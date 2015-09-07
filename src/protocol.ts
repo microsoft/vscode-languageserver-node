@@ -28,7 +28,7 @@ export namespace Message {
  */
 export interface Message {
 	/**
-	 * One of 'request', 'response', or 'event'.
+	 * One of 'request', 'response', or 'event'
 	 * See also namespace Message
 	 */
 	type: string;
@@ -40,18 +40,18 @@ export interface Message {
 }
 
 /**
-  * Client-initiated request message
-  */
+ * Client-initiated request message
+ */
 export interface Request extends Message {
-    /**
-      * The command to execute
-      */
-    command: string;
+	/**
+	 * The command to execute
+	 */
+	command: string;
 
-    /**
-      * Object containing arguments for the command
-      */
-    arguments?: any;
+	/**
+	 * Object containing arguments for the command
+	 */
+	arguments?: any;
 }
 
 /**
@@ -98,18 +98,18 @@ export interface Response extends Message {
 }
 
 /**
-  * Server-initiated event message
-  */
+ * Server-initiated event message
+ */
 export interface Event extends Message {
-    /**
-      * Name of event
-      */
-    event: string;
+	/**
+	 * Name of event
+	 */
+	event: string;
 
-    /**
-      * Event-specific information
-      */
-    body?: any;
+	/**
+	 * Event-specific information
+	 */
+	body?: any;
 }
 
 export namespace InitializeRequest {
@@ -125,15 +125,16 @@ export interface InitializeReponse extends Response {
 /**
  * A request to shutdown the open tools server service
  */
- export namespace ShutdownRequest {
+export namespace ShutdownRequest {
 	 export let command: string = 'showdown';
- }
- export interface ShutdownRequest extends Request {
- }
+}
 
- /**
-	* The response for a shutdown request
-  */
+export interface ShutdownRequest extends Request {
+}
+
+/**
+ * The response for a shutdown request
+ */
 export interface ShutdownResponse extends Response {
 }
 
