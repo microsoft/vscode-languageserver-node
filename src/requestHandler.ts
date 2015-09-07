@@ -67,6 +67,8 @@ export class RequestHandler {
 		} catch (err) {
 			if (err instanceof RequestException) {
 				message = (<RequestException>err).message;
+			} else if (typeof err.message === 'string' || err.message instanceof String) {
+				message = err.message;
 			}
 			// do nothing right now. Need to log later or send
 			// a log event to the VSCode. Need to think about.
