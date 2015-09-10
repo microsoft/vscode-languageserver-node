@@ -9,6 +9,7 @@
     "gulp-debug": "^2.1.0",
     "gulp-tsb": "^1.4.5",
     "gulp-util": "^3.0.6",
-    "rimraf": "^2.4.3"
+    "rimraf": "^2.4.3",
+    "mocha": "^2.3.2"
   }
 }

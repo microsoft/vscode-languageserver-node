@@ -3,12 +3,12 @@
  *--------------------------------------------------------*/
 'use strict';
 
-import { Message } from 'protocol';
+import { Message } from 'messages';
 
 let ContentLength:string = 'Content-Length: ';
 let CRLF = '\r\n';
 
-export class ProtocolWriter {
+export class MessageWriter {
 
 	private writable: NodeJS.WritableStream;
 	private encoding: string

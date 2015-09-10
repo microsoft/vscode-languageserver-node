@@ -8,9 +8,9 @@ import * as assert from 'assert';
 import { Duplex, Writable, Readable } from 'stream';
 import { inherits } from 'util';
 
-import { Message, Request } from '../protocol';
-import { ProtocolWriter } from '../protocolWriter';
-import { ProtocolReader } from '../protocolReader';
+import { Message, RequestMessage } from '../messages';
+import { MessageWriter } from '../messageWriter';
+import { MessageReader } from '../messageReader';
 
 function TestWritable() {
 	Writable.call(this);
@@ -22,13 +22,13 @@ TestWritable.prototype._write = function (chunk, encoding, done) {
 	done();
 }
 
-describe('Open Tools Protocol', () => {
+describe('Messages', () => {
 	let data: string = 'Content-Length: 46\r\n\r\n{"seq":1,"type":"request","command":"example"}'
 	it('Writing', () => {
 		let writable = new TestWritable();
-		let writer = new ProtocolWriter(writable, 'ascii');
+		let writer = new MessageWriter(writable, 'ascii');
 
-		let request: Request = {
+		let request: RequestMessage = {
 			seq: 1,
 			type: Message.Request,
 			command: 'example'
@@ -39,7 +39,7 @@ describe('Open Tools Protocol', () => {
 	});
 	it('Reading', (done) => {
 		let readable = new Readable();
-		let reader = new ProtocolReader(readable, (message: Request) => {
+		let reader = new MessageReader(readable, (message: RequestMessage) => {
 			assert.equal(message.seq, 1);
 			assert.equal(message.type, Message.Request);
 			assert.equal(message.command, 'example');

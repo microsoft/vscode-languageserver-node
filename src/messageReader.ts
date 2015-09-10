@@ -3,14 +3,14 @@
  *--------------------------------------------------------*/
 'use strict';
 
-import { Message, Request } from 'protocol';
+import { Message } from 'messages';
 
 let DefaultSize: number = 8192;
 let CR:number = new Buffer('\r', 'ascii')[0];
 let LF:number = new Buffer('\n', 'ascii')[0];
 let CRLF: string = '\r\n';
 
-class ProtocolBuffer {
+class MessageBuffer {
 
 	private encoding: string;
 	private index: number;
@@ -82,19 +82,19 @@ class ProtocolBuffer {
 }
 
 export interface ICallback {
-	(data: Request): void;
+	(data: Message): void;
 }
 
-export class ProtocolReader {
+export class MessageReader {
 
 	private readable: NodeJS.ReadableStream;
 	private callback: ICallback;
-	private buffer: ProtocolBuffer;
+	private buffer: MessageBuffer;
 	private nextMessageLength: number;
 
 	public constructor(readable: NodeJS.ReadableStream, callback: ICallback, encoding: string = 'utf-8') {
 		this.readable = readable;
-		this.buffer = new ProtocolBuffer(encoding);
+		this.buffer = new MessageBuffer(encoding);
 		this.callback = callback;
 		this.nextMessageLength = -1;
 		this.readable.on('data', (data:Buffer) => {
