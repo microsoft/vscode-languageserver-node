@@ -14,7 +14,8 @@ import * as path from 'path';
 export var initializeCommand: string = 'initialize';
 
 export interface InitializeRequestArguments {
-	rootFolder?: string;
+	rootFolder: string;
+	defaultEncoding: string;
 	capabilities: string[];
 }
 
@@ -22,10 +23,18 @@ export interface InitializeResponseBody {
 	capabilities: string[];
 }
 
+export var configureEvent: string = 'configureEvent';
+
+export interface ConfigureEventArguments {
+	defaultEncoding?: string;
+}
+
+
+
 // configureValidation: Host to client
 // Configures the validation with user or workspace settings
 
-export var configureValidation: string = 'configureValidation';
+export let configureValidation: string = 'configureValidation';
 
 export interface ConfigureValidationArguments {
 	enable: boolean;
@@ -42,7 +51,7 @@ export interface ConfigureValidationResponseBody {
 export var subscribeFileEventsCommand: string = 'subscribeFileEvents';
 
 export interface SubscribeFileEventsArguments {
-	filePathsPatterns: string[];
+	filePathPatterns: string[];
 }
 
 export interface SubscribeFileEventBody {
@@ -56,17 +65,17 @@ export interface SubscribeFileEventBody {
 export var subscribeBufferEventsCommand: string = 'subscribeBufferEvents';
 
 export interface SubscribeBufferEventsArguments {
-	filePathsPatterns: string[];
+	filePathPatterns: string[];
 }
 
 export interface SubscribeBufferEventBody {
-	openBuffers: string
+	buffersOpen: TextBufferInfo[]
 }
 
 // filesChangedEvent: Host to client
-// Used by the host to signal that files or folders have been added, deleted or that files have changed
+// Used by the host to signal that files have been added, deleted or that files have changed
 export var filesChangedEvent: string = 'filesChangedEvent';
-export interface BufferEventBody {
+export interface FilesChangedEventBody {
 	filesAdded: string[];
 	filesRemoved: string[];
 	filesChanged: string[];
@@ -75,24 +84,24 @@ export interface BufferEventBody {
 // buffersChangedEvent: Host to client
 // Used by the host to signal that buffers have been opened, changed or closed
 export var buffersChangedEvent: string = 'buffersChangedEvent';
-export interface BufferEventBody {
-	buffersOpened: string[];
-	buffersChanged: string[];
-	buffersClosed: string[];
+export interface BufferChangedEventBody {
+	buffersOpened: TextBufferInfo[];
+	buffersChanged: TextBufferInfo[];
+	buffersClosed: TextBufferInfo[];
 }
 
 
 // getDocumentCommand: Client to host
 // Used by the client to ask the host for the latest content of a buffer or file. 
 
-export var getDocumentCommand: string = 'getDocumentCommand';
+export var getTextBuffersCommand: string = 'textBuffer/content';
 
-export interface GetDocumentArguments {
-	documents: { path: string; };
+export interface GetTextBufferArguments {
+	textBuffers: TextBufferInfo[];
 }
 
-export interface GetDocumentBody {
-	[filePath:string]: {
+export interface GetTextBuffersBody {
+	[uri:string]: {
 		content: string
 	}
 }
@@ -101,7 +110,7 @@ export interface GetDocumentBody {
 // Used by the client to notify validation marker changes in the open buffers
 export var validationEvent: string = 'validationEvent';
 export interface ValidationEventBody {
-	[filePath:string]: {
+	[uri:string]: {
 		m: Diagnostic[]
 	}
 }
@@ -116,6 +125,10 @@ export interface ShutdownRequestArguments {
 }
 
 export interface ShutdownResponseBody {
+}
+
+export interface TextBufferInfo {
+	uri: string;
 }
 
 /**
