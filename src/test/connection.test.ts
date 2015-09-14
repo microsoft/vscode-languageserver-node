@@ -5,7 +5,7 @@
 
 import * as assert from 'assert';
 
-import { Duplex, Writable, Readable } from 'stream';
+import { Duplex, Writable, Readable, Transform } from 'stream';
 import { inherits } from 'util';
 
 import { Message, RequestMessage, ResponseMessage, Response } from '../messages';
@@ -24,24 +24,71 @@ TestWritable.prototype._write = function (chunk, encoding, done) {
 	done();
 }
 
+function TestDuplex(name: string = 'ds1', dbg = false) {
+	Duplex.call(this);
+	this.data = '';
+	this.name = name;
+	this.dbg = dbg;
+    this.on('finish', function() {
+		this.isWriteFinished = true;
+		this.emit('readable');
+    });	
+}
+inherits(TestDuplex, Duplex);
+TestDuplex.prototype._write = function (chunk, encoding, done) {
+	var val = chunk.toString();
+	this.data += val;
+	if (this.dbg) console.log(this.name + ': write: ' + val);
+	this.emit('readable');
+	done();
+}
+
+TestDuplex.prototype._read = function(size) {
+	if (size > this.data.length) {
+		size = this.data.length;
+	}
+	var val = this.data.substring(0, size);
+	if (this.dbg) console.log(this.name + ': read: ' + val);
+	this.push(val);
+	this.data = this.data.substring(size);
+	
+	if (this.isWriteFinished && this.data.length === 0) {
+		this.push(null);
+		this.isWriteFinished = false;
+	}
+}
+
 function newRequestString(seq: number, command: string, arg: any) : string {
 	var request : RequestMessage = { type: Message.Request, seq, command, arguments: arg };
 	var str = JSON.stringify(request);
 	return `Content-Length: ${str.length}\r\n\r\n${str}`;
 }
 
+function selectProperties(properties: string[]) {
+	return (obj) => {
+		var res= {};
+		properties.forEach(p => {
+			res[p] = obj[p];
+		});
+		return res;		
+	}
+}
 
-function assertResponses(resultData: string, expected: ResponseMessage[], done: MochaDone) {
+
+function assertMessages(resultData: string, expected: Message[], done: MochaDone) {
 	var resultStream = new Readable();
 	resultStream.push(resultData);
 	resultStream.push(null);
-	var actualResponses : Message[] = [];
+	var actual : Message[] = [];
 	new MessageReader(resultStream, (res) => {
-		actualResponses.push(res);
+		if (res.type === Message.Response) {
+			delete (<ResponseMessage> res).message;
+		}
+		actual.push(res);
 	});
 	setTimeout(() => {
 		try {
-			assert.deepEqual(actualResponses, expected);
+			assert.deepEqual(actual, expected);
 			done();
 		} catch (e) {
 			done(e);
@@ -49,7 +96,8 @@ function assertResponses(resultData: string, expected: ResponseMessage[], done: 
 	}, 10);
 }
 
-var testCommand = 'test';
+var testCommand1 = 'testCommand1';
+var testCommand2 = 'testCommand2';
 function newTestBody(content: string)  { 
 	return { documents: [ { content: content } ]};
 };
@@ -68,73 +116,188 @@ function testRequestHandler(args: any) : Response {
 	}
 };
 
+
+function createEventHandler(result: any[]) : hostConnection.IEventHandler {
+	return (event) => {
+		result.push(event);
+	}
+};
+
+function createEchoRequestHandler(result: any[]) : hostConnection.IRequestHandler {
+	return (body) => {
+		result.push(body);
+		return {
+			success: true,
+			body: body
+		};
+	}
+};
+
 describe('Connection', () => {
 
-	it('Single Request', (done) => {
+	it('Handle Single Request', (done) => {
 	
 		let outputStream = new TestWritable();	
 		var inputStream = new Readable();
 		
 		var connection = hostConnection.connect(inputStream, outputStream);
-		connection.handleRequest(testCommand, testRequestHandler);
+		connection.handleRequest(testCommand1, testRequestHandler);
 	
-		inputStream.push(newRequestString(1, testCommand, newTestBody('foo')));
+		inputStream.push(newRequestString(1, testCommand1, newTestBody('foo')));
 		inputStream.push(null);
 		
 		var expected : ResponseMessage[]= [
-			{ type: Message.Response, seq: 0, request_seq: 1, command: testCommand, success: true, body: 'foo' }
+			{ type: Message.Response, seq: 0, request_seq: 1, command: testCommand1, success: true, body: 'foo' }
 		];		
 		
 		setTimeout(() => {
-			assertResponses(outputStream.data, expected, done);
+			assertMessages(outputStream.data, expected, done);
 		});
 		
 
 	});
 
-	it('Multiple Requests', (done) => {
+	it('Handle Multiple Requests', (done) => {
 	
 		let outputStream = new TestWritable();	
 		var inputStream = new Readable();
 		
 		var connection = hostConnection.connect(inputStream, outputStream);
-		connection.handleRequest(testCommand, testRequestHandler);
+		connection.handleRequest(testCommand1, testRequestHandler);
+		connection.handleRequest(testCommand2, testRequestHandler);
 	
-		inputStream.push(newRequestString(1, testCommand, newTestBody('foo')));
-		inputStream.push(newRequestString(2, testCommand, newTestBody('bar')));
+		inputStream.push(newRequestString(1, testCommand1, newTestBody('foo')));
+		inputStream.push(newRequestString(2, testCommand2, newTestBody('bar')));
 		inputStream.push(null);
 		
 		var expected : ResponseMessage[]= [
-			{ type: Message.Response, seq: 0, request_seq: 1, command: testCommand, success: true, body: 'foo' },
-			{ type: Message.Response, seq: 1, request_seq: 2, command: testCommand, success: true, body: 'bar' }
+			{ type: Message.Response, seq: 0, request_seq: 1, command: testCommand1, success: true, body: 'foo' },
+			{ type: Message.Response, seq: 1, request_seq: 2, command: testCommand2, success: true, body: 'bar' }
 		];
 		
 		setTimeout(() => {
-			assertResponses(outputStream.data, expected, done);
+			assertMessages(outputStream.data, expected, done);
 		});
 		
 
 	});
 	
-	it('Invalid Request', (done) => {
+	it('Handle Invalid Request', (done) => {
 	
 		let outputStream = new TestWritable();	
 		var inputStream = new Readable();
 		
 		var connection = hostConnection.connect(inputStream, outputStream);
-		connection.handleRequest(testCommand, testRequestHandler);
+		connection.handleRequest(testCommand1, testRequestHandler);
 	
-		inputStream.push(newRequestString(1, testCommand, {}));
+		inputStream.push(newRequestString(1, testCommand1, {}));
 		inputStream.push(null);
 		
 		var expected : ResponseMessage[]= [
-			{ type: Message.Response, seq: 0, request_seq: 1, command: testCommand, success: false, message: 'invalid' }
+			{ type: Message.Response, seq: 0, request_seq: 1, command: testCommand1, success: false }
 		];
 		
 		setTimeout(() => {
-			assertResponses(outputStream.data, expected, done);
+			assertMessages(outputStream.data, expected, done);
 		});
 		
 
 	});	
+	
+	it('Unhandled Request', (done) => {
+	
+		let outputStream = new TestWritable();	
+		var inputStream = new Readable();
+		
+		var connection = hostConnection.connect(inputStream, outputStream);
+		connection.handleRequest(testCommand1, testRequestHandler);
+	
+		inputStream.push(newRequestString(1, testCommand2, {}));
+		inputStream.push(null);
+		
+		var expected : ResponseMessage[]= [
+			{ type: Message.Response, seq: 0, request_seq: 1, command: testCommand2, success: false, code: hostConnection.ERROR_NOT_HANDLED }
+		];
+		
+		setTimeout(() => {
+			assertMessages(outputStream.data, expected, done);
+		});
+		
+
+	});
+	
+	it('Send Request', (done) => {
+	
+		let outputStream = new TestWritable();	
+		var inputStream = new Readable();
+		inputStream.push(null);
+		
+		var connection = hostConnection.connect(inputStream, outputStream);
+		connection.sendRequest(testCommand1, { 'foo': true });
+		
+		var expected : Message[] = [
+			{ type: Message.Request, seq: 0, command: testCommand1, arguments: { 'foo': true } }
+		];
+		
+		setTimeout(() => {
+			assertMessages(outputStream.data, expected, done);
+		});
+		
+
+	});
+	
+	it('Send and Receive Request', (done) => {
+	
+		let duplexStream1 = new TestDuplex('ds1');	
+		let duplexStream2 = new TestDuplex('ds2');	
+		var inputStream = new Readable();
+		inputStream.push(null);
+		
+		var requestBody = { 'foo': [ { bar: 1 } ]};
+		
+		var receivedRequests = [];
+		var receivedResponses = [];
+		
+		var connection1 = hostConnection.connect(duplexStream1, duplexStream2);
+		connection1.sendRequest(testCommand1, requestBody).then(response => {
+			receivedResponses.push(response);
+		});
+		
+		var connection2 = hostConnection.connect(duplexStream2, duplexStream1);
+		connection2.handleRequest(testCommand1, createEchoRequestHandler(receivedRequests));		
+		
+		setTimeout(() => {
+				assert.deepEqual(receivedRequests, [ requestBody ]);
+				assert.deepEqual(receivedResponses.map(selectProperties(['success', 'body'])), [ { success: true, body: requestBody } ]);
+				done();
+		}, 10);
+
+	});	
+	
+	var testEvent = "testEvent";
+	
+	it('Send and Receive Event', (done) => {
+	
+		let outputStream = new TestWritable();	
+		let duplexStream = new TestDuplex();	
+		var inputStream = new Readable();
+		inputStream.push(null);
+		
+		var eventBody = { 'foo': true };
+		
+		var connection1 = hostConnection.connect(inputStream, duplexStream);
+		connection1.sendEvent(testEvent, eventBody);
+		
+		var resultingEvents = [];
+		
+		var connection2 = hostConnection.connect(duplexStream, outputStream);
+		connection2.handleEvent(testEvent, createEventHandler(resultingEvents));		
+		
+		
+		setTimeout(() => {
+			assert.deepEqual(resultingEvents, [ eventBody ]);
+			done();
+		}, 10);
+
+	});		
 });

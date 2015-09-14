@@ -22,7 +22,13 @@ class MessageBuffer {
 		this.buffer = new Buffer(DefaultSize);
 	}
 
-	public append(toAppend: Buffer):void {
+	public append(chunk: Buffer | String):void {
+		var toAppend: Buffer = <Buffer> chunk;
+    	if (typeof(chunk) == 'string') {
+			var str = <string> chunk;
+			toAppend = new Buffer(str.length);
+			toAppend.write(str, 0, str.length, this.encoding);
+    	}
 		if (this.buffer.length - this.index >= toAppend.length) {
 			toAppend.copy(this.buffer, this.index, 0, toAppend.length);
 		} else {
@@ -97,12 +103,16 @@ export class MessageReader {
 		this.buffer = new MessageBuffer(encoding);
 		this.callback = callback;
 		this.nextMessageLength = -1;
-		this.readable.on('data', (data:Buffer) => {
-			this.onData(data);
+		this.readable.on('readable', () => {
+			var chunk = this.readable.read();
+			while (chunk !== null) {
+				this.onData(chunk);
+				chunk = this.readable.read();
+			}		
 		});
 	}
 
-	private onData(data:Buffer): void {
+	private onData(data:Buffer|String): void {
 		this.buffer.append(data);
 		while(true) {
 			if (this.nextMessageLength === -1) {

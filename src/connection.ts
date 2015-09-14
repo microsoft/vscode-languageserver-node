@@ -7,6 +7,11 @@ import { Message, RequestMessage, ResponseMessage, Response, EventMessage } from
 import { MessageReader } from './messageReader';
 import { MessageWriter } from './messageWriter';
 
+export let ERROR_NOT_HANDLED = 0x100;
+export let ERROR_HANDLER_FAILURE = 0x101;
+
+export let ERROR_CUSTOM = 0x1000;
+
 export interface IRequestHandler {
 	(body?: any): Thenable<Response> | Response;
 }
@@ -30,7 +35,7 @@ export function connect(inputStream: NodeJS.ReadableStream, outputStream: NodeJS
 
 	var requestHandlers : { [name:string]: IRequestHandler } = {};
 	var eventHandlers : { [name:string]: IEventHandler } = {};
-	var responseHandlers : { [name:string]: { resolve: (Response) => void, reject: (error: any) => void } };
+	var responseHandlers : { [name:string]: { resolve: (Response) => void, reject: (error: any) => void } } = {};
 	
 	var connection : Connection = {
 		sendEvent: (event, body) => {
@@ -42,13 +47,13 @@ export function connect(inputStream: NodeJS.ReadableStream, outputStream: NodeJS
 			}
 			protocolWriter.write(eventMessage);
 		},
-		sendRequest: (command, body) => {
+		sendRequest: (command, args) => {
 			var seq = sequenceNumber++;			
 			var requestMessage : RequestMessage = {
 				type: Message.Request,
 				seq: seq,
 				command: command,
-				body: body
+				arguments: args
 			}
 			protocolWriter.write(requestMessage);
 			
@@ -85,21 +90,21 @@ export function connect(inputStream: NodeJS.ReadableStream, outputStream: NodeJS
 				var handlerResult = requestHandler(requestMessage.arguments);
 				var promise = <Thenable<Response>> handlerResult;
 				if (!promise) {
-					reply({ success: false, message: `Unhandled command ${requestMessage.command}` });
+					reply({ success: false, message: `Handler ${requestMessage.command} failure`, code: ERROR_HANDLER_FAILURE });
 				} else if (promise.then) {
 					promise.then(responseContent => {
 						reply(responseContent);
 					}, error => {
-						reply({ success: false, message: `Request failed unexpectedly: ${error.message}` });
+						reply({ success: false, message: `Request failed unexpectedly: ${error.message}`, code: ERROR_HANDLER_FAILURE });
 					});
 				} else {
 					reply(<Response> handlerResult);
 				}
 			} catch (error) {
-				reply({ success: false, message: `Request failed unexpectedly: ${error.message}` });
+				reply({ success: false, message: `Request failed unexpectedly: ${error.message}`, code: ERROR_HANDLER_FAILURE });
 			}
 		} else {
-			reply({ success: false, message: `Unhandled command ${requestMessage.command}` });
+			reply({ success: false, message: `Unhandled command ${requestMessage.command}`, code: ERROR_NOT_HANDLED });
 		}
 	}
 	
