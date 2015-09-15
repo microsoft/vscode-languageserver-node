@@ -51,7 +51,7 @@
 			// Use JavaScript source maps (if they exist).
 			"sourceMaps": true,
 			// If JavaScript source maps are enabled, the generated code is expected in this directory.
-			"outDir": "out"
+			"outDir": "lib"
 		},		
 		{
 			"name": "Attach",

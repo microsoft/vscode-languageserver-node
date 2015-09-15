@@ -1,2 +1,2 @@
-out/test
+lib/test
 --recursive

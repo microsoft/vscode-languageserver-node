@@ -1,6 +1,5 @@
 .vs-code/
-node_modules/
-out/test/
+lib/test/
 src/
 test/
 .eslintrc

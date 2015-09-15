@@ -16,7 +16,7 @@ var sources = [
 gulp.task('build', function() {
 	return gulp.src(sources, { base: 'src' })
 		.pipe(compilation())
-		.pipe(gulp.dest('out'));
+		.pipe(gulp.dest('lib'));
 });
 
 gulp.task('watch', ['build'], function() {
@@ -25,7 +25,7 @@ gulp.task('watch', ['build'], function() {
 });
 
 gulp.task('clean', function (cb) { 
-	rimraf('out', cb);
+	rimraf('lib', cb);
 });
 
 gulp.task('default', ['build']);

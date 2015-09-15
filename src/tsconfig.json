@@ -3,6 +3,6 @@
 		"target": "ES5",
 		"module": "commonjs",
 		"watch": false,
-		"outDir": "../out"
+		"outDir": "../lib"
 	}
 }
