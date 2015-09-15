@@ -1,0 +1,9 @@
+.vs-code/
+node_modules/
+out/test/
+src/
+test/
+.eslintrc
+.gitignore
+gulpfile.js
+tsd.json
