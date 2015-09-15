@@ -117,18 +117,18 @@ function testRequestHandler(args: any) : Response {
 };
 
 
-function createEventHandler(result: any[]) : hostConnection.IEventHandler {
+function createEventHandler<T>(result: T[]) : hostConnection.IEventHandler<T> {
 	return (event) => {
 		result.push(event);
 	}
 };
 
-function createEchoRequestHandler(result: any[]) : hostConnection.IRequestHandler {
-	return (body) => {
+function createEchoRequestHandler<T>(result: T[]) : hostConnection.IRequestHandler<T, Response> {
+	return (body: T) => {
 		result.push(body);
 		return {
 			success: true,
-			body: body
+			body: <any> body
 		};
 	}
 };
@@ -141,7 +141,7 @@ describe('Connection', () => {
 		var inputStream = new Readable();
 		
 		var connection = hostConnection.connect(inputStream, outputStream);
-		connection.handleRequest(testCommand1, testRequestHandler);
+		connection.onRequest(testCommand1, testRequestHandler);
 	
 		inputStream.push(newRequestString(1, testCommand1, newTestBody('foo')));
 		inputStream.push(null);
@@ -163,8 +163,8 @@ describe('Connection', () => {
 		var inputStream = new Readable();
 		
 		var connection = hostConnection.connect(inputStream, outputStream);
-		connection.handleRequest(testCommand1, testRequestHandler);
-		connection.handleRequest(testCommand2, testRequestHandler);
+		connection.onRequest(testCommand1, testRequestHandler);
+		connection.onRequest(testCommand2, testRequestHandler);
 	
 		inputStream.push(newRequestString(1, testCommand1, newTestBody('foo')));
 		inputStream.push(newRequestString(2, testCommand2, newTestBody('bar')));
@@ -188,7 +188,7 @@ describe('Connection', () => {
 		var inputStream = new Readable();
 		
 		var connection = hostConnection.connect(inputStream, outputStream);
-		connection.handleRequest(testCommand1, testRequestHandler);
+		connection.onRequest(testCommand1, testRequestHandler);
 	
 		inputStream.push(newRequestString(1, testCommand1, {}));
 		inputStream.push(null);
@@ -210,7 +210,7 @@ describe('Connection', () => {
 		var inputStream = new Readable();
 		
 		var connection = hostConnection.connect(inputStream, outputStream);
-		connection.handleRequest(testCommand1, testRequestHandler);
+		connection.onRequest(testCommand1, testRequestHandler);
 	
 		inputStream.push(newRequestString(1, testCommand2, {}));
 		inputStream.push(null);
@@ -264,7 +264,7 @@ describe('Connection', () => {
 		});
 		
 		var connection2 = hostConnection.connect(duplexStream2, duplexStream1);
-		connection2.handleRequest(testCommand1, createEchoRequestHandler(receivedRequests));		
+		connection2.onRequest(testCommand1, createEchoRequestHandler(receivedRequests));		
 		
 		setTimeout(() => {
 				assert.deepEqual(receivedRequests, [ requestBody ]);
@@ -291,7 +291,7 @@ describe('Connection', () => {
 		var resultingEvents = [];
 		
 		var connection2 = hostConnection.connect(duplexStream, outputStream);
-		connection2.handleEvent(testEvent, createEventHandler(resultingEvents));		
+		connection2.onEvent(testEvent, createEventHandler(resultingEvents));		
 		
 		
 		setTimeout(() => {

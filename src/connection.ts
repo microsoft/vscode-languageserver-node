@@ -12,19 +12,19 @@ export let ERROR_HANDLER_FAILURE = 0x101;
 
 export let ERROR_CUSTOM = 0x1000;
 
-export interface IRequestHandler {
-	(body?: any): Thenable<Response> | Response;
+export interface IRequestHandler<T, U extends Response> {
+	(body?: T): Thenable<U> | U;
 }
 
-export interface IEventHandler {
-	(body?: any): void;
+export interface IEventHandler<T> {
+	(body?: T): void;
 }
 
 export interface Connection {
-	sendRequest(command: string, body: any) : Thenable<Response>;
+	sendRequest(command: string, args?: any) : Thenable<Response>;
 	sendEvent(event: string, body?: any) : void;
-	handleRequest(command: string, handler: IRequestHandler) : void;
-	handleEvent(event: string, handler: IEventHandler) : void;
+	onRequest(command: string, handler: IRequestHandler<any, Response>) : void;
+	onEvent(event: string, handler: IEventHandler<any>) : void;
 	dispose(): void;
 }
 
@@ -33,8 +33,8 @@ export function connect(inputStream: NodeJS.ReadableStream, outputStream: NodeJS
 	var protocolWriter = new MessageWriter(outputStream);
 	var sequenceNumber = 0;
 
-	var requestHandlers : { [name:string]: IRequestHandler } = {};
-	var eventHandlers : { [name:string]: IEventHandler } = {};
+	var requestHandlers : { [name:string]: IRequestHandler<any, Response> } = {};
+	var eventHandlers : { [name:string]: IEventHandler<any> } = {};
 	var responseHandlers : { [name:string]: { resolve: (Response) => void, reject: (error: any) => void } } = {};
 	
 	var connection : Connection = {
@@ -61,10 +61,10 @@ export function connect(inputStream: NodeJS.ReadableStream, outputStream: NodeJS
 				responseHandlers[String(seq)] = { resolve, reject };
 			});
 		},
-		handleRequest: (command: string, handler: IRequestHandler) => {
+		onRequest: (command: string, handler: IRequestHandler<any, Response>) => {
 			requestHandlers[command] = handler;
 		},
-		handleEvent: (event: string, handler: IEventHandler) => {
+		onEvent: (event: string, handler: IEventHandler<any>) => {
 			eventHandlers[event] = handler;
 		},
 		dispose: () => {
@@ -111,7 +111,7 @@ export function connect(inputStream: NodeJS.ReadableStream, outputStream: NodeJS
 	function handleResponse(responseMessage: ResponseMessage) {
 		var responseHandler = responseHandlers[String(responseMessage.request_seq)];
 		if (responseHandler) {
-			responseHandler.resolve(<Response> responseMessage);
+			responseHandler.resolve(responseMessage);
 			delete responseHandlers[String(responseMessage.request_seq)];
 		}
 	}
