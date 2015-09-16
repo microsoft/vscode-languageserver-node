@@ -3,7 +3,7 @@
  *--------------------------------------------------------*/
 'use strict';
 
-import { Message } from 'messages';
+import { Message } from './messages';
 
 let DefaultSize: number = 8192;
 let CR:number = new Buffer('\r', 'ascii')[0];

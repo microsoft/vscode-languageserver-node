@@ -3,7 +3,7 @@
  *--------------------------------------------------------*/
 'use strict';
 
-import { Message } from 'messages';
+import { Message } from './messages';
 
 let ContentLength:string = 'Content-Length: ';
 let CRLF = '\r\n';

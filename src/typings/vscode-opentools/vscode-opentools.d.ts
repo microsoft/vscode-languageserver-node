@@ -1,7 +1,7 @@
 /*---------------------------------------------------------
  * Copyright (C) Microsoft Corporation. All rights reserved.
  *--------------------------------------------------------*/
-declare module 'OpenTools-node' {
+declare module 'vscode-opentools' {
 	export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, handler: SingleFileValidator) : void;
 
 	interface ContentsByURI {
@@ -36,7 +36,7 @@ declare module 'OpenTools-node' {
 	}
 
 
-	declare var Severity: {
+	export var Severity: {
 		Error: number;
 		Warning: number;
 		Info: number;

@@ -1,5 +1,5 @@
 {
-  "name": "OpenTools-Node",
+  "name": "vscode-opentools",
   "description": "Open Tools implementation for node",
   "version": "0.1.0",
   "main": "./lib/index.js",

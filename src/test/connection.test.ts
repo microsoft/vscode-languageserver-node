@@ -235,7 +235,7 @@ describe('Connection', () => {
 		var connection = hostConnection.connect(inputStream, outputStream);
 		connection.sendRequest(testCommand1, { 'foo': true });
 		
-		var expected : Message[] = [
+		var expected : RequestMessage[] = [
 			{ type: Message.Request, seq: 0, command: testCommand1, arguments: { 'foo': true } }
 		];
 		
