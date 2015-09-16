@@ -15,7 +15,7 @@ declare module 'OpenTools-node' {
 	interface SingleFileValidator {
 		startValidation(root: string,  settings: any) : { filePathPatterns: string[], configFilePathPatterns: string[] };
 		stopValidation(): void;
-		configurationChanged(addedURIs: string[], removedURIs: string[], changedURIs: string[]);
+		configurationChanged(addedURIs: string[], removedURIs: string[], changedURIs: string[]) : boolean | Thenable<boolean>;
 		validate(contents: ContentsByURI): DiagnosticsByURI | Thenable<DiagnosticsByURI>;
 		shutdown();
 	}
