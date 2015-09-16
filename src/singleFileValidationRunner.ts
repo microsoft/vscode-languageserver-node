@@ -16,11 +16,12 @@ export interface DiagnosticsByURI {
 export interface SingleFileValidator {
 	startValidation(root: string,  settings: any) : { filePathPatterns: string[], configFilePathPatterns: string[] };
 	stopValidation(): void;
+	configurationChanged(addedURIs: string[], removedURIs: string[], changedURIs: string[]) : boolean | Thenable<boolean>;
 	validate(contents: ContentsByURI): DiagnosticsByURI | Thenable<DiagnosticsByURI>;
 	shutdown();
 }
 
-export function runValidator(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, handler: SingleFileValidator) : void {
+export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, handler: SingleFileValidator) : void {
 	var connection = getValidationHostConnection(inputStream, outputStream);
 	var rootFolder: string;
 
@@ -108,11 +109,25 @@ export function runValidator(inputStream: NodeJS.ReadableStream, outputStream: N
 	});
 	
 	connection.onFilesChangedEvent(event => {
-		// config file has changed, revalidate all tracked documents
-		for (var p in trackedDocuments) {
-			changedDocuments[p] = trackedDocuments[p];
+		function validateAll() {
+			// config file has changed, revalidate all tracked documents
+			for (var p in trackedDocuments) {
+				changedDocuments[p] = trackedDocuments[p];
+			}
+			triggerValidation();			
+		}	
+		
+		var confChangedResult = handler.configurationChanged(event.filesAdded, event.filesRemoved, event.filesChanged);
+		var confChangedPromise = <Thenable<boolean>> confChangedResult;
+		if (confChangedPromise.then) {
+			confChangedPromise.then(result => {
+				if (result) {
+					validateAll();
+				}
+			})
+		} else if (<boolean> confChangedResult) {
+			validateAll();
 		}
-		triggerValidation();
 	});
 	
 	function triggerValidation() {

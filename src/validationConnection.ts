@@ -27,47 +27,6 @@ export function getValidationHostConnection(inputStream: NodeJS.ReadableStream, 
 	}
 }
 
-/* Connection from client to host */
-export interface ValidationHostConnection extends Connection {
-	onRequest(command: string, handler: IRequestHandler<any, Response>) : void;
-	onRequest(command: 'initialize', handler: IRequestHandler<InitializeArguments, InitializeResponse>) : void;
-	onRequest(command: 'configureValidation', handler: IRequestHandler<ConfigureValidationArguments, ConfigureValidationResponse>) : void;
-	onRequest(command: 'shutdown', handler: IRequestHandler<ShutdownArguments, ShutdownResponse>) : void;	
-	
-	sendRequest(command: string, args: any) : Thenable<Response>;
-	sendRequest(command: 'subscribeFileEvents', args: SubscribeFileEventsArguments) : Thenable<SubscribeFileEventsResponse>;
-	sendRequest(command: 'subscribeBufferEvents', args: SubscribeBufferEventsArguments) : Thenable<SubscribeBufferEventsResponse>;	
-	sendRequest(command: 'getTextBuffers', args: GetTextBufferArguments) : Thenable<GetTextBuffersResponse>;
-
-	sendEvent(event: string, body?: any) : void;
-	sendEvent(event: 'validationEvent', body: ValidationEventBody) : void;
-	
-	onEvent(event: string, handler: IEventHandler<any>) : void;
-	onEvent(event: 'configureEvent', handler: IEventHandler<ConfigureEventBody>) : void;
-	onEvent(event: 'filesChangedEvent', handler: IEventHandler<FilesChangedEventBody>) : void;
-	onEvent(event: 'buffersChangedEvent', handler: IEventHandler<BufferChangedEventBody>) : void;	
-	dispose(): void;
-}
-
-/* Connection from host to client */
-export interface ValidationClientConnection extends Connection {
-	sendRequest(command: string, args: any) : Thenable<Response>;
-	sendRequest(command: 'initialize', args: InitializeArguments) : Thenable<InitializeResponse>;
-	sendRequest(command: 'configureValidation', args: ConfigureValidationArguments) : Thenable<ConfigureValidationResponse>;
-	sendRequest(command: 'shutdown', args: ShutdownArguments) : Thenable<ShutdownResponse>;
-	
-	onRequest(command: string, handler: IRequestHandler<any, Response>) : void;
-	onRequest(command: 'getTextBuffers', handler: IRequestHandler<GetTextBufferArguments, GetTextBuffersResponse>): void;
-
-	sendEvent(event: string, body?: any) : void;
-	sendEvent(event: 'configureEvent', body?: ConfigureEventBody) : void;
-	
-	onEvent(event: string, handler: IEventHandler<any>) : void;
-	onEvent(event: 'validationEvent', handler?: IEventHandler<ValidationEventBody>) : void;	
-	dispose(): void;
-}
-
-
 // initializeCommand: Host to client
 // Sent once, right after startup
 
