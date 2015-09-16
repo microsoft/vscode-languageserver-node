@@ -4,19 +4,25 @@
 declare module 'vscode-opentools' {
 	export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, handler: SingleFileValidator) : void;
 
-	interface ContentsByURI {
+	interface Contents {
 		[uri:string]: string;
 	}
 
-	interface DiagnosticsByURI {
+	interface Diagnostics {
 		[uri:string]: Diagnostic[];
 	}
 
+	interface Subscriptions {
+		filePathPatterns?: string[];
+		mimeTypes?: string[];
+		configFilePathPatterns?: string[];
+	}
+
 	interface SingleFileValidator {
-		startValidation(root: string,  settings: any) : { filePathPatterns: string[], configFilePathPatterns: string[] };
+		startValidation(root: string,  settings: any) : Subscriptions;
 		stopValidation(): void;
 		configurationChanged(addedURIs: string[], removedURIs: string[], changedURIs: string[]) : boolean | Thenable<boolean>;
-		validate(contents: ContentsByURI): DiagnosticsByURI | Thenable<DiagnosticsByURI>;
+		validate(contents: Contents): Diagnostics | Thenable<Diagnostics>;
 		shutdown();
 	}
 

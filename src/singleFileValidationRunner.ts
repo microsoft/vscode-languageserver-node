@@ -4,22 +4,7 @@
 'use strict';
 
 import {Diagnostic, TextBufferIdentifier, Capabilities, ValidationEventBody, getValidationHostConnection} from './validationConnection';
-
-export interface ContentsByURI { 
-	[uri:string]: string;
-}
-
-export interface DiagnosticsByURI { 
-	[uri:string]: Diagnostic[];
-}
-
-export interface SingleFileValidator {
-	startValidation(root: string,  settings: any) : { filePathPatterns: string[], configFilePathPatterns: string[] };
-	stopValidation(): void;
-	configurationChanged(addedURIs: string[], removedURIs: string[], changedURIs: string[]) : boolean | Thenable<boolean>;
-	validate(contents: ContentsByURI): DiagnosticsByURI | Thenable<DiagnosticsByURI>;
-	shutdown();
-}
+import {Contents, Diagnostics, Subscriptions, SingleFileValidator} from 'vscode-opentools';
 
 export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, handler: SingleFileValidator) : void {
 	var connection = getValidationHostConnection(inputStream, outputStream);
@@ -47,7 +32,7 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 	});
 	
 	connection.onConfigureValidationRequest(configArgs => {
-		var configSubscriptions = [];
+		var subscriptions : Subscriptions = {};
 		var bufferSubscriptions = [];		
 		if (validationSupportEnabled) {
 			handler.stopValidation();
@@ -56,14 +41,18 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 		changedDocuments = trackedDocuments;
 		trackedDocuments = {};
 		if (configArgs.enable) {
-			var startResult = handler.startValidation(rootFolder, configArgs.settings);
-			configSubscriptions = startResult.configFilePathPatterns || [];
-			bufferSubscriptions = configSubscriptions.concat(startResult.filePathPatterns || []);
+			subscriptions = handler.startValidation(rootFolder, configArgs.settings);
 			validationSupportEnabled = true;
 		}
 
-		// subscribe to buffer change events 
-		var subscribeBufferEventsPromise = connection.requestBufferEvents({ filePathPatterns: bufferSubscriptions }).then(subscribeBufferResponse => {
+		var subscribePromises : Thenable<any>[] = [];
+
+		// subscribe to buffer change events
+		var bufferSubscribeArgs = {
+			filePathPatterns: subscriptions.filePathPatterns || [],
+			mimeTypes: subscriptions.mimeTypes || [],
+		};
+		subscribePromises.push(connection.requestBufferEvents(bufferSubscribeArgs).then(subscribeBufferResponse => {
 			if (subscribeBufferResponse.success) {
 				if (subscribeBufferResponse.body.buffersOpen) {
 					subscribeBufferResponse.body.buffersOpen.forEach(b => {
@@ -74,12 +63,12 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 			} else {
 				return Promise.reject('Unable to register to buffer changed events: ' + subscribeBufferResponse.message);
 			}
-		});
+		}));
 		
-		// subscribe to file change events 
-		var subscribeFileEventsPromise = connection.requestFileEvents({ filePathPatterns: configSubscriptions });		
+		// subscribe to file change events
+		subscribePromises.push(connection.requestFileEvents({ filePathPatterns: subscriptions.configFilePathPatterns }));
 		
-		return Promise.all([subscribeBufferEventsPromise, subscribeFileEventsPromise]).then(success => {
+		return Promise.all(subscribePromises).then(success => {
 			triggerValidation();
 			return { success: true };
 		}, error => {
@@ -175,9 +164,9 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 			}
 			try {
 				var valResult = handler.validate(contents);
-				var promise = <Thenable<DiagnosticsByURI>> valResult;
+				var promise = <Thenable<Diagnostics>> valResult;
 				if (!promise.then) {
-					promise = Promise.resolve(<DiagnosticsByURI> valResult);
+					promise = Promise.resolve(<Diagnostics> valResult);
 				}
 				promise.then(d => {
 					for (var p in d) {

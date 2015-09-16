@@ -89,6 +89,7 @@ export const subscribeBufferEventsCommand: string = 'subscribeBufferEvents';
 
 export interface SubscribeBufferEventsArguments {
 	filePathPatterns: string[];
+	mimeTypes: string[];
 }
 
 export interface SubscribeBufferEventsResponse extends Response {
