@@ -3,8 +3,7 @@
  *--------------------------------------------------------*/
 'use strict';
 
-import {Diagnostic, TextBufferIdentifier, Capabilities, ValidationEventBody, getValidationHostConnection} from './validationConnection';
-import {Contents, Diagnostics, Subscriptions, SingleFileValidator} from 'vscode-opentools';
+import {Diagnostic, DocumentIdentifier, Capabilities, ValidationEventBody, getValidationHostConnection, Contents, Diagnostics, Subscriptions, SingleFileValidator} from './index';
 
 export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, handler: SingleFileValidator) : void {
 	var connection = getValidationHostConnection(inputStream, outputStream);
@@ -13,10 +12,10 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 	var validationSupportEnabled = false;
 	var validationTrigger: NodeJS.Timer = null;
 	
-	var trackedDocuments : { [uri: string]:TextBufferIdentifier} = {};
-	var changedDocuments : { [uri: string]:TextBufferIdentifier} = {};
+	var trackedDocuments : { [uri: string]:DocumentIdentifier} = {};
+	var changedDocuments : { [uri: string]:DocumentIdentifier} = {};
 	
-	connection.onInitializeRequest(initArgs => {
+	connection.onInitialize(initArgs => {
 		rootFolder = initArgs.rootFolder;
 		
 		var resultCapabilities : Capabilities = {};
@@ -26,14 +25,14 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 		return { success: true, body: { capabilities: resultCapabilities }};
 	});
 	
-	connection.onShutdownRequest(shutdownArgs => {
+	connection.onShutdown(shutdownArgs => {
 		handler.shutdown();
 		return { success: true };
 	});
 	
-	connection.onConfigureValidationRequest(configArgs => {
+	connection.onConfigureValidator(configArgs => {
 		var subscriptions : Subscriptions = {};
-		var bufferSubscriptions = [];		
+		var documentSubscriptions = [];		
 		if (validationSupportEnabled) {
 			handler.stopValidation();
 			validationSupportEnabled = false;
@@ -47,21 +46,21 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 
 		var subscribePromises : Thenable<any>[] = [];
 
-		// subscribe to buffer change events
-		var bufferSubscribeArgs = {
+		// subscribe to document change events
+		var documentSubscribeArgs = {
 			filePathPatterns: subscriptions.filePathPatterns || [],
 			mimeTypes: subscriptions.mimeTypes || [],
 		};
-		subscribePromises.push(connection.requestBufferEvents(bufferSubscribeArgs).then(subscribeBufferResponse => {
-			if (subscribeBufferResponse.success) {
-				if (subscribeBufferResponse.body.buffersOpen) {
-					subscribeBufferResponse.body.buffersOpen.forEach(b => {
+		subscribePromises.push(connection.requestDocumentEvents(documentSubscribeArgs).then(response => {
+			if (response.success) {
+				if (response.body.buffersOpen) {
+					response.body.buffersOpen.forEach(b => {
 						trackedDocuments[b.uri] = b;
 						changedDocuments[b.uri] = b;
 					});
 				}
 			} else {
-				return Promise.reject('Unable to register to buffer changed events: ' + subscribeBufferResponse.message);
+				return Promise.reject('Unable to register to document events: ' + response.message);
 			}
 		}));
 		
@@ -76,20 +75,20 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 		});
 	});
 	
-	connection.onBuffersChangedEvent(event => {
-		if (event.buffersClosed) {
-			event.buffersClosed.forEach(b => {
+	connection.onDocumentEvent(event => {
+		if (event.documentsClosed) {
+			event.documentsClosed.forEach(b => {
 				delete trackedDocuments[b.uri];
 				changedDocuments[b.uri] = b;
 			})
 		}		
-		if (event.buffersChanged) {
-			event.buffersChanged.forEach(b => {
+		if (event.documentsChanged) {
+			event.documentsChanged.forEach(b => {
 				changedDocuments[b.uri] = b;
 			})
 		}
-		if (event.buffersOpened) {
-			event.buffersOpened.forEach(b => {
+		if (event.documentsOpened) {
+			event.documentsOpened.forEach(b => {
 				changedDocuments[b.uri] = b;
 				trackedDocuments[b.uri] = b;
 			})
@@ -97,7 +96,7 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 		triggerValidation();
 	});
 	
-	connection.onFilesChangedEvent(event => {
+	connection.onFileEvent(event => {
 		function validateAll() {
 			// config file has changed, revalidate all tracked documents
 			for (var p in trackedDocuments) {
@@ -130,10 +129,10 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 		var validationResult : ValidationEventBody = {};
 		var needsValidation = false;
 		
-		var buffersToValidate : TextBufferIdentifier[] = [];
+		var documentsToValidate : DocumentIdentifier[] = [];
 		for (var p in changedDocuments) {
 			if (trackedDocuments[p]) {
-				buffersToValidate.push(changedDocuments[p]);
+				documentsToValidate.push(changedDocuments[p]);
 			} else {
 				validationResult[p] = { m: [] };
 			}
@@ -147,20 +146,20 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 		var oldChangedDocuments = changedDocuments;
 		changedDocuments = {};		
 		
-		if (buffersToValidate.length === 0) {
+		if (documentsToValidate.length === 0) {
 			// only untracked documents
 			connection.sendValidationEvent(validationResult);
 			return;
 		}
-		connection.requestTextBuffers({ textBuffers: buffersToValidate }).then(buffers => {
-			if (!buffers.success) {
-				handleError(buffers.message);
+		connection.requestDocuments({ documents: documentsToValidate }).then(documents => {
+			if (!documents.success) {
+				handleError(documents.message);
 				return;
 			}
 			
 			var contents : {[uri:string]: string } = {};
-			for (var b in buffers.body) {
-				contents[b] = buffers.body[b].content;
+			for (var b in documents.body) {
+				contents[b] = documents.body[b].content;
 			}
 			try {
 				var valResult = handler.validate(contents);
