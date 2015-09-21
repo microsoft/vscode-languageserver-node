@@ -36,9 +36,9 @@ export interface FileEvent {
 
 export interface SingleFileValidator {
 	validate(document: IDocument): Result<Diagnostic[]>;
-	onConfigurationChange(settings: any, requestor: IValidationRequestor): void;
-	onFileEvent(event: FileEvent, requestor: IValidationRequestor): void;
-	shutdown();
+	onConfigurationChange?(settings: any, requestor: IValidationRequestor): void;
+	onFileEvent?(event: FileEvent, requestor: IValidationRequestor): void;
+	shutdown?();
 }
 
 export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, handler: SingleFileValidator) : void {

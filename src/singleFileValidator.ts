@@ -99,7 +99,9 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 	});
 	
 	connection.onShutdown(shutdownArgs => {
-		handler.shutdown();
+		if (isFunction(handler.shutdown)) {
+			handler.shutdown();
+		}
 		return { success: true };
 	});
 	
@@ -128,7 +130,11 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 	connection.onConfigurationChange(eventBody => {
 		let settings = eventBody.settings;
 		let requestor = new ValidationRequestor();
-		handler.onConfigurationChange(settings, requestor);
+		if (isFunction(handler.onConfigurationChange)) {
+			handler.onConfigurationChange(settings, requestor);
+		} else {
+			requestor.all();
+		}
 		process.nextTick(() => {
 			requestor.toValidate.forEach(document => {
 				validate(document);
@@ -138,7 +144,11 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 	
 	connection.onFileEvent(fileEvent => {
 		let requestor = new ValidationRequestor();
-		handler.onFileEvent(fileEvent, requestor);
+		if (isFunction(handler.onFileEvent)) {
+			handler.onFileEvent(fileEvent, requestor);
+		} else {
+			requestor.all();
+		}
 		process.nextTick(() => {
 			requestor.toValidate.forEach(document => {
 				validate(document);
