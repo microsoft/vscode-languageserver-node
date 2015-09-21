@@ -140,7 +140,7 @@ describe('Connection', () => {
 		let outputStream = new TestWritable();	
 		var inputStream = new Readable();
 		
-		var connection = hostConnection.connect(inputStream, outputStream);
+		var connection = hostConnection.connectWorker(inputStream, outputStream);
 		connection.onRequest(testCommand1, testRequestHandler);
 	
 		inputStream.push(newRequestString(1, testCommand1, newTestBody('foo')));
@@ -162,7 +162,7 @@ describe('Connection', () => {
 		let outputStream = new TestWritable();	
 		var inputStream = new Readable();
 		
-		var connection = hostConnection.connect(inputStream, outputStream);
+		var connection = hostConnection.connectWorker(inputStream, outputStream);
 		connection.onRequest(testCommand1, testRequestHandler);
 		connection.onRequest(testCommand2, testRequestHandler);
 	
@@ -187,7 +187,7 @@ describe('Connection', () => {
 		let outputStream = new TestWritable();	
 		var inputStream = new Readable();
 		
-		var connection = hostConnection.connect(inputStream, outputStream);
+		var connection = hostConnection.connectWorker(inputStream, outputStream);
 		connection.onRequest(testCommand1, testRequestHandler);
 	
 		inputStream.push(newRequestString(1, testCommand1, {}));
@@ -209,7 +209,7 @@ describe('Connection', () => {
 		let outputStream = new TestWritable();	
 		var inputStream = new Readable();
 		
-		var connection = hostConnection.connect(inputStream, outputStream);
+		var connection = hostConnection.connectWorker(inputStream, outputStream);
 		connection.onRequest(testCommand1, testRequestHandler);
 	
 		inputStream.push(newRequestString(1, testCommand2, {}));
@@ -232,7 +232,7 @@ describe('Connection', () => {
 		var inputStream = new Readable();
 		inputStream.push(null);
 		
-		var connection = hostConnection.connect(inputStream, outputStream);
+		var connection = hostConnection.connectClient(inputStream, outputStream);
 		connection.sendRequest(testCommand1, { 'foo': true });
 		
 		var expected : RequestMessage[] = [
@@ -253,25 +253,21 @@ describe('Connection', () => {
 		var inputStream = new Readable();
 		inputStream.push(null);
 		
-		var requestBody = { 'foo': [ { bar: 1 } ]};
+		let requestBody = { 'foo': [ { bar: 1 } ]};
 		
-		var receivedRequests = [];
-		var receivedResponses = [];
+		let receivedRequests = [];
+		let receivedResponses = [];
 		
-		var connection1 = hostConnection.connect(duplexStream1, duplexStream2);
+		var connection2 = hostConnection.connectWorker(duplexStream2, duplexStream1);
+		connection2.onRequest(testCommand1, createEchoRequestHandler(receivedRequests));
+		
+		var connection1 = hostConnection.connectClient(duplexStream1, duplexStream2);
 		connection1.sendRequest(testCommand1, requestBody).then(response => {
 			receivedResponses.push(response);
+			assert.deepEqual(receivedRequests, [ requestBody ]);
+			assert.deepEqual(receivedResponses.map(selectProperties(['success', 'body'])), [ { success: true, body: requestBody } ]);
+			done();
 		});
-		
-		var connection2 = hostConnection.connect(duplexStream2, duplexStream1);
-		connection2.onRequest(testCommand1, createEchoRequestHandler(receivedRequests));		
-		
-		setTimeout(() => {
-				assert.deepEqual(receivedRequests, [ requestBody ]);
-				assert.deepEqual(receivedResponses.map(selectProperties(['success', 'body'])), [ { success: true, body: requestBody } ]);
-				done();
-		}, 10);
-
 	});	
 	
 	var testEvent = "testEvent";
@@ -285,12 +281,12 @@ describe('Connection', () => {
 		
 		var eventBody = { 'foo': true };
 		
-		var connection1 = hostConnection.connect(inputStream, duplexStream);
+		var connection1 = hostConnection.connectWorker(inputStream, duplexStream);
 		connection1.sendEvent(testEvent, eventBody);
 		
 		var resultingEvents = [];
 		
-		var connection2 = hostConnection.connect(duplexStream, outputStream);
+		var connection2 = hostConnection.connectClient(duplexStream, outputStream);
 		connection2.onEvent(testEvent, createEventHandler(resultingEvents));		
 		
 		

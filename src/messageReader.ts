@@ -24,11 +24,11 @@ class MessageBuffer {
 
 	public append(chunk: Buffer | String):void {
 		var toAppend: Buffer = <Buffer> chunk;
-    	if (typeof(chunk) == 'string') {
+		if (typeof(chunk) == 'string') {
 			var str = <string> chunk;
 			toAppend = new Buffer(str.length);
 			toAppend.write(str, 0, str.length, this.encoding);
-    	}
+		}
 		if (this.buffer.length - this.index >= toAppend.length) {
 			toAppend.copy(this.buffer, this.index, 0, toAppend.length);
 		} else {

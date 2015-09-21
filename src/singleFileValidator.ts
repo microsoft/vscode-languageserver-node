@@ -3,17 +3,90 @@
  *--------------------------------------------------------*/
 'use strict';
 
-import {Diagnostic, DocumentIdentifier, Capabilities, ValidationEventBody, getValidationHostConnection, Contents, Diagnostics, Subscriptions, SingleFileValidator} from './index';
+import { SingleFileValidator, getValidationWorkerConnection, IDocument, IValidationRequestor } from './index';
+import { Capabilities, Diagnostic } from './protocol';
 
 export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, handler: SingleFileValidator) : void {
-	var connection = getValidationHostConnection(inputStream, outputStream);
-	var rootFolder: string;
-
-	var validationSupportEnabled = false;
-	var validationTrigger: NodeJS.Timer = null;
+	let connection = getValidationWorkerConnection(inputStream, outputStream);
 	
-	var trackedDocuments : { [uri: string]:DocumentIdentifier} = {};
-	var changedDocuments : { [uri: string]:DocumentIdentifier} = {};
+	let rootFolder: string;
+
+	let validationSupportEnabled = false;
+	let validationTrigger: NodeJS.Timer = null;
+	
+	class Document implements IDocument {
+		
+		private _uri: string;
+		private _content: string;
+		
+		constructor(uri: string, content: string) {
+			this._uri = uri;
+			this._content = content;
+		}
+		
+		public get uri(): string {
+			return this._uri;
+		}
+		
+		public getText(): string {
+			return this._content;
+		}
+		
+		public setText(content: string): void {
+			this._content = content;
+		}
+	}
+	
+	let trackedDocuments : { [uri: string]: Document } = Object.create(null);
+	let changedDocuments : { [uri: string]: Document } = Object.create(null);
+	
+	class ValidationRequestor implements IValidationRequestor {
+		private _toValidate: { [uri: string]: Document };
+		
+		constructor() {
+			this._toValidate = Object.create(null);
+		}
+		
+		public get toValidate(): Document[] {
+			return Object.keys(this._toValidate).map(key => this.toValidate[key]);
+		}
+		
+		public all(): void {
+			Object.keys(trackedDocuments).forEach(key => this._toValidate[key] = trackedDocuments[key]);
+		}
+		
+		public single(uri: string): boolean {
+			let document = trackedDocuments[uri];
+			if (document) {
+				this._toValidate[uri] = document;
+			}
+			return !!document;
+		}
+	}
+	
+	function isFunction(arg: any): arg is Function {
+		return Object.prototype.toString.call(arg) === '[object Function]';
+	}
+		
+	function validate(document: Document): void {
+		let result = handler.validate(document);
+		if (isFunction((result as Thenable<Diagnostic[]>).then)) {
+			(result as Thenable<Diagnostic[]>).then((diagnostics => {
+				connection.sendDiagnosticEvent({
+					uri: document.uri,
+					diagnostics: result as Diagnostic[]
+				});
+			}, (error) => {
+				// We need a log event to tell the client that a diagnostic 
+				// failed.
+			}));
+		} else {
+			connection.sendDiagnosticEvent({
+				uri: document.uri,
+				diagnostics: result as Diagnostic[]
+			});
+		}
+	}
 	
 	connection.onInitialize(initArgs => {
 		rootFolder = initArgs.rootFolder;
@@ -30,163 +103,46 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 		return { success: true };
 	});
 	
-	connection.onConfigureValidator(configArgs => {
-		var subscriptions : Subscriptions = {};
-		var documentSubscriptions = [];		
-		if (validationSupportEnabled) {
-			handler.stopValidation();
-			validationSupportEnabled = false;
+	connection.onExit(() => {
+		process.exit(0);
+	});
+	
+	connection.onDocumentOpen(event => {
+		let document = new Document(event.uri, event.content);
+		trackedDocuments[event.uri] = document; 
+		process.nextTick(() => { validate(document); });
+	});
+	
+	connection.onDocumentChange(event => {
+		let document = trackedDocuments[event.uri];
+		if (document) {
+			document.setText(event.content);
 		}
-		changedDocuments = trackedDocuments;
-		trackedDocuments = {};
-		if (configArgs.enable) {
-			subscriptions = handler.startValidation(rootFolder, configArgs.settings);
-			validationSupportEnabled = true;
-		}
-
-		var subscribePromises : Thenable<any>[] = [];
-
-		// subscribe to document change events
-		var documentSubscribeArgs = {
-			filePathPatterns: subscriptions.filePathPatterns || [],
-			mimeTypes: subscriptions.mimeTypes || [],
-		};
-		subscribePromises.push(connection.requestDocumentEvents(documentSubscribeArgs).then(response => {
-			if (response.success) {
-				if (response.body.buffersOpen) {
-					response.body.buffersOpen.forEach(b => {
-						trackedDocuments[b.uri] = b;
-						changedDocuments[b.uri] = b;
-					});
-				}
-			} else {
-				return Promise.reject('Unable to register to document events: ' + response.message);
-			}
-		}));
-		
-		// subscribe to file change events
-		subscribePromises.push(connection.requestFileEvents({ filePathPatterns: subscriptions.configFilePathPatterns }));
-		
-		return Promise.all(subscribePromises).then(success => {
-			triggerValidation();
-			return { success: true };
-		}, error => {
-			return { success: false, message: "Unable to configure the validation support: " + error };
+		process.nextTick(() => { validate(document); });
+	});
+	
+	connection.onDocumetClose(event => {
+		delete trackedDocuments[event.uri];
+	});
+	
+	connection.onConfigurationChange(eventBody => {
+		let settings = eventBody.settings;
+		let requestor = new ValidationRequestor();
+		handler.onConfigurationChange(settings, requestor);
+		process.nextTick(() => {
+			requestor.toValidate.forEach(document => {
+				validate(document);
+			});
 		});
 	});
 	
-	connection.onDocumentEvent(event => {
-		if (event.documentsClosed) {
-			event.documentsClosed.forEach(b => {
-				delete trackedDocuments[b.uri];
-				changedDocuments[b.uri] = b;
-			})
-		}		
-		if (event.documentsChanged) {
-			event.documentsChanged.forEach(b => {
-				changedDocuments[b.uri] = b;
-			})
-		}
-		if (event.documentsOpened) {
-			event.documentsOpened.forEach(b => {
-				changedDocuments[b.uri] = b;
-				trackedDocuments[b.uri] = b;
-			})
-		}
-		triggerValidation();
-	});
-	
-	connection.onFileEvent(event => {
-		function validateAll() {
-			// config file has changed, revalidate all tracked documents
-			for (var p in trackedDocuments) {
-				changedDocuments[p] = trackedDocuments[p];
-			}
-			triggerValidation();			
-		}	
-		
-		var confChangedResult = handler.configurationChanged(event.filesAdded, event.filesRemoved, event.filesChanged);
-		var confChangedPromise = <Thenable<boolean>> confChangedResult;
-		if (confChangedPromise.then) {
-			confChangedPromise.then(result => {
-				if (result) {
-					validateAll();
-				}
-			})
-		} else if (<boolean> confChangedResult) {
-			validateAll();
-		}
-	});
-	
-	function triggerValidation() {
-		if (validationTrigger) {
-			clearTimeout(validationTrigger);
-		}
-		validationTrigger = <any> setTimeout(onValidation, 1000);
-	}
-	
-	function onValidation() {
-		var validationResult : ValidationEventBody = {};
-		var needsValidation = false;
-		
-		var documentsToValidate : DocumentIdentifier[] = [];
-		for (var p in changedDocuments) {
-			if (trackedDocuments[p]) {
-				documentsToValidate.push(changedDocuments[p]);
-			} else {
-				validationResult[p] = { m: [] };
-			}
-			needsValidation = true;
-		}
-		if (!needsValidation) {
-			return;
-		}
-		
-		// reset the list of changed events
-		var oldChangedDocuments = changedDocuments;
-		changedDocuments = {};		
-		
-		if (documentsToValidate.length === 0) {
-			// only untracked documents
-			connection.sendValidationEvent(validationResult);
-			return;
-		}
-		connection.requestDocuments({ documents: documentsToValidate }).then(documents => {
-			if (!documents.success) {
-				handleError(documents.message);
-				return;
-			}
-			
-			var contents : {[uri:string]: string } = {};
-			for (var b in documents.body) {
-				contents[b] = documents.body[b].content;
-			}
-			try {
-				var valResult = handler.validate(contents);
-				var promise = <Thenable<Diagnostics>> valResult;
-				if (!promise.then) {
-					promise = Promise.resolve(<Diagnostics> valResult);
-				}
-				promise.then(d => {
-					for (var p in d) {
-						validationResult[p] = { m : d[p] };
-					}
-					connection.sendValidationEvent(validationResult);
-				}, error => {
-					handleError(error.message);
-				});
-			} catch (e) {
-				handleError(e.message);
-			}
+	connection.onFileEvent(fileEvent => {
+		let requestor = new ValidationRequestor();
+		handler.onFileEvent(fileEvent, requestor);
+		process.nextTick(() => {
+			requestor.toValidate.forEach(document => {
+				validate(document);
+			});
 		});
-		
-		function handleError(message: string) {
-			console.log('Errors while collecting validation results: ' + message);
-			
-			// put the documents back in the list of changed documents
-			for (var p in oldChangedDocuments) {
-				changedDocuments[p] = oldChangedDocuments[p];
-			}
-		}
-	}
+	});
 }

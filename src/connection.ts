@@ -4,16 +4,18 @@
 'use strict';
 
 import { Message, RequestMessage, ResponseMessage, Response, EventMessage } from './messages';
-import { MessageReader } from './messageReader';
+import { MessageReader, ICallback } from './messageReader';
 import { MessageWriter } from './messageWriter';
 
-export let ERROR_NOT_HANDLED = 0x100;
-export let ERROR_HANDLER_FAILURE = 0x101;
+export const ERROR_NOT_HANDLED = 0x100;
+export const ERROR_HANDLER_FAILURE = 0x101;
 
-export let ERROR_CUSTOM = 0x1000;
+export const ERROR_CUSTOM = 0x1000;
+
+export type RequestResult<U> = Thenable<U> | U;
 
 export interface IRequestHandler<T, U extends Response> {
-	(body?: T): Thenable<U> | U;
+	(body?: T): RequestResult<U>;
 }
 
 export interface IEventHandler<T> {
@@ -21,23 +23,29 @@ export interface IEventHandler<T> {
 }
 
 export interface Connection {
-	sendRequest(command: string, args?: any) : Thenable<Response>;
 	sendEvent(event: string, body?: any) : void;
 	onRequest(command: string, handler: IRequestHandler<any, Response>) : void;
 	onEvent(event: string, handler: IEventHandler<any>) : void;
 	dispose(): void;
 }
 
-export function connect(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream) : Connection {
-		
-	var protocolWriter = new MessageWriter(outputStream);
-	var sequenceNumber = 0;
+export interface WorkerConnection extends Connection {
+}
 
-	var requestHandlers : { [name:string]: IRequestHandler<any, Response> } = {};
-	var eventHandlers : { [name:string]: IEventHandler<any> } = {};
-	var responseHandlers : { [name:string]: { resolve: (Response) => void, reject: (error: any) => void } } = {};
+export interface ClientConnection extends Connection {
+	sendRequest(command: string, args?: any) : Thenable<Response>;
+}
+
+function connect<T extends Connection>(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, client: boolean = false): T {
+	let protocolWriter = new MessageWriter(outputStream);
+	let sequenceNumber = 0;
+
+	let requestHandlers : { [name:string]: IRequestHandler<any, Response> } = Object.create(null);
+	let responseHandlers : { [name:string]: { resolve: (Response) => void, reject: (error: any) => void } } = Object.create(null);
 	
-	var connection : Connection = {
+	let eventHandlers : { [name:string]: IEventHandler<any> } = Object.create(null);
+	
+	var connection: Connection = {
 		sendEvent: (event, body) => {
 			var eventMessage : EventMessage = {
 				type: Message.Event,
@@ -46,20 +54,6 @@ export function connect(inputStream: NodeJS.ReadableStream, outputStream: NodeJS
 				body: body
 			}
 			protocolWriter.write(eventMessage);
-		},
-		sendRequest: (command, args) => {
-			var seq = sequenceNumber++;			
-			var requestMessage : RequestMessage = {
-				type: Message.Request,
-				seq: seq,
-				command: command,
-				arguments: args
-			}
-			protocolWriter.write(requestMessage);
-			
-			return new Promise<Response>((resolve, reject) => {
-				responseHandlers[String(seq)] = { resolve, reject };
-			});
 		},
 		onRequest: (command: string, handler: IRequestHandler<any, Response>) => {
 			requestHandlers[command] = handler;
@@ -71,6 +65,20 @@ export function connect(inputStream: NodeJS.ReadableStream, outputStream: NodeJS
 			// TODO
 		}
 	};
+	if (client) {
+		(connection as ClientConnection).sendRequest = (command, args) => {
+			return new Promise<Response>((resolve, reject) => {
+				let requestMessage : RequestMessage = {
+					type: Message.Request,
+					seq: sequenceNumber++,
+					command: command,
+					arguments: args
+				}
+				responseHandlers[String(requestMessage.seq)] = { resolve, reject };
+				protocolWriter.write(requestMessage);
+			});
+		}
+	}
 	inputStream.on('end', () => outputStream.end());
 	inputStream.on('close', () => outputStream.end());
 	
@@ -107,7 +115,7 @@ export function connect(inputStream: NodeJS.ReadableStream, outputStream: NodeJS
 			reply({ success: false, message: `Unhandled command ${requestMessage.command}`, code: ERROR_NOT_HANDLED });
 		}
 	}
-	
+
 	function handleResponse(responseMessage: ResponseMessage) {
 		var responseHandler = responseHandlers[String(responseMessage.request_seq)];
 		if (responseHandler) {
@@ -115,7 +123,7 @@ export function connect(inputStream: NodeJS.ReadableStream, outputStream: NodeJS
 			delete responseHandlers[String(responseMessage.request_seq)];
 		}
 	}
-	
+
 	function handleEvent(eventMessage: EventMessage) {
 		var eventHandler = eventHandlers[eventMessage.event];
 		if (eventHandler) {
@@ -123,14 +131,32 @@ export function connect(inputStream: NodeJS.ReadableStream, outputStream: NodeJS
 		}
 	}	
 	
-	new MessageReader(inputStream, (message) => {
-		if (message.type === Message.Response) {
-			handleResponse(<ResponseMessage> message);
-		} else if (message.type === Message.Request) {
-			handleRequest(<RequestMessage> message);
-		} else if (message.type === Message.Event) {
-			handleEvent(<EventMessage> message);
+	let callback: ICallback;
+	if (client) {
+		callback = (message) => {
+			if (message.type === Message.Response) {
+				handleResponse(message as ResponseMessage)
+			} else if (message.type === Message.Event) {
+				handleEvent(<EventMessage> message);
+			}
 		}
-	});
-	return connection;
+	} else {
+		callback = (message) => {
+			if (message.type === Message.Request) {
+				handleRequest(<RequestMessage> message);
+			} else if (message.type === Message.Event) {
+				handleEvent(<EventMessage> message);
+			}
+		}
+	}
+	new MessageReader(inputStream, callback);
+	return connection as T;
+}
+
+export function connectWorker(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream): WorkerConnection {
+	return connect<WorkerConnection>(inputStream, outputStream);
+}
+
+export function connectClient(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream): ClientConnection {
+	return connect<ClientConnection>(inputStream, outputStream, true);
 }
