@@ -59,10 +59,21 @@ export interface InitializeResponse extends Response {
  * in it's extension manifest.
  */
 export namespace ConfigurationChangeEvent {
-	export let type: EventType<ConfigurationChangeArguments> = { event: 'configurationChange' };
+	export let type: EventType<ConfigurationChangeArguments> = { event: 'workspace/configurationChange' };
 } 
 export interface ConfigurationChangeArguments {
 	settings: any;
+}
+
+/**
+ * The show message event is send from a worker to a client to ask
+ * the client to display a particular message in the user interface
+ */
+export namespace ShowMessageEvent {
+	export let type: EventType<ShowMessageArguments> = { event: 'shell/showMessage' };
+}
+export interface ShowMessageArguments {
+	message: string;
 }
 
 export interface DocumentIdentifier {
@@ -131,6 +142,9 @@ export interface DiagnosticEventArguments {
 	 * An array of diagnostic information items.
 	 */
 	diagnostics: Diagnostic[];	
+}
+export interface DiagnosticEvent {
+	body: DiagnosticEventArguments;
 }
 
 /**
