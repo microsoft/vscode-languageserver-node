@@ -8,7 +8,7 @@ import * as assert from 'assert';
 import { Duplex, Writable, Readable, Transform } from 'stream';
 import { inherits } from 'util';
 
-import { Message, RequestMessage, ResponseMessage, Response } from '../messages';
+import { Message, RequestMessage, RequestType, ResponseMessage, Response, EventType } from '../messages';
 import { MessageWriter } from '../messageWriter';
 import { MessageReader } from '../messageReader';
 
@@ -96,8 +96,8 @@ function assertMessages(resultData: string, expected: Message[], done: MochaDone
 	}, 10);
 }
 
-var testCommand1 = 'testCommand1';
-var testCommand2 = 'testCommand2';
+var testRequest1: RequestType<any, Response> = { command: 'testCommand1' };
+var testRequest2: RequestType<any, Response> = { command: 'testCommand2' };
 function newTestBody(content: string)  { 
 	return { documents: [ { content: content } ]};
 };
@@ -141,13 +141,13 @@ describe('Connection', () => {
 		var inputStream = new Readable();
 		
 		var connection = hostConnection.connectWorker(inputStream, outputStream);
-		connection.onRequest(testCommand1, testRequestHandler);
+		connection.onRequest(testRequest1, testRequestHandler);
 	
-		inputStream.push(newRequestString(1, testCommand1, newTestBody('foo')));
+		inputStream.push(newRequestString(1, testRequest1.command, newTestBody('foo')));
 		inputStream.push(null);
 		
 		var expected : ResponseMessage[]= [
-			{ type: Message.Response, seq: 0, request_seq: 1, command: testCommand1, success: true, body: 'foo' }
+			{ type: Message.Response, seq: 0, request_seq: 1, command: testRequest1.command, success: true, body: 'foo' }
 		];		
 		
 		setTimeout(() => {
@@ -163,16 +163,16 @@ describe('Connection', () => {
 		var inputStream = new Readable();
 		
 		var connection = hostConnection.connectWorker(inputStream, outputStream);
-		connection.onRequest(testCommand1, testRequestHandler);
-		connection.onRequest(testCommand2, testRequestHandler);
+		connection.onRequest(testRequest1, testRequestHandler);
+		connection.onRequest(testRequest2, testRequestHandler);
 	
-		inputStream.push(newRequestString(1, testCommand1, newTestBody('foo')));
-		inputStream.push(newRequestString(2, testCommand2, newTestBody('bar')));
+		inputStream.push(newRequestString(1, testRequest1.command, newTestBody('foo')));
+		inputStream.push(newRequestString(2, testRequest2.command, newTestBody('bar')));
 		inputStream.push(null);
 		
 		var expected : ResponseMessage[]= [
-			{ type: Message.Response, seq: 0, request_seq: 1, command: testCommand1, success: true, body: 'foo' },
-			{ type: Message.Response, seq: 1, request_seq: 2, command: testCommand2, success: true, body: 'bar' }
+			{ type: Message.Response, seq: 0, request_seq: 1, command: testRequest1.command, success: true, body: 'foo' },
+			{ type: Message.Response, seq: 1, request_seq: 2, command: testRequest2.command, success: true, body: 'bar' }
 		];
 		
 		setTimeout(() => {
@@ -188,13 +188,13 @@ describe('Connection', () => {
 		var inputStream = new Readable();
 		
 		var connection = hostConnection.connectWorker(inputStream, outputStream);
-		connection.onRequest(testCommand1, testRequestHandler);
+		connection.onRequest(testRequest1, testRequestHandler);
 	
-		inputStream.push(newRequestString(1, testCommand1, {}));
+		inputStream.push(newRequestString(1, testRequest1.command, {}));
 		inputStream.push(null);
 		
 		var expected : ResponseMessage[]= [
-			{ type: Message.Response, seq: 0, request_seq: 1, command: testCommand1, success: false }
+			{ type: Message.Response, seq: 0, request_seq: 1, command: testRequest1.command, success: false }
 		];
 		
 		setTimeout(() => {
@@ -210,13 +210,13 @@ describe('Connection', () => {
 		var inputStream = new Readable();
 		
 		var connection = hostConnection.connectWorker(inputStream, outputStream);
-		connection.onRequest(testCommand1, testRequestHandler);
+		connection.onRequest(testRequest1, testRequestHandler);
 	
-		inputStream.push(newRequestString(1, testCommand2, {}));
+		inputStream.push(newRequestString(1, testRequest2.command, {}));
 		inputStream.push(null);
 		
 		var expected : ResponseMessage[]= [
-			{ type: Message.Response, seq: 0, request_seq: 1, command: testCommand2, success: false, code: hostConnection.ERROR_NOT_HANDLED }
+			{ type: Message.Response, seq: 0, request_seq: 1, command: testRequest2.command, success: false, code: hostConnection.ERROR_NOT_HANDLED }
 		];
 		
 		setTimeout(() => {
@@ -233,10 +233,10 @@ describe('Connection', () => {
 		inputStream.push(null);
 		
 		var connection = hostConnection.connectClient(inputStream, outputStream);
-		connection.sendRequest(testCommand1, { 'foo': true });
+		connection.sendRequest(testRequest1, { 'foo': true });
 		
 		var expected : RequestMessage[] = [
-			{ type: Message.Request, seq: 0, command: testCommand1, arguments: { 'foo': true } }
+			{ type: Message.Request, seq: 0, command: testRequest1.command, arguments: { 'foo': true } }
 		];
 		
 		setTimeout(() => {
@@ -259,10 +259,10 @@ describe('Connection', () => {
 		let receivedResponses = [];
 		
 		var connection2 = hostConnection.connectWorker(duplexStream2, duplexStream1);
-		connection2.onRequest(testCommand1, createEchoRequestHandler(receivedRequests));
+		connection2.onRequest(testRequest1, createEchoRequestHandler(receivedRequests));
 		
 		var connection1 = hostConnection.connectClient(duplexStream1, duplexStream2);
-		connection1.sendRequest(testCommand1, requestBody).then(response => {
+		connection1.sendRequest(testRequest1, requestBody).then(response => {
 			receivedResponses.push(response);
 			assert.deepEqual(receivedRequests, [ requestBody ]);
 			assert.deepEqual(receivedResponses.map(selectProperties(['success', 'body'])), [ { success: true, body: requestBody } ]);
@@ -270,8 +270,7 @@ describe('Connection', () => {
 		});
 	});	
 	
-	var testEvent = "testEvent";
-	
+	var testEvent: EventType<any> = { event: "testEvent" };
 	it('Send and Receive Event', (done) => {
 	
 		let outputStream = new TestWritable();	

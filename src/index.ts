@@ -50,19 +50,19 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 export function getValidationWorkerConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream) {
 	let connection = connectWorker(inputStream, outputStream);
 	return {
-		onInitialize: (handler: IRequestHandler<InitializeArguments, InitializeResponse>) => connection.onRequest(InitializeRequest.command, handler),
-		onShutdown: (handler: IRequestHandler<ShutdownArguments, ShutdownResponse>) => connection.onRequest(ShutdownRequest.command, handler),
-		onExit: (handler: IEventHandler<ExitArguments>) => connection.onEvent(ExitEvent.command, handler),
+		onInitialize: (handler: IRequestHandler<InitializeArguments, InitializeResponse>) => connection.onRequest(InitializeRequest.type, handler),
+		onShutdown: (handler: IRequestHandler<ShutdownArguments, ShutdownResponse>) => connection.onRequest(ShutdownRequest.type, handler),
+		onExit: (handler: IEventHandler<ExitArguments>) => connection.onEvent(ExitEvent.type, handler),
 		
-		onConfigurationChange: (handler: IEventHandler<ConfigurationChangeArguments>) => connection.onEvent(ConfigurationChangeEvent.command, handler),
+		onConfigurationChange: (handler: IEventHandler<ConfigurationChangeArguments>) => connection.onEvent(ConfigurationChangeEvent.type, handler),
 		
-		onDocumentOpen: (handler: IEventHandler<DocumentOpenArguments>) => connection.onEvent(DocumentOpenEvent.command, handler),
-		onDocumentChange: (handler: IEventHandler<DocumentChangeArguments>) => connection.onEvent(DocumentChangeEvent.command, handler),
-		onDocumetClose: (handler: IEventHandler<DocumentCloseArguments>) => connection.onEvent(DocumentChangeEvent.command, handler),
+		onDocumentOpen: (handler: IEventHandler<DocumentOpenArguments>) => connection.onEvent(DocumentOpenEvent.type, handler),
+		onDocumentChange: (handler: IEventHandler<DocumentChangeArguments>) => connection.onEvent(DocumentChangeEvent.type, handler),
+		onDocumetClose: (handler: IEventHandler<DocumentCloseArguments>) => connection.onEvent(DocumentChangeEvent.type, handler),
 		
-		onFileEvent: (handler: IEventHandler<FileEventArguments>) => connection.onEvent(FileEvent.command, handler),
+		onFileEvent: (handler: IEventHandler<FileEventArguments>) => connection.onEvent(FileEvent.type, handler),
 		
-		sendDiagnosticEvent: (body: DiagnosticEventArguments) => connection.sendEvent(DiagnosticEvent.command, body),
+		sendDiagnosticEvent: (body: DiagnosticEventArguments) => connection.sendEvent(DiagnosticEvent.type, body),
 		
 		dispose: () => connection.dispose()
 	}
@@ -71,19 +71,19 @@ export function getValidationWorkerConnection(inputStream: NodeJS.ReadableStream
 export function getValidationClientConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream) {
 	let connection = connectClient(inputStream, outputStream);
 	return {
-		initialize: (args: InitializeArguments) => connection.sendRequest(InitializeRequest.command, args) as Thenable<InitializeResponse>,
-		shutdown: (args: ShutdownArguments) => connection.sendRequest(ShutdownRequest.command, args) as Thenable<ShutdownResponse>,
-		exit: () => connection.sendEvent(ExitEvent.command),
+		initialize: (args: InitializeArguments) => connection.sendRequest(InitializeRequest.type, args),
+		shutdown: (args: ShutdownArguments) => connection.sendRequest(ShutdownRequest.type, args),
+		exit: () => connection.sendEvent(ExitEvent.type),
 		
-		configurationChange: (body: ConfigurationChangeArguments) => connection.sendEvent(ConfigurationChangeEvent.command, body),
+		configurationChange: (body: ConfigurationChangeArguments) => connection.sendEvent(ConfigurationChangeEvent.type, body),
 		
-		documentOpen: (body: DocumentOpenArguments) => connection.sendEvent(DocumentOpenEvent.command, body),
-		documentChange: (body: DocumentChangeArguments) => connection.sendEvent(DocumentChangeEvent.command, body),
-		documentClose: (body: DocumentCloseArguments) => connection.sendEvent(DocumentCloseEvent.command, body),
+		documentOpen: (body: DocumentOpenArguments) => connection.sendEvent(DocumentOpenEvent.type, body),
+		documentChange: (body: DocumentChangeArguments) => connection.sendEvent(DocumentChangeEvent.type, body),
+		documentClose: (body: DocumentCloseArguments) => connection.sendEvent(DocumentCloseEvent.type, body),
 		
-		fileEvent: (body: FileEventArguments) => connection.sendEvent(FileEvent.command, body),
+		fileEvent: (body: FileEventArguments) => connection.sendEvent(FileEvent.type, body),
 		
-		onDiagnosticEvent: (handler: IEventHandler<DiagnosticEventArguments>) => connection.onEvent(DiagnosticEvent.command, handler),
+		onDiagnosticEvent: (handler: IEventHandler<DiagnosticEventArguments>) => connection.onEvent(DiagnosticEvent.type, handler),
 		
 		dispose: () => connection.dispose()
 	}

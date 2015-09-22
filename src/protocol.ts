@@ -3,29 +3,7 @@
  *--------------------------------------------------------*/
 'use strict';
 
-import { Response } from './messages';
-
-/**
- * The initialize command is send from the client to the worker.
- * It is send once as the first command after starting up the
- * worker.
- */
-export interface Capabilities {
-	validation?: boolean;
-}
-
-export namespace InitializeRequest {
-	export let command: string = 'initialize';
-}
-export interface InitializeArguments {
-	rootFolder: string;
-	capabilities: Capabilities;
-}
-
-export interface InitializeResponse extends Response {
-	body: { capabilities: Capabilities; }
-}
-
+import { Response, RequestType, EventType } from './messages';
 
 /**
  * The shutdown command is send from the client to the worker.
@@ -34,7 +12,7 @@ export interface InitializeResponse extends Response {
  * is the exit event.
  */
 export namespace ShutdownRequest {
-	export let command: string = 'shutdown';
+	export let type: RequestType<ShutdownArguments, ShutdownResponse> = { command: 'shutdown' };
 }
 
 export interface ShutdownArguments {
@@ -48,9 +26,30 @@ export interface ShutdownResponse extends Response {
  * ask the worker to exit its process.
  */
 export namespace ExitEvent {
-	export let command: string = 'exit'; 
+	export let type: EventType<ExitArguments> = { event: 'exit' }; 
 }
 export interface ExitArguments {
+}
+
+/**
+ * The initialize command is send from the client to the worker.
+ * It is send once as the first command after starting up the
+ * worker.
+ */
+export interface Capabilities {
+	validation?: boolean;
+}
+
+export namespace InitializeRequest {
+	export let type: RequestType<InitializeArguments, InitializeResponse> = { command: 'initialize' };
+}
+export interface InitializeArguments {
+	rootFolder: string;
+	capabilities: Capabilities;
+}
+
+export interface InitializeResponse extends Response {
+	body: { capabilities: Capabilities; }
 }
 
 /**
@@ -60,7 +59,7 @@ export interface ExitArguments {
  * in it's extension manifest.
  */
 export namespace ConfigurationChangeEvent {
-	export let command: string = 'configurationChange';
+	export let type: EventType<ConfigurationChangeArguments> = { event: 'configurationChange' };
 } 
 export interface ConfigurationChangeArguments {
 	settings: any;
@@ -78,7 +77,7 @@ export interface DocumentIdentifier {
  * newly opened, changed and closed documents. 
  */
 export namespace DocumentOpenEvent {
-	export let command: string = 'document/open';
+	export let type: EventType<DocumentOpenArguments> = { event: 'document/open' };
 }
 export interface DocumentOpenArguments extends DocumentIdentifier {
 	/**
@@ -88,7 +87,7 @@ export interface DocumentOpenArguments extends DocumentIdentifier {
 }
 
 export namespace DocumentChangeEvent {
-	export let command: string = 'document/change';
+	export let type: EventType<DocumentChangeArguments> = { event: 'document/change' };
 }
 export interface DocumentChangeArguments extends DocumentIdentifier {
 	/**
@@ -98,7 +97,7 @@ export interface DocumentChangeArguments extends DocumentIdentifier {
 }
 
 export namespace DocumentCloseEvent {
-	export let command: string = 'document/close';
+	export let type: EventType<DocumentCloseArguments> = { event: 'document/close' };
 }
 export interface DocumentCloseArguments extends DocumentIdentifier {
 }
@@ -107,7 +106,7 @@ export interface DocumentCloseArguments extends DocumentIdentifier {
 /**
  */
 export namespace FileEvent {
-	export let command: string = 'file/event';
+	export let type: EventType<FileEventArguments> = { event: 'file/event' };
 }
 export interface FileEventArguments {
 	filesAdded: string[];
@@ -120,7 +119,7 @@ export interface FileEventArguments {
  * results of validation runs
  */
 export namespace DiagnosticEvent {
-	export let command: string = 'document/diagnostics';
+	export let type: EventType<DiagnosticEventArguments> = { event: 'document/diagnostics' };
 }
 export interface DiagnosticEventArguments {
 	/**

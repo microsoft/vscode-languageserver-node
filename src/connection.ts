@@ -3,7 +3,7 @@
  *--------------------------------------------------------*/
 'use strict';
 
-import { Message, RequestMessage, ResponseMessage, Response, EventMessage } from './messages';
+import { Message, RequestMessage, RequestType, ResponseMessage, Response, EventMessage, EventType } from './messages';
 import { MessageReader, ICallback } from './messageReader';
 import { MessageWriter } from './messageWriter';
 
@@ -23,9 +23,9 @@ export interface IEventHandler<T> {
 }
 
 export interface Connection {
-	sendEvent(event: string, body?: any) : void;
-	onRequest(command: string, handler: IRequestHandler<any, Response>) : void;
-	onEvent(event: string, handler: IEventHandler<any>) : void;
+	sendEvent<T>(type: EventType<T>, body?: T) : void;
+	onRequest<T, R extends Response>(type: RequestType<T, R>, handler: IRequestHandler<any, R>) : void;
+	onEvent<T>(type: EventType<T>, handler: IEventHandler<T>) : void;
 	dispose(): void;
 }
 
@@ -33,7 +33,7 @@ export interface WorkerConnection extends Connection {
 }
 
 export interface ClientConnection extends Connection {
-	sendRequest(command: string, args?: any) : Thenable<Response>;
+	sendRequest<T, R extends Response>(type: RequestType<T, R>, args?: any) : Thenable<R>;
 }
 
 function connect<T extends Connection>(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, client: boolean = false): T {
@@ -46,32 +46,32 @@ function connect<T extends Connection>(inputStream: NodeJS.ReadableStream, outpu
 	let eventHandlers : { [name:string]: IEventHandler<any> } = Object.create(null);
 	
 	var connection: Connection = {
-		sendEvent: (event, body) => {
+		sendEvent: <T>(type: EventType<T>, body) => {
 			var eventMessage : EventMessage = {
 				type: Message.Event,
 				seq: sequenceNumber++,
-				event: event,
+				event: type.event,
 				body: body
 			}
 			protocolWriter.write(eventMessage);
 		},
-		onRequest: (command: string, handler: IRequestHandler<any, Response>) => {
-			requestHandlers[command] = handler;
+		onRequest: <T, R extends Response>(type: RequestType<T, R>, handler: IRequestHandler<any, R>) => {
+			requestHandlers[type.command] = handler;
 		},
-		onEvent: (event: string, handler: IEventHandler<any>) => {
-			eventHandlers[event] = handler;
+		onEvent: <T>(type: EventType<T>, handler: IEventHandler<T>) => {
+			eventHandlers[type.event] = handler;
 		},
 		dispose: () => {
 			// TODO
 		}
 	};
 	if (client) {
-		(connection as ClientConnection).sendRequest = (command, args) => {
+		(connection as ClientConnection).sendRequest = <T, R extends Response>(type: RequestType<T, R>, args) => {
 			return new Promise<Response>((resolve, reject) => {
 				let requestMessage : RequestMessage = {
 					type: Message.Request,
 					seq: sequenceNumber++,
-					command: command,
+					command: type.command,
 					arguments: args
 				}
 				responseHandlers[String(requestMessage.seq)] = { resolve, reject };
