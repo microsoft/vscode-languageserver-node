@@ -49,7 +49,7 @@ export interface InitializeArguments {
 }
 
 export interface InitializeResponse extends Response {
-	body: { capabilities: Capabilities; }
+	body?: { capabilities: Capabilities; }
 }
 
 /**

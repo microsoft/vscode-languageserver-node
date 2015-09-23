@@ -3,13 +3,12 @@
  *--------------------------------------------------------*/
 'use strict';
 
-import { Message, RequestMessage, RequestType, ResponseMessage, Response, EventMessage, EventType } from './messages';
+import { Message, RequestMessage, RequestType, ResponseMessage, Response, EventMessage, EventType, isFailedResponse, isString } from './messages';
 import { MessageReader, ICallback } from './messageReader';
 import { MessageWriter } from './messageWriter';
 
 export const ERROR_NOT_HANDLED = 0x100;
 export const ERROR_HANDLER_FAILURE = 0x101;
-
 export const ERROR_CUSTOM = 0x1000;
 
 export type RequestResult<U> = Thenable<U> | U;
@@ -22,6 +21,7 @@ export interface IEventHandler<T> {
 	(body?: T): void;
 }
 
+/* @internal */
 export interface Connection {
 	sendEvent<T>(type: EventType<T>, body?: T) : void;
 	onRequest<T, R extends Response>(type: RequestType<T, R>, handler: IRequestHandler<any, R>) : void;
@@ -29,9 +29,11 @@ export interface Connection {
 	dispose(): void;
 }
 
+/* @internal */
 export interface WorkerConnection extends Connection {
 }
 
+/* @internal */
 export interface ClientConnection extends Connection {
 	sendRequest<T, R extends Response>(type: RequestType<T, R>, args?: any) : Thenable<R>;
 }
@@ -42,9 +44,9 @@ function connect<T extends Connection>(inputStream: NodeJS.ReadableStream, outpu
 
 	let requestHandlers : { [name:string]: IRequestHandler<any, Response> } = Object.create(null);
 	let responseHandlers : { [name:string]: { resolve: (Response) => void, reject: (error: any) => void } } = Object.create(null);
-	
+
 	let eventHandlers : { [name:string]: IEventHandler<any> } = Object.create(null);
-	
+
 	var connection: Connection = {
 		sendEvent: <T>(type: EventType<T>, body) => {
 			var eventMessage : EventMessage = {
@@ -81,7 +83,7 @@ function connect<T extends Connection>(inputStream: NodeJS.ReadableStream, outpu
 	}
 	inputStream.on('end', () => outputStream.end());
 	inputStream.on('close', () => outputStream.end());
-	
+
 	function handleRequest(requestMessage: RequestMessage) {
 		function reply(response: Response): void {
 			let result: ResponseMessage = <ResponseMessage> response;
@@ -91,25 +93,35 @@ function connect<T extends Connection>(inputStream: NodeJS.ReadableStream, outpu
 			result.command = requestMessage.command;
 			protocolWriter.write(result);
 		}
-		
-		var requestHandler = requestHandlers[requestMessage.command];
+
+		let requestHandler = requestHandlers[requestMessage.command];
 		if (requestHandler) {
 			try {
-				var handlerResult = requestHandler(requestMessage.arguments);
-				var promise = <Thenable<Response>> handlerResult;
+				let handlerResult = requestHandler(requestMessage.arguments);
+				let promise = <Thenable<Response>> handlerResult;
 				if (!promise) {
 					reply({ success: false, message: `Handler ${requestMessage.command} failure`, code: ERROR_HANDLER_FAILURE });
 				} else if (promise.then) {
 					promise.then(responseContent => {
 						reply(responseContent);
 					}, error => {
-						reply({ success: false, message: `Request failed unexpectedly: ${error.message}`, code: ERROR_HANDLER_FAILURE });
+						if (isFailedResponse(error)) {
+							reply(error);
+						} else if (error && isString(error.message)) {
+							reply({ success: false, message: error.message, code: ERROR_HANDLER_FAILURE });
+						} else {
+							reply({ success: false, message: 'Request failed unexpectedly', code: ERROR_HANDLER_FAILURE });
+						}
 					});
 				} else {
 					reply(<Response> handlerResult);
 				}
 			} catch (error) {
-				reply({ success: false, message: `Request failed unexpectedly: ${error.message}`, code: ERROR_HANDLER_FAILURE });
+				if (error && isString(error.message)) {
+					reply({ success: false, message: error.message, code: ERROR_HANDLER_FAILURE });
+				} else {
+					reply({ success: false, message: 'Request failed unexpectedly', code: ERROR_HANDLER_FAILURE });
+				}
 			}
 		} else {
 			reply({ success: false, message: `Unhandled command ${requestMessage.command}`, code: ERROR_NOT_HANDLED });
@@ -129,8 +141,8 @@ function connect<T extends Connection>(inputStream: NodeJS.ReadableStream, outpu
 		if (eventHandler) {
 			eventHandler(eventMessage.body);
 		}
-	}	
-	
+	}
+
 	let callback: ICallback;
 	if (client) {
 		callback = (message) => {

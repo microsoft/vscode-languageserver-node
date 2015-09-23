@@ -26,22 +26,41 @@ export namespace Message {
 /**
  * Tests if the given message is a request message
  */
-export function isRequest(message: Message): message is RequestMessage {
+export function isRequestMessage(message: Message): message is RequestMessage {
 	return message.type === Message.Request;
 }
 
 /**
  * Tests if the given message is a event message
  */
-export function isEvent(message: Message): message is EventMessage {
+export function isEventMessage(message: Message): message is EventMessage {
 	return message.type === Message.Event;
 }
 
 /**
  * Tests if the given message is a response message
  */
-export function isResponse(message: Message): message is ResponseMessage {
+export function isReponseMessage(message: Message): message is ResponseMessage {
 	return message.type === Message.Response;
+}
+
+export function isString(str: any): str is string {
+	return typeof (str) === 'string' || str instanceof String;
+}
+
+export function isResponse(value: any): value is Response {
+	let candidate = value as Response;
+	return candidate &&  (candidate.success === true || candidate.success === false);
+}
+
+export function isFailedResponse(value: any): value is Response {
+	let candidate = value as Response;
+	return isResponse(value) && candidate.success === false && isString(candidate.message);
+}
+
+export function isSuccessfulResponse(value: any): value is Response {
+	let candidate = value as Response;
+	return isResponse(value) && candidate.success;
 }
 
 /**
@@ -53,7 +72,7 @@ export interface Message {
 	 * See also namespace Message
 	 */
 	type: string;
-	
+
 	/**
 	 * Sequence number of the message
 	 */
@@ -64,7 +83,7 @@ export interface Request {
 	/**
 	 * Object containing arguments for the command
 	 */
-	arguments?: any;	
+	arguments?: any;
 }
 
 /**
@@ -98,9 +117,9 @@ export interface Response {
 	 * be omitted if not available
 	 */
 	code?: number;
-	
+
 	/**
-	 * Indicates whether the response can be retried 
+	 * Indicates whether the response can be retried
 	 * after the provided message has been showed to
 	 * the user.
 	 */
