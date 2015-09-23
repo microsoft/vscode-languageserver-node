@@ -1,7 +1,7 @@
 {
   "name": "vscode-languageWorker",
   "description": "Language worker implementation for node",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "main": "./lib/index.js",
   "typings": "./lib/index",
   "devDependencies": {
