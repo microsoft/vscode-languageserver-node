@@ -1,2 +1,4 @@
-# OpenTools-Node
-Open Tools protocol implementation for node.js runtime to implement a open tools service in JS running on node.js
+# VSCode Language Worker for Node
+
+This npm module provides the implementation of the VSCode language worker protocol for node.js. This allows writing
+language service extensions in node which are executed in a different process.
