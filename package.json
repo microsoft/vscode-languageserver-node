@@ -1,5 +1,5 @@
 {
-  "name": "vscode-opentools",
+  "name": "vscode-languageWorker",
   "description": "Language worker implementation for node",
   "version": "0.1.4",
   "main": "./lib/index.js",
