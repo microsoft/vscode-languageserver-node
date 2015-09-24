@@ -29,6 +29,7 @@ export namespace Files {
 export type Result<T> = T | Thenable<T>;
 
 export interface IDocument {
+	uri: string;
 	getText(): string;
 }
 
@@ -248,13 +249,13 @@ function getValidationClientConnection(inputStream: NodeJS.ReadableStream, outpu
 		shutdown: (args: ShutdownArguments) => connection.sendRequest(ShutdownRequest.type, args),
 		exit: () => connection.sendEvent(ExitEvent.type),
 
-		publishConfigurationDidChange: (body: DidChangeConfigurationArguments) => connection.sendEvent(DidChangeConfigurationEvent.type, body),
+		publishConfigurationDidChange: (args: DidChangeConfigurationArguments) => connection.sendEvent(DidChangeConfigurationEvent.type, args),
 
-		publishDocumentDidOpen: (body: DidOpenDocumentArguments) => connection.sendEvent(DidOpenDocumentEvent.type, body),
-		publishDocumentDidChange: (body: DidChangeDocumentArguments) => connection.sendEvent(DidChangeDocumentEvent.type, body),
-		publishDocumentDidClose: (body: DidCloseDocumentArguments) => connection.sendEvent(DidCloseDocumentEvent.type, body),
+		publishDocumentDidOpen: (args: DidOpenDocumentArguments) => connection.sendEvent(DidOpenDocumentEvent.type, args),
+		publishDocumentDidChange: (args: DidChangeDocumentArguments) => connection.sendEvent(DidChangeDocumentEvent.type, args),
+		publishDocumentDidClose: (args: DidCloseDocumentArguments) => connection.sendEvent(DidCloseDocumentEvent.type, args),
 
-		publishFilesDidChange: (body: DidChangeFilesArguments) => connection.sendEvent(DidChangeFilesEvent.type, body),
+		publishFilesDidChange: (args: DidChangeFilesArguments) => connection.sendEvent(DidChangeFilesEvent.type, args),
 
 		onDiagnosticEvent: (handler: IEventHandler<PublishDiagnosticsArguments>) => connection.onEvent(PublishDiagnosticsEvent.type, handler),
 
