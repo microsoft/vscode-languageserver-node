@@ -21,6 +21,12 @@ export interface IEventHandler<T> {
 	(body?: T): void;
 }
 
+export interface ILogger {
+	error(message: string);
+	log(message: string);
+	info(message: string);
+}
+
 /* @internal */
 export interface Connection {
 	sendEvent<T>(type: EventType<T>, body?: T) : void;
@@ -38,7 +44,7 @@ export interface ClientConnection extends Connection {
 	sendRequest<T, R extends Response>(type: RequestType<T, R>, args?: any) : Thenable<R>;
 }
 
-function connect<T extends Connection>(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, client: boolean = false): T {
+function connect<T extends Connection>(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger: ILogger, client: boolean = false): T {
 	let protocolWriter = new MessageWriter(outputStream);
 	let sequenceNumber = 0;
 
@@ -143,9 +149,9 @@ function connect<T extends Connection>(inputStream: NodeJS.ReadableStream, outpu
 				eventHandler(eventMessage.body);
 			} catch (error) {
 				if (error.message) {
-					console.error(`Event handler '${eventMessage.event}' failed with message: ${error.message}`)
+					 logger.error(`Event handler '${eventMessage.event}' failed with message: ${error.message}`)
 				} else {
-					console.error(`Event handler '${eventMessage.event}' failed unexpectedly.`);
+					logger.error(`Event handler '${eventMessage.event}' failed unexpectedly.`);
 				}
 			}
 		}
@@ -173,10 +179,10 @@ function connect<T extends Connection>(inputStream: NodeJS.ReadableStream, outpu
 	return connection as T;
 }
 
-export function connectWorker(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream): WorkerConnection {
-	return connect<WorkerConnection>(inputStream, outputStream);
+export function connectWorker(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger: ILogger): WorkerConnection {
+	return connect<WorkerConnection>(inputStream, outputStream, logger);
 }
 
-export function connectClient(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream): ClientConnection {
-	return connect<ClientConnection>(inputStream, outputStream, true);
+export function connectClient(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger: ILogger): ClientConnection {
+	return connect<ClientConnection>(inputStream, outputStream, logger, true);
 }

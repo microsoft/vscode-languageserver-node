@@ -65,6 +65,12 @@ export interface DidChangeConfigurationArguments {
 	settings: any;
 }
 
+export namespace MessageSeverity {
+	export let Error: number = 1;
+	export let Warning: number = 2;
+	export let Info: number = 3;
+}
+
 /**
  * The show message event is send from a worker to a client to ask
  * the client to display a particular message in the user interface
@@ -73,6 +79,16 @@ export namespace ShowMessageEvent {
 	export let type: EventType<ShowMessageArguments> = { event: 'shell/showMessage' };
 }
 export interface ShowMessageArguments {
+	severity: number;
+	message: string;
+}
+
+export namespace LogMessageEvent {
+	export let type: EventType<LogMessageArguments> = { event: 'shell/logMessage' };
+}
+
+export interface LogMessageArguments {
+	severity: number;
 	message: string;
 }
 
@@ -161,7 +177,6 @@ export interface Location {
 	 */
 	offset: number;
 }
-
 
 export namespace Severity {
 	export let Error: number = 1;

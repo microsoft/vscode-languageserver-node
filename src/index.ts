@@ -8,12 +8,13 @@ import {
 		InitializeRequest, InitializeArguments, InitializeResponse, Capabilities,
 		ShutdownRequest, ShutdownArguments, ShutdownResponse,
 		ExitEvent, ExitArguments,
+		LogMessageEvent, LogMessageArguments, MessageSeverity,
 		DidChangeConfigurationEvent, DidChangeConfigurationArguments,
 		DidOpenDocumentEvent, DidOpenDocumentArguments, DidChangeDocumentEvent, DidChangeDocumentArguments, DidCloseDocumentEvent, DidCloseDocumentArguments,
 		DidChangeFilesEvent, DidChangeFilesArguments,
 		PublishDiagnosticsEvent, PublishDiagnosticsArguments, Diagnostic, Severity, Location
 	} from './protocol';
-import { IRequestHandler, IEventHandler, WorkerConnection, connectWorker, ClientConnection, connectClient } from './connection';
+import { IRequestHandler, IEventHandler, Connection, WorkerConnection, connectWorker, ClientConnection, connectClient, ILogger } from './connection';
 
 // ------------- Reexport the API surface of the language worker API ----------------------
 export { Response, InitializeResponse, Diagnostic, Severity, Location }
@@ -132,9 +133,9 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 				func();
 			} catch (error) {
 				if (error.message) {
-					console.error(`Safe Runner failed with message: ${error.message}`)
+					connection.publishLogMessage({ severity: MessageSeverity.Error, message: `Safe Runner failed with message: ${error.message}`});
 				} else {
-					console.error('Safe Runner failed unexpectedly.');
+					connection.publishLogMessage({ severity: MessageSeverity.Error, message: 'Safe Runner failed unexpectedly.'});
 				}
 			}
 		});
@@ -235,8 +236,33 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 	});
 }
 
+class Logger implements ILogger {
+	private connection: Connection;
+	public constructor() {
+	}
+	public attach(connection: Connection) {
+		this.connection = connection;
+	}
+	public error(message: string): void {
+		this.send(MessageSeverity.Error, message);
+	}
+	public log(message: string): void {
+		this.send(MessageSeverity.Warning, message);
+	}
+	public info(message: string): void {
+		this.send(MessageSeverity.Info, message);
+	}
+	private send(severity: number, message: string) {
+		if (this.connection) {
+			this.connection.sendEvent(LogMessageEvent.type, { severity, message });
+		}
+	}
+}
+
 function getValidationWorkerConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream) {
-	let connection = connectWorker(inputStream, outputStream);
+	let logger = new Logger();
+	let connection = connectWorker(inputStream, outputStream, logger);
+	logger.attach(connection);
 	return {
 		onInitialize: (handler: IRequestHandler<InitializeArguments, InitializeResponse>) => connection.onRequest(InitializeRequest.type, handler),
 		onShutdown: (handler: IRequestHandler<ShutdownArguments, ShutdownResponse>) => connection.onRequest(ShutdownRequest.type, handler),
@@ -250,14 +276,17 @@ function getValidationWorkerConnection(inputStream: NodeJS.ReadableStream, outpu
 
 		onDidChangeFiles: (handler: IEventHandler<DidChangeFilesArguments>) => connection.onEvent(DidChangeFilesEvent.type, handler),
 
-		publishDiagnostics: (body: PublishDiagnosticsArguments) => connection.sendEvent(PublishDiagnosticsEvent.type, body),
+		publishDiagnostics: (args: PublishDiagnosticsArguments) => connection.sendEvent(PublishDiagnosticsEvent.type, args),
+		publishLogMessage: (args: LogMessageArguments) => connection.sendEvent(LogMessageEvent.type, args),
 
 		dispose: () => connection.dispose()
 	}
 }
 
 function getValidationClientConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream) {
-	let connection = connectClient(inputStream, outputStream);
+	let logger = new Logger();
+	let connection = connectClient(inputStream, outputStream, logger);
+	logger.attach(connection);
 	return {
 		initialize: (args: InitializeArguments) => connection.sendRequest(InitializeRequest.type, args),
 		shutdown: (args: ShutdownArguments) => connection.sendRequest(ShutdownRequest.type, args),
@@ -272,6 +301,7 @@ function getValidationClientConnection(inputStream: NodeJS.ReadableStream, outpu
 		publishFilesDidChange: (args: DidChangeFilesArguments) => connection.sendEvent(DidChangeFilesEvent.type, args),
 
 		onDiagnosticEvent: (handler: IEventHandler<PublishDiagnosticsArguments>) => connection.onEvent(PublishDiagnosticsEvent.type, handler),
+		onLogMessage: (handler: IEventHandler<LogMessageArguments>) => connection.onEvent(LogMessageEvent.type, handler),
 
 		dispose: () => connection.dispose()
 	}
