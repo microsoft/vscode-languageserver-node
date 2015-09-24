@@ -7,7 +7,7 @@ import { Response, RequestType, EventType } from './messages';
 
 /**
  * The shutdown command is send from the client to the worker.
- * It is send once when the client descides to shutdown the 
+ * It is send once when the client descides to shutdown the
  * worker. The only event that is send after a shudown request
  * is the exit event.
  */
@@ -22,11 +22,11 @@ export interface ShutdownResponse extends Response {
 }
 
 /**
- * The exit event is send from the client to the worker to 
+ * The exit event is send from the client to the worker to
  * ask the worker to exit its process.
  */
 export namespace ExitEvent {
-	export let type: EventType<ExitArguments> = { event: 'exit' }; 
+	export let type: EventType<ExitArguments> = { event: 'exit' };
 }
 export interface ExitArguments {
 }
@@ -58,10 +58,10 @@ export interface InitializeResponse extends Response {
  * the changed configuration as defined by the language worker statically
  * in it's extension manifest.
  */
-export namespace ConfigurationChangeEvent {
-	export let type: EventType<ConfigurationChangeArguments> = { event: 'workspace/configurationChange' };
-} 
-export interface ConfigurationChangeArguments {
+export namespace DidChangeConfigurationEvent {
+	export let type: EventType<DidChangeConfigurationArguments> = { event: 'workspace/didChangeConfiguration' };
+}
+export interface DidChangeConfigurationArguments {
 	settings: any;
 }
 
@@ -78,48 +78,48 @@ export interface ShowMessageArguments {
 
 export interface DocumentIdentifier {
 	/**
-	 * A URI identifying the resource in the client. 
+	 * A URI identifying the resource in the client.
 	 */
 	uri: string;
 }
 
 /**
  * The document event is send from the client to the worker to signal
- * newly opened, changed and closed documents. 
+ * newly opened, changed and closed documents.
  */
-export namespace DocumentOpenEvent {
-	export let type: EventType<DocumentOpenArguments> = { event: 'document/open' };
+export namespace DidOpenDocumentEvent {
+	export let type: EventType<DidOpenDocumentArguments> = { event: 'document/didOpen' };
 }
-export interface DocumentOpenArguments extends DocumentIdentifier {
+export interface DidOpenDocumentArguments extends DocumentIdentifier {
 	/**
 	 * The content of the opened document.
 	 */
 	content: string;
 }
 
-export namespace DocumentChangeEvent {
-	export let type: EventType<DocumentChangeArguments> = { event: 'document/change' };
+export namespace DidChangeDocumentEvent {
+	export let type: EventType<DidChangeDocumentArguments> = { event: 'document/didChange' };
 }
-export interface DocumentChangeArguments extends DocumentIdentifier {
+export interface DidChangeDocumentArguments extends DocumentIdentifier {
 	/**
 	 * The new content of the document.
 	 */
 	content: string;
 }
 
-export namespace DocumentCloseEvent {
-	export let type: EventType<DocumentCloseArguments> = { event: 'document/close' };
+export namespace DidCloseDocumentEvent {
+	export let type: EventType<DidCloseDocumentArguments> = { event: 'document/didClose' };
 }
-export interface DocumentCloseArguments extends DocumentIdentifier {
+export interface DidCloseDocumentArguments extends DocumentIdentifier {
 }
 
 
 /**
  */
-export namespace FileEvent {
-	export let type: EventType<FileEventArguments> = { event: 'file/event' };
+export namespace DidChangeFilesEvent {
+	export let type: EventType<DidChangeFilesArguments> = { event: 'files/didChange' };
 }
-export interface FileEventArguments {
+export interface DidChangeFilesArguments {
 	filesAdded: string[];
 	filesRemoved: string[];
 	filesChanged: string[];
@@ -129,10 +129,10 @@ export interface FileEventArguments {
  * Diagnostics events are send from the worker to clients to signal
  * results of validation runs
  */
-export namespace DiagnosticEvent {
-	export let type: EventType<DiagnosticEventArguments> = { event: 'document/diagnostics' };
+export namespace PublishDiagnosticsEvent {
+	export let type: EventType<PublishDiagnosticsArguments> = { event: 'document/publishDiagnostics' };
 }
-export interface DiagnosticEventArguments {
+export interface PublishDiagnosticsArguments {
 	/**
 	 * The URI for which diagnostic information is reported.
 	 */
@@ -141,10 +141,10 @@ export interface DiagnosticEventArguments {
 	/**
 	 * An array of diagnostic information items.
 	 */
-	diagnostics: Diagnostic[];	
+	diagnostics: Diagnostic[];
 }
-export interface DiagnosticEvent {
-	body: DiagnosticEventArguments;
+export interface PublishDiagnosticsEvent {
+	body: PublishDiagnosticsArguments;
 }
 
 /**
@@ -166,7 +166,7 @@ export interface Location {
 export namespace Severity {
 	export let Error: number = 1;
 	export let Warning: number = 2;
-	export let Info: number = 3;	
+	export let Info: number = 3;
 }
 
 /**
@@ -185,10 +185,10 @@ export interface Diagnostic {
 
 	/**
 	 * The diagnostic's severity. Can be omitted. If omitted it is up to the
-	 * client to interpret diagnostics as error, warning or info. 
+	 * client to interpret diagnostics as error, warning or info.
 	 */
 	severity?: number;
-	
+
 	/**
 	 * The diagnostic code. Can be omitted.
 	 */

@@ -8,15 +8,21 @@ import {
 		InitializeRequest, InitializeArguments, InitializeResponse, Capabilities,
 		ShutdownRequest, ShutdownArguments, ShutdownResponse,
 		ExitEvent, ExitArguments,
-		ConfigurationChangeEvent, ConfigurationChangeArguments,
-		DocumentOpenEvent, DocumentOpenArguments, DocumentChangeEvent, DocumentChangeArguments, DocumentCloseEvent, DocumentCloseArguments,
-		FileEvent, FileEventArguments,
-		DiagnosticEvent, DiagnosticEventArguments, Diagnostic, Severity, Location
+		DidChangeConfigurationEvent, DidChangeConfigurationArguments,
+		DidOpenDocumentEvent, DidOpenDocumentArguments, DidChangeDocumentEvent, DidChangeDocumentArguments, DidCloseDocumentEvent, DidCloseDocumentArguments,
+		DidChangeFilesEvent, DidChangeFilesArguments,
+		PublishDiagnosticsEvent, PublishDiagnosticsArguments, Diagnostic, Severity, Location
 	} from './protocol';
 import { IRequestHandler, IEventHandler, WorkerConnection, connectWorker, ClientConnection, connectClient } from './connection';
 
-// Reexport the plubic available API.
+// ------------- Reexport the API surface of the language worker API ----------------------
 export { Response, InitializeResponse, Diagnostic, Severity, Location }
+
+import * as fm from './files';
+export namespace Files {
+	export let uriToFilePath = fm.uriToFilePath;
+	export let resolveModule = fm.resolveModule;
+}
 
 // -------------- single file validator -------------------
 
@@ -47,11 +53,15 @@ export interface SingleFileValidator {
 // -------------- validator open tools protocol -------------------
 export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, handler: SingleFileValidator) : void {
 	let connection = getValidationWorkerConnection(inputStream, outputStream);
-
 	let rootFolder: string;
+	let shutdownReceived: boolean;
 
-	let validationSupportEnabled = false;
-	let validationTrigger: NodeJS.Timer = null;
+	inputStream.on('end', () => {
+		process.exit(shutdownReceived ? 0 : 1);
+	});
+	inputStream.on('close', () => {
+		process.exit(shutdownReceived ? 0 : 1);
+	});
 
 	class Document implements IDocument {
 
@@ -118,7 +128,7 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 	function validate(document: Document): void {
 		let result = handler.validate(document);
 		doProcess(result, (value) => {
-			connection.sendDiagnosticEvent({
+			connection.publishDiagnostics({
 				uri: document.uri,
 				diagnostics: result as Diagnostic[]
 			});
@@ -217,15 +227,15 @@ function getValidationWorkerConnection(inputStream: NodeJS.ReadableStream, outpu
 		onShutdown: (handler: IRequestHandler<ShutdownArguments, ShutdownResponse>) => connection.onRequest(ShutdownRequest.type, handler),
 		onExit: (handler: IEventHandler<ExitArguments>) => connection.onEvent(ExitEvent.type, handler),
 
-		onDidChangeConfiguration: (handler: IEventHandler<ConfigurationChangeArguments>) => connection.onEvent(ConfigurationChangeEvent.type, handler),
+		onDidChangeConfiguration: (handler: IEventHandler<DidChangeConfigurationArguments>) => connection.onEvent(DidChangeConfigurationEvent.type, handler),
 
-		onDidOpenDocument: (handler: IEventHandler<DocumentOpenArguments>) => connection.onEvent(DocumentOpenEvent.type, handler),
-		onDidChangeDocument: (handler: IEventHandler<DocumentChangeArguments>) => connection.onEvent(DocumentChangeEvent.type, handler),
-		onDidCloseDocumet: (handler: IEventHandler<DocumentCloseArguments>) => connection.onEvent(DocumentCloseEvent.type, handler),
+		onDidOpenDocument: (handler: IEventHandler<DidOpenDocumentArguments>) => connection.onEvent(DidOpenDocumentEvent.type, handler),
+		onDidChangeDocument: (handler: IEventHandler<DidChangeDocumentArguments>) => connection.onEvent(DidChangeDocumentEvent.type, handler),
+		onDidCloseDocumet: (handler: IEventHandler<DidCloseDocumentArguments>) => connection.onEvent(DidCloseDocumentEvent.type, handler),
 
-		onDidChangeFiles: (handler: IEventHandler<FileEventArguments>) => connection.onEvent(FileEvent.type, handler),
+		onDidChangeFiles: (handler: IEventHandler<DidChangeFilesArguments>) => connection.onEvent(DidChangeFilesEvent.type, handler),
 
-		sendDiagnosticEvent: (body: DiagnosticEventArguments) => connection.sendEvent(DiagnosticEvent.type, body),
+		publishDiagnostics: (body: PublishDiagnosticsArguments) => connection.sendEvent(PublishDiagnosticsEvent.type, body),
 
 		dispose: () => connection.dispose()
 	}
@@ -238,15 +248,15 @@ function getValidationClientConnection(inputStream: NodeJS.ReadableStream, outpu
 		shutdown: (args: ShutdownArguments) => connection.sendRequest(ShutdownRequest.type, args),
 		exit: () => connection.sendEvent(ExitEvent.type),
 
-		configurationChange: (body: ConfigurationChangeArguments) => connection.sendEvent(ConfigurationChangeEvent.type, body),
+		publishConfigurationDidChange: (body: DidChangeConfigurationArguments) => connection.sendEvent(DidChangeConfigurationEvent.type, body),
 
-		documentOpen: (body: DocumentOpenArguments) => connection.sendEvent(DocumentOpenEvent.type, body),
-		documentChange: (body: DocumentChangeArguments) => connection.sendEvent(DocumentChangeEvent.type, body),
-		documentClose: (body: DocumentCloseArguments) => connection.sendEvent(DocumentCloseEvent.type, body),
+		publishDocumentDidOpen: (body: DidOpenDocumentArguments) => connection.sendEvent(DidOpenDocumentEvent.type, body),
+		publishDocumentDidChange: (body: DidChangeDocumentArguments) => connection.sendEvent(DidChangeDocumentEvent.type, body),
+		publishDocumentDidClose: (body: DidCloseDocumentArguments) => connection.sendEvent(DidCloseDocumentEvent.type, body),
 
-		fileEvent: (body: FileEventArguments) => connection.sendEvent(FileEvent.type, body),
+		publishFilesDidChange: (body: DidChangeFilesArguments) => connection.sendEvent(DidChangeFilesEvent.type, body),
 
-		onDiagnosticEvent: (handler: IEventHandler<DiagnosticEventArguments>) => connection.onEvent(DiagnosticEvent.type, handler),
+		onDiagnosticEvent: (handler: IEventHandler<PublishDiagnosticsArguments>) => connection.onEvent(PublishDiagnosticsEvent.type, handler),
 
 		dispose: () => connection.dispose()
 	}

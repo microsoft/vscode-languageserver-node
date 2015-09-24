@@ -5,8 +5,9 @@
 
 import * as url from 'url';
 import * as path from 'path';
+import { exec, fork, ChildProcess } from 'child_process';
 
-export function toFilePath(uri: string): string {
+export function uriToFilePath(uri: string): string {
 	let parsed = url.parse(uri);
 	if (parsed.protocol !== 'file:' || !parsed.path) {
 		return null;
@@ -26,4 +27,70 @@ export function toFilePath(uri: string): string {
 		}
 	}
 	return path.normalize(segments.join('/'));
+}
+
+function isWindows(): boolean {
+	return process.platform === 'win32';
+}
+
+export function resolveModule(workspaceRoot: string, moduleName: string): Thenable<any> {
+	interface Message {
+		command: string;
+		success?: boolean;
+		args?: any;
+		result?: any
+	}
+	let nodePathKey: string = 'NODE_PATH';
+	return new Promise<any>((c, e) => {
+		let result = Object.create(null);
+		let nodePath: string[] = [];
+		if (workspaceRoot) {
+			nodePath.push(path.join(workspaceRoot, 'node_modules'));
+		}
+		exec('npm config get prefix', (error: Error, stdout: Buffer, stderr: Buffer) => {
+			if (!error) {
+				let globalPath = stdout.toString().replace(/[\s\r\n]+$/, '');
+				if (globalPath.length > 0) {
+					if (isWindows()) {
+						nodePath.push(path.join(globalPath, 'node_modules'));
+					} else {
+						nodePath.push(path.join(globalPath, 'lib', 'node_modules'));
+					}
+				}
+			}
+			let separator = isWindows() ? ';' : ':';
+			let env = process.env;
+			let newEnv = Object.create(null);
+			Object.keys(env).forEach(key => newEnv[key] = env[key]);
+			if (newEnv[nodePathKey]) {
+				newEnv[nodePathKey] = newEnv[nodePathKey] + separator + nodePath.join(separator);
+			} else {
+				newEnv[nodePathKey] = nodePath.join(separator);
+			}
+			try {
+				let cp: ChildProcess = fork(path.join(__dirname, 'resolve.js'), [], <any>{ env: newEnv, execArgv: [] });
+				cp.on('message', (message: Message) => {
+					if (message.command === 'resolve') {
+						let toRequire: string = moduleName;
+						if (message.success) {
+							toRequire = message.result;
+						}
+						cp.send({ command: 'exit' });
+						try {
+							c(require(toRequire));
+						} catch (err) {
+							e(undefined);
+						}
+					}
+				});
+				let message: Message = {
+					command: 'resolve',
+					args: moduleName
+				};
+				cp.send(message);
+			} catch (error) {
+				e(undefined);
+			}
+		});
+	});
 }
