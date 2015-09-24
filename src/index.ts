@@ -126,6 +126,20 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 		}
 	}
 
+	function safeRunner(func: () => void): void {
+		process.nextTick(() => {
+			try {
+				func();
+			} catch (error) {
+				if (error.message) {
+					console.error(`Safe Runner failed with message: ${error.message}`)
+				} else {
+					console.error('Safe Runner failed unexpectedly.');
+				}
+			}
+		});
+	}
+
 	function validate(document: Document): void {
 		let result = handler.validate(document);
 		doProcess(result, (value) => {
@@ -176,14 +190,14 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 	connection.onDidOpenDocument(event => {
 		let document = new Document(event.uri, event.content);
 		trackedDocuments[event.uri] = document;
-		process.nextTick(() => { validate(document); });
+		safeRunner(() => { validate(document); });
 	});
 
 	connection.onDidChangeDocument(event => {
 		let document = trackedDocuments[event.uri];
 		if (document) {
 			document.setText(event.content);
-			process.nextTick(() => { validate(document); });
+			safeRunner(() => { validate(document); });
 		}
 	});
 
@@ -199,7 +213,7 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 		} else {
 			requestor.all();
 		}
-		process.nextTick(() => {
+		safeRunner(() => {
 			requestor.toValidate.forEach(document => {
 				validate(document);
 			});
@@ -213,7 +227,7 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 		} else {
 			requestor.all();
 		}
-		process.nextTick(() => {
+		safeRunner(() => {
 			requestor.toValidate.forEach(document => {
 				validate(document);
 			});

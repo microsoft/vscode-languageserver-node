@@ -110,7 +110,7 @@ function connect<T extends Connection>(inputStream: NodeJS.ReadableStream, outpu
 						} else if (error && isString(error.message)) {
 							reply({ success: false, message: error.message, code: ERROR_HANDLER_FAILURE });
 						} else {
-							reply({ success: false, message: 'Request failed unexpectedly', code: ERROR_HANDLER_FAILURE });
+							reply({ success: false, message: 'Request failed unexpectedly.', code: ERROR_HANDLER_FAILURE });
 						}
 					});
 				} else {
@@ -120,7 +120,7 @@ function connect<T extends Connection>(inputStream: NodeJS.ReadableStream, outpu
 				if (error && isString(error.message)) {
 					reply({ success: false, message: error.message, code: ERROR_HANDLER_FAILURE });
 				} else {
-					reply({ success: false, message: 'Request failed unexpectedly', code: ERROR_HANDLER_FAILURE });
+					reply({ success: false, message: 'Request failed unexpectedly.', code: ERROR_HANDLER_FAILURE });
 				}
 			}
 		} else {
@@ -139,7 +139,15 @@ function connect<T extends Connection>(inputStream: NodeJS.ReadableStream, outpu
 	function handleEvent(eventMessage: EventMessage) {
 		var eventHandler = eventHandlers[eventMessage.event];
 		if (eventHandler) {
-			eventHandler(eventMessage.body);
+			try {
+				eventHandler(eventMessage.body);
+			} catch (error) {
+				if (error.message) {
+					console.error(`Event handler '${eventMessage.event}' failed with message: ${error.message}`)
+				} else {
+					console.error(`Event handler '${eventMessage.event}' failed unexpectedly.`);
+				}
+			}
 		}
 	}
 
