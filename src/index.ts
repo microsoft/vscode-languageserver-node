@@ -11,13 +11,13 @@ import {
 		LogMessageEvent, LogMessageArguments, MessageSeverity,
 		DidChangeConfigurationEvent, DidChangeConfigurationArguments,
 		DidOpenDocumentEvent, DidOpenDocumentArguments, DidChangeDocumentEvent, DidChangeDocumentArguments, DidCloseDocumentEvent, DidCloseDocumentArguments,
-		DidChangeFilesEvent, DidChangeFilesArguments, FileEvent,
+		DidChangeFilesEvent, DidChangeFilesArguments, FileEvent, FileChangeType,
 		PublishDiagnosticsEvent, PublishDiagnosticsArguments, Diagnostic, Severity, Location
 	} from './protocol';
 import { IRequestHandler, IEventHandler, Connection, WorkerConnection, connectWorker, ClientConnection, connectClient, ILogger } from './connection';
 
 // ------------- Reexport the API surface of the language worker API ----------------------
-export { Response, InitializeResponse, Diagnostic, Severity, Location }
+export { Response, InitializeResponse, Diagnostic, Severity, Location, FileEvent, FileChangeType }
 
 import * as fm from './files';
 export namespace Files {
@@ -42,7 +42,7 @@ export interface SingleFileValidator {
 	initialize?(rootFolder: string): Result<InitializeResponse>;
 	validate(document: IDocument): Result<Diagnostic[]>;
 	onConfigurationChange?(settings: any, requestor: IValidationRequestor): void;
-	onFileEvents?(changes: FileEvent[] , requestor: IValidationRequestor): void;
+	onFileEvents?(changes: FileEvent[], requestor: IValidationRequestor): void;
 	shutdown?(): void;
 }
 
