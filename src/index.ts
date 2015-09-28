@@ -11,7 +11,7 @@ import {
 		LogMessageEvent, LogMessageArguments, MessageSeverity,
 		DidChangeConfigurationEvent, DidChangeConfigurationArguments,
 		DidOpenDocumentEvent, DidOpenDocumentArguments, DidChangeDocumentEvent, DidChangeDocumentArguments, DidCloseDocumentEvent, DidCloseDocumentArguments,
-		DidChangeFilesEvent, DidChangeFilesArguments,
+		DidChangeFilesEvent, DidChangeFilesArguments, FileEvent,
 		PublishDiagnosticsEvent, PublishDiagnosticsArguments, Diagnostic, Severity, Location
 	} from './protocol';
 import { IRequestHandler, IEventHandler, Connection, WorkerConnection, connectWorker, ClientConnection, connectClient, ILogger } from './connection';
@@ -38,18 +38,12 @@ export interface IValidationRequestor {
 	all(): void;
 }
 
-export interface FileEvent {
-	filesAdded: string[];
-	filesRemoved: string[];
-	filesChanged: string[];
-}
-
 export interface SingleFileValidator {
 	initialize?(rootFolder: string): Result<InitializeResponse>;
 	validate(document: IDocument): Result<Diagnostic[]>;
 	onConfigurationChange?(settings: any, requestor: IValidationRequestor): void;
-	onFileEvent?(event: FileEvent, requestor: IValidationRequestor): void;
-	shutdown?();
+	onFileEvents?(changes: FileEvent[] , requestor: IValidationRequestor): void;
+	shutdown?(): void;
 }
 
 // -------------- validator open tools protocol -------------------
@@ -99,7 +93,7 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 		}
 
 		public get toValidate(): Document[] {
-			return Object.keys(this._toValidate).map(key => this.toValidate[key]);
+			return Object.keys(this._toValidate).map(key => this._toValidate[key]);
 		}
 
 		public all(): void {
@@ -221,10 +215,10 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 		});
 	});
 
-	connection.onDidChangeFiles(fileEvent => {
+	connection.onDidChangeFiles(args => {
 		let requestor = new ValidationRequestor();
-		if (isFunction(handler.onFileEvent)) {
-			handler.onFileEvent(fileEvent, requestor);
+		if (isFunction(handler.onFileEvents)) {
+			handler.onFileEvents(args.changes, requestor);
 		} else {
 			requestor.all();
 		}

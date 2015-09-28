@@ -133,13 +133,24 @@ export interface DidCloseDocumentArguments extends DocumentIdentifier {
 /**
  */
 export namespace DidChangeFilesEvent {
-	export let type: EventType<DidChangeFilesArguments> = { event: 'files/didChange' };
+	export let type: EventType<DidChangeFilesArguments> = { event: 'workspace/didChangeFiles' };
 }
+
+export namespace FileChangeType {
+	export let Created = 1;
+	export let Changed = 2;
+	export let Deleted = 3;
+}
+
+export interface FileEvent {
+	path: string;
+	type: number;
+}
+
 export interface DidChangeFilesArguments {
-	filesAdded: string[];
-	filesRemoved: string[];
-	filesChanged: string[];
+	changes: FileEvent[];
 }
+
 
 /**
  * Diagnostics events are send from the worker to clients to signal
