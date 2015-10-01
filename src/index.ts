@@ -3,12 +3,14 @@
  *--------------------------------------------------------*/
 'use strict';
 
+import { LanguageWorkerError, MessageKind } from './languageWorkerError';
 import { Response } from './messages';
 import {
 		InitializeRequest, InitializeArguments, InitializeResponse, Capabilities,
 		ShutdownRequest, ShutdownArguments, ShutdownResponse,
 		ExitEvent, ExitArguments,
 		LogMessageEvent, LogMessageArguments, MessageSeverity,
+		ShowMessageEvent, ShowMessageArguments,
 		DidChangeConfigurationEvent, DidChangeConfigurationArguments,
 		DidOpenDocumentEvent, DidOpenDocumentArguments, DidChangeDocumentEvent, DidChangeDocumentArguments, DidCloseDocumentEvent, DidCloseDocumentArguments,
 		DidChangeFilesEvent, DidChangeFilesArguments, FileEvent, FileChangeType,
@@ -18,6 +20,7 @@ import { IRequestHandler, IEventHandler, Connection, WorkerConnection, connectWo
 
 // ------------- Reexport the API surface of the language worker API ----------------------
 export { Response, InitializeResponse, Diagnostic, Severity, Location, FileEvent, FileChangeType }
+export { LanguageWorkerError, MessageKind }
 
 import * as fm from './files';
 export namespace Files {
@@ -109,8 +112,39 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 		}
 	}
 
+	class ErrorMessageTracker {
+
+		private messages: { [key: string]: number };
+		constructor() {
+			this.messages = Object.create(null);
+		}
+		public add(message: string): void {
+			let count: number = this.messages[message];
+			if (!count) {
+				count = 0;
+			}
+			count++;
+			this.messages[message] = count;
+		}
+		public publish(connection: { publishShowMessage(args: ShowMessageArguments): void }): void {
+			Object.keys(this.messages).forEach(message => {
+				connection.publishShowMessage({ message: message, severity: MessageSeverity.Error });
+			});
+		}
+	}
+
 	function isFunction(arg: any): arg is Function {
 		return Object.prototype.toString.call(arg) === '[object Function]';
+	}
+
+	function isArray(array: any): array is any[] {
+		if (Array.isArray) {
+			return Array.isArray(array);
+		}
+		if (array && typeof (array.length) === 'number' && array.constructor === Array) {
+			return true;
+		}
+		return false;
 	}
 
 	function doProcess<T, R>(result: Result<T>, complete: (value: T) => Result<R>, error?: (error: any) => void): Result<R> {
@@ -121,18 +155,43 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 		}
 	}
 
-	function safeRunner(func: () => void): void {
-		process.nextTick(() => {
+	function safeRunner<T>(values: T | T[], func: (value: T) => void): void {
+		let messageTracker: ErrorMessageTracker = new ErrorMessageTracker();
+		let runSingle = (value: T) => {
 			try {
-				func();
+				func(value);
 			} catch (error) {
-				if (error.message) {
-					connection.publishLogMessage({ severity: MessageSeverity.Error, message: `Safe Runner failed with message: ${error.message}`});
+				if (error instanceof LanguageWorkerError) {
+					let workerError = error as LanguageWorkerError;
+					switch( workerError.messageKind) {
+						case MessageKind.Show:
+							messageTracker.add(workerError.message);
+							break;
+						case MessageKind.Log:
+							logSafeRunnerMessage(workerError.message);
+							break;
+					}
 				} else {
-					connection.publishLogMessage({ severity: MessageSeverity.Error, message: 'Safe Runner failed unexpectedly.'});
+					logSafeRunnerMessage(error.message);
 				}
 			}
-		});
+		}
+		if (isArray(values)) {
+			for (let value of (values as T[])) {
+				runSingle(value);
+			}
+		} else {
+			runSingle(values as T);
+		}
+		messageTracker.publish(connection);
+	}
+
+	function logSafeRunnerMessage(message?: string): void {
+		if (message) {
+			connection.publishLogMessage({ severity: MessageSeverity.Error, message: `Safe Runner failed with message: ${message}`});
+		} else {
+			connection.publishLogMessage({ severity: MessageSeverity.Error, message: 'Safe Runner failed unexpectedly.'});
+		}
 	}
 
 	function validate(document: Document): void {
@@ -185,14 +244,14 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 	connection.onDidOpenDocument(event => {
 		let document = new Document(event.uri, event.content);
 		trackedDocuments[event.uri] = document;
-		safeRunner(() => { validate(document); });
+		process.nextTick(() => safeRunner(document, validate));
 	});
 
 	connection.onDidChangeDocument(event => {
 		let document = trackedDocuments[event.uri];
 		if (document) {
 			document.setText(event.content);
-			safeRunner(() => { validate(document); });
+			process.nextTick(() => safeRunner(document, validate));
 		}
 	});
 
@@ -208,11 +267,7 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 		} else {
 			requestor.all();
 		}
-		safeRunner(() => {
-			requestor.toValidate.forEach(document => {
-				validate(document);
-			});
-		});
+		process.nextTick(() => safeRunner(requestor.toValidate, validate));
 	});
 
 	connection.onDidChangeFiles(args => {
@@ -222,11 +277,7 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 		} else {
 			requestor.all();
 		}
-		safeRunner(() => {
-			requestor.toValidate.forEach(document => {
-				validate(document);
-			});
-		});
+		process.nextTick(() => safeRunner(requestor.toValidate, validate));
 	});
 }
 
@@ -272,6 +323,7 @@ function getValidationWorkerConnection(inputStream: NodeJS.ReadableStream, outpu
 
 		publishDiagnostics: (args: PublishDiagnosticsArguments) => connection.sendEvent(PublishDiagnosticsEvent.type, args),
 		publishLogMessage: (args: LogMessageArguments) => connection.sendEvent(LogMessageEvent.type, args),
+		publishShowMessage: (args: ShowMessageArguments) => connection.sendEvent(ShowMessageEvent.type, args),
 
 		dispose: () => connection.dispose()
 	}
@@ -296,6 +348,7 @@ function getValidationClientConnection(inputStream: NodeJS.ReadableStream, outpu
 
 		onDiagnosticEvent: (handler: IEventHandler<PublishDiagnosticsArguments>) => connection.onEvent(PublishDiagnosticsEvent.type, handler),
 		onLogMessage: (handler: IEventHandler<LogMessageArguments>) => connection.onEvent(LogMessageEvent.type, handler),
+		onShowMessage: (handler: IEventHandler<ShowMessageArguments>) => connection.onEvent(ShowMessageEvent.type, handler),
 
 		dispose: () => connection.dispose()
 	}
