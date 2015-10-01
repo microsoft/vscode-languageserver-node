@@ -186,7 +186,7 @@ export interface Location {
 	/**
 	 * Character offset on a line in a document (one-based)
 	 */
-	offset: number;
+	character: number;
 }
 
 export namespace Severity {
