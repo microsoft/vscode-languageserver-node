@@ -14,7 +14,7 @@ import {
 		DidChangeConfigurationEvent, DidChangeConfigurationArguments,
 		DidOpenDocumentEvent, DidOpenDocumentArguments, DidChangeDocumentEvent, DidChangeDocumentArguments, DidCloseDocumentEvent, DidCloseDocumentArguments,
 		DidChangeFilesEvent, DidChangeFilesArguments, FileEvent, FileChangeType,
-		PublishDiagnosticsEvent, PublishDiagnosticsArguments, Diagnostic, Severity, Location
+		PublishDiagnosticsEvent, PublishDiagnosticsArguments, Diagnostic, Severity, Position
 	} from './protocol';
 import { IRequestHandler, IEventHandler, Connection, WorkerConnection, connectWorker, ClientConnection, connectClient, ILogger } from './connection';
 
