@@ -19,7 +19,7 @@ import {
 import { IRequestHandler, IEventHandler, Connection, WorkerConnection, connectWorker, ClientConnection, connectClient, ILogger } from './connection';
 
 // ------------- Reexport the API surface of the language worker API ----------------------
-export { Response, InitializeResponse, Diagnostic, Severity, Location, FileEvent, FileChangeType }
+export { Response, InitializeResponse, Diagnostic, Severity, Position, FileEvent, FileChangeType }
 export { LanguageWorkerError, MessageKind }
 
 import * as fm from './files';

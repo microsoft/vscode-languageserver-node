@@ -179,7 +179,7 @@ export interface PublishDiagnosticsEvent {
  */
 export interface Position {
 	/**
-	 * Line location in a document (one-based)
+	 * Line Position in a document (one-based)
 	 */
 	line: number;
 
