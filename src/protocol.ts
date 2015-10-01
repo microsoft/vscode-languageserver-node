@@ -175,9 +175,9 @@ export interface PublishDiagnosticsEvent {
 }
 
 /**
- * Location in document expressed as (one-based) line and character offset.
+ * Position in document expressed as (one-based) line and character offset.
  */
-export interface Location {
+export interface Position {
 	/**
 	 * Line location in a document (one-based)
 	 */
@@ -200,14 +200,14 @@ export namespace Severity {
  */
 export interface Diagnostic {
 	/**
-	 * Starting file location at which text appies.
+	 * Starting position at which text appies.
 	 */
-	start: Location;
+	start: Position;
 
 	/**
-	 * The last file location at which the text applies. Can be omitted.
+	 * The last position at which the text applies. Can be omitted.
 	 */
-	end?: Location;
+	end?: Position;
 
 	/**
 	 * The diagnostic's severity. Can be omitted. If omitted it is up to the
