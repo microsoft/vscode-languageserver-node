@@ -196,10 +196,10 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 
 	function validate(document: Document): void {
 		let result = handler.validate(document);
-		doProcess(result, (value) => {
+		doProcess(result, (diagnostics) => {
 			connection.publishDiagnostics({
 				uri: document.uri,
-				diagnostics: result as Diagnostic[]
+				diagnostics: diagnostics
 			});
 		}, (error) => {
 			// We need a log event to tell the client that a diagnostic
@@ -218,9 +218,9 @@ export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outpu
 	connection.onInitialize(initArgs => {
 		rootFolder = initArgs.rootFolder;
 		if (isFunction(handler.initialize)) {
-			return doProcess(handler.initialize(rootFolder), (value) => {
-				if (value && !value.success) {
-					return value;
+			return doProcess(handler.initialize(rootFolder), (response) => {
+				if (response && !response.success) {
+					return response;
 				} else {
 					return createInitializeResponse(initArgs);
 				}
