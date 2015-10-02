@@ -1,7 +1,7 @@
 {
   "name": "vscode-languageworker",
   "description": "Language worker implementation for node",
-  "version": "0.1.17",
+  "version": "0.2.0",
   "author": "Microsoft Corporation",
   "license": "MIT",
   "main": "./lib/index.js",
