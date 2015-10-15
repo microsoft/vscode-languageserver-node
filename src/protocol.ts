@@ -65,10 +65,11 @@ export interface DidChangeConfigurationArguments {
 	settings: any;
 }
 
-export namespace MessageSeverity {
+export namespace MessageType {
 	export let Error: number = 1;
 	export let Warning: number = 2;
 	export let Info: number = 3;
+	export let Log: number = 4;
 }
 
 /**
@@ -79,7 +80,7 @@ export namespace ShowMessageEvent {
 	export let type: EventType<ShowMessageArguments> = { event: 'shell/showMessage' };
 }
 export interface ShowMessageArguments {
-	severity: number;
+	type: number;
 	message: string;
 }
 
@@ -88,7 +89,7 @@ export namespace LogMessageEvent {
 }
 
 export interface LogMessageArguments {
-	severity: number;
+	type: number;
 	message: string;
 }
 

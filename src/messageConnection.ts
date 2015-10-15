@@ -23,28 +23,26 @@ export interface IEventHandler<T> {
 
 export interface ILogger {
 	error(message: string);
-	log(message: string);
+	warn(message: string);
 	info(message: string);
+	log(message: string);
 }
 
-/* @internal */
-export interface Connection {
+export interface MessageConnection {
 	sendEvent<T>(type: EventType<T>, body?: T) : void;
 	onRequest<T, R extends Response>(type: RequestType<T, R>, handler: IRequestHandler<any, R>) : void;
 	onEvent<T>(type: EventType<T>, handler: IEventHandler<T>) : void;
 	dispose(): void;
 }
 
-/* @internal */
-export interface WorkerConnection extends Connection {
+export interface WorkerMessageConnection extends MessageConnection {
 }
 
-/* @internal */
-export interface ClientConnection extends Connection {
+export interface ClientMessageConnection extends MessageConnection {
 	sendRequest<T, R extends Response>(type: RequestType<T, R>, args?: any) : Thenable<R>;
 }
 
-function connect<T extends Connection>(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger: ILogger, client: boolean = false): T {
+function createMessageConnection<T extends MessageConnection>(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger: ILogger, client: boolean = false): T {
 	let protocolWriter = new MessageWriter(outputStream);
 	let sequenceNumber = 0;
 
@@ -53,9 +51,9 @@ function connect<T extends Connection>(inputStream: NodeJS.ReadableStream, outpu
 
 	let eventHandlers : { [name:string]: IEventHandler<any> } = Object.create(null);
 
-	var connection: Connection = {
+	let connection: MessageConnection = {
 		sendEvent: <T>(type: EventType<T>, body) => {
-			var eventMessage : EventMessage = {
+			let eventMessage : EventMessage = {
 				type: Message.Event,
 				seq: sequenceNumber++,
 				event: type.event,
@@ -74,7 +72,7 @@ function connect<T extends Connection>(inputStream: NodeJS.ReadableStream, outpu
 		}
 	};
 	if (client) {
-		(connection as ClientConnection).sendRequest = <T, R extends Response>(type: RequestType<T, R>, args) => {
+		(connection as ClientMessageConnection).sendRequest = <T, R extends Response>(type: RequestType<T, R>, args) => {
 			return new Promise<Response>((resolve, reject) => {
 				let requestMessage : RequestMessage = {
 					type: Message.Request,
@@ -179,10 +177,10 @@ function connect<T extends Connection>(inputStream: NodeJS.ReadableStream, outpu
 	return connection as T;
 }
 
-export function connectWorker(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger: ILogger): WorkerConnection {
-	return connect<WorkerConnection>(inputStream, outputStream, logger);
+export function createWorkerMessageConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger: ILogger): WorkerMessageConnection {
+	return createMessageConnection<WorkerMessageConnection>(inputStream, outputStream, logger);
 }
 
-export function connectClient(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger: ILogger): ClientConnection {
-	return connect<ClientConnection>(inputStream, outputStream, logger, true);
+export function createClientMessageConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger: ILogger): ClientMessageConnection {
+	return createMessageConnection<ClientMessageConnection>(inputStream, outputStream, logger, true);
 }

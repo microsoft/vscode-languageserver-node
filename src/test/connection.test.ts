@@ -12,7 +12,7 @@ import { Message, RequestMessage, RequestType, ResponseMessage, Response, EventT
 import { MessageWriter } from '../messageWriter';
 import { MessageReader } from '../messageReader';
 
-import * as hostConnection from '../connection';
+import * as hostConnection from '../messageConnection';
 
 function TestWritable() {
 	Writable.call(this);
@@ -135,8 +135,9 @@ function createEchoRequestHandler<T>(result: T[]) : hostConnection.IRequestHandl
 
 let Logger: hostConnection.ILogger = {
 	error: (message: string) => {},
-	log: (message: string) => {},
-	info: (message: string) => {}
+	warn: (message: string) => {},
+	info: (message: string) => {},
+	log: (message: string) => {}
 }
 
 describe('Connection', () => {
@@ -146,7 +147,7 @@ describe('Connection', () => {
 		let outputStream = new TestWritable();
 		var inputStream = new Readable();
 
-		var connection = hostConnection.connectWorker(inputStream, outputStream, Logger);
+		var connection = hostConnection.createWorkerMessageConnection(inputStream, outputStream, Logger);
 		connection.onRequest(testRequest1, testRequestHandler);
 
 		inputStream.push(newRequestString(1, testRequest1.command, newTestBody('foo')));
@@ -168,7 +169,7 @@ describe('Connection', () => {
 		let outputStream = new TestWritable();
 		var inputStream = new Readable();
 
-		var connection = hostConnection.connectWorker(inputStream, outputStream, Logger);
+		var connection = hostConnection.createWorkerMessageConnection(inputStream, outputStream, Logger);
 		connection.onRequest(testRequest1, testRequestHandler);
 		connection.onRequest(testRequest2, testRequestHandler);
 
@@ -193,7 +194,7 @@ describe('Connection', () => {
 		let outputStream = new TestWritable();
 		var inputStream = new Readable();
 
-		var connection = hostConnection.connectWorker(inputStream, outputStream, Logger);
+		var connection = hostConnection.createWorkerMessageConnection(inputStream, outputStream, Logger);
 		connection.onRequest(testRequest1, testRequestHandler);
 
 		inputStream.push(newRequestString(1, testRequest1.command, {}));
@@ -215,7 +216,7 @@ describe('Connection', () => {
 		let outputStream = new TestWritable();
 		var inputStream = new Readable();
 
-		var connection = hostConnection.connectWorker(inputStream, outputStream, Logger);
+		var connection = hostConnection.createWorkerMessageConnection(inputStream, outputStream, Logger);
 		connection.onRequest(testRequest1, testRequestHandler);
 
 		inputStream.push(newRequestString(1, testRequest2.command, {}));
@@ -238,7 +239,7 @@ describe('Connection', () => {
 		var inputStream = new Readable();
 		inputStream.push(null);
 
-		var connection = hostConnection.connectClient(inputStream, outputStream, Logger);
+		var connection = hostConnection.createClientMessageConnection(inputStream, outputStream, Logger);
 		connection.sendRequest(testRequest1, { 'foo': true });
 
 		var expected : RequestMessage[] = [
@@ -264,10 +265,10 @@ describe('Connection', () => {
 		let receivedRequests = [];
 		let receivedResponses = [];
 
-		var connection2 = hostConnection.connectWorker(duplexStream2, duplexStream1, Logger);
+		var connection2 = hostConnection.createWorkerMessageConnection(duplexStream2, duplexStream1, Logger);
 		connection2.onRequest(testRequest1, createEchoRequestHandler(receivedRequests));
 
-		var connection1 = hostConnection.connectClient(duplexStream1, duplexStream2, Logger);
+		var connection1 = hostConnection.createClientMessageConnection(duplexStream1, duplexStream2, Logger);
 		connection1.sendRequest(testRequest1, requestBody).then(response => {
 			receivedResponses.push(response);
 			assert.deepEqual(receivedRequests, [ requestBody ]);
@@ -286,12 +287,12 @@ describe('Connection', () => {
 
 		var eventBody = { 'foo': true };
 
-		var connection1 = hostConnection.connectWorker(inputStream, duplexStream, Logger);
+		var connection1 = hostConnection.createWorkerMessageConnection(inputStream, duplexStream, Logger);
 		connection1.sendEvent(testEvent, eventBody);
 
 		var resultingEvents = [];
 
-		var connection2 = hostConnection.connectClient(duplexStream, outputStream, Logger);
+		var connection2 = hostConnection.createClientMessageConnection(duplexStream, outputStream, Logger);
 		connection2.onEvent(testEvent, createEventHandler(resultingEvents));
 
 
