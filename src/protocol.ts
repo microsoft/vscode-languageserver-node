@@ -175,16 +175,16 @@ export interface PublishDiagnosticsEvent {
 }
 
 /**
- * Position in document expressed as (one-based) line and character offset.
+ * Position in document expressed as (zero-based) line and character offset.
  */
 export interface Position {
 	/**
-	 * Line Position in a document (one-based)
+	 * Line Position in a document (zero-based)
 	 */
 	line: number;
 
 	/**
-	 * Character offset on a line in a document (one-based)
+	 * Character offset on a line in a document (zero-based)
 	 */
 	character: number;
 }
