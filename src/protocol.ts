@@ -77,7 +77,7 @@ export namespace MessageType {
  * the client to display a particular message in the user interface
  */
 export namespace ShowMessageEvent {
-	export let type: EventType<ShowMessageArguments> = { event: 'shell/showMessage' };
+	export let type: EventType<ShowMessageArguments> = { event: 'window/showMessage' };
 }
 export interface ShowMessageArguments {
 	type: number;
@@ -85,7 +85,7 @@ export interface ShowMessageArguments {
 }
 
 export namespace LogMessageEvent {
-	export let type: EventType<LogMessageArguments> = { event: 'shell/logMessage' };
+	export let type: EventType<LogMessageArguments> = { event: 'window/logMessage' };
 }
 
 export interface LogMessageArguments {
