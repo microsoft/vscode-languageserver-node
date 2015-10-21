@@ -1,0 +1,13 @@
+{
+  "name": "vscode-languageserver",
+  "description": "Language server implementation for node",
+  "version": "0.10.0-pre.3",
+  "author": "Microsoft Corporation",
+  "license": "MIT",
+  "main": "./lib/index.js",
+  "typings": "./lib/index",
+  "devDependencies": {
+    "mocha": "^2.3.2",
+    "typescript": "^1.6.2"
+  }
+}

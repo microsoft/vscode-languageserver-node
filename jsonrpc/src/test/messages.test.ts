@@ -23,15 +23,15 @@ TestWritable.prototype._write = function (chunk, encoding, done) {
 }
 
 describe('Messages', () => {
-	let data: string = 'Content-Length: 46\r\n\r\n{"seq":1,"type":"request","command":"example"}'
+	let data: string = 'Content-Length: 43\r\n\r\n{"jsonrpc":"2.0","id":1,"method":"example"}'
 	it('Writing', () => {
 		let writable = new TestWritable();
 		let writer = new MessageWriter(writable, 'ascii');
 
 		let request: RequestMessage = {
-			seq: 1,
-			type: Message.Request,
-			command: 'example'
+			jsonrpc: '2.0',
+			id: 1,
+			method: 'example'
 		};
 		writer.write(request);
 		writable.end();
@@ -40,9 +40,8 @@ describe('Messages', () => {
 	it('Reading', (done) => {
 		let readable = new Readable();
 		let reader = new MessageReader(readable, (message: RequestMessage) => {
-			assert.equal(message.seq, 1);
-			assert.equal(message.type, Message.Request);
-			assert.equal(message.command, 'example');
+			assert.equal(message.id, 1);
+			assert.equal(message.method, 'example');
 			done();
 		});
 		readable.push(data);

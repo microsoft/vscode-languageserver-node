@@ -3,13 +3,12 @@
  *--------------------------------------------------------*/
 'use strict';
 
-
 export enum MessageKind {
 	Log,
 	Show
 }
 
-export class LanguageWorkerError extends Error {
+export class LanguageServerError extends Error {
 
 	private _messageKind: MessageKind;
 	public message: string;

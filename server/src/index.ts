@@ -3,24 +3,26 @@
  *--------------------------------------------------------*/
 'use strict';
 
-import { LanguageWorkerError, MessageKind } from './languageWorkerError';
-import { Response } from './messages';
+import { LanguageServerError, MessageKind } from './languageServerError';
+import { Response, IRequestHandler, INotificationHandler, MessageConnection, ServerMessageConnection, ILogger, createServerMessageConnection, ErrorCodes } from 'vscode-jsonrpc';
 import {
-		InitializeRequest, InitializeArguments, InitializeResponse, Capabilities,
-		ShutdownRequest, ShutdownArguments, ShutdownResponse,
-		ExitEvent, ExitArguments,
-		LogMessageEvent, LogMessageArguments, MessageType,
-		ShowMessageEvent, ShowMessageArguments,
-		DidChangeConfigurationEvent, DidChangeConfigurationArguments,
-		DidOpenDocumentEvent, DidOpenDocumentArguments, DidChangeDocumentEvent, DidChangeDocumentArguments, DidCloseDocumentEvent, DidCloseDocumentArguments,
-		DidChangeFilesEvent, DidChangeFilesArguments, FileEvent, FileChangeType,
-		PublishDiagnosticsEvent, PublishDiagnosticsArguments, Diagnostic, Severity, Position
+		InitializeRequest, InitializeParams, InitializeResponse, HostCapabilities, ServerCapabilities,
+		ShutdownRequest, ShutdownParams, ShutdownResponse,
+		ExitNotification, ExitParams,
+		LogMessageNotification, LogMessageParams, MessageType,
+		ShowMessageNotification, ShowMessageParams,
+		DidChangeConfigurationNotification, DidChangeConfigurationParams,
+		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams, DidCloseTextDocumentNotification, DidCloseTextDocumentParams,
+		DidChangeFilesNotification, DidChangeFilesParams, FileEvent, FileChangeType,
+		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, Severity, Position
 	} from './protocol';
-import { IRequestHandler, IEventHandler, MessageConnection, WorkerMessageConnection, createWorkerMessageConnection, ILogger } from './messageConnection';
+
+import { ISimpleTextDocument, SimpleTextDocument } from './textDocuments';
 
 // ------------- Reexport the API surface of the language worker API ----------------------
-export { Response, InitializeResponse, Diagnostic, Severity, Position, FileEvent, FileChangeType }
-export { LanguageWorkerError, MessageKind }
+export { Response, InitializeResponse, Diagnostic, Severity, Position, FileEvent, FileChangeType, ErrorCodes }
+export { LanguageServerError, MessageKind }
+export { ISimpleTextDocument }
 
 import * as fm from './files';
 export namespace Files {
@@ -32,18 +34,13 @@ export namespace Files {
 
 export type Result<T> = T | Thenable<T>;
 
-export interface IDocument {
-	uri: string;
-	getText(): string;
-}
-
 export interface IValidationRequestor {
 	all(): void;
 }
 
 export interface SingleFileValidator {
 	initialize?(rootFolder: string): Result<InitializeResponse>;
-	validate(document: IDocument): Result<Diagnostic[]>;
+	validate(document: ISimpleTextDocument): Result<Diagnostic[]>;
 	onConfigurationChange?(settings: any, requestor: IValidationRequestor): void;
 	onFileEvents?(changes: FileEvent[], requestor: IValidationRequestor): void;
 	shutdown?(): void;
@@ -65,38 +62,15 @@ function isArray(array: any): array is any[] {
 	return false;
 }
 
-class Document implements IDocument {
-
-	private _uri: string;
-	private _content: string;
-
-	constructor(uri: string, content: string) {
-		this._uri = uri;
-		this._content = content;
-	}
-
-	public get uri(): string {
-		return this._uri;
-	}
-
-	public getText(): string {
-		return this._content;
-	}
-
-	public setText(content: string): void {
-		this._content = content;
-	}
-}
-
 class DocumentManager {
 
-	private trackedDocuments : { [uri: string]: Document };
+	private trackedDocuments : { [uri: string]: SimpleTextDocument };
 
 	public constructor() {
 		this.trackedDocuments = Object.create(null);
 	}
 
-	public add(uri: string, document: Document) {
+	public add(uri: string, document: SimpleTextDocument) {
 		this.trackedDocuments[uri] = document;
 	}
 
@@ -104,11 +78,11 @@ class DocumentManager {
 		return delete this.trackedDocuments[uri];
 	}
 
-	public get(uri: string): Document {
+	public get(uri: string): SimpleTextDocument {
 		return this.trackedDocuments[uri];
 	}
 
-	public all(): Document[] {
+	public all(): SimpleTextDocument[] {
 		return Object.keys(this.trackedDocuments).map(key => this.trackedDocuments[key]);
 	}
 
@@ -172,7 +146,7 @@ class Logger implements ILogger, RemoteConsole {
 	}
 	private send(type: number, message: string) {
 		if (this.connection) {
-			this.connection.sendEvent(LogMessageEvent.type, { type, message });
+			this.connection.sendNotification(LogMessageNotification.type, { type, message });
 		}
 	}
 }
@@ -183,32 +157,32 @@ class RemoteWindowImpl implements RemoteWindow {
 	}
 
 	public showErrorMessage(message: string) {
-		this.connection.sendEvent(ShowMessageEvent.type, { type: MessageType.Error, message });
+		this.connection.sendNotification(ShowMessageNotification.type, { type: MessageType.Error, message });
 	}
 	public showWarningMessage(message: string) {
-		this.connection.sendEvent(ShowMessageEvent.type, { type: MessageType.Warning, message });
+		this.connection.sendNotification(ShowMessageNotification.type, { type: MessageType.Warning, message });
 	}
 	public showInformationMessage(message: string) {
-		this.connection.sendEvent(ShowMessageEvent.type, { type: MessageType.Info, message });
+		this.connection.sendNotification(ShowMessageNotification.type, { type: MessageType.Info, message });
 	}
 }
 
 export interface IConnection {
 
-	onInitialize(handler: IRequestHandler<InitializeArguments, InitializeResponse>): void;
-	onShutdown(handler: IRequestHandler<ShutdownArguments, ShutdownResponse>): void;
-	onExit(handler: IEventHandler<ExitArguments>): void;
+	onInitialize(handler: IRequestHandler<InitializeParams, InitializeResponse>): void;
+	onShutdown(handler: IRequestHandler<ShutdownParams, ShutdownResponse>): void;
+	onExit(handler: INotificationHandler<ExitParams>): void;
 
 	console: RemoteConsole;
 	window: RemoteWindow;
 
-	onDidChangeConfiguration(handler: IEventHandler<DidChangeConfigurationArguments>): void;
-	onDidChangeFiles(handler: IEventHandler<DidChangeFilesArguments>): void;
+	onDidChangeConfiguration(handler: INotificationHandler<DidChangeConfigurationParams>): void;
+	onDidChangeFiles(handler: INotificationHandler<DidChangeFilesParams>): void;
 
-	onDidOpenDocument(handler: IEventHandler<DidOpenDocumentArguments>): void;
-	onDidChangeDocument(handler: IEventHandler<DidChangeDocumentArguments>): void;
-	onDidCloseDocumet(handler: IEventHandler<DidCloseDocumentArguments>): void;
-	publishDiagnostics(args: PublishDiagnosticsArguments): void;
+	onDidOpenTextDocument(handler: INotificationHandler<DidOpenTextDocumentParams>): void;
+	onDidChangeTextDocument(handler: INotificationHandler<DidChangeTextDocumentParams>): void;
+	onDidCloseTextDocument(handler: INotificationHandler<DidCloseTextDocumentParams>): void;
+	publishDiagnostics(args: PublishDiagnosticsParams): void;
 
 	dispose(): void;
 }
@@ -224,11 +198,11 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
 	});
 
 	let logger = new Logger();
-	let connection = createWorkerMessageConnection(inputStream, outputStream, logger);
+	let connection = createServerMessageConnection(inputStream, outputStream, logger);
 	logger.attach(connection);
 	let remoteWindow = new RemoteWindowImpl(connection);
 
-	let shutdownHandler: IRequestHandler<ShutdownArguments, ShutdownResponse> = null;
+	let shutdownHandler: IRequestHandler<ShutdownParams, ShutdownResponse> = null;
 	connection.onRequest(ShutdownRequest.type, (args) => {
 		shutdownReceived = true;
 		if (shutdownHandler) {
@@ -240,18 +214,18 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
 	let result: IConnection = {
 		onInitialize: (handler) => connection.onRequest(InitializeRequest.type, handler),
 		onShutdown: (handler) => shutdownHandler = handler,
-		onExit: (handler) => connection.onEvent(ExitEvent.type, handler),
+		onExit: (handler) => connection.onNotification(ExitNotification.type, handler),
 
 		get console() { return logger; },
 		get window() { return remoteWindow; },
 
-		onDidChangeConfiguration: (handler) => connection.onEvent(DidChangeConfigurationEvent.type, handler),
-		onDidChangeFiles: (handler) => connection.onEvent(DidChangeFilesEvent.type, handler),
+		onDidChangeConfiguration: (handler) => connection.onNotification(DidChangeConfigurationNotification.type, handler),
+		onDidChangeFiles: (handler) => connection.onNotification(DidChangeFilesNotification.type, handler),
 
-		onDidOpenDocument: (handler) => connection.onEvent(DidOpenDocumentEvent.type, handler),
-		onDidChangeDocument: (handler) => connection.onEvent(DidChangeDocumentEvent.type, handler),
-		onDidCloseDocumet: (handler) => connection.onEvent(DidCloseDocumentEvent.type, handler),
-		publishDiagnostics: (args) => connection.sendEvent(PublishDiagnosticsEvent.type, args),
+		onDidOpenTextDocument: (handler) => connection.onNotification(DidOpenTextDocumentNotification.type, handler),
+		onDidChangeTextDocument: (handler) => connection.onNotification(DidChangeTextDocumentNotification.type, handler),
+		onDidCloseTextDocument: (handler) => connection.onNotification(DidCloseTextDocumentNotification.type, handler),
+		publishDiagnostics: (params) => connection.sendNotification(PublishDiagnosticsNotification.type, params),
 
 		dispose: () => connection.dispose()
 	}
@@ -268,14 +242,14 @@ export interface IValidatorConnection {
 
 class ValidationRequestor implements IValidationRequestor {
 	private documents: DocumentManager;
-	private _toValidate: { [uri: string]: Document };
+	private _toValidate: { [uri: string]: SimpleTextDocument };
 
 	public constructor(documents: DocumentManager) {
 		this.documents = documents;
 		this._toValidate = Object.create(null);
 	}
 
-	public get toValidate(): Document[] {
+	public get toValidate(): SimpleTextDocument[] {
 		return Object.keys(this._toValidate).map(key => this._toValidate[key]);
 	}
 
@@ -313,8 +287,8 @@ export function createValidatorConnection(inputStream: NodeJS.ReadableStream, ou
 				try {
 					func(value);
 				} catch (error) {
-					if (error instanceof LanguageWorkerError) {
-						let workerError = error as LanguageWorkerError;
+					if (error instanceof LanguageServerError) {
+						let workerError = error as LanguageServerError;
 						switch( workerError.messageKind) {
 							case MessageKind.Show:
 								messageTracker.add(workerError.message);
@@ -346,7 +320,7 @@ export function createValidatorConnection(inputStream: NodeJS.ReadableStream, ou
 			}
 		}
 
-		function validate(document: Document): void {
+		function validate(document: SimpleTextDocument): void {
 			let result = handler.validate(document);
 			doProcess(result, (diagnostics) => {
 				connection.publishDiagnostics({
@@ -359,19 +333,18 @@ export function createValidatorConnection(inputStream: NodeJS.ReadableStream, ou
 			})
 		}
 
-		function createInitializeResponse(initArgs: InitializeArguments): InitializeResponse {
-			var resultCapabilities : Capabilities = {};
-			if (initArgs.capabilities.validation) {
-				resultCapabilities.validation = true;
-			}
-			return { success: true, body: { capabilities: resultCapabilities }};
+		function createInitializeResponse(initArgs: InitializeParams): InitializeResponse {
+			var resultCapabilities : ServerCapabilities = {
+				incrementalTextDocumentSync: false
+			};
+			return { result: { capabilities: resultCapabilities }};
 		}
 
 		connection.onInitialize(initArgs => {
 			rootFolder = initArgs.rootFolder;
 			if (isFunction(handler.initialize)) {
 				return doProcess(handler.initialize(rootFolder), (response) => {
-					if (response && !response.success) {
+					if (response && response.error) {
 						return response;
 					} else {
 						return createInitializeResponse(initArgs);
@@ -393,21 +366,21 @@ export function createValidatorConnection(inputStream: NodeJS.ReadableStream, ou
 			process.exit(0);
 		});
 
-		connection.onDidOpenDocument(event => {
-			let document = new Document(event.uri, event.content);
+		connection.onDidOpenTextDocument(event => {
+			let document = new SimpleTextDocument(event.uri, event.text);
 			documents.add(event.uri, document);
 			process.nextTick(() => safeRunner(document, validate));
 		});
 
-		connection.onDidChangeDocument(event => {
+		connection.onDidChangeTextDocument(event => {
 			let document = documents.get(event.uri);
 			if (document) {
-				document.setText(event.content);
+				document.setText(event.text);
 				process.nextTick(() => safeRunner(document, validate));
 			}
 		});
 
-		connection.onDidCloseDocumet(event => {
+		connection.onDidCloseTextDocument(event => {
 			documents.remove(event.uri);
 		});
 

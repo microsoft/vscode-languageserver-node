@@ -1,0 +1,13 @@
+{
+  "name": "vscode-jsonrpc",
+  "description": "A json rpc implementation over streams",
+  "version": "0.10.0-pre.3",
+  "author": "Microsoft Corporation",
+  "license": "MIT",
+  "main": "./lib/messageConnection.js",
+  "typings": "./lib/messageConnection",
+  "devDependencies": {
+    "mocha": "^2.3.2",
+    "typescript": "^1.6.2"
+  }
+}

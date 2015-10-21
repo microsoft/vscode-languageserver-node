@@ -2,7 +2,9 @@
 	"compilerOptions": {
 		"target": "ES5",
 		"module": "commonjs",
-		"watch": false,
+		"moduleResolution": "node",
+		"watch": true,
+		"sourceMap": true,
 		"declaration": true,
 		"stripInternal": true,
 		"outDir": "../lib"
