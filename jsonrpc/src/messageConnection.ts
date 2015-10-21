@@ -6,19 +6,19 @@
 import * as is from './is';
 
 import { Message,
-	RequestMessage, Request, RequestType, isRequestMessage,
+	RequestMessage, RequestType, isRequestMessage,
 	ResponseMessage, Response, isReponseMessage, isSuccessfulResponse, isFailedResponse,
-	ErrorCodes,
-	NotificationMessage, Notification, NotificationType, isNotificationMessage
+	ErrorCodes, ErrorInfo,
+	NotificationMessage,  NotificationType, isNotificationMessage
 } from './messages';
 
 import { MessageReader, ICallback } from './messageReader';
 import { MessageWriter } from './messageWriter';
 
-export { Response, ErrorCodes, RequestType, NotificationType }
+export { Response, ErrorCodes, ErrorInfo, RequestType, NotificationType }
 
-export interface IRequestHandler<P, R extends Response> {
-	(params?: P): R | Thenable<R>;
+export interface IRequestHandler<P, R, E> {
+	(params?: P): Response<R, E> | Thenable<Response<R, E>>;
 }
 
 export interface INotificationHandler<P> {
@@ -34,7 +34,7 @@ export interface ILogger {
 
 export interface MessageConnection {
 	sendNotification<P>(type: NotificationType<P>, params?: P): void;
-	onRequest<P, R extends Response>(type: RequestType<P, R>, handler: IRequestHandler<P, R>): void;
+	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void;
 	onNotification<P>(type: NotificationType<P>, handler: INotificationHandler<P>): void;
 	dispose(): void;
 }
@@ -43,7 +43,7 @@ export interface ServerMessageConnection extends MessageConnection {
 }
 
 export interface ClientMessageConnection extends MessageConnection {
-	sendRequest<P, R extends Response>(type: RequestType<P, R>, params?: P) : Thenable<R>;
+	sendRequest<P, R, E>(type: RequestType<P, R, E>, params?: P) : Thenable<R>;
 }
 
 function createMessageConnection<T extends MessageConnection>(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger: ILogger, client: boolean = false): T {
@@ -51,8 +51,8 @@ function createMessageConnection<T extends MessageConnection>(inputStream: NodeJ
 	let sequenceNumber = 0;
 	const version: string = '2.0';
 
-	let requestHandlers : { [name: string]: IRequestHandler<any, Response> } = Object.create(null);
-	let responseHandlers : { [name: string]: { resolve: (Response) => void, reject: (error: any) => void } } = Object.create(null);
+	let requestHandlers : { [name: string]: IRequestHandler<any, any, any> } = Object.create(null);
+	let responseHandlers : { [name: string]: { method: string, resolve: (Response) => void, reject: (error: any) => void } } = Object.create(null);
 
 	let eventHandlers : { [name: string]: INotificationHandler<any> } = Object.create(null);
 
@@ -65,7 +65,7 @@ function createMessageConnection<T extends MessageConnection>(inputStream: NodeJ
 			}
 			protocolWriter.write(notificatioMessage);
 		},
-		onRequest: <P, R extends Response>(type: RequestType<P, R>, handler: IRequestHandler<P, R>) => {
+		onRequest: <P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>) => {
 			requestHandlers[type.method] = handler;
 		},
 		onNotification: <P>(type: NotificationType<P>, handler: INotificationHandler<P>) => {
@@ -75,8 +75,8 @@ function createMessageConnection<T extends MessageConnection>(inputStream: NodeJ
 		}
 	};
 	if (client) {
-		(connection as ClientMessageConnection).sendRequest = <P, R extends Response>(type: RequestType<P, R>, params: P) => {
-			return new Promise<Response>((resolve, reject) => {
+		(connection as ClientMessageConnection).sendRequest = <P, R, E>(type: RequestType<P, R, E>, params: P) => {
+			return new Promise<Response<R, E>>((resolve, reject) => {
 				let id = sequenceNumber++;
 				let requestMessage : RequestMessage = {
 					jsonrpc: version,
@@ -84,7 +84,7 @@ function createMessageConnection<T extends MessageConnection>(inputStream: NodeJ
 					method: type.method,
 					params: params
 				}
-				responseHandlers[String(id)] = { resolve, reject };
+				responseHandlers[String(id)] = { method: type.method, resolve, reject };
 				protocolWriter.write(requestMessage);
 			});
 		}
@@ -93,7 +93,7 @@ function createMessageConnection<T extends MessageConnection>(inputStream: NodeJ
 	inputStream.on('close', () => outputStream.end());
 
 	function handleRequest(requestMessage: RequestMessage) {
-		function reply(response: Response): void {
+		function reply(response: Response<any, any>): void {
 			let message: ResponseMessage = {
 				jsonrpc: version,
 				id: requestMessage.id
@@ -115,7 +115,7 @@ function createMessageConnection<T extends MessageConnection>(inputStream: NodeJ
 		if (requestHandler) {
 			try {
 				let handlerResult = requestHandler(requestMessage.params);
-				let promise = <Thenable<Response>> handlerResult;
+				let promise = <Thenable<Response<any, any>>> handlerResult;
 				if (!promise) {
 					reply({ result: {} });
 				} else if (promise.then) {
@@ -131,7 +131,7 @@ function createMessageConnection<T extends MessageConnection>(inputStream: NodeJ
 						}
 					});
 				} else {
-					reply(<Response>handlerResult);
+					reply(<Response<any, any>>handlerResult);
 				}
 			} catch (error) {
 				if (error && is.string(error.message)) {
@@ -149,8 +149,22 @@ function createMessageConnection<T extends MessageConnection>(inputStream: NodeJ
 		let key = String(responseMessage.id);
 		var responseHandler = responseHandlers[key];
 		if (responseHandler) {
-			responseHandler.resolve(responseMessage);
-			delete responseHandlers[String(responseMessage.id)];
+			try {
+				if (responseMessage.error) {
+					responseHandler.reject(responseMessage.error);
+				} else if (responseMessage.result) {
+					responseHandler.resolve(responseMessage.result);
+				} else {
+					responseHandler.resolve(undefined);
+				}
+				delete responseHandlers[key];
+			} catch (error) {
+				if (error.message) {
+					 logger.error(`Response handler '${responseHandler.method}' failed with message: ${error.message}`);
+				} else {
+					logger.error(`Response handler '${responseHandler.method}' failed unexpectedly.`);
+				}
+			}
 		}
 	}
 

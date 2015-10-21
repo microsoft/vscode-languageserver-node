@@ -28,3 +28,7 @@ export function string(value: any): value is string {
 export function number(value: any): value is number {
 	return toString.call(value) === '[object Number]';
 }
+
+export function error(value: any): value is Error {
+	return toString.call(value) === '[object Error]';
+}

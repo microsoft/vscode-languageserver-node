@@ -33,20 +33,9 @@ export interface Message {
 }
 
 /**
- * A Json RPC request message
- */
-export interface Request {
-
-	/**
-	 * The method's params
-	 */
-	params?: any
-}
-
-/**
  * Request message
  */
-export interface RequestMessage extends Message, Request {
+export interface RequestMessage extends Message {
 
 	/**
 	 * The request id;
@@ -57,13 +46,11 @@ export interface RequestMessage extends Message, Request {
 	 * The method to be invoked
 	 */
 	method: string;
-}
 
-/**
- * A interface to type the request parameter / response pair
- */
-export interface RequestType<P, R extends Response> {
-	method: string;
+	/**
+	 * The method's params
+	 */
+	params?: any
 }
 
 /**
@@ -83,7 +70,7 @@ export namespace ErrorCodes {
  * A error object return in a response in case a request
  * has failed.
  */
-export interface ErrorInfo {
+export interface ErrorInfo<D> {
 	/**
 	 * A number indicating the error type that occured
 	 */
@@ -98,10 +85,31 @@ export interface ErrorInfo {
 	 * A Primitive or Structured value that contains additional
 	 * information about the error. Can be omitted;
 	 */
-	data?: any;
+	data?: D;
 }
 
-export interface Response {
+export interface Response<R, E> {
+	/**
+	 * The result of a request. This can be omitted in
+	 * the case of an error
+	 */
+	result?: R;
+
+	/**
+	 * The error object in case a request fails.
+	 */
+	error?: ErrorInfo<E>;
+}
+
+/**
+ * A response message.
+ */
+export interface ResponseMessage extends Message {
+	/**
+	 * The request id;
+	 */
+	id: number | string;
+
 	/**
 	 * The result of a request. This can be omitted in
 	 * the case of an error
@@ -111,34 +119,29 @@ export interface Response {
 	/**
 	 * The error object in case a request fails.
 	 */
-	error?: ErrorInfo;
+	error?: ErrorInfo<any>;
 }
 
 /**
- * A response message.
+ * A interface to type the request parameter / response pair
  */
-export interface ResponseMessage extends Message, Response {
-	/**
-	 * The request id;
-	 */
-	id: number | string;
-}
-
-export interface Notification {
-	/**
-	 * The notification's params
-	 */
-	params?: any
+export interface RequestType<P, R, E> {
+	method: string;
 }
 
 /**
  * Notification Message
  */
-export interface NotificationMessage extends Message, Notification {
+export interface NotificationMessage extends Message {
 	/**
 	 * The method to be invoked
 	 */
 	method: string;
+
+	/**
+	 * The notification's params
+	 */
+	params?: any
 }
 
 export interface NotificationType<P> {
@@ -169,17 +172,17 @@ export function isReponseMessage(message: Message): message is ResponseMessage {
 	return candidate && (is.defined(candidate.result) || is.defined(candidate.error)) && (is.string(candidate.id) || is.number(candidate.id));
 }
 
-export function isResponse(value: any): value is Response {
-	let candidate = value as Response;
+export function isResponse(value: any): boolean {
+	let candidate = value as Response<any, any>;
 	return candidate && (is.defined(candidate.result) || is.defined(candidate.error));
 }
 
-export function isFailedResponse(value: any): value is Response {
-	let candidate = value as Response;
+export function isFailedResponse(value: any): boolean {
+	let candidate = value as Response<any, any>;
 	return candidate && is.defined(candidate.error) && is.undefined(candidate.result);
 }
 
-export function isSuccessfulResponse(value: any): value is Response {
-	let candidate = value as Response;
+export function isSuccessfulResponse(value: any): boolean {
+	let candidate = value as Response<any, any>;
 	return candidate && is.defined(candidate.result) && is.undefined(candidate.error);
 }

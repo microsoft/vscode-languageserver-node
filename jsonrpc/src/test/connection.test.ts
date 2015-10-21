@@ -83,7 +83,7 @@ function assertMessages(resultData: string, expected: Message[], done: MochaDone
 	var actual : Message[] = [];
 	new MessageReader(resultStream, (res) => {
 		if (isFailedResponse(res)) {
-			delete (<Response>res).error.message;
+			delete (<Response<any, any>>res).error.message;
 		}
 		actual.push(res);
 	});
@@ -97,16 +97,16 @@ function assertMessages(resultData: string, expected: Message[], done: MochaDone
 	}, 10);
 }
 
-var testRequest1: RequestType<any, Response> = { method: 'testCommand1' };
-var testRequest2: RequestType<any, Response> = { method: 'testCommand2' };
+var testRequest1: RequestType<any, any, any> = { method: 'testCommand1' };
+var testRequest2: RequestType<any, any, any> = { method: 'testCommand2' };
 function newParams(content: string)  {
 	return { documents: [ { content: content } ]};
 };
 
-function testRequestHandler(args: any) : Response {
-	if (args.documents && args.documents.length === 1 && args.documents[0].content) {
+function testRequestHandler(params: any) : Response<any, any> {
+	if (params.documents && params.documents.length === 1 && params.documents[0].content) {
 		return {
-			result: args.documents[0].content
+			result: params.documents[0].content
 		};
 	} else {
 		return {
@@ -125,8 +125,8 @@ function createEventHandler<T>(result: T[]) : hostConnection.INotificationHandle
 	}
 };
 
-function createEchoRequestHandler<T>(result: T[]) : hostConnection.IRequestHandler<T, Response> {
-	return (param: T): Response => {
+function createEchoRequestHandler<P>(result: P[]) : hostConnection.IRequestHandler<P, any, any> {
+	return (param: P): Response<any, any> => {
 		result.push(param);
 		return {
 			result: param

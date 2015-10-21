@@ -6,8 +6,8 @@
 import { LanguageServerError, MessageKind } from './languageServerError';
 import { Response, IRequestHandler, INotificationHandler, MessageConnection, ServerMessageConnection, ILogger, createServerMessageConnection, ErrorCodes } from 'vscode-jsonrpc';
 import {
-		InitializeRequest, InitializeParams, InitializeResponse, HostCapabilities, ServerCapabilities,
-		ShutdownRequest, ShutdownParams, ShutdownResponse,
+		InitializeRequest, InitializeParams, InitializeResult, InitializeError, HostCapabilities, ServerCapabilities,
+		ShutdownRequest, ShutdownParams,
 		ExitNotification, ExitParams,
 		LogMessageNotification, LogMessageParams, MessageType,
 		ShowMessageNotification, ShowMessageParams,
@@ -20,7 +20,7 @@ import {
 import { ISimpleTextDocument, SimpleTextDocument } from './textDocuments';
 
 // ------------- Reexport the API surface of the language worker API ----------------------
-export { Response, InitializeResponse, Diagnostic, Severity, Position, FileEvent, FileChangeType, ErrorCodes }
+export { Response, InitializeResult, InitializeError, Diagnostic, Severity, Position, FileEvent, FileChangeType, ErrorCodes }
 export { LanguageServerError, MessageKind }
 export { ISimpleTextDocument }
 
@@ -39,7 +39,7 @@ export interface IValidationRequestor {
 }
 
 export interface SingleFileValidator {
-	initialize?(rootFolder: string): Result<InitializeResponse>;
+	initialize?(rootFolder: string): Result<Response<InitializeResult, InitializeError>>;
 	validate(document: ISimpleTextDocument): Result<Diagnostic[]>;
 	onConfigurationChange?(settings: any, requestor: IValidationRequestor): void;
 	onFileEvents?(changes: FileEvent[], requestor: IValidationRequestor): void;
@@ -169,8 +169,8 @@ class RemoteWindowImpl implements RemoteWindow {
 
 export interface IConnection {
 
-	onInitialize(handler: IRequestHandler<InitializeParams, InitializeResponse>): void;
-	onShutdown(handler: IRequestHandler<ShutdownParams, ShutdownResponse>): void;
+	onInitialize(handler: IRequestHandler<InitializeParams, InitializeResult, InitializeError>): void;
+	onShutdown(handler: IRequestHandler<ShutdownParams, void, void>): void;
 	onExit(handler: INotificationHandler<ExitParams>): void;
 
 	console: RemoteConsole;
@@ -202,7 +202,7 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
 	logger.attach(connection);
 	let remoteWindow = new RemoteWindowImpl(connection);
 
-	let shutdownHandler: IRequestHandler<ShutdownParams, ShutdownResponse> = null;
+	let shutdownHandler: IRequestHandler<ShutdownParams, void, void> = null;
 	connection.onRequest(ShutdownRequest.type, (args) => {
 		shutdownReceived = true;
 		if (shutdownHandler) {
@@ -333,7 +333,7 @@ export function createValidatorConnection(inputStream: NodeJS.ReadableStream, ou
 			})
 		}
 
-		function createInitializeResponse(initArgs: InitializeParams): InitializeResponse {
+		function createInitializeResponse(initArgs: InitializeParams): Response<InitializeResult, InitializeError> {
 			var resultCapabilities : ServerCapabilities = {
 				incrementalTextDocumentSync: false
 			};

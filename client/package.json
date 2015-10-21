@@ -1,6 +1,6 @@
 {
-  "name": "vscode-languageserver",
-  "description": "Language server implementation for node",
+  "name": "vscode-languageclient",
+  "description": "VSCode Language client implementation",
   "version": "0.10.0-pre.4",
   "author": "Microsoft Corporation",
   "license": "MIT",
