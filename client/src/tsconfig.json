@@ -4,7 +4,8 @@
 		"module": "commonjs",
 		"moduleResolution": "node",
 		"watch": true,
-		"sourceMap": true,
+		"sourceMap": false,
+		"inlineSources": false,
 		"declaration": true,
 		"stripInternal": true,
 		"outDir": "../lib"

@@ -1,16 +1,17 @@
 {
   "name": "vscode-languageclient",
   "description": "VSCode Language client implementation",
-  "version": "0.10.0-pre.4",
+  "version": "0.10.0-pre.5",
   "author": "Microsoft Corporation",
   "license": "MIT",
   "main": "./lib/index.js",
   "typings": "./lib/index",
   "devDependencies": {
     "mocha": "^2.3.2",
-    "typescript": "^1.6.2"
+    "typescript": "^1.6.2",
+    "vscode": "next"
   },
   "dependencies": {
-    "vscode-jsonrpc": "^0.10.0-pre.4"
+    "vscode-jsonrpc": "next"
   }
 }

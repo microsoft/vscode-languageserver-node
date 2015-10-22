@@ -3,6 +3,8 @@
  *--------------------------------------------------------*/
 'use strict';
 
+import { workspace, window, languages, extensions, TextDocumentChangeEvent, TextDocument, Disposable } from 'vscode';
+
 import { Response, IRequestHandler, INotificationHandler, MessageConnection, ServerMessageConnection, ILogger, createClientMessageConnection, ErrorCodes, ErrorInfo } from 'vscode-jsonrpc';
 import {
 		InitializeRequest, InitializeParams, InitializeResult, InitializeError, HostCapabilities, ServerCapabilities,
@@ -16,12 +18,14 @@ import {
 		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, Severity, Position
 	} from './protocol';
 
+import { asOpenTextDocumentParams, asChangeTextDocumentParams, asCloseTextDocumentParams, asDiagnostics } from './converters';
+
 export interface IConnection {
 
-	initialize(params: InitializeParams): TThenable<InitializeResult, ErrorInfo<InitializeError>>;
+	initialize(params: InitializeParams): Thenable<InitializeResult>;
 	shutdown(params: ShutdownParams): Thenable<void>;
 	exit(params: ExitParams): void;
-	
+
 	onLogMessage(handle: INotificationHandler<LogMessageParams>): void;
 	onShowMessage(handler: INotificationHandler<ShowMessageParams>): void;
 
@@ -51,7 +55,6 @@ class Logger implements ILogger {
 	}
 }
 
-
 export function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream): IConnection {
 	let logger = new Logger();
 	let connection = createClientMessageConnection(inputStream, outputStream, logger);
@@ -59,13 +62,13 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
 		initialize: (params: InitializeParams) => connection.sendRequest(InitializeRequest.type, params),
 		shutdown: (params: ShutdownParams) => connection.sendRequest(ShutdownRequest.type, params),
 		exit: (params: ExitParams) => connection.sendNotification(ExitNotification.type, params),
-		
+
 		onLogMessage: (handler: INotificationHandler<LogMessageParams>) => connection.onNotification(LogMessageNotification.type, handler),
 		onShowMessage: (handler: INotificationHandler<ShowMessageParams>) => connection.onNotification(ShowMessageNotification.type, handler),
-		
+
 		didChangeConfiguration: (params: DidChangeConfigurationParams) => connection.sendNotification(DidChangeConfigurationNotification.type, params),
 		didChangeFiles: (params: DidChangeFilesParams) => connection.sendNotification(DidChangeFilesNotification.type, params),
-		
+
 		didOpenTextDocument: (params: DidOpenTextDocumentParams) => connection.sendNotification(DidOpenTextDocumentNotification.type, params),
 		didChangeTextDocument: (params: DidChangeTextDocumentParams) => connection.sendNotification(DidChangeTextDocumentNotification.type, params),
 		didCloseTextDocument: (params: DidCloseTextDocumentParams) => connection.sendNotification(DidCloseTextDocumentNotification.type, params),
@@ -77,20 +80,80 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
 	return result;
 }
 
+export interface ValidationCustomization {
+	syncTextDocument(textDocument: TextDocument): boolean;
+}
+
 export class ValidationClient {
-	
+
+	private customization: ValidationCustomization;
+
 	private connection: IConnection;
 	private capabilites: ServerCapabilities;
-	
-	public constructor() {
+
+	private disposables: Disposable[];
+	private diagnostics: { [uri: string]: Disposable };
+
+	public constructor(customization: ValidationCustomization) {
+		this.customization = customization;
+		this.disposables = [];
+		this.diagnostics = Object.create(null);
 	}
-	
-	private start() {
-		let initParams: InitializeParams = { rootFolder: vscode.workspace.getPath(), capabilities: { } };
-		this.connection.initialize(initParams).then((result) => {
-			this.capabilites = result.capabilities;
-		}, (error) => {
-			error.data.retry;
+
+	private start(): void {
+		this.connection.onDiagnostics(params => this.handleDiagnostics(params));
+		this.initialize().then(() => {
+			extensions.onDidChangeConfiguration(this.onDidChangeConfiguration, this, this.disposables);
+			workspace.onDidOpenTextDocument(this.onDidOpenTextDoument, this, this.disposables);
+			workspace.onDidChangeTextDocument(this.onDidChangeTextDocument, this, this.disposables);
+			workspace.onDidCloseTextDocument(this.onDidCloseTextDoument, this, this.disposables);
+		}, (error: ErrorInfo<InitializeError>) => {
+			window.showErrorMessage(error.message).then(() => {
+				// REtry initialize
+			});
 		});
+	}
+
+	private initialize(): Thenable<InitializeResult> {
+		let initParams: InitializeParams = { rootFolder: workspace.getPath(), capabilities: { } };
+		return this.connection.initialize(initParams).then((result) => {
+			this.capabilites = result.capabilities;
+			return result;
+		});
+	}
+
+	private onDidChangeConfiguration(event): void {
+	}
+
+	private onDidOpenTextDoument(textDocument: TextDocument): void {
+		if (!this.customization.syncTextDocument(textDocument)) {
+			return;
+		}
+
+		this.connection.didOpenTextDocument(asOpenTextDocumentParams(textDocument));
+	}
+
+	private onDidChangeTextDocument(event: TextDocumentChangeEvent): void {
+		if (!this.customization.syncTextDocument(event.document)) {
+			return;
+		}
+		let uri: string = event.document.getUri().toString();
+		if (this.capabilites.incrementalTextDocumentSync) {
+			asChangeTextDocumentParams(event).forEach(param => this.connection.didChangeTextDocument(param));
+		} else {
+			this.connection.didChangeTextDocument(asChangeTextDocumentParams(event.document));
+		}
+	}
+
+	private onDidCloseTextDoument(textDocument: TextDocument): void {
+		if (!this.customization.syncTextDocument(textDocument)) {
+			return;
+		}
+		this.connection.didCloseTextDocument(asCloseTextDocumentParams(textDocument));
+	}
+
+	private handleDiagnostics(params: PublishDiagnosticsParams) {
+		let diagnostics = asDiagnostics(params);
+		languages.addDiagnostics(diagnostics);
 	}
 }

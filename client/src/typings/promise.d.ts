@@ -35,11 +35,6 @@ interface Thenable<R> {
     then<TResult>(onfulfilled?: (value: R) => TResult | Thenable<TResult>, onrejected?: (reason: any) => void): Thenable<TResult>;
 }
 
-interface TThenable<R, E> {
-    then<TResult>(onfulfilled?: (value: R) => TResult | Thenable<TResult>, onrejected?: (reason: E) => TResult | Thenable<TResult>): Thenable<TResult>;
-    then<TResult>(onfulfilled?: (value: R) => TResult | Thenable<TResult>, onrejected?: (reason: E) => void): Thenable<TResult>;
-}
-
 /**
  * Represents the completion of an asynchronous operation
  */
