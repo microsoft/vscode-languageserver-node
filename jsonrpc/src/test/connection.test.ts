@@ -264,16 +264,16 @@ describe('Connection', () => {
 		let params = { 'foo': [ { bar: 1 } ]};
 
 		let receivedRequests = [];
-		let receivedResponses = [];
+		let receivedResults = [];
 
 		var connection2 = hostConnection.createServerMessageConnection(duplexStream2, duplexStream1, Logger);
 		connection2.onRequest(testRequest1, createEchoRequestHandler(receivedRequests));
 
 		var connection1 = hostConnection.createClientMessageConnection(duplexStream1, duplexStream2, Logger);
-		connection1.sendRequest(testRequest1, params).then(response => {
-			receivedResponses.push(response);
+		connection1.sendRequest(testRequest1, params).then(result => {
+			receivedResults.push(result);
 			assert.deepEqual(receivedRequests, [ params ]);
-			assert.deepEqual(receivedResponses.map(selectProperties(['result'])), [ { result: params } ]);
+			assert.deepEqual(receivedResults, [ params ]);
 			done();
 		});
 	});
@@ -295,8 +295,6 @@ describe('Connection', () => {
 
 		var connection2 = hostConnection.createClientMessageConnection(duplexStream, outputStream, Logger);
 		connection2.onNotification(testEvent, createEventHandler(resultingEvents));
-
-
 		setTimeout(() => {
 			assert.deepEqual(resultingEvents, [ params ]);
 			done();
