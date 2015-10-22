@@ -8,8 +8,7 @@ import * as assert from 'assert';
 import { Duplex, Writable, Readable, Transform } from 'stream';
 import { inherits } from 'util';
 
-import { Message, RequestMessage, RequestType, ResponseMessage, Response, NotificationType, isReponseMessage,
-	isFailedResponse, ErrorCodes } from '../messages';
+import { Message, RequestMessage, RequestType, ResponseMessage, ResponseError, NotificationType, isReponseMessage, ErrorCodes } from '../messages';
 import { MessageWriter } from '../messageWriter';
 import { MessageReader } from '../messageReader';
 
@@ -82,8 +81,8 @@ function assertMessages(resultData: string, expected: Message[], done: MochaDone
 	resultStream.push(null);
 	var actual : Message[] = [];
 	new MessageReader(resultStream, (res) => {
-		if (isFailedResponse(res)) {
-			delete (<Response<any, any>>res).error.message;
+		if ((<ResponseMessage>res).error) {
+			delete (<ResponseMessage>res).error.message;
 		}
 		actual.push(res);
 	});
@@ -103,18 +102,11 @@ function newParams(content: string)  {
 	return { documents: [ { content: content } ]};
 };
 
-function testRequestHandler(params: any) : Response<any, any> {
+function testRequestHandler(params: any) : any | ResponseError<void> {
 	if (params.documents && params.documents.length === 1 && params.documents[0].content) {
-		return {
-			result: params.documents[0].content
-		};
+		return params.documents[0].content;
 	} else {
-		return {
-			error: {
-				code: ErrorCodes.InvalidRequest,
-				message: "invalid"
-			}
-		};
+		return new ResponseError<void>(ErrorCodes.InvalidRequest, "invalid");
 	}
 };
 
@@ -126,11 +118,9 @@ function createEventHandler<T>(result: T[]) : hostConnection.INotificationHandle
 };
 
 function createEchoRequestHandler<P>(result: P[]) : hostConnection.IRequestHandler<P, any, any> {
-	return (param: P): Response<any, any> => {
+	return (param: P): any | ResponseError<any> => {
 		result.push(param);
-		return {
-			result: param
-		};
+		return param;
 	}
 };
 

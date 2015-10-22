@@ -7,18 +7,17 @@ import * as is from './is';
 
 import { Message,
 	RequestMessage, RequestType, isRequestMessage,
-	ResponseMessage, Response, isReponseMessage, isSuccessfulResponse, isFailedResponse,
-	ErrorCodes, ErrorInfo,
+	ResponseMessage, isReponseMessage, ResponseError, ErrorCodes,
 	NotificationMessage,  NotificationType, isNotificationMessage
 } from './messages';
 
 import { MessageReader, ICallback } from './messageReader';
 import { MessageWriter } from './messageWriter';
 
-export { Response, ErrorCodes, ErrorInfo, RequestType, NotificationType }
+export { ErrorCodes, ResponseError, RequestType, NotificationType }
 
 export interface IRequestHandler<P, R, E> {
-	(params?: P): Response<R, E> | Thenable<Response<R, E>>;
+	(params?: P): R | ResponseError<E> | Thenable<R | ResponseError<E>>;
 }
 
 export interface INotificationHandler<P> {
@@ -76,7 +75,7 @@ function createMessageConnection<T extends MessageConnection>(inputStream: NodeJ
 	};
 	if (client) {
 		(connection as ClientMessageConnection).sendRequest = <P, R, E>(type: RequestType<P, R, E>, params: P) => {
-			return new Promise<Response<R, E>>((resolve, reject) => {
+			return new Promise<R | ResponseError<E>>((resolve, reject) => {
 				let id = sequenceNumber++;
 				let requestMessage : RequestMessage = {
 					jsonrpc: version,
@@ -93,21 +92,32 @@ function createMessageConnection<T extends MessageConnection>(inputStream: NodeJ
 	inputStream.on('close', () => outputStream.end());
 
 	function handleRequest(requestMessage: RequestMessage) {
-		function reply(response: Response<any, any>): void {
+		function reply(resultOrError: any | ResponseError<any>): void {
 			let message: ResponseMessage = {
 				jsonrpc: version,
 				id: requestMessage.id
-			}
-			if (is.defined(response.error)) {
-				message.error = response.error;
-			} else if (is.defined(response.result)) {
-				message.result = response.result;
+			};
+			if (resultOrError instanceof ResponseError) {
+				message.error = (<ResponseError<any>>resultOrError).toJson();
 			} else {
-				message.error = {
-					code: ErrorCodes.InvalidRequest,
-					message: `The request ${requestMessage.method} did neither return a result nor a error.`
-				}
+				message.result = resultOrError;
 			}
+			protocolWriter.write(message);
+		}
+		function replyError(error: ResponseError<any>) {
+			let message: ResponseMessage = {
+				jsonrpc: version,
+				id: requestMessage.id,
+				error: error.toJson()
+			};
+			protocolWriter.write(message);
+		}
+		function replySuccess(result: any) {
+			let message: ResponseMessage = {
+				jsonrpc: version,
+				id: requestMessage.id,
+				result: result
+			};
 			protocolWriter.write(message);
 		}
 
@@ -115,33 +125,35 @@ function createMessageConnection<T extends MessageConnection>(inputStream: NodeJ
 		if (requestHandler) {
 			try {
 				let handlerResult = requestHandler(requestMessage.params);
-				let promise = <Thenable<Response<any, any>>> handlerResult;
+				let promise = <Thenable<any | ResponseError<any>>>handlerResult;
 				if (!promise) {
-					reply({ result: {} });
+					replySuccess({});
 				} else if (promise.then) {
-					promise.then(response => {
-						reply(response);
+					promise.then((resultOrError): any | ResponseError<any>  => {
+						reply(resultOrError);
 					}, error => {
-						if (isFailedResponse(error)) {
-							reply(error);
+						if (error instanceof ResponseError) {
+							replyError(<ResponseError<any>>error);
 						} else if (error && is.string(error.message)) {
-							reply( { error: { code: ErrorCodes.InternalError, message: `Request ${requestMessage.method} failed with message: ${error.message}` }});
+							replyError(new ResponseError<void>(ErrorCodes.InternalError, `Request ${requestMessage.method} failed with message: ${error.message}`));
 						} else {
-							reply( { error: { code: ErrorCodes.InternalError, message: `Request ${requestMessage.method} failed unexpectedly without providing any details.` }}) ;
+							replyError(new ResponseError<void>(ErrorCodes.InternalError, `Request ${requestMessage.method} failed unexpectedly without providing any details.`));
 						}
 					});
 				} else {
-					reply(<Response<any, any>>handlerResult);
+					reply(handlerResult);
 				}
 			} catch (error) {
-				if (error && is.string(error.message)) {
-					reply( { error: { code: ErrorCodes.InternalError, message: `Request ${requestMessage.method} failed with message: ${error.message}` }});
+				if (error instanceof ResponseError) {
+					reply(<ResponseError<any>>error);
+				} else if (error && is.string(error.message)) {
+					replyError(new ResponseError<void>(ErrorCodes.InternalError, `Request ${requestMessage.method} failed with message: ${error.message}`));
 				} else {
-					reply( { error: { code: ErrorCodes.InternalError, message: `Request ${requestMessage.method} failed unexpectedly without providing any details.` }}) ;
+					replyError(new ResponseError<void>(ErrorCodes.InternalError, `Request ${requestMessage.method} failed unexpectedly without providing any details.`));
 				}
 			}
 		} else {
-			reply({ error: { code: ErrorCodes.MethodNotFound, message: `Unhandled method ${requestMessage.method}` } });
+			replyError(new ResponseError<void>(ErrorCodes.MethodNotFound, `Unhandled method ${requestMessage.method}`));
 		}
 	}
 

@@ -66,11 +66,7 @@ export namespace ErrorCodes {
 	export const serverErrorEnd: number = -32000;
 }
 
-/**
- * A error object return in a response in case a request
- * has failed.
- */
-export interface ErrorInfo<D> {
+export interface ResponseErrorLiteral<D> {
 	/**
 	 * A number indicating the error type that occured
 	 */
@@ -88,17 +84,37 @@ export interface ErrorInfo<D> {
 	data?: D;
 }
 
-export interface Response<R, E> {
-	/**
-	 * The result of a request. This can be omitted in
-	 * the case of an error
-	 */
-	result?: R;
+/**
+ * A error object return in a response in case a request
+ * has failed.
+ */
+export class ResponseError<D> extends Error {
 
-	/**
-	 * The error object in case a request fails.
-	 */
-	error?: ErrorInfo<E>;
+	public code: number;
+
+	public message: string;
+
+	public data: D;
+
+	constructor(code: number, message: string, data?: D) {
+		super(message);
+		this.code = code;
+		this.message = message;
+		if (is.defined(data)) {
+			this.data = data;
+		}
+	}
+
+	public toJson(): ResponseErrorLiteral<D> {
+		let result: ResponseErrorLiteral<D> = {
+			code: this.code,
+			message: this.message
+		};
+		if (is.defined(this.data)) {
+			result.data = this.data
+		};
+		return result;
+	}
 }
 
 /**
@@ -119,7 +135,7 @@ export interface ResponseMessage extends Message {
 	/**
 	 * The error object in case a request fails.
 	 */
-	error?: ErrorInfo<any>;
+	error?: ResponseErrorLiteral<any>;
 }
 
 /**
@@ -170,19 +186,4 @@ export function isNotificationMessage(message: Message): message is Notification
 export function isReponseMessage(message: Message): message is ResponseMessage {
 	let candidate = <ResponseMessage>message;
 	return candidate && (is.defined(candidate.result) || is.defined(candidate.error)) && (is.string(candidate.id) || is.number(candidate.id));
-}
-
-export function isResponse(value: any): boolean {
-	let candidate = value as Response<any, any>;
-	return candidate && (is.defined(candidate.result) || is.defined(candidate.error));
-}
-
-export function isFailedResponse(value: any): boolean {
-	let candidate = value as Response<any, any>;
-	return candidate && is.defined(candidate.error) && is.undefined(candidate.result);
-}
-
-export function isSuccessfulResponse(value: any): boolean {
-	let candidate = value as Response<any, any>;
-	return candidate && is.defined(candidate.result) && is.undefined(candidate.error);
 }
