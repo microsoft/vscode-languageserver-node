@@ -3,7 +3,7 @@
  *--------------------------------------------------------*/
 'use strict';
 
-import { Response, RequestType, NotificationType } from 'vscode-jsonrpc';
+import { RequestType, NotificationType } from 'vscode-jsonrpc';
 
 export interface HostCapabilities {
 }

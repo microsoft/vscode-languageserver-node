@@ -4,7 +4,7 @@
 'use strict';
 
 import { LanguageServerError, MessageKind } from './languageServerError';
-import { Response, IRequestHandler, INotificationHandler, MessageConnection, ServerMessageConnection, ILogger, createServerMessageConnection, ErrorCodes } from 'vscode-jsonrpc';
+import { IRequestHandler, INotificationHandler, MessageConnection, ServerMessageConnection, ILogger, createServerMessageConnection, ResponseError, ErrorCodes } from 'vscode-jsonrpc';
 import {
 		InitializeRequest, InitializeParams, InitializeResult, InitializeError, HostCapabilities, ServerCapabilities,
 		ShutdownRequest, ShutdownParams,
@@ -20,7 +20,7 @@ import {
 import { ISimpleTextDocument, SimpleTextDocument } from './textDocuments';
 
 // ------------- Reexport the API surface of the language worker API ----------------------
-export { Response, InitializeResult, InitializeError, Diagnostic, Severity, Position, FileEvent, FileChangeType, ErrorCodes }
+export { InitializeResult, InitializeError, Diagnostic, Severity, Position, FileEvent, FileChangeType, ErrorCodes }
 export { LanguageServerError, MessageKind }
 export { ISimpleTextDocument }
 
@@ -39,7 +39,7 @@ export interface IValidationRequestor {
 }
 
 export interface SingleFileValidator {
-	initialize?(rootFolder: string): Result<Response<InitializeResult, InitializeError>>;
+	initialize?(rootFolder: string): Result<InitializeResult | ResponseError<InitializeError>>;
 	validate(document: ISimpleTextDocument): Result<Diagnostic[]>;
 	onConfigurationChange?(settings: any, requestor: IValidationRequestor): void;
 	onFileEvents?(changes: FileEvent[], requestor: IValidationRequestor): void;
@@ -203,12 +203,12 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
 	let remoteWindow = new RemoteWindowImpl(connection);
 
 	let shutdownHandler: IRequestHandler<ShutdownParams, void, void> = null;
-	connection.onRequest(ShutdownRequest.type, (args) => {
+	connection.onRequest(ShutdownRequest.type, (params) => {
 		shutdownReceived = true;
 		if (shutdownHandler) {
-			return shutdownHandler(args)
+			return shutdownHandler(params);
 		} else {
-			return { success: true };
+			return undefined;
 		}
 	});
 	let result: IConnection = {
@@ -333,33 +333,33 @@ export function createValidatorConnection(inputStream: NodeJS.ReadableStream, ou
 			})
 		}
 
-		function createInitializeResponse(initArgs: InitializeParams): Response<InitializeResult, InitializeError> {
+		function createInitializeResult(initArgs: InitializeParams): InitializeResult {
 			var resultCapabilities : ServerCapabilities = {
 				incrementalTextDocumentSync: false
 			};
-			return { result: { capabilities: resultCapabilities }};
+			return { capabilities: resultCapabilities };
 		}
 
 		connection.onInitialize(initArgs => {
 			rootFolder = initArgs.rootFolder;
 			if (isFunction(handler.initialize)) {
-				return doProcess(handler.initialize(rootFolder), (response) => {
-					if (response && response.error) {
-						return response;
+				return doProcess(handler.initialize(rootFolder), (resultOrError) => {
+					if (resultOrError) {
+						return resultOrError;
 					} else {
-						return createInitializeResponse(initArgs);
+						return createInitializeResult(initArgs);
 					}
 				});
 			} else {
-				return createInitializeResponse(initArgs);
+				return createInitializeResult(initArgs);
 			}
 		});
 
-		connection.onShutdown(shutdownArgs => {
+		connection.onShutdown(params => {
 			if (isFunction(handler.shutdown)) {
 				handler.shutdown();
 			}
-			return { success: true };
+			return undefined;
 		});
 
 		connection.onExit(() => {
