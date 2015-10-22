@@ -217,9 +217,10 @@ export interface PublishDiagnosticsParams {
 }
 
 export namespace Severity {
-	export let Error: number = 1;
-	export let Warning: number = 2;
-	export let Info: number = 3;
+	export let Error: number = 0;
+	export let Warning: number = 1;
+	export let Information: number = 2;
+	export let Hint: number = 3;
 }
 
 /**
