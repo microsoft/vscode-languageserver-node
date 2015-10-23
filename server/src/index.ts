@@ -20,7 +20,7 @@ import {
 import { ISimpleTextDocument, SimpleTextDocument } from './textDocuments';
 
 // ------------- Reexport the API surface of the language worker API ----------------------
-export { InitializeResult, InitializeError, Diagnostic, Severity, Position, FileEvent, FileChangeType, ErrorCodes }
+export { InitializeResult, InitializeError, Diagnostic, Severity, Position, FileEvent, FileChangeType, ErrorCodes, ResponseError }
 export { LanguageServerError, MessageKind }
 export { ISimpleTextDocument }
 

@@ -103,12 +103,8 @@ export class MessageReader {
 		this.buffer = new MessageBuffer(encoding);
 		this.callback = callback;
 		this.nextMessageLength = -1;
-		this.readable.on('readable', () => {
-			var chunk = this.readable.read();
-			while (chunk !== null) {
-				this.onData(chunk);
-				chunk = this.readable.read();
-			}		
+		this.readable.on('data', (data:Buffer) => {
+			this.onData(data);
 		});
 	}
 

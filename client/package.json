@@ -1,7 +1,7 @@
 {
   "name": "vscode-languageclient",
   "description": "VSCode Language client implementation",
-  "version": "0.10.0-pre.5",
+  "version": "0.10.0-pre.7",
   "author": "Microsoft Corporation",
   "license": "MIT",
   "main": "./lib/index.js",
