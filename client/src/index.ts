@@ -204,6 +204,7 @@ export class LanguageClient {
 				this._childProcess = null;
 				// Remove all markers
 				Object.keys(this._diagnostics).forEach(key => this._diagnostics[key].dispose());
+				this._diagnostics = Object.create(null);
 				this.checkProcessDied(toCheck);
 			})
 		});
@@ -335,6 +336,7 @@ export class ClientController {
 	constructor(private _client: LanguageClient, private _setting: string) {
 		this._disposables = [];
 		extensions.onDidChangeConfiguration(this.onDidChangeConfiguration, this, this._disposables);
+		this.onDidChangeConfiguration();
 	}
 
 	private onDidChangeConfiguration(): void {
