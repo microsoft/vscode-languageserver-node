@@ -36,3 +36,11 @@ export function error(value: any): value is Error {
 export function func(value: any): value is Function {
 	return toString.call(value) === '[object Function]';
 }
+
+export function array<T>(value: any): value is T[] {
+	return Array.isArray(value);
+}
+
+export function stringArray(value: any): value is string[] {
+	return array(value) && (<any[]>value).every(elem => string(elem));
+}

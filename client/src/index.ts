@@ -6,7 +6,7 @@
 import * as cp from 'child_process';
 import ChildProcess = cp.ChildProcess;
 
-import { workspace, window, languages, extensions, TextDocumentChangeEvent, TextDocument, Disposable } from 'vscode';
+import { workspace, window, languages, extensions, TextDocumentChangeEvent, TextDocument, Disposable, FileSystemWatcher } from 'vscode';
 
 import { IRequestHandler, INotificationHandler, MessageConnection, ServerMessageConnection, ILogger, createClientMessageConnection, ErrorCodes, ResponseError } from 'vscode-jsonrpc';
 import {
@@ -26,6 +26,7 @@ import { asOpenTextDocumentParams, asChangeTextDocumentParams, asCloseTextDocume
 import * as is from './utils/is';
 import * as electron from './utils/electron';
 import { terminate } from './utils/processes';
+import { Delayer } from './utils/async'
 
 declare var v8debug;
 
@@ -115,13 +116,23 @@ export interface ForkOptions {
 }
 
 export interface NodeModule {
-	name: string;
+	module: string;
 	args?: string[];
 	options?: ForkOptions;
 }
 
+export interface ConfigurationClient {
+	send(settings: any): void;
+}
+
+export interface FileChangeClient {
+	send(event: FileEvent);
+}
+
 export interface ClientCustomization {
 	server: Executable | { run: Executable; debug: Executable; } |  { run: NodeModule; debug: NodeModule } | NodeModule | (() => Thenable<ChildProcess | StreamInfo>);
+	configuration: string | string[];
+	fileChanges: FileSystemWatcher | FileSystemWatcher[] | ((client: FileChangeClient) => void);
 	syncTextDocument(textDocument: TextDocument): boolean;
 }
 
@@ -143,8 +154,11 @@ export class LanguageClient {
 	private _childProcess: ChildProcess;
 	private _capabilites: ServerCapabilities;
 
-	private _disposables: Disposable[];
+	private _listeners: Disposable[];
 	private _diagnostics: { [uri: string]: Disposable };
+
+	private _fileEvents: FileEvent[];
+	private _delayer: Delayer<void>;
 
 	public constructor(name: string, customization: ClientCustomization, forceDebug: boolean = false) {
 		this._name = name;
@@ -155,8 +169,11 @@ export class LanguageClient {
 		this._connection = null;
 		this._childProcess = null;
 
-		this._disposables = [];
+		this._listeners = [];
 		this._diagnostics = Object.create(null);
+
+		this._fileEvents = [];
+		this._delayer = new Delayer<void>(250);
 	}
 
 	public needsStart(): boolean {
@@ -173,10 +190,12 @@ export class LanguageClient {
 			this._state = ClientState.Running;
 			connection.onDiagnostics(params => this.handleDiagnostics(params));
 			this.initialize(connection).then(() => {
-				extensions.onDidChangeConfiguration(e => this.onDidChangeConfiguration(connection, e), null, this._disposables);
-				workspace.onDidOpenTextDocument(t => this.onDidOpenTextDoument(connection, t), null, this._disposables);
-				workspace.onDidChangeTextDocument(t => this.onDidChangeTextDocument(connection, t), null, this._disposables);
-				workspace.onDidCloseTextDocument(t => this.onDidCloseTextDoument(connection, t), null, this._disposables);
+				if (this._customization.configuration) {
+					extensions.onDidChangeConfiguration(e => this.onDidChangeConfiguration(connection, e), null, this._listeners);
+				}
+				workspace.onDidOpenTextDocument(t => this.onDidOpenTextDoument(connection, t), null, this._listeners);
+				workspace.onDidChangeTextDocument(t => this.onDidChangeTextDocument(connection, t), null, this._listeners);
+				workspace.onDidCloseTextDocument(t => this.onDidCloseTextDoument(connection, t), null, this._listeners);
 				workspace.getTextDocuments().forEach(t => this.onDidOpenTextDoument(connection, t));
 			}, (error: ResponseError<InitializeError>) => {
 				window.showErrorMessage(error.message).then(() => {
@@ -194,6 +213,8 @@ export class LanguageClient {
 			return;
 		}
 		this._state = ClientState.Stopping;
+		// unkook listeners
+		this._listeners.forEach(listener => listener.dispose());
 		this.resolveConnection().then(connection => {
 			connection.shutdown({}).then(() => {
 				connection.exit({});
@@ -207,6 +228,25 @@ export class LanguageClient {
 				this._diagnostics = Object.create(null);
 				this.checkProcessDied(toCheck);
 			})
+		});
+	}
+
+	public sendSettings(settings: any): void {
+		this.resolveConnection().then(connection => {
+			if (this._state === ClientState.Running) {
+				connection.didChangeConfiguration({ settings });
+			}
+		}, (error) => {
+			console.error(`Syncing settings failed with error ${JSON.stringify(error, null, 4)}`);
+		});
+	}
+
+	public sendFileEvent(event: FileEvent): void {
+		this._fileEvents.push(event);
+		this._delayer.trigger(() => {
+			if (this._state === ClientState.Running) {
+				this.resolveConnection().then
+			}
 		});
 	}
 
@@ -226,13 +266,25 @@ export class LanguageClient {
 	}
 
 	private onDidChangeConfiguration(connection: IConnection, event): void {
+		let keys: string[] = null;
+		if (is.string(this._customization.configuration)) {
+			keys = [<string>this._customization.configuration];
+		} else if (is.stringArray(this._customization.configuration)) {
+			keys = (<string[]>this._customization.configuration);
+		}
+		if (keys) {
+			this.extractSettingsInformation(keys).then((settings) => {
+				connection.didChangeConfiguration({ settings });
+			}, (error) => {
+				console.error(`Syncing settings failed with error ${JSON.stringify(error, null, 4)}`);
+			});
+		}
 	}
 
 	private onDidOpenTextDoument(connection: IConnection, textDocument: TextDocument): void {
 		if (!this._customization.syncTextDocument(textDocument)) {
 			return;
 		}
-
 		connection.didOpenTextDocument(asOpenTextDocumentParams(textDocument));
 	}
 
@@ -296,7 +348,7 @@ export class LanguageClient {
 				let options = node.options || {};
 				options.execArgv = options.execArgv || [];
 				options.cwd = options.cwd || workspace.getPath();
-				electron.fork(node.name, node.args || [], options, (error, cp) => {
+				electron.fork(node.module, node.args || [], options, (error, cp) => {
 					if (error) {
 						reject(error);
 					} else {
@@ -326,6 +378,40 @@ export class LanguageClient {
 				// All is fine.
 			}
 		}, 2000);
+	}
+
+	private extractSettingsInformation(keys: string[]): Thenable<any> {
+		function ensurePath(config: any, path: string[]): any {
+			let current = config;
+			for (let i = 0; i < path.length - 1; i++) {
+				let obj = current[path[i]];
+				if (!obj) {
+					obj = Object.create(null);
+					current[path[i]] = obj;
+				}
+				current = obj;
+			}
+			return current;
+		}
+		let promises: Thenable<any>[] = [];
+		for (let i = 0; i < keys.length; i++) {
+			let key = keys[i];
+			let index: number = key.indexOf('.');
+			if (index >= 0) {
+				promises.push(extensions.getConfigurationMemento(key.substr(0, index)).getValue(key.substr(index + 1)));
+			} else {
+				promises.push(extensions.getConfigurationMemento(key).getValues());
+			}
+		}
+		return Promise.all(promises).then(values => {
+			let result = Object.create(null);
+			for (let i = 0; i < values.length; i++) {
+				let path = keys[i].split('.');
+				let value = values[1];
+				ensurePath(result, path)[path[path.length - 1]] = value;
+			}
+			return result;
+		});
 	}
 }
 
