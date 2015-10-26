@@ -12,7 +12,7 @@ import { Message, RequestMessage, RequestType, ResponseMessage, ResponseError, N
 import { MessageWriter } from '../messageWriter';
 import { MessageReader } from '../messageReader';
 
-import * as hostConnection from '../messageConnection';
+import * as hostConnection from '../main';
 
 function TestWritable() {
 	Writable.call(this);

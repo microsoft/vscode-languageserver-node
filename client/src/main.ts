@@ -320,7 +320,7 @@ export class LanguageClient {
 				}
 			});
 		}
-		let json: { command?: string; name?: string } = null;
+		let json: { command?: string; module?: string } = null;
 		let runDebug= <{ run: any; debug: any;}>server;
 		if (is.defined(runDebug.run) || is.defined(runDebug.debug)) {
 			// We are under debugging. So use debug as well.
