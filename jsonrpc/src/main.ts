@@ -33,12 +33,12 @@ export interface ILogger {
 
 export interface MessageConnection {
 	sendNotification<P>(type: NotificationType<P>, params?: P): void;
-	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void;
 	onNotification<P>(type: NotificationType<P>, handler: INotificationHandler<P>): void;
 	dispose(): void;
 }
 
 export interface ServerMessageConnection extends MessageConnection {
+	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void;
 }
 
 export interface ClientMessageConnection extends MessageConnection {
@@ -64,9 +64,6 @@ function createMessageConnection<T extends MessageConnection>(inputStream: NodeJ
 			}
 			protocolWriter.write(notificatioMessage);
 		},
-		onRequest: <P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>) => {
-			requestHandlers[type.method] = handler;
-		},
 		onNotification: <P>(type: NotificationType<P>, handler: INotificationHandler<P>) => {
 			eventHandlers[type.method] = handler;
 		},
@@ -86,6 +83,10 @@ function createMessageConnection<T extends MessageConnection>(inputStream: NodeJ
 				responseHandlers[String(id)] = { method: type.method, resolve, reject };
 				protocolWriter.write(requestMessage);
 			});
+		}
+	} else {
+		(connection as ServerMessageConnection).onRequest = <P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>) => {
+			requestHandlers[type.method] = handler;
 		}
 	}
 	inputStream.on('end', () => outputStream.end());

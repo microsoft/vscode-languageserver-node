@@ -4,7 +4,10 @@
 'use strict';
 
 import { LanguageServerError, MessageKind } from './languageServerError';
-import { IRequestHandler, INotificationHandler, MessageConnection, ServerMessageConnection, ILogger, createServerMessageConnection, ResponseError, ErrorCodes } from 'vscode-jsonrpc';
+import {
+		RequestType, IRequestHandler, NotificationType, INotificationHandler, ResponseError, ErrorCodes,
+		MessageConnection, ServerMessageConnection, ILogger, createServerMessageConnection
+	} from 'vscode-jsonrpc';
 import {
 		InitializeRequest, InitializeParams, InitializeResult, InitializeError, HostCapabilities, ServerCapabilities,
 		ShutdownRequest, ShutdownParams,
@@ -169,6 +172,10 @@ class RemoteWindowImpl implements RemoteWindow {
 
 export interface IConnection {
 
+	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void;
+	sendNotification<P>(type: NotificationType<P>, params?: P): void;
+	onNotification<P>(type: NotificationType<P>, handler: INotificationHandler<P>): void;
+
 	onInitialize(handler: IRequestHandler<InitializeParams, InitializeResult, InitializeError>): void;
 	onShutdown(handler: IRequestHandler<ShutdownParams, void, void>): void;
 	onExit(handler: INotificationHandler<ExitParams>): void;
@@ -212,6 +219,10 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
 		}
 	});
 	let result: IConnection = {
+		onRequest: <P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void => connection.onRequest(type, handler),
+		sendNotification: <P>(type: NotificationType<P>, params?: P): void => connection.sendNotification(type, params),
+		onNotification: <P>(type: NotificationType<P>, handler: INotificationHandler<P>): void => connection.onNotification(type, handler),
+
 		onInitialize: (handler) => connection.onRequest(InitializeRequest.type, handler),
 		onShutdown: (handler) => shutdownHandler = handler,
 		onExit: (handler) => connection.onNotification(ExitNotification.type, handler),
@@ -236,6 +247,10 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
 export interface IValidatorConnection {
 	console: RemoteConsole;
 	window: RemoteWindow;
+
+	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void;
+	sendNotification<P>(type: NotificationType<P>, params?: P): void;
+	onNotification<P>(type: NotificationType<P>, handler: INotificationHandler<P>): void;
 
 	run(handler: SingleFileValidator): void;
 }
@@ -407,6 +422,10 @@ export function createValidatorConnection(inputStream: NodeJS.ReadableStream, ou
 	}
 
 	let result: IValidatorConnection = {
+		onRequest: <P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void => connection.onRequest(type, handler),
+		sendNotification: <P>(type: NotificationType<P>, params?: P): void => connection.sendNotification(type, params),
+		onNotification: <P>(type: NotificationType<P>, handler: INotificationHandler<P>): void => connection.onNotification(type, handler),
+
 		get console() { return connection.console; },
 		get window() { return connection.window },
 		run: run

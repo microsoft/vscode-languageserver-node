@@ -8,7 +8,7 @@ import ChildProcess = cp.ChildProcess;
 
 import { workspace, window, languages, extensions, TextDocumentChangeEvent, TextDocument, Disposable, FileSystemWatcher, CommandCallback } from 'vscode';
 
-import { IRequestHandler, INotificationHandler, MessageConnection, ServerMessageConnection, ILogger, createClientMessageConnection, ErrorCodes, ResponseError } from 'vscode-jsonrpc';
+import { IRequestHandler, INotificationHandler, MessageConnection, ClientMessageConnection, ILogger, createClientMessageConnection, ErrorCodes, ResponseError, RequestType, NotificationType } from 'vscode-jsonrpc';
 import {
 		InitializeRequest, InitializeParams, InitializeResult, InitializeError, HostCapabilities, ServerCapabilities,
 		ShutdownRequest, ShutdownParams,
@@ -30,7 +30,11 @@ import { Delayer } from './utils/async'
 
 declare var v8debug;
 
-export interface IConnection {
+interface IConnection {
+
+	sendRequest<P, R, E>(type: RequestType<P, R, E>, params?: P): Thenable<R>;
+	sendNotification<P>(type: NotificationType<P>, params?: P): void;
+	onNotification<P>(type: NotificationType<P>, handler: INotificationHandler<P>): void;
 
 	initialize(params: InitializeParams): Thenable<InitializeResult>;
 	shutdown(params: ShutdownParams): Thenable<void>;
@@ -65,10 +69,15 @@ class Logger implements ILogger {
 	}
 }
 
-export function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream): IConnection {
+function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream): IConnection {
 	let logger = new Logger();
 	let connection = createClientMessageConnection(inputStream, outputStream, logger);
 	let result: IConnection = {
+
+		sendRequest: <P, R, E>(type: RequestType<P, R, E>, params?: P): Thenable<R> => connection.sendRequest(type, params),
+		sendNotification: <P>(type: NotificationType<P>, params?: P): void => connection.sendNotification(type, params),
+		onNotification: <P>(type: NotificationType<P>, handler: INotificationHandler<P>): void => connection.onNotification(type, handler),
+
 		initialize: (params: InitializeParams) => connection.sendRequest(InitializeRequest.type, params),
 		shutdown: (params: ShutdownParams) => connection.sendRequest(ShutdownRequest.type, params),
 		exit: (params: ExitParams) => connection.sendNotification(ExitNotification.type, params),
@@ -170,6 +179,36 @@ export class LanguageClient {
 		this._delayer = new Delayer<void>(250);
 		this._onReady = new Promise<void>((resolve, reject) => {
 			this._onReadyCallbacks = { resolve, reject };
+		});
+	}
+
+	public sendRequest<P, R, E>(type: RequestType<P, R, E>, params?: P): Thenable<R> {
+		return this.onReady().then(() => {
+			return this.resolveConnection().then((connection) => {
+				if (this.isConnectionActive()) {
+					return connection.sendRequest(type, params);
+				} else {
+					return Promise.reject<R>(new ResponseError(ErrorCodes.InternalError, 'Connection is already closed'));
+				}
+			});
+		});
+	}
+
+	public sendNotification<P>(type: NotificationType<P>, params?: P): void {
+		this.onReady().then(() => {
+			this.resolveConnection().then((connection) => {
+				if (this.isConnectionActive()) {
+					connection.sendNotification(type, params);
+				}
+			});
+		});
+	}
+
+	public onNotification<P>(type: NotificationType<P>, handler: INotificationHandler<P>): void {
+		this.onReady().then(() => {
+			this.resolveConnection().then((connection) => {
+				connection.onNotification(type, handler);
+			})
 		});
 	}
 
