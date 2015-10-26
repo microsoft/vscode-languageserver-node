@@ -1,16 +1,16 @@
 {
-  "name": "vscode-languageserver",
-  "description": "Language server implementation for node",
-  "version": "0.10.0-pre.11",
-  "author": "Microsoft Corporation",
-  "license": "MIT",
-  "main": "./lib/main.js",
-  "typings": "./lib/main",
-  "devDependencies": {
-    "mocha": "^2.3.2",
-    "typescript": "^1.6.2"
-  },
-  "dependencies": {
-    "vscode-jsonrpc": "next"
-  }
+	"name": "vscode-languageserver",
+	"description": "Language server implementation for node",
+	"version": "0.10.0-pre.15",
+	"author": "Microsoft Corporation",
+	"license": "MIT",
+	"main": "./lib/main.js",
+	"typings": "./lib/main",
+	"devDependencies": {
+		"mocha": "^2.3.2",
+		"typescript": "^1.6.2"
+	},
+	"dependencies": {
+		"vscode-jsonrpc": "next"
+	}
 }
