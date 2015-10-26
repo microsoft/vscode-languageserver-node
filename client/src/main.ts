@@ -132,7 +132,7 @@ export interface NodeModule {
 	options?: ForkOptions;
 }
 
-export interface ClientCustomization {
+export interface ClientOptions {
 	server: Executable | { run: Executable; debug: Executable; } |  { run: NodeModule; debug: NodeModule } | NodeModule | (() => Thenable<ChildProcess | StreamInfo>);
 	configuration: string | string[];
 	fileWatchers: FileSystemWatcher | FileSystemWatcher[];
@@ -149,7 +149,7 @@ enum ClientState {
 export class LanguageClient {
 
 	private _name: string;
-	private _customization: ClientCustomization;
+	private _options: ClientOptions;
 	private _forceDebug: boolean;
 
 	private _state: ClientState;
@@ -165,9 +165,9 @@ export class LanguageClient {
 	private _fileEvents: FileEvent[];
 	private _delayer: Delayer<void>;
 
-	public constructor(name: string, customization: ClientCustomization, forceDebug: boolean = false) {
+	public constructor(name: string, options: ClientOptions, forceDebug: boolean = false) {
 		this._name = name;
-		this._customization = customization;
+		this._options = options;
 		this._forceDebug = forceDebug;
 
 		this._state = ClientState.Stopped;
@@ -323,14 +323,14 @@ export class LanguageClient {
 	}
 
 	private onDidOpenTextDoument(connection: IConnection, textDocument: TextDocument): void {
-		if (!this._customization.syncTextDocument(textDocument)) {
+		if (!this._options.syncTextDocument(textDocument)) {
 			return;
 		}
 		connection.didOpenTextDocument(asOpenTextDocumentParams(textDocument));
 	}
 
 	private onDidChangeTextDocument(connection: IConnection, event: TextDocumentChangeEvent): void {
-		if (!this._customization.syncTextDocument(event.document)) {
+		if (!this._options.syncTextDocument(event.document)) {
 			return;
 		}
 		let uri: string = event.document.getUri().toString();
@@ -342,7 +342,7 @@ export class LanguageClient {
 	}
 
 	private onDidCloseTextDoument(connection: IConnection, textDocument: TextDocument): void {
-		if (!this._customization.syncTextDocument(textDocument)) {
+		if (!this._options.syncTextDocument(textDocument)) {
 			return;
 		}
 		connection.didCloseTextDocument(asCloseTextDocumentParams(textDocument));
@@ -358,7 +358,7 @@ export class LanguageClient {
 	}
 
 	private createConnection(): Thenable<IConnection> {
-		let server = this._customization.server;
+		let server = this._options.server;
 		// We got a function.
 		if (is.func(server)) {
 			return server().then((result) => {
@@ -422,7 +422,7 @@ export class LanguageClient {
 	}
 
 	private hookConfigurationChanged(connection: IConnection): void {
-		if (!this._customization.configuration) {
+		if (!this._options.configuration) {
 			return;
 		}
 		extensions.onDidChangeConfiguration(e => this.onDidChangeConfiguration(connection), this, this._listeners);
@@ -431,10 +431,10 @@ export class LanguageClient {
 
 	private onDidChangeConfiguration(connection: IConnection): void {
 		let keys: string[] = null;
-		if (is.string(this._customization.configuration)) {
-			keys = [<string>this._customization.configuration];
-		} else if (is.stringArray(this._customization.configuration)) {
-			keys = (<string[]>this._customization.configuration);
+		if (is.string(this._options.configuration)) {
+			keys = [<string>this._options.configuration];
+		} else if (is.stringArray(this._options.configuration)) {
+			keys = (<string[]>this._options.configuration);
 		}
 		if (keys) {
 			this.extractSettingsInformation(keys).then((settings) => {
@@ -482,14 +482,14 @@ export class LanguageClient {
 	}
 
 	private hookFileEvents(connection: IConnection): void {
-		if (!this._customization.fileWatchers) {
+		if (!this._options.fileWatchers) {
 			return;
 		}
 		let watchers: FileSystemWatcher[] = null;
-		if (is.array(this._customization.fileWatchers)) {
-			watchers = <FileSystemWatcher[]>this._customization.fileWatchers;
+		if (is.array(this._options.fileWatchers)) {
+			watchers = <FileSystemWatcher[]>this._options.fileWatchers;
 		} else {
-			watchers = [<FileSystemWatcher>this._customization.fileWatchers];
+			watchers = [<FileSystemWatcher>this._options.fileWatchers];
 		}
 		if (!watchers) {
 			return;
@@ -518,19 +518,28 @@ export class LanguageClient {
 	}
 }
 
-export class ClientController {
+export class ClientStarter {
 
+	private _setting: string;
 	private _disposables: Disposable[];
 
-	constructor(private _client: LanguageClient, private _setting: string) {
+	constructor(private _client: LanguageClient) {
 		this._disposables = [];
+	}
+
+	public watchSetting(setting: string) {
+		this._setting = setting;
 		extensions.onDidChangeConfiguration(this.onDidChangeConfiguration, this, this._disposables);
 		this.onDidChangeConfiguration();
 	}
 
 	private onDidChangeConfiguration(): void {
-		let memento = extensions.getConfigurationMemento(this._setting);
-		memento.getValue('enable', false).then(enabled => {
+		let index = this._setting.indexOf('.');
+		let primary = index >= 0 ? this._setting.substr(0, index) : this._setting;
+		let rest = index >= 0 ? this._setting.substr(index + 1) : undefined;
+		let memento = extensions.getConfigurationMemento(primary);
+		let valuePromise: Thenable<boolean | any> = rest ? memento.getValue(rest, false) : memento.getValues();
+		valuePromise.then((enabled) => {
 			if (enabled && this._client.needsStart()) {
 				this._client.start();
 			} else if (!enabled && this._client.needsStop()) {
