@@ -121,18 +121,10 @@ export interface NodeModule {
 	options?: ForkOptions;
 }
 
-export interface ConfigurationClient {
-	send(settings: any): void;
-}
-
-export interface FileChangeClient {
-	send(event: FileEvent);
-}
-
 export interface ClientCustomization {
 	server: Executable | { run: Executable; debug: Executable; } |  { run: NodeModule; debug: NodeModule } | NodeModule | (() => Thenable<ChildProcess | StreamInfo>);
 	configuration: string | string[];
-	fileChanges: FileSystemWatcher | FileSystemWatcher[] | ((client: FileChangeClient) => void);
+	fileWatchers: FileSystemWatcher | FileSystemWatcher[];
 	syncTextDocument(textDocument: TextDocument): boolean;
 }
 
@@ -184,18 +176,21 @@ export class LanguageClient {
 		return this._state === ClientState.Starting || this._state === ClientState.Running;
 	}
 
+	private isConnectionActive(): boolean {
+		return this._state === ClientState.Starting || this._state === ClientState.Running;
+	}
+
 	public start(): void {
 		this._state = ClientState.Starting;
 		this.resolveConnection().then((connection) => {
 			this._state = ClientState.Running;
 			connection.onDiagnostics(params => this.handleDiagnostics(params));
 			this.initialize(connection).then(() => {
-				if (this._customization.configuration) {
-					extensions.onDidChangeConfiguration(e => this.onDidChangeConfiguration(connection, e), null, this._listeners);
-				}
 				workspace.onDidOpenTextDocument(t => this.onDidOpenTextDoument(connection, t), null, this._listeners);
 				workspace.onDidChangeTextDocument(t => this.onDidChangeTextDocument(connection, t), null, this._listeners);
 				workspace.onDidCloseTextDocument(t => this.onDidCloseTextDoument(connection, t), null, this._listeners);
+				this.hookFileEvents(connection);
+				this.hookConfigurationChanged(connection);
 				workspace.getTextDocuments().forEach(t => this.onDidOpenTextDoument(connection, t));
 			}, (error: ResponseError<InitializeError>) => {
 				window.showErrorMessage(error.message).then(() => {
@@ -232,8 +227,11 @@ export class LanguageClient {
 	}
 
 	public sendSettings(settings: any): void {
+		if (!this.isConnectionActive()) {
+			return;
+		}
 		this.resolveConnection().then(connection => {
-			if (this._state === ClientState.Running) {
+			if (this.isConnectionActive()) {
 				connection.didChangeConfiguration({ settings });
 			}
 		}, (error) => {
@@ -242,10 +240,18 @@ export class LanguageClient {
 	}
 
 	public sendFileEvent(event: FileEvent): void {
+		if (!this.isConnectionActive()) {
+			return;
+		}
 		this._fileEvents.push(event);
 		this._delayer.trigger(() => {
-			if (this._state === ClientState.Running) {
-				this.resolveConnection().then
+			if (this.isConnectionActive()) {
+				this.resolveConnection().then(connection => {
+					if (this.isConnectionActive()) {
+						connection.didChangeFiles({ changes: this._fileEvents });
+					}
+					this._fileEvents = [];
+				})
 			}
 		});
 	}
@@ -263,22 +269,6 @@ export class LanguageClient {
 			this._capabilites = result.capabilities;
 			return result;
 		});
-	}
-
-	private onDidChangeConfiguration(connection: IConnection, event): void {
-		let keys: string[] = null;
-		if (is.string(this._customization.configuration)) {
-			keys = [<string>this._customization.configuration];
-		} else if (is.stringArray(this._customization.configuration)) {
-			keys = (<string[]>this._customization.configuration);
-		}
-		if (keys) {
-			this.extractSettingsInformation(keys).then((settings) => {
-				connection.didChangeConfiguration({ settings });
-			}, (error) => {
-				console.error(`Syncing settings failed with error ${JSON.stringify(error, null, 4)}`);
-			});
-		}
 	}
 
 	private onDidOpenTextDoument(connection: IConnection, textDocument: TextDocument): void {
@@ -342,7 +332,7 @@ export class LanguageClient {
 		} else {
 			json = server;
 		}
-		if (is.defined(json.name)) {
+		if (is.defined(json.module)) {
 			let node: NodeModule = <NodeModule>json;
 			return new Promise<IConnection>((resolve, reject) => {
 				let options = node.options || {};
@@ -380,6 +370,32 @@ export class LanguageClient {
 		}, 2000);
 	}
 
+	private hookConfigurationChanged(connection: IConnection): void {
+		if (!this._customization.configuration) {
+			return;
+		}
+		extensions.onDidChangeConfiguration(e => this.onDidChangeConfiguration(connection), this, this._listeners);
+		this.onDidChangeConfiguration(connection);
+	}
+
+	private onDidChangeConfiguration(connection: IConnection): void {
+		let keys: string[] = null;
+		if (is.string(this._customization.configuration)) {
+			keys = [<string>this._customization.configuration];
+		} else if (is.stringArray(this._customization.configuration)) {
+			keys = (<string[]>this._customization.configuration);
+		}
+		if (keys) {
+			this.extractSettingsInformation(keys).then((settings) => {
+				if (this.isConnectionActive()) {
+					connection.didChangeConfiguration({ settings });
+				}
+			}, (error) => {
+				console.error(`Syncing settings failed with error ${JSON.stringify(error, null, 4)}`);
+			});
+		}
+	}
+
 	private extractSettingsInformation(keys: string[]): Thenable<any> {
 		function ensurePath(config: any, path: string[]): any {
 			let current = config;
@@ -407,11 +423,47 @@ export class LanguageClient {
 			let result = Object.create(null);
 			for (let i = 0; i < values.length; i++) {
 				let path = keys[i].split('.');
-				let value = values[1];
+				let value = values[i];
 				ensurePath(result, path)[path[path.length - 1]] = value;
 			}
 			return result;
 		});
+	}
+
+	private hookFileEvents(connection: IConnection): void {
+		if (!this._customization.fileWatchers) {
+			return;
+		}
+		let watchers: FileSystemWatcher[] = null;
+		if (is.array(this._customization.fileWatchers)) {
+			watchers = <FileSystemWatcher[]>this._customization.fileWatchers;
+		} else {
+			watchers = [<FileSystemWatcher>this._customization.fileWatchers];
+		}
+		if (!watchers) {
+			return;
+		}
+		watchers.forEach(watcher => {
+			watcher.onDidCreate((resource) => this.sendFileEvent(
+				{
+					uri: resource.toString(),
+					type: FileChangeType.Created
+				}
+			), null, this._listeners);
+			watcher.onDidChange((resource) => this.sendFileEvent(
+				{
+					uri: resource.toString(),
+					type: FileChangeType.Changed
+				}
+
+			), null, this._listeners);
+			watcher.onDidDelete((resource) => this.sendFileEvent(
+				{
+					uri: resource.toString(),
+					type: FileChangeType.Deleted
+				}
+			), null, this._listeners);
+		})
 	}
 }
 

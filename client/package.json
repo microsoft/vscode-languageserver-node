@@ -1,11 +1,11 @@
 {
   "name": "vscode-languageclient",
   "description": "VSCode Language client implementation",
-  "version": "0.10.0-pre.7",
+  "version": "0.10.0-pre.8",
   "author": "Microsoft Corporation",
   "license": "MIT",
-  "main": "./lib/index.js",
-  "typings": "./lib/index",
+  "main": "./lib/main.js",
+  "typings": "./lib/main",
   "devDependencies": {
     "mocha": "^2.3.2",
     "typescript": "^1.6.2",

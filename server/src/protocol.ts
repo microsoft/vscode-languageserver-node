@@ -192,7 +192,7 @@ export namespace FileChangeType {
 }
 
 export interface FileEvent {
-	path: string;
+	uri: string;
 	type: number;
 }
 
