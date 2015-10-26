@@ -23,7 +23,10 @@ import {
 import { ISimpleTextDocument, SimpleTextDocument } from './textDocuments';
 
 // ------------- Reexport the API surface of the language worker API ----------------------
-export { InitializeResult, InitializeError, Diagnostic, Severity, Position, FileEvent, FileChangeType, ErrorCodes, ResponseError }
+export {
+		RequestType, IRequestHandler, NotificationType, INotificationHandler,
+		InitializeResult, InitializeError, Diagnostic, Severity, Position, FileEvent, FileChangeType, ErrorCodes, ResponseError
+}
 export { LanguageServerError, MessageKind }
 export { ISimpleTextDocument }
 

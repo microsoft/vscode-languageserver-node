@@ -28,6 +28,8 @@ import * as electron from './utils/electron';
 import { terminate } from './utils/processes';
 import { Delayer } from './utils/async'
 
+export { RequestType, NotificationType, INotificationHandler }
+
 declare var v8debug;
 
 interface IConnection {
