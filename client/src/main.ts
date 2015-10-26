@@ -6,7 +6,7 @@
 import * as cp from 'child_process';
 import ChildProcess = cp.ChildProcess;
 
-import { workspace, window, languages, extensions, TextDocumentChangeEvent, TextDocument, Disposable, FileSystemWatcher } from 'vscode';
+import { workspace, window, languages, extensions, TextDocumentChangeEvent, TextDocument, Disposable, FileSystemWatcher, CommandCallback } from 'vscode';
 
 import { IRequestHandler, INotificationHandler, MessageConnection, ServerMessageConnection, ILogger, createClientMessageConnection, ErrorCodes, ResponseError } from 'vscode-jsonrpc';
 import {
@@ -142,6 +142,8 @@ export class LanguageClient {
 	private _forceDebug: boolean;
 
 	private _state: ClientState;
+	private _onReady: Promise<void>;
+	private _onReadyCallbacks: { resolve: () => void; reject: () => void; };
 	private _connection: Thenable<IConnection>;
 	private _childProcess: ChildProcess;
 	private _capabilites: ServerCapabilities;
@@ -166,6 +168,9 @@ export class LanguageClient {
 
 		this._fileEvents = [];
 		this._delayer = new Delayer<void>(250);
+		this._onReady = new Promise<void>((resolve, reject) => {
+			this._onReadyCallbacks = { resolve, reject };
+		});
 	}
 
 	public needsStart(): boolean {
@@ -176,30 +181,54 @@ export class LanguageClient {
 		return this._state === ClientState.Starting || this._state === ClientState.Running;
 	}
 
+	public onReady(): Promise<void> {
+		return this._onReady;
+	}
+
 	private isConnectionActive(): boolean {
-		return this._state === ClientState.Starting || this._state === ClientState.Running;
+		return this._state === ClientState.Running;
 	}
 
 	public start(): void {
 		this._state = ClientState.Starting;
 		this.resolveConnection().then((connection) => {
-			this._state = ClientState.Running;
-			connection.onDiagnostics(params => this.handleDiagnostics(params));
-			this.initialize(connection).then(() => {
-				workspace.onDidOpenTextDocument(t => this.onDidOpenTextDoument(connection, t), null, this._listeners);
-				workspace.onDidChangeTextDocument(t => this.onDidChangeTextDocument(connection, t), null, this._listeners);
-				workspace.onDidCloseTextDocument(t => this.onDidCloseTextDoument(connection, t), null, this._listeners);
-				this.hookFileEvents(connection);
-				this.hookConfigurationChanged(connection);
-				workspace.getTextDocuments().forEach(t => this.onDidOpenTextDoument(connection, t));
-			}, (error: ResponseError<InitializeError>) => {
-				window.showErrorMessage(error.message).then(() => {
-					// REtry initialize
-				});
-			});
+			this.initialize(connection);
 		}, (error) => {
+			this._onReadyCallbacks.reject();
 			window.showErrorMessage(`Couldn't start client ${this._name}`);
 		})
+	}
+	private resolveConnection(): Thenable<IConnection> {
+		if (!this._connection) {
+			this._connection = this.createConnection();
+		}
+		return this._connection;
+	}
+
+	private initialize(connection: IConnection): Thenable<InitializeResult> {
+		let initParams: InitializeParams = { rootFolder: workspace.getPath(), capabilities: { } };
+		return connection.initialize(initParams).then((result) => {
+			this._state = ClientState.Running;
+			this._capabilites = result.capabilities;
+			connection.onDiagnostics(params => this.handleDiagnostics(params));
+			workspace.onDidOpenTextDocument(t => this.onDidOpenTextDoument(connection, t), null, this._listeners);
+			workspace.onDidChangeTextDocument(t => this.onDidChangeTextDocument(connection, t), null, this._listeners);
+			workspace.onDidCloseTextDocument(t => this.onDidCloseTextDoument(connection, t), null, this._listeners);
+			this.hookFileEvents(connection);
+			this.hookConfigurationChanged(connection);
+			this._onReadyCallbacks.resolve();
+			workspace.getTextDocuments().forEach(t => this.onDidOpenTextDoument(connection, t));
+			return result;
+		}, (error: ResponseError<InitializeError>) => {
+			if (error.data.retry) {
+				window.showErrorMessage(error.message, { title: 'Retry', command: () => {
+					this.initialize(connection);
+				}});
+			} else {
+				this._onReadyCallbacks.reject();
+				window.showErrorMessage(error.message);
+			}
+		});
 	}
 
 	public stop() {
@@ -226,48 +255,29 @@ export class LanguageClient {
 		});
 	}
 
-	public sendSettings(settings: any): void {
-		if (!this.isConnectionActive()) {
-			return;
-		}
-		this.resolveConnection().then(connection => {
-			if (this.isConnectionActive()) {
-				connection.didChangeConfiguration({ settings });
-			}
-		}, (error) => {
-			console.error(`Syncing settings failed with error ${JSON.stringify(error, null, 4)}`);
+	public notifyConfigurationChanged(settings: any): void {
+		this.onReady().then(() => {
+			this.resolveConnection().then(connection => {
+				if (this.isConnectionActive()) {
+					connection.didChangeConfiguration({ settings });
+				}
+			}, (error) => {
+				console.error(`Syncing settings failed with error ${JSON.stringify(error, null, 4)}`);
+			});
 		});
 	}
 
-	public sendFileEvent(event: FileEvent): void {
-		if (!this.isConnectionActive()) {
-			return;
-		}
+	public notifyFileEvent(event: FileEvent): void {
 		this._fileEvents.push(event);
 		this._delayer.trigger(() => {
-			if (this.isConnectionActive()) {
+			this.onReady().then(() => {
 				this.resolveConnection().then(connection => {
 					if (this.isConnectionActive()) {
 						connection.didChangeFiles({ changes: this._fileEvents });
 					}
 					this._fileEvents = [];
 				})
-			}
-		});
-	}
-
-	private resolveConnection(): Thenable<IConnection> {
-		if (!this._connection) {
-			this._connection = this.createConnection();
-		}
-		return this._connection;
-	}
-
-	private initialize(connection: IConnection): Thenable<InitializeResult> {
-		let initParams: InitializeParams = { rootFolder: workspace.getPath(), capabilities: { } };
-		return connection.initialize(initParams).then((result) => {
-			this._capabilites = result.capabilities;
-			return result;
+			});
 		});
 	}
 
@@ -444,20 +454,20 @@ export class LanguageClient {
 			return;
 		}
 		watchers.forEach(watcher => {
-			watcher.onDidCreate((resource) => this.sendFileEvent(
+			watcher.onDidCreate((resource) => this.notifyFileEvent(
 				{
 					uri: resource.toString(),
 					type: FileChangeType.Created
 				}
 			), null, this._listeners);
-			watcher.onDidChange((resource) => this.sendFileEvent(
+			watcher.onDidChange((resource) => this.notifyFileEvent(
 				{
 					uri: resource.toString(),
 					type: FileChangeType.Changed
 				}
 
 			), null, this._listeners);
-			watcher.onDidDelete((resource) => this.sendFileEvent(
+			watcher.onDidDelete((resource) => this.notifyFileEvent(
 				{
 					uri: resource.toString(),
 					type: FileChangeType.Deleted
