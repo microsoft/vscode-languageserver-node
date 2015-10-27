@@ -38,7 +38,7 @@ if (!fs.existsSync(clientFolder)) {
 	process.exit(1);
 }
 
-var clientServerFolder = path.join(clientFolder, 'bin', 'server')
+var clientServerFolder = path.join(clientFolder, 'server')
 
 json = require(tsconfigFile);
 var compilerOptions = json.compilerOptions;
@@ -50,9 +50,6 @@ if (compilerOptions) {
 	}
 }
 
-if (!fs.existsSync(path.join(clientFolder, 'bin'))) {
-	fs.mkdirSync(path.join(clientFolder, 'bin'))
-};
 if (!fs.existsSync(clientServerFolder)) {
 	fs.mkdirSync(clientServerFolder);
 }
