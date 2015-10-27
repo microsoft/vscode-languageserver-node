@@ -1,0 +1,111 @@
+#!/usr/bin/env node
+
+var path = require('path');
+var fs = require('fs');
+var cp = require('child_process');
+
+var packageFile = path.resolve(process.argv[2]);
+if (!packageFile) {
+	console.error('No package.json file provided.');
+	process.exit(1);
+}
+if (!fs.existsSync(packageFile)) {
+	console.error('Package file ' + packageFile + ' doesn\'t exist on disk.');
+	process.exit(1);
+}
+var tsconfigFile = path.resolve(process.argv[3]);
+if (!tsconfigFile) {
+	console.error('No tsconfig.json file provided');
+	process.exit(1);
+}
+if (!fs.existsSync(tsconfigFile)) {
+	console.error('tsconfig file ' + tsconfigFile + ' doesn\'t exist on disk.')
+	process.exit(1);
+}
+
+var json = require(packageFile);
+var serverName = json.name + "";
+var index  = serverName.indexOf('-server');
+if (index === -1) {
+	console.error('Package name should end in -server for a language server');
+	process.exit(1);
+}
+
+var clientName = serverName.substr(0, index);
+var clientFolder = path.join(path.dirname(path.dirname(packageFile)), clientName);
+if (!fs.existsSync(clientFolder)) {
+	console.error('Extension folder ' + clientFolder + ' doesn\'t exist on disk. Server and client extension must reside side by side.');
+	process.exit(1);
+}
+
+var clientServerFolder = path.join(clientFolder, 'bin', 'server')
+
+json = require(tsconfigFile);
+var compilerOptions = json.compilerOptions;
+if (compilerOptions) {
+	var outDir = compilerOptions.outDir;
+	if (!outDir || path.join(path.dirname(tsconfigFile), outDir) !== clientServerFolder) {
+		console.error('outDir in tsconfig.json must point to bin/server in the extension folder. But it points to: ' + path.join(path.dirname(tsconfigFile), outDir));
+		process.exit(1);
+	}
+}
+
+if (!fs.existsSync(path.join(clientFolder, 'bin'))) {
+	fs.mkdirSync(path.join(clientFolder, 'bin'))
+};
+if (!fs.existsSync(clientServerFolder)) {
+	fs.mkdirSync(clientServerFolder);
+}
+
+var dest = path.join(clientServerFolder, 'package.json');
+console.log('Copying package.json to extension\'s server location...');
+fs.writeFileSync(dest, fs.readFileSync(packageFile));
+
+console.log('Installing server npm modules into extension\'s server location...');
+cp.execSync('npm install --production --prefix ' + clientServerFolder);
+
+var launchFile = path.join(path.dirname(packageFile), '.vscode', 'launch.json');
+if (fs.existsSync(launchFile)) {
+	try {
+		json = JSON.parse(stripComments(fs.readFileSync(launchFile, 'utf8').toString()));
+		var configurations = json.configurations;
+		if (configurations) {
+			configurations.forEach(function(config) {
+				if (config.request === 'attach' && config.type === 'node') {
+					var outDir = config.outDir;
+					if (!outDir || path.join(path.dirname(packageFile), outDir) !== clientServerFolder) {
+						console.warn('ourDir in launch.json should point to bin/server in the extension folder. But it points to: ' + path.join(path.dirname(packageFile), outDir));
+					}
+				}
+			})
+		}
+	} catch (error) {
+		console.warn('Clouldn\'t check launch.json file. Reading the file failed with: ' + error.message);
+	}
+}
+
+function stripComments(content) {
+	var regexp = /("(?:[^\\\"]*(?:\\.)?)*")|('(?:[^\\\']*(?:\\.)?)*')|(\/\*(?:\r?\n|.)*?\*\/)|(\/{2,}.*?(?:(?:\r?\n)|$))/g;
+	var result = content.replace(regexp, function (match, m1, m2, m3, m4) {
+		// Only one of m1, m2, m3, m4 matches
+		if (m3) {
+			// A block comment. Replace with nothing
+			return "";
+		}
+		else if (m4) {
+			// A line comment. If it ends in \r?\n then keep it.
+			var length_1 = m4.length;
+			if (length_1 > 2 && m4[length_1 - 1] === '\n') {
+				return m4[length_1 - 2] === '\r' ? '\r\n' : '\n';
+			}
+			else {
+				return "";
+			}
+		}
+		else {
+			// We match a string
+			return match;
+		}
+	});
+	return result;
+}
