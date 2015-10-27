@@ -45,7 +45,7 @@ var compilerOptions = json.compilerOptions;
 if (compilerOptions) {
 	var outDir = compilerOptions.outDir;
 	if (!outDir || path.join(path.dirname(tsconfigFile), outDir) !== clientServerFolder) {
-		console.error('outDir in tsconfig.json must point to bin/server in the extension folder. But it points to: ' + path.join(path.dirname(tsconfigFile), outDir));
+		console.error('outDir in tsconfig.json must point to ./server in the extension folder. But it points to: ' + path.join(path.dirname(tsconfigFile), outDir));
 		process.exit(1);
 	}
 }
@@ -71,7 +71,7 @@ if (fs.existsSync(launchFile)) {
 				if (config.request === 'attach' && config.type === 'node') {
 					var outDir = config.outDir;
 					if (!outDir || path.join(path.dirname(packageFile), outDir) !== clientServerFolder) {
-						console.warn('ourDir in launch.json should point to bin/server in the extension folder. But it points to: ' + path.join(path.dirname(packageFile), outDir));
+						console.warn('ourDir in launch.json should point to ./server in the extension folder. But it points to: ' + path.join(path.dirname(packageFile), outDir));
 					}
 				}
 			})
