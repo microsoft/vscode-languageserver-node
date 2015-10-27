@@ -50,17 +50,6 @@ if (compilerOptions) {
 	}
 }
 
-if (!fs.existsSync(clientServerFolder)) {
-	fs.mkdirSync(clientServerFolder);
-}
-
-var dest = path.join(clientServerFolder, 'package.json');
-console.log('Copying package.json to extension\'s server location...');
-fs.writeFileSync(dest, fs.readFileSync(packageFile));
-
-console.log('Installing server npm modules into extension\'s server location...');
-cp.execSync('npm install --production --prefix ' + clientServerFolder);
-
 var launchFile = path.join(path.dirname(packageFile), '.vscode', 'launch.json');
 if (fs.existsSync(launchFile)) {
 	try {
@@ -71,7 +60,8 @@ if (fs.existsSync(launchFile)) {
 				if (config.request === 'attach' && config.type === 'node') {
 					var outDir = config.outDir;
 					if (!outDir || path.join(path.dirname(packageFile), outDir) !== clientServerFolder) {
-						console.warn('ourDir in launch.json should point to ./server in the extension folder. But it points to: ' + path.join(path.dirname(packageFile), outDir));
+						console.error('ourDir in launch.json should point to ./server in the extension folder. But it points to: ' + path.join(path.dirname(packageFile), outDir));
+						process.exit(1);
 					}
 				}
 			})
@@ -106,3 +96,14 @@ function stripComments(content) {
 	});
 	return result;
 }
+
+if (!fs.existsSync(clientServerFolder)) {
+	fs.mkdirSync(clientServerFolder);
+}
+
+var dest = path.join(clientServerFolder, 'package.json');
+console.log('Copying package.json to extension\'s server location...');
+fs.writeFileSync(dest, fs.readFileSync(packageFile));
+
+console.log('Installing server npm modules into extension\'s server location...');
+cp.execSync('npm install --production --prefix ' + clientServerFolder);
