@@ -1,17 +1,30 @@
 {
-  "name": "vscode-languageclient",
-  "description": "VSCode Language client implementation",
-  "version": "0.10.0-pre.13",
-  "author": "Microsoft Corporation",
-  "license": "MIT",
-  "main": "./lib/main.js",
-  "typings": "./lib/main",
-  "devDependencies": {
-    "mocha": "^2.3.2",
-    "typescript": "^1.6.2",
-    "vscode": "next"
-  },
-  "dependencies": {
-    "vscode-jsonrpc": "next"
-  }
+	"name": "vscode-languageclient",
+	"description": "VSCode Language client implementation",
+	"version": "0.10.0-pre.14",
+	"author": "Visual Studio Code Team",
+	"license": "MIT",
+	"engines": {
+		"vscode": "*"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Microsoft/vscode-languageserver-node.git"
+	},
+	"bugs": {
+		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
+	},
+	"main": "./lib/main.js",
+	"typings": "./lib/main",
+	"devDependencies": {
+		"mocha": "^2.3.2",
+		"typescript": "^1.6.2",
+		"vscode": "next"
+	},
+	"dependencies": {
+		"vscode-jsonrpc": "next"
+	},
+	"scripts": {
+		"prepublish": "tsc -p ./src"
+	}
 }

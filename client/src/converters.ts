@@ -50,9 +50,16 @@ export function asCloseTextDocumentParams(textDocument: vs.TextDocument): DidClo
 	};
 }
 
-export function asDiagnostics(params: PublishDiagnosticsParams): vs.Diagnostic[] {
-	let uri = vs.Uri.parse(params.uri);
-	return params.diagnostics.map(diagnostic => new vs.Diagnostic(asDiagnosticSeverity(diagnostic.severity), asLocation(uri, diagnostic), diagnostic.message));
+export function asDiagnostics(diagnostics: Diagnostic[]): vs.Diagnostic[] {
+	return diagnostics.map(diagnostic => new vs.Diagnostic(asRange(diagnostic), diagnostic.message, asDiagnosticSeverity(diagnostic.severity)));
+}
+
+export function asRange(diagnostic: Diagnostic): vs.Range {
+	if (diagnostic.end) {
+		return new vs.Range(diagnostic.start.line, diagnostic.start.character, diagnostic.end.line, diagnostic.end.character);
+	} else {
+		return new vs.Range(diagnostic.start.line, diagnostic.start.character, diagnostic.start.line, Number.MAX_VALUE);
+	}
 }
 
 export function asDiagnosticSeverity(value: number): vs.DiagnosticSeverity {
@@ -66,11 +73,4 @@ export function asDiagnosticSeverity(value: number): vs.DiagnosticSeverity {
 		case Severity.Hint:
 			return vs.DiagnosticSeverity.Hint;
 	}
-}
-
-export function asLocation(uri: vs.Uri, value: Diagnostic): vs.Location {
-	return new vs.Location(uri,
-		value.end
-			? new vs.Range(value.start.line, value.start.character, value.end.line, value.end.character)
-			: new vs.Position(value.start.line, value.start.character));
 }

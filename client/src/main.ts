@@ -6,7 +6,7 @@
 import * as cp from 'child_process';
 import ChildProcess = cp.ChildProcess;
 
-import { workspace, window, languages, extensions, TextDocumentChangeEvent, TextDocument, Disposable, FileSystemWatcher, CommandCallback } from 'vscode';
+import { workspace, window, languages, extensions, TextDocumentChangeEvent, TextDocument, Disposable, FileSystemWatcher, CommandCallback, Uri, DiagnosticCollection } from 'vscode';
 
 import { IRequestHandler, INotificationHandler, MessageConnection, ClientMessageConnection, ILogger, createClientMessageConnection, ErrorCodes, ResponseError, RequestType, NotificationType } from 'vscode-jsonrpc';
 import {
@@ -160,7 +160,7 @@ export class LanguageClient {
 	private _capabilites: ServerCapabilities;
 
 	private _listeners: Disposable[];
-	private _diagnostics: { [uri: string]: Disposable };
+	private _diagnostics: DiagnosticCollection;
 
 	private _fileEvents: FileEvent[];
 	private _delayer: Delayer<void>;
@@ -175,7 +175,7 @@ export class LanguageClient {
 		this._childProcess = null;
 
 		this._listeners = [];
-		this._diagnostics = Object.create(null);
+		this._diagnostics = languages.createDiagnosticCollection();
 
 		this._fileEvents = [];
 		this._delayer = new Delayer<void>(250);
@@ -349,12 +349,9 @@ export class LanguageClient {
 	}
 
 	private handleDiagnostics(params: PublishDiagnosticsParams) {
-		let uri = params.uri;
-		let diagnostics = asDiagnostics(params);
-		let disposable = languages.addDiagnostics(diagnostics);
-		let old = this._diagnostics[uri];
-		old && old.dispose();
-		this._diagnostics[uri] = disposable;
+		let uri = Uri.parse(params.uri);
+		let diagnostics = asDiagnostics(params.diagnostics);
+		this._diagnostics.set(uri, diagnostics);
 	}
 
 	private createConnection(): Thenable<IConnection> {

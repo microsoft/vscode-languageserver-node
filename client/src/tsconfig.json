@@ -3,7 +3,6 @@
 		"target": "ES5",
 		"module": "commonjs",
 		"moduleResolution": "node",
-		"watch": true,
 		"sourceMap": false,
 		"inlineSources": false,
 		"declaration": true,
