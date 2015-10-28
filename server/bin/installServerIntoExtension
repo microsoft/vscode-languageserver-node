@@ -43,7 +43,8 @@ var compilerOptions = json.compilerOptions;
 if (compilerOptions) {
 	var outDir = compilerOptions.outDir;
 	if (!outDir || path.join(path.dirname(tsconfigFile), outDir) !== extensionServerDirectory) {
-		console.error('outDir in tsconfig.json must point to ./server in the extension folder. But it points to: ' + path.join(path.dirname(tsconfigFile), outDir));
+		console.error('outDir in tsconfig.json must point to ' + extensionServerDirectory + ' but it points to ' + path.join(path.dirname(tsconfigFile), outDir));
+		console.error('Please change outDir in ' + process.argv[4] + ' to ' + path.relative(path.dirname(tsconfigFile), extensionServerDirectory));
 		process.exit(1);
 	}
 }
@@ -58,7 +59,8 @@ if (fs.existsSync(launchFile)) {
 				if (config.request === 'attach' && config.type === 'node') {
 					var outDir = config.outDir;
 					if (!outDir || path.join(path.dirname(packageFile), outDir) !== extensionServerDirectory) {
-						console.error('ourDir in launch.json must point to ./server in the extension folder. But it points to: ' + path.join(path.dirname(packageFile), outDir));
+						console.error('outDir in ./.vscode/launch.json must point to ' + extensionServerDirectory + ' but it points to ' + path.join(path.dirname(packageFile), outDir));
+						console.error('Please change outDir in ./.vscode/launch.json to ' + path.relative(path.dirname(packageFile), extensionServerDirectory));
 						process.exit(1);
 					}
 				}

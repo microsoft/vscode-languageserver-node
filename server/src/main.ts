@@ -41,6 +41,7 @@ export namespace Files {
 export type Result<T> = T | Thenable<T>;
 
 export interface IValidationRequestor {
+	single(uri: string): boolean;
 	all(): void;
 }
 
