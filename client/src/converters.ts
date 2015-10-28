@@ -58,7 +58,7 @@ export function asRange(diagnostic: Diagnostic): vs.Range {
 	if (diagnostic.end) {
 		return new vs.Range(diagnostic.start.line, diagnostic.start.character, diagnostic.end.line, diagnostic.end.character);
 	} else {
-		return new vs.Range(diagnostic.start.line, diagnostic.start.character, diagnostic.start.line, Number.MAX_VALUE);
+		return new vs.Range(diagnostic.start.line, diagnostic.start.character, diagnostic.start.line, diagnostic.start.character);
 	}
 }
 
