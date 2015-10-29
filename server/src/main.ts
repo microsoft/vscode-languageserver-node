@@ -3,7 +3,6 @@
  *--------------------------------------------------------*/
 'use strict';
 
-import { LanguageServerError, MessageKind } from './languageServerError';
 import {
 		RequestType, IRequestHandler, NotificationType, INotificationHandler, ResponseError, ErrorCodes,
 		MessageConnection, ServerMessageConnection, ILogger, createServerMessageConnection
@@ -18,7 +17,7 @@ import {
 		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams, DidCloseTextDocumentNotification, DidCloseTextDocumentParams,
 		DidChangeFilesNotification, DidChangeFilesParams, FileEvent, FileChangeType,
 		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, Severity, Position,
-		TextDocumentIdentifier, TextDocumentPosition,
+		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSync,
 		HoverRequest, HoverResult
 	} from './protocol';
 
@@ -31,12 +30,10 @@ export {
 		InitializeResult, InitializeError,
 		Diagnostic, Severity, Position,
 		FileEvent, FileChangeType,
-		TextDocumentIdentifier, TextDocumentPosition,
+		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSync,
 		HoverResult
 }
-export { LanguageServerError, MessageKind }
 export { Event }
-
 
 import * as fm from './files';
 export namespace Files {
@@ -79,7 +76,7 @@ export class TextDocumentChangeEvent {
 }
 
 interface IConnectionState {
-	__incrementalTextDocumentSync: boolean;
+	__textDocumentSync: number;
 }
 
 export class TextDocuments {
@@ -110,7 +107,7 @@ export class TextDocuments {
 	}
 
 	public listen(connection: IConnection): void {
-		(<IConnectionState><any>connection).__incrementalTextDocumentSync = false;
+		(<IConnectionState><any>connection).__textDocumentSync = TextDocumentSync.Full;
 		connection.onDidOpenTextDocument((event: DidOpenTextDocumentParams) => {
 			let document = new TextDocument(event.uri, event.text);
 			this._documents[event.uri] = document;
@@ -263,7 +260,7 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
 		sendNotification: <P>(type: NotificationType<P>, params?: P): void => connection.sendNotification(type, params),
 		onNotification: <P>(type: NotificationType<P>, handler: INotificationHandler<P>): void => connection.onNotification(type, handler),
 
-		onInitialize: (handler) => connection.onRequest(InitializeRequest.type, handler),
+		onInitialize: (handler) => initializeHandler = handler,
 		onShutdown: (handler) => shutdownHandler = handler,
 		onExit: (handler) => connection.onNotification(ExitNotification.type, handler),
 
@@ -273,7 +270,7 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
 		onDidChangeConfiguration: (handler) => connection.onNotification(DidChangeConfigurationNotification.type, handler),
 		onDidChangeFiles: (handler) => connection.onNotification(DidChangeFilesNotification.type, handler),
 
-		__incrementalTextDocumentSync: undefined,
+		__textDocumentSync: undefined,
 		onDidOpenTextDocument: (handler) => connection.onNotification(DidOpenTextDocumentNotification.type, handler),
 		onDidChangeTextDocument: (handler) => connection.onNotification(DidChangeTextDocumentNotification.type, handler),
 		onDidCloseTextDocument: (handler) => connection.onNotification(DidCloseTextDocumentNotification.type, handler),
@@ -288,21 +285,26 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
 	connection.onRequest(InitializeRequest.type, (params) => {
 		if (initializeHandler) {
 			let result = initializeHandler(params);
-			if (is.undefined(protocolConnection.__incrementalTextDocumentSync)) {
-				return result;
-			}
 			return asThenable(result).then((value) => {
 				if (value instanceof ResponseError) {
 					return value;
 				}
-				let capabilities = (<InitializeResult>value).capabilities;
-				if (capabilities) {
-					capabilities.incrementalTextDocumentSync = protocolConnection.__incrementalTextDocumentSync;
+				let result = <InitializeResult>value;
+				if (!result) {
+					result = { capabilities: {} };
 				}
-				return value;
+				let capabilities = (<InitializeResult>value).capabilities;
+				if (!capabilities) {
+					capabilities = {}
+					result.capabilities = {};
+				}
+				if (!is.number(capabilities.textDocumentSync)) {
+					capabilities.textDocumentSync = is.number(protocolConnection.__textDocumentSync) ? protocolConnection.__textDocumentSync : TextDocumentSync.None;
+				}
+				return result;
 			});
 		} else {
-			let result: InitializeResult = { capabilities: { incrementalTextDocumentSync: false } };
+			let result: InitializeResult = { capabilities: { textDocumentSync: TextDocumentSync.None } };
 			return result;
 		}
 	});

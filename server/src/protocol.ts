@@ -8,8 +8,14 @@ import { RequestType, NotificationType } from 'vscode-jsonrpc';
 export interface HostCapabilities {
 }
 
+export namespace TextDocumentSync {
+	export const None: number = 0;
+	export const Full: number = 1;
+	export const Incremental: number = 2;
+}
+
 export interface ServerCapabilities {
-	incrementalTextDocumentSync?: boolean;
+	textDocumentSync?: number;
 	hoverProvider?: boolean;
 }
 

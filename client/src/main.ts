@@ -13,7 +13,7 @@ import {
 
 import { IRequestHandler, INotificationHandler, MessageConnection, ClientMessageConnection, ILogger, createClientMessageConnection, ErrorCodes, ResponseError, RequestType, NotificationType } from 'vscode-jsonrpc';
 import {
-		InitializeRequest, InitializeParams, InitializeResult, InitializeError, HostCapabilities, ServerCapabilities,
+		InitializeRequest, InitializeParams, InitializeResult, InitializeError, HostCapabilities, ServerCapabilities, TextDocumentSync,
 		ShutdownRequest, ShutdownParams,
 		ExitNotification, ExitParams,
 		LogMessageNotification, LogMessageParams, MessageType,
@@ -357,9 +357,11 @@ export class LanguageClient {
 			this._state = ClientState.Running;
 			this._capabilites = result.capabilities;
 			connection.onDiagnostics(params => this.handleDiagnostics(params));
-			workspace.onDidOpenTextDocument(t => this.onDidOpenTextDoument(connection, t), null, this._listeners);
-			workspace.onDidChangeTextDocument(t => this.onDidChangeTextDocument(connection, t), null, this._listeners);
-			workspace.onDidCloseTextDocument(t => this.onDidCloseTextDoument(connection, t), null, this._listeners);
+			if (this._capabilites.textDocumentSync !== TextDocumentSync.None) {
+				workspace.onDidOpenTextDocument(t => this.onDidOpenTextDoument(connection, t), null, this._listeners);
+				workspace.onDidChangeTextDocument(t => this.onDidChangeTextDocument(connection, t), null, this._listeners);
+				workspace.onDidCloseTextDocument(t => this.onDidCloseTextDoument(connection, t), null, this._listeners);
+			}
 			this.hookFileEvents(connection);
 			this.hookConfigurationChanged(connection);
 			this.hookCapabilities(connection);
@@ -442,7 +444,7 @@ export class LanguageClient {
 			return;
 		}
 		let uri: string = event.document.uri.toString();
-		if (this._capabilites.incrementalTextDocumentSync) {
+		if (this._capabilites.textDocumentSync === TextDocumentSync.Incremental) {
 			asChangeTextDocumentParams(event).forEach(param => connection.didChangeTextDocument(param));
 		} else {
 			connection.didChangeTextDocument(asChangeTextDocumentParams(event.document));
