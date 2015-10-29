@@ -74,21 +74,17 @@ class TextDocument implements ITextDocument {
 	}
 }
 
-export interface TextDocumentHandler {
-	incremental?: boolean;
-	onDidOpenTextDocument(event: DidOpenTextDocumentParams): void;
-	onDidChangeTextDocument(event: DidChangeTextDocumentParams): void;
-	onDidCloseTextDocument(event: DidCloseTextDocumentParams): void;
-}
-
 export class TextDocumentChangeEvent {
 	document: ITextDocument;
+}
+
+interface IConnectionState {
+	__incrementalTextDocumentSync: boolean;
 }
 
 export class TextDocuments {
 
 	private _documents : { [uri: string]: TextDocument };
-	private _handler: TextDocumentHandler;
 
 	public _onDidContentChange: Emitter<TextDocumentChangeEvent>;
 
@@ -96,21 +92,6 @@ export class TextDocuments {
 	public constructor() {
 		this._documents = Object.create(null);
 		this._onDidContentChange = new Emitter<TextDocumentChangeEvent>();
-		this._handler = {
-			onDidOpenTextDocument: (event: DidOpenTextDocumentParams) => {
-				let document = new TextDocument(event.uri, event.text);
-				this._documents[event.uri] = document;
-				this._onDidContentChange.fire({ document });
-			},
-			onDidChangeTextDocument: (event: DidChangeTextDocumentParams) => {
-				let document = this._documents[event.uri];
-				document.update(event);
-				this._onDidContentChange.fire({ document });
-			},
-			onDidCloseTextDocument: (event: DidCloseTextDocumentParams) => {
-				delete this._documents[event.uri];
-			}
-		}
 	}
 
 	public get onDidContentChange(): Event<TextDocumentChangeEvent> {
@@ -129,8 +110,21 @@ export class TextDocuments {
 		return Object.keys(this._documents);
 	}
 
-	public observe(connection: IConnection): void {
-		connection.onTextDocument(this._handler);
+	public listen(connection: IConnection): void {
+		(<IConnectionState><any>connection).__incrementalTextDocumentSync = false;
+		connection.onDidOpenTextDocument((event: DidOpenTextDocumentParams) => {
+			let document = new TextDocument(event.uri, event.text);
+			this._documents[event.uri] = document;
+			this._onDidContentChange.fire({ document });
+		});
+		connection.onDidChangeTextDocument((event: DidChangeTextDocumentParams) => {
+			let document = this._documents[event.uri];
+			document.update(event);
+			this._onDidContentChange.fire({ document });
+		});
+		connection.onDidCloseTextDocument((event: DidCloseTextDocumentParams) => {
+			delete this._documents[event.uri];
+		});
 	}
 }
 
@@ -230,7 +224,9 @@ export interface IConnection {
 	onDidChangeConfiguration(handler: INotificationHandler<DidChangeConfigurationParams>): void;
 	onDidChangeFiles(handler: INotificationHandler<DidChangeFilesParams>): void;
 
-	onTextDocument(handler: TextDocumentHandler): void;
+	onDidOpenTextDocument(handler: INotificationHandler<DidOpenTextDocumentParams>): void;
+	onDidChangeTextDocument(handler: INotificationHandler<DidChangeTextDocumentParams>): void;
+	onDidCloseTextDocument(handler: INotificationHandler<DidCloseTextDocumentParams>): void;
 	publishDiagnostics(args: PublishDiagnosticsParams): void;
 
 	onHover(handler: IRequestHandler<TextDocumentPosition, HoverResult, void>): void;
@@ -261,41 +257,8 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
 	}
 
 	let shutdownHandler: IRequestHandler<ShutdownParams, void, void> = null;
-	connection.onRequest(ShutdownRequest.type, (params) => {
-		shutdownReceived = true;
-		if (shutdownHandler) {
-			return shutdownHandler(params);
-		} else {
-			return undefined;
-		}
-	});
-
-	let incrementalSync: boolean = undefined;
-
 	let initializeHandler: IRequestHandler<InitializeParams, InitializeResult, InitializeError> = null;
-	connection.onRequest(InitializeRequest.type, (params) => {
-		if (initializeHandler) {
-			let result = initializeHandler(params);
-			if (is.undefined(incrementalSync)) {
-				return result;
-			}
-			return asThenable(result).then((value) => {
-				if (value instanceof ResponseError) {
-					return value;
-				}
-				let capabilities = (<InitializeResult>value).capabilities;
-				if (capabilities) {
-					capabilities.incrementalTextDocumentSync = incrementalSync;
-				}
-				return value;
-			});
-		} else {
-			let result: InitializeResult = { capabilities: { incrementalTextDocumentSync: false } };
-			return result;
-		}
-	});
-
-	let result: IConnection = {
+	let protocolConnection: IConnection & IConnectionState = {
 		listen: (): void => connection.listen(),
 		onRequest: <P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void => connection.onRequest(type, handler),
 		sendNotification: <P>(type: NotificationType<P>, params?: P): void => connection.sendNotification(type, params),
@@ -311,21 +274,48 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
 		onDidChangeConfiguration: (handler) => connection.onNotification(DidChangeConfigurationNotification.type, handler),
 		onDidChangeFiles: (handler) => connection.onNotification(DidChangeFilesNotification.type, handler),
 
-		onTextDocument: (handler: TextDocumentHandler) => {
-			if (handler.incremental === true || handler.incremental === false) {
-				incrementalSync = handler.incremental;
-			}
-			connection.onNotification(DidOpenTextDocumentNotification.type, handler.onDidOpenTextDocument);
-			connection.onNotification(DidChangeTextDocumentNotification.type, handler.onDidChangeTextDocument);
-			connection.onNotification(DidCloseTextDocumentNotification.type, handler.onDidCloseTextDocument);
-		},
+		__incrementalTextDocumentSync: undefined,
+		onDidOpenTextDocument: (handler) => connection.onNotification(DidOpenTextDocumentNotification.type, handler),
+		onDidChangeTextDocument: (handler) => connection.onNotification(DidChangeTextDocumentNotification.type, handler),
+		onDidCloseTextDocument: (handler) => connection.onNotification(DidCloseTextDocumentNotification.type, handler),
 
 		publishDiagnostics: (params) => connection.sendNotification(PublishDiagnosticsNotification.type, params),
 
 		onHover: (handler) => connection.onRequest(HoverRequest.type, handler),
 
 		dispose: () => connection.dispose()
-	}
+	};
 
-	return result;
+	connection.onRequest(InitializeRequest.type, (params) => {
+		if (initializeHandler) {
+			let result = initializeHandler(params);
+			if (is.undefined(protocolConnection.__incrementalTextDocumentSync)) {
+				return result;
+			}
+			return asThenable(result).then((value) => {
+				if (value instanceof ResponseError) {
+					return value;
+				}
+				let capabilities = (<InitializeResult>value).capabilities;
+				if (capabilities) {
+					capabilities.incrementalTextDocumentSync = protocolConnection.__incrementalTextDocumentSync;
+				}
+				return value;
+			});
+		} else {
+			let result: InitializeResult = { capabilities: { incrementalTextDocumentSync: false } };
+			return result;
+		}
+	});
+
+	connection.onRequest(ShutdownRequest.type, (params) => {
+		shutdownReceived = true;
+		if (shutdownHandler) {
+			return shutdownHandler(params);
+		} else {
+			return undefined;
+		}
+	});
+
+	return protocolConnection;
 }
