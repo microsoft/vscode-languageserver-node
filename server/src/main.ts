@@ -86,8 +86,7 @@ export class TextDocuments {
 
 	private _documents : { [uri: string]: TextDocument };
 
-	public _onDidContentChange: Emitter<TextDocumentChangeEvent>;
-
+	private _onDidContentChange: Emitter<TextDocumentChangeEvent>;
 
 	public constructor() {
 		this._documents = Object.create(null);
@@ -130,7 +129,7 @@ export class TextDocuments {
 
 // ------------------------- implementation of the language server protocol ---------------------------------------------
 
-class ErrorMessageTracker {
+export class ErrorMessageTracker {
 
 	private messages: { [key: string]: number };
 	constructor() {
