@@ -142,10 +142,10 @@ export interface NodeModule {
 
 export interface ClientOptions {
 	server: Executable | { run: Executable; debug: Executable; } |  { run: NodeModule; debug: NodeModule } | NodeModule | (() => Thenable<ChildProcess | StreamInfo>);
-	configuration: string | string[];
-	fileWatchers: FileSystemWatcher | FileSystemWatcher[];
-	syncTextDocument(textDocument: TextDocument): boolean;
-	languageSelector: LanguageSelector;
+	configuration?: string | string[];
+	fileWatchers?: FileSystemWatcher | FileSystemWatcher[];
+	languageSelector?: string | string[];
+	syncTextDocument?: (textDocument: TextDocument) => boolean;
 }
 
 enum ClientState {
@@ -153,6 +153,45 @@ enum ClientState {
 	Running,
 	Stopping,
 	Stopped
+}
+
+interface SyncExpression {
+	evaluate(textDocument: TextDocument): boolean;
+}
+
+class FalseSyncExpression implements SyncExpression {
+	public evaluate(textDocument: TextDocument): boolean {
+		return false;
+	}
+}
+
+class LanguageIdExpression implements SyncExpression {
+	constructor(private _id: string) {
+	}
+	public evaluate(textDocument: TextDocument): boolean {
+		return this._id === textDocument.languageId;
+	}
+}
+
+class FunctionSyncExpression implements SyncExpression {
+	constructor(private _func: (textDocument: TextDocument) => boolean) {
+	}
+	public evaluate(textDocument: TextDocument): boolean {
+		return this._func(textDocument);
+	}
+}
+
+class CompositeSyncExpression implements SyncExpression {
+	private _expression: SyncExpression[];
+	constructor(values: string[], func?: (textDocument: TextDocument) => boolean) {
+		this._expression = values.map(value => new LanguageIdExpression(value));
+		if (func) {
+			this._expression.push(new FunctionSyncExpression(func));
+		}
+	}
+	public evaluate(textDocument: TextDocument): boolean {
+		return this._expression.some(exp => exp.evaluate(textDocument));
+	}
 }
 
 export class LanguageClient {
@@ -172,12 +211,15 @@ export class LanguageClient {
 	private _providers: Disposable[];
 	private _diagnostics: DiagnosticCollection;
 
+	private _syncExpression: SyncExpression;
+
 	private _fileEvents: FileEvent[];
 	private _delayer: Delayer<void>;
 
 	public constructor(name: string, options: ClientOptions, forceDebug: boolean = false) {
 		this._name = name;
 		this._options = options;
+		this._syncExpression = this.computeSyncExpression();
 		this._forceDebug = forceDebug;
 
 		this._state = ClientState.Stopped;
@@ -193,6 +235,27 @@ export class LanguageClient {
 		this._onReady = new Promise<void>((resolve, reject) => {
 			this._onReadyCallbacks = { resolve, reject };
 		});
+	}
+
+	private computeSyncExpression(): SyncExpression {
+		if (!this._options.languageSelector && !this._options.syncTextDocument) {
+			return new FalseSyncExpression();
+		}
+		if (this._options.syncTextDocument && !this._options.languageSelector) {
+			return new FunctionSyncExpression(this._options.syncTextDocument);
+		}
+		if (!this._options.syncTextDocument && this._options.languageSelector) {
+			if (is.string(this._options.languageSelector)) {
+				return new LanguageIdExpression(<string>this._options.languageSelector)
+			} else {
+				return new CompositeSyncExpression(<string[]>this._options.languageSelector)
+			}
+		}
+		if (this._options.syncTextDocument && this._options.languageSelector) {
+			return new CompositeSyncExpression(
+				is.string(this._options.languageSelector) ? [<string>this._options.languageSelector] : <string[]>this._options.languageSelector,
+				this._options.syncTextDocument);
+		}
 	}
 
 	public sendRequest<P, R, E>(type: RequestType<P, R, E>, params?: P): Thenable<R> {
@@ -368,14 +431,14 @@ export class LanguageClient {
 	}
 
 	private onDidOpenTextDoument(connection: IConnection, textDocument: TextDocument): void {
-		if (!this._options.syncTextDocument(textDocument)) {
+		if (!this._syncExpression.evaluate(textDocument)) {
 			return;
 		}
 		connection.didOpenTextDocument(asOpenTextDocumentParams(textDocument));
 	}
 
 	private onDidChangeTextDocument(connection: IConnection, event: TextDocumentChangeEvent): void {
-		if (!this._options.syncTextDocument(event.document)) {
+		if (!this._syncExpression.evaluate(event.document)) {
 			return;
 		}
 		let uri: string = event.document.uri.toString();
@@ -387,7 +450,7 @@ export class LanguageClient {
 	}
 
 	private onDidCloseTextDoument(connection: IConnection, textDocument: TextDocument): void {
-		if (!this._options.syncTextDocument(textDocument)) {
+		if (!this._syncExpression.evaluate(textDocument)) {
 			return;
 		}
 		connection.didCloseTextDocument(asCloseTextDocumentParams(textDocument));
