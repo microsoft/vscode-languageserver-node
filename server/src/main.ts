@@ -293,7 +293,7 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
 				if (!result) {
 					result = { capabilities: {} };
 				}
-				let capabilities = (<InitializeResult>value).capabilities;
+				let capabilities = result.capabilities;
 				if (!capabilities) {
 					capabilities = {}
 					result.capabilities = {};
