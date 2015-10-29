@@ -10,6 +10,7 @@ export interface HostCapabilities {
 
 export interface ServerCapabilities {
 	incrementalTextDocumentSync?: boolean;
+	hoverProvider?: boolean;
 }
 
 /**
@@ -125,11 +126,29 @@ export interface Range {
 	end: Position;
 }
 
+export interface HTMLContentElement {
+	formattedText?:string;
+	text?: string;
+	className?: string;
+	style?: string;
+	customStyle?: any;
+	tagName?: string;
+	children?: HTMLContentElement[];
+	isText?: boolean;
+}
+
 export interface TextDocumentIdentifier {
 	/**
 	 * A URI identifying the resource in the client.
 	 */
 	uri: string;
+}
+
+export interface TextDocumentPosition extends TextDocumentIdentifier {
+	/**
+	 * The position inside the text document.
+	 */
+	position: Position;
 }
 
 /**
@@ -202,7 +221,7 @@ export interface FileEvent {
  * results of validation runs
  */
 export namespace PublishDiagnosticsNotification {
-	export let type: NotificationType<PublishDiagnosticsParams> = { method: 'document/publishDiagnostics' };
+	export let type: NotificationType<PublishDiagnosticsParams> = { method: 'textDocument/publishDiagnostics' };
 }
 export interface PublishDiagnosticsParams {
 	/**
@@ -252,4 +271,25 @@ export interface Diagnostic {
 	 * The diagnostic message.
 	 */
 	message: string;
+}
+
+//---- Hover support -------------------------------
+
+export namespace HoverRequest {
+	export let type: RequestType<TextDocumentPosition, HoverResult, void> = { method: 'textDocument/hover' };
+}
+
+/**
+ * The result of a hove request.
+ */
+export interface HoverResult {
+	/**
+	 * The hover's content
+	 */
+	content: string | HTMLContentElement;
+
+	/**
+	 * An optional range
+	 */
+	range?: Range;
 }

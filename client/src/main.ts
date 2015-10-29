@@ -6,7 +6,10 @@
 import * as cp from 'child_process';
 import ChildProcess = cp.ChildProcess;
 
-import { workspace, window, languages, extensions, TextDocumentChangeEvent, TextDocument, Disposable, FileSystemWatcher, CommandCallback, Uri, DiagnosticCollection } from 'vscode';
+import {
+		workspace, window, languages, extensions, TextDocumentChangeEvent, TextDocument, Disposable, FileSystemWatcher, CommandCallback, Uri, DiagnosticCollection, LanguageSelector,
+		CancellationToken, Hover, Position as VPosition, IHTMLContentElement
+} from 'vscode';
 
 import { IRequestHandler, INotificationHandler, MessageConnection, ClientMessageConnection, ILogger, createClientMessageConnection, ErrorCodes, ResponseError, RequestType, NotificationType } from 'vscode-jsonrpc';
 import {
@@ -18,10 +21,11 @@ import {
 		DidChangeConfigurationNotification, DidChangeConfigurationParams,
 		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams, DidCloseTextDocumentNotification, DidCloseTextDocumentParams,
 		DidChangeFilesNotification, DidChangeFilesParams, FileEvent, FileChangeType,
-		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, Severity, Position
+		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, Severity, Position,
+		HoverRequest, HoverResult
 	} from './protocol';
 
-import { asOpenTextDocumentParams, asChangeTextDocumentParams, asCloseTextDocumentParams, asDiagnostics } from './converters';
+import { asOpenTextDocumentParams, asChangeTextDocumentParams, asCloseTextDocumentParams, asDiagnostics, asRange, asTextDocumentPosition } from './converters';
 
 import * as is from './utils/is';
 import * as electron from './utils/electron';
@@ -33,6 +37,8 @@ export { RequestType, NotificationType, INotificationHandler }
 declare var v8debug;
 
 interface IConnection {
+
+	listen(): void;
 
 	sendRequest<P, R, E>(type: RequestType<P, R, E>, params?: P): Thenable<R>;
 	sendNotification<P>(type: NotificationType<P>, params?: P): void;
@@ -75,6 +81,8 @@ function createConnection(inputStream: NodeJS.ReadableStream, outputStream: Node
 	let logger = new Logger();
 	let connection = createClientMessageConnection(inputStream, outputStream, logger);
 	let result: IConnection = {
+
+		listen: (): void => connection.listen(),
 
 		sendRequest: <P, R, E>(type: RequestType<P, R, E>, params?: P): Thenable<R> => connection.sendRequest(type, params),
 		sendNotification: <P>(type: NotificationType<P>, params?: P): void => connection.sendNotification(type, params),
@@ -137,6 +145,7 @@ export interface ClientOptions {
 	configuration: string | string[];
 	fileWatchers: FileSystemWatcher | FileSystemWatcher[];
 	syncTextDocument(textDocument: TextDocument): boolean;
+	languageSelector: LanguageSelector;
 }
 
 enum ClientState {
@@ -160,6 +169,7 @@ export class LanguageClient {
 	private _capabilites: ServerCapabilities;
 
 	private _listeners: Disposable[];
+	private _providers: Disposable[];
 	private _diagnostics: DiagnosticCollection;
 
 	private _fileEvents: FileEvent[];
@@ -175,6 +185,7 @@ export class LanguageClient {
 		this._childProcess = null;
 
 		this._listeners = [];
+		this._providers = [];
 		this._diagnostics = languages.createDiagnosticCollection();
 
 		this._fileEvents = [];
@@ -233,6 +244,37 @@ export class LanguageClient {
 	public start(): void {
 		this._state = ClientState.Starting;
 		this.resolveConnection().then((connection) => {
+			connection.onLogMessage((message) => {
+				switch(message.type) {
+					case MessageType.Error:
+						console.error(message.message);
+						break;
+					case MessageType.Warning:
+						console.warn(message.message);
+						break;
+					case MessageType.Info:
+						console.info(message.message);
+						break;
+					default:
+						console.log(message.message);
+				}
+			});
+			connection.onShowMessage((message) => {
+				switch(message.type) {
+					case MessageType.Error:
+						window.showErrorMessage(message.message);
+						break;
+					case MessageType.Warning:
+						window.showWarningMessage(message.message);
+						break;
+					case MessageType.Info:
+						window.showInformationMessage(message.message);
+						break;
+					default:
+						window.showInformationMessage(message.message);
+				}
+			});
+			connection.listen();
 			this.initialize(connection);
 		}, (error) => {
 			this._onReadyCallbacks.reject();
@@ -247,7 +289,7 @@ export class LanguageClient {
 	}
 
 	private initialize(connection: IConnection): Thenable<InitializeResult> {
-		let initParams: InitializeParams = { rootFolder: workspace.getPath(), capabilities: { } };
+		let initParams: InitializeParams = { rootFolder: workspace.rootPath, capabilities: { } };
 		return connection.initialize(initParams).then((result) => {
 			this._state = ClientState.Running;
 			this._capabilites = result.capabilities;
@@ -257,14 +299,17 @@ export class LanguageClient {
 			workspace.onDidCloseTextDocument(t => this.onDidCloseTextDoument(connection, t), null, this._listeners);
 			this.hookFileEvents(connection);
 			this.hookConfigurationChanged(connection);
+			this.hookCapabilities(connection);
 			this._onReadyCallbacks.resolve();
-			workspace.getTextDocuments().forEach(t => this.onDidOpenTextDoument(connection, t));
+			workspace.textDocuments.forEach(t => this.onDidOpenTextDoument(connection, t));
 			return result;
 		}, (error: ResponseError<InitializeError>) => {
 			if (error.data.retry) {
-				window.showErrorMessage(error.message, { title: 'Retry', command: () => {
-					this.initialize(connection);
-				}});
+				window.showErrorMessage(error.message, { title: 'Retry', id: "retry"}).then(item => {
+					if (item.id === 'retry') {
+						this.initialize(connection);
+					}
+				});
 			} else {
 				this._onReadyCallbacks.reject();
 				window.showErrorMessage(error.message);
@@ -333,7 +378,7 @@ export class LanguageClient {
 		if (!this._options.syncTextDocument(event.document)) {
 			return;
 		}
-		let uri: string = event.document.getUri().toString();
+		let uri: string = event.document.uri.toString();
 		if (this._capabilites.incrementalTextDocumentSync) {
 			asChangeTextDocumentParams(event).forEach(param => connection.didChangeTextDocument(param));
 		} else {
@@ -385,7 +430,7 @@ export class LanguageClient {
 			return new Promise<IConnection>((resolve, reject) => {
 				let options = node.options || {};
 				options.execArgv = options.execArgv || [];
-				options.cwd = options.cwd || workspace.getPath();
+				options.cwd = options.cwd || workspace.rootPath;
 				electron.fork(node.module, node.args || [], options, (error, cp) => {
 					if (error) {
 						reject(error);
@@ -398,7 +443,7 @@ export class LanguageClient {
 		} else if (is.defined(json.command)) {
 			let command: Executable = <Executable>json;
 			let options = command.options || {};
-			options.cwd = options.cwd || workspace.getPath();
+			options.cwd = options.cwd || workspace.rootPath;
 			let process = cp.spawn(command.command, command.args, command.options);
 			this._childProcess = process;
 			return Promise.resolve(createConnection(process.stdout, process.stdin));
@@ -422,7 +467,7 @@ export class LanguageClient {
 		if (!this._options.configuration) {
 			return;
 		}
-		extensions.onDidChangeConfiguration(e => this.onDidChangeConfiguration(connection), this, this._listeners);
+		workspace.onDidChangeConfiguration(e => this.onDidChangeConfiguration(connection), this, this._listeners);
 		this.onDidChangeConfiguration(connection);
 	}
 
@@ -434,17 +479,13 @@ export class LanguageClient {
 			keys = (<string[]>this._options.configuration);
 		}
 		if (keys) {
-			this.extractSettingsInformation(keys).then((settings) => {
-				if (this.isConnectionActive()) {
-					connection.didChangeConfiguration({ settings });
-				}
-			}, (error) => {
-				console.error(`Syncing settings failed with error ${JSON.stringify(error, null, 4)}`);
-			});
+			if (this.isConnectionActive()) {
+				connection.didChangeConfiguration({ settings: this.extractSettingsInformation(keys) });
+			}
 		}
 	}
 
-	private extractSettingsInformation(keys: string[]): Thenable<any> {
+	private extractSettingsInformation(keys: string[]): any {
 		function ensurePath(config: any, path: string[]): any {
 			let current = config;
 			for (let i = 0; i < path.length - 1; i++) {
@@ -457,25 +498,24 @@ export class LanguageClient {
 			}
 			return current;
 		}
-		let promises: Thenable<any>[] = [];
+		workspace.getConfiguration()
+
+		let result = Object.create(null);
 		for (let i = 0; i < keys.length; i++) {
 			let key = keys[i];
 			let index: number = key.indexOf('.');
+			let config: any = null;
 			if (index >= 0) {
-				promises.push(extensions.getConfigurationMemento(key.substr(0, index)).getValue(key.substr(index + 1)));
+				config = workspace.getConfiguration(key.substr(0, index)).get(key.substr(index + 1));
 			} else {
-				promises.push(extensions.getConfigurationMemento(key).getValues());
+				config = workspace.getConfiguration(key);
+			}
+			if (config) {
+				let path = keys[i].split('.');
+				ensurePath(result, path)[path[path.length - 1]] = config;
 			}
 		}
-		return Promise.all(promises).then(values => {
-			let result = Object.create(null);
-			for (let i = 0; i < values.length; i++) {
-				let path = keys[i].split('.');
-				let value = values[i];
-				ensurePath(result, path)[path[path.length - 1]] = value;
-			}
-			return result;
-		});
+		return result;
 	}
 
 	private hookFileEvents(connection: IConnection): void {
@@ -513,20 +553,40 @@ export class LanguageClient {
 			), null, this._listeners);
 		})
 	}
+
+	private hookCapabilities(connection: IConnection): void {
+		if (this._capabilites.hoverProvider && this._options.languageSelector) {
+			this._providers.push(languages.registerHoverProvider(this._options.languageSelector, {
+				provideHover: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<Hover> => {
+					if (this.isConnectionActive()) {
+						return connection.sendRequest(HoverRequest.type, asTextDocumentPosition(document, position)).then((result: HoverResult) => {
+							if (is.string(result.content)) {
+								return new Hover(<string>result.content, asRange(result.range));
+							} else {
+								return new Hover(<IHTMLContentElement>result.content, asRange(result.range));
+							}
+						});
+					} else {
+						return Promise.reject<Hover>(new Error('Connection is not active anymore'));
+					}
+				}
+			}));
+		}
+	}
 }
 
 export class ClientStarter {
 
 	private _setting: string;
-	private _disposables: Disposable[];
+	private _listeners: Disposable[];
 
 	constructor(private _client: LanguageClient) {
-		this._disposables = [];
+		this._listeners = [];
 	}
 
 	public watchSetting(setting: string) {
 		this._setting = setting;
-		extensions.onDidChangeConfiguration(this.onDidChangeConfiguration, this, this._disposables);
+		workspace.onDidChangeConfiguration(this.onDidChangeConfiguration, this, this._listeners);
 		this.onDidChangeConfiguration();
 	}
 
@@ -534,14 +594,11 @@ export class ClientStarter {
 		let index = this._setting.indexOf('.');
 		let primary = index >= 0 ? this._setting.substr(0, index) : this._setting;
 		let rest = index >= 0 ? this._setting.substr(index + 1) : undefined;
-		let memento = extensions.getConfigurationMemento(primary);
-		let valuePromise: Thenable<boolean | any> = rest ? memento.getValue(rest, false) : memento.getValues();
-		valuePromise.then((enabled) => {
-			if (enabled && this._client.needsStart()) {
-				this._client.start();
-			} else if (!enabled && this._client.needsStop()) {
-				this._client.stop();
-			}
-		});
+		let enabled = rest ? workspace.getConfiguration(primary).get(rest, false) : workspace.getConfiguration(primary);
+		if (enabled && this._client.needsStart()) {
+			this._client.start();
+		} else if (!enabled && this._client.needsStop()) {
+			this._client.stop();
+		}
 	}
 }

@@ -17,18 +17,26 @@ import {
 		DidChangeConfigurationNotification, DidChangeConfigurationParams,
 		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams, DidCloseTextDocumentNotification, DidCloseTextDocumentParams,
 		DidChangeFilesNotification, DidChangeFilesParams, FileEvent, FileChangeType,
-		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, Severity, Position
+		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, Severity, Position,
+		TextDocumentIdentifier, TextDocumentPosition,
+		HoverRequest, HoverResult
 	} from './protocol';
 
-import { ISimpleTextDocument, SimpleTextDocument } from './textDocuments';
+import { Event, Emitter } from './utils/events';
+import * as is from './utils/is';
 
 // ------------- Reexport the API surface of the language worker API ----------------------
 export {
-		RequestType, IRequestHandler, NotificationType, INotificationHandler,
-		InitializeResult, InitializeError, Diagnostic, Severity, Position, FileEvent, FileChangeType, ErrorCodes, ResponseError
+		RequestType, IRequestHandler, NotificationType, INotificationHandler, ErrorCodes, ResponseError,
+		InitializeResult, InitializeError,
+		Diagnostic, Severity, Position,
+		FileEvent, FileChangeType,
+		TextDocumentIdentifier, TextDocumentPosition,
+		HoverResult
 }
 export { LanguageServerError, MessageKind }
-export { ISimpleTextDocument }
+export { Event }
+
 
 import * as fm from './files';
 export namespace Files {
@@ -36,67 +44,97 @@ export namespace Files {
 	export let resolveModule = fm.resolveModule;
 }
 
-// -------------- single file validator -------------------
+// ------------------------- text documents  --------------------------------------------------
 
-export type Result<T> = T | Thenable<T>;
-
-export interface IValidationRequestor {
-	single(uri: string): boolean;
-	all(): void;
+export interface ITextDocument {
+	uri: string;
+	getText(): string;
 }
 
-export interface SingleFileValidator {
-	initialize?(rootFolder: string): Result<InitializeResult | ResponseError<InitializeError>>;
-	validate(document: ISimpleTextDocument): Result<Diagnostic[]>;
-	onConfigurationChange?(settings: any, requestor: IValidationRequestor): void;
-	onFileEvents?(changes: FileEvent[], requestor: IValidationRequestor): void;
-	shutdown?(): void;
-}
+class TextDocument implements ITextDocument {
 
-// ------------------------- implementation of the language worker protocol ---------------------------------------------
+	private _uri: string;
+	private _content: string;
 
-function isFunction(arg: any): arg is Function {
-	return Object.prototype.toString.call(arg) === '[object Function]';
-}
-
-function isArray(array: any): array is any[] {
-	if (Array.isArray) {
-		return Array.isArray(array);
+	public constructor(uri: string, content: string) {
+		this._uri = uri;
+		this._content = content;
 	}
-	if (array && typeof (array.length) === 'number' && array.constructor === Array) {
-		return true;
+
+	public get uri(): string {
+		return this._uri;
 	}
-	return false;
+
+	public getText(): string {
+		return this._content;
+	}
+
+	public update(event: DidChangeTextDocumentParams): void {
+		this._content = event.text;
+	}
 }
 
-class DocumentManager {
+export interface TextDocumentHandler {
+	incremental?: boolean;
+	onDidOpenTextDocument(event: DidOpenTextDocumentParams): void;
+	onDidChangeTextDocument(event: DidChangeTextDocumentParams): void;
+	onDidCloseTextDocument(event: DidCloseTextDocumentParams): void;
+}
 
-	private trackedDocuments : { [uri: string]: SimpleTextDocument };
+export class TextDocumentChangeEvent {
+	document: ITextDocument;
+}
+
+export class TextDocuments {
+
+	private _documents : { [uri: string]: TextDocument };
+	private _handler: TextDocumentHandler;
+
+	public _onDidContentChange: Emitter<TextDocumentChangeEvent>;
+
 
 	public constructor() {
-		this.trackedDocuments = Object.create(null);
+		this._documents = Object.create(null);
+		this._onDidContentChange = new Emitter<TextDocumentChangeEvent>();
+		this._handler = {
+			onDidOpenTextDocument: (event: DidOpenTextDocumentParams) => {
+				let document = new TextDocument(event.uri, event.text);
+				this._documents[event.uri] = document;
+				this._onDidContentChange.fire({ document });
+			},
+			onDidChangeTextDocument: (event: DidChangeTextDocumentParams) => {
+				let document = this._documents[event.uri];
+				document.update(event);
+				this._onDidContentChange.fire({ document });
+			},
+			onDidCloseTextDocument: (event: DidCloseTextDocumentParams) => {
+				delete this._documents[event.uri];
+			}
+		}
 	}
 
-	public add(uri: string, document: SimpleTextDocument) {
-		this.trackedDocuments[uri] = document;
+	public get onDidContentChange(): Event<TextDocumentChangeEvent> {
+		return this._onDidContentChange.event;
 	}
 
-	public remove(uri: string): boolean {
-		return delete this.trackedDocuments[uri];
+	public get(uri: string): ITextDocument {
+		return this._documents[uri];
 	}
 
-	public get(uri: string): SimpleTextDocument {
-		return this.trackedDocuments[uri];
-	}
-
-	public all(): SimpleTextDocument[] {
-		return Object.keys(this.trackedDocuments).map(key => this.trackedDocuments[key]);
+	public all(): ITextDocument[] {
+		return Object.keys(this._documents).map(key => this._documents[key]);
 	}
 
 	public keys(): string[] {
-		return Object.keys(this.trackedDocuments);
+		return Object.keys(this._documents);
 	}
- }
+
+	public observe(connection: IConnection): void {
+		connection.onTextDocument(this._handler);
+	}
+}
+
+// ------------------------- implementation of the language server protocol ---------------------------------------------
 
 class ErrorMessageTracker {
 
@@ -176,6 +214,8 @@ class RemoteWindowImpl implements RemoteWindow {
 
 export interface IConnection {
 
+	listen(): void;
+
 	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void;
 	sendNotification<P>(type: NotificationType<P>, params?: P): void;
 	onNotification<P>(type: NotificationType<P>, handler: INotificationHandler<P>): void;
@@ -190,14 +230,13 @@ export interface IConnection {
 	onDidChangeConfiguration(handler: INotificationHandler<DidChangeConfigurationParams>): void;
 	onDidChangeFiles(handler: INotificationHandler<DidChangeFilesParams>): void;
 
-	onDidOpenTextDocument(handler: INotificationHandler<DidOpenTextDocumentParams>): void;
-	onDidChangeTextDocument(handler: INotificationHandler<DidChangeTextDocumentParams>): void;
-	onDidCloseTextDocument(handler: INotificationHandler<DidCloseTextDocumentParams>): void;
+	onTextDocument(handler: TextDocumentHandler): void;
 	publishDiagnostics(args: PublishDiagnosticsParams): void;
+
+	onHover(handler: IRequestHandler<TextDocumentPosition, HoverResult, void>): void;
 
 	dispose(): void;
 }
-
 
 export function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream): IConnection {
 	let shutdownReceived: boolean;
@@ -213,6 +252,14 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
 	logger.attach(connection);
 	let remoteWindow = new RemoteWindowImpl(connection);
 
+	function asThenable<T>(value: T | Thenable<T>): Thenable<T> {
+		if (is.thenable(value)) {
+			return value;
+		} else {
+			return Promise.resolve<T>(<T>value);
+		}
+	}
+
 	let shutdownHandler: IRequestHandler<ShutdownParams, void, void> = null;
 	connection.onRequest(ShutdownRequest.type, (params) => {
 		shutdownReceived = true;
@@ -222,7 +269,34 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
 			return undefined;
 		}
 	});
+
+	let incrementalSync: boolean = undefined;
+
+	let initializeHandler: IRequestHandler<InitializeParams, InitializeResult, InitializeError> = null;
+	connection.onRequest(InitializeRequest.type, (params) => {
+		if (initializeHandler) {
+			let result = initializeHandler(params);
+			if (is.undefined(incrementalSync)) {
+				return result;
+			}
+			return asThenable(result).then((value) => {
+				if (value instanceof ResponseError) {
+					return value;
+				}
+				let capabilities = (<InitializeResult>value).capabilities;
+				if (capabilities) {
+					capabilities.incrementalTextDocumentSync = incrementalSync;
+				}
+				return value;
+			});
+		} else {
+			let result: InitializeResult = { capabilities: { incrementalTextDocumentSync: false } };
+			return result;
+		}
+	});
+
 	let result: IConnection = {
+		listen: (): void => connection.listen(),
 		onRequest: <P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void => connection.onRequest(type, handler),
 		sendNotification: <P>(type: NotificationType<P>, params?: P): void => connection.sendNotification(type, params),
 		onNotification: <P>(type: NotificationType<P>, handler: INotificationHandler<P>): void => connection.onNotification(type, handler),
@@ -237,206 +311,21 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
 		onDidChangeConfiguration: (handler) => connection.onNotification(DidChangeConfigurationNotification.type, handler),
 		onDidChangeFiles: (handler) => connection.onNotification(DidChangeFilesNotification.type, handler),
 
-		onDidOpenTextDocument: (handler) => connection.onNotification(DidOpenTextDocumentNotification.type, handler),
-		onDidChangeTextDocument: (handler) => connection.onNotification(DidChangeTextDocumentNotification.type, handler),
-		onDidCloseTextDocument: (handler) => connection.onNotification(DidCloseTextDocumentNotification.type, handler),
+		onTextDocument: (handler: TextDocumentHandler) => {
+			if (handler.incremental === true || handler.incremental === false) {
+				incrementalSync = handler.incremental;
+			}
+			connection.onNotification(DidOpenTextDocumentNotification.type, handler.onDidOpenTextDocument);
+			connection.onNotification(DidChangeTextDocumentNotification.type, handler.onDidChangeTextDocument);
+			connection.onNotification(DidCloseTextDocumentNotification.type, handler.onDidCloseTextDocument);
+		},
+
 		publishDiagnostics: (params) => connection.sendNotification(PublishDiagnosticsNotification.type, params),
+
+		onHover: (handler) => connection.onRequest(HoverRequest.type, handler),
 
 		dispose: () => connection.dispose()
 	}
 
 	return result;
-}
-
-export interface IValidatorConnection {
-	console: RemoteConsole;
-	window: RemoteWindow;
-
-	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void;
-	sendNotification<P>(type: NotificationType<P>, params?: P): void;
-	onNotification<P>(type: NotificationType<P>, handler: INotificationHandler<P>): void;
-
-	run(handler: SingleFileValidator): void;
-}
-
-class ValidationRequestor implements IValidationRequestor {
-	private documents: DocumentManager;
-	private _toValidate: { [uri: string]: SimpleTextDocument };
-
-	public constructor(documents: DocumentManager) {
-		this.documents = documents;
-		this._toValidate = Object.create(null);
-	}
-
-	public get toValidate(): SimpleTextDocument[] {
-		return Object.keys(this._toValidate).map(key => this._toValidate[key]);
-	}
-
-	public all(): void {
-		this.documents.keys().forEach(key => this._toValidate[key] = this.documents.get(key));
-	}
-
-	public single(uri: string): boolean {
-		let document = this.documents.get(uri);
-		if (document) {
-			this._toValidate[uri] = document;
-		}
-		return !!document;
-	}
-}
-
-export function createValidatorConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream): IValidatorConnection {
-	let connection = createConnection(inputStream, outputStream);
-	let documents = new DocumentManager();
-
-	function run(handler: SingleFileValidator): void {
-		let rootFolder: string;
-
-		function doProcess<T, R>(result: Result<T>, complete: (value: T) => Result<R>, error?: (error: any) => void): Result<R> {
-			if (isFunction((result as Thenable<T>).then)) {
-				return (result as Thenable<T>).then(complete, error);
-			} else {
-				return complete(result as T);
-			}
-		}
-
-		function safeRunner<T>(values: T | T[], func: (value: T) => void): void {
-			let messageTracker: ErrorMessageTracker = new ErrorMessageTracker();
-			let runSingle = (value: T) => {
-				try {
-					func(value);
-				} catch (error) {
-					if (error instanceof LanguageServerError) {
-						let workerError = error as LanguageServerError;
-						switch( workerError.messageKind) {
-							case MessageKind.Show:
-								messageTracker.add(workerError.message);
-								break;
-							case MessageKind.Log:
-								logSafeRunnerMessage(workerError.message);
-								break;
-						}
-					} else {
-						logSafeRunnerMessage(error.message);
-					}
-				}
-			}
-			if (isArray(values)) {
-				for (let value of (values as T[])) {
-					runSingle(value);
-				}
-			} else {
-				runSingle(values as T);
-			}
-			messageTracker.publish(connection);
-		}
-
-		function logSafeRunnerMessage(message?: string): void {
-			if (message) {
-				connection.console.error(`Safe Runner failed with message: ${message}`);
-			} else {
-				connection.console.error('Safe Runner failed unexpectedly.');
-			}
-		}
-
-		function validate(document: SimpleTextDocument): void {
-			let result = handler.validate(document);
-			doProcess(result, (diagnostics) => {
-				connection.publishDiagnostics({
-					uri: document.uri,
-					diagnostics: diagnostics
-				});
-			}, (error) => {
-				// We need a log event to tell the client that a diagnostic
-				// failed.
-			})
-		}
-
-		function createInitializeResult(initArgs: InitializeParams): InitializeResult {
-			var resultCapabilities : ServerCapabilities = {
-				incrementalTextDocumentSync: false
-			};
-			return { capabilities: resultCapabilities };
-		}
-
-		connection.onInitialize(initArgs => {
-			rootFolder = initArgs.rootFolder;
-			if (isFunction(handler.initialize)) {
-				return doProcess(handler.initialize(rootFolder), (resultOrError) => {
-					if (resultOrError) {
-						return resultOrError;
-					} else {
-						return createInitializeResult(initArgs);
-					}
-				});
-			} else {
-				return createInitializeResult(initArgs);
-			}
-		});
-
-		connection.onShutdown(params => {
-			if (isFunction(handler.shutdown)) {
-				handler.shutdown();
-			}
-			return undefined;
-		});
-
-		connection.onExit(() => {
-			process.exit(0);
-		});
-
-		connection.onDidOpenTextDocument(event => {
-			let document = new SimpleTextDocument(event.uri, event.text);
-			documents.add(event.uri, document);
-			process.nextTick(() => safeRunner(document, validate));
-		});
-
-		connection.onDidChangeTextDocument(event => {
-			let document = documents.get(event.uri);
-			if (document) {
-				document.setText(event.text);
-				process.nextTick(() => safeRunner(document, validate));
-			}
-		});
-
-		connection.onDidCloseTextDocument(event => {
-			documents.remove(event.uri);
-		});
-
-		connection.onDidChangeConfiguration(eventBody => {
-			let settings = eventBody.settings;
-			let requestor = new ValidationRequestor(documents);
-			if (isFunction(handler.onConfigurationChange)) {
-				handler.onConfigurationChange(settings, requestor);
-			} else {
-				requestor.all();
-			}
-			process.nextTick(() => safeRunner(requestor.toValidate, validate));
-		});
-
-		connection.onDidChangeFiles(args => {
-			let requestor = new ValidationRequestor(documents);
-			if (isFunction(handler.onFileEvents)) {
-				handler.onFileEvents(args.changes, requestor);
-			} else {
-				requestor.all();
-			}
-			process.nextTick(() => safeRunner(requestor.toValidate, validate));
-		});
-	}
-
-	let result: IValidatorConnection = {
-		onRequest: <P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void => connection.onRequest(type, handler),
-		sendNotification: <P>(type: NotificationType<P>, params?: P): void => connection.sendNotification(type, params),
-		onNotification: <P>(type: NotificationType<P>, handler: INotificationHandler<P>): void => connection.onNotification(type, handler),
-
-		get console() { return connection.console; },
-		get window() { return connection.window },
-		run: run
-	};
-	return result;
-}
-
-export function runSingleFileValidator(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, handler: SingleFileValidator) : void {
-	createValidatorConnection(inputStream, outputStream).run(handler);
 }

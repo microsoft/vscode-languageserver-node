@@ -34,6 +34,7 @@ export interface ILogger {
 export interface MessageConnection {
 	sendNotification<P>(type: NotificationType<P>, params?: P): void;
 	onNotification<P>(type: NotificationType<P>, handler: INotificationHandler<P>): void;
+	listen();
 	dispose(): void;
 }
 
@@ -54,43 +55,6 @@ function createMessageConnection<T extends MessageConnection>(inputStream: NodeJ
 	let responseHandlers : { [name: string]: { method: string, resolve: (Response) => void, reject: (error: any) => void } } = Object.create(null);
 
 	let eventHandlers : { [name: string]: INotificationHandler<any> } = Object.create(null);
-
-	let connection: MessageConnection = {
-		sendNotification: <P>(type: NotificationType<P>, params) => {
-			let notificatioMessage : NotificationMessage = {
-				jsonrpc: version,
-				method: type.method,
-				params: params
-			}
-			protocolWriter.write(notificatioMessage);
-		},
-		onNotification: <P>(type: NotificationType<P>, handler: INotificationHandler<P>) => {
-			eventHandlers[type.method] = handler;
-		},
-		dispose: () => {
-		}
-	};
-	if (client) {
-		(connection as ClientMessageConnection).sendRequest = <P, R, E>(type: RequestType<P, R, E>, params: P) => {
-			return new Promise<R | ResponseError<E>>((resolve, reject) => {
-				let id = sequenceNumber++;
-				let requestMessage : RequestMessage = {
-					jsonrpc: version,
-					id: id,
-					method: type.method,
-					params: params
-				}
-				responseHandlers[String(id)] = { method: type.method, resolve, reject };
-				protocolWriter.write(requestMessage);
-			});
-		}
-	} else {
-		(connection as ServerMessageConnection).onRequest = <P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>) => {
-			requestHandlers[type.method] = handler;
-		}
-	}
-	inputStream.on('end', () => outputStream.end());
-	inputStream.on('close', () => outputStream.end());
 
 	function handleRequest(requestMessage: RequestMessage) {
 		function reply(resultOrError: any | ResponseError<any>): void {
@@ -214,7 +178,47 @@ function createMessageConnection<T extends MessageConnection>(inputStream: NodeJ
 			}
 		}
 	}
-	new MessageReader(inputStream, callback);
+
+	let connection: MessageConnection = {
+		sendNotification: <P>(type: NotificationType<P>, params) => {
+			let notificatioMessage : NotificationMessage = {
+				jsonrpc: version,
+				method: type.method,
+				params: params
+			}
+			protocolWriter.write(notificatioMessage);
+		},
+		onNotification: <P>(type: NotificationType<P>, handler: INotificationHandler<P>) => {
+			eventHandlers[type.method] = handler;
+		},
+		dispose: () => {
+		},
+		listen: () => {
+			new MessageReader(inputStream, callback);
+		}
+	};
+	if (client) {
+		(connection as ClientMessageConnection).sendRequest = <P, R, E>(type: RequestType<P, R, E>, params: P) => {
+			return new Promise<R | ResponseError<E>>((resolve, reject) => {
+				let id = sequenceNumber++;
+				let requestMessage : RequestMessage = {
+					jsonrpc: version,
+					id: id,
+					method: type.method,
+					params: params
+				}
+				responseHandlers[String(id)] = { method: type.method, resolve, reject };
+				protocolWriter.write(requestMessage);
+			});
+		}
+	} else {
+		(connection as ServerMessageConnection).onRequest = <P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>) => {
+			requestHandlers[type.method] = handler;
+		}
+	}
+	
+	inputStream.on('end', () => outputStream.end());
+	inputStream.on('close', () => outputStream.end());
 	return connection as T;
 }
 

@@ -140,6 +140,7 @@ describe('Connection', () => {
 
 		var connection = hostConnection.createServerMessageConnection(inputStream, outputStream, Logger);
 		connection.onRequest(testRequest1, testRequestHandler);
+		connection.listen();
 
 		inputStream.push(newRequestString(0, testRequest1.method, newParams('foo')));
 		inputStream.push(null);
@@ -163,6 +164,7 @@ describe('Connection', () => {
 		var connection = hostConnection.createServerMessageConnection(inputStream, outputStream, Logger);
 		connection.onRequest(testRequest1, testRequestHandler);
 		connection.onRequest(testRequest2, testRequestHandler);
+		connection.listen();
 
 		inputStream.push(newRequestString(0, testRequest1.method, newParams('foo')));
 		inputStream.push(newRequestString(1, testRequest2.method, newParams('bar')));
@@ -187,6 +189,7 @@ describe('Connection', () => {
 
 		var connection = hostConnection.createServerMessageConnection(inputStream, outputStream, Logger);
 		connection.onRequest(testRequest1, testRequestHandler);
+		connection.listen();
 
 		inputStream.push(newRequestString(0, testRequest1.method, {}));
 		inputStream.push(null);
@@ -209,6 +212,7 @@ describe('Connection', () => {
 
 		var connection = hostConnection.createServerMessageConnection(inputStream, outputStream, Logger);
 		connection.onRequest(testRequest1, testRequestHandler);
+		connection.listen();
 
 		inputStream.push(newRequestString(0, testRequest2.method, {}));
 		inputStream.push(null);
@@ -232,6 +236,7 @@ describe('Connection', () => {
 
 		var connection = hostConnection.createClientMessageConnection(inputStream, outputStream, Logger);
 		connection.sendRequest(testRequest1, { 'foo': true });
+		connection.listen();
 
 		var expected : RequestMessage[] = [
 			{ jsonrpc: '2.0', id: 0, method: testRequest1.method, params: { 'foo': true } }
@@ -258,8 +263,10 @@ describe('Connection', () => {
 
 		var connection2 = hostConnection.createServerMessageConnection(duplexStream2, duplexStream1, Logger);
 		connection2.onRequest(testRequest1, createEchoRequestHandler(receivedRequests));
+		connection2.listen();
 
 		var connection1 = hostConnection.createClientMessageConnection(duplexStream1, duplexStream2, Logger);
+		connection1.listen();
 		connection1.sendRequest(testRequest1, params).then(result => {
 			receivedResults.push(result);
 			assert.deepEqual(receivedRequests, [ params ]);
@@ -279,12 +286,14 @@ describe('Connection', () => {
 		var params = { 'foo': true };
 
 		var connection1 = hostConnection.createServerMessageConnection(inputStream, duplexStream, Logger);
+		connection1.listen();
 		connection1.sendNotification(testEvent, params);
 
 		var resultingEvents = [];
 
 		var connection2 = hostConnection.createClientMessageConnection(duplexStream, outputStream, Logger);
 		connection2.onNotification(testEvent, createEventHandler(resultingEvents));
+		connection2.listen();
 		setTimeout(() => {
 			assert.deepEqual(resultingEvents, [ params ]);
 			done();
