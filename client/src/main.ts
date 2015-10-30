@@ -226,9 +226,9 @@ export class LanguageClient {
 		this._connection = null;
 		this._childProcess = null;
 
-		this._listeners = [];
-		this._providers = [];
-		this._diagnostics = languages.createDiagnosticCollection();
+		this._listeners = null;
+		this._providers = null;
+		this._diagnostics = null;
 
 		this._fileEvents = [];
 		this._delayer = new Delayer<void>(250);
@@ -305,6 +305,9 @@ export class LanguageClient {
 	}
 
 	public start(): void {
+		this._listeners = [];
+		this._providers = [];
+		this._diagnostics = languages.createDiagnosticCollection();
 		this._state = ClientState.Starting;
 		this.resolveConnection().then((connection) => {
 			connection.onLogMessage((message) => {
@@ -390,6 +393,11 @@ export class LanguageClient {
 		this._state = ClientState.Stopping;
 		// unkook listeners
 		this._listeners.forEach(listener => listener.dispose());
+		this._listeners = null;
+		this._providers.forEach(provider => provider.dispose());
+		this._providers = null;
+		this._diagnostics.dispose();
+		this._diagnostics = null;
 		this.resolveConnection().then(connection => {
 			connection.shutdown({}).then(() => {
 				connection.exit({});
@@ -399,8 +407,6 @@ export class LanguageClient {
 				let toCheck = this._childProcess;
 				this._childProcess = null;
 				// Remove all markers
-				Object.keys(this._diagnostics).forEach(key => this._diagnostics[key].dispose());
-				this._diagnostics = Object.create(null);
 				this.checkProcessDied(toCheck);
 			})
 		});
