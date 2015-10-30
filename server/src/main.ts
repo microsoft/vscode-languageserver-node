@@ -15,7 +15,7 @@ import {
 		ShowMessageNotification, ShowMessageParams,
 		DidChangeConfigurationNotification, DidChangeConfigurationParams,
 		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams, DidCloseTextDocumentNotification, DidCloseTextDocumentParams,
-		DidChangeFilesNotification, DidChangeFilesParams, FileEvent, FileChangeType,
+		DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
 		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, Severity, Position,
 		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSync,
 		HoverRequest, HoverResult
@@ -26,10 +26,13 @@ import * as is from './utils/is';
 
 // ------------- Reexport the API surface of the language worker API ----------------------
 export {
-		RequestType, IRequestHandler, NotificationType, INotificationHandler, ErrorCodes, ResponseError,
-		InitializeResult, InitializeError,
-		Diagnostic, Severity, Position,
-		FileEvent, FileChangeType,
+		RequestType, IRequestHandler, NotificationType, INotificationHandler, ResponseError, ErrorCodes,
+		InitializeParams, InitializeResult, InitializeError,
+		ShutdownParams, ExitParams,
+		DidChangeConfigurationParams,
+		DidChangeWatchedFilesParams, FileEvent, FileChangeType,
+		DidOpenTextDocumentParams, DidChangeTextDocumentParams, DidCloseTextDocumentParams,
+		PublishDiagnosticsParams, Diagnostic, Severity, Position,
 		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSync,
 		HoverResult
 }
@@ -83,15 +86,15 @@ export class TextDocuments {
 
 	private _documents : { [uri: string]: TextDocument };
 
-	private _onDidContentChange: Emitter<TextDocumentChangeEvent>;
+	private _onDidChangeContent: Emitter<TextDocumentChangeEvent>;
 
 	public constructor() {
 		this._documents = Object.create(null);
-		this._onDidContentChange = new Emitter<TextDocumentChangeEvent>();
+		this._onDidChangeContent = new Emitter<TextDocumentChangeEvent>();
 	}
 
-	public get onDidContentChange(): Event<TextDocumentChangeEvent> {
-		return this._onDidContentChange.event;
+	public get onDidChangeContent(): Event<TextDocumentChangeEvent> {
+		return this._onDidChangeContent.event;
 	}
 
 	public get(uri: string): ITextDocument {
@@ -111,12 +114,12 @@ export class TextDocuments {
 		connection.onDidOpenTextDocument((event: DidOpenTextDocumentParams) => {
 			let document = new TextDocument(event.uri, event.text);
 			this._documents[event.uri] = document;
-			this._onDidContentChange.fire({ document });
+			this._onDidChangeContent.fire({ document });
 		});
 		connection.onDidChangeTextDocument((event: DidChangeTextDocumentParams) => {
 			let document = this._documents[event.uri];
 			document.update(event);
-			this._onDidContentChange.fire({ document });
+			this._onDidChangeContent.fire({ document });
 		});
 		connection.onDidCloseTextDocument((event: DidCloseTextDocumentParams) => {
 			delete this._documents[event.uri];
@@ -218,7 +221,7 @@ export interface IConnection {
 	window: RemoteWindow;
 
 	onDidChangeConfiguration(handler: INotificationHandler<DidChangeConfigurationParams>): void;
-	onDidChangeFiles(handler: INotificationHandler<DidChangeFilesParams>): void;
+	onDidChangeWatchedFiles(handler: INotificationHandler<DidChangeWatchedFilesParams>): void;
 
 	onDidOpenTextDocument(handler: INotificationHandler<DidOpenTextDocumentParams>): void;
 	onDidChangeTextDocument(handler: INotificationHandler<DidChangeTextDocumentParams>): void;
@@ -254,6 +257,7 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
 
 	let shutdownHandler: IRequestHandler<ShutdownParams, void, void> = null;
 	let initializeHandler: IRequestHandler<InitializeParams, InitializeResult, InitializeError> = null;
+	let exitHandler: INotificationHandler<ExitParams> = null;
 	let protocolConnection: IConnection & IConnectionState = {
 		listen: (): void => connection.listen(),
 		onRequest: <P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void => connection.onRequest(type, handler),
@@ -262,13 +266,13 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
 
 		onInitialize: (handler) => initializeHandler = handler,
 		onShutdown: (handler) => shutdownHandler = handler,
-		onExit: (handler) => connection.onNotification(ExitNotification.type, handler),
+		onExit: (handler) => exitHandler = handler,
 
 		get console() { return logger; },
 		get window() { return remoteWindow; },
 
 		onDidChangeConfiguration: (handler) => connection.onNotification(DidChangeConfigurationNotification.type, handler),
-		onDidChangeFiles: (handler) => connection.onNotification(DidChangeFilesNotification.type, handler),
+		onDidChangeWatchedFiles: (handler) => connection.onNotification(DidChangeWatchedFilesNotification.type, handler),
 
 		__textDocumentSync: undefined,
 		onDidOpenTextDocument: (handler) => connection.onNotification(DidOpenTextDocumentNotification.type, handler),
@@ -317,6 +321,20 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
 			return undefined;
 		}
 	});
+
+	connection.onNotification(ExitNotification.type, (params) => {
+		try {
+			if (exitHandler) {
+				exitHandler(params);
+			}
+		} finally {
+			if (shutdownReceived) {
+				process.exit(0);
+			} else {
+				process.exit(1);
+			}
+		}
+	})
 
 	return protocolConnection;
 }

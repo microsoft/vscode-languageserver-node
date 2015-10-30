@@ -9,7 +9,6 @@ import {
 		ShutdownParams, ExitParams, LogMessageParams, MessageType,
 		ShowMessageParams, DidChangeConfigurationParams,
 		DidOpenTextDocumentParams, DidChangeTextDocumentParams, DidCloseTextDocumentParams,
-		DidChangeFilesParams, FileEvent, FileChangeType,
 		PublishDiagnosticsParams, Diagnostic, Severity, Position, Range,
 		TextDocumentPosition
 	} from './protocol';

@@ -20,7 +20,7 @@ import {
 		ShowMessageNotification, ShowMessageParams,
 		DidChangeConfigurationNotification, DidChangeConfigurationParams,
 		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams, DidCloseTextDocumentNotification, DidCloseTextDocumentParams,
-		DidChangeFilesNotification, DidChangeFilesParams, FileEvent, FileChangeType,
+		DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
 		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, Severity, Position,
 		HoverRequest, HoverResult
 	} from './protocol';
@@ -52,7 +52,7 @@ interface IConnection {
 	onShowMessage(handler: INotificationHandler<ShowMessageParams>): void;
 
 	didChangeConfiguration(params: DidChangeConfigurationParams): void;
-	didChangeFiles(params: DidChangeFilesParams): void;
+	didChangeWatchedFiles(params: DidChangeWatchedFilesParams): void;
 
 	didOpenTextDocument(params: DidOpenTextDocumentParams): void;
 	didChangeTextDocument(params: DidChangeTextDocumentParams): void;
@@ -96,7 +96,7 @@ function createConnection(inputStream: NodeJS.ReadableStream, outputStream: Node
 		onShowMessage: (handler: INotificationHandler<ShowMessageParams>) => connection.onNotification(ShowMessageNotification.type, handler),
 
 		didChangeConfiguration: (params: DidChangeConfigurationParams) => connection.sendNotification(DidChangeConfigurationNotification.type, params),
-		didChangeFiles: (params: DidChangeFilesParams) => connection.sendNotification(DidChangeFilesNotification.type, params),
+		didChangeWatchedFiles: (params: DidChangeWatchedFilesParams) => connection.sendNotification(DidChangeWatchedFilesNotification.type, params),
 
 		didOpenTextDocument: (params: DidOpenTextDocumentParams) => connection.sendNotification(DidOpenTextDocumentNotification.type, params),
 		didChangeTextDocument: (params: DidChangeTextDocumentParams) => connection.sendNotification(DidChangeTextDocumentNotification.type, params),
@@ -424,7 +424,7 @@ export class LanguageClient {
 			this.onReady().then(() => {
 				this.resolveConnection().then(connection => {
 					if (this.isConnectionActive()) {
-						connection.didChangeFiles({ changes: this._fileEvents });
+						connection.didChangeWatchedFiles({ changes: this._fileEvents });
 					}
 					this._fileEvents = [];
 				})

@@ -203,10 +203,10 @@ export interface DidCloseTextDocumentParams extends TextDocumentIdentifier {
 }
 
 
-export namespace DidChangeFilesNotification {
-	export let type: NotificationType<DidChangeFilesParams> = { method: 'workspace/didChangeFiles' };
+export namespace DidChangeWatchedFilesNotification {
+	export let type: NotificationType<DidChangeWatchedFilesParams> = { method: 'workspace/didChangeFiles' };
 }
-export interface DidChangeFilesParams {
+export interface DidChangeWatchedFilesParams {
 	changes: FileEvent[];
 }
 
