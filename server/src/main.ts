@@ -17,8 +17,9 @@ import {
 		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams, DidCloseTextDocumentNotification, DidCloseTextDocumentParams,
 		DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
 		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, Severity, Position,
-		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSync,
-		HoverRequest, HoverResult
+		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSyncKind,
+		HoverRequest, HoverResult,
+		CompletionOptions, CompletionItemKind, CompletionItem, TextEdit, CompletionRequest, CompletionResolveRequest
 	} from './protocol';
 
 import { Event, Emitter } from './utils/events';
@@ -33,8 +34,9 @@ export {
 		DidChangeWatchedFilesParams, FileEvent, FileChangeType,
 		DidOpenTextDocumentParams, DidChangeTextDocumentParams, DidCloseTextDocumentParams,
 		PublishDiagnosticsParams, Diagnostic, Severity, Position,
-		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSync,
-		HoverResult
+		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSyncKind,
+		HoverResult,
+		CompletionOptions, CompletionItemKind, CompletionItem, TextEdit, CompletionRequest
 }
 export { Event }
 
@@ -79,7 +81,7 @@ export class TextDocumentChangeEvent {
 }
 
 interface IConnectionState {
-	__textDocumentSync: number;
+	__textDocumentSync: TextDocumentSyncKind;
 }
 
 export class TextDocuments {
@@ -91,6 +93,10 @@ export class TextDocuments {
 	public constructor() {
 		this._documents = Object.create(null);
 		this._onDidChangeContent = new Emitter<TextDocumentChangeEvent>();
+	}
+
+	public get syncKind(): TextDocumentSyncKind {
+		return TextDocumentSyncKind.Full;
 	}
 
 	public get onDidChangeContent(): Event<TextDocumentChangeEvent> {
@@ -110,7 +116,7 @@ export class TextDocuments {
 	}
 
 	public listen(connection: IConnection): void {
-		(<IConnectionState><any>connection).__textDocumentSync = TextDocumentSync.Full;
+		(<IConnectionState><any>connection).__textDocumentSync = TextDocumentSyncKind.Full;
 		connection.onDidOpenTextDocument((event: DidOpenTextDocumentParams) => {
 			let document = new TextDocument(event.uri, event.text);
 			this._documents[event.uri] = document;
@@ -143,7 +149,7 @@ export class ErrorMessageTracker {
 		count++;
 		this.messages[message] = count;
 	}
-	public publish(connection: { window: RemoteWindow }): void {
+	public sendErrors(connection: { window: RemoteWindow }): void {
 		Object.keys(this.messages).forEach(message => {
 			connection.window.showErrorMessage(message);
 		});
@@ -226,9 +232,11 @@ export interface IConnection {
 	onDidOpenTextDocument(handler: INotificationHandler<DidOpenTextDocumentParams>): void;
 	onDidChangeTextDocument(handler: INotificationHandler<DidChangeTextDocumentParams>): void;
 	onDidCloseTextDocument(handler: INotificationHandler<DidCloseTextDocumentParams>): void;
-	publishDiagnostics(args: PublishDiagnosticsParams): void;
+	sendDiagnostics(args: PublishDiagnosticsParams): void;
 
 	onHover(handler: IRequestHandler<TextDocumentPosition, HoverResult, void>): void;
+	onCompletionRequest(handler: IRequestHandler<TextDocumentPosition, CompletionItem[], void>): void;
+	onCompletionResolveRequest(handler: IRequestHandler<CompletionItem, CompletionItem, void>): void;
 
 	dispose(): void;
 }
@@ -279,9 +287,11 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
 		onDidChangeTextDocument: (handler) => connection.onNotification(DidChangeTextDocumentNotification.type, handler),
 		onDidCloseTextDocument: (handler) => connection.onNotification(DidCloseTextDocumentNotification.type, handler),
 
-		publishDiagnostics: (params) => connection.sendNotification(PublishDiagnosticsNotification.type, params),
+		sendDiagnostics: (params) => connection.sendNotification(PublishDiagnosticsNotification.type, params),
 
 		onHover: (handler) => connection.onRequest(HoverRequest.type, handler),
+		onCompletionRequest: (handler) => connection.onRequest(CompletionRequest.type, handler),
+		onCompletionResolveRequest: (handler) => connection.onRequest(CompletionResolveRequest.type, handler),
 
 		dispose: () => connection.dispose()
 	};
@@ -303,12 +313,12 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
 					result.capabilities = {};
 				}
 				if (!is.number(capabilities.textDocumentSync)) {
-					capabilities.textDocumentSync = is.number(protocolConnection.__textDocumentSync) ? protocolConnection.__textDocumentSync : TextDocumentSync.None;
+					capabilities.textDocumentSync = is.number(protocolConnection.__textDocumentSync) ? protocolConnection.__textDocumentSync : TextDocumentSyncKind.None;
 				}
 				return result;
 			});
 		} else {
-			let result: InitializeResult = { capabilities: { textDocumentSync: TextDocumentSync.None } };
+			let result: InitializeResult = { capabilities: { textDocumentSync: TextDocumentSyncKind.None } };
 			return result;
 		}
 	});

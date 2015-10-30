@@ -8,15 +8,21 @@ import { RequestType, NotificationType } from 'vscode-jsonrpc';
 export interface HostCapabilities {
 }
 
-export namespace TextDocumentSync {
-	export const None: number = 0;
-	export const Full: number = 1;
-	export const Incremental: number = 2;
+export enum TextDocumentSyncKind {
+	None = 0,
+	Full = 1,
+	Incremental = 2
+}
+
+export interface CompletionOptions {
+	resolveProvider?: boolean;
+	triggerCharacters?: string[]
 }
 
 export interface ServerCapabilities {
 	textDocumentSync?: number;
 	hoverProvider?: boolean;
+	completionProvider?: CompletionOptions;
 }
 
 /**
@@ -25,7 +31,7 @@ export interface ServerCapabilities {
  * worker.
  */
 export namespace InitializeRequest {
-	export let type: RequestType<InitializeParams, InitializeResult, InitializeError> = { method: 'initialize' };
+	export const type: RequestType<InitializeParams, InitializeResult, InitializeError> = { method: 'initialize' };
 }
 export interface InitializeParams {
 	rootFolder: string;
@@ -47,7 +53,7 @@ export interface InitializeError {
  * is the exit event.
  */
 export namespace ShutdownRequest {
-	export let type: RequestType<ShutdownParams, void, void> = { method: 'shutdown' };
+	export const type: RequestType<ShutdownParams, void, void> = { method: 'shutdown' };
 }
 export interface ShutdownParams {
 }
@@ -57,7 +63,7 @@ export interface ShutdownParams {
  * ask the worker to exit its process.
  */
 export namespace ExitNotification {
-	export let type: NotificationType<ExitParams> = { method: 'exit' };
+	export const type: NotificationType<ExitParams> = { method: 'exit' };
 }
 export interface ExitParams {
 }
@@ -69,17 +75,17 @@ export interface ExitParams {
  * in it's extension manifest.
  */
 export namespace DidChangeConfigurationNotification {
-	export let type: NotificationType<DidChangeConfigurationParams> = { method: 'workspace/didChangeConfiguration' };
+	export const type: NotificationType<DidChangeConfigurationParams> = { method: 'workspace/didChangeConfiguration' };
 }
 export interface DidChangeConfigurationParams {
 	settings: any;
 }
 
-export namespace MessageType {
-	export const Error: number = 1;
-	export const Warning: number = 2;
-	export const Info: number = 3;
-	export const Log: number = 4;
+export enum MessageType {
+	Error = 1,
+	Warning = 2,
+	Info = 3,
+	Log = 4
 }
 
 /**
@@ -87,7 +93,7 @@ export namespace MessageType {
  * the client to display a particular message in the user interface
  */
 export namespace ShowMessageNotification {
-	export let type: NotificationType<ShowMessageParams> = { method: 'window/showMessage' };
+	export const type: NotificationType<ShowMessageParams> = { method: 'window/showMessage' };
 }
 export interface ShowMessageParams {
 	type: number;
@@ -162,7 +168,7 @@ export interface TextDocumentPosition extends TextDocumentIdentifier {
  * newly opened, changed and closed documents.
  */
 export namespace DidOpenTextDocumentNotification {
-	export let type: NotificationType<DidOpenTextDocumentParams> = { method: 'textDocument/didOpen' };
+	export const type: NotificationType<DidOpenTextDocumentParams> = { method: 'textDocument/didOpen' };
 }
 export interface DidOpenTextDocumentParams extends TextDocumentIdentifier {
 	/**
@@ -172,7 +178,7 @@ export interface DidOpenTextDocumentParams extends TextDocumentIdentifier {
 }
 
 export namespace DidChangeTextDocumentNotification {
-	export let type: NotificationType<DidChangeTextDocumentParams> = { method: 'textDocument/didChange' };
+	export const type: NotificationType<DidChangeTextDocumentParams> = { method: 'textDocument/didChange' };
 }
 /**
  * The arguments describing a change to a text document. If range and rangeLength are omitted
@@ -197,23 +203,23 @@ export interface DidChangeTextDocumentParams extends TextDocumentIdentifier {
 }
 
 export namespace DidCloseTextDocumentNotification {
-	export let type: NotificationType<DidCloseTextDocumentParams> = { method: 'textDocument/didClose' };
+	export const type: NotificationType<DidCloseTextDocumentParams> = { method: 'textDocument/didClose' };
 }
 export interface DidCloseTextDocumentParams extends TextDocumentIdentifier {
 }
 
 
 export namespace DidChangeWatchedFilesNotification {
-	export let type: NotificationType<DidChangeWatchedFilesParams> = { method: 'workspace/didChangeFiles' };
+	export const type: NotificationType<DidChangeWatchedFilesParams> = { method: 'workspace/didChangeFiles' };
 }
 export interface DidChangeWatchedFilesParams {
 	changes: FileEvent[];
 }
 
-export namespace FileChangeType {
-	export let Created = 1;
-	export let Changed = 2;
-	export let Deleted = 3;
+export enum FileChangeType {
+	Created = 1,
+	Changed = 2,
+	Deleted = 3
 }
 
 export interface FileEvent {
@@ -227,7 +233,7 @@ export interface FileEvent {
  * results of validation runs
  */
 export namespace PublishDiagnosticsNotification {
-	export let type: NotificationType<PublishDiagnosticsParams> = { method: 'textDocument/publishDiagnostics' };
+	export const type: NotificationType<PublishDiagnosticsParams> = { method: 'textDocument/publishDiagnostics' };
 }
 export interface PublishDiagnosticsParams {
 	/**
@@ -241,11 +247,11 @@ export interface PublishDiagnosticsParams {
 	diagnostics: Diagnostic[];
 }
 
-export namespace Severity {
-	export let Error: number = 0;
-	export let Warning: number = 1;
-	export let Information: number = 2;
-	export let Hint: number = 3;
+export enum Severity {
+	Error = 0,
+	Warning = 1,
+	Information = 2,
+	Hint = 3
 }
 
 /**
@@ -279,10 +285,75 @@ export interface Diagnostic {
 	message: string;
 }
 
-//---- Hover support -------------------------------
+//---- Completion Support --------------------------
+
+export enum CompletionItemKind {
+	Text,
+	Method,
+	Function,
+	Constructor,
+	Field,
+	Variable,
+	Class,
+	Interface,
+	Module,
+	Property,
+	Unit,
+	Value,
+	Enum,
+	Keyword,
+	Snippet,
+	Color,
+	File,
+	Reference
+}
+
+export interface CompletionItem {
+	label: string;
+	kind?: number;
+	detail?: string;
+	documentation?: string;
+	sortText?: string;
+	filterText?: string;
+	insertText?: string;
+	textEdit?: TextEdit;
+}
+
+export namespace CompletionItem {
+	export function create(label: string): CompletionItem {
+		return { label };
+	}
+}
+
+export interface TextEdit {
+	range: Range;
+	newText: string;
+}
+
+export namespace TextEdit {
+	export function replace(range: Range, newText: string): TextEdit {
+		return { range, newText };
+	}
+	export function insert(position: Position, newText: string): TextEdit {
+		return { range: { start: position, end: position }, newText };
+	}
+	export function del(range: Range): TextEdit {
+		return { range, newText: '' };
+	}
+}
+
+export namespace CompletionRequest {
+	export const type: RequestType<TextDocumentPosition, CompletionItem[], void> = { method: 'textDocument/completion' };
+}
+
+export namespace CompletionResolveRequest {
+	export const type: RequestType<CompletionItem, CompletionItem, void> = { method: 'completionItem/resolve' };
+}
+
+//---- Hover Support -------------------------------
 
 export namespace HoverRequest {
-	export let type: RequestType<TextDocumentPosition, HoverResult, void> = { method: 'textDocument/hover' };
+	export const type: RequestType<TextDocumentPosition, HoverResult, void> = { method: 'textDocument/hover' };
 }
 
 /**

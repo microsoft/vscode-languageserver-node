@@ -7,13 +7,15 @@ import * as cp from 'child_process';
 import ChildProcess = cp.ChildProcess;
 
 import {
-		workspace, window, languages, extensions, TextDocumentChangeEvent, TextDocument, Disposable, FileSystemWatcher, CommandCallback, Uri, DiagnosticCollection, LanguageSelector,
-		CancellationToken, Hover, Position as VPosition, IHTMLContentElement
+		workspace as Workspace, window as Window, languages as Languages, extensions as Extensions, TextDocumentChangeEvent, TextDocument, Disposable,
+		FileSystemWatcher, CommandCallback, Uri, DiagnosticCollection, LanguageSelector,
+		CancellationToken, Hover, Position as VPosition, IHTMLContentElement,
+		CompletionItem as VCompletionItem,
 } from 'vscode';
 
 import { IRequestHandler, INotificationHandler, MessageConnection, ClientMessageConnection, ILogger, createClientMessageConnection, ErrorCodes, ResponseError, RequestType, NotificationType } from 'vscode-jsonrpc';
 import {
-		InitializeRequest, InitializeParams, InitializeResult, InitializeError, HostCapabilities, ServerCapabilities, TextDocumentSync,
+		InitializeRequest, InitializeParams, InitializeResult, InitializeError, HostCapabilities, ServerCapabilities, TextDocumentSyncKind,
 		ShutdownRequest, ShutdownParams,
 		ExitNotification, ExitParams,
 		LogMessageNotification, LogMessageParams, MessageType,
@@ -22,6 +24,7 @@ import {
 		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams, DidCloseTextDocumentNotification, DidCloseTextDocumentParams,
 		DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
 		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, Severity, Position,
+		CompletionRequest, CompletionResolveRequest, CompletionItem,
 		HoverRequest, HoverResult
 	} from './protocol';
 
@@ -140,12 +143,17 @@ export interface NodeModule {
 	options?: ForkOptions;
 }
 
-export interface ClientOptions {
-	server: Executable | { run: Executable; debug: Executable; } |  { run: NodeModule; debug: NodeModule } | NodeModule | (() => Thenable<ChildProcess | StreamInfo>);
-	configuration?: string | string[];
-	fileWatchers?: FileSystemWatcher | FileSystemWatcher[];
+export type ServerOptions = Executable | { run: Executable; debug: Executable; } |  { run: NodeModule; debug: NodeModule } | NodeModule | (() => Thenable<ChildProcess | StreamInfo>);
+
+export interface SynchronizeOptions {
+	configurationSection?: string | string[];
+	fileEvents?: FileSystemWatcher | FileSystemWatcher[];
+	textDocumentFilter?: (textDocument: TextDocument) => boolean;
+}
+
+export interface LanguageClientOptions {
 	languageSelector?: string | string[];
-	syncTextDocument?: (textDocument: TextDocument) => boolean;
+	synchronize?: SynchronizeOptions;
 }
 
 enum ClientState {
@@ -197,7 +205,8 @@ class CompositeSyncExpression implements SyncExpression {
 export class LanguageClient {
 
 	private _name: string;
-	private _options: ClientOptions;
+	private _serverOptions: ServerOptions;
+	private _languageOptions: LanguageClientOptions;
 	private _forceDebug: boolean;
 
 	private _state: ClientState;
@@ -216,9 +225,11 @@ export class LanguageClient {
 	private _fileEvents: FileEvent[];
 	private _delayer: Delayer<void>;
 
-	public constructor(name: string, options: ClientOptions, forceDebug: boolean = false) {
+	public constructor(name: string, serverOptions: ServerOptions, languageOptions: LanguageClientOptions, forceDebug: boolean = false) {
 		this._name = name;
-		this._options = options;
+		this._serverOptions = serverOptions;
+		this._languageOptions = languageOptions || {};
+		this._languageOptions.synchronize = this._languageOptions.synchronize || {};
 		this._syncExpression = this.computeSyncExpression();
 		this._forceDebug = forceDebug;
 
@@ -238,23 +249,26 @@ export class LanguageClient {
 	}
 
 	private computeSyncExpression(): SyncExpression {
-		if (!this._options.languageSelector && !this._options.syncTextDocument) {
+		let languageSelector = this._languageOptions.languageSelector;
+		let textDocumentFilter = this._languageOptions.synchronize.textDocumentFilter;
+
+		if (!languageSelector && !textDocumentFilter) {
 			return new FalseSyncExpression();
 		}
-		if (this._options.syncTextDocument && !this._options.languageSelector) {
-			return new FunctionSyncExpression(this._options.syncTextDocument);
+		if (textDocumentFilter && !languageSelector) {
+			return new FunctionSyncExpression(textDocumentFilter);
 		}
-		if (!this._options.syncTextDocument && this._options.languageSelector) {
-			if (is.string(this._options.languageSelector)) {
-				return new LanguageIdExpression(<string>this._options.languageSelector)
+		if (!textDocumentFilter && languageSelector) {
+			if (is.string(languageSelector)) {
+				return new LanguageIdExpression(<string>languageSelector)
 			} else {
-				return new CompositeSyncExpression(<string[]>this._options.languageSelector)
+				return new CompositeSyncExpression(<string[]>languageSelector)
 			}
 		}
-		if (this._options.syncTextDocument && this._options.languageSelector) {
+		if (textDocumentFilter && languageSelector) {
 			return new CompositeSyncExpression(
-				is.string(this._options.languageSelector) ? [<string>this._options.languageSelector] : <string[]>this._options.languageSelector,
-				this._options.syncTextDocument);
+				is.string(languageSelector) ? [<string>languageSelector] : <string[]>languageSelector,
+				textDocumentFilter);
 		}
 	}
 
@@ -304,10 +318,10 @@ export class LanguageClient {
 		return this._state === ClientState.Running;
 	}
 
-	public start(): void {
+	public start(): Disposable {
 		this._listeners = [];
 		this._providers = [];
-		this._diagnostics = languages.createDiagnosticCollection();
+		this._diagnostics = Languages.createDiagnosticCollection();
 		this._state = ClientState.Starting;
 		this.resolveConnection().then((connection) => {
 			connection.onLogMessage((message) => {
@@ -328,24 +342,29 @@ export class LanguageClient {
 			connection.onShowMessage((message) => {
 				switch(message.type) {
 					case MessageType.Error:
-						window.showErrorMessage(message.message);
+						Window.showErrorMessage(message.message);
 						break;
 					case MessageType.Warning:
-						window.showWarningMessage(message.message);
+						Window.showWarningMessage(message.message);
 						break;
 					case MessageType.Info:
-						window.showInformationMessage(message.message);
+						Window.showInformationMessage(message.message);
 						break;
 					default:
-						window.showInformationMessage(message.message);
+						Window.showInformationMessage(message.message);
 				}
 			});
 			connection.listen();
 			this.initialize(connection);
 		}, (error) => {
 			this._onReadyCallbacks.reject();
-			window.showErrorMessage(`Couldn't start client ${this._name}`);
-		})
+			Window.showErrorMessage(`Couldn't start client ${this._name}`);
+		});
+		return new Disposable(() => {
+			if (this.needsStop()) {
+				this.stop();
+			}
+		});
 	}
 	private resolveConnection(): Thenable<IConnection> {
 		if (!this._connection) {
@@ -355,32 +374,32 @@ export class LanguageClient {
 	}
 
 	private initialize(connection: IConnection): Thenable<InitializeResult> {
-		let initParams: InitializeParams = { rootFolder: workspace.rootPath, capabilities: { } };
+		let initParams: InitializeParams = { rootFolder: Workspace.rootPath, capabilities: { } };
 		return connection.initialize(initParams).then((result) => {
 			this._state = ClientState.Running;
 			this._capabilites = result.capabilities;
 			connection.onDiagnostics(params => this.handleDiagnostics(params));
-			if (this._capabilites.textDocumentSync !== TextDocumentSync.None) {
-				workspace.onDidOpenTextDocument(t => this.onDidOpenTextDoument(connection, t), null, this._listeners);
-				workspace.onDidChangeTextDocument(t => this.onDidChangeTextDocument(connection, t), null, this._listeners);
-				workspace.onDidCloseTextDocument(t => this.onDidCloseTextDoument(connection, t), null, this._listeners);
+			if (this._capabilites.textDocumentSync !== TextDocumentSyncKind.None) {
+				Workspace.onDidOpenTextDocument(t => this.onDidOpenTextDoument(connection, t), null, this._listeners);
+				Workspace.onDidChangeTextDocument(t => this.onDidChangeTextDocument(connection, t), null, this._listeners);
+				Workspace.onDidCloseTextDocument(t => this.onDidCloseTextDoument(connection, t), null, this._listeners);
 			}
 			this.hookFileEvents(connection);
 			this.hookConfigurationChanged(connection);
 			this.hookCapabilities(connection);
 			this._onReadyCallbacks.resolve();
-			workspace.textDocuments.forEach(t => this.onDidOpenTextDoument(connection, t));
+			Workspace.textDocuments.forEach(t => this.onDidOpenTextDoument(connection, t));
 			return result;
 		}, (error: ResponseError<InitializeError>) => {
 			if (error.data.retry) {
-				window.showErrorMessage(error.message, { title: 'Retry', id: "retry"}).then(item => {
+				Window.showErrorMessage(error.message, { title: 'Retry', id: "retry"}).then(item => {
 					if (item.id === 'retry') {
 						this.initialize(connection);
 					}
 				});
 			} else {
 				this._onReadyCallbacks.reject();
-				window.showErrorMessage(error.message);
+				Window.showErrorMessage(error.message);
 			}
 		});
 	}
@@ -450,7 +469,7 @@ export class LanguageClient {
 			return;
 		}
 		let uri: string = event.document.uri.toString();
-		if (this._capabilites.textDocumentSync === TextDocumentSync.Incremental) {
+		if (this._capabilites.textDocumentSync === TextDocumentSyncKind.Incremental) {
 			asChangeTextDocumentParams(event).forEach(param => connection.didChangeTextDocument(param));
 		} else {
 			connection.didChangeTextDocument(asChangeTextDocumentParams(event.document));
@@ -471,7 +490,7 @@ export class LanguageClient {
 	}
 
 	private createConnection(): Thenable<IConnection> {
-		let server = this._options.server;
+		let server = this._serverOptions;
 		// We got a function.
 		if (is.func(server)) {
 			return server().then((result) => {
@@ -501,7 +520,7 @@ export class LanguageClient {
 			return new Promise<IConnection>((resolve, reject) => {
 				let options = node.options || {};
 				options.execArgv = options.execArgv || [];
-				options.cwd = options.cwd || workspace.rootPath;
+				options.cwd = options.cwd || Workspace.rootPath;
 				electron.fork(node.module, node.args || [], options, (error, cp) => {
 					if (error) {
 						reject(error);
@@ -514,7 +533,7 @@ export class LanguageClient {
 		} else if (is.defined(json.command)) {
 			let command: Executable = <Executable>json;
 			let options = command.options || {};
-			options.cwd = options.cwd || workspace.rootPath;
+			options.cwd = options.cwd || Workspace.rootPath;
 			let process = cp.spawn(command.command, command.args, command.options);
 			this._childProcess = process;
 			return Promise.resolve(createConnection(process.stdout, process.stdin));
@@ -535,19 +554,20 @@ export class LanguageClient {
 	}
 
 	private hookConfigurationChanged(connection: IConnection): void {
-		if (!this._options.configuration) {
+		if (!this._languageOptions.synchronize.configurationSection) {
 			return;
 		}
-		workspace.onDidChangeConfiguration(e => this.onDidChangeConfiguration(connection), this, this._listeners);
+		Workspace.onDidChangeConfiguration(e => this.onDidChangeConfiguration(connection), this, this._listeners);
 		this.onDidChangeConfiguration(connection);
 	}
 
 	private onDidChangeConfiguration(connection: IConnection): void {
 		let keys: string[] = null;
-		if (is.string(this._options.configuration)) {
-			keys = [<string>this._options.configuration];
-		} else if (is.stringArray(this._options.configuration)) {
-			keys = (<string[]>this._options.configuration);
+		let configurationSection = this._languageOptions.synchronize.configurationSection;
+		if (is.string(configurationSection)) {
+			keys = [<string>configurationSection];
+		} else if (is.stringArray(configurationSection)) {
+			keys = (<string[]>configurationSection);
 		}
 		if (keys) {
 			if (this.isConnectionActive()) {
@@ -569,7 +589,7 @@ export class LanguageClient {
 			}
 			return current;
 		}
-		workspace.getConfiguration()
+		Workspace.getConfiguration()
 
 		let result = Object.create(null);
 		for (let i = 0; i < keys.length; i++) {
@@ -577,9 +597,9 @@ export class LanguageClient {
 			let index: number = key.indexOf('.');
 			let config: any = null;
 			if (index >= 0) {
-				config = workspace.getConfiguration(key.substr(0, index)).get(key.substr(index + 1));
+				config = Workspace.getConfiguration(key.substr(0, index)).get(key.substr(index + 1));
 			} else {
-				config = workspace.getConfiguration(key);
+				config = Workspace.getConfiguration(key);
 			}
 			if (config) {
 				let path = keys[i].split('.');
@@ -590,14 +610,15 @@ export class LanguageClient {
 	}
 
 	private hookFileEvents(connection: IConnection): void {
-		if (!this._options.fileWatchers) {
+		let fileEvents = this._languageOptions.synchronize.fileEvents;
+		if (!fileEvents) {
 			return;
 		}
 		let watchers: FileSystemWatcher[] = null;
-		if (is.array(this._options.fileWatchers)) {
-			watchers = <FileSystemWatcher[]>this._options.fileWatchers;
+		if (is.array(fileEvents)) {
+			watchers = <FileSystemWatcher[]>fileEvents;
 		} else {
-			watchers = [<FileSystemWatcher>this._options.fileWatchers];
+			watchers = [<FileSystemWatcher>fileEvents];
 		}
 		if (!watchers) {
 			return;
@@ -626,8 +647,8 @@ export class LanguageClient {
 	}
 
 	private hookCapabilities(connection: IConnection): void {
-		if (this._capabilites.hoverProvider && this._options.languageSelector) {
-			this._providers.push(languages.registerHoverProvider(this._options.languageSelector, {
+		if (this._capabilites.hoverProvider && this._languageOptions.languageSelector) {
+			this._providers.push(Languages.registerHoverProvider(this._languageOptions.languageSelector, {
 				provideHover: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<Hover> => {
 					if (this.isConnectionActive()) {
 						return connection.sendRequest(HoverRequest.type, asTextDocumentPosition(document, position)).then((result: HoverResult) => {
@@ -642,30 +663,53 @@ export class LanguageClient {
 					}
 				}
 			}));
+		} else if (this._capabilites.completionProvider && this._languageOptions.languageSelector) {
+			this._providers.push(Languages.registerCompletionItemProvider(this._languageOptions.languageSelector, {
+				provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VCompletionItem[]> => {
+					if (this.isConnectionActive()) {
+						return connection.sendRequest(CompletionRequest.type, asTextDocumentPosition(document, position));
+					} else {
+						return Promise.resolve([]);
+					}
+				},
+				resolveCompletionItem: this._capabilites.completionProvider.resolveProvider
+					? (item: VCompletionItem, token: CancellationToken): Thenable<VCompletionItem> => {
+						if (this.isConnectionActive()) {
+							return connection.sendRequest(CompletionResolveRequest.type, item);
+						} else {
+							return Promise.resolve(item);
+						}
+					}
+					: undefined
+			}, ...this._capabilites.completionProvider.triggerCharacters));
 		}
 	}
 }
 
-export class ClientStarter {
+export class SettingMonitor {
 
 	private _setting: string;
 	private _listeners: Disposable[];
 
-	constructor(private _client: LanguageClient) {
+	constructor(private _client: LanguageClient, _setting: string) {
 		this._listeners = [];
 	}
 
-	public watchSetting(setting: string) {
-		this._setting = setting;
-		workspace.onDidChangeConfiguration(this.onDidChangeConfiguration, this, this._listeners);
+	public start(): Disposable {
+		Workspace.onDidChangeConfiguration(this.onDidChangeConfiguration, this, this._listeners);
 		this.onDidChangeConfiguration();
+		return new Disposable(() => {
+			if (this._client.needsStop()) {
+				this._client.stop();
+			}
+		});
 	}
 
 	private onDidChangeConfiguration(): void {
 		let index = this._setting.indexOf('.');
 		let primary = index >= 0 ? this._setting.substr(0, index) : this._setting;
 		let rest = index >= 0 ? this._setting.substr(index + 1) : undefined;
-		let enabled = rest ? workspace.getConfiguration(primary).get(rest, false) : workspace.getConfiguration(primary);
+		let enabled = rest ? Workspace.getConfiguration(primary).get(rest, false) : Workspace.getConfiguration(primary);
 		if (enabled && this._client.needsStart()) {
 			this._client.start();
 		} else if (!enabled && this._client.needsStop()) {
