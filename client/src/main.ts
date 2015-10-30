@@ -688,10 +688,9 @@ export class LanguageClient {
 
 export class SettingMonitor {
 
-	private _setting: string;
 	private _listeners: Disposable[];
 
-	constructor(private _client: LanguageClient, _setting: string) {
+	constructor(private _client: LanguageClient, private _setting: string) {
 		this._listeners = [];
 	}
 
