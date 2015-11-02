@@ -16,7 +16,7 @@ export enum TextDocumentSyncKind {
 
 export interface CompletionOptions {
 	resolveProvider?: boolean;
-	triggerCharacters?: string[]
+	triggerCharacters?: string[];
 }
 
 export interface SignatureHelpOptions {
@@ -141,17 +141,6 @@ export interface Range {
 	 * The range's end position
 	 */
 	end: Position;
-}
-
-export interface HTMLContentElement {
-	formattedText?:string;
-	text?: string;
-	className?: string;
-	style?: string;
-	customStyle?: any;
-	tagName?: string;
-	children?: HTMLContentElement[];
-	isText?: boolean;
 }
 
 export interface TextDocumentIdentifier {
@@ -357,14 +346,16 @@ export namespace CompletionResolveRequest {
 
 //---- Hover Support -------------------------------
 
+export type MarkedString = string | { language: string; value: string };
+
 /**
  * The result of a hove request.
  */
-export interface HoverResult {
+export interface Hover {
 	/**
 	 * The hover's content
 	 */
-	content: string | HTMLContentElement;
+	contents: MarkedString | MarkedString[];
 
 	/**
 	 * An optional range
@@ -373,7 +364,7 @@ export interface HoverResult {
 }
 
 export namespace HoverRequest {
-	export const type: RequestType<TextDocumentPosition, HoverResult, void> = { method: 'textDocument/hover' };
+	export const type: RequestType<TextDocumentPosition, Hover, void> = { method: 'textDocument/hover' };
 }
 
 //---- SignatureHelp ----------------------------------

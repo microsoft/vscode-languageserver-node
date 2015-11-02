@@ -8,8 +8,8 @@ import ChildProcess = cp.ChildProcess;
 
 import {
 		workspace as Workspace, window as Window, languages as Languages, extensions as Extensions, TextDocumentChangeEvent, TextDocument, Disposable,
-		FileSystemWatcher, CommandCallback, Uri, DiagnosticCollection, LanguageSelector,
-		CancellationToken, Hover, Position as VPosition, IHTMLContentElement,
+		FileSystemWatcher, Uri, DiagnosticCollection, DocumentSelector,
+		CancellationToken, Hover as vHover, Position as VPosition,
 		CompletionItem as VCompletionItem, SignatureHelp as VSignatureHelp
 } from 'vscode';
 
@@ -25,11 +25,14 @@ import {
 		DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
 		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, Severity, Position,
 		CompletionRequest, CompletionResolveRequest, CompletionItem,
-		HoverRequest, HoverResult,
+		HoverRequest, Hover,
 		SignatureHelpRequest
-	} from './protocol';
+} from './protocol';
 
-import { asOpenTextDocumentParams, asChangeTextDocumentParams, asCloseTextDocumentParams, asDiagnostics, asRange, asTextDocumentPosition } from './converters';
+import {
+		asOpenTextDocumentParams, asChangeTextDocumentParams, asCloseTextDocumentParams, asDiagnostics, asRange, asTextDocumentPosition,
+		asHover, asCompletionItems, asCompletionItem, asSignatureHelp
+} from './converters';
 
 import * as is from './utils/is';
 import * as electron from './utils/electron';
@@ -153,7 +156,7 @@ export interface SynchronizeOptions {
 }
 
 export interface LanguageClientOptions {
-	languageSelector?: string | string[];
+	documentSelector?: string | string[];
 	synchronize?: SynchronizeOptions;
 }
 
@@ -250,25 +253,25 @@ export class LanguageClient {
 	}
 
 	private computeSyncExpression(): SyncExpression {
-		let languageSelector = this._languageOptions.languageSelector;
+		let documentSelector = this._languageOptions.documentSelector;
 		let textDocumentFilter = this._languageOptions.synchronize.textDocumentFilter;
 
-		if (!languageSelector && !textDocumentFilter) {
+		if (!documentSelector && !textDocumentFilter) {
 			return new FalseSyncExpression();
 		}
-		if (textDocumentFilter && !languageSelector) {
+		if (textDocumentFilter && !documentSelector) {
 			return new FunctionSyncExpression(textDocumentFilter);
 		}
-		if (!textDocumentFilter && languageSelector) {
-			if (is.string(languageSelector)) {
-				return new LanguageIdExpression(<string>languageSelector)
+		if (!textDocumentFilter && documentSelector) {
+			if (is.string(documentSelector)) {
+				return new LanguageIdExpression(<string>documentSelector)
 			} else {
-				return new CompositeSyncExpression(<string[]>languageSelector)
+				return new CompositeSyncExpression(<string[]>documentSelector)
 			}
 		}
-		if (textDocumentFilter && languageSelector) {
+		if (textDocumentFilter && documentSelector) {
 			return new CompositeSyncExpression(
-				is.string(languageSelector) ? [<string>languageSelector] : <string[]>languageSelector,
+				is.string(documentSelector) ? [<string>documentSelector] : <string[]>documentSelector,
 				textDocumentFilter);
 		}
 	}
@@ -648,20 +651,16 @@ export class LanguageClient {
 	}
 
 	private hookCapabilities(connection: IConnection): void {
-		let languageSelector = this._languageOptions.languageSelector;
-		if (!languageSelector) {
+		let documentSelector = this._languageOptions.documentSelector;
+		if (!documentSelector) {
 			return;
 		}
 		if (this._capabilites.hoverProvider) {
-			this._providers.push(Languages.registerHoverProvider(languageSelector, {
+			this._providers.push(Languages.registerHoverProvider(documentSelector, {
 				provideHover: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<Hover> => {
 					if (this.isConnectionActive()) {
-						return connection.sendRequest(HoverRequest.type, asTextDocumentPosition(document, position)).then((result: HoverResult) => {
-							if (is.string(result.content)) {
-								return new Hover(<string>result.content, asRange(result.range));
-							} else {
-								return new Hover(<IHTMLContentElement>result.content, asRange(result.range));
-							}
+						return connection.sendRequest(HoverRequest.type, asTextDocumentPosition(document, position)).then((result: Hover) => {
+							return asHover(result);
 						});
 					} else {
 						return Promise.reject<Hover>(new Error('Connection is not active anymore'));
@@ -670,10 +669,12 @@ export class LanguageClient {
 			}));
 		}
 		if (this._capabilites.completionProvider) {
-			this._providers.push(Languages.registerCompletionItemProvider(languageSelector, {
+			this._providers.push(Languages.registerCompletionItemProvider(documentSelector, {
 				provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VCompletionItem[]> => {
 					if (this.isConnectionActive()) {
-						return connection.sendRequest(CompletionRequest.type, asTextDocumentPosition(document, position));
+						return connection.sendRequest(CompletionRequest.type, asTextDocumentPosition(document, position)).then((result: CompletionItem[]) => {
+							return asCompletionItems(result);
+						});
 					} else {
 						return Promise.resolve([]);
 					}
@@ -681,7 +682,9 @@ export class LanguageClient {
 				resolveCompletionItem: this._capabilites.completionProvider.resolveProvider
 					? (item: VCompletionItem, token: CancellationToken): Thenable<VCompletionItem> => {
 						if (this.isConnectionActive()) {
-							return connection.sendRequest(CompletionResolveRequest.type, item);
+							return connection.sendRequest(CompletionResolveRequest.type, item).then((result: CompletionItem) => {
+								return asCompletionItem(result);
+							});
 						} else {
 							return Promise.resolve(item);
 						}
@@ -690,11 +693,11 @@ export class LanguageClient {
 			}, ...this._capabilites.completionProvider.triggerCharacters));
 		}
 		if (this._capabilites.signatureHelpProvider) {
-			this._providers.push(Languages.registerSignatureHelpProvider(languageSelector, {
+			this._providers.push(Languages.registerSignatureHelpProvider(documentSelector, {
 				provideSignatureHelp: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VSignatureHelp> => {
 					if (this.isConnectionActive()) {
 						return connection.sendRequest(SignatureHelpRequest.type, asTextDocumentPosition(document, position)).then((result) => {
-							return result;
+							return asSignatureHelp(result);
 						});
 					} else {
 						return Promise.resolve(null);

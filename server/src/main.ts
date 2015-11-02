@@ -18,7 +18,7 @@ import {
 		DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
 		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, Severity, Position,
 		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSyncKind,
-		HoverRequest, HoverResult,
+		HoverRequest, Hover,
 		CompletionRequest, CompletionResolveRequest, CompletionOptions, CompletionItemKind, CompletionItem, TextEdit,
 		SignatureHelpRequest, SignatureHelp, SignatureInformation, ParameterInformation,
 	} from './protocol';
@@ -36,7 +36,7 @@ export {
 		DidOpenTextDocumentParams, DidChangeTextDocumentParams, DidCloseTextDocumentParams,
 		PublishDiagnosticsParams, Diagnostic, Severity, Position,
 		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSyncKind,
-		HoverResult,
+		Hover,
 		CompletionOptions, CompletionItemKind, CompletionItem, TextEdit,
 		SignatureHelp, SignatureInformation, ParameterInformation
 }
@@ -236,7 +236,7 @@ export interface IConnection {
 	onDidCloseTextDocument(handler: INotificationHandler<DidCloseTextDocumentParams>): void;
 	sendDiagnostics(args: PublishDiagnosticsParams): void;
 
-	onHover(handler: IRequestHandler<TextDocumentPosition, HoverResult, void>): void;
+	onHover(handler: IRequestHandler<TextDocumentPosition, Hover, void>): void;
 	onCompletion(handler: IRequestHandler<TextDocumentPosition, CompletionItem[], void>): void;
 	onCompletionResolve(handler: IRequestHandler<CompletionItem, CompletionItem, void>): void;
 	onSignatureHelp(handler: IRequestHandler<TextDocumentIdentifier, SignatureHelp, void>): void;
