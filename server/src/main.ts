@@ -19,7 +19,8 @@ import {
 		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, Severity, Position,
 		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSyncKind,
 		HoverRequest, HoverResult,
-		CompletionOptions, CompletionItemKind, CompletionItem, TextEdit, CompletionRequest, CompletionResolveRequest
+		CompletionRequest, CompletionResolveRequest, CompletionOptions, CompletionItemKind, CompletionItem, TextEdit,
+		SignatureHelpRequest, SignatureHelp, SignatureInformation, ParameterInformation,
 	} from './protocol';
 
 import { Event, Emitter } from './utils/events';
@@ -36,7 +37,8 @@ export {
 		PublishDiagnosticsParams, Diagnostic, Severity, Position,
 		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSyncKind,
 		HoverResult,
-		CompletionOptions, CompletionItemKind, CompletionItem, TextEdit, CompletionRequest
+		CompletionOptions, CompletionItemKind, CompletionItem, TextEdit,
+		SignatureHelp, SignatureInformation, ParameterInformation
 }
 export { Event }
 
@@ -235,8 +237,9 @@ export interface IConnection {
 	sendDiagnostics(args: PublishDiagnosticsParams): void;
 
 	onHover(handler: IRequestHandler<TextDocumentPosition, HoverResult, void>): void;
-	onCompletionRequest(handler: IRequestHandler<TextDocumentPosition, CompletionItem[], void>): void;
-	onCompletionResolveRequest(handler: IRequestHandler<CompletionItem, CompletionItem, void>): void;
+	onCompletion(handler: IRequestHandler<TextDocumentPosition, CompletionItem[], void>): void;
+	onCompletionResolve(handler: IRequestHandler<CompletionItem, CompletionItem, void>): void;
+	onSignatureHelp(handler: IRequestHandler<TextDocumentIdentifier, SignatureHelp, void>): void;
 
 	dispose(): void;
 }
@@ -290,8 +293,9 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
 		sendDiagnostics: (params) => connection.sendNotification(PublishDiagnosticsNotification.type, params),
 
 		onHover: (handler) => connection.onRequest(HoverRequest.type, handler),
-		onCompletionRequest: (handler) => connection.onRequest(CompletionRequest.type, handler),
-		onCompletionResolveRequest: (handler) => connection.onRequest(CompletionResolveRequest.type, handler),
+		onCompletion: (handler) => connection.onRequest(CompletionRequest.type, handler),
+		onCompletionResolve: (handler) => connection.onRequest(CompletionResolveRequest.type, handler),
+		onSignatureHelp: (handler) => connection.onRequest(SignatureHelpRequest.type, handler),
 
 		dispose: () => connection.dispose()
 	};

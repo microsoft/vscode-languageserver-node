@@ -10,7 +10,7 @@ import {
 		workspace as Workspace, window as Window, languages as Languages, extensions as Extensions, TextDocumentChangeEvent, TextDocument, Disposable,
 		FileSystemWatcher, CommandCallback, Uri, DiagnosticCollection, LanguageSelector,
 		CancellationToken, Hover, Position as VPosition, IHTMLContentElement,
-		CompletionItem as VCompletionItem,
+		CompletionItem as VCompletionItem, SignatureHelp as VSignatureHelp
 } from 'vscode';
 
 import { IRequestHandler, INotificationHandler, MessageConnection, ClientMessageConnection, ILogger, createClientMessageConnection, ErrorCodes, ResponseError, RequestType, NotificationType } from 'vscode-jsonrpc';
@@ -25,7 +25,8 @@ import {
 		DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
 		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, Severity, Position,
 		CompletionRequest, CompletionResolveRequest, CompletionItem,
-		HoverRequest, HoverResult
+		HoverRequest, HoverResult,
+		SignatureHelpRequest
 	} from './protocol';
 
 import { asOpenTextDocumentParams, asChangeTextDocumentParams, asCloseTextDocumentParams, asDiagnostics, asRange, asTextDocumentPosition } from './converters';
@@ -647,8 +648,12 @@ export class LanguageClient {
 	}
 
 	private hookCapabilities(connection: IConnection): void {
-		if (this._capabilites.hoverProvider && this._languageOptions.languageSelector) {
-			this._providers.push(Languages.registerHoverProvider(this._languageOptions.languageSelector, {
+		let languageSelector = this._languageOptions.languageSelector;
+		if (!languageSelector) {
+			return;
+		}
+		if (this._capabilites.hoverProvider) {
+			this._providers.push(Languages.registerHoverProvider(languageSelector, {
 				provideHover: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<Hover> => {
 					if (this.isConnectionActive()) {
 						return connection.sendRequest(HoverRequest.type, asTextDocumentPosition(document, position)).then((result: HoverResult) => {
@@ -663,8 +668,9 @@ export class LanguageClient {
 					}
 				}
 			}));
-		} else if (this._capabilites.completionProvider && this._languageOptions.languageSelector) {
-			this._providers.push(Languages.registerCompletionItemProvider(this._languageOptions.languageSelector, {
+		}
+		if (this._capabilites.completionProvider) {
+			this._providers.push(Languages.registerCompletionItemProvider(languageSelector, {
 				provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VCompletionItem[]> => {
 					if (this.isConnectionActive()) {
 						return connection.sendRequest(CompletionRequest.type, asTextDocumentPosition(document, position));
@@ -682,6 +688,19 @@ export class LanguageClient {
 					}
 					: undefined
 			}, ...this._capabilites.completionProvider.triggerCharacters));
+		}
+		if (this._capabilites.signatureHelpProvider) {
+			this._providers.push(Languages.registerSignatureHelpProvider(languageSelector, {
+				provideSignatureHelp: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VSignatureHelp> => {
+					if (this.isConnectionActive()) {
+						return connection.sendRequest(SignatureHelpRequest.type, asTextDocumentPosition(document, position)).then((result) => {
+							return result;
+						});
+					} else {
+						return Promise.resolve(null);
+					}
+				}
+			}, ...this._capabilites.signatureHelpProvider.triggerCharacters));
 		}
 	}
 }

@@ -16,13 +16,18 @@ export enum TextDocumentSyncKind {
 
 export interface CompletionOptions {
 	resolveProvider?: boolean;
-	triggerCharacters?: string[]
+	triggerCharacters?: string[];
+}
+
+export interface SignatureHelpOptions {
+	triggerCharacters?: string[];
 }
 
 export interface ServerCapabilities {
 	textDocumentSync?: number;
 	hoverProvider?: boolean;
 	completionProvider?: CompletionOptions;
+	signatureHelpProvider?: SignatureHelpOptions;
 }
 
 /**
@@ -352,10 +357,6 @@ export namespace CompletionResolveRequest {
 
 //---- Hover Support -------------------------------
 
-export namespace HoverRequest {
-	export const type: RequestType<TextDocumentPosition, HoverResult, void> = { method: 'textDocument/hover' };
-}
-
 /**
  * The result of a hove request.
  */
@@ -369,4 +370,43 @@ export interface HoverResult {
 	 * An optional range
 	 */
 	range?: Range;
+}
+
+export namespace HoverRequest {
+	export const type: RequestType<TextDocumentPosition, HoverResult, void> = { method: 'textDocument/hover' };
+}
+
+//---- SignatureHelp ----------------------------------
+
+export interface ParameterInformation {
+	label: string;
+	documentation?: string;
+}
+
+export namespace ParameterInformation {
+	export function create(label: string, documentation?: string): ParameterInformation {
+		return documentation ? { label, documentation } : { label };
+	};
+}
+
+export interface SignatureInformation {
+	label: string;
+	documentation?: string;
+	parameters?: ParameterInformation[];
+}
+
+export namespace SignatureInformation {
+	export function create(label: string, documentation?: string): SignatureInformation {
+		return documentation ? { label, documentation } : { label };
+	}
+}
+
+export interface SignatureHelp {
+	signatures?: SignatureInformation[];
+	activeSignature?: number;
+	activeParameter?: number;
+}
+
+export namespace SignatureHelpRequest {
+	export const type: RequestType<TextDocumentPosition, SignatureHelp, void> = { method: 'textDocument/signatureHelp' };
 }
