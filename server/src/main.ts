@@ -8,15 +8,15 @@ import {
 		MessageConnection, ServerMessageConnection, ILogger, createServerMessageConnection
 	} from 'vscode-jsonrpc';
 import {
-		InitializeRequest, InitializeParams, InitializeResult, InitializeError, HostCapabilities, ServerCapabilities,
-		ShutdownRequest, ShutdownParams,
-		ExitNotification, ExitParams,
+		InitializeRequest, InitializeParams, InitializeResult, InitializeError, ClientCapabilities, ServerCapabilities,
+		ShutdownRequest,
+		ExitNotification,
 		LogMessageNotification, LogMessageParams, MessageType,
 		ShowMessageNotification, ShowMessageParams,
 		DidChangeConfigurationNotification, DidChangeConfigurationParams,
-		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams, DidCloseTextDocumentNotification, DidCloseTextDocumentParams,
+		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams, DidCloseTextDocumentNotification,
 		DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
-		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, Severity, Position,
+		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Position,
 		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSyncKind,
 		HoverRequest, Hover,
 		CompletionRequest, CompletionResolveRequest, CompletionOptions, CompletionItemKind, CompletionItem, TextEdit,
@@ -29,12 +29,11 @@ import * as is from './utils/is';
 // ------------- Reexport the API surface of the language worker API ----------------------
 export {
 		RequestType, IRequestHandler, NotificationType, INotificationHandler, ResponseError, ErrorCodes,
-		InitializeParams, InitializeResult, InitializeError,
-		ShutdownParams, ExitParams,
+		InitializeParams, InitializeResult, InitializeError, ServerCapabilities,
 		DidChangeConfigurationParams,
 		DidChangeWatchedFilesParams, FileEvent, FileChangeType,
-		DidOpenTextDocumentParams, DidChangeTextDocumentParams, DidCloseTextDocumentParams,
-		PublishDiagnosticsParams, Diagnostic, Severity, Position,
+		DidOpenTextDocumentParams, DidChangeTextDocumentParams,
+		PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Position,
 		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSyncKind,
 		Hover,
 		CompletionOptions, CompletionItemKind, CompletionItem, TextEdit,
@@ -124,12 +123,22 @@ export class TextDocuments {
 			this._documents[event.uri] = document;
 			this._onDidChangeContent.fire({ document });
 		});
-		connection.onDidChangeTextDocument((event: DidChangeTextDocumentParams) => {
-			let document = this._documents[event.uri];
-			document.update(event);
-			this._onDidChangeContent.fire({ document });
+		connection.onDidChangeTextDocument((event: DidChangeTextDocumentParams | DidChangeTextDocumentParams[]) => {
+			let last: DidChangeTextDocumentParams = null;
+			if (is.array<DidChangeTextDocumentParams>(event)) {
+				if (event.length > 0) {
+					last = event[event.length - 1];
+				}
+			} else {
+				last = event;
+			}
+			if (last) {
+				let document = this._documents[last.uri];
+				document.update(last);
+				this._onDidChangeContent.fire({ document });
+			}
 		});
-		connection.onDidCloseTextDocument((event: DidCloseTextDocumentParams) => {
+		connection.onDidCloseTextDocument((event: TextDocumentIdentifier) => {
 			delete this._documents[event.uri];
 		});
 	}
@@ -222,8 +231,8 @@ export interface IConnection {
 	onNotification<P>(type: NotificationType<P>, handler: INotificationHandler<P>): void;
 
 	onInitialize(handler: IRequestHandler<InitializeParams, InitializeResult, InitializeError>): void;
-	onShutdown(handler: IRequestHandler<ShutdownParams, void, void>): void;
-	onExit(handler: INotificationHandler<ExitParams>): void;
+	onShutdown(handler: IRequestHandler<void, void, void>): void;
+	onExit(handler: INotificationHandler<void>): void;
 
 	console: RemoteConsole;
 	window: RemoteWindow;
@@ -232,8 +241,8 @@ export interface IConnection {
 	onDidChangeWatchedFiles(handler: INotificationHandler<DidChangeWatchedFilesParams>): void;
 
 	onDidOpenTextDocument(handler: INotificationHandler<DidOpenTextDocumentParams>): void;
-	onDidChangeTextDocument(handler: INotificationHandler<DidChangeTextDocumentParams>): void;
-	onDidCloseTextDocument(handler: INotificationHandler<DidCloseTextDocumentParams>): void;
+	onDidChangeTextDocument(handler: INotificationHandler<DidChangeTextDocumentParams | DidChangeTextDocumentParams[]>): void;
+	onDidCloseTextDocument(handler: INotificationHandler<TextDocumentIdentifier>): void;
 	sendDiagnostics(args: PublishDiagnosticsParams): void;
 
 	onHover(handler: IRequestHandler<TextDocumentPosition, Hover, void>): void;
@@ -266,9 +275,9 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
 		}
 	}
 
-	let shutdownHandler: IRequestHandler<ShutdownParams, void, void> = null;
+	let shutdownHandler: IRequestHandler<void, void, void> = null;
 	let initializeHandler: IRequestHandler<InitializeParams, InitializeResult, InitializeError> = null;
-	let exitHandler: INotificationHandler<ExitParams> = null;
+	let exitHandler: INotificationHandler<void> = null;
 	let protocolConnection: IConnection & IConnectionState = {
 		listen: (): void => connection.listen(),
 		onRequest: <P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void => connection.onRequest(type, handler),

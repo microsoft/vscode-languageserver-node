@@ -6,10 +6,10 @@
 import * as vs from 'vscode';
 import {
 		InitializeParams, InitializeResult, InitializeError,
-		ShutdownParams, ExitParams, LogMessageParams, MessageType,
+		LogMessageParams, MessageType,
 		ShowMessageParams, DidChangeConfigurationParams,
-		DidOpenTextDocumentParams, DidChangeTextDocumentParams, DidCloseTextDocumentParams,
-		PublishDiagnosticsParams, Diagnostic, Severity, Position, Range,
+		DidOpenTextDocumentParams, DidChangeTextDocumentParams, TextDocumentIdentifier,
+		PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Position, Range,
 		TextDocumentPosition,
 		Hover, MarkedString,
 		CompletionItem, TextEdit,
@@ -60,7 +60,7 @@ export function asChangeTextDocumentParams(arg: vs.TextDocumentChangeEvent | vs.
 	}
 }
 
-export function asCloseTextDocumentParams(textDocument: vs.TextDocument): DidCloseTextDocumentParams {
+export function asCloseTextDocumentParams(textDocument: vs.TextDocument): TextDocumentIdentifier {
 	return {
 		uri: textDocument.uri.toString()
 	};
@@ -75,31 +75,36 @@ export function asWorkerPosition(position: vs.Position): Position {
 }
 
 export function asDiagnostics(diagnostics: Diagnostic[]): vs.Diagnostic[] {
-	return diagnostics.map(diagnostic => new vs.Diagnostic(asRange(diagnostic), diagnostic.message, asDiagnosticSeverity(diagnostic.severity)));
+	return diagnostics.map(diagnostic => new vs.Diagnostic(asRange(diagnostic.range), diagnostic.message, asDiagnosticSeverity(diagnostic.severity)));
 }
 
-export function asRange(value: Diagnostic | Range): vs.Range {
+export function asRange(value: Range): vs.Range {
 	if (is.undefined(value)) {
 		return undefined;
 	} else if (is.nil(value)) {
 		return null;
 	}
-	if (value.end) {
-		return new vs.Range(value.start.line, value.start.character, value.end.line, value.end.character);
-	} else {
-		return new vs.Range(value.start.line, value.start.character, value.start.line, value.start.character);
+	return new vs.Range(asPosition(value.start), asPosition(value.end));
+}
+
+export function asPosition(value: Position): vs.Position {
+	if (is.undefined(value)) {
+		return undefined;
+	} else if (is.nil(value)) {
+		return null;
 	}
+	return new vs.Position(value.line, value.character);
 }
 
 export function asDiagnosticSeverity(value: number): vs.DiagnosticSeverity {
 	switch (value) {
-		case Severity.Error:
+		case DiagnosticSeverity.Error:
 			return vs.DiagnosticSeverity.Error;
-		case Severity.Warning:
+		case DiagnosticSeverity.Warning:
 			return vs.DiagnosticSeverity.Warning;
-		case Severity.Information:
+		case DiagnosticSeverity.Information:
 			return vs.DiagnosticSeverity.Information;
-		case Severity.Hint:
+		case DiagnosticSeverity.Hint:
 			return vs.DiagnosticSeverity.Hint;
 	}
 }

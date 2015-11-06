@@ -15,15 +15,16 @@ import {
 
 import { IRequestHandler, INotificationHandler, MessageConnection, ClientMessageConnection, ILogger, createClientMessageConnection, ErrorCodes, ResponseError, RequestType, NotificationType } from 'vscode-jsonrpc';
 import {
-		InitializeRequest, InitializeParams, InitializeResult, InitializeError, HostCapabilities, ServerCapabilities, TextDocumentSyncKind,
-		ShutdownRequest, ShutdownParams,
-		ExitNotification, ExitParams,
+		InitializeRequest, InitializeParams, InitializeResult, InitializeError, ClientCapabilities, ServerCapabilities, TextDocumentSyncKind,
+		ShutdownRequest,
+		ExitNotification,
 		LogMessageNotification, LogMessageParams, MessageType,
 		ShowMessageNotification, ShowMessageParams,
 		DidChangeConfigurationNotification, DidChangeConfigurationParams,
-		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams, DidCloseTextDocumentNotification, DidCloseTextDocumentParams,
+		TextDocumentIdentifier, TextDocumentPosition,
+		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams, DidCloseTextDocumentNotification,
 		DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
-		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, Severity, Position,
+		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Position,
 		CompletionRequest, CompletionResolveRequest, CompletionItem,
 		HoverRequest, Hover,
 		SignatureHelpRequest
@@ -52,8 +53,8 @@ interface IConnection {
 	onNotification<P>(type: NotificationType<P>, handler: INotificationHandler<P>): void;
 
 	initialize(params: InitializeParams): Thenable<InitializeResult>;
-	shutdown(params: ShutdownParams): Thenable<void>;
-	exit(params: ExitParams): void;
+	shutdown(): Thenable<void>;
+	exit(): void;
 
 	onLogMessage(handle: INotificationHandler<LogMessageParams>): void;
 	onShowMessage(handler: INotificationHandler<ShowMessageParams>): void;
@@ -62,8 +63,8 @@ interface IConnection {
 	didChangeWatchedFiles(params: DidChangeWatchedFilesParams): void;
 
 	didOpenTextDocument(params: DidOpenTextDocumentParams): void;
-	didChangeTextDocument(params: DidChangeTextDocumentParams): void;
-	didCloseTextDocument(params: DidCloseTextDocumentParams): void;
+	didChangeTextDocument(params: DidChangeTextDocumentParams | DidChangeTextDocumentParams[]): void;
+	didCloseTextDocument(params: TextDocumentIdentifier): void;
 	onDiagnostics(handler: INotificationHandler<PublishDiagnosticsParams>): void;
 
 	dispose(): void;
@@ -96,8 +97,8 @@ function createConnection(inputStream: NodeJS.ReadableStream, outputStream: Node
 		onNotification: <P>(type: NotificationType<P>, handler: INotificationHandler<P>): void => connection.onNotification(type, handler),
 
 		initialize: (params: InitializeParams) => connection.sendRequest(InitializeRequest.type, params),
-		shutdown: (params: ShutdownParams) => connection.sendRequest(ShutdownRequest.type, params),
-		exit: (params: ExitParams) => connection.sendNotification(ExitNotification.type, params),
+		shutdown: () => connection.sendRequest(ShutdownRequest.type),
+		exit: () => connection.sendNotification(ExitNotification.type),
 
 		onLogMessage: (handler: INotificationHandler<LogMessageParams>) => connection.onNotification(LogMessageNotification.type, handler),
 		onShowMessage: (handler: INotificationHandler<ShowMessageParams>) => connection.onNotification(ShowMessageNotification.type, handler),
@@ -106,8 +107,8 @@ function createConnection(inputStream: NodeJS.ReadableStream, outputStream: Node
 		didChangeWatchedFiles: (params: DidChangeWatchedFilesParams) => connection.sendNotification(DidChangeWatchedFilesNotification.type, params),
 
 		didOpenTextDocument: (params: DidOpenTextDocumentParams) => connection.sendNotification(DidOpenTextDocumentNotification.type, params),
-		didChangeTextDocument: (params: DidChangeTextDocumentParams) => connection.sendNotification(DidChangeTextDocumentNotification.type, params),
-		didCloseTextDocument: (params: DidCloseTextDocumentParams) => connection.sendNotification(DidCloseTextDocumentNotification.type, params),
+		didChangeTextDocument: (params: DidChangeTextDocumentParams  | DidChangeTextDocumentParams[]) => connection.sendNotification(DidChangeTextDocumentNotification.type, params),
+		didCloseTextDocument: (params: TextDocumentIdentifier) => connection.sendNotification(DidCloseTextDocumentNotification.type, params),
 		onDiagnostics: (handler: INotificationHandler<PublishDiagnosticsParams>) => connection.onNotification(PublishDiagnosticsNotification.type, handler),
 
 		dispose: () => connection.dispose()
@@ -226,8 +227,10 @@ export class LanguageClient {
 
 	private _syncExpression: SyncExpression;
 
+	private _documentSyncDelayer: Delayer<void>;
+
 	private _fileEvents: FileEvent[];
-	private _delayer: Delayer<void>;
+	private _fileEventDelayer: Delayer<void>;
 
 	public constructor(name: string, serverOptions: ServerOptions, languageOptions: LanguageClientOptions, forceDebug: boolean = false) {
 		this._name = name;
@@ -246,7 +249,7 @@ export class LanguageClient {
 		this._diagnostics = null;
 
 		this._fileEvents = [];
-		this._delayer = new Delayer<void>(250);
+		this._fileEventDelayer = new Delayer<void>(250);
 		this._onReady = new Promise<void>((resolve, reject) => {
 			this._onReadyCallbacks = { resolve, reject };
 		});
@@ -280,6 +283,7 @@ export class LanguageClient {
 		return this.onReady().then(() => {
 			return this.resolveConnection().then((connection) => {
 				if (this.isConnectionActive()) {
+					this.forceDocumentSync();
 					return connection.sendRequest(type, params);
 				} else {
 					return Promise.reject<R>(new ResponseError(ErrorCodes.InternalError, 'Connection is already closed'));
@@ -292,6 +296,7 @@ export class LanguageClient {
 		this.onReady().then(() => {
 			this.resolveConnection().then((connection) => {
 				if (this.isConnectionActive()) {
+					this.forceDocumentSync();
 					connection.sendNotification(type, params);
 				}
 			});
@@ -378,7 +383,7 @@ export class LanguageClient {
 	}
 
 	private initialize(connection: IConnection): Thenable<InitializeResult> {
-		let initParams: InitializeParams = { rootFolder: Workspace.rootPath, capabilities: { } };
+		let initParams: InitializeParams = { rootPath: Workspace.rootPath, capabilities: { } };
 		return connection.initialize(initParams).then((result) => {
 			this._state = ClientState.Running;
 			this._capabilites = result.capabilities;
@@ -387,6 +392,9 @@ export class LanguageClient {
 				Workspace.onDidOpenTextDocument(t => this.onDidOpenTextDoument(connection, t), null, this._listeners);
 				Workspace.onDidChangeTextDocument(t => this.onDidChangeTextDocument(connection, t), null, this._listeners);
 				Workspace.onDidCloseTextDocument(t => this.onDidCloseTextDoument(connection, t), null, this._listeners);
+				if (this._capabilites.textDocumentSync === TextDocumentSyncKind.Full) {
+					this._documentSyncDelayer = new Delayer<void>(100);
+				}
 			}
 			this.hookFileEvents(connection);
 			this.hookConfigurationChanged(connection);
@@ -422,8 +430,8 @@ export class LanguageClient {
 		this._diagnostics.dispose();
 		this._diagnostics = null;
 		this.resolveConnection().then(connection => {
-			connection.shutdown({}).then(() => {
-				connection.exit({});
+			connection.shutdown().then(() => {
+				connection.exit();
 				connection.dispose();
 				this._state = ClientState.Stopped;
 				this._connection = null;
@@ -449,7 +457,7 @@ export class LanguageClient {
 
 	public notifyFileEvent(event: FileEvent): void {
 		this._fileEvents.push(event);
-		this._delayer.trigger(() => {
+		this._fileEventDelayer.trigger(() => {
 			this.onReady().then(() => {
 				this.resolveConnection().then(connection => {
 					if (this.isConnectionActive()) {
@@ -474,9 +482,11 @@ export class LanguageClient {
 		}
 		let uri: string = event.document.uri.toString();
 		if (this._capabilites.textDocumentSync === TextDocumentSyncKind.Incremental) {
-			asChangeTextDocumentParams(event).forEach(param => connection.didChangeTextDocument(param));
+			connection.didChangeTextDocument(asChangeTextDocumentParams(event));
 		} else {
-			connection.didChangeTextDocument(asChangeTextDocumentParams(event.document));
+			this._documentSyncDelayer.trigger(() => {
+				connection.didChangeTextDocument(asChangeTextDocumentParams(event.document));
+			}, -1);
 		}
 	}
 
@@ -485,6 +495,12 @@ export class LanguageClient {
 			return;
 		}
 		connection.didCloseTextDocument(asCloseTextDocumentParams(textDocument));
+	}
+
+	private forceDocumentSync(): void {
+		if (this._documentSyncDelayer) {
+			this._documentSyncDelayer.forceDelivery();
+		}
 	}
 
 	private handleDiagnostics(params: PublishDiagnosticsParams) {
@@ -659,6 +675,7 @@ export class LanguageClient {
 			this._providers.push(Languages.registerHoverProvider(documentSelector, {
 				provideHover: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<Hover> => {
 					if (this.isConnectionActive()) {
+						this.forceDocumentSync();
 						return connection.sendRequest(HoverRequest.type, asTextDocumentPosition(document, position)).then((result: Hover) => {
 							return asHover(result);
 						});
@@ -672,6 +689,7 @@ export class LanguageClient {
 			this._providers.push(Languages.registerCompletionItemProvider(documentSelector, {
 				provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VCompletionItem[]> => {
 					if (this.isConnectionActive()) {
+						this.forceDocumentSync();
 						return connection.sendRequest(CompletionRequest.type, asTextDocumentPosition(document, position)).then((result: CompletionItem[]) => {
 							return asCompletionItems(result);
 						});
@@ -682,6 +700,7 @@ export class LanguageClient {
 				resolveCompletionItem: this._capabilites.completionProvider.resolveProvider
 					? (item: VCompletionItem, token: CancellationToken): Thenable<VCompletionItem> => {
 						if (this.isConnectionActive()) {
+							this.forceDocumentSync();
 							return connection.sendRequest(CompletionResolveRequest.type, item).then((result: CompletionItem) => {
 								return asCompletionItem(result);
 							});
@@ -696,6 +715,7 @@ export class LanguageClient {
 			this._providers.push(Languages.registerSignatureHelpProvider(documentSelector, {
 				provideSignatureHelp: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VSignatureHelp> => {
 					if (this.isConnectionActive()) {
+						this.forceDocumentSync();
 						return connection.sendRequest(SignatureHelpRequest.type, asTextDocumentPosition(document, position)).then((result) => {
 							return asSignatureHelp(result);
 						});

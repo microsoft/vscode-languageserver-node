@@ -3,133 +3,253 @@
  *--------------------------------------------------------*/
 'use strict';
 
-import { RequestType, NotificationType } from 'vscode-jsonrpc';
+import { RequestType, NotificationType, ResponseError } from 'vscode-jsonrpc';
 
-export interface HostCapabilities {
+/**
+ * Defines the capabilities provided by the client.
+ */
+export interface ClientCapabilities {
 }
 
+/**
+ * Defines how the host (editor) should sync
+ * document changes to the language server.
+ */
 export enum TextDocumentSyncKind {
+	/**
+	 * Documents should not be synced at all.
+	 */
 	None = 0,
+
+	/**
+	 * Documents are synced by always sending the full content
+	 * of the document.
+	 */
 	Full = 1,
+
+	/**
+	 * Documents are synced by sending the full content on open.
+	 * After that only incremental updates to the document are
+	 * send.
+	 */
 	Incremental = 2
 }
 
+/**
+ * Completion options
+ */
 export interface CompletionOptions {
+	/**
+	 * The server provides support to resolve additional
+	 * information for a completion item.
+	 */
 	resolveProvider?: boolean;
+
+	/**
+	 * The characters that trigger completion automatically.
+	 */
 	triggerCharacters?: string[];
 }
 
+/**
+ * Signature help options
+ */
 export interface SignatureHelpOptions {
+	/**
+	 * The characters that trigger signature help
+	 * automatically.
+	 */
 	triggerCharacters?: string[];
 }
 
+/**
+ * Defines the capabilities provided by the language
+ * server
+ */
 export interface ServerCapabilities {
+	/** Defines how text documents are synced. */
 	textDocumentSync?: number;
+	/** The server provides hover support. */
 	hoverProvider?: boolean;
+	/** The server provides completion support. */
 	completionProvider?: CompletionOptions;
+	/** The server provides signature help support. */
 	signatureHelpProvider?: SignatureHelpOptions;
 }
 
+//---- Initialize Method ----
+
 /**
- * The initialize command is send from the client to the worker.
- * It is send once as the first command after starting up the
+ * The initialize method is sent from the client to the server.
+ * It is send once as the first method after starting up the
  * worker.
  */
 export namespace InitializeRequest {
-	export const type: RequestType<InitializeParams, InitializeResult, InitializeError> = { method: 'initialize' };
-}
-export interface InitializeParams {
-	rootFolder: string;
-	capabilities: HostCapabilities;
+	export const type: RequestType<InitializeParams, InitializeResult, InitializeError> = { get method() { return 'initialize'; } };
 }
 
+/**
+ * The initialize parameters
+ */
+export interface InitializeParams {
+	/**
+	 * The rootPath of the workspace. Is null
+	 * if no folder is open.
+	 */
+	rootPath: string;
+
+	/**
+	 * The capabilities provided by the client (editor)
+	 */
+	capabilities: ClientCapabilities;
+}
+
+/**
+ * The result returned from an initilize request.
+ */
 export interface InitializeResult {
+	/**
+	 * The capabilities the language server provides.
+	 */
 	capabilities: ServerCapabilities;
 }
 
+/**
+ * The error returned if the initilize request fails.
+ */
 export interface InitializeError {
+	/**
+	 * Indicates whether the client should retry to send the
+	 * initilize request after showing the message provided
+	 * in the {@link ResponseError}
+	 */
 	retry: boolean;
 }
 
+//---- Shutdown Method ----
+
 /**
- * The shutdown command is send from the client to the worker.
+ * A shutdown request is sent from the client to the server.
  * It is send once when the client descides to shutdown the
- * worker. The only event that is send after a shudown request
+ * server. The only event that is sent after a shudown request
  * is the exit event.
  */
 export namespace ShutdownRequest {
-	export const type: RequestType<ShutdownParams, void, void> = { method: 'shutdown' };
-}
-export interface ShutdownParams {
+	export const type: RequestType<void, void, void> = { get method() { return 'shutdown'; } };
 }
 
+//---- Exit Notification ----
+
 /**
- * The exit event is send from the client to the worker to
- * ask the worker to exit its process.
+ * The exit event is sent from the client to the server to
+ * ask the server to exit its process.
  */
 export namespace ExitNotification {
-	export const type: NotificationType<ExitParams> = { method: 'exit' };
+	export const type: NotificationType<void> = { get method() { return 'exit'; } };
 }
-export interface ExitParams {
+
+//---- Configuration notification ----
+
+/**
+ * The configuration change notification is sent from the client to the server
+ * when the client's configuration has changed. The notification contains
+ * the changed configuration as defined by the language client.
+ */
+export namespace DidChangeConfigurationNotification {
+	export const type: NotificationType<DidChangeConfigurationParams> = { get method() { return 'workspace/didChangeConfiguration'; } };
 }
 
 /**
- * The configuration change event is send from the client to the worker
- * when the client's configuration has changed. The event contains
- * the changed configuration as defined by the language worker statically
- * in it's extension manifest.
+ * The parameters of a change configuration notification.
  */
-export namespace DidChangeConfigurationNotification {
-	export const type: NotificationType<DidChangeConfigurationParams> = { method: 'workspace/didChangeConfiguration' };
-}
 export interface DidChangeConfigurationParams {
+	/**
+	 * The actual changed settings
+	 */
 	settings: any;
 }
 
+//---- Message show and log notifications ----
+
+/**
+ * The message type
+ */
 export enum MessageType {
+	/** An error message. */
 	Error = 1,
+	/** A warning message. */
 	Warning = 2,
+	/** An information message. */
 	Info = 3,
+	/** A log message. */
 	Log = 4
 }
 
 /**
- * The show message event is send from a worker to a client to ask
- * the client to display a particular message in the user interface
+ * The show message notification is sent from a server to a client to ask
+ * the client to display a particular message in the user interface.
  */
 export namespace ShowMessageNotification {
-	export const type: NotificationType<ShowMessageParams> = { method: 'window/showMessage' };
-}
-export interface ShowMessageParams {
-	type: number;
-	message: string;
+	export const type: NotificationType<ShowMessageParams> = { get method() { return 'window/showMessage'; } };
 }
 
-export namespace LogMessageNotification {
-	export let type: NotificationType<LogMessageParams> = { method: 'window/logMessage' };
-}
-export interface LogMessageParams {
+/**
+ * The parameters of a notification message.
+ */
+export interface ShowMessageParams {
+	/**
+	 * The message type. See {@link MessageType}
+	 */
 	type: number;
+
+	/**
+	 * The actual message
+	 */
 	message: string;
 }
 
 /**
- * Position in a text document expressed as (zero-based) line and character offset.
+ * The log message notification is send from the server to the client to ask
+ * the client to log a particular message.
+ */
+export namespace LogMessageNotification {
+	export let type: NotificationType<LogMessageParams> = { get method() { return  'window/logMessage'; } };
+}
+
+/**
+ * The log message parameters.
+ */
+export interface LogMessageParams {
+	/**
+	 * The message type. See {@link MessageType}
+	 */
+	type: number;
+
+	/**
+	 * The actual message
+	 */
+	message: string;
+}
+
+//---- text document notifications ----
+
+/**
+ * Position in a text document expressed as zero-based line and character offset.
  */
 export interface Position {
 	/**
-	 * Line Position in a document (zero-based)
+	 * Line position in a document (zero-based).
 	 */
 	line: number;
 
 	/**
-	 * Character offset on a line in a document (zero-based)
+	 * Character offset on a line in a document (zero-based).
 	 */
 	character: number;
 }
 
 /**
- * A range in a text document.
+ * A range in a text document expressed as (zero-based) start and end positions.
  */
 export interface Range {
 	/**
@@ -143,13 +263,19 @@ export interface Range {
 	end: Position;
 }
 
+/**
+ * A literal to identify a text document in the client.
+ */
 export interface TextDocumentIdentifier {
 	/**
-	 * A URI identifying the resource in the client.
+	 * The text document's uri.
 	 */
 	uri: string;
 }
 
+/**
+ * A literal to define the position in a text document.
+ */
 export interface TextDocumentPosition extends TextDocumentIdentifier {
 	/**
 	 * The position inside the text document.
@@ -158,21 +284,32 @@ export interface TextDocumentPosition extends TextDocumentIdentifier {
 }
 
 /**
- * The document event is send from the client to the worker to signal
- * newly opened, changed and closed documents.
+ * The document open notification is sent from the client to the server to signal
+ * newly opened text documents. The document's truth is now managed by the client
+ * and the server must not try to read the document's truth using the document's
+ * uri.
  */
 export namespace DidOpenTextDocumentNotification {
-	export const type: NotificationType<DidOpenTextDocumentParams> = { method: 'textDocument/didOpen' };
+	export const type: NotificationType<DidOpenTextDocumentParams> = { get method() { return 'textDocument/didOpen'; } };
 }
+
+/**
+ * The parameters send in a open text document notification
+ */
 export interface DidOpenTextDocumentParams extends TextDocumentIdentifier {
 	/**
-	 * The content of the opened document.
+	 * The content of the opened  text document.
 	 */
 	text: string;
 }
 
+/**
+ * The document change notification is sent from the client to the server to signal
+ * changes to a text document. The notification's parameters are either a single
+ * {@link DidChangeTextDocumentParams} or an array of {@link DidChangeTextDocumentParams}.
+ */
 export namespace DidChangeTextDocumentNotification {
-	export const type: NotificationType<DidChangeTextDocumentParams> = { method: 'textDocument/didChange' };
+	export const type: NotificationType<DidChangeTextDocumentParams | DidChangeTextDocumentParams[]> = { get method() { return 'textDocument/didChange'; } };
 }
 /**
  * The arguments describing a change to a text document. If range and rangeLength are omitted
@@ -196,39 +333,71 @@ export interface DidChangeTextDocumentParams extends TextDocumentIdentifier {
 	text: string;
 }
 
+/**
+ * The document close notification is sent from the client to the server when
+ * the document got closed in the client. The document's truth now exists
+ * where the document's uri points to (e.g. if the document's uri is a file uri
+ * the truth now exists on disk).
+ */
 export namespace DidCloseTextDocumentNotification {
-	export const type: NotificationType<DidCloseTextDocumentParams> = { method: 'textDocument/didClose' };
-}
-export interface DidCloseTextDocumentParams extends TextDocumentIdentifier {
+	export const type: NotificationType<TextDocumentIdentifier> = { get method() { return 'textDocument/didClose'; } };
 }
 
+//---- File eventing ----
 
+/**
+ * The watched files notification is sent from the client to the server when
+ * the client detects changes to file watched by the lanaguage client.
+ */
 export namespace DidChangeWatchedFilesNotification {
-	export const type: NotificationType<DidChangeWatchedFilesParams> = { method: 'workspace/didChangeFiles' };
+	export const type: NotificationType<DidChangeWatchedFilesParams> = { get method() { return 'workspace/didChangeWatchedFiles'; } };
 }
+
+/**
+ * The watched files change notification's parameters.
+ */
 export interface DidChangeWatchedFilesParams {
+	/**
+	 * The actual file events.
+	 */
 	changes: FileEvent[];
 }
 
+/**
+ * The file event type
+ */
 export enum FileChangeType {
+	/** The file got created. */
 	Created = 1,
+	/** The file got changed. */
 	Changed = 2,
+	/** The file got deleted. */
 	Deleted = 3
 }
 
+/**
+ * An event describing a file change.
+ */
 export interface FileEvent {
+	/** The file's uri. */
 	uri: string;
+	/** teh change type. */
 	type: number;
 }
 
+//---- Diagnostic notification ----
 
 /**
- * Diagnostics notification are send from the worker to clients to signal
- * results of validation runs
+ * Diagnostics notification are sent from the server to the client to signal
+ * results of validation runs.
  */
 export namespace PublishDiagnosticsNotification {
 	export const type: NotificationType<PublishDiagnosticsParams> = { method: 'textDocument/publishDiagnostics' };
 }
+
+/**
+ * The publish diagnostic notification's parameters.
+ */
 export interface PublishDiagnosticsParams {
 	/**
 	 * The URI for which diagnostic information is reported.
@@ -241,37 +410,39 @@ export interface PublishDiagnosticsParams {
 	diagnostics: Diagnostic[];
 }
 
-export enum Severity {
+/**
+ * The diagnostic's serverity.
+ */
+export enum DiagnosticSeverity {
+	/** Reports an error. */
 	Error = 0,
+	/** Reports a warning. */
 	Warning = 1,
+	/** Reports an information. */
 	Information = 2,
+	/** Reports a hint. */
 	Hint = 3
 }
 
 /**
- * Item of diagnostic information found in a DiagnosticEvent message.
+ * A diagnostic item found in a diagnostic notification.
  */
 export interface Diagnostic {
 	/**
-	 * Starting position at which text appies.
+	 * The range at which the message applies
 	 */
-	start: Position;
-
-	/**
-	 * The last position at which the text applies. Can be omitted.
-	 */
-	end?: Position;
+	range: Range;
 
 	/**
 	 * The diagnostic's severity. Can be omitted. If omitted it is up to the
-	 * client to interpret diagnostics as error, warning or info.
+	 * client to interpret diagnostics as error, warning, info or hint.
 	 */
 	severity?: number;
 
 	/**
-	 * The diagnostic code. Can be omitted.
+	 * The diagnostic's code. Can be omitted.
 	 */
-	code?: string;
+	code?: number | string;
 
 	/**
 	 * The diagnostic message.

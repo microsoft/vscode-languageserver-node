@@ -25,7 +25,9 @@ export class Delayer<T> {
 
 	public trigger(task: ITask<T>, delay: number = this.defaultDelay): Promise<T> {
 		this.task = task;
-		this.cancelTimeout();
+		if (delay >= 0) {
+			this.cancelTimeout();
+		}
 
 		if (!this.completionPromise) {
 			this.completionPromise = new Promise<T>((resolve) => {
@@ -39,12 +41,24 @@ export class Delayer<T> {
 			});
 		}
 
-		this.timeout = setTimeout(() => {
-			this.timeout = null;
-			this.onSuccess(null);
-		}, delay);
+		if (delay >= 0 || this.timeout === null) {
+			this.timeout = setTimeout(() => {
+				this.timeout = null;
+				this.onSuccess(null);
+			}, delay >= 0 ? delay : this.defaultDelay);
+		}
 
 		return this.completionPromise;
+	}
+
+	public forceDelivery(): Promise<T> {
+		if (!this.completionPromise) {
+			return null;
+		}
+		this.cancelTimeout();
+		let result = this.completionPromise;
+		this.onSuccess(null);
+		return result;
 	}
 
 	public isTriggered(): boolean {
