@@ -17,11 +17,13 @@ import {
 		DidChangeConfigurationNotification, DidChangeConfigurationParams,
 		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams, DidCloseTextDocumentNotification,
 		DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
-		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Position,
+		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Position, Location,
 		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSyncKind,
 		HoverRequest, Hover,
 		CompletionRequest, CompletionResolveRequest, CompletionOptions, CompletionItemKind, CompletionItem, TextEdit,
 		SignatureHelpRequest, SignatureHelp, SignatureInformation, ParameterInformation,
+		DefinitionRequest, Definition, ReferencesRequest, ReferenceParams,
+		DocumentHighlightRequest, DocumentHighlight, DocumentHighlightKind
 	} from './protocol';
 
 import { Event, Emitter } from './utils/events';
@@ -34,11 +36,12 @@ export {
 		DidChangeConfigurationParams,
 		DidChangeWatchedFilesParams, FileEvent, FileChangeType,
 		DidOpenTextDocumentParams, DidChangeTextDocumentParams,
-		PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Position,
+		PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Position, Location,
 		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSyncKind,
 		Hover,
 		CompletionOptions, CompletionItemKind, CompletionItem, TextEdit,
-		SignatureHelp, SignatureInformation, ParameterInformation
+		SignatureHelp, SignatureInformation, ParameterInformation,
+		Definition, ReferenceParams,  DocumentHighlight, DocumentHighlightKind
 }
 export { Event }
 
@@ -250,6 +253,9 @@ export interface IConnection {
 	onCompletion(handler: IRequestHandler<TextDocumentPosition, CompletionItem[], void>): void;
 	onCompletionResolve(handler: IRequestHandler<CompletionItem, CompletionItem, void>): void;
 	onSignatureHelp(handler: IRequestHandler<TextDocumentIdentifier, SignatureHelp, void>): void;
+	onDefinition(handler: IRequestHandler<TextDocumentPosition, Definition, void>): void;
+	onReferences(handler: IRequestHandler<ReferenceParams, Location[], void>): void;
+	onDocumentHighlight(handler: IRequestHandler<TextDocumentPosition, DocumentHighlight[], void>): void;
 
 	dispose(): void;
 }
@@ -306,6 +312,9 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
 		onCompletion: (handler) => connection.onRequest(CompletionRequest.type, handler),
 		onCompletionResolve: (handler) => connection.onRequest(CompletionResolveRequest.type, handler),
 		onSignatureHelp: (handler) => connection.onRequest(SignatureHelpRequest.type, handler),
+		onDefinition: (handler) => connection.onRequest(DefinitionRequest.type, handler),
+		onReferences: (handler) => connection.onRequest(ReferencesRequest.type, handler),
+		onDocumentHighlight: (handler) => connection.onRequest(DocumentHighlightRequest.type, handler),
 
 		dispose: () => connection.dispose()
 	};

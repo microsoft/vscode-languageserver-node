@@ -10,8 +10,8 @@ import ChildProcess = cp.ChildProcess;
 import {
 		workspace as Workspace, window as Window, languages as Languages, extensions as Extensions, TextDocumentChangeEvent, TextDocument, Disposable,
 		FileSystemWatcher, Uri, DiagnosticCollection, DocumentSelector,
-		CancellationToken, Hover as vHover, Position as VPosition,
-		CompletionItem as VCompletionItem, SignatureHelp as VSignatureHelp
+		CancellationToken, Hover as VHover, Position as VPosition, Location as VLocation,
+		CompletionItem as VCompletionItem, SignatureHelp as VSignatureHelp, Definition as VDefinition
 } from 'vscode';
 
 import { IRequestHandler, INotificationHandler, MessageConnection, ClientMessageConnection, ILogger, createClientMessageConnection, ErrorCodes, ResponseError, RequestType, NotificationType } from 'vscode-jsonrpc';
@@ -28,13 +28,11 @@ import {
 		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Position,
 		CompletionRequest, CompletionResolveRequest, CompletionItem,
 		HoverRequest, Hover,
-		SignatureHelpRequest
+		SignatureHelpRequest, DefinitionRequest, Definition, ReferencesRequest, DocumentHighlightRequest, DocumentHighlight
 } from './protocol';
 
-import {
-		asOpenTextDocumentParams, asChangeTextDocumentParams, asCloseTextDocumentParams, asDiagnostics, asRange, asTextDocumentPosition,
-		asHover, asCompletionItems, asCompletionItem, asSignatureHelp
-} from './converters';
+import * as c2p from './code2protocol';
+import * as p2c from './protocol2code';
 
 import * as is from './utils/is';
 import * as electron from './utils/electron';
@@ -474,7 +472,7 @@ export class LanguageClient {
 		if (!this._syncExpression.evaluate(textDocument)) {
 			return;
 		}
-		connection.didOpenTextDocument(asOpenTextDocumentParams(textDocument));
+		connection.didOpenTextDocument(c2p.asOpenTextDocumentParams(textDocument));
 	}
 
 	private onDidChangeTextDocument(connection: IConnection, event: TextDocumentChangeEvent): void {
@@ -483,10 +481,10 @@ export class LanguageClient {
 		}
 		let uri: string = event.document.uri.toString();
 		if (this._capabilites.textDocumentSync === TextDocumentSyncKind.Incremental) {
-			connection.didChangeTextDocument(asChangeTextDocumentParams(event));
+			connection.didChangeTextDocument(c2p.asChangeTextDocumentParams(event));
 		} else {
 			this._documentSyncDelayer.trigger(() => {
-				connection.didChangeTextDocument(asChangeTextDocumentParams(event.document));
+				connection.didChangeTextDocument(c2p.asChangeTextDocumentParams(event.document));
 			}, -1);
 		}
 	}
@@ -495,7 +493,7 @@ export class LanguageClient {
 		if (!this._syncExpression.evaluate(textDocument)) {
 			return;
 		}
-		connection.didCloseTextDocument(asCloseTextDocumentParams(textDocument));
+		connection.didCloseTextDocument(c2p.asCloseTextDocumentParams(textDocument));
 	}
 
 	private forceDocumentSync(): void {
@@ -506,7 +504,7 @@ export class LanguageClient {
 
 	private handleDiagnostics(params: PublishDiagnosticsParams) {
 		let uri = Uri.parse(params.uri);
-		let diagnostics = asDiagnostics(params.diagnostics);
+		let diagnostics = p2c.asDiagnostics(params.diagnostics);
 		this._diagnostics.set(uri, diagnostics);
 	}
 
@@ -672,60 +670,134 @@ export class LanguageClient {
 		if (!documentSelector) {
 			return;
 		}
-		if (this._capabilites.hoverProvider) {
-			this._providers.push(Languages.registerHoverProvider(documentSelector, {
-				provideHover: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<Hover> => {
+		this.hookCompletionProvider(documentSelector, connection);
+		this.hookHoverProvider(documentSelector, connection);
+		this.hookSignatureHelpProvider(documentSelector, connection);
+		this.hookDefinitionProvider(documentSelector, connection);
+		this.hookReferencesProvider(documentSelector, connection);
+		this.hookDocumentHighlightProvider(documentSelector, connection);
+	}
+
+	private hookCompletionProvider(documentSelector: DocumentSelector, connection: IConnection): void {
+		if (!this._capabilites.completionProvider) {
+			return;
+		}
+
+		this._providers.push(Languages.registerCompletionItemProvider(documentSelector, {
+			provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VCompletionItem[]> => {
+				if (this.isConnectionActive()) {
+					this.forceDocumentSync();
+					return connection.sendRequest(CompletionRequest.type, c2p.asTextDocumentPosition(document, position)).then((result: CompletionItem[]) => {
+						return p2c.asCompletionItems(result);
+					});
+				} else {
+					return Promise.resolve([]);
+				}
+			},
+			resolveCompletionItem: this._capabilites.completionProvider.resolveProvider
+				? (item: VCompletionItem, token: CancellationToken): Thenable<VCompletionItem> => {
 					if (this.isConnectionActive()) {
 						this.forceDocumentSync();
-						return connection.sendRequest(HoverRequest.type, asTextDocumentPosition(document, position)).then((result: Hover) => {
-							return asHover(result);
+						return connection.sendRequest(CompletionResolveRequest.type, c2p.asCompletionItem(item)).then((result: CompletionItem) => {
+							return p2c.asCompletionItem(result);
 						});
 					} else {
-						return Promise.reject<Hover>(new Error('Connection is not active anymore'));
+						return Promise.resolve(item);
 					}
 				}
-			}));
+				: undefined
+		}, ...this._capabilites.completionProvider.triggerCharacters));
+	}
+
+	private hookHoverProvider(documentSelector: DocumentSelector, connection: IConnection): void {
+		if (!this._capabilites.hoverProvider) {
+			return;
 		}
-		if (this._capabilites.completionProvider) {
-			this._providers.push(Languages.registerCompletionItemProvider(documentSelector, {
-				provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VCompletionItem[]> => {
-					if (this.isConnectionActive()) {
-						this.forceDocumentSync();
-						return connection.sendRequest(CompletionRequest.type, asTextDocumentPosition(document, position)).then((result: CompletionItem[]) => {
-							return asCompletionItems(result);
-						});
-					} else {
-						return Promise.resolve([]);
-					}
-				},
-				resolveCompletionItem: this._capabilites.completionProvider.resolveProvider
-					? (item: VCompletionItem, token: CancellationToken): Thenable<VCompletionItem> => {
-						if (this.isConnectionActive()) {
-							this.forceDocumentSync();
-							return connection.sendRequest(CompletionResolveRequest.type, item).then((result: CompletionItem) => {
-								return asCompletionItem(result);
-							});
-						} else {
-							return Promise.resolve(item);
-						}
-					}
-					: undefined
-			}, ...this._capabilites.completionProvider.triggerCharacters));
-		}
-		if (this._capabilites.signatureHelpProvider) {
-			this._providers.push(Languages.registerSignatureHelpProvider(documentSelector, {
-				provideSignatureHelp: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VSignatureHelp> => {
-					if (this.isConnectionActive()) {
-						this.forceDocumentSync();
-						return connection.sendRequest(SignatureHelpRequest.type, asTextDocumentPosition(document, position)).then((result) => {
-							return asSignatureHelp(result);
-						});
-					} else {
-						return Promise.resolve(null);
-					}
+
+		this._providers.push(Languages.registerHoverProvider(documentSelector, {
+			provideHover: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<Hover> => {
+				if (this.isConnectionActive()) {
+					this.forceDocumentSync();
+					return connection.sendRequest(HoverRequest.type, c2p.asTextDocumentPosition(document, position)).then((result: Hover) => {
+						return p2c.asHover(result);
+					});
+				} else {
+					return Promise.reject<Hover>(new Error('Connection is not active anymore'));
 				}
-			}, ...this._capabilites.signatureHelpProvider.triggerCharacters));
+			}
+		}));
+	}
+
+	private hookSignatureHelpProvider(documentSelector: DocumentSelector, connection: IConnection): void {
+		if (!this._capabilites.signatureHelpProvider) {
+			return;
 		}
+		this._providers.push(Languages.registerSignatureHelpProvider(documentSelector, {
+			provideSignatureHelp: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VSignatureHelp> => {
+				if (this.isConnectionActive()) {
+					this.forceDocumentSync();
+					return connection.sendRequest(SignatureHelpRequest.type, c2p.asTextDocumentPosition(document, position)).then((result) => {
+						return p2c.asSignatureHelp(result);
+					});
+				} else {
+					return Promise.resolve(null);
+				}
+			}
+		}, ...this._capabilites.signatureHelpProvider.triggerCharacters));
+	}
+
+	private hookDefinitionProvider(documentSelector: DocumentSelector, connection: IConnection): void {
+		if (!this._capabilites.definitionProvider) {
+			return;
+		}
+		this._providers.push(Languages.registerDefinitionProvider(documentSelector, {
+			provideDefinition: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VDefinition> => {
+				if (this.isConnectionActive()) {
+					this.forceDocumentSync();
+					return connection.sendRequest(DefinitionRequest.type, c2p.asTextDocumentPosition(document, position)).then((result) => {
+						return p2c.asDefinitionResult(result);
+					});
+				} else {
+					return Promise.resolve(null);
+				}
+			}
+		}))
+	}
+
+	private hookReferencesProvider(documentSelector: DocumentSelector, connection: IConnection): void {
+		if (!this._capabilites.referencesProvider) {
+			return;
+		}
+		this._providers.push(Languages.registerReferenceProvider(documentSelector, {
+			provideReferences: (document: TextDocument, position: VPosition, options: { includeDeclaration: boolean; }, token: CancellationToken): Thenable<VLocation[]> => {
+				if (this.isConnectionActive()) {
+					this.forceDocumentSync();
+					return connection.sendRequest(ReferencesRequest.type, c2p.asReferenceParams(document, position, options)).then((result) => {
+						return p2c.asReferences(result);
+					});
+				} else {
+					return Promise.resolve(null);
+				}
+			}
+		}));
+	}
+
+	private hookDocumentHighlightProvider(documentSelector: DocumentSelector, connection: IConnection): void {
+		if (!this._capabilites.documentHighlightProvider) {
+			return;
+		}
+		this._providers.push(Languages.registerDocumentHighlightProvider(documentSelector, {
+			provideDocumentHighlights: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<DocumentHighlight[]> => {
+				if (this.isConnectionActive()) {
+					this.forceDocumentSync();
+					return connection.sendRequest(DocumentHighlightRequest.type, c2p.asTextDocumentPosition(document, position)).then((result) => {
+						return p2c.asDocumentHighlights(result);
+					});
+				} else {
+					Promise.resolve(null);
+				}
+			}
+		}));
 	}
 }
 

@@ -76,6 +76,12 @@ export interface ServerCapabilities {
 	completionProvider?: CompletionOptions;
 	/** The server provides signature help support. */
 	signatureHelpProvider?: SignatureHelpOptions;
+	/** The server provides goto definition support. */
+	definitionProvider?: boolean;
+	/** The server provides find references support. */
+	referencesProvider?: boolean;
+	/** The server provides document highlight support. */
+	documentHighlightProvider?: boolean;
 }
 
 //---- Initialize Method ----
@@ -265,6 +271,15 @@ export interface Range {
 }
 
 /**
+ * Represents a location inside a resource, such as a line
+ * inside a text file.
+ */
+export class Location {
+	uri: string;
+	range: Range;
+}
+
+/**
  * A literal to identify a text document in the client.
  */
 export interface TextDocumentIdentifier {
@@ -416,13 +431,13 @@ export interface PublishDiagnosticsParams {
  */
 export enum DiagnosticSeverity {
 	/** Reports an error. */
-	Error = 0,
+	Error = 1,
 	/** Reports a warning. */
-	Warning = 1,
+	Warning = 2,
 	/** Reports an information. */
-	Information = 2,
+	Information = 3,
 	/** Reports a hint. */
-	Hint = 3
+	Hint = 4
 }
 
 /**
@@ -454,24 +469,24 @@ export interface Diagnostic {
 //---- Completion Support --------------------------
 
 export enum CompletionItemKind {
-	Text,
-	Method,
-	Function,
-	Constructor,
-	Field,
-	Variable,
-	Class,
-	Interface,
-	Module,
-	Property,
-	Unit,
-	Value,
-	Enum,
-	Keyword,
-	Snippet,
-	Color,
-	File,
-	Reference
+	Text = 1,
+	Method = 2,
+	Function = 3,
+	Constructor = 4,
+	Field = 5,
+	Variable = 6,
+	Class = 7,
+	Interface = 8,
+	Module = 9,
+	Property = 10,
+	Unit = 11,
+	Value = 12,
+	Enum = 13,
+	Keyword = 14,
+	Snippet = 15,
+	Color = 16,
+	File = 17,
+	Reference = 18
 }
 
 export interface CompletionItem {
@@ -572,4 +587,42 @@ export interface SignatureHelp {
 
 export namespace SignatureHelpRequest {
 	export const type: RequestType<TextDocumentPosition, SignatureHelp, void> = { method: 'textDocument/signatureHelp' };
+}
+
+//---- Goto Definition -------------------------------------
+
+/**
+ * The definition of a symbol is one or many [locations](#Location)
+ */
+export type Definition = Location | Location[];
+
+export namespace DefinitionRequest {
+	export const type: RequestType<TextDocumentPosition, Definition, void> = { method: 'textDocument/definition' };
+}
+
+//---- Reference Provider ----------------------------------
+
+export interface ReferenceParams extends TextDocumentPosition {
+	options: { includeDeclaration: boolean; }
+}
+
+export namespace ReferencesRequest {
+	export const type: RequestType<ReferenceParams, Location[], void> = { method: 'textDocument/references' };
+}
+
+//---- Document Highlight ----------------------------------
+
+export enum DocumentHighlightKind {
+	Text = 1,
+	Read = 2,
+	Write = 3
+}
+
+export interface DocumentHighlight {
+	range: Range;
+	kind?: number;
+}
+
+export namespace DocumentHighlightRequest {
+	export const type: RequestType<TextDocumentPosition, DocumentHighlight[], void> = { method: 'textDocument/documentHighlight' };
 }
