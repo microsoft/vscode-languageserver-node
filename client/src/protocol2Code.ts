@@ -63,7 +63,8 @@ export function asCompletionItem(item: proto.CompletionItem): code.CompletionIte
 	set(item.documentation, () => result.documentation = item.documentation);
 	set(item.filterText, () => result.filterText = item.filterText);
 	set(item.insertText, () => result.insertText = item.insertText);
-	set(item.kind, () => result.kind = item.kind);
+	// Protocol item kind is 1 based, codes item kind is zero based.
+	set(item.kind, () => result.kind = item.kind - 1);
 	set(item.sortText, () => result.sortText = item.sortText);
 	set(item.textEdit, () => result.textEdit = asTextEdit(item.textEdit));
 	return result;
