@@ -23,7 +23,8 @@ import {
 		CompletionRequest, CompletionResolveRequest, CompletionOptions, CompletionItemKind, CompletionItem, TextEdit,
 		SignatureHelpRequest, SignatureHelp, SignatureInformation, ParameterInformation,
 		DefinitionRequest, Definition, ReferencesRequest, ReferenceParams,
-		DocumentHighlightRequest, DocumentHighlight, DocumentHighlightKind
+		DocumentHighlightRequest, DocumentHighlight, DocumentHighlightKind,
+		DocumentSymbolRequest, SymbolInformation, SymbolKind, WorkspaceSymbolRequest, WorkspaceSymbolParams
 	} from './protocol';
 
 import { Event, Emitter } from './utils/events';
@@ -41,7 +42,8 @@ export {
 		Hover,
 		CompletionOptions, CompletionItemKind, CompletionItem, TextEdit,
 		SignatureHelp, SignatureInformation, ParameterInformation,
-		Definition, ReferenceParams,  DocumentHighlight, DocumentHighlightKind
+		Definition, ReferenceParams,  DocumentHighlight, DocumentHighlightKind,
+		SymbolInformation, SymbolKind, WorkspaceSymbolParams
 }
 export { Event }
 
@@ -256,6 +258,8 @@ export interface IConnection {
 	onDefinition(handler: IRequestHandler<TextDocumentPosition, Definition, void>): void;
 	onReferences(handler: IRequestHandler<ReferenceParams, Location[], void>): void;
 	onDocumentHighlight(handler: IRequestHandler<TextDocumentPosition, DocumentHighlight[], void>): void;
+	onDocumentSymbol(handler: IRequestHandler<TextDocumentIdentifier, SymbolInformation[], void>): void;
+	onWorkspaceSymbol(handler: IRequestHandler<WorkspaceSymbolParams, SymbolInformation[], void>): void;
 
 	dispose(): void;
 }
@@ -315,6 +319,8 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
 		onDefinition: (handler) => connection.onRequest(DefinitionRequest.type, handler),
 		onReferences: (handler) => connection.onRequest(ReferencesRequest.type, handler),
 		onDocumentHighlight: (handler) => connection.onRequest(DocumentHighlightRequest.type, handler),
+		onDocumentSymbol: (handler) => connection.onRequest(DocumentSymbolRequest.type, handler),
+		onWorkspaceSymbol: (handler) => connection.onRequest(WorkspaceSymbolRequest.type, handler),
 
 		dispose: () => connection.dispose()
 	};

@@ -51,7 +51,7 @@ export function asCompletionItems(items: proto.CompletionItem[]): code.Completio
 	return items.map(asCompletionItem);
 }
 
-function set(value, func: () => void): void {
+function set<T>(value: T, func: () => void): void {
 	if (is.defined(value)) {
 		func();
 	}
@@ -139,4 +139,18 @@ export function asDocumentHighlightKind(item: proto.DocumentHighlightKind): code
 			return code.DocumentHighlightKind.Write;
 	}
 	return code.DocumentHighlightKind.Text;
+}
+
+export function asSymbolInformations(values: proto.SymbolInformation[], uri?: code.Uri): code.SymbolInformation[] {
+	return values.map(information => asSymbolInformation(information, uri));
+}
+
+export function asSymbolInformation(item: proto.SymbolInformation, uri?: code.Uri): code.SymbolInformation {
+	// Symbol kind is one based in the protocol and zero based in code.
+	let result = new code.SymbolInformation(
+		item.name, item.kind - 1,
+		asRange(item.location.range),
+		item.location.uri ? code.Uri.parse(item.location.uri) : uri);
+	set(item.containerName, () => result.containerName = item.containerName);
+	return result;
 }

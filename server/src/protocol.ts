@@ -82,6 +82,10 @@ export interface ServerCapabilities {
 	referencesProvider?: boolean;
 	/** The server provides document highlight support. */
 	documentHighlightProvider?: boolean;
+	/** The server provides document symbol support. */
+	documentSymbolProvider?: boolean;
+	/** The server provides workspace symbol support. */
+	workspaceSymbolProvider?: boolean;
 }
 
 //---- Initialize Method ----
@@ -625,4 +629,48 @@ export interface DocumentHighlight {
 
 export namespace DocumentHighlightRequest {
 	export const type: RequestType<TextDocumentPosition, DocumentHighlight[], void> = { method: 'textDocument/documentHighlight' };
+}
+
+//---- Document Symbol Provider ---------------------------
+
+export enum SymbolKind {
+	File = 1,
+	Module = 2,
+	Namespace = 3,
+	Package = 4,
+	Class = 5,
+	Method = 6,
+	Property = 7,
+	Field = 8,
+	Constructor = 9,
+	Enum = 10,
+	Interface = 11,
+	Function = 12,
+	Variable = 13,
+	Constant = 14,
+	String = 15,
+	Number = 16,
+	Boolean = 17,
+	Array = 18,
+}
+
+export interface SymbolInformation {
+	name: string;
+	kind: number;
+	location: Location;
+	containerName?: string;
+}
+
+export namespace DocumentSymbolRequest {
+	export const type: RequestType<TextDocumentIdentifier, SymbolInformation[], void> = { method: 'textDocument/documentSymbol' };
+}
+
+//---- Workspace Symbol Provider ---------------------------
+
+export interface WorkspaceSymbolParams {
+	query: string;
+}
+
+export namespace  WorkspaceSymbolRequest {
+	export const type: RequestType<WorkspaceSymbolParams, SymbolInformation[], void> = { method: 'workspace/symbol' };
 }

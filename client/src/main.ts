@@ -11,7 +11,8 @@ import {
 		workspace as Workspace, window as Window, languages as Languages, extensions as Extensions, TextDocumentChangeEvent, TextDocument, Disposable,
 		FileSystemWatcher, Uri, DiagnosticCollection, DocumentSelector,
 		CancellationToken, Hover as VHover, Position as VPosition, Location as VLocation,
-		CompletionItem as VCompletionItem, SignatureHelp as VSignatureHelp, Definition as VDefinition
+		CompletionItem as VCompletionItem, SignatureHelp as VSignatureHelp, Definition as VDefinition, DocumentHighlight as VDocumentHighlight,
+		SymbolInformation as VSymbolInformation
 } from 'vscode';
 
 import { IRequestHandler, INotificationHandler, MessageConnection, ClientMessageConnection, ILogger, createClientMessageConnection, ErrorCodes, ResponseError, RequestType, NotificationType } from 'vscode-jsonrpc';
@@ -28,11 +29,12 @@ import {
 		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Position,
 		CompletionRequest, CompletionResolveRequest, CompletionItem,
 		HoverRequest, Hover,
-		SignatureHelpRequest, DefinitionRequest, Definition, ReferencesRequest, DocumentHighlightRequest, DocumentHighlight
+		SignatureHelpRequest, DefinitionRequest, Definition, ReferencesRequest, DocumentHighlightRequest, DocumentHighlight,
+		DocumentSymbolRequest, SymbolInformation, SymbolKind, WorkspaceSymbolRequest, WorkspaceSymbolParams
 } from './protocol';
 
-import * as c2p from './code2protocol';
-import * as p2c from './protocol2code';
+import * as c2p from './codeConverter';
+import * as p2c from './protocolConverter';
 
 import * as is from './utils/is';
 import * as electron from './utils/electron';
@@ -676,6 +678,8 @@ export class LanguageClient {
 		this.hookDefinitionProvider(documentSelector, connection);
 		this.hookReferencesProvider(documentSelector, connection);
 		this.hookDocumentHighlightProvider(documentSelector, connection);
+		this.hookDocumentSymbolProvider(documentSelector, connection);
+		this.hookWorkspaceSymbolProvider(connection);
 	}
 
 	private hookCompletionProvider(documentSelector: DocumentSelector, connection: IConnection): void {
@@ -787,7 +791,7 @@ export class LanguageClient {
 			return;
 		}
 		this._providers.push(Languages.registerDocumentHighlightProvider(documentSelector, {
-			provideDocumentHighlights: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<DocumentHighlight[]> => {
+			provideDocumentHighlights: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VDocumentHighlight[]> => {
 				if (this.isConnectionActive()) {
 					this.forceDocumentSync();
 					return connection.sendRequest(DocumentHighlightRequest.type, c2p.asTextDocumentPosition(document, position)).then((result) => {
@@ -796,6 +800,44 @@ export class LanguageClient {
 				} else {
 					Promise.resolve(null);
 				}
+			}
+		}));
+	}
+
+	private hookDocumentSymbolProvider(documentSelector: DocumentSelector, connection: IConnection): void {
+		if (!this._capabilites.documentSymbolProvider) {
+			return;
+		}
+		this._providers.push(Languages.registerDocumentSymbolProvider(documentSelector, {
+			provideDocumentSymbols: (document: TextDocument, token: CancellationToken): Thenable<VSymbolInformation[]> => {
+				if (this.isConnectionActive()) {
+					this.forceDocumentSync();
+					return connection.sendRequest(DocumentSymbolRequest.type, c2p.asTextDocumentIdentifier(document)).then((result) => {
+						return p2c.asSymbolInformations(result, document.uri);
+					});
+				} else {
+					Promise.resolve(null);
+				}
+				return null;
+			}
+		}));
+	}
+
+	private hookWorkspaceSymbolProvider(connection: IConnection): void {
+		if (!this._capabilites.workspaceSymbolProvider) {
+			return;
+		}
+		this._providers.push(Languages.registerWorkspaceSymbolProvider({
+			provideWorkspaceSymbols: (query: string, token: CancellationToken): Thenable<VSymbolInformation[]> => {
+				if (this.isConnectionActive()) {
+					this.forceDocumentSync();
+					return connection.sendRequest(WorkspaceSymbolRequest.type, { query }).then((result) => {
+						return p2c.asSymbolInformations(result);
+					});
+				} else {
+					Promise.resolve(null);
+				}
+				return null;
 			}
 		}));
 	}

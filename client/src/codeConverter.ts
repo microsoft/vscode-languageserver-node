@@ -56,6 +56,10 @@ export function asCloseTextDocumentParams(textDocument: code.TextDocument): prot
 	};
 }
 
+export function asTextDocumentIdentifier(textDocument: code.TextDocument): proto.TextDocumentIdentifier {
+	return { uri: textDocument.uri.toString() };
+}
+
 export function asTextDocumentPosition(textDocument: code.TextDocument, position: code.Position): proto.TextDocumentPosition {
 	return { uri: textDocument.uri.toString(), position: asWorkerPosition(position) };
 }
