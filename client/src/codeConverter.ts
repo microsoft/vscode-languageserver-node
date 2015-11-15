@@ -31,7 +31,6 @@ export function asChangeTextDocumentParams(arg: code.TextDocumentChangeEvent | c
 	if (isTextDocument(arg)) {
 		return { uri: arg.uri.toString(), text: arg.getText() };
 	} else if (isTextDocumentChangeEvent(arg)) {
-		let result: proto.DidChangeTextDocumentParams[] = [];
 		let uri: string = arg.document.uri.toString();
 		return arg.contentChanges.map((change): proto.DidChangeTextDocumentParams => {
 			let range = change.range;
@@ -39,7 +38,7 @@ export function asChangeTextDocumentParams(arg: code.TextDocumentChangeEvent | c
 				uri: uri,
 				range: {
 					start: { line: range.start.line, character: range.start.character },
-					end: { line: range.end.line, character: range.end.line }
+					end: { line: range.end.line, character: range.end.character }
 				},
 				rangeLength: change.rangeLength,
 				text: change.text
