@@ -1,11 +1,11 @@
 {
 	"name": "vscode-languageclient",
 	"description": "VSCode Language client implementation",
-	"version": "0.10.4",
+	"version": "0.10.5",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"engines": {
-		"vscode": "0.10.x"
+		"vscode": "^0.10.1"
 	},
 	"repository": {
 		"type": "git",
