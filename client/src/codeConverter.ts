@@ -7,6 +7,7 @@
 import * as code from 'vscode';
 import * as proto from './protocol';
 import * as is from './utils/is';
+import ProtocolCompletionItem from './protocolCompletionItem';
 
 export function asOpenTextDocumentParams(textDocument: code.TextDocument): proto.DidOpenTextDocumentParams {
 	return {
@@ -97,9 +98,13 @@ export function asCompletionItem(item: code.CompletionItem): proto.CompletionIte
 	set(item.documentation, () => result.documentation = item.documentation);
 	set(item.filterText, () => result.filterText = item.filterText);
 	set(item.insertText, () => result.insertText = item.insertText);
-	set(item.kind, () => result.kind = item.kind);
+	// Protocol item kind is 1 based, codes item kind is zero based.
+	set(item.kind, () => result.kind = item.kind + 1);
 	set(item.sortText, () => result.sortText = item.sortText);
 	set(item.textEdit, () => result.textEdit = asTextEdit(item.textEdit));
+	if (item instanceof ProtocolCompletionItem) {
+		set(item.data, () => result.data = item.data);
+	}
 	return result;
 }
 
@@ -111,6 +116,6 @@ export function asReferenceParams(textDocument: code.TextDocument, position: cod
 	return {
 		uri: textDocument.uri.toString(),
 		position: asWorkerPosition(position),
-		options: { includeDeclaration: options.includeDeclaration }
+		context: { includeDeclaration: options.includeDeclaration }
 	};
 }

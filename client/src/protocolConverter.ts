@@ -7,6 +7,7 @@
 import * as code from 'vscode';
 import * as proto from './protocol';
 import * as is from './utils/is';
+import ProtocolCompletionItem from './protocolCompletionItem';
 
 export function asDiagnostics(diagnostics: proto.Diagnostic[]): code.Diagnostic[] {
 	return diagnostics.map(diagnostic => new code.Diagnostic(asRange(diagnostic.range), diagnostic.message, asDiagnosticSeverity(diagnostic.severity)));
@@ -57,8 +58,8 @@ function set<T>(value: T, func: () => void): void {
 	}
 }
 
-export function asCompletionItem(item: proto.CompletionItem): code.CompletionItem {
-	let result = new code.CompletionItem(item.label);
+export function asCompletionItem(item: proto.CompletionItem): ProtocolCompletionItem {
+	let result = new ProtocolCompletionItem(item.label);
 	set(item.detail, () => result.detail = item.detail);
 	set(item.documentation, () => result.documentation = item.documentation);
 	set(item.filterText, () => result.filterText = item.filterText);
@@ -67,6 +68,7 @@ export function asCompletionItem(item: proto.CompletionItem): code.CompletionIte
 	set(item.kind, () => result.kind = item.kind - 1);
 	set(item.sortText, () => result.sortText = item.sortText);
 	set(item.textEdit, () => result.textEdit = asTextEdit(item.textEdit));
+	set(item.data, () => result.data = item.data);
 	return result;
 }
 
