@@ -32,13 +32,13 @@ export function asChangeTextDocumentParams(arg: code.TextDocumentChangeEvent | c
 	if (isTextDocument(arg)) {
 		let result: proto.DidChangeTextDocumentParams = {
 			uri: arg.uri.toString(),
-			changes: [ { text: arg.getText() } ]
+			contentChanges: [ { text: arg.getText() } ]
 		}
 		return result;
 	} else if (isTextDocumentChangeEvent(arg)) {
 		let result: proto.DidChangeTextDocumentParams = {
 			uri: arg.document.uri.toString(),
-			changes: arg.contentChanges.map((change): proto.TextDocumentChangeEvent => {
+			contentChanges: arg.contentChanges.map((change): proto.TextDocumentContentChangeEvent => {
 				let range = change.range;
 				return {
 					range: {

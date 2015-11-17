@@ -15,7 +15,7 @@ import {
 		LogMessageNotification, LogMessageParams, MessageType,
 		ShowMessageNotification, ShowMessageParams,
 		DidChangeConfigurationNotification, DidChangeConfigurationParams,
-		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams, TextDocumentChangeEvent,
+		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams, TextDocumentContentChangeEvent,
 		DidCloseTextDocumentNotification,
 		DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
 		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Range, Position, Location,
@@ -37,7 +37,7 @@ export {
 		InitializeParams, InitializeResult, InitializeError, ServerCapabilities,
 		DidChangeConfigurationParams,
 		DidChangeWatchedFilesParams, FileEvent, FileChangeType,
-		DidOpenTextDocumentParams, DidChangeTextDocumentParams,
+		DidOpenTextDocumentParams, DidChangeTextDocumentParams, TextDocumentContentChangeEvent,
 		PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Range, Position, Location,
 		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSyncKind,
 		Hover,
@@ -56,7 +56,7 @@ export namespace Files {
 
 // ------------------------- text documents  --------------------------------------------------
 
-export interface SimpleTextDocumentChangeEvent {
+export interface TextDocumentChangeEvent {
 	document: ITextDocument;
 }
 
@@ -83,7 +83,7 @@ class TextDocument implements ITextDocument {
 		return this._content;
 	}
 
-	public update(event: TextDocumentChangeEvent): void {
+	public update(event: TextDocumentContentChangeEvent): void {
 		this._content = event.text;
 	}
 }
@@ -96,18 +96,18 @@ export class TextDocuments {
 
 	private _documents : { [uri: string]: TextDocument };
 
-	private _onDidChangeContent: Emitter<SimpleTextDocumentChangeEvent>;
+	private _onDidChangeContent: Emitter<TextDocumentChangeEvent>;
 
 	public constructor() {
 		this._documents = Object.create(null);
-		this._onDidChangeContent = new Emitter<SimpleTextDocumentChangeEvent>();
+		this._onDidChangeContent = new Emitter<TextDocumentChangeEvent>();
 	}
 
 	public get syncKind(): TextDocumentSyncKind {
 		return TextDocumentSyncKind.Full;
 	}
 
-	public get onDidChangeContent(): Event<SimpleTextDocumentChangeEvent> {
+	public get onDidChangeContent(): Event<TextDocumentChangeEvent> {
 		return this._onDidChangeContent.event;
 	}
 
@@ -131,8 +131,8 @@ export class TextDocuments {
 			this._onDidChangeContent.fire({ document });
 		});
 		connection.onDidChangeTextDocument((event: DidChangeTextDocumentParams) => {
-			let changes = event.changes;
-			let last: TextDocumentChangeEvent = changes.length > 0 ? changes[changes.length - 1] : null;
+			let changes = event.contentChanges;
+			let last: TextDocumentContentChangeEvent = changes.length > 0 ? changes[changes.length - 1] : null;
 			if (last) {
 				let document = this._documents[event.uri];
 				document.update(last);

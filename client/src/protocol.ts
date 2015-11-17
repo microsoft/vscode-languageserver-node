@@ -340,7 +340,7 @@ export namespace DidChangeTextDocumentNotification {
  * An event describing a change to a text document. If range and rangeLength are omitted
  * the new text is considered to be the full content of the document.
  */
-export interface TextDocumentChangeEvent {
+export interface TextDocumentContentChangeEvent {
 	/**
 	 * The range of the document that changed.
 	 */
@@ -361,7 +361,7 @@ export interface TextDocumentChangeEvent {
  * The change text document notification's parameters.
  */
 export interface DidChangeTextDocumentParams extends TextDocumentIdentifier {
-	changes: TextDocumentChangeEvent[];
+	contentChanges: TextDocumentContentChangeEvent[];
 }
 
 /**
