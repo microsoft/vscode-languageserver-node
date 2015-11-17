@@ -27,24 +27,30 @@ function isTextDocument(value: any): value is code.TextDocument {
 }
 
 export function asChangeTextDocumentParams(textDocument: code.TextDocument): proto.DidChangeTextDocumentParams;
-export function asChangeTextDocumentParams(event: code.TextDocumentChangeEvent): proto.DidChangeTextDocumentParams[];
-export function asChangeTextDocumentParams(arg: code.TextDocumentChangeEvent | code.TextDocument): any {
+export function asChangeTextDocumentParams(event: code.TextDocumentChangeEvent): proto.DidChangeTextDocumentParams;
+export function asChangeTextDocumentParams(arg: code.TextDocumentChangeEvent | code.TextDocument): proto.DidChangeTextDocumentParams {
 	if (isTextDocument(arg)) {
-		return { uri: arg.uri.toString(), text: arg.getText() };
+		let result: proto.DidChangeTextDocumentParams = {
+			uri: arg.uri.toString(),
+			changes: [ { text: arg.getText() } ]
+		}
+		return result;
 	} else if (isTextDocumentChangeEvent(arg)) {
-		let uri: string = arg.document.uri.toString();
-		return arg.contentChanges.map((change): proto.DidChangeTextDocumentParams => {
-			let range = change.range;
-			return {
-				uri: uri,
-				range: {
-					start: { line: range.start.line, character: range.start.character },
-					end: { line: range.end.line, character: range.end.character }
-				},
-				rangeLength: change.rangeLength,
-				text: change.text
-			};
-		});
+		let result: proto.DidChangeTextDocumentParams = {
+			uri: arg.document.uri.toString(),
+			changes: arg.contentChanges.map((change): proto.TextDocumentChangeEvent => {
+				let range = change.range;
+				return {
+					range: {
+						start: { line: range.start.line, character: range.start.character },
+						end: { line: range.end.line, character: range.end.character }
+					},
+					rangeLength: change.rangeLength,
+					text: change.text
+				}
+			})
+		}
+		return result;
 	} else {
 		throw Error ('Unsupported text document change parameter');
 	}

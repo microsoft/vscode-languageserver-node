@@ -333,14 +333,14 @@ export interface DidOpenTextDocumentParams extends TextDocumentIdentifier {
  * {@link DidChangeTextDocumentParams} or an array of {@link DidChangeTextDocumentParams}.
  */
 export namespace DidChangeTextDocumentNotification {
-	export const type: NotificationType<DidChangeTextDocumentParams | DidChangeTextDocumentParams[]> = { get method() { return 'textDocument/didChange'; } };
+	export const type: NotificationType<DidChangeTextDocumentParams> = { get method() { return 'textDocument/didChange'; } };
 }
+
 /**
- * The arguments describing a change to a text document. If range and rangeLength are omitted
+ * An event describing a change to a text document. If range and rangeLength are omitted
  * the new text is considered to be the full content of the document.
  */
-export interface DidChangeTextDocumentParams extends TextDocumentIdentifier {
-
+export interface TextDocumentChangeEvent {
 	/**
 	 * The range of the document that changed.
 	 */
@@ -355,6 +355,13 @@ export interface DidChangeTextDocumentParams extends TextDocumentIdentifier {
 	 * The new text of the document.
 	 */
 	text: string;
+}
+
+/**
+ * The change text document notification's parameters.
+ */
+export interface DidChangeTextDocumentParams extends TextDocumentIdentifier {
+	changes: TextDocumentChangeEvent[];
 }
 
 /**

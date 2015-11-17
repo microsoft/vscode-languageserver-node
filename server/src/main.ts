@@ -15,7 +15,8 @@ import {
 		LogMessageNotification, LogMessageParams, MessageType,
 		ShowMessageNotification, ShowMessageParams,
 		DidChangeConfigurationNotification, DidChangeConfigurationParams,
-		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams, DidCloseTextDocumentNotification,
+		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams, TextDocumentChangeEvent,
+		DidCloseTextDocumentNotification,
 		DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
 		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Range, Position, Location,
 		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSyncKind,
@@ -55,6 +56,10 @@ export namespace Files {
 
 // ------------------------- text documents  --------------------------------------------------
 
+export interface SimpleTextDocumentChangeEvent {
+	document: ITextDocument;
+}
+
 export interface ITextDocument {
 	uri: string;
 	getText(): string;
@@ -78,13 +83,9 @@ class TextDocument implements ITextDocument {
 		return this._content;
 	}
 
-	public update(event: DidChangeTextDocumentParams): void {
+	public update(event: TextDocumentChangeEvent): void {
 		this._content = event.text;
 	}
-}
-
-export class TextDocumentChangeEvent {
-	document: ITextDocument;
 }
 
 interface IConnectionState {
@@ -95,18 +96,18 @@ export class TextDocuments {
 
 	private _documents : { [uri: string]: TextDocument };
 
-	private _onDidChangeContent: Emitter<TextDocumentChangeEvent>;
+	private _onDidChangeContent: Emitter<SimpleTextDocumentChangeEvent>;
 
 	public constructor() {
 		this._documents = Object.create(null);
-		this._onDidChangeContent = new Emitter<TextDocumentChangeEvent>();
+		this._onDidChangeContent = new Emitter<SimpleTextDocumentChangeEvent>();
 	}
 
 	public get syncKind(): TextDocumentSyncKind {
 		return TextDocumentSyncKind.Full;
 	}
 
-	public get onDidChangeContent(): Event<TextDocumentChangeEvent> {
+	public get onDidChangeContent(): Event<SimpleTextDocumentChangeEvent> {
 		return this._onDidChangeContent.event;
 	}
 
@@ -129,17 +130,11 @@ export class TextDocuments {
 			this._documents[event.uri] = document;
 			this._onDidChangeContent.fire({ document });
 		});
-		connection.onDidChangeTextDocument((event: DidChangeTextDocumentParams | DidChangeTextDocumentParams[]) => {
-			let last: DidChangeTextDocumentParams = null;
-			if (is.array<DidChangeTextDocumentParams>(event)) {
-				if (event.length > 0) {
-					last = event[event.length - 1];
-				}
-			} else {
-				last = event;
-			}
+		connection.onDidChangeTextDocument((event: DidChangeTextDocumentParams) => {
+			let changes = event.changes;
+			let last: TextDocumentChangeEvent = changes.length > 0 ? changes[changes.length - 1] : null;
 			if (last) {
-				let document = this._documents[last.uri];
+				let document = this._documents[event.uri];
 				document.update(last);
 				this._onDidChangeContent.fire({ document });
 			}
@@ -247,7 +242,7 @@ export interface IConnection {
 	onDidChangeWatchedFiles(handler: INotificationHandler<DidChangeWatchedFilesParams>): void;
 
 	onDidOpenTextDocument(handler: INotificationHandler<DidOpenTextDocumentParams>): void;
-	onDidChangeTextDocument(handler: INotificationHandler<DidChangeTextDocumentParams | DidChangeTextDocumentParams[]>): void;
+	onDidChangeTextDocument(handler: INotificationHandler<DidChangeTextDocumentParams>): void;
 	onDidCloseTextDocument(handler: INotificationHandler<TextDocumentIdentifier>): void;
 	sendDiagnostics(args: PublishDiagnosticsParams): void;
 

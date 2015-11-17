@@ -52,13 +52,15 @@ export class Delayer<T> {
 		return this.completionPromise;
 	}
 
-	public forceDelivery(): Promise<T> {
+	public forceDelivery(): T {
 		if (!this.completionPromise) {
 			return null;
 		}
 		this.cancelTimeout();
-		let result = this.completionPromise;
-		this.onSuccess(null);
+		let result: T = this.task();
+		this.completionPromise = null;
+		this.onSuccess = null;
+		this.task = null;
 		return result;
 	}
 
