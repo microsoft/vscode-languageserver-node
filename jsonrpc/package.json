@@ -18,6 +18,8 @@
 		"typescript": "^1.6.2"
 	},
 	"scripts": {
-		"prepublish": "tsc -p ./src"
+		"prepublish": "tsc -p ./src",
+		"compile": "tsc -p ./src",
+		"test": "mocha"
 	}
 }

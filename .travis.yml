@@ -1,0 +1,12 @@
+language: node_js
+sudo: false
+
+node_js:
+  - "0.12"
+  
+install:
+  - cd jsonrpc && npm install && cd ../client && npm install && cd ../server && npm install && cd ..
+  
+script:
+  - cd jsonrpc && npm run compile && cd ../client && npm run compile && cd ../server && npm run compile && cd ..
+  - cd jsonrpc && npm test && cd ..

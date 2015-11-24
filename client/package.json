@@ -25,6 +25,7 @@
 		"vscode-jsonrpc": "0.10.x"
 	},
 	"scripts": {
-		"prepublish": "tsc -p ./src"
+		"prepublish": "tsc -p ./src",
+		"compile": "tsc -p ./src"
 	}
 }
