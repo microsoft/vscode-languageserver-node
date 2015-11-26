@@ -1,11 +1,8 @@
 {
     "version": "0.1.0",
-    "command": "node_modules/.bin/tsc",
-    "windows": {
-        "command": "node_modules\\.bin\\tsc"
-    },
+    "command": "npm",
     "isShellCommand": true,
-    "args": ["-w", "-p", "src"],
+    "args": ["run", "watch"],
     "showOutput": "silent",
     "isWatching": true,
     "problemMatcher": "$tsc-watch"

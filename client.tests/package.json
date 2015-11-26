@@ -3,6 +3,7 @@
 	"description": "VSCode Language client implementation",
 	"version": "0.10.7",
 	"author": "Microsoft Corporation",
+	"publisher": "Microsoft Corporation",
 	"license": "MIT",
 	"engines": {
 		"vscode": "^0.10.1"
@@ -14,17 +15,12 @@
 	"bugs": {
 		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
 	},
-	"main": "./lib/main.js",
-	"typings": "./lib/main",
 	"devDependencies": {
+		"mocha": "^2.3.2",
 		"typescript": "^1.6.2",
 		"vscode": "0.10.x"
 	},
-	"dependencies": {
-		"vscode-jsonrpc": "0.10.x"
-	},
 	"scripts": {
-		"prepublish": "tsc -p ./src",
 		"compile": "tsc -p ./src",
 		"watch": "tsc -w -p ./src"
 	}

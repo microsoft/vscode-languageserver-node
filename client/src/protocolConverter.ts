@@ -10,7 +10,15 @@ import * as is from './utils/is';
 import ProtocolCompletionItem from './protocolCompletionItem';
 
 export function asDiagnostics(diagnostics: proto.Diagnostic[]): code.Diagnostic[] {
-	return diagnostics.map(diagnostic => new code.Diagnostic(asRange(diagnostic.range), diagnostic.message, asDiagnosticSeverity(diagnostic.severity)));
+	return diagnostics.map(asDiagnostic);
+}
+
+export function asDiagnostic(diagnostic: proto.Diagnostic): code.Diagnostic {
+	let result = new code.Diagnostic(asRange(diagnostic.range), diagnostic.message, asDiagnosticSeverity(diagnostic.severity));
+	if (is.defined(diagnostic.code)) {
+		result.code = diagnostic.code;
+	}
+	return result;
 }
 
 export function asRange(value: proto.Range): code.Range {
