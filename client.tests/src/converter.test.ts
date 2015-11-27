@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 'use strict';
 
-import { strictEqual, deepEqual } from 'assert';
+import { strictEqual, deepEqual, ok } from 'assert';
 
 import * as proto from '../../client/lib/protocol';
 import * as c2p from '../../client/lib/codeConverter';
@@ -16,6 +16,7 @@ suite('Protocol Converter', () => {
 
 	test('Position Converter', () => {
 		let position: proto.Position = { line: 1, character: 2 };
+		
 		let result = p2c.asPosition(position);
 		strictEqual(result.line, position.line);
 		strictEqual(result.character, position.character);
@@ -24,6 +25,7 @@ suite('Protocol Converter', () => {
 	test('Range Converter', () => {
 		let start: proto.Position = { line: 1, character: 2 };
 		let end: proto.Position = { line: 8, character: 9 };
+		
 		let result = p2c.asRange({start, end});
 		strictEqual(result.start.line, start.line);
 		strictEqual(result.start.character, start.character);
@@ -46,7 +48,8 @@ suite('Protocol Converter', () => {
 			message: 'error',
 			severity: proto.DiagnosticSeverity.Error,
 			code: 99
-		}
+		};
+		
 		let result = p2c.asDiagnostic(diagnostic);
 		let range = result.range;
 		strictEqual(range.start.line, start.line);
@@ -56,12 +59,15 @@ suite('Protocol Converter', () => {
 		strictEqual(result.message, diagnostic.message);
 		strictEqual(result.code, diagnostic.code);
 		strictEqual(result.severity, vscode.DiagnosticSeverity.Error);
+		
+		ok(p2c.asDiagnostics([diagnostic]).every(value => value instanceof vscode.Diagnostic));
 	});
 	
 	test('Hover', () => {
 		let hover: proto.Hover = {
 			contents: 'hover'
 		};
+		
 		let result = p2c.asHover(hover);
 		deepEqual(result.contents, ['hover']);
 		strictEqual(result.range, undefined);
@@ -96,6 +102,7 @@ suite('Protocol Converter', () => {
 				end: { line: 8, character: 9 }
 			}, 
 			'insert');
+			
 		let result = p2c.asTextEdit(edit);
 		let range = result.range;
 		strictEqual(range.start.line, edit.range.start.line);
@@ -111,6 +118,7 @@ suite('Protocol Converter', () => {
 				start: { line: 1, character: 2 },
 				end: { line: 8, character: 9 }
 			});
+			
 		let result = p2c.asTextEdit(edit);
 		let range = result.range;
 		strictEqual(range.start.line, edit.range.start.line);
@@ -124,6 +132,7 @@ suite('Protocol Converter', () => {
 		let completionItem: proto.CompletionItem = {
 			label: 'item'
 		};
+		
 		let result = p2c.asCompletionItem(completionItem);
 		strictEqual(result.label, completionItem.label);
 		strictEqual(result.detail, undefined);
@@ -147,6 +156,7 @@ suite('Protocol Converter', () => {
 			sortText: 'sort',
 			data: 'data'
 		};
+		
 		let result = p2c.asCompletionItem(completionItem);
 		strictEqual(result.label, completionItem.label);
 		strictEqual(result.detail, completionItem.detail);
@@ -157,5 +167,131 @@ suite('Protocol Converter', () => {
 		strictEqual(result.sortText, completionItem.sortText);
 		strictEqual(result.textEdit, undefined);
 		strictEqual(result.data, completionItem.data);
+		
+		ok(p2c.asCompletionItems([completionItem]).every(value => value instanceof vscode.CompletionItem));
+	});
+	
+	test('Completion Item Text Edit', () => {
+		let completionItem: proto.CompletionItem = {
+			label: 'item',
+			textEdit: proto.TextEdit.insert({ line: 1, character: 2}, 'insert')
+		};
+		
+		let result = p2c.asCompletionItem(completionItem);
+		strictEqual(result.label, completionItem.label);
+		ok(result.textEdit instanceof vscode.TextEdit);
+	});
+	
+	test('Parameter Information', () => {
+		let parameterInfo: proto.ParameterInformation = {
+			label: 'label'
+		};
+		
+		let result = p2c.asParameterInformation(parameterInfo);
+		strictEqual(result.label, parameterInfo.label);
+		strictEqual(result.documentation, undefined);
+		
+		parameterInfo.documentation = 'documentation';
+		result = p2c.asParameterInformation(parameterInfo);
+		strictEqual(result.label, parameterInfo.label);
+		strictEqual(result.documentation, parameterInfo.documentation);
+		
+		ok(p2c.asParameterInformations([parameterInfo]).every(value => value instanceof vscode.ParameterInformation));
+	});
+	
+	test('Signature Information', () => {
+		let signatureInfo: proto.SignatureInformation = {
+			label: 'label'
+		};
+		
+		let result = p2c.asSignatureInformation(signatureInfo);
+		strictEqual(result.label, signatureInfo.label);
+		strictEqual(result.documentation, undefined);
+		deepEqual(result.parameters, []);
+		
+		signatureInfo.documentation = 'documentation';
+		signatureInfo.parameters = [ { label: 'label' } ];
+		result = p2c.asSignatureInformation(signatureInfo);
+		strictEqual(result.label, signatureInfo.label);
+		strictEqual(result.documentation, signatureInfo.documentation);
+		ok(result.parameters.every(value => value instanceof vscode.ParameterInformation));
+		
+		ok(p2c.asSignatureInformations([signatureInfo]).every(value => value instanceof vscode.SignatureInformation));
+	});
+	
+	test('Signature Help', () => {
+		let signatureHelp: proto.SignatureHelp = {
+			signatures: [
+				{ label: 'label' }
+			]
+		};
+		
+		let result = p2c.asSignatureHelp(signatureHelp);
+		ok(result.signatures.every(value => value instanceof vscode.SignatureInformation));
+		strictEqual(result.activeSignature, undefined);
+		strictEqual(result.activeParameter, undefined);
+		
+		signatureHelp.activeSignature = 1;
+		signatureHelp.activeParameter = 2;
+		result = p2c.asSignatureHelp(signatureHelp);
+		ok(result.signatures.every(value => value instanceof vscode.SignatureInformation));
+		strictEqual(result.activeSignature, 1);
+		strictEqual(result.activeParameter, 2);
+	});
+	
+	test('Location', () => {
+		let start: proto.Position = { line: 1, character: 2 };
+		let end: proto.Position = { line: 8, character: 9 };
+		let location: proto.Location = {
+			uri: 'file://localhost/folder/file', 
+			range: { start, end }
+		};
+		
+		let result = p2c.asLocation(location);
+		ok(result.uri instanceof vscode.Uri);
+		ok(result.range instanceof vscode.Range);
+		
+		ok(p2c.asReferences([location]).every(value => value instanceof vscode.Location));
+	});
+	
+	test('Definition', () => {
+		let start: proto.Position = { line: 1, character: 2 };
+		let end: proto.Position = { line: 8, character: 9 };
+		let location: proto.Location = {
+			uri: 'file://localhost/folder/file', 
+			range: { start, end }
+		}
+		
+		let single = <vscode.Location>p2c.asDefinitionResult(location);
+		ok(single.uri instanceof vscode.Uri);
+		ok(single.range instanceof vscode.Range);
+		
+		let array = <vscode.Location[]>p2c.asDefinitionResult([location]);
+		ok(array.every(value => value instanceof vscode.Location));
+	});
+	
+	test('Document Highlight Kind', () => {
+		strictEqual(p2c.asDocumentHighlightKind(proto.DocumentHighlightKind.Text), vscode.DocumentHighlightKind.Text);
+		strictEqual(p2c.asDocumentHighlightKind(proto.DocumentHighlightKind.Read), vscode.DocumentHighlightKind.Read);
+		strictEqual(p2c.asDocumentHighlightKind(proto.DocumentHighlightKind.Write), vscode.DocumentHighlightKind.Write);
+	});
+	
+	test ('Document Highlight', () => {
+		let start: proto.Position = { line: 1, character: 2 };
+		let end: proto.Position = { line: 8, character: 9 };
+		let documentHighlight = proto.DocumentHighlight.create(
+			{ start, end }
+		);
+		
+		let result = p2c.asDocumentHighlight(documentHighlight);
+		ok(result.range instanceof vscode.Range);
+		strictEqual(result.kind, vscode.DocumentHighlightKind.Text);
+		
+		documentHighlight.kind = proto.DocumentHighlightKind.Write;
+		result = p2c.asDocumentHighlight(documentHighlight);
+		ok(result.range instanceof vscode.Range);
+		strictEqual(result.kind, vscode.DocumentHighlightKind.Write);
+		
+		ok(p2c.asDocumentHighlights([documentHighlight]).every(value => value instanceof vscode.DocumentHighlight));
 	});
 });
