@@ -12,7 +12,7 @@ This repository contains the code for the following npm modules:
 [![NPM Version](https://img.shields.io/npm/v/vscode-jsonrpc.svg)](https://npmjs.org/package/vscode-jsonrpc)
 [![NPM Downloads](https://img.shields.io/npm/dm/vscode-jsonrpc.svg)](https://npmjs.org/package/vscode-jsonrpc)
 
-All three npm modules are build using one travis build. Its status is:
+All three npm modules are built using one travis build. Its status is:
 
 [![Build Status](https://travis-ci.org/Microsoft/vscode-languageserver-node.svg?branch=master)](https://travis-ci.org/Microsoft/vscode-languageserver-node)
 
