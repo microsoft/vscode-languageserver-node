@@ -1,4 +1,10 @@
-# VSCode Language Server for Node
+# VSCode Language Server
 
-This npm module provides the implementation of the VSCode language server protocol for node.js. This allows writing
-language service extensions in node which are executed in a different process.
+[![NPM Version](https://img.shields.io/npm/v/vscode-languageserver.svg)](https://npmjs.org/package/vscode-languageserver)
+[![NPM Downloads](https://img.shields.io/npm/dm/vscode-languageserver.svg)](https://npmjs.org/package/vscode-languageserver)
+[![Build Status](https://travis-ci.org/Microsoft/vscode-languageserver-node.svg?branch=master)](https://travis-ci.org/Microsoft/vscode-languageserver-node)
+
+Npm module to implement a VSCode language server using [Node.js](https://nodejs.org/) as a runtime.
+
+Click [here](https://code.visualstudio.com/docs/extensions/example-language-server) for a detaild document on how to uses this npm module
+to implement language servers for [VSCode](https://code.visualstudio.com/).

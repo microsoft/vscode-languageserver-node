@@ -5,7 +5,7 @@ This repository contains the code for the following npm modules:
 * _vscode-languageclient_: npm module to talk to a VSCode language server from a VSCode extension:<br>
 [![NPM Version](https://img.shields.io/npm/v/vscode-languageclient.svg)](https://npmjs.org/package/vscode-languageclient)
 [![NPM Downloads](https://img.shields.io/npm/dm/vscode-languageclient.svg)](https://npmjs.org/package/vscode-languageclient)
-* _vscode-languageserver_: npm module to implement a VSCode language server using node as a runtime:<br>
+* _vscode-languageserver_: npm module to implement a VSCode language server using [Node.js](https://nodejs.org/) as a runtime:<br>
 [![NPM Version](https://img.shields.io/npm/v/vscode-languageserver.svg)](https://npmjs.org/package/vscode-languageserver)
 [![NPM Downloads](https://img.shields.io/npm/dm/vscode-languageserver.svg)](https://npmjs.org/package/vscode-languageserver)
 * _vscode-jsonrpc_: the underlying message protocol to communicate between a client and a server:<br>
