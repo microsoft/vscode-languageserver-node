@@ -182,6 +182,16 @@ suite('Protocol Converter', () => {
 		ok(result.textEdit instanceof vscode.TextEdit);
 	});
 	
+	test('Completion Item Preserve Data', () => {
+		let completionItem: proto.CompletionItem = {
+			label: 'item',
+			data: 'data'
+		};
+		
+		let result = c2p.asCompletionItem(p2c.asCompletionItem(completionItem));
+		strictEqual(result.data, completionItem.data);
+	});
+	
 	test('Parameter Information', () => {
 		let parameterInfo: proto.ParameterInformation = {
 			label: 'label'
@@ -293,5 +303,121 @@ suite('Protocol Converter', () => {
 		strictEqual(result.kind, vscode.DocumentHighlightKind.Write);
 		
 		ok(p2c.asDocumentHighlights([documentHighlight]).every(value => value instanceof vscode.DocumentHighlight));
+	});
+	
+	test('Symbol Information', () => {
+		let start: proto.Position = { line: 1, character: 2 };
+		let end: proto.Position = { line: 8, character: 9 };
+		let location: proto.Location = {
+			uri: 'file://localhost/folder/file', 
+			range: { start, end }
+		};
+		let symbolInformation: proto.SymbolInformation = {
+			name: 'name',
+			kind: proto.SymbolKind.Array,
+			location: location
+		};
+		
+		let result = p2c.asSymbolInformation(symbolInformation);
+		strictEqual(result.name, symbolInformation.name);
+		strictEqual(result.kind, vscode.SymbolKind.Array);
+		strictEqual(result.containerName, undefined);
+		ok(result.location instanceof vscode.Location);
+		
+		symbolInformation.containerName = 'container';
+		result = p2c.asSymbolInformation(symbolInformation);
+		strictEqual(result.containerName, symbolInformation.containerName);
+		
+		ok(p2c.asSymbolInformations([symbolInformation]).every(value => value instanceof vscode.SymbolInformation));
+	});	
+});
+
+suite('Code Converter', () => {
+	
+	function positionEqual(actual: proto.Position, expected: vscode.Position) {
+		strictEqual(actual.line, expected.line);
+		strictEqual(actual.character, expected.character);		
+	}
+	
+	function rangeEqual(actual: proto.Range, expected: vscode.Range) {
+		strictEqual(actual.start.line, expected.start.line);
+		strictEqual(actual.start.character, expected.start.character);
+		strictEqual(actual.end.line, expected.end.line);
+		strictEqual(actual.end.character, expected.end.character);
+	}
+	
+	test('Position', () => {
+		let position = new vscode.Position(1, 2);
+		let result = c2p.asPosition(position);
+		positionEqual(result, position);
+	});
+	
+	test('Range', () => {
+		let range = new vscode.Range(new vscode.Position(1, 2), new vscode.Position(8, 9));
+		let result = c2p.asRange(range);
+		rangeEqual(result, range);
+	});
+	
+	test('Text Edit Insert', () => {
+		let insert = vscode.TextEdit.insert(new vscode.Position(1, 2), 'insert');
+		let result = c2p.asTextEdit(insert);
+		rangeEqual(result.range, insert.range);
+		strictEqual(result.newText, insert.newText);
+	});
+	
+	test('Text Edit Replace', () => {
+		let replace = vscode.TextEdit.replace(new vscode.Range(new vscode.Position(1, 2), new vscode.Position(8, 9)), 'insert');
+		let result = c2p.asTextEdit(replace);
+		rangeEqual(result.range, replace.range);
+		strictEqual(result.newText, replace.newText);
+	});
+	
+	test('Text Edit Delete', () => {
+		let del = vscode.TextEdit.delete(new vscode.Range(new vscode.Position(1, 2), new vscode.Position(8, 9)));
+		let result = c2p.asTextEdit(del);
+		rangeEqual(result.range, del.range);
+		strictEqual(result.newText, del.newText);
+	});
+	
+	test('Completion Item', () => {
+		let item: vscode.CompletionItem = new vscode.CompletionItem('label');
+		let result = c2p.asCompletionItem(<any>item);
+		strictEqual(result.label, item.label);
+		strictEqual(result.detail, undefined);
+		strictEqual(result.documentation, undefined);
+		strictEqual(result.filterText, undefined);
+		strictEqual(result.insertText, undefined);
+		strictEqual(result.kind, undefined);
+		strictEqual(result.sortText, undefined);
+		strictEqual(result.textEdit, undefined);
+		strictEqual(result.data, undefined);
+	});
+	
+	test('Completion Item Full', () => {
+		let item: vscode.CompletionItem = new vscode.CompletionItem('label');
+		item.detail = 'detail';
+		item.documentation = 'documentation';
+		item.filterText = 'filter';
+		item.insertText = 'insert';
+		item.kind = vscode.CompletionItemKind.Interface;
+		item.sortText = 'sort';
+		
+		let result = c2p.asCompletionItem(<any>item);
+		strictEqual(result.label, item.label);
+		strictEqual(result.detail, item.detail);
+		strictEqual(result.documentation, item.documentation);
+		strictEqual(result.filterText, item.filterText);
+		strictEqual(result.insertText, item.insertText);
+		strictEqual(result.kind, proto.CompletionItemKind.Interface);
+		strictEqual(result.sortText, item.sortText);
+	});
+	
+	test('Completion Item Text Edit', () => {
+		let item: vscode.CompletionItem = new vscode.CompletionItem('label');
+		item.textEdit = vscode.TextEdit.insert(new vscode.Position(1, 2), 'insert');
+		
+		let result = c2p.asCompletionItem(<any>item);
+		rangeEqual(result.textEdit.range, item.textEdit.range);
+		strictEqual(result.textEdit.newText, item.textEdit.newText);
 	});
 });
