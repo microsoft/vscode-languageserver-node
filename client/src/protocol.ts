@@ -108,6 +108,12 @@ export namespace InitializeRequest {
  */
 export interface InitializeParams {
 	/**
+	 * The process Id of the parent process that started
+	 * the server.
+	 */
+	processId: number;
+
+	/**
 	 * The rootPath of the workspace. Is null
 	 * if no folder is open.
 	 */

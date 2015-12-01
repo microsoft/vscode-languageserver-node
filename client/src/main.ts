@@ -15,7 +15,11 @@ import {
 		SymbolInformation as VSymbolInformation
 } from 'vscode';
 
-import { IRequestHandler, INotificationHandler, MessageConnection, ClientMessageConnection, ILogger, createClientMessageConnection, ErrorCodes, ResponseError, RequestType, NotificationType } from 'vscode-jsonrpc';
+import {
+		IRequestHandler, INotificationHandler, MessageConnection, ClientMessageConnection, ILogger, createClientMessageConnection,
+		ErrorCodes, ResponseError, RequestType, NotificationType,
+		IMessageReader, IPCMessageReader, IMessageWriter, IPCMessageWriter,
+} from 'vscode-jsonrpc';
 import {
 		InitializeRequest, InitializeParams, InitializeResult, InitializeError, ClientCapabilities, ServerCapabilities, TextDocumentSyncKind,
 		ShutdownRequest,
@@ -85,10 +89,11 @@ class Logger implements ILogger {
 		console.log(message);
 	}
 }
-
-function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream): IConnection {
+function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream): IConnection;
+function createConnection(reader: IMessageReader, writer: IMessageWriter): IConnection;
+function createConnection(input: any, output: any): IConnection {
 	let logger = new Logger();
-	let connection = createClientMessageConnection(inputStream, outputStream, logger);
+	let connection = createClientMessageConnection(input, output, logger);
 	let result: IConnection = {
 
 		listen: (): void => connection.listen(),
@@ -145,6 +150,7 @@ export interface ForkOptions {
 
 export interface NodeModule {
 	module: string;
+	useIPC?: boolean;
 	args?: string[];
 	options?: ForkOptions;
 }
@@ -384,7 +390,7 @@ export class LanguageClient {
 	}
 
 	private initialize(connection: IConnection): Thenable<InitializeResult> {
-		let initParams: InitializeParams = { rootPath: Workspace.rootPath, capabilities: { } };
+		let initParams: InitializeParams = { processId: process.pid, rootPath: Workspace.rootPath, capabilities: { } };
 		return connection.initialize(initParams).then((result) => {
 			this._state = ClientState.Running;
 			this._capabilites = result.capabilities;
@@ -542,14 +548,23 @@ export class LanguageClient {
 				let options = node.options || {};
 				options.execArgv = options.execArgv || [];
 				options.cwd = options.cwd || Workspace.rootPath;
-				electron.fork(node.module, node.args || [], options, (error, cp) => {
-					if (error) {
-						reject(error);
+				if (node.useIPC) {
+					this._childProcess = cp.fork(node.module, node.args || [], options);
+					if (this._childProcess.pid) {
+						resolve(createConnection(new IPCMessageReader(this._childProcess), new IPCMessageWriter(this._childProcess)));
 					} else {
-						this._childProcess = cp;
-						resolve(createConnection(cp.stdout, cp.stdin));
+						reject(new Error(`Unable to fork node using module ${node.module}`));
 					}
-				});
+				} else {
+					electron.fork(node.module, node.args || [], options, (error, cp) => {
+						if (error) {
+							reject(error);
+						} else {
+							this._childProcess = cp;
+							resolve(createConnection(cp.stdout, cp.stdin));
+						}
+					});
+				}
 			});
 		} else if (is.defined(json.command)) {
 			let command: Executable = <Executable>json;

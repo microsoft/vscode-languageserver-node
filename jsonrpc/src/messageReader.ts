@@ -88,22 +88,29 @@ class MessageBuffer {
 	}
 }
 
-export interface ICallback {
+export interface DataCallback {
 	(data: Message): void;
 }
 
-export class MessageReader {
+export interface IMessageReader {
+	listen(callback: DataCallback): void;
+}
+
+export class StreamMessageReader implements IMessageReader {
 
 	private readable: NodeJS.ReadableStream;
-	private callback: ICallback;
+	private callback: DataCallback;
 	private buffer: MessageBuffer;
 	private nextMessageLength: number;
 
-	public constructor(readable: NodeJS.ReadableStream, callback: ICallback, encoding: string = 'utf-8') {
+	public constructor(readable: NodeJS.ReadableStream, encoding: string = 'utf-8') {
 		this.readable = readable;
 		this.buffer = new MessageBuffer(encoding);
-		this.callback = callback;
+	}
+
+	public listen(callback: DataCallback): void {
 		this.nextMessageLength = -1;
+		this.callback = <DataCallback>callback;
 		this.readable.on('data', (data:Buffer) => {
 			this.onData(data);
 		});
@@ -135,5 +142,18 @@ export class MessageReader {
 			var json = JSON.parse(msg);
 			this.callback(json);
 		}
+	}
+}
+
+export class IPCMessageReader implements IMessageReader {
+
+	private process: { on(event: string, listener: Function): any; };
+
+	public constructor(process: { on(event: string, listener: Function): any; }) {
+		this.process = process;
+	}
+
+	public listen(callback: DataCallback): void {
+		this.process.on('message', callback);
 	}
 }

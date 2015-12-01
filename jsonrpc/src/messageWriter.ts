@@ -9,10 +9,14 @@ import { Message } from './messages';
 let ContentLength:string = 'Content-Length: ';
 let CRLF = '\r\n';
 
-export class MessageWriter {
+export interface IMessageWriter {
+	write(msg: Message): void;
+}
+
+export class StreamMessageWriter implements IMessageWriter {
 
 	private writable: NodeJS.WritableStream;
-	private encoding: string
+	private encoding: string;
 
 	public constructor(writable: NodeJS.WritableStream, encoding: string = 'utf8') {
 		this.writable = writable;
@@ -32,5 +36,18 @@ export class MessageWriter {
 
 		// Now write the content. This can be written in any encoding
 		this.writable.write(json, this.encoding);
+	}
+}
+
+export class IPCMessageWriter implements IMessageWriter {
+
+	private process: { send?(message: any, sendHandle?: any): void; };
+
+	public constructor(process: { send?(message: any, sendHandle?: any): void; }) {
+		this.process = process;
+	}
+
+	public write(msg: Message): void {
+		this.process.send(msg);
 	}
 }

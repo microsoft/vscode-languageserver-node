@@ -10,8 +10,8 @@ import { Duplex, Writable, Readable, Transform } from 'stream';
 import { inherits } from 'util';
 
 import { Message, RequestMessage, RequestType, ResponseMessage, ResponseError, NotificationType, isReponseMessage, ErrorCodes } from '../messages';
-import { MessageWriter } from '../messageWriter';
-import { MessageReader } from '../messageReader';
+import { StreamMessageWriter } from '../messageWriter';
+import { StreamMessageReader } from '../messageReader';
 
 import * as hostConnection from '../main';
 
@@ -81,7 +81,7 @@ function assertMessages(resultData: string, expected: Message[], done: MochaDone
 	resultStream.push(resultData);
 	resultStream.push(null);
 	var actual : Message[] = [];
-	new MessageReader(resultStream, (res) => {
+	new StreamMessageReader(resultStream).listen((res) => {
 		if ((<ResponseMessage>res).error) {
 			delete (<ResponseMessage>res).error.message;
 		}

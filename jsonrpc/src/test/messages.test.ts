@@ -10,8 +10,8 @@ import { Duplex, Writable, Readable } from 'stream';
 import { inherits } from 'util';
 
 import { Message, RequestMessage } from '../messages';
-import { MessageWriter } from '../messageWriter';
-import { MessageReader } from '../messageReader';
+import { StreamMessageWriter } from '../messageWriter';
+import { StreamMessageReader } from '../messageReader';
 
 function TestWritable() {
 	Writable.call(this);
@@ -27,7 +27,7 @@ describe('Messages', () => {
 	let data: string = 'Content-Length: 43\r\n\r\n{"jsonrpc":"2.0","id":1,"method":"example"}'
 	it('Writing', () => {
 		let writable = new TestWritable();
-		let writer = new MessageWriter(writable, 'ascii');
+		let writer = new StreamMessageWriter(writable, 'ascii');
 
 		let request: RequestMessage = {
 			jsonrpc: '2.0',
@@ -40,7 +40,7 @@ describe('Messages', () => {
 	});
 	it('Reading', (done) => {
 		let readable = new Readable();
-		let reader = new MessageReader(readable, (message: RequestMessage) => {
+		let reader = new StreamMessageReader(readable).listen((message: RequestMessage) => {
 			assert.equal(message.id, 1);
 			assert.equal(message.method, 'example');
 			done();

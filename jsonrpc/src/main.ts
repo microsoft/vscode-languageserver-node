@@ -12,10 +12,14 @@ import { Message,
 	NotificationMessage,  NotificationType, isNotificationMessage
 } from './messages';
 
-import { MessageReader, ICallback } from './messageReader';
-import { MessageWriter } from './messageWriter';
+import { IMessageReader, DataCallback, StreamMessageReader, IPCMessageReader } from './messageReader';
+import { IMessageWriter, StreamMessageWriter, IPCMessageWriter } from './messageWriter';
 
-export { ErrorCodes, ResponseError, RequestType, NotificationType }
+export {
+	ErrorCodes, ResponseError, RequestType, NotificationType,
+	IMessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
+	IMessageWriter, StreamMessageWriter, IPCMessageWriter
+}
 
 export interface IRequestHandler<P, R, E> {
 	(params?: P): R | ResponseError<E> | Thenable<R | ResponseError<E>>;
@@ -47,8 +51,7 @@ export interface ClientMessageConnection extends MessageConnection {
 	sendRequest<P, R, E>(type: RequestType<P, R, E>, params?: P) : Thenable<R>;
 }
 
-function createMessageConnection<T extends MessageConnection>(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger: ILogger, client: boolean = false): T {
-	let protocolWriter = new MessageWriter(outputStream);
+function createMessageConnection<T extends MessageConnection>(messageReader: IMessageReader, messageWriter: IMessageWriter, logger: ILogger, client: boolean = false): T {
 	let sequenceNumber = 0;
 	const version: string = '2.0';
 
@@ -68,7 +71,7 @@ function createMessageConnection<T extends MessageConnection>(inputStream: NodeJ
 			} else {
 				message.result = resultOrError;
 			}
-			protocolWriter.write(message);
+			messageWriter.write(message);
 		}
 		function replyError(error: ResponseError<any>) {
 			let message: ResponseMessage = {
@@ -76,7 +79,7 @@ function createMessageConnection<T extends MessageConnection>(inputStream: NodeJ
 				id: requestMessage.id,
 				error: error.toJson()
 			};
-			protocolWriter.write(message);
+			messageWriter.write(message);
 		}
 		function replySuccess(result: any) {
 			let message: ResponseMessage = {
@@ -84,7 +87,7 @@ function createMessageConnection<T extends MessageConnection>(inputStream: NodeJ
 				id: requestMessage.id,
 				result: result
 			};
-			protocolWriter.write(message);
+			messageWriter.write(message);
 		}
 
 		let requestHandler = requestHandlers[requestMessage.method];
@@ -161,7 +164,7 @@ function createMessageConnection<T extends MessageConnection>(inputStream: NodeJ
 		}
 	}
 
-	let callback: ICallback;
+	let callback: DataCallback;
 	if (client) {
 		callback = (message) => {
 			if (isReponseMessage(message)) {
@@ -187,7 +190,7 @@ function createMessageConnection<T extends MessageConnection>(inputStream: NodeJ
 				method: type.method,
 				params: params
 			}
-			protocolWriter.write(notificatioMessage);
+			messageWriter.write(notificatioMessage);
 		},
 		onNotification: <P>(type: NotificationType<P>, handler: INotificationHandler<P>) => {
 			eventHandlers[type.method] = handler;
@@ -195,7 +198,7 @@ function createMessageConnection<T extends MessageConnection>(inputStream: NodeJ
 		dispose: () => {
 		},
 		listen: () => {
-			new MessageReader(inputStream, callback);
+			messageReader.listen(callback);
 		}
 	};
 	if (client) {
@@ -209,7 +212,7 @@ function createMessageConnection<T extends MessageConnection>(inputStream: NodeJ
 					params: params
 				}
 				responseHandlers[String(id)] = { method: type.method, resolve, reject };
-				protocolWriter.write(requestMessage);
+				messageWriter.write(requestMessage);
 			});
 		}
 	} else {
@@ -217,16 +220,29 @@ function createMessageConnection<T extends MessageConnection>(inputStream: NodeJ
 			requestHandlers[type.method] = handler;
 		}
 	}
-	
-	inputStream.on('end', () => outputStream.end());
-	inputStream.on('close', () => outputStream.end());
 	return connection as T;
 }
 
-export function createServerMessageConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger: ILogger): ServerMessageConnection {
-	return createMessageConnection<ServerMessageConnection>(inputStream, outputStream, logger);
+function isMessageReader(value: any): value is IMessageReader {
+	return is.defined(value.listen) && is.undefined(value.read);
 }
 
-export function createClientMessageConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger: ILogger): ClientMessageConnection {
-	return createMessageConnection<ClientMessageConnection>(inputStream, outputStream, logger, true);
+function isMessageWriter(value: any): value is IMessageWriter {
+	return is.defined(value.write) && is.undefined(value.end);
+}
+
+export function createServerMessageConnection(reader: IMessageReader, writer: IMessageWriter, logger: ILogger): ServerMessageConnection;
+export function createServerMessageConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger: ILogger): ServerMessageConnection;
+export function createServerMessageConnection(input: IMessageReader | NodeJS.ReadableStream, output: IMessageWriter | NodeJS.WritableStream, logger: ILogger): ServerMessageConnection {
+	let reader = isMessageReader(input) ? input : new StreamMessageReader(input);
+	let writer = isMessageWriter(output) ? output : new StreamMessageWriter(output);
+	return createMessageConnection<ServerMessageConnection>(reader, writer, logger);
+}
+
+export function createClientMessageConnection(reader: IMessageReader, writer: IMessageWriter, logger: ILogger): ClientMessageConnection;
+export function createClientMessageConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger: ILogger): ClientMessageConnection;
+export function createClientMessageConnection(input: IMessageReader | NodeJS.ReadableStream, output: IMessageWriter | NodeJS.WritableStream, logger: ILogger): ClientMessageConnection {
+	let reader = isMessageReader(input) ? input : new StreamMessageReader(input);
+	let writer = isMessageWriter(output) ? output : new StreamMessageWriter(output);
+	return createMessageConnection<ClientMessageConnection>(reader, writer, logger, true);
 }

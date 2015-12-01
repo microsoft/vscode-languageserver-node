@@ -6,7 +6,9 @@
 
 import {
 		RequestType, IRequestHandler, NotificationType, INotificationHandler, ResponseError, ErrorCodes,
-		MessageConnection, ServerMessageConnection, ILogger, createServerMessageConnection
+		MessageConnection, ServerMessageConnection, ILogger, createServerMessageConnection,
+		IMessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
+		IMessageWriter, StreamMessageWriter, IPCMessageWriter
 	} from 'vscode-jsonrpc';
 import {
 		InitializeRequest, InitializeParams, InitializeResult, InitializeError, ClientCapabilities, ServerCapabilities,
@@ -34,6 +36,8 @@ import * as is from './utils/is';
 // ------------- Reexport the API surface of the language worker API ----------------------
 export {
 		RequestType, IRequestHandler, NotificationType, INotificationHandler, ResponseError, ErrorCodes,
+		IMessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
+		IMessageWriter, StreamMessageWriter, IPCMessageWriter,
 		InitializeParams, InitializeResult, InitializeError, ServerCapabilities,
 		DidChangeConfigurationParams,
 		DidChangeWatchedFilesParams, FileEvent, FileChangeType,
@@ -529,23 +533,36 @@ export interface IConnection {
 }
 
 /**
- * Creates a connection.
+ * Creates a new connection.
  *
  * @param inputStream The stream to read messages from.
  * @param outputStream The stream to write messages to.
  * @return a [connection](#IConnection)
  */
-export function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream): IConnection {
+export function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream): IConnection;
+
+/**
+ * Creates a new connection.
+ *
+ * @param reader The message reader to read messages from.
+ * @param writer The message writer to write message to.
+ */
+export function createConnection(reader: IMessageReader, writer: IMessageWriter): IConnection;
+export function createConnection(input: any, output: any): IConnection {
 	let shutdownReceived: boolean;
-	inputStream.on('end', () => {
-		process.exit(shutdownReceived ? 0 : 1);
-	});
-	inputStream.on('close', () => {
-		process.exit(shutdownReceived ? 0 : 1);
-	});
+	// Backwards compatibility
+	if (is.func(input.read) && is.func(input.on)) {
+		let inputStream = <NodeJS.ReadableStream>input;
+		inputStream.on('end', () => {
+			process.exit(shutdownReceived ? 0 : 1);
+		});
+		inputStream.on('close', () => {
+			process.exit(shutdownReceived ? 0 : 1);
+		});
+	}
 
 	let logger = new Logger();
-	let connection = createServerMessageConnection(inputStream, outputStream, logger);
+	let connection = createServerMessageConnection(input, output, logger);
 	logger.attach(connection);
 	let remoteWindow = new RemoteWindowImpl(connection);
 
@@ -597,6 +614,18 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
 	};
 
 	connection.onRequest(InitializeRequest.type, (params) => {
+		if (is.number(params.processId)) {
+			// We received a parent process id. Set up a timer to periodically check
+			// if the parent is still alive.
+			setInterval(() => {
+				try {
+					process.kill(params.processId, '0');
+				} catch (ex) {
+					// Parent process doesn't exist anymore. Exit the server.
+					// process.exit(shutdownReceived ? 0 : 1);
+				}
+			}, 3000);
+		}
 		if (initializeHandler) {
 			let result = initializeHandler(params);
 			return asThenable(result).then((value) => {
