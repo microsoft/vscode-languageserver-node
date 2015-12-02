@@ -148,9 +148,14 @@ export interface ForkOptions {
 	execArgv?: string[];
 }
 
+export enum TransportKind {
+	stdio,
+	ipc
+}
+
 export interface NodeModule {
 	module: string;
-	useIPC?: boolean;
+	transport?: TransportKind;
 	args?: string[];
 	options?: ForkOptions;
 }
@@ -548,7 +553,7 @@ export class LanguageClient {
 				let options = node.options || {};
 				options.execArgv = options.execArgv || [];
 				options.cwd = options.cwd || Workspace.rootPath;
-				if (node.useIPC) {
+				if (node.transport === TransportKind.ipc) {
 					this._childProcess = cp.fork(node.module, node.args || [], options);
 					if (this._childProcess.pid) {
 						resolve(createConnection(new IPCMessageReader(this._childProcess), new IPCMessageWriter(this._childProcess)));
