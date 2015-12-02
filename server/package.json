@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageserver",
 	"description": "Language server implementation for node",
-	"version": "0.10.6",
+	"version": "1.0.1",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"repository": {
@@ -21,7 +21,7 @@
 		"typescript": "^1.6.2"
 	},
 	"dependencies": {
-		"vscode-jsonrpc": "0.10.x"
+		"vscode-jsonrpc": "^1.0.1"
 	},
 	"scripts": {
 		"prepublish": "tsc -p ./src",
