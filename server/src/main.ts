@@ -619,10 +619,10 @@ export function createConnection(input: any, output: any): IConnection {
 			// if the parent is still alive.
 			setInterval(() => {
 				try {
-					process.kill(params.processId, '0');
+					process.kill(params.processId, <any>0);
 				} catch (ex) {
 					// Parent process doesn't exist anymore. Exit the server.
-					// process.exit(shutdownReceived ? 0 : 1);
+					process.exit(shutdownReceived ? 0 : 1);
 				}
 			}, 3000);
 		}

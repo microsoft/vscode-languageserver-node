@@ -581,7 +581,7 @@ export class LanguageClient {
 		setTimeout(() => {
 			// Test if the process is still alive. Throws an exception if not
 			try {
-				process.kill(childProcess.pid, '0');
+				process.kill(childProcess.pid, <any>0);
 				terminate(childProcess);
 			} catch (error) {
 				// All is fine.

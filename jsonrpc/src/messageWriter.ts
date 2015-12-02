@@ -4,6 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
+import { ChildProcess } from 'child_process';
+
 import { Message } from './messages';
 
 let ContentLength:string = 'Content-Length: ';
@@ -41,9 +43,9 @@ export class StreamMessageWriter implements IMessageWriter {
 
 export class IPCMessageWriter implements IMessageWriter {
 
-	private process: { send?(message: any, sendHandle?: any): void; };
+	private process: NodeJS.Process | ChildProcess;
 
-	public constructor(process: { send?(message: any, sendHandle?: any): void; }) {
+	public constructor(process: NodeJS.Process | ChildProcess) {
 		this.process = process;
 	}
 

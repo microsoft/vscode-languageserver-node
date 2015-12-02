@@ -4,6 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
+import { ChildProcess } from 'child_process';
+
 import { Message } from './messages';
 
 let DefaultSize: number = 8192;
@@ -147,9 +149,9 @@ export class StreamMessageReader implements IMessageReader {
 
 export class IPCMessageReader implements IMessageReader {
 
-	private process: { on(event: string, listener: Function): any; };
+	private process: NodeJS.Process | ChildProcess;
 
-	public constructor(process: { on(event: string, listener: Function): any; }) {
+	public constructor(process: NodeJS.Process | ChildProcess) {
 		this.process = process;
 	}
 
