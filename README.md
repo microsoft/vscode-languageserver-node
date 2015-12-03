@@ -37,4 +37,4 @@ language servers for [VSCode](https://code.visualstudio.com/).
 * 0.10.x: Intial versions to build a good API for the client and server side
 
 ## License
-[MIT](https://github.com/Microsoft/vscode-languageserver/blob/master/License.txt)
+[MIT](https://github.com/Microsoft/vscode-languageserver-node/blob/master/License.txt)
