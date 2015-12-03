@@ -18,3 +18,23 @@ All three npm modules are built using one travis build. Its status is:
 
 Click [here](https://code.visualstudio.com/docs/extensions/example-language-server) for a detaild document on how to uses these npm modules to implement 
 language servers for [VSCode](https://code.visualstudio.com/).
+
+## History
+
+* 1.0.x: Current version which provides support for the following features:
+  * Document synchronization: incremental and full text document synchronization.
+  * Configuration synchronization: synchronization of configuration settings to the server.
+  * File events: synchronization of file events to the server.
+  * Code Complete: provides code complete lists.
+  * Document Highlights: highlights all 'equal' symbols in a text document.
+  * Hover: provides hover information for a symbol selected in a text document.
+  * Signature Help: provides signature help for a symbol selected in a text document.
+  * Goto Definition: provides goto definition support for a symbol selected in a text document.
+  * Find References: finds all project-wide references for a symbol selected in a text document.
+  * List Document Symbols: lists all symbols defined in a text document.
+  * List Workspace Symbols: lists all project-wide symbols.
+
+* 0.10.x: Intial versions to build a good API for the client and server side
+
+## License
+[MIT](https://github.com/Microsoft/vscode-languageserver/blob/master/License.txt)
