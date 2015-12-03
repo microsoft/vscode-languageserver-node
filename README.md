@@ -22,6 +22,7 @@ language servers for [VSCode](https://code.visualstudio.com/).
 ## History
 
 * 1.0.x: Current version which provides support for the following features:
+  * Transports: stdio and node IPC can be used as a transport.
   * Document synchronization: incremental and full text document synchronization.
   * Configuration synchronization: synchronization of configuration settings to the server.
   * File events: synchronization of file events to the server.
