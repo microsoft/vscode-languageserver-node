@@ -1,7 +1,7 @@
 {
-	"name": "vscode-languageclient",
-	"description": "VSCode Language client implementation",
-	"version": "0.10.7",
+	"name": "vscode-languageclient-test",
+	"description": "VSCode Language client tests",
+	"version": "1.0.0",
 	"author": "Microsoft Corporation",
 	"publisher": "Microsoft Corporation",
 	"license": "MIT",

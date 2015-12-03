@@ -45,7 +45,10 @@ import * as electron from './utils/electron';
 import { terminate } from './utils/processes';
 import { Delayer } from './utils/async'
 
-export { RequestType, NotificationType, INotificationHandler }
+export {
+	RequestType, NotificationType, INotificationHandler,
+	Position, Range, Location, TextDocumentIdentifier, TextDocumentPosition
+}
 
 declare var v8debug;
 
@@ -89,6 +92,7 @@ class Logger implements ILogger {
 		console.log(message);
 	}
 }
+
 function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream): IConnection;
 function createConnection(reader: IMessageReader, writer: IMessageWriter): IConnection;
 function createConnection(input: any, output: any): IConnection {
@@ -294,14 +298,18 @@ export class LanguageClient {
 	public sendRequest<P, R, E>(type: RequestType<P, R, E>, params?: P): Thenable<R> {
 		return this.onReady().then(() => {
 			return this.resolveConnection().then((connection) => {
-				if (this.isConnectionActive()) {
-					this.forceDocumentSync();
-					return connection.sendRequest(type, params);
-				} else {
-					return Promise.reject<R>(new ResponseError(ErrorCodes.InternalError, 'Connection is already closed'));
-				}
+				return this.doSendRequest(connection, type, params);
 			});
 		});
+	}
+
+	private doSendRequest<P, R, E>(connection: IConnection, type: RequestType<P, R, E>, params?: P): Thenable<R> {
+		if (this.isConnectionActive()) {
+			this.forceDocumentSync();
+			return connection.sendRequest(type, params);
+		} else {
+			return Promise.reject<R>(new ResponseError(ErrorCodes.InternalError, 'Connection is closed.'));
+		}
 	}
 
 	public sendNotification<P>(type: NotificationType<P>, params?: P): void {
@@ -709,25 +717,17 @@ export class LanguageClient {
 
 		this._providers.push(Languages.registerCompletionItemProvider(documentSelector, {
 			provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VCompletionItem[]> => {
-				if (this.isConnectionActive()) {
-					this.forceDocumentSync();
-					return connection.sendRequest(CompletionRequest.type, c2p.asTextDocumentPosition(document, position)).then((result: CompletionItem[]) => {
-						return p2c.asCompletionItems(result);
-					});
-				} else {
-					return Promise.resolve([]);
-				}
+				return this.doSendRequest(connection, CompletionRequest.type, c2p.asTextDocumentPosition(document, position)). then(
+					p2c.asCompletionItems,
+					error => Promise.resolve([])
+				)
 			},
 			resolveCompletionItem: this._capabilites.completionProvider.resolveProvider
 				? (item: VCompletionItem, token: CancellationToken): Thenable<VCompletionItem> => {
-					if (this.isConnectionActive()) {
-						this.forceDocumentSync();
-						return connection.sendRequest(CompletionResolveRequest.type, c2p.asCompletionItem(item)).then((result: CompletionItem) => {
-							return p2c.asCompletionItem(result);
-						});
-					} else {
-						return Promise.resolve(item);
-					}
+					return this.doSendRequest(connection, CompletionResolveRequest.type, c2p.asCompletionItem(item)).then(
+						p2c.asCompletionItem,
+						error => Promise.resolve(item)
+					);
 				}
 				: undefined
 		}, ...this._capabilites.completionProvider.triggerCharacters));
@@ -740,14 +740,10 @@ export class LanguageClient {
 
 		this._providers.push(Languages.registerHoverProvider(documentSelector, {
 			provideHover: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<Hover> => {
-				if (this.isConnectionActive()) {
-					this.forceDocumentSync();
-					return connection.sendRequest(HoverRequest.type, c2p.asTextDocumentPosition(document, position)).then((result: Hover) => {
-						return p2c.asHover(result);
-					});
-				} else {
-					return Promise.reject<Hover>(new Error('Connection is not active anymore'));
-				}
+				return this.doSendRequest(connection, HoverRequest.type, c2p.asTextDocumentPosition(document, position)).then(
+					p2c.asHover,
+					error => Promise.resolve(null)
+				)
 			}
 		}));
 	}
@@ -758,14 +754,10 @@ export class LanguageClient {
 		}
 		this._providers.push(Languages.registerSignatureHelpProvider(documentSelector, {
 			provideSignatureHelp: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VSignatureHelp> => {
-				if (this.isConnectionActive()) {
-					this.forceDocumentSync();
-					return connection.sendRequest(SignatureHelpRequest.type, c2p.asTextDocumentPosition(document, position)).then((result) => {
-						return p2c.asSignatureHelp(result);
-					});
-				} else {
-					return Promise.resolve(null);
-				}
+				return this.doSendRequest(connection, SignatureHelpRequest.type, c2p.asTextDocumentPosition(document, position)). then(
+					p2c.asSignatureHelp,
+					error => Promise.resolve(null)
+				);
 			}
 		}, ...this._capabilites.signatureHelpProvider.triggerCharacters));
 	}
@@ -776,14 +768,10 @@ export class LanguageClient {
 		}
 		this._providers.push(Languages.registerDefinitionProvider(documentSelector, {
 			provideDefinition: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VDefinition> => {
-				if (this.isConnectionActive()) {
-					this.forceDocumentSync();
-					return connection.sendRequest(DefinitionRequest.type, c2p.asTextDocumentPosition(document, position)).then((result) => {
-						return p2c.asDefinitionResult(result);
-					});
-				} else {
-					return Promise.resolve(null);
-				}
+				return this.doSendRequest(connection, DefinitionRequest.type, c2p.asTextDocumentPosition(document, position)). then(
+					p2c.asDefinitionResult,
+					error => Promise.resolve(null)
+				);
 			}
 		}))
 	}
@@ -794,14 +782,10 @@ export class LanguageClient {
 		}
 		this._providers.push(Languages.registerReferenceProvider(documentSelector, {
 			provideReferences: (document: TextDocument, position: VPosition, options: { includeDeclaration: boolean; }, token: CancellationToken): Thenable<VLocation[]> => {
-				if (this.isConnectionActive()) {
-					this.forceDocumentSync();
-					return connection.sendRequest(ReferencesRequest.type, c2p.asReferenceParams(document, position, options)).then((result) => {
-						return p2c.asReferences(result);
-					});
-				} else {
-					return Promise.resolve(null);
-				}
+				return this.doSendRequest(connection, ReferencesRequest.type, c2p.asReferenceParams(document, position, options)).then(
+					p2c.asReferences,
+					error => Promise.resolve([])
+				);
 			}
 		}));
 	}
@@ -812,14 +796,10 @@ export class LanguageClient {
 		}
 		this._providers.push(Languages.registerDocumentHighlightProvider(documentSelector, {
 			provideDocumentHighlights: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VDocumentHighlight[]> => {
-				if (this.isConnectionActive()) {
-					this.forceDocumentSync();
-					return connection.sendRequest(DocumentHighlightRequest.type, c2p.asTextDocumentPosition(document, position)).then((result) => {
-						return p2c.asDocumentHighlights(result);
-					});
-				} else {
-					Promise.resolve(null);
-				}
+				return this.doSendRequest(connection, DocumentHighlightRequest.type, c2p.asTextDocumentPosition(document, position)).then(
+					p2c.asDocumentHighlights,
+					error => Promise.resolve([])
+				);
 			}
 		}));
 	}
@@ -830,15 +810,10 @@ export class LanguageClient {
 		}
 		this._providers.push(Languages.registerDocumentSymbolProvider(documentSelector, {
 			provideDocumentSymbols: (document: TextDocument, token: CancellationToken): Thenable<VSymbolInformation[]> => {
-				if (this.isConnectionActive()) {
-					this.forceDocumentSync();
-					return connection.sendRequest(DocumentSymbolRequest.type, c2p.asTextDocumentIdentifier(document)).then((result) => {
-						return p2c.asSymbolInformations(result, document.uri);
-					});
-				} else {
-					Promise.resolve(null);
-				}
-				return null;
+				return this.doSendRequest(connection, DocumentSymbolRequest.type, c2p.asTextDocumentIdentifier(document)).then(
+					p2c.asSymbolInformations,
+					error => Promise.resolve([])
+				);
 			}
 		}));
 	}
@@ -849,15 +824,10 @@ export class LanguageClient {
 		}
 		this._providers.push(Languages.registerWorkspaceSymbolProvider({
 			provideWorkspaceSymbols: (query: string, token: CancellationToken): Thenable<VSymbolInformation[]> => {
-				if (this.isConnectionActive()) {
-					this.forceDocumentSync();
-					return connection.sendRequest(WorkspaceSymbolRequest.type, { query }).then((result) => {
-						return p2c.asSymbolInformations(result);
-					});
-				} else {
-					Promise.resolve(null);
-				}
-				return null;
+				return this.doSendRequest(connection, WorkspaceSymbolRequest.type, { query }).then(
+					p2c.asSymbolInformations,
+					error => Promise.resolve([])
+				);
 			}
 		}));
 	}

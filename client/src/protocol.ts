@@ -6,7 +6,7 @@
 
 import { RequestType, NotificationType, ResponseError } from 'vscode-jsonrpc';
 
-import * as is from './utils/is';
+import * as Is from './utils/is';
 
 /**
  * Defines the capabilities provided by the client.
@@ -270,6 +270,28 @@ export interface Position {
 }
 
 /**
+ * The Position namespace provides helper functions to work with
+ * [Position](#Position) literals.
+ */
+export namespace Position {
+	/**
+	 * Creates a new Position literal from the given line and character.
+	 * @param line The position's line.
+	 * @param character The position's character.
+	 */
+	export function create(line: number, character: number): Position {
+		return { line, character };
+	}
+	/**
+	 * Checks whether the given liternal conforms to the [Position](#Position) interface.
+	 */
+	export function is(value: any): value is Position {
+		let candidate = value as Position;
+		return Is.defined(candidate) && Is.number(candidate.line) && Is.number(candidate.character);
+	}
+}
+
+/**
  * A range in a text document expressed as (zero-based) start and end positions.
  */
 export interface Range {
@@ -285,12 +307,73 @@ export interface Range {
 }
 
 /**
+ * The Range namespace provides helper functions to work with
+ * [Range](#Range) literals.
+ */
+export namespace Range {
+	/**
+	 * Create a new Range liternal.
+	 * @param start The range's start position.
+	 * @param end The range's end position.
+	 */
+	export function create(start: Position, end: Position): Range;
+	/**
+	 * Create a new Range liternal.
+	 * @param startLine The start line number.
+	 * @param startCharacter The start character.
+	 * @param endLine The end line number.
+	 * @param endCharacter The end character.
+	 */
+	export function create(startLine: number, startCharacter: number, endLine: number, endCharacter: number): Range;
+	export function create(one: Position | number, two: Position | number, three?: number, four?: number): Range {
+		if (Is.number(one) && Is.number(two) && Is.number(three) && Is.number(four)) {
+			return { start: Position.create(one, two), end: Position.create(three, four) };
+		} else if (Position.is(one) && Position.is(two)) {
+			return { start: one, end: two };
+		} else {
+			throw new Error(`Range#create called with invalid arguments[${one}, ${two}, ${three}, ${four}]`);
+		}
+	}
+	/**
+	 * Checks whether the given literal conforms to the [Range](#Range) interface.
+	 */
+	export function is(value: any): value is Range {
+		let candidate  = value as Range;
+		return Is.defined(candidate) && Position.is(candidate.start) && Position.is(candidate.end);
+	}
+}
+
+
+/**
  * Represents a location inside a resource, such as a line
  * inside a text file.
  */
-export class Location {
+export interface Location {
 	uri: string;
 	range: Range;
+}
+
+
+/**
+ * The Location namespace provides helper functions to work with
+ * [Location](#Location) literals.
+ */
+export namespace Location {
+	/**
+	 * Creates a Location literal.
+	 * @param uri The location's uri.
+	 * @param range The location's range.
+	 */
+	export function create(uri: string, range: Range): Location {
+		return { uri, range };
+	}
+	/**
+	 * Checks whether the given literal conforms to the [Location](#Location) interface.
+	 */
+	export function is(value: any): value is Location {
+		let candidate = value as Location;
+		return Is.defined(candidate) && Range.is(candidate) && (Is.string(candidate.uri) || Is.undefined(candidate.uri));
+	}
 }
 
 /**
@@ -303,6 +386,28 @@ export interface TextDocumentIdentifier {
 	uri: string;
 }
 
+
+/**
+ * The TextDocumentIdentifier namespace provides helper functions to work with
+ * [TextDocumentIdentifier](#TextDocumentIdentifier) literals.
+ */
+export namespace TextDocumentIdentifier {
+	/**
+	 * Creates a new TextDocumentIdentifier literal.
+	 * @param uri The document's uri.
+	 */
+	export function create(uri: string): TextDocumentIdentifier {
+		return { uri };
+	}
+	/**
+	 * Checks whether the given literal conforms to the [TextDocumentIdentifier](#TextDocumentIdentifier) interface.
+	 */
+	export function is(value: any): value is TextDocumentIdentifier {
+		let candidate = value as TextDocumentIdentifier;
+		return Is.defined(candidate) && Is.string(candidate.uri);
+	}
+}
+
 /**
  * A literal to define the position in a text document.
  */
@@ -311,6 +416,28 @@ export interface TextDocumentPosition extends TextDocumentIdentifier {
 	 * The position inside the text document.
 	 */
 	position: Position;
+}
+
+/**
+ * The TextDocumentPosition namespace provides helper functions to work with
+ * [TextDocumentPosition](#TextDocumentPosition) literals.
+ */
+export namespace TextDocumentPosition {
+	/**
+	 * Creates a new TextDocumentPosition
+	 * @param uri The document's uri.
+	 * @param position The position inside the document.
+	 */
+	export function create(uri: string, position: Position): TextDocumentPosition {
+		return { uri, position };
+	}
+	/**
+	 * Checks whether the given literal conforms to the [TextDocumentPosition](#TextDocumentPosition) interface.
+	 */
+	export function is(value: any): value is TextDocumentPosition {
+		let candidate = value as TextDocumentPosition;
+		return Is.defined(candidate) && TextDocumentIdentifier.is(candidate) && Position.is(candidate.position);
+	}
 }
 
 /**
@@ -485,6 +612,38 @@ export interface Diagnostic {
 	 * The diagnostic message.
 	 */
 	message: string;
+}
+
+/**
+ * The Diagnostic namespace provides helper functions to work with
+ * [Diagnostic](#Diagnostic) literals.
+ */
+
+export namespace Diagnostic {
+	/**
+	 * Creates a new Diagnostic literal.
+	 */
+	export function create(range: Range, message: string, severity?: number, code?: number | string): Diagnostic {
+		let result: Diagnostic = { range, message };
+		if (Is.defined(severity)) {
+			result.severity = severity;
+		}
+		if (Is.defined(code)) {
+			result.code = code;
+		}
+		return result;
+	}
+	/**
+	 * Checks whether the given literal conforms to the [Diagnostic](#Diagnostic) interface.
+	 */
+	export function is(value: any): value is Diagnostic {
+		let candidate = value as Diagnostic;
+		return Is.defined(candidate)
+			&& Range.is(candidate.range)
+			&& Is.string(candidate.message)
+			&& (Is.number(candidate.severity) || Is.undefined(candidate.severity))
+			&& (Is.number(candidate.code) || Is.string(candidate.code) || Is.undefined(candidate.code));
+	}
 }
 
 //---- Completion Support --------------------------
@@ -752,10 +911,10 @@ export interface SignatureInformation {
 export namespace SignatureInformation {
 	export function create(label: string, documentation?: string, ...parameters: ParameterInformation[]): SignatureInformation {
 		let result: SignatureInformation = { label };
-		if (is.defined(documentation)) {
+		if (Is.defined(documentation)) {
 			result.documentation = documentation;
 		}
-		if (is.defined(parameters)) {
+		if (Is.defined(parameters)) {
 			result.parameters = parameters;
 		} else {
 			result.parameters = [];
@@ -891,7 +1050,7 @@ export namespace DocumentHighlight {
 	 */
 	export function create(range: Range, kind?: number): DocumentHighlight {
 		let result: DocumentHighlight = { range };
-		if (is.number(kind)) {
+		if (Is.number(kind)) {
 			result.kind = kind;
 		}
 		return result;
