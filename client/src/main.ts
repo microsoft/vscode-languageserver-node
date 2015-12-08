@@ -559,10 +559,21 @@ export class LanguageClient {
 		if (is.defined(json.module)) {
 			let node: NodeModule = <NodeModule>json;
 			return new Promise<IConnection>((resolve, reject) => {
-				let options = node.options || {};
+				let options: ForkOptions = node.options || Object.create(null);
 				options.execArgv = options.execArgv || [];
 				options.cwd = options.cwd || Workspace.rootPath;
 				if (node.transport === TransportKind.ipc) {
+					let env = options.env || process.env;
+					if (env['ATOM_SHELL_INTERNAL_RUN_AS_NODE'] !== '1') {
+						// Make a copy. Since we usually call this once the performance impact of using JSON is acceptable.
+						options = JSON.parse(JSON.stringify(options));
+						let newEnv: any = Object.create(null);
+						for (var key in env) {
+							newEnv[key] = env[key];
+						}
+						newEnv['ATOM_SHELL_INTERNAL_RUN_AS_NODE'] = '1';
+						options.env = newEnv;
+					}
 					this._childProcess = cp.fork(node.module, node.args || [], options);
 					if (this._childProcess.pid) {
 						resolve(createConnection(new IPCMessageReader(this._childProcess), new IPCMessageWriter(this._childProcess)));
