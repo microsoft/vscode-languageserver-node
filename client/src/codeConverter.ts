@@ -175,3 +175,7 @@ export function asCodeLens(item: code.CodeLens): proto.CodeLens {
 	}
 	return result;
 }
+
+export function asFormattingOptions(item: code.FormattingOptions): proto.FormattingOptions {
+	return { tabSize: item.tabSize, insertSpaces: item.insertSpaces };
+}

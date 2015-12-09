@@ -12,7 +12,8 @@ import {
 		FileSystemWatcher, Uri, DiagnosticCollection, DocumentSelector,
 		CancellationToken, Hover as VHover, Position as VPosition, Location as VLocation, Range as VRange,
 		CompletionItem as VCompletionItem, SignatureHelp as VSignatureHelp, Definition as VDefinition, DocumentHighlight as VDocumentHighlight,
-		SymbolInformation as VSymbolInformation, CodeActionContext as VCodeActionContext, Command as VCommand, CodeLens as VCodeLens
+		SymbolInformation as VSymbolInformation, CodeActionContext as VCodeActionContext, Command as VCommand, CodeLens as VCodeLens,
+		FormattingOptions as VFormattingOptions, TextEdit as VTextEdit
 } from 'vscode';
 
 import {
@@ -37,7 +38,8 @@ import {
 		SignatureHelpRequest, DefinitionRequest, Definition, ReferencesRequest, DocumentHighlightRequest, DocumentHighlight,
 		DocumentSymbolRequest, SymbolInformation, SymbolKind, WorkspaceSymbolRequest, WorkspaceSymbolParams,
 		CodeActionRequest, CodeActionParams,
-		CodeLensRequest, CodeLensResolveRequest, CodeLens
+		CodeLensRequest, CodeLensResolveRequest, CodeLens,
+		DocumentFormattingRequest, DocumentFormattingParams, FormattingOptions
 } from './protocol';
 
 import * as c2p from './codeConverter';
@@ -724,6 +726,7 @@ export class LanguageClient {
 		this.hookWorkspaceSymbolProvider(connection);
 		this.hookCodeActionsProvider(documentSelector, connection);
 		this.hookCodeLensProvider(documentSelector, connection);
+		this.hookDocumentFormattingProvider(documentSelector, connection);
 	}
 
 	private hookCompletionProvider(documentSelector: DocumentSelector, connection: IConnection): void {
@@ -886,6 +889,24 @@ export class LanguageClient {
 					)
 				}
 				: undefined
+		}));
+	}
+
+	private hookDocumentFormattingProvider(documentSelector: DocumentSelector, connection: IConnection): void {
+		if (!this._capabilites.documentFormatting) {
+			return;
+		}
+		this._providers.push(Languages.registerDocumentFormattingEditProvider(documentSelector, {
+			provideDocumentFormattingEdits: (document: TextDocument, options: VFormattingOptions, token: CancellationToken): Thenable<VTextEdit[]> => {
+				let params: DocumentFormattingParams = {
+					textDocument: c2p.asTextDocumentIdentifier(document),
+					options: c2p.asFormattingOptions(options)
+				}
+				return this.doSendRequest(connection, DocumentFormattingRequest.type, params).then(
+					p2c.asTextEdits,
+					error => Promise.resolve([])
+				)
+			}
 		}));
 	}
 }

@@ -85,6 +85,10 @@ export function asTextEdit(edit: proto.TextEdit): code.TextEdit {
 	return new code.TextEdit(asRange(edit.range), edit.newText);
 }
 
+export function asTextEdits(items: proto.TextEdit[]): code.TextEdit[] {
+	return items.map(asTextEdit);
+}
+
 export function asSignatureHelp(item: proto.SignatureHelp): code.SignatureHelp {
 	let result = new code.SignatureHelp();
 	set(item.activeParameter, () => result.activeParameter = item.activeParameter);

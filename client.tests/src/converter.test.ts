@@ -135,6 +135,15 @@ suite('Protocol Converter', () => {
 		strictEqual(result.newText, edit.newText);
 	});
 	
+	test('Text Edits', () => {
+		let edit: proto.TextEdit = proto.TextEdit.del(
+			{ 
+				start: { line: 1, character: 2 },
+				end: { line: 8, character: 9 }
+			});
+		ok(p2c.asTextEdits([edit]).every(elem => elem instanceof vscode.TextEdit));
+	});
+	
 	test('Completion Item', () => {
 		let completionItem: proto.CompletionItem = {
 			label: 'item'

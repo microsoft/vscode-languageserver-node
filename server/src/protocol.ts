@@ -99,6 +99,8 @@ export interface ServerCapabilities {
 	codeActionProvider?: boolean;
 	/** The server provides code lens. */
 	codeLensProvider?: CodeLensOptions;
+	/** The server provides document formatting. */
+	documentFormatting?: boolean;
 }
 
 //---- Initialize Method ----
@@ -1347,4 +1349,58 @@ export namespace CodeLensRequest {
  */
 export namespace CodeLensResolveRequest {
 	export const type: RequestType<CodeLens, CodeLens, void> = { get method() { return 'codeLens/resolve'; } };
+}
+
+//---- Formattimng ----------------------------------------------
+
+/**
+ * Value-object describing what options formatting should use.
+ */
+export interface FormattingOptions {
+	/**
+	 * Size of a tab in spaces.
+	 */
+	tabSize: number;
+	/**
+	 * Prefer spaces over tabs.
+	 */
+	insertSpaces: boolean;
+	/**
+	 * Signature for further properties.
+	 */
+	[key: string]: boolean | number | string;
+}
+
+/**
+ * The FormattingOptions namespace provides helper functions to work with
+ * [FormattingOptions](#FormattingOptions) literals.
+ */
+export namespace FormattingOptions {
+	/**
+	 * Creates a new FormattingOptions literal.
+	 */
+	export function create(tabSize: number, insertSpaces: boolean): FormattingOptions {
+		return { tabSize, insertSpaces };
+	}
+	/**
+	 * Checks whether the given literal conforms to the [FormattingOptions](#FormattingOptions) interface.
+	 */
+	export function is(value: any): value is FormattingOptions {
+		let candidate = value as FormattingOptions;
+		return Is.defined(candidate) && Is.number(candidate.tabSize) && Is.boolean(candidate.insertSpaces);
+	}
+}
+
+export interface DocumentFormattingParams {
+	/** The document to format. */
+	textDocument: TextDocumentIdentifier;
+	/** The format options */
+	options: FormattingOptions;
+}
+
+/**
+ * A request to to format a whole document.
+ */
+export namespace DocumentFormattingRequest {
+	export const type: RequestType<DocumentFormattingParams, TextEdit[], void> = { get method() { return 'textDocument/formatting'; } };
 }
