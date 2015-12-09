@@ -27,7 +27,9 @@ import {
 		SignatureHelpRequest, SignatureHelp, SignatureInformation, ParameterInformation,
 		DefinitionRequest, Definition, ReferencesRequest, ReferenceParams,
 		DocumentHighlightRequest, DocumentHighlight, DocumentHighlightKind,
-		DocumentSymbolRequest, SymbolInformation, SymbolKind, WorkspaceSymbolRequest, WorkspaceSymbolParams
+		DocumentSymbolRequest, SymbolInformation, SymbolKind, WorkspaceSymbolRequest, WorkspaceSymbolParams,
+		CodeActionRequest, CodeActionParams, CodeActionContext, Command,
+		CodeLensRequest, CodeLensResolveRequest, CodeLens, CodeLensOptions
 	} from './protocol';
 
 import { Event, Emitter } from './utils/events';
@@ -48,7 +50,9 @@ export {
 		CompletionOptions, CompletionItemKind, CompletionItem, TextEdit,
 		SignatureHelp, SignatureInformation, ParameterInformation,
 		Definition, ReferenceParams,  DocumentHighlight, DocumentHighlightKind,
-		SymbolInformation, SymbolKind, WorkspaceSymbolParams
+		SymbolInformation, SymbolKind, WorkspaceSymbolParams,
+		CodeActionParams, CodeActionContext, Command,
+		CodeLensRequest, CodeLensResolveRequest, CodeLens, CodeLensOptions
 }
 export { Event }
 
@@ -527,6 +531,30 @@ export interface IConnection {
 	onWorkspaceSymbol(handler: IRequestHandler<WorkspaceSymbolParams, SymbolInformation[], void>): void;
 
 	/**
+	 * Installs a handler for the `CodeAction` request.
+	 *
+	 * @param handler The corresponding handler.
+	 */
+	onCodeAction(handler: IRequestHandler<CodeActionParams, Command[], void>): void;
+
+	/**
+	 * Compute a list of [lenses](#CodeLens). This call should return as fast as possible and if
+	 * computing the commands is expensive implementors should only return code lens objects with the
+	 * range set and handle the resolve request.
+	 *
+	 * @param handler The corresponding handler.
+	 */
+	onCodeLens(handler: IRequestHandler<TextDocumentIdentifier, CodeLens[], void>): void;
+
+	/**
+	 * This function will be called for each visible code lens, usually when scrolling and after
+	 * the onCodeLens has been called.
+	 *
+	 * @param handler The corresponding handler.
+	 */
+	onCodeLensResolve(handler: IRequestHandler<CodeLens, CodeLens, void>): void;
+
+	/**
 	 * Disposes the connection
 	 */
 	dispose(): void;
@@ -609,6 +637,9 @@ export function createConnection(input: any, output: any): IConnection {
 		onDocumentHighlight: (handler) => connection.onRequest(DocumentHighlightRequest.type, handler),
 		onDocumentSymbol: (handler) => connection.onRequest(DocumentSymbolRequest.type, handler),
 		onWorkspaceSymbol: (handler) => connection.onRequest(WorkspaceSymbolRequest.type, handler),
+		onCodeAction: (handler) => connection.onRequest(CodeActionRequest.type, handler),
+		onCodeLens: (handler) => connection.onRequest(CodeLensRequest.type, handler),
+		onCodeLensResolve: (handler) => connection.onRequest(CodeLensResolveRequest.type, handler),
 
 		dispose: () => connection.dispose()
 	};

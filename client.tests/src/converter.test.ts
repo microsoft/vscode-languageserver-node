@@ -14,6 +14,13 @@ import * as vscode from 'vscode';
 
 suite('Protocol Converter', () => {
 
+	function rangeEqual(actual: vscode.Range, expected: proto.Range) {
+		strictEqual(actual.start.line, expected.start.line);
+		strictEqual(actual.start.character, expected.start.character);
+		strictEqual(actual.end.line, expected.end.line);
+		strictEqual(actual.end.character, expected.end.character);
+	}
+
 	test('Position Converter', () => {
 		let position: proto.Position = { line: 1, character: 2 };
 		
@@ -329,7 +336,39 @@ suite('Protocol Converter', () => {
 		strictEqual(result.containerName, symbolInformation.containerName);
 		
 		ok(p2c.asSymbolInformations([symbolInformation]).every(value => value instanceof vscode.SymbolInformation));
-	});	
+	});
+	
+	test('Command', () => {
+		let command = proto.Command.create('title', 'commandId');
+		command.arguments = ['args'];
+		
+		let result = p2c.asCommand(command);
+		strictEqual(result.title, command.title);
+		strictEqual(result.command, command.command);
+		strictEqual(result.arguments, command.arguments);
+		
+		ok(p2c.asCommands([command]).every(elem => !!elem.title && !!elem.command));
+	});
+	
+	test('Code Lens', () => {
+		let codeLens: proto.CodeLens = proto.CodeLens.create(proto.Range.create(1,2,8,9), 'data');
+		
+		let result = p2c.asCodeLens(codeLens);
+		rangeEqual(result.range, codeLens.range);
+
+		codeLens.command = proto.Command.create('title', 'commandId');
+		result = p2c.asCodeLens(codeLens);
+		strictEqual(result.command.title, codeLens.command.title);
+		strictEqual(result.command.command, codeLens.command.command);
+		
+		ok(p2c.asCodeLenses([codeLens]).every(elem => elem instanceof vscode.CodeLens));
+	});
+	
+	test('Code Lens Preserve Data', () => {
+		let codeLens: proto.CodeLens = proto.CodeLens.create(proto.Range.create(1,2,8,9), 'data');
+		let result = c2p.asCodeLens(p2c.asCodeLens(codeLens));
+		strictEqual(result.data, codeLens.data);
+	});
 });
 
 suite('Code Converter', () => {
@@ -419,5 +458,33 @@ suite('Code Converter', () => {
 		let result = c2p.asCompletionItem(<any>item);
 		rangeEqual(result.textEdit.range, item.textEdit.range);
 		strictEqual(result.textEdit.newText, item.textEdit.newText);
+	});
+	
+	test('DiagnosticSeverity', () => {
+		strictEqual(c2p.asDiagnosticSeverity(<any>vscode.DiagnosticSeverity.Error), proto.DiagnosticSeverity.Error);
+		strictEqual(c2p.asDiagnosticSeverity(<any>vscode.DiagnosticSeverity.Warning), proto.DiagnosticSeverity.Warning);
+		strictEqual(c2p.asDiagnosticSeverity(<any>vscode.DiagnosticSeverity.Information), proto.DiagnosticSeverity.Information);
+		strictEqual(c2p.asDiagnosticSeverity(<any>vscode.DiagnosticSeverity.Hint), proto.DiagnosticSeverity.Hint);
+	});
+	
+	test('Diagnostic', () => {
+		let item: vscode.Diagnostic = new vscode.Diagnostic(new vscode.Range(1, 2, 8, 9), "message", vscode.DiagnosticSeverity.Warning);
+		item.code = 99;
+		
+		let result = c2p.asDiagnostic(<any>item);
+		rangeEqual(result.range, item.range);
+		strictEqual(result.message, item.message);
+		strictEqual(result.severity, proto.DiagnosticSeverity.Warning);
+		strictEqual(result.code, item.code);
+		ok(c2p.asDiagnostics(<any>[item]).every(elem => proto.Diagnostic.is(elem)));
+	});
+	
+	test("CodeActionContext", () => {
+		let item: vscode.CodeActionContext = {
+			diagnostics: [new vscode.Diagnostic(new vscode.Range(1, 2, 8, 9), "message", vscode.DiagnosticSeverity.Warning)]
+		};
+		
+		let result = c2p.asCodeActionContext(<any>item);
+		ok(result.diagnostics.every(elem => proto.Diagnostic.is(elem)));
 	});
 });

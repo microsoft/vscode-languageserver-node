@@ -8,6 +8,7 @@ import * as code from 'vscode';
 import * as proto from './protocol';
 import * as is from './utils/is';
 import ProtocolCompletionItem from './protocolCompletionItem';
+import ProtocolCodeLens from './protocolCodeLens';
 
 export function asOpenTextDocumentParams(textDocument: code.TextDocument): proto.DidOpenTextDocumentParams {
 	return {
@@ -98,6 +99,33 @@ function set(value, func: () => void): void {
 	}
 }
 
+export function asDiagnosticSeverity(value: code.DiagnosticSeverity): proto.DiagnosticSeverity {
+	switch (value) {
+		case code.DiagnosticSeverity.Error:
+			return proto.DiagnosticSeverity.Error;
+		case code.DiagnosticSeverity.Warning:
+			return proto.DiagnosticSeverity.Warning;
+		case code.DiagnosticSeverity.Information:
+			return proto.DiagnosticSeverity.Information;
+		case code.DiagnosticSeverity.Hint:
+			return proto.DiagnosticSeverity.Hint;
+	}
+}
+
+export function asDiagnostic(item: code.Diagnostic): proto.Diagnostic {
+	let result: proto.Diagnostic = proto.Diagnostic.create(asRange(item.range), item.message);
+	set(item.severity, () => result.severity = asDiagnosticSeverity(item.severity));
+	set(item.code, () => result.code = item.code);
+	return result;
+}
+
+export function asDiagnostics(items: code.Diagnostic[]): proto.Diagnostic[] {
+	if (is.undefined(items) || is.nil(items)) {
+		return items;
+	}
+	return items.map(asDiagnostic);
+}
+
 export function asCompletionItem(item: code.CompletionItem): proto.CompletionItem {
 	let result: proto.CompletionItem = { label: item.label };
 	set(item.detail, () => result.detail = item.detail);
@@ -124,4 +152,26 @@ export function asReferenceParams(textDocument: code.TextDocument, position: cod
 		position: asWorkerPosition(position),
 		context: { includeDeclaration: options.includeDeclaration }
 	};
+}
+
+export function asCodeActionContext(context: code.CodeActionContext): proto.CodeActionContext {
+	if (is.undefined(context) || is.nil(context)) {
+		return context;
+	}
+	return proto.CodeActionContext.create(asDiagnostics(context.diagnostics));
+}
+
+export function asCommand(item: code.Command): proto.Command {
+	let result = proto.Command.create(item.title, item.command);
+	if (is.defined(item.arguments)) result.arguments = item.arguments;
+	return result;
+}
+
+export function asCodeLens(item: code.CodeLens): proto.CodeLens {
+	let result = proto.CodeLens.create(asRange(item.range));
+	if (is.defined(item.command)) result.command = asCommand(item.command);
+	if (item instanceof ProtocolCodeLens) {
+		if (is.defined(item.data)) result.data = item.data;
+	}
+	return result;
 }

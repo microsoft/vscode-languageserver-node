@@ -6,7 +6,7 @@
 
 import { RequestType, NotificationType, ResponseError } from 'vscode-jsonrpc';
 
-import * as is from './utils/is';
+import * as Is from './utils/is';
 
 /**
  * Defines the capabilities provided by the client.
@@ -39,7 +39,7 @@ export enum TextDocumentSyncKind {
 }
 
 /**
- * Completion options
+ * Completion options.
  */
 export interface CompletionOptions {
 	/**
@@ -55,7 +55,7 @@ export interface CompletionOptions {
 }
 
 /**
- * Signature help options
+ * Signature help options.
  */
 export interface SignatureHelpOptions {
 	/**
@@ -66,8 +66,15 @@ export interface SignatureHelpOptions {
 }
 
 /**
+ * Code Lens options.
+ */
+export interface CodeLensOptions {
+	resolveProvider?: boolean;
+}
+
+/**
  * Defines the capabilities provided by the language
- * server
+ * server.
  */
 export interface ServerCapabilities {
 	/** Defines how text documents are synced. */
@@ -88,6 +95,10 @@ export interface ServerCapabilities {
 	documentSymbolProvider?: boolean;
 	/** The server provides workspace symbol support. */
 	workspaceSymbolProvider?: boolean;
+	/** The server provides code actions. */
+	codeActionProvider?: boolean;
+	/** The server provides code lens. */
+	codeLensProvider?: CodeLensOptions;
 }
 
 //---- Initialize Method ----
@@ -270,6 +281,28 @@ export interface Position {
 }
 
 /**
+ * The Position namespace provides helper functions to work with
+ * [Position](#Position) literals.
+ */
+export namespace Position {
+	/**
+	 * Creates a new Position literal from the given line and character.
+	 * @param line The position's line.
+	 * @param character The position's character.
+	 */
+	export function create(line: number, character: number): Position {
+		return { line, character };
+	}
+	/**
+	 * Checks whether the given liternal conforms to the [Position](#Position) interface.
+	 */
+	export function is(value: any): value is Position {
+		let candidate = value as Position;
+		return Is.defined(candidate) && Is.number(candidate.line) && Is.number(candidate.character);
+	}
+}
+
+/**
  * A range in a text document expressed as (zero-based) start and end positions.
  */
 export interface Range {
@@ -285,12 +318,73 @@ export interface Range {
 }
 
 /**
+ * The Range namespace provides helper functions to work with
+ * [Range](#Range) literals.
+ */
+export namespace Range {
+	/**
+	 * Create a new Range liternal.
+	 * @param start The range's start position.
+	 * @param end The range's end position.
+	 */
+	export function create(start: Position, end: Position): Range;
+	/**
+	 * Create a new Range liternal.
+	 * @param startLine The start line number.
+	 * @param startCharacter The start character.
+	 * @param endLine The end line number.
+	 * @param endCharacter The end character.
+	 */
+	export function create(startLine: number, startCharacter: number, endLine: number, endCharacter: number): Range;
+	export function create(one: Position | number, two: Position | number, three?: number, four?: number): Range {
+		if (Is.number(one) && Is.number(two) && Is.number(three) && Is.number(four)) {
+			return { start: Position.create(one, two), end: Position.create(three, four) };
+		} else if (Position.is(one) && Position.is(two)) {
+			return { start: one, end: two };
+		} else {
+			throw new Error(`Range#create called with invalid arguments[${one}, ${two}, ${three}, ${four}]`);
+		}
+	}
+	/**
+	 * Checks whether the given literal conforms to the [Range](#Range) interface.
+	 */
+	export function is(value: any): value is Range {
+		let candidate  = value as Range;
+		return Is.defined(candidate) && Position.is(candidate.start) && Position.is(candidate.end);
+	}
+}
+
+
+/**
  * Represents a location inside a resource, such as a line
  * inside a text file.
  */
-export class Location {
+export interface Location {
 	uri: string;
 	range: Range;
+}
+
+
+/**
+ * The Location namespace provides helper functions to work with
+ * [Location](#Location) literals.
+ */
+export namespace Location {
+	/**
+	 * Creates a Location literal.
+	 * @param uri The location's uri.
+	 * @param range The location's range.
+	 */
+	export function create(uri: string, range: Range): Location {
+		return { uri, range };
+	}
+	/**
+	 * Checks whether the given literal conforms to the [Location](#Location) interface.
+	 */
+	export function is(value: any): value is Location {
+		let candidate = value as Location;
+		return Is.defined(candidate) && Range.is(candidate) && (Is.string(candidate.uri) || Is.undefined(candidate.uri));
+	}
 }
 
 /**
@@ -303,6 +397,28 @@ export interface TextDocumentIdentifier {
 	uri: string;
 }
 
+
+/**
+ * The TextDocumentIdentifier namespace provides helper functions to work with
+ * [TextDocumentIdentifier](#TextDocumentIdentifier) literals.
+ */
+export namespace TextDocumentIdentifier {
+	/**
+	 * Creates a new TextDocumentIdentifier literal.
+	 * @param uri The document's uri.
+	 */
+	export function create(uri: string): TextDocumentIdentifier {
+		return { uri };
+	}
+	/**
+	 * Checks whether the given literal conforms to the [TextDocumentIdentifier](#TextDocumentIdentifier) interface.
+	 */
+	export function is(value: any): value is TextDocumentIdentifier {
+		let candidate = value as TextDocumentIdentifier;
+		return Is.defined(candidate) && Is.string(candidate.uri);
+	}
+}
+
 /**
  * A literal to define the position in a text document.
  */
@@ -311,6 +427,28 @@ export interface TextDocumentPosition extends TextDocumentIdentifier {
 	 * The position inside the text document.
 	 */
 	position: Position;
+}
+
+/**
+ * The TextDocumentPosition namespace provides helper functions to work with
+ * [TextDocumentPosition](#TextDocumentPosition) literals.
+ */
+export namespace TextDocumentPosition {
+	/**
+	 * Creates a new TextDocumentPosition
+	 * @param uri The document's uri.
+	 * @param position The position inside the document.
+	 */
+	export function create(uri: string, position: Position): TextDocumentPosition {
+		return { uri, position };
+	}
+	/**
+	 * Checks whether the given literal conforms to the [TextDocumentPosition](#TextDocumentPosition) interface.
+	 */
+	export function is(value: any): value is TextDocumentPosition {
+		let candidate = value as TextDocumentPosition;
+		return Is.defined(candidate) && TextDocumentIdentifier.is(candidate) && Position.is(candidate.position);
+	}
 }
 
 /**
@@ -429,7 +567,7 @@ export interface FileEvent {
  * results of validation runs.
  */
 export namespace PublishDiagnosticsNotification {
-	export const type: NotificationType<PublishDiagnosticsParams> = { method: 'textDocument/publishDiagnostics' };
+	export const type: NotificationType<PublishDiagnosticsParams> = { get method() { return 'textDocument/publishDiagnostics'; } };
 }
 
 /**
@@ -485,6 +623,85 @@ export interface Diagnostic {
 	 * The diagnostic message.
 	 */
 	message: string;
+}
+
+/**
+ * The Diagnostic namespace provides helper functions to work with
+ * [Diagnostic](#Diagnostic) literals.
+ */
+export namespace Diagnostic {
+	/**
+	 * Creates a new Diagnostic literal.
+	 */
+	export function create(range: Range, message: string, severity?: number, code?: number | string): Diagnostic {
+		let result: Diagnostic = { range, message };
+		if (Is.defined(severity)) {
+			result.severity = severity;
+		}
+		if (Is.defined(code)) {
+			result.code = code;
+		}
+		return result;
+	}
+	/**
+	 * Checks whether the given literal conforms to the [Diagnostic](#Diagnostic) interface.
+	 */
+	export function is(value: any): value is Diagnostic {
+		let candidate = value as Diagnostic;
+		return Is.defined(candidate)
+			&& Range.is(candidate.range)
+			&& Is.string(candidate.message)
+			&& (Is.number(candidate.severity) || Is.undefined(candidate.severity))
+			&& (Is.number(candidate.code) || Is.string(candidate.code) || Is.undefined(candidate.code));
+	}
+}
+
+
+/**
+ * Represents a reference to a command. Provides a title which
+ * will be used to represent a command in the UI and, optionally,
+ * an array of arguments which will be passed to the command handler
+ * function when invoked.
+ */
+export interface Command {
+	/**
+	 * Title of the command, like `save`.
+	 */
+	title: string;
+	/**
+	 * The identifier of the actual command handler.
+	 */
+	command: string;
+	/**
+	 * Arguments that the command handler should be
+	 * invoked with.
+	 */
+	arguments?: any[];
+}
+
+
+/**
+ * The Command namespace provides helper functions to work with
+ * [Command](#Command) literals.
+ */
+export namespace Command {
+	/**
+	 * Creates a new Command literal.
+	 */
+	export function create(title: string, command: string, ...args:any[]): Command {
+		let result: Command = { title, command };
+		if (Is.defined(args) && args.length > 0) {
+			result.arguments = args;
+		}
+		return result;
+	}
+	/**
+	 * Checks whether the given literal conforms to the [Command](#Command) interface.
+	 */
+	export function is(value: any): value is Command {
+		let candidate = value as Command;
+		return Is.defined(candidate) && Is.string(candidate.title) && Is.string(candidate.title);
+	}
 }
 
 //---- Completion Support --------------------------
@@ -645,7 +862,7 @@ export namespace TextEdit {
  * is of type [CompletionItem[]](#CompletionItem) or a Thenable that resolves to such.
  */
 export namespace CompletionRequest {
-	export const type: RequestType<TextDocumentPosition, CompletionItem[], void> = { method: 'textDocument/completion' };
+	export const type: RequestType<TextDocumentPosition, CompletionItem[], void> = { get method() { return 'textDocument/completion'; } };
 }
 
 /**
@@ -654,7 +871,7 @@ export namespace CompletionRequest {
  * is of type [CompletionItem](#CompletionItem) or a Thenable that resolves to such.
  */
 export namespace CompletionResolveRequest {
-	export const type: RequestType<CompletionItem, CompletionItem, void> = { method: 'completionItem/resolve' };
+	export const type: RequestType<CompletionItem, CompletionItem, void> = { get method() { return 'completionItem/resolve'; } };
 }
 
 //---- Hover Support -------------------------------
@@ -682,7 +899,7 @@ export interface Hover {
  * type [Hover](#Hover) or a Thenable that resolves to such.
  */
 export namespace HoverRequest {
-	export const type: RequestType<TextDocumentPosition, Hover, void> = { method: 'textDocument/hover' };
+	export const type: RequestType<TextDocumentPosition, Hover, void> = { get method() { return 'textDocument/hover'; } };
 }
 
 //---- SignatureHelp ----------------------------------
@@ -752,10 +969,10 @@ export interface SignatureInformation {
 export namespace SignatureInformation {
 	export function create(label: string, documentation?: string, ...parameters: ParameterInformation[]): SignatureInformation {
 		let result: SignatureInformation = { label };
-		if (is.defined(documentation)) {
+		if (Is.defined(documentation)) {
 			result.documentation = documentation;
 		}
-		if (is.defined(parameters)) {
+		if (Is.defined(parameters)) {
 			result.parameters = parameters;
 		} else {
 			result.parameters = [];
@@ -788,7 +1005,7 @@ export interface SignatureHelp {
 }
 
 export namespace SignatureHelpRequest {
-	export const type: RequestType<TextDocumentPosition, SignatureHelp, void> = { method: 'textDocument/signatureHelp' };
+	export const type: RequestType<TextDocumentPosition, SignatureHelp, void> = { get method() { return 'textDocument/signatureHelp'; } };
 }
 
 //---- Goto Definition -------------------------------------
@@ -807,7 +1024,7 @@ export type Definition = Location | Location[];
  * Thenable that resolves to such.
  */
 export namespace DefinitionRequest {
-	export const type: RequestType<TextDocumentPosition, Definition, void> = { method: 'textDocument/definition' };
+	export const type: RequestType<TextDocumentPosition, Definition, void> = { get method() { return 'textDocument/definition'; } };
 }
 
 //---- Reference Provider ----------------------------------
@@ -837,7 +1054,7 @@ export interface ReferenceParams extends TextDocumentPosition {
  * [Location[]](#Location) or a Thenable that resolves to such.
  */
 export namespace ReferencesRequest {
-	export const type: RequestType<ReferenceParams, Location[], void> = { method: 'textDocument/references' };
+	export const type: RequestType<ReferenceParams, Location[], void> = { get method() { return 'textDocument/references'; } };
 }
 
 //---- Document Highlight ----------------------------------
@@ -891,7 +1108,7 @@ export namespace DocumentHighlight {
 	 */
 	export function create(range: Range, kind?: number): DocumentHighlight {
 		let result: DocumentHighlight = { range };
-		if (is.number(kind)) {
+		if (Is.number(kind)) {
 			result.kind = kind;
 		}
 		return result;
@@ -905,7 +1122,7 @@ export namespace DocumentHighlight {
  * (#DocumentHighlight) or a Thenable that resolves to such.
  */
 export namespace DocumentHighlightRequest {
-	export const type: RequestType<TextDocumentPosition, DocumentHighlight[], void> = { method: 'textDocument/documentHighlight' };
+	export const type: RequestType<TextDocumentPosition, DocumentHighlight[], void> = { get method() { return 'textDocument/documentHighlight'; } };
 }
 
 //---- Document Symbol Provider ---------------------------
@@ -990,7 +1207,7 @@ export namespace SymbolInformation {
  * that resolves to such.
  */
 export namespace DocumentSymbolRequest {
-	export const type: RequestType<TextDocumentIdentifier, SymbolInformation[], void> = { method: 'textDocument/documentSymbol' };
+	export const type: RequestType<TextDocumentIdentifier, SymbolInformation[], void> = { get method() { return 'textDocument/documentSymbol'; } };
 }
 
 //---- Workspace Symbol Provider ---------------------------
@@ -1012,5 +1229,122 @@ export interface WorkspaceSymbolParams {
  * resolves to such.
  */
 export namespace  WorkspaceSymbolRequest {
-	export const type: RequestType<WorkspaceSymbolParams, SymbolInformation[], void> = { method: 'workspace/symbol' };
+	export const type: RequestType<WorkspaceSymbolParams, SymbolInformation[], void> = { get method() { return 'workspace/symbol'; } };
+}
+
+//---- Code Action Provider ----------------------------------
+
+/**
+ * Contains additional diagnostic information about the context in which
+ * a [code action](#CodeActionProvider.provideCodeActions) is run.
+ */
+export interface CodeActionContext {
+	/**
+	 * An array of diagnostics.
+	 *
+	 * @readonly
+	 */
+	diagnostics: Diagnostic[];
+}
+
+/**
+ * The CodeActionContext namespace provides helper functions to work with
+ * [CodeActionContext](#CodeActionContext) literals.
+ */
+export namespace CodeActionContext {
+	/**
+	 * Creates a new CodeActionContext literal.
+	 */
+	export function create(diagnostics: Diagnostic[]): CodeActionContext {
+		return { diagnostics };
+	}
+	/**
+	 * Checks whether the given literal conforms to the [CodeActionContext](#CodeActionContext) interface.
+	 */
+	export function is(value: any): value is CodeActionContext {
+		let candidate = value as CodeActionContext;
+		return Is.defined(candidate) && Is.typedArray<Diagnostic[]>(candidate.diagnostics, Diagnostic.is);
+	}
+}
+
+/**
+ * Params for the CodeActionRequest
+ */
+export interface CodeActionParams {
+	/** The document in which the command was invoked. */
+	textDocument: TextDocumentIdentifier;
+	/* The range for which the command was invoked. */
+	range: Range;
+	/* context Context carrying additional information. */
+	context: CodeActionContext;
+}
+
+/**
+ * A request to provide commands for the given text document and range.
+ */
+export namespace CodeActionRequest {
+	export const type: RequestType<CodeActionParams, Command[], void> = { get method() { return 'textDocument/codeAction'; } };
+}
+
+//---- Code Lens Provider -------------------------------------------
+
+/**
+ * A code lens represents a [command](#Command) that should be shown along with
+ * source text, like the number of references, a way to run tests, etc.
+ *
+ * A code lens is _unresolved_ when no command is associated to it. For performance
+ * reasons the creation of a code lens and resolving should be done to two stages.
+ */
+export interface CodeLens {
+	/**
+	 * The range in which this code lens is valid. Should only span a single line.
+	 */
+	range: Range;
+	/**
+	 * The command this code lens represents.
+	 */
+	command?: Command;
+
+	/**
+	 * An data entry field that is preserved on a code lens item between
+	 * a [CodeLensRequest](#CodeLensRequest) and a [CodeLensResolveRequest]
+	 * (#CodeLensResolveRequest)
+	 */
+	data?: any
+}
+
+/**
+ * The CodeLens namespace provides helper functions to work with
+ * [CodeLens](#CodeLens) literals.
+ */
+export namespace CodeLens {
+	/**
+	 * Creates a new CodeLens literal.
+	 */
+	export function create(range: Range, data?: any): CodeLens {
+		let result: CodeLens = { range };
+		if (Is.defined(data)) result.data = data;
+		return result;
+	}
+	/**
+	 * Checks whether the given literal conforms to the [CodeLens](#CodeLens) interface.
+	 */
+	export function is(value: any): value is CodeLens {
+		let candidate = value as CodeLens;
+		return Is.defined(candidate) && Range.is(candidate.range) && (Is.undefined(candidate.command) || Command.is(candidate.command));
+	}
+}
+
+/**
+ * A request to provide code lens for the given text document.
+ */
+export namespace CodeLensRequest {
+	export const type: RequestType<TextDocumentIdentifier, CodeLens[], void> = { get method() { return 'textDocument/codeLens'; } };
+}
+
+/**
+ * A request to resolve a command for a given code lens.
+ */
+export namespace CodeLensResolveRequest {
+	export const type: RequestType<CodeLens, CodeLens, void> = { get method() { return 'codeLens/resolve'; } };
 }

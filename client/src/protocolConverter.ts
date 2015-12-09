@@ -8,6 +8,7 @@ import * as code from 'vscode';
 import * as proto from './protocol';
 import * as is from './utils/is';
 import ProtocolCompletionItem from './protocolCompletionItem';
+import ProtocolCodeLens from './protocolCodeLens';
 
 export function asDiagnostics(diagnostics: proto.Diagnostic[]): code.Diagnostic[] {
 	return diagnostics.map(asDiagnostic);
@@ -163,4 +164,25 @@ export function asSymbolInformation(item: proto.SymbolInformation, uri?: code.Ur
 		item.location.uri ? code.Uri.parse(item.location.uri) : uri);
 	set(item.containerName, () => result.containerName = item.containerName);
 	return result;
+}
+
+export function asCommand(item: proto.Command): code.Command {
+	let result: code.Command = { title: item.title, command: item.command };
+	set(item.arguments, () => result.arguments = item.arguments);
+	return result;
+}
+
+export function asCommands(items: proto.Command[]): code.Command[] {
+	return items.map(asCommand);
+}
+
+export function asCodeLens(item: proto.CodeLens): code.CodeLens {
+	let result: ProtocolCodeLens = new ProtocolCodeLens(asRange(item.range));
+	if (is.defined(item.command)) result.command = asCommand(item.command);
+	if (is.defined(item.data)) result.data = item.data;
+	return result;
+}
+
+export function asCodeLenses(items: proto.CodeLens[]): code.CodeLens[] {
+	return items.map(asCodeLens);
 }

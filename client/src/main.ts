@@ -10,9 +10,9 @@ import ChildProcess = cp.ChildProcess;
 import {
 		workspace as Workspace, window as Window, languages as Languages, extensions as Extensions, TextDocumentChangeEvent, TextDocument, Disposable,
 		FileSystemWatcher, Uri, DiagnosticCollection, DocumentSelector,
-		CancellationToken, Hover as VHover, Position as VPosition, Location as VLocation,
+		CancellationToken, Hover as VHover, Position as VPosition, Location as VLocation, Range as VRange,
 		CompletionItem as VCompletionItem, SignatureHelp as VSignatureHelp, Definition as VDefinition, DocumentHighlight as VDocumentHighlight,
-		SymbolInformation as VSymbolInformation
+		SymbolInformation as VSymbolInformation, CodeActionContext as VCodeActionContext, Command as VCommand, CodeLens as VCodeLens
 } from 'vscode';
 
 import {
@@ -35,7 +35,9 @@ import {
 		CompletionRequest, CompletionResolveRequest, CompletionItem,
 		HoverRequest, Hover,
 		SignatureHelpRequest, DefinitionRequest, Definition, ReferencesRequest, DocumentHighlightRequest, DocumentHighlight,
-		DocumentSymbolRequest, SymbolInformation, SymbolKind, WorkspaceSymbolRequest, WorkspaceSymbolParams
+		DocumentSymbolRequest, SymbolInformation, SymbolKind, WorkspaceSymbolRequest, WorkspaceSymbolParams,
+		CodeActionRequest, CodeActionParams,
+		CodeLensRequest, CodeLensResolveRequest, CodeLens
 } from './protocol';
 
 import * as c2p from './codeConverter';
@@ -720,6 +722,8 @@ export class LanguageClient {
 		this.hookDocumentHighlightProvider(documentSelector, connection);
 		this.hookDocumentSymbolProvider(documentSelector, connection);
 		this.hookWorkspaceSymbolProvider(connection);
+		this.hookCodeActionsProvider(documentSelector, connection);
+		this.hookCodeLensProvider(documentSelector, connection);
 	}
 
 	private hookCompletionProvider(documentSelector: DocumentSelector, connection: IConnection): void {
@@ -841,6 +845,47 @@ export class LanguageClient {
 					error => Promise.resolve([])
 				);
 			}
+		}));
+	}
+
+	private hookCodeActionsProvider(documentSelector: DocumentSelector, connection: IConnection): void {
+		if (!this._capabilites.codeActionProvider) {
+			return;
+		}
+		this._providers.push(Languages.registerCodeActionsProvider(documentSelector, {
+			provideCodeActions: (document: TextDocument, range: VRange, context: VCodeActionContext, token: CancellationToken): Thenable<VCommand[]> => {
+				let params: CodeActionParams = {
+					textDocument: c2p.asTextDocumentIdentifier(document),
+					range: c2p.asRange(range),
+					context: c2p.asCodeActionContext(context)
+				};
+				return this.doSendRequest(connection, CodeActionRequest.type, params).then(
+					p2c.asCommands,
+					error => Promise.resolve([])
+				)
+			}
+		}));
+	}
+
+	private hookCodeLensProvider(documentSelector: DocumentSelector, connection: IConnection): void {
+		if (!this._capabilites.codeLensProvider) {
+			return;
+		}
+		this._providers.push(Languages.registerCodeLensProvider(documentSelector, {
+			provideCodeLenses: (document: TextDocument, token: CancellationToken): Thenable<VCodeLens[]> => {
+				return this.doSendRequest(connection, CodeLensRequest.type, c2p.asTextDocumentIdentifier(document)).then(
+					p2c.asCodeLenses,
+					error => Promise.resolve([])
+				)
+			},
+			resolveCodeLens: (this._capabilites.codeLensProvider.resolveProvider)
+				? (codeLens: VCodeLens, token: CancellationToken): Thenable<CodeLens> => {
+					return this.doSendRequest(connection, CodeLensResolveRequest.type, c2p.asCodeLens(codeLens)).then(
+						p2c.asCodeLens,
+						error => codeLens
+					)
+				}
+				: undefined
 		}));
 	}
 }
