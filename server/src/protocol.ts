@@ -69,7 +69,24 @@ export interface SignatureHelpOptions {
  * Code Lens options.
  */
 export interface CodeLensOptions {
+	/**
+	 * Code lens has a resolve provider as well.
+	 */
 	resolveProvider?: boolean;
+}
+
+/**
+ * Format document on type options
+ */
+export interface DocumentOnTypeFormattingOptions {
+	/**
+	 * A character on which formatting should be triggered, like `}`.
+	 */
+	firstTriggerCharacter: string;
+	/**
+	 * More trigger characters.
+	 */
+	moreTriggerCharacter?: string[]
 }
 
 /**
@@ -77,30 +94,66 @@ export interface CodeLensOptions {
  * server.
  */
 export interface ServerCapabilities {
-	/** Defines how text documents are synced. */
+	/**
+	 * Defines how text documents are synced.
+	 */
 	textDocumentSync?: number;
-	/** The server provides hover support. */
+	/**
+	 * The server provides hover support.
+	 */
 	hoverProvider?: boolean;
-	/** The server provides completion support. */
+	/**
+	 * The server provides completion support.
+	 */
 	completionProvider?: CompletionOptions;
-	/** The server provides signature help support. */
+	/**
+	 * The server provides signature help support.
+	 */
 	signatureHelpProvider?: SignatureHelpOptions;
-	/** The server provides goto definition support. */
+	/**
+	 * The server provides goto definition support.
+	 */
 	definitionProvider?: boolean;
-	/** The server provides find references support. */
+	/**
+	 * The server provides find references support.
+	 */
 	referencesProvider?: boolean;
-	/** The server provides document highlight support. */
+	/**
+	 * The server provides document highlight support.
+	 */
 	documentHighlightProvider?: boolean;
-	/** The server provides document symbol support. */
+	/**
+	 * The server provides document symbol support.
+	 */
 	documentSymbolProvider?: boolean;
-	/** The server provides workspace symbol support. */
+	/**
+	 * The server provides workspace symbol support.
+	 */
 	workspaceSymbolProvider?: boolean;
-	/** The server provides code actions. */
+	/**
+	 * The server provides code actions.
+	 */
 	codeActionProvider?: boolean;
-	/** The server provides code lens. */
+	/**
+	 * The server provides code lens.
+	 */
 	codeLensProvider?: CodeLensOptions;
-	/** The server provides document formatting. */
-	documentFormatting?: boolean;
+	/**
+	 * The server provides document formatting.
+	 */
+	documentFormattingProvider?: boolean;
+	/**
+	 * The server provides document range formatting.
+	 */
+	documentRangeFormattingProvider?: boolean;
+	/**
+	 * The server provides document formatting on typing.
+	 */
+	documentOnTypeFormattingProvider?: DocumentOnTypeFormattingOptions;
+	/**
+	 * The server provides rename support.
+	 */
+	renameProvider?: boolean
 }
 
 //---- Initialize Method ----
@@ -209,13 +262,21 @@ export interface DidChangeConfigurationParams {
  * The message type
  */
 export enum MessageType {
-	/** An error message. */
+	/**
+	 * An error message.
+	 */
 	Error = 1,
-	/** A warning message. */
+	/**
+	 * A warning message.
+	 */
 	Warning = 2,
-	/** An information message. */
+	/**
+	 * An information message.
+	 */
 	Info = 3,
-	/** A log message. */
+	/**
+	 * A log message.
+	 */
 	Log = 4
 }
 
@@ -544,11 +605,17 @@ export interface DidChangeWatchedFilesParams {
  * The file event type
  */
 export enum FileChangeType {
-	/** The file got created. */
+	/**
+	 * The file got created.
+	 */
 	Created = 1,
-	/** The file got changed. */
+	/**
+	 * The file got changed.
+	 */
 	Changed = 2,
-	/** The file got deleted. */
+	/**
+	 * The file got deleted.
+	 */
 	Deleted = 3
 }
 
@@ -556,9 +623,13 @@ export enum FileChangeType {
  * An event describing a file change.
  */
 export interface FileEvent {
-	/** The file's uri. */
+	/**
+	 * The file's uri.
+	 */
 	uri: string;
-	/** teh change type. */
+	/**
+	 * The change type.
+	 */
 	type: number;
 }
 
@@ -591,13 +662,21 @@ export interface PublishDiagnosticsParams {
  * The diagnostic's serverity.
  */
 export enum DiagnosticSeverity {
-	/** Reports an error. */
+	/**
+	 * Reports an error.
+	 */
 	Error = 1,
-	/** Reports a warning. */
+	/**
+	 * Reports a warning.
+	 */
 	Warning = 2,
-	/** Reports an information. */
+	/**
+	 * Reports an information.
+	 */
 	Information = 3,
-	/** Reports a hint. */
+	/**
+	 * Reports a hint.
+	 */
 	Hint = 4
 }
 
@@ -855,6 +934,118 @@ export namespace TextEdit {
 	 */
 	export function del(range: Range): TextEdit {
 		return { range, newText: '' };
+	}
+}
+
+/**
+ * A workspace edit represents changes to resource managed
+ * in the workspace.
+ */
+export interface WorkspaceEdit {
+	// creates: { [uri: string]: string; };
+	/**
+	 * Holds changes to existing resources.
+	 */
+	changes: { [uri: string]: TextEdit[]; };
+	// deletes: string[];
+}
+
+/**
+ * A change to capture text edits for existing resources.
+ */
+export interface TextEditChange {
+	/**
+	 * Gets all text edits for this change.
+	 *
+	 * @return An array of text edits.
+	 */
+	all(): TextEdit[];
+
+	/**
+	 * Clears the edits for this change.
+	 */
+	clear(): void;
+
+	/**
+	 * Insert the given text at the given position.
+	 *
+	 * @param position A position.
+	 * @param newText A string.
+	 */
+	insert(position: Position, newText: string): void;
+
+	/**
+	 * Replace the given range with given text for the given resource.
+	 *
+	 * @param range A range.
+	 * @param newText A string.
+	 */
+	replace(range: Range, newText: string): void;
+
+	/**
+	 * Delete the text at the given range.
+	 *
+	 * @param range A range.
+	 */
+	delete(range: Range): void;
+}
+
+/**
+ * A workspace change helps constructing changes to a workspace.
+ */
+export class WorkspaceChange {
+	private workspaceEdit: WorkspaceEdit;
+	private textEditChanges: { [uri: string]: TextEditChange };
+
+	constructor() {
+		this.workspaceEdit = {
+			changes: Object.create(null)
+		};
+		this.textEditChanges = Object.create(null);
+	}
+
+	/**
+	 * Returns the underlying [WorkspaceEdit](#WorkspaceEdit) literal
+	 * use to be returned from a workspace edit operation like rename.
+	 */
+	public get edit(): WorkspaceEdit {
+		return this.workspaceEdit;
+	}
+
+	/**
+	 * Returns the [TextEditChange](#TextEditChange) to manage text edits
+	 * for resources.
+	 */
+	public getTextEditChange(uri: string): TextEditChange {
+		class TextEditChangeImpl implements TextEditChange {
+			private edits: TextEdit[];
+			constructor(edits: TextEdit[]) {
+				this.edits = edits;
+			}
+			insert(position: Position, newText: string): void {
+				this.edits.push(TextEdit.insert(position, newText));
+			}
+			replace(range: Range, newText: string): void {
+				this.edits.push(TextEdit.replace(range, newText));
+			}
+			delete(range: Range): void {
+				this.edits.push(TextEdit.del(range));
+			}
+			all(): TextEdit[] {
+				return this.edits;
+			}
+			clear(): void {
+				this.edits.splice(0, this.edits.length);
+			}
+		}
+		let result = this.textEditChanges[uri];
+		if (!result) {
+			let edits: TextEdit[] = [];
+			this.workspaceEdit.changes[uri] = edits;
+			result = new TextEditChangeImpl(edits);
+			this.textEditChanges[uri] = result;
+		}
+		return result;
 	}
 }
 
@@ -1273,11 +1464,17 @@ export namespace CodeActionContext {
  * Params for the CodeActionRequest
  */
 export interface CodeActionParams {
-	/** The document in which the command was invoked. */
+	/**
+	 * The document in which the command was invoked.
+	 */
 	textDocument: TextDocumentIdentifier;
-	/* The range for which the command was invoked. */
+	/**
+	 * The range for which the command was invoked.
+	 */
 	range: Range;
-	/* context Context carrying additional information. */
+	/**
+	 * Context carrying additional information.
+	 */
 	context: CodeActionContext;
 }
 
@@ -1306,7 +1503,6 @@ export interface CodeLens {
 	 * The command this code lens represents.
 	 */
 	command?: Command;
-
 	/**
 	 * An data entry field that is preserved on a code lens item between
 	 * a [CodeLensRequest](#CodeLensRequest) and a [CodeLensResolveRequest]
@@ -1392,9 +1588,13 @@ export namespace FormattingOptions {
 }
 
 export interface DocumentFormattingParams {
-	/** The document to format. */
+	/**
+	 * The document to format.
+	 */
 	textDocument: TextDocumentIdentifier;
-	/** The format options */
+	/**
+	 * The format options
+	 */
 	options: FormattingOptions;
 }
 
@@ -1403,4 +1603,78 @@ export interface DocumentFormattingParams {
  */
 export namespace DocumentFormattingRequest {
 	export const type: RequestType<DocumentFormattingParams, TextEdit[], void> = { get method() { return 'textDocument/formatting'; } };
+}
+
+export interface DocumentRangeFormattingParams {
+	/**
+	 * The document to format.
+	 */
+	textDocument: TextDocumentIdentifier;
+	/**
+	 * The range to format
+	 */
+	range: Range;
+	/**
+	 * The format options
+	 */
+	options: FormattingOptions;
+}
+
+/**
+ * A request to to format a range in a document.
+ */
+export namespace DocumentRangeFormattingRequest {
+	export const type: RequestType<DocumentRangeFormattingParams, TextEdit[], void> = { get method() { return 'textDocument/rangeFormatting'; } };
+}
+
+export interface DocumentOnTypeFormattingParams {
+	/**
+	 * The document to format.
+	 */
+	textDocument: TextDocumentIdentifier;
+	/**
+	 * The position at which this request was send.
+	 */
+	position: Position;
+	/**
+	 * The character that has been typed.
+	 */
+	ch: string;
+	/**
+	 * The format options.
+	 */
+	options: FormattingOptions;
+}
+
+/**
+ * A request to format a document on type.
+ */
+export namespace DocumentOnTypeFormattingRequest {
+	export const type: RequestType<DocumentOnTypeFormattingParams, TextEdit[], void> = { get method() { return 'textDocument/onTypeFormatting'; } };
+}
+
+//---- Rename ----------------------------------------------
+
+export interface RenameParams {
+	/**
+	 * The document to format.
+	 */
+	textDocument: TextDocumentIdentifier;
+	/**
+	 * The position at which this request was send.
+	 */
+	position: Position;
+	/**
+	 * The new name of the symbol. If the given name is not valid the
+	 * request must return a [ResponseError](#ResponseError) with an
+	 * appropriate message set.
+	 */
+	newName: string;
+}
+
+/**
+ * A request to rename a symbol.
+ */
+export namespace RenameRequest {
+	export const type: RequestType<RenameParams, WorkspaceEdit, void> = { get method() { return 'textDocument/rename'; } };
 }

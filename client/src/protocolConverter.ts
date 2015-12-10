@@ -190,3 +190,10 @@ export function asCodeLens(item: proto.CodeLens): code.CodeLens {
 export function asCodeLenses(items: proto.CodeLens[]): code.CodeLens[] {
 	return items.map(asCodeLens);
 }
+
+export function asWorkspaceEdit(item: proto.WorkspaceEdit): code.WorkspaceEdit {
+	let result = new code.WorkspaceEdit();
+	let keys = Object.keys(item.changes);
+	keys.forEach(key => result.set(code.Uri.parse(key), asTextEdits(item.changes[key])));
+	return result;
+}

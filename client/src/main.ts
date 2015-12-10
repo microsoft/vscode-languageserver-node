@@ -13,7 +13,7 @@ import {
 		CancellationToken, Hover as VHover, Position as VPosition, Location as VLocation, Range as VRange,
 		CompletionItem as VCompletionItem, SignatureHelp as VSignatureHelp, Definition as VDefinition, DocumentHighlight as VDocumentHighlight,
 		SymbolInformation as VSymbolInformation, CodeActionContext as VCodeActionContext, Command as VCommand, CodeLens as VCodeLens,
-		FormattingOptions as VFormattingOptions, TextEdit as VTextEdit
+		FormattingOptions as VFormattingOptions, TextEdit as VTextEdit, WorkspaceEdit as VWorkspaceEdit
 } from 'vscode';
 
 import {
@@ -39,7 +39,9 @@ import {
 		DocumentSymbolRequest, SymbolInformation, SymbolKind, WorkspaceSymbolRequest, WorkspaceSymbolParams,
 		CodeActionRequest, CodeActionParams,
 		CodeLensRequest, CodeLensResolveRequest, CodeLens,
-		DocumentFormattingRequest, DocumentFormattingParams, FormattingOptions
+		DocumentFormattingRequest, DocumentFormattingParams, FormattingOptions, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
+		DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams,
+		RenameRequest, RenameParams
 } from './protocol';
 
 import * as c2p from './codeConverter';
@@ -727,6 +729,9 @@ export class LanguageClient {
 		this.hookCodeActionsProvider(documentSelector, connection);
 		this.hookCodeLensProvider(documentSelector, connection);
 		this.hookDocumentFormattingProvider(documentSelector, connection);
+		this.hookDocumentRangeFormattingProvider(documentSelector, connection);
+		this.hookDocumentOnTypeFormattingProvider(documentSelector, connection);
+		this.hookRenameProvider(documentSelector, connection);
 	}
 
 	private hookCompletionProvider(documentSelector: DocumentSelector, connection: IConnection): void {
@@ -739,7 +744,7 @@ export class LanguageClient {
 				return this.doSendRequest(connection, CompletionRequest.type, c2p.asTextDocumentPosition(document, position)). then(
 					p2c.asCompletionItems,
 					error => Promise.resolve([])
-				)
+				);
 			},
 			resolveCompletionItem: this._capabilites.completionProvider.resolveProvider
 				? (item: VCompletionItem, token: CancellationToken): Thenable<VCompletionItem> => {
@@ -762,7 +767,7 @@ export class LanguageClient {
 				return this.doSendRequest(connection, HoverRequest.type, c2p.asTextDocumentPosition(document, position)).then(
 					p2c.asHover,
 					error => Promise.resolve(null)
-				)
+				);
 			}
 		}));
 	}
@@ -865,7 +870,7 @@ export class LanguageClient {
 				return this.doSendRequest(connection, CodeActionRequest.type, params).then(
 					p2c.asCommands,
 					error => Promise.resolve([])
-				)
+				);
 			}
 		}));
 	}
@@ -879,21 +884,21 @@ export class LanguageClient {
 				return this.doSendRequest(connection, CodeLensRequest.type, c2p.asTextDocumentIdentifier(document)).then(
 					p2c.asCodeLenses,
 					error => Promise.resolve([])
-				)
+				);
 			},
 			resolveCodeLens: (this._capabilites.codeLensProvider.resolveProvider)
 				? (codeLens: VCodeLens, token: CancellationToken): Thenable<CodeLens> => {
 					return this.doSendRequest(connection, CodeLensResolveRequest.type, c2p.asCodeLens(codeLens)).then(
 						p2c.asCodeLens,
 						error => codeLens
-					)
+					);
 				}
 				: undefined
 		}));
 	}
 
 	private hookDocumentFormattingProvider(documentSelector: DocumentSelector, connection: IConnection): void {
-		if (!this._capabilites.documentFormatting) {
+		if (!this._capabilites.documentFormattingProvider) {
 			return;
 		}
 		this._providers.push(Languages.registerDocumentFormattingEditProvider(documentSelector, {
@@ -901,10 +906,69 @@ export class LanguageClient {
 				let params: DocumentFormattingParams = {
 					textDocument: c2p.asTextDocumentIdentifier(document),
 					options: c2p.asFormattingOptions(options)
-				}
+				};
 				return this.doSendRequest(connection, DocumentFormattingRequest.type, params).then(
 					p2c.asTextEdits,
 					error => Promise.resolve([])
+				);
+			}
+		}));
+	}
+
+	private hookDocumentRangeFormattingProvider(documentSelector: DocumentSelector, connection: IConnection): void {
+		if (!this._capabilites.documentRangeFormattingProvider) {
+			return;
+		}
+		this._providers.push(Languages.registerDocumentRangeFormattingEditProvider(documentSelector, {
+			provideDocumentRangeFormattingEdits: (document: TextDocument, range: VRange, options: VFormattingOptions, token: CancellationToken): Thenable<VTextEdit[]> => {
+				let params: DocumentRangeFormattingParams = {
+					textDocument: c2p.asTextDocumentIdentifier(document),
+					range: c2p.asRange(range),
+					options: c2p.asFormattingOptions(options)
+				};
+				return this.doSendRequest(connection, DocumentRangeFormattingRequest.type, params).then(
+					p2c.asTextEdits,
+					error => Promise.resolve([])
+				);
+			}
+		}));
+	}
+
+	private hookDocumentOnTypeFormattingProvider(documentSelector: DocumentSelector, connection: IConnection): void {
+		if (!this._capabilites.documentOnTypeFormattingProvider) {
+			return;
+		}
+		let formatCapabilities = this._capabilites.documentOnTypeFormattingProvider;
+		this._providers.push(Languages.registerOnTypeFormattingEditProvider(documentSelector, {
+			provideOnTypeFormattingEdits: (document: TextDocument, position: VPosition, ch: string, options: VFormattingOptions, token: CancellationToken): Thenable<VTextEdit[]> => {
+				let params: DocumentOnTypeFormattingParams = {
+					textDocument: c2p.asTextDocumentIdentifier(document),
+					position: c2p.asPosition(position),
+					ch: ch,
+					options: c2p.asFormattingOptions(options)
+				};
+				return this.doSendRequest(connection, DocumentOnTypeFormattingRequest.type, params).then(
+					p2c.asTextEdits,
+					error => Promise.resolve([])
+				);
+			}
+		}, formatCapabilities.firstTriggerCharacter, ...formatCapabilities.moreTriggerCharacter));
+	}
+
+	private hookRenameProvider(documentSelector: DocumentSelector, connection: IConnection): void {
+		if (!this._capabilites.renameProvider) {
+			return;
+		}
+		this._providers.push(Languages.registerRenameProvider(documentSelector, {
+			provideRenameEdits: (document: TextDocument, position: VPosition, newName: string, token: CancellationToken): Thenable<VWorkspaceEdit> => {
+				let params: RenameParams = {
+					textDocument: c2p.asTextDocumentIdentifier(document),
+					position: c2p.asPosition(position),
+					newName: newName
+				};
+				return this.doSendRequest(connection, RenameRequest.type, params).then(
+					p2c.asWorkspaceEdit,
+					(error: ResponseError<void>) => Promise.resolve(new Error(error.message))
 				)
 			}
 		}));

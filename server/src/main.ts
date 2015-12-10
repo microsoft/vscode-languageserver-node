@@ -23,14 +23,16 @@ import {
 		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Range, Position, Location,
 		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSyncKind,
 		HoverRequest, Hover,
-		CompletionRequest, CompletionResolveRequest, CompletionOptions, CompletionItemKind, CompletionItem, TextEdit,
+		CompletionRequest, CompletionResolveRequest, CompletionOptions, CompletionItemKind, CompletionItem, TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
 		SignatureHelpRequest, SignatureHelp, SignatureInformation, ParameterInformation,
 		DefinitionRequest, Definition, ReferencesRequest, ReferenceParams,
 		DocumentHighlightRequest, DocumentHighlight, DocumentHighlightKind,
 		DocumentSymbolRequest, SymbolInformation, SymbolKind, WorkspaceSymbolRequest, WorkspaceSymbolParams,
 		CodeActionRequest, CodeActionParams, CodeActionContext, Command,
 		CodeLensRequest, CodeLensResolveRequest, CodeLens, CodeLensOptions,
-		DocumentFormattingRequest, DocumentFormattingParams
+		DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
+		DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams,
+		RenameRequest, RenameParams
 	} from './protocol';
 
 import { Event, Emitter } from './utils/events';
@@ -48,13 +50,15 @@ export {
 		PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Range, Position, Location,
 		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSyncKind,
 		Hover,
-		CompletionOptions, CompletionItemKind, CompletionItem, TextEdit,
+		CompletionOptions, CompletionItemKind, CompletionItem, TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
 		SignatureHelp, SignatureInformation, ParameterInformation,
 		Definition, ReferenceParams,  DocumentHighlight, DocumentHighlightKind,
 		SymbolInformation, SymbolKind, WorkspaceSymbolParams,
 		CodeActionParams, CodeActionContext, Command,
 		CodeLensRequest, CodeLensResolveRequest, CodeLens, CodeLensOptions,
-		DocumentFormattingRequest, DocumentFormattingParams
+		DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
+		DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams,
+		RenameRequest, RenameParams
 }
 export { Event }
 
@@ -557,11 +561,32 @@ export interface IConnection {
 	onCodeLensResolve(handler: IRequestHandler<CodeLens, CodeLens, void>): void;
 
 	/**
-	 * Install a handler for the document formatting request.
+	 * Installs a handler for the document formatting request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
 	onDocumentFormatting(handler: IRequestHandler<DocumentFormattingParams, TextEdit[], void>): void;
+
+	/**
+	 * Installs a handler for the document range formatting request.
+	 *
+	 * @param handler The corresponding handler.
+	 */
+	onDocumentRangeFormatting(handler: IRequestHandler<DocumentRangeFormattingParams, TextEdit[], void>): void;
+
+	/**
+	 * Installs a handler for the document on type formatting request.
+	 *
+	 * @param handler The corresponding handler.
+	 */
+	onDocumentOnTypeFormatting(handler: IRequestHandler<DocumentOnTypeFormattingParams, TextEdit[], void>): void;
+
+	/**
+	 * Installs a handler for rename request.
+	 *
+	 * @param handler The corresponding handler.
+	 */
+	onRenameRequest(handler: IRequestHandler<RenameParams, WorkspaceEdit, void>): void;
 	/**
 	 * Disposes the connection
 	 */
@@ -649,6 +674,9 @@ export function createConnection(input: any, output: any): IConnection {
 		onCodeLens: (handler) => connection.onRequest(CodeLensRequest.type, handler),
 		onCodeLensResolve: (handler) => connection.onRequest(CodeLensResolveRequest.type, handler),
 		onDocumentFormatting: (handler) => connection.onRequest(DocumentFormattingRequest.type, handler),
+		onDocumentRangeFormatting: (handler) => connection.onRequest(DocumentRangeFormattingRequest.type, handler),
+		onDocumentOnTypeFormatting: (handler) => connection.onRequest(DocumentOnTypeFormattingRequest.type, handler),
+		onRenameRequest: (handler) => connection.onRequest(RenameRequest.type, handler),
 
 		dispose: () => connection.dispose()
 	};

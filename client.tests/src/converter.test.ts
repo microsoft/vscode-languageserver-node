@@ -378,6 +378,27 @@ suite('Protocol Converter', () => {
 		let result = c2p.asCodeLens(p2c.asCodeLens(codeLens));
 		strictEqual(result.data, codeLens.data);
 	});
+	
+	test('WorkspaceEdit', () => {
+		let workspaceChange = new proto.WorkspaceChange();
+		let uri1 = 'file:///abc.txt';
+		let change1 = workspaceChange.getTextEditChange(uri1);
+		change1.insert(proto.Position.create(0,1), 'insert');
+		let uri2 = 'file:///xyz.txt';
+		let change2 = workspaceChange.getTextEditChange(uri2);
+		change2.replace(proto.Range.create(0,1,2,3), 'replace');
+		
+		let result = p2c.asWorkspaceEdit(workspaceChange.edit);
+		let edits = result.get(vscode.Uri.parse(uri1));
+		strictEqual(edits.length, 1);
+		rangeEqual(edits[0].range, proto.Range.create(0,1,0,1));
+		strictEqual(edits[0].newText, 'insert');
+		
+		edits = result.get(vscode.Uri.parse(uri2));
+		strictEqual(edits.length, 1);
+		rangeEqual(edits[0].range, proto.Range.create(0,1,2,3));
+		strictEqual(edits[0].newText, 'replace');
+	});
 });
 
 suite('Code Converter', () => {

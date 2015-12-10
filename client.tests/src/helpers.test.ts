@@ -8,10 +8,17 @@ import { strictEqual, deepEqual, ok } from 'assert';
 
 import { 
 	Position, Range, TextDocumentIdentifier, TextDocumentPosition, Command, CodeLens, CodeActionContext, 
-	Diagnostic, DiagnosticSeverity
+	Diagnostic, DiagnosticSeverity, WorkspaceChange, WorkspaceEdit, TextEditChange, TextEdit
 } from '../../client/lib/protocol';
 
 suite('Protocol Helper Tests', () => {
+	function rangeEqual(actual: Range, expected: Range) {
+		strictEqual(actual.start.line, expected.start.line);
+		strictEqual(actual.start.character, expected.start.character);
+		strictEqual(actual.end.line, expected.end.line);
+		strictEqual(actual.end.character, expected.end.character);
+	}
+	
 	test('Position', () => {
 		let position: Position = Position.create(1, 2);
 		strictEqual(position.line, 1);
@@ -78,8 +85,36 @@ suite('Protocol Helper Tests', () => {
 	});
 	
 	test('CodeActionContext', () => {
-		let codeActionContext = CodeActionContext.create([Diagnostic.create(Range.create(1,2,8,9), 'message')]);
+		let codeActionContext = CodeActionContext.create([Diagnostic.create(Range.create(1, 2, 8, 9), 'message')]);
 		strictEqual(codeActionContext.diagnostics.length, 1);
 		ok(Diagnostic.is(codeActionContext.diagnostics[0]));
-	})
+	});
+	
+	test('WorkspaceEdit', () => {
+		let workspaceChange = new WorkspaceChange();
+		let uri = 'file:///abc.txt';
+		let change1 = workspaceChange.getTextEditChange(uri);
+		change1.insert(Position.create(0,1), 'insert');
+		change1.replace(Range.create(0,1,2,3), 'replace');
+		change1.delete(Range.create(0,1,2,3));
+		let change2 = workspaceChange.getTextEditChange('file:///xyz.txt');
+		change2.insert(Position.create(2,3), 'insert');
+		
+		let workspaceEdit = workspaceChange.edit;
+		let keys = Object.keys(workspaceEdit.changes);
+		strictEqual(keys.length, 2);
+		let edits = workspaceEdit.changes[uri];
+		strictEqual(edits.length, 3);
+		rangeEqual(edits[0].range, Range.create(0,1,0,1));
+		strictEqual(edits[0].newText, 'insert');
+		rangeEqual(edits[1].range, Range.create(0,1,2,3));
+		strictEqual(edits[1].newText, 'replace');
+		rangeEqual(edits[2].range, Range.create(0,1,2,3));
+		strictEqual(edits[2].newText, '');
+		
+		edits = workspaceEdit.changes['file:///xyz.txt'];
+		strictEqual(edits.length, 1);
+		rangeEqual(edits[0].range, Range.create(2,3,2,3));
+		strictEqual(edits[0].newText, 'insert');
+	});
 });
