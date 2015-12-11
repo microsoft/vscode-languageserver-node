@@ -21,7 +21,13 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
-* 1.0.x: Current version which provides support for the following features:
+* 1.1.x: Provides all language service feature available in the extension host via the language client / server protocol. Features added:
+  * Code Actions: provide actions to fix diagnostic problems.
+  * Code Lens: provide commands that are shown along with source text.
+  * Formatting: whole document, document ranges and formatting on type.
+  * Rename refactoring: provides renaming symbols.
+
+* 1.0.x: Version which provides support for the following features:
   * Transports: stdio and node IPC can be used as a transport.
   * Document synchronization: incremental and full text document synchronization.
   * Configuration synchronization: synchronization of configuration settings to the server.
