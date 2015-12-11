@@ -8,7 +8,7 @@ import * as cp from 'child_process';
 import ChildProcess = cp.ChildProcess;
 
 import {
-		workspace as Workspace, window as Window, languages as Languages, extensions as Extensions, TextDocumentChangeEvent, TextDocument, Disposable,
+		workspace as Workspace, window as Window, languages as Languages, extensions as Extensions, TextDocumentChangeEvent, TextDocument, Disposable, OutputChannel,
 		FileSystemWatcher, Uri, DiagnosticCollection, DocumentSelector,
 		CancellationToken, Hover as VHover, Position as VPosition, Location as VLocation, Range as VRange,
 		CompletionItem as VCompletionItem, SignatureHelp as VSignatureHelp, Definition as VDefinition, DocumentHighlight as VDocumentHighlight,
@@ -242,6 +242,7 @@ export class LanguageClient {
 	private _onReadyCallbacks: { resolve: () => void; reject: () => void; };
 	private _connection: Thenable<IConnection>;
 	private _childProcess: ChildProcess;
+	private _outputChannel: OutputChannel;
 	private _capabilites: ServerCapabilities;
 
 	private _listeners: Disposable[];
@@ -266,6 +267,7 @@ export class LanguageClient {
 		this._state = ClientState.Stopped;
 		this._connection = null;
 		this._childProcess = null;
+		this._outputChannel = null;
 
 		this._listeners = null;
 		this._providers = null;
@@ -568,34 +570,22 @@ export class LanguageClient {
 				let options: ForkOptions = node.options || Object.create(null);
 				options.execArgv = options.execArgv || [];
 				options.cwd = options.cwd || Workspace.rootPath;
-				if (node.transport === TransportKind.ipc) {
-					let env = options.env || process.env;
-					if (env['ATOM_SHELL_INTERNAL_RUN_AS_NODE'] !== '1') {
-						// Make a copy. Since we usually call this once the performance impact of using JSON is acceptable.
-						options = JSON.parse(JSON.stringify(options));
-						let newEnv: any = Object.create(null);
-						for (var key in env) {
-							newEnv[key] = env[key];
-						}
-						newEnv['ATOM_SHELL_INTERNAL_RUN_AS_NODE'] = '1';
-						options.env = newEnv;
-					}
-					this._childProcess = cp.fork(node.module, node.args || [], options);
-					if (this._childProcess.pid) {
-						resolve(createConnection(new IPCMessageReader(this._childProcess), new IPCMessageWriter(this._childProcess)));
+				electron.fork(node.module, node.args || [], options, (error, cp) => {
+					if (error) {
+						reject(error);
 					} else {
-						reject(new Error(`Unable to fork node using module ${node.module}`));
-					}
-				} else {
-					electron.fork(node.module, node.args || [], options, (error, cp) => {
-						if (error) {
-							reject(error);
+						this._childProcess = cp;
+						if (node.transport === TransportKind.ipc) {
+							this._outputChannel = Window.createOutputChannel(this._name);
+							cp.stdout.on('data', (data) => {
+								this._outputChannel.append(data.toString());
+							});
+							resolve(createConnection(new IPCMessageReader(this._childProcess), new IPCMessageWriter(this._childProcess)));
 						} else {
-							this._childProcess = cp;
 							resolve(createConnection(cp.stdout, cp.stdin));
 						}
-					});
-				}
+					}
+				});
 			});
 		} else if (is.defined(json.command)) {
 			let command: Executable = <Executable>json;
