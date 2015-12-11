@@ -7,26 +7,6 @@
 import * as is from './is';
 
 /**
- * Message kinds.
- */
-export namespace Message {
-	/**
-	 * A request message usually send from the client to the server
-	 */
-	export var Request: string = 'request';
-
-	/**
-	 * A message response usually send from the server to the client
-	 */
-	export var Response: string = 'response';
-
-	/**
-	 * A event message usually send asynchronously from the server to the client
-	 */
-	export var Event: string = 'event';
-}
-
-/**
  * A language server message
  */
 export interface Message {
@@ -39,17 +19,17 @@ export interface Message {
 export interface RequestMessage extends Message {
 
 	/**
-	 * The request id;
+	 * The request id.
 	 */
 	id: number | string;
 
 	/**
-	 * The method to be invoked
+	 * The method to be invoked.
 	 */
 	method: string;
 
 	/**
-	 * The method's params
+	 * The method's params.
 	 */
 	params?: any
 }
@@ -69,7 +49,7 @@ export namespace ErrorCodes {
 
 export interface ResponseErrorLiteral<D> {
 	/**
-	 * A number indicating the error type that occured
+	 * A number indicating the error type that occured.
 	 */
 	code: number;
 
@@ -80,7 +60,7 @@ export interface ResponseErrorLiteral<D> {
 
 	/**
 	 * A Primitive or Structured value that contains additional
-	 * information about the error. Can be omitted;
+	 * information about the error. Can be omitted.
 	 */
 	data?: D;
 }
@@ -123,13 +103,13 @@ export class ResponseError<D> extends Error {
  */
 export interface ResponseMessage extends Message {
 	/**
-	 * The request id;
+	 * The request id.
 	 */
 	id: number | string;
 
 	/**
 	 * The result of a request. This can be omitted in
-	 * the case of an error
+	 * the case of an error.
 	 */
 	result?: any;
 
@@ -151,12 +131,12 @@ export interface RequestType<P, R, E> {
  */
 export interface NotificationMessage extends Message {
 	/**
-	 * The method to be invoked
+	 * The method to be invoked.
 	 */
 	method: string;
 
 	/**
-	 * The notification's params
+	 * The notification's params.
 	 */
 	params?: any
 }

@@ -9,6 +9,478 @@ import { RequestType, NotificationType, ResponseError } from 'vscode-jsonrpc';
 import * as Is from './utils/is';
 
 /**
+ * Position in a text document expressed as zero-based line and character offset.
+ */
+export interface Position {
+	/**
+	 * Line position in a document (zero-based).
+	 */
+	line: number;
+
+	/**
+	 * Character offset on a line in a document (zero-based).
+	 */
+	character: number;
+}
+
+/**
+ * The Position namespace provides helper functions to work with
+ * [Position](#Position) literals.
+ */
+export namespace Position {
+	/**
+	 * Creates a new Position literal from the given line and character.
+	 * @param line The position's line.
+	 * @param character The position's character.
+	 */
+	export function create(line: number, character: number): Position {
+		return { line, character };
+	}
+	/**
+	 * Checks whether the given liternal conforms to the [Position](#Position) interface.
+	 */
+	export function is(value: any): value is Position {
+		let candidate = value as Position;
+		return Is.defined(candidate) && Is.number(candidate.line) && Is.number(candidate.character);
+	}
+}
+
+/**
+ * A range in a text document expressed as (zero-based) start and end positions.
+ */
+export interface Range {
+	/**
+	 * The range's start position
+	 */
+	start: Position;
+
+	/**
+	 * The range's end position
+	 */
+	end: Position;
+}
+
+/**
+ * The Range namespace provides helper functions to work with
+ * [Range](#Range) literals.
+ */
+export namespace Range {
+	/**
+	 * Create a new Range liternal.
+	 * @param start The range's start position.
+	 * @param end The range's end position.
+	 */
+	export function create(start: Position, end: Position): Range;
+	/**
+	 * Create a new Range liternal.
+	 * @param startLine The start line number.
+	 * @param startCharacter The start character.
+	 * @param endLine The end line number.
+	 * @param endCharacter The end character.
+	 */
+	export function create(startLine: number, startCharacter: number, endLine: number, endCharacter: number): Range;
+	export function create(one: Position | number, two: Position | number, three?: number, four?: number): Range {
+		if (Is.number(one) && Is.number(two) && Is.number(three) && Is.number(four)) {
+			return { start: Position.create(one, two), end: Position.create(three, four) };
+		} else if (Position.is(one) && Position.is(two)) {
+			return { start: one, end: two };
+		} else {
+			throw new Error(`Range#create called with invalid arguments[${one}, ${two}, ${three}, ${four}]`);
+		}
+	}
+	/**
+	 * Checks whether the given literal conforms to the [Range](#Range) interface.
+	 */
+	export function is(value: any): value is Range {
+		let candidate  = value as Range;
+		return Is.defined(candidate) && Position.is(candidate.start) && Position.is(candidate.end);
+	}
+}
+
+/**
+ * Represents a location inside a resource, such as a line
+ * inside a text file.
+ */
+export interface Location {
+	uri: string;
+	range: Range;
+}
+
+/**
+ * The Location namespace provides helper functions to work with
+ * [Location](#Location) literals.
+ */
+export namespace Location {
+	/**
+	 * Creates a Location literal.
+	 * @param uri The location's uri.
+	 * @param range The location's range.
+	 */
+	export function create(uri: string, range: Range): Location {
+		return { uri, range };
+	}
+	/**
+	 * Checks whether the given literal conforms to the [Location](#Location) interface.
+	 */
+	export function is(value: any): value is Location {
+		let candidate = value as Location;
+		return Is.defined(candidate) && Range.is(candidate) && (Is.string(candidate.uri) || Is.undefined(candidate.uri));
+	}
+}
+
+/**
+ * The diagnostic's serverity.
+ */
+export enum DiagnosticSeverity {
+	/**
+	 * Reports an error.
+	 */
+	Error = 1,
+	/**
+	 * Reports a warning.
+	 */
+	Warning = 2,
+	/**
+	 * Reports an information.
+	 */
+	Information = 3,
+	/**
+	 * Reports a hint.
+	 */
+	Hint = 4
+}
+
+/**
+ * Represents a diagnostic, such as a compiler error or warning. Diagnostic objects
+ * are only valid in the scope of a resource.
+ */
+export interface Diagnostic {
+	/**
+	 * The range at which the message applies
+	 */
+	range: Range;
+
+	/**
+	 * The diagnostic's severity. Can be omitted. If omitted it is up to the
+	 * client to interpret diagnostics as error, warning, info or hint.
+	 */
+	severity?: number;
+
+	/**
+	 * The diagnostic's code. Can be omitted.
+	 */
+	code?: number | string;
+
+	/**
+	 * The diagnostic's message.
+	 */
+	message: string;
+}
+
+/**
+ * The Diagnostic namespace provides helper functions to work with
+ * [Diagnostic](#Diagnostic) literals.
+ */
+export namespace Diagnostic {
+	/**
+	 * Creates a new Diagnostic literal.
+	 */
+	export function create(range: Range, message: string, severity?: number, code?: number | string): Diagnostic {
+		let result: Diagnostic = { range, message };
+		if (Is.defined(severity)) {
+			result.severity = severity;
+		}
+		if (Is.defined(code)) {
+			result.code = code;
+		}
+		return result;
+	}
+	/**
+	 * Checks whether the given literal conforms to the [Diagnostic](#Diagnostic) interface.
+	 */
+	export function is(value: any): value is Diagnostic {
+		let candidate = value as Diagnostic;
+		return Is.defined(candidate)
+			&& Range.is(candidate.range)
+			&& Is.string(candidate.message)
+			&& (Is.number(candidate.severity) || Is.undefined(candidate.severity))
+			&& (Is.number(candidate.code) || Is.string(candidate.code) || Is.undefined(candidate.code));
+	}
+}
+
+
+/**
+ * Represents a reference to a command. Provides a title which
+ * will be used to represent a command in the UI and, optionally,
+ * an array of arguments which will be passed to the command handler
+ * function when invoked.
+ */
+export interface Command {
+	/**
+	 * Title of the command, like `save`.
+	 */
+	title: string;
+	/**
+	 * The identifier of the actual command handler.
+	 */
+	command: string;
+	/**
+	 * Arguments that the command handler should be
+	 * invoked with.
+	 */
+	arguments?: any[];
+}
+
+
+/**
+ * The Command namespace provides helper functions to work with
+ * [Command](#Command) literals.
+ */
+export namespace Command {
+	/**
+	 * Creates a new Command literal.
+	 */
+	export function create(title: string, command: string, ...args:any[]): Command {
+		let result: Command = { title, command };
+		if (Is.defined(args) && args.length > 0) {
+			result.arguments = args;
+		}
+		return result;
+	}
+	/**
+	 * Checks whether the given literal conforms to the [Command](#Command) interface.
+	 */
+	export function is(value: any): value is Command {
+		let candidate = value as Command;
+		return Is.defined(candidate) && Is.string(candidate.title) && Is.string(candidate.title);
+	}
+}
+
+/**
+ * A text edit applicable to a text document.
+ */
+export interface TextEdit {
+	/**
+	 * The range of the text document to be manipulated. To insert
+	 * text into a document create a range where start === end.
+	 */
+	range: Range;
+
+	/**
+	 * The string to be inserted. For delete operations use an
+	 * empty string.
+	 */
+	newText: string;
+}
+
+/**
+ * The TextEdit namespace provides helper function to create replace,
+ * insert and delete edits more easily.
+ */
+export namespace TextEdit {
+	/**
+	 * Creates a replace text edit.
+	 * @param range The range of text to be replaced.
+	 * @param newText The new text.
+	 */
+	export function replace(range: Range, newText: string): TextEdit {
+		return { range, newText };
+	}
+	/**
+	 * Creates a insert text edit.
+	 * @param psotion The position to insert the text at.
+	 * @param newText The text to be inserted.
+	 */
+	export function insert(position: Position, newText: string): TextEdit {
+		return { range: { start: position, end: position }, newText };
+	}
+	/**
+	 * Creates a delete text edit.
+	 * @param range The range of text to be deleted.
+	 */
+	export function del(range: Range): TextEdit {
+		return { range, newText: '' };
+	}
+}
+
+/**
+ * A workspace edit represents changes to many resources managed
+ * in the workspace.
+ */
+export interface WorkspaceEdit {
+	// creates: { [uri: string]: string; };
+	/**
+	 * Holds changes to existing resources.
+	 */
+	changes: { [uri: string]: TextEdit[]; };
+	// deletes: string[];
+}
+
+/**
+ * A change to capture text edits for existing resources.
+ */
+export interface TextEditChange {
+	/**
+	 * Gets all text edits for this change.
+	 *
+	 * @return An array of text edits.
+	 */
+	all(): TextEdit[];
+
+	/**
+	 * Clears the edits for this change.
+	 */
+	clear(): void;
+
+	/**
+	 * Insert the given text at the given position.
+	 *
+	 * @param position A position.
+	 * @param newText A string.
+	 */
+	insert(position: Position, newText: string): void;
+
+	/**
+	 * Replace the given range with given text for the given resource.
+	 *
+	 * @param range A range.
+	 * @param newText A string.
+	 */
+	replace(range: Range, newText: string): void;
+
+	/**
+	 * Delete the text at the given range.
+	 *
+	 * @param range A range.
+	 */
+	delete(range: Range): void;
+}
+
+/**
+ * A workspace change helps constructing changes to a workspace.
+ */
+export class WorkspaceChange {
+	private workspaceEdit: WorkspaceEdit;
+	private textEditChanges: { [uri: string]: TextEditChange };
+
+	constructor() {
+		this.workspaceEdit = {
+			changes: Object.create(null)
+		};
+		this.textEditChanges = Object.create(null);
+	}
+
+	/**
+	 * Returns the underlying [WorkspaceEdit](#WorkspaceEdit) literal
+	 * use to be returned from a workspace edit operation like rename.
+	 */
+	public get edit(): WorkspaceEdit {
+		return this.workspaceEdit;
+	}
+
+	/**
+	 * Returns the [TextEditChange](#TextEditChange) to manage text edits
+	 * for resources.
+	 */
+	public getTextEditChange(uri: string): TextEditChange {
+		class TextEditChangeImpl implements TextEditChange {
+			private edits: TextEdit[];
+			constructor(edits: TextEdit[]) {
+				this.edits = edits;
+			}
+			insert(position: Position, newText: string): void {
+				this.edits.push(TextEdit.insert(position, newText));
+			}
+			replace(range: Range, newText: string): void {
+				this.edits.push(TextEdit.replace(range, newText));
+			}
+			delete(range: Range): void {
+				this.edits.push(TextEdit.del(range));
+			}
+			all(): TextEdit[] {
+				return this.edits;
+			}
+			clear(): void {
+				this.edits.splice(0, this.edits.length);
+			}
+		}
+		let result = this.textEditChanges[uri];
+		if (!result) {
+			let edits: TextEdit[] = [];
+			this.workspaceEdit.changes[uri] = edits;
+			result = new TextEditChangeImpl(edits);
+			this.textEditChanges[uri] = result;
+		}
+		return result;
+	}
+}
+
+/**
+ * A literal to identify a text document in the client.
+ */
+export interface TextDocumentIdentifier {
+	/**
+	 * The text document's uri.
+	 */
+	uri: string;
+}
+
+/**
+ * The TextDocumentIdentifier namespace provides helper functions to work with
+ * [TextDocumentIdentifier](#TextDocumentIdentifier) literals.
+ */
+export namespace TextDocumentIdentifier {
+	/**
+	 * Creates a new TextDocumentIdentifier literal.
+	 * @param uri The document's uri.
+	 */
+	export function create(uri: string): TextDocumentIdentifier {
+		return { uri };
+	}
+	/**
+	 * Checks whether the given literal conforms to the [TextDocumentIdentifier](#TextDocumentIdentifier) interface.
+	 */
+	export function is(value: any): value is TextDocumentIdentifier {
+		let candidate = value as TextDocumentIdentifier;
+		return Is.defined(candidate) && Is.string(candidate.uri);
+	}
+}
+
+/**
+ * A literal to define the position in a text document.
+ */
+export interface TextDocumentPosition extends TextDocumentIdentifier {
+	/**
+	 * The position inside the text document.
+	 */
+	position: Position;
+}
+
+/**
+ * The TextDocumentPosition namespace provides helper functions to work with
+ * [TextDocumentPosition](#TextDocumentPosition) literals.
+ */
+export namespace TextDocumentPosition {
+	/**
+	 * Creates a new TextDocumentPosition
+	 * @param uri The document's uri.
+	 * @param position The position inside the document.
+	 */
+	export function create(uri: string, position: Position): TextDocumentPosition {
+		return { uri, position };
+	}
+	/**
+	 * Checks whether the given literal conforms to the [TextDocumentPosition](#TextDocumentPosition) interface.
+	 */
+	export function is(value: any): value is TextDocumentPosition {
+		let candidate = value as TextDocumentPosition;
+		return Is.defined(candidate) && TextDocumentIdentifier.is(candidate) && Position.is(candidate.position);
+	}
+}
+
+//---- Initialize Method ----
+
+/**
  * Defines the capabilities provided by the client.
  */
 export interface ClientCapabilities {
@@ -90,7 +562,7 @@ export interface DocumentOnTypeFormattingOptions {
 }
 
 /**
- * Defines the capabilities provided by the language
+ * Defines the capabilities provided by a language
  * server.
  */
 export interface ServerCapabilities {
@@ -155,8 +627,6 @@ export interface ServerCapabilities {
 	 */
 	renameProvider?: boolean
 }
-
-//---- Initialize Method ----
 
 /**
  * The initialize method is sent from the client to the server.
@@ -326,193 +796,7 @@ export interface LogMessageParams {
 	message: string;
 }
 
-//---- text document notifications ----
-
-/**
- * Position in a text document expressed as zero-based line and character offset.
- */
-export interface Position {
-	/**
-	 * Line position in a document (zero-based).
-	 */
-	line: number;
-
-	/**
-	 * Character offset on a line in a document (zero-based).
-	 */
-	character: number;
-}
-
-/**
- * The Position namespace provides helper functions to work with
- * [Position](#Position) literals.
- */
-export namespace Position {
-	/**
-	 * Creates a new Position literal from the given line and character.
-	 * @param line The position's line.
-	 * @param character The position's character.
-	 */
-	export function create(line: number, character: number): Position {
-		return { line, character };
-	}
-	/**
-	 * Checks whether the given liternal conforms to the [Position](#Position) interface.
-	 */
-	export function is(value: any): value is Position {
-		let candidate = value as Position;
-		return Is.defined(candidate) && Is.number(candidate.line) && Is.number(candidate.character);
-	}
-}
-
-/**
- * A range in a text document expressed as (zero-based) start and end positions.
- */
-export interface Range {
-	/**
-	 * The range's start position
-	 */
-	start: Position;
-
-	/**
-	 * The range's end position
-	 */
-	end: Position;
-}
-
-/**
- * The Range namespace provides helper functions to work with
- * [Range](#Range) literals.
- */
-export namespace Range {
-	/**
-	 * Create a new Range liternal.
-	 * @param start The range's start position.
-	 * @param end The range's end position.
-	 */
-	export function create(start: Position, end: Position): Range;
-	/**
-	 * Create a new Range liternal.
-	 * @param startLine The start line number.
-	 * @param startCharacter The start character.
-	 * @param endLine The end line number.
-	 * @param endCharacter The end character.
-	 */
-	export function create(startLine: number, startCharacter: number, endLine: number, endCharacter: number): Range;
-	export function create(one: Position | number, two: Position | number, three?: number, four?: number): Range {
-		if (Is.number(one) && Is.number(two) && Is.number(three) && Is.number(four)) {
-			return { start: Position.create(one, two), end: Position.create(three, four) };
-		} else if (Position.is(one) && Position.is(two)) {
-			return { start: one, end: two };
-		} else {
-			throw new Error(`Range#create called with invalid arguments[${one}, ${two}, ${three}, ${four}]`);
-		}
-	}
-	/**
-	 * Checks whether the given literal conforms to the [Range](#Range) interface.
-	 */
-	export function is(value: any): value is Range {
-		let candidate  = value as Range;
-		return Is.defined(candidate) && Position.is(candidate.start) && Position.is(candidate.end);
-	}
-}
-
-
-/**
- * Represents a location inside a resource, such as a line
- * inside a text file.
- */
-export interface Location {
-	uri: string;
-	range: Range;
-}
-
-
-/**
- * The Location namespace provides helper functions to work with
- * [Location](#Location) literals.
- */
-export namespace Location {
-	/**
-	 * Creates a Location literal.
-	 * @param uri The location's uri.
-	 * @param range The location's range.
-	 */
-	export function create(uri: string, range: Range): Location {
-		return { uri, range };
-	}
-	/**
-	 * Checks whether the given literal conforms to the [Location](#Location) interface.
-	 */
-	export function is(value: any): value is Location {
-		let candidate = value as Location;
-		return Is.defined(candidate) && Range.is(candidate) && (Is.string(candidate.uri) || Is.undefined(candidate.uri));
-	}
-}
-
-/**
- * A literal to identify a text document in the client.
- */
-export interface TextDocumentIdentifier {
-	/**
-	 * The text document's uri.
-	 */
-	uri: string;
-}
-
-
-/**
- * The TextDocumentIdentifier namespace provides helper functions to work with
- * [TextDocumentIdentifier](#TextDocumentIdentifier) literals.
- */
-export namespace TextDocumentIdentifier {
-	/**
-	 * Creates a new TextDocumentIdentifier literal.
-	 * @param uri The document's uri.
-	 */
-	export function create(uri: string): TextDocumentIdentifier {
-		return { uri };
-	}
-	/**
-	 * Checks whether the given literal conforms to the [TextDocumentIdentifier](#TextDocumentIdentifier) interface.
-	 */
-	export function is(value: any): value is TextDocumentIdentifier {
-		let candidate = value as TextDocumentIdentifier;
-		return Is.defined(candidate) && Is.string(candidate.uri);
-	}
-}
-
-/**
- * A literal to define the position in a text document.
- */
-export interface TextDocumentPosition extends TextDocumentIdentifier {
-	/**
-	 * The position inside the text document.
-	 */
-	position: Position;
-}
-
-/**
- * The TextDocumentPosition namespace provides helper functions to work with
- * [TextDocumentPosition](#TextDocumentPosition) literals.
- */
-export namespace TextDocumentPosition {
-	/**
-	 * Creates a new TextDocumentPosition
-	 * @param uri The document's uri.
-	 * @param position The position inside the document.
-	 */
-	export function create(uri: string, position: Position): TextDocumentPosition {
-		return { uri, position };
-	}
-	/**
-	 * Checks whether the given literal conforms to the [TextDocumentPosition](#TextDocumentPosition) interface.
-	 */
-	export function is(value: any): value is TextDocumentPosition {
-		let candidate = value as TextDocumentPosition;
-		return Is.defined(candidate) && TextDocumentIdentifier.is(candidate) && Position.is(candidate.position);
-	}
-}
+//---- Text document notifications ----
 
 /**
  * The document open notification is sent from the client to the server to signal
@@ -536,8 +820,7 @@ export interface DidOpenTextDocumentParams extends TextDocumentIdentifier {
 
 /**
  * The document change notification is sent from the client to the server to signal
- * changes to a text document. The notification's parameters are either a single
- * {@link DidChangeTextDocumentParams} or an array of {@link DidChangeTextDocumentParams}.
+ * changes to a text document.
  */
 export namespace DidChangeTextDocumentNotification {
 	export const type: NotificationType<DidChangeTextDocumentParams> = { get method() { return 'textDocument/didChange'; } };
@@ -658,133 +941,6 @@ export interface PublishDiagnosticsParams {
 	diagnostics: Diagnostic[];
 }
 
-/**
- * The diagnostic's serverity.
- */
-export enum DiagnosticSeverity {
-	/**
-	 * Reports an error.
-	 */
-	Error = 1,
-	/**
-	 * Reports a warning.
-	 */
-	Warning = 2,
-	/**
-	 * Reports an information.
-	 */
-	Information = 3,
-	/**
-	 * Reports a hint.
-	 */
-	Hint = 4
-}
-
-/**
- * A diagnostic item found in a diagnostic notification.
- */
-export interface Diagnostic {
-	/**
-	 * The range at which the message applies
-	 */
-	range: Range;
-
-	/**
-	 * The diagnostic's severity. Can be omitted. If omitted it is up to the
-	 * client to interpret diagnostics as error, warning, info or hint.
-	 */
-	severity?: number;
-
-	/**
-	 * The diagnostic's code. Can be omitted.
-	 */
-	code?: number | string;
-
-	/**
-	 * The diagnostic message.
-	 */
-	message: string;
-}
-
-/**
- * The Diagnostic namespace provides helper functions to work with
- * [Diagnostic](#Diagnostic) literals.
- */
-export namespace Diagnostic {
-	/**
-	 * Creates a new Diagnostic literal.
-	 */
-	export function create(range: Range, message: string, severity?: number, code?: number | string): Diagnostic {
-		let result: Diagnostic = { range, message };
-		if (Is.defined(severity)) {
-			result.severity = severity;
-		}
-		if (Is.defined(code)) {
-			result.code = code;
-		}
-		return result;
-	}
-	/**
-	 * Checks whether the given literal conforms to the [Diagnostic](#Diagnostic) interface.
-	 */
-	export function is(value: any): value is Diagnostic {
-		let candidate = value as Diagnostic;
-		return Is.defined(candidate)
-			&& Range.is(candidate.range)
-			&& Is.string(candidate.message)
-			&& (Is.number(candidate.severity) || Is.undefined(candidate.severity))
-			&& (Is.number(candidate.code) || Is.string(candidate.code) || Is.undefined(candidate.code));
-	}
-}
-
-
-/**
- * Represents a reference to a command. Provides a title which
- * will be used to represent a command in the UI and, optionally,
- * an array of arguments which will be passed to the command handler
- * function when invoked.
- */
-export interface Command {
-	/**
-	 * Title of the command, like `save`.
-	 */
-	title: string;
-	/**
-	 * The identifier of the actual command handler.
-	 */
-	command: string;
-	/**
-	 * Arguments that the command handler should be
-	 * invoked with.
-	 */
-	arguments?: any[];
-}
-
-
-/**
- * The Command namespace provides helper functions to work with
- * [Command](#Command) literals.
- */
-export namespace Command {
-	/**
-	 * Creates a new Command literal.
-	 */
-	export function create(title: string, command: string, ...args:any[]): Command {
-		let result: Command = { title, command };
-		if (Is.defined(args) && args.length > 0) {
-			result.arguments = args;
-		}
-		return result;
-	}
-	/**
-	 * Checks whether the given literal conforms to the [Command](#Command) interface.
-	 */
-	export function is(value: any): value is Command {
-		let candidate = value as Command;
-		return Is.defined(candidate) && Is.string(candidate.title) && Is.string(candidate.title);
-	}
-}
-
 //---- Completion Support --------------------------
 
 /**
@@ -887,165 +1043,6 @@ export namespace CompletionItem {
 	 */
 	export function create(label: string): CompletionItem {
 		return { label };
-	}
-}
-
-/**
- * A text edit applicable to a text document.
- */
-export interface TextEdit {
-	/**
-	 * The range of the text document to be manipulated. To insert
-	 * text into a document create a range where start === end.
-	 */
-	range: Range;
-
-	/**
-	 * The string to be inserted. For delete operations use an
-	 * empty string.
-	 */
-	newText: string;
-}
-
-/**
- * The TextEdit namespace provides helper function to create replace,
- * insert and delete edits more easily.
- */
-export namespace TextEdit {
-	/**
-	 * Creates a replace text edit.
-	 * @param range The range of text to be replaced.
-	 * @param newText The new text.
-	 */
-	export function replace(range: Range, newText: string): TextEdit {
-		return { range, newText };
-	}
-	/**
-	 * Creates a insert text edit.
-	 * @param psotion The position to insert the text at.
-	 * @param newText The text to be inserted.
-	 */
-	export function insert(position: Position, newText: string): TextEdit {
-		return { range: { start: position, end: position }, newText };
-	}
-	/**
-	 * Creates a delete text edit.
-	 * @param range The range of text to be deleted.
-	 */
-	export function del(range: Range): TextEdit {
-		return { range, newText: '' };
-	}
-}
-
-/**
- * A workspace edit represents changes to resource managed
- * in the workspace.
- */
-export interface WorkspaceEdit {
-	// creates: { [uri: string]: string; };
-	/**
-	 * Holds changes to existing resources.
-	 */
-	changes: { [uri: string]: TextEdit[]; };
-	// deletes: string[];
-}
-
-/**
- * A change to capture text edits for existing resources.
- */
-export interface TextEditChange {
-	/**
-	 * Gets all text edits for this change.
-	 *
-	 * @return An array of text edits.
-	 */
-	all(): TextEdit[];
-
-	/**
-	 * Clears the edits for this change.
-	 */
-	clear(): void;
-
-	/**
-	 * Insert the given text at the given position.
-	 *
-	 * @param position A position.
-	 * @param newText A string.
-	 */
-	insert(position: Position, newText: string): void;
-
-	/**
-	 * Replace the given range with given text for the given resource.
-	 *
-	 * @param range A range.
-	 * @param newText A string.
-	 */
-	replace(range: Range, newText: string): void;
-
-	/**
-	 * Delete the text at the given range.
-	 *
-	 * @param range A range.
-	 */
-	delete(range: Range): void;
-}
-
-/**
- * A workspace change helps constructing changes to a workspace.
- */
-export class WorkspaceChange {
-	private workspaceEdit: WorkspaceEdit;
-	private textEditChanges: { [uri: string]: TextEditChange };
-
-	constructor() {
-		this.workspaceEdit = {
-			changes: Object.create(null)
-		};
-		this.textEditChanges = Object.create(null);
-	}
-
-	/**
-	 * Returns the underlying [WorkspaceEdit](#WorkspaceEdit) literal
-	 * use to be returned from a workspace edit operation like rename.
-	 */
-	public get edit(): WorkspaceEdit {
-		return this.workspaceEdit;
-	}
-
-	/**
-	 * Returns the [TextEditChange](#TextEditChange) to manage text edits
-	 * for resources.
-	 */
-	public getTextEditChange(uri: string): TextEditChange {
-		class TextEditChangeImpl implements TextEditChange {
-			private edits: TextEdit[];
-			constructor(edits: TextEdit[]) {
-				this.edits = edits;
-			}
-			insert(position: Position, newText: string): void {
-				this.edits.push(TextEdit.insert(position, newText));
-			}
-			replace(range: Range, newText: string): void {
-				this.edits.push(TextEdit.replace(range, newText));
-			}
-			delete(range: Range): void {
-				this.edits.push(TextEdit.del(range));
-			}
-			all(): TextEdit[] {
-				return this.edits;
-			}
-			clear(): void {
-				this.edits.splice(0, this.edits.length);
-			}
-		}
-		let result = this.textEditChanges[uri];
-		if (!result) {
-			let edits: TextEdit[] = [];
-			this.workspaceEdit.changes[uri] = edits;
-			result = new TextEditChangeImpl(edits);
-			this.textEditChanges[uri] = result;
-		}
-		return result;
 	}
 }
 
