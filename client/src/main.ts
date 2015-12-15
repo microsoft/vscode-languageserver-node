@@ -434,7 +434,7 @@ export class LanguageClient {
 		}, (error: ResponseError<InitializeError>) => {
 			if (error.data.retry) {
 				Window.showErrorMessage(error.message, { title: 'Retry', id: "retry"}).then(item => {
-					if (item.id === 'retry') {
+					if (is.defined(item) && item.id === 'retry') {
 						this.initialize(connection);
 					}
 				});
