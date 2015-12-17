@@ -1177,7 +1177,6 @@ export namespace SignatureInformation {
  * active and only one active parameter.
  */
 export interface SignatureHelp {
-
 	/**
 	 * One or more signatures.
 	 */
@@ -1275,7 +1274,6 @@ export enum DocumentHighlightKind {
  * the background color of its range.
  */
 export interface DocumentHighlight {
-
 	/**
 	 * The range this highlight applies to.
 	 */
@@ -1431,8 +1429,6 @@ export namespace  WorkspaceSymbolRequest {
 export interface CodeActionContext {
 	/**
 	 * An array of diagnostics.
-	 *
-	 * @readonly
 	 */
 	diagnostics: Diagnostic[];
 }
@@ -1465,10 +1461,12 @@ export interface CodeActionParams {
 	 * The document in which the command was invoked.
 	 */
 	textDocument: TextDocumentIdentifier;
+
 	/**
 	 * The range for which the command was invoked.
 	 */
 	range: Range;
+
 	/**
 	 * Context carrying additional information.
 	 */
@@ -1496,10 +1494,12 @@ export interface CodeLens {
 	 * The range in which this code lens is valid. Should only span a single line.
 	 */
 	range: Range;
+
 	/**
 	 * The command this code lens represents.
 	 */
 	command?: Command;
+
 	/**
 	 * An data entry field that is preserved on a code lens item between
 	 * a [CodeLensRequest](#CodeLensRequest) and a [CodeLensResolveRequest]
@@ -1554,10 +1554,12 @@ export interface FormattingOptions {
 	 * Size of a tab in spaces.
 	 */
 	tabSize: number;
+
 	/**
 	 * Prefer spaces over tabs.
 	 */
 	insertSpaces: boolean;
+
 	/**
 	 * Signature for further properties.
 	 */
@@ -1589,6 +1591,7 @@ export interface DocumentFormattingParams {
 	 * The document to format.
 	 */
 	textDocument: TextDocumentIdentifier;
+
 	/**
 	 * The format options
 	 */
@@ -1607,10 +1610,12 @@ export interface DocumentRangeFormattingParams {
 	 * The document to format.
 	 */
 	textDocument: TextDocumentIdentifier;
+
 	/**
 	 * The range to format
 	 */
 	range: Range;
+
 	/**
 	 * The format options
 	 */
@@ -1629,14 +1634,17 @@ export interface DocumentOnTypeFormattingParams {
 	 * The document to format.
 	 */
 	textDocument: TextDocumentIdentifier;
+
 	/**
 	 * The position at which this request was send.
 	 */
 	position: Position;
+
 	/**
 	 * The character that has been typed.
 	 */
 	ch: string;
+
 	/**
 	 * The format options.
 	 */
@@ -1657,10 +1665,12 @@ export interface RenameParams {
 	 * The document to format.
 	 */
 	textDocument: TextDocumentIdentifier;
+
 	/**
 	 * The position at which this request was send.
 	 */
 	position: Position;
+
 	/**
 	 * The new name of the symbol. If the given name is not valid the
 	 * request must return a [ResponseError](#ResponseError) with an
