@@ -172,6 +172,12 @@ export interface Diagnostic {
 	code?: number | string;
 
 	/**
+	 * A human-readable string describing the source of this
+	 * diagnostic, e.g. 'typescript' or 'super lint'.
+	 */
+	source?: string;
+
+	/**
 	 * The diagnostic's message.
 	 */
 	message: string;
@@ -185,13 +191,16 @@ export namespace Diagnostic {
 	/**
 	 * Creates a new Diagnostic literal.
 	 */
-	export function create(range: Range, message: string, severity?: number, code?: number | string): Diagnostic {
+	export function create(range: Range, message: string, severity?: number, code?: number | string, source?: string): Diagnostic {
 		let result: Diagnostic = { range, message };
 		if (Is.defined(severity)) {
 			result.severity = severity;
 		}
 		if (Is.defined(code)) {
 			result.code = code;
+		}
+		if (Is.defined(source)) {
+			result.source = source;
 		}
 		return result;
 	}
@@ -204,7 +213,8 @@ export namespace Diagnostic {
 			&& Range.is(candidate.range)
 			&& Is.string(candidate.message)
 			&& (Is.number(candidate.severity) || Is.undefined(candidate.severity))
-			&& (Is.number(candidate.code) || Is.string(candidate.code) || Is.undefined(candidate.code));
+			&& (Is.number(candidate.code) || Is.string(candidate.code) || Is.undefined(candidate.code))
+			&& (Is.string(candidate.source) || Is.undefined(candidate.source));
 	}
 }
 

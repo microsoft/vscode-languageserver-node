@@ -19,6 +19,9 @@ export function asDiagnostic(diagnostic: proto.Diagnostic): code.Diagnostic {
 	if (is.defined(diagnostic.code)) {
 		result.code = diagnostic.code;
 	}
+	if (is.defined(diagnostic.source)) {
+		result.source = diagnostic.source;
+	}
 	return result;
 }
 
@@ -41,6 +44,9 @@ export function asPosition(value: proto.Position): code.Position {
 }
 
 export function asDiagnosticSeverity(value: number): code.DiagnosticSeverity {
+	if (is.undefined(value) || is.nil(value)) {
+		return code.DiagnosticSeverity.Error;
+	}
 	switch (value) {
 		case proto.DiagnosticSeverity.Error:
 			return code.DiagnosticSeverity.Error;
@@ -51,6 +57,7 @@ export function asDiagnosticSeverity(value: number): code.DiagnosticSeverity {
 		case proto.DiagnosticSeverity.Hint:
 			return code.DiagnosticSeverity.Hint;
 	}
+	return code.DiagnosticSeverity.Error;
 }
 
 export function asHover(hover: proto.Hover): code.Hover {

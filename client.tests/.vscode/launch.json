@@ -7,13 +7,13 @@
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
 			"args": [
-				"${workspaceRoot}",
+				// "${workspaceRoot}",
 				"--extensionDevelopmentPath=${workspaceRoot}",
 				"--extensionTestsPath=${workspaceRoot}/lib"
 			],
 			"stopOnEntry": false,
 			"sourceMaps": true,
-			"outDir": "lib"
+			"outDir": "${workspaceRoot}/lib"
 		}
 	]
 }

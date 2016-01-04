@@ -60,11 +60,12 @@ suite('Protocol Helper Tests', () => {
 	});
 	
 	test('Diagnostic', () => {
-		let diagnostic = Diagnostic.create(Range.create(1,2,8,9), 'message', DiagnosticSeverity.Warning, 99);
+		let diagnostic = Diagnostic.create(Range.create(1,2,8,9), 'message', DiagnosticSeverity.Warning, 99, 'source');
 		ok(Range.is(diagnostic.range));
 		strictEqual(diagnostic.message, 'message');
 		strictEqual(diagnostic.severity, DiagnosticSeverity.Warning);
 		strictEqual(diagnostic.code, 99);
+		strictEqual(diagnostic.source, 'source');
 	});
 	
 	test('Command', () => {

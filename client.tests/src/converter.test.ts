@@ -54,7 +54,8 @@ suite('Protocol Converter', () => {
 			range: { start, end},
 			message: 'error',
 			severity: proto.DiagnosticSeverity.Error,
-			code: 99
+			code: 99,
+			source: 'source'
 		};
 		
 		let result = p2c.asDiagnostic(diagnostic);
@@ -65,6 +66,7 @@ suite('Protocol Converter', () => {
 		strictEqual(range.end.character, end.character);
 		strictEqual(result.message, diagnostic.message);
 		strictEqual(result.code, diagnostic.code);
+		strictEqual(result.source, diagnostic.source);
 		strictEqual(result.severity, vscode.DiagnosticSeverity.Error);
 		
 		ok(p2c.asDiagnostics([diagnostic]).every(value => value instanceof vscode.Diagnostic));
@@ -500,12 +502,14 @@ suite('Code Converter', () => {
 	test('Diagnostic', () => {
 		let item: vscode.Diagnostic = new vscode.Diagnostic(new vscode.Range(1, 2, 8, 9), "message", vscode.DiagnosticSeverity.Warning);
 		item.code = 99;
+		item.source = 'source';
 		
 		let result = c2p.asDiagnostic(<any>item);
 		rangeEqual(result.range, item.range);
 		strictEqual(result.message, item.message);
 		strictEqual(result.severity, proto.DiagnosticSeverity.Warning);
 		strictEqual(result.code, item.code);
+		strictEqual(result.source, item.source);
 		ok(c2p.asDiagnostics(<any>[item]).every(elem => proto.Diagnostic.is(elem)));
 	});
 	

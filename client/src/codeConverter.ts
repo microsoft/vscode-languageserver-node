@@ -116,6 +116,7 @@ export function asDiagnostic(item: code.Diagnostic): proto.Diagnostic {
 	let result: proto.Diagnostic = proto.Diagnostic.create(asRange(item.range), item.message);
 	set(item.severity, () => result.severity = asDiagnosticSeverity(item.severity));
 	set(item.code, () => result.code = item.code);
+	set(item.source, () => result.source = item.source);
 	return result;
 }
 
