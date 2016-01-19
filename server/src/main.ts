@@ -31,7 +31,7 @@ import {
 		CodeActionRequest, CodeActionParams, CodeActionContext, Command,
 		CodeLensRequest, CodeLensResolveRequest, CodeLens, CodeLensOptions,
 		DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
-		DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams,
+		DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams, FormattingOptions,
 		RenameRequest, RenameParams
 	} from './protocol';
 
@@ -57,7 +57,7 @@ export {
 		CodeActionParams, CodeActionContext, Command,
 		CodeLensRequest, CodeLensResolveRequest, CodeLens, CodeLensOptions,
 		DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
-		DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams,
+		DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams, FormattingOptions,
 		RenameRequest, RenameParams
 }
 export { Event }
