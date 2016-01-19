@@ -22,7 +22,7 @@ import {
 		DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
 		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Range, Position, Location,
 		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSyncKind,
-		HoverRequest, Hover,
+		HoverRequest, Hover, MarkedString,
 		CompletionRequest, CompletionResolveRequest, CompletionOptions, CompletionItemKind, CompletionItem, TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
 		SignatureHelpRequest, SignatureHelp, SignatureInformation, ParameterInformation,
 		DefinitionRequest, Definition, ReferencesRequest, ReferenceParams,
@@ -49,7 +49,7 @@ export {
 		DidOpenTextDocumentParams, DidChangeTextDocumentParams, TextDocumentContentChangeEvent,
 		PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Range, Position, Location,
 		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSyncKind,
-		Hover,
+		Hover, MarkedString,
 		CompletionOptions, CompletionItemKind, CompletionItem, TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
 		SignatureHelp, SignatureInformation, ParameterInformation,
 		Definition, ReferenceParams,  DocumentHighlight, DocumentHighlightKind,
@@ -166,7 +166,7 @@ export class TextDocuments {
 	public get onDidChangeContent(): Event<TextDocumentChangeEvent> {
 		return this._onDidChangeContent.event;
 	}
-    
+
 	/**
 	 * An event that fires when a text document managed by this manager
 	 * has been opened.
@@ -174,14 +174,14 @@ export class TextDocuments {
 	public get onDidOpen(): Event<TextDocumentChangeEvent> {
 		return this._onDidOpen.event;
 	}
-    
+
 	/**
 	 * An event that fires when a text document managed by this manager
 	 * has been closed.
 	 */
 	public get onDidClose(): Event<TextDocumentChangeEvent> {
 		return this._onDidClose.event;
-	}       
+	}
 
 	/**
 	 * Returns the document for the given URI. Returns undefined if
