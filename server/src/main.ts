@@ -138,6 +138,8 @@ export class TextDocuments {
 	private _documents : { [uri: string]: TextDocument };
 
 	private _onDidChangeContent: Emitter<TextDocumentChangeEvent>;
+    private _onDidOpen: Emitter<TextDocumentChangeEvent>;
+    private _onDidClose: Emitter<TextDocumentChangeEvent>;
 
 	/**
 	 * Create a new text document manager.
@@ -145,6 +147,8 @@ export class TextDocuments {
 	public constructor() {
 		this._documents = Object.create(null);
 		this._onDidChangeContent = new Emitter<TextDocumentChangeEvent>();
+		this._onDidOpen = new Emitter<TextDocumentChangeEvent>();
+		this._onDidClose = new Emitter<TextDocumentChangeEvent>();
 	}
 
 	/**
@@ -157,11 +161,27 @@ export class TextDocuments {
 
 	/**
 	 * An event that fires when a text document managed by this manager
-	 * changes.
+	 * has been opened or the content changes.
 	 */
 	public get onDidChangeContent(): Event<TextDocumentChangeEvent> {
 		return this._onDidChangeContent.event;
 	}
+    
+	/**
+	 * An event that fires when a text document managed by this manager
+	 * has been opened.
+	 */
+	public get onDidOpen(): Event<TextDocumentChangeEvent> {
+		return this._onDidOpen.event;
+	}
+    
+	/**
+	 * An event that fires when a text document managed by this manager
+	 * has been closed.
+	 */
+	public get onDidClose(): Event<TextDocumentChangeEvent> {
+		return this._onDidClose.event;
+	}       
 
 	/**
 	 * Returns the document for the given URI. Returns undefined if
@@ -203,6 +223,7 @@ export class TextDocuments {
 		connection.onDidOpenTextDocument((event: DidOpenTextDocumentParams) => {
 			let document = new TextDocument(event.uri, event.text);
 			this._documents[event.uri] = document;
+            this._onDidOpen.fire({ document });
 			this._onDidChangeContent.fire({ document });
 		});
 		connection.onDidChangeTextDocument((event: DidChangeTextDocumentParams) => {
@@ -215,7 +236,9 @@ export class TextDocuments {
 			}
 		});
 		connection.onDidCloseTextDocument((event: TextDocumentIdentifier) => {
+            let document = this._documents[event.uri];
 			delete this._documents[event.uri];
+            this._onDidClose.fire({ document });
 		});
 	}
 }
