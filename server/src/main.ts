@@ -36,7 +36,7 @@ import {
 	} from './protocol';
 
 import { Event, Emitter } from './utils/events';
-import * as is from './utils/is';
+import * as Is from './utils/is';
 
 // ------------- Reexport the API surface of the language worker API ----------------------
 export {
@@ -72,7 +72,7 @@ export namespace Files {
 // ------------------------- text documents  --------------------------------------------------
 
 /**
- * A simple text document.
+ * A simple text document. Not to be implemenented.
  */
 export interface ITextDocument {
 
@@ -91,6 +91,50 @@ export interface ITextDocument {
 	 * @return The text of this document.
 	 */
 	getText(): string;
+
+    /**
+     * Converts a zero-based offset to a position.
+     *
+     * @param offset A zero-based offset.
+     * @return A valid [position](#Position).
+     */
+    positionAt(offset: number): Position;
+
+    /**
+     * Converts the position to a zero-based offset.
+     *
+     * The position will be [adjusted](#TextDocument.validatePosition).
+     *
+     * @param position A position.
+     * @return A valid zero-based offset.
+     */
+    offsetAt(position: Position): number;
+
+    /**
+     * The number of lines in this document.
+     *
+     * @readonly
+     */
+    lineCount: number;
+}
+
+export namespace ITextDocument {
+	/**
+	 * Creates a new ITextDocument literal from the given uri and content.
+	 * @param uri The document's uri.
+	 * @param content The document's content.
+	 */
+	export function create(uri: string, content: string): ITextDocument {
+		return new TextDocument(uri, content);
+	}
+	/**
+	 * Checks whether the given liternal conforms to the [ITextDocument](#ITextDocument) interface.
+	 */
+	export function is(value: any): value is ITextDocument {
+		let candidate = value as ITextDocument;
+		return Is.defined(candidate) && Is.string(candidate.uri) && Is.number(candidate.lineCount)
+			&& Is.func(candidate.getText) && Is.func(candidate.positionAt) && Is.func(candidate.offsetAt);
+	}
 }
 
 /**
@@ -107,10 +151,12 @@ class TextDocument implements ITextDocument {
 
 	private _uri: string;
 	private _content: string;
+	private _lineOffsets: number[];
 
 	public constructor(uri: string, content: string) {
 		this._uri = uri;
 		this._content = content;
+		this._lineOffsets = null;
 	}
 
 	public get uri(): string {
@@ -123,6 +169,69 @@ class TextDocument implements ITextDocument {
 
 	public update(event: TextDocumentContentChangeEvent): void {
 		this._content = event.text;
+		this._lineOffsets = null;
+	}
+
+	private getLineOffsets() : number[] {
+		if (this._lineOffsets === null) {
+			let lineOffsets: number[] = [];
+			let text = this._content;
+			let isLineStart = true;
+			for (let i = 0; i < text.length; i++) {
+				if (isLineStart) {
+					lineOffsets.push(i);
+					isLineStart = false;
+				}
+				let ch = text.charAt(i);
+				isLineStart = (ch === '\r' || ch === '\n');
+				if (ch === '\r' && i + 1 < text.length && text.charAt(i+1) === '\n') {
+					i++;
+				}
+			}
+			if (isLineStart && text.length > 0) {
+				lineOffsets.push(text.length);
+			}
+			this._lineOffsets = lineOffsets;
+		}
+		return this._lineOffsets;
+	}
+
+	public positionAt(offset:number) {
+		offset = Math.max(Math.min(offset, this._content.length), 0);
+
+		let lineOffsets = this.getLineOffsets();
+		let low = 0, high = lineOffsets.length;
+		if (high === 0) {
+			return Position.create(0, offset);
+		}
+		while (low < high) {
+			let mid = Math.floor((low + high) / 2);
+			if (lineOffsets[mid] > offset) {
+				high = mid;
+			} else {
+				low = mid + 1;
+			}
+		}
+		// low is the least x for which the line offset is larger than the current offset
+		// or array.length if no line offset is larger than the current offset
+		let line = low - 1;
+		return Position.create(line, offset - lineOffsets[line]);
+	}
+
+	public offsetAt(position: Position) {
+		let lineOffsets = this.getLineOffsets();
+		if (position.line >= lineOffsets.length) {
+			return this._content.length;
+		} else if (position.line < 0) {
+			return 0;
+		}
+		let lineOffset = lineOffsets[position.line];
+		let nextLineOffset = (position.line + 1 < lineOffsets.length) ? lineOffsets[position.line + 1] : this._content.length;
+		return Math.max(Math.min(lineOffset + position.character, nextLineOffset), lineOffset);
+	}
+
+	public get lineCount() {
+		return this.getLineOffsets().length;
 	}
 }
 
@@ -635,7 +744,7 @@ export function createConnection(reader: IMessageReader, writer: IMessageWriter)
 export function createConnection(input: any, output: any): IConnection {
 	let shutdownReceived: boolean;
 	// Backwards compatibility
-	if (is.func(input.read) && is.func(input.on)) {
+	if (Is.func(input.read) && Is.func(input.on)) {
 		let inputStream = <NodeJS.ReadableStream>input;
 		inputStream.on('end', () => {
 			process.exit(shutdownReceived ? 0 : 1);
@@ -651,7 +760,7 @@ export function createConnection(input: any, output: any): IConnection {
 	let remoteWindow = new RemoteWindowImpl(connection);
 
 	function asThenable<T>(value: T | Thenable<T>): Thenable<T> {
-		if (is.thenable(value)) {
+		if (Is.thenable(value)) {
 			return value;
 		} else {
 			return Promise.resolve<T>(<T>value);
@@ -705,7 +814,7 @@ export function createConnection(input: any, output: any): IConnection {
 	};
 
 	connection.onRequest(InitializeRequest.type, (params) => {
-		if (is.number(params.processId)) {
+		if (Is.number(params.processId)) {
 			// We received a parent process id. Set up a timer to periodically check
 			// if the parent is still alive.
 			setInterval(() => {
@@ -732,8 +841,8 @@ export function createConnection(input: any, output: any): IConnection {
 					capabilities = {}
 					result.capabilities = {};
 				}
-				if (!is.number(capabilities.textDocumentSync)) {
-					capabilities.textDocumentSync = is.number(protocolConnection.__textDocumentSync) ? protocolConnection.__textDocumentSync : TextDocumentSyncKind.None;
+				if (!Is.number(capabilities.textDocumentSync)) {
+					capabilities.textDocumentSync = Is.number(protocolConnection.__textDocumentSync) ? protocolConnection.__textDocumentSync : TextDocumentSyncKind.None;
 				}
 				return result;
 			});
