@@ -182,6 +182,7 @@ export interface SynchronizeOptions {
 export interface LanguageClientOptions {
 	documentSelector?: string | string[];
 	synchronize?: SynchronizeOptions;
+	diagnosticCollectionName?: string;
 }
 
 enum ClientState {
@@ -359,7 +360,10 @@ export class LanguageClient {
 	public start(): Disposable {
 		this._listeners = [];
 		this._providers = [];
-		this._diagnostics = Languages.createDiagnosticCollection();
+		this._diagnostics = this._languageOptions.diagnosticCollectionName
+			? Languages.createDiagnosticCollection(this._languageOptions.diagnosticCollectionName)
+			: Languages.createDiagnosticCollection();
+
 		this._state = ClientState.Starting;
 		this.resolveConnection().then((connection) => {
 			connection.onLogMessage((message) => {
