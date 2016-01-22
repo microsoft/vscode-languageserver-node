@@ -66,6 +66,7 @@ interface IConnection {
 	sendRequest<P, R, E>(type: RequestType<P, R, E>, params?: P): Thenable<R>;
 	sendNotification<P>(type: NotificationType<P>, params?: P): void;
 	onNotification<P>(type: NotificationType<P>, handler: INotificationHandler<P>): void;
+	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void;
 
 	initialize(params: InitializeParams): Thenable<InitializeResult>;
 	shutdown(): Thenable<void>;
@@ -112,6 +113,7 @@ function createConnection(input: any, output: any): IConnection {
 		sendRequest: <P, R, E>(type: RequestType<P, R, E>, params?: P): Thenable<R> => connection.sendRequest(type, params),
 		sendNotification: <P>(type: NotificationType<P>, params?: P): void => connection.sendNotification(type, params),
 		onNotification: <P>(type: NotificationType<P>, handler: INotificationHandler<P>): void => connection.onNotification(type, handler),
+		onRequest: <P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void => connection.onRequest(type, handler),
 
 		initialize: (params: InitializeParams) => connection.sendRequest(InitializeRequest.type, params),
 		shutdown: () => connection.sendRequest(ShutdownRequest.type),
@@ -340,6 +342,14 @@ export class LanguageClient {
 			})
 		});
 	}
+	
+	public onRequest<P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void {
+		this.onReady().then(() => {
+			this.resolveConnection().then((connection) => {
+				connection.onRequest(type, handler);
+			})
+		});
+	}	
 
 	public needsStart(): boolean {
 		return this._state === ClientState.Stopping || this._state === ClientState.Stopped;

@@ -6,5 +6,5 @@
 
 This npm module implements the base messaging protocol spoken between a VSCode language server and a VSCode language client.
 
-Click [here](https://code.visualstudio.com/docs/extensions/example-language-server) for a detaild document on how to uses this npm module
+Click [here](https://code.visualstudio.com/docs/extensions/example-language-server) for a detailed document on how to uses this npm module
 to implement language servers for [VSCode](https://code.visualstudio.com/).
