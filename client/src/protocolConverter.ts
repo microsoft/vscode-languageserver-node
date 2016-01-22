@@ -61,6 +61,12 @@ export function asDiagnosticSeverity(value: number): code.DiagnosticSeverity {
 }
 
 export function asHover(hover: proto.Hover): code.Hover {
+	if (is.undefined(hover)) {
+		return undefined;
+	}
+	if (is.nil(hover)) {
+		return null;
+	}
 	return new code.Hover(hover.contents, is.defined(hover.range) ? asRange(hover.range) : undefined);
 }
 

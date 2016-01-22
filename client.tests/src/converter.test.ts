@@ -73,6 +73,9 @@ suite('Protocol Converter', () => {
 	});
 	
 	test('Hover', () => {
+		strictEqual(undefined, p2c.asHover(undefined));
+		strictEqual(null, p2c.asHover(null));
+		
 		let hover: proto.Hover = {
 			contents: 'hover'
 		};

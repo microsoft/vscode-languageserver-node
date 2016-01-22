@@ -4,5 +4,6 @@
 	"files.trimTrailingWhitespace": true,
 	"eslint.enable": false,
 	"editor.insertSpaces": false,
-	"editor.tabSize": 4
+	"editor.tabSize": 4,
+	"tslint.enable": false
 }
