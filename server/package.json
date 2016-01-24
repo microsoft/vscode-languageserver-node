@@ -21,7 +21,7 @@
 		"typescript": "^1.6.2"
 	},
 	"dependencies": {
-		"vscode-jsonrpc": "^1.0.2"
+		"vscode-jsonrpc": "next"
 	},
 	"scripts": {
 		"prepublish": "tsc -p ./src",

@@ -21,7 +21,7 @@
 		"vscode": "0.10.x"
 	},
 	"dependencies": {
-		"vscode-jsonrpc": "^1.0.2"
+		"vscode-jsonrpc": "next"
 	},
 	"scripts": {
 		"prepublish": "tsc -p ./src",
