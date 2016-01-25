@@ -11,7 +11,7 @@ import {
 		workspace as Workspace, window as Window, languages as Languages, extensions as Extensions, TextDocumentChangeEvent, TextDocument, Disposable, OutputChannel,
 		FileSystemWatcher, Uri, DiagnosticCollection, DocumentSelector,
 		CancellationToken, Hover as VHover, Position as VPosition, Location as VLocation, Range as VRange,
-		CompletionItem as VCompletionItem, SignatureHelp as VSignatureHelp, Definition as VDefinition, DocumentHighlight as VDocumentHighlight,
+		CompletionItem as VCompletionItem, CompletionList as VCompletionList, SignatureHelp as VSignatureHelp, Definition as VDefinition, DocumentHighlight as VDocumentHighlight,
 		SymbolInformation as VSymbolInformation, CodeActionContext as VCodeActionContext, Command as VCommand, CodeLens as VCodeLens,
 		FormattingOptions as VFormattingOptions, TextEdit as VTextEdit, WorkspaceEdit as VWorkspaceEdit
 } from 'vscode';
@@ -745,9 +745,9 @@ export class LanguageClient {
 		}
 
 		this._providers.push(Languages.registerCompletionItemProvider(documentSelector, {
-			provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VCompletionItem[]> => {
+			provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VCompletionList | VCompletionItem[]> => {
 				return this.doSendRequest(connection, CompletionRequest.type, c2p.asTextDocumentPosition(document, position)). then(
-					p2c.asCompletionItems,
+					p2c.asCompletionResult,
 					error => Promise.resolve([])
 				);
 			},

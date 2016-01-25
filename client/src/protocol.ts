@@ -1062,6 +1062,39 @@ export namespace CompletionItem {
 }
 
 /**
+ * Represents a collection of [completion items](#CompletionItem) to be presented
+ * in the editor.
+ */
+export class CompletionList {
+
+	/**
+	 * This list it not complete. Further typing should result in recomputing
+	 * this list.
+	 */
+	isIncomplete: boolean;
+
+	/**
+	 * The completion items.
+	 */
+	items: CompletionItem[];
+
+}
+
+/**
+ * The CompletionItem namespace provides functions to deal with
+ * completion items.
+ */
+export namespace CompletionList {
+	/**
+	 * Create a completion item and seed it with a label.
+	 * @param label The completion item's label
+	 */
+	export function create(items: CompletionItem[], isIncomplete: boolean): CompletionList {
+		return { items, isIncomplete};
+	}
+}
+
+/**
  * Request to request completion at a given text document position. The request's
  * parameter is of type [TextDocumentPosition](#TextDocumentPosition) the response
  * is of type [CompletionItem[]](#CompletionItem) or a Thenable that resolves to such.
