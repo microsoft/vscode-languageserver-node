@@ -1081,15 +1081,17 @@ export class CompletionList {
 }
 
 /**
- * The CompletionItem namespace provides functions to deal with
- * completion items.
+ * The CompletionList namespace provides functions to deal with
+ * completion lists.
  */
 export namespace CompletionList {
 	/**
-	 * Create a completion item and seed it with a label.
-	 * @param label The completion item's label
+	 * Creates a new completion list.
+	 *
+	 * @param items The completion items.
+	 * @param isIncomplete The list is not complete.
 	 */
-	export function create(items: CompletionItem[], isIncomplete: boolean): CompletionList {
+	export function create(items?: CompletionItem[], isIncomplete?: boolean): CompletionList {
 		return { items, isIncomplete};
 	}
 }
@@ -1097,10 +1099,11 @@ export namespace CompletionList {
 /**
  * Request to request completion at a given text document position. The request's
  * parameter is of type [TextDocumentPosition](#TextDocumentPosition) the response
- * is of type [CompletionItem[]](#CompletionItem) or a Thenable that resolves to such.
+ * is of type [CompletionItem[]](#CompletionItem) or [CompletionList](#CompletionList)
+ * or a Thenable that resolves to such.
  */
 export namespace CompletionRequest {
-	export const type: RequestType<TextDocumentPosition, CompletionItem[], void> = { get method() { return 'textDocument/completion'; } };
+	export const type: RequestType<TextDocumentPosition, CompletionItem[] | CompletionList, void> = { get method() { return 'textDocument/completion'; } };
 }
 
 /**

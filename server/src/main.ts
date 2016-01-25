@@ -23,7 +23,8 @@ import {
 		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Range, Position, Location,
 		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSyncKind,
 		HoverRequest, Hover, MarkedString,
-		CompletionRequest, CompletionResolveRequest, CompletionOptions, CompletionItemKind, CompletionItem, TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
+		CompletionRequest, CompletionResolveRequest, CompletionOptions, CompletionItemKind, CompletionItem, CompletionList, 
+		TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
 		SignatureHelpRequest, SignatureHelp, SignatureInformation, ParameterInformation,
 		DefinitionRequest, Definition, ReferencesRequest, ReferenceParams,
 		DocumentHighlightRequest, DocumentHighlight, DocumentHighlightKind,
@@ -50,7 +51,8 @@ export {
 		PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Range, Position, Location,
 		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSyncKind,
 		Hover, MarkedString,
-		CompletionOptions, CompletionItemKind, CompletionItem, TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
+		CompletionOptions, CompletionItemKind, CompletionItem, CompletionList, 
+		TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
 		SignatureHelp, SignatureInformation, ParameterInformation,
 		Definition, ReferenceParams,  DocumentHighlight, DocumentHighlightKind,
 		SymbolInformation, SymbolKind, WorkspaceSymbolParams,
@@ -625,7 +627,7 @@ export interface IConnection {
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCompletion(handler: IRequestHandler<TextDocumentPosition, CompletionItem[], void>): void;
+	onCompletion(handler: IRequestHandler<TextDocumentPosition, CompletionItem[] | CompletionList, void>): void;
 
 	/**
 	 * Installs a handler for the `CompletionResolve` request.
