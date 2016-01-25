@@ -185,6 +185,7 @@ export interface LanguageClientOptions {
 	documentSelector?: string | string[];
 	synchronize?: SynchronizeOptions;
 	diagnosticCollectionName?: string;
+	initializationOptions?: any;
 }
 
 enum ClientState {
@@ -342,14 +343,14 @@ export class LanguageClient {
 			})
 		});
 	}
-	
+
 	public onRequest<P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void {
 		this.onReady().then(() => {
 			this.resolveConnection().then((connection) => {
 				connection.onRequest(type, handler);
 			})
 		});
-	}	
+	}
 
 	public needsStart(): boolean {
 		return this._state === ClientState.Stopping || this._state === ClientState.Stopped;
@@ -426,7 +427,7 @@ export class LanguageClient {
 	}
 
 	private initialize(connection: IConnection): Thenable<InitializeResult> {
-		let initParams: InitializeParams = { processId: process.pid, rootPath: Workspace.rootPath, capabilities: { } };
+		let initParams: InitializeParams = { processId: process.pid, rootPath: Workspace.rootPath, capabilities: { }, initializationOptions: this._languageOptions.initializationOptions };
 		return connection.initialize(initParams).then((result) => {
 			this._state = ClientState.Running;
 			this._capabilites = result.capabilities;

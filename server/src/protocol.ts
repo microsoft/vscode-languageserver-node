@@ -669,6 +669,11 @@ export interface InitializeParams {
 	 * The capabilities provided by the client (editor)
 	 */
 	capabilities: ClientCapabilities;
+	
+	/**
+	 * User provided initialization options.
+	 */
+	initializationOptions: any;	
 }
 
 /**
