@@ -6,7 +6,7 @@
 	"publisher": "Microsoft Corporation",
 	"license": "MIT",
 	"engines": {
-		"vscode": "^0.10.1"
+		"vscode": "^0.10.7"
 	},
 	"repository": {
 		"type": "git",
@@ -17,11 +17,12 @@
 	},
 	"devDependencies": {
 		"mocha": "^2.3.2",
-		"typescript": "^1.6.2",
-		"vscode": "0.10.x"
+		"typescript": "^1.7.5",
+		"vscode": "next"
 	},
 	"scripts": {
 		"compile": "tsc -p ./src",
-		"watch": "tsc -w -p ./src"
+		"watch": "tsc -w -p ./src",
+		"update-vscode": "node ./node_modules/vscode/bin/install"
 	}
 }

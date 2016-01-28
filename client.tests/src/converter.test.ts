@@ -189,7 +189,12 @@ suite('Protocol Converter', () => {
 		strictEqual(result.textEdit, undefined);
 		strictEqual(result.data, completionItem.data);
 		
-		ok(p2c.asCompletionItems([completionItem]).every(value => value instanceof vscode.CompletionItem));
+		let completionResult = p2c.asCompletionResult([completionItem]);
+		if (Array.isArray(completionResult)) {
+			ok(completionResult.every(value => value instanceof vscode.CompletionItem));
+		} else {
+			ok(completionResult.items.every(value => value instanceof vscode.CompletionItem));
+		}
 	});
 	
 	test('Completion Item Text Edit', () => {
