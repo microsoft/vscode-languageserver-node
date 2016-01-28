@@ -18,9 +18,10 @@
 	"devDependencies": {
 		"mocha": "^2.3.2",
 		"typescript": "^1.7.5",
-		"vscode": "next"
+		"vscode": "^0.11.x"
 	},
 	"scripts": {
+		"postinstall": "node ./node_modules/vscode/bin/install",
 		"compile": "tsc -p ./src",
 		"watch": "tsc -w -p ./src",
 		"update-vscode": "node ./node_modules/vscode/bin/install"
