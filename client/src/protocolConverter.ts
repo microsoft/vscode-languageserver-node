@@ -70,8 +70,13 @@ export function asHover(hover: proto.Hover): code.Hover {
 	return new code.Hover(hover.contents, is.defined(hover.range) ? asRange(hover.range) : undefined);
 }
 
-export function asCompletionItems(items: proto.CompletionItem[]): code.CompletionItem[] {
-	return items.map(asCompletionItem);
+export function asCompletionResult(result: proto.CompletionItem[] | proto.CompletionList): code.CompletionItem[] | code.CompletionList {
+	if (Array.isArray(result)) {
+		let items = <proto.CompletionItem[]> result;
+		return items.map(asCompletionItem);
+	}
+	let list = <code.CompletionList> result;
+	return new code.CompletionList(list.items.map(asCompletionItem), list.isIncomplete);
 }
 
 function set<T>(value: T, func: () => void): void {

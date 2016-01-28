@@ -37,6 +37,8 @@ export interface ILogger {
 }
 
 export interface MessageConnection {
+	sendRequest<P, R, E>(type: RequestType<P, R, E>, params?: P) : Thenable<R>;
+	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void;
 	sendNotification<P>(type: NotificationType<P>, params?: P): void;
 	onNotification<P>(type: NotificationType<P>, handler: INotificationHandler<P>): void;
 	listen();
@@ -44,11 +46,9 @@ export interface MessageConnection {
 }
 
 export interface ServerMessageConnection extends MessageConnection {
-	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void;
 }
 
 export interface ClientMessageConnection extends MessageConnection {
-	sendRequest<P, R, E>(type: RequestType<P, R, E>, params?: P) : Thenable<R>;
 }
 
 function createMessageConnection<T extends MessageConnection>(messageReader: IMessageReader, messageWriter: IMessageWriter, logger: ILogger, client: boolean = false): T {
@@ -164,24 +164,15 @@ function createMessageConnection<T extends MessageConnection>(messageReader: IMe
 		}
 	}
 
-	let callback: DataCallback;
-	if (client) {
-		callback = (message) => {
-			if (isReponseMessage(message)) {
-				handleResponse(message)
-			} else if (isNotificationMessage(message)) {
-				handleNotification(message);
-			}
+	let callback: DataCallback = (message) => {
+		if (isRequestMessage(message)) {
+			handleRequest(message);
+		} else if (isReponseMessage(message)) {
+			handleResponse(message)
+		} else if (isNotificationMessage(message)) {
+			handleNotification(message);
 		}
-	} else {
-		callback = (message) => {
-			if (isRequestMessage(message)) {
-				handleRequest(message);
-			} else if (isNotificationMessage(message)) {
-				handleNotification(message);
-			}
-		}
-	}
+	};
 
 	let connection: MessageConnection = {
 		sendNotification: <P>(type: NotificationType<P>, params) => {
@@ -195,14 +186,7 @@ function createMessageConnection<T extends MessageConnection>(messageReader: IMe
 		onNotification: <P>(type: NotificationType<P>, handler: INotificationHandler<P>) => {
 			eventHandlers[type.method] = handler;
 		},
-		dispose: () => {
-		},
-		listen: () => {
-			messageReader.listen(callback);
-		}
-	};
-	if (client) {
-		(connection as ClientMessageConnection).sendRequest = <P, R, E>(type: RequestType<P, R, E>, params: P) => {
+		sendRequest: <P, R, E>(type: RequestType<P, R, E>, params: P) => {
 			return new Promise<R | ResponseError<E>>((resolve, reject) => {
 				let id = sequenceNumber++;
 				let requestMessage : RequestMessage = {
@@ -214,12 +198,16 @@ function createMessageConnection<T extends MessageConnection>(messageReader: IMe
 				responseHandlers[String(id)] = { method: type.method, resolve, reject };
 				messageWriter.write(requestMessage);
 			});
-		}
-	} else {
-		(connection as ServerMessageConnection).onRequest = <P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>) => {
+		},
+		onRequest: <P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>) => {
 			requestHandlers[type.method] = handler;
+		},
+		dispose: () => {
+		},
+		listen: () => {
+			messageReader.listen(callback);
 		}
-	}
+	};
 	return connection as T;
 }
 

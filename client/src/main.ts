@@ -11,7 +11,7 @@ import {
 		workspace as Workspace, window as Window, languages as Languages, extensions as Extensions, TextDocumentChangeEvent, TextDocument, Disposable, OutputChannel,
 		FileSystemWatcher, Uri, DiagnosticCollection, DocumentSelector,
 		CancellationToken, Hover as VHover, Position as VPosition, Location as VLocation, Range as VRange,
-		CompletionItem as VCompletionItem, SignatureHelp as VSignatureHelp, Definition as VDefinition, DocumentHighlight as VDocumentHighlight,
+		CompletionItem as VCompletionItem, CompletionList as VCompletionList, SignatureHelp as VSignatureHelp, Definition as VDefinition, DocumentHighlight as VDocumentHighlight,
 		SymbolInformation as VSymbolInformation, CodeActionContext as VCodeActionContext, Command as VCommand, CodeLens as VCodeLens,
 		FormattingOptions as VFormattingOptions, TextEdit as VTextEdit, WorkspaceEdit as VWorkspaceEdit
 } from 'vscode';
@@ -66,6 +66,7 @@ interface IConnection {
 	sendRequest<P, R, E>(type: RequestType<P, R, E>, params?: P): Thenable<R>;
 	sendNotification<P>(type: NotificationType<P>, params?: P): void;
 	onNotification<P>(type: NotificationType<P>, handler: INotificationHandler<P>): void;
+	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void;
 
 	initialize(params: InitializeParams): Thenable<InitializeResult>;
 	shutdown(): Thenable<void>;
@@ -112,6 +113,7 @@ function createConnection(input: any, output: any): IConnection {
 		sendRequest: <P, R, E>(type: RequestType<P, R, E>, params?: P): Thenable<R> => connection.sendRequest(type, params),
 		sendNotification: <P>(type: NotificationType<P>, params?: P): void => connection.sendNotification(type, params),
 		onNotification: <P>(type: NotificationType<P>, handler: INotificationHandler<P>): void => connection.onNotification(type, handler),
+		onRequest: <P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void => connection.onRequest(type, handler),
 
 		initialize: (params: InitializeParams) => connection.sendRequest(InitializeRequest.type, params),
 		shutdown: () => connection.sendRequest(ShutdownRequest.type),
@@ -183,6 +185,7 @@ export interface LanguageClientOptions {
 	documentSelector?: string | string[];
 	synchronize?: SynchronizeOptions;
 	diagnosticCollectionName?: string;
+	initializationOptions?: any;
 }
 
 enum ClientState {
@@ -341,6 +344,14 @@ export class LanguageClient {
 		});
 	}
 
+	public onRequest<P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void {
+		this.onReady().then(() => {
+			this.resolveConnection().then((connection) => {
+				connection.onRequest(type, handler);
+			})
+		});
+	}
+
 	public needsStart(): boolean {
 		return this._state === ClientState.Stopping || this._state === ClientState.Stopped;
 	}
@@ -416,7 +427,7 @@ export class LanguageClient {
 	}
 
 	private initialize(connection: IConnection): Thenable<InitializeResult> {
-		let initParams: InitializeParams = { processId: process.pid, rootPath: Workspace.rootPath, capabilities: { } };
+		let initParams: InitializeParams = { processId: process.pid, rootPath: Workspace.rootPath, capabilities: { }, initializationOptions: this._languageOptions.initializationOptions };
 		return connection.initialize(initParams).then((result) => {
 			this._state = ClientState.Running;
 			this._capabilites = result.capabilities;
@@ -734,9 +745,9 @@ export class LanguageClient {
 		}
 
 		this._providers.push(Languages.registerCompletionItemProvider(documentSelector, {
-			provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VCompletionItem[]> => {
+			provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VCompletionList | VCompletionItem[]> => {
 				return this.doSendRequest(connection, CompletionRequest.type, c2p.asTextDocumentPosition(document, position)). then(
-					p2c.asCompletionItems,
+					p2c.asCompletionResult,
 					error => Promise.resolve([])
 				);
 			},

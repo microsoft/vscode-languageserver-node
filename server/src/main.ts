@@ -23,7 +23,8 @@ import {
 		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Range, Position, Location,
 		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSyncKind,
 		HoverRequest, Hover, MarkedString,
-		CompletionRequest, CompletionResolveRequest, CompletionOptions, CompletionItemKind, CompletionItem, TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
+		CompletionRequest, CompletionResolveRequest, CompletionOptions, CompletionItemKind, CompletionItem, CompletionList, 
+		TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
 		SignatureHelpRequest, SignatureHelp, SignatureInformation, ParameterInformation,
 		DefinitionRequest, Definition, ReferencesRequest, ReferenceParams,
 		DocumentHighlightRequest, DocumentHighlight, DocumentHighlightKind,
@@ -50,7 +51,8 @@ export {
 		PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Range, Position, Location,
 		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSyncKind,
 		Hover, MarkedString,
-		CompletionOptions, CompletionItemKind, CompletionItem, TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
+		CompletionOptions, CompletionItemKind, CompletionItem, CompletionList, 
+		TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
 		SignatureHelp, SignatureInformation, ParameterInformation,
 		Definition, ReferenceParams,  DocumentHighlight, DocumentHighlightKind,
 		SymbolInformation, SymbolKind, WorkspaceSymbolParams,
@@ -530,6 +532,14 @@ export interface IConnection {
 	 * @param params The notification's parameters.
 	 */
 	sendNotification<P>(type: NotificationType<P>, params?: P): void;
+	
+	/**
+	 * Send a request to the client.
+	 *
+	 * @param type The [RequestType](#RequestType) describing the request.
+	 * @param params The request's parameters.
+	 */	
+	sendRequest<P, R, E>(type: RequestType<P, R, E>, params?: P): Thenable<R>;
 
 	/**
 	 * Installs a handler for the intialize request.
@@ -617,7 +627,7 @@ export interface IConnection {
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCompletion(handler: IRequestHandler<TextDocumentPosition, CompletionItem[], void>): void;
+	onCompletion(handler: IRequestHandler<TextDocumentPosition, CompletionItem[] | CompletionList, void>): void;
 
 	/**
 	 * Installs a handler for the `CompletionResolve` request.
@@ -772,6 +782,7 @@ export function createConnection(input: any, output: any): IConnection {
 	let exitHandler: INotificationHandler<void> = null;
 	let protocolConnection: IConnection & IConnectionState = {
 		listen: (): void => connection.listen(),
+		sendRequest: <P, R, E>(type: RequestType<P, R, E>, params?: P): Thenable<R> => connection.sendRequest(type, params),
 		onRequest: <P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void => connection.onRequest(type, handler),
 		sendNotification: <P>(type: NotificationType<P>, params?: P): void => connection.sendNotification(type, params),
 		onNotification: <P>(type: NotificationType<P>, handler: INotificationHandler<P>): void => connection.onNotification(type, handler),
