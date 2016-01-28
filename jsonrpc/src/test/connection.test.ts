@@ -276,6 +276,46 @@ describe('Connection', () => {
 		});
 	});
 
+	it('Receives Undefined as null', (done) => {
+		let duplexStream1 = new TestDuplex('ds1');
+		let duplexStream2 = new TestDuplex('ds2');
+		var inputStream = new Readable();
+		inputStream.push(null);
+
+		var connection2 = hostConnection.createServerMessageConnection(duplexStream2, duplexStream1, Logger);
+		connection2.onRequest(testRequest1, () => {
+			return undefined;
+		});
+		connection2.listen();
+
+		var connection1 = hostConnection.createClientMessageConnection(duplexStream1, duplexStream2, Logger);
+		connection1.listen();
+		connection1.sendRequest(testRequest1, {}).then(result => {
+			assert.deepEqual(result, null);
+			done();
+		});
+	});
+
+	it('Receives null as null', (done) => {
+		let duplexStream1 = new TestDuplex('ds1');
+		let duplexStream2 = new TestDuplex('ds2');
+		var inputStream = new Readable();
+		inputStream.push(null);
+
+		var connection2 = hostConnection.createServerMessageConnection(duplexStream2, duplexStream1, Logger);
+		connection2.onRequest(testRequest1, () => {
+			return null;
+		});
+		connection2.listen();
+
+		var connection1 = hostConnection.createClientMessageConnection(duplexStream1, duplexStream2, Logger);
+		connection1.listen();
+		connection1.sendRequest(testRequest1, {}).then(result => {
+			assert.deepEqual(result, null);
+			done();
+		});
+	});
+
 	var testEvent: NotificationType<any> = { method: "testNotification" };
 	it('Send and Receive Event', (done) => {
 

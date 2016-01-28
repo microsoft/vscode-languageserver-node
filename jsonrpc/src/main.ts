@@ -69,7 +69,7 @@ function createMessageConnection<T extends MessageConnection>(messageReader: IMe
 			if (resultOrError instanceof ResponseError) {
 				message.error = (<ResponseError<any>>resultOrError).toJson();
 			} else {
-				message.result = resultOrError;
+				message.result = is.undefined(resultOrError) ? null : resultOrError;
 			}
 			messageWriter.write(message);
 		}
@@ -82,6 +82,11 @@ function createMessageConnection<T extends MessageConnection>(messageReader: IMe
 			messageWriter.write(message);
 		}
 		function replySuccess(result: any) {
+			// The JSON RPC defines that a response must either have a result or an error
+			// So we can't treat undefined as a valid response result.
+			if (is.undefined(result)) {
+				result = null;
+			}
 			let message: ResponseMessage = {
 				jsonrpc: version,
 				id: requestMessage.id,
@@ -95,8 +100,8 @@ function createMessageConnection<T extends MessageConnection>(messageReader: IMe
 			try {
 				let handlerResult = requestHandler(requestMessage.params);
 				let promise = <Thenable<any | ResponseError<any>>>handlerResult;
-				if (!promise) {
-					replySuccess({});
+				if (!handlerResult) {
+					replySuccess(handlerResult);
 				} else if (promise.then) {
 					promise.then((resultOrError): any | ResponseError<any>  => {
 						reply(resultOrError);
@@ -128,15 +133,15 @@ function createMessageConnection<T extends MessageConnection>(messageReader: IMe
 
 	function handleResponse(responseMessage: ResponseMessage) {
 		let key = String(responseMessage.id);
-		var responseHandler = responseHandlers[key];
+		let responseHandler = responseHandlers[key];
 		if (responseHandler) {
 			try {
-				if (responseMessage.error) {
+				if (is.defined(responseMessage.error)) {
 					responseHandler.reject(responseMessage.error);
-				} else if (responseMessage.result) {
+				} else if (is.defined(responseMessage.result)) {
 					responseHandler.resolve(responseMessage.result);
 				} else {
-					responseHandler.resolve(undefined);
+					throw new Error('Should never happen.');
 				}
 				delete responseHandlers[key];
 			} catch (error) {
@@ -164,6 +169,23 @@ function createMessageConnection<T extends MessageConnection>(messageReader: IMe
 		}
 	}
 
+	function handleInvalidMessage(message: Message) {
+		if (!message) {
+			logger.error('Received empty message.');
+			return;
+		}
+		logger.error(`Recevied message which is neither a response nor a notification message:\n${JSON.stringify(message, null, 4)}`);
+		// Test whether we find an id to reject the promise
+		let responseMessage: ResponseMessage = message as ResponseMessage;
+		if (is.string(responseMessage.id) || is.number(responseMessage.id)) {
+			let key = String(responseMessage.id);
+			let responseHandler = responseHandlers[key];
+			if (responseHandler) {
+				responseHandler.reject(new Error('The received response has neither a result nor an error property.'));
+			}
+		}
+	}
+
 	let callback: DataCallback = (message) => {
 		if (isRequestMessage(message)) {
 			handleRequest(message);
@@ -171,6 +193,8 @@ function createMessageConnection<T extends MessageConnection>(messageReader: IMe
 			handleResponse(message)
 		} else if (isNotificationMessage(message)) {
 			handleNotification(message);
+		} else {
+			handleInvalidMessage(message);
 		}
 	};
 
