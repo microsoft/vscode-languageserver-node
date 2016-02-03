@@ -64,7 +64,7 @@ export function resolveModule(workspaceRoot: string, moduleName: string): Thenab
 			let newEnv = Object.create(null);
 			Object.keys(env).forEach(key => newEnv[key] = env[key]);
 			if (newEnv[nodePathKey]) {
-				newEnv[nodePathKey] = newEnv[nodePathKey] + separator + nodePath.join(separator);
+				newEnv[nodePathKey] = nodePath.join(separator) + separator + newEnv[nodePathKey];
 			} else {
 				newEnv[nodePathKey] = nodePath.join(separator);
 			}
