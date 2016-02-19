@@ -13,6 +13,7 @@ import ProtocolCodeLens from './protocolCodeLens';
 export function asOpenTextDocumentParams(textDocument: code.TextDocument): proto.DidOpenTextDocumentParams {
 	return {
 		uri: textDocument.uri.toString(),
+		languageId: textDocument.languageId,
 		text: textDocument.getText()
 	};
 }
@@ -33,12 +34,14 @@ export function asChangeTextDocumentParams(arg: code.TextDocumentChangeEvent | c
 	if (isTextDocument(arg)) {
 		let result: proto.DidChangeTextDocumentParams = {
 			uri: arg.uri.toString(),
+			languageId: arg.languageId,
 			contentChanges: [ { text: arg.getText() } ]
 		}
 		return result;
 	} else if (isTextDocumentChangeEvent(arg)) {
 		let result: proto.DidChangeTextDocumentParams = {
 			uri: arg.document.uri.toString(),
+			languageId: arg.document.languageId,
 			contentChanges: arg.contentChanges.map((change): proto.TextDocumentContentChangeEvent => {
 				let range = change.range;
 				return {
@@ -59,16 +62,17 @@ export function asChangeTextDocumentParams(arg: code.TextDocumentChangeEvent | c
 
 export function asCloseTextDocumentParams(textDocument: code.TextDocument): proto.TextDocumentIdentifier {
 	return {
-		uri: textDocument.uri.toString()
+		uri: textDocument.uri.toString(),
+		languageId: textDocument.languageId
 	};
 }
 
 export function asTextDocumentIdentifier(textDocument: code.TextDocument): proto.TextDocumentIdentifier {
-	return { uri: textDocument.uri.toString() };
+	return { uri: textDocument.uri.toString(), languageId: textDocument.languageId };
 }
 
 export function asTextDocumentPosition(textDocument: code.TextDocument, position: code.Position): proto.TextDocumentPosition {
-	return { uri: textDocument.uri.toString(), position: asWorkerPosition(position) };
+	return { uri: textDocument.uri.toString(), languageId: textDocument.languageId, position: asWorkerPosition(position) };
 }
 
 export function asWorkerPosition(position: code.Position): proto.Position {
@@ -150,6 +154,7 @@ export function asTextEdit(edit: code.TextEdit): proto.TextEdit {
 export function asReferenceParams(textDocument: code.TextDocument, position: code.Position, options: { includeDeclaration: boolean; }): proto.ReferenceParams {
 	return {
 		uri: textDocument.uri.toString(),
+		languageId: textDocument.languageId,
 		position: asWorkerPosition(position),
 		context: { includeDeclaration: options.includeDeclaration }
 	};

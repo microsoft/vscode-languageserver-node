@@ -23,7 +23,7 @@ import {
 		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Range, Position, Location,
 		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSyncKind,
 		HoverRequest, Hover, MarkedString,
-		CompletionRequest, CompletionResolveRequest, CompletionOptions, CompletionItemKind, CompletionItem, CompletionList, 
+		CompletionRequest, CompletionResolveRequest, CompletionOptions, CompletionItemKind, CompletionItem, CompletionList,
 		TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
 		SignatureHelpRequest, SignatureHelp, SignatureInformation, ParameterInformation,
 		DefinitionRequest, Definition, ReferencesRequest, ReferenceParams,
@@ -51,7 +51,7 @@ export {
 		PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Range, Position, Location,
 		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSyncKind,
 		Hover, MarkedString,
-		CompletionOptions, CompletionItemKind, CompletionItem, CompletionList, 
+		CompletionOptions, CompletionItemKind, CompletionItem, CompletionList,
 		TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
 		SignatureHelp, SignatureInformation, ParameterInformation,
 		Definition, ReferenceParams,  DocumentHighlight, DocumentHighlightKind,
@@ -86,6 +86,13 @@ export interface ITextDocument {
 	 * @readonly
 	 */
 	uri: string;
+
+	/**
+	 * The identifier of the language associated with this document.
+	 *
+	 * @readonly
+	 */
+	languageId: string;
 
 	/**
 	 * Get the text of this document.
@@ -125,17 +132,35 @@ export namespace ITextDocument {
 	 * Creates a new ITextDocument literal from the given uri and content.
 	 * @param uri The document's uri.
 	 * @param content The document's content.
+	 * @deprecated Use create function with language identifier.
 	 */
-	export function create(uri: string, content: string): ITextDocument {
-		return new TextDocument(uri, content);
+	export function create(uri: string, content: string): ITextDocument;
+	/**
+	 * Creates a new ITextDocument literal from the given uri and content.
+	 * @param uri The document's uri.
+	 * @param languageId  The document's language Id.
+	 * @param content The document's content.
+	 */
+	export function create(uri: string, languageId: string, content: string): ITextDocument;
+	export function create(uri: string, arg2: string, arg3?: string): ITextDocument {
+		let languageId: string;
+		let content: string;
+		if (Is.string(arg3)) {
+			languageId = arg2;
+			content = arg3;
+		} else {
+			languageId = undefined;
+			content = arg2;
+		}
+		return new TextDocument(uri, languageId, content);
 	}
 	/**
-	 * Checks whether the given liternal conforms to the [ITextDocument](#ITextDocument) interface.
+	 * Checks whether the given literal conforms to the [ITextDocument](#ITextDocument) interface.
 	 */
 	export function is(value: any): value is ITextDocument {
 		let candidate = value as ITextDocument;
-		return Is.defined(candidate) && Is.string(candidate.uri) && Is.number(candidate.lineCount)
-			&& Is.func(candidate.getText) && Is.func(candidate.positionAt) && Is.func(candidate.offsetAt);
+		return Is.defined(candidate) && Is.string(candidate.uri) && (Is.undefined(candidate.languageId) || Is.string(candidate.languageId)) && Is.number(candidate.lineCount)
+			&& Is.func(candidate.getText) && Is.func(candidate.positionAt) && Is.func(candidate.offsetAt) ? true : false;
 	}
 }
 
@@ -152,17 +177,23 @@ export interface TextDocumentChangeEvent {
 class TextDocument implements ITextDocument {
 
 	private _uri: string;
+	private _languageId: string;
 	private _content: string;
 	private _lineOffsets: number[];
 
-	public constructor(uri: string, content: string) {
+	public constructor(uri: string, languageId: string, content: string) {
 		this._uri = uri;
+		this._languageId = languageId;
 		this._content = content;
 		this._lineOffsets = null;
 	}
 
 	public get uri(): string {
 		return this._uri;
+	}
+
+	public get languageId(): string {
+		return this._languageId;
 	}
 
 	public getText(): string {
@@ -332,7 +363,7 @@ export class TextDocuments {
 	public listen(connection: IConnection): void {
 		(<IConnectionState><any>connection).__textDocumentSync = TextDocumentSyncKind.Full;
 		connection.onDidOpenTextDocument((event: DidOpenTextDocumentParams) => {
-			let document = new TextDocument(event.uri, event.text);
+			let document = new TextDocument(event.uri, event.languageId, event.text);
 			this._documents[event.uri] = document;
             this._onDidOpen.fire({ document });
 			this._onDidChangeContent.fire({ document });
@@ -532,13 +563,13 @@ export interface IConnection {
 	 * @param params The notification's parameters.
 	 */
 	sendNotification<P>(type: NotificationType<P>, params?: P): void;
-	
+
 	/**
 	 * Send a request to the client.
 	 *
 	 * @param type The [RequestType](#RequestType) describing the request.
 	 * @param params The request's parameters.
-	 */	
+	 */
 	sendRequest<P, R, E>(type: RequestType<P, R, E>, params?: P): Thenable<R>;
 
 	/**

@@ -41,7 +41,7 @@ export namespace Position {
 	 */
 	export function is(value: any): value is Position {
 		let candidate = value as Position;
-		return Is.defined(candidate) && Is.number(candidate.line) && Is.number(candidate.character);
+		return Is.defined(candidate) && Is.number(candidate.line) && Is.number(candidate.character) ? true : false;
 	}
 }
 
@@ -93,7 +93,7 @@ export namespace Range {
 	 */
 	export function is(value: any): value is Range {
 		let candidate  = value as Range;
-		return Is.defined(candidate) && Position.is(candidate.start) && Position.is(candidate.end);
+		return Is.defined(candidate) && Position.is(candidate.start) && Position.is(candidate.end) ? true : false;
 	}
 }
 
@@ -124,7 +124,7 @@ export namespace Location {
 	 */
 	export function is(value: any): value is Location {
 		let candidate = value as Location;
-		return Is.defined(candidate) && Range.is(candidate) && (Is.string(candidate.uri) || Is.undefined(candidate.uri));
+		return Is.defined(candidate) && Range.is(candidate) && (Is.string(candidate.uri) || Is.undefined(candidate.uri)) ? true : false;
 	}
 }
 
@@ -214,7 +214,7 @@ export namespace Diagnostic {
 			&& Is.string(candidate.message)
 			&& (Is.number(candidate.severity) || Is.undefined(candidate.severity))
 			&& (Is.number(candidate.code) || Is.string(candidate.code) || Is.undefined(candidate.code))
-			&& (Is.string(candidate.source) || Is.undefined(candidate.source));
+			&& (Is.string(candidate.source) || Is.undefined(candidate.source)) ? true : false;
 	}
 }
 
@@ -262,7 +262,7 @@ export namespace Command {
 	 */
 	export function is(value: any): value is Command {
 		let candidate = value as Command;
-		return Is.defined(candidate) && Is.string(candidate.title) && Is.string(candidate.title);
+		return Is.defined(candidate) && Is.string(candidate.title) && Is.string(candidate.title) ? true : false;
 	}
 }
 
@@ -433,6 +433,11 @@ export interface TextDocumentIdentifier {
 	 * The text document's uri.
 	 */
 	uri: string;
+
+	/**
+	 * The text document's language identifier
+	 */
+	languageId: string;
 }
 
 /**
@@ -443,16 +448,17 @@ export namespace TextDocumentIdentifier {
 	/**
 	 * Creates a new TextDocumentIdentifier literal.
 	 * @param uri The document's uri.
+	 * @param languageId The document's language id.
 	 */
-	export function create(uri: string): TextDocumentIdentifier {
-		return { uri };
+	export function create(uri: string, languageId?: string): TextDocumentIdentifier {
+		return { uri, languageId };
 	}
 	/**
 	 * Checks whether the given literal conforms to the [TextDocumentIdentifier](#TextDocumentIdentifier) interface.
 	 */
 	export function is(value: any): value is TextDocumentIdentifier {
 		let candidate = value as TextDocumentIdentifier;
-		return Is.defined(candidate) && Is.string(candidate.uri);
+		return Is.defined(candidate) && Is.string(candidate.uri) ? true : false;
 	}
 }
 
@@ -476,15 +482,30 @@ export namespace TextDocumentPosition {
 	 * @param uri The document's uri.
 	 * @param position The position inside the document.
 	 */
-	export function create(uri: string, position: Position): TextDocumentPosition {
-		return { uri, position };
+	export function create(uri: string, position: Position): TextDocumentPosition;
+	/**
+	 * Creates a new TextDocumentPosition
+	 * @param uri The document's uri.
+	 * @param position The position inside the document.
+	 */
+	export function create(uri: string, languageId: string, position: Position): TextDocumentPosition;
+	export function create(uri: string, arg2: Position | string, arg3?: Position): TextDocumentPosition {
+		let languageId: string;
+		let position: Position;
+		if (Is.string(arg2) && Position.is(arg3)) {
+			languageId = arg2
+			position = arg3;
+		} else if (Position.is(arg2)) {
+			position = arg2;
+		}
+		return { uri, languageId, position };
 	}
 	/**
 	 * Checks whether the given literal conforms to the [TextDocumentPosition](#TextDocumentPosition) interface.
 	 */
 	export function is(value: any): value is TextDocumentPosition {
 		let candidate = value as TextDocumentPosition;
-		return Is.defined(candidate) && TextDocumentIdentifier.is(candidate) && Position.is(candidate.position);
+		return Is.defined(candidate) && TextDocumentIdentifier.is(candidate) && Position.is(candidate.position) ? true : false;
 	}
 }
 
@@ -1500,7 +1521,7 @@ export namespace CodeActionContext {
 	 */
 	export function is(value: any): value is CodeActionContext {
 		let candidate = value as CodeActionContext;
-		return Is.defined(candidate) && Is.typedArray<Diagnostic[]>(candidate.diagnostics, Diagnostic.is);
+		return Is.defined(candidate) && Is.typedArray<Diagnostic[]>(candidate.diagnostics, Diagnostic.is) ? true : false;
 	}
 }
 
@@ -1633,7 +1654,7 @@ export namespace FormattingOptions {
 	 */
 	export function is(value: any): value is FormattingOptions {
 		let candidate = value as FormattingOptions;
-		return Is.defined(candidate) && Is.number(candidate.tabSize) && Is.boolean(candidate.insertSpaces);
+		return Is.defined(candidate) && Is.number(candidate.tabSize) && Is.boolean(candidate.insertSpaces) ? true : false;
 	}
 }
 
