@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageclient",
 	"description": "VSCode Language client implementation",
-	"version": "1.4.0",
+	"version": "1.4.1",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"engines": {
@@ -17,11 +17,11 @@
 	"main": "./lib/main.js",
 	"typings": "./lib/main",
 	"devDependencies": {
-		"typescript": "^1.7.5",
-		"vscode": "^0.11.x"
+		"typescript": "^1.7.5"
 	},
 	"dependencies": {
-		"vscode-jsonrpc": "^1.2.0"
+		"vscode-jsonrpc": "^1.2.0",
+		"vscode": "^0.11.x"
 	},
 	"scripts": {
 		"postinstall": "node ./node_modules/vscode/bin/install",
