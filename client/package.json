@@ -24,7 +24,7 @@
 		"vscode-jsonrpc": "^1.2.0"
 	},
 	"scripts": {
-		"prepublish": "tsc -p ./src",
+		"prepublish": "node ./node_modules/vscode/bin/install && tsc -p ./src",
 		"compile": "tsc -p ./src",
 		"watch": "tsc -w -p ./src",
 		"update-vscode": "node ./node_modules/vscode/bin/install"
