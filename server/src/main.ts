@@ -365,7 +365,7 @@ export class TextDocuments {
 		connection.onDidOpenTextDocument((event: DidOpenTextDocumentParams) => {
 			let document = new TextDocument(event.uri, event.languageId, event.text);
 			this._documents[event.uri] = document;
-            this._onDidOpen.fire({ document });
+			this._onDidOpen.fire({ document });
 			this._onDidChangeContent.fire({ document });
 		});
 		connection.onDidChangeTextDocument((event: DidChangeTextDocumentParams) => {
@@ -373,14 +373,18 @@ export class TextDocuments {
 			let last: TextDocumentContentChangeEvent = changes.length > 0 ? changes[changes.length - 1] : null;
 			if (last) {
 				let document = this._documents[event.uri];
-				document.update(last);
-				this._onDidChangeContent.fire({ document });
+				if (document) {
+					document.update(last);
+					this._onDidChangeContent.fire({ document });
+				}
 			}
 		});
 		connection.onDidCloseTextDocument((event: TextDocumentIdentifier) => {
-            let document = this._documents[event.uri];
-			delete this._documents[event.uri];
-            this._onDidClose.fire({ document });
+			let document = this._documents[event.uri];
+			if (document) {
+				delete this._documents[event.uri];
+				this._onDidClose.fire({ document });
+			}
 		});
 	}
 }
