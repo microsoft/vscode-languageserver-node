@@ -433,11 +433,6 @@ export interface TextDocumentIdentifier {
 	 * The text document's uri.
 	 */
 	uri: string;
-
-	/**
-	 * The text document's language identifier
-	 */
-	languageId: string;
 }
 
 /**
@@ -448,10 +443,9 @@ export namespace TextDocumentIdentifier {
 	/**
 	 * Creates a new TextDocumentIdentifier literal.
 	 * @param uri The document's uri.
-	 * @param languageId The document's language id.
 	 */
-	export function create(uri: string, languageId?: string): TextDocumentIdentifier {
-		return { uri, languageId };
+	export function create(uri: string): TextDocumentIdentifier {
+		return { uri };
 	}
 	/**
 	 * Checks whether the given literal conforms to the [TextDocumentIdentifier](#TextDocumentIdentifier) interface.
@@ -463,9 +457,15 @@ export namespace TextDocumentIdentifier {
 }
 
 /**
- * A literal to define the position in a text document.
+ * A parameter literal to pass a text document and a position inside that
+ * document.
  */
-export interface TextDocumentPosition extends TextDocumentIdentifier {
+export interface TextDocumentPositionParams {
+	/**
+	 * The document to format.
+	 */
+	textDocument: TextDocumentIdentifier;
+
 	/**
 	 * The position inside the text document.
 	 */
@@ -476,35 +476,23 @@ export interface TextDocumentPosition extends TextDocumentIdentifier {
  * The TextDocumentPosition namespace provides helper functions to work with
  * [TextDocumentPosition](#TextDocumentPosition) literals.
  */
-export namespace TextDocumentPosition {
+export namespace TextDocumentPositionParams {
 	/**
 	 * Creates a new TextDocumentPosition
 	 * @param uri The document's uri.
 	 * @param position The position inside the document.
 	 */
-	export function create(uri: string, position: Position): TextDocumentPosition;
-	/**
-	 * Creates a new TextDocumentPosition
-	 * @param uri The document's uri.
-	 * @param position The position inside the document.
-	 */
-	export function create(uri: string, languageId: string, position: Position): TextDocumentPosition;
-	export function create(uri: string, arg2: Position | string, arg3?: Position): TextDocumentPosition {
-		let languageId: string;
-		let position: Position;
-		if (Is.string(arg2) && Position.is(arg3)) {
-			languageId = arg2
-			position = arg3;
-		} else if (Position.is(arg2)) {
-			position = arg2;
-		}
-		return { uri, languageId, position };
+	export function create(uri: string, position: Position): TextDocumentPositionParams {
+		return {
+			textDocument: { uri },
+			position: position
+		};
 	}
 	/**
 	 * Checks whether the given literal conforms to the [TextDocumentPosition](#TextDocumentPosition) interface.
 	 */
-	export function is(value: any): value is TextDocumentPosition {
-		let candidate = value as TextDocumentPosition;
+	export function is(value: any): value is TextDocumentPositionParams {
+		let candidate = value as TextDocumentPositionParams;
 		return Is.defined(candidate) && TextDocumentIdentifier.is(candidate) && Position.is(candidate.position) ? true : false;
 	}
 }
@@ -834,6 +822,24 @@ export interface LogMessageParams {
 
 //---- Text document notifications ----
 
+export interface FullTextDocument extends TextDocumentIdentifier {
+	/**
+	 * The text document's language identifier
+	 */
+	languageId: string;
+
+	/**
+	 * The version number of this document (it will strictly increase after each
+	 * change, including undo/redo).
+	 */
+	version: number;
+
+	/**
+	 * The content of the opened  text document.
+	 */
+	text: string;
+}
+
 /**
  * The document open notification is sent from the client to the server to signal
  * newly opened text documents. The document's truth is now managed by the client
@@ -847,19 +853,11 @@ export namespace DidOpenTextDocumentNotification {
 /**
  * The parameters send in a open text document notification
  */
-export interface DidOpenTextDocumentParams extends TextDocumentIdentifier {
+export interface DidOpenTextDocumentParams {
 	/**
-	 * The content of the opened  text document.
+	 * The document that was opened.
 	 */
-	text: string;
-}
-
-/**
- * The document change notification is sent from the client to the server to signal
- * changes to a text document.
- */
-export namespace DidChangeTextDocumentNotification {
-	export const type: NotificationType<DidChangeTextDocumentParams> = { get method() { return 'textDocument/didChange'; } };
+	textDocument: FullTextDocument;
 }
 
 /**
@@ -883,11 +881,46 @@ export interface TextDocumentContentChangeEvent {
 	text: string;
 }
 
+export interface VersionedTextDocument extends TextDocumentIdentifier {
+	/**
+	 * The version number of this document.
+	 */
+	version: number;
+}
+
 /**
  * The change text document notification's parameters.
  */
-export interface DidChangeTextDocumentParams extends TextDocumentIdentifier {
+export interface DidChangeTextDocumentParams {
+	/**
+	 * The document that did change. The version number points
+	 * to the version after all provided content changes have
+	 * been applied.
+	 */
+	textDocument: VersionedTextDocument;
+
+	/**
+	 * The actual content changes.
+	 */
 	contentChanges: TextDocumentContentChangeEvent[];
+}
+
+/**
+ * The document change notification is sent from the client to the server to signal
+ * changes to a text document.
+ */
+export namespace DidChangeTextDocumentNotification {
+	export const type: NotificationType<DidChangeTextDocumentParams> = { get method() { return 'textDocument/didChange'; } };
+}
+
+/**
+ * The parameters send in a close text document notification
+ */
+export interface DidCloseTextDocumentParams {
+	/**
+	 * The document that was closed.
+	 */
+	textDocument: TextDocumentIdentifier;
 }
 
 /**
@@ -897,7 +930,7 @@ export interface DidChangeTextDocumentParams extends TextDocumentIdentifier {
  * the truth now exists on disk).
  */
 export namespace DidCloseTextDocumentNotification {
-	export const type: NotificationType<TextDocumentIdentifier> = { get method() { return 'textDocument/didClose'; } };
+	export const type: NotificationType<DidCloseTextDocumentParams> = { get method() { return 'textDocument/didClose'; } };
 }
 
 //---- File eventing ----
@@ -1124,7 +1157,7 @@ export namespace CompletionList {
  * or a Thenable that resolves to such.
  */
 export namespace CompletionRequest {
-	export const type: RequestType<TextDocumentPosition, CompletionItem[] | CompletionList, void> = { get method() { return 'textDocument/completion'; } };
+	export const type: RequestType<TextDocumentPositionParams, CompletionItem[] | CompletionList, void> = { get method() { return 'textDocument/completion'; } };
 }
 
 /**
@@ -1161,7 +1194,7 @@ export interface Hover {
  * type [Hover](#Hover) or a Thenable that resolves to such.
  */
 export namespace HoverRequest {
-	export const type: RequestType<TextDocumentPosition, Hover, void> = { get method() { return 'textDocument/hover'; } };
+	export const type: RequestType<TextDocumentPositionParams, Hover, void> = { get method() { return 'textDocument/hover'; } };
 }
 
 //---- SignatureHelp ----------------------------------
@@ -1266,7 +1299,7 @@ export interface SignatureHelp {
 }
 
 export namespace SignatureHelpRequest {
-	export const type: RequestType<TextDocumentPosition, SignatureHelp, void> = { get method() { return 'textDocument/signatureHelp'; } };
+	export const type: RequestType<TextDocumentPositionParams, SignatureHelp, void> = { get method() { return 'textDocument/signatureHelp'; } };
 }
 
 //---- Goto Definition -------------------------------------
@@ -1285,7 +1318,7 @@ export type Definition = Location | Location[];
  * Thenable that resolves to such.
  */
 export namespace DefinitionRequest {
-	export const type: RequestType<TextDocumentPosition, Definition, void> = { get method() { return 'textDocument/definition'; } };
+	export const type: RequestType<TextDocumentPositionParams, Definition, void> = { get method() { return 'textDocument/definition'; } };
 }
 
 //---- Reference Provider ----------------------------------
@@ -1304,7 +1337,7 @@ export interface ReferenceContext {
 /**
  * Parameters for a [ReferencesRequest](#ReferencesRequest).
  */
-export interface ReferenceParams extends TextDocumentPosition {
+export interface ReferenceParams extends TextDocumentPositionParams {
 	context: ReferenceContext
 }
 
@@ -1382,7 +1415,7 @@ export namespace DocumentHighlight {
  * (#DocumentHighlight) or a Thenable that resolves to such.
  */
 export namespace DocumentHighlightRequest {
-	export const type: RequestType<TextDocumentPosition, DocumentHighlight[], void> = { get method() { return 'textDocument/documentHighlight'; } };
+	export const type: RequestType<TextDocumentPositionParams, DocumentHighlight[], void> = { get method() { return 'textDocument/documentHighlight'; } };
 }
 
 //---- Document Symbol Provider ---------------------------
@@ -1461,13 +1494,23 @@ export namespace SymbolInformation {
 }
 
 /**
+ * Parameters for a [DocumentSymbolRequest](#DocumentSymbolRequest).
+ */
+export interface DocumentSymbolParams {
+	/**
+	 * The text document.
+	 */
+	textDocument: TextDocumentIdentifier;
+}
+
+/**
  * A request to list all symbols found in a given text document. The request's
  * parameter is of type [TextDocumentIdentifier](#TextDocumentIdentifier) the
  * response is of type [SymbolInformation[]](#SymbolInformation) or a Thenable
  * that resolves to such.
  */
 export namespace DocumentSymbolRequest {
-	export const type: RequestType<TextDocumentIdentifier, SymbolInformation[], void> = { get method() { return 'textDocument/documentSymbol'; } };
+	export const type: RequestType<DocumentSymbolParams, SymbolInformation[], void> = { get method() { return 'textDocument/documentSymbol'; } };
 }
 
 //---- Workspace Symbol Provider ---------------------------
@@ -1603,10 +1646,20 @@ export namespace CodeLens {
 }
 
 /**
+ * Params for the Code Lens request.
+ */
+export interface CodeLensParams {
+	/**
+	 * The document to request code lens for.
+	 */
+	textDocument: TextDocumentIdentifier;
+}
+
+/**
  * A request to provide code lens for the given text document.
  */
 export namespace CodeLensRequest {
-	export const type: RequestType<TextDocumentIdentifier, CodeLens[], void> = { get method() { return 'textDocument/codeLens'; } };
+	export const type: RequestType<CodeLensParams, CodeLens[], void> = { get method() { return 'textDocument/codeLens'; } };
 }
 
 /**

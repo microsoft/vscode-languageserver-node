@@ -7,7 +7,7 @@
 import { strictEqual, deepEqual, ok } from 'assert';
 
 import { 
-	Position, Range, TextDocumentIdentifier, TextDocumentPosition, Command, CodeLens, CodeActionContext, 
+	Position, Range, TextDocumentIdentifier, TextDocumentPositionParams, Command, CodeLens, CodeActionContext, 
 	Diagnostic, DiagnosticSeverity, WorkspaceChange, WorkspaceEdit, TextEditChange, TextEdit
 } from '../../client/lib/protocol';
 
@@ -48,31 +48,15 @@ suite('Protocol Helper Tests', () => {
 		let uri = 'file:///folder/file.txt';
 		let identifier = TextDocumentIdentifier.create(uri);
 		strictEqual(identifier.uri, uri);
-		strictEqual(identifier.languageId, undefined);
 		ok(TextDocumentIdentifier.is(identifier));
-		
-		let languageId = 'typescript';
-		identifier = TextDocumentIdentifier.create(uri, languageId);
-		strictEqual(identifier.uri, uri);
-		strictEqual(identifier.languageId, languageId);
-		ok(TextDocumentIdentifier.is(identifier));
-		
 	});
 	
 	test('TextDocumentPosition', () => {
 		let uri = 'file:///folder/file.txt';
-		let position = TextDocumentPosition.create(uri, Position.create(1,2));
-		strictEqual(position.uri, uri);
-		ok(Position.is(position.position));
-		strictEqual(position.languageId, undefined);
-		ok(TextDocumentPosition.is(position));
-
-		let languageId = 'typescript';
-		position = TextDocumentPosition.create(uri, languageId, Position.create(1,2));
-		strictEqual(position.uri, uri);
-		ok(Position.is(position.position));
-		strictEqual(position.languageId, languageId);
-		ok(TextDocumentPosition.is(position));
+		let params = TextDocumentPositionParams.create(uri, Position.create(1,2));
+		strictEqual(params.textDocument.uri, uri);
+		ok(Position.is(params.position));
+		ok(TextDocumentPositionParams.is(params));
 	});
 	
 	test('Diagnostic', () => {

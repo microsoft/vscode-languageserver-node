@@ -18,19 +18,19 @@ import {
 		ShowMessageNotification, ShowMessageParams,
 		DidChangeConfigurationNotification, DidChangeConfigurationParams,
 		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams, TextDocumentContentChangeEvent,
-		DidCloseTextDocumentNotification,
+		DidCloseTextDocumentNotification, DidCloseTextDocumentParams,
 		DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
 		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Range, Position, Location,
-		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSyncKind,
+		TextDocumentIdentifier, TextDocumentPositionParams, TextDocumentSyncKind,
 		HoverRequest, Hover, MarkedString,
 		CompletionRequest, CompletionResolveRequest, CompletionOptions, CompletionItemKind, CompletionItem, CompletionList,
 		TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
 		SignatureHelpRequest, SignatureHelp, SignatureInformation, ParameterInformation,
 		DefinitionRequest, Definition, ReferencesRequest, ReferenceParams,
 		DocumentHighlightRequest, DocumentHighlight, DocumentHighlightKind,
-		DocumentSymbolRequest, SymbolInformation, SymbolKind, WorkspaceSymbolRequest, WorkspaceSymbolParams,
+		DocumentSymbolRequest, DocumentSymbolParams, SymbolInformation, SymbolKind, WorkspaceSymbolRequest, WorkspaceSymbolParams,
 		CodeActionRequest, CodeActionParams, CodeActionContext, Command,
-		CodeLensRequest, CodeLensResolveRequest, CodeLens, CodeLensOptions,
+		CodeLensRequest, CodeLensParams, CodeLensResolveRequest, CodeLens, CodeLensOptions,
 		DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
 		DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams, FormattingOptions,
 		RenameRequest, RenameParams
@@ -47,17 +47,17 @@ export {
 		InitializeParams, InitializeResult, InitializeError, ServerCapabilities,
 		DidChangeConfigurationParams,
 		DidChangeWatchedFilesParams, FileEvent, FileChangeType,
-		DidOpenTextDocumentParams, DidChangeTextDocumentParams, TextDocumentContentChangeEvent,
+		DidOpenTextDocumentParams, DidChangeTextDocumentParams, TextDocumentContentChangeEvent, DidCloseTextDocumentParams,
 		PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Range, Position, Location,
-		TextDocumentIdentifier, TextDocumentPosition, TextDocumentSyncKind,
+		TextDocumentIdentifier, TextDocumentPositionParams, TextDocumentSyncKind,
 		Hover, MarkedString,
 		CompletionOptions, CompletionItemKind, CompletionItem, CompletionList,
 		TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
 		SignatureHelp, SignatureInformation, ParameterInformation,
 		Definition, ReferenceParams,  DocumentHighlight, DocumentHighlightKind,
-		SymbolInformation, SymbolKind, WorkspaceSymbolParams,
+		SymbolInformation, SymbolKind, DocumentSymbolParams, WorkspaceSymbolParams,
 		CodeActionParams, CodeActionContext, Command,
-		CodeLensRequest, CodeLensResolveRequest, CodeLens, CodeLensOptions,
+		CodeLensRequest, CodeLensParams, CodeLensResolveRequest, CodeLens, CodeLensOptions,
 		DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
 		DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams, FormattingOptions,
 		RenameRequest, RenameParams
@@ -93,6 +93,14 @@ export interface ITextDocument {
 	 * @readonly
 	 */
 	languageId: string;
+
+	/**
+	 * The version number of this document (it will strictly increase after each
+	 * change, including undo/redo).
+	 *
+	 * @readonly
+	 */
+	version: number;
 
 	/**
 	 * Get the text of this document.
@@ -131,28 +139,11 @@ export namespace ITextDocument {
 	/**
 	 * Creates a new ITextDocument literal from the given uri and content.
 	 * @param uri The document's uri.
-	 * @param content The document's content.
-	 * @deprecated Use create function with language identifier.
-	 */
-	export function create(uri: string, content: string): ITextDocument;
-	/**
-	 * Creates a new ITextDocument literal from the given uri and content.
-	 * @param uri The document's uri.
 	 * @param languageId  The document's language Id.
 	 * @param content The document's content.
 	 */
-	export function create(uri: string, languageId: string, content: string): ITextDocument;
-	export function create(uri: string, arg2: string, arg3?: string): ITextDocument {
-		let languageId: string;
-		let content: string;
-		if (Is.string(arg3)) {
-			languageId = arg2;
-			content = arg3;
-		} else {
-			languageId = undefined;
-			content = arg2;
-		}
-		return new TextDocument(uri, languageId, content);
+	export function create(uri: string, languageId: string, version: number, content: string): ITextDocument {
+		return new TextDocument(uri, languageId, version, content);
 	}
 	/**
 	 * Checks whether the given literal conforms to the [ITextDocument](#ITextDocument) interface.
@@ -178,10 +169,11 @@ class TextDocument implements ITextDocument {
 
 	private _uri: string;
 	private _languageId: string;
+	private _version: number;
 	private _content: string;
 	private _lineOffsets: number[];
 
-	public constructor(uri: string, languageId: string, content: string) {
+	public constructor(uri: string, languageId: string, version: number, content: string) {
 		this._uri = uri;
 		this._languageId = languageId;
 		this._content = content;
@@ -196,12 +188,17 @@ class TextDocument implements ITextDocument {
 		return this._languageId;
 	}
 
+	public get version(): number {
+		return this._version;
+	}
+
 	public getText(): string {
 		return this._content;
 	}
 
-	public update(event: TextDocumentContentChangeEvent): void {
+	public update(event: TextDocumentContentChangeEvent, version: number): void {
 		this._content = event.text;
+		this._version = version;
 		this._lineOffsets = null;
 	}
 
@@ -363,26 +360,28 @@ export class TextDocuments {
 	public listen(connection: IConnection): void {
 		(<IConnectionState><any>connection).__textDocumentSync = TextDocumentSyncKind.Full;
 		connection.onDidOpenTextDocument((event: DidOpenTextDocumentParams) => {
-			let document = new TextDocument(event.uri, event.languageId, event.text);
-			this._documents[event.uri] = document;
+			let td = event.textDocument;
+			let document = new TextDocument(td.uri, td.languageId, td.version, td.text);
+			this._documents[td.uri] = document;
 			this._onDidOpen.fire({ document });
 			this._onDidChangeContent.fire({ document });
 		});
 		connection.onDidChangeTextDocument((event: DidChangeTextDocumentParams) => {
+			let td= event.textDocument;
 			let changes = event.contentChanges;
 			let last: TextDocumentContentChangeEvent = changes.length > 0 ? changes[changes.length - 1] : null;
 			if (last) {
-				let document = this._documents[event.uri];
+				let document = this._documents[td.uri];
 				if (document) {
-					document.update(last);
+					document.update(last, td.version);
 					this._onDidChangeContent.fire({ document });
 				}
 			}
 		});
-		connection.onDidCloseTextDocument((event: TextDocumentIdentifier) => {
-			let document = this._documents[event.uri];
+		connection.onDidCloseTextDocument((event: DidCloseTextDocumentParams) => {
+			let document = this._documents[event.textDocument.uri];
 			if (document) {
-				delete this._documents[event.uri];
+				delete this._documents[event.textDocument.uri];
 				this._onDidClose.fire({ document });
 			}
 		});
@@ -640,7 +639,7 @@ export interface IConnection {
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDidCloseTextDocument(handler: INotificationHandler<TextDocumentIdentifier>): void;
+	onDidCloseTextDocument(handler: INotificationHandler<DidCloseTextDocumentParams>): void;
 
 	/**
 	 * Sends diagnostics computed for a given document to VSCode to render them in the
@@ -655,14 +654,14 @@ export interface IConnection {
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onHover(handler: IRequestHandler<TextDocumentPosition, Hover, void>): void;
+	onHover(handler: IRequestHandler<TextDocumentPositionParams, Hover, void>): void;
 
 	/**
 	 * Installs a handler for the `Completion` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCompletion(handler: IRequestHandler<TextDocumentPosition, CompletionItem[] | CompletionList, void>): void;
+	onCompletion(handler: IRequestHandler<TextDocumentPositionParams, CompletionItem[] | CompletionList, void>): void;
 
 	/**
 	 * Installs a handler for the `CompletionResolve` request.
@@ -676,14 +675,14 @@ export interface IConnection {
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onSignatureHelp(handler: IRequestHandler<TextDocumentIdentifier, SignatureHelp, void>): void;
+	onSignatureHelp(handler: IRequestHandler<TextDocumentPositionParams, SignatureHelp, void>): void;
 
 	/**
 	 * Installs a handler for the `Definition` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDefinition(handler: IRequestHandler<TextDocumentPosition, Definition, void>): void;
+	onDefinition(handler: IRequestHandler<TextDocumentPositionParams, Definition, void>): void;
 
 	/**
 	 * Installs a handler for the `References` request.
@@ -697,14 +696,14 @@ export interface IConnection {
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentHighlight(handler: IRequestHandler<TextDocumentPosition, DocumentHighlight[], void>): void;
+	onDocumentHighlight(handler: IRequestHandler<TextDocumentPositionParams, DocumentHighlight[], void>): void;
 
 	/**
 	 * Installs a handler for the `DocumentSymbol` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentSymbol(handler: IRequestHandler<TextDocumentIdentifier, SymbolInformation[], void>): void;
+	onDocumentSymbol(handler: IRequestHandler<DocumentSymbolParams, SymbolInformation[], void>): void;
 
 	/**
 	 * Installs a handler for the `WorkspaceSymbol` request.
@@ -727,7 +726,7 @@ export interface IConnection {
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCodeLens(handler: IRequestHandler<TextDocumentIdentifier, CodeLens[], void>): void;
+	onCodeLens(handler: IRequestHandler<CodeLensParams, CodeLens[], void>): void;
 
 	/**
 	 * This function will be called for each visible code lens, usually when scrolling and after

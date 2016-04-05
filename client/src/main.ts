@@ -29,8 +29,9 @@ import {
 		ShowMessageNotification, ShowMessageParams,
 		DidChangeConfigurationNotification, DidChangeConfigurationParams,
 		Position, Range, Location,
-		TextDocumentIdentifier, TextDocumentPosition,
-		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams, DidCloseTextDocumentNotification,
+		TextDocumentIdentifier, TextDocumentPositionParams, TextEdit, TextEditChange, WorkspaceChange,
+		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams,
+		DidCloseTextDocumentNotification, DidCloseTextDocumentParams,
 		DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
 		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity,
 		CompletionRequest, CompletionResolveRequest, CompletionItem,
@@ -54,7 +55,9 @@ import { Delayer } from './utils/async'
 
 export {
 	RequestType, NotificationType, INotificationHandler,
-	Position, Range, Location, TextDocumentIdentifier, TextDocumentPosition
+	Position, Range, Location, TextDocumentIdentifier, TextDocumentPositionParams,
+	TextEdit, TextEditChange, WorkspaceChange,
+	c2p as Code2Protocol, p2c as Protocol2Code
 }
 
 declare var v8debug;
@@ -79,8 +82,8 @@ interface IConnection {
 	didChangeWatchedFiles(params: DidChangeWatchedFilesParams): void;
 
 	didOpenTextDocument(params: DidOpenTextDocumentParams): void;
-	didChangeTextDocument(params: DidChangeTextDocumentParams | DidChangeTextDocumentParams[]): void;
-	didCloseTextDocument(params: TextDocumentIdentifier): void;
+	didChangeTextDocument(params: DidChangeTextDocumentParams): void;
+	didCloseTextDocument(params: DidCloseTextDocumentParams): void;
 	onDiagnostics(handler: INotificationHandler<PublishDiagnosticsParams>): void;
 
 	dispose(): void;
@@ -127,7 +130,7 @@ function createConnection(input: any, output: any): IConnection {
 
 		didOpenTextDocument: (params: DidOpenTextDocumentParams) => connection.sendNotification(DidOpenTextDocumentNotification.type, params),
 		didChangeTextDocument: (params: DidChangeTextDocumentParams  | DidChangeTextDocumentParams[]) => connection.sendNotification(DidChangeTextDocumentNotification.type, params),
-		didCloseTextDocument: (params: TextDocumentIdentifier) => connection.sendNotification(DidCloseTextDocumentNotification.type, params),
+		didCloseTextDocument: (params: DidCloseTextDocumentParams) => connection.sendNotification(DidCloseTextDocumentNotification.type, params),
 		onDiagnostics: (handler: INotificationHandler<PublishDiagnosticsParams>) => connection.onNotification(PublishDiagnosticsNotification.type, handler),
 
 		dispose: () => connection.dispose()
@@ -746,7 +749,7 @@ export class LanguageClient {
 
 		this._providers.push(Languages.registerCompletionItemProvider(documentSelector, {
 			provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VCompletionList | VCompletionItem[]> => {
-				return this.doSendRequest(connection, CompletionRequest.type, c2p.asTextDocumentPosition(document, position)). then(
+				return this.doSendRequest(connection, CompletionRequest.type, c2p.asTextDocumentPositionParams(document, position)). then(
 					p2c.asCompletionResult,
 					error => Promise.resolve([])
 				);
@@ -769,7 +772,7 @@ export class LanguageClient {
 
 		this._providers.push(Languages.registerHoverProvider(documentSelector, {
 			provideHover: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<Hover> => {
-				return this.doSendRequest(connection, HoverRequest.type, c2p.asTextDocumentPosition(document, position)).then(
+				return this.doSendRequest(connection, HoverRequest.type, c2p.asTextDocumentPositionParams(document, position)).then(
 					p2c.asHover,
 					error => Promise.resolve(null)
 				);
@@ -783,7 +786,7 @@ export class LanguageClient {
 		}
 		this._providers.push(Languages.registerSignatureHelpProvider(documentSelector, {
 			provideSignatureHelp: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VSignatureHelp> => {
-				return this.doSendRequest(connection, SignatureHelpRequest.type, c2p.asTextDocumentPosition(document, position)). then(
+				return this.doSendRequest(connection, SignatureHelpRequest.type, c2p.asTextDocumentPositionParams(document, position)). then(
 					p2c.asSignatureHelp,
 					error => Promise.resolve(null)
 				);
@@ -797,7 +800,7 @@ export class LanguageClient {
 		}
 		this._providers.push(Languages.registerDefinitionProvider(documentSelector, {
 			provideDefinition: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VDefinition> => {
-				return this.doSendRequest(connection, DefinitionRequest.type, c2p.asTextDocumentPosition(document, position)). then(
+				return this.doSendRequest(connection, DefinitionRequest.type, c2p.asTextDocumentPositionParams(document, position)). then(
 					p2c.asDefinitionResult,
 					error => Promise.resolve(null)
 				);
@@ -825,7 +828,7 @@ export class LanguageClient {
 		}
 		this._providers.push(Languages.registerDocumentHighlightProvider(documentSelector, {
 			provideDocumentHighlights: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VDocumentHighlight[]> => {
-				return this.doSendRequest(connection, DocumentHighlightRequest.type, c2p.asTextDocumentPosition(document, position)).then(
+				return this.doSendRequest(connection, DocumentHighlightRequest.type, c2p.asTextDocumentPositionParams(document, position)).then(
 					p2c.asDocumentHighlights,
 					error => Promise.resolve([])
 				);
@@ -839,7 +842,7 @@ export class LanguageClient {
 		}
 		this._providers.push(Languages.registerDocumentSymbolProvider(documentSelector, {
 			provideDocumentSymbols: (document: TextDocument, token: CancellationToken): Thenable<VSymbolInformation[]> => {
-				return this.doSendRequest(connection, DocumentSymbolRequest.type, c2p.asTextDocumentIdentifier(document)).then(
+				return this.doSendRequest(connection, DocumentSymbolRequest.type, c2p.asDocumentSymbolParams(document)).then(
 					p2c.asSymbolInformations,
 					error => Promise.resolve([])
 				);
@@ -886,7 +889,7 @@ export class LanguageClient {
 		}
 		this._providers.push(Languages.registerCodeLensProvider(documentSelector, {
 			provideCodeLenses: (document: TextDocument, token: CancellationToken): Thenable<VCodeLens[]> => {
-				return this.doSendRequest(connection, CodeLensRequest.type, c2p.asTextDocumentIdentifier(document)).then(
+				return this.doSendRequest(connection, CodeLensRequest.type, c2p.asCodeLensParams(document)).then(
 					p2c.asCodeLenses,
 					error => Promise.resolve([])
 				);

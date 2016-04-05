@@ -10,11 +10,20 @@ import * as is from './utils/is';
 import ProtocolCompletionItem from './protocolCompletionItem';
 import ProtocolCodeLens from './protocolCodeLens';
 
+export function asTextDocumentIdentifier(textDocument: code.TextDocument): proto.TextDocumentIdentifier {
+	return {
+		uri: textDocument.uri.toString()
+	};
+}
+
 export function asOpenTextDocumentParams(textDocument: code.TextDocument): proto.DidOpenTextDocumentParams {
 	return {
-		uri: textDocument.uri.toString(),
-		languageId: textDocument.languageId,
-		text: textDocument.getText()
+		textDocument: {
+			uri: textDocument.uri.toString(),
+			languageId: textDocument.languageId,
+			version: textDocument.version,
+			text: textDocument.getText()
+		}
 	};
 }
 
@@ -33,15 +42,20 @@ export function asChangeTextDocumentParams(event: code.TextDocumentChangeEvent):
 export function asChangeTextDocumentParams(arg: code.TextDocumentChangeEvent | code.TextDocument): proto.DidChangeTextDocumentParams {
 	if (isTextDocument(arg)) {
 		let result: proto.DidChangeTextDocumentParams = {
-			uri: arg.uri.toString(),
-			languageId: arg.languageId,
+			textDocument: {
+				uri: arg.uri.toString(),
+				version: arg.version
+			},
 			contentChanges: [ { text: arg.getText() } ]
 		}
 		return result;
 	} else if (isTextDocumentChangeEvent(arg)) {
+		let document = arg.document;
 		let result: proto.DidChangeTextDocumentParams = {
-			uri: arg.document.uri.toString(),
-			languageId: arg.document.languageId,
+			textDocument: {
+				uri: document.uri.toString(),
+				version: document.version
+			},
 			contentChanges: arg.contentChanges.map((change): proto.TextDocumentContentChangeEvent => {
 				let range = change.range;
 				return {
@@ -60,19 +74,17 @@ export function asChangeTextDocumentParams(arg: code.TextDocumentChangeEvent | c
 	}
 }
 
-export function asCloseTextDocumentParams(textDocument: code.TextDocument): proto.TextDocumentIdentifier {
+export function asCloseTextDocumentParams(textDocument: code.TextDocument): proto.DidCloseTextDocumentParams {
 	return {
-		uri: textDocument.uri.toString(),
-		languageId: textDocument.languageId
+		textDocument: asTextDocumentIdentifier(textDocument)
 	};
 }
 
-export function asTextDocumentIdentifier(textDocument: code.TextDocument): proto.TextDocumentIdentifier {
-	return { uri: textDocument.uri.toString(), languageId: textDocument.languageId };
-}
-
-export function asTextDocumentPosition(textDocument: code.TextDocument, position: code.Position): proto.TextDocumentPosition {
-	return { uri: textDocument.uri.toString(), languageId: textDocument.languageId, position: asWorkerPosition(position) };
+export function asTextDocumentPositionParams(textDocument: code.TextDocument, position: code.Position): proto.TextDocumentPositionParams {
+	return {
+		textDocument: asTextDocumentIdentifier(textDocument),
+		position: asWorkerPosition(position)
+	};
 }
 
 export function asWorkerPosition(position: code.Position): proto.Position {
@@ -153,8 +165,7 @@ export function asTextEdit(edit: code.TextEdit): proto.TextEdit {
 
 export function asReferenceParams(textDocument: code.TextDocument, position: code.Position, options: { includeDeclaration: boolean; }): proto.ReferenceParams {
 	return {
-		uri: textDocument.uri.toString(),
-		languageId: textDocument.languageId,
+		textDocument: asTextDocumentIdentifier(textDocument),
 		position: asWorkerPosition(position),
 		context: { includeDeclaration: options.includeDeclaration }
 	};
@@ -184,4 +195,16 @@ export function asCodeLens(item: code.CodeLens): proto.CodeLens {
 
 export function asFormattingOptions(item: code.FormattingOptions): proto.FormattingOptions {
 	return { tabSize: item.tabSize, insertSpaces: item.insertSpaces };
+}
+
+export function asDocumentSymbolParams(textDocument: code.TextDocument): proto.DocumentSymbolParams {
+	return {
+		textDocument: asTextDocumentIdentifier(textDocument)
+	}
+}
+
+export function asCodeLensParams(textDocument: code.TextDocument): proto.CodeLensParams {
+	return {
+		textDocument: asTextDocumentIdentifier(textDocument)
+	};
 }
