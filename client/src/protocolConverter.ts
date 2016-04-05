@@ -9,18 +9,22 @@ import * as proto from './protocol';
 import * as is from './utils/is';
 import ProtocolCompletionItem from './protocolCompletionItem';
 import ProtocolCodeLens from './protocolCodeLens';
+import ProtocolDiagnostic from './protocolDiagnostic';
 
-export function asDiagnostics(diagnostics: proto.Diagnostic[]): code.Diagnostic[] {
+export function asDiagnostics(diagnostics: proto.Diagnostic[]): ProtocolDiagnostic[] {
 	return diagnostics.map(asDiagnostic);
 }
 
-export function asDiagnostic(diagnostic: proto.Diagnostic): code.Diagnostic {
-	let result = new code.Diagnostic(asRange(diagnostic.range), diagnostic.message, asDiagnosticSeverity(diagnostic.severity));
+export function asDiagnostic(diagnostic: proto.Diagnostic): ProtocolDiagnostic {
+	let result = new ProtocolDiagnostic(asRange(diagnostic.range), diagnostic.message, asDiagnosticSeverity(diagnostic.severity));
 	if (is.defined(diagnostic.code)) {
 		result.code = diagnostic.code;
 	}
 	if (is.defined(diagnostic.source)) {
 		result.source = diagnostic.source;
+	}
+	if (is.defined(diagnostic.data)) {
+		result.data = diagnostic.data;
 	}
 	return result;
 }

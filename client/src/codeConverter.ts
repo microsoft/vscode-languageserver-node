@@ -9,6 +9,7 @@ import * as proto from './protocol';
 import * as is from './utils/is';
 import ProtocolCompletionItem from './protocolCompletionItem';
 import ProtocolCodeLens from './protocolCodeLens';
+import ProtocolDiagnostic from './protocolDiagnostic';
 
 export function asOpenTextDocumentParams(textDocument: code.TextDocument): proto.DidOpenTextDocumentParams {
 	return {
@@ -121,6 +122,9 @@ export function asDiagnostic(item: code.Diagnostic): proto.Diagnostic {
 	set(item.severity, () => result.severity = asDiagnosticSeverity(item.severity));
 	set(item.code, () => result.code = item.code);
 	set(item.source, () => result.source = item.source);
+	if (item instanceof ProtocolDiagnostic) {
+		set(item.data, () => result.data = item.data);
+	}
 	return result;
 }
 

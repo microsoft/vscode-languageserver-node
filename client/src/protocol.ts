@@ -181,6 +181,14 @@ export interface Diagnostic {
 	 * The diagnostic's message.
 	 */
 	message: string;
+
+	/**
+	 * An data entry field that is preserved on a diagnostic between
+	 * a notification of diagnostics and for example a code action
+	 * request.
+	 */
+	data?: any
+
 }
 
 /**
