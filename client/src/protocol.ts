@@ -456,13 +456,100 @@ export namespace TextDocumentIdentifier {
 	}
 }
 
+
 /**
- * A parameter literal to pass a text document and a position inside that
+ * An item to transfer a text document from the client to the
+ * server.
+ */
+export interface TextDocumentItem {
+	/**
+	 * The text document's uri.
+	 */
+	uri: string;
+
+	/**
+	 * The text document's language identifier
+	 */
+	languageId: string;
+
+	/**
+	 * The version number of this document (it will strictly increase after each
+	 * change, including undo/redo).
+	 */
+	version: number;
+
+	/**
+	 * The content of the opened text document.
+	 */
+	text: string;
+}
+
+/**
+ * The TextDocumentItem namespace provides helper functions to work with
+ * [TextDocumentItem](#TextDocumentItem) literals.
+ */
+export namespace TextDocumentItem {
+	/**
+	 * Creates a new TextDocumentItem literal.
+	 * @param uri The document's uri.
+	 * @param uri The document's language identifier.
+	 * @param uri The document's version number.
+	 * @param uri The document's text.
+	 */
+	export function create(uri: string, languageId: string, version: number, text: string): TextDocumentItem {
+		return { uri, languageId, version, text };
+	}
+
+	/**
+	 * Checks whether the given literal conforms to the [TextDocumentItem](#TextDocumentItem) interface.
+	 */
+	export function is(value: any): value is TextDocumentItem {
+		let candidate = value as TextDocumentItem;
+		return Is.defined(candidate) && Is.string(candidate.uri) && Is.string(candidate.languageId) && Is.number(candidate.version) && Is.string(candidate.text);
+	}
+}
+
+
+/**
+ * An identifier to denote a specific version of a text document.
+ */
+export interface VersionedTextDocumentIdentifier extends TextDocumentIdentifier {
+	/**
+	 * The version number of this document.
+	 */
+	version: number;
+}
+
+/**
+ * The VersionedTextDocumentIdentifier namespace provides helper functions to work with
+ * [VersionedTextDocumentIdentifier](#VersionedTextDocumentIdentifier) literals.
+ */
+export namespace VersionedTextDocumentIdentifier {
+	/**
+	 * Creates a new VersionedTextDocumentIdentifier literal.
+	 * @param uri The document's uri.
+	 * @param uri The document's text.
+	 */
+	export function create(uri: string, version: number): VersionedTextDocumentIdentifier {
+		return { uri, version };
+	}
+
+	/**
+	 * Checks whether the given literal conforms to the [VersionedTextDocumentIdentifier](#VersionedTextDocumentIdentifier) interface.
+	 */
+	export function is(value: any): value is VersionedTextDocumentIdentifier {
+		let candidate = value as VersionedTextDocumentIdentifier;
+		return Is.defined(candidate) && Is.string(candidate.uri) && Is.number(candidate.version);
+	}
+}
+
+/**
+ * A parameter literal used in requests to pass a text document and a position inside that
  * document.
  */
 export interface TextDocumentPositionParams {
 	/**
-	 * The document to format.
+	 * The text document.
 	 */
 	textDocument: TextDocumentIdentifier;
 
@@ -822,22 +909,14 @@ export interface LogMessageParams {
 
 //---- Text document notifications ----
 
-export interface FullTextDocument extends TextDocumentIdentifier {
+/**
+ * The parameters send in a open text document notification
+ */
+export interface DidOpenTextDocumentParams {
 	/**
-	 * The text document's language identifier
+	 * The document that was opened.
 	 */
-	languageId: string;
-
-	/**
-	 * The version number of this document (it will strictly increase after each
-	 * change, including undo/redo).
-	 */
-	version: number;
-
-	/**
-	 * The content of the opened  text document.
-	 */
-	text: string;
+	textDocument: TextDocumentItem;
 }
 
 /**
@@ -848,16 +927,6 @@ export interface FullTextDocument extends TextDocumentIdentifier {
  */
 export namespace DidOpenTextDocumentNotification {
 	export const type: NotificationType<DidOpenTextDocumentParams> = { get method() { return 'textDocument/didOpen'; } };
-}
-
-/**
- * The parameters send in a open text document notification
- */
-export interface DidOpenTextDocumentParams {
-	/**
-	 * The document that was opened.
-	 */
-	textDocument: FullTextDocument;
 }
 
 /**
@@ -881,13 +950,6 @@ export interface TextDocumentContentChangeEvent {
 	text: string;
 }
 
-export interface VersionedTextDocument extends TextDocumentIdentifier {
-	/**
-	 * The version number of this document.
-	 */
-	version: number;
-}
-
 /**
  * The change text document notification's parameters.
  */
@@ -897,7 +959,7 @@ export interface DidChangeTextDocumentParams {
 	 * to the version after all provided content changes have
 	 * been applied.
 	 */
-	textDocument: VersionedTextDocument;
+	textDocument: VersionedTextDocumentIdentifier;
 
 	/**
 	 * The actual content changes.
