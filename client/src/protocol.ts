@@ -41,7 +41,7 @@ export namespace Position {
 	 */
 	export function is(value: any): value is Position {
 		let candidate = value as Position;
-		return Is.defined(candidate) && Is.number(candidate.line) && Is.number(candidate.character) ? true : false;
+		return Is.defined(candidate) && Is.number(candidate.line) && Is.number(candidate.character);
 	}
 }
 
@@ -93,7 +93,7 @@ export namespace Range {
 	 */
 	export function is(value: any): value is Range {
 		let candidate  = value as Range;
-		return Is.defined(candidate) && Position.is(candidate.start) && Position.is(candidate.end) ? true : false;
+		return Is.defined(candidate) && Position.is(candidate.start) && Position.is(candidate.end);
 	}
 }
 
@@ -124,7 +124,7 @@ export namespace Location {
 	 */
 	export function is(value: any): value is Location {
 		let candidate = value as Location;
-		return Is.defined(candidate) && Range.is(candidate) && (Is.string(candidate.uri) || Is.undefined(candidate.uri)) ? true : false;
+		return Is.defined(candidate) && Range.is(candidate) && (Is.string(candidate.uri) || Is.undefined(candidate.uri));
 	}
 }
 
@@ -214,7 +214,7 @@ export namespace Diagnostic {
 			&& Is.string(candidate.message)
 			&& (Is.number(candidate.severity) || Is.undefined(candidate.severity))
 			&& (Is.number(candidate.code) || Is.string(candidate.code) || Is.undefined(candidate.code))
-			&& (Is.string(candidate.source) || Is.undefined(candidate.source)) ? true : false;
+			&& (Is.string(candidate.source) || Is.undefined(candidate.source));
 	}
 }
 
@@ -262,7 +262,7 @@ export namespace Command {
 	 */
 	export function is(value: any): value is Command {
 		let candidate = value as Command;
-		return Is.defined(candidate) && Is.string(candidate.title) && Is.string(candidate.title) ? true : false;
+		return Is.defined(candidate) && Is.string(candidate.title) && Is.string(candidate.title);
 	}
 }
 
@@ -452,7 +452,7 @@ export namespace TextDocumentIdentifier {
 	 */
 	export function is(value: any): value is TextDocumentIdentifier {
 		let candidate = value as TextDocumentIdentifier;
-		return Is.defined(candidate) && Is.string(candidate.uri) ? true : false;
+		return Is.defined(candidate) && Is.string(candidate.uri);
 	}
 }
 
@@ -493,7 +493,7 @@ export namespace TextDocumentPositionParams {
 	 */
 	export function is(value: any): value is TextDocumentPositionParams {
 		let candidate = value as TextDocumentPositionParams;
-		return Is.defined(candidate) && TextDocumentIdentifier.is(candidate) && Position.is(candidate.position) ? true : false;
+		return Is.defined(candidate) && TextDocumentIdentifier.is(candidate.textDocument) && Position.is(candidate.position);
 	}
 }
 
@@ -1564,7 +1564,7 @@ export namespace CodeActionContext {
 	 */
 	export function is(value: any): value is CodeActionContext {
 		let candidate = value as CodeActionContext;
-		return Is.defined(candidate) && Is.typedArray<Diagnostic[]>(candidate.diagnostics, Diagnostic.is) ? true : false;
+		return Is.defined(candidate) && Is.typedArray<Diagnostic[]>(candidate.diagnostics, Diagnostic.is);
 	}
 }
 
@@ -1707,7 +1707,7 @@ export namespace FormattingOptions {
 	 */
 	export function is(value: any): value is FormattingOptions {
 		let candidate = value as FormattingOptions;
-		return Is.defined(candidate) && Is.number(candidate.tabSize) && Is.boolean(candidate.insertSpaces) ? true : false;
+		return Is.defined(candidate) && Is.number(candidate.tabSize) && Is.boolean(candidate.insertSpaces);
 	}
 }
 
