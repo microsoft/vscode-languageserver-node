@@ -80,6 +80,12 @@ export function asCloseTextDocumentParams(textDocument: code.TextDocument): prot
 	};
 }
 
+export function asSaveTextDocumentParams(textDocument: code.TextDocument): proto.DidSaveTextDocumentParams {
+	return {
+		textDocument: asTextDocumentIdentifier(textDocument)
+	}
+}
+
 export function asTextDocumentPositionParams(textDocument: code.TextDocument, position: code.Position): proto.TextDocumentPositionParams {
 	return {
 		textDocument: asTextDocumentIdentifier(textDocument),

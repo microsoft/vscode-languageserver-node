@@ -18,7 +18,7 @@ import {
 		ShowMessageNotification, ShowMessageParams,
 		DidChangeConfigurationNotification, DidChangeConfigurationParams,
 		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams, TextDocumentContentChangeEvent,
-		DidCloseTextDocumentNotification, DidCloseTextDocumentParams,
+		DidCloseTextDocumentNotification, DidCloseTextDocumentParams, DidSaveTextDocumentNotification, DidSaveTextDocumentParams,
 		DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
 		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Range, Position, Location,
 		TextDocumentIdentifier, TextDocumentPositionParams, TextDocumentSyncKind,
@@ -47,7 +47,7 @@ export {
 		InitializeParams, InitializeResult, InitializeError, ServerCapabilities,
 		DidChangeConfigurationParams,
 		DidChangeWatchedFilesParams, FileEvent, FileChangeType,
-		DidOpenTextDocumentParams, DidChangeTextDocumentParams, TextDocumentContentChangeEvent, DidCloseTextDocumentParams,
+		DidOpenTextDocumentParams, DidChangeTextDocumentParams, TextDocumentContentChangeEvent, DidCloseTextDocumentParams, DidSaveTextDocumentParams,
 		PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Range, Position, Location,
 		TextDocumentIdentifier, TextDocumentPositionParams, TextDocumentSyncKind,
 		Hover, MarkedString,
@@ -277,8 +277,9 @@ export class TextDocuments {
 	private _documents : { [uri: string]: TextDocument };
 
 	private _onDidChangeContent: Emitter<TextDocumentChangeEvent>;
-    private _onDidOpen: Emitter<TextDocumentChangeEvent>;
-    private _onDidClose: Emitter<TextDocumentChangeEvent>;
+	private _onDidOpen: Emitter<TextDocumentChangeEvent>;
+	private _onDidClose: Emitter<TextDocumentChangeEvent>;
+	private _onDidSave: Emitter<TextDocumentChangeEvent>;
 
 	/**
 	 * Create a new text document manager.
@@ -288,6 +289,7 @@ export class TextDocuments {
 		this._onDidChangeContent = new Emitter<TextDocumentChangeEvent>();
 		this._onDidOpen = new Emitter<TextDocumentChangeEvent>();
 		this._onDidClose = new Emitter<TextDocumentChangeEvent>();
+		this._onDidSave = new Emitter<TextDocumentChangeEvent>();
 	}
 
 	/**
@@ -320,6 +322,14 @@ export class TextDocuments {
 	 */
 	public get onDidClose(): Event<TextDocumentChangeEvent> {
 		return this._onDidClose.event;
+	}
+
+	/**
+	 * An event that fires when a text document managed by this manager
+	 * has been closed.
+	 */
+	public get onDidSave(): Event<TextDocumentChangeEvent> {
+		return this._onDidSave.event;
 	}
 
 	/**
@@ -383,6 +393,12 @@ export class TextDocuments {
 			if (document) {
 				delete this._documents[event.textDocument.uri];
 				this._onDidClose.fire({ document });
+			}
+		});
+		connection.onDidSaveTextDocument((event: DidSaveTextDocumentParams) => {
+			let document = this._documents[event.textDocument.uri];
+			if (document) {
+				this._onDidSave.fire({ document });
 			}
 		});
 	}
@@ -642,6 +658,13 @@ export interface IConnection {
 	onDidCloseTextDocument(handler: INotificationHandler<DidCloseTextDocumentParams>): void;
 
 	/**
+	 * Installs a handler for the `DidSaveTextDocument` notification.
+	 *
+	 * @param handler The corresponding handler.
+	 */
+	onDidSaveTextDocument(handler: INotificationHandler<DidSaveTextDocumentParams>): void;
+
+	/**
 	 * Sends diagnostics computed for a given document to VSCode to render them in the
 	 * user interface.
 	 *
@@ -835,6 +858,7 @@ export function createConnection(input: any, output: any): IConnection {
 		onDidOpenTextDocument: (handler) => connection.onNotification(DidOpenTextDocumentNotification.type, handler),
 		onDidChangeTextDocument: (handler) => connection.onNotification(DidChangeTextDocumentNotification.type, handler),
 		onDidCloseTextDocument: (handler) => connection.onNotification(DidCloseTextDocumentNotification.type, handler),
+		onDidSaveTextDocument: (handler) => connection.onNotification(DidSaveTextDocumentNotification.type, handler),
 
 		sendDiagnostics: (params) => connection.sendNotification(PublishDiagnosticsNotification.type, params),
 

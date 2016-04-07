@@ -995,6 +995,24 @@ export namespace DidCloseTextDocumentNotification {
 	export const type: NotificationType<DidCloseTextDocumentParams> = { get method() { return 'textDocument/didClose'; } };
 }
 
+/**
+ * The parameters send in a save text document notification
+ */
+export interface DidSaveTextDocumentParams {
+	/**
+	 * The document that was closed.
+	 */
+	textDocument: TextDocumentIdentifier;
+}
+
+/**
+ * The document save notification is sent from the client to the server when
+ * the document got saved in the client.
+ */
+export namespace DidSaveTextDocumentNotification {
+	export const type: NotificationType<DidSaveTextDocumentParams> = { get method() { return 'textDocument/didSave'; } };
+}
+
 //---- File eventing ----
 
 /**

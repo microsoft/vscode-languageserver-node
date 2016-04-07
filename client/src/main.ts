@@ -31,7 +31,7 @@ import {
 		Position, Range, Location,
 		TextDocumentIdentifier, TextDocumentPositionParams, TextEdit, TextEditChange, WorkspaceChange,
 		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams,
-		DidCloseTextDocumentNotification, DidCloseTextDocumentParams,
+		DidCloseTextDocumentNotification, DidCloseTextDocumentParams, DidSaveTextDocumentNotification, DidSaveTextDocumentParams,
 		DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
 		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity,
 		CompletionRequest, CompletionResolveRequest, CompletionItem,
@@ -84,6 +84,7 @@ interface IConnection {
 	didOpenTextDocument(params: DidOpenTextDocumentParams): void;
 	didChangeTextDocument(params: DidChangeTextDocumentParams): void;
 	didCloseTextDocument(params: DidCloseTextDocumentParams): void;
+	didSaveTextDocument(params: DidSaveTextDocumentParams): void;
 	onDiagnostics(handler: INotificationHandler<PublishDiagnosticsParams>): void;
 
 	dispose(): void;
@@ -131,6 +132,7 @@ function createConnection(input: any, output: any): IConnection {
 		didOpenTextDocument: (params: DidOpenTextDocumentParams) => connection.sendNotification(DidOpenTextDocumentNotification.type, params),
 		didChangeTextDocument: (params: DidChangeTextDocumentParams  | DidChangeTextDocumentParams[]) => connection.sendNotification(DidChangeTextDocumentNotification.type, params),
 		didCloseTextDocument: (params: DidCloseTextDocumentParams) => connection.sendNotification(DidCloseTextDocumentNotification.type, params),
+		didSaveTextDocument: (params: DidSaveTextDocumentParams) => connection.sendNotification(DidSaveTextDocumentNotification.type, params),
 		onDiagnostics: (handler: INotificationHandler<PublishDiagnosticsParams>) => connection.onNotification(PublishDiagnosticsNotification.type, handler),
 
 		dispose: () => connection.dispose()
@@ -439,6 +441,7 @@ export class LanguageClient {
 				Workspace.onDidOpenTextDocument(t => this.onDidOpenTextDoument(connection, t), null, this._listeners);
 				Workspace.onDidChangeTextDocument(t => this.onDidChangeTextDocument(connection, t), null, this._listeners);
 				Workspace.onDidCloseTextDocument(t => this.onDidCloseTextDoument(connection, t), null, this._listeners);
+				Workspace.onDidSaveTextDocument(t => this.onDidSaveTextDocument(connection, t), null, this._listeners);
 				if (this._capabilites.textDocumentSync === TextDocumentSyncKind.Full) {
 					this._documentSyncDelayer = new Delayer<void>(100);
 				}
@@ -542,6 +545,13 @@ export class LanguageClient {
 			return;
 		}
 		connection.didCloseTextDocument(c2p.asCloseTextDocumentParams(textDocument));
+	}
+
+	private onDidSaveTextDocument(conneciton: IConnection, textDocument: TextDocument): void {
+		if (!this._syncExpression.evaluate(textDocument)) {
+			return;
+		}
+		conneciton.didSaveTextDocument(c2p.asSaveTextDocumentParams(textDocument));
 	}
 
 	private forceDocumentSync(): void {
