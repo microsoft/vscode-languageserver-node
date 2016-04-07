@@ -14,19 +14,33 @@ import { Message,
 
 import { IMessageReader, DataCallback, StreamMessageReader, IPCMessageReader } from './messageReader';
 import { IMessageWriter, StreamMessageWriter, IPCMessageWriter } from './messageWriter';
+import { Disposable, Event, Emitter } from './events';
+import { CancellationTokenSource, CancellationToken } from './cancellation';
 
 export {
 	ErrorCodes, ResponseError, RequestType, NotificationType,
 	IMessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
-	IMessageWriter, StreamMessageWriter, IPCMessageWriter
+	IMessageWriter, StreamMessageWriter, IPCMessageWriter,
+	CancellationToken, Event
 }
 
-export interface IRequestHandler<P, R, E> {
-	(params?: P): R | ResponseError<E> | Thenable<R | ResponseError<E>>;
+interface CancelParams {
+	/**
+	 * The request id to cancel.
+	 */
+	id: number | string;
 }
 
-export interface INotificationHandler<P> {
-	(params?: P): void;
+namespace CancelNotification {
+	export const type: NotificationType<CancelParams> = { get method() { return '$/cancelRequest'; } };
+}
+
+export interface RequestHandler<P, R, E> {
+	(params: P, token?: CancellationToken): R | ResponseError<E> | Thenable<R | ResponseError<E>>;
+}
+
+export interface NotificationHandler<P> {
+	(params: P): void;
 }
 
 export interface ILogger {
@@ -37,10 +51,10 @@ export interface ILogger {
 }
 
 export interface MessageConnection {
-	sendRequest<P, R, E>(type: RequestType<P, R, E>, params?: P) : Thenable<R>;
-	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void;
+	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken) : Thenable<R>;
+	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): void;
 	sendNotification<P>(type: NotificationType<P>, params?: P): void;
-	onNotification<P>(type: NotificationType<P>, handler: INotificationHandler<P>): void;
+	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): void;
 	listen();
 	dispose(): void;
 }
@@ -55,10 +69,11 @@ function createMessageConnection<T extends MessageConnection>(messageReader: IMe
 	let sequenceNumber = 0;
 	const version: string = '2.0';
 
-	let requestHandlers : { [name: string]: IRequestHandler<any, any, any> } = Object.create(null);
-	let responseHandlers : { [name: string]: { method: string, resolve: (Response) => void, reject: (error: any) => void } } = Object.create(null);
+	let requestHandlers : { [name: string]: RequestHandler<any, any, any> } = Object.create(null);
+	let eventHandlers : { [name: string]: NotificationHandler<any> } = Object.create(null);
 
-	let eventHandlers : { [name: string]: INotificationHandler<any> } = Object.create(null);
+	let responsePromises : { [name: string]: { method: string, resolve: (Response) => void, reject: (error: any) => void } } = Object.create(null);
+	let requestTokens: { [id: string] : CancellationTokenSource } = Object.create(null);
 
 	function handleRequest(requestMessage: RequestMessage) {
 		function reply(resultOrError: any | ResponseError<any>): void {
@@ -97,15 +112,21 @@ function createMessageConnection<T extends MessageConnection>(messageReader: IMe
 
 		let requestHandler = requestHandlers[requestMessage.method];
 		if (requestHandler) {
+			let cancellationSource = new CancellationTokenSource();
+			let tokenKey = String(requestMessage.id);
+			requestTokens[tokenKey] = cancellationSource;
 			try {
-				let handlerResult = requestHandler(requestMessage.params);
+				let handlerResult = requestHandler(requestMessage.params, cancellationSource.token);
 				let promise = <Thenable<any | ResponseError<any>>>handlerResult;
 				if (!handlerResult) {
+					delete requestTokens[tokenKey];
 					replySuccess(handlerResult);
 				} else if (promise.then) {
 					promise.then((resultOrError): any | ResponseError<any>  => {
+						delete requestTokens[tokenKey];
 						reply(resultOrError);
 					}, error => {
+						delete requestTokens[tokenKey];
 						if (error instanceof ResponseError) {
 							replyError(<ResponseError<any>>error);
 						} else if (error && is.string(error.message)) {
@@ -115,9 +136,11 @@ function createMessageConnection<T extends MessageConnection>(messageReader: IMe
 						}
 					});
 				} else {
+					delete requestTokens[tokenKey];
 					reply(handlerResult);
 				}
 			} catch (error) {
+				delete requestTokens[tokenKey];
 				if (error instanceof ResponseError) {
 					reply(<ResponseError<any>>error);
 				} else if (error && is.string(error.message)) {
@@ -133,7 +156,7 @@ function createMessageConnection<T extends MessageConnection>(messageReader: IMe
 
 	function handleResponse(responseMessage: ResponseMessage) {
 		let key = String(responseMessage.id);
-		let responseHandler = responseHandlers[key];
+		let responseHandler = responsePromises[key];
 		if (responseHandler) {
 			try {
 				if (is.defined(responseMessage.error)) {
@@ -143,7 +166,7 @@ function createMessageConnection<T extends MessageConnection>(messageReader: IMe
 				} else {
 					throw new Error('Should never happen.');
 				}
-				delete responseHandlers[key];
+				delete responsePromises[key];
 			} catch (error) {
 				if (error.message) {
 					 logger.error(`Response handler '${responseHandler.method}' failed with message: ${error.message}`);
@@ -155,7 +178,18 @@ function createMessageConnection<T extends MessageConnection>(messageReader: IMe
 	}
 
 	function handleNotification(message: NotificationMessage) {
-		var eventHandler = eventHandlers[message.method];
+		let eventHandler: NotificationHandler<any>;
+		if (message.method === CancelNotification.type.method) {
+			eventHandler = (params: CancelParams) => {
+				let id = params.id;
+				let source = requestTokens[String(id)];
+				if (source) {
+					source.cancel();
+				}
+			}
+		} else {
+			eventHandler = eventHandlers[message.method];
+		}
 		if (eventHandler) {
 			try {
 				eventHandler(message.params);
@@ -179,7 +213,7 @@ function createMessageConnection<T extends MessageConnection>(messageReader: IMe
 		let responseMessage: ResponseMessage = message as ResponseMessage;
 		if (is.string(responseMessage.id) || is.number(responseMessage.id)) {
 			let key = String(responseMessage.id);
-			let responseHandler = responseHandlers[key];
+			let responseHandler = responsePromises[key];
 			if (responseHandler) {
 				responseHandler.reject(new Error('The received response has neither a result nor an error property.'));
 			}
@@ -207,23 +241,29 @@ function createMessageConnection<T extends MessageConnection>(messageReader: IMe
 			}
 			messageWriter.write(notificatioMessage);
 		},
-		onNotification: <P>(type: NotificationType<P>, handler: INotificationHandler<P>) => {
+		onNotification: <P>(type: NotificationType<P>, handler: NotificationHandler<P>) => {
 			eventHandlers[type.method] = handler;
 		},
-		sendRequest: <P, R, E>(type: RequestType<P, R, E>, params: P) => {
-			return new Promise<R | ResponseError<E>>((resolve, reject) => {
-				let id = sequenceNumber++;
+		sendRequest: <P, R, E>(type: RequestType<P, R, E>, params: P, token?:CancellationToken) => {
+			let id = sequenceNumber++;
+			let result = new Promise<R | ResponseError<E>>((resolve, reject) => {
 				let requestMessage : RequestMessage = {
 					jsonrpc: version,
 					id: id,
 					method: type.method,
 					params: params
 				}
-				responseHandlers[String(id)] = { method: type.method, resolve, reject };
+				responsePromises[String(id)] = { method: type.method, resolve, reject };
 				messageWriter.write(requestMessage);
 			});
+			if (token) {
+				token.onCancellationRequested((event) => {
+					connection.sendNotification(CancelNotification.type, { id });
+				});
+			}
+			return result;
 		},
-		onRequest: <P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>) => {
+		onRequest: <P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>) => {
 			requestHandlers[type.method] = handler;
 		},
 		dispose: () => {

@@ -112,13 +112,13 @@ function testRequestHandler(params: any) : any | ResponseError<void> {
 };
 
 
-function createEventHandler<T>(result: T[]) : hostConnection.INotificationHandler<T> {
+function createEventHandler<T>(result: T[]) : hostConnection.NotificationHandler<T> {
 	return (event) => {
 		result.push(event);
 	}
 };
 
-function createEchoRequestHandler<P>(result: P[]) : hostConnection.IRequestHandler<P, any, any> {
+function createEchoRequestHandler<P>(result: P[]) : hostConnection.RequestHandler<P, any, any> {
 	return (param: P): any | ResponseError<any> => {
 		result.push(param);
 		return param;
