@@ -177,6 +177,7 @@ class FullTextDocument implements TextDocument {
 	public constructor(uri: string, languageId: string, version: number, content: string) {
 		this._uri = uri;
 		this._languageId = languageId;
+		this._version = version;
 		this._content = content;
 		this._lineOffsets = null;
 	}
