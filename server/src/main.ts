@@ -6,7 +6,7 @@
 
 import {
 		RequestType, RequestHandler, NotificationType, NotificationHandler, ResponseError, ErrorCodes,
-		MessageConnection, ServerMessageConnection, ILogger, createServerMessageConnection,
+		MessageConnection, ServerMessageConnection, Logger, createServerMessageConnection,
 		MessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
 		MessageWriter, StreamMessageWriter, IPCMessageWriter,
 		CancellationToken, CancellationTokenSource,
@@ -77,7 +77,7 @@ export namespace Files {
 /**
  * A simple text document. Not to be implemenented.
  */
-export interface ITextDocument {
+export interface TextDocument {
 
 	/**
 	 * The associated URI for this document. Most documents have the __file__-scheme, indicating that they
@@ -136,21 +136,21 @@ export interface ITextDocument {
     lineCount: number;
 }
 
-export namespace ITextDocument {
+export namespace TextDocument {
 	/**
 	 * Creates a new ITextDocument literal from the given uri and content.
 	 * @param uri The document's uri.
 	 * @param languageId  The document's language Id.
 	 * @param content The document's content.
 	 */
-	export function create(uri: string, languageId: string, version: number, content: string): ITextDocument {
-		return new TextDocument(uri, languageId, version, content);
+	export function create(uri: string, languageId: string, version: number, content: string): TextDocument {
+		return new FullTextDocument(uri, languageId, version, content);
 	}
 	/**
 	 * Checks whether the given literal conforms to the [ITextDocument](#ITextDocument) interface.
 	 */
-	export function is(value: any): value is ITextDocument {
-		let candidate = value as ITextDocument;
+	export function is(value: any): value is TextDocument {
+		let candidate = value as TextDocument;
 		return Is.defined(candidate) && Is.string(candidate.uri) && (Is.undefined(candidate.languageId) || Is.string(candidate.languageId)) && Is.number(candidate.lineCount)
 			&& Is.func(candidate.getText) && Is.func(candidate.positionAt) && Is.func(candidate.offsetAt) ? true : false;
 	}
@@ -163,10 +163,10 @@ export interface TextDocumentChangeEvent {
 	/**
 	 * The document that has changed.
 	 */
-	document: ITextDocument;
+	document: TextDocument;
 }
 
-class TextDocument implements ITextDocument {
+class FullTextDocument implements TextDocument {
 
 	private _uri: string;
 	private _languageId: string;
@@ -266,7 +266,7 @@ class TextDocument implements ITextDocument {
 	}
 }
 
-interface IConnectionState {
+interface ConnectionState {
 	__textDocumentSync: TextDocumentSyncKind;
 }
 
@@ -275,7 +275,7 @@ interface IConnectionState {
  */
 export class TextDocuments {
 
-	private _documents : { [uri: string]: TextDocument };
+	private _documents : { [uri: string]: FullTextDocument };
 
 	private _onDidChangeContent: Emitter<TextDocumentChangeEvent>;
 	private _onDidOpen: Emitter<TextDocumentChangeEvent>;
@@ -340,7 +340,7 @@ export class TextDocuments {
 	 * @param uri The text document's URI to retrieve.
 	 * @return the text document or `undefined`.
 	 */
-	public get(uri: string): ITextDocument {
+	public get(uri: string): TextDocument {
 		return this._documents[uri];
 	}
 
@@ -349,7 +349,7 @@ export class TextDocuments {
 	 *
 	 * @return all text documents.
 	 */
-	public all(): ITextDocument[] {
+	public all(): TextDocument[] {
 		return Object.keys(this._documents).map(key => this._documents[key]);
 	}
 
@@ -369,10 +369,10 @@ export class TextDocuments {
 	 * @param connection The connection to listen on.
 	 */
 	public listen(connection: IConnection): void {
-		(<IConnectionState><any>connection).__textDocumentSync = TextDocumentSyncKind.Full;
+		(<ConnectionState><any>connection).__textDocumentSync = TextDocumentSyncKind.Full;
 		connection.onDidOpenTextDocument((event: DidOpenTextDocumentParams) => {
 			let td = event.textDocument;
-			let document = new TextDocument(td.uri, td.languageId, td.version, td.text);
+			let document = new FullTextDocument(td.uri, td.languageId, td.version, td.text);
 			this._documents[td.uri] = document;
 			this._onDidOpen.fire({ document });
 			this._onDidChangeContent.fire({ document });
@@ -508,7 +508,7 @@ export interface RemoteWindow {
 	showInformationMessage(message: string);
 }
 
-class Logger implements ILogger, RemoteConsole {
+class ConnectionLogger implements Logger, RemoteConsole {
 	private connection: MessageConnection;
 	public constructor() {
 	}
@@ -822,7 +822,7 @@ export function createConnection(input: any, output: any): IConnection {
 		});
 	}
 
-	let logger = new Logger();
+	let logger = new ConnectionLogger();
 	let connection = createServerMessageConnection(input, output, logger);
 	logger.attach(connection);
 	let remoteWindow = new RemoteWindowImpl(connection);
@@ -838,7 +838,7 @@ export function createConnection(input: any, output: any): IConnection {
 	let shutdownHandler: RequestHandler<void, void, void> = null;
 	let initializeHandler: RequestHandler<InitializeParams, InitializeResult, InitializeError> = null;
 	let exitHandler: NotificationHandler<void> = null;
-	let protocolConnection: IConnection & IConnectionState = {
+	let protocolConnection: IConnection & ConnectionState = {
 		listen: (): void => connection.listen(),
 		sendRequest: <P, R, E>(type: RequestType<P, R, E>, params?: P): Thenable<R> => connection.sendRequest(type, params),
 		onRequest: <P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): void => connection.onRequest(type, handler),

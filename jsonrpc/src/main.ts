@@ -44,7 +44,7 @@ export interface NotificationHandler<P> {
 	(params: P): void;
 }
 
-export interface ILogger {
+export interface Logger {
 	error(message: string);
 	warn(message: string);
 	info(message: string);
@@ -66,7 +66,7 @@ export interface ServerMessageConnection extends MessageConnection {
 export interface ClientMessageConnection extends MessageConnection {
 }
 
-function createMessageConnection<T extends MessageConnection>(messageReader: MessageReader, messageWriter: MessageWriter, logger: ILogger, client: boolean = false): T {
+function createMessageConnection<T extends MessageConnection>(messageReader: MessageReader, messageWriter: MessageWriter, logger: Logger, client: boolean = false): T {
 	let sequenceNumber = 0;
 	const version: string = '2.0';
 
@@ -284,17 +284,17 @@ function isMessageWriter(value: any): value is MessageWriter {
 	return is.defined(value.write) && is.undefined(value.end);
 }
 
-export function createServerMessageConnection(reader: MessageReader, writer: MessageWriter, logger: ILogger): ServerMessageConnection;
-export function createServerMessageConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger: ILogger): ServerMessageConnection;
-export function createServerMessageConnection(input: MessageReader | NodeJS.ReadableStream, output: MessageWriter | NodeJS.WritableStream, logger: ILogger): ServerMessageConnection {
+export function createServerMessageConnection(reader: MessageReader, writer: MessageWriter, logger: Logger): ServerMessageConnection;
+export function createServerMessageConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger: Logger): ServerMessageConnection;
+export function createServerMessageConnection(input: MessageReader | NodeJS.ReadableStream, output: MessageWriter | NodeJS.WritableStream, logger: Logger): ServerMessageConnection {
 	let reader = isMessageReader(input) ? input : new StreamMessageReader(input);
 	let writer = isMessageWriter(output) ? output : new StreamMessageWriter(output);
 	return createMessageConnection<ServerMessageConnection>(reader, writer, logger);
 }
 
-export function createClientMessageConnection(reader: MessageReader, writer: MessageWriter, logger: ILogger): ClientMessageConnection;
-export function createClientMessageConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger: ILogger): ClientMessageConnection;
-export function createClientMessageConnection(input: MessageReader | NodeJS.ReadableStream, output: MessageWriter | NodeJS.WritableStream, logger: ILogger): ClientMessageConnection {
+export function createClientMessageConnection(reader: MessageReader, writer: MessageWriter, logger: Logger): ClientMessageConnection;
+export function createClientMessageConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger: Logger): ClientMessageConnection;
+export function createClientMessageConnection(input: MessageReader | NodeJS.ReadableStream, output: MessageWriter | NodeJS.WritableStream, logger: Logger): ClientMessageConnection {
 	let reader = isMessageReader(input) ? input : new StreamMessageReader(input);
 	let writer = isMessageWriter(output) ? output : new StreamMessageWriter(output);
 	return createMessageConnection<ClientMessageConnection>(reader, writer, logger, true);

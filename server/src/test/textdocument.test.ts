@@ -5,11 +5,11 @@
 'use strict';
 
 import assert = require('assert');
-import {ITextDocument, Position} from '../main';
+import {TextDocument, Position} from '../main';
 
 suite('Text Document Lines Model Validator', () => {
 	function newDocument(str:string) {
-		return ITextDocument.create('file://foo/bar', "text", 0, str);
+		return TextDocument.create('file://foo/bar', "text", 0, str);
 	}
 
 	test('Single line', () => {

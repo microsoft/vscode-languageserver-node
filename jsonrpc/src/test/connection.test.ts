@@ -125,7 +125,7 @@ function createEchoRequestHandler<P>(result: P[]) : hostConnection.RequestHandle
 	}
 };
 
-let Logger: hostConnection.ILogger = {
+let Logger: hostConnection.Logger = {
 	error: (message: string) => {},
 	warn: (message: string) => {},
 	info: (message: string) => {},
