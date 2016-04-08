@@ -17,7 +17,7 @@ import {
 } from 'vscode';
 
 import {
-		RequestHandler, NotificationHandler, MessageConnection, ClientMessageConnection, ILogger, createClientMessageConnection,
+		RequestHandler, NotificationHandler, MessageConnection, ClientMessageConnection, Logger, createClientMessageConnection,
 		ErrorCodes, ResponseError, RequestType, NotificationType,
 		MessageReader, IPCMessageReader, MessageWriter, IPCMessageWriter,
 } from 'vscode-jsonrpc';
@@ -90,7 +90,7 @@ interface IConnection {
 	dispose(): void;
 }
 
-class Logger implements ILogger {
+class ConsoleLogger implements Logger {
 	public error(message: string): void {
 		console.error(message);
 	}
@@ -108,7 +108,7 @@ class Logger implements ILogger {
 function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream): IConnection;
 function createConnection(reader: MessageReader, writer: MessageWriter): IConnection;
 function createConnection(input: any, output: any): IConnection {
-	let logger = new Logger();
+	let logger = new ConsoleLogger();
 	let connection = createClientMessageConnection(input, output, logger);
 	let result: IConnection = {
 
