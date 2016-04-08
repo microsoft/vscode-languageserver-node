@@ -11,11 +11,11 @@ import { Message } from './messages';
 let ContentLength:string = 'Content-Length: ';
 let CRLF = '\r\n';
 
-export interface IMessageWriter {
+export interface MessageWriter {
 	write(msg: Message): void;
 }
 
-export class StreamMessageWriter implements IMessageWriter {
+export class StreamMessageWriter implements MessageWriter {
 
 	private writable: NodeJS.WritableStream;
 	private encoding: string;
@@ -41,7 +41,7 @@ export class StreamMessageWriter implements IMessageWriter {
 	}
 }
 
-export class IPCMessageWriter implements IMessageWriter {
+export class IPCMessageWriter implements MessageWriter {
 
 	private process: NodeJS.Process | ChildProcess;
 

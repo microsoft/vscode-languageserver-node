@@ -17,7 +17,7 @@ import {
 } from 'vscode';
 
 import {
-		IRequestHandler, INotificationHandler, MessageConnection, ClientMessageConnection, ILogger, createClientMessageConnection,
+		RequestHandler, NotificationHandler, MessageConnection, ClientMessageConnection, ILogger, createClientMessageConnection,
 		ErrorCodes, ResponseError, RequestType, NotificationType,
 		IMessageReader, IPCMessageReader, IMessageWriter, IPCMessageWriter,
 } from 'vscode-jsonrpc';
@@ -54,7 +54,7 @@ import { terminate } from './utils/processes';
 import { Delayer } from './utils/async'
 
 export {
-	RequestType, NotificationType, INotificationHandler,
+	RequestType, NotificationType, NotificationHandler,
 	Position, Range, Location, TextDocumentIdentifier, TextDocumentPositionParams,
 	TextEdit, TextEditChange, WorkspaceChange,
 	c2p as Code2Protocol, p2c as Protocol2Code
@@ -66,17 +66,17 @@ interface IConnection {
 
 	listen(): void;
 
-	sendRequest<P, R, E>(type: RequestType<P, R, E>, params?: P): Thenable<R>;
-	sendNotification<P>(type: NotificationType<P>, params?: P): void;
-	onNotification<P>(type: NotificationType<P>, handler: INotificationHandler<P>): void;
-	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void;
+	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): Thenable<R>;
+	sendNotification<P>(type: NotificationType<P>, params: P): void;
+	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): void;
+	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): void;
 
 	initialize(params: InitializeParams): Thenable<InitializeResult>;
 	shutdown(): Thenable<void>;
 	exit(): void;
 
-	onLogMessage(handle: INotificationHandler<LogMessageParams>): void;
-	onShowMessage(handler: INotificationHandler<ShowMessageParams>): void;
+	onLogMessage(handle: NotificationHandler<LogMessageParams>): void;
+	onShowMessage(handler: NotificationHandler<ShowMessageParams>): void;
 
 	didChangeConfiguration(params: DidChangeConfigurationParams): void;
 	didChangeWatchedFiles(params: DidChangeWatchedFilesParams): void;
@@ -85,7 +85,7 @@ interface IConnection {
 	didChangeTextDocument(params: DidChangeTextDocumentParams): void;
 	didCloseTextDocument(params: DidCloseTextDocumentParams): void;
 	didSaveTextDocument(params: DidSaveTextDocumentParams): void;
-	onDiagnostics(handler: INotificationHandler<PublishDiagnosticsParams>): void;
+	onDiagnostics(handler: NotificationHandler<PublishDiagnosticsParams>): void;
 
 	dispose(): void;
 }
@@ -114,17 +114,17 @@ function createConnection(input: any, output: any): IConnection {
 
 		listen: (): void => connection.listen(),
 
-		sendRequest: <P, R, E>(type: RequestType<P, R, E>, params?: P): Thenable<R> => connection.sendRequest(type, params),
-		sendNotification: <P>(type: NotificationType<P>, params?: P): void => connection.sendNotification(type, params),
-		onNotification: <P>(type: NotificationType<P>, handler: INotificationHandler<P>): void => connection.onNotification(type, handler),
-		onRequest: <P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void => connection.onRequest(type, handler),
+		sendRequest: <P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): Thenable<R> => connection.sendRequest(type, params, token),
+		sendNotification: <P>(type: NotificationType<P>, params: P): void => connection.sendNotification(type, params),
+		onNotification: <P>(type: NotificationType<P>, handler: NotificationHandler<P>): void => connection.onNotification(type, handler),
+		onRequest: <P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): void => connection.onRequest(type, handler),
 
 		initialize: (params: InitializeParams) => connection.sendRequest(InitializeRequest.type, params),
-		shutdown: () => connection.sendRequest(ShutdownRequest.type),
+		shutdown: () => connection.sendRequest(ShutdownRequest.type, undefined),
 		exit: () => connection.sendNotification(ExitNotification.type),
 
-		onLogMessage: (handler: INotificationHandler<LogMessageParams>) => connection.onNotification(LogMessageNotification.type, handler),
-		onShowMessage: (handler: INotificationHandler<ShowMessageParams>) => connection.onNotification(ShowMessageNotification.type, handler),
+		onLogMessage: (handler: NotificationHandler<LogMessageParams>) => connection.onNotification(LogMessageNotification.type, handler),
+		onShowMessage: (handler: NotificationHandler<ShowMessageParams>) => connection.onNotification(ShowMessageNotification.type, handler),
 
 		didChangeConfiguration: (params: DidChangeConfigurationParams) => connection.sendNotification(DidChangeConfigurationNotification.type, params),
 		didChangeWatchedFiles: (params: DidChangeWatchedFilesParams) => connection.sendNotification(DidChangeWatchedFilesNotification.type, params),
@@ -133,7 +133,7 @@ function createConnection(input: any, output: any): IConnection {
 		didChangeTextDocument: (params: DidChangeTextDocumentParams  | DidChangeTextDocumentParams[]) => connection.sendNotification(DidChangeTextDocumentNotification.type, params),
 		didCloseTextDocument: (params: DidCloseTextDocumentParams) => connection.sendNotification(DidCloseTextDocumentNotification.type, params),
 		didSaveTextDocument: (params: DidSaveTextDocumentParams) => connection.sendNotification(DidSaveTextDocumentNotification.type, params),
-		onDiagnostics: (handler: INotificationHandler<PublishDiagnosticsParams>) => connection.onNotification(PublishDiagnosticsNotification.type, handler),
+		onDiagnostics: (handler: NotificationHandler<PublishDiagnosticsParams>) => connection.onNotification(PublishDiagnosticsNotification.type, handler),
 
 		dispose: () => connection.dispose()
 	}
@@ -313,18 +313,18 @@ export class LanguageClient {
 		}
 	}
 
-	public sendRequest<P, R, E>(type: RequestType<P, R, E>, params?: P): Thenable<R> {
+	public sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): Thenable<R> {
 		return this.onReady().then(() => {
 			return this.resolveConnection().then((connection) => {
-				return this.doSendRequest(connection, type, params);
+				return this.doSendRequest(connection, type, params, token);
 			});
 		});
 	}
 
-	private doSendRequest<P, R, E>(connection: IConnection, type: RequestType<P, R, E>, params?: P): Thenable<R> {
+	private doSendRequest<P, R, E>(connection: IConnection, type: RequestType<P, R, E>, params: P, token?: CancellationToken): Thenable<R> {
 		if (this.isConnectionActive()) {
 			this.forceDocumentSync();
-			return connection.sendRequest(type, params);
+			return connection.sendRequest(type, params, token);
 		} else {
 			return Promise.reject<R>(new ResponseError(ErrorCodes.InternalError, 'Connection is closed.'));
 		}
@@ -341,7 +341,7 @@ export class LanguageClient {
 		});
 	}
 
-	public onNotification<P>(type: NotificationType<P>, handler: INotificationHandler<P>): void {
+	public onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): void {
 		this.onReady().then(() => {
 			this.resolveConnection().then((connection) => {
 				connection.onNotification(type, handler);
@@ -349,7 +349,7 @@ export class LanguageClient {
 		});
 	}
 
-	public onRequest<P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void {
+	public onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): void {
 		this.onReady().then(() => {
 			this.resolveConnection().then((connection) => {
 				connection.onRequest(type, handler);
@@ -759,14 +759,14 @@ export class LanguageClient {
 
 		this._providers.push(Languages.registerCompletionItemProvider(documentSelector, {
 			provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VCompletionList | VCompletionItem[]> => {
-				return this.doSendRequest(connection, CompletionRequest.type, c2p.asTextDocumentPositionParams(document, position)). then(
+				return this.doSendRequest(connection, CompletionRequest.type, c2p.asTextDocumentPositionParams(document, position), token). then(
 					p2c.asCompletionResult,
 					error => Promise.resolve([])
 				);
 			},
 			resolveCompletionItem: this._capabilites.completionProvider.resolveProvider
 				? (item: VCompletionItem, token: CancellationToken): Thenable<VCompletionItem> => {
-					return this.doSendRequest(connection, CompletionResolveRequest.type, c2p.asCompletionItem(item)).then(
+					return this.doSendRequest(connection, CompletionResolveRequest.type, c2p.asCompletionItem(item), token).then(
 						p2c.asCompletionItem,
 						error => Promise.resolve(item)
 					);
@@ -782,7 +782,7 @@ export class LanguageClient {
 
 		this._providers.push(Languages.registerHoverProvider(documentSelector, {
 			provideHover: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<Hover> => {
-				return this.doSendRequest(connection, HoverRequest.type, c2p.asTextDocumentPositionParams(document, position)).then(
+				return this.doSendRequest(connection, HoverRequest.type, c2p.asTextDocumentPositionParams(document, position), token).then(
 					p2c.asHover,
 					error => Promise.resolve(null)
 				);
@@ -796,7 +796,7 @@ export class LanguageClient {
 		}
 		this._providers.push(Languages.registerSignatureHelpProvider(documentSelector, {
 			provideSignatureHelp: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VSignatureHelp> => {
-				return this.doSendRequest(connection, SignatureHelpRequest.type, c2p.asTextDocumentPositionParams(document, position)). then(
+				return this.doSendRequest(connection, SignatureHelpRequest.type, c2p.asTextDocumentPositionParams(document, position), token). then(
 					p2c.asSignatureHelp,
 					error => Promise.resolve(null)
 				);
@@ -810,7 +810,7 @@ export class LanguageClient {
 		}
 		this._providers.push(Languages.registerDefinitionProvider(documentSelector, {
 			provideDefinition: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VDefinition> => {
-				return this.doSendRequest(connection, DefinitionRequest.type, c2p.asTextDocumentPositionParams(document, position)). then(
+				return this.doSendRequest(connection, DefinitionRequest.type, c2p.asTextDocumentPositionParams(document, position), token). then(
 					p2c.asDefinitionResult,
 					error => Promise.resolve(null)
 				);
@@ -824,7 +824,7 @@ export class LanguageClient {
 		}
 		this._providers.push(Languages.registerReferenceProvider(documentSelector, {
 			provideReferences: (document: TextDocument, position: VPosition, options: { includeDeclaration: boolean; }, token: CancellationToken): Thenable<VLocation[]> => {
-				return this.doSendRequest(connection, ReferencesRequest.type, c2p.asReferenceParams(document, position, options)).then(
+				return this.doSendRequest(connection, ReferencesRequest.type, c2p.asReferenceParams(document, position, options), token).then(
 					p2c.asReferences,
 					error => Promise.resolve([])
 				);
@@ -838,7 +838,7 @@ export class LanguageClient {
 		}
 		this._providers.push(Languages.registerDocumentHighlightProvider(documentSelector, {
 			provideDocumentHighlights: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VDocumentHighlight[]> => {
-				return this.doSendRequest(connection, DocumentHighlightRequest.type, c2p.asTextDocumentPositionParams(document, position)).then(
+				return this.doSendRequest(connection, DocumentHighlightRequest.type, c2p.asTextDocumentPositionParams(document, position), token).then(
 					p2c.asDocumentHighlights,
 					error => Promise.resolve([])
 				);
@@ -852,7 +852,7 @@ export class LanguageClient {
 		}
 		this._providers.push(Languages.registerDocumentSymbolProvider(documentSelector, {
 			provideDocumentSymbols: (document: TextDocument, token: CancellationToken): Thenable<VSymbolInformation[]> => {
-				return this.doSendRequest(connection, DocumentSymbolRequest.type, c2p.asDocumentSymbolParams(document)).then(
+				return this.doSendRequest(connection, DocumentSymbolRequest.type, c2p.asDocumentSymbolParams(document), token).then(
 					p2c.asSymbolInformations,
 					error => Promise.resolve([])
 				);
@@ -866,7 +866,7 @@ export class LanguageClient {
 		}
 		this._providers.push(Languages.registerWorkspaceSymbolProvider({
 			provideWorkspaceSymbols: (query: string, token: CancellationToken): Thenable<VSymbolInformation[]> => {
-				return this.doSendRequest(connection, WorkspaceSymbolRequest.type, { query }).then(
+				return this.doSendRequest(connection, WorkspaceSymbolRequest.type, { query }, token).then(
 					p2c.asSymbolInformations,
 					error => Promise.resolve([])
 				);
@@ -885,7 +885,7 @@ export class LanguageClient {
 					range: c2p.asRange(range),
 					context: c2p.asCodeActionContext(context)
 				};
-				return this.doSendRequest(connection, CodeActionRequest.type, params).then(
+				return this.doSendRequest(connection, CodeActionRequest.type, params, token).then(
 					p2c.asCommands,
 					error => Promise.resolve([])
 				);
@@ -899,14 +899,14 @@ export class LanguageClient {
 		}
 		this._providers.push(Languages.registerCodeLensProvider(documentSelector, {
 			provideCodeLenses: (document: TextDocument, token: CancellationToken): Thenable<VCodeLens[]> => {
-				return this.doSendRequest(connection, CodeLensRequest.type, c2p.asCodeLensParams(document)).then(
+				return this.doSendRequest(connection, CodeLensRequest.type, c2p.asCodeLensParams(document), token).then(
 					p2c.asCodeLenses,
 					error => Promise.resolve([])
 				);
 			},
 			resolveCodeLens: (this._capabilites.codeLensProvider.resolveProvider)
 				? (codeLens: VCodeLens, token: CancellationToken): Thenable<CodeLens> => {
-					return this.doSendRequest(connection, CodeLensResolveRequest.type, c2p.asCodeLens(codeLens)).then(
+					return this.doSendRequest(connection, CodeLensResolveRequest.type, c2p.asCodeLens(codeLens), token).then(
 						p2c.asCodeLens,
 						error => codeLens
 					);
@@ -925,7 +925,7 @@ export class LanguageClient {
 					textDocument: c2p.asTextDocumentIdentifier(document),
 					options: c2p.asFormattingOptions(options)
 				};
-				return this.doSendRequest(connection, DocumentFormattingRequest.type, params).then(
+				return this.doSendRequest(connection, DocumentFormattingRequest.type, params, token).then(
 					p2c.asTextEdits,
 					error => Promise.resolve([])
 				);
@@ -944,7 +944,7 @@ export class LanguageClient {
 					range: c2p.asRange(range),
 					options: c2p.asFormattingOptions(options)
 				};
-				return this.doSendRequest(connection, DocumentRangeFormattingRequest.type, params).then(
+				return this.doSendRequest(connection, DocumentRangeFormattingRequest.type, params, token).then(
 					p2c.asTextEdits,
 					error => Promise.resolve([])
 				);
@@ -965,7 +965,7 @@ export class LanguageClient {
 					ch: ch,
 					options: c2p.asFormattingOptions(options)
 				};
-				return this.doSendRequest(connection, DocumentOnTypeFormattingRequest.type, params).then(
+				return this.doSendRequest(connection, DocumentOnTypeFormattingRequest.type, params, token).then(
 					p2c.asTextEdits,
 					error => Promise.resolve([])
 				);
@@ -984,7 +984,7 @@ export class LanguageClient {
 					position: c2p.asPosition(position),
 					newName: newName
 				};
-				return this.doSendRequest(connection, RenameRequest.type, params).then(
+				return this.doSendRequest(connection, RenameRequest.type, params, token).then(
 					p2c.asWorkspaceEdit,
 					(error: ResponseError<void>) => Promise.resolve(new Error(error.message))
 				)

@@ -94,11 +94,11 @@ export interface DataCallback {
 	(data: Message): void;
 }
 
-export interface IMessageReader {
+export interface MessageReader {
 	listen(callback: DataCallback): void;
 }
 
-export class StreamMessageReader implements IMessageReader {
+export class StreamMessageReader implements MessageReader {
 
 	private readable: NodeJS.ReadableStream;
 	private callback: DataCallback;
@@ -147,7 +147,7 @@ export class StreamMessageReader implements IMessageReader {
 	}
 }
 
-export class IPCMessageReader implements IMessageReader {
+export class IPCMessageReader implements MessageReader {
 
 	private process: NodeJS.Process | ChildProcess;
 

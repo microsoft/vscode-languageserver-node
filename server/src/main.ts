@@ -5,10 +5,12 @@
 'use strict';
 
 import {
-		RequestType, IRequestHandler, NotificationType, INotificationHandler, ResponseError, ErrorCodes,
+		RequestType, RequestHandler, NotificationType, NotificationHandler, ResponseError, ErrorCodes,
 		MessageConnection, ServerMessageConnection, ILogger, createServerMessageConnection,
-		IMessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
-		IMessageWriter, StreamMessageWriter, IPCMessageWriter
+		MessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
+		MessageWriter, StreamMessageWriter, IPCMessageWriter,
+		CancellationToken, CancellationTokenSource,
+		Disposable, Event, Emitter
 	} from 'vscode-jsonrpc';
 import {
 		InitializeRequest, InitializeParams, InitializeResult, InitializeError, ClientCapabilities, ServerCapabilities,
@@ -36,14 +38,13 @@ import {
 		RenameRequest, RenameParams
 	} from './protocol';
 
-import { Event, Emitter } from './utils/events';
 import * as Is from './utils/is';
 
 // ------------- Reexport the API surface of the language worker API ----------------------
 export {
-		RequestType, IRequestHandler, NotificationType, INotificationHandler, ResponseError, ErrorCodes,
-		IMessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
-		IMessageWriter, StreamMessageWriter, IPCMessageWriter,
+		RequestType, RequestHandler, NotificationType, NotificationHandler, ResponseError, ErrorCodes,
+		MessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
+		MessageWriter, StreamMessageWriter, IPCMessageWriter,
 		InitializeParams, InitializeResult, InitializeError, ServerCapabilities,
 		DidChangeConfigurationParams,
 		DidChangeWatchedFilesParams, FileEvent, FileChangeType,
@@ -565,7 +566,7 @@ export interface IConnection {
 	 * @param type The [RequestType](#RequestType) describing the request.
 	 * @param handler The handler to install
 	 */
-	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void;
+	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): void;
 
 	/**
 	 * Installs a notification handler described by the given [NotificationType](#NotificationType).
@@ -573,7 +574,7 @@ export interface IConnection {
 	 * @param type The [NotificationType](#NotificationType) describing the notification.
 	 * @param handler The handler to install
 	 */
-	onNotification<P>(type: NotificationType<P>, handler: INotificationHandler<P>): void;
+	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): void;
 
 	/**
 	 * Send a notification to the client.
@@ -596,21 +597,21 @@ export interface IConnection {
 	 *
 	 * @param handler The initialize handler.
 	 */
-	onInitialize(handler: IRequestHandler<InitializeParams, InitializeResult, InitializeError>): void;
+	onInitialize(handler: RequestHandler<InitializeParams, InitializeResult, InitializeError>): void;
 
 	/**
 	 * Installs a handler for the shutdown request.
 	 *
 	 * @param handler The initialize handler.
 	 */
-	onShutdown(handler: IRequestHandler<void, void, void>): void;
+	onShutdown(handler: RequestHandler<void, void, void>): void;
 
 	/**
 	 * Installs a handler for the exit notification.
 	 *
 	 * @param handler The exit handler.
 	 */
-	onExit(handler: INotificationHandler<void>): void;
+	onExit(handler: NotificationHandler<void>): void;
 
 	/**
 	 * A proxy for VSCode's development console. See [RemoteConsole](#RemoteConsole)
@@ -627,42 +628,42 @@ export interface IConnection {
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDidChangeConfiguration(handler: INotificationHandler<DidChangeConfigurationParams>): void;
+	onDidChangeConfiguration(handler: NotificationHandler<DidChangeConfigurationParams>): void;
 
 	/**
 	 * Installs a handler for the `DidChangeWatchedFiles` notification.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDidChangeWatchedFiles(handler: INotificationHandler<DidChangeWatchedFilesParams>): void;
+	onDidChangeWatchedFiles(handler: NotificationHandler<DidChangeWatchedFilesParams>): void;
 
 	/**
 	 * Installs a handler for the `DidOpenTextDocument` notification.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDidOpenTextDocument(handler: INotificationHandler<DidOpenTextDocumentParams>): void;
+	onDidOpenTextDocument(handler: NotificationHandler<DidOpenTextDocumentParams>): void;
 
 	/**
 	 * Installs a handler for the `DidChangeTextDocument` notification.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDidChangeTextDocument(handler: INotificationHandler<DidChangeTextDocumentParams>): void;
+	onDidChangeTextDocument(handler: NotificationHandler<DidChangeTextDocumentParams>): void;
 
 	/**
 	 * Installs a handler for the `DidCloseTextDocument` notification.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDidCloseTextDocument(handler: INotificationHandler<DidCloseTextDocumentParams>): void;
+	onDidCloseTextDocument(handler: NotificationHandler<DidCloseTextDocumentParams>): void;
 
 	/**
 	 * Installs a handler for the `DidSaveTextDocument` notification.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDidSaveTextDocument(handler: INotificationHandler<DidSaveTextDocumentParams>): void;
+	onDidSaveTextDocument(handler: NotificationHandler<DidSaveTextDocumentParams>): void;
 
 	/**
 	 * Sends diagnostics computed for a given document to VSCode to render them in the
@@ -677,70 +678,70 @@ export interface IConnection {
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onHover(handler: IRequestHandler<TextDocumentPositionParams, Hover, void>): void;
+	onHover(handler: RequestHandler<TextDocumentPositionParams, Hover, void>): void;
 
 	/**
 	 * Installs a handler for the `Completion` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCompletion(handler: IRequestHandler<TextDocumentPositionParams, CompletionItem[] | CompletionList, void>): void;
+	onCompletion(handler: RequestHandler<TextDocumentPositionParams, CompletionItem[] | CompletionList, void>): void;
 
 	/**
 	 * Installs a handler for the `CompletionResolve` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCompletionResolve(handler: IRequestHandler<CompletionItem, CompletionItem, void>): void;
+	onCompletionResolve(handler: RequestHandler<CompletionItem, CompletionItem, void>): void;
 
 	/**
 	 * Installs a handler for the `SignatureHelp` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onSignatureHelp(handler: IRequestHandler<TextDocumentPositionParams, SignatureHelp, void>): void;
+	onSignatureHelp(handler: RequestHandler<TextDocumentPositionParams, SignatureHelp, void>): void;
 
 	/**
 	 * Installs a handler for the `Definition` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDefinition(handler: IRequestHandler<TextDocumentPositionParams, Definition, void>): void;
+	onDefinition(handler: RequestHandler<TextDocumentPositionParams, Definition, void>): void;
 
 	/**
 	 * Installs a handler for the `References` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onReferences(handler: IRequestHandler<ReferenceParams, Location[], void>): void;
+	onReferences(handler: RequestHandler<ReferenceParams, Location[], void>): void;
 
 	/**
 	 * Installs a handler for the `DocumentHighlight` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentHighlight(handler: IRequestHandler<TextDocumentPositionParams, DocumentHighlight[], void>): void;
+	onDocumentHighlight(handler: RequestHandler<TextDocumentPositionParams, DocumentHighlight[], void>): void;
 
 	/**
 	 * Installs a handler for the `DocumentSymbol` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentSymbol(handler: IRequestHandler<DocumentSymbolParams, SymbolInformation[], void>): void;
+	onDocumentSymbol(handler: RequestHandler<DocumentSymbolParams, SymbolInformation[], void>): void;
 
 	/**
 	 * Installs a handler for the `WorkspaceSymbol` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onWorkspaceSymbol(handler: IRequestHandler<WorkspaceSymbolParams, SymbolInformation[], void>): void;
+	onWorkspaceSymbol(handler: RequestHandler<WorkspaceSymbolParams, SymbolInformation[], void>): void;
 
 	/**
 	 * Installs a handler for the `CodeAction` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCodeAction(handler: IRequestHandler<CodeActionParams, Command[], void>): void;
+	onCodeAction(handler: RequestHandler<CodeActionParams, Command[], void>): void;
 
 	/**
 	 * Compute a list of [lenses](#CodeLens). This call should return as fast as possible and if
@@ -749,7 +750,7 @@ export interface IConnection {
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCodeLens(handler: IRequestHandler<CodeLensParams, CodeLens[], void>): void;
+	onCodeLens(handler: RequestHandler<CodeLensParams, CodeLens[], void>): void;
 
 	/**
 	 * This function will be called for each visible code lens, usually when scrolling and after
@@ -757,35 +758,35 @@ export interface IConnection {
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCodeLensResolve(handler: IRequestHandler<CodeLens, CodeLens, void>): void;
+	onCodeLensResolve(handler: RequestHandler<CodeLens, CodeLens, void>): void;
 
 	/**
 	 * Installs a handler for the document formatting request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentFormatting(handler: IRequestHandler<DocumentFormattingParams, TextEdit[], void>): void;
+	onDocumentFormatting(handler: RequestHandler<DocumentFormattingParams, TextEdit[], void>): void;
 
 	/**
 	 * Installs a handler for the document range formatting request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentRangeFormatting(handler: IRequestHandler<DocumentRangeFormattingParams, TextEdit[], void>): void;
+	onDocumentRangeFormatting(handler: RequestHandler<DocumentRangeFormattingParams, TextEdit[], void>): void;
 
 	/**
 	 * Installs a handler for the document on type formatting request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentOnTypeFormatting(handler: IRequestHandler<DocumentOnTypeFormattingParams, TextEdit[], void>): void;
+	onDocumentOnTypeFormatting(handler: RequestHandler<DocumentOnTypeFormattingParams, TextEdit[], void>): void;
 
 	/**
 	 * Installs a handler for rename request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onRenameRequest(handler: IRequestHandler<RenameParams, WorkspaceEdit, void>): void;
+	onRenameRequest(handler: RequestHandler<RenameParams, WorkspaceEdit, void>): void;
 	/**
 	 * Disposes the connection
 	 */
@@ -807,7 +808,7 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
  * @param reader The message reader to read messages from.
  * @param writer The message writer to write message to.
  */
-export function createConnection(reader: IMessageReader, writer: IMessageWriter): IConnection;
+export function createConnection(reader: MessageReader, writer: MessageWriter): IConnection;
 export function createConnection(input: any, output: any): IConnection {
 	let shutdownReceived: boolean;
 	// Backwards compatibility
@@ -834,15 +835,15 @@ export function createConnection(input: any, output: any): IConnection {
 		}
 	}
 
-	let shutdownHandler: IRequestHandler<void, void, void> = null;
-	let initializeHandler: IRequestHandler<InitializeParams, InitializeResult, InitializeError> = null;
-	let exitHandler: INotificationHandler<void> = null;
+	let shutdownHandler: RequestHandler<void, void, void> = null;
+	let initializeHandler: RequestHandler<InitializeParams, InitializeResult, InitializeError> = null;
+	let exitHandler: NotificationHandler<void> = null;
 	let protocolConnection: IConnection & IConnectionState = {
 		listen: (): void => connection.listen(),
 		sendRequest: <P, R, E>(type: RequestType<P, R, E>, params?: P): Thenable<R> => connection.sendRequest(type, params),
-		onRequest: <P, R, E>(type: RequestType<P, R, E>, handler: IRequestHandler<P, R, E>): void => connection.onRequest(type, handler),
+		onRequest: <P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): void => connection.onRequest(type, handler),
 		sendNotification: <P>(type: NotificationType<P>, params?: P): void => connection.sendNotification(type, params),
-		onNotification: <P>(type: NotificationType<P>, handler: INotificationHandler<P>): void => connection.onNotification(type, handler),
+		onNotification: <P>(type: NotificationType<P>, handler: NotificationHandler<P>): void => connection.onNotification(type, handler),
 
 		onInitialize: (handler) => initializeHandler = handler,
 		onShutdown: (handler) => shutdownHandler = handler,
@@ -896,7 +897,7 @@ export function createConnection(input: any, output: any): IConnection {
 			}, 3000);
 		}
 		if (initializeHandler) {
-			let result = initializeHandler(params);
+			let result = initializeHandler(params, new CancellationTokenSource().token);
 			return asThenable(result).then((value) => {
 				if (value instanceof ResponseError) {
 					return value;
@@ -924,7 +925,7 @@ export function createConnection(input: any, output: any): IConnection {
 	connection.onRequest(ShutdownRequest.type, (params) => {
 		shutdownReceived = true;
 		if (shutdownHandler) {
-			return shutdownHandler(params);
+			return shutdownHandler(params, new CancellationTokenSource().token);
 		} else {
 			return undefined;
 		}
