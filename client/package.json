@@ -21,7 +21,7 @@
 		"vscode": "^0.11.0"
 	},
 	"dependencies": {
-		"vscode-jsonrpc": "2.0.0-pre.1"
+		"vscode-jsonrpc": "^2.0.0-pre.2"
 	},
 	"scripts": {
 		"prepublish": "node ./node_modules/vscode/bin/install && tsc -p ./src",
