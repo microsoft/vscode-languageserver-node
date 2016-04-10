@@ -16,7 +16,7 @@ All three npm modules are built using one travis build. Its status is:
 
 [![Build Status](https://travis-ci.org/Microsoft/vscode-languageserver-node.svg?branch=master)](https://travis-ci.org/Microsoft/vscode-languageserver-node)
 
-Click [here](https://code.visualstudio.com/docs/extensions/example-language-server) for a detaild document on how to uses these npm modules to implement 
+Click [here](https://code.visualstudio.com/docs/extensions/example-language-server) for a detailed document on how to use these npm modules to implement 
 language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
