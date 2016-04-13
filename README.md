@@ -21,6 +21,11 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
+* 2.0: A detailed desciption of the 2.0 version can be found [here](https://github.com/Microsoft/vscode-languageserver-protocol/blob/master/README.md). A summary of the changes:
+  * support for request cancellation. Cancellation is automatically hooked to VSCode's cancellation tokens
+  * document save notification.
+  * Synced text documents carry VSCode's text document version number
+
 * 1.1.x: Provides all language service feature available in the extension host via the language client / server protocol. Features added:
   * Code Actions: provide actions to fix diagnostic problems.
   * Code Lens: provide commands that are shown along with source text.
