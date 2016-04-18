@@ -494,7 +494,7 @@ export interface RemoteWindow {
 	 * @param message The message to show.
 	 */
 	showErrorMessage(message: string);
-	showErrorMessage(message: string, actions: MessageActionItem[]): Thenable<MessageActionItem>;
+	showErrorMessage<T extends MessageActionItem>(message: string, ...actions: T[]): Thenable<T>;
 
 	/**
 	 * Show a warning message.
@@ -502,7 +502,7 @@ export interface RemoteWindow {
 	 * @param message The message to show.
 	 */
 	showWarningMessage(message: string);
-	showWarningMessage(message: string, actions: MessageActionItem[]): Thenable<MessageActionItem>;
+	showWarningMessage<T extends MessageActionItem>(message: string, ...actions: T[]): Thenable<T>;
 
 	/**
 	 * Show an information message.
@@ -510,7 +510,7 @@ export interface RemoteWindow {
 	 * @param message The message to show.
 	 */
 	showInformationMessage(message: string);
-	showInformationMessage(message: string, actions: MessageActionItem[]): Thenable<MessageActionItem>;
+	showInformationMessage<T extends MessageActionItem>(message: string, ...actions: T[]): Thenable<T>;
 }
 
 class ConnectionLogger implements Logger, RemoteConsole {
