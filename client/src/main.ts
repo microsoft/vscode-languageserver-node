@@ -13,7 +13,7 @@ import {
 		CancellationToken, Hover as VHover, Position as VPosition, Location as VLocation, Range as VRange,
 		CompletionItem as VCompletionItem, CompletionList as VCompletionList, SignatureHelp as VSignatureHelp, Definition as VDefinition, DocumentHighlight as VDocumentHighlight,
 		SymbolInformation as VSymbolInformation, CodeActionContext as VCodeActionContext, Command as VCommand, CodeLens as VCodeLens,
-		FormattingOptions as VFormattingOptions, TextEdit as VTextEdit, WorkspaceEdit as VWorkspaceEdit
+		FormattingOptions as VFormattingOptions, TextEdit as VTextEdit, WorkspaceEdit as VWorkspaceEdit, MessageItem
 } from 'vscode';
 
 import {
@@ -26,7 +26,7 @@ import {
 		ShutdownRequest,
 		ExitNotification,
 		LogMessageNotification, LogMessageParams, MessageType,
-		ShowMessageNotification, ShowMessageParams,
+		ShowMessageNotification, ShowMessageParams, ShowMessageRequest, ShowMessageRequestParams,
 		DidChangeConfigurationNotification, DidChangeConfigurationParams,
 		Position, Range, Location,
 		TextDocumentIdentifier, TextDocumentPositionParams, TextEdit, TextEditChange, WorkspaceChange,
@@ -412,6 +412,23 @@ export class LanguageClient {
 						Window.showInformationMessage(message.message);
 				}
 			});
+			connection.onRequest(ShowMessageRequest.type, (params) => {
+				let messageFunc: <T extends MessageItem>(message: string, ...items: T[]) => Thenable<T> = null;
+				switch(params.type) {
+					case MessageType.Error:
+						messageFunc = Window.showErrorMessage;
+						break;
+					case MessageType.Warning:
+						messageFunc = Window.showWarningMessage;
+						break;
+					case MessageType.Info:
+						messageFunc = Window.showInformationMessage;
+						break;
+					default:
+						messageFunc = Window.showInformationMessage;
+				}
+				return messageFunc(params.message, ...params.actions);
+			});
 			connection.listen();
 			this.initialize(connection);
 		}, (error) => {
@@ -424,6 +441,7 @@ export class LanguageClient {
 			}
 		});
 	}
+
 	private resolveConnection(): Thenable<IConnection> {
 		if (!this._connection) {
 			this._connection = this.createConnection();

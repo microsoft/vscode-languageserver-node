@@ -17,7 +17,7 @@ import {
 		ShutdownRequest,
 		ExitNotification,
 		LogMessageNotification, LogMessageParams, MessageType,
-		ShowMessageNotification, ShowMessageParams,
+		ShowMessageNotification, ShowMessageParams, ShowMessageRequest, ShowMessageRequestParams, MessageActionItem,
 		DidChangeConfigurationNotification, DidChangeConfigurationParams,
 		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams, TextDocumentContentChangeEvent,
 		DidCloseTextDocumentNotification, DidCloseTextDocumentParams, DidSaveTextDocumentNotification, DidSaveTextDocumentParams,
@@ -45,6 +45,7 @@ export {
 		RequestType, RequestHandler, NotificationType, NotificationHandler, ResponseError, ErrorCodes,
 		MessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
 		MessageWriter, StreamMessageWriter, IPCMessageWriter,
+		MessageActionItem,
 		InitializeParams, InitializeResult, InitializeError, ServerCapabilities,
 		DidChangeConfigurationParams,
 		DidChangeWatchedFilesParams, FileEvent, FileChangeType,
@@ -493,6 +494,7 @@ export interface RemoteWindow {
 	 * @param message The message to show.
 	 */
 	showErrorMessage(message: string);
+	showErrorMessage(message: string, actions: MessageActionItem[]): Thenable<MessageActionItem>;
 
 	/**
 	 * Show a warning message.
@@ -500,6 +502,7 @@ export interface RemoteWindow {
 	 * @param message The message to show.
 	 */
 	showWarningMessage(message: string);
+	showWarningMessage(message: string, actions: MessageActionItem[]): Thenable<MessageActionItem>;
 
 	/**
 	 * Show an information message.
@@ -507,6 +510,7 @@ export interface RemoteWindow {
 	 * @param message The message to show.
 	 */
 	showInformationMessage(message: string);
+	showInformationMessage(message: string, actions: MessageActionItem[]): Thenable<MessageActionItem>;
 }
 
 class ConnectionLogger implements Logger, RemoteConsole {
@@ -540,14 +544,14 @@ class RemoteWindowImpl implements RemoteWindow {
 	constructor(private connection: MessageConnection) {
 	}
 
-	public showErrorMessage(message: string) {
-		this.connection.sendNotification(ShowMessageNotification.type, { type: MessageType.Error, message });
+	public showErrorMessage(message: string, actions: MessageActionItem[] = []): Thenable<MessageActionItem> {
+		return this.connection.sendRequest(ShowMessageRequest.type, { type: MessageType.Error, message, actions });
 	}
-	public showWarningMessage(message: string) {
-		this.connection.sendNotification(ShowMessageNotification.type, { type: MessageType.Warning, message });
+	public showWarningMessage(message: string, actions: MessageActionItem[] = []): Thenable<MessageActionItem> {
+		return this.connection.sendRequest(ShowMessageRequest.type, { type: MessageType.Warning, message, actions });
 	}
-	public showInformationMessage(message: string) {
-		this.connection.sendNotification(ShowMessageNotification.type, { type: MessageType.Info, message });
+	public showInformationMessage(message: string, actions: MessageActionItem[] = []): Thenable<MessageActionItem> {
+		return this.connection.sendRequest(ShowMessageRequest.type, { type: MessageType.Info, message, actions });
 	}
 }
 

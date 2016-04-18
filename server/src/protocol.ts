@@ -862,14 +862,6 @@ export enum MessageType {
 }
 
 /**
- * The show message notification is sent from a server to a client to ask
- * the client to display a particular message in the user interface.
- */
-export namespace ShowMessageNotification {
-	export const type: NotificationType<ShowMessageParams> = { get method() { return 'window/showMessage'; } };
-}
-
-/**
  * The parameters of a notification message.
  */
 export interface ShowMessageParams {
@@ -882,6 +874,46 @@ export interface ShowMessageParams {
 	 * The actual message
 	 */
 	message: string;
+}
+
+/**
+ * The show message notification is sent from a server to a client to ask
+ * the client to display a particular message in the user interface.
+ */
+export namespace ShowMessageNotification {
+	export const type: NotificationType<ShowMessageParams> = { get method() { return 'window/showMessage'; } };
+}
+
+export interface MessageActionItem {
+	/**
+	 * A short title like 'Retry', 'Open Log' etc.
+	 */
+	title: string;
+}
+
+export interface ShowMessageRequestParams {
+	/**
+	 * The message type. See {@link MessageType}
+	 */
+	type: number;
+
+	/**
+	 * The actual message
+	 */
+	message: string;
+
+	/**
+	 * The message action items to present.
+	 */
+	actions?: MessageActionItem[];
+}
+
+/**
+ * The show message request is send from the server to the clinet to show a message
+ * and a set of options actions to the user.
+ */
+export namespace ShowMessageRequest {
+	export const type: RequestType<ShowMessageRequestParams, MessageActionItem, void> = { get method() { return 'window/showMessageRequest'; } };
 }
 
 /**
