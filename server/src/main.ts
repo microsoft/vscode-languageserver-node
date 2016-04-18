@@ -544,13 +544,13 @@ class RemoteWindowImpl implements RemoteWindow {
 	constructor(private connection: MessageConnection) {
 	}
 
-	public showErrorMessage(message: string, actions: MessageActionItem[] = []): Thenable<MessageActionItem> {
+	public showErrorMessage(message: string, ...actions: MessageActionItem[]): Thenable<MessageActionItem> {
 		return this.connection.sendRequest(ShowMessageRequest.type, { type: MessageType.Error, message, actions });
 	}
-	public showWarningMessage(message: string, actions: MessageActionItem[] = []): Thenable<MessageActionItem> {
+	public showWarningMessage(message: string, ...actions: MessageActionItem[]): Thenable<MessageActionItem> {
 		return this.connection.sendRequest(ShowMessageRequest.type, { type: MessageType.Warning, message, actions });
 	}
-	public showInformationMessage(message: string, actions: MessageActionItem[] = []): Thenable<MessageActionItem> {
+	public showInformationMessage(message: string, ...actions: MessageActionItem[]): Thenable<MessageActionItem> {
 		return this.connection.sendRequest(ShowMessageRequest.type, { type: MessageType.Info, message, actions });
 	}
 }
