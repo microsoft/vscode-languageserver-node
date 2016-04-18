@@ -287,6 +287,11 @@ export class LanguageClient {
 		this._onReady = new Promise<void>((resolve, reject) => {
 			this._onReadyCallbacks = { resolve, reject };
 		});
+		this._onReady.then(null, () => {
+			// Do nothing for now. We shut down after the initialize.
+			// However to make the promise reject handler happy we register
+			// an empty callback.
+		});
 	}
 
 	private computeSyncExpression(): SyncExpression {
@@ -478,8 +483,11 @@ export class LanguageClient {
 					}
 				});
 			} else {
+				if (error.message) {
+					Window.showErrorMessage(error.message);
+				}
+				this.stop();
 				this._onReadyCallbacks.reject();
-				Window.showErrorMessage(error.message);
 			}
 		});
 	}
