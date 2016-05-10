@@ -1231,8 +1231,7 @@ export namespace CompletionItem {
  * Represents a collection of [completion items](#CompletionItem) to be presented
  * in the editor.
  */
-export class CompletionList {
-
+export interface CompletionList {
 	/**
 	 * This list it not complete. Further typing should result in recomputing
 	 * this list.
@@ -1243,7 +1242,6 @@ export class CompletionList {
 	 * The completion items.
 	 */
 	items: CompletionItem[];
-
 }
 
 /**
@@ -1258,7 +1256,7 @@ export namespace CompletionList {
 	 * @param isIncomplete The list is not complete.
 	 */
 	export function create(items?: CompletionItem[], isIncomplete?: boolean): CompletionList {
-		return { items, isIncomplete};
+		return { items: items ? items : [], isIncomplete: !!isIncomplete};
 	}
 }
 
