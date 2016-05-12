@@ -19,7 +19,7 @@ import {
 import {
 		RequestHandler, NotificationHandler, MessageConnection, ClientMessageConnection, Logger, createClientMessageConnection,
 		ErrorCodes, ResponseError, RequestType, NotificationType,
-		MessageReader, IPCMessageReader, MessageWriter, IPCMessageWriter, Trace, Tracer
+		MessageReader, IPCMessageReader, MessageWriter, IPCMessageWriter, Trace, Tracer, Event, Emitter
 } from 'vscode-jsonrpc';
 import {
 		InitializeRequest, InitializeParams, InitializeResult, InitializeError, ClientCapabilities, ServerCapabilities, TextDocumentSyncKind,
@@ -27,6 +27,7 @@ import {
 		ExitNotification,
 		LogMessageNotification, LogMessageParams, MessageType,
 		ShowMessageNotification, ShowMessageParams, ShowMessageRequest, ShowMessageRequestParams,
+		TelemetryEventNotification,
 		DidChangeConfigurationNotification, DidChangeConfigurationParams,
 		Position, Range, Location,
 		TextDocumentIdentifier, TextDocumentPositionParams, TextEdit, TextEditChange, WorkspaceChange,
@@ -78,6 +79,7 @@ interface IConnection {
 
 	onLogMessage(handle: NotificationHandler<LogMessageParams>): void;
 	onShowMessage(handler: NotificationHandler<ShowMessageParams>): void;
+	onTelemetry(handler: NotificationHandler<any>): void;
 
 	didChangeConfiguration(params: DidChangeConfigurationParams): void;
 	didChangeWatchedFiles(params: DidChangeWatchedFilesParams): void;
@@ -128,6 +130,7 @@ function createConnection(input: any, output: any): IConnection {
 
 		onLogMessage: (handler: NotificationHandler<LogMessageParams>) => connection.onNotification(LogMessageNotification.type, handler),
 		onShowMessage: (handler: NotificationHandler<ShowMessageParams>) => connection.onNotification(ShowMessageNotification.type, handler),
+		onTelemetry: (handler: NotificationHandler<any>) => connection.onNotification(TelemetryEventNotification.type, handler),
 
 		didChangeConfiguration: (params: DidChangeConfigurationParams) => connection.sendNotification(DidChangeConfigurationNotification.type, params),
 		didChangeWatchedFiles: (params: DidChangeWatchedFilesParams) => connection.sendNotification(DidChangeWatchedFilesNotification.type, params),
@@ -268,6 +271,8 @@ export class LanguageClient {
 	private _fileEvents: FileEvent[];
 	private _fileEventDelayer: Delayer<void>;
 
+	private _telemetryEmitter: Emitter<any>;
+
 	private _tracer: Tracer;
 
 	public constructor(name: string, serverOptions: ServerOptions, languageOptions: LanguageClientOptions, forceDebug: boolean = false) {
@@ -297,6 +302,7 @@ export class LanguageClient {
 			// However to make the promise reject handler happy we register
 			// an empty callback.
 		});
+		this._telemetryEmitter = new Emitter<any>();
 		this._tracer = {
 			log: (message: string) => {
 				this.outputChannel.appendLine(message);
@@ -370,6 +376,10 @@ export class LanguageClient {
 				connection.onRequest(type, handler);
 			})
 		});
+	}
+
+	public get onTelemetry(): Event<any> {
+		return this._telemetryEmitter.event;
 	}
 
 	private get outputChannel(): OutputChannel {
@@ -458,6 +468,9 @@ export class LanguageClient {
 						messageFunc = Window.showInformationMessage;
 				}
 				return messageFunc(params.message, ...params.actions);
+			});
+			connection.onTelemetry((data) => {
+				this._telemetryEmitter.fire(data);
 			});
 			connection.listen();
 			this.initialize(connection);

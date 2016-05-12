@@ -921,7 +921,7 @@ export namespace ShowMessageRequest {
  * the client to log a particular message.
  */
 export namespace LogMessageNotification {
-	export let type: NotificationType<LogMessageParams> = { get method() { return  'window/logMessage'; } };
+	export let type: NotificationType<LogMessageParams> = { get method() { return 'window/logMessage'; } };
 }
 
 /**
@@ -937,6 +937,16 @@ export interface LogMessageParams {
 	 * The actual message
 	 */
 	message: string;
+}
+
+//---- Telemetry notification
+
+/**
+ * The telemetry event notification is send from the server to the client to ask
+ * the client to log telemetry data.
+ */
+export namespace TelemetryEventNotification {
+	export let type: NotificationType<any> = { get method() { return 'telemetry/event'; } };
 }
 
 //---- Text document notifications ----

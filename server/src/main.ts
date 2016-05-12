@@ -18,6 +18,7 @@ import {
 		ExitNotification,
 		LogMessageNotification, LogMessageParams, MessageType,
 		ShowMessageNotification, ShowMessageParams, ShowMessageRequest, ShowMessageRequestParams, MessageActionItem,
+		TelemetryEventNotification,
 		DidChangeConfigurationNotification, DidChangeConfigurationParams,
 		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams, TextDocumentContentChangeEvent,
 		DidCloseTextDocumentNotification, DidCloseTextDocumentParams, DidSaveTextDocumentNotification, DidSaveTextDocumentParams,
@@ -556,6 +557,29 @@ class RemoteWindowImpl implements RemoteWindow {
 }
 
 /**
+ * Interface to log telemetry events. The events are actually send to the client
+ * and the client needs to feed the event into a propert telemetry system.
+ */
+export interface Telemetry {
+	/**
+	 * Log the given data to telemetry.
+	 *
+	 * @param data The data to log. Must be a JSON serializable object.
+	 */
+	logEvent(data: any): void;
+}
+
+class TelemetryImpl implements Telemetry {
+
+	constructor(private connection: MessageConnection) {
+	}
+
+	public logEvent(data: any): void {
+		this.connection.sendNotification(TelemetryEventNotification.type, data);
+	}
+}
+
+/**
  * Interface to describe the shape of the server connection.
  */
 export interface IConnection {
@@ -627,6 +651,11 @@ export interface IConnection {
 	 * A proxy for VSCode's window. See [RemoteWindow](#RemoteWindow)
 	 */
 	window: RemoteWindow;
+
+	/**
+	 * A proxy to send telemetry events to the client.
+	 */
+	telemetry: Telemetry;
 
 	/**
 	 * Installs a handler for the `DidChangeConfiguration` notification.
@@ -831,6 +860,7 @@ export function createConnection(input: any, output: any): IConnection {
 	let connection = createServerMessageConnection(input, output, logger);
 	logger.attach(connection);
 	let remoteWindow = new RemoteWindowImpl(connection);
+	let telemetry = new TelemetryImpl(connection);
 
 	function asThenable<T>(value: T | Thenable<T>): Thenable<T> {
 		if (Is.thenable(value)) {
@@ -856,6 +886,7 @@ export function createConnection(input: any, output: any): IConnection {
 
 		get console() { return logger; },
 		get window() { return remoteWindow; },
+		get telemetry() { return telemetry; },
 
 		onDidChangeConfiguration: (handler) => connection.onNotification(DidChangeConfigurationNotification.type, handler),
 		onDidChangeWatchedFiles: (handler) => connection.onNotification(DidChangeWatchedFilesNotification.type, handler),
