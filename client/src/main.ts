@@ -181,6 +181,7 @@ export interface NodeModule {
 	module: string;
 	transport?: TransportKind;
 	args?: string[];
+	runtime?: string;
 	options?: ForkOptions;
 }
 
@@ -631,6 +632,15 @@ export class LanguageClient {
 	}
 
 	private createConnection(): Thenable<IConnection> {
+		function getEnvironment(env: any): any {
+			if (!env) {
+				return process.env;
+			}
+			let result: any = Object.create(null);
+			Object.keys(process.env).forEach(key => result[key] = process.env[key]);
+			Object.keys(env).forEach(key => result[key] = env[key]);
+		}
+
 		let server = this._serverOptions;
 		// We got a function.
 		if (is.func(server)) {
@@ -658,26 +668,67 @@ export class LanguageClient {
 		}
 		if (is.defined(json.module)) {
 			let node: NodeModule = <NodeModule>json;
-			return new Promise<IConnection>((resolve, reject) => {
+			if (node.runtime) {
+				let args: string[] = [];
 				let options: ForkOptions = node.options || Object.create(null);
-				options.execArgv = options.execArgv || [];
-				options.cwd = options.cwd || Workspace.rootPath;
-				electron.fork(node.module, node.args || [], options, (error, cp) => {
-					if (error) {
-						reject(error);
-					} else {
-						this._childProcess = cp;
-						if (node.transport === TransportKind.ipc) {
-							cp.stdout.on('data', (data) => {
-								this.outputChannel.append(data.toString());
-							});
-							resolve(createConnection(new IPCMessageReader(this._childProcess), new IPCMessageWriter(this._childProcess)));
-						} else {
-							resolve(createConnection(cp.stdout, cp.stdin));
-						}
-					}
+				if (options.execArgv) {
+					options.execArgv.forEach(element => args.push(element));
+				}
+				args.push(node.module);
+				if (node.args) {
+					node.args.forEach(element => args.push(element));
+				}
+				let execOptions: ExecutableOptions = Object.create(null);
+				execOptions.cwd = options.cwd || Workspace.rootPath;
+				execOptions.env = getEnvironment(options.env);
+				if (node.transport === TransportKind.ipc) {
+					execOptions.stdio = [null, null, null, 'ipc'];
+				}
+				let process = cp.spawn(node.runtime, args, execOptions);
+				if (!process || !process.pid) {
+					return Promise.reject<IConnection>(`Launching server using runtime ${node.runtime} failed.`);
+				}
+				process.once('error', (error: Error) => {
+					this._childProcess = null;
+					// ToDo more work to restart server on crash...
+					console.error('Starting runtime failed');
 				});
-			});
+				process.once('close', (data: any) => {
+					this._childProcess = null;
+					// ToDo more work to restart server on crash...
+					console.error('Server closed.');
+				})
+				this._childProcess = process;
+				// A spawned process doesn't have ipc transport even if we spawn node. For now always use stdio communication.
+				if (node.transport === TransportKind.ipc) {
+					process.stdout.on('data', data => this.outputChannel.append(data.toString()));
+					process.stderr.on('data', data => this.outputChannel.append(data.toString()));
+					return Promise.resolve(createConnection(new IPCMessageReader(process), new IPCMessageWriter(process)));
+				} else {
+					return Promise.resolve(createConnection(process.stdout, process.stdin));
+				}
+			} else {
+				return new Promise<IConnection>((resolve, reject) => {
+					let options: ForkOptions = node.options || Object.create(null);
+					options.execArgv = options.execArgv || [];
+					options.cwd = options.cwd || Workspace.rootPath;
+					electron.fork(node.module, node.args || [], options, (error, cp) => {
+						if (error) {
+							reject(error);
+						} else {
+							this._childProcess = cp;
+							if (node.transport === TransportKind.ipc) {
+								cp.stdout.on('data', (data) => {
+									this.outputChannel.append(data.toString());
+								});
+								resolve(createConnection(new IPCMessageReader(this._childProcess), new IPCMessageWriter(this._childProcess)));
+							} else {
+								resolve(createConnection(cp.stdout, cp.stdin));
+							}
+						}
+					});
+				});
+			}
 		} else if (is.defined(json.command)) {
 			let command: Executable = <Executable>json;
 			let options = command.options || {};
