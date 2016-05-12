@@ -19,7 +19,7 @@ import {
 import {
 		RequestHandler, NotificationHandler, MessageConnection, ClientMessageConnection, Logger, createClientMessageConnection,
 		ErrorCodes, ResponseError, RequestType, NotificationType,
-		MessageReader, IPCMessageReader, MessageWriter, IPCMessageWriter,
+		MessageReader, IPCMessageReader, MessageWriter, IPCMessageWriter, Trace, Tracer
 } from 'vscode-jsonrpc';
 import {
 		InitializeRequest, InitializeParams, InitializeResult, InitializeError, ClientCapabilities, ServerCapabilities, TextDocumentSyncKind,
@@ -70,6 +70,7 @@ interface IConnection {
 	sendNotification<P>(type: NotificationType<P>, params: P): void;
 	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): void;
 	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): void;
+	trace(value: Trace, tracer: Tracer): void;
 
 	initialize(params: InitializeParams): Thenable<InitializeResult>;
 	shutdown(): Thenable<void>;
@@ -118,6 +119,8 @@ function createConnection(input: any, output: any): IConnection {
 		sendNotification: <P>(type: NotificationType<P>, params: P): void => connection.sendNotification(type, params),
 		onNotification: <P>(type: NotificationType<P>, handler: NotificationHandler<P>): void => connection.onNotification(type, handler),
 		onRequest: <P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): void => connection.onRequest(type, handler),
+
+		trace: (value: Trace, tracer: Tracer): void => connection.trace(value, tracer),
 
 		initialize: (params: InitializeParams) => connection.sendRequest(InitializeRequest.type, params),
 		shutdown: () => connection.sendRequest(ShutdownRequest.type, undefined),
@@ -265,6 +268,8 @@ export class LanguageClient {
 	private _fileEvents: FileEvent[];
 	private _fileEventDelayer: Delayer<void>;
 
+	private _tracer: Tracer;
+
 	public constructor(name: string, serverOptions: ServerOptions, languageOptions: LanguageClientOptions, forceDebug: boolean = false) {
 		this._name = name;
 		this._serverOptions = serverOptions;
@@ -292,6 +297,11 @@ export class LanguageClient {
 			// However to make the promise reject handler happy we register
 			// an empty callback.
 		});
+		this._tracer = {
+			log: (message: string) => {
+				this.outputChannel.appendLine(message);
+			}
+		};
 	}
 
 	private computeSyncExpression(): SyncExpression {
@@ -358,6 +368,21 @@ export class LanguageClient {
 		this.onReady().then(() => {
 			this.resolveConnection().then((connection) => {
 				connection.onRequest(type, handler);
+			})
+		});
+	}
+
+	private get outputChannel(): OutputChannel {
+		if (!this._outputChannel) {
+			this._outputChannel = Window.createOutputChannel(this._name);
+		}
+		return this._outputChannel;
+	}
+
+	public set trace(value: Trace) {
+		this.onReady().then(() => {
+			this.resolveConnection().then((connection) => {
+				connection.trace(value, this._tracer);
 			})
 		});
 	}
@@ -630,9 +655,8 @@ export class LanguageClient {
 					} else {
 						this._childProcess = cp;
 						if (node.transport === TransportKind.ipc) {
-							this._outputChannel = Window.createOutputChannel(this._name);
 							cp.stdout.on('data', (data) => {
-								this._outputChannel.append(data.toString());
+								this.outputChannel.append(data.toString());
 							});
 							resolve(createConnection(new IPCMessageReader(this._childProcess), new IPCMessageWriter(this._childProcess)));
 						} else {
@@ -673,12 +697,17 @@ export class LanguageClient {
 	}
 
 	private onDidChangeConfiguration(connection: IConnection): void {
+		let config = Workspace.getConfiguration(this._name.toLowerCase());
+		if (config) {
+			let trace = config.get('trace.server', 'off');
+			connection.trace(Trace.fromString(trace), this._tracer);
+		}
 		let keys: string[] = null;
 		let configurationSection = this._languageOptions.synchronize.configurationSection;
 		if (is.string(configurationSection)) {
-			keys = [<string>configurationSection];
+			keys = [configurationSection];
 		} else if (is.stringArray(configurationSection)) {
-			keys = (<string[]>configurationSection);
+			keys = configurationSection;
 		}
 		if (keys) {
 			if (this.isConnectionActive()) {
@@ -700,8 +729,6 @@ export class LanguageClient {
 			}
 			return current;
 		}
-		Workspace.getConfiguration()
-
 		let result = Object.create(null);
 		for (let i = 0; i < keys.length; i++) {
 			let key = keys[i];

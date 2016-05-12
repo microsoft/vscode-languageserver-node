@@ -45,10 +45,34 @@ export interface NotificationHandler<P> {
 }
 
 export interface Logger {
-	error(message: string);
-	warn(message: string);
-	info(message: string);
-	log(message: string);
+	error(message: string): void;
+	warn(message: string): void;
+	info(message: string): void;
+	log(message: string): void;
+}
+
+export enum Trace {
+	Off, Messages, Verbose
+}
+
+export namespace Trace {
+	export function fromString(value: string): Trace {
+		value = value.toLowerCase();
+		switch (value) {
+			case 'off':
+				return Trace.Off;
+			case 'messages':
+				return Trace.Messages;
+			case 'verbose':
+				return Trace.Verbose;
+			default:
+				return Trace.Off;
+		}
+	}
+}
+
+export interface Tracer {
+	log(message: string): void;
 }
 
 export interface MessageConnection {
@@ -56,6 +80,7 @@ export interface MessageConnection {
 	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): void;
 	sendNotification<P>(type: NotificationType<P>, params?: P): void;
 	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): void;
+	trace(value: Trace, tracer: Tracer): void;
 	listen();
 	dispose(): void;
 }
@@ -66,6 +91,13 @@ export interface ServerMessageConnection extends MessageConnection {
 export interface ClientMessageConnection extends MessageConnection {
 }
 
+interface ResponsePromise {
+	method: string;
+	timerStart: number;
+	resolve: (response) => void;
+	reject: (error: any) => void
+}
+
 function createMessageConnection<T extends MessageConnection>(messageReader: MessageReader, messageWriter: MessageWriter, logger: Logger, client: boolean = false): T {
 	let sequenceNumber = 0;
 	const version: string = '2.0';
@@ -73,8 +105,11 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 	let requestHandlers : { [name: string]: RequestHandler<any, any, any> } = Object.create(null);
 	let eventHandlers : { [name: string]: NotificationHandler<any> } = Object.create(null);
 
-	let responsePromises : { [name: string]: { method: string, resolve: (Response) => void, reject: (error: any) => void } } = Object.create(null);
+	let responsePromises : { [name: string]: ResponsePromise } = Object.create(null);
 	let requestTokens: { [id: string] : CancellationTokenSource } = Object.create(null);
+
+	let trace: Trace = Trace.Off;
+	let tracer: Tracer;
 
 	function handleRequest(requestMessage: RequestMessage) {
 		function reply(resultOrError: any | ResponseError<any>): void {
@@ -157,22 +192,25 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 
 	function handleResponse(responseMessage: ResponseMessage) {
 		let key = String(responseMessage.id);
-		let responseHandler = responsePromises[key];
-		if (responseHandler) {
+		let responsePromise = responsePromises[key];
+		if (trace != Trace.Off && tracer) {
+			traceResponse(responseMessage, responsePromise);
+		}
+		if (responsePromise) {
 			try {
 				if (is.defined(responseMessage.error)) {
-					responseHandler.reject(responseMessage.error);
+					responsePromise.reject(responseMessage.error);
 				} else if (is.defined(responseMessage.result)) {
-					responseHandler.resolve(responseMessage.result);
+					responsePromise.resolve(responseMessage.result);
 				} else {
 					throw new Error('Should never happen.');
 				}
 				delete responsePromises[key];
 			} catch (error) {
 				if (error.message) {
-					 logger.error(`Response handler '${responseHandler.method}' failed with message: ${error.message}`);
+					 logger.error(`Response handler '${responsePromise.method}' failed with message: ${error.message}`);
 				} else {
-					logger.error(`Response handler '${responseHandler.method}' failed unexpectedly.`);
+					logger.error(`Response handler '${responsePromise.method}' failed unexpectedly.`);
 				}
 			}
 		}
@@ -221,6 +259,44 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 		}
 	}
 
+	function traceRequest(message: RequestMessage): void {
+		tracer.log(`[${(new Date().toLocaleTimeString())}] Sending request '${message.method} - (${message.id})'.`);
+		if (trace === Trace.Verbose && message.params) {
+			tracer.log(`Params: ${JSON.stringify(message.params, null, 4)}\n\n`)
+		}
+	}
+
+	function traceNotification(message: NotificationMessage): void {
+		tracer.log(`[${(new Date().toLocaleTimeString())}] Sending notification '${message.method}'.`);
+		if (trace === Trace.Verbose) {
+			if (message.params) {
+				tracer.log(`Params: ${JSON.stringify(message.params, null, 4)}\n\n`)
+			} else {
+				tracer.log('No parameters provided.\n\n');
+			}
+		}
+	}
+
+	function traceResponse(message: ResponseMessage, responsePromise: ResponsePromise): void {
+		if (responsePromise) {
+			let error = message.error ? ` Request failed: ${message.error.message} (${message.error.code}).` : '';
+			tracer.log(`[${(new Date().toLocaleTimeString())}] Recevied response '${responsePromise.method} - (${message.id})' in ${Date.now() - responsePromise.timerStart}ms.${error}`);
+		} else {
+			tracer.log(`[${(new Date().toLocaleTimeString())}] Recevied response ${message.id} without active response promise.`);
+		}
+		if (trace === Trace.Verbose) {
+			if (message.error && message.error.data) {
+				tracer.log(`Error data: ${JSON.stringify(message.error.data, null, 4)}\n\n`)
+			} else {
+				if (message.result) {
+					tracer.log(`Result: ${JSON.stringify(message.result, null, 4)}\n\n`);
+				} else {
+					tracer.log('No result returned.\n\n');
+				}
+			}
+		}
+	}
+
 	let callback: DataCallback = (message) => {
 		if (isRequestMessage(message)) {
 			handleRequest(message);
@@ -240,6 +316,9 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 				method: type.method,
 				params: params
 			}
+			if (trace != Trace.Off && tracer) {
+				traceNotification(notificatioMessage);
+			}
 			messageWriter.write(notificatioMessage);
 		},
 		onNotification: <P>(type: NotificationType<P>, handler: NotificationHandler<P>) => {
@@ -254,7 +333,10 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 					method: type.method,
 					params: params
 				}
-				responsePromises[String(id)] = { method: type.method, resolve, reject };
+				responsePromises[String(id)] = { method: type.method, timerStart: Date.now(), resolve, reject };
+				if (trace != Trace.Off && tracer) {
+					traceRequest(requestMessage);
+				}
 				messageWriter.write(requestMessage);
 			});
 			if (token) {
@@ -266,6 +348,14 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 		},
 		onRequest: <P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>) => {
 			requestHandlers[type.method] = handler;
+		},
+		trace: (_value: Trace, _tracer: Tracer) => {
+			trace = _value;
+			if (trace === Trace.Off) {
+				tracer = null;
+			} else {
+				tracer = _tracer;
+			}
 		},
 		dispose: () => {
 		},
