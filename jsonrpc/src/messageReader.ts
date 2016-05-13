@@ -7,6 +7,8 @@
 import { ChildProcess } from 'child_process';
 
 import { Message } from './messages';
+import { Event, Emitter } from './events';
+import * as is from './is';
 
 let DefaultSize: number = 8192;
 let CR:number = new Buffer('\r', 'ascii')[0];
@@ -95,10 +97,47 @@ export interface DataCallback {
 }
 
 export interface MessageReader {
+	onError: Event<Error>;
+	onClose: Event<void>;
 	listen(callback: DataCallback): void;
 }
 
-export class StreamMessageReader implements MessageReader {
+export abstract class AbstractMessageReader {
+
+	private errorEmitter: Emitter<Error>;
+	private closeEmitter: Emitter<void>;
+
+	constructor() {
+		this.errorEmitter = new Emitter<Error>();
+		this.closeEmitter = new Emitter<void>();
+	}
+
+	public get onError(): Event<Error> {
+		return this.errorEmitter.event;
+	}
+
+	protected fireError(error: any): void {
+		this.errorEmitter.fire(this.asError(error));
+	}
+
+	public get onClose(): Event<void> {
+		return this.closeEmitter.event;
+	}
+
+	protected fireClose(): void {
+		this.closeEmitter.fire(undefined);
+	}
+
+	private asError(error: any): Error {
+		if (error instanceof Error) {
+			return error;
+		} else {
+			return new Error(`Reader recevied error. Reason: ${is.string(error.message) ? error.message : 'unknown'}`);
+		}
+	}
+}
+
+export class StreamMessageReader extends AbstractMessageReader implements MessageReader {
 
 	private readable: NodeJS.ReadableStream;
 	private callback: DataCallback;
@@ -106,6 +145,7 @@ export class StreamMessageReader implements MessageReader {
 	private nextMessageLength: number;
 
 	public constructor(readable: NodeJS.ReadableStream, encoding: string = 'utf-8') {
+		super();
 		this.readable = readable;
 		this.buffer = new MessageBuffer(encoding);
 	}
@@ -116,6 +156,8 @@ export class StreamMessageReader implements MessageReader {
 		this.readable.on('data', (data:Buffer) => {
 			this.onData(data);
 		});
+		this.readable.on('error', (error: any) => this.fireError(error));
+		this.readable.on('close', () => this.fireClose());
 	}
 
 	private onData(data:Buffer|String): void {
@@ -147,12 +189,15 @@ export class StreamMessageReader implements MessageReader {
 	}
 }
 
-export class IPCMessageReader implements MessageReader {
+export class IPCMessageReader extends AbstractMessageReader implements MessageReader {
 
 	private process: NodeJS.Process | ChildProcess;
 
 	public constructor(process: NodeJS.Process | ChildProcess) {
+		super();
 		this.process = process;
+		this.process.on('error', (error:any) => this.fireError(error));
+		this.process.on('close', () => this.fireClose());
 	}
 
 	public listen(callback: DataCallback): void {

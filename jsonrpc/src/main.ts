@@ -81,6 +81,8 @@ export interface MessageConnection {
 	sendNotification<P>(type: NotificationType<P>, params?: P): void;
 	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): void;
 	trace(value: Trace, tracer: Tracer): void;
+	onError: Event<Error>;
+	onClose: Event<void>;
 	listen();
 	dispose(): void;
 }
@@ -110,6 +112,23 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 
 	let trace: Trace = Trace.Off;
 	let tracer: Tracer;
+
+	let errorEmitter: Emitter<Error> = new Emitter<Error>();
+	let closeEmitter: Emitter<void> = new Emitter<void>();
+
+	function closeHandler(): void {
+
+	};
+
+	function errorHandler(error: Error): void {
+
+	}
+
+	messageReader.onClose(closeHandler);
+	messageReader.onError(errorHandler);
+
+	messageWriter.onClose(closeHandler);
+	messageWriter.onError(errorHandler);
 
 	function handleRequest(requestMessage: RequestMessage) {
 		function reply(resultOrError: any | ResponseError<any>): void {
@@ -197,6 +216,7 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 			traceResponse(responseMessage, responsePromise);
 		}
 		if (responsePromise) {
+			delete responsePromises[key];
 			try {
 				if (is.defined(responseMessage.error)) {
 					responsePromise.reject(responseMessage.error);
@@ -205,7 +225,6 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 				} else {
 					throw new Error('Should never happen.');
 				}
-				delete responsePromises[key];
 			} catch (error) {
 				if (error.message) {
 					 logger.error(`Response handler '${responsePromise.method}' failed with message: ${error.message}`);
@@ -324,7 +343,7 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 	};
 
 	let connection: MessageConnection = {
-		sendNotification: <P>(type: NotificationType<P>, params) => {
+		sendNotification: <P>(type: NotificationType<P>, params): void  => {
 			let notificatioMessage : NotificationMessage = {
 				jsonrpc: version,
 				method: type.method,
@@ -333,7 +352,15 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 			if (trace != Trace.Off && tracer) {
 				traceSendNotification(notificatioMessage);
 			}
-			messageWriter.write(notificatioMessage);
+			try {
+				messageWriter.write(notificatioMessage);
+			} catch (e) {
+				if (e instanceof Error) {
+					errorEmitter.fire(e);
+				} else {
+					errorEmitter.fire(new Error(`Message write failed. Reason: ${e.message ? e.message : 'unknown'}`));
+				}
+			}
 		},
 		onNotification: <P>(type: NotificationType<P>, handler: NotificationHandler<P>) => {
 			eventHandlers[type.method] = handler;
@@ -347,11 +374,20 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 					method: type.method,
 					params: params
 				}
-				responsePromises[String(id)] = { method: type.method, timerStart: Date.now(), resolve, reject };
+				let responsePromise: ResponsePromise = { method: type.method, timerStart: Date.now(), resolve, reject };
 				if (trace != Trace.Off && tracer) {
 					traceRequest(requestMessage);
 				}
-				messageWriter.write(requestMessage);
+				try {
+					messageWriter.write(requestMessage);
+				} catch (e) {
+					// Writing the message failed. So we need to reject the promise.
+					responsePromise.reject(new ResponseError<void>(ErrorCodes.MessageWriteError, e.message ? e.message : 'Unknown reason'));
+					responsePromise = null;
+				}
+				if (responsePromise) {
+					responsePromises[String(id)] = responsePromise;
+				}
 			});
 			if (token) {
 				token.onCancellationRequested((event) => {
@@ -371,6 +407,8 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 				tracer = _tracer;
 			}
 		},
+		onError: errorEmitter.event,
+		onClose: closeEmitter.event,
 		dispose: () => {
 		},
 		listen: () => {
