@@ -38,6 +38,7 @@ export interface RequestMessage extends Message {
  * Predefined error codes.
  */
 export namespace ErrorCodes {
+	// Defined by JSON RPC
 	export const ParseError: number = -32700;
 	export const InvalidRequest: number = -32600;
 	export const MethodNotFound: number = -32601;
@@ -45,6 +46,10 @@ export namespace ErrorCodes {
 	export const InternalError: number = -32603;
 	export const serverErrorStart: number = -32099
 	export const serverErrorEnd: number = -32000;
+
+	// Defined by VSCode.
+	export const MessageWriteError: number = 1;
+	export const MessageReadError: number = 2;
 }
 
 export interface ResponseErrorLiteral<D> {
