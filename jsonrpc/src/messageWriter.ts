@@ -14,27 +14,27 @@ let ContentLength:string = 'Content-Length: ';
 let CRLF = '\r\n';
 
 export interface MessageWriter {
-	onError: Event<Error>;
+	onError: Event<[Error, Message]>;
 	onClose: Event<void>;
 	write(msg: Message): void;
 }
 
 export abstract class AbstractMessageWriter {
 
-	private errorEmitter: Emitter<Error>;
+	private errorEmitter: Emitter<[Error, Message]>;
 	private closeEmitter: Emitter<void>;
 
 	constructor() {
-		this.errorEmitter = new Emitter<Error>();
+		this.errorEmitter = new Emitter<[Error, Message]>();
 		this.closeEmitter = new Emitter<void>();
 	}
 
-	public get onError(): Event<Error> {
+	public get onError(): Event<[Error, Message]> {
 		return this.errorEmitter.event;
 	}
 
-	protected fireError(error: any): void {
-		this.errorEmitter.fire(this.asError(error));
+	protected fireError(error: any, message?: Message): void {
+		this.errorEmitter.fire([this.asError(error), message]);
 	}
 
 	public get onClose(): Event<void> {
@@ -82,7 +82,7 @@ export class StreamMessageWriter extends AbstractMessageWriter implements Messag
 			// Now write the content. This can be written in any encoding
 			this.writable.write(json, this.encoding);
 		} catch (error) {
-			this.fireError(error);
+			this.fireError(error, msg);
 		}
 	}
 }
@@ -102,7 +102,7 @@ export class IPCMessageWriter extends AbstractMessageWriter implements MessageWr
 		try {
 			this.process.send(msg);
 		} catch (error) {
-			this.fireError(error);
+			this.fireError(error, msg);
 		}
 	}
 }
