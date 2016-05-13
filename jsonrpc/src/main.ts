@@ -100,6 +100,10 @@ interface ResponsePromise {
 	reject: (error: any) => void
 }
 
+enum ConnectionState {
+	Active, Closed
+}
+
 function createMessageConnection<T extends MessageConnection>(messageReader: MessageReader, messageWriter: MessageWriter, logger: Logger, client: boolean = false): T {
 	let sequenceNumber = 0;
 	const version: string = '2.0';
@@ -113,22 +117,31 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 	let trace: Trace = Trace.Off;
 	let tracer: Tracer;
 
+	let state: ConnectionState = ConnectionState.Active;
 	let errorEmitter: Emitter<Error> = new Emitter<Error>();
 	let closeEmitter: Emitter<void> = new Emitter<void>();
 
 	function closeHandler(): void {
-
+		if (state !== ConnectionState.Closed) {
+			state = ConnectionState.Closed;
+			closeEmitter.fire(undefined);
+		}
 	};
 
-	function errorHandler(error: Error): void {
+	function readErrorHandler(error: Error): void {
 
 	}
 
+	function writeErrorHandler(tuple: [Error, Message]): void {
+		var [error, message] = tuple;
+		
+	}
+
 	messageReader.onClose(closeHandler);
-	messageReader.onError(errorHandler);
+	messageReader.onError(readErrorHandler);
 
 	messageWriter.onClose(closeHandler);
-	messageWriter.onError(errorHandler);
+	messageWriter.onError(writeErrorHandler);
 
 	function handleRequest(requestMessage: RequestMessage) {
 		function reply(resultOrError: any | ResponseError<any>): void {
