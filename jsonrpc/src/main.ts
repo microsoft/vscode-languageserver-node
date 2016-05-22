@@ -231,6 +231,9 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 		}
 		if (eventHandler) {
 			try {
+				if (trace != Trace.Off && tracer) {
+					traceReceivedNotification(message);
+				}
 				eventHandler(message.params);
 			} catch (error) {
 				if (error.message) {
@@ -266,8 +269,19 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 		}
 	}
 
-	function traceNotification(message: NotificationMessage): void {
+	function traceSendNotification(message: NotificationMessage): void {
 		tracer.log(`[${(new Date().toLocaleTimeString())}] Sending notification '${message.method}'.`);
+		if (trace === Trace.Verbose) {
+			if (message.params) {
+				tracer.log(`Params: ${JSON.stringify(message.params, null, 4)}\n\n`)
+			} else {
+				tracer.log('No parameters provided.\n\n');
+			}
+		}
+	}
+
+	function traceReceivedNotification(message: NotificationMessage): void {
+		tracer.log(`[${(new Date().toLocaleTimeString())}] Received notification '${message.method}'.`);
 		if (trace === Trace.Verbose) {
 			if (message.params) {
 				tracer.log(`Params: ${JSON.stringify(message.params, null, 4)}\n\n`)
@@ -317,7 +331,7 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 				params: params
 			}
 			if (trace != Trace.Off && tracer) {
-				traceNotification(notificatioMessage);
+				traceSendNotification(notificatioMessage);
 			}
 			messageWriter.write(notificatioMessage);
 		},
