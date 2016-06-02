@@ -17,6 +17,7 @@ import {
 } from 'vscode';
 
 import {
+		Message,
 		RequestHandler, NotificationHandler, MessageConnection, ClientMessageConnection, Logger, createClientMessageConnection,
 		ErrorCodes, ResponseError, RequestType, NotificationType,
 		MessageReader, IPCMessageReader, MessageWriter, IPCMessageWriter, Trace, Tracer, Event, Emitter
@@ -108,11 +109,20 @@ class ConsoleLogger implements Logger {
 	}
 }
 
-function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream): IConnection;
-function createConnection(reader: MessageReader, writer: MessageWriter): IConnection;
-function createConnection(input: any, output: any): IConnection {
+interface ConnectionErrorHandler {
+	(error: Error, message: Message, count: number): void;
+}
+
+interface ConnectionCloseHandler {
+	(): void;
+}
+function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler): IConnection;
+function createConnection(reader: MessageReader, writer: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler): IConnection;
+function createConnection(input: any, output: any, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler): IConnection {
 	let logger = new ConsoleLogger();
 	let connection = createClientMessageConnection(input, output, logger);
+	connection.onError((data) => { errorHandler(data[0], data[1], data[2])});
+	connection.onClose(closeHandler);
 	let result: IConnection = {
 
 		listen: (): void => connection.listen(),
@@ -187,6 +197,87 @@ export interface NodeModule {
 
 export type ServerOptions = Executable | { run: Executable; debug: Executable; } |  { run: NodeModule; debug: NodeModule } | NodeModule | (() => Thenable<ChildProcess | StreamInfo>);
 
+/**
+ * An action to be performed when the connection is producing errors.
+ */
+export enum ErrorAction {
+	/**
+	 * Continue running the server.
+	 */
+	Continue = 1,
+	/**
+	 * Shutdown the server.
+	 */
+	Shutdown = 2
+}
+
+/**
+ * An action to be performed when the connection to a server got closed.
+ */
+export enum CloseAction {
+	/**
+	 * Don't restart the server. The connection stays closed.
+	 */
+	DoNotRestart = 1,
+	/**
+	 * Restart the server.
+	 */
+	Restart = 2,
+}
+
+
+/**
+ * A pluggable error handler that is invoked when the connection is either
+ * producing errors or got closed.
+ */
+export interface ErrorHandler {
+	/**
+	 * An error has occurred while writing or reading from the connection.
+	 *
+	 * @param error - the error received
+	 * @param message - the message to be delivered to the server if know.
+	 * @param count - a count indicating how often an error is received. Will
+	 *  be reset if a message got successfully send or received.
+	 */
+	error(error: Error, message: Message, count: number): ErrorAction;
+
+	/**
+	 * The connection to the server got closed.
+	 */
+	closed(): CloseAction
+}
+
+class DefaultErrorHandler implements ErrorHandler {
+
+	private restarts: number[];
+
+	constructor(private name: string) {
+		this.restarts = [];
+	}
+
+	public error(error: Error, message: Message, count): ErrorAction {
+		if (count && count <= 3) {
+			return ErrorAction.Continue;
+		}
+		return ErrorAction.Shutdown;
+	}
+	public closed(): CloseAction {
+		this.restarts.push(Date.now());
+		if (this.restarts.length < 5) {
+			return CloseAction.Restart;
+		} else {
+			let diff = this.restarts[this.restarts.length - 1] - this.restarts[0];
+			if (diff <= 3 * 60 * 1000) {
+				Window.showErrorMessage(`The ${this.name} server crashed 5 times in the last 3 minutes. The server will not be restarted.`);
+				return CloseAction.DoNotRestart;
+			} else {
+				this.restarts.shift();
+				return CloseAction.Restart;
+			}
+		}
+	}
+}
+
 export interface SynchronizeOptions {
 	configurationSection?: string | string[];
 	fileEvents?: FileSystemWatcher | FileSystemWatcher[];
@@ -198,9 +289,11 @@ export interface LanguageClientOptions {
 	synchronize?: SynchronizeOptions;
 	diagnosticCollectionName?: string;
 	initializationOptions?: any;
+	errorHandler?: ErrorHandler;
 }
 
 enum ClientState {
+	Initial,
 	Starting,
 	Running,
 	Stopping,
@@ -274,6 +367,7 @@ export class LanguageClient {
 
 	private _telemetryEmitter: Emitter<any>;
 
+	private _trace: Trace;
 	private _tracer: Tracer;
 
 	public constructor(name: string, serverOptions: ServerOptions, languageOptions: LanguageClientOptions, forceDebug: boolean = false) {
@@ -281,10 +375,11 @@ export class LanguageClient {
 		this._serverOptions = serverOptions;
 		this._languageOptions = languageOptions || {};
 		this._languageOptions.synchronize = this._languageOptions.synchronize || {};
+		this._languageOptions.errorHandler = this._languageOptions.errorHandler || new DefaultErrorHandler(name);
 		this._syncExpression = this.computeSyncExpression();
 		this._forceDebug = forceDebug;
 
-		this._state = ClientState.Stopped;
+		this._state = ClientState.Initial;
 		this._connection = null;
 		this._childProcess = null;
 		this._outputChannel = null;
@@ -391,6 +486,7 @@ export class LanguageClient {
 	}
 
 	public set trace(value: Trace) {
+		this._trace = value;
 		this.onReady().then(() => {
 			this.resolveConnection().then((connection) => {
 				connection.trace(value, this._tracer);
@@ -398,8 +494,15 @@ export class LanguageClient {
 		});
 	}
 
+	private logTrace(message: string): void {
+		if (this._trace === Trace.Off) {
+			return;
+		}
+		this.outputChannel.appendLine(`[${(new Date().toLocaleTimeString())}] ${message}`);
+	}
+
 	public needsStart(): boolean {
-		return this._state === ClientState.Stopping || this._state === ClientState.Stopped;
+		return this._state === ClientState.Initial || this._state === ClientState.Stopping || this._state === ClientState.Stopped;
 	}
 
 	public needsStop(): boolean {
@@ -417,9 +520,12 @@ export class LanguageClient {
 	public start(): Disposable {
 		this._listeners = [];
 		this._providers = [];
-		this._diagnostics = this._languageOptions.diagnosticCollectionName
-			? Languages.createDiagnosticCollection(this._languageOptions.diagnosticCollectionName)
-			: Languages.createDiagnosticCollection();
+		// If we restart then the diagnostics collection is reused.
+		if (!this._diagnostics) {
+			this._diagnostics = this._languageOptions.diagnosticCollectionName
+				? Languages.createDiagnosticCollection(this._languageOptions.diagnosticCollectionName)
+				: Languages.createDiagnosticCollection();
+		}
 
 		this._state = ClientState.Starting;
 		this.resolveConnection().then((connection) => {
@@ -537,13 +643,8 @@ export class LanguageClient {
 			return;
 		}
 		this._state = ClientState.Stopping;
+		this.cleanUp();
 		// unkook listeners
-		this._listeners.forEach(listener => listener.dispose());
-		this._listeners = null;
-		this._providers.forEach(provider => provider.dispose());
-		this._providers = null;
-		this._diagnostics.dispose();
-		this._diagnostics = null;
 		this.resolveConnection().then(connection => {
 			connection.shutdown().then(() => {
 				connection.exit();
@@ -556,6 +657,17 @@ export class LanguageClient {
 				this.checkProcessDied(toCheck);
 			})
 		});
+	}
+
+	private cleanUp(diagnostics: boolean = true): void {
+		this._listeners.forEach(listener => listener.dispose());
+		this._listeners = null;
+		this._providers.forEach(provider => provider.dispose());
+		this._providers = null;
+		if (diagnostics) {
+			this._diagnostics.dispose();
+			this._diagnostics = null;
+		}
 	}
 
 	public notifyConfigurationChanged(settings: any): void {
@@ -641,16 +753,24 @@ export class LanguageClient {
 			Object.keys(env).forEach(key => result[key] = env[key]);
 		}
 
+		let errorHandler = (error: Error, message: Message, count: number) => {
+			this.handleConnectionError(error, message, count);
+		}
+
+		let closeHandler = () => {
+			this.handleConnectionClosed();
+		}
+
 		let server = this._serverOptions;
 		// We got a function.
 		if (is.func(server)) {
 			return server().then((result) => {
 				let info = result as StreamInfo;
 				if (info.writer && info.reader) {
-					return createConnection(info.reader, info.writer);
+					return createConnection(info.reader, info.writer, errorHandler, closeHandler);
 				} else {
 					let cp = result as ChildProcess;
-					return createConnection(cp.stdout, cp.stdin);
+					return createConnection(cp.stdout, cp.stdin, errorHandler, closeHandler);
 				}
 			});
 		}
@@ -688,24 +808,14 @@ export class LanguageClient {
 				if (!process || !process.pid) {
 					return Promise.reject<IConnection>(`Launching server using runtime ${node.runtime} failed.`);
 				}
-				process.once('error', (error: Error) => {
-					this._childProcess = null;
-					// ToDo more work to restart server on crash...
-					console.error('Starting runtime failed');
-				});
-				process.once('close', (data: any) => {
-					this._childProcess = null;
-					// ToDo more work to restart server on crash...
-					console.error('Server closed.');
-				})
 				this._childProcess = process;
 				// A spawned process doesn't have ipc transport even if we spawn node. For now always use stdio communication.
 				if (node.transport === TransportKind.ipc) {
 					process.stdout.on('data', data => this.outputChannel.append(data.toString()));
 					process.stderr.on('data', data => this.outputChannel.append(data.toString()));
-					return Promise.resolve(createConnection(new IPCMessageReader(process), new IPCMessageWriter(process)));
+					return Promise.resolve(createConnection(new IPCMessageReader(process), new IPCMessageWriter(process), errorHandler, closeHandler));
 				} else {
-					return Promise.resolve(createConnection(process.stdout, process.stdin));
+					return Promise.resolve(createConnection(process.stdout, process.stdin, errorHandler, closeHandler));
 				}
 			} else {
 				return new Promise<IConnection>((resolve, reject) => {
@@ -721,9 +831,9 @@ export class LanguageClient {
 								cp.stdout.on('data', (data) => {
 									this.outputChannel.append(data.toString());
 								});
-								resolve(createConnection(new IPCMessageReader(this._childProcess), new IPCMessageWriter(this._childProcess)));
+								resolve(createConnection(new IPCMessageReader(this._childProcess), new IPCMessageWriter(this._childProcess), errorHandler, closeHandler));
 							} else {
-								resolve(createConnection(cp.stdout, cp.stdin));
+								resolve(createConnection(cp.stdout, cp.stdin, errorHandler, closeHandler));
 							}
 						}
 					});
@@ -735,9 +845,37 @@ export class LanguageClient {
 			options.cwd = options.cwd || Workspace.rootPath;
 			let process = cp.spawn(command.command, command.args, command.options);
 			this._childProcess = process;
-			return Promise.resolve(createConnection(process.stdout, process.stdin));
+			return Promise.resolve(createConnection(process.stdout, process.stdin, errorHandler, closeHandler));
 		}
 		return Promise.reject<IConnection>(new Error(`Unsupported server configuartion ` + JSON.stringify(server, null, 4)));
+	}
+
+	private handleConnectionClosed() {
+		// Check whether this is a normal shutdown in progress or the client stopped normally.
+		if (this._state === ClientState.Stopping || this._state === ClientState.Stopped) {
+			return;
+		}
+		this._connection = null;
+		this._childProcess = null;
+		let action = this._languageOptions.errorHandler.closed();
+		if (action === CloseAction.DoNotRestart) {
+			this.logTrace('Connection to server got closed. Server will not be restarted.');
+			this._state = ClientState.Stopped;
+			this.cleanUp();
+		} else if (action === CloseAction.Restart && this._state !== ClientState.Stopping) {
+			this.logTrace('Connection to server got closed. Server will restart.');
+			this.cleanUp(false);
+			this._state = ClientState.Initial;
+			this.start();
+		}
+	}
+
+	private handleConnectionError(error: Error, message: Message, count: number) {
+		let action = this._languageOptions.errorHandler.error(error, message, count);
+		if (action === ErrorAction.Shutdown) {
+			this.logTrace('Connection to server is erroring. Shutting down server.')
+			this.stop();
+		}
 	}
 
 	private checkProcessDied(childProcess: ChildProcess): void {
@@ -764,7 +902,8 @@ export class LanguageClient {
 		let config = Workspace.getConfiguration(this._name.toLowerCase());
 		if (config) {
 			let trace = config.get('trace.server', 'off');
-			connection.trace(Trace.fromString(trace), this._tracer);
+			this._trace = Trace.fromString(trace);
+			connection.trace(this._trace, this._tracer);
 		}
 		let keys: string[] = null;
 		let configurationSection = this._languageOptions.synchronize.configurationSection;
