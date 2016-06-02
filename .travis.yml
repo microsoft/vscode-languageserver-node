@@ -5,7 +5,7 @@ node_js:
   - "0.12"
   
 install:
-  - cd jsonrpc && npm install && cd ../client && npm install && cd ../server && npm install && cd ..
+  - cd jsonrpc && npm install && cd ../client && mkdir node_modules && ln -s ../../jsonrpc jsonrpc &&  npm install && cd ../server && mkdir node_modules && ln -s ../../jsonrpc jsonrpc && npm install && cd ..
   
 script:
   - cd jsonrpc && npm run compile && cd ../client && npm run compile && cd ../server && npm run compile && cd ..
