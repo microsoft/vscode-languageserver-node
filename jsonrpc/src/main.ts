@@ -18,7 +18,9 @@ import { Disposable, Event, Emitter } from './events';
 import { CancellationTokenSource, CancellationToken } from './cancellation';
 
 export {
-	ErrorCodes, ResponseError, RequestType, NotificationType,
+	Message, ErrorCodes, ResponseError,
+	RequestMessage, RequestType,
+	NotificationMessage, NotificationType,
 	MessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
 	MessageWriter, StreamMessageWriter, IPCMessageWriter,
 	CancellationTokenSource, CancellationToken,
@@ -81,7 +83,7 @@ export interface MessageConnection {
 	sendNotification<P>(type: NotificationType<P>, params?: P): void;
 	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): void;
 	trace(value: Trace, tracer: Tracer): void;
-	onError: Event<Error>;
+	onError: Event<[Error, Message, number]>;
 	onClose: Event<void>;
 	listen();
 	dispose(): void;
@@ -101,7 +103,8 @@ interface ResponsePromise {
 }
 
 enum ConnectionState {
-	Active, Closed
+	Active = 1,
+	Closed = 2
 }
 
 function createMessageConnection<T extends MessageConnection>(messageReader: MessageReader, messageWriter: MessageWriter, logger: Logger, client: boolean = false): T {
@@ -118,7 +121,7 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 	let tracer: Tracer;
 
 	let state: ConnectionState = ConnectionState.Active;
-	let errorEmitter: Emitter<Error> = new Emitter<Error>();
+	let errorEmitter: Emitter<[Error, Message, number]> = new Emitter<[Error, Message, number]>();
 	let closeEmitter: Emitter<void> = new Emitter<void>();
 
 	function closeHandler(): void {
@@ -129,12 +132,11 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 	};
 
 	function readErrorHandler(error: Error): void {
-
+		errorEmitter.fire([error, undefined, undefined]);
 	}
 
-	function writeErrorHandler(tuple: [Error, Message]): void {
-		var [error, message] = tuple;
-		
+	function writeErrorHandler(data: [Error, Message, number]): void {
+		errorEmitter.fire(data);
 	}
 
 	messageReader.onClose(closeHandler);
@@ -365,15 +367,7 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 			if (trace != Trace.Off && tracer) {
 				traceSendNotification(notificatioMessage);
 			}
-			try {
-				messageWriter.write(notificatioMessage);
-			} catch (e) {
-				if (e instanceof Error) {
-					errorEmitter.fire(e);
-				} else {
-					errorEmitter.fire(new Error(`Message write failed. Reason: ${e.message ? e.message : 'unknown'}`));
-				}
-			}
+			messageWriter.write(notificatioMessage);
 		},
 		onNotification: <P>(type: NotificationType<P>, handler: NotificationHandler<P>) => {
 			eventHandlers[type.method] = handler;

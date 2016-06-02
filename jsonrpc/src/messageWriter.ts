@@ -14,27 +14,27 @@ let ContentLength:string = 'Content-Length: ';
 let CRLF = '\r\n';
 
 export interface MessageWriter {
-	onError: Event<[Error, Message]>;
+	onError: Event<[Error, Message, number]>;
 	onClose: Event<void>;
 	write(msg: Message): void;
 }
 
 export abstract class AbstractMessageWriter {
 
-	private errorEmitter: Emitter<[Error, Message]>;
+	private errorEmitter: Emitter<[Error, Message, number]>;
 	private closeEmitter: Emitter<void>;
 
 	constructor() {
-		this.errorEmitter = new Emitter<[Error, Message]>();
+		this.errorEmitter = new Emitter<[Error, Message, number]>();
 		this.closeEmitter = new Emitter<void>();
 	}
 
-	public get onError(): Event<[Error, Message]> {
+	public get onError(): Event<[Error, Message, number]> {
 		return this.errorEmitter.event;
 	}
 
-	protected fireError(error: any, message?: Message): void {
-		this.errorEmitter.fire([this.asError(error), message]);
+	protected fireError(error: any, message?: Message, count?: number): void {
+		this.errorEmitter.fire([this.asError(error), message, count]);
 	}
 
 	public get onClose(): Event<void> {
@@ -58,11 +58,13 @@ export class StreamMessageWriter extends AbstractMessageWriter implements Messag
 
 	private writable: NodeJS.WritableStream;
 	private encoding: string;
+	private errorCount: number;
 
 	public constructor(writable: NodeJS.WritableStream, encoding: string = 'utf8') {
 		super();
 		this.writable = writable;
 		this.encoding = encoding;
+		this.errorCount = 0;
 		this.writable.on('error', (error) => this.fireError(error));
 		this.writable.on('close', () => this.fireClose());
 	}
@@ -81,8 +83,10 @@ export class StreamMessageWriter extends AbstractMessageWriter implements Messag
 
 			// Now write the content. This can be written in any encoding
 			this.writable.write(json, this.encoding);
+			this.errorCount = 0;
 		} catch (error) {
-			this.fireError(error, msg);
+			this.errorCount++;
+			this.fireError(error, msg, this.errorCount);
 		}
 	}
 }
@@ -90,10 +94,12 @@ export class StreamMessageWriter extends AbstractMessageWriter implements Messag
 export class IPCMessageWriter extends AbstractMessageWriter implements MessageWriter {
 
 	private process: NodeJS.Process | ChildProcess;
+	private errorCount: number;
 
 	public constructor(process: NodeJS.Process | ChildProcess) {
 		super();
 		this.process = process;
+		this.errorCount = 0;
 		this.process.on('error', (error) => this.fireError(error));
 		this.process.on('close', () => this.fireClose);
 	}
@@ -101,8 +107,10 @@ export class IPCMessageWriter extends AbstractMessageWriter implements MessageWr
 	public write(msg: Message): void {
 		try {
 			this.process.send(msg);
+			this.errorCount = 0;
 		} catch (error) {
-			this.fireError(error, msg);
+			this.errorCount++;
+			this.fireError(error, msg, this.errorCount);
 		}
 	}
 }
