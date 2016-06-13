@@ -430,6 +430,11 @@ export class LanguageClient {
 		}
 	}
 
+	public changeDocumentSelector(documentSelector: string | string[]): void {
+		this._languageOptions.documentSelector = documentSelector;
+		this._syncExpression = this.computeSyncExpression();
+	}
+
 	public sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): Thenable<R> {
 		return this.onReady().then(() => {
 			return this.resolveConnection().then((connection) => {
