@@ -276,6 +276,9 @@ suite('Protocol Converter', () => {
 	});
 	
 	test('Location', () => {
+		strictEqual(undefined, p2c.asLocation(undefined));
+		strictEqual(null, p2c.asLocation(null));
+		
 		let start: proto.Position = { line: 1, character: 2 };
 		let end: proto.Position = { line: 8, character: 9 };
 		let location: proto.Location = {

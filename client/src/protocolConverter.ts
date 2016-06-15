@@ -145,6 +145,12 @@ export function asDefinitionResult(item: proto.Definition): code.Definition {
 }
 
 export function asLocation(item: proto.Location): code.Location {
+	if (is.undefined(item)) {
+		return undefined;
+	}
+	if (is.nil(item)) {
+		return null;
+	}
 	return new code.Location(code.Uri.parse(item.uri), asRange(item.range));
 }
 
