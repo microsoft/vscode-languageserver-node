@@ -21,6 +21,11 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
+* 2.3.0: Client only
+  * the client no restatrt the server if the server crashes without a prior exit notification sent. The strategy used to restart
+  the server is pluggable (see `LanguageClientOptions.errorHandler`). The default strategy restart the server unless it crashed 5
+  times or more in the last 3 minutes. 
+
 * 2.0: A detailed desciption of the 2.0 version can be found [here](https://github.com/Microsoft/vscode-languageserver-protocol/blob/master/README.md). A summary of the changes:
   * support for request cancellation. Cancellation is automatically hooked to VSCode's cancellation tokens
   * document save notification.
