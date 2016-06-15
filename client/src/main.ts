@@ -64,6 +64,10 @@ export {
 
 declare var v8debug;
 
+interface Map<T> {
+	[key: string]: T;
+}
+
 interface IConnection {
 
 	listen(): void;
@@ -292,6 +296,11 @@ export interface LanguageClientOptions {
 	errorHandler?: ErrorHandler;
 }
 
+export interface LanguageProviderOptions {
+	id: string;
+	documentSelector?: string | string[];
+}
+
 enum ClientState {
 	Initial,
 	Starting,
@@ -344,6 +353,7 @@ export class LanguageClient {
 	private _name: string;
 	private _serverOptions: ServerOptions;
 	private _languageOptions: LanguageClientOptions;
+	private _languageProviders: Map<LanguageProviderOptions>;
 	private _forceDebug: boolean;
 
 	private _state: ClientState;
@@ -376,6 +386,7 @@ export class LanguageClient {
 		this._languageOptions = languageOptions || {};
 		this._languageOptions.synchronize = this._languageOptions.synchronize || {};
 		this._languageOptions.errorHandler = this._languageOptions.errorHandler || new DefaultErrorHandler(name);
+		this._languageProviders = Object.create(null);
 		this._syncExpression = this.computeSyncExpression();
 		this._forceDebug = forceDebug;
 
@@ -406,10 +417,66 @@ export class LanguageClient {
 		};
 	}
 
+	public addLanguageProvider(provider: LanguageProviderOptions): Disposable {
+		const internalId = Date.now().toString();
+		this._languageProviders[internalId] = provider;
+		this._syncExpression = this.computeSyncExpression();
+		if (provider.documentSelector) {
+			this.onReady().then(() => {
+				const providerSyncExpression = this._computeSyncExpression(provider.documentSelector);
+				this.resolveConnection().then((connection) => {
+					Workspace.textDocuments.forEach((t) => {
+						if (providerSyncExpression.evaluate(t)) {
+							this.onDidOpenTextDoument(connection, t);
+						}
+					});
+				});
+			});
+		}
+		return new Disposable(() => {
+			const provider = this._languageProviders[internalId];
+			delete this._languageProviders[internalId];
+			this._syncExpression = this.computeSyncExpression();
+			if (provider.documentSelector) {
+				const providerSyncExpression = this._computeSyncExpression(provider.documentSelector);
+				this.resolveConnection().then((connection) => {
+					Workspace.textDocuments.forEach((t) => {
+						if (providerSyncExpression.evaluate(t)) {
+							this.onDidCloseTextDoument(connection, t);
+						}
+					});
+				});
+			}
+		});
+	}
+
 	private computeSyncExpression(): SyncExpression {
 		let documentSelector = this._languageOptions.documentSelector;
 		let textDocumentFilter = this._languageOptions.synchronize.textDocumentFilter;
+		let packages = Object.keys(this._languageProviders);
+		if (packages.length > 0) {
+			let allSelectors: string[];
+			if (is.string(documentSelector)) {
+				allSelectors = [<string>documentSelector];
+			} else {
+				allSelectors = (<string[]>documentSelector).slice(0);
+			}
+			packages.forEach((key) => {
+				const pack = this._languageProviders[key];
+				if (pack.documentSelector) {
+					if (is.string(pack.documentSelector)) {
+						allSelectors.push(<string>pack.documentSelector);
+					} else {
+						allSelectors.push(...(<string[]>pack.documentSelector));
+					}
+				}
+			});
+			documentSelector = allSelectors;
+		}
+		return this._computeSyncExpression(documentSelector, textDocumentFilter);
+	}
 
+	private _computeSyncExpression(documentSelector: string | string[], textDocumentFilter?: (textDocument: TextDocument) => boolean): SyncExpression {
 		if (!documentSelector && !textDocumentFilter) {
 			return new FalseSyncExpression();
 		}
