@@ -22,6 +22,21 @@ import {
 		ErrorCodes, ResponseError, RequestType, NotificationType,
 		MessageReader, IPCMessageReader, MessageWriter, IPCMessageWriter, Trace, Tracer, Event, Emitter
 } from 'vscode-jsonrpc';
+
+import {
+		Range, Position, Location, Diagnostic, DiagnosticSeverity, Command,
+		TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
+		TextDocumentIdentifier, CompletionItemKind, CompletionItem, CompletionList,
+		Hover, MarkedString,
+		SignatureHelp, SignatureInformation, ParameterInformation,
+		Definition, CodeActionContext,
+		DocumentHighlight, DocumentHighlightKind,
+		SymbolInformation, SymbolKind,
+		CodeLens, 
+		FormattingOptions
+} from 'vscode-languageserver-types';
+
+
 import {
 		InitializeRequest, InitializeParams, InitializeResult, InitializeError, ClientCapabilities, ServerCapabilities, TextDocumentSyncKind,
 		ShutdownRequest,
@@ -30,19 +45,18 @@ import {
 		ShowMessageNotification, ShowMessageParams, ShowMessageRequest, ShowMessageRequestParams,
 		TelemetryEventNotification,
 		DidChangeConfigurationNotification, DidChangeConfigurationParams,
-		Position, Range, Location,
-		TextDocumentIdentifier, TextDocumentPositionParams, TextEdit, TextEditChange, WorkspaceChange,
+		TextDocumentPositionParams, 
 		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams,
 		DidCloseTextDocumentNotification, DidCloseTextDocumentParams, DidSaveTextDocumentNotification, DidSaveTextDocumentParams,
 		DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
-		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity,
-		CompletionRequest, CompletionResolveRequest, CompletionItem,
-		HoverRequest, Hover,
-		SignatureHelpRequest, DefinitionRequest, Definition, ReferencesRequest, DocumentHighlightRequest, DocumentHighlight,
-		DocumentSymbolRequest, SymbolInformation, SymbolKind, WorkspaceSymbolRequest, WorkspaceSymbolParams,
+		PublishDiagnosticsNotification, PublishDiagnosticsParams, 
+		CompletionRequest, CompletionResolveRequest, 
+		HoverRequest, 
+		SignatureHelpRequest, DefinitionRequest, ReferencesRequest, DocumentHighlightRequest, 
+		DocumentSymbolRequest, WorkspaceSymbolRequest, WorkspaceSymbolParams,
 		CodeActionRequest, CodeActionParams,
-		CodeLensRequest, CodeLensResolveRequest, CodeLens,
-		DocumentFormattingRequest, DocumentFormattingParams, FormattingOptions, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
+		CodeLensRequest, CodeLensResolveRequest, 
+		DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
 		DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams,
 		RenameRequest, RenameParams
 } from './protocol';
