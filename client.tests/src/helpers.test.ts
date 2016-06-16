@@ -7,9 +7,9 @@
 import { strictEqual, deepEqual, ok } from 'assert';
 
 import {
-	Position, Range, TextDocumentIdentifier, TextDocumentPositionParams, TextDocumentItem, VersionedTextDocumentIdentifier, Command, CodeLens, CodeActionContext,
+	Position, Range, TextDocumentIdentifier, TextDocumentItem, VersionedTextDocumentIdentifier, Command, CodeLens, CodeActionContext,
 	Diagnostic, DiagnosticSeverity, WorkspaceChange, WorkspaceEdit, TextEditChange, TextEdit
-} from '../../client/lib/protocol';
+} from 'vscode-languageserver-types';
 
 suite('Protocol Helper Tests', () => {
 	function rangeEqual(actual: Range, expected: Range) {
@@ -59,13 +59,13 @@ suite('Protocol Helper Tests', () => {
 		ok(VersionedTextDocumentIdentifier.is(identifier));
 	});
 
-	test('TextDocumentPositionParams', () => {
-		let uri = 'file:///folder/file.txt';
-		let params = TextDocumentPositionParams.create(uri, Position.create(1,2));
-		strictEqual(params.textDocument.uri, uri);
-		ok(Position.is(params.position));
-		ok(TextDocumentPositionParams.is(params));
-	});
+	// test('TextDocumentPositionParams', () => {
+	// 	let uri = 'file:///folder/file.txt';
+	// 	let params = TextDocumentPositionParams.create(uri, Position.create(1,2));
+	// 	strictEqual(params.textDocument.uri, uri);
+	// 	ok(Position.is(params.position));
+	// 	ok(TextDocumentPositionParams.is(params));
+	// });
 
 	test('TextDocumentItem', () => {
 		let uri = 'file:///folder/file.txt';
