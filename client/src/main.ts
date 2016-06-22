@@ -625,6 +625,9 @@ export class LanguageClient {
 				Window.showErrorMessage(error.message, { title: 'Retry', id: "retry"}).then(item => {
 					if (is.defined(item) && item.id === 'retry') {
 						this.initialize(connection);
+					} else {
+						this.stop();
+						this._onReadyCallbacks.reject();
 					}
 				});
 			} else {
