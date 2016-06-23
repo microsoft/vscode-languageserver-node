@@ -127,7 +127,7 @@ export namespace Location {
 /**
  * The diagnostic's serverity.
  */
-export enum DiagnosticSeverity {
+export const enum DiagnosticSeverity {
 	/**
 	 * Reports an error.
 	 */
@@ -541,7 +541,7 @@ export namespace TextDocumentItem {
 /**
  * The kind of a completion entry.
  */
-export enum CompletionItemKind {
+export const enum CompletionItemKind {
 	Text = 1,
 	Method = 2,
 	Function = 3,
@@ -812,7 +812,7 @@ export interface ReferenceContext {
 /**
  * A document highlight kind.
  */
-export enum DocumentHighlightKind {
+export const enum DocumentHighlightKind {
 	/**
 	 * A textual occurrance.
 	 */
@@ -867,7 +867,7 @@ export namespace DocumentHighlight {
 /**
  * A symbol kind.
  */
-export enum SymbolKind {
+export const enum SymbolKind {
 	File = 1,
 	Module = 2,
 	Namespace = 3,
