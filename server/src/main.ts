@@ -12,6 +12,21 @@ import {
 		CancellationToken, CancellationTokenSource,
 		Disposable, Event, Emitter
 	} from 'vscode-jsonrpc';
+
+import {
+		TextDocument, TextDocumentChangeEvent, TextDocumentContentChangeEvent,
+		Range, Position, Location, Diagnostic, DiagnosticSeverity, Command,
+		TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
+		TextDocumentIdentifier, CompletionItemKind, CompletionItem, CompletionList,
+		Hover, MarkedString,
+		SignatureHelp, SignatureInformation, ParameterInformation,
+		Definition, CodeActionContext,
+		DocumentHighlight, DocumentHighlightKind,
+		SymbolInformation, SymbolKind,
+		CodeLens, 
+		FormattingOptions,
+	} from 'vscode-languageserver-types';
+
 import {
 		InitializeRequest, InitializeParams, InitializeResult, InitializeError, ClientCapabilities, ServerCapabilities,
 		ShutdownRequest,
@@ -20,22 +35,21 @@ import {
 		ShowMessageNotification, ShowMessageParams, ShowMessageRequest, ShowMessageRequestParams, MessageActionItem,
 		TelemetryEventNotification,
 		DidChangeConfigurationNotification, DidChangeConfigurationParams,
-		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams, TextDocumentContentChangeEvent,
+		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams,
 		DidCloseTextDocumentNotification, DidCloseTextDocumentParams, DidSaveTextDocumentNotification, DidSaveTextDocumentParams,
 		DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
-		PublishDiagnosticsNotification, PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Range, Position, Location,
-		TextDocumentIdentifier, TextDocumentPositionParams, TextDocumentSyncKind,
-		HoverRequest, Hover, MarkedString,
-		CompletionRequest, CompletionResolveRequest, CompletionOptions, CompletionItemKind, CompletionItem, CompletionList,
-		TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
-		SignatureHelpRequest, SignatureHelp, SignatureInformation, ParameterInformation,
-		DefinitionRequest, Definition, ReferencesRequest, ReferenceParams,
-		DocumentHighlightRequest, DocumentHighlight, DocumentHighlightKind,
-		DocumentSymbolRequest, DocumentSymbolParams, SymbolInformation, SymbolKind, WorkspaceSymbolRequest, WorkspaceSymbolParams,
-		CodeActionRequest, CodeActionParams, CodeActionContext, Command,
-		CodeLensRequest, CodeLensParams, CodeLensResolveRequest, CodeLens, CodeLensOptions,
+		PublishDiagnosticsNotification, PublishDiagnosticsParams, 
+		TextDocumentPositionParams, TextDocumentSyncKind,
+		HoverRequest, 
+		CompletionRequest, CompletionResolveRequest, CompletionOptions, 
+		SignatureHelpRequest, 
+		DefinitionRequest,  ReferencesRequest, ReferenceParams,
+		DocumentHighlightRequest, 
+		DocumentSymbolRequest, DocumentSymbolParams,  WorkspaceSymbolRequest, WorkspaceSymbolParams,
+		CodeActionRequest, CodeActionParams, CodeLensOptions,
+		CodeLensRequest, CodeLensParams, CodeLensResolveRequest, 
 		DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
-		DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams, FormattingOptions,
+		DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams, 
 		RenameRequest, RenameParams
 	} from './protocol';
 
@@ -74,201 +88,6 @@ export namespace Files {
 	export let resolveModule = fm.resolveModule;
 }
 
-// ------------------------- text documents  --------------------------------------------------
-
-/**
- * A simple text document. Not to be implemenented.
- */
-export interface TextDocument {
-
-	/**
-	 * The associated URI for this document. Most documents have the __file__-scheme, indicating that they
-	 * represent files on disk. However, some documents may have other schemes indicating that they are not
-	 * available on disk.
-	 *
-	 * @readonly
-	 */
-	uri: string;
-
-	/**
-	 * The identifier of the language associated with this document.
-	 *
-	 * @readonly
-	 */
-	languageId: string;
-
-	/**
-	 * The version number of this document (it will strictly increase after each
-	 * change, including undo/redo).
-	 *
-	 * @readonly
-	 */
-	version: number;
-
-	/**
-	 * Get the text of this document.
-	 *
-	 * @return The text of this document.
-	 */
-	getText(): string;
-
-    /**
-     * Converts a zero-based offset to a position.
-     *
-     * @param offset A zero-based offset.
-     * @return A valid [position](#Position).
-     */
-    positionAt(offset: number): Position;
-
-    /**
-     * Converts the position to a zero-based offset.
-     *
-     * The position will be [adjusted](#TextDocument.validatePosition).
-     *
-     * @param position A position.
-     * @return A valid zero-based offset.
-     */
-    offsetAt(position: Position): number;
-
-    /**
-     * The number of lines in this document.
-     *
-     * @readonly
-     */
-    lineCount: number;
-}
-
-export namespace TextDocument {
-	/**
-	 * Creates a new ITextDocument literal from the given uri and content.
-	 * @param uri The document's uri.
-	 * @param languageId  The document's language Id.
-	 * @param content The document's content.
-	 */
-	export function create(uri: string, languageId: string, version: number, content: string): TextDocument {
-		return new FullTextDocument(uri, languageId, version, content);
-	}
-	/**
-	 * Checks whether the given literal conforms to the [ITextDocument](#ITextDocument) interface.
-	 */
-	export function is(value: any): value is TextDocument {
-		let candidate = value as TextDocument;
-		return Is.defined(candidate) && Is.string(candidate.uri) && (Is.undefined(candidate.languageId) || Is.string(candidate.languageId)) && Is.number(candidate.lineCount)
-			&& Is.func(candidate.getText) && Is.func(candidate.positionAt) && Is.func(candidate.offsetAt) ? true : false;
-	}
-}
-
-/**
- * Event to signal changes to a simple text document.
- */
-export interface TextDocumentChangeEvent {
-	/**
-	 * The document that has changed.
-	 */
-	document: TextDocument;
-}
-
-class FullTextDocument implements TextDocument {
-
-	private _uri: string;
-	private _languageId: string;
-	private _version: number;
-	private _content: string;
-	private _lineOffsets: number[];
-
-	public constructor(uri: string, languageId: string, version: number, content: string) {
-		this._uri = uri;
-		this._languageId = languageId;
-		this._version = version;
-		this._content = content;
-		this._lineOffsets = null;
-	}
-
-	public get uri(): string {
-		return this._uri;
-	}
-
-	public get languageId(): string {
-		return this._languageId;
-	}
-
-	public get version(): number {
-		return this._version;
-	}
-
-	public getText(): string {
-		return this._content;
-	}
-
-	public update(event: TextDocumentContentChangeEvent, version: number): void {
-		this._content = event.text;
-		this._version = version;
-		this._lineOffsets = null;
-	}
-
-	private getLineOffsets() : number[] {
-		if (this._lineOffsets === null) {
-			let lineOffsets: number[] = [];
-			let text = this._content;
-			let isLineStart = true;
-			for (let i = 0; i < text.length; i++) {
-				if (isLineStart) {
-					lineOffsets.push(i);
-					isLineStart = false;
-				}
-				let ch = text.charAt(i);
-				isLineStart = (ch === '\r' || ch === '\n');
-				if (ch === '\r' && i + 1 < text.length && text.charAt(i+1) === '\n') {
-					i++;
-				}
-			}
-			if (isLineStart && text.length > 0) {
-				lineOffsets.push(text.length);
-			}
-			this._lineOffsets = lineOffsets;
-		}
-		return this._lineOffsets;
-	}
-
-	public positionAt(offset:number) {
-		offset = Math.max(Math.min(offset, this._content.length), 0);
-
-		let lineOffsets = this.getLineOffsets();
-		let low = 0, high = lineOffsets.length;
-		if (high === 0) {
-			return Position.create(0, offset);
-		}
-		while (low < high) {
-			let mid = Math.floor((low + high) / 2);
-			if (lineOffsets[mid] > offset) {
-				high = mid;
-			} else {
-				low = mid + 1;
-			}
-		}
-		// low is the least x for which the line offset is larger than the current offset
-		// or array.length if no line offset is larger than the current offset
-		let line = low - 1;
-		return Position.create(line, offset - lineOffsets[line]);
-	}
-
-	public offsetAt(position: Position) {
-		let lineOffsets = this.getLineOffsets();
-		if (position.line >= lineOffsets.length) {
-			return this._content.length;
-		} else if (position.line < 0) {
-			return 0;
-		}
-		let lineOffset = lineOffsets[position.line];
-		let nextLineOffset = (position.line + 1 < lineOffsets.length) ? lineOffsets[position.line + 1] : this._content.length;
-		return Math.max(Math.min(lineOffset + position.character, nextLineOffset), lineOffset);
-	}
-
-	public get lineCount() {
-		return this.getLineOffsets().length;
-	}
-}
-
 interface ConnectionState {
 	__textDocumentSync: TextDocumentSyncKind;
 }
@@ -278,7 +97,7 @@ interface ConnectionState {
  */
 export class TextDocuments {
 
-	private _documents : { [uri: string]: FullTextDocument };
+	private _documents : { [uri: string]: TextDocument };
 
 	private _onDidChangeContent: Emitter<TextDocumentChangeEvent>;
 	private _onDidOpen: Emitter<TextDocumentChangeEvent>;
@@ -375,7 +194,7 @@ export class TextDocuments {
 		(<ConnectionState><any>connection).__textDocumentSync = TextDocumentSyncKind.Full;
 		connection.onDidOpenTextDocument((event: DidOpenTextDocumentParams) => {
 			let td = event.textDocument;
-			let document = new FullTextDocument(td.uri, td.languageId, td.version, td.text);
+			let document = TextDocument.create(td.uri, td.languageId, td.version, td.text);
 			this._documents[td.uri] = document;
 			this._onDidOpen.fire({ document });
 			this._onDidChangeContent.fire({ document });
@@ -386,8 +205,8 @@ export class TextDocuments {
 			let last: TextDocumentContentChangeEvent = changes.length > 0 ? changes[changes.length - 1] : null;
 			if (last) {
 				let document = this._documents[td.uri];
-				if (document) {
-					document.update(last, td.version);
+				if (document && Is.func(document['update'])) {
+					(<any> document).update(last, td.version);
 					this._onDidChangeContent.fire({ document });
 				}
 			}

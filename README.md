@@ -8,11 +8,14 @@ This repository contains the code for the following npm modules:
 * _vscode-languageserver_: npm module to implement a VSCode language server using [Node.js](https://nodejs.org/) as a runtime:<br>
 [![NPM Version](https://img.shields.io/npm/v/vscode-languageserver.svg)](https://npmjs.org/package/vscode-languageserver)
 [![NPM Downloads](https://img.shields.io/npm/dm/vscode-languageserver.svg)](https://npmjs.org/package/vscode-languageserver)
+* _vscode-languageserver-types_: data types used by the language server client and server:<br>
+[![NPM Version](https://img.shields.io/npm/v/vscode-languageserver-types.svg)](https://npmjs.org/package/vscode-languageserver-types)
+[![NPM Downloads](https://img.shields.io/npm/dm/vscode-languageserver-types.svg)](https://npmjs.org/package/vscode-languageserver-types)
 * _vscode-jsonrpc_: the underlying message protocol to communicate between a client and a server:<br>
 [![NPM Version](https://img.shields.io/npm/v/vscode-jsonrpc.svg)](https://npmjs.org/package/vscode-jsonrpc)
 [![NPM Downloads](https://img.shields.io/npm/dm/vscode-jsonrpc.svg)](https://npmjs.org/package/vscode-jsonrpc)
 
-All three npm modules are built using one travis build. Its status is:
+All four npm modules are built using one travis build. Its status is:
 
 [![Build Status](https://travis-ci.org/Microsoft/vscode-languageserver-node.svg?branch=master)](https://travis-ci.org/Microsoft/vscode-languageserver-node)
 
@@ -21,8 +24,12 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
+* 2.4.0 Client and Server
+  * Data types such as Range, Position, TextDocument, Hover, CompletionItem... extracted to new node module _vscode-languageserver-types_.
+  The new node module is shared between the server and client and can also be used by language service libraries that want to use the same data types.
+
 * 2.3.0: Client only
-  * the client no restatrt the server if the server crashes without a prior exit notification sent. The strategy used to restart
+  * the client no restart the server if the server crashes without a prior exit notification sent. The strategy used to restart
   the server is pluggable (see `LanguageClientOptions.errorHandler`). The default strategy restart the server unless it crashed 5
   times or more in the last 3 minutes. 
 

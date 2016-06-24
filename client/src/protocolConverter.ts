@@ -5,16 +5,16 @@
 'use strict';
 
 import * as code from 'vscode';
-import * as proto from './protocol';
+import * as ls from 'vscode-languageserver-types';
 import * as is from './utils/is';
 import ProtocolCompletionItem from './protocolCompletionItem';
 import ProtocolCodeLens from './protocolCodeLens';
 
-export function asDiagnostics(diagnostics: proto.Diagnostic[]): code.Diagnostic[] {
+export function asDiagnostics(diagnostics: ls.Diagnostic[]): code.Diagnostic[] {
 	return diagnostics.map(asDiagnostic);
 }
 
-export function asDiagnostic(diagnostic: proto.Diagnostic): code.Diagnostic {
+export function asDiagnostic(diagnostic: ls.Diagnostic): code.Diagnostic {
 	let result = new code.Diagnostic(asRange(diagnostic.range), diagnostic.message, asDiagnosticSeverity(diagnostic.severity));
 	if (is.defined(diagnostic.code)) {
 		result.code = diagnostic.code;
@@ -25,7 +25,7 @@ export function asDiagnostic(diagnostic: proto.Diagnostic): code.Diagnostic {
 	return result;
 }
 
-export function asRange(value: proto.Range): code.Range {
+export function asRange(value: ls.Range): code.Range {
 	if (is.undefined(value)) {
 		return undefined;
 	} else if (is.nil(value)) {
@@ -34,7 +34,7 @@ export function asRange(value: proto.Range): code.Range {
 	return new code.Range(asPosition(value.start), asPosition(value.end));
 }
 
-export function asPosition(value: proto.Position): code.Position {
+export function asPosition(value: ls.Position): code.Position {
 	if (is.undefined(value)) {
 		return undefined;
 	} else if (is.nil(value)) {
@@ -48,19 +48,19 @@ export function asDiagnosticSeverity(value: number): code.DiagnosticSeverity {
 		return code.DiagnosticSeverity.Error;
 	}
 	switch (value) {
-		case proto.DiagnosticSeverity.Error:
+		case ls.DiagnosticSeverity.Error:
 			return code.DiagnosticSeverity.Error;
-		case proto.DiagnosticSeverity.Warning:
+		case ls.DiagnosticSeverity.Warning:
 			return code.DiagnosticSeverity.Warning;
-		case proto.DiagnosticSeverity.Information:
+		case ls.DiagnosticSeverity.Information:
 			return code.DiagnosticSeverity.Information;
-		case proto.DiagnosticSeverity.Hint:
+		case ls.DiagnosticSeverity.Hint:
 			return code.DiagnosticSeverity.Hint;
 	}
 	return code.DiagnosticSeverity.Error;
 }
 
-export function asHover(hover: proto.Hover): code.Hover {
+export function asHover(hover: ls.Hover): code.Hover {
 	if (is.undefined(hover)) {
 		return undefined;
 	}
@@ -70,9 +70,9 @@ export function asHover(hover: proto.Hover): code.Hover {
 	return new code.Hover(hover.contents, is.defined(hover.range) ? asRange(hover.range) : undefined);
 }
 
-export function asCompletionResult(result: proto.CompletionItem[] | proto.CompletionList): code.CompletionItem[] | code.CompletionList {
+export function asCompletionResult(result: ls.CompletionItem[] | ls.CompletionList): code.CompletionItem[] | code.CompletionList {
 	if (Array.isArray(result)) {
-		let items = <proto.CompletionItem[]> result;
+		let items = <ls.CompletionItem[]> result;
 		return items.map(asCompletionItem);
 	}
 	let list = <code.CompletionList> result;
@@ -85,7 +85,7 @@ function set<T>(value: T, func: () => void): void {
 	}
 }
 
-export function asCompletionItem(item: proto.CompletionItem): ProtocolCompletionItem {
+export function asCompletionItem(item: ls.CompletionItem): ProtocolCompletionItem {
 	let result = new ProtocolCompletionItem(item.label);
 	set(item.detail, () => result.detail = item.detail);
 	set(item.documentation, () => result.documentation = item.documentation);
@@ -99,15 +99,15 @@ export function asCompletionItem(item: proto.CompletionItem): ProtocolCompletion
 	return result;
 }
 
-export function asTextEdit(edit: proto.TextEdit): code.TextEdit {
+export function asTextEdit(edit: ls.TextEdit): code.TextEdit {
 	return new code.TextEdit(asRange(edit.range), edit.newText);
 }
 
-export function asTextEdits(items: proto.TextEdit[]): code.TextEdit[] {
+export function asTextEdits(items: ls.TextEdit[]): code.TextEdit[] {
 	return items.map(asTextEdit);
 }
 
-export function asSignatureHelp(item: proto.SignatureHelp): code.SignatureHelp {
+export function asSignatureHelp(item: ls.SignatureHelp): code.SignatureHelp {
 	let result = new code.SignatureHelp();
 	set(item.activeParameter, () => result.activeParameter = item.activeParameter);
 	set(item.activeSignature, () => result.activeSignature = item.activeSignature);
@@ -115,28 +115,28 @@ export function asSignatureHelp(item: proto.SignatureHelp): code.SignatureHelp {
 	return result;
 }
 
-export function asSignatureInformations(items: proto.SignatureInformation[]): code.SignatureInformation[] {
+export function asSignatureInformations(items: ls.SignatureInformation[]): code.SignatureInformation[] {
 	return items.map(asSignatureInformation);
 }
 
-export function asSignatureInformation(item: proto.SignatureInformation): code.SignatureInformation {
+export function asSignatureInformation(item: ls.SignatureInformation): code.SignatureInformation {
 	let result = new code.SignatureInformation(item.label);
 	set(item.documentation, () => result.documentation = item.documentation);
 	set(item.parameters, () => result.parameters = asParameterInformations(item.parameters));
 	return result;
 }
 
-export function asParameterInformations(item: proto.ParameterInformation[]): code.ParameterInformation[] {
+export function asParameterInformations(item: ls.ParameterInformation[]): code.ParameterInformation[] {
 	return item.map(asParameterInformation);
 }
 
-export function asParameterInformation(item: proto.ParameterInformation): code.ParameterInformation {
+export function asParameterInformation(item: ls.ParameterInformation): code.ParameterInformation {
 	let result = new code.ParameterInformation(item.label);
 	set(item.documentation, () => result.documentation = item.documentation);
 	return result;
 }
 
-export function asDefinitionResult(item: proto.Definition): code.Definition {
+export function asDefinitionResult(item: ls.Definition): code.Definition {
 	if (is.array(item)) {
 		return item.map(asLocation);
 	} else {
@@ -144,7 +144,7 @@ export function asDefinitionResult(item: proto.Definition): code.Definition {
 	}
 }
 
-export function asLocation(item: proto.Location): code.Location {
+export function asLocation(item: ls.Location): code.Location {
 	if (is.undefined(item)) {
 		return undefined;
 	}
@@ -154,37 +154,37 @@ export function asLocation(item: proto.Location): code.Location {
 	return new code.Location(code.Uri.parse(item.uri), asRange(item.range));
 }
 
-export function asReferences(values: proto.Location[]): code.Location[] {
+export function asReferences(values: ls.Location[]): code.Location[] {
 	return values.map(asLocation);
 }
 
-export function asDocumentHighlights(values: proto.DocumentHighlight[]): code.DocumentHighlight[] {
+export function asDocumentHighlights(values: ls.DocumentHighlight[]): code.DocumentHighlight[] {
 	return values.map(asDocumentHighlight);
 }
 
-export function asDocumentHighlight(item: proto.DocumentHighlight): code.DocumentHighlight {
+export function asDocumentHighlight(item: ls.DocumentHighlight): code.DocumentHighlight {
 	let result = new code.DocumentHighlight(asRange(item.range));
 	set(item.kind, () => result.kind = asDocumentHighlightKind(item.kind));
 	return result;
 }
 
-export function asDocumentHighlightKind(item: proto.DocumentHighlightKind): code.DocumentHighlightKind {
+export function asDocumentHighlightKind(item: ls.DocumentHighlightKind): code.DocumentHighlightKind {
 	switch(item) {
-		case proto.DocumentHighlightKind.Text:
+		case ls.DocumentHighlightKind.Text:
 			return code.DocumentHighlightKind.Text;
-		case proto.DocumentHighlightKind.Read:
+		case ls.DocumentHighlightKind.Read:
 			return code.DocumentHighlightKind.Read;
-		case proto.DocumentHighlightKind.Write:
+		case ls.DocumentHighlightKind.Write:
 			return code.DocumentHighlightKind.Write;
 	}
 	return code.DocumentHighlightKind.Text;
 }
 
-export function asSymbolInformations(values: proto.SymbolInformation[], uri?: code.Uri): code.SymbolInformation[] {
+export function asSymbolInformations(values: ls.SymbolInformation[], uri?: code.Uri): code.SymbolInformation[] {
 	return values.map(information => asSymbolInformation(information, uri));
 }
 
-export function asSymbolInformation(item: proto.SymbolInformation, uri?: code.Uri): code.SymbolInformation {
+export function asSymbolInformation(item: ls.SymbolInformation, uri?: code.Uri): code.SymbolInformation {
 	// Symbol kind is one based in the protocol and zero based in code.
 	let result = new code.SymbolInformation(
 		item.name, item.kind - 1,
@@ -194,28 +194,28 @@ export function asSymbolInformation(item: proto.SymbolInformation, uri?: code.Ur
 	return result;
 }
 
-export function asCommand(item: proto.Command): code.Command {
+export function asCommand(item: ls.Command): code.Command {
 	let result: code.Command = { title: item.title, command: item.command };
 	set(item.arguments, () => result.arguments = item.arguments);
 	return result;
 }
 
-export function asCommands(items: proto.Command[]): code.Command[] {
+export function asCommands(items: ls.Command[]): code.Command[] {
 	return items.map(asCommand);
 }
 
-export function asCodeLens(item: proto.CodeLens): code.CodeLens {
+export function asCodeLens(item: ls.CodeLens): code.CodeLens {
 	let result: ProtocolCodeLens = new ProtocolCodeLens(asRange(item.range));
 	if (is.defined(item.command)) result.command = asCommand(item.command);
 	if (is.defined(item.data)) result.data = item.data;
 	return result;
 }
 
-export function asCodeLenses(items: proto.CodeLens[]): code.CodeLens[] {
+export function asCodeLenses(items: ls.CodeLens[]): code.CodeLens[] {
 	return items.map(asCodeLens);
 }
 
-export function asWorkspaceEdit(item: proto.WorkspaceEdit): code.WorkspaceEdit {
+export function asWorkspaceEdit(item: ls.WorkspaceEdit): code.WorkspaceEdit {
 	let result = new code.WorkspaceEdit();
 	let keys = Object.keys(item.changes);
 	keys.forEach(key => result.set(code.Uri.parse(key), asTextEdits(item.changes[key])));

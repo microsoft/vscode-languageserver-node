@@ -6,7 +6,7 @@
 
 import { strictEqual, deepEqual, ok } from 'assert';
 
-import * as proto from '../../client/lib/protocol';
+import * as proto from 'vscode-languageserver-types';
 import * as c2p from '../../client/lib/codeConverter';
 import * as p2c from '../../client/lib/protocolConverter';
 

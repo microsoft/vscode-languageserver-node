@@ -5,12 +5,13 @@
 'use strict';
 
 import * as code from 'vscode';
+import * as ls from 'vscode-languageserver-types';
 import * as proto from './protocol';
 import * as is from './utils/is';
 import ProtocolCompletionItem from './protocolCompletionItem';
 import ProtocolCodeLens from './protocolCodeLens';
 
-export function asTextDocumentIdentifier(textDocument: code.TextDocument): proto.TextDocumentIdentifier {
+export function asTextDocumentIdentifier(textDocument: code.TextDocument): ls.TextDocumentIdentifier {
 	return {
 		uri: textDocument.uri.toString()
 	};
@@ -93,11 +94,11 @@ export function asTextDocumentPositionParams(textDocument: code.TextDocument, po
 	};
 }
 
-export function asWorkerPosition(position: code.Position): proto.Position {
+export function asWorkerPosition(position: code.Position): ls.Position {
 	return { line: position.line, character: position.character };
 }
 
-export function asRange(value: code.Range): proto.Range {
+export function asRange(value: code.Range): ls.Range {
 	if (is.undefined(value)) {
 		return undefined;
 	} else if (is.nil(value)) {
@@ -106,7 +107,7 @@ export function asRange(value: code.Range): proto.Range {
 	return { start: asPosition(value.start), end: asPosition(value.end) };
 }
 
-export function asPosition(value: code.Position): proto.Position {
+export function asPosition(value: code.Position): ls.Position {
 	if (is.undefined(value)) {
 		return undefined;
 	} else if (is.nil(value)) {
@@ -121,36 +122,36 @@ function set(value, func: () => void): void {
 	}
 }
 
-export function asDiagnosticSeverity(value: code.DiagnosticSeverity): proto.DiagnosticSeverity {
+export function asDiagnosticSeverity(value: code.DiagnosticSeverity): ls.DiagnosticSeverity {
 	switch (value) {
 		case code.DiagnosticSeverity.Error:
-			return proto.DiagnosticSeverity.Error;
+			return ls.DiagnosticSeverity.Error;
 		case code.DiagnosticSeverity.Warning:
-			return proto.DiagnosticSeverity.Warning;
+			return ls.DiagnosticSeverity.Warning;
 		case code.DiagnosticSeverity.Information:
-			return proto.DiagnosticSeverity.Information;
+			return ls.DiagnosticSeverity.Information;
 		case code.DiagnosticSeverity.Hint:
-			return proto.DiagnosticSeverity.Hint;
+			return ls.DiagnosticSeverity.Hint;
 	}
 }
 
-export function asDiagnostic(item: code.Diagnostic): proto.Diagnostic {
-	let result: proto.Diagnostic = proto.Diagnostic.create(asRange(item.range), item.message);
+export function asDiagnostic(item: code.Diagnostic): ls.Diagnostic {
+	let result: ls.Diagnostic = ls.Diagnostic.create(asRange(item.range), item.message);
 	set(item.severity, () => result.severity = asDiagnosticSeverity(item.severity));
 	set(item.code, () => result.code = item.code);
 	set(item.source, () => result.source = item.source);
 	return result;
 }
 
-export function asDiagnostics(items: code.Diagnostic[]): proto.Diagnostic[] {
+export function asDiagnostics(items: code.Diagnostic[]): ls.Diagnostic[] {
 	if (is.undefined(items) || is.nil(items)) {
 		return items;
 	}
 	return items.map(asDiagnostic);
 }
 
-export function asCompletionItem(item: code.CompletionItem): proto.CompletionItem {
-	let result: proto.CompletionItem = { label: item.label };
+export function asCompletionItem(item: code.CompletionItem): ls.CompletionItem {
+	let result: ls.CompletionItem = { label: item.label };
 	set(item.detail, () => result.detail = item.detail);
 	set(item.documentation, () => result.documentation = item.documentation);
 	set(item.filterText, () => result.filterText = item.filterText);
@@ -165,7 +166,7 @@ export function asCompletionItem(item: code.CompletionItem): proto.CompletionIte
 	return result;
 }
 
-export function asTextEdit(edit: code.TextEdit): proto.TextEdit {
+export function asTextEdit(edit: code.TextEdit): ls.TextEdit {
 	return { range: asRange(edit.range), newText: edit.newText };
 }
 
@@ -177,21 +178,21 @@ export function asReferenceParams(textDocument: code.TextDocument, position: cod
 	};
 }
 
-export function asCodeActionContext(context: code.CodeActionContext): proto.CodeActionContext {
+export function asCodeActionContext(context: code.CodeActionContext): ls.CodeActionContext {
 	if (is.undefined(context) || is.nil(context)) {
 		return context;
 	}
-	return proto.CodeActionContext.create(asDiagnostics(context.diagnostics));
+	return ls.CodeActionContext.create(asDiagnostics(context.diagnostics));
 }
 
-export function asCommand(item: code.Command): proto.Command {
-	let result = proto.Command.create(item.title, item.command);
+export function asCommand(item: code.Command): ls.Command {
+	let result = ls.Command.create(item.title, item.command);
 	if (is.defined(item.arguments)) result.arguments = item.arguments;
 	return result;
 }
 
-export function asCodeLens(item: code.CodeLens): proto.CodeLens {
-	let result = proto.CodeLens.create(asRange(item.range));
+export function asCodeLens(item: code.CodeLens): ls.CodeLens {
+	let result = ls.CodeLens.create(asRange(item.range));
 	if (is.defined(item.command)) result.command = asCommand(item.command);
 	if (item instanceof ProtocolCodeLens) {
 		if (is.defined(item.data)) result.data = item.data;
@@ -199,7 +200,7 @@ export function asCodeLens(item: code.CodeLens): proto.CodeLens {
 	return result;
 }
 
-export function asFormattingOptions(item: code.FormattingOptions): proto.FormattingOptions {
+export function asFormattingOptions(item: code.FormattingOptions): ls.FormattingOptions {
 	return { tabSize: item.tabSize, insertSpaces: item.insertSpaces };
 }
 
