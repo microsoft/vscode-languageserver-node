@@ -24,7 +24,7 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
-* 2.4.0 Client and Server
+* Next (2.4.0) Client and Server
   * Data types such as Range, Position, TextDocument, Hover, CompletionItem... extracted to new node module _vscode-languageserver-types_.
   The new node module is shared between the server and client and can also be used by language service libraries that want to use the same data types.
 
