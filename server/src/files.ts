@@ -42,7 +42,7 @@ export function resolveModule(workspaceRoot: string, moduleName: string): Thenab
 		result?: any
 	}
 	let nodePathKey: string = 'NODE_PATH';
-	return new Promise<any>((c, e) => {
+	return new Promise<any>((resolve, reject) => {
 		let result = Object.create(null);
 		let nodePath: string[] = [];
 		if (workspaceRoot) {
@@ -78,9 +78,9 @@ export function resolveModule(workspaceRoot: string, moduleName: string): Thenab
 						}
 						cp.send({ command: 'exit' });
 						try {
-							c(require(toRequire));
-						} catch (err) {
-							e(undefined);
+							resolve(require(toRequire));
+						} catch (error) {
+							reject(error);
 						}
 					}
 				});
@@ -90,7 +90,7 @@ export function resolveModule(workspaceRoot: string, moduleName: string): Thenab
 				};
 				cp.send(message);
 			} catch (error) {
-				e(undefined);
+				reject(error);
 			}
 		});
 	});
