@@ -29,7 +29,7 @@ language servers for [VSCode](https://code.visualstudio.com/).
   The new node module is shared between the server and client and can also be used by language service libraries that want to use the same data types.
 
 * 2.3.0: Client only
-  * the client no restart the server if the server crashes without a prior exit notification sent. The strategy used to restart
+  * the client now restarts the server if the server crashes without a prior exit notification sent. The strategy used to restart
   the server is pluggable (see `LanguageClientOptions.errorHandler`). The default strategy restart the server unless it crashed 5
   times or more in the last 3 minutes. 
 
