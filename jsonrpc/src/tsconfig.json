@@ -3,7 +3,7 @@
 		"target": "ES5",
 		"module": "commonjs",
 		"moduleResolution": "node",
-		"sourceMap": false,
+		"sourceMap": true,
 		"declaration": true,
 		"stripInternal": true,
 		"outDir": "../lib"
