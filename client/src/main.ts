@@ -32,7 +32,7 @@ import {
 		Definition, CodeActionContext,
 		DocumentHighlight, DocumentHighlightKind,
 		SymbolInformation, SymbolKind,
-		CodeLens, 
+		CodeLens,
 		FormattingOptions
 } from 'vscode-languageserver-types';
 
@@ -45,17 +45,17 @@ import {
 		ShowMessageNotification, ShowMessageParams, ShowMessageRequest, ShowMessageRequestParams,
 		TelemetryEventNotification,
 		DidChangeConfigurationNotification, DidChangeConfigurationParams,
-		TextDocumentPositionParams, 
+		TextDocumentPositionParams,
 		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams,
 		DidCloseTextDocumentNotification, DidCloseTextDocumentParams, DidSaveTextDocumentNotification, DidSaveTextDocumentParams,
 		DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
-		PublishDiagnosticsNotification, PublishDiagnosticsParams, 
-		CompletionRequest, CompletionResolveRequest, 
-		HoverRequest, 
-		SignatureHelpRequest, DefinitionRequest, ReferencesRequest, DocumentHighlightRequest, 
+		PublishDiagnosticsNotification, PublishDiagnosticsParams,
+		CompletionRequest, CompletionResolveRequest,
+		HoverRequest,
+		SignatureHelpRequest, DefinitionRequest, ReferencesRequest, DocumentHighlightRequest,
 		DocumentSymbolRequest, WorkspaceSymbolRequest, WorkspaceSymbolParams,
 		CodeActionRequest, CodeActionParams,
-		CodeLensRequest, CodeLensResolveRequest, 
+		CodeLensRequest, CodeLensResolveRequest,
 		DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
 		DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams,
 		RenameRequest, RenameParams
@@ -546,16 +546,16 @@ export class LanguageClient {
 			connection.onLogMessage((message) => {
 				switch(message.type) {
 					case MessageType.Error:
-						console.error(message.message);
+						this.outputChannel.appendLine(`[Error] ${message.message}`);
 						break;
 					case MessageType.Warning:
-						console.warn(message.message);
+						this.outputChannel.appendLine(`[Warn] ${message.message}`);
 						break;
 					case MessageType.Info:
-						console.info(message.message);
+						this.outputChannel.appendLine(`[Info] ${message.message}`);
 						break;
 					default:
-						console.log(message.message);
+						this.outputChannel.appendLine(message.message);
 				}
 			});
 			connection.onShowMessage((message) => {
