@@ -302,6 +302,7 @@ export interface LanguageClientOptions {
 	documentSelector?: string | string[];
 	synchronize?: SynchronizeOptions;
 	diagnosticCollectionName?: string;
+	outputChannelName?: string;
 	initializationOptions?: any;
 	errorHandler?: ErrorHandler;
 }
@@ -355,9 +356,10 @@ class CompositeSyncExpression implements SyncExpression {
 
 export class LanguageClient {
 
+	private _id: string;
 	private _name: string;
 	private _serverOptions: ServerOptions;
-	private _languageOptions: LanguageClientOptions;
+	private _clientOptions: LanguageClientOptions;
 	private _forceDebug: boolean;
 
 	private _state: ClientState;
@@ -384,12 +386,13 @@ export class LanguageClient {
 	private _trace: Trace;
 	private _tracer: Tracer;
 
-	public constructor(name: string, serverOptions: ServerOptions, languageOptions: LanguageClientOptions, forceDebug: boolean = false) {
+	public constructor(id: string, name: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, forceDebug: boolean = false) {
+		this._id = id;
 		this._name = name;
 		this._serverOptions = serverOptions;
-		this._languageOptions = languageOptions || {};
-		this._languageOptions.synchronize = this._languageOptions.synchronize || {};
-		this._languageOptions.errorHandler = this._languageOptions.errorHandler || new DefaultErrorHandler(name);
+		this._clientOptions = clientOptions || {};
+		this._clientOptions.synchronize = this._clientOptions.synchronize || {};
+		this._clientOptions.errorHandler = this._clientOptions.errorHandler || new DefaultErrorHandler(name);
 		this._syncExpression = this.computeSyncExpression();
 		this._forceDebug = forceDebug;
 
@@ -421,8 +424,8 @@ export class LanguageClient {
 	}
 
 	private computeSyncExpression(): SyncExpression {
-		let documentSelector = this._languageOptions.documentSelector;
-		let textDocumentFilter = this._languageOptions.synchronize.textDocumentFilter;
+		let documentSelector = this._clientOptions.documentSelector;
+		let textDocumentFilter = this._clientOptions.synchronize.textDocumentFilter;
 
 		if (!documentSelector && !textDocumentFilter) {
 			return new FalseSyncExpression();
@@ -492,9 +495,9 @@ export class LanguageClient {
 		return this._telemetryEmitter.event;
 	}
 
-	private get outputChannel(): OutputChannel {
+	public get outputChannel(): OutputChannel {
 		if (!this._outputChannel) {
-			this._outputChannel = Window.createOutputChannel(this._name);
+			this._outputChannel = Window.createOutputChannel(this._clientOptions.outputChannelName ? this._clientOptions.outputChannelName : this._name);
 		}
 		return this._outputChannel;
 	}
@@ -536,8 +539,8 @@ export class LanguageClient {
 		this._providers = [];
 		// If we restart then the diagnostics collection is reused.
 		if (!this._diagnostics) {
-			this._diagnostics = this._languageOptions.diagnosticCollectionName
-				? Languages.createDiagnosticCollection(this._languageOptions.diagnosticCollectionName)
+			this._diagnostics = this._clientOptions.diagnosticCollectionName
+				? Languages.createDiagnosticCollection(this._clientOptions.diagnosticCollectionName)
 				: Languages.createDiagnosticCollection();
 		}
 
@@ -614,7 +617,7 @@ export class LanguageClient {
 	}
 
 	private initialize(connection: IConnection): Thenable<InitializeResult> {
-		let initParams: InitializeParams = { processId: process.pid, rootPath: Workspace.rootPath, capabilities: { }, initializationOptions: this._languageOptions.initializationOptions };
+		let initParams: InitializeParams = { processId: process.pid, rootPath: Workspace.rootPath, capabilities: { }, initializationOptions: this._clientOptions.initializationOptions };
 		return connection.initialize(initParams).then((result) => {
 			this._state = ClientState.Running;
 			this._capabilites = result.capabilities;
@@ -874,7 +877,7 @@ export class LanguageClient {
 		}
 		this._connection = null;
 		this._childProcess = null;
-		let action = this._languageOptions.errorHandler.closed();
+		let action = this._clientOptions.errorHandler.closed();
 		if (action === CloseAction.DoNotRestart) {
 			this.logTrace('Connection to server got closed. Server will not be restarted.');
 			this._state = ClientState.Stopped;
@@ -888,7 +891,7 @@ export class LanguageClient {
 	}
 
 	private handleConnectionError(error: Error, message: Message, count: number) {
-		let action = this._languageOptions.errorHandler.error(error, message, count);
+		let action = this._clientOptions.errorHandler.error(error, message, count);
 		if (action === ErrorAction.Shutdown) {
 			this.logTrace('Connection to server is erroring. Shutting down server.')
 			this.stop();
@@ -896,6 +899,9 @@ export class LanguageClient {
 	}
 
 	private checkProcessDied(childProcess: ChildProcess): void {
+		if (!childProcess) {
+			return;
+		}
 		setTimeout(() => {
 			// Test if the process is still alive. Throws an exception if not
 			try {
@@ -908,7 +914,7 @@ export class LanguageClient {
 	}
 
 	private hookConfigurationChanged(connection: IConnection): void {
-		if (!this._languageOptions.synchronize.configurationSection) {
+		if (!this._clientOptions.synchronize.configurationSection) {
 			return;
 		}
 		Workspace.onDidChangeConfiguration(e => this.onDidChangeConfiguration(connection), this, this._listeners);
@@ -916,14 +922,14 @@ export class LanguageClient {
 	}
 
 	private onDidChangeConfiguration(connection: IConnection): void {
-		let config = Workspace.getConfiguration(this._name.toLowerCase());
+		let config = Workspace.getConfiguration(this._id.toLowerCase());
 		if (config) {
 			let trace = config.get('trace.server', 'off');
 			this._trace = Trace.fromString(trace);
 			connection.trace(this._trace, this._tracer);
 		}
 		let keys: string[] = null;
-		let configurationSection = this._languageOptions.synchronize.configurationSection;
+		let configurationSection = this._clientOptions.synchronize.configurationSection;
 		if (is.string(configurationSection)) {
 			keys = [configurationSection];
 		} else if (is.stringArray(configurationSection)) {
@@ -968,7 +974,7 @@ export class LanguageClient {
 	}
 
 	private hookFileEvents(connection: IConnection): void {
-		let fileEvents = this._languageOptions.synchronize.fileEvents;
+		let fileEvents = this._clientOptions.synchronize.fileEvents;
 		if (!fileEvents) {
 			return;
 		}
@@ -1005,7 +1011,7 @@ export class LanguageClient {
 	}
 
 	private hookCapabilities(connection: IConnection): void {
-		let documentSelector = this._languageOptions.documentSelector;
+		let documentSelector = this._clientOptions.documentSelector;
 		if (!documentSelector) {
 			return;
 		}
