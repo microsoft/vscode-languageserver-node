@@ -1,0 +1,32 @@
+{
+  "name": "vscode-languageserver-testclient",
+  "description": "VSCode Language server protocol test client implementation",
+  "version": "1.0.5",
+  "author": "Microsoft Corporation",
+  "publisher": "Microsoft Corporation",
+  "license": "MIT",
+  "engines": {
+	  "vscode": "^0.10.7"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Microsoft/vscode-languageserver-node.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
+  },
+  "main": "./lib/main.js",
+  "typings": "./lib/main",
+  "dependencies": {
+    "vscode-jsonrpc": "^2.2.0",
+    "vscode-languageserver-types": "^1.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^1.8.9",
+	"mocha": "^2.4.5"
+  },
+  "scripts": {
+    "compile": "tsc -p ./src",
+    "watch": "tsc -w -p ./src"
+  }
+}
