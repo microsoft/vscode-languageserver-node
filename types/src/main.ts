@@ -88,7 +88,7 @@ export namespace Range {
 	 * Checks whether the given literal conforms to the [Range](#Range) interface.
 	 */
 	export function is(value: any): value is Range {
-		let candidate  = value as Range;
+		let candidate = value as Range;
 		return Is.defined(candidate) && Position.is(candidate.start) && Position.is(candidate.end);
 	}
 }
@@ -246,7 +246,7 @@ export namespace Command {
 	/**
 	 * Creates a new Command literal.
 	 */
-	export function create(title: string, command: string, ...args:any[]): Command {
+	export function create(title: string, command: string, ...args: any[]): Command {
 		let result: Command = { title, command };
 		if (Is.defined(args) && args.length > 0) {
 			result.arguments = args;
@@ -670,11 +670,9 @@ export namespace CompletionList {
 	 * @param isIncomplete The list is not complete.
 	 */
 	export function create(items?: CompletionItem[], isIncomplete?: boolean): CompletionList {
-		return { items: items ? items : [], isIncomplete: !!isIncomplete};
+		return { items: items ? items : [], isIncomplete: !!isIncomplete };
 	}
 }
-
-export type MarkedString = string | { language: string; value: string };
 
 /**
  * The result of a hove request.
@@ -1112,30 +1110,30 @@ export interface TextDocument {
 	 */
 	getText(): string;
 
-    /**
-     * Converts a zero-based offset to a position.
-     *
-     * @param offset A zero-based offset.
-     * @return A valid [position](#Position).
-     */
-    positionAt(offset: number): Position;
+	/**
+	 * Converts a zero-based offset to a position.
+	 *
+	 * @param offset A zero-based offset.
+	 * @return A valid [position](#Position).
+	 */
+	positionAt(offset: number): Position;
 
-    /**
-     * Converts the position to a zero-based offset.
-     *
-     * The position will be [adjusted](#TextDocument.validatePosition).
-     *
-     * @param position A position.
-     * @return A valid zero-based offset.
-     */
-    offsetAt(position: Position): number;
+	/**
+	 * Converts the position to a zero-based offset.
+	 *
+	 * The position will be [adjusted](#TextDocument.validatePosition).
+	 *
+	 * @param position A position.
+	 * @return A valid zero-based offset.
+	 */
+	offsetAt(position: Position): number;
 
-    /**
-     * The number of lines in this document.
-     *
-     * @readonly
-     */
-    lineCount: number;
+	/**
+	 * The number of lines in this document.
+	 *
+	 * @readonly
+	 */
+	lineCount: number;
 }
 
 export namespace TextDocument {
@@ -1227,7 +1225,7 @@ class FullTextDocument implements TextDocument {
 		this._lineOffsets = null;
 	}
 
-	private getLineOffsets() : number[] {
+	private getLineOffsets(): number[] {
 		if (this._lineOffsets === null) {
 			let lineOffsets: number[] = [];
 			let text = this._content;
@@ -1239,7 +1237,7 @@ class FullTextDocument implements TextDocument {
 				}
 				let ch = text.charAt(i);
 				isLineStart = (ch === '\r' || ch === '\n');
-				if (ch === '\r' && i + 1 < text.length && text.charAt(i+1) === '\n') {
+				if (ch === '\r' && i + 1 < text.length && text.charAt(i + 1) === '\n') {
 					i++;
 				}
 			}
@@ -1251,7 +1249,7 @@ class FullTextDocument implements TextDocument {
 		return this._lineOffsets;
 	}
 
-	public positionAt(offset:number) {
+	public positionAt(offset: number) {
 		offset = Math.max(Math.min(offset, this._content.length), 0);
 
 		let lineOffsets = this.getLineOffsets();
@@ -1322,4 +1320,753 @@ namespace Is {
 		return Array.isArray(value) && (<any[]>value).every(check);
 	}
 
+}
+
+/**
+ * A parameter literal used in requests to pass a text document and a position inside that
+ * document.
+ */
+export interface TextDocumentPositionParams {
+	/**
+	 * The text document.
+	 */
+	textDocument: TextDocumentIdentifier;
+
+	/**
+	 * The position inside the text document.
+	 */
+	position: Position;
+}
+
+
+//---- Initialize Method ----
+
+/**
+ * Defines the capabilities provided by the client.
+ */
+export interface ClientCapabilities {
+}
+
+/**
+ * Defines how the host (editor) should sync
+ * document changes to the language server.
+ */
+export enum TextDocumentSyncKind {
+	/**
+	 * Documents should not be synced at all.
+	 */
+	None = 0,
+
+	/**
+	 * Documents are synced by always sending the full content
+	 * of the document.
+	 */
+	Full = 1,
+
+	/**
+	 * Documents are synced by sending the full content on open.
+	 * After that only incremental updates to the document are
+	 * send.
+	 */
+	Incremental = 2
+}
+
+/**
+ * Completion options.
+ */
+export interface CompletionOptions {
+	/**
+	 * The server provides support to resolve additional
+	 * information for a completion item.
+	 */
+	resolveProvider?: boolean;
+
+	/**
+	 * The characters that trigger completion automatically.
+	 */
+	triggerCharacters?: string[];
+}
+
+/**
+ * Signature help options.
+ */
+export interface SignatureHelpOptions {
+	/**
+	 * The characters that trigger signature help
+	 * automatically.
+	 */
+	triggerCharacters?: string[];
+}
+
+/**
+ * Code Lens options.
+ */
+export interface CodeLensOptions {
+	/**
+	 * Code lens has a resolve provider as well.
+	 */
+	resolveProvider?: boolean;
+}
+
+/**
+ * Format document on type options
+ */
+export interface DocumentOnTypeFormattingOptions {
+	/**
+	 * A character on which formatting should be triggered, like `}`.
+	 */
+	firstTriggerCharacter: string;
+	/**
+	 * More trigger characters.
+	 */
+	moreTriggerCharacter?: string[]
+}
+
+/**
+ * Defines the capabilities provided by a language
+ * server.
+ */
+export interface ServerCapabilities {
+	/**
+	 * Defines how text documents are synced.
+	 */
+	textDocumentSync?: number;
+	/**
+	 * The server provides hover support.
+	 */
+	hoverProvider?: boolean;
+	/**
+	 * The server provides completion support.
+	 */
+	completionProvider?: CompletionOptions;
+	/**
+	 * The server provides signature help support.
+	 */
+	signatureHelpProvider?: SignatureHelpOptions;
+	/**
+	 * The server provides goto definition support.
+	 */
+	definitionProvider?: boolean;
+	/**
+	 * The server provides find references support.
+	 */
+	referencesProvider?: boolean;
+	/**
+	 * The server provides document highlight support.
+	 */
+	documentHighlightProvider?: boolean;
+	/**
+	 * The server provides document symbol support.
+	 */
+	documentSymbolProvider?: boolean;
+	/**
+	 * The server provides workspace symbol support.
+	 */
+	workspaceSymbolProvider?: boolean;
+	/**
+	 * The server provides code actions.
+	 */
+	codeActionProvider?: boolean;
+	/**
+	 * The server provides code lens.
+	 */
+	codeLensProvider?: CodeLensOptions;
+	/**
+	 * The server provides document formatting.
+	 */
+	documentFormattingProvider?: boolean;
+	/**
+	 * The server provides document range formatting.
+	 */
+	documentRangeFormattingProvider?: boolean;
+	/**
+	 * The server provides document formatting on typing.
+	 */
+	documentOnTypeFormattingProvider?: DocumentOnTypeFormattingOptions;
+	/**
+	 * The server provides rename support.
+	 */
+	renameProvider?: boolean
+}
+/**
+ * The initialize parameters
+ */
+export interface InitializeParams {
+	/**
+	 * The process Id of the parent process that started
+	 * the server.
+	 */
+	processId: number;
+
+	/**
+	 * The rootPath of the workspace. Is null
+	 * if no folder is open.
+	 */
+	rootPath: string;
+
+	/**
+	 * The capabilities provided by the client (editor)
+	 */
+	capabilities: ClientCapabilities;
+
+	/**
+	 * User provided initialization options.
+	 */
+	initializationOptions: any;
+}
+
+/**
+ * The result returned from an initilize request.
+ */
+export interface InitializeResult {
+	/**
+	 * The capabilities the language server provides.
+	 */
+	capabilities: ServerCapabilities;
+}
+
+/**
+ * The error returned if the initilize request fails.
+ */
+export interface InitializeError {
+	/**
+	 * Indicates whether the client should retry to send the
+	 * initilize request after showing the message provided
+	 * in the {@link ResponseError}
+	 */
+	retry: boolean;
+}
+
+/**
+ * The parameters of a change configuration notification.
+ */
+export interface DidChangeConfigurationParams {
+	/**
+	 * The actual changed settings
+	 */
+	settings: any;
+}
+
+//---- Message show and log notifications ----
+
+/**
+ * The message type
+ */
+export enum MessageType {
+	/**
+	 * An error message.
+	 */
+	Error = 1,
+	/**
+	 * A warning message.
+	 */
+	Warning = 2,
+	/**
+	 * An information message.
+	 */
+	Info = 3,
+	/**
+	 * A log message.
+	 */
+	Log = 4
+}
+
+/**
+ * The parameters of a notification message.
+ */
+export interface ShowMessageParams {
+	/**
+	 * The message type. See {@link MessageType}
+	 */
+	type: number;
+
+	/**
+	 * The actual message
+	 */
+	message: string;
+}
+
+export interface MessageActionItem {
+	/**
+	 * A short title like 'Retry', 'Open Log' etc.
+	 */
+	title: string;
+}
+
+export interface ShowMessageRequestParams {
+	/**
+	 * The message type. See {@link MessageType}
+	 */
+	type: number;
+
+	/**
+	 * The actual message
+	 */
+	message: string;
+
+	/**
+	 * The message action items to present.
+	 */
+	actions?: MessageActionItem[];
+}
+
+/**
+ * The log message parameters.
+ */
+export interface LogMessageParams {
+	/**
+	 * The message type. See {@link MessageType}
+	 */
+	type: number;
+
+	/**
+	 * The actual message
+	 */
+	message: string;
+}
+
+//---- Text document notifications ----
+
+/**
+ * The parameters send in a open text document notification
+ */
+export interface DidOpenTextDocumentParams {
+	/**
+	 * The document that was opened.
+	 */
+	textDocument: TextDocumentItem;
+}
+
+/**
+ * The change text document notification's parameters.
+ */
+export interface DidChangeTextDocumentParams {
+	/**
+	 * The document that did change. The version number points
+	 * to the version after all provided content changes have
+	 * been applied.
+	 */
+	textDocument: VersionedTextDocumentIdentifier;
+
+	/**
+	 * The actual content changes.
+	 */
+	contentChanges: TextDocumentContentChangeEvent[];
+}
+
+/**
+ * The parameters send in a close text document notification
+ */
+export interface DidCloseTextDocumentParams {
+	/**
+	 * The document that was closed.
+	 */
+	textDocument: TextDocumentIdentifier;
+}
+
+/**
+ * The parameters send in a save text document notification
+ */
+export interface DidSaveTextDocumentParams {
+	/**
+	 * The document that was closed.
+	 */
+	textDocument: TextDocumentIdentifier;
+}
+
+/**
+ * The watched files change notification's parameters.
+ */
+export interface DidChangeWatchedFilesParams {
+	/**
+	 * The actual file events.
+	 */
+	changes: FileEvent[];
+}
+
+/**
+ * The file event type
+ */
+export enum FileChangeType {
+	/**
+	 * The file got created.
+	 */
+	Created = 1,
+	/**
+	 * The file got changed.
+	 */
+	Changed = 2,
+	/**
+	 * The file got deleted.
+	 */
+	Deleted = 3
+}
+
+/**
+ * An event describing a file change.
+ */
+export interface FileEvent {
+	/**
+	 * The file's uri.
+	 */
+	uri: string;
+	/**
+	 * The change type.
+	 */
+	type: number;
+}
+
+/**
+ * The publish diagnostic notification's parameters.
+ */
+export interface PublishDiagnosticsParams {
+	/**
+	 * The URI for which diagnostic information is reported.
+	 */
+	uri: string;
+
+	/**
+	 * An array of diagnostic information items.
+	 */
+	diagnostics: Diagnostic[];
+}
+
+//---- Hover Support -------------------------------
+
+export type MarkedString = string | { language: string; value: string };
+
+//---- Reference Provider ----------------------------------
+
+/**
+ * Parameters for a [ReferencesRequest](#ReferencesRequest).
+ */
+export interface ReferenceParams extends TextDocumentPositionParams {
+	context: ReferenceContext
+}
+
+//---- Code Action Provider ----------------------------------
+
+/**
+ * Params for the CodeActionRequest
+ */
+export interface CodeActionParams {
+	/**
+	 * The document in which the command was invoked.
+	 */
+	textDocument: TextDocumentIdentifier;
+
+	/**
+	 * The range for which the command was invoked.
+	 */
+	range: Range;
+
+	/**
+	 * Context carrying additional information.
+	 */
+	context: CodeActionContext;
+}
+
+//---- Code Lens Provider -------------------------------------------
+
+/**
+ * Params for the Code Lens request.
+ */
+export interface CodeLensParams {
+	/**
+	 * The document to request code lens for.
+	 */
+	textDocument: TextDocumentIdentifier;
+}
+
+//---- Formatting ----------------------------------------------
+
+export interface DocumentFormattingParams {
+	/**
+	 * The document to format.
+	 */
+	textDocument: TextDocumentIdentifier;
+
+	/**
+	 * The format options
+	 */
+	options: FormattingOptions;
+}
+
+export interface DocumentRangeFormattingParams {
+	/**
+	 * The document to format.
+	 */
+	textDocument: TextDocumentIdentifier;
+
+	/**
+	 * The range to format
+	 */
+	range: Range;
+
+	/**
+	 * The format options
+	 */
+	options: FormattingOptions;
+}
+
+export interface DocumentOnTypeFormattingParams {
+	/**
+	 * The document to format.
+	 */
+	textDocument: TextDocumentIdentifier;
+
+	/**
+	 * The position at which this request was send.
+	 */
+	position: Position;
+
+	/**
+	 * The character that has been typed.
+	 */
+	ch: string;
+
+	/**
+	 * The format options.
+	 */
+	options: FormattingOptions;
+}
+
+//---- Rename ----------------------------------------------
+
+export interface RenameParams {
+	/**
+	 * The document to format.
+	 */
+	textDocument: TextDocumentIdentifier;
+
+	/**
+	 * The position at which this request was send.
+	 */
+	position: Position;
+
+	/**
+	 * The new name of the symbol. If the given name is not valid the
+	 * request must return a [ResponseError](#ResponseError) with an
+	 * appropriate message set.
+	 */
+	newName: string;
+}
+
+export namespace Methods {
+	/**
+	 * The initialize method is sent from the client to the server.
+	 * It is send once as the first method after starting up the
+	 * worker. The requests parameter is of type [InitializeParams](#InitializeParams)
+	 * the response if of type [InitializeResult](#InitializeResult) of a Thenable that
+	 * resolves to such.
+	 */
+	export const InitializeRequest = 'initialize';
+
+	//---- Shutdown Method ----
+
+	/**
+	 * A shutdown request is sent from the client to the server.
+	 * It is send once when the client descides to shutdown the
+	 * server. The only notification that is sent after a shudown request
+	 * is the exit event.
+	 */
+	export const ShutdownRequest = 'shutdown';
+
+	//---- Exit Notification ----
+
+	/**
+	 * The exit event is sent from the client to the server to
+	 * ask the server to exit its process.
+	 */
+	export const ExitNotification = 'exit';
+
+	//---- Configuration notification ----
+
+	/**
+	 * The configuration change notification is sent from the client to the server
+	 * when the client's configuration has changed. The notification contains
+	 * the changed configuration as defined by the language client.
+	 */
+	export const DidChangeConfigurationNotification = 'workspace/didChangeConfiguration';
+
+	/**
+	 * The show message notification is sent from a server to a client to ask
+	 * the client to display a particular message in the user interface.
+	 */
+	export const ShowMessageNotification = 'window/showMessage';
+
+	/**
+	 * The show message request is send from the server to the clinet to show a message
+	 * and a set of options actions to the user.
+	 */
+	export const ShowMessageRequest = 'window/showMessageRequest';
+
+	/**
+	 * The log message notification is send from the server to the client to ask
+	 * the client to log a particular message.
+	 */
+	export const LogMessageNotification = 'window/logMessage';
+
+	//---- Telemetry notification
+
+	/**
+	 * The telemetry event notification is send from the server to the client to ask
+	 * the client to log telemetry data.
+	 */
+	export const TelemetryEventNotification = 'telemetry/event';
+
+	/**
+	 * The document open notification is sent from the client to the server to signal
+	 * newly opened text documents. The document's truth is now managed by the client
+	 * and the server must not try to read the document's truth using the document's
+	 * uri.
+	 */
+	export const DidOpenTextDocumentNotification = 'textDocument/didOpen';
+
+	/**
+	 * The document change notification is sent from the client to the server to signal
+	 * changes to a text document.
+	 */
+	export const DidChangeTextDocumentNotification = 'textDocument/didChange';
+
+	/**
+	 * The document close notification is sent from the client to the server when
+	 * the document got closed in the client. The document's truth now exists
+	 * where the document's uri points to (e.g. if the document's uri is a file uri
+	 * the truth now exists on disk).
+	 */
+	export const DidCloseTextDocumentNotification = 'textDocument/didClose';
+
+	/**
+	 * The document save notification is sent from the client to the server when
+	 * the document got saved in the client.
+	 */
+	export const DidSaveTextDocumentNotification = 'textDocument/didSave';
+
+	//---- File eventing ----
+
+	/**
+	 * The watched files notification is sent from the client to the server when
+	 * the client detects changes to file watched by the lanaguage client.
+	 */
+	export const DidChangeWatchedFilesNotification = 'workspace/didChangeWatchedFiles';
+
+	//---- Diagnostic notification ----
+
+	/**
+	 * Diagnostics notification are sent from the server to the client to signal
+	 * results of validation runs.
+	 */
+	export const PublishDiagnosticsNotification = 'textDocument/publishDiagnostics';
+
+	//---- Completion Support --------------------------
+
+	/**
+	 * Request to request completion at a given text document position. The request's
+	 * parameter is of type [TextDocumentPosition](#TextDocumentPosition) the response
+	 * is of type [CompletionItem[]](#CompletionItem) or [CompletionList](#CompletionList)
+	 * or a Thenable that resolves to such.
+	 */
+	export const CompletionRequest = 'textDocument/completion';
+
+	/**
+	 * Request to resolve additional information for a given completion item.The request's
+	 * parameter is of type [CompletionItem](#CompletionItem) the response
+	 * is of type [CompletionItem](#CompletionItem) or a Thenable that resolves to such.
+	 */
+	export const CompletionResolveRequest = 'completionItem/resolve';
+
+	/**
+	 * Request to request hover information at a given text document position. The request's
+	 * parameter is of type [TextDocumentPosition](#TextDocumentPosition) the response is of
+	 * type [Hover](#Hover) or a Thenable that resolves to such.
+	 */
+	export const HoverRequest = 'textDocument/hover';
+
+	//---- SignatureHelp ----------------------------------
+
+	export const SignatureHelpRequest = 'textDocument/signatureHelp';
+
+	//---- Goto Definition -------------------------------------
+
+	/**
+	 * A request to resolve the defintion location of a symbol at a given text
+	 * document position. The request's parameter is of type [TextDocumentPosition]
+	 * (#TextDocumentPosition) the response is of type [Definition](#Definition) or a
+	 * Thenable that resolves to such.
+	 */
+	export const DefinitionRequest = 'textDocument/definition';
+
+	/**
+	 * A request to resolve project-wide references for the symbol denoted
+	 * by the given text document position. The request's parameter is of
+	 * type [ReferenceParams](#ReferenceParams) the response is of type
+	 * [Location[]](#Location) or a Thenable that resolves to such.
+	 */
+	export const ReferencesRequest = 'textDocument/references';
+
+	//---- Document Highlight ----------------------------------
+
+	/**
+	 * Request to resolve a [DocumentHighlight](#DocumentHighlight) for a given
+	 * text document position. The request's parameter is of type [TextDocumentPosition]
+	 * (#TextDocumentPosition) the request reponse is of type [DocumentHighlight[]]
+	 * (#DocumentHighlight) or a Thenable that resolves to such.
+	 */
+	export const DocumentHighlightRequest = 'textDocument/documentHighlight';
+
+	//---- Document Symbol Provider ---------------------------
+
+	/**
+	 * A request to list all symbols found in a given text document. The request's
+	 * parameter is of type [TextDocumentIdentifier](#TextDocumentIdentifier) the
+	 * response is of type [SymbolInformation[]](#SymbolInformation) or a Thenable
+	 * that resolves to such.
+	 */
+	export const DocumentSymbolRequest = 'textDocument/documentSymbol';
+
+	//---- Workspace Symbol Provider ---------------------------
+
+	/**
+	 * A request to list project-wide symbols matching the query string given
+	 * by the [WorkspaceSymbolParams](#WorkspaceSymbolParams). The response is
+	 * of type [SymbolInformation[]](#SymbolInformation) or a Thenable that
+	 * resolves to such.
+	 */
+	export const WorkspaceSymbolRequest = 'workspace/symbol';
+
+	/**
+	 * A request to provide commands for the given text document and range.
+	 */
+	export const CodeActionRequest = 'textDocument/codeAction';
+
+	/**
+	 * A request to provide code lens for the given text document.
+	 */
+	export const CodeLensRequest = 'textDocument/codeLens';
+
+	/**
+	 * A request to resolve a command for a given code lens.
+	 */
+	export const CodeLensResolveRequest = 'codeLens/resolve';
+
+	/**
+	 * A request to to format a whole document.
+	 */
+	export const DocumentFormattingRequest = 'textDocument/formatting';
+
+	/**
+	 * A request to to format a range in a document.
+	 */
+	export const DocumentRangeFormattingRequest = 'textDocument/rangeFormatting';
+
+	/**
+	 * A request to format a document on type.
+	 */
+	export const DocumentOnTypeFormattingRequest = 'textDocument/onTypeFormatting';
+
+	/**
+	 * A request to rename a symbol.
+	 */
+	export const RenameRequest = 'textDocument/rename';
 }
