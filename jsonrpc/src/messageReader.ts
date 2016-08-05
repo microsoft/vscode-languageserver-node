@@ -96,9 +96,15 @@ export interface DataCallback {
 	(data: Message): void;
 }
 
+export interface PartialMessageInfo {
+	messageToken: number;
+	waitingTime: number;
+}
+
 export interface MessageReader {
 	onError: Event<Error>;
 	onClose: Event<void>;
+	onPartialMessage: Event<PartialMessageInfo>;
 	listen(callback: DataCallback): void;
 }
 
@@ -107,9 +113,12 @@ export abstract class AbstractMessageReader {
 	private errorEmitter: Emitter<Error>;
 	private closeEmitter: Emitter<void>;
 
+	private partialMessageEmitter: Emitter<PartialMessageInfo>;
+
 	constructor() {
 		this.errorEmitter = new Emitter<Error>();
 		this.closeEmitter = new Emitter<void>();
+		this.partialMessageEmitter = new Emitter<PartialMessageInfo>();
 	}
 
 	public get onError(): Event<Error> {
@@ -128,6 +137,14 @@ export abstract class AbstractMessageReader {
 		this.closeEmitter.fire(undefined);
 	}
 
+	public get onPartialMessage(): Event<PartialMessageInfo> {
+		return this.partialMessageEmitter.event;
+	}
+
+	protected firePartialMessage(info: PartialMessageInfo): void {
+		this.partialMessageEmitter.fire(info);
+	}
+
 	private asError(error: any): Error {
 		if (error instanceof Error) {
 			return error;
@@ -143,16 +160,30 @@ export class StreamMessageReader extends AbstractMessageReader implements Messag
 	private callback: DataCallback;
 	private buffer: MessageBuffer;
 	private nextMessageLength: number;
+	private messageToken: number;
+	private partialMessageTimer: NodeJS.Timer;
+	private _partialMessageTimeout: number;
 
 	public constructor(readable: NodeJS.ReadableStream, encoding: string = 'utf-8') {
 		super();
 		this.readable = readable;
 		this.buffer = new MessageBuffer(encoding);
+		this._partialMessageTimeout = 10000;
+	}
+
+	public set partialMessageTimeout(timeout: number) {
+		this._partialMessageTimeout = timeout;
+	}
+
+	public get partialMessageTimeout(): number {
+		return this._partialMessageTimeout;
 	}
 
 	public listen(callback: DataCallback): void {
 		this.nextMessageLength = -1;
-		this.callback = <DataCallback>callback;
+		this.messageToken = 0;
+		this.partialMessageTimer = undefined;
+		this.callback = callback;
 		this.readable.on('data', (data:Buffer) => {
 			this.onData(data);
 		});
@@ -180,12 +211,37 @@ export class StreamMessageReader extends AbstractMessageReader implements Messag
 			}
 			var msg = this.buffer.tryReadContent(this.nextMessageLength);
 			if (msg === null) {
+				/** We haven't recevied the full message yet. */
+				this.setPartialMessageTimer();
 				return;
 			}
+			this.clearPartialMessageTimer();
 			this.nextMessageLength = -1;
+			this.messageToken++;
 			var json = JSON.parse(msg);
 			this.callback(json);
 		}
+	}
+
+	private clearPartialMessageTimer(): void {
+		if (this.partialMessageTimer) {
+			clearTimeout(this.partialMessageTimer);
+			this.partialMessageTimer = undefined;
+		}
+	}
+
+	private setPartialMessageTimer(): void {
+		this.clearPartialMessageTimer();
+		if (this._partialMessageTimeout <= 0) {
+			return;
+		}
+		this.partialMessageTimer = setTimeout((token, timeout) => {
+			this.partialMessageTimer = undefined;
+			if (token === this.messageToken) {
+				this.firePartialMessage({ messageToken: token, waitingTime: timeout });
+				this.setPartialMessageTimer();
+			}
+		}, this._partialMessageTimeout, this.messageToken, this._partialMessageTimeout);
 	}
 }
 
