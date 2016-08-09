@@ -37,7 +37,7 @@ function TestDuplex(name: string = 'ds1', dbg = false) {
 }
 inherits(TestDuplex, Duplex);
 TestDuplex.prototype._write = function (chunk, encoding, done) {
-	var val = chunk.toString();
+	let val = chunk.toString();
 	this.data += val;
 	if (this.dbg) console.log(this.name + ': write: ' + val);
 	this.emit('readable');
@@ -48,7 +48,7 @@ TestDuplex.prototype._read = function(size) {
 	if (size > this.data.length) {
 		size = this.data.length;
 	}
-	var val = this.data.substring(0, size);
+	let val = this.data.substring(0, size);
 	if (this.dbg) console.log(this.name + ': read: ' + val);
 	this.push(val);
 	this.data = this.data.substring(size);
@@ -60,14 +60,14 @@ TestDuplex.prototype._read = function(size) {
 }
 
 function newRequestString(id: number, method: string, params: any) : string {
-	var request : RequestMessage = { jsonrpc: '2.0', id, method, params };
-	var str = JSON.stringify(request);
+	let request : RequestMessage = { jsonrpc: '2.0', id, method, params };
+	let str = JSON.stringify(request);
 	return `Content-Length: ${str.length}\r\n\r\n${str}`;
 }
 
 function selectProperties(properties: string[]) {
 	return (obj) => {
-		var res= {};
+		let res= {};
 		properties.forEach(p => {
 			res[p] = obj[p];
 		});
@@ -77,10 +77,10 @@ function selectProperties(properties: string[]) {
 
 
 function assertMessages(resultData: string, expected: Message[], done: MochaDone) {
-	var resultStream = new Readable();
+	let resultStream = new Readable();
 	resultStream.push(resultData);
 	resultStream.push(null);
-	var actual : Message[] = [];
+	let actual : Message[] = [];
 	new StreamMessageReader(resultStream).listen((res) => {
 		if ((<ResponseMessage>res).error) {
 			delete (<ResponseMessage>res).error.message;
@@ -97,8 +97,8 @@ function assertMessages(resultData: string, expected: Message[], done: MochaDone
 	}, 10);
 }
 
-var testRequest1: RequestType<any, any, any> = { method: 'testCommand1' };
-var testRequest2: RequestType<any, any, any> = { method: 'testCommand2' };
+let testRequest1: RequestType<any, any, any> = { method: 'testCommand1' };
+let testRequest2: RequestType<any, any, any> = { method: 'testCommand2' };
 function newParams(content: string)  {
 	return { documents: [ { content: content } ]};
 };
@@ -137,16 +137,16 @@ describe('Connection', () => {
 	it('Handle Single Request', (done) => {
 
 		let outputStream = new TestWritable();
-		var inputStream = new Readable();
+		let inputStream = new Readable();
 
-		var connection = hostConnection.createServerMessageConnection(inputStream, outputStream, Logger);
+		let connection = hostConnection.createServerMessageConnection(inputStream, outputStream, Logger);
 		connection.onRequest(testRequest1, testRequestHandler);
 		connection.listen();
 
 		inputStream.push(newRequestString(0, testRequest1.method, newParams('foo')));
 		inputStream.push(null);
 
-		var expected : ResponseMessage[]= [
+		let expected : ResponseMessage[]= [
 			{ jsonrpc: '2.0', id: 0, result: 'foo' }
 		];
 
@@ -160,9 +160,9 @@ describe('Connection', () => {
 	it('Handle Multiple Requests', (done) => {
 
 		let outputStream = new TestWritable();
-		var inputStream = new Readable();
+		let inputStream = new Readable();
 
-		var connection = hostConnection.createServerMessageConnection(inputStream, outputStream, Logger);
+		let connection = hostConnection.createServerMessageConnection(inputStream, outputStream, Logger);
 		connection.onRequest(testRequest1, testRequestHandler);
 		connection.onRequest(testRequest2, testRequestHandler);
 		connection.listen();
@@ -171,7 +171,7 @@ describe('Connection', () => {
 		inputStream.push(newRequestString(1, testRequest2.method, newParams('bar')));
 		inputStream.push(null);
 
-		var expected : ResponseMessage[]= [
+		let expected : ResponseMessage[]= [
 			{ jsonrpc: '2.0', id: 0, result: 'foo' },
 			{ jsonrpc: '2.0', id: 1, result: 'bar' }
 		];
@@ -186,16 +186,16 @@ describe('Connection', () => {
 	it('Handle Invalid Request', (done) => {
 
 		let outputStream = new TestWritable();
-		var inputStream = new Readable();
+		let inputStream = new Readable();
 
-		var connection = hostConnection.createServerMessageConnection(inputStream, outputStream, Logger);
+		let connection = hostConnection.createServerMessageConnection(inputStream, outputStream, Logger);
 		connection.onRequest(testRequest1, testRequestHandler);
 		connection.listen();
 
 		inputStream.push(newRequestString(0, testRequest1.method, {}));
 		inputStream.push(null);
 
-		var expected : ResponseMessage[]= [
+		let expected : ResponseMessage[]= [
 			{ jsonrpc: '2.0', id: 0, error: <any>{ code: ErrorCodes.InvalidRequest } }
 		];
 
@@ -209,16 +209,16 @@ describe('Connection', () => {
 	it('Unhandled Request', (done) => {
 
 		let outputStream = new TestWritable();
-		var inputStream = new Readable();
+		let inputStream = new Readable();
 
-		var connection = hostConnection.createServerMessageConnection(inputStream, outputStream, Logger);
+		let connection = hostConnection.createServerMessageConnection(inputStream, outputStream, Logger);
 		connection.onRequest(testRequest1, testRequestHandler);
 		connection.listen();
 
 		inputStream.push(newRequestString(0, testRequest2.method, {}));
 		inputStream.push(null);
 
-		var expected : ResponseMessage[]= [
+		let expected : ResponseMessage[]= [
 			{ jsonrpc: '2.0', id: 0, error: <any>{ code: ErrorCodes.MethodNotFound } }
 		];
 
@@ -232,14 +232,14 @@ describe('Connection', () => {
 	it('Send Request', (done) => {
 
 		let outputStream = new TestWritable();
-		var inputStream = new Readable();
+		let inputStream = new Readable();
 		inputStream.push(null);
 
-		var connection = hostConnection.createClientMessageConnection(inputStream, outputStream, Logger);
+		let connection = hostConnection.createClientMessageConnection(inputStream, outputStream, Logger);
 		connection.sendRequest(testRequest1, { 'foo': true });
 		connection.listen();
 
-		var expected : RequestMessage[] = [
+		let expected : RequestMessage[] = [
 			{ jsonrpc: '2.0', id: 0, method: testRequest1.method, params: { 'foo': true } }
 		];
 
@@ -254,7 +254,7 @@ describe('Connection', () => {
 
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
-		var inputStream = new Readable();
+		let inputStream = new Readable();
 		inputStream.push(null);
 
 		let params = { 'foo': [ { bar: 1 } ]};
@@ -262,11 +262,11 @@ describe('Connection', () => {
 		let receivedRequests = [];
 		let receivedResults = [];
 
-		var connection2 = hostConnection.createServerMessageConnection(duplexStream2, duplexStream1, Logger);
+		let connection2 = hostConnection.createServerMessageConnection(duplexStream2, duplexStream1, Logger);
 		connection2.onRequest(testRequest1, createEchoRequestHandler(receivedRequests));
 		connection2.listen();
 
-		var connection1 = hostConnection.createClientMessageConnection(duplexStream1, duplexStream2, Logger);
+		let connection1 = hostConnection.createClientMessageConnection(duplexStream1, duplexStream2, Logger);
 		connection1.listen();
 		connection1.sendRequest(testRequest1, params).then(result => {
 			receivedResults.push(result);
@@ -279,16 +279,16 @@ describe('Connection', () => {
 	it('Receives Undefined as null', (done) => {
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
-		var inputStream = new Readable();
+		let inputStream = new Readable();
 		inputStream.push(null);
 
-		var connection2 = hostConnection.createServerMessageConnection(duplexStream2, duplexStream1, Logger);
+		let connection2 = hostConnection.createServerMessageConnection(duplexStream2, duplexStream1, Logger);
 		connection2.onRequest(testRequest1, () => {
 			return undefined;
 		});
 		connection2.listen();
 
-		var connection1 = hostConnection.createClientMessageConnection(duplexStream1, duplexStream2, Logger);
+		let connection1 = hostConnection.createClientMessageConnection(duplexStream1, duplexStream2, Logger);
 		connection1.listen();
 		connection1.sendRequest(testRequest1, {}).then(result => {
 			assert.deepEqual(result, null);
@@ -299,16 +299,16 @@ describe('Connection', () => {
 	it('Receives null as null', (done) => {
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
-		var inputStream = new Readable();
+		let inputStream = new Readable();
 		inputStream.push(null);
 
-		var connection2 = hostConnection.createServerMessageConnection(duplexStream2, duplexStream1, Logger);
+		let connection2 = hostConnection.createServerMessageConnection(duplexStream2, duplexStream1, Logger);
 		connection2.onRequest(testRequest1, () => {
 			return null;
 		});
 		connection2.listen();
 
-		var connection1 = hostConnection.createClientMessageConnection(duplexStream1, duplexStream2, Logger);
+		let connection1 = hostConnection.createClientMessageConnection(duplexStream1, duplexStream2, Logger);
 		connection1.listen();
 		connection1.sendRequest(testRequest1, {}).then(result => {
 			assert.deepEqual(result, null);
@@ -316,29 +316,49 @@ describe('Connection', () => {
 		});
 	});
 
-	var testEvent: NotificationType<any> = { method: "testNotification" };
-	it('Send and Receive Event', (done) => {
+	let testNotification: NotificationType<any> = { method: "testNotification" };
+	it('Send and Receive Notification', (done) => {
 
 		let outputStream = new TestWritable();
 		let duplexStream = new TestDuplex();
-		var inputStream = new Readable();
+		let inputStream = new Readable();
 		inputStream.push(null);
 
-		var params = { 'foo': true };
+		let params = { 'foo': true };
 
-		var connection1 = hostConnection.createServerMessageConnection(inputStream, duplexStream, Logger);
+		let connection1 = hostConnection.createServerMessageConnection(inputStream, duplexStream, Logger);
 		connection1.listen();
-		connection1.sendNotification(testEvent, params);
+		connection1.sendNotification(testNotification, params);
 
-		var resultingEvents = [];
+		let resultingEvents = [];
 
-		var connection2 = hostConnection.createClientMessageConnection(duplexStream, outputStream, Logger);
-		connection2.onNotification(testEvent, createEventHandler(resultingEvents));
+		let connection2 = hostConnection.createClientMessageConnection(duplexStream, outputStream, Logger);
+		connection2.onNotification(testNotification, createEventHandler(resultingEvents));
 		connection2.listen();
 		setTimeout(() => {
 			assert.deepEqual(resultingEvents, [ params ]);
 			done();
 		}, 10);
 
+	});
+
+	it(('Unhandled notification event'), (done) => {
+		let outputStream = new TestWritable();
+		let duplexStream = new TestDuplex();
+		let inputStream = new Readable();
+		inputStream.push(null);
+
+		let params = { 'foo': true };
+
+		let connection1 = hostConnection.createServerMessageConnection(inputStream, duplexStream, Logger);
+		connection1.listen();
+		connection1.sendNotification(testNotification, params);
+
+		let connection2 = hostConnection.createClientMessageConnection(duplexStream, outputStream, Logger);
+		connection2.onUnhandledNotification((message) => {
+			assert.strictEqual(message.method, testNotification.method);
+			done();
+		});
+		connection2.listen();
 	});
 });

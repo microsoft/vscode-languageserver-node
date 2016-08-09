@@ -85,6 +85,7 @@ export interface MessageConnection {
 	trace(value: Trace, tracer: Tracer): void;
 	onError: Event<[Error, Message, number]>;
 	onClose: Event<void>;
+	onUnhandledNotification: Event<NotificationMessage>;
 	listen();
 	dispose(): void;
 }
@@ -123,6 +124,7 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 	let state: ConnectionState = ConnectionState.Active;
 	let errorEmitter: Emitter<[Error, Message, number]> = new Emitter<[Error, Message, number]>();
 	let closeEmitter: Emitter<void> = new Emitter<void>();
+	let unhandledNotificationEmitter: Emitter<NotificationMessage> = new Emitter<NotificationMessage>();
 
 	function closeHandler(): void {
 		if (state !== ConnectionState.Closed) {
@@ -276,6 +278,8 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 					logger.error(`Notification handler '${message.method}' failed unexpectedly.`);
 				}
 			}
+		} else {
+			unhandledNotificationEmitter.fire(message);
 		}
 	}
 
@@ -416,6 +420,7 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 		},
 		onError: errorEmitter.event,
 		onClose: closeEmitter.event,
+		onUnhandledNotification: unhandledNotificationEmitter.event,
 		dispose: () => {
 		},
 		listen: () => {
