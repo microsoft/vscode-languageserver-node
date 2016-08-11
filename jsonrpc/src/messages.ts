@@ -125,7 +125,7 @@ export interface ResponseMessage extends Message {
 }
 
 /**
- * A interface to type the request parameter / response pair
+ * An interface to type the request parameter / response pair
  */
 export interface RequestType<P, R, E> {
 	method: string;
@@ -146,8 +146,14 @@ export interface NotificationMessage extends Message {
 	params?: any
 }
 
-export interface NotificationType<P> {
+export interface MessageType {
 	method: string;
+}
+
+export interface NotificationType<P> extends MessageType {
+}
+
+export interface NotificationType2<P1, P2> extends MessageType {
 }
 
 /**

@@ -9,7 +9,7 @@ import * as assert from 'assert';
 import { Duplex, Writable, Readable, Transform } from 'stream';
 import { inherits } from 'util';
 
-import { Message, RequestMessage, RequestType, ResponseMessage, ResponseError, NotificationType, isReponseMessage, ErrorCodes } from '../messages';
+import { Message, RequestMessage, RequestType, ResponseMessage, ResponseError, NotificationType, NotificationType2, isReponseMessage, ErrorCodes } from '../messages';
 import { StreamMessageWriter } from '../messageWriter';
 import { StreamMessageReader } from '../messageReader';
 
@@ -361,4 +361,45 @@ describe('Connection', () => {
 		});
 		connection2.listen();
 	});
+
+	it (('Array params in notifications'), (done) => {
+		let type: NotificationType2<number, string> = { method: 'test' };
+		let outputStream = new TestWritable();
+		let duplexStream = new TestDuplex();
+		let inputStream = new Readable();
+		inputStream.push(null);
+
+		let connection1 = hostConnection.createServerMessageConnection(inputStream, duplexStream, Logger);
+		connection1.listen();
+		connection1.sendNotification(type, 10, 'vscode');
+
+		let connection2 = hostConnection.createClientMessageConnection(duplexStream, outputStream, Logger);
+		connection2.onNotification(type, (p1, p2) => {
+			assert.strictEqual(p1, 10);
+			assert.strictEqual(p2, 'vscode');
+			done();
+		});
+		connection2.listen();
+	});
 });
+
+
+
+interface Type1<P1> {
+	_: P1;
+}
+
+interface Type2<P1, P2> {
+	method: string;
+	_: [P1, P2];
+}
+
+interface Connection {
+	sendMessage<P1>(type: Type1<P1>, p1: P1): void;
+	sendMessage<P1, P2>(type: Type2<P1, P2>, p1: P1, p2: P2): void;
+}
+
+let connection: Connection;
+let type: Type2<string, number> = { method: 'dirk', _: undefined }
+
+connection.sendMessage(type, 'dirk', 10);

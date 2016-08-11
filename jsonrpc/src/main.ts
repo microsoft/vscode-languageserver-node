@@ -6,10 +6,11 @@
 
 import * as is from './is';
 
-import { Message,
+import { Message, MessageType,
 	RequestMessage, RequestType, isRequestMessage,
 	ResponseMessage, isReponseMessage, ResponseError, ErrorCodes,
-	NotificationMessage,  NotificationType, isNotificationMessage
+	NotificationMessage,  NotificationType, NotificationType2,
+	isNotificationMessage
 } from './messages';
 
 import { MessageReader, DataCallback, StreamMessageReader, IPCMessageReader } from './messageReader';
@@ -42,8 +43,16 @@ export interface RequestHandler<P, R, E> {
 	(params: P, token: CancellationToken): R | ResponseError<E> | Thenable<R | ResponseError<E>>;
 }
 
+interface GenericHandler {
+	(...params): void;
+}
+
 export interface NotificationHandler<P> {
 	(params: P): void;
+}
+
+export interface NotificationHandler2<P1, P2> {
+	(param1: P1, param2: P2): void;
 }
 
 export interface Logger {
@@ -80,8 +89,13 @@ export interface Tracer {
 export interface MessageConnection {
 	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken) : Thenable<R>;
 	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): void;
+
 	sendNotification<P>(type: NotificationType<P>, params?: P): void;
+	sendNotification<P1, P2>(type: NotificationType2<P1, P2>, param1: P1, param2: P2): void;
+
 	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): void;
+	onNotification<P1, P2>(type: NotificationType2<P1, P2>, handler: NotificationHandler2<P1, P2>): void;
+
 	trace(value: Trace, tracer: Tracer): void;
 	onError: Event<[Error, Message, number]>;
 	onClose: Event<void>;
@@ -113,7 +127,7 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 	const version: string = '2.0';
 
 	let requestHandlers : { [name: string]: RequestHandler<any, any, any> } = Object.create(null);
-	let eventHandlers : { [name: string]: NotificationHandler<any> } = Object.create(null);
+	let eventHandlers : { [name: string]: GenericHandler } = Object.create(null);
 
 	let responsePromises : { [name: string]: ResponsePromise } = Object.create(null);
 	let requestTokens: { [id: string] : CancellationTokenSource } = Object.create(null);
@@ -253,7 +267,7 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 	}
 
 	function handleNotification(message: NotificationMessage) {
-		let eventHandler: NotificationHandler<any>;
+		let eventHandler: GenericHandler;
 		if (message.method === CancelNotification.type.method) {
 			eventHandler = (params: CancelParams) => {
 				let id = params.id;
@@ -270,7 +284,13 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 				if (trace != Trace.Off && tracer) {
 					traceReceivedNotification(message);
 				}
-				eventHandler(message.params);
+				if (is.nil(message.params)) {
+					eventHandler();
+				} else if (is.array(message.params)) {
+					eventHandler(...message.params);
+				} else {
+					eventHandler(message.params);
+				}
 			} catch (error) {
 				if (error.message) {
 					 logger.error(`Notification handler '${message.method}' failed with message: ${error.message}`);
@@ -361,19 +381,30 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 		}
 	};
 
+	function getParams(params: any[]): any {
+		switch (params.length) {
+			case 0:
+				return null;
+			case 1:
+				return params[0];
+			default:
+				return params;
+		}
+	}
+
 	let connection: MessageConnection = {
-		sendNotification: <P>(type: NotificationType<P>, params): void  => {
+		sendNotification: (type: MessageType, ...params: any[]): void  => {
 			let notificatioMessage : NotificationMessage = {
 				jsonrpc: version,
 				method: type.method,
-				params: params
+				params: getParams(params)
 			}
 			if (trace != Trace.Off && tracer) {
 				traceSendNotification(notificatioMessage);
 			}
 			messageWriter.write(notificatioMessage);
 		},
-		onNotification: <P>(type: NotificationType<P>, handler: NotificationHandler<P>) => {
+		onNotification: (type: MessageType, handler: GenericHandler) => {
 			eventHandlers[type.method] = handler;
 		},
 		sendRequest: <P, R, E>(type: RequestType<P, R, E>, params: P, token?:CancellationToken) => {
