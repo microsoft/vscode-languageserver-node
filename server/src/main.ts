@@ -69,7 +69,7 @@ export {
 		TextDocumentIdentifier, TextDocumentPositionParams, TextDocumentSyncKind,
 		Hover, MarkedString,
 		CompletionOptions, CompletionItemKind, CompletionItem, CompletionList,
-		TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
+		TextDocument, TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
 		SignatureHelp, SignatureInformation, ParameterInformation,
 		Definition, ReferenceParams,  DocumentHighlight, DocumentHighlightKind,
 		SymbolInformation, SymbolKind, DocumentSymbolParams, WorkspaceSymbolParams,
@@ -82,6 +82,8 @@ export {
 export { Event }
 
 import * as fm from './files';
+import * as net from 'net';
+import * as stream from 'stream';
 
 export namespace Files {
 	export let uriToFilePath = fm.uriToFilePath;
@@ -647,7 +649,7 @@ export interface IConnection {
 }
 
 /**
- * Creates a new connection.
+ * Creates a new connection using a the given streams.
  *
  * @param inputStream The stream to read messages from.
  * @param outputStream The stream to write messages to.
@@ -662,7 +664,54 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
  * @param writer The message writer to write message to.
  */
 export function createConnection(reader: MessageReader, writer: MessageWriter): IConnection;
-export function createConnection(input: any, output: any): IConnection {
+/**
+ * Creates a new connection based on the processes command line arguments:
+ * --ipc : connection using the node  process ipc 
+ *
+ * @param reader The message reader to read messages from.
+ * @param writer The message writer to write message to.
+ */
+export function createConnection(): IConnection;
+export function createConnection(input?: any, output?: any): IConnection {
+	if (!input && !output && process.argv.length > 2) {
+		let port = void 0;
+		let argv = process.argv.slice(2);
+		for (let i = 0; i < argv.length; i++) {
+			let arg = argv[i];
+			if (arg === '--node-ipc') {
+				input = new IPCMessageReader(process);
+				output = new IPCMessageWriter(process); 
+			} else if (arg === '--stdio') {
+				input = process.stdin;
+				output = process.stdout;
+			} else if (arg === '--socket') {
+				port = parseInt(argv[i + 1]);
+				i++;
+			} else {
+				var args = arg.split('=');
+				if (args[0] === '--socket') {
+					port = parseInt(args[1]);
+				}
+			}
+		}
+		if (port) {
+			output = new stream.PassThrough();
+			input = new stream.PassThrough();
+  			let server = net.createServer(socket => {
+				server.close();	
+				socket.pipe(output);
+				input.pipe(socket);
+     		}).listen(port);
+		}
+	}
+	var commandLineMessage = "Use arguments of createConnection or set command line parameters: '--node-ipc', '--stdio' or '--socket={number}'";
+	if (!input) {
+		throw new Error("Connection input stream is not set. " + commandLineMessage);
+	}
+	if (!output) {
+		throw new Error("Connection output stream is not set. " + commandLineMessage);
+	}	
+
 	let shutdownReceived: boolean;
 	// Backwards compatibility
 	if (Is.func(input.read) && Is.func(input.on)) {

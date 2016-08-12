@@ -847,6 +847,9 @@ export class LanguageClient {
 				execOptions.env = getEnvironment(options.env);
 				if (node.transport === TransportKind.ipc) {
 					execOptions.stdio = [null, null, null, 'ipc'];
+					args.push('--node-ipc');
+				} else if (node.transport === TransportKind.stdio) {
+					args.push('--stdio');
 				}
 				let process = cp.spawn(node.runtime, args, execOptions);
 				if (!process || !process.pid) {
@@ -863,10 +866,16 @@ export class LanguageClient {
 				}
 			} else {
 				return new Promise<IConnection>((resolve, reject) => {
+					let args = node.args && node.args.slice() || [];
+					if (node.transport === TransportKind.ipc) {
+						args.push('--node-ipc');
+					} else if (node.transport === TransportKind.stdio) {
+						args.push('--stdio');
+					}					
 					let options: ForkOptions = node.options || Object.create(null);
 					options.execArgv = options.execArgv || [];
 					options.cwd = options.cwd || Workspace.rootPath;
-					electron.fork(node.module, node.args || [], options, (error, cp) => {
+					electron.fork(node.module, args || [], options, (error, cp) => {
 						if (error) {
 							reject(error);
 						} else {
