@@ -310,9 +310,9 @@ suite('Protocol Converter', () => {
 	});
 	
 	test('Document Highlight Kind', () => {
-		strictEqual(p2c.asDocumentHighlightKind(proto.DocumentHighlightKind.Text), vscode.DocumentHighlightKind.Text);
-		strictEqual(p2c.asDocumentHighlightKind(proto.DocumentHighlightKind.Read), vscode.DocumentHighlightKind.Read);
-		strictEqual(p2c.asDocumentHighlightKind(proto.DocumentHighlightKind.Write), vscode.DocumentHighlightKind.Write);
+		strictEqual(p2c.asDocumentHighlightKind(<any>proto.DocumentHighlightKind.Text), vscode.DocumentHighlightKind.Text);
+		strictEqual(p2c.asDocumentHighlightKind(<any>proto.DocumentHighlightKind.Read), vscode.DocumentHighlightKind.Read);
+		strictEqual(p2c.asDocumentHighlightKind(<any>proto.DocumentHighlightKind.Write), vscode.DocumentHighlightKind.Write);
 	});
 	
 	test ('Document Highlight', () => {
@@ -411,6 +411,15 @@ suite('Protocol Converter', () => {
 		strictEqual(edits.length, 1);
 		rangeEqual(edits[0].range, proto.Range.create(0,1,2,3));
 		strictEqual(edits[0].newText, 'replace');
+	});
+
+	test('Uri Rewrite', () => {
+		let converter = p2c.createConverter((value: string) => {
+			return vscode.Uri.parse(`${value}.vscode`);
+		});
+
+		let result = converter.asUri('file://localhost/folder/file');
+		strictEqual('file://localhost/folder/file.vscode', result.toString());
 	});
 });
 
@@ -532,4 +541,13 @@ suite('Code Converter', () => {
 		let result = c2p.asCodeActionContext(<any>item);
 		ok(result.diagnostics.every(elem => proto.Diagnostic.is(elem)));
 	});
+
+	test('Uri Rewrite', () => {
+		let converter = c2p.createConverter((value: vscode.Uri) => {
+			return `${value.toString()}.vscode`;
+		});
+
+		let result = converter.asUri(vscode.Uri.parse('file://localhost/folder/file'));
+		strictEqual('file://localhost/folder/file.vscode', result);
+	});	
 });

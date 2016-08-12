@@ -305,6 +305,10 @@ export interface LanguageClientOptions {
 	outputChannelName?: string;
 	initializationOptions?: any;
 	errorHandler?: ErrorHandler;
+	uriConverters?: {
+		code2Protocol: c2p.URIConverter,
+		protocol2Code: p2c.URIConverter
+	};
 }
 
 enum ClientState {
@@ -386,13 +390,31 @@ export class LanguageClient {
 	private _trace: Trace;
 	private _tracer: Tracer;
 
-	public constructor(id: string, name: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, forceDebug: boolean = false) {
-		this._id = id;
-		this._name = name;
-		this._serverOptions = serverOptions;
+	private _c2p: c2p.Converter;
+	private _p2c: p2c.Converter;
+
+	public constructor(name: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, forceDebug?: boolean);
+	public constructor(id: string, name: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, forceDebug?: boolean);
+	public constructor(arg1: string, arg2: ServerOptions | string, arg3: LanguageClientOptions | ServerOptions, arg4: boolean | LanguageClientOptions, arg5?: boolean) {
+		let clientOptions: LanguageClientOptions;
+		let forceDebug: boolean;
+		if (is.string(arg2)) {
+			this._id = arg1;
+			this._name = arg2;
+			this._serverOptions = arg3 as ServerOptions;
+			clientOptions = arg4 as LanguageClientOptions;
+			forceDebug = arg5;
+		} else {
+			this._id = arg1;
+			this._name = arg1;
+			this._serverOptions = arg2 as ServerOptions;
+			clientOptions = arg3 as LanguageClientOptions;
+			forceDebug = arg4 as boolean;
+		}
+		if (forceDebug === void 0) { forceDebug = false; }
 		this._clientOptions = clientOptions || {};
 		this._clientOptions.synchronize = this._clientOptions.synchronize || {};
-		this._clientOptions.errorHandler = this._clientOptions.errorHandler || new DefaultErrorHandler(name);
+		this._clientOptions.errorHandler = this._clientOptions.errorHandler || new DefaultErrorHandler(this._name);
 		this._syncExpression = this.computeSyncExpression();
 		this._forceDebug = forceDebug;
 
@@ -421,6 +443,8 @@ export class LanguageClient {
 				this.outputChannel.appendLine(message);
 			}
 		};
+		this._c2p = c2p.createConverter(clientOptions.uriConverters ? clientOptions.uriConverters.code2Protocol : undefined);
+		this._p2c = p2c.createConverter(clientOptions.uriConverters ? clientOptions.uriConverters.protocol2Code : undefined);
 	}
 
 	private computeSyncExpression(): SyncExpression {
@@ -720,7 +744,7 @@ export class LanguageClient {
 		if (!this._syncExpression.evaluate(textDocument)) {
 			return;
 		}
-		connection.didOpenTextDocument(c2p.asOpenTextDocumentParams(textDocument));
+		connection.didOpenTextDocument(this._c2p.asOpenTextDocumentParams(textDocument));
 	}
 
 	private onDidChangeTextDocument(connection: IConnection, event: TextDocumentChangeEvent): void {
@@ -729,10 +753,10 @@ export class LanguageClient {
 		}
 		let uri: string = event.document.uri.toString();
 		if (this._capabilites.textDocumentSync === TextDocumentSyncKind.Incremental) {
-			connection.didChangeTextDocument(c2p.asChangeTextDocumentParams(event));
+			connection.didChangeTextDocument(this._c2p.asChangeTextDocumentParams(event));
 		} else {
 			this._documentSyncDelayer.trigger(() => {
-				connection.didChangeTextDocument(c2p.asChangeTextDocumentParams(event.document));
+				connection.didChangeTextDocument(this._c2p.asChangeTextDocumentParams(event.document));
 			}, -1);
 		}
 	}
@@ -741,14 +765,14 @@ export class LanguageClient {
 		if (!this._syncExpression.evaluate(textDocument)) {
 			return;
 		}
-		connection.didCloseTextDocument(c2p.asCloseTextDocumentParams(textDocument));
+		connection.didCloseTextDocument(this._c2p.asCloseTextDocumentParams(textDocument));
 	}
 
 	private onDidSaveTextDocument(conneciton: IConnection, textDocument: TextDocument): void {
 		if (!this._syncExpression.evaluate(textDocument)) {
 			return;
 		}
-		conneciton.didSaveTextDocument(c2p.asSaveTextDocumentParams(textDocument));
+		conneciton.didSaveTextDocument(this._c2p.asSaveTextDocumentParams(textDocument));
 	}
 
 	private forceDocumentSync(): void {
@@ -759,7 +783,7 @@ export class LanguageClient {
 
 	private handleDiagnostics(params: PublishDiagnosticsParams) {
 		let uri = Uri.parse(params.uri);
-		let diagnostics = p2c.asDiagnostics(params.diagnostics);
+		let diagnostics = this._p2c.asDiagnostics(params.diagnostics);
 		this._diagnostics.set(uri, diagnostics);
 	}
 
@@ -1038,15 +1062,15 @@ export class LanguageClient {
 
 		this._providers.push(Languages.registerCompletionItemProvider(documentSelector, {
 			provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VCompletionList | VCompletionItem[]> => {
-				return this.doSendRequest(connection, CompletionRequest.type, c2p.asTextDocumentPositionParams(document, position), token). then(
-					p2c.asCompletionResult,
+				return this.doSendRequest(connection, CompletionRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token). then(
+					this._p2c.asCompletionResult,
 					error => Promise.resolve([])
 				);
 			},
 			resolveCompletionItem: this._capabilites.completionProvider.resolveProvider
 				? (item: VCompletionItem, token: CancellationToken): Thenable<VCompletionItem> => {
-					return this.doSendRequest(connection, CompletionResolveRequest.type, c2p.asCompletionItem(item), token).then(
-						p2c.asCompletionItem,
+					return this.doSendRequest(connection, CompletionResolveRequest.type, this._c2p.asCompletionItem(item), token).then(
+						this._p2c.asCompletionItem,
 						error => Promise.resolve(item)
 					);
 				}
@@ -1061,8 +1085,8 @@ export class LanguageClient {
 
 		this._providers.push(Languages.registerHoverProvider(documentSelector, {
 			provideHover: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<Hover> => {
-				return this.doSendRequest(connection, HoverRequest.type, c2p.asTextDocumentPositionParams(document, position), token).then(
-					p2c.asHover,
+				return this.doSendRequest(connection, HoverRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token).then(
+					this._p2c.asHover,
 					error => Promise.resolve(null)
 				);
 			}
@@ -1075,8 +1099,8 @@ export class LanguageClient {
 		}
 		this._providers.push(Languages.registerSignatureHelpProvider(documentSelector, {
 			provideSignatureHelp: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VSignatureHelp> => {
-				return this.doSendRequest(connection, SignatureHelpRequest.type, c2p.asTextDocumentPositionParams(document, position), token). then(
-					p2c.asSignatureHelp,
+				return this.doSendRequest(connection, SignatureHelpRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token). then(
+					this._p2c.asSignatureHelp,
 					error => Promise.resolve(null)
 				);
 			}
@@ -1089,8 +1113,8 @@ export class LanguageClient {
 		}
 		this._providers.push(Languages.registerDefinitionProvider(documentSelector, {
 			provideDefinition: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VDefinition> => {
-				return this.doSendRequest(connection, DefinitionRequest.type, c2p.asTextDocumentPositionParams(document, position), token). then(
-					p2c.asDefinitionResult,
+				return this.doSendRequest(connection, DefinitionRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token). then(
+					this._p2c.asDefinitionResult,
 					error => Promise.resolve(null)
 				);
 			}
@@ -1103,8 +1127,8 @@ export class LanguageClient {
 		}
 		this._providers.push(Languages.registerReferenceProvider(documentSelector, {
 			provideReferences: (document: TextDocument, position: VPosition, options: { includeDeclaration: boolean; }, token: CancellationToken): Thenable<VLocation[]> => {
-				return this.doSendRequest(connection, ReferencesRequest.type, c2p.asReferenceParams(document, position, options), token).then(
-					p2c.asReferences,
+				return this.doSendRequest(connection, ReferencesRequest.type, this._c2p.asReferenceParams(document, position, options), token).then(
+					this._p2c.asReferences,
 					error => Promise.resolve([])
 				);
 			}
@@ -1117,8 +1141,8 @@ export class LanguageClient {
 		}
 		this._providers.push(Languages.registerDocumentHighlightProvider(documentSelector, {
 			provideDocumentHighlights: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VDocumentHighlight[]> => {
-				return this.doSendRequest(connection, DocumentHighlightRequest.type, c2p.asTextDocumentPositionParams(document, position), token).then(
-					p2c.asDocumentHighlights,
+				return this.doSendRequest(connection, DocumentHighlightRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token).then(
+					this._p2c.asDocumentHighlights,
 					error => Promise.resolve([])
 				);
 			}
@@ -1131,8 +1155,8 @@ export class LanguageClient {
 		}
 		this._providers.push(Languages.registerDocumentSymbolProvider(documentSelector, {
 			provideDocumentSymbols: (document: TextDocument, token: CancellationToken): Thenable<VSymbolInformation[]> => {
-				return this.doSendRequest(connection, DocumentSymbolRequest.type, c2p.asDocumentSymbolParams(document), token).then(
-					p2c.asSymbolInformations,
+				return this.doSendRequest(connection, DocumentSymbolRequest.type, this._c2p.asDocumentSymbolParams(document), token).then(
+					this._p2c.asSymbolInformations,
 					error => Promise.resolve([])
 				);
 			}
@@ -1146,7 +1170,7 @@ export class LanguageClient {
 		this._providers.push(Languages.registerWorkspaceSymbolProvider({
 			provideWorkspaceSymbols: (query: string, token: CancellationToken): Thenable<VSymbolInformation[]> => {
 				return this.doSendRequest(connection, WorkspaceSymbolRequest.type, { query }, token).then(
-					p2c.asSymbolInformations,
+					this._p2c.asSymbolInformations,
 					error => Promise.resolve([])
 				);
 			}
@@ -1160,12 +1184,12 @@ export class LanguageClient {
 		this._providers.push(Languages.registerCodeActionsProvider(documentSelector, {
 			provideCodeActions: (document: TextDocument, range: VRange, context: VCodeActionContext, token: CancellationToken): Thenable<VCommand[]> => {
 				let params: CodeActionParams = {
-					textDocument: c2p.asTextDocumentIdentifier(document),
-					range: c2p.asRange(range),
-					context: c2p.asCodeActionContext(context)
+					textDocument: this._c2p.asTextDocumentIdentifier(document),
+					range: this._c2p.asRange(range),
+					context: this._c2p.asCodeActionContext(context)
 				};
 				return this.doSendRequest(connection, CodeActionRequest.type, params, token).then(
-					p2c.asCommands,
+					this._p2c.asCommands,
 					error => Promise.resolve([])
 				);
 			}
@@ -1178,15 +1202,15 @@ export class LanguageClient {
 		}
 		this._providers.push(Languages.registerCodeLensProvider(documentSelector, {
 			provideCodeLenses: (document: TextDocument, token: CancellationToken): Thenable<VCodeLens[]> => {
-				return this.doSendRequest(connection, CodeLensRequest.type, c2p.asCodeLensParams(document), token).then(
-					p2c.asCodeLenses,
+				return this.doSendRequest(connection, CodeLensRequest.type, this._c2p.asCodeLensParams(document), token).then(
+					this._p2c.asCodeLenses,
 					error => Promise.resolve([])
 				);
 			},
 			resolveCodeLens: (this._capabilites.codeLensProvider.resolveProvider)
 				? (codeLens: VCodeLens, token: CancellationToken): Thenable<CodeLens> => {
-					return this.doSendRequest(connection, CodeLensResolveRequest.type, c2p.asCodeLens(codeLens), token).then(
-						p2c.asCodeLens,
+					return this.doSendRequest(connection, CodeLensResolveRequest.type, this._c2p.asCodeLens(codeLens), token).then(
+						this._p2c.asCodeLens,
 						error => codeLens
 					);
 				}
@@ -1201,11 +1225,11 @@ export class LanguageClient {
 		this._providers.push(Languages.registerDocumentFormattingEditProvider(documentSelector, {
 			provideDocumentFormattingEdits: (document: TextDocument, options: VFormattingOptions, token: CancellationToken): Thenable<VTextEdit[]> => {
 				let params: DocumentFormattingParams = {
-					textDocument: c2p.asTextDocumentIdentifier(document),
-					options: c2p.asFormattingOptions(options)
+					textDocument: this._c2p.asTextDocumentIdentifier(document),
+					options: this._c2p.asFormattingOptions(options)
 				};
 				return this.doSendRequest(connection, DocumentFormattingRequest.type, params, token).then(
-					p2c.asTextEdits,
+					this._p2c.asTextEdits,
 					error => Promise.resolve([])
 				);
 			}
@@ -1219,12 +1243,12 @@ export class LanguageClient {
 		this._providers.push(Languages.registerDocumentRangeFormattingEditProvider(documentSelector, {
 			provideDocumentRangeFormattingEdits: (document: TextDocument, range: VRange, options: VFormattingOptions, token: CancellationToken): Thenable<VTextEdit[]> => {
 				let params: DocumentRangeFormattingParams = {
-					textDocument: c2p.asTextDocumentIdentifier(document),
-					range: c2p.asRange(range),
-					options: c2p.asFormattingOptions(options)
+					textDocument: this._c2p.asTextDocumentIdentifier(document),
+					range: this._c2p.asRange(range),
+					options: this._c2p.asFormattingOptions(options)
 				};
 				return this.doSendRequest(connection, DocumentRangeFormattingRequest.type, params, token).then(
-					p2c.asTextEdits,
+					this._p2c.asTextEdits,
 					error => Promise.resolve([])
 				);
 			}
@@ -1239,13 +1263,13 @@ export class LanguageClient {
 		this._providers.push(Languages.registerOnTypeFormattingEditProvider(documentSelector, {
 			provideOnTypeFormattingEdits: (document: TextDocument, position: VPosition, ch: string, options: VFormattingOptions, token: CancellationToken): Thenable<VTextEdit[]> => {
 				let params: DocumentOnTypeFormattingParams = {
-					textDocument: c2p.asTextDocumentIdentifier(document),
-					position: c2p.asPosition(position),
+					textDocument: this._c2p.asTextDocumentIdentifier(document),
+					position: this._c2p.asPosition(position),
 					ch: ch,
-					options: c2p.asFormattingOptions(options)
+					options: this._c2p.asFormattingOptions(options)
 				};
 				return this.doSendRequest(connection, DocumentOnTypeFormattingRequest.type, params, token).then(
-					p2c.asTextEdits,
+					this._p2c.asTextEdits,
 					error => Promise.resolve([])
 				);
 			}
@@ -1259,12 +1283,12 @@ export class LanguageClient {
 		this._providers.push(Languages.registerRenameProvider(documentSelector, {
 			provideRenameEdits: (document: TextDocument, position: VPosition, newName: string, token: CancellationToken): Thenable<VWorkspaceEdit> => {
 				let params: RenameParams = {
-					textDocument: c2p.asTextDocumentIdentifier(document),
-					position: c2p.asPosition(position),
+					textDocument: this._c2p.asTextDocumentIdentifier(document),
+					position: this._c2p.asPosition(position),
 					newName: newName
 				};
 				return this.doSendRequest(connection, RenameRequest.type, params, token).then(
-					p2c.asWorkspaceEdit,
+					this._p2c.asWorkspaceEdit,
 					(error: ResponseError<void>) => Promise.resolve(new Error(error.message))
 				)
 			}
