@@ -405,7 +405,7 @@ export class LanguageClient {
 			clientOptions = arg4 as LanguageClientOptions;
 			forceDebug = arg5;
 		} else {
-			this._id = arg1;
+			this._id = arg1.toLowerCase();
 			this._name = arg1;
 			this._serverOptions = arg2 as ServerOptions;
 			clientOptions = arg3 as LanguageClientOptions;
@@ -955,7 +955,7 @@ export class LanguageClient {
 	}
 
 	private onDidChangeConfiguration(connection: IConnection): void {
-		let config = Workspace.getConfiguration(this._id.toLowerCase());
+		let config = Workspace.getConfiguration(this._id);
 		if (config) {
 			let trace = config.get('trace.server', 'off');
 			this._trace = Trace.fromString(trace);
