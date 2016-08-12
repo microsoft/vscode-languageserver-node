@@ -87,6 +87,7 @@ export interface MessageConnection {
 	onClose: Event<void>;
 	onUnhandledNotification: Event<NotificationMessage>;
 	listen();
+	onDispose: Event<void>;
 	dispose(): void;
 }
 
@@ -110,6 +111,7 @@ enum ConnectionState {
 
 function createMessageConnection<T extends MessageConnection>(messageReader: MessageReader, messageWriter: MessageWriter, logger: Logger, client: boolean = false): T {
 	let sequenceNumber = 0;
+	let isDisposed = false;
 	const version: string = '2.0';
 
 	let requestHandlers : { [name: string]: RequestHandler<any, any, any> } = Object.create(null);
@@ -125,6 +127,7 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 	let errorEmitter: Emitter<[Error, Message, number]> = new Emitter<[Error, Message, number]>();
 	let closeEmitter: Emitter<void> = new Emitter<void>();
 	let unhandledNotificationEmitter: Emitter<NotificationMessage> = new Emitter<NotificationMessage>();
+	let disposeEmitter: Emitter<void> = new Emitter<void>();
 
 	function closeHandler(): void {
 		if (state !== ConnectionState.Closed) {
@@ -148,6 +151,12 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 	messageWriter.onError(writeErrorHandler);
 
 	function handleRequest(requestMessage: RequestMessage) {
+		if (isDisposed) {
+			// we return here silently since we fired an event when the
+			// connection got disposed.
+			return;
+		}
+
 		function reply(resultOrError: any | ResponseError<any>): void {
 			let message: ResponseMessage = {
 				jsonrpc: version,
@@ -227,6 +236,11 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 	}
 
 	function handleResponse(responseMessage: ResponseMessage) {
+		if (isDisposed) {
+			// See handle request.
+			return;
+		}
+
 		let key = String(responseMessage.id);
 		let responsePromise = responsePromises[key];
 		if (trace != Trace.Off && tracer) {
@@ -253,6 +267,10 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 	}
 
 	function handleNotification(message: NotificationMessage) {
+		if (isDisposed) {
+			// See handle request.
+			return;
+		}
 		let eventHandler: NotificationHandler<any>;
 		if (message.method === CancelNotification.type.method) {
 			eventHandler = (params: CancelParams) => {
@@ -361,8 +379,12 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 		}
 	};
 
+	const disposedMessage = 'Connection is disposed';
 	let connection: MessageConnection = {
 		sendNotification: <P>(type: NotificationType<P>, params): void  => {
+			if (isDisposed) {
+				throw new Error(disposedMessage);
+			}
 			let notificatioMessage : NotificationMessage = {
 				jsonrpc: version,
 				method: type.method,
@@ -374,9 +396,15 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 			messageWriter.write(notificatioMessage);
 		},
 		onNotification: <P>(type: NotificationType<P>, handler: NotificationHandler<P>) => {
+			if (isDisposed) {
+				throw new Error(disposedMessage);
+			}
 			eventHandlers[type.method] = handler;
 		},
 		sendRequest: <P, R, E>(type: RequestType<P, R, E>, params: P, token?:CancellationToken) => {
+			if (isDisposed) {
+				throw new Error(disposedMessage);
+			}
 			let id = sequenceNumber++;
 			let result = new Promise<R | ResponseError<E>>((resolve, reject) => {
 				let requestMessage : RequestMessage = {
@@ -408,6 +436,9 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 			return result;
 		},
 		onRequest: <P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>) => {
+			if (isDisposed) {
+				throw new Error(disposedMessage);
+			}
 			requestHandlers[type.method] = handler;
 		},
 		trace: (_value: Trace, _tracer: Tracer) => {
@@ -421,9 +452,24 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 		onError: errorEmitter.event,
 		onClose: closeEmitter.event,
 		onUnhandledNotification: unhandledNotificationEmitter.event,
+		onDispose: disposeEmitter.event,
 		dispose: () => {
+			if (isDisposed) {
+				return;
+			}
+			isDisposed = true;
+			disposeEmitter.fire(undefined);
+			let error = new Error('Connection got disposed.');
+			Object.keys(responsePromises).forEach((key) => {
+				responsePromises[key].reject(error);
+			});
+			responsePromises = Object.create(null);
+			requestTokens = Object.create(null);
 		},
 		listen: () => {
+			if (isDisposed) {
+				throw new Error(disposedMessage);
+			}
 			messageReader.listen(callback);
 		}
 	};

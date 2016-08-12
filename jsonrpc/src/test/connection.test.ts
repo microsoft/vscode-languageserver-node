@@ -361,4 +361,54 @@ describe('Connection', () => {
 		});
 		connection2.listen();
 	});
+
+	it(('Dispose connection'), (done) => {
+		let outputStream = new TestWritable();
+		let duplexStream = new TestDuplex();
+		let inputStream = new Readable();
+		inputStream.push(null);
+
+		let params = { 'foo': true };
+
+		let connection1 = hostConnection.createServerMessageConnection(inputStream, duplexStream, Logger);
+		let connection2 = hostConnection.createClientMessageConnection(duplexStream, outputStream, Logger);
+		connection2.onRequest(testRequest1, (params) => {
+			connection1.dispose();
+			return {};
+		});
+		connection2.listen();
+
+		connection1.listen();
+		connection1.sendRequest(testRequest1, {}).then((value) => {
+			assert.fail();
+		}, (error) => {
+			done();
+		});
+		connection1.sendNotification(testNotification, params);
+	});
+
+	it(('Disposed connection throws'), (done) => {
+		let duplexStream = new TestDuplex();
+		let inputStream = new Readable();
+		inputStream.push(null);
+		let connection1 = hostConnection.createServerMessageConnection(inputStream, duplexStream, Logger);
+		connection1.dispose();
+		try {
+			connection1.sendNotification(testNotification);
+			assert.fail();
+		} catch (error) {
+			done();
+		}
+	});
+
+	it(('Notify on connection dispose'), (done) => {
+		let duplexStream = new TestDuplex();
+		let inputStream = new Readable();
+		inputStream.push(null);
+		let connection1 = hostConnection.createServerMessageConnection(inputStream, duplexStream, Logger);
+		connection1.onDispose(() => {
+			done();
+		});
+		connection1.dispose();
+	});
 });
