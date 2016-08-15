@@ -6,5 +6,41 @@
 
 This npm module implements the base messaging protocol spoken between a VSCode language server and a VSCode language client.
 
-Click [here](https://code.visualstudio.com/docs/extensions/example-language-server) for a detailed document on how to uses this npm module
-to implement language servers for [VSCode](https://code.visualstudio.com/).
+The npm module can also be used standalone to establish a [JSON-RPC](http://www.jsonrpc.org/) channel between
+a client and a server. Below an example how to setup a JSON-RPC connection. First the client side.
+
+```ts
+import * as cp from 'child_process';
+import * as rpc from 'vscode-jsonrpc';
+
+let childProcess = cp.spawn(...);
+
+// Use stdin and stdout for communication:
+let connection = rpc.createClientMessageConnection(
+	new rpc.StreamMessageReader(childProcess.stdout),
+	new rpc.StreamMessageWriter(childProcess.stdin));
+
+let notification: rpc.NotificationType<string> = { method: 'testNotification' };
+
+connection.listen();
+
+connection.sendNotification(notification, 'Hello World');
+```
+
+The server side looks very symmetrical:
+
+```ts
+import * as rpc from 'vscode-jsonrpc';
+
+
+let connection = rpc.createClientMessageConnection(
+	new rpc.StreamMessageReader(process.stdin),
+	new rpc.StreamMessageWriter(process.stdout));
+
+let notification: rpc.NotificationType<string> = { method: 'testNotification' };
+connection.onNotification(notification, (param: string) => {
+	console.log(param); // This prints Hello World
+});
+
+connection.listen();
+```
