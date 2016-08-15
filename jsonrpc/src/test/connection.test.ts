@@ -401,6 +401,20 @@ describe('Connection', () => {
 		}
 	});
 
+	it(('Two listen throw'), (done) => {
+		let duplexStream = new TestDuplex();
+		let inputStream = new Readable();
+		inputStream.push(null);
+		let connection1 = hostConnection.createServerMessageConnection(inputStream, duplexStream, Logger);
+		connection1.listen();
+		try {
+			connection1.listen();
+			assert.fail();
+		} catch (error) {
+			done();
+		}
+	});
+
 	it(('Notify on connection dispose'), (done) => {
 		let duplexStream = new TestDuplex();
 		let inputStream = new Readable();
