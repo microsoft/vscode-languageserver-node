@@ -7,6 +7,11 @@
 
 import { Event, Emitter } from './events';
 
+/**
+ * Defines a CancellationToken. This interface is not
+ * intended to be implemented. A CancellationToken must
+ * be created via a CancellationTokenSource.
+ */
 export interface CancellationToken {
 	/**
 	 * Is `true` when the token has been cancelled, `false` otherwise.
@@ -36,6 +41,10 @@ const shortcutEvent: Event<any> = Object.freeze(function(callback, context?) {
 	let handle = setTimeout(callback.bind(context), 0);
 	return { dispose() { clearTimeout(handle); } };
 });
+
+export function isCancellationToken(value: any): value is CancellationToken {
+	return value === CancellationToken.None || value === CancellationToken.Cancelled || value instanceof MutableToken;
+}
 
 class MutableToken implements CancellationToken {
 
