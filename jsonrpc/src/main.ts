@@ -134,6 +134,10 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 		return state === ConnectionState.Listening;
 	}
 
+	function isClosed(): boolean {
+		return state === ConnectionState.Closed;
+	}
+
 	function isDisposed(): boolean {
 		return state === ConnectionState.Disposed;
 	}
@@ -389,12 +393,25 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 		}
 	};
 
-	const disposedMessage = 'Connection is disposed';
+	function throwIfClosedOrDisposed() {
+		if (isClosed()) {
+			throw new Error('Connection is closed.');
+		}
+		if (isDisposed()) {
+			throw new Error('Connection is disposed.');
+		}
+	}
+
+	function throwIfListening() {
+		if (isListening()) {
+			throw new Error('Connection is already listening');
+		}
+	}
+
 	let connection: MessageConnection = {
 		sendNotification: <P>(type: NotificationType<P>, params): void  => {
-			if (isDisposed()) {
-				throw new Error(disposedMessage);
-			}
+			throwIfClosedOrDisposed();
+
 			let notificatioMessage : NotificationMessage = {
 				jsonrpc: version,
 				method: type.method,
@@ -406,15 +423,13 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 			messageWriter.write(notificatioMessage);
 		},
 		onNotification: <P>(type: NotificationType<P>, handler: NotificationHandler<P>) => {
-			if (isDisposed()) {
-				throw new Error(disposedMessage);
-			}
+			throwIfClosedOrDisposed();
+
 			eventHandlers[type.method] = handler;
 		},
 		sendRequest: <P, R, E>(type: RequestType<P, R, E>, params: P, token?:CancellationToken) => {
-			if (isDisposed()) {
-				throw new Error(disposedMessage);
-			}
+			throwIfClosedOrDisposed();
+
 			let id = sequenceNumber++;
 			let result = new Promise<R | ResponseError<E>>((resolve, reject) => {
 				let requestMessage : RequestMessage = {
@@ -446,9 +461,8 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 			return result;
 		},
 		onRequest: <P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>) => {
-			if (isDisposed()) {
-				throw new Error(disposedMessage);
-			}
+			throwIfClosedOrDisposed();
+
 			requestHandlers[type.method] = handler;
 		},
 		trace: (_value: Trace, _tracer: Tracer) => {
@@ -477,12 +491,9 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 			requestTokens = Object.create(null);
 		},
 		listen: () => {
-			if (isDisposed()) {
-				throw new Error(disposedMessage);
-			}
-			if (isListening()) {
-				throw new Error('Conneciton is already listening');
-			}
+			throwIfClosedOrDisposed();
+			throwIfListening();
+
 			state = ConnectionState.Listening;
 			messageReader.listen(callback);
 		}
