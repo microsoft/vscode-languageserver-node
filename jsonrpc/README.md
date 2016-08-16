@@ -16,7 +16,7 @@ import * as rpc from 'vscode-jsonrpc';
 let childProcess = cp.spawn(...);
 
 // Use stdin and stdout for communication:
-let connection = rpc.createClientMessageConnection(
+let connection = rpc.createMessageConnection(
 	new rpc.StreamMessageReader(childProcess.stdout),
 	new rpc.StreamMessageWriter(childProcess.stdin));
 
@@ -33,7 +33,7 @@ The server side looks very symmetrical:
 import * as rpc from 'vscode-jsonrpc';
 
 
-let connection = rpc.createClientMessageConnection(
+let connection = rpc.createMessageConnection(
 	new rpc.StreamMessageReader(process.stdin),
 	new rpc.StreamMessageWriter(process.stdout));
 
