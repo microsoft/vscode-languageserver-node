@@ -542,6 +542,10 @@ export class LanguageClient {
 		return this._outputChannel;
 	}
 
+	public get diagnostics(): DiagnosticCollection {
+		return this._diagnostics;
+	}
+
 	public set trace(value: Trace) {
 		this._trace = value;
 		this.onReady().then(() => {
