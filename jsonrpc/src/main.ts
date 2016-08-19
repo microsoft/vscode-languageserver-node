@@ -74,7 +74,7 @@ export namespace Trace {
 }
 
 export interface Tracer {
-	log(message: string): void;
+	log(message: string, data?: string): void;
 }
 
 export interface MessageConnection {
@@ -333,51 +333,55 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 	}
 
 	function traceRequest(message: RequestMessage): void {
-		tracer.log(`[${(new Date().toLocaleTimeString())}] Sending request '${message.method} - (${message.id})'.`);
+		let data: string = undefined;
 		if (trace === Trace.Verbose && message.params) {
-			tracer.log(`Params: ${JSON.stringify(message.params, null, 4)}\n\n`)
+			data = `Params: ${JSON.stringify(message.params, null, 4)}\n\n`;
 		}
+		tracer.log(`Sending request '${message.method} - (${message.id})'.`, data);
 	}
 
 	function traceSendNotification(message: NotificationMessage): void {
-		tracer.log(`[${(new Date().toLocaleTimeString())}] Sending notification '${message.method}'.`);
+		let data: string = undefined;
 		if (trace === Trace.Verbose) {
 			if (message.params) {
-				tracer.log(`Params: ${JSON.stringify(message.params, null, 4)}\n\n`)
+				data = `Params: ${JSON.stringify(message.params, null, 4)}\n\n`;
 			} else {
-				tracer.log('No parameters provided.\n\n');
+				data = 'No parameters provided.\n\n';
 			}
 		}
+		tracer.log(`Sending notification '${message.method}'.`, data);
 	}
 
 	function traceReceivedNotification(message: NotificationMessage): void {
-		tracer.log(`[${(new Date().toLocaleTimeString())}] Received notification '${message.method}'.`);
+		let data: string = undefined;
 		if (trace === Trace.Verbose) {
 			if (message.params) {
-				tracer.log(`Params: ${JSON.stringify(message.params, null, 4)}\n\n`)
+				data = `Params: ${JSON.stringify(message.params, null, 4)}\n\n`;
 			} else {
-				tracer.log('No parameters provided.\n\n');
+				data = 'No parameters provided.\n\n';
 			}
 		}
+		tracer.log(`Received notification '${message.method}'.`, data);
 	}
 
 	function traceResponse(message: ResponseMessage, responsePromise: ResponsePromise): void {
-		if (responsePromise) {
-			let error = message.error ? ` Request failed: ${message.error.message} (${message.error.code}).` : '';
-			tracer.log(`[${(new Date().toLocaleTimeString())}] Recevied response '${responsePromise.method} - (${message.id})' in ${Date.now() - responsePromise.timerStart}ms.${error}`);
-		} else {
-			tracer.log(`[${(new Date().toLocaleTimeString())}] Recevied response ${message.id} without active response promise.`);
-		}
+		let data: string = undefined;
 		if (trace === Trace.Verbose) {
 			if (message.error && message.error.data) {
-				tracer.log(`Error data: ${JSON.stringify(message.error.data, null, 4)}\n\n`)
+				data = `Error data: ${JSON.stringify(message.error.data, null, 4)}\n\n`;
 			} else {
 				if (message.result) {
-					tracer.log(`Result: ${JSON.stringify(message.result, null, 4)}\n\n`);
+					data = `Result: ${JSON.stringify(message.result, null, 4)}\n\n`;
 				} else {
-					tracer.log('No result returned.\n\n');
+					data = 'No result returned.\n\n';
 				}
 			}
+		}
+		if (responsePromise) {
+			let error = message.error ? ` Request failed: ${message.error.message} (${message.error.code}).` : '';
+			tracer.log(`Recevied response '${responsePromise.method} - (${message.id})' in ${Date.now() - responsePromise.timerStart}ms.${error}`, data);
+		} else {
+			tracer.log(`Recevied response ${message.id} without active response promise.`, data);
 		}
 	}
 

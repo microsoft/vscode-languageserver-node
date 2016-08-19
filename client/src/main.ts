@@ -439,8 +439,8 @@ export class LanguageClient {
 		});
 		this._telemetryEmitter = new Emitter<any>();
 		this._tracer = {
-			log: (message: string) => {
-				this.outputChannel.appendLine(message);
+			log: (message: string, data?: string) => {
+				this.logTrace(message, data);
 			}
 		};
 		this._c2p = c2p.createConverter(clientOptions.uriConverters ? clientOptions.uriConverters.code2Protocol : undefined);
@@ -535,11 +535,23 @@ export class LanguageClient {
 		});
 	}
 
-	private logTrace(message: string): void {
-		if (this._trace === Trace.Off) {
-			return;
+	private info(message: string): void {
+		this.outputChannel.appendLine(`[Info  - ${(new Date().toLocaleTimeString())}] ${message}`);
+	}
+
+	private warn(message: string): void {
+		this.outputChannel.appendLine(`[Warn  - ${(new Date().toLocaleTimeString())}] ${message}`);
+	}
+
+	private error(message: string): void {
+		this.outputChannel.appendLine(`[Error - ${(new Date().toLocaleTimeString())}] ${message}`);
+	}
+
+	private logTrace(message: string, data?: string): void {
+		this.outputChannel.appendLine(`[Trace - ${(new Date().toLocaleTimeString())}] ${message}`);
+		if (data) {
+			this.outputChannel.appendLine(data);
 		}
-		this.outputChannel.appendLine(`[${(new Date().toLocaleTimeString())}] ${message}`);
 	}
 
 	public needsStart(): boolean {
@@ -573,13 +585,13 @@ export class LanguageClient {
 			connection.onLogMessage((message) => {
 				switch(message.type) {
 					case MessageType.Error:
-						this.outputChannel.appendLine(`[Error] ${message.message}`);
+						this.error(message.message);
 						break;
 					case MessageType.Warning:
-						this.outputChannel.appendLine(`[Warn] ${message.message}`);
+						this.warn(message.message);
 						break;
 					case MessageType.Info:
-						this.outputChannel.appendLine(`[Info] ${message.message}`);
+						this.info(message.message);
 						break;
 					default:
 						this.outputChannel.appendLine(message.message);
@@ -871,7 +883,7 @@ export class LanguageClient {
 						args.push('--node-ipc');
 					} else if (node.transport === TransportKind.stdio) {
 						args.push('--stdio');
-					}					
+					}
 					let options: ForkOptions = node.options || Object.create(null);
 					options.execArgv = options.execArgv || [];
 					options.cwd = options.cwd || Workspace.rootPath;
@@ -912,11 +924,11 @@ export class LanguageClient {
 		this._childProcess = null;
 		let action = this._clientOptions.errorHandler.closed();
 		if (action === CloseAction.DoNotRestart) {
-			this.logTrace('Connection to server got closed. Server will not be restarted.');
+			this.error('Connection to server got closed. Server will not be restarted.');
 			this._state = ClientState.Stopped;
 			this.cleanUp();
 		} else if (action === CloseAction.Restart && this._state !== ClientState.Stopping) {
-			this.logTrace('Connection to server got closed. Server will restart.');
+			this.info('Connection to server got closed. Server will restart.');
 			this.cleanUp(false);
 			this._state = ClientState.Initial;
 			this.start();
@@ -926,7 +938,7 @@ export class LanguageClient {
 	private handleConnectionError(error: Error, message: Message, count: number) {
 		let action = this._clientOptions.errorHandler.error(error, message, count);
 		if (action === ErrorAction.Shutdown) {
-			this.logTrace('Connection to server is erroring. Shutting down server.')
+			this.error('Connection to server is erroring. Shutting down server.')
 			this.stop();
 		}
 	}
