@@ -20,7 +20,7 @@ import {
 		CodeLens, CodeActionContext,
 		FormattingOptions,
 	} from 'vscode-languageserver-types';
-	
+
 /**
  * A parameter literal used in requests to pass a text document and a position inside that
  * document.
@@ -237,7 +237,8 @@ export interface InitializeResult {
 }
 
 /**
- * The error returned if the initilize request fails.
+ * The data type of the ResponseError if the
+ * initialize request fails.
  */
 export interface InitializeError {
 	/**

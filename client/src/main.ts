@@ -482,7 +482,11 @@ export class LanguageClient {
 	private doSendRequest<P, R, E>(connection: IConnection, type: RequestType<P, R, E>, params: P, token?: CancellationToken): Thenable<R> {
 		if (this.isConnectionActive()) {
 			this.forceDocumentSync();
-			return connection.sendRequest(type, params, token);
+			try {
+				return connection.sendRequest(type, params, token);
+			} catch (error) {
+				this.error(`Sending request ${type.method} failed.`, error);
+			}
 		} else {
 			return Promise.reject<R>(new ResponseError(ErrorCodes.InternalError, 'Connection is closed.'));
 		}
@@ -493,7 +497,11 @@ export class LanguageClient {
 			this.resolveConnection().then((connection) => {
 				if (this.isConnectionActive()) {
 					this.forceDocumentSync();
-					connection.sendNotification(type, params);
+					try {
+						connection.sendNotification(type, params);
+					} catch (error) {
+						this.error(`Sending notification ${type.method} failed.`, error);
+					}
 				}
 			});
 		});
@@ -502,7 +510,11 @@ export class LanguageClient {
 	public onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): void {
 		this.onReady().then(() => {
 			this.resolveConnection().then((connection) => {
-				connection.onNotification(type, handler);
+				try {
+					connection.onNotification(type, handler);
+				} catch (error) {
+					this.error(`Registering notification handler ${type.method} failed.`, error);
+				}
 			})
 		});
 	}
@@ -510,7 +522,11 @@ export class LanguageClient {
 	public onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): void {
 		this.onReady().then(() => {
 			this.resolveConnection().then((connection) => {
-				connection.onRequest(type, handler);
+				try {
+					connection.onRequest(type, handler);
+				} catch (error) {
+					this.error(`Registering request handler ${type.method} failed.`, error);
+				}
 			})
 		});
 	}
@@ -535,23 +551,51 @@ export class LanguageClient {
 		});
 	}
 
-	private info(message: string): void {
+	private data2String(data: any): string {
+		if (data instanceof ResponseError) {
+			const responseError = data as ResponseError<any>;
+			return `  Message: ${responseError.message}\n  Code: ${responseError.code} ${responseError.data ? '\n' + responseError.data.toString() : ''}`
+		}
+		if (data instanceof Error) {
+			if (is.string(data.stack)) {
+				return data.stack;
+			}
+			return (data as Error).message;
+		}
+		if (is.string(data)) {
+			return data;
+		}
+		return data.toString();
+	}
+
+	private info(message: string, data?: any): void {
 		this.outputChannel.appendLine(`[Info  - ${(new Date().toLocaleTimeString())}] ${message}`);
+		if (data) {
+			this.outputChannel.appendLine(this.data2String(data));
+		}
 	}
 
-	private warn(message: string): void {
+	private warn(message: string, data?: any): void {
 		this.outputChannel.appendLine(`[Warn  - ${(new Date().toLocaleTimeString())}] ${message}`);
+		if (data) {
+			this.outputChannel.appendLine(this.data2String(data));
+		}
 	}
 
-	private error(message: string): void {
+	private error(message: string, data?: any): void {
 		this.outputChannel.appendLine(`[Error - ${(new Date().toLocaleTimeString())}] ${message}`);
+		if (data) {
+			this.outputChannel.appendLine(this.data2String(data));
+		}
+		this.outputChannel.show();
 	}
 
-	private logTrace(message: string, data?: string): void {
+	private logTrace(message: string, data?: any): void {
 		this.outputChannel.appendLine(`[Trace - ${(new Date().toLocaleTimeString())}] ${message}`);
 		if (data) {
-			this.outputChannel.appendLine(data);
+			this.outputChannel.appendLine(this.data2String(data));
 		}
+		this.outputChannel.show();
 	}
 
 	public needsStart(): boolean {
@@ -636,6 +680,7 @@ export class LanguageClient {
 			this.initialize(connection);
 		}, (error) => {
 			this._onReadyCallbacks.reject();
+			this.error('Starting client failed', error);
 			Window.showErrorMessage(`Couldn't start client ${this._name}`);
 		});
 		return new Disposable(() => {
@@ -674,7 +719,7 @@ export class LanguageClient {
 			Workspace.textDocuments.forEach(t => this.onDidOpenTextDoument(connection, t));
 			return result;
 		}, (error: ResponseError<InitializeError>) => {
-			if (error.data.retry) {
+			if ( error.data.retry) {
 				Window.showErrorMessage(error.message, { title: 'Retry', id: "retry"}).then(item => {
 					if (is.defined(item) && item.id === 'retry') {
 						this.initialize(connection);
@@ -687,6 +732,7 @@ export class LanguageClient {
 				if (error.message) {
 					Window.showErrorMessage(error.message);
 				}
+				this.error('Server initialization failed.', error);
 				this.stop();
 				this._onReadyCallbacks.reject();
 			}
@@ -1076,6 +1122,10 @@ export class LanguageClient {
 		this.hookRenameProvider(documentSelector, connection);
 	}
 
+	private logFailedRequest(type: RequestType<any, any, any>, error: any): void {
+		this.error(`Request ${type.method} failed.`, error);
+	}
+
 	private hookCompletionProvider(documentSelector: DocumentSelector, connection: IConnection): void {
 		if (!this._capabilites.completionProvider) {
 			return;
@@ -1085,14 +1135,20 @@ export class LanguageClient {
 			provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VCompletionList | VCompletionItem[]> => {
 				return this.doSendRequest(connection, CompletionRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token). then(
 					this._p2c.asCompletionResult,
-					error => Promise.resolve([])
+					(error) => {
+						this.logFailedRequest(CompletionRequest.type, error);
+						return Promise.resolve([]);
+					}
 				);
 			},
 			resolveCompletionItem: this._capabilites.completionProvider.resolveProvider
 				? (item: VCompletionItem, token: CancellationToken): Thenable<VCompletionItem> => {
 					return this.doSendRequest(connection, CompletionResolveRequest.type, this._c2p.asCompletionItem(item), token).then(
 						this._p2c.asCompletionItem,
-						error => Promise.resolve(item)
+						(error) => {
+							this.logFailedRequest(CompletionResolveRequest.type, error);
+							return Promise.resolve(item);
+						}
 					);
 				}
 				: undefined
@@ -1108,7 +1164,10 @@ export class LanguageClient {
 			provideHover: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<Hover> => {
 				return this.doSendRequest(connection, HoverRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token).then(
 					this._p2c.asHover,
-					error => Promise.resolve(null)
+					(error) => {
+						this.logFailedRequest(HoverRequest.type, error);
+						return Promise.resolve(null);
+					}
 				);
 			}
 		}));
@@ -1122,7 +1181,10 @@ export class LanguageClient {
 			provideSignatureHelp: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VSignatureHelp> => {
 				return this.doSendRequest(connection, SignatureHelpRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token). then(
 					this._p2c.asSignatureHelp,
-					error => Promise.resolve(null)
+					(error) => {
+						this.logFailedRequest(SignatureHelpRequest.type, error);
+						return Promise.resolve(null);
+					}
 				);
 			}
 		}, ...this._capabilites.signatureHelpProvider.triggerCharacters));
@@ -1136,7 +1198,10 @@ export class LanguageClient {
 			provideDefinition: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VDefinition> => {
 				return this.doSendRequest(connection, DefinitionRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token). then(
 					this._p2c.asDefinitionResult,
-					error => Promise.resolve(null)
+					(error) => {
+						this.logFailedRequest(DefinitionRequest.type, error);
+						return Promise.resolve(null);
+					}
 				);
 			}
 		}))
@@ -1150,7 +1215,10 @@ export class LanguageClient {
 			provideReferences: (document: TextDocument, position: VPosition, options: { includeDeclaration: boolean; }, token: CancellationToken): Thenable<VLocation[]> => {
 				return this.doSendRequest(connection, ReferencesRequest.type, this._c2p.asReferenceParams(document, position, options), token).then(
 					this._p2c.asReferences,
-					error => Promise.resolve([])
+					(error) => {
+						this.logFailedRequest(ReferencesRequest.type, error);
+						return Promise.resolve([]);
+					}
 				);
 			}
 		}));
@@ -1164,7 +1232,10 @@ export class LanguageClient {
 			provideDocumentHighlights: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VDocumentHighlight[]> => {
 				return this.doSendRequest(connection, DocumentHighlightRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token).then(
 					this._p2c.asDocumentHighlights,
-					error => Promise.resolve([])
+					(error) => {
+						this.logFailedRequest(DocumentHighlightRequest.type, error);
+						return Promise.resolve([]);
+					}
 				);
 			}
 		}));
@@ -1178,7 +1249,10 @@ export class LanguageClient {
 			provideDocumentSymbols: (document: TextDocument, token: CancellationToken): Thenable<VSymbolInformation[]> => {
 				return this.doSendRequest(connection, DocumentSymbolRequest.type, this._c2p.asDocumentSymbolParams(document), token).then(
 					this._p2c.asSymbolInformations,
-					error => Promise.resolve([])
+					(error) => {
+						this.logFailedRequest(DocumentSymbolRequest.type, error);
+						return Promise.resolve([]);
+					}
 				);
 			}
 		}));
@@ -1192,7 +1266,10 @@ export class LanguageClient {
 			provideWorkspaceSymbols: (query: string, token: CancellationToken): Thenable<VSymbolInformation[]> => {
 				return this.doSendRequest(connection, WorkspaceSymbolRequest.type, { query }, token).then(
 					this._p2c.asSymbolInformations,
-					error => Promise.resolve([])
+					(error) => {
+						this.logFailedRequest(WorkspaceSymbolRequest.type, error);
+						return Promise.resolve([]);
+					}
 				);
 			}
 		}));
@@ -1211,7 +1288,10 @@ export class LanguageClient {
 				};
 				return this.doSendRequest(connection, CodeActionRequest.type, params, token).then(
 					this._p2c.asCommands,
-					error => Promise.resolve([])
+					(error) => {
+						this.logFailedRequest(CodeActionRequest.type, error);
+						return Promise.resolve([]);
+					}
 				);
 			}
 		}));
@@ -1225,14 +1305,20 @@ export class LanguageClient {
 			provideCodeLenses: (document: TextDocument, token: CancellationToken): Thenable<VCodeLens[]> => {
 				return this.doSendRequest(connection, CodeLensRequest.type, this._c2p.asCodeLensParams(document), token).then(
 					this._p2c.asCodeLenses,
-					error => Promise.resolve([])
+					(error) => {
+						this.logFailedRequest(CodeLensRequest.type, error);
+						return Promise.resolve([]);
+					}
 				);
 			},
 			resolveCodeLens: (this._capabilites.codeLensProvider.resolveProvider)
 				? (codeLens: VCodeLens, token: CancellationToken): Thenable<CodeLens> => {
 					return this.doSendRequest(connection, CodeLensResolveRequest.type, this._c2p.asCodeLens(codeLens), token).then(
 						this._p2c.asCodeLens,
-						error => codeLens
+						(error) => {
+							this.logFailedRequest(CodeLensResolveRequest.type, error);
+							return codeLens;
+						}
 					);
 				}
 				: undefined
@@ -1251,7 +1337,10 @@ export class LanguageClient {
 				};
 				return this.doSendRequest(connection, DocumentFormattingRequest.type, params, token).then(
 					this._p2c.asTextEdits,
-					error => Promise.resolve([])
+					(error) => {
+						this.logFailedRequest(DocumentFormattingRequest.type, error);
+						return Promise.resolve([]);
+					}
 				);
 			}
 		}));
@@ -1270,7 +1359,10 @@ export class LanguageClient {
 				};
 				return this.doSendRequest(connection, DocumentRangeFormattingRequest.type, params, token).then(
 					this._p2c.asTextEdits,
-					error => Promise.resolve([])
+					(error) => {
+						this.logFailedRequest(DocumentRangeFormattingRequest.type, error);
+						return Promise.resolve([]);
+					}
 				);
 			}
 		}));
@@ -1291,7 +1383,10 @@ export class LanguageClient {
 				};
 				return this.doSendRequest(connection, DocumentOnTypeFormattingRequest.type, params, token).then(
 					this._p2c.asTextEdits,
-					error => Promise.resolve([])
+					(error) => {
+						this.logFailedRequest(DocumentOnTypeFormattingRequest.type, error);
+						return Promise.resolve([]);
+					}
 				);
 			}
 		}, formatCapabilities.firstTriggerCharacter, ...formatCapabilities.moreTriggerCharacter));
@@ -1310,7 +1405,10 @@ export class LanguageClient {
 				};
 				return this.doSendRequest(connection, RenameRequest.type, params, token).then(
 					this._p2c.asWorkspaceEdit,
-					(error: ResponseError<void>) => Promise.resolve(new Error(error.message))
+					(error: ResponseError<void>) => {
+						this.logFailedRequest(RenameRequest.type, error);
+						Promise.resolve(new Error(error.message));
+					}
 				)
 			}
 		}));

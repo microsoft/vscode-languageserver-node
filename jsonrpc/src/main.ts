@@ -264,7 +264,8 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 			delete responsePromises[key];
 			try {
 				if (is.defined(responseMessage.error)) {
-					responsePromise.reject(responseMessage.error);
+					let error = responseMessage.error;
+					responsePromise.reject(new ResponseError(error.code, error.message, error.data));
 				} else if (is.defined(responseMessage.result)) {
 					responsePromise.resolve(responseMessage.result);
 				} else {
@@ -372,7 +373,7 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 			} else {
 				if (message.result) {
 					data = `Result: ${JSON.stringify(message.result, null, 4)}\n\n`;
-				} else {
+				} else if (is.undefined(message.error)) {
 					data = 'No result returned.\n\n';
 				}
 			}
