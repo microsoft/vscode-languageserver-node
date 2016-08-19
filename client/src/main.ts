@@ -729,7 +729,7 @@ export class LanguageClient {
 					}
 				});
 			} else {
-				if (error.message) {
+				if (error && error.message) {
 					Window.showErrorMessage(error.message);
 				}
 				this.error('Server initialization failed.', error);
