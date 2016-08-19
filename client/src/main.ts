@@ -718,8 +718,8 @@ export class LanguageClient {
 			this._onReadyCallbacks.resolve();
 			Workspace.textDocuments.forEach(t => this.onDidOpenTextDoument(connection, t));
 			return result;
-		}, (error: ResponseError<InitializeError>) => {
-			if ( error.data.retry) {
+		}, (error: any) => {
+			if (error instanceof ResponseError && error.data && error.data.retry) {
 				Window.showErrorMessage(error.message, { title: 'Retry', id: "retry"}).then(item => {
 					if (is.defined(item) && item.id === 'retry') {
 						this.initialize(connection);
