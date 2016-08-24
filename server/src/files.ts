@@ -96,6 +96,10 @@ export function resolveModule(workspaceRoot: string, moduleName: string): Thenab
 	});
 }
 
+/**
+ * Resolves the given module relative to the given workspace root. In contrast to
+ * `resolveModule` this method considers the parent chain as well.
+ */
 export function resolveModule2(workspaceRoot: string, moduleName: string): Thenable<any> {
 
 	interface Message {
