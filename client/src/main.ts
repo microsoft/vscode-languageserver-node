@@ -546,6 +546,10 @@ export class LanguageClient {
 		return this._diagnostics;
 	}
 
+	public createDefaultErrorHandler(): ErrorHandler {
+		return new DefaultErrorHandler(this._name);
+	}
+
 	public set trace(value: Trace) {
 		this._trace = value;
 		this.onReady().then(() => {
@@ -572,21 +576,21 @@ export class LanguageClient {
 		return data.toString();
 	}
 
-	private info(message: string, data?: any): void {
+	public info(message: string, data?: any): void {
 		this.outputChannel.appendLine(`[Info  - ${(new Date().toLocaleTimeString())}] ${message}`);
 		if (data) {
 			this.outputChannel.appendLine(this.data2String(data));
 		}
 	}
 
-	private warn(message: string, data?: any): void {
+	public warn(message: string, data?: any): void {
 		this.outputChannel.appendLine(`[Warn  - ${(new Date().toLocaleTimeString())}] ${message}`);
 		if (data) {
 			this.outputChannel.appendLine(this.data2String(data));
 		}
 	}
 
-	private error(message: string, data?: any): void {
+	public error(message: string, data?: any): void {
 		this.outputChannel.appendLine(`[Error - ${(new Date().toLocaleTimeString())}] ${message}`);
 		if (data) {
 			this.outputChannel.appendLine(this.data2String(data));
