@@ -12,7 +12,7 @@
 		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
 	},
 	"engines": {
-		"node": ">=5.10.0 || >=6.0.0"
+		"node": ">=4.0.0 || >=6.0.0"
 	},
 	"main": "./lib/main.js",
 	"typings": "./lib/main",
