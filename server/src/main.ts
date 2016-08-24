@@ -23,7 +23,7 @@ import {
 		Definition, CodeActionContext,
 		DocumentHighlight, DocumentHighlightKind,
 		SymbolInformation, SymbolKind,
-		CodeLens, 
+		CodeLens,
 		FormattingOptions,
 	} from 'vscode-languageserver-types';
 
@@ -38,18 +38,18 @@ import {
 		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams,
 		DidCloseTextDocumentNotification, DidCloseTextDocumentParams, DidSaveTextDocumentNotification, DidSaveTextDocumentParams,
 		DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
-		PublishDiagnosticsNotification, PublishDiagnosticsParams, 
+		PublishDiagnosticsNotification, PublishDiagnosticsParams,
 		TextDocumentPositionParams, TextDocumentSyncKind,
-		HoverRequest, 
-		CompletionRequest, CompletionResolveRequest, CompletionOptions, 
-		SignatureHelpRequest, 
+		HoverRequest,
+		CompletionRequest, CompletionResolveRequest, CompletionOptions,
+		SignatureHelpRequest,
 		DefinitionRequest,  ReferencesRequest, ReferenceParams,
-		DocumentHighlightRequest, 
+		DocumentHighlightRequest,
 		DocumentSymbolRequest, DocumentSymbolParams,  WorkspaceSymbolRequest, WorkspaceSymbolParams,
 		CodeActionRequest, CodeActionParams, CodeLensOptions,
-		CodeLensRequest, CodeLensParams, CodeLensResolveRequest, 
+		CodeLensRequest, CodeLensParams, CodeLensResolveRequest,
 		DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
-		DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams, 
+		DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams,
 		RenameRequest, RenameParams
 	} from './protocol';
 
@@ -88,6 +88,7 @@ import * as stream from 'stream';
 export namespace Files {
 	export let uriToFilePath = fm.uriToFilePath;
 	export let resolveModule = fm.resolveModule;
+	export let resolveModule2 = fm.resolveModule2;
 }
 
 interface ConnectionState {
@@ -666,7 +667,7 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
 export function createConnection(reader: MessageReader, writer: MessageWriter): IConnection;
 /**
  * Creates a new connection based on the processes command line arguments:
- * --ipc : connection using the node  process ipc 
+ * --ipc : connection using the node  process ipc
  *
  * @param reader The message reader to read messages from.
  * @param writer The message writer to write message to.
@@ -680,7 +681,7 @@ export function createConnection(input?: any, output?: any): IConnection {
 			let arg = argv[i];
 			if (arg === '--node-ipc') {
 				input = new IPCMessageReader(process);
-				output = new IPCMessageWriter(process); 
+				output = new IPCMessageWriter(process);
 			} else if (arg === '--stdio') {
 				input = process.stdin;
 				output = process.stdout;
@@ -698,7 +699,7 @@ export function createConnection(input?: any, output?: any): IConnection {
 			output = new stream.PassThrough();
 			input = new stream.PassThrough();
   			let server = net.createServer(socket => {
-				server.close();	
+				server.close();
 				socket.pipe(output);
 				input.pipe(socket);
      		}).listen(port);
@@ -710,7 +711,7 @@ export function createConnection(input?: any, output?: any): IConnection {
 	}
 	if (!output) {
 		throw new Error("Connection output stream is not set. " + commandLineMessage);
-	}	
+	}
 
 	let shutdownReceived: boolean;
 	// Backwards compatibility

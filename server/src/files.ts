@@ -95,3 +95,67 @@ export function resolveModule(workspaceRoot: string, moduleName: string): Thenab
 		});
 	});
 }
+
+export function resolveModule2(workspaceRoot: string, moduleName: string): Thenable<any> {
+
+	interface Message {
+		c: string;
+		s?: boolean;
+		a?: any;
+		r?: any
+	}
+
+	const app= [
+		"var p = process;",
+		"p.on('message',function(m){",
+			"if(m.c==='e'){",
+				"p.exit(0);",
+			"}",
+			"else if(m.c==='rs'){",
+				"try{",
+					"var r=require.resolve(m.a);",
+					"p.send({c:'r',s:true,r:r});",
+				"}",
+				"catch(err){",
+					"p.send({c:'r',s:false});",
+				"}",
+			"}",
+		"});"
+	].join('');
+
+	return new Promise<any>((resolve, reject) => {
+		let env = process.env;
+		let newEnv = Object.create(null);
+
+		Object.keys(env).forEach(key => newEnv[key] = env[key]);
+		newEnv['ATOM_SHELL_INTERNAL_RUN_AS_NODE'] = '1';
+		try {
+			let cp: ChildProcess = fork('', [], <any> {
+				cwd: workspaceRoot,
+				env: newEnv,
+				execArgv: ['-e', app]
+			});
+			cp.on('message', (message: Message) => {
+				if (message.c === 'r') {
+					let toRequire: string = moduleName;
+					if (message.s) {
+						toRequire = message.r;
+					}
+					cp.send({ c: 'e' });
+					try {
+						resolve(require(toRequire));
+					} catch (error) {
+						reject(error);
+					}
+				}
+			});
+			let message: Message = {
+				c: 'rs',
+				a: moduleName
+			};
+			cp.send(message);
+		} catch (error) {
+			reject(error);
+		}
+	});
+}
