@@ -71,6 +71,36 @@ export namespace Trace {
 				return Trace.Off;
 		}
 	}
+
+	export function toString(value: Trace): string {
+		switch (value) {
+			case Trace.Off:
+				return 'off';
+			case Trace.Messages:
+				return 'messages';
+			case Trace.Verbose:
+				return 'verbose';
+			default:
+				return 'off';
+		}
+ 	}
+}
+
+export interface SetTraceParams {
+	value: 'off' | 'messages' | 'verbose';
+}
+
+export namespace SetTraceNotification {
+	export const type: NotificationType<SetTraceParams> = { get method() { return '$/setTraceNotification'; } };
+}
+
+export interface LogTraceParams {
+	message: string;
+	verbose?: string;
+}
+
+export namespace LogTraceNotification {
+	export const type: NotificationType<LogTraceParams> = { get method() { return '$/logTraceNotification'; } };
 }
 
 export interface Tracer {
@@ -82,7 +112,7 @@ export interface MessageConnection {
 	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): void;
 	sendNotification<P>(type: NotificationType<P>, params?: P): void;
 	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): void;
-	trace(value: Trace, tracer: Tracer): void;
+	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): void;
 	onError: Event<[Error, Message, number]>;
 	onClose: Event<void>;
 	onUnhandledNotification: Event<NotificationMessage>;
@@ -354,6 +384,9 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 	}
 
 	function traceReceivedNotification(message: NotificationMessage): void {
+		if (message.method === LogTraceNotification.type.method) {
+			return;
+		}
 		let data: string = undefined;
 		if (trace === Trace.Verbose) {
 			if (message.params) {
@@ -470,12 +503,15 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 
 			requestHandlers[type.method] = handler;
 		},
-		trace: (_value: Trace, _tracer: Tracer) => {
+		trace: (_value: Trace, _tracer: Tracer, sendNotification: boolean = false) => {
 			trace = _value;
 			if (trace === Trace.Off) {
 				tracer = null;
 			} else {
 				tracer = _tracer;
+			}
+			if (sendNotification && !isClosed() && !isDisposed()) {
+				connection.sendNotification(SetTraceNotification.type, { value: Trace.toString(_value) });
 			}
 		},
 		onError: errorEmitter.event,
@@ -503,6 +539,13 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 			messageReader.listen(callback);
 		}
 	};
+
+	connection.onNotification(LogTraceNotification.type, (params) => {
+		if (trace === Trace.Off) {
+			return;
+		}
+		tracer.log(params.message, trace === Trace.Verbose ? params.verbose : undefined);
+	});
 	return connection as T;
 }
 
