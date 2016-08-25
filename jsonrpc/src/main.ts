@@ -57,6 +57,7 @@ export enum Trace {
 	Off, Messages, Verbose
 }
 
+export type TraceValues = 'off' | 'messages' | 'verbose';
 export namespace Trace {
 	export function fromString(value: string): Trace {
 		value = value.toLowerCase();
@@ -72,7 +73,7 @@ export namespace Trace {
 		}
 	}
 
-	export function toString(value: Trace): string {
+	export function toString(value: Trace): TraceValues {
 		switch (value) {
 			case Trace.Off:
 				return 'off';
@@ -87,7 +88,7 @@ export namespace Trace {
 }
 
 export interface SetTraceParams {
-	value: 'off' | 'messages' | 'verbose';
+	value: TraceValues;
 }
 
 export namespace SetTraceNotification {

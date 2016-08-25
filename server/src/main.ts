@@ -842,6 +842,9 @@ export function createConnection(input?: any, output?: any): IConnection {
 				}
 			}, 3000);
 		}
+		if (Is.string(params.trace)) {
+			tracer.trace = Trace.fromString(params.trace);
+		}
 		if (initializeHandler) {
 			let result = initializeHandler(params, new CancellationTokenSource().token);
 			return asThenable(result).then((value) => {

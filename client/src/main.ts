@@ -706,7 +706,13 @@ export class LanguageClient {
 	}
 
 	private initialize(connection: IConnection): Thenable<InitializeResult> {
-		let initParams: InitializeParams = { processId: process.pid, rootPath: Workspace.rootPath, capabilities: { }, initializationOptions: this._clientOptions.initializationOptions };
+		let initParams: InitializeParams = {
+			processId: process.pid,
+			rootPath: Workspace.rootPath,
+			capabilities: { },
+			initializationOptions: this._clientOptions.initializationOptions,
+			trace: Trace.toString(this.readTrace())
+		};
 		return connection.initialize(initParams).then((result) => {
 			this._state = ClientState.Running;
 			this._capabilites = result.capabilities;
@@ -1018,6 +1024,15 @@ export class LanguageClient {
 		}
 		Workspace.onDidChangeConfiguration(e => this.onDidChangeConfiguration(connection), this, this._listeners);
 		this.onDidChangeConfiguration(connection);
+	}
+
+	private readTrace(): Trace {
+		let config = Workspace.getConfiguration(this._id);
+		if (config) {
+			let trace = config.get('trace.server', 'off');
+			return Trace.fromString(trace);
+		}
+		return Trace.Off;
 	}
 
 	private onDidChangeConfiguration(connection: IConnection): void {

@@ -223,7 +223,12 @@ export interface InitializeParams {
 	/**
 	 * User provided initialization options.
 	 */
-	initializationOptions: any;
+	initializationOptions?: any;
+
+	/**
+	 * The initial trace setting. If omitted trace is disabled ('off').
+	 */
+	trace?: 'off' | 'messages' | 'verbose';
 }
 
 /**
