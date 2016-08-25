@@ -192,6 +192,7 @@ export function resolveModule2(workspaceRoot: string, moduleName: string, nodePa
 					}
 					cp.send({ c: 'e' });
 					try {
+						tracer(`Using eslint from location: ${toRequire}`);
 						resolve(require(toRequire));
 					} catch (error) {
 						reject(error);

@@ -86,7 +86,7 @@ interface IConnection {
 	sendNotification<P>(type: NotificationType<P>, params: P): void;
 	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): void;
 	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): void;
-	trace(value: Trace, tracer: Tracer): void;
+	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): void;
 
 	initialize(params: InitializeParams): Thenable<InitializeResult>;
 	shutdown(): Thenable<void>;
@@ -146,7 +146,7 @@ function createConnection(input: any, output: any, errorHandler: ConnectionError
 		onNotification: <P>(type: NotificationType<P>, handler: NotificationHandler<P>): void => connection.onNotification(type, handler),
 		onRequest: <P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): void => connection.onRequest(type, handler),
 
-		trace: (value: Trace, tracer: Tracer): void => connection.trace(value, tracer, true),
+		trace: (value: Trace, tracer: Tracer, sendNotification: boolean = false): void => connection.trace(value, tracer, sendNotification),
 
 		initialize: (params: InitializeParams) => connection.sendRequest(InitializeRequest.type, params),
 		shutdown: () => connection.sendRequest(ShutdownRequest.type, undefined),
@@ -706,12 +706,13 @@ export class LanguageClient {
 	}
 
 	private initialize(connection: IConnection): Thenable<InitializeResult> {
+		this.refreshTrace(connection, false);
 		let initParams: InitializeParams = {
 			processId: process.pid,
 			rootPath: Workspace.rootPath,
 			capabilities: { },
 			initializationOptions: this._clientOptions.initializationOptions,
-			trace: Trace.toString(this.readTrace())
+			trace: Trace.toString(this._trace)
 		};
 		return connection.initialize(initParams).then((result) => {
 			this._state = ClientState.Running;
@@ -1026,22 +1027,18 @@ export class LanguageClient {
 		this.onDidChangeConfiguration(connection);
 	}
 
-	private readTrace(): Trace {
+	private refreshTrace(connection: IConnection, sendNotification: boolean = false): void {
 		let config = Workspace.getConfiguration(this._id);
+		let trace: Trace = Trace.Off;
 		if (config) {
-			let trace = config.get('trace.server', 'off');
-			return Trace.fromString(trace);
+			trace = Trace.fromString(config.get('trace.server', 'off'));
 		}
-		return Trace.Off;
+		this._trace = trace;
+		connection.trace(this._trace, this._tracer, sendNotification);
 	}
 
 	private onDidChangeConfiguration(connection: IConnection): void {
-		let config = Workspace.getConfiguration(this._id);
-		if (config) {
-			let trace = config.get('trace.server', 'off');
-			this._trace = Trace.fromString(trace);
-			connection.trace(this._trace, this._tracer);
-		}
+		this.refreshTrace(connection, true);
 		let keys: string[] = null;
 		let configurationSection = this._clientOptions.synchronize.configurationSection;
 		if (is.string(configurationSection)) {

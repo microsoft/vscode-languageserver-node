@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageclient",
 	"description": "VSCode Language client implementation",
-	"version": "2.4.2-next.8",
+	"version": "2.4.2-next.9",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"engines": {
