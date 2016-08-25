@@ -314,6 +314,7 @@ export interface LanguageClientOptions {
 enum ClientState {
 	Initial,
 	Starting,
+	StartFailed,
 	Running,
 	Stopping,
 	Stopped
@@ -687,6 +688,7 @@ export class LanguageClient {
 			connection.listen();
 			this.initialize(connection);
 		}, (error) => {
+			this._state = ClientState.StartFailed;
 			this._onReadyCallbacks.reject();
 			this.error('Starting client failed', error);
 			Window.showErrorMessage(`Couldn't start client ${this._name}`);
@@ -777,10 +779,14 @@ export class LanguageClient {
 	}
 
 	private cleanUp(diagnostics: boolean = true): void {
-		this._listeners.forEach(listener => listener.dispose());
-		this._listeners = null;
-		this._providers.forEach(provider => provider.dispose());
-		this._providers = null;
+		if (this._listeners) {
+			this._listeners.forEach(listener => listener.dispose());
+			this._listeners = null;
+		}
+		if (this._providers) {
+			this._providers.forEach(provider => provider.dispose());
+			this._providers = null;
+		}
 		if (diagnostics) {
 			this._diagnostics.dispose();
 			this._diagnostics = null;
