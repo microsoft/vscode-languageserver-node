@@ -146,7 +146,7 @@ function createConnection(input: any, output: any, errorHandler: ConnectionError
 		onNotification: <P>(type: NotificationType<P>, handler: NotificationHandler<P>): void => connection.onNotification(type, handler),
 		onRequest: <P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): void => connection.onRequest(type, handler),
 
-		trace: (value: Trace, tracer: Tracer): void => connection.trace(value, tracer),
+		trace: (value: Trace, tracer: Tracer): void => connection.trace(value, tracer, true),
 
 		initialize: (params: InitializeParams) => connection.sendRequest(InitializeRequest.type, params),
 		shutdown: () => connection.sendRequest(ShutdownRequest.type, undefined),

@@ -6,7 +6,7 @@
 
 import * as url from 'url';
 import * as path from 'path';
-import { exec, fork, ChildProcess } from 'child_process';
+import { exec, spawnSync, fork, ChildProcess } from 'child_process';
 
 export function uriToFilePath(uri: string): string {
 	let parsed = url.parse(uri);
@@ -100,7 +100,7 @@ export function resolveModule(workspaceRoot: string, moduleName: string): Thenab
  * Resolves the given module relative to the given workspace root. In contrast to
  * `resolveModule` this method considers the parent chain as well.
  */
-export function resolveModule2(workspaceRoot: string, moduleName: string): Thenable<any> {
+export function resolveModule2(workspaceRoot: string, moduleName: string, nodePath: string, tracer: (message: string, verbose?: string) => void): Thenable<any> {
 
 	interface Message {
 		c: string;
@@ -109,7 +109,7 @@ export function resolveModule2(workspaceRoot: string, moduleName: string): Thena
 		r?: any
 	}
 
-	const app= [
+	const app: string = [
 		"var p = process;",
 		"p.on('message',function(m){",
 			"if(m.c==='e'){",
@@ -127,11 +127,56 @@ export function resolveModule2(workspaceRoot: string, moduleName: string): Thena
 		"});"
 	].join('');
 
+	const nodePathKey: string = 'NODE_PATH';
+
+	function getGlobalNodePath(): string {
+		let npmCommand = isWindows() ? 'npm.cmd' : 'npm';
+
+		let prefix = spawnSync(npmCommand, ['config', 'get', 'prefix'], {
+			encoding: 'utf8'
+		}).stdout.trim();
+		if (tracer) {
+			tracer(`'npm config get prefix' value is: ${prefix}`);
+		}
+
+		if (prefix.length > 0) {
+			if (isWindows()) {
+				return path.join(prefix, 'node_modules');
+			} else {
+				return path.join(prefix, 'lib', 'node_modules');
+			}
+		}
+		return undefined;
+	}
+
+	if (nodePath && !path.isAbsolute(nodePath)) {
+		nodePath = path.join(workspaceRoot, nodePath);
+	}
+
+	let nodePaths: string[] = [];
+	if (nodePath) {
+		nodePaths.push(nodePath);
+	}
+	let global = getGlobalNodePath();
+	if (global) {
+		nodePaths.push(global);
+	}
+
 	return new Promise<any>((resolve, reject) => {
 		let env = process.env;
 		let newEnv = Object.create(null);
-
 		Object.keys(env).forEach(key => newEnv[key] = env[key]);
+
+		if (nodePaths.length > 0) {
+			if (newEnv[nodePathKey]) {
+				newEnv[nodePathKey] = nodePaths.join(path.delimiter) + path.delimiter + newEnv[nodePathKey];
+			} else {
+				newEnv[nodePathKey] = nodePaths.join(path.delimiter);
+			}
+			if (tracer) {
+				tracer(`NODE_PATH value is: ${newEnv[nodePathKey]}`);
+			}
+		}
 		newEnv['ATOM_SHELL_INTERNAL_RUN_AS_NODE'] = '1';
 		try {
 			let cp: ChildProcess = fork('', [], <any> {

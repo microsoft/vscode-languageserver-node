@@ -10,7 +10,7 @@ import {
 		MessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
 		MessageWriter, StreamMessageWriter, IPCMessageWriter,
 		CancellationToken, CancellationTokenSource,
-		Disposable, Event, Emitter
+		Disposable, Event, Emitter, Trace, SetTraceNotification, LogTraceNotification
 	} from 'vscode-jsonrpc';
 
 import {
@@ -391,6 +391,40 @@ export interface Telemetry {
 	logEvent(data: any): void;
 }
 
+/**
+ * Interface to log traces to the client. The events are sent to the client and the
+ * client needs to log the trace events.
+ */
+export interface Tracer {
+	/**
+	 * Log the given data to the trace Log
+	 */
+	log(message: string, verbose?: string): void;
+}
+
+class TracerImpl implements Tracer {
+
+	private _trace: Trace;
+
+	constructor(private connection: MessageConnection) {
+		this._trace = Trace.Off;
+	}
+
+	public set trace(value: Trace) {
+		this._trace = value;
+	}
+
+	public log(message: string, verbose?: string): void {
+		if (this._trace === Trace.Off) {
+			return;
+		}
+		this.connection.sendNotification(LogTraceNotification.type, {
+			message: message,
+			verbose: this._trace === Trace.Verbose ? verbose : null
+		});
+	}
+}
+
 class TelemetryImpl implements Telemetry {
 
 	constructor(private connection: MessageConnection) {
@@ -478,6 +512,11 @@ export interface IConnection {
 	 * A proxy to send telemetry events to the client.
 	 */
 	telemetry: Telemetry;
+
+	/**
+	 * A proxy to send trace events to the client.
+	 */
+	tracer: Tracer;
 
 	/**
 	 * Installs a handler for the `DidChangeConfiguration` notification.
@@ -725,11 +764,12 @@ export function createConnection(input?: any, output?: any): IConnection {
 		});
 	}
 
-	let logger = new ConnectionLogger();
-	let connection = createServerMessageConnection(input, output, logger);
+	const logger = new ConnectionLogger();
+	const connection = createServerMessageConnection(input, output, logger);
 	logger.attach(connection);
-	let remoteWindow = new RemoteWindowImpl(connection);
-	let telemetry = new TelemetryImpl(connection);
+	const remoteWindow = new RemoteWindowImpl(connection);
+	const telemetry = new TelemetryImpl(connection);
+	const tracer = new TracerImpl(connection);
 
 	function asThenable<T>(value: T | Thenable<T>): Thenable<T> {
 		if (Is.thenable(value)) {
@@ -756,6 +796,7 @@ export function createConnection(input?: any, output?: any): IConnection {
 		get console() { return logger; },
 		get window() { return remoteWindow; },
 		get telemetry() { return telemetry; },
+		get tracer() { return tracer; },
 
 		onDidChangeConfiguration: (handler) => connection.onNotification(DidChangeConfigurationNotification.type, handler),
 		onDidChangeWatchedFiles: (handler) => connection.onNotification(DidChangeWatchedFilesNotification.type, handler),
@@ -848,7 +889,11 @@ export function createConnection(input?: any, output?: any): IConnection {
 				process.exit(1);
 			}
 		}
-	})
+	});
+
+	connection.onNotification(SetTraceNotification.type, (params) => {
+		tracer.trace = Trace.fromString(params.value);;
+	});
 
 	return protocolConnection;
 }
