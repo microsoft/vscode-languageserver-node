@@ -976,6 +976,9 @@ export class LanguageClient {
 			let options = command.options || {};
 			options.cwd = options.cwd || Workspace.rootPath;
 			let process = cp.spawn(command.command, command.args, command.options);
+			if (!process || !process.pid) {
+				return Promise.reject<IConnection>(`Launching server using command ${command.command} failed.`);
+			}
 			this._childProcess = process;
 			return Promise.resolve(createConnection(process.stdout, process.stdin, errorHandler, closeHandler));
 		}
