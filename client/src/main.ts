@@ -980,6 +980,9 @@ export class LanguageClient {
 				return Promise.reject<IConnection>(`Launching server using command ${command.command} failed.`);
 			}
 			this._childProcess = process;
+			if (process.stderr) {
+				process.stderr.on('data', data => this.outputChannel.append(data.toString()));
+			}
 			return Promise.resolve(createConnection(process.stdout, process.stdin, errorHandler, closeHandler));
 		}
 		return Promise.reject<IConnection>(new Error(`Unsupported server configuartion ` + JSON.stringify(server, null, 4)));
