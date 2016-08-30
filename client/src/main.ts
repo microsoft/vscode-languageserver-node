@@ -303,6 +303,11 @@ export interface LanguageClientOptions {
 	synchronize?: SynchronizeOptions;
 	diagnosticCollectionName?: string;
 	outputChannelName?: string;
+	/**
+	 * The encoding use to read stdout and stderr. Defaults
+	 * to 'utf8' if ommitted.
+	 */
+	stdioEncoding?: string;
 	initializationOptions?: any;
 	errorHandler?: ErrorHandler;
 	uriConverters?: {
@@ -876,6 +881,8 @@ export class LanguageClient {
 			Object.keys(env).forEach(key => result[key] = env[key]);
 		}
 
+		let encoding = this._clientOptions.stdioEncoding || 'utf8';
+
 		let errorHandler = (error: Error, message: Message, count: number) => {
 			this.handleConnectionError(error, message, count);
 		}
@@ -935,10 +942,9 @@ export class LanguageClient {
 					return Promise.reject<IConnection>(`Launching server using runtime ${node.runtime} failed.`);
 				}
 				this._childProcess = process;
-				// A spawned process doesn't have ipc transport even if we spawn node. For now always use stdio communication.
+				process.stderr.on('data', data => this.outputChannel.append(data.toString(encoding)));
 				if (node.transport === TransportKind.ipc) {
-					process.stdout.on('data', data => this.outputChannel.append(data.toString()));
-					process.stderr.on('data', data => this.outputChannel.append(data.toString()));
+					process.stdout.on('data', data => this.outputChannel.append(data.toString(encoding)));
 					return Promise.resolve(createConnection(new IPCMessageReader(process), new IPCMessageWriter(process), errorHandler, closeHandler));
 				} else {
 					return Promise.resolve(createConnection(process.stdout, process.stdin, errorHandler, closeHandler));
@@ -959,10 +965,9 @@ export class LanguageClient {
 							reject(error);
 						} else {
 							this._childProcess = cp;
+							cp.stderr.on('data', data => this.outputChannel.append(data.toString(encoding)));
 							if (node.transport === TransportKind.ipc) {
-								cp.stdout.on('data', (data) => {
-									this.outputChannel.append(data.toString());
-								});
+								cp.stdout.on('data', data => this.outputChannel.append(data.toString(encoding)));
 								resolve(createConnection(new IPCMessageReader(this._childProcess), new IPCMessageWriter(this._childProcess), errorHandler, closeHandler));
 							} else {
 								resolve(createConnection(cp.stdout, cp.stdin, errorHandler, closeHandler));
@@ -979,10 +984,8 @@ export class LanguageClient {
 			if (!process || !process.pid) {
 				return Promise.reject<IConnection>(`Launching server using command ${command.command} failed.`);
 			}
+			process.stderr.on('data', data => this.outputChannel.append(data.toString(encoding)));
 			this._childProcess = process;
-			if (process.stderr) {
-				process.stderr.on('data', data => this.outputChannel.append(data.toString()));
-			}
 			return Promise.resolve(createConnection(process.stdout, process.stdin, errorHandler, closeHandler));
 		}
 		return Promise.reject<IConnection>(new Error(`Unsupported server configuartion ` + JSON.stringify(server, null, 4)));
