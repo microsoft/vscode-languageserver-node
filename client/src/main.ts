@@ -308,7 +308,7 @@ export interface LanguageClientOptions {
 	 * to 'utf8' if ommitted.
 	 */
 	stdioEncoding?: string;
-	initializationOptions?: any;
+	initializationOptions?: () => any | any;
 	errorHandler?: ErrorHandler;
 	uriConverters?: {
 		code2Protocol: c2p.URIConverter,
@@ -714,11 +714,12 @@ export class LanguageClient {
 
 	private initialize(connection: IConnection): Thenable<InitializeResult> {
 		this.refreshTrace(connection, false);
+		let initOption = this._clientOptions.initializationOptions;
 		let initParams: InitializeParams = {
 			processId: process.pid,
 			rootPath: Workspace.rootPath,
 			capabilities: { },
-			initializationOptions: this._clientOptions.initializationOptions,
+			initializationOptions: is.func(initOption) ? initOption() : initOption,
 			trace: Trace.toString(this._trace)
 		};
 		return connection.initialize(initParams).then((result) => {
