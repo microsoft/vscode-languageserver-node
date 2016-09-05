@@ -96,12 +96,8 @@ export function resolveModule(workspaceRoot: string, moduleName: string): Thenab
 	});
 }
 
-/**
- * Resolves the given module relative to the given workspace root. In contrast to
- * `resolveModule` this method considers the parent chain as well.
- */
-export function resolveModule2(workspaceRoot: string, moduleName: string, nodePath: string, tracer: (message: string, verbose?: string) => void): Thenable<any> {
 
+export function resolveModulePath(workspaceRoot: string, moduleName: string, nodePath: string, tracer: (message: string, verbose?: string) => void): Thenable<string> {
 	interface Message {
 		c: string;
 		s?: boolean;
@@ -191,12 +187,7 @@ export function resolveModule2(workspaceRoot: string, moduleName: string, nodePa
 						toRequire = message.r;
 					}
 					cp.send({ c: 'e' });
-					try {
-						tracer(`Using eslint from location: ${toRequire}`);
-						resolve(require(toRequire));
-					} catch (error) {
-						reject(error);
-					}
+					resolve(toRequire);
 				}
 			});
 			let message: Message = {
@@ -207,5 +198,16 @@ export function resolveModule2(workspaceRoot: string, moduleName: string, nodePa
 		} catch (error) {
 			reject(error);
 		}
+	});
+}
+
+/**
+ * Resolves the given module relative to the given workspace root. In contrast to
+ * `resolveModule` this method considers the parent chain as well.
+ */
+export function resolveModule2(workspaceRoot: string, moduleName: string, nodePath: string, tracer: (message: string, verbose?: string) => void): Thenable<any> {
+
+	return resolveModulePath(workspaceRoot, moduleName, nodePath, tracer).then((path) => {
+		return require(path);
 	});
 }
