@@ -380,7 +380,7 @@ export class LanguageClient {
 
 	private _state: ClientState;
 	private _onReady: Promise<void>;
-	private _onReadyCallbacks: { resolve: () => void; reject: () => void; };
+	private _onReadyCallbacks: { resolve: () => void; reject: (error) => void; };
 	private _connection: Thenable<IConnection>;
 	private _childProcess: ChildProcess;
 	private _outputChannel: OutputChannel;
@@ -700,7 +700,7 @@ export class LanguageClient {
 			this.initialize(connection);
 		}, (error) => {
 			this._state = ClientState.StartFailed;
-			this._onReadyCallbacks.reject();
+			this._onReadyCallbacks.reject(error);
 			this.error('Starting client failed', error);
 			Window.showErrorMessage(`Couldn't start client ${this._name}`);
 		});
@@ -753,7 +753,7 @@ export class LanguageClient {
 					this.initialize(connection);
 				} else {
 					this.stop();
-					this._onReadyCallbacks.reject();
+					this._onReadyCallbacks.reject(error);
 				}
 			} else if (error instanceof ResponseError && error.data && error.data.retry) {
 				Window.showErrorMessage(error.message, { title: 'Retry', id: "retry"}).then(item => {
@@ -761,7 +761,7 @@ export class LanguageClient {
 						this.initialize(connection);
 					} else {
 						this.stop();
-						this._onReadyCallbacks.reject();
+						this._onReadyCallbacks.reject(error);
 					}
 				});
 			} else {
@@ -770,7 +770,7 @@ export class LanguageClient {
 				}
 				this.error('Server initialization failed.', error);
 				this.stop();
-				this._onReadyCallbacks.reject();
+				this._onReadyCallbacks.reject(error);
 			}
 		});
 	}
