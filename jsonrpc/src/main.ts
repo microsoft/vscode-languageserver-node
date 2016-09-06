@@ -352,7 +352,7 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 			logger.error('Received empty message.');
 			return;
 		}
-		logger.error(`Recevied message which is neither a response nor a notification message:\n${JSON.stringify(message, null, 4)}`);
+		logger.error(`Received message which is neither a response nor a notification message:\n${JSON.stringify(message, null, 4)}`);
 		// Test whether we find an id to reject the promise
 		let responseMessage: ResponseMessage = message as ResponseMessage;
 		if (is.string(responseMessage.id) || is.number(responseMessage.id)) {
@@ -414,9 +414,9 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 		}
 		if (responsePromise) {
 			let error = message.error ? ` Request failed: ${message.error.message} (${message.error.code}).` : '';
-			tracer.log(`Recevied response '${responsePromise.method} - (${message.id})' in ${Date.now() - responsePromise.timerStart}ms.${error}`, data);
+			tracer.log(`Received response '${responsePromise.method} - (${message.id})' in ${Date.now() - responsePromise.timerStart}ms.${error}`, data);
 		} else {
-			tracer.log(`Recevied response ${message.id} without active response promise.`, data);
+			tracer.log(`Received response ${message.id} without active response promise.`, data);
 		}
 	}
 
