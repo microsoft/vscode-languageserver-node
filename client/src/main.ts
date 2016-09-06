@@ -70,7 +70,8 @@ import { terminate } from './utils/processes';
 import { Delayer } from './utils/async'
 
 export {
-	RequestType, NotificationType, NotificationHandler,
+	RequestType, NotificationType, NotificationHandler, RequestHandler,
+	ResponseError, InitializeError, ErrorCodes,
 	Position, Range, Location, TextDocumentIdentifier, TextDocumentPositionParams,
 	TextEdit, TextEditChange, WorkspaceChange,
 	c2p as Code2Protocol, p2c as Protocol2Code
