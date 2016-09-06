@@ -292,6 +292,10 @@ class DefaultErrorHandler implements ErrorHandler {
 	}
 }
 
+export interface InitializationFailedHandler {
+	(error: ResponseError<InitializeError> | Error | any): boolean;
+}
+
 export interface SynchronizeOptions {
 	configurationSection?: string | string[];
 	fileEvents?: FileSystemWatcher | FileSystemWatcher[];
@@ -309,6 +313,7 @@ export interface LanguageClientOptions {
 	 */
 	stdioEncoding?: string;
 	initializationOptions?: () => any | any;
+	initializationFailedHandler?: InitializationFailedHandler;
 	errorHandler?: ErrorHandler;
 	uriConverters?: {
 		code2Protocol: c2p.URIConverter,
@@ -742,7 +747,14 @@ export class LanguageClient {
 			Workspace.textDocuments.forEach(t => this.onDidOpenTextDoument(connection, t));
 			return result;
 		}, (error: any) => {
-			if (error instanceof ResponseError && error.data && error.data.retry) {
+			if (this._clientOptions.initializationFailedHandler) {
+				if (this._clientOptions.initializationFailedHandler(error)) {
+					this.initialize(connection);
+				} else {
+					this.stop();
+					this._onReadyCallbacks.reject();
+				}
+			} else if (error instanceof ResponseError && error.data && error.data.retry) {
 				Window.showErrorMessage(error.message, { title: 'Retry', id: "retry"}).then(item => {
 					if (is.defined(item) && item.id === 'retry') {
 						this.initialize(connection);
