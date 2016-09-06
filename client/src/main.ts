@@ -444,11 +444,6 @@ export class LanguageClient {
 		this._onReady = new Promise<void>((resolve, reject) => {
 			this._onReadyCallbacks = { resolve, reject };
 		});
-		this._onReady.then(null, () => {
-			// Do nothing for now. We shut down after the initialize.
-			// However to make the promise reject handler happy we register
-			// an empty callback.
-		});
 		this._telemetryEmitter = new Emitter<any>();
 		this._tracer = {
 			log: (message: string, data?: string) => {
@@ -516,6 +511,8 @@ export class LanguageClient {
 					}
 				}
 			});
+		}, (error) => {
+			this.error(`Sending notification ${type.method} failed.`, error)
 		});
 	}
 
@@ -528,6 +525,7 @@ export class LanguageClient {
 					this.error(`Registering notification handler ${type.method} failed.`, error);
 				}
 			})
+		}, (error) => {
 		});
 	}
 
@@ -540,6 +538,7 @@ export class LanguageClient {
 					this.error(`Registering request handler ${type.method} failed.`, error);
 				}
 			})
+		}, (error) => {
 		});
 	}
 
@@ -568,6 +567,7 @@ export class LanguageClient {
 			this.resolveConnection().then((connection) => {
 				connection.trace(value, this._tracer);
 			})
+		}, (error) => {
 		});
 	}
 
@@ -697,7 +697,8 @@ export class LanguageClient {
 				this._telemetryEmitter.fire(data);
 			});
 			connection.listen();
-			this.initialize(connection);
+			// Error is handled in the intialize call.
+			this.initialize(connection).then(null, (error) => {});
 		}, (error) => {
 			this._state = ClientState.StartFailed;
 			this._onReadyCallbacks.reject(error);
@@ -812,19 +813,21 @@ export class LanguageClient {
 		}
 	}
 
-	public notifyConfigurationChanged(settings: any): void {
+	private notifyConfigurationChanged(settings: any): void {
 		this.onReady().then(() => {
 			this.resolveConnection().then(connection => {
 				if (this.isConnectionActive()) {
 					connection.didChangeConfiguration({ settings });
 				}
 			}, (error) => {
-				console.error(`Syncing settings failed with error ${JSON.stringify(error, null, 4)}`);
+				this.error(`Syncing settings failed.`, JSON.stringify(error, null, 4));
 			});
+		}, (error) => {
+			this.error(`Syncing settings failed.`, JSON.stringify(error, null, 4));
 		});
 	}
 
-	public notifyFileEvent(event: FileEvent): void {
+	private notifyFileEvent(event: FileEvent): void {
 		this._fileEvents.push(event);
 		this._fileEventDelayer.trigger(() => {
 			this.onReady().then(() => {
@@ -834,6 +837,8 @@ export class LanguageClient {
 					}
 					this._fileEvents = [];
 				})
+			}, (error) => {
+				this.error(`Notify file events failed.`, error);
 			});
 		});
 	}
