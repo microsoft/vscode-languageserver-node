@@ -674,7 +674,23 @@ export namespace CompletionList {
 	}
 }
 
+/**
+ * MarkedString can be used to render human readable text. It is either a markdown string
+ * or a code-block that provides a language and a code snippet. Note that
+ * markdown strings will be sanitized - that means html will be escaped.
+ */
 export type MarkedString = string | { language: string; value: string };
+
+export namespace MarkedString {
+	/**
+	 * Creates a marked string from plain text.
+	 *
+	 * @param plainText The plain text.
+	 */
+	export function fromPlainText(plainText: string): MarkedString {
+		return plainText.replace(/[\\`*_{}[\]()#+\-.!]/g, "\\$&"); // escape markdown syntax tokens: http://daringfireball.net/projects/markdown/syntax#backslash
+	}
+}
 
 /**
  * The result of a hove request.
