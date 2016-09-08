@@ -322,6 +322,16 @@ export interface LanguageClientOptions {
 	};
 }
 
+export enum State {
+	Stopped = 1,
+	Running = 2
+}
+
+export interface StateChangeEvent {
+	oldState: State;
+	newState: State;
+}
+
 enum ClientState {
 	Initial,
 	Starting,
@@ -398,6 +408,7 @@ export class LanguageClient {
 	private _fileEventDelayer: Delayer<void>;
 
 	private _telemetryEmitter: Emitter<any>;
+	private _stateChangeEmitter: Emitter<StateChangeEvent>;
 
 	private _trace: Trace;
 	private _tracer: Tracer;
@@ -430,7 +441,7 @@ export class LanguageClient {
 		this._syncExpression = this.computeSyncExpression();
 		this._forceDebug = forceDebug;
 
-		this._state = ClientState.Initial;
+		this.state = ClientState.Initial;
 		this._connection = null;
 		this._childProcess = null;
 		this._outputChannel = null;
@@ -445,6 +456,7 @@ export class LanguageClient {
 			this._onReadyCallbacks = { resolve, reject };
 		});
 		this._telemetryEmitter = new Emitter<any>();
+		this._stateChangeEmitter = new Emitter<StateChangeEvent>();
 		this._tracer = {
 			log: (message: string, data?: string) => {
 				this.logTrace(message, data);
@@ -452,6 +464,27 @@ export class LanguageClient {
 		};
 		this._c2p = c2p.createConverter(clientOptions.uriConverters ? clientOptions.uriConverters.code2Protocol : undefined);
 		this._p2c = p2c.createConverter(clientOptions.uriConverters ? clientOptions.uriConverters.protocol2Code : undefined);
+	}
+
+	private get state(): ClientState {
+		return this._state;
+	}
+
+	private set state(value: ClientState) {
+		let oldState = this.getPublicState();
+		this._state = value;
+		let newState = this.getPublicState();
+		if (newState !== oldState) {
+			this._stateChangeEmitter.fire({ oldState, newState });
+		}
+	}
+
+	private getPublicState(): State {
+		if (this.state === ClientState.Running) {
+			return State.Running;
+		} else {
+			return State.Stopped;
+		}
 	}
 
 	private computeSyncExpression(): SyncExpression {
@@ -546,6 +579,10 @@ export class LanguageClient {
 		return this._telemetryEmitter.event;
 	}
 
+	public get onDidChangeState(): Event<StateChangeEvent> {
+		return this._stateChangeEmitter.event;
+	}
+
 	public get outputChannel(): OutputChannel {
 		if (!this._outputChannel) {
 			this._outputChannel = Window.createOutputChannel(this._clientOptions.outputChannelName ? this._clientOptions.outputChannelName : this._name);
@@ -619,11 +656,11 @@ export class LanguageClient {
 	}
 
 	public needsStart(): boolean {
-		return this._state === ClientState.Initial || this._state === ClientState.Stopping || this._state === ClientState.Stopped;
+		return this.state === ClientState.Initial || this.state === ClientState.Stopping || this.state === ClientState.Stopped;
 	}
 
 	public needsStop(): boolean {
-		return this._state === ClientState.Starting || this._state === ClientState.Running;
+		return this.state === ClientState.Starting || this.state === ClientState.Running;
 	}
 
 	public onReady(): Promise<void> {
@@ -631,7 +668,7 @@ export class LanguageClient {
 	}
 
 	private isConnectionActive(): boolean {
-		return this._state === ClientState.Running;
+		return this.state === ClientState.Running;
 	}
 
 	public start(): Disposable {
@@ -644,7 +681,7 @@ export class LanguageClient {
 				: Languages.createDiagnosticCollection();
 		}
 
-		this._state = ClientState.Starting;
+		this.state = ClientState.Starting;
 		this.resolveConnection().then((connection) => {
 			connection.onLogMessage((message) => {
 				switch(message.type) {
@@ -700,7 +737,7 @@ export class LanguageClient {
 			// Error is handled in the intialize call.
 			this.initialize(connection).then(null, (error) => {});
 		}, (error) => {
-			this._state = ClientState.StartFailed;
+			this.state = ClientState.StartFailed;
 			this._onReadyCallbacks.reject(error);
 			this.error('Starting client failed', error);
 			Window.showErrorMessage(`Couldn't start client ${this._name}`);
@@ -730,7 +767,7 @@ export class LanguageClient {
 			trace: Trace.toString(this._trace)
 		};
 		return connection.initialize(initParams).then((result) => {
-			this._state = ClientState.Running;
+			this.state = ClientState.Running;
 			this._capabilites = result.capabilities;
 			connection.onDiagnostics(params => this.handleDiagnostics(params));
 			if (this._capabilites.textDocumentSync !== TextDocumentSyncKind.None) {
@@ -778,17 +815,17 @@ export class LanguageClient {
 
 	public stop() {
 		if (!this._connection) {
-			this._state = ClientState.Stopped;
+			this.state = ClientState.Stopped;
 			return;
 		}
-		this._state = ClientState.Stopping;
+		this.state = ClientState.Stopping;
 		this.cleanUp();
 		// unkook listeners
 		this.resolveConnection().then(connection => {
 			connection.shutdown().then(() => {
 				connection.exit();
 				connection.dispose();
-				this._state = ClientState.Stopped;
+				this.state = ClientState.Stopped;
 				this._connection = null;
 				let toCheck = this._childProcess;
 				this._childProcess = null;
@@ -1012,7 +1049,7 @@ export class LanguageClient {
 
 	private handleConnectionClosed() {
 		// Check whether this is a normal shutdown in progress or the client stopped normally.
-		if (this._state === ClientState.Stopping || this._state === ClientState.Stopped) {
+		if (this.state === ClientState.Stopping || this.state === ClientState.Stopped) {
 			return;
 		}
 		this._connection = null;
@@ -1020,12 +1057,12 @@ export class LanguageClient {
 		let action = this._clientOptions.errorHandler.closed();
 		if (action === CloseAction.DoNotRestart) {
 			this.error('Connection to server got closed. Server will not be restarted.');
-			this._state = ClientState.Stopped;
+			this.state = ClientState.Stopped;
 			this.cleanUp();
-		} else if (action === CloseAction.Restart && this._state !== ClientState.Stopping) {
+		} else if (action === CloseAction.Restart && this.state !== ClientState.Stopping) {
 			this.info('Connection to server got closed. Server will restart.');
 			this.cleanUp(false);
-			this._state = ClientState.Initial;
+			this.state = ClientState.Initial;
 			this.start();
 		}
 	}
