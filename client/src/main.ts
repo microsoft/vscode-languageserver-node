@@ -313,7 +313,7 @@ export interface LanguageClientOptions {
 	 * to 'utf8' if ommitted.
 	 */
 	stdioEncoding?: string;
-	initializationOptions?: () => any | any;
+	initializationOptions?: any | (() => any);
 	initializationFailedHandler?: InitializationFailedHandler;
 	errorHandler?: ErrorHandler;
 	uriConverters?: {
