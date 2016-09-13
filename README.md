@@ -32,7 +32,7 @@ language servers for [VSCode](https://code.visualstudio.com/).
   * Support to convert URIs betweeen the client and the server.
   * Server connection.console logging now appears in the corresponding output channel instead of in the developer console.
   * If a non stdio communicaiton channel is used between client and server the server's stdio is redirected to the output channel.
-  * A client can now have an id and a name .
+  * A client can now have an id and a name.
 
 * 2.4.0 Client and Server
   * Data types such as Range, Position, TextDocument, Hover, CompletionItem... extracted to new node module _vscode-languageserver-types_.
