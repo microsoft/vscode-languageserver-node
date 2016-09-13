@@ -24,7 +24,17 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
-* Next (2.4.0) Client and Server
+* 2.5.0: Client and Server
+  * Better error handling on client side.
+  * Events for starting and stopping the server.
+  * Initialization options can be provided as a function.
+  * Support for stdio / stderr encoding.
+  * Support to convert URIs betweeen the client and the server.
+  * Server connection.console logging now appears in the corresponding output channel instead of in the developer console.
+  * If a non stdio communicaiton channel is used between client and server the server's stdio is redirected to the output channel.
+  * A client can now have an id and a name .
+
+* 2.4.0 Client and Server
   * Data types such as Range, Position, TextDocument, Hover, CompletionItem... extracted to new node module _vscode-languageserver-types_.
   The new node module is shared between the server and client and can also be used by language service libraries that want to use the same data types.
 

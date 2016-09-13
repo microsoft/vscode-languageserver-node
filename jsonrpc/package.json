@@ -1,7 +1,7 @@
 {
 	"name": "vscode-jsonrpc",
 	"description": "A json rpc implementation over streams",
-	"version": "2.3.2-next.5",
+	"version": "2.4.0",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"repository": {
@@ -17,7 +17,7 @@
 	"main": "./lib/main.js",
 	"typings": "./lib/main",
 	"devDependencies": {
-		"mocha": "^2.4.5",
+		"mocha": "^3.0.2",
 		"typescript": "^1.8.10"
 	},
 	"scripts": {
