@@ -78,7 +78,8 @@ export {
 		CodeLensRequest, CodeLensParams, CodeLensResolveRequest, CodeLens, CodeLensOptions,
 		DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
 		DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams, FormattingOptions,
-		RenameRequest, RenameParams, DocumentLink
+		RenameRequest, RenameParams, 
+		DocumentLink, DocumentLinkRequest, DocumentLinkResolveRequest
 }
 export { Event }
 
@@ -690,14 +691,14 @@ export interface IConnection {
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentLinkRequest(handler: RequestHandler<DocumentLinkParams, DocumentLink[], void>): void;	
+	onDocumentLinks(handler: RequestHandler<DocumentLinkParams, DocumentLink[], void>): void;	
 
 	/**
 	 * Installs a handler for the document links resolve request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentLinkResolveRequest(handler: RequestHandler<DocumentLink, DocumentLink, void>): void;	
+	onDocumentLinkResolve(handler: RequestHandler<DocumentLink, DocumentLink, void>): void;	
 
 	/**
 	 * Disposes the connection
@@ -842,8 +843,8 @@ export function createConnection(input?: any, output?: any): IConnection {
 		onDocumentRangeFormatting: (handler) => connection.onRequest(DocumentRangeFormattingRequest.type, handler),
 		onDocumentOnTypeFormatting: (handler) => connection.onRequest(DocumentOnTypeFormattingRequest.type, handler),
 		onRenameRequest: (handler) => connection.onRequest(RenameRequest.type, handler),
-		onDocumentLinkRequest: (handler) => connection.onRequest(DocumentLinkRequest.type, handler),
-		onDocumentLinkResolveRequest: (handler) => connection.onRequest(DocumentLinkResolveRequest.type, handler),
+		onDocumentLinks: (handler) => connection.onRequest(DocumentLinkRequest.type, handler),
+		onDocumentLinkResolve: (handler) => connection.onRequest(DocumentLinkResolveRequest.type, handler),
 
 		dispose: () => connection.dispose()
 	};
