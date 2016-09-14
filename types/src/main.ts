@@ -1093,6 +1093,44 @@ export namespace FormattingOptions {
 }
 
 /**
+ * A document link is a range in a text document that links to an internal or external resource, like another
+ * text document or a web site.
+ */
+export class DocumentLink {
+
+	/**
+	 * The range this link applies to.
+	 */
+	range: Range;
+
+	/**
+	 * The uri this link points to.
+	 */
+	target: string;
+}
+
+/**
+ * The DocumentLink namespace provides helper functions to work with
+ * [DocumentLink](#DocumentLink) literals.
+ */
+export namespace DocumentLink {
+	/**
+	 * Creates a new DocumentLink literal.
+	 */
+	export function create(range: Range, target?: string): DocumentLink {
+		return { range, target };
+	}
+
+	/**
+	 * Checks whether the given literal conforms to the [DocumentLink](#DocumentLink) interface.
+	 */
+	export function is(value: any): value is DocumentLink {
+		let candidate = value as DocumentLink;
+		return Is.defined(candidate) && Range.is(candidate.range) && (Is.undefined(candidate.target) || Is.string(candidate.target));
+	}	
+}
+
+/**
  * A simple text document. Not to be implemenented.
  */
 export interface TextDocument {

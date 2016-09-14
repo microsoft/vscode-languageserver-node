@@ -6,5 +6,5 @@
 
 Npm module to implement a VSCode language server using [Node.js](https://nodejs.org/) as a runtime.
 
-Click [here](https://code.visualstudio.com/docs/extensions/example-language-server) for a detaild document on how to uses this npm module
+Click [here](https://code.visualstudio.com/docs/extensions/example-language-server) for a detailed document on how to use this npm module
 to implement language servers for [VSCode](https://code.visualstudio.com/).

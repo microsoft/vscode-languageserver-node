@@ -24,6 +24,9 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
+* Next: Client and Server
+  * Support for Document Link Providers
+
 * 2.5.0: Client and Server
   * Better error handling on client side.
   * Events for starting and stopping the server.

@@ -13,7 +13,8 @@ import {
 		CancellationToken, Hover as VHover, Position as VPosition, Location as VLocation, Range as VRange,
 		CompletionItem as VCompletionItem, CompletionList as VCompletionList, SignatureHelp as VSignatureHelp, Definition as VDefinition, DocumentHighlight as VDocumentHighlight,
 		SymbolInformation as VSymbolInformation, CodeActionContext as VCodeActionContext, Command as VCommand, CodeLens as VCodeLens,
-		FormattingOptions as VFormattingOptions, TextEdit as VTextEdit, WorkspaceEdit as VWorkspaceEdit, MessageItem
+		FormattingOptions as VFormattingOptions, TextEdit as VTextEdit, WorkspaceEdit as VWorkspaceEdit, MessageItem,
+		DocumentLink as VDocumentLink
 } from 'vscode';
 
 import {
@@ -33,7 +34,7 @@ import {
 		DocumentHighlight, DocumentHighlightKind,
 		SymbolInformation, SymbolKind,
 		CodeLens,
-		FormattingOptions
+		FormattingOptions, DocumentLink
 } from 'vscode-languageserver-types';
 
 
@@ -58,7 +59,8 @@ import {
 		CodeLensRequest, CodeLensResolveRequest,
 		DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
 		DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams,
-		RenameRequest, RenameParams
+		RenameRequest, RenameParams,
+		DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkParams
 } from './protocol';
 
 import * as c2p from './codeConverter';
@@ -1211,6 +1213,7 @@ export class LanguageClient {
 		this.hookDocumentRangeFormattingProvider(documentSelector, connection);
 		this.hookDocumentOnTypeFormattingProvider(documentSelector, connection);
 		this.hookRenameProvider(documentSelector, connection);
+		this.hookDocumentLinkProvider(documentSelector, connection);
 	}
 
 	private logFailedRequest(type: RequestType<any, any, any>, error: any): void {
@@ -1504,6 +1507,34 @@ export class LanguageClient {
 			}
 		}));
 	}
+
+	private hookDocumentLinkProvider(documentSelector: DocumentSelector, connection: IConnection): void {
+		if (!this._capabilites.documentLinkProvider) {
+			return;
+		}
+		this._providers.push(Languages.registerDocumentLinkProvider(documentSelector, {
+			provideDocumentLinks: (document: TextDocument, token: CancellationToken): Thenable<VDocumentLink[]> => {
+				return this.doSendRequest(connection, DocumentLinkRequest.type, this._c2p.asDocumentLinkParams(document), token).then(
+					this._p2c.asDocumentLinks,
+					(error: ResponseError<void>) => {
+						this.logFailedRequest(DocumentLinkRequest.type, error);
+						Promise.resolve(new Error(error.message));
+					}
+				)
+			},
+			resolveDocumentLink: this._capabilites.documentLinkProvider.resolveProvider
+				? (link: VDocumentLink, token: CancellationToken): Thenable<VDocumentLink> => {
+					return this.doSendRequest(connection, DocumentLinkResolveRequest.type, this._c2p.asDocumentLink(link), token).then(
+						this._p2c.asDocumentLink,
+						(error: ResponseError<void>) => {
+							this.logFailedRequest(DocumentLinkResolveRequest.type, error);
+							Promise.resolve(new Error(error.message));
+						}
+					)		
+				} 
+				: undefined
+		}));
+	}	
 }
 
 export class SettingMonitor {

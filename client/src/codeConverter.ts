@@ -56,6 +56,10 @@ export interface Converter {
 	asDocumentSymbolParams(textDocument: code.TextDocument): proto.DocumentSymbolParams;
 
 	asCodeLensParams(textDocument: code.TextDocument): proto.CodeLensParams;
+
+	asDocumentLink(item: code.DocumentLink): ls.DocumentLink;
+
+	asDocumentLinkParams(textDocument: code.TextDocument): proto.DocumentLinkParams;
 }
 
 export interface URIConverter {
@@ -277,6 +281,18 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		};
 	}
 
+	function asDocumentLink(item: code.DocumentLink): ls.DocumentLink {
+		let result = ls.DocumentLink.create(asRange(item.range));
+		if (is.defined(item.target)) result.target = asUri(item.target);
+		return result;
+	}
+
+	function asDocumentLinkParams(textDocument: code.TextDocument): proto.DocumentLinkParams {
+		return {
+			textDocument: asTextDocumentIdentifier(textDocument)
+		};
+	}
+
 	return {
 		asUri,
 		asTextDocumentIdentifier,
@@ -299,7 +315,9 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asCodeLens,
 		asFormattingOptions,
 		asDocumentSymbolParams,
-		asCodeLensParams
+		asCodeLensParams,
+		asDocumentLink,
+		asDocumentLinkParams
 	}
 }
 

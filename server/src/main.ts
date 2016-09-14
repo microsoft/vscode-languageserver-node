@@ -24,7 +24,7 @@ import {
 		DocumentHighlight, DocumentHighlightKind,
 		SymbolInformation, SymbolKind,
 		CodeLens,
-		FormattingOptions,
+		FormattingOptions, DocumentLink
 	} from 'vscode-languageserver-types';
 
 import {
@@ -50,7 +50,8 @@ import {
 		CodeLensRequest, CodeLensParams, CodeLensResolveRequest,
 		DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
 		DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams,
-		RenameRequest, RenameParams
+		RenameRequest, RenameParams,
+		DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkParams
 	} from './protocol';
 
 import * as Is from './utils/is';
@@ -77,7 +78,7 @@ export {
 		CodeLensRequest, CodeLensParams, CodeLensResolveRequest, CodeLens, CodeLensOptions,
 		DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
 		DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams, FormattingOptions,
-		RenameRequest, RenameParams
+		RenameRequest, RenameParams, DocumentLink
 }
 export { Event }
 
@@ -678,11 +679,26 @@ export interface IConnection {
 	onDocumentOnTypeFormatting(handler: RequestHandler<DocumentOnTypeFormattingParams, TextEdit[], void>): void;
 
 	/**
-	 * Installs a handler for rename request.
+	 * Installs a handler for the rename request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
 	onRenameRequest(handler: RequestHandler<RenameParams, WorkspaceEdit, void>): void;
+
+	/**
+	 * Installs a handler for the document links request.
+	 *
+	 * @param handler The corresponding handler.
+	 */
+	onDocumentLinkRequest(handler: RequestHandler<DocumentLinkParams, DocumentLink[], void>): void;	
+
+	/**
+	 * Installs a handler for the document links resolve request.
+	 *
+	 * @param handler The corresponding handler.
+	 */
+	onDocumentLinkResolveRequest(handler: RequestHandler<DocumentLink, DocumentLink, void>): void;	
+
 	/**
 	 * Disposes the connection
 	 */
@@ -826,6 +842,8 @@ export function createConnection(input?: any, output?: any): IConnection {
 		onDocumentRangeFormatting: (handler) => connection.onRequest(DocumentRangeFormattingRequest.type, handler),
 		onDocumentOnTypeFormatting: (handler) => connection.onRequest(DocumentOnTypeFormattingRequest.type, handler),
 		onRenameRequest: (handler) => connection.onRequest(RenameRequest.type, handler),
+		onDocumentLinkRequest: (handler) => connection.onRequest(DocumentLinkRequest.type, handler),
+		onDocumentLinkResolveRequest: (handler) => connection.onRequest(DocumentLinkResolveRequest.type, handler),
 
 		dispose: () => connection.dispose()
 	};

@@ -18,7 +18,7 @@ import {
 		DocumentHighlight, DocumentHighlightKind,
 		SymbolInformation, SymbolKind,
 		CodeLens, CodeActionContext,
-		FormattingOptions,
+		FormattingOptions, DocumentLink
 	} from 'vscode-languageserver-types';
 
 /**
@@ -122,6 +122,16 @@ export interface DocumentOnTypeFormattingOptions {
 }
 
 /**
+ * Document link options
+ */
+export interface DocumentLinkOptions {
+	/**
+	 * Document links have a resolve provider as well.
+	 */
+	resolveProvider?: boolean;
+}
+
+/**
  * Defines the capabilities provided by a language
  * server.
  */
@@ -185,7 +195,11 @@ export interface ServerCapabilities {
 	/**
 	 * The server provides rename support.
 	 */
-	renameProvider?: boolean
+	renameProvider?: boolean;
+	/**
+	 * The server provides document link support.
+	 */
+	documentLinkProvider?: DocumentLinkOptions;
 }
 
 /**
@@ -877,4 +891,29 @@ export interface RenameParams {
  */
 export namespace RenameRequest {
 	export const type: RequestType<RenameParams, WorkspaceEdit, void> = { get method() { return 'textDocument/rename'; } };
+}
+
+//---- Document Links ----------------------------------------------
+
+export interface DocumentLinkParams {
+	/**
+	 * The document to provide document links for.
+	 */
+	textDocument: TextDocumentIdentifier;
+}
+
+/**
+ * A request to provide document links
+ */
+export namespace DocumentLinkRequest {
+	export const type: RequestType<DocumentLinkParams, DocumentLink[], void> = { get method() { return 'textDocument/documentLink'; } };
+}
+
+/**
+ * Request to resolve additional information for a given document link. The request's
+ * parameter is of type [DocumentLink](#DocumentLink) the response
+ * is of type [DocumentLink](#DocumentLink) or a Thenable that resolves to such.
+ */
+export namespace DocumentLinkResolveRequest {
+	export const type: RequestType<DocumentLink, DocumentLink, void> = { get method() { return 'documentLink/resolve'; } };
 }

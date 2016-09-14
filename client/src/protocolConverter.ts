@@ -69,6 +69,10 @@ export interface Converter {
 	asCodeLenses(items: ls.CodeLens[]): code.CodeLens[];
 
 	asWorkspaceEdit(item: ls.WorkspaceEdit): code.WorkspaceEdit;
+
+	asDocumentLink(item: ls.DocumentLink): code.DocumentLink;
+
+	asDocumentLinks(items: ls.DocumentLink[]): code.DocumentLink[];
 }
 
 export interface URIConverter {
@@ -297,6 +301,16 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return result;
 	}
 
+	function asDocumentLink(item: ls.DocumentLink): code.DocumentLink {
+		let range = asRange(item.range);
+		let target = is.defined(item.target) && asUri(item.target);
+		return new code.DocumentLink(range, target);
+	}
+
+	function asDocumentLinks(items: ls.DocumentLink[]): code.DocumentLink[] {
+		return items.map(asDocumentLink);
+	}	
+
 	return {
 		asUri,
 		asDiagnostics,
@@ -326,7 +340,9 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asCommands,
 		asCodeLens,
 		asCodeLenses,
-		asWorkspaceEdit
+		asWorkspaceEdit,
+		asDocumentLink,
+		asDocumentLinks
 	}
 }
 
@@ -361,3 +377,5 @@ export const asCommands: (items: ls.Command[]) => code.Command[] = defaultConver
 export const asCodeLens: (item: ls.CodeLens) => code.CodeLens = defaultConverter.asCodeLens;
 export const asCodeLenses: (items: ls.CodeLens[]) => code.CodeLens[] = defaultConverter.asCodeLenses;
 export const asWorkspaceEdit: (item: ls.WorkspaceEdit) => code.WorkspaceEdit = defaultConverter.asWorkspaceEdit;
+export const asDocumentLink: (item: ls.DocumentLink) => code.DocumentLink = defaultConverter.asDocumentLink;
+export const asDocumentLinks: (item: ls.DocumentLink[]) => code.DocumentLink[] = defaultConverter.asDocumentLinks;
