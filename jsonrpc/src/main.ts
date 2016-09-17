@@ -447,19 +447,25 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 		}
 	}
 
+	function throwIfNotListening() {
+		if (!isListening()) {
+			throw new Error('Call listen() first.');
+		}
+	}
+
 	let connection: MessageConnection = {
 		sendNotification: <P>(type: NotificationType<P>, params): void  => {
 			throwIfClosedOrDisposed();
 
-			let notificatioMessage : NotificationMessage = {
+			let notificationMessage : NotificationMessage = {
 				jsonrpc: version,
 				method: type.method,
 				params: params
 			}
 			if (trace != Trace.Off && tracer) {
-				traceSendNotification(notificatioMessage);
+				traceSendNotification(notificationMessage);
 			}
-			messageWriter.write(notificatioMessage);
+			messageWriter.write(notificationMessage);
 		},
 		onNotification: <P>(type: NotificationType<P>, handler: NotificationHandler<P>) => {
 			throwIfClosedOrDisposed();
@@ -468,6 +474,7 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 		},
 		sendRequest: <P, R, E>(type: RequestType<P, R, E>, params: P, token?:CancellationToken) => {
 			throwIfClosedOrDisposed();
+			throwIfNotListening();
 
 			let id = sequenceNumber++;
 			let result = new Promise<R | ResponseError<E>>((resolve, reject) => {
