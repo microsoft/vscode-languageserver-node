@@ -457,15 +457,15 @@ function createMessageConnection<T extends MessageConnection>(messageReader: Mes
 		sendNotification: <P>(type: NotificationType<P>, params): void  => {
 			throwIfClosedOrDisposed();
 
-			let notificatioMessage : NotificationMessage = {
+			let notificationMessage : NotificationMessage = {
 				jsonrpc: version,
 				method: type.method,
 				params: params
 			}
 			if (trace != Trace.Off && tracer) {
-				traceSendNotification(notificatioMessage);
+				traceSendNotification(notificationMessage);
 			}
-			messageWriter.write(notificatioMessage);
+			messageWriter.write(notificationMessage);
 		},
 		onNotification: <P>(type: NotificationType<P>, handler: NotificationHandler<P>) => {
 			throwIfClosedOrDisposed();
