@@ -128,9 +128,16 @@ export function resolveModulePath(workspaceRoot: string, moduleName: string, nod
 	function getGlobalNodePath(): string {
 		let npmCommand = isWindows() ? 'npm.cmd' : 'npm';
 
-		let prefix = spawnSync(npmCommand, ['config', 'get', 'prefix'], {
+		let stdout = spawnSync(npmCommand, ['config', 'get', 'prefix'], {
 			encoding: 'utf8'
-		}).stdout.trim();
+		}).stdout;
+		if (!stdout) {
+			if (tracer) {
+				tracer(`'npm config get prefix' didn't return a value.`);
+			}
+			return undefined;
+		}
+		let prefix = stdout.trim();
 		if (tracer) {
 			tracer(`'npm config get prefix' value is: ${prefix}`);
 		}
