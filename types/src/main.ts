@@ -1127,7 +1127,7 @@ export namespace DocumentLink {
 	export function is(value: any): value is DocumentLink {
 		let candidate = value as DocumentLink;
 		return Is.defined(candidate) && Range.is(candidate.range) && (Is.undefined(candidate.target) || Is.string(candidate.target));
-	}	
+	}
 }
 
 /**
@@ -1375,5 +1375,4 @@ namespace Is {
 	export function typedArray<T>(value: any, check: (value: any) => boolean): value is T[] {
 		return Array.isArray(value) && (<any[]>value).every(check);
 	}
-
 }

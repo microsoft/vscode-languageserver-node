@@ -45,7 +45,7 @@ class DisposableImpl implements Disposable {
 	 * @return Returns a new disposable which, upon dispose, will
 	 * dispose all provides disposable-likes.
 	 */
-	static from(...disposables: { dispose(): any }[]): DisposableImpl {
+	static from(...disposables: Disposable[]): DisposableImpl {
 		return new DisposableImpl(function () {
 			if (disposables) {
 				for(let disposable of disposables) {

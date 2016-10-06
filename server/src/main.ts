@@ -2,11 +2,23 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
+/// <reference path="./thenable.ts" />
 'use strict';
 
 import {
-		RequestType, RequestHandler, NotificationType, NotificationHandler, ResponseError, ErrorCodes,
-		MessageConnection, ServerMessageConnection, Logger, createServerMessageConnection,
+		RequestType, RequestType0, RequestType1, RequestType2, RequestType3, RequestType4,
+		RequestType5, RequestType6, RequestType7, RequestType8, RequestType9,
+		RequestHandler, RequestHandler0, RequestHandler1, RequestHandler2, RequestHandler3,
+		RequestHandler4, RequestHandler5, RequestHandler6, RequestHandler7, RequestHandler8,
+		RequestHandler9, GenericRequestHandler,
+		NotificationType, NotificationType0, NotificationType1, NotificationType2, NotificationType3,
+		NotificationType4, NotificationType5, NotificationType6, NotificationType7, NotificationType8,
+		NotificationType9,
+		NotificationHandler, NotificationHandler0, NotificationHandler1, NotificationHandler2,
+		NotificationHandler3, NotificationHandler4, NotificationHandler5, NotificationHandler6,
+		NotificationHandler7, NotificationHandler8, NotificationHandler9, GenericNotificationHandler,
+		Message, MessageType as RPCMessageType, ResponseError, ErrorCodes,
+		MessageConnection, Logger, createMessageConnection,
 		MessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
 		MessageWriter, StreamMessageWriter, IPCMessageWriter,
 		CancellationToken, CancellationTokenSource,
@@ -58,7 +70,18 @@ import * as Is from './utils/is';
 
 // ------------- Reexport the API surface of the language worker API ----------------------
 export {
-		RequestType, RequestHandler, NotificationType, NotificationHandler, ResponseError, ErrorCodes,
+		RequestType, RequestType0, RequestType1, RequestType2, RequestType3, RequestType4,
+		RequestType5, RequestType6, RequestType7, RequestType8, RequestType9,
+		RequestHandler, RequestHandler0, RequestHandler1, RequestHandler2, RequestHandler3,
+		RequestHandler4, RequestHandler5, RequestHandler6, RequestHandler7, RequestHandler8,
+		RequestHandler9,
+		NotificationType, NotificationType0, NotificationType1, NotificationType2, NotificationType3,
+		NotificationType4, NotificationType5, NotificationType6, NotificationType7, NotificationType8,
+		NotificationType9,
+		NotificationHandler, NotificationHandler0, NotificationHandler1, NotificationHandler2,
+		NotificationHandler3, NotificationHandler4, NotificationHandler5, NotificationHandler6,
+		NotificationHandler7, NotificationHandler8, NotificationHandler9,
+		ResponseError, ErrorCodes,
 		MessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
 		MessageWriter, StreamMessageWriter, IPCMessageWriter,
 		MessageActionItem,
@@ -78,7 +101,7 @@ export {
 		CodeLensRequest, CodeLensParams, CodeLensResolveRequest, CodeLens, CodeLensOptions,
 		DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
 		DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams, FormattingOptions,
-		RenameRequest, RenameParams, 
+		RenameRequest, RenameParams,
 		DocumentLink, DocumentLinkRequest, DocumentLinkResolveRequest
 }
 export { Event }
@@ -449,28 +472,29 @@ export interface IConnection {
 	listen(): void;
 
 	/**
+	 * Installs a request handler for the given method.
+	 *
+	 * @param method The method to register a request handler for.
+	 * @param handler The handler to install.
+	 */
+	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): void;
+
+	/**
 	 * Installs a request handler described by the given [RequestType](#RequestType).
 	 *
 	 * @param type The [RequestType](#RequestType) describing the request.
 	 * @param handler The handler to install
 	 */
+	onRequest<R, E>(type: RequestType0<R, E>, handler: RequestHandler0<R, E>): void;
 	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): void;
 
 	/**
-	 * Installs a notification handler described by the given [NotificationType](#NotificationType).
+	 * Send a request to the client.
 	 *
-	 * @param type The [NotificationType](#NotificationType) describing the notification.
-	 * @param handler The handler to install
+	 * @param method The method to invoke on the client.
+	 * @param params The request's parameters.
 	 */
-	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): void;
-
-	/**
-	 * Send a notification to the client.
-	 *
-	 * @param type The [NotificationType](#NotificationType) describing the notification.
-	 * @param params The notification's parameters.
-	 */
-	sendNotification<P>(type: NotificationType<P>, params?: P): void;
+	sendRequest<R>(method: string, ...params: any[]): Thenable<R>;
 
 	/**
 	 * Send a request to the client.
@@ -478,7 +502,42 @@ export interface IConnection {
 	 * @param type The [RequestType](#RequestType) describing the request.
 	 * @param params The request's parameters.
 	 */
-	sendRequest<P, R, E>(type: RequestType<P, R, E>, params?: P): Thenable<R>;
+	sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): Thenable<R>;
+	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): Thenable<R>;
+
+	/**
+	 * Installs a notification handler for the given method.
+	 *
+	 * @param method The method to register a request handler for.
+	 * @param handler The handler to install.
+	 */
+	onNotification(method: string, handler: GenericNotificationHandler): void;
+
+	/**
+	 * Installs a notification handler described by the given [NotificationType](#NotificationType).
+	 *
+	 * @param type The [NotificationType](#NotificationType) describing the notification.
+	 * @param handler The handler to install.
+	 */
+	onNotification(type: NotificationType0, handler: NotificationHandler0): void;
+	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): void;
+
+	/**
+	 * Send a notification to the client.
+	 *
+	 * @param method The method to invoke on the client.
+	 * @param params The notification's parameters.
+	 */
+	sendNotification(method: string, ...args: any[]): void;
+
+	/**
+	 * Send a notification to the client.
+	 *
+	 * @param type The [NotificationType](#NotificationType) describing the notification.
+	 * @param params The notification's parameters.
+	 */
+	sendNotification(type: NotificationType0): void;
+	sendNotification<P>(type: NotificationType<P>, params?: P): void;
 
 	/**
 	 * Installs a handler for the intialize request.
@@ -492,14 +551,14 @@ export interface IConnection {
 	 *
 	 * @param handler The initialize handler.
 	 */
-	onShutdown(handler: RequestHandler<void, void, void>): void;
+	onShutdown(handler: RequestHandler0<void, void>): void;
 
 	/**
 	 * Installs a handler for the exit notification.
 	 *
 	 * @param handler The exit handler.
 	 */
-	onExit(handler: NotificationHandler<void>): void;
+	onExit(handler: NotificationHandler0): void;
 
 	/**
 	 * A proxy for VSCode's development console. See [RemoteConsole](#RemoteConsole)
@@ -691,14 +750,14 @@ export interface IConnection {
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentLinks(handler: RequestHandler<DocumentLinkParams, DocumentLink[], void>): void;	
+	onDocumentLinks(handler: RequestHandler<DocumentLinkParams, DocumentLink[], void>): void;
 
 	/**
 	 * Installs a handler for the document links resolve request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentLinkResolve(handler: RequestHandler<DocumentLink, DocumentLink, void>): void;	
+	onDocumentLinkResolve(handler: RequestHandler<DocumentLink, DocumentLink, void>): void;
 
 	/**
 	 * Disposes the connection
@@ -783,12 +842,14 @@ export function createConnection(input?: any, output?: any): IConnection {
 	}
 
 	const logger = new ConnectionLogger();
-	const connection = createServerMessageConnection(input, output, logger);
+	const connection = createMessageConnection(input, output, logger);
 	logger.attach(connection);
 	const remoteWindow = new RemoteWindowImpl(connection);
 	const telemetry = new TelemetryImpl(connection);
 	const tracer = new TracerImpl(connection);
 
+	function asThenable<T>(value: Thenable<T>): Thenable<T>;
+	function asThenable<T>(value: T): Thenable<T>;
 	function asThenable<T>(value: T | Thenable<T>): Thenable<T> {
 		if (Is.thenable(value)) {
 			return value;
@@ -797,15 +858,17 @@ export function createConnection(input?: any, output?: any): IConnection {
 		}
 	}
 
-	let shutdownHandler: RequestHandler<void, void, void> = null;
+	let shutdownHandler: RequestHandler0<void, void> = null;
 	let initializeHandler: RequestHandler<InitializeParams, InitializeResult, InitializeError> = null;
-	let exitHandler: NotificationHandler<void> = null;
+	let exitHandler: NotificationHandler0 = null;
 	let protocolConnection: IConnection & ConnectionState = {
 		listen: (): void => connection.listen(),
-		sendRequest: <P, R, E>(type: RequestType<P, R, E>, params?: P): Thenable<R> => connection.sendRequest(type, params),
-		onRequest: <P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): void => connection.onRequest(type, handler),
-		sendNotification: <P>(type: NotificationType<P>, params?: P): void => connection.sendNotification(type, params),
-		onNotification: <P>(type: NotificationType<P>, handler: NotificationHandler<P>): void => connection.onNotification(type, handler),
+
+		sendRequest: <R>(type, ...params: any[]): Thenable<R> => connection.sendRequest(type, ...params),
+		onRequest: <R, E>(type: string | RPCMessageType, handler: GenericRequestHandler<R, E>): void => connection.onRequest(type, handler),
+
+		sendNotification: (type: string | RPCMessageType, ...params: any[]): void => connection.sendNotification(type, ...params),
+		onNotification: (type: string | RPCMessageType, handler: GenericNotificationHandler): void => connection.onNotification(type, handler),
 
 		onInitialize: (handler) => initializeHandler = handler,
 		onShutdown: (handler) => shutdownHandler = handler,
@@ -891,10 +954,10 @@ export function createConnection(input?: any, output?: any): IConnection {
 		}
 	});
 
-	connection.onRequest(ShutdownRequest.type, (params) => {
+	connection.onRequest<void, void>(ShutdownRequest.type, () => {
 		shutdownReceived = true;
 		if (shutdownHandler) {
-			return shutdownHandler(params, new CancellationTokenSource().token);
+			return shutdownHandler(new CancellationTokenSource().token);
 		} else {
 			return undefined;
 		}
@@ -903,7 +966,7 @@ export function createConnection(input?: any, output?: any): IConnection {
 	connection.onNotification(ExitNotification.type, (params) => {
 		try {
 			if (exitHandler) {
-				exitHandler(params);
+				exitHandler();
 			}
 		} finally {
 			if (shutdownReceived) {

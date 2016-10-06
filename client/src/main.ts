@@ -18,9 +18,18 @@ import {
 } from 'vscode';
 
 import {
-		Message,
-		RequestHandler, NotificationHandler, MessageConnection, ClientMessageConnection, Logger, createClientMessageConnection,
-		ErrorCodes, ResponseError, RequestType, NotificationType,
+		Message, MessageType as RPCMessageType, MessageConnection, Logger, createMessageConnection, ErrorCodes, ResponseError,
+		RequestType, RequestType0, RequestType1, RequestType2, RequestType3, RequestType4,
+		RequestType5, RequestType6, RequestType7, RequestType8, RequestType9,
+		RequestHandler, RequestHandler0, RequestHandler1, RequestHandler2, RequestHandler3,
+		RequestHandler4, RequestHandler5, RequestHandler6, RequestHandler7, RequestHandler8,
+		RequestHandler9, GenericRequestHandler,
+		NotificationType, NotificationType0, NotificationType1, NotificationType2, NotificationType3,
+		NotificationType4, NotificationType5, NotificationType6, NotificationType7, NotificationType8,
+		NotificationType9,
+		NotificationHandler, NotificationHandler0, NotificationHandler1, NotificationHandler2,
+		NotificationHandler3, NotificationHandler4, NotificationHandler5, NotificationHandler6,
+		NotificationHandler7, NotificationHandler8, NotificationHandler9, GenericNotificationHandler,
 		MessageReader, IPCMessageReader, MessageWriter, IPCMessageWriter, Trace, Tracer, Event, Emitter
 } from 'vscode-jsonrpc';
 
@@ -72,8 +81,9 @@ import { terminate } from './utils/processes';
 import { Delayer } from './utils/async'
 
 export {
-	RequestType, NotificationType, NotificationHandler, RequestHandler,
 	ResponseError, InitializeError, ErrorCodes,
+	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler,
+	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler,
 	Position, Range, Location, TextDocumentIdentifier, TextDocumentPositionParams,
 	TextEdit, TextEditChange, WorkspaceChange,
 	c2p as Code2Protocol, p2c as Protocol2Code
@@ -85,10 +95,28 @@ interface IConnection {
 
 	listen(): void;
 
-	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): Thenable<R>;
-	sendNotification<P>(type: NotificationType<P>, params: P): void;
-	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): void;
+	sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken) : Thenable<R>;
+	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken) : Thenable<R>;
+	sendRequest<R>(method: string, token?: CancellationToken) : Thenable<R>;
+	sendRequest<R>(method: string, param: any, token?: CancellationToken) : Thenable<R>;
+	sendRequest<R>(type: string | RPCMessageType, ...params: any[]): Thenable<R>;
+
+	onRequest<R, E>(type: RequestType0<R, E>, handler: RequestHandler0<R, E>): void;
 	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): void;
+	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): void;
+	onRequest<R, E>(method: string | RPCMessageType, handler: GenericRequestHandler<R, E>): void;
+
+	sendNotification(type: NotificationType0): void;
+	sendNotification<P>(type: NotificationType<P>, params?: P): void;
+	sendNotification(method: string): void;
+	sendNotification(method: string, params: any): void;
+	sendNotification(method: string | RPCMessageType, params?: any): void;
+
+	onNotification(type: NotificationType0, handler: NotificationHandler0): void;
+	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): void;
+	onNotification(method: string, handler: GenericNotificationHandler): void;
+	onNotification(method: string | RPCMessageType, handler: GenericNotificationHandler): void;
+
 	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): void;
 
 	initialize(params: InitializeParams): Thenable<InitializeResult>;
@@ -137,17 +165,18 @@ function createConnection(inputStream: NodeJS.ReadableStream, outputStream: Node
 function createConnection(reader: MessageReader, writer: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler): IConnection;
 function createConnection(input: any, output: any, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler): IConnection {
 	let logger = new ConsoleLogger();
-	let connection = createClientMessageConnection(input, output, logger);
+	let connection = createMessageConnection(input, output, logger);
 	connection.onError((data) => { errorHandler(data[0], data[1], data[2])});
 	connection.onClose(closeHandler);
 	let result: IConnection = {
 
 		listen: (): void => connection.listen(),
 
-		sendRequest: <P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): Thenable<R> => connection.sendRequest(type, params, token),
-		sendNotification: <P>(type: NotificationType<P>, params: P): void => connection.sendNotification(type, params),
-		onNotification: <P>(type: NotificationType<P>, handler: NotificationHandler<P>): void => connection.onNotification(type, handler),
-		onRequest: <P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): void => connection.onRequest(type, handler),
+		sendRequest: <R>(type: string | RPCMessageType, ...params: any[]): Thenable<R> => connection.sendRequest(type, ...params),
+		onRequest: <P, R, E>(type: string | RPCMessageType, handler: GenericRequestHandler<R, E>): void => connection.onRequest(type, handler),
+
+		sendNotification: (type: string | RPCMessageType, params?: any): void => connection.sendNotification(type, params),
+		onNotification: (type: string | RPCMessageType, handler: GenericNotificationHandler): void => connection.onNotification(type, handler),
 
 		trace: (value: Trace, tracer: Tracer, sendNotification: boolean = false): void => connection.trace(value, tracer, sendNotification),
 
@@ -513,28 +542,57 @@ export class LanguageClient {
 		}
 	}
 
-	public sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): Thenable<R> {
+
+	public sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): Thenable<R>;
+	public sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): Thenable<R>;
+	public sendRequest<R>(method: string, token?: CancellationToken): Thenable<R>;
+	public sendRequest<R>(method: string, param: any, token?: CancellationToken): Thenable<R>;
+	public sendRequest<R>(type: string | RPCMessageType, ...params: any[]): Thenable<R> {
 		return this.onReady().then(() => {
 			return this.resolveConnection().then((connection) => {
-				return this.doSendRequest(connection, type, params, token);
+				return this._doSendRequest(connection, type, params);
 			});
 		});
 	}
 
 	private doSendRequest<P, R, E>(connection: IConnection, type: RequestType<P, R, E>, params: P, token?: CancellationToken): Thenable<R> {
+		return this._doSendRequest<R>(connection, type, [params, token]);
+	}
+
+	private _doSendRequest<R>(connection: IConnection, type: string | RPCMessageType, params: any[]): Thenable<R> {
 		if (this.isConnectionActive()) {
 			this.forceDocumentSync();
 			try {
-				return connection.sendRequest(type, params, token);
+				return connection.sendRequest<R>(type, ...params);
 			} catch (error) {
-				this.error(`Sending request ${type.method} failed.`, error);
+				this.error(`Sending request ${is.string(type) ? type : type.method} failed.`, error);
 			}
 		} else {
 			return Promise.reject<R>(new ResponseError(ErrorCodes.InternalError, 'Connection is closed.'));
 		}
 	}
 
-	public sendNotification<P>(type: NotificationType<P>, params?: P): void {
+	public onRequest<R, E>(type: RequestType0<R, E>, handler: RequestHandler0<R, E>): void;
+	public onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): void;
+	public onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): void;
+	public onRequest<P, R, E>(type: string | RPCMessageType, handler: GenericRequestHandler<R, E>): void {
+		this.onReady().then(() => {
+			this.resolveConnection().then((connection) => {
+				try {
+					connection.onRequest(type, handler);
+				} catch (error) {
+					this.error(`Registering request handler ${is.string(type) ? type : type.method} failed.`, error);
+				}
+			})
+		}, (error) => {
+		});
+	}
+
+	public sendNotification(type: NotificationType0): void;
+	public sendNotification<P>(type: NotificationType<P>, params?: P): void;
+	public sendNotification(method: string): void;
+	public sendNotification(method: string, params: any): void;
+	public sendNotification<P>(type: string | RPCMessageType, params?: P): void {
 		this.onReady().then(() => {
 			this.resolveConnection().then((connection) => {
 				if (this.isConnectionActive()) {
@@ -542,35 +600,25 @@ export class LanguageClient {
 					try {
 						connection.sendNotification(type, params);
 					} catch (error) {
-						this.error(`Sending notification ${type.method} failed.`, error);
+						this.error(`Sending notification ${is.string(type) ? type : type.method} failed.`, error);
 					}
 				}
 			});
 		}, (error) => {
-			this.error(`Sending notification ${type.method} failed.`, error)
+			this.error(`Sending notification ${is.string(type) ? type : type.method} failed.`, error)
 		});
 	}
 
-	public onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): void {
+	public onNotification(type: NotificationType0, handler: NotificationHandler0): void;
+	public onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): void;
+	public onNotification(method: string, handler: GenericNotificationHandler): void;
+	public onNotification(type: string | RPCMessageType, handler: GenericNotificationHandler): void {
 		this.onReady().then(() => {
 			this.resolveConnection().then((connection) => {
 				try {
 					connection.onNotification(type, handler);
 				} catch (error) {
-					this.error(`Registering notification handler ${type.method} failed.`, error);
-				}
-			})
-		}, (error) => {
-		});
-	}
-
-	public onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): void {
-		this.onReady().then(() => {
-			this.resolveConnection().then((connection) => {
-				try {
-					connection.onRequest(type, handler);
-				} catch (error) {
-					this.error(`Registering request handler ${type.method} failed.`, error);
+					this.error(`Registering notification handler ${is.string(type) ? type : type.method} failed.`, error);
 				}
 			})
 		}, (error) => {
@@ -730,7 +778,8 @@ export class LanguageClient {
 					default:
 						messageFunc = Window.showInformationMessage;
 				}
-				return messageFunc(params.message, ...params.actions);
+				let actions = params.actions || [];
+				return messageFunc(params.message, ...actions);
 			});
 			connection.onTelemetry((data) => {
 				this._telemetryEmitter.fire(data);
@@ -924,7 +973,7 @@ export class LanguageClient {
 	}
 
 	private handleDiagnostics(params: PublishDiagnosticsParams) {
-		let uri = Uri.parse(params.uri);
+		let uri = this._p2c.asUri(params.uri);
 		let diagnostics = this._p2c.asDiagnostics(params.diagnostics);
 		this._diagnostics.set(uri, diagnostics);
 	}
@@ -1000,9 +1049,9 @@ export class LanguageClient {
 					return Promise.reject<IConnection>(`Launching server using runtime ${node.runtime} failed.`);
 				}
 				this._childProcess = process;
-				process.stderr.on('data', data => this.outputChannel.append(data.toString(encoding)));
+				process.stderr.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
 				if (node.transport === TransportKind.ipc) {
-					process.stdout.on('data', data => this.outputChannel.append(data.toString(encoding)));
+					process.stdout.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
 					return Promise.resolve(createConnection(new IPCMessageReader(process), new IPCMessageWriter(process), errorHandler, closeHandler));
 				} else {
 					return Promise.resolve(createConnection(process.stdout, process.stdin, errorHandler, closeHandler));
@@ -1023,9 +1072,9 @@ export class LanguageClient {
 							reject(error);
 						} else {
 							this._childProcess = cp;
-							cp.stderr.on('data', data => this.outputChannel.append(data.toString(encoding)));
+							cp.stderr.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
 							if (node.transport === TransportKind.ipc) {
-								cp.stdout.on('data', data => this.outputChannel.append(data.toString(encoding)));
+								cp.stdout.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
 								resolve(createConnection(new IPCMessageReader(this._childProcess), new IPCMessageWriter(this._childProcess), errorHandler, closeHandler));
 							} else {
 								resolve(createConnection(cp.stdout, cp.stdin, errorHandler, closeHandler));
@@ -1042,7 +1091,7 @@ export class LanguageClient {
 			if (!process || !process.pid) {
 				return Promise.reject<IConnection>(`Launching server using command ${command.command} failed.`);
 			}
-			process.stderr.on('data', data => this.outputChannel.append(data.toString(encoding)));
+			process.stderr.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
 			this._childProcess = process;
 			return Promise.resolve(createConnection(process.stdout, process.stdin, errorHandler, closeHandler));
 		}
@@ -1061,7 +1110,7 @@ export class LanguageClient {
 			this.error('Connection to server got closed. Server will not be restarted.');
 			this.state = ClientState.Stopped;
 			this.cleanUp();
-		} else if (action === CloseAction.Restart && this.state !== ClientState.Stopping) {
+		} else if (action === CloseAction.Restart) {
 			this.info('Connection to server got closed. Server will restart.');
 			this.cleanUp(false);
 			this.state = ClientState.Initial;
@@ -1225,6 +1274,7 @@ export class LanguageClient {
 			return;
 		}
 
+		let triggerCharacters = this._capabilites.completionProvider.triggerCharacters || [];
 		this._providers.push(Languages.registerCompletionItemProvider(documentSelector, {
 			provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VCompletionList | VCompletionItem[]> => {
 				return this.doSendRequest(connection, CompletionRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token). then(
@@ -1246,7 +1296,7 @@ export class LanguageClient {
 					);
 				}
 				: undefined
-		}, ...this._capabilites.completionProvider.triggerCharacters));
+		},  ...triggerCharacters));
 	}
 
 	private hookHoverProvider(documentSelector: DocumentSelector, connection: IConnection): void {
@@ -1271,6 +1321,7 @@ export class LanguageClient {
 		if (!this._capabilites.signatureHelpProvider) {
 			return;
 		}
+		let triggerCharacters = this._capabilites.signatureHelpProvider.triggerCharacters || [];
 		this._providers.push(Languages.registerSignatureHelpProvider(documentSelector, {
 			provideSignatureHelp: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VSignatureHelp> => {
 				return this.doSendRequest(connection, SignatureHelpRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token). then(
@@ -1281,7 +1332,7 @@ export class LanguageClient {
 					}
 				);
 			}
-		}, ...this._capabilites.signatureHelpProvider.triggerCharacters));
+		}, ...triggerCharacters));
 	}
 
 	private hookDefinitionProvider(documentSelector: DocumentSelector, connection: IConnection): void {
@@ -1467,6 +1518,7 @@ export class LanguageClient {
 			return;
 		}
 		let formatCapabilities = this._capabilites.documentOnTypeFormattingProvider;
+		let moreTriggerCharacter = formatCapabilities.moreTriggerCharacter || [];
 		this._providers.push(Languages.registerOnTypeFormattingEditProvider(documentSelector, {
 			provideOnTypeFormattingEdits: (document: TextDocument, position: VPosition, ch: string, options: VFormattingOptions, token: CancellationToken): Thenable<VTextEdit[]> => {
 				let params: DocumentOnTypeFormattingParams = {
@@ -1483,7 +1535,7 @@ export class LanguageClient {
 					}
 				);
 			}
-		}, formatCapabilities.firstTriggerCharacter, ...formatCapabilities.moreTriggerCharacter));
+		}, formatCapabilities.firstTriggerCharacter, ...moreTriggerCharacter));
 	}
 
 	private hookRenameProvider(documentSelector: DocumentSelector, connection: IConnection): void {
@@ -1530,11 +1582,11 @@ export class LanguageClient {
 							this.logFailedRequest(DocumentLinkResolveRequest.type, error);
 							Promise.resolve(new Error(error.message));
 						}
-					)		
-				} 
+					)
+				}
 				: undefined
 		}));
-	}	
+	}
 }
 
 export class SettingMonitor {

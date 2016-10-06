@@ -6,7 +6,13 @@
 'use strict';
 
 import { Event, Emitter } from './events';
+import * as Is from './is';
 
+/**
+ * Defines a CancellationToken. This interface is not
+ * intended to be implemented. A CancellationToken must
+ * be created via a CancellationTokenSource.
+ */
 export interface CancellationToken {
 	/**
 	 * Is `true` when the token has been cancelled, `false` otherwise.
@@ -30,6 +36,13 @@ export namespace CancellationToken {
 		isCancellationRequested: true,
 		onCancellationRequested: Event.None
 	});
+
+	export function is(value: any): value is CancellationToken {
+		let candidate = value as CancellationToken;
+		return candidate === CancellationToken.None
+			|| candidate === CancellationToken.Cancelled
+			|| (Is.boolean(candidate.isCancellationRequested) && Is.defined(candidate.onCancellationRequested));
+	}
 }
 
 const shortcutEvent: Event<any> = Object.freeze(function(callback, context?) {

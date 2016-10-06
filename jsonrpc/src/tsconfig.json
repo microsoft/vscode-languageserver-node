@@ -1,11 +1,12 @@
 {
 	"compilerOptions": {
-		"target": "ES5",
+		"target": "es5",
 		"module": "commonjs",
 		"moduleResolution": "node",
 		"sourceMap": true,
 		"declaration": true,
 		"stripInternal": true,
+		"lib": [ "es5", "es2015.promise" ],
 		"outDir": "../lib"
 	}
 }
