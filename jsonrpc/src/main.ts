@@ -653,8 +653,12 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				default:
 					const last = params.length - 1;
 					if (CancellationToken.is(params[last])) {
-						messageParams = params.slice(0, last);
 						token = params[last];
+						if (params.length === 2) {
+							messageParams = params[0];
+						} else {
+							messageParams = params.slice(0, last);
+						}
 					} else {
 						messageParams = params;
 					}

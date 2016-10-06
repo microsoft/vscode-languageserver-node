@@ -3,7 +3,7 @@
 		"target": "es5",
 		"module": "commonjs",
 		"moduleResolution": "node",
-		"sourceMap": true,
+		"sourceMap": false,
 		"declaration": true,
 		"stripInternal": true,
 		"lib": [ "es5", "es2015.promise" ],
