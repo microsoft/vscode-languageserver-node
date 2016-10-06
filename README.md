@@ -24,8 +24,24 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
-* Next: Client and Server
+* 3.0.0-alpha.x: Client, Server and JSON-RPC
   * Support for Document Link Providers
+  * Moved all libraries to TypeScript 2.0.3
+  * Client and Server are compiled to ES6. JSON-RPC is still compiled to ES5.
+  * JSON-RPC supports n parameter request and notification invocation
+  * Breaking changes:
+    * due to the use of TypeScript 2.0.3 and differences in d.ts generation users of the new version need to move to 
+      TypeScript 2.0.3 as well.
+    * Request and notification types have an additional property '_'. This property is to improve TypeScript type 
+      inference and can savely be set to undefined when a request of notification type is created. For example:
+```ts
+export namespace CompletionRequest {
+	export const type: RequestType<TextDocumentPositionParams, CompletionItem[] | CompletionList, void> = { 
+    get method() { return 'textDocument/completion'; }, 
+    _: undefined 
+  };
+}
+```
 
 * 2.5.0: Client and Server
   * Better error handling on client side.

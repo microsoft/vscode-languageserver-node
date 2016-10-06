@@ -51,3 +51,19 @@ connection.listen();
 
 - converted the NPM module to use TypeScript 2.0.3
 - support for passing more than one parameter to a request or notification.
+- Breaking changes:
+  - due to the use of TypeScript 2.0.3 and differences in d.ts generation users of the new version need to move to 
+    TypeScript 2.0.3 as well.
+  - Request and notification types have an additional property '_'. This property is to improve TypeScript type 
+    inference and can savely be set to undefined when a request of notification type is created. For example:
+```ts
+export namespace CompletionRequest {
+	export const type: RequestType<TextDocumentPositionParams, CompletionItem[] | CompletionList, void> = { 
+    get method() { return 'textDocument/completion'; }, 
+    _: undefined 
+  };
+}
+```
+
+## License
+[MIT](https://github.com/Microsoft/vscode-languageserver-node/blob/master/License.txt)
