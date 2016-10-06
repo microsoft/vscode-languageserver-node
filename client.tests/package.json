@@ -1,12 +1,12 @@
 {
 	"name": "vscode-languageclient-test",
 	"description": "VSCode Language client tests",
-	"version": "1.0.0",
+	"version": "3.0.0-alpha.1",
 	"author": "Microsoft Corporation",
 	"publisher": "Microsoft Corporation",
 	"license": "MIT",
 	"engines": {
-		"vscode": "^0.10.7"
+		"vscode": "^1.5.0"
 	},
 	"repository": {
 		"type": "git",
@@ -17,9 +17,11 @@
 	},
 	"devDependencies": {
 		"mocha": "^3.0.2",
-		"typescript": "^1.8.10",
-		"vscode": "^0.11.0",
-		"vscode-languageserver-types": "^1.0.3"
+		"typescript": "^2.0.3",
+		"vscode": "^1.0.0",
+		"vscode-languageserver-types": "2.0.0-alpha.1",
+		"@types/node": "^6.0.45",
+		"@types/mocha": "^2.2.32"
 	},
 	"scripts": {
 		"postinstall": "node ./node_modules/vscode/bin/install",

@@ -23,8 +23,8 @@
 		"@types/mocha": "^2.2.32"
 	},
 	"dependencies": {
-		"vscode-jsonrpc": "^2.4.0",
-		"vscode-languageserver-types": "^1.0.4-next.2"
+		"vscode-jsonrpc": "^3.0.0-alpha.2",
+		"vscode-languageserver-types": "^2.0.0-alpha.1"
 	},
 	"scripts": {
 		"prepublish": "tsc -p ./src",
