@@ -85,9 +85,10 @@ export {
 	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler,
 	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler,
 	Position, Range, Location, TextDocumentIdentifier, TextDocumentPositionParams,
-	TextEdit, TextEditChange, WorkspaceChange,
-	c2p as Code2Protocol, p2c as Protocol2Code
+	TextEdit, TextEditChange, WorkspaceChange
 }
+export { Converter as Code2ProtocolConverter } from './codeConverter';
+export { Converter as Protocol2CodeConverter } from './protocolConverter';
 
 declare var v8debug;
 
@@ -623,6 +624,14 @@ export class LanguageClient {
 			})
 		}, (error) => {
 		});
+	}
+
+	public get protocol2CodeConverter(): p2c.Converter {
+		return this._p2c;
+	}
+
+	public get code2ProtocolConverter(): c2p.Converter {
+		return this._c2p;
 	}
 
 	public get onTelemetry(): Event<any> {
