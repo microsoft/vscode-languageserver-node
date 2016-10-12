@@ -9,12 +9,12 @@ import ChildProcess = cp.ChildProcess;
 
 import {
 		workspace as Workspace, window as Window, languages as Languages, extensions as Extensions, TextDocumentChangeEvent, TextDocument, Disposable, OutputChannel,
-		FileSystemWatcher, Uri, DiagnosticCollection, DocumentSelector,
+		FileSystemWatcher, Uri, DiagnosticCollection, DocumentSelector as VDocumentSelector,
 		CancellationToken, Hover as VHover, Position as VPosition, Location as VLocation, Range as VRange,
 		CompletionItem as VCompletionItem, CompletionList as VCompletionList, SignatureHelp as VSignatureHelp, Definition as VDefinition, DocumentHighlight as VDocumentHighlight,
 		SymbolInformation as VSymbolInformation, CodeActionContext as VCodeActionContext, Command as VCommand, CodeLens as VCodeLens,
 		FormattingOptions as VFormattingOptions, TextEdit as VTextEdit, WorkspaceEdit as VWorkspaceEdit, MessageItem,
-		DocumentLink as VDocumentLink
+		DocumentLink as VDocumentLink, TextDocumentWillSaveEvent
 } from 'vscode';
 
 import {
@@ -48,6 +48,7 @@ import {
 
 
 import {
+		RegistrationRequest, RegisterParams, UnregistrationRequest, UnregisterParams,
 		InitializeRequest, InitializeParams, InitializeResult, InitializeError, ClientCapabilities, ServerCapabilities, TextDocumentSyncKind,
 		ShutdownRequest,
 		ExitNotification,
@@ -55,9 +56,10 @@ import {
 		ShowMessageNotification, ShowMessageParams, ShowMessageRequest, ShowMessageRequestParams,
 		TelemetryEventNotification,
 		DidChangeConfigurationNotification, DidChangeConfigurationParams,
-		TextDocumentPositionParams,
+		TextDocumentPositionParams, DocumentSelector, DocumentFilter,
 		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams,
 		DidCloseTextDocumentNotification, DidCloseTextDocumentParams, DidSaveTextDocumentNotification, DidSaveTextDocumentParams,
+		WillSaveTextDocumentNotification, WillSaveTextDocumentWaitUntilRequest, WillSaveTextDocumentParams,
 		DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
 		PublishDiagnosticsNotification, PublishDiagnosticsParams,
 		CompletionRequest, CompletionResolveRequest,
@@ -96,25 +98,25 @@ interface IConnection {
 
 	listen(): void;
 
-	sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken) : Thenable<R>;
-	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken) : Thenable<R>;
+	sendRequest<R, E, RO>(type: RequestType0<R, E, RO>, token?: CancellationToken) : Thenable<R>;
+	sendRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, params: P, token?: CancellationToken) : Thenable<R>;
 	sendRequest<R>(method: string, token?: CancellationToken) : Thenable<R>;
 	sendRequest<R>(method: string, param: any, token?: CancellationToken) : Thenable<R>;
 	sendRequest<R>(type: string | RPCMessageType, ...params: any[]): Thenable<R>;
 
-	onRequest<R, E>(type: RequestType0<R, E>, handler: RequestHandler0<R, E>): void;
-	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): void;
+	onRequest<R, E, RO>(type: RequestType0<R, E, RO>, handler: RequestHandler0<R, E>): void;
+	onRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, handler: RequestHandler<P, R, E>): void;
 	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): void;
 	onRequest<R, E>(method: string | RPCMessageType, handler: GenericRequestHandler<R, E>): void;
 
-	sendNotification(type: NotificationType0): void;
-	sendNotification<P>(type: NotificationType<P>, params?: P): void;
+	sendNotification<RO>(type: NotificationType0<RO>): void;
+	sendNotification<P, RO>(type: NotificationType<P, RO>, params?: P): void;
 	sendNotification(method: string): void;
 	sendNotification(method: string, params: any): void;
 	sendNotification(method: string | RPCMessageType, params?: any): void;
 
-	onNotification(type: NotificationType0, handler: NotificationHandler0): void;
-	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): void;
+	onNotification<RO>(type: NotificationType0<RO>, handler: NotificationHandler0): void;
+	onNotification<P, RO>(type: NotificationType<P, RO>, handler: NotificationHandler<P>): void;
 	onNotification(method: string, handler: GenericNotificationHandler): void;
 	onNotification(method: string | RPCMessageType, handler: GenericNotificationHandler): void;
 
@@ -196,6 +198,7 @@ function createConnection(input: any, output: any, errorHandler: ConnectionError
 		didChangeTextDocument: (params: DidChangeTextDocumentParams  | DidChangeTextDocumentParams[]) => connection.sendNotification(DidChangeTextDocumentNotification.type, params),
 		didCloseTextDocument: (params: DidCloseTextDocumentParams) => connection.sendNotification(DidCloseTextDocumentNotification.type, params),
 		didSaveTextDocument: (params: DidSaveTextDocumentParams) => connection.sendNotification(DidSaveTextDocumentNotification.type, params),
+
 		onDiagnostics: (handler: NotificationHandler<PublishDiagnosticsParams>) => connection.onNotification(PublishDiagnosticsNotification.type, handler),
 
 		dispose: () => connection.dispose()
@@ -335,7 +338,12 @@ export interface SynchronizeOptions {
 	textDocumentFilter?: (textDocument: TextDocument) => boolean;
 }
 
+export interface Configuration {
+	willSaveTextDocumentWaitUntilRequest?: boolean | ((textDocument: TextDocument) => boolean);
+}
+
 export interface LanguageClientOptions {
+	configuration?: Configuration;
 	documentSelector?: string | string[];
 	synchronize?: SynchronizeOptions;
 	diagnosticCollectionName?: string;
@@ -377,6 +385,12 @@ interface SyncExpression {
 	evaluate(textDocument: TextDocument): boolean;
 }
 
+namespace SyncExpression {
+	export function create(selector: DocumentSelector): SyncExpression {
+		return new DocumentSelectorExpression(selector);
+	}
+}
+
 class FalseSyncExpression implements SyncExpression {
 	public evaluate(textDocument: TextDocument): boolean {
 		return false;
@@ -399,10 +413,26 @@ class FunctionSyncExpression implements SyncExpression {
 	}
 }
 
+class DocumentSelectorExpression implements SyncExpression {
+	constructor(private _selector: DocumentSelector) {
+	}
+	public evaluate(textDocument: TextDocument): boolean {
+		return Languages.match(this._selector, textDocument) > 0;
+	}
+}
+
 class CompositeSyncExpression implements SyncExpression {
 	private _expression: SyncExpression[];
-	constructor(values: string[], func?: (textDocument: TextDocument) => boolean) {
-		this._expression = values.map(value => new LanguageIdExpression(value));
+	constructor(expressions: SyncExpression[]);
+	constructor(values: string[], func?: (textDocument: TextDocument) => boolean);
+	constructor(values: (string | SyncExpression)[], func?: (textDocument: TextDocument) => boolean) {
+		this._expression = values.map((value) => {
+			if (is.string(value)) {
+				return new LanguageIdExpression(value);
+			} else {
+				return value;
+			}
+		});
 		if (func) {
 			this._expression.push(new FunctionSyncExpression(func));
 		}
@@ -427,6 +457,7 @@ export class LanguageClient {
 	private _childProcess: ChildProcess;
 	private _outputChannel: OutputChannel;
 	private _capabilites: ServerCapabilities;
+	private _configuration: Configuration;
 
 	private _listeners: Disposable[];
 	private _providers: Disposable[];
@@ -470,6 +501,7 @@ export class LanguageClient {
 		this._clientOptions = clientOptions || {};
 		this._clientOptions.synchronize = this._clientOptions.synchronize || {};
 		this._clientOptions.errorHandler = this._clientOptions.errorHandler || new DefaultErrorHandler(this._name);
+		this._configuration = clientOptions.configuration || {};
 		this._syncExpression = this.computeSyncExpression();
 		this._forceDebug = forceDebug;
 
@@ -544,8 +576,8 @@ export class LanguageClient {
 	}
 
 
-	public sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): Thenable<R>;
-	public sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): Thenable<R>;
+	public sendRequest<R, E, RO>(type: RequestType0<R, E, RO>, token?: CancellationToken): Thenable<R>;
+	public sendRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, params: P, token?: CancellationToken): Thenable<R>;
 	public sendRequest<R>(method: string, token?: CancellationToken): Thenable<R>;
 	public sendRequest<R>(method: string, param: any, token?: CancellationToken): Thenable<R>;
 	public sendRequest<R>(type: string | RPCMessageType, ...params: any[]): Thenable<R> {
@@ -556,7 +588,7 @@ export class LanguageClient {
 		});
 	}
 
-	private doSendRequest<P, R, E>(connection: IConnection, type: RequestType<P, R, E>, params: P, token?: CancellationToken): Thenable<R> {
+	private doSendRequest<P, R, E, RO>(connection: IConnection, type: RequestType<P, R, E, RO>, params: P, token?: CancellationToken): Thenable<R> {
 		return this._doSendRequest<R>(connection, type, [params, token]);
 	}
 
@@ -573,8 +605,8 @@ export class LanguageClient {
 		}
 	}
 
-	public onRequest<R, E>(type: RequestType0<R, E>, handler: RequestHandler0<R, E>): void;
-	public onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): void;
+	public onRequest<R, E, RO>(type: RequestType0<R, E, RO>, handler: RequestHandler0<R, E>): void;
+	public onRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, handler: RequestHandler<P, R, E>): void;
 	public onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): void;
 	public onRequest<P, R, E>(type: string | RPCMessageType, handler: GenericRequestHandler<R, E>): void {
 		this.onReady().then(() => {
@@ -589,8 +621,8 @@ export class LanguageClient {
 		});
 	}
 
-	public sendNotification(type: NotificationType0): void;
-	public sendNotification<P>(type: NotificationType<P>, params?: P): void;
+	public sendNotification<RO>(type: NotificationType0<RO>): void;
+	public sendNotification<P, RO>(type: NotificationType<P, RO>, params?: P): void;
 	public sendNotification(method: string): void;
 	public sendNotification(method: string, params: any): void;
 	public sendNotification<P>(type: string | RPCMessageType, params?: P): void {
@@ -610,8 +642,8 @@ export class LanguageClient {
 		});
 	}
 
-	public onNotification(type: NotificationType0, handler: NotificationHandler0): void;
-	public onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): void;
+	public onNotification<RO>(type: NotificationType0<RO>, handler: NotificationHandler0): void;
+	public onNotification<P, RO>(type: NotificationType<P, RO>, handler: NotificationHandler<P>): void;
 	public onNotification(method: string, handler: GenericNotificationHandler): void;
 	public onNotification(type: string | RPCMessageType, handler: GenericNotificationHandler): void {
 		this.onReady().then(() => {
@@ -841,6 +873,8 @@ export class LanguageClient {
 			}
 			this.hookFileEvents(connection);
 			this.hookConfigurationChanged(connection);
+			connection.onRequest(RegistrationRequest.type, params => this.handleRegistrationRequest(params));
+			connection.onRequest(UnregistrationRequest.type, params => this.handleUnregistrationRequest(params));
 			this.hookCapabilities(connection);
 			this._onReadyCallbacks.resolve();
 			Workspace.textDocuments.forEach(t => this.onDidOpenTextDoument(connection, t));
@@ -968,11 +1002,11 @@ export class LanguageClient {
 		connection.didCloseTextDocument(this._c2p.asCloseTextDocumentParams(textDocument));
 	}
 
-	private onDidSaveTextDocument(conneciton: IConnection, textDocument: TextDocument): void {
+	private onDidSaveTextDocument(connection: IConnection, textDocument: TextDocument): void {
 		if (!this._syncExpression.evaluate(textDocument)) {
 			return;
 		}
-		conneciton.didSaveTextDocument(this._c2p.asSaveTextDocumentParams(textDocument));
+		connection.didSaveTextDocument(this._c2p.asSaveTextDocumentParams(textDocument));
 	}
 
 	private forceDocumentSync(): void {
@@ -1252,6 +1286,90 @@ export class LanguageClient {
 		})
 	}
 
+	private handleRegistrationRequest(params: RegisterParams): Thenable<void> {
+		const method = params.method;
+		switch (method) {
+			case WillSaveTextDocumentNotification.type.method:
+			case WillSaveTextDocumentWaitUntilRequest.type.method:
+				return this.registerWillSaveTextDocument(params);
+		}
+		return Promise.reject(`Register request for unknown ${params.method} received.`);
+	}
+
+	private handleUnregistrationRequest(params: UnregisterParams): Thenable<void> {
+		const method = params.method;
+		switch (method) {
+			case WillSaveTextDocumentNotification.type.method:
+			case WillSaveTextDocumentWaitUntilRequest.type.method:
+				return this.unregisterWillSaveTextDocument(params);
+
+		}
+		return Promise.reject(`Register request for unknown ${params.method} received.`);
+	}
+
+	private _willSaveTextDocumentListener: Disposable;
+	private _willSaveNotifications: Map<string, DocumentSelector> = new Map<string, DocumentSelector>();
+	private _willSaveRequests: Map<string, DocumentSelector> = new Map<string, DocumentSelector>();
+	private registerWillSaveTextDocument(params: RegisterParams): Thenable<void> {
+		if (!this._willSaveTextDocumentListener) {
+			this._willSaveTextDocumentListener = Workspace.onWillSaveTextDocument(this.onWillSaveTextDocument, this);
+		}
+		let selector = params.registerOptions.selector;
+		if (params.method === WillSaveTextDocumentNotification.type.method) {
+			this._willSaveNotifications.set(params.id, selector);
+		} else {
+			this._willSaveRequests.set(params.id, selector);
+		}
+		return Promise.resolve();
+	}
+
+	private unregisterWillSaveTextDocument(params: UnregisterParams): Thenable<void> {
+		if (params.method === WillSaveTextDocumentNotification.type.method) {
+			this._willSaveNotifications.delete(params.id);
+		} else {
+			this._willSaveRequests.set(params.id);
+		}
+		if (this._willSaveNotifications.size === 0 && this._willSaveRequests.size === 0) {
+			this._willSaveTextDocumentListener.dispose();
+			this._willSaveTextDocumentListener = undefined;
+		}
+		return Promise.resolve();
+	}
+
+	private onWillSaveTextDocument(event: TextDocumentWillSaveEvent): void {
+		let sendRequest = false;
+		for (const selector of this._willSaveRequests.values()) {
+			if (Languages.match(selector, event.document)) {
+				sendRequest = true;
+				break;
+			}
+		}
+		let sendNotification = false;
+		for (const selector of this._willSaveNotifications.values()) {
+			if (Languages.match(selector, event.document)) {
+				sendNotification = true;
+				break;
+			}
+		}
+		if (sendRequest || sendNotification) {
+			this.onReady().then(() => {
+				this.resolveConnection().then((connection) => {
+					if (sendRequest) {
+						event.waitUntil(
+							connection.sendRequest(
+								WillSaveTextDocumentWaitUntilRequest.type,
+								this._c2p.asWillSaveTextDocumentParams(event)).then((result) => {
+									return this._p2c.asTextEdits(result);
+								})
+						);
+					} else {
+						connection.sendNotification(WillSaveTextDocumentNotification.type, this._c2p.asWillSaveTextDocumentParams(event));
+					}
+				});
+			})
+		}
+	}
+
 	private hookCapabilities(connection: IConnection): void {
 		let documentSelector = this._clientOptions.documentSelector;
 		if (!documentSelector) {
@@ -1274,11 +1392,11 @@ export class LanguageClient {
 		this.hookDocumentLinkProvider(documentSelector, connection);
 	}
 
-	private logFailedRequest(type: RequestType<any, any, any>, error: any): void {
+	private logFailedRequest(type: RequestType<any, any, any, any>, error: any): void {
 		this.error(`Request ${type.method} failed.`, error);
 	}
 
-	private hookCompletionProvider(documentSelector: DocumentSelector, connection: IConnection): void {
+	private hookCompletionProvider(documentSelector: VDocumentSelector, connection: IConnection): void {
 		if (!this._capabilites.completionProvider) {
 			return;
 		}
@@ -1308,7 +1426,7 @@ export class LanguageClient {
 		},  ...triggerCharacters));
 	}
 
-	private hookHoverProvider(documentSelector: DocumentSelector, connection: IConnection): void {
+	private hookHoverProvider(documentSelector: VDocumentSelector, connection: IConnection): void {
 		if (!this._capabilites.hoverProvider) {
 			return;
 		}
@@ -1326,7 +1444,7 @@ export class LanguageClient {
 		}));
 	}
 
-	private hookSignatureHelpProvider(documentSelector: DocumentSelector, connection: IConnection): void {
+	private hookSignatureHelpProvider(documentSelector: VDocumentSelector, connection: IConnection): void {
 		if (!this._capabilites.signatureHelpProvider) {
 			return;
 		}
@@ -1344,7 +1462,7 @@ export class LanguageClient {
 		}, ...triggerCharacters));
 	}
 
-	private hookDefinitionProvider(documentSelector: DocumentSelector, connection: IConnection): void {
+	private hookDefinitionProvider(documentSelector: VDocumentSelector, connection: IConnection): void {
 		if (!this._capabilites.definitionProvider) {
 			return;
 		}
@@ -1361,7 +1479,7 @@ export class LanguageClient {
 		}))
 	}
 
-	private hookReferencesProvider(documentSelector: DocumentSelector, connection: IConnection): void {
+	private hookReferencesProvider(documentSelector: VDocumentSelector, connection: IConnection): void {
 		if (!this._capabilites.referencesProvider) {
 			return;
 		}
@@ -1378,7 +1496,7 @@ export class LanguageClient {
 		}));
 	}
 
-	private hookDocumentHighlightProvider(documentSelector: DocumentSelector, connection: IConnection): void {
+	private hookDocumentHighlightProvider(documentSelector: VDocumentSelector, connection: IConnection): void {
 		if (!this._capabilites.documentHighlightProvider) {
 			return;
 		}
@@ -1395,7 +1513,7 @@ export class LanguageClient {
 		}));
 	}
 
-	private hookDocumentSymbolProvider(documentSelector: DocumentSelector, connection: IConnection): void {
+	private hookDocumentSymbolProvider(documentSelector: VDocumentSelector, connection: IConnection): void {
 		if (!this._capabilites.documentSymbolProvider) {
 			return;
 		}
@@ -1429,7 +1547,7 @@ export class LanguageClient {
 		}));
 	}
 
-	private hookCodeActionsProvider(documentSelector: DocumentSelector, connection: IConnection): void {
+	private hookCodeActionsProvider(documentSelector: VDocumentSelector, connection: IConnection): void {
 		if (!this._capabilites.codeActionProvider) {
 			return;
 		}
@@ -1451,7 +1569,7 @@ export class LanguageClient {
 		}));
 	}
 
-	private hookCodeLensProvider(documentSelector: DocumentSelector, connection: IConnection): void {
+	private hookCodeLensProvider(documentSelector: VDocumentSelector, connection: IConnection): void {
 		if (!this._capabilites.codeLensProvider) {
 			return;
 		}
@@ -1479,7 +1597,7 @@ export class LanguageClient {
 		}));
 	}
 
-	private hookDocumentFormattingProvider(documentSelector: DocumentSelector, connection: IConnection): void {
+	private hookDocumentFormattingProvider(documentSelector: VDocumentSelector, connection: IConnection): void {
 		if (!this._capabilites.documentFormattingProvider) {
 			return;
 		}
@@ -1500,7 +1618,7 @@ export class LanguageClient {
 		}));
 	}
 
-	private hookDocumentRangeFormattingProvider(documentSelector: DocumentSelector, connection: IConnection): void {
+	private hookDocumentRangeFormattingProvider(documentSelector: VDocumentSelector, connection: IConnection): void {
 		if (!this._capabilites.documentRangeFormattingProvider) {
 			return;
 		}
@@ -1522,7 +1640,7 @@ export class LanguageClient {
 		}));
 	}
 
-	private hookDocumentOnTypeFormattingProvider(documentSelector: DocumentSelector, connection: IConnection): void {
+	private hookDocumentOnTypeFormattingProvider(documentSelector: VDocumentSelector, connection: IConnection): void {
 		if (!this._capabilites.documentOnTypeFormattingProvider) {
 			return;
 		}
@@ -1547,7 +1665,7 @@ export class LanguageClient {
 		}, formatCapabilities.firstTriggerCharacter, ...moreTriggerCharacter));
 	}
 
-	private hookRenameProvider(documentSelector: DocumentSelector, connection: IConnection): void {
+	private hookRenameProvider(documentSelector: VDocumentSelector, connection: IConnection): void {
 		if (!this._capabilites.renameProvider) {
 			return;
 		}
@@ -1569,7 +1687,7 @@ export class LanguageClient {
 		}));
 	}
 
-	private hookDocumentLinkProvider(documentSelector: DocumentSelector, connection: IConnection): void {
+	private hookDocumentLinkProvider(documentSelector: VDocumentSelector, connection: IConnection): void {
 		if (!this._capabilites.documentLinkProvider) {
 			return;
 		}

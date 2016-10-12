@@ -25,6 +25,7 @@ export interface Converter {
 	asCloseTextDocumentParams(textDocument: code.TextDocument): proto.DidCloseTextDocumentParams;
 
 	asSaveTextDocumentParams(textDocument: code.TextDocument): proto.DidSaveTextDocumentParams;
+	asWillSaveTextDocumentParams(event: code.TextDocumentWillSaveEvent): proto.WillSaveTextDocumentParams;
 
 	asTextDocumentPositionParams(textDocument: code.TextDocument, position: code.Position): proto.TextDocumentPositionParams;
 
@@ -149,6 +150,13 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	function asSaveTextDocumentParams(textDocument: code.TextDocument): proto.DidSaveTextDocumentParams {
 		return {
 			textDocument: asTextDocumentIdentifier(textDocument)
+		}
+	}
+
+	function asWillSaveTextDocumentParams(event: code.TextDocumentWillSaveEvent): proto.WillSaveTextDocumentParams {
+		return {
+			textDocument: asTextDocumentIdentifier(event.document),
+			reason: event.reason
 		}
 	}
 
@@ -300,6 +308,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asChangeTextDocumentParams,
 		asCloseTextDocumentParams,
 		asSaveTextDocumentParams,
+		asWillSaveTextDocumentParams,
 		asTextDocumentPositionParams,
 		asWorkerPosition,
 		asRange,

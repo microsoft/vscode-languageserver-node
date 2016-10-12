@@ -11,6 +11,14 @@ export interface Disposable {
 	dispose();
 }
 
+export namespace Disposable {
+	export function create(func: () => void): Disposable {
+		return {
+			dispose: func
+		};
+	}
+}
+
 /**
  * Represents a typed event.
  */

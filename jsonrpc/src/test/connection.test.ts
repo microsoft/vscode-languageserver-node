@@ -98,8 +98,8 @@ function assertMessages(resultData: string, expected: Message[], done: MochaDone
 	}, 10);
 }
 
-let testRequest1: RequestType<any, any, any> = { method: 'testCommand1', _: undefined };
-let testRequest2: RequestType<any, any, any> = { method: 'testCommand2', _: undefined };
+let testRequest1: RequestType<any, any, any, void> = { method: 'testCommand1', _: undefined };
+let testRequest2: RequestType<any, any, any, void> = { method: 'testCommand2', _: undefined };
 function newParams(content: string)  {
 	return { documents: [ { content: content } ]};
 };
@@ -310,7 +310,7 @@ describe('Connection', () => {
 		});
 	});
 
-	let testNotification: NotificationType<any> = { method: "testNotification", _: undefined };
+	let testNotification: NotificationType<any, void> = { method: "testNotification", _: undefined };
 	it('Send and Receive Notification', (done) => {
 
 		let outputStream = new TestWritable();
@@ -421,7 +421,7 @@ describe('Connection', () => {
 	});
 
 	it (('Array params in notifications'), (done) => {
-		let type: NotificationType2<number, string> = { method: 'test', _: undefined };
+		let type: NotificationType2<number, string, void> = { method: 'test', _: undefined };
 		let outputStream = new TestWritable();
 		let duplexStream = new TestDuplex();
 		let inputStream = new Readable();
@@ -441,12 +441,12 @@ describe('Connection', () => {
 	});
 
 	it (('Array params in request / response'), (done) => {
-		let type: RequestType3<number, number, number, number, void> = { method: 'add', _: undefined };
+		let type: RequestType3<number, number, number, number, void, void> = { method: 'add', _: undefined };
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
 		let connection2 = hostConnection.createMessageConnection(duplexStream2, duplexStream1, Logger);
-		connection2.onRequest(type, (p1, p2, p3, token) => {
+		connection2.onRequest(type, (p1, p2, p3) => {
 			assert.strictEqual(p1, 10);
 			assert.strictEqual(p2, 20);
 			assert.strictEqual(p3, 30);
@@ -466,7 +466,7 @@ describe('Connection', () => {
 	});
 
 	it (('Array params in request / response with token'), (done) => {
-		let type: RequestType3<number, number, number, number, void> = { method: 'add', _: undefined };
+		let type: RequestType3<number, number, number, number, void, void> = { method: 'add', _: undefined };
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 

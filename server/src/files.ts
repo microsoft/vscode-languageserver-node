@@ -108,18 +108,18 @@ export function resolveModulePath(workspaceRoot: string, moduleName: string, nod
 	const app: string = [
 		"var p = process;",
 		"p.on('message',function(m){",
-			"if(m.c==='e'){",
-				"p.exit(0);",
-			"}",
-			"else if(m.c==='rs'){",
-				"try{",
-					"var r=require.resolve(m.a);",
-					"p.send({c:'r',s:true,r:r});",
-				"}",
-				"catch(err){",
-					"p.send({c:'r',s:false});",
-				"}",
-			"}",
+		"if(m.c==='e'){",
+		"p.exit(0);",
+		"}",
+		"else if(m.c==='rs'){",
+		"try{",
+		"var r=require.resolve(m.a);",
+		"p.send({c:'r',s:true,r:r});",
+		"}",
+		"catch(err){",
+		"p.send({c:'r',s:false});",
+		"}",
+		"}",
 		"});"
 	].join('');
 
@@ -182,7 +182,7 @@ export function resolveModulePath(workspaceRoot: string, moduleName: string, nod
 		}
 		newEnv['ATOM_SHELL_INTERNAL_RUN_AS_NODE'] = '1';
 		try {
-			let cp: ChildProcess = fork('', [], <any> {
+			let cp: ChildProcess = fork('', [], <any>{
 				cwd: workspaceRoot,
 				env: newEnv,
 				execArgv: ['-e', app]

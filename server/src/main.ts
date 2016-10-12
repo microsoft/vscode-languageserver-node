@@ -6,103 +6,106 @@
 'use strict';
 
 import {
-		RequestType, RequestType0, RequestType1, RequestType2, RequestType3, RequestType4,
-		RequestType5, RequestType6, RequestType7, RequestType8, RequestType9,
-		RequestHandler, RequestHandler0, RequestHandler1, RequestHandler2, RequestHandler3,
-		RequestHandler4, RequestHandler5, RequestHandler6, RequestHandler7, RequestHandler8,
-		RequestHandler9, GenericRequestHandler,
-		NotificationType, NotificationType0, NotificationType1, NotificationType2, NotificationType3,
-		NotificationType4, NotificationType5, NotificationType6, NotificationType7, NotificationType8,
-		NotificationType9,
-		NotificationHandler, NotificationHandler0, NotificationHandler1, NotificationHandler2,
-		NotificationHandler3, NotificationHandler4, NotificationHandler5, NotificationHandler6,
-		NotificationHandler7, NotificationHandler8, NotificationHandler9, GenericNotificationHandler,
-		Message, MessageType as RPCMessageType, ResponseError, ErrorCodes,
-		MessageConnection, Logger, createMessageConnection,
-		MessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
-		MessageWriter, StreamMessageWriter, IPCMessageWriter,
-		CancellationToken, CancellationTokenSource,
-		Disposable, Event, Emitter, Trace, SetTraceNotification, LogTraceNotification
-	} from 'vscode-jsonrpc';
+	RequestType, RequestType0, RequestType1, RequestType2, RequestType3, RequestType4,
+	RequestType5, RequestType6, RequestType7, RequestType8, RequestType9,
+	RequestHandler, RequestHandler0, RequestHandler1, RequestHandler2, RequestHandler3,
+	RequestHandler4, RequestHandler5, RequestHandler6, RequestHandler7, RequestHandler8,
+	RequestHandler9, GenericRequestHandler,
+	NotificationType, NotificationType0, NotificationType1, NotificationType2, NotificationType3,
+	NotificationType4, NotificationType5, NotificationType6, NotificationType7, NotificationType8,
+	NotificationType9,
+	NotificationHandler, NotificationHandler0, NotificationHandler1, NotificationHandler2,
+	NotificationHandler3, NotificationHandler4, NotificationHandler5, NotificationHandler6,
+	NotificationHandler7, NotificationHandler8, NotificationHandler9, GenericNotificationHandler,
+	Message, MessageType as RPCMessageType, ResponseError, ErrorCodes,
+	MessageConnection, Logger, createMessageConnection,
+	MessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
+	MessageWriter, StreamMessageWriter, IPCMessageWriter,
+	CancellationToken, CancellationTokenSource,
+	Disposable, Event, Emitter, Trace, SetTraceNotification, LogTraceNotification
+} from 'vscode-jsonrpc';
 
 import {
-		TextDocument, TextDocumentChangeEvent, TextDocumentContentChangeEvent,
-		Range, Position, Location, Diagnostic, DiagnosticSeverity, Command,
-		TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
-		TextDocumentIdentifier, CompletionItemKind, CompletionItem, CompletionList,
-		Hover, MarkedString,
-		SignatureHelp, SignatureInformation, ParameterInformation,
-		Definition, CodeActionContext,
-		DocumentHighlight, DocumentHighlightKind,
-		SymbolInformation, SymbolKind,
-		CodeLens,
-		FormattingOptions, DocumentLink
-	} from 'vscode-languageserver-types';
+	TextDocument, TextDocumentChangeEvent, TextDocumentContentChangeEvent,
+	Range, Position, Location, Diagnostic, DiagnosticSeverity, Command,
+	TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
+	TextDocumentIdentifier, CompletionItemKind, CompletionItem, CompletionList,
+	Hover, MarkedString,
+	SignatureHelp, SignatureInformation, ParameterInformation,
+	Definition, CodeActionContext,
+	DocumentHighlight, DocumentHighlightKind,
+	SymbolInformation, SymbolKind,
+	CodeLens,
+	FormattingOptions, DocumentLink
+} from 'vscode-languageserver-types';
 
 import {
-		InitializeRequest, InitializeParams, InitializeResult, InitializeError, ClientCapabilities, ServerCapabilities,
-		ShutdownRequest,
-		ExitNotification,
-		LogMessageNotification, LogMessageParams, MessageType,
-		ShowMessageNotification, ShowMessageParams, ShowMessageRequest, ShowMessageRequestParams, MessageActionItem,
-		TelemetryEventNotification,
-		DidChangeConfigurationNotification, DidChangeConfigurationParams,
-		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams,
-		DidCloseTextDocumentNotification, DidCloseTextDocumentParams, DidSaveTextDocumentNotification, DidSaveTextDocumentParams,
-		DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
-		PublishDiagnosticsNotification, PublishDiagnosticsParams,
-		TextDocumentPositionParams, TextDocumentSyncKind,
-		HoverRequest,
-		CompletionRequest, CompletionResolveRequest, CompletionOptions,
-		SignatureHelpRequest,
-		DefinitionRequest,  ReferencesRequest, ReferenceParams,
-		DocumentHighlightRequest,
-		DocumentSymbolRequest, DocumentSymbolParams,  WorkspaceSymbolRequest, WorkspaceSymbolParams,
-		CodeActionRequest, CodeActionParams, CodeLensOptions,
-		CodeLensRequest, CodeLensParams, CodeLensResolveRequest,
-		DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
-		DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams,
-		RenameRequest, RenameParams,
-		DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkParams
-	} from './protocol';
+	RegistrationRequest, RegisterParams, UnregistrationRequest, UnregisterParams,
+	InitializeRequest, InitializeParams, InitializeResult, InitializeError, ClientCapabilities, ServerCapabilities,
+	ShutdownRequest,
+	ExitNotification,
+	LogMessageNotification, LogMessageParams, MessageType,
+	ShowMessageNotification, ShowMessageParams, ShowMessageRequest, ShowMessageRequestParams, MessageActionItem,
+	TelemetryEventNotification,
+	DidChangeConfigurationNotification, DidChangeConfigurationParams,
+	DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams,
+	DidCloseTextDocumentNotification, DidCloseTextDocumentParams, DidSaveTextDocumentNotification, DidSaveTextDocumentParams,
+	WillSaveTextDocumentNotification, WillSaveTextDocumentParams, WillSaveTextDocumentWaitUntilRequest,
+	DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
+	PublishDiagnosticsNotification, PublishDiagnosticsParams,
+	TextDocumentPositionParams, TextDocumentSyncKind,
+	HoverRequest,
+	CompletionRequest, CompletionResolveRequest, CompletionOptions,
+	SignatureHelpRequest,
+	DefinitionRequest, ReferencesRequest, ReferenceParams,
+	DocumentHighlightRequest,
+	DocumentSymbolRequest, DocumentSymbolParams, WorkspaceSymbolRequest, WorkspaceSymbolParams,
+	CodeActionRequest, CodeActionParams, CodeLensOptions,
+	CodeLensRequest, CodeLensParams, CodeLensResolveRequest,
+	DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
+	DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams,
+	RenameRequest, RenameParams,
+	DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkParams
+} from './protocol';
 
 import * as Is from './utils/is';
+import * as UUID from './utils/uuid';
 
 // ------------- Reexport the API surface of the language worker API ----------------------
 export {
-		RequestType, RequestType0, RequestType1, RequestType2, RequestType3, RequestType4,
-		RequestType5, RequestType6, RequestType7, RequestType8, RequestType9,
-		RequestHandler, RequestHandler0, RequestHandler1, RequestHandler2, RequestHandler3,
-		RequestHandler4, RequestHandler5, RequestHandler6, RequestHandler7, RequestHandler8,
-		RequestHandler9,
-		NotificationType, NotificationType0, NotificationType1, NotificationType2, NotificationType3,
-		NotificationType4, NotificationType5, NotificationType6, NotificationType7, NotificationType8,
-		NotificationType9,
-		NotificationHandler, NotificationHandler0, NotificationHandler1, NotificationHandler2,
-		NotificationHandler3, NotificationHandler4, NotificationHandler5, NotificationHandler6,
-		NotificationHandler7, NotificationHandler8, NotificationHandler9,
-		ResponseError, ErrorCodes,
-		MessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
-		MessageWriter, StreamMessageWriter, IPCMessageWriter,
-		MessageActionItem,
-		InitializeParams, InitializeResult, InitializeError, ServerCapabilities,
-		DidChangeConfigurationParams,
-		DidChangeWatchedFilesParams, FileEvent, FileChangeType,
-		DidOpenTextDocumentParams, DidChangeTextDocumentParams, TextDocumentContentChangeEvent, DidCloseTextDocumentParams, DidSaveTextDocumentParams,
-		PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Range, Position, Location,
-		TextDocumentIdentifier, TextDocumentPositionParams, TextDocumentSyncKind,
-		Hover, MarkedString,
-		CompletionOptions, CompletionItemKind, CompletionItem, CompletionList,
-		TextDocument, TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
-		SignatureHelp, SignatureInformation, ParameterInformation,
-		Definition, ReferenceParams,  DocumentHighlight, DocumentHighlightKind,
-		SymbolInformation, SymbolKind, DocumentSymbolParams, WorkspaceSymbolParams,
-		CodeActionParams, CodeActionContext, Command,
-		CodeLensRequest, CodeLensParams, CodeLensResolveRequest, CodeLens, CodeLensOptions,
-		DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
-		DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams, FormattingOptions,
-		RenameRequest, RenameParams,
-		DocumentLink, DocumentLinkRequest, DocumentLinkResolveRequest
+	RequestType, RequestType0, RequestType1, RequestType2, RequestType3, RequestType4,
+	RequestType5, RequestType6, RequestType7, RequestType8, RequestType9,
+	RequestHandler, RequestHandler0, RequestHandler1, RequestHandler2, RequestHandler3,
+	RequestHandler4, RequestHandler5, RequestHandler6, RequestHandler7, RequestHandler8,
+	RequestHandler9,
+	NotificationType, NotificationType0, NotificationType1, NotificationType2, NotificationType3,
+	NotificationType4, NotificationType5, NotificationType6, NotificationType7, NotificationType8,
+	NotificationType9,
+	NotificationHandler, NotificationHandler0, NotificationHandler1, NotificationHandler2,
+	NotificationHandler3, NotificationHandler4, NotificationHandler5, NotificationHandler6,
+	NotificationHandler7, NotificationHandler8, NotificationHandler9,
+	ResponseError, ErrorCodes,
+	MessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
+	MessageWriter, StreamMessageWriter, IPCMessageWriter,
+	MessageActionItem,
+	InitializeParams, InitializeResult, InitializeError, ServerCapabilities,
+	DidChangeConfigurationParams,
+	DidChangeWatchedFilesParams, FileEvent, FileChangeType,
+	DidOpenTextDocumentParams, DidChangeTextDocumentParams, TextDocumentContentChangeEvent, DidCloseTextDocumentParams, DidSaveTextDocumentParams,
+	PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Range, Position, Location,
+	TextDocumentIdentifier, TextDocumentPositionParams, TextDocumentSyncKind,
+	Hover, MarkedString,
+	CompletionOptions, CompletionItemKind, CompletionItem, CompletionList,
+	TextDocument, TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
+	SignatureHelp, SignatureInformation, ParameterInformation,
+	Definition, ReferenceParams, DocumentHighlight, DocumentHighlightKind,
+	SymbolInformation, SymbolKind, DocumentSymbolParams, WorkspaceSymbolParams,
+	CodeActionParams, CodeActionContext, Command,
+	CodeLensRequest, CodeLensParams, CodeLensResolveRequest, CodeLens, CodeLensOptions,
+	DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
+	DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams, FormattingOptions,
+	RenameRequest, RenameParams,
+	DocumentLink, DocumentLinkRequest, DocumentLinkResolveRequest
 }
 export { Event }
 
@@ -126,7 +129,7 @@ interface ConnectionState {
  */
 export class TextDocuments {
 
-	private _documents : { [uri: string]: TextDocument };
+	private _documents: { [uri: string]: TextDocument };
 
 	private _onDidChangeContent: Emitter<TextDocumentChangeEvent>;
 	private _onDidOpen: Emitter<TextDocumentChangeEvent>;
@@ -229,13 +232,13 @@ export class TextDocuments {
 			this._onDidChangeContent.fire({ document });
 		});
 		connection.onDidChangeTextDocument((event: DidChangeTextDocumentParams) => {
-			let td= event.textDocument;
+			let td = event.textDocument;
 			let changes = event.contentChanges;
 			let last: TextDocumentContentChangeEvent = changes.length > 0 ? changes[changes.length - 1] : null;
 			if (last) {
 				let document = this._documents[td.uri];
 				if (document && Is.func(document['update'])) {
-					(<any> document).update(last, td.version);
+					(<any>document).update(last, td.version);
 					this._onDidChangeContent.fire({ document });
 				}
 			}
@@ -362,6 +365,10 @@ export interface RemoteWindow {
 	showInformationMessage<T extends MessageActionItem>(message: string, ...actions: T[]): Thenable<T>;
 }
 
+export interface RemoteClient {
+	register<R, E, RO>(type: RequestType0<R, E, RO>, registerParams: RO): Thenable<Disposable>;
+}
+
 class ConnectionLogger implements Logger, RemoteConsole {
 	private connection: MessageConnection;
 	public constructor() {
@@ -396,11 +403,43 @@ class RemoteWindowImpl implements RemoteWindow {
 	public showErrorMessage(message: string, ...actions: MessageActionItem[]): Thenable<MessageActionItem> {
 		return this.connection.sendRequest(ShowMessageRequest.type, { type: MessageType.Error, message, actions });
 	}
+
 	public showWarningMessage(message: string, ...actions: MessageActionItem[]): Thenable<MessageActionItem> {
 		return this.connection.sendRequest(ShowMessageRequest.type, { type: MessageType.Warning, message, actions });
 	}
+
 	public showInformationMessage(message: string, ...actions: MessageActionItem[]): Thenable<MessageActionItem> {
 		return this.connection.sendRequest(ShowMessageRequest.type, { type: MessageType.Info, message, actions });
+	}
+}
+
+class RemoteClientImpl implements RemoteClient {
+	constructor(private connection: MessageConnection, private console: RemoteConsole) {
+	}
+
+	public register<RO>(type: string | RPCMessageType, registerOptions: RO): Thenable<Disposable> {
+		const method = Is.string(type) ? type : type.method;
+		const id = UUID.generateUuid();
+		let params: RegisterParams = {
+				id: id,
+				method: method,
+				registerOptions: registerOptions
+		};
+		return this.connection.sendRequest(RegistrationRequest.type, params).then((result) => {
+			return Disposable.create(() => {
+				this.unregister(id, method);
+			});
+		}, (error) => {
+			this.console.info(`Registering request handler for ${method} failed.`);
+			throw error;
+		});
+	}
+
+	private unregister(id: string, method: string): Thenable<void> {
+		return this.connection.sendRequest(UnregistrationRequest.type, { id: id, method: method }).then(undefined, (error) => {
+			this.console.info(`Unregistering request handler for ${id} failed.`);
+			throw error;
+		});
 	}
 }
 
@@ -472,6 +511,15 @@ export interface IConnection {
 	listen(): void;
 
 	/**
+	 * Installs a request handler described by the given [RequestType](#RequestType).
+	 *
+	 * @param type The [RequestType](#RequestType) describing the request.
+	 * @param handler The handler to install
+	 */
+	onRequest<R, E, RO>(type: RequestType0<R, E, RO>, handler: RequestHandler0<R, E>): void;
+	onRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, handler: RequestHandler<P, R, E>): void;
+
+	/**
 	 * Installs a request handler for the given method.
 	 *
 	 * @param method The method to register a request handler for.
@@ -480,13 +528,13 @@ export interface IConnection {
 	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): void;
 
 	/**
-	 * Installs a request handler described by the given [RequestType](#RequestType).
+	 * Send a request to the client.
 	 *
 	 * @param type The [RequestType](#RequestType) describing the request.
-	 * @param handler The handler to install
+	 * @param params The request's parameters.
 	 */
-	onRequest<R, E>(type: RequestType0<R, E>, handler: RequestHandler0<R, E>): void;
-	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): void;
+	sendRequest<R, E, RO>(type: RequestType0<R, E, RO>, token?: CancellationToken): Thenable<R>;
+	sendRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, params: P, token?: CancellationToken): Thenable<R>;
 
 	/**
 	 * Send a request to the client.
@@ -497,13 +545,13 @@ export interface IConnection {
 	sendRequest<R>(method: string, ...params: any[]): Thenable<R>;
 
 	/**
-	 * Send a request to the client.
+	 * Installs a notification handler described by the given [NotificationType](#NotificationType).
 	 *
-	 * @param type The [RequestType](#RequestType) describing the request.
-	 * @param params The request's parameters.
+	 * @param type The [NotificationType](#NotificationType) describing the notification.
+	 * @param handler The handler to install.
 	 */
-	sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): Thenable<R>;
-	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): Thenable<R>;
+	onNotification<RO>(type: NotificationType0<RO>, handler: NotificationHandler0): void;
+	onNotification<P, RO>(type: NotificationType<P, RO>, handler: NotificationHandler<P>): void;
 
 	/**
 	 * Installs a notification handler for the given method.
@@ -514,13 +562,13 @@ export interface IConnection {
 	onNotification(method: string, handler: GenericNotificationHandler): void;
 
 	/**
-	 * Installs a notification handler described by the given [NotificationType](#NotificationType).
+	 * Send a notification to the client.
 	 *
 	 * @param type The [NotificationType](#NotificationType) describing the notification.
-	 * @param handler The handler to install.
+	 * @param params The notification's parameters.
 	 */
-	onNotification(type: NotificationType0, handler: NotificationHandler0): void;
-	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): void;
+	sendNotification<RO>(type: NotificationType0<RO>): void;
+	sendNotification<P, RO>(type: NotificationType<P, RO>, params?: P): void;
 
 	/**
 	 * Send a notification to the client.
@@ -529,15 +577,6 @@ export interface IConnection {
 	 * @param params The notification's parameters.
 	 */
 	sendNotification(method: string, ...args: any[]): void;
-
-	/**
-	 * Send a notification to the client.
-	 *
-	 * @param type The [NotificationType](#NotificationType) describing the notification.
-	 * @param params The notification's parameters.
-	 */
-	sendNotification(type: NotificationType0): void;
-	sendNotification<P>(type: NotificationType<P>, params?: P): void;
 
 	/**
 	 * Installs a handler for the intialize request.
@@ -559,6 +598,12 @@ export interface IConnection {
 	 * @param handler The exit handler.
 	 */
 	onExit(handler: NotificationHandler0): void;
+
+	/**
+	 * A proxy interface for the language client interface to register for requests or
+	 * notifications.
+	 */
+	client: RemoteClient;
 
 	/**
 	 * A proxy for VSCode's development console. See [RemoteConsole](#RemoteConsole)
@@ -614,6 +659,20 @@ export interface IConnection {
 	 * @param handler The corresponding handler.
 	 */
 	onDidCloseTextDocument(handler: NotificationHandler<DidCloseTextDocumentParams>): void;
+
+	/**
+	 * Installs a handler for the `DidSaveTextDocument` notification.
+	 *
+	 * @param handler The corresponding handler.
+	 */
+	onWillSaveTextDocument(handler: NotificationHandler<WillSaveTextDocumentParams>): void;
+
+	/**
+	 * Installs a handler for the `DidSaveTextDocument` notification.
+	 *
+	 * @param handler The corresponding handler.
+	 */
+	onWillSaveTextDocumentWaitUntil(handler: RequestHandler<WillSaveTextDocumentParams, TextEdit[], void>): void;
 
 	/**
 	 * Installs a handler for the `DidSaveTextDocument` notification.
@@ -814,11 +873,11 @@ export function createConnection(input?: any, output?: any): IConnection {
 		if (port) {
 			output = new stream.PassThrough();
 			input = new stream.PassThrough();
-  			let server = net.createServer(socket => {
+			let server = net.createServer(socket => {
 				server.close();
 				socket.pipe(output);
 				input.pipe(socket);
-     		}).listen(port);
+			}).listen(port);
 		}
 	}
 	var commandLineMessage = "Use arguments of createConnection or set command line parameters: '--node-ipc', '--stdio' or '--socket={number}'";
@@ -847,6 +906,7 @@ export function createConnection(input?: any, output?: any): IConnection {
 	const remoteWindow = new RemoteWindowImpl(connection);
 	const telemetry = new TelemetryImpl(connection);
 	const tracer = new TracerImpl(connection);
+	const client = new RemoteClientImpl(connection, logger);
 
 	function asThenable<T>(value: Thenable<T>): Thenable<T>;
 	function asThenable<T>(value: T): Thenable<T>;
@@ -878,6 +938,7 @@ export function createConnection(input?: any, output?: any): IConnection {
 		get window() { return remoteWindow; },
 		get telemetry() { return telemetry; },
 		get tracer() { return tracer; },
+		get client() { return client; },
 
 		onDidChangeConfiguration: (handler) => connection.onNotification(DidChangeConfigurationNotification.type, handler),
 		onDidChangeWatchedFiles: (handler) => connection.onNotification(DidChangeWatchedFilesNotification.type, handler),
@@ -886,6 +947,8 @@ export function createConnection(input?: any, output?: any): IConnection {
 		onDidOpenTextDocument: (handler) => connection.onNotification(DidOpenTextDocumentNotification.type, handler),
 		onDidChangeTextDocument: (handler) => connection.onNotification(DidChangeTextDocumentNotification.type, handler),
 		onDidCloseTextDocument: (handler) => connection.onNotification(DidCloseTextDocumentNotification.type, handler),
+		onWillSaveTextDocument: (handler) => connection.onNotification(WillSaveTextDocumentNotification.type, handler),
+		onWillSaveTextDocumentWaitUntil: (handler) => connection.onRequest(WillSaveTextDocumentWaitUntilRequest.type, handler),
 		onDidSaveTextDocument: (handler) => connection.onNotification(DidSaveTextDocumentNotification.type, handler),
 
 		sendDiagnostics: (params) => connection.sendNotification(PublishDiagnosticsNotification.type, params),
