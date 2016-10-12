@@ -939,6 +939,14 @@ export class LanguageClient {
 			Object.keys(env).forEach(key => result[key] = env[key]);
 		}
 
+		function startedInDebugMode(): boolean {
+			let args = (process as any).execArgv;
+			if (args) {
+				return args.some((arg) => /^--debug=?/.test(arg) || /^--debug-brk=?/.test(arg));
+			};
+			return false;
+		}
+
 		let encoding = this._clientOptions.stdioEncoding || 'utf8';
 
 		let errorHandler = (error: Error, message: Message, count: number) => {
@@ -966,7 +974,7 @@ export class LanguageClient {
 		let runDebug= <{ run: any; debug: any;}>server;
 		if (is.defined(runDebug.run) || is.defined(runDebug.debug)) {
 			// We are under debugging. So use debug as well.
-			if (typeof v8debug === 'object' || this._forceDebug) {
+			if (typeof v8debug === 'object' || this._forceDebug || startedInDebugMode()) {
 				json = runDebug.debug;
 			} else {
 				json = runDebug.run;
