@@ -174,6 +174,8 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		set(item.kind, () => result.kind = item.kind - 1);
 		set(item.sortText, () => result.sortText = item.sortText);
 		set(item.textEdit, () => result.textEdit = asTextEdit(item.textEdit));
+		set(item.additionalTextEdits, () => result.additionalTextEdits = asTextEdits(item.additionalTextEdits));
+		set(item.command, () => result.command = asCommand(item.command));
 		set(item.data, () => result.data = item.data);
 		return result;
 	}
@@ -309,7 +311,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 
 	function asDocumentLinks(items: ls.DocumentLink[]): code.DocumentLink[] {
 		return items.map(asDocumentLink);
-	}	
+	}
 
 	return {
 		asUri,

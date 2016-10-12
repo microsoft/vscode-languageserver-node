@@ -22,7 +22,7 @@
 	},
 	"dependencies": {
 		"vscode-jsonrpc": "^2.4.0",
-		"vscode-languageserver-types": "^1.0.4-next.2"
+		"vscode-languageserver-types": "^1.0.4"
 	},
 	"scripts": {
 		"prepublish": "node ./node_modules/vscode/bin/install && tsc -p ./src",
