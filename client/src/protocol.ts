@@ -299,7 +299,7 @@ export interface ServerCapabilities {
 
 /**
  * The initialize method is sent from the client to the server.
- * It is send once as the first method after starting up the
+ * It is sent once as the first method after starting up the
  * worker. The requests parameter is of type [InitializeParams](#InitializeParams)
  * the response if of type [InitializeResult](#InitializeResult) of a Thenable that
  * resolves to such.
@@ -357,7 +357,7 @@ export interface InitializeResult {
 export interface InitializeError {
 	/**
 	 * Indicates whether the client should retry to send the
-	 * initilize request after showing the message provided
+	 * initialize request after showing the message provided
 	 * in the {@link ResponseError}
 	 */
 	retry: boolean;
@@ -367,7 +367,7 @@ export interface InitializeError {
 
 /**
  * A shutdown request is sent from the client to the server.
- * It is send once when the client descides to shutdown the
+ * It is sent once when the client descides to shutdown the
  * server. The only notification that is sent after a shudown request
  * is the exit event.
  */
@@ -478,7 +478,7 @@ export interface ShowMessageRequestParams {
 }
 
 /**
- * The show message request is send from the server to the clinet to show a message
+ * The show message request is sent from the server to the clinet to show a message
  * and a set of options actions to the user.
  */
 export namespace ShowMessageRequest {
@@ -486,7 +486,7 @@ export namespace ShowMessageRequest {
 }
 
 /**
- * The log message notification is send from the server to the client to ask
+ * The log message notification is sent from the server to the client to ask
  * the client to log a particular message.
  */
 export namespace LogMessageNotification {
@@ -511,7 +511,7 @@ export interface LogMessageParams {
 //---- Telemetry notification
 
 /**
- * The telemetry event notification is send from the server to the client to ask
+ * The telemetry event notification is sent from the server to the client to ask
  * the client to log telemetry data.
  */
 export namespace TelemetryEventNotification {
