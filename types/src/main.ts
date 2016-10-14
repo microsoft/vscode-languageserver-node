@@ -693,7 +693,7 @@ export namespace MarkedString {
 }
 
 /**
- * The result of a hove request.
+ * The result of a hover request.
  */
 export interface Hover {
 	/**
