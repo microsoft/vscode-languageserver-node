@@ -25,7 +25,6 @@ language servers for [VSCode](https://code.visualstudio.com/).
 ## History
 
 * 3.0.0-alpha.x: Client, Server and JSON-RPC
-  * Support for Document Link Providers
   * Moved all libraries to TypeScript 2.0.3
   * Client and Server are compiled to ES6. JSON-RPC is still compiled to ES5.
   * JSON-RPC supports n parameter request and notification invocation
@@ -42,6 +41,9 @@ export namespace CompletionRequest {
   };
 }
 ```
+* 2.6.0: Client and Server
+  * Support for Document Link Providers
+  * Support for additional text edits and commands in completion items.
 
 * 2.5.0: Client and Server
   * Better error handling on client side.
