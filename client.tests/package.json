@@ -21,7 +21,10 @@
 		"vscode": "^1.0.0",
 		"vscode-languageserver-types": "2.0.0-alpha.1",
 		"@types/node": "^6.0.45",
-		"@types/mocha": "^2.2.32"
+		"@types/mocha": "^2.2.32",
+        "@types/socket.io": "^1.4.27",
+        "@types/socket.io-client": "^1.4.27",
+        "socket.io": "^1.0.6"
 	},
 	"scripts": {
 		"postinstall": "node ./node_modules/vscode/bin/install",
