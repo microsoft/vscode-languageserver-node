@@ -1,34 +1,35 @@
 {
-	"name": "vscode-languageclient",
-	"description": "VSCode Language client implementation",
-	"version": "3.0.0-alpha.3",
-	"author": "Microsoft Corporation",
-	"license": "MIT",
-	"engines": {
-		"vscode": "^1.6.0"
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/Microsoft/vscode-languageserver-node.git"
-	},
-	"bugs": {
-		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
-	},
-	"main": "./lib/main.js",
-	"typings": "./lib/main",
-	"devDependencies": {
-		"typescript": "^2.0.3",
-		"vscode": "^1.0.0",
-		"@types/node": "^6.0.42"
-	},
-	"dependencies": {
-		"vscode-jsonrpc": "^3.0.0-alpha.2",
-		"vscode-languageserver-types": "^2.0.0-alpha.1"
-	},
-	"scripts": {
-		"prepublish": "node ./node_modules/vscode/bin/install && tsc -p ./src",
-		"compile": "tsc -p ./src",
-		"watch": "tsc -w -p ./src",
-		"update-vscode": "node ./node_modules/vscode/bin/install"
-	}
+  "name": "vscode-languageclient",
+  "description": "VSCode Language client implementation",
+  "version": "3.0.0-alpha.3",
+  "author": "Microsoft Corporation",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.6.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Microsoft/vscode-languageserver-node.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
+  },
+  "main": "./lib/main.js",
+  "typings": "./lib/main",
+  "devDependencies": {
+    "typescript": "^2.0.3",
+    "vscode": "^1.0.0",
+    "@types/node": "^6.0.42"
+  },
+  "dependencies": {
+    "socket.io": "^1.0.6",
+    "vscode-jsonrpc": "^3.0.0-alpha.2",
+    "vscode-languageserver-types": "^2.0.0-alpha.1"
+  },
+  "scripts": {
+    "prepublish": "node ./node_modules/vscode/bin/install && tsc -p ./src",
+    "compile": "tsc -p ./src",
+    "watch": "tsc -w -p ./src",
+    "update-vscode": "node ./node_modules/vscode/bin/install"
+  }
 }
