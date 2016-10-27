@@ -20,7 +20,8 @@
     "mocha": "^3.1.0",
     "typescript": "^2.0.3",
     "@types/node": "^6.0.42",
-    "@types/mocha": "^2.2.32"
+    "@types/mocha": "^2.2.32",
+    "@types/socket.io": "^1.4.27"
   },
   "scripts": {
     "prepublish": "tsc -p ./src",

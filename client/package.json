@@ -17,9 +17,10 @@
   "main": "./lib/main.js",
   "typings": "./lib/main",
   "devDependencies": {
+    "@types/node": "^6.0.42",
+    "@types/socket.io": "^1.4.27",
     "typescript": "^2.0.3",
-    "vscode": "^1.0.0",
-    "@types/node": "^6.0.42"
+    "vscode": "^1.0.0"
   },
   "dependencies": {
     "socket.io": "^1.0.6",

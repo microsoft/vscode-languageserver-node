@@ -17,10 +17,11 @@
   },
   "typings": "./lib/main",
   "devDependencies": {
-    "mocha": "3.0.2",
-    "typescript": "^2.0.3",
+    "@types/mocha": "^2.2.32",
     "@types/node": "^6.0.42",
-    "@types/mocha": "^2.2.32"
+    "@types/socket.io": "^1.4.27",
+    "mocha": "3.0.2",
+    "typescript": "^2.0.3"
   },
   "dependencies": {
     "socket.io": "^1.0.6",
