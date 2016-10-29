@@ -46,7 +46,6 @@ import {
 		FormattingOptions, DocumentLink
 } from 'vscode-languageserver-types';
 
-
 import {
 		RegistrationRequest, RegisterParams, UnregistrationRequest, UnregisterParams,
 		InitializeRequest, InitializeParams, InitializeResult, InitializeError, ClientCapabilities, ServerCapabilities, TextDocumentSyncKind,
@@ -74,8 +73,8 @@ import {
 		DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkParams
 } from './protocol';
 
-import * as c2p from './codeConverter';
-import * as p2c from './protocolConverter';
+import * as c2p from './converters/code-converter';
+import * as p2c from './converters/protocol-converter';
 
 import * as is from './utils/is';
 import * as electron from './utils/electron';
@@ -92,8 +91,12 @@ export {
 	Position, Range, Location, TextDocumentIdentifier, TextDocumentPositionParams,
 	TextEdit, TextEditChange, WorkspaceChange
 }
-export { Converter as Code2ProtocolConverter } from './codeConverter';
-export { Converter as Protocol2CodeConverter } from './protocolConverter';
+
+import {
+    DefaultCodeConverter, code2ProtocolConverter,
+    DefaultProtocolConverter, protocol2CodeConverter
+} from './converters/default-converters';
+export { code2ProtocolConverter, protocol2CodeConverter } from './converters/default-converters';
 
 declare var v8debug;
 
@@ -514,8 +517,8 @@ export class LanguageClient {
 				this.logTrace(message, data);
 			}
 		};
-		this._c2p = c2p.createConverter(clientOptions.uriConverters ? clientOptions.uriConverters.code2Protocol : undefined);
-		this._p2c = p2c.createConverter(clientOptions.uriConverters ? clientOptions.uriConverters.protocol2Code : undefined);
+		this._c2p = new DefaultCodeConverter(clientOptions.uriConverters ? clientOptions.uriConverters.code2Protocol : undefined);
+		this._p2c = new DefaultProtocolConverter(clientOptions.uriConverters ? clientOptions.uriConverters.protocol2Code : undefined);
 	}
 
 	private get state(): ClientState {
@@ -1354,7 +1357,7 @@ export class LanguageClient {
 						event.waitUntil(
 							connection.sendRequest(
 								WillSaveTextDocumentWaitUntilRequest.type,
-								this._c2p.asWillSaveTextDocumentParams(event)).then((result) => {
+								this._c2p.asWillSaveTextDocumentParams(event)).then((result: TextEdit[]) => {
 									return this._p2c.asTextEdits(result);
 								})
 						);
