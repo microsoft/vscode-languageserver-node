@@ -78,7 +78,7 @@ export {
 		CodeLensRequest, CodeLensParams, CodeLensResolveRequest, CodeLens, CodeLensOptions,
 		DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
 		DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams, FormattingOptions,
-		RenameRequest, RenameParams, 
+		RenameRequest, RenameParams,
 		DocumentLink, DocumentLinkRequest, DocumentLinkResolveRequest
 }
 export { Event }
@@ -89,9 +89,12 @@ import * as stream from 'stream';
 
 export namespace Files {
 	export let uriToFilePath = fm.uriToFilePath;
+	export let resolveGlobalNodePath = fm.resolveGlobalNodePath;
+	export let resolve = fm.resolve;
 	export let resolveModule = fm.resolveModule;
 	export let resolveModule2 = fm.resolveModule2;
 	export let resolveModulePath = fm.resolveModulePath;
+
 }
 
 interface ConnectionState {
@@ -691,14 +694,14 @@ export interface IConnection {
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentLinks(handler: RequestHandler<DocumentLinkParams, DocumentLink[], void>): void;	
+	onDocumentLinks(handler: RequestHandler<DocumentLinkParams, DocumentLink[], void>): void;
 
 	/**
 	 * Installs a handler for the document links resolve request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentLinkResolve(handler: RequestHandler<DocumentLink, DocumentLink, void>): void;	
+	onDocumentLinkResolve(handler: RequestHandler<DocumentLink, DocumentLink, void>): void;
 
 	/**
 	 * Disposes the connection
