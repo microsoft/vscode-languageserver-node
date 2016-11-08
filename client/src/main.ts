@@ -815,7 +815,7 @@ export class LanguageClient {
 		});
 	}
 
-	public stop() {
+	public stop(): Thenable<void> {
 		if (!this._connection) {
 			this.state = ClientState.Stopped;
 			return;
@@ -823,7 +823,7 @@ export class LanguageClient {
 		this.state = ClientState.Stopping;
 		this.cleanUp();
 		// unkook listeners
-		this.resolveConnection().then(connection => {
+		return this.resolveConnection().then(connection => {
 			connection.shutdown().then(() => {
 				connection.exit();
 				connection.dispose();
@@ -1538,11 +1538,11 @@ export class LanguageClient {
 							this.logFailedRequest(DocumentLinkResolveRequest.type, error);
 							Promise.resolve(new Error(error.message));
 						}
-					)		
-				} 
+					)
+				}
 				: undefined
 		}));
-	}	
+	}
 }
 
 export class SettingMonitor {
