@@ -620,6 +620,20 @@ export interface CompletionItem {
 	textEdit?: TextEdit;
 
 	/**
+	 * An optional array of additional [text edits](#TextEdit) that are applied when
+	 * selecting this completion. Edits must not overlap with the main [edit](#CompletionItem.textEdit)
+	 * nor with themselves.
+	 */
+	additionalTextEdits?: TextEdit[];
+
+	/**
+	 * An optional [command](#Command) that is executed *after* inserting this completion. *Note* that
+	 * additional modifications to the current document should be described with the
+	 * [additionalTextEdits](#CompletionItem.additionalTextEdits)-property.
+	 */
+	command?: Command;
+
+	/**
 	 * An data entry field that is preserved on a completion item between
 	 * a [CompletionRequest](#CompletionRequest) and a [CompletionResolveRequest]
 	 * (#CompletionResolveRequest)

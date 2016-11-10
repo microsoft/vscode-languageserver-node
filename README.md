@@ -41,6 +41,7 @@ export namespace CompletionRequest {
   };
 }
 ```
+
 * 2.6.0: Client and Server
   * Support for Document Link Providers
   * Support for additional text edits and commands in completion items.

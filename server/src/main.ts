@@ -115,9 +115,12 @@ import * as stream from 'stream';
 
 export namespace Files {
 	export let uriToFilePath = fm.uriToFilePath;
+	export let resolveGlobalNodePath = fm.resolveGlobalNodePath;
+	export let resolve = fm.resolve;
 	export let resolveModule = fm.resolveModule;
 	export let resolveModule2 = fm.resolveModule2;
 	export let resolveModulePath = fm.resolveModulePath;
+
 }
 
 interface ConnectionState {
