@@ -305,11 +305,19 @@ export interface SynchronizeOptions {
 	textDocumentFilter?: (textDocument: TextDocument) => boolean;
 }
 
+export enum RevealOutputChannelOn {
+	Info = 1,
+	Warn = 2,
+	Error = 3,
+	Never = 4
+}
+
 export interface LanguageClientOptions {
 	documentSelector?: string | string[];
 	synchronize?: SynchronizeOptions;
 	diagnosticCollectionName?: string;
 	outputChannelName?: string;
+	revealOutputChannelOn?: RevealOutputChannelOn;
 	/**
 	 * The encoding use to read stdout and stderr. Defaults
 	 * to 'utf8' if ommitted.
@@ -440,6 +448,7 @@ export class LanguageClient {
 		this._clientOptions = clientOptions || {};
 		this._clientOptions.synchronize = this._clientOptions.synchronize || {};
 		this._clientOptions.errorHandler = this._clientOptions.errorHandler || new DefaultErrorHandler(this._name);
+		this._clientOptions.revealOutputChannelOn == this._clientOptions.revealOutputChannelOn || RevealOutputChannelOn.Error;
 		this._syncExpression = this.computeSyncExpression();
 		this._forceDebug = forceDebug;
 
@@ -632,12 +641,18 @@ export class LanguageClient {
 		if (data) {
 			this.outputChannel.appendLine(this.data2String(data));
 		}
+		if (this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Info) {
+			this.outputChannel.show(true);
+		}
 	}
 
 	public warn(message: string, data?: any): void {
 		this.outputChannel.appendLine(`[Warn  - ${(new Date().toLocaleTimeString())}] ${message}`);
 		if (data) {
 			this.outputChannel.appendLine(this.data2String(data));
+		}
+		if (this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Warn) {
+			this.outputChannel.show(true);
 		}
 	}
 
@@ -646,7 +661,9 @@ export class LanguageClient {
 		if (data) {
 			this.outputChannel.appendLine(this.data2String(data));
 		}
-		this.outputChannel.show();
+		if (this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Error) {
+			this.outputChannel.show(true);
+		}
 	}
 
 	private logTrace(message: string, data?: any): void {
@@ -654,7 +671,7 @@ export class LanguageClient {
 		if (data) {
 			this.outputChannel.appendLine(this.data2String(data));
 		}
-		this.outputChannel.show();
+		this.outputChannel.show(true);
 	}
 
 	public needsStart(): boolean {
