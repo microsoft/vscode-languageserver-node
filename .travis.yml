@@ -5,9 +5,14 @@ node_js:
   - "0.12"
   
 install:
-  - cd jsonrpc && npm install && cd ../client && mkdir node_modules && cd node_modules && ln -s ../../jsonrpc vscode-jsonrpc  && cd .. && npm install && cd ../server && mkdir node_modules && cd node_modules && ln -s ../../jsonrpc vscode-jsonrpc && cd .. && npm install && cd ..
-  - cd types && npm install && cd ../client && cd node_modules && ln -s ../../types vscode-languageserver-types  && cd .. && npm install && cd ../server && cd node_modules && ln -s ../../types vscode-languageserver-types && cd .. && npm install && cd ..
-  
+  - cd jsonrpc && npm install && cd ..
+  - cd client && mkdir node_modules && cd node_modules && ln -s ../../jsonrpc vscode-jsonrpc && cd ../..
+  - cd server && mkdir node_modules && cd node_modules && ln -s ../../jsonrpc vscode-jsonrpc && cd ../..
+  - cd types && npm install && cd ..
+  - cd client && cd node_modules && ln -s ../../types vscode-languageserver-types && cd ../..
+  - cd server && cd node_modules && ln -s ../../types vscode-languageserver-types && cd ../..
+  - cd client && npm install && cd ..
+  - cd server && npm install && cd ..
 script:
   - cd jsonrpc && npm run compile && cd ../types && npm run compile && cd ../client && npm run compile && cd ../server && npm run compile && cd ..
   - cd jsonrpc && npm test && cd ../types && npm test && cd ..
