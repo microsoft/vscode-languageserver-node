@@ -26,7 +26,7 @@ import {
 } from 'vscode-jsonrpc';
 
 import {
-	TextDocument, TextDocumentChangeEvent, TextDocumentContentChangeEvent,
+	TextDocument, TextDocumentChangeEvent, TextDocumentContentChangeEvent, TextDocumentSaveReason, TextDocumentWillSaveEvent,
 	Range, Position, Location, Diagnostic, DiagnosticSeverity, Command,
 	TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
 	TextDocumentIdentifier, CompletionItemKind, CompletionItem, CompletionList,
@@ -42,8 +42,7 @@ import {
 import {
 	RegistrationRequest, RegisterParams, UnregistrationRequest, UnregisterParams,
 	InitializeRequest, InitializeParams, InitializeResult, InitializeError, ClientCapabilities, ServerCapabilities,
-	ShutdownRequest,
-	ExitNotification,
+	InitializedNotification, InitializedParams, ShutdownRequest, ExitNotification,
 	LogMessageNotification, LogMessageParams, MessageType,
 	ShowMessageNotification, ShowMessageParams, ShowMessageRequest, ShowMessageRequestParams, MessageActionItem,
 	TelemetryEventNotification,
@@ -73,25 +72,18 @@ import * as UUID from './utils/uuid';
 
 // ------------- Reexport the API surface of the language worker API ----------------------
 export {
-	RequestType, RequestType0, RequestType1, RequestType2, RequestType3, RequestType4,
-	RequestType5, RequestType6, RequestType7, RequestType8, RequestType9,
-	RequestHandler, RequestHandler0, RequestHandler1, RequestHandler2, RequestHandler3,
-	RequestHandler4, RequestHandler5, RequestHandler6, RequestHandler7, RequestHandler8,
-	RequestHandler9,
-	NotificationType, NotificationType0, NotificationType1, NotificationType2, NotificationType3,
-	NotificationType4, NotificationType5, NotificationType6, NotificationType7, NotificationType8,
-	NotificationType9,
-	NotificationHandler, NotificationHandler0, NotificationHandler1, NotificationHandler2,
-	NotificationHandler3, NotificationHandler4, NotificationHandler5, NotificationHandler6,
-	NotificationHandler7, NotificationHandler8, NotificationHandler9,
+	RequestType, RequestType0,
+	NotificationType, NotificationType0,
+	NotificationHandler, NotificationHandler0,
 	ResponseError, ErrorCodes,
 	MessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
 	MessageWriter, StreamMessageWriter, IPCMessageWriter,
 	MessageActionItem,
-	InitializeParams, InitializeResult, InitializeError, ServerCapabilities,
+	InitializeParams, InitializeResult, InitializeError, ServerCapabilities, InitializedParams,
 	DidChangeConfigurationParams,
 	DidChangeWatchedFilesParams, FileEvent, FileChangeType,
 	DidOpenTextDocumentParams, DidChangeTextDocumentParams, TextDocumentContentChangeEvent, DidCloseTextDocumentParams, DidSaveTextDocumentParams,
+	WillSaveTextDocumentParams, WillSaveTextDocumentNotification, WillSaveTextDocumentWaitUntilRequest,
 	PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Range, Position, Location,
 	TextDocumentIdentifier, TextDocumentPositionParams, TextDocumentSyncKind,
 	Hover, MarkedString,
@@ -138,6 +130,8 @@ export class TextDocuments {
 	private _onDidOpen: Emitter<TextDocumentChangeEvent>;
 	private _onDidClose: Emitter<TextDocumentChangeEvent>;
 	private _onDidSave: Emitter<TextDocumentChangeEvent>;
+	private _onWillSave: Emitter<TextDocumentWillSaveEvent>;
+	private _willSaveWaitUntil: RequestHandler<TextDocumentWillSaveEvent, TextEdit[], void>;
 
 	/**
 	 * Create a new text document manager.
@@ -148,6 +142,7 @@ export class TextDocuments {
 		this._onDidOpen = new Emitter<TextDocumentChangeEvent>();
 		this._onDidClose = new Emitter<TextDocumentChangeEvent>();
 		this._onDidSave = new Emitter<TextDocumentChangeEvent>();
+		this._onWillSave = new Emitter<TextDocumentWillSaveEvent>();
 	}
 
 	/**
@@ -176,18 +171,41 @@ export class TextDocuments {
 
 	/**
 	 * An event that fires when a text document managed by this manager
-	 * has been closed.
+	 * will be saved.
 	 */
-	public get onDidClose(): Event<TextDocumentChangeEvent> {
-		return this._onDidClose.event;
+	public get onWillSave(): Event<TextDocumentWillSaveEvent> {
+		return this._onWillSave.event;
+	}
+
+	/**
+	 * Sets a handler that will be called if a participant wants to provide
+	 * edits during a text document save.
+	 */
+	public set onWillSaveWaitUntil(value: RequestHandler<TextDocumentWillSaveEvent, TextEdit[], void>) {
+		this._willSaveWaitUntil = value;
+	}
+
+	/**
+	 * Gets the handler that will be called during a text document save.
+	 */
+	public get onWillSaveWaitUntil(): RequestHandler<TextDocumentWillSaveEvent, TextEdit[], void> {
+		return this._willSaveWaitUntil;
+	}
+
+	/**
+	 * An event that fires when a text document managed by this manager
+	 * has been saved.
+	 */
+	public get onDidSave(): Event<TextDocumentChangeEvent> {
+		return this._onDidSave.event;
 	}
 
 	/**
 	 * An event that fires when a text document managed by this manager
 	 * has been closed.
 	 */
-	public get onDidSave(): Event<TextDocumentChangeEvent> {
-		return this._onDidSave.event;
+	public get onDidClose(): Event<TextDocumentChangeEvent> {
+		return this._onDidClose.event;
 	}
 
 	/**
@@ -232,7 +250,7 @@ export class TextDocuments {
 			let document = TextDocument.create(td.uri, td.languageId, td.version, td.text);
 			this._documents[td.uri] = document;
 			this._onDidOpen.fire({ document });
-			this._onDidChangeContent.fire({ document });
+			this._onDidChangeContent.fire(Object.freeze({ document }));
 		});
 		connection.onDidChangeTextDocument((event: DidChangeTextDocumentParams) => {
 			let td = event.textDocument;
@@ -242,7 +260,7 @@ export class TextDocuments {
 				let document = this._documents[td.uri];
 				if (document && Is.func(document['update'])) {
 					(<any>document).update(last, td.version);
-					this._onDidChangeContent.fire({ document });
+					this._onDidChangeContent.fire(Object.freeze({ document }));
 				}
 			}
 		});
@@ -250,13 +268,25 @@ export class TextDocuments {
 			let document = this._documents[event.textDocument.uri];
 			if (document) {
 				delete this._documents[event.textDocument.uri];
-				this._onDidClose.fire({ document });
+				this._onDidClose.fire(Object.freeze({ document }));
+			}
+		});
+		connection.onWillSaveTextDocument((event: WillSaveTextDocumentParams) => {
+			let document = this._documents[event.textDocument.uri];
+			if (document) {
+				this._onWillSave.fire(Object.freeze({ document, reason: event.reason }));
+			}
+		});
+		connection.onWillSaveTextDocumentWaitUntil((event: WillSaveTextDocumentParams, token: CancellationToken) => {
+			let document = this._documents[event.textDocument.uri];
+			if (document && this._willSaveWaitUntil) {
+				return this._willSaveWaitUntil(Object.freeze({ document, reason: event.reason }), token);
 			}
 		});
 		connection.onDidSaveTextDocument((event: DidSaveTextDocumentParams) => {
 			let document = this._documents[event.textDocument.uri];
 			if (document) {
-				this._onDidSave.fire({ document });
+				this._onDidSave.fire(Object.freeze({ document }));
 			}
 		});
 	}
@@ -368,8 +398,72 @@ export interface RemoteWindow {
 	showInformationMessage<T extends MessageActionItem>(message: string, ...actions: T[]): Thenable<T>;
 }
 
+export interface BulkRegistration {
+	add<RO>(type: NotificationType0<RO>, registerParams?: RO): void;
+	add<P, RO>(type: NotificationType<P, RO>, registerParams?: RO): void;
+	add<R, E, RO>(type: RequestType0<R, E, RO>, registerParams?: RO): void;
+	add<P, R, E, RO>(type: RequestType<P, R, E, RO>, registerParams?: RO): void;
+}
+
+export namespace BulkRegistration {
+	export function create(): BulkRegistration {
+		return new BulkRegistrationImpl();
+	}
+}
+
+class BulkRegistrationImpl {
+	private _registrations: RegisterParams[] = [];
+
+	public add<RO>(type: string | RPCMessageType, registerOptions?: RO): void {
+		const method = Is.string(type) ? type : type.method;
+		const id = UUID.generateUuid();
+		this._registrations.push({
+			id: id,
+			method: method,
+			registerOptions: registerOptions
+		});
+	}
+
+	public get registrations(): RegisterParams[] {
+		return this._registrations;
+	}
+}
+
+export interface BulkUnregistration extends Disposable {
+	disposeSingle(index: number): void;
+}
+
+class BulkUnregistrationImpl implements BulkUnregistration {
+
+	constructor(private connection: MessageConnection, private console: RemoteConsole, private _unregistrations: UnregisterParams[]) {
+	}
+
+	public dispose(): any {
+		this.connection.sendRequest(UnregistrationRequest.type, this._unregistrations).then(undefined, (error) => {
+			this.console.info(`Bulk unregistration failed.`);
+			throw error;
+		});
+	}
+
+	public disposeSingle(index: number): void {
+		let elem = this._unregistrations[index];
+		if (!elem) {
+			return;
+		}
+		this.connection.sendRequest(UnregistrationRequest.type, elem).then(undefined, (error) => {
+			this._unregistrations.splice(index, 1);
+			this.console.info(`Unregistering request handler for ${elem.id} failed.`);
+			throw error;
+		});
+	}
+}
+
 export interface RemoteClient {
-	register<R, E, RO>(type: RequestType0<R, E, RO>, registerParams: RO): Thenable<Disposable>;
+	register<RO>(type: NotificationType0<RO>, registerParams?: RO): Thenable<Disposable>;
+	register<P, RO>(type: NotificationType<P, RO>, registerParams?: RO): Thenable<Disposable>;
+	register<R, E, RO>(type: RequestType0<R, E, RO>, registerParams?: RO): Thenable<Disposable>;
+	register<P, R, E, RO>(type: RequestType<P, R, E, RO>, registerParams?: RO): Thenable<Disposable>;
+	register(registrations: BulkRegistration): Thenable<BulkUnregistration>;
 }
 
 class ConnectionLogger implements Logger, RemoteConsole {
@@ -420,17 +514,25 @@ class RemoteClientImpl implements RemoteClient {
 	constructor(private connection: MessageConnection, private console: RemoteConsole) {
 	}
 
-	public register<RO>(type: string | RPCMessageType, registerOptions: RO): Thenable<Disposable> {
+	public register(typeOrRegistrations: string | RPCMessageType | BulkRegistration, registerOptions?: any): Thenable<Disposable> | Thenable<BulkUnregistration> {
+		if (typeOrRegistrations instanceof BulkRegistrationImpl) {
+			return this.registerMany(typeOrRegistrations);
+		} else {
+			return this.registerSingle(<string | RPCMessageType>typeOrRegistrations, registerOptions);
+		}
+	}
+
+	private registerSingle<RO>(type: string | RPCMessageType, registerOptions: any): Thenable<Disposable> {
 		const method = Is.string(type) ? type : type.method;
 		const id = UUID.generateUuid();
 		let params: RegisterParams = {
-				id: id,
-				method: method,
-				registerOptions: registerOptions
+			id: id,
+			method: method,
+			registerOptions: registerOptions
 		};
-		return this.connection.sendRequest(RegistrationRequest.type, params).then((result) => {
+		return this.connection.sendRequest(RegistrationRequest.type, [params]).then((result) => {
 			return Disposable.create(() => {
-				this.unregister(id, method);
+				this.unregisterSingle(id, method);
 			});
 		}, (error) => {
 			this.console.info(`Registering request handler for ${method} failed.`);
@@ -438,9 +540,19 @@ class RemoteClientImpl implements RemoteClient {
 		});
 	}
 
-	private unregister(id: string, method: string): Thenable<void> {
-		return this.connection.sendRequest(UnregistrationRequest.type, { id: id, method: method }).then(undefined, (error) => {
+	private unregisterSingle(id: string, method: string): Thenable<void> {
+		return this.connection.sendRequest(UnregistrationRequest.type, [{ id: id, method: method }]).then(undefined, (error) => {
 			this.console.info(`Unregistering request handler for ${id} failed.`);
+			throw error;
+		});
+	}
+
+	private registerMany(registractions: BulkRegistrationImpl): Thenable<BulkUnregistration> {
+		let rawRegistrations = registractions.registrations;
+		return this.connection.sendRequest(RegistrationRequest.type, ).then(() => {
+			return new BulkUnregistrationImpl(this.connection, this.console, rawRegistrations.map(registration => { return { id: registration.id, method: registration.method } }));
+		}, (error) => {
+			this.console.info(`Bulk registeration failed.`);
 			throw error;
 		});
 	}
@@ -587,6 +699,13 @@ export interface IConnection {
 	 * @param handler The initialize handler.
 	 */
 	onInitialize(handler: RequestHandler<InitializeParams, InitializeResult, InitializeError>): void;
+
+	/**
+	 * Installs a handler for the intialized notification.
+	 *
+	 * @param handler The initialized handler.
+	 */
+	onInitialized(handler: NotificationHandler<InitializedParams>): void;
 
 	/**
 	 * Installs a handler for the shutdown request.
@@ -934,6 +1053,7 @@ export function createConnection(input?: any, output?: any): IConnection {
 		onNotification: (type: string | RPCMessageType, handler: GenericNotificationHandler): void => connection.onNotification(type, handler),
 
 		onInitialize: (handler) => initializeHandler = handler,
+		onInitialized: (handler) => connection.onNotification(InitializedNotification.type, handler),
 		onShutdown: (handler) => shutdownHandler = handler,
 		onExit: (handler) => exitHandler = handler,
 

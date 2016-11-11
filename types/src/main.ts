@@ -1237,6 +1237,40 @@ export interface TextDocumentChangeEvent {
 }
 
 /**
+ * Represents reasons why a text document is saved.
+ */
+export enum TextDocumentSaveReason {
+
+	/**
+	 * Manually triggered, e.g. by the user pressing save, by starting debugging,
+	 * or by an API call.
+	 */
+	Manual = 1,
+
+	/**
+	 * Automatic after a delay.
+	 */
+	AfterDelay = 2,
+
+	/**
+	 * When the editor lost focus.
+	 */
+	FocusOut = 3
+}
+
+export interface TextDocumentWillSaveEvent {
+	/**
+	 * The document that will be saved
+	 */
+	document: TextDocument;
+
+	/**
+	 * The reason why save was triggered.
+	 */
+	reason: TextDocumentSaveReason;
+}
+
+/**
  * An event describing a change to a text document. If range and rangeLength are omitted
  * the new text is considered to be the full content of the document.
  */

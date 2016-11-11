@@ -50,8 +50,7 @@ import {
 import {
 		RegistrationRequest, RegisterParams, UnregistrationRequest, UnregisterParams,
 		InitializeRequest, InitializeParams, InitializeResult, InitializeError, ClientCapabilities, ServerCapabilities, TextDocumentSyncKind,
-		ShutdownRequest,
-		ExitNotification,
+		InitializedNotification, InitializedParams, ShutdownRequest, ExitNotification,
 		LogMessageNotification, LogMessageParams, MessageType,
 		ShowMessageNotification, ShowMessageParams, ShowMessageRequest, ShowMessageRequestParams,
 		TelemetryEventNotification,
@@ -893,6 +892,7 @@ export class LanguageClient {
 			connection.onRequest(RegistrationRequest.type, params => this.handleRegistrationRequest(params));
 			connection.onRequest(UnregistrationRequest.type, params => this.handleUnregistrationRequest(params));
 			this.hookCapabilities(connection);
+			connection.sendNotification(InitializedNotification.type, {});
 			this._onReadyCallbacks.resolve();
 			Workspace.textDocuments.forEach(t => this.onDidOpenTextDoument(connection, t));
 			return result;
@@ -1311,25 +1311,32 @@ export class LanguageClient {
 		})
 	}
 
-	private handleRegistrationRequest(params: RegisterParams): Thenable<void> {
-		const method = params.method;
-		switch (method) {
-			case WillSaveTextDocumentNotification.type.method:
-			case WillSaveTextDocumentWaitUntilRequest.type.method:
-				return this.registerWillSaveTextDocument(params);
-		}
-		return Promise.reject(`Register request for unknown ${params.method} received.`);
+	private handleRegistrationRequest(params: RegisterParams[]): Thenable<void> {
+		return new Promise((resolve, reject) => {
+			params.forEach((element) => {
+				const method = element.method;
+				switch (method) {
+					case WillSaveTextDocumentNotification.type.method:
+					case WillSaveTextDocumentWaitUntilRequest.type.method:
+						return this.registerWillSaveTextDocument(element);
+				}
+			});
+			resolve();
+		})
 	}
 
-	private handleUnregistrationRequest(params: UnregisterParams): Thenable<void> {
-		const method = params.method;
-		switch (method) {
-			case WillSaveTextDocumentNotification.type.method:
-			case WillSaveTextDocumentWaitUntilRequest.type.method:
-				return this.unregisterWillSaveTextDocument(params);
-
-		}
-		return Promise.reject(`Register request for unknown ${params.method} received.`);
+	private handleUnregistrationRequest(params: UnregisterParams[]): Thenable<void> {
+		return new Promise((resolve, reject) => {
+			params.forEach((element) => {
+				const method = element.method;
+				switch (method) {
+					case WillSaveTextDocumentNotification.type.method:
+					case WillSaveTextDocumentWaitUntilRequest.type.method:
+						return this.unregisterWillSaveTextDocument(element);
+				}
+			});
+			resolve();
+		})
 	}
 
 	private _willSaveTextDocumentListener: Disposable;
