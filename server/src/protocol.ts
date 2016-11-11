@@ -256,7 +256,8 @@ export interface InitializeResult {
 }
 
 /**
- * The error returned if the initilize request fails.
+ * The data type of the ResponseError if the
+ * initialize request fails.
  */
 export interface InitializeError {
 	/**
@@ -868,7 +869,7 @@ export namespace DocumentOnTypeFormattingRequest {
 
 export interface RenameParams {
 	/**
-	 * The document to rename in.
+	 * The document to format.
 	 */
 	textDocument: TextDocumentIdentifier;
 
