@@ -41,7 +41,7 @@ export namespace CancellationToken {
 		let candidate = value as CancellationToken;
 		return candidate === CancellationToken.None
 			|| candidate === CancellationToken.Cancelled
-			|| (Is.boolean(candidate.isCancellationRequested) && Is.defined(candidate.onCancellationRequested));
+			|| (candidate && Is.boolean(candidate.isCancellationRequested) && Is.defined(candidate.onCancellationRequested));
 	}
 }
 
