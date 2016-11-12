@@ -1,34 +1,37 @@
 {
-	"name": "vscode-languageserver",
-	"description": "Language server implementation for node",
-	"version": "3.0.0-alpha.1",
-	"author": "Microsoft Corporation",
-	"license": "MIT",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/Microsoft/vscode-languageserver-node.git"
-	},
-	"bugs": {
-		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
-	},
-	"main": "./lib/main.js",
-	"bin": {
-		"installServerIntoExtension": "./bin/installServerIntoExtension"
-	},
-	"typings": "./lib/main",
-	"devDependencies": {
-		"mocha": "3.0.2",
-		"typescript": "^2.0.3",
-		"@types/node": "^6.0.42",
-		"@types/mocha": "^2.2.32"
-	},
-	"dependencies": {
-		"vscode-jsonrpc": "^3.0.0-alpha.2",
-		"vscode-languageserver-types": "^2.0.0-alpha.1"
-	},
-	"scripts": {
-		"prepublish": "tsc -p ./src",
-		"compile": "tsc -p ./src",
-		"watch": "tsc -w -p ./src"
-	}
+  "name": "vscode-languageserver",
+  "description": "Language server implementation for node",
+  "version": "3.0.0-alpha.1",
+  "author": "Microsoft Corporation",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Microsoft/vscode-languageserver-node.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
+  },
+  "main": "./lib/main.js",
+  "bin": {
+    "installServerIntoExtension": "./bin/installServerIntoExtension"
+  },
+  "typings": "./lib/main",
+  "devDependencies": {
+    "@types/mocha": "^2.2.32",
+    "@types/node": "^6.0.42",
+    "@types/socket.io": "^1.4.27",
+    "@types/socket.io-client": "^1.4.27",
+    "mocha": "3.0.2",
+    "typescript": "^2.0.3"
+  },
+  "dependencies": {
+    "socket.io": "^1.0.6",
+    "vscode-jsonrpc": "^3.0.0-alpha.2",
+    "vscode-languageserver-types": "^2.0.0-alpha.1"
+  },
+  "scripts": {
+    "prepublish": "tsc -p ./src",
+    "compile": "tsc -p ./src",
+    "watch": "tsc -w -p ./src"
+  }
 }
