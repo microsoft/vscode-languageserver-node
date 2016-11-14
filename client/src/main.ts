@@ -50,8 +50,7 @@ import {
 import {
 		RegistrationRequest, RegisterParams, UnregistrationRequest, UnregisterParams,
 		InitializeRequest, InitializeParams, InitializeResult, InitializeError, ClientCapabilities, ServerCapabilities, TextDocumentSyncKind,
-		ShutdownRequest,
-		ExitNotification,
+		InitializedNotification, InitializedParams, ShutdownRequest, ExitNotification,
 		LogMessageNotification, LogMessageParams, MessageType,
 		ShowMessageNotification, ShowMessageParams, ShowMessageRequest, ShowMessageRequestParams,
 		TelemetryEventNotification,
@@ -342,12 +341,20 @@ export interface Configuration {
 	willSaveTextDocumentWaitUntilRequest?: boolean | ((textDocument: TextDocument) => boolean);
 }
 
+export enum RevealOutputChannelOn {
+	Info = 1,
+	Warn = 2,
+	Error = 3,
+	Never = 4
+}
+
 export interface LanguageClientOptions {
 	configuration?: Configuration;
 	documentSelector?: string | string[];
 	synchronize?: SynchronizeOptions;
 	diagnosticCollectionName?: string;
 	outputChannelName?: string;
+	revealOutputChannelOn?: RevealOutputChannelOn;
 	/**
 	 * The encoding use to read stdout and stderr. Defaults
 	 * to 'utf8' if ommitted.
@@ -502,6 +509,7 @@ export class LanguageClient {
 		this._clientOptions.synchronize = this._clientOptions.synchronize || {};
 		this._clientOptions.errorHandler = this._clientOptions.errorHandler || new DefaultErrorHandler(this._name);
 		this._configuration = clientOptions.configuration || {};
+		this._clientOptions.revealOutputChannelOn == this._clientOptions.revealOutputChannelOn || RevealOutputChannelOn.Error;
 		this._syncExpression = this.computeSyncExpression();
 		this._forceDebug = forceDebug;
 
@@ -721,12 +729,18 @@ export class LanguageClient {
 		if (data) {
 			this.outputChannel.appendLine(this.data2String(data));
 		}
+		if (this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Info) {
+			this.outputChannel.show(true);
+		}
 	}
 
 	public warn(message: string, data?: any): void {
 		this.outputChannel.appendLine(`[Warn  - ${(new Date().toLocaleTimeString())}] ${message}`);
 		if (data) {
 			this.outputChannel.appendLine(this.data2String(data));
+		}
+		if (this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Warn) {
+			this.outputChannel.show(true);
 		}
 	}
 
@@ -735,7 +749,9 @@ export class LanguageClient {
 		if (data) {
 			this.outputChannel.appendLine(this.data2String(data));
 		}
-		this.outputChannel.show();
+		if (this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Error) {
+			this.outputChannel.show(true);
+		}
 	}
 
 	private logTrace(message: string, data?: any): void {
@@ -743,7 +759,7 @@ export class LanguageClient {
 		if (data) {
 			this.outputChannel.appendLine(this.data2String(data));
 		}
-		this.outputChannel.show();
+		this.outputChannel.show(true);
 	}
 
 	public needsStart(): boolean {
@@ -876,6 +892,7 @@ export class LanguageClient {
 			connection.onRequest(RegistrationRequest.type, params => this.handleRegistrationRequest(params));
 			connection.onRequest(UnregistrationRequest.type, params => this.handleUnregistrationRequest(params));
 			this.hookCapabilities(connection);
+			connection.sendNotification(InitializedNotification.type, {});
 			this._onReadyCallbacks.resolve();
 			Workspace.textDocuments.forEach(t => this.onDidOpenTextDoument(connection, t));
 			return result;
@@ -907,7 +924,7 @@ export class LanguageClient {
 		});
 	}
 
-	public stop() {
+	public stop(): Thenable<void> {
 		if (!this._connection) {
 			this.state = ClientState.Stopped;
 			return;
@@ -915,7 +932,7 @@ export class LanguageClient {
 		this.state = ClientState.Stopping;
 		this.cleanUp();
 		// unkook listeners
-		this.resolveConnection().then(connection => {
+		return this.resolveConnection().then(connection => {
 			connection.shutdown().then(() => {
 				connection.exit();
 				connection.dispose();
@@ -1294,25 +1311,32 @@ export class LanguageClient {
 		})
 	}
 
-	private handleRegistrationRequest(params: RegisterParams): Thenable<void> {
-		const method = params.method;
-		switch (method) {
-			case WillSaveTextDocumentNotification.type.method:
-			case WillSaveTextDocumentWaitUntilRequest.type.method:
-				return this.registerWillSaveTextDocument(params);
-		}
-		return Promise.reject(`Register request for unknown ${params.method} received.`);
+	private handleRegistrationRequest(params: RegisterParams[]): Thenable<void> {
+		return new Promise((resolve, reject) => {
+			params.forEach((element) => {
+				const method = element.method;
+				switch (method) {
+					case WillSaveTextDocumentNotification.type.method:
+					case WillSaveTextDocumentWaitUntilRequest.type.method:
+						return this.registerWillSaveTextDocument(element);
+				}
+			});
+			resolve();
+		})
 	}
 
-	private handleUnregistrationRequest(params: UnregisterParams): Thenable<void> {
-		const method = params.method;
-		switch (method) {
-			case WillSaveTextDocumentNotification.type.method:
-			case WillSaveTextDocumentWaitUntilRequest.type.method:
-				return this.unregisterWillSaveTextDocument(params);
-
-		}
-		return Promise.reject(`Register request for unknown ${params.method} received.`);
+	private handleUnregistrationRequest(params: UnregisterParams[]): Thenable<void> {
+		return new Promise((resolve, reject) => {
+			params.forEach((element) => {
+				const method = element.method;
+				switch (method) {
+					case WillSaveTextDocumentNotification.type.method:
+					case WillSaveTextDocumentWaitUntilRequest.type.method:
+						return this.unregisterWillSaveTextDocument(element);
+				}
+			});
+			resolve();
+		})
 	}
 
 	private _willSaveTextDocumentListener: Disposable;

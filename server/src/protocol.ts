@@ -7,7 +7,7 @@
 import { RequestType, RequestType0, NotificationType, NotificationType0, ResponseError } from 'vscode-jsonrpc';
 
 import {
-	TextDocument, TextDocumentChangeEvent, TextDocumentContentChangeEvent,
+	TextDocument, TextDocumentChangeEvent, TextDocumentContentChangeEvent, TextDocumentSaveReason,
 	Range, Position, Location, Diagnostic, DiagnosticSeverity, Command,
 	TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
 	TextDocumentIdentifier, VersionedTextDocumentIdentifier, TextDocumentItem,
@@ -74,7 +74,7 @@ export interface RegisterParams {
  * to the server and vice versa this request can be sent into both directions.
  */
 export namespace RegistrationRequest {
-	export const type: RequestType<RegisterParams, void, void, void> = { get method() { return 'client/registrationRequest'; }, _: undefined }
+	export const type: RequestType<RegisterParams[], void, void, void> = { get method() { return 'client/registrationRequest'; }, _: undefined }
 }
 
 /**
@@ -97,7 +97,7 @@ export interface UnregisterParams {
  * Unregisters the given request on the other side.
  */
 export namespace UnregistrationRequest {
-	export const type: RequestType<UnregisterParams, void, void, void> = { get method() { return 'client/unregistrationRequest'; }, _: undefined }
+	export const type: RequestType<UnregisterParams[], void, void, void> = { get method() { return 'client/unregistrationRequest'; }, _: undefined }
 }
 
 /**
@@ -298,9 +298,9 @@ export interface ServerCapabilities {
 }
 
 /**
- * The initialize method is sent from the client to the server.
- * It is send once as the first method after starting up the
- * worker. The requests parameter is of type [InitializeParams](#InitializeParams)
+ * The initialize request is sent from the client to the server.
+ * It is sent once as the request after starting up the server.
+ * The requests parameter is of type [InitializeParams](#InitializeParams)
  * the response if of type [InitializeResult](#InitializeResult) of a Thenable that
  * resolves to such.
  */
@@ -357,17 +357,29 @@ export interface InitializeResult {
 export interface InitializeError {
 	/**
 	 * Indicates whether the client should retry to send the
-	 * initilize request after showing the message provided
+	 * initialize request after showing the message provided
 	 * in the {@link ResponseError}
 	 */
 	retry: boolean;
+}
+
+export interface InitializedParams {
+}
+
+/**
+ * The intialized notification is send from the client to the
+ * server after the client is fully initialized and the server
+ * is allowed to send requests from the server to the client.
+ */
+export namespace InitializedNotification {
+	export const type: NotificationType<InitializedParams, void> = { get method() { return 'initialized'; }, _: undefined };
 }
 
 //---- Shutdown Method ----
 
 /**
  * A shutdown request is sent from the client to the server.
- * It is send once when the client descides to shutdown the
+ * It is sent once when the client descides to shutdown the
  * server. The only notification that is sent after a shudown request
  * is the exit event.
  */
@@ -478,7 +490,7 @@ export interface ShowMessageRequestParams {
 }
 
 /**
- * The show message request is send from the server to the clinet to show a message
+ * The show message request is sent from the server to the clinet to show a message
  * and a set of options actions to the user.
  */
 export namespace ShowMessageRequest {
@@ -486,7 +498,7 @@ export namespace ShowMessageRequest {
 }
 
 /**
- * The log message notification is send from the server to the client to ask
+ * The log message notification is sent from the server to the client to ask
  * the client to log a particular message.
  */
 export namespace LogMessageNotification {
@@ -511,7 +523,7 @@ export interface LogMessageParams {
 //---- Telemetry notification
 
 /**
- * The telemetry event notification is send from the server to the client to ask
+ * The telemetry event notification is sent from the server to the client to ask
  * the client to log telemetry data.
  */
 export namespace TelemetryEventNotification {
@@ -625,28 +637,6 @@ export namespace DidSaveTextDocumentNotification {
 }
 
 /**
- * Represents reasons why a text document is saved.
- */
-export enum TextDocumentSaveReason {
-
-	/**
-	 * Manually triggered, e.g. by the user pressing save, by starting debugging,
-	 * or by an API call.
-	 */
-	Manual = 1,
-
-	/**
-	 * Automatic after a delay.
-	 */
-	AfterDelay = 2,
-
-	/**
-	 * When the editor lost focus.
-	 */
-	FocusOut = 3
-}
-
-/**
  * The parameters send in a will save text document notification.
  */
 export interface WillSaveTextDocumentParams {
@@ -654,8 +644,9 @@ export interface WillSaveTextDocumentParams {
 	 * The document that will be saved.
 	 */
 	textDocument: TextDocumentIdentifier;
+
 	/**
-	 * The reason why a text document is saved.
+	 * The 'TextDocumentSaveReason'.
 	 */
 	reason: number;
 }

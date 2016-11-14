@@ -233,6 +233,8 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		set(item.kind, () => result.kind = item.kind + 1);
 		set(item.sortText, () => result.sortText = item.sortText);
 		set(item.textEdit, () => result.textEdit = asTextEdit(item.textEdit));
+		set(item.additionalTextEdits, () => result.additionalTextEdits = asTextEdits(item.additionalTextEdits));
+		set(item.command, () => result.command = asCommand(item.command));
 		if (item instanceof ProtocolCompletionItem) {
 			set(item.data, () => result.data = item.data);
 		}
@@ -241,6 +243,13 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 
 	function asTextEdit(edit: code.TextEdit): ls.TextEdit {
 		return { range: asRange(edit.range), newText: edit.newText };
+	}
+
+	function asTextEdits(edits: code.TextEdit[]): ls.TextEdit[] {
+		if (is.undefined(edits) || is.nil(edits)) {
+			return edits;
+		}
+		return edits.map(asTextEdit);
 	}
 
 	function asReferenceParams(textDocument: code.TextDocument, position: code.Position, options: { includeDeclaration: boolean; }): proto.ReferenceParams {

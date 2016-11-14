@@ -6,5 +6,6 @@
 	"editor.insertSpaces": false,
 	"editor.tabSize": 4,
 	"tslint.enable": false,
-	"typescript.tsdk": "./node_modules/typescript/lib"
+	"typescript.tsdk": "./node_modules/typescript/lib",
+	"typescript.tsserver.trace": "off"
 }

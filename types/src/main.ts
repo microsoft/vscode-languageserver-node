@@ -620,6 +620,20 @@ export interface CompletionItem {
 	textEdit?: TextEdit;
 
 	/**
+	 * An optional array of additional [text edits](#TextEdit) that are applied when
+	 * selecting this completion. Edits must not overlap with the main [edit](#CompletionItem.textEdit)
+	 * nor with themselves.
+	 */
+	additionalTextEdits?: TextEdit[];
+
+	/**
+	 * An optional [command](#Command) that is executed *after* inserting this completion. *Note* that
+	 * additional modifications to the current document should be described with the
+	 * [additionalTextEdits](#CompletionItem.additionalTextEdits)-property.
+	 */
+	command?: Command;
+
+	/**
 	 * An data entry field that is preserved on a completion item between
 	 * a [CompletionRequest](#CompletionRequest) and a [CompletionResolveRequest]
 	 * (#CompletionResolveRequest)
@@ -1220,6 +1234,40 @@ export interface TextDocumentChangeEvent {
 	 * The document that has changed.
 	 */
 	document: TextDocument;
+}
+
+/**
+ * Represents reasons why a text document is saved.
+ */
+export enum TextDocumentSaveReason {
+
+	/**
+	 * Manually triggered, e.g. by the user pressing save, by starting debugging,
+	 * or by an API call.
+	 */
+	Manual = 1,
+
+	/**
+	 * Automatic after a delay.
+	 */
+	AfterDelay = 2,
+
+	/**
+	 * When the editor lost focus.
+	 */
+	FocusOut = 3
+}
+
+export interface TextDocumentWillSaveEvent {
+	/**
+	 * The document that will be saved
+	 */
+	document: TextDocument;
+
+	/**
+	 * The reason why save was triggered.
+	 */
+	reason: TextDocumentSaveReason;
 }
 
 /**
