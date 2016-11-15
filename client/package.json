@@ -26,9 +26,9 @@
 		"vscode-languageserver-types": "^2.0.0-alpha.1"
 	},
 	"scripts": {
-		"prepublish": "node ./node_modules/vscode/bin/install && tsc -p ./src",
-		"compile": "tsc -p ./src",
-		"watch": "tsc -w -p ./src",
+		"prepublish": "node ./node_modules/vscode/bin/install && ./node_modules/.bin/tsc -p ./src",
+		"compile": "./node_modules/.bin/tsc -p ./src",
+		"watch": "./node_modules/.bin/tsc -w -p ./src",
 		"update-vscode": "node ./node_modules/vscode/bin/install"
 	}
 }

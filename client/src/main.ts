@@ -590,9 +590,9 @@ export class LanguageClient {
 	public sendRequest<R>(method: string, param: any, token?: CancellationToken): Thenable<R>;
 	public sendRequest<R>(type: string | RPCMessageType, ...params: any[]): Thenable<R> {
 		return this.onReady().then(() => {
-			return this.resolveConnection().then((connection) => {
-				return this._doSendRequest(connection, type, params);
-			});
+			return this.resolveConnection();
+		}).then((connection: IConnection) => {
+			return this._doSendRequest<R>(connection, type, params);
 		});
 	}
 
@@ -1312,31 +1312,33 @@ export class LanguageClient {
 	}
 
 	private handleRegistrationRequest(params: RegisterParams[]): Thenable<void> {
-		return new Promise((resolve, reject) => {
-			params.forEach((element) => {
+		return new Promise<void>((resolve, reject) => {
+			Promise.all(params.map((element) => {
 				const method = element.method;
 				switch (method) {
 					case WillSaveTextDocumentNotification.type.method:
 					case WillSaveTextDocumentWaitUntilRequest.type.method:
 						return this.registerWillSaveTextDocument(element);
 				}
+			})).then(_ => {
+				Promise.resolve();
 			});
-			resolve();
-		})
+		});
 	}
 
 	private handleUnregistrationRequest(params: UnregisterParams[]): Thenable<void> {
-		return new Promise((resolve, reject) => {
-			params.forEach((element) => {
+		return new Promise<void>((resolve, reject) => {
+			Promise.all(params.map((element) => {
 				const method = element.method;
 				switch (method) {
 					case WillSaveTextDocumentNotification.type.method:
 					case WillSaveTextDocumentWaitUntilRequest.type.method:
 						return this.unregisterWillSaveTextDocument(element);
 				}
+			})).then(_ => {
+				Promise.resolve();
 			});
-			resolve();
-		})
+		});
 	}
 
 	private _willSaveTextDocumentListener: Disposable;
