@@ -932,17 +932,19 @@ export class LanguageClient {
 		this.state = ClientState.Stopping;
 		this.cleanUp();
 		// unkook listeners
-		return this.resolveConnection().then(connection => {
-			connection.shutdown().then(() => {
-				connection.exit();
-				connection.dispose();
-				this.state = ClientState.Stopped;
-				this._connection = null;
-				let toCheck = this._childProcess;
-				this._childProcess = null;
-				// Remove all markers
-				this.checkProcessDied(toCheck);
-			})
+		let connection;
+		return this.resolveConnection().then(_connection => {
+			connection = _connection;
+			return connection.shutdown();
+		}).then(() => {
+			connection.exit();
+			connection.dispose();
+			this.state = ClientState.Stopped;
+			this._connection = null;
+			let toCheck = this._childProcess;
+			this._childProcess = null;
+			// Remove all markers
+			this.checkProcessDied(toCheck);
 		});
 	}
 
