@@ -48,7 +48,7 @@ import {
 
 
 import {
-		RegistrationRequest, RegisterParams, UnregistrationRequest, UnregisterParams,
+		RegistrationRequest, Registration, RegistrationParams, UnregistrationRequest, Unregisteration, UnregistrationParams,
 		InitializeRequest, InitializeParams, InitializeResult, InitializeError, ClientCapabilities, ServerCapabilities, TextDocumentSyncKind,
 		InitializedNotification, InitializedParams, ShutdownRequest, ExitNotification,
 		LogMessageNotification, LogMessageParams, MessageType,
@@ -1311,9 +1311,9 @@ export class LanguageClient {
 		})
 	}
 
-	private handleRegistrationRequest(params: RegisterParams[]): Thenable<void> {
+	private handleRegistrationRequest(params: RegistrationParams): Thenable<void> {
 		return new Promise((resolve, reject) => {
-			params.forEach((element) => {
+			params.registrations.forEach((element) => {
 				const method = element.method;
 				switch (method) {
 					case WillSaveTextDocumentNotification.type.method:
@@ -1325,9 +1325,9 @@ export class LanguageClient {
 		})
 	}
 
-	private handleUnregistrationRequest(params: UnregisterParams[]): Thenable<void> {
+	private handleUnregistrationRequest(params: UnregistrationParams): Thenable<void> {
 		return new Promise((resolve, reject) => {
-			params.forEach((element) => {
+			params.unregisterations.forEach((element) => {
 				const method = element.method;
 				switch (method) {
 					case WillSaveTextDocumentNotification.type.method:
@@ -1342,24 +1342,24 @@ export class LanguageClient {
 	private _willSaveTextDocumentListener: Disposable;
 	private _willSaveNotifications: Map<string, DocumentSelector> = new Map<string, DocumentSelector>();
 	private _willSaveRequests: Map<string, DocumentSelector> = new Map<string, DocumentSelector>();
-	private registerWillSaveTextDocument(params: RegisterParams): Thenable<void> {
+	private registerWillSaveTextDocument(registration: Registration): Thenable<void> {
 		if (!this._willSaveTextDocumentListener) {
 			this._willSaveTextDocumentListener = Workspace.onWillSaveTextDocument(this.onWillSaveTextDocument, this);
 		}
-		let selector = params.registerOptions.selector;
-		if (params.method === WillSaveTextDocumentNotification.type.method) {
-			this._willSaveNotifications.set(params.id, selector);
+		let selector = registration.registerOptions.selector;
+		if (registration.method === WillSaveTextDocumentNotification.type.method) {
+			this._willSaveNotifications.set(registration.id, selector);
 		} else {
-			this._willSaveRequests.set(params.id, selector);
+			this._willSaveRequests.set(registration.id, selector);
 		}
 		return Promise.resolve();
 	}
 
-	private unregisterWillSaveTextDocument(params: UnregisterParams): Thenable<void> {
-		if (params.method === WillSaveTextDocumentNotification.type.method) {
-			this._willSaveNotifications.delete(params.id);
+	private unregisterWillSaveTextDocument(unregistration: Unregisteration): Thenable<void> {
+		if (unregistration.method === WillSaveTextDocumentNotification.type.method) {
+			this._willSaveNotifications.delete(unregistration.id);
 		} else {
-			this._willSaveRequests.set(params.id);
+			this._willSaveRequests.set(unregistration.id);
 		}
 		if (this._willSaveNotifications.size === 0 && this._willSaveRequests.size === 0) {
 			this._willSaveTextDocumentListener.dispose();

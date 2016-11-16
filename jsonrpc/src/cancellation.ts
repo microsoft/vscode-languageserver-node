@@ -39,9 +39,9 @@ export namespace CancellationToken {
 
 	export function is(value: any): value is CancellationToken {
 		let candidate = value as CancellationToken;
-		return candidate === CancellationToken.None
+		return candidate && (candidate === CancellationToken.None
 			|| candidate === CancellationToken.Cancelled
-			|| (Is.boolean(candidate.isCancellationRequested) && Is.defined(candidate.onCancellationRequested));
+			|| (Is.boolean(candidate.isCancellationRequested) && Is.defined(candidate.onCancellationRequested)));
 	}
 }
 

@@ -40,7 +40,7 @@ import {
 } from 'vscode-languageserver-types';
 
 import {
-	RegistrationRequest, RegisterParams, UnregistrationRequest, UnregisterParams,
+	RegistrationRequest, Registration, RegistrationParams, UnregistrationRequest, Unregisteration, UnregistrationParams,
 	InitializeRequest, InitializeParams, InitializeResult, InitializeError, ClientCapabilities, ServerCapabilities,
 	InitializedNotification, InitializedParams, ShutdownRequest, ExitNotification,
 	LogMessageNotification, LogMessageParams, MessageType,
@@ -72,9 +72,8 @@ import * as UUID from './utils/uuid';
 
 // ------------- Reexport the API surface of the language worker API ----------------------
 export {
-	RequestType, RequestType0,
-	NotificationType, NotificationType0,
-	NotificationHandler, NotificationHandler0,
+	RequestType0, RequestHandler0, RequestType, RequestHandler,
+	NotificationType0, NotificationHandler0, NotificationType, NotificationHandler,
 	ResponseError, ErrorCodes,
 	MessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
 	MessageWriter, StreamMessageWriter, IPCMessageWriter,
@@ -399,10 +398,10 @@ export interface RemoteWindow {
 }
 
 export interface BulkRegistration {
-	add<RO>(type: NotificationType0<RO>, registerParams?: RO): void;
-	add<P, RO>(type: NotificationType<P, RO>, registerParams?: RO): void;
-	add<R, E, RO>(type: RequestType0<R, E, RO>, registerParams?: RO): void;
-	add<P, R, E, RO>(type: RequestType<P, R, E, RO>, registerParams?: RO): void;
+	add<RO>(type: NotificationType0<RO>, registerParams: RO): void;
+	add<P, RO>(type: NotificationType<P, RO>, registerParams: RO): void;
+	add<R, E, RO>(type: RequestType0<R, E, RO>, registerParams: RO): void;
+	add<P, R, E, RO>(type: RequestType<P, R, E, RO>, registerParams: RO): void;
 }
 
 export namespace BulkRegistration {
@@ -412,7 +411,7 @@ export namespace BulkRegistration {
 }
 
 class BulkRegistrationImpl {
-	private _registrations: RegisterParams[] = [];
+	private _registrations: Registration[] = [];
 
 	public add<RO>(type: string | RPCMessageType, registerOptions?: RO): void {
 		const method = Is.string(type) ? type : type.method;
@@ -424,8 +423,10 @@ class BulkRegistrationImpl {
 		});
 	}
 
-	public get registrations(): RegisterParams[] {
-		return this._registrations;
+	public asRegistrationParams(): RegistrationParams {
+		return {
+			registrations: this._registrations
+		};
 	}
 }
 
@@ -435,11 +436,14 @@ export interface BulkUnregistration extends Disposable {
 
 class BulkUnregistrationImpl implements BulkUnregistration {
 
-	constructor(private connection: MessageConnection, private console: RemoteConsole, private _unregistrations: UnregisterParams[]) {
+	constructor(private connection: MessageConnection, private console: RemoteConsole, private _unregistrations: Unregisteration[]) {
 	}
 
 	public dispose(): any {
-		this.connection.sendRequest(UnregistrationRequest.type, this._unregistrations).then(undefined, (error) => {
+		let params: UnregistrationParams = {
+			unregisterations: this._unregistrations
+		};
+		this.connection.sendRequest(UnregistrationRequest.type, params).then(undefined, (error) => {
 			this.console.info(`Bulk unregistration failed.`);
 			throw error;
 		});
@@ -450,8 +454,12 @@ class BulkUnregistrationImpl implements BulkUnregistration {
 		if (!elem) {
 			return;
 		}
-		this.connection.sendRequest(UnregistrationRequest.type, elem).then(undefined, (error) => {
+		let params: UnregistrationParams = {
+			unregisterations: [elem]
+		}
+		this.connection.sendRequest(UnregistrationRequest.type, params).then(() => {
 			this._unregistrations.splice(index, 1);
+		}, (error) => {
 			this.console.info(`Unregistering request handler for ${elem.id} failed.`);
 			throw error;
 		});
@@ -525,12 +533,10 @@ class RemoteClientImpl implements RemoteClient {
 	private registerSingle<RO>(type: string | RPCMessageType, registerOptions: any): Thenable<Disposable> {
 		const method = Is.string(type) ? type : type.method;
 		const id = UUID.generateUuid();
-		let params: RegisterParams = {
-			id: id,
-			method: method,
-			registerOptions: registerOptions
-		};
-		return this.connection.sendRequest(RegistrationRequest.type, [params]).then((result) => {
+		let params: RegistrationParams = {
+			registrations: [{ id, method, registerOptions }]
+		}
+		return this.connection.sendRequest(RegistrationRequest.type, params).then((result) => {
 			return Disposable.create(() => {
 				this.unregisterSingle(id, method);
 			});
@@ -541,16 +547,20 @@ class RemoteClientImpl implements RemoteClient {
 	}
 
 	private unregisterSingle(id: string, method: string): Thenable<void> {
-		return this.connection.sendRequest(UnregistrationRequest.type, [{ id: id, method: method }]).then(undefined, (error) => {
+		let params: UnregistrationParams = {
+			unregisterations: [{ id, method }]
+		};
+
+		return this.connection.sendRequest(UnregistrationRequest.type, params).then(undefined, (error) => {
 			this.console.info(`Unregistering request handler for ${id} failed.`);
 			throw error;
 		});
 	}
 
 	private registerMany(registractions: BulkRegistrationImpl): Thenable<BulkUnregistration> {
-		let rawRegistrations = registractions.registrations;
-		return this.connection.sendRequest(RegistrationRequest.type, ).then(() => {
-			return new BulkUnregistrationImpl(this.connection, this.console, rawRegistrations.map(registration => { return { id: registration.id, method: registration.method } }));
+		let params = registractions.asRegistrationParams();
+		return this.connection.sendRequest(RegistrationRequest.type, params).then(() => {
+			return new BulkUnregistrationImpl(this.connection, this.console, params.registrations.map(registration => { return { id: registration.id, method: registration.method } }));
 		}, (error) => {
 			this.console.info(`Bulk registeration failed.`);
 			throw error;
@@ -1046,11 +1056,11 @@ export function createConnection(input?: any, output?: any): IConnection {
 	let protocolConnection: IConnection & ConnectionState = {
 		listen: (): void => connection.listen(),
 
-		sendRequest: <R>(type, ...params: any[]): Thenable<R> => connection.sendRequest(type, ...params),
-		onRequest: <R, E>(type: string | RPCMessageType, handler: GenericRequestHandler<R, E>): void => connection.onRequest(type, handler),
+		sendRequest: <R>(type: string  | RPCMessageType, ...params: any[]): Thenable<R> => connection.sendRequest(Is.string(type) ? type : type.method, ...params),
+		onRequest: <R, E>(type: string | RPCMessageType, handler: GenericRequestHandler<R, E>): void => connection.onRequest(Is.string(type) ? type : type.method, handler),
 
-		sendNotification: (type: string | RPCMessageType, ...params: any[]): void => connection.sendNotification(type, ...params),
-		onNotification: (type: string | RPCMessageType, handler: GenericNotificationHandler): void => connection.onNotification(type, handler),
+		sendNotification: (type: string | RPCMessageType, ...params: any[]): void => connection.sendNotification(Is.string(type) ? type : type.method, ...params),
+		onNotification: (type: string | RPCMessageType, handler: GenericNotificationHandler): void => connection.onNotification(Is.string(type) ? type : type.method, handler),
 
 		onInitialize: (handler) => initializeHandler = handler,
 		onInitialized: (handler) => connection.onNotification(InitializedNotification.type, handler),
@@ -1140,7 +1150,7 @@ export function createConnection(input?: any, output?: any): IConnection {
 		}
 	});
 
-	connection.onRequest<void, void>(ShutdownRequest.type, () => {
+	connection.onRequest<void, void, void>(ShutdownRequest.type, () => {
 		shutdownReceived = true;
 		if (shutdownHandler) {
 			return shutdownHandler(new CancellationTokenSource().token);
@@ -1149,7 +1159,7 @@ export function createConnection(input?: any, output?: any): IConnection {
 		}
 	});
 
-	connection.onNotification(ExitNotification.type, (params) => {
+	connection.onNotification(ExitNotification.type, () => {
 		try {
 			if (exitHandler) {
 				exitHandler();

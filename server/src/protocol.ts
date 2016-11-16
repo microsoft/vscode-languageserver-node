@@ -51,7 +51,7 @@ export type DocumentSelector = string | DocumentFilter | (string | DocumentFilte
 /**
  * General paramters to to regsiter for an notification or to register a provider.
  */
-export interface RegisterParams {
+export interface Registration {
 	/**
 	 * The id used to register the request. The id can be used to deregister
 	 * the request again.
@@ -69,18 +69,22 @@ export interface RegisterParams {
 	registerOptions: DocumentOptions;
 }
 
+export interface RegistrationParams {
+	registrations: Registration[];
+}
+
 /**
  * Register the given request or notification on the other side. Since requests can be sent from the client
  * to the server and vice versa this request can be sent into both directions.
  */
 export namespace RegistrationRequest {
-	export const type: RequestType<RegisterParams[], void, void, void> = { get method() { return 'client/registrationRequest'; }, _: undefined }
+	export const type: RequestType<RegistrationParams, void, void, void> = { get method() { return 'client/registrationRequest'; }, _: undefined }
 }
 
 /**
  * General parameters to unregister a request or notification.
  */
-export interface UnregisterParams {
+export interface Unregisteration {
 	/**
 	 * The id used to unregister the request or notification. Usually an id
 	 * provided during the register request.
@@ -93,11 +97,15 @@ export interface UnregisterParams {
 	method: string;
 }
 
+export interface UnregistrationParams {
+	unregisterations: Unregisteration[];
+}
+
 /**
  * Unregisters the given request on the other side.
  */
 export namespace UnregistrationRequest {
-	export const type: RequestType<UnregisterParams[], void, void, void> = { get method() { return 'client/unregistrationRequest'; }, _: undefined }
+	export const type: RequestType<UnregistrationParams, void, void, void> = { get method() { return 'client/unregistrationRequest'; }, _: undefined }
 }
 
 /**
