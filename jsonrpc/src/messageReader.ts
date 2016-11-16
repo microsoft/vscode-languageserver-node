@@ -252,11 +252,12 @@ export class IPCMessageReader extends AbstractMessageReader implements MessageRe
 	public constructor(process: NodeJS.Process | ChildProcess) {
 		super();
 		this.process = process;
-		this.process.on('error', (error:any) => this.fireError(error));
-		this.process.on('close', () => this.fireClose());
+		let eventEmitter: NodeJS.EventEmitter = this.process;
+		eventEmitter.on('error', (error:any) => this.fireError(error));
+		eventEmitter.on('close', () => this.fireClose());
 	}
 
 	public listen(callback: DataCallback): void {
-		this.process.on('message', callback);
+		(this.process as NodeJS.EventEmitter).on('message', callback);
 	}
 }

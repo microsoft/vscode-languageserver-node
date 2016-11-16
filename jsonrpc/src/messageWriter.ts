@@ -100,8 +100,9 @@ export class IPCMessageWriter extends AbstractMessageWriter implements MessageWr
 		super();
 		this.process = process;
 		this.errorCount = 0;
-		this.process.on('error', (error) => this.fireError(error));
-		this.process.on('close', () => this.fireClose);
+		let eventEmitter: NodeJS.EventEmitter = this.process;
+		eventEmitter.on('error', (error) => this.fireError(error));
+		eventEmitter.on('close', () => this.fireClose);
 	}
 
 	public write(msg: Message): void {
