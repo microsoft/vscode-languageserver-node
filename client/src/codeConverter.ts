@@ -228,7 +228,8 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		set(item.detail, () => result.detail = item.detail);
 		set(item.documentation, () => result.documentation = item.documentation);
 		set(item.filterText, () => result.filterText = item.filterText);
-		set(item.insertText, () => result.insertText = item.insertText);
+		set(item.insertText, () => result.insertText = asCompletionInsertText(item.insertText));
+		set(item.range, () => result.range = asRange(item.range));
 		// Protocol item kind is 1 based, codes item kind is zero based.
 		set(item.kind, () => result.kind = item.kind + 1);
 		set(item.sortText, () => result.sortText = item.sortText);
@@ -240,6 +241,15 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		}
 		return result;
 	}
+
+	function asCompletionInsertText(text: string | code.SnippetString): string | ls.SnippetString {
+		if (is.string(text)) {
+			return text;
+		} else if (is.defined(text.value)) {
+			return ls.SnippetString.create(text.value);
+		}
+		return undefined;
+	}	
 
 	function asTextEdit(edit: code.TextEdit): ls.TextEdit {
 		return { range: asRange(edit.range), newText: edit.newText };
