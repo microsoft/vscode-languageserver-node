@@ -422,6 +422,44 @@ export class WorkspaceChange {
 }
 
 /**
+ * A snippet string is a template which allows to insert text
+ * and to control the editor cursor when insertion happens.
+ *
+ * A snippet can define tab stops and placeholders with `$1`, `$2`
+ * and `${3:foo}`. `$0` defines the final tab stop, it defaults to
+ * the end of the snippet. Placeholders with equal identifiers are linked,
+ * that is typing in one will update others too.
+ */
+export interface SnippetString {
+
+	/**
+	 * The snippet string.
+	 */
+	value: string;
+}
+
+/**
+ * The SnippetString namespace provides helper functions to work with
+ * [SnippetString](#SnippetString) literals.
+ */
+export namespace SnippetString {
+	/**
+	 * Creates a new SnippetString literal.
+	 * @param uri The document's uri.
+	 */
+	export function create(value: string): SnippetString {
+		return { value };
+	}
+	/**
+	 * Checks whether the given literal conforms to the [SnippetString](#SnippetString) interface.
+	 */
+	export function is(value: any): value is SnippetString {
+		let candidate = value as SnippetString;
+		return Is.defined(candidate) && Is.string(candidate.value);
+	}
+}
+
+/**
  * A literal to identify a text document in the client.
  */
 export interface TextDocumentIdentifier {
@@ -610,12 +648,25 @@ export interface CompletionItem {
 	 * this completion. When `falsy` the [label](#CompletionItem.label)
 	 * is used.
 	 */
-	insertText?: string;
+	insertText?: string | SnippetString;
 
 	/**
+	 * A range of text that should be replaced by this completion item.
+	 *
+	 * Defaults to a range from the start of the current word to the
+	 * current position.
+	 *
+	 * *Note:* The range must be a single line and it must
+	 * contain the position at which completion has been requested.
+	 */
+	range?: Range;
+
+	/**
+	 * * @deprecated **Deprecated** in favor of `CompletionItem.insertText` and `CompletionItem.range`.
+	 * 
 	 * An [edit](#TextEdit) which is applied to a document when selecting
 	 * this completion. When an edit is provided the value of
-	 * [insertText](#CompletionItem.insertText) is ignored.
+	 * [insertText](#CompletionItem.insertText) and [range](#CompletionItem.range) is ignored.
 	 */
 	textEdit?: TextEdit;
 

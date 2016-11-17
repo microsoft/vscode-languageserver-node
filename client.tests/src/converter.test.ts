@@ -170,6 +170,7 @@ suite('Protocol Converter', () => {
 		strictEqual(result.documentation, undefined);
 		strictEqual(result.filterText, undefined);
 		strictEqual(result.insertText, undefined);
+		strictEqual(result.range, undefined);
 		strictEqual(result.kind, undefined);
 		strictEqual(result.sortText, undefined);
 		strictEqual(result.textEdit, undefined);
@@ -186,6 +187,7 @@ suite('Protocol Converter', () => {
 			documentation: 'doc',
 			filterText: 'filter',
 			insertText: 'insert',
+			range: proto.Range.create({ line: 0, character: 5}, { line: 0, character: 7}),
 			kind: proto.CompletionItemKind.Field,
 			sortText: 'sort',
 			data: 'data',
@@ -207,6 +209,7 @@ suite('Protocol Converter', () => {
 		strictEqual(result.command.command, command.command);
 		strictEqual(result.command.arguments, command.arguments);
 		ok(result.additionalTextEdits[0] instanceof vscode.TextEdit);
+		ok(result.range instanceof vscode.Range);
 
 		let completionResult = p2c.asCompletionResult([completionItem]);
 		if (Array.isArray(completionResult)) {
@@ -215,6 +218,18 @@ suite('Protocol Converter', () => {
 			ok(completionResult.items.every(value => value instanceof vscode.CompletionItem));
 		}
 	});
+
+	test('Completion Item Snippet String', () => {
+		let completionItem: proto.CompletionItem = {
+			label: 'item',
+			insertText: proto.SnippetString.create("${value}")
+		};
+
+		let result = p2c.asCompletionItem(completionItem);
+		strictEqual(result.label, completionItem.label);
+		ok(result.insertText instanceof vscode.SnippetString);
+		strictEqual((<vscode.SnippetString> result.insertText).value, "${value}");
+	});	
 
 	test('Completion Item Text Edit', () => {
 		let completionItem: proto.CompletionItem = {

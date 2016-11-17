@@ -1086,7 +1086,7 @@ export class LanguageClient {
 			this.error('Connection to server got closed. Server will not be restarted.');
 			this.state = ClientState.Stopped;
 			this.cleanUp();
-		} else if (action === CloseAction.Restart && this.state !== ClientState.Stopping) {
+		} else if (action === CloseAction.Restart) {
 			this.info('Connection to server got closed. Server will restart.');
 			this.cleanUp(false);
 			this.state = ClientState.Initial;
