@@ -19,7 +19,7 @@
 		"mocha": "^3.0.2",
 		"typescript": "^2.0.3",
 		"vscode": "^1.0.0",
-		"vscode-languageserver-types": "2.0.0-alpha.1",
+		"vscode-languageserver-types": "file:../types",
 		"@types/node": "^6.0.45",
 		"@types/mocha": "^2.2.32"
 	},

@@ -150,6 +150,11 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asCompletionResult(result: ls.CompletionItem[] | ls.CompletionList): code.CompletionItem[] | code.CompletionList {
+		if (is.undefined(result)) {
+			return undefined;
+		} else if (is.nil(result)) {
+			return null;
+		}
 		if (Array.isArray(result)) {
 			let items = <ls.CompletionItem[]> result;
 			return items.map(asCompletionItem);
@@ -185,10 +190,20 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asTextEdits(items: ls.TextEdit[]): code.TextEdit[] {
+		if (is.undefined(items)) {
+			return undefined;
+		} else if (is.nil(items)) {
+			return null;
+		}
 		return items.map(asTextEdit);
 	}
 
 	function asSignatureHelp(item: ls.SignatureHelp): code.SignatureHelp {
+		if (is.undefined(item)) {
+			return undefined;
+		} else if (is.nil(item)) {
+			return null;
+		}
 		let result = new code.SignatureHelp();
 		set(item.activeParameter, () => result.activeParameter = item.activeParameter);
 		set(item.activeSignature, () => result.activeSignature = item.activeSignature);
@@ -218,6 +233,11 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asDefinitionResult(item: ls.Definition): code.Definition {
+		if (is.undefined(item)) {
+			return undefined;
+		} else if (is.nil(item)) {
+			return null;
+		}
 		if (is.array(item)) {
 			return item.map(asLocation);
 		} else {
@@ -236,10 +256,22 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asReferences(values: ls.Location[]): code.Location[] {
+		if (is.undefined(values)) {
+			return undefined;
+		}
+		if (is.nil(values)) {
+			return null;
+		}
 		return values.map(asLocation);
 	}
 
 	function asDocumentHighlights(values: ls.DocumentHighlight[]): code.DocumentHighlight[] {
+		if (is.undefined(values)) {
+			return undefined;
+		}
+		if (is.nil(values)) {
+			return null;
+		}
 		return values.map(asDocumentHighlight);
 	}
 
@@ -262,6 +294,12 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asSymbolInformations(values: ls.SymbolInformation[], uri?: code.Uri): code.SymbolInformation[] {
+		if (is.undefined(values)) {
+			return undefined;
+		}
+		if (is.nil(values)) {
+			return null;
+		}
 		return values.map(information => asSymbolInformation(information, uri));
 	}
 
@@ -282,6 +320,12 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asCommands(items: ls.Command[]): code.Command[] {
+		if (is.undefined(items)) {
+			return undefined;
+		}
+		if (is.nil(items)) {
+			return null;
+		}
 		return items.map(asCommand);
 	}
 
@@ -293,10 +337,22 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asCodeLenses(items: ls.CodeLens[]): code.CodeLens[] {
+		if (is.undefined(items)) {
+			return undefined;
+		}
+		if (is.nil(items)) {
+			return null;
+		}
 		return items.map(asCodeLens);
 	}
 
 	function asWorkspaceEdit(item: ls.WorkspaceEdit): code.WorkspaceEdit {
+		if (is.undefined(item)) {
+			return undefined;
+		}
+		if (is.nil(item)) {
+			return null;
+		}
 		let result = new code.WorkspaceEdit();
 		let keys = Object.keys(item.changes);
 		keys.forEach(key => result.set(_uriConverter(key), asTextEdits(item.changes[key])));
@@ -310,6 +366,12 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asDocumentLinks(items: ls.DocumentLink[]): code.DocumentLink[] {
+		if (is.undefined(items)) {
+			return undefined;
+		}
+		if (is.nil(items)) {
+			return null;
+		}
 		return items.map(asDocumentLink);
 	}
 
