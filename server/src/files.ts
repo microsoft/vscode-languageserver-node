@@ -147,6 +147,9 @@ export function resolve(moduleName: string, nodePath: string, cwd: string, trace
 				env: newEnv,
 				execArgv: ['-e', app]
 			});
+			cp.on('error', (error) => {
+				reject(error);
+			});
 			cp.on('message', (message: Message) => {
 				if (message.c === 'r') {
 					cp.send({ c: 'e' });
@@ -206,7 +209,7 @@ export function resolveModulePath(workspaceRoot: string, moduleName: string, nod
 			if (value.indexOf(path.normalize(nodePath)) === 0) {
 				return value;
 			} else {
-				return Promise.reject<string>(new Error(`Failed to load ${moduleName} form node path location.`));
+				return Promise.reject<string>(new Error(`Failed to load ${moduleName} from node path location.`));
 			}
 		}).then(null, (error) => {
 			return resolve(moduleName, resolveGlobalNodePath(tracer), workspaceRoot, tracer);
