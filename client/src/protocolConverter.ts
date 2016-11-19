@@ -164,7 +164,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function set<T>(value: T, func: () => void): void {
-		if (is.defined(value)) {
+		if (is.defined(value) && !is.nil(value)) {
 			func();
 		}
 	}
