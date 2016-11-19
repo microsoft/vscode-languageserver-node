@@ -84,7 +84,7 @@ export namespace RegistrationRequest {
 /**
  * General parameters to unregister a request or notification.
  */
-export interface Unregisteration {
+export interface Unregistration {
 	/**
 	 * The id used to unregister the request or notification. Usually an id
 	 * provided during the register request.
@@ -98,7 +98,7 @@ export interface Unregisteration {
 }
 
 export interface UnregistrationParams {
-	unregisterations: Unregisteration[];
+	unregisterations: Unregistration[];
 }
 
 /**
@@ -130,15 +130,10 @@ export interface TextDocumentPositionParams {
  * Defines the capabilities provided by the client.
  */
 export interface ClientCapabilities {
-	/**
-	 * Client is able to emit will save text document notifications.
-	 */
-	willSaveTextDocumentNotification?: boolean;
-
-	/**
-	 * Client support participation in document save.
-	 */
-	willSaveTextDocumentProvider?: boolean;
+	dynamicRegistration?: boolean;
+	willSaveTextDocument?: {
+		waitUntil?: boolean;
+	}
 }
 
 /**
