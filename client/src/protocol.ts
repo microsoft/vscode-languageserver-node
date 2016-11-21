@@ -165,7 +165,7 @@ export interface DocumentOptions {
 	 * An optional document selector to identify the scope of the registration. If not
 	 * provided the registration happens for the scope determined by the other side.
 	 */
-	selector?: DocumentSelector;
+	documentSelector?: DocumentSelector;
 }
 
 /**
