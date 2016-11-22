@@ -92,6 +92,9 @@ export {
 export { Converter as Code2ProtocolConverter } from './codeConverter';
 export { Converter as Protocol2CodeConverter } from './protocolConverter';
 
+import * as Protocol from './protocol';
+export { Protocol };
+
 declare var v8debug;
 
 interface IConnection {
