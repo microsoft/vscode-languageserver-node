@@ -28,6 +28,11 @@ language servers for [VSCode](https://code.visualstudio.com/).
   * Moved all libraries to TypeScript 2.0.3
   * Client and Server are compiled to ES6. JSON-RPC is still compiled to ES5.
   * JSON-RPC supports n parameter request and notification invocation
+  * Support for snippets in completion items:
+    * New type `SnippetText`
+    * CompletionItem.insertText can now also be a SnippetText.
+    * Added CompletionItem.range
+    * Deprecated CompletionItem.textEdit
   * Breaking changes:
     * due to the use of TypeScript 2.0.3 and differences in d.ts generation users of the new version need to move to 
       TypeScript 2.0.3 as well.
@@ -42,6 +47,7 @@ export namespace CompletionRequest {
 }
 ```
 
+    
 * 2.6.0: Client and Server
   * Support for Document Link Providers
   * Support for additional text edits and commands in completion items.
