@@ -419,37 +419,3 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asDocumentLinks
 	}
 }
-
-// This for backward compatibility since we exported the converter functions as API.
-const defaultConverter = createConverter();
-
-export const asDiagnostics: (diagnostics: ls.Diagnostic[]) => code.Diagnostic[] = defaultConverter.asDiagnostics;
-export const asDiagnostic: (diagnostic: ls.Diagnostic) => code.Diagnostic = defaultConverter.asDiagnostic;
-export const asRange: (value: ls.Range) => code.Range = defaultConverter.asRange;
-export const asPosition: (value: ls.Position) => code.Position = defaultConverter.asPosition;
-export const asDiagnosticSeverity: (value: number) => code.DiagnosticSeverity = defaultConverter.asDiagnosticSeverity;
-export const asHover: (hover: ls.Hover) => code.Hover = defaultConverter.asHover;
-export const asCompletionResult: (result: ls.CompletionItem[] | ls.CompletionList) => code.CompletionItem[] | code.CompletionList = defaultConverter.asCompletionResult;
-export const asCompletionItem: (item: ls.CompletionItem) => ProtocolCompletionItem = defaultConverter.asCompletionItem;
-export const asTextEdit: (edit: ls.TextEdit) => code.TextEdit = defaultConverter.asTextEdit;
-export const asTextEdits: (items: ls.TextEdit[]) => code.TextEdit[] = defaultConverter.asTextEdits;
-export const asSignatureHelp: (item: ls.SignatureHelp) => code.SignatureHelp = defaultConverter.asSignatureHelp;
-export const asSignatureInformations: (items: ls.SignatureInformation[]) => code.SignatureInformation[] = defaultConverter.asSignatureInformations;
-export const asSignatureInformation: (item: ls.SignatureInformation) => code.SignatureInformation = defaultConverter.asSignatureInformation;
-export const asParameterInformations: (item: ls.ParameterInformation[]) => code.ParameterInformation[] = defaultConverter.asParameterInformations;
-export const asParameterInformation: (item: ls.ParameterInformation) => code.ParameterInformation = defaultConverter.asParameterInformation;
-export const asDefinitionResult: (item: ls.Definition) => code.Definition = defaultConverter.asDefinitionResult;
-export const asLocation: (item: ls.Location) => code.Location = defaultConverter.asLocation;
-export const asReferences: (values: ls.Location[]) => code.Location[] = defaultConverter.asReferences;
-export const asDocumentHighlights: (values: ls.DocumentHighlight[]) => code.DocumentHighlight[] = defaultConverter.asDocumentHighlights;
-export const asDocumentHighlight: (item: ls.DocumentHighlight) => code.DocumentHighlight = defaultConverter.asDocumentHighlight;
-export const asDocumentHighlightKind: (item: ls.DocumentHighlightKind) => code.DocumentHighlightKind = defaultConverter.asDocumentHighlightKind;
-export const asSymbolInformations: (values: ls.SymbolInformation[], uri?: code.Uri) => code.SymbolInformation[] = defaultConverter.asSymbolInformations;
-export const asSymbolInformation: (item: ls.SymbolInformation, uri?: code.Uri) => code.SymbolInformation = defaultConverter.asSymbolInformation;
-export const asCommand: (item: ls.Command) => code.Command = defaultConverter.asCommand;
-export const asCommands: (items: ls.Command[]) => code.Command[] = defaultConverter.asCommands;
-export const asCodeLens: (item: ls.CodeLens) => code.CodeLens = defaultConverter.asCodeLens;
-export const asCodeLenses: (items: ls.CodeLens[]) => code.CodeLens[] = defaultConverter.asCodeLenses;
-export const asWorkspaceEdit: (item: ls.WorkspaceEdit) => code.WorkspaceEdit = defaultConverter.asWorkspaceEdit;
-export const asDocumentLink: (item: ls.DocumentLink) => code.DocumentLink = defaultConverter.asDocumentLink;
-export const asDocumentLinks: (item: ls.DocumentLink[]) => code.DocumentLink[] = defaultConverter.asDocumentLinks;

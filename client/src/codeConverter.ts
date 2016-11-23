@@ -5,7 +5,7 @@
 'use strict';
 
 import * as code from 'vscode';
-import * as ls from 'vscode-languageserver-types';
+import * as types from 'vscode-languageserver-types';
 import * as proto from './protocol';
 import * as is from './utils/is';
 import ProtocolCompletionItem from './protocolCompletionItem';
@@ -15,7 +15,7 @@ export interface Converter {
 
 	asUri(uri: code.Uri): string;
 
-	asTextDocumentIdentifier(textDocument: code.TextDocument): ls.TextDocumentIdentifier;
+	asTextDocumentIdentifier(textDocument: code.TextDocument): types.TextDocumentIdentifier;
 
 	asOpenTextDocumentParams(textDocument: code.TextDocument): proto.DidOpenTextDocumentParams;
 
@@ -29,36 +29,36 @@ export interface Converter {
 
 	asTextDocumentPositionParams(textDocument: code.TextDocument, position: code.Position): proto.TextDocumentPositionParams;
 
-	asWorkerPosition(position: code.Position): ls.Position;
+	asWorkerPosition(position: code.Position): types.Position;
 
-	asRange(value: code.Range): ls.Range;
+	asRange(value: code.Range): types.Range;
 
-	asPosition(value: code.Position): ls.Position;
+	asPosition(value: code.Position): types.Position;
 
-	asDiagnosticSeverity(value: code.DiagnosticSeverity): ls.DiagnosticSeverity;
+	asDiagnosticSeverity(value: code.DiagnosticSeverity): types.DiagnosticSeverity;
 
-	asDiagnostic(item: code.Diagnostic): ls.Diagnostic;
-	asDiagnostics(items: code.Diagnostic[]): ls.Diagnostic[];
+	asDiagnostic(item: code.Diagnostic): types.Diagnostic;
+	asDiagnostics(items: code.Diagnostic[]): types.Diagnostic[];
 
-	asCompletionItem(item: code.CompletionItem): ls.CompletionItem;
+	asCompletionItem(item: code.CompletionItem): types.CompletionItem;
 
-	asTextEdit(edit: code.TextEdit): ls.TextEdit;
+	asTextEdit(edit: code.TextEdit): types.TextEdit;
 
 	asReferenceParams(textDocument: code.TextDocument, position: code.Position, options: { includeDeclaration: boolean; }): proto.ReferenceParams;
 
-	asCodeActionContext(context: code.CodeActionContext): ls.CodeActionContext;
+	asCodeActionContext(context: code.CodeActionContext): types.CodeActionContext;
 
-	asCommand(item: code.Command): ls.Command;
+	asCommand(item: code.Command): types.Command;
 
-	asCodeLens(item: code.CodeLens): ls.CodeLens;
+	asCodeLens(item: code.CodeLens): types.CodeLens;
 
-	asFormattingOptions(item: code.FormattingOptions): ls.FormattingOptions;
+	asFormattingOptions(item: code.FormattingOptions): types.FormattingOptions;
 
-	asDocumentSymbolParams(textDocument: code.TextDocument): proto.DocumentSymbolParams;
+	asDocumentSymbolParams(textDocument: code.TextDocument): types.DocumentSymbolParams;
 
 	asCodeLensParams(textDocument: code.TextDocument): proto.CodeLensParams;
 
-	asDocumentLink(item: code.DocumentLink): ls.DocumentLink;
+	asDocumentLink(item: code.DocumentLink): types.DocumentLink;
 
 	asDocumentLinkParams(textDocument: code.TextDocument): proto.DocumentLinkParams;
 }
@@ -77,7 +77,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return _uriConverter(value);
 	}
 
-	function asTextDocumentIdentifier(textDocument: code.TextDocument): ls.TextDocumentIdentifier {
+	function asTextDocumentIdentifier(textDocument: code.TextDocument): types.TextDocumentIdentifier {
 		return {
 			uri: _uriConverter(textDocument.uri)
 		};
@@ -123,7 +123,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 					uri: _uriConverter(document.uri),
 					version: document.version
 				},
-				contentChanges: arg.contentChanges.map((change): proto.TextDocumentContentChangeEvent => {
+				contentChanges: arg.contentChanges.map((change): types.TextDocumentContentChangeEvent => {
 					let range = change.range;
 					return {
 						range: {
@@ -167,11 +167,11 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		};
 	}
 
-	function asWorkerPosition(position: code.Position): ls.Position {
+	function asWorkerPosition(position: code.Position): types.Position {
 		return { line: position.line, character: position.character };
 	}
 
-	function asRange(value: code.Range): ls.Range {
+	function asRange(value: code.Range): types.Range {
 		if (is.undefined(value)) {
 			return undefined;
 		} else if (is.nil(value)) {
@@ -180,7 +180,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return { start: asPosition(value.start), end: asPosition(value.end) };
 	}
 
-	function asPosition(value: code.Position): ls.Position {
+	function asPosition(value: code.Position): types.Position {
 		if (is.undefined(value)) {
 			return undefined;
 		} else if (is.nil(value)) {
@@ -195,36 +195,36 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		}
 	}
 
-	function asDiagnosticSeverity(value: code.DiagnosticSeverity): ls.DiagnosticSeverity {
+	function asDiagnosticSeverity(value: code.DiagnosticSeverity): types.DiagnosticSeverity {
 		switch (value) {
 			case code.DiagnosticSeverity.Error:
-				return ls.DiagnosticSeverity.Error;
+				return types.DiagnosticSeverity.Error;
 			case code.DiagnosticSeverity.Warning:
-				return ls.DiagnosticSeverity.Warning;
+				return types.DiagnosticSeverity.Warning;
 			case code.DiagnosticSeverity.Information:
-				return ls.DiagnosticSeverity.Information;
+				return types.DiagnosticSeverity.Information;
 			case code.DiagnosticSeverity.Hint:
-				return ls.DiagnosticSeverity.Hint;
+				return types.DiagnosticSeverity.Hint;
 		}
 	}
 
-	function asDiagnostic(item: code.Diagnostic): ls.Diagnostic {
-		let result: ls.Diagnostic = ls.Diagnostic.create(asRange(item.range), item.message);
+	function asDiagnostic(item: code.Diagnostic): types.Diagnostic {
+		let result: types.Diagnostic = types.Diagnostic.create(asRange(item.range), item.message);
 		set(item.severity, () => result.severity = asDiagnosticSeverity(item.severity));
 		set(item.code, () => result.code = item.code);
 		set(item.source, () => result.source = item.source);
 		return result;
 	}
 
-	function asDiagnostics(items: code.Diagnostic[]): ls.Diagnostic[] {
+	function asDiagnostics(items: code.Diagnostic[]): types.Diagnostic[] {
 		if (is.undefined(items) || is.nil(items)) {
 			return items;
 		}
 		return items.map(asDiagnostic);
 	}
 
-	function asCompletionItem(item: code.CompletionItem): ls.CompletionItem {
-		let result: ls.CompletionItem = { label: item.label };
+	function asCompletionItem(item: code.CompletionItem): types.CompletionItem {
+		let result: types.CompletionItem = { label: item.label };
 		set(item.detail, () => result.detail = item.detail);
 		set(item.documentation, () => result.documentation = item.documentation);
 		set(item.filterText, () => result.filterText = item.filterText);
@@ -242,20 +242,20 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return result;
 	}
 
-	function asCompletionInsertText(text: string | code.SnippetString): string | ls.SnippetString {
+	function asCompletionInsertText(text: string | code.SnippetString): string | types.SnippetString {
 		if (is.string(text)) {
 			return text;
 		} else if (is.defined(text.value)) {
-			return ls.SnippetString.create(text.value);
+			return types.SnippetString.create(text.value);
 		}
 		return undefined;
-	}	
+	}
 
-	function asTextEdit(edit: code.TextEdit): ls.TextEdit {
+	function asTextEdit(edit: code.TextEdit): types.TextEdit {
 		return { range: asRange(edit.range), newText: edit.newText };
 	}
 
-	function asTextEdits(edits: code.TextEdit[]): ls.TextEdit[] {
+	function asTextEdits(edits: code.TextEdit[]): types.TextEdit[] {
 		if (is.undefined(edits) || is.nil(edits)) {
 			return edits;
 		}
@@ -270,21 +270,21 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		};
 	}
 
-	function asCodeActionContext(context: code.CodeActionContext): ls.CodeActionContext {
+	function asCodeActionContext(context: code.CodeActionContext): types.CodeActionContext {
 		if (is.undefined(context) || is.nil(context)) {
 			return context;
 		}
-		return ls.CodeActionContext.create(asDiagnostics(context.diagnostics));
+		return types.CodeActionContext.create(asDiagnostics(context.diagnostics));
 	}
 
-	function asCommand(item: code.Command): ls.Command {
-		let result = ls.Command.create(item.title, item.command);
+	function asCommand(item: code.Command): types.Command {
+		let result = types.Command.create(item.title, item.command);
 		if (is.defined(item.arguments)) result.arguments = item.arguments;
 		return result;
 	}
 
-	function asCodeLens(item: code.CodeLens): ls.CodeLens {
-		let result = ls.CodeLens.create(asRange(item.range));
+	function asCodeLens(item: code.CodeLens): types.CodeLens {
+		let result = types.CodeLens.create(asRange(item.range));
 		if (is.defined(item.command)) result.command = asCommand(item.command);
 		if (item instanceof ProtocolCodeLens) {
 			if (is.defined(item.data)) result.data = item.data;
@@ -292,11 +292,11 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return result;
 	}
 
-	function asFormattingOptions(item: code.FormattingOptions): ls.FormattingOptions {
+	function asFormattingOptions(item: code.FormattingOptions): types.FormattingOptions {
 		return { tabSize: item.tabSize, insertSpaces: item.insertSpaces };
 	}
 
-	function asDocumentSymbolParams(textDocument: code.TextDocument): proto.DocumentSymbolParams {
+	function asDocumentSymbolParams(textDocument: code.TextDocument): types.DocumentSymbolParams {
 		return {
 			textDocument: asTextDocumentIdentifier(textDocument)
 		}
@@ -308,8 +308,8 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		};
 	}
 
-	function asDocumentLink(item: code.DocumentLink): ls.DocumentLink {
-		let result = ls.DocumentLink.create(asRange(item.range));
+	function asDocumentLink(item: code.DocumentLink): types.DocumentLink {
+		let result = types.DocumentLink.create(asRange(item.range));
 		if (is.defined(item.target)) result.target = asUri(item.target);
 		return result;
 	}
@@ -348,28 +348,3 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asDocumentLinkParams
 	}
 }
-
-// This for backward compatibility since we exported the converter functions as API.
-let defaultConverter = createConverter();
-
-export const asTextDocumentIdentifier: (textDocument: code.TextDocument) => ls.TextDocumentIdentifier = defaultConverter.asTextDocumentIdentifier;
-export const asOpenTextDocumentParams: (textDocument: code.TextDocument) => proto.DidOpenTextDocumentParams = defaultConverter.asOpenTextDocumentParams;
-export const asChangeTextDocumentParams: (arg: code.TextDocumentChangeEvent | code.TextDocument) => proto.DidChangeTextDocumentParams = defaultConverter.asChangeTextDocumentParams;
-export const asCloseTextDocumentParams: (textDocument: code.TextDocument) => proto.DidCloseTextDocumentParams = defaultConverter.asCloseTextDocumentParams;
-export const asSaveTextDocumentParams: (textDocument: code.TextDocument) => proto.DidSaveTextDocumentParams = defaultConverter.asSaveTextDocumentParams;
-export const asTextDocumentPositionParams: (textDocument: code.TextDocument, position: code.Position) => proto.TextDocumentPositionParams = defaultConverter.asTextDocumentPositionParams;
-export const asWorkerPosition: (position: code.Position) => ls.Position = defaultConverter.asWorkerPosition;
-export const asRange: (value: code.Range) => ls.Range = defaultConverter.asRange;
-export const asPosition: (value: code.Position) => ls.Position = defaultConverter.asPosition;
-export const asDiagnosticSeverity: (value: code.DiagnosticSeverity) => ls.DiagnosticSeverity = defaultConverter.asDiagnosticSeverity;
-export const asDiagnostic: (item: code.Diagnostic) => ls.Diagnostic = defaultConverter.asDiagnostic;
-export const asDiagnostics: (items: code.Diagnostic[]) => ls.Diagnostic[] = defaultConverter.asDiagnostics;
-export const asCompletionItem: (item: code.CompletionItem) => ls.CompletionItem = defaultConverter.asCompletionItem;
-export const asTextEdit: (edit: code.TextEdit) => ls.TextEdit = defaultConverter.asTextEdit;
-export const asReferenceParams: (textDocument: code.TextDocument, position: code.Position, options: { includeDeclaration: boolean; }) => proto.ReferenceParams = defaultConverter.asReferenceParams;
-export const asCodeActionContext: (context: code.CodeActionContext) => ls.CodeActionContext = defaultConverter.asCodeActionContext;
-export const asCommand: (item: code.Command) => ls.Command = defaultConverter.asCommand;
-export const asCodeLens: (item: code.CodeLens) => ls.CodeLens = defaultConverter.asCodeLens;
-export const asFormattingOptions: (item: code.FormattingOptions) => ls.FormattingOptions = defaultConverter.asFormattingOptions;
-export const asDocumentSymbolParams: (textDocument: code.TextDocument) => proto.DocumentSymbolParams = defaultConverter.asDocumentSymbolParams;
-export const asCodeLensParams: (textDocument: code.TextDocument) => proto.CodeLensParams = defaultConverter.asCodeLensParams;

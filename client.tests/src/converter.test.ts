@@ -7,10 +7,13 @@
 import { strictEqual, deepEqual, ok } from 'assert';
 
 import * as proto from 'vscode-languageserver-types';
-import * as c2p from '../../client/lib/codeConverter';
-import * as p2c from '../../client/lib/protocolConverter';
+import * as codeConverter from '../../client/lib/codeConverter';
+import * as protocolConverter from '../../client/lib/protocolConverter';
 
 import * as vscode from 'vscode';
+
+const c2p: codeConverter.Converter = codeConverter.createConverter();
+const p2c: protocolConverter.Converter = protocolConverter.createConverter();
 
 suite('Protocol Converter', () => {
 
@@ -229,7 +232,7 @@ suite('Protocol Converter', () => {
 		strictEqual(result.label, completionItem.label);
 		ok(result.insertText instanceof vscode.SnippetString);
 		strictEqual((<vscode.SnippetString> result.insertText).value, "${value}");
-	});	
+	});
 
 	test('Completion Item Text Edit', () => {
 		let completionItem: proto.CompletionItem = {
@@ -504,7 +507,7 @@ suite('Protocol Converter', () => {
 	});
 
 	test('Uri Rewrite', () => {
-		let converter = p2c.createConverter((value: string) => {
+		let converter = protocolConverter.createConverter((value: string) => {
 			return vscode.Uri.parse(`${value}.vscode`);
 		});
 
@@ -640,7 +643,7 @@ suite('Code Converter', () => {
 	});
 
 	test('Uri Rewrite', () => {
-		let converter = c2p.createConverter((value: vscode.Uri) => {
+		let converter = codeConverter.createConverter((value: vscode.Uri) => {
 			return `${value.toString()}.vscode`;
 		});
 

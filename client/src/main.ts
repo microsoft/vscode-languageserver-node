@@ -37,7 +37,7 @@ import {
 		Range, Position, Location, Diagnostic, DiagnosticSeverity, Command,
 		TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
 		TextDocumentIdentifier, CompletionItemKind, CompletionItem, CompletionList,
-		Hover, MarkedString,
+		Hover, MarkedString, WorkspaceSymbolParams, DocumentSymbolParams,
 		SignatureHelp, SignatureInformation, ParameterInformation,
 		Definition, CodeActionContext,
 		DocumentHighlight, DocumentHighlightKind,
@@ -56,15 +56,17 @@ import {
 		TelemetryEventNotification,
 		DidChangeConfigurationNotification, DidChangeConfigurationParams,
 		TextDocumentPositionParams, DocumentSelector, DocumentFilter,
-		DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams,
-		DidCloseTextDocumentNotification, DidCloseTextDocumentParams, DidSaveTextDocumentNotification, DidSaveTextDocumentParams,
+		DidOpenTextDocumentNotification, DidOpenTextDocumentParams,
+		DidChangeTextDocumentNotification, DidChangeTextDocumentParams, DidChangeTextDocumentOptions,
+		DidCloseTextDocumentNotification, DidCloseTextDocumentParams,
+		DidSaveTextDocumentNotification, DidSaveTextDocumentParams,
 		WillSaveTextDocumentNotification, WillSaveTextDocumentWaitUntilRequest, WillSaveTextDocumentParams,
 		DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
 		PublishDiagnosticsNotification, PublishDiagnosticsParams,
 		CompletionRequest, CompletionResolveRequest, CompletionOptions,
 		HoverRequest,
 		SignatureHelpRequest, SignatureHelpOptions, DefinitionRequest, ReferencesRequest, DocumentHighlightRequest,
-		DocumentSymbolRequest, WorkspaceSymbolRequest, WorkspaceSymbolParams,
+		DocumentSymbolRequest, WorkspaceSymbolRequest,
 		CodeActionRequest, CodeActionParams,
 		CodeLensRequest, CodeLensResolveRequest, CodeLensOptions,
 		DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
@@ -85,12 +87,13 @@ import * as UUID from './utils/uuid';
 export {
 	ResponseError, InitializeError, ErrorCodes,
 	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler,
-	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler,
-	Position, Range, Location, TextDocumentIdentifier, TextDocumentPositionParams,
-	TextEdit, TextEditChange, WorkspaceChange
+	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler
 }
 export { Converter as Code2ProtocolConverter } from './codeConverter';
 export { Converter as Protocol2CodeConverter } from './protocolConverter';
+
+export * from 'vscode-languageserver-types';
+export * from './protocol';
 
 declare var v8debug;
 
@@ -335,7 +338,6 @@ export interface InitializationFailedHandler {
 export interface SynchronizeOptions {
 	configurationSection?: string | string[];
 	fileEvents?: FileSystemWatcher | FileSystemWatcher[];
-	textDocumentFilter?: (textDocument: TextDocument) => boolean;
 }
 
 export interface Configuration {
@@ -351,7 +353,7 @@ export enum RevealOutputChannelOn {
 
 export interface LanguageClientOptions {
 	configuration?: Configuration;
-	documentSelector?: string | string[];
+	documentSelector?: DocumentSelector;
 	synchronize?: SynchronizeOptions;
 	diagnosticCollectionName?: string;
 	outputChannelName?: string;
@@ -389,67 +391,6 @@ enum ClientState {
 	Stopped
 }
 
-interface SyncExpression {
-	evaluate(textDocument: TextDocument): boolean;
-}
-
-namespace SyncExpression {
-	export function create(selector: DocumentSelector): SyncExpression {
-		return new DocumentSelectorExpression(selector);
-	}
-}
-
-class FalseSyncExpression implements SyncExpression {
-	public evaluate(textDocument: TextDocument): boolean {
-		return false;
-	}
-}
-
-class LanguageIdExpression implements SyncExpression {
-	constructor(private _id: string) {
-	}
-	public evaluate(textDocument: TextDocument): boolean {
-		return this._id === textDocument.languageId;
-	}
-}
-
-class FunctionSyncExpression implements SyncExpression {
-	constructor(private _func: (textDocument: TextDocument) => boolean) {
-	}
-	public evaluate(textDocument: TextDocument): boolean {
-		return this._func(textDocument);
-	}
-}
-
-class DocumentSelectorExpression implements SyncExpression {
-	constructor(private _selector: DocumentSelector) {
-	}
-	public evaluate(textDocument: TextDocument): boolean {
-		return Languages.match(this._selector, textDocument) > 0;
-	}
-}
-
-class CompositeSyncExpression implements SyncExpression {
-	private _expression: SyncExpression[];
-	constructor(expressions: SyncExpression[]);
-	constructor(values: string[], func?: (textDocument: TextDocument) => boolean);
-	constructor(values: (string | SyncExpression)[], func?: (textDocument: TextDocument) => boolean) {
-		this._expression = values.map((value) => {
-			if (is.string(value)) {
-				return new LanguageIdExpression(value);
-			} else {
-				return value;
-			}
-		});
-		if (func) {
-			this._expression.push(new FunctionSyncExpression(func));
-		}
-	}
-	public evaluate(textDocument: TextDocument): boolean {
-		return this._expression.some(exp => exp.evaluate(textDocument));
-	}
-}
-
 interface RegistrationData<T extends DocumentOptions> {
 	id: string;
 	registerOptions: T;
@@ -468,7 +409,7 @@ interface CreateParamsSignature<E, P> {
 class DocumentNotifiactions<P, E> implements FeatureHandler<DocumentOptions> {
 
 	private _listener: Disposable = null;
-	private _selectors: Map<string, DocumentSelector> = new Map<string, DocumentSelector>();
+	protected _selectors: Map<string, DocumentSelector> = new Map<string, DocumentSelector>();
 
 	public static textDocumentFilter(selectors: IterableIterator<DocumentOptions>, textDocument: TextDocument): boolean {
 		for (const selector of selectors) {
@@ -480,9 +421,9 @@ class DocumentNotifiactions<P, E> implements FeatureHandler<DocumentOptions> {
 	}
 
 	constructor(
-		private _client: LanguageClient, private _event: Event<E>,
-		private _type: NotificationType<P, DocumentSelector>, private _createParams: CreateParamsSignature<E, P>,
-		private _selectorFilter?: (selectors: IterableIterator<DocumentOptions>, data: E) => boolean) {
+		protected _connection: IConnection, private _event: Event<E>,
+		protected _type: NotificationType<P, DocumentSelector>, protected _createParams: CreateParamsSignature<E, P>,
+		protected _selectorFilter?: (selectors: IterableIterator<DocumentOptions>, data: E) => boolean) {
 	}
 
 	public register(data: RegistrationData<DocumentOptions>): void {
@@ -497,8 +438,12 @@ class DocumentNotifiactions<P, E> implements FeatureHandler<DocumentOptions> {
 
 	private callback(data: E): void {
 		if (!this._selectorFilter || this._selectorFilter(this._selectors.values(), data)) {
-			this._client.sendNotification(this._type, this._createParams(data));
+			this._connection.sendNotification(this._type, this._createParams(data));
+			this.notificationSent(data);
 		}
+	}
+
+	protected notificationSent(data: E): void {
 	}
 
 	public unregister(id: string): void {
@@ -516,12 +461,143 @@ class DocumentNotifiactions<P, E> implements FeatureHandler<DocumentOptions> {
 	}
 }
 
+class DidOpenTextDocumentFeature extends DocumentNotifiactions<DidOpenTextDocumentParams, TextDocument> {
+	constructor(connection: IConnection, converter: c2p.Converter, private _syncedDocuments: Map<string, TextDocument>) {
+		super(
+			connection, Workspace.onDidOpenTextDocument, DidOpenTextDocumentNotification.type,
+			(textDocument) => converter.asOpenTextDocumentParams(textDocument),
+			DocumentNotifiactions.textDocumentFilter
+		);
+	}
+
+	public register(data: RegistrationData<DocumentOptions>): void {
+		super.register(data);
+		if (!data.registerOptions.documentSelector) {
+			return;
+		}
+		Workspace.textDocuments.forEach((textDocument) => {
+			let uri: string = textDocument.uri.toString();
+			if (this._syncedDocuments.has(uri)) {
+				return;
+			}
+			if (Languages.match(data.registerOptions.documentSelector, textDocument)) {
+				this._connection.sendNotification(this._type, this._createParams(textDocument));
+				this._syncedDocuments.set(uri, textDocument);
+			}
+		});
+	}
+
+	protected notificationSent(textDocument: TextDocument): void {
+		super.notificationSent(textDocument);
+		this._syncedDocuments.set(textDocument.uri.toString(), textDocument);
+	}
+}
+
+class DidCloseTextDocumentFeature extends DocumentNotifiactions<DidCloseTextDocumentParams, TextDocument> {
+
+	constructor(connection: IConnection, converter: c2p.Converter, private _syncedDocuments: Map<string, TextDocument>) {
+		super(
+			connection, Workspace.onDidCloseTextDocument, DidCloseTextDocumentNotification.type,
+			(textDocument) => converter.asCloseTextDocumentParams(textDocument),
+			DocumentNotifiactions.textDocumentFilter
+		);
+	}
+
+	protected notificationSent(textDocument: TextDocument): void {
+		super.notificationSent(textDocument);
+		this._syncedDocuments.delete(textDocument.uri.toString());
+	}
+
+	public unregister(id: string): void {
+		let selector = this._selectors.get(id);
+		super.unregister(id);
+		let selectors = this._selectors.values();
+		this._syncedDocuments.forEach((textDocument) => {
+			if (Languages.match(selector, textDocument) && !this._selectorFilter(selectors, textDocument)) {
+				this._connection.sendNotification(this._type, this._createParams(textDocument));
+			}
+		});
+	}
+}
+
+interface DidChangeTextDocumentData {
+	documentSelector: DocumentSelector;
+	syncKind: TextDocumentSyncKind;
+	delayer: Delayer<void>;
+}
+
+class DidChangeTextDocumentFeature implements FeatureHandler<DidChangeTextDocumentOptions> {
+
+	private _listener: Disposable = null;
+	private _changeData: Map<string, DidChangeTextDocumentData> = new Map<string, DidChangeTextDocumentData>();
+
+	constructor(private _connection: IConnection, private _converter: c2p.Converter, ) {
+	}
+
+	public register(data: RegistrationData<DidChangeTextDocumentOptions>): void {
+		if (!data.registerOptions.documentSelector) {
+			return;
+		}
+		if (!this._listener) {
+			this._listener = Workspace.onDidChangeTextDocument(this.callback, this);
+		}
+		this._changeData.set(
+			data.id,
+			{
+				documentSelector: data.registerOptions.documentSelector,
+				syncKind: data.registerOptions.syncKind,
+				delayer: data.registerOptions.syncKind === TextDocumentSyncKind.Full ? new Delayer<void>(200) : undefined
+			}
+		);
+	}
+
+	private callback(event: TextDocumentChangeEvent): void {
+		for (const changeData of this._changeData.values()) {
+			if (Languages.match(changeData.documentSelector, event.document)) {
+				let uri: string = event.document.uri.toString();
+				if (changeData.syncKind === TextDocumentSyncKind.Incremental) {
+					this._connection.sendNotification(DidChangeTextDocumentNotification.type, this._converter.asChangeTextDocumentParams(event));
+					break;
+				} else if (changeData.syncKind === TextDocumentSyncKind.Full) {
+					changeData.delayer.trigger(() => {
+						this._connection.sendNotification(DidChangeTextDocumentNotification.type, this._converter.asChangeTextDocumentParams(event.document));
+					}, -1);
+					break;
+				}
+			}
+		}
+	}
+
+	public unregister(id: string): void {
+		this._changeData.delete(id);
+		if (this._changeData.size === 0) {
+			this._listener.dispose();
+			this._listener = null;
+		}
+	}
+
+	public dispose(): void {
+		if (this._listener) {
+			this._listener.dispose();
+			this._listener = undefined;
+		}
+	}
+
+	public forceDelivery() {
+		for (const changeData of this._changeData.values()) {
+			if (changeData.delayer) {
+				changeData.delayer.forceDelivery();
+			}
+		}
+	}
+}
+
 class WillSaveWaitUntilFeature implements FeatureHandler<DocumentOptions> {
 
 	private _listener: Disposable = null;
 	private _selectors: Map<string, DocumentSelector> = new Map<string, DocumentSelector>();
 
-	constructor(private _client: LanguageClient) {
+	constructor(private _connection: IConnection, private _c2p: c2p.Converter, private _p2c: p2c.Converter, private _forceDelivery: () => void) {
 	}
 
 	public register(data: RegistrationData<DocumentOptions>): void {
@@ -536,12 +612,13 @@ class WillSaveWaitUntilFeature implements FeatureHandler<DocumentOptions> {
 
 	private callback(event: TextDocumentWillSaveEvent): void {
 		if (DocumentNotifiactions.textDocumentFilter(this._selectors.values(), event.document)) {
+			this._forceDelivery();
 			event.waitUntil(
-				this._client.sendRequest(
+				this._connection.sendRequest(
 					WillSaveTextDocumentWaitUntilRequest.type,
-					this._client.code2ProtocolConverter.asWillSaveTextDocumentParams(event)
+					this._c2p.asWillSaveTextDocumentParams(event)
 				).then((edits) => {
-					return this._client.protocol2CodeConverter.asTextEdits(edits);
+					return this._p2c.asTextEdits(edits);
 				})
 			);
 		}
@@ -558,6 +635,7 @@ class WillSaveWaitUntilFeature implements FeatureHandler<DocumentOptions> {
 	public dispose(): void {
 		if (this._listener) {
 			this._listener.dispose();
+			this._listener = null;
 		}
 	}
 }
@@ -618,10 +696,6 @@ export class LanguageClient {
 	private _providers: Disposable[];
 	private _diagnostics: DiagnosticCollection;
 
-	private _syncExpression: SyncExpression;
-
-	private _documentSyncDelayer: Delayer<void>;
-
 	private _fileEvents: FileEvent[];
 	private _fileEventDelayer: Delayer<void>;
 
@@ -658,7 +732,6 @@ export class LanguageClient {
 		this._clientOptions.errorHandler = this._clientOptions.errorHandler || new DefaultErrorHandler(this._name);
 		this._configuration = clientOptions.configuration || {};
 		this._clientOptions.revealOutputChannelOn == this._clientOptions.revealOutputChannelOn || RevealOutputChannelOn.Error;
-		this._syncExpression = this.computeSyncExpression();
 		this._forceDebug = forceDebug;
 
 		this.state = ClientState.Initial;
@@ -684,7 +757,6 @@ export class LanguageClient {
 		};
 		this._c2p = c2p.createConverter(clientOptions.uriConverters ? clientOptions.uriConverters.code2Protocol : undefined);
 		this._p2c = p2c.createConverter(clientOptions.uriConverters ? clientOptions.uriConverters.protocol2Code : undefined);
-		this.initRegistrationHandlers();
 	}
 
 	private get state(): ClientState {
@@ -707,31 +779,6 @@ export class LanguageClient {
 			return State.Stopped;
 		}
 	}
-
-	private computeSyncExpression(): SyncExpression {
-		let documentSelector = this._clientOptions.documentSelector;
-		let textDocumentFilter = this._clientOptions.synchronize.textDocumentFilter;
-
-		if (!documentSelector && !textDocumentFilter) {
-			return new FalseSyncExpression();
-		}
-		if (textDocumentFilter && !documentSelector) {
-			return new FunctionSyncExpression(textDocumentFilter);
-		}
-		if (!textDocumentFilter && documentSelector) {
-			if (is.string(documentSelector)) {
-				return new LanguageIdExpression(<string>documentSelector)
-			} else {
-				return new CompositeSyncExpression(<string[]>documentSelector)
-			}
-		}
-		if (textDocumentFilter && documentSelector) {
-			return new CompositeSyncExpression(
-				is.string(documentSelector) ? [<string>documentSelector] : <string[]>documentSelector,
-				textDocumentFilter);
-		}
-	}
-
 
 	public sendRequest<R, E, RO>(type: RequestType0<R, E, RO>, token?: CancellationToken): Thenable<R>;
 	public sendRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, params: P, token?: CancellationToken): Thenable<R>;
@@ -990,6 +1037,7 @@ export class LanguageClient {
 			connection.onTelemetry((data) => {
 				this._telemetryEmitter.fire(data);
 			});
+			this.initRegistrationHandlers(connection);
 			connection.listen();
 			// Error is handled in the intialize call.
 			this.initialize(connection).then(null, (error) => {});
@@ -1026,24 +1074,34 @@ export class LanguageClient {
 		return connection.initialize(initParams).then((result) => {
 			this.state = ClientState.Running;
 			this._capabilites = result.capabilities;
+
 			connection.onDiagnostics(params => this.handleDiagnostics(params));
-			if (this._capabilites.textDocumentSync !== TextDocumentSyncKind.None) {
-				Workspace.onDidOpenTextDocument(t => this.onDidOpenTextDoument(connection, t), null, this._listeners);
-				Workspace.onDidChangeTextDocument(t => this.onDidChangeTextDocument(connection, t), null, this._listeners);
-				Workspace.onDidCloseTextDocument(t => this.onDidCloseTextDoument(connection, t), null, this._listeners);
-				Workspace.onDidSaveTextDocument(t => this.onDidSaveTextDocument(connection, t), null, this._listeners);
-				if (this._capabilites.textDocumentSync === TextDocumentSyncKind.Full) {
-					this._documentSyncDelayer = new Delayer<void>(100);
-				}
-			}
-			this.hookFileEvents(connection);
-			this.hookConfigurationChanged(connection);
 			connection.onRequest(RegistrationRequest.type, params => this.handleRegistrationRequest(params));
 			connection.onRequest(UnregistrationRequest.type, params => this.handleUnregistrationRequest(params));
-			this.hookCapabilities(connection);
 			connection.sendNotification(InitializedNotification.type, {});
+
+			this.hookFileEvents(connection);
+			this.hookConfigurationChanged(connection);
+			this.hookCapabilities(connection);
+			if (this._capabilites.textDocumentSync !== TextDocumentSyncKind.None && this._clientOptions.documentSelector) {
+				let selectorOptions: DocumentOptions = { documentSelector: this._clientOptions.documentSelector };
+				this._registeredHandlers.get(DidOpenTextDocumentNotification.type.method).register(
+					{ id: UUID.generateUuid(), registerOptions: selectorOptions }
+				);
+				this._registeredHandlers.get(DidChangeTextDocumentNotification.type.method).register(
+					{
+						id: UUID.generateUuid(),
+						registerOptions: Object.assign({}, selectorOptions, { syncKind: this._capabilites.textDocumentSync }) as DidChangeTextDocumentOptions
+					}
+				);
+				this._registeredHandlers.get(DidCloseTextDocumentNotification.type.method).register(
+					{ id: UUID.generateUuid(), registerOptions: selectorOptions }
+				);
+				this._registeredHandlers.get(DidSaveTextDocumentNotification.type.method).register(
+					{ id: UUID.generateUuid(), registerOptions: selectorOptions }
+				);
+			}
 			this._onReadyCallbacks.resolve();
-			Workspace.textDocuments.forEach(t => this.onDidOpenTextDoument(connection, t));
 			return result;
 		}, (error: any) => {
 			if (this._clientOptions.initializationFailedHandler) {
@@ -1082,7 +1140,7 @@ export class LanguageClient {
 		this.cleanUp();
 		// unkook listeners
 		return this.resolveConnection().then(connection => {
-			connection.shutdown().then(() => {
+			return connection.shutdown().then(() => {
 				connection.exit();
 				connection.dispose();
 				this.state = ClientState.Stopped;
@@ -1140,45 +1198,8 @@ export class LanguageClient {
 		});
 	}
 
-	private onDidOpenTextDoument(connection: IConnection, textDocument: TextDocument): void {
-		if (!this._syncExpression.evaluate(textDocument)) {
-			return;
-		}
-		connection.didOpenTextDocument(this._c2p.asOpenTextDocumentParams(textDocument));
-	}
-
-	private onDidChangeTextDocument(connection: IConnection, event: TextDocumentChangeEvent): void {
-		if (!this._syncExpression.evaluate(event.document)) {
-			return;
-		}
-		let uri: string = event.document.uri.toString();
-		if (this._capabilites.textDocumentSync === TextDocumentSyncKind.Incremental) {
-			connection.didChangeTextDocument(this._c2p.asChangeTextDocumentParams(event));
-		} else {
-			this._documentSyncDelayer.trigger(() => {
-				connection.didChangeTextDocument(this._c2p.asChangeTextDocumentParams(event.document));
-			}, -1);
-		}
-	}
-
-	private onDidCloseTextDoument(connection: IConnection, textDocument: TextDocument): void {
-		if (!this._syncExpression.evaluate(textDocument)) {
-			return;
-		}
-		connection.didCloseTextDocument(this._c2p.asCloseTextDocumentParams(textDocument));
-	}
-
-	private onDidSaveTextDocument(connection: IConnection, textDocument: TextDocument): void {
-		if (!this._syncExpression.evaluate(textDocument)) {
-			return;
-		}
-		connection.didSaveTextDocument(this._c2p.asSaveTextDocumentParams(textDocument));
-	}
-
 	private forceDocumentSync(): void {
-		if (this._documentSyncDelayer) {
-			this._documentSyncDelayer.forceDelivery();
-		}
+		(this._registeredHandlers.get(DidChangeTextDocumentNotification.type.method) as DidChangeTextDocumentFeature).forceDelivery();
 	}
 
 	private handleDiagnostics(params: PublishDiagnosticsParams) {
@@ -1461,98 +1482,97 @@ export class LanguageClient {
 	}
 
 	private _registeredHandlers: Map<string, FeatureHandler<DocumentOptions>> = new Map<string, FeatureHandler<DocumentOptions>>();
-	private initRegistrationHandlers() {
+	private initRegistrationHandlers(connection: IConnection) {
+		const syncedDocuments: Map<string, TextDocument> = new Map<string, TextDocument>();
 		this._registeredHandlers.set(
 			DidOpenTextDocumentNotification.type.method,
-			new DocumentNotifiactions<DidOpenTextDocumentParams, TextDocument>(
-				this, Workspace.onDidOpenTextDocument, DidOpenTextDocumentNotification.type,
-				(textDocument) => this._c2p.asOpenTextDocumentParams(textDocument),
-				DocumentNotifiactions.textDocumentFilter
-		));
+			new DidOpenTextDocumentFeature(connection, this._c2p, syncedDocuments)
+		);
+		this._registeredHandlers.set(
+			DidChangeTextDocumentNotification.type.method,
+			new DidChangeTextDocumentFeature(connection, this.code2ProtocolConverter)
+		);
 		this._registeredHandlers.set(
 			WillSaveTextDocumentNotification.type.method,
 			new DocumentNotifiactions<WillSaveTextDocumentParams, TextDocumentWillSaveEvent>(
-				this, Workspace.onWillSaveTextDocument, WillSaveTextDocumentNotification.type,
+				connection, Workspace.onWillSaveTextDocument, WillSaveTextDocumentNotification.type,
 				(willSaveEvent) => this._c2p.asWillSaveTextDocumentParams(willSaveEvent),
 				(selectors, willSaveEvent) => DocumentNotifiactions.textDocumentFilter(selectors, willSaveEvent.document)
 		));
 		this._registeredHandlers.set(
 			WillSaveTextDocumentWaitUntilRequest.type.method,
-			new WillSaveWaitUntilFeature(this)
+			new WillSaveWaitUntilFeature(connection, this.code2ProtocolConverter, this.protocol2CodeConverter, () => this.forceDocumentSync())
 		);
 		this._registeredHandlers.set(
 			DidSaveTextDocumentNotification.type.method,
 			new DocumentNotifiactions<DidSaveTextDocumentParams, TextDocument>(
-				this, Workspace.onDidOpenTextDocument, DidSaveTextDocumentNotification.type,
+				connection, Workspace.onDidSaveTextDocument, DidSaveTextDocumentNotification.type,
 				(textDocument) => this._c2p.asSaveTextDocumentParams(textDocument),
 				DocumentNotifiactions.textDocumentFilter
 		));
 		this._registeredHandlers.set(
 			DidCloseTextDocumentNotification.type.method,
-			new DocumentNotifiactions<DidCloseTextDocumentParams, TextDocument>(
-				this, Workspace.onDidOpenTextDocument, DidCloseTextDocumentNotification.type,
-				(textDocument) => this._c2p.asCloseTextDocumentParams(textDocument),
-				DocumentNotifiactions.textDocumentFilter
-		));
+			new DidCloseTextDocumentFeature(connection, this.code2ProtocolConverter, syncedDocuments)
+		);
 		this._registeredHandlers.set(
 			CompletionRequest.type.method,
-			new LanguageFeature<CompletionOptions>((options) => this.createCompletionProvider(options))
+			new LanguageFeature<CompletionOptions>((options) => this.createCompletionProvider(connection, options))
 		);
 		this._registeredHandlers.set(
 			HoverRequest.type.method,
-			new LanguageFeature<DocumentOptions>((options) => this.createHoverProvider(options))
+			new LanguageFeature<DocumentOptions>((options) => this.createHoverProvider(connection, options))
 		);
 		this._registeredHandlers.set(
 			SignatureHelpRequest.type.method,
-			new LanguageFeature<SignatureHelpOptions>((options) => this.createSignatureHelpProvider(options))
+			new LanguageFeature<SignatureHelpOptions>((options) => this.createSignatureHelpProvider(connection, options))
 		);
 		this._registeredHandlers.set(
 			DefinitionRequest.type.method,
-			new LanguageFeature<DocumentOptions>((options) => this.createDefinitionProvider(options))
+			new LanguageFeature<DocumentOptions>((options) => this.createDefinitionProvider(connection, options))
 		);
 		this._registeredHandlers.set(
 			ReferencesRequest.type.method,
-			new LanguageFeature<DocumentOptions>((options) => this.createReferencesProvider(options))
+			new LanguageFeature<DocumentOptions>((options) => this.createReferencesProvider(connection, options))
 		);
 		this._registeredHandlers.set(
 			DocumentHighlightRequest.type.method,
-			new LanguageFeature<DocumentOptions>((options) => this.createDocumentHighlightProvider(options))
+			new LanguageFeature<DocumentOptions>((options) => this.createDocumentHighlightProvider(connection, options))
 		);
 		this._registeredHandlers.set(
 			DocumentSymbolRequest.type.method,
-			new LanguageFeature<DocumentOptions>((options) => this.createDocumentSymbolProvider(options))
+			new LanguageFeature<DocumentOptions>((options) => this.createDocumentSymbolProvider(connection, options))
 		);
 		this._registeredHandlers.set(
 			WorkspaceSymbolRequest.type.method,
-			new LanguageFeature<DocumentOptions>((options) => this.createWorkspaceSymbolProvider(options))
+			new LanguageFeature<DocumentOptions>((options) => this.createWorkspaceSymbolProvider(connection, options))
 		);
 		this._registeredHandlers.set(
 			CodeActionRequest.type.method,
-			new LanguageFeature<DocumentOptions>((options) => this.createCodeActionsProvider(options))
+			new LanguageFeature<DocumentOptions>((options) => this.createCodeActionsProvider(connection, options))
 		);
 		this._registeredHandlers.set(
 			CodeLensRequest.type.method,
-			new LanguageFeature<CodeLensOptions>((options) => this.createCodeLensProvider(options))
+			new LanguageFeature<CodeLensOptions>((options) => this.createCodeLensProvider(connection, options))
 		);
 		this._registeredHandlers.set(
 			DocumentFormattingRequest.type.method,
-			new LanguageFeature<DocumentOptions>((options) => this.createDocumentFormattingProvider(options))
+			new LanguageFeature<DocumentOptions>((options) => this.createDocumentFormattingProvider(connection, options))
 		);
 		this._registeredHandlers.set(
 			DocumentRangeFormattingRequest.type.method,
-			new LanguageFeature<DocumentOptions>((options) => this.createDocumentRangeFormattingProvider(options))
+			new LanguageFeature<DocumentOptions>((options) => this.createDocumentRangeFormattingProvider(connection, options))
 		);
 		this._registeredHandlers.set(
 			DocumentOnTypeFormattingRequest.type.method,
-			new LanguageFeature<DocumentOnTypeFormattingOptions>((options) => this.createDocumentOnTypeFormattingProvider(options))
+			new LanguageFeature<DocumentOnTypeFormattingOptions>((options) => this.createDocumentOnTypeFormattingProvider(connection, options))
 		);
 		this._registeredHandlers.set(
 			RenameRequest.type.method,
-			new LanguageFeature<DocumentOptions>((options) => this.createRenameProvider(options))
+			new LanguageFeature<DocumentOptions>((options) => this.createRenameProvider(connection, options))
 		);
 		this._registeredHandlers.set(
 			DocumentLinkRequest.type.method,
-			new LanguageFeature<DocumentLinkOptions>((options) => this.createDocumentLinkProvider(options))
+			new LanguageFeature<DocumentLinkOptions>((options) => this.createDocumentLinkProvider(connection, options))
 		);
 	}
 
@@ -1643,7 +1663,7 @@ export class LanguageClient {
 
 		if (this._capabilites.codeLensProvider) {
 			let options: CodeLensOptions = Object.assign({}, selectorOptions, this._capabilites.codeLensProvider);
-			this._registeredHandlers.get(SignatureHelpRequest.type.method).register(
+			this._registeredHandlers.get(CodeLensRequest.type.method).register(
 				{ id: UUID.generateUuid(), registerOptions: options }
 			);
 		}
@@ -1654,7 +1674,7 @@ export class LanguageClient {
 			);
 		}
 
-		if (!this._capabilites.documentRangeFormattingProvider) {
+		if (this._capabilites.documentRangeFormattingProvider) {
 			this._registeredHandlers.get(DocumentRangeFormattingRequest.type.method).register(
 				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
 			);
@@ -1662,7 +1682,7 @@ export class LanguageClient {
 
 		if (this._capabilites.documentOnTypeFormattingProvider) {
 			let options: DocumentOnTypeFormattingOptions = Object.assign({}, selectorOptions, this._capabilites.documentOnTypeFormattingProvider);
-			this._registeredHandlers.get(SignatureHelpRequest.type.method).register(
+			this._registeredHandlers.get(DocumentOnTypeFormattingRequest.type.method).register(
 				{ id: UUID.generateUuid(), registerOptions: options }
 			);
 		}
@@ -1685,11 +1705,11 @@ export class LanguageClient {
 		this.error(`Request ${type.method} failed.`, error);
 	}
 
-	private createCompletionProvider(options: CompletionOptions): Disposable {
+	private createCompletionProvider(connection: IConnection, options: CompletionOptions): Disposable {
 		let triggerCharacters = options.triggerCharacters || [];
 		return Languages.registerCompletionItemProvider(options.documentSelector, {
 			provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VCompletionList | VCompletionItem[]> => {
-				return this.sendRequest(CompletionRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token). then(
+				return this.doSendRequest(connection, CompletionRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token). then(
 					this._p2c.asCompletionResult,
 					(error) => {
 						this.logFailedRequest(CompletionRequest.type, error);
@@ -1699,7 +1719,7 @@ export class LanguageClient {
 			},
 			resolveCompletionItem: options.resolveProvider
 				? (item: VCompletionItem, token: CancellationToken): Thenable<VCompletionItem> => {
-					return this.sendRequest(CompletionResolveRequest.type, this._c2p.asCompletionItem(item), token).then(
+					return this.doSendRequest(connection, CompletionResolveRequest.type, this._c2p.asCompletionItem(item), token).then(
 						this._p2c.asCompletionItem,
 						(error) => {
 							this.logFailedRequest(CompletionResolveRequest.type, error);
@@ -1711,10 +1731,10 @@ export class LanguageClient {
 		},  ...triggerCharacters);
 	}
 
-	private createHoverProvider(options: DocumentOptions): Disposable {
+	private createHoverProvider(connection: IConnection, options: DocumentOptions): Disposable {
 		return Languages.registerHoverProvider(options.documentSelector, {
 			provideHover: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<Hover> => {
-				return this.sendRequest(HoverRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token).then(
+				return this.doSendRequest(connection, HoverRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token).then(
 					this._p2c.asHover,
 					(error) => {
 						this.logFailedRequest(HoverRequest.type, error);
@@ -1725,11 +1745,11 @@ export class LanguageClient {
 		});
 	}
 
-	private createSignatureHelpProvider(options: SignatureHelpOptions): Disposable {
+	private createSignatureHelpProvider(connection: IConnection, options: SignatureHelpOptions): Disposable {
 		let triggerCharacters = options.triggerCharacters || [];
 		return Languages.registerSignatureHelpProvider(options.documentSelector, {
 			provideSignatureHelp: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VSignatureHelp> => {
-				return this.sendRequest(SignatureHelpRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token). then(
+				return this.doSendRequest(connection, SignatureHelpRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token). then(
 					this._p2c.asSignatureHelp,
 					(error) => {
 						this.logFailedRequest(SignatureHelpRequest.type, error);
@@ -1740,10 +1760,10 @@ export class LanguageClient {
 		}, ...triggerCharacters);
 	}
 
-	private createDefinitionProvider(options: DocumentOptions): Disposable {
+	private createDefinitionProvider(connection: IConnection, options: DocumentOptions): Disposable {
 		return Languages.registerDefinitionProvider(options.documentSelector, {
 			provideDefinition: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VDefinition> => {
-				return this.sendRequest(DefinitionRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token). then(
+				return this.doSendRequest(connection, DefinitionRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token). then(
 					this._p2c.asDefinitionResult,
 					(error) => {
 						this.logFailedRequest(DefinitionRequest.type, error);
@@ -1754,10 +1774,10 @@ export class LanguageClient {
 		});
 	}
 
-	private createReferencesProvider(options: DocumentOptions): Disposable {
+	private createReferencesProvider(connection: IConnection, options: DocumentOptions): Disposable {
 		return Languages.registerReferenceProvider(options.documentSelector, {
 			provideReferences: (document: TextDocument, position: VPosition, options: { includeDeclaration: boolean; }, token: CancellationToken): Thenable<VLocation[]> => {
-				return this.sendRequest(ReferencesRequest.type, this._c2p.asReferenceParams(document, position, options), token).then(
+				return this.doSendRequest(connection, ReferencesRequest.type, this._c2p.asReferenceParams(document, position, options), token).then(
 					this._p2c.asReferences,
 					(error) => {
 						this.logFailedRequest(ReferencesRequest.type, error);
@@ -1768,10 +1788,10 @@ export class LanguageClient {
 		});
 	}
 
-	private createDocumentHighlightProvider(options: DocumentOptions): Disposable {
+	private createDocumentHighlightProvider(connection: IConnection, options: DocumentOptions): Disposable {
 		return Languages.registerDocumentHighlightProvider(options.documentSelector, {
 			provideDocumentHighlights: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VDocumentHighlight[]> => {
-				return this.sendRequest(DocumentHighlightRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token).then(
+				return this.doSendRequest(connection, DocumentHighlightRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token).then(
 					this._p2c.asDocumentHighlights,
 					(error) => {
 						this.logFailedRequest(DocumentHighlightRequest.type, error);
@@ -1782,10 +1802,10 @@ export class LanguageClient {
 		});
 	}
 
-	private createDocumentSymbolProvider(options: DocumentOptions): Disposable {
+	private createDocumentSymbolProvider(connection: IConnection, options: DocumentOptions): Disposable {
 		return Languages.registerDocumentSymbolProvider(options.documentSelector, {
 			provideDocumentSymbols: (document: TextDocument, token: CancellationToken): Thenable<VSymbolInformation[]> => {
-				return this.sendRequest(DocumentSymbolRequest.type, this._c2p.asDocumentSymbolParams(document), token).then(
+				return this.doSendRequest(connection, DocumentSymbolRequest.type, this._c2p.asDocumentSymbolParams(document), token).then(
 					this._p2c.asSymbolInformations,
 					(error) => {
 						this.logFailedRequest(DocumentSymbolRequest.type, error);
@@ -1796,10 +1816,10 @@ export class LanguageClient {
 		});
 	}
 
-	private createWorkspaceSymbolProvider(options: DocumentOptions): Disposable {
+	private createWorkspaceSymbolProvider(connection: IConnection, options: DocumentOptions): Disposable {
 		return Languages.registerWorkspaceSymbolProvider({
 			provideWorkspaceSymbols: (query: string, token: CancellationToken): Thenable<VSymbolInformation[]> => {
-				return this.sendRequest(WorkspaceSymbolRequest.type, { query }, token).then(
+				return this.doSendRequest(connection, WorkspaceSymbolRequest.type, { query }, token).then(
 					this._p2c.asSymbolInformations,
 					(error) => {
 						this.logFailedRequest(WorkspaceSymbolRequest.type, error);
@@ -1810,7 +1830,7 @@ export class LanguageClient {
 		});
 	}
 
-	private createCodeActionsProvider(options: DocumentOptions): Disposable {
+	private createCodeActionsProvider(connection: IConnection, options: DocumentOptions): Disposable {
 		return Languages.registerCodeActionsProvider(options.documentSelector, {
 			provideCodeActions: (document: TextDocument, range: VRange, context: VCodeActionContext, token: CancellationToken): Thenable<VCommand[]> => {
 				let params: CodeActionParams = {
@@ -1818,7 +1838,7 @@ export class LanguageClient {
 					range: this._c2p.asRange(range),
 					context: this._c2p.asCodeActionContext(context)
 				};
-				return this.sendRequest(CodeActionRequest.type, params, token).then(
+				return this.doSendRequest(connection, CodeActionRequest.type, params, token).then(
 					this._p2c.asCommands,
 					(error) => {
 						this.logFailedRequest(CodeActionRequest.type, error);
@@ -1829,10 +1849,10 @@ export class LanguageClient {
 		});
 	}
 
-	private createCodeLensProvider(options: CodeLensOptions): Disposable {
+	private createCodeLensProvider(connection: IConnection, options: CodeLensOptions): Disposable {
 		return Languages.registerCodeLensProvider(options.documentSelector, {
 			provideCodeLenses: (document: TextDocument, token: CancellationToken): Thenable<VCodeLens[]> => {
-				return this.sendRequest(CodeLensRequest.type, this._c2p.asCodeLensParams(document), token).then(
+				return this.doSendRequest(connection, CodeLensRequest.type, this._c2p.asCodeLensParams(document), token).then(
 					this._p2c.asCodeLenses,
 					(error) => {
 						this.logFailedRequest(CodeLensRequest.type, error);
@@ -1842,7 +1862,7 @@ export class LanguageClient {
 			},
 			resolveCodeLens: (options.resolveProvider)
 				? (codeLens: VCodeLens, token: CancellationToken): Thenable<CodeLens> => {
-					return this.sendRequest(CodeLensResolveRequest.type, this._c2p.asCodeLens(codeLens), token).then(
+					return this.doSendRequest(connection, CodeLensResolveRequest.type, this._c2p.asCodeLens(codeLens), token).then(
 						this._p2c.asCodeLens,
 						(error) => {
 							this.logFailedRequest(CodeLensResolveRequest.type, error);
@@ -1854,14 +1874,14 @@ export class LanguageClient {
 		});
 	}
 
-	private createDocumentFormattingProvider(options: DocumentOptions): Disposable {
+	private createDocumentFormattingProvider(connection: IConnection, options: DocumentOptions): Disposable {
 		return Languages.registerDocumentFormattingEditProvider(options.documentSelector, {
 			provideDocumentFormattingEdits: (document: TextDocument, options: VFormattingOptions, token: CancellationToken): Thenable<VTextEdit[]> => {
 				let params: DocumentFormattingParams = {
 					textDocument: this._c2p.asTextDocumentIdentifier(document),
 					options: this._c2p.asFormattingOptions(options)
 				};
-				return this.sendRequest(DocumentFormattingRequest.type, params, token).then(
+				return this.doSendRequest(connection, DocumentFormattingRequest.type, params, token).then(
 					this._p2c.asTextEdits,
 					(error) => {
 						this.logFailedRequest(DocumentFormattingRequest.type, error);
@@ -1872,7 +1892,7 @@ export class LanguageClient {
 		});
 	}
 
-	private createDocumentRangeFormattingProvider(options: DocumentOptions): Disposable {
+	private createDocumentRangeFormattingProvider(connection: IConnection, options: DocumentOptions): Disposable {
 		return Languages.registerDocumentRangeFormattingEditProvider(options.documentSelector, {
 			provideDocumentRangeFormattingEdits: (document: TextDocument, range: VRange, options: VFormattingOptions, token: CancellationToken): Thenable<VTextEdit[]> => {
 				let params: DocumentRangeFormattingParams = {
@@ -1880,7 +1900,7 @@ export class LanguageClient {
 					range: this._c2p.asRange(range),
 					options: this._c2p.asFormattingOptions(options)
 				};
-				return this.sendRequest(DocumentRangeFormattingRequest.type, params, token).then(
+				return this.doSendRequest(connection, DocumentRangeFormattingRequest.type, params, token).then(
 					this._p2c.asTextEdits,
 					(error) => {
 						this.logFailedRequest(DocumentRangeFormattingRequest.type, error);
@@ -1891,7 +1911,7 @@ export class LanguageClient {
 		});
 	}
 
-	private createDocumentOnTypeFormattingProvider(options: DocumentOnTypeFormattingOptions): Disposable {
+	private createDocumentOnTypeFormattingProvider(connection: IConnection, options: DocumentOnTypeFormattingOptions): Disposable {
 		let moreTriggerCharacter = options.moreTriggerCharacter || [];
 		return Languages.registerOnTypeFormattingEditProvider(options.documentSelector, {
 			provideOnTypeFormattingEdits: (document: TextDocument, position: VPosition, ch: string, options: VFormattingOptions, token: CancellationToken): Thenable<VTextEdit[]> => {
@@ -1901,7 +1921,7 @@ export class LanguageClient {
 					ch: ch,
 					options: this._c2p.asFormattingOptions(options)
 				};
-				return this.sendRequest(DocumentOnTypeFormattingRequest.type, params, token).then(
+				return this.doSendRequest(connection, DocumentOnTypeFormattingRequest.type, params, token).then(
 					this._p2c.asTextEdits,
 					(error) => {
 						this.logFailedRequest(DocumentOnTypeFormattingRequest.type, error);
@@ -1912,7 +1932,7 @@ export class LanguageClient {
 		}, options.firstTriggerCharacter, ...moreTriggerCharacter);
 	}
 
-	private createRenameProvider(options: DocumentOptions): Disposable {
+	private createRenameProvider(connection: IConnection, options: DocumentOptions): Disposable {
 		return Languages.registerRenameProvider(options.documentSelector, {
 			provideRenameEdits: (document: TextDocument, position: VPosition, newName: string, token: CancellationToken): Thenable<VWorkspaceEdit> => {
 				let params: RenameParams = {
@@ -1920,7 +1940,7 @@ export class LanguageClient {
 					position: this._c2p.asPosition(position),
 					newName: newName
 				};
-				return this.sendRequest(RenameRequest.type, params, token).then(
+				return this.doSendRequest(connection, RenameRequest.type, params, token).then(
 					this._p2c.asWorkspaceEdit,
 					(error: ResponseError<void>) => {
 						this.logFailedRequest(RenameRequest.type, error);
@@ -1931,10 +1951,10 @@ export class LanguageClient {
 		});
 	}
 
-	private createDocumentLinkProvider(options: DocumentLinkOptions): Disposable {
+	private createDocumentLinkProvider(connection: IConnection, options: DocumentLinkOptions): Disposable {
 		return Languages.registerDocumentLinkProvider(options.documentSelector, {
 			provideDocumentLinks: (document: TextDocument, token: CancellationToken): Thenable<VDocumentLink[]> => {
-				return this.sendRequest(DocumentLinkRequest.type, this._c2p.asDocumentLinkParams(document), token).then(
+				return this.doSendRequest(connection, DocumentLinkRequest.type, this._c2p.asDocumentLinkParams(document), token).then(
 					this._p2c.asDocumentLinks,
 					(error: ResponseError<void>) => {
 						this.logFailedRequest(DocumentLinkRequest.type, error);
@@ -1944,7 +1964,7 @@ export class LanguageClient {
 			},
 			resolveDocumentLink: options.resolveProvider
 				? (link: VDocumentLink, token: CancellationToken): Thenable<VDocumentLink> => {
-					return this.sendRequest(DocumentLinkResolveRequest.type, this._c2p.asDocumentLink(link), token).then(
+					return this.doSendRequest(connection, DocumentLinkResolveRequest.type, this._c2p.asDocumentLink(link), token).then(
 						this._p2c.asDocumentLink,
 						(error: ResponseError<void>) => {
 							this.logFailedRequest(DocumentLinkResolveRequest.type, error);

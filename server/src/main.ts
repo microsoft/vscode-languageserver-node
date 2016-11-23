@@ -34,13 +34,13 @@ import {
 	SignatureHelp, SignatureInformation, ParameterInformation,
 	Definition, CodeActionContext,
 	DocumentHighlight, DocumentHighlightKind,
-	SymbolInformation, SymbolKind,
+	SymbolInformation, SymbolKind, WorkspaceSymbolParams, DocumentSymbolParams,
 	CodeLens,
 	FormattingOptions, DocumentLink
 } from 'vscode-languageserver-types';
 
 import {
-	RegistrationRequest, Registration, RegistrationParams, UnregistrationRequest, Unregisteration, UnregistrationParams,
+	RegistrationRequest, Registration, RegistrationParams, Unregistration, UnregistrationRequest, UnregistrationParams,
 	InitializeRequest, InitializeParams, InitializeResult, InitializeError, ClientCapabilities, ServerCapabilities,
 	InitializedNotification, InitializedParams, ShutdownRequest, ExitNotification,
 	LogMessageNotification, LogMessageParams, MessageType,
@@ -58,7 +58,7 @@ import {
 	SignatureHelpRequest,
 	DefinitionRequest, ReferencesRequest, ReferenceParams,
 	DocumentHighlightRequest,
-	DocumentSymbolRequest, DocumentSymbolParams, WorkspaceSymbolRequest, WorkspaceSymbolParams,
+	DocumentSymbolRequest, WorkspaceSymbolRequest,
 	CodeActionRequest, CodeActionParams, CodeLensOptions,
 	CodeLensRequest, CodeLensParams, CodeLensResolveRequest,
 	DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
@@ -77,27 +77,9 @@ export {
 	ResponseError, ErrorCodes,
 	MessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
 	MessageWriter, StreamMessageWriter, IPCMessageWriter,
-	InitializeParams, InitializeResult, InitializeError, ServerCapabilities, InitializedNotification, InitializedParams,
-	MessageType, MessageActionItem, ShowMessageRequest, ShowMessageNotification,
-	DidChangeConfigurationParams,
-	DidChangeWatchedFilesParams, FileEvent, FileChangeType,
-	DidOpenTextDocumentParams, DidChangeTextDocumentParams, TextDocumentContentChangeEvent, DidCloseTextDocumentParams, DidSaveTextDocumentParams,
-	WillSaveTextDocumentParams, WillSaveTextDocumentNotification, WillSaveTextDocumentWaitUntilRequest,
-	PublishDiagnosticsParams, Diagnostic, DiagnosticSeverity, Range, Position, Location,
-	TextDocumentIdentifier, TextDocumentPositionParams, TextDocumentSyncKind,
-	Hover, MarkedString,
-	CompletionOptions, CompletionItemKind, CompletionItem, CompletionList, SnippetString,
-	TextDocument, TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
-	SignatureHelp, SignatureInformation, ParameterInformation,
-	Definition, ReferenceParams, DocumentHighlight, DocumentHighlightKind,
-	SymbolInformation, SymbolKind, DocumentSymbolParams, WorkspaceSymbolParams,
-	CodeActionParams, CodeActionContext, Command,
-	CodeLensRequest, CodeLensParams, CodeLensResolveRequest, CodeLens, CodeLensOptions,
-	DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
-	DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams, FormattingOptions,
-	RenameRequest, RenameParams,
-	DocumentLink, DocumentLinkRequest, DocumentLinkResolveRequest
 }
+export * from 'vscode-languageserver-types';
+export * from './protocol';
 export { Event }
 
 import * as fm from './files';
@@ -436,7 +418,7 @@ export interface BulkUnregistration extends Disposable {
 
 class BulkUnregistrationImpl implements BulkUnregistration {
 
-	constructor(private connection: MessageConnection, private console: RemoteConsole, private _unregistrations: Unregisteration[]) {
+	constructor(private connection: MessageConnection, private console: RemoteConsole, private _unregistrations: Unregistration[]) {
 	}
 
 	public dispose(): any {

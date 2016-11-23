@@ -251,6 +251,21 @@ describe('Connection', () => {
 
 	});
 
+	it('Send Request receives undefined params', (done) => { 
+		let outputStream = new TestWritable(); 
+		let inputStream = new Readable(); 
+		inputStream.push(null); 
+		let connection = hostConnection.createMessageConnection(inputStream, outputStream, Logger); 
+		connection.sendRequest(testRequest1, undefined); 
+		connection.listen(); 
+		let expected : RequestMessage[] = [ 
+			{ jsonrpc: '2.0', id: 0, method: testRequest1.method } 
+		]; 
+		setImmediate(() => { 
+			assertMessages(outputStream.data, expected, done); 
+		}); 
+	}); 
+
 	it('Send and Receive Request', (done) => {
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');

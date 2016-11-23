@@ -9,13 +9,13 @@ import { RequestType, RequestType0, NotificationType, NotificationType0, Respons
 import {
 	TextDocument, TextDocumentChangeEvent, TextDocumentContentChangeEvent, TextDocumentSaveReason,
 	Range, Position, Location, Diagnostic, DiagnosticSeverity, Command,
-	TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
+	TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange, WorkspaceSymbolParams,
 	TextDocumentIdentifier, VersionedTextDocumentIdentifier, TextDocumentItem,
 	CompletionItemKind, CompletionItem, CompletionList,
 	Hover, MarkedString,
 	SignatureHelp, SignatureInformation, ParameterInformation,
 	Definition, ReferenceContext,
-	DocumentHighlight, DocumentHighlightKind,
+	DocumentHighlight, DocumentHighlightKind, DocumentSymbolParams,
 	SymbolInformation, SymbolKind,
 	CodeLens, CodeActionContext,
 	FormattingOptions, DocumentLink
@@ -84,7 +84,7 @@ export namespace RegistrationRequest {
 /**
  * General parameters to unregister a request or notification.
  */
-export interface Unregisteration {
+export interface Unregistration {
 	/**
 	 * The id used to unregister the request or notification. Usually an id
 	 * provided during the register request.
@@ -98,7 +98,7 @@ export interface Unregisteration {
 }
 
 export interface UnregistrationParams {
-	unregisterations: Unregisteration[];
+	unregisterations: Unregistration[];
 }
 
 /**
@@ -127,18 +127,30 @@ export interface TextDocumentPositionParams {
 //---- Initialize Method ----
 
 /**
+ * Options to descibe dynamic registration client behaviour.
+ */
+export interface EmptyClientOptions {
+}
+
+
+export interface WillSaveTextDocumentClientOptions {
+	waitUntilClientOptions: EmptyClientOptions;
+}
+
+/**
  * Defines the capabilities provided by the client.
  */
 export interface ClientCapabilities {
 	/**
-	 * Client is able to emit will save text document notifications.
+	 * The client supports dynamic feature registration
 	 */
-	willSaveTextDocumentNotification?: boolean;
+	dynamicRegistration?: EmptyClientOptions;
 
 	/**
-	 * Client support participation in document save.
+	 * The clients supports sending will save text document notifications
 	 */
-	willSaveTextDocumentProvider?: boolean;
+	willSaveTextDocument?: WillSaveTextDocumentClientOptions;
+
 }
 
 /**
@@ -170,7 +182,7 @@ export interface DocumentOptions {
 	 * An optional document selector to identify the scope of the registration. If not
 	 * provided the registration happens for the scope determined by the other side.
 	 */
-	selector?: DocumentSelector;
+	documentSelector?: DocumentSelector;
 }
 
 /**
@@ -561,27 +573,6 @@ export namespace DidOpenTextDocumentNotification {
 }
 
 /**
- * An event describing a change to a text document. If range and rangeLength are omitted
- * the new text is considered to be the full content of the document.
- */
-export interface TextDocumentContentChangeEvent {
-	/**
-	 * The range of the document that changed.
-	 */
-	range?: Range;
-
-	/**
-	 * The length of the range that got replaced.
-	 */
-	rangeLength?: number;
-
-	/**
-	 * The new text of the document.
-	 */
-	text: string;
-}
-
-/**
  * The change text document notification's parameters.
  */
 export interface DidChangeTextDocumentParams {
@@ -599,11 +590,21 @@ export interface DidChangeTextDocumentParams {
 }
 
 /**
+ * Descibe options to be used when registered for text document change events.
+ */
+export interface DidChangeTextDocumentOptions extends DocumentOptions {
+	/**
+	 * How documents are sync to the server.
+	 */
+	syncKind: TextDocumentSyncKind;
+}
+
+/**
  * The document change notification is sent from the client to the server to signal
  * changes to a text document.
  */
 export namespace DidChangeTextDocumentNotification {
-	export const type: NotificationType<DidChangeTextDocumentParams, DocumentOptions> = { get method() { return 'textDocument/didChange'; }, _: undefined };
+	export const type: NotificationType<DidChangeTextDocumentParams, DidChangeTextDocumentOptions> = { get method() { return 'textDocument/didChange'; }, _: undefined };
 }
 
 /**
@@ -779,8 +780,6 @@ export namespace CompletionResolveRequest {
 
 //---- Hover Support -------------------------------
 
-export type MarkedString = string | { language: string; value: string };
-
 /**
  * Request to request hover information at a given text document position. The request's
  * parameter is of type [TextDocumentPosition](#TextDocumentPosition) the response is of
@@ -843,16 +842,6 @@ export namespace DocumentHighlightRequest {
 //---- Document Symbol Provider ---------------------------
 
 /**
- * Parameters for a [DocumentSymbolRequest](#DocumentSymbolRequest).
- */
-export interface DocumentSymbolParams {
-	/**
-	 * The text document.
-	 */
-	textDocument: TextDocumentIdentifier;
-}
-
-/**
  * A request to list all symbols found in a given text document. The request's
  * parameter is of type [TextDocumentIdentifier](#TextDocumentIdentifier) the
  * response is of type [SymbolInformation[]](#SymbolInformation) or a Thenable
@@ -863,16 +852,6 @@ export namespace DocumentSymbolRequest {
 }
 
 //---- Workspace Symbol Provider ---------------------------
-
-/**
- * The parameters of a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest).
- */
-export interface WorkspaceSymbolParams {
-	/**
-	 * A non-empty query string
-	 */
-	query: string;
-}
 
 /**
  * A request to list project-wide symbols matching the query string given
