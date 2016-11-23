@@ -34,6 +34,8 @@ language servers for [VSCode](https://code.visualstudio.com/).
     * Added CompletionItem.range
     * Deprecated CompletionItem.textEdit
   * Breaking changes:
+    * removed the deprecated module functions on code2Protocol and protocol2Code converters. Use the corresponding
+      properties on the LanguageClient instead to get access to the same converters used by the LanguageClient.
     * due to the use of TypeScript 2.0.3 and differences in d.ts generation users of the new version need to move to 
       TypeScript 2.0.3 as well.
     * Request and notification types have an additional property '_'. This property is to improve TypeScript type 
