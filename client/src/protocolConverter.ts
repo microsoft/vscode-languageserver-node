@@ -159,7 +159,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			let items = <ls.CompletionItem[]> result;
 			return items.map(asCompletionItem);
 		}
-		let list = <code.CompletionList> result;
+		let list = <ls.CompletionList> result;
 		return new code.CompletionList(list.items.map(asCompletionItem), list.isIncomplete);
 	}
 
