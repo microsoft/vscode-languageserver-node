@@ -34,6 +34,9 @@ language servers for [VSCode](https://code.visualstudio.com/).
     * Added CompletionItem.range
     * Deprecated CompletionItem.textEdit
   * Breaking changes:
+    * to ensure ordered delivery of notifications and requests the language client now throws if sendRequest, onRequest,
+      sendNotification or onNotification is called before the client is ready. Use the isReady() Promise to wait until
+      the client is ready.
     * removed the deprecated module functions on code2Protocol and protocol2Code converters. Use the corresponding
       properties on the LanguageClient instead to get access to the same converters used by the LanguageClient.
     * due to the use of TypeScript 2.0.3 and differences in d.ts generation users of the new version need to move to 

@@ -24,7 +24,7 @@ export interface Converter {
 
 	asCloseTextDocumentParams(textDocument: code.TextDocument): proto.DidCloseTextDocumentParams;
 
-	asSaveTextDocumentParams(textDocument: code.TextDocument): proto.DidSaveTextDocumentParams;
+	asSaveTextDocumentParams(textDocument: code.TextDocument, includeContent?: boolean): proto.DidSaveTextDocumentParams;
 	asWillSaveTextDocumentParams(event: code.TextDocumentWillSaveEvent): proto.WillSaveTextDocumentParams;
 
 	asTextDocumentPositionParams(textDocument: code.TextDocument, position: code.Position): proto.TextDocumentPositionParams;
@@ -80,6 +80,13 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	function asTextDocumentIdentifier(textDocument: code.TextDocument): types.TextDocumentIdentifier {
 		return {
 			uri: _uriConverter(textDocument.uri)
+		};
+	}
+
+	function asVersionedTextDocumentIdentifier(textDocument: code.TextDocument): types.VersionedTextDocumentIdentifier {
+		return {
+			uri: _uriConverter(textDocument.uri),
+			version: textDocument.version
 		};
 	}
 
@@ -147,10 +154,14 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		};
 	}
 
-	function asSaveTextDocumentParams(textDocument: code.TextDocument): proto.DidSaveTextDocumentParams {
-		return {
-			textDocument: asTextDocumentIdentifier(textDocument)
+	function asSaveTextDocumentParams(textDocument: code.TextDocument, includeContent: boolean = false): proto.DidSaveTextDocumentParams {
+		let result: proto.DidSaveTextDocumentParams = {
+			textDocument: asVersionedTextDocumentIdentifier(textDocument)
 		}
+		if (includeContent) {
+			result.content = textDocument.getText()
+		}
+		return result;
 	}
 
 	function asWillSaveTextDocumentParams(event: code.TextDocumentWillSaveEvent): proto.WillSaveTextDocumentParams {

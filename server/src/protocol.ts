@@ -126,15 +126,8 @@ export interface TextDocumentPositionParams {
 
 //---- Initialize Method ----
 
-/**
- * Options to descibe dynamic registration client behaviour.
- */
-export interface EmptyClientOptions {
-}
-
-
 export interface WillSaveTextDocumentClientOptions {
-	waitUntilClientOptions: EmptyClientOptions;
+	waitUntil?: boolean;
 }
 
 /**
@@ -142,15 +135,15 @@ export interface WillSaveTextDocumentClientOptions {
  */
 export interface ClientCapabilities {
 	/**
-	 * The client supports dynamic feature registration
+	 * The client supports dynamic feature registration.
 	 */
-	dynamicRegistration?: EmptyClientOptions;
+	dynamicRegistration?: boolean;
 
 	/**
-	 * The clients supports sending will save text document notifications
+	 * The client supports sending will save text document notifications.
+	 * Set to `null` if the client doesn't support the feature.
 	 */
 	willSaveTextDocument?: WillSaveTextDocumentClientOptions;
-
 }
 
 /**
@@ -183,6 +176,16 @@ export interface DocumentOptions {
 	 * provided the registration happens for the scope determined by the other side.
 	 */
 	documentSelector?: DocumentSelector;
+}
+
+/**
+ * Save options.
+ */
+export interface SaveOptions extends DocumentOptions {
+	/**
+	 * The client is supposed to include the content on save.
+	 */
+	includeContent?: boolean;
 }
 
 /**
@@ -594,9 +597,9 @@ export interface DidChangeTextDocumentParams {
  */
 export interface DidChangeTextDocumentOptions extends DocumentOptions {
 	/**
-	 * How documents are sync to the server.
+	 * How documents are synced to the server.
 	 */
-	syncKind: TextDocumentSyncKind;
+	syncKind?: number;
 }
 
 /**
@@ -634,7 +637,12 @@ export interface DidSaveTextDocumentParams {
 	/**
 	 * The document that was closed.
 	 */
-	textDocument: TextDocumentIdentifier;
+	textDocument: VersionedTextDocumentIdentifier;
+
+	/**
+	 * Optional the content when saved
+	 */
+	content?: string;
 }
 
 /**
@@ -642,7 +650,7 @@ export interface DidSaveTextDocumentParams {
  * the document got saved in the client.
  */
 export namespace DidSaveTextDocumentNotification {
-	export const type: NotificationType<DidSaveTextDocumentParams, DocumentOptions> = { get method() { return 'textDocument/didSave'; }, _: undefined };
+	export const type: NotificationType<DidSaveTextDocumentParams, SaveOptions> = { get method() { return 'textDocument/didSave'; }, _: undefined };
 }
 
 /**
