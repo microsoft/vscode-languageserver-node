@@ -364,8 +364,9 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			return null;
 		}
 		let result = new code.WorkspaceEdit();
-		let keys = Object.keys(item.changes);
-		keys.forEach(key => result.set(_uriConverter(key), asTextEdits(item.changes[key])));
+		item.changes.forEach(change => {
+			result.set(_uriConverter(change.textDocument.uri), asTextEdits(change.edits));
+		});
 		return result;
 	}
 

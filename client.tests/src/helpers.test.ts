@@ -112,17 +112,16 @@ suite('Protocol Helper Tests', () => {
 	test('WorkspaceEdit', () => {
 		let workspaceChange = new WorkspaceChange();
 		let uri = 'file:///abc.txt';
-		let change1 = workspaceChange.getTextEditChange(uri);
+		let change1 = workspaceChange.getTextEditChange({uri: uri, version: 10});
 		change1.insert(Position.create(0,1), 'insert');
 		change1.replace(Range.create(0,1,2,3), 'replace');
 		change1.delete(Range.create(0,1,2,3));
-		let change2 = workspaceChange.getTextEditChange('file:///xyz.txt');
+		let change2 = workspaceChange.getTextEditChange({ uri: 'file:///xyz.txt', version: 20 });
 		change2.insert(Position.create(2,3), 'insert');
 
 		let workspaceEdit = workspaceChange.edit;
-		let keys = Object.keys(workspaceEdit.changes);
-		strictEqual(keys.length, 2);
-		let edits = workspaceEdit.changes[uri];
+		strictEqual(workspaceEdit.changes.length, 2);
+		let edits = workspaceEdit.changes[0].edits;
 		strictEqual(edits.length, 3);
 		rangeEqual(edits[0].range, Range.create(0,1,0,1));
 		strictEqual(edits[0].newText, 'insert');
@@ -131,7 +130,7 @@ suite('Protocol Helper Tests', () => {
 		rangeEqual(edits[2].range, Range.create(0,1,2,3));
 		strictEqual(edits[2].newText, '');
 
-		edits = workspaceEdit.changes['file:///xyz.txt'];
+		edits = workspaceEdit.changes[1].edits;
 		strictEqual(edits.length, 1);
 		rangeEqual(edits[0].range, Range.create(2,3,2,3));
 		strictEqual(edits[0].newText, 'insert');

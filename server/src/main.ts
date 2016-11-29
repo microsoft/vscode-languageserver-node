@@ -64,7 +64,9 @@ import {
 	DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
 	DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams,
 	RenameRequest, RenameParams,
-	DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkParams
+	DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkParams,
+	ExecuteCommandRequest, ExecuteCommandParams, ExecuteCommandResponse,
+	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse
 } from './protocol';
 
 import * as Is from './utils/is';
@@ -76,7 +78,7 @@ export {
 	NotificationType0, NotificationHandler0, NotificationType, NotificationHandler,
 	ResponseError, ErrorCodes,
 	MessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
-	MessageWriter, StreamMessageWriter, IPCMessageWriter,
+	MessageWriter, StreamMessageWriter, IPCMessageWriter, Disposable
 }
 export * from 'vscode-languageserver-types';
 export * from './protocol';
@@ -162,15 +164,8 @@ export class TextDocuments {
 	 * Sets a handler that will be called if a participant wants to provide
 	 * edits during a text document save.
 	 */
-	public set onWillSaveWaitUntil(value: RequestHandler<TextDocumentWillSaveEvent, TextEdit[], void>) {
-		this._willSaveWaitUntil = value;
-	}
-
-	/**
-	 * Gets the handler that will be called during a text document save.
-	 */
-	public get onWillSaveWaitUntil(): RequestHandler<TextDocumentWillSaveEvent, TextEdit[], void> {
-		return this._willSaveWaitUntil;
+	public onWillSaveWaitUntil(handler: RequestHandler<TextDocumentWillSaveEvent, TextEdit[], void>) {
+		this._willSaveWaitUntil = handler;
 	}
 
 	/**
@@ -283,10 +278,10 @@ export class TextDocuments {
  */
 export class ErrorMessageTracker {
 
-	private messages: { [key: string]: number };
+	private _messages: { [key: string]: number };
 
 	constructor() {
-		this.messages = Object.create(null);
+		this._messages = Object.create(null);
 	}
 
 	/**
@@ -295,12 +290,12 @@ export class ErrorMessageTracker {
 	 * @param message The message to add.
 	 */
 	public add(message: string): void {
-		let count: number = this.messages[message];
+		let count: number = this._messages[message];
 		if (!count) {
 			count = 0;
 		}
 		count++;
-		this.messages[message] = count;
+		this._messages[message] = count;
 	}
 
 	/**
@@ -309,7 +304,7 @@ export class ErrorMessageTracker {
 	 * @param connection The connection establised between client and server.
 	 */
 	public sendErrors(connection: { window: RemoteWindow }): void {
-		Object.keys(this.messages).forEach(message => {
+		Object.keys(this._messages).forEach(message => {
 			connection.window.showErrorMessage(message);
 		});
 	}
@@ -379,14 +374,32 @@ export interface RemoteWindow {
 	showInformationMessage<T extends MessageActionItem>(message: string, ...actions: T[]): Thenable<T>;
 }
 
+/**
+ * A bulk registration manages n single registration to be able to register
+ * for n notifications or requests using one register request.
+ */
 export interface BulkRegistration {
+	/**
+	 * Adds a single registration.
+	 * @param type the notification type to register for.
+	 * @param registerParams special registration parameters.
+	 */
 	add<RO>(type: NotificationType0<RO>, registerParams: RO): void;
 	add<P, RO>(type: NotificationType<P, RO>, registerParams: RO): void;
+	/**
+	 * Adds a single registration.
+	 * @param type the request type to register for.
+	 * @param registerParams special registration parameters.
+	 */
 	add<R, E, RO>(type: RequestType0<R, E, RO>, registerParams: RO): void;
 	add<P, R, E, RO>(type: RequestType<P, R, E, RO>, registerParams: RO): void;
 }
 
 export namespace BulkRegistration {
+	/**
+	 * Creates a new bulk registration.
+	 * @return an empty bulk registration.
+	 */
 	export function create(): BulkRegistration {
 		return new BulkRegistrationImpl();
 	}
@@ -412,21 +425,28 @@ class BulkRegistrationImpl {
 	}
 }
 
+/**
+ * A `BulkUnregistration` manages n unregistrations.
+ */
 export interface BulkUnregistration extends Disposable {
+	/**
+	 * Disposes a single registration. It will be removed from the
+	 * `BulkUnregistration`.
+	 */
 	disposeSingle(index: number): void;
 }
 
 class BulkUnregistrationImpl implements BulkUnregistration {
 
-	constructor(private connection: MessageConnection, private console: RemoteConsole, private _unregistrations: Unregistration[]) {
+	constructor(private _connection: MessageConnection, private _console: RemoteConsole, private _unregistrations: Unregistration[]) {
 	}
 
 	public dispose(): any {
 		let params: UnregistrationParams = {
 			unregisterations: this._unregistrations
 		};
-		this.connection.sendRequest(UnregistrationRequest.type, params).then(undefined, (error) => {
-			this.console.info(`Bulk unregistration failed.`);
+		this._connection.sendRequest(UnregistrationRequest.type, params).then(undefined, (error) => {
+			this._console.info(`Bulk unregistration failed.`);
 			throw error;
 		});
 	}
@@ -439,29 +459,49 @@ class BulkUnregistrationImpl implements BulkUnregistration {
 		let params: UnregistrationParams = {
 			unregisterations: [elem]
 		}
-		this.connection.sendRequest(UnregistrationRequest.type, params).then(() => {
+		this._connection.sendRequest(UnregistrationRequest.type, params).then(() => {
 			this._unregistrations.splice(index, 1);
 		}, (error) => {
-			this.console.info(`Unregistering request handler for ${elem.id} failed.`);
+			this._console.info(`Unregistering request handler for ${elem.id} failed.`);
 			throw error;
 		});
 	}
 }
 
+/**
+ * Interface to register and unregister `listeners` on the client / tools side.
+ */
 export interface RemoteClient {
+	/**
+	 * Registers a listener for the given notification.
+	 * @param type the notification type to register for.
+	 * @param registerParams special registration parameters.
+	 * @return a `Disposable` to unregister the listener again.
+	 */
 	register<RO>(type: NotificationType0<RO>, registerParams?: RO): Thenable<Disposable>;
 	register<P, RO>(type: NotificationType<P, RO>, registerParams?: RO): Thenable<Disposable>;
+	/**
+	 * Registers a listener for the given request.
+	 * @param type the request type to register for.
+	 * @param registerParams special registration parameters.
+	 * @return a `Disposable` to unregister the listener again.
+	 */
 	register<R, E, RO>(type: RequestType0<R, E, RO>, registerParams?: RO): Thenable<Disposable>;
 	register<P, R, E, RO>(type: RequestType<P, R, E, RO>, registerParams?: RO): Thenable<Disposable>;
+	/**
+	 * Registers a set of listeners.
+	 * @param registrations the bulk registration
+	 * @return a `Disposable` to unregister the listeners again.
+	 */
 	register(registrations: BulkRegistration): Thenable<BulkUnregistration>;
 }
 
 class ConnectionLogger implements Logger, RemoteConsole {
-	private connection: MessageConnection;
+	private _connection: MessageConnection;
 	public constructor() {
 	}
 	public attach(connection: MessageConnection) {
-		this.connection = connection;
+		this._connection = connection;
 	}
 	public error(message: string): void {
 		this.send(MessageType.Error, message);
@@ -476,32 +516,32 @@ class ConnectionLogger implements Logger, RemoteConsole {
 		this.send(MessageType.Log, message);
 	}
 	private send(type: number, message: string) {
-		if (this.connection) {
-			this.connection.sendNotification(LogMessageNotification.type, { type, message });
+		if (this._connection) {
+			this._connection.sendNotification(LogMessageNotification.type, { type, message });
 		}
 	}
 }
 
 class RemoteWindowImpl implements RemoteWindow {
 
-	constructor(private connection: MessageConnection) {
+	constructor(private _connection: MessageConnection) {
 	}
 
 	public showErrorMessage(message: string, ...actions: MessageActionItem[]): Thenable<MessageActionItem> {
-		return this.connection.sendRequest(ShowMessageRequest.type, { type: MessageType.Error, message, actions });
+		return this._connection.sendRequest(ShowMessageRequest.type, { type: MessageType.Error, message, actions });
 	}
 
 	public showWarningMessage(message: string, ...actions: MessageActionItem[]): Thenable<MessageActionItem> {
-		return this.connection.sendRequest(ShowMessageRequest.type, { type: MessageType.Warning, message, actions });
+		return this._connection.sendRequest(ShowMessageRequest.type, { type: MessageType.Warning, message, actions });
 	}
 
 	public showInformationMessage(message: string, ...actions: MessageActionItem[]): Thenable<MessageActionItem> {
-		return this.connection.sendRequest(ShowMessageRequest.type, { type: MessageType.Info, message, actions });
+		return this._connection.sendRequest(ShowMessageRequest.type, { type: MessageType.Info, message, actions });
 	}
 }
 
 class RemoteClientImpl implements RemoteClient {
-	constructor(private connection: MessageConnection, private console: RemoteConsole) {
+	constructor(private _connection: MessageConnection, private _console: RemoteConsole) {
 	}
 
 	public register(typeOrRegistrations: string | RPCMessageType | BulkRegistration, registerOptions?: any): Thenable<Disposable> | Thenable<BulkUnregistration> {
@@ -518,12 +558,12 @@ class RemoteClientImpl implements RemoteClient {
 		let params: RegistrationParams = {
 			registrations: [{ id, method, registerOptions }]
 		}
-		return this.connection.sendRequest(RegistrationRequest.type, params).then((result) => {
+		return this._connection.sendRequest(RegistrationRequest.type, params).then((result) => {
 			return Disposable.create(() => {
 				this.unregisterSingle(id, method);
 			});
 		}, (error) => {
-			this.console.info(`Registering request handler for ${method} failed.`);
+			this._console.info(`Registering request handler for ${method} failed.`);
 			throw error;
 		});
 	}
@@ -533,20 +573,45 @@ class RemoteClientImpl implements RemoteClient {
 			unregisterations: [{ id, method }]
 		};
 
-		return this.connection.sendRequest(UnregistrationRequest.type, params).then(undefined, (error) => {
-			this.console.info(`Unregistering request handler for ${id} failed.`);
+		return this._connection.sendRequest(UnregistrationRequest.type, params).then(undefined, (error) => {
+			this._console.info(`Unregistering request handler for ${id} failed.`);
 			throw error;
 		});
 	}
 
-	private registerMany(registractions: BulkRegistrationImpl): Thenable<BulkUnregistration> {
-		let params = registractions.asRegistrationParams();
-		return this.connection.sendRequest(RegistrationRequest.type, params).then(() => {
-			return new BulkUnregistrationImpl(this.connection, this.console, params.registrations.map(registration => { return { id: registration.id, method: registration.method } }));
+	private registerMany(registrations: BulkRegistrationImpl): Thenable<BulkUnregistration> {
+		let params = registrations.asRegistrationParams();
+		return this._connection.sendRequest(RegistrationRequest.type, params).then(() => {
+			return new BulkUnregistrationImpl(this._connection, this._console, params.registrations.map(registration => { return { id: registration.id, method: registration.method } }));
 		}, (error) => {
-			this.console.info(`Bulk registeration failed.`);
+			this._console.info(`Bulk registeration failed.`);
 			throw error;
 		});
+	}
+}
+
+/**
+ * Represents the workspace managed by the client.
+ */
+export interface RemoteWorkspace {
+	/**
+	 * Applies a `WorkspaceEdit` to the workspace
+	 * @param edit the workspace edit.
+	 * @return a thenable that resolves to the `ApplyWorkspaceEditResponse`.
+	 */
+	applyEdit(edit: WorkspaceEdit): Thenable<ApplyWorkspaceEditResponse>;
+}
+
+class RemoteWorkspaceImpl implements RemoteWorkspace {
+
+	constructor(private _connection: MessageConnection) {
+	}
+
+	public applyEdit(edit: WorkspaceEdit): Thenable<ApplyWorkspaceEditResponse> {
+		let params: ApplyWorkspaceEditParams = {
+			edit
+		};
+		return this._connection.sendRequest(ApplyWorkspaceEditRequest.type, params);
 	}
 }
 
@@ -578,7 +643,7 @@ class TracerImpl implements Tracer {
 
 	private _trace: Trace;
 
-	constructor(private connection: MessageConnection) {
+	constructor(private _connection: MessageConnection) {
 		this._trace = Trace.Off;
 	}
 
@@ -590,7 +655,7 @@ class TracerImpl implements Tracer {
 		if (this._trace === Trace.Off) {
 			return;
 		}
-		this.connection.sendNotification(LogTraceNotification.type, {
+		this._connection.sendNotification(LogTraceNotification.type, {
 			message: message,
 			verbose: this._trace === Trace.Verbose ? verbose : null
 		});
@@ -599,11 +664,11 @@ class TracerImpl implements Tracer {
 
 class TelemetryImpl implements Telemetry {
 
-	constructor(private connection: MessageConnection) {
+	constructor(private _connection: MessageConnection) {
 	}
 
 	public logEvent(data: any): void {
-		this.connection.sendNotification(TelemetryEventNotification.type, data);
+		this._connection.sendNotification(TelemetryEventNotification.type, data);
 	}
 }
 
@@ -738,6 +803,11 @@ export interface IConnection {
 	 * A proxy to send trace events to the client.
 	 */
 	tracer: Tracer;
+
+	/**
+	 * A proxy to talk to the client's workspace.
+	 */
+	workspace: RemoteWorkspace;
 
 	/**
 	 * Installs a handler for the `DidChangeConfiguration` notification.
@@ -933,6 +1003,13 @@ export interface IConnection {
 	onDocumentLinkResolve(handler: RequestHandler<DocumentLink, DocumentLink, void>): void;
 
 	/**
+	 * Installs a handler for the execute command request.
+	 *
+	 * @param handler The corresponding handler.
+	 */
+	onExecuteCommand(handler: RequestHandler<ExecuteCommandParams, ExecuteCommandResponse, void>): void;
+
+	/**
 	 * Disposes the connection
 	 */
 	dispose(): void;
@@ -1021,6 +1098,7 @@ export function createConnection(input?: any, output?: any): IConnection {
 	const telemetry = new TelemetryImpl(connection);
 	const tracer = new TracerImpl(connection);
 	const client = new RemoteClientImpl(connection, logger);
+	const workspace = new RemoteWorkspaceImpl(connection);
 
 	function asThenable<T>(value: Thenable<T>): Thenable<T>;
 	function asThenable<T>(value: T): Thenable<T>;
@@ -1054,6 +1132,7 @@ export function createConnection(input?: any, output?: any): IConnection {
 		get telemetry() { return telemetry; },
 		get tracer() { return tracer; },
 		get client() { return client; },
+		get workspace() { return workspace; },
 
 		onDidChangeConfiguration: (handler) => connection.onNotification(DidChangeConfigurationNotification.type, handler),
 		onDidChangeWatchedFiles: (handler) => connection.onNotification(DidChangeWatchedFilesNotification.type, handler),
@@ -1086,6 +1165,7 @@ export function createConnection(input?: any, output?: any): IConnection {
 		onRenameRequest: (handler) => connection.onRequest(RenameRequest.type, handler),
 		onDocumentLinks: (handler) => connection.onRequest(DocumentLinkRequest.type, handler),
 		onDocumentLinkResolve: (handler) => connection.onRequest(DocumentLinkResolveRequest.type, handler),
+		onExecuteCommand: (handler) => connection.onRequest(ExecuteCommandRequest.type, handler),
 
 		dispose: () => connection.dispose()
 	};

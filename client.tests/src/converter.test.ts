@@ -485,10 +485,10 @@ suite('Protocol Converter', () => {
 	test('WorkspaceEdit', () => {
 		let workspaceChange = new proto.WorkspaceChange();
 		let uri1 = 'file:///abc.txt';
-		let change1 = workspaceChange.getTextEditChange(uri1);
+		let change1 = workspaceChange.getTextEditChange({uri: uri1, version: 1});
 		change1.insert(proto.Position.create(0,1), 'insert');
 		let uri2 = 'file:///xyz.txt';
-		let change2 = workspaceChange.getTextEditChange(uri2);
+		let change2 = workspaceChange.getTextEditChange({uri: uri2, version: 99});
 		change2.replace(proto.Range.create(0,1,2,3), 'replace');
 
 		let result = p2c.asWorkspaceEdit(workspaceChange.edit);

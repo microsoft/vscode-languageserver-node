@@ -8,13 +8,14 @@ import * as cp from 'child_process';
 import ChildProcess = cp.ChildProcess;
 
 import {
-		workspace as Workspace, window as Window, languages as Languages, extensions as Extensions, TextDocumentChangeEvent, TextDocument, Disposable, OutputChannel,
+		workspace as Workspace, window as Window, languages as Languages, extensions as Extensions, commands as Commands,
+		TextDocumentChangeEvent, TextDocument, Disposable, OutputChannel,
 		FileSystemWatcher, Uri, DiagnosticCollection, DocumentSelector as VDocumentSelector,
 		CancellationToken, Hover as VHover, Position as VPosition, Location as VLocation, Range as VRange,
 		CompletionItem as VCompletionItem, CompletionList as VCompletionList, SignatureHelp as VSignatureHelp, Definition as VDefinition, DocumentHighlight as VDocumentHighlight,
 		SymbolInformation as VSymbolInformation, CodeActionContext as VCodeActionContext, Command as VCommand, CodeLens as VCodeLens,
 		FormattingOptions as VFormattingOptions, TextEdit as VTextEdit, WorkspaceEdit as VWorkspaceEdit, MessageItem,
-		DocumentLink as VDocumentLink, TextDocumentWillSaveEvent
+		DocumentLink as VDocumentLink, TextDocumentWillSaveEvent, TextDocumentSaveReason as VTextDocumentSaveReason
 } from 'vscode';
 
 import {
@@ -72,7 +73,9 @@ import {
 		DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
 		DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams, DocumentOnTypeFormattingOptions,
 		RenameRequest, RenameParams,
-		DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkParams, DocumentLinkOptions
+		DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkParams, DocumentLinkOptions,
+		ExecuteCommandRequest, ExecuteCommandParams, ExecuteCommandResponse, ExecuteCommandOptions,
+		ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse
 } from './protocol';
 
 import * as c2p from './codeConverter';
@@ -620,6 +623,9 @@ class WillSaveWaitUntilFeature implements FeatureHandler<DocumentOptions> {
 	}
 
 	private callback(event: TextDocumentWillSaveEvent): void {
+		if (event.reason !== VTextDocumentSaveReason.AfterDelay) {
+			return;
+		}
 		if (DocumentNotifiactions.textDocumentFilter(this._selectors.values(), event.document)) {
 			event.waitUntil(
 				this._client.sendRequest(
@@ -697,6 +703,44 @@ class LanguageFeature<T extends DocumentOptions> implements FeatureHandler<T> {
 	public dispose(): void {
 		this._providers.forEach((value) => {
 			value.dispose();
+		});
+	}
+}
+
+
+class ExecuteCommandFeature implements FeatureHandler<ExecuteCommandOptions> {
+
+	private _commands: Map<string, Disposable[]> = new Map<string, Disposable[]>();
+
+	constructor(private _client: LanguageClient, private _logger: (type: RPCMessageType, error?: any) => void) {
+	}
+
+	public register(data: RegistrationData<ExecuteCommandOptions>): void {
+		if (data.registerOptions.commands) {
+			let disposeables: Disposable[] = [];
+			for (const command of data.registerOptions.commands) {
+				disposeables.push(Commands.registerCommand(command, (args: any[]) => {
+					let params: ExecuteCommandParams = {
+						command,
+						arguments: args
+					};
+					this._client.sendRequest(ExecuteCommandRequest.type, params).then(undefined, (error) => { this._logger(ExecuteCommandRequest.type, error); });
+				}));
+			}
+			this._commands.set(data.id, disposeables);
+		}
+	}
+
+	public unregister(id: string): void {
+		let disposeables = this._commands.get(id);
+		if (disposeables) {
+			disposeables.forEach(disposable => disposable.dispose());
+		}
+	}
+
+	public dispose(): void {
+		this._commands.forEach((value) => {
+			value.forEach(disposable => disposable.dispose());
 		});
 	}
 }
@@ -1079,8 +1123,12 @@ export class LanguageClient {
 			rootPath: Workspace.rootPath,
 			capabilities: {
 				dynamicRegistration: true,
-				willSaveTextDocument: {
-					waitUntil: true
+				workspace: {
+					applyEdit: true
+				},
+				textDocument: {
+					willSaveNotification: true,
+					willSaveWaitUntilRequest: true
 				}
 			},
 			initializationOptions: is.func(initOption) ? initOption() : initOption,
@@ -1095,6 +1143,7 @@ export class LanguageClient {
 			connection.onDiagnostics(params => this.handleDiagnostics(params));
 			connection.onRequest(RegistrationRequest.type, params => this.handleRegistrationRequest(params));
 			connection.onRequest(UnregistrationRequest.type, params => this.handleUnregistrationRequest(params));
+			connection.onRequest(ApplyWorkspaceEditRequest.type, params => this.handleApplyWorkspaceEdit(params));
 			connection.sendNotification(InitializedNotification.type, {});
 
 			this.hookFileEvents(connection);
@@ -1503,6 +1552,7 @@ export class LanguageClient {
 	private _registeredHandlers: Map<string, FeatureHandler<DocumentOptions>> = new Map<string, FeatureHandler<DocumentOptions>>();
 	private initRegistrationHandlers(connection: IConnection) {
 		const syncedDocuments: Map<string, TextDocument> = new Map<string, TextDocument>();
+		const logger = (type: RPCMessageType, error: any): void => { this.logFailedRequest(type, error); };
 		this._registeredHandlers.set(
 			DidOpenTextDocumentNotification.type.method,
 			new DidOpenTextDocumentFeature(this, syncedDocuments)
@@ -1593,13 +1643,18 @@ export class LanguageClient {
 			DocumentLinkRequest.type.method,
 			new LanguageFeature<DocumentLinkOptions>((options) => this.createDocumentLinkProvider(options))
 		);
+		this._registeredHandlers.set(
+			ExecuteCommandRequest.type.method,
+			new ExecuteCommandFeature(this, logger)
+		);
 	}
 
 	private handleRegistrationRequest(params: RegistrationParams): Thenable<void> {
 		return new Promise((resolve, reject) => {
 			params.registrations.forEach((element) => {
 				const handler = this._registeredHandlers.get(element.method);
-				element.registerOptions.documentSelector = element.registerOptions.documentSelector || this._clientOptions.documentSelector;
+				const options = element.registerOptions || {};
+				options.documentSelector = options.documentSelector || this._clientOptions.documentSelector;
 				if (handler) {
 					handler.register(element);
 				}
@@ -1619,6 +1674,10 @@ export class LanguageClient {
 			resolve();
 		})
 	}
+
+	private handleApplyWorkspaceEdit(params: ApplyWorkspaceEditParams): Thenable<ApplyWorkspaceEditResponse> {
+		return Workspace.applyEdit(this._p2c.asWorkspaceEdit(params.edit)).then((value) => { return { applied: value }; });
+	};
 
 	private hookCapabilities(connection: IConnection): void {
 		let documentSelector = this._clientOptions.documentSelector;
@@ -1718,9 +1777,15 @@ export class LanguageClient {
 				{ id: UUID.generateUuid(), registerOptions: options }
 			);
 		}
+		if (this._capabilites.executeCommandProvider) {
+			let options: ExecuteCommandOptions = Object.assign({}, this._capabilites.executeCommandProvider);
+			this._registeredHandlers.get(ExecuteCommandRequest.type.method).register(
+				{id: UUID.generateUuid(), registerOptions: options }
+			);
+		}
 	}
 
-	protected logFailedRequest(type: RequestType<any, any, any, any>, error: any): void {
+	protected logFailedRequest(type: RPCMessageType, error: any): void {
 		this.error(`Request ${type.method} failed.`, error);
 	}
 

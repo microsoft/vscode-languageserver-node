@@ -374,6 +374,35 @@ export interface TextEditChange {
 	delete(range: Range): void;
 }
 
+class TextEditChangeImpl implements TextEditChange {
+
+	private edits: TextEdit[];
+
+	public constructor(edits: TextEdit[]) {
+		this.edits = edits;
+	}
+
+	public insert(position: Position, newText: string): void {
+		this.edits.push(TextEdit.insert(position, newText));
+	}
+
+	public replace(range: Range, newText: string): void {
+		this.edits.push(TextEdit.replace(range, newText));
+	}
+
+	public delete(range: Range): void {
+		this.edits.push(TextEdit.del(range));
+	}
+
+	public all(): TextEdit[] {
+		return this.edits;
+	}
+
+	public clear(): void {
+		this.edits.splice(0, this.edits.length);
+	}
+}
+
 /**
  * A workspace change helps constructing changes to a workspace.
  */
@@ -381,11 +410,19 @@ export class WorkspaceChange {
 	private _workspaceEdit: WorkspaceEdit;
 	private _textEditChanges: { [uri: string]: TextEditChange };
 
-	constructor() {
-		this._workspaceEdit = {
-			changes: []
-		};
+	constructor(workspaceEdit?: WorkspaceEdit) {
 		this._textEditChanges = Object.create(null);
+		if (workspaceEdit) {
+			this._workspaceEdit = workspaceEdit;
+			workspaceEdit.changes.forEach((textDocumentEdit) => {
+				let textEditChange = new TextEditChangeImpl(textDocumentEdit.edits);
+				this._textEditChanges[textDocumentEdit.textDocument.uri] = textEditChange;
+			});
+		} else {
+			this._workspaceEdit = {
+				changes: []
+			};
+		}
 	}
 
 	/**
@@ -400,40 +437,26 @@ export class WorkspaceChange {
 	 * Returns the [TextEditChange](#TextEditChange) to manage text edits
 	 * for resources.
 	 */
-	public getTextEditChange(textDocument: VersionedTextDocumentIdentifier): TextEditChange {
-		class TextEditChangeImpl implements TextEditChange {
-			private edits: TextEdit[];
-			constructor(edits: TextEdit[]) {
-				this.edits = edits;
+	public getTextEditChange(textDocument: VersionedTextDocumentIdentifier): TextEditChange;
+	public getTextEditChange(uri: string): TextEditChange;
+	public getTextEditChange(key: string | VersionedTextDocumentIdentifier): TextEditChange {
+		if (VersionedTextDocumentIdentifier.is(key)) {
+			let textDocument: VersionedTextDocumentIdentifier = key;
+			let result: TextEditChange = this._textEditChanges[textDocument.uri];
+			if (!result) {
+				let edits: TextEdit[] = [];
+				let textDocumentEdit: TextDocumentEdit = {
+					textDocument,
+					edits
+				};
+				this._workspaceEdit.changes.push(textDocumentEdit);
+				result = new TextEditChangeImpl(edits);
+				this._textEditChanges[textDocument.uri] = result;
 			}
-			insert(position: Position, newText: string): void {
-				this.edits.push(TextEdit.insert(position, newText));
-			}
-			replace(range: Range, newText: string): void {
-				this.edits.push(TextEdit.replace(range, newText));
-			}
-			delete(range: Range): void {
-				this.edits.push(TextEdit.del(range));
-			}
-			all(): TextEdit[] {
-				return this.edits;
-			}
-			clear(): void {
-				this.edits.splice(0, this.edits.length);
-			}
+			return result;
+		} else {
+			return this._textEditChanges[key];
 		}
-		let result: TextEditChange = this._textEditChanges[textDocument.uri];
-		if (!result) {
-			let edits: TextEdit[] = [];
-			let textDocumentEdit: TextDocumentEdit = {
-				textDocument,
-				edits
-			};
-			this._workspaceEdit.changes.push(textDocumentEdit);
-			result = new TextEditChangeImpl(edits);
-			this._textEditChanges[textDocument.uri] = result;
-		}
-		return result;
 	}
 }
 

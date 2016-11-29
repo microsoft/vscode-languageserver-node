@@ -21,7 +21,6 @@ import {
 	FormattingOptions, DocumentLink
 } from 'vscode-languageserver-types';
 
-
 export interface DocumentFilter {
 	/**
 	 * A language id, like `typescript`.
@@ -126,8 +125,32 @@ export interface TextDocumentPositionParams {
 
 //---- Initialize Method ----
 
-export interface WillSaveTextDocumentClientOptions {
-	waitUntil?: boolean;
+/**
+ * Workspace specific client capabilities.
+ */
+export interface WorkspaceClientCapabilites {
+	/**
+	 * The client supports applying batch edits
+	 * to the workspace.
+	 */
+	applyEdit?: boolean;
+}
+
+/**
+ * Text document specific client capabilities.
+ */
+export interface TextDocumentClientCapabilities {
+	/**
+	 * The client supports sending will save notifications.
+	 */
+	willSaveNotification?: boolean;
+
+	/**
+	 * The client supports sending a will save request and
+	 * waits for a response providing text edits which will
+	 * be applied to the document before it is saved.
+	 */
+	willSaveWaitUntilRequest?: boolean;
 }
 
 /**
@@ -140,10 +163,19 @@ export interface ClientCapabilities {
 	dynamicRegistration?: boolean;
 
 	/**
-	 * The client supports sending will save text document notifications.
-	 * Set to `null` if the client doesn't support the feature.
+	 * Workspace specific client capabilities.
 	 */
-	willSaveTextDocument?: WillSaveTextDocumentClientOptions;
+	workspace?: WorkspaceClientCapabilites;
+
+	/**
+	 * Text document specific client capabilities.
+	 */
+	textDocument?: TextDocumentClientCapabilities;
+
+	/**
+	 * Experimental client capabilities.
+	 */
+	experimental?: any;
 }
 
 /**
@@ -318,6 +350,10 @@ export interface ServerCapabilities {
 	 * The server provides document link support.
 	 */
 	documentLinkProvider?: DocumentLinkOptions;
+	/**
+	 * The server provides execute command support.
+	 */
+	executeCommandProvider?: ExecuteCommandOptions;
 }
 
 /**
@@ -1053,4 +1089,68 @@ export namespace DocumentLinkRequest {
  */
 export namespace DocumentLinkResolveRequest {
 	export const type: RequestType<DocumentLink, DocumentLink, void, void> = { get method() { return 'documentLink/resolve'; }, _: undefined };
+}
+
+//---- Command Execution -------------------------------------------
+
+export interface ExecuteCommandParams {
+
+	/**
+	 * The identifier of the actual command handler.
+	 */
+	command: string;
+	/**
+	 * Arguments that the command should be invoked with.
+	 */
+	arguments?: any[];
+}
+
+/**
+ * Execute command response.
+ */
+export interface ExecuteCommandResponse {
+}
+
+export interface ExecuteCommandOptions {
+	/**
+	 * The commands to be executed on the server
+	 */
+	commands: string[]
+}
+
+/**
+ * A request send from the client to the server to execute a command. The request might return
+ * a workspace edit which the client will apply to the workspace.
+ */
+export namespace ExecuteCommandRequest {
+	export const type: RequestType<ExecuteCommandParams, ExecuteCommandResponse, void, ExecuteCommandOptions> = { get method() { return 'workspace/executeCommand'; }, _: undefined };
+}
+
+//---- Apply Edit request ----------------------------------------
+
+/**
+ * The parameters passed via a apply workspace edit request.
+ */
+export interface ApplyWorkspaceEditParams {
+	/**
+	 * The edits to apply.
+	 */
+	edit: WorkspaceEdit;
+}
+
+/**
+ * A reponse returned from the apply workspace edit request.
+ */
+export interface ApplyWorkspaceEditResponse {
+	/**
+	 * Indicates whether the edit was applied or not.
+	 */
+	applied: boolean;
+}
+
+/**
+ * A request sent from the server to the client to modified certain files.
+ */
+export namespace ApplyWorkspaceEditRequest {
+	export const type: RequestType<ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse, void, void> = { get method() { return 'workspace/applyEdit'; }, _: undefined };
 }
