@@ -309,17 +309,29 @@ export namespace TextEdit {
 	}
 }
 
+
+/**
+ * Describes textual changes on a text document.
+ */
+export interface TextDocumentEdit {
+	/**
+	 * The text document to change.
+	 */
+	textDocument: VersionedTextDocumentIdentifier;
+
+	/**
+	 * The edits to be applied.
+	 */
+	edits: TextEdit[];
+}
+
+
 /**
  * A workspace edit represents changes to many resources managed
  * in the workspace.
  */
 export interface WorkspaceEdit {
-	// creates: { [uri: string]: string; };
-	/**
-	 * Holds changes to existing resources.
-	 */
-	changes: { [uri: string]: TextEdit[]; };
-	// deletes: string[];
+	changes: TextDocumentEdit[];
 }
 
 /**
@@ -366,14 +378,14 @@ export interface TextEditChange {
  * A workspace change helps constructing changes to a workspace.
  */
 export class WorkspaceChange {
-	private workspaceEdit: WorkspaceEdit;
-	private textEditChanges: { [uri: string]: TextEditChange };
+	private _workspaceEdit: WorkspaceEdit;
+	private _textEditChanges: { [uri: string]: TextEditChange };
 
 	constructor() {
-		this.workspaceEdit = {
-			changes: Object.create(null)
+		this._workspaceEdit = {
+			changes: []
 		};
-		this.textEditChanges = Object.create(null);
+		this._textEditChanges = Object.create(null);
 	}
 
 	/**
@@ -381,14 +393,14 @@ export class WorkspaceChange {
 	 * use to be returned from a workspace edit operation like rename.
 	 */
 	public get edit(): WorkspaceEdit {
-		return this.workspaceEdit;
+		return this._workspaceEdit;
 	}
 
 	/**
 	 * Returns the [TextEditChange](#TextEditChange) to manage text edits
 	 * for resources.
 	 */
-	public getTextEditChange(uri: string): TextEditChange {
+	public getTextEditChange(textDocument: VersionedTextDocumentIdentifier): TextEditChange {
 		class TextEditChangeImpl implements TextEditChange {
 			private edits: TextEdit[];
 			constructor(edits: TextEdit[]) {
@@ -410,12 +422,16 @@ export class WorkspaceChange {
 				this.edits.splice(0, this.edits.length);
 			}
 		}
-		let result = this.textEditChanges[uri];
+		let result: TextEditChange = this._textEditChanges[textDocument.uri];
 		if (!result) {
 			let edits: TextEdit[] = [];
-			this.workspaceEdit.changes[uri] = edits;
+			let textDocumentEdit: TextDocumentEdit = {
+				textDocument,
+				edits
+			};
+			this._workspaceEdit.changes.push(textDocumentEdit);
 			result = new TextEditChangeImpl(edits);
-			this.textEditChanges[uri] = result;
+			this._textEditChanges[textDocument.uri] = result;
 		}
 		return result;
 	}
@@ -663,7 +679,7 @@ export interface CompletionItem {
 
 	/**
 	 * * @deprecated **Deprecated** in favor of `CompletionItem.insertText` and `CompletionItem.range`.
-	 * 
+	 *
 	 * An [edit](#TextEdit) which is applied to a document when selecting
 	 * this completion. When an edit is provided the value of
 	 * [insertText](#CompletionItem.insertText) and [range](#CompletionItem.range) is ignored.
