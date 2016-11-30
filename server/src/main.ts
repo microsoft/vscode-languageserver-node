@@ -1236,7 +1236,7 @@ export function createConnection(input?: any, output?: any): IConnection {
 	});
 
 	connection.onNotification(SetTraceNotification.type, (params) => {
-		tracer.trace = Trace.fromString(params.value);;
+		tracer.trace = Trace.fromString(params.value);
 	});
 
 	return protocolConnection;
