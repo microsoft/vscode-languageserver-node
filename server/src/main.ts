@@ -407,15 +407,20 @@ export namespace BulkRegistration {
 
 class BulkRegistrationImpl {
 	private _registrations: Registration[] = [];
+	private _registered: Set<string> = new Set<string>();
 
 	public add<RO>(type: string | RPCMessageType, registerOptions?: RO): void {
 		const method = Is.string(type) ? type : type.method;
+		if (this._registered.has(method)) {
+			throw new Error(`${method} is already added to this registration`);
+		}
 		const id = UUID.generateUuid();
 		this._registrations.push({
 			id: id,
 			method: method,
-			registerOptions: registerOptions
+			registerOptions: registerOptions || {}
 		});
+		this._registered.add(method);
 	}
 
 	public asRegistrationParams(): RegistrationParams {
@@ -433,38 +438,68 @@ export interface BulkUnregistration extends Disposable {
 	 * Disposes a single registration. It will be removed from the
 	 * `BulkUnregistration`.
 	 */
-	disposeSingle(index: number): void;
+	disposeSingle(arg: string | RPCMessageType): boolean;
+}
+
+export namespace BulkUnregistration {
+	export function create(): BulkUnregistration {
+		return new BulkUnregistrationImpl(undefined, undefined, []);
+	}
 }
 
 class BulkUnregistrationImpl implements BulkUnregistration {
 
-	constructor(private _connection: MessageConnection, private _console: RemoteConsole, private _unregistrations: Unregistration[]) {
+	private _unregistrations: Map<string, Unregistration> = new Map<string, Unregistration>();
+
+	constructor(private _connection: MessageConnection, private _console: RemoteConsole, unregistrations: Unregistration[]) {
+		unregistrations.forEach(unregistration => {
+			this._unregistrations.set(unregistration.method, unregistration);
+		});
+	}
+
+	public get isAttached(): boolean {
+		return !!this._connection && !!this._console;
+	}
+
+	public attach(connection: MessageConnection, _console: RemoteConsole): void {
+		this._connection = connection;
+		this._console = _console;
+	}
+
+	public add(unregistration: Unregistration): void {
+		this._unregistrations.set(unregistration.method, unregistration);
 	}
 
 	public dispose(): any {
+		let unregistrations: Unregistration[] = [];
+		for (let unregistration of this._unregistrations.values()) {
+			unregistrations.push(unregistration);
+		}
 		let params: UnregistrationParams = {
-			unregisterations: this._unregistrations
+			unregisterations: unregistrations
 		};
 		this._connection.sendRequest(UnregistrationRequest.type, params).then(undefined, (error) => {
 			this._console.info(`Bulk unregistration failed.`);
-			throw error;
 		});
 	}
 
-	public disposeSingle(index: number): void {
-		let elem = this._unregistrations[index];
-		if (!elem) {
-			return;
+	public disposeSingle(arg: string | RPCMessageType): boolean {
+		const method = Is.string(arg) ? arg : arg.method;
+
+		const unregistration = this._unregistrations.get(method);
+		if (!unregistration) {
+			return false;
 		}
+
 		let params: UnregistrationParams = {
-			unregisterations: [elem]
+			unregisterations: [unregistration]
 		}
 		this._connection.sendRequest(UnregistrationRequest.type, params).then(() => {
-			this._unregistrations.splice(index, 1);
+			this._unregistrations.delete(method);
 		}, (error) => {
-			this._console.info(`Unregistering request handler for ${elem.id} failed.`);
-			throw error;
+			this._console.info(`Unregistering request handler for ${unregistration.id} failed.`);
 		});
+		return true;
 	}
 }
 
@@ -480,6 +515,17 @@ export interface RemoteClient {
 	 */
 	register<RO>(type: NotificationType0<RO>, registerParams?: RO): Thenable<Disposable>;
 	register<P, RO>(type: NotificationType<P, RO>, registerParams?: RO): Thenable<Disposable>;
+
+	/**
+	 * Registers a listener for the given notification.
+	 * @param unregisteration the unregistration to add a corresponding unregister action to.
+	 * @param type the notification type to register for.
+	 * @param registerParams special registration parameters.
+	 * @return the updated unregistration.
+	 */
+	register<RO>(unregisteration: BulkUnregistration, type: NotificationType0<RO>, registerParams?: RO): Thenable<BulkUnregistration>;
+	register<P, RO>(unregisteration: BulkUnregistration, type: NotificationType<P, RO>, registerParams?: RO): Thenable<BulkUnregistration>;
+
 	/**
 	 * Registers a listener for the given request.
 	 * @param type the request type to register for.
@@ -488,6 +534,16 @@ export interface RemoteClient {
 	 */
 	register<R, E, RO>(type: RequestType0<R, E, RO>, registerParams?: RO): Thenable<Disposable>;
 	register<P, R, E, RO>(type: RequestType<P, R, E, RO>, registerParams?: RO): Thenable<Disposable>;
+
+	/**
+	 * Registers a listener for the given request.
+	 * @param unregisteration the unregistration to add a corresponding unregister action to.
+	 * @param type the request type to register for.
+	 * @param registerParams special registration parameters.
+	 * @return the updated unregistration.
+	 */
+	register<R, E, RO>(unregisteration: BulkUnregistration, type: RequestType0<R, E, RO>, registerParams?: RO): Thenable<BulkUnregistration>;
+	register<P, R, E, RO>(unregisteration: BulkUnregistration, type: RequestType<P, R, E, RO>, registerParams?: RO): Thenable<BulkUnregistration>;
 	/**
 	 * Registers a set of listeners.
 	 * @param registrations the bulk registration
@@ -544,19 +600,38 @@ class RemoteClientImpl implements RemoteClient {
 	constructor(private _connection: MessageConnection, private _console: RemoteConsole) {
 	}
 
-	public register(typeOrRegistrations: string | RPCMessageType | BulkRegistration, registerOptions?: any): Thenable<Disposable> | Thenable<BulkUnregistration> {
+	public register(typeOrRegistrations: string | RPCMessageType | BulkRegistration | BulkUnregistration, registerOptionsOrType?: string | RPCMessageType | any, registerOptions?: any): Thenable<Disposable> | Thenable<BulkUnregistration> | Thenable<BulkUnregistration> {
 		if (typeOrRegistrations instanceof BulkRegistrationImpl) {
 			return this.registerMany(typeOrRegistrations);
+		} else if (typeOrRegistrations instanceof BulkUnregistrationImpl) {
+			return this.registerSingle1(<BulkUnregistrationImpl>typeOrRegistrations, <string | RPCMessageType>registerOptionsOrType, registerOptions);
 		} else {
-			return this.registerSingle(<string | RPCMessageType>typeOrRegistrations, registerOptions);
+			return this.registerSingle2(<string | RPCMessageType>typeOrRegistrations, registerOptionsOrType);
 		}
 	}
 
-	private registerSingle<RO>(type: string | RPCMessageType, registerOptions: any): Thenable<Disposable> {
+	private registerSingle1<RO>(unregistration: BulkUnregistrationImpl, type: string | RPCMessageType, registerOptions: any): Thenable<Disposable> {
 		const method = Is.string(type) ? type : type.method;
 		const id = UUID.generateUuid();
 		let params: RegistrationParams = {
-			registrations: [{ id, method, registerOptions }]
+			registrations: [{ id, method, registerOptions: registerOptions || {} }]
+		}
+		if (!unregistration.isAttached) {
+			unregistration.attach(this._connection, this._console);
+		}
+		return this._connection.sendRequest(RegistrationRequest.type, params).then((result) => {
+			unregistration.add({ id: id, method: method });
+			return unregistration;
+		}, (error) => {
+			this._console.info(`Registering request handler for ${method} failed.`);
+		});
+	}
+
+	private registerSingle2<RO>(type: string | RPCMessageType, registerOptions: any): Thenable<Disposable> {
+		const method = Is.string(type) ? type : type.method;
+		const id = UUID.generateUuid();
+		let params: RegistrationParams = {
+			registrations: [{ id, method, registerOptions: registerOptions || {} }]
 		}
 		return this._connection.sendRequest(RegistrationRequest.type, params).then((result) => {
 			return Disposable.create(() => {
@@ -564,7 +639,6 @@ class RemoteClientImpl implements RemoteClient {
 			});
 		}, (error) => {
 			this._console.info(`Registering request handler for ${method} failed.`);
-			throw error;
 		});
 	}
 
@@ -575,7 +649,6 @@ class RemoteClientImpl implements RemoteClient {
 
 		return this._connection.sendRequest(UnregistrationRequest.type, params).then(undefined, (error) => {
 			this._console.info(`Unregistering request handler for ${id} failed.`);
-			throw error;
 		});
 	}
 
@@ -585,7 +658,6 @@ class RemoteClientImpl implements RemoteClient {
 			return new BulkUnregistrationImpl(this._connection, this._console, params.registrations.map(registration => { return { id: registration.id, method: registration.method } }));
 		}, (error) => {
 			this._console.info(`Bulk registeration failed.`);
-			throw error;
 		});
 	}
 }
