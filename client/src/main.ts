@@ -623,9 +623,6 @@ class WillSaveWaitUntilFeature implements FeatureHandler<DocumentOptions> {
 	}
 
 	private callback(event: TextDocumentWillSaveEvent): void {
-		if (event.reason !== VTextDocumentSaveReason.AfterDelay) {
-			return;
-		}
 		if (DocumentNotifiactions.textDocumentFilter(this._selectors.values(), event.document)) {
 			event.waitUntil(
 				this._client.sendRequest(
@@ -1148,7 +1145,6 @@ export class LanguageClient {
 
 			this.hookFileEvents(connection);
 			this.hookConfigurationChanged(connection);
-			this.hookCapabilities(connection);
 			if (this._capabilites.textDocumentSync !== TextDocumentSyncKind.None && this._clientOptions.documentSelector) {
 				let selectorOptions: DocumentOptions = { documentSelector: this._clientOptions.documentSelector };
 				this._registeredHandlers.get(DidOpenTextDocumentNotification.type.method).register(
@@ -1167,6 +1163,7 @@ export class LanguageClient {
 					{ id: UUID.generateUuid(), registerOptions: selectorOptions }
 				);
 			}
+			this.hookCapabilities(connection);
 			this._onReadyCallbacks.resolve();
 			return result;
 		}, (error: any) => {
@@ -1676,6 +1673,26 @@ export class LanguageClient {
 	}
 
 	private handleApplyWorkspaceEdit(params: ApplyWorkspaceEditParams): Thenable<ApplyWorkspaceEditResponse> {
+		// This is some sort of workaround since the version check should be done by VS Code in the Workspace.applyEdit.
+		// However doing it here adds some safety since the server can lag more behind then an extension.
+		let workspaceEdit: WorkspaceEdit = params.edit;
+		let openTextDocuments: Map<string, TextDocument> = new Map<string, TextDocument>();
+		Workspace.textDocuments.forEach((document) => openTextDocuments.set(document.uri.toString(), document));
+		let versionMismatch = false;
+		if (workspaceEdit.changes) {
+			for (const change of workspaceEdit.changes) {
+				if (change.textDocument.version && change.textDocument.version >= 0) {
+					let textDocument = openTextDocuments.get(change.textDocument.uri);
+					if (textDocument && textDocument.version !== change.textDocument.version) {
+						versionMismatch = true;
+						break;
+					}
+				}
+			}
+		}
+		if (versionMismatch) {
+			return Promise.resolve({ applied: false });
+		}
 		return Workspace.applyEdit(this._p2c.asWorkspaceEdit(params.edit)).then((value) => { return { applied: value }; });
 	};
 
