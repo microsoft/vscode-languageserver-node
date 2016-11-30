@@ -351,6 +351,12 @@ export interface TextEditChange {
 	clear(): void;
 
 	/**
+	 * Adds a text edit.
+	 * @param edit the text edit to add.
+	 */
+	add(edit: TextEdit): void;
+
+	/**
 	 * Insert the given text at the given position.
 	 *
 	 * @param position A position.
@@ -392,6 +398,10 @@ class TextEditChangeImpl implements TextEditChange {
 
 	public delete(range: Range): void {
 		this.edits.push(TextEdit.del(range));
+	}
+
+	public add(edit: TextEdit): void {
+		this.edits.push(edit);
 	}
 
 	public all(): TextEdit[] {
