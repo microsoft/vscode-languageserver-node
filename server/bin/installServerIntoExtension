@@ -49,38 +49,6 @@ if (compilerOptions) {
 	}
 }
 
-var launchFile = path.join(path.dirname(packageFile), '.vscode', 'launch.json');
-if (fs.existsSync(launchFile)) {
-	try {
-		json = JSON.parse(stripComments(fs.readFileSync(launchFile, 'utf8').toString()));
-		var configurations = json.configurations;
-		if (configurations) {
-			configurations.forEach(function(config) {
-				if (config.request === 'attach' && config.type === 'node') {
-					var outDir = config.outDir;
-					var resolvedOutDir = outDir;
-					if (resolvedOutDir) {
-						var workspaceRoot = path.dirname(packageFile);
-						resolvedOutDir = resolvedOutDir.replace(/\$\{workspaceRoot\}/g, workspaceRoot);
-						if (path.isAbsolute(resolvedOutDir)) {
-							resolvedOutDir = path.normalize(resolvedOutDir);
-						} else {
-							resolvedOutDir = path.join(workspaceRoot, outDir);
-						}
-					}
-					if (!resolvedOutDir || resolvedOutDir !== extensionServerDirectory) {
-						console.error('outDir in ./.vscode/launch.json must point to ' + extensionServerDirectory + ' but it points to ' + path.join(path.dirname(packageFile), outDir));
-						console.error('Please change outDir in ./.vscode/launch.json to ' + path.relative(path.dirname(packageFile), extensionServerDirectory).replace(/\\/g, '/'));
-						process.exit(1);
-					}
-				}
-			})
-		}
-	} catch (error) {
-		console.warn('Couldn\'t check launch.json file. Reading the file failed with: ' + error.message);
-	}
-}
-
 function stripComments(content) {
 	var regexp = /("(?:[^\\\"]*(?:\\.)?)*")|('(?:[^\\\']*(?:\\.)?)*')|(\/\*(?:\r?\n|.)*?\*\/)|(\/{2,}.*?(?:(?:\r?\n)|$))/g;
 	var result = content.replace(regexp, function (match, m1, m2, m3, m4) {
