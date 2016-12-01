@@ -312,13 +312,15 @@ suite('Protocol Converter', () => {
 		let signatureHelp: proto.SignatureHelp = {
 			signatures: [
 				{ label: 'label' }
-			]
+			],
+			activeSignature: undefined,
+			activeParameter: undefined
 		};
 
 		let result = p2c.asSignatureHelp(signatureHelp);
 		ok(result.signatures.every(value => value instanceof vscode.SignatureInformation));
-		strictEqual(result.activeSignature, undefined);
-		strictEqual(result.activeParameter, undefined);
+		strictEqual(result.activeSignature, 0);
+		strictEqual(result.activeParameter, 0);
 
 		signatureHelp.activeSignature = 1;
 		signatureHelp.activeParameter = 2;
