@@ -518,6 +518,7 @@ class DidCloseTextDocumentFeature extends DocumentNotifiactions<DidCloseTextDocu
 		this._syncedDocuments.forEach((textDocument) => {
 			if (Languages.match(selector, textDocument) && !this._selectorFilter(selectors, textDocument)) {
 				this._client.sendNotification(this._type, this._createParams(textDocument));
+				this._syncedDocuments.delete(textDocument.uri.toString());
 			}
 		});
 	}
