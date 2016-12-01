@@ -215,8 +215,18 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			return null;
 		}
 		let result = new code.SignatureHelp();
-		set(item.activeParameter, () => result.activeParameter = item.activeParameter);
-		set(item.activeSignature, () => result.activeSignature = item.activeSignature);
+		if (is.number(item.activeSignature)) {
+			result.activeSignature = item.activeSignature;
+		} else {
+			// activeSignature was optional in the past
+			result.activeSignature = 0;
+		}
+		if (is.number(item.activeParameter)) {
+			result.activeParameter = item.activeParameter;
+		} else {
+			// activeParameter was optional in the past
+			result.activeParameter = 0;
+		}
 		set(item.signatures, () => result.signatures = asSignatureInformations(item.signatures));
 		return result;
 	}
