@@ -25,7 +25,7 @@ language servers for [VSCode](https://code.visualstudio.com/).
 ## History
 
 * 3.0.0-alpha.x: Client, Server and JSON-RPC
-  * Moved all libraries to TypeScript 2.0.3
+  * Moved all libraries to TypeScript 2.x.x
   * Client and Server are compiled to ES6. JSON-RPC is still compiled to ES5.
   * JSON-RPC supports n parameter request and notification invocation
   * Support for snippets in completion items:
@@ -39,8 +39,9 @@ language servers for [VSCode](https://code.visualstudio.com/).
       the client is ready.
     * removed the deprecated module functions on code2Protocol and protocol2Code converters. Use the corresponding
       properties on the LanguageClient instead to get access to the same converters used by the LanguageClient.
-    * due to the use of TypeScript 2.0.3 and differences in d.ts generation users of the new version need to move to 
-      TypeScript 2.0.3 as well.
+    * due to the use of TypeScript 2.x.x and differences in d.ts generation users of the new version need to move to 
+      TypeScript 2.x.x as well.
+    * `activeSignature` and `activeParameter` where incorrectly declared as optional in `SignatureHelp`. They are now mandantory.
     * Request and notification types have an additional property '_'. This property is to improve TypeScript type 
       inference and can savely be set to undefined when a request of notification type is created. For example:
 ```ts
