@@ -1058,7 +1058,7 @@ export namespace SymbolInformation {
 		let result: SymbolInformation = {
 			name,
 			kind,
-			location: { uri, range }
+			location: { uri: uri as any, range }
 		}
 		if (containerName) {
 			result.containerName = containerName;
@@ -1231,7 +1231,7 @@ export namespace DocumentLink {
 	/**
 	 * Creates a new DocumentLink literal.
 	 */
-	export function create(range: Range, target?: string): DocumentLink {
+	export function create(range: Range, target: string): DocumentLink {
 		return { range, target };
 	}
 
@@ -1256,14 +1256,14 @@ export interface TextDocument {
 	 *
 	 * @readonly
 	 */
-	uri: string;
+	readonly uri: string;
 
 	/**
 	 * The identifier of the language associated with this document.
 	 *
 	 * @readonly
 	 */
-	languageId: string;
+	readonly languageId: string;
 
 	/**
 	 * The version number of this document (it will strictly increase after each
@@ -1271,7 +1271,7 @@ export interface TextDocument {
 	 *
 	 * @readonly
 	 */
-	version: number;
+	readonly version: number;
 
 	/**
 	 * Get the text of this document.
@@ -1280,30 +1280,30 @@ export interface TextDocument {
 	 */
 	getText(): string;
 
-    /**
-     * Converts a zero-based offset to a position.
-     *
-     * @param offset A zero-based offset.
-     * @return A valid [position](#Position).
-     */
-    positionAt(offset: number): Position;
+	/**
+	 * Converts a zero-based offset to a position.
+	 *
+	 * @param offset A zero-based offset.
+	 * @return A valid [position](#Position).
+	 */
+	positionAt(offset: number): Position;
 
-    /**
-     * Converts the position to a zero-based offset.
-     *
-     * The position will be [adjusted](#TextDocument.validatePosition).
-     *
-     * @param position A position.
-     * @return A valid zero-based offset.
-     */
-    offsetAt(position: Position): number;
+	/**
+	 * Converts the position to a zero-based offset.
+	 *
+	 * The position will be [adjusted](#TextDocument.validatePosition).
+	 *
+	 * @param position A position.
+	 * @return A valid zero-based offset.
+	 */
+	offsetAt(position: Position): number;
 
-    /**
-     * The number of lines in this document.
-     *
-     * @readonly
-     */
-    lineCount: number;
+	/**
+	 * The number of lines in this document.
+	 *
+	 * @readonly
+	 */
+	readonly lineCount: number;
 }
 
 export namespace TextDocument {
@@ -1397,7 +1397,7 @@ class FullTextDocument implements TextDocument {
 	private _languageId: string;
 	private _version: number;
 	private _content: string;
-	private _lineOffsets: number[];
+	private _lineOffsets: number[] | null;
 
 	public constructor(uri: string, languageId: string, version: number, content: string) {
 		this._uri = uri;

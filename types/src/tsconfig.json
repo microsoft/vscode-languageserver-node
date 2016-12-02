@@ -6,6 +6,12 @@
 		"declaration": true,
 		"stripInternal": true,
 		"lib": [ "es5" ],
-		"outDir": "../lib"
+		"outDir": "../lib",
+		"strictNullChecks": true,
+		"noImplicitAny": true,
+		"noImplicitReturns": true,
+		"noImplicitThis": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true
 	}
 }
