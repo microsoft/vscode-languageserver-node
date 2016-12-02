@@ -48,8 +48,8 @@ class MessageBuffer {
 		this.index+= toAppend.length;
 	}
 
-	public tryReadHeaders(): { [key: string]: string; } {
-		let result: { [key: string]: string; } = undefined;
+	public tryReadHeaders(): { [key: string]: string; } | undefined {
+		let result: { [key: string]: string; } | undefined = undefined;
 		let current = 0;
 		while (current + 3 < this.index && (this.buffer[current] !== CR || this.buffer[current + 1] !== LF || this.buffer[current + 2] !== CR || this.buffer[current + 3] !== LF)) {
 			current++;
@@ -67,7 +67,7 @@ class MessageBuffer {
 			}
 			let key = header.substr(0, index);
 			let value = header.substr(index + 1).trim();
-			result[key] = value;
+			result![key] = value;
 		})
 
 		let nextStart = current + 4;
@@ -76,7 +76,7 @@ class MessageBuffer {
 		return result;
 	}
 
-	public tryReadContent(length: number): string {
+	public tryReadContent(length: number): string | null {
 		if (this.index < length) {
 			return null;
 		}
@@ -97,14 +97,14 @@ export interface DataCallback {
 }
 
 export interface PartialMessageInfo {
-	messageToken: number;
-	waitingTime: number;
+	readonly messageToken: number;
+	readonly waitingTime: number;
 }
 
 export interface MessageReader {
-	onError: Event<Error>;
-	onClose: Event<void>;
-	onPartialMessage: Event<PartialMessageInfo>;
+	readonly onError: Event<Error>;
+	readonly onClose: Event<void>;
+	readonly onPartialMessage: Event<PartialMessageInfo>;
 	listen(callback: DataCallback): void;
 }
 
@@ -161,7 +161,7 @@ export class StreamMessageReader extends AbstractMessageReader implements Messag
 	private buffer: MessageBuffer;
 	private nextMessageLength: number;
 	private messageToken: number;
-	private partialMessageTimer: NodeJS.Timer;
+	private partialMessageTimer: NodeJS.Timer | undefined;
 	private _partialMessageTimeout: number;
 
 	public constructor(readable: NodeJS.ReadableStream, encoding: string = 'utf-8') {
@@ -253,7 +253,7 @@ export class IPCMessageReader extends AbstractMessageReader implements MessageRe
 		super();
 		this.process = process;
 		let eventEmitter: NodeJS.EventEmitter = this.process;
-		eventEmitter.on('error', (error:any) => this.fireError(error));
+		eventEmitter.on('error', (error: any) => this.fireError(error));
 		eventEmitter.on('close', () => this.fireClose());
 	}
 

@@ -6,46 +6,67 @@
 
 import * as assert from 'assert';
 
-import { Duplex, Writable, Readable, Transform } from 'stream';
+import { Duplex, Writable, Readable } from 'stream';
 import { inherits } from 'util';
 
-import { Message, RequestMessage, RequestType, RequestType3, ResponseMessage, ResponseError, NotificationType, NotificationType2, isReponseMessage, ErrorCodes } from '../messages';
-import { StreamMessageWriter } from '../messageWriter';
+import { Message, RequestMessage, RequestType, RequestType3, ResponseMessage, ResponseError, NotificationType, NotificationType2, ErrorCodes } from '../messages';
 import { StreamMessageReader } from '../messageReader';
 import { CancellationTokenSource } from '../cancellation';
 
 import * as hostConnection from '../main';
 
-function TestWritable() {
-	Writable.call(this);
-	this.data = '';
-}
-inherits(TestWritable, Writable);
-TestWritable.prototype._write = function (chunk, encoding, done) {
-	this.data += chunk.toString();
-	done();
+interface TestWritable extends Writable {
+	constructor: Function;
+	readonly data: string;
 }
 
-function TestDuplex(name: string = 'ds1', dbg = false) {
-	Duplex.call(this);
-	this.data = '';
-	this.name = name;
-	this.dbg = dbg;
-    this.on('finish', function() {
-		this.isWriteFinished = true;
+interface TestWritableConstructor {
+	new (): TestWritable;
+}
+
+let TestWritable: TestWritableConstructor = function(): TestWritableConstructor {
+	function TestWritable(this: any): void {
+		Writable.call(this);
+		this.data = '';
+	}
+	inherits(TestWritable, Writable);
+	TestWritable.prototype._write = function(this: any, chunk: string | Buffer, _encoding: string, done: Function) {
+		this.data += chunk.toString();
+		done();
+	}
+	return (<any>TestWritable) as TestWritableConstructor;
+}();
+
+interface TestDuplex extends Duplex {
+}
+
+interface TestDuplexConstructor {
+	new (name?: string, dbg?: boolean): TestDuplex;
+}
+
+let TestDuplex: TestDuplexConstructor = function(): TestDuplexConstructor {
+	function TestDuplex(this: any, name: string = 'ds1', dbg = false) {
+		Duplex.call(this);
+		this.data = '';
+		this.name = name;
+		this.dbg = dbg;
+		this.on('finish', function(this: any) {
+			this.isWriteFinished = true;
+			this.emit('readable');
+		});
+	}
+	inherits(TestDuplex, Duplex);
+	TestDuplex.prototype._write = function (this: any, chunk: string | Buffer, _encoding: string, done: Function) {
+		let val = chunk.toString();
+		this.data += val;
+		if (this.dbg) console.log(this.name + ': write: ' + val);
 		this.emit('readable');
-    });
-}
-inherits(TestDuplex, Duplex);
-TestDuplex.prototype._write = function (chunk, encoding, done) {
-	let val = chunk.toString();
-	this.data += val;
-	if (this.dbg) console.log(this.name + ': write: ' + val);
-	this.emit('readable');
-	done();
-}
+		done();
+	}
+	return (<any>TestDuplex) as TestDuplexConstructor;
+}();
 
-TestDuplex.prototype._read = function(size) {
+TestDuplex.prototype._read = function(this: any, size: number) {
 	if (size > this.data.length) {
 		size = this.data.length;
 	}
@@ -66,17 +87,6 @@ function newRequestString(id: number, method: string, params: any) : string {
 	return `Content-Length: ${str.length}\r\n\r\n${str}`;
 }
 
-function selectProperties(properties: string[]) {
-	return (obj) => {
-		let res= {};
-		properties.forEach(p => {
-			res[p] = obj[p];
-		});
-		return res;
-	}
-}
-
-
 function assertMessages(resultData: string, expected: Message[], done: MochaDone) {
 	let resultStream = new Readable();
 	resultStream.push(resultData);
@@ -84,7 +94,7 @@ function assertMessages(resultData: string, expected: Message[], done: MochaDone
 	let actual : Message[] = [];
 	new StreamMessageReader(resultStream).listen((res) => {
 		if ((<ResponseMessage>res).error) {
-			delete (<ResponseMessage>res).error.message;
+			delete (<ResponseMessage>res).error!.message;
 		}
 		actual.push(res);
 	});
@@ -98,8 +108,8 @@ function assertMessages(resultData: string, expected: Message[], done: MochaDone
 	}, 10);
 }
 
-let testRequest1: RequestType<any, any, any, void> = { method: 'testCommand1', _: undefined };
-let testRequest2: RequestType<any, any, any, void> = { method: 'testCommand2', _: undefined };
+let testRequest1: RequestType<any, any, any, void> = { method: 'testCommand1'};
+let testRequest2: RequestType<any, any, any, void> = { method: 'testCommand2'};
 function newParams(content: string)  {
 	return { documents: [ { content: content } ]};
 };
@@ -127,10 +137,10 @@ function createEchoRequestHandler<P>(result: P[]) : hostConnection.RequestHandle
 };
 
 let Logger: hostConnection.Logger = {
-	error: (message: string) => {},
-	warn: (message: string) => {},
-	info: (message: string) => {},
-	log: (message: string) => {}
+	error: (_message: string) => {},
+	warn: (_message: string) => {},
+	info: (_message: string) => {},
+	log: (_message: string) => {}
 }
 
 describe('Connection', () => {
@@ -251,20 +261,20 @@ describe('Connection', () => {
 
 	});
 
-	it('Send Request receives undefined params', (done) => { 
-		let outputStream = new TestWritable(); 
-		let inputStream = new Readable(); 
-		inputStream.push(null); 
-		let connection = hostConnection.createMessageConnection(inputStream, outputStream, Logger); 
-		connection.sendRequest(testRequest1, undefined); 
-		connection.listen(); 
-		let expected : RequestMessage[] = [ 
-			{ jsonrpc: '2.0', id: 0, method: testRequest1.method } 
-		]; 
-		setImmediate(() => { 
-			assertMessages(outputStream.data, expected, done); 
-		}); 
-	}); 
+	it('Send Request receives undefined params', (done) => {
+		let outputStream = new TestWritable();
+		let inputStream = new Readable();
+		inputStream.push(null);
+		let connection = hostConnection.createMessageConnection(inputStream, outputStream, Logger);
+		connection.sendRequest(testRequest1, undefined);
+		connection.listen();
+		let expected : RequestMessage[] = [
+			{ jsonrpc: '2.0', id: 0, method: testRequest1.method }
+		];
+		setImmediate(() => {
+			assertMessages(outputStream.data, expected, done);
+		});
+	});
 
 	it('Send and Receive Request', (done) => {
 		let duplexStream1 = new TestDuplex('ds1');
@@ -272,8 +282,8 @@ describe('Connection', () => {
 
 		let params = { 'foo': [ { bar: 1 } ]};
 
-		let receivedRequests = [];
-		let receivedResults = [];
+		let receivedRequests: any[] = [];
+		let receivedResults: any[] = [];
 
 		let connection2 = hostConnection.createMessageConnection(duplexStream2, duplexStream1, Logger);
 		connection2.onRequest(testRequest1, createEchoRequestHandler(receivedRequests));
@@ -325,7 +335,7 @@ describe('Connection', () => {
 		});
 	});
 
-	let testNotification: NotificationType<any, void> = { method: "testNotification", _: undefined };
+	let testNotification: NotificationType<any, void> = { method: "testNotification"};
 	it('Send and Receive Notification', (done) => {
 
 		let outputStream = new TestWritable();
@@ -339,7 +349,7 @@ describe('Connection', () => {
 		connection1.listen();
 		connection1.sendNotification(testNotification, params);
 
-		let resultingEvents = [];
+		let resultingEvents: any[] = [];
 
 		let connection2 = hostConnection.createMessageConnection(duplexStream, outputStream, Logger);
 		connection2.onNotification(testNotification, createEventHandler(resultingEvents));
@@ -381,16 +391,16 @@ describe('Connection', () => {
 
 		let connection1 = hostConnection.createMessageConnection(inputStream, duplexStream, Logger);
 		let connection2 = hostConnection.createMessageConnection(duplexStream, outputStream, Logger);
-		connection2.onRequest(testRequest1, (params) => {
+		connection2.onRequest(testRequest1, () => {
 			connection1.dispose();
 			return {};
 		});
 		connection2.listen();
 
 		connection1.listen();
-		connection1.sendRequest(testRequest1, {}).then((value) => {
+		connection1.sendRequest(testRequest1, {}).then(() => {
 			assert(false);
-		}, (error) => {
+		}, () => {
 			done();
 		});
 		connection1.sendNotification(testNotification, params);
@@ -436,7 +446,7 @@ describe('Connection', () => {
 	});
 
 	it (('Array params in notifications'), (done) => {
-		let type: NotificationType2<number, string, void> = { method: 'test', _: undefined };
+		let type: NotificationType2<number, string, void> = <any>{ method: 'test' };
 		let outputStream = new TestWritable();
 		let duplexStream = new TestDuplex();
 		let inputStream = new Readable();
@@ -456,7 +466,7 @@ describe('Connection', () => {
 	});
 
 	it (('Array params in request / response'), (done) => {
-		let type: RequestType3<number, number, number, number, void, void> = { method: 'add', _: undefined };
+		let type: RequestType3<number, number, number, number, void, void> = { method: 'add' };
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
@@ -474,19 +484,19 @@ describe('Connection', () => {
 		connection1.sendRequest(type, 10, 20, 30).then(result => {
 			assert.strictEqual(result, 60);
 			done();
-		}, (error) => {
+		}, () => {
 			assert(false);
 			done();
 		});
 	});
 
 	it (('Array params in request / response with token'), (done) => {
-		let type: RequestType3<number, number, number, number, void, void> = { method: 'add', _: undefined };
+		let type: RequestType3<number, number, number, number, void, void> = { method: 'add' };
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
 		let connection2 = hostConnection.createMessageConnection(duplexStream2, duplexStream1, Logger);
-		connection2.onRequest(type, (p1, p2, p3, token) => {
+		connection2.onRequest(type, (p1, p2, p3, _token) => {
 			assert.strictEqual(p1, 10);
 			assert.strictEqual(p2, 20);
 			assert.strictEqual(p3, 30);
@@ -500,7 +510,7 @@ describe('Connection', () => {
 		connection1.sendRequest(type, 10, 20, 30, token).then(result => {
 			assert.strictEqual(result, 60);
 			done();
-		}, (error) => {
+		}, () => {
 			assert(false);
 			done();
 		});
@@ -511,7 +521,7 @@ describe('Connection', () => {
 		let duplexStream2 = new TestDuplex('ds2');
 
 		let connection2 = hostConnection.createMessageConnection(duplexStream2, duplexStream1, Logger);
-		connection2.onRequest('test', (p1, p2, p3, token) => {
+		connection2.onRequest('test', (p1, p2, p3, _token) => {
 			assert.strictEqual(p1, 10);
 			assert.strictEqual(p2, 20);
 			assert.strictEqual(p3, 30);
@@ -522,10 +532,10 @@ describe('Connection', () => {
 		let connection1 = hostConnection.createMessageConnection(duplexStream1, duplexStream2, Logger);
 		let token = new CancellationTokenSource().token;
 		connection1.listen();
-		connection1.sendRequest('test', 10, 20, 30, token).then(result => {
+		connection1.sendRequest('test', 10, 20, 30, token).then((result) => {
 			assert.strictEqual(result, 60);
 			done();
-		}, (error) => {
+		}, () => {
 			assert(false);
 			done();
 		});

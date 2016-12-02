@@ -6,22 +6,34 @@
 
 import * as assert from 'assert';
 
-import { Duplex, Writable, Readable } from 'stream';
+import { Writable, Readable } from 'stream';
 import { inherits } from 'util';
 
-import { Message, RequestMessage } from '../messages';
+import { RequestMessage } from '../messages';
 import { StreamMessageWriter } from '../messageWriter';
 import { StreamMessageReader } from '../messageReader';
 
-function TestWritable() {
-	Writable.call(this);
-	this.data = '';
+interface TestWritable extends Writable {
+	constructor: Function;
+	readonly data: string;
 }
-inherits(TestWritable, Writable);
-TestWritable.prototype._write = function (chunk, encoding, done) {
-	this.data += chunk.toString();
-	done();
+
+interface TestWritableConstructor {
+	new (): TestWritable;
 }
+
+let TestWritable: TestWritableConstructor = function(): TestWritableConstructor {
+	function TestWritable(this: any): void {
+		Writable.call(this);
+		this.data = '';
+	}
+	inherits(TestWritable, Writable);
+	TestWritable.prototype._write = function(this: any, chunk: string | Buffer, _encoding: string, done: Function) {
+		this.data += chunk.toString();
+		done();
+	}
+	return (<any>TestWritable) as TestWritableConstructor;
+}();
 
 describe('Messages', () => {
 	let data: string = 'Content-Length: 43\r\n\r\n{"jsonrpc":"2.0","id":1,"method":"example"}';
@@ -40,7 +52,7 @@ describe('Messages', () => {
 	});
 	it('Reading', (done) => {
 		let readable = new Readable();
-		let reader = new StreamMessageReader(readable).listen((message: RequestMessage) => {
+		new StreamMessageReader(readable).listen((message: RequestMessage) => {
 			assert.equal(message.id, 1);
 			assert.equal(message.method, 'example');
 			done();
@@ -61,7 +73,7 @@ describe('Messages', () => {
 				done();
 			}, 200)
 		});
-		reader.onPartialMessage((info) => {
+		reader.onPartialMessage((_info) => {
 			setTimeout(() => {
 				readable.push(partTwo);
 				readable.push(null);

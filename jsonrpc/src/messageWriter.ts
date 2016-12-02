@@ -14,14 +14,14 @@ let ContentLength:string = 'Content-Length: ';
 let CRLF = '\r\n';
 
 export interface MessageWriter {
-	onError: Event<[Error, Message, number]>;
-	onClose: Event<void>;
+	readonly onError: Event<[Error, Message | undefined, number | undefined]>;
+	readonly onClose: Event<void>;
 	write(msg: Message): void;
 }
 
 export abstract class AbstractMessageWriter {
 
-	private errorEmitter: Emitter<[Error, Message, number]>;
+	private errorEmitter: Emitter<[Error, Message | undefined , number | undefined]>;
 	private closeEmitter: Emitter<void>;
 
 	constructor() {
@@ -65,7 +65,7 @@ export class StreamMessageWriter extends AbstractMessageWriter implements Messag
 		this.writable = writable;
 		this.encoding = encoding;
 		this.errorCount = 0;
-		this.writable.on('error', (error) => this.fireError(error));
+		this.writable.on('error', (error: any) => this.fireError(error));
 		this.writable.on('close', () => this.fireClose());
 	}
 
@@ -101,14 +101,16 @@ export class IPCMessageWriter extends AbstractMessageWriter implements MessageWr
 		this.process = process;
 		this.errorCount = 0;
 		let eventEmitter: NodeJS.EventEmitter = this.process;
-		eventEmitter.on('error', (error) => this.fireError(error));
+		eventEmitter.on('error', (error: any) => this.fireError(error));
 		eventEmitter.on('close', () => this.fireClose);
 	}
 
 	public write(msg: Message): void {
 		try {
-			this.process.send(msg);
-			this.errorCount = 0;
+			if (this.process.send) {
+				this.process.send(msg);
+				this.errorCount = 0;
+			}
 		} catch (error) {
 			this.errorCount++;
 			this.fireError(error, msg, this.errorCount);

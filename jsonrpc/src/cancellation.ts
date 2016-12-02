@@ -17,12 +17,12 @@ export interface CancellationToken {
 	/**
 	 * Is `true` when the token has been cancelled, `false` otherwise.
 	 */
-	isCancellationRequested: boolean;
+	readonly isCancellationRequested: boolean;
 
 	/**
 	 * An [event](#Event) which fires upon cancellation.
 	 */
-	onCancellationRequested: Event<any>;
+	readonly onCancellationRequested: Event<any>;
 }
 
 export namespace CancellationToken {
@@ -45,7 +45,7 @@ export namespace CancellationToken {
 	}
 }
 
-const shortcutEvent: Event<any> = Object.freeze(function(callback, context?) {
+const shortcutEvent: Event<any> = Object.freeze(function(callback: Function, context?: any): any {
 	let handle = setTimeout(callback.bind(context), 0);
 	return { dispose() { clearTimeout(handle); } };
 });
@@ -53,7 +53,7 @@ const shortcutEvent: Event<any> = Object.freeze(function(callback, context?) {
 class MutableToken implements CancellationToken {
 
 	private _isCancelled: boolean = false;
-	private _emitter: Emitter<any>;
+	private _emitter: Emitter<any> | undefined;
 
 	public cancel() {
 		if (!this._isCancelled) {

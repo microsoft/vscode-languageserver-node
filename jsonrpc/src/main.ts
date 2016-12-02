@@ -44,7 +44,7 @@ interface CancelParams {
 }
 
 namespace CancelNotification {
-	export const type: NotificationType<CancelParams, void> = { get method() { return '$/cancelRequest'; }, _: undefined };
+	export const type: NotificationType<CancelParams, void> = { get method() { return '$/cancelRequest'; } };
 }
 
 export interface GenericRequestHandler<R, E> {
@@ -189,7 +189,7 @@ export interface SetTraceParams {
 }
 
 export namespace SetTraceNotification {
-	export const type: NotificationType<SetTraceParams, void> = { get method() { return '$/setTraceNotification'; }, _: undefined };
+	export const type: NotificationType<SetTraceParams, void> = { get method() { return '$/setTraceNotification'; } };
 }
 
 export interface LogTraceParams {
@@ -198,7 +198,7 @@ export interface LogTraceParams {
 }
 
 export namespace LogTraceNotification {
-	export const type: NotificationType<LogTraceParams, void> = { get method() { return '$/logTraceNotification'; }, _: undefined };
+	export const type: NotificationType<LogTraceParams, void> = { get method() { return '$/logTraceNotification'; } };
 }
 
 export interface Tracer {
@@ -263,7 +263,7 @@ export interface MessageConnection {
 	onError: Event<[Error, Message, number]>;
 	onClose: Event<void>;
 	onUnhandledNotification: Event<NotificationMessage>;
-	listen();
+	listen(): void;
 	onDispose: Event<void>;
 	dispose(): void;
 }
@@ -271,7 +271,7 @@ export interface MessageConnection {
 interface ResponsePromise {
 	method: string;
 	timerStart: number;
-	resolve: (response) => void;
+	resolve: (response: any) => void;
 	reject: (error: any) => void
 }
 
@@ -293,10 +293,10 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 	let requestTokens: { [id: string] : CancellationTokenSource } = Object.create(null);
 
 	let trace: Trace = Trace.Off;
-	let tracer: Tracer;
+	let tracer: Tracer | undefined;
 
 	let state: ConnectionState = ConnectionState.New;
-	let errorEmitter: Emitter<[Error, Message, number]> = new Emitter<[Error, Message, number]>();
+	let errorEmitter: Emitter<[Error, Message | undefined, number | undefined]> = new Emitter<[Error, Message, number]>();
 	let closeEmitter: Emitter<void> = new Emitter<void>();
 	let unhandledNotificationEmitter: Emitter<NotificationMessage> = new Emitter<NotificationMessage>();
 	let disposeEmitter: Emitter<void> = new Emitter<void>();
@@ -352,9 +352,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			} else {
 				message.result = is.undefined(resultOrError) ? null : resultOrError;
 			}
-			if (trace != Trace.Off && tracer) {
-				traceSendingResponse(message, method, startTime);
-			}
+			traceSendingResponse(message, method, startTime);
 			messageWriter.write(message);
 		}
 		function replyError(error: ResponseError<any>, method: string, startTime: number) {
@@ -363,9 +361,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				id: requestMessage.id,
 				error: error.toJson()
 			};
-			if (trace != Trace.Off && tracer) {
-				traceSendingResponse(message, method, startTime);
-			}
+			traceSendingResponse(message, method, startTime);
 			messageWriter.write(message);
 		}
 		function replySuccess(result: any, method: string, startTime: number) {
@@ -379,15 +375,11 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				id: requestMessage.id,
 				result: result
 			};
-			if (trace != Trace.Off && tracer) {
-				traceSendingResponse(message, method, startTime);
-			}
+			traceSendingResponse(message, method, startTime);
 			messageWriter.write(message);
 		}
 
-		if (trace != Trace.Off && tracer) {
-			traceReceviedRequest(requestMessage);
-		}
+		traceReceviedRequest(requestMessage);
 
 		let requestHandler = requestHandlers[requestMessage.method];
 		let startTime = Date.now();
@@ -450,13 +442,11 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 
 		let key = String(responseMessage.id);
 		let responsePromise = responsePromises[key];
-		if (trace != Trace.Off && tracer) {
-			traceReceviedResponse(responseMessage, responsePromise);
-		}
+		traceReceviedResponse(responseMessage, responsePromise);
 		if (responsePromise) {
 			delete responsePromises[key];
 			try {
-				if (is.defined(responseMessage.error)) {
+				if (responseMessage.error && is.defined(responseMessage.error)) {
 					let error = responseMessage.error;
 					responsePromise.reject(new ResponseError(error.code, error.message, error.data));
 				} else if (is.defined(responseMessage.result)) {
@@ -493,9 +483,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 		}
 		if (notificationHandler) {
 			try {
-				if (trace != Trace.Off && tracer) {
-					traceReceivedNotification(message);
-				}
+				traceReceivedNotification(message);
 				if (is.nil(message.params)) {
 					notificationHandler();
 				} else if (is.array(message.params)) {
@@ -533,7 +521,10 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 	}
 
 	function traceSendingRequest(message: RequestMessage): void {
-		let data: string = undefined;
+		if (trace === Trace.Off || !tracer) {
+			return;
+		}
+		let data: string | undefined = undefined;
 		if (trace === Trace.Verbose && message.params) {
 			data = `Params: ${JSON.stringify(message.params, null, 4)}\n\n`;
 		}
@@ -541,7 +532,10 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 	}
 
 	function traceSendNotification(message: NotificationMessage): void {
-		let data: string = undefined;
+		if (trace === Trace.Off || !tracer) {
+			return;
+		}
+		let data: string | undefined = undefined;
 		if (trace === Trace.Verbose) {
 			if (message.params) {
 				data = `Params: ${JSON.stringify(message.params, null, 4)}\n\n`;
@@ -553,7 +547,10 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 	}
 
 	function traceSendingResponse(message: ResponseMessage, method: string, startTime: number): void  {
-		let data: string = undefined;
+		if (trace === Trace.Off || !tracer) {
+			return;
+		}
+		let data: string | undefined = undefined;
 		if (trace === Trace.Verbose) {
 			if (message.error && message.error.data) {
 				data = `Error data: ${JSON.stringify(message.error.data, null, 4)}\n\n`;
@@ -569,7 +566,10 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 	}
 
 	function traceReceviedRequest(message: RequestMessage): void {
-		let data: string = undefined;
+		if (trace === Trace.Off || !tracer) {
+			return;
+		}
+		let data: string | undefined = undefined;
 		if (trace === Trace.Verbose && message.params) {
 			data = `Params: ${JSON.stringify(message.params, null, 4)}\n\n`;
 		}
@@ -577,10 +577,10 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 	}
 
 	function traceReceivedNotification(message: NotificationMessage): void {
-		if (message.method === LogTraceNotification.type.method) {
+		if (trace === Trace.Off || !tracer || message.method === LogTraceNotification.type.method) {
 			return;
 		}
-		let data: string = undefined;
+		let data: string | undefined = undefined;
 		if (trace === Trace.Verbose) {
 			if (message.params) {
 				data = `Params: ${JSON.stringify(message.params, null, 4)}\n\n`;
@@ -592,7 +592,10 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 	}
 
 	function traceReceviedResponse(message: ResponseMessage, responsePromise: ResponsePromise): void {
-		let data: string = undefined;
+		if (trace === Trace.Off || !tracer) {
+			return;
+		}
+		let data: string | undefined = undefined;
 		if (trace === Trace.Verbose) {
 			if (message.error && message.error.data) {
 				data = `Error data: ${JSON.stringify(message.error.data, null, 4)}\n\n`;
@@ -643,7 +646,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 		sendNotification: (type: string | MessageType, ...params: any[]): void => {
 			throwIfClosedOrDisposed();
 
-			let messageParams: any[];
+			let messageParams: any[] | null;
 			switch (params.length) {
 				case 0:
 					messageParams = null;
@@ -660,9 +663,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				method: is.string(type) ? type : type.method,
 				params: messageParams
 			}
-			if (trace != Trace.Off && tracer) {
-				traceSendNotification(notificatioMessage);
-			}
+			traceSendNotification(notificatioMessage);
 			messageWriter.write(notificatioMessage);
 		},
 		onNotification: (type: string | MessageType, handler: GenericNotificationHandler): void => {
@@ -674,8 +675,8 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			throwIfClosedOrDisposed();
 
 			const method = is.string(type) ? type : type.method;
-			let messageParams: any[];
-			let token: CancellationToken = undefined;
+			let messageParams: any[] | null;
+			let token: CancellationToken | undefined = undefined;
 			switch (params.length) {
 				case 0:
 					messageParams = null;
@@ -711,10 +712,8 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 					method: method,
 					params: messageParams
 				}
-				let responsePromise: ResponsePromise = { method: method, timerStart: Date.now(), resolve, reject };
-				if (trace != Trace.Off && tracer) {
-					traceSendingRequest(requestMessage);
-				}
+				let responsePromise: ResponsePromise | null = { method: method, timerStart: Date.now(), resolve, reject };
+				traceSendingRequest(requestMessage);
 				try {
 					messageWriter.write(requestMessage);
 				} catch (e) {
@@ -727,7 +726,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				}
 			});
 			if (token) {
-				token.onCancellationRequested((event) => {
+				token.onCancellationRequested(() => {
 					connection.sendNotification(CancelNotification.type, { id });
 				});
 			}
@@ -741,7 +740,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 		trace: (_value: Trace, _tracer: Tracer, sendNotification: boolean = false) => {
 			trace = _value;
 			if (trace === Trace.Off) {
-				tracer = null;
+				tracer = undefined;
 			} else {
 				tracer = _tracer;
 			}
@@ -776,7 +775,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 	};
 
 	connection.onNotification(LogTraceNotification.type, (params) => {
-		if (trace === Trace.Off) {
+		if (trace === Trace.Off || !tracer) {
 			return;
 		}
 		tracer.log(params.message, trace === Trace.Verbose ? params.verbose : undefined);

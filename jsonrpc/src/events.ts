@@ -8,7 +8,7 @@ export interface Disposable {
 	/**
 	 * Dispose this object.
 	 */
-	dispose();
+	dispose(): void;
 }
 
 export namespace Disposable {
@@ -53,8 +53,9 @@ class DisposableImpl implements Disposable {
 	 * @return Returns a new disposable which, upon dispose, will
 	 * dispose all provides disposable-likes.
 	 */
-	static from(...disposables: Disposable[]): DisposableImpl {
+	static from(..._disposables: Disposable[]): DisposableImpl {
 		return new DisposableImpl(function () {
+			let disposables: Disposable[] | undefined = _disposables;
 			if (disposables) {
 				for(let disposable of disposables) {
 					disposable.dispose();
@@ -64,7 +65,7 @@ class DisposableImpl implements Disposable {
 		});
 	}
 
-	private _callOnDispose: Function;
+	private _callOnDispose: Function | undefined;
 
 	constructor(callOnDispose: Function) {
 		this._callOnDispose = callOnDispose;
@@ -83,8 +84,8 @@ class DisposableImpl implements Disposable {
 
 class CallbackList {
 
-	private _callbacks: Function[];
-	private _contexts: any[];
+	private _callbacks: Function[] | undefined;
+	private _contexts: any[] | undefined;
 
 	public add(callback: Function, context: any = null, bucket?: Disposable[]): void {
 		if (!this._callbacks) {
@@ -92,11 +93,11 @@ class CallbackList {
 			this._contexts = [];
 		}
 		this._callbacks.push(callback);
-        this._contexts.push(context);
+		this._contexts!.push(context);
 
-        if (Array.isArray(bucket)) {
-            bucket.push({ dispose: () => this.remove(callback, context) });
-        }
+		if (Array.isArray(bucket)) {
+			bucket.push({ dispose: () => this.remove(callback, context) });
+		}
 	}
 
 	public remove(callback: Function, context: any = null): void {
@@ -107,10 +108,10 @@ class CallbackList {
 		var foundCallbackWithDifferentContext = false;
 		for (var i = 0, len = this._callbacks.length; i < len; i++) {
 			if (this._callbacks[i] === callback) {
-				if (this._contexts[i] === context) {
+				if (this._contexts![i] === context) {
 					// callback & context match => remove it
 					this._callbacks.splice(i, 1);
-					this._contexts.splice(i, 1);
+					this._contexts!.splice(i, 1);
 					return;
 				} else {
 					foundCallbackWithDifferentContext = true;
@@ -125,12 +126,12 @@ class CallbackList {
 
 	public invoke(...args: any[]): any[] {
 		if (!this._callbacks) {
-			return;
+			return [];
 		}
 
 		var ret: any[] = [],
 			callbacks = this._callbacks.slice(0),
-			contexts = this._contexts.slice(0);
+			contexts = this._contexts!.slice(0);
 
 		for (var i = 0, len = callbacks.length; i < len; i++) {
 			try {
@@ -162,7 +163,7 @@ export class Emitter<T> {
 	private static _noop = function () { };
 
 	private _event: Event<T>;
-	private _callbacks: CallbackList;
+	private _callbacks: CallbackList | undefined;
 
 	constructor(private _options?: EmitterOptions) {
 	}
@@ -185,9 +186,9 @@ export class Emitter<T> {
 				let result: Disposable;
 				result = {
 					dispose: () => {
-						this._callbacks.remove(listener, thisArgs);
+						this._callbacks!.remove(listener, thisArgs);
 						result.dispose = Emitter._noop;
-						if(this._options && this._options.onLastListenerRemove && this._callbacks.isEmpty()) {
+						if(this._options && this._options.onLastListenerRemove && this._callbacks!.isEmpty()) {
 							this._options.onLastListenerRemove(this);
 						}
 					}

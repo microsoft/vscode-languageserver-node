@@ -86,7 +86,7 @@ export class ResponseError<D> extends Error {
 		super(message);
 		this.code = code;
 		this.message = message;
-		if (is.defined(data)) {
+		if (data && is.defined(data)) {
 			this.data = data;
 		}
 	}
@@ -142,57 +142,57 @@ export interface _EM {
  * A interface to type the request parameter / response pair
  */
 export interface RequestType0<R, E, RO> extends MessageType {
-	_: [R, E, RO, _EM];
+	_?: [R, E, RO, _EM];
 	registerOptions?: RO;
 }
 
 export interface RequestType<P, R, E, RO> extends MessageType {
-	_: [P, R, E, RO, _EM];
+	_?: [P, R, E, RO, _EM];
 	registerOptions?: RO;
 }
 
 export interface RequestType1<P1, R, E, RO> extends MessageType {
-	_: [P1, R, E, RO, _EM];
+	_?: [P1, R, E, RO, _EM];
 	registerOptions?: RO;
 }
 
 export interface RequestType2<P1, P2, R, E, RO> extends MessageType {
-	_: [P1, P2, R, E, RO, _EM];
+	_?: [P1, P2, R, E, RO, _EM];
 	registerOptions?: RO;
 }
 
 export interface RequestType3<P1, P2, P3, R, E, RO> extends MessageType {
-	_: [P1, P2, P3, R, E, RO, _EM];
+	_?: [P1, P2, P3, R, E, RO, _EM];
 	registerOptions?: RO;
 }
 
 export interface RequestType4<P1, P2, P3, P4, R, E, RO> extends MessageType {
-	_: [P1, P2, P3, P4, R, E, RO, _EM];
+	_?: [P1, P2, P3, P4, R, E, RO, _EM];
 	registerOptions?: RO;
 }
 
 export interface RequestType5<P1, P2, P3, P4, P5, R, E, RO> extends MessageType {
-	_: [P1, P2, P3, P4, P5, R, E, RO, _EM];
+	_?: [P1, P2, P3, P4, P5, R, E, RO, _EM];
 	registerOptions?: RO;
 }
 
 export interface RequestType6<P1, P2, P3, P4, P5, P6, R, E, RO> extends MessageType {
-	_: [P1, P2, P3, P4, P5, P6, R, E, RO, _EM];
+	_?: [P1, P2, P3, P4, P5, P6, R, E, RO, _EM];
 	registerOptions?: RO;
 }
 
 export interface RequestType7<P1, P2, P3, P4, P5, P6, P7, R, E, RO> extends MessageType {
-	_: [P1, P2, P3, P4, P5, P6, P7, R, E, RO, _EM];
+	_?: [P1, P2, P3, P4, P5, P6, P7, R, E, RO, _EM];
 	registerOptions?: RO;
 }
 
 export interface RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO> extends MessageType {
-	_: [P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO, _EM];
+	_?: [P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO, _EM];
 	registerOptions?: RO;
 }
 
 export interface RequestType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO> extends MessageType {
-	_: [P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO, _EM];
+	_?: [P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO, _EM];
 	registerOptions?: RO;
 }
 
@@ -215,58 +215,58 @@ export interface NotificationMessage extends Message {
  * An interface to type notification messages.
  */
 export interface NotificationType<P, RO> extends MessageType {
-	_: [P, RO, _EM];
+	_?: [P, RO, _EM];
 	registerOptions?: RO;
 }
 
 export interface NotificationType0<RO> extends MessageType {
-	_: [RO, _EM];
+	_?: [RO, _EM];
 	registerOptions?: RO;
 }
 
 
 export interface NotificationType1<P1, RO> extends MessageType {
-	_: [P1, RO, _EM];
+	_?: [P1, RO, _EM];
 	registerOptions?: RO;
 }
 
 export interface NotificationType2<P1, P2, RO> extends MessageType {
-	_: [P1, P2, RO, _EM];
+	_?: [P1, P2, RO, _EM];
 	registerOptions?: RO;
 }
 
 export interface NotificationType3<P1, P2, P3, RO> extends MessageType {
-	_: [P1, P2, P3, RO, _EM];
+	_?: [P1, P2, P3, RO, _EM];
 	registerOptions?: RO;
 }
 
 export interface NotificationType4<P1, P2, P3, P4, RO> extends MessageType {
-	_: [P1, P2, P3, P4, RO, _EM];
+	_?: [P1, P2, P3, P4, RO, _EM];
 	registerOptions?: RO;
 }
 
 export interface NotificationType5<P1, P2, P3, P4, P5, RO> extends MessageType {
-	_: [P1, P2, P3, P4, P5, RO, _EM];
+	_?: [P1, P2, P3, P4, P5, RO, _EM];
 	registerOptions?: RO;
 }
 
 export interface NotificationType6<P1, P2, P3, P4, P5, P6, RO> extends MessageType {
-	_: [P1, P2, P3, P4, P5, P6, RO, _EM];
+	_?: [P1, P2, P3, P4, P5, P6, RO, _EM];
 	registerOptions?: RO;
 }
 
 export interface NotificationType7<P1, P2, P3, P4, P5, P6, P7, RO> extends MessageType {
-	_: [P1, P2, P3, P4, P5, P6, P7, RO, _EM];
+	_?: [P1, P2, P3, P4, P5, P6, P7, RO, _EM];
 	registerOptions?: RO;
 }
 
 export interface NotificationType8<P1, P2, P3, P4, P5, P6, P7, P8, RO> extends MessageType {
-	_: [P1, P2, P3, P4, P5, P6, P7, P8, RO, _EM];
+	_?: [P1, P2, P3, P4, P5, P6, P7, P8, RO, _EM];
 	registerOptions?: RO;
 }
 
 export interface NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, RO> extends MessageType {
-	_: [P1, P2, P3, P4, P5, P6, P7, P8, P9, RO, _EM];
+	_?: [P1, P2, P3, P4, P5, P6, P7, P8, P9, RO, _EM];
 	registerOptions?: RO;
 }
 
