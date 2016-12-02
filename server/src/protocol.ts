@@ -4,21 +4,15 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { RequestType, RequestType0, NotificationType, NotificationType0, ResponseError } from 'vscode-jsonrpc';
+import { RequestType, RequestType0, NotificationType, NotificationType0 } from 'vscode-jsonrpc';
 
 import {
-	TextDocument, TextDocumentChangeEvent, TextDocumentContentChangeEvent, TextDocumentSaveReason,
-	Range, Position, Location, Diagnostic, DiagnosticSeverity, Command,
-	TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange, WorkspaceSymbolParams,
+	TextDocumentContentChangeEvent, Position, Range, Location, Diagnostic, Command,
+	TextEdit, WorkspaceEdit, WorkspaceSymbolParams,
 	TextDocumentIdentifier, VersionedTextDocumentIdentifier, TextDocumentItem,
-	CompletionItemKind, CompletionItem, CompletionList,
-	Hover, MarkedString,
-	SignatureHelp, SignatureInformation, ParameterInformation,
-	Definition, ReferenceContext,
-	DocumentHighlight, DocumentHighlightKind, DocumentSymbolParams,
-	SymbolInformation, SymbolKind,
-	CodeLens, CodeActionContext,
-	FormattingOptions, DocumentLink
+	CompletionItem, CompletionList, Hover, SignatureHelp,
+	Definition, ReferenceContext, DocumentHighlight, DocumentSymbolParams,
+	SymbolInformation, CodeLens, CodeActionContext, FormattingOptions, DocumentLink
 } from 'vscode-languageserver-types';
 
 export interface DocumentFilter {
@@ -77,7 +71,7 @@ export interface RegistrationParams {
  * to the server and vice versa this request can be sent into both directions.
  */
 export namespace RegistrationRequest {
-	export const type: RequestType<RegistrationParams, void, void, void> = { get method() { return 'client/registrationRequest'; }, _: undefined }
+	export const type: RequestType<RegistrationParams, void, void, void> = { get method() { return 'client/registrationRequest'; } }
 }
 
 /**
@@ -104,7 +98,7 @@ export interface UnregistrationParams {
  * Unregisters the given request on the other side.
  */
 export namespace UnregistrationRequest {
-	export const type: RequestType<UnregistrationParams, void, void, void> = { get method() { return 'client/unregistrationRequest'; }, _: undefined }
+	export const type: RequestType<UnregistrationParams, void, void, void> = { get method() { return 'client/unregistrationRequest'; } }
 }
 
 /**
@@ -364,7 +358,7 @@ export interface ServerCapabilities {
  * resolves to such.
  */
 export namespace InitializeRequest {
-	export const type: RequestType<InitializeParams, InitializeResult, InitializeError, void> = { get method() { return 'initialize'; }, _: undefined };
+	export const type: RequestType<InitializeParams, InitializeResult, InitializeError, void> = { get method() { return 'initialize'; } };
 }
 
 /**
@@ -431,7 +425,7 @@ export interface InitializedParams {
  * is allowed to send requests from the server to the client.
  */
 export namespace InitializedNotification {
-	export const type: NotificationType<InitializedParams, void> = { get method() { return 'initialized'; }, _: undefined };
+	export const type: NotificationType<InitializedParams, void> = { get method() { return 'initialized'; } };
 }
 
 //---- Shutdown Method ----
@@ -443,7 +437,7 @@ export namespace InitializedNotification {
  * is the exit event.
  */
 export namespace ShutdownRequest {
-	export const type: RequestType0<void, void, void> = { get method() { return 'shutdown'; }, _: undefined };
+	export const type: RequestType0<void, void, void> = { get method() { return 'shutdown'; } };
 }
 
 //---- Exit Notification ----
@@ -453,7 +447,7 @@ export namespace ShutdownRequest {
  * ask the server to exit its process.
  */
 export namespace ExitNotification {
-	export const type: NotificationType0<void> = { get method() { return 'exit'; }, _: undefined };
+	export const type: NotificationType0<void> = { get method() { return 'exit'; } };
 }
 
 //---- Configuration notification ----
@@ -464,7 +458,7 @@ export namespace ExitNotification {
  * the changed configuration as defined by the language client.
  */
 export namespace DidChangeConfigurationNotification {
-	export const type: NotificationType<DidChangeConfigurationParams, void> = { get method() { return 'workspace/didChangeConfiguration'; }, _: undefined };
+	export const type: NotificationType<DidChangeConfigurationParams, void> = { get method() { return 'workspace/didChangeConfiguration'; } };
 }
 
 /**
@@ -521,7 +515,7 @@ export interface ShowMessageParams {
  * the client to display a particular message in the user interface.
  */
 export namespace ShowMessageNotification {
-	export const type: NotificationType<ShowMessageParams, void> = { get method() { return 'window/showMessage'; }, _: undefined };
+	export const type: NotificationType<ShowMessageParams, void> = { get method() { return 'window/showMessage'; } };
 }
 
 export interface MessageActionItem {
@@ -553,7 +547,7 @@ export interface ShowMessageRequestParams {
  * and a set of options actions to the user.
  */
 export namespace ShowMessageRequest {
-	export const type: RequestType<ShowMessageRequestParams, MessageActionItem, void, void> = { get method() { return 'window/showMessageRequest'; }, _: undefined };
+	export const type: RequestType<ShowMessageRequestParams, MessageActionItem, void, void> = { get method() { return 'window/showMessageRequest'; } };
 }
 
 /**
@@ -561,7 +555,7 @@ export namespace ShowMessageRequest {
  * the client to log a particular message.
  */
 export namespace LogMessageNotification {
-	export let type: NotificationType<LogMessageParams, void> = { get method() { return 'window/logMessage'; }, _: undefined };
+	export let type: NotificationType<LogMessageParams, void> = { get method() { return 'window/logMessage'; } };
 }
 
 /**
@@ -586,7 +580,7 @@ export interface LogMessageParams {
  * the client to log telemetry data.
  */
 export namespace TelemetryEventNotification {
-	export let type: NotificationType<any, void> = { get method() { return 'telemetry/event'; }, _: undefined };
+	export let type: NotificationType<any, void> = { get method() { return 'telemetry/event'; } };
 }
 
 //---- Text document notifications ----
@@ -608,7 +602,7 @@ export interface DidOpenTextDocumentParams {
  * uri.
  */
 export namespace DidOpenTextDocumentNotification {
-	export const type: NotificationType<DidOpenTextDocumentParams, DocumentOptions> = { get method() { return 'textDocument/didOpen'; }, _: undefined };
+	export const type: NotificationType<DidOpenTextDocumentParams, DocumentOptions> = { get method() { return 'textDocument/didOpen'; } };
 }
 
 /**
@@ -643,7 +637,7 @@ export interface DidChangeTextDocumentOptions extends DocumentOptions {
  * changes to a text document.
  */
 export namespace DidChangeTextDocumentNotification {
-	export const type: NotificationType<DidChangeTextDocumentParams, DidChangeTextDocumentOptions> = { get method() { return 'textDocument/didChange'; }, _: undefined };
+	export const type: NotificationType<DidChangeTextDocumentParams, DidChangeTextDocumentOptions> = { get method() { return 'textDocument/didChange'; } };
 }
 
 /**
@@ -663,7 +657,7 @@ export interface DidCloseTextDocumentParams {
  * the truth now exists on disk).
  */
 export namespace DidCloseTextDocumentNotification {
-	export const type: NotificationType<DidCloseTextDocumentParams, DocumentOptions> = { get method() { return 'textDocument/didClose'; }, _: undefined };
+	export const type: NotificationType<DidCloseTextDocumentParams, DocumentOptions> = { get method() { return 'textDocument/didClose'; } };
 }
 
 /**
@@ -686,7 +680,7 @@ export interface DidSaveTextDocumentParams {
  * the document got saved in the client.
  */
 export namespace DidSaveTextDocumentNotification {
-	export const type: NotificationType<DidSaveTextDocumentParams, SaveOptions> = { get method() { return 'textDocument/didSave'; }, _: undefined };
+	export const type: NotificationType<DidSaveTextDocumentParams, SaveOptions> = { get method() { return 'textDocument/didSave'; } };
 }
 
 /**
@@ -709,7 +703,7 @@ export interface WillSaveTextDocumentParams {
  * the document is actually saved.
  */
 export namespace WillSaveTextDocumentNotification {
-	export const type: NotificationType<WillSaveTextDocumentParams, DocumentOptions> = { get method() { return 'textDocument/willSave'; }, _: undefined }
+	export const type: NotificationType<WillSaveTextDocumentParams, DocumentOptions> = { get method() { return 'textDocument/willSave'; } }
 }
 
 /**
@@ -721,7 +715,7 @@ export namespace WillSaveTextDocumentNotification {
  * reliable.
  */
 export namespace WillSaveTextDocumentWaitUntilRequest {
-	export const type: RequestType<WillSaveTextDocumentParams, TextEdit[], void, DocumentOptions> = { get method() { return 'textDocument/willSaveWaitUntil'; }, _: undefined }
+	export const type: RequestType<WillSaveTextDocumentParams, TextEdit[], void, DocumentOptions> = { get method() { return 'textDocument/willSaveWaitUntil'; } }
 }
 
 //---- File eventing ----
@@ -731,7 +725,7 @@ export namespace WillSaveTextDocumentWaitUntilRequest {
  * the client detects changes to file watched by the lanaguage client.
  */
 export namespace DidChangeWatchedFilesNotification {
-	export const type: NotificationType<DidChangeWatchedFilesParams, void> = { get method() { return 'workspace/didChangeWatchedFiles'; }, _: undefined };
+	export const type: NotificationType<DidChangeWatchedFilesParams, void> = { get method() { return 'workspace/didChangeWatchedFiles'; } };
 }
 
 /**
@@ -783,7 +777,7 @@ export interface FileEvent {
  * results of validation runs.
  */
 export namespace PublishDiagnosticsNotification {
-	export const type: NotificationType<PublishDiagnosticsParams, void> = { get method() { return 'textDocument/publishDiagnostics'; }, _: undefined };
+	export const type: NotificationType<PublishDiagnosticsParams, void> = { get method() { return 'textDocument/publishDiagnostics'; } };
 }
 
 /**
@@ -810,7 +804,7 @@ export interface PublishDiagnosticsParams {
  * or a Thenable that resolves to such.
  */
 export namespace CompletionRequest {
-	export const type: RequestType<TextDocumentPositionParams, CompletionItem[] | CompletionList, void, CompletionOptions> = { get method() { return 'textDocument/completion'; }, _: undefined };
+	export const type: RequestType<TextDocumentPositionParams, CompletionItem[] | CompletionList, void, CompletionOptions> = { get method() { return 'textDocument/completion'; } };
 }
 
 /**
@@ -819,7 +813,7 @@ export namespace CompletionRequest {
  * is of type [CompletionItem](#CompletionItem) or a Thenable that resolves to such.
  */
 export namespace CompletionResolveRequest {
-	export const type: RequestType<CompletionItem, CompletionItem, void, void> = { get method() { return 'completionItem/resolve'; }, _: undefined };
+	export const type: RequestType<CompletionItem, CompletionItem, void, void> = { get method() { return 'completionItem/resolve'; } };
 }
 
 //---- Hover Support -------------------------------
@@ -830,13 +824,13 @@ export namespace CompletionResolveRequest {
  * type [Hover](#Hover) or a Thenable that resolves to such.
  */
 export namespace HoverRequest {
-	export const type: RequestType<TextDocumentPositionParams, Hover, void, DocumentOptions> = { get method() { return 'textDocument/hover'; }, _: undefined };
+	export const type: RequestType<TextDocumentPositionParams, Hover, void, DocumentOptions> = { get method() { return 'textDocument/hover'; } };
 }
 
 //---- SignatureHelp ----------------------------------
 
 export namespace SignatureHelpRequest {
-	export const type: RequestType<TextDocumentPositionParams, SignatureHelp, void, SignatureHelpOptions> = { get method() { return 'textDocument/signatureHelp'; }, _: undefined };
+	export const type: RequestType<TextDocumentPositionParams, SignatureHelp, void, SignatureHelpOptions> = { get method() { return 'textDocument/signatureHelp'; } };
 }
 
 //---- Goto Definition -------------------------------------
@@ -849,7 +843,7 @@ export namespace SignatureHelpRequest {
  * Thenable that resolves to such.
  */
 export namespace DefinitionRequest {
-	export const type: RequestType<TextDocumentPositionParams, Definition, void, DocumentOptions> = { get method() { return 'textDocument/definition'; }, _: undefined };
+	export const type: RequestType<TextDocumentPositionParams, Definition, void, DocumentOptions> = { get method() { return 'textDocument/definition'; } };
 }
 
 //---- Reference Provider ----------------------------------
@@ -868,7 +862,7 @@ export interface ReferenceParams extends TextDocumentPositionParams {
  * [Location[]](#Location) or a Thenable that resolves to such.
  */
 export namespace ReferencesRequest {
-	export const type: RequestType<ReferenceParams, Location[], void, DocumentOptions> = { get method() { return 'textDocument/references'; }, _: undefined };
+	export const type: RequestType<ReferenceParams, Location[], void, DocumentOptions> = { get method() { return 'textDocument/references'; } };
 }
 
 //---- Document Highlight ----------------------------------
@@ -880,7 +874,7 @@ export namespace ReferencesRequest {
  * (#DocumentHighlight) or a Thenable that resolves to such.
  */
 export namespace DocumentHighlightRequest {
-	export const type: RequestType<TextDocumentPositionParams, DocumentHighlight[], void, DocumentOptions> = { get method() { return 'textDocument/documentHighlight'; }, _: undefined };
+	export const type: RequestType<TextDocumentPositionParams, DocumentHighlight[], void, DocumentOptions> = { get method() { return 'textDocument/documentHighlight'; } };
 }
 
 //---- Document Symbol Provider ---------------------------
@@ -892,7 +886,7 @@ export namespace DocumentHighlightRequest {
  * that resolves to such.
  */
 export namespace DocumentSymbolRequest {
-	export const type: RequestType<DocumentSymbolParams, SymbolInformation[], void, DocumentOptions> = { get method() { return 'textDocument/documentSymbol'; }, _: undefined };
+	export const type: RequestType<DocumentSymbolParams, SymbolInformation[], void, DocumentOptions> = { get method() { return 'textDocument/documentSymbol'; } };
 }
 
 //---- Workspace Symbol Provider ---------------------------
@@ -904,7 +898,7 @@ export namespace DocumentSymbolRequest {
  * resolves to such.
  */
 export namespace WorkspaceSymbolRequest {
-	export const type: RequestType<WorkspaceSymbolParams, SymbolInformation[], void, void> = { get method() { return 'workspace/symbol'; }, _: undefined };
+	export const type: RequestType<WorkspaceSymbolParams, SymbolInformation[], void, void> = { get method() { return 'workspace/symbol'; } };
 }
 
 //---- Code Action Provider ----------------------------------
@@ -935,7 +929,7 @@ export interface CodeActionParams {
  * A request to provide commands for the given text document and range.
  */
 export namespace CodeActionRequest {
-	export const type: RequestType<CodeActionParams, Command[], void, DocumentOptions> = { get method() { return 'textDocument/codeAction'; }, _: undefined };
+	export const type: RequestType<CodeActionParams, Command[], void, DocumentOptions> = { get method() { return 'textDocument/codeAction'; } };
 }
 
 //---- Code Lens Provider -------------------------------------------
@@ -954,14 +948,14 @@ export interface CodeLensParams {
  * A request to provide code lens for the given text document.
  */
 export namespace CodeLensRequest {
-	export const type: RequestType<CodeLensParams, CodeLens[], void, CodeLensOptions> = { get method() { return 'textDocument/codeLens'; }, _: undefined };
+	export const type: RequestType<CodeLensParams, CodeLens[], void, CodeLensOptions> = { get method() { return 'textDocument/codeLens'; } };
 }
 
 /**
  * A request to resolve a command for a given code lens.
  */
 export namespace CodeLensResolveRequest {
-	export const type: RequestType<CodeLens, CodeLens, void, void> = { get method() { return 'codeLens/resolve'; }, _: undefined };
+	export const type: RequestType<CodeLens, CodeLens, void, void> = { get method() { return 'codeLens/resolve'; } };
 }
 
 //---- Formatting ----------------------------------------------
@@ -982,7 +976,7 @@ export interface DocumentFormattingParams {
  * A request to to format a whole document.
  */
 export namespace DocumentFormattingRequest {
-	export const type: RequestType<DocumentFormattingParams, TextEdit[], void, DocumentOptions> = { get method() { return 'textDocument/formatting'; }, _: undefined };
+	export const type: RequestType<DocumentFormattingParams, TextEdit[], void, DocumentOptions> = { get method() { return 'textDocument/formatting'; } };
 }
 
 export interface DocumentRangeFormattingParams {
@@ -1006,7 +1000,7 @@ export interface DocumentRangeFormattingParams {
  * A request to to format a range in a document.
  */
 export namespace DocumentRangeFormattingRequest {
-	export const type: RequestType<DocumentRangeFormattingParams, TextEdit[], void, DocumentOptions> = { get method() { return 'textDocument/rangeFormatting'; }, _: undefined };
+	export const type: RequestType<DocumentRangeFormattingParams, TextEdit[], void, DocumentOptions> = { get method() { return 'textDocument/rangeFormatting'; } };
 }
 
 export interface DocumentOnTypeFormattingParams {
@@ -1035,7 +1029,7 @@ export interface DocumentOnTypeFormattingParams {
  * A request to format a document on type.
  */
 export namespace DocumentOnTypeFormattingRequest {
-	export const type: RequestType<DocumentOnTypeFormattingParams, TextEdit[], void, DocumentOnTypeFormattingOptions> = { get method() { return 'textDocument/onTypeFormatting'; }, _: undefined };
+	export const type: RequestType<DocumentOnTypeFormattingParams, TextEdit[], void, DocumentOnTypeFormattingOptions> = { get method() { return 'textDocument/onTypeFormatting'; } };
 }
 
 //---- Rename ----------------------------------------------
@@ -1063,7 +1057,7 @@ export interface RenameParams {
  * A request to rename a symbol.
  */
 export namespace RenameRequest {
-	export const type: RequestType<RenameParams, WorkspaceEdit, void, DocumentOptions> = { get method() { return 'textDocument/rename'; }, _: undefined };
+	export const type: RequestType<RenameParams, WorkspaceEdit, void, DocumentOptions> = { get method() { return 'textDocument/rename'; } };
 }
 
 //---- Document Links ----------------------------------------------
@@ -1079,7 +1073,7 @@ export interface DocumentLinkParams {
  * A request to provide document links
  */
 export namespace DocumentLinkRequest {
-	export const type: RequestType<DocumentLinkParams, DocumentLink[], void, DocumentLinkOptions> = { get method() { return 'textDocument/documentLink'; }, _: undefined };
+	export const type: RequestType<DocumentLinkParams, DocumentLink[], void, DocumentLinkOptions> = { get method() { return 'textDocument/documentLink'; } };
 }
 
 /**
@@ -1088,7 +1082,7 @@ export namespace DocumentLinkRequest {
  * is of type [DocumentLink](#DocumentLink) or a Thenable that resolves to such.
  */
 export namespace DocumentLinkResolveRequest {
-	export const type: RequestType<DocumentLink, DocumentLink, void, void> = { get method() { return 'documentLink/resolve'; }, _: undefined };
+	export const type: RequestType<DocumentLink, DocumentLink, void, void> = { get method() { return 'documentLink/resolve'; } };
 }
 
 //---- Command Execution -------------------------------------------
@@ -1123,7 +1117,7 @@ export interface ExecuteCommandOptions {
  * a workspace edit which the client will apply to the workspace.
  */
 export namespace ExecuteCommandRequest {
-	export const type: RequestType<ExecuteCommandParams, ExecuteCommandResponse, void, ExecuteCommandOptions> = { get method() { return 'workspace/executeCommand'; }, _: undefined };
+	export const type: RequestType<ExecuteCommandParams, ExecuteCommandResponse, void, ExecuteCommandOptions> = { get method() { return 'workspace/executeCommand'; } };
 }
 
 //---- Apply Edit request ----------------------------------------
@@ -1152,5 +1146,5 @@ export interface ApplyWorkspaceEditResponse {
  * A request sent from the server to the client to modified certain files.
  */
 export namespace ApplyWorkspaceEditRequest {
-	export const type: RequestType<ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse, void, void> = { get method() { return 'workspace/applyEdit'; }, _: undefined };
+	export const type: RequestType<ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse, void, void> = { get method() { return 'workspace/applyEdit'; } };
 }

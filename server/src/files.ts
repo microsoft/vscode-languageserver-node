@@ -8,10 +8,10 @@ import * as url from 'url';
 import * as path from 'path';
 import { exec, spawnSync, fork, ChildProcess } from 'child_process';
 
-export function uriToFilePath(uri: string): string {
+export function uriToFilePath(uri: string): string | undefined {
 	let parsed = url.parse(uri);
 	if (parsed.protocol !== 'file:' || !parsed.path) {
-		return null;
+		return undefined;
 	}
 	let segments = parsed.path.split('/');
 	for (var i = 0, len = segments.length; i < len; i++) {
@@ -43,12 +43,11 @@ export function resolveModule(workspaceRoot: string, moduleName: string): Thenab
 	}
 	let nodePathKey: string = 'NODE_PATH';
 	return new Promise<any>((resolve, reject) => {
-		let result = Object.create(null);
 		let nodePath: string[] = [];
 		if (workspaceRoot) {
 			nodePath.push(path.join(workspaceRoot, 'node_modules'));
 		}
-		exec('npm config get prefix', (error: Error, stdout: Buffer, stderr: Buffer) => {
+		exec('npm config get prefix', (error: Error, stdout: Buffer, _stderr: Buffer) => {
 			if (!error) {
 				let globalPath = stdout.toString().replace(/[\s\r\n]+$/, '');
 				if (globalPath.length > 0) {
@@ -97,7 +96,7 @@ export function resolveModule(workspaceRoot: string, moduleName: string): Thenab
 }
 
 
-export function resolve(moduleName: string, nodePath: string, cwd: string, tracer: (message: string, verbose?: string) => void): Thenable<string> {
+export function resolve(moduleName: string, nodePath: string | undefined, cwd: string, tracer: (message: string, verbose?: string) => void): Thenable<string> {
 	interface Message {
 		c: string;
 		s?: boolean;
@@ -147,7 +146,7 @@ export function resolve(moduleName: string, nodePath: string, cwd: string, trace
 				env: newEnv,
 				execArgv: ['-e', app]
 			});
-			cp.on('error', (error) => {
+			cp.on('error', (error: any) => {
 				reject(error);
 			});
 			cp.on('message', (message: Message) => {
@@ -172,7 +171,7 @@ export function resolve(moduleName: string, nodePath: string, cwd: string, trace
 
 }
 
-export function resolveGlobalNodePath(tracer?: (message: string) => void): string {
+export function resolveGlobalNodePath(tracer?: (message: string) => void): string | undefined {
 	let npmCommand = isWindows() ? 'npm.cmd' : 'npm';
 
 	let stdout = spawnSync(npmCommand, ['config', 'get', 'prefix'], {
@@ -211,7 +210,7 @@ export function resolveModulePath(workspaceRoot: string, moduleName: string, nod
 			} else {
 				return Promise.reject<string>(new Error(`Failed to load ${moduleName} from node path location.`));
 			}
-		}).then(null, (error) => {
+		}).then(undefined, (_error: any) => {
 			return resolve(moduleName, resolveGlobalNodePath(tracer), workspaceRoot, tracer);
 		});
 	} else {

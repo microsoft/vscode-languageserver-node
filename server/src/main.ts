@@ -6,18 +6,9 @@
 'use strict';
 
 import {
-	RequestType, RequestType0, RequestType1, RequestType2, RequestType3, RequestType4,
-	RequestType5, RequestType6, RequestType7, RequestType8, RequestType9,
-	RequestHandler, RequestHandler0, RequestHandler1, RequestHandler2, RequestHandler3,
-	RequestHandler4, RequestHandler5, RequestHandler6, RequestHandler7, RequestHandler8,
-	RequestHandler9, GenericRequestHandler,
-	NotificationType, NotificationType0, NotificationType1, NotificationType2, NotificationType3,
-	NotificationType4, NotificationType5, NotificationType6, NotificationType7, NotificationType8,
-	NotificationType9,
-	NotificationHandler, NotificationHandler0, NotificationHandler1, NotificationHandler2,
-	NotificationHandler3, NotificationHandler4, NotificationHandler5, NotificationHandler6,
-	NotificationHandler7, NotificationHandler8, NotificationHandler9, GenericNotificationHandler,
-	Message, MessageType as RPCMessageType, ResponseError, ErrorCodes,
+	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler,
+	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler,
+	MessageType as RPCMessageType, ResponseError, ErrorCodes,
 	MessageConnection, Logger, createMessageConnection,
 	MessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
 	MessageWriter, StreamMessageWriter, IPCMessageWriter,
@@ -26,41 +17,32 @@ import {
 } from 'vscode-jsonrpc';
 
 import {
-	TextDocument, TextDocumentChangeEvent, TextDocumentContentChangeEvent, TextDocumentSaveReason, TextDocumentWillSaveEvent,
-	Range, Position, Location, Diagnostic, DiagnosticSeverity, Command,
-	TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
-	TextDocumentIdentifier, CompletionItemKind, CompletionItem, CompletionList, SnippetString,
-	Hover, MarkedString,
-	SignatureHelp, SignatureInformation, ParameterInformation,
-	Definition, CodeActionContext,
-	DocumentHighlight, DocumentHighlightKind,
-	SymbolInformation, SymbolKind, WorkspaceSymbolParams, DocumentSymbolParams,
-	CodeLens,
-	FormattingOptions, DocumentLink
+	TextDocument, TextDocumentChangeEvent, TextDocumentContentChangeEvent, TextDocumentWillSaveEvent,
+	Location, Command, TextEdit, WorkspaceEdit, CompletionItem, CompletionList, Hover,
+	SignatureHelp, Definition,DocumentHighlight, SymbolInformation, WorkspaceSymbolParams, DocumentSymbolParams,
+	CodeLens, DocumentLink
 } from 'vscode-languageserver-types';
 
 import {
 	RegistrationRequest, Registration, RegistrationParams, Unregistration, UnregistrationRequest, UnregistrationParams,
-	InitializeRequest, InitializeParams, InitializeResult, InitializeError, ClientCapabilities, ServerCapabilities,
+	InitializeRequest, InitializeParams, InitializeResult, InitializeError,
 	InitializedNotification, InitializedParams, ShutdownRequest, ExitNotification,
-	LogMessageNotification, LogMessageParams, MessageType,
-	ShowMessageNotification, ShowMessageParams, ShowMessageRequest, ShowMessageRequestParams, MessageActionItem,
+	LogMessageNotification, MessageType, ShowMessageRequest, MessageActionItem,
 	TelemetryEventNotification,
 	DidChangeConfigurationNotification, DidChangeConfigurationParams,
 	DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams,
 	DidCloseTextDocumentNotification, DidCloseTextDocumentParams, DidSaveTextDocumentNotification, DidSaveTextDocumentParams,
 	WillSaveTextDocumentNotification, WillSaveTextDocumentParams, WillSaveTextDocumentWaitUntilRequest,
-	DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
+	DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams,
 	PublishDiagnosticsNotification, PublishDiagnosticsParams,
 	TextDocumentPositionParams, TextDocumentSyncKind,
 	HoverRequest,
-	CompletionRequest, CompletionResolveRequest, CompletionOptions,
+	CompletionRequest, CompletionResolveRequest,
 	SignatureHelpRequest,
 	DefinitionRequest, ReferencesRequest, ReferenceParams,
 	DocumentHighlightRequest,
 	DocumentSymbolRequest, WorkspaceSymbolRequest,
-	CodeActionRequest, CodeActionParams, CodeLensOptions,
-	CodeLensRequest, CodeLensParams, CodeLensResolveRequest,
+	CodeActionRequest, CodeActionParams,CodeLensRequest, CodeLensParams, CodeLensResolveRequest,
 	DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
 	DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams,
 	RenameRequest, RenameParams,
@@ -99,7 +81,7 @@ export namespace Files {
 }
 
 interface ConnectionState {
-	__textDocumentSync: TextDocumentSyncKind;
+	__textDocumentSync: TextDocumentSyncKind | undefined;
 }
 
 /**
@@ -220,6 +202,14 @@ export class TextDocuments {
 	 * @param connection The connection to listen on.
 	 */
 	public listen(connection: IConnection): void {
+		interface UpdateableDocument extends TextDocument {
+			update(event: TextDocumentContentChangeEvent, version: number): void;
+		}
+
+		function isUpdateableDocument(value: TextDocument): value is UpdateableDocument {
+			return Is.func((value as UpdateableDocument).update);
+		}
+
 		(<ConnectionState><any>connection).__textDocumentSync = TextDocumentSyncKind.Full;
 		connection.onDidOpenTextDocument((event: DidOpenTextDocumentParams) => {
 			let td = event.textDocument;
@@ -231,11 +221,11 @@ export class TextDocuments {
 		connection.onDidChangeTextDocument((event: DidChangeTextDocumentParams) => {
 			let td = event.textDocument;
 			let changes = event.contentChanges;
-			let last: TextDocumentContentChangeEvent = changes.length > 0 ? changes[changes.length - 1] : null;
+			let last: TextDocumentContentChangeEvent | undefined = changes.length > 0 ? changes[changes.length - 1] : undefined;
 			if (last) {
 				let document = this._documents[td.uri];
-				if (document && Is.func(document['update'])) {
-					(<any>document).update(last, td.version);
+				if (document && isUpdateableDocument(document)) {
+					document.update(last, td.version);
 					this._onDidChangeContent.fire(Object.freeze({ document }));
 				}
 			}
@@ -257,6 +247,8 @@ export class TextDocuments {
 			let document = this._documents[event.textDocument.uri];
 			if (document && this._willSaveWaitUntil) {
 				return this._willSaveWaitUntil(Object.freeze({ document, reason: event.reason }), token);
+			} else {
+				return [];
 			}
 		});
 		connection.onDidSaveTextDocument((event: DidSaveTextDocumentParams) => {
@@ -320,28 +312,28 @@ export interface RemoteConsole {
 	 *
 	 * @param message The message to show.
 	 */
-	error(message: string);
+	error(message: string): void;
 
 	/**
 	 * Show a warning message.
 	 *
 	 * @param message The message to show.
 	 */
-	warn(message: string);
+	warn(message: string): void;
 
 	/**
 	 * Show an information message.
 	 *
 	 * @param message The message to show.
 	 */
-	info(message: string);
+	info(message: string): void;
 
 	/**
 	 * Log a message.
 	 *
 	 * @param message The message to log.
 	 */
-	log(message: string);
+	log(message: string): void;
 }
 
 /**
@@ -354,7 +346,7 @@ export interface RemoteWindow {
 	 *
 	 * @param message The message to show.
 	 */
-	showErrorMessage(message: string);
+	showErrorMessage(message: string): void;
 	showErrorMessage<T extends MessageActionItem>(message: string, ...actions: T[]): Thenable<T>;
 
 	/**
@@ -362,7 +354,7 @@ export interface RemoteWindow {
 	 *
 	 * @param message The message to show.
 	 */
-	showWarningMessage(message: string);
+	showWarningMessage(message: string): void;
 	showWarningMessage<T extends MessageActionItem>(message: string, ...actions: T[]): Thenable<T>;
 
 	/**
@@ -370,7 +362,7 @@ export interface RemoteWindow {
 	 *
 	 * @param message The message to show.
 	 */
-	showInformationMessage(message: string);
+	showInformationMessage(message: string): void;
 	showInformationMessage<T extends MessageActionItem>(message: string, ...actions: T[]): Thenable<T>;
 }
 
@@ -451,7 +443,7 @@ class BulkUnregistrationImpl implements BulkUnregistration {
 
 	private _unregistrations: Map<string, Unregistration> = new Map<string, Unregistration>();
 
-	constructor(private _connection: MessageConnection, private _console: RemoteConsole, unregistrations: Unregistration[]) {
+	constructor(private _connection: MessageConnection | undefined, private _console: RemoteConsole | undefined, unregistrations: Unregistration[]) {
 		unregistrations.forEach(unregistration => {
 			this._unregistrations.set(unregistration.method, unregistration);
 		});
@@ -478,8 +470,8 @@ class BulkUnregistrationImpl implements BulkUnregistration {
 		let params: UnregistrationParams = {
 			unregisterations: unregistrations
 		};
-		this._connection.sendRequest(UnregistrationRequest.type, params).then(undefined, (error) => {
-			this._console.info(`Bulk unregistration failed.`);
+		this._connection!.sendRequest(UnregistrationRequest.type, params).then(undefined, (_error) => {
+			this._console!.info(`Bulk unregistration failed.`);
 		});
 	}
 
@@ -494,10 +486,10 @@ class BulkUnregistrationImpl implements BulkUnregistration {
 		let params: UnregistrationParams = {
 			unregisterations: [unregistration]
 		}
-		this._connection.sendRequest(UnregistrationRequest.type, params).then(() => {
+		this._connection!.sendRequest(UnregistrationRequest.type, params).then(() => {
 			this._unregistrations.delete(method);
-		}, (error) => {
-			this._console.info(`Unregistering request handler for ${unregistration.id} failed.`);
+		}, (_error) => {
+			this._console!.info(`Unregistering request handler for ${unregistration.id} failed.`);
 		});
 		return true;
 	}
@@ -610,7 +602,7 @@ class RemoteClientImpl implements RemoteClient {
 		}
 	}
 
-	private registerSingle1<RO>(unregistration: BulkUnregistrationImpl, type: string | RPCMessageType, registerOptions: any): Thenable<Disposable> {
+	private registerSingle1(unregistration: BulkUnregistrationImpl, type: string | RPCMessageType, registerOptions: any): Thenable<Disposable> {
 		const method = Is.string(type) ? type : type.method;
 		const id = UUID.generateUuid();
 		let params: RegistrationParams = {
@@ -619,25 +611,25 @@ class RemoteClientImpl implements RemoteClient {
 		if (!unregistration.isAttached) {
 			unregistration.attach(this._connection, this._console);
 		}
-		return this._connection.sendRequest(RegistrationRequest.type, params).then((result) => {
+		return this._connection.sendRequest(RegistrationRequest.type, params).then((_result) => {
 			unregistration.add({ id: id, method: method });
 			return unregistration;
-		}, (error) => {
+		}, (_error) => {
 			this._console.info(`Registering request handler for ${method} failed.`);
 		});
 	}
 
-	private registerSingle2<RO>(type: string | RPCMessageType, registerOptions: any): Thenable<Disposable> {
+	private registerSingle2(type: string | RPCMessageType, registerOptions: any): Thenable<Disposable> {
 		const method = Is.string(type) ? type : type.method;
 		const id = UUID.generateUuid();
 		let params: RegistrationParams = {
 			registrations: [{ id, method, registerOptions: registerOptions || {} }]
 		}
-		return this._connection.sendRequest(RegistrationRequest.type, params).then((result) => {
+		return this._connection.sendRequest(RegistrationRequest.type, params).then((_result) => {
 			return Disposable.create(() => {
 				this.unregisterSingle(id, method);
 			});
-		}, (error) => {
+		}, (_error) => {
 			this._console.info(`Registering request handler for ${method} failed.`);
 		});
 	}
@@ -647,7 +639,7 @@ class RemoteClientImpl implements RemoteClient {
 			unregisterations: [{ id, method }]
 		};
 
-		return this._connection.sendRequest(UnregistrationRequest.type, params).then(undefined, (error) => {
+		return this._connection.sendRequest(UnregistrationRequest.type, params).then(undefined, (_error) => {
 			this._console.info(`Unregistering request handler for ${id} failed.`);
 		});
 	}
@@ -656,7 +648,7 @@ class RemoteClientImpl implements RemoteClient {
 		let params = registrations.asRegistrationParams();
 		return this._connection.sendRequest(RegistrationRequest.type, params).then(() => {
 			return new BulkUnregistrationImpl(this._connection, this._console, params.registrations.map(registration => { return { id: registration.id, method: registration.method } }));
-		}, (error) => {
+		}, (_error) => {
 			this._console.info(`Bulk registeration failed.`);
 		});
 	}
@@ -729,7 +721,7 @@ class TracerImpl implements Tracer {
 		}
 		this._connection.sendNotification(LogTraceNotification.type, {
 			message: message,
-			verbose: this._trace === Trace.Verbose ? verbose : null
+			verbose: this._trace === Trace.Verbose ? verbose : undefined
 		});
 	}
 }
@@ -1113,7 +1105,7 @@ export function createConnection(reader: MessageReader, writer: MessageWriter): 
 export function createConnection(): IConnection;
 export function createConnection(input?: any, output?: any): IConnection {
 	if (!input && !output && process.argv.length > 2) {
-		let port = void 0;
+		let port: number | undefined = void 0;
 		let argv = process.argv.slice(2);
 		for (let i = 0; i < argv.length; i++) {
 			let arg = argv[i];
@@ -1182,9 +1174,9 @@ export function createConnection(input?: any, output?: any): IConnection {
 		}
 	}
 
-	let shutdownHandler: RequestHandler0<void, void> = null;
-	let initializeHandler: RequestHandler<InitializeParams, InitializeResult, InitializeError> = null;
-	let exitHandler: NotificationHandler0 = null;
+	let shutdownHandler: RequestHandler0<void, void> | undefined = undefined;
+	let initializeHandler: RequestHandler<InitializeParams, InitializeResult, InitializeError> | undefined = undefined;
+	let exitHandler: NotificationHandler0 | undefined = undefined;
 	let protocolConnection: IConnection & ConnectionState = {
 		listen: (): void => connection.listen(),
 
