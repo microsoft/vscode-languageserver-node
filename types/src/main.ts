@@ -1220,7 +1220,7 @@ export class DocumentLink {
 	/**
 	 * The uri this link points to.
 	 */
-	target: string;
+	target?: string;
 }
 
 /**
@@ -1231,7 +1231,7 @@ export namespace DocumentLink {
 	/**
 	 * Creates a new DocumentLink literal.
 	 */
-	export function create(range: Range, target: string): DocumentLink {
+	export function create(range: Range, target?: string): DocumentLink {
 		return { range, target };
 	}
 

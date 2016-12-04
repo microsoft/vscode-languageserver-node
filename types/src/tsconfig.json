@@ -5,7 +5,7 @@
 		"sourceMap": false,
 		"declaration": true,
 		"stripInternal": true,
-		"lib": [ "es5" ],
+		"lib": [ "es2015" ],
 		"outDir": "../lib",
 		"strictNullChecks": true,
 		"noImplicitAny": true,
