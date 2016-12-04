@@ -31,8 +31,8 @@ suite('Protocol Converter', () => {
 		strictEqual(result.line, position.line);
 		strictEqual(result.character, position.character);
 
-		strictEqual(p2c.asPosition(null), null);
-		strictEqual(p2c.asPosition(void 0), void 0);
+		strictEqual(p2c.asPosition(null), undefined);
+		strictEqual(p2c.asPosition(undefined), undefined);
 	});
 
 	test('Range Converter', () => {
@@ -45,7 +45,7 @@ suite('Protocol Converter', () => {
 		strictEqual(result.end.line, end.line);
 		strictEqual(result.end.character, end.character);
 
-		strictEqual(p2c.asRange(null), null);
+		strictEqual(p2c.asRange(null), undefined);
 		strictEqual(p2c.asRange(undefined), undefined);
 	});
 
@@ -83,7 +83,7 @@ suite('Protocol Converter', () => {
 
 	test('Hover', () => {
 		strictEqual(p2c.asHover(undefined), undefined);
-		strictEqual(p2c.asHover(null), null);
+		strictEqual(p2c.asHover(null), undefined);
 
 		let hover: proto.Hover = {
 			contents: 'hover'
@@ -158,7 +158,7 @@ suite('Protocol Converter', () => {
 		ok(p2c.asTextEdits([edit]).every(elem => elem instanceof vscode.TextEdit));
 
 		strictEqual(p2c.asTextEdits(undefined), undefined);
-		strictEqual(p2c.asTextEdits(null), null);
+		strictEqual(p2c.asTextEdits(null), undefined);
 		deepEqual(p2c.asTextEdits([]), []);
 	});
 
@@ -267,7 +267,7 @@ suite('Protocol Converter', () => {
 		strictEqual(result['items'][0].label, 'item');
 
 		strictEqual(p2c.asCompletionResult(undefined), undefined);
-		strictEqual(p2c.asCompletionResult(null), null);
+		strictEqual(p2c.asCompletionResult(null), undefined);
 		deepEqual(p2c.asCompletionResult([]), []);
 	});
 
@@ -330,12 +330,12 @@ suite('Protocol Converter', () => {
 		strictEqual(result.activeParameter, 2);
 
 		strictEqual(p2c.asSignatureHelp(undefined), undefined);
-		strictEqual(p2c.asSignatureHelp(null), null);
+		strictEqual(p2c.asSignatureHelp(null), undefined);
 	});
 
 	test('Location', () => {
 		strictEqual(p2c.asLocation(undefined), undefined);
-		strictEqual(p2c.asLocation(null), null);
+		strictEqual(p2c.asLocation(null), undefined);
 
 		let start: proto.Position = { line: 1, character: 2 };
 		let end: proto.Position = { line: 8, character: 9 };
@@ -367,7 +367,7 @@ suite('Protocol Converter', () => {
 		ok(array.every(value => value instanceof vscode.Location));
 
 		strictEqual(p2c.asDefinitionResult(undefined), undefined);
-		strictEqual(p2c.asDefinitionResult(null), null);
+		strictEqual(p2c.asDefinitionResult(null), undefined);
 		deepEqual(p2c.asDefinitionResult([]), []);
 	});
 
@@ -395,7 +395,7 @@ suite('Protocol Converter', () => {
 
 		ok(p2c.asDocumentHighlights([documentHighlight]).every(value => value instanceof vscode.DocumentHighlight));
 		strictEqual(p2c.asDocumentHighlights(undefined), undefined);
-		strictEqual(p2c.asDocumentHighlights(null), null);
+		strictEqual(p2c.asDocumentHighlights(null), undefined);
 		deepEqual(p2c.asDocumentHighlights([]), []);
 	});
 
@@ -413,7 +413,7 @@ suite('Protocol Converter', () => {
 
 		ok(p2c.asDocumentLinks([documentLink]).every(value => value instanceof vscode.DocumentLink));
 		strictEqual(p2c.asDocumentLinks(undefined), undefined);
-		strictEqual(p2c.asDocumentLinks(null), null);
+		strictEqual(p2c.asDocumentLinks(null), undefined);
 		deepEqual(p2c.asDocumentLinks([]), []);
 	});
 
@@ -442,7 +442,7 @@ suite('Protocol Converter', () => {
 
 		ok(p2c.asSymbolInformations([symbolInformation]).every(value => value instanceof vscode.SymbolInformation));
 		strictEqual(p2c.asSymbolInformations(undefined), undefined);
-		strictEqual(p2c.asSymbolInformations(null), null);
+		strictEqual(p2c.asSymbolInformations(null), undefined);
 		deepEqual(p2c.asSymbolInformations([]), []);
 	});
 
@@ -457,7 +457,7 @@ suite('Protocol Converter', () => {
 
 		ok(p2c.asCommands([command]).every(elem => !!elem.title && !!elem.command));
 		strictEqual(p2c.asCommands(undefined), undefined);
-		strictEqual(p2c.asCommands(null), null);
+		strictEqual(p2c.asCommands(null), undefined);
 		deepEqual(p2c.asCommands([]), []);
 	});
 
@@ -474,7 +474,7 @@ suite('Protocol Converter', () => {
 
 		ok(p2c.asCodeLenses([codeLens]).every(elem => elem instanceof vscode.CodeLens));
 		strictEqual(p2c.asCodeLenses(undefined), undefined);
-		strictEqual(p2c.asCodeLenses(null), null);
+		strictEqual(p2c.asCodeLenses(null), undefined);
 		deepEqual(p2c.asCodeLenses([]), []);
 	});
 
@@ -505,7 +505,7 @@ suite('Protocol Converter', () => {
 		strictEqual(edits[0].newText, 'replace');
 
 		strictEqual(p2c.asWorkspaceEdit(undefined), undefined);
-		strictEqual(p2c.asWorkspaceEdit(null), null);
+		strictEqual(p2c.asWorkspaceEdit(null), undefined);
 	});
 
 	test('Uri Rewrite', () => {
