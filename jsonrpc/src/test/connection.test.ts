@@ -17,7 +17,7 @@ import * as hostConnection from '../main';
 
 interface TestWritable extends Writable {
 	constructor: Function;
-	readonly data: string;
+	data: string;
 }
 
 interface TestWritableConstructor {
@@ -25,7 +25,7 @@ interface TestWritableConstructor {
 }
 
 let TestWritable: TestWritableConstructor = function(): TestWritableConstructor {
-	function TestWritable(this: any): void {
+	function TestWritable(this: TestWritable): void {
 		Writable.call(this);
 		this.data = '';
 	}

@@ -6,7 +6,7 @@
 		"sourceMap": false,
 		"declaration": true,
 		"stripInternal": true,
-		"lib": [ "es5", "es2015.promise" ],
+		"lib": [ "es2015", "es2015.promise" ],
 		"outDir": "../lib",
 		"strictNullChecks": true,
 		"noImplicitAny": true,
