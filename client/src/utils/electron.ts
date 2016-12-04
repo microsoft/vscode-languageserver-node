@@ -51,7 +51,7 @@ function generatePatchedEnv(env:any, stdInPipeName:string, stdOutPipeName:string
 	return newEnv;
 }
 
-export function fork(modulePath: string, args: string[], options: IForkOptions, callback:(error:any, cp:cp.ChildProcess)=>void): void {
+export function fork(modulePath: string, args: string[], options: IForkOptions, callback:(error: any, cp: cp.ChildProcess | undefined) => void): void {
 
 	var callbackCalled = false;
 	var resolve = (result: cp.ChildProcess) => {
@@ -59,14 +59,14 @@ export function fork(modulePath: string, args: string[], options: IForkOptions, 
 			return;
 		}
 		callbackCalled = true;
-		callback(null, result);
+		callback(undefined, result);
 	};
 	var reject = (err:any) => {
 		if (callbackCalled) {
 			return;
 		}
 		callbackCalled = true;
-		callback(err, null);
+		callback(err, undefined);
 	};
 
 	// Generate two unique pipe names
@@ -81,7 +81,7 @@ export function fork(modulePath: string, args: string[], options: IForkOptions, 
 	var server = net.createServer((stream) => {
 		// The child process will write exactly one chunk with content `ready` when it has installed a listener to the stdin pipe
 
-		stream.once('data', (chunk:Buffer) => {
+		stream.once('data', (_chunk: Buffer) => {
 			// The child process is sending me the `ready` chunk, time to connect to the stdin pipe
 			childProcess.stdin = <any>net.connect(stdInPipeName);
 

@@ -4,20 +4,18 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { RequestType, RequestType0, NotificationType, NotificationType0, ResponseError } from 'vscode-jsonrpc';
+import { RequestType, RequestType0, NotificationType, NotificationType0 } from 'vscode-jsonrpc';
 
 import {
-	TextDocument, TextDocumentChangeEvent, TextDocumentContentChangeEvent, TextDocumentSaveReason,
-	Range, Position, Location, Diagnostic, DiagnosticSeverity, Command,
-	TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange, WorkspaceSymbolParams,
+	TextDocumentContentChangeEvent,
+	Range, Position, Location, Diagnostic, Command,
+	TextEdit, WorkspaceEdit, WorkspaceSymbolParams,
 	TextDocumentIdentifier, VersionedTextDocumentIdentifier, TextDocumentItem,
-	CompletionItemKind, CompletionItem, CompletionList,
-	Hover, MarkedString,
-	SignatureHelp, SignatureInformation, ParameterInformation,
+	CompletionItem, CompletionList,
+	Hover, SignatureHelp,
 	Definition, ReferenceContext,
-	DocumentHighlight, DocumentHighlightKind, DocumentSymbolParams,
-	SymbolInformation, SymbolKind,
-	CodeLens, CodeActionContext,
+	DocumentHighlight, DocumentSymbolParams,
+	SymbolInformation, CodeLens, CodeActionContext,
 	FormattingOptions, DocumentLink
 } from 'vscode-languageserver-types';
 
@@ -381,7 +379,7 @@ export interface InitializeParams {
 	 * The rootPath of the workspace. Is null
 	 * if no folder is open.
 	 */
-	rootPath: string;
+	rootPath: string | null;
 
 	/**
 	 * The capabilities provided by the client (editor)
@@ -635,7 +633,7 @@ export interface DidChangeTextDocumentOptions extends DocumentOptions {
 	/**
 	 * How documents are synced to the server.
 	 */
-	syncKind?: number;
+	syncKind: number;
 }
 
 /**

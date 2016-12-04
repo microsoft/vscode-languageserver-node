@@ -15,7 +15,7 @@ var log = (function() {
 	}
 	var isFirst = true;
 	var LOG_LOCATION = 'C:\\stdFork.log';
-	return function log(str) {
+	return function log(str: string) {
 		if (isFirst) {
 			isFirst = false;
 			fs.writeFileSync(LOG_LOCATION, str + '\n');
@@ -48,13 +48,13 @@ log('ATOM_SHELL_INTERNAL_RUN_AS_NODE: ' + process.env['ATOM_SHELL_INTERNAL_RUN_A
 	// handle process.stderr
 	(<any>process).__defineGetter__('stderr', function() { return stdOutStream; });
 
-	var fsWriteSyncString = function(fd, str, position, encoding) {
+	var fsWriteSyncString = function(fd: number, str:  string, _position: number, encoding: string) {
 		//  fs.writeSync(fd, string[, position[, encoding]]);
 		var buf = new Buffer(str, encoding || 'utf8');
 		return fsWriteSyncBuffer(fd, buf, 0, buf.length);
 	};
 
-	var fsWriteSyncBuffer = function(fd, buffer, off, len) {
+	var fsWriteSyncBuffer = function(_fd: number, buffer: any, off: number, len: number) {
 		off = Math.abs(off | 0);
 		len = Math.abs(len | 0);
 
@@ -86,7 +86,7 @@ log('ATOM_SHELL_INTERNAL_RUN_AS_NODE: ' + process.env['ATOM_SHELL_INTERNAL_RUN_A
 
 	// handle fs.writeSync(1, ...)
 	var originalWriteSync = fs.writeSync;
-	fs.writeSync = function(fd, data, position, encoding) {
+	fs.writeSync = function(fd: number, data: any, _position: any, _encoding: string) {
 		if (fd !== 1) {
 			return originalWriteSync.apply(fs, arguments);
 		}
@@ -114,7 +114,7 @@ log('ATOM_SHELL_INTERNAL_RUN_AS_NODE: ' + process.env['ATOM_SHELL_INTERNAL_RUN_A
 (function() {
 
 	// Begin listening to stdin pipe
-	var server = net.createServer(function(stream) {
+	var server = net.createServer(function(stream: any) {
 		// Stop accepting new connections, keep the existing one alive
 		server.close();
 

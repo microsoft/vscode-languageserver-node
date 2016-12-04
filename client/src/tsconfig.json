@@ -7,7 +7,13 @@
 		"inlineSources": false,
 		"declaration": true,
 		"stripInternal": true,
-		"lib": [ "es6" ],
-		"outDir": "../lib"
+		"lib": [ "es2016" ],
+		"outDir": "../lib",
+		"strictNullChecks": true,
+		"noImplicitAny": true,
+		"noImplicitReturns": true,
+		"noImplicitThis": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true
 	}
 }

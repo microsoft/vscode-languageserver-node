@@ -8,59 +8,43 @@ import * as cp from 'child_process';
 import ChildProcess = cp.ChildProcess;
 
 import {
-		workspace as Workspace, window as Window, languages as Languages, extensions as Extensions, commands as Commands,
+		workspace as Workspace, window as Window, languages as Languages, commands as Commands,
 		TextDocumentChangeEvent, TextDocument, Disposable, OutputChannel,
-		FileSystemWatcher, Uri, DiagnosticCollection, DocumentSelector as VDocumentSelector,
-		CancellationToken, Hover as VHover, Position as VPosition, Location as VLocation, Range as VRange,
+		FileSystemWatcher, DiagnosticCollection,
+		CancellationToken, Position as VPosition, Location as VLocation, Range as VRange,
 		CompletionItem as VCompletionItem, CompletionList as VCompletionList, SignatureHelp as VSignatureHelp, Definition as VDefinition, DocumentHighlight as VDocumentHighlight,
 		SymbolInformation as VSymbolInformation, CodeActionContext as VCodeActionContext, Command as VCommand, CodeLens as VCodeLens,
 		FormattingOptions as VFormattingOptions, TextEdit as VTextEdit, WorkspaceEdit as VWorkspaceEdit, MessageItem,
-		DocumentLink as VDocumentLink, TextDocumentWillSaveEvent, TextDocumentSaveReason as VTextDocumentSaveReason
+		Hover as VHover,
+		DocumentLink as VDocumentLink, TextDocumentWillSaveEvent
 } from 'vscode';
 
 import {
-		Message, MessageType as RPCMessageType, MessageConnection, Logger, createMessageConnection, ErrorCodes, ResponseError,
-		RequestType, RequestType0, RequestType1, RequestType2, RequestType3, RequestType4,
-		RequestType5, RequestType6, RequestType7, RequestType8, RequestType9,
-		RequestHandler, RequestHandler0, RequestHandler1, RequestHandler2, RequestHandler3,
-		RequestHandler4, RequestHandler5, RequestHandler6, RequestHandler7, RequestHandler8,
-		RequestHandler9, GenericRequestHandler,
-		NotificationType, NotificationType0, NotificationType1, NotificationType2, NotificationType3,
-		NotificationType4, NotificationType5, NotificationType6, NotificationType7, NotificationType8,
-		NotificationType9,
-		NotificationHandler, NotificationHandler0, NotificationHandler1, NotificationHandler2,
-		NotificationHandler3, NotificationHandler4, NotificationHandler5, NotificationHandler6,
-		NotificationHandler7, NotificationHandler8, NotificationHandler9, GenericNotificationHandler,
+		Message, MessageType as RPCMessageType, Logger, createMessageConnection, ErrorCodes, ResponseError,
+		RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler,
+		NotificationType, NotificationType0,
+		NotificationHandler, NotificationHandler0, GenericNotificationHandler,
 		MessageReader, IPCMessageReader, MessageWriter, IPCMessageWriter, Trace, Tracer, Event, Emitter
 } from 'vscode-jsonrpc';
 
 import {
-		Range, Position, Location, Diagnostic, DiagnosticSeverity, Command,
-		TextEdit, WorkspaceEdit, WorkspaceChange, TextEditChange,
-		TextDocumentIdentifier, CompletionItemKind, CompletionItem, CompletionList,
-		Hover, MarkedString, WorkspaceSymbolParams, DocumentSymbolParams,
-		SignatureHelp, SignatureInformation, ParameterInformation,
-		Definition, CodeActionContext,
-		DocumentHighlight, DocumentHighlightKind,
-		SymbolInformation, SymbolKind,
-		CodeLens,
-		FormattingOptions, DocumentLink
+		WorkspaceEdit
 } from 'vscode-languageserver-types';
 
 
 import {
-		RegistrationRequest, Registration, RegistrationParams, UnregistrationRequest, Unregistration, UnregistrationParams, DocumentOptions,
-		InitializeRequest, InitializeParams, InitializeResult, InitializeError, ClientCapabilities, ServerCapabilities, TextDocumentSyncKind,
-		InitializedNotification, InitializedParams, ShutdownRequest, ExitNotification,
+		RegistrationRequest, RegistrationParams, UnregistrationRequest, UnregistrationParams, DocumentOptions,
+		InitializeRequest, InitializeParams, InitializeResult, InitializeError, ServerCapabilities, TextDocumentSyncKind,
+		InitializedNotification, ShutdownRequest, ExitNotification,
 		LogMessageNotification, LogMessageParams, MessageType,
-		ShowMessageNotification, ShowMessageParams, ShowMessageRequest, ShowMessageRequestParams,
+		ShowMessageNotification, ShowMessageParams, ShowMessageRequest,
 		TelemetryEventNotification,
 		DidChangeConfigurationNotification, DidChangeConfigurationParams,
-		TextDocumentPositionParams, DocumentSelector, DocumentFilter,
+		DocumentSelector,
 		DidOpenTextDocumentNotification, DidOpenTextDocumentParams,
 		DidChangeTextDocumentNotification, DidChangeTextDocumentParams, DidChangeTextDocumentOptions,
 		DidCloseTextDocumentNotification, DidCloseTextDocumentParams,
-		DidSaveTextDocumentNotification, DidSaveTextDocumentParams, SaveOptions,
+		DidSaveTextDocumentNotification, DidSaveTextDocumentParams, /* SaveOptions, */
 		WillSaveTextDocumentNotification, WillSaveTextDocumentWaitUntilRequest, WillSaveTextDocumentParams,
 		DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
 		PublishDiagnosticsNotification, PublishDiagnosticsParams,
@@ -73,8 +57,8 @@ import {
 		DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
 		DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams, DocumentOnTypeFormattingOptions,
 		RenameRequest, RenameParams,
-		DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkParams, DocumentLinkOptions,
-		ExecuteCommandRequest, ExecuteCommandParams, ExecuteCommandResponse, ExecuteCommandOptions,
+		DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkOptions,
+		ExecuteCommandRequest, ExecuteCommandParams, ExecuteCommandOptions,
 		ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse
 } from './protocol';
 
@@ -98,7 +82,7 @@ export { Converter as Protocol2CodeConverter } from './protocolConverter';
 export * from 'vscode-languageserver-types';
 export * from './protocol';
 
-declare var v8debug;
+declare var v8debug: any;
 
 interface IConnection {
 
@@ -182,7 +166,7 @@ function createConnection(input: any, output: any, errorHandler: ConnectionError
 		listen: (): void => connection.listen(),
 
 		sendRequest: <R>(type: string | RPCMessageType, ...params: any[]): Thenable<R> => connection.sendRequest(is.string(type) ? type : type.method, ...params),
-		onRequest: <P, R, E>(type: string | RPCMessageType, handler: GenericRequestHandler<R, E>): void => connection.onRequest(is.string(type) ? type : type.method, handler),
+		onRequest: <R, E>(type: string | RPCMessageType, handler: GenericRequestHandler<R, E>): void => connection.onRequest(is.string(type) ? type : type.method, handler),
 
 		sendNotification: (type: string | RPCMessageType, params?: any): void => connection.sendNotification(is.string(type) ? type : type.method, params),
 		onNotification: (type: string | RPCMessageType, handler: GenericNotificationHandler): void => connection.onNotification(is.string(type) ? type : type.method, handler),
@@ -311,7 +295,7 @@ class DefaultErrorHandler implements ErrorHandler {
 		this.restarts = [];
 	}
 
-	public error(error: Error, message: Message, count): ErrorAction {
+	public error(_error: Error, _message: Message, count: number): ErrorAction {
 		if (count && count <= 3) {
 			return ErrorAction.Continue;
 		}
@@ -411,7 +395,7 @@ interface CreateParamsSignature<E, P> {
 
 class DocumentNotifiactions<P, E> implements FeatureHandler<DocumentOptions> {
 
-	private _listener: Disposable = null;
+	private _listener: Disposable | undefined;
 	protected _selectors: Map<string, DocumentSelector> = new Map<string, DocumentSelector>();
 
 	public static textDocumentFilter(selectors: IterableIterator<DocumentOptions>, textDocument: TextDocument): boolean {
@@ -446,14 +430,14 @@ class DocumentNotifiactions<P, E> implements FeatureHandler<DocumentOptions> {
 		}
 	}
 
-	protected notificationSent(data: E): void {
+	protected notificationSent(_data: E): void {
 	}
 
 	public unregister(id: string): void {
 		this._selectors.delete(id);
 		if (this._selectors.size === 0) {
-			this._listener.dispose();
-			this._listener = null;
+			this._listener!.dispose();
+			this._listener = undefined;
 		}
 	}
 
@@ -483,7 +467,7 @@ class DidOpenTextDocumentFeature extends DocumentNotifiactions<DidOpenTextDocume
 			if (this._syncedDocuments.has(uri)) {
 				return;
 			}
-			if (Languages.match(data.registerOptions.documentSelector, textDocument)) {
+			if (Languages.match(data.registerOptions.documentSelector!, textDocument)) {
 				this._client.sendNotification(this._type, this._createParams(textDocument));
 				this._syncedDocuments.set(uri, textDocument);
 			}
@@ -512,11 +496,11 @@ class DidCloseTextDocumentFeature extends DocumentNotifiactions<DidCloseTextDocu
 	}
 
 	public unregister(id: string): void {
-		let selector = this._selectors.get(id);
+		let selector = this._selectors.get(id)!;
 		super.unregister(id);
 		let selectors = this._selectors.values();
 		this._syncedDocuments.forEach((textDocument) => {
-			if (Languages.match(selector, textDocument) && !this._selectorFilter(selectors, textDocument)) {
+			if (Languages.match(selector, textDocument) && !this._selectorFilter!(selectors, textDocument)) {
 				this._client.sendNotification(this._type, this._createParams(textDocument));
 				this._syncedDocuments.delete(textDocument.uri.toString());
 			}
@@ -527,12 +511,12 @@ class DidCloseTextDocumentFeature extends DocumentNotifiactions<DidCloseTextDocu
 interface DidChangeTextDocumentData {
 	documentSelector: DocumentSelector;
 	syncKind: TextDocumentSyncKind;
-	delayer: Delayer<void>;
+	delayer?: Delayer<void>;
 }
 
 class DidChangeTextDocumentFeature implements FeatureHandler<DidChangeTextDocumentOptions> {
 
-	private _listener: Disposable = null;
+	private _listener: Disposable | undefined;
 	private _changeData: Map<string, DidChangeTextDocumentData> = new Map<string, DidChangeTextDocumentData>();
 	private _forcingDelivery: boolean = false;
 
@@ -559,12 +543,11 @@ class DidChangeTextDocumentFeature implements FeatureHandler<DidChangeTextDocume
 	private callback(event: TextDocumentChangeEvent): void {
 		for (const changeData of this._changeData.values()) {
 			if (Languages.match(changeData.documentSelector, event.document)) {
-				let uri: string = event.document.uri.toString();
 				if (changeData.syncKind === TextDocumentSyncKind.Incremental) {
 					this._client.sendNotification(DidChangeTextDocumentNotification.type, this._client.code2ProtocolConverter.asChangeTextDocumentParams(event));
 					break;
 				} else if (changeData.syncKind === TextDocumentSyncKind.Full) {
-					changeData.delayer.trigger(() => {
+					changeData.delayer!.trigger(() => {
 						this._client.sendNotification(DidChangeTextDocumentNotification.type, this._client.code2ProtocolConverter.asChangeTextDocumentParams(event.document));
 					}, -1);
 					break;
@@ -576,8 +559,8 @@ class DidChangeTextDocumentFeature implements FeatureHandler<DidChangeTextDocume
 	public unregister(id: string): void {
 		this._changeData.delete(id);
 		if (this._changeData.size === 0) {
-			this._listener.dispose();
-			this._listener = null;
+			this._listener!.dispose();
+			this._listener = undefined;
 		}
 	}
 
@@ -607,7 +590,7 @@ class DidChangeTextDocumentFeature implements FeatureHandler<DidChangeTextDocume
 
 class WillSaveWaitUntilFeature implements FeatureHandler<DocumentOptions> {
 
-	private _listener: Disposable = null;
+	private _listener: Disposable | undefined;
 	private _selectors: Map<string, DocumentSelector> = new Map<string, DocumentSelector>();
 
 	constructor(private _client: LanguageClient) {
@@ -639,19 +622,20 @@ class WillSaveWaitUntilFeature implements FeatureHandler<DocumentOptions> {
 	public unregister(id: string): void {
 		this._selectors.delete(id);
 		if (this._selectors.size === 0) {
-			this._listener.dispose();
-			this._listener = null;
+			this._listener!.dispose();
+			this._listener = undefined;
 		}
 	}
 
 	public dispose(): void {
 		if (this._listener) {
 			this._listener.dispose();
-			this._listener = null;
+			this._listener = undefined;
 		}
 	}
 }
 
+/*
 class DidSaveTextDocumentFeature extends DocumentNotifiactions<DidSaveTextDocumentParams, TextDocument> {
 
 	private _includeContent: boolean;
@@ -665,10 +649,11 @@ class DidSaveTextDocumentFeature extends DocumentNotifiactions<DidSaveTextDocume
 	}
 
 	public register(data: RegistrationData<SaveOptions>): void {
-		this._includeContent = data.registerOptions.includeContent;
+		this._includeContent = !!data.registerOptions.includeContent;
 		super.register(data);
 	}
 }
+*/
 
 interface CreateProviderSignature<T extends DocumentOptions> {
 	(options: T): Disposable;
@@ -753,17 +738,17 @@ export class LanguageClient {
 
 	private _state: ClientState;
 	private _onReady: Promise<void>;
-	private _onReadyCallbacks: { resolve: () => void; reject: (error) => void; };
-	private _connectionPromise: Thenable<IConnection>;
-	private _resolvedConnection: IConnection;
-	private _childProcess: ChildProcess;
-	private _outputChannel: OutputChannel;
+	private _onReadyCallbacks: { resolve: () => void; reject: (error: any) => void; };
+	private _connectionPromise: Thenable<IConnection> | undefined;
+	private _resolvedConnection: IConnection | undefined;
+	private _childProcess: ChildProcess | undefined;
+	private _outputChannel: OutputChannel | undefined;
 	private _capabilites: ServerCapabilities;
 	private _configuration: Configuration;
 
-	private _listeners: Disposable[];
-	private _providers: Disposable[];
-	private _diagnostics: DiagnosticCollection;
+	private _listeners: Disposable[] | undefined;
+	private _providers: Disposable[] | undefined;
+	private _diagnostics: DiagnosticCollection | undefined;
 
 	private _fileEvents: FileEvent[];
 	private _fileEventDelayer: Delayer<void>;
@@ -779,7 +764,7 @@ export class LanguageClient {
 
 	public constructor(name: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, forceDebug?: boolean);
 	public constructor(id: string, name: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, forceDebug?: boolean);
-	public constructor(arg1: string, arg2: ServerOptions | string, arg3: LanguageClientOptions | ServerOptions, arg4: boolean | LanguageClientOptions, arg5?: boolean) {
+	public constructor(arg1: string, arg2: ServerOptions | string, arg3: LanguageClientOptions | ServerOptions, arg4?: boolean | LanguageClientOptions, arg5?: boolean) {
 		let clientOptions: LanguageClientOptions;
 		let forceDebug: boolean;
 		if (is.string(arg2)) {
@@ -787,7 +772,7 @@ export class LanguageClient {
 			this._name = arg2;
 			this._serverOptions = arg3 as ServerOptions;
 			clientOptions = arg4 as LanguageClientOptions;
-			forceDebug = arg5;
+			forceDebug = !!arg5;
 		} else {
 			this._id = arg1.toLowerCase();
 			this._name = arg1;
@@ -804,14 +789,14 @@ export class LanguageClient {
 		this._forceDebug = forceDebug;
 
 		this.state = ClientState.Initial;
-		this._connectionPromise = null;
-		this._resolvedConnection = null;
-		this._childProcess = null;
-		this._outputChannel = null;
+		this._connectionPromise = undefined;
+		this._resolvedConnection = undefined;
+		this._childProcess = undefined;
+		this._outputChannel = undefined;
 
-		this._listeners = null;
-		this._providers = null;
-		this._diagnostics = null;
+		this._listeners = undefined;
+		this._providers = undefined;
+		this._diagnostics = undefined;
 
 		this._fileEvents = [];
 		this._fileEventDelayer = new Delayer<void>(250);
@@ -860,7 +845,7 @@ export class LanguageClient {
 		}
 		this.forceDocumentSync();
 		try {
-			return this._resolvedConnection.sendRequest<R>(type, ...params);
+			return this._resolvedConnection!.sendRequest<R>(type, ...params);
 		} catch (error) {
 			this.error(`Sending request ${is.string(type) ? type : type.method} failed.`, error);
 			throw error;
@@ -870,12 +855,12 @@ export class LanguageClient {
 	public onRequest<R, E, RO>(type: RequestType0<R, E, RO>, handler: RequestHandler0<R, E>): void;
 	public onRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, handler: RequestHandler<P, R, E>): void;
 	public onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): void;
-	public onRequest<P, R, E>(type: string | RPCMessageType, handler: GenericRequestHandler<R, E>): void {
+	public onRequest<R, E>(type: string | RPCMessageType, handler: GenericRequestHandler<R, E>): void {
 		if (!this.isConnectionActive()) {
 			throw new Error('Language client is not ready yet');
 		}
 		try {
-			this._resolvedConnection.onRequest(type, handler);
+			this._resolvedConnection!.onRequest(type, handler);
 		} catch (error) {
 			this.error(`Registering request handler ${is.string(type) ? type : type.method} failed.`, error);
 			throw error;
@@ -892,7 +877,7 @@ export class LanguageClient {
 		}
 		this.forceDocumentSync();
 		try {
-			this._resolvedConnection.sendNotification(type, params);
+			this._resolvedConnection!.sendNotification(type, params);
 		} catch (error) {
 			this.error(`Sending notification ${is.string(type) ? type : type.method} failed.`, error);
 			throw error;
@@ -907,7 +892,7 @@ export class LanguageClient {
 			throw new Error('Language client is not ready yet');
 		}
 		try {
-			this._resolvedConnection.onNotification(type, handler);
+			this._resolvedConnection!.onNotification(type, handler);
 		} catch (error) {
 			this.error(`Registering notification handler ${is.string(type) ? type : type.method} failed.`, error);
 			throw error;
@@ -937,7 +922,7 @@ export class LanguageClient {
 		return this._outputChannel;
 	}
 
-	public get diagnostics(): DiagnosticCollection {
+	public get diagnostics(): DiagnosticCollection | undefined {
 		return this._diagnostics;
 	}
 
@@ -951,7 +936,7 @@ export class LanguageClient {
 			this.resolveConnection().then((connection) => {
 				connection.trace(value, this._tracer);
 			})
-		}, (error) => {
+		}, () => {
 		});
 	}
 
@@ -1069,7 +1054,7 @@ export class LanguageClient {
 				}
 			});
 			connection.onRequest(ShowMessageRequest.type, (params) => {
-				let messageFunc: <T extends MessageItem>(message: string, ...items: T[]) => Thenable<T> = null;
+				let messageFunc: <T extends MessageItem>(message: string, ...items: T[]) => Thenable<T>;
 				switch(params.type) {
 					case MessageType.Error:
 						messageFunc = Window.showErrorMessage;
@@ -1092,7 +1077,7 @@ export class LanguageClient {
 			this.initRegistrationHandlers(connection);
 			connection.listen();
 			// Error is handled in the intialize call.
-			this.initialize(connection).then(null, (error) => {});
+			this.initialize(connection).then(undefined, () => {});
 		}, (error) => {
 			this.state = ClientState.StartFailed;
 			this._onReadyCallbacks.reject(error);
@@ -1118,7 +1103,7 @@ export class LanguageClient {
 		let initOption = this._clientOptions.initializationOptions;
 		let initParams: InitializeParams = {
 			processId: process.pid,
-			rootPath: Workspace.rootPath,
+			rootPath: Workspace.rootPath ? Workspace.rootPath : null,
 			capabilities: {
 				dynamicRegistration: true,
 				workspace: {
@@ -1148,19 +1133,19 @@ export class LanguageClient {
 			this.hookConfigurationChanged(connection);
 			if (this._capabilites.textDocumentSync !== TextDocumentSyncKind.None && this._clientOptions.documentSelector) {
 				let selectorOptions: DocumentOptions = { documentSelector: this._clientOptions.documentSelector };
-				this._registeredHandlers.get(DidOpenTextDocumentNotification.type.method).register(
+				this._registeredHandlers.get(DidOpenTextDocumentNotification.type.method)!.register(
 					{ id: UUID.generateUuid(), registerOptions: selectorOptions }
 				);
-				this._registeredHandlers.get(DidChangeTextDocumentNotification.type.method).register(
+				this._registeredHandlers.get(DidChangeTextDocumentNotification.type.method)!.register(
 					{
 						id: UUID.generateUuid(),
 						registerOptions: Object.assign({}, selectorOptions, { syncKind: this._capabilites.textDocumentSync }) as DidChangeTextDocumentOptions
 					}
 				);
-				this._registeredHandlers.get(DidCloseTextDocumentNotification.type.method).register(
+				this._registeredHandlers.get(DidCloseTextDocumentNotification.type.method)!.register(
 					{ id: UUID.generateUuid(), registerOptions: selectorOptions }
 				);
-				this._registeredHandlers.get(DidSaveTextDocumentNotification.type.method).register(
+				this._registeredHandlers.get(DidSaveTextDocumentNotification.type.method)!.register(
 					{ id: UUID.generateUuid(), registerOptions: selectorOptions }
 				);
 			}
@@ -1177,7 +1162,7 @@ export class LanguageClient {
 				}
 			} else if (error instanceof ResponseError && error.data && error.data.retry) {
 				Window.showErrorMessage(error.message, { title: 'Retry', id: "retry"}).then(item => {
-					if (is.defined(item) && item.id === 'retry') {
+					if (item && item.id === 'retry') {
 						this.initialize(connection);
 					} else {
 						this.stop();
@@ -1198,7 +1183,7 @@ export class LanguageClient {
 	public stop(): Thenable<void> {
 		if (!this._connectionPromise) {
 			this.state = ClientState.Stopped;
-			return;
+			return Promise.resolve();
 		}
 		this.state = ClientState.Stopping;
 		this.cleanUp();
@@ -1208,10 +1193,10 @@ export class LanguageClient {
 				connection.exit();
 				connection.dispose();
 				this.state = ClientState.Stopped;
-				this._connectionPromise = null;
-				this._resolvedConnection = null;
+				this._connectionPromise = undefined;
+				this._resolvedConnection = undefined;
 				let toCheck = this._childProcess;
-				this._childProcess = null;
+				this._childProcess = undefined;
 				// Remove all markers
 				this.checkProcessDied(toCheck);
 			})
@@ -1221,30 +1206,16 @@ export class LanguageClient {
 	private cleanUp(diagnostics: boolean = true): void {
 		if (this._listeners) {
 			this._listeners.forEach(listener => listener.dispose());
-			this._listeners = null;
+			this._listeners = undefined;
 		}
 		if (this._providers) {
 			this._providers.forEach(provider => provider.dispose());
-			this._providers = null;
+			this._providers = undefined;
 		}
-		if (diagnostics) {
+		if (diagnostics && this._diagnostics) {
 			this._diagnostics.dispose();
-			this._diagnostics = null;
+			this._diagnostics = undefined;
 		}
-	}
-
-	private notifyConfigurationChanged(settings: any): void {
-		this.onReady().then(() => {
-			this.resolveConnection().then(connection => {
-				if (this.isConnectionActive()) {
-					connection.didChangeConfiguration({ settings });
-				}
-			}, (error) => {
-				this.error(`Syncing settings failed.`, JSON.stringify(error, null, 4));
-			});
-		}, (error) => {
-			this.error(`Syncing settings failed.`, JSON.stringify(error, null, 4));
-		});
 	}
 
 	private notifyFileEvent(event: FileEvent): void {
@@ -1270,7 +1241,7 @@ export class LanguageClient {
 	private handleDiagnostics(params: PublishDiagnosticsParams) {
 		let uri = this._p2c.asUri(params.uri);
 		let diagnostics = this._p2c.asDiagnostics(params.diagnostics);
-		this._diagnostics.set(uri, diagnostics);
+		this._diagnostics!.set(uri, diagnostics);
 	}
 
 	private createConnection(): Thenable<IConnection> {
@@ -1284,7 +1255,7 @@ export class LanguageClient {
 		}
 
 		function startedInDebugMode(): boolean {
-			let args = (process as any).execArgv;
+			let args: string[] = (process as any).execArgv;
 			if (args) {
 				return args.some((arg) => /^--debug=?/.test(arg) || /^--debug-brk=?/.test(arg));
 			};
@@ -1314,9 +1285,9 @@ export class LanguageClient {
 				}
 			});
 		}
-		let json: { command?: string; module?: string } = null;
+		let json: { command?: string; module?: string };
 		let runDebug= <{ run: any; debug: any;}>server;
-		if (is.defined(runDebug.run) || is.defined(runDebug.debug)) {
+		if (runDebug.run || runDebug.debug) {
 			// We are under debugging. So use debug as well.
 			if (typeof v8debug === 'object' || this._forceDebug || startedInDebugMode()) {
 				json = runDebug.debug;
@@ -1326,7 +1297,7 @@ export class LanguageClient {
 		} else {
 			json = server;
 		}
-		if (is.defined(json.module)) {
+		if (json.module) {
 			let node: NodeModule = <NodeModule>json;
 			if (node.runtime) {
 				let args: string[] = [];
@@ -1342,7 +1313,8 @@ export class LanguageClient {
 				execOptions.cwd = options.cwd || Workspace.rootPath;
 				execOptions.env = getEnvironment(options.env);
 				if (node.transport === TransportKind.ipc) {
-					execOptions.stdio = [null, null, null, 'ipc'];
+					// exec options not correctly typed in lib
+					execOptions.stdio = <any>[null, null, null, 'ipc'];
 					args.push('--node-ipc');
 				} else if (node.transport === TransportKind.stdio) {
 					args.push('--stdio');
@@ -1371,7 +1343,7 @@ export class LanguageClient {
 					options.execArgv = options.execArgv || [];
 					options.cwd = options.cwd || Workspace.rootPath;
 					electron.fork(node.module, args || [], options, (error, cp) => {
-						if (error) {
+						if (error || !cp) {
 							reject(error);
 						} else {
 							this._childProcess = cp;
@@ -1386,7 +1358,7 @@ export class LanguageClient {
 					});
 				});
 			}
-		} else if (is.defined(json.command)) {
+		} else if (json.command) {
 			let command: Executable = <Executable>json;
 			let options = command.options || {};
 			options.cwd = options.cwd || Workspace.rootPath;
@@ -1406,10 +1378,10 @@ export class LanguageClient {
 		if (this.state === ClientState.Stopping || this.state === ClientState.Stopped) {
 			return;
 		}
-		this._connectionPromise = null;
-		this._resolvedConnection = null;
-		this._childProcess = null;
-		let action = this._clientOptions.errorHandler.closed();
+		this._connectionPromise = undefined;
+		this._resolvedConnection = undefined;
+		this._childProcess = undefined;
+		let action = this._clientOptions.errorHandler!.closed();
 		if (action === CloseAction.DoNotRestart) {
 			this.error('Connection to server got closed. Server will not be restarted.');
 			this.state = ClientState.Stopped;
@@ -1423,14 +1395,14 @@ export class LanguageClient {
 	}
 
 	private handleConnectionError(error: Error, message: Message, count: number) {
-		let action = this._clientOptions.errorHandler.error(error, message, count);
+		let action = this._clientOptions.errorHandler!.error(error, message, count);
 		if (action === ErrorAction.Shutdown) {
 			this.error('Connection to server is erroring. Shutting down server.')
 			this.stop();
 		}
 	}
 
-	private checkProcessDied(childProcess: ChildProcess): void {
+	private checkProcessDied(childProcess: ChildProcess | undefined): void {
 		if (!childProcess) {
 			return;
 		}
@@ -1446,10 +1418,10 @@ export class LanguageClient {
 	}
 
 	private hookConfigurationChanged(connection: IConnection): void {
-		if (!this._clientOptions.synchronize.configurationSection) {
+		if (!this._clientOptions.synchronize!.configurationSection) {
 			return;
 		}
-		Workspace.onDidChangeConfiguration(e => this.onDidChangeConfiguration(connection), this, this._listeners);
+		Workspace.onDidChangeConfiguration(() => this.onDidChangeConfiguration(connection), this, this._listeners);
 		this.onDidChangeConfiguration(connection);
 	}
 
@@ -1465,8 +1437,8 @@ export class LanguageClient {
 
 	private onDidChangeConfiguration(connection: IConnection): void {
 		this.refreshTrace(connection, true);
-		let keys: string[] = null;
-		let configurationSection = this._clientOptions.synchronize.configurationSection;
+		let keys: string[] | undefined;
+		let configurationSection = this._clientOptions.synchronize!.configurationSection;
 		if (is.string(configurationSection)) {
 			keys = [configurationSection];
 		} else if (is.stringArray(configurationSection)) {
@@ -1510,12 +1482,12 @@ export class LanguageClient {
 		return result;
 	}
 
-	private hookFileEvents(connection: IConnection): void {
-		let fileEvents = this._clientOptions.synchronize.fileEvents;
+	private hookFileEvents(_connection: IConnection): void {
+		let fileEvents = this._clientOptions.synchronize!.fileEvents;
 		if (!fileEvents) {
 			return;
 		}
-		let watchers: FileSystemWatcher[] = null;
+		let watchers: FileSystemWatcher[];
 		if (is.array(fileEvents)) {
 			watchers = <FileSystemWatcher[]>fileEvents;
 		} else {
@@ -1548,7 +1520,7 @@ export class LanguageClient {
 	}
 
 	private _registeredHandlers: Map<string, FeatureHandler<DocumentOptions>> = new Map<string, FeatureHandler<DocumentOptions>>();
-	private initRegistrationHandlers(connection: IConnection) {
+	private initRegistrationHandlers(_connection: IConnection) {
 		const syncedDocuments: Map<string, TextDocument> = new Map<string, TextDocument>();
 		const logger = (type: RPCMessageType, error: any): void => { this.logFailedRequest(type, error); };
 		this._registeredHandlers.set(
@@ -1648,7 +1620,7 @@ export class LanguageClient {
 	}
 
 	private handleRegistrationRequest(params: RegistrationParams): Thenable<void> {
-		return new Promise((resolve, reject) => {
+		return new Promise((resolve, _reject) => {
 			params.registrations.forEach((element) => {
 				const handler = this._registeredHandlers.get(element.method);
 				const options = element.registerOptions || {};
@@ -1662,7 +1634,7 @@ export class LanguageClient {
 	}
 
 	private handleUnregistrationRequest(params: UnregistrationParams): Thenable<void> {
-		return new Promise((resolve, reject) => {
+		return new Promise((resolve, _reject) => {
 			params.unregisterations.forEach((element) => {
 				const handler = this._registeredHandlers.get(element.method);
 				if (handler) {
@@ -1697,7 +1669,7 @@ export class LanguageClient {
 		return Workspace.applyEdit(this._p2c.asWorkspaceEdit(params.edit)).then((value) => { return { applied: value }; });
 	};
 
-	private hookCapabilities(connection: IConnection): void {
+	private hookCapabilities(_connection: IConnection): void {
 		let documentSelector = this._clientOptions.documentSelector;
 		if (!documentSelector) {
 			return;
@@ -1705,99 +1677,99 @@ export class LanguageClient {
 		let selectorOptions: DocumentOptions = { documentSelector: documentSelector };
 		if (this._capabilites.completionProvider) {
 			let options: CompletionOptions = Object.assign({}, selectorOptions, this._capabilites.completionProvider);
-			this._registeredHandlers.get(CompletionRequest.type.method).register(
+			this._registeredHandlers.get(CompletionRequest.type.method)!.register(
 				{ id: UUID.generateUuid(), registerOptions: options }
 			);
 		}
 		if (this._capabilites.hoverProvider) {
-			this._registeredHandlers.get(HoverRequest.type.method).register(
+			this._registeredHandlers.get(HoverRequest.type.method)!.register(
 				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
 			);
 		}
 		if (this._capabilites.signatureHelpProvider) {
 			let options: SignatureHelpOptions = Object.assign({}, selectorOptions, this._capabilites.signatureHelpProvider);
-			this._registeredHandlers.get(SignatureHelpRequest.type.method).register(
+			this._registeredHandlers.get(SignatureHelpRequest.type.method)!.register(
 				{ id: UUID.generateUuid(), registerOptions: options }
 			);
 		}
 
 		if (this._capabilites.definitionProvider) {
-			this._registeredHandlers.get(DefinitionRequest.type.method).register(
+			this._registeredHandlers.get(DefinitionRequest.type.method)!.register(
 				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
 			);
 		}
 
 		if (this._capabilites.referencesProvider) {
-			this._registeredHandlers.get(ReferencesRequest.type.method).register(
+			this._registeredHandlers.get(ReferencesRequest.type.method)!.register(
 				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
 			);
 		}
 
 		if (this._capabilites.documentHighlightProvider) {
-			this._registeredHandlers.get(DocumentHighlightRequest.type.method).register(
+			this._registeredHandlers.get(DocumentHighlightRequest.type.method)!.register(
 				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
 			);
 		}
 
 		if (this._capabilites.documentSymbolProvider) {
-			this._registeredHandlers.get(DocumentSymbolRequest.type.method).register(
+			this._registeredHandlers.get(DocumentSymbolRequest.type.method)!.register(
 				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
 			);
 		}
 
 		if (this._capabilites.workspaceSymbolProvider) {
-			this._registeredHandlers.get(WorkspaceSymbolRequest.type.method).register(
+			this._registeredHandlers.get(WorkspaceSymbolRequest.type.method)!.register(
 				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
 			);
 		}
 
 		if (this._capabilites.codeActionProvider) {
-			this._registeredHandlers.get(CodeActionRequest.type.method).register(
+			this._registeredHandlers.get(CodeActionRequest.type.method)!.register(
 				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
 			);
 		}
 
 		if (this._capabilites.codeLensProvider) {
 			let options: CodeLensOptions = Object.assign({}, selectorOptions, this._capabilites.codeLensProvider);
-			this._registeredHandlers.get(CodeLensRequest.type.method).register(
+			this._registeredHandlers.get(CodeLensRequest.type.method)!.register(
 				{ id: UUID.generateUuid(), registerOptions: options }
 			);
 		}
 
 		if (this._capabilites.documentFormattingProvider) {
-			this._registeredHandlers.get(DocumentFormattingRequest.type.method).register(
+			this._registeredHandlers.get(DocumentFormattingRequest.type.method)!.register(
 				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
 			);
 		}
 
 		if (this._capabilites.documentRangeFormattingProvider) {
-			this._registeredHandlers.get(DocumentRangeFormattingRequest.type.method).register(
+			this._registeredHandlers.get(DocumentRangeFormattingRequest.type.method)!.register(
 				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
 			);
 		}
 
 		if (this._capabilites.documentOnTypeFormattingProvider) {
 			let options: DocumentOnTypeFormattingOptions = Object.assign({}, selectorOptions, this._capabilites.documentOnTypeFormattingProvider);
-			this._registeredHandlers.get(DocumentOnTypeFormattingRequest.type.method).register(
+			this._registeredHandlers.get(DocumentOnTypeFormattingRequest.type.method)!.register(
 				{ id: UUID.generateUuid(), registerOptions: options }
 			);
 		}
 
 		if (this._capabilites.renameProvider) {
-			this._registeredHandlers.get(RenameRequest.type.method).register(
+			this._registeredHandlers.get(RenameRequest.type.method)!.register(
 				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
 			);
 		}
 
 		if (this._capabilites.documentLinkProvider) {
 			let options: DocumentLinkOptions = Object.assign({}, selectorOptions, this._capabilites.documentLinkProvider);
-			this._registeredHandlers.get(DocumentLinkRequest.type.method).register(
+			this._registeredHandlers.get(DocumentLinkRequest.type.method)!.register(
 				{ id: UUID.generateUuid(), registerOptions: options }
 			);
 		}
 		if (this._capabilites.executeCommandProvider) {
 			let options: ExecuteCommandOptions = Object.assign({}, this._capabilites.executeCommandProvider);
-			this._registeredHandlers.get(ExecuteCommandRequest.type.method).register(
+			this._registeredHandlers.get(ExecuteCommandRequest.type.method)!.register(
 				{id: UUID.generateUuid(), registerOptions: options }
 			);
 		}
@@ -1809,7 +1781,7 @@ export class LanguageClient {
 
 	private createCompletionProvider(options: CompletionOptions): Disposable {
 		let triggerCharacters = options.triggerCharacters || [];
-		return Languages.registerCompletionItemProvider(options.documentSelector, {
+		return Languages.registerCompletionItemProvider(options.documentSelector!, {
 			provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VCompletionList | VCompletionItem[]> => {
 				return this.sendRequest(CompletionRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token). then(
 					this._p2c.asCompletionResult,
@@ -1834,8 +1806,8 @@ export class LanguageClient {
 	}
 
 	private createHoverProvider(options: DocumentOptions): Disposable {
-		return Languages.registerHoverProvider(options.documentSelector, {
-			provideHover: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<Hover> => {
+		return Languages.registerHoverProvider(options.documentSelector!, {
+			provideHover: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VHover> => {
 				return this.sendRequest(HoverRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token).then(
 					this._p2c.asHover,
 					(error) => {
@@ -1849,7 +1821,7 @@ export class LanguageClient {
 
 	private createSignatureHelpProvider(options: SignatureHelpOptions): Disposable {
 		let triggerCharacters = options.triggerCharacters || [];
-		return Languages.registerSignatureHelpProvider(options.documentSelector, {
+		return Languages.registerSignatureHelpProvider(options.documentSelector!, {
 			provideSignatureHelp: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VSignatureHelp> => {
 				return this.sendRequest(SignatureHelpRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token). then(
 					this._p2c.asSignatureHelp,
@@ -1863,7 +1835,7 @@ export class LanguageClient {
 	}
 
 	private createDefinitionProvider(options: DocumentOptions): Disposable {
-		return Languages.registerDefinitionProvider(options.documentSelector, {
+		return Languages.registerDefinitionProvider(options.documentSelector!, {
 			provideDefinition: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VDefinition> => {
 				return this.sendRequest(DefinitionRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token). then(
 					this._p2c.asDefinitionResult,
@@ -1877,7 +1849,7 @@ export class LanguageClient {
 	}
 
 	private createReferencesProvider(options: DocumentOptions): Disposable {
-		return Languages.registerReferenceProvider(options.documentSelector, {
+		return Languages.registerReferenceProvider(options.documentSelector!, {
 			provideReferences: (document: TextDocument, position: VPosition, options: { includeDeclaration: boolean; }, token: CancellationToken): Thenable<VLocation[]> => {
 				return this.sendRequest(ReferencesRequest.type, this._c2p.asReferenceParams(document, position, options), token).then(
 					this._p2c.asReferences,
@@ -1891,7 +1863,7 @@ export class LanguageClient {
 	}
 
 	private createDocumentHighlightProvider(options: DocumentOptions): Disposable {
-		return Languages.registerDocumentHighlightProvider(options.documentSelector, {
+		return Languages.registerDocumentHighlightProvider(options.documentSelector!, {
 			provideDocumentHighlights: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VDocumentHighlight[]> => {
 				return this.sendRequest(DocumentHighlightRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token).then(
 					this._p2c.asDocumentHighlights,
@@ -1905,7 +1877,7 @@ export class LanguageClient {
 	}
 
 	private createDocumentSymbolProvider(options: DocumentOptions): Disposable {
-		return Languages.registerDocumentSymbolProvider(options.documentSelector, {
+		return Languages.registerDocumentSymbolProvider(options.documentSelector!, {
 			provideDocumentSymbols: (document: TextDocument, token: CancellationToken): Thenable<VSymbolInformation[]> => {
 				return this.sendRequest(DocumentSymbolRequest.type, this._c2p.asDocumentSymbolParams(document), token).then(
 					this._p2c.asSymbolInformations,
@@ -1918,7 +1890,7 @@ export class LanguageClient {
 		});
 	}
 
-	private createWorkspaceSymbolProvider(options: DocumentOptions): Disposable {
+	private createWorkspaceSymbolProvider(_options: DocumentOptions): Disposable {
 		return Languages.registerWorkspaceSymbolProvider({
 			provideWorkspaceSymbols: (query: string, token: CancellationToken): Thenable<VSymbolInformation[]> => {
 				return this.sendRequest(WorkspaceSymbolRequest.type, { query }, token).then(
@@ -1933,7 +1905,7 @@ export class LanguageClient {
 	}
 
 	private createCodeActionsProvider(options: DocumentOptions): Disposable {
-		return Languages.registerCodeActionsProvider(options.documentSelector, {
+		return Languages.registerCodeActionsProvider(options.documentSelector!, {
 			provideCodeActions: (document: TextDocument, range: VRange, context: VCodeActionContext, token: CancellationToken): Thenable<VCommand[]> => {
 				let params: CodeActionParams = {
 					textDocument: this._c2p.asTextDocumentIdentifier(document),
@@ -1952,7 +1924,7 @@ export class LanguageClient {
 	}
 
 	private createCodeLensProvider(options: CodeLensOptions): Disposable {
-		return Languages.registerCodeLensProvider(options.documentSelector, {
+		return Languages.registerCodeLensProvider(options.documentSelector!, {
 			provideCodeLenses: (document: TextDocument, token: CancellationToken): Thenable<VCodeLens[]> => {
 				return this.sendRequest(CodeLensRequest.type, this._c2p.asCodeLensParams(document), token).then(
 					this._p2c.asCodeLenses,
@@ -1963,7 +1935,7 @@ export class LanguageClient {
 				);
 			},
 			resolveCodeLens: (options.resolveProvider)
-				? (codeLens: VCodeLens, token: CancellationToken): Thenable<CodeLens> => {
+				? (codeLens: VCodeLens, token: CancellationToken): Thenable<VCodeLens> => {
 					return this.sendRequest(CodeLensResolveRequest.type, this._c2p.asCodeLens(codeLens), token).then(
 						this._p2c.asCodeLens,
 						(error) => {
@@ -1977,7 +1949,7 @@ export class LanguageClient {
 	}
 
 	private createDocumentFormattingProvider(options: DocumentOptions): Disposable {
-		return Languages.registerDocumentFormattingEditProvider(options.documentSelector, {
+		return Languages.registerDocumentFormattingEditProvider(options.documentSelector!, {
 			provideDocumentFormattingEdits: (document: TextDocument, options: VFormattingOptions, token: CancellationToken): Thenable<VTextEdit[]> => {
 				let params: DocumentFormattingParams = {
 					textDocument: this._c2p.asTextDocumentIdentifier(document),
@@ -1995,7 +1967,7 @@ export class LanguageClient {
 	}
 
 	private createDocumentRangeFormattingProvider(options: DocumentOptions): Disposable {
-		return Languages.registerDocumentRangeFormattingEditProvider(options.documentSelector, {
+		return Languages.registerDocumentRangeFormattingEditProvider(options.documentSelector!, {
 			provideDocumentRangeFormattingEdits: (document: TextDocument, range: VRange, options: VFormattingOptions, token: CancellationToken): Thenable<VTextEdit[]> => {
 				let params: DocumentRangeFormattingParams = {
 					textDocument: this._c2p.asTextDocumentIdentifier(document),
@@ -2015,7 +1987,7 @@ export class LanguageClient {
 
 	private createDocumentOnTypeFormattingProvider(options: DocumentOnTypeFormattingOptions): Disposable {
 		let moreTriggerCharacter = options.moreTriggerCharacter || [];
-		return Languages.registerOnTypeFormattingEditProvider(options.documentSelector, {
+		return Languages.registerOnTypeFormattingEditProvider(options.documentSelector!, {
 			provideOnTypeFormattingEdits: (document: TextDocument, position: VPosition, ch: string, options: VFormattingOptions, token: CancellationToken): Thenable<VTextEdit[]> => {
 				let params: DocumentOnTypeFormattingParams = {
 					textDocument: this._c2p.asTextDocumentIdentifier(document),
@@ -2035,7 +2007,7 @@ export class LanguageClient {
 	}
 
 	private createRenameProvider(options: DocumentOptions): Disposable {
-		return Languages.registerRenameProvider(options.documentSelector, {
+		return Languages.registerRenameProvider(options.documentSelector!, {
 			provideRenameEdits: (document: TextDocument, position: VPosition, newName: string, token: CancellationToken): Thenable<VWorkspaceEdit> => {
 				let params: RenameParams = {
 					textDocument: this._c2p.asTextDocumentIdentifier(document),
@@ -2054,7 +2026,7 @@ export class LanguageClient {
 	}
 
 	private createDocumentLinkProvider(options: DocumentLinkOptions): Disposable {
-		return Languages.registerDocumentLinkProvider(options.documentSelector, {
+		return Languages.registerDocumentLinkProvider(options.documentSelector!, {
 			provideDocumentLinks: (document: TextDocument, token: CancellationToken): Thenable<VDocumentLink[]> => {
 				return this.sendRequest(DocumentLinkRequest.type, this._c2p.asDocumentLinkParams(document), token).then(
 					this._p2c.asDocumentLinks,

@@ -31,9 +31,15 @@ export interface Converter {
 
 	asWorkerPosition(position: code.Position): types.Position;
 
-	asRange(value: code.Range): types.Range;
-
 	asPosition(value: code.Position): types.Position;
+	asPosition(value: undefined): undefined;
+	asPosition(value: null): null;
+	asPosition(value: code.Position | undefined | null): types.Position | undefined | null;
+
+	asRange(value: code.Range): types.Range;
+	asRange(value: undefined): undefined;
+	asRange(value: null): null;
+	asRange(value: code.Range | undefined | null): types.Range | undefined | null;
 
 	asDiagnosticSeverity(value: code.DiagnosticSeverity): types.DiagnosticSeverity;
 
@@ -103,12 +109,12 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 
 	function isTextDocumentChangeEvent(value: any): value is code.TextDocumentChangeEvent {
 		let candidate = <code.TextDocumentChangeEvent>value;
-		return is.defined(candidate.document) && is.defined(candidate.contentChanges);
+		return !!candidate.document && !!candidate.contentChanges;
 	}
 
 	function isTextDocument(value: any): value is code.TextDocument {
 		let candidate = <code.TextDocument>value;
-		return is.defined(candidate.uri) && is.defined(candidate.version);
+		return !!candidate.uri && !!candidate.version;
 	}
 
 	function asChangeTextDocumentParams(textDocument: code.TextDocument): proto.DidChangeTextDocumentParams;
@@ -182,28 +188,30 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return { line: position.line, character: position.character };
 	}
 
-	function asRange(value: code.Range): types.Range {
-		if (is.undefined(value)) {
+	function asPosition(value: code.Position): types.Position;
+	function asPosition(value: undefined): undefined;
+	function asPosition(value: null): null;
+	function asPosition(value: code.Position | undefined | null): types.Position | undefined | null
+	function asPosition(value: code.Position | undefined | null): types.Position | undefined | null {
+		if (value === void 0) {
 			return undefined;
-		} else if (is.nil(value)) {
-			return null;
-		}
-		return { start: asPosition(value.start), end: asPosition(value.end) };
-	}
-
-	function asPosition(value: code.Position): types.Position {
-		if (is.undefined(value)) {
-			return undefined;
-		} else if (is.nil(value)) {
+		} else if (value === null) {
 			return null;
 		}
 		return { line: value.line, character: value.character };
 	}
 
-	function set(value, func: () => void): void {
-		if (is.defined(value)) {
-			func();
+	function asRange(value: code.Range): types.Range;
+	function asRange(value: undefined): undefined;
+	function asRange(value: null): null;
+	function asRange(value: code.Range | undefined | null): types.Range | undefined | null;
+	function asRange(value: code.Range | undefined | null): types.Range | undefined | null {
+		if (value === void 0) {
+			return undefined;
+		} else if (value === null) {
+			return null;
 		}
+		return { start: asPosition(value.start)!, end: asPosition(value.end)! };
 	}
 
 	function asDiagnosticSeverity(value: code.DiagnosticSeverity): types.DiagnosticSeverity {
@@ -220,15 +228,15 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asDiagnostic(item: code.Diagnostic): types.Diagnostic {
-		let result: types.Diagnostic = types.Diagnostic.create(asRange(item.range), item.message);
-		set(item.severity, () => result.severity = asDiagnosticSeverity(item.severity));
-		set(item.code, () => result.code = item.code);
-		set(item.source, () => result.source = item.source);
+		let result: types.Diagnostic = types.Diagnostic.create(asRange(item.range)!, item.message);
+		if (item.severity) { result.severity = asDiagnosticSeverity(item.severity); }
+		if (item.code) { result.code = item.code; }
+		if (item.source) { result.source = item.source; }
 		return result;
 	}
 
 	function asDiagnostics(items: code.Diagnostic[]): types.Diagnostic[] {
-		if (is.undefined(items) || is.nil(items)) {
+		if (items === void 0 || items === null) {
 			return items;
 		}
 		return items.map(asDiagnostic);
@@ -236,38 +244,38 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 
 	function asCompletionItem(item: code.CompletionItem): types.CompletionItem {
 		let result: types.CompletionItem = { label: item.label };
-		set(item.detail, () => result.detail = item.detail);
-		set(item.documentation, () => result.documentation = item.documentation);
-		set(item.filterText, () => result.filterText = item.filterText);
-		set(item.insertText, () => result.insertText = asCompletionInsertText(item.insertText));
-		set(item.range, () => result.range = asRange(item.range));
+		if (item.detail) { result.detail = item.detail; }
+		if (item.documentation) { result.documentation = item.documentation; }
+		if (item.filterText) { result.filterText = item.filterText; }
+		if (item.insertText) { result.insertText = asCompletionInsertText(item.insertText!); }
+		if (item.range) { result.range = asRange(item.range!)!; }
 		// Protocol item kind is 1 based, codes item kind is zero based.
-		set(item.kind, () => result.kind = item.kind + 1);
-		set(item.sortText, () => result.sortText = item.sortText);
-		set(item.textEdit, () => result.textEdit = asTextEdit(item.textEdit));
-		set(item.additionalTextEdits, () => result.additionalTextEdits = asTextEdits(item.additionalTextEdits));
-		set(item.command, () => result.command = asCommand(item.command));
+		if (item.kind) { result.kind = item.kind + 1; }
+		if (item.sortText) { result.sortText = item.sortText; }
+		if (item.textEdit) { result.textEdit = asTextEdit(item.textEdit!); }
+		if (item.additionalTextEdits) { result.additionalTextEdits = asTextEdits(item.additionalTextEdits!); }
+		if (item.command) { result.command = asCommand(item.command!); }
 		if (item instanceof ProtocolCompletionItem) {
-			set(item.data, () => result.data = item.data);
+			if (item.data) { result.data = item.data; }
 		}
 		return result;
 	}
 
-	function asCompletionInsertText(text: string | code.SnippetString): string | types.SnippetString {
+	function asCompletionInsertText(text: string | code.SnippetString): string | types.SnippetString | undefined {
 		if (is.string(text)) {
 			return text;
-		} else if (is.defined(text.value)) {
+		} else if (text.value) {
 			return types.SnippetString.create(text.value);
 		}
 		return undefined;
 	}
 
 	function asTextEdit(edit: code.TextEdit): types.TextEdit {
-		return { range: asRange(edit.range), newText: edit.newText };
+		return { range: asRange(edit.range)!, newText: edit.newText };
 	}
 
 	function asTextEdits(edits: code.TextEdit[]): types.TextEdit[] {
-		if (is.undefined(edits) || is.nil(edits)) {
+		if (edits === void 0 || edits === null) {
 			return edits;
 		}
 		return edits.map(asTextEdit);
@@ -282,7 +290,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asCodeActionContext(context: code.CodeActionContext): types.CodeActionContext {
-		if (is.undefined(context) || is.nil(context)) {
+		if (context === void 0 || context === null) {
 			return context;
 		}
 		return types.CodeActionContext.create(asDiagnostics(context.diagnostics));
@@ -290,15 +298,15 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 
 	function asCommand(item: code.Command): types.Command {
 		let result = types.Command.create(item.title, item.command);
-		if (is.defined(item.arguments)) result.arguments = item.arguments;
+		if (item.arguments) { result.arguments = item.arguments; }
 		return result;
 	}
 
 	function asCodeLens(item: code.CodeLens): types.CodeLens {
-		let result = types.CodeLens.create(asRange(item.range));
-		if (is.defined(item.command)) result.command = asCommand(item.command);
+		let result = types.CodeLens.create(asRange(item.range)!);
+		if (item.command) { result.command = asCommand(item.command!); }
 		if (item instanceof ProtocolCodeLens) {
-			if (is.defined(item.data)) result.data = item.data;
+			if (item.data) { result.data = item.data };
 		}
 		return result;
 	}
@@ -320,8 +328,8 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asDocumentLink(item: code.DocumentLink): types.DocumentLink {
-		let result = types.DocumentLink.create(asRange(item.range));
-		if (is.defined(item.target)) result.target = asUri(item.target);
+		let result = types.DocumentLink.create(asRange(item.range)!);
+		if (item.target) { result.target = asUri(item.target); }
 		return result;
 	}
 
