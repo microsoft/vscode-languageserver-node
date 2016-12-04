@@ -6,7 +6,7 @@
 		"sourceMap": false,
 		"declaration": true,
 		"stripInternal": true,
-		"lib": [ "es6" ],
+		"lib": [ "es2016" ],
 		"outDir": "../lib",
 		"strictNullChecks": true,
 		"noImplicitAny": true,
