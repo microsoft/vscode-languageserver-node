@@ -375,7 +375,7 @@ export interface InitializeParams {
 	 * The rootPath of the workspace. Is null
 	 * if no folder is open.
 	 */
-	rootPath: string;
+	rootPath: string | null;
 
 	/**
 	 * The capabilities provided by the client (editor)
@@ -629,7 +629,7 @@ export interface DidChangeTextDocumentOptions extends DocumentOptions {
 	/**
 	 * How documents are synced to the server.
 	 */
-	syncKind?: number;
+	syncKind: number;
 }
 
 /**
