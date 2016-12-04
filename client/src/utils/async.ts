@@ -42,7 +42,7 @@ export class Delayer<T> {
 			});
 		}
 
-		if (delay >= 0 || this.timeout === null) {
+		if (delay >= 0 || this.timeout === void 0) {
 			this.timeout = setTimeout(() => {
 				this.timeout = undefined;
 				this.onSuccess!(undefined);
