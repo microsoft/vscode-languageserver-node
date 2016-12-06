@@ -511,7 +511,6 @@ class DidCloseTextDocumentFeature extends DocumentNotifiactions<DidCloseTextDocu
 interface DidChangeTextDocumentData {
 	documentSelector: DocumentSelector;
 	syncKind: TextDocumentSyncKind;
-	delayer?: Delayer<void>;
 }
 
 class DidChangeTextDocumentFeature implements FeatureHandler<DidChangeTextDocumentOptions> {
@@ -519,6 +518,7 @@ class DidChangeTextDocumentFeature implements FeatureHandler<DidChangeTextDocume
 	private _listener: Disposable | undefined;
 	private _changeData: Map<string, DidChangeTextDocumentData> = new Map<string, DidChangeTextDocumentData>();
 	private _forcingDelivery: boolean = false;
+	private _changeDelayer: { uri: string; delayer: Delayer<void>} | undefined;
 
 	constructor(private _client: LanguageClient) {
 	}
@@ -534,8 +534,7 @@ class DidChangeTextDocumentFeature implements FeatureHandler<DidChangeTextDocume
 			data.id,
 			{
 				documentSelector: data.registerOptions.documentSelector,
-				syncKind: data.registerOptions.syncKind,
-				delayer: data.registerOptions.syncKind === TextDocumentSyncKind.Full ? new Delayer<void>(200) : undefined
+				syncKind: data.registerOptions.syncKind
 			}
 		);
 	}
@@ -547,9 +546,24 @@ class DidChangeTextDocumentFeature implements FeatureHandler<DidChangeTextDocume
 					this._client.sendNotification(DidChangeTextDocumentNotification.type, this._client.code2ProtocolConverter.asChangeTextDocumentParams(event));
 					break;
 				} else if (changeData.syncKind === TextDocumentSyncKind.Full) {
-					changeData.delayer!.trigger(() => {
-						this._client.sendNotification(DidChangeTextDocumentNotification.type, this._client.code2ProtocolConverter.asChangeTextDocumentParams(event.document));
-					}, -1);
+					if (this._changeDelayer) {
+						if (this._changeDelayer.uri !== event.document.uri.toString()) {
+							// Use this force delivery to track boolean state. Otherwise we might call two times.
+							this.forceDelivery();
+							this._changeDelayer.uri = event.document.uri.toString();
+						}
+						this._changeDelayer.delayer.trigger(() => {
+							this._client.sendNotification(DidChangeTextDocumentNotification.type, this._client.code2ProtocolConverter.asChangeTextDocumentParams(event.document));
+						});
+					} else {
+						this._changeDelayer = {
+							uri: event.document.uri.toString(),
+							delayer: new Delayer<void>(200)
+						}
+						this._changeDelayer.delayer.trigger(() => {
+							this._client.sendNotification(DidChangeTextDocumentNotification.type, this._client.code2ProtocolConverter.asChangeTextDocumentParams(event.document));
+						}, -1);
+					}
 					break;
 				}
 			}
@@ -572,16 +586,12 @@ class DidChangeTextDocumentFeature implements FeatureHandler<DidChangeTextDocume
 	}
 
 	public forceDelivery() {
-		if (this._forcingDelivery) {
+		if (this._forcingDelivery || !this._changeDelayer) {
 			return;
 		}
 		try {
 			this._forcingDelivery = true;
-			for (const changeData of this._changeData.values()) {
-				if (changeData.delayer) {
-					changeData.delayer.forceDelivery();
-				}
-			}
+			this._changeDelayer.delayer.forceDelivery();
 		} finally {
 			this._forcingDelivery = false;
 		}
