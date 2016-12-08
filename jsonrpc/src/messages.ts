@@ -46,6 +46,7 @@ export namespace ErrorCodes {
 	export const InternalError: number = -32603;
 	export const serverErrorStart: number = -32099
 	export const serverErrorEnd: number = -32000;
+	export const serverNotInitialized: number = -32001;
 
 	// Defined by VSCode.
 	export const MessageWriteError: number = 1;
