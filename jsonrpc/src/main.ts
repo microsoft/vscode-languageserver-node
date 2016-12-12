@@ -350,7 +350,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			if (resultOrError instanceof ResponseError) {
 				message.error = (<ResponseError<any>>resultOrError).toJson();
 			} else {
-				message.result = is.undefined(resultOrError) ? null : resultOrError;
+				message.result = resultOrError === void 0 ? null : resultOrError;
 			}
 			traceSendingResponse(message, method, startTime);
 			messageWriter.write(message);
@@ -367,7 +367,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 		function replySuccess(result: any, method: string, startTime: number) {
 			// The JSON RPC defines that a response must either have a result or an error
 			// So we can't treat undefined as a valid response result.
-			if (is.undefined(result)) {
+			if (result === void 0) {
 				result = null;
 			}
 			let message: ResponseMessage = {
@@ -389,7 +389,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			requestTokens[tokenKey] = cancellationSource;
 			try {
 				let handlerResult: any;
-				if (is.nil(requestMessage.params)) {
+				if (!requestMessage.params) {
 					handlerResult = requestHandler(cancellationSource.token);
 				} else if (is.array(requestMessage.params)) {
 					handlerResult = requestHandler(...requestMessage.params, cancellationSource.token);
@@ -446,10 +446,10 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 		if (responsePromise) {
 			delete responsePromises[key];
 			try {
-				if (responseMessage.error && is.defined(responseMessage.error)) {
+				if (responseMessage.error) {
 					let error = responseMessage.error;
 					responsePromise.reject(new ResponseError(error.code, error.message, error.data));
-				} else if (is.defined(responseMessage.result)) {
+				} else if (responseMessage.result !== void 0) {
 					responsePromise.resolve(responseMessage.result);
 				} else {
 					throw new Error('Should never happen.');
@@ -484,7 +484,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 		if (notificationHandler) {
 			try {
 				traceReceivedNotification(message);
-				if (is.nil(message.params)) {
+				if (!message.params) {
 					notificationHandler();
 				} else if (is.array(message.params)) {
 					notificationHandler(...message.params);
@@ -557,7 +557,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			} else {
 				if (message.result) {
 					data = `Result: ${JSON.stringify(message.result, null, 4)}\n\n`;
-				} else if (is.undefined(message.error)) {
+				} else if (message.error === void 0) {
 					data = 'No result returned.\n\n';
 				}
 			}
@@ -602,7 +602,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			} else {
 				if (message.result) {
 					data = `Result: ${JSON.stringify(message.result, null, 4)}\n\n`;
-				} else if (is.undefined(message.error)) {
+				} else if (message.error === void 0) {
 					data = 'No result returned.\n\n';
 				}
 			}
@@ -785,11 +785,11 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 }
 
 function isMessageReader(value: any): value is MessageReader {
-	return is.defined(value.listen) && is.undefined(value.read);
+	return value.listen !== void 0 && value.read === void 0;
 }
 
 function isMessageWriter(value: any): value is MessageWriter {
-	return is.defined(value.write) && is.undefined(value.end);
+	return value.write !== void 0 && value.end === void 0;
 }
 
 export function createMessageConnection(reader: MessageReader, writer: MessageWriter, logger: Logger): MessageConnection;

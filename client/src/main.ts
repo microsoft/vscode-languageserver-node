@@ -1630,7 +1630,7 @@ export class LanguageClient {
 	}
 
 	private handleRegistrationRequest(params: RegistrationParams): Thenable<void> {
-		return new Promise((resolve, _reject) => {
+		return new Promise<void>((resolve, _reject) => {
 			params.registrations.forEach((element) => {
 				const handler = this._registeredHandlers.get(element.method);
 				const options = element.registerOptions || {};
@@ -1640,11 +1640,11 @@ export class LanguageClient {
 				}
 			});
 			resolve();
-		})
+		});
 	}
 
 	private handleUnregistrationRequest(params: UnregistrationParams): Thenable<void> {
-		return new Promise((resolve, _reject) => {
+		return new Promise<void>((resolve, _reject) => {
 			params.unregisterations.forEach((element) => {
 				const handler = this._registeredHandlers.get(element.method);
 				if (handler) {
@@ -1652,7 +1652,7 @@ export class LanguageClient {
 				}
 			});
 			resolve();
-		})
+		});
 	}
 
 	private handleApplyWorkspaceEdit(params: ApplyWorkspaceEditParams): Thenable<ApplyWorkspaceEditResponse> {

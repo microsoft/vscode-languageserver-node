@@ -46,7 +46,7 @@ export namespace ErrorCodes {
 	export const InternalError: number = -32603;
 	export const serverErrorStart: number = -32099
 	export const serverErrorEnd: number = -32000;
-	export const serverNotInitialized: number = -32001;
+	// export const serverNotInitialized: number = -32001;
 
 	// Defined by VSCode.
 	export const MessageWriteError: number = 1;
@@ -77,19 +77,16 @@ export interface ResponseErrorLiteral<D> {
  */
 export class ResponseError<D> extends Error {
 
-	public code: number;
-
-	public message: string;
-
-	public data: D;
+	public readonly code: number;
+	public readonly data: D;
 
 	constructor(code: number, message: string, data?: D) {
 		super(message);
 		this.code = code;
-		this.message = message;
-		if (data && is.defined(data)) {
+		if (data !== void 0) {
 			this.data = data;
 		}
+		Object.setPrototypeOf(this, ResponseError.prototype);
 	}
 
 	public toJson(): ResponseErrorLiteral<D> {
@@ -97,7 +94,7 @@ export class ResponseError<D> extends Error {
 			code: this.code,
 			message: this.message
 		};
-		if (is.defined(this.data)) {
+		if (this.data !== void 0) {
 			result.data = this.data
 		};
 		return result;
@@ -284,7 +281,7 @@ export function isRequestMessage(message: Message): message is RequestMessage {
  */
 export function isNotificationMessage(message: Message): message is NotificationMessage {
 	let candidate = <NotificationMessage>message;
-	return candidate && is.string(candidate.method) && is.undefined((<any>message).id);
+	return candidate && is.string(candidate.method) && (<any>message).id === void 0;
 }
 
 /**
@@ -292,5 +289,5 @@ export function isNotificationMessage(message: Message): message is Notification
  */
 export function isReponseMessage(message: Message): message is ResponseMessage {
 	let candidate = <ResponseMessage>message;
-	return candidate && (is.defined(candidate.result) || is.defined(candidate.error)) && (is.string(candidate.id) || is.number(candidate.id));
+	return candidate && (candidate.result !== void 0 || !!candidate.error) && (is.string(candidate.id) || is.number(candidate.id));
 }

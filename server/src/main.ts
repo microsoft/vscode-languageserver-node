@@ -616,6 +616,7 @@ class RemoteClientImpl implements RemoteClient {
 			return unregistration;
 		}, (_error) => {
 			this._console.info(`Registering request handler for ${method} failed.`);
+			return Promise.reject(_error);
 		});
 	}
 
@@ -631,6 +632,7 @@ class RemoteClientImpl implements RemoteClient {
 			});
 		}, (_error) => {
 			this._console.info(`Registering request handler for ${method} failed.`);
+			return Promise.reject(_error);
 		});
 	}
 
@@ -650,6 +652,7 @@ class RemoteClientImpl implements RemoteClient {
 			return new BulkUnregistrationImpl(this._connection, this._console, params.registrations.map(registration => { return { id: registration.id, method: registration.method } }));
 		}, (_error) => {
 			this._console.info(`Bulk registeration failed.`);
+			return Promise.reject(_error);
 		});
 	}
 }

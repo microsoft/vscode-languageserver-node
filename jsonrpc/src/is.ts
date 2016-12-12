@@ -6,18 +6,6 @@
 
 const toString = Object.prototype.toString;
 
-export function defined(value: any): boolean {
-	return typeof value !== 'undefined';
-}
-
-export function undefined(value: any): boolean {
-	return typeof value === 'undefined';
-}
-
-export function nil(value: any): boolean {
-	return value === null;
-}
-
 export function boolean(value: any): value is boolean {
 	return value === true || value === false;
 }
