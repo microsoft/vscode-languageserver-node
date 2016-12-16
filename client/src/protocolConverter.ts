@@ -127,12 +127,8 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 
 	function asDiagnostic(diagnostic: ls.Diagnostic): code.Diagnostic {
 		let result = new code.Diagnostic(asRange(diagnostic.range)!, diagnostic.message, asDiagnosticSeverity(diagnostic.severity));
-		if (diagnostic.code) {
-			result.code = diagnostic.code!;
-		}
-		if (diagnostic.source) {
-			result.source = diagnostic.source!;
-		}
+		if (is.number(diagnostic.code) || is.string(diagnostic.code)) { result.code = diagnostic.code; }
+		if (diagnostic.source) { result.source = diagnostic.source; }
 		return result;
 	}
 
@@ -206,12 +202,12 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (item.insertText) { result.insertText = asCompletionInsertText(item.insertText); }
 		if (item.range) { result.range = asRange(item.range); }
 		// Protocol item kind is 1 based, codes item kind is zero based.
-		if (item.kind) { result.kind = item.kind - 1; }
+		if (is.number(item.kind) && item.kind > 0) { result.kind = item.kind - 1; }
 		if (item.sortText) { result.sortText = item.sortText; }
 		if (item.textEdit) { result.textEdit = asTextEdit(item.textEdit); }
 		if (item.additionalTextEdits) { result.additionalTextEdits = asTextEdits(item.additionalTextEdits); }
 		if (item.command) { result.command = asCommand(item.command); }
-		if (item.data) { result.data = item.data; }
+		if (item.data !== void 0 && item.data !== null) { result.data = item.data; }
 		return result;
 	}
 
@@ -225,7 +221,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asTextEdit(edit: ls.TextEdit): code.TextEdit {
-		return new code.TextEdit(asRange(edit.range)!, edit.newText);
+		return new code.TextEdit(asRange(edit.range), edit.newText);
 	}
 
 	function asTextEdits(items: ls.TextEdit[]): code.TextEdit[];
@@ -329,7 +325,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 
 	function asDocumentHighlight(item: ls.DocumentHighlight): code.DocumentHighlight {
 		let result = new code.DocumentHighlight(asRange(item.range)!);
-		if (item.kind) { result.kind = asDocumentHighlightKind(item.kind); }
+		if (is.number(item.kind)) { result.kind = asDocumentHighlightKind(item.kind); }
 		return result;
 	}
 
@@ -390,7 +386,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		}
 		let result: ProtocolCodeLens = new ProtocolCodeLens(asRange(item.range)!);
 		if (item.command) { result.command = asCommand(item.command); }
-		if (item.data) { result.data = item.data; }
+		if (item.data !== void 0 && item.data !== null) { result.data = item.data; }
 		return result;
 	}
 

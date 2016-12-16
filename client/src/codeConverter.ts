@@ -230,7 +230,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	function asDiagnostic(item: code.Diagnostic): types.Diagnostic {
 		let result: types.Diagnostic = types.Diagnostic.create(asRange(item.range)!, item.message);
 		if (item.severity) { result.severity = asDiagnosticSeverity(item.severity); }
-		if (item.code) { result.code = item.code; }
+		if (is.number(item.code) || is.string(item.code)) { result.code = item.code; }
 		if (item.source) { result.source = item.source; }
 		return result;
 	}
@@ -250,7 +250,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (item.insertText) { result.insertText = asCompletionInsertText(item.insertText!); }
 		if (item.range) { result.range = asRange(item.range!)!; }
 		// Protocol item kind is 1 based, codes item kind is zero based.
-		if (item.kind) { result.kind = item.kind + 1; }
+		if (is.number(item.kind)) { result.kind = item.kind + 1; }
 		if (item.sortText) { result.sortText = item.sortText; }
 		if (item.textEdit) { result.textEdit = asTextEdit(item.textEdit!); }
 		if (item.additionalTextEdits) { result.additionalTextEdits = asTextEdits(item.additionalTextEdits!); }
