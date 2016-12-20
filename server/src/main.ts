@@ -81,7 +81,7 @@ export namespace Files {
 }
 
 interface ConnectionState {
-	__textDocumentSync: TextDocumentSyncKind | undefined;
+	__textDocumentSync: 0 | 1 | 2 | undefined;
 }
 
 /**
@@ -114,7 +114,7 @@ export class TextDocuments {
 	 * Returns the [TextDocumentSyncKind](#TextDocumentSyncKind) used by
 	 * this text document manager.
 	 */
-	public get syncKind(): TextDocumentSyncKind {
+	public get syncKind(): 0 | 1 | 2 {
 		return TextDocumentSyncKind.Full;
 	}
 

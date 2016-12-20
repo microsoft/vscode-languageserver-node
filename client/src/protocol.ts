@@ -182,24 +182,24 @@ export interface ClientCapabilities {
  * Defines how the host (editor) should sync
  * document changes to the language server.
  */
-export enum TextDocumentSyncKind {
+export namespace TextDocumentSyncKind {
 	/**
 	 * Documents should not be synced at all.
 	 */
-	None = 0,
+	export const None = 0;
 
 	/**
 	 * Documents are synced by always sending the full content
 	 * of the document.
 	 */
-	Full = 1,
+	export const Full = 1;
 
 	/**
 	 * Documents are synced by sending the full content on open.
 	 * After that only incremental updates to the document are
 	 * send.
 	 */
-	Incremental = 2
+	export const Incremental = 2;
 }
 
 export interface DocumentOptions {
@@ -217,7 +217,7 @@ export interface SaveOptions extends DocumentOptions {
 	/**
 	 * The client is supposed to include the content on save.
 	 */
-	includeContent?: boolean;
+	includeText?: boolean;
 }
 
 /**
@@ -281,15 +281,45 @@ export interface DocumentLinkOptions extends DocumentOptions {
 	resolveProvider?: boolean;
 }
 
+export interface TextDocumentSyncOptions {
+	/**
+	 * Open and close notifications are sent to the server.
+	 */
+	openClose?: boolean;
+	/**
+	 * Change notificatins are sent to the server. See TextDocumentSyncKind.None, TextDocumentSyncKind.Full
+	 * and TextDocumentSyncKindIncremental.
+	 */
+	change?: 0 | 1 | 2;
+	/**
+	 * Will save notifications are sent to the server.
+	 */
+	willSave?: boolean;
+	/**
+	 * Will save wait until requests are sent to the server.
+	 */
+	willSaveWaitUntil?: boolean;
+	/**
+	 * Save notifications are sent to the server.
+	 */
+	save?: {
+		/**
+		 * The saved text is to be included in the notification.
+		 */
+		includeText?: boolean;
+	};
+}
+
 /**
  * Defines the capabilities provided by a language
  * server.
  */
 export interface ServerCapabilities {
 	/**
-	 * Defines how text documents are synced.
+	 * Defines how text documents are synced. Is either a detailed structure defining each notification or
+	 * for backwards compatibility the TextDocumentSyncKind number.
 	 */
-	textDocumentSync?: number;
+	textDocumentSync?: TextDocumentSyncOptions | 0 | 1 | 2;
 	/**
 	 * The server provides hover support.
 	 */
@@ -297,11 +327,28 @@ export interface ServerCapabilities {
 	/**
 	 * The server provides completion support.
 	 */
-	completionProvider?: CompletionOptions;
+	completionProvider?: {
+		/**
+		 * The characters that trigger completion automatically.
+		 */
+		triggerCharacters?: string[];
+
+		/**
+		 * The server provides support to resolve additional
+		 * information for a completion item.
+		 */
+		resolveProvider?: boolean;
+	};
 	/**
 	 * The server provides signature help support.
 	 */
-	signatureHelpProvider?: SignatureHelpOptions;
+	signatureHelpProvider?: {
+		/**
+		 * The characters that trigger signature help
+		 * automatically.
+		 */
+		triggerCharacters?: string[];
+	};
 	/**
 	 * The server provides goto definition support.
 	 */
@@ -329,7 +376,12 @@ export interface ServerCapabilities {
 	/**
 	 * The server provides code lens.
 	 */
-	codeLensProvider?: CodeLensOptions;
+	codeLensProvider?: {
+		/**
+		 * Code lens has a resolve provider as well.
+		 */
+		resolveProvider?: boolean;
+	};
 	/**
 	 * The server provides document formatting.
 	 */
@@ -341,7 +393,16 @@ export interface ServerCapabilities {
 	/**
 	 * The server provides document formatting on typing.
 	 */
-	documentOnTypeFormattingProvider?: DocumentOnTypeFormattingOptions;
+	documentOnTypeFormattingProvider?: {
+		/**
+		 * A character on which formatting should be triggered, like `}`.
+		 */
+		firstTriggerCharacter: string;
+		/**
+		 * More trigger characters.
+		 */
+		moreTriggerCharacter?: string[]
+	};
 	/**
 	 * The server provides rename support.
 	 */
@@ -349,11 +410,21 @@ export interface ServerCapabilities {
 	/**
 	 * The server provides document link support.
 	 */
-	documentLinkProvider?: DocumentLinkOptions;
+	documentLinkProvider?: {
+		/**
+		 * Document links have a resolve provider as well.
+		 */
+		resolveProvider?: boolean;
+	};
 	/**
 	 * The server provides execute command support.
 	 */
-	executeCommandProvider?: ExecuteCommandOptions;
+	executeCommandProvider?: {
+		/**
+		 * The commands to be executed on the server
+		 */
+		commands: string[]
+	};
 }
 
 /**
@@ -372,6 +443,11 @@ export namespace InitializeRequest {
  */
 export interface InitializeParams {
 	/**
+	 * The protocol version the client speaks.
+	 */
+	protocolVersion: string;
+
+	/**
 	 * The process Id of the parent process that started
 	 * the server.
 	 */
@@ -384,7 +460,7 @@ export interface InitializeParams {
 	rootPath: string | null;
 
 	/**
-	 * The capabilities provided by the client (editor)
+	 * The capabilities provided by the client (editor or tool)
 	 */
 	capabilities: ClientCapabilities;
 
@@ -407,6 +483,16 @@ export interface InitializeResult {
 	 * The capabilities the language server provides.
 	 */
 	capabilities: ServerCapabilities;
+}
+
+/**
+ * Known error codes for an `InitializeError`;
+ */
+export namespace InitializeError {
+	/**
+	 * If the protocol version provided by the client can't be handled by the server.
+	 */
+	export const unknownProtocolVersion: number = 1;
 }
 
 /**
@@ -482,23 +568,23 @@ export interface DidChangeConfigurationParams {
 /**
  * The message type
  */
-export enum MessageType {
+export namespace MessageType {
 	/**
 	 * An error message.
 	 */
-	Error = 1,
+	export const Error = 1;
 	/**
 	 * A warning message.
 	 */
-	Warning = 2,
+	export const Warning = 2;
 	/**
 	 * An information message.
 	 */
-	Info = 3,
+	export const Info = 3;
 	/**
 	 * A log message.
 	 */
-	Log = 4
+	export const Log = 4;
 }
 
 /**
@@ -508,7 +594,7 @@ export interface ShowMessageParams {
 	/**
 	 * The message type. See {@link MessageType}
 	 */
-	type: number;
+	type: 1 | 2 | 3 | 4;
 
 	/**
 	 * The actual message
@@ -635,7 +721,7 @@ export interface DidChangeTextDocumentOptions extends DocumentOptions {
 	/**
 	 * How documents are synced to the server.
 	 */
-	syncKind: number;
+	syncKind: 0 | 1 | 2;
 }
 
 /**
@@ -676,9 +762,10 @@ export interface DidSaveTextDocumentParams {
 	textDocument: VersionedTextDocumentIdentifier;
 
 	/**
-	 * Optional the content when saved
+	 * Optional the content when saved. Depends on the includeText value
+	 * when the save notifcation was requested.
 	 */
-	content?: string;
+	text?: string;
 }
 
 /**
@@ -701,7 +788,7 @@ export interface WillSaveTextDocumentParams {
 	/**
 	 * The 'TextDocumentSaveReason'.
 	 */
-	reason: number;
+	reason: 1 | 2 | 3;
 }
 
 /**
@@ -747,19 +834,19 @@ export interface DidChangeWatchedFilesParams {
 /**
  * The file event type
  */
-export enum FileChangeType {
+export namespace FileChangeType {
 	/**
 	 * The file got created.
 	 */
-	Created = 1,
+	export const Created = 1;
 	/**
 	 * The file got changed.
 	 */
-	Changed = 2,
+	export const Changed = 2;
 	/**
 	 * The file got deleted.
 	 */
-	Deleted = 3
+	export const Deleted = 3;
 }
 
 /**
@@ -773,7 +860,7 @@ export interface FileEvent {
 	/**
 	 * The change type.
 	 */
-	type: number;
+	type: 1 | 2 | 3;
 }
 
 //---- Diagnostic notification ----

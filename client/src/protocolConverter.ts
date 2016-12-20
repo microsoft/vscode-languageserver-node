@@ -68,7 +68,7 @@ export interface Converter {
 	asReferences(values: undefined | null): code.Location[] | undefined;
 	asReferences(values: ls.Location[] | undefined | null): code.Location[] | undefined;
 
-	asDocumentHighlightKind(item: ls.DocumentHighlightKind): code.DocumentHighlightKind;
+	asDocumentHighlightKind(item: number): code.DocumentHighlightKind;
 
 	asDocumentHighlight(item: ls.DocumentHighlight): code.DocumentHighlight;
 
@@ -329,7 +329,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return result;
 	}
 
-	function asDocumentHighlightKind(item: ls.DocumentHighlightKind): code.DocumentHighlightKind {
+	function asDocumentHighlightKind(item: number): code.DocumentHighlightKind {
 		switch (item) {
 			case ls.DocumentHighlightKind.Text:
 				return code.DocumentHighlightKind.Text;

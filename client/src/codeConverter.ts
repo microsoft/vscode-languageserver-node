@@ -41,7 +41,7 @@ export interface Converter {
 	asRange(value: null): null;
 	asRange(value: code.Range | undefined | null): types.Range | undefined | null;
 
-	asDiagnosticSeverity(value: code.DiagnosticSeverity): types.DiagnosticSeverity;
+	asDiagnosticSeverity(value: code.DiagnosticSeverity): number;
 
 	asDiagnostic(item: code.Diagnostic): types.Diagnostic;
 	asDiagnostics(items: code.Diagnostic[]): types.Diagnostic[];
@@ -165,15 +165,27 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			textDocument: asVersionedTextDocumentIdentifier(textDocument)
 		}
 		if (includeContent) {
-			result.content = textDocument.getText()
+			result.text = textDocument.getText()
 		}
 		return result;
+	}
+
+	function asTextDocumentSaveReason(reason: code.TextDocumentSaveReason): 1 | 2 | 3 {
+		switch (reason) {
+			case code.TextDocumentSaveReason.Manual:
+				return types.TextDocumentSaveReason.Manual;
+			case code.TextDocumentSaveReason.AfterDelay:
+				return types.TextDocumentSaveReason.AfterDelay;
+			case code.TextDocumentSaveReason.FocusOut:
+				return types.TextDocumentSaveReason.FocusOut;
+		}
+		return types.TextDocumentSaveReason.Manual;
 	}
 
 	function asWillSaveTextDocumentParams(event: code.TextDocumentWillSaveEvent): proto.WillSaveTextDocumentParams {
 		return {
 			textDocument: asTextDocumentIdentifier(event.document),
-			reason: event.reason
+			reason: asTextDocumentSaveReason(event.reason)
 		}
 	}
 
@@ -214,7 +226,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return { start: asPosition(value.start) !, end: asPosition(value.end) ! };
 	}
 
-	function asDiagnosticSeverity(value: code.DiagnosticSeverity): types.DiagnosticSeverity {
+	function asDiagnosticSeverity(value: code.DiagnosticSeverity): number {
 		switch (value) {
 			case code.DiagnosticSeverity.Error:
 				return types.DiagnosticSeverity.Error;

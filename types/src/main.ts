@@ -127,23 +127,23 @@ export namespace Location {
 /**
  * The diagnostic's serverity.
  */
-export const enum DiagnosticSeverity {
+export namespace DiagnosticSeverity {
 	/**
 	 * Reports an error.
 	 */
-	Error = 1,
+	export const Error = 1;
 	/**
 	 * Reports a warning.
 	 */
-	Warning = 2,
+	export const Warning = 2;
 	/**
 	 * Reports an information.
 	 */
-	Information = 3,
+	export const Information = 3;
 	/**
 	 * Reports a hint.
 	 */
-	Hint = 4
+	export const Hint = 4;
 }
 
 /**
@@ -628,25 +628,25 @@ export namespace TextDocumentItem {
 /**
  * The kind of a completion entry.
  */
-export const enum CompletionItemKind {
-	Text = 1,
-	Method = 2,
-	Function = 3,
-	Constructor = 4,
-	Field = 5,
-	Variable = 6,
-	Class = 7,
-	Interface = 8,
-	Module = 9,
-	Property = 10,
-	Unit = 11,
-	Value = 12,
-	Enum = 13,
-	Keyword = 14,
-	Snippet = 15,
-	Color = 16,
-	File = 17,
-	Reference = 18
+export namespace CompletionItemKind {
+	export const Text = 1;
+	export const Method = 2;
+	export const Function = 3;
+	export const Constructor = 4;
+	export const Field = 5;
+	export const Variable = 6;
+	export const Class = 7;
+	export const Interface = 8;
+	export const Module = 9;
+	export const Property = 10;
+	export const Unit = 11;
+	export const Value = 12;
+	export const Enum = 13;
+	export const Keyword = 14;
+	export const Snippet = 15;
+	export const Color = 16;
+	export const File = 17;
+	export const Reference = 1;
 }
 
 /**
@@ -938,25 +938,24 @@ export interface ReferenceContext {
 	includeDeclaration: boolean;
 }
 
-
 /**
  * A document highlight kind.
  */
-export const enum DocumentHighlightKind {
+export namespace DocumentHighlightKind {
 	/**
 	 * A textual occurrance.
 	 */
-	Text = 1,
+	export const Text = 1;
 
 	/**
 	 * Read-access of a symbol, like reading a variable.
 	 */
-	Read = 2,
+	export const Read = 2;
 
 	/**
 	 * Write-access of a symbol, like writing to a variable.
 	 */
-	Write = 3
+	export const Write = 3;
 }
 
 /**
@@ -997,25 +996,25 @@ export namespace DocumentHighlight {
 /**
  * A symbol kind.
  */
-export const enum SymbolKind {
-	File = 1,
-	Module = 2,
-	Namespace = 3,
-	Package = 4,
-	Class = 5,
-	Method = 6,
-	Property = 7,
-	Field = 8,
-	Constructor = 9,
-	Enum = 10,
-	Interface = 11,
-	Function = 12,
-	Variable = 13,
-	Constant = 14,
-	String = 15,
-	Number = 16,
-	Boolean = 17,
-	Array = 18,
+export namespace SymbolKind {
+	export const File = 1;
+	export const Module = 2;
+	export const Namespace = 3;
+	export const Package = 4;
+	export const Class = 5;
+	export const Method = 6;
+	export const Property = 7;
+	export const Field = 8;
+	export const Constructor = 9;
+	export const Enum = 10;
+	export const Interface = 11;
+	export const Function = 12;
+	export const Variable = 13;
+	export const Constant = 14;
+	export const String = 15;
+	export const Number = 16;
+	export const Boolean = 17;
+	export const Array = 18;
 }
 
 /**
@@ -1054,7 +1053,7 @@ export namespace SymbolInformation {
 	 * @param uri The resource of the location of symbol, defaults to the current document.
 	 * @param containerName The name of the symbol containg the symbol.
 	 */
-	export function create(name: string, kind: SymbolKind, range: Range, uri?: string, containerName?: string): SymbolInformation {
+	export function create(name: string, kind: number, range: Range, uri?: string, containerName?: string): SymbolInformation {
 		let result: SymbolInformation = {
 			name,
 			kind,
@@ -1339,23 +1338,23 @@ export interface TextDocumentChangeEvent {
 /**
  * Represents reasons why a text document is saved.
  */
-export enum TextDocumentSaveReason {
+export namespace TextDocumentSaveReason {
 
 	/**
 	 * Manually triggered, e.g. by the user pressing save, by starting debugging,
 	 * or by an API call.
 	 */
-	Manual = 1,
+	export const Manual = 1;
 
 	/**
 	 * Automatic after a delay.
 	 */
-	AfterDelay = 2,
+	export const AfterDelay = 2;
 
 	/**
 	 * When the editor lost focus.
 	 */
-	FocusOut = 3
+	export const FocusOut = 3;
 }
 
 export interface TextDocumentWillSaveEvent {
@@ -1367,7 +1366,7 @@ export interface TextDocumentWillSaveEvent {
 	/**
 	 * The reason why save was triggered.
 	 */
-	reason: TextDocumentSaveReason;
+	reason: 1 | 2 | 3;
 }
 
 /**

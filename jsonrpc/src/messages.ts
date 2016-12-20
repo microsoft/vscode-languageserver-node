@@ -46,7 +46,8 @@ export namespace ErrorCodes {
 	export const InternalError: number = -32603;
 	export const serverErrorStart: number = -32099
 	export const serverErrorEnd: number = -32000;
-	// export const serverNotInitialized: number = -32001;
+	export const ServerNotInitialized: number = -32002;
+	export const UnknownErrorCode: number = -32001;
 
 	// Defined by VSCode.
 	export const MessageWriteError: number = 1;
@@ -82,7 +83,7 @@ export class ResponseError<D> extends Error {
 
 	constructor(code: number, message: string, data?: D) {
 		super(message);
-		this.code = code;
+		this.code = is.number(code) ? code : ErrorCodes.UnknownErrorCode;
 		if (data !== void 0) {
 			this.data = data;
 		}

@@ -34,7 +34,7 @@ import {
 
 import {
 	RegistrationRequest, RegistrationParams, UnregistrationRequest, UnregistrationParams, DocumentOptions,
-	InitializeRequest, InitializeParams, InitializeResult, InitializeError, ServerCapabilities, TextDocumentSyncKind,
+	InitializeRequest, InitializeParams, InitializeResult, InitializeError, ServerCapabilities, TextDocumentSyncKind, TextDocumentSyncOptions,
 	InitializedNotification, ShutdownRequest, ExitNotification,
 	LogMessageNotification, LogMessageParams, MessageType,
 	ShowMessageNotification, ShowMessageParams, ShowMessageRequest,
@@ -44,7 +44,7 @@ import {
 	DidOpenTextDocumentNotification, DidOpenTextDocumentParams,
 	DidChangeTextDocumentNotification, DidChangeTextDocumentParams, DidChangeTextDocumentOptions,
 	DidCloseTextDocumentNotification, DidCloseTextDocumentParams,
-	DidSaveTextDocumentNotification, DidSaveTextDocumentParams, /* SaveOptions, */
+	DidSaveTextDocumentNotification, DidSaveTextDocumentParams, SaveOptions,
 	WillSaveTextDocumentNotification, WillSaveTextDocumentWaitUntilRequest, WillSaveTextDocumentParams,
 	DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
 	PublishDiagnosticsNotification, PublishDiagnosticsParams,
@@ -510,7 +510,7 @@ class DidCloseTextDocumentFeature extends DocumentNotifiactions<DidCloseTextDocu
 
 interface DidChangeTextDocumentData {
 	documentSelector: DocumentSelector;
-	syncKind: TextDocumentSyncKind;
+	syncKind: 0 | 1 | 2;
 }
 
 class DidChangeTextDocumentFeature implements FeatureHandler<DidChangeTextDocumentOptions> {
@@ -645,25 +645,23 @@ class WillSaveWaitUntilFeature implements FeatureHandler<DocumentOptions> {
 	}
 }
 
-/*
 class DidSaveTextDocumentFeature extends DocumentNotifiactions<DidSaveTextDocumentParams, TextDocument> {
 
-	private _includeContent: boolean;
+	private _includeText: boolean;
 
 	constructor(client: LanguageClient) {
 		super(
 			client, Workspace.onDidSaveTextDocument, DidSaveTextDocumentNotification.type,
-			(textDocument) => client.code2ProtocolConverter.asSaveTextDocumentParams(textDocument, this._includeContent),
+			(textDocument) => client.code2ProtocolConverter.asSaveTextDocumentParams(textDocument, this._includeText),
 			DocumentNotifiactions.textDocumentFilter
 		);
 	}
 
 	public register(data: RegistrationData<SaveOptions>): void {
-		this._includeContent = !!data.registerOptions.includeContent;
+		this._includeText = !!data.registerOptions.includeText;
 		super.register(data);
 	}
 }
-*/
 
 interface CreateProviderSignature<T extends DocumentOptions> {
 	(options: T): Disposable;
@@ -1112,6 +1110,7 @@ export class LanguageClient {
 		this.refreshTrace(connection, false);
 		let initOption = this._clientOptions.initializationOptions;
 		let initParams: InitializeParams = {
+			protocolVersion: "3.0",
 			processId: process.pid,
 			rootPath: Workspace.rootPath ? Workspace.rootPath : null,
 			capabilities: {
@@ -1141,23 +1140,56 @@ export class LanguageClient {
 
 			this.hookFileEvents(connection);
 			this.hookConfigurationChanged(connection);
-			if (this._capabilites.textDocumentSync !== TextDocumentSyncKind.None && this._clientOptions.documentSelector) {
+			if (this._clientOptions.documentSelector) {
 				let selectorOptions: DocumentOptions = { documentSelector: this._clientOptions.documentSelector };
-				this._registeredHandlers.get(DidOpenTextDocumentNotification.type.method) !.register(
-					{ id: UUID.generateUuid(), registerOptions: selectorOptions }
-				);
-				this._registeredHandlers.get(DidChangeTextDocumentNotification.type.method) !.register(
-					{
-						id: UUID.generateUuid(),
-						registerOptions: Object.assign({}, selectorOptions, { syncKind: this._capabilites.textDocumentSync }) as DidChangeTextDocumentOptions
+				let textDocumentSyncOptions: TextDocumentSyncOptions | undefined = undefined;
+				if (is.number(this._capabilites.textDocumentSync) && this._capabilites.textDocumentSync !== TextDocumentSyncKind.None) {
+					textDocumentSyncOptions = {
+						openClose: true,
+						change: this._capabilites.textDocumentSync,
+						save: {
+							includeText: false
+						}
+					};
+				} else if (this._capabilites.textDocumentSync !== void 0 && this._capabilites.textDocumentSync === null) {
+					textDocumentSyncOptions = this._capabilites.textDocumentSync as TextDocumentSyncOptions;
+				}
+				if (textDocumentSyncOptions) {
+					if (textDocumentSyncOptions.openClose) {
+						this._registeredHandlers.get(DidOpenTextDocumentNotification.type.method)!.register(
+							{ id: UUID.generateUuid(), registerOptions: selectorOptions }
+						);
+						this._registeredHandlers.get(DidCloseTextDocumentNotification.type.method)!.register(
+							{ id: UUID.generateUuid(), registerOptions: selectorOptions }
+						);
 					}
-				);
-				this._registeredHandlers.get(DidCloseTextDocumentNotification.type.method) !.register(
-					{ id: UUID.generateUuid(), registerOptions: selectorOptions }
-				);
-				this._registeredHandlers.get(DidSaveTextDocumentNotification.type.method) !.register(
-					{ id: UUID.generateUuid(), registerOptions: selectorOptions }
-				);
+					if (textDocumentSyncOptions.change !== TextDocumentSyncKind.None) {
+						this._registeredHandlers.get(DidChangeTextDocumentNotification.type.method)!.register(
+							{
+								id: UUID.generateUuid(),
+								registerOptions: Object.assign({}, selectorOptions, { syncKind: textDocumentSyncOptions.change }) as DidChangeTextDocumentOptions
+							}
+						);
+					}
+					if (textDocumentSyncOptions.willSave) {
+						this._registeredHandlers.get(WillSaveTextDocumentNotification.type.method)!.register(
+							{ id: UUID.generateUuid(), registerOptions: selectorOptions }
+						);
+					}
+					if (textDocumentSyncOptions.willSaveWaitUntil) {
+						this._registeredHandlers.get(WillSaveTextDocumentWaitUntilRequest.type.method)!.register(
+							{ id: UUID.generateUuid(), registerOptions: selectorOptions }
+						);
+					}
+					if (textDocumentSyncOptions.save) {
+						this._registeredHandlers.get(DidSaveTextDocumentNotification.type.method)!.register(
+							{
+								id: UUID.generateUuid(),
+								registerOptions: Object.assign({}, selectorOptions, { includeText: !!textDocumentSyncOptions.save.includeText }) as SaveOptions
+							}
+						);
+					}
+				}
 			}
 			this.hookCapabilities(connection);
 			this._onReadyCallbacks.resolve();
@@ -1547,18 +1579,16 @@ export class LanguageClient {
 				this, Workspace.onWillSaveTextDocument, WillSaveTextDocumentNotification.type,
 				(willSaveEvent) => this._c2p.asWillSaveTextDocumentParams(willSaveEvent),
 				(selectors, willSaveEvent) => DocumentNotifiactions.textDocumentFilter(selectors, willSaveEvent.document)
-			));
+			)
+		);
 		this._registeredHandlers.set(
 			WillSaveTextDocumentWaitUntilRequest.type.method,
 			new WillSaveWaitUntilFeature(this)
 		);
 		this._registeredHandlers.set(
 			DidSaveTextDocumentNotification.type.method,
-			new DocumentNotifiactions<DidSaveTextDocumentParams, TextDocument>(
-				this, Workspace.onDidSaveTextDocument, DidSaveTextDocumentNotification.type,
-				(textDocument) => this._c2p.asSaveTextDocumentParams(textDocument),
-				DocumentNotifiactions.textDocumentFilter
-			));
+			new DidSaveTextDocumentFeature(this)
+		);
 		this._registeredHandlers.set(
 			DidCloseTextDocumentNotification.type.method,
 			new DidCloseTextDocumentFeature(this, syncedDocuments)
