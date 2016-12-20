@@ -27,7 +27,12 @@ language servers for [VSCode](https://code.visualstudio.com/).
 * 3.0.0-alpha.x: Client, Server and JSON-RPC
   * Moved all libraries to TypeScript 2.x.x
   * Client and Server are compiled to ES6. JSON-RPC is still compiled to ES5.
-  * JSON-RPC supports n parameter request and notification invocation
+  * JSON-RPC supports n parameter request and notification invocation.
+  * Support for the 2.2 version of the Language Server protocol (see ...). Some highlights are:
+    * Support for dynamic registration. In the 2.x version of the library a server announced its features statically. In 3.x the server
+      can now dynamically register and unregister feature handlers using the new requests `client/registrationRequest` and `client/unregistrationRequest`.
+      Servers must check the `ClientCapabilities.dynamicRegistration` property to see if the client supports dynamic feature registration.
+    * Support for command execution via a new request `workspace/executeCommand`.
   * Support for snippets in completion items:
     * New type `SnippetText`
     * CompletionItem.insertText can now also be a SnippetText.
@@ -42,14 +47,18 @@ language servers for [VSCode](https://code.visualstudio.com/).
     * due to the use of TypeScript 2.x.x and differences in d.ts generation users of the new version need to move to 
       TypeScript 2.x.x as well.
     * `activeSignature` and `activeParameter` where incorrectly declared as optional in `SignatureHelp`. They are now mandantory.
-    * Request and notification types have an additional property '_'. This property is to improve TypeScript type 
-      inference and can savely be set to undefined when a request of notification type is created. For example:
+    * Request and Notification types are no classes instead of interfaces. In addition they now take an additional type argument to type the registration
+      options for dynamic registration. Adopting to that change is quite easy. Simply new the RequestType or NotificationType and add void as the registration 
+      option type as in the example below:
 ```ts
-export namespace CompletionRequest {
-	export const type: RequestType<TextDocumentPositionParams, CompletionItem[] | CompletionList, void> = { 
-    get method() { return 'textDocument/completion'; }, 
-    _: undefined 
-  };
+// Old
+export namespace Myrequest {
+  export const type: RequestType<MyParams, MyResult, void> = { get method() { return 'myRequest'; } };
+}
+
+// New
+export namespace Myrequest {
+  export const type = new RequestType<MyParams, MyResult, void, void>('myRequest');
 }
 ```
 
