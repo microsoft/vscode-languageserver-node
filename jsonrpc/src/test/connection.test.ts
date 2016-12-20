@@ -108,8 +108,9 @@ function assertMessages(resultData: string, expected: Message[], done: MochaDone
 	}, 10);
 }
 
-let testRequest1: RequestType<any, any, any, void> = { method: 'testCommand1'};
-let testRequest2: RequestType<any, any, any, void> = { method: 'testCommand2'};
+let testRequest1 = new RequestType<any, any, any, void>('testCommand1');
+let testRequest2 = new RequestType<any, any, any, void>('testCommand2');
+
 function newParams(content: string)  {
 	return { documents: [ { content: content } ]};
 };
@@ -269,7 +270,7 @@ describe('Connection', () => {
 		connection.sendRequest(testRequest1, undefined);
 		connection.listen();
 		let expected : RequestMessage[] = [
-			{ jsonrpc: '2.0', id: 0, method: testRequest1.method }
+			{ jsonrpc: '2.0', id: 0, method: testRequest1.method, params: null }
 		];
 		setImmediate(() => {
 			assertMessages(outputStream.data, expected, done);
@@ -335,7 +336,7 @@ describe('Connection', () => {
 		});
 	});
 
-	let testNotification: NotificationType<any, void> = { method: "testNotification"};
+	let testNotification = new NotificationType<any, void>("testNotification");
 	it('Send and Receive Notification', (done) => {
 
 		let outputStream = new TestWritable();
@@ -445,8 +446,8 @@ describe('Connection', () => {
 		connection1.dispose();
 	});
 
-	it (('Array params in notifications'), (done) => {
-		let type: NotificationType2<number, string, void> = <any>{ method: 'test' };
+	it(('Array params in notifications'), (done) => {
+		let type = new NotificationType2<number, string, void>('test');
 		let outputStream = new TestWritable();
 		let duplexStream = new TestDuplex();
 		let inputStream = new Readable();
@@ -465,8 +466,8 @@ describe('Connection', () => {
 		connection2.listen();
 	});
 
-	it (('Array params in request / response'), (done) => {
-		let type: RequestType3<number, number, number, number, void, void> = { method: 'add' };
+	it(('Array params in request / response'), (done) => {
+		let type = new RequestType3<number, number, number, number, void, void>('add');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
@@ -490,8 +491,8 @@ describe('Connection', () => {
 		});
 	});
 
-	it (('Array params in request / response with token'), (done) => {
-		let type: RequestType3<number, number, number, number, void, void> = { method: 'add' };
+	it(('Array params in request / response with token'), (done) => {
+		let type = new RequestType3<number, number, number, number, void, void>('add');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
@@ -516,7 +517,7 @@ describe('Connection', () => {
 		});
 	});
 
-	it (('Untyped request / response'), (done) => {
+	it(('Untyped request / response'), (done) => {
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
@@ -539,5 +540,75 @@ describe('Connection', () => {
 			assert(false);
 			done();
 		});
+	});
+
+	it(('Cancellation token is undefined'), (done) => {
+		let type = new RequestType3<number, number, number, number, void, void>('add');
+		let duplexStream1 = new TestDuplex('ds1');
+		let duplexStream2 = new TestDuplex('ds2');
+
+		let connection2 = hostConnection.createMessageConnection(duplexStream2, duplexStream1, Logger);
+		connection2.onRequest(type, (p1, p2, p3, _token) => {
+			assert.strictEqual(p1, 10);
+			assert.strictEqual(p2, 20);
+			assert.strictEqual(p3, 30);
+			return p1 + p2 + p3;
+		});
+		connection2.listen();
+
+		let connection1 = hostConnection.createMessageConnection(duplexStream1, duplexStream2, Logger);
+		connection1.listen();
+		connection1.sendRequest(type, 10, 20, 30, undefined).then(result => {
+			assert.strictEqual(result, 60);
+			done();
+		}, () => {
+			assert(false);
+			done();
+		});
+	});
+
+	it(('Missing params in request'), (done) => {
+		let type = new RequestType3<number, number, number, number, void, void>('add');
+		let duplexStream1 = new TestDuplex('ds1');
+		let duplexStream2 = new TestDuplex('ds2');
+
+		let connection2 = hostConnection.createMessageConnection(duplexStream2, duplexStream1, Logger);
+		connection2.onRequest(type, (p1, p2, p3, _token) => {
+			assert.strictEqual(p1, 10);
+			assert.strictEqual(p2, 20);
+			assert.strictEqual(p3, null);
+			return p1 + p2;
+		});
+		connection2.listen();
+
+		let connection1 = hostConnection.createMessageConnection(duplexStream1, duplexStream2, Logger);
+		connection1.listen();
+		(connection1.sendRequest as Function)(type, 10, 20).then((result: any) => {
+			assert.strictEqual(result, 30);
+			done();
+		}, () => {
+			assert(false);
+			done();
+		});
+	});
+
+	it(('Missing params in notifications'), (done) => {
+		let type = new NotificationType2<number, string, void>('test');
+		let outputStream = new TestWritable();
+		let duplexStream = new TestDuplex();
+		let inputStream = new Readable();
+		inputStream.push(null);
+
+		let connection1 = hostConnection.createMessageConnection(inputStream, duplexStream, Logger);
+		connection1.listen();
+		(connection1.sendNotification as Function)(type, 10);
+
+		let connection2 = hostConnection.createMessageConnection(duplexStream, outputStream, Logger);
+		connection2.onNotification(type, (p1, p2) => {
+			assert.strictEqual(p1, 10);
+			assert.strictEqual(p2, null);
+			done();
+		});
+		connection2.listen();
 	});
 });

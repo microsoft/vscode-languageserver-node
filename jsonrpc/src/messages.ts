@@ -126,7 +126,24 @@ export interface ResponseMessage extends Message {
  * An interface to type messages.
  */
 export interface MessageType {
-	method: string;
+	readonly method: string;
+	readonly numberOfParams: number;
+}
+
+/**
+ * An abstract implementation of a MessageType.
+ */
+export abstract class AbstractMessageType implements MessageType {
+	constructor(private _method: string, private _numberOfParams: number) {
+	}
+
+	get method(): string {
+		return this._method;
+	}
+
+	get numberOfParams(): number {
+		return this._numberOfParams;
+	}
 }
 
 /**
@@ -137,61 +154,95 @@ export interface _EM {
 }
 
 /**
- * A interface to type the request parameter / response pair
+ * Classes to type request response pairs
  */
-export interface RequestType0<R, E, RO> extends MessageType {
-	_?: [R, E, RO, _EM];
-	registerOptions?: RO;
+export class RequestType0<R, E, RO> extends AbstractMessageType {
+	private _?: [R, E, RO, _EM];
+	constructor(method: string) {
+		super(method, 0);
+		this._ = undefined;
+	}
 }
 
-export interface RequestType<P, R, E, RO> extends MessageType {
-	_?: [P, R, E, RO, _EM];
-	registerOptions?: RO;
+export class RequestType<P, R, E, RO> extends AbstractMessageType {
+	private _?: [P, R, E, RO, _EM];
+	constructor(method: string) {
+		super(method, 1);
+		this._ = undefined;
+	}
 }
 
-export interface RequestType1<P1, R, E, RO> extends MessageType {
-	_?: [P1, R, E, RO, _EM];
-	registerOptions?: RO;
+
+export class RequestType1<P1, R, E, RO> extends AbstractMessageType {
+	private _?: [P1, R, E, RO, _EM];
+	constructor(method: string) {
+		super(method, 1);
+		this._ = undefined;
+	}
 }
 
-export interface RequestType2<P1, P2, R, E, RO> extends MessageType {
-	_?: [P1, P2, R, E, RO, _EM];
-	registerOptions?: RO;
+export class RequestType2<P1, P2, R, E, RO> extends AbstractMessageType {
+	private _?: [P1, P2, R, E, RO, _EM];
+	constructor(method: string) {
+		super(method, 2);
+		this._ = undefined;
+	}
 }
 
-export interface RequestType3<P1, P2, P3, R, E, RO> extends MessageType {
-	_?: [P1, P2, P3, R, E, RO, _EM];
-	registerOptions?: RO;
+export class RequestType3<P1, P2, P3, R, E, RO> extends AbstractMessageType {
+	private _?: [P1, P2, P3, R, E, RO, _EM];
+	constructor(method: string) {
+		super(method, 3);
+		this._ = undefined;
+	}
 }
 
-export interface RequestType4<P1, P2, P3, P4, R, E, RO> extends MessageType {
-	_?: [P1, P2, P3, P4, R, E, RO, _EM];
-	registerOptions?: RO;
+export class RequestType4<P1, P2, P3, P4, R, E, RO> extends AbstractMessageType {
+	private _?: [P1, P2, P3, P4, R, E, RO, _EM];
+	constructor(method: string) {
+		super(method, 4);
+		this._ = undefined;
+	}
 }
 
-export interface RequestType5<P1, P2, P3, P4, P5, R, E, RO> extends MessageType {
-	_?: [P1, P2, P3, P4, P5, R, E, RO, _EM];
-	registerOptions?: RO;
+export class RequestType5<P1, P2, P3, P4, P5, R, E, RO> extends AbstractMessageType {
+	private _?: [P1, P2, P3, P4, P5, R, E, RO, _EM];
+	constructor(method: string) {
+		super(method, 5);
+		this._ = undefined;
+	}
 }
 
-export interface RequestType6<P1, P2, P3, P4, P5, P6, R, E, RO> extends MessageType {
-	_?: [P1, P2, P3, P4, P5, P6, R, E, RO, _EM];
-	registerOptions?: RO;
+export class RequestType6<P1, P2, P3, P4, P5, P6, R, E, RO> extends AbstractMessageType {
+	private _?: [P1, P2, P3, P4, P5, P6, R, E, RO, _EM];
+	constructor(method: string) {
+		super(method, 6);
+		this._ = undefined;
+	}
 }
 
-export interface RequestType7<P1, P2, P3, P4, P5, P6, P7, R, E, RO> extends MessageType {
-	_?: [P1, P2, P3, P4, P5, P6, P7, R, E, RO, _EM];
-	registerOptions?: RO;
+export class RequestType7<P1, P2, P3, P4, P5, P6, P7, R, E, RO> extends AbstractMessageType {
+	private _?: [P1, P2, P3, P4, P5, P6, P7, R, E, RO, _EM];
+	constructor(method: string) {
+		super(method, 7);
+		this._ = undefined;
+	}
 }
 
-export interface RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO> extends MessageType {
-	_?: [P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO, _EM];
-	registerOptions?: RO;
+export class RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO> extends AbstractMessageType {
+	private _?: [P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO, _EM];
+	constructor(method: string) {
+		super(method, 8);
+		this._ = undefined;
+	}
 }
 
-export interface RequestType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO> extends MessageType {
-	_?: [P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO, _EM];
-	registerOptions?: RO;
+export class RequestType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO> extends AbstractMessageType {
+	private _?: [P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO, _EM];
+	constructor(method: string) {
+		super(method, 9);
+		this._ = undefined;
+	}
 }
 
 /**
@@ -209,63 +260,92 @@ export interface NotificationMessage extends Message {
 	params?: any
 }
 
-/**
- * An interface to type notification messages.
- */
-export interface NotificationType<P, RO> extends MessageType {
-	_?: [P, RO, _EM];
-	registerOptions?: RO;
+export class NotificationType<P, RO> extends AbstractMessageType {
+	private _?: [P, RO, _EM];
+	constructor(method: string) {
+		super(method, 1);
+		this._ = undefined;
+	}
 }
 
-export interface NotificationType0<RO> extends MessageType {
-	_?: [RO, _EM];
-	registerOptions?: RO;
+export class NotificationType0<RO> extends AbstractMessageType {
+	private _?: [RO, _EM];
+	constructor(method: string) {
+		super(method, 0);
+		this._ = undefined;
+	}
 }
 
-
-export interface NotificationType1<P1, RO> extends MessageType {
-	_?: [P1, RO, _EM];
-	registerOptions?: RO;
+export class NotificationType1<P1, RO> extends AbstractMessageType {
+	private _?: [P1, RO, _EM];
+	constructor(method: string) {
+		super(method, 1);
+		this._ = undefined;
+	}
 }
 
-export interface NotificationType2<P1, P2, RO> extends MessageType {
-	_?: [P1, P2, RO, _EM];
-	registerOptions?: RO;
+export class NotificationType2<P1, P2, RO> extends AbstractMessageType {
+	private _?: [P1, P2, RO, _EM];
+	constructor(method: string) {
+		super(method, 2);
+		this._ = undefined;
+	}
 }
 
-export interface NotificationType3<P1, P2, P3, RO> extends MessageType {
-	_?: [P1, P2, P3, RO, _EM];
-	registerOptions?: RO;
+export class NotificationType3<P1, P2, P3, RO> extends AbstractMessageType {
+	private _?: [P1, P2, P3, RO, _EM];
+	constructor(method: string) {
+		super(method, 3);
+		this._ = undefined;
+	}
 }
 
-export interface NotificationType4<P1, P2, P3, P4, RO> extends MessageType {
-	_?: [P1, P2, P3, P4, RO, _EM];
-	registerOptions?: RO;
+export class NotificationType4<P1, P2, P3, P4, RO> extends AbstractMessageType {
+	private _?: [P1, P2, P3, P4, RO, _EM];
+	constructor(method: string) {
+		super(method, 4);
+		this._ = undefined;
+	}
 }
 
-export interface NotificationType5<P1, P2, P3, P4, P5, RO> extends MessageType {
-	_?: [P1, P2, P3, P4, P5, RO, _EM];
-	registerOptions?: RO;
+export class NotificationType5<P1, P2, P3, P4, P5, RO> extends AbstractMessageType {
+	private _?: [P1, P2, P3, P4, P5, RO, _EM];
+	constructor(method: string) {
+		super(method, 5);
+		this._ = undefined;
+	}
 }
 
-export interface NotificationType6<P1, P2, P3, P4, P5, P6, RO> extends MessageType {
-	_?: [P1, P2, P3, P4, P5, P6, RO, _EM];
-	registerOptions?: RO;
+export class NotificationType6<P1, P2, P3, P4, P5, P6, RO> extends AbstractMessageType {
+	private _?: [P1, P2, P3, P4, P5, P6, RO, _EM];
+	constructor(method: string) {
+		super(method, 6);
+		this._ = undefined;
+	}
 }
 
-export interface NotificationType7<P1, P2, P3, P4, P5, P6, P7, RO> extends MessageType {
-	_?: [P1, P2, P3, P4, P5, P6, P7, RO, _EM];
-	registerOptions?: RO;
+export class NotificationType7<P1, P2, P3, P4, P5, P6, P7, RO> extends AbstractMessageType {
+	private _?: [P1, P2, P3, P4, P5, P6, P7, RO, _EM];
+	constructor(method: string) {
+		super(method, 7);
+		this._ = undefined;
+	}
 }
 
-export interface NotificationType8<P1, P2, P3, P4, P5, P6, P7, P8, RO> extends MessageType {
-	_?: [P1, P2, P3, P4, P5, P6, P7, P8, RO, _EM];
-	registerOptions?: RO;
+export class NotificationType8<P1, P2, P3, P4, P5, P6, P7, P8, RO> extends AbstractMessageType {
+	private _?: [P1, P2, P3, P4, P5, P6, P7, P8, RO, _EM];
+	constructor(method: string) {
+		super(method, 8);
+		this._ = undefined;
+	}
 }
 
-export interface NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, RO> extends MessageType {
-	_?: [P1, P2, P3, P4, P5, P6, P7, P8, P9, RO, _EM];
-	registerOptions?: RO;
+export class NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, RO> extends AbstractMessageType {
+	private _?: [P1, P2, P3, P4, P5, P6, P7, P8, P9, RO, _EM];
+	constructor(method: string) {
+		super(method, 9);
+		this._ = undefined;
+	}
 }
 
 /**

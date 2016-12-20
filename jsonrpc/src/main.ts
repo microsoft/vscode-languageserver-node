@@ -44,7 +44,7 @@ interface CancelParams {
 }
 
 namespace CancelNotification {
-	export const type: NotificationType<CancelParams, void> = { get method() { return '$/cancelRequest'; } };
+	export const type = new NotificationType<CancelParams, void>('$/cancelRequest');
 }
 
 export interface GenericRequestHandler<R, E> {
@@ -189,7 +189,7 @@ export interface SetTraceParams {
 }
 
 export namespace SetTraceNotification {
-	export const type: NotificationType<SetTraceParams, void> = { get method() { return '$/setTraceNotification'; } };
+	export const type = new NotificationType<SetTraceParams, void>('$/setTraceNotification');
 }
 
 export interface LogTraceParams {
@@ -198,7 +198,7 @@ export interface LogTraceParams {
 }
 
 export namespace LogTraceNotification {
-	export const type: NotificationType<LogTraceParams, void> = { get method() { return '$/logTraceNotification'; } };
+	export const type = new NotificationType<LogTraceParams, void>('$/logTraceNotification');
 }
 
 export interface Tracer {
@@ -642,21 +642,53 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 		}
 	}
 
+	function computeMessageParams(type: MessageType, params: any[]): any | any[] | null {
+		let result: any | any[] | null;
+		let numberOfParams = type.numberOfParams;
+		switch(numberOfParams) {
+			case 0:
+				result = null;
+				break;
+			case 1:
+				result = params[0] || null;
+				break;
+			default:
+				result = [];
+				for (let i = 0; i < params.length && i < numberOfParams; i++) {
+					result.push(params[i] || null);
+				}
+				if (params.length < numberOfParams) {
+					for (let i = params.length; i < numberOfParams; i++) {
+						result.push(null);
+					}
+				}
+				break;
+		}
+		return result;
+	}
+
 	let connection: MessageConnection = {
 		sendNotification: (type: string | MessageType, ...params: any[]): void => {
 			throwIfClosedOrDisposed();
 
-			let messageParams: any[] | null;
-			switch (params.length) {
-				case 0:
-					messageParams = null;
-					break;
-				case 1:
-					messageParams = params[0];
-					break;
-				default:
-					messageParams = params;
-					break;
+			let method: string;
+			let messageParams: any | any[] | null;
+			if (is.string(type)) {
+				method = type;
+				switch (params.length) {
+					case 0:
+						messageParams = null;
+						break;
+					case 1:
+						messageParams = params[0];
+						break;
+					default:
+						messageParams = params;
+						break;
+				}
+			} else {
+				method = type.method;
+				messageParams = computeMessageParams(type, params);
 			}
 			let notificatioMessage : NotificationMessage = {
 				jsonrpc: version,
@@ -674,34 +706,43 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 		sendRequest: <R, E>(type: string | MessageType, ...params: any[]) => {
 			throwIfClosedOrDisposed();
 
-			const method = is.string(type) ? type : type.method;
-			let messageParams: any[] | null;
+			let method: string;
+			let messageParams: any | any[] | null;
 			let token: CancellationToken | undefined = undefined;
-			switch (params.length) {
-				case 0:
-					messageParams = null;
-					break;
-				case 1:
-					if (CancellationToken.is(params[0])) {
+			if (is.string(type)) {
+				method = type;
+				switch (params.length) {
+					case 0:
 						messageParams = null;
-						token = params[0];
-					} else {
-						messageParams = params[0];
-					}
-					break;
-				default:
-					const last = params.length - 1;
-					if (CancellationToken.is(params[last])) {
-						token = params[last];
-						if (params.length === 2) {
-							messageParams = params[0];
+						break;
+					case 1:
+						// The cancellation token is optional so it can also be undefined.
+						if (CancellationToken.is(params[0])) {
+							messageParams = null;
+							token = params[0];
 						} else {
-							messageParams = params.slice(0, last);
+							messageParams = params[0] || null;
 						}
-					} else {
-						messageParams = params;
-					}
-					break;
+						break;
+					default:
+						const last = params.length - 1;
+						if (CancellationToken.is(params[last])) {
+							token = params[last];
+							if (params.length === 2) {
+								messageParams = params[0] || null;
+							} else {
+								messageParams = params.slice(0, last).map(value => value || null);
+							}
+						} else {
+							messageParams = params.map(value => value || null);
+						}
+						break;
+				}
+			} else {
+				method = type.method;
+				messageParams = computeMessageParams(type, params);
+				let numberOfParams = type.numberOfParams;
+				token = CancellationToken.is(params[numberOfParams]) ? params[numberOfParams] : undefined;
 			}
 
 			let id = sequenceNumber++;
