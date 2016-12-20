@@ -45,7 +45,7 @@ export namespace CancellationToken {
 	}
 }
 
-const shortcutEvent: Event<any> = Object.freeze(function(callback: Function, context?: any): any {
+const shortcutEvent: Event<any> = Object.freeze(function (callback: Function, context?: any): any {
 	let handle = setTimeout(callback.bind(context), 0);
 	return { dispose() { clearTimeout(handle); } };
 });

@@ -24,18 +24,18 @@ interface TestWritableConstructor {
 	new (): TestWritable;
 }
 
-let TestWritable: TestWritableConstructor = function(): TestWritableConstructor {
+let TestWritable: TestWritableConstructor = function (): TestWritableConstructor {
 	function TestWritable(this: TestWritable): void {
 		Writable.call(this);
 		this.data = '';
 	}
 	inherits(TestWritable, Writable);
-	TestWritable.prototype._write = function(this: any, chunk: string | Buffer, _encoding: string, done: Function) {
+	TestWritable.prototype._write = function (this: any, chunk: string | Buffer, _encoding: string, done: Function) {
 		this.data += chunk.toString();
 		done();
 	}
 	return (<any>TestWritable) as TestWritableConstructor;
-}();
+} ();
 
 interface TestDuplex extends Duplex {
 }
@@ -44,13 +44,13 @@ interface TestDuplexConstructor {
 	new (name?: string, dbg?: boolean): TestDuplex;
 }
 
-let TestDuplex: TestDuplexConstructor = function(): TestDuplexConstructor {
+let TestDuplex: TestDuplexConstructor = function (): TestDuplexConstructor {
 	function TestDuplex(this: any, name: string = 'ds1', dbg = false) {
 		Duplex.call(this);
 		this.data = '';
 		this.name = name;
 		this.dbg = dbg;
-		this.on('finish', function(this: any) {
+		this.on('finish', function (this: any) {
 			this.isWriteFinished = true;
 			this.emit('readable');
 		});
@@ -64,9 +64,9 @@ let TestDuplex: TestDuplexConstructor = function(): TestDuplexConstructor {
 		done();
 	}
 	return (<any>TestDuplex) as TestDuplexConstructor;
-}();
+} ();
 
-TestDuplex.prototype._read = function(this: any, size: number) {
+TestDuplex.prototype._read = function (this: any, size: number) {
 	if (size > this.data.length) {
 		size = this.data.length;
 	}
@@ -81,8 +81,8 @@ TestDuplex.prototype._read = function(this: any, size: number) {
 	}
 }
 
-function newRequestString(id: number, method: string, params: any) : string {
-	let request : RequestMessage = { jsonrpc: '2.0', id, method, params };
+function newRequestString(id: number, method: string, params: any): string {
+	let request: RequestMessage = { jsonrpc: '2.0', id, method, params };
 	let str = JSON.stringify(request);
 	return `Content-Length: ${str.length}\r\n\r\n${str}`;
 }
@@ -91,7 +91,7 @@ function assertMessages(resultData: string, expected: Message[], done: MochaDone
 	let resultStream = new Readable();
 	resultStream.push(resultData);
 	resultStream.push(null);
-	let actual : Message[] = [];
+	let actual: Message[] = [];
 	new StreamMessageReader(resultStream).listen((res) => {
 		if ((<ResponseMessage>res).error) {
 			delete (<ResponseMessage>res).error!.message;
@@ -111,11 +111,11 @@ function assertMessages(resultData: string, expected: Message[], done: MochaDone
 let testRequest1 = new RequestType<any, any, any, void>('testCommand1');
 let testRequest2 = new RequestType<any, any, any, void>('testCommand2');
 
-function newParams(content: string)  {
-	return { documents: [ { content: content } ]};
+function newParams(content: string) {
+	return { documents: [{ content: content }] };
 };
 
-function testRequestHandler(params: any) : any | ResponseError<void> {
+function testRequestHandler(params: any): any | ResponseError<void> {
 	if (params.documents && params.documents.length === 1 && params.documents[0].content) {
 		return params.documents[0].content;
 	} else {
@@ -124,13 +124,13 @@ function testRequestHandler(params: any) : any | ResponseError<void> {
 };
 
 
-function createEventHandler<T>(result: T[]) : hostConnection.NotificationHandler<T> {
+function createEventHandler<T>(result: T[]): hostConnection.NotificationHandler<T> {
 	return (event) => {
 		result.push(event);
 	}
 };
 
-function createEchoRequestHandler<P>(result: P[]) : hostConnection.RequestHandler<P, any, any> {
+function createEchoRequestHandler<P>(result: P[]): hostConnection.RequestHandler<P, any, any> {
 	return (param: P): any | ResponseError<any> => {
 		result.push(param);
 		return param;
@@ -138,10 +138,10 @@ function createEchoRequestHandler<P>(result: P[]) : hostConnection.RequestHandle
 };
 
 let Logger: hostConnection.Logger = {
-	error: (_message: string) => {},
-	warn: (_message: string) => {},
-	info: (_message: string) => {},
-	log: (_message: string) => {}
+	error: (_message: string) => { },
+	warn: (_message: string) => { },
+	info: (_message: string) => { },
+	log: (_message: string) => { }
 }
 
 describe('Connection', () => {
@@ -158,7 +158,7 @@ describe('Connection', () => {
 		inputStream.push(newRequestString(0, testRequest1.method, newParams('foo')));
 		inputStream.push(null);
 
-		let expected : ResponseMessage[]= [
+		let expected: ResponseMessage[] = [
 			{ jsonrpc: '2.0', id: 0, result: 'foo' }
 		];
 
@@ -183,7 +183,7 @@ describe('Connection', () => {
 		inputStream.push(newRequestString(1, testRequest2.method, newParams('bar')));
 		inputStream.push(null);
 
-		let expected : ResponseMessage[]= [
+		let expected: ResponseMessage[] = [
 			{ jsonrpc: '2.0', id: 0, result: 'foo' },
 			{ jsonrpc: '2.0', id: 1, result: 'bar' }
 		];
@@ -207,7 +207,7 @@ describe('Connection', () => {
 		inputStream.push(newRequestString(0, testRequest1.method, {}));
 		inputStream.push(null);
 
-		let expected : ResponseMessage[]= [
+		let expected: ResponseMessage[] = [
 			{ jsonrpc: '2.0', id: 0, error: <any>{ code: ErrorCodes.InvalidRequest } }
 		];
 
@@ -230,7 +230,7 @@ describe('Connection', () => {
 		inputStream.push(newRequestString(0, testRequest2.method, {}));
 		inputStream.push(null);
 
-		let expected : ResponseMessage[]= [
+		let expected: ResponseMessage[] = [
 			{ jsonrpc: '2.0', id: 0, error: <any>{ code: ErrorCodes.MethodNotFound } }
 		];
 
@@ -251,7 +251,7 @@ describe('Connection', () => {
 		connection.sendRequest(testRequest1, { 'foo': true });
 		connection.listen();
 
-		let expected : RequestMessage[] = [
+		let expected: RequestMessage[] = [
 			{ jsonrpc: '2.0', id: 0, method: testRequest1.method, params: { 'foo': true } }
 		];
 
@@ -269,7 +269,7 @@ describe('Connection', () => {
 		let connection = hostConnection.createMessageConnection(inputStream, outputStream, Logger);
 		connection.sendRequest(testRequest1, undefined);
 		connection.listen();
-		let expected : RequestMessage[] = [
+		let expected: RequestMessage[] = [
 			{ jsonrpc: '2.0', id: 0, method: testRequest1.method, params: null }
 		];
 		setImmediate(() => {
@@ -281,7 +281,7 @@ describe('Connection', () => {
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
-		let params = { 'foo': [ { bar: 1 } ]};
+		let params = { 'foo': [{ bar: 1 }] };
 
 		let receivedRequests: any[] = [];
 		let receivedResults: any[] = [];
@@ -294,8 +294,8 @@ describe('Connection', () => {
 		connection1.listen();
 		connection1.sendRequest(testRequest1, params).then(result => {
 			receivedResults.push(result);
-			assert.deepEqual(receivedRequests, [ params ]);
-			assert.deepEqual(receivedResults, [ params ]);
+			assert.deepEqual(receivedRequests, [params]);
+			assert.deepEqual(receivedResults, [params]);
 			done();
 		});
 	});
@@ -356,7 +356,7 @@ describe('Connection', () => {
 		connection2.onNotification(testNotification, createEventHandler(resultingEvents));
 		connection2.listen();
 		setTimeout(() => {
-			assert.deepEqual(resultingEvents, [ params ]);
+			assert.deepEqual(resultingEvents, [params]);
 			done();
 		}, 10);
 

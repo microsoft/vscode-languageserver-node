@@ -126,7 +126,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asDiagnostic(diagnostic: ls.Diagnostic): code.Diagnostic {
-		let result = new code.Diagnostic(asRange(diagnostic.range)!, diagnostic.message, asDiagnosticSeverity(diagnostic.severity));
+		let result = new code.Diagnostic(asRange(diagnostic.range) !, diagnostic.message, asDiagnosticSeverity(diagnostic.severity));
 		if (is.number(diagnostic.code) || is.string(diagnostic.code)) { result.code = diagnostic.code; }
 		if (diagnostic.source) { result.source = diagnostic.source; }
 		return result;
@@ -187,10 +187,10 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			return undefined;
 		}
 		if (Array.isArray(result)) {
-			let items = <ls.CompletionItem[]> result;
+			let items = <ls.CompletionItem[]>result;
 			return items.map(asCompletionItem);
 		}
-		let list = <ls.CompletionList> result;
+		let list = <ls.CompletionList>result;
 		return new code.CompletionList(list.items.map(asCompletionItem), list.isIncomplete);
 	}
 
@@ -287,7 +287,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			return undefined;
 		}
 		if (is.array(item)) {
-			return item.map((location) => asLocation(location)!);
+			return item.map((location) => asLocation(location) !);
 		} else {
 			return asLocation(item);
 		}
@@ -300,7 +300,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (!item) {
 			return undefined;
 		}
-		return new code.Location(_uriConverter(item.uri), asRange(item.range)!);
+		return new code.Location(_uriConverter(item.uri), asRange(item.range) !);
 	}
 
 	function asReferences(values: ls.Location[]): code.Location[];
@@ -310,7 +310,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (!values) {
 			return undefined;
 		}
-		return values.map(location => asLocation(location)!);
+		return values.map(location => asLocation(location) !);
 	}
 
 	function asDocumentHighlights(values: ls.DocumentHighlight[]): code.DocumentHighlight[];
@@ -324,13 +324,13 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asDocumentHighlight(item: ls.DocumentHighlight): code.DocumentHighlight {
-		let result = new code.DocumentHighlight(asRange(item.range)!);
+		let result = new code.DocumentHighlight(asRange(item.range) !);
 		if (is.number(item.kind)) { result.kind = asDocumentHighlightKind(item.kind); }
 		return result;
 	}
 
 	function asDocumentHighlightKind(item: ls.DocumentHighlightKind): code.DocumentHighlightKind {
-		switch(item) {
+		switch (item) {
 			case ls.DocumentHighlightKind.Text:
 				return code.DocumentHighlightKind.Text;
 			case ls.DocumentHighlightKind.Read:
@@ -355,7 +355,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		// Symbol kind is one based in the protocol and zero based in code.
 		let result = new code.SymbolInformation(
 			item.name, item.kind - 1,
-			asRange(item.location.range)!,
+			asRange(item.location.range) !,
 			item.location.uri ? _uriConverter(item.location.uri) : uri);
 		if (item.containerName) { result.containerName = item.containerName; }
 		return result;
@@ -384,7 +384,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (!item) {
 			return undefined;
 		}
-		let result: ProtocolCodeLens = new ProtocolCodeLens(asRange(item.range)!);
+		let result: ProtocolCodeLens = new ProtocolCodeLens(asRange(item.range) !);
 		if (item.command) { result.command = asCommand(item.command); }
 		if (item.data !== void 0 && item.data !== null) { result.data = item.data; }
 		return result;
@@ -397,7 +397,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (!items) {
 			return undefined;
 		}
-		return items.map((codeLens) => asCodeLens(codeLens)!);
+		return items.map((codeLens) => asCodeLens(codeLens) !);
 	}
 
 	function asWorkspaceEdit(item: ls.WorkspaceEdit): code.WorkspaceEdit;
@@ -409,13 +409,13 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		}
 		let result = new code.WorkspaceEdit();
 		item.changes.forEach(change => {
-			result.set(_uriConverter(change.textDocument.uri), asTextEdits(change.edits)!);
+			result.set(_uriConverter(change.textDocument.uri), asTextEdits(change.edits) !);
 		});
 		return result;
 	}
 
 	function asDocumentLink(item: ls.DocumentLink): code.DocumentLink {
-		let range = asRange(item.range)!;
+		let range = asRange(item.range) !;
 		let target = item.target ? asUri(item.target!) : undefined;
 		// target must be optional in DocumentLink
 		return new code.DocumentLink(range, target!);

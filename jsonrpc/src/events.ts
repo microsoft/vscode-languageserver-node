@@ -36,7 +36,7 @@ export interface Event<T> {
 
 export namespace Event {
 	const _disposable = { dispose() { } };
-	export const None: Event<any> = function() { return _disposable; };
+	export const None: Event<any> = function () { return _disposable; };
 }
 
 /**
@@ -57,7 +57,7 @@ class DisposableImpl implements Disposable {
 		return new DisposableImpl(function () {
 			let disposables: Disposable[] | undefined = _disposables;
 			if (disposables) {
-				for(let disposable of disposables) {
+				for (let disposable of disposables) {
 					disposable.dispose();
 				}
 				disposables = undefined;
@@ -174,7 +174,7 @@ export class Emitter<T> {
 	 */
 	get event(): Event<T> {
 		if (!this._event) {
-			this._event = (listener: (e: T) => any,  thisArgs?: any, disposables?: Disposable[]) => {
+			this._event = (listener: (e: T) => any, thisArgs?: any, disposables?: Disposable[]) => {
 				if (!this._callbacks) {
 					this._callbacks = new CallbackList();
 				}
@@ -188,12 +188,12 @@ export class Emitter<T> {
 					dispose: () => {
 						this._callbacks!.remove(listener, thisArgs);
 						result.dispose = Emitter._noop;
-						if(this._options && this._options.onLastListenerRemove && this._callbacks!.isEmpty()) {
+						if (this._options && this._options.onLastListenerRemove && this._callbacks!.isEmpty()) {
 							this._options.onLastListenerRemove(this);
 						}
 					}
 				};
-				if(Array.isArray(disposables)) {
+				if (Array.isArray(disposables)) {
 					disposables.push(result);
 				}
 
@@ -214,7 +214,7 @@ export class Emitter<T> {
 	}
 
 	dispose() {
-		if(this._callbacks) {
+		if (this._callbacks) {
 			this._callbacks.dispose();
 			this._callbacks = undefined;
 		}

@@ -19,7 +19,7 @@ import {
 import {
 	TextDocument, TextDocumentChangeEvent, TextDocumentContentChangeEvent, TextDocumentWillSaveEvent,
 	Location, Command, TextEdit, WorkspaceEdit, CompletionItem, CompletionList, Hover,
-	SignatureHelp, Definition,DocumentHighlight, SymbolInformation, WorkspaceSymbolParams, DocumentSymbolParams,
+	SignatureHelp, Definition, DocumentHighlight, SymbolInformation, WorkspaceSymbolParams, DocumentSymbolParams,
 	CodeLens, DocumentLink
 } from 'vscode-languageserver-types';
 
@@ -42,7 +42,7 @@ import {
 	DefinitionRequest, ReferencesRequest, ReferenceParams,
 	DocumentHighlightRequest,
 	DocumentSymbolRequest, WorkspaceSymbolRequest,
-	CodeActionRequest, CodeActionParams,CodeLensRequest, CodeLensParams, CodeLensResolveRequest,
+	CodeActionRequest, CodeActionParams, CodeLensRequest, CodeLensParams, CodeLensResolveRequest,
 	DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
 	DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams,
 	RenameRequest, RenameParams,
@@ -1183,7 +1183,7 @@ export function createConnection(input?: any, output?: any): IConnection {
 	let protocolConnection: IConnection & ConnectionState = {
 		listen: (): void => connection.listen(),
 
-		sendRequest: <R>(type: string  | RPCMessageType, ...params: any[]): Thenable<R> => connection.sendRequest(Is.string(type) ? type : type.method, ...params),
+		sendRequest: <R>(type: string | RPCMessageType, ...params: any[]): Thenable<R> => connection.sendRequest(Is.string(type) ? type : type.method, ...params),
 		onRequest: <R, E>(type: string | RPCMessageType, handler: GenericRequestHandler<R, E>): void => connection.onRequest(Is.string(type) ? type : type.method, handler),
 
 		sendNotification: (type: string | RPCMessageType, ...params: any[]): void => connection.sendNotification(Is.string(type) ? type : type.method, ...params),

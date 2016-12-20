@@ -11,8 +11,8 @@ import { Event, Emitter } from './events';
 import * as is from './is';
 
 let DefaultSize: number = 8192;
-let CR:number = new Buffer('\r', 'ascii')[0];
-let LF:number = new Buffer('\n', 'ascii')[0];
+let CR: number = new Buffer('\r', 'ascii')[0];
+let LF: number = new Buffer('\n', 'ascii')[0];
 let CRLF: string = '\r\n';
 
 class MessageBuffer {
@@ -27,10 +27,10 @@ class MessageBuffer {
 		this.buffer = new Buffer(DefaultSize);
 	}
 
-	public append(chunk: Buffer | String):void {
-		var toAppend: Buffer = <Buffer> chunk;
-		if (typeof(chunk) == 'string') {
-			var str = <string> chunk;
+	public append(chunk: Buffer | String): void {
+		var toAppend: Buffer = <Buffer>chunk;
+		if (typeof (chunk) == 'string') {
+			var str = <string>chunk;
 			toAppend = new Buffer(str.length);
 			toAppend.write(str, 0, str.length, this.encoding);
 		}
@@ -45,7 +45,7 @@ class MessageBuffer {
 				this.buffer = Buffer.concat([this.buffer.slice(0, this.index), toAppend], newSize);
 			}
 		}
-		this.index+= toAppend.length;
+		this.index += toAppend.length;
 	}
 
 	public tryReadHeaders(): { [key: string]: string; } | undefined {
@@ -87,7 +87,7 @@ class MessageBuffer {
 		return result;
 	}
 
-	public get numberOfBytes():number {
+	public get numberOfBytes(): number {
 		return this.index;
 	}
 }
@@ -184,16 +184,16 @@ export class StreamMessageReader extends AbstractMessageReader implements Messag
 		this.messageToken = 0;
 		this.partialMessageTimer = undefined;
 		this.callback = callback;
-		this.readable.on('data', (data:Buffer) => {
+		this.readable.on('data', (data: Buffer) => {
 			this.onData(data);
 		});
 		this.readable.on('error', (error: any) => this.fireError(error));
 		this.readable.on('close', () => this.fireClose());
 	}
 
-	private onData(data:Buffer|String): void {
+	private onData(data: Buffer | String): void {
 		this.buffer.append(data);
-		while(true) {
+		while (true) {
 			if (this.nextMessageLength === -1) {
 				let headers = this.buffer.tryReadHeaders();
 				if (!headers) {

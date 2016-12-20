@@ -52,7 +52,7 @@ export class Delayer<T> {
 		return this.completionPromise;
 	}
 
-	public forceDelivery(): T  | undefined {
+	public forceDelivery(): T | undefined {
 		if (!this.completionPromise) {
 			return undefined;
 		}

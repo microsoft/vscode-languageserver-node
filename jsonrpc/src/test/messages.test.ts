@@ -22,18 +22,18 @@ interface TestWritableConstructor {
 	new (): TestWritable;
 }
 
-let TestWritable: TestWritableConstructor = function(): TestWritableConstructor {
+let TestWritable: TestWritableConstructor = function (): TestWritableConstructor {
 	function TestWritable(this: any): void {
 		Writable.call(this);
 		this.data = '';
 	}
 	inherits(TestWritable, Writable);
-	TestWritable.prototype._write = function(this: any, chunk: string | Buffer, _encoding: string, done: Function) {
+	TestWritable.prototype._write = function (this: any, chunk: string | Buffer, _encoding: string, done: Function) {
 		this.data += chunk.toString();
 		done();
 	}
 	return (<any>TestWritable) as TestWritableConstructor;
-}();
+} ();
 
 describe('Messages', () => {
 	let data: string = 'Content-Length: 43\r\n\r\n{"jsonrpc":"2.0","id":1,"method":"example"}';

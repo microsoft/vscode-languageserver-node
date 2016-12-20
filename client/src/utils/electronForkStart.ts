@@ -9,9 +9,9 @@ var net = require('net'),
 
 var ENABLE_LOGGING = false;
 
-var log = (function() {
+var log = (function () {
 	if (!ENABLE_LOGGING) {
-		return function() {};
+		return function () { };
 	}
 	var isFirst = true;
 	var LOG_LOCATION = 'C:\\stdFork.log';
@@ -33,7 +33,7 @@ log('STDOUT_PIPE_NAME: ' + stdOutPipeName);
 log('ATOM_SHELL_INTERNAL_RUN_AS_NODE: ' + process.env['ATOM_SHELL_INTERNAL_RUN_AS_NODE']);
 
 // stdout redirection to named pipe
-(function() {
+(function () {
 	log('Beginning stdout redirection...');
 
 	// Create a writing stream to the stdout pipe
@@ -43,18 +43,18 @@ log('ATOM_SHELL_INTERNAL_RUN_AS_NODE: ' + process.env['ATOM_SHELL_INTERNAL_RUN_A
 	stdOutStream.unref();
 
 	// handle process.stdout
-	(<any>process).__defineGetter__('stdout', function() { return stdOutStream; });
+	(<any>process).__defineGetter__('stdout', function () { return stdOutStream; });
 
 	// handle process.stderr
-	(<any>process).__defineGetter__('stderr', function() { return stdOutStream; });
+	(<any>process).__defineGetter__('stderr', function () { return stdOutStream; });
 
-	var fsWriteSyncString = function(fd: number, str:  string, _position: number, encoding: string) {
+	var fsWriteSyncString = function (fd: number, str: string, _position: number, encoding: string) {
 		//  fs.writeSync(fd, string[, position[, encoding]]);
 		var buf = new Buffer(str, encoding || 'utf8');
 		return fsWriteSyncBuffer(fd, buf, 0, buf.length);
 	};
 
-	var fsWriteSyncBuffer = function(_fd: number, buffer: any, off: number, len: number) {
+	var fsWriteSyncBuffer = function (_fd: number, buffer: any, off: number, len: number) {
 		off = Math.abs(off | 0);
 		len = Math.abs(len | 0);
 
@@ -86,7 +86,7 @@ log('ATOM_SHELL_INTERNAL_RUN_AS_NODE: ' + process.env['ATOM_SHELL_INTERNAL_RUN_A
 
 	// handle fs.writeSync(1, ...)
 	var originalWriteSync = fs.writeSync;
-	fs.writeSync = function(fd: number, data: any, _position: any, _encoding: string) {
+	fs.writeSync = function (fd: number, data: any, _position: any, _encoding: string) {
 		if (fd !== 1) {
 			return originalWriteSync.apply(fs, arguments);
 		}
@@ -111,17 +111,17 @@ log('ATOM_SHELL_INTERNAL_RUN_AS_NODE: ' + process.env['ATOM_SHELL_INTERNAL_RUN_A
 })();
 
 // stdin redirection to named pipe
-(function() {
+(function () {
 
 	// Begin listening to stdin pipe
-	var server = net.createServer(function(stream: any) {
+	var server = net.createServer(function (stream: any) {
 		// Stop accepting new connections, keep the existing one alive
 		server.close();
 
 		log('Parent process has connected to my stdin. All should be good now.');
 
 		// handle process.stdin
-		(<any>process).__defineGetter__('stdin', function() {
+		(<any>process).__defineGetter__('stdin', function () {
 			return stream;
 		});
 
@@ -142,7 +142,7 @@ log('ATOM_SHELL_INTERNAL_RUN_AS_NODE: ' + process.env['ATOM_SHELL_INTERNAL_RUN_A
 		log('Finished loading program.');
 
 		var stdinIsReferenced = true;
-		var timer = setInterval(function() {
+		var timer = setInterval(function () {
 			var listenerCount = (
 				stream.listeners('data').length +
 				stream.listeners('end').length +
@@ -174,8 +174,7 @@ log('ATOM_SHELL_INTERNAL_RUN_AS_NODE: ' + process.env['ATOM_SHELL_INTERNAL_RUN_A
 		timer.unref();
 	});
 
-
-	server.listen(stdInPipeName, function() {
+	server.listen(stdInPipeName, function () {
 		// signal via stdout that the parent process can now begin writing to stdin pipe
 		process.stdout.write('ready');
 	});

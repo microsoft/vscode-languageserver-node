@@ -141,7 +141,7 @@ export function resolve(moduleName: string, nodePath: string | undefined, cwd: s
 		}
 		newEnv['ATOM_SHELL_INTERNAL_RUN_AS_NODE'] = '1';
 		try {
-			let cp: ChildProcess = fork('', [], <any> {
+			let cp: ChildProcess = fork('', [], <any>{
 				cwd: cwd,
 				env: newEnv,
 				execArgv: ['-e', app]

@@ -8,58 +8,58 @@ import * as cp from 'child_process';
 import ChildProcess = cp.ChildProcess;
 
 import {
-		workspace as Workspace, window as Window, languages as Languages, commands as Commands,
-		TextDocumentChangeEvent, TextDocument, Disposable, OutputChannel,
-		FileSystemWatcher, DiagnosticCollection,
-		CancellationToken, Position as VPosition, Location as VLocation, Range as VRange,
-		CompletionItem as VCompletionItem, CompletionList as VCompletionList, SignatureHelp as VSignatureHelp, Definition as VDefinition, DocumentHighlight as VDocumentHighlight,
-		SymbolInformation as VSymbolInformation, CodeActionContext as VCodeActionContext, Command as VCommand, CodeLens as VCodeLens,
-		FormattingOptions as VFormattingOptions, TextEdit as VTextEdit, WorkspaceEdit as VWorkspaceEdit, MessageItem,
-		Hover as VHover,
-		DocumentLink as VDocumentLink, TextDocumentWillSaveEvent
+	workspace as Workspace, window as Window, languages as Languages, commands as Commands,
+	TextDocumentChangeEvent, TextDocument, Disposable, OutputChannel,
+	FileSystemWatcher, DiagnosticCollection,
+	CancellationToken, Position as VPosition, Location as VLocation, Range as VRange,
+	CompletionItem as VCompletionItem, CompletionList as VCompletionList, SignatureHelp as VSignatureHelp, Definition as VDefinition, DocumentHighlight as VDocumentHighlight,
+	SymbolInformation as VSymbolInformation, CodeActionContext as VCodeActionContext, Command as VCommand, CodeLens as VCodeLens,
+	FormattingOptions as VFormattingOptions, TextEdit as VTextEdit, WorkspaceEdit as VWorkspaceEdit, MessageItem,
+	Hover as VHover,
+	DocumentLink as VDocumentLink, TextDocumentWillSaveEvent
 } from 'vscode';
 
 import {
-		Message, MessageType as RPCMessageType, Logger, createMessageConnection, ErrorCodes, ResponseError,
-		RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler,
-		NotificationType, NotificationType0,
-		NotificationHandler, NotificationHandler0, GenericNotificationHandler,
-		MessageReader, IPCMessageReader, MessageWriter, IPCMessageWriter, Trace, Tracer, Event, Emitter
+	Message, MessageType as RPCMessageType, Logger, createMessageConnection, ErrorCodes, ResponseError,
+	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler,
+	NotificationType, NotificationType0,
+	NotificationHandler, NotificationHandler0, GenericNotificationHandler,
+	MessageReader, IPCMessageReader, MessageWriter, IPCMessageWriter, Trace, Tracer, Event, Emitter
 } from 'vscode-jsonrpc';
 
 import {
-		WorkspaceEdit
+	WorkspaceEdit
 } from 'vscode-languageserver-types';
 
 
 import {
-		RegistrationRequest, RegistrationParams, UnregistrationRequest, UnregistrationParams, DocumentOptions,
-		InitializeRequest, InitializeParams, InitializeResult, InitializeError, ServerCapabilities, TextDocumentSyncKind,
-		InitializedNotification, ShutdownRequest, ExitNotification,
-		LogMessageNotification, LogMessageParams, MessageType,
-		ShowMessageNotification, ShowMessageParams, ShowMessageRequest,
-		TelemetryEventNotification,
-		DidChangeConfigurationNotification, DidChangeConfigurationParams,
-		DocumentSelector,
-		DidOpenTextDocumentNotification, DidOpenTextDocumentParams,
-		DidChangeTextDocumentNotification, DidChangeTextDocumentParams, DidChangeTextDocumentOptions,
-		DidCloseTextDocumentNotification, DidCloseTextDocumentParams,
-		DidSaveTextDocumentNotification, DidSaveTextDocumentParams, /* SaveOptions, */
-		WillSaveTextDocumentNotification, WillSaveTextDocumentWaitUntilRequest, WillSaveTextDocumentParams,
-		DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
-		PublishDiagnosticsNotification, PublishDiagnosticsParams,
-		CompletionRequest, CompletionResolveRequest, CompletionOptions,
-		HoverRequest,
-		SignatureHelpRequest, SignatureHelpOptions, DefinitionRequest, ReferencesRequest, DocumentHighlightRequest,
-		DocumentSymbolRequest, WorkspaceSymbolRequest,
-		CodeActionRequest, CodeActionParams,
-		CodeLensRequest, CodeLensResolveRequest, CodeLensOptions,
-		DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
-		DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams, DocumentOnTypeFormattingOptions,
-		RenameRequest, RenameParams,
-		DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkOptions,
-		ExecuteCommandRequest, ExecuteCommandParams, ExecuteCommandOptions,
-		ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse
+	RegistrationRequest, RegistrationParams, UnregistrationRequest, UnregistrationParams, DocumentOptions,
+	InitializeRequest, InitializeParams, InitializeResult, InitializeError, ServerCapabilities, TextDocumentSyncKind,
+	InitializedNotification, ShutdownRequest, ExitNotification,
+	LogMessageNotification, LogMessageParams, MessageType,
+	ShowMessageNotification, ShowMessageParams, ShowMessageRequest,
+	TelemetryEventNotification,
+	DidChangeConfigurationNotification, DidChangeConfigurationParams,
+	DocumentSelector,
+	DidOpenTextDocumentNotification, DidOpenTextDocumentParams,
+	DidChangeTextDocumentNotification, DidChangeTextDocumentParams, DidChangeTextDocumentOptions,
+	DidCloseTextDocumentNotification, DidCloseTextDocumentParams,
+	DidSaveTextDocumentNotification, DidSaveTextDocumentParams, /* SaveOptions, */
+	WillSaveTextDocumentNotification, WillSaveTextDocumentWaitUntilRequest, WillSaveTextDocumentParams,
+	DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
+	PublishDiagnosticsNotification, PublishDiagnosticsParams,
+	CompletionRequest, CompletionResolveRequest, CompletionOptions,
+	HoverRequest,
+	SignatureHelpRequest, SignatureHelpOptions, DefinitionRequest, ReferencesRequest, DocumentHighlightRequest,
+	DocumentSymbolRequest, WorkspaceSymbolRequest,
+	CodeActionRequest, CodeActionParams,
+	CodeLensRequest, CodeLensResolveRequest, CodeLensOptions,
+	DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
+	DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams, DocumentOnTypeFormattingOptions,
+	RenameRequest, RenameParams,
+	DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkOptions,
+	ExecuteCommandRequest, ExecuteCommandParams, ExecuteCommandOptions,
+	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse
 } from './protocol';
 
 import * as c2p from './codeConverter';
@@ -88,10 +88,10 @@ interface IConnection {
 
 	listen(): void;
 
-	sendRequest<R, E, RO>(type: RequestType0<R, E, RO>, token?: CancellationToken) : Thenable<R>;
-	sendRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, params: P, token?: CancellationToken) : Thenable<R>;
-	sendRequest<R>(method: string, token?: CancellationToken) : Thenable<R>;
-	sendRequest<R>(method: string, param: any, token?: CancellationToken) : Thenable<R>;
+	sendRequest<R, E, RO>(type: RequestType0<R, E, RO>, token?: CancellationToken): Thenable<R>;
+	sendRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, params: P, token?: CancellationToken): Thenable<R>;
+	sendRequest<R>(method: string, token?: CancellationToken): Thenable<R>;
+	sendRequest<R>(method: string, param: any, token?: CancellationToken): Thenable<R>;
 	sendRequest<R>(type: string | RPCMessageType, ...params: any[]): Thenable<R>;
 
 	onRequest<R, E, RO>(type: RequestType0<R, E, RO>, handler: RequestHandler0<R, E>): void;
@@ -159,7 +159,7 @@ function createConnection(reader: MessageReader, writer: MessageWriter, errorHan
 function createConnection(input: any, output: any, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler): IConnection {
 	let logger = new ConsoleLogger();
 	let connection = createMessageConnection(input, output, logger);
-	connection.onError((data) => { errorHandler(data[0], data[1], data[2])});
+	connection.onError((data) => { errorHandler(data[0], data[1], data[2]) });
 	connection.onClose(closeHandler);
 	let result: IConnection = {
 
@@ -235,7 +235,7 @@ export interface NodeModule {
 	options?: ForkOptions;
 }
 
-export type ServerOptions = Executable | { run: Executable; debug: Executable; } |  { run: NodeModule; debug: NodeModule } | NodeModule | (() => Thenable<ChildProcess | StreamInfo>);
+export type ServerOptions = Executable | { run: Executable; debug: Executable; } | { run: NodeModule; debug: NodeModule } | NodeModule | (() => Thenable<ChildProcess | StreamInfo>);
 
 /**
  * An action to be performed when the connection is producing errors.
@@ -496,7 +496,7 @@ class DidCloseTextDocumentFeature extends DocumentNotifiactions<DidCloseTextDocu
 	}
 
 	public unregister(id: string): void {
-		let selector = this._selectors.get(id)!;
+		let selector = this._selectors.get(id) !;
 		super.unregister(id);
 		let selectors = this._selectors.values();
 		this._syncedDocuments.forEach((textDocument) => {
@@ -518,7 +518,7 @@ class DidChangeTextDocumentFeature implements FeatureHandler<DidChangeTextDocume
 	private _listener: Disposable | undefined;
 	private _changeData: Map<string, DidChangeTextDocumentData> = new Map<string, DidChangeTextDocumentData>();
 	private _forcingDelivery: boolean = false;
-	private _changeDelayer: { uri: string; delayer: Delayer<void>} | undefined;
+	private _changeDelayer: { uri: string; delayer: Delayer<void> } | undefined;
 
 	constructor(private _client: LanguageClient) {
 	}
@@ -1034,7 +1034,7 @@ export class LanguageClient {
 		this.state = ClientState.Starting;
 		this.resolveConnection().then((connection) => {
 			connection.onLogMessage((message) => {
-				switch(message.type) {
+				switch (message.type) {
 					case MessageType.Error:
 						this.error(message.message);
 						break;
@@ -1049,7 +1049,7 @@ export class LanguageClient {
 				}
 			});
 			connection.onShowMessage((message) => {
-				switch(message.type) {
+				switch (message.type) {
 					case MessageType.Error:
 						Window.showErrorMessage(message.message);
 						break;
@@ -1065,7 +1065,7 @@ export class LanguageClient {
 			});
 			connection.onRequest(ShowMessageRequest.type, (params) => {
 				let messageFunc: <T extends MessageItem>(message: string, ...items: T[]) => Thenable<T>;
-				switch(params.type) {
+				switch (params.type) {
 					case MessageType.Error:
 						messageFunc = Window.showErrorMessage;
 						break;
@@ -1087,7 +1087,7 @@ export class LanguageClient {
 			this.initRegistrationHandlers(connection);
 			connection.listen();
 			// Error is handled in the intialize call.
-			this.initialize(connection).then(undefined, () => {});
+			this.initialize(connection).then(undefined, () => { });
 		}, (error) => {
 			this.state = ClientState.StartFailed;
 			this._onReadyCallbacks.reject(error);
@@ -1143,19 +1143,19 @@ export class LanguageClient {
 			this.hookConfigurationChanged(connection);
 			if (this._capabilites.textDocumentSync !== TextDocumentSyncKind.None && this._clientOptions.documentSelector) {
 				let selectorOptions: DocumentOptions = { documentSelector: this._clientOptions.documentSelector };
-				this._registeredHandlers.get(DidOpenTextDocumentNotification.type.method)!.register(
+				this._registeredHandlers.get(DidOpenTextDocumentNotification.type.method) !.register(
 					{ id: UUID.generateUuid(), registerOptions: selectorOptions }
 				);
-				this._registeredHandlers.get(DidChangeTextDocumentNotification.type.method)!.register(
+				this._registeredHandlers.get(DidChangeTextDocumentNotification.type.method) !.register(
 					{
 						id: UUID.generateUuid(),
 						registerOptions: Object.assign({}, selectorOptions, { syncKind: this._capabilites.textDocumentSync }) as DidChangeTextDocumentOptions
 					}
 				);
-				this._registeredHandlers.get(DidCloseTextDocumentNotification.type.method)!.register(
+				this._registeredHandlers.get(DidCloseTextDocumentNotification.type.method) !.register(
 					{ id: UUID.generateUuid(), registerOptions: selectorOptions }
 				);
-				this._registeredHandlers.get(DidSaveTextDocumentNotification.type.method)!.register(
+				this._registeredHandlers.get(DidSaveTextDocumentNotification.type.method) !.register(
 					{ id: UUID.generateUuid(), registerOptions: selectorOptions }
 				);
 			}
@@ -1171,7 +1171,7 @@ export class LanguageClient {
 					this._onReadyCallbacks.reject(error);
 				}
 			} else if (error instanceof ResponseError && error.data && error.data.retry) {
-				Window.showErrorMessage(error.message, { title: 'Retry', id: "retry"}).then(item => {
+				Window.showErrorMessage(error.message, { title: 'Retry', id: "retry" }).then(item => {
 					if (item && item.id === 'retry') {
 						this.initialize(connection);
 					} else {
@@ -1296,7 +1296,7 @@ export class LanguageClient {
 			});
 		}
 		let json: { command?: string; module?: string };
-		let runDebug= <{ run: any; debug: any;}>server;
+		let runDebug = <{ run: any; debug: any; }>server;
 		if (runDebug.run || runDebug.debug) {
 			// We are under debugging. So use debug as well.
 			if (typeof v8debug === 'object' || this._forceDebug || startedInDebugMode()) {
@@ -1547,7 +1547,7 @@ export class LanguageClient {
 				this, Workspace.onWillSaveTextDocument, WillSaveTextDocumentNotification.type,
 				(willSaveEvent) => this._c2p.asWillSaveTextDocumentParams(willSaveEvent),
 				(selectors, willSaveEvent) => DocumentNotifiactions.textDocumentFilter(selectors, willSaveEvent.document)
-		));
+			));
 		this._registeredHandlers.set(
 			WillSaveTextDocumentWaitUntilRequest.type.method,
 			new WillSaveWaitUntilFeature(this)
@@ -1558,7 +1558,7 @@ export class LanguageClient {
 				this, Workspace.onDidSaveTextDocument, DidSaveTextDocumentNotification.type,
 				(textDocument) => this._c2p.asSaveTextDocumentParams(textDocument),
 				DocumentNotifiactions.textDocumentFilter
-		));
+			));
 		this._registeredHandlers.set(
 			DidCloseTextDocumentNotification.type.method,
 			new DidCloseTextDocumentFeature(this, syncedDocuments)
@@ -1687,100 +1687,100 @@ export class LanguageClient {
 		let selectorOptions: DocumentOptions = { documentSelector: documentSelector };
 		if (this._capabilites.completionProvider) {
 			let options: CompletionOptions = Object.assign({}, selectorOptions, this._capabilites.completionProvider);
-			this._registeredHandlers.get(CompletionRequest.type.method)!.register(
+			this._registeredHandlers.get(CompletionRequest.type.method) !.register(
 				{ id: UUID.generateUuid(), registerOptions: options }
 			);
 		}
 		if (this._capabilites.hoverProvider) {
-			this._registeredHandlers.get(HoverRequest.type.method)!.register(
+			this._registeredHandlers.get(HoverRequest.type.method) !.register(
 				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
 			);
 		}
 		if (this._capabilites.signatureHelpProvider) {
 			let options: SignatureHelpOptions = Object.assign({}, selectorOptions, this._capabilites.signatureHelpProvider);
-			this._registeredHandlers.get(SignatureHelpRequest.type.method)!.register(
+			this._registeredHandlers.get(SignatureHelpRequest.type.method) !.register(
 				{ id: UUID.generateUuid(), registerOptions: options }
 			);
 		}
 
 		if (this._capabilites.definitionProvider) {
-			this._registeredHandlers.get(DefinitionRequest.type.method)!.register(
+			this._registeredHandlers.get(DefinitionRequest.type.method) !.register(
 				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
 			);
 		}
 
 		if (this._capabilites.referencesProvider) {
-			this._registeredHandlers.get(ReferencesRequest.type.method)!.register(
+			this._registeredHandlers.get(ReferencesRequest.type.method) !.register(
 				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
 			);
 		}
 
 		if (this._capabilites.documentHighlightProvider) {
-			this._registeredHandlers.get(DocumentHighlightRequest.type.method)!.register(
+			this._registeredHandlers.get(DocumentHighlightRequest.type.method) !.register(
 				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
 			);
 		}
 
 		if (this._capabilites.documentSymbolProvider) {
-			this._registeredHandlers.get(DocumentSymbolRequest.type.method)!.register(
+			this._registeredHandlers.get(DocumentSymbolRequest.type.method) !.register(
 				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
 			);
 		}
 
 		if (this._capabilites.workspaceSymbolProvider) {
-			this._registeredHandlers.get(WorkspaceSymbolRequest.type.method)!.register(
+			this._registeredHandlers.get(WorkspaceSymbolRequest.type.method) !.register(
 				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
 			);
 		}
 
 		if (this._capabilites.codeActionProvider) {
-			this._registeredHandlers.get(CodeActionRequest.type.method)!.register(
+			this._registeredHandlers.get(CodeActionRequest.type.method) !.register(
 				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
 			);
 		}
 
 		if (this._capabilites.codeLensProvider) {
 			let options: CodeLensOptions = Object.assign({}, selectorOptions, this._capabilites.codeLensProvider);
-			this._registeredHandlers.get(CodeLensRequest.type.method)!.register(
+			this._registeredHandlers.get(CodeLensRequest.type.method) !.register(
 				{ id: UUID.generateUuid(), registerOptions: options }
 			);
 		}
 
 		if (this._capabilites.documentFormattingProvider) {
-			this._registeredHandlers.get(DocumentFormattingRequest.type.method)!.register(
+			this._registeredHandlers.get(DocumentFormattingRequest.type.method) !.register(
 				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
 			);
 		}
 
 		if (this._capabilites.documentRangeFormattingProvider) {
-			this._registeredHandlers.get(DocumentRangeFormattingRequest.type.method)!.register(
+			this._registeredHandlers.get(DocumentRangeFormattingRequest.type.method) !.register(
 				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
 			);
 		}
 
 		if (this._capabilites.documentOnTypeFormattingProvider) {
 			let options: DocumentOnTypeFormattingOptions = Object.assign({}, selectorOptions, this._capabilites.documentOnTypeFormattingProvider);
-			this._registeredHandlers.get(DocumentOnTypeFormattingRequest.type.method)!.register(
+			this._registeredHandlers.get(DocumentOnTypeFormattingRequest.type.method) !.register(
 				{ id: UUID.generateUuid(), registerOptions: options }
 			);
 		}
 
 		if (this._capabilites.renameProvider) {
-			this._registeredHandlers.get(RenameRequest.type.method)!.register(
+			this._registeredHandlers.get(RenameRequest.type.method) !.register(
 				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
 			);
 		}
 
 		if (this._capabilites.documentLinkProvider) {
 			let options: DocumentLinkOptions = Object.assign({}, selectorOptions, this._capabilites.documentLinkProvider);
-			this._registeredHandlers.get(DocumentLinkRequest.type.method)!.register(
+			this._registeredHandlers.get(DocumentLinkRequest.type.method) !.register(
 				{ id: UUID.generateUuid(), registerOptions: options }
 			);
 		}
 		if (this._capabilites.executeCommandProvider) {
 			let options: ExecuteCommandOptions = Object.assign({}, this._capabilites.executeCommandProvider);
-			this._registeredHandlers.get(ExecuteCommandRequest.type.method)!.register(
-				{id: UUID.generateUuid(), registerOptions: options }
+			this._registeredHandlers.get(ExecuteCommandRequest.type.method) !.register(
+				{ id: UUID.generateUuid(), registerOptions: options }
 			);
 		}
 	}
@@ -1793,7 +1793,7 @@ export class LanguageClient {
 		let triggerCharacters = options.triggerCharacters || [];
 		return Languages.registerCompletionItemProvider(options.documentSelector!, {
 			provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VCompletionList | VCompletionItem[]> => {
-				return this.sendRequest(CompletionRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token). then(
+				return this.sendRequest(CompletionRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token).then(
 					this._p2c.asCompletionResult,
 					(error) => {
 						this.logFailedRequest(CompletionRequest.type, error);
@@ -1812,7 +1812,7 @@ export class LanguageClient {
 					);
 				}
 				: undefined
-		},  ...triggerCharacters);
+		}, ...triggerCharacters);
 	}
 
 	private createHoverProvider(options: DocumentOptions): Disposable {
@@ -1833,7 +1833,7 @@ export class LanguageClient {
 		let triggerCharacters = options.triggerCharacters || [];
 		return Languages.registerSignatureHelpProvider(options.documentSelector!, {
 			provideSignatureHelp: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VSignatureHelp> => {
-				return this.sendRequest(SignatureHelpRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token). then(
+				return this.sendRequest(SignatureHelpRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token).then(
 					this._p2c.asSignatureHelp,
 					(error) => {
 						this.logFailedRequest(SignatureHelpRequest.type, error);
@@ -1847,7 +1847,7 @@ export class LanguageClient {
 	private createDefinitionProvider(options: DocumentOptions): Disposable {
 		return Languages.registerDefinitionProvider(options.documentSelector!, {
 			provideDefinition: (document: TextDocument, position: VPosition, token: CancellationToken): Thenable<VDefinition> => {
-				return this.sendRequest(DefinitionRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token). then(
+				return this.sendRequest(DefinitionRequest.type, this._c2p.asTextDocumentPositionParams(document, position), token).then(
 					this._p2c.asDefinitionResult,
 					(error) => {
 						this.logFailedRequest(DefinitionRequest.type, error);

@@ -7,7 +7,8 @@
 
 import * as is from './is';
 
-import { Message, MessageType,
+import {
+	Message, MessageType,
 	RequestMessage, RequestType, isRequestMessage,
 	RequestType0, RequestType1, RequestType2, RequestType3, RequestType4,
 	RequestType5, RequestType6, RequestType7, RequestType8, RequestType9,
@@ -181,7 +182,7 @@ export namespace Trace {
 			default:
 				return 'off';
 		}
- 	}
+	}
 }
 
 export interface SetTraceParams {
@@ -206,17 +207,17 @@ export interface Tracer {
 }
 
 export interface MessageConnection {
-	sendRequest<R, E, RO>(type: RequestType0<R, E, RO>, token?: CancellationToken) : Thenable<R>;
-	sendRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, params: P, token?: CancellationToken) : Thenable<R>;
-	sendRequest<P1, R, E, RO>(type: RequestType1<P1, R, E, RO>, p1: P1, token?: CancellationToken) : Thenable<R>;
-	sendRequest<P1, P2, R, E, RO>(type: RequestType2<P1, P2, R, E, RO>, p1: P1, p2: P2, token?: CancellationToken) : Thenable<R>;
-	sendRequest<P1, P2, P3, R, E, RO>(type: RequestType3<P1, P2, P3, R, E, RO>, p1: P1, p2: P2, p3: P3, token?: CancellationToken) : Thenable<R>;
-	sendRequest<P1, P2, P3, P4, R, E, RO>(type: RequestType4<P1, P2, P3, P4, R, E, RO>, p1: P1, p2: P2, p3: P3, p4: P4, token?: CancellationToken) : Thenable<R>;
-	sendRequest<P1, P2, P3, P4, P5, R, E, RO>(type: RequestType5<P1, P2, P3, P4, P5, R, E, RO>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, token?: CancellationToken) : Thenable<R>;
-	sendRequest<P1, P2, P3, P4, P5, P6, R, E, RO>(type: RequestType6<P1, P2, P3, P4, P5, P6, R, E, RO>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, token?: CancellationToken) : Thenable<R>;
-	sendRequest<P1, P2, P3, P4, P5, P6, P7, R, E, RO>(type: RequestType7<P1, P2, P3, P4, P5, P6, P7, R, E, RO>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, token?: CancellationToken) : Thenable<R>;
-	sendRequest<P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO>(type: RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8, token?: CancellationToken) : Thenable<R>;
-	sendRequest<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO>(type: RequestType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8, p9: P9, token?: CancellationToken) : Thenable<R>;
+	sendRequest<R, E, RO>(type: RequestType0<R, E, RO>, token?: CancellationToken): Thenable<R>;
+	sendRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, params: P, token?: CancellationToken): Thenable<R>;
+	sendRequest<P1, R, E, RO>(type: RequestType1<P1, R, E, RO>, p1: P1, token?: CancellationToken): Thenable<R>;
+	sendRequest<P1, P2, R, E, RO>(type: RequestType2<P1, P2, R, E, RO>, p1: P1, p2: P2, token?: CancellationToken): Thenable<R>;
+	sendRequest<P1, P2, P3, R, E, RO>(type: RequestType3<P1, P2, P3, R, E, RO>, p1: P1, p2: P2, p3: P3, token?: CancellationToken): Thenable<R>;
+	sendRequest<P1, P2, P3, P4, R, E, RO>(type: RequestType4<P1, P2, P3, P4, R, E, RO>, p1: P1, p2: P2, p3: P3, p4: P4, token?: CancellationToken): Thenable<R>;
+	sendRequest<P1, P2, P3, P4, P5, R, E, RO>(type: RequestType5<P1, P2, P3, P4, P5, R, E, RO>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, token?: CancellationToken): Thenable<R>;
+	sendRequest<P1, P2, P3, P4, P5, P6, R, E, RO>(type: RequestType6<P1, P2, P3, P4, P5, P6, R, E, RO>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, token?: CancellationToken): Thenable<R>;
+	sendRequest<P1, P2, P3, P4, P5, P6, P7, R, E, RO>(type: RequestType7<P1, P2, P3, P4, P5, P6, P7, R, E, RO>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, token?: CancellationToken): Thenable<R>;
+	sendRequest<P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO>(type: RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8, token?: CancellationToken): Thenable<R>;
+	sendRequest<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO>(type: RequestType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8, p9: P9, token?: CancellationToken): Thenable<R>;
 	sendRequest<R>(method: string, ...params: any[]): Thenable<R>;
 
 	onRequest<R, E, RO>(type: RequestType0<R, E, RO>, handler: RequestHandler0<R, E>): void;
@@ -286,11 +287,11 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 	let sequenceNumber = 0;
 	const version: string = '2.0';
 
-	let requestHandlers : { [name: string]: GenericRequestHandler<any, any> } = Object.create(null);
-	let notificationHandlers : { [name: string]: GenericNotificationHandler } = Object.create(null);
+	let requestHandlers: { [name: string]: GenericRequestHandler<any, any> } = Object.create(null);
+	let notificationHandlers: { [name: string]: GenericNotificationHandler } = Object.create(null);
 
-	let responsePromises : { [name: string]: ResponsePromise } = Object.create(null);
-	let requestTokens: { [id: string] : CancellationTokenSource } = Object.create(null);
+	let responsePromises: { [name: string]: ResponsePromise } = Object.create(null);
+	let requestTokens: { [id: string]: CancellationTokenSource } = Object.create(null);
 
 	let trace: Trace = Trace.Off;
 	let tracer: Tracer | undefined;
@@ -402,7 +403,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 					delete requestTokens[tokenKey];
 					replySuccess(handlerResult, requestMessage.method, startTime);
 				} else if (promise.then) {
-					promise.then((resultOrError): any | ResponseError<any>  => {
+					promise.then((resultOrError): any | ResponseError<any> => {
 						delete requestTokens[tokenKey];
 						reply(resultOrError, requestMessage.method, startTime);
 					}, error => {
@@ -456,7 +457,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				}
 			} catch (error) {
 				if (error.message) {
-					 logger.error(`Response handler '${responsePromise.method}' failed with message: ${error.message}`);
+					logger.error(`Response handler '${responsePromise.method}' failed with message: ${error.message}`);
 				} else {
 					logger.error(`Response handler '${responsePromise.method}' failed unexpectedly.`);
 				}
@@ -493,7 +494,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				}
 			} catch (error) {
 				if (error.message) {
-					 logger.error(`Notification handler '${message.method}' failed with message: ${error.message}`);
+					logger.error(`Notification handler '${message.method}' failed with message: ${error.message}`);
 				} else {
 					logger.error(`Notification handler '${message.method}' failed unexpectedly.`);
 				}
@@ -546,7 +547,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 		tracer.log(`Sending notification '${message.method}'.`, data);
 	}
 
-	function traceSendingResponse(message: ResponseMessage, method: string, startTime: number): void  {
+	function traceSendingResponse(message: ResponseMessage, method: string, startTime: number): void {
 		if (trace === Trace.Off || !tracer) {
 			return;
 		}
@@ -645,7 +646,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 	function computeMessageParams(type: MessageType, params: any[]): any | any[] | null {
 		let result: any | any[] | null;
 		let numberOfParams = type.numberOfParams;
-		switch(numberOfParams) {
+		switch (numberOfParams) {
 			case 0:
 				result = null;
 				break;
@@ -690,7 +691,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				method = type.method;
 				messageParams = computeMessageParams(type, params);
 			}
-			let notificatioMessage : NotificationMessage = {
+			let notificatioMessage: NotificationMessage = {
 				jsonrpc: version,
 				method: is.string(type) ? type : type.method,
 				params: messageParams
@@ -747,7 +748,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 
 			let id = sequenceNumber++;
 			let result = new Promise<R | ResponseError<E>>((resolve, reject) => {
-				let requestMessage : RequestMessage = {
+				let requestMessage: RequestMessage = {
 					jsonrpc: version,
 					id: id,
 					method: method,

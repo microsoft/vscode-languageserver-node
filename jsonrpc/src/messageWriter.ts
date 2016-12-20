@@ -10,7 +10,7 @@ import { Message } from './messages';
 import { Event, Emitter } from './events';
 import * as is from './is';
 
-let ContentLength:string = 'Content-Length: ';
+let ContentLength: string = 'Content-Length: ';
 let CRLF = '\r\n';
 
 export interface MessageWriter {
@@ -21,7 +21,7 @@ export interface MessageWriter {
 
 export abstract class AbstractMessageWriter {
 
-	private errorEmitter: Emitter<[Error, Message | undefined , number | undefined]>;
+	private errorEmitter: Emitter<[Error, Message | undefined, number | undefined]>;
 	private closeEmitter: Emitter<void>;
 
 	constructor() {

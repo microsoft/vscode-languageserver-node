@@ -18,7 +18,7 @@ export function terminate(process: ChildProcess, cwd?: string): boolean {
 			// This we run in Atom execFileSync is available.
 			// Ignore stderr since this is otherwise piped to parent.stderr
 			// which might be already closed.
-			let options:any = {
+			let options: any = {
 				stdio: ['pipe', 'pipe', 'ignore']
 			};
 			if (cwd) {

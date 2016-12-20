@@ -126,7 +126,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 					uri: _uriConverter(arg.uri),
 					version: arg.version
 				},
-				contentChanges: [ { text: arg.getText() } ]
+				contentChanges: [{ text: arg.getText() }]
 			}
 			return result;
 		} else if (isTextDocumentChangeEvent(arg)) {
@@ -150,7 +150,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			}
 			return result;
 		} else {
-			throw Error ('Unsupported text document change parameter');
+			throw Error('Unsupported text document change parameter');
 		}
 	}
 
@@ -211,7 +211,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		} else if (value === null) {
 			return null;
 		}
-		return { start: asPosition(value.start)!, end: asPosition(value.end)! };
+		return { start: asPosition(value.start) !, end: asPosition(value.end) ! };
 	}
 
 	function asDiagnosticSeverity(value: code.DiagnosticSeverity): types.DiagnosticSeverity {
@@ -228,7 +228,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asDiagnostic(item: code.Diagnostic): types.Diagnostic {
-		let result: types.Diagnostic = types.Diagnostic.create(asRange(item.range)!, item.message);
+		let result: types.Diagnostic = types.Diagnostic.create(asRange(item.range) !, item.message);
 		if (item.severity) { result.severity = asDiagnosticSeverity(item.severity); }
 		if (is.number(item.code) || is.string(item.code)) { result.code = item.code; }
 		if (item.source) { result.source = item.source; }
@@ -248,7 +248,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (item.documentation) { result.documentation = item.documentation; }
 		if (item.filterText) { result.filterText = item.filterText; }
 		if (item.insertText) { result.insertText = asCompletionInsertText(item.insertText!); }
-		if (item.range) { result.range = asRange(item.range!)!; }
+		if (item.range) { result.range = asRange(item.range!) !; }
 		// Protocol item kind is 1 based, codes item kind is zero based.
 		if (is.number(item.kind)) { result.kind = item.kind + 1; }
 		if (item.sortText) { result.sortText = item.sortText; }
@@ -271,7 +271,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asTextEdit(edit: code.TextEdit): types.TextEdit {
-		return { range: asRange(edit.range)!, newText: edit.newText };
+		return { range: asRange(edit.range) !, newText: edit.newText };
 	}
 
 	function asTextEdits(edits: code.TextEdit[]): types.TextEdit[] {
@@ -303,7 +303,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asCodeLens(item: code.CodeLens): types.CodeLens {
-		let result = types.CodeLens.create(asRange(item.range)!);
+		let result = types.CodeLens.create(asRange(item.range) !);
 		if (item.command) { result.command = asCommand(item.command!); }
 		if (item instanceof ProtocolCodeLens) {
 			if (item.data) { result.data = item.data };
@@ -328,7 +328,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asDocumentLink(item: code.DocumentLink): types.DocumentLink {
-		let result = types.DocumentLink.create(asRange(item.range)!);
+		let result = types.DocumentLink.create(asRange(item.range) !);
 		if (item.target) { result.target = asUri(item.target); }
 		return result;
 	}
