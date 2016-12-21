@@ -27,7 +27,7 @@ import {
 	RegistrationRequest, Registration, RegistrationParams, Unregistration, UnregistrationRequest, UnregistrationParams,
 	InitializeRequest, InitializeParams, InitializeResult, InitializeError,
 	InitializedNotification, InitializedParams, ShutdownRequest, ExitNotification,
-	LogMessageNotification, MessageType, ShowMessageRequest, MessageActionItem,
+	LogMessageNotification, MessageType, ShowMessageRequest, ShowMessageRequestParams, MessageActionItem,
 	TelemetryEventNotification,
 	DidChangeConfigurationNotification, DidChangeConfigurationParams,
 	DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification, DidChangeTextDocumentParams,
@@ -81,7 +81,7 @@ export namespace Files {
 }
 
 interface ConnectionState {
-	__textDocumentSync: 0 | 1 | 2 | undefined;
+	__textDocumentSync: TextDocumentSyncKind | undefined;
 }
 
 /**
@@ -114,7 +114,7 @@ export class TextDocuments {
 	 * Returns the [TextDocumentSyncKind](#TextDocumentSyncKind) used by
 	 * this text document manager.
 	 */
-	public get syncKind(): 0 | 1 | 2 {
+	public get syncKind(): TextDocumentSyncKind {
 		return TextDocumentSyncKind.Full;
 	}
 
@@ -563,7 +563,7 @@ class ConnectionLogger implements Logger, RemoteConsole {
 	public log(message: string): void {
 		this.send(MessageType.Log, message);
 	}
-	private send(type: number, message: string) {
+	private send(type: MessageType, message: string) {
 		if (this._connection) {
 			this._connection.sendNotification(LogMessageNotification.type, { type, message });
 		}
@@ -576,15 +576,18 @@ class RemoteWindowImpl implements RemoteWindow {
 	}
 
 	public showErrorMessage(message: string, ...actions: MessageActionItem[]): Thenable<MessageActionItem> {
-		return this._connection.sendRequest(ShowMessageRequest.type, { type: MessageType.Error, message, actions });
+		let params: ShowMessageRequestParams = { type: MessageType.Error, message, actions };
+		return this._connection.sendRequest(ShowMessageRequest.type, params);
 	}
 
 	public showWarningMessage(message: string, ...actions: MessageActionItem[]): Thenable<MessageActionItem> {
-		return this._connection.sendRequest(ShowMessageRequest.type, { type: MessageType.Warning, message, actions });
+		let params: ShowMessageRequestParams = { type: MessageType.Warning, message, actions };
+		return this._connection.sendRequest(ShowMessageRequest.type, params);
 	}
 
 	public showInformationMessage(message: string, ...actions: MessageActionItem[]): Thenable<MessageActionItem> {
-		return this._connection.sendRequest(ShowMessageRequest.type, { type: MessageType.Info, message, actions });
+		let params: ShowMessageRequestParams = { type: MessageType.Info, message, actions };
+		return this._connection.sendRequest(ShowMessageRequest.type, params);
 	}
 }
 

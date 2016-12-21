@@ -9,7 +9,7 @@ import { RequestType, RequestType0, NotificationType, NotificationType0 } from '
 import {
 	TextDocumentContentChangeEvent, Position, Range, Location, Diagnostic, Command,
 	TextEdit, WorkspaceEdit, WorkspaceSymbolParams,
-	TextDocumentIdentifier, VersionedTextDocumentIdentifier, TextDocumentItem,
+	TextDocumentIdentifier, VersionedTextDocumentIdentifier, TextDocumentItem, TextDocumentSaveReason,
 	CompletionItem, CompletionList, Hover, SignatureHelp,
 	Definition, ReferenceContext, DocumentHighlight, DocumentSymbolParams,
 	SymbolInformation, CodeLens, CodeActionContext, FormattingOptions, DocumentLink
@@ -202,6 +202,8 @@ export namespace TextDocumentSyncKind {
 	export const Incremental = 2;
 }
 
+export type TextDocumentSyncKind = 0 | 1 | 2;
+
 export interface DocumentOptions {
 	/**
 	 * An optional document selector to identify the scope of the registration. If not
@@ -290,7 +292,7 @@ export interface TextDocumentSyncOptions {
 	 * Change notificatins are sent to the server. See TextDocumentSyncKind.None, TextDocumentSyncKind.Full
 	 * and TextDocumentSyncKindIncremental.
 	 */
-	change?: 0 | 1 | 2;
+	change?: TextDocumentSyncKind;
 	/**
 	 * Will save notifications are sent to the server.
 	 */
@@ -319,7 +321,7 @@ export interface ServerCapabilities {
 	 * Defines how text documents are synced. Is either a detailed structure defining each notification or
 	 * for backwards compatibility the TextDocumentSyncKind number.
 	 */
-	textDocumentSync?: TextDocumentSyncOptions | 0 | 1 | 2;
+	textDocumentSync?: TextDocumentSyncOptions | TextDocumentSyncKind;
 	/**
 	 * The server provides hover support.
 	 */
@@ -587,6 +589,8 @@ export namespace MessageType {
 	export const Log = 4;
 }
 
+export type MessageType = 1 | 2 | 3 | 4;
+
 /**
  * The parameters of a notification message.
  */
@@ -594,7 +598,7 @@ export interface ShowMessageParams {
 	/**
 	 * The message type. See {@link MessageType}
 	 */
-	type: 1 | 2 | 3 | 4;
+	type: MessageType;
 
 	/**
 	 * The actual message
@@ -621,7 +625,7 @@ export interface ShowMessageRequestParams {
 	/**
 	 * The message type. See {@link MessageType}
 	 */
-	type: number;
+	type: MessageType;
 
 	/**
 	 * The actual message
@@ -657,7 +661,7 @@ export interface LogMessageParams {
 	/**
 	 * The message type. See {@link MessageType}
 	 */
-	type: number;
+	type: MessageType;
 
 	/**
 	 * The actual message
@@ -721,7 +725,7 @@ export interface DidChangeTextDocumentOptions extends DocumentOptions {
 	/**
 	 * How documents are synced to the server.
 	 */
-	syncKind: 0 | 1 | 2;
+	syncKind: TextDocumentSyncKind;
 }
 
 /**
@@ -788,7 +792,7 @@ export interface WillSaveTextDocumentParams {
 	/**
 	 * The 'TextDocumentSaveReason'.
 	 */
-	reason: 1 | 2 | 3;
+	reason: TextDocumentSaveReason;
 }
 
 /**
@@ -849,6 +853,8 @@ export namespace FileChangeType {
 	export const Deleted = 3;
 }
 
+export type FileChangeType = 1 | 2 | 3;
+
 /**
  * An event describing a file change.
  */
@@ -860,7 +866,7 @@ export interface FileEvent {
 	/**
 	 * The change type.
 	 */
-	type: 1 | 2 | 3;
+	type: FileChangeType;
 }
 
 //---- Diagnostic notification ----

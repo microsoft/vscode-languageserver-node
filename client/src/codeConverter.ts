@@ -218,15 +218,13 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	function asRange(value: null): null;
 	function asRange(value: code.Range | undefined | null): types.Range | undefined | null;
 	function asRange(value: code.Range | undefined | null): types.Range | undefined | null {
-		if (value === void 0) {
-			return undefined;
-		} else if (value === null) {
-			return null;
+		if (value === void 0 || value === null) {
+			return value;
 		}
-		return { start: asPosition(value.start) !, end: asPosition(value.end) ! };
+		return { start: asPosition(value.start), end: asPosition(value.end) };
 	}
 
-	function asDiagnosticSeverity(value: code.DiagnosticSeverity): number {
+	function asDiagnosticSeverity(value: code.DiagnosticSeverity): types.DiagnosticSeverity {
 		switch (value) {
 			case code.DiagnosticSeverity.Error:
 				return types.DiagnosticSeverity.Error;
@@ -240,7 +238,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asDiagnostic(item: code.Diagnostic): types.Diagnostic {
-		let result: types.Diagnostic = types.Diagnostic.create(asRange(item.range) !, item.message);
+		let result: types.Diagnostic = types.Diagnostic.create(asRange(item.range), item.message);
 		if (item.severity) { result.severity = asDiagnosticSeverity(item.severity); }
 		if (is.number(item.code) || is.string(item.code)) { result.code = item.code; }
 		if (item.source) { result.source = item.source; }
@@ -259,14 +257,20 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (item.detail) { result.detail = item.detail; }
 		if (item.documentation) { result.documentation = item.documentation; }
 		if (item.filterText) { result.filterText = item.filterText; }
-		if (item.insertText) { result.insertText = asCompletionInsertText(item.insertText!); }
-		if (item.range) { result.range = asRange(item.range!) !; }
+		if (item.insertText) { result.insertText = asCompletionInsertText(item.insertText); }
+		if (item.range) { result.range = asRange(item.range); }
 		// Protocol item kind is 1 based, codes item kind is zero based.
-		if (is.number(item.kind)) { result.kind = item.kind + 1; }
+		if (is.number(item.kind)) {
+			if (code.CompletionItemKind.Text <= item.kind && item.kind <= code.CompletionItemKind.Reference) {
+				result.kind = (item.kind + 1) as types.CompletionItemKind;
+			} else {
+				result.kind = types.CompletionItemKind.Text;
+			}
+		}
 		if (item.sortText) { result.sortText = item.sortText; }
-		if (item.textEdit) { result.textEdit = asTextEdit(item.textEdit!); }
-		if (item.additionalTextEdits) { result.additionalTextEdits = asTextEdits(item.additionalTextEdits!); }
-		if (item.command) { result.command = asCommand(item.command!); }
+		if (item.textEdit) { result.textEdit = asTextEdit(item.textEdit); }
+		if (item.additionalTextEdits) { result.additionalTextEdits = asTextEdits(item.additionalTextEdits); }
+		if (item.command) { result.command = asCommand(item.command); }
 		if (item instanceof ProtocolCompletionItem) {
 			if (item.data) { result.data = item.data; }
 		}
@@ -283,7 +287,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asTextEdit(edit: code.TextEdit): types.TextEdit {
-		return { range: asRange(edit.range) !, newText: edit.newText };
+		return { range: asRange(edit.range), newText: edit.newText };
 	}
 
 	function asTextEdits(edits: code.TextEdit[]): types.TextEdit[] {
@@ -315,8 +319,8 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asCodeLens(item: code.CodeLens): types.CodeLens {
-		let result = types.CodeLens.create(asRange(item.range) !);
-		if (item.command) { result.command = asCommand(item.command!); }
+		let result = types.CodeLens.create(asRange(item.range));
+		if (item.command) { result.command = asCommand(item.command); }
 		if (item instanceof ProtocolCodeLens) {
 			if (item.data) { result.data = item.data };
 		}
@@ -340,7 +344,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asDocumentLink(item: code.DocumentLink): types.DocumentLink {
-		let result = types.DocumentLink.create(asRange(item.range) !);
+		let result = types.DocumentLink.create(asRange(item.range));
 		if (item.target) { result.target = asUri(item.target); }
 		return result;
 	}

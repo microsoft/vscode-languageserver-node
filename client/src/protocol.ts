@@ -9,7 +9,7 @@ import { RequestType, RequestType0, NotificationType, NotificationType0 } from '
 import {
 	TextDocumentContentChangeEvent, Position, Range, Location, Diagnostic, Command,
 	TextEdit, WorkspaceEdit, WorkspaceSymbolParams,
-	TextDocumentIdentifier, VersionedTextDocumentIdentifier, TextDocumentItem,
+	TextDocumentIdentifier, VersionedTextDocumentIdentifier, TextDocumentItem, TextDocumentSaveReason,
 	CompletionItem, CompletionList, Hover, SignatureHelp,
 	Definition, ReferenceContext, DocumentHighlight, DocumentSymbolParams,
 	SymbolInformation, CodeLens, CodeActionContext, FormattingOptions, DocumentLink
@@ -65,7 +65,7 @@ export interface Registration {
 	/**
 	 * Options necessary for the registration.
 	 */
-	registerOptions: DocumentOptions;
+	registerOptions?: any;
 }
 
 export interface RegistrationParams {
@@ -73,11 +73,11 @@ export interface RegistrationParams {
 }
 
 /**
- * Register the given request or notification on the other side. Since requests can be sent from the client
- * to the server and vice versa this request can be sent into both directions.
+ * The `client/registerFeature` request is sent from the server to the client to register a new feature
+ * handler on the client side.
  */
 export namespace RegistrationRequest {
-	export const type = new RequestType<RegistrationParams, void, void, void>('client/registrationRequest');
+	export const type = new RequestType<RegistrationParams, void, void, void>('client/registerFeature');
 }
 
 /**
@@ -101,10 +101,11 @@ export interface UnregistrationParams {
 }
 
 /**
- * Unregisters the given request on the other side.
+ * The `client/unregisterFeature` request is sent from the server to the client to unregister a previously registered feature
+ * handler on the client side.
  */
 export namespace UnregistrationRequest {
-	export const type = new RequestType<UnregistrationParams, void, void, void>('client/unregistrationRequest');
+	export const type = new RequestType<UnregistrationParams, void, void, void>('client/unregisterFeature');
 }
 
 /**
@@ -151,6 +152,24 @@ export interface TextDocumentClientCapabilities {
 	 * be applied to the document before it is saved.
 	 */
 	willSaveWaitUntilRequest?: boolean;
+
+	/**
+	 * The client supports the following `CompletionItem` specific
+	 * capabilities.
+	 */
+	completionItem?: {
+		/**
+		 * Client supports the new range property in favour of the
+		 * deprecated `textEdit` property.
+		 */
+		rangeProperty?: boolean;
+	}
+}
+
+/**
+ * Dynamic registration specific client capabilities
+ */
+export interface DynamicRegistrationCapabilites {
 }
 
 /**
@@ -160,7 +179,7 @@ export interface ClientCapabilities {
 	/**
 	 * The client supports dynamic feature registration.
 	 */
-	dynamicRegistration?: boolean;
+	dynamicRegistration?: DynamicRegistrationCapabilites;
 
 	/**
 	 * Workspace specific client capabilities.
@@ -202,18 +221,20 @@ export namespace TextDocumentSyncKind {
 	export const Incremental = 2;
 }
 
-export interface DocumentOptions {
+export type TextDocumentSyncKind = 0 | 1 | 2;
+
+export interface TextDocumentOptions {
 	/**
-	 * An optional document selector to identify the scope of the registration. If not
-	 * provided the registration happens for the scope determined by the other side.
+	 * A document selector to identify the scope of the registration. If set to null
+	 * the document selector provided on the client side will be used.
 	 */
-	documentSelector?: DocumentSelector;
+	documentSelector: DocumentSelector | null;
 }
 
 /**
  * Save options.
  */
-export interface SaveOptions extends DocumentOptions {
+export interface TextDocumentSaveOptions extends TextDocumentOptions {
 	/**
 	 * The client is supposed to include the content on save.
 	 */
@@ -223,7 +244,7 @@ export interface SaveOptions extends DocumentOptions {
 /**
  * Completion options.
  */
-export interface CompletionOptions extends DocumentOptions {
+export interface CompletionOptions extends TextDocumentOptions {
 	/**
 	 * The characters that trigger completion automatically.
 	 */
@@ -239,7 +260,7 @@ export interface CompletionOptions extends DocumentOptions {
 /**
  * Signature help options.
  */
-export interface SignatureHelpOptions extends DocumentOptions {
+export interface SignatureHelpOptions extends TextDocumentOptions {
 	/**
 	 * The characters that trigger signature help
 	 * automatically.
@@ -250,7 +271,7 @@ export interface SignatureHelpOptions extends DocumentOptions {
 /**
  * Code Lens options.
  */
-export interface CodeLensOptions extends DocumentOptions {
+export interface CodeLensOptions extends TextDocumentOptions {
 	/**
 	 * Code lens has a resolve provider as well.
 	 */
@@ -258,23 +279,9 @@ export interface CodeLensOptions extends DocumentOptions {
 }
 
 /**
- * Format document on type options
- */
-export interface DocumentOnTypeFormattingOptions extends DocumentOptions {
-	/**
-	 * A character on which formatting should be triggered, like `}`.
-	 */
-	firstTriggerCharacter: string;
-	/**
-	 * More trigger characters.
-	 */
-	moreTriggerCharacter?: string[]
-}
-
-/**
  * Document link options
  */
-export interface DocumentLinkOptions extends DocumentOptions {
+export interface DocumentLinkOptions extends TextDocumentOptions {
 	/**
 	 * Document links have a resolve provider as well.
 	 */
@@ -290,7 +297,7 @@ export interface TextDocumentSyncOptions {
 	 * Change notificatins are sent to the server. See TextDocumentSyncKind.None, TextDocumentSyncKind.Full
 	 * and TextDocumentSyncKindIncremental.
 	 */
-	change?: 0 | 1 | 2;
+	change?: TextDocumentSyncKind;
 	/**
 	 * Will save notifications are sent to the server.
 	 */
@@ -319,7 +326,7 @@ export interface ServerCapabilities {
 	 * Defines how text documents are synced. Is either a detailed structure defining each notification or
 	 * for backwards compatibility the TextDocumentSyncKind number.
 	 */
-	textDocumentSync?: TextDocumentSyncOptions | 0 | 1 | 2;
+	textDocumentSync?: TextDocumentSyncOptions | TextDocumentSyncKind;
 	/**
 	 * The server provides hover support.
 	 */
@@ -442,11 +449,6 @@ export namespace InitializeRequest {
  * The initialize parameters
  */
 export interface InitializeParams {
-	/**
-	 * The protocol version the client speaks.
-	 */
-	protocolVersion: string;
-
 	/**
 	 * The process Id of the parent process that started
 	 * the server.
@@ -587,6 +589,8 @@ export namespace MessageType {
 	export const Log = 4;
 }
 
+export type MessageType = 1 | 2 | 3 | 4;
+
 /**
  * The parameters of a notification message.
  */
@@ -594,7 +598,7 @@ export interface ShowMessageParams {
 	/**
 	 * The message type. See {@link MessageType}
 	 */
-	type: 1 | 2 | 3 | 4;
+	type: MessageType;
 
 	/**
 	 * The actual message
@@ -621,7 +625,7 @@ export interface ShowMessageRequestParams {
 	/**
 	 * The message type. See {@link MessageType}
 	 */
-	type: number;
+	type: MessageType;
 
 	/**
 	 * The actual message
@@ -657,7 +661,7 @@ export interface LogMessageParams {
 	/**
 	 * The message type. See {@link MessageType}
 	 */
-	type: number;
+	type: MessageType;
 
 	/**
 	 * The actual message
@@ -694,7 +698,7 @@ export interface DidOpenTextDocumentParams {
  * uri.
  */
 export namespace DidOpenTextDocumentNotification {
-	export const type = new NotificationType<DidOpenTextDocumentParams, DocumentOptions>('textDocument/didOpen');
+	export const type = new NotificationType<DidOpenTextDocumentParams, TextDocumentOptions>('textDocument/didOpen');
 }
 
 /**
@@ -717,11 +721,11 @@ export interface DidChangeTextDocumentParams {
 /**
  * Descibe options to be used when registered for text document change events.
  */
-export interface DidChangeTextDocumentOptions extends DocumentOptions {
+export interface TextDocumentChangeOptions extends TextDocumentOptions {
 	/**
 	 * How documents are synced to the server.
 	 */
-	syncKind: 0 | 1 | 2;
+	syncKind: TextDocumentSyncKind;
 }
 
 /**
@@ -729,7 +733,7 @@ export interface DidChangeTextDocumentOptions extends DocumentOptions {
  * changes to a text document.
  */
 export namespace DidChangeTextDocumentNotification {
-	export const type = new NotificationType<DidChangeTextDocumentParams, DidChangeTextDocumentOptions>('textDocument/didChange');
+	export const type = new NotificationType<DidChangeTextDocumentParams, TextDocumentChangeOptions>('textDocument/didChange');
 }
 
 /**
@@ -749,7 +753,7 @@ export interface DidCloseTextDocumentParams {
  * the truth now exists on disk).
  */
 export namespace DidCloseTextDocumentNotification {
-	export const type = new NotificationType<DidCloseTextDocumentParams, DocumentOptions>('textDocument/didClose');
+	export const type = new NotificationType<DidCloseTextDocumentParams, TextDocumentOptions>('textDocument/didClose');
 }
 
 /**
@@ -773,7 +777,7 @@ export interface DidSaveTextDocumentParams {
  * the document got saved in the client.
  */
 export namespace DidSaveTextDocumentNotification {
-	export const type = new NotificationType<DidSaveTextDocumentParams, SaveOptions>('textDocument/didSave');
+	export const type = new NotificationType<DidSaveTextDocumentParams, TextDocumentSaveOptions>('textDocument/didSave');
 }
 
 /**
@@ -788,7 +792,7 @@ export interface WillSaveTextDocumentParams {
 	/**
 	 * The 'TextDocumentSaveReason'.
 	 */
-	reason: 1 | 2 | 3;
+	reason: TextDocumentSaveReason;
 }
 
 /**
@@ -796,7 +800,7 @@ export interface WillSaveTextDocumentParams {
  * the document is actually saved.
  */
 export namespace WillSaveTextDocumentNotification {
-	export const type = new NotificationType<WillSaveTextDocumentParams, DocumentOptions>('textDocument/willSave');
+	export const type = new NotificationType<WillSaveTextDocumentParams, TextDocumentOptions>('textDocument/willSave');
 }
 
 /**
@@ -808,7 +812,7 @@ export namespace WillSaveTextDocumentNotification {
  * reliable.
  */
 export namespace WillSaveTextDocumentWaitUntilRequest {
-	export const type = new RequestType<WillSaveTextDocumentParams, TextEdit[], void, DocumentOptions>('textDocument/willSaveWaitUntil');
+	export const type = new RequestType<WillSaveTextDocumentParams, TextEdit[], void, TextDocumentOptions>('textDocument/willSaveWaitUntil');
 }
 
 //---- File eventing ----
@@ -849,6 +853,8 @@ export namespace FileChangeType {
 	export const Deleted = 3;
 }
 
+export type FileChangeType = 1 | 2 | 3;
+
 /**
  * An event describing a file change.
  */
@@ -860,7 +866,7 @@ export interface FileEvent {
 	/**
 	 * The change type.
 	 */
-	type: 1 | 2 | 3;
+	type: FileChangeType;
 }
 
 //---- Diagnostic notification ----
@@ -917,7 +923,7 @@ export namespace CompletionResolveRequest {
  * type [Hover](#Hover) or a Thenable that resolves to such.
  */
 export namespace HoverRequest {
-	export const type = new RequestType<TextDocumentPositionParams, Hover, void, DocumentOptions>('textDocument/hover');
+	export const type = new RequestType<TextDocumentPositionParams, Hover, void, TextDocumentOptions>('textDocument/hover');
 }
 
 //---- SignatureHelp ----------------------------------
@@ -935,7 +941,7 @@ export namespace SignatureHelpRequest {
  * Thenable that resolves to such.
  */
 export namespace DefinitionRequest {
-	export const type = new RequestType<TextDocumentPositionParams, Definition, void, DocumentOptions>('textDocument/definition');
+	export const type = new RequestType<TextDocumentPositionParams, Definition, void, TextDocumentOptions>('textDocument/definition');
 }
 
 //---- Reference Provider ----------------------------------
@@ -954,7 +960,7 @@ export interface ReferenceParams extends TextDocumentPositionParams {
  * [Location[]](#Location) or a Thenable that resolves to such.
  */
 export namespace ReferencesRequest {
-	export const type = new RequestType<ReferenceParams, Location[], void, DocumentOptions>('textDocument/references');
+	export const type = new RequestType<ReferenceParams, Location[], void, TextDocumentOptions>('textDocument/references');
 }
 
 //---- Document Highlight ----------------------------------
@@ -966,7 +972,7 @@ export namespace ReferencesRequest {
  * (#DocumentHighlight) or a Thenable that resolves to such.
  */
 export namespace DocumentHighlightRequest {
-	export const type = new RequestType<TextDocumentPositionParams, DocumentHighlight[], void, DocumentOptions>('textDocument/documentHighlight');
+	export const type = new RequestType<TextDocumentPositionParams, DocumentHighlight[], void, TextDocumentOptions>('textDocument/documentHighlight');
 }
 
 //---- Document Symbol Provider ---------------------------
@@ -978,7 +984,7 @@ export namespace DocumentHighlightRequest {
  * that resolves to such.
  */
 export namespace DocumentSymbolRequest {
-	export const type = new RequestType<DocumentSymbolParams, SymbolInformation[], void, DocumentOptions>('textDocument/documentSymbol');
+	export const type = new RequestType<DocumentSymbolParams, SymbolInformation[], void, TextDocumentOptions>('textDocument/documentSymbol');
 }
 
 //---- Workspace Symbol Provider ---------------------------
@@ -1021,7 +1027,7 @@ export interface CodeActionParams {
  * A request to provide commands for the given text document and range.
  */
 export namespace CodeActionRequest {
-	export const type = new RequestType<CodeActionParams, Command[], void, DocumentOptions>('textDocument/codeAction');
+	export const type = new RequestType<CodeActionParams, Command[], void, TextDocumentOptions>('textDocument/codeAction');
 }
 
 //---- Code Lens Provider -------------------------------------------
@@ -1068,7 +1074,7 @@ export interface DocumentFormattingParams {
  * A request to to format a whole document.
  */
 export namespace DocumentFormattingRequest {
-	export const type = new RequestType<DocumentFormattingParams, TextEdit[], void, DocumentOptions>('textDocument/formatting');
+	export const type = new RequestType<DocumentFormattingParams, TextEdit[], void, TextDocumentOptions>('textDocument/formatting');
 }
 
 export interface DocumentRangeFormattingParams {
@@ -1092,7 +1098,7 @@ export interface DocumentRangeFormattingParams {
  * A request to to format a range in a document.
  */
 export namespace DocumentRangeFormattingRequest {
-	export const type = new RequestType<DocumentRangeFormattingParams, TextEdit[], void, DocumentOptions>('textDocument/rangeFormatting');
+	export const type = new RequestType<DocumentRangeFormattingParams, TextEdit[], void, TextDocumentOptions>('textDocument/rangeFormatting');
 }
 
 export interface DocumentOnTypeFormattingParams {
@@ -1115,6 +1121,20 @@ export interface DocumentOnTypeFormattingParams {
 	 * The format options.
 	 */
 	options: FormattingOptions;
+}
+
+/**
+ * Format document on type options
+ */
+export interface DocumentOnTypeFormattingOptions extends TextDocumentOptions {
+	/**
+	 * A character on which formatting should be triggered, like `}`.
+	 */
+	firstTriggerCharacter: string;
+	/**
+	 * More trigger characters.
+	 */
+	moreTriggerCharacter?: string[]
 }
 
 /**
@@ -1149,7 +1169,7 @@ export interface RenameParams {
  * A request to rename a symbol.
  */
 export namespace RenameRequest {
-	export const type = new RequestType<RenameParams, WorkspaceEdit, void, DocumentOptions>('textDocument/rename');
+	export const type = new RequestType<RenameParams, WorkspaceEdit, void, TextDocumentOptions>('textDocument/rename');
 }
 
 //---- Document Links ----------------------------------------------

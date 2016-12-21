@@ -146,6 +146,8 @@ export namespace DiagnosticSeverity {
 	export const Hint = 4;
 }
 
+export type DiagnosticSeverity = 1 | 2 | 3 | 4;
+
 /**
  * Represents a diagnostic, such as a compiler error or warning. Diagnostic objects
  * are only valid in the scope of a resource.
@@ -160,7 +162,7 @@ export interface Diagnostic {
 	 * The diagnostic's severity. Can be omitted. If omitted it is up to the
 	 * client to interpret diagnostics as error, warning, info or hint.
 	 */
-	severity?: number;
+	severity?: DiagnosticSeverity;
 
 	/**
 	 * The diagnostic's code. Can be omitted.
@@ -187,7 +189,7 @@ export namespace Diagnostic {
 	/**
 	 * Creates a new Diagnostic literal.
 	 */
-	export function create(range: Range, message: string, severity?: number, code?: number | string, source?: string): Diagnostic {
+	export function create(range: Range, message: string, severity?: DiagnosticSeverity, code?: number | string, source?: string): Diagnostic {
 		let result: Diagnostic = { range, message };
 		if (Is.defined(severity)) {
 			result.severity = severity;
@@ -646,8 +648,10 @@ export namespace CompletionItemKind {
 	export const Snippet = 15;
 	export const Color = 16;
 	export const File = 17;
-	export const Reference = 1;
+	export const Reference = 18;
 }
+
+export type CompletionItemKind = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18;
 
 /**
  * A completion item represents a text snippet that is
@@ -665,7 +669,7 @@ export interface CompletionItem {
 	 * The kind of this completion item. Based of the kind
 	 * an icon is chosen by the editor.
 	 */
-	kind?: number;
+	kind?: CompletionItemKind;
 
 	/**
 	 * A human-readable string with additional information
@@ -958,6 +962,8 @@ export namespace DocumentHighlightKind {
 	export const Write = 3;
 }
 
+export type DocumentHighlightKind = 1 | 2 | 3;
+
 /**
  * A document highlight is a range inside a text document which deserves
  * special attention. Usually a document highlight is visualized by changing
@@ -972,7 +978,7 @@ export interface DocumentHighlight {
 	/**
 	 * The highlight kind, default is [text](#DocumentHighlightKind.Text).
 	 */
-	kind?: number;
+	kind?: DocumentHighlightKind;
 }
 
 /**
@@ -984,7 +990,7 @@ export namespace DocumentHighlight {
 	 * Create a DocumentHighlight object.
 	 * @param range The range the highlight applies to.
 	 */
-	export function create(range: Range, kind?: number): DocumentHighlight {
+	export function create(range: Range, kind?: DocumentHighlightKind): DocumentHighlight {
 		let result: DocumentHighlight = { range };
 		if (Is.number(kind)) {
 			result.kind = kind;
@@ -1017,6 +1023,8 @@ export namespace SymbolKind {
 	export const Array = 18;
 }
 
+export type SymbolKind = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18;
+
 /**
  * Represents information about programming constructs like variables, classes,
  * interfaces etc.
@@ -1030,7 +1038,7 @@ export interface SymbolInformation {
 	/**
 	 * The kind of this symbol.
 	 */
-	kind: number;
+	kind: SymbolKind;
 
 	/**
 	 * The location of this symbol.
@@ -1053,7 +1061,7 @@ export namespace SymbolInformation {
 	 * @param uri The resource of the location of symbol, defaults to the current document.
 	 * @param containerName The name of the symbol containg the symbol.
 	 */
-	export function create(name: string, kind: number, range: Range, uri?: string, containerName?: string): SymbolInformation {
+	export function create(name: string, kind: SymbolKind, range: Range, uri?: string, containerName?: string): SymbolInformation {
 		let result: SymbolInformation = {
 			name,
 			kind,
@@ -1357,6 +1365,8 @@ export namespace TextDocumentSaveReason {
 	export const FocusOut = 3;
 }
 
+export type TextDocumentSaveReason = 1 | 2 | 3;
+
 export interface TextDocumentWillSaveEvent {
 	/**
 	 * The document that will be saved
@@ -1366,7 +1376,7 @@ export interface TextDocumentWillSaveEvent {
 	/**
 	 * The reason why save was triggered.
 	 */
-	reason: 1 | 2 | 3;
+	reason: TextDocumentSaveReason;
 }
 
 /**
