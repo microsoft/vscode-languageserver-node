@@ -10,7 +10,7 @@ import ChildProcess = cp.ChildProcess;
 import {
 	workspace as Workspace, window as Window, languages as Languages, commands as Commands,
 	TextDocumentChangeEvent, TextDocument, Disposable, OutputChannel,
-	FileSystemWatcher, DiagnosticCollection,
+	FileSystemWatcher, DiagnosticCollection, Uri,
 	CancellationToken, Position as VPosition, Location as VLocation, Range as VRange,
 	CompletionItem as VCompletionItem, CompletionList as VCompletionList, SignatureHelp as VSignatureHelp, Definition as VDefinition, DocumentHighlight as VDocumentHighlight,
 	SymbolInformation as VSymbolInformation, CodeActionContext as VCodeActionContext, Command as VCommand, CodeLens as VCodeLens,
@@ -1211,6 +1211,7 @@ export class LanguageClient {
 		let initParams: InitializeParams = {
 			processId: process.pid,
 			rootPath: Workspace.rootPath ? Workspace.rootPath : null,
+			rootUri: Workspace.rootPath ? Uri.file(Workspace.rootPath).toString() : null,
 			capabilities: clientCapabilities,
 			initializationOptions: is.func(initOption) ? initOption() : initOption,
 			trace: Trace.toString(this._trace)

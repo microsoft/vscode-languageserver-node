@@ -630,8 +630,16 @@ export interface InitializeParams {
 	/**
 	 * The rootPath of the workspace. Is null
 	 * if no folder is open.
+	 *
+	 * @deprecated in favour of rootUri.
 	 */
 	rootPath: string | null;
+
+	/**
+	 * The rootUri of the workspace. Is null if no
+	 * folder is open.
+	 */
+	rootUri: string | null;
 
 	/**
 	 * The capabilities provided by the client (editor or tool)
