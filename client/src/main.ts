@@ -33,6 +33,7 @@ import {
 
 
 import {
+	ClientCapabilities,
 	RegistrationRequest, RegistrationParams, UnregistrationRequest, UnregistrationParams, TextDocumentRegistrationOptions,
 	InitializeRequest, InitializeParams, InitializeResult, InitializeError, ServerCapabilities, TextDocumentSyncKind, TextDocumentSyncOptions,
 	InitializedNotification, ShutdownRequest, ExitNotification,
@@ -752,6 +753,77 @@ interface FeatureHandlerMap extends Map<string, FeatureHandler<any>> {
 	get(key: string): FeatureHandler<any>;
 }
 
+const clientCapabilities: ClientCapabilities = {
+	workspace: {
+		applyEdit: true,
+		didChangeConfiguration: {
+			dynamicRegistration: false
+		},
+		didChangeWatchedFiles: {
+			dynamicRegistration: false
+		},
+		symbol: {
+			dynamicRegistration: true
+		},
+		executeCommand: {
+			dynamicRegistration: true
+		}
+	},
+	textDocument: {
+		synchronization: {
+			dynamicRegistration: true,
+			willSave: true,
+			willSaveWaitUntil: true,
+			didSave: true
+		},
+		completion: {
+			dynamicRegistration: true,
+			completionItem: {
+				rangeProperty: true
+			}
+		},
+		hover: {
+			dynamicRegistration: true
+		},
+		signatureHelp: {
+			dynamicRegistration: true
+		},
+		references: {
+			dynamicRegistration: true
+		},
+		documentHighlight: {
+			dynamicRegistration: true
+		},
+		documentSymbol: {
+			dynamicRegistration: true
+		},
+		formatting: {
+			dynamicRegistration: true
+		},
+		rangeFormatting: {
+			dynamicRegistration: true
+		},
+		onTypeFormatting: {
+			dynamicRegistration: true
+		},
+		definition: {
+			dynamicRegistration: true
+		},
+		codeAction: {
+			dynamicRegistration: true
+		},
+		codeLens: {
+			dynamicRegistration: true
+		},
+		documentLink: {
+			dynamicRegistration: true
+		},
+		rename: {
+			dynamicRegistration: true
+		}
+	}
+}
+
 export class LanguageClient {
 
 	private _id: string;
@@ -1139,19 +1211,7 @@ export class LanguageClient {
 		let initParams: InitializeParams = {
 			processId: process.pid,
 			rootPath: Workspace.rootPath ? Workspace.rootPath : null,
-			capabilities: {
-				dynamicRegistration: {},
-				workspace: {
-					applyEdit: true
-				},
-				textDocument: {
-					willSaveNotification: true,
-					willSaveWaitUntilRequest: true,
-					completionItem: {
-						rangeProperty: true
-					}
-				}
-			},
+			capabilities: clientCapabilities,
 			initializationOptions: is.func(initOption) ? initOption() : initOption,
 			trace: Trace.toString(this._trace)
 		};

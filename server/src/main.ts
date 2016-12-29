@@ -47,7 +47,7 @@ import {
 	DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams,
 	RenameRequest, RenameParams,
 	DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkParams,
-	ExecuteCommandRequest, ExecuteCommandParams, ExecuteCommandResponse,
+	ExecuteCommandRequest, ExecuteCommandParams,
 	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse
 } from './protocol';
 
@@ -1077,7 +1077,7 @@ export interface IConnection {
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onExecuteCommand(handler: RequestHandler<ExecuteCommandParams, ExecuteCommandResponse, void>): void;
+	onExecuteCommand(handler: RequestHandler<ExecuteCommandParams, any, void>): void;
 
 	/**
 	 * Disposes the connection

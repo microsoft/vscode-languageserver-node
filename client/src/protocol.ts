@@ -135,52 +135,234 @@ export interface WorkspaceClientCapabilites {
 	 * to the workspace.
 	 */
 	applyEdit?: boolean;
+
+	/**
+	 * Capabilities specific to the `workspace/didChangeConfiguration` notification.
+	 */
+	didChangeConfiguration?: {
+		/**
+		 * Did change configuration notification supports dynamic registration.
+		 */
+		dynamicRegistration?: boolean;
+	};
+
+	/**
+	 * Capabilities specific to the `workspace/didChangeWatchedFiles` notification.
+	 */
+	didChangeWatchedFiles?: {
+		/**
+		 * Did change watched files notification supports dynamic registration.
+		 */
+		dynamicRegistration?: boolean;
+	};
+
+	/**
+	 * Capabilities specific to the `workspace/symbol` request.
+	 */
+	symbol?: {
+		/**
+		 * Symbol request supports dynamic registration.
+		 */
+		dynamicRegistration?: boolean;
+	};
+
+	/**
+	 * Capabilities specific to the `workspace/executeCommand` request.
+	 */
+	executeCommand?: {
+		/**
+		 * Execute command supports dynamic registration.
+		 */
+		dynamicRegistration?: boolean;
+	};
 }
 
 /**
  * Text document specific client capabilities.
  */
 export interface TextDocumentClientCapabilities {
-	/**
-	 * The client supports sending will save notifications.
-	 */
-	willSaveNotification?: boolean;
 
-	/**
-	 * The client supports sending a will save request and
-	 * waits for a response providing text edits which will
-	 * be applied to the document before it is saved.
-	 */
-	willSaveWaitUntilRequest?: boolean;
-
-	/**
-	 * The client supports the following `CompletionItem` specific
-	 * capabilities.
-	 */
-	completionItem?: {
+	synchronization?: {
 		/**
-		 * Client supports the new range property in favour of the
-		 * deprecated `textEdit` property.
+		 * Whether text document synchronization supports dynamic registration.
 		 */
-		rangeProperty?: boolean;
-	}
-}
+		dynamicRegistration?: boolean;
 
-/**
- * Dynamic registration specific client capabilities
- */
-export interface DynamicRegistrationCapabilites {
+		/**
+		 * The client supports sending will save notifications.
+		 */
+		willSave?: boolean;
+
+		/**
+		 * The client supports sending a will save request and
+		 * waits for a response providing text edits which will
+		 * be applied to the document before it is saved.
+		 */
+		willSaveWaitUntil?: boolean;
+
+		/**
+		 * The client supports did save notifications.
+		 */
+		didSave?: boolean;
+	}
+
+	/**
+	 * Capabilities specific to the `textDocument/completion`
+	 */
+	completion?: {
+		/**
+		 * Whether completion supports dynamic registration.
+		 */
+		dynamicRegistration?: boolean;
+
+		/**
+		 * The client supports the following `CompletionItem` specific
+		 * capabilities.
+		 */
+		completionItem?: {
+			/**
+			 * Client supports the new range property in favour of the
+			 * deprecated `textEdit` property.
+			 */
+			rangeProperty?: boolean;
+		}
+	};
+
+	/**
+	 * Capabilities specific to the `textDocument/hover`
+	 */
+	hover?: {
+		/**
+		 * Whether hover supports dynamic registration.
+		 */
+		dynamicRegistration?: boolean;
+	};
+
+	/**
+	 * Capabilities specific to the `textDocument/signatureHelp`
+	 */
+	signatureHelp?: {
+		/**
+		 * Whether signature help supports dynamic registration.
+		 */
+		dynamicRegistration?: boolean;
+	};
+
+	/**
+	 * Capabilities specific to the `textDocument/references`
+	 */
+	references?: {
+		/**
+		 * Whether references supports dynamic registration.
+		 */
+		dynamicRegistration?: boolean;
+	};
+
+	/**
+	 * Capabilities specific to the `textDocument/documentHighlight`
+	 */
+	documentHighlight?: {
+		/**
+		 * Whether document highlight supports dynamic registration.
+		 */
+		dynamicRegistration?: boolean;
+	};
+
+	/**
+	 * Capabilities specific to the `textDocument/documentSymbol`
+	 */
+	documentSymbol?: {
+		/**
+		 * Whether document symbol supports dynamic registration.
+		 */
+		dynamicRegistration?: boolean;
+	};
+
+	/**
+	 * Capabilities specific to the `textDocument/formatting`
+	 */
+	formatting?: {
+		/**
+		 * Whether formatting supports dynamic registration.
+		 */
+		dynamicRegistration?: boolean;
+	};
+
+	/**
+	 * Capabilities specific to the `textDocument/rangeFormatting`
+	 */
+	rangeFormatting?: {
+		/**
+		 * Whether range formatting supports dynamic registration.
+		 */
+		dynamicRegistration?: boolean;
+	};
+
+	/**
+	 * Capabilities specific to the `textDocument/onTypeFormatting`
+	 */
+	onTypeFormatting?: {
+		/**
+		 * Whether on type formatting supports dynamic registration.
+		 */
+		dynamicRegistration?: boolean;
+	};
+
+	/**
+	 * Capabilities specific to the `textDocument/definition`
+	 */
+	definition?: {
+		/**
+		 * Whether definition supports dynamic registration.
+		 */
+		dynamicRegistration?: boolean;
+	};
+
+	/**
+	 * Capabilities specific to the `textDocument/codeAction`
+	 */
+	codeAction?: {
+		/**
+		 * Whether code action supports dynamic registration.
+		 */
+		dynamicRegistration?: boolean;
+	};
+
+	/**
+	 * Capabilities specific to the `textDocument/codeLens`
+	 */
+	codeLens?: {
+		/**
+		 * Whether code lens supports dynamic registration.
+		 */
+		dynamicRegistration?: boolean;
+	};
+
+	/**
+	 * Capabilities specific to the `textDocument/documentLink`
+	 */
+	documentLink?: {
+		/**
+		 * Whether document link supports dynamic registration.
+		 */
+		dynamicRegistration?: boolean;
+	};
+
+	/**
+	 * Capabilities specific to the `textDocument/rename`
+	 */
+	rename?: {
+		/**
+		 * Whether rename supports dynamic registration.
+		 */
+		dynamicRegistration?: boolean;
+	};
 }
 
 /**
  * Defines the capabilities provided by the client.
  */
 export interface ClientCapabilities {
-	/**
-	 * The client supports dynamic feature registration.
-	 */
-	dynamicRegistration?: DynamicRegistrationCapabilites;
-
 	/**
 	 * Workspace specific client capabilities.
 	 */
