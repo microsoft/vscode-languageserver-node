@@ -14,7 +14,16 @@ export interface Position {
 	line: number;
 
 	/**
-	 * Character offset on a line in a document (zero-based).
+	 * Character offset on a line in a document (zero-based). Assuming that the line is
+	 * represented as a string, the `character` value represents the gap between the
+	 * `character` and `character + 1`. Given the following line: 'a𐐀c', character 0 is
+	 * the gap between the start of the start and 'a' ('|a𐐀c'), character 1 is the gap
+	 * between 'a' and '𐐀' ('a|𐐀c') and character 2 is the gap between '𐐀' and 'b' ('a𐐀|c').
+	 *
+	 * The string 'a𐐀c' consist of 3 characters with valid character values being 0, 1, 2, 3
+	 * for that string. Note that the string encoded in UTF-16 is encoded using 4 code units
+	 * (the 𐐀 is encoded using two code units). The character offset is therefore encoding
+	 * independent.
 	 */
 	character: number;
 }
