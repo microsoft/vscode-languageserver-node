@@ -208,14 +208,20 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (item.additionalTextEdits) { result.additionalTextEdits = asTextEdits(item.additionalTextEdits); }
 		if (item.command) { result.command = asCommand(item.command); }
 		if (item.data !== void 0 && item.data !== null) { result.data = item.data; }
+		result.typedString = ls.TypedString.is(item.insertText);
 		return result;
 	}
 
-	function asCompletionInsertText(text: string | ls.SnippetString | undefined | null): string | code.SnippetString | undefined {
+	function asCompletionInsertText(text: string | ls.TypedString | undefined | null): string | code.SnippetString | undefined {
 		if (is.string(text)) {
 			return text;
-		} else if (ls.SnippetString.is(text)) {
-			return new code.SnippetString(text.value);
+		} else if (ls.TypedString.is(text)) {
+			switch(text.type) {
+				case ls.StringType.Normal:
+					return text.value;
+				case ls.StringType.Snippet:
+					return new code.SnippetString(text.value);
+			}
 		}
 		return undefined;
 	}

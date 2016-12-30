@@ -225,6 +225,12 @@ export interface TextDocumentClientCapabilities {
 			 * deprecated `textEdit` property.
 			 */
 			rangeProperty?: boolean;
+
+			/**
+			 * Client supports the new `TypedString` for the insertText
+			 * property. This adds supports for snippet strings.
+			 */
+			typedString?: boolean;
 		}
 	};
 
@@ -630,8 +636,16 @@ export interface InitializeParams {
 	/**
 	 * The rootPath of the workspace. Is null
 	 * if no folder is open.
+	 *
+	 * @deprecated in favour of rootUri.
 	 */
 	rootPath: string | null;
+
+	/**
+	 * The rootUri of the workspace. Is null if no
+	 * folder is open.
+	 */
+	rootUri: string | null;
 
 	/**
 	 * The capabilities provided by the client (editor or tool)

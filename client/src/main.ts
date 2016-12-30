@@ -779,7 +779,8 @@ const clientCapabilities: ClientCapabilities = {
 		completion: {
 			dynamicRegistration: true,
 			completionItem: {
-				rangeProperty: true
+				rangeProperty: true,
+				typedString: true
 			}
 		},
 		hover: {

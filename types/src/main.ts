@@ -472,41 +472,65 @@ export class WorkspaceChange {
 	}
 }
 
-/**
- * A snippet string is a template which allows to insert text
- * and to control the editor cursor when insertion happens.
- *
- * A snippet can define tab stops and placeholders with `$1`, `$2`
- * and `${3:foo}`. `$0` defines the final tab stop, it defaults to
- * the end of the snippet. Placeholders with equal identifiers are linked,
- * that is typing in one will update others too.
- */
-export interface SnippetString {
+export namespace StringType {
+	/**
+	 * The strings is a normal string and will be inserted as is.
+	 */
+	export const Normal = 1;
 
 	/**
-	 * The snippet string.
+	 * A snippet string is a template which allows to insert text
+	 * and to control the editor cursor when insertion happens.
+	 *
+	 * A snippet can define tab stops and placeholders with `$1`, `$2`
+	 * and `${3:foo}`. `$0` defines the final tab stop, it defaults to
+	 * the end of the snippet. Placeholders with equal identifiers are linked,
+	 * that is typing in one will update others too.
+	 */
+	export const Snippet = 2;
+}
+
+export type StringType = 1 | 2;
+
+export interface TypedString {
+
+	/**
+	 * The string type.
+	 */
+	type: StringType;
+
+	/**
+	 * The string value.
 	 */
 	value: string;
 }
 
 /**
- * The SnippetString namespace provides helper functions to work with
- * [SnippetString](#SnippetString) literals.
+ * The TypedString namespace provides helper functions to work with
+ * [TypedString](#TypedString) literals.
  */
-export namespace SnippetString {
+export namespace TypedString {
 	/**
-	 * Creates a new SnippetString literal.
-	 * @param uri The document's uri.
+	 * Creates a new TypedString literal.
+	 * @param value the string value.
 	 */
-	export function create(value: string): SnippetString {
-		return { value };
+	export function createNormal(value: string): TypedString {
+		return { type: StringType.Normal, value };
 	}
 	/**
-	 * Checks whether the given literal conforms to the [SnippetString](#SnippetString) interface.
+	 * Creates a new TypedString literal for snippet strings
+	 * @param value the snippet string value.
 	 */
-	export function is(value: any): value is SnippetString {
-		let candidate = value as SnippetString;
-		return Is.defined(candidate) && Is.string(candidate.value);
+	export function createSnippet(value: string): TypedString {
+		return { type: StringType.Snippet, value };
+	}
+	/**
+	 * Checks whether the given literal conforms to the [TypedString](#TypedString) interface.
+	 */
+	export function is(value: any): value is TypedString {
+		let candidate = value as TypedString;
+		return Is.defined(candidate) && Is.string(candidate.value) &&
+			Is.number(candidate.type) && (candidate.type === StringType.Normal || candidate.type === StringType.Snippet);
 	}
 }
 
@@ -701,7 +725,7 @@ export interface CompletionItem {
 	 * this completion. When `falsy` the [label](#CompletionItem.label)
 	 * is used.
 	 */
-	insertText?: string | SnippetString;
+	insertText?: string | TypedString;
 
 	/**
 	 * A range of text that should be replaced by this completion item.

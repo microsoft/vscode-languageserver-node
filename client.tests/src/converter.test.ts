@@ -225,13 +225,28 @@ suite('Protocol Converter', () => {
 	test('Completion Item Snippet String', () => {
 		let completionItem: proto.CompletionItem = {
 			label: 'item',
-			insertText: proto.SnippetString.create("${value}")
+			insertText: proto.TypedString.createSnippet("${value}")
 		};
 
 		let result = p2c.asCompletionItem(completionItem);
 		strictEqual(result.label, completionItem.label);
 		ok(result.insertText instanceof vscode.SnippetString);
 		strictEqual((<vscode.SnippetString> result.insertText).value, "${value}");
+	});
+
+	test('Completion Item Preserve Typed String', () => {
+		let completionItem: proto.CompletionItem = {
+			label: 'item',
+			insertText: proto.TypedString.createNormal("insert")
+		};
+
+		let result = p2c.asCompletionItem(completionItem);
+		strictEqual(result.label, completionItem.label);
+		strictEqual(result.insertText, "insert");
+		let back = c2p.asCompletionItem(result);
+		ok(proto.TypedString.is(back.insertText));
+		strictEqual((back.insertText as proto.TypedString).type, proto.StringType.Normal);
+		strictEqual((back.insertText as proto.TypedString).value, "insert");
 	});
 
 	test('Completion Item Text Edit', () => {

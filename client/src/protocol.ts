@@ -225,6 +225,12 @@ export interface TextDocumentClientCapabilities {
 			 * deprecated `textEdit` property.
 			 */
 			rangeProperty?: boolean;
+
+			/**
+			 * Client supports the new `TypedString` for the insertText
+			 * property. This adds supports for snippet strings.
+			 */
+			typedString?: boolean;
 		}
 	};
 
