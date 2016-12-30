@@ -47,6 +47,10 @@ language servers for [VSCode](https://code.visualstudio.com/).
     * due to the use of TypeScript 2.x.x and differences in d.ts generation users of the new version need to move to 
       TypeScript 2.x.x as well.
     * `activeSignature` and `activeParameter` where incorrectly declared as optional in `SignatureHelp`. They are now mandantory.
+    * the `protocol.ts` file used enum types in 2.x. However the protocol itself is number based since no assumption can be made about
+      the presence of a enum type in the implementing language. To make this more clear the enum got replace by number types with a 
+      or literal type definition. This might result in compile errors if a number was directly assigned to a previous enum type without
+      a proper range check.
     * Request and Notification types are now classes instead of interfaces. In addition they now take an additional type argument to type the registration
       options for dynamic registration. Adopting to that change is quite easy. Simply new the RequestType or NotificationType and add void as the registration 
       option type as in the example below:
