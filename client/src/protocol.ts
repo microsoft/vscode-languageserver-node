@@ -610,6 +610,10 @@ export interface ServerCapabilities {
 	 * The server provides execute command support.
 	 */
 	executeCommandProvider?: ExecuteCommandOptions;
+	/**
+	 * Experimental server capabilities.
+	 */
+	experimental?: any;
 }
 
 /**
