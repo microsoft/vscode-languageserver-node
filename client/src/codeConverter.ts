@@ -254,12 +254,10 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 
 	function asCompletionItem(item: code.CompletionItem): types.CompletionItem {
 		let result: types.CompletionItem = { label: item.label };
-		let typedString = item instanceof ProtocolCompletionItem ? item.typedString : false;
 		if (item.detail) { result.detail = item.detail; }
 		if (item.documentation) { result.documentation = item.documentation; }
 		if (item.filterText) { result.filterText = item.filterText; }
-		if (item.insertText) { result.insertText = asCompletionInsertText(item.insertText, typedString); }
-		if (item.range) { result.range = asRange(item.range); }
+		fillPrimaryInsertText(result, item as ProtocolCompletionItem);
 		// Protocol item kind is 1 based, codes item kind is zero based.
 		if (is.number(item.kind)) {
 			if (code.CompletionItemKind.Text <= item.kind && item.kind <= code.CompletionItemKind.Reference) {
@@ -269,7 +267,6 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			}
 		}
 		if (item.sortText) { result.sortText = item.sortText; }
-		if (item.textEdit) { result.textEdit = asTextEdit(item.textEdit); }
 		if (item.additionalTextEdits) { result.additionalTextEdits = asTextEdits(item.additionalTextEdits); }
 		if (item.command) { result.command = asCommand(item.command); }
 		if (item instanceof ProtocolCompletionItem && item.data) {
@@ -278,17 +275,29 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return result;
 	}
 
-	function asCompletionInsertText(text: string | code.SnippetString, typedString: boolean): string | types.TypedString | undefined {
-		if (is.string(text)) {
-			if (typedString) {
-				return types.TypedString.createNormal(text);
-			} else {
-				return text;
-			}
-		} else if (text.value) {
-			return types.TypedString.createSnippet(text.value);
+	function fillPrimaryInsertText(target: types.CompletionItem, source: ProtocolCompletionItem): void {
+		let format: types.InsertTextFormat = types.InsertTextFormat.PlainText;
+		let text: string | undefined;
+		let range: types.Range | undefined = undefined;
+		if (source.textEdit) {
+			text = source.textEdit.newText;
+			range = asRange(source.textEdit.range);
+		} else if (source.insertText instanceof code.SnippetString) {
+			format = types.InsertTextFormat.Snippet;
+			text = source.insertText.value;
+		} else {
+			text = source.insertText;
 		}
-		return undefined;
+		if (source.range) {
+			range = asRange(source.range);
+		}
+
+		target.insertTextFormat = format;
+		if (source.fromEdit && text && range) {
+			target.textEdit = { newText: text, range: range };
+		} else {
+			target.insertText = text;
+		}
 	}
 
 	function asTextEdit(edit: code.TextEdit): types.TextEdit {

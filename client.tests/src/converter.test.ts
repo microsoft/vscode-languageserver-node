@@ -9,6 +9,7 @@ import { strictEqual, deepEqual, ok } from 'assert';
 import * as proto from 'vscode-languageserver-types';
 import * as codeConverter from '../../client/lib/codeConverter';
 import * as protocolConverter from '../../client/lib/protocolConverter';
+import ProtocolCompletionItem from '../../client/lib/protocolCompletionItem';
 
 import * as vscode from 'vscode';
 
@@ -17,7 +18,9 @@ const p2c: protocolConverter.Converter = protocolConverter.createConverter();
 
 suite('Protocol Converter', () => {
 
-	function rangeEqual(actual: vscode.Range, expected: proto.Range) {
+	function rangeEqual(actual: vscode.Range, expected: proto.Range);
+	function rangeEqual(actual: proto.Range, expected: vscode.Range);
+	function rangeEqual(actual: vscode.Range | proto.Range, expected: proto.Range | proto.Range) {
 		strictEqual(actual.start.line, expected.start.line);
 		strictEqual(actual.start.character, expected.start.character);
 		strictEqual(actual.end.line, expected.end.line);
@@ -190,7 +193,7 @@ suite('Protocol Converter', () => {
 			documentation: 'doc',
 			filterText: 'filter',
 			insertText: 'insert',
-			range: proto.Range.create({ line: 0, character: 5}, { line: 0, character: 7}),
+			insertTextFormat: proto.InsertTextFormat.PlainText,
 			kind: proto.CompletionItemKind.Field,
 			sortText: 'sort',
 			data: 'data',
@@ -212,7 +215,6 @@ suite('Protocol Converter', () => {
 		strictEqual(result.command.command, command.command);
 		strictEqual(result.command.arguments, command.arguments);
 		ok(result.additionalTextEdits[0] instanceof vscode.TextEdit);
-		ok(result.range instanceof vscode.Range);
 
 		let completionResult = p2c.asCompletionResult([completionItem]);
 		if (Array.isArray(completionResult)) {
@@ -222,31 +224,36 @@ suite('Protocol Converter', () => {
 		}
 	});
 
-	test('Completion Item Snippet String', () => {
+	test('Completion Item Preserve Insert Text', () => {
 		let completionItem: proto.CompletionItem = {
 			label: 'item',
-			insertText: proto.TypedString.createSnippet("${value}")
-		};
-
-		let result = p2c.asCompletionItem(completionItem);
-		strictEqual(result.label, completionItem.label);
-		ok(result.insertText instanceof vscode.SnippetString);
-		strictEqual((<vscode.SnippetString> result.insertText).value, "${value}");
-	});
-
-	test('Completion Item Preserve Typed String', () => {
-		let completionItem: proto.CompletionItem = {
-			label: 'item',
-			insertText: proto.TypedString.createNormal("insert")
+			insertText: "insert"
 		};
 
 		let result = p2c.asCompletionItem(completionItem);
 		strictEqual(result.label, completionItem.label);
 		strictEqual(result.insertText, "insert");
 		let back = c2p.asCompletionItem(result);
-		ok(proto.TypedString.is(back.insertText));
-		strictEqual((back.insertText as proto.TypedString).type, proto.StringType.Normal);
-		strictEqual((back.insertText as proto.TypedString).value, "insert");
+		strictEqual(back.insertText, "insert");
+	});
+
+	test('Completion Item Snippet String', () => {
+		let completionItem: proto.CompletionItem = {
+			label: 'item',
+			insertText: "${value}",
+			insertTextFormat: proto.InsertTextFormat.Snippet
+		};
+
+		let result = p2c.asCompletionItem(completionItem);
+		strictEqual(result.label, completionItem.label);
+		ok(result.insertText instanceof vscode.SnippetString);
+		strictEqual((<vscode.SnippetString> result.insertText).value, "${value}");
+		strictEqual(result.range, undefined);
+		strictEqual(result.textEdit, undefined);
+
+		let back = c2p.asCompletionItem(result);
+		strictEqual(back.insertTextFormat, proto.InsertTextFormat.Snippet);
+		strictEqual(back.insertText, "${value}");
 	});
 
 	test('Completion Item Text Edit', () => {
@@ -257,7 +264,35 @@ suite('Protocol Converter', () => {
 
 		let result = p2c.asCompletionItem(completionItem);
 		strictEqual(result.label, completionItem.label);
-		ok(result.textEdit instanceof vscode.TextEdit);
+		strictEqual(result.textEdit, undefined);
+		strictEqual(result.insertText, "insert");
+		rangeEqual(result.range, completionItem.textEdit.range);
+
+		let back = c2p.asCompletionItem(result);
+		strictEqual(back.insertTextFormat, proto.InsertTextFormat.PlainText);
+		strictEqual(back.insertText, undefined);
+		strictEqual(back.textEdit.newText, 'insert');
+		rangeEqual(back.textEdit.range, result.range);
+	});
+
+	test('Completion Item Text Edit Snippet String', () => {
+		let completionItem: proto.CompletionItem = {
+			label: 'item',
+			textEdit: proto.TextEdit.insert({ line: 1, character: 2}, '${insert}'),
+			insertTextFormat: proto.InsertTextFormat.Snippet
+		};
+
+		let result = p2c.asCompletionItem(completionItem);
+		strictEqual(result.label, completionItem.label);
+		strictEqual(result.textEdit, undefined);
+		ok(result.insertText instanceof vscode.SnippetString && result.insertText.value === '${insert}');
+		rangeEqual(result.range, completionItem.textEdit.range);
+
+		let back = c2p.asCompletionItem(result);
+		strictEqual(back.insertText, undefined);
+		strictEqual(back.insertTextFormat, proto.InsertTextFormat.Snippet);
+		strictEqual(back.textEdit.newText, '${insert}');
+		rangeEqual(back.textEdit.range, result.range);
 	});
 
 	test('Completion Item Preserve Data', () => {
@@ -620,11 +655,43 @@ suite('Code Converter', () => {
 		strictEqual(result.additionalTextEdits[0].newText, item.additionalTextEdits[0].newText);
 	});
 
-	test('Completion Item Text Edit', () => {
-		let item: vscode.CompletionItem = new vscode.CompletionItem('label');
-		item.textEdit = vscode.TextEdit.insert(new vscode.Position(1, 2), 'insert');
+	test('Completion Item insertText', () => {
+		let item: ProtocolCompletionItem = new ProtocolCompletionItem ('label');
+		item.insertText = 'insert';
+		item.fromEdit = false;
 
 		let result = c2p.asCompletionItem(<any>item);
+		strictEqual(result.insertText, item.insertText);
+	});
+
+	test('Completion Item TextEdit', () => {
+		let item: ProtocolCompletionItem = new ProtocolCompletionItem ('label');
+		item.textEdit = vscode.TextEdit.insert(new vscode.Position(1, 2), 'insert');
+		item.fromEdit = false;
+
+		let result = c2p.asCompletionItem(<any>item);
+		strictEqual(result.insertText, item.textEdit.newText);
+	});
+
+	test('Completion Item Insert Text and Range', () => {
+		let item: ProtocolCompletionItem = new ProtocolCompletionItem('label');
+		item.insertText = 'insert';
+		item.range = new vscode.Range(1, 2, 1, 2);
+		item.fromEdit = true;
+
+		let result = c2p.asCompletionItem(<any>item);
+		strictEqual(result.insertText, undefined);
+		rangeEqual(result.textEdit.range, item.range);
+		strictEqual(result.textEdit.newText, item.insertText);
+	});
+
+	test('Completion Item TextEdit from Edit', () => {
+		let item: ProtocolCompletionItem = new ProtocolCompletionItem ('label');
+		item.textEdit = vscode.TextEdit.insert(new vscode.Position(1, 2), 'insert');
+		item.fromEdit = true;
+
+		let result = c2p.asCompletionItem(<any>item);
+		strictEqual(result.insertText, undefined);
 		rangeEqual(result.textEdit.range, item.textEdit.range);
 		strictEqual(result.textEdit.newText, item.textEdit.newText);
 	});

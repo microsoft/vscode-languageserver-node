@@ -481,68 +481,6 @@ export class WorkspaceChange {
 	}
 }
 
-export namespace StringType {
-	/**
-	 * The strings is a normal string and will be inserted as is.
-	 */
-	export const Normal = 1;
-
-	/**
-	 * A snippet string is a template which allows to insert text
-	 * and to control the editor cursor when insertion happens.
-	 *
-	 * A snippet can define tab stops and placeholders with `$1`, `$2`
-	 * and `${3:foo}`. `$0` defines the final tab stop, it defaults to
-	 * the end of the snippet. Placeholders with equal identifiers are linked,
-	 * that is typing in one will update others too.
-	 */
-	export const Snippet = 2;
-}
-
-export type StringType = 1 | 2;
-
-export interface TypedString {
-
-	/**
-	 * The string type.
-	 */
-	type: StringType;
-
-	/**
-	 * The string value.
-	 */
-	value: string;
-}
-
-/**
- * The TypedString namespace provides helper functions to work with
- * [TypedString](#TypedString) literals.
- */
-export namespace TypedString {
-	/**
-	 * Creates a new TypedString literal.
-	 * @param value the string value.
-	 */
-	export function createNormal(value: string): TypedString {
-		return { type: StringType.Normal, value };
-	}
-	/**
-	 * Creates a new TypedString literal for snippet strings
-	 * @param value the snippet string value.
-	 */
-	export function createSnippet(value: string): TypedString {
-		return { type: StringType.Snippet, value };
-	}
-	/**
-	 * Checks whether the given literal conforms to the [TypedString](#TypedString) interface.
-	 */
-	export function is(value: any): value is TypedString {
-		let candidate = value as TypedString;
-		return Is.defined(candidate) && Is.string(candidate.value) &&
-			Is.number(candidate.type) && (candidate.type === StringType.Normal || candidate.type === StringType.Snippet);
-	}
-}
-
 /**
  * A literal to identify a text document in the client.
  */
@@ -686,11 +624,38 @@ export namespace CompletionItemKind {
 
 export type CompletionItemKind = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18;
 
+
+/**
+ * Defines whether the insert text in a completion item should be interpreted as
+ * plain text or a snippet.
+ */
+export namespace InsertTextFormat {
+	/**
+	 * The primary text to be inserted is treated as a plain string.
+	 */
+	export const PlainText = 1;
+
+	/**
+	 * The primary text to be inserted is treated as a snippet.
+	 *
+	 * A snippet can define tab stops and placeholders with `$1`, `$2`
+	 * and `${3:foo}`. `$0` defines the final tab stop, it defaults to
+	 * the end of the snippet. Placeholders with equal identifiers are linked,
+	 * that is typing in one will update others too.
+	 *
+	 * See also: https://github.com/Microsoft/vscode/blob/master/src/vs/editor/contrib/snippet/common/snippet.md
+	 */
+	export const Snippet = 2;
+}
+
+export type InsertTextFormat = 1 | 2;
+
 /**
  * A completion item represents a text snippet that is
  * proposed to complete text that is being typed.
  */
 export interface CompletionItem {
+
 	/**
 	 * The label of this completion item. By default
 	 * also the text that is inserted when selecting
@@ -734,22 +699,15 @@ export interface CompletionItem {
 	 * this completion. When `falsy` the [label](#CompletionItem.label)
 	 * is used.
 	 */
-	insertText?: string | TypedString;
+	insertText?: string;
 
 	/**
-	 * A range of text that should be replaced by this completion item.
-	 *
-	 * Defaults to a range from the start of the current word to the
-	 * current position.
-	 *
-	 * *Note:* The range must be a single line and it must
-	 * contain the position at which completion has been requested.
+	 * The format of the insert text. The format applies to both the `insertText` property
+	 * and the `newText` property of a provided `textEdit`.
 	 */
-	range?: Range;
+	insertTextFormat?: InsertTextFormat;
 
 	/**
-	 * * @deprecated **Deprecated** in favor of `CompletionItem.insertText` and `CompletionItem.range`.
-	 *
 	 * An [edit](#TextEdit) which is applied to a document when selecting
 	 * this completion. When an edit is provided the value of
 	 * [insertText](#CompletionItem.insertText) and [range](#CompletionItem.range) is ignored.

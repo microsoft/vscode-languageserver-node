@@ -221,16 +221,14 @@ export interface TextDocumentClientCapabilities {
 		 */
 		completionItem?: {
 			/**
-			 * Client supports the new range property in favour of the
-			 * deprecated `textEdit` property.
+			 * Client supports snippets as insert text.
+			 *
+			 * A snippet can define tab stops and placeholders with `$1`, `$2`
+			 * and `${3:foo}`. `$0` defines the final tab stop, it defaults to
+			 * the end of the snippet. Placeholders with equal identifiers are linked,
+			 * that is typing in one will update others too.
 			 */
-			rangeProperty?: boolean;
-
-			/**
-			 * Client supports the new `TypedString` for the insertText
-			 * property. This adds supports for snippet strings.
-			 */
-			typedString?: boolean;
+			snippetSupport?: boolean;
 		}
 	};
 

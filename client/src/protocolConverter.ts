@@ -199,31 +199,37 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (item.detail) { result.detail = item.detail; }
 		if (item.documentation) { result.documentation = item.documentation };
 		if (item.filterText) { result.filterText = item.filterText; }
-		if (item.insertText) { result.insertText = asCompletionInsertText(item.insertText); }
-		if (item.range) { result.range = asRange(item.range); }
+		let insertText = asCompletionInsertText(item);
+		if (insertText) {
+			result.insertText = insertText.text;
+			result.range = insertText.range;
+			result.fromEdit = insertText.fromEdit;
+		}
 		// Protocol item kind is 1 based, codes item kind is zero based.
 		if (is.number(item.kind) && item.kind > 0) { result.kind = item.kind - 1; }
 		if (item.sortText) { result.sortText = item.sortText; }
-		if (item.textEdit) { result.textEdit = asTextEdit(item.textEdit); }
 		if (item.additionalTextEdits) { result.additionalTextEdits = asTextEdits(item.additionalTextEdits); }
 		if (item.command) { result.command = asCommand(item.command); }
 		if (item.data !== void 0 && item.data !== null) { result.data = item.data; }
-		result.typedString = ls.TypedString.is(item.insertText);
 		return result;
 	}
 
-	function asCompletionInsertText(text: string | ls.TypedString | undefined | null): string | code.SnippetString | undefined {
-		if (is.string(text)) {
-			return text;
-		} else if (ls.TypedString.is(text)) {
-			switch(text.type) {
-				case ls.StringType.Normal:
-					return text.value;
-				case ls.StringType.Snippet:
-					return new code.SnippetString(text.value);
+	function asCompletionInsertText(item: ls.CompletionItem): { text: string | code.SnippetString, range?: code.Range, fromEdit: boolean } | undefined {
+		if (item.textEdit) {
+			if (item.insertTextFormat === ls.InsertTextFormat.Snippet) {
+				return { text: new code.SnippetString(item.textEdit.newText), range: asRange(item.textEdit.range), fromEdit: true };
+			} else {
+				return { text: item.textEdit.newText, range: asRange(item.textEdit.range), fromEdit: true };
 			}
+		} else if (item.insertText) {
+			if (item.insertTextFormat === ls.InsertTextFormat.Snippet) {
+				return { text: new code.SnippetString(item.insertText), fromEdit: false };
+			} else {
+				return { text: item.insertText, fromEdit: false };
+			}
+		} else {
+			return undefined;
 		}
-		return undefined;
 	}
 
 	function asTextEdit(edit: ls.TextEdit): code.TextEdit {

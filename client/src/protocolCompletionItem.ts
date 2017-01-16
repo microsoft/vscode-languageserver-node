@@ -9,7 +9,7 @@ import * as code from 'vscode';
 export default class ProtocolCompletionItem extends code.CompletionItem {
 
 	public data: any;
-	public typedString: boolean;
+	public fromEdit: boolean;
 
 	constructor(label: string) {
 		super(label);
