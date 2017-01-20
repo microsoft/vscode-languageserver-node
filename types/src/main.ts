@@ -1,3 +1,4 @@
+
 /* --------------------------------------------------------------------------------------------
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
@@ -140,19 +141,19 @@ export namespace DiagnosticSeverity {
 	/**
 	 * Reports an error.
 	 */
-	export const Error = 1;
+	export const Error: 1 = 1;
 	/**
 	 * Reports a warning.
 	 */
-	export const Warning = 2;
+	export const Warning: 2 = 2;
 	/**
 	 * Reports an information.
 	 */
-	export const Information = 3;
+	export const Information: 3 = 3;
 	/**
 	 * Reports a hint.
 	 */
-	export const Hint = 4;
+	export const Hint: 4 = 4;
 }
 
 export type DiagnosticSeverity = 1 | 2 | 3 | 4;
@@ -334,6 +335,26 @@ export interface TextDocumentEdit {
 	 * The edits to be applied.
 	 */
 	edits: TextEdit[];
+}
+
+/**
+ * The TextDocumentEdit namespace provides helper function to create
+ * create a edit that manipulates a text document.
+ */
+export namespace TextDocumentEdit {
+	/**
+	 * Creates a new `TextDocumentEdit`
+	 */
+	export function create(textDocument: VersionedTextDocumentIdentifier, edits: TextEdit[]): TextDocumentEdit {
+		return { textDocument, edits };
+	}
+
+	export function is(value: any): value is TextDocumentEdit {
+		let candidate = value as TextDocumentEdit;
+		return Is.defined(candidate)
+			&& VersionedTextDocumentIdentifier.is(candidate.textDocument)
+			&& Array.isArray(candidate.edits);
+	}
 }
 
 
@@ -602,24 +623,24 @@ export namespace TextDocumentItem {
  * The kind of a completion entry.
  */
 export namespace CompletionItemKind {
-	export const Text = 1;
-	export const Method = 2;
-	export const Function = 3;
-	export const Constructor = 4;
-	export const Field = 5;
-	export const Variable = 6;
-	export const Class = 7;
-	export const Interface = 8;
-	export const Module = 9;
-	export const Property = 10;
-	export const Unit = 11;
-	export const Value = 12;
-	export const Enum = 13;
-	export const Keyword = 14;
-	export const Snippet = 15;
-	export const Color = 16;
-	export const File = 17;
-	export const Reference = 18;
+	export const Text: 1 = 1;
+	export const Method: 2 = 2;
+	export const Function: 3 = 3;
+	export const Constructor: 4 = 4;
+	export const Field: 5 = 5;
+	export const Variable: 6 = 6;
+	export const Class: 7 = 7;
+	export const Interface: 8 = 8;
+	export const Module: 9 = 9;
+	export const Property: 10 = 10;
+	export const Unit: 11 = 11;
+	export const Value: 12 = 12;
+	export const Enum: 13 = 13;
+	export const Keyword: 14 = 14;
+	export const Snippet: 15 = 15;
+	export const Color: 16 = 16;
+	export const File: 17 = 17;
+	export const Reference: 18 = 18;
 }
 
 export type CompletionItemKind = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18;
@@ -633,7 +654,7 @@ export namespace InsertTextFormat {
 	/**
 	 * The primary text to be inserted is treated as a plain string.
 	 */
-	export const PlainText = 1;
+	export const PlainText: 1 = 1;
 
 	/**
 	 * The primary text to be inserted is treated as a snippet.
@@ -645,7 +666,7 @@ export namespace InsertTextFormat {
 	 *
 	 * See also: https://github.com/Microsoft/vscode/blob/master/src/vs/editor/contrib/snippet/common/snippet.md
 	 */
-	export const Snippet = 2;
+	export const Snippet: 2 = 2;
 }
 
 export type InsertTextFormat = 1 | 2;
@@ -947,17 +968,17 @@ export namespace DocumentHighlightKind {
 	/**
 	 * A textual occurrance.
 	 */
-	export const Text = 1;
+	export const Text: 1 = 1;
 
 	/**
 	 * Read-access of a symbol, like reading a variable.
 	 */
-	export const Read = 2;
+	export const Read: 2 = 2;
 
 	/**
 	 * Write-access of a symbol, like writing to a variable.
 	 */
-	export const Write = 3;
+	export const Write: 3 = 3;
 }
 
 export type DocumentHighlightKind = 1 | 2 | 3;
@@ -1001,24 +1022,24 @@ export namespace DocumentHighlight {
  * A symbol kind.
  */
 export namespace SymbolKind {
-	export const File = 1;
-	export const Module = 2;
-	export const Namespace = 3;
-	export const Package = 4;
-	export const Class = 5;
-	export const Method = 6;
-	export const Property = 7;
-	export const Field = 8;
-	export const Constructor = 9;
-	export const Enum = 10;
-	export const Interface = 11;
-	export const Function = 12;
-	export const Variable = 13;
-	export const Constant = 14;
-	export const String = 15;
-	export const Number = 16;
-	export const Boolean = 17;
-	export const Array = 18;
+	export const File: 1 = 1;
+	export const Module: 2 = 2;
+	export const Namespace: 3 = 3;
+	export const Package: 4 = 4;
+	export const Class: 5 = 5;
+	export const Method: 6 = 6;
+	export const Property: 7 = 7;
+	export const Field: 8 = 8;
+	export const Constructor: 9 = 9;
+	export const Enum: 10 = 10;
+	export const Interface: 11 = 11;
+	export const Function: 12 = 12;
+	export const Variable: 13 = 13;
+	export const Constant: 14 = 14;
+	export const String: 15 = 15;
+	export const Number: 16 = 16;
+	export const Boolean: 17 = 17;
+	export const Array: 18 = 18;
 }
 
 export type SymbolKind = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18;
@@ -1352,17 +1373,17 @@ export namespace TextDocumentSaveReason {
 	 * Manually triggered, e.g. by the user pressing save, by starting debugging,
 	 * or by an API call.
 	 */
-	export const Manual = 1;
+	export const Manual: 1 = 1;
 
 	/**
 	 * Automatic after a delay.
 	 */
-	export const AfterDelay = 2;
+	export const AfterDelay: 2 = 2;
 
 	/**
 	 * When the editor lost focus.
 	 */
-	export const FocusOut = 3;
+	export const FocusOut: 3 = 3;
 }
 
 export type TextDocumentSaveReason = 1 | 2 | 3;
