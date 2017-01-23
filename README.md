@@ -24,7 +24,7 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
-### 3.0.2-beta.x: Client, Server and JSON-RPC
+### 3.0.3: Client, Server and JSON-RPC
 
 #### New Features
 

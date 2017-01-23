@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageserver",
 	"description": "Language server implementation for node",
-	"version": "3.0.2-beta.5",
+	"version": "3.0.3",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"repository": {
@@ -23,8 +23,8 @@
 		"@types/mocha": "^2.2.32"
 	},
 	"dependencies": {
-		"vscode-jsonrpc": "^3.0.2-beta.5",
-		"vscode-languageserver-types": "^3.0.2-beta.5"
+		"vscode-jsonrpc": "^3.0.3",
+		"vscode-languageserver-types": "^3.0.3"
 	},
 	"scripts": {
 		"prepublish": "tsc -p ./src",
