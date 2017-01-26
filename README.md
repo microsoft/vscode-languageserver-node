@@ -43,8 +43,7 @@ language servers for [VSCode](https://code.visualstudio.com/).
   * Deprecated CompletionItem.textEdit
 
 #### Breaking changes:
-* to ensure ordered delivery of notifications and requests the language client now throws if sendRequest, onRequest, sendNotification or onNotification 
-is called before the client is ready. Use the onReady() Promise to wait until the client is ready.
+* to ensure ordered delivery of notifications and requests the language client now throws if sendRequest, onRequest, sendNotification or onNotification is called before the client is ready. Use the onReady() Promise to wait until the client is ready.
 
 ```ts
 let client = new LanguageClient(...);
@@ -53,8 +52,7 @@ client.onReady().then(() => {
   client.sendRequest(...);
 );
 ```
-* removed the deprecated module functions on code2Protocol and protocol2Code converters. Use the corresponding properties on the LanguageClient instance instead to get 
-access to the same converters used by the LanguageClient.
+* removed the deprecated module functions on code2Protocol and protocol2Code converters. Use the corresponding properties on the LanguageClient instance instead to get access to the same converters used by the LanguageClient.
 
 ```ts
 // Old
@@ -64,15 +62,10 @@ Protocol2Code.asTextEdits(edits);
 let client = new LanguageClient(...);
 client.protocol2CodeConverter.asTextEdits(edits);
 ```
-* due to the use of TypeScript 2.x.x and differences in d.ts generation users of the new version need to move to TypeScript 2.x.x as well. Usually the `LanguageClient` is used
-in a VS Code extension. You can find detailed steps on how to upgrade a VS Code extension to TypeScript 2.x.x [here](http://code.visualstudio.com/updates/v1_6#_authoring-in-typescript).
+* due to the use of TypeScript 2.x.x and differences in d.ts generation users of the new version need to move to TypeScript 2.x.x as well. Usually the `LanguageClient` is used in a VS Code extension. You can find detailed steps on how to upgrade a VS Code extension to TypeScript 2.x.x [here](http://code.visualstudio.com/updates/v1_6#_authoring-in-typescript).
 * `activeSignature` and `activeParameter` where incorrectly declared as optional in `SignatureHelp`. They are now mandatory.
-* the `protocol.ts` file used enum types in 2.x. However the protocol itself is number based since no assumption can be made about the presence of an enum type 
-in the implementing language. To make this more clear the enum got replace by number types with a or literal type definition. This might result in compile errors 
-if a number was directly assigned to a previous enum type without a proper range check.
-* Request and Notification types are now classes instead of interfaces. In addition they now take an additional type argument to type the registration options for 
-dynamic registration. Adopting to that change is quite easy. Simply new the `RequestType` or `NotificationType` and add void as the registration option type. Please
-remember to update this on both the client and server side:
+* the `protocol.ts` file used enum types in 2.x. However the protocol itself is number based since no assumption can be made about the presence of an enum type  in the implementing language. To make this more clear the enum got replace by number types with a or literal type definition. This might result in compile errors if a number was directly assigned to a previous enum type without a proper range check.
+* Request and Notification types are now classes instead of interfaces. In addition they now take an additional type argument to type the registration options for dynamic registration. Adopting to that change is quite easy. Simply new the `RequestType` or `NotificationType` and add void as the registration option type. Please remember to update this on both the client and server side:
 
 ```ts
 // Old
@@ -109,14 +102,11 @@ export namespace MyNotification {
 
 ### 2.4.0 Client and Server
 
-* Data types such as Range, Position, TextDocument, Hover, CompletionItem... extracted to new node module _vscode-languageserver-types_.
-  The new node module is shared between the server and client and can also be used by language service libraries that want to use the same data types.
+* Data types such as Range, Position, TextDocument, Hover, CompletionItem... extracted to new node module _vscode-languageserver-types_. The new node module is shared between the server and client and can also be used by language service libraries that want to use the same data types.
 
 ### 2.3.0: Client only
 
-* the client now restarts the server if the server crashes without a prior exit notification sent. The strategy used to restart
-  the server is pluggable (see `LanguageClientOptions.errorHandler`). The default strategy restart the server unless it crashed 5
-  times or more in the last 3 minutes. 
+* the client now restarts the server if the server crashes without a prior exit notification sent. The strategy used to restart the server is pluggable (see `LanguageClientOptions.errorHandler`). The default strategy restart the server unless it crashed 5 times or more in the last 3 minutes. 
 
 ### 2.0: A detailed desciption of the 2.0 version can be found [here](https://github.com/Microsoft/vscode-languageserver-protocol/blob/master/README.md). A summary of the changes:
 
@@ -147,6 +137,7 @@ export namespace MyNotification {
 * List Workspace Symbols: lists all project-wide symbols.
 
 ### 0.10.x: Intial versions to build a good API for the client and server side
+
 
 ## License
 [MIT](https://github.com/Microsoft/vscode-languageserver-node/blob/master/License.txt)
