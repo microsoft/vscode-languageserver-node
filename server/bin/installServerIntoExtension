@@ -38,7 +38,7 @@ if (!fs.existsSync(tsconfigFile)) {
 
 var extensionServerDirectory = path.join(extensionDirectory, 'server')
 
-json = require(tsconfigFile);
+var json = require(tsconfigFile);
 var compilerOptions = json.compilerOptions;
 if (compilerOptions) {
 	var outDir = compilerOptions.outDir;
