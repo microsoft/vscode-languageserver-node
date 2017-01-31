@@ -38,7 +38,7 @@ if (!fs.existsSync(tsconfigFile)) {
 
 var extensionServerDirectory = path.join(extensionDirectory, 'server')
 
-json = require(tsconfigFile);
+var json = require(tsconfigFile);
 var compilerOptions = json.compilerOptions;
 if (compilerOptions) {
 	var outDir = compilerOptions.outDir;
@@ -47,32 +47,6 @@ if (compilerOptions) {
 		console.error('Please change outDir in ' + process.argv[4] + ' to ' + path.relative(path.dirname(tsconfigFile), extensionServerDirectory).replace(/\\/g, '/'));
 		process.exit(1);
 	}
-}
-
-function stripComments(content) {
-	var regexp = /("(?:[^\\\"]*(?:\\.)?)*")|('(?:[^\\\']*(?:\\.)?)*')|(\/\*(?:\r?\n|.)*?\*\/)|(\/{2,}.*?(?:(?:\r?\n)|$))/g;
-	var result = content.replace(regexp, function (match, m1, m2, m3, m4) {
-		// Only one of m1, m2, m3, m4 matches
-		if (m3) {
-			// A block comment. Replace with nothing
-			return "";
-		}
-		else if (m4) {
-			// A line comment. If it ends in \r?\n then keep it.
-			var length_1 = m4.length;
-			if (length_1 > 2 && m4[length_1 - 1] === '\n') {
-				return m4[length_1 - 2] === '\r' ? '\r\n' : '\n';
-			}
-			else {
-				return "";
-			}
-		}
-		else {
-			// We match a string
-			return match;
-		}
-	});
-	return result;
 }
 
 if (!fs.existsSync(extensionServerDirectory)) {
