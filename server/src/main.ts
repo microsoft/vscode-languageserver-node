@@ -215,8 +215,9 @@ export class TextDocuments {
 			let td = event.textDocument;
 			let document = TextDocument.create(td.uri, td.languageId, td.version, td.text);
 			this._documents[td.uri] = document;
-			this._onDidOpen.fire({ document });
-			this._onDidChangeContent.fire(Object.freeze({ document }));
+			let toFire = Object.freeze({ document });
+			this._onDidOpen.fire(toFire);
+			this._onDidChangeContent.fire(toFire);
 		});
 		connection.onDidChangeTextDocument((event: DidChangeTextDocumentParams) => {
 			let td = event.textDocument;
