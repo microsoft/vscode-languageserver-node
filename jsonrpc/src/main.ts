@@ -206,6 +206,32 @@ export interface Tracer {
 	log(message: string, data?: string): void;
 }
 
+export enum ConnectionErrors {
+	/**
+	 * The connection is closed.
+	 */
+	Closed = 1,
+	/**
+	 * The connection got disposed.
+	 */
+	Disposed = 2,
+	/**
+	 * The connection is already in listening mode.
+	 */
+	AlreadyListening = 3
+}
+
+export class ConnectionError extends Error {
+
+	public readonly code: ConnectionErrors;
+
+	constructor(code: ConnectionErrors, message: string) {
+		super(message);
+		this.code = code;
+		Object.setPrototypeOf(this, ConnectionError.prototype);
+	}
+}
+
 export interface MessageConnection {
 	sendRequest<R, E, RO>(type: RequestType0<R, E, RO>, token?: CancellationToken): Thenable<R>;
 	sendRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, params: P, token?: CancellationToken): Thenable<R>;
@@ -630,16 +656,16 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 
 	function throwIfClosedOrDisposed() {
 		if (isClosed()) {
-			throw new Error('Connection is closed.');
+			throw new ConnectionError(ConnectionErrors.Closed, 'Connection is closed.');
 		}
 		if (isDisposed()) {
-			throw new Error('Connection is disposed.');
+			throw new ConnectionError(ConnectionErrors.Disposed, 'Connection is disposed.');
 		}
 	}
 
 	function throwIfListening() {
 		if (isListening()) {
-			throw new Error('Connection is already listening');
+			throw new ConnectionError(ConnectionErrors.AlreadyListening, 'Connection is already listening');
 		}
 	}
 
