@@ -37,10 +37,8 @@ language servers for [VSCode](https://code.visualstudio.com/).
     can now dynamically register and unregister capability handlers using the new requests `client/registerCapability` and `client/unregisterCapability`.
   * Support to delegate command execution via a new request `workspace/executeCommand` to the server.
 * Support for snippets in completion items:
-  * New type `SnippetText`
-  * CompletionItem.insertText can now also be a SnippetText.
-  * Added CompletionItem.range
-  * Deprecated CompletionItem.textEdit
+  * New type `InsertTextFormat`
+  * CompletionItem.insertTextFormat controls whether the inserted test is interpreted as a plain text or a snippet.
 
 #### Breaking changes:
 * to ensure ordered delivery of notifications and requests the language client now throws if sendRequest, onRequest, sendNotification or onNotification is called before the client is ready. Use the onReady() Promise to wait until the client is ready.
