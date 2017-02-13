@@ -24,6 +24,11 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
+### 3.0.5 Server and 3.0.4 Client
+
+* deprecated `Files.uriToFilePath` in favour of the vscode-uri npm module which provides a more complete implementation of URI for VS Code.
+* made `rootPath` optional since it is deprecated in 3.x. 
+
 ### 3.0.3: Client, Server and JSON-RPC
 
 #### New Features
