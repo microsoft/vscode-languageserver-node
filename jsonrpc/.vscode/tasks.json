@@ -1,9 +1,10 @@
 {
 	"version": "0.1.0",
+	"_runner": "terminal",
 	"command": "npm",
 	"isShellCommand": true,
 	"args": ["run", "watch"],
 	"showOutput": "silent",
-	"isWatching": true,
+	"isBackground": true,
 	"problemMatcher": "$tsc-watch"
 }

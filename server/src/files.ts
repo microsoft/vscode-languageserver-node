@@ -8,6 +8,10 @@ import * as url from 'url';
 import * as path from 'path';
 import { exec, spawnSync, fork, ChildProcess } from 'child_process';
 
+/**
+ * @deprecated Use the `vscode-uri` npm module which provides a more
+ * complete implementation of handling VS Code URIs.
+ */
 export function uriToFilePath(uri: string): string | undefined {
 	let parsed = url.parse(uri);
 	if (parsed.protocol !== 'file:' || !parsed.path) {

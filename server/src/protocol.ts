@@ -641,11 +641,12 @@ export interface InitializeParams {
 	 *
 	 * @deprecated in favour of rootUri.
 	 */
-	rootPath: string | null;
+	rootPath?: string | null;
 
 	/**
 	 * The rootUri of the workspace. Is null if no
-	 * folder is open.
+	 * folder is open. If both `rootPath` and `rootUri` are set
+	 * `rootUri` wins.
 	 */
 	rootUri: string | null;
 
@@ -681,6 +682,8 @@ export interface InitializeResult {
 export namespace InitializeError {
 	/**
 	 * If the protocol version provided by the client can't be handled by the server.
+	 * @deprecated This initialize error got replaced by client capabilities. There is
+	 * no version handshake in version 3.0x
 	 */
 	export const unknownProtocolVersion: number = 1;
 }
