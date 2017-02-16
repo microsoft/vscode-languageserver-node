@@ -173,6 +173,13 @@ export class RequestType<P, R, E, RO> extends AbstractMessageType {
 	}
 }
 
+export class RequestTypeWithStreamingResponse<Params, ProgressCallback, Result, Error, RegistrationOptions> extends AbstractMessageType {
+	private _?: [Params, ProgressCallback, Result, Error, RegistrationOptions, _EM];
+	constructor(method: string) {
+		super(method, 1);
+		this._ = undefined;
+	}
+}
 
 export class RequestType1<P1, R, E, RO> extends AbstractMessageType {
 	private _?: [P1, R, E, RO, _EM];

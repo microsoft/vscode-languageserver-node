@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { RequestType, RequestType0, NotificationType, NotificationType0 } from 'vscode-jsonrpc';
+import { RequestType, RequestType0, RequestTypeWithStreamingResponse, NotificationType, NotificationType0 } from 'vscode-jsonrpc';
 
 import {
 	TextDocumentContentChangeEvent, Position, Range, Location, Diagnostic, Command,
@@ -1169,7 +1169,7 @@ export interface ReferenceParams extends TextDocumentPositionParams {
  * [Location[]](#Location) or a Thenable that resolves to such.
  */
 export namespace ReferencesRequest {
-	export const type = new RequestType<ReferenceParams, Location[], void, TextDocumentRegistrationOptions>('textDocument/references');
+	export const type = new RequestTypeWithStreamingResponse<ReferenceParams, Location[], Location[], void, TextDocumentRegistrationOptions>('textDocument/references');
 }
 
 //---- Document Highlight ----------------------------------
