@@ -31,8 +31,9 @@ class MessageBuffer {
 		var toAppend: Buffer = <Buffer>chunk;
 		if (typeof (chunk) == 'string') {
 			var str = <string>chunk;
-			toAppend = new Buffer(str.length);
-			toAppend.write(str, 0, str.length, this.encoding);
+			var bufferLen = Buffer.byteLength(str, this.encoding);
+			toAppend = new Buffer(bufferLen);
+			toAppend.write(str, 0, bufferLen, this.encoding);
 		}
 		if (this.buffer.length - this.index >= toAppend.length) {
 			toAppend.copy(this.buffer, this.index, 0, toAppend.length);
