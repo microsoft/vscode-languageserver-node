@@ -20,11 +20,9 @@ let connection = rpc.createMessageConnection(
 	new rpc.StreamMessageReader(childProcess.stdout),
 	new rpc.StreamMessageWriter(childProcess.stdin));
 
-let notification: rpc.NotificationType<string> = { method: 'testNotification' };
-
 connection.listen();
 
-connection.sendNotification(notification, 'Hello World');
+connection.sendNotification('testNotification', 'Hello World');
 ```
 
 The server side looks very symmetrical:
