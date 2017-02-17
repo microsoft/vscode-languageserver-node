@@ -24,7 +24,8 @@ import {
 	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler,
 	NotificationType, NotificationType0,
 	NotificationHandler, NotificationHandler0, GenericNotificationHandler,
-	MessageReader, IPCMessageReader, MessageWriter, IPCMessageWriter, Trace, Tracer, Event, Emitter
+	MessageReader, IPCMessageReader, MessageWriter, IPCMessageWriter, Trace, Tracer, Event, Emitter,
+	createClientPipeTransport, generateRandomPipeName
 } from 'vscode-jsonrpc';
 
 import {
@@ -225,7 +226,8 @@ export interface ForkOptions {
 
 export enum TransportKind {
 	stdio,
-	ipc
+	ipc,
+	pipe
 }
 
 export interface NodeModule {
@@ -1448,50 +1450,90 @@ export class LanguageClient {
 				let execOptions: ExecutableOptions = Object.create(null);
 				execOptions.cwd = options.cwd || Workspace.rootPath;
 				execOptions.env = getEnvironment(options.env);
+				let pipeName: string | undefined = undefined;
 				if (node.transport === TransportKind.ipc) {
 					// exec options not correctly typed in lib
 					execOptions.stdio = <any>[null, null, null, 'ipc'];
 					args.push('--node-ipc');
 				} else if (node.transport === TransportKind.stdio) {
 					args.push('--stdio');
+				} else if (node.transport === TransportKind.pipe) {
+					pipeName = generateRandomPipeName();
+					args.push(`--pipe=${pipeName}`);
 				}
-				let process = cp.spawn(node.runtime, args, execOptions);
-				if (!process || !process.pid) {
-					return Promise.reject<IConnection>(`Launching server using runtime ${node.runtime} failed.`);
-				}
-				this._childProcess = process;
-				process.stderr.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
-				if (node.transport === TransportKind.ipc) {
-					process.stdout.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
-					return Promise.resolve(createConnection(new IPCMessageReader(process), new IPCMessageWriter(process), errorHandler, closeHandler));
-				} else {
-					return Promise.resolve(createConnection(process.stdout, process.stdin, errorHandler, closeHandler));
+				if (node.transport === TransportKind.ipc || node.transport === TransportKind.stdio) {
+					let process = cp.spawn(node.runtime, args, execOptions);
+					if (!process || !process.pid) {
+						return Promise.reject<IConnection>(`Launching server using runtime ${node.runtime} failed.`);
+					}
+					this._childProcess = process;
+					process.stderr.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
+					if (node.transport === TransportKind.ipc) {
+						process.stdout.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
+						return Promise.resolve(createConnection(new IPCMessageReader(process), new IPCMessageWriter(process), errorHandler, closeHandler));
+					} else {
+						return Promise.resolve(createConnection(process.stdout, process.stdin, errorHandler, closeHandler));
+					}
+				} else if (node.transport == TransportKind.pipe) {
+					return createClientPipeTransport(pipeName!).then((transport) => {
+						let process = cp.spawn(node.runtime!, args, execOptions);
+						if (!process || !process.pid) {
+							return Promise.reject<IConnection>(`Launching server using runtime ${node.runtime} failed.`);
+						}
+						this._childProcess = process;
+						process.stderr.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
+						process.stdout.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
+						return transport.onConnected().then((protocol) => {
+							return createConnection(protocol[0], protocol[1], errorHandler, closeHandler);
+						});
+					})
 				}
 			} else {
+				let pipeName: string | undefined = undefined;
 				return new Promise<IConnection>((resolve, reject) => {
 					let args = node.args && node.args.slice() || [];
 					if (node.transport === TransportKind.ipc) {
 						args.push('--node-ipc');
 					} else if (node.transport === TransportKind.stdio) {
 						args.push('--stdio');
+					} else if (node.transport === TransportKind.pipe) {
+						pipeName = generateRandomPipeName();
+						args.push(`--pipe=${pipeName}`);
 					}
 					let options: ForkOptions = node.options || Object.create(null);
 					options.execArgv = options.execArgv || [];
 					options.cwd = options.cwd || Workspace.rootPath;
-					electron.fork(node.module, args || [], options, (error, cp) => {
-						if (error || !cp) {
-							reject(error);
-						} else {
-							this._childProcess = cp;
-							cp.stderr.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
-							if (node.transport === TransportKind.ipc) {
-								cp.stdout.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
-								resolve(createConnection(new IPCMessageReader(this._childProcess), new IPCMessageWriter(this._childProcess), errorHandler, closeHandler));
+					if (node.transport === TransportKind.ipc || node.transport === TransportKind.stdio) {
+						electron.fork(node.module, args || [], options, (error, cp) => {
+							if (error || !cp) {
+								reject(error);
 							} else {
-								resolve(createConnection(cp.stdout, cp.stdin, errorHandler, closeHandler));
+								this._childProcess = cp;
+								cp.stderr.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
+								if (node.transport === TransportKind.ipc) {
+									cp.stdout.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
+									resolve(createConnection(new IPCMessageReader(this._childProcess), new IPCMessageWriter(this._childProcess), errorHandler, closeHandler));
+								} else {
+									resolve(createConnection(cp.stdout, cp.stdin, errorHandler, closeHandler));
+								}
 							}
-						}
-					});
+						});
+					}  else if (node.transport === TransportKind.pipe) {
+						createClientPipeTransport(pipeName!).then((transport) => {
+							electron.fork(node.module, args || [], options, (error, cp) => {
+								if (error || !cp) {
+									reject(error);
+								} else {
+									this._childProcess = cp;
+									cp.stderr.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
+									cp.stdout.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
+									transport.onConnected().then((protocol) => {
+										resolve(createConnection(protocol[0], protocol[1], errorHandler, closeHandler));
+									});
+								}
+							});
+						});
+					}
 				});
 			}
 		} else if (json.command) {
