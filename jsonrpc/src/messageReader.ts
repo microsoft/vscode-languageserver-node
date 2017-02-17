@@ -4,6 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
+import { Socket } from 'net';
 import { ChildProcess } from 'child_process';
 
 import { Message } from './messages';
@@ -260,5 +261,11 @@ export class IPCMessageReader extends AbstractMessageReader implements MessageRe
 
 	public listen(callback: DataCallback): void {
 		(this.process as NodeJS.EventEmitter).on('message', callback);
+	}
+}
+
+export class SocketMessageReader extends StreamMessageReader {
+	public constructor(socket: Socket, encoding: string = 'utf-8') {
+		super(socket as NodeJS.ReadableStream, encoding);
 	}
 }

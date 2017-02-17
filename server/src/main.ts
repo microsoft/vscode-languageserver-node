@@ -11,7 +11,7 @@ import {
 	MessageType as RPCMessageType, ResponseError, ErrorCodes,
 	MessageConnection, Logger, createMessageConnection,
 	MessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
-	MessageWriter, StreamMessageWriter, IPCMessageWriter,
+	MessageWriter, StreamMessageWriter, IPCMessageWriter, createServerPipeTransport,
 	CancellationToken, CancellationTokenSource,
 	Disposable, Event, Emitter, Trace, SetTraceNotification, LogTraceNotification
 } from 'vscode-jsonrpc';
@@ -60,7 +60,7 @@ export {
 	NotificationType0, NotificationHandler0, NotificationType, NotificationHandler,
 	ResponseError, ErrorCodes,
 	MessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
-	MessageWriter, StreamMessageWriter, IPCMessageWriter, Disposable
+	MessageWriter, StreamMessageWriter, IPCMessageWriter, Disposable, createServerPipeTransport
 }
 export * from 'vscode-languageserver-types';
 export * from './protocol';
@@ -1104,7 +1104,7 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
 export function createConnection(reader: MessageReader, writer: MessageWriter): IConnection;
 /**
  * Creates a new connection based on the processes command line arguments:
- * --ipc : connection using the node  process ipc
+ * --ipc : connection using the node process ipc
  *
  * @param reader The message reader to read messages from.
  * @param writer The message writer to write message to.
@@ -1113,22 +1113,33 @@ export function createConnection(): IConnection;
 export function createConnection(input?: any, output?: any): IConnection {
 	if (!input && !output && process.argv.length > 2) {
 		let port: number | undefined = void 0;
+		let pipeName: string | undefined = void 0;
 		let argv = process.argv.slice(2);
 		for (let i = 0; i < argv.length; i++) {
 			let arg = argv[i];
 			if (arg === '--node-ipc') {
 				input = new IPCMessageReader(process);
 				output = new IPCMessageWriter(process);
+				break;
 			} else if (arg === '--stdio') {
 				input = process.stdin;
 				output = process.stdout;
+				break;
 			} else if (arg === '--socket') {
 				port = parseInt(argv[i + 1]);
-				i++;
-			} else {
+				break;
+			} else if (arg === '--pipe') {
+				pipeName = argv[i + 1];
+				break;
+			}
+			else {
 				var args = arg.split('=');
 				if (args[0] === '--socket') {
 					port = parseInt(args[1]);
+					break;
+				} else if (args[0] === '--pipe') {
+					pipeName = args[1];
+					break;
 				}
 			}
 		}
@@ -1140,6 +1151,10 @@ export function createConnection(input?: any, output?: any): IConnection {
 				socket.pipe(output);
 				input.pipe(socket);
 			}).listen(port);
+		} else if (pipeName) {
+			let protocol = createServerPipeTransport(pipeName);
+			input = protocol[0];
+			output = protocol[1];
 		}
 	}
 	var commandLineMessage = "Use arguments of createConnection or set command line parameters: '--node-ipc', '--stdio' or '--socket={number}'";

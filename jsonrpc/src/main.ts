@@ -36,6 +36,7 @@ export {
 	CancellationTokenSource, CancellationToken,
 	Disposable, Event, Emitter
 }
+export * from './pipeSupport';
 
 interface CancelParams {
 	/**
