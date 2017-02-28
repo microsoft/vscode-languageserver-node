@@ -109,7 +109,7 @@ suite('Protocol Helper Tests', () => {
 		ok(Diagnostic.is(codeActionContext.diagnostics[0]));
 	});
 
-	test('WorkspaceEdit', () => {
+	test('WorkspaceEdit - documentChanges', () => {
 		let workspaceChange = new WorkspaceChange();
 		let uri = 'file:///abc.txt';
 		let change1 = workspaceChange.getTextEditChange({uri: uri, version: 10});
@@ -120,8 +120,8 @@ suite('Protocol Helper Tests', () => {
 		change2.insert(Position.create(2,3), 'insert');
 
 		let workspaceEdit = workspaceChange.edit;
-		strictEqual(workspaceEdit.changes.length, 2);
-		let edits = workspaceEdit.changes[0].edits;
+		strictEqual(workspaceEdit.documentChanges.length, 2);
+		let edits = workspaceEdit.documentChanges[0].edits;
 		strictEqual(edits.length, 3);
 		rangeEqual(edits[0].range, Range.create(0,1,0,1));
 		strictEqual(edits[0].newText, 'insert');
@@ -130,9 +130,35 @@ suite('Protocol Helper Tests', () => {
 		rangeEqual(edits[2].range, Range.create(0,1,2,3));
 		strictEqual(edits[2].newText, '');
 
-		edits = workspaceEdit.changes[1].edits;
+		edits = workspaceEdit.documentChanges[1].edits;
 		strictEqual(edits.length, 1);
 		rangeEqual(edits[0].range, Range.create(2,3,2,3));
 		strictEqual(edits[0].newText, 'insert');
 	});
-});
+
+	test('WorkspaceEdit - changes', () => {
+		let workspaceChange = new WorkspaceChange();
+		let uri = 'file:///abc.txt';
+		let change1 = workspaceChange.getTextEditChange(uri);
+		change1.insert(Position.create(0,1), 'insert');
+		change1.replace(Range.create(0,1,2,3), 'replace');
+		change1.delete(Range.create(0,1,2,3));
+		let change2 = workspaceChange.getTextEditChange('file:///xyz.txt');
+		change2.insert(Position.create(2,3), 'insert');
+
+		let workspaceEdit = workspaceChange.edit;
+		strictEqual(Object.keys(workspaceEdit.changes).length, 2);
+		let edits = workspaceEdit.changes[uri];
+		strictEqual(edits.length, 3);
+		rangeEqual(edits[0].range, Range.create(0,1,0,1));
+		strictEqual(edits[0].newText, 'insert');
+		rangeEqual(edits[1].range, Range.create(0,1,2,3));
+		strictEqual(edits[1].newText, 'replace');
+		rangeEqual(edits[2].range, Range.create(0,1,2,3));
+		strictEqual(edits[2].newText, '');
+
+		edits = workspaceEdit.changes['file:///xyz.txt'];
+		strictEqual(edits.length, 1);
+		rangeEqual(edits[0].range, Range.create(2,3,2,3));
+		strictEqual(edits[0].newText, 'insert');
+	});});

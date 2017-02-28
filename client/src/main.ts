@@ -758,6 +758,9 @@ interface FeatureHandlerMap extends Map<string, FeatureHandler<any>> {
 const clientCapabilities: ClientCapabilities = {
 	workspace: {
 		applyEdit: true,
+		workspaceEdit: {
+			documentChanges: true
+		},
 		didChangeConfiguration: {
 			dynamicRegistration: false
 		},
@@ -1832,8 +1835,8 @@ export class LanguageClient {
 		let openTextDocuments: Map<string, TextDocument> = new Map<string, TextDocument>();
 		Workspace.textDocuments.forEach((document) => openTextDocuments.set(document.uri.toString(), document));
 		let versionMismatch = false;
-		if (workspaceEdit.changes) {
-			for (const change of workspaceEdit.changes) {
+		if (workspaceEdit.documentChanges) {
+			for (const change of workspaceEdit.documentChanges) {
 				if (change.textDocument.version && change.textDocument.version >= 0) {
 					let textDocument = openTextDocuments.get(change.textDocument.uri);
 					if (textDocument && textDocument.version !== change.textDocument.version) {
