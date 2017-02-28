@@ -20,7 +20,7 @@ let connection = rpc.createMessageConnection(
 	new rpc.StreamMessageReader(childProcess.stdout),
 	new rpc.StreamMessageWriter(childProcess.stdin));
 
-let notification: rpc.NotificationType<string> = { method: 'testNotification' };
+let notification = new NotificationType<string, void>('testNotification');
 
 connection.listen();
 
@@ -37,7 +37,7 @@ let connection = rpc.createMessageConnection(
 	new rpc.StreamMessageReader(process.stdin),
 	new rpc.StreamMessageWriter(process.stdout));
 
-let notification: rpc.NotificationType<string> = { method: 'testNotification' };
+let notification = new NotificationType<string, void>('testNotification');
 connection.onNotification(notification, (param: string) => {
 	console.log(param); // This prints Hello World
 });
