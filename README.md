@@ -24,6 +24,11 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
+### 3.1.0 Server and Client
+
+* add support for named pipes and socket file transport
+* fixed dead lock problem with node-ipc.
+
 ### 3.0.5 Server and 3.0.4 Client
 
 * deprecated `Files.uriToFilePath` in favour of the vscode-uri npm module which provides a more complete implementation of URI for VS Code.
