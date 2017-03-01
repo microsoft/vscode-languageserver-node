@@ -23,7 +23,7 @@
 		"@types/mocha": "^2.2.32"
 	},
 	"dependencies": {
-		"vscode-jsonrpc": "^3.1.0",
+		"vscode-jsonrpc": "^3.2.0-alpha.1",
 		"vscode-languageserver-types": "^3.2.0-alpha.1"
 	},
 	"scripts": {
