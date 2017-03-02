@@ -725,7 +725,7 @@ class ExecuteCommandFeature implements FeatureHandler<ExecuteCommandRegistration
 		if (data.registerOptions.commands) {
 			let disposeables: Disposable[] = [];
 			for (const command of data.registerOptions.commands) {
-				disposeables.push(Commands.registerCommand(command, (args: any[]) => {
+				disposeables.push(Commands.registerCommand(command, (...args: any[]) => {
 					let params: ExecuteCommandParams = {
 						command,
 						arguments: args
