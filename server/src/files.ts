@@ -212,9 +212,17 @@ export function resolveModulePath(workspaceRoot: string, moduleName: string, nod
 			if (value.indexOf(path.normalize(nodePath)) === 0) {
 				return value;
 			} else {
-				return Promise.reject<string>(new Error(`Failed to load ${moduleName} from node path location.`));
+				const message = `Failed to load ${moduleName} from node path location.`;
+				if (tracer) {
+					tracer(message);
+					tracer(`Node path location: ${nodePath}`);
+				}
+				return Promise.reject<string>(new Error(message));
 			}
 		}).then(undefined, (_error: any) => {
+			if (tracer) {
+				tracer('Resolving module against global node path.');
+			}
 			return resolve(moduleName, resolveGlobalNodePath(tracer), workspaceRoot, tracer);
 		});
 	} else {
@@ -227,7 +235,6 @@ export function resolveModulePath(workspaceRoot: string, moduleName: string, nod
  * `resolveModule` this method considers the parent chain as well.
  */
 export function resolveModule2(workspaceRoot: string, moduleName: string, nodePath: string, tracer: (message: string, verbose?: string) => void): Thenable<any> {
-
 	return resolveModulePath(workspaceRoot, moduleName, nodePath, tracer).then((path) => {
 		if (tracer) {
 			tracer(`Module ${moduleName} got resolved to ${path}`);
