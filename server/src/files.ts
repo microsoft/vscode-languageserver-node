@@ -209,6 +209,9 @@ export function resolveModulePath(workspaceRoot: string, moduleName: string, nod
 			nodePath = path.join(workspaceRoot, nodePath);
 		}
 		return resolve(moduleName, nodePath, nodePath, tracer).then((value) => {
+			if (tracer) {
+				tracer(`Resolved module path is ${value}`);
+			}
 			if (value.indexOf(path.normalize(nodePath)) === 0) {
 				return value;
 			} else {
