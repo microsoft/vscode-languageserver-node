@@ -147,7 +147,8 @@ export interface TextDocumentPositionParams {
 export interface WorkspaceClientCapabilites {
 	/**
 	 * The client supports applying batch edits
-	 * to the workspace.
+	 * to the workspace by supporting the request
+	 * 'workspace/applyEdit'
 	 */
 	applyEdit?: boolean;
 
@@ -207,6 +208,9 @@ export interface WorkspaceClientCapabilites {
  */
 export interface TextDocumentClientCapabilities {
 
+	/**
+	 * Defines which synchronization capabilities the client supports.
+	 */
 	synchronization?: {
 		/**
 		 * Whether text document synchronization supports dynamic registration.
