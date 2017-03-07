@@ -884,9 +884,7 @@ export class LanguageClient {
 
 		clientOptions = clientOptions || {};
 		this._clientOptions = {
-			documentSelector: is.typedArray<string>(clientOptions.documentSelector, is.string)
-				? clientOptions.documentSelector.map(element => { return { language: element }; })
-				: clientOptions.documentSelector,
+			documentSelector: clientOptions.documentSelector || [],
 			synchronize: clientOptions.synchronize || {},
 			diagnosticCollectionName: clientOptions.diagnosticCollectionName,
 			outputChannelName: clientOptions.outputChannelName || this._name,
@@ -1440,6 +1438,7 @@ export class LanguageClient {
 		}
 		if (json.module) {
 			let node: NodeModule = <NodeModule>json;
+			let transport = node.transport || TransportKind.stdio;
 			if (node.runtime) {
 				let args: string[] = [];
 				let options: ForkOptions = node.options || Object.create(null);
@@ -1454,30 +1453,30 @@ export class LanguageClient {
 				execOptions.cwd = options.cwd || Workspace.rootPath;
 				execOptions.env = getEnvironment(options.env);
 				let pipeName: string | undefined = undefined;
-				if (node.transport === TransportKind.ipc) {
+				if (transport === TransportKind.ipc) {
 					// exec options not correctly typed in lib
 					execOptions.stdio = <any>[null, null, null, 'ipc'];
 					args.push('--node-ipc');
-				} else if (node.transport === TransportKind.stdio) {
+				} else if (transport === TransportKind.stdio) {
 					args.push('--stdio');
-				} else if (node.transport === TransportKind.pipe) {
+				} else if (transport === TransportKind.pipe) {
 					pipeName = generateRandomPipeName();
 					args.push(`--pipe=${pipeName}`);
 				}
-				if (node.transport === TransportKind.ipc || node.transport === TransportKind.stdio) {
+				if (transport === TransportKind.ipc || transport === TransportKind.stdio) {
 					let process = cp.spawn(node.runtime, args, execOptions);
 					if (!process || !process.pid) {
 						return Promise.reject<IConnection>(`Launching server using runtime ${node.runtime} failed.`);
 					}
 					this._childProcess = process;
 					process.stderr.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
-					if (node.transport === TransportKind.ipc) {
+					if (transport === TransportKind.ipc) {
 						process.stdout.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
 						return Promise.resolve(createConnection(new IPCMessageReader(process), new IPCMessageWriter(process), errorHandler, closeHandler));
 					} else {
 						return Promise.resolve(createConnection(process.stdout, process.stdin, errorHandler, closeHandler));
 					}
-				} else if (node.transport == TransportKind.pipe) {
+				} else if (transport == TransportKind.pipe) {
 					return createClientPipeTransport(pipeName!).then((transport) => {
 						let process = cp.spawn(node.runtime!, args, execOptions);
 						if (!process || !process.pid) {
@@ -1495,25 +1494,25 @@ export class LanguageClient {
 				let pipeName: string | undefined = undefined;
 				return new Promise<IConnection>((resolve, reject) => {
 					let args = node.args && node.args.slice() || [];
-					if (node.transport === TransportKind.ipc) {
+					if (transport === TransportKind.ipc) {
 						args.push('--node-ipc');
-					} else if (node.transport === TransportKind.stdio) {
+					} else if (transport === TransportKind.stdio) {
 						args.push('--stdio');
-					} else if (node.transport === TransportKind.pipe) {
+					} else if (transport === TransportKind.pipe) {
 						pipeName = generateRandomPipeName();
 						args.push(`--pipe=${pipeName}`);
 					}
 					let options: ForkOptions = node.options || Object.create(null);
 					options.execArgv = options.execArgv || [];
 					options.cwd = options.cwd || Workspace.rootPath;
-					if (node.transport === TransportKind.ipc || node.transport === TransportKind.stdio) {
+					if (transport === TransportKind.ipc || transport === TransportKind.stdio) {
 						electron.fork(node.module, args || [], options, (error, cp) => {
 							if (error || !cp) {
 								reject(error);
 							} else {
 								this._childProcess = cp;
 								cp.stderr.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
-								if (node.transport === TransportKind.ipc) {
+								if (transport === TransportKind.ipc) {
 									cp.stdout.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
 									resolve(createConnection(new IPCMessageReader(this._childProcess), new IPCMessageWriter(this._childProcess), errorHandler, closeHandler));
 								} else {
@@ -1521,7 +1520,7 @@ export class LanguageClient {
 								}
 							}
 						});
-					}  else if (node.transport === TransportKind.pipe) {
+					}  else if (transport === TransportKind.pipe) {
 						createClientPipeTransport(pipeName!).then((transport) => {
 							electron.fork(node.module, args || [], options, (error, cp) => {
 								if (error || !cp) {

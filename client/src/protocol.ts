@@ -4,6 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
+import * as Is from './utils/is';
+
 import { RequestType, RequestType0, NotificationType, NotificationType0 } from 'vscode-jsonrpc';
 
 import {
@@ -23,21 +25,34 @@ import {
  * @sample A language filter that applies to typescript files on disk: `{ language: 'typescript', scheme: 'file' }`
  * @sample A language filter that applies to all package.json paths: `{ language: 'json', pattern: '**package.json' }`
  */
-export interface DocumentFilter {
-	/**
-	 * A language id, like `typescript`.
-	 */
-	language?: string;
-
-	/**
-	 * A Uri [scheme](#Uri.scheme), like `file` or `untitled`.
-	 */
+export type DocumentFilter = {
+	/** A language id, like `typescript`. */
+	language: string;
+	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */
 	scheme?: string;
-
-	/**
-	 * A glob pattern, like `*.{ts,js}`.
-	 */
+	/** A glob pattern, like `*.{ts,js}`. */
 	pattern?: string;
+} | {
+	/** A language id, like `typescript`. */
+	language?: string;
+	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */
+	scheme: string;
+	/** A glob pattern, like `*.{ts,js}`. */
+	pattern?: string;
+} | {
+	/** A language id, like `typescript`. */
+	language?: string;
+	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */
+	scheme?: string;
+	/** A glob pattern, like `*.{ts,js}`. */
+	pattern: string;
+};
+
+export namespace DocumentFilter {
+	export function is(value: any): value is DocumentFilter {
+		let candidate: DocumentFilter = value;
+		return Is.string(candidate.language) || Is.string(candidate.scheme) || Is.string(candidate.pattern);
+	}
 }
 
 /**
@@ -45,7 +60,7 @@ export interface DocumentFilter {
  *
  * @sample `let sel:DocumentSelector = [{ language: 'typescript' }, { language: 'json', pattern: '**∕tsconfig.json' }]`;
  */
-export type DocumentSelector = DocumentFilter[];
+export type DocumentSelector = (string | DocumentFilter)[];
 
 /**
  * General paramters to to regsiter for an notification or to register a provider.
