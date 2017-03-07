@@ -109,7 +109,7 @@ export interface ResponseMessage extends Message {
 	/**
 	 * The request id.
 	 */
-	id: number | string;
+	id: number | string | null;
 
 	/**
 	 * The result of a request. This can be omitted in
@@ -370,5 +370,5 @@ export function isNotificationMessage(message: Message): message is Notification
  */
 export function isReponseMessage(message: Message): message is ResponseMessage {
 	let candidate = <ResponseMessage>message;
-	return candidate && (candidate.result !== void 0 || !!candidate.error) && (is.string(candidate.id) || is.number(candidate.id));
+	return candidate && (candidate.result !== void 0 || !!candidate.error) && (is.string(candidate.id) || is.number(candidate.id) || candidate.id === null);
 }
