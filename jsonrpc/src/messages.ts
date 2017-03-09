@@ -49,7 +49,10 @@ export namespace ErrorCodes {
 	export const ServerNotInitialized: number = -32002;
 	export const UnknownErrorCode: number = -32001;
 
-	// Defined by VSCode.
+	// Defined by the protocol.
+	export const RequestCancelled: number = -32800;
+
+	// Defined by VSCode library.
 	export const MessageWriteError: number = 1;
 	export const MessageReadError: number = 2;
 }

@@ -1959,6 +1959,10 @@ export class LanguageClient {
 	}
 
 	protected logFailedRequest(type: RPCMessageType, error: any): void {
+		// If we get a request cancel don't log anything.
+		if (error instanceof ResponseError && error.code === ErrorCodes.RequestCancelled) {
+			return;
+		}
 		this.error(`Request ${type.method} failed.`, error);
 	}
 
