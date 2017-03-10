@@ -18,8 +18,8 @@ import {
 	NotificationType5, NotificationType6, NotificationType7, NotificationType8, NotificationType9
 } from './messages';
 
-import { MessageReader, DataCallback, StreamMessageReader, IPCMessageReader } from './messageReader';
-import { MessageWriter, StreamMessageWriter, IPCMessageWriter } from './messageWriter';
+import { MessageReader, DataCallback, StreamMessageReader, IPCMessageReader, SocketMessageReader } from './messageReader';
+import { MessageWriter, StreamMessageWriter, IPCMessageWriter, SocketMessageWriter } from './messageWriter';
 import { Disposable, Event, Emitter } from './events';
 import { CancellationTokenSource, CancellationToken } from './cancellation';
 
