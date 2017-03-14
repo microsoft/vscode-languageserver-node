@@ -24,6 +24,14 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
+### 3.2.0 Server and Client
+
+* made `WorkspaceEdit` conform to the 3.x version of the spec and backwards compatible with 2.x version of the library.
+* added `RequestCancelled` error code.
+* Fixed [nodePath not working (vscode-tslint)](https://github.com/Microsoft/vscode-languageserver-node/issues/179)
+* Fixed [update from 3.0.4/3.0.5 to 3.1.0 breaks my extension](https://github.com/Microsoft/vscode-languageserver-node/issues/178)
+
+
 ### 3.1.0 Server and Client
 
 * add support for named pipes and socket file transport
