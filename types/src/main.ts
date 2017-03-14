@@ -339,7 +339,7 @@ export interface TextDocumentEdit {
 
 /**
  * The TextDocumentEdit namespace provides helper function to create
- * create a edit that manipulates a text document.
+ * an edit that manipulates a text document.
  */
 export namespace TextDocumentEdit {
 	/**
@@ -357,13 +357,23 @@ export namespace TextDocumentEdit {
 	}
 }
 
-
 /**
- * A workspace edit represents changes to many resources managed
- * in the workspace.
+ * A workspace edit represents changes to many resources managed in the workspace. The edit
+ * should either provide `changes` or `documentChanges`. If documentChanges are present
+ * they are preferred over `changes` if the client can handle versioned document edits.
  */
 export interface WorkspaceEdit {
-	changes: TextDocumentEdit[];
+	/**
+	 * Holds changes to existing resources.
+	 */
+	changes?: { [uri: string]: TextEdit[]; };
+
+	/**
+	 * An array of `TextDocumentEdit`s to express changes to specific a specific
+	 * version of a text document. Whether a client supports versioned document
+	 * edits is expressed via `WorkspaceClientCapabilites.versionedWorkspaceEdit`.
+	 */
+	documentChanges?: TextDocumentEdit[];
 }
 
 /**
@@ -456,14 +466,17 @@ export class WorkspaceChange {
 		this._textEditChanges = Object.create(null);
 		if (workspaceEdit) {
 			this._workspaceEdit = workspaceEdit;
-			workspaceEdit.changes.forEach((textDocumentEdit) => {
-				let textEditChange = new TextEditChangeImpl(textDocumentEdit.edits);
-				this._textEditChanges[textDocumentEdit.textDocument.uri] = textEditChange;
-			});
-		} else {
-			this._workspaceEdit = {
-				changes: []
-			};
+			if (workspaceEdit.documentChanges) {
+				workspaceEdit.documentChanges.forEach((textDocumentEdit) => {
+					let textEditChange = new TextEditChangeImpl(textDocumentEdit.edits);
+					this._textEditChanges[textDocumentEdit.textDocument.uri] = textEditChange;
+				});
+			} else if (workspaceEdit.changes) {
+				Object.keys(workspaceEdit.changes).forEach((key) => {
+					let textEditChange = new TextEditChangeImpl(workspaceEdit.changes![key]);
+					this._textEditChanges[key] = textEditChange;
+				});
+			}
 		}
 	}
 
@@ -483,6 +496,14 @@ export class WorkspaceChange {
 	public getTextEditChange(uri: string): TextEditChange;
 	public getTextEditChange(key: string | VersionedTextDocumentIdentifier): TextEditChange {
 		if (VersionedTextDocumentIdentifier.is(key)) {
+			if (!this._workspaceEdit) {
+				this._workspaceEdit = {
+					documentChanges: []
+				};
+			}
+			if (!this._workspaceEdit.documentChanges) {
+				throw new Error('Workspace edit is not configured for versioned document changes.');
+			}
 			let textDocument: VersionedTextDocumentIdentifier = key;
 			let result: TextEditChange = this._textEditChanges[textDocument.uri];
 			if (!result) {
@@ -491,13 +512,28 @@ export class WorkspaceChange {
 					textDocument,
 					edits
 				};
-				this._workspaceEdit.changes.push(textDocumentEdit);
+				this._workspaceEdit.documentChanges.push(textDocumentEdit);
 				result = new TextEditChangeImpl(edits);
 				this._textEditChanges[textDocument.uri] = result;
 			}
 			return result;
 		} else {
-			return this._textEditChanges[key];
+			if (!this._workspaceEdit) {
+				this._workspaceEdit = {
+					changes: Object.create(null)
+				}
+			}
+			if (!this._workspaceEdit.changes) {
+				throw new Error('Workspace edit is not configured for normal text edit changes.');
+			}
+			let result: TextEditChange = this._textEditChanges[key];
+			if (!result) {
+				let edits: TextEdit[] = [];
+				this._workspaceEdit.changes[key] = edits;
+				result = new TextEditChangeImpl(edits);
+				this._textEditChanges[key] = result;
+			}
+			return result;
 		}
 	}
 }

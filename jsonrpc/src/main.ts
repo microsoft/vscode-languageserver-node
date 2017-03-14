@@ -468,28 +468,37 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			return;
 		}
 
-		let key = String(responseMessage.id);
-		let responsePromise = responsePromises[key];
-		traceReceviedResponse(responseMessage, responsePromise);
-		if (responsePromise) {
-			delete responsePromises[key];
-			try {
-				if (responseMessage.error) {
-					let error = responseMessage.error;
-					responsePromise.reject(new ResponseError(error.code, error.message, error.data));
-				} else if (responseMessage.result !== void 0) {
-					responsePromise.resolve(responseMessage.result);
-				} else {
-					throw new Error('Should never happen.');
-				}
-			} catch (error) {
-				if (error.message) {
-					logger.error(`Response handler '${responsePromise.method}' failed with message: ${error.message}`);
-				} else {
-					logger.error(`Response handler '${responsePromise.method}' failed unexpectedly.`);
+		if (responseMessage.id === null) {
+			if (responseMessage.error) {
+				logger.error(`Received response message without id: Error is: \n${JSON.stringify(responseMessage.error, undefined, 4)}`);
+			} else {
+				logger.error(`Received response message without id. No further error information provided.`);
+			}
+		} else {
+			let key = String(responseMessage.id);
+			let responsePromise = responsePromises[key];
+			traceReceviedResponse(responseMessage, responsePromise);
+			if (responsePromise) {
+				delete responsePromises[key];
+				try {
+					if (responseMessage.error) {
+						let error = responseMessage.error;
+						responsePromise.reject(new ResponseError(error.code, error.message, error.data));
+					} else if (responseMessage.result !== void 0) {
+						responsePromise.resolve(responseMessage.result);
+					} else {
+						throw new Error('Should never happen.');
+					}
+				} catch (error) {
+					if (error.message) {
+						logger.error(`Response handler '${responsePromise.method}' failed with message: ${error.message}`);
+					} else {
+						logger.error(`Response handler '${responsePromise.method}' failed unexpectedly.`);
+					}
 				}
 			}
 		}
+
 	}
 
 	function handleNotification(message: NotificationMessage) {

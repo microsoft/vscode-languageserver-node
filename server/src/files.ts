@@ -6,6 +6,7 @@
 
 import * as url from 'url';
 import * as path from 'path';
+import * as fs from 'fs';
 import { exec, spawnSync, fork, ChildProcess } from 'child_process';
 
 /**
@@ -203,13 +204,40 @@ export function resolveGlobalNodePath(tracer?: (message: string) => void): strin
 	return undefined;
 }
 
+
+export namespace FileSystem {
+
+	let _isCaseSensitive: boolean | undefined = undefined;
+	export function isCaseSensitive(): boolean {
+		if (_isCaseSensitive !== void 0) {
+			return _isCaseSensitive;
+		}
+		if (process.platform === 'win32') {
+			_isCaseSensitive = false;
+		} else {
+			// convert current file name to upper case / lower case and check if file exists
+			// (guards against cases when name is already all uppercase or lowercase)
+			_isCaseSensitive = !fs.existsSync(__filename.toUpperCase()) || !fs.existsSync(__filename.toLowerCase());
+		}
+		return _isCaseSensitive;
+	}
+
+	export function isParent(parent: string, child: string): boolean {
+		if (isCaseSensitive()) {
+			return path.normalize(child).indexOf(path.normalize(parent)) === 0;
+		} else {
+			return path.normalize(child).toLowerCase().indexOf(path.normalize(parent).toLowerCase()) == 0;
+		}
+	}
+}
+
 export function resolveModulePath(workspaceRoot: string, moduleName: string, nodePath: string, tracer: (message: string, verbose?: string) => void): Thenable<string> {
 	if (nodePath) {
 		if (!path.isAbsolute(nodePath)) {
 			nodePath = path.join(workspaceRoot, nodePath);
 		}
 		return resolve(moduleName, nodePath, nodePath, tracer).then((value) => {
-			if (value.indexOf(path.normalize(nodePath)) === 0) {
+			if (FileSystem.isParent(nodePath, value)) {
 				return value;
 			} else {
 				return Promise.reject<string>(new Error(`Failed to load ${moduleName} from node path location.`));

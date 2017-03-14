@@ -420,9 +420,15 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			return undefined;
 		}
 		let result = new code.WorkspaceEdit();
-		item.changes.forEach(change => {
-			result.set(_uriConverter(change.textDocument.uri), asTextEdits(change.edits));
-		});
+		if (item.documentChanges) {
+			item.documentChanges.forEach(change => {
+				result.set(_uriConverter(change.textDocument.uri), asTextEdits(change.edits));
+			});
+		} else if (item.changes) {
+			Object.keys(item.changes).forEach(key => {
+				result.set(_uriConverter(key), asTextEdits(item.changes![key]));
+			});
+		}
 		return result;
 	}
 

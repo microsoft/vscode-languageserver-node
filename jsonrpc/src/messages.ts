@@ -49,7 +49,10 @@ export namespace ErrorCodes {
 	export const ServerNotInitialized: number = -32002;
 	export const UnknownErrorCode: number = -32001;
 
-	// Defined by VSCode.
+	// Defined by the protocol.
+	export const RequestCancelled: number = -32800;
+
+	// Defined by VSCode library.
 	export const MessageWriteError: number = 1;
 	export const MessageReadError: number = 2;
 }
@@ -109,7 +112,7 @@ export interface ResponseMessage extends Message {
 	/**
 	 * The request id.
 	 */
-	id: number | string;
+	id: number | string | null;
 
 	/**
 	 * The result of a request. This can be omitted in
@@ -370,5 +373,5 @@ export function isNotificationMessage(message: Message): message is Notification
  */
 export function isReponseMessage(message: Message): message is ResponseMessage {
 	let candidate = <ResponseMessage>message;
-	return candidate && (candidate.result !== void 0 || !!candidate.error) && (is.string(candidate.id) || is.number(candidate.id));
+	return candidate && (candidate.result !== void 0 || !!candidate.error) && (is.string(candidate.id) || is.number(candidate.id) || candidate.id === null);
 }
