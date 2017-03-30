@@ -53,6 +53,7 @@ import {
 
 import * as Is from './utils/is';
 import * as UUID from './utils/uuid';
+import { LinkedMap, Touch } from './utils/linkedMap';
 
 // ------------- Reexport the API surface of the language worker API ----------------------
 export {
@@ -257,6 +258,51 @@ export class TextDocuments {
 				this._onDidSave.fire(Object.freeze({ document }));
 			}
 		});
+	}
+}
+
+export interface ValidationEvent {
+	document: TextDocument;
+}
+
+export class ValidationQueue {
+
+	private _queue: LinkedMap<TextDocument>;
+	private _onValidate: Emitter<ValidationEvent>;
+	private _timeout: NodeJS.Timer | undefined;
+
+	constructor() {
+		this._queue = new LinkedMap<TextDocument>();
+		this._onValidate = new Emitter<ValidationEvent>();
+	}
+
+	public add(document: TextDocument): void {
+		this._queue.add(document.uri, document, Touch.First);
+		this.trigger();
+	}
+
+	public remove(document: TextDocument): void {
+		this._queue.remove(document.uri);
+	}
+
+	private trigger(): void {
+		if (this._timeout) {
+			return;
+		}
+		this._timeout = setTimeout(() => {
+			this._timeout = undefined;
+			this.processQueue();
+		}, 200);
+	}
+
+	private processQueue(): void {
+		let document = this._queue.shift();
+		if (document) {
+			this._onValidate.fire(Object.freeze({ document }));
+		}
+		if (this._queue.length > 0) {
+			this.trigger();
+		}
 	}
 }
 
