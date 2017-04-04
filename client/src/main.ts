@@ -1391,6 +1391,7 @@ export class LanguageClient {
 			let result: any = Object.create(null);
 			Object.keys(process.env).forEach(key => result[key] = process.env[key]);
 			Object.keys(env).forEach(key => result[key] = env[key]);
+			return result;
 		}
 
 		function startedInDebugMode(): boolean {
