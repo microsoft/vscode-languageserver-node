@@ -261,19 +261,37 @@ export class TextDocuments {
 	}
 }
 
-export interface ValidationEvent {
-	document: TextDocument;
+namespace Thenable {
+	export function is<T>(value: any): value is Thenable<T> {
+		let candidate: Thenable<T> = value;
+		return candidate && typeof candidate.then === 'function';
+	}
+}
+
+export interface ValidationCallback {
+	(document: TextDocument): Thenable<void> | void;
+}
+
+
+export enum ValidationQueueMode {
+	Sequential = 1,
+	Parallel = 2
 }
 
 export class ValidationQueue {
 
+	private _onValidate: ValidationCallback;
 	private _queue: LinkedMap<TextDocument>;
-	private _onValidate: Emitter<ValidationEvent>;
-	private _timeout: NodeJS.Timer | undefined;
+	private _mode: ValidationQueueMode;
+	private _timeout: number;
+	private _pendingValidation: Thenable<void> | undefined;
+	private _timer: NodeJS.Timer | undefined;
 
-	constructor() {
+	constructor(onValidate: ValidationCallback, mode: ValidationQueueMode = ValidationQueueMode.Sequential, timeout: number = 0) {
 		this._queue = new LinkedMap<TextDocument>();
-		this._onValidate = new Emitter<ValidationEvent>();
+		this._onValidate = onValidate;
+		this._mode = mode;
+		this._timeout = timeout;
 	}
 
 	public add(document: TextDocument): void {
@@ -286,22 +304,38 @@ export class ValidationQueue {
 	}
 
 	private trigger(): void {
-		if (this._timeout) {
+		if (this._timer || this._pendingValidation || this._queue.length === 0) {
 			return;
 		}
-		this._timeout = setTimeout(() => {
-			this._timeout = undefined;
-			this.processQueue();
-		}, 200);
+		if (this._timeout > 0) {
+			this._timer = setTimeout(() => {
+				this._timer = undefined;
+				this.processQueue();
+			}, this._timeout);
+		} else {
+			this._timer = setImmediate(() => {
+				this._timer = undefined;
+				this.processQueue();
+			});
+		}
 	}
 
 	private processQueue(): void {
 		let document = this._queue.shift();
 		if (document) {
-			this._onValidate.fire(Object.freeze({ document }));
-		}
-		if (this._queue.length > 0) {
-			this.trigger();
+			let result = this._onValidate(document);
+			if (Thenable.is<void>(result) && this._mode === ValidationQueueMode.Sequential) {
+				this._pendingValidation = result;
+				result.then(() => {
+					this._pendingValidation = undefined;
+					this.trigger();
+				}, () => {
+					this._pendingValidation = undefined;
+					this.trigger();
+				});
+			} else {
+				this.trigger();
+			}
 		}
 	}
 }
