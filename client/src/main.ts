@@ -1559,6 +1559,9 @@ export class LanguageClient {
 		if (this.state === ClientState.Stopping || this.state === ClientState.Stopped) {
 			return;
 		}
+		if (this._resolvedConnection) {
+			this._resolvedConnection.dispose();
+		}
 		this._connectionPromise = undefined;
 		this._resolvedConnection = undefined;
 		this._childProcess = undefined;
