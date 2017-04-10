@@ -57,5 +57,12 @@ var dest = path.join(extensionServerDirectory, 'package.json');
 console.log('Copying package.json to extension\'s server location...');
 fs.writeFileSync(dest, fs.readFileSync(packageFile));
 
+var shrinkwrapFile = process.argv[5];
+if (fs.existsSync(shrinkwrapFile)) {
+	console.log('Copying npm-shrinkwrap.json to extension\'s server location...');
+	fs.writeFileSync(dest, fs.readFileSync(shrinkwrapFile));
+
+}
+
 console.log('Updating server npm modules into extension\'s server location...');
 cp.execSync('npm update --production --prefix ' + extensionServerDirectory);
