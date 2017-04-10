@@ -679,6 +679,12 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 		}
 	}
 
+	function throwIfNotListening() {
+		if (!isListening()) {
+			throw new Error('Call listen() first.');
+		}
+	}
+
 	function computeMessageParams(type: MessageType, params: any[]): any | any[] | null {
 		let result: any | any[] | null;
 		let numberOfParams = type.numberOfParams;
@@ -727,13 +733,13 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				method = type.method;
 				messageParams = computeMessageParams(type, params);
 			}
-			let notificatioMessage: NotificationMessage = {
+			let notificationMessage: NotificationMessage = {
 				jsonrpc: version,
 				method: is.string(type) ? type : type.method,
 				params: messageParams
 			}
-			traceSendNotification(notificatioMessage);
-			messageWriter.write(notificatioMessage);
+			traceSendNotification(notificationMessage);
+			messageWriter.write(notificationMessage);
 		},
 		onNotification: (type: string | MessageType, handler: GenericNotificationHandler): void => {
 			throwIfClosedOrDisposed();
@@ -742,6 +748,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 		},
 		sendRequest: <R, E>(type: string | MessageType, ...params: any[]) => {
 			throwIfClosedOrDisposed();
+			throwIfNotListening();
 
 			let method: string;
 			let messageParams: any | any[] | null;

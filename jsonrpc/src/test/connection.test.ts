@@ -248,8 +248,8 @@ describe('Connection', () => {
 		inputStream.push(null);
 
 		let connection = hostConnection.createMessageConnection(inputStream, outputStream, Logger);
-		connection.sendRequest(testRequest1, { 'foo': true });
 		connection.listen();
+		connection.sendRequest(testRequest1, { 'foo': true });
 
 		let expected: RequestMessage[] = [
 			{ jsonrpc: '2.0', id: 0, method: testRequest1.method, params: { 'foo': true } }
@@ -267,8 +267,8 @@ describe('Connection', () => {
 		let inputStream = new Readable();
 		inputStream.push(null);
 		let connection = hostConnection.createMessageConnection(inputStream, outputStream, Logger);
-		connection.sendRequest(testRequest1, undefined);
 		connection.listen();
+		connection.sendRequest(testRequest1, undefined);
 		let expected: RequestMessage[] = [
 			{ jsonrpc: '2.0', id: 0, method: testRequest1.method, params: null }
 		];
