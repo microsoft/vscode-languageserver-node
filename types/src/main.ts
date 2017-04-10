@@ -969,14 +969,16 @@ export interface SignatureHelp {
 	signatures: SignatureInformation[];
 
 	/**
-	 * The active signature.
+	 * The active signature. Set to `null` if no
+	 * signatures exist.
 	 */
-	activeSignature: number;
+	activeSignature: number | null;
 
 	/**
-	 * The active parameter of the active signature.
+	 * The active parameter of the active signature. Set to `null`
+	 * if the active signature has no parameters.
 	 */
-	activeParameter: number;
+	activeParameter: number | null;
 }
 
 /**
