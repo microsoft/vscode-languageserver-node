@@ -1333,6 +1333,9 @@ export class LanguageClient {
 				this._resolvedConnection = undefined;
 				let toCheck = this._childProcess;
 				this._childProcess = undefined;
+				if (this._outputChannel) {
+					this._outputChannel.clear();
+				}
 				// Remove all markers
 				this.checkProcessDied(toCheck);
 			})
