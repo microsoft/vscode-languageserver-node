@@ -849,6 +849,13 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			});
 			responsePromises = Object.create(null);
 			requestTokens = Object.create(null);
+			// Test for backwards compatibility
+			if (is.func(messageWriter.dispose)) {
+				messageWriter.dispose();
+			}
+			if (is.func(messageReader.dispose)) {
+				messageReader.dispose();
+			}
 		},
 		listen: () => {
 			throwIfClosedOrDisposed();

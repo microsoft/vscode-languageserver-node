@@ -18,6 +18,7 @@ export interface MessageWriter {
 	readonly onError: Event<[Error, Message | undefined, number | undefined]>;
 	readonly onClose: Event<void>;
 	write(msg: Message): void;
+	dispose(): void;
 }
 
 export abstract class AbstractMessageWriter {
@@ -28,6 +29,11 @@ export abstract class AbstractMessageWriter {
 	constructor() {
 		this.errorEmitter = new Emitter<[Error, Message, number]>();
 		this.closeEmitter = new Emitter<void>();
+	}
+
+	public dispose(): void {
+		this.errorEmitter.dispose();
+		this.closeEmitter.dispose();
 	}
 
 	public get onError(): Event<[Error, Message, number]> {

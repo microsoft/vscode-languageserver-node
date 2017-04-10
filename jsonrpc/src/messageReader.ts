@@ -108,6 +108,7 @@ export interface MessageReader {
 	readonly onClose: Event<void>;
 	readonly onPartialMessage: Event<PartialMessageInfo>;
 	listen(callback: DataCallback): void;
+	dispose(): void;
 }
 
 export abstract class AbstractMessageReader {
@@ -121,6 +122,11 @@ export abstract class AbstractMessageReader {
 		this.errorEmitter = new Emitter<Error>();
 		this.closeEmitter = new Emitter<void>();
 		this.partialMessageEmitter = new Emitter<PartialMessageInfo>();
+	}
+
+	public dispose(): void {
+		this.errorEmitter.dispose();
+		this.closeEmitter.dispose();
 	}
 
 	public get onError(): Event<Error> {
