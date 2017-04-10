@@ -136,6 +136,7 @@ log('ATOM_SHELL_INTERNAL_RUN_AS_NODE: ' + process.env['ATOM_SHELL_INTERNAL_RUN_A
 		delete process.env['STDIN_PIPE_NAME'];
 		delete process.env['STDOUT_PIPE_NAME'];
 		delete process.env['ATOM_SHELL_INTERNAL_RUN_AS_NODE'];
+		delete process.env['ELECTRON_RUN_AS_NODE'];
 
 		require(program);
 
