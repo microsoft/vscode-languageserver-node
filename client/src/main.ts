@@ -1351,6 +1351,10 @@ export class LanguageClient {
 			this._providers.forEach(provider => provider.dispose());
 			this._providers = undefined;
 		}
+		for (let handler of this._registeredHandlers.values()) {
+			handler.dispose();
+		}
+		this._registeredHandlers.clear();
 		if (diagnostics && this._diagnostics) {
 			this._diagnostics.dispose();
 			this._diagnostics = undefined;
@@ -1706,7 +1710,7 @@ export class LanguageClient {
 		})
 	}
 
-	private _registeredHandlers: Map<string, FeatureHandler<any>> = new Map<string, FeatureHandler<any>>();
+	private readonly _registeredHandlers: Map<string, FeatureHandler<any>> = new Map<string, FeatureHandler<any>>();
 	private initRegistrationHandlers(_connection: IConnection) {
 		const syncedDocuments: Map<string, TextDocument> = new Map<string, TextDocument>();
 		const logger = (type: RPCMessageType, error: any): void => { this.logFailedRequest(type, error); };
