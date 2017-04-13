@@ -10,7 +10,7 @@ import ChildProcess = cp.ChildProcess;
 import {
 	workspace as Workspace, window as Window, languages as Languages, commands as Commands,
 	TextDocumentChangeEvent, TextDocument, Disposable, OutputChannel,
-	FileSystemWatcher, DiagnosticCollection, Uri,
+	FileSystemWatcher, DiagnosticCollection, Uri, ProviderResult,
 	CancellationToken, Position as VPosition, Location as VLocation, Range as VRange,
 	CompletionItem as VCompletionItem, CompletionList as VCompletionList, SignatureHelp as VSignatureHelp, Definition as VDefinition, DocumentHighlight as VDocumentHighlight,
 	SymbolInformation as VSymbolInformation, CodeActionContext as VCodeActionContext, Command as VCommand, CodeLens as VCodeLens,
@@ -337,8 +337,12 @@ export enum RevealOutputChannelOn {
 	Never = 4
 }
 
-export interface RequestFilters {
-	codeAction?: (document: TextDocument, range: VRange, context: VCodeActionContext) => boolean;
+export interface CodeActionsSignature {
+	(document: TextDocument, range: VRange, context: VCodeActionContext, token: CancellationToken): ProviderResult<VCommand[]>;
+}
+
+export interface Middleware {
+	codeActions?: (document: TextDocument, range: VRange, context: VCodeActionContext, token: CancellationToken, next: CodeActionsSignature) => ProviderResult<VCommand[]>;
 }
 
 export interface LanguageClientOptions {
@@ -355,7 +359,7 @@ export interface LanguageClientOptions {
 	initializationOptions?: any | (() => any);
 	initializationFailedHandler?: InitializationFailedHandler;
 	errorHandler?: ErrorHandler;
-	requestFilters?: RequestFilters;
+	middleware?: Middleware;
 	uriConverters?: {
 		code2Protocol: c2p.URIConverter,
 		protocol2Code: p2c.URIConverter
@@ -372,7 +376,7 @@ interface ResolvedClientOptions {
 	initializationOptions?: any | (() => any);
 	initializationFailedHandler?: InitializationFailedHandler;
 	errorHandler: ErrorHandler;
-	requestFilters: RequestFilters;
+	middleware: Middleware;
 	uriConverters?: {
 		code2Protocol: c2p.URIConverter,
 		protocol2Code: p2c.URIConverter
@@ -899,7 +903,7 @@ export class LanguageClient {
 			initializationOptions: clientOptions.initializationOptions,
 			initializationFailedHandler: clientOptions.initializationFailedHandler,
 			errorHandler: clientOptions.errorHandler || new DefaultErrorHandler(this._name),
-			requestFilters: clientOptions.requestFilters || {},
+			middleware: clientOptions.middleware || {},
 			uriConverters: clientOptions.uriConverters
 		};
 		this._clientOptions.synchronize = this._clientOptions.synchronize || {};
@@ -2110,23 +2114,28 @@ export class LanguageClient {
 	}
 
 	private createCodeActionsProvider(options: TextDocumentRegistrationOptions): Disposable {
-		return Languages.registerCodeActionsProvider(options.documentSelector!, {
-			provideCodeActions: (document: TextDocument, range: VRange, context: VCodeActionContext, token: CancellationToken): Thenable<VCommand[]> => {
-				if (this._clientOptions.requestFilters.codeAction && this._clientOptions.requestFilters.codeAction(document, range, context)) {
+		let codeActions: CodeActionsSignature = (document, range, context, token) => {
+			let params: CodeActionParams = {
+				textDocument: this._c2p.asTextDocumentIdentifier(document),
+				range: this._c2p.asRange(range),
+				context: this._c2p.asCodeActionContext(context)
+			};
+			return this.sendRequest(CodeActionRequest.type, params, token).then(
+				this._p2c.asCommands,
+				(error) => {
+					this.logFailedRequest(CodeActionRequest.type, error);
 					return Promise.resolve([]);
 				}
-				let params: CodeActionParams = {
-					textDocument: this._c2p.asTextDocumentIdentifier(document),
-					range: this._c2p.asRange(range),
-					context: this._c2p.asCodeActionContext(context)
-				};
-				return this.sendRequest(CodeActionRequest.type, params, token).then(
-					this._p2c.asCommands,
-					(error) => {
-						this.logFailedRequest(CodeActionRequest.type, error);
-						return Promise.resolve([]);
-					}
-				);
+			);
+		}
+
+		return Languages.registerCodeActionsProvider(options.documentSelector!, {
+			provideCodeActions: (document: TextDocument, range: VRange, context: VCodeActionContext, token: CancellationToken): ProviderResult<VCommand[]> => {
+				if (this._clientOptions.middleware.codeActions) {
+					return this._clientOptions.middleware.codeActions(document, range, context, token, codeActions);
+				} else {
+					return codeActions(document, range, context, token);
+				}
 			}
 		});
 	}
