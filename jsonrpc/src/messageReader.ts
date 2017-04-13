@@ -22,7 +22,7 @@ class MessageBuffer {
 	private index: number;
 	private buffer: Buffer;
 
-	constructor(encoding: string = 'utf-8') {
+	constructor(encoding: string = 'utf8') {
 		this.encoding = encoding;
 		this.index = 0;
 		this.buffer = new Buffer(DefaultSize);
@@ -172,7 +172,7 @@ export class StreamMessageReader extends AbstractMessageReader implements Messag
 	private partialMessageTimer: NodeJS.Timer | undefined;
 	private _partialMessageTimeout: number;
 
-	public constructor(readable: NodeJS.ReadableStream, encoding: string = 'utf-8') {
+	public constructor(readable: NodeJS.ReadableStream, encoding: string = 'utf8') {
 		super();
 		this.readable = readable;
 		this.buffer = new MessageBuffer(encoding);
@@ -216,6 +216,8 @@ export class StreamMessageReader extends AbstractMessageReader implements Messag
 					throw new Error('Content-Length value must be a number.');
 				}
 				this.nextMessageLength = length;
+				// Take the encoding form the header. For compatibility
+				// treat both utf-8 and utf8 as node utf8
 			}
 			var msg = this.buffer.tryReadContent(this.nextMessageLength);
 			if (msg === null) {
