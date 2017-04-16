@@ -1557,7 +1557,7 @@ export class LanguageClient {
 			let command: Executable = <Executable>json;
 			let options = command.options || {};
 			options.cwd = options.cwd || Workspace.rootPath;
-			let process = cp.spawn(command.command, command.args, command.options);
+			let process = cp.spawn(command.command, command.args, options);
 			if (!process || !process.pid) {
 				return Promise.reject<IConnection>(`Launching server using command ${command.command} failed.`);
 			}
