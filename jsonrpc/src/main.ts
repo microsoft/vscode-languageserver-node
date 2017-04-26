@@ -407,7 +407,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			messageWriter.write(message);
 		}
 
-		traceReceviedRequest(requestMessage);
+		traceReceivedRequest(requestMessage);
 
 		let requestHandler = requestHandlers[requestMessage.method];
 		let startTime = Date.now();
@@ -477,7 +477,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 		} else {
 			let key = String(responseMessage.id);
 			let responsePromise = responsePromises[key];
-			traceReceviedResponse(responseMessage, responsePromise);
+			traceReceivedResponse(responseMessage, responsePromise);
 			if (responsePromise) {
 				delete responsePromises[key];
 				try {
@@ -602,7 +602,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 		tracer.log(`Sending response '${method} - (${message.id})'. Processing request took ${Date.now() - startTime}ms`)
 	}
 
-	function traceReceviedRequest(message: RequestMessage): void {
+	function traceReceivedRequest(message: RequestMessage): void {
 		if (trace === Trace.Off || !tracer) {
 			return;
 		}
@@ -628,7 +628,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 		tracer.log(`Received notification '${message.method}'.`, data);
 	}
 
-	function traceReceviedResponse(message: ResponseMessage, responsePromise: ResponsePromise): void {
+	function traceReceivedResponse(message: ResponseMessage, responsePromise: ResponsePromise): void {
 		if (trace === Trace.Off || !tracer) {
 			return;
 		}
