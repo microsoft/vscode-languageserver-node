@@ -88,11 +88,11 @@ export interface RegistrationParams {
 }
 
 /**
- * The `client/registerFeature` request is sent from the server to the client to register a new feature
+ * The `client/registerCapability` request is sent from the server to the client to register a new capability
  * handler on the client side.
  */
 export namespace RegistrationRequest {
-	export const type = new RequestType<RegistrationParams, void, void, void>('client/registerFeature');
+	export const type = new RequestType<RegistrationParams, void, void, void>('client/registerCapability');
 }
 
 /**
@@ -116,11 +116,11 @@ export interface UnregistrationParams {
 }
 
 /**
- * The `client/unregisterFeature` request is sent from the server to the client to unregister a previously registered feature
+ * The `client/unregisterCapability` request is sent from the server to the client to unregister a previously registered capability
  * handler on the client side.
  */
 export namespace UnregistrationRequest {
-	export const type = new RequestType<UnregistrationParams, void, void, void>('client/unregisterFeature');
+	export const type = new RequestType<UnregistrationParams, void, void, void>('client/unregisterCapability');
 }
 
 /**

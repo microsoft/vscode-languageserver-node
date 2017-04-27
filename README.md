@@ -24,6 +24,10 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
+### 3.2.1 Server and Client
+
+* Fixed [Using wrong name for method `client/registerFeature`: should be `client/registerCapability`](https://github.com/Microsoft/vscode-languageserver-node/issues/199)
+
 ### 3.2.0 Server and Client
 
 * made `WorkspaceEdit` conform to the 3.x version of the spec and backwards compatible with 2.x version of the library.
