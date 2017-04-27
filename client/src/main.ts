@@ -1565,7 +1565,7 @@ export class LanguageClient {
 			this._childProcess = process;
 			return Promise.resolve(createConnection(process.stdout, process.stdin, errorHandler, closeHandler));
 		}
-		return Promise.reject<IConnection>(new Error(`Unsupported server configuartion ` + JSON.stringify(server, null, 4)));
+		return Promise.reject<IConnection>(new Error(`Unsupported server configuration ` + JSON.stringify(server, null, 4)));
 	}
 
 	private handleConnectionClosed() {
