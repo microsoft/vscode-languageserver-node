@@ -1227,8 +1227,13 @@ export class LanguageClient {
 
 			connection.onDiagnostics(params => this.handleDiagnostics(params));
 			connection.onRequest(RegistrationRequest.type, params => this.handleRegistrationRequest(params));
+			// See https://github.com/Microsoft/vscode-languageserver-node/issues/199
+			connection.onRequest('client/registerFeature', params => this.handleRegistrationRequest(params));
 			connection.onRequest(UnregistrationRequest.type, params => this.handleUnregistrationRequest(params));
+			// See https://github.com/Microsoft/vscode-languageserver-node/issues/199
+			connection.onRequest('client/unregisterFeature', params => this.handleUnregistrationRequest(params));
 			connection.onRequest(ApplyWorkspaceEditRequest.type, params => this.handleApplyWorkspaceEdit(params));
+
 			connection.sendNotification(InitializedNotification.type, {});
 
 			this.hookFileEvents(connection);
