@@ -59,6 +59,7 @@ fs.writeFileSync(dest, fs.readFileSync(packageFile));
 
 var shrinkwrapFile = process.argv[5];
 if (fs.existsSync(shrinkwrapFile)) {
+	shrinkwrapFile = path.resolve(shrinkwrapFile);
 	console.log('Copying npm-shrinkwrap.json to extension\'s server location...');
 	fs.writeFileSync(dest, fs.readFileSync(shrinkwrapFile));
 
