@@ -1364,10 +1364,12 @@ export function createConnection(input?: any, output?: any): IConnection {
 				let capabilities = result.capabilities;
 				if (!capabilities) {
 					capabilities = {}
-					result.capabilities = {};
+					result.capabilities = capabilities;
 				}
-				if (!Is.number(capabilities.textDocumentSync)) {
+				if (!capabilities.textDocumentSync) {
 					capabilities.textDocumentSync = Is.number(protocolConnection.__textDocumentSync) ? protocolConnection.__textDocumentSync : TextDocumentSyncKind.None;
+				} else if (!Is.number(capabilities.textDocumentSync) && !Is.number(capabilities.textDocumentSync.change)) {
+					capabilities.textDocumentSync.change = Is.number(protocolConnection.__textDocumentSync) ? protocolConnection.__textDocumentSync : TextDocumentSyncKind.None;
 				}
 				return result;
 			});
