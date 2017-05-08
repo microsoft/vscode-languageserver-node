@@ -24,6 +24,10 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
+### 3.2.2 Server and Client
+
+* Fixed [ServerCapabilities.textDocumentSync has no effect when it's set to a TextDocumentSyncOptions instance](https://github.com/Microsoft/vscode-languageserver-node/issues/203)
+
 ### 3.2.1 Server and Client
 
 * Fixed [Using wrong name for method `client/registerFeature`: should be `client/registerCapability`](https://github.com/Microsoft/vscode-languageserver-node/issues/199)
