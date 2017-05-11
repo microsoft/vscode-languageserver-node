@@ -1096,6 +1096,47 @@ export interface FileEvent {
 	type: FileChangeType;
 }
 
+/**
+ * Descibe options to be used when registered for text document change events.
+ */
+export interface DidChangeWatchedFilesRegistrationOptions {
+	/**
+	 * The watchers to register.
+	 */
+	watchers: FileSystemWatcher[];
+}
+
+export interface FileSystemWatcher {
+	/**
+	 * The  glob pattern to watch
+	 */
+	globPattern: string;
+
+	/**
+	 * The kind of events of interest. If omitted it defaults
+	 * to WatchKind.Create | WatchKind.Change | WatchKind.Delete
+	 * which is 7.
+	 */
+	kind?: number;
+}
+
+export namespace WatchKind {
+	/**
+	 * Interested in create events.
+	 */
+	export const Create = 1;
+
+	/**
+	 * Interested in change events
+	 */
+	export const Change = 2;
+
+	/**
+	 * Interested in delete events
+	 */
+	export const Delete = 4;
+}
+
 //---- Diagnostic notification ----
 
 /**

@@ -38,6 +38,7 @@ export { Converter as Protocol2CodeConverter } from './protocolConverter';
 
 export * from 'vscode-languageserver-types';
 export * from './protocol';
+export * from './client';
 
 declare var v8debug: any;
 
@@ -88,9 +89,9 @@ export class LanguageClient extends BaseLanguageClient {
 	private _forceDebug: boolean;
 	private _childProcess: ChildProcess | undefined;
 
-	public constructor(name: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, forceDebug: boolean);
-	public constructor(id: string, name: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, forceDebug: boolean);
-	public constructor(arg1: string, arg2: ServerOptions | string, arg3: LanguageClientOptions | ServerOptions, arg4: boolean | LanguageClientOptions, arg5?: boolean) {
+	public constructor(name: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, forceDebug?: boolean);
+	public constructor(id: string, name: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, forceDebug?: boolean);
+	public constructor(arg1: string, arg2: ServerOptions | string, arg3: LanguageClientOptions | ServerOptions, arg4?: boolean | LanguageClientOptions, arg5?: boolean) {
 		let id: string;
 		let name: string;
 		let serverOptions: ServerOptions;
