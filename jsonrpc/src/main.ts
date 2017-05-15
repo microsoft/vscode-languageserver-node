@@ -5,7 +5,7 @@
 /// <reference path="./thenable.ts" />
 'use strict';
 
-import * as is from './is';
+import * as Is from './is';
 
 import {
 	Message, MessageType,
@@ -22,6 +22,7 @@ import { MessageReader, DataCallback, StreamMessageReader, IPCMessageReader, Soc
 import { MessageWriter, StreamMessageWriter, IPCMessageWriter, SocketMessageWriter } from './messageWriter';
 import { Disposable, Event, Emitter } from './events';
 import { CancellationTokenSource, CancellationToken } from './cancellation';
+import { LinkedMap } from './linkedMap';
 
 export {
 	Message, MessageType, ErrorCodes, ResponseError,
@@ -49,52 +50,62 @@ namespace CancelNotification {
 	export const type = new NotificationType<CancelParams, void>('$/cancelRequest');
 }
 
+export type HandlerResult<R, E> = R | ResponseError<E> | Thenable<R> | Thenable<ResponseError<E>>;
+
+export interface StarRequestHandler {
+	(method: string, ...params: any[]): HandlerResult<any, any>;
+}
+
 export interface GenericRequestHandler<R, E> {
-	(...params: any[]): R | ResponseError<E> | Thenable<R> | Thenable<ResponseError<E>>;
+	(...params: any[]): HandlerResult<R, E>;
 }
 
 export interface RequestHandler0<R, E> {
-	(token: CancellationToken): R | ResponseError<E> | Thenable<R> | Thenable<ResponseError<E>>;
+	(token: CancellationToken): HandlerResult<R, E>;
 }
 
 export interface RequestHandler<P, R, E> {
-	(params: P, token: CancellationToken): R | ResponseError<E> | Thenable<R> | Thenable<ResponseError<E>>;
+	(params: P, token: CancellationToken): HandlerResult<R, E>;
 }
 
 export interface RequestHandler1<P1, R, E> {
-	(p1: P1, token: CancellationToken): R | ResponseError<E> | Thenable<R> | Thenable<ResponseError<E>>;
+	(p1: P1, token: CancellationToken): HandlerResult<R, E>;
 }
 
 export interface RequestHandler2<P1, P2, R, E> {
-	(p1: P1, p2: P2, token: CancellationToken): R | ResponseError<E> | Thenable<R> | Thenable<ResponseError<E>>;
+	(p1: P1, p2: P2, token: CancellationToken): HandlerResult<R, E>;
 }
 
 export interface RequestHandler3<P1, P2, P3, R, E> {
-	(p1: P1, p2: P2, p3: P3, token: CancellationToken): R | ResponseError<E> | Thenable<R> | Thenable<ResponseError<E>>;
+	(p1: P1, p2: P2, p3: P3, token: CancellationToken): HandlerResult<R, E>;
 }
 
 export interface RequestHandler4<P1, P2, P3, P4, R, E> {
-	(p1: P1, p2: P2, p3: P3, p4: P4, token: CancellationToken): R | ResponseError<E> | Thenable<R> | Thenable<ResponseError<E>>;
+	(p1: P1, p2: P2, p3: P3, p4: P4, token: CancellationToken): HandlerResult<R, E>;
 }
 
 export interface RequestHandler5<P1, P2, P3, P4, P5, R, E> {
-	(p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, token: CancellationToken): R | ResponseError<E> | Thenable<R> | Thenable<ResponseError<E>>;
+	(p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, token: CancellationToken): HandlerResult<R, E>;
 }
 
 export interface RequestHandler6<P1, P2, P3, P4, P5, P6, R, E> {
-	(p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, token: CancellationToken): R | ResponseError<E> | Thenable<R> | Thenable<ResponseError<E>>;
+	(p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, token: CancellationToken): HandlerResult<R, E>;
 }
 
 export interface RequestHandler7<P1, P2, P3, P4, P5, P6, P7, R, E> {
-	(p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, token: CancellationToken): R | ResponseError<E> | Thenable<R> | Thenable<ResponseError<E>>;
+	(p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, token: CancellationToken): HandlerResult<R, E>;
 }
 
 export interface RequestHandler8<P1, P2, P3, P4, P5, P6, P7, P8, R, E> {
-	(p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8, token: CancellationToken): R | ResponseError<E> | Thenable<R> | Thenable<ResponseError<E>>;
+	(p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8, token: CancellationToken): HandlerResult<R, E>;
 }
 
 export interface RequestHandler9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E> {
-	(p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8, p9: P9, token: CancellationToken): R | ResponseError<E> | Thenable<R> | Thenable<ResponseError<E>>;
+	(p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8, p9: P9, token: CancellationToken): HandlerResult<R, E>;
+}
+
+export interface StarNotificationHandler {
+	(method: string, ...params: any[]): void;
 }
 
 export interface GenericNotificationHandler {
@@ -233,6 +244,19 @@ export class ConnectionError extends Error {
 	}
 }
 
+export type MessageQueue = LinkedMap<string, Message>;
+
+export type ConnectionStrategy = {
+	cancelUndispatched?: (message: Message, next: (message: Message) => ResponseMessage | undefined) => ResponseMessage | undefined;
+};
+
+export namespace ConnectionStrategy {
+	export function is(value: any): value is ConnectionStrategy {
+		let candidate: ConnectionStrategy = value;
+		return candidate && Is.func(candidate.cancelUndispatched);
+	}
+}
+
 export interface MessageConnection {
 	sendRequest<R, E, RO>(type: RequestType0<R, E, RO>, token?: CancellationToken): Thenable<R>;
 	sendRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, params: P, token?: CancellationToken): Thenable<R>;
@@ -259,6 +283,7 @@ export interface MessageConnection {
 	onRequest<P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO>(type: RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO>, handler: RequestHandler8<P1, P2, P3, P4, P5, P6, P7, P8, R, E>): void;
 	onRequest<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO>(type: RequestType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO>, handler: RequestHandler9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E>): void;
 	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): void;
+	onRequest(handler: StarRequestHandler): void;
 
 	sendNotification<RO>(type: NotificationType0<RO>): void;
 	sendNotification<P, RO>(type: NotificationType<P, RO>, params?: P): void;
@@ -285,6 +310,7 @@ export interface MessageConnection {
 	onNotification<P1, P2, P3, P4, P5, P6, P7, P8, RO>(type: NotificationType8<P1, P2, P3, P4, P5, P6, P7, P8, RO>, handler: NotificationHandler8<P1, P2, P3, P4, P5, P6, P7, P8>): void;
 	onNotification<P1, P2, P3, P4, P5, P6, P7, P8, P9, RO>(type: NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, RO>, handler: NotificationHandler9<P1, P2, P3, P4, P5, P6, P7, P8, P9>): void;
 	onNotification(method: string, handler: GenericNotificationHandler): void;
+	onNotification(handler: StarNotificationHandler): void;
 
 	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): void;
 
@@ -294,6 +320,7 @@ export interface MessageConnection {
 	listen(): void;
 	onDispose: Event<void>;
 	dispose(): void;
+	inspect(): void;
 }
 
 interface ResponsePromise {
@@ -310,13 +337,27 @@ enum ConnectionState {
 	Disposed = 4
 }
 
-function _createMessageConnection(messageReader: MessageReader, messageWriter: MessageWriter, logger: Logger): MessageConnection {
+interface RequestHandlerElement {
+	type: MessageType | undefined;
+	handler: GenericRequestHandler<any, any>;
+}
+interface NotificationHandlerElement {
+	type: MessageType | undefined;
+	handler: GenericNotificationHandler;
+}
+
+function _createMessageConnection(messageReader: MessageReader, messageWriter: MessageWriter, logger: Logger, strategy?: ConnectionStrategy): MessageConnection {
 	let sequenceNumber = 0;
+	let notificationSquenceNumber = 0;
 	const version: string = '2.0';
 
-	let requestHandlers: { [name: string]: GenericRequestHandler<any, any> } = Object.create(null);
-	let notificationHandlers: { [name: string]: GenericNotificationHandler } = Object.create(null);
+	let starRequestHandler: StarRequestHandler | undefined = undefined;
+	let requestHandlers: { [name: string]: RequestHandlerElement | undefined } = Object.create(null);
+	let starNotificationHandler: StarNotificationHandler | undefined = undefined;
+	let notificationHandlers: { [name: string]: NotificationHandlerElement | undefined } = Object.create(null);
 
+	let  timer:  NodeJS.Timer | undefined;
+	let messageQueue: MessageQueue = new LinkedMap<string, Message>();
 	let responsePromises: { [name: string]: ResponsePromise } = Object.create(null);
 	let requestTokens: { [id: string]: CancellationTokenSource } = Object.create(null);
 
@@ -327,7 +368,23 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 	let errorEmitter: Emitter<[Error, Message | undefined, number | undefined]> = new Emitter<[Error, Message, number]>();
 	let closeEmitter: Emitter<void> = new Emitter<void>();
 	let unhandledNotificationEmitter: Emitter<NotificationMessage> = new Emitter<NotificationMessage>();
+
 	let disposeEmitter: Emitter<void> = new Emitter<void>();
+
+	function addMessageToQueue(queue: MessageQueue, message: Message): void {
+		if (isRequestMessage(message)) {
+			queue.set(message.id.toString(), message);
+		} else if (isReponseMessage(message) && message.id != null) {
+			queue.set(message.id.toString(), message);
+		} else {
+			let id = 'n' + (++notificationSquenceNumber).toString();
+			queue.set(id, message);
+		}
+	}
+
+	function cancelUndispatched(_message: Message): ResponseMessage | undefined {
+		return undefined;
+	}
 
 	function isListening(): boolean {
 		return state === ConnectionState.Listening;
@@ -362,6 +419,60 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 
 	messageWriter.onClose(closeHandler);
 	messageWriter.onError(writeErrorHandler);
+
+	function triggerMessageQueue(): void {
+		if (timer || messageQueue.size === 0) {
+			return;
+		}
+		timer = setImmediate(() => {
+			timer = undefined;
+			processMessageQueue();
+		});
+	}
+
+	function processMessageQueue(): void {
+		if (messageQueue.size === 0) {
+			return;
+		}
+		let message = messageQueue.shift()!;
+		try {
+			if (isRequestMessage(message)) {
+				handleRequest(message);
+			} else if (isNotificationMessage(message)) {
+				handleNotification(message);
+			} else if (isReponseMessage(message)) {
+				handleResponse(message);
+			} else {
+				handleInvalidMessage(message);
+			}
+		} finally {
+			triggerMessageQueue();
+		}
+	}
+
+	let callback: DataCallback = (message) => {
+		try {
+			// We have recevied a cancellation message. Check if the message is still in the queue
+			// and cancel it if allowed to do so.
+			if (isNotificationMessage(message) && message.method === CancelNotification.type.method) {
+				let key = (message.params as CancelParams).id.toString();
+				let toCancel = messageQueue.get(key);
+				if (isRequestMessage(toCancel)) {
+					let response = strategy && strategy.cancelUndispatched ? strategy.cancelUndispatched(toCancel, cancelUndispatched) : cancelUndispatched(toCancel);
+					if (response && (response.error !== void 0 || response.result !== void 0)) {
+						messageQueue.delete(key);
+						response.id = toCancel.id;
+						traceSendingResponse(response, message.method, Date.now());
+						messageWriter.write(response);
+						return;
+					}
+				}
+			}
+			addMessageToQueue(messageQueue, message);
+		} finally {
+			triggerMessageQueue();
+		}
+	};
 
 	function handleRequest(requestMessage: RequestMessage) {
 		if (isDisposed()) {
@@ -409,20 +520,32 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 
 		traceReceivedRequest(requestMessage);
 
-		let requestHandler = requestHandlers[requestMessage.method];
+		let element = requestHandlers[requestMessage.method];
+		let type: MessageType | undefined;
+		let requestHandler: GenericRequestHandler<any, any> | undefined;
+		if (element) {
+			type = element.type;
+			requestHandler = element.handler;
+		}
 		let startTime = Date.now();
-		if (requestHandler) {
+		if (requestHandler || starRequestHandler) {
 			let cancellationSource = new CancellationTokenSource();
 			let tokenKey = String(requestMessage.id);
 			requestTokens[tokenKey] = cancellationSource;
 			try {
 				let handlerResult: any;
-				if (!requestMessage.params) {
-					handlerResult = requestHandler(cancellationSource.token);
-				} else if (is.array(requestMessage.params)) {
-					handlerResult = requestHandler(...requestMessage.params, cancellationSource.token);
+				if (requestMessage.params === void 0 || (type !== void 0 && type.numberOfParams === 0)) {
+					handlerResult = requestHandler
+						? requestHandler(cancellationSource.token)
+						: starRequestHandler!(requestMessage.method, cancellationSource.token);
+				} else if (Is.array(requestMessage.params) && (type === void 0 || type.numberOfParams > 1)) {
+					handlerResult = requestHandler
+						? requestHandler(...requestMessage.params, cancellationSource.token)
+						: starRequestHandler!(requestMessage.method, ...requestMessage.params, cancellationSource.token);
 				} else {
-					handlerResult = requestHandler(requestMessage.params, cancellationSource.token);
+					handlerResult = requestHandler
+						? requestHandler(requestMessage.params, cancellationSource.token)
+						: starRequestHandler!(requestMessage.method, requestMessage.params, cancellationSource.token);
 				}
 
 				let promise = <Thenable<any | ResponseError<any>>>handlerResult;
@@ -437,7 +560,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 						delete requestTokens[tokenKey];
 						if (error instanceof ResponseError) {
 							replyError(<ResponseError<any>>error, requestMessage.method, startTime);
-						} else if (error && is.string(error.message)) {
+						} else if (error && Is.string(error.message)) {
 							replyError(new ResponseError<void>(ErrorCodes.InternalError, `Request ${requestMessage.method} failed with message: ${error.message}`), requestMessage.method, startTime);
 						} else {
 							replyError(new ResponseError<void>(ErrorCodes.InternalError, `Request ${requestMessage.method} failed unexpectedly without providing any details.`), requestMessage.method, startTime);
@@ -451,7 +574,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				delete requestTokens[tokenKey];
 				if (error instanceof ResponseError) {
 					reply(<ResponseError<any>>error, requestMessage.method, startTime);
-				} else if (error && is.string(error.message)) {
+				} else if (error && Is.string(error.message)) {
 					replyError(new ResponseError<void>(ErrorCodes.InternalError, `Request ${requestMessage.method} failed with message: ${error.message}`), requestMessage.method, startTime);
 				} else {
 					replyError(new ResponseError<void>(ErrorCodes.InternalError, `Request ${requestMessage.method} failed unexpectedly without providing any details.`), requestMessage.method, startTime);
@@ -506,7 +629,8 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			// See handle request.
 			return;
 		}
-		let notificationHandler: GenericNotificationHandler;
+		let type: MessageType | undefined = undefined;
+		let notificationHandler: GenericNotificationHandler | undefined;
 		if (message.method === CancelNotification.type.method) {
 			notificationHandler = (params: CancelParams) => {
 				let id = params.id;
@@ -516,17 +640,21 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				}
 			}
 		} else {
-			notificationHandler = notificationHandlers[message.method];
+			let element = notificationHandlers[message.method];
+			if (element) {
+				notificationHandler = element.handler;
+				type = element.type;
+			}
 		}
-		if (notificationHandler) {
+		if (notificationHandler || starNotificationHandler) {
 			try {
 				traceReceivedNotification(message);
-				if (!message.params) {
-					notificationHandler();
-				} else if (is.array(message.params)) {
-					notificationHandler(...message.params);
+				if (message.params === void 0 || (type !== void 0 && type.numberOfParams === 0)) {
+					notificationHandler ? notificationHandler() : starNotificationHandler!(message.method);
+				} else if (Is.array(message.params) && (type === void 0 || type.numberOfParams > 1)) {
+					notificationHandler ? notificationHandler(...message.params) : starNotificationHandler!(message.method, ...message.params);
 				} else {
-					notificationHandler(message.params);
+					notificationHandler ? notificationHandler(message.params) : starNotificationHandler!(message.method, message.params);
 				}
 			} catch (error) {
 				if (error.message) {
@@ -548,7 +676,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 		logger.error(`Received message which is neither a response nor a notification message:\n${JSON.stringify(message, null, 4)}`);
 		// Test whether we find an id to reject the promise
 		let responseMessage: ResponseMessage = message as ResponseMessage;
-		if (is.string(responseMessage.id) || is.number(responseMessage.id)) {
+		if (Is.string(responseMessage.id) || Is.number(responseMessage.id)) {
 			let key = String(responseMessage.id);
 			let responseHandler = responsePromises[key];
 			if (responseHandler) {
@@ -652,18 +780,6 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 		}
 	}
 
-	let callback: DataCallback = (message) => {
-		if (isRequestMessage(message)) {
-			handleRequest(message);
-		} else if (isReponseMessage(message)) {
-			handleResponse(message)
-		} else if (isNotificationMessage(message)) {
-			handleNotification(message);
-		} else {
-			handleInvalidMessage(message);
-		}
-	};
-
 	function throwIfClosedOrDisposed() {
 		if (isClosed()) {
 			throw new ConnectionError(ConnectionErrors.Closed, 'Connection is closed.');
@@ -716,7 +832,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 
 			let method: string;
 			let messageParams: any | any[] | null;
-			if (is.string(type)) {
+			if (Is.string(type)) {
 				method = type;
 				switch (params.length) {
 					case 0:
@@ -735,16 +851,23 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			}
 			let notificationMessage: NotificationMessage = {
 				jsonrpc: version,
-				method: is.string(type) ? type : type.method,
+				method: Is.string(type) ? type : type.method,
 				params: messageParams
 			}
 			traceSendNotification(notificationMessage);
 			messageWriter.write(notificationMessage);
 		},
-		onNotification: (type: string | MessageType, handler: GenericNotificationHandler): void => {
+		onNotification: (type: string | MessageType | StarNotificationHandler, handler?: GenericNotificationHandler): void => {
 			throwIfClosedOrDisposed();
-
-			notificationHandlers[is.string(type) ? type : type.method] = handler;
+			if (Is.func(type)) {
+				starNotificationHandler = type as StarNotificationHandler;
+			} else if (handler) {
+				if (Is.string(type)) {
+					notificationHandlers[type] = { type: undefined, handler }
+				} else {
+					notificationHandlers[type.method] = { type, handler };
+				}
+			}
 		},
 		sendRequest: <R, E>(type: string | MessageType, ...params: any[]) => {
 			throwIfClosedOrDisposed();
@@ -753,7 +876,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			let method: string;
 			let messageParams: any | any[] | null;
 			let token: CancellationToken | undefined = undefined;
-			if (is.string(type)) {
+			if (Is.string(type)) {
 				method = type;
 				switch (params.length) {
 					case 0:
@@ -817,10 +940,18 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			}
 			return result;
 		},
-		onRequest: <R, E>(type: string | MessageType, handler: GenericRequestHandler<R, E>): void => {
+		onRequest: <R, E>(type: string | MessageType | StarRequestHandler, handler?: GenericRequestHandler<R, E>): void => {
 			throwIfClosedOrDisposed();
 
-			requestHandlers[is.string(type) ? type : type.method] = handler;
+			if (Is.func(type)) {
+				starRequestHandler = type as StarRequestHandler;
+			} else if (handler) {
+				if (Is.string(type)) {
+					requestHandlers[type] = { type: undefined, handler };
+				} else {
+					requestHandlers[type.method] = { type, handler };
+				}
+			}
 		},
 		trace: (_value: Trace, _tracer: Tracer, sendNotification: boolean = false) => {
 			trace = _value;
@@ -849,11 +980,12 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			});
 			responsePromises = Object.create(null);
 			requestTokens = Object.create(null);
+			messageQueue = new LinkedMap<string, Message>();
 			// Test for backwards compatibility
-			if (is.func(messageWriter.dispose)) {
+			if (Is.func(messageWriter.dispose)) {
 				messageWriter.dispose();
 			}
-			if (is.func(messageReader.dispose)) {
+			if (Is.func(messageReader.dispose)) {
 				messageReader.dispose();
 			}
 		},
@@ -863,6 +995,9 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 
 			state = ConnectionState.Listening;
 			messageReader.listen(callback);
+		},
+		inspect: (): void => {
+			console.log("inspect");
 		}
 	};
 
@@ -884,10 +1019,10 @@ function isMessageWriter(value: any): value is MessageWriter {
 	return value.write !== void 0 && value.end === void 0;
 }
 
-export function createMessageConnection(reader: MessageReader, writer: MessageWriter, logger: Logger): MessageConnection;
-export function createMessageConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger: Logger): MessageConnection;
-export function createMessageConnection(input: MessageReader | NodeJS.ReadableStream, output: MessageWriter | NodeJS.WritableStream, logger: Logger): MessageConnection {
+export function createMessageConnection(reader: MessageReader, writer: MessageWriter, logger: Logger, strategy?: ConnectionStrategy): MessageConnection;
+export function createMessageConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger: Logger, strategy?: ConnectionStrategy): MessageConnection;
+export function createMessageConnection(input: MessageReader | NodeJS.ReadableStream, output: MessageWriter | NodeJS.WritableStream, logger: Logger, strategy?: ConnectionStrategy): MessageConnection {
 	let reader = isMessageReader(input) ? input : new StreamMessageReader(input);
 	let writer = isMessageWriter(output) ? output : new StreamMessageWriter(output);
-	return _createMessageConnection(reader, writer, logger);
+	return _createMessageConnection(reader, writer, logger, strategy);
 }

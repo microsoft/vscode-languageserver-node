@@ -6,14 +6,15 @@
 'use strict';
 
 import {
-	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler,
-	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler,
+	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler,
+	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler, StarNotificationHandler,
 	MessageType as RPCMessageType, ResponseError, ErrorCodes,
 	MessageConnection, Logger, createMessageConnection,
 	MessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
 	MessageWriter, StreamMessageWriter, IPCMessageWriter, createServerPipeTransport,
 	CancellationToken, CancellationTokenSource,
-	Disposable, Event, Emitter, Trace, SetTraceNotification, LogTraceNotification
+	Disposable, Event, Emitter, Trace, SetTraceNotification, LogTraceNotification,
+	ConnectionStrategy
 } from 'vscode-jsonrpc';
 
 import {
@@ -53,13 +54,12 @@ import {
 
 import * as Is from './utils/is';
 import * as UUID from './utils/uuid';
-import { LinkedMap, Touch } from './utils/linkedMap';
 
 // ------------- Reexport the API surface of the language worker API ----------------------
 export {
 	RequestType0, RequestHandler0, RequestType, RequestHandler,
 	NotificationType0, NotificationHandler0, NotificationType, NotificationHandler,
-	ResponseError, ErrorCodes,
+	CancellationTokenSource, CancellationToken, ResponseError, ErrorCodes,
 	MessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
 	MessageWriter, StreamMessageWriter, IPCMessageWriter, Disposable, createServerPipeTransport
 }
@@ -258,85 +258,6 @@ export class TextDocuments {
 				this._onDidSave.fire(Object.freeze({ document }));
 			}
 		});
-	}
-}
-
-namespace Thenable {
-	export function is<T>(value: any): value is Thenable<T> {
-		let candidate: Thenable<T> = value;
-		return candidate && typeof candidate.then === 'function';
-	}
-}
-
-export interface ValidationCallback {
-	(document: TextDocument): Thenable<void> | void;
-}
-
-
-export enum ValidationQueueMode {
-	Sequential = 1,
-	Parallel = 2
-}
-
-export class ValidationQueue {
-
-	private _onValidate: ValidationCallback;
-	private _queue: LinkedMap<TextDocument>;
-	private _mode: ValidationQueueMode;
-	private _timeout: number;
-	private _pendingValidation: Thenable<void> | undefined;
-	private _timer: NodeJS.Timer | undefined;
-
-	constructor(onValidate: ValidationCallback, mode: ValidationQueueMode = ValidationQueueMode.Sequential, timeout: number = 0) {
-		this._queue = new LinkedMap<TextDocument>();
-		this._onValidate = onValidate;
-		this._mode = mode;
-		this._timeout = timeout;
-	}
-
-	public add(document: TextDocument): void {
-		this._queue.add(document.uri, document, Touch.First);
-		this.trigger();
-	}
-
-	public remove(document: TextDocument): void {
-		this._queue.remove(document.uri);
-	}
-
-	private trigger(): void {
-		if (this._timer || this._pendingValidation || this._queue.length === 0) {
-			return;
-		}
-		if (this._timeout > 0) {
-			this._timer = setTimeout(() => {
-				this._timer = undefined;
-				this.processQueue();
-			}, this._timeout);
-		} else {
-			this._timer = setImmediate(() => {
-				this._timer = undefined;
-				this.processQueue();
-			});
-		}
-	}
-
-	private processQueue(): void {
-		let document = this._queue.shift();
-		if (document) {
-			let result = this._onValidate(document);
-			if (Thenable.is<void>(result) && this._mode === ValidationQueueMode.Sequential) {
-				this._pendingValidation = result;
-				result.then(() => {
-					this._pendingValidation = undefined;
-					this.trigger();
-				}, () => {
-					this._pendingValidation = undefined;
-					this.trigger();
-				});
-			} else {
-				this.trigger();
-			}
-		}
 	}
 }
 
@@ -850,6 +771,13 @@ export interface IConnection {
 	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): void;
 
 	/**
+	 * Installs a request handler that is invoked if no specific request handler can be found.
+	 *
+	 * @param handler a handler that handles all requests.
+	 */
+	onRequest(handler: StarRequestHandler): void;
+
+	/**
 	 * Send a request to the client.
 	 *
 	 * @param type The [RequestType](#RequestType) describing the request.
@@ -882,6 +810,13 @@ export interface IConnection {
 	 * @param handler The handler to install.
 	 */
 	onNotification(method: string, handler: GenericNotificationHandler): void;
+
+	/**
+	 * Installs a notification handler that is invoked if no specific notification handler can be found.
+	 *
+	 * @param handler a handler that handles all notifications.
+	 */
+	onNotification(handler: StarNotificationHandler): void;
 
 	/**
 	 * Send a notification to the client.
@@ -1172,7 +1107,7 @@ export interface IConnection {
  * @param outputStream The stream to write messages to.
  * @return a [connection](#IConnection)
  */
-export function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream): IConnection;
+export function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, strategy?: ConnectionStrategy): IConnection;
 
 /**
  * Creates a new connection.
@@ -1180,7 +1115,7 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
  * @param reader The message reader to read messages from.
  * @param writer The message writer to write message to.
  */
-export function createConnection(reader: MessageReader, writer: MessageWriter): IConnection;
+export function createConnection(reader: MessageReader, writer: MessageWriter, strategy?: ConnectionStrategy): IConnection;
 /**
  * Creates a new connection based on the processes command line arguments:
  * --ipc : connection using the node process ipc
@@ -1188,8 +1123,18 @@ export function createConnection(reader: MessageReader, writer: MessageWriter): 
  * @param reader The message reader to read messages from.
  * @param writer The message writer to write message to.
  */
-export function createConnection(): IConnection;
-export function createConnection(input?: any, output?: any): IConnection {
+export function createConnection(strategy?: ConnectionStrategy): IConnection;
+export function createConnection(arg1?: NodeJS.ReadableStream | MessageReader | ConnectionStrategy, arg2?: NodeJS.WritableStream | MessageWriter, arg3?: ConnectionStrategy): IConnection {
+	let input: any | undefined;
+	let output: any | undefined;
+	let strategy: ConnectionStrategy | undefined;
+	if (ConnectionStrategy.is(arg1)) {
+		strategy = arg1;
+	} else {
+		input = arg1;
+		output = arg2;
+		strategy = arg3;
+	}
 	if (!input && !output && process.argv.length > 2) {
 		let port: number | undefined = void 0;
 		let pipeName: string | undefined = void 0;
@@ -1257,7 +1202,7 @@ export function createConnection(input?: any, output?: any): IConnection {
 	}
 
 	const logger = new ConnectionLogger();
-	const connection = createMessageConnection(input, output, logger);
+	const connection = createMessageConnection(input, output, logger, strategy);
 	logger.attach(connection);
 	const remoteWindow = new RemoteWindowImpl(connection);
 	const telemetry = new TelemetryImpl(connection);
@@ -1282,10 +1227,10 @@ export function createConnection(input?: any, output?: any): IConnection {
 		listen: (): void => connection.listen(),
 
 		sendRequest: <R>(type: string | RPCMessageType, ...params: any[]): Thenable<R> => connection.sendRequest(Is.string(type) ? type : type.method, ...params),
-		onRequest: <R, E>(type: string | RPCMessageType, handler: GenericRequestHandler<R, E>): void => connection.onRequest(Is.string(type) ? type : type.method, handler),
+		onRequest: <R, E>(type: string | RPCMessageType | StarRequestHandler, handler?: GenericRequestHandler<R, E>): void => (connection as any).onRequest(type, handler),
 
 		sendNotification: (type: string | RPCMessageType, ...params: any[]): void => connection.sendNotification(Is.string(type) ? type : type.method, ...params),
-		onNotification: (type: string | RPCMessageType, handler: GenericNotificationHandler): void => connection.onNotification(Is.string(type) ? type : type.method, handler),
+		onNotification: (type: string | RPCMessageType | StarNotificationHandler, handler?: GenericNotificationHandler): void => (connection as any).onNotification(type, handler),
 
 		onInitialize: (handler) => initializeHandler = handler,
 		onInitialized: (handler) => connection.onNotification(InitializedNotification.type, handler),
