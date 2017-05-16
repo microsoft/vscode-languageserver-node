@@ -136,6 +136,46 @@ export class LinkedMap<K, V> {
 		}
 	}
 
+	/* JSON RPC run on es5 which has no Symbol.iterator
+	public keys(): IterableIterator<K> {
+		let current = this._head;
+		let iterator: IterableIterator<K> = {
+			[Symbol.iterator]() {
+				return iterator;
+			},
+			next():IteratorResult<K> {
+				if (current) {
+					let result = { value: current.key, done: false };
+					current = current.next;
+					return result;
+				} else {
+					return { value: undefined, done: true };
+				}
+			}
+		};
+		return iterator;
+	}
+
+	public values(): IterableIterator<V> {
+		let current = this._head;
+		let iterator: IterableIterator<V> = {
+			[Symbol.iterator]() {
+				return iterator;
+			},
+			next():IteratorResult<V> {
+				if (current) {
+					let result = { value: current.value, done: false };
+					current = current.next;
+					return result;
+				} else {
+					return { value: undefined, done: true };
+				}
+			}
+		};
+		return iterator;
+	}
+	*/
+
 	private addItemFirst(item: Item<K, V>): void {
 		// First time Insert
 		if (!this._head && !this._tail) {
