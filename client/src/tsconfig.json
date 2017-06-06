@@ -3,7 +3,7 @@
 		"target": "es6",
 		"module": "commonjs",
 		"moduleResolution": "node",
-		"sourceMap": false,
+		"sourceMap": true,
 		"inlineSources": false,
 		"declaration": true,
 		"stripInternal": true,
