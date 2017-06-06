@@ -144,7 +144,8 @@ export interface TextDocumentPositionParams {
 /**
  * Workspace specific client capabilities.
  */
-export interface WorkspaceClientCapabilites {
+
+export interface WorkspaceClientCapabilities {
 	/**
 	 * The client supports applying batch edits
 	 * to the workspace by supporting the request
@@ -202,6 +203,11 @@ export interface WorkspaceClientCapabilites {
 		dynamicRegistration?: boolean;
 	};
 }
+
+/**
+ * This is for backwards compatibility. Can be removed when we switch to 4.0.
+ */
+export type WorkspaceClientCapabilites = WorkspaceClientCapabilities;
 
 /**
  * Text document specific client capabilities.
@@ -399,7 +405,7 @@ export interface ClientCapabilities {
 	/**
 	 * Workspace specific client capabilities.
 	 */
-	workspace?: WorkspaceClientCapabilites;
+	workspace?: WorkspaceClientCapabilities;
 
 	/**
 	 * Text document specific client capabilities.
