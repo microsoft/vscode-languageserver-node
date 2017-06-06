@@ -295,9 +295,10 @@ export class LanguageClient extends BaseLanguageClient {
 			}
 		} else if (json.command) {
 			let command: Executable = <Executable>json;
+			let args = command.args || [];
 			let options = command.options || {};
 			options.cwd = options.cwd || Workspace.rootPath;
-			let process = cp.spawn(command.command, command.args, command.options);
+			let process = cp.spawn(command.command, args, options);
 			if (!process || !process.pid) {
 				return Promise.reject<MessageTransports>(`Launching server using command ${command.command} failed.`);
 			}
