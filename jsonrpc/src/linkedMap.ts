@@ -136,6 +136,26 @@ export class LinkedMap<K, V> {
 		}
 	}
 
+	public values(): V[] {
+		let result: V[] = [];
+		let current = this._head;
+		while(current) {
+			result.push(current.value);
+			current = current.next;
+		}
+ 		return result;
+	}
+
+	public keys(): K[] {
+		let result: K[] = [];
+		let current = this._head;
+		while(current) {
+			result.push(current.key);
+			current = current.next;
+		}
+ 		return result;
+	}
+
 	/* JSON RPC run on es5 which has no Symbol.iterator
 	public keys(): IterableIterator<K> {
 		let current = this._head;
@@ -242,6 +262,9 @@ export class LinkedMap<K, V> {
 
 			// Unlink the item
 			if (item === this._tail) {
+				// previous must be defined since item was not head but is tail
+				// So there are more than on item in the map
+				previous!.next = undefined;
 				this._tail = previous;
 			}
 			else {
@@ -265,6 +288,9 @@ export class LinkedMap<K, V> {
 
 			// Unlink the item.
 			if (item === this._head) {
+				// next must be defined since item was not tail but is head
+				// So there are more than on item in the map
+				next!.previous = undefined;
 				this._head = next;
 			} else {
 				// Both next and previous are not undefined since item was neither head nor tail.
