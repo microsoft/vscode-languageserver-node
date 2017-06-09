@@ -4,7 +4,7 @@
 	"command": "npm",
 	"isShellCommand": true,
 	"args": ["run", "watch"],
-	"showOutput": "silent",
+	"showOutput": "never",
 	"isBackground": true,
 	"problemMatcher": "$tsc-watch"
 }
