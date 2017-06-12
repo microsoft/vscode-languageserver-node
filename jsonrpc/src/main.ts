@@ -802,7 +802,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 	}
 
 	function undefinedToNull(param: any) {
-		if (param === undefined) {
+		if (param === void 0) {
 			return null;
 		} else {
 			return param;
