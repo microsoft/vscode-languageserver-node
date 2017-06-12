@@ -801,6 +801,14 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 		}
 	}
 
+	function undefinedToNull(param: any) {
+		if (param === undefined) {
+			return null;
+		} else {
+			return param;
+		}
+	}
+
 	function computeMessageParams(type: MessageType, params: any[]): any | any[] | null {
 		let result: any | any[] | null;
 		let numberOfParams = type.numberOfParams;
@@ -809,12 +817,12 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				result = null;
 				break;
 			case 1:
-				result = params[0] || null;
+				result = undefinedToNull(params[0]);
 				break;
 			default:
 				result = [];
 				for (let i = 0; i < params.length && i < numberOfParams; i++) {
-					result.push(params[i] || null);
+					result.push(undefinedToNull(params[i]));
 				}
 				if (params.length < numberOfParams) {
 					for (let i = params.length; i < numberOfParams; i++) {
@@ -888,7 +896,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 							messageParams = null;
 							token = params[0];
 						} else {
-							messageParams = params[0] || null;
+							messageParams = undefinedToNull(params[0]);
 						}
 						break;
 					default:
@@ -896,12 +904,12 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 						if (CancellationToken.is(params[last])) {
 							token = params[last];
 							if (params.length === 2) {
-								messageParams = params[0] || null;
+								messageParams = undefinedToNull(params[0]);
 							} else {
-								messageParams = params.slice(0, last).map(value => value || null);
+								messageParams = params.slice(0, last).map(value => undefinedToNull(value));
 							}
 						} else {
-							messageParams = params.map(value => value || null);
+							messageParams = params.map(value => undefinedToNull(value));
 						}
 						break;
 				}

@@ -179,6 +179,26 @@ describe('Connection', () => {
 		});
 	});
 
+	it('Receives 0 as 0', (done) => {
+ 		let type = new RequestType<number, number, void, void>('test/handleSingleRequest');
+ 		let duplexStream1 = new TestDuplex('ds1');
+ 		let duplexStream2 = new TestDuplex('ds2');
+
+ 		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, Logger);
+ 		server.onRequest(type, (param) => {
+ 			assert.strictEqual(param, 0);
+ 			return 0;
+ 		});
+ 		server.listen();
+
+ 		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, Logger);
+ 		client.listen();
+ 		client.sendRequest(type, 0).then(result => {
+ 			assert.deepEqual(result, 0);
+ 			done();
+ 		});
+ 	});
+
 	let testNotification = new NotificationType<{ value: boolean }, void>("testNotification");
 	it('Send and Receive Notification', (done) => {
 
