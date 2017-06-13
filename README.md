@@ -24,6 +24,12 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
+### 3.3.0 Server and Client
+
+* splitted the client into a base client and a main client to support reusing the client implementation in other environments.
+* made the request processing more async. So instead of processing a request immediatelly when the code gets notified by a Node.js callback the request is now put into a queue and processed from the queue. This allows for better dropping or folding of events if necessary.
+* bugs fixes see [April](https://github.com/Microsoft/vscode-languageserver-node/issues?q=is%3Aissue+milestone%3A%22April+2017%22+is%3Aclosed) und [May](https://github.com/Microsoft/vscode-languageserver-node/issues?q=is%3Aissue+is%3Aclosed+milestone%3A%22Mai+2017%22)
+
 ### 3.2.1 Server and Client
 
 * Fixed [Using wrong name for method `client/registerFeature`: should be `client/registerCapability`](https://github.com/Microsoft/vscode-languageserver-node/issues/199)
