@@ -371,7 +371,7 @@ export function isNotificationMessage(message: Message | undefined): message is 
 /**
  * Tests if the given message is a response message
  */
-export function isReponseMessage(message: Message | undefined): message is ResponseMessage {
+export function isResponseMessage(message: Message | undefined): message is ResponseMessage {
 	let candidate = <ResponseMessage>message;
 	return candidate && (candidate.result !== void 0 || !!candidate.error) && (is.string(candidate.id) || is.number(candidate.id) || candidate.id === null);
 }

@@ -1,10 +1,12 @@
 {
 	"version": "2.0.0",
-	"_runner": "terminal",
-	"command": "npm",
-	"isShellCommand": true,
-	"args": ["run", "watch"],
-	"showOutput": "never",
-	"isBackground": true,
-	"problemMatcher": "$tsc-watch"
+	"tasks": [
+		{
+			"customize": "vscode.npm.run watch",
+			"taskName": "npm: run watch",
+			"group": "build",
+			"problemMatcher": "$tsc-watch",
+			"isBackground": true
+		}
+	]
 }

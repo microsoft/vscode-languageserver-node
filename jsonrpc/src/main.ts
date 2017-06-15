@@ -12,7 +12,7 @@ import {
 	RequestMessage, RequestType, isRequestMessage,
 	RequestType0, RequestType1, RequestType2, RequestType3, RequestType4,
 	RequestType5, RequestType6, RequestType7, RequestType8, RequestType9,
-	ResponseMessage, isReponseMessage, ResponseError, ErrorCodes,
+	ResponseMessage, isResponseMessage, ResponseError, ErrorCodes,
 	NotificationMessage, isNotificationMessage,
 	NotificationType, NotificationType0, NotificationType1, NotificationType2, NotificationType3, NotificationType4,
 	NotificationType5, NotificationType6, NotificationType7, NotificationType8, NotificationType9
@@ -349,6 +349,7 @@ interface NotificationHandlerElement {
 function _createMessageConnection(messageReader: MessageReader, messageWriter: MessageWriter, logger: Logger, strategy?: ConnectionStrategy): MessageConnection {
 	let sequenceNumber = 0;
 	let notificationSquenceNumber = 0;
+	let unknownResponseSquenceNumber = 0;
 	const version: string = '2.0';
 
 	let starRequestHandler: StarRequestHandler | undefined = undefined;
@@ -371,14 +372,29 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 
 	let disposeEmitter: Emitter<void> = new Emitter<void>();
 
+	function createRequestQueueKey(id: string | number): string {
+		return 'req-' + id.toString();
+	}
+
+	function createResponseQueueKey(id: string | number | null): string {
+		if (id === null) {
+			return 'res-unknown-' + (++unknownResponseSquenceNumber).toString();
+		} else {
+			return 'res-' + id.toString();
+		}
+	}
+
+	function createNotificationQueueKey(): string {
+		return 'not-' + (++notificationSquenceNumber).toString();
+	}
+
 	function addMessageToQueue(queue: MessageQueue, message: Message): void {
 		if (isRequestMessage(message)) {
-			queue.set(message.id.toString(), message);
-		} else if (isReponseMessage(message) && message.id != null) {
-			queue.set(message.id.toString(), message);
+			queue.set(createRequestQueueKey(message.id), message);
+		} else if (isResponseMessage(message)) {
+			queue.set(createResponseQueueKey(message.id), message);
 		} else {
-			let id = 'n' + (++notificationSquenceNumber).toString();
-			queue.set(id, message);
+			queue.set(createNotificationQueueKey(), message);
 		}
 	}
 
@@ -440,7 +456,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				handleRequest(message);
 			} else if (isNotificationMessage(message)) {
 				handleNotification(message);
-			} else if (isReponseMessage(message)) {
+			} else if (isResponseMessage(message)) {
 				handleResponse(message);
 			} else {
 				handleInvalidMessage(message);
@@ -455,7 +471,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			// We have recevied a cancellation message. Check if the message is still in the queue
 			// and cancel it if allowed to do so.
 			if (isNotificationMessage(message) && message.method === CancelNotification.type.method) {
-				let key = (message.params as CancelParams).id.toString();
+				let key = createRequestQueueKey((message.params as CancelParams).id);
 				let toCancel = messageQueue.get(key);
 				if (isRequestMessage(toCancel)) {
 					let response = strategy && strategy.cancelUndispatched ? strategy.cancelUndispatched(toCancel, cancelUndispatched) : cancelUndispatched(toCancel);
