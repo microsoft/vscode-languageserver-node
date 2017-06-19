@@ -2317,7 +2317,7 @@ export abstract class BaseLanguageClient {
 				this._p2c.asWorkspaceEdit,
 				(error: ResponseError<void>) => {
 					this.logFailedRequest(RenameRequest.type, error);
-					Promise.resolve(new Error(error.message));
+					throw error.message;
 				}
 			);
 		};
