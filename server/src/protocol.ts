@@ -1432,12 +1432,12 @@ export namespace DocumentOnTypeFormattingRequest {
 
 export interface RenameParams {
 	/**
-	 * The document to format.
+	 * The document to rename.
 	 */
 	textDocument: TextDocumentIdentifier;
 
 	/**
-	 * The position at which this request was send.
+	 * The position at which this request was sent.
 	 */
 	position: Position;
 
