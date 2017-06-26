@@ -16,7 +16,7 @@ import { MessageWriter, SocketMessageWriter } from './messageWriter';
 export function generateRandomPipeName(): string {
 	const randomSuffix = randomBytes(21).toString('hex');
 	if (process.platform === 'win32') {
-		return `\\\\.\\pipe\\vscode-${randomSuffix}-sock`;
+		return `\\\\.\\pipe\\vscode-jsonrpc-${randomSuffix}-sock`;
 	} else {
 		// Mac/Unix: use socket file
 		return join(tmpdir(), `vscode-${randomSuffix}.sock`);
