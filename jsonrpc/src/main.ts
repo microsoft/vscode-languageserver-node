@@ -314,7 +314,7 @@ export interface MessageConnection {
 
 	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): void;
 
-	onError: Event<[Error, Message, number]>;
+	onError: Event<[Error, Message | undefined, number | undefined]>;
 	onClose: Event<void>;
 	onUnhandledNotification: Event<NotificationMessage>;
 	listen(): void;
