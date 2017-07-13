@@ -596,7 +596,7 @@ class RemoteClientImpl implements RemoteClient {
 	constructor(private _connection: MessageConnection, private _console: RemoteConsole) {
 	}
 
-	public register(typeOrRegistrations: string | RPCMessageType | BulkRegistration | BulkUnregistration, registerOptionsOrType?: string | RPCMessageType | any, registerOptions?: any): Thenable<Disposable> | Thenable<BulkUnregistration> | Thenable<BulkUnregistration> {
+	public register(typeOrRegistrations: string | RPCMessageType | BulkRegistration | BulkUnregistration, registerOptionsOrType?: string | RPCMessageType | any, registerOptions?: any): Thenable<any>  /* Thenable<Disposable | BulkUnregistration> */ {
 		if (typeOrRegistrations instanceof BulkRegistrationImpl) {
 			return this.registerMany(typeOrRegistrations);
 		} else if (typeOrRegistrations instanceof BulkUnregistrationImpl) {

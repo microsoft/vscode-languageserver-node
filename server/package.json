@@ -17,10 +17,10 @@
 	},
 	"typings": "./lib/main",
 	"devDependencies": {
-		"mocha": "3.2.0",
-		"typescript": "^2.3.0",
-		"@types/node": "^6.0.68",
-		"@types/mocha": "^2.2.40"
+		"mocha": "3.4.2",
+		"typescript": "^2.4.1",
+		"@types/node": "^6.0.81",
+		"@types/mocha": "^2.2.41"
 	},
 	"dependencies": {
 		"vscode-jsonrpc": "^3.3.0",

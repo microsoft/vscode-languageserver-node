@@ -236,13 +236,14 @@ export function resolveModulePath(workspaceRoot: string, moduleName: string, nod
 		if (!path.isAbsolute(nodePath)) {
 			nodePath = path.join(workspaceRoot, nodePath);
 		}
+
 		return resolve(moduleName, nodePath, nodePath, tracer).then((value) => {
 			if (FileSystem.isParent(nodePath, value)) {
 				return value;
 			} else {
 				return Promise.reject<string>(new Error(`Failed to load ${moduleName} from node path location.`));
 			}
-		}).then(undefined, (_error: any) => {
+		}).then<string, string>(undefined, (_error: any) => {
 			return resolve(moduleName, resolveGlobalNodePath(tracer), workspaceRoot, tracer);
 		});
 	} else {
