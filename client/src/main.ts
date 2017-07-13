@@ -189,7 +189,7 @@ export class LanguageClient extends BaseLanguageClient {
 				json = runDebug.run;
 			}
 		} else {
-			json = server;
+			json = server as NodeModule;
 		}
 		if (json.module) {
 			let node: NodeModule = <NodeModule>json;
