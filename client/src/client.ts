@@ -1553,6 +1553,9 @@ export abstract class BaseLanguageClient {
 			handler.dispose();
 		}
 		this._registeredHandlers.clear();
+		if (this._outputChannel) {
+			this._outputChannel.dispose();
+		}
 		if (diagnostics && this._diagnostics) {
 			this._diagnostics.dispose();
 			this._diagnostics = undefined;
