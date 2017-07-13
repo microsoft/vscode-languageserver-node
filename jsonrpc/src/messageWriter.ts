@@ -36,7 +36,7 @@ export abstract class AbstractMessageWriter {
 		this.closeEmitter.dispose();
 	}
 
-	public get onError(): Event<[Error, Message, number]> {
+	public get onError(): Event<[Error, Message | undefined, number | undefined]> {
 		return this.errorEmitter.event;
 	}
 
