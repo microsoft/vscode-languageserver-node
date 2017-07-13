@@ -146,7 +146,7 @@ class ConsoleLogger implements Logger {
 }
 
 interface ConnectionErrorHandler {
-	(error: Error, message: Message, count: number): void;
+	(error: Error, message: Message | undefined, count: number | undefined): void;
 }
 
 interface ConnectionCloseHandler {
