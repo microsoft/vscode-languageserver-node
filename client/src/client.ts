@@ -437,8 +437,13 @@ export interface Middleware {
 	resolveDocumentLink?: (link: VDocumentLink, token: CancellationToken, next: ResolveDocumentLinkSignature) => ProviderResult<VDocumentLink>;
 }
 
+export interface DocumentSelectorFactory {
+	(method:string): DocumentSelector | string[];
+}
+
 export interface LanguageClientOptions {
 	documentSelector?: DocumentSelector | string[];
+	documentSelectorFactory?:DocumentSelectorFactory;
 	synchronize?: SynchronizeOptions;
 	diagnosticCollectionName?: string;
 	outputChannelName?: string;
@@ -460,6 +465,7 @@ export interface LanguageClientOptions {
 
 interface ResolvedClientOptions {
 	documentSelector?: DocumentSelector;
+	documentSelectorFactory?:DocumentSelectorFactory;
 	synchronize: SynchronizeOptions;
 	diagnosticCollectionName?: string;
 	outputChannelName: string;
@@ -1079,6 +1085,7 @@ export abstract class BaseLanguageClient {
 		clientOptions = clientOptions || {};
 		this._clientOptions = {
 			documentSelector: clientOptions.documentSelector || [],
+			documentSelectorFactory: clientOptions.documentSelectorFactory,
 			synchronize: clientOptions.synchronize || {},
 			diagnosticCollectionName: clientOptions.diagnosticCollectionName,
 			outputChannelName: clientOptions.outputChannelName || this._name,
@@ -1405,6 +1412,14 @@ export abstract class BaseLanguageClient {
 		return this._connectionPromise;
 	}
 
+	private resolveDocumentSelector(options:ResolvedClientOptions, method:string) {
+		if(options.documentSelectorFactory) {
+			return options.documentSelectorFactory(method) || options.documentSelector || [];
+		} else {
+			return options.documentSelector || [];
+		}
+	}
+
 	private initialize(connection: IConnection): Thenable<InitializeResult> {
 		this.refreshTrace(connection, false);
 		let initOption = this._clientOptions.initializationOptions;
@@ -1435,8 +1450,7 @@ export abstract class BaseLanguageClient {
 
 			this.hookFileEvents(connection);
 			this.hookConfigurationChanged(connection);
-			if (this._clientOptions.documentSelector) {
-				let selectorOptions: TextDocumentRegistrationOptions = { documentSelector: this._clientOptions.documentSelector };
+			if (this._clientOptions.documentSelector || this._clientOptions.documentSelectorFactory) {
 				let textDocumentSyncOptions: TextDocumentSyncOptions | undefined = undefined;
 				if (is.number(this._capabilites.textDocumentSync) && this._capabilites.textDocumentSync !== TextDocumentSyncKind.None) {
 					textDocumentSyncOptions = {
@@ -1453,35 +1467,53 @@ export abstract class BaseLanguageClient {
 					let registeredHandlers: FeatureHandlerMap = this._registeredHandlers as FeatureHandlerMap;
 					if (textDocumentSyncOptions.openClose) {
 						registeredHandlers.get(DidOpenTextDocumentNotification.type.method).register(
-							{ id: UUID.generateUuid(), registerOptions: selectorOptions }
+							{
+								id: UUID.generateUuid(),
+								registerOptions: { documentSelector: this.resolveDocumentSelector(this._clientOptions, DidOpenTextDocumentNotification.type.method) }
+							}
 						);
 						registeredHandlers.get(DidCloseTextDocumentNotification.type.method).register(
-							{ id: UUID.generateUuid(), registerOptions: selectorOptions }
+							{
+								id: UUID.generateUuid(),
+								registerOptions: { documentSelector: this.resolveDocumentSelector(this._clientOptions, DidCloseTextDocumentNotification.type.method) }
+							}
 						);
 					}
 					if (textDocumentSyncOptions.change !== TextDocumentSyncKind.None) {
 						registeredHandlers.get(DidChangeTextDocumentNotification.type.method).register(
 							{
 								id: UUID.generateUuid(),
-								registerOptions: Object.assign({}, selectorOptions, { syncKind: textDocumentSyncOptions.change }) as TextDocumentChangeRegistrationOptions
+								registerOptions: Object.assign(
+									{ documentSelector: this.resolveDocumentSelector(this._clientOptions, DidChangeTextDocumentNotification.type.method) },
+									{ syncKind: textDocumentSyncOptions.change }
+								) as TextDocumentChangeRegistrationOptions
 							}
 						);
 					}
 					if (textDocumentSyncOptions.willSave) {
 						registeredHandlers.get(WillSaveTextDocumentNotification.type.method).register(
-							{ id: UUID.generateUuid(), registerOptions: selectorOptions }
+							{
+								id: UUID.generateUuid(),
+								registerOptions: { documentSelector: this.resolveDocumentSelector(this._clientOptions, WillSaveTextDocumentNotification.type.method) }
+							}
 						);
 					}
 					if (textDocumentSyncOptions.willSaveWaitUntil) {
 						registeredHandlers.get(WillSaveTextDocumentWaitUntilRequest.type.method).register(
-							{ id: UUID.generateUuid(), registerOptions: selectorOptions }
+							{
+								id: UUID.generateUuid(),
+								registerOptions: { documentSelector: this.resolveDocumentSelector(this._clientOptions, WillSaveTextDocumentWaitUntilRequest.type.method) }
+							}
 						);
 					}
 					if (textDocumentSyncOptions.save) {
 						registeredHandlers.get(DidSaveTextDocumentNotification.type.method).register(
 							{
 								id: UUID.generateUuid(),
-								registerOptions: Object.assign({}, selectorOptions, { includeText: !!textDocumentSyncOptions.save.includeText }) as TextDocumentSaveRegistrationOptions
+								registerOptions: Object.assign(
+									{ documentSelector: this.resolveDocumentSelector(this._clientOptions, DidSaveTextDocumentNotification.type.method) },
+									{ includeText: !!textDocumentSyncOptions.save.includeText }
+								) as TextDocumentSaveRegistrationOptions
 							}
 						);
 					}
@@ -1829,7 +1861,7 @@ export abstract class BaseLanguageClient {
 			params.registrations.forEach((element) => {
 				const handler = this._registeredHandlers.get(element.method);
 				const options = element.registerOptions || {};
-				options.documentSelector = options.documentSelector || this._clientOptions.documentSelector;
+				options.documentSelector = options.documentSelector || this.resolveDocumentSelector(this._clientOptions, element.method);
 				const data: RegistrationData<any> = {
 					id: element.id,
 					registerOptions: options
@@ -1879,25 +1911,32 @@ export abstract class BaseLanguageClient {
 	};
 
 	private hookCapabilities(_connection: IConnection): void {
-		let documentSelector = this._clientOptions.documentSelector;
-		if (!documentSelector) {
+		if (!this._clientOptions.documentSelector && !this._clientOptions.documentSelectorFactory) {
 			return;
 		}
-		let selectorOptions: TextDocumentRegistrationOptions = { documentSelector: documentSelector };
 		let registeredHandlers: FeatureHandlerMap = this._registeredHandlers as FeatureHandlerMap;
 		if (this._capabilites.completionProvider) {
-			let options: CompletionRegistrationOptions = Object.assign({}, selectorOptions, this._capabilites.completionProvider);
+			let options: CompletionRegistrationOptions = Object.assign(
+				{ documentSelector: this.resolveDocumentSelector(this._clientOptions, CompletionRequest.type.method) },
+				this._capabilites.completionProvider
+			);
 			registeredHandlers.get(CompletionRequest.type.method).register(
 				{ id: UUID.generateUuid(), registerOptions: options }
 			);
 		}
 		if (this._capabilites.hoverProvider) {
 			registeredHandlers.get(HoverRequest.type.method).register(
-				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
+				{
+					id: UUID.generateUuid(),
+					registerOptions: { documentSelector: this.resolveDocumentSelector(this._clientOptions, HoverRequest.type.method) }
+				}
 			);
 		}
 		if (this._capabilites.signatureHelpProvider) {
-			let options: SignatureHelpRegistrationOptions = Object.assign({}, selectorOptions, this._capabilites.signatureHelpProvider);
+			let options: SignatureHelpRegistrationOptions = Object.assign(
+				{ documentSelector: this.resolveDocumentSelector(this._clientOptions, SignatureHelpRequest.type.method) },
+				this._capabilites.signatureHelpProvider
+			);
 			registeredHandlers.get(SignatureHelpRequest.type.method).register(
 				{ id: UUID.generateUuid(), registerOptions: options }
 			);
@@ -1905,42 +1944,63 @@ export abstract class BaseLanguageClient {
 
 		if (this._capabilites.definitionProvider) {
 			registeredHandlers.get(DefinitionRequest.type.method).register(
-				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
+				{
+					id: UUID.generateUuid(),
+					registerOptions: { documentSelector: this.resolveDocumentSelector(this._clientOptions, DefinitionRequest.type.method) }
+				}
 			);
 		}
 
 		if (this._capabilites.referencesProvider) {
 			registeredHandlers.get(ReferencesRequest.type.method).register(
-				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
+				{
+					id: UUID.generateUuid(),
+					registerOptions: { documentSelector: this.resolveDocumentSelector(this._clientOptions, ReferencesRequest.type.method) }
+				}
 			);
 		}
 
 		if (this._capabilites.documentHighlightProvider) {
 			registeredHandlers.get(DocumentHighlightRequest.type.method).register(
-				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
+				{
+					id: UUID.generateUuid(),
+					registerOptions: { documentSelector: this.resolveDocumentSelector(this._clientOptions, DocumentHighlightRequest.type.method) }
+				}
 			);
 		}
 
 		if (this._capabilites.documentSymbolProvider) {
 			registeredHandlers.get(DocumentSymbolRequest.type.method).register(
-				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
+				{
+					id: UUID.generateUuid(),
+					registerOptions: { documentSelector: this.resolveDocumentSelector(this._clientOptions, DocumentSymbolRequest.type.method) }
+				}
 			);
 		}
 
 		if (this._capabilites.workspaceSymbolProvider) {
 			registeredHandlers.get(WorkspaceSymbolRequest.type.method).register(
-				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
+				{
+					id: UUID.generateUuid(),
+					registerOptions: { documentSelector: this.resolveDocumentSelector(this._clientOptions, WorkspaceSymbolRequest.type.method) }
+				}
 			);
 		}
 
 		if (this._capabilites.codeActionProvider) {
 			registeredHandlers.get(CodeActionRequest.type.method).register(
-				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
+				{
+					id: UUID.generateUuid(),
+					registerOptions: { documentSelector: this.resolveDocumentSelector(this._clientOptions, CodeActionRequest.type.method) }
+				}
 			);
 		}
 
 		if (this._capabilites.codeLensProvider) {
-			let options: CodeLensRegistrationOptions = Object.assign({}, selectorOptions, this._capabilites.codeLensProvider);
+			let options: CodeLensRegistrationOptions = Object.assign(
+				{ documentSelector: this.resolveDocumentSelector(this._clientOptions, CodeLensRequest.type.method) } ,
+				this._capabilites.codeLensProvider
+			);
 			registeredHandlers.get(CodeLensRequest.type.method).register(
 				{ id: UUID.generateUuid(), registerOptions: options }
 			);
@@ -1948,18 +2008,27 @@ export abstract class BaseLanguageClient {
 
 		if (this._capabilites.documentFormattingProvider) {
 			registeredHandlers.get(DocumentFormattingRequest.type.method).register(
-				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
+				{
+					id: UUID.generateUuid(),
+					registerOptions: { documentSelector: this.resolveDocumentSelector(this._clientOptions, DocumentFormattingRequest.type.method) }
+				}
 			);
 		}
 
 		if (this._capabilites.documentRangeFormattingProvider) {
 			registeredHandlers.get(DocumentRangeFormattingRequest.type.method).register(
-				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
+				{
+					id: UUID.generateUuid(),
+					registerOptions: { documentSelector: this.resolveDocumentSelector(this._clientOptions, DocumentRangeFormattingRequest.type.method) }
+				}
 			);
 		}
 
 		if (this._capabilites.documentOnTypeFormattingProvider) {
-			let options: DocumentOnTypeFormattingRegistrationOptions = Object.assign({}, selectorOptions, this._capabilites.documentOnTypeFormattingProvider);
+			let options: DocumentOnTypeFormattingRegistrationOptions = Object.assign(
+				{ documentSelector: this.resolveDocumentSelector(this._clientOptions, DocumentOnTypeFormattingRequest.type.method) },
+				this._capabilites.documentOnTypeFormattingProvider
+			);
 			registeredHandlers.get(DocumentOnTypeFormattingRequest.type.method).register(
 				{ id: UUID.generateUuid(), registerOptions: options }
 			);
@@ -1967,12 +2036,18 @@ export abstract class BaseLanguageClient {
 
 		if (this._capabilites.renameProvider) {
 			registeredHandlers.get(RenameRequest.type.method).register(
-				{ id: UUID.generateUuid(), registerOptions: Object.assign({}, selectorOptions) }
+				{
+					id: UUID.generateUuid(),
+					registerOptions: { documentSelector: this.resolveDocumentSelector(this._clientOptions, RenameRequest.type.method) }
+				}
 			);
 		}
 
 		if (this._capabilites.documentLinkProvider) {
-			let options: DocumentLinkRegistrationOptions = Object.assign({}, selectorOptions, this._capabilites.documentLinkProvider);
+			let options: DocumentLinkRegistrationOptions = Object.assign(
+				{ documentSelector: this.resolveDocumentSelector(this._clientOptions, DocumentLinkRequest.type.method) },
+				this._capabilites.documentLinkProvider
+			);
 			registeredHandlers.get(DocumentLinkRequest.type.method).register(
 				{ id: UUID.generateUuid(), registerOptions: options }
 			);
