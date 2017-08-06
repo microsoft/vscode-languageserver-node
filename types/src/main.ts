@@ -768,7 +768,7 @@ export interface CompletionItem {
 	/**
 	 * An [edit](#TextEdit) which is applied to a document when selecting
 	 * this completion. When an edit is provided the value of
-	 * [insertText](#CompletionItem.insertText) and [range](#CompletionItem.range) is ignored.
+	 * [insertText](#CompletionItem.insertText).
 	 */
 	textEdit?: TextEdit;
 
