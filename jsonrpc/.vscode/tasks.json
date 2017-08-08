@@ -4,8 +4,9 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"type": "npm",
-			"script": "watch",
+			"taskName": "TypeScript Compile",
+			"type": "shell",
+			"command": "node_modules\\.bin\\tsc -w -p ./src",
 			"isBackground": true,
 			"problemMatcher": [
 				"$tsc-watch"

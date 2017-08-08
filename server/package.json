@@ -17,9 +17,9 @@
 	},
 	"typings": "./lib/main",
 	"devDependencies": {
-		"mocha": "3.4.2",
-		"typescript": "^2.4.1",
-		"@types/node": "^6.0.81",
+		"mocha": "3.5.0",
+		"typescript": "^2.4.2",
+		"@types/node": "^6.0.85",
 		"@types/mocha": "^2.2.41"
 	},
 	"dependencies": {
