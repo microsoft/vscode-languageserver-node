@@ -6,6 +6,11 @@
 
 import { RequestType, RequestType0, NotificationType } from 'vscode-jsonrpc';
 
+export interface WorkspaceClientCapabilities {
+	workspaceFolders?: boolean;
+	getConfiguration?: boolean;
+}
+
 //---- Get Configuration request ----
 
 /**
@@ -53,7 +58,7 @@ export interface WorkspaceFolder {
  * The `workspace/getWorkspaceFolders` is sent from the server to the client to fetch the open workspace folders.
  */
 export namespace GetWorkspaceFolders {
-	export const type = new RequestType0<WorkspaceFolder[], void, void>('workspace/getWorkspaceFolders');
+	export const type = new RequestType0<WorkspaceFolder[] | null, void, void>('workspace/getWorkspaceFolders');
 }
 
 /**
@@ -61,7 +66,7 @@ export namespace GetWorkspaceFolders {
  * specific resource.
  */
 export namespace GetWorkspaceFolder {
-	export const type = new RequestType<string, WorkspaceFolder | undefined, void, void>('workspace/getWorkspaceFolders');
+	export const type = new RequestType<string, WorkspaceFolder | null, void, void>('workspace/getWorkspaceFolders');
 }
 
 export namespace DidChangeWorkspaceFolders {

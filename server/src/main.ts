@@ -763,7 +763,7 @@ class TelemetryImpl implements Telemetry {
 /**
  * Interface to describe the shape of the server connection.
  */
-export interface IConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _> {
+export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _> {
 
 	/**
 	 * Start listening on the input stream for messages to process.
@@ -1117,43 +1117,7 @@ export interface IConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	dispose(): void;
 }
 
-/**
- * Creates a new connection using a the given streams.
- *
- * @param inputStream The stream to read messages from.
- * @param outputStream The stream to write messages to.
- * @param strategy An optional connection strategy to control additinal settings
- * @return a [connection](#IConnection)
- */
-export function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, strategy?: ConnectionStrategy): IConnection;
-
-/**
- * Creates a new connection.
- *
- * @param reader The message reader to read messages from.
- * @param writer The message writer to write message to.
- * @param strategy An optional connection strategy to control additinal settings
- */
-export function createConnection(reader: MessageReader, writer: MessageWriter, strategy?: ConnectionStrategy): IConnection;
-/**
- * Creates a new connection based on the processes command line arguments:
- * --ipc : connection using the node process ipc
- *
- * @param strategy An optional connection strategy to control additinal settings
- */
-export function createConnection(strategy?: ConnectionStrategy): IConnection;
-export function createConnection(arg1?: NodeJS.ReadableStream | MessageReader | ConnectionStrategy, arg2?: NodeJS.WritableStream | MessageWriter, arg3?: ConnectionStrategy): IConnection {
-	let input: NodeJS.ReadableStream | MessageReader | undefined;
-	let output: NodeJS.WritableStream | MessageWriter | undefined;
-	let strategy: ConnectionStrategy | undefined;
-	if (ConnectionStrategy.is(arg1)) {
-		strategy = arg1;
-	} else {
-		input = arg1;
-		output = arg2;
-		strategy = arg3;
-	}
-	return _createConnection(input, output, strategy, undefined);
+export interface IConnection extends Connection {
 }
 
 export interface RemoteFactory<B, P> {
@@ -1172,6 +1136,7 @@ export type RemoteTracerFactory<P> = RemoteFactory<Tracer, P>;
 export type RemoteWorkspaceFactory<P> = RemoteFactory<RemoteWorkspace, P>;
 
 export interface RemoteFactories<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _> {
+	__brand: 'remoteFactories';
 	console?: RemoteConsoleFactory<PConsole>;
 	tracer?: RemoteTracerFactory<PTracer>;
 	telemetry?: RemoteTelemetryFactory<PTelemetry>;
@@ -1180,6 +1145,86 @@ export interface RemoteFactories<PConsole = _, PTracer = _, PTelemetry = _, PCli
 	workspace?: RemoteWorkspaceFactory<PWorkspace>;
 }
 
+/**
+ * Creates a new connection based on the processes command line arguments:
+ *
+ * @param strategy An optional connection strategy to control additinal settings
+ */
+export function createConnection(strategy?: ConnectionStrategy): IConnection;
+
+/**
+ * Creates a new connection using a the given streams.
+ *
+ * @param inputStream The stream to read messages from.
+ * @param outputStream The stream to write messages to.
+ * @param strategy An optional connection strategy to control additinal settings
+ * @return a [connection](#IConnection)
+ */
+export function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, strategy?: ConnectionStrategy): IConnection;
+
+/**
+ * Creates a new connection.
+ *
+ * @param reader The message reader to read messages from.
+ * @param writer The message writer to write message to.
+ * @param strategy An optional connection strategy to control additinal settings
+ */
+export function createConnection(reader: MessageReader, writer: MessageWriter, strategy?: ConnectionStrategy): IConnection;
+
+/**
+ * Creates a new connection based on the processes command line arguments. The new connection surfaces proposed API
+ *
+ * @param factories: the factories to use to implement the proposed API
+ * @param strategy An optional connection strategy to control additinal settings
+ */
+export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _>(
+	factories: RemoteFactories<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,
+	strategy?: ConnectionStrategy
+): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>;
+
+/**
+ * Creates a new connection using a the given streams.
+ *
+ * @param inputStream The stream to read messages from.
+ * @param outputStream The stream to write messages to.
+ * @param strategy An optional connection strategy to control additinal settings
+ * @return a [connection](#IConnection)
+ */
+export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _>(
+	factories: RemoteFactories<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,
+	inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, strategy?: ConnectionStrategy
+): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>;
+
+/**
+ * Creates a new connection.
+ *
+ * @param reader The message reader to read messages from.
+ * @param writer The message writer to write message to.
+ * @param strategy An optional connection strategy to control additinal settings
+ */
+export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _>(
+	factories: RemoteFactories<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,
+	reader: MessageReader, writer: MessageWriter, strategy?: ConnectionStrategy
+): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>;
+
+export function createConnection(arg1?: any, arg2?: any, arg3?: any, arg4?: any): IConnection {
+	let factories: RemoteFactories | undefined;
+	let input: NodeJS.ReadableStream | MessageReader | undefined;
+	let output: NodeJS.WritableStream | MessageWriter | undefined;
+	let strategy: ConnectionStrategy | undefined;
+	if ((arg1 as RemoteFactories).__brand === 'remoteFactories') {
+		factories = arg1;
+		arg1 = arg2; arg2 = arg3; arg3 = arg4;
+	}
+	if (ConnectionStrategy.is(arg1)) {
+		strategy = arg1;
+	} else {
+		input = arg1;
+		output = arg2;
+		strategy = arg3;
+	}
+	return _createConnection(input, output, strategy, factories);
+}
 
 /**
  * Creates a new connection using a the given streams. The new connection surfaces proposed API
@@ -1193,7 +1238,7 @@ export interface RemoteFactories<PConsole = _, PTracer = _, PTelemetry = _, PCli
 export function createProposedConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _>(
 	factories: RemoteFactories<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,
 	inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, strategy?: ConnectionStrategy
-): IConnection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>;
+): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>;
 
 /**
  * Creates a new connection.
@@ -1206,7 +1251,7 @@ export function createProposedConnection<PConsole = _, PTracer = _, PTelemetry =
 export function createProposedConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _>(
 	factories: RemoteFactories<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,
 	reader: MessageReader, writer: MessageWriter, strategy?: ConnectionStrategy
-): IConnection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>;
+): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>;
 
 /**
  * Creates a new connection based on the processes command line arguments:
@@ -1218,14 +1263,14 @@ export function createProposedConnection<PConsole = _, PTracer = _, PTelemetry =
 export function createProposedConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _>(
 	factories: RemoteFactories<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,
 	strategy?: ConnectionStrategy
-): IConnection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>;
+): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>;
 
 export function createProposedConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _>(
 	factories: RemoteFactories<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,
 	arg1?: NodeJS.ReadableStream | MessageReader | ConnectionStrategy,
 	arg2?: NodeJS.WritableStream | MessageWriter,
 	arg3?: ConnectionStrategy
-): IConnection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace> {
+): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace> {
 	let input: NodeJS.ReadableStream | MessageReader | undefined;
 	let output: NodeJS.WritableStream | MessageWriter | undefined;
 	let strategy: ConnectionStrategy | undefined;
@@ -1242,7 +1287,7 @@ export function createProposedConnection<PConsole = _, PTracer = _, PTelemetry =
 function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _>(
 	input?: NodeJS.ReadableStream | MessageReader, output?: NodeJS.WritableStream | MessageWriter, strategy?: ConnectionStrategy,
 	factories?: RemoteFactories<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>
-): IConnection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace> {
+): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace> {
 	if (!input && !output && process.argv.length > 2) {
 		let port: number | undefined = void 0;
 		let pipeName: string | undefined = void 0;
@@ -1331,7 +1376,7 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 	let shutdownHandler: RequestHandler0<void, void> | undefined = undefined;
 	let initializeHandler: RequestHandler<InitializeParams, InitializeResult, InitializeError> | undefined = undefined;
 	let exitHandler: NotificationHandler0 | undefined = undefined;
-	let protocolConnection: IConnection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace> & ConnectionState = {
+	let protocolConnection: Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace> & ConnectionState = {
 		listen: (): void => connection.listen(),
 
 		sendRequest: <R>(type: string | RPCMessageType, ...params: any[]): Thenable<R> => connection.sendRequest(Is.string(type) ? type : type.method, ...params),
@@ -1465,6 +1510,7 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 // Export the protocol currently in proposed state.
 
 import { factories, RemoteWorkspaceProposed } from './proposed';
+export * from './protocol.proposed';
 export interface ProposedProtocol {
 	factories: RemoteFactories<_, _, _, _, _, RemoteWorkspaceProposed>
 }

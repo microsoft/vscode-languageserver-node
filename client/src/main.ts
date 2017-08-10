@@ -340,3 +340,5 @@ export class SettingMonitor {
 		}
 	}
 }
+
+export * from './proposed';

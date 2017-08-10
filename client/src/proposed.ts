@@ -1,0 +1,142 @@
+/* --------------------------------------------------------------------------------------------
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License. See License.txt in the project root for license information.
+ * ------------------------------------------------------------------------------------------ */
+'use strict';
+
+import { workspace, Disposable, WorkspaceFolder as VWorkspaceFolder } from 'vscode';
+
+import { FeatureHandler, RegistrationData, BaseLanguageClient } from './client';
+import { ClientCapabilities, DocumentSelector, ServerCapabilities } from './protocol';
+
+import {
+	WorkspaceFolder, GetWorkspaceFolders, GetWorkspaceFolder, WorkspaceClientCapabilities,
+	DidChangeWorkspaceFolders, DidChangeWorkspaceFoldersParams, GetConfigurationRequest
+} from './protocol.proposed';
+
+export class WorkspaceFolderFeature implements FeatureHandler<undefined> {
+
+	private _listeners: Map<string, Disposable> = new Map<string, Disposable>();
+
+	constructor(private _client: BaseLanguageClient) {
+	}
+
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
+		capabilities.workspace = capabilities.workspace || {};
+		let workspace = capabilities.workspace as WorkspaceClientCapabilities;
+		workspace.workspaceFolders = true;
+	}
+
+	public initialized(_documentSelector: DocumentSelector | undefined, _capabilities: ServerCapabilities): void {
+		let client = this._client;
+		client.onRequest(GetWorkspaceFolders.type, () => {
+			let folders = workspace.workspaceFolders;
+			if (folders === void 0) {
+				return null;
+			}
+			let result: WorkspaceFolder[] = folders.map((folder) => {
+				return this.asProtocol(folder);
+			});
+			return result;
+		});
+
+		client.onRequest(GetWorkspaceFolder.type, (uri: string) => {
+			let folder = workspace.getWorkspaceFolder(client.protocol2CodeConverter.asUri(uri));
+			if (folder === void 0) {
+				return null;
+			}
+			return this.asProtocol(folder);
+		});
+	}
+
+	public register(data: RegistrationData<undefined>): void {
+		let id = data.id;
+		let disposable = workspace.onDidChangeWorkspaceFolders((event) => {
+			let params: DidChangeWorkspaceFoldersParams = {
+				event: {
+					added: event.added.map(folder => this.asProtocol(folder)),
+					removed: event.removed.map(folder => this.asProtocol(folder))
+				}
+			}
+			this._client.sendNotification(DidChangeWorkspaceFolders.type, params);
+		});
+		this._listeners.set(id, disposable);
+	}
+
+	public unregister(id: string): void {
+		let disposable = this._listeners.get(id);
+		if (disposable === void 0) {
+			return;
+		}
+		this._listeners.delete(id);
+		disposable.dispose();
+	}
+
+	public dispose(): void {
+		for (let disposable of this._listeners.values()) {
+			disposable.dispose();
+		}
+		this._listeners.clear();
+	}
+
+	private asProtocol(workspaceFolder: VWorkspaceFolder): WorkspaceFolder;
+	private asProtocol(workspaceFolder: undefined): null;
+	private asProtocol(workspaceFolder: VWorkspaceFolder | undefined): WorkspaceFolder | null {
+		if (workspaceFolder === void 0) {
+			return null;
+		}
+		return { uri: this._client.code2ProtocolConverter.asUri(workspaceFolder.uri), name: workspaceFolder.name };
+	}
+}
+
+export class GetConfigurationFeature implements FeatureHandler<undefined> {
+	constructor(private _client: BaseLanguageClient) {
+	}
+
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
+		capabilities.workspace = capabilities.workspace || {};
+		let workspace = capabilities.workspace as WorkspaceClientCapabilities;
+		workspace.getConfiguration = true;
+	}
+
+	public initialized(_documentSelector: DocumentSelector | undefined, _capabilities: ServerCapabilities): void {
+		let client = this._client;
+		client.onRequest(GetConfigurationRequest.type, (params) => {
+			let section = params.section === null ? undefined : params.section;
+			let resource = params.uri ? this._client.protocol2CodeConverter.asUri(params.uri) : undefined;
+			let result: any = null;
+			if (section) {
+				let index = section.lastIndexOf('.');
+				if (index === -1) {
+					let config = workspace.getConfiguration(section.substr(0, index));
+					if (config) {
+						result = config.get(section.substr(index + 1))
+					}
+				} else {
+					result = workspace.getConfiguration(undefined, resource).get(section);
+				}
+			} else {
+				let config = workspace.getConfiguration(undefined, resource);
+				result = {};
+				for (let key of Object.keys(config)) {
+					if (config.has(key)) {
+						result[key] = config.get(key);
+					}
+				}
+			}
+			if (!result) {
+				return null;
+			}
+			return result;
+		});
+	}
+
+	public register(_data: RegistrationData<undefined>): void {
+	}
+
+	public unregister(_id: string): void {
+	}
+
+	public dispose(): void {
+	}
+}
