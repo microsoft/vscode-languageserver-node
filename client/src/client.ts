@@ -67,7 +67,7 @@ import {
 import * as c2p from './codeConverter';
 import * as p2c from './protocolConverter';
 
-import * as is from './utils/is';
+import * as Is from './utils/is';
 import { Delayer } from './utils/async'
 import * as UUID from './utils/uuid';
 
@@ -163,11 +163,11 @@ function createConnection(input: any, output: any, errorHandler: ConnectionError
 
 		listen: (): void => connection.listen(),
 
-		sendRequest: <R>(type: string | RPCMessageType, ...params: any[]): Thenable<R> => connection.sendRequest(is.string(type) ? type : type.method, ...params),
-		onRequest: <R, E>(type: string | RPCMessageType, handler: GenericRequestHandler<R, E>): void => connection.onRequest(is.string(type) ? type : type.method, handler),
+		sendRequest: <R>(type: string | RPCMessageType, ...params: any[]): Thenable<R> => connection.sendRequest(Is.string(type) ? type : type.method, ...params),
+		onRequest: <R, E>(type: string | RPCMessageType, handler: GenericRequestHandler<R, E>): void => connection.onRequest(Is.string(type) ? type : type.method, handler),
 
-		sendNotification: (type: string | RPCMessageType, params?: any): void => connection.sendNotification(is.string(type) ? type : type.method, params),
-		onNotification: (type: string | RPCMessageType, handler: GenericNotificationHandler): void => connection.onNotification(is.string(type) ? type : type.method, handler),
+		sendNotification: (type: string | RPCMessageType, params?: any): void => connection.sendNotification(Is.string(type) ? type : type.method, params),
+		onNotification: (type: string | RPCMessageType, handler: GenericNotificationHandler): void => connection.onNotification(Is.string(type) ? type : type.method, handler),
 
 		trace: (value: Trace, tracer: Tracer, sendNotification: boolean = false): void => connection.trace(value, tracer, sendNotification),
 
@@ -494,21 +494,74 @@ enum ClientState {
 	Stopped
 }
 
+/**
+ * A static feature. A static feature can't be dynamically activate via the
+ * server. It is wired during the initialize sequence.
+ */
+export interface StaticFeature {
+	/**
+	 * Called to fill in the client capabilities this feature implements.
+	 *
+	 * @param capabilities The client capabilities to fill.
+	 */
+	fillClientCapabilities(capabilities: ClientCapabilities): void;
+
+	/**
+	 * Initialize the feature. This method is called on a feature instance
+	 * when the client has successfully received the initalize request from
+	 * the server and before the client sends the initialized notification
+	 * to the server.
+	 *
+	 * @param documentSelector the document selector pass to the client's constuctor.
+	 *  May be `undefined` if the client was created without a selector.
+	 * @param capabilities the server capabilities
+	 */
+	initialize(documentSelector: DocumentSelector | undefined, capabilities: ServerCapabilities): void;
+}
+
 export interface RegistrationData<T> {
 	id: string;
 	registerOptions: T;
 }
 
-export interface FeatureHandler<T> {
+export interface DynamicFeature<T> {
+
+	/**
+	 * The message for which this features support dynamic activation / registration.
+	 */
+	messages: RPCMessageType | RPCMessageType[];
+
+	/**
+	 * Called to fill in the client capabilities this feature implements.
+	 *
+	 * @param capabilities The client capabilities to fill.
+	 */
 	fillClientCapabilities(capabilities: ClientCapabilities): void;
-	initialized(documentSelector: DocumentSelector | undefined, capabilities: ServerCapabilities): void;
-	register(data: RegistrationData<T>): void;
+
+	/**
+	 * Initialize the feature. This method is called on a feature instance
+	 * when the client has successfully received the initalize request from
+	 * the server and before the client sends the initialized notification
+	 * to the server.
+	 *
+	 * @param documentSelector the document selector pass to the client's constuctor.
+	 *  May be `undefined` if the client was created without a selector.
+	 * @param capabilities the server capabilities
+	 */
+	initialize(documentSelector: DocumentSelector | undefined, capabilities: ServerCapabilities): void;
+
+	register(message: RPCMessageType, data: RegistrationData<T>): void;
+
 	unregister(id: string): void;
+
 	dispose(): void;
 }
 
-interface CreateParamsSignature<E, P> {
-	(data: E): P;
+namespace DynamicFeature {
+	export function is<T>(value: any): value is DynamicFeature<T> {
+		let candidate: DynamicFeature<T> = value;
+		return candidate && Is.func(candidate.register) && Is.func(candidate.unregister) && Is.func(candidate.dispose) && candidate.messages !== void 0;
+	}
 }
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
@@ -518,7 +571,15 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	return target[key];
 }
 
-abstract class DocumentNotifiactions<P, E> implements FeatureHandler<TextDocumentRegistrationOptions> {
+interface CreateParamsSignature<E, P> {
+	(data: E): P;
+}
+
+interface ResolvedTextDocumentSyncCapabilities {
+	resolvedTextDocumentSync?: TextDocumentSyncOptions;
+}
+
+abstract class DocumentNotifiactions<P, E> implements DynamicFeature<TextDocumentRegistrationOptions> {
 
 	private _listener: Disposable | undefined;
 	protected _selectors: Map<string, DocumentSelector> = new Map<string, DocumentSelector>();
@@ -540,11 +601,14 @@ abstract class DocumentNotifiactions<P, E> implements FeatureHandler<TextDocumen
 		protected _selectorFilter?: (selectors: IterableIterator<DocumentSelector>, data: E) => boolean) {
 	}
 
-	abstract fillClientCapabilities(capabilities: ClientCapabilities): void;
+	public abstract messages: RPCMessageType | RPCMessageType[];
 
-	abstract initialized(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void;
+	public abstract fillClientCapabilities(capabilities: ClientCapabilities): void;
 
-	public register(data: RegistrationData<TextDocumentRegistrationOptions>): void {
+	public abstract initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void;
+
+	public register(_message: RPCMessageType, data: RegistrationData<TextDocumentRegistrationOptions>): void {
+
 		if (!data.registerOptions.documentSelector) {
 			return;
 		}
@@ -593,15 +657,23 @@ class DidOpenTextDocumentFeature extends DocumentNotifiactions<DidOpenTextDocume
 		);
 	}
 
+	public get messages(): RPCMessageType {
+		return DidOpenTextDocumentNotification.type;
+	}
+
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
 		ensure(ensure(capabilities, 'textDocument')!, 'synchronization')!.dynamicRegistration = true;
 	}
 
-	public initialized(_documentSelector: DocumentSelector, _capabilities: ServerCapabilities): void {
+	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+		let textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
+		if (documentSelector && textDocumentSyncOptions && textDocumentSyncOptions.openClose) {
+			this.register(this.messages, { id: UUID.generateUuid(), registerOptions: { documentSelector: documentSelector } });
+		}
 	}
 
-	public register(data: RegistrationData<TextDocumentRegistrationOptions>): void {
-		super.register(data);
+	public register(message: RPCMessageType, data: RegistrationData<TextDocumentRegistrationOptions>): void {
+		super.register(message, data);
 		if (!data.registerOptions.documentSelector) {
 			return;
 		}
@@ -635,11 +707,19 @@ class DidCloseTextDocumentFeature extends DocumentNotifiactions<DidCloseTextDocu
 		);
 	}
 
+	public get messages(): RPCMessageType {
+		return DidCloseTextDocumentNotification.type;
+	}
+
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
 		ensure(ensure(capabilities, 'textDocument')!, 'synchronization')!.dynamicRegistration = true;
 	}
 
-	public initialized(_documentSelector: DocumentSelector, _capabilities: ServerCapabilities): void {
+	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+		let textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
+		if (documentSelector && textDocumentSyncOptions && textDocumentSyncOptions.openClose) {
+			this.register(this.messages, { id: UUID.generateUuid(), registerOptions: { documentSelector: documentSelector } });
+		}
 	}
 
 	protected notificationSent(textDocument: TextDocument): void {
@@ -665,7 +745,7 @@ interface DidChangeTextDocumentData {
 	syncKind: 0 | 1 | 2;
 }
 
-class DidChangeTextDocumentFeature implements FeatureHandler<TextDocumentChangeRegistrationOptions> {
+class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeRegistrationOptions> {
 
 	private _listener: Disposable | undefined;
 	private _changeData: Map<string, DidChangeTextDocumentData> = new Map<string, DidChangeTextDocumentData>();
@@ -675,14 +755,27 @@ class DidChangeTextDocumentFeature implements FeatureHandler<TextDocumentChangeR
 	constructor(private _client: BaseLanguageClient) {
 	}
 
+	public get messages(): RPCMessageType {
+		return DidChangeTextDocumentNotification.type;
+	}
+
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
 		ensure(ensure(capabilities, 'textDocument')!, 'synchronization')!.dynamicRegistration = true;
 	}
 
-	public initialized(_documentSelector: DocumentSelector, _capabilities: ServerCapabilities): void {
+	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+		let textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
+		if (documentSelector && textDocumentSyncOptions && textDocumentSyncOptions.change !== void 0 && textDocumentSyncOptions.change !== TextDocumentSyncKind.None) {
+			this.register(this.messages,
+				{
+					id: UUID.generateUuid(),
+					registerOptions: Object.assign({}, { documentSelector: documentSelector }, { syncKind: textDocumentSyncOptions.change })
+				}
+			);
+		}
 	}
 
-	public register(data: RegistrationData<TextDocumentChangeRegistrationOptions>): void {
+	public register(_message: RPCMessageType, data: RegistrationData<TextDocumentChangeRegistrationOptions>): void {
 		if (!data.registerOptions.documentSelector) {
 			return;
 		}
@@ -780,16 +873,27 @@ class WillSaveFeature extends DocumentNotifiactions<WillSaveTextDocumentParams, 
 		)
 	}
 
+	public get messages(): RPCMessageType {
+		return WillSaveTextDocumentNotification.type;
+	}
+
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
 		let value = ensure(ensure(capabilities, 'textDocument')!, 'synchronization')!;
 		value.willSave = true;
 	}
 
-	public initialized(_documentSelector: DocumentSelector, _capabilities: ServerCapabilities): void {
+	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+		let textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
+		if (documentSelector && textDocumentSyncOptions && textDocumentSyncOptions.willSave) {
+			this.register(this.messages, {
+				id: UUID.generateUuid(),
+				registerOptions: { documentSelector: documentSelector }
+			});
+		}
 	}
 }
 
-class WillSaveWaitUntilFeature implements FeatureHandler<TextDocumentRegistrationOptions> {
+class WillSaveWaitUntilFeature implements DynamicFeature<TextDocumentRegistrationOptions> {
 
 	private _listener: Disposable | undefined;
 	private _selectors: Map<string, DocumentSelector> = new Map<string, DocumentSelector>();
@@ -797,15 +901,26 @@ class WillSaveWaitUntilFeature implements FeatureHandler<TextDocumentRegistratio
 	constructor(private _client: BaseLanguageClient) {
 	}
 
+	public get messages(): RPCMessageType {
+		return WillSaveTextDocumentWaitUntilRequest.type;
+	}
+
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
 		let value = ensure(ensure(capabilities, 'textDocument')!, 'synchronization')!;
 		value.willSaveWaitUntil = true;
 	}
 
-	public initialized(_documentSelector: DocumentSelector, _capabilities: ServerCapabilities): void {
+	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+		let textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
+		if (documentSelector && textDocumentSyncOptions && textDocumentSyncOptions.willSaveWaitUntil) {
+			this.register(this.messages, {
+				id: UUID.generateUuid(),
+				registerOptions: { documentSelector: documentSelector }
+			});
+		}
 	}
 
-	public register(data: RegistrationData<TextDocumentRegistrationOptions>): void {
+	public register(_message: RPCMessageType, data: RegistrationData<TextDocumentRegistrationOptions>): void {
 		if (!data.registerOptions.documentSelector) {
 			return;
 		}
@@ -861,40 +976,55 @@ class DidSaveTextDocumentFeature extends DocumentNotifiactions<DidSaveTextDocume
 		);
 	}
 
+	public get messages(): RPCMessageType {
+		return DidSaveTextDocumentNotification.type;
+	}
+
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
 		ensure(ensure(capabilities, 'textDocument')!, 'synchronization')!.didSave = true;
 	}
 
-	public initialized(_documentSelector: DocumentSelector, _capabilities: ServerCapabilities): void {
+	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+		let textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
+		if (documentSelector && textDocumentSyncOptions && textDocumentSyncOptions.save) {
+			this.register(this.messages, {
+				id: UUID.generateUuid(),
+				registerOptions: Object.assign({}, { documentSelector: documentSelector }, { includeText: !!textDocumentSyncOptions.save.includeText })
+			});
+		}
 	}
 
-	public register(data: RegistrationData<TextDocumentSaveRegistrationOptions>): void {
+	public register(method: RPCMessageType, data: RegistrationData<TextDocumentSaveRegistrationOptions>): void {
 		this._includeText = !!data.registerOptions.includeText;
-		super.register(data);
+		super.register(method, data);
 	}
 }
 
-class FileSystemWatcherFeature implements FeatureHandler<DidChangeWatchedFilesRegistrationOptions> {
+class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatchedFilesRegistrationOptions> {
 
 	private _watchers: Map<string, Disposable[]> = new Map<string, Disposable[]>();
 
 	constructor(private _notifyFileEvent: (event: FileEvent) => void) {
 	}
 
+	public get messages(): RPCMessageType {
+		return DidChangeWatchedFilesNotification.type;
+	}
+
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
 		ensure(ensure(capabilities, 'workspace')!, 'didChangeWatchedFiles')!.dynamicRegistration = true;
 	}
 
-	public initialized(_documentSelector: DocumentSelector, _capabilities: ServerCapabilities): void {
+	public initialize(_documentSelector: DocumentSelector, _capabilities: ServerCapabilities): void {
 	}
 
-	public register(data: RegistrationData<DidChangeWatchedFilesRegistrationOptions>): void {
+	public register(_method: RPCMessageType, data: RegistrationData<DidChangeWatchedFilesRegistrationOptions>): void {
 		if (!Array.isArray(data.registerOptions.watchers)) {
 			return;
 		}
 		let disposeables: Disposable[] = [];
 		for (let watcher of data.registerOptions.watchers) {
-			if (!is.string(watcher.globPattern)) {
+			if (!Is.string(watcher.globPattern)) {
 				continue;
 			}
 			let watchCreate: boolean = true, watchChange: boolean = true, watchDelete: boolean = true;
@@ -963,18 +1093,25 @@ class FileSystemWatcherFeature implements FeatureHandler<DidChangeWatchedFilesRe
 	}
 }
 
-abstract class TextDocumentFeature<T extends TextDocumentRegistrationOptions> implements FeatureHandler<T> {
+abstract class TextDocumentFeature<T extends TextDocumentRegistrationOptions> implements DynamicFeature<T> {
 
 	protected _providers: Map<string, Disposable> = new Map<string, Disposable>();
 
-	constructor(protected _client: BaseLanguageClient) {
+	constructor(protected _client: BaseLanguageClient, private _message: RPCMessageType) {
+	}
+
+	public get messages(): RPCMessageType {
+		return this._message;
 	}
 
 	public abstract fillClientCapabilities(capabilities: ClientCapabilities): void;
 
-	public abstract initialized(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void;
+	public abstract initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void;
 
-	public register(data: RegistrationData<T>): void {
+	public register(message: RPCMessageType, data: RegistrationData<T>): void {
+		if (message.method !== this.messages.method) {
+			throw new Error(`Register called on wron feature. Requested ${message.method} but reached feature ${this.messages.method}`);
+		}
 		if (!data.registerOptions.documentSelector) {
 			return;
 		}
@@ -1000,18 +1137,25 @@ abstract class TextDocumentFeature<T extends TextDocumentRegistrationOptions> im
 	}
 }
 
-abstract class WorkspaceFeature<T> implements FeatureHandler<T> {
+abstract class WorkspaceFeature<T> implements DynamicFeature<T> {
 
 	protected _providers: Map<string, Disposable> = new Map<string, Disposable>();
 
-	constructor(protected _client: BaseLanguageClient) {
+	constructor(protected _client: BaseLanguageClient, private _message: RPCMessageType) {
+	}
+
+	public get messages(): RPCMessageType {
+		return this._message;
 	}
 
 	public abstract fillClientCapabilities(capabilities: ClientCapabilities): void;
 
-	public abstract initialized(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void;
+	public abstract initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void;
 
-	public register(data: RegistrationData<T>): void {
+	public register(message: RPCMessageType, data: RegistrationData<T>): void {
+		if (message.method !== this.messages.method) {
+			throw new Error(`Register called on wron feature. Requested ${message.method} but reached feature ${this.messages.method}`);
+		}
 		let provider = this.registerLanguageProvider(data.registerOptions);
 		if (provider) {
 			this._providers.set(data.id, provider);
@@ -1037,18 +1181,18 @@ abstract class WorkspaceFeature<T> implements FeatureHandler<T> {
 class CompletionItemFeature extends TextDocumentFeature<CompletionRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
-		super(client);
+		super(client, CompletionRequest.type);
 	}
 
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
 		ensure(ensure(capabilites, 'textDocument')!, 'completion')!.dynamicRegistration = true;
 	}
 
-	public initialized(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
 		if (!capabilities.completionProvider || !documentSelector) {
 			return;
 		}
-		this.register({
+		this.register(this.messages, {
 			id: UUID.generateUuid(),
 			registerOptions: Object.assign({}, { documentSelector: documentSelector }, capabilities.completionProvider)
 		});
@@ -1097,18 +1241,18 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionRegistrationOp
 class HoverFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
-		super(client);
+		super(client, HoverRequest.type);
 	}
 
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
 		ensure(ensure(capabilites, 'textDocument')!, 'hover')!.dynamicRegistration = true;
 	}
 
-	public initialized(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
 		if (!capabilities.hoverProvider || !documentSelector) {
 			return;
 		}
-		this.register({
+		this.register(this.messages, {
 			id: UUID.generateUuid(),
 			registerOptions: Object.assign({}, { documentSelector: documentSelector })
 		});
@@ -1139,18 +1283,18 @@ class HoverFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> 
 class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
-		super(client);
+		super(client, SignatureHelpRequest.type);
 	}
 
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
 		ensure(ensure(capabilites, 'textDocument')!, 'signatureHelp')!.dynamicRegistration = true;
 	}
 
-	public initialized(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
 		if (!capabilities.signatureHelpProvider || !documentSelector) {
 			return;
 		}
-		this.register({
+		this.register(this.messages, {
 			id: UUID.generateUuid(),
 			registerOptions: Object.assign({}, { documentSelector: documentSelector }, capabilities.signatureHelpProvider)
 		});
@@ -1182,18 +1326,18 @@ class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpRegistration
 class DefinitionFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
-		super(client);
+		super(client, DefinitionRequest.type);
 	}
 
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
 		ensure(ensure(capabilites, 'textDocument')!, 'definition')!.dynamicRegistration = true;
 	}
 
-	public initialized(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
 		if (!capabilities.definitionProvider || !documentSelector) {
 			return;
 		}
-		this.register({
+		this.register(this.messages, {
 			id: UUID.generateUuid(),
 			registerOptions: Object.assign({}, { documentSelector: documentSelector })
 		});
@@ -1224,18 +1368,18 @@ class DefinitionFeature extends TextDocumentFeature<TextDocumentRegistrationOpti
 class ReferencesFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
-		super(client);
+		super(client, ReferencesRequest.type);
 	}
 
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
 		ensure(ensure(capabilites, 'textDocument')!, 'references')!.dynamicRegistration = true;
 	}
 
-	public initialized(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
 		if (!capabilities.referencesProvider || !documentSelector) {
 			return;
 		}
-		this.register({
+		this.register(this.messages, {
 			id: UUID.generateUuid(),
 			registerOptions: Object.assign({}, { documentSelector: documentSelector })
 		});
@@ -1266,18 +1410,18 @@ class ReferencesFeature extends TextDocumentFeature<TextDocumentRegistrationOpti
 class DocumentHighlightFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
-		super(client);
+		super(client, DocumentHighlightRequest.type);
 	}
 
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
 		ensure(ensure(capabilites, 'textDocument')!, 'documentHighlight')!.dynamicRegistration = true;
 	}
 
-	public initialized(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
 		if (!capabilities.documentHighlightProvider || !documentSelector) {
 			return;
 		}
-		this.register({
+		this.register(this.messages, {
 			id: UUID.generateUuid(),
 			registerOptions: Object.assign({}, { documentSelector: documentSelector })
 		});
@@ -1308,18 +1452,18 @@ class DocumentHighlightFeature extends TextDocumentFeature<TextDocumentRegistrat
 class DocumentSymbolFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
-		super(client);
+		super(client, DocumentSymbolRequest.type);
 	}
 
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
 		ensure(ensure(capabilites, 'textDocument')!, 'documentSymbol')!.dynamicRegistration = true;
 	}
 
-	public initialized(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
 		if (!capabilities.documentSymbolProvider || !documentSelector) {
 			return;
 		}
-		this.register({
+		this.register(this.messages, {
 			id: UUID.generateUuid(),
 			registerOptions: Object.assign({}, { documentSelector: documentSelector })
 		});
@@ -1350,18 +1494,18 @@ class DocumentSymbolFeature extends TextDocumentFeature<TextDocumentRegistration
 class WorkspaceSymbolFeature extends WorkspaceFeature<undefined> {
 
 	constructor(client: BaseLanguageClient) {
-		super(client);
+		super(client, WorkspaceSymbolRequest.type);
 	}
 
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
 		ensure(ensure(capabilites, 'workspace')!, 'symbol')!.dynamicRegistration = true;
 	}
 
-	public initialized(_documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(_documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
 		if (!capabilities.workspaceSymbolProvider) {
 			return;
 		}
-		this.register({
+		this.register(this.messages, {
 			id: UUID.generateUuid(),
 			registerOptions: undefined
 		});
@@ -1392,18 +1536,18 @@ class WorkspaceSymbolFeature extends WorkspaceFeature<undefined> {
 class CodeActionFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
-		super(client);
+		super(client, CodeActionRequest.type);
 	}
 
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
 		ensure(ensure(capabilites, 'textDocument')!, 'codeAction')!.dynamicRegistration = true;
 	}
 
-	public initialized(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
 		if (!capabilities.codeActionProvider || !documentSelector) {
 			return;
 		}
-		this.register({
+		this.register(this.messages, {
 			id: UUID.generateUuid(),
 			registerOptions: Object.assign({}, { documentSelector: documentSelector })
 		});
@@ -1439,18 +1583,18 @@ class CodeActionFeature extends TextDocumentFeature<TextDocumentRegistrationOpti
 class CodeLensFeature extends TextDocumentFeature<CodeLensRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
-		super(client);
+		super(client, CodeLensRequest.type);
 	}
 
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
 		ensure(ensure(capabilites, 'textDocument')!, 'codeLens')!.dynamicRegistration = true;
 	}
 
-	public initialized(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
 		if (!capabilities.codeLensProvider || !documentSelector) {
 			return;
 		}
-		this.register({
+		this.register(this.messages, {
 			id: UUID.generateUuid(),
 			registerOptions: Object.assign({}, { documentSelector: documentSelector }, capabilities.codeLensProvider)
 		});
@@ -1497,18 +1641,18 @@ class CodeLensFeature extends TextDocumentFeature<CodeLensRegistrationOptions> {
 class DocumentFormattingFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
-		super(client);
+		super(client, DocumentFormattingRequest.type);
 	}
 
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
 		ensure(ensure(capabilites, 'textDocument')!, 'formatting')!.dynamicRegistration = true;
 	}
 
-	public initialized(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
 		if (!capabilities.documentFormattingProvider || !documentSelector) {
 			return;
 		}
-		this.register({
+		this.register(this.messages, {
 			id: UUID.generateUuid(),
 			registerOptions: Object.assign({}, { documentSelector: documentSelector })
 		});
@@ -1543,18 +1687,18 @@ class DocumentFormattingFeature extends TextDocumentFeature<TextDocumentRegistra
 class DocumentRangeFormattingFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
-		super(client);
+		super(client, DocumentRangeFormattingRequest.type);
 	}
 
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
 		ensure(ensure(capabilites, 'textDocument')!, 'rangeFormatting')!.dynamicRegistration = true;
 	}
 
-	public initialized(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
 		if (!capabilities.documentRangeFormattingProvider || !documentSelector) {
 			return;
 		}
-		this.register({
+		this.register(this.messages, {
 			id: UUID.generateUuid(),
 			registerOptions: Object.assign({}, { documentSelector: documentSelector })
 		});
@@ -1590,18 +1734,18 @@ class DocumentRangeFormattingFeature extends TextDocumentFeature<TextDocumentReg
 class DocumentOnTypeFormattingFeature extends TextDocumentFeature<DocumentOnTypeFormattingRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
-		super(client);
+		super(client, DocumentOnTypeFormattingRequest.type);
 	}
 
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
 		ensure(ensure(capabilites, 'textDocument')!, 'onTypeFormatting')!.dynamicRegistration = true;
 	}
 
-	public initialized(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
 		if (!capabilities.documentOnTypeFormattingProvider || !documentSelector) {
 			return;
 		}
-		this.register({
+		this.register(this.messages, {
 			id: UUID.generateUuid(),
 			registerOptions: Object.assign({}, { documentSelector: documentSelector }, capabilities.documentOnTypeFormattingProvider)
 		});
@@ -1639,18 +1783,18 @@ class DocumentOnTypeFormattingFeature extends TextDocumentFeature<DocumentOnType
 class RenameFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
-		super(client);
+		super(client, RenameRequest.type);
 	}
 
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
 		ensure(ensure(capabilites, 'textDocument')!, 'rename')!.dynamicRegistration = true;
 	}
 
-	public initialized(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
 		if (!capabilities.renameProvider || !documentSelector) {
 			return;
 		}
-		this.register({
+		this.register(this.messages, {
 			id: UUID.generateUuid(),
 			registerOptions: Object.assign({}, { documentSelector: documentSelector })
 		});
@@ -1686,18 +1830,18 @@ class RenameFeature extends TextDocumentFeature<TextDocumentRegistrationOptions>
 class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
-		super(client);
+		super(client, DocumentLinkRequest.type);
 	}
 
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
 		ensure(ensure(capabilites, 'textDocument')!, 'documentLink')!.dynamicRegistration = true;
 	}
 
-	public initialized(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
 		if (!capabilities.documentLinkProvider || !documentSelector) {
 			return;
 		}
-		this.register({
+		this.register(this.messages, {
 			id: UUID.generateUuid(),
 			registerOptions: Object.assign({}, { documentSelector: documentSelector }, capabilities.documentLinkProvider)
 		});
@@ -1741,28 +1885,32 @@ class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkRegistrationOp
 	}
 }
 
-class ExecuteCommandFeature implements FeatureHandler<ExecuteCommandRegistrationOptions> {
+class ExecuteCommandFeature implements DynamicFeature<ExecuteCommandRegistrationOptions> {
 
 	private _commands: Map<string, Disposable[]> = new Map<string, Disposable[]>();
 
 	constructor(private _client: BaseLanguageClient) {
 	}
 
+	public get messages(): RPCMessageType {
+		return ExecuteCommandRequest.type;
+	}
+
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
 		ensure(ensure(capabilities, 'workspace')!, 'executeCommand')!.dynamicRegistration = true;
 	}
 
-	public initialized(_documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(_documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
 		if (!capabilities.executeCommandProvider) {
 			return;
 		}
-		this.register({
+		this.register(this.messages, {
 			id: UUID.generateUuid(),
 			registerOptions: Object.assign({}, capabilities.executeCommandProvider)
 		});
 	}
 
-	public register(data: RegistrationData<ExecuteCommandRegistrationOptions>): void {
+	public register(_message: RPCMessageType, data: RegistrationData<ExecuteCommandRegistrationOptions>): void {
 		let client = this._client;
 		if (data.registerOptions.commands) {
 			let disposeables: Disposable[] = [];
@@ -1796,10 +1944,6 @@ class ExecuteCommandFeature implements FeatureHandler<ExecuteCommandRegistration
 			value.forEach(disposable => disposable.dispose());
 		});
 	}
-}
-
-interface FeatureHandlerMap extends Map<string, FeatureHandler<any>> {
-	get(key: string): FeatureHandler<any>;
 }
 
 /*
@@ -1895,7 +2039,7 @@ export abstract class BaseLanguageClient {
 	private _connectionPromise: Thenable<IConnection> | undefined;
 	private _resolvedConnection: IConnection | undefined;
 	private _outputChannel: OutputChannel | undefined;
-	private _capabilites: ServerCapabilities;
+	private _capabilities: ServerCapabilities & ResolvedTextDocumentSyncCapabilities;
 
 	private _listeners: Disposable[] | undefined;
 	private _providers: Disposable[] | undefined;
@@ -1956,6 +2100,7 @@ export abstract class BaseLanguageClient {
 		};
 		this._c2p = c2p.createConverter(clientOptions.uriConverters ? clientOptions.uriConverters.code2Protocol : undefined);
 		this._p2c = p2c.createConverter(clientOptions.uriConverters ? clientOptions.uriConverters.protocol2Code : undefined);
+		this.registerBuiltinFeatures();
 	}
 
 	private get state(): ClientState {
@@ -1991,7 +2136,7 @@ export abstract class BaseLanguageClient {
 		try {
 			return this._resolvedConnection!.sendRequest<R>(type, ...params);
 		} catch (error) {
-			this.error(`Sending request ${is.string(type) ? type : type.method} failed.`, error);
+			this.error(`Sending request ${Is.string(type) ? type : type.method} failed.`, error);
 			throw error;
 		}
 	}
@@ -2006,7 +2151,7 @@ export abstract class BaseLanguageClient {
 		try {
 			this._resolvedConnection!.onRequest(type, handler);
 		} catch (error) {
-			this.error(`Registering request handler ${is.string(type) ? type : type.method} failed.`, error);
+			this.error(`Registering request handler ${Is.string(type) ? type : type.method} failed.`, error);
 			throw error;
 		}
 	}
@@ -2023,7 +2168,7 @@ export abstract class BaseLanguageClient {
 		try {
 			this._resolvedConnection!.sendNotification(type, params);
 		} catch (error) {
-			this.error(`Sending notification ${is.string(type) ? type : type.method} failed.`, error);
+			this.error(`Sending notification ${Is.string(type) ? type : type.method} failed.`, error);
 			throw error;
 		}
 	}
@@ -2038,7 +2183,7 @@ export abstract class BaseLanguageClient {
 		try {
 			this._resolvedConnection!.onNotification(type, handler);
 		} catch (error) {
-			this.error(`Registering notification handler ${is.string(type) ? type : type.method} failed.`, error);
+			this.error(`Registering notification handler ${Is.string(type) ? type : type.method} failed.`, error);
 			throw error;
 		}
 	}
@@ -2094,12 +2239,12 @@ export abstract class BaseLanguageClient {
 			return `  Message: ${responseError.message}\n  Code: ${responseError.code} ${responseError.data ? '\n' + responseError.data.toString() : ''}`
 		}
 		if (data instanceof Error) {
-			if (is.string(data.stack)) {
+			if (Is.string(data.stack)) {
 				return data.stack;
 			}
 			return (data as Error).message;
 		}
-		if (is.string(data)) {
+		if (Is.string(data)) {
 			return data;
 		}
 		return data.toString();
@@ -2222,8 +2367,6 @@ export abstract class BaseLanguageClient {
 			connection.onTelemetry((data) => {
 				this._telemetryEmitter.fire(data);
 			});
-			this.initFeatureHandlers(connection);
-
 			connection.listen();
 			// Error is handled in the intialize call.
 			this.initialize(connection).then(undefined, () => { });
@@ -2255,14 +2398,26 @@ export abstract class BaseLanguageClient {
 			rootPath: Workspace.rootPath ? Workspace.rootPath : null,
 			rootUri: Workspace.rootPath ? Uri.file(Workspace.rootPath).toString() : null,
 			capabilities: this.computeClientCapabilities(),
-			initializationOptions: is.func(initOption) ? initOption() : initOption,
+			initializationOptions: Is.func(initOption) ? initOption() : initOption,
 			trace: Trace.toString(this._trace)
 		};
 		return connection.initialize(initParams).then((result) => {
 			this._resolvedConnection = connection;
 			this.state = ClientState.Running;
 
-			this._capabilites = result.capabilities;
+			let textDocumentSyncOptions: TextDocumentSyncOptions | undefined = undefined;
+			if (Is.number(result.capabilities.textDocumentSync) && result.capabilities.textDocumentSync !== TextDocumentSyncKind.None) {
+				textDocumentSyncOptions = {
+					openClose: true,
+					change: result.capabilities.textDocumentSync,
+					save: {
+						includeText: false
+					}
+				};
+			} else if (result.capabilities.textDocumentSync !== void 0 && this._capabilities.textDocumentSync !== null) {
+				textDocumentSyncOptions = result.capabilities.textDocumentSync as TextDocumentSyncOptions;
+			}
+			this._capabilities = Object.assign({}, result.capabilities, { resolvedTextDocumentSync: textDocumentSyncOptions });
 
 			connection.onDiagnostics(params => this.handleDiagnostics(params));
 			connection.onRequest(RegistrationRequest.type, params => this.handleRegistrationRequest(params));
@@ -2277,59 +2432,7 @@ export abstract class BaseLanguageClient {
 
 			this.hookFileEvents(connection);
 			this.hookConfigurationChanged(connection);
-			if (this._clientOptions.documentSelector) {
-				let selectorOptions: TextDocumentRegistrationOptions = { documentSelector: this._clientOptions.documentSelector };
-				let textDocumentSyncOptions: TextDocumentSyncOptions | undefined = undefined;
-				if (is.number(this._capabilites.textDocumentSync) && this._capabilites.textDocumentSync !== TextDocumentSyncKind.None) {
-					textDocumentSyncOptions = {
-						openClose: true,
-						change: this._capabilites.textDocumentSync,
-						save: {
-							includeText: false
-						}
-					};
-				} else if (this._capabilites.textDocumentSync !== void 0 && this._capabilites.textDocumentSync !== null) {
-					textDocumentSyncOptions = this._capabilites.textDocumentSync as TextDocumentSyncOptions;
-				}
-				if (textDocumentSyncOptions) {
-					let registeredHandlers: FeatureHandlerMap = this._registeredFeatures as FeatureHandlerMap;
-					if (textDocumentSyncOptions.openClose) {
-						registeredHandlers.get(DidOpenTextDocumentNotification.type.method).register(
-							{ id: UUID.generateUuid(), registerOptions: selectorOptions }
-						);
-						registeredHandlers.get(DidCloseTextDocumentNotification.type.method).register(
-							{ id: UUID.generateUuid(), registerOptions: selectorOptions }
-						);
-					}
-					if (textDocumentSyncOptions.change !== TextDocumentSyncKind.None) {
-						registeredHandlers.get(DidChangeTextDocumentNotification.type.method).register(
-							{
-								id: UUID.generateUuid(),
-								registerOptions: Object.assign({}, selectorOptions, { syncKind: textDocumentSyncOptions.change }) as TextDocumentChangeRegistrationOptions
-							}
-						);
-					}
-					if (textDocumentSyncOptions.willSave) {
-						registeredHandlers.get(WillSaveTextDocumentNotification.type.method).register(
-							{ id: UUID.generateUuid(), registerOptions: selectorOptions }
-						);
-					}
-					if (textDocumentSyncOptions.willSaveWaitUntil) {
-						registeredHandlers.get(WillSaveTextDocumentWaitUntilRequest.type.method).register(
-							{ id: UUID.generateUuid(), registerOptions: selectorOptions }
-						);
-					}
-					if (textDocumentSyncOptions.save) {
-						registeredHandlers.get(DidSaveTextDocumentNotification.type.method).register(
-							{
-								id: UUID.generateUuid(),
-								registerOptions: Object.assign({}, selectorOptions, { includeText: !!textDocumentSyncOptions.save.includeText }) as TextDocumentSaveRegistrationOptions
-							}
-						);
-					}
-				}
-			}
-			this.hookCapabilities(connection);
+			this.initializeFeatures(connection);
 			this._onReadyCallbacks.resolve();
 			return result;
 		}, (error: any) => {
@@ -2382,7 +2485,7 @@ export abstract class BaseLanguageClient {
 		});
 	}
 
-	private cleanUp(diagnostics: boolean = true): void {
+	private cleanUp(restart: boolean = false): void {
 		if (this._listeners) {
 			this._listeners.forEach(listener => listener.dispose());
 			this._listeners = undefined;
@@ -2391,14 +2494,13 @@ export abstract class BaseLanguageClient {
 			this._providers.forEach(provider => provider.dispose());
 			this._providers = undefined;
 		}
-		for (let handler of this._registeredFeatures.values()) {
+		for (let handler of this._dynamicFeatures.values()) {
 			handler.dispose();
 		}
-		this._registeredFeatures.clear();
 		if (this._outputChannel) {
 			this._outputChannel.dispose();
 		}
-		if (diagnostics && this._diagnostics) {
+		if (!restart && this._diagnostics) {
 			this._diagnostics.dispose();
 			this._diagnostics = undefined;
 		}
@@ -2421,7 +2523,7 @@ export abstract class BaseLanguageClient {
 	}
 
 	private forceDocumentSync(): void {
-		(this._registeredFeatures.get(DidChangeTextDocumentNotification.type.method) as DidChangeTextDocumentFeature).forceDelivery();
+		(this._dynamicFeatures.get(DidChangeTextDocumentNotification.type.method) as DidChangeTextDocumentFeature).forceDelivery();
 	}
 
 	private handleDiagnostics(params: PublishDiagnosticsParams) {
@@ -2463,10 +2565,10 @@ export abstract class BaseLanguageClient {
 		if (action === CloseAction.DoNotRestart) {
 			this.error('Connection to server got closed. Server will not be restarted.');
 			this.state = ClientState.Stopped;
-			this.cleanUp();
+			this.cleanUp(false);
 		} else if (action === CloseAction.Restart) {
 			this.info('Connection to server got closed. Server will restart.');
-			this.cleanUp(false);
+			this.cleanUp(true);
 			this.state = ClientState.Initial;
 			this.start();
 		}
@@ -2502,9 +2604,9 @@ export abstract class BaseLanguageClient {
 		this.refreshTrace(connection, true);
 		let keys: string[] | undefined;
 		let configurationSection = this._clientOptions.synchronize!.configurationSection;
-		if (is.string(configurationSection)) {
+		if (Is.string(configurationSection)) {
 			keys = [configurationSection];
-		} else if (is.stringArray(configurationSection)) {
+		} else if (Is.stringArray(configurationSection)) {
 			keys = configurationSection;
 		}
 		if (keys) {
@@ -2551,7 +2653,7 @@ export abstract class BaseLanguageClient {
 			return;
 		}
 		let watchers: VFileSystemWatcher[];
-		if (is.array(fileEvents)) {
+		if (Is.array(fileEvents)) {
 			watchers = <VFileSystemWatcher[]>fileEvents;
 		} else {
 			watchers = [<VFileSystemWatcher>fileEvents];
@@ -2559,83 +2661,108 @@ export abstract class BaseLanguageClient {
 		if (!watchers) {
 			return;
 		}
-		(this._registeredFeatures.get(DidChangeWatchedFilesNotification.type.method)! as FileSystemWatcherFeature).
-			registerRaw(UUID.generateUuid(), watchers);
+		(this._dynamicFeatures.get(DidChangeWatchedFilesNotification.type.method)! as FileSystemWatcherFeature).registerRaw(UUID.generateUuid(), watchers);
 	}
 
-	private readonly _registeredFeatures: Map<string, FeatureHandler<any>> = new Map<string, FeatureHandler<any>>();
-	private initFeatureHandlers(_connection: IConnection) {
+	private readonly _features: (StaticFeature | DynamicFeature<any>)[] = [];
+	private readonly _method2Message: Map<string, RPCMessageType> = new Map<string, RPCMessageType>();
+	private readonly _dynamicFeatures: Map<string, DynamicFeature<any>> = new Map<string, DynamicFeature<any>>();
+
+
+	public registerFeatures(features: (StaticFeature | DynamicFeature<any>)[]): void {
+		for (let feature of features) {
+			this.registerFeature(feature);
+		}
+	}
+
+	public registerFeature(feature: StaticFeature | DynamicFeature<any>): void {
+		this._features.push(feature);
+		if (DynamicFeature.is(feature)) {
+			let messages = feature.messages;
+			if (Array.isArray(messages)) {
+				for (let message of messages) {
+					this._method2Message.set(message.method, message);
+					this._dynamicFeatures.set(message.method, feature);
+				}
+			} else {
+				this._method2Message.set(messages.method, messages);
+				this._dynamicFeatures.set(messages.method, feature);
+			}
+		}
+	}
+
+	private registerBuiltinFeatures() {
 		const syncedDocuments: Map<string, TextDocument> = new Map<string, TextDocument>();
-		this._registeredFeatures.set(DidOpenTextDocumentNotification.type.method, new DidOpenTextDocumentFeature(this, syncedDocuments));
-		this._registeredFeatures.set(DidChangeTextDocumentNotification.type.method, new DidChangeTextDocumentFeature(this));
-		this._registeredFeatures.set(WillSaveTextDocumentNotification.type.method, new WillSaveFeature(this));
-		this._registeredFeatures.set(WillSaveTextDocumentWaitUntilRequest.type.method, new WillSaveWaitUntilFeature(this));
-		this._registeredFeatures.set(DidSaveTextDocumentNotification.type.method, new DidSaveTextDocumentFeature(this));
-		this._registeredFeatures.set(DidCloseTextDocumentNotification.type.method, new DidCloseTextDocumentFeature(this, syncedDocuments));
-		this._registeredFeatures.set(DidChangeWatchedFilesNotification.type.method, new FileSystemWatcherFeature((event) => this.notifyFileEvent(event)));
-		this._registeredFeatures.set(CompletionRequest.type.method, new CompletionItemFeature(this));
-		this._registeredFeatures.set(HoverRequest.type.method, new HoverFeature(this));
-		this._registeredFeatures.set(SignatureHelpRequest.type.method, new SignatureHelpFeature(this));
-		this._registeredFeatures.set(DefinitionRequest.type.method, new DefinitionFeature(this));
-		this._registeredFeatures.set(ReferencesRequest.type.method, new ReferencesFeature(this));
-		this._registeredFeatures.set(DocumentHighlightRequest.type.method, new DocumentHighlightFeature(this));
-		this._registeredFeatures.set(DocumentSymbolRequest.type.method, new DocumentSymbolFeature(this));
-		this._registeredFeatures.set(WorkspaceSymbolRequest.type.method, new WorkspaceSymbolFeature(this));
-		this._registeredFeatures.set(CodeActionRequest.type.method, new CodeActionFeature(this));
-		this._registeredFeatures.set(CodeLensRequest.type.method, new CodeLensFeature(this));
-		this._registeredFeatures.set(DocumentFormattingRequest.type.method, new DocumentFormattingFeature(this));
-		this._registeredFeatures.set(DocumentRangeFormattingRequest.type.method, new DocumentRangeFormattingFeature(this));
-		this._registeredFeatures.set(DocumentOnTypeFormattingRequest.type.method, new DocumentOnTypeFormattingFeature(this));
-		this._registeredFeatures.set(RenameRequest.type.method, new RenameFeature(this));
-		this._registeredFeatures.set(DocumentLinkRequest.type.method, new DocumentLinkFeature(this));
-		this._registeredFeatures.set(ExecuteCommandRequest.type.method, new ExecuteCommandFeature(this));
-	}
-
-	public registerFeature(key: string, handler: FeatureHandler<any>): void {
-		this._registeredFeatures.set(key, handler);
+		this.registerFeature(new DidOpenTextDocumentFeature(this, syncedDocuments));
+		this.registerFeature(new DidChangeTextDocumentFeature(this));
+		this.registerFeature(new WillSaveFeature(this));
+		this.registerFeature(new WillSaveWaitUntilFeature(this));
+		this.registerFeature(new DidSaveTextDocumentFeature(this));
+		this.registerFeature(new DidCloseTextDocumentFeature(this, syncedDocuments));
+		this.registerFeature(new FileSystemWatcherFeature((event) => this.notifyFileEvent(event)));
+		this.registerFeature(new CompletionItemFeature(this));
+		this.registerFeature(new HoverFeature(this));
+		this.registerFeature(new SignatureHelpFeature(this));
+		this.registerFeature(new DefinitionFeature(this));
+		this.registerFeature(new ReferencesFeature(this));
+		this.registerFeature(new DocumentHighlightFeature(this));
+		this.registerFeature(new DocumentSymbolFeature(this));
+		this.registerFeature(new WorkspaceSymbolFeature(this));
+		this.registerFeature(new CodeActionFeature(this));
+		this.registerFeature(new CodeLensFeature(this));
+		this.registerFeature(new DocumentFormattingFeature(this));
+		this.registerFeature(new DocumentRangeFormattingFeature(this));
+		this.registerFeature(new DocumentOnTypeFormattingFeature(this));
+		this.registerFeature(new RenameFeature(this));
+		this.registerFeature(new DocumentLinkFeature(this));
+		this.registerFeature(new ExecuteCommandFeature(this));
 	}
 
 	private computeClientCapabilities(): ClientCapabilities {
 		let result: ClientCapabilities = {};
-		for (let handler of this._registeredFeatures.values()) {
-			handler.fillClientCapabilities(result);
+		for (let feature of this._features) {
+			feature.fillClientCapabilities(result);
 		}
 		return result;
 	}
 
-	private hookCapabilities(_connection: IConnection): void {
+	private initializeFeatures(_connection: IConnection): void {
 		let documentSelector = this._clientOptions.documentSelector;
-		for (let handler of this._registeredFeatures.values()) {
-			handler.initialized(documentSelector, this._capabilites);
+		for (let feature of this._features) {
+			feature.initialize(documentSelector, this._capabilities);
 		}
 	}
 
 	private handleRegistrationRequest(params: RegistrationParams): Thenable<void> {
-		return new Promise<void>((resolve, _reject) => {
-			params.registrations.forEach((element) => {
-				const handler = this._registeredFeatures.get(element.method);
-				const options = element.registerOptions || {};
+		return new Promise<void>((resolve, reject) => {
+			for (let registration of params.registrations) {
+				const feature = this._dynamicFeatures.get(registration.method);
+				if (!feature) {
+					reject(new Error(`No feature implementation for ${registration.method} found. Registration failed.`));
+					return;
+				}
+				const options = registration.registerOptions || {};
 				options.documentSelector = options.documentSelector || this._clientOptions.documentSelector;
 				const data: RegistrationData<any> = {
-					id: element.id,
+					id: registration.id,
 					registerOptions: options
 				}
-				if (handler) {
-					handler.register(data);
-				}
-			});
+				feature.register(this._method2Message.get(registration.method)!, data);
+			}
 			resolve();
 		});
 	}
 
 	private handleUnregistrationRequest(params: UnregistrationParams): Thenable<void> {
-		return new Promise<void>((resolve, _reject) => {
-			params.unregisterations.forEach((element) => {
-				const handler = this._registeredFeatures.get(element.method);
-				if (handler) {
-					handler.unregister(element.id);
+		return new Promise<void>((resolve, reject) => {
+			for (let unregistration of params.unregisterations) {
+				const feature = this._dynamicFeatures.get(unregistration.method);
+				if (!feature) {
+					reject(new Error(`No feature implementation for ${unregistration.method} found. Unregistration failed.`));
+					return;
 				}
-			});
+				feature.unregister(unregistration.id);
+			};
 			resolve();
 		});
 	}

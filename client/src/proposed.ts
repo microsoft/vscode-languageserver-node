@@ -6,7 +6,9 @@
 
 import { workspace, Disposable, WorkspaceFolder as VWorkspaceFolder } from 'vscode';
 
-import { FeatureHandler, RegistrationData, BaseLanguageClient } from './client';
+import { MessageType as RPCMessageType } from 'vscode-jsonrpc';
+
+import { DynamicFeature, StaticFeature, RegistrationData, BaseLanguageClient } from './client';
 import { ClientCapabilities, DocumentSelector, ServerCapabilities } from './protocol';
 
 import {
@@ -14,11 +16,15 @@ import {
 	DidChangeWorkspaceFolders, DidChangeWorkspaceFoldersParams, GetConfigurationRequest
 } from './protocol.proposed';
 
-export class WorkspaceFolderFeature implements FeatureHandler<undefined> {
+export class WorkspaceFolderFeature implements DynamicFeature<undefined> {
 
 	private _listeners: Map<string, Disposable> = new Map<string, Disposable>();
 
 	constructor(private _client: BaseLanguageClient) {
+	}
+
+	public get messages(): RPCMessageType {
+		return DidChangeWorkspaceFolders.type;
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
@@ -27,7 +33,7 @@ export class WorkspaceFolderFeature implements FeatureHandler<undefined> {
 		workspace.workspaceFolders = true;
 	}
 
-	public initialized(_documentSelector: DocumentSelector | undefined, _capabilities: ServerCapabilities): void {
+	public initialize(_documentSelector: DocumentSelector | undefined, _capabilities: ServerCapabilities): void {
 		let client = this._client;
 		client.onRequest(GetWorkspaceFolders.type, () => {
 			let folders = workspace.workspaceFolders;
@@ -49,7 +55,7 @@ export class WorkspaceFolderFeature implements FeatureHandler<undefined> {
 		});
 	}
 
-	public register(data: RegistrationData<undefined>): void {
+	public register(_message: RPCMessageType, data: RegistrationData<undefined>): void {
 		let id = data.id;
 		let disposable = workspace.onDidChangeWorkspaceFolders((event) => {
 			let params: DidChangeWorkspaceFoldersParams = {
@@ -89,7 +95,7 @@ export class WorkspaceFolderFeature implements FeatureHandler<undefined> {
 	}
 }
 
-export class GetConfigurationFeature implements FeatureHandler<undefined> {
+export class GetConfigurationFeature implements StaticFeature {
 	constructor(private _client: BaseLanguageClient) {
 	}
 
@@ -99,7 +105,7 @@ export class GetConfigurationFeature implements FeatureHandler<undefined> {
 		workspace.getConfiguration = true;
 	}
 
-	public initialized(_documentSelector: DocumentSelector | undefined, _capabilities: ServerCapabilities): void {
+	public initialize(_documentSelector: DocumentSelector | undefined, _capabilities: ServerCapabilities): void {
 		let client = this._client;
 		client.onRequest(GetConfigurationRequest.type, (params) => {
 			let section = params.section === null ? undefined : params.section;
@@ -108,12 +114,12 @@ export class GetConfigurationFeature implements FeatureHandler<undefined> {
 			if (section) {
 				let index = section.lastIndexOf('.');
 				if (index === -1) {
+					result = workspace.getConfiguration(undefined, resource).get(section);
+				} else {
 					let config = workspace.getConfiguration(section.substr(0, index));
 					if (config) {
 						result = config.get(section.substr(index + 1))
 					}
-				} else {
-					result = workspace.getConfiguration(undefined, resource).get(section);
 				}
 			} else {
 				let config = workspace.getConfiguration(undefined, resource);
@@ -130,13 +136,11 @@ export class GetConfigurationFeature implements FeatureHandler<undefined> {
 			return result;
 		});
 	}
+}
 
-	public register(_data: RegistrationData<undefined>): void {
-	}
-
-	public unregister(_id: string): void {
-	}
-
-	public dispose(): void {
-	}
+export function createAllProposedFeatures(client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
+	let result: (StaticFeature | DynamicFeature<any>)[] = [];
+	result.push(new WorkspaceFolderFeature(client));
+	result.push(new GetConfigurationFeature(client));
+	return result;
 }
