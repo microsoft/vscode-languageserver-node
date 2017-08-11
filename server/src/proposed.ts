@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 import { MessageConnection, Event, Emitter } from 'vscode-jsonrpc';
-import { _, RemoteFactories } from './main';
+import { _, Features } from './main';
 import {
 	WorkspaceFolder, GetWorkspaceFolders, GetWorkspaceFolder, WorkspaceFoldersChangeEvent, DidChangeWorkspaceFolders,
 	GetConfigurationRequest
@@ -16,8 +16,8 @@ export interface RemoteWorkspaceProposed {
 	getConfiguration(section?: string, uri?: string): Thenable<any>;
 }
 
-export const factories: RemoteFactories<_, _, _, _, _, RemoteWorkspaceProposed> = {
-	__brand: 'remoteFactories',
+export const factories: Features<_, _, _, _, _, RemoteWorkspaceProposed> = {
+	__brand: 'features',
 	workspace: (Base) => {
 		return class extends Base {
 			private _onDidChangeWorkspaceFolders = new Emitter<WorkspaceFoldersChangeEvent>();

@@ -1120,30 +1120,84 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 export interface IConnection extends Connection {
 }
 
-export interface RemoteFactory<B, P> {
+export interface Feature<B, P> {
 	(Base: new(connection: MessageConnection) => B): new(connection: MessageConnection) => B & P;
 }
 
-export interface RemoteConsoleFactory<P> {
+export interface ConsoleFeature<P> {
 	(Base: new() => RemoteConsole): new() => RemoteConsole & P;
 }
-export interface RemoteClientFactory<P> {
+export function combineConsoleFeatures<O, T>(one: ConsoleFeature<O>, two: ConsoleFeature<T>): ConsoleFeature<O & T> {
+	return function(Base: new() => RemoteConsole): new () => RemoteConsole & O & T {
+		return two(one(Base)) as any;
+	}
+}
+
+export type TelemetryFeature<P> = Feature<Telemetry, P>;
+export function combineTelemetryFeatures<O, T>(one: TelemetryFeature<O>, two: TelemetryFeature<T>): TelemetryFeature<O & T> {
+	return function(Base: new(connection: MessageConnection) => Telemetry): new (connection: MessageConnection) => Telemetry & O & T {
+		return two(one(Base)) as any;
+	}
+}
+
+export type TracerFeature<P> = Feature<Tracer, P>;
+export function combineTracerFeatures<O, T>(one: TracerFeature<O>, two: TracerFeature<T>): TracerFeature<O & T> {
+	return function(Base: new(connection: MessageConnection) => Tracer): new (connection: MessageConnection) => Tracer & O & T {
+		return two(one(Base)) as any;
+	}
+}
+
+export interface ClientFeature<P> {
 	(Base: new(connection: MessageConnection, console: RemoteConsole) => RemoteClient): new(connection: MessageConnection, console: RemoteConsole) => RemoteClient & P;
 }
-export type RemoteWindowFactory<P> = RemoteFactory<RemoteWindow, P>;
-export type RemoteTelemetryFactory<P> = RemoteFactory<Telemetry, P>;
-export type RemoteTracerFactory<P> = RemoteFactory<Tracer, P>;
-export type RemoteWorkspaceFactory<P> = RemoteFactory<RemoteWorkspace, P>;
-
-export interface RemoteFactories<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _> {
-	__brand: 'remoteFactories';
-	console?: RemoteConsoleFactory<PConsole>;
-	tracer?: RemoteTracerFactory<PTracer>;
-	telemetry?: RemoteTelemetryFactory<PTelemetry>;
-	client?: RemoteClientFactory<PClient>;
-	window?: RemoteWindowFactory<PWindow>;
-	workspace?: RemoteWorkspaceFactory<PWorkspace>;
+export function combineClientFeatures<O, T>(one: ClientFeature<O>, two: ClientFeature<T>): ClientFeature<O & T> {
+	return function(Base: new(connection: MessageConnection, console: RemoteConsole) => RemoteClient): new (connection: MessageConnection, console: RemoteConsole) => RemoteClient & O & T {
+		return two(one(Base)) as any;
+	}
 }
+export type WindowFeature<P> = Feature<RemoteWindow, P>;
+export function combineWindowFeatures<O, T>(one: WindowFeature<O>, two: WindowFeature<T>): WindowFeature<O & T> {
+	return function(Base: new(connection: MessageConnection) => RemoteWindow): new (connection: MessageConnection) => RemoteWindow & O & T {
+		return two(one(Base)) as any;
+	}
+}
+export type WorkspaceFeature<P> = Feature<RemoteWorkspace, P>;
+export function combineWorkspaceFeatures<O, T>(one: WorkspaceFeature<O>, two: WorkspaceFeature<T>): WorkspaceFeature<O & T> {
+	return function(Base: new(connection: MessageConnection) => RemoteWorkspace): new (connection: MessageConnection) => RemoteWorkspace & O & T {
+		return two(one(Base)) as any;
+	}
+}
+
+export interface Features<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _> {
+	__brand: 'features';
+	console?: ConsoleFeature<PConsole>;
+	tracer?: TracerFeature<PTracer>;
+	telemetry?: TelemetryFeature<PTelemetry>;
+	client?: ClientFeature<PClient>;
+	window?: WindowFeature<PWindow>;
+	workspace?: WorkspaceFeature<PWorkspace>;
+}
+
+interface FeatureOne {
+	getOne(): void;
+}
+
+interface FeatureTwo {
+	getTwo(): void;
+}
+
+interface FeatureThree {
+	getThree(): void;
+}
+
+let factoryOne: WorkspaceFeature<FeatureOne> = undefined as any;
+let factoryTwo: WorkspaceFeature<FeatureTwo> = undefined as any;
+let factoryThree: WorkspaceFeature<FeatureThree> = undefined as any;
+
+let combined = combineWorkspaceFeatures(combineWorkspaceFeatures(factoryOne, factoryTwo), factoryThree);
+
+let remote = new (combined(RemoteWorkspaceImpl))(undefined as any);
+remote.getThree();
 
 /**
  * Creates a new connection based on the processes command line arguments:
@@ -1178,7 +1232,7 @@ export function createConnection(reader: MessageReader, writer: MessageWriter, s
  * @param strategy An optional connection strategy to control additinal settings
  */
 export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _>(
-	factories: RemoteFactories<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,
+	factories: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,
 	strategy?: ConnectionStrategy
 ): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>;
 
@@ -1191,7 +1245,7 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
  * @return a [connection](#IConnection)
  */
 export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _>(
-	factories: RemoteFactories<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,
+	factories: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,
 	inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, strategy?: ConnectionStrategy
 ): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>;
 
@@ -1203,16 +1257,16 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
  * @param strategy An optional connection strategy to control additinal settings
  */
 export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _>(
-	factories: RemoteFactories<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,
+	factories: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,
 	reader: MessageReader, writer: MessageWriter, strategy?: ConnectionStrategy
 ): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>;
 
 export function createConnection(arg1?: any, arg2?: any, arg3?: any, arg4?: any): IConnection {
-	let factories: RemoteFactories | undefined;
+	let factories: Features | undefined;
 	let input: NodeJS.ReadableStream | MessageReader | undefined;
 	let output: NodeJS.WritableStream | MessageWriter | undefined;
 	let strategy: ConnectionStrategy | undefined;
-	if ((arg1 as RemoteFactories).__brand === 'remoteFactories') {
+	if ((arg1 as Features).__brand === 'features') {
 		factories = arg1;
 		arg1 = arg2; arg2 = arg3; arg3 = arg4;
 	}
@@ -1236,7 +1290,7 @@ export function createConnection(arg1?: any, arg2?: any, arg3?: any, arg4?: any)
  * @return a [connection](#IConnection)
  */
 export function createProposedConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _>(
-	factories: RemoteFactories<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,
+	factories: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,
 	inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, strategy?: ConnectionStrategy
 ): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>;
 
@@ -1249,7 +1303,7 @@ export function createProposedConnection<PConsole = _, PTracer = _, PTelemetry =
  * @param strategy An optional connection strategy to control additinal settings
  */
 export function createProposedConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _>(
-	factories: RemoteFactories<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,
+	factories: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,
 	reader: MessageReader, writer: MessageWriter, strategy?: ConnectionStrategy
 ): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>;
 
@@ -1261,12 +1315,12 @@ export function createProposedConnection<PConsole = _, PTracer = _, PTelemetry =
  * @param strategy An optional connection strategy to control additinal settings
  */
 export function createProposedConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _>(
-	factories: RemoteFactories<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,
+	factories: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,
 	strategy?: ConnectionStrategy
 ): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>;
 
 export function createProposedConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _>(
-	factories: RemoteFactories<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,
+	factories: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,
 	arg1?: NodeJS.ReadableStream | MessageReader | ConnectionStrategy,
 	arg2?: NodeJS.WritableStream | MessageWriter,
 	arg3?: ConnectionStrategy
@@ -1286,7 +1340,7 @@ export function createProposedConnection<PConsole = _, PTracer = _, PTelemetry =
 
 function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _>(
 	input?: NodeJS.ReadableStream | MessageReader, output?: NodeJS.WritableStream | MessageWriter, strategy?: ConnectionStrategy,
-	factories?: RemoteFactories<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>
+	factories?: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>
 ): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace> {
 	if (!input && !output && process.argv.length > 2) {
 		let port: number | undefined = void 0;
@@ -1512,7 +1566,7 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 import { factories, RemoteWorkspaceProposed } from './proposed';
 export * from './protocol.proposed';
 export interface ProposedProtocol {
-	factories: RemoteFactories<_, _, _, _, _, RemoteWorkspaceProposed>
+	factories: Features<_, _, _, _, _, RemoteWorkspaceProposed>
 }
 export const ProposedProtocol = {
 	factories
