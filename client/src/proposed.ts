@@ -12,11 +12,11 @@ import { DynamicFeature, StaticFeature, RegistrationData, BaseLanguageClient } f
 import { ClientCapabilities, DocumentSelector, ServerCapabilities } from './protocol';
 
 import {
-	WorkspaceFolder, GetWorkspaceFolders, GetWorkspaceFolder, WorkspaceClientCapabilities,
+	WorkspaceFolder, GetWorkspaceFolders, GetWorkspaceFolder, ProposedWorkspaceClientCapabilities,
 	DidChangeWorkspaceFolders, DidChangeWorkspaceFoldersParams, GetConfigurationRequest
 } from './protocol.proposed';
 
-export class WorkspaceFolderFeature implements DynamicFeature<undefined> {
+export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 
 	private _listeners: Map<string, Disposable> = new Map<string, Disposable>();
 
@@ -29,7 +29,7 @@ export class WorkspaceFolderFeature implements DynamicFeature<undefined> {
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
 		capabilities.workspace = capabilities.workspace || {};
-		let workspace = capabilities.workspace as WorkspaceClientCapabilities;
+		let workspace = capabilities.workspace as ProposedWorkspaceClientCapabilities;
 		workspace.workspaceFolders = true;
 	}
 
@@ -67,6 +67,15 @@ export class WorkspaceFolderFeature implements DynamicFeature<undefined> {
 			this._client.sendNotification(DidChangeWorkspaceFolders.type, params);
 		});
 		this._listeners.set(id, disposable);
+		let folders = workspace.workspaceFolders;
+		if (folders) {
+			this._client.sendNotification(DidChangeWorkspaceFolders.type, {
+				event: {
+					added: folders.map(folder => this.asProtocol(folder)),
+					removed: []
+				}
+			});
+		}
 	}
 
 	public unregister(id: string): void {
@@ -101,7 +110,7 @@ export class GetConfigurationFeature implements StaticFeature {
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
 		capabilities.workspace = capabilities.workspace || {};
-		let workspace = capabilities.workspace as WorkspaceClientCapabilities;
+		let workspace = capabilities.workspace as ProposedWorkspaceClientCapabilities;
 		workspace.getConfiguration = true;
 	}
 
@@ -140,7 +149,7 @@ export class GetConfigurationFeature implements StaticFeature {
 
 export function createAllProposedFeatures(client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
 	let result: (StaticFeature | DynamicFeature<any>)[] = [];
-	result.push(new WorkspaceFolderFeature(client));
+	result.push(new WorkspaceFoldersFeature(client));
 	result.push(new GetConfigurationFeature(client));
 	return result;
 }

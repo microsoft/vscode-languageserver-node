@@ -6,7 +6,7 @@
 
 import { RequestType, RequestType0, NotificationType } from 'vscode-jsonrpc';
 
-export interface WorkspaceClientCapabilities {
+export interface ProposedWorkspaceClientCapabilities {
 	workspaceFolders?: boolean;
 	getConfiguration?: boolean;
 }

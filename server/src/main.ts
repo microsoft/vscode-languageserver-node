@@ -9,7 +9,7 @@ import {
 	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler,
 	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler, StarNotificationHandler,
 	MessageType as RPCMessageType, ResponseError, ErrorCodes,
-	MessageConnection, Logger, createMessageConnection,
+	Logger, createMessageConnection, MessageConnection,
 	MessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
 	MessageWriter, StreamMessageWriter, IPCMessageWriter, createServerPipeTransport,
 	CancellationToken, CancellationTokenSource,
@@ -49,7 +49,8 @@ import {
 	RenameRequest, RenameParams,
 	DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkParams,
 	ExecuteCommandRequest, ExecuteCommandParams,
-	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse
+	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse,
+	ClientCapabilities, ServerCapabilities
 } from './protocol';
 
 import * as Is from './utils/is';
@@ -313,14 +314,39 @@ export class ErrorMessageTracker {
  *
  */
 export interface Remote {
-	connection: MessageConnection;
+	/**
+	 * Attach the remote to the given connection.
+	 *
+	 * @param connection The connection this remote is operating on.
+	 */
+	attach(connection: IConnection): void;
+
+	/**
+	 * The connection this remote is attached to.
+	 */
+	connection: IConnection;
+
+	/**
+	 * Called to initialize the remote with the given
+	 * client capabilities
+	 *
+	 * @param capabilities The client capabilities
+	 */
+	initialize(capabilities: ClientCapabilities): void;
+
+	/**
+	 * Called to fill in the server capabilities this feature implements.
+	 *
+	 * @param capabilities The server capabilities to fill.
+	 */
+	fillServerCapabilities(capabilities: ServerCapabilities): void;
 }
 
 /**
  * The RemoteConsole interface contains all functions to interact with
  * the developer console of VS Code.
  */
-export interface RemoteConsole {
+export interface RemoteConsole extends Remote {
 	/**
 	 * Show an error message.
 	 *
@@ -354,7 +380,7 @@ export interface RemoteConsole {
  * The RemoteWindow interface contains all functions to interact with
  * the visual window of VS Code.
  */
-export interface RemoteWindow {
+export interface RemoteWindow extends Remote {
 	/**
 	 * Show an error message.
 	 *
@@ -449,7 +475,7 @@ export interface BulkUnregistration extends Disposable {
 
 export namespace BulkUnregistration {
 	export function create(): BulkUnregistration {
-		return new BulkUnregistrationImpl(undefined, undefined, []);
+		return new BulkUnregistrationImpl(undefined, []);
 	}
 }
 
@@ -457,19 +483,18 @@ class BulkUnregistrationImpl implements BulkUnregistration {
 
 	private _unregistrations: Map<string, Unregistration> = new Map<string, Unregistration>();
 
-	constructor(private _connection: MessageConnection | undefined, private _console: RemoteConsole | undefined, unregistrations: Unregistration[]) {
+	constructor(private _connection: IConnection | undefined, unregistrations: Unregistration[]) {
 		unregistrations.forEach(unregistration => {
 			this._unregistrations.set(unregistration.method, unregistration);
 		});
 	}
 
 	public get isAttached(): boolean {
-		return !!this._connection && !!this._console;
+		return !!this._connection;
 	}
 
-	public attach(connection: MessageConnection, _console: RemoteConsole): void {
+	public attach(connection: IConnection): void {
 		this._connection = connection;
-		this._console = _console;
 	}
 
 	public add(unregistration: Unregistration): void {
@@ -485,7 +510,7 @@ class BulkUnregistrationImpl implements BulkUnregistration {
 			unregisterations: unregistrations
 		};
 		this._connection!.sendRequest(UnregistrationRequest.type, params).then(undefined, (_error) => {
-			this._console!.info(`Bulk unregistration failed.`);
+			this._connection!.console.info(`Bulk unregistration failed.`);
 		});
 	}
 
@@ -503,7 +528,7 @@ class BulkUnregistrationImpl implements BulkUnregistration {
 		this._connection!.sendRequest(UnregistrationRequest.type, params).then(() => {
 			this._unregistrations.delete(method);
 		}, (_error) => {
-			this._console!.info(`Unregistering request handler for ${unregistration.id} failed.`);
+			this._connection!.console.info(`Unregistering request handler for ${unregistration.id} failed.`);
 		});
 		return true;
 	}
@@ -512,7 +537,7 @@ class BulkUnregistrationImpl implements BulkUnregistration {
 /**
  * Interface to register and unregister `listeners` on the client / tools side.
  */
-export interface RemoteClient {
+export interface RemoteClient extends Remote {
 	/**
 	 * Registers a listener for the given notification.
 	 * @param type the notification type to register for.
@@ -559,34 +584,79 @@ export interface RemoteClient {
 }
 
 class ConnectionLogger implements Logger, RemoteConsole {
-	private _connection: MessageConnection;
+
+	private _rawConnection: MessageConnection;
+	private _connection: IConnection;
+
 	public constructor() {
 	}
-	public attach(connection: MessageConnection) {
+
+	public rawAttach(connection: MessageConnection): void {
+		this._rawConnection = connection;
+	}
+
+	public attach(connection: IConnection) {
 		this._connection = connection;
 	}
+
+	public get connection(): IConnection {
+		if (!this._connection) {
+			throw new Error('Remote is not attached to a connection yet.');
+		}
+		return this._connection;
+	}
+
+	public fillServerCapabilities(_capabilities: ServerCapabilities): void {
+	}
+
+	public initialize(_capabilities: ClientCapabilities): void {
+	}
+
 	public error(message: string): void {
 		this.send(MessageType.Error, message);
 	}
+
 	public warn(message: string): void {
 		this.send(MessageType.Warning, message);
 	}
+
 	public info(message: string): void {
 		this.send(MessageType.Info, message);
 	}
+
 	public log(message: string): void {
 		this.send(MessageType.Log, message);
 	}
+
 	private send(type: MessageType, message: string) {
-		if (this._connection) {
-			this._connection.sendNotification(LogMessageNotification.type, { type, message });
+		if (this._rawConnection) {
+			this._rawConnection.sendNotification(LogMessageNotification.type, { type, message });
 		}
 	}
 }
 
 class RemoteWindowImpl implements RemoteWindow {
 
-	constructor(private _connection: MessageConnection) {
+	private _connection: IConnection;
+
+	constructor() {
+	}
+
+	public attach(connection: IConnection) {
+		this._connection = connection;
+	}
+
+	public get connection(): IConnection {
+		if (!this._connection) {
+			throw new Error('Remote is not attached to a connection yet.');
+		}
+		return this._connection;
+	}
+
+	public initialize(_capabilities: ClientCapabilities): void {
+	}
+
+	public fillServerCapabilities(_capabilities: ServerCapabilities): void {
 	}
 
 	public showErrorMessage(message: string, ...actions: MessageActionItem[]): Thenable<MessageActionItem> {
@@ -606,7 +676,24 @@ class RemoteWindowImpl implements RemoteWindow {
 }
 
 class RemoteClientImpl implements RemoteClient {
-	constructor(private _connection: MessageConnection, private _console: RemoteConsole) {
+
+	private _connection: IConnection;
+
+	public attach(connection: IConnection) {
+		this._connection = connection;
+	}
+
+	public get connection(): IConnection {
+		if (!this._connection) {
+			throw new Error('Remote is not attached to a connection yet.');
+		}
+		return this._connection;
+	}
+
+	public initialize(_capabilities: ClientCapabilities): void {
+	}
+
+	public fillServerCapabilities(_capabilities: ServerCapabilities): void {
 	}
 
 	public register(typeOrRegistrations: string | RPCMessageType | BulkRegistration | BulkUnregistration, registerOptionsOrType?: string | RPCMessageType | any, registerOptions?: any): Thenable<any>  /* Thenable<Disposable | BulkUnregistration> */ {
@@ -626,13 +713,13 @@ class RemoteClientImpl implements RemoteClient {
 			registrations: [{ id, method, registerOptions: registerOptions || {} }]
 		}
 		if (!unregistration.isAttached) {
-			unregistration.attach(this._connection, this._console);
+			unregistration.attach(this._connection);
 		}
 		return this._connection.sendRequest(RegistrationRequest.type, params).then((_result) => {
 			unregistration.add({ id: id, method: method });
 			return unregistration;
 		}, (_error) => {
-			this._console.info(`Registering request handler for ${method} failed.`);
+			this.connection.console.info(`Registering request handler for ${method} failed.`);
 			return Promise.reject(_error);
 		});
 	}
@@ -648,7 +735,7 @@ class RemoteClientImpl implements RemoteClient {
 				this.unregisterSingle(id, method);
 			});
 		}, (_error) => {
-			this._console.info(`Registering request handler for ${method} failed.`);
+			this.connection.console.info(`Registering request handler for ${method} failed.`);
 			return Promise.reject(_error);
 		});
 	}
@@ -659,16 +746,16 @@ class RemoteClientImpl implements RemoteClient {
 		};
 
 		return this._connection.sendRequest(UnregistrationRequest.type, params).then(undefined, (_error) => {
-			this._console.info(`Unregistering request handler for ${id} failed.`);
+			this.connection.console.info(`Unregistering request handler for ${id} failed.`);
 		});
 	}
 
 	private registerMany(registrations: BulkRegistrationImpl): Thenable<BulkUnregistration> {
 		let params = registrations.asRegistrationParams();
 		return this._connection.sendRequest(RegistrationRequest.type, params).then(() => {
-			return new BulkUnregistrationImpl(this._connection, this._console, params.registrations.map(registration => { return { id: registration.id, method: registration.method } }));
+			return new BulkUnregistrationImpl(this._connection, params.registrations.map(registration => { return { id: registration.id, method: registration.method } }));
 		}, (_error) => {
-			this._console.info(`Bulk registeration failed.`);
+			this.connection.console.info(`Bulk registeration failed.`);
 			return Promise.reject(_error);
 		});
 	}
@@ -688,11 +775,26 @@ export interface RemoteWorkspace extends Remote {
 
 class RemoteWorkspaceImpl implements RemoteWorkspace {
 
-	constructor(private _connection: MessageConnection) {
+	private _connection: IConnection;
+
+	public constructor() {
 	}
 
-	public get connection(): MessageConnection {
+	public attach(connection: IConnection) {
+		this._connection = connection;
+	}
+
+	public get connection(): IConnection {
+		if (!this._connection) {
+			throw new Error('Remote is not attached to a connection yet.');
+		}
 		return this._connection;
+	}
+
+	public initialize(_capabilities: ClientCapabilities): void {
+	}
+
+	public fillServerCapabilities(_capabilities: ServerCapabilities): void {
 	}
 
 	public applyEdit(edit: WorkspaceEdit): Thenable<ApplyWorkspaceEditResponse> {
@@ -707,7 +809,7 @@ class RemoteWorkspaceImpl implements RemoteWorkspace {
  * Interface to log telemetry events. The events are actually send to the client
  * and the client needs to feed the event into a propert telemetry system.
  */
-export interface Telemetry {
+export interface Telemetry extends Remote {
 	/**
 	 * Log the given data to telemetry.
 	 *
@@ -720,7 +822,7 @@ export interface Telemetry {
  * Interface to log traces to the client. The events are sent to the client and the
  * client needs to log the trace events.
  */
-export interface Tracer {
+export interface Tracer extends Remote {
 	/**
 	 * Log the given data to the trace Log
 	 */
@@ -730,9 +832,27 @@ export interface Tracer {
 class TracerImpl implements Tracer {
 
 	private _trace: Trace;
+	private _connection: IConnection;
 
-	constructor(private _connection: MessageConnection) {
+	constructor() {
 		this._trace = Trace.Off;
+	}
+
+	public attach(connection: IConnection) {
+		this._connection = connection;
+	}
+
+	public get connection(): IConnection {
+		if (!this._connection) {
+			throw new Error('Remote is not attached to a connection yet.');
+		}
+		return this._connection;
+	}
+
+	public initialize(_capabilities: ClientCapabilities): void {
+	}
+
+	public fillServerCapabilities(_capabilities: ServerCapabilities): void {
 	}
 
 	public set trace(value: Trace) {
@@ -752,7 +872,26 @@ class TracerImpl implements Tracer {
 
 class TelemetryImpl implements Telemetry {
 
-	constructor(private _connection: MessageConnection) {
+	private _connection: IConnection;
+
+	constructor() {
+	}
+
+	public attach(connection: IConnection) {
+		this._connection = connection;
+	}
+
+	public get connection(): IConnection {
+		if (!this._connection) {
+			throw new Error('Remote is not attached to a connection yet.');
+		}
+		return this._connection;
+	}
+
+	public initialize(_capabilities: ClientCapabilities): void {
+	}
+
+	public fillServerCapabilities(_capabilities: ServerCapabilities): void {
 	}
 
 	public logEvent(data: any): void {
@@ -1121,12 +1260,10 @@ export interface IConnection extends Connection {
 }
 
 export interface Feature<B, P> {
-	(Base: new(connection: MessageConnection) => B): new(connection: MessageConnection) => B & P;
+	(Base: new() => B): new() => B & P;
 }
 
-export interface ConsoleFeature<P> {
-	(Base: new() => RemoteConsole): new() => RemoteConsole & P;
-}
+export type ConsoleFeature<P> = Feature<RemoteConsole, P>;
 export function combineConsoleFeatures<O, T>(one: ConsoleFeature<O>, two: ConsoleFeature<T>): ConsoleFeature<O & T> {
 	return function(Base: new() => RemoteConsole): new () => RemoteConsole & O & T {
 		return two(one(Base)) as any;
@@ -1135,35 +1272,33 @@ export function combineConsoleFeatures<O, T>(one: ConsoleFeature<O>, two: Consol
 
 export type TelemetryFeature<P> = Feature<Telemetry, P>;
 export function combineTelemetryFeatures<O, T>(one: TelemetryFeature<O>, two: TelemetryFeature<T>): TelemetryFeature<O & T> {
-	return function(Base: new(connection: MessageConnection) => Telemetry): new (connection: MessageConnection) => Telemetry & O & T {
+	return function(Base: new() => Telemetry): new () => Telemetry & O & T {
 		return two(one(Base)) as any;
 	}
 }
 
 export type TracerFeature<P> = Feature<Tracer, P>;
 export function combineTracerFeatures<O, T>(one: TracerFeature<O>, two: TracerFeature<T>): TracerFeature<O & T> {
-	return function(Base: new(connection: MessageConnection) => Tracer): new (connection: MessageConnection) => Tracer & O & T {
+	return function(Base: new() => Tracer): new () => Tracer & O & T {
 		return two(one(Base)) as any;
 	}
 }
 
-export interface ClientFeature<P> {
-	(Base: new(connection: MessageConnection, console: RemoteConsole) => RemoteClient): new(connection: MessageConnection, console: RemoteConsole) => RemoteClient & P;
-}
+export type ClientFeature<P> = Feature<RemoteClient, P>;
 export function combineClientFeatures<O, T>(one: ClientFeature<O>, two: ClientFeature<T>): ClientFeature<O & T> {
-	return function(Base: new(connection: MessageConnection, console: RemoteConsole) => RemoteClient): new (connection: MessageConnection, console: RemoteConsole) => RemoteClient & O & T {
+	return function(Base: new() => RemoteClient): new () => RemoteClient & O & T {
 		return two(one(Base)) as any;
 	}
 }
 export type WindowFeature<P> = Feature<RemoteWindow, P>;
 export function combineWindowFeatures<O, T>(one: WindowFeature<O>, two: WindowFeature<T>): WindowFeature<O & T> {
-	return function(Base: new(connection: MessageConnection) => RemoteWindow): new (connection: MessageConnection) => RemoteWindow & O & T {
+	return function(Base: new() => RemoteWindow): new () => RemoteWindow & O & T {
 		return two(one(Base)) as any;
 	}
 }
 export type WorkspaceFeature<P> = Feature<RemoteWorkspace, P>;
 export function combineWorkspaceFeatures<O, T>(one: WorkspaceFeature<O>, two: WorkspaceFeature<T>): WorkspaceFeature<O & T> {
-	return function(Base: new(connection: MessageConnection) => RemoteWorkspace): new (connection: MessageConnection) => RemoteWorkspace & O & T {
+	return function(Base: new() => RemoteWorkspace): new () => RemoteWorkspace & O & T {
 		return two(one(Base)) as any;
 	}
 }
@@ -1177,27 +1312,30 @@ export interface Features<PConsole = _, PTracer = _, PTelemetry = _, PClient = _
 	window?: WindowFeature<PWindow>;
 	workspace?: WorkspaceFeature<PWorkspace>;
 }
-
-interface FeatureOne {
-	getOne(): void;
+export function combineFeatures<OConsole, OTracer, OTelemetry, OClient, OWindow, OWorkspace, TConsole, TTracer, TTelemetry, TClient, TWindow, TWorkspace>(
+	one: Features<OConsole, OTracer, OTelemetry, OClient, OWindow, OWorkspace>,
+	two: Features<TConsole, TTracer, TTelemetry, TClient, TWindow, TWorkspace>
+): Features<OConsole & TConsole, OTracer & TTracer, OTelemetry & TTelemetry, OClient & TClient, OWindow & TWindow, OWorkspace & TWorkspace> {
+	function combine<O, T>(one: O, two: T, func: (one: O, two: T) => any): any {
+		if (one && two) {
+			return func(one, two);
+		} else if (one) {
+			return one;
+		} else {
+			return two;
+		}
+	}
+	let result: Features<OConsole & TConsole, OTracer & TTracer, OTelemetry & TTelemetry, OClient & TClient, OWindow & TWindow, OWorkspace & TWorkspace> = {
+		__brand: 'features',
+		console: combine(one.console, two.console, combineConsoleFeatures),
+		tracer: combine(one.tracer, two.tracer, combineTracerFeatures),
+		telemetry: combine(one.telemetry, two.telemetry, combineTelemetryFeatures),
+		client: combine(one.client, two.client, combineClientFeatures),
+		window: combine(one.window, two.window, combineWindowFeatures),
+		workspace: combine(one.workspace, two.workspace, combineWorkspaceFeatures)
+	};
+	return result;
 }
-
-interface FeatureTwo {
-	getTwo(): void;
-}
-
-interface FeatureThree {
-	getThree(): void;
-}
-
-let factoryOne: WorkspaceFeature<FeatureOne> = undefined as any;
-let factoryTwo: WorkspaceFeature<FeatureTwo> = undefined as any;
-let factoryThree: WorkspaceFeature<FeatureThree> = undefined as any;
-
-let combined = combineWorkspaceFeatures(combineWorkspaceFeatures(factoryOne, factoryTwo), factoryThree);
-
-let remote = new (combined(RemoteWorkspaceImpl))(undefined as any);
-remote.getThree();
 
 /**
  * Creates a new connection based on the processes command line arguments:
@@ -1280,64 +1418,6 @@ export function createConnection(arg1?: any, arg2?: any, arg3?: any, arg4?: any)
 	return _createConnection(input, output, strategy, factories);
 }
 
-/**
- * Creates a new connection using a the given streams. The new connection surfaces proposed API
- *
- * @param factories: the factories to use to implement the proposed API
- * @param inputStream The stream to read messages from.
- * @param outputStream The stream to write messages to.
- * @param strategy An optional connection strategy to control additinal settings
- * @return a [connection](#IConnection)
- */
-export function createProposedConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _>(
-	factories: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,
-	inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, strategy?: ConnectionStrategy
-): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>;
-
-/**
- * Creates a new connection.
- *
- * @param factories: the factories to use to implement the proposed API
- * @param reader The message reader to read messages from.
- * @param writer The message writer to write message to.
- * @param strategy An optional connection strategy to control additinal settings
- */
-export function createProposedConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _>(
-	factories: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,
-	reader: MessageReader, writer: MessageWriter, strategy?: ConnectionStrategy
-): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>;
-
-/**
- * Creates a new connection based on the processes command line arguments:
- * --ipc : connection using the node process ipc
- *
- * @param factories: the factories to use to implement the proposed API
- * @param strategy An optional connection strategy to control additinal settings
- */
-export function createProposedConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _>(
-	factories: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,
-	strategy?: ConnectionStrategy
-): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>;
-
-export function createProposedConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _>(
-	factories: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,
-	arg1?: NodeJS.ReadableStream | MessageReader | ConnectionStrategy,
-	arg2?: NodeJS.WritableStream | MessageWriter,
-	arg3?: ConnectionStrategy
-): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace> {
-	let input: NodeJS.ReadableStream | MessageReader | undefined;
-	let output: NodeJS.WritableStream | MessageWriter | undefined;
-	let strategy: ConnectionStrategy | undefined;
-	if (ConnectionStrategy.is(arg1)) {
-		strategy = arg1;
-	} else {
-		input = arg1;
-		output = arg2;
-		strategy = arg3;
-	}
-	return _createConnection(input, output, strategy, factories);
-}
-
 function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _>(
 	input?: NodeJS.ReadableStream | MessageReader, output?: NodeJS.WritableStream | MessageWriter, strategy?: ConnectionStrategy,
 	factories?: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>
@@ -1410,12 +1490,13 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 
 	const logger = (factories && factories.console ? new (factories.console(ConnectionLogger))() : new ConnectionLogger()) as ConnectionLogger & PConsole;
 	const connection = createMessageConnection(input as any, output as any, logger, strategy);
-	logger.attach(connection);
-	const tracer = (factories && factories.tracer ? new (factories.tracer(TracerImpl))(connection) : new TracerImpl(connection)) as TracerImpl & PTracer;
-	const telemetry = (factories && factories.telemetry ? new (factories.telemetry(TelemetryImpl))(connection) : new TelemetryImpl(connection)) as TelemetryImpl & PTelemetry;
-	const client = (factories && factories.client ? new (factories.client(RemoteClientImpl))(connection, logger) :  new RemoteClientImpl(connection, logger)) as RemoteClientImpl & PClient;
-	const remoteWindow = (factories && factories.window ? new (factories.window(RemoteWindowImpl))(connection) : new RemoteWindowImpl(connection)) as RemoteWindowImpl & PWindow;
-	const workspace = (factories && factories.workspace ? new (factories.workspace(RemoteWorkspaceImpl))(connection) : new RemoteWorkspaceImpl(connection)) as RemoteWorkspaceImpl & PWorkspace;
+	logger.rawAttach(connection);
+	const tracer = (factories && factories.tracer ? new (factories.tracer(TracerImpl))() : new TracerImpl()) as TracerImpl & PTracer;
+	const telemetry = (factories && factories.telemetry ? new (factories.telemetry(TelemetryImpl))() : new TelemetryImpl()) as TelemetryImpl & PTelemetry;
+	const client = (factories && factories.client ? new (factories.client(RemoteClientImpl))() :  new RemoteClientImpl()) as RemoteClientImpl & PClient;
+	const remoteWindow = (factories && factories.window ? new (factories.window(RemoteWindowImpl))() : new RemoteWindowImpl()) as RemoteWindowImpl & PWindow;
+	const workspace = (factories && factories.workspace ? new (factories.workspace(RemoteWorkspaceImpl))() : new RemoteWorkspaceImpl()) as RemoteWorkspaceImpl & PWorkspace;
+	const allRemotes: Remote[] = [logger, tracer, telemetry, client, remoteWindow, workspace];
 
 	function asThenable<T>(value: Thenable<T>): Thenable<T>;
 	function asThenable<T>(value: T): Thenable<T>;
@@ -1445,10 +1526,10 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 		onExit: (handler) => exitHandler = handler,
 
 		get console() { return logger; },
-		get window() { return remoteWindow; },
 		get telemetry() { return telemetry; },
 		get tracer() { return tracer; },
 		get client() { return client; },
+		get window() { return remoteWindow; },
 		get workspace() { return workspace; },
 
 		onDidChangeConfiguration: (handler) => connection.onNotification(DidChangeConfigurationNotification.type, handler),
@@ -1486,6 +1567,9 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 
 		dispose: () => connection.dispose()
 	};
+	for (let remote of allRemotes) {
+		remote.attach(protocolConnection);
+	}
 
 	connection.onRequest(InitializeRequest.type, (params) => {
 		if (Is.number(params.processId)) {
@@ -1502,6 +1586,9 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 		}
 		if (Is.string(params.trace)) {
 			tracer.trace = Trace.fromString(params.trace);
+		}
+		for (let remote of allRemotes) {
+			remote.initialize(params.capabilities);
 		}
 		if (initializeHandler) {
 			let result = initializeHandler(params, new CancellationTokenSource().token);
@@ -1523,10 +1610,16 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 				} else if (!Is.number(capabilities.textDocumentSync) && !Is.number(capabilities.textDocumentSync.change)) {
 					capabilities.textDocumentSync.change = Is.number(protocolConnection.__textDocumentSync) ? protocolConnection.__textDocumentSync : TextDocumentSyncKind.None;
 				}
+				for (let remote of allRemotes) {
+					remote.fillServerCapabilities(capabilities);
+				}
 				return result;
 			});
 		} else {
 			let result: InitializeResult = { capabilities: { textDocumentSync: TextDocumentSyncKind.None } };
+				for (let remote of allRemotes) {
+					remote.fillServerCapabilities(result.capabilities);
+				}
 			return result;
 		}
 	});
@@ -1563,11 +1656,5 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 
 // Export the protocol currently in proposed state.
 
-import { factories, RemoteWorkspaceProposed } from './proposed';
-export * from './protocol.proposed';
-export interface ProposedProtocol {
-	factories: Features<_, _, _, _, _, RemoteWorkspaceProposed>
-}
-export const ProposedProtocol = {
-	factories
-}
+export * from './proposed';
+export * from './protocol.proposed'
