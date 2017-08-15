@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { workspace, Disposable, WorkspaceFolder as VWorkspaceFolder } from 'vscode';
+import { workspace, Disposable, WorkspaceFolder as VWorkspaceFolder, Uri } from 'vscode';
 
 import { MessageType as RPCMessageType } from 'vscode-jsonrpc';
 
@@ -117,37 +117,60 @@ export class GetConfigurationFeature implements StaticFeature {
 	public initialize(_documentSelector: DocumentSelector | undefined, _capabilities: ServerCapabilities): void {
 		let client = this._client;
 		client.onRequest(GetConfigurationRequest.type, (params) => {
-			let section = params.section === null ? undefined : params.section;
-			let resource = params.uri ? this._client.protocol2CodeConverter.asUri(params.uri) : undefined;
-			let result: any = null;
-			if (section) {
-				let index = section.lastIndexOf('.');
-				if (index === -1) {
-					result = workspace.getConfiguration(undefined, resource).get(section);
-				} else {
-					let config = workspace.getConfiguration(section.substr(0, index));
-					if (config) {
-						result = config.get(section.substr(index + 1))
-					}
-				}
+			let result: any[][] = [];
+			let scopes = params.scopeUris;
+			if (scopes === void 0 || scopes === null) {
+				result.push(this.getConfigurations(undefined, params.sections));
 			} else {
-				let config = workspace.getConfiguration(undefined, resource);
-				result = {};
-				for (let key of Object.keys(config)) {
-					if (config.has(key)) {
-						result[key] = config.get(key);
-					}
+				for (let uri of scopes) {
+					result.push(this.getConfigurations(this._client.protocol2CodeConverter.asUri(uri), params.sections));
 				}
-			}
-			if (!result) {
-				return null;
 			}
 			return result;
 		});
 	}
+
+	private getConfigurations(resource: Uri | undefined, sections: string[] | undefined): any[] {
+		let result: any[] = [];
+		if (sections === void 0 || sections === null) {
+			result.push(resource, undefined);
+		} else {
+			for (let section of sections) {
+				result.push(this.getConfiguration(resource, section));
+			}
+		}
+		return result;
+	}
+
+	private getConfiguration(resource: Uri | undefined, section: string | undefined): any {
+		let result: any = null;
+		if (section) {
+			let index = section.lastIndexOf('.');
+			if (index === -1) {
+				result = workspace.getConfiguration(undefined, resource).get(section);
+			} else {
+				let config = workspace.getConfiguration(section.substr(0, index));
+				if (config) {
+					result = config.get(section.substr(index + 1))
+				}
+			}
+		} else {
+			let config = workspace.getConfiguration(undefined, resource);
+			result = {};
+			for (let key of Object.keys(config)) {
+				if (config.has(key)) {
+					result[key] = config.get(key);
+				}
+			}
+		}
+		if (!result) {
+			return null;
+		}
+		return result;
+	}
 }
 
-export function createAllProposedFeatures(client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
+export function ProposedProtocol(client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
 	let result: (StaticFeature | DynamicFeature<any>)[] = [];
 	result.push(new WorkspaceFoldersFeature(client));
 	result.push(new GetConfigurationFeature(client));

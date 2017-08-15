@@ -40,7 +40,7 @@ import {
 	LogMessageNotification, LogMessageParams, MessageType,
 	ShowMessageNotification, ShowMessageParams, ShowMessageRequest,
 	TelemetryEventNotification,
-	DidChangeConfigurationNotification, DidChangeConfigurationParams,
+	DidChangeConfigurationNotification, DidChangeConfigurationParams, DidChangeConfigurationRegistrationOptions,
 	DocumentSelector,
 	DidOpenTextDocumentNotification, DidOpenTextDocumentParams,
 	DidChangeTextDocumentNotification, DidChangeTextDocumentParams, TextDocumentChangeRegistrationOptions,
@@ -1885,6 +1885,105 @@ class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkRegistrationOp
 	}
 }
 
+class ConfigurationFeature implements DynamicFeature<DidChangeConfigurationRegistrationOptions> {
+
+	private _listeners: Map<string, Disposable> = new Map<string, Disposable>();
+
+	constructor(private _client: BaseLanguageClient) {
+	}
+
+	public get messages(): RPCMessageType {
+		return DidChangeConfigurationNotification.type;
+	}
+
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
+		ensure(ensure(capabilities, 'workspace')!, 'didChangeConfiguration')!.dynamicRegistration = true;
+	}
+
+	public initialize(_documentSelector: DocumentSelector, _capabilities: ServerCapabilities): void {
+		let section = this._client.clientOptions.synchronize!.configurationSection;
+		if (section !== void 0) {
+			this.register(this.messages, {
+				id: UUID.generateUuid(),
+				registerOptions: {
+					section: section
+				}
+			})
+		}
+	}
+
+	public register(_message: RPCMessageType, data: RegistrationData<DidChangeConfigurationRegistrationOptions>): void {
+		let disposable = Workspace.onDidChangeConfiguration(() => {
+			this.onDidChangeConfiguration(data.registerOptions.section);
+		});
+		this._listeners.set(data.id, disposable);
+		if (data.registerOptions.section !== void 0) {
+			this.onDidChangeConfiguration(data.registerOptions.section);
+		}
+	}
+
+	public unregister(id: string): void {
+		let disposable = this._listeners.get(id);
+		if (disposable) {
+			this._listeners.delete(id);
+			disposable.dispose();
+		}
+	}
+
+	public dispose(): void {
+		for (let disposable of this._listeners.values()) {
+			disposable.dispose();
+		}
+	}
+
+	private onDidChangeConfiguration(configurationSection: string | string[] | undefined): void {
+		if (configurationSection === void 0) {
+			this._client.sendNotification(DidChangeConfigurationNotification.type, { settings: null });
+			return;
+		}
+		let keys: string[] | undefined;
+		if (Is.string(configurationSection)) {
+			keys = [configurationSection];
+		} else if (Is.stringArray(configurationSection)) {
+			keys = configurationSection;
+		}
+		if (keys) {
+			this._client.sendNotification(DidChangeConfigurationNotification.type, { settings: this.extractSettingsInformation(keys) });
+		}
+	}
+
+	private extractSettingsInformation(keys: string[]): any {
+		function ensurePath(config: any, path: string[]): any {
+			let current = config;
+			for (let i = 0; i < path.length - 1; i++) {
+				let obj = current[path[i]];
+				if (!obj) {
+					obj = Object.create(null);
+					current[path[i]] = obj;
+				}
+				current = obj;
+			}
+			return current;
+		}
+		let result = Object.create(null);
+		for (let i = 0; i < keys.length; i++) {
+			let key = keys[i];
+			let index: number = key.indexOf('.');
+			let config: any = null;
+			if (index >= 0) {
+				config = Workspace.getConfiguration(key.substr(0, index)).get(key.substr(index + 1));
+			} else {
+				config = Workspace.getConfiguration(key);
+			}
+			if (config) {
+				let path = keys[i].split('.');
+				ensurePath(result, path)[path[path.length - 1]] = config;
+			}
+		}
+		return result;
+	}
+}
+
 class ExecuteCommandFeature implements DynamicFeature<ExecuteCommandRegistrationOptions> {
 
 	private _commands: Map<string, Disposable[]> = new Map<string, Disposable[]>();
@@ -2583,11 +2682,9 @@ export abstract class BaseLanguageClient {
 	}
 
 	private hookConfigurationChanged(connection: IConnection): void {
-		if (!this._clientOptions.synchronize!.configurationSection) {
-			return;
-		}
-		Workspace.onDidChangeConfiguration(() => this.onDidChangeConfiguration(connection), this, this._listeners);
-		this.onDidChangeConfiguration(connection);
+		Workspace.onDidChangeConfiguration(() => {
+			this.refreshTrace(connection, true);
+		});
 	}
 
 	private refreshTrace(connection: IConnection, sendNotification: boolean = false): void {
@@ -2600,52 +2697,6 @@ export abstract class BaseLanguageClient {
 		connection.trace(this._trace, this._tracer, sendNotification);
 	}
 
-	private onDidChangeConfiguration(connection: IConnection): void {
-		this.refreshTrace(connection, true);
-		let keys: string[] | undefined;
-		let configurationSection = this._clientOptions.synchronize!.configurationSection;
-		if (Is.string(configurationSection)) {
-			keys = [configurationSection];
-		} else if (Is.stringArray(configurationSection)) {
-			keys = configurationSection;
-		}
-		if (keys) {
-			if (this.isConnectionActive()) {
-				connection.didChangeConfiguration({ settings: this.extractSettingsInformation(keys) });
-			}
-		}
-	}
-
-	private extractSettingsInformation(keys: string[]): any {
-		function ensurePath(config: any, path: string[]): any {
-			let current = config;
-			for (let i = 0; i < path.length - 1; i++) {
-				let obj = current[path[i]];
-				if (!obj) {
-					obj = Object.create(null);
-					current[path[i]] = obj;
-				}
-				current = obj;
-			}
-			return current;
-		}
-		let result = Object.create(null);
-		for (let i = 0; i < keys.length; i++) {
-			let key = keys[i];
-			let index: number = key.indexOf('.');
-			let config: any = null;
-			if (index >= 0) {
-				config = Workspace.getConfiguration(key.substr(0, index)).get(key.substr(index + 1));
-			} else {
-				config = Workspace.getConfiguration(key);
-			}
-			if (config) {
-				let path = keys[i].split('.');
-				ensurePath(result, path)[path[path.length - 1]] = config;
-			}
-		}
-		return result;
-	}
 
 	private hookFileEvents(_connection: IConnection): void {
 		let fileEvents = this._clientOptions.synchronize.fileEvents;
@@ -2693,6 +2744,7 @@ export abstract class BaseLanguageClient {
 
 	private registerBuiltinFeatures() {
 		const syncedDocuments: Map<string, TextDocument> = new Map<string, TextDocument>();
+		this.registerFeature(new ConfigurationFeature(this));
 		this.registerFeature(new DidOpenTextDocumentFeature(this, syncedDocuments));
 		this.registerFeature(new DidChangeTextDocumentFeature(this));
 		this.registerFeature(new WillSaveFeature(this));

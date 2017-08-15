@@ -779,7 +779,11 @@ export namespace ExitNotification {
  * the changed configuration as defined by the language client.
  */
 export namespace DidChangeConfigurationNotification {
-	export const type = new NotificationType<DidChangeConfigurationParams, void>('workspace/didChangeConfiguration');
+	export const type = new NotificationType<DidChangeConfigurationParams, DidChangeConfigurationRegistrationOptions>('workspace/didChangeConfiguration');
+}
+
+export interface DidChangeConfigurationRegistrationOptions {
+	section?: string | string[]
 }
 
 /**

@@ -18,25 +18,27 @@ export interface ProposedWorkspaceClientCapabilities {
  * configuration setting.
  */
 export namespace GetConfigurationRequest {
-	export const type = new RequestType<GetConfigurationParams, any, void, void>('workspace/getConfiguration');
+	export const type = new RequestType<GetConfigurationParams, any[][], void, void>('workspace/getConfiguration');
 }
 
 /**
  * The parameters of a get configuration request.
  */
 export interface GetConfigurationParams {
+
 	/**
-	 * When a section-identifier is provided only that part of the configuration
+	 * The scopes to get the configuration sections for.
+	 */
+	scopeUris?: string[];
+
+	/**
+	 * When section-identifiers are provided only the sections of the configuration
 	 * is returned. Dots in the section-identifier are interpreted as JSON child-access,
 	 * like `{ myExt: { setting: { doIt: true }}}` then `getConfiguration('myExt.setting')`
 	 * returns `{ doIt: true }`.
 	 */
-	section?: string;
+	sections?: string[];
 
-	/**
-	 * An option resource the configuration is ask for.
-	 */
-	uri?: string;
 }
 
 //---- Workspace Folder ----
