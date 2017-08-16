@@ -11,6 +11,10 @@ export interface ProposedWorkspaceClientCapabilities {
 	getConfiguration?: boolean;
 }
 
+export interface ProposedInitializeParams {
+	workspaceFolders: WorkspaceFolder[] | null;
+}
+
 //---- Get Configuration request ----
 
 /**

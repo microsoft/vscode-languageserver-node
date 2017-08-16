@@ -9,11 +9,11 @@ import { workspace, Disposable, WorkspaceFolder as VWorkspaceFolder, Uri } from 
 import { MessageType as RPCMessageType } from 'vscode-jsonrpc';
 
 import { DynamicFeature, StaticFeature, RegistrationData, BaseLanguageClient } from './client';
-import { ClientCapabilities, DocumentSelector, ServerCapabilities } from './protocol';
+import { ClientCapabilities, DocumentSelector, ServerCapabilities, InitializedParams } from './protocol';
 
 import {
 	WorkspaceFolder, GetWorkspaceFolders, GetWorkspaceFolder, ProposedWorkspaceClientCapabilities,
-	DidChangeWorkspaceFolders, DidChangeWorkspaceFoldersParams, GetConfigurationRequest
+	DidChangeWorkspaceFolders, DidChangeWorkspaceFoldersParams, GetConfigurationRequest, ProposedInitializeParams
 } from './protocol.proposed';
 
 export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
@@ -25,6 +25,17 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 
 	public get messages(): RPCMessageType {
 		return DidChangeWorkspaceFolders.type;
+	}
+
+	public fillInitializeParams(params: InitializedParams): void {
+		let proposedParams = params as ProposedInitializeParams;
+		let folders = workspace.workspaceFolders;
+
+		if (folders === void 0) {
+			proposedParams.workspaceFolders = null;
+		} else {
+			proposedParams.workspaceFolders = folders.map(folder => this.asProtocol(folder));
+		}
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {

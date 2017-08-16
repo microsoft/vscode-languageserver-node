@@ -500,6 +500,13 @@ enum ClientState {
  */
 export interface StaticFeature {
 	/**
+	 * Called to fill the initialize params.
+	 *
+	 * @params the initialize params.
+	 */
+	fillInitializeParams?: (params: InitializeParams) => void;
+
+	/**
 	 * Called to fill in the client capabilities this feature implements.
 	 *
 	 * @param capabilities The client capabilities to fill.
@@ -530,6 +537,13 @@ export interface DynamicFeature<T> {
 	 * The message for which this features support dynamic activation / registration.
 	 */
 	messages: RPCMessageType | RPCMessageType[];
+
+	/**
+	 * Called to fill the initialize params.
+	 *
+	 * @params the initialize params.
+	 */
+	fillInitializeParams?: (params: InitializeParams) => void;
 
 	/**
 	 * Called to fill in the client capabilities this feature implements.
@@ -657,7 +671,7 @@ class DidOpenTextDocumentFeature extends DocumentNotifiactions<DidOpenTextDocume
 		);
 	}
 
-	public get messages(): RPCMessageType {
+	public get messages(): typeof DidOpenTextDocumentNotification.type {
 		return DidOpenTextDocumentNotification.type;
 	}
 
@@ -684,7 +698,15 @@ class DidOpenTextDocumentFeature extends DocumentNotifiactions<DidOpenTextDocume
 				return;
 			}
 			if (Languages.match(documentSelector, textDocument)) {
-				this._client.sendNotification(this._type, this._createParams(textDocument));
+				let middleware = this._client.clientOptions.middleware!;
+				let didOpen = (textDocument: TextDocument) => {
+					this._client.sendNotification(this._type, this._createParams(textDocument));
+				};
+				if (middleware.didOpen) {
+					middleware.didOpen(textDocument, didOpen);
+				} else {
+					didOpen(textDocument);
+				}
 				this._syncedDocuments.set(uri, textDocument);
 			}
 		});
@@ -707,7 +729,7 @@ class DidCloseTextDocumentFeature extends DocumentNotifiactions<DidCloseTextDocu
 		);
 	}
 
-	public get messages(): RPCMessageType {
+	public get messages(): typeof DidCloseTextDocumentNotification.type {
 		return DidCloseTextDocumentNotification.type;
 	}
 
@@ -729,12 +751,22 @@ class DidCloseTextDocumentFeature extends DocumentNotifiactions<DidCloseTextDocu
 
 	public unregister(id: string): void {
 		let selector = this._selectors.get(id)!;
+		// The super call removed the selector from the map
+		// of selectors.
 		super.unregister(id);
 		let selectors = this._selectors.values();
 		this._syncedDocuments.forEach((textDocument) => {
 			if (Languages.match(selector, textDocument) && !this._selectorFilter!(selectors, textDocument)) {
-				this._client.sendNotification(this._type, this._createParams(textDocument));
+				let middleware = this._client.clientOptions.middleware!;
+				let didClose = (textDocument: TextDocument) => {
+					this._client.sendNotification(this._type, this._createParams(textDocument));
+				};
 				this._syncedDocuments.delete(textDocument.uri.toString());
+				if (middleware.didClose) {
+					middleware.didClose(textDocument, didClose);
+				} else {
+					didClose(textDocument);
+				}
 			}
 		});
 	}
@@ -755,7 +787,7 @@ class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeR
 	constructor(private _client: BaseLanguageClient) {
 	}
 
-	public get messages(): RPCMessageType {
+	public get messages(): typeof DidChangeTextDocumentNotification.type {
 		return DidChangeTextDocumentNotification.type;
 	}
 
@@ -2495,11 +2527,12 @@ export abstract class BaseLanguageClient {
 		let initParams: InitializeParams = {
 			processId: process.pid,
 			rootPath: Workspace.rootPath ? Workspace.rootPath : null,
-			rootUri: Workspace.rootPath ? Uri.file(Workspace.rootPath).toString() : null,
+			rootUri: Workspace.rootPath ? this._c2p.asUri(Uri.file(Workspace.rootPath)) : null,
 			capabilities: this.computeClientCapabilities(),
 			initializationOptions: Is.func(initOption) ? initOption() : initOption,
 			trace: Trace.toString(this._trace)
 		};
+		this.fillInitializeParams(initParams);
 		return connection.initialize(initParams).then((result) => {
 			this._resolvedConnection = connection;
 			this.state = ClientState.Running;
@@ -2768,6 +2801,14 @@ export abstract class BaseLanguageClient {
 		this.registerFeature(new RenameFeature(this));
 		this.registerFeature(new DocumentLinkFeature(this));
 		this.registerFeature(new ExecuteCommandFeature(this));
+	}
+
+	private fillInitializeParams(params: InitializeParams): void {
+		for (let feature of this._features) {
+			if (Is.func(feature.fillInitializeParams)) {
+				feature.fillInitializeParams(params);
+			}
+		}
 	}
 
 	private computeClientCapabilities(): ClientCapabilities {
