@@ -1404,7 +1404,7 @@ export function createConnection(arg1?: any, arg2?: any, arg3?: any, arg4?: any)
 	let input: NodeJS.ReadableStream | MessageReader | undefined;
 	let output: NodeJS.WritableStream | MessageWriter | undefined;
 	let strategy: ConnectionStrategy | undefined;
-	if ((arg1 as Features).__brand === 'features') {
+	if (arg1 !== void 0 && (arg1 as Features).__brand === 'features') {
 		factories = arg1;
 		arg1 = arg2; arg2 = arg3; arg3 = arg4;
 	}
