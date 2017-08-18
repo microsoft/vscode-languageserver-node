@@ -579,7 +579,7 @@ namespace DynamicFeature {
 }
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
-	if (target[key] === void 0) {
+if (target[key] === void 0) {
 		target[key] = {} as any;
 	}
 	return target[key];
@@ -1036,7 +1036,7 @@ class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatchedFilesRe
 
 	private _watchers: Map<string, Disposable[]> = new Map<string, Disposable[]>();
 
-	constructor(private _notifyFileEvent: (event: FileEvent) => void) {
+	constructor(private _client: BaseLanguageClient, private _notifyFileEvent: (event: FileEvent) => void) {
 	}
 
 	public get messages(): RPCMessageType {
@@ -1084,7 +1084,7 @@ class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatchedFilesRe
 		if (watchCreate) {
 			fileSystemWatcher.onDidCreate((resource) => this._notifyFileEvent(
 				{
-					uri: resource.toString(),
+					uri: this._client.code2ProtocolConverter.asUri(resource),
 					type: FileChangeType.Created
 				}
 			), null, listeners);
@@ -1092,7 +1092,7 @@ class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatchedFilesRe
 		if (watchChange) {
 			fileSystemWatcher.onDidChange((resource) => this._notifyFileEvent(
 				{
-					uri: resource.toString(),
+					uri: this._client.code2ProtocolConverter.asUri(resource),
 					type: FileChangeType.Changed
 				}
 			), null, listeners);
@@ -1100,7 +1100,7 @@ class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatchedFilesRe
 		if (watchDelete) {
 			fileSystemWatcher.onDidDelete((resource) => this._notifyFileEvent(
 				{
-					uri: resource.toString(),
+					uri: this._client.code2ProtocolConverter.asUri(resource),
 					type: FileChangeType.Deleted
 				}
 			), null, listeners);
@@ -2786,7 +2786,7 @@ export abstract class BaseLanguageClient {
 		this.registerFeature(new WillSaveWaitUntilFeature(this));
 		this.registerFeature(new DidSaveTextDocumentFeature(this));
 		this.registerFeature(new DidCloseTextDocumentFeature(this, syncedDocuments));
-		this.registerFeature(new FileSystemWatcherFeature((event) => this.notifyFileEvent(event)));
+		this.registerFeature(new FileSystemWatcherFeature(this, (event) => this.notifyFileEvent(event)));
 		this.registerFeature(new CompletionItemFeature(this));
 		this.registerFeature(new HoverFeature(this));
 		this.registerFeature(new SignatureHelpFeature(this));
