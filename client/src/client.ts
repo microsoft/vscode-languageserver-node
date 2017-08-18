@@ -409,6 +409,9 @@ export interface NextSignature<P, R> {
 	(data: P, next: (data: P) => R): R;
 }
 
+export interface WorkspaceMiddleware {
+}
+
 export interface Middleware {
 	didOpen?: NextSignature<TextDocument, void>;
 	didChange?: NextSignature<TextDocumentChangeEvent, void>;
@@ -435,6 +438,7 @@ export interface Middleware {
 	provideRenameEdits?: (document: TextDocument, position: VPosition, newName: string, token: CancellationToken, next: ProvideRenameEditsSignature) => ProviderResult<VWorkspaceEdit>;
 	provideDocumentLinks?: (document: TextDocument, token: CancellationToken, next: ProvideDocumentLinksSignature) => ProviderResult<VDocumentLink[]>;
 	resolveDocumentLink?: (link: VDocumentLink, token: CancellationToken, next: ResolveDocumentLinkSignature) => ProviderResult<VDocumentLink>;
+	workspace?: WorkspaceMiddleware;
 }
 
 export interface LanguageClientOptions {
@@ -2548,7 +2552,7 @@ export abstract class BaseLanguageClient {
 						includeText: false
 					}
 				};
-			} else if (result.capabilities.textDocumentSync !== void 0 && this._capabilities.textDocumentSync !== null) {
+			} else if (result.capabilities.textDocumentSync !== void 0 && result.capabilities.textDocumentSync !== null) {
 				textDocumentSyncOptions = result.capabilities.textDocumentSync as TextDocumentSyncOptions;
 			}
 			this._capabilities = Object.assign({}, result.capabilities, { resolvedTextDocumentSync: textDocumentSyncOptions });

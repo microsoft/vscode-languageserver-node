@@ -7,11 +7,10 @@ import { ClientCapabilities } from './protocol';
 import { _, Features, WorkspaceFeature, combineWorkspaceFeatures } from './main';
 import {
 	WorkspaceFolder, GetWorkspaceFolders, GetWorkspaceFolder, WorkspaceFoldersChangeEvent, DidChangeWorkspaceFolders,
-	GetConfigurationRequest, GetConfigurationParams, ProposedWorkspaceClientCapabilities
+	GetConfigurationRequest, GetConfigurationParams, ProposedWorkspaceClientCapabilities, ConfigurationItem
 } from './protocol.proposed';
 
 import * as Is from './utils/is';
-import Uri from 'vscode-uri';
 
 export interface WorkspaceFoldersProposed {
 	getWorkspaceFolders(): Thenable<WorkspaceFolder[] | null>;
@@ -50,75 +49,38 @@ export const WorkspaceFoldersFeature: WorkspaceFeature<WorkspaceFoldersProposed>
 	}
 };
 
-export interface GetConfigurationProposed {
-	getGlobalConfiguration(): Thenable<any>;
-	getGlobalConfiguration(section: string): Thenable<any>;
-	getGlobalConfiguration(sections: string[]): Thenable<any[]>;
-	getScopedConfiguration(scopeUri: Uri | string): Thenable<any>;
-	getScopedConfiguration(scopeUri: Uri | string, section: string): Thenable<any>;
-	getScopedConfiguration(scopeUri: Uri | string, sections: string[]): Thenable<any[]>;
-	getScopedConfiguration(scopeUris: (Uri| string)[]): Thenable<any[]>;
-	getScopedConfiguration(scopeUris: (Uri| string)[], section: string): Thenable<any[]>;
-	getScopedConfiguration(scopeUris: (Uri| string)[], sections: string[]): Thenable<any[][]>;
+export interface ConfigurationProposed {
+	getConfiguration(): Thenable<any>;
+	getConfiguration(section: string): Thenable<any>;
+	getConfiguration(item: ConfigurationItem): Thenable<any>;
+	getConfiguration(items: ConfigurationItem[]): Thenable<any[]>;
 }
 
-export const GetConfigurationFeature: WorkspaceFeature<GetConfigurationProposed> = (Base) => {
+export const GetConfigurationFeature: WorkspaceFeature<ConfigurationProposed> = (Base) => {
 	return class extends Base {
 
-		getGlobalConfiguration(sections?: string | string[]): Thenable<any> {
-			return this._getConfiguration(undefined, sections);
-		}
-
-		getScopedConfiguration(scopeUris: Uri | string | (Uri | string)[], sections?: string | string[]): Thenable<any> {
-			if (Is.string(scopeUris)) {
-				return this._getConfiguration(scopeUris, sections);
-			} else if (scopeUris instanceof Uri) {
-				return this._getConfiguration(scopeUris.toString(), sections);
-			} else if (Array.isArray(scopeUris)) {
-				if (scopeUris.length === 0) {
-					return this._getConfiguration([], sections);
-				} else {
-					return this._getConfiguration(scopeUris.map(element => Is.string(element) ? element : element.toString()), sections);
-				}
+		getConfiguration(arg?: string | ConfigurationItem | ConfigurationItem[]): Thenable<any> {
+			if (!arg) {
+				return this._getConfiguration({});
+			} else if (Is.string(arg)) {
+				return this._getConfiguration({ section: arg })
 			} else {
-				return this._getConfiguration(undefined, undefined);
+				return this._getConfiguration(arg);
 			}
 		}
 
-		private _getConfiguration(scopeUris: string | string[] | undefined, sections: string | string[] | undefined): Thenable<any> {
-			let params: GetConfigurationParams = {};
-			if (Is.string(scopeUris)) {
-				params.scopeUris = [scopeUris];
-			} else if (Is.stringArray(scopeUris)) {
-				params.scopeUris = scopeUris;
-			}
-			if (Is.string(sections)) {
-				params.sections = [sections];
-			} else if (Is.stringArray(sections)) {
-				params.sections = sections;
-			}
+		private _getConfiguration(arg: ConfigurationItem | ConfigurationItem[]): Thenable<any> {
+			let params: GetConfigurationParams = {
+				items: Array.isArray(arg) ? arg : [arg]
+			};
 			return this.connection.sendRequest(GetConfigurationRequest.type, params).then((result) => {
-				let uriIsString = Is.string(scopeUris);
-				let uriIsArray = Is.stringArray(scopeUris);
-				let sectionIsString = Is.string(sections);
-				let sectionIsArray = Is.stringArray(sections);
-				if ((scopeUris === void 0 || scopeUris === null || uriIsString) && (sections === void 0 || sections === null || sectionIsString)) {
-					return result[0][0];
-				} else if (uriIsArray && sectionIsString) {
-					return result.map(elements => elements[0]);
-				} else if (uriIsString && sectionIsArray) {
-					return result[0];
-				} else if (uriIsArray && sectionIsArray) {
-					return result;
-				} else {
-					return Promise.reject(new Error('Invalid arguments provided for get configuration request'));
-				}
+				return Array.isArray(arg) ? result : result[0];
 			});
 		}
 	}
 }
 
-export const ProposedProtocol: Features<_, _, _, _, _, WorkspaceFoldersProposed & GetConfigurationProposed> = {
+export const ProposedProtocol: Features<_, _, _, _, _, WorkspaceFoldersProposed & ConfigurationProposed> = {
 	__brand: 'features',
 	workspace: combineWorkspaceFeatures(WorkspaceFoldersFeature, GetConfigurationFeature)
 }

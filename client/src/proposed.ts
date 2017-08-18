@@ -4,17 +4,24 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { workspace, Disposable, WorkspaceFolder as VWorkspaceFolder, Uri } from 'vscode';
+import { workspace, Disposable, WorkspaceFolder as VWorkspaceFolder, Uri, WorkspaceFoldersChangeEvent as VWorkspaceFoldersChangeEvent } from 'vscode';
 
-import { MessageType as RPCMessageType } from 'vscode-jsonrpc';
+import { MessageType as RPCMessageType, CancellationToken } from 'vscode-jsonrpc';
 
-import { DynamicFeature, StaticFeature, RegistrationData, BaseLanguageClient } from './client';
+import { DynamicFeature, StaticFeature, RegistrationData, BaseLanguageClient, NextSignature } from './client';
 import { ClientCapabilities, DocumentSelector, ServerCapabilities, InitializedParams } from './protocol';
 
 import {
 	WorkspaceFolder, GetWorkspaceFolders, GetWorkspaceFolder, ProposedWorkspaceClientCapabilities,
-	DidChangeWorkspaceFolders, DidChangeWorkspaceFoldersParams, GetConfigurationRequest, ProposedInitializeParams
+	DidChangeWorkspaceFolders, DidChangeWorkspaceFoldersParams,ProposedWorkspaceInitializeParams,
+	GetConfigurationRequest, ProposedConfigurationClientCapabilities
 } from './protocol.proposed';
+
+export interface WorkspaceFolderMiddleware {
+	workspaceFolders?: GetWorkspaceFolders.MiddlewareSignature;
+	workspaceFolder?: GetWorkspaceFolder.MiddlewareSignature;
+	didChangeWorkspaceFolders?: NextSignature<VWorkspaceFoldersChangeEvent, void>
+}
 
 export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 
@@ -28,7 +35,7 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 	}
 
 	public fillInitializeParams(params: InitializedParams): void {
-		let proposedParams = params as ProposedInitializeParams;
+		let proposedParams = params as ProposedWorkspaceInitializeParams;
 		let folders = workspace.workspaceFolders;
 
 		if (folders === void 0) {
@@ -46,47 +53,56 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 
 	public initialize(_documentSelector: DocumentSelector | undefined, _capabilities: ServerCapabilities): void {
 		let client = this._client;
-		client.onRequest(GetWorkspaceFolders.type, () => {
-			let folders = workspace.workspaceFolders;
-			if (folders === void 0) {
-				return null;
-			}
-			let result: WorkspaceFolder[] = folders.map((folder) => {
-				return this.asProtocol(folder);
-			});
-			return result;
+		client.onRequest(GetWorkspaceFolders.type, (token: CancellationToken) => {
+			let workspaceFolders: GetWorkspaceFolders.HandlerSignature = () => {
+				let folders = workspace.workspaceFolders;
+				if (folders === void 0) {
+					return null;
+				}
+				let result: WorkspaceFolder[] = folders.map((folder) => {
+					return this.asProtocol(folder);
+				});
+				return result;
+			};
+			let middleware = this.getWorkspaceFolderMiddleware();
+			return middleware.workspaceFolders
+				? middleware.workspaceFolders(token, workspaceFolders)
+				: workspaceFolders(token);
 		});
 
-		client.onRequest(GetWorkspaceFolder.type, (uri: string) => {
-			let folder = workspace.getWorkspaceFolder(client.protocol2CodeConverter.asUri(uri));
-			if (folder === void 0) {
-				return null;
-			}
-			return this.asProtocol(folder);
+		client.onRequest(GetWorkspaceFolder.type, (uri: string, token: CancellationToken) => {
+			let workspaceFolder: GetWorkspaceFolder.HandlerSignature = (uri: string)  => {
+				let folder = workspace.getWorkspaceFolder(client.protocol2CodeConverter.asUri(uri));
+				if (folder === void 0) {
+					return null;
+				}
+				return this.asProtocol(folder);
+			};
+			let middleware = this.getWorkspaceFolderMiddleware();
+			return middleware.workspaceFolder
+				? middleware.workspaceFolder(uri, token, workspaceFolder)
+				: workspaceFolder(uri, token);
 		});
 	}
 
 	public register(_message: RPCMessageType, data: RegistrationData<undefined>): void {
 		let id = data.id;
 		let disposable = workspace.onDidChangeWorkspaceFolders((event) => {
-			let params: DidChangeWorkspaceFoldersParams = {
-				event: {
-					added: event.added.map(folder => this.asProtocol(folder)),
-					removed: event.removed.map(folder => this.asProtocol(folder))
+			let didChangeWorkspaceFolders = (event: VWorkspaceFoldersChangeEvent) => {
+				let params: DidChangeWorkspaceFoldersParams = {
+					event: {
+						added: event.added.map(folder => this.asProtocol(folder)),
+						removed: event.removed.map(folder => this.asProtocol(folder))
+					}
 				}
+				this._client.sendNotification(DidChangeWorkspaceFolders.type, params);
 			}
-			this._client.sendNotification(DidChangeWorkspaceFolders.type, params);
+			let middleware = this.getWorkspaceFolderMiddleware();
+			middleware.didChangeWorkspaceFolders
+				? middleware.didChangeWorkspaceFolders(event, didChangeWorkspaceFolders)
+				: didChangeWorkspaceFolders(event);
 		});
 		this._listeners.set(id, disposable);
-		let folders = workspace.workspaceFolders;
-		if (folders) {
-			this._client.sendNotification(DidChangeWorkspaceFolders.type, {
-				event: {
-					added: folders.map(folder => this.asProtocol(folder)),
-					removed: []
-				}
-			});
-		}
 	}
 
 	public unregister(id: string): void {
@@ -113,44 +129,46 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 		}
 		return { uri: this._client.code2ProtocolConverter.asUri(workspaceFolder.uri), name: workspaceFolder.name };
 	}
+
+	private getWorkspaceFolderMiddleware(): WorkspaceFolderMiddleware {
+		let middleware = this._client.clientOptions.middleware;
+		return middleware && middleware.workspace
+			? middleware.workspace as WorkspaceFolderMiddleware
+			: {};
+	}
 }
 
-export class GetConfigurationFeature implements StaticFeature {
+export interface ConfigurationMiddleware {
+	configuration?: GetConfigurationRequest.MiddlewareSignature
+}
+
+export class ConfigurationFeature implements StaticFeature {
+
 	constructor(private _client: BaseLanguageClient) {
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
 		capabilities.workspace = capabilities.workspace || {};
-		let workspace = capabilities.workspace as ProposedWorkspaceClientCapabilities;
-		workspace.getConfiguration = true;
+		let workspace = capabilities.workspace as ProposedConfigurationClientCapabilities;
+		workspace.configuration = true;
 	}
 
 	public initialize(_documentSelector: DocumentSelector | undefined, _capabilities: ServerCapabilities): void {
 		let client = this._client;
-		client.onRequest(GetConfigurationRequest.type, (params) => {
-			let result: any[][] = [];
-			let scopes = params.scopeUris;
-			if (scopes === void 0 || scopes === null) {
-				result.push(this.getConfigurations(undefined, params.sections));
-			} else {
-				for (let uri of scopes) {
-					result.push(this.getConfigurations(this._client.protocol2CodeConverter.asUri(uri), params.sections));
+		client.onRequest(GetConfigurationRequest.type, (params, token) => {
+			let configuration: GetConfigurationRequest.HandlerSignature = (params) => {
+				let result: any[] = [];
+				for (let item of params.items) {
+					let resource = item.scopeUri !== void 0 && item.scopeUri !== null ? this._client.protocol2CodeConverter.asUri(item.scopeUri) : undefined;
+					result.push(this.getConfiguration(resource, item.section !== null ? item.section : undefined));
 				}
+				return result;
 			}
-			return result;
+			let middleware = this.getConfigurationMiddleware();
+			return middleware.configuration
+				? middleware.configuration(params, token, configuration)
+				: configuration(params, token);
 		});
-	}
-
-	private getConfigurations(resource: Uri | undefined, sections: string[] | undefined): any[] {
-		let result: any[] = [];
-		if (sections === void 0 || sections === null) {
-			result.push(resource, undefined);
-		} else {
-			for (let section of sections) {
-				result.push(this.getConfiguration(resource, section));
-			}
-		}
-		return result;
 	}
 
 	private getConfiguration(resource: Uri | undefined, section: string | undefined): any {
@@ -179,11 +197,18 @@ export class GetConfigurationFeature implements StaticFeature {
 		}
 		return result;
 	}
+
+	private getConfigurationMiddleware(): ConfigurationMiddleware {
+		let middleware = this._client.clientOptions.middleware;
+		return middleware && middleware.workspace
+			? middleware.workspace as ConfigurationMiddleware
+			: {};
+	}
 }
 
 export function ProposedProtocol(client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
 	let result: (StaticFeature | DynamicFeature<any>)[] = [];
 	result.push(new WorkspaceFoldersFeature(client));
-	result.push(new GetConfigurationFeature(client));
+	result.push(new ConfigurationFeature(client));
 	return result;
 }

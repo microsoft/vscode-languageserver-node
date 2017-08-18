@@ -20,7 +20,7 @@ import {
 	NotificationHandler, NotificationHandler0, GenericNotificationHandler,
 	StreamMessageReader, StreamMessageWriter,
 	IPCMessageReader, IPCMessageWriter,
-	createClientPipeTransport, generateRandomPipeName
+	createClientPipeTransport, generateRandomPipeName, CancellationToken
 } from 'vscode-jsonrpc';
 
 import * as is from './utils/is';
@@ -30,7 +30,8 @@ import { terminate } from './utils/processes';
 export {
 	ResponseError, ErrorCodes,
 	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler,
-	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler
+	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler,
+	CancellationToken
 }
 
 export { Converter as Code2ProtocolConverter } from './codeConverter';
@@ -342,3 +343,4 @@ export class SettingMonitor {
 }
 
 export * from './proposed';
+export * from './protocol.proposed';
