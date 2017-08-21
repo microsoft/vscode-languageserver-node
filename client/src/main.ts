@@ -14,28 +14,14 @@ import {
 } from 'vscode';
 
 import {
-	ErrorCodes, ResponseError,
-	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler,
-	NotificationType, NotificationType0,
-	NotificationHandler, NotificationHandler0, GenericNotificationHandler,
 	StreamMessageReader, StreamMessageWriter,
 	IPCMessageReader, IPCMessageWriter,
-	createClientPipeTransport, generateRandomPipeName, CancellationToken
+	createClientPipeTransport, generateRandomPipeName
 } from 'vscode-jsonrpc';
 
 import * as is from './utils/is';
 import * as electron from './utils/electron';
 import { terminate } from './utils/processes';
-
-export {
-	ResponseError, ErrorCodes,
-	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler,
-	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler,
-	CancellationToken
-}
-
-export { Converter as Code2ProtocolConverter } from './codeConverter';
-export { Converter as Protocol2CodeConverter } from './protocolConverter';
 
 export * from './client';
 

@@ -74,7 +74,8 @@ import * as UUID from './utils/uuid';
 export {
 	ResponseError, InitializeError, ErrorCodes,
 	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler,
-	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler
+	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler,
+	CancellationToken
 }
 export { Converter as Code2ProtocolConverter } from './codeConverter';
 export { Converter as Protocol2CodeConverter } from './protocolConverter';
