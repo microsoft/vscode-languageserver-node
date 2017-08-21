@@ -3,12 +3,12 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 import { Event, Emitter, Disposable } from 'vscode-jsonrpc';
-import { ClientCapabilities } from './protocol';
-import { _, Features, WorkspaceFeature, combineWorkspaceFeatures } from './main';
-import {
+import { ClientCapabilities,
 	WorkspaceFolder, GetWorkspaceFolders, GetWorkspaceFolder, WorkspaceFoldersChangeEvent, DidChangeWorkspaceFolders,
 	GetConfigurationRequest, GetConfigurationParams, ProposedWorkspaceClientCapabilities, ConfigurationItem
-} from './protocol.proposed';
+} from 'vscode-languageserver-protocol';
+import { _, Features, WorkspaceFeature, combineWorkspaceFeatures } from './main';
+
 
 import * as Is from './utils/is';
 

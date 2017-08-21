@@ -6,7 +6,7 @@
 
 import * as code from 'vscode';
 import * as types from 'vscode-languageserver-types';
-import * as proto from './protocol';
+import * as proto from 'vscode-languageserver-protocol';
 import * as is from './utils/is';
 import ProtocolCompletionItem from './protocolCompletionItem';
 import ProtocolCodeLens from './protocolCodeLens';

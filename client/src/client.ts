@@ -62,7 +62,7 @@ import {
 	DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkRegistrationOptions,
 	ExecuteCommandRequest, ExecuteCommandParams, ExecuteCommandRegistrationOptions,
 	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse
-} from './protocol';
+} from 'vscode-languageserver-protocol';
 
 import * as c2p from './codeConverter';
 import * as p2c from './protocolConverter';
@@ -80,7 +80,7 @@ export { Converter as Code2ProtocolConverter } from './codeConverter';
 export { Converter as Protocol2CodeConverter } from './protocolConverter';
 
 export * from 'vscode-languageserver-types';
-export * from './protocol';
+export * from 'vscode-languageserver-protocol';
 
 interface IConnection {
 
@@ -2082,82 +2082,6 @@ class ExecuteCommandFeature implements DynamicFeature<ExecuteCommandRegistration
 		});
 	}
 }
-
-/*
-const clientCapabilities: ClientCapabilities = {
-	workspace: {
-		applyEdit: true,
-		workspaceEdit: {
-			documentChanges: true
-		},
-		didChangeConfiguration: {
-			dynamicRegistration: false
-		},
-		didChangeWatchedFiles: {
-			dynamicRegistration: true
-		},
-		symbol: {
-			dynamicRegistration: true
-		},
-		executeCommand: {
-			dynamicRegistration: true
-		}
-	},
-	textDocument: {
-		synchronization: {
-			dynamicRegistration: true,
-			willSave: true,
-			willSaveWaitUntil: true,
-			didSave: true
-		},
-		completion: {
-			dynamicRegistration: true,
-			completionItem: {
-				snippetSupport: true
-			}
-		},
-		hover: {
-			dynamicRegistration: true
-		},
-		signatureHelp: {
-			dynamicRegistration: true
-		},
-		references: {
-			dynamicRegistration: true
-		},
-		documentHighlight: {
-			dynamicRegistration: true
-		},
-		documentSymbol: {
-			dynamicRegistration: true
-		},
-		formatting: {
-			dynamicRegistration: true
-		},
-		rangeFormatting: {
-			dynamicRegistration: true
-		},
-		onTypeFormatting: {
-			dynamicRegistration: true
-		},
-		definition: {
-			dynamicRegistration: true
-		},
-		codeAction: {
-			dynamicRegistration: true
-		},
-		codeLens: {
-			dynamicRegistration: true
-		},
-		documentLink: {
-			dynamicRegistration: true
-		},
-		rename: {
-			dynamicRegistration: true
-		}
-	}
-}
-*/
 
 export interface MessageTransports {
 	reader: MessageReader;

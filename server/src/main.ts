@@ -51,7 +51,7 @@ import {
 	ExecuteCommandRequest, ExecuteCommandParams,
 	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse,
 	ClientCapabilities, ServerCapabilities
-} from './protocol';
+} from 'vscode-languageserver-protocol';
 
 import * as Is from './utils/is';
 import * as UUID from './utils/uuid';
@@ -65,7 +65,7 @@ export {
 	MessageWriter, StreamMessageWriter, IPCMessageWriter, Disposable, createServerPipeTransport
 }
 export * from 'vscode-languageserver-types';
-export * from './protocol';
+export * from 'vscode-languageserver-protocol';
 export { Event }
 
 import * as fm from './files';
@@ -1657,4 +1657,3 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 // Export the protocol currently in proposed state.
 
 export * from './proposed';
-export * from './protocol.proposed'

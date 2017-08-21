@@ -9,13 +9,12 @@ import { workspace, Disposable, WorkspaceFolder as VWorkspaceFolder, Uri, Worksp
 import { MessageType as RPCMessageType, CancellationToken } from 'vscode-jsonrpc';
 
 import { DynamicFeature, StaticFeature, RegistrationData, BaseLanguageClient, NextSignature } from './client';
-import { ClientCapabilities, DocumentSelector, ServerCapabilities, InitializedParams } from './protocol';
-
 import {
+	ClientCapabilities, DocumentSelector, ServerCapabilities, InitializedParams,
 	WorkspaceFolder, GetWorkspaceFolders, GetWorkspaceFolder, ProposedWorkspaceClientCapabilities,
 	DidChangeWorkspaceFolders, DidChangeWorkspaceFoldersParams,ProposedWorkspaceInitializeParams,
 	GetConfigurationRequest, ProposedConfigurationClientCapabilities
-} from './protocol.proposed';
+} from 'vscode-languageserver-protocol';
 
 export interface WorkspaceFolderMiddleware {
 	workspaceFolders?: GetWorkspaceFolders.MiddlewareSignature;

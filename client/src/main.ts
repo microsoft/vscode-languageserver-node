@@ -37,8 +37,6 @@ export {
 export { Converter as Code2ProtocolConverter } from './codeConverter';
 export { Converter as Protocol2CodeConverter } from './protocolConverter';
 
-export * from 'vscode-languageserver-types';
-export * from './protocol';
 export * from './client';
 
 declare var v8debug: any;
@@ -343,4 +341,3 @@ export class SettingMonitor {
 }
 
 export * from './proposed';
-export * from './protocol.proposed';
