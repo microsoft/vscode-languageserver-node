@@ -411,11 +411,11 @@ export interface NextSignature<P, R> {
 }
 
 export interface DidChangeConfigurationSignature {
-	(sections: string | string[] | undefined): void;
+	(sections: string[] | undefined): void;
 }
 
 export interface WorkspaceMiddleware {
-	didChangeConfiguration?: (sections: string | string[] | undefined, next: DidChangeConfigurationSignature) => void;
+	didChangeConfiguration?: (sections: string[] | undefined, next: DidChangeConfigurationSignature) => void;
 }
 
 export interface Middleware {
@@ -1981,25 +1981,23 @@ class ConfigurationFeature implements DynamicFeature<DidChangeConfigurationRegis
 	}
 
 	private onDidChangeConfiguration(configurationSection: string | string[] | undefined): void {
-		let didChangeConfiguration = (sections: string | string[] | undefined): void => {
+		let sections: string[] | undefined;
+		if (Is.string(configurationSection)) {
+			sections = [configurationSection];
+		} else {
+			sections = configurationSection;
+		}
+		let didChangeConfiguration = (sections: string[] | undefined): void => {
 			if (sections === void 0) {
 				this._client.sendNotification(DidChangeConfigurationNotification.type, { settings: null });
 				return;
 			}
-			let keys: string[] | undefined;
-			if (Is.string(sections)) {
-				keys = [sections];
-			} else if (Is.stringArray(sections)) {
-				keys = sections;
-			}
-			if (keys) {
-				this._client.sendNotification(DidChangeConfigurationNotification.type, { settings: this.extractSettingsInformation(keys) });
-			}
+			this._client.sendNotification(DidChangeConfigurationNotification.type, { settings: this.extractSettingsInformation(sections) });
 		}
 		let middleware = this.getMiddleware();
 		middleware
-			? middleware(configurationSection, didChangeConfiguration)
-			: didChangeConfiguration(configurationSection);
+			? middleware(sections, didChangeConfiguration)
+			: didChangeConfiguration(sections);
 	}
 
 	private extractSettingsInformation(keys: string[]): any {
