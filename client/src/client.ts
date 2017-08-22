@@ -410,7 +410,12 @@ export interface NextSignature<P, R> {
 	(data: P, next: (data: P) => R): R;
 }
 
+export interface DidChangeConfigurationSignature {
+	(sections: string | string[] | undefined): void;
+}
+
 export interface WorkspaceMiddleware {
+	didChangeConfiguration?: (sections: string | string[] | undefined, next: DidChangeConfigurationSignature) => void;
 }
 
 export interface Middleware {
@@ -1976,19 +1981,25 @@ class ConfigurationFeature implements DynamicFeature<DidChangeConfigurationRegis
 	}
 
 	private onDidChangeConfiguration(configurationSection: string | string[] | undefined): void {
-		if (configurationSection === void 0) {
-			this._client.sendNotification(DidChangeConfigurationNotification.type, { settings: null });
-			return;
+		let didChangeConfiguration = (sections: string | string[] | undefined): void => {
+			if (sections === void 0) {
+				this._client.sendNotification(DidChangeConfigurationNotification.type, { settings: null });
+				return;
+			}
+			let keys: string[] | undefined;
+			if (Is.string(sections)) {
+				keys = [sections];
+			} else if (Is.stringArray(sections)) {
+				keys = sections;
+			}
+			if (keys) {
+				this._client.sendNotification(DidChangeConfigurationNotification.type, { settings: this.extractSettingsInformation(keys) });
+			}
 		}
-		let keys: string[] | undefined;
-		if (Is.string(configurationSection)) {
-			keys = [configurationSection];
-		} else if (Is.stringArray(configurationSection)) {
-			keys = configurationSection;
-		}
-		if (keys) {
-			this._client.sendNotification(DidChangeConfigurationNotification.type, { settings: this.extractSettingsInformation(keys) });
-		}
+		let middleware = this.getMiddleware();
+		middleware
+			? middleware(configurationSection, didChangeConfiguration)
+			: didChangeConfiguration(configurationSection);
 	}
 
 	private extractSettingsInformation(keys: string[]): any {
@@ -2020,6 +2031,15 @@ class ConfigurationFeature implements DynamicFeature<DidChangeConfigurationRegis
 			}
 		}
 		return result;
+	}
+
+	private getMiddleware() {
+		let middleware = this._client.clientOptions.middleware!;
+		if (middleware.workspace && middleware.workspace.didChangeConfiguration) {
+			return middleware.workspace.didChangeConfiguration;
+		} else {
+			return undefined;
+		}
 	}
 }
 
