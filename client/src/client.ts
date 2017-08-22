@@ -2365,7 +2365,6 @@ export abstract class BaseLanguageClient {
 		if (data) {
 			this.outputChannel.appendLine(this.data2String(data));
 		}
-		this.outputChannel.show(true);
 	}
 
 	public needsStart(): boolean {
