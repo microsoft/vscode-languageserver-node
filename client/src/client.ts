@@ -452,6 +452,7 @@ export interface LanguageClientOptions {
 	documentSelector?: DocumentSelector | string[];
 	synchronize?: SynchronizeOptions;
 	diagnosticCollectionName?: string;
+	outputChannel?: OutputChannel;
 	outputChannelName?: string;
 	revealOutputChannelOn?: RevealOutputChannelOn;
 	/**
@@ -2125,6 +2126,7 @@ export abstract class BaseLanguageClient {
 	private _connectionPromise: Thenable<IConnection> | undefined;
 	private _resolvedConnection: IConnection | undefined;
 	private _outputChannel: OutputChannel | undefined;
+	private _disposeOutputChannel: boolean;
 	private _capabilities: ServerCapabilities & ResolvedTextDocumentSyncCapabilities;
 
 	private _listeners: Disposable[] | undefined;
@@ -2167,7 +2169,13 @@ export abstract class BaseLanguageClient {
 		this.state = ClientState.Initial;
 		this._connectionPromise = undefined;
 		this._resolvedConnection = undefined;
-		this._outputChannel = undefined;
+		if (clientOptions.outputChannel) {
+			this._outputChannel = clientOptions.outputChannel;
+			this._disposeOutputChannel = false;
+		} else {
+			this._outputChannel = undefined;
+			this._disposeOutputChannel = true;
+		}
 
 		this._listeners = undefined;
 		this._providers = undefined;
@@ -2587,7 +2595,7 @@ export abstract class BaseLanguageClient {
 		for (let handler of this._dynamicFeatures.values()) {
 			handler.dispose();
 		}
-		if (this._outputChannel) {
+		if (this._outputChannel && this._disposeOutputChannel) {
 			this._outputChannel.dispose();
 		}
 		if (!restart && this._diagnostics) {
