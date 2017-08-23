@@ -133,6 +133,10 @@ export class LanguageClient extends BaseLanguageClient {
 
 
 	protected createMessageTransports(encoding: string): Thenable<MessageTransports> {
+		let rootPath = this.clientOptions.workspaceFolder
+			? this.clientOptions.workspaceFolder.uri.fsPath
+			: Workspace.rootPath;
+
 		function getEnvironment(env: any): any {
 			if (!env) {
 				return process.env;
@@ -190,7 +194,7 @@ export class LanguageClient extends BaseLanguageClient {
 					node.args.forEach(element => args.push(element));
 				}
 				let execOptions: ExecutableOptions = Object.create(null);
-				execOptions.cwd = options.cwd || Workspace.rootPath;
+				execOptions.cwd = options.cwd || rootPath;
 				execOptions.env = getEnvironment(options.env);
 				let pipeName: string | undefined = undefined;
 				if (transport === TransportKind.ipc) {
@@ -244,7 +248,7 @@ export class LanguageClient extends BaseLanguageClient {
 					}
 					let options: ForkOptions = node.options || Object.create(null);
 					options.execArgv = options.execArgv || [];
-					options.cwd = options.cwd || Workspace.rootPath;
+					options.cwd = options.cwd || rootPath;
 					if (transport === TransportKind.ipc || transport === TransportKind.stdio) {
 						electron.fork(node.module, args || [], options, (error, cp) => {
 							if (error || !cp) {
@@ -282,7 +286,7 @@ export class LanguageClient extends BaseLanguageClient {
 			let command: Executable = <Executable>json;
 			let args = command.args || [];
 			let options = command.options || {};
-			options.cwd = options.cwd || Workspace.rootPath;
+			options.cwd = options.cwd || rootPath;
 			let process = cp.spawn(command.command, args, options);
 			if (!process || !process.pid) {
 				return Promise.reject<MessageTransports>(`Launching server using command ${command.command} failed.`);

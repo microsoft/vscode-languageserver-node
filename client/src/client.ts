@@ -16,7 +16,8 @@ import {
 	SymbolInformation as VSymbolInformation, CodeActionContext as VCodeActionContext, Command as VCommand, CodeLens as VCodeLens,
 	FormattingOptions as VFormattingOptions, TextEdit as VTextEdit, WorkspaceEdit as VWorkspaceEdit, MessageItem,
 	Hover as VHover,
-	DocumentLink as VDocumentLink, TextDocumentWillSaveEvent
+	DocumentLink as VDocumentLink, TextDocumentWillSaveEvent,
+	WorkspaceFolder as VWorkspaceFolder
 } from 'vscode';
 
 import {
@@ -466,6 +467,7 @@ export interface LanguageClientOptions {
 		code2Protocol: c2p.URIConverter,
 		protocol2Code: p2c.URIConverter
 	};
+	workspaceFolder?: VWorkspaceFolder;
 }
 
 interface ResolvedClientOptions {
@@ -483,6 +485,7 @@ interface ResolvedClientOptions {
 		code2Protocol: c2p.URIConverter,
 		protocol2Code: p2c.URIConverter
 	};
+	workspaceFolder?: VWorkspaceFolder
 }
 
 export enum State {
@@ -2013,15 +2016,18 @@ class ConfigurationFeature implements DynamicFeature<DidChangeConfigurationRegis
 			}
 			return current;
 		}
+		let resource: Uri | undefined = this._client.clientOptions.workspaceFolder
+			? this._client.clientOptions.workspaceFolder.uri
+			: undefined;
 		let result = Object.create(null);
 		for (let i = 0; i < keys.length; i++) {
 			let key = keys[i];
 			let index: number = key.indexOf('.');
 			let config: any = null;
 			if (index >= 0) {
-				config = Workspace.getConfiguration(key.substr(0, index)).get(key.substr(index + 1));
+				config = Workspace.getConfiguration(key.substr(0, index), resource).get(key.substr(index + 1));
 			} else {
-				config = Workspace.getConfiguration(key);
+				config = Workspace.getConfiguration(key, resource);
 			}
 			if (config) {
 				let path = keys[i].split('.');
@@ -2153,7 +2159,8 @@ export abstract class BaseLanguageClient {
 			initializationFailedHandler: clientOptions.initializationFailedHandler,
 			errorHandler: clientOptions.errorHandler || new DefaultErrorHandler(this._name),
 			middleware: clientOptions.middleware || {},
-			uriConverters: clientOptions.uriConverters
+			uriConverters: clientOptions.uriConverters,
+			workspaceFolder: clientOptions.workspaceFolder
 		};
 		this._clientOptions.synchronize = this._clientOptions.synchronize || {};
 
@@ -2472,10 +2479,13 @@ export abstract class BaseLanguageClient {
 	private initialize(connection: IConnection): Thenable<InitializeResult> {
 		this.refreshTrace(connection, false);
 		let initOption = this._clientOptions.initializationOptions;
+		let rootPath = this._clientOptions.workspaceFolder
+			? this._clientOptions.workspaceFolder.uri.fsPath
+			: Workspace.rootPath;
 		let initParams: InitializeParams = {
 			processId: process.pid,
-			rootPath: Workspace.rootPath ? Workspace.rootPath : null,
-			rootUri: Workspace.rootPath ? this._c2p.asUri(Uri.file(Workspace.rootPath)) : null,
+			rootPath: rootPath ? rootPath : null,
+			rootUri: rootPath ? this._c2p.asUri(Uri.file(rootPath)) : null,
 			capabilities: this.computeClientCapabilities(),
 			initializationOptions: Is.func(initOption) ? initOption() : initOption,
 			trace: Trace.toString(this._trace)
