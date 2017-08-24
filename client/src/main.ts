@@ -164,6 +164,7 @@ export class LanguageClient extends BaseLanguageClient {
 					return { reader: new StreamMessageReader(info.reader), writer: new StreamMessageWriter(info.writer) };
 				} else {
 					let cp = result as ChildProcess;
+					cp.stderr.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
 					return { reader: new StreamMessageReader(cp.stdout), writer: new StreamMessageWriter(cp.stdin) };
 				}
 			});
