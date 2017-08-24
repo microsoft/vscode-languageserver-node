@@ -593,7 +593,7 @@ namespace DynamicFeature {
 }
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
-	if (target[key] === void 0) {
+if (target[key] === void 0) {
 		target[key] = {} as any;
 	}
 	return target[key];
