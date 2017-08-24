@@ -108,6 +108,11 @@ suite('Protocol Converter', () => {
 		strictEqual(range.end.character, hover.range.end.character);
 	});
 
+	test('Text Edit undefined | null', () => {
+		strictEqual(p2c.asTextEdit(null), undefined);
+		strictEqual(p2c.asTextEdit(undefined), undefined);
+	});
+
 	test('Text Edit Insert', () => {
 		let edit: proto.TextEdit = proto.TextEdit.insert({ line: 1, character: 2 }, 'insert');
 		let result = p2c.asTextEdit(edit);

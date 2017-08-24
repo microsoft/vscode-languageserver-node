@@ -38,6 +38,7 @@ export interface Converter {
 
 	asCompletionItem(item: ls.CompletionItem): ProtocolCompletionItem;
 
+	asTextEdit(edit: undefined | null): undefined;
 	asTextEdit(edit: ls.TextEdit): code.TextEdit;
 
 	asTextEdits(items: ls.TextEdit[]): code.TextEdit[];
@@ -232,7 +233,12 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		}
 	}
 
-	function asTextEdit(edit: ls.TextEdit): code.TextEdit {
+	function asTextEdit(edit: undefined | null): undefined;
+	function asTextEdit(edit: ls.TextEdit): code.TextEdit;
+	function asTextEdit(edit: ls.TextEdit | undefined | null): code.TextEdit | undefined {
+		if (!edit) {
+			return undefined;
+		}
 		return new code.TextEdit(asRange(edit.range), edit.newText);
 	}
 
