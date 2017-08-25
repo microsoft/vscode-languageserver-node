@@ -10,10 +10,9 @@ import { MessageType as RPCMessageType, CancellationToken } from 'vscode-jsonrpc
 
 import { DynamicFeature, StaticFeature, RegistrationData, BaseLanguageClient, NextSignature } from './client';
 import {
-	ClientCapabilities, DocumentSelector, ServerCapabilities, InitializedParams,
-	WorkspaceFolder, GetWorkspaceFolders, GetWorkspaceFolder, ProposedWorkspaceClientCapabilities,
-	DidChangeWorkspaceFolders, DidChangeWorkspaceFoldersParams,ProposedWorkspaceInitializeParams,
-	GetConfigurationRequest, ProposedConfigurationClientCapabilities
+	ClientCapabilities, InitializedParams, WorkspaceFolder, GetWorkspaceFolders, GetWorkspaceFolder,
+	ProposedWorkspaceClientCapabilities, DidChangeWorkspaceFolders, DidChangeWorkspaceFoldersParams,
+	ProposedWorkspaceInitializeParams, GetConfigurationRequest, ProposedConfigurationClientCapabilities
 } from 'vscode-languageserver-protocol';
 
 export interface WorkspaceFolderMiddleware {
@@ -50,7 +49,7 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 		workspace.workspaceFolders = true;
 	}
 
-	public initialize(_documentSelector: DocumentSelector | undefined, _capabilities: ServerCapabilities): void {
+	public initialize(): void {
 		let client = this._client;
 		client.onRequest(GetWorkspaceFolders.type, (token: CancellationToken) => {
 			let workspaceFolders: GetWorkspaceFolders.HandlerSignature = () => {
@@ -152,7 +151,7 @@ export class ConfigurationFeature implements StaticFeature {
 		workspace.configuration = true;
 	}
 
-	public initialize(_documentSelector: DocumentSelector | undefined, _capabilities: ServerCapabilities): void {
+	public initialize(): void {
 		let client = this._client;
 		client.onRequest(GetConfigurationRequest.type, (params, token) => {
 			let configuration: GetConfigurationRequest.HandlerSignature = (params) => {

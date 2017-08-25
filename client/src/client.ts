@@ -533,11 +533,11 @@ export interface StaticFeature {
 	 * the server and before the client sends the initialized notification
 	 * to the server.
 	 *
+	 * @param capabilities the server capabilities
 	 * @param documentSelector the document selector pass to the client's constuctor.
 	 *  May be `undefined` if the client was created without a selector.
-	 * @param capabilities the server capabilities
 	 */
-	initialize(documentSelector: DocumentSelector | undefined, capabilities: ServerCapabilities): void;
+	initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector | undefined): void;
 }
 
 export interface RegistrationData<T> {
@@ -572,11 +572,11 @@ export interface DynamicFeature<T> {
 	 * the server and before the client sends the initialized notification
 	 * to the server.
 	 *
+	 * @param capabilities the server capabilities
 	 * @param documentSelector the document selector pass to the client's constuctor.
 	 *  May be `undefined` if the client was created without a selector.
-	 * @param capabilities the server capabilities
 	 */
-	initialize(documentSelector: DocumentSelector | undefined, capabilities: ServerCapabilities): void;
+	initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector | undefined): void;
 
 	register(message: RPCMessageType, data: RegistrationData<T>): void;
 
@@ -633,7 +633,7 @@ abstract class DocumentNotifiactions<P, E> implements DynamicFeature<TextDocumen
 
 	public abstract fillClientCapabilities(capabilities: ClientCapabilities): void;
 
-	public abstract initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void;
+	public abstract initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector | undefined): void;
 
 	public register(_message: RPCMessageType, data: RegistrationData<TextDocumentRegistrationOptions>): void {
 
@@ -693,7 +693,7 @@ class DidOpenTextDocumentFeature extends DocumentNotifiactions<DidOpenTextDocume
 		ensure(ensure(capabilities, 'textDocument')!, 'synchronization')!.dynamicRegistration = true;
 	}
 
-	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		let textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
 		if (documentSelector && textDocumentSyncOptions && textDocumentSyncOptions.openClose) {
 			this.register(this.messages, { id: UUID.generateUuid(), registerOptions: { documentSelector: documentSelector } });
@@ -751,7 +751,7 @@ class DidCloseTextDocumentFeature extends DocumentNotifiactions<DidCloseTextDocu
 		ensure(ensure(capabilities, 'textDocument')!, 'synchronization')!.dynamicRegistration = true;
 	}
 
-	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		let textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
 		if (documentSelector && textDocumentSyncOptions && textDocumentSyncOptions.openClose) {
 			this.register(this.messages, { id: UUID.generateUuid(), registerOptions: { documentSelector: documentSelector } });
@@ -809,7 +809,7 @@ class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeR
 		ensure(ensure(capabilities, 'textDocument')!, 'synchronization')!.dynamicRegistration = true;
 	}
 
-	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		let textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
 		if (documentSelector && textDocumentSyncOptions && textDocumentSyncOptions.change !== void 0 && textDocumentSyncOptions.change !== TextDocumentSyncKind.None) {
 			this.register(this.messages,
@@ -928,7 +928,7 @@ class WillSaveFeature extends DocumentNotifiactions<WillSaveTextDocumentParams, 
 		value.willSave = true;
 	}
 
-	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		let textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
 		if (documentSelector && textDocumentSyncOptions && textDocumentSyncOptions.willSave) {
 			this.register(this.messages, {
@@ -956,7 +956,7 @@ class WillSaveWaitUntilFeature implements DynamicFeature<TextDocumentRegistratio
 		value.willSaveWaitUntil = true;
 	}
 
-	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		let textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
 		if (documentSelector && textDocumentSyncOptions && textDocumentSyncOptions.willSaveWaitUntil) {
 			this.register(this.messages, {
@@ -1030,7 +1030,7 @@ class DidSaveTextDocumentFeature extends DocumentNotifiactions<DidSaveTextDocume
 		ensure(ensure(capabilities, 'textDocument')!, 'synchronization')!.didSave = true;
 	}
 
-	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		let textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
 		if (documentSelector && textDocumentSyncOptions && textDocumentSyncOptions.save) {
 			this.register(this.messages, {
@@ -1061,7 +1061,7 @@ class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatchedFilesRe
 		ensure(ensure(capabilities, 'workspace')!, 'didChangeWatchedFiles')!.dynamicRegistration = true;
 	}
 
-	public initialize(_documentSelector: DocumentSelector, _capabilities: ServerCapabilities): void {
+	public initialize(_capabilities: ServerCapabilities, _documentSelector: DocumentSelector): void {
 	}
 
 	public register(_method: RPCMessageType, data: RegistrationData<DidChangeWatchedFilesRegistrationOptions>): void {
@@ -1152,7 +1152,7 @@ abstract class TextDocumentFeature<T extends TextDocumentRegistrationOptions> im
 
 	public abstract fillClientCapabilities(capabilities: ClientCapabilities): void;
 
-	public abstract initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void;
+	public abstract initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void;
 
 	public register(message: RPCMessageType, data: RegistrationData<T>): void {
 		if (message.method !== this.messages.method) {
@@ -1196,7 +1196,7 @@ abstract class WorkspaceFeature<T> implements DynamicFeature<T> {
 
 	public abstract fillClientCapabilities(capabilities: ClientCapabilities): void;
 
-	public abstract initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void;
+	public abstract initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector | undefined): void;
 
 	public register(message: RPCMessageType, data: RegistrationData<T>): void {
 		if (message.method !== this.messages.method) {
@@ -1236,7 +1236,7 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionRegistrationOp
 		completion.completionItem = { snippetSupport: true };
 	}
 
-	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		if (!capabilities.completionProvider || !documentSelector) {
 			return;
 		}
@@ -1296,7 +1296,7 @@ class HoverFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> 
 		ensure(ensure(capabilites, 'textDocument')!, 'hover')!.dynamicRegistration = true;
 	}
 
-	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		if (!capabilities.hoverProvider || !documentSelector) {
 			return;
 		}
@@ -1338,7 +1338,7 @@ class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpRegistration
 		ensure(ensure(capabilites, 'textDocument')!, 'signatureHelp')!.dynamicRegistration = true;
 	}
 
-	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		if (!capabilities.signatureHelpProvider || !documentSelector) {
 			return;
 		}
@@ -1381,7 +1381,7 @@ class DefinitionFeature extends TextDocumentFeature<TextDocumentRegistrationOpti
 		ensure(ensure(capabilites, 'textDocument')!, 'definition')!.dynamicRegistration = true;
 	}
 
-	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		if (!capabilities.definitionProvider || !documentSelector) {
 			return;
 		}
@@ -1423,7 +1423,7 @@ class ReferencesFeature extends TextDocumentFeature<TextDocumentRegistrationOpti
 		ensure(ensure(capabilites, 'textDocument')!, 'references')!.dynamicRegistration = true;
 	}
 
-	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		if (!capabilities.referencesProvider || !documentSelector) {
 			return;
 		}
@@ -1465,7 +1465,7 @@ class DocumentHighlightFeature extends TextDocumentFeature<TextDocumentRegistrat
 		ensure(ensure(capabilites, 'textDocument')!, 'documentHighlight')!.dynamicRegistration = true;
 	}
 
-	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		if (!capabilities.documentHighlightProvider || !documentSelector) {
 			return;
 		}
@@ -1507,7 +1507,7 @@ class DocumentSymbolFeature extends TextDocumentFeature<TextDocumentRegistration
 		ensure(ensure(capabilites, 'textDocument')!, 'documentSymbol')!.dynamicRegistration = true;
 	}
 
-	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		if (!capabilities.documentSymbolProvider || !documentSelector) {
 			return;
 		}
@@ -1549,7 +1549,7 @@ class WorkspaceSymbolFeature extends WorkspaceFeature<undefined> {
 		ensure(ensure(capabilites, 'workspace')!, 'symbol')!.dynamicRegistration = true;
 	}
 
-	public initialize(_documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(capabilities: ServerCapabilities): void {
 		if (!capabilities.workspaceSymbolProvider) {
 			return;
 		}
@@ -1591,7 +1591,7 @@ class CodeActionFeature extends TextDocumentFeature<TextDocumentRegistrationOpti
 		ensure(ensure(capabilites, 'textDocument')!, 'codeAction')!.dynamicRegistration = true;
 	}
 
-	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		if (!capabilities.codeActionProvider || !documentSelector) {
 			return;
 		}
@@ -1638,7 +1638,7 @@ class CodeLensFeature extends TextDocumentFeature<CodeLensRegistrationOptions> {
 		ensure(ensure(capabilites, 'textDocument')!, 'codeLens')!.dynamicRegistration = true;
 	}
 
-	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		if (!capabilities.codeLensProvider || !documentSelector) {
 			return;
 		}
@@ -1696,7 +1696,7 @@ class DocumentFormattingFeature extends TextDocumentFeature<TextDocumentRegistra
 		ensure(ensure(capabilites, 'textDocument')!, 'formatting')!.dynamicRegistration = true;
 	}
 
-	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		if (!capabilities.documentFormattingProvider || !documentSelector) {
 			return;
 		}
@@ -1742,7 +1742,7 @@ class DocumentRangeFormattingFeature extends TextDocumentFeature<TextDocumentReg
 		ensure(ensure(capabilites, 'textDocument')!, 'rangeFormatting')!.dynamicRegistration = true;
 	}
 
-	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		if (!capabilities.documentRangeFormattingProvider || !documentSelector) {
 			return;
 		}
@@ -1789,7 +1789,7 @@ class DocumentOnTypeFormattingFeature extends TextDocumentFeature<DocumentOnType
 		ensure(ensure(capabilites, 'textDocument')!, 'onTypeFormatting')!.dynamicRegistration = true;
 	}
 
-	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		if (!capabilities.documentOnTypeFormattingProvider || !documentSelector) {
 			return;
 		}
@@ -1838,7 +1838,7 @@ class RenameFeature extends TextDocumentFeature<TextDocumentRegistrationOptions>
 		ensure(ensure(capabilites, 'textDocument')!, 'rename')!.dynamicRegistration = true;
 	}
 
-	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		if (!capabilities.renameProvider || !documentSelector) {
 			return;
 		}
@@ -1885,7 +1885,7 @@ class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkRegistrationOp
 		ensure(ensure(capabilites, 'textDocument')!, 'documentLink')!.dynamicRegistration = true;
 	}
 
-	public initialize(documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		if (!capabilities.documentLinkProvider || !documentSelector) {
 			return;
 		}
@@ -1948,7 +1948,7 @@ class ConfigurationFeature implements DynamicFeature<DidChangeConfigurationRegis
 		ensure(ensure(capabilities, 'workspace')!, 'didChangeConfiguration')!.dynamicRegistration = true;
 	}
 
-	public initialize(_documentSelector: DocumentSelector, _capabilities: ServerCapabilities): void {
+	public initialize(): void {
 		let section = this._client.clientOptions.synchronize!.configurationSection;
 		if (section !== void 0) {
 			this.register(this.messages, {
@@ -2063,7 +2063,7 @@ class ExecuteCommandFeature implements DynamicFeature<ExecuteCommandRegistration
 		ensure(ensure(capabilities, 'workspace')!, 'executeCommand')!.dynamicRegistration = true;
 	}
 
-	public initialize(_documentSelector: DocumentSelector, capabilities: ServerCapabilities): void {
+	public initialize(capabilities: ServerCapabilities): void {
 		if (!capabilities.executeCommandProvider) {
 			return;
 		}
@@ -2788,7 +2788,7 @@ export abstract class BaseLanguageClient {
 	private initializeFeatures(_connection: IConnection): void {
 		let documentSelector = this._clientOptions.documentSelector;
 		for (let feature of this._features) {
-			feature.initialize(documentSelector, this._capabilities);
+			feature.initialize(this._capabilities, documentSelector);
 		}
 	}
 
