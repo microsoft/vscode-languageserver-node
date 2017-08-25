@@ -1,29 +1,29 @@
 {
-	"name": "vscode-languageserver-protocol",
-	"description": "VSCode Language Server Protocol implementation",
-	"version": "3.1.0",
-	"author": "Microsoft Corporation",
-	"license": "MIT",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/Microsoft/vscode-languageserver-node.git"
-	},
-	"bugs": {
-		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
-	},
-	"main": "./lib/main.js",
-	"typings": "./lib/main",
-	"devDependencies": {
-		"typescript": "^2.4.1",
-		"@types/node": "^6.0.81"
-	},
-	"dependencies": {
-		"vscode-jsonrpc": "^3.3.0",
-		"vscode-languageserver-types": "^3.3.0"
-	},
-	"scripts": {
-		"prepublish": "tsc -p ./src",
-		"compile": "tsc -p ./src",
-		"watch": "tsc -w -p ./src"
-	}
+  "name": "vscode-languageserver-protocol",
+  "description": "VSCode Language Server Protocol implementation",
+  "version": "3.1.1",
+  "author": "Microsoft Corporation",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Microsoft/vscode-languageserver-node.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
+  },
+  "main": "./lib/main.js",
+  "typings": "./lib/main",
+  "devDependencies": {
+    "typescript": "^2.4.1",
+    "@types/node": "^6.0.81"
+  },
+  "dependencies": {
+    "vscode-jsonrpc": "^3.3.0",
+    "vscode-languageserver-types": "^3.3.0"
+  },
+  "scripts": {
+    "prepublish": "tsc -p ./src",
+    "compile": "tsc -p ./src",
+    "watch": "tsc -w -p ./src"
+  }
 }
