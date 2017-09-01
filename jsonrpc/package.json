@@ -17,10 +17,10 @@
 	"main": "./lib/main.js",
 	"typings": "./lib/main.d.ts",
 	"devDependencies": {
-		"mocha": "^3.4.2",
-		"typescript": "^2.4.1",
-		"@types/node": "^6.0.81",
-		"@types/mocha": "^2.2.41"
+		"mocha": "^3.5.0",
+		"typescript": "^2.5.2",
+		"@types/node": "^6.0.88",
+		"@types/mocha": "^2.2.42"
 	},
 	"scripts": {
 		"prepublish": "tsc -p ./src",

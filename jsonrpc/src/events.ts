@@ -39,49 +39,6 @@ export namespace Event {
 	export const None: Event<any> = function () { return _disposable; };
 }
 
-/**
- * Represents a type which can release resources, such
- * as event listening or a timer.
- */
-class DisposableImpl implements Disposable {
-
-	/**
-	 * Combine many disposable-likes into one. Use this method
-	 * when having objects with a dispose function which are not
-	 * instances of Disposable.
-	 *
-	 * @return Returns a new disposable which, upon dispose, will
-	 * dispose all provides disposable-likes.
-	 */
-	static from(..._disposables: Disposable[]): DisposableImpl {
-		return new DisposableImpl(function () {
-			let disposables: Disposable[] | undefined = _disposables;
-			if (disposables) {
-				for (let disposable of disposables) {
-					disposable.dispose();
-				}
-				disposables = undefined;
-			}
-		});
-	}
-
-	private _callOnDispose: Function | undefined;
-
-	constructor(callOnDispose: Function) {
-		this._callOnDispose = callOnDispose;
-	}
-
-	/**
-	 * Dispose this object.
-	 */
-	dispose(): any {
-		if (typeof this._callOnDispose === 'function') {
-			this._callOnDispose();
-			this._callOnDispose = undefined;
-		}
-	}
-}
-
 class CallbackList {
 
 	private _callbacks: Function[] | undefined;

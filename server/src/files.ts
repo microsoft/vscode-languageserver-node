@@ -52,9 +52,9 @@ export function resolveModule(workspaceRoot: string, moduleName: string): Thenab
 		if (workspaceRoot) {
 			nodePath.push(path.join(workspaceRoot, 'node_modules'));
 		}
-		exec('npm config get prefix', (error: Error, stdout: Buffer, _stderr: Buffer) => {
+		exec('npm config get prefix', (error: Error, stdout: string, _stderr: string) => {
 			if (!error) {
-				let globalPath = stdout.toString().replace(/[\s\r\n]+$/, '');
+				let globalPath = stdout.replace(/[\s\r\n]+$/, '');
 				if (globalPath.length > 0) {
 					if (isWindows()) {
 						nodePath.push(path.join(globalPath, 'node_modules'));
