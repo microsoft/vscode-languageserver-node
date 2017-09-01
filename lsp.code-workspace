@@ -1,10 +1,26 @@
 {
-	"id": "1501856892086",
 	"folders": [
-		"file:///p:/mseng/LanguageServer/Node/types",
-		"file:///p:/mseng/LanguageServer/Node/jsonrpc",
-		"file:///p:/mseng/LanguageServer/Node/client",
-		"file:///p:/mseng/LanguageServer/Node/client.tests",
-		"file:///p:/mseng/LanguageServer/Node/server"
-	]
+		{
+			"path": "jsonrpc"
+		},
+		{
+			"path": "types"
+		},
+		{
+			"path": "protocol"
+		},
+		{
+			"path": "server"
+		},
+		{
+			"path": "client"
+		},
+		{
+			"path": "client.tests"
+		}
+	],
+	"settings": {
+		"typescript.tsdk": "./node_modules/typescript/lib",
+		"typescript.tsserver.trace": "off"
+	}
 }
