@@ -16,8 +16,8 @@ install:
   - cd protocol && npm install && cd ..
   - cd client && cd node_modules && ln -s ../../protocol vscode-languageserver-protocol && cd ../..
   - cd server && cd node_modules && ln -s ../../protocol vscode-languageserver-protocol && cd ../..
-  - cd client && npm install && cd ..
   - cd server && npm install && cd ..
+  - cd client && npm install && cd ..
 script:
   - cd jsonrpc && npm run compile && cd ../types && npm run compile && cd ../protocol && npm run compile && cd ../client && npm run compile && cd ../server && npm run compile && cd ..
   - cd jsonrpc && npm test && cd ../types && npm test && cd ..

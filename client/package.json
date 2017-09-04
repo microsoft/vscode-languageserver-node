@@ -18,8 +18,10 @@
 	"typings": "./lib/main",
 	"devDependencies": {
 		"typescript": "^2.5.2",
+		"mocha": "^3.5.0",
 		"vscode": "^1.1.5",
-		"@types/node": "^6.0.88"
+		"@types/node": "^6.0.88",
+		"@types/mocha": "^2.2.42"
 	},
 	"dependencies": {
 		"vscode-jsonrpc": "^3.3.1",
@@ -30,6 +32,7 @@
 		"prepublish": "node ./node_modules/vscode/bin/install && tsc -p ./src",
 		"compile": "tsc -p ./src",
 		"watch": "tsc -w -p ./src",
-		"update-vscode": "node ./node_modules/vscode/bin/install"
+		"update-vscode": "node ./node_modules/vscode/bin/install",
+		"test": "npm run compile && cd lib && node ../node_modules/vscode/bin/test"
 	}
 }

@@ -5,6 +5,7 @@
 	"tasks": [
 		{
 			"type": "npm",
+			"label": "npm_watch",
 			"script": "watch",
 			"isBackground": true,
 			"problemMatcher": [
