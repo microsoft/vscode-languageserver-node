@@ -33,20 +33,20 @@ export type DocumentFilter = {
 	/** A glob pattern, like `*.{ts,js}`. */
 	pattern?: string;
 } | {
-	/** A language id, like `typescript`. */
-	language?: string;
-	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */
-	scheme: string;
-	/** A glob pattern, like `*.{ts,js}`. */
-	pattern?: string;
-} | {
-	/** A language id, like `typescript`. */
-	language?: string;
-	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */
-	scheme?: string;
-	/** A glob pattern, like `*.{ts,js}`. */
-	pattern: string;
-};
+		/** A language id, like `typescript`. */
+		language?: string;
+		/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */
+		scheme: string;
+		/** A glob pattern, like `*.{ts,js}`. */
+		pattern?: string;
+	} | {
+		/** A language id, like `typescript`. */
+		language?: string;
+		/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */
+		scheme?: string;
+		/** A glob pattern, like `*.{ts,js}`. */
+		pattern: string;
+	};
 
 export namespace DocumentFilter {
 	export function is(value: any): value is DocumentFilter {
@@ -712,7 +712,7 @@ export interface InitializeResult {
 	/**
 	 * Custom initialization results.
 	 */
-	customResults?: any;
+	[custom: string]: any;
 }
 
 /**
