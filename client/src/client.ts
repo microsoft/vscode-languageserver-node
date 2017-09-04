@@ -849,7 +849,7 @@ class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeR
 						this._client.sendNotification(DidChangeTextDocumentNotification.type, params);
 					}
 				} else if (changeData.syncKind === TextDocumentSyncKind.Full) {
-					let didChange: (event:TextDocumentChangeEvent) => void = (event) => {
+					let didChange: (event: TextDocumentChangeEvent) => void = (event) => {
 						if (this._changeDelayer) {
 							if (this._changeDelayer.uri !== event.document.uri.toString()) {
 								// Use this force delivery to track boolean state. Otherwise we might call two times.
@@ -2125,6 +2125,7 @@ export abstract class BaseLanguageClient {
 	private _onReadyCallbacks: { resolve: () => void; reject: (error: any) => void; };
 	private _connectionPromise: Thenable<IConnection> | undefined;
 	private _resolvedConnection: IConnection | undefined;
+	private _initializeResult: InitializeResult | undefined;
 	private _outputChannel: OutputChannel | undefined;
 	private _disposeOutputChannel: boolean;
 	private _capabilities: ServerCapabilities & ResolvedTextDocumentSyncCapabilities;
@@ -2169,6 +2170,7 @@ export abstract class BaseLanguageClient {
 		this.state = ClientState.Initial;
 		this._connectionPromise = undefined;
 		this._resolvedConnection = undefined;
+		this._initializeResult = undefined;
 		if (clientOptions.outputChannel) {
 			this._outputChannel = clientOptions.outputChannel;
 			this._disposeOutputChannel = false;
@@ -2217,6 +2219,10 @@ export abstract class BaseLanguageClient {
 		} else {
 			return State.Stopped;
 		}
+	}
+
+	public get initializeResult(): InitializeResult | undefined {
+		return this._initializeResult;
 	}
 
 	public sendRequest<R, E, RO>(type: RequestType0<R, E, RO>, token?: CancellationToken): Thenable<R>;
@@ -2501,6 +2507,7 @@ export abstract class BaseLanguageClient {
 		this.fillInitializeParams(initParams);
 		return connection.initialize(initParams).then((result) => {
 			this._resolvedConnection = connection;
+			this._initializeResult = result;
 			this.state = ClientState.Running;
 
 			let textDocumentSyncOptions: TextDocumentSyncOptions | undefined = undefined;
@@ -2562,6 +2569,7 @@ export abstract class BaseLanguageClient {
 	}
 
 	public stop(): Thenable<void> {
+		this._initializeResult = undefined;
 		if (!this._connectionPromise) {
 			this.state = ClientState.Stopped;
 			return Promise.resolve();

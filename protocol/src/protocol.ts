@@ -709,6 +709,10 @@ export interface InitializeResult {
 	 * The capabilities the language server provides.
 	 */
 	capabilities: ServerCapabilities;
+	/**
+	 * Custom initialization results.
+	 */
+	customResults?: any;
 }
 
 /**
