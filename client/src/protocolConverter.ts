@@ -32,7 +32,8 @@ export interface Converter {
 	asHover(hover: undefined | null): undefined;
 	asHover(hover: ls.Hover | undefined | null): code.Hover | undefined;
 
-	asCompletionResult(result: ls.CompletionItem[] | ls.CompletionList): code.CompletionItem[] | code.CompletionList;
+	asCompletionResult(result: ls.CompletionList): code.CompletionList;
+	asCompletionResult(result: ls.CompletionItem[]): code.CompletionItem[];
 	asCompletionResult(result: undefined | null): undefined;
 	asCompletionResult(result: ls.CompletionItem[] | ls.CompletionList | undefined | null): code.CompletionItem[] | code.CompletionList | undefined;
 
@@ -180,7 +181,8 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return new code.Hover(hover.contents, asRange(hover.range));
 	}
 
-	function asCompletionResult(result: ls.CompletionItem[] | ls.CompletionList): code.CompletionItem[] | code.CompletionList;
+	function asCompletionResult(result: ls.CompletionList): code.CompletionList;
+	function asCompletionResult(result: ls.CompletionItem[]): code.CompletionItem[];
 	function asCompletionResult(result: undefined | null): undefined;
 	function asCompletionResult(result: ls.CompletionItem[] | ls.CompletionList | undefined | null): code.CompletionItem[] | code.CompletionList | undefined;
 	function asCompletionResult(result: ls.CompletionItem[] | ls.CompletionList | undefined | null): code.CompletionItem[] | code.CompletionList | undefined {

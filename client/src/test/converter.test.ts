@@ -7,9 +7,9 @@
 import { strictEqual, deepEqual, ok } from 'assert';
 
 import * as proto from 'vscode-languageserver-types';
-import * as codeConverter from '../../client/lib/codeConverter';
-import * as protocolConverter from '../../client/lib/protocolConverter';
-import ProtocolCompletionItem from '../../client/lib/protocolCompletionItem';
+import * as codeConverter from '../codeConverter';
+import * as protocolConverter from '../protocolConverter';
+import ProtocolCompletionItem from '../protocolCompletionItem';
 
 import * as vscode from 'vscode';
 
@@ -18,9 +18,9 @@ const p2c: protocolConverter.Converter = protocolConverter.createConverter();
 
 suite('Protocol Converter', () => {
 
-	function rangeEqual(actual: vscode.Range, expected: proto.Range);
-	function rangeEqual(actual: proto.Range, expected: vscode.Range);
-	function rangeEqual(actual: vscode.Range | proto.Range, expected: proto.Range | proto.Range) {
+	function rangeEqual(actual: vscode.Range, expected: proto.Range) : void;
+	function rangeEqual(actual: proto.Range, expected: vscode.Range) : void;
+	function rangeEqual(actual: vscode.Range | proto.Range, expected: proto.Range | proto.Range) : void {
 		strictEqual(actual.start.line, expected.start.line);
 		strictEqual(actual.start.character, expected.start.character);
 		strictEqual(actual.end.line, expected.end.line);
@@ -101,7 +101,7 @@ suite('Protocol Converter', () => {
 			end: { line: 8, character: 9 }
 		}
 		result = p2c.asHover(hover);
-		let range = result.range;
+		let range = result.range!;
 		strictEqual(range.start.line, hover.range.start.line);
 		strictEqual(range.start.character, hover.range.start.character);
 		strictEqual(range.end.line, hover.range.end.line);
@@ -216,17 +216,13 @@ suite('Protocol Converter', () => {
 		strictEqual(result.sortText, completionItem.sortText);
 		strictEqual(result.textEdit, undefined);
 		strictEqual(result.data, completionItem.data);
-		strictEqual(result.command.title, command.title);
-		strictEqual(result.command.command, command.command);
-		strictEqual(result.command.arguments, command.arguments);
-		ok(result.additionalTextEdits[0] instanceof vscode.TextEdit);
+		strictEqual(result.command!.title, command.title);
+		strictEqual(result.command!.command, command.command);
+		strictEqual(result.command!.arguments, command.arguments);
+		ok(result.additionalTextEdits![0] instanceof vscode.TextEdit);
 
 		let completionResult = p2c.asCompletionResult([completionItem]);
-		if (Array.isArray(completionResult)) {
-			ok(completionResult.every(value => value instanceof vscode.CompletionItem));
-		} else {
-			ok(completionResult.items.every(value => value instanceof vscode.CompletionItem));
-		}
+		ok(completionResult.every(value => value instanceof vscode.CompletionItem));
 	});
 
 	test('Completion Item Preserve Insert Text', () => {
@@ -271,13 +267,13 @@ suite('Protocol Converter', () => {
 		strictEqual(result.label, completionItem.label);
 		strictEqual(result.textEdit, undefined);
 		strictEqual(result.insertText, "insert");
-		rangeEqual(result.range, completionItem.textEdit.range);
+		rangeEqual(result.range!, completionItem.textEdit!.range);
 
 		let back = c2p.asCompletionItem(result);
 		strictEqual(back.insertTextFormat, proto.InsertTextFormat.PlainText);
 		strictEqual(back.insertText, undefined);
-		strictEqual(back.textEdit.newText, 'insert');
-		rangeEqual(back.textEdit.range, result.range);
+		strictEqual(back.textEdit!.newText, 'insert');
+		rangeEqual(back.textEdit!.range, result.range!);
 	});
 
 	test('Completion Item Text Edit Snippet String', () => {
@@ -291,13 +287,13 @@ suite('Protocol Converter', () => {
 		strictEqual(result.label, completionItem.label);
 		strictEqual(result.textEdit, undefined);
 		ok(result.insertText instanceof vscode.SnippetString && result.insertText.value === '${insert}');
-		rangeEqual(result.range, completionItem.textEdit.range);
+		rangeEqual(result.range!, completionItem.textEdit!.range);
 
 		let back = c2p.asCompletionItem(result);
 		strictEqual(back.insertText, undefined);
 		strictEqual(back.insertTextFormat, proto.InsertTextFormat.Snippet);
-		strictEqual(back.textEdit.newText, '${insert}');
-		rangeEqual(back.textEdit.range, result.range);
+		strictEqual(back.textEdit!.newText, '${insert}');
+		rangeEqual(back.textEdit!.range, result.range!);
 	});
 
 	test('Completion Item Preserve Data', () => {
@@ -317,9 +313,9 @@ suite('Protocol Converter', () => {
 			items: [ { label: 'item', data: 'data' } ]
 		};
 		let result = p2c.asCompletionResult(completionResult);
-		strictEqual(result['isIncomplete'], completionResult.isIncomplete);
-		strictEqual(result['items'].length, 1);
-		strictEqual(result['items'][0].label, 'item');
+		strictEqual(result.isIncomplete, completionResult.isIncomplete);
+		strictEqual(result.items.length, 1);
+		strictEqual(result.items[0].label, 'item');
 
 		strictEqual(p2c.asCompletionResult(undefined), undefined);
 		strictEqual(p2c.asCompletionResult(null), undefined);
@@ -368,8 +364,8 @@ suite('Protocol Converter', () => {
 			signatures: [
 				{ label: 'label' }
 			],
-			activeSignature: undefined,
-			activeParameter: undefined
+			activeSignature: null,
+			activeParameter: null
 		};
 
 		let result = p2c.asSignatureHelp(signatureHelp);
@@ -464,7 +460,7 @@ suite('Protocol Converter', () => {
 
 		let result = p2c.asDocumentLink(documentLink);
 		ok(result.range instanceof vscode.Range);
-		strictEqual(result. target.toString(), location);
+		strictEqual(result.target!.toString(), location);
 
 		ok(p2c.asDocumentLinks([documentLink]).every(value => value instanceof vscode.DocumentLink));
 		strictEqual(p2c.asDocumentLinks(undefined), undefined);
@@ -524,8 +520,8 @@ suite('Protocol Converter', () => {
 
 		codeLens.command = proto.Command.create('title', 'commandId');
 		result = p2c.asCodeLens(codeLens);
-		strictEqual(result.command.title, codeLens.command.title);
-		strictEqual(result.command.command, codeLens.command.command);
+		strictEqual(result.command!.title, codeLens.command.title);
+		strictEqual(result.command!.command, codeLens.command.command);
 
 		ok(p2c.asCodeLenses([codeLens]).every(elem => elem instanceof vscode.CodeLens));
 		strictEqual(p2c.asCodeLenses(undefined), undefined);
@@ -656,8 +652,8 @@ suite('Code Converter', () => {
 		strictEqual(result.insertText, item.insertText);
 		strictEqual(result.kind, proto.CompletionItemKind.Interface);
 		strictEqual(result.sortText, item.sortText);
-		rangeEqual(result.additionalTextEdits[0].range, item.additionalTextEdits[0].range);
-		strictEqual(result.additionalTextEdits[0].newText, item.additionalTextEdits[0].newText);
+		rangeEqual(result.additionalTextEdits![0].range, item.additionalTextEdits[0].range);
+		strictEqual(result.additionalTextEdits![0].newText, item.additionalTextEdits[0].newText);
 	});
 
 	test('Completion Item insertText', () => {
@@ -686,8 +682,8 @@ suite('Code Converter', () => {
 
 		let result = c2p.asCompletionItem(<any>item);
 		strictEqual(result.insertText, undefined);
-		rangeEqual(result.textEdit.range, item.range);
-		strictEqual(result.textEdit.newText, item.insertText);
+		rangeEqual(result.textEdit!.range, item.range);
+		strictEqual(result.textEdit!.newText, item.insertText);
 	});
 
 	test('Completion Item TextEdit from Edit', () => {
@@ -697,8 +693,8 @@ suite('Code Converter', () => {
 
 		let result = c2p.asCompletionItem(<any>item);
 		strictEqual(result.insertText, undefined);
-		rangeEqual(result.textEdit.range, item.textEdit.range);
-		strictEqual(result.textEdit.newText, item.textEdit.newText);
+		rangeEqual(result.textEdit!.range, item.textEdit.range);
+		strictEqual(result.textEdit!.newText, item.textEdit.newText);
 	});
 
 	test('DiagnosticSeverity', () => {

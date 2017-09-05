@@ -4,11 +4,11 @@
  *--------------------------------------------------------------------------------------------*/
 'use strict';
 
-import { strictEqual, deepEqual, ok } from 'assert';
+import { strictEqual, ok } from 'assert';
 
 import {
 	Position, Range, TextDocumentIdentifier, TextDocumentItem, VersionedTextDocumentIdentifier, Command, CodeLens, CodeActionContext,
-	Diagnostic, DiagnosticSeverity, WorkspaceChange, WorkspaceEdit, TextEditChange, TextEdit
+	Diagnostic, DiagnosticSeverity, WorkspaceChange
 } from 'vscode-languageserver-types';
 
 suite('Protocol Helper Tests', () => {
@@ -90,7 +90,7 @@ suite('Protocol Helper Tests', () => {
 		let command = Command.create('title', 'command', 'arg');
 		strictEqual(command.title, 'title');
 		strictEqual(command.command, 'command');
-		strictEqual(command.arguments[0], 'arg');
+		strictEqual(command.arguments![0], 'arg');
 	});
 
 	test('CodeLens', () => {
@@ -120,8 +120,8 @@ suite('Protocol Helper Tests', () => {
 		change2.insert(Position.create(2,3), 'insert');
 
 		let workspaceEdit = workspaceChange.edit;
-		strictEqual(workspaceEdit.documentChanges.length, 2);
-		let edits = workspaceEdit.documentChanges[0].edits;
+		strictEqual(workspaceEdit.documentChanges!.length, 2);
+		let edits = workspaceEdit.documentChanges![0].edits;
 		strictEqual(edits.length, 3);
 		rangeEqual(edits[0].range, Range.create(0,1,0,1));
 		strictEqual(edits[0].newText, 'insert');
@@ -130,7 +130,7 @@ suite('Protocol Helper Tests', () => {
 		rangeEqual(edits[2].range, Range.create(0,1,2,3));
 		strictEqual(edits[2].newText, '');
 
-		edits = workspaceEdit.documentChanges[1].edits;
+		edits = workspaceEdit.documentChanges![1].edits;
 		strictEqual(edits.length, 1);
 		rangeEqual(edits[0].range, Range.create(2,3,2,3));
 		strictEqual(edits[0].newText, 'insert');
@@ -147,8 +147,8 @@ suite('Protocol Helper Tests', () => {
 		change2.insert(Position.create(2,3), 'insert');
 
 		let workspaceEdit = workspaceChange.edit;
-		strictEqual(Object.keys(workspaceEdit.changes).length, 2);
-		let edits = workspaceEdit.changes[uri];
+		strictEqual(Object.keys(workspaceEdit.changes!).length, 2);
+		let edits = workspaceEdit.changes![uri];
 		strictEqual(edits.length, 3);
 		rangeEqual(edits[0].range, Range.create(0,1,0,1));
 		strictEqual(edits[0].newText, 'insert');
@@ -157,7 +157,7 @@ suite('Protocol Helper Tests', () => {
 		rangeEqual(edits[2].range, Range.create(0,1,2,3));
 		strictEqual(edits[2].newText, '');
 
-		edits = workspaceEdit.changes['file:///xyz.txt'];
+		edits = workspaceEdit.changes!['file:///xyz.txt'];
 		strictEqual(edits.length, 1);
 		rangeEqual(edits[0].range, Range.create(2,3,2,3));
 		strictEqual(edits[0].newText, 'insert');

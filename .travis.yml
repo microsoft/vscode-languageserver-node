@@ -1,8 +1,19 @@
 language: node_js
 sudo: false
 
+os:
+  - osx
+  - linux
+
 node_js:
   - "6.10"
+
+before_install:
+  - if [ $TRAVIS_OS_NAME == "linux" ]; then
+      export CXX="g++-4.9" CC="gcc-4.9" DISPLAY=:99.0;
+      sh -e /etc/init.d/xvfb start;
+      sleep 3;
+    fi
   
 install:
   - cd jsonrpc && npm install && cd ..
@@ -20,4 +31,4 @@ install:
   - cd client && npm install && cd ..
 script:
   - cd jsonrpc && npm run compile && cd ../types && npm run compile && cd ../protocol && npm run compile && cd ../client && npm run compile && cd ../server && npm run compile && cd ..
-  - cd jsonrpc && npm test && cd ../types && npm test && cd ..
+  - cd jsonrpc && npm test && cd ../types && npm test && cd ../client && npm test && cd ..
