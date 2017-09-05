@@ -14,21 +14,17 @@ before_install:
       sh -e /etc/init.d/xvfb start;
       sleep 3;
     fi
-  
+
 install:
-  - cd jsonrpc && npm install && cd ..
   - cd protocol && mkdir node_modules && cd node_modules && ln -s ../../jsonrpc vscode-jsonrpc && cd ../..
+  - cd protocol/node_modules && ln -s ../../types vscode-languageserver-types && cd ../..
   - cd client && mkdir node_modules && cd node_modules && ln -s ../../jsonrpc vscode-jsonrpc && cd ../..
+  - cd client/node_modules && ln -s ../../types vscode-languageserver-types && cd ../..
+  - cd client/node_modules && ln -s ../../protocol vscode-languageserver-protocol && cd ../..
   - cd server && mkdir node_modules && cd node_modules && ln -s ../../jsonrpc vscode-jsonrpc && cd ../..
-  - cd types && npm install && cd ..
-  - cd protocol && cd node_modules && ln -s ../../types vscode-languageserver-types && cd ../..
-  - cd client && cd node_modules && ln -s ../../types vscode-languageserver-types && cd ../..
-  - cd server && cd node_modules && ln -s ../../types vscode-languageserver-types && cd ../..
-  - cd protocol && npm install && cd ..
-  - cd client && cd node_modules && ln -s ../../protocol vscode-languageserver-protocol && cd ../..
-  - cd server && cd node_modules && ln -s ../../protocol vscode-languageserver-protocol && cd ../..
-  - cd server && npm install && cd ..
-  - cd client && npm install && cd ..
+  - cd server/node_modules && ln -s ../../types vscode-languageserver-types && cd ../..
+  - cd server/node_modules && ln -s ../../protocol vscode-languageserver-protocol && cd ../..
 script:
-  - cd jsonrpc && npm run compile && cd ../types && npm run compile && cd ../protocol && npm run compile && cd ../client && npm run compile && cd ../server && npm run compile && cd ..
-  - cd jsonrpc && npm test && cd ../types && npm test && cd ../client && npm test && cd ..
+  - npm run install
+  - npm run compile
+  - npm run test
