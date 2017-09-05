@@ -1,12 +1,5 @@
 {
 	"compilerOptions": {
-		"target": "es5",
-		"module": "umd",
-		"sourceMap": false,
-		"declaration": true,
-		"stripInternal": true,
-		"lib": [ "es2015" ],
-		"outDir": "../lib",
 		"strictNullChecks": true,
 		"noImplicitAny": true,
 		"noImplicitReturns": true,

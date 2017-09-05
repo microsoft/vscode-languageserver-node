@@ -16,12 +16,6 @@
     "installServerIntoExtension": "./bin/installServerIntoExtension"
   },
   "typings": "./lib/main",
-  "devDependencies": {
-    "mocha": "3.5.0",
-    "typescript": "^2.5.2",
-    "@types/node": "^6.0.88",
-    "@types/mocha": "^2.2.42"
-  },
   "dependencies": {
     "vscode-uri": "^1.0.1",
     "vscode-jsonrpc": "^3.3.1",
@@ -29,8 +23,8 @@
     "vscode-languageserver-protocol": "^3.1.1"
   },
   "scripts": {
-    "prepublish": "tsc -p ./src",
-    "compile": "tsc -p ./src",
-    "watch": "tsc -w -p ./src"
+    "prepublish": "tsc -p ./tsconfig.json",
+    "compile": "tsc -p ./tsconfig.json",
+    "watch": "tsc -w -p ./tsconfig.json"
   }
 }

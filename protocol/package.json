@@ -13,17 +13,13 @@
   },
   "main": "./lib/main.js",
   "typings": "./lib/main",
-  "devDependencies": {
-    "typescript": "^2.5.2",
-    "@types/node": "^6.0.88"
-  },
   "dependencies": {
     "vscode-jsonrpc": "^3.3.1",
     "vscode-languageserver-types": "^3.3.0"
   },
   "scripts": {
-    "prepublish": "tsc -p ./src",
-    "compile": "tsc -p ./src",
-    "watch": "tsc -w -p ./src"
+    "prepublish": "tsc -p ./tsconfig.json",
+    "compile": "tsc -p ./tsconfig.json",
+    "watch": "tsc -w -p ./tsconfig.json"
   }
 }

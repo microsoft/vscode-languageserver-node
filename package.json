@@ -1,0 +1,35 @@
+{
+	"name": "vscode-lsp",
+	"description": "VSCode Language Server Protocol Implementation",
+	"version": "1.0.0",
+	"author": "Microsoft Corporation",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Microsoft/vscode-languageserver-node.git"
+	},
+	"bugs": {
+		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
+	},
+	"devDependencies": {
+		"typescript": "^2.5.2",
+		"mocha": "^3.5.0",
+		"@types/node": "^6.0.88",
+		"@types/mocha": "^2.2.42"
+	},
+	"scripts": {
+		"postinstall": "cd types && npm install && cd ../jsonrpc && npm install && cd ../protocol && npm install && cd ../client && npm install && cd ../server && npm install && cd ..",
+		"test": "cd types && npm test && cd ../jsonrpc && npm test && cd ../client && npm test && cd ..",
+		"compile": "npm run compile:types && npm run compile:jsonrpc && npm run compile:protocol && npm run compile:server && npm run compile:client",
+		"compile:types": "tsc -p ./types/tsconfig.json",
+		"compile:jsonrpc": "tsc -p ./jsonrpc/tsconfig.json",
+		"compile:protocol": "tsc -p ./protocol/tsconfig.json",
+		"compile:server": "tsc -p ./server/tsconfig.json",
+		"compile:client": "tsc -p ./client/tsconfig.json",
+		"watch:types": "tsc -w -p ./types/tsconfig.json",
+		"watch:jsonrpc": "tsc -w -p ./jsonrpc/tsconfig.json",
+		"watch:protocol": "tsc -w -p ./protocol/tsconfig.json",
+		"watch:server": "tsc -w -p ./server/tsconfig.json",
+		"watch:client": "tsc -w -p ./client/tsconfig.json"
+	}
+}

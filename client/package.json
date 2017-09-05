@@ -17,11 +17,7 @@
 	"main": "./lib/main.js",
 	"typings": "./lib/main",
 	"devDependencies": {
-		"typescript": "^2.5.2",
-		"mocha": "^3.5.0",
-		"vscode": "^1.1.5",
-		"@types/node": "^6.0.88",
-		"@types/mocha": "^2.2.42"
+		"vscode": "^1.1.5"
 	},
 	"dependencies": {
 		"vscode-jsonrpc": "^3.3.1",
@@ -29,9 +25,9 @@
 	    "vscode-languageserver-protocol": "^3.1.2"
 	},
 	"scripts": {
-		"prepublish": "node ./node_modules/vscode/bin/install && tsc -p ./src",
-		"compile": "tsc -p ./src",
-		"watch": "tsc -w -p ./src",
+		"prepublish": "node ./node_modules/vscode/bin/install && tsc -p ./tsconfig.json",
+		"compile": "tsc -p ./tsconfig.json",
+		"watch": "tsc -w -p ./tsconfig.json",
 		"update-vscode": "node ./node_modules/vscode/bin/install",
 		"test": "npm run compile && cd lib && node ../node_modules/vscode/bin/test"
 	}

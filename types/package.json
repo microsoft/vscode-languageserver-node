@@ -13,16 +13,10 @@
 	},
 	"main": "./lib/main.js",
 	"typings": "./lib/main",
-	"devDependencies": {
-		"mocha": "^3.5.0",
-		"typescript": "^2.5.2",
-		"@types/node": "^6.0.88",
-		"@types/mocha": "^2.2.42"
-	},
 	"scripts": {
-		"prepublish": "tsc -p ./src",
-		"compile": "tsc -p ./src",
-		"watch": "tsc -w -p ./src",
-		"test": "mocha"
+		"prepublish": "tsc -p ./tsconfig.json",
+		"compile": "tsc -p ./tsconfig.json",
+		"watch": "tsc -w -p ./tsconfig.json",
+		"test": "node ../node_modules/mocha/bin/_mocha"
 	}
 }

@@ -1,9 +1,0 @@
-{
-	"version": "2.0.0",
-	"command": "npm",
-	"isShellCommand": true,
-	"args": ["run", "watch"],
-	"showOutput": "silent",
-	"isBackground": true,
-	"problemMatcher": "$tsc-watch"
-}

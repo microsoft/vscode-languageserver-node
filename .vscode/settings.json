@@ -22,5 +22,8 @@
 	"javascript.validate.enable": false,
 
 	"eslint.enable": false,
-	"tslint.enable": false
+	"tslint.enable": false,
+
+	"npm.autoDetect": "off",
+	"typescript.tsc.autoDetect": "off"
 }

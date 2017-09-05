@@ -8,3 +8,4 @@ test/
 .gitignore
 gulpfile.js
 tsd.json
+tsconfig.json

@@ -1,0 +1,175 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"taskName": "compile",
+			"dependsOn": [
+				"compile:server",
+				"compile:client"
+			],
+			"problemMatcher": []
+		},
+		{
+			"taskName": "compile:types",
+			"type": "shell",
+			"command": "npm run compile:types",
+			"group": "build",
+			"presentation": {
+				"panel": "dedicated",
+				"reveal": "never"
+
+			},
+			"problemMatcher": [
+				"$tsc"
+			]
+		},
+		{
+			"taskName": "compile:jsonrpc",
+			"type": "shell",
+			"command": "npm run compile:jsonrpc",
+			"group": "build",
+			"presentation": {
+				"panel": "dedicated",
+				"reveal": "never"
+			},
+			"problemMatcher": [
+				"$tsc"
+			]
+		},
+		{
+			"taskName": "compile:protocol",
+			"type": "shell",
+			"command": "npm run compile:protocol",
+			"group": "build",
+			"presentation": {
+				"panel": "dedicated",
+				"reveal": "never"
+			},
+			"problemMatcher": [
+				"$tsc"
+			],
+			"dependsOn": [
+				"compile:types",
+				"compile:jsonrpc"
+			]
+		},
+		{
+			"taskName": "compile:server",
+			"type": "shell",
+			"command": "npm run compile:server",
+			"group": "build",
+			"presentation": {
+				"panel": "dedicated",
+				"reveal": "never"
+			},
+			"problemMatcher": [
+				"$tsc"
+			],
+			"dependsOn": [
+				"compile:types",
+				"compile:jsonrpc",
+				"compile:protocol"
+			]
+		},
+		{
+			"taskName": "compile:client",
+			"type": "shell",
+			"command": "npm run compile:client",
+			"group": "build",
+			"presentation": {
+				"panel": "dedicated",
+				"reveal": "never"
+			},
+			"problemMatcher": [
+				"$tsc"
+			],
+			"dependsOn": [
+				"compile:types",
+				"compile:jsonrpc",
+				"compile:protocol"
+			]
+		},
+		{
+			"taskName": "watch",
+			"dependsOn": [
+				"watch:types",
+				"watch:jsonrpc",
+				"watch:protocol",
+				"watch:server",
+				"watch:client"
+			],
+			"problemMatcher": []
+		},
+		{
+			"taskName": "watch:types",
+			"type": "shell",
+			"command": "npm run watch:types",
+			"group": "build",
+			"presentation": {
+				"panel": "dedicated",
+				"reveal": "never"
+
+			},
+			"isBackground": true,
+			"problemMatcher": [
+				"$tsc-watch"
+			]
+		},
+		{
+			"taskName": "watch:jsonrpc",
+			"type": "shell",
+			"command": "npm run watch:jsonrpc",
+			"group": "build",
+			"presentation": {
+				"panel": "dedicated",
+				"reveal": "never"
+			},
+			"isBackground": true,
+			"problemMatcher": [
+				"$tsc-watch"
+			]
+		},
+		{
+			"taskName": "watch:protocol",
+			"type": "shell",
+			"command": "npm run watch:protocol",
+			"group": "build",
+			"presentation": {
+				"panel": "dedicated",
+				"reveal": "never"
+			},
+			"isBackground": true,
+			"problemMatcher": [
+				"$tsc-watch"
+			]
+		},
+		{
+			"taskName": "watch:server",
+			"type": "shell",
+			"command": "npm run watch:server",
+			"group": "build",
+			"presentation": {
+				"panel": "dedicated",
+				"reveal": "never"
+			},
+			"isBackground": true,
+			"problemMatcher": [
+				"$tsc-watch"
+			]
+		},
+		{
+			"taskName": "watch:client",
+			"type": "shell",
+			"command": "npm run watch:client",
+			"group": "build",
+			"presentation": {
+				"panel": "dedicated",
+				"reveal": "never"
+			},
+			"isBackground": true,
+			"problemMatcher": [
+				"$tsc-watch"
+			]
+		}
+	]
+}
