@@ -25,6 +25,6 @@ install:
   - cd server/node_modules && ln -s ../../types vscode-languageserver-types && cd ../..
   - cd server/node_modules && ln -s ../../protocol vscode-languageserver-protocol && cd ../..
 script:
-  - npm run install
+  - npm install
   - npm run compile
   - npm run test
