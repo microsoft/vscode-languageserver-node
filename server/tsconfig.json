@@ -10,5 +10,8 @@
 		"lib": [ "es2016" ],
 		"outDir": "lib",
 		"rootDir": "src"
-	}
+	},
+	"include": [
+		"src"
+	]
 }

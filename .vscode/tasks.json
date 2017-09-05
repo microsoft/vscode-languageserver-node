@@ -92,7 +92,7 @@
 		{
 			"taskName": "watch",
 			"dependsOn": [
-				"watch:types",
+				"watch:jsonrpc",
 				"watch:jsonrpc",
 				"watch:protocol",
 				"watch:server",
