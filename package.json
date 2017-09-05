@@ -18,7 +18,7 @@
 		"@types/mocha": "^2.2.42"
 	},
 	"scripts": {
-		"postinstall": "cd types && npm install && cd ../jsonrpc && npm install && cd ../protocol && npm install && cd ../client && npm install && cd ../server && npm install && cd ..",
+		"postinstall": "cd types && npm install && cd ../jsonrpc && npm install && cd ../protocol && npm install && cd ../server && npm install && cd ../client && npm install && cd ..",
 		"test": "cd types && npm test && cd ../jsonrpc && npm test && cd ../client && npm test && cd ..",
 		"compile": "npm run compile:types && npm run compile:jsonrpc && npm run compile:protocol && npm run compile:server && npm run compile:client",
 		"compile:types": "tsc -p ./types/tsconfig.json",
