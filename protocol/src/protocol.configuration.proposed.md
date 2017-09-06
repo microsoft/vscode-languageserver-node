@@ -10,9 +10,14 @@ The client sets the following client capability if it is able to handle `workspa
 
 ```ts
 /**
- * The client supports `workspace/configuration` requests.
+ * The workspace client capabilities
  */
-configuration?: boolean
+workspace: {
+	/**
+	 * The client supports `workspace/configuration` requests.
+	 */
+	configuration?: boolean;
+}
 ```
 
 _Request_:

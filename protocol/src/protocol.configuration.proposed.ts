@@ -12,9 +12,14 @@ import {
 
 export interface ProposedConfigurationClientCapabilities {
 	/**
-	 * The client supports `workspace/configuration` requests.
+	 * The workspace client capabilities
 	 */
-	configuration?: boolean;
+	workspace: {
+		/**
+		* The client supports `workspace/configuration` requests.
+		*/
+		configuration?: boolean;
+	}
 }
 
 /**

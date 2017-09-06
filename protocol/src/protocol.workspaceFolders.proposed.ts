@@ -9,18 +9,23 @@ import {
 	CancellationToken
 } from 'vscode-jsonrpc';
 
-export interface ProposedWorkspaceInitializeParams {
+export interface ProposedWorkspaceFoldersInitializeParams {
 	/**
 	 * The actual configured workspace folders.
 	 */
 	workspaceFolders: WorkspaceFolder[] | null;
 }
 
-export interface ProposedWorkspaceClientCapabilities {
+export interface ProposedWorkspaceFoldersClientCapabilities {
 	/**
-	 * The client has support for workspace folders
+	 * The workspace client capabilities
 	 */
-	workspaceFolders?: boolean;
+	workspace: {
+		/**
+		 * The client has support for workspace folders
+		 */
+		workspaceFolders?: boolean;
+	}
 }
 
 export interface WorkspaceFolder {

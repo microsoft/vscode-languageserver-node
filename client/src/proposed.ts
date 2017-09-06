@@ -11,8 +11,8 @@ import { MessageType as RPCMessageType, CancellationToken } from 'vscode-jsonrpc
 import { DynamicFeature, StaticFeature, RegistrationData, BaseLanguageClient, NextSignature } from './client';
 import {
 	ClientCapabilities, InitializedParams, WorkspaceFolder, WorkspaceFoldersRequest,
-	ProposedWorkspaceClientCapabilities, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams,
-	ProposedWorkspaceInitializeParams, ConfigurationRequest, ProposedConfigurationClientCapabilities
+	ProposedWorkspaceFoldersClientCapabilities, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams,
+	ProposedWorkspaceFoldersInitializeParams, ConfigurationRequest, ProposedConfigurationClientCapabilities
 } from 'vscode-languageserver-protocol';
 
 export interface WorkspaceFolderMiddleware {
@@ -33,7 +33,7 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 	}
 
 	public fillInitializeParams(params: InitializedParams): void {
-		let proposedParams = params as ProposedWorkspaceInitializeParams;
+		let proposedParams = params as ProposedWorkspaceFoldersInitializeParams;
 		let folders = workspace.workspaceFolders;
 
 		if (folders === void 0) {
@@ -45,8 +45,8 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
 		capabilities.workspace = capabilities.workspace || {};
-		let workspace = capabilities.workspace as ProposedWorkspaceClientCapabilities;
-		workspace.workspaceFolders = true;
+		let workspaceCapabilities = capabilities as ProposedWorkspaceFoldersClientCapabilities;
+		workspaceCapabilities.workspace.workspaceFolders = true;
 	}
 
 	public initialize(): void {
@@ -133,8 +133,8 @@ export class ConfigurationFeature implements StaticFeature {
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
 		capabilities.workspace = capabilities.workspace || {};
-		let workspace = capabilities.workspace as ProposedConfigurationClientCapabilities;
-		workspace.configuration = true;
+		let configCapabilities = capabilities as ProposedConfigurationClientCapabilities;
+		configCapabilities.workspace.configuration = true;
 	}
 
 	public initialize(): void {
