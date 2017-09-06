@@ -11,17 +11,20 @@ import {
 //---- Get Configuration request ----
 
 export interface ProposedConfigurationClientCapabilities {
+	/**
+	 * The client supports `workspace/configuration` requests.
+	 */
 	configuration?: boolean;
 }
 
 /**
- * The 'workspace/getConfiguration' request is sent from the server to the client to fetch a certain
+ * The 'workspace/configuration' request is sent from the server to the client to fetch a certain
  * configuration setting.
  */
-export namespace GetConfigurationRequest {
-	export const type = new RequestType<GetConfigurationParams, any[], void, void>('workspace/configuration');
-	export type HandlerSignature = RequestHandler<GetConfigurationParams, any[], void>;
-	export type MiddlewareSignature = (params: GetConfigurationParams, token: CancellationToken, next: HandlerSignature) => HandlerResult<any[], void>;
+export namespace ConfigurationRequest {
+	export const type = new RequestType<ConfigurationParams, any[], void, void>('workspace/configuration');
+	export type HandlerSignature = RequestHandler<ConfigurationParams, any[], void>;
+	export type MiddlewareSignature = (params: ConfigurationParams, token: CancellationToken, next: HandlerSignature) => HandlerResult<any[], void>;
 }
 
 
@@ -38,8 +41,8 @@ export interface ConfigurationItem {
 }
 
 /**
- * The parameters of a get configuration request.
+ * The parameters of a configuration request.
  */
-export interface GetConfigurationParams {
+export interface ConfigurationParams {
 	items: ConfigurationItem[];
 }

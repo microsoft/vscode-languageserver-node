@@ -10,14 +10,14 @@ import { MessageType as RPCMessageType, CancellationToken } from 'vscode-jsonrpc
 
 import { DynamicFeature, StaticFeature, RegistrationData, BaseLanguageClient, NextSignature } from './client';
 import {
-	ClientCapabilities, InitializedParams, WorkspaceFolder, GetWorkspaceFolders, GetWorkspaceFolder,
-	ProposedWorkspaceClientCapabilities, DidChangeWorkspaceFolders, DidChangeWorkspaceFoldersParams,
-	ProposedWorkspaceInitializeParams, GetConfigurationRequest, ProposedConfigurationClientCapabilities
+	ClientCapabilities, InitializedParams, WorkspaceFolder, WorkspaceFoldersRequest,
+	ProposedWorkspaceClientCapabilities, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams,
+	ProposedWorkspaceInitializeParams, ConfigurationRequest, ProposedConfigurationClientCapabilities
 } from 'vscode-languageserver-protocol';
 
 export interface WorkspaceFolderMiddleware {
-	workspaceFolders?: GetWorkspaceFolders.MiddlewareSignature;
-	workspaceFolder?: GetWorkspaceFolder.MiddlewareSignature;
+	workspaceFolders?: WorkspaceFoldersRequest.MiddlewareSignature;
+	workspaceFolder?: WorkspaceFoldersRequest.MiddlewareSignature;
 	didChangeWorkspaceFolders?: NextSignature<VWorkspaceFoldersChangeEvent, void>
 }
 
@@ -29,7 +29,7 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 	}
 
 	public get messages(): RPCMessageType {
-		return DidChangeWorkspaceFolders.type;
+		return DidChangeWorkspaceFoldersNotification.type;
 	}
 
 	public fillInitializeParams(params: InitializedParams): void {
@@ -51,8 +51,8 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 
 	public initialize(): void {
 		let client = this._client;
-		client.onRequest(GetWorkspaceFolders.type, (token: CancellationToken) => {
-			let workspaceFolders: GetWorkspaceFolders.HandlerSignature = () => {
+		client.onRequest(WorkspaceFoldersRequest.type, (token: CancellationToken) => {
+			let workspaceFolders: WorkspaceFoldersRequest.HandlerSignature = () => {
 				let folders = workspace.workspaceFolders;
 				if (folders === void 0) {
 					return null;
@@ -67,20 +67,6 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 				? middleware.workspaceFolders(token, workspaceFolders)
 				: workspaceFolders(token);
 		});
-
-		client.onRequest(GetWorkspaceFolder.type, (uri: string, token: CancellationToken) => {
-			let workspaceFolder: GetWorkspaceFolder.HandlerSignature = (uri: string)  => {
-				let folder = workspace.getWorkspaceFolder(client.protocol2CodeConverter.asUri(uri));
-				if (folder === void 0) {
-					return null;
-				}
-				return this.asProtocol(folder);
-			};
-			let middleware = this.getWorkspaceFolderMiddleware();
-			return middleware.workspaceFolder
-				? middleware.workspaceFolder(uri, token, workspaceFolder)
-				: workspaceFolder(uri, token);
-		});
 	}
 
 	public register(_message: RPCMessageType, data: RegistrationData<undefined>): void {
@@ -93,7 +79,7 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 						removed: event.removed.map(folder => this.asProtocol(folder))
 					}
 				}
-				this._client.sendNotification(DidChangeWorkspaceFolders.type, params);
+				this._client.sendNotification(DidChangeWorkspaceFoldersNotification.type, params);
 			}
 			let middleware = this.getWorkspaceFolderMiddleware();
 			middleware.didChangeWorkspaceFolders
@@ -137,7 +123,7 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 }
 
 export interface ConfigurationMiddleware {
-	configuration?: GetConfigurationRequest.MiddlewareSignature
+	configuration?: ConfigurationRequest.MiddlewareSignature
 }
 
 export class ConfigurationFeature implements StaticFeature {
@@ -153,8 +139,8 @@ export class ConfigurationFeature implements StaticFeature {
 
 	public initialize(): void {
 		let client = this._client;
-		client.onRequest(GetConfigurationRequest.type, (params, token) => {
-			let configuration: GetConfigurationRequest.HandlerSignature = (params) => {
+		client.onRequest(ConfigurationRequest.type, (params, token) => {
+			let configuration: ConfigurationRequest.HandlerSignature = (params) => {
 				let result: any[] = [];
 				for (let item of params.items) {
 					let resource = item.scopeUri !== void 0 && item.scopeUri !== null ? this._client.protocol2CodeConverter.asUri(item.scopeUri) : undefined;

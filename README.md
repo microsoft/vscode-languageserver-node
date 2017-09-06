@@ -22,10 +22,19 @@ All four npm modules are built using one travis build. Its status is:
 
 [![Build Status](https://travis-ci.org/Microsoft/vscode-languageserver-node.svg?branch=master)](https://travis-ci.org/Microsoft/vscode-languageserver-node)
 
-Click [here](https://code.visualstudio.com/docs/extensions/example-language-server) for a detailed document on how to use these npm modules to implement 
+Click [here](https://code.visualstudio.com/docs/extensions/example-language-server) for a detailed document on how to use these npm modules to implement
 language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
+
+### 3.4.0 Server and Client
+
+* a new npm module `vscode-languageserver-protocol` has been added which contains the protocol definitions in TypeScript. This module is now shared between the client and the server.
+* support for proposed protocol has been added to the `protocol`, `client` and `server` npm modules. Proposed protocol is subject to change even if it ships in a stable version of the npm modules.
+* proposed protocol has been added for the following features:
+  * _configuration_: support to fetch configuration settings by sending a request from the server to the client
+  * _workspaceFolders_: support to handle more than one root folder per workspace
+  * _colorProvider_: support to compute color ranges for a document
 
 ### 3.3.0 Server and Client
 
@@ -53,7 +62,7 @@ language servers for [VSCode](https://code.visualstudio.com/).
 ### 3.0.5 Server and 3.0.4 Client
 
 * deprecated `Files.uriToFilePath` in favour of the vscode-uri npm module which provides a more complete implementation of URI for VS Code.
-* made `rootPath` optional since it is deprecated in 3.x. 
+* made `rootPath` optional since it is deprecated in 3.x.
 
 ### 3.0.3: Client, Server and JSON-RPC
 
@@ -135,7 +144,7 @@ export namespace MyNotification {
 
 ### 2.3.0: Client only
 
-* the client now restarts the server if the server crashes without a prior exit notification sent. The strategy used to restart the server is pluggable (see `LanguageClientOptions.errorHandler`). The default strategy restart the server unless it crashed 5 times or more in the last 3 minutes. 
+* the client now restarts the server if the server crashes without a prior exit notification sent. The strategy used to restart the server is pluggable (see `LanguageClientOptions.errorHandler`). The default strategy restart the server unless it crashed 5 times or more in the last 3 minutes.
 
 ### 2.0: A detailed desciption of the 2.0 version can be found [here](https://github.com/Microsoft/vscode-languageserver-protocol/blob/master/README.md). A summary of the changes:
 

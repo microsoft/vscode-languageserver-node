@@ -4,8 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 import { Event, Emitter, Disposable } from 'vscode-jsonrpc';
 import { ClientCapabilities,
-	WorkspaceFolder, GetWorkspaceFolders, GetWorkspaceFolder, WorkspaceFoldersChangeEvent, DidChangeWorkspaceFolders,
-	GetConfigurationRequest, GetConfigurationParams, ProposedWorkspaceClientCapabilities, ConfigurationItem
+	WorkspaceFolder, WorkspaceFoldersRequest, WorkspaceFoldersChangeEvent, DidChangeWorkspaceFoldersNotification,
+	ConfigurationRequest, ConfigurationParams, ProposedWorkspaceClientCapabilities, ConfigurationItem
 } from 'vscode-languageserver-protocol';
 import { _, Features, WorkspaceFeature, combineWorkspaceFeatures } from './main';
 
@@ -14,7 +14,6 @@ import * as Is from './utils/is';
 
 export interface WorkspaceFoldersProposed {
 	getWorkspaceFolders(): Thenable<WorkspaceFolder[] | null>;
-	getWorkspaceFolder(uri: string): Thenable<WorkspaceFolder | null>;
 	onDidChangeWorkspaceFolders: Event<WorkspaceFoldersChangeEvent>;
 }
 
@@ -26,23 +25,20 @@ export const WorkspaceFoldersFeature: WorkspaceFeature<WorkspaceFoldersProposed>
 			let workspaceCapabilities = capabilities.workspace as ProposedWorkspaceClientCapabilities;
 			if (workspaceCapabilities.workspaceFolders) {
 				this._onDidChangeWorkspaceFolders = new Emitter<WorkspaceFoldersChangeEvent>();
-				this.connection.onNotification(DidChangeWorkspaceFolders.type, (params) => {
+				this.connection.onNotification(DidChangeWorkspaceFoldersNotification.type, (params) => {
 					this._onDidChangeWorkspaceFolders.fire(params.event);
 				});
 			}
 		}
 		getWorkspaceFolders(): Thenable<WorkspaceFolder[] | null> {
-			return this.connection.sendRequest(GetWorkspaceFolders.type);
-		}
-		getWorkspaceFolder(uri: string): Thenable<WorkspaceFolder | null> {
-			return this.connection.sendRequest(GetWorkspaceFolder.type, uri);
+			return this.connection.sendRequest(WorkspaceFoldersRequest.type);
 		}
 		get onDidChangeWorkspaceFolders(): Event<WorkspaceFoldersChangeEvent> {
 			if (!this._onDidChangeWorkspaceFolders) {
 				throw new Error('Client doesn\'t support sending workspace folder change events.');
 			}
 			if (!this._unregistration) {
-				this._unregistration = this.connection.client.register(DidChangeWorkspaceFolders.type);
+				this._unregistration = this.connection.client.register(DidChangeWorkspaceFoldersNotification.type);
 			}
 			return this._onDidChangeWorkspaceFolders.event;
 		}
@@ -70,10 +66,10 @@ export const GetConfigurationFeature: WorkspaceFeature<ConfigurationProposed> = 
 		}
 
 		private _getConfiguration(arg: ConfigurationItem | ConfigurationItem[]): Thenable<any> {
-			let params: GetConfigurationParams = {
+			let params: ConfigurationParams = {
 				items: Array.isArray(arg) ? arg : [arg]
 			};
-			return this.connection.sendRequest(GetConfigurationRequest.type, params).then((result) => {
+			return this.connection.sendRequest(ConfigurationRequest.type, params).then((result) => {
 				return Array.isArray(arg) ? result : result[0];
 			});
 		}
