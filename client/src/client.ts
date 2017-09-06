@@ -572,16 +572,31 @@ export interface DynamicFeature<T> {
 	 * the server and before the client sends the initialized notification
 	 * to the server.
 	 *
-	 * @param capabilities the server capabilities
+	 * @param capabilities the server capabilities.
 	 * @param documentSelector the document selector pass to the client's constuctor.
 	 *  May be `undefined` if the client was created without a selector.
 	 */
 	initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector | undefined): void;
 
+	/**
+	 * Is called when the server send a register request for the given message.
+	 *
+	 * @param message the message to register for.
+	 * @param data additional registration data as defined in the protocol.
+	 */
 	register(message: RPCMessageType, data: RegistrationData<T>): void;
 
+	/**
+	 * Is called when the server wants to unregister a feature.
+	 *
+	 * @param id the id used when registering the feature.
+	 */
 	unregister(id: string): void;
 
+	/**
+	 * Called when the client is stopped to dispose this feature. Usually a feature
+	 * unregisters listeners registerd hooked up with the VS Code extension host.
+	 */
 	dispose(): void;
 }
 

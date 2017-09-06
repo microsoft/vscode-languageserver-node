@@ -2,21 +2,26 @@
 
 Many tools support more than one root folder per workspace. Examples for this are VS Code's multi-root support, Atom's project folder support or Sublime's project support. If a client workspace consists of multiple roots then a server typically needs to know about this. The protocol up to know assumes one root folder which is announce to the server by the `rootUri` property of the `InitializeParams`. For workspace folders the following additions are proposed:
 
+_InitializeParams_:
+
+An additional property `workspaceFolders` which contain the configured workspace folders when the server starts.
+
+
 _Client Capabilities_:
 
 The client sets the following capability if it is supporting workspace folders.
 
 ```ts
 /**
- * The client has support for workspace folders
+ * The workspace client capabilities
  */
-workspaceFolders?: boolean;
+workspace: {
+	/**
+	 * The client has support for workspace folders
+	 */
+	workspaceFolders?: boolean;
+}
 ```
-
-_InitializeParams_:
-
-An additional property `workspaceFolders` which contain the configured workspace folders when the server starts.
-
 
 ```ts
 /**

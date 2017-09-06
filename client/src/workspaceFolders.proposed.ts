@@ -4,20 +4,19 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { workspace, Disposable, WorkspaceFolder as VWorkspaceFolder, Uri, WorkspaceFoldersChangeEvent as VWorkspaceFoldersChangeEvent } from 'vscode';
+import { workspace, Disposable, WorkspaceFolder as VWorkspaceFolder, WorkspaceFoldersChangeEvent as VWorkspaceFoldersChangeEvent } from 'vscode';
 
 import { MessageType as RPCMessageType, CancellationToken } from 'vscode-jsonrpc';
 
-import { DynamicFeature, StaticFeature, RegistrationData, BaseLanguageClient, NextSignature } from './client';
+import { DynamicFeature, RegistrationData, BaseLanguageClient, NextSignature } from './client';
 import {
 	ClientCapabilities, InitializedParams, WorkspaceFolder, WorkspaceFoldersRequest,
 	ProposedWorkspaceFoldersClientCapabilities, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams,
-	ProposedWorkspaceFoldersInitializeParams, ConfigurationRequest, ProposedConfigurationClientCapabilities
+	ProposedWorkspaceFoldersInitializeParams
 } from 'vscode-languageserver-protocol';
 
 export interface WorkspaceFolderMiddleware {
 	workspaceFolders?: WorkspaceFoldersRequest.MiddlewareSignature;
-	workspaceFolder?: WorkspaceFoldersRequest.MiddlewareSignature;
 	didChangeWorkspaceFolders?: NextSignature<VWorkspaceFoldersChangeEvent, void>
 }
 
@@ -120,79 +119,4 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 			? middleware.workspace as WorkspaceFolderMiddleware
 			: {};
 	}
-}
-
-export interface ConfigurationMiddleware {
-	configuration?: ConfigurationRequest.MiddlewareSignature
-}
-
-export class ConfigurationFeature implements StaticFeature {
-
-	constructor(private _client: BaseLanguageClient) {
-	}
-
-	public fillClientCapabilities(capabilities: ClientCapabilities): void {
-		capabilities.workspace = capabilities.workspace || {};
-		let configCapabilities = capabilities as ProposedConfigurationClientCapabilities;
-		configCapabilities.workspace.configuration = true;
-	}
-
-	public initialize(): void {
-		let client = this._client;
-		client.onRequest(ConfigurationRequest.type, (params, token) => {
-			let configuration: ConfigurationRequest.HandlerSignature = (params) => {
-				let result: any[] = [];
-				for (let item of params.items) {
-					let resource = item.scopeUri !== void 0 && item.scopeUri !== null ? this._client.protocol2CodeConverter.asUri(item.scopeUri) : undefined;
-					result.push(this.getConfiguration(resource, item.section !== null ? item.section : undefined));
-				}
-				return result;
-			}
-			let middleware = this.getConfigurationMiddleware();
-			return middleware.configuration
-				? middleware.configuration(params, token, configuration)
-				: configuration(params, token);
-		});
-	}
-
-	private getConfiguration(resource: Uri | undefined, section: string | undefined): any {
-		let result: any = null;
-		if (section) {
-			let index = section.lastIndexOf('.');
-			if (index === -1) {
-				result = workspace.getConfiguration(undefined, resource).get(section);
-			} else {
-				let config = workspace.getConfiguration(section.substr(0, index));
-				if (config) {
-					result = config.get(section.substr(index + 1))
-				}
-			}
-		} else {
-			let config = workspace.getConfiguration(undefined, resource);
-			result = {};
-			for (let key of Object.keys(config)) {
-				if (config.has(key)) {
-					result[key] = config.get(key);
-				}
-			}
-		}
-		if (!result) {
-			return null;
-		}
-		return result;
-	}
-
-	private getConfigurationMiddleware(): ConfigurationMiddleware {
-		let middleware = this._client.clientOptions.middleware;
-		return middleware && middleware.workspace
-			? middleware.workspace as ConfigurationMiddleware
-			: {};
-	}
-}
-
-export function ProposedProtocol(client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
-	let result: (StaticFeature | DynamicFeature<any>)[] = [];
-	result.push(new WorkspaceFoldersFeature(client));
-	result.push(new ConfigurationFeature(client));
-	return result;
 }

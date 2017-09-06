@@ -2,15 +2,16 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
+'use strict';
+
 import { Event, Emitter, Disposable } from 'vscode-jsonrpc';
-import { ClientCapabilities,
-	WorkspaceFolder, WorkspaceFoldersRequest, WorkspaceFoldersChangeEvent, DidChangeWorkspaceFoldersNotification,
-	ConfigurationRequest, ConfigurationParams, ProposedWorkspaceClientCapabilities, ConfigurationItem
+
+import { ClientCapabilities, WorkspaceFolder, WorkspaceFoldersRequest, WorkspaceFoldersChangeEvent,
+	DidChangeWorkspaceFoldersNotification, ProposedWorkspaceFoldersClientCapabilities
 } from 'vscode-languageserver-protocol';
-import { _, Features, WorkspaceFeature, combineWorkspaceFeatures } from './main';
 
+import { WorkspaceFeature } from './main';
 
-import * as Is from './utils/is';
 
 export interface WorkspaceFoldersProposed {
 	getWorkspaceFolders(): Thenable<WorkspaceFolder[] | null>;
@@ -22,7 +23,7 @@ export const WorkspaceFoldersFeature: WorkspaceFeature<WorkspaceFoldersProposed>
 		private _onDidChangeWorkspaceFolders: Emitter<WorkspaceFoldersChangeEvent>;
 		private _unregistration: Thenable<Disposable>;
 		public initialize(capabilities: ClientCapabilities): void {
-			let workspaceCapabilities = capabilities.workspace as ProposedWorkspaceClientCapabilities;
+			let workspaceCapabilities = (capabilities as ProposedWorkspaceFoldersClientCapabilities).workspace;
 			if (workspaceCapabilities.workspaceFolders) {
 				this._onDidChangeWorkspaceFolders = new Emitter<WorkspaceFoldersChangeEvent>();
 				this.connection.onNotification(DidChangeWorkspaceFoldersNotification.type, (params) => {
@@ -45,38 +46,3 @@ export const WorkspaceFoldersFeature: WorkspaceFeature<WorkspaceFoldersProposed>
 	}
 };
 
-export interface ConfigurationProposed {
-	getConfiguration(): Thenable<any>;
-	getConfiguration(section: string): Thenable<any>;
-	getConfiguration(item: ConfigurationItem): Thenable<any>;
-	getConfiguration(items: ConfigurationItem[]): Thenable<any[]>;
-}
-
-export const GetConfigurationFeature: WorkspaceFeature<ConfigurationProposed> = (Base) => {
-	return class extends Base {
-
-		getConfiguration(arg?: string | ConfigurationItem | ConfigurationItem[]): Thenable<any> {
-			if (!arg) {
-				return this._getConfiguration({});
-			} else if (Is.string(arg)) {
-				return this._getConfiguration({ section: arg })
-			} else {
-				return this._getConfiguration(arg);
-			}
-		}
-
-		private _getConfiguration(arg: ConfigurationItem | ConfigurationItem[]): Thenable<any> {
-			let params: ConfigurationParams = {
-				items: Array.isArray(arg) ? arg : [arg]
-			};
-			return this.connection.sendRequest(ConfigurationRequest.type, params).then((result) => {
-				return Array.isArray(arg) ? result : result[0];
-			});
-		}
-	}
-}
-
-export const ProposedProtocol: Features<_, _, _, _, _, WorkspaceFoldersProposed & ConfigurationProposed> = {
-	__brand: 'features',
-	workspace: combineWorkspaceFeatures(WorkspaceFoldersFeature, GetConfigurationFeature)
-}

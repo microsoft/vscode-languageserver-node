@@ -7,7 +7,7 @@
 import * as cp from 'child_process';
 import ChildProcess = cp.ChildProcess;
 
-import { BaseLanguageClient, LanguageClientOptions, MessageTransports } from './client';
+import { BaseLanguageClient, LanguageClientOptions, MessageTransports, StaticFeature, DynamicFeature } from './client';
 
 import {
 	workspace as Workspace, Disposable
@@ -331,4 +331,18 @@ export class SettingMonitor {
 	}
 }
 
-export * from './proposed';
+
+// Exporting proposed protocol.
+
+import { ConfigurationFeature } from './configuration.proposed';
+import { WorkspaceFoldersFeature } from './workspaceFolders.proposed';
+
+export * from './configuration.proposed';
+export * from './workspaceFolders.proposed';
+
+export function ProposedProtocol(client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
+	let result: (StaticFeature | DynamicFeature<any>)[] = [];
+	result.push(new WorkspaceFoldersFeature(client));
+	result.push(new ConfigurationFeature(client));
+	return result;
+}
