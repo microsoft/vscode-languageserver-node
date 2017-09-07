@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageclient",
 	"description": "VSCode Language client implementation",
-	"version": "3.4.0-next.18",
+	"version": "3.4.0-next.30",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"engines": {
@@ -20,15 +20,13 @@
 		"vscode": "^1.1.5"
 	},
 	"dependencies": {
-		"vscode-jsonrpc": "^3.3.1",
-		"vscode-languageserver-types": "^3.3.0",
-	    "vscode-languageserver-protocol": "^3.1.2"
+	    "vscode-languageserver-protocol": "^3.2.0-next.3"
 	},
 	"scripts": {
-		"prepublish": "node ./node_modules/vscode/bin/install && tsc -p ./tsconfig.json",
+		"prepublish": "npm run update-vscode && npm run compile && npm test",
 		"compile": "tsc -p ./tsconfig.json",
 		"watch": "tsc -w -p ./tsconfig.json",
 		"update-vscode": "node ./node_modules/vscode/bin/install",
-		"test": "npm run compile && cd lib && node ../node_modules/vscode/bin/test"
+		"test": "cd lib && node ../node_modules/vscode/bin/test"
 	}
 }

@@ -21,20 +21,13 @@ import {
 } from 'vscode';
 
 import {
-	Message, MessageType as RPCMessageType, Logger, createMessageConnection, ErrorCodes, ResponseError,
+	Message, RPCMessageType, Logger, ErrorCodes, ResponseError,
 	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler,
 	NotificationType, NotificationType0,
 	NotificationHandler, NotificationHandler0, GenericNotificationHandler,
-	MessageReader, MessageWriter, Trace, Tracer, Event, Emitter
-} from 'vscode-jsonrpc';
-
-import {
-	WorkspaceEdit
-} from 'vscode-languageserver-types';
-
-
-import {
-	ClientCapabilities,
+	MessageReader, MessageWriter, Trace, Tracer, Event, Emitter,
+	createProtocolConnection,
+	ClientCapabilities, WorkspaceEdit,
 	RegistrationRequest, RegistrationParams, UnregistrationRequest, UnregistrationParams, TextDocumentRegistrationOptions,
 	InitializeRequest, InitializeParams, InitializeResult, InitializeError, ServerCapabilities, TextDocumentSyncKind, TextDocumentSyncOptions,
 	InitializedNotification, ShutdownRequest, ExitNotification,
@@ -72,16 +65,9 @@ import * as Is from './utils/is';
 import { Delayer } from './utils/async'
 import * as UUID from './utils/uuid';
 
-export {
-	ResponseError, InitializeError, ErrorCodes,
-	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler,
-	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler,
-	CancellationToken
-}
 export { Converter as Code2ProtocolConverter } from './codeConverter';
 export { Converter as Protocol2CodeConverter } from './protocolConverter';
 
-export * from 'vscode-languageserver-types';
 export * from 'vscode-languageserver-protocol';
 
 interface IConnection {
@@ -158,7 +144,7 @@ function createConnection(inputStream: NodeJS.ReadableStream, outputStream: Node
 function createConnection(reader: MessageReader, writer: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler): IConnection;
 function createConnection(input: any, output: any, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler): IConnection {
 	let logger = new ConsoleLogger();
-	let connection = createMessageConnection(input, output, logger);
+	let connection = createProtocolConnection(input, output, logger);
 	connection.onError((data) => { errorHandler(data[0], data[1], data[2]) });
 	connection.onClose(closeHandler);
 	let result: IConnection = {

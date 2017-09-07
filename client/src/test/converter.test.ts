@@ -6,7 +6,7 @@
 
 import { strictEqual, deepEqual, ok } from 'assert';
 
-import * as proto from 'vscode-languageserver-types';
+import * as proto from 'vscode-languageserver-protocol';
 import * as codeConverter from '../codeConverter';
 import * as protocolConverter from '../protocolConverter';
 import ProtocolCompletionItem from '../protocolCompletionItem';

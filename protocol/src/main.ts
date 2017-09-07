@@ -5,25 +5,30 @@
 'use strict';
 
 import {
-	ErrorCodes, ResponseError, CancellationToken,
-	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler,
-	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler,
+	ErrorCodes, ResponseError, CancellationToken, CancellationTokenSource,
+	Disposable, Event, Emitter, Trace, SetTraceNotification, LogTraceNotification,
+	Message, NotificationMessage, RequestMessage, MessageType as RPCMessageType,
+	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler,
+	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler, StarNotificationHandler,
 	MessageReader, MessageWriter, Logger, ConnectionStrategy,
-	StreamMessageReader, StreamMessageWriter,
-	IPCMessageReader, IPCMessageWriter,
-	createClientPipeTransport, createServerPipeTransport, generateRandomPipeName,
-	createMessageConnection,
+	StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageWriter,
+	createClientPipeTransport, createServerPipeTransport, generateRandomPipeName, DataCallback,
+	createMessageConnection, Tracer
 } from 'vscode-jsonrpc';
 
 export {
-	ErrorCodes, ResponseError, CancellationToken,
-	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler,
-	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler,
+	ErrorCodes, ResponseError, CancellationToken, CancellationTokenSource,
+	Disposable, Event, Emitter, Trace, SetTraceNotification, LogTraceNotification,
+	Message, NotificationMessage, RequestMessage, RPCMessageType,
+	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler,
+	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler, StarNotificationHandler,
 	MessageReader, MessageWriter, Logger, ConnectionStrategy,
 	StreamMessageReader, StreamMessageWriter,
 	IPCMessageReader, IPCMessageWriter,
-	createClientPipeTransport, createServerPipeTransport, generateRandomPipeName
+	createClientPipeTransport, createServerPipeTransport, generateRandomPipeName, DataCallback,
+	Tracer
 }
+export * from 'vscode-languageserver-types';
 export * from './protocol';
 export * from './protocol.configuration.proposed';
 export * from './protocol.workspaceFolders.proposed';
@@ -145,6 +150,42 @@ export interface ProtocolConnetion {
 	 * @param handler The actual handler.
 	 */
 	onNotification(method: string, handler: GenericNotificationHandler): void;
+
+	/**
+	 * Enables tracing mode for the connection.
+	 */
+	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): void;
+
+	/**
+	 * An event emitter firing when an error occurs on the connection.
+	 */
+	onError: Event<[Error, Message | undefined, number | undefined]>;
+
+	/**
+	 * An event emitter firing when the connection got closed.
+	 */
+	onClose: Event<void>;
+
+	/**
+	 * An event emiiter firing when the connection receives a notification that is not
+	 * handled.
+	 */
+	onUnhandledNotification: Event<NotificationMessage>;
+
+	/**
+	 * An event emitter firing when the connection got disposed.
+	 */
+	onDispose: Event<void>;
+
+	/**
+	 * Actively disposes the connection.
+	 */
+	dispose(): void;
+
+	/**
+	 * Turns the connection into listening mode
+	 */
+	listen(): void;
 }
 
 export function createProtocolConnection(reader: MessageReader, writer: MessageWriter, logger: Logger, strategy?: ConnectionStrategy): ProtocolConnetion {

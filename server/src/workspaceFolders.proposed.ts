@@ -4,9 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Event, Emitter, Disposable } from 'vscode-jsonrpc';
-
-import { ClientCapabilities, WorkspaceFolder, WorkspaceFoldersRequest, WorkspaceFoldersChangeEvent,
+import { Event, Emitter, Disposable, ClientCapabilities, WorkspaceFolder, WorkspaceFoldersRequest, WorkspaceFoldersChangeEvent,
 	DidChangeWorkspaceFoldersNotification, ProposedWorkspaceFoldersClientCapabilities
 } from 'vscode-languageserver-protocol';
 

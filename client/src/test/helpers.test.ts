@@ -9,7 +9,7 @@ import { strictEqual, ok } from 'assert';
 import {
 	Position, Range, TextDocumentIdentifier, TextDocumentItem, VersionedTextDocumentIdentifier, Command, CodeLens, CodeActionContext,
 	Diagnostic, DiagnosticSeverity, WorkspaceChange
-} from 'vscode-languageserver-types';
+} from 'vscode-languageserver-protocol';
 
 suite('Protocol Helper Tests', () => {
 	function rangeEqual(actual: Range, expected: Range) {

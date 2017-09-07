@@ -16,14 +16,14 @@ before_install:
     fi
 
 install:
-  - cd protocol && mkdir node_modules && cd node_modules && ln -s ../../jsonrpc vscode-jsonrpc && cd ../..
+  - cd protocol && mkdir node_modules && cd ..
+  - cd protocol/node_modules && ln -s ../../jsonrpc vscode-jsonrpc && cd ../..
   - cd protocol/node_modules && ln -s ../../types vscode-languageserver-types && cd ../..
-  - cd client && mkdir node_modules && cd node_modules && ln -s ../../jsonrpc vscode-jsonrpc && cd ../..
-  - cd client/node_modules && ln -s ../../types vscode-languageserver-types && cd ../..
+  - cd client && mkdir node_modules && cd ..
   - cd client/node_modules && ln -s ../../protocol vscode-languageserver-protocol && cd ../..
-  - cd server && mkdir node_modules && cd node_modules && ln -s ../../jsonrpc vscode-jsonrpc && cd ../..
-  - cd server/node_modules && ln -s ../../types vscode-languageserver-types && cd ../..
+  - cd server && mkdir node_modules && cd..
   - cd server/node_modules && ln -s ../../protocol vscode-languageserver-protocol && cd ../..
+
 script:
   - npm install
   - npm run compile

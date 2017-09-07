@@ -17,7 +17,7 @@ import {
 	StreamMessageReader, StreamMessageWriter,
 	IPCMessageReader, IPCMessageWriter,
 	createClientPipeTransport, generateRandomPipeName
-} from 'vscode-jsonrpc';
+} from 'vscode-languageserver-protocol';
 
 import * as is from './utils/is';
 import * as electron from './utils/electron';

@@ -1,7 +1,7 @@
 {
 	"name": "vscode-jsonrpc",
 	"description": "A json rpc implementation over streams",
-	"version": "3.3.1",
+	"version": "3.4.0-next.2",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"repository": {
@@ -17,7 +17,7 @@
 	"main": "./lib/main.js",
 	"typings": "./lib/main.d.ts",
 	"scripts": {
-		"prepublish": "tsc -p ./tsconfig.json",
+		"prepublish": "npm run compile && npm test",
 		"compile": "tsc -p ./tsconfig.json",
 		"watch": "tsc -w -p ./tsconfig.json",
 		"test": "node ../node_modules/mocha/bin/_mocha"

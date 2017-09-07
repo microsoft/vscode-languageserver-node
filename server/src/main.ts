@@ -6,25 +6,18 @@
 'use strict';
 
 import {
-	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler,
-	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler, StarNotificationHandler,
-	MessageType as RPCMessageType, ResponseError, ErrorCodes,
-	Logger, createMessageConnection, MessageConnection,
-	MessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
-	MessageWriter, StreamMessageWriter, IPCMessageWriter, createServerPipeTransport,
-	CancellationToken, CancellationTokenSource,
-	Disposable, Event, Emitter, Trace, SetTraceNotification, LogTraceNotification,
-	ConnectionStrategy
-} from 'vscode-jsonrpc';
-
-import {
 	TextDocument, TextDocumentChangeEvent, TextDocumentContentChangeEvent, TextDocumentWillSaveEvent,
 	Location, Command, TextEdit, WorkspaceEdit, CompletionItem, CompletionList, Hover,
 	SignatureHelp, Definition, DocumentHighlight, SymbolInformation, WorkspaceSymbolParams, DocumentSymbolParams,
-	CodeLens, DocumentLink
-} from 'vscode-languageserver-types';
-
-import {
+	CodeLens, DocumentLink,
+	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler,
+	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler, StarNotificationHandler,
+	RPCMessageType, ResponseError,
+	Logger, MessageReader, IPCMessageReader,
+	MessageWriter, IPCMessageWriter, createServerPipeTransport,
+	CancellationToken, CancellationTokenSource,
+	Disposable, Event, Emitter, Trace, SetTraceNotification, LogTraceNotification,
+	ConnectionStrategy,
 	RegistrationRequest, Registration, RegistrationParams, Unregistration, UnregistrationRequest, UnregistrationParams,
 	InitializeRequest, InitializeParams, InitializeResult, InitializeError,
 	InitializedNotification, InitializedParams, ShutdownRequest, ExitNotification,
@@ -50,21 +43,13 @@ import {
 	DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkParams,
 	ExecuteCommandRequest, ExecuteCommandParams,
 	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse,
-	ClientCapabilities, ServerCapabilities
+	ClientCapabilities, ServerCapabilities, ProtocolConnetion, createProtocolConnection
 } from 'vscode-languageserver-protocol';
 
 import * as Is from './utils/is';
 import * as UUID from './utils/uuid';
 
 // ------------- Reexport the API surface of the language worker API ----------------------
-export {
-	RequestType0, RequestHandler0, RequestType, RequestHandler,
-	NotificationType0, NotificationHandler0, NotificationType, NotificationHandler,
-	CancellationTokenSource, CancellationToken, ResponseError, ErrorCodes,
-	MessageReader, DataCallback, StreamMessageReader, IPCMessageReader,
-	MessageWriter, StreamMessageWriter, IPCMessageWriter, Disposable, createServerPipeTransport
-}
-export * from 'vscode-languageserver-types';
 export * from 'vscode-languageserver-protocol';
 export { Event }
 
@@ -585,13 +570,13 @@ export interface RemoteClient extends Remote {
 
 class ConnectionLogger implements Logger, RemoteConsole {
 
-	private _rawConnection: MessageConnection;
+	private _rawConnection: ProtocolConnetion;
 	private _connection: IConnection;
 
 	public constructor() {
 	}
 
-	public rawAttach(connection: MessageConnection): void {
+	public rawAttach(connection: ProtocolConnetion): void {
 		this._rawConnection = connection;
 	}
 
@@ -1489,7 +1474,7 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 	}
 
 	const logger = (factories && factories.console ? new (factories.console(ConnectionLogger))() : new ConnectionLogger()) as ConnectionLogger & PConsole;
-	const connection = createMessageConnection(input as any, output as any, logger, strategy);
+	const connection = createProtocolConnection(input as any, output as any, logger, strategy);
 	logger.rawAttach(connection);
 	const tracer = (factories && factories.tracer ? new (factories.tracer(TracerImpl))() : new TracerImpl()) as TracerImpl & PTracer;
 	const telemetry = (factories && factories.telemetry ? new (factories.telemetry(TelemetryImpl))() : new TelemetryImpl()) as TelemetryImpl & PTelemetry;

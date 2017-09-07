@@ -6,13 +6,11 @@
 
 import { workspace, Disposable, WorkspaceFolder as VWorkspaceFolder, WorkspaceFoldersChangeEvent as VWorkspaceFoldersChangeEvent } from 'vscode';
 
-import { MessageType as RPCMessageType, CancellationToken } from 'vscode-jsonrpc';
-
 import { DynamicFeature, RegistrationData, BaseLanguageClient, NextSignature } from './client';
 import {
 	ClientCapabilities, InitializedParams, WorkspaceFolder, WorkspaceFoldersRequest,
 	ProposedWorkspaceFoldersClientCapabilities, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams,
-	ProposedWorkspaceFoldersInitializeParams
+	ProposedWorkspaceFoldersInitializeParams, RPCMessageType, CancellationToken
 } from 'vscode-languageserver-protocol';
 
 export interface WorkspaceFolderMiddleware {

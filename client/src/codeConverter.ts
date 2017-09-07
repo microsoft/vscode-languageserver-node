@@ -5,7 +5,6 @@
 'use strict';
 
 import * as code from 'vscode';
-import * as types from 'vscode-languageserver-types';
 import * as proto from 'vscode-languageserver-protocol';
 import * as is from './utils/is';
 import ProtocolCompletionItem from './protocolCompletionItem';
@@ -15,7 +14,7 @@ export interface Converter {
 
 	asUri(uri: code.Uri): string;
 
-	asTextDocumentIdentifier(textDocument: code.TextDocument): types.TextDocumentIdentifier;
+	asTextDocumentIdentifier(textDocument: code.TextDocument): proto.TextDocumentIdentifier;
 
 	asOpenTextDocumentParams(textDocument: code.TextDocument): proto.DidOpenTextDocumentParams;
 
@@ -29,42 +28,42 @@ export interface Converter {
 
 	asTextDocumentPositionParams(textDocument: code.TextDocument, position: code.Position): proto.TextDocumentPositionParams;
 
-	asWorkerPosition(position: code.Position): types.Position;
+	asWorkerPosition(position: code.Position): proto.Position;
 
-	asPosition(value: code.Position): types.Position;
+	asPosition(value: code.Position): proto.Position;
 	asPosition(value: undefined): undefined;
 	asPosition(value: null): null;
-	asPosition(value: code.Position | undefined | null): types.Position | undefined | null;
+	asPosition(value: code.Position | undefined | null): proto.Position | undefined | null;
 
-	asRange(value: code.Range): types.Range;
+	asRange(value: code.Range): proto.Range;
 	asRange(value: undefined): undefined;
 	asRange(value: null): null;
-	asRange(value: code.Range | undefined | null): types.Range | undefined | null;
+	asRange(value: code.Range | undefined | null): proto.Range | undefined | null;
 
 	asDiagnosticSeverity(value: code.DiagnosticSeverity): number;
 
-	asDiagnostic(item: code.Diagnostic): types.Diagnostic;
-	asDiagnostics(items: code.Diagnostic[]): types.Diagnostic[];
+	asDiagnostic(item: code.Diagnostic): proto.Diagnostic;
+	asDiagnostics(items: code.Diagnostic[]): proto.Diagnostic[];
 
-	asCompletionItem(item: code.CompletionItem): types.CompletionItem;
+	asCompletionItem(item: code.CompletionItem): proto.CompletionItem;
 
-	asTextEdit(edit: code.TextEdit): types.TextEdit;
+	asTextEdit(edit: code.TextEdit): proto.TextEdit;
 
 	asReferenceParams(textDocument: code.TextDocument, position: code.Position, options: { includeDeclaration: boolean; }): proto.ReferenceParams;
 
-	asCodeActionContext(context: code.CodeActionContext): types.CodeActionContext;
+	asCodeActionContext(context: code.CodeActionContext): proto.CodeActionContext;
 
-	asCommand(item: code.Command): types.Command;
+	asCommand(item: code.Command): proto.Command;
 
-	asCodeLens(item: code.CodeLens): types.CodeLens;
+	asCodeLens(item: code.CodeLens): proto.CodeLens;
 
-	asFormattingOptions(item: code.FormattingOptions): types.FormattingOptions;
+	asFormattingOptions(item: code.FormattingOptions): proto.FormattingOptions;
 
-	asDocumentSymbolParams(textDocument: code.TextDocument): types.DocumentSymbolParams;
+	asDocumentSymbolParams(textDocument: code.TextDocument): proto.DocumentSymbolParams;
 
 	asCodeLensParams(textDocument: code.TextDocument): proto.CodeLensParams;
 
-	asDocumentLink(item: code.DocumentLink): types.DocumentLink;
+	asDocumentLink(item: code.DocumentLink): proto.DocumentLink;
 
 	asDocumentLinkParams(textDocument: code.TextDocument): proto.DocumentLinkParams;
 }
@@ -83,13 +82,13 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return _uriConverter(value);
 	}
 
-	function asTextDocumentIdentifier(textDocument: code.TextDocument): types.TextDocumentIdentifier {
+	function asTextDocumentIdentifier(textDocument: code.TextDocument): proto.TextDocumentIdentifier {
 		return {
 			uri: _uriConverter(textDocument.uri)
 		};
 	}
 
-	function asVersionedTextDocumentIdentifier(textDocument: code.TextDocument): types.VersionedTextDocumentIdentifier {
+	function asVersionedTextDocumentIdentifier(textDocument: code.TextDocument): proto.VersionedTextDocumentIdentifier {
 		return {
 			uri: _uriConverter(textDocument.uri),
 			version: textDocument.version
@@ -136,7 +135,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 					uri: _uriConverter(document.uri),
 					version: document.version
 				},
-				contentChanges: arg.contentChanges.map((change): types.TextDocumentContentChangeEvent => {
+				contentChanges: arg.contentChanges.map((change): proto.TextDocumentContentChangeEvent => {
 					let range = change.range;
 					return {
 						range: {
@@ -173,13 +172,13 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	function asTextDocumentSaveReason(reason: code.TextDocumentSaveReason): 1 | 2 | 3 {
 		switch (reason) {
 			case code.TextDocumentSaveReason.Manual:
-				return types.TextDocumentSaveReason.Manual;
+				return proto.TextDocumentSaveReason.Manual;
 			case code.TextDocumentSaveReason.AfterDelay:
-				return types.TextDocumentSaveReason.AfterDelay;
+				return proto.TextDocumentSaveReason.AfterDelay;
 			case code.TextDocumentSaveReason.FocusOut:
-				return types.TextDocumentSaveReason.FocusOut;
+				return proto.TextDocumentSaveReason.FocusOut;
 		}
-		return types.TextDocumentSaveReason.Manual;
+		return proto.TextDocumentSaveReason.Manual;
 	}
 
 	function asWillSaveTextDocumentParams(event: code.TextDocumentWillSaveEvent): proto.WillSaveTextDocumentParams {
@@ -196,15 +195,15 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		};
 	}
 
-	function asWorkerPosition(position: code.Position): types.Position {
+	function asWorkerPosition(position: code.Position): proto.Position {
 		return { line: position.line, character: position.character };
 	}
 
-	function asPosition(value: code.Position): types.Position;
+	function asPosition(value: code.Position): proto.Position;
 	function asPosition(value: undefined): undefined;
 	function asPosition(value: null): null;
-	function asPosition(value: code.Position | undefined | null): types.Position | undefined | null
-	function asPosition(value: code.Position | undefined | null): types.Position | undefined | null {
+	function asPosition(value: code.Position | undefined | null): proto.Position | undefined | null
+	function asPosition(value: code.Position | undefined | null): proto.Position | undefined | null {
 		if (value === void 0) {
 			return undefined;
 		} else if (value === null) {
@@ -213,47 +212,47 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return { line: value.line, character: value.character };
 	}
 
-	function asRange(value: code.Range): types.Range;
+	function asRange(value: code.Range): proto.Range;
 	function asRange(value: undefined): undefined;
 	function asRange(value: null): null;
-	function asRange(value: code.Range | undefined | null): types.Range | undefined | null;
-	function asRange(value: code.Range | undefined | null): types.Range | undefined | null {
+	function asRange(value: code.Range | undefined | null): proto.Range | undefined | null;
+	function asRange(value: code.Range | undefined | null): proto.Range | undefined | null {
 		if (value === void 0 || value === null) {
 			return value;
 		}
 		return { start: asPosition(value.start), end: asPosition(value.end) };
 	}
 
-	function asDiagnosticSeverity(value: code.DiagnosticSeverity): types.DiagnosticSeverity {
+	function asDiagnosticSeverity(value: code.DiagnosticSeverity): proto.DiagnosticSeverity {
 		switch (value) {
 			case code.DiagnosticSeverity.Error:
-				return types.DiagnosticSeverity.Error;
+				return proto.DiagnosticSeverity.Error;
 			case code.DiagnosticSeverity.Warning:
-				return types.DiagnosticSeverity.Warning;
+				return proto.DiagnosticSeverity.Warning;
 			case code.DiagnosticSeverity.Information:
-				return types.DiagnosticSeverity.Information;
+				return proto.DiagnosticSeverity.Information;
 			case code.DiagnosticSeverity.Hint:
-				return types.DiagnosticSeverity.Hint;
+				return proto.DiagnosticSeverity.Hint;
 		}
 	}
 
-	function asDiagnostic(item: code.Diagnostic): types.Diagnostic {
-		let result: types.Diagnostic = types.Diagnostic.create(asRange(item.range), item.message);
+	function asDiagnostic(item: code.Diagnostic): proto.Diagnostic {
+		let result: proto.Diagnostic = proto.Diagnostic.create(asRange(item.range), item.message);
 		if (item.severity) { result.severity = asDiagnosticSeverity(item.severity); }
 		if (is.number(item.code) || is.string(item.code)) { result.code = item.code; }
 		if (item.source) { result.source = item.source; }
 		return result;
 	}
 
-	function asDiagnostics(items: code.Diagnostic[]): types.Diagnostic[] {
+	function asDiagnostics(items: code.Diagnostic[]): proto.Diagnostic[] {
 		if (items === void 0 || items === null) {
 			return items;
 		}
 		return items.map(asDiagnostic);
 	}
 
-	function asCompletionItem(item: code.CompletionItem): types.CompletionItem {
-		let result: types.CompletionItem = { label: item.label };
+	function asCompletionItem(item: code.CompletionItem): proto.CompletionItem {
+		let result: proto.CompletionItem = { label: item.label };
 		if (item.detail) { result.detail = item.detail; }
 		if (item.documentation) { result.documentation = item.documentation; }
 		if (item.filterText) { result.filterText = item.filterText; }
@@ -261,9 +260,9 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		// Protocol item kind is 1 based, codes item kind is zero based.
 		if (is.number(item.kind)) {
 			if (code.CompletionItemKind.Text <= item.kind && item.kind <= code.CompletionItemKind.Reference) {
-				result.kind = (item.kind + 1) as types.CompletionItemKind;
+				result.kind = (item.kind + 1) as proto.CompletionItemKind;
 			} else {
-				result.kind = types.CompletionItemKind.Text;
+				result.kind = proto.CompletionItemKind.Text;
 			}
 		}
 		if (item.sortText) { result.sortText = item.sortText; }
@@ -275,15 +274,15 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return result;
 	}
 
-	function fillPrimaryInsertText(target: types.CompletionItem, source: ProtocolCompletionItem): void {
-		let format: types.InsertTextFormat = types.InsertTextFormat.PlainText;
+	function fillPrimaryInsertText(target: proto.CompletionItem, source: ProtocolCompletionItem): void {
+		let format: proto.InsertTextFormat = proto.InsertTextFormat.PlainText;
 		let text: string | undefined;
-		let range: types.Range | undefined = undefined;
+		let range: proto.Range | undefined = undefined;
 		if (source.textEdit) {
 			text = source.textEdit.newText;
 			range = asRange(source.textEdit.range);
 		} else if (source.insertText instanceof code.SnippetString) {
-			format = types.InsertTextFormat.Snippet;
+			format = proto.InsertTextFormat.Snippet;
 			text = source.insertText.value;
 		} else {
 			text = source.insertText;
@@ -300,11 +299,11 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		}
 	}
 
-	function asTextEdit(edit: code.TextEdit): types.TextEdit {
+	function asTextEdit(edit: code.TextEdit): proto.TextEdit {
 		return { range: asRange(edit.range), newText: edit.newText };
 	}
 
-	function asTextEdits(edits: code.TextEdit[]): types.TextEdit[] {
+	function asTextEdits(edits: code.TextEdit[]): proto.TextEdit[] {
 		if (edits === void 0 || edits === null) {
 			return edits;
 		}
@@ -319,21 +318,21 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		};
 	}
 
-	function asCodeActionContext(context: code.CodeActionContext): types.CodeActionContext {
+	function asCodeActionContext(context: code.CodeActionContext): proto.CodeActionContext {
 		if (context === void 0 || context === null) {
 			return context;
 		}
-		return types.CodeActionContext.create(asDiagnostics(context.diagnostics));
+		return proto.CodeActionContext.create(asDiagnostics(context.diagnostics));
 	}
 
-	function asCommand(item: code.Command): types.Command {
-		let result = types.Command.create(item.title, item.command);
+	function asCommand(item: code.Command): proto.Command {
+		let result = proto.Command.create(item.title, item.command);
 		if (item.arguments) { result.arguments = item.arguments; }
 		return result;
 	}
 
-	function asCodeLens(item: code.CodeLens): types.CodeLens {
-		let result = types.CodeLens.create(asRange(item.range));
+	function asCodeLens(item: code.CodeLens): proto.CodeLens {
+		let result = proto.CodeLens.create(asRange(item.range));
 		if (item.command) { result.command = asCommand(item.command); }
 		if (item instanceof ProtocolCodeLens) {
 			if (item.data) { result.data = item.data };
@@ -341,11 +340,11 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return result;
 	}
 
-	function asFormattingOptions(item: code.FormattingOptions): types.FormattingOptions {
+	function asFormattingOptions(item: code.FormattingOptions): proto.FormattingOptions {
 		return { tabSize: item.tabSize, insertSpaces: item.insertSpaces };
 	}
 
-	function asDocumentSymbolParams(textDocument: code.TextDocument): types.DocumentSymbolParams {
+	function asDocumentSymbolParams(textDocument: code.TextDocument): proto.DocumentSymbolParams {
 		return {
 			textDocument: asTextDocumentIdentifier(textDocument)
 		}
@@ -357,8 +356,8 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		};
 	}
 
-	function asDocumentLink(item: code.DocumentLink): types.DocumentLink {
-		let result = types.DocumentLink.create(asRange(item.range));
+	function asDocumentLink(item: code.DocumentLink): proto.DocumentLink {
+		let result = proto.DocumentLink.create(asRange(item.range));
 		if (item.target) { result.target = asUri(item.target); }
 		return result;
 	}

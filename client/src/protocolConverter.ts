@@ -5,7 +5,7 @@
 'use strict';
 
 import * as code from 'vscode';
-import * as ls from 'vscode-languageserver-types';
+import * as ls from 'vscode-languageserver-protocol';
 import * as is from './utils/is';
 import ProtocolCompletionItem from './protocolCompletionItem';
 import ProtocolCodeLens from './protocolCodeLens';
