@@ -21,7 +21,7 @@ install:
   - cd protocol/node_modules && ln -s ../../types vscode-languageserver-types && cd ../..
   - cd client && mkdir node_modules && cd ..
   - cd client/node_modules && ln -s ../../protocol vscode-languageserver-protocol && cd ../..
-  - cd server && mkdir node_modules && cd..
+  - cd server && mkdir node_modules && cd ..
   - cd server/node_modules && ln -s ../../protocol vscode-languageserver-protocol && cd ../..
 
 script:
