@@ -1641,13 +1641,19 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 
 // Export the protocol currently in proposed state.
 
-import { ConfigurationProposed, ConfigurationFeature } from './configuration.proposed';
-import { WorkspaceFoldersProposed, WorkspaceFoldersFeature } from './workspaceFolders.proposed';
 
-export * from './configuration.proposed';
-export * from './workspaceFolders.proposed';
+import * as config from './configuration.proposed';
+import * as folders from './workspaceFolders.proposed';
 
-export const ProposedProtocol: Features<_, _, _, _, _, WorkspaceFoldersProposed & ConfigurationProposed> = {
-	__brand: 'features',
-	workspace: combineWorkspaceFeatures(WorkspaceFoldersFeature, ConfigurationFeature)
+export namespace ProposedFeatures {
+	export type Configuration = config.ConfigurationProposed;
+	export const ConfigurationFeature = config.ConfigurationFeature;
+
+	export type WorkspaceFolders = folders.WorkspaceFoldersProposed;
+	export const WorkspaceFoldersFeature = folders.WorkspaceFoldersFeature;
+
+	export const all: Features<_, _, _, _, _, ProposedFeatures.WorkspaceFolders & ProposedFeatures.Configuration> = {
+		__brand: 'features',
+		workspace: combineWorkspaceFeatures(WorkspaceFoldersFeature, ConfigurationFeature)
+	}
 }

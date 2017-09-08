@@ -30,8 +30,45 @@ export {
 }
 export * from 'vscode-languageserver-types';
 export * from './protocol';
-export * from './protocol.configuration.proposed';
-export * from './protocol.workspaceFolders.proposed';
+
+import * as config from './protocol.configuration.proposed';
+import * as folders from './protocol.workspaceFolders.proposed';
+import * as color from './protocol.colorProvider.proposed';
+
+export namespace Proposed {
+	export type ConfigurationClientCapabilities = config.ConfigurationClientCapabilities;
+	export type ConfigurationParams = config.ConfigurationParams;
+	export type ConfigurationItem = config.ConfigurationItem;
+	export namespace ConfigurationRequest {
+		export const type = config.ConfigurationRequest.type;
+		export type HandlerSignature = config.ConfigurationRequest.HandlerSignature;
+		export type MiddlewareSignature = config.ConfigurationRequest.MiddlewareSignature;
+	};
+
+	export type WorkspaceFoldersInitializeParams = folders.WorkspaceFoldersInitializeParams;
+	export type WorkspaceFoldersClientCapabilities = folders.WorkspaceFoldersClientCapabilities;
+	export type WorkspaceFolder = folders.WorkspaceFolder;
+	export type WorkspaceFoldersChangeEvent = folders.WorkspaceFoldersChangeEvent;
+	export type DidChangeWorkspaceFoldersParams = folders.DidChangeWorkspaceFoldersParams;
+	export namespace WorkspaceFoldersRequest {
+		export const type = folders.WorkspaceFoldersRequest.type;
+		export type HandlerSignature = folders.WorkspaceFoldersRequest.HandlerSignature;
+		export type MiddlewareSignature = folders.WorkspaceFoldersRequest.MiddlewareSignature;
+	}
+	export namespace DidChangeWorkspaceFoldersNotification {
+		export const type = folders.DidChangeWorkspaceFoldersNotification.type;
+		export type HandlerSignature = folders.DidChangeWorkspaceFoldersNotification.HandlerSignature;
+		export type MiddlewareSignature = folders.DidChangeWorkspaceFoldersNotification.MiddlewareSignature;
+	}
+
+
+	export type ColorProviderOptions = color.ColorProviderOptions;
+	export type DocumentColorParams = color.DocumentColorParams;
+	export type Color = color.Color;
+	export type ColorInformation = color.ColorInformation;
+	export type ColorServerCapabilities = color.ServerCapabilities;
+	export const DocumentColorRequest = color.DocumentColorRequest;
+}
 
 export interface ProtocolConnetion {
 

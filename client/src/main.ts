@@ -298,6 +298,10 @@ export class LanguageClient extends BaseLanguageClient {
 		}
 		return Promise.reject<MessageTransports>(new Error(`Unsupported server configuration ` + JSON.stringify(server, null, 4)));
 	}
+
+	public registerProposedFeatures() {
+		this.registerFeatures(ProposedFeatures.createAll(this));
+	}
 }
 
 export class SettingMonitor {
@@ -331,18 +335,21 @@ export class SettingMonitor {
 	}
 }
 
-
 // Exporting proposed protocol.
 
-import { ConfigurationFeature } from './configuration.proposed';
-import { WorkspaceFoldersFeature } from './workspaceFolders.proposed';
+import * as config from './configuration.proposed';
+import * as folders from './workspaceFolders.proposed';
 
-export * from './configuration.proposed';
-export * from './workspaceFolders.proposed';
+export namespace ProposedFeatures {
+	export const ConfigurationFeature = config.ConfigurationFeature;
+	export type ConfigurationMiddleware = config.ConfigurationMiddleware;
+	export const WorkspaceFoldersFeature = folders.WorkspaceFoldersFeature;
+	export type WorkspaceFolderMiddleware = folders.WorkspaceFolderMiddleware
 
-export function ProposedProtocol(client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
-	let result: (StaticFeature | DynamicFeature<any>)[] = [];
-	result.push(new WorkspaceFoldersFeature(client));
-	result.push(new ConfigurationFeature(client));
-	return result;
+	export function createAll(client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
+		let result: (StaticFeature | DynamicFeature<any>)[] = [];
+		result.push(new WorkspaceFoldersFeature(client));
+		result.push(new ConfigurationFeature(client));
+		return result;
+	}
 }

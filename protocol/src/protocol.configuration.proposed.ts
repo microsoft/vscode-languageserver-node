@@ -10,7 +10,7 @@ import {
 
 //---- Get Configuration request ----
 
-export interface ProposedConfigurationClientCapabilities {
+export interface ConfigurationClientCapabilities {
 	/**
 	 * The workspace client capabilities
 	 */

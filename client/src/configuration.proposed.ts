@@ -8,11 +8,17 @@ import { workspace, Uri } from 'vscode';
 
 import { StaticFeature, BaseLanguageClient } from './client';
 import {
-	ClientCapabilities, ConfigurationRequest, ProposedConfigurationClientCapabilities
+	ClientCapabilities, Proposed
 } from 'vscode-languageserver-protocol';
 
 export interface ConfigurationMiddleware {
-	configuration?: ConfigurationRequest.MiddlewareSignature
+	workspace?: {
+		configuration?: Proposed.ConfigurationRequest.MiddlewareSignature
+	}
+}
+
+interface _Middleware {
+	configuration?: Proposed.ConfigurationRequest.MiddlewareSignature
 }
 
 export class ConfigurationFeature implements StaticFeature {
@@ -22,14 +28,14 @@ export class ConfigurationFeature implements StaticFeature {
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
 		capabilities.workspace = capabilities.workspace || {};
-		let configCapabilities = capabilities as ProposedConfigurationClientCapabilities;
+		let configCapabilities = capabilities as Proposed.ConfigurationClientCapabilities;
 		configCapabilities.workspace.configuration = true;
 	}
 
 	public initialize(): void {
 		let client = this._client;
-		client.onRequest(ConfigurationRequest.type, (params, token) => {
-			let configuration: ConfigurationRequest.HandlerSignature = (params) => {
+		client.onRequest(Proposed.ConfigurationRequest.type, (params, token) => {
+			let configuration: Proposed.ConfigurationRequest.HandlerSignature = (params) => {
 				let result: any[] = [];
 				for (let item of params.items) {
 					let resource = item.scopeUri !== void 0 && item.scopeUri !== null ? this._client.protocol2CodeConverter.asUri(item.scopeUri) : undefined;
@@ -71,10 +77,10 @@ export class ConfigurationFeature implements StaticFeature {
 		return result;
 	}
 
-	private getConfigurationMiddleware(): ConfigurationMiddleware {
+	private getConfigurationMiddleware(): _Middleware {
 		let middleware = this._client.clientOptions.middleware;
 		return middleware && middleware.workspace
-			? middleware.workspace as ConfigurationMiddleware
+			? middleware.workspace as _Middleware
 			: {};
 	}
 }
