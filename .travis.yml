@@ -8,6 +8,11 @@ os:
 node_js:
   - "6.10"
 
+addons:
+  apt:
+    packages:
+      - libsecret-1-dev
+
 before_install:
   - if [ $TRAVIS_OS_NAME == "linux" ]; then
       export CXX="g++-4.9" CC="gcc-4.9" DISPLAY=:99.0;
