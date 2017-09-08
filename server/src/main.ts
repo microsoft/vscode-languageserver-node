@@ -1646,10 +1646,10 @@ import * as config from './configuration.proposed';
 import * as folders from './workspaceFolders.proposed';
 
 export namespace ProposedFeatures {
-	export type Configuration = config.ConfigurationProposed;
+	export type Configuration = config.Configuration;
 	export const ConfigurationFeature = config.ConfigurationFeature;
 
-	export type WorkspaceFolders = folders.WorkspaceFoldersProposed;
+	export type WorkspaceFolders = folders.WorkspaceFolders;
 	export const WorkspaceFoldersFeature = folders.WorkspaceFoldersFeature;
 
 	export const all: Features<_, _, _, _, _, ProposedFeatures.WorkspaceFolders & ProposedFeatures.Configuration> = {

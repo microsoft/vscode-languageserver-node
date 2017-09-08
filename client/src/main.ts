@@ -341,8 +341,11 @@ import * as config from './configuration.proposed';
 import * as folders from './workspaceFolders.proposed';
 
 export namespace ProposedFeatures {
+	export type ConfigurationFeature = config.ConfigurationFeature;
 	export const ConfigurationFeature = config.ConfigurationFeature;
 	export type ConfigurationMiddleware = config.ConfigurationMiddleware;
+
+	export type WorkspaceFoldersFeature = folders.WorkspaceFoldersFeature;
 	export const WorkspaceFoldersFeature = folders.WorkspaceFoldersFeature;
 	export type WorkspaceFolderMiddleware = folders.WorkspaceFolderMiddleware
 

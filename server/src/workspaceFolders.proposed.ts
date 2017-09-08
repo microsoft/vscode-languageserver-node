@@ -10,12 +10,12 @@ import { Event, Emitter, Disposable, ClientCapabilities, Proposed
 import { WorkspaceFeature } from './main';
 
 
-export interface WorkspaceFoldersProposed {
+export interface WorkspaceFolders {
 	getWorkspaceFolders(): Thenable<Proposed.WorkspaceFolder[] | null>;
 	onDidChangeWorkspaceFolders: Event<Proposed.WorkspaceFoldersChangeEvent>;
 }
 
-export const WorkspaceFoldersFeature: WorkspaceFeature<WorkspaceFoldersProposed> = (Base) => {
+export const WorkspaceFoldersFeature: WorkspaceFeature<WorkspaceFolders> = (Base) => {
 	return class extends Base {
 		private _onDidChangeWorkspaceFolders: Emitter<Proposed.WorkspaceFoldersChangeEvent>;
 		private _unregistration: Thenable<Disposable>;

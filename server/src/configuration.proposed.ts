@@ -12,14 +12,14 @@ import { WorkspaceFeature } from './main';
 
 import * as Is from './utils/is';
 
-export interface ConfigurationProposed {
+export interface Configuration {
 	getConfiguration(): Thenable<any>;
 	getConfiguration(section: string): Thenable<any>;
 	getConfiguration(item: Proposed.ConfigurationItem): Thenable<any>;
 	getConfiguration(items: Proposed.ConfigurationItem[]): Thenable<any[]>;
 }
 
-export const ConfigurationFeature: WorkspaceFeature<ConfigurationProposed> = (Base) => {
+export const ConfigurationFeature: WorkspaceFeature<Configuration> = (Base) => {
 	return class extends Base {
 
 		getConfiguration(arg?: string | Proposed.ConfigurationItem | Proposed.ConfigurationItem[]): Thenable<any> {
