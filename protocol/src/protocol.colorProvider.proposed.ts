@@ -15,7 +15,7 @@ export interface ColorProviderOptions {
 
 export interface ServerCapabilities {
 	/**
-	 * The server provides document range formatting.
+	 * The server provides color provider support.
 	 */
 	colorProvider?: ColorProviderOptions;
 }
@@ -26,9 +26,9 @@ export interface ServerCapabilities {
  * Parameters for a [DocumentColorParams](#DocumentColorParams).
  */
 export interface DocumentColorParams {
-    /**
-     * The text document.
-     */
+	/**
+	 * The text document.
+	 */
 	textDocument: TextDocumentIdentifier;
 }
 
