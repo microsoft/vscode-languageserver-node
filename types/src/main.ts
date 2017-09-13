@@ -985,9 +985,9 @@ export interface SignatureHelp {
 /**
  * The definition of a symbol represented as one or many [locations](#Location).
  * For most programming languages there is only one location at which a symbol is
- * defined.
+ * defined. If no definition can be found `null` is returned.
  */
-export type Definition = Location | Location[];
+export type Definition = Location | Location[] | null;
 
 /**
  * Value-object that contains additional information when
