@@ -8,7 +8,7 @@ Clients can use the result to decorate color references in an editor. For exampl
 
 _Server Capability_:
 
-The server sets the following server capability if it is able to handle `textDocument/documentColor` requests:
+The server sets the following server capability if it is able to handle `textDocument/documentColor` and `textDocument/colorPresentation` requests:
 
 ```ts
 /**
@@ -45,7 +45,14 @@ _Response_:
 * result: `ColorInformation[]` defined as follows:
 ```ts
 interface ColorInformation {
+	/**
+	 * The range in the document where this color appers.
+	 */
 	range: Range;
+
+	/**
+	 * The actual color value for this color range.
+	 */
 	color: Color;
 }
 /**
@@ -75,3 +82,49 @@ class Color {
 }
 ```
 * error: code and message set in case an exception happens during the 'textDocument/documentColor' request
+
+
+
+_Request_:
+
+* method: 'textDocument/colorPresentation'
+* params: `DocumentColorParams` defined as follows
+
+```ts
+interface ColorPresentationParams {
+	/**
+	 * The text document.
+	 */
+	textDocument: TextDocumentIdentifier;
+
+	/**
+	 * The color information to request presentations for.
+	 */
+	colorInfo: ColorInformation;
+}
+```
+
+_Response_:
+* result: `ColorPresentation[]` defined as follows:
+```ts
+class ColorPresentation {
+	/**
+	 * The label of this color presentation. It will be shown on the color
+	 * picker header. By default this is also the text that is inserted when selecting
+	 * this color presentation.
+	 */
+	label: string;
+	/**
+	 * An [edit](#TextEdit) which is applied to a document when selecting
+	 * this presentation for the color.  When `falsy` the [label](#ColorPresentation.label)
+	 * is used.
+	 */
+	textEdit?: TextEdit;
+	/**
+	 * An optional array of additional [text edits](#TextEdit) that are applied when
+	 * selecting this color presentation. Edits must not overlap with the main [edit](#ColorPresentation.textEdit) nor with themselves.
+	 */
+	additionalTextEdits?: TextEdit[];
+}
+```
+* error: code and message set in case an exception happens during the 'textDocument/colorPresentation' request
