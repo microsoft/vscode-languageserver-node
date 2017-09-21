@@ -4,7 +4,12 @@ The document color request is sent from the client to the server to list all col
 
 Clients can use the result to decorate color references in an editor. For example:
 - Color boxes showing the actual color next to the reference
-- Color pickers when a color references are edited
+- Show a color picker when a color reference is edited
+
+The color presentation request is sent from the client to the server to obtain a list of presentations for a color value at a given location.
+Clients can use the result to
+- modify a color reference.
+- show in a color picker and let users pick one of the presentations
 
 _Server Capability_:
 
@@ -58,7 +63,7 @@ interface ColorInformation {
 /**
  * Represents a color in RGBA space.
  */
-class Color {
+interface Color {
 
 	/**
 	 * The red component of this color in the range [0-1].
@@ -107,7 +112,7 @@ interface ColorPresentationParams {
 _Response_:
 * result: `ColorPresentation[]` defined as follows:
 ```ts
-class ColorPresentation {
+interface ColorPresentation {
 	/**
 	 * The label of this color presentation. It will be shown on the color
 	 * picker header. By default this is also the text that is inserted when selecting

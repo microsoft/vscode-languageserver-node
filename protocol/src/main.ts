@@ -61,13 +61,16 @@ export namespace Proposed {
 		export type MiddlewareSignature = folders.DidChangeWorkspaceFoldersNotification.MiddlewareSignature;
 	}
 
-
+	
 	export type ColorProviderOptions = color.ColorProviderOptions;
 	export type DocumentColorParams = color.DocumentColorParams;
+	export type ColorPresentationParams = color.ColorPresentationParams;
 	export type Color = color.Color;
 	export type ColorInformation = color.ColorInformation;
+	export type ColorPresentation = color.ColorPresentation;
 	export type ColorServerCapabilities = color.ServerCapabilities;
 	export const DocumentColorRequest = color.DocumentColorRequest;
+	export const ColorPresentationRequest = color.ColorPresentationRequest;
 }
 
 export interface ProtocolConnetion {
