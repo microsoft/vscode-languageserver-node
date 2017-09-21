@@ -7,6 +7,10 @@
 				"compile:server",
 				"compile:client"
 			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
 			"problemMatcher": []
 		},
 		{
@@ -17,7 +21,6 @@
 			"presentation": {
 				"panel": "dedicated",
 				"reveal": "never"
-
 			},
 			"problemMatcher": [
 				"$tsc"
@@ -108,7 +111,6 @@
 			"presentation": {
 				"panel": "dedicated",
 				"reveal": "never"
-
 			},
 			"isBackground": true,
 			"problemMatcher": [
