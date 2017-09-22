@@ -72,7 +72,7 @@ export class LanguageClient extends BaseLanguageClient {
 
 	private _serverOptions: ServerOptions;
 	private _forceDebug: boolean;
-	private _childProcess: ChildProcess | undefined;
+	private _serverProcess: ChildProcess | undefined;
 
 	public constructor(name: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, forceDebug?: boolean);
 	public constructor(id: string, name: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, forceDebug?: boolean);
@@ -103,9 +103,9 @@ export class LanguageClient extends BaseLanguageClient {
 
 	public stop(): Thenable<void> {
 		return super.stop().then(() => {
-			if (this._childProcess) {
-				let toCheck = this._childProcess;
-				this._childProcess = undefined;
+			if (this._serverProcess) {
+				let toCheck = this._serverProcess;
+				this._serverProcess = undefined;
 				this.checkProcessDied(toCheck);
 			}
 		});
@@ -127,7 +127,7 @@ export class LanguageClient extends BaseLanguageClient {
 	}
 
 	protected handleConnectionClosed() {
-		this._childProcess = undefined;
+		this._serverProcess = undefined;
 		super.handleConnectionClosed();
 	}
 
@@ -208,18 +208,19 @@ export class LanguageClient extends BaseLanguageClient {
 					pipeName = generateRandomPipeName();
 					args.push(`--pipe=${pipeName}`);
 				}
+				args.push(`--clientProcessId=${process.pid.toString()}`);
 				if (transport === TransportKind.ipc || transport === TransportKind.stdio) {
-					let process = cp.spawn(node.runtime, args, execOptions);
-					if (!process || !process.pid) {
+					let serverProcess = cp.spawn(node.runtime, args, execOptions);
+					if (!serverProcess || !serverProcess.pid) {
 						return Promise.reject<MessageTransports>(`Launching server using runtime ${node.runtime} failed.`);
 					}
-					this._childProcess = process;
-					process.stderr.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
+					this._serverProcess = serverProcess;
+					serverProcess.stderr.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
 					if (transport === TransportKind.ipc) {
-						process.stdout.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
-						return Promise.resolve({ reader: new IPCMessageReader(process), writer: new IPCMessageWriter(process) });
+						serverProcess.stdout.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
+						return Promise.resolve({ reader: new IPCMessageReader(serverProcess), writer: new IPCMessageWriter(serverProcess) });
 					} else {
-						return Promise.resolve({ reader: new StreamMessageReader(process.stdout), writer: new StreamMessageWriter(process.stdin) });
+						return Promise.resolve({ reader: new StreamMessageReader(serverProcess.stdout), writer: new StreamMessageWriter(serverProcess.stdin) });
 					}
 				} else if (transport == TransportKind.pipe) {
 					return createClientPipeTransport(pipeName!).then((transport) => {
@@ -227,7 +228,7 @@ export class LanguageClient extends BaseLanguageClient {
 						if (!process || !process.pid) {
 							return Promise.reject<MessageTransports>(`Launching server using runtime ${node.runtime} failed.`);
 						}
-						this._childProcess = process;
+						this._serverProcess = process;
 						process.stderr.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
 						process.stdout.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
 						return transport.onConnected().then((protocol) => {
@@ -247,21 +248,22 @@ export class LanguageClient extends BaseLanguageClient {
 						pipeName = generateRandomPipeName();
 						args.push(`--pipe=${pipeName}`);
 					}
+					args.push(`--clientProcessId=${process.pid.toString()}`);
 					let options: ForkOptions = node.options || Object.create(null);
 					options.execArgv = options.execArgv || [];
 					options.cwd = options.cwd || rootPath;
 					if (transport === TransportKind.ipc || transport === TransportKind.stdio) {
-						electron.fork(node.module, args || [], options, (error, cp) => {
-							if (error || !cp) {
+						electron.fork(node.module, args || [], options, (error, serverProcess) => {
+							if (error || !serverProcess) {
 								reject(error);
 							} else {
-								this._childProcess = cp;
-								cp.stderr.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
+								this._serverProcess = serverProcess;
+								serverProcess.stderr.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
 								if (transport === TransportKind.ipc) {
-									cp.stdout.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
-									resolve({ reader: new IPCMessageReader(this._childProcess), writer: new IPCMessageWriter(this._childProcess) });
+									serverProcess.stdout.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
+									resolve({ reader: new IPCMessageReader(this._serverProcess), writer: new IPCMessageWriter(this._serverProcess) });
 								} else {
-									resolve({ reader: new StreamMessageReader(cp.stdout), writer: new StreamMessageWriter(cp.stdin) });
+									resolve({ reader: new StreamMessageReader(serverProcess.stdout), writer: new StreamMessageWriter(serverProcess.stdin) });
 								}
 							}
 						});
@@ -271,7 +273,7 @@ export class LanguageClient extends BaseLanguageClient {
 								if (error || !cp) {
 									reject(error);
 								} else {
-									this._childProcess = cp;
+									this._serverProcess = cp;
 									cp.stderr.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
 									cp.stdout.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
 									transport.onConnected().then((protocol) => {
@@ -288,13 +290,13 @@ export class LanguageClient extends BaseLanguageClient {
 			let args = command.args || [];
 			let options = command.options || {};
 			options.cwd = options.cwd || rootPath;
-			let process = cp.spawn(command.command, args, options);
-			if (!process || !process.pid) {
+			let serverProcess = cp.spawn(command.command, args, options);
+			if (!serverProcess || !serverProcess.pid) {
 				return Promise.reject<MessageTransports>(`Launching server using command ${command.command} failed.`);
 			}
-			process.stderr.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
-			this._childProcess = process;
-			return Promise.resolve({ reader: new StreamMessageReader(process.stdout), writer: new StreamMessageWriter(process.stdin) });
+			serverProcess.stderr.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
+			this._serverProcess = serverProcess;
+			return Promise.resolve({ reader: new StreamMessageReader(serverProcess.stdout), writer: new StreamMessageWriter(serverProcess.stdin) });
 		}
 		return Promise.reject<MessageTransports>(new Error(`Unsupported server configuration ` + JSON.stringify(server, null, 4)));
 	}

@@ -66,6 +66,44 @@ export namespace Files {
 	export let resolveModulePath = fm.resolveModulePath;
 }
 
+let shutdownReceived: boolean = false;
+let exitTimer: NodeJS.Timer | undefined = undefined;
+
+function setupExitTimer(): void {
+	const argName = '--clientProcessId';
+	function runTimer(value: string): void {
+		try {
+			let processId = parseInt(value);
+			if (!isNaN(processId)) {
+				exitTimer = setInterval(() => {
+					try {
+						process.kill(processId, <any>0);
+					} catch (ex) {
+						// Parent process doesn't exist anymore. Exit the server.
+						process.exit(shutdownReceived ? 0 : 1);
+					}
+				}, 3000);
+			}
+		} catch (e) {
+			// Ignore errors;
+		}
+	}
+
+	for (let i = 2; i < process.argv.length; i++) {
+		let arg = process.argv[i];
+		if (arg === argName && i + 1 < process.argv.length) {
+			runTimer(process.argv[i + 1]);
+			return;
+		} else {
+			let args = arg.split('=');
+			if (args[0] === argName) {
+				runTimer(args[1]);
+			}
+		}
+	}
+}
+setupExitTimer();
+
 interface ConnectionState {
 	__textDocumentSync: TextDocumentSyncKind | undefined;
 }
@@ -1461,7 +1499,6 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 		throw new Error("Connection output stream is not set. " + commandLineMessage);
 	}
 
-	let shutdownReceived: boolean;
 	// Backwards compatibility
 	if (Is.func((input as NodeJS.ReadableStream).read) && Is.func((input as NodeJS.ReadableStream).on)) {
 		let inputStream = <NodeJS.ReadableStream>input;
@@ -1557,7 +1594,7 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 	}
 
 	connection.onRequest(InitializeRequest.type, (params) => {
-		if (Is.number(params.processId)) {
+		if (Is.number(params.processId) && exitTimer === void 0) {
 			// We received a parent process id. Set up a timer to periodically check
 			// if the parent is still alive.
 			setInterval(() => {
