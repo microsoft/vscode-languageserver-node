@@ -20,7 +20,7 @@
 	"scripts": {
 		"prepublish": "npm run compile",
 		"postpublish": "node ../build/npm/post-publish.js",
-		"compile": "../node_modules/.bin/tsc -p ./tsconfig.json",
-		"watch": "../node_modules/.bin/tsc -w -p ./tsconfig.json"
+		"compile": "node ../build/bin/tsc -p ./tsconfig.json",
+		"watch": "node ../build/bin/tsc -w -p ./tsconfig.json"
 	}
 }

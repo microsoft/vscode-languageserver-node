@@ -25,8 +25,8 @@
 	"scripts": {
 		"prepublish": "npm run update-vscode && npm run compile && npm test",
 		"postpublish": "node ../build/npm/post-publish.js",
-		"compile": "../node_modules/.bin/tsc -p ./tsconfig.json",
-		"watch": "../node_modules/.bin/tsc -w -p ./tsconfig.json",
+		"compile": "node ../build/bin/tsc -p ./tsconfig.json",
+		"watch": "node ../build/bin/tsc -w -p ./tsconfig.json",
 		"update-vscode": "node ./node_modules/vscode/bin/install",
 		"test": "cd lib && node ../node_modules/vscode/bin/test"
 	}
