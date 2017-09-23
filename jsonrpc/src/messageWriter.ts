@@ -9,7 +9,7 @@ import { Socket } from 'net';
 
 import { Message } from './messages';
 import { Event, Emitter } from './events';
-import * as is from './is';
+import * as Is from './is';
 
 let ContentLength: string = 'Content-Length: ';
 let CRLF = '\r\n';
@@ -19,6 +19,14 @@ export interface MessageWriter {
 	readonly onClose: Event<void>;
 	write(msg: Message): void;
 	dispose(): void;
+}
+
+export namespace MessageWriter {
+	export function is(value: any): value is MessageWriter {
+		let candidate: MessageWriter = value;
+		return candidate && Is.func(candidate.dispose) && Is.func(candidate.onClose) &&
+			Is.func(candidate.onError) && Is.func(candidate.write);
+	}
 }
 
 export abstract class AbstractMessageWriter {
@@ -56,7 +64,7 @@ export abstract class AbstractMessageWriter {
 		if (error instanceof Error) {
 			return error;
 		} else {
-			return new Error(`Writer recevied error. Reason: ${is.string(error.message) ? error.message : 'unknown'}`);
+			return new Error(`Writer recevied error. Reason: ${Is.string(error.message) ? error.message : 'unknown'}`);
 		}
 	}
 }

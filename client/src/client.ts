@@ -4,9 +4,6 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import * as cp from 'child_process';
-import ChildProcess = cp.ChildProcess;
-
 import {
 	workspace as Workspace, window as Window, languages as Languages, commands as Commands,
 	TextDocumentChangeEvent, TextDocument, Disposable, OutputChannel,
@@ -183,11 +180,6 @@ function createConnection(input: any, output: any, errorHandler: ConnectionError
 	return result;
 }
 
-export interface StreamInfo {
-	writer: NodeJS.WritableStream;
-	reader: NodeJS.ReadableStream;
-}
-
 export interface ExecutableOptions {
 	cwd?: string;
 	stdio?: string | string[];
@@ -221,8 +213,6 @@ export interface NodeModule {
 	runtime?: string;
 	options?: ForkOptions;
 }
-
-export type ServerOptions = Executable | { run: Executable; debug: Executable; } | { run: NodeModule; debug: NodeModule } | NodeModule | (() => Thenable<ChildProcess | StreamInfo>);
 
 /**
  * An action to be performed when the connection is producing errors.
@@ -2113,6 +2103,13 @@ class ExecuteCommandFeature implements DynamicFeature<ExecuteCommandRegistration
 export interface MessageTransports {
 	reader: MessageReader;
 	writer: MessageWriter;
+}
+
+export namespace MessageTransports {
+	export function is(value: any): value is MessageTransports {
+		let candidate: MessageTransports = value;
+		return candidate && MessageReader.is(value.reader) && MessageWriter.is(value.writer);
+	}
 }
 
 export abstract class BaseLanguageClient {

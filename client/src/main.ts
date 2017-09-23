@@ -27,11 +27,6 @@ export * from './client';
 
 declare var v8debug: any;
 
-export interface StreamInfo {
-	writer: NodeJS.WritableStream;
-	reader: NodeJS.ReadableStream;
-}
-
 export interface ExecutableOptions {
 	cwd?: string;
 	stdio?: string | string[];
@@ -66,7 +61,12 @@ export interface NodeModule {
 	options?: ForkOptions;
 }
 
-export type ServerOptions = Executable | { run: Executable; debug: Executable; } | { run: NodeModule; debug: NodeModule } | NodeModule | (() => Thenable<ChildProcess | StreamInfo>);
+export interface StreamInfo {
+	writer: NodeJS.WritableStream;
+	reader: NodeJS.ReadableStream;
+}
+
+export type ServerOptions = Executable | { run: Executable; debug: Executable; } | { run: NodeModule; debug: NodeModule } | NodeModule | (() => Thenable<ChildProcess | StreamInfo | MessageTransports>);
 
 export class LanguageClient extends BaseLanguageClient {
 
@@ -159,6 +159,9 @@ export class LanguageClient extends BaseLanguageClient {
 		// We got a function.
 		if (is.func(server)) {
 			return server().then((result) => {
+				if (MessageTransports.is(result)) {
+					return result;
+				}
 				let info = result as StreamInfo;
 				if (info.writer && info.reader) {
 					return { reader: new StreamMessageReader(info.reader), writer: new StreamMessageWriter(info.writer) };

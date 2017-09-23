@@ -9,7 +9,7 @@ import { ChildProcess } from 'child_process';
 
 import { Message } from './messages';
 import { Event, Emitter } from './events';
-import * as is from './is';
+import * as Is from './is';
 
 let DefaultSize: number = 8192;
 let CR: number = new Buffer('\r', 'ascii')[0];
@@ -111,6 +111,14 @@ export interface MessageReader {
 	dispose(): void;
 }
 
+export namespace MessageReader {
+	export function is(value: any): value is MessageReader {
+		let candidate: MessageReader = value;
+		return candidate && Is.func(candidate.listen) && Is.func(candidate.dispose) &&
+			Is.func(candidate.onError) && Is.func(candidate.onClose) && Is.func(candidate.onPartialMessage);
+	}
+}
+
 export abstract class AbstractMessageReader {
 
 	private errorEmitter: Emitter<Error>;
@@ -157,7 +165,7 @@ export abstract class AbstractMessageReader {
 		if (error instanceof Error) {
 			return error;
 		} else {
-			return new Error(`Reader recevied error. Reason: ${is.string(error.message) ? error.message : 'unknown'}`);
+			return new Error(`Reader recevied error. Reason: ${Is.string(error.message) ? error.message : 'unknown'}`);
 		}
 	}
 }
