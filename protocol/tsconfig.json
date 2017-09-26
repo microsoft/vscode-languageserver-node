@@ -13,6 +13,8 @@
 		"rootDir": "src"
 	},
 	"include": [
-		"src"
+		"src",
+		"node_modules/vscode-jsonrpc",
+		"node_modules/languageserver-types"
 	]
 }

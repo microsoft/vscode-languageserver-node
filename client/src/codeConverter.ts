@@ -267,6 +267,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		}
 		if (item.sortText) { result.sortText = item.sortText; }
 		if (item.additionalTextEdits) { result.additionalTextEdits = asTextEdits(item.additionalTextEdits); }
+		if (item.commitCharacters) { result.commitCharacters = item.commitCharacters.slice(); }
 		if (item.command) { result.command = asCommand(item.command); }
 		if (item instanceof ProtocolCompletionItem && item.data) {
 			result.data = item.data;

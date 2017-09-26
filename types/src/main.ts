@@ -780,6 +780,13 @@ export interface CompletionItem {
 	additionalTextEdits?: TextEdit[];
 
 	/**
+	 * An optional set of characters that when pressed while this completion is active will accept it first and
+	 * then type that character. *Note* that all commit characters should have `length=1` and that superfluous
+	 * characters will be ignored.
+	 */
+	commitCharacters?: string[];
+
+	/**
 	 * An optional [command](#Command) that is executed *after* inserting this completion. *Note* that
 	 * additional modifications to the current document should be described with the
 	 * [additionalTextEdits](#CompletionItem.additionalTextEdits)-property.

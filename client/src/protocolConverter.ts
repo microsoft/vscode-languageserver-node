@@ -212,6 +212,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (is.number(item.kind) && item.kind > 0) { result.kind = item.kind - 1; }
 		if (item.sortText) { result.sortText = item.sortText; }
 		if (item.additionalTextEdits) { result.additionalTextEdits = asTextEdits(item.additionalTextEdits); }
+		if (is.stringArray(item.commitCharacters)) { result.commitCharacters = item.commitCharacters.slice(); }
 		if (item.command) { result.command = asCommand(item.command); }
 		if (item.data !== void 0 && item.data !== null) { result.data = item.data; }
 		return result;
