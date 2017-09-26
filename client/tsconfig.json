@@ -13,7 +13,6 @@
 		"rootDir": "src"
 	},
 	"include": [
-		"src",
-		"node_modules/vscode-language-server-protocol"
+		"src"
 	]
 }
