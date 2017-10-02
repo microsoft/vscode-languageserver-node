@@ -1224,7 +1224,7 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionRegistrationOp
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
 		let completion = ensure(ensure(capabilites, 'textDocument')!, 'completion')!;
 		completion.dynamicRegistration = true;
-		completion.completionItem = { snippetSupport: true };
+		completion.completionItem = { snippetSupport: true, commitCharactersSupport: true };
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {

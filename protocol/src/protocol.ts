@@ -264,6 +264,11 @@ export interface TextDocumentClientCapabilities {
 			 * that is typing in one will update others too.
 			 */
 			snippetSupport?: boolean;
+
+			/**
+			 * Client supports commit characters on a completion item.
+			 */
+			commitCharactersSupport?: boolean
 		}
 	};
 
