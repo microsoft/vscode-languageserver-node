@@ -13,6 +13,7 @@ import {
 	MessageReader, MessageWriter, Logger, ConnectionStrategy,
 	StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageWriter,
 	createClientPipeTransport, createServerPipeTransport, generateRandomPipeName, DataCallback,
+	createClientSocketTransport, createServerSocketTransport,
 	createMessageConnection, Tracer
 } from 'vscode-jsonrpc';
 
@@ -26,6 +27,7 @@ export {
 	StreamMessageReader, StreamMessageWriter,
 	IPCMessageReader, IPCMessageWriter,
 	createClientPipeTransport, createServerPipeTransport, generateRandomPipeName, DataCallback,
+	createClientSocketTransport, createServerSocketTransport,
 	Tracer
 }
 export * from 'vscode-languageserver-types';
@@ -61,7 +63,7 @@ export namespace Proposed {
 		export type MiddlewareSignature = folders.DidChangeWorkspaceFoldersNotification.MiddlewareSignature;
 	}
 
-	
+
 	export type ColorProviderOptions = color.ColorProviderOptions;
 	export type DocumentColorParams = color.DocumentColorParams;
 	export type ColorPresentationParams = color.ColorPresentationParams;

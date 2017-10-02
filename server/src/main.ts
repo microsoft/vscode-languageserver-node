@@ -14,7 +14,7 @@ import {
 	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler, StarNotificationHandler,
 	RPCMessageType, ResponseError,
 	Logger, MessageReader, IPCMessageReader,
-	MessageWriter, IPCMessageWriter, createServerPipeTransport,
+	MessageWriter, IPCMessageWriter, createServerPipeTransport, createServerSocketTransport,
 	CancellationToken, CancellationTokenSource,
 	Disposable, Event, Emitter, Trace, SetTraceNotification, LogTraceNotification,
 	ConnectionStrategy,
@@ -54,8 +54,6 @@ export * from 'vscode-languageserver-protocol';
 export { Event }
 
 import * as fm from './files';
-import * as net from 'net';
-import * as stream from 'stream';
 
 export namespace Files {
 	export let uriToFilePath = fm.uriToFilePath;
@@ -1478,17 +1476,13 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 			}
 		}
 		if (port) {
-			output = new stream.PassThrough();
-			input = new stream.PassThrough();
-			let server = net.createServer(socket => {
-				server.close();
-				socket.pipe(output as stream.PassThrough);
-				(input as stream.PassThrough).pipe(socket);
-			}).listen(port);
+			let transport = createServerSocketTransport(port);
+			input = transport[0];
+			output = transport[1];
 		} else if (pipeName) {
-			let protocol = createServerPipeTransport(pipeName);
-			input = protocol[0];
-			output = protocol[1];
+			let transport = createServerPipeTransport(pipeName);
+			input = transport[0];
+			output = transport[1];
 		}
 	}
 	var commandLineMessage = "Use arguments of createConnection or set command line parameters: '--node-ipc', '--stdio' or '--socket={number}'";

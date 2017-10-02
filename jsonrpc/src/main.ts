@@ -38,6 +38,7 @@ export {
 	Disposable, Event, Emitter
 }
 export * from './pipeSupport';
+export * from './socketSupport';
 
 interface CancelParams {
 	/**

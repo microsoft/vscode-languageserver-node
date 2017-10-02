@@ -16,10 +16,10 @@ import {
 import {
 	StreamMessageReader, StreamMessageWriter,
 	IPCMessageReader, IPCMessageWriter,
-	createClientPipeTransport, generateRandomPipeName
+	createClientPipeTransport, generateRandomPipeName, createClientSocketTransport
 } from 'vscode-languageserver-protocol';
 
-import * as is from './utils/is';
+import * as Is from './utils/is';
 import * as electron from './utils/electron';
 import { terminate } from './utils/processes';
 
@@ -50,12 +50,27 @@ export interface ForkOptions {
 export enum TransportKind {
 	stdio,
 	ipc,
-	pipe
+	pipe,
+	socket
 }
+
+export interface SocketTransport {
+	kind: TransportKind.socket;
+	port: number;
+}
+
+namespace Transport {
+	export function isSocket(value: Transport): value is SocketTransport {
+		let candidate = value as SocketTransport;
+		return candidate && candidate.kind === TransportKind.socket && Is.number(candidate.port);
+	}
+}
+
+export type Transport = TransportKind | SocketTransport;
 
 export interface NodeModule {
 	module: string;
-	transport?: TransportKind;
+	transport?: Transport;
 	args?: string[];
 	runtime?: string;
 	options?: ForkOptions;
@@ -82,7 +97,7 @@ export class LanguageClient extends BaseLanguageClient {
 		let serverOptions: ServerOptions;
 		let clientOptions: LanguageClientOptions;
 		let forceDebug: boolean;
-		if (is.string(arg2)) {
+		if (Is.string(arg2)) {
 			id = arg1;
 			name = arg2;
 			serverOptions = arg3 as ServerOptions;
@@ -157,7 +172,7 @@ export class LanguageClient extends BaseLanguageClient {
 
 		let server = this._serverOptions;
 		// We got a function.
-		if (is.func(server)) {
+		if (Is.func(server)) {
 			return server().then((result) => {
 				if (MessageTransports.is(result)) {
 					return result;
@@ -167,7 +182,7 @@ export class LanguageClient extends BaseLanguageClient {
 					return { reader: new StreamMessageReader(info.reader), writer: new StreamMessageWriter(info.writer) };
 				} else {
 					let cp = result as ChildProcess;
-					cp.stderr.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
+					cp.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 					return { reader: new StreamMessageReader(cp.stdout), writer: new StreamMessageWriter(cp.stdin) };
 				}
 			});
@@ -210,6 +225,8 @@ export class LanguageClient extends BaseLanguageClient {
 				} else if (transport === TransportKind.pipe) {
 					pipeName = generateRandomPipeName();
 					args.push(`--pipe=${pipeName}`);
+				} else if (Transport.isSocket(transport)) {
+					args.push(`--socket=${transport.port}`);
 				}
 				args.push(`--clientProcessId=${process.pid.toString()}`);
 				if (transport === TransportKind.ipc || transport === TransportKind.stdio) {
@@ -218,9 +235,9 @@ export class LanguageClient extends BaseLanguageClient {
 						return Promise.reject<MessageTransports>(`Launching server using runtime ${node.runtime} failed.`);
 					}
 					this._serverProcess = serverProcess;
-					serverProcess.stderr.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
+					serverProcess.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 					if (transport === TransportKind.ipc) {
-						serverProcess.stdout.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
+						serverProcess.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 						return Promise.resolve({ reader: new IPCMessageReader(serverProcess), writer: new IPCMessageWriter(serverProcess) });
 					} else {
 						return Promise.resolve({ reader: new StreamMessageReader(serverProcess.stdout), writer: new StreamMessageWriter(serverProcess.stdin) });
@@ -232,12 +249,25 @@ export class LanguageClient extends BaseLanguageClient {
 							return Promise.reject<MessageTransports>(`Launching server using runtime ${node.runtime} failed.`);
 						}
 						this._serverProcess = process;
-						process.stderr.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
-						process.stdout.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
+						process.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+						process.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 						return transport.onConnected().then((protocol) => {
 							return { reader: protocol[0], writer: protocol[1] };
 						});
 					})
+				} else if (Transport.isSocket(transport)) {
+					return createClientSocketTransport(transport.port).then((transport) => {
+						let process = cp.spawn(node.runtime!, args, execOptions);
+						if (!process || !process.pid) {
+							return Promise.reject<MessageTransports>(`Launching server using runtime ${node.runtime} failed.`);
+						}
+						this._serverProcess = process;
+						process.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+						process.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+						return transport.onConnected().then((protocol) => {
+							return { reader: protocol[0], writer: protocol[1] };
+						});
+					});
 				}
 			} else {
 				let pipeName: string | undefined = undefined;
@@ -250,6 +280,8 @@ export class LanguageClient extends BaseLanguageClient {
 					} else if (transport === TransportKind.pipe) {
 						pipeName = generateRandomPipeName();
 						args.push(`--pipe=${pipeName}`);
+					} else if (Transport.isSocket(transport)) {
+						args.push(`--socket=${transport.port}`);
 					}
 					args.push(`--clientProcessId=${process.pid.toString()}`);
 					let options: ForkOptions = node.options || Object.create(null);
@@ -261,9 +293,9 @@ export class LanguageClient extends BaseLanguageClient {
 								reject(error);
 							} else {
 								this._serverProcess = serverProcess;
-								serverProcess.stderr.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
+								serverProcess.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 								if (transport === TransportKind.ipc) {
-									serverProcess.stdout.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
+									serverProcess.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 									resolve({ reader: new IPCMessageReader(this._serverProcess), writer: new IPCMessageWriter(this._serverProcess) });
 								} else {
 									resolve({ reader: new StreamMessageReader(serverProcess.stdout), writer: new StreamMessageWriter(serverProcess.stdin) });
@@ -277,8 +309,23 @@ export class LanguageClient extends BaseLanguageClient {
 									reject(error);
 								} else {
 									this._serverProcess = cp;
-									cp.stderr.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
-									cp.stdout.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
+									cp.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+									cp.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+									transport.onConnected().then((protocol) => {
+										resolve({ reader: protocol[0], writer: protocol[1]});
+									});
+								}
+							});
+						});
+					} else if (Transport.isSocket(transport)) {
+						createClientSocketTransport(transport.port).then((transport) => {
+							electron.fork(node.module, args || [], options, (error, cp) => {
+								if (error || !cp) {
+									reject(error);
+								} else {
+									this._serverProcess = cp;
+									cp.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+									cp.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 									transport.onConnected().then((protocol) => {
 										resolve({ reader: protocol[0], writer: protocol[1]});
 									});
@@ -297,7 +344,7 @@ export class LanguageClient extends BaseLanguageClient {
 			if (!serverProcess || !serverProcess.pid) {
 				return Promise.reject<MessageTransports>(`Launching server using command ${command.command} failed.`);
 			}
-			serverProcess.stderr.on('data', data => this.outputChannel.append(is.string(data) ? data : data.toString(encoding)));
+			serverProcess.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 			this._serverProcess = serverProcess;
 			return Promise.resolve({ reader: new StreamMessageReader(serverProcess.stdout), writer: new StreamMessageWriter(serverProcess.stdin) });
 		}
