@@ -1106,12 +1106,23 @@ export interface SymbolInformation {
 	kind: SymbolKind;
 
 	/**
-	 * The location of this symbol.
+	 * The location of this symbol. The location's range is used by a tool
+	 * to reveal the location in the editor. If the symbol is selected in the
+	 * tool the range's start information is used to position the cursor. So
+	 * the range usually spwans more then the actual symbol's name and does
+	 * normally include thinks like visibility modifiers.
+	 *
+	 * The range doesn't have to denote a node range in the sense of a abstract
+	 * syntax tree. It can therefore not be used to re-construct a hierarchy of
+	 * the symbols.
 	 */
 	location: Location;
 
 	/**
-	 * The name of the symbol containing this symbol.
+	 * The name of the symbol containing this symbol. This information is for
+	 * user interface purposes (e.g. to render a qaulifier in the user interface
+	 * if necessary). It can't be used to re-infer a hierarchy for the document
+	 * symbols.
 	 */
 	containerName?: string;
 }
