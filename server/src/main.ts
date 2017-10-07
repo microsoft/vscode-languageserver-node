@@ -14,7 +14,7 @@ import {
 	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler, StarNotificationHandler,
 	RPCMessageType, ResponseError,
 	Logger, MessageReader, IPCMessageReader,
-	MessageWriter, IPCMessageWriter, createServerPipeTransport, createServerSocketTransport,
+	MessageWriter, IPCMessageWriter, createServerPipeTransport,
 	CancellationToken, CancellationTokenSource,
 	Disposable, Event, Emitter, Trace, SetTraceNotification, LogTraceNotification,
 	ConnectionStrategy,
@@ -54,6 +54,8 @@ export * from 'vscode-languageserver-protocol';
 export { Event }
 
 import * as fm from './files';
+import * as net from 'net';
+import * as stream from 'stream';
 
 export namespace Files {
 	export let uriToFilePath = fm.uriToFilePath;
@@ -1476,9 +1478,13 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 			}
 		}
 		if (port) {
-			let transport = createServerSocketTransport(port);
-			input = transport[0];
-			output = transport[1];
+			input = new stream.PassThrough();
+			output = new stream.PassThrough();
+			let server = net.createServer(socket => {
+				server.close();
+				socket.pipe(input as stream.PassThrough);
+				(output as stream.PassThrough).pipe(socket);
+			}).listen(port);
 		} else if (pipeName) {
 			let transport = createServerPipeTransport(pipeName);
 			input = transport[0];
