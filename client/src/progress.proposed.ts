@@ -89,7 +89,7 @@ class WindowProgress {
         } else if (message !== undefined) {
             return message;
         } else if (percentage !== undefined) {
-            return percentage.toString();
+            return `${percentage}%`;
         } else {
             return "It's impossible.";
         }
