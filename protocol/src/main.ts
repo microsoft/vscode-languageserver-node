@@ -36,6 +36,7 @@ export * from './protocol';
 export { FoldingRangeParams as FoldingRangeRequestParam } from './protocol'; // for backward compatibility
 
 import * as callHierarchy from './protocol.callHierarchy.proposed';
+import * as progress from './protocol.progress.proposed';
 
 export namespace Proposed {
 	export type CallHierarchyClientCapabilities = callHierarchy.CallHierarchyClientCapabilities;
@@ -48,6 +49,13 @@ export namespace Proposed {
 
 	export type CallHierarchyParams = callHierarchy.CallHierarchyParams;
 	export type CallHierarchyCall = callHierarchy.CallHierarchyCall;
+
+	export type WindowProgressClientCapabilities = progress.WindowProgressClientCapabilities;
+	export type ProgressParams = progress.ProgressParams;
+	export namespace WindowProgressNotification {
+		export const type = progress.WindowProgressNotification.type;
+		export type HandlerSignature = progress.WindowProgressNotification.HandlerSignature;
+	}
 }
 
 export interface ProtocolConnection {
