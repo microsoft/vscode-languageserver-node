@@ -31,6 +31,7 @@ import { WorkspaceFoldersFeature } from './workspaceFolders';
 import { FoldingRangeFeature } from './foldingRange';
 import { DeclarationFeature } from './declaration';
 import { SelectionRangeFeature } from './selectionRange.proposed';
+import { WindowProgressFeature } from './progress.proposed';
 
 import * as Is from './utils/is';
 import { terminate } from './utils/processes';
@@ -510,7 +511,8 @@ export class SettingMonitor {
 export namespace ProposedFeatures {
 	export function createAll(client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
 		let result: (StaticFeature | DynamicFeature<any>)[] = [
-			new SelectionRangeFeature(client)
+			new SelectionRangeFeature(client),
+			new WindowProgressFeature(client)
 		];
 		return result;
 	}
