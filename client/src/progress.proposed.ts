@@ -29,7 +29,7 @@ export class WindowProgressFeature implements StaticFeature {
             if (progress !== undefined) {
                 progress.updateProgress(params);
             } else {
-                window.withProgress({ location: ProgressLocation.Window, title: params.title || ''}, p => {
+                window.withProgress({ location: ProgressLocation.Window }, p => {
                     progress = new WindowProgress(p);
                     progresses.set(params.id, progress);
 
@@ -55,8 +55,8 @@ class WindowProgress {
 
     private progress: Progress<{ message?: string; }>;
 
+    private title: string | undefined;
     private message: string | undefined;
-    private percentage: number | undefined;
 
     constructor(progress: Progress<{ message?: string; }>) {
         this.progress = progress;
@@ -68,11 +68,11 @@ class WindowProgress {
     }
 
     public updateProgress(params: Proposed.ProgressParams) {
-        const message = params.message || this.message;
-        const percentage = params.percentage || this.percentage;
+        this.title = params.title || this.message;
+        this.message = params.message || this.message;
 
-        const progressMessage = this.createProgressMessage(message, percentage);
-        this.progress.report({message: progressMessage});
+        const displayedMessage = this.message || this.title;
+        this.progress.report({message: displayedMessage});
     }
 
     public finish() {
@@ -81,17 +81,5 @@ class WindowProgress {
 
     public cancel() {
         this.reject();
-    }
-
-    createProgressMessage(message: string | undefined, percentage: number | undefined): string {
-        if (message !== undefined && percentage !== undefined) {
-            return `${message} (${percentage}%)`;
-        } else if (message !== undefined) {
-            return message;
-        } else if (percentage !== undefined) {
-            return `${percentage}%`;
-        } else {
-            return "It's impossible.";
-        }
     }
 }
