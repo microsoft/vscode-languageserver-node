@@ -66,6 +66,17 @@ namespace Transport {
 	}
 }
 
+/**
+ * To avoid any timing, pipe name or port number issues the pipe (TransportKind.pipe)
+ * and the sockets (TransportKind.socket and SocketTransport) are owned by the
+ * VS Code processes. The server process simply connects to the pipe / socket.
+ * In node term the VS Code process calls `createServer`, then starts the server
+ * process, waits until the server process has connected to the pipe / socket
+ * and then signals that the connection has been established and messages can
+ * be send back and forth. If the language server is implemented in a different
+ * programm language the server simply needs to create a connection to the
+ * passed pipe name or port number.
+ */
 export type Transport = TransportKind | SocketTransport;
 
 export interface NodeModule {

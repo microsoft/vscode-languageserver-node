@@ -4,7 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Event, Emitter, Disposable, ClientCapabilities, Proposed
+import {
+	Event, Emitter, Disposable, ClientCapabilities, Proposed
 } from 'vscode-languageserver-protocol';
 
 import { WorkspaceFeature } from './main';
