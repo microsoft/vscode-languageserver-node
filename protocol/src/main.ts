@@ -75,7 +75,7 @@ export namespace Proposed {
 	export const ColorPresentationRequest = color.ColorPresentationRequest;
 }
 
-export interface ProtocolConnetion {
+export interface ProtocolConnection {
 
 	/**
 	 * Sends a request and returns a promise resolving to the result of the request.
@@ -230,6 +230,6 @@ export interface ProtocolConnetion {
 	listen(): void;
 }
 
-export function createProtocolConnection(reader: MessageReader, writer: MessageWriter, logger: Logger, strategy?: ConnectionStrategy): ProtocolConnetion {
+export function createProtocolConnection(reader: MessageReader, writer: MessageWriter, logger: Logger, strategy?: ConnectionStrategy): ProtocolConnection {
 	return createMessageConnection(reader, writer, logger, strategy);
 }
