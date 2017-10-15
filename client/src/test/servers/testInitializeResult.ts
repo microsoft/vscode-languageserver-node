@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 'use strict';
-
+import * as assert from 'assert';
 import {
 	createConnection, IConnection,
 	TextDocuments, InitializeParams, ServerCapabilities
@@ -18,7 +18,7 @@ let documents: TextDocuments = new TextDocuments();
 documents.listen(connection);
 
 connection.onInitialize((params: InitializeParams): any => {
-
+	assert.equal((params.capabilities.workspace as any).applyEdit, true);
 	console.log(params.capabilities);
 
 	let capabilities: ServerCapabilities = {
