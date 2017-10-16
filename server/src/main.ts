@@ -43,7 +43,7 @@ import {
 	DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkParams,
 	ExecuteCommandRequest, ExecuteCommandParams,
 	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse,
-	ClientCapabilities, ServerCapabilities, ProtocolConnetion, createProtocolConnection
+	ClientCapabilities, ServerCapabilities, ProtocolConnection, createProtocolConnection
 } from 'vscode-languageserver-protocol';
 
 import * as Is from './utils/is';
@@ -606,13 +606,13 @@ export interface RemoteClient extends Remote {
 
 class ConnectionLogger implements Logger, RemoteConsole {
 
-	private _rawConnection: ProtocolConnetion;
+	private _rawConnection: ProtocolConnection;
 	private _connection: IConnection;
 
 	public constructor() {
 	}
 
-	public rawAttach(connection: ProtocolConnetion): void {
+	public rawAttach(connection: ProtocolConnection): void {
 		this._rawConnection = connection;
 	}
 
