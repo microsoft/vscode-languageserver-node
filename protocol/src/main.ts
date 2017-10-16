@@ -230,6 +230,11 @@ export interface ProtocolConnection {
 	listen(): void;
 }
 
+/**
+ * @deprecated Use ProtocolConnection instead.
+ */
+export type ProtocolConnetion = ProtocolConnection;
+
 export function createProtocolConnection(reader: MessageReader, writer: MessageWriter, logger: Logger, strategy?: ConnectionStrategy): ProtocolConnection {
 	return createMessageConnection(reader, writer, logger, strategy);
 }
