@@ -2785,6 +2785,7 @@ export abstract class BaseLanguageClient {
 
 	private computeClientCapabilities(): ClientCapabilities {
 		let result: ClientCapabilities = {};
+		ensure(result, 'workspace')!.applyEdit = true;
 		for (let feature of this._features) {
 			feature.fillClientCapabilities(result);
 		}
