@@ -52,9 +52,14 @@ export interface ColorPresentationParams {
 	textDocument: TextDocumentIdentifier;
 
 	/**
-	 * The color information to request presentations for.
+	 * The color to request presentations for.
 	 */
-	colorInfo: ColorInformation;
+	color: Color
+
+	/**
+	 * The range where the color would be inserted. Serves as a context.
+	 */
+	range: Range;
 }
 
 /**

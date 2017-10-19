@@ -105,7 +105,12 @@ interface ColorPresentationParams {
 	/**
 	 * The color information to request presentations for.
 	 */
-	colorInfo: ColorInformation;
+	colorInfo: Color;
+
+	/**
+	 * The range where the color would be inserted. Serves as a context.
+	 */
+	range: Range;
 }
 ```
 
