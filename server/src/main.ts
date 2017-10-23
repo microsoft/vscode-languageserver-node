@@ -58,6 +58,7 @@ import * as fm from './files';
 export namespace Files {
 	export let uriToFilePath = fm.uriToFilePath;
 	export let resolveGlobalNodePath = fm.resolveGlobalNodePath;
+	export let resolveGlobalYarnPath = fm.resolveGlobalYarnPath;
 	export let resolve = fm.resolve;
 	export let resolveModule = fm.resolveModule;
 	export let resolveModule2 = fm.resolveModule2;

@@ -204,6 +204,39 @@ export function resolveGlobalNodePath(tracer?: (message: string) => void): strin
 	return undefined;
 }
 
+interface YarnJsonFormat {
+	type: string;
+	data: string;
+}
+
+export function resolveGlobalYarnPath(tracer?: (message: string) => void): string | undefined {
+    let yarnCommand = isWindows() ? 'yarn.cmd' : 'yarn';
+	let results = spawnSync(yarnCommand, ['global', 'dir', '--json'], {
+		encoding: 'utf8'
+	});
+	let stdout = results.stdout;
+	if (!stdout) {
+		if (tracer) {
+			tracer(`'yarn global dir' didn't return a value.`);
+			if (results.stderr) {
+				tracer(results.stderr);
+			}
+		}
+		return undefined;
+	}
+	let lines = stdout.trim().split(/\r?\n/);
+	for (let line of lines) {
+		try {
+			let yarn: YarnJsonFormat = JSON.parse(line);
+			if (yarn.type === 'log') {
+				return path.join(yarn.data, 'node_modules');
+			}
+		} catch (e) {
+			// Do nothing. Ignore the line
+		}
+	}
+	return undefined;
+}
 
 export namespace FileSystem {
 
