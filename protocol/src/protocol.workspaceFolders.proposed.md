@@ -63,7 +63,7 @@ _Response_:
 
 ##### DidChangeWorkspaceFolders Notification
 
-The `workspace/didChangeWorkspaceFolders` notification is sent from the client to the server to inform the client about workspace folder configuration changes. The notification is not sent by default. For a server to receive this notification it has to register for it first. To register for the `workspace/didChangeWorkspaceFolders` send a `client/registerCapability` request from the client to the server. The registration parameter must have a `registrations` item of the following form, where `id` is a unique id used to unregister the capability (the example uses a UUID):
+The `workspace/didChangeWorkspaceFolders` notification is sent from the client to the server to inform the server about workspace folder configuration changes. The notification is not sent by default. For a server to receive this notification it has to register for it first. To register for the `workspace/didChangeWorkspaceFolders` send a `client/registerCapability` request from the client to the server. The registration parameter must have a `registrations` item of the following form, where `id` is a unique id used to unregister the capability (the example uses a UUID):
 ```ts
 {
 	id: "28c6150c-bd7b-11e7-abc4-cec278b6b50a",
