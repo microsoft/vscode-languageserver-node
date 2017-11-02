@@ -614,7 +614,7 @@ abstract class DocumentNotifiactions<P, E> implements DynamicFeature<TextDocumen
 
 	constructor(
 		protected _client: BaseLanguageClient, private _event: Event<E>,
-		protected _type: NotificationType<P, DocumentSelector>,
+		protected _type: NotificationType<P, TextDocumentRegistrationOptions>,
 		protected _middleware: NextSignature<E, void> | undefined,
 		protected _createParams: CreateParamsSignature<E, P>,
 		protected _selectorFilter?: (selectors: IterableIterator<DocumentSelector>, data: E) => boolean) {
