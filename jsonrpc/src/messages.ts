@@ -161,7 +161,7 @@ export interface _EM {
  * Classes to type request response pairs
  */
 export class RequestType0<R, E, RO> extends AbstractMessageType {
-	private _?: [R, E, RO, _EM];
+	public readonly _?: [R, E, RO, _EM];
 	constructor(method: string) {
 		super(method, 0);
 		this._ = undefined;
@@ -169,7 +169,7 @@ export class RequestType0<R, E, RO> extends AbstractMessageType {
 }
 
 export class RequestType<P, R, E, RO> extends AbstractMessageType {
-	private _?: [P, R, E, RO, _EM];
+	public readonly _?: [P, R, E, RO, _EM];
 	constructor(method: string) {
 		super(method, 1);
 		this._ = undefined;
@@ -178,7 +178,7 @@ export class RequestType<P, R, E, RO> extends AbstractMessageType {
 
 
 export class RequestType1<P1, R, E, RO> extends AbstractMessageType {
-	private _?: [P1, R, E, RO, _EM];
+	public readonly _?: [P1, R, E, RO, _EM];
 	constructor(method: string) {
 		super(method, 1);
 		this._ = undefined;
@@ -186,7 +186,7 @@ export class RequestType1<P1, R, E, RO> extends AbstractMessageType {
 }
 
 export class RequestType2<P1, P2, R, E, RO> extends AbstractMessageType {
-	private _?: [P1, P2, R, E, RO, _EM];
+	public readonly _?: [P1, P2, R, E, RO, _EM];
 	constructor(method: string) {
 		super(method, 2);
 		this._ = undefined;
@@ -194,7 +194,7 @@ export class RequestType2<P1, P2, R, E, RO> extends AbstractMessageType {
 }
 
 export class RequestType3<P1, P2, P3, R, E, RO> extends AbstractMessageType {
-	private _?: [P1, P2, P3, R, E, RO, _EM];
+	public readonly _?: [P1, P2, P3, R, E, RO, _EM];
 	constructor(method: string) {
 		super(method, 3);
 		this._ = undefined;
@@ -202,7 +202,7 @@ export class RequestType3<P1, P2, P3, R, E, RO> extends AbstractMessageType {
 }
 
 export class RequestType4<P1, P2, P3, P4, R, E, RO> extends AbstractMessageType {
-	private _?: [P1, P2, P3, P4, R, E, RO, _EM];
+	public readonly _?: [P1, P2, P3, P4, R, E, RO, _EM];
 	constructor(method: string) {
 		super(method, 4);
 		this._ = undefined;
@@ -210,7 +210,7 @@ export class RequestType4<P1, P2, P3, P4, R, E, RO> extends AbstractMessageType 
 }
 
 export class RequestType5<P1, P2, P3, P4, P5, R, E, RO> extends AbstractMessageType {
-	private _?: [P1, P2, P3, P4, P5, R, E, RO, _EM];
+	public readonly _?: [P1, P2, P3, P4, P5, R, E, RO, _EM];
 	constructor(method: string) {
 		super(method, 5);
 		this._ = undefined;
@@ -218,7 +218,7 @@ export class RequestType5<P1, P2, P3, P4, P5, R, E, RO> extends AbstractMessageT
 }
 
 export class RequestType6<P1, P2, P3, P4, P5, P6, R, E, RO> extends AbstractMessageType {
-	private _?: [P1, P2, P3, P4, P5, P6, R, E, RO, _EM];
+	public readonly _?: [P1, P2, P3, P4, P5, P6, R, E, RO, _EM];
 	constructor(method: string) {
 		super(method, 6);
 		this._ = undefined;
@@ -226,7 +226,7 @@ export class RequestType6<P1, P2, P3, P4, P5, P6, R, E, RO> extends AbstractMess
 }
 
 export class RequestType7<P1, P2, P3, P4, P5, P6, P7, R, E, RO> extends AbstractMessageType {
-	private _?: [P1, P2, P3, P4, P5, P6, P7, R, E, RO, _EM];
+	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, R, E, RO, _EM];
 	constructor(method: string) {
 		super(method, 7);
 		this._ = undefined;
@@ -234,7 +234,7 @@ export class RequestType7<P1, P2, P3, P4, P5, P6, P7, R, E, RO> extends Abstract
 }
 
 export class RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO> extends AbstractMessageType {
-	private _?: [P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO, _EM];
+	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO, _EM];
 	constructor(method: string) {
 		super(method, 8);
 		this._ = undefined;
@@ -242,7 +242,7 @@ export class RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO> extends Abst
 }
 
 export class RequestType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO> extends AbstractMessageType {
-	private _?: [P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO, _EM];
+	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO, _EM];
 	constructor(method: string) {
 		super(method, 9);
 		this._ = undefined;
@@ -265,7 +265,7 @@ export interface NotificationMessage extends Message {
 }
 
 export class NotificationType<P, RO> extends AbstractMessageType {
-	private _?: [P, RO, _EM];
+	public readonly _?: [P, RO, _EM];
 	constructor(method: string) {
 		super(method, 1);
 		this._ = undefined;
@@ -273,7 +273,7 @@ export class NotificationType<P, RO> extends AbstractMessageType {
 }
 
 export class NotificationType0<RO> extends AbstractMessageType {
-	private _?: [RO, _EM];
+	public readonly _?: [RO, _EM];
 	constructor(method: string) {
 		super(method, 0);
 		this._ = undefined;
@@ -281,7 +281,7 @@ export class NotificationType0<RO> extends AbstractMessageType {
 }
 
 export class NotificationType1<P1, RO> extends AbstractMessageType {
-	private _?: [P1, RO, _EM];
+	public readonly _?: [P1, RO, _EM];
 	constructor(method: string) {
 		super(method, 1);
 		this._ = undefined;
@@ -289,7 +289,7 @@ export class NotificationType1<P1, RO> extends AbstractMessageType {
 }
 
 export class NotificationType2<P1, P2, RO> extends AbstractMessageType {
-	private _?: [P1, P2, RO, _EM];
+	public readonly _?: [P1, P2, RO, _EM];
 	constructor(method: string) {
 		super(method, 2);
 		this._ = undefined;
@@ -297,7 +297,7 @@ export class NotificationType2<P1, P2, RO> extends AbstractMessageType {
 }
 
 export class NotificationType3<P1, P2, P3, RO> extends AbstractMessageType {
-	private _?: [P1, P2, P3, RO, _EM];
+	public readonly _?: [P1, P2, P3, RO, _EM];
 	constructor(method: string) {
 		super(method, 3);
 		this._ = undefined;
@@ -305,7 +305,7 @@ export class NotificationType3<P1, P2, P3, RO> extends AbstractMessageType {
 }
 
 export class NotificationType4<P1, P2, P3, P4, RO> extends AbstractMessageType {
-	private _?: [P1, P2, P3, P4, RO, _EM];
+	public readonly _?: [P1, P2, P3, P4, RO, _EM];
 	constructor(method: string) {
 		super(method, 4);
 		this._ = undefined;
@@ -313,7 +313,7 @@ export class NotificationType4<P1, P2, P3, P4, RO> extends AbstractMessageType {
 }
 
 export class NotificationType5<P1, P2, P3, P4, P5, RO> extends AbstractMessageType {
-	private _?: [P1, P2, P3, P4, P5, RO, _EM];
+	public readonly _?: [P1, P2, P3, P4, P5, RO, _EM];
 	constructor(method: string) {
 		super(method, 5);
 		this._ = undefined;
@@ -321,7 +321,7 @@ export class NotificationType5<P1, P2, P3, P4, P5, RO> extends AbstractMessageTy
 }
 
 export class NotificationType6<P1, P2, P3, P4, P5, P6, RO> extends AbstractMessageType {
-	private _?: [P1, P2, P3, P4, P5, P6, RO, _EM];
+	public readonly _?: [P1, P2, P3, P4, P5, P6, RO, _EM];
 	constructor(method: string) {
 		super(method, 6);
 		this._ = undefined;
@@ -329,7 +329,7 @@ export class NotificationType6<P1, P2, P3, P4, P5, P6, RO> extends AbstractMessa
 }
 
 export class NotificationType7<P1, P2, P3, P4, P5, P6, P7, RO> extends AbstractMessageType {
-	private _?: [P1, P2, P3, P4, P5, P6, P7, RO, _EM];
+	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, RO, _EM];
 	constructor(method: string) {
 		super(method, 7);
 		this._ = undefined;
@@ -337,7 +337,7 @@ export class NotificationType7<P1, P2, P3, P4, P5, P6, P7, RO> extends AbstractM
 }
 
 export class NotificationType8<P1, P2, P3, P4, P5, P6, P7, P8, RO> extends AbstractMessageType {
-	private _?: [P1, P2, P3, P4, P5, P6, P7, P8, RO, _EM];
+	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, P8, RO, _EM];
 	constructor(method: string) {
 		super(method, 8);
 		this._ = undefined;
@@ -345,7 +345,7 @@ export class NotificationType8<P1, P2, P3, P4, P5, P6, P7, P8, RO> extends Abstr
 }
 
 export class NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, RO> extends AbstractMessageType {
-	private _?: [P1, P2, P3, P4, P5, P6, P7, P8, P9, RO, _EM];
+	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, P8, P9, RO, _EM];
 	constructor(method: string) {
 		super(method, 9);
 		this._ = undefined;
