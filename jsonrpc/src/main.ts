@@ -164,6 +164,13 @@ export interface Logger {
 	log(message: string): void;
 }
 
+export const NullLogger: Logger = Object.freeze({
+	error: () => {},
+	warn: () => {},
+	info: () => {},
+	log: () => {}
+});
+
 export enum Trace {
 	Off, Messages, Verbose
 }
@@ -744,7 +751,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				}
 			}
 		}
-		tracer.log(`Sending response '${method} - (${message.id})'. Processing request took ${Date.now() - startTime}ms`)
+		tracer.log(`Sending response '${method} - (${message.id})'. Processing request took ${Date.now() - startTime}ms`, data)
 	}
 
 	function traceReceivedRequest(message: RequestMessage): void {
@@ -876,7 +883,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			}
 			let notificationMessage: NotificationMessage = {
 				jsonrpc: version,
-				method: Is.string(type) ? type : type.method,
+				method: method,
 				params: messageParams
 			}
 			traceSendNotification(notificationMessage);
@@ -1044,9 +1051,12 @@ function isMessageWriter(value: any): value is MessageWriter {
 	return value.write !== void 0 && value.end === void 0;
 }
 
-export function createMessageConnection(reader: MessageReader, writer: MessageWriter, logger: Logger, strategy?: ConnectionStrategy): MessageConnection;
-export function createMessageConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger: Logger, strategy?: ConnectionStrategy): MessageConnection;
-export function createMessageConnection(input: MessageReader | NodeJS.ReadableStream, output: MessageWriter | NodeJS.WritableStream, logger: Logger, strategy?: ConnectionStrategy): MessageConnection {
+export function createMessageConnection(reader: MessageReader, writer: MessageWriter, logger?: Logger, strategy?: ConnectionStrategy): MessageConnection;
+export function createMessageConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger?: Logger, strategy?: ConnectionStrategy): MessageConnection;
+export function createMessageConnection(input: MessageReader | NodeJS.ReadableStream, output: MessageWriter | NodeJS.WritableStream, logger?: Logger, strategy?: ConnectionStrategy): MessageConnection {
+	if (!logger) {
+		logger = NullLogger;
+	}
 	let reader = isMessageReader(input) ? input : new StreamMessageReader(input);
 	let writer = isMessageWriter(output) ? output : new StreamMessageWriter(output);
 	return _createMessageConnection(reader, writer, logger, strategy);
