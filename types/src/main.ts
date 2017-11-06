@@ -639,9 +639,9 @@ export namespace TextDocumentItem {
 	/**
 	 * Creates a new TextDocumentItem literal.
 	 * @param uri The document's uri.
-	 * @param uri The document's language identifier.
-	 * @param uri The document's version number.
-	 * @param uri The document's text.
+	 * @param languageId The document's language identifier.
+	 * @param version The document's version number.
+	 * @param text The document's text.
 	 */
 	export function create(uri: string, languageId: string, version: number, text: string): TextDocumentItem {
 		return { uri, languageId, version, text };
