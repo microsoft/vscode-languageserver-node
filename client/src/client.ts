@@ -1851,7 +1851,7 @@ class RenameFeature extends TextDocumentFeature<TextDocumentRegistrationOptions>
 				client.protocol2CodeConverter.asWorkspaceEdit,
 				(error: ResponseError<void>) => {
 					client.logFailedRequest(RenameRequest.type, error);
-					Promise.resolve(new Error(error.message));
+					Promise.reject(new Error(error.message));
 				}
 			);
 		};
