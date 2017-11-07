@@ -90,15 +90,36 @@ export interface NodeModule {
 export interface StreamInfo {
 	writer: NodeJS.WritableStream;
 	reader: NodeJS.ReadableStream;
+	detached?: boolean;
 }
 
-export type ServerOptions = Executable | { run: Executable; debug: Executable; } | { run: NodeModule; debug: NodeModule } | NodeModule | (() => Thenable<ChildProcess | StreamInfo | MessageTransports>);
+namespace StreamInfo {
+	export function is(value: any): value is StreamInfo {
+		let candidate = value as StreamInfo;
+		return candidate && candidate.writer !== void 0 && candidate.reader !== void 0;
+	}
+}
+
+export interface ChildProcessInfo {
+	process: ChildProcess;
+	detached: boolean;
+}
+
+namespace ChildProcessInfo {
+	export function is(value: any): value is ChildProcessInfo {
+		let candidate = value as ChildProcessInfo;
+		return candidate && candidate.process !== void 0 && typeof candidate.detached === 'boolean';
+	}
+}
+
+export type ServerOptions = Executable | { run: Executable; debug: Executable; } | { run: NodeModule; debug: NodeModule } | NodeModule | (() => Thenable<ChildProcess | StreamInfo | MessageTransports | ChildProcessInfo>);
 
 export class LanguageClient extends BaseLanguageClient {
 
 	private _serverOptions: ServerOptions;
 	private _forceDebug: boolean;
 	private _serverProcess: ChildProcess | undefined;
+	private _isDetached: boolean | undefined;
 
 	public constructor(name: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, forceDebug?: boolean);
 	public constructor(id: string, name: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, forceDebug?: boolean);
@@ -132,7 +153,10 @@ export class LanguageClient extends BaseLanguageClient {
 			if (this._serverProcess) {
 				let toCheck = this._serverProcess;
 				this._serverProcess = undefined;
-				this.checkProcessDied(toCheck);
+				if (this._isDetached === void 0 || !this._isDetached) {
+					this.checkProcessDied(toCheck);
+				}
+				this._isDetached = undefined;
 			}
 		});
 	}
@@ -186,13 +210,20 @@ export class LanguageClient extends BaseLanguageClient {
 		if (Is.func(server)) {
 			return server().then((result) => {
 				if (MessageTransports.is(result)) {
+					this._isDetached = !!result.detached;
 					return result;
-				}
-				let info = result as StreamInfo;
-				if (info.writer && info.reader) {
-					return { reader: new StreamMessageReader(info.reader), writer: new StreamMessageWriter(info.writer) };
+				} else if (StreamInfo.is(result)) {
+					this._isDetached = !!result.detached;
+					return { reader: new StreamMessageReader(result.reader), writer: new StreamMessageWriter(result.writer) };
 				} else {
-					let cp = result as ChildProcess;
+					let cp: ChildProcess;
+					if (ChildProcessInfo.is(result)) {
+						cp = result.process;
+						this._isDetached = result.detached;
+					} else {
+						cp = result;
+						this._isDetached = false;
+					}
 					cp.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 					return { reader: new StreamMessageReader(cp.stdout), writer: new StreamMessageWriter(cp.stdin) };
 				}
@@ -357,6 +388,7 @@ export class LanguageClient extends BaseLanguageClient {
 			}
 			serverProcess.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 			this._serverProcess = serverProcess;
+			this._isDetached = !!options.detached;
 			return Promise.resolve({ reader: new StreamMessageReader(serverProcess.stdout), writer: new StreamMessageWriter(serverProcess.stdin) });
 		}
 		return Promise.reject<MessageTransports>(new Error(`Unsupported server configuration ` + JSON.stringify(server, null, 4)));

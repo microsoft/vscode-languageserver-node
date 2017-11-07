@@ -2103,6 +2103,7 @@ class ExecuteCommandFeature implements DynamicFeature<ExecuteCommandRegistration
 export interface MessageTransports {
 	reader: MessageReader;
 	writer: MessageWriter;
+	detached?: boolean;
 }
 
 export namespace MessageTransports {
