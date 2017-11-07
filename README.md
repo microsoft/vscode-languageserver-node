@@ -27,6 +27,11 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
+### 3.5.0 Server and Client
+
+* allow the client to start the server in detached mode. If the server is running detached the client will not monitor the server process and kill it on shutdown.
+* bug fixing.
+
 ### 3.4.0 Server and Client
 
 * a new npm module `vscode-languageserver-protocol` has been added which contains the protocol definitions in TypeScript. This module is now shared between the client and the server.
