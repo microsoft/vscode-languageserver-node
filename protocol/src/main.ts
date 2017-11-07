@@ -36,6 +36,7 @@ export * from './protocol';
 import * as config from './protocol.configuration.proposed';
 import * as folders from './protocol.workspaceFolders.proposed';
 import * as color from './protocol.colorProvider.proposed';
+import { InitializeParams } from './protocol';
 
 export namespace Proposed {
 	export type ConfigurationClientCapabilities = config.ConfigurationClientCapabilities;
@@ -47,7 +48,7 @@ export namespace Proposed {
 		export type MiddlewareSignature = config.ConfigurationRequest.MiddlewareSignature;
 	};
 
-	export type WorkspaceFoldersInitializeParams = folders.WorkspaceFoldersInitializeParams;
+	export type WorkspaceFoldersInitializeParams = InitializeParams & folders.WorkspaceFoldersInitializeParams;
 	export type WorkspaceFoldersClientCapabilities = folders.WorkspaceFoldersClientCapabilities;
 	export type WorkspaceFolder = folders.WorkspaceFolder;
 	export type WorkspaceFoldersChangeEvent = folders.WorkspaceFoldersChangeEvent;
@@ -62,7 +63,6 @@ export namespace Proposed {
 		export type HandlerSignature = folders.DidChangeWorkspaceFoldersNotification.HandlerSignature;
 		export type MiddlewareSignature = folders.DidChangeWorkspaceFoldersNotification.MiddlewareSignature;
 	}
-
 
 	export type ColorProviderOptions = color.ColorProviderOptions;
 	export type DocumentColorParams = color.DocumentColorParams;
