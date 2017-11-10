@@ -23,6 +23,24 @@ workspace: {
 }
 ```
 
+_Server Capabilities_:
+
+The server sets the following capability if it is supporting workspace folders.
+
+```ts
+/**
+ * The workspace server capabilities
+ */
+workspace: {
+	/**
+	 * The server has support for workspace folders
+	 */
+	workspaceFolders?: boolean;
+}
+```
+
+_Model_:
+
 ```ts
 /**
  * The actual configured workspace folders.
@@ -63,7 +81,7 @@ _Response_:
 
 ##### DidChangeWorkspaceFolders Notification
 
-The `workspace/didChangeWorkspaceFolders` notification is sent from the client to the server to inform the server about workspace folder configuration changes. The notification is not sent by default. For a server to receive this notification it has to register for it first. To register for the `workspace/didChangeWorkspaceFolders` send a `client/registerCapability` request from the client to the server. The registration parameter must have a `registrations` item of the following form, where `id` is a unique id used to unregister the capability (the example uses a UUID):
+The `workspace/didChangeWorkspaceFolders` notification is sent from the client to the server to inform the server about workspace folder configuration changes. The notification is sent by default if both _ServerCapabilities/workspace/workspaceFolders_ and _ClientCapabilities/workapce/workspaceFolders_ are true; or if the server has registered to receive this notification it first. To register for the `workspace/didChangeWorkspaceFolders` send a `client/registerCapability` request from the client to the server. The registration parameter must have a `registrations` item of the following form, where `id` is a unique id used to unregister the capability (the example uses a UUID):
 ```ts
 {
 	id: "28c6150c-bd7b-11e7-abc4-cec278b6b50a",
