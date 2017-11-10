@@ -8,7 +8,7 @@ import { Socket } from 'net';
 import { ChildProcess } from 'child_process';
 
 import { Message } from './messages';
-import { Event, Emitter } from './events';
+import { Disposable, Event, Emitter } from './events';
 import * as Is from './is';
 
 let DefaultSize: number = 8192;
@@ -135,6 +135,7 @@ export abstract class AbstractMessageReader {
 	public dispose(): void {
 		this.errorEmitter.dispose();
 		this.closeEmitter.dispose();
+		this.partialMessageEmitter.dispose();
 	}
 
 	public get onError(): Event<Error> {
@@ -179,12 +180,25 @@ export class StreamMessageReader extends AbstractMessageReader implements Messag
 	private messageToken: number;
 	private partialMessageTimer: NodeJS.Timer | undefined;
 	private _partialMessageTimeout: number;
+	private disposable: Disposable | null;
 
 	public constructor(readable: NodeJS.ReadableStream, encoding: string = 'utf8') {
 		super();
 		this.readable = readable;
 		this.buffer = new MessageBuffer(encoding);
 		this._partialMessageTimeout = 10000;
+		this.disposable = null;
+	}
+
+	public dispose(): void {
+		super.dispose();
+		if (this.partialMessageTimer) {
+			clearTimeout(this.partialMessageTimer);
+			this.partialMessageTimer = undefined;
+		}
+		if (this.disposable != null) {
+			this.disposable.dispose();
+		}
 	}
 
 	public set partialMessageTimeout(timeout: number) {
@@ -200,44 +214,60 @@ export class StreamMessageReader extends AbstractMessageReader implements Messag
 		this.messageToken = 0;
 		this.partialMessageTimer = undefined;
 		this.callback = callback;
-		this.readable.on('data', (data: Buffer) => {
-			this.onData(data);
+
+		const onData = this.onData.bind(this);
+		const onError = this.fireError.bind(this);
+		const onClose = this.fireClose.bind(this);
+
+		this.readable.on('data', onData);
+		this.readable.on('error', onError);
+		this.readable.on('close', onClose);
+
+		this.disposable = Disposable.create(() => {
+			this.readable.removeListener('data', onData);
+			this.readable.removeListener('error', onError);
+			this.readable.removeListener('close', onClose);
 		});
-		this.readable.on('error', (error: any) => this.fireError(error));
-		this.readable.on('close', () => this.fireClose());
 	}
 
 	private onData(data: Buffer | String): void {
 		this.buffer.append(data);
-		while (true) {
-			if (this.nextMessageLength === -1) {
-				let headers = this.buffer.tryReadHeaders();
-				if (!headers) {
+		try {
+			while (true) {
+				if (this.nextMessageLength === -1) {
+					let headers = this.buffer.tryReadHeaders();
+					if (!headers) {
+						return;
+					}
+					let contentLength = headers['Content-Length'];
+					if (!contentLength) {
+						throw new Error('Header must provide a Content-Length property.');
+					}
+					let length = parseInt(contentLength);
+					if (isNaN(length)) {
+						throw new Error('Content-Length value must be a number.');
+					}
+					this.nextMessageLength = length;
+					// Take the encoding form the header. For compatibility
+					// treat both utf-8 and utf8 as node utf8
+				}
+				var msg = this.buffer.tryReadContent(this.nextMessageLength);
+				if (msg === null) {
+					/** We haven't recevied the full message yet. */
+					this.setPartialMessageTimer();
 					return;
 				}
-				let contentLength = headers['Content-Length'];
-				if (!contentLength) {
-					throw new Error('Header must provide a Content-Length property.');
-				}
-				let length = parseInt(contentLength);
-				if (isNaN(length)) {
-					throw new Error('Content-Length value must be a number.');
-				}
-				this.nextMessageLength = length;
-				// Take the encoding form the header. For compatibility
-				// treat both utf-8 and utf8 as node utf8
+				this.clearPartialMessageTimer();
+				this.nextMessageLength = -1;
+				this.messageToken++;
+				var json = JSON.parse(msg);
+				this.callback(json);
 			}
-			var msg = this.buffer.tryReadContent(this.nextMessageLength);
-			if (msg === null) {
-				/** We haven't recevied the full message yet. */
-				this.setPartialMessageTimer();
-				return;
-			}
-			this.clearPartialMessageTimer();
-			this.nextMessageLength = -1;
-			this.messageToken++;
-			var json = JSON.parse(msg);
-			this.callback(json);
+		} catch (err) {
+			// Stream errors are unrecoverable.
+			// Emit an error event and stop listening to any further events.
+			this.fireError(err);
+			this.dispose();
 		}
 	}
 
