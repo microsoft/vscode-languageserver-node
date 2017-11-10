@@ -101,7 +101,7 @@ export function resolveModule(workspaceRoot: string, moduleName: string): Thenab
 }
 
 
-export function resolve(moduleName: string, nodePath: string | undefined, cwd: string, tracer: (message: string, verbose?: string) => void): Thenable<string> {
+export function resolve(moduleName: string, nodePath: string | undefined, cwd: string | undefined, tracer: (message: string, verbose?: string) => void): Thenable<string> {
 	interface Message {
 		c: string;
 		s?: boolean;
