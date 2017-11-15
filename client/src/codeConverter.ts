@@ -28,6 +28,8 @@ export interface Converter {
 
 	asTextDocumentPositionParams(textDocument: code.TextDocument, position: code.Position): proto.TextDocumentPositionParams;
 
+	asCompletionParams(textDocument: code.TextDocument, position: code.Position, context: code.CompletionContext): proto.CompletionParams
+
 	asWorkerPosition(position: code.Position): proto.Position;
 
 	asPosition(value: code.Position): proto.Position;
@@ -195,6 +197,26 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		};
 	}
 
+	function asTriggerKind(triggerKind: code.CompletionTriggerKind): proto.CompletionTriggerKind {
+		switch(triggerKind) {
+			case code.CompletionTriggerKind.TriggerCharacter:
+				return proto.CompletionTriggerKind.TriggerCharacter;
+			default:
+				return proto.CompletionTriggerKind.Invoked;
+		}
+	}
+
+	function asCompletionParams(textDocument: code.TextDocument, position: code.Position, context: code.CompletionContext): proto.CompletionParams {
+		return {
+			textDocument: asTextDocumentIdentifier(textDocument),
+			position: asWorkerPosition(position),
+			context: {
+				triggerKind: asTriggerKind(context.triggerKind),
+				triggerCharacter: context.triggerCharacter
+			}
+		};
+	}
+
 	function asWorkerPosition(position: code.Position): proto.Position {
 		return { line: position.line, character: position.character };
 	}
@@ -254,7 +276,9 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	function asCompletionItem(item: code.CompletionItem): proto.CompletionItem {
 		let result: proto.CompletionItem = { label: item.label };
 		if (item.detail) { result.detail = item.detail; }
-		if (item.documentation) { result.documentation = item.documentation; }
+		// We only send items back we created. So this can't be something else than
+		// a string right now.
+		if (item.documentation) { result.documentation = item.documentation as string; }
 		if (item.filterText) { result.filterText = item.filterText; }
 		fillPrimaryInsertText(result, item as ProtocolCompletionItem);
 		// Protocol item kind is 1 based, codes item kind is zero based.
@@ -378,6 +402,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asSaveTextDocumentParams,
 		asWillSaveTextDocumentParams,
 		asTextDocumentPositionParams,
+		asCompletionParams,
 		asWorkerPosition,
 		asRange,
 		asPosition,

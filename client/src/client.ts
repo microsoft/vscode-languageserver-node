@@ -14,7 +14,7 @@ import {
 	FormattingOptions as VFormattingOptions, TextEdit as VTextEdit, WorkspaceEdit as VWorkspaceEdit, MessageItem,
 	Hover as VHover,
 	DocumentLink as VDocumentLink, TextDocumentWillSaveEvent,
-	WorkspaceFolder as VWorkspaceFolder
+	WorkspaceFolder as VWorkspaceFolder, CompletionContext as VCompletionContext
 } from 'vscode';
 
 import {
@@ -312,7 +312,7 @@ export enum RevealOutputChannelOn {
 }
 
 export interface ProvideCompletionItemsSignature {
-	(document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VCompletionItem[] | VCompletionList>;
+	(document: TextDocument, position: VPosition, context: VCompletionContext, token: CancellationToken): ProviderResult<VCompletionItem[] | VCompletionList>;
 }
 
 export interface ResolveCompletionItemSignature {
@@ -403,7 +403,7 @@ export interface Middleware {
 	didSave?: NextSignature<TextDocument, void>;
 	didClose?: NextSignature<TextDocument, void>;
 
-	provideCompletionItem?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideCompletionItemsSignature) => ProviderResult<VCompletionItem[] | VCompletionList>;
+	provideCompletionItem?: (this: void, document: TextDocument, position: VPosition, context: VCompletionContext, token: CancellationToken, next: ProvideCompletionItemsSignature) => ProviderResult<VCompletionItem[] | VCompletionList>;
 	resolveCompletionItem?: (this: void, item: VCompletionItem, token: CancellationToken, next: ResolveCompletionItemSignature) => ProviderResult<VCompletionItem>;
 	provideHover?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideHoverSignature) => ProviderResult<VHover>;
 	provideSignatureHelp?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideSignatureHelpSignature) => ProviderResult<VSignatureHelp>;
@@ -1224,6 +1224,7 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionRegistrationOp
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
 		let completion = ensure(ensure(capabilites, 'textDocument')!, 'completion')!;
 		completion.dynamicRegistration = true;
+		completion.contextSupport = true;
 		completion.completionItem = { snippetSupport: true, commitCharactersSupport: true };
 	}
 
@@ -1240,8 +1241,8 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionRegistrationOp
 	protected registerLanguageProvider(options: CompletionRegistrationOptions): Disposable {
 		let triggerCharacters = options.triggerCharacters || [];
 		let client = this._client;
-		let provideCompletionItems: ProvideCompletionItemsSignature = (document, position, token) => {
-			return client.sendRequest(CompletionRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
+		let provideCompletionItems: ProvideCompletionItemsSignature = (document, position, context, token) => {
+			return client.sendRequest(CompletionRequest.type, client.code2ProtocolConverter.asCompletionParams(document, position, context), token).then(
 				client.protocol2CodeConverter.asCompletionResult,
 				(error) => {
 					client.logFailedRequest(CompletionRequest.type, error);
@@ -1261,10 +1262,10 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionRegistrationOp
 
 		let middleware = this._client.clientOptions.middleware!;
 		return Languages.registerCompletionItemProvider(options.documentSelector!, {
-			provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VCompletionList | VCompletionItem[]> => {
+			provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken, context: VCompletionContext): ProviderResult<VCompletionList | VCompletionItem[]> => {
 				return middleware.provideCompletionItem
-					? middleware.provideCompletionItem(document, position, token, provideCompletionItems)
-					: provideCompletionItems(document, position, token);
+					? middleware.provideCompletionItem(document, position, context, token, provideCompletionItems)
+					: provideCompletionItems(document, position, context, token);
 			},
 			resolveCompletionItem: options.resolveProvider
 				? (item: VCompletionItem, token: CancellationToken): ProviderResult<VCompletionItem> => {

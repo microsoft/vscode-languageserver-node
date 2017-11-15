@@ -270,6 +270,12 @@ export interface TextDocumentClientCapabilities {
 			 */
 			commitCharactersSupport?: boolean
 		}
+
+		/**
+		 * The client supports to send additional context information for a
+		 * `textDocument/completion` requestion.
+		 */
+		contextSupport?: boolean;
 	};
 
 	/**
@@ -1199,13 +1205,58 @@ export interface CompletionRegistrationOptions extends TextDocumentRegistrationO
 }
 
 /**
+ * How a completion was triggered
+ */
+export namespace CompletionTriggerKind {
+	/**
+	 * Completion was triggered by invoking it manuall or using API.
+	 */
+	export const Invoked: 1 = 1;
+
+	/**
+	 * Completion was triggered by a trigger character.
+	 */
+	export const TriggerCharacter: 2 = 2;
+}
+export type CompletionTriggerKind = 1 | 2;
+
+
+/**
+ * Contains additional information about the context in which a completion request is triggered.
+ */
+export interface CompletionContext {
+	/**
+	 * How the completion was triggered.
+	 */
+	triggerKind: CompletionTriggerKind;
+
+	/**
+	 * The trigger character (a single character) that has trigger code complete.
+	 * Is undefined if `triggerKind !== CompletionTriggerKind.TriggerCharacter`
+	 */
+	triggerCharacter?: string;
+}
+
+/**
+ * Completion parameters
+ */
+export interface CompletionParams extends TextDocumentPositionParams {
+
+	/**
+	 * The completion context. This is only available it the client specifies
+	 * to send this using `ClientCapabilities.textDocument.completion.contextSupport === true`
+	 */
+	context?: CompletionContext;
+}
+
+/**
  * Request to request completion at a given text document position. The request's
  * parameter is of type [TextDocumentPosition](#TextDocumentPosition) the response
  * is of type [CompletionItem[]](#CompletionItem) or [CompletionList](#CompletionList)
  * or a Thenable that resolves to such.
  */
 export namespace CompletionRequest {
-	export const type = new RequestType<TextDocumentPositionParams, CompletionItem[] | CompletionList, void, CompletionRegistrationOptions>('textDocument/completion');
+	export const type = new RequestType<CompletionParams, CompletionItem[] | CompletionList, void, CompletionRegistrationOptions>('textDocument/completion');
 }
 
 /**

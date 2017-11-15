@@ -306,7 +306,6 @@ suite('Protocol Converter', () => {
 		strictEqual(result.data, completionItem.data);
 	});
 
-
 	test('Completion Result', () => {
 		let completionResult: proto.CompletionList = {
 			isIncomplete: true,
