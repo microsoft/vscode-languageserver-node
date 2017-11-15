@@ -883,7 +883,7 @@ export interface ShowMessageRequestParams {
  * and a set of options actions to the user.
  */
 export namespace ShowMessageRequest {
-	export const type = new RequestType<ShowMessageRequestParams, MessageActionItem, void, void>('window/showMessageRequest');
+	export const type = new RequestType<ShowMessageRequestParams, MessageActionItem | null, void, void>('window/showMessageRequest');
 }
 
 /**
@@ -1225,7 +1225,7 @@ export namespace CompletionResolveRequest {
  * type [Hover](#Hover) or a Thenable that resolves to such.
  */
 export namespace HoverRequest {
-	export const type = new RequestType<TextDocumentPositionParams, Hover, void, TextDocumentRegistrationOptions>('textDocument/hover');
+	export const type = new RequestType<TextDocumentPositionParams, Hover | null, void, TextDocumentRegistrationOptions>('textDocument/hover');
 }
 
 //---- SignatureHelp ----------------------------------
@@ -1237,7 +1237,7 @@ export interface SignatureHelpRegistrationOptions extends TextDocumentRegistrati
 }
 
 export namespace SignatureHelpRequest {
-	export const type = new RequestType<TextDocumentPositionParams, SignatureHelp, void, SignatureHelpRegistrationOptions>('textDocument/signatureHelp');
+	export const type = new RequestType<TextDocumentPositionParams, SignatureHelp | null, void, SignatureHelpRegistrationOptions>('textDocument/signatureHelp');
 }
 
 //---- Goto Definition -------------------------------------
@@ -1475,7 +1475,7 @@ export interface RenameParams {
  * A request to rename a symbol.
  */
 export namespace RenameRequest {
-	export const type = new RequestType<RenameParams, WorkspaceEdit, void, TextDocumentRegistrationOptions>('textDocument/rename');
+	export const type = new RequestType<RenameParams, WorkspaceEdit | null, void, TextDocumentRegistrationOptions>('textDocument/rename');
 }
 
 //---- Document Links ----------------------------------------------
@@ -1534,7 +1534,7 @@ export interface ExecuteCommandRegistrationOptions extends ExecuteCommandOptions
  * a workspace edit which the client will apply to the workspace.
  */
 export namespace ExecuteCommandRequest {
-	export const type = new RequestType<ExecuteCommandParams, any, void, ExecuteCommandRegistrationOptions>('workspace/executeCommand');
+	export const type = new RequestType<ExecuteCommandParams, any | null, void, ExecuteCommandRegistrationOptions>('workspace/executeCommand');
 }
 
 //---- Apply Edit request ----------------------------------------
