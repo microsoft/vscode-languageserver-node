@@ -7,6 +7,13 @@
 
 /**
  * Position in a text document expressed as zero-based line and character offset.
+ * The offsets are based on a UTF-16 string representation. So a string of the form
+ * `a𐐀b` the character offset of the character `a` is 0, the character offset of `𐐀`
+ * is 1 and the character offset of b is 3 since `𐐀` is represented using two code
+ * units in UTF-16.
+ *
+ * Positions are line end character agnostic. So you can not specifiy a position that
+ * denotes `\r|\n` or `\n|` where `|` represents the character offset.
  */
 export interface Position {
 	/**
@@ -17,14 +24,10 @@ export interface Position {
 	/**
 	 * Character offset on a line in a document (zero-based). Assuming that the line is
 	 * represented as a string, the `character` value represents the gap between the
-	 * `character` and `character + 1`. Given the following line: 'a𐐀c', character 0 is
-	 * the gap between the start of the start and 'a' ('|a𐐀c'), character 1 is the gap
-	 * between 'a' and '𐐀' ('a|𐐀c') and character 2 is the gap between '𐐀' and 'b' ('a𐐀|c').
+	 * `character` and `character + 1`.
 	 *
-	 * The string 'a𐐀c' consist of 3 characters with valid character values being 0, 1, 2, 3
-	 * for that string. Note that the string encoded in UTF-16 is encoded using 4 code units
-	 * (the 𐐀 is encoded using two code units). The character offset is therefore encoding
-	 * independent.
+	 * If the character value is greater than the line length it defaults back to the
+	 * line length.
 	 */
 	character: number;
 }
@@ -53,6 +56,16 @@ export namespace Position {
 
 /**
  * A range in a text document expressed as (zero-based) start and end positions.
+ *
+ * If you want to specify a range that contains a line including the line ending
+ * caharacter(s) then use an end poosition denoting the start of the next line.
+ * For example:
+ * ```ts
+ * {
+ *     start: { line: 5, character: 23 }
+ *     end : { line 6, character : 0 }
+ * }
+ * ```
  */
 export interface Range {
 	/**
