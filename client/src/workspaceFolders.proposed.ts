@@ -4,12 +4,21 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
+import * as UUID from './utils/uuid';
+
 import { workspace, Disposable, WorkspaceFolder as VWorkspaceFolder, WorkspaceFoldersChangeEvent as VWorkspaceFoldersChangeEvent } from 'vscode';
 
 import { DynamicFeature, RegistrationData, BaseLanguageClient, NextSignature } from './client';
 import {
-	ClientCapabilities, InitializedParams, Proposed, RPCMessageType, CancellationToken
+	ClientCapabilities, InitializedParams, Proposed, RPCMessageType, CancellationToken, ServerCapabilities
 } from 'vscode-languageserver-protocol';
+
+function access<T, K extends keyof T>(target: T | undefined, key: K): T[K] | undefined {
+	if (target === void 0) {
+		return undefined;
+	}
+	return target[key];
+}
 
 export interface WorkspaceFolderMiddleware {
 	workspace?: {
@@ -48,10 +57,10 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
 		capabilities.workspace = capabilities.workspace || {};
 		let workspaceCapabilities = capabilities as Proposed.WorkspaceFoldersClientCapabilities;
-		workspaceCapabilities.workspace.workspaceFolders = true;
+		workspaceCapabilities.workspace!.workspaceFolders = true;
 	}
 
-	public initialize(): void {
+	public initialize(capabilities: ServerCapabilities): void {
 		let client = this._client;
 		client.onRequest(Proposed.WorkspaceFoldersRequest.type, (token: CancellationToken) => {
 			let workspaceFolders: Proposed.WorkspaceFoldersRequest.HandlerSignature = () => {
@@ -69,6 +78,19 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 				? middleware.workspaceFolders(token, workspaceFolders)
 				: workspaceFolders(token);
 		});
+		let value = access(access((capabilities as Proposed.WorkspaceFoldersServerCapabilities), 'workspace'), 'workspaceFoldersChangeNotification');
+		let id: string | undefined;
+		if (typeof value === 'string') {
+			id = value;
+		} else if (value === true) {
+			id = UUID.generateUuid();
+		}
+		if (id) {
+			this.register(this.messages, {
+				id: id,
+				registerOptions: undefined
+			});
+		}
 	}
 
 	public register(_message: RPCMessageType, data: RegistrationData<undefined>): void {

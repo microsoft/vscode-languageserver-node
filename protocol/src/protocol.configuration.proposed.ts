@@ -14,7 +14,7 @@ export interface ConfigurationClientCapabilities {
 	/**
 	 * The workspace client capabilities
 	 */
-	workspace: {
+	workspace?: {
 		/**
 		* The client supports `workspace/configuration` requests.
 		*/

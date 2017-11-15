@@ -29,7 +29,7 @@ export class ConfigurationFeature implements StaticFeature {
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
 		capabilities.workspace = capabilities.workspace || {};
 		let configCapabilities = capabilities as Proposed.ConfigurationClientCapabilities;
-		configCapabilities.workspace.configuration = true;
+		configCapabilities.workspace!.configuration = true;
 	}
 
 	public initialize(): void {
