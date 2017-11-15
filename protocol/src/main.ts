@@ -50,6 +50,7 @@ export namespace Proposed {
 
 	export type WorkspaceFoldersInitializeParams = InitializeParams & folders.WorkspaceFoldersInitializeParams;
 	export type WorkspaceFoldersClientCapabilities = folders.WorkspaceFoldersClientCapabilities;
+	export type WorkspaceFoldersServerCapabilities = folders.WorkspaceFoldersServerCapabilities;
 	export type WorkspaceFolder = folders.WorkspaceFolder;
 	export type WorkspaceFoldersChangeEvent = folders.WorkspaceFoldersChangeEvent;
 	export type DidChangeWorkspaceFoldersParams = folders.DidChangeWorkspaceFoldersParams;
