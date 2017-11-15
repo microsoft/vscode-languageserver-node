@@ -78,7 +78,7 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 				? middleware.workspaceFolders(token, workspaceFolders)
 				: workspaceFolders(token);
 		});
-		let value = access(access((capabilities as Proposed.WorkspaceFoldersServerCapabilities), 'workspace'), 'workspaceFoldersChangeNotification');
+		let value = access(access(access((capabilities as Proposed.WorkspaceFoldersServerCapabilities), 'workspace'), 'workspaceFolders'), 'changeNotifications');
 		let id: string | undefined;
 		if (typeof value === 'string') {
 			id = value;
