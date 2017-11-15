@@ -681,17 +681,17 @@ class RemoteWindowImpl implements RemoteWindow {
 	public fillServerCapabilities(_capabilities: ServerCapabilities): void {
 	}
 
-	public showErrorMessage(message: string, ...actions: MessageActionItem[]): Thenable<MessageActionItem> {
+	public showErrorMessage(message: string, ...actions: MessageActionItem[]): Thenable<MessageActionItem | null> {
 		let params: ShowMessageRequestParams = { type: MessageType.Error, message, actions };
 		return this._connection.sendRequest(ShowMessageRequest.type, params);
 	}
 
-	public showWarningMessage(message: string, ...actions: MessageActionItem[]): Thenable<MessageActionItem> {
+	public showWarningMessage(message: string, ...actions: MessageActionItem[]): Thenable<MessageActionItem | null> {
 		let params: ShowMessageRequestParams = { type: MessageType.Warning, message, actions };
 		return this._connection.sendRequest(ShowMessageRequest.type, params);
 	}
 
-	public showInformationMessage(message: string, ...actions: MessageActionItem[]): Thenable<MessageActionItem> {
+	public showInformationMessage(message: string, ...actions: MessageActionItem[]): Thenable<MessageActionItem | null> {
 		let params: ShowMessageRequestParams = { type: MessageType.Info, message, actions };
 		return this._connection.sendRequest(ShowMessageRequest.type, params);
 	}
