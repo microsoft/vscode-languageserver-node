@@ -56,14 +56,7 @@ workspace: {
 
 _Model_:
 
-```ts
-/**
- * The actual configured workspace folders.
- */
-workspaceFolders: WorkspaceFolder[] | null;
-```
-
-where a `WorkspaceFolder` is defined as follows:
+`WorkspaceFolder` is defined as follows:
 
 ```ts
 export interface WorkspaceFolder {
