@@ -1209,7 +1209,7 @@ export interface CompletionRegistrationOptions extends TextDocumentRegistrationO
  */
 export namespace CompletionTriggerKind {
 	/**
-	 * Completion was triggered by invoking it manuall or using API.
+	 * Completion was triggered by invoking it manually or using API.
 	 */
 	export const Invoked: 1 = 1;
 
