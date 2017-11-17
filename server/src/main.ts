@@ -103,6 +103,13 @@ function setupExitTimer(): void {
 }
 setupExitTimer();
 
+function null2Undefined<T>(value: T | null): T | undefined {
+	if (value === null) {
+		return void 0;
+	}
+	return value;
+}
+
 interface ConnectionState {
 	__textDocumentSync: TextDocumentSyncKind | undefined;
 }
@@ -409,7 +416,7 @@ export interface RemoteWindow extends Remote {
 	 * @param message The message to show.
 	 */
 	showErrorMessage(message: string): void;
-	showErrorMessage<T extends MessageActionItem>(message: string, ...actions: T[]): Thenable<T>;
+	showErrorMessage<T extends MessageActionItem>(message: string, ...actions: T[]): Thenable<T | undefined>;
 
 	/**
 	 * Show a warning message.
@@ -417,7 +424,7 @@ export interface RemoteWindow extends Remote {
 	 * @param message The message to show.
 	 */
 	showWarningMessage(message: string): void;
-	showWarningMessage<T extends MessageActionItem>(message: string, ...actions: T[]): Thenable<T>;
+	showWarningMessage<T extends MessageActionItem>(message: string, ...actions: T[]): Thenable<T | undefined>;
 
 	/**
 	 * Show an information message.
@@ -425,7 +432,7 @@ export interface RemoteWindow extends Remote {
 	 * @param message The message to show.
 	 */
 	showInformationMessage(message: string): void;
-	showInformationMessage<T extends MessageActionItem>(message: string, ...actions: T[]): Thenable<T>;
+	showInformationMessage<T extends MessageActionItem>(message: string, ...actions: T[]): Thenable<T | undefined>;
 }
 
 /**
@@ -681,19 +688,19 @@ class RemoteWindowImpl implements RemoteWindow {
 	public fillServerCapabilities(_capabilities: ServerCapabilities): void {
 	}
 
-	public showErrorMessage(message: string, ...actions: MessageActionItem[]): Thenable<MessageActionItem | null> {
+	public showErrorMessage(message: string, ...actions: MessageActionItem[]): Thenable<MessageActionItem | undefined> {
 		let params: ShowMessageRequestParams = { type: MessageType.Error, message, actions };
-		return this._connection.sendRequest(ShowMessageRequest.type, params);
+		return this._connection.sendRequest(ShowMessageRequest.type, params).then(null2Undefined);
 	}
 
-	public showWarningMessage(message: string, ...actions: MessageActionItem[]): Thenable<MessageActionItem | null> {
+	public showWarningMessage(message: string, ...actions: MessageActionItem[]): Thenable<MessageActionItem | undefined> {
 		let params: ShowMessageRequestParams = { type: MessageType.Warning, message, actions };
-		return this._connection.sendRequest(ShowMessageRequest.type, params);
+		return this._connection.sendRequest(ShowMessageRequest.type, params).then(null2Undefined);
 	}
 
-	public showInformationMessage(message: string, ...actions: MessageActionItem[]): Thenable<MessageActionItem | null> {
+	public showInformationMessage(message: string, ...actions: MessageActionItem[]): Thenable<MessageActionItem | undefined> {
 		let params: ShowMessageRequestParams = { type: MessageType.Info, message, actions };
-		return this._connection.sendRequest(ShowMessageRequest.type, params);
+		return this._connection.sendRequest(ShowMessageRequest.type, params).then(null2Undefined);
 	}
 }
 
@@ -1141,7 +1148,7 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onHover(handler: RequestHandler<TextDocumentPositionParams, Hover, void>): void;
+	onHover(handler: RequestHandler<TextDocumentPositionParams, Hover | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the `Completion` request.
@@ -1162,7 +1169,7 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onSignatureHelp(handler: RequestHandler<TextDocumentPositionParams, SignatureHelp, void>): void;
+	onSignatureHelp(handler: RequestHandler<TextDocumentPositionParams, SignatureHelp | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the `Definition` request.
@@ -1249,7 +1256,7 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onRenameRequest(handler: RequestHandler<RenameParams, WorkspaceEdit, void>): void;
+	onRenameRequest(handler: RequestHandler<RenameParams, WorkspaceEdit | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the document links request.
@@ -1270,7 +1277,7 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onExecuteCommand(handler: RequestHandler<ExecuteCommandParams, any, void>): void;
+	onExecuteCommand(handler: RequestHandler<ExecuteCommandParams, any | undefined | null, void>): void;
 
 	/**
 	 * Disposes the connection
