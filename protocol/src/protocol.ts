@@ -1073,7 +1073,7 @@ export namespace WillSaveTextDocumentNotification {
  * reliable.
  */
 export namespace WillSaveTextDocumentWaitUntilRequest {
-	export const type = new RequestType<WillSaveTextDocumentParams, TextEdit[], void, TextDocumentRegistrationOptions>('textDocument/willSaveWaitUntil');
+	export const type = new RequestType<WillSaveTextDocumentParams, TextEdit[] | null, void, TextDocumentRegistrationOptions>('textDocument/willSaveWaitUntil');
 }
 
 //---- File eventing ----
@@ -1256,7 +1256,7 @@ export interface CompletionParams extends TextDocumentPositionParams {
  * or a Thenable that resolves to such.
  */
 export namespace CompletionRequest {
-	export const type = new RequestType<CompletionParams, CompletionItem[] | CompletionList, void, CompletionRegistrationOptions>('textDocument/completion');
+	export const type = new RequestType<CompletionParams, CompletionItem[] | CompletionList | null, void, CompletionRegistrationOptions>('textDocument/completion');
 }
 
 /**
@@ -1300,7 +1300,7 @@ export namespace SignatureHelpRequest {
  * Thenable that resolves to such.
  */
 export namespace DefinitionRequest {
-	export const type = new RequestType<TextDocumentPositionParams, Definition, void, TextDocumentRegistrationOptions>('textDocument/definition');
+	export const type = new RequestType<TextDocumentPositionParams, Definition | null, void, TextDocumentRegistrationOptions>('textDocument/definition');
 }
 
 //---- Reference Provider ----------------------------------
@@ -1319,7 +1319,7 @@ export interface ReferenceParams extends TextDocumentPositionParams {
  * [Location[]](#Location) or a Thenable that resolves to such.
  */
 export namespace ReferencesRequest {
-	export const type = new RequestType<ReferenceParams, Location[], void, TextDocumentRegistrationOptions>('textDocument/references');
+	export const type = new RequestType<ReferenceParams, Location[] | null, void, TextDocumentRegistrationOptions>('textDocument/references');
 }
 
 //---- Document Highlight ----------------------------------
@@ -1331,7 +1331,7 @@ export namespace ReferencesRequest {
  * (#DocumentHighlight) or a Thenable that resolves to such.
  */
 export namespace DocumentHighlightRequest {
-	export const type = new RequestType<TextDocumentPositionParams, DocumentHighlight[], void, TextDocumentRegistrationOptions>('textDocument/documentHighlight');
+	export const type = new RequestType<TextDocumentPositionParams, DocumentHighlight[] | null, void, TextDocumentRegistrationOptions>('textDocument/documentHighlight');
 }
 
 //---- Document Symbol Provider ---------------------------
@@ -1343,7 +1343,7 @@ export namespace DocumentHighlightRequest {
  * that resolves to such.
  */
 export namespace DocumentSymbolRequest {
-	export const type = new RequestType<DocumentSymbolParams, SymbolInformation[], void, TextDocumentRegistrationOptions>('textDocument/documentSymbol');
+	export const type = new RequestType<DocumentSymbolParams, SymbolInformation[] | null, void, TextDocumentRegistrationOptions>('textDocument/documentSymbol');
 }
 
 //---- Workspace Symbol Provider ---------------------------
@@ -1355,7 +1355,7 @@ export namespace DocumentSymbolRequest {
  * resolves to such.
  */
 export namespace WorkspaceSymbolRequest {
-	export const type = new RequestType<WorkspaceSymbolParams, SymbolInformation[], void, void>('workspace/symbol');
+	export const type = new RequestType<WorkspaceSymbolParams, SymbolInformation[] | null, void, void>('workspace/symbol');
 }
 
 //---- Code Action Provider ----------------------------------
@@ -1386,7 +1386,7 @@ export interface CodeActionParams {
  * A request to provide commands for the given text document and range.
  */
 export namespace CodeActionRequest {
-	export const type = new RequestType<CodeActionParams, Command[], void, TextDocumentRegistrationOptions>('textDocument/codeAction');
+	export const type = new RequestType<CodeActionParams, Command[] | null, void, TextDocumentRegistrationOptions>('textDocument/codeAction');
 }
 
 //---- Code Lens Provider -------------------------------------------
@@ -1411,7 +1411,7 @@ export interface CodeLensRegistrationOptions extends TextDocumentRegistrationOpt
  * A request to provide code lens for the given text document.
  */
 export namespace CodeLensRequest {
-	export const type = new RequestType<CodeLensParams, CodeLens[], void, CodeLensRegistrationOptions>('textDocument/codeLens');
+	export const type = new RequestType<CodeLensParams, CodeLens[] | null, void, CodeLensRegistrationOptions>('textDocument/codeLens');
 }
 
 /**
@@ -1439,7 +1439,7 @@ export interface DocumentFormattingParams {
  * A request to to format a whole document.
  */
 export namespace DocumentFormattingRequest {
-	export const type = new RequestType<DocumentFormattingParams, TextEdit[], void, TextDocumentRegistrationOptions>('textDocument/formatting');
+	export const type = new RequestType<DocumentFormattingParams, TextEdit[] | null, void, TextDocumentRegistrationOptions>('textDocument/formatting');
 }
 
 export interface DocumentRangeFormattingParams {
@@ -1463,7 +1463,7 @@ export interface DocumentRangeFormattingParams {
  * A request to to format a range in a document.
  */
 export namespace DocumentRangeFormattingRequest {
-	export const type = new RequestType<DocumentRangeFormattingParams, TextEdit[], void, TextDocumentRegistrationOptions>('textDocument/rangeFormatting');
+	export const type = new RequestType<DocumentRangeFormattingParams, TextEdit[] | null, void, TextDocumentRegistrationOptions>('textDocument/rangeFormatting');
 }
 
 export interface DocumentOnTypeFormattingParams {
@@ -1498,7 +1498,7 @@ export interface DocumentOnTypeFormattingRegistrationOptions extends TextDocumen
  * A request to format a document on type.
  */
 export namespace DocumentOnTypeFormattingRequest {
-	export const type = new RequestType<DocumentOnTypeFormattingParams, TextEdit[], void, DocumentOnTypeFormattingRegistrationOptions>('textDocument/onTypeFormatting');
+	export const type = new RequestType<DocumentOnTypeFormattingParams, TextEdit[] | null, void, DocumentOnTypeFormattingRegistrationOptions>('textDocument/onTypeFormatting');
 }
 
 //---- Rename ----------------------------------------------
@@ -1548,7 +1548,7 @@ export interface DocumentLinkRegistrationOptions extends TextDocumentRegistratio
  * A request to provide document links
  */
 export namespace DocumentLinkRequest {
-	export const type = new RequestType<DocumentLinkParams, DocumentLink[], void, DocumentLinkRegistrationOptions>('textDocument/documentLink');
+	export const type = new RequestType<DocumentLinkParams, DocumentLink[] | null, void, DocumentLinkRegistrationOptions>('textDocument/documentLink');
 }
 
 /**
