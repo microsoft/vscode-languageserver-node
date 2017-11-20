@@ -1126,7 +1126,7 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onWillSaveTextDocumentWaitUntil(handler: RequestHandler<WillSaveTextDocumentParams, TextEdit[], void>): void;
+	onWillSaveTextDocumentWaitUntil(handler: RequestHandler<WillSaveTextDocumentParams, TextEdit[] | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the `DidSaveTextDocument` notification.
@@ -1155,7 +1155,7 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCompletion(handler: RequestHandler<TextDocumentPositionParams, CompletionItem[] | CompletionList, void>): void;
+	onCompletion(handler: RequestHandler<TextDocumentPositionParams, CompletionItem[] | CompletionList | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the `CompletionResolve` request.
@@ -1176,42 +1176,42 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDefinition(handler: RequestHandler<TextDocumentPositionParams, Definition, void>): void;
+	onDefinition(handler: RequestHandler<TextDocumentPositionParams, Definition | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the `References` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onReferences(handler: RequestHandler<ReferenceParams, Location[], void>): void;
+	onReferences(handler: RequestHandler<ReferenceParams, Location[] | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the `DocumentHighlight` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentHighlight(handler: RequestHandler<TextDocumentPositionParams, DocumentHighlight[], void>): void;
+	onDocumentHighlight(handler: RequestHandler<TextDocumentPositionParams, DocumentHighlight[] | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the `DocumentSymbol` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentSymbol(handler: RequestHandler<DocumentSymbolParams, SymbolInformation[], void>): void;
+	onDocumentSymbol(handler: RequestHandler<DocumentSymbolParams, SymbolInformation[] | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the `WorkspaceSymbol` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onWorkspaceSymbol(handler: RequestHandler<WorkspaceSymbolParams, SymbolInformation[], void>): void;
+	onWorkspaceSymbol(handler: RequestHandler<WorkspaceSymbolParams, SymbolInformation[] | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the `CodeAction` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCodeAction(handler: RequestHandler<CodeActionParams, Command[], void>): void;
+	onCodeAction(handler: RequestHandler<CodeActionParams, Command[] | undefined | null, void>): void;
 
 	/**
 	 * Compute a list of [lenses](#CodeLens). This call should return as fast as possible and if
@@ -1220,7 +1220,7 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCodeLens(handler: RequestHandler<CodeLensParams, CodeLens[], void>): void;
+	onCodeLens(handler: RequestHandler<CodeLensParams, CodeLens[] | undefined | null, void>): void;
 
 	/**
 	 * This function will be called for each visible code lens, usually when scrolling and after
@@ -1235,21 +1235,21 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentFormatting(handler: RequestHandler<DocumentFormattingParams, TextEdit[], void>): void;
+	onDocumentFormatting(handler: RequestHandler<DocumentFormattingParams, TextEdit[] | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the document range formatting request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentRangeFormatting(handler: RequestHandler<DocumentRangeFormattingParams, TextEdit[], void>): void;
+	onDocumentRangeFormatting(handler: RequestHandler<DocumentRangeFormattingParams, TextEdit[] | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the document on type formatting request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentOnTypeFormatting(handler: RequestHandler<DocumentOnTypeFormattingParams, TextEdit[], void>): void;
+	onDocumentOnTypeFormatting(handler: RequestHandler<DocumentOnTypeFormattingParams, TextEdit[] | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the rename request.
@@ -1263,14 +1263,14 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentLinks(handler: RequestHandler<DocumentLinkParams, DocumentLink[], void>): void;
+	onDocumentLinks(handler: RequestHandler<DocumentLinkParams, DocumentLink[] | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the document links resolve request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentLinkResolve(handler: RequestHandler<DocumentLink, DocumentLink, void>): void;
+	onDocumentLinkResolve(handler: RequestHandler<DocumentLink, DocumentLink | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the execute command request.
