@@ -973,7 +973,8 @@ class WillSaveWaitUntilFeature implements DynamicFeature<TextDocumentRegistratio
 			let willSaveWaitUntil = (event: TextDocumentWillSaveEvent): Thenable<VTextEdit[]> => {
 				return this._client.sendRequest(WillSaveTextDocumentWaitUntilRequest.type,
 					this._client.code2ProtocolConverter.asWillSaveTextDocumentParams(event)).then((edits) => {
-						return this._client.protocol2CodeConverter.asTextEdits(edits);
+						let vEdits = this._client.protocol2CodeConverter.asTextEdits(edits);
+						return vEdits === void 0 ? [] : vEdits;
 					});
 			};
 			event.waitUntil(
