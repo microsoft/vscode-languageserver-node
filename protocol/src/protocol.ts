@@ -1263,6 +1263,11 @@ export interface CompletionParams extends TextDocumentPositionParams {
  * parameter is of type [TextDocumentPosition](#TextDocumentPosition) the response
  * is of type [CompletionItem[]](#CompletionItem) or [CompletionList](#CompletionList)
  * or a Thenable that resolves to such.
+ *
+ * The request can delay the computation of the [`detail`](#CompletionItem.detail)
+ * and [`documentation`](#CompletionItem.documentation) properties to the `completionItem/resolve`
+ * request. However, properties that are needed for the inital sorting and filtering, like `sortText`,
+ * `filterText`, `insertText`, and `textEdit`, must not be changed during resolve.
  */
 export namespace CompletionRequest {
 	export const type = new RequestType<CompletionParams, CompletionItem[] | CompletionList | null, void, CompletionRegistrationOptions>('textDocument/completion');
