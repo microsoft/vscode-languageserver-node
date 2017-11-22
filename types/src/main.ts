@@ -766,9 +766,18 @@ export interface CompletionItem {
 	filterText?: string;
 
 	/**
-	 * A string that should be inserted a document when selecting
+	 * A string that should be inserted into a document when selecting
 	 * this completion. When `falsy` the [label](#CompletionItem.label)
 	 * is used.
+	 *
+	 * The `insertText` is subject to interpretation by the client side.
+	 * Some tools might not take the string litteraly. For example
+	 * VS Code when code complete is requested in this example `con<cursor position>`
+	 * and a completion item with and `insertText` of `console` is provided it
+	 * will only insert `sole`. Therefore it is recommended to use `textEdit` instead
+	 * since it avoids additional client side interpretation.
+	 *
+	 * @deprecated Use textEdit instead.
 	 */
 	insertText?: string;
 
@@ -782,6 +791,9 @@ export interface CompletionItem {
 	 * An [edit](#TextEdit) which is applied to a document when selecting
 	 * this completion. When an edit is provided the value of
 	 * [insertText](#CompletionItem.insertText) is ignored.
+	 *
+	 * *Note:* The text edit's range must be a [single line] and it must contain the position
+	 * at which completion has been requested.
 	 */
 	textEdit?: TextEdit;
 
