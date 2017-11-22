@@ -1117,8 +1117,9 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	/**
 	 * Installs a handler for the `WillSaveTextDocument` notification.
 	 *
-	 * Note that this notification will not be sent unless your server has the 
-	 * `textDocumentSync.willSave` capability.
+	 * Note that this notification is opt-in. The client will not send it unless
+	 * your server has the `textDocumentSync.willSave` capability or you've
+	 * dynamically registered for the `textDocument/willSave` method.
 	 *
 	 * @param handler The corresponding handler.
 	 */
@@ -1127,8 +1128,10 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	/**
 	 * Installs a handler for the `WillSaveTextDocumentWaitUntil` request.
 	 *
-	 * Note that this request will not be sent unless your server has the 
-	 * `textDocumentSync.willSaveWaitUntil` capability.
+	 * Note that this request is opt-in. The client will not send it unless
+	 * your server has the `textDocumentSync.willSaveWaitUntil` capability,
+	 * or you've dynamically registered for the `textDocument/willSaveWaitUntil`
+	 * method.
 	 *
 	 * @param handler The corresponding handler.
 	 */
