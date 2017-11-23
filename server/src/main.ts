@@ -1115,14 +1115,23 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	onDidCloseTextDocument(handler: NotificationHandler<DidCloseTextDocumentParams>): void;
 
 	/**
-	 * Installs a handler for the `DidSaveTextDocument` notification.
+	 * Installs a handler for the `WillSaveTextDocument` notification.
+	 *
+	 * Note that this notification is opt-in. The client will not send it unless
+	 * your server has the `textDocumentSync.willSave` capability or you've
+	 * dynamically registered for the `textDocument/willSave` method.
 	 *
 	 * @param handler The corresponding handler.
 	 */
 	onWillSaveTextDocument(handler: NotificationHandler<WillSaveTextDocumentParams>): void;
 
 	/**
-	 * Installs a handler for the `DidSaveTextDocument` notification.
+	 * Installs a handler for the `WillSaveTextDocumentWaitUntil` request.
+	 *
+	 * Note that this request is opt-in. The client will not send it unless
+	 * your server has the `textDocumentSync.willSaveWaitUntil` capability,
+	 * or you've dynamically registered for the `textDocument/willSaveWaitUntil`
+	 * method.
 	 *
 	 * @param handler The corresponding handler.
 	 */
