@@ -145,13 +145,12 @@ export interface TextDocumentPositionParams {
  * Describes the content type that a client supports in various
  * result literals like `Hover`, `ParameterInfo` or `CompletionItem`
  */
-export namespace ContentFormats {
+export namespace ContentFormat {
 	/**
 	 * Markdown is supported as a content format
 	 */
 	export const Markdown: 1 = 1;
 }
-export type ContentFormats = 1;
 
 /**
  * Workspace specific client capabilities.
@@ -284,7 +283,7 @@ export interface TextDocumentClientCapabilities {
 			/**
 			 * Client supports the follow content formats for the documentation
 			 * property beside plain text. The value must be an or value of the
-			 * constants defined in `ContentFormats`.
+			 * constants defined in `ContentFormat`.
 			 */
 			documentationFormat?: number;
 		}
@@ -323,7 +322,7 @@ export interface TextDocumentClientCapabilities {
 			/**
 			 * Client supports the follow content formats for the documentation
 			 * property beside plain text. The value must be an OR value of the
-			 * constants defined in `ContentFormats`. The documentation format
+			 * constants defined in `ContentFormat`. The documentation format
 			 * also applies to the embedded `ParameterInformation` literal.
 			 */
 			documentationFormat?: number;

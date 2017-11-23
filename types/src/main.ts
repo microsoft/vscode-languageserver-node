@@ -670,8 +670,9 @@ export namespace TextDocumentItem {
 }
 
 /**
- * A `MarkdownContent` literal represents a string value which content is interpreted as markdown. The string
- * can contain fenced code blocks like in GitHub issues. See https://help.github.com/articles/creating-and-highlighting-code-blocks/#syntax-highlighting
+ * A `MarkdownContent` literal represents a string value which content is interpreted as markdown.
+ * The string can contain fenced code blocks like in GitHub issues.
+ * See https://help.github.com/articles/creating-and-highlighting-code-blocks/#syntax-highlighting
  *
  * Here is an example how such a string can be constructed using JavaScript / TypeScript:
  * ```ts
@@ -685,6 +686,9 @@ export namespace TextDocumentItem {
  *	].join('\n')
  * };
  * ```
+ *
+ * *Please Note* that clients might sanatize the return markdown. A client could decide to
+ * remove HTML from the markdown to avoid script execution.
  */
 export interface MarkdownContent {
 	value: string;
