@@ -183,7 +183,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return code.DiagnosticSeverity.Error;
 	}
 
-	function asMarkdownString(value: ls.MarkedString | ls.MarkedString[] | ls.MarkdownContent): code.MarkdownString {
+	function asMarkdownString(value: ls.MarkedString | ls.MarkedString[] | ls.MarkupContent): code.MarkdownString {
 		if (Is.string(value)) {
 			return new code.MarkdownString(value);
 		} else if (CodeBlock.is(value)) {
@@ -204,10 +204,13 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		}
 	}
 
-	function asDocumentation(value: string | ls.MarkdownContent): string | code.MarkdownString {
+	function asDocumentation(value: string | ls.MarkupContent): string | code.MarkdownString {
 		if (Is.string(value)) {
 			return value;
 		} else {
+			if (value.kind !== ls.MarkupKind.Markdown) {
+				return `Unsupported Markup content received. Kind is: ${ls.MarkupKind.toString(value.kind)}`;
+			}
 			return new code.MarkdownString(value.value);
 		}
 	}

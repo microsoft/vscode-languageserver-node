@@ -142,17 +142,6 @@ export interface TextDocumentPositionParams {
 //---- Initialize Method ----
 
 /**
- * Describes the content type that a client supports in various
- * result literals like `Hover`, `ParameterInfo` or `CompletionItem`
- */
-export namespace ContentFormat {
-	/**
-	 * Markdown is supported as a content format
-	 */
-	export const Markdown: 1 = 1;
-}
-
-/**
  * Workspace specific client capabilities.
  */
 export interface WorkspaceClientCapabilities {

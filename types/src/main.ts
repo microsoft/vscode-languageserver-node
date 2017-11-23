@@ -670,6 +670,27 @@ export namespace TextDocumentItem {
 }
 
 /**
+ * Describes the content type that a client supports in various
+ * result literals like `Hover`, `ParameterInfo` or `CompletionItem`
+ */
+export namespace MarkupKind {
+	/**
+	 * Markdown is supported as a content format
+	 */
+	export const Markdown: 1 = 1;
+
+	export function toString(kind: MarkupKind) {
+		switch(kind) {
+			case Markdown:
+				return 'Markdown';
+			default:
+				return `unknown: ${kind}`
+		}
+	}
+}
+export type MarkupKind = 1;
+
+/**
  * A `MarkdownContent` literal represents a string value which content is interpreted as markdown.
  * The string can contain fenced code blocks like in GitHub issues.
  * See https://help.github.com/articles/creating-and-highlighting-code-blocks/#syntax-highlighting
@@ -677,6 +698,7 @@ export namespace TextDocumentItem {
  * Here is an example how such a string can be constructed using JavaScript / TypeScript:
  * ```ts
  * let markdown: MarkdownContent = {
+ *  type: MarkupType.Markdown,
  *	value: [
  *		'# Header',
  *		'Some text',
@@ -690,7 +712,15 @@ export namespace TextDocumentItem {
  * *Please Note* that clients might sanatize the return markdown. A client could decide to
  * remove HTML from the markdown to avoid script execution.
  */
-export interface MarkdownContent {
+export interface MarkupContent {
+	/**
+	 * The type of the Markup
+	 */
+	kind: MarkupKind;
+
+	/**
+	 * The content itself
+	 */
 	value: string;
 }
 
@@ -774,7 +804,7 @@ export interface CompletionItem {
 	/**
 	 * A human-readable string that represents a doc-comment.
 	 */
-	documentation?: string | MarkdownContent;
+	documentation?: string | MarkupContent;
 
 	/**
 	 * A string that shoud be used when comparing this item
@@ -931,7 +961,7 @@ export interface Hover {
 	/**
 	 * The hover's content
 	 */
-	contents: MarkdownContent | MarkedString | MarkedString[];
+	contents: MarkupContent | MarkedString | MarkedString[];
 
 	/**
 	 * An optional range
@@ -954,7 +984,7 @@ export interface ParameterInformation {
 	 * The human-readable doc-comment of this signature. Will be shown
 	 * in the UI but can be omitted.
 	 */
-	documentation?: string | MarkdownContent;
+	documentation?: string | MarkupContent;
 }
 
 /**
@@ -989,7 +1019,7 @@ export interface SignatureInformation {
 	 * The human-readable doc-comment of this signature. Will be shown
 	 * in the UI but can be omitted.
 	 */
-	documentation?: string | MarkdownContent;
+	documentation?: string | MarkupContent;
 
 	/**
 	 * The parameters of this signature.
