@@ -93,7 +93,9 @@ suite('Protocol Converter', () => {
 		};
 
 		let result = p2c.asHover(hover);
-		deepEqual(result.contents, ['hover']);
+		strictEqual(result.contents.length, 1);
+		ok(result.contents[0] instanceof vscode.MarkdownString)
+		strictEqual((result.contents[0] as vscode.MarkdownString).value, 'hover');
 		strictEqual(result.range, undefined);
 
 		hover.range = {
