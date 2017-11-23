@@ -52,7 +52,8 @@ import {
 	RenameRequest, RenameParams,
 	DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkRegistrationOptions,
 	ExecuteCommandRequest, ExecuteCommandParams, ExecuteCommandRegistrationOptions,
-	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse
+	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse,
+	ContentFormats
 } from 'vscode-languageserver-protocol';
 
 import * as c2p from './codeConverter';
@@ -1226,7 +1227,7 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionRegistrationOp
 		let completion = ensure(ensure(capabilites, 'textDocument')!, 'completion')!;
 		completion.dynamicRegistration = true;
 		completion.contextSupport = true;
-		completion.completionItem = { snippetSupport: true, commitCharactersSupport: true };
+		completion.completionItem = { snippetSupport: true, commitCharactersSupport: true, documentationFormat: ContentFormats.Markdown };
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
@@ -1328,7 +1329,9 @@ class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpRegistration
 	}
 
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		ensure(ensure(capabilites, 'textDocument')!, 'signatureHelp')!.dynamicRegistration = true;
+		let config = ensure(ensure(capabilites, 'textDocument')!, 'signatureHelp')!;
+		config.dynamicRegistration = true;
+		config.signatureInformation = { documentationFormat: ContentFormats.Markdown };
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {

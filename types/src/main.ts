@@ -670,6 +670,27 @@ export namespace TextDocumentItem {
 }
 
 /**
+ * A `MarkdownContent` literal represents a string value which content is interpreted as markdown. The string
+ * can contain fenced code blocks like in GitHub issues. See https://help.github.com/articles/creating-and-highlighting-code-blocks/#syntax-highlighting
+ *
+ * Here is an example how such a string can be constructed using JavaScript / TypeScript:
+ * ```ts
+ * let markdown: MarkdownContent = {
+ *	value: [
+ *		'# Header',
+ *		'Some text',
+ *		'```typescript',
+ *		'someCode();',
+ *		'```'
+ *	].join('\n')
+ * };
+ * ```
+ */
+export interface MarkdownContent {
+	value: string;
+}
+
+/**
  * The kind of a completion entry.
  */
 export namespace CompletionItemKind {
@@ -749,7 +770,7 @@ export interface CompletionItem {
 	/**
 	 * A human-readable string that represents a doc-comment.
 	 */
-	documentation?: string;
+	documentation?: string | MarkdownContent;
 
 	/**
 	 * A string that shoud be used when comparing this item
@@ -884,6 +905,7 @@ export namespace CompletionList {
  * ```
  *
  * Note that markdown strings will be sanitized - that means html will be escaped.
+ * @deprecated use MarkdownString instead.
  */
 export type MarkedString = string | { language: string; value: string };
 
@@ -893,7 +915,7 @@ export namespace MarkedString {
 	 *
 	 * @param plainText The plain text.
 	 */
-	export function fromPlainText(plainText: string): MarkedString {
+	export function fromPlainText(plainText: string): string {
 		return plainText.replace(/[\\`*_{}[\]()#+\-.!]/g, "\\$&"); // escape markdown syntax tokens: http://daringfireball.net/projects/markdown/syntax#backslash
 	}
 }
@@ -905,7 +927,7 @@ export interface Hover {
 	/**
 	 * The hover's content
 	 */
-	contents: MarkedString | MarkedString[];
+	contents: MarkdownContent | MarkedString | MarkedString[];
 
 	/**
 	 * An optional range
@@ -928,7 +950,7 @@ export interface ParameterInformation {
 	 * The human-readable doc-comment of this signature. Will be shown
 	 * in the UI but can be omitted.
 	 */
-	documentation?: string;
+	documentation?: string | MarkdownContent;
 }
 
 /**
@@ -963,7 +985,7 @@ export interface SignatureInformation {
 	 * The human-readable doc-comment of this signature. Will be shown
 	 * in the UI but can be omitted.
 	 */
-	documentation?: string;
+	documentation?: string | MarkdownContent;
 
 	/**
 	 * The parameters of this signature.

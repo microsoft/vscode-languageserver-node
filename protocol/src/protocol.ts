@@ -142,9 +142,20 @@ export interface TextDocumentPositionParams {
 //---- Initialize Method ----
 
 /**
+ * Describes the content type that a client supports in various
+ * result literals like `Hover`, `ParameterInfo` or `CompletionItem`
+ */
+export namespace ContentFormats {
+	/**
+	 * Markdown is supported as a content format
+	 */
+	export const Markdown: 1 = 1;
+}
+export type ContentFormats = 1;
+
+/**
  * Workspace specific client capabilities.
  */
-
 export interface WorkspaceClientCapabilities {
 	/**
 	 * The client supports applying batch edits
@@ -269,6 +280,13 @@ export interface TextDocumentClientCapabilities {
 			 * Client supports commit characters on a completion item.
 			 */
 			commitCharactersSupport?: boolean
+
+			/**
+			 * Client supports the follow content formats for the documentation
+			 * property beside plain text. The value must be an or value of the
+			 * constants defined in `ContentFormats`.
+			 */
+			documentationFormat?: number;
 		}
 
 		/**
@@ -296,6 +314,20 @@ export interface TextDocumentClientCapabilities {
 		 * Whether signature help supports dynamic registration.
 		 */
 		dynamicRegistration?: boolean;
+
+		/**
+		 * The client supports the following `SignatureInformation`
+		 * specific properties.
+		 */
+		signatureInformation?: {
+			/**
+			 * Client supports the follow content formats for the documentation
+			 * property beside plain text. The value must be an OR value of the
+			 * constants defined in `ContentFormats`. The documentation format
+			 * also applies to the embedded `ParameterInformation` literal.
+			 */
+			documentationFormat?: number;
+		};
 	};
 
 	/**

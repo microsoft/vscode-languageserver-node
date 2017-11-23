@@ -6,7 +6,7 @@
 
 import * as code from 'vscode';
 import * as ls from 'vscode-languageserver-protocol';
-import * as is from './utils/is';
+import * as Is from './utils/is';
 import ProtocolCompletionItem from './protocolCompletionItem';
 import ProtocolCodeLens from './protocolCodeLens';
 
@@ -113,6 +113,18 @@ export interface URIConverter {
 	(value: string): code.Uri;
 }
 
+interface CodeFenceBlock {
+	language: string;
+	value: string;
+}
+
+namespace CodeBlock {
+	export function is(value: any): value is CodeFenceBlock {
+		let candidate: CodeFenceBlock = value;
+		return candidate && Is.string(candidate.language) && Is.string(candidate.value);
+	}
+}
+
 export function createConverter(uriConverter?: URIConverter): Converter {
 
 	const nullConverter = (value: string) => code.Uri.parse(value);
@@ -129,7 +141,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 
 	function asDiagnostic(diagnostic: ls.Diagnostic): code.Diagnostic {
 		let result = new code.Diagnostic(asRange(diagnostic.range), diagnostic.message, asDiagnosticSeverity(diagnostic.severity));
-		if (is.number(diagnostic.code) || is.string(diagnostic.code)) { result.code = diagnostic.code; }
+		if (Is.number(diagnostic.code) || Is.string(diagnostic.code)) { result.code = diagnostic.code; }
 		if (diagnostic.source) { result.source = diagnostic.source; }
 		return result;
 	}
@@ -171,6 +183,35 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return code.DiagnosticSeverity.Error;
 	}
 
+	function asMarkdownString(value: ls.MarkedString | ls.MarkedString[] | ls.MarkdownContent): code.MarkdownString {
+		if (Is.string(value)) {
+			return new code.MarkdownString(value);
+		} else if (CodeBlock.is(value)) {
+			let result = new code.MarkdownString();
+			return result.appendCodeblock(value.value, value.language);
+		} else if (Array.isArray(value)) {
+			let result = new code.MarkdownString();
+			for (let element of value) {
+				if (CodeBlock.is(element)) {
+					result.appendCodeblock(element.value, element.language);
+				} else {
+					result.appendMarkdown(element);
+				}
+			}
+			return result;
+		} else {
+			return new code.MarkdownString(value.value);
+		}
+	}
+
+	function asDocumentation(value: string | ls.MarkdownContent): string | code.MarkdownString {
+		if (Is.string(value)) {
+			return value;
+		} else {
+			return new code.MarkdownString(value.value);
+		}
+	}
+
 	function asHover(hover: ls.Hover): code.Hover;
 	function asHover(hover: undefined | null): undefined;
 	function asHover(hover: ls.Hover | undefined | null): code.Hover | undefined;
@@ -178,7 +219,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (!hover) {
 			return undefined;
 		}
-		return new code.Hover(hover.contents, asRange(hover.range));
+		return new code.Hover(asMarkdownString(hover.contents), asRange(hover.range));
 	}
 
 	function asCompletionResult(result: ls.CompletionList): code.CompletionList;
@@ -200,7 +241,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	function asCompletionItem(item: ls.CompletionItem): ProtocolCompletionItem {
 		let result = new ProtocolCompletionItem(item.label);
 		if (item.detail) { result.detail = item.detail; }
-		if (item.documentation) { result.documentation = item.documentation };
+		if (item.documentation) { result.documentation = asDocumentation(item.documentation) };
 		if (item.filterText) { result.filterText = item.filterText; }
 		let insertText = asCompletionInsertText(item);
 		if (insertText) {
@@ -209,10 +250,10 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			result.fromEdit = insertText.fromEdit;
 		}
 		// Protocol item kind is 1 based, codes item kind is zero based.
-		if (is.number(item.kind) && item.kind > 0) { result.kind = item.kind - 1; }
+		if (Is.number(item.kind) && item.kind > 0) { result.kind = item.kind - 1; }
 		if (item.sortText) { result.sortText = item.sortText; }
 		if (item.additionalTextEdits) { result.additionalTextEdits = asTextEdits(item.additionalTextEdits); }
-		if (is.stringArray(item.commitCharacters)) { result.commitCharacters = item.commitCharacters.slice(); }
+		if (Is.stringArray(item.commitCharacters)) { result.commitCharacters = item.commitCharacters.slice(); }
 		if (item.command) { result.command = asCommand(item.command); }
 		if (item.data !== void 0 && item.data !== null) { result.data = item.data; }
 		return result;
@@ -263,13 +304,13 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			return undefined;
 		}
 		let result = new code.SignatureHelp();
-		if (is.number(item.activeSignature)) {
+		if (Is.number(item.activeSignature)) {
 			result.activeSignature = item.activeSignature;
 		} else {
 			// activeSignature was optional in the past
 			result.activeSignature = 0;
 		}
-		if (is.number(item.activeParameter)) {
+		if (Is.number(item.activeParameter)) {
 			result.activeParameter = item.activeParameter;
 		} else {
 			// activeParameter was optional in the past
@@ -285,7 +326,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 
 	function asSignatureInformation(item: ls.SignatureInformation): code.SignatureInformation {
 		let result = new code.SignatureInformation(item.label);
-		if (item.documentation) { result.documentation = item.documentation; }
+		if (item.documentation) { result.documentation = asDocumentation(item.documentation); }
 		if (item.parameters) { result.parameters = asParameterInformations(item.parameters); }
 		return result;
 	}
@@ -296,7 +337,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 
 	function asParameterInformation(item: ls.ParameterInformation): code.ParameterInformation {
 		let result = new code.ParameterInformation(item.label);
-		if (item.documentation) { result.documentation = item.documentation };
+		if (item.documentation) { result.documentation = asDocumentation(item.documentation); };
 		return result;
 	}
 
@@ -307,7 +348,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (!item) {
 			return undefined;
 		}
-		if (is.array(item)) {
+		if (Is.array(item)) {
 			return item.map((location) => asLocation(location));
 		} else {
 			return asLocation(item);
@@ -346,7 +387,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 
 	function asDocumentHighlight(item: ls.DocumentHighlight): code.DocumentHighlight {
 		let result = new code.DocumentHighlight(asRange(item.range));
-		if (is.number(item.kind)) { result.kind = asDocumentHighlightKind(item.kind); }
+		if (Is.number(item.kind)) { result.kind = asDocumentHighlightKind(item.kind); }
 		return result;
 	}
 
