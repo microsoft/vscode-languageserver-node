@@ -183,7 +183,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return code.DiagnosticSeverity.Error;
 	}
 
-	function asMarkdownString(value: ls.MarkedString | ls.MarkedString[] | ls.MarkupContent): code.MarkdownString {
+	function asHoverContent(value: ls.MarkedString | ls.MarkedString[] | ls.MarkupContent): code.MarkdownString {
 		if (Is.string(value)) {
 			return new code.MarkdownString(value);
 		} else if (CodeBlock.is(value)) {
@@ -200,7 +200,19 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			}
 			return result;
 		} else {
-			return new code.MarkdownString(value.value);
+			let result: code.MarkdownString;
+			switch (value.kind) {
+				case ls.MarkupKind.Markdown:
+					return new code.MarkdownString(value.value);
+				case ls.MarkupKind.PlainText:
+					result = new code.MarkdownString();
+					result.appendText(value.value);
+					return result;
+				default:
+					result = new code.MarkdownString();
+					result.appendText(`Unsupported Markup content received. Kind is: ${value.kind}`);
+					return result;
+			}
 		}
 	}
 
@@ -208,10 +220,14 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (Is.string(value)) {
 			return value;
 		} else {
-			if (value.kind !== ls.MarkupKind.Markdown) {
-				return `Unsupported Markup content received. Kind is: ${ls.MarkupKind.toString(value.kind)}`;
+			switch (value.kind) {
+				case ls.MarkupKind.Markdown:
+					return new code.MarkdownString(value.value);
+				case ls.MarkupKind.PlainText:
+					return value.value;
+				default:
+					return `Unsupported Markup content received. Kind is: ${value.kind}`;
 			}
-			return new code.MarkdownString(value.value);
 		}
 	}
 
@@ -222,7 +238,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (!hover) {
 			return undefined;
 		}
-		return new code.Hover(asMarkdownString(hover.contents), asRange(hover.range));
+		return new code.Hover(asHoverContent(hover.contents), asRange(hover.range));
 	}
 
 	function asCompletionResult(result: ls.CompletionList): code.CompletionList;
@@ -244,7 +260,10 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	function asCompletionItem(item: ls.CompletionItem): ProtocolCompletionItem {
 		let result = new ProtocolCompletionItem(item.label);
 		if (item.detail) { result.detail = item.detail; }
-		if (item.documentation) { result.documentation = asDocumentation(item.documentation) };
+		if (item.documentation) {
+			result.documentation = asDocumentation(item.documentation);
+			result.documentationFormat = Is.string(item.documentation) ? '$string' : item.documentation.kind;
+		};
 		if (item.filterText) { result.filterText = item.filterText; }
 		let insertText = asCompletionInsertText(item);
 		if (insertText) {

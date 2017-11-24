@@ -6,9 +6,10 @@
 
 import * as code from 'vscode';
 import * as proto from 'vscode-languageserver-protocol';
-import * as is from './utils/is';
+import * as Is from './utils/is';
 import ProtocolCompletionItem from './protocolCompletionItem';
 import ProtocolCodeLens from './protocolCodeLens';
+import { MarkdownString } from 'vscode';
 
 export interface Converter {
 
@@ -261,7 +262,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	function asDiagnostic(item: code.Diagnostic): proto.Diagnostic {
 		let result: proto.Diagnostic = proto.Diagnostic.create(asRange(item.range), item.message);
 		if (item.severity) { result.severity = asDiagnosticSeverity(item.severity); }
-		if (is.number(item.code) || is.string(item.code)) { result.code = item.code; }
+		if (Is.number(item.code) || Is.string(item.code)) { result.code = item.code; }
 		if (item.source) { result.source = item.source; }
 		return result;
 	}
@@ -273,16 +274,36 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return items.map(asDiagnostic);
 	}
 
+	function asDocumentation(format: string, documentation: string | MarkdownString): string | proto.MarkupContent {
+		switch (format) {
+			case '$string':
+				return documentation as string;
+			case proto.MarkupKind.PlainText:
+				return { kind: format, value: documentation as string };
+			case proto.MarkupKind.Markdown:
+				return { kind: format, value: (documentation as MarkdownString).value };
+			default:
+				return `Unsupported Markup content received. Kind is: ${format}`;
+		}
+	}
+
 	function asCompletionItem(item: code.CompletionItem): proto.CompletionItem {
 		let result: proto.CompletionItem = { label: item.label };
+		let protocolItem = item instanceof ProtocolCompletionItem ? item as ProtocolCompletionItem : undefined;
 		if (item.detail) { result.detail = item.detail; }
 		// We only send items back we created. So this can't be something else than
 		// a string right now.
-		if (item.documentation) { result.documentation = item.documentation as string; }
+		if (item.documentation) {
+			if (!protocolItem || protocolItem.documentationFormat === '$string') {
+				result.documentation = item.documentation as string;
+			} else {
+				result.documentation = asDocumentation(protocolItem.documentationFormat, item.documentation);
+			}
+		}
 		if (item.filterText) { result.filterText = item.filterText; }
 		fillPrimaryInsertText(result, item as ProtocolCompletionItem);
 		// Protocol item kind is 1 based, codes item kind is zero based.
-		if (is.number(item.kind)) {
+		if (Is.number(item.kind)) {
 			if (code.CompletionItemKind.Text <= item.kind && item.kind <= code.CompletionItemKind.Reference) {
 				result.kind = (item.kind + 1) as proto.CompletionItemKind;
 			} else {
@@ -293,8 +314,8 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (item.additionalTextEdits) { result.additionalTextEdits = asTextEdits(item.additionalTextEdits); }
 		if (item.commitCharacters) { result.commitCharacters = item.commitCharacters.slice(); }
 		if (item.command) { result.command = asCommand(item.command); }
-		if (item instanceof ProtocolCompletionItem && item.data) {
-			result.data = item.data;
+		if (protocolItem && protocolItem.data) {
+			result.data = protocolItem.data;
 		}
 		return result;
 	}

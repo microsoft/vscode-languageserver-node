@@ -10,6 +10,7 @@ export default class ProtocolCompletionItem extends code.CompletionItem {
 
 	public data: any;
 	public fromEdit: boolean;
+	public documentationFormat: string;
 
 	constructor(label: string) {
 		super(label);

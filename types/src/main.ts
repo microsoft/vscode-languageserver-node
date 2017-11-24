@@ -671,24 +671,23 @@ export namespace TextDocumentItem {
 
 /**
  * Describes the content type that a client supports in various
- * result literals like `Hover`, `ParameterInfo` or `CompletionItem`
+ * result literals like `Hover`, `ParameterInfo` or `CompletionItem`.
+ *
+ * Please note that `MarkupKinds` must not start with a `$`. This kinds
+ * are reserved for internal usage.
  */
 export namespace MarkupKind {
 	/**
+	 * Plain text is supported as a content format
+	 */
+	export const PlainText: 'plaintext' = 'plaintext';
+
+	/**
 	 * Markdown is supported as a content format
 	 */
-	export const Markdown: 1 = 1;
-
-	export function toString(kind: MarkupKind) {
-		switch(kind) {
-			case Markdown:
-				return 'Markdown';
-			default:
-				return `unknown: ${kind}`
-		}
-	}
+	export const Markdown: 'markdown' = 'markdown';
 }
-export type MarkupKind = 1;
+export type MarkupKind = 'plaintext' | 'markdown';
 
 /**
  * A `MarkdownContent` literal represents a string value which content is interpreted as markdown.

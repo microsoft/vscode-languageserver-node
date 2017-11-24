@@ -1227,7 +1227,7 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionRegistrationOp
 		let completion = ensure(ensure(capabilites, 'textDocument')!, 'completion')!;
 		completion.dynamicRegistration = true;
 		completion.contextSupport = true;
-		completion.completionItem = { snippetSupport: true, commitCharactersSupport: true, documentationFormat: MarkupKind.Markdown };
+		completion.completionItem = { snippetSupport: true, commitCharactersSupport: true, documentationFormat: [MarkupKind.Markdown, MarkupKind.PlainText] };
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
@@ -1331,7 +1331,7 @@ class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpRegistration
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
 		let config = ensure(ensure(capabilites, 'textDocument')!, 'signatureHelp')!;
 		config.dynamicRegistration = true;
-		config.signatureInformation = { documentationFormat: MarkupKind.Markdown };
+		config.signatureInformation = { documentationFormat: [MarkupKind.Markdown, MarkupKind.PlainText] };
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {

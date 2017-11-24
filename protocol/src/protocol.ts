@@ -14,7 +14,7 @@ import {
 	TextDocumentIdentifier, VersionedTextDocumentIdentifier, TextDocumentItem, TextDocumentSaveReason,
 	CompletionItem, CompletionList, Hover, SignatureHelp,
 	Definition, ReferenceContext, DocumentHighlight, DocumentSymbolParams,
-	SymbolInformation, CodeLens, CodeActionContext, FormattingOptions, DocumentLink
+	SymbolInformation, CodeLens, CodeActionContext, FormattingOptions, DocumentLink, MarkupKind
 } from 'vscode-languageserver-types';
 
 /**
@@ -271,10 +271,9 @@ export interface TextDocumentClientCapabilities {
 
 			/**
 			 * Client supports the follow content formats for the documentation
-			 * property beside plain text. The value must be an or value of the
-			 * constants defined in `ContentFormat`.
+			 * property. The order describes the preferred format of the client.
 			 */
-			documentationFormat?: number;
+			documentationFormat?: MarkupKind[];
 		}
 
 		/**
@@ -310,11 +309,9 @@ export interface TextDocumentClientCapabilities {
 		signatureInformation?: {
 			/**
 			 * Client supports the follow content formats for the documentation
-			 * property beside plain text. The value must be an OR value of the
-			 * constants defined in `ContentFormat`. The documentation format
-			 * also applies to the embedded `ParameterInformation` literal.
+			 * property. The order describes the preferred format of the client.
 			 */
-			documentationFormat?: number;
+			documentationFormat?: MarkupKind[];
 		};
 	};
 

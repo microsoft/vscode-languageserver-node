@@ -10,6 +10,7 @@ import * as proto from 'vscode-languageserver-protocol';
 import * as codeConverter from '../codeConverter';
 import * as protocolConverter from '../protocolConverter';
 import ProtocolCompletionItem from '../protocolCompletionItem';
+import * as Is from '../utils/is';
 
 import * as vscode from 'vscode';
 
@@ -306,6 +307,41 @@ suite('Protocol Converter', () => {
 
 		let result = c2p.asCompletionItem(p2c.asCompletionItem(completionItem));
 		strictEqual(result.data, completionItem.data);
+	});
+
+	test('Completion Item Documentation as string', () => {
+		let completionItem: proto.CompletionItem = {
+			label: 'item',
+			documentation: 'doc'
+		};
+		let result = c2p.asCompletionItem(p2c.asCompletionItem(completionItem));
+		ok(Is.string(result.documentation) && result.documentation === 'doc');
+	});
+
+	test('Completion Item Documentation as PlainText', () => {
+		let completionItem: proto.CompletionItem = {
+			label: 'item',
+			documentation: {
+				kind: proto.MarkupKind.PlainText,
+				value: 'doc'
+			}
+		};
+		let result = c2p.asCompletionItem(p2c.asCompletionItem(completionItem));
+		strictEqual((result.documentation as proto.MarkupContent).kind, proto.MarkupKind.PlainText);
+		strictEqual((result.documentation as proto.MarkupContent).value, 'doc');
+	});
+
+	test('Completion Item Documentation as Markdown', () => {
+		let completionItem: proto.CompletionItem = {
+			label: 'item',
+			documentation: {
+				kind: proto.MarkupKind.Markdown,
+				value: '# Header'
+			}
+		};
+		let result = c2p.asCompletionItem(p2c.asCompletionItem(completionItem));
+		strictEqual((result.documentation as proto.MarkupContent).kind, proto.MarkupKind.Markdown);
+		strictEqual((result.documentation as proto.MarkupContent).value, '# Header');
 	});
 
 	test('Completion Result', () => {
