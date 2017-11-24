@@ -1287,7 +1287,9 @@ class HoverFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> 
 	}
 
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		ensure(ensure(capabilites, 'textDocument')!, 'hover')!.dynamicRegistration = true;
+		const hoverCapability = (ensure(ensure(capabilites, 'textDocument')!, 'hover')!);
+		hoverCapability.dynamicRegistration = true;
+		hoverCapability.contentFormat = [MarkupKind.Markdown, MarkupKind.PlainText];
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {

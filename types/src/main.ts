@@ -940,7 +940,7 @@ export namespace CompletionList {
  * ```
  *
  * Note that markdown strings will be sanitized - that means html will be escaped.
- * @deprecated use MarkdownString instead.
+ * @deprecated use MarkupContent instead.
  */
 export type MarkedString = string | { language: string; value: string };
 

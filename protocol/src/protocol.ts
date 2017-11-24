@@ -291,6 +291,12 @@ export interface TextDocumentClientCapabilities {
 		 * Whether hover supports dynamic registration.
 		 */
 		dynamicRegistration?: boolean;
+
+		/**
+		 * Client supports the follow content formats for the content
+		 * property. The order describes the preferred format of the client.
+		 */
+		contentFormat?: MarkupKind[];
 	};
 
 	/**
