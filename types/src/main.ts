@@ -690,14 +690,16 @@ export namespace MarkupKind {
 export type MarkupKind = 'plaintext' | 'markdown';
 
 /**
- * A `MarkdownContent` literal represents a string value which content is interpreted as markdown.
- * The string can contain fenced code blocks like in GitHub issues.
+ * A `MarkupContent` literal represents a string value which content is interpreted base on its
+ * kind flag. Currently the protocol supports `plaintext` and `markdown` as markup kinds.
+ *
+ * If the kind is `markdown` then the value can contain fenced code blocks like in GitHub issues.
  * See https://help.github.com/articles/creating-and-highlighting-code-blocks/#syntax-highlighting
  *
  * Here is an example how such a string can be constructed using JavaScript / TypeScript:
  * ```ts
  * let markdown: MarkdownContent = {
- *  type: MarkupType.Markdown,
+ *  kind: MarkupKind.Markdown,
  *	value: [
  *		'# Header',
  *		'Some text',
@@ -708,7 +710,7 @@ export type MarkupKind = 'plaintext' | 'markdown';
  * };
  * ```
  *
- * *Please Note* that clients might sanatize the return markdown. A client could decide to
+ * *Please Note* that clients might sanitize the return markdown. A client could decide to
  * remove HTML from the markdown to avoid script execution.
  */
 export interface MarkupContent {
