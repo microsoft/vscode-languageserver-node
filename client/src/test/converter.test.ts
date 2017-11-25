@@ -344,6 +344,18 @@ suite('Protocol Converter', () => {
 		strictEqual((result.documentation as proto.MarkupContent).value, '# Header');
 	});
 
+	test('Completion Item Kind Outside', () => {
+		let completionItem: proto.CompletionItem = {
+			label: 'item',
+			kind: Number.MAX_VALUE as any
+		};
+		let result = p2c.asCompletionItem(completionItem);
+		strictEqual(result.kind, vscode.CompletionItemKind.Text);
+
+		let back = c2p.asCompletionItem(result);
+		strictEqual(back.kind, Number.MAX_VALUE);
+	});
+
 	test('Completion Result', () => {
 		let completionResult: proto.CompletionList = {
 			isIncomplete: true,
@@ -532,6 +544,22 @@ suite('Protocol Converter', () => {
 		strictEqual(p2c.asSymbolInformations(undefined), undefined);
 		strictEqual(p2c.asSymbolInformations(null), undefined);
 		deepEqual(p2c.asSymbolInformations([]), []);
+	});
+
+	test('SymbolInformation Kind outside', () => {
+		let start: proto.Position = { line: 1, character: 2 };
+		let end: proto.Position = { line: 8, character: 9 };
+		let location: proto.Location = {
+			uri: 'file://localhost/folder/file',
+			range: { start, end }
+		};
+		let symbolInformation: proto.SymbolInformation = {
+			name: 'name',
+			kind: Number.MAX_VALUE as any,
+			location: location
+		};
+		let result = p2c.asSymbolInformation(symbolInformation);
+		strictEqual(result.kind, vscode.SymbolKind.Property);
 	});
 
 	test('Command', () => {

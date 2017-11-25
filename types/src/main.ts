@@ -747,9 +747,16 @@ export namespace CompletionItemKind {
 	export const Color: 16 = 16;
 	export const File: 17 = 17;
 	export const Reference: 18 = 18;
+	export const Folder: 19 = 19;
+	export const EnumMember: 20 = 20;
+	export const Constant: 21 = 21;
+	export const Struct: 22 = 22;
+	export const Event: 23 = 23;
+	export const Operator: 24 = 24;
+	export const TypeParameter: 25 = 25;
 }
 
-export type CompletionItemKind = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18;
+export type CompletionItemKind = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 25;
 
 
 /**
@@ -1168,9 +1175,17 @@ export namespace SymbolKind {
 	export const Number: 16 = 16;
 	export const Boolean: 17 = 17;
 	export const Array: 18 = 18;
+	export const Object: 19 = 19;
+	export const Key: 20 = 20;
+	export const Null: 21 = 21;
+	export const EnumMember: 22 = 22;
+	export const Struct: 23 = 23;
+	export const Event: 24 = 24;
+	export const Operator: 25 = 25;
+	export const TypeParameter: 26 = 26;
 }
 
-export type SymbolKind = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18;
+export type SymbolKind = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 25 | 26;
 
 /**
  * Represents information about programming constructs like variables, classes,

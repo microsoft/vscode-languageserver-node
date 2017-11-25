@@ -257,6 +257,14 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return new code.CompletionList(list.items.map(asCompletionItem), list.isIncomplete);
 	}
 
+	function asCompletionItemKind(value: ls.CompletionItemKind): [code.CompletionItemKind, ls.CompletionItemKind | undefined] {
+		// Protocol item kind is 1 based, codes item kind is zero based.
+		if (ls.CompletionItemKind.Text <= value && value <= ls.CompletionItemKind.TypeParameter) {
+			return [value - 1, undefined];
+		};
+		return [code.CompletionItemKind.Text, value];
+	}
+
 	function asCompletionItem(item: ls.CompletionItem): ProtocolCompletionItem {
 		let result = new ProtocolCompletionItem(item.label);
 		if (item.detail) { result.detail = item.detail; }
@@ -271,8 +279,13 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			result.range = insertText.range;
 			result.fromEdit = insertText.fromEdit;
 		}
-		// Protocol item kind is 1 based, codes item kind is zero based.
-		if (Is.number(item.kind) && item.kind > 0) { result.kind = item.kind - 1; }
+		if (Is.number(item.kind)) {
+			let [itemKind, original] = asCompletionItemKind(item.kind);
+			result.kind = itemKind;
+			if (original) {
+				result.originalItemKind = original;
+			}
+		}
 		if (item.sortText) { result.sortText = item.sortText; }
 		if (item.additionalTextEdits) { result.additionalTextEdits = asTextEdits(item.additionalTextEdits); }
 		if (Is.stringArray(item.commitCharacters)) { result.commitCharacters = item.commitCharacters.slice(); }
@@ -435,10 +448,18 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return values.map(information => asSymbolInformation(information, uri));
 	}
 
+	function asSymbolKind(item: ls.SymbolKind): code.SymbolKind {
+		if (item <= ls.SymbolKind.TypeParameter) {
+			// Symbol kind is one based in the protocol and zero based in code.
+			return item - 1;
+		}
+		return code.SymbolKind.Property;
+	}
+
 	function asSymbolInformation(item: ls.SymbolInformation, uri?: code.Uri): code.SymbolInformation {
 		// Symbol kind is one based in the protocol and zero based in code.
 		let result = new code.SymbolInformation(
-			item.name, item.kind - 1,
+			item.name, asSymbolKind(item.kind),
 			asRange(item.location.range),
 			item.location.uri ? _uriConverter(item.location.uri) : uri);
 		if (item.containerName) { result.containerName = item.containerName; }

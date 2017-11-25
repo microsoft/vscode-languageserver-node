@@ -287,6 +287,13 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		}
 	}
 
+	function asCompletionItemKind(value: code.CompletionItemKind, original: proto.CompletionItemKind | undefined): proto.CompletionItemKind {
+		if (original !== void 0) {
+			return original;
+		}
+		return value + 1 as proto.CompletionItemKind;
+	}
+
 	function asCompletionItem(item: code.CompletionItem): proto.CompletionItem {
 		let result: proto.CompletionItem = { label: item.label };
 		let protocolItem = item instanceof ProtocolCompletionItem ? item as ProtocolCompletionItem : undefined;
@@ -302,13 +309,8 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		}
 		if (item.filterText) { result.filterText = item.filterText; }
 		fillPrimaryInsertText(result, item as ProtocolCompletionItem);
-		// Protocol item kind is 1 based, codes item kind is zero based.
 		if (Is.number(item.kind)) {
-			if (code.CompletionItemKind.Text <= item.kind && item.kind <= code.CompletionItemKind.Reference) {
-				result.kind = (item.kind + 1) as proto.CompletionItemKind;
-			} else {
-				result.kind = proto.CompletionItemKind.Text;
-			}
+			result.kind = asCompletionItemKind(item.kind, protocolItem && protocolItem.originalItemKind);
 		}
 		if (item.sortText) { result.sortText = item.sortText; }
 		if (item.additionalTextEdits) { result.additionalTextEdits = asTextEdits(item.additionalTextEdits); }

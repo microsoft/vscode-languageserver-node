@@ -14,7 +14,8 @@ import {
 	TextDocumentIdentifier, VersionedTextDocumentIdentifier, TextDocumentItem, TextDocumentSaveReason,
 	CompletionItem, CompletionList, Hover, SignatureHelp,
 	Definition, ReferenceContext, DocumentHighlight, DocumentSymbolParams,
-	SymbolInformation, CodeLens, CodeActionContext, FormattingOptions, DocumentLink, MarkupKind
+	SymbolInformation, CodeLens, CodeActionContext, FormattingOptions, DocumentLink, MarkupKind,
+	SymbolKind, CompletionItemKind
 } from 'vscode-languageserver-types';
 
 /**
@@ -190,6 +191,23 @@ export interface WorkspaceClientCapabilities {
 		 * Symbol request supports dynamic registration.
 		 */
 		dynamicRegistration?: boolean;
+
+		/**
+		 * Specific capabilities for the `SymbolKind` in the `workspace/symbol` request.
+		 */
+		symbolKind?: {
+			/**
+			 * The symbol kind values the client supports. When this
+			 * property exists the client also guarantees that it will
+			 * handle values outside its set gracefully and falls back
+			 * to a default value when unknown.
+			 *
+			 * If this property is not present the client only supports
+			 * the symbol kinds from `File` to `Array` as defined in
+			 * the initial version of the protocol.
+			 */
+			valueSet?: SymbolKind[];
+		},
 	};
 
 	/**
@@ -274,7 +292,21 @@ export interface TextDocumentClientCapabilities {
 			 * property. The order describes the preferred format of the client.
 			 */
 			documentationFormat?: MarkupKind[];
-		}
+		},
+
+		completionItemKind?: {
+			/**
+			 * The completion item kind values the client supports. When this
+			 * property exists the client also guarantees that it will
+			 * handle values outside its set gracefully and falls back
+			 * to a default value when unknown.
+			 *
+			 * If this property is not present the client only supports
+			 * the completion items kinds from `Text` to `Reference` as defined in
+			 * the initial version of the protocol.
+			 */
+			valueSet?: CompletionItemKind[];
+		},
 
 		/**
 		 * The client supports to send additional context information for a
@@ -349,6 +381,23 @@ export interface TextDocumentClientCapabilities {
 		 * Whether document symbol supports dynamic registration.
 		 */
 		dynamicRegistration?: boolean;
+
+		/**
+		 * Specific capabilities for the `SymbolKind`.
+		 */
+		symbolKind?: {
+			/**
+			 * The symbol kind values the client supports. When this
+			 * property exists the client also guarantees that it will
+			 * handle values outside its set gracefully and falls back
+			 * to a default value when unknown.
+			 *
+			 * If this property is not present the client only supports
+			 * the symbol kinds from `File` to `Array` as defined in
+			 * the initial version of the protocol.
+			 */
+			valueSet?: SymbolKind[];
+		},
 	};
 
 	/**

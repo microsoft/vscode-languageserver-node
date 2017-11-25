@@ -53,7 +53,7 @@ import {
 	DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkRegistrationOptions,
 	ExecuteCommandRequest, ExecuteCommandParams, ExecuteCommandRegistrationOptions,
 	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse,
-	MarkupKind
+	MarkupKind, SymbolKind, CompletionItemKind
 } from 'vscode-languageserver-protocol';
 
 import * as c2p from './codeConverter';
@@ -484,6 +484,63 @@ enum ClientState {
 	Stopping,
 	Stopped
 }
+
+const SupporedSymbolKinds: SymbolKind[] = [
+	SymbolKind.File,
+	SymbolKind.Module,
+	SymbolKind.Namespace,
+	SymbolKind.Package,
+	SymbolKind.Class,
+	SymbolKind.Method,
+	SymbolKind.Property,
+	SymbolKind.Field,
+	SymbolKind.Constructor,
+	SymbolKind.Enum,
+	SymbolKind.Interface,
+	SymbolKind.Function,
+	SymbolKind.Variable,
+	SymbolKind.Constant,
+	SymbolKind.String,
+	SymbolKind.Number,
+	SymbolKind.Boolean,
+	SymbolKind.Array,
+	SymbolKind.Object,
+	SymbolKind.Key,
+	SymbolKind.Null,
+	SymbolKind.EnumMember,
+	SymbolKind.Struct,
+	SymbolKind.Event,
+	SymbolKind.Operator,
+	SymbolKind.TypeParameter
+];
+
+const SupportedCompletionItemKinds: CompletionItemKind[] = [
+	CompletionItemKind.Text,
+	CompletionItemKind.Method,
+	CompletionItemKind.Function,
+	CompletionItemKind.Constructor,
+	CompletionItemKind.Field,
+	CompletionItemKind.Variable,
+	CompletionItemKind.Class,
+	CompletionItemKind.Interface,
+	CompletionItemKind.Module,
+	CompletionItemKind.Property,
+	CompletionItemKind.Unit,
+	CompletionItemKind.Value,
+	CompletionItemKind.Enum,
+	CompletionItemKind.Keyword,
+	CompletionItemKind.Snippet,
+	CompletionItemKind.Color,
+	CompletionItemKind.File,
+	CompletionItemKind.Reference,
+	CompletionItemKind.Folder,
+	CompletionItemKind.EnumMember,
+	CompletionItemKind.Constant,
+	CompletionItemKind.Struct,
+	CompletionItemKind.Event,
+	CompletionItemKind.Operator,
+	CompletionItemKind.TypeParameter
+];
 
 /**
  * A static feature. A static feature can't be dynamically activate via the
@@ -1228,6 +1285,7 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionRegistrationOp
 		completion.dynamicRegistration = true;
 		completion.contextSupport = true;
 		completion.completionItem = { snippetSupport: true, commitCharactersSupport: true, documentationFormat: [MarkupKind.Markdown, MarkupKind.PlainText] };
+		completion.completionItemKind = { valueSet: SupportedCompletionItemKinds };
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
@@ -1502,7 +1560,11 @@ class DocumentSymbolFeature extends TextDocumentFeature<TextDocumentRegistration
 	}
 
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		ensure(ensure(capabilites, 'textDocument')!, 'documentSymbol')!.dynamicRegistration = true;
+		let symbolCapabilities = ensure(ensure(capabilites, 'textDocument')!, 'documentSymbol')!;
+		symbolCapabilities.dynamicRegistration = true;
+		symbolCapabilities.symbolKind = {
+			valueSet: SupporedSymbolKinds
+		}
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
@@ -1544,7 +1606,11 @@ class WorkspaceSymbolFeature extends WorkspaceFeature<undefined> {
 	}
 
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		ensure(ensure(capabilites, 'workspace')!, 'symbol')!.dynamicRegistration = true;
+		let symbolCapabilities = ensure(ensure(capabilites, 'workspace')!, 'symbol')!;
+		symbolCapabilities.dynamicRegistration = true;
+		symbolCapabilities.symbolKind = {
+			valueSet: SupporedSymbolKinds
+		};
 	}
 
 	public initialize(capabilities: ServerCapabilities): void {
