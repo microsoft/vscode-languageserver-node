@@ -2195,6 +2195,7 @@ export abstract class BaseLanguageClient {
 	private _state: ClientState;
 	private _onReady: Promise<void>;
 	private _onReadyCallbacks: { resolve: () => void; reject: (error: any) => void; };
+	private _onStop: Thenable<void> | undefined;
 	private _connectionPromise: Thenable<IConnection> | undefined;
 	private _resolvedConnection: IConnection | undefined;
 	private _initializeResult: InitializeResult | undefined;
@@ -2260,6 +2261,7 @@ export abstract class BaseLanguageClient {
 		this._onReady = new Promise<void>((resolve, reject) => {
 			this._onReadyCallbacks = { resolve, reject };
 		});
+		this._onStop = undefined;
 		this._telemetryEmitter = new Emitter<any>();
 		this._stateChangeEmitter = new Emitter<StateChangeEvent>();
 		this._tracer = {
@@ -2646,14 +2648,18 @@ export abstract class BaseLanguageClient {
 			this.state = ClientState.Stopped;
 			return Promise.resolve();
 		}
+		if (this.state === ClientState.Stopping && this._onStop) {
+			return this._onStop;
+		}
 		this.state = ClientState.Stopping;
 		this.cleanUp();
 		// unkook listeners
-		return this.resolveConnection().then(connection => {
+		return this._onStop = this.resolveConnection().then(connection => {
 			return connection.shutdown().then(() => {
 				connection.exit();
 				connection.dispose();
 				this.state = ClientState.Stopped;
+				this._onStop = undefined;
 				this._connectionPromise = undefined;
 				this._resolvedConnection = undefined;
 				if (this._outputChannel) {
