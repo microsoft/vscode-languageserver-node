@@ -207,7 +207,7 @@ export interface WorkspaceClientCapabilities {
 			 * the initial version of the protocol.
 			 */
 			valueSet?: SymbolKind[];
-		},
+		}
 	};
 
 	/**
@@ -397,7 +397,7 @@ export interface TextDocumentClientCapabilities {
 			 * the initial version of the protocol.
 			 */
 			valueSet?: SymbolKind[];
-		},
+		}
 	};
 
 	/**
