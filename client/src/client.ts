@@ -2147,7 +2147,7 @@ class ExecuteCommandFeature implements DynamicFeature<ExecuteCommandRegistration
 						command,
 						arguments: args
 					};
-					client.sendRequest(ExecuteCommandRequest.type, params).then(
+					return client.sendRequest(ExecuteCommandRequest.type, params).then(
 						undefined,
 						(error) => {
 							client.logFailedRequest(ExecuteCommandRequest.type, error);
