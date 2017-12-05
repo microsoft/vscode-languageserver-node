@@ -27,6 +27,17 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
+### 4.0.0-next.x Server and Client
+
+* implemented the latest protocol additions. Noteworthy are completion context, extensible completion item and symbol kind as well as markdown support for completion item and signature help. Moved to 4.0.0 version since the introduction of the completion context required a breaking change in the client middleware. The old signature:
+```typescript
+provideCompletionItem?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideCompletionItemsSignature) => ProviderResult<VCompletionItem[] | VCompletionList>;
+```
+contains now an additional argument `context`:
+```typescript
+provideCompletionItem?: (this: void, document: TextDocument, position: VPosition, context: VCompletionContext, token: CancellationToken, next: ProvideCompletionItemsSignature) => ProviderResult<VCompletionItem[] | VCompletionList>;
+```
+
 ### 3.5.0 Server and Client
 
 * allow the client to start the server in detached mode. If the server is running detached the client will not monitor the server process and kill it on shutdown.
