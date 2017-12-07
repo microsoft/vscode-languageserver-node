@@ -2740,12 +2740,21 @@ export abstract class BaseLanguageClient {
 		if (this.state === ClientState.Stopping || this.state === ClientState.Stopped) {
 			return;
 		}
-		if (this._resolvedConnection) {
-			this._resolvedConnection.dispose();
+		try {
+			if (this._resolvedConnection) {
+				this._resolvedConnection.dispose();
+			}
+		} catch (error) {
+			// Disposing a connection could fail if error cases.
+		}
+		let action = CloseAction.DoNotRestart;
+		try {
+			action = this._clientOptions.errorHandler!.closed();
+		} catch (error) {
+			// Ignore errors coming from the error handler.
 		}
 		this._connectionPromise = undefined;
 		this._resolvedConnection = undefined;
-		let action = this._clientOptions.errorHandler!.closed();
 		if (action === CloseAction.DoNotRestart) {
 			this.error('Connection to server got closed. Server will not be restarted.');
 			this.state = ClientState.Stopped;
