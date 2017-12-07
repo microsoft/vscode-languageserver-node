@@ -38,9 +38,10 @@ contains now an additional argument `context`:
 provideCompletionItem?: (this: void, document: TextDocument, position: VPosition, context: VCompletionContext, token: CancellationToken, next: ProvideCompletionItemsSignature) => ProviderResult<VCompletionItem[] | VCompletionList>;
 ```
 
-* Fixed:
+* Noteworthy fixes:
   * [Getting value after executing command programmatically](https://github.com/Microsoft/language-server-protocol/issues/329)
   * [Experiencing infinite recursion in this code in VSCode 1.18.1](https://github.com/Microsoft/language-server-protocol/issues/279)
+  * [LangaueClient#handleConnectionClosed fails to restart if this._resolvedConnection.dispose() throws](https://github.com/Microsoft/vscode-languageserver-node/issues/286)
 ### 3.5.0 Server and Client
 
 * allow the client to start the server in detached mode. If the server is running detached the client will not monitor the server process and kill it on shutdown.
