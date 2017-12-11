@@ -76,7 +76,7 @@ export interface ResponseErrorLiteral<D> {
 }
 
 /**
- * A error object return in a response in case a request
+ * An error object return in a response in case a request
  * has failed.
  */
 export class ResponseError<D> extends Error {
