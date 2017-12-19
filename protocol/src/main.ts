@@ -16,6 +16,8 @@ import {
 	createClientSocketTransport, createServerSocketTransport,
 	createMessageConnection, Tracer
 } from 'vscode-jsonrpc';
+import { Definition } from 'vscode-languageserver-types';
+import { InitializeParams, TextDocumentPositionParams, TextDocumentRegistrationOptions } from './protocol';
 
 export {
 	ErrorCodes, ResponseError, CancellationToken, CancellationTokenSource,
@@ -36,7 +38,8 @@ export * from './protocol';
 import * as config from './protocol.configuration.proposed';
 import * as folders from './protocol.workspaceFolders.proposed';
 import * as color from './protocol.colorProvider.proposed';
-import { InitializeParams } from './protocol';
+import * as implementation from './protocol.implementation.proposed';
+
 
 export namespace Proposed {
 	export type ConfigurationClientCapabilities = config.ConfigurationClientCapabilities;
@@ -74,6 +77,12 @@ export namespace Proposed {
 	export type ColorServerCapabilities = color.ServerCapabilities;
 	export const DocumentColorRequest = color.DocumentColorRequest;
 	export const ColorPresentationRequest = color.ColorPresentationRequest;
+
+	export type ImplementationClientCapabilities = implementation.ImplementationClientCapabilities;
+	export type ImplementationServerCapabilities = implementation.ImplementationServerCapabilities;
+	export namespace ImplementationRequest {
+		export const type: RequestType<TextDocumentPositionParams, Definition | null, void, TextDocumentRegistrationOptions> = implementation.ImplementationRequest.type;
+	}
 }
 
 export interface ProtocolConnection {

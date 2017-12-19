@@ -185,7 +185,7 @@ export class LanguageClient extends BaseLanguageClient {
 	protected createMessageTransports(encoding: string): Thenable<MessageTransports> {
 		let rootPath = this.clientOptions.workspaceFolder
 			? this.clientOptions.workspaceFolder.uri.fsPath
-			: Workspace.rootPath;
+			: this._mainGetRootPath();
 
 		function getEnvironment(env: any): any {
 			if (!env) {
@@ -397,6 +397,18 @@ export class LanguageClient extends BaseLanguageClient {
 	public registerProposedFeatures() {
 		this.registerFeatures(ProposedFeatures.createAll(this));
 	}
+
+	private _mainGetRootPath(): string | undefined{
+		let folders = Workspace.workspaceFolders;
+		if (!folders || folders.length === 0) {
+			return undefined;
+		}
+		let folder = folders[0];
+		if (folder.uri.scheme === 'file') {
+			return folder.uri.fsPath;
+		}
+		return undefined;
+	}
 }
 
 export class SettingMonitor {
@@ -434,6 +446,7 @@ export class SettingMonitor {
 
 import * as config from './configuration.proposed';
 import * as folders from './workspaceFolders.proposed';
+import * as implementation from './implementation.proposed';
 
 export namespace ProposedFeatures {
 	export type ConfigurationFeature = config.ConfigurationFeature;
@@ -444,10 +457,15 @@ export namespace ProposedFeatures {
 	export const WorkspaceFoldersFeature = folders.WorkspaceFoldersFeature;
 	export type WorkspaceFolderMiddleware = folders.WorkspaceFolderMiddleware
 
+	export type ImplementationFeature = implementation.ImplementationFeature;
+	export const ImplementationFeature = implementation.ImplementationFeature;
+	export type ImplementationMiddleware = implementation.ImplementationMiddleware;
+
 	export function createAll(client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
 		let result: (StaticFeature | DynamicFeature<any>)[] = [];
 		result.push(new WorkspaceFoldersFeature(client));
 		result.push(new ConfigurationFeature(client));
+		result.push(new ImplementationFeature(client));
 		return result;
 	}
 }

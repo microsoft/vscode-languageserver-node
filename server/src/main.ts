@@ -43,7 +43,7 @@ import {
 	DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkParams,
 	ExecuteCommandRequest, ExecuteCommandParams,
 	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse,
-	ClientCapabilities, ServerCapabilities, ProtocolConnection, createProtocolConnection
+	ClientCapabilities, ServerCapabilities, ProtocolConnection, createProtocolConnection, Proposed
 } from 'vscode-languageserver-protocol';
 
 import * as Is from './utils/is';
@@ -1188,6 +1188,13 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	onDefinition(handler: RequestHandler<TextDocumentPositionParams, Definition | undefined | null, void>): void;
 
 	/**
+	 * Installs a handler for the `Implementation` request.
+	 *
+	 * @param handler The corresponding handler.
+	 */
+	onImplementation(handler: RequestHandler<TextDocumentPositionParams, Definition | undefined | null, void>): void;
+
+	/**
 	 * Installs a handler for the `References` request.
 	 *
 	 * @param handler The corresponding handler.
@@ -1583,6 +1590,7 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 		onCompletionResolve: (handler) => connection.onRequest(CompletionResolveRequest.type, handler),
 		onSignatureHelp: (handler) => connection.onRequest(SignatureHelpRequest.type, handler),
 		onDefinition: (handler) => connection.onRequest(DefinitionRequest.type, handler),
+		onImplementation: (handler) => connection.onRequest(Proposed.ImplementationRequest.type, handler),
 		onReferences: (handler) => connection.onRequest(ReferencesRequest.type, handler),
 		onDocumentHighlight: (handler) => connection.onRequest(DocumentHighlightRequest.type, handler),
 		onDocumentSymbol: (handler) => connection.onRequest(DocumentSymbolRequest.type, handler),

@@ -1189,7 +1189,7 @@ class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatchedFilesRe
 	}
 }
 
-abstract class TextDocumentFeature<T extends TextDocumentRegistrationOptions> implements DynamicFeature<T> {
+export abstract class TextDocumentFeature<T extends TextDocumentRegistrationOptions> implements DynamicFeature<T> {
 
 	protected _providers: Map<string, Disposable> = new Map<string, Disposable>();
 
@@ -1206,7 +1206,7 @@ abstract class TextDocumentFeature<T extends TextDocumentRegistrationOptions> im
 
 	public register(message: RPCMessageType, data: RegistrationData<T>): void {
 		if (message.method !== this.messages.method) {
-			throw new Error(`Register called on wron feature. Requested ${message.method} but reached feature ${this.messages.method}`);
+			throw new Error(`Register called on wrong feature. Requested ${message.method} but reached feature ${this.messages.method}`);
 		}
 		if (!data.registerOptions.documentSelector) {
 			return;
@@ -2569,7 +2569,7 @@ export abstract class BaseLanguageClient {
 		let initOption = this._clientOptions.initializationOptions;
 		let rootPath = this._clientOptions.workspaceFolder
 			? this._clientOptions.workspaceFolder.uri.fsPath
-			: Workspace.rootPath;
+			: this._clientGetRootPath();
 		let initParams: InitializeParams = {
 			processId: process.pid,
 			rootPath: rootPath ? rootPath : null,
@@ -2640,6 +2640,18 @@ export abstract class BaseLanguageClient {
 				this._onReadyCallbacks.reject(error);
 			}
 		});
+	}
+
+	private _clientGetRootPath(): string | undefined{
+		let folders = Workspace.workspaceFolders;
+		if (!folders || folders.length === 0) {
+			return undefined;
+		}
+		let folder = folders[0];
+		if (folder.uri.scheme === 'file') {
+			return folder.uri.fsPath;
+		}
+		return undefined;
 	}
 
 	public stop(): Thenable<void> {
