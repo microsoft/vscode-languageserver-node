@@ -261,7 +261,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 
 	function asDiagnostic(item: code.Diagnostic): proto.Diagnostic {
 		let result: proto.Diagnostic = proto.Diagnostic.create(asRange(item.range), item.message);
-		if (item.severity) { result.severity = asDiagnosticSeverity(item.severity); }
+		if (Is.number(item.severity)) { result.severity = asDiagnosticSeverity(item.severity); }
 		if (Is.number(item.code) || Is.string(item.code)) { result.code = item.code; }
 		if (item.source) { result.source = item.source; }
 		return result;
