@@ -390,7 +390,15 @@ export interface WorkspaceEdit {
 	 * Whether a client supports versioned document edits is expressed via
 	 * `WorkspaceClientCapabilites.workspaceEdit.documentChanges`.
 	 */
-	documentChanges?: TextDocumentEdit[];
+  documentChanges?: TextDocumentEdit[];
+
+  /**
+   *  if resource changes are supported the `WorkspaceEdit` uses the property
+   * `resourceChanges`. which are either a rename, move, delete or content change.
+   *  These changes are applied in the order that they are supplied, however
+   *  clients may group the changes for optimization.
+   */
+   resourceChanges?: ResourceChange[];
 }
 
 /**
