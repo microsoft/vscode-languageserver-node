@@ -23,7 +23,7 @@ The client sets the following capability if it supports goto implementation.
 
 _Server Capabilities_:
 
-The server answer with the following cpatbility of it supports goto implementation
+The server answers with the following capability if it supports goto implementation.
 
 ```ts
 	/**
