@@ -1188,6 +1188,13 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	onDefinition(handler: RequestHandler<TextDocumentPositionParams, Definition | undefined | null, void>): void;
 
 	/**
+	 * Installs a handler for the `Type Definition` request.
+	 *
+	 * @param handler The corresponding handler.
+	 */
+	onTypeDefinition(handler: RequestHandler<TextDocumentPositionParams, Definition | undefined | null, void>): void;
+
+	/**
 	 * Installs a handler for the `Implementation` request.
 	 *
 	 * @param handler The corresponding handler.
@@ -1590,6 +1597,7 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 		onCompletionResolve: (handler) => connection.onRequest(CompletionResolveRequest.type, handler),
 		onSignatureHelp: (handler) => connection.onRequest(SignatureHelpRequest.type, handler),
 		onDefinition: (handler) => connection.onRequest(DefinitionRequest.type, handler),
+		onTypeDefinition: (handler) => connection.onRequest(Proposed.TypeDefinitionRequest.type, handler),
 		onImplementation: (handler) => connection.onRequest(Proposed.ImplementationRequest.type, handler),
 		onReferences: (handler) => connection.onRequest(ReferencesRequest.type, handler),
 		onDocumentHighlight: (handler) => connection.onRequest(DocumentHighlightRequest.type, handler),

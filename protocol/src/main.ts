@@ -39,6 +39,7 @@ import * as config from './protocol.configuration.proposed';
 import * as folders from './protocol.workspaceFolders.proposed';
 import * as color from './protocol.colorProvider.proposed';
 import * as implementation from './protocol.implementation.proposed';
+import * as typeDefinition from './protocol.typeDefinition.proposed';
 
 
 export namespace Proposed {
@@ -82,6 +83,12 @@ export namespace Proposed {
 	export type ImplementationServerCapabilities = implementation.ImplementationServerCapabilities;
 	export namespace ImplementationRequest {
 		export const type: RequestType<TextDocumentPositionParams, Definition | null, void, TextDocumentRegistrationOptions> = implementation.ImplementationRequest.type;
+	}
+
+	export type TypeDefinitionClientCapabilities = typeDefinition.TypeDefinitionClientCapabilities;
+	export type TypeDefinitionServerCapabilities = typeDefinition.TypeDefinitionServerCapabilities;
+	export namespace TypeDefinitionRequest {
+		export const type: RequestType<TextDocumentPositionParams, Definition | null, void, TextDocumentRegistrationOptions> = typeDefinition.TypeDefinitionRequest.type;
 	}
 }
 

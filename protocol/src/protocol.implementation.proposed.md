@@ -34,7 +34,7 @@ The server answers with the following capability if it supports goto implementat
 
 #### <a name="textDocument_implementation"></a>Goto Implementation Request
 
-The goto definition request is sent from the client to the server to resolve the implementation location of a symbol at a given text document position.
+The goto implementation request is sent from the client to the server to resolve the implementation location of a symbol at a given text document position.
 
 _Request_:
 * method: 'textDocument/implementation'

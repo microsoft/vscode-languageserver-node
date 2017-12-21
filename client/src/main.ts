@@ -447,6 +447,7 @@ export class SettingMonitor {
 import * as config from './configuration.proposed';
 import * as folders from './workspaceFolders.proposed';
 import * as implementation from './implementation.proposed';
+import * as typeDefinition from './typeDefinition.proposed';
 
 export namespace ProposedFeatures {
 	export type ConfigurationFeature = config.ConfigurationFeature;
@@ -461,11 +462,16 @@ export namespace ProposedFeatures {
 	export const ImplementationFeature = implementation.ImplementationFeature;
 	export type ImplementationMiddleware = implementation.ImplementationMiddleware;
 
+	export type TypeDefinitionFeature = typeDefinition.TypeDefinitionFeature;
+	export const TypeDefinitionFeature = typeDefinition.TypeDefinitionFeature;
+	export type TypeDefinitionMiddleware = typeDefinition.TypeDefinitionMiddleware;
+
 	export function createAll(client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
 		let result: (StaticFeature | DynamicFeature<any>)[] = [];
 		result.push(new WorkspaceFoldersFeature(client));
 		result.push(new ConfigurationFeature(client));
 		result.push(new ImplementationFeature(client));
+		result.push(new TypeDefinitionFeature(client));
 		return result;
 	}
 }
