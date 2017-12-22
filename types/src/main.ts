@@ -319,7 +319,7 @@ export namespace TextEdit {
 	}
 	/**
 	 * Creates a insert text edit.
-	 * @param psotion The position to insert the text at.
+	 * @param position The position to insert the text at.
 	 * @param newText The text to be inserted.
 	 */
 	export function insert(position: Position, newText: string): TextEdit {
