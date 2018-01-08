@@ -51,7 +51,7 @@ namespace CancelNotification {
 	export const type = new NotificationType<CancelParams, void>('$/cancelRequest');
 }
 
-export type HandlerResult<R, E> = R | ResponseError<E> | Thenable<R> | Thenable<ResponseError<E>>;
+export type HandlerResult<R, E> = R | ResponseError<E> | Thenable<R> | Thenable<ResponseError<E>> | Thenable<R | ResponseError<E>>;
 
 export interface StarRequestHandler {
 	(method: string, ...params: any[]): HandlerResult<any, any>;
