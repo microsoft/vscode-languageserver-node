@@ -2674,10 +2674,7 @@ export abstract class BaseLanguageClient {
 				this._onStop = undefined;
 				this._connectionPromise = undefined;
 				this._resolvedConnection = undefined;
-				if (this._outputChannel) {
-					this._outputChannel.clear();
-				}
-			})
+			});
 		});
 	}
 
