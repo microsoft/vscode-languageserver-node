@@ -1460,11 +1460,14 @@ export interface TextDocument {
 	readonly version: number;
 
 	/**
-	 * Get the text of this document.
+	 * Get the text of this document. A substring can be retrieved by
+	 * providing a range.
 	 *
-	 * @return The text of this document.
+	 * @param range The interested range within the document to return.
+	 * @return The text of this document or a substring of the text if a
+	 *         range is provided.
 	 */
-	getText(): string;
+	getText(range?: Range): string;
 
 	/**
 	 * Converts a zero-based offset to a position.
@@ -1607,7 +1610,12 @@ class FullTextDocument implements TextDocument {
 		return this._version;
 	}
 
-	public getText(): string {
+	public getText(range?: Range): string {
+		if (range) {
+			let start = this.offsetAt(range.start);
+			let end = this.offsetAt(range.end);
+			return this._content.substring(start, end);
+		}
 		return this._content;
 	}
 
