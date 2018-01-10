@@ -18,6 +18,8 @@
 export interface Position {
 	/**
 	 * Line position in a document (zero-based).
+	 * If a line number is greater than the number of lines in a document, it defaults back to the number of lines in the document.
+	 * If a line number is negative, if defaults to 0.
 	 */
 	line: number;
 
@@ -28,6 +30,7 @@ export interface Position {
 	 *
 	 * If the character value is greater than the line length it defaults back to the
 	 * line length.
+	 * If a line number is negative, if defaults to 0.
 	 */
 	character: number;
 }
@@ -58,7 +61,7 @@ export namespace Position {
  * A range in a text document expressed as (zero-based) start and end positions.
  *
  * If you want to specify a range that contains a line including the line ending
- * caharacter(s) then use an end poosition denoting the start of the next line.
+ * character(s) then use an end position denoting the start of the next line.
  * For example:
  * ```ts
  * {
@@ -74,7 +77,7 @@ export interface Range {
 	start: Position;
 
 	/**
-	 * The range's end position
+	 * The range's end position.
 	 */
 	end: Position;
 }
@@ -1463,7 +1466,13 @@ export interface TextDocument {
 	 * Get the text of this document. A substring can be retrieved by
 	 * providing a range.
 	 *
-	 * @param range The interested range within the document to return.
+	 * @param range (optional) An range within the document to return.
+	 * If no range is passed, the full conetnt is returned.
+	 * Invalid range positions are adjusted as described in [Position.line](#Position.line)
+	 * and [Position.character](#Position.character).
+	 * If a the start range position is greater than the end range position,
+	 * then the effect of getText is as if the two positions were swapped.
+
 	 * @return The text of this document or a substring of the text if a
 	 *         range is provided.
 	 */
@@ -1479,8 +1488,8 @@ export interface TextDocument {
 
 	/**
 	 * Converts the position to a zero-based offset.
-	 *
-	 * The position will be [adjusted](#TextDocument.validatePosition).
+	 * Invalid positions are adjusted as described in [Position.line](#Position.line)
+	 * and [Position.character](#Position.character).
 	 *
 	 * @param position A position.
 	 * @return A valid zero-based offset.
