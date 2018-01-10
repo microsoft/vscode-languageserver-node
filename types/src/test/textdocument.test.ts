@@ -5,7 +5,7 @@
 'use strict';
 
 import assert = require('assert');
-import { TextDocument, Position } from '../main';
+import { TextDocument, Range, Position } from '../main';
 
 suite('Text Document Lines Model Validator', () => {
 	function newDocument(str: string) {
@@ -62,6 +62,17 @@ suite('Text Document Lines Model Validator', () => {
 		assert.equal(newDocument(str).lineCount, 3);
 	})
 
+	test('getText(Range)', () => {
+		var str = "12345\n12345\n12345";
+		var lm = newDocument(str);
+		assert.equal(lm.getText(), str);
+		assert.equal(lm.getText(Range.create(-1, 0, 0, 5)), "12345");
+		assert.equal(lm.getText(Range.create(0, 0, 0, 5)), "12345");
+		assert.equal(lm.getText(Range.create(0, 4, 1, 1)), "5\n1");
+		assert.equal(lm.getText(Range.create(0, 4, 2, 1)), "5\n12345\n1");
+		assert.equal(lm.getText(Range.create(0, 4, 3, 1)), "5\n12345\n12345");
+		assert.equal(lm.getText(Range.create(0, 0, 3, 5)), str);
+	});
 
 	test('Invalid inputs', () => {
 		var str = "Hello World";
