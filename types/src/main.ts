@@ -19,7 +19,7 @@ export interface Position {
 	/**
 	 * Line position in a document (zero-based).
 	 * If a line number is greater than the number of lines in a document, it defaults back to the number of lines in the document.
-	 * If a line number is negative, if defaults to 0.
+	 * If a line number is negative, it defaults to 0.
 	 */
 	line: number;
 
@@ -30,7 +30,7 @@ export interface Position {
 	 *
 	 * If the character value is greater than the line length it defaults back to the
 	 * line length.
-	 * If a line number is negative, if defaults to 0.
+	 * If a line number is negative, it defaults to 0.
 	 */
 	character: number;
 }
@@ -1470,7 +1470,7 @@ export interface TextDocument {
 	 * If no range is passed, the full conetnt is returned.
 	 * Invalid range positions are adjusted as described in [Position.line](#Position.line)
 	 * and [Position.character](#Position.character).
-	 * If a the start range position is greater than the end range position,
+	 * If the start range position is greater than the end range position,
 	 * then the effect of getText is as if the two positions were swapped.
 
 	 * @return The text of this document or a substring of the text if a
