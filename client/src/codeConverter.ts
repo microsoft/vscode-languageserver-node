@@ -202,6 +202,8 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		switch(triggerKind) {
 			case code.CompletionTriggerKind.TriggerCharacter:
 				return proto.CompletionTriggerKind.TriggerCharacter;
+			case code.CompletionTriggerKind.TriggerForIncompleteCompletions:
+				return proto.CompletionTriggerKind.TriggerForIncompleteCompletions;
 			default:
 				return proto.CompletionTriggerKind.Invoked;
 		}
