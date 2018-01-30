@@ -396,6 +396,10 @@ export interface WorkspaceMiddleware {
 	didChangeConfiguration?: (this: void, sections: string[] | undefined, next: DidChangeConfigurationSignature) => void;
 }
 
+/**
+ * The Middleware lets extensions intercept the request and notications send and received
+ * from the server
+ */
 export interface Middleware {
 	didOpen?: NextSignature<TextDocument, void>;
 	didChange?: NextSignature<TextDocumentChangeEvent, void>;
