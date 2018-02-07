@@ -41,6 +41,7 @@ export interface Converter {
 
 	asTextEdit(edit: undefined | null): undefined;
 	asTextEdit(edit: ls.TextEdit): code.TextEdit;
+	asTextEdit(edit: ls.TextEdit | undefined | null): code.TextEdit | undefined;
 
 	asTextEdits(items: ls.TextEdit[]): code.TextEdit[];
 	asTextEdits(items: undefined | null): undefined;

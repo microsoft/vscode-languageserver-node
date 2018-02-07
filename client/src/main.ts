@@ -344,7 +344,7 @@ export class LanguageClient extends BaseLanguageClient {
 								}
 							}
 						});
-					}  else if (transport === TransportKind.pipe) {
+					} else if (transport === TransportKind.pipe) {
 						createClientPipeTransport(pipeName!).then((transport) => {
 							electron.fork(node.module, args || [], options, (error, cp) => {
 								if (error || !cp) {
@@ -354,7 +354,7 @@ export class LanguageClient extends BaseLanguageClient {
 									cp.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 									cp.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 									transport.onConnected().then((protocol) => {
-										resolve({ reader: protocol[0], writer: protocol[1]});
+										resolve({ reader: protocol[0], writer: protocol[1] });
 									});
 								}
 							});
@@ -369,7 +369,7 @@ export class LanguageClient extends BaseLanguageClient {
 									cp.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 									cp.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 									transport.onConnected().then((protocol) => {
-										resolve({ reader: protocol[0], writer: protocol[1]});
+										resolve({ reader: protocol[0], writer: protocol[1] });
 									});
 								}
 							});
@@ -398,7 +398,7 @@ export class LanguageClient extends BaseLanguageClient {
 		this.registerFeatures(ProposedFeatures.createAll(this));
 	}
 
-	private _mainGetRootPath(): string | undefined{
+	private _mainGetRootPath(): string | undefined {
 		let folders = Workspace.workspaceFolders;
 		if (!folders || folders.length === 0) {
 			return undefined;
@@ -448,6 +448,7 @@ import * as config from './configuration.proposed';
 import * as folders from './workspaceFolders.proposed';
 import * as implementation from './implementation.proposed';
 import * as typeDefinition from './typeDefinition.proposed';
+import * as colorProvider from './colorProvider.proposed';
 
 export namespace ProposedFeatures {
 	export type ConfigurationFeature = config.ConfigurationFeature;
@@ -466,12 +467,17 @@ export namespace ProposedFeatures {
 	export const TypeDefinitionFeature = typeDefinition.TypeDefinitionFeature;
 	export type TypeDefinitionMiddleware = typeDefinition.TypeDefinitionMiddleware;
 
+	export type ColorProviderFeature = colorProvider.ColorProviderFeature;
+	export const ColorProviderFeature = colorProvider.ColorProviderFeature;
+	export type ColorProviderMiddleware = colorProvider.ColorProviderMiddleware;
+
 	export function createAll(client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
 		let result: (StaticFeature | DynamicFeature<any>)[] = [];
 		result.push(new WorkspaceFoldersFeature(client));
 		result.push(new ConfigurationFeature(client));
 		result.push(new ImplementationFeature(client));
 		result.push(new TypeDefinitionFeature(client));
+		result.push(new ColorProviderFeature(client));
 		return result;
 	}
 }
