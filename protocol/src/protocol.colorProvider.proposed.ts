@@ -5,10 +5,28 @@
 'use strict';
 
 import { RequestType } from 'vscode-jsonrpc';
-import { TextDocumentRegistrationOptions } from './protocol';
+import { TextDocumentRegistrationOptions, StaticRegistrationOptions } from './protocol';
 import { TextDocumentIdentifier, Range, TextEdit } from 'vscode-languageserver-types';
 
 //---- Server capability ----
+
+
+export interface ClientCapabilities {
+	/**
+	 * The text document client capabilities
+	 */
+	textDocument?: {
+		/**
+		 * Capabilities specific to the colorProvider
+		 */
+		colorProvider?: {
+			/**
+			 * Whether implementation supports dynamic registration.
+			 */
+			dynamicRegistration?: boolean;
+		};
+	}
+}
 
 export interface ColorProviderOptions {
 }
@@ -17,7 +35,7 @@ export interface ServerCapabilities {
 	/**
 	 * The server provides color provider support.
 	 */
-	colorProvider?: ColorProviderOptions;
+	colorProvider?: ColorProviderOptions | (TextDocumentRegistrationOptions & StaticRegistrationOptions);
 }
 
 //---- Color Symbol Provider ---------------------------
