@@ -68,7 +68,7 @@ export namespace Proposed {
 		export type HandlerSignature = folders.DidChangeWorkspaceFoldersNotification.HandlerSignature;
 		export type MiddlewareSignature = folders.DidChangeWorkspaceFoldersNotification.MiddlewareSignature;
 	}
-
+	
 	export type ColorProviderOptions = color.ColorProviderOptions;
 	export type DocumentColorParams = color.DocumentColorParams;
 	export type ColorPresentationParams = color.ColorPresentationParams;
@@ -76,6 +76,7 @@ export namespace Proposed {
 	export type ColorInformation = color.ColorInformation;
 	export type ColorPresentation = color.ColorPresentation;
 	export type ColorServerCapabilities = color.ServerCapabilities;
+	export type ColorClientCapabilities = color.ClientCapabilities;
 	export const DocumentColorRequest = color.DocumentColorRequest;
 	export const ColorPresentationRequest = color.ColorPresentationRequest;
 

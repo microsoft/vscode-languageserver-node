@@ -396,6 +396,10 @@ export interface WorkspaceMiddleware {
 	didChangeConfiguration?: (this: void, sections: string[] | undefined, next: DidChangeConfigurationSignature) => void;
 }
 
+/**
+ * The Middleware lets extensions intercept the request and notications send and received
+ * from the server
+ */
 export interface Middleware {
 	didOpen?: NextSignature<TextDocument, void>;
 	didChange?: NextSignature<TextDocumentChangeEvent, void>;
@@ -2884,6 +2888,7 @@ export abstract class BaseLanguageClient {
 	private computeClientCapabilities(): ClientCapabilities {
 		let result: ClientCapabilities = {};
 		ensure(result, 'workspace')!.applyEdit = true;
+		ensure(ensure(result, 'workspace')!, 'workspaceEdit')!.documentChanges = true;
 		for (let feature of this._features) {
 			feature.fillClientCapabilities(result);
 		}
