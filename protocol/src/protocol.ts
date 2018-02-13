@@ -1310,8 +1310,14 @@ export namespace CompletionTriggerKind {
 	 * the `triggerCharacters` properties of the `CompletionRegistrationOptions`.
 	 */
 	export const TriggerCharacter: 2 = 2;
+
+	/**
+	 * Completion was re-triggered as current completion list is incomplete
+	 */
+	export const TriggerForIncompleteCompletions: 3 = 3;
 }
-export type CompletionTriggerKind = 1 | 2;
+
+export type CompletionTriggerKind = 1 | 2 | 3;
 
 
 /**

@@ -29,7 +29,7 @@ import {
 	WillSaveTextDocumentNotification, WillSaveTextDocumentParams, WillSaveTextDocumentWaitUntilRequest,
 	DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams,
 	PublishDiagnosticsNotification, PublishDiagnosticsParams,
-	TextDocumentPositionParams, TextDocumentSyncKind,
+	TextDocumentPositionParams, CompletionParams, TextDocumentSyncKind,
 	HoverRequest,
 	CompletionRequest, CompletionResolveRequest,
 	SignatureHelpRequest,
@@ -1164,7 +1164,7 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCompletion(handler: RequestHandler<TextDocumentPositionParams, CompletionItem[] | CompletionList | undefined | null, void>): void;
+	onCompletion(handler: RequestHandler<CompletionParams, CompletionItem[] | CompletionList | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the `CompletionResolve` request.
