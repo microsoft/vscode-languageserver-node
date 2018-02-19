@@ -2210,6 +2210,7 @@ export abstract class BaseLanguageClient {
 	private _listeners: Disposable[] | undefined;
 	private _providers: Disposable[] | undefined;
 	private _diagnostics: DiagnosticCollection | undefined;
+	private _syncedDocuments: Map<string, TextDocument>;
 
 	private _fileEvents: FileEvent[];
 	private _fileEventDelayer: Delayer<void>;
@@ -2275,6 +2276,7 @@ export abstract class BaseLanguageClient {
 		};
 		this._c2p = c2p.createConverter(clientOptions.uriConverters ? clientOptions.uriConverters.code2Protocol : undefined);
 		this._p2c = p2c.createConverter(clientOptions.uriConverters ? clientOptions.uriConverters.protocol2Code : undefined);
+		this._syncedDocuments = new Map<string, TextDocument>();
 		this.registerBuiltinFeatures();
 	}
 
@@ -2691,10 +2693,13 @@ export abstract class BaseLanguageClient {
 			this._providers.forEach(provider => provider.dispose());
 			this._providers = undefined;
 		}
+		if (this._syncedDocuments) {
+			this._syncedDocuments.clear();
+		}
 		for (let handler of this._dynamicFeatures.values()) {
 			handler.dispose();
 		}
-		if (this._outputChannel && this._disposeOutputChannel) {
+		if (!restart && this._outputChannel && this._disposeOutputChannel) {
 			this._outputChannel.dispose();
 		}
 		if (!restart && this._diagnostics) {
@@ -2850,14 +2855,13 @@ export abstract class BaseLanguageClient {
 	}
 
 	private registerBuiltinFeatures() {
-		const syncedDocuments: Map<string, TextDocument> = new Map<string, TextDocument>();
 		this.registerFeature(new ConfigurationFeature(this));
-		this.registerFeature(new DidOpenTextDocumentFeature(this, syncedDocuments));
+		this.registerFeature(new DidOpenTextDocumentFeature(this, this._syncedDocuments));
 		this.registerFeature(new DidChangeTextDocumentFeature(this));
 		this.registerFeature(new WillSaveFeature(this));
 		this.registerFeature(new WillSaveWaitUntilFeature(this));
 		this.registerFeature(new DidSaveTextDocumentFeature(this));
-		this.registerFeature(new DidCloseTextDocumentFeature(this, syncedDocuments));
+		this.registerFeature(new DidCloseTextDocumentFeature(this, this._syncedDocuments));
 		this.registerFeature(new FileSystemWatcherFeature(this, (event) => this.notifyFileEvent(event)));
 		this.registerFeature(new CompletionItemFeature(this));
 		this.registerFeature(new HoverFeature(this));
