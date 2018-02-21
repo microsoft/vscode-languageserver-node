@@ -16,8 +16,6 @@ import {
 	createClientSocketTransport, createServerSocketTransport,
 	createMessageConnection, Tracer
 } from 'vscode-jsonrpc';
-import { Definition } from 'vscode-languageserver-types';
-import { InitializeParams, TextDocumentPositionParams, TextDocumentRegistrationOptions } from './protocol';
 
 export {
 	ErrorCodes, ResponseError, CancellationToken, CancellationTokenSource,
@@ -35,62 +33,7 @@ export {
 export * from 'vscode-languageserver-types';
 export * from './protocol';
 
-import * as config from './protocol.configuration.proposed';
-import * as folders from './protocol.workspaceFolders.proposed';
-import * as color from './protocol.colorProvider.proposed';
-import * as implementation from './protocol.implementation.proposed';
-import * as typeDefinition from './protocol.typeDefinition.proposed';
-
-
 export namespace Proposed {
-	export type ConfigurationClientCapabilities = config.ConfigurationClientCapabilities;
-	export type ConfigurationParams = config.ConfigurationParams;
-	export type ConfigurationItem = config.ConfigurationItem;
-	export namespace ConfigurationRequest {
-		export const type = config.ConfigurationRequest.type;
-		export type HandlerSignature = config.ConfigurationRequest.HandlerSignature;
-		export type MiddlewareSignature = config.ConfigurationRequest.MiddlewareSignature;
-	};
-
-	export type WorkspaceFoldersInitializeParams = InitializeParams & folders.WorkspaceFoldersInitializeParams;
-	export type WorkspaceFoldersClientCapabilities = folders.WorkspaceFoldersClientCapabilities;
-	export type WorkspaceFoldersServerCapabilities = folders.WorkspaceFoldersServerCapabilities;
-	export type WorkspaceFolder = folders.WorkspaceFolder;
-	export type WorkspaceFoldersChangeEvent = folders.WorkspaceFoldersChangeEvent;
-	export type DidChangeWorkspaceFoldersParams = folders.DidChangeWorkspaceFoldersParams;
-	export namespace WorkspaceFoldersRequest {
-		export const type = folders.WorkspaceFoldersRequest.type;
-		export type HandlerSignature = folders.WorkspaceFoldersRequest.HandlerSignature;
-		export type MiddlewareSignature = folders.WorkspaceFoldersRequest.MiddlewareSignature;
-	}
-	export namespace DidChangeWorkspaceFoldersNotification {
-		export const type = folders.DidChangeWorkspaceFoldersNotification.type;
-		export type HandlerSignature = folders.DidChangeWorkspaceFoldersNotification.HandlerSignature;
-		export type MiddlewareSignature = folders.DidChangeWorkspaceFoldersNotification.MiddlewareSignature;
-	}
-	
-	export type ColorProviderOptions = color.ColorProviderOptions;
-	export type DocumentColorParams = color.DocumentColorParams;
-	export type ColorPresentationParams = color.ColorPresentationParams;
-	export type Color = color.Color;
-	export type ColorInformation = color.ColorInformation;
-	export type ColorPresentation = color.ColorPresentation;
-	export type ColorServerCapabilities = color.ServerCapabilities;
-	export type ColorClientCapabilities = color.ClientCapabilities;
-	export const DocumentColorRequest = color.DocumentColorRequest;
-	export const ColorPresentationRequest = color.ColorPresentationRequest;
-
-	export type ImplementationClientCapabilities = implementation.ImplementationClientCapabilities;
-	export type ImplementationServerCapabilities = implementation.ImplementationServerCapabilities;
-	export namespace ImplementationRequest {
-		export const type: RequestType<TextDocumentPositionParams, Definition | null, void, TextDocumentRegistrationOptions> = implementation.ImplementationRequest.type;
-	}
-
-	export type TypeDefinitionClientCapabilities = typeDefinition.TypeDefinitionClientCapabilities;
-	export type TypeDefinitionServerCapabilities = typeDefinition.TypeDefinitionServerCapabilities;
-	export namespace TypeDefinitionRequest {
-		export const type: RequestType<TextDocumentPositionParams, Definition | null, void, TextDocumentRegistrationOptions> = typeDefinition.TypeDefinitionRequest.type;
-	}
 }
 
 export interface ProtocolConnection {

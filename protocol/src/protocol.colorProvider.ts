@@ -11,7 +11,7 @@ import { TextDocumentIdentifier, Range, TextEdit } from 'vscode-languageserver-t
 //---- Server capability ----
 
 
-export interface ClientCapabilities {
+export interface ColorClientCapabilities {
 	/**
 	 * The text document client capabilities
 	 */
@@ -31,7 +31,7 @@ export interface ClientCapabilities {
 export interface ColorProviderOptions {
 }
 
-export interface ServerCapabilities {
+export interface ColorServerCapabilities {
 	/**
 	 * The server provides color provider support.
 	 */

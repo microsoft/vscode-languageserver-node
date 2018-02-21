@@ -43,8 +43,11 @@ import {
 	DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkParams,
 	ExecuteCommandRequest, ExecuteCommandParams,
 	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse,
-	ClientCapabilities, ServerCapabilities, ProtocolConnection, createProtocolConnection, Proposed
+	ClientCapabilities, ServerCapabilities, ProtocolConnection, createProtocolConnection, TypeDefinitionRequest, ImplementationRequest
 } from 'vscode-languageserver-protocol';
+
+import { Configuration, ConfigurationFeature } from './configuration';
+import { WorkspaceFolders, WorkspaceFoldersFeature } from './workspaceFolders';
 
 import * as Is from './utils/is';
 import * as UUID from './utils/uuid';
@@ -793,7 +796,7 @@ class RemoteClientImpl implements RemoteClient {
 /**
  * Represents the workspace managed by the client.
  */
-export interface RemoteWorkspace extends Remote {
+export interface _RemoteWorkspace extends Remote {
 	/**
 	 * Applies a `WorkspaceEdit` to the workspace
 	 * @param edit the workspace edit.
@@ -802,7 +805,9 @@ export interface RemoteWorkspace extends Remote {
 	applyEdit(edit: WorkspaceEdit): Thenable<ApplyWorkspaceEditResponse>;
 }
 
-class RemoteWorkspaceImpl implements RemoteWorkspace {
+export type RemoteWorkspace = _RemoteWorkspace & Configuration & WorkspaceFolders;
+
+class _RemoteWorkspaceImpl implements _RemoteWorkspace {
 
 	private _connection: IConnection;
 
@@ -833,6 +838,8 @@ class RemoteWorkspaceImpl implements RemoteWorkspace {
 		return this._connection.sendRequest(ApplyWorkspaceEditRequest.type, params);
 	}
 }
+
+const RemoteWorkspaceImpl: new () => RemoteWorkspace = WorkspaceFoldersFeature(ConfigurationFeature(_RemoteWorkspaceImpl)) as (new () => RemoteWorkspace);
 
 /**
  * Interface to log telemetry events. The events are actually send to the client
@@ -1539,10 +1546,10 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 	const connection = createProtocolConnection(input as any, output as any, logger, strategy);
 	logger.rawAttach(connection);
 	const tracer = (factories && factories.tracer ? new (factories.tracer(TracerImpl))() : new TracerImpl()) as TracerImpl & PTracer;
-	const telemetry = (factories && factories.telemetry ? new (factories.telemetry(TelemetryImpl))() : new TelemetryImpl()) as TelemetryImpl & PTelemetry;
-	const client = (factories && factories.client ? new (factories.client(RemoteClientImpl))() :  new RemoteClientImpl()) as RemoteClientImpl & PClient;
-	const remoteWindow = (factories && factories.window ? new (factories.window(RemoteWindowImpl))() : new RemoteWindowImpl()) as RemoteWindowImpl & PWindow;
-	const workspace = (factories && factories.workspace ? new (factories.workspace(RemoteWorkspaceImpl))() : new RemoteWorkspaceImpl()) as RemoteWorkspaceImpl & PWorkspace;
+	const telemetry = (factories && factories.telemetry ? new (factories.telemetry(TelemetryImpl))() : new TelemetryImpl()) as Telemetry & PTelemetry;
+	const client = (factories && factories.client ? new (factories.client(RemoteClientImpl))() :  new RemoteClientImpl()) as RemoteClient & PClient;
+	const remoteWindow = (factories && factories.window ? new (factories.window(RemoteWindowImpl))() : new RemoteWindowImpl()) as RemoteWindow & PWindow;
+	const workspace = (factories && factories.workspace ? new (factories.workspace(RemoteWorkspaceImpl))() : new RemoteWorkspaceImpl()) as RemoteWorkspace & PWorkspace;
 	const allRemotes: Remote[] = [logger, tracer, telemetry, client, remoteWindow, workspace];
 
 	function asThenable<T>(value: Thenable<T>): Thenable<T>;
@@ -1597,8 +1604,8 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 		onCompletionResolve: (handler) => connection.onRequest(CompletionResolveRequest.type, handler),
 		onSignatureHelp: (handler) => connection.onRequest(SignatureHelpRequest.type, handler),
 		onDefinition: (handler) => connection.onRequest(DefinitionRequest.type, handler),
-		onTypeDefinition: (handler) => connection.onRequest(Proposed.TypeDefinitionRequest.type, handler),
-		onImplementation: (handler) => connection.onRequest(Proposed.ImplementationRequest.type, handler),
+		onTypeDefinition: (handler) => connection.onRequest(TypeDefinitionRequest.type, handler),
+		onImplementation: (handler) => connection.onRequest(ImplementationRequest.type, handler),
 		onReferences: (handler) => connection.onRequest(ReferencesRequest.type, handler),
 		onDocumentHighlight: (handler) => connection.onRequest(DocumentHighlightRequest.type, handler),
 		onDocumentSymbol: (handler) => connection.onRequest(DocumentSymbolRequest.type, handler),
@@ -1705,19 +1712,8 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 
 // Export the protocol currently in proposed state.
 
-
-import * as config from './configuration.proposed';
-import * as folders from './workspaceFolders.proposed';
-
 export namespace ProposedFeatures {
-	export type Configuration = config.Configuration;
-	export const ConfigurationFeature = config.ConfigurationFeature;
-
-	export type WorkspaceFolders = folders.WorkspaceFolders;
-	export const WorkspaceFoldersFeature = folders.WorkspaceFoldersFeature;
-
-	export const all: Features<_, _, _, _, _, ProposedFeatures.WorkspaceFolders & ProposedFeatures.Configuration> = {
+	export const all: Features<_, _, _, _, _, _> = {
 		__brand: 'features',
-		workspace: combineWorkspaceFeatures(WorkspaceFoldersFeature, ConfigurationFeature)
 	}
 }

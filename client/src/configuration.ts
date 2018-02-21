@@ -8,17 +8,13 @@ import { workspace, Uri } from 'vscode';
 
 import { StaticFeature, BaseLanguageClient } from './client';
 import {
-	ClientCapabilities, Proposed
+	ClientCapabilities, ConfigurationRequest
 } from 'vscode-languageserver-protocol';
 
 export interface ConfigurationMiddleware {
 	workspace?: {
-		configuration?: Proposed.ConfigurationRequest.MiddlewareSignature
+		configuration?: ConfigurationRequest.MiddlewareSignature
 	}
-}
-
-interface _Middleware {
-	configuration?: Proposed.ConfigurationRequest.MiddlewareSignature
 }
 
 export class ConfigurationFeature implements StaticFeature {
@@ -28,14 +24,13 @@ export class ConfigurationFeature implements StaticFeature {
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
 		capabilities.workspace = capabilities.workspace || {};
-		let configCapabilities = capabilities as Proposed.ConfigurationClientCapabilities;
-		configCapabilities.workspace!.configuration = true;
+		capabilities.workspace!.configuration = true;
 	}
 
 	public initialize(): void {
 		let client = this._client;
-		client.onRequest(Proposed.ConfigurationRequest.type, (params, token) => {
-			let configuration: Proposed.ConfigurationRequest.HandlerSignature = (params) => {
+		client.onRequest(ConfigurationRequest.type, (params, token) => {
+			let configuration: ConfigurationRequest.HandlerSignature = (params) => {
 				let result: any[] = [];
 				for (let item of params.items) {
 					let resource = item.scopeUri !== void 0 && item.scopeUri !== null ? this._client.protocol2CodeConverter.asUri(item.scopeUri) : undefined;
@@ -43,8 +38,8 @@ export class ConfigurationFeature implements StaticFeature {
 				}
 				return result;
 			}
-			let middleware = this.getConfigurationMiddleware();
-			return middleware.configuration
+			let middleware = client.clientOptions.middleware!.workspace;
+			return middleware && middleware.configuration
 				? middleware.configuration(params, token, configuration)
 				: configuration(params, token);
 		});
@@ -76,12 +71,4 @@ export class ConfigurationFeature implements StaticFeature {
 		}
 		return result;
 	}
-
-	private getConfigurationMiddleware(): _Middleware {
-		let middleware = this._client.clientOptions.middleware;
-		return middleware && middleware.workspace
-			? middleware.workspace as _Middleware
-			: {};
-	}
 }
-

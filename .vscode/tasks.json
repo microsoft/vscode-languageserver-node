@@ -2,7 +2,7 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"taskName": "compile",
+			"label": "compile",
 			"dependsOn": [
 				"compile:server",
 				"compile:client"
@@ -14,7 +14,7 @@
 			"problemMatcher": []
 		},
 		{
-			"taskName": "compile:types",
+			"label": "compile:types",
 			"type": "shell",
 			"command": "npm run compile:types",
 			"group": "build",
@@ -27,7 +27,7 @@
 			]
 		},
 		{
-			"taskName": "compile:jsonrpc",
+			"label": "compile:jsonrpc",
 			"type": "shell",
 			"command": "npm run compile:jsonrpc",
 			"group": "build",
@@ -40,7 +40,7 @@
 			]
 		},
 		{
-			"taskName": "compile:protocol",
+			"label": "compile:protocol",
 			"type": "shell",
 			"command": "npm run compile:protocol",
 			"group": "build",
@@ -57,7 +57,7 @@
 			]
 		},
 		{
-			"taskName": "compile:server",
+			"label": "compile:server",
 			"type": "shell",
 			"command": "npm run compile:server",
 			"group": "build",
@@ -75,7 +75,7 @@
 			]
 		},
 		{
-			"taskName": "compile:client",
+			"label": "compile:client",
 			"type": "shell",
 			"command": "npm run compile:client",
 			"group": "build",
@@ -93,7 +93,7 @@
 			]
 		},
 		{
-			"taskName": "watch",
+			"label": "watch",
 			"dependsOn": [
 				"watch:types",
 				"watch:jsonrpc",
@@ -104,7 +104,7 @@
 			"problemMatcher": []
 		},
 		{
-			"taskName": "watch:types",
+			"label": "watch:types",
 			"type": "shell",
 			"command": "npm run watch:types",
 			"group": "build",
@@ -118,7 +118,7 @@
 			]
 		},
 		{
-			"taskName": "watch:jsonrpc",
+			"label": "watch:jsonrpc",
 			"type": "shell",
 			"command": "npm run watch:jsonrpc",
 			"group": "build",
@@ -132,7 +132,7 @@
 			]
 		},
 		{
-			"taskName": "watch:protocol",
+			"label": "watch:protocol",
 			"type": "shell",
 			"command": "npm run watch:protocol",
 			"group": "build",
@@ -146,7 +146,7 @@
 			]
 		},
 		{
-			"taskName": "watch:server",
+			"label": "watch:server",
 			"type": "shell",
 			"command": "npm run watch:server",
 			"group": "build",
@@ -160,7 +160,7 @@
 			]
 		},
 		{
-			"taskName": "watch:client",
+			"label": "watch:client",
 			"type": "shell",
 			"command": "npm run watch:client",
 			"group": "build",

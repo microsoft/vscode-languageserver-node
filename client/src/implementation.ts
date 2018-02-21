@@ -10,7 +10,7 @@ import * as Is from  './utils/is';
 import { languages as Languages, Disposable, TextDocument, ProviderResult, Position as VPosition, Definition as VDefinition } from 'vscode';
 
 import {
-	ClientCapabilities, Proposed, CancellationToken, ServerCapabilities, TextDocumentRegistrationOptions, DocumentSelector
+	ClientCapabilities, CancellationToken, ServerCapabilities, TextDocumentRegistrationOptions, DocumentSelector, ImplementationRequest
 } from 'vscode-languageserver-protocol';
 
 import { TextDocumentFeature, BaseLanguageClient } from './client';
@@ -33,17 +33,14 @@ export interface ImplementationMiddleware {
 export class ImplementationFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
-		super(client, Proposed.ImplementationRequest.type);
+		super(client, ImplementationRequest.type);
 	}
 
-	public fillClientCapabilities(cap: ClientCapabilities): void {
-		let capabilites = cap as ClientCapabilities & Proposed.ImplementationClientCapabilities;
+	public fillClientCapabilities(capabilites: ClientCapabilities): void {
 		ensure(ensure(capabilites, 'textDocument')!, 'implementation')!.dynamicRegistration = true;
 	}
 
-	public initialize(cap: ServerCapabilities, documentSelector: DocumentSelector): void {
-		let capabilities = cap as ServerCapabilities & Proposed.ImplementationServerCapabilities;
-
+	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		if (!capabilities.implementationProvider) {
 			return;
 		}
@@ -70,11 +67,11 @@ export class ImplementationFeature extends TextDocumentFeature<TextDocumentRegis
 
 	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): Disposable {
 		let client = this._client;
-		let provideDefinition: ProvideImplementationSignature = (document, position, token) => {
-			return client.sendRequest(Proposed.ImplementationRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
+		let provideImplementation: ProvideImplementationSignature = (document, position, token) => {
+			return client.sendRequest(ImplementationRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
 				client.protocol2CodeConverter.asDefinitionResult,
 				(error) => {
-					client.logFailedRequest(Proposed.ImplementationRequest.type, error);
+					client.logFailedRequest(ImplementationRequest.type, error);
 					return Promise.resolve(null);
 				}
 			);
@@ -82,9 +79,9 @@ export class ImplementationFeature extends TextDocumentFeature<TextDocumentRegis
 		let middleware = client.clientOptions.middleware!;
 		return Languages.registerImplementationProvider(options.documentSelector!, {
 			provideImplementation: (document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDefinition> => {
-				return middleware.provideDefinition
-					? middleware.provideDefinition(document, position, token, provideDefinition)
-					: provideDefinition(document, position, token);
+				return middleware.provideImplementation
+					? middleware.provideImplementation(document, position, token, provideImplementation)
+					: provideImplementation(document, position, token);
 			}
 		});
 	}

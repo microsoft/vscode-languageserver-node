@@ -7,10 +7,11 @@
 import * as UUID from './utils/uuid';
 import * as Is from './utils/is';
 
-import { languages as Languages, Disposable, TextDocument, ProviderResult, Range as VRange, Color, ColorPresentation, ColorInformation } from 'vscode';
+import { languages as Languages, Disposable, TextDocument, ProviderResult, Range as VRange, Color as VColor, ColorPresentation as VColorPresentation, ColorInformation as VColorInformation} from 'vscode';
 
 import {
-	ClientCapabilities, Proposed, CancellationToken, ServerCapabilities, TextDocumentRegistrationOptions, DocumentSelector, StaticRegistrationOptions
+	ClientCapabilities, CancellationToken, ServerCapabilities, TextDocumentRegistrationOptions, DocumentSelector, StaticRegistrationOptions,
+	DocumentColorRequest, ColorPresentationRequest, Color, ColorInformation, ColorPresentation
 } from 'vscode-languageserver-protocol';
 
 import { TextDocumentFeature, BaseLanguageClient } from './client';
@@ -23,31 +24,29 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 }
 
 export interface ProvideDocumentColorsSignature {
-	(document: TextDocument, token: CancellationToken): ProviderResult<ColorInformation[]>;
+	(document: TextDocument, token: CancellationToken): ProviderResult<VColorInformation[]>;
 }
 
 export interface ProvideColorPresentationSignature {
-	(color: Color, context: { document: TextDocument, range: VRange }, token: CancellationToken): ProviderResult<ColorPresentation[]>;
+	(color: VColor, context: { document: TextDocument, range: VRange }, token: CancellationToken): ProviderResult<VColorPresentation[]>;
 }
 
 export interface ColorProviderMiddleware {
-	provideDocumentColors?: (this: void, document: TextDocument, token: CancellationToken, next: ProvideDocumentColorsSignature) => ProviderResult<ColorInformation[]>;
-	provideColorPresentations?: (this: void, color: Color, context: { document: TextDocument, range: VRange }, token: CancellationToken, next: ProvideColorPresentationSignature) => ProviderResult<ColorPresentation[]>;
+	provideDocumentColors?: (this: void, document: TextDocument, token: CancellationToken, next: ProvideDocumentColorsSignature) => ProviderResult<VColorInformation[]>;
+	provideColorPresentations?: (this: void, color: VColor, context: { document: TextDocument, range: VRange }, token: CancellationToken, next: ProvideColorPresentationSignature) => ProviderResult<VColorPresentation[]>;
 }
 
 export class ColorProviderFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
-		super(client, Proposed.DocumentColorRequest.type);
+		super(client, DocumentColorRequest.type);
 	}
 
-	public fillClientCapabilities(cap: ClientCapabilities): void {
-		let capabilites = cap as ClientCapabilities & Proposed.ColorClientCapabilities;
+	public fillClientCapabilities(capabilites: ClientCapabilities): void {
 		ensure(ensure(capabilites, 'textDocument')!, 'colorProvider')!.dynamicRegistration = true;
 	}
 
-	public initialize(cap: ServerCapabilities, documentSelector: DocumentSelector): void {
-		let capabilities = cap as ServerCapabilities & Proposed.ColorServerCapabilities;
+	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		if (!capabilities.colorProvider) {
 			return;
 		}
@@ -71,10 +70,10 @@ export class ColorProviderFeature extends TextDocumentFeature<TextDocumentRegist
 				textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(context.document),
 				range: client.code2ProtocolConverter.asRange(context.range)
 			};
-			return client.sendRequest(Proposed.ColorPresentationRequest.type, requestParams, token).then(
+			return client.sendRequest(ColorPresentationRequest.type, requestParams, token).then(
 				this.asColorPresentations.bind(this),
 				(error: any) => {
-					client.logFailedRequest(Proposed.ColorPresentationRequest.type, error);
+					client.logFailedRequest(ColorPresentationRequest.type, error);
 					return Promise.resolve(null);
 				}
 			);
@@ -83,17 +82,17 @@ export class ColorProviderFeature extends TextDocumentFeature<TextDocumentRegist
 			const requestParams = {
 				textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document)
 			};
-			return client.sendRequest(Proposed.DocumentColorRequest.type, requestParams, token).then(
+			return client.sendRequest(DocumentColorRequest.type, requestParams, token).then(
 				this.asColorInformations.bind(this),
 				(error: any) => {
-					client.logFailedRequest(Proposed.ColorPresentationRequest.type, error);
+					client.logFailedRequest(ColorPresentationRequest.type, error);
 					return Promise.resolve(null);
 				}
 			);
 		};
-		let middleware = <ColorProviderMiddleware>client.clientOptions.middleware!;
+		let middleware = client.clientOptions.middleware!;
 		return Languages.registerColorProvider(options.documentSelector!, {
-			provideColorPresentations: (color: Color, context: { document: TextDocument, range: VRange }, token: CancellationToken) => {
+			provideColorPresentations: (color: VColor, context: { document: TextDocument, range: VRange }, token: CancellationToken) => {
 				return middleware.provideColorPresentations
 					? middleware.provideColorPresentations(color, context, token, provideColorPresentations)
 					: provideColorPresentations(color, context, token);
@@ -106,23 +105,23 @@ export class ColorProviderFeature extends TextDocumentFeature<TextDocumentRegist
 		});
 	}
 
-	private asColor(color: Proposed.Color): Color {
-		return new Color(color.red, color.green, color.blue, color.alpha);
+	private asColor(color: Color): VColor {
+		return new VColor(color.red, color.green, color.blue, color.alpha);
 	}
 
-	private asColorInformations(colorInformation: Proposed.ColorInformation[]): ColorInformation[] {
+	private asColorInformations(colorInformation: ColorInformation[]): VColorInformation[] {
 		if (Array.isArray(colorInformation)) {
 			return colorInformation.map(ci => {
-				return new ColorInformation(this._client.protocol2CodeConverter.asRange(ci.range), this.asColor(ci.color));
+				return new VColorInformation(this._client.protocol2CodeConverter.asRange(ci.range), this.asColor(ci.color));
 			});
 		}
 		return [];
 	}
 
-	private asColorPresentations(colorPresentations: Proposed.ColorPresentation[]): ColorPresentation[] {
+	private asColorPresentations(colorPresentations: ColorPresentation[]): VColorPresentation[] {
 		if (Array.isArray(colorPresentations)) {
 			return colorPresentations.map(cp => {
-				let presentation = new ColorPresentation(cp.label);
+				let presentation = new VColorPresentation(cp.label);
 				presentation.additionalTextEdits = this._client.protocol2CodeConverter.asTextEdits(cp.additionalTextEdits);
 				presentation.textEdit = this._client.protocol2CodeConverter.asTextEdit(cp.textEdit);
 				return presentation;
@@ -131,5 +130,3 @@ export class ColorProviderFeature extends TextDocumentFeature<TextDocumentRegist
 		return [];
 	}
 }
-
-

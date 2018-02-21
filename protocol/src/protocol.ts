@@ -18,6 +18,18 @@ import {
 	SymbolKind, CompletionItemKind
 } from 'vscode-languageserver-types';
 
+import { ImplementationRequest, ImplementationClientCapabilities, ImplementationServerCapabilities } from './protocol.implementation';
+import { TypeDefinitionRequest, TypeDefinitionClientCapabilities, TypeDefinitionServerCapabilities }  from './protocol.typeDefinition';
+import {
+	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, WorkspaceFolder,
+	WorkspaceFoldersChangeEvent, WorkspaceFoldersInitializeParams, WorkspaceFoldersClientCapabilities, WorkspaceFoldersServerCapabilities
+} from './protocol.workspaceFolders';
+import { ConfigurationRequest, ConfigurationParams, ConfigurationItem, ConfigurationClientCapabilities } from './protocol.configuration';
+import {
+	DocumentColorRequest, ColorPresentationRequest, ColorProviderOptions, DocumentColorParams, ColorPresentationParams,
+	Color, ColorInformation, ColorPresentation, ColorServerCapabilities, ColorClientCapabilities,
+ } from './protocol.colorProvider';
+
 /**
  * A document filter denotes a document by different properties like
  * the [language](#TextDocument.languageId), the [scheme](#Uri.scheme) of
@@ -220,11 +232,6 @@ export interface WorkspaceClientCapabilities {
 		dynamicRegistration?: boolean;
 	};
 }
-
-/**
- * This is for backwards compatibility. Can be removed when we switch to 4.0.
- */
-export type WorkspaceClientCapabilites = WorkspaceClientCapabilities;
 
 /**
  * Text document specific client capabilities.
@@ -484,7 +491,7 @@ export interface TextDocumentClientCapabilities {
 /**
  * Defines the capabilities provided by the client.
  */
-export interface ClientCapabilities {
+export interface _ClientCapabilities {
 	/**
 	 * Workspace specific client capabilities.
 	 */
@@ -500,6 +507,9 @@ export interface ClientCapabilities {
 	 */
 	experimental?: any;
 }
+
+export type ClientCapabilities = _ClientCapabilities & ImplementationClientCapabilities & TypeDefinitionClientCapabilities &
+	WorkspaceFoldersClientCapabilities & ConfigurationClientCapabilities & ColorClientCapabilities;
 
 /**
  * Defines how the host (editor) should sync
@@ -666,7 +676,7 @@ export interface TextDocumentSyncOptions {
  * Defines the capabilities provided by a language
  * server.
  */
-export interface ServerCapabilities {
+export interface _ServerCapabilities {
 	/**
 	 * Defines how text documents are synced. Is either a detailed structure defining each notification or
 	 * for backwards compatibility the TextDocumentSyncKind number.
@@ -751,6 +761,9 @@ export interface ServerCapabilities {
 	experimental?: any;
 }
 
+export type ServerCapabilities = _ServerCapabilities & ImplementationServerCapabilities & TypeDefinitionServerCapabilities & WorkspaceFoldersServerCapabilities &
+	ColorServerCapabilities;
+
 /**
  * The initialize request is sent from the client to the server.
  * It is sent once as the request after starting up the server.
@@ -765,7 +778,7 @@ export namespace InitializeRequest {
 /**
  * The initialize parameters
  */
-export interface InitializeParams {
+export interface _InitializeParams {
 	/**
 	 * The process Id of the parent process that started
 	 * the server.
@@ -784,6 +797,8 @@ export interface InitializeParams {
 	 * The rootUri of the workspace. Is null if no
 	 * folder is open. If both `rootPath` and `rootUri` are set
 	 * `rootUri` wins.
+	 *
+	 * @deprecated in favour of workspaceFolders.
 	 */
 	rootUri: string | null;
 
@@ -802,6 +817,8 @@ export interface InitializeParams {
 	 */
 	trace?: 'off' | 'messages' | 'verbose';
 }
+
+export type InitializeParams = _InitializeParams & WorkspaceFoldersInitializeParams
 
 /**
  * The result returned from an initilize request.
@@ -1727,3 +1744,11 @@ export interface ApplyWorkspaceEditResponse {
 export namespace ApplyWorkspaceEditRequest {
 	export const type = new RequestType<ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse, void, void>('workspace/applyEdit');
 }
+
+export {
+	ImplementationRequest,
+	TypeDefinitionRequest,
+	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, WorkspaceFolder, WorkspaceFoldersChangeEvent,
+	ConfigurationRequest, ConfigurationParams, ConfigurationItem,
+	DocumentColorRequest, ColorPresentationRequest, ColorProviderOptions, DocumentColorParams, ColorPresentationParams, Color, ColorInformation, ColorPresentation
+};

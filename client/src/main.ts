@@ -20,6 +20,12 @@ import {
 	createClientPipeTransport, generateRandomPipeName, createClientSocketTransport
 } from 'vscode-languageserver-protocol';
 
+import { ColorProviderFeature } from './colorProvider';
+import { ConfigurationFeature as PullConfigurationFeature} from './configuration';
+import { ImplementationFeature }  from './implementation'
+import { TypeDefinitionFeature } from './typeDefinition';
+import { WorkspaceFoldersFeature } from './workspaceFolders';
+
 import * as Is from './utils/is';
 import * as electron from './utils/electron';
 import { terminate } from './utils/processes';
@@ -410,6 +416,15 @@ export class LanguageClient extends BaseLanguageClient {
 		this.registerFeatures(ProposedFeatures.createAll(this));
 	}
 
+	protected registerBuiltinFeatures() {
+		super.registerBuiltinFeatures();
+		this.registerFeature(new PullConfigurationFeature(this));
+		this.registerFeature(new TypeDefinitionFeature(this));
+		this.registerFeature(new ImplementationFeature(this));
+		this.registerFeature(new ColorProviderFeature(this));
+		this.registerFeature(new WorkspaceFoldersFeature(this));
+	}
+
 	private _mainGetRootPath(): string | undefined {
 		let folders = Workspace.workspaceFolders;
 		if (!folders || folders.length === 0) {
@@ -474,40 +489,9 @@ export class SettingMonitor {
 
 // Exporting proposed protocol.
 
-import * as config from './configuration.proposed';
-import * as folders from './workspaceFolders.proposed';
-import * as implementation from './implementation.proposed';
-import * as typeDefinition from './typeDefinition.proposed';
-import * as colorProvider from './colorProvider.proposed';
-
 export namespace ProposedFeatures {
-	export type ConfigurationFeature = config.ConfigurationFeature;
-	export const ConfigurationFeature = config.ConfigurationFeature;
-	export type ConfigurationMiddleware = config.ConfigurationMiddleware;
-
-	export type WorkspaceFoldersFeature = folders.WorkspaceFoldersFeature;
-	export const WorkspaceFoldersFeature = folders.WorkspaceFoldersFeature;
-	export type WorkspaceFolderMiddleware = folders.WorkspaceFolderMiddleware
-
-	export type ImplementationFeature = implementation.ImplementationFeature;
-	export const ImplementationFeature = implementation.ImplementationFeature;
-	export type ImplementationMiddleware = implementation.ImplementationMiddleware;
-
-	export type TypeDefinitionFeature = typeDefinition.TypeDefinitionFeature;
-	export const TypeDefinitionFeature = typeDefinition.TypeDefinitionFeature;
-	export type TypeDefinitionMiddleware = typeDefinition.TypeDefinitionMiddleware;
-
-	export type ColorProviderFeature = colorProvider.ColorProviderFeature;
-	export const ColorProviderFeature = colorProvider.ColorProviderFeature;
-	export type ColorProviderMiddleware = colorProvider.ColorProviderMiddleware;
-
-	export function createAll(client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
+	export function createAll(_client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
 		let result: (StaticFeature | DynamicFeature<any>)[] = [];
-		result.push(new WorkspaceFoldersFeature(client));
-		result.push(new ConfigurationFeature(client));
-		result.push(new ImplementationFeature(client));
-		result.push(new TypeDefinitionFeature(client));
-		result.push(new ColorProviderFeature(client));
 		return result;
 	}
 }

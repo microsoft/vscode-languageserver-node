@@ -10,7 +10,8 @@ import { workspace, Disposable, WorkspaceFolder as VWorkspaceFolder, WorkspaceFo
 
 import { DynamicFeature, RegistrationData, BaseLanguageClient, NextSignature } from './client';
 import {
-	ClientCapabilities, InitializedParams, Proposed, RPCMessageType, CancellationToken, ServerCapabilities
+	ClientCapabilities, InitializeParams, RPCMessageType, CancellationToken, ServerCapabilities, WorkspaceFoldersRequest, WorkspaceFolder,
+	DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams
 } from 'vscode-languageserver-protocol';
 
 function access<T, K extends keyof T>(target: T | undefined, key: K): T[K] | undefined {
@@ -22,14 +23,9 @@ function access<T, K extends keyof T>(target: T | undefined, key: K): T[K] | und
 
 export interface WorkspaceFolderMiddleware {
 	workspace?: {
-		workspaceFolders?: Proposed.WorkspaceFoldersRequest.MiddlewareSignature;
+		workspaceFolders?: WorkspaceFoldersRequest.MiddlewareSignature;
 		didChangeWorkspaceFolders?: NextSignature<VWorkspaceFoldersChangeEvent, void>
 	}
-}
-
-interface _Middleware {
-	workspaceFolders?: Proposed.WorkspaceFoldersRequest.MiddlewareSignature;
-	didChangeWorkspaceFolders?: NextSignature<VWorkspaceFoldersChangeEvent, void>
 }
 
 export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
@@ -40,45 +36,43 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 	}
 
 	public get messages(): RPCMessageType {
-		return Proposed.DidChangeWorkspaceFoldersNotification.type;
+		return DidChangeWorkspaceFoldersNotification.type;
 	}
 
-	public fillInitializeParams(params: InitializedParams): void {
-		let proposedParams = params as Proposed.WorkspaceFoldersInitializeParams;
+	public fillInitializeParams(params: InitializeParams): void {
 		let folders = workspace.workspaceFolders;
 
 		if (folders === void 0) {
-			proposedParams.workspaceFolders = null;
+			params.workspaceFolders = null;
 		} else {
-			proposedParams.workspaceFolders = folders.map(folder => this.asProtocol(folder));
+			params.workspaceFolders = folders.map(folder => this.asProtocol(folder));
 		}
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
 		capabilities.workspace = capabilities.workspace || {};
-		let workspaceCapabilities = capabilities as Proposed.WorkspaceFoldersClientCapabilities;
-		workspaceCapabilities.workspace!.workspaceFolders = true;
+		capabilities.workspace.workspaceFolders = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities): void {
 		let client = this._client;
-		client.onRequest(Proposed.WorkspaceFoldersRequest.type, (token: CancellationToken) => {
-			let workspaceFolders: Proposed.WorkspaceFoldersRequest.HandlerSignature = () => {
+		client.onRequest(WorkspaceFoldersRequest.type, (token: CancellationToken) => {
+			let workspaceFolders: WorkspaceFoldersRequest.HandlerSignature = () => {
 				let folders = workspace.workspaceFolders;
 				if (folders === void 0) {
 					return null;
 				}
-				let result: Proposed.WorkspaceFolder[] = folders.map((folder) => {
+				let result: WorkspaceFolder[] = folders.map((folder) => {
 					return this.asProtocol(folder);
 				});
 				return result;
 			};
-			let middleware = this.getWorkspaceFolderMiddleware();
-			return middleware.workspaceFolders
+			let middleware = client.clientOptions.middleware!.workspace;
+			return middleware && middleware.workspaceFolders
 				? middleware.workspaceFolders(token, workspaceFolders)
 				: workspaceFolders(token);
 		});
-		let value = access(access(access((capabilities as Proposed.WorkspaceFoldersServerCapabilities), 'workspace'), 'workspaceFolders'), 'changeNotifications');
+		let value = access(access(access(capabilities, 'workspace'), 'workspaceFolders'), 'changeNotifications');
 		let id: string | undefined;
 		if (typeof value === 'string') {
 			id = value;
@@ -95,18 +89,19 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 
 	public register(_message: RPCMessageType, data: RegistrationData<undefined>): void {
 		let id = data.id;
+		let client = this._client;
 		let disposable = workspace.onDidChangeWorkspaceFolders((event) => {
 			let didChangeWorkspaceFolders = (event: VWorkspaceFoldersChangeEvent) => {
-				let params: Proposed.DidChangeWorkspaceFoldersParams = {
+				let params: DidChangeWorkspaceFoldersParams = {
 					event: {
 						added: event.added.map(folder => this.asProtocol(folder)),
 						removed: event.removed.map(folder => this.asProtocol(folder))
 					}
 				}
-				this._client.sendNotification(Proposed.DidChangeWorkspaceFoldersNotification.type, params);
+				this._client.sendNotification(DidChangeWorkspaceFoldersNotification.type, params);
 			}
-			let middleware = this.getWorkspaceFolderMiddleware();
-			middleware.didChangeWorkspaceFolders
+			let middleware = client.clientOptions.middleware!.workspace;
+			middleware && middleware.didChangeWorkspaceFolders
 				? middleware.didChangeWorkspaceFolders(event, didChangeWorkspaceFolders)
 				: didChangeWorkspaceFolders(event);
 		});
@@ -129,19 +124,12 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 		this._listeners.clear();
 	}
 
-	private asProtocol(workspaceFolder: VWorkspaceFolder): Proposed.WorkspaceFolder;
+	private asProtocol(workspaceFolder: VWorkspaceFolder): WorkspaceFolder;
 	private asProtocol(workspaceFolder: undefined): null;
-	private asProtocol(workspaceFolder: VWorkspaceFolder | undefined): Proposed.WorkspaceFolder | null {
+	private asProtocol(workspaceFolder: VWorkspaceFolder | undefined): WorkspaceFolder | null {
 		if (workspaceFolder === void 0) {
 			return null;
 		}
 		return { uri: this._client.code2ProtocolConverter.asUri(workspaceFolder.uri), name: workspaceFolder.name };
-	}
-
-	private getWorkspaceFolderMiddleware(): _Middleware {
-		let middleware = this._client.clientOptions.middleware;
-		return middleware && middleware.workspace
-			? middleware.workspace as _Middleware
-			: {};
 	}
 }

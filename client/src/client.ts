@@ -56,6 +56,12 @@ import {
 	MarkupKind, SymbolKind, CompletionItemKind
 } from 'vscode-languageserver-protocol';
 
+import { ColorProviderMiddleware } from './colorProvider';
+import { ConfigurationMiddleware } from './configuration';
+import { ImplementationMiddleware }  from './implementation'
+import { TypeDefinitionMiddleware } from './typeDefinition';
+import { WorkspaceFolderMiddleware } from './workspaceFolders';
+
 import * as c2p from './codeConverter';
 import * as p2c from './protocolConverter';
 
@@ -400,7 +406,7 @@ export interface WorkspaceMiddleware {
  * The Middleware lets extensions intercept the request and notications send and received
  * from the server
  */
-export interface Middleware {
+export interface _Middleware {
 	didOpen?: NextSignature<TextDocument, void>;
 	didChange?: NextSignature<TextDocumentChangeEvent, void>;
 	willSave?: NextSignature<TextDocumentWillSaveEvent, void>;
@@ -428,6 +434,8 @@ export interface Middleware {
 	resolveDocumentLink?: (this: void, link: VDocumentLink, token: CancellationToken, next: ResolveDocumentLinkSignature) => ProviderResult<VDocumentLink>;
 	workspace?: WorkspaceMiddleware;
 }
+
+export type Middleware = _Middleware & WorkspaceFolderMiddleware & TypeDefinitionMiddleware & ImplementationMiddleware & ConfigurationMiddleware & ColorProviderMiddleware;
 
 export interface LanguageClientOptions {
 	documentSelector?: DocumentSelector | string[];
@@ -546,6 +554,22 @@ const SupportedCompletionItemKinds: CompletionItemKind[] = [
 	CompletionItemKind.TypeParameter
 ];
 
+function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
+	if (target[key] === void 0) {
+		target[key] = {} as any;
+	}
+	return target[key];
+}
+
+interface ResolvedTextDocumentSyncCapabilities {
+	resolvedTextDocumentSync?: TextDocumentSyncOptions;
+}
+
+export interface RegistrationData<T> {
+	id: string;
+	registerOptions: T;
+}
+
 /**
  * A static feature. A static feature can't be dynamically activate via the
  * server. It is wired during the initialize sequence.
@@ -576,11 +600,6 @@ export interface StaticFeature {
 	 *  May be `undefined` if the client was created without a selector.
 	 */
 	initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector | undefined): void;
-}
-
-export interface RegistrationData<T> {
-	id: string;
-	registerOptions: T;
 }
 
 export interface DynamicFeature<T> {
@@ -645,19 +664,8 @@ namespace DynamicFeature {
 	}
 }
 
-function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
-	if (target[key] === void 0) {
-		target[key] = {} as any;
-	}
-	return target[key];
-}
-
 interface CreateParamsSignature<E, P> {
 	(data: E): P;
-}
-
-interface ResolvedTextDocumentSyncCapabilities {
-	resolvedTextDocumentSync?: TextDocumentSyncOptions;
 }
 
 abstract class DocumentNotifiactions<P, E> implements DynamicFeature<TextDocumentRegistrationOptions> {
@@ -2582,7 +2590,8 @@ export abstract class BaseLanguageClient {
 			rootUri: rootPath ? this._c2p.asUri(Uri.file(rootPath)) : null,
 			capabilities: this.computeClientCapabilities(),
 			initializationOptions: Is.func(initOption) ? initOption() : initOption,
-			trace: Trace.toString(this._trace)
+			trace: Trace.toString(this._trace),
+			workspaceFolders: null
 		};
 		this.fillInitializeParams(initParams);
 		return connection.initialize(initParams).then((result) => {
@@ -2854,7 +2863,7 @@ export abstract class BaseLanguageClient {
 		}
 	}
 
-	private registerBuiltinFeatures() {
+	protected registerBuiltinFeatures() {
 		this.registerFeature(new ConfigurationFeature(this));
 		this.registerFeature(new DidOpenTextDocumentFeature(this, this._syncedDocuments));
 		this.registerFeature(new DidChangeTextDocumentFeature(this));
