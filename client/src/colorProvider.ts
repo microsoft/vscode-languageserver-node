@@ -11,7 +11,7 @@ import { languages as Languages, Disposable, TextDocument, ProviderResult, Range
 
 import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, TextDocumentRegistrationOptions, DocumentSelector, StaticRegistrationOptions,
-	DocumentColorRequest, ColorPresentationRequest, Color, ColorInformation, ColorPresentation
+	DocumentColorRequest, ColorPresentationRequest, Color, ColorInformation, ColorPresentation, ColorProviderOptions
 } from 'vscode-languageserver-protocol';
 
 import { TextDocumentFeature, BaseLanguageClient } from './client';
@@ -51,7 +51,7 @@ export class ColorProviderFeature extends TextDocumentFeature<TextDocumentRegist
 			return;
 		}
 
-		const implCapabilities = capabilities.colorProvider as TextDocumentRegistrationOptions & StaticRegistrationOptions;
+		const implCapabilities = capabilities.colorProvider as TextDocumentRegistrationOptions & StaticRegistrationOptions & ColorProviderOptions;
 		const id = Is.string(implCapabilities.id) && implCapabilities.id.length > 0 ? implCapabilities.id : UUID.generateUuid();
 		const selector = implCapabilities.documentSelector || documentSelector;
 		if (selector) {

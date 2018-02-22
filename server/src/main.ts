@@ -43,7 +43,8 @@ import {
 	DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkParams,
 	ExecuteCommandRequest, ExecuteCommandParams,
 	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse,
-	ClientCapabilities, ServerCapabilities, ProtocolConnection, createProtocolConnection, TypeDefinitionRequest, ImplementationRequest
+	ClientCapabilities, ServerCapabilities, ProtocolConnection, createProtocolConnection, TypeDefinitionRequest, ImplementationRequest,
+	DocumentColorRequest, DocumentColorParams, ColorInformation, ColorPresentationParams, ColorPresentation, ColorPresentationRequest
 } from 'vscode-languageserver-protocol';
 
 import { Configuration, ConfigurationFeature } from './configuration';
@@ -1303,6 +1304,20 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	onDocumentLinkResolve(handler: RequestHandler<DocumentLink, DocumentLink | undefined | null, void>): void;
 
 	/**
+	 * Installs a handler for the document color request.
+	 *
+	 * @param handler The corresponding handler.
+	 */
+	onDocumentColor(handler: RequestHandler<DocumentColorParams, ColorInformation[] | undefined | null, void>): void;
+
+	/**
+	 * Installs a handler for the document color request.
+	 *
+	 * @param handler The corresponding handler.
+	 */
+	onColorPresentation(handler: RequestHandler<ColorPresentationParams, ColorPresentation[] | undefined | null, void>): void;
+
+	/**
 	 * Installs a handler for the execute command request.
 	 *
 	 * @param handler The corresponding handler.
@@ -1619,6 +1634,8 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 		onRenameRequest: (handler) => connection.onRequest(RenameRequest.type, handler),
 		onDocumentLinks: (handler) => connection.onRequest(DocumentLinkRequest.type, handler),
 		onDocumentLinkResolve: (handler) => connection.onRequest(DocumentLinkResolveRequest.type, handler),
+		onDocumentColor: (handler) => connection.onRequest(DocumentColorRequest.type, handler),
+		onColorPresentation: (handler) => connection.onRequest(ColorPresentationRequest.type, handler),
 		onExecuteCommand: (handler) => connection.onRequest(ExecuteCommandRequest.type, handler),
 
 		dispose: () => connection.dispose()

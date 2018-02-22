@@ -10,7 +10,6 @@ import { TextDocumentIdentifier, Range, TextEdit } from 'vscode-languageserver-t
 
 //---- Server capability ----
 
-
 export interface ColorClientCapabilities {
 	/**
 	 * The text document client capabilities
@@ -21,7 +20,9 @@ export interface ColorClientCapabilities {
 		 */
 		colorProvider?: {
 			/**
-			 * Whether implementation supports dynamic registration.
+			 * Whether implementation supports dynamic registration. If this is set to `true`
+			 * the client supports the new `(ColorProviderOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions)`
+			 * return value for the corresponding server capability as well.
 			 */
 			dynamicRegistration?: boolean;
 		};
@@ -35,7 +36,7 @@ export interface ColorServerCapabilities {
 	/**
 	 * The server provides color provider support.
 	 */
-	colorProvider?: ColorProviderOptions | (TextDocumentRegistrationOptions & StaticRegistrationOptions);
+	colorProvider?: ColorProviderOptions | (ColorProviderOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions);
 }
 
 //---- Color Symbol Provider ---------------------------
