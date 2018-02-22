@@ -21,11 +21,9 @@ function access<T, K extends keyof T>(target: T | undefined, key: K): T[K] | und
 	return target[key];
 }
 
-export interface WorkspaceFolderMiddleware {
-	workspace?: {
-		workspaceFolders?: WorkspaceFoldersRequest.MiddlewareSignature;
-		didChangeWorkspaceFolders?: NextSignature<VWorkspaceFoldersChangeEvent, void>
-	}
+export interface WorkspaceFolderWorkspaceMiddleware {
+	workspaceFolders?: WorkspaceFoldersRequest.MiddlewareSignature;
+	didChangeWorkspaceFolders?: NextSignature<VWorkspaceFoldersChangeEvent, void>
 }
 
 export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {

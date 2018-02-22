@@ -57,10 +57,10 @@ import {
 } from 'vscode-languageserver-protocol';
 
 import { ColorProviderMiddleware } from './colorProvider';
-import { ConfigurationMiddleware } from './configuration';
 import { ImplementationMiddleware }  from './implementation'
 import { TypeDefinitionMiddleware } from './typeDefinition';
-import { WorkspaceFolderMiddleware } from './workspaceFolders';
+import { ConfigurationWorkspaceMiddleware } from './configuration';
+import { WorkspaceFolderWorkspaceMiddleware } from './workspaceFolders';
 
 import * as c2p from './codeConverter';
 import * as p2c from './protocolConverter';
@@ -398,9 +398,11 @@ export interface DidChangeConfigurationSignature {
 	(sections: string[] | undefined): void;
 }
 
-export interface WorkspaceMiddleware {
+export interface _WorkspaceMiddleware {
 	didChangeConfiguration?: (this: void, sections: string[] | undefined, next: DidChangeConfigurationSignature) => void;
 }
+
+export type WorkspaceMiddleware = _WorkspaceMiddleware & ConfigurationWorkspaceMiddleware & WorkspaceFolderWorkspaceMiddleware;
 
 /**
  * The Middleware lets extensions intercept the request and notications send and received
@@ -435,7 +437,7 @@ export interface _Middleware {
 	workspace?: WorkspaceMiddleware;
 }
 
-export type Middleware = _Middleware & WorkspaceFolderMiddleware & TypeDefinitionMiddleware & ImplementationMiddleware & ConfigurationMiddleware & ColorProviderMiddleware;
+export type Middleware = _Middleware & TypeDefinitionMiddleware & ImplementationMiddleware & ColorProviderMiddleware;
 
 export interface LanguageClientOptions {
 	documentSelector?: DocumentSelector | string[];

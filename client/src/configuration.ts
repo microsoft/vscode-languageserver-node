@@ -11,10 +11,8 @@ import {
 	ClientCapabilities, ConfigurationRequest
 } from 'vscode-languageserver-protocol';
 
-export interface ConfigurationMiddleware {
-	workspace?: {
-		configuration?: ConfigurationRequest.MiddlewareSignature
-	}
+export interface ConfigurationWorkspaceMiddleware {
+	configuration?: ConfigurationRequest.MiddlewareSignature
 }
 
 export class ConfigurationFeature implements StaticFeature {
