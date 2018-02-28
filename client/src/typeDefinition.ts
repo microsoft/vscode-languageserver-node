@@ -30,7 +30,6 @@ export interface TypeDefinitionMiddleware {
 	provideTypeDefinition?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideTypeDefinitionSignature) => ProviderResult<VDefinition>;
 }
 
-console.log('TypeDefinition', TextDocumentFeature);
 export class TypeDefinitionFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
