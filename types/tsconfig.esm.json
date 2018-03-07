@@ -2,12 +2,12 @@
 	"extends": "../tsconfig.base.json",
 	"compilerOptions": {
 		"target": "es5",
-		"module": "umd",
+		"module": "es6",
 		"sourceMap": false,
 		"declaration": true,
 		"stripInternal": true,
 		"lib": [ "es2015" ],
-		"outDir": "lib/umd",
+		"outDir": "lib/esm",
 		"rootDir": "src"
 	},
 	"include": [

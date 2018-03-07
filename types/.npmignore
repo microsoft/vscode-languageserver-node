@@ -1,6 +1,6 @@
 .vscode/
-lib/test/
-lib/*.map
+lib/**/test/
+lib/**/*.map
 src/
 test/
 .eslintrc
