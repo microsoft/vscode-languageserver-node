@@ -19,6 +19,6 @@
 		"postpublish": "node ../build/npm/post-publish.js",
 		"compile": "node ../build/bin/tsc -p ./tsconfig.json && node ../build/bin/tsc -p ./tsconfig.esm.json",
 		"watch": "node ../build/bin/tsc -w -p ./tsconfig.json",
-		"test": "node ../node_modules/mocha/bin/_mocha"
+		"test": "npm run compile && node ../node_modules/mocha/bin/_mocha"
 	}
 }
