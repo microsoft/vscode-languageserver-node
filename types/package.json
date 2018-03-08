@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageserver-types",
 	"description": "Types used by the Language server for node",
-	"version": "3.7.0-next.1",
+	"version": "3.7.0-next.2",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"repository": {
@@ -15,9 +15,11 @@
 	"typings": "./lib/umd/main",
 	"module": "./lib/esm/main.js",
 	"scripts": {
-		"prepublish": "npm run compile && npm test",
+		"prepublishOnly": "npm run clean && npm run compile-esm && npm run test",
 		"postpublish": "node ../build/npm/post-publish.js",
-		"compile": "node ../build/bin/tsc -p ./tsconfig.json && node ../build/bin/tsc -p ./tsconfig.esm.json",
+		"compile": "node ../build/bin/tsc -p ./tsconfig.json",
+		"compile-esm": "node ../build/bin/tsc -p ./tsconfig.esm.json",
+		"clean": "node ../node_modules/.bin/rimraf lib",
 		"watch": "node ../build/bin/tsc -w -p ./tsconfig.json",
 		"test": "npm run compile && node ../node_modules/mocha/bin/_mocha"
 	}

@@ -15,7 +15,8 @@
 		"typescript": "2.6.1",
 		"mocha": "^3.5.0",
 		"@types/node": "^6.0.88",
-		"@types/mocha": "^2.2.42"
+		"@types/mocha": "^2.2.42",
+		"rimraf": "^2.6.2"
 	},
 	"scripts": {
 		"postinstall": "cd types && npm install && cd ../jsonrpc && npm install && cd ../protocol && npm install && cd ../server && npm install && cd ../client && npm install && cd ..",
