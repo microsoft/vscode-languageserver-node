@@ -17,6 +17,7 @@
 	"scripts": {
 		"prepublishOnly": "npm run clean && npm run compile-esm && npm run test",
 		"postpublish": "node ../build/npm/post-publish.js",
+		"postinstall": "npm run compile",
 		"compile": "node ../build/bin/tsc -p ./tsconfig.json",
 		"compile-esm": "node ../build/bin/tsc -p ./tsconfig.esm.json",
 		"clean": "node ../node_modules/.bin/rimraf lib",
