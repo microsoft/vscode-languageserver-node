@@ -1191,7 +1191,7 @@ export namespace WillSaveTextDocumentWaitUntilRequest {
  * the client detects changes to file watched by the lanaguage client.
  */
 export namespace DidChangeWatchedFilesNotification {
-	export const type = new NotificationType<DidChangeWatchedFilesParams, void>('workspace/didChangeWatchedFiles');
+	export const type = new NotificationType<DidChangeWatchedFilesParams, DidChangeWatchedFilesRegistrationOptions>('workspace/didChangeWatchedFiles');
 }
 
 /**
