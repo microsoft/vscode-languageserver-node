@@ -57,7 +57,7 @@ import {
 } from 'vscode-languageserver-protocol';
 
 import { ColorProviderMiddleware } from './colorProvider';
-import { ImplementationMiddleware }  from './implementation'
+import { ImplementationMiddleware } from './implementation'
 import { TypeDefinitionMiddleware } from './typeDefinition';
 import { ConfigurationWorkspaceMiddleware } from './configuration';
 import { WorkspaceFolderWorkspaceMiddleware } from './workspaceFolders';
@@ -2659,7 +2659,7 @@ export abstract class BaseLanguageClient {
 		});
 	}
 
-	private _clientGetRootPath(): string | undefined{
+	private _clientGetRootPath(): string | undefined {
 		let folders = Workspace.workspaceFolders;
 		if (!folders || folders.length === 0) {
 			return undefined;
@@ -2904,6 +2904,7 @@ export abstract class BaseLanguageClient {
 		let result: ClientCapabilities = {};
 		ensure(result, 'workspace')!.applyEdit = true;
 		ensure(ensure(result, 'workspace')!, 'workspaceEdit')!.documentChanges = true;
+		result.diagnosticRelatedInformation = true;
 		for (let feature of this._features) {
 			feature.fillClientCapabilities(result);
 		}
