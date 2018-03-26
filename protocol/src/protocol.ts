@@ -76,7 +76,7 @@ export namespace DocumentFilter {
 export type DocumentSelector = (string | DocumentFilter)[];
 
 /**
- * General paramters to to regsiter for an notification or to register a provider.
+ * General parameters to to register for an notification or to register a provider.
  */
 export interface Registration {
 	/**
@@ -654,8 +654,8 @@ export interface TextDocumentSyncOptions {
 	 */
 	openClose?: boolean;
 	/**
-	 * Change notificatins are sent to the server. See TextDocumentSyncKind.None, TextDocumentSyncKind.Full
-	 * and TextDocumentSyncKindIncremental.
+	 * Change notifications are sent to the server. See TextDocumentSyncKind.None, TextDocumentSyncKind.Full
+	 * and TextDocumentSyncKind.Incremental.
 	 */
 	change?: TextDocumentSyncKind;
 	/**
@@ -821,7 +821,7 @@ export interface _InitializeParams {
 export type InitializeParams = _InitializeParams & WorkspaceFoldersInitializeParams
 
 /**
- * The result returned from an initilize request.
+ * The result returned from an initialize request.
  */
 export interface InitializeResult {
 	/**
@@ -864,7 +864,7 @@ export interface InitializedParams {
 }
 
 /**
- * The intialized notification is send from the client to the
+ * The intialized notification is sent from the client to the
  * server after the client is fully initialized and the server
  * is allowed to send requests from the server to the client.
  */
@@ -876,8 +876,8 @@ export namespace InitializedNotification {
 
 /**
  * A shutdown request is sent from the client to the server.
- * It is sent once when the client descides to shutdown the
- * server. The only notification that is sent after a shudown request
+ * It is sent once when the client decides to shutdown the
+ * server. The only notification that is sent after a shutdown request
  * is the exit event.
  */
 export namespace ShutdownRequest {
@@ -993,7 +993,7 @@ export interface ShowMessageRequestParams {
 }
 
 /**
- * The show message request is sent from the server to the clinet to show a message
+ * The show message request is sent from the server to the client to show a message
  * and a set of options actions to the user.
  */
 export namespace ShowMessageRequest {
@@ -1071,7 +1071,7 @@ export interface DidChangeTextDocumentParams {
 	textDocument: VersionedTextDocumentIdentifier;
 
 	/**
-	 * The actual content changes. The content changes descibe single state changes
+	 * The actual content changes. The content changes describe single state changes
 	 * to the document. So if there are two content changes c1 and c2 for a document
 	 * in state S10 then c1 move the document to S11 and c2 to S12.
 	 */
@@ -1079,7 +1079,7 @@ export interface DidChangeTextDocumentParams {
 }
 
 /**
- * Descibe options to be used when registered for text document change events.
+ * Describe options to be used when registered for text document change events.
  */
 export interface TextDocumentChangeRegistrationOptions extends TextDocumentRegistrationOptions {
 	/**
@@ -1113,7 +1113,7 @@ export interface DidCloseTextDocumentParams {
  * truth now exists on disk). As with the open notification the close notification
  * is about managing the document's content. Receiving a close notification
  * doesn't mean that the document was open in an editor before. A close
- * notification requires a previous open notifaction to be sent.
+ * notification requires a previous open notification to be sent.
  */
 export namespace DidCloseTextDocumentNotification {
 	export const type = new NotificationType<DidCloseTextDocumentParams, TextDocumentRegistrationOptions>('textDocument/didClose');
@@ -1130,7 +1130,7 @@ export interface DidSaveTextDocumentParams {
 
 	/**
 	 * Optional the content when saved. Depends on the includeText value
-	 * when the save notifcation was requested.
+	 * when the save notification was requested.
 	 */
 	text?: string;
 }
@@ -1188,7 +1188,7 @@ export namespace WillSaveTextDocumentWaitUntilRequest {
 
 /**
  * The watched files notification is sent from the client to the server when
- * the client detects changes to file watched by the lanaguage client.
+ * the client detects changes to file watched by the language client.
  */
 export namespace DidChangeWatchedFilesNotification {
 	export const type = new NotificationType<DidChangeWatchedFilesParams, void>('workspace/didChangeWatchedFiles');
@@ -1239,7 +1239,7 @@ export interface FileEvent {
 }
 
 /**
- * Descibe options to be used when registered for text document change events.
+ * Describe options to be used when registered for text document change events.
  */
 export interface DidChangeWatchedFilesRegistrationOptions {
 	/**
@@ -1373,7 +1373,7 @@ export interface CompletionParams extends TextDocumentPositionParams {
  *
  * The request can delay the computation of the [`detail`](#CompletionItem.detail)
  * and [`documentation`](#CompletionItem.documentation) properties to the `completionItem/resolve`
- * request. However, properties that are needed for the inital sorting and filtering, like `sortText`,
+ * request. However, properties that are needed for the initial sorting and filtering, like `sortText`,
  * `filterText`, `insertText`, and `textEdit`, must not be changed during resolve.
  */
 export namespace CompletionRequest {
@@ -1415,7 +1415,7 @@ export namespace SignatureHelpRequest {
 //---- Goto Definition -------------------------------------
 
 /**
- * A request to resolve the defintion location of a symbol at a given text
+ * A request to resolve the definition location of a symbol at a given text
  * document position. The request's parameter is of type [TextDocumentPosition]
  * (#TextDocumentPosition) the response is of type [Definition](#Definition) or a
  * Thenable that resolves to such.
@@ -1448,7 +1448,7 @@ export namespace ReferencesRequest {
 /**
  * Request to resolve a [DocumentHighlight](#DocumentHighlight) for a given
  * text document position. The request's parameter is of type [TextDocumentPosition]
- * (#TextDocumentPosition) the request reponse is of type [DocumentHighlight[]]
+ * (#TextDocumentPosition) the request response is of type [DocumentHighlight[]]
  * (#DocumentHighlight) or a Thenable that resolves to such.
  */
 export namespace DocumentHighlightRequest {
@@ -1729,7 +1729,7 @@ export interface ApplyWorkspaceEditParams {
 }
 
 /**
- * A reponse returned from the apply workspace edit request.
+ * A response returned from the apply workspace edit request.
  */
 export interface ApplyWorkspaceEditResponse {
 	/**
