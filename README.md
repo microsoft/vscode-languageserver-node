@@ -27,6 +27,10 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
+### 4.0.1 Client
+
+* removed unnecessary console log statement.
+
 ### 4.0.0 Server and Client
 
 * implemented the latest protocol additions. Noteworthy are completion context, extensible completion item and symbol kind as well as markdown support for completion item and signature help. Moved to 4.0.0 version since the introduction of the completion context required a breaking change in the client middleware. The old signature:
