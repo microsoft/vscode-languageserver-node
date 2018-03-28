@@ -263,7 +263,7 @@ export interface TextDocumentClientCapabilities {
 		 * The client supports did save notifications.
 		 */
 		didSave?: boolean;
-	}
+	};
 
 	/**
 	 * Capabilities specific to the `textDocument/completion`
@@ -486,6 +486,16 @@ export interface TextDocumentClientCapabilities {
 		 */
 		dynamicRegistration?: boolean;
 	};
+
+	/**
+	 * Capabilities specific to `textDocument/publishDiagnostics`.
+	 */
+	publishDiagnostics?: {
+		/**
+		 * Whether the clients accepts diagnostics with related information.
+		 */
+		relatedInformation?: boolean;
+	};
 }
 
 /**
@@ -501,11 +511,6 @@ export interface _ClientCapabilities {
 	 * Text document specific client capabilities.
 	 */
 	textDocument?: TextDocumentClientCapabilities;
-
-	/**
-	 * Whether the client supports diagnostics with related information.
-	 */
-	diagnosticRelatedInformation?: boolean;
 
 	/**
 	 * Experimental client capabilities.

@@ -2904,7 +2904,7 @@ export abstract class BaseLanguageClient {
 		let result: ClientCapabilities = {};
 		ensure(result, 'workspace')!.applyEdit = true;
 		ensure(ensure(result, 'workspace')!, 'workspaceEdit')!.documentChanges = true;
-		result.diagnosticRelatedInformation = true;
+		ensure(ensure(result, 'textDocument')!, 'publishDiagnostics')!.relatedInformation = true;
 		for (let feature of this._features) {
 			feature.fillClientCapabilities(result);
 		}
