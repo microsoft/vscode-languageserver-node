@@ -306,7 +306,7 @@ export interface _ {
 /**
  * Helps tracking error message. Equal occurences of the same
  * message are only stored once. This class is for example
- * usefull if text documents are validated in a loop and equal
+ * useful if text documents are validated in a loop and equal
  * error message should be folded into one.
  */
 export class ErrorMessageTracker {
@@ -332,9 +332,9 @@ export class ErrorMessageTracker {
 	}
 
 	/**
-	 * Send all tracked messages to the conenction's window.
+	 * Send all tracked messages to the connection's window.
 	 *
-	 * @param connection The connection establised between client and server.
+	 * @param connection The connection established between client and server.
 	 */
 	public sendErrors(connection: { window: RemoteWindow }): void {
 		Object.keys(this._messages).forEach(message => {
@@ -788,7 +788,7 @@ class RemoteClientImpl implements RemoteClient {
 		return this._connection.sendRequest(RegistrationRequest.type, params).then(() => {
 			return new BulkUnregistrationImpl(this._connection, params.registrations.map(registration => { return { id: registration.id, method: registration.method } }));
 		}, (_error) => {
-			this.connection.console.info(`Bulk registeration failed.`);
+			this.connection.console.info(`Bulk registration failed.`);
 			return Promise.reject(_error);
 		});
 	}
@@ -844,7 +844,7 @@ const RemoteWorkspaceImpl: new () => RemoteWorkspace = WorkspaceFoldersFeature(C
 
 /**
  * Interface to log telemetry events. The events are actually send to the client
- * and the client needs to feed the event into a propert telemetry system.
+ * and the client needs to feed the event into a proper telemetry system.
  */
 export interface Telemetry extends Remote {
 	/**
@@ -1029,14 +1029,14 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	sendNotification(method: string, ...args: any[]): void;
 
 	/**
-	 * Installs a handler for the intialize request.
+	 * Installs a handler for the initialize request.
 	 *
 	 * @param handler The initialize handler.
 	 */
 	onInitialize(handler: RequestHandler<InitializeParams, InitializeResult, InitializeError>): void;
 
 	/**
-	 * Installs a handler for the intialized notification.
+	 * Installs a handler for the initialized notification.
 	 *
 	 * @param handler The initialized handler.
 	 */
@@ -1246,7 +1246,7 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 
 	/**
 	 * Compute a list of [lenses](#CodeLens). This call should return as fast as possible and if
-	 * computing the commands is expensive implementors should only return code lens objects with the
+	 * computing the commands is expensive implementers should only return code lens objects with the
 	 * range set and handle the resolve request.
 	 *
 	 * @param handler The corresponding handler.
@@ -1414,7 +1414,7 @@ export function combineFeatures<OConsole, OTracer, OTelemetry, OClient, OWindow,
 /**
  * Creates a new connection based on the processes command line arguments:
  *
- * @param strategy An optional connection strategy to control additinal settings
+ * @param strategy An optional connection strategy to control additional settings
  */
 export function createConnection(strategy?: ConnectionStrategy): IConnection;
 
@@ -1423,7 +1423,7 @@ export function createConnection(strategy?: ConnectionStrategy): IConnection;
  *
  * @param inputStream The stream to read messages from.
  * @param outputStream The stream to write messages to.
- * @param strategy An optional connection strategy to control additinal settings
+ * @param strategy An optional connection strategy to control additional settings
  * @return a [connection](#IConnection)
  */
 export function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, strategy?: ConnectionStrategy): IConnection;
@@ -1433,7 +1433,7 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
  *
  * @param reader The message reader to read messages from.
  * @param writer The message writer to write message to.
- * @param strategy An optional connection strategy to control additinal settings
+ * @param strategy An optional connection strategy to control additional settings
  */
 export function createConnection(reader: MessageReader, writer: MessageWriter, strategy?: ConnectionStrategy): IConnection;
 
@@ -1441,7 +1441,7 @@ export function createConnection(reader: MessageReader, writer: MessageWriter, s
  * Creates a new connection based on the processes command line arguments. The new connection surfaces proposed API
  *
  * @param factories: the factories to use to implement the proposed API
- * @param strategy An optional connection strategy to control additinal settings
+ * @param strategy An optional connection strategy to control additional settings
  */
 export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _>(
 	factories: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,
@@ -1453,7 +1453,7 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
  *
  * @param inputStream The stream to read messages from.
  * @param outputStream The stream to write messages to.
- * @param strategy An optional connection strategy to control additinal settings
+ * @param strategy An optional connection strategy to control additional settings
  * @return a [connection](#IConnection)
  */
 export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _>(
@@ -1466,7 +1466,7 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
  *
  * @param reader The message reader to read messages from.
  * @param writer The message writer to write message to.
- * @param strategy An optional connection strategy to control additinal settings
+ * @param strategy An optional connection strategy to control additional settings
  */
 export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _>(
 	factories: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,

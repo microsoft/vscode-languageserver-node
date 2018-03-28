@@ -476,7 +476,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 
 	let callback: DataCallback = (message) => {
 		try {
-			// We have recevied a cancellation message. Check if the message is still in the queue
+			// We have received a cancellation message. Check if the message is still in the queue
 			// and cancel it if allowed to do so.
 			if (isNotificationMessage(message) && message.method === CancelNotification.type.method) {
 				let key = createRequestQueueKey((message.params as CancelParams).id);

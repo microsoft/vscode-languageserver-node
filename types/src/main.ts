@@ -12,7 +12,7 @@
  * is 1 and the character offset of b is 3 since `𐐀` is represented using two code
  * units in UTF-16.
  *
- * Positions are line end character agnostic. So you can not specifiy a position that
+ * Positions are line end character agnostic. So you can not specify a position that
  * denotes `\r|\n` or `\n|` where `|` represents the character offset.
  */
 export interface Position {
@@ -151,7 +151,7 @@ export namespace Location {
 }
 
 /**
- * The diagnostic's serverity.
+ * The diagnostic's severity.
  */
 export namespace DiagnosticSeverity {
 	/**
@@ -822,7 +822,7 @@ export interface CompletionItem {
 	documentation?: string | MarkupContent;
 
 	/**
-	 * A string that shoud be used when comparing this item
+	 * A string that should be used when comparing this item
 	 * with other items. When `falsy` the [label](#CompletionItem.label)
 	 * is used.
 	 */
@@ -945,7 +945,7 @@ export namespace CompletionList {
 /**
  * MarkedString can be used to render human readable text. It is either a markdown string
  * or a code-block that provides a language and a code snippet. The language identifier
- * is sematically equal to the optional language identifier in fenced code blocks in GitHub
+ * is semantically equal to the optional language identifier in fenced code blocks in GitHub
  * issues. See https://help.github.com/articles/creating-and-highlighting-code-blocks/#syntax-highlighting
  *
  * The pair of a language and a value is an equivalent to markdown:
@@ -1108,7 +1108,7 @@ export interface ReferenceContext {
  */
 export namespace DocumentHighlightKind {
 	/**
-	 * A textual occurrance.
+	 * A textual occurrence.
 	 */
 	export const Text: 1 = 1;
 
@@ -1213,7 +1213,7 @@ export interface SymbolInformation {
 	 * The location of this symbol. The location's range is used by a tool
 	 * to reveal the location in the editor. If the symbol is selected in the
 	 * tool the range's start information is used to position the cursor. So
-	 * the range usually spwans more then the actual symbol's name and does
+	 * the range usually spans more than the actual symbol's name and does
 	 * normally include thinks like visibility modifiers.
 	 *
 	 * The range doesn't have to denote a node range in the sense of a abstract
@@ -1224,7 +1224,7 @@ export interface SymbolInformation {
 
 	/**
 	 * The name of the symbol containing this symbol. This information is for
-	 * user interface purposes (e.g. to render a qaulifier in the user interface
+	 * user interface purposes (e.g. to render a qualifier in the user interface
 	 * if necessary). It can't be used to re-infer a hierarchy for the document
 	 * symbols.
 	 */
@@ -1239,7 +1239,7 @@ export namespace SymbolInformation {
 	 * @param kind The kind of the symbol.
 	 * @param range The range of the location of the symbol.
 	 * @param uri The resource of the location of symbol, defaults to the current document.
-	 * @param containerName The name of the symbol containg the symbol.
+	 * @param containerName The name of the symbol containing the symbol.
 	 */
 	export function create(name: string, kind: SymbolKind, range: Range, uri?: string, containerName?: string): SymbolInformation {
 		let result: SymbolInformation = {
@@ -1434,7 +1434,7 @@ export namespace DocumentLink {
 export const EOL: string[] = ['\n', '\r\n', '\r'];
 
 /**
- * A simple text document. Not to be implemenented.
+ * A simple text document. Not to be implemented.
  */
 export interface TextDocument {
 
@@ -1467,7 +1467,7 @@ export interface TextDocument {
 	 * providing a range.
 	 *
 	 * @param range (optional) An range within the document to return.
-	 * If no range is passed, the full conetnt is returned.
+	 * If no range is passed, the full content is returned.
 	 * Invalid range positions are adjusted as described in [Position.line](#Position.line)
 	 * and [Position.character](#Position.character).
 	 * If the start range position is greater than the end range position,
