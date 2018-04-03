@@ -27,6 +27,10 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
+### 4.0.2 Client
+
+* [Initialisation exceptions swallowed](https://github.com/Microsoft/vscode-languageserver-node/issues/330)
+
 ### 4.0.1 Client
 
 * removed unnecessary console log statement.
