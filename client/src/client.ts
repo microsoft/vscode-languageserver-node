@@ -2559,8 +2559,8 @@ export abstract class BaseLanguageClient {
 			});
 			connection.listen();
 			// Error is handled in the intialize call.
-			this.initialize(connection).then(undefined, () => { });
-		}, (error) => {
+			return this.initialize(connection);
+		}).then(undefined, (error) => {
 			this.state = ClientState.StartFailed;
 			this._onReadyCallbacks.reject(error);
 			this.error('Starting client failed', error);
@@ -2631,7 +2631,7 @@ export abstract class BaseLanguageClient {
 			this.initializeFeatures(connection);
 			this._onReadyCallbacks.resolve();
 			return result;
-		}, (error: any) => {
+		}).then<InitializeResult>(undefined, (error: any) => {
 			if (this._clientOptions.initializationFailedHandler) {
 				if (this._clientOptions.initializationFailedHandler(error)) {
 					this.initialize(connection);
@@ -2659,7 +2659,7 @@ export abstract class BaseLanguageClient {
 		});
 	}
 
-	private _clientGetRootPath(): string | undefined{
+	private _clientGetRootPath(): string | undefined {
 		let folders = Workspace.workspaceFolders;
 		if (!folders || folders.length === 0) {
 			return undefined;
