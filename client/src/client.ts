@@ -2162,7 +2162,7 @@ class ExecuteCommandFeature implements DynamicFeature<ExecuteCommandRegistration
 						arguments: args
 					};
 					return client.sendRequest(ExecuteCommandRequest.type, params).then(
-						undefined,
+						(result) => result,
 						(error) => {
 							client.logFailedRequest(ExecuteCommandRequest.type, error);
 						}
