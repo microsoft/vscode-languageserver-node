@@ -34,6 +34,7 @@ language servers for [VSCode](https://code.visualstudio.com/).
 ### 4.0.1 Client
 
 * removed unnecessary console log statement.
+* [Errors from rename still not shown in VSCode](https://github.com/Microsoft/vscode-languageserver-node/issues/329)
 
 ### 4.0.0 Server and Client
 
