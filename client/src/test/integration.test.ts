@@ -17,7 +17,19 @@ suite('Client integration', () => {
             debug: { module: serverModule, transport: lsclient.TransportKind.ipc, options: { execArgv: ['--nolazy', '--inspect=6014'] } }
         };
         let documentSelector: lsclient.DocumentSelector = ['css'];
-        let clientOptions: lsclient.LanguageClientOptions = { documentSelector, synchronize: {}, initializationOptions: {} };
+        let clientOptions: lsclient.LanguageClientOptions = {
+            documentSelector, synchronize: {}, initializationOptions: {},
+            middleware: {
+                handleDiagnostics: (uri, diagnostics, next) => {
+                    assert.equal(uri, "uri:/test.ts");
+                    assert.ok(Array.isArray(diagnostics));
+                    assert.equal(diagnostics.length, 0);
+                    next(uri, diagnostics);
+                    disposable.dispose();
+                    done();
+                }
+            }
+        };
         let client = new lsclient.LanguageClient('css', 'Test Language Server', serverOptions, clientOptions);
         let disposable = client.start();
 
@@ -36,8 +48,6 @@ suite('Client integration', () => {
                     }
                 };
                 assert.deepEqual(client.initializeResult, expected);
-                disposable.dispose();
-                done();
             } catch (e) {
                 disposable.dispose();
                 done(e);
