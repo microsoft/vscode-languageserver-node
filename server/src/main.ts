@@ -377,7 +377,8 @@ export interface Remote {
 
 /**
  * The RemoteConsole interface contains all functions to interact with
- * the developer console of VS Code.
+ * the tools / clients console or log system. Interally it used `window/logMessage`
+ * notifications.
  */
 export interface RemoteConsole extends Remote {
 	/**
