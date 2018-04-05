@@ -151,6 +151,48 @@ export namespace Location {
 }
 
 /**
+ * Represents a related message and source code location for a diagnostic. This should be
+ * used to point to code locations that cause or related to a diagnostics, e.g when duplicating
+ * a symbol in a scope.
+ */
+export interface DiagnosticRelatedInformation {
+	/**
+	 * The location of this related diagnostic information.
+	 */
+	location: Location;
+
+	/**
+	 * The message of this related diagnostic information.
+	 */
+	message: string;
+}
+
+/**
+ * The DiagnosticRelatedInformation namespace provides helper functions to work with
+ * [DiagnosticRelatedInformation](#DiagnosticRelatedInformation) literals.
+ */
+export namespace DiagnosticRelatedInformation {
+
+	/**
+	 * Creates a new DiagnosticRelatedInformation literal.
+	 */
+	export function create(location: Location, message: string): DiagnosticRelatedInformation {
+		return {
+			location,
+			message
+		};
+	}
+
+	/**
+	 * Checks whether the given literal conforms to the [DiagnosticRelatedInformation](#DiagnosticRelatedInformation) interface.
+	 */
+	export function is(value: any): value is DiagnosticRelatedInformation {
+		let candidate: DiagnosticRelatedInformation = value as DiagnosticRelatedInformation;
+		return Is.defined(candidate) && Location.is(candidate.location) && Is.string(candidate.message);
+	}
+}
+
+/**
  * The diagnostic's severity.
  */
 export namespace DiagnosticSeverity {
@@ -213,15 +255,6 @@ export interface Diagnostic {
 }
 
 /**
- * Represents a supplemental information of a diagnostic, such
- * as other locations that are relevant for a compiler error or warning.
- */
-export interface DiagnosticRelatedInformation {
-	location: Location,
-	message: string
-}
-
-/**
  * The Diagnostic namespace provides helper functions to work with
  * [Diagnostic](#Diagnostic) literals.
  */
@@ -257,14 +290,7 @@ export namespace Diagnostic {
 			&& (Is.number(candidate.severity) || Is.undefined(candidate.severity))
 			&& (Is.number(candidate.code) || Is.string(candidate.code) || Is.undefined(candidate.code))
 			&& (Is.string(candidate.source) || Is.undefined(candidate.source))
-			&& (Is.typedArray<DiagnosticRelatedInformation>(candidate.relatedInformation, isRelatedInformation) || Is.undefined(candidate.relatedInformation));
-	}
-
-	function isRelatedInformation(value: any): value is DiagnosticRelatedInformation {
-		let candidate = value as DiagnosticRelatedInformation;
-		return Is.defined(candidate)
-			&& Location.is(candidate.location)
-			&& Is.string(candidate.message);
+			&& (Is.undefined(candidate.relatedInformation) || Is.typedArray<DiagnosticRelatedInformation>(candidate.relatedInformation, DiagnosticRelatedInformation.is));
 	}
 }
 
