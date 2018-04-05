@@ -81,4 +81,40 @@ describe('Messages', () => {
 		});
 		readable.push(partOne);
 	});
+	it('Emits errors for invalid headers', (done) => {
+		let invalidHeader = 'Invalid-Header = 1\r\n\r\ntest';
+		let readable = new Readable({
+			read() {
+				this.push(invalidHeader);
+				this.push(null);
+			},
+		});
+		let reader = new StreamMessageReader(readable);
+		reader.listen(() => {
+			done(Error('Should not receive any data on error.'));
+		});
+		reader.onError(err => {
+			assert.equal(err.message, 'Message header must separate key and value using :');
+			done();
+		});
+	});
+	it('Emits errors for invalid Content-Length', (done) => {
+		let invalidHeader = 'Content-Length: abc\r\n\r\n';
+		let validHeader = 'Content-Length: 2\r\n\r\n{}'
+		let readable = new Readable({
+			read() {
+				this.push(invalidHeader);
+				this.push(validHeader);
+				this.push(null);
+			},
+		});
+		let reader = new StreamMessageReader(readable);
+		reader.listen(() => {
+			done(Error('Should have stopped reading data after error.'));
+		});
+		reader.onError(err => {
+			assert.equal(err.message, 'Content-Length value must be a number.');
+			done();
+		});
+	});
 });
