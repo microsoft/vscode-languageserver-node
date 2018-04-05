@@ -27,7 +27,9 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
-### 4.0.2 Client
+### 4.1.0 Client
+
+* Add support for related information in diagnostics.
 
 * [Initialisation exceptions swallowed](https://github.com/Microsoft/vscode-languageserver-node/issues/330)
 * [Errors from rename still not shown in VSCode](https://github.com/Microsoft/vscode-languageserver-node/issues/329)
