@@ -249,7 +249,8 @@ export interface Diagnostic {
 	message: string;
 
 	/**
-	 * Array of information related to this diagnostic.
+	 * An array of related diagnostic information, e.g. when symbol-names within
+	 * a scope collide all definitions can be marked via this property.
 	 */
 	relatedInformation?: DiagnosticRelatedInformation[];
 }
