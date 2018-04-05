@@ -17,6 +17,7 @@
 	"main": "./lib/main.js",
 	"typings": "./lib/main",
 	"devDependencies": {
+		"shx": "^0.2.2",
 		"vscode": "^1.1.5"
 	},
 	"dependencies": {
@@ -25,7 +26,7 @@
 	"scripts": {
 		"prepublish": "npm run update-vscode && npm run compile && npm test",
 		"postpublish": "node ../build/npm/post-publish.js",
-		"compile": "node ../build/bin/tsc -p ./tsconfig.json",
+		"compile": "node ../build/bin/tsc -p ./tsconfig.json && shx cp src/utils/terminateProcess.sh lib/utils/terminateProcess.sh",
 		"watch": "node ../build/bin/tsc -w -p ./tsconfig.json",
 		"update-vscode": "node ./node_modules/vscode/bin/install",
 		"test": "cd lib && node ../node_modules/vscode/bin/test"
