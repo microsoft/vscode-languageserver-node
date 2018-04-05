@@ -144,7 +144,16 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		let result = new code.Diagnostic(asRange(diagnostic.range), diagnostic.message, asDiagnosticSeverity(diagnostic.severity));
 		if (Is.number(diagnostic.code) || Is.string(diagnostic.code)) { result.code = diagnostic.code; }
 		if (diagnostic.source) { result.source = diagnostic.source; }
+		if (diagnostic.relatedInformation) { result.relatedInformation = asRelatedInformation(diagnostic.relatedInformation); }
 		return result;
+	}
+
+	function asRelatedInformation(relatedInformation: ls.DiagnosticRelatedInformation[]): code.DiagnosticRelatedInformation[] {
+		return relatedInformation.map(asDiagnosticRelatedInformation);
+	}
+
+	function asDiagnosticRelatedInformation(information: ls.DiagnosticRelatedInformation): code.DiagnosticRelatedInformation {
+		return new code.DiagnosticRelatedInformation(asLocation(information.location), information.message);
 	}
 
 	function asPosition(value: undefined | null): undefined;

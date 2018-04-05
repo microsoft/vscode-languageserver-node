@@ -57,7 +57,7 @@ import {
 } from 'vscode-languageserver-protocol';
 
 import { ColorProviderMiddleware } from './colorProvider';
-import { ImplementationMiddleware }  from './implementation'
+import { ImplementationMiddleware } from './implementation'
 import { TypeDefinitionMiddleware } from './typeDefinition';
 import { ConfigurationWorkspaceMiddleware } from './configuration';
 import { WorkspaceFolderWorkspaceMiddleware } from './workspaceFolders';
@@ -2904,6 +2904,7 @@ export abstract class BaseLanguageClient {
 		let result: ClientCapabilities = {};
 		ensure(result, 'workspace')!.applyEdit = true;
 		ensure(ensure(result, 'workspace')!, 'workspaceEdit')!.documentChanges = true;
+		ensure(ensure(result, 'textDocument')!, 'publishDiagnostics')!.relatedInformation = true;
 		for (let feature of this._features) {
 			feature.fillClientCapabilities(result);
 		}

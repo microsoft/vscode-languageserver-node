@@ -19,7 +19,7 @@ import {
 } from 'vscode-languageserver-types';
 
 import { ImplementationRequest, ImplementationClientCapabilities, ImplementationServerCapabilities } from './protocol.implementation';
-import { TypeDefinitionRequest, TypeDefinitionClientCapabilities, TypeDefinitionServerCapabilities }  from './protocol.typeDefinition';
+import { TypeDefinitionRequest, TypeDefinitionClientCapabilities, TypeDefinitionServerCapabilities } from './protocol.typeDefinition';
 import {
 	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, WorkspaceFolder,
 	WorkspaceFoldersChangeEvent, WorkspaceFoldersInitializeParams, WorkspaceFoldersClientCapabilities, WorkspaceFoldersServerCapabilities
@@ -28,7 +28,7 @@ import { ConfigurationRequest, ConfigurationParams, ConfigurationItem, Configura
 import {
 	DocumentColorRequest, ColorPresentationRequest, ColorProviderOptions, DocumentColorParams, ColorPresentationParams,
 	Color, ColorInformation, ColorPresentation, ColorServerCapabilities, ColorClientCapabilities,
- } from './protocol.colorProvider';
+} from './protocol.colorProvider';
 
 /**
  * A document filter denotes a document by different properties like
@@ -263,7 +263,7 @@ export interface TextDocumentClientCapabilities {
 		 * The client supports did save notifications.
 		 */
 		didSave?: boolean;
-	}
+	};
 
 	/**
 	 * Capabilities specific to the `textDocument/completion`
@@ -485,6 +485,16 @@ export interface TextDocumentClientCapabilities {
 		 * Whether rename supports dynamic registration.
 		 */
 		dynamicRegistration?: boolean;
+	};
+
+	/**
+	 * Capabilities specific to `textDocument/publishDiagnostics`.
+	 */
+	publishDiagnostics?: {
+		/**
+		 * Whether the clients accepts diagnostics with related information.
+		 */
+		relatedInformation?: boolean;
 	};
 }
 
