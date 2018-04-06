@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageclient",
 	"description": "VSCode Language client implementation",
-	"version": "4.1.1",
+	"version": "4.1.2",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"engines": {
@@ -24,7 +24,7 @@
 		"vscode-languageserver-protocol": "^3.7.0"
 	},
 	"scripts": {
-		"prepublish": "npm run update-vscode && npm run compile && npm test",
+		"prepublishOnly": "npm run update-vscode && npm run compile && npm test",
 		"postpublish": "node ../build/npm/post-publish.js",
 		"compile": "node ../build/bin/tsc -p ./tsconfig.json && shx cp src/utils/terminateProcess.sh lib/utils/terminateProcess.sh",
 		"watch": "node ../build/bin/tsc -w -p ./tsconfig.json",

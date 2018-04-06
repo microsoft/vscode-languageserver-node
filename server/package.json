@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageserver",
 	"description": "Language server implementation for node",
-	"version": "4.1.0",
+	"version": "4.1.1",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"repository": {
@@ -21,7 +21,7 @@
 		"vscode-languageserver-protocol": "^3.7.0"
 	},
 	"scripts": {
-		"prepublish": "npm run compile",
+		"prepublishOnly": "npm run compile",
 		"postpublish": "node ../build/npm/post-publish.js",
 		"compile": "node ../build/bin/tsc -p ./tsconfig.json",
 		"watch": "node ../build/bin/tsc -w -p ./tsconfig.json"
