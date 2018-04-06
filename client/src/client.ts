@@ -2700,7 +2700,7 @@ export abstract class BaseLanguageClient {
 		});
 	}
 
-	private cleanUp(restart: boolean = false): void {
+	private cleanUp(channel: boolean = true, diagnostics: boolean = true): void {
 		if (this._listeners) {
 			this._listeners.forEach(listener => listener.dispose());
 			this._listeners = undefined;
@@ -2715,10 +2715,11 @@ export abstract class BaseLanguageClient {
 		for (let handler of this._dynamicFeatures.values()) {
 			handler.dispose();
 		}
-		if (!restart && this._outputChannel && this._disposeOutputChannel) {
+		if (channel && this._outputChannel && this._disposeOutputChannel) {
 			this._outputChannel.dispose();
+			this._outputChannel = undefined;
 		}
-		if (!restart && this._diagnostics) {
+		if (diagnostics && this._diagnostics) {
 			this._diagnostics.dispose();
 			this._diagnostics = undefined;
 		}
@@ -2804,10 +2805,10 @@ export abstract class BaseLanguageClient {
 		if (action === CloseAction.DoNotRestart) {
 			this.error('Connection to server got closed. Server will not be restarted.');
 			this.state = ClientState.Stopped;
-			this.cleanUp(false);
+			this.cleanUp(false, true);
 		} else if (action === CloseAction.Restart) {
 			this.info('Connection to server got closed. Server will restart.');
-			this.cleanUp(true);
+			this.cleanUp(false, false);
 			this.state = ClientState.Initial;
 			this.start();
 		}
