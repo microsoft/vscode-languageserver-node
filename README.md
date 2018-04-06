@@ -34,6 +34,7 @@ language servers for [VSCode](https://code.visualstudio.com/).
 * [Initialisation exceptions swallowed](https://github.com/Microsoft/vscode-languageserver-node/issues/330)
 * [Errors from rename still not shown in VSCode](https://github.com/Microsoft/vscode-languageserver-node/issues/329)
 * [terminateProcess.sh is not shipped in dist package](https://github.com/Microsoft/vscode-languageserver-node/issues/331)
+* [Add middleware to intercept textDocument/publishDiagnostics](https://github.com/Microsoft/vscode-languageserver-node/pull/322)
 
 ### 4.0.1 Client
 
