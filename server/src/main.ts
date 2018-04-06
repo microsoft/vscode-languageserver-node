@@ -986,7 +986,8 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 * @param method The method to invoke on the client.
 	 * @param params The request's parameters.
 	 */
-	sendRequest<R>(method: string, ...params: any[]): Thenable<R>;
+	sendRequest<R>(method: string, token?: CancellationToken): Thenable<R>;
+	sendRequest<R>(method: string, params: any, token?: CancellationToken): Thenable<R>;
 
 	/**
 	 * Installs a notification handler described by the given [NotificationType](#NotificationType).
@@ -1019,7 +1020,7 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 * @param params The notification's parameters.
 	 */
 	sendNotification<RO>(type: NotificationType0<RO>): void;
-	sendNotification<P, RO>(type: NotificationType<P, RO>, params?: P): void;
+	sendNotification<P, RO>(type: NotificationType<P, RO>, params: P): void;
 
 	/**
 	 * Send a notification to the client.
@@ -1027,7 +1028,7 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 * @param method The method to invoke on the client.
 	 * @param params The notification's parameters.
 	 */
-	sendNotification(method: string, ...args: any[]): void;
+	sendNotification(method: string, params?: any): void;
 
 	/**
 	 * Installs a handler for the initialize request.
@@ -1584,10 +1585,10 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 	let protocolConnection: Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace> & ConnectionState = {
 		listen: (): void => connection.listen(),
 
-		sendRequest: <R>(type: string | RPCMessageType, ...params: any[]): Thenable<R> => connection.sendRequest(Is.string(type) ? type : type.method, ...params),
+		sendRequest: <R>(type: string | RPCMessageType, paramsOrToken?: any, token?: CancellationToken): Thenable<R> => connection.sendRequest(Is.string(type) ? type : type.method, paramsOrToken, token),
 		onRequest: <R, E>(type: string | RPCMessageType | StarRequestHandler, handler?: GenericRequestHandler<R, E>): void => (connection as any).onRequest(type, handler),
 
-		sendNotification: (type: string | RPCMessageType, ...params: any[]): void => connection.sendNotification(Is.string(type) ? type : type.method, ...params),
+		sendNotification: (type: string | RPCMessageType, params?: any): void => connection.sendNotification(Is.string(type) ? type : type.method, params),
 		onNotification: (type: string | RPCMessageType | StarNotificationHandler, handler?: GenericNotificationHandler): void => (connection as any).onNotification(type, handler),
 
 		onInitialize: (handler) => initializeHandler = handler,
