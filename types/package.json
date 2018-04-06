@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageserver-types",
 	"description": "Types used by the Language server for node",
-	"version": "3.7.0",
+	"version": "3.7.1",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"repository": {
@@ -17,7 +17,6 @@
 	"scripts": {
 		"prepublishOnly": "npm run clean && npm run compile-esm && npm run compile && npm run test",
 		"postpublish": "node ../build/npm/post-publish.js",
-		"postinstall": "npm run compile",
 		"compile": "node ../build/bin/tsc -p ./tsconfig.json",
 		"compile-esm": "node ../build/bin/tsc -p ./tsconfig.esm.json",
 		"clean": "node ../node_modules/rimraf/bin.js lib",
