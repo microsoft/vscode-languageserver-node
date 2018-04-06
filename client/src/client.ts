@@ -7,7 +7,7 @@
 import {
 	workspace as Workspace, window as Window, languages as Languages, commands as Commands,
 	TextDocumentChangeEvent, TextDocument, Disposable, OutputChannel,
-	FileSystemWatcher as VFileSystemWatcher, DiagnosticCollection, Uri, ProviderResult,
+	FileSystemWatcher as VFileSystemWatcher, DiagnosticCollection, Diagnostic as VDiagnostic, Uri, ProviderResult,
 	CancellationToken, Position as VPosition, Location as VLocation, Range as VRange,
 	CompletionItem as VCompletionItem, CompletionList as VCompletionList, SignatureHelp as VSignatureHelp, Definition as VDefinition, DocumentHighlight as VDocumentHighlight,
 	SymbolInformation as VSymbolInformation, CodeActionContext as VCodeActionContext, Command as VCommand, CodeLens as VCodeLens,
@@ -318,6 +318,10 @@ export enum RevealOutputChannelOn {
 	Never = 4
 }
 
+export interface HandleDiagnosticsSignature {
+	(uri: Uri, diagnostics: VDiagnostic[]): void;
+}
+
 export interface ProvideCompletionItemsSignature {
 	(document: TextDocument, position: VPosition, context: VCompletionContext, token: CancellationToken): ProviderResult<VCompletionItem[] | VCompletionList>;
 }
@@ -416,6 +420,7 @@ export interface _Middleware {
 	didSave?: NextSignature<TextDocument, void>;
 	didClose?: NextSignature<TextDocument, void>;
 
+	handleDiagnostics?: (this: void, uri: Uri, diagnostics: VDiagnostic[], next: HandleDiagnosticsSignature) => void;
 	provideCompletionItem?: (this: void, document: TextDocument, position: VPosition, context: VCompletionContext, token: CancellationToken, next: ProvideCompletionItemsSignature) => ProviderResult<VCompletionItem[] | VCompletionList>;
 	resolveCompletionItem?: (this: void, item: VCompletionItem, token: CancellationToken, next: ResolveCompletionItemSignature) => ProviderResult<VCompletionItem>;
 	provideHover?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideHoverSignature) => ProviderResult<VHover>;
@@ -2745,6 +2750,18 @@ export abstract class BaseLanguageClient {
 		}
 		let uri = this._p2c.asUri(params.uri);
 		let diagnostics = this._p2c.asDiagnostics(params.diagnostics);
+		let middleware = this.clientOptions.middleware!.handleDiagnostics;
+		if (middleware) {
+			middleware(uri, diagnostics, (uri, diagnostics) => this.setDiagnostics(uri, diagnostics));
+		} else {
+			this.setDiagnostics(uri, diagnostics);
+		}
+	}
+
+	private setDiagnostics(uri: Uri, diagnostics: VDiagnostic[] | undefined) {
+		if (!this._diagnostics) {
+			return;
+		}
 		this._diagnostics.set(uri, diagnostics);
 	}
 

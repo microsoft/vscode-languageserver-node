@@ -33,6 +33,9 @@ connection.onInitialize((params: InitializeParams): any => {
 	return { capabilities, customResults: { "hello": "world" } };
 });
 
+connection.onInitialized(() => {
+	connection.sendDiagnostics({ uri: "uri:/test.ts", diagnostics: [] });
+});
 
 // Listen on the connection
 connection.listen();
