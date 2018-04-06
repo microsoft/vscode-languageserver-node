@@ -27,7 +27,11 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
-### 4.1.0 Client
+### 4.1.1 Client
+
+* [Information on server crash lost as output channel is closed](https://github.com/Microsoft/vscode-languageserver-node/issues/319)
+
+### 4.1.0 Client & Server
 
 * Add support for related information in diagnostics.
 
