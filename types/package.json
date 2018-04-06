@@ -15,12 +15,12 @@
 	"typings": "./lib/umd/main",
 	"module": "./lib/esm/main.js",
 	"scripts": {
-		"prepublishOnly": "npm run clean && npm run compile-esm && npm run test",
+		"prepublishOnly": "npm run clean && npm run compile-esm && npm run compile && npm run test",
 		"postpublish": "node ../build/npm/post-publish.js",
 		"postinstall": "npm run compile",
 		"compile": "node ../build/bin/tsc -p ./tsconfig.json",
 		"compile-esm": "node ../build/bin/tsc -p ./tsconfig.esm.json",
-		"clean": "node ../node_modules/.bin/rimraf lib",
+		"clean": "node ../node_modules/rimraf/bin.js lib",
 		"watch": "node ../build/bin/tsc -w -p ./tsconfig.json",
 		"test": "npm run compile && node ../node_modules/mocha/bin/_mocha"
 	}
