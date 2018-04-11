@@ -299,6 +299,11 @@ export interface TextDocumentClientCapabilities {
 			 * property. The order describes the preferred format of the client.
 			 */
 			documentationFormat?: MarkupKind[];
+
+			/**
+			 * Client supports the deprecated property on a completion item.
+			 */
+			deprecatedSupport?: boolean;
 		},
 
 		completionItemKind?: {
