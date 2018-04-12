@@ -1461,6 +1461,12 @@ export class DocumentLink {
 	 * The uri this link points to.
 	 */
 	target?: string;
+
+	/**
+	 * A data entry field that is preserved on a document link between a
+	 * DocumentLinkRequest and a DocumentLinkResolveRequest.
+	 */
+	data?: any
 }
 
 /**
@@ -1471,8 +1477,8 @@ export namespace DocumentLink {
 	/**
 	 * Creates a new DocumentLink literal.
 	 */
-	export function create(range: Range, target?: string): DocumentLink {
-		return { range, target };
+	export function create(range: Range, target?: string, data?: any): DocumentLink {
+		return { range, target, data };
 	}
 
 	/**

@@ -9,6 +9,7 @@ import * as proto from 'vscode-languageserver-protocol';
 import * as Is from './utils/is';
 import ProtocolCompletionItem from './protocolCompletionItem';
 import ProtocolCodeLens from './protocolCodeLens';
+import ProtocolDocumentLink from './protocolDocumentLink';
 import { MarkdownString } from 'vscode';
 
 export interface Converter {
@@ -409,6 +410,10 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	function asDocumentLink(item: code.DocumentLink): proto.DocumentLink {
 		let result = proto.DocumentLink.create(asRange(item.range));
 		if (item.target) { result.target = asUri(item.target); }
+		let protocolItem = item instanceof ProtocolDocumentLink ? item as ProtocolDocumentLink : undefined;
+		if (protocolItem && protocolItem.data) {
+			result.data = protocolItem.data;
+		}
 		return result;
 	}
 

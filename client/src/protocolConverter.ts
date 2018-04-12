@@ -9,6 +9,7 @@ import * as ls from 'vscode-languageserver-protocol';
 import * as Is from './utils/is';
 import ProtocolCompletionItem from './protocolCompletionItem';
 import ProtocolCodeLens from './protocolCodeLens';
+import ProtocolDocumentLink from './protocolDocumentLink';
 
 export interface Converter {
 
@@ -539,7 +540,9 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		let range = asRange(item.range);
 		let target = item.target ? asUri(item.target) : undefined;
 		// target must be optional in DocumentLink
-		return new code.DocumentLink(range, target);
+		let link = new ProtocolDocumentLink(range, target);
+		if (item.data !== void 0 && item.data !== null) { link.data = item.data; }
+		return link;
 	}
 
 	function asDocumentLinks(items: ls.DocumentLink[]): code.DocumentLink[];
