@@ -20,7 +20,7 @@
 	},
 	"scripts": {
 		"postinstall": "cd types && npm install && cd ../jsonrpc && npm install && cd ../protocol && npm install && cd ../server && npm install && cd ../client && npm install && cd ..",
-		"test": "cd types && npm test && cd ../jsonrpc && npm test && cd ../client && npm test && cd ..",
+		"test": "cd types && npm test && cd ../jsonrpc && npm test && cd ../protocol && npm test && cd ../server && npm test && cd ../client && npm test && cd ..",
 		"compile": "npm run compile:types && npm run compile:jsonrpc && npm run compile:protocol && npm run compile:server && npm run compile:client",
 		"compile:types": "tsc -p ./types/tsconfig.json",
 		"compile:jsonrpc": "tsc -p ./jsonrpc/tsconfig.json",
