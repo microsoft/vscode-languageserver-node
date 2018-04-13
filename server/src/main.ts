@@ -1585,10 +1585,17 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 	let protocolConnection: Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace> & ConnectionState = {
 		listen: (): void => connection.listen(),
 
-		sendRequest: <R>(type: string | RPCMessageType, paramsOrToken?: any, token?: CancellationToken): Thenable<R> => connection.sendRequest(Is.string(type) ? type : type.method, paramsOrToken, token),
+		sendRequest: <R>(type: string | RPCMessageType, ...params: any[]): Thenable<R> => connection.sendRequest(Is.string(type) ? type : type.method, ...params),
 		onRequest: <R, E>(type: string | RPCMessageType | StarRequestHandler, handler?: GenericRequestHandler<R, E>): void => (connection as any).onRequest(type, handler),
 
-		sendNotification: (type: string | RPCMessageType, params?: any): void => connection.sendNotification(Is.string(type) ? type : type.method, params),
+		sendNotification: (type: string | RPCMessageType, param?: any): void => {
+			const method = Is.string(type) ? type : type.method;
+			if (arguments.length === 1) {
+				connection.sendNotification(method)
+			} else {
+				connection.sendNotification(method, param);
+			}
+		},
 		onNotification: (type: string | RPCMessageType | StarNotificationHandler, handler?: GenericNotificationHandler): void => (connection as any).onNotification(type, handler),
 
 		onInitialize: (handler) => initializeHandler = handler,

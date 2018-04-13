@@ -18,9 +18,10 @@
 		"vscode-languageserver-types": "^3.7.0"
 	},
 	"scripts": {
-		"prepublishOnly": "npm run compile",
+		"prepublishOnly": "npm run compile && npm test",
 		"postpublish": "node ../build/npm/post-publish.js",
 		"compile": "node ../build/bin/tsc -p ./tsconfig.json",
-		"watch": "node ../build/bin/tsc -w -p ./tsconfig.json"
+		"watch": "node ../build/bin/tsc -w -p ./tsconfig.json",
+		"test": "node ../node_modules/mocha/bin/_mocha"
 	}
 }
