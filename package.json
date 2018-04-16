@@ -17,12 +17,13 @@
 		"@types/node": "^6.0.88",
 		"@types/mocha": "^2.2.42",
 		"rimraf": "^2.6.2",
+		"shelljs": "^0.8.1",
 		"shx": "^0.2.2"
 	},
 	"scripts": {
 		"postinstall": "cd types && npm install && cd ../jsonrpc && npm install && cd ../protocol && npm install && cd ../server && npm install && cd ../client && npm install && cd ..",
 		"test": "cd types && npm test && cd ../jsonrpc && npm test && cd ../protocol && npm test && cd ../server && npm test && cd ../client && npm test && cd ..",
-		"symlink": "shx rm -rf protocol/node_modules/vscode-jsonrpc protocol/node_modules/vscode-languageserver-types client/node_modules/vscode-languageserver-protocol server/node_modules/vscode-languageserver-protocol && cd client/node_modules && shx ln -s ../../protocol vscode-languageserver-protocol && cd ../../server/node_modules && shx ln -s ../../protocol vscode-languageserver-protocol && cd ../../protocol/node_modules && shx ln -s ../../jsonrpc vscode-jsonrpc && shx ln -s ../../types vscode-languageserver-types",
+		"symlink": "node ./build/bin/symlink.js",
 		"compile": "npm run compile:types && npm run compile:jsonrpc && npm run compile:protocol && npm run compile:server && npm run compile:client",
 		"compile:types": "tsc -p ./types/tsconfig.json",
 		"compile:jsonrpc": "tsc -p ./jsonrpc/tsconfig.json",

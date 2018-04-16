@@ -18,7 +18,7 @@
 	"typings": "./lib/main",
 	"dependencies": {
 		"vscode-uri": "^1.0.1",
-		"vscode-languageserver-protocol": "^3.7.0"
+		"vscode-languageserver-protocol": "^3.7.1"
 	},
 	"scripts": {
 		"prepublishOnly": "npm run compile && npm test",
