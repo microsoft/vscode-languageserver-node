@@ -207,7 +207,7 @@ export class TextDocuments {
 	 * @param uri The text document's URI to retrieve.
 	 * @return the text document or `undefined`.
 	 */
-	public get(uri: string): TextDocument {
+	public get(uri: string): TextDocument | undefined {
 		return this._documents[uri];
 	}
 
