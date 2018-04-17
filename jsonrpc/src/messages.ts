@@ -82,26 +82,21 @@ export interface ResponseErrorLiteral<D> {
 export class ResponseError<D> extends Error {
 
 	public readonly code: number;
-	public readonly data: D;
+	public readonly data?: D;
 
 	constructor(code: number, message: string, data?: D) {
 		super(message);
 		this.code = is.number(code) ? code : ErrorCodes.UnknownErrorCode;
-		if (data !== void 0) {
-			this.data = data;
-		}
+		this.data = data;
 		Object.setPrototypeOf(this, ResponseError.prototype);
 	}
 
 	public toJson(): ResponseErrorLiteral<D> {
-		let result: ResponseErrorLiteral<D> = {
+		return {
 			code: this.code,
-			message: this.message
+			message: this.message,
+			data: this.data,
 		};
-		if (this.data !== void 0) {
-			result.data = this.data
-		};
-		return result;
 	}
 }
 
