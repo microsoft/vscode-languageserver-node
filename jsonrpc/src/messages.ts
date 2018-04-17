@@ -82,7 +82,7 @@ export interface ResponseErrorLiteral<D> {
 export class ResponseError<D> extends Error {
 
 	public readonly code: number;
-	public readonly data?: D;
+	public readonly data: D | undefined;
 
 	constructor(code: number, message: string, data?: D) {
 		super(message);
