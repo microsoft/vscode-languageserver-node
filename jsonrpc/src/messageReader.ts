@@ -30,7 +30,7 @@ class MessageBuffer {
 
 	public append(chunk: Buffer | String): void {
 		var toAppend: Buffer = <Buffer>chunk;
-		if (typeof (chunk) == 'string') {
+		if (typeof (chunk) === 'string') {
 			var str = <string>chunk;
 			var bufferLen = Buffer.byteLength(str, this.encoding);
 			toAppend = new Buffer(bufferLen);
