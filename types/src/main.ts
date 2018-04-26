@@ -875,6 +875,11 @@ export interface CompletionItem {
 	documentation?: string | MarkupContent;
 
 	/**
+	 * Indicates if this item is deprecated.
+	 */
+	deprecated?: boolean;
+
+	/**
 	 * A string that should be used when comparing this item
 	 * with other items. When `falsy` the [label](#CompletionItem.label)
 	 * is used.
@@ -1261,6 +1266,11 @@ export interface SymbolInformation {
 	 * The kind of this symbol.
 	 */
 	kind: SymbolKind;
+
+	/**
+	 * Indicates if this symbol is deprecated.
+	 */
+	deprecated?: boolean;
 
 	/**
 	 * The location of this symbol. The location's range is used by a tool
