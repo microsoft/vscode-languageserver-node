@@ -63,13 +63,15 @@ class MessageBuffer {
 		result = Object.create(null);
 		let headers = this.buffer.toString('ascii', 0, current).split(CRLF);
 		headers.forEach((header) => {
-			let index: number = header.indexOf(':');
-			if (index === -1) {
-				throw new Error('Message header must separate key and value using :');
+			if(header){
+				let index: number = header.indexOf(':');
+				if (index === -1) {
+					throw new Error('Message header must separate key and value using :');
+				}
+				let key = header.substr(0, index);
+				let value = header.substr(index + 1).trim();
+				result![key] = value;
 			}
-			let key = header.substr(0, index);
-			let value = header.substr(index + 1).trim();
-			result![key] = value;
 		})
 
 		let nextStart = current + 4;
