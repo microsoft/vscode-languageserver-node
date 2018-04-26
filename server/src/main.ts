@@ -801,10 +801,10 @@ class RemoteClientImpl implements RemoteClient {
 export interface _RemoteWorkspace extends Remote {
 	/**
 	 * Applies a `WorkspaceEdit` to the workspace
-	 * @param edit the workspace edit.
+	 * @param param the workspace edit params.
 	 * @return a thenable that resolves to the `ApplyWorkspaceEditResponse`.
 	 */
-	applyEdit(edit: WorkspaceEdit): Thenable<ApplyWorkspaceEditResponse>;
+	applyEdit(paramOrEdit: ApplyWorkspaceEditParams | WorkspaceEdit): Thenable<ApplyWorkspaceEditResponse>;
 }
 
 export type RemoteWorkspace = _RemoteWorkspace & Configuration & WorkspaceFolders;
@@ -833,10 +833,12 @@ class _RemoteWorkspaceImpl implements _RemoteWorkspace {
 	public fillServerCapabilities(_capabilities: ServerCapabilities): void {
 	}
 
-	public applyEdit(edit: WorkspaceEdit): Thenable<ApplyWorkspaceEditResponse> {
-		let params: ApplyWorkspaceEditParams = {
-			edit
-		};
+	public applyEdit(paramOrEdit: ApplyWorkspaceEditParams | WorkspaceEdit): Thenable<ApplyWorkspaceEditResponse> {
+		function isApplyWorkspaceEditParams(value: ApplyWorkspaceEditParams | WorkspaceEdit): value is ApplyWorkspaceEditParams {
+			return value && !!(value as ApplyWorkspaceEditParams).edit;
+		}
+
+		let params: ApplyWorkspaceEditParams = isApplyWorkspaceEditParams(paramOrEdit) ? paramOrEdit : { edit: paramOrEdit };
 		return this._connection.sendRequest(ApplyWorkspaceEditRequest.type, params);
 	}
 }
