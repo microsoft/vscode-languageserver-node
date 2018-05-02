@@ -2,14 +2,15 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
+
 'use strict';
 
-import path = require('path');
-import os = require('os');
-import net = require('net');
-import cp = require('child_process');
+import * as path from 'path';
+import * as os from 'os';
+import * as net from 'net';
+import * as cp from 'child_process';
 
-export interface IForkOptions {
+export interface IForkOpts {
 	cwd?: string;
 	env?: any;
 	encoding?: string;
@@ -27,7 +28,7 @@ function makeRandomHexString(length: number): string {
 }
 
 function generatePipeName(): string {
-	var randomName = 'vscode-' + makeRandomHexString(40);
+	let randomName = 'vscode-lang-' + makeRandomHexString(40);
 	if (process.platform === 'win32') {
 		return '\\\\.\\pipe\\' + randomName + '-sock';
 	}
@@ -39,8 +40,8 @@ function generatePipeName(): string {
 function generatePatchedEnv(env: any, stdInPipeName: string, stdOutPipeName: string): any {
 	// Set the two unique pipe names and the electron flag as process env
 
-	var newEnv: any = {};
-	for (var key in env) {
+	let newEnv: any = {};
+	for (let key in env) {
 		newEnv[key] = env[key];
 	}
 
@@ -52,17 +53,17 @@ function generatePatchedEnv(env: any, stdInPipeName: string, stdOutPipeName: str
 	return newEnv;
 }
 
-export function fork(modulePath: string, args: string[], options: IForkOptions, callback: (error: any, cp: cp.ChildProcess | undefined) => void): void {
+export function fork(modulePath: string, args: string[], options: IForkOpts, callback: (error: any, cp: cp.ChildProcess | undefined) => void): void {
 
-	var callbackCalled = false;
-	var resolve = (result: cp.ChildProcess) => {
+	let callbackCalled = false;
+	let resolve = (result: cp.ChildProcess) => {
 		if (callbackCalled) {
 			return;
 		}
 		callbackCalled = true;
 		callback(undefined, result);
 	};
-	var reject = (err: any) => {
+	let reject = (err: any) => {
 		if (callbackCalled) {
 			return;
 		}
@@ -71,37 +72,38 @@ export function fork(modulePath: string, args: string[], options: IForkOptions, 
 	};
 
 	// Generate two unique pipe names
-	var stdInPipeName = generatePipeName();
-	var stdOutPipeName = generatePipeName();
+	let stdInPipeName = generatePipeName();
+	let stdOutPipeName = generatePipeName();
 
-	var newEnv = generatePatchedEnv(options.env || process.env, stdInPipeName, stdOutPipeName);
+	let newEnv = generatePatchedEnv(options.env || process.env, stdInPipeName, stdOutPipeName);
 
-	var childProcess: cp.ChildProcess;
+	let childProcess: cp.ChildProcess;
 
 	// Begin listening to stdout pipe
-	var server = net.createServer((stream) => {
+	let stdOutServer = net.createServer((stdOutStream) => {
 		// The child process will write exactly one chunk with content `ready` when it has installed a listener to the stdin pipe
 
-		stream.once('data', (_chunk: Buffer) => {
+		stdOutStream.once('data', (_chunk: Buffer) => {
 			// The child process is sending me the `ready` chunk, time to connect to the stdin pipe
 			childProcess.stdin = <any>net.connect(stdInPipeName);
 
 			// From now on the childProcess.stdout is available for reading
-			childProcess.stdout = stream;
+			childProcess.stdout = stdOutStream;
 
 			resolve(childProcess);
 		});
 	});
-	server.listen(stdOutPipeName);
+	stdOutServer.listen(stdOutPipeName);
 
-	var serverClosed = false;
-	var closeServer = () => {
+	let serverClosed = false;
+	let closeServer = () => {
 		if (serverClosed) {
 			return;
 		}
+
 		serverClosed = true;
-		server.close();
-	}
+		stdOutServer.close();
+	};
 
 	// Create the process
 	let bootstrapperPath = path.join(__dirname, 'electronForkStart');
