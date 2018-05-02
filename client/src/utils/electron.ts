@@ -102,6 +102,7 @@ export function fork(modulePath: string, args: string[], options: IForkOpts, cal
 		}
 
 		serverClosed = true;
+		process.removeListener('exit', closeServer);
 		stdOutServer.close();
 	};
 
@@ -123,4 +124,7 @@ export function fork(modulePath: string, args: string[], options: IForkOpts, cal
 		closeServer();
 		reject(err);
 	});
+
+	// On exit still close server
+	process.once('exit', closeServer);
 }
