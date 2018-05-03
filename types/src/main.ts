@@ -1599,7 +1599,7 @@ export namespace TextDocument {
 			if (diff === 0) {
 				return a.range.start.character - b.range.start.character;
 			}
-			return 0;
+			return diff;
 		});
 		let lastModifiedOffset = text.length;
 		for (let i = sortedEdits.length - 1; i >= 0; i--) {

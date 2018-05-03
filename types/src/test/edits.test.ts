@@ -35,4 +35,9 @@ suite('Edits', () => {
 		assert.throws(() => applyEdits(input, [TextEdit.replace(Range.create(Position.create(0, 3), Position.create(0, 6)), 'Hello'), TextEdit.insert(Position.create(0, 4), 'World')]));
 	});
 
+	test('multiline', function (): any {
+		let input = TextDocument.create('foo://bar/f', 'html', 0, '0\n1\n2\n3\n4');
+		assert.equal(applyEdits(input, [TextEdit.replace(Range.create(Position.create(2, 0), Position.create(3, 0)), 'Hello'), TextEdit.insert(Position.create(1, 1), 'World')]), '0\n1World\nHello3\n4');
+	});
+
 });
