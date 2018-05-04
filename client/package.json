@@ -18,7 +18,7 @@
 	"typings": "./lib/main",
 	"devDependencies": {
 		"shx": "^0.2.2",
-		"vscode": "^1.1.5"
+		"vscode": "^1.1.17"
 	},
 	"dependencies": {
 		"vscode-languageserver-protocol": "^3.7.1"
