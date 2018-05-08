@@ -20,6 +20,7 @@ documents.listen(connection);
 connection.onInitialize((params: InitializeParams): any => {
 	assert.equal((params.capabilities.workspace as any).applyEdit, true);
 	assert.equal(params.capabilities.workspace!.workspaceEdit!.documentChanges, true);
+	assert.equal(params.capabilities.textDocument!.completion!.completionItem!.deprecatedSupport, true);
 	let valueSet = params.capabilities.textDocument!.completion!.completionItemKind!.valueSet!;
 	assert.equal(valueSet[0], 1);
 	assert.equal(valueSet[valueSet.length - 1], CompletionItemKind.TypeParameter);

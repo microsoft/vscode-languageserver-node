@@ -1303,7 +1303,7 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionRegistrationOp
 		let completion = ensure(ensure(capabilites, 'textDocument')!, 'completion')!;
 		completion.dynamicRegistration = true;
 		completion.contextSupport = true;
-		completion.completionItem = { snippetSupport: true, commitCharactersSupport: true, documentationFormat: [MarkupKind.Markdown, MarkupKind.PlainText], deprecatedSupport: false };
+		completion.completionItem = { snippetSupport: true, commitCharactersSupport: true, documentationFormat: [MarkupKind.Markdown, MarkupKind.PlainText], deprecatedSupport: true };
 		completion.completionItemKind = { valueSet: SupportedCompletionItemKinds };
 	}
 
