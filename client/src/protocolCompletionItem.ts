@@ -13,6 +13,7 @@ export default class ProtocolCompletionItem extends code.CompletionItem {
 	public fromEdit: boolean;
 	public documentationFormat: string;
 	public originalItemKind: proto.CompletionItemKind;
+	public deprecated: boolean;
 
 	constructor(label: string) {
 		super(label);

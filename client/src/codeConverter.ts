@@ -319,8 +319,13 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (item.additionalTextEdits) { result.additionalTextEdits = asTextEdits(item.additionalTextEdits); }
 		if (item.commitCharacters) { result.commitCharacters = item.commitCharacters.slice(); }
 		if (item.command) { result.command = asCommand(item.command); }
-		if (protocolItem && protocolItem.data) {
-			result.data = protocolItem.data;
+		if (protocolItem) {
+			if (protocolItem.data) {
+				result.data = protocolItem.data;
+			}
+			if (protocolItem.deprecated === true || protocolItem.deprecated === false) {
+				result.deprecated = protocolItem.deprecated;
+			}
 		}
 		return result;
 	}
