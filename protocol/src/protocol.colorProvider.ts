@@ -36,7 +36,7 @@ export interface ColorServerCapabilities {
 	/**
 	 * The server provides color provider support.
 	 */
-	colorProvider?: ColorProviderOptions | (ColorProviderOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions);
+	colorProvider?: boolean | ColorProviderOptions | (ColorProviderOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions);
 }
 
 //---- Color Symbol Provider ---------------------------
