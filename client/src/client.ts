@@ -737,6 +737,7 @@ abstract class DocumentNotifiactions<P, E> implements DynamicFeature<TextDocumen
 	}
 
 	public dispose(): void {
+		this._selectors.clear();
 		if (this._listener) {
 			this._listener.dispose();
 		}
@@ -906,6 +907,12 @@ class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeR
 	}
 
 	private callback(event: TextDocumentChangeEvent): void {
+		// Text document changes are send for dirty changes as well. We don't
+		// have dirty / undirty events in the LSP so we ignore content changes
+		// with length zero.
+		if (event.contentChanges.length === 0) {
+			return;
+		}
 		for (const changeData of this._changeData.values()) {
 			if (Languages.match(changeData.documentSelector, event.document)) {
 				let middleware = this._client.clientOptions.middleware!;
@@ -956,6 +963,9 @@ class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeR
 	}
 
 	public dispose(): void {
+		this._changeDelayer = undefined;
+		this._forcingDelivery = false;
+		this._changeData.clear();
 		if (this._listener) {
 			this._listener.dispose();
 			this._listener = undefined;
@@ -1071,6 +1081,7 @@ class WillSaveWaitUntilFeature implements DynamicFeature<TextDocumentRegistratio
 	}
 
 	public dispose(): void {
+		this._selectors.clear();
 		if (this._listener) {
 			this._listener.dispose();
 			this._listener = undefined;
@@ -1205,6 +1216,7 @@ class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatchedFilesRe
 				disposable.dispose();
 			}
 		});
+		this._watchers.clear();
 	}
 }
 
@@ -1249,6 +1261,7 @@ export abstract class TextDocumentFeature<T extends TextDocumentRegistrationOpti
 		this._providers.forEach((value) => {
 			value.dispose();
 		});
+		this._providers.clear();
 	}
 }
 
@@ -1290,6 +1303,7 @@ abstract class WorkspaceFeature<T> implements DynamicFeature<T> {
 		this._providers.forEach((value) => {
 			value.dispose();
 		});
+		this._providers.clear();
 	}
 }
 
@@ -2065,6 +2079,7 @@ class ConfigurationFeature implements DynamicFeature<DidChangeConfigurationRegis
 		for (let disposable of this._listeners.values()) {
 			disposable.dispose();
 		}
+		this._listeners.clear();
 	}
 
 	private onDidChangeConfiguration(configurationSection: string | string[] | undefined): void {
@@ -2189,6 +2204,7 @@ class ExecuteCommandFeature implements DynamicFeature<ExecuteCommandRegistration
 		this._commands.forEach((value) => {
 			value.forEach(disposable => disposable.dispose());
 		});
+		this._commands.clear();
 	}
 }
 

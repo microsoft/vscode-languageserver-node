@@ -27,6 +27,10 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
+### 4.1.4 Client & 4.1.3 Server
+
+* [Client: duplicate messages sent after server restart](https://github.com/Microsoft/vscode-languageserver-node/issues/342)
+
 ### 4.1.1 Client
 
 * [Information on server crash lost as output channel is closed](https://github.com/Microsoft/vscode-languageserver-node/issues/319)
