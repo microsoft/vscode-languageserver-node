@@ -446,6 +446,15 @@ export interface WorkspaceEdit {
 	documentChanges?: TextDocumentEdit[];
 }
 
+export namespace WorkspaceEdit {
+	export function is(value: any): value is WorkspaceEdit {
+		let candidate: WorkspaceEdit = value;
+		return candidate &&
+			(candidate.changes !== void 0 || candidate.documentChanges !== void 0) &&
+			(candidate.documentChanges === void 0 || Is.typedArray(candidate.documentChanges, TextDocumentEdit.is));
+	}
+}
+
 /**
  * A change to capture text edits for existing resources.
  */
@@ -1467,7 +1476,7 @@ export namespace CodeActionContext {
  *
  * A CodeAction must set either `edit` and/or a `command`. If both are supplied, the `edit` is applied first, then the `command` is executed.
  */
-export interface CodeAction {
+export type CodeAction = {
 
 	/**
 	 * A short, human-readable, title for this code action.
@@ -1482,6 +1491,11 @@ export interface CodeAction {
 	kind?: CodeActionKind;
 
 	/**
+	 * The diagnostics that this code action resolves.
+	 */
+	diagnostics?: Diagnostic[];
+
+	/**
 	 * The workspace edit this code action performs.
 	 */
 	edit?: WorkspaceEdit;
@@ -1492,11 +1506,18 @@ export interface CodeAction {
 	 * executed and then the command.
 	 */
 	command?: Command;
+}
 
-	/**
-	 * The diagnostics that this code action resolves.
-	 */
-	diagnostics?: Diagnostic[];
+export namespace CodeAction {
+	export function is(value: any): value is CodeAction {
+		let candidate: CodeAction = value;
+		return candidate && Is.string(candidate.title) &&
+			(candidate.diagnostics === void 0 || Is.typedArray(candidate.diagnostics, Diagnostic.is)) &&
+			(candidate.kind === void 0 || Is.string(candidate.kind)) &&
+			(candidate.edit !== void 0 || candidate.command !== void 0) &&
+			(candidate.command === void 0 || Command.is(candidate.command)) &&
+			(candidate.edit === void 0 || WorkspaceEdit.is(candidate.edit));
+	}
 }
 
 /**

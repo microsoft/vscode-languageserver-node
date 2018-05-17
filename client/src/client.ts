@@ -10,9 +10,9 @@ import {
 	FileSystemWatcher as VFileSystemWatcher, DiagnosticCollection, Diagnostic as VDiagnostic, Uri, ProviderResult,
 	CancellationToken, Position as VPosition, Location as VLocation, Range as VRange,
 	CompletionItem as VCompletionItem, CompletionList as VCompletionList, SignatureHelp as VSignatureHelp, Definition as VDefinition, DocumentHighlight as VDocumentHighlight,
-	SymbolInformation as VSymbolInformation, CodeActionContext as VCodeActionContext, Command as VCommand, CodeLens as VCodeLens,
+	SymbolInformation as VSymbolInformation, CodeActionContext as VCodeActionContext, Command as VCommand, CodeLens as VCodeLens, CodeActionKind as VCodeActionKind,
 	FormattingOptions as VFormattingOptions, TextEdit as VTextEdit, WorkspaceEdit as VWorkspaceEdit, MessageItem,
-	Hover as VHover,
+	Hover as VHover, CodeAction as VCodeAction,
 	DocumentLink as VDocumentLink, TextDocumentWillSaveEvent,
 	WorkspaceFolder as VWorkspaceFolder, CompletionContext as VCompletionContext
 } from 'vscode';
@@ -53,7 +53,7 @@ import {
 	DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkRegistrationOptions,
 	ExecuteCommandRequest, ExecuteCommandParams, ExecuteCommandRegistrationOptions,
 	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse,
-	MarkupKind, SymbolKind, CompletionItemKind
+	MarkupKind, SymbolKind, CompletionItemKind, Command
 } from 'vscode-languageserver-protocol';
 
 import { ColorProviderMiddleware } from './colorProvider';
@@ -359,7 +359,7 @@ export interface ProvideWorkspaceSymbolsSignature {
 }
 
 export interface ProvideCodeActionsSignature {
-	(document: TextDocument, range: VRange, context: VCodeActionContext, token: CancellationToken): ProviderResult<VCommand[]>;
+	(document: TextDocument, range: VRange, context: VCodeActionContext, token: CancellationToken): ProviderResult<(VCommand | VCodeAction)[]>;
 }
 
 export interface ProvideCodeLensesSignature {
@@ -430,7 +430,7 @@ export interface _Middleware {
 	provideDocumentHighlights?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideDocumentHighlightsSignature) => ProviderResult<VDocumentHighlight[]>;
 	provideDocumentSymbols?: (this: void, document: TextDocument, token: CancellationToken, next: ProvideDocumentSymbolsSignature) => ProviderResult<VSymbolInformation[]>;
 	provideWorkspaceSymbols?: (this: void, query: string, token: CancellationToken, next: ProvideWorkspaceSymbolsSignature) => ProviderResult<VSymbolInformation[]>;
-	provideCodeActions?: (this: void, document: TextDocument, range: VRange, context: VCodeActionContext, token: CancellationToken, next: ProvideCodeActionsSignature) => ProviderResult<VCommand[]>;
+	provideCodeActions?: (this: void, document: TextDocument, range: VRange, context: VCodeActionContext, token: CancellationToken, next: ProvideCodeActionsSignature) => ProviderResult<(VCommand | VCodeAction)[]>;
 	provideCodeLenses?: (this: void, document: TextDocument, token: CancellationToken, next: ProvideCodeLensesSignature) => ProviderResult<VCodeLens[]>;
 	resolveCodeLens?: (this: void, codeLens: VCodeLens, token: CancellationToken, next: ResolveCodeLensSignature) => ProviderResult<VCodeLens>;
 	provideDocumentFormattingEdits?: (this: void, document: TextDocument, options: VFormattingOptions, token: CancellationToken, next: ProvideDocumentFormattingEditsSignature) => ProviderResult<VTextEdit[]>;
@@ -1671,7 +1671,22 @@ class CodeActionFeature extends TextDocumentFeature<TextDocumentRegistrationOpti
 	}
 
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		ensure(ensure(capabilites, 'textDocument')!, 'codeAction')!.dynamicRegistration = true;
+		const cap = ensure(ensure(capabilites, 'textDocument')!, 'codeAction')!;
+		cap.dynamicRegistration = true;
+		cap.codeActionLiteralSupport = {
+			codeActionKind: {
+				valueSet: [
+					VCodeActionKind.Empty.value!,
+					VCodeActionKind.QuickFix.value!,
+					VCodeActionKind.Refactor.value!,
+					VCodeActionKind.RefactorExtract.value!,
+					VCodeActionKind.RefactorInline.value!,
+					VCodeActionKind.RefactorRewrite.value!,
+					VCodeActionKind.Source.value!,
+					VCodeActionKind.SourceOrganizeImports.value!
+				]
+			}
+		};
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
@@ -1692,8 +1707,20 @@ class CodeActionFeature extends TextDocumentFeature<TextDocumentRegistrationOpti
 				range: client.code2ProtocolConverter.asRange(range),
 				context: client.code2ProtocolConverter.asCodeActionContext(context)
 			};
-			return client.sendRequest(CodeActionRequest.type, params, token).then(
-				client.protocol2CodeConverter.asCommands,
+			return client.sendRequest(CodeActionRequest.type, params, token).then((values) => {
+					if (values === null) {
+						return undefined;
+					}
+					let result: (VCommand | VCodeAction)[] = [];
+					for (let item of values) {
+						if (Command.is(item)) {
+							result.push(client.protocol2CodeConverter.asCommand(item))
+						} else {
+							result.push(client.protocol2CodeConverter.asCodeAction(item));
+						};
+					}
+					return result;
+				},
 				(error) => {
 					client.logFailedRequest(CodeActionRequest.type, error);
 					return Promise.resolve([]);
@@ -1702,7 +1729,7 @@ class CodeActionFeature extends TextDocumentFeature<TextDocumentRegistrationOpti
 		}
 		let middleware = client.clientOptions.middleware!;
 		return Languages.registerCodeActionsProvider(options.documentSelector!, {
-			provideCodeActions: (document: TextDocument, range: VRange, context: VCodeActionContext, token: CancellationToken): ProviderResult<VCommand[]> => {
+			provideCodeActions: (document: TextDocument, range: VRange, context: VCodeActionContext, token: CancellationToken): ProviderResult<(VCommand | VCodeAction)[]> => {
 				return middleware.provideCodeActions
 					? middleware.provideCodeActions(document, range, context, token, provideCodeActions)
 					: provideCodeActions(document, range, context, token);
