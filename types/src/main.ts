@@ -339,7 +339,7 @@ export namespace Command {
 	 */
 	export function is(value: any): value is Command {
 		let candidate = value as Command;
-		return Is.defined(candidate) && Is.string(candidate.title) && Is.string(candidate.title);
+		return Is.defined(candidate) && Is.string(candidate.title) && Is.string(candidate.command);
 	}
 }
 

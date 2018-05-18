@@ -44,7 +44,7 @@ import {
 	ExecuteCommandRequest, ExecuteCommandParams,
 	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse,
 	ClientCapabilities, ServerCapabilities, ProtocolConnection, createProtocolConnection, TypeDefinitionRequest, ImplementationRequest,
-	DocumentColorRequest, DocumentColorParams, ColorInformation, ColorPresentationParams, ColorPresentation, ColorPresentationRequest
+	DocumentColorRequest, DocumentColorParams, ColorInformation, ColorPresentationParams, ColorPresentation, ColorPresentationRequest, CodeAction
 } from 'vscode-languageserver-protocol';
 
 import { Configuration, ConfigurationFeature } from './configuration';
@@ -1249,7 +1249,7 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCodeAction(handler: RequestHandler<CodeActionParams, Command[] | undefined | null, void>): void;
+	onCodeAction(handler: RequestHandler<CodeActionParams, (Command | CodeAction)[] | undefined | null, void>): void;
 
 	/**
 	 * Compute a list of [lenses](#CodeLens). This call should return as fast as possible and if
