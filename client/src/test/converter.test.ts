@@ -309,6 +309,36 @@ suite('Protocol Converter', () => {
 		strictEqual(result.data, completionItem.data);
 	});
 
+	test('Completion Item Preserve Data === 0', () => {
+		let completionItem: proto.CompletionItem = {
+			label: 'item',
+			data: 0
+		};
+
+		let result = c2p.asCompletionItem(p2c.asCompletionItem(completionItem));
+		strictEqual(result.data, completionItem.data);
+	});
+
+	test('Completion Item Preserve Data === false', () => {
+		let completionItem: proto.CompletionItem = {
+			label: 'item',
+			data: false
+		};
+
+		let result = c2p.asCompletionItem(p2c.asCompletionItem(completionItem));
+		strictEqual(result.data, completionItem.data);
+	});
+
+	test('Completion Item Preserve Data === ""', () => {
+		let completionItem: proto.CompletionItem = {
+			label: 'item',
+			data: ''
+		};
+
+		let result = c2p.asCompletionItem(p2c.asCompletionItem(completionItem));
+		strictEqual(result.data, completionItem.data);
+	});
+
 	test('Completion Item Documentation as string', () => {
 		let completionItem: proto.CompletionItem = {
 			label: 'item',
