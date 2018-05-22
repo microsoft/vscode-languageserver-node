@@ -1443,7 +1443,7 @@ export interface CodeActionContext {
 	 * Actions not of this kind are filtered out by the client before being shown. So servers
 	 * can omit computing them.
 	 */
-	only?: CodeActionKind
+	only?: CodeActionKind[];
 }
 
 /**
@@ -1454,7 +1454,7 @@ export namespace CodeActionContext {
 	/**
 	 * Creates a new CodeActionContext literal.
 	 */
-	export function create(diagnostics: Diagnostic[], only?: CodeActionKind): CodeActionContext {
+	export function create(diagnostics: Diagnostic[], only?: CodeActionKind[]): CodeActionContext {
 		let result: CodeActionContext = { diagnostics };
 		if (only !== void 0 && only !== null) {
 			result.only = only;
@@ -1466,7 +1466,7 @@ export namespace CodeActionContext {
 	 */
 	export function is(value: any): value is CodeActionContext {
 		let candidate = value as CodeActionContext;
-		return Is.defined(candidate) && Is.typedArray<Diagnostic[]>(candidate.diagnostics, Diagnostic.is) && (candidate.only === void 0 || Is.string(candidate.only));
+		return Is.defined(candidate) && Is.typedArray<Diagnostic[]>(candidate.diagnostics, Diagnostic.is) && (candidate.only === void 0 || Is.typedArray(candidate.only, Is.string));
 	}
 }
 
