@@ -92,6 +92,10 @@ export interface Converter {
 	asCommands(items: undefined | null): undefined
 	asCommands(items: ls.Command[] | undefined | null): code.Command[] | undefined;
 
+	asCodeAction(item: ls.CodeAction): code.CodeAction;
+	asCodeAction(item: undefined | null): undefined;
+	asCodeAction(item: ls.CodeAction | undefined | null): code.CodeAction | undefined;
+
 	asCodeLens(item: ls.CodeLens): code.CodeLens;
 	asCodeLens(item: undefined | null): undefined;
 	asCodeLens(item: ls.CodeLens | undefined | null): code.CodeLens | undefined;
@@ -494,6 +498,50 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return items.map(asCommand);
 	}
 
+	const kindMapping: Map<ls.CodeActionKind, code.CodeActionKind> = new Map();
+	kindMapping.set('', code.CodeActionKind.Empty);
+	kindMapping.set(ls.CodeActionKind.QuickFix, code.CodeActionKind.QuickFix);
+	kindMapping.set(ls.CodeActionKind.Refactor, code.CodeActionKind.Refactor);
+	kindMapping.set(ls.CodeActionKind.RefactorExtract, code.CodeActionKind.RefactorExtract);
+	kindMapping.set(ls.CodeActionKind.RefactorInline, code.CodeActionKind.RefactorInline);
+	kindMapping.set(ls.CodeActionKind.RefactorRewrite, code.CodeActionKind.RefactorRewrite);
+	kindMapping.set(ls.CodeActionKind.Source, code.CodeActionKind.Source);
+	kindMapping.set(ls.CodeActionKind.SourceOrganizeImports, code.CodeActionKind.SourceOrganizeImports);
+
+	function asCodeActionKind(item: null | undefined): undefined;
+	function asCodeActionKind(item: ls.CodeActionKind): code.CodeActionKind;
+	function asCodeActionKind(item: ls.CodeActionKind | null | undefined): code.CodeActionKind | undefined;
+	function asCodeActionKind(item: ls.CodeActionKind | null | undefined): code.CodeActionKind | undefined {
+		if (item === void 0 || item === null) {
+			return undefined
+		}
+		let result: code.CodeActionKind | undefined = kindMapping.get(item);
+		if (result) {
+			return result;
+		}
+		let parts = item.split('.');
+		result = code.CodeActionKind.Empty;
+		for (let part of parts) {
+			result = result.append(part);
+		}
+		return result;
+	}
+
+	function asCodeAction(item: ls.CodeAction): code.CodeAction;
+	function asCodeAction(item: undefined | null): undefined;
+	function asCodeAction(item: ls.CodeAction | undefined | null): code.CodeAction | undefined;
+	function asCodeAction(item: ls.CodeAction | undefined | null): code.CodeAction | undefined {
+		if (item === void 0 || item === null) {
+			return undefined;
+		}
+		let result = new code.CodeAction(item.title);
+		if (item.kind !== void 0) { result.kind = asCodeActionKind(item.kind); }
+		if (item.diagnostics) { result.diagnostics = asDiagnostics(item.diagnostics); }
+		if (item.edit) { result.edit = asWorkspaceEdit(item.edit); }
+		if (item.command) { result.command = asCommand(item.command); }
+		return result;
+	}
+
 	function asCodeLens(item: ls.CodeLens): code.CodeLens;
 	function asCodeLens(item: undefined | null): undefined;
 	function asCodeLens(item: ls.CodeLens | undefined | null): code.CodeLens | undefined;
@@ -583,6 +631,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asSymbolInformation,
 		asCommand,
 		asCommands,
+		asCodeAction,
 		asCodeLens,
 		asCodeLenses,
 		asWorkspaceEdit,

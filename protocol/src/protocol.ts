@@ -15,7 +15,7 @@ import {
 	CompletionItem, CompletionList, Hover, SignatureHelp,
 	Definition, ReferenceContext, DocumentHighlight, DocumentSymbolParams,
 	SymbolInformation, CodeLens, CodeActionContext, FormattingOptions, DocumentLink, MarkupKind,
-	SymbolKind, CompletionItemKind
+	SymbolKind, CompletionItemKind, CodeAction, CodeActionKind
 } from 'vscode-languageserver-types';
 
 import { ImplementationRequest, ImplementationClientCapabilities, ImplementationServerCapabilities } from './protocol.implementation';
@@ -460,6 +460,27 @@ export interface TextDocumentClientCapabilities {
 		 * Whether code action supports dynamic registration.
 		 */
 		dynamicRegistration?: boolean;
+
+		/**
+		 * The client support code action literals as a valid
+		 * response of the `textDocument/codeAction` request.
+		 */
+		codeActionLiteralSupport?: {
+			/**
+			 * The code action kind is support with the following value
+			 * set.
+			 */
+			codeActionKind: {
+
+				/**
+				 * The code action kind values the client supports. When this
+				 * property exists the client also guarantees that it will
+				 * handle values outside its set gracefully and falls back
+				 * to a default value when unknown.
+				 */
+				valueSet: CodeActionKind[];
+			};
+		};
 	};
 
 	/**
@@ -1522,7 +1543,7 @@ export interface CodeActionParams {
  * A request to provide commands for the given text document and range.
  */
 export namespace CodeActionRequest {
-	export const type = new RequestType<CodeActionParams, Command[] | null, void, TextDocumentRegistrationOptions>('textDocument/codeAction');
+	export const type = new RequestType<CodeActionParams, (Command | CodeAction)[] | null, void, TextDocumentRegistrationOptions>('textDocument/codeAction');
 }
 
 //---- Code Lens Provider -------------------------------------------
