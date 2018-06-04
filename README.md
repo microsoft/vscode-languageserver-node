@@ -27,6 +27,11 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
+### 4.2.0 Client & 4.2.0 Server & 3.8.0 Protocol
+
+* [Add CodeAction class](https://github.com/Microsoft/language-server-protocol/issues/389)
+* [Add support for code action literal as a return value of the textDocument/codeAction request ](https://github.com/Microsoft/vscode-languageserver-node/pull/350)
+
 ### 4.1.4 Client & 4.1.3 Server
 
 * [Client: duplicate messages sent after server restart](https://github.com/Microsoft/vscode-languageserver-node/issues/342)
