@@ -378,7 +378,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (context === void 0 || context === null) {
 			return context;
 		}
-		return proto.CodeActionContext.create(asDiagnostics(context.diagnostics));
+		return proto.CodeActionContext.create(asDiagnostics(context.diagnostics), Is.string(context.only) ? [context.only] : undefined);
 	}
 
 	function asCommand(item: code.Command): proto.Command {

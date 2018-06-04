@@ -10,7 +10,7 @@ import {
 	FileSystemWatcher as VFileSystemWatcher, DiagnosticCollection, Diagnostic as VDiagnostic, Uri, ProviderResult,
 	CancellationToken, Position as VPosition, Location as VLocation, Range as VRange,
 	CompletionItem as VCompletionItem, CompletionList as VCompletionList, SignatureHelp as VSignatureHelp, Definition as VDefinition, DocumentHighlight as VDocumentHighlight,
-	SymbolInformation as VSymbolInformation, CodeActionContext as VCodeActionContext, Command as VCommand, CodeLens as VCodeLens, CodeActionKind as VCodeActionKind,
+	SymbolInformation as VSymbolInformation, CodeActionContext as VCodeActionContext, Command as VCommand, CodeLens as VCodeLens,
 	FormattingOptions as VFormattingOptions, TextEdit as VTextEdit, WorkspaceEdit as VWorkspaceEdit, MessageItem,
 	Hover as VHover, CodeAction as VCodeAction,
 	DocumentLink as VDocumentLink, TextDocumentWillSaveEvent,
@@ -53,7 +53,7 @@ import {
 	DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkRegistrationOptions,
 	ExecuteCommandRequest, ExecuteCommandParams, ExecuteCommandRegistrationOptions,
 	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse,
-	MarkupKind, SymbolKind, CompletionItemKind, Command
+	MarkupKind, SymbolKind, CompletionItemKind, Command, CodeActionKind
 } from 'vscode-languageserver-protocol';
 
 import { ColorProviderMiddleware } from './colorProvider';
@@ -1690,14 +1690,14 @@ class CodeActionFeature extends TextDocumentFeature<TextDocumentRegistrationOpti
 		cap.codeActionLiteralSupport = {
 			codeActionKind: {
 				valueSet: [
-					VCodeActionKind.Empty.value!,
-					VCodeActionKind.QuickFix.value!,
-					VCodeActionKind.Refactor.value!,
-					VCodeActionKind.RefactorExtract.value!,
-					VCodeActionKind.RefactorInline.value!,
-					VCodeActionKind.RefactorRewrite.value!,
-					VCodeActionKind.Source.value!,
-					VCodeActionKind.SourceOrganizeImports.value!
+					'',
+					CodeActionKind.QuickFix,
+					CodeActionKind.Refactor,
+					CodeActionKind.RefactorExtract,
+					CodeActionKind.RefactorInline,
+					CodeActionKind.RefactorRewrite,
+					CodeActionKind.Source,
+					CodeActionKind.SourceOrganizeImports
 				]
 			}
 		};
