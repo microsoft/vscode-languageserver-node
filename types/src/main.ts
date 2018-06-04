@@ -1476,7 +1476,7 @@ export namespace CodeActionContext {
  *
  * A CodeAction must set either `edit` and/or a `command`. If both are supplied, the `edit` is applied first, then the `command` is executed.
  */
-export type CodeAction = {
+export interface CodeAction {
 
 	/**
 	 * A short, human-readable, title for this code action.
@@ -1509,6 +1509,34 @@ export type CodeAction = {
 }
 
 export namespace CodeAction {
+	/**
+	 * Creates a new code action.
+	 *
+	 * @param title The title of the code action.
+	 * @param command The command to execute.
+	 * @param kind The kind of the code action.
+	 */
+	export function create(title: string, command: Command, kind?: CodeActionKind): CodeAction;
+	/**
+	 * Creates a new code action.
+	 *
+	 * @param title The title of the code action.
+	 * @param command The command to execute.
+	 * @param kind The kind of the code action.
+	 */
+	export function create(title: string, edit: WorkspaceEdit, kind?: CodeActionKind): CodeAction;
+	export function create(title: string, commandOrEdit: Command | WorkspaceEdit, kind?: CodeActionKind): CodeAction {
+		let result: CodeAction = { title };
+		if (Command.is(commandOrEdit)) {
+			result.command = commandOrEdit;
+		} else {
+			result.edit = commandOrEdit;
+		}
+		if (kind !== void null) {
+			result.kind = kind;
+		}
+		return result;
+	}
 	export function is(value: any): value is CodeAction {
 		let candidate: CodeAction = value;
 		return candidate && Is.string(candidate.title) &&
