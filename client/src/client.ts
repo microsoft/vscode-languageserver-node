@@ -14,7 +14,7 @@ import {
 	FormattingOptions as VFormattingOptions, TextEdit as VTextEdit, WorkspaceEdit as VWorkspaceEdit, MessageItem,
 	Hover as VHover,
 	DocumentLink as VDocumentLink, TextDocumentWillSaveEvent,
-	WorkspaceFolder as VWorkspaceFolder, CompletionContext as VCompletionContext
+	WorkspaceFolder as VWorkspaceFolder, CompletionContext as VCompletionContext, ConfigurationChangeEvent
 } from 'vscode';
 
 import {
@@ -2058,12 +2058,12 @@ class ConfigurationFeature implements DynamicFeature<DidChangeConfigurationRegis
 	}
 
 	public register(_message: RPCMessageType, data: RegistrationData<DidChangeConfigurationRegistrationOptions>): void {
-		let disposable = Workspace.onDidChangeConfiguration(() => {
-			this.onDidChangeConfiguration(data.registerOptions.section);
+		let disposable = Workspace.onDidChangeConfiguration((event) => {
+			this.onDidChangeConfiguration(data.registerOptions.section, event);
 		});
 		this._listeners.set(data.id, disposable);
 		if (data.registerOptions.section !== void 0) {
-			this.onDidChangeConfiguration(data.registerOptions.section);
+			this.onDidChangeConfiguration(data.registerOptions.section, undefined);
 		}
 	}
 
@@ -2082,12 +2082,18 @@ class ConfigurationFeature implements DynamicFeature<DidChangeConfigurationRegis
 		this._listeners.clear();
 	}
 
-	private onDidChangeConfiguration(configurationSection: string | string[] | undefined): void {
+	private onDidChangeConfiguration(configurationSection: string | string[] | undefined, event: ConfigurationChangeEvent | undefined): void {
 		let sections: string[] | undefined;
 		if (Is.string(configurationSection)) {
 			sections = [configurationSection];
 		} else {
 			sections = configurationSection;
+		}
+		if (sections !== void 0 && event !== void 0) {
+			let affected = sections.some((section) => event.affectsConfiguration(section));
+			if (!affected) {
+				return;
+			}
 		}
 		let didChangeConfiguration = (sections: string[] | undefined): void => {
 			if (sections === void 0) {
