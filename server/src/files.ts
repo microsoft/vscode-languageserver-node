@@ -7,7 +7,7 @@
 import * as url from 'url';
 import * as path from 'path';
 import * as fs from 'fs';
-import { exec, spawnSync, fork, ChildProcess } from 'child_process';
+import { exec, spawnSync, fork, ChildProcess, SpawnSyncOptionsWithStringEncoding } from 'child_process';
 
 /**
  * @deprecated Use the `vscode-uri` npm module which provides a more
@@ -177,11 +177,16 @@ export function resolve(moduleName: string, nodePath: string | undefined, cwd: s
 }
 
 export function resolveGlobalNodePath(tracer?: (message: string) => void): string | undefined {
-	let npmCommand = isWindows() ? 'npm.cmd' : 'npm';
-
-	let stdout = spawnSync(npmCommand, ['config', 'get', 'prefix'], {
+	let npmCommand = 'npm';
+	let options: SpawnSyncOptionsWithStringEncoding = {
 		encoding: 'utf8'
-	}).stdout;
+	};
+	if (isWindows()) {
+		npmCommand = 'npm.cmd';
+		options.shell = true;
+	}
+
+	let stdout = spawnSync(npmCommand, ['config', 'get', 'prefix'], options).stdout;
 
 	if (!stdout) {
 		if (tracer) {
@@ -210,10 +215,18 @@ interface YarnJsonFormat {
 }
 
 export function resolveGlobalYarnPath(tracer?: (message: string) => void): string | undefined {
-    let yarnCommand = isWindows() ? 'yarn.cmd' : 'yarn';
-	let results = spawnSync(yarnCommand, ['global', 'dir', '--json'], {
+	let yarnCommand = 'yarn';
+	let options: SpawnSyncOptionsWithStringEncoding = {
 		encoding: 'utf8'
-	});
+	};
+
+	if (isWindows()) {
+		yarnCommand = 'yarn.cmd';
+		options.shell = true;
+	}
+
+	let results = spawnSync(yarnCommand, ['global', 'dir', '--json'], options);
+
 	let stdout = results.stdout;
 	if (!stdout) {
 		if (tracer) {
