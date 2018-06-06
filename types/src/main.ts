@@ -53,7 +53,7 @@ export namespace Position {
 	 */
 	export function is(value: any): value is Position {
 		let candidate = value as Position;
-		return Is.defined(candidate) && Is.number(candidate.line) && Is.number(candidate.character);
+		return typeof candidate === 'object' && candidate !== null && Is.number(candidate.line) && Is.number(candidate.character);
 	}
 }
 
@@ -115,7 +115,7 @@ export namespace Range {
 	 */
 	export function is(value: any): value is Range {
 		let candidate = value as Range;
-		return Is.defined(candidate) && Position.is(candidate.start) && Position.is(candidate.end);
+		return typeof candidate === 'object' && candidate !== null && Position.is(candidate.start) && Position.is(candidate.end);
 	}
 }
 
