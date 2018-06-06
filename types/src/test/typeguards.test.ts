@@ -1,5 +1,5 @@
 import * as assert from 'assert'
-import { Range, Position } from '../main';
+import { Range, Position, Hover, MarkedString } from '../main';
 
 suite('Type guards', () => {
 	suite('Position.is', () => {
@@ -54,6 +54,89 @@ suite('Type guards', () => {
 		test('undefined', () => {
 			const range = undefined
 			assert.strictEqual(Range.is(range), false)
+		})
+	})
+	suite('MarkedString.is', () => {
+		test('string', () => {
+			const markedString = 'test'
+			assert.strictEqual(MarkedString.is(markedString), true)
+		})
+		test('language and value', () => {
+			const markedString = { language: 'foo', value: 'test' }
+			assert.strictEqual(MarkedString.is(markedString), true)
+		})
+		test('null', () => {
+			const markedString = null
+			assert.strictEqual(MarkedString.is(markedString), false)
+		})
+		test('undefined', () => {
+			const markedString = undefined
+			assert.strictEqual(MarkedString.is(markedString), false)
+		})
+	})
+	suite('Hover.is', () => {
+		test('string contents', () => {
+			const hover = {
+				contents: 'test'
+			}
+			assert.strictEqual(Hover.is(hover), true)
+		})
+		test('MarkupContent contents', () => {
+			const hover = {
+				contents: {
+					kind: 'plaintext',
+					value: 'test'
+				}
+			}
+			assert.strictEqual(Hover.is(hover), true)
+		})
+		test('MarkupContent contents array', () => {
+			const hover = {
+				contents: [{
+					kind: 'plaintext',
+					value: 'test'
+				}]
+			}
+			assert.strictEqual(Hover.is(hover), false)
+		})
+		test('contents array', () => {
+			const hover = {
+				contents: [
+					'test',
+					{
+						language: 'foo',
+						value: 'test'
+					}
+				]
+			}
+			assert.strictEqual(Hover.is(hover), true)
+		})
+		test('null range', () => {
+			const hover = {
+				contents: 'test',
+				range: null
+			}
+			assert.strictEqual(Hover.is(hover), false)
+		})
+		test('null contents', () => {
+			const hover = {
+				contents: null
+			}
+			assert.strictEqual(Hover.is(hover), false)
+		})
+		test('contents array with null', () => {
+			const hover = {
+				contents: [null]
+			}
+			assert.strictEqual(Hover.is(hover), false)
+		})
+		test('null', () => {
+			const hover = null
+			assert.strictEqual(Hover.is(hover), false)
+		})
+		test('undefined', () => {
+			const hover = undefined
+			assert.strictEqual(Hover.is(hover), false)
 		})
 	})
 })
