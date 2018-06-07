@@ -53,7 +53,7 @@ export namespace Position {
 	 */
 	export function is(value: any): value is Position {
 		let candidate = value as Position;
-		return Is.defined(candidate) && Is.number(candidate.line) && Is.number(candidate.character);
+		return Is.objectLiteral(candidate) && Is.number(candidate.line) && Is.number(candidate.character);
 	}
 }
 
@@ -115,7 +115,7 @@ export namespace Range {
 	 */
 	export function is(value: any): value is Range {
 		let candidate = value as Range;
-		return Is.defined(candidate) && Position.is(candidate.start) && Position.is(candidate.end);
+		return Is.objectLiteral(candidate) && Position.is(candidate.start) && Position.is(candidate.end);
 	}
 }
 
@@ -758,6 +758,16 @@ export namespace MarkupKind {
 }
 export type MarkupKind = 'plaintext' | 'markdown';
 
+export namespace MarkupKind {
+	/**
+	 * Checks whether the given value is a value of the [MarkupKind](#MarkupKind) type.
+	 */
+	export function is(value: any): value is MarkupKind {
+		const candidate = value as MarkupKind;
+		return candidate === MarkupKind.PlainText || candidate === MarkupKind.Markdown;
+	}
+}
+
 /**
  * A `MarkupContent` literal represents a string value which content is interpreted base on its
  * kind flag. Currently the protocol supports `plaintext` and `markdown` as markup kinds.
@@ -792,6 +802,16 @@ export interface MarkupContent {
 	 * The content itself
 	 */
 	value: string;
+}
+
+export namespace MarkupContent {
+	/**
+	 * Checks whether the given value conforms to the [MarkupContent](#MarkupContent) interface.
+	 */
+	export function is(value: any): value is MarkupContent {
+		const candidate = value as MarkupContent;
+		return Is.objectLiteral(value) && MarkupKind.is(candidate.kind) && Is.string(candidate.value);
+	}
 }
 
 /**
@@ -1038,6 +1058,14 @@ export namespace MarkedString {
 	export function fromPlainText(plainText: string): string {
 		return plainText.replace(/[\\`*_{}[\]()#+\-.!]/g, "\\$&"); // escape markdown syntax tokens: http://daringfireball.net/projects/markdown/syntax#backslash
 	}
+
+	/**
+	 * Checks whether the given value conforms to the [MarkedString](#MarkedString) type.
+	 */
+	export function is(value: any): value is MarkedString {
+		const candidate = value as MarkedString;
+		return Is.string(candidate) || (Is.objectLiteral(candidate) && Is.string(candidate.language) && Is.string(candidate.value));
+	}
 }
 
 /**
@@ -1053,6 +1081,22 @@ export interface Hover {
 	 * An optional range
 	 */
 	range?: Range;
+}
+
+export namespace Hover {
+	/**
+	 * Checks whether the given value conforms to the [Hover](#Hover) interface.
+	 */
+	export function is(value: any): value is Hover {
+		let candidate = value as Hover;
+		return Is.objectLiteral(candidate) && (
+			MarkupContent.is(candidate.contents) ||
+			MarkedString.is(candidate.contents) ||
+			Is.typedArray(candidate.contents, MarkedString.is)
+		) && (
+			value.range === void 0 || Range.is(value.range)
+		);
+	}
 }
 
 /**
@@ -2030,6 +2074,10 @@ namespace Is {
 
 	export function func(value: any): value is Function {
 		return toString.call(value) === '[object Function]';
+	}
+
+	export function objectLiteral(value: any): boolean {
+		return value !== null && typeof value === 'object';
 	}
 
 	export function typedArray<T>(value: any, check: (value: any) => boolean): value is T[] {
