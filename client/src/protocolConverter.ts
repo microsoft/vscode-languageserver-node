@@ -198,20 +198,22 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return code.DiagnosticSeverity.Error;
 	}
 
-	function asHoverContent(value: ls.MarkedString | ls.MarkedString[] | ls.MarkupContent): code.MarkdownString {
+	function asHoverContent(value: ls.MarkedString | ls.MarkedString[] | ls.MarkupContent): code.MarkdownString | code.MarkdownString[] {
 		if (Is.string(value)) {
 			return new code.MarkdownString(value);
 		} else if (CodeBlock.is(value)) {
 			let result = new code.MarkdownString();
 			return result.appendCodeblock(value.value, value.language);
 		} else if (Array.isArray(value)) {
-			let result = new code.MarkdownString();
+			let result: code.MarkdownString[] = [];
 			for (let element of value) {
+				let item = new code.MarkdownString();
 				if (CodeBlock.is(element)) {
-					result.appendCodeblock(element.value, element.language);
+					item.appendCodeblock(element.value, element.language);
 				} else {
-					result.appendMarkdown(element);
+					item.appendMarkdown(element);
 				}
+				result.push(item);
 			}
 			return result;
 		} else {
