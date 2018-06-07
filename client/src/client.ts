@@ -187,40 +187,6 @@ function createConnection(input: any, output: any, errorHandler: ConnectionError
 	return result;
 }
 
-export interface ExecutableOptions {
-	cwd?: string;
-	stdio?: string | string[];
-	env?: any;
-	detached?: boolean;
-}
-
-export interface Executable {
-	command: string;
-	args?: string[];
-	options?: ExecutableOptions;
-}
-
-export interface ForkOptions {
-	cwd?: string;
-	env?: any;
-	encoding?: string;
-	execArgv?: string[];
-}
-
-export enum TransportKind {
-	stdio,
-	ipc,
-	pipe
-}
-
-export interface NodeModule {
-	module: string;
-	transport?: TransportKind;
-	args?: string[];
-	runtime?: string;
-	options?: ForkOptions;
-}
-
 /**
  * An action to be performed when the connection is producing errors.
  */

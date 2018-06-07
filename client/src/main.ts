@@ -39,6 +39,7 @@ export interface ExecutableOptions {
 	stdio?: string | string[];
 	env?: any;
 	detached?: boolean;
+	shell?: boolean;
 }
 
 export interface Executable {
@@ -397,8 +398,8 @@ export class LanguageClient extends BaseLanguageClient {
 			} else if (Executable.is(json) && json.command) {
 				let command: Executable = <Executable>json;
 				let args = command.args || [];
-				let options = command.options || Object.create(null);
-				options.cwd = serverWorkingDir;
+				let options = Object.assign({}, command.options);
+				options.cwd = options.cwd || serverWorkingDir;
 				let serverProcess = cp.spawn(command.command, args, options);
 				if (!serverProcess || !serverProcess.pid) {
 					return Promise.reject<MessageTransports>(`Launching server using command ${command.command} failed.`);
