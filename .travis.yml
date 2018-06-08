@@ -24,5 +24,6 @@ install:
   - npm run symlink
 
 script:
+  - npm run prettier
   - npm run compile
   - npm run test

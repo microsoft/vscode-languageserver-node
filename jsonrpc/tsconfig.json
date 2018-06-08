@@ -1,17 +1,15 @@
 {
-	"extends": "../tsconfig.base.json",
-	"compilerOptions": {
-		"target": "es5",
-		"module": "commonjs",
-		"moduleResolution": "node",
-		"sourceMap": false,
-		"declaration": true,
-		"stripInternal": true,
-		"lib": [ "es2015", "es2015.promise" ],
-		"rootDir": "src",
-		"outDir": "lib"
-	},
-	"include": [
-		"src"
-	]
+    "extends": "../tsconfig.base.json",
+    "compilerOptions": {
+        "target": "es5",
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "sourceMap": false,
+        "declaration": true,
+        "stripInternal": true,
+        "lib": ["es2015", "es2015.promise"],
+        "rootDir": "src",
+        "outDir": "lib"
+    },
+    "include": ["src"]
 }

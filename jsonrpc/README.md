@@ -32,14 +32,14 @@ The server side looks very symmetrical:
 ```ts
 import * as rpc from 'vscode-jsonrpc';
 
-
 let connection = rpc.createMessageConnection(
-	new rpc.StreamMessageReader(process.stdin),
-	new rpc.StreamMessageWriter(process.stdout));
+    new rpc.StreamMessageReader(process.stdin),
+    new rpc.StreamMessageWriter(process.stdout)
+);
 
 let notification = new NotificationType<string, void>('testNotification');
 connection.onNotification(notification, (param: string) => {
-	console.log(param); // This prints Hello World
+    console.log(param); // This prints Hello World
 });
 
 connection.listen();
@@ -49,12 +49,13 @@ connection.listen();
 
 ### 3.0.0:
 
-- converted the NPM module to use TypeScript 2.0.3.
-- added strict null support.
-- support for passing more than one parameter to a request or notification.
-- Breaking changes:
-  - due to the use of TypeScript 2.0.3 and differences in d.ts generation users of the new version need to move to
-    TypeScript 2.0.3 as well.
+-   converted the NPM module to use TypeScript 2.0.3.
+-   added strict null support.
+-   support for passing more than one parameter to a request or notification.
+-   Breaking changes:
+    -   due to the use of TypeScript 2.0.3 and differences in d.ts generation users of the new version need to move to
+        TypeScript 2.0.3 as well.
 
 ## License
+
 [MIT](https://github.com/Microsoft/vscode-languageserver-node/blob/master/License.txt)

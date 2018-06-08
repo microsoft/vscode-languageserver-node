@@ -14,4 +14,5 @@ to implement language servers for [VSCode](https://code.visualstudio.com/).
 For the history please see the [main repository](https://github.com/Microsoft/vscode-languageserver-node/blob/master/README.md)
 
 ## License
+
 [MIT](https://github.com/Microsoft/vscode-languageserver-node/blob/master/License.txt)

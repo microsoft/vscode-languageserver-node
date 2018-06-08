@@ -7,10 +7,9 @@
 import * as code from 'vscode';
 
 export default class ProtocolCodeLens extends code.CodeLens {
+    public data: any;
 
-	public data: any;
-
-	constructor(range: code.Range) {
-		super(range);
-	}
+    constructor(range: code.Range) {
+        super(range);
+    }
 }

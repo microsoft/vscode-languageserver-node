@@ -14,46 +14,45 @@ import { MessageReader, SocketMessageReader } from './messageReader';
 import { MessageWriter, SocketMessageWriter } from './messageWriter';
 
 export function generateRandomPipeName(): string {
-	const randomSuffix = randomBytes(21).toString('hex');
-	if (process.platform === 'win32') {
-		return `\\\\.\\pipe\\vscode-jsonrpc-${randomSuffix}-sock`;
-	} else {
-		// Mac/Unix: use socket file
-		return join(tmpdir(), `vscode-${randomSuffix}.sock`);
-	}
+    const randomSuffix = randomBytes(21).toString('hex');
+    if (process.platform === 'win32') {
+        return `\\\\.\\pipe\\vscode-jsonrpc-${randomSuffix}-sock`;
+    } else {
+        // Mac/Unix: use socket file
+        return join(tmpdir(), `vscode-${randomSuffix}.sock`);
+    }
 }
 
 export interface PipeTransport {
-	onConnected(): Thenable<[MessageReader, MessageWriter]>;
+    onConnected(): Thenable<[MessageReader, MessageWriter]>;
 }
 
 export function createClientPipeTransport(pipeName: string, encoding: string = 'utf-8'): Thenable<PipeTransport> {
-	let connectResolve: any;
-	let connected = new Promise<[MessageReader, MessageWriter]>((resolve, _reject) => {
-		connectResolve = resolve;
-	});
-	return new Promise<PipeTransport>((resolve, reject) => {
-		let server: Server = createServer((socket: Socket) => {
-			server.close();
-			connectResolve([
-				new SocketMessageReader(socket, encoding),
-				new SocketMessageWriter(socket, encoding)
-			]);
-		});
-		server.on('error', reject);
-		server.listen(pipeName, () => {
-			server.removeListener('error', reject);
-			resolve({
-				onConnected: () => { return connected; }
-			});
-		});
-	});
+    let connectResolve: any;
+    let connected = new Promise<[MessageReader, MessageWriter]>((resolve, _reject) => {
+        connectResolve = resolve;
+    });
+    return new Promise<PipeTransport>((resolve, reject) => {
+        let server: Server = createServer((socket: Socket) => {
+            server.close();
+            connectResolve([new SocketMessageReader(socket, encoding), new SocketMessageWriter(socket, encoding)]);
+        });
+        server.on('error', reject);
+        server.listen(pipeName, () => {
+            server.removeListener('error', reject);
+            resolve({
+                onConnected: () => {
+                    return connected;
+                },
+            });
+        });
+    });
 }
 
-export function createServerPipeTransport(pipeName: string, encoding: string = 'utf-8'): [MessageReader, MessageWriter] {
-	const socket: Socket = createConnection(pipeName);
-	return [
-		new SocketMessageReader(socket, encoding),
-		new SocketMessageWriter(socket, encoding)
-	];
+export function createServerPipeTransport(
+    pipeName: string,
+    encoding: string = 'utf-8'
+): [MessageReader, MessageWriter] {
+    const socket: Socket = createConnection(pipeName);
+    return [new SocketMessageReader(socket, encoding), new SocketMessageWriter(socket, encoding)];
 }

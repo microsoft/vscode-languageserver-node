@@ -7,10 +7,9 @@
 import * as code from 'vscode';
 
 export default class ProtocolDocumentLink extends code.DocumentLink {
+    public data: any;
 
-	public data: any;
-
-	constructor(range: code.Range, target?: code.Uri | undefined) {
-		super(range, target);
-	}
+    constructor(range: code.Range, target?: code.Uri | undefined) {
+        super(range, target);
+    }
 }

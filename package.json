@@ -12,17 +12,20 @@
 		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
 	},
 	"devDependencies": {
-		"typescript": "2.9.1",
-		"mocha": "^3.5.0",
-		"@types/node": "^6.0.88",
 		"@types/mocha": "^2.2.42",
+		"@types/node": "^6.0.88",
+		"mocha": "^3.5.0",
+		"prettier": "^1.13.4",
 		"rimraf": "^2.6.2",
 		"shelljs": "^0.8.1",
-		"shx": "^0.2.2"
+		"shx": "^0.2.2",
+		"tslint": "^5.10.0",
+		"typescript": "2.9.1"
 	},
 	"scripts": {
 		"postinstall": "cd types && npm install && cd ../jsonrpc && npm install && cd ../protocol && npm install && cd ../server && npm install && cd ../client && npm install && cd ..",
 		"test": "cd types && npm test && cd ../jsonrpc && npm test && cd ../protocol && npm test && cd ../server && npm test && cd ../client && npm test && cd ..",
+		"prettier": "prettier --list-different --write \"**/*.{ts,js,json,md}\"",
 		"symlink": "node ./build/bin/symlink.js",
 		"compile": "npm run compile:types && npm run compile:jsonrpc && npm run compile:protocol && npm run compile:server && npm run compile:client",
 		"compile:types": "tsc -p ./types/tsconfig.json",

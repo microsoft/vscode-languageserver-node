@@ -5,41 +5,47 @@
 'use strict';
 
 import {
-	Event, Emitter, Disposable, ClientCapabilities, WorkspaceFolder, WorkspaceFoldersChangeEvent, DidChangeWorkspaceFoldersNotification, WorkspaceFoldersRequest
+    Event,
+    Emitter,
+    Disposable,
+    ClientCapabilities,
+    WorkspaceFolder,
+    WorkspaceFoldersChangeEvent,
+    DidChangeWorkspaceFoldersNotification,
+    WorkspaceFoldersRequest,
 } from 'vscode-languageserver-protocol';
 
 import { Feature, _RemoteWorkspace } from './main';
 
-
 export interface WorkspaceFolders {
-	getWorkspaceFolders(): Thenable<WorkspaceFolder[] | null>;
-	onDidChangeWorkspaceFolders: Event<WorkspaceFoldersChangeEvent>;
+    getWorkspaceFolders(): Thenable<WorkspaceFolder[] | null>;
+    onDidChangeWorkspaceFolders: Event<WorkspaceFoldersChangeEvent>;
 }
 
-export const WorkspaceFoldersFeature: Feature<_RemoteWorkspace, WorkspaceFolders> = (Base) => {
-	return class extends Base {
-		private _onDidChangeWorkspaceFolders: Emitter<WorkspaceFoldersChangeEvent>;
-		private _unregistration: Thenable<Disposable>;
-		public initialize(capabilities: ClientCapabilities): void {
-			let workspaceCapabilities = capabilities.workspace;
-			if (workspaceCapabilities && workspaceCapabilities.workspaceFolders) {
-				this._onDidChangeWorkspaceFolders = new Emitter<WorkspaceFoldersChangeEvent>();
-				this.connection.onNotification(DidChangeWorkspaceFoldersNotification.type, (params) => {
-					this._onDidChangeWorkspaceFolders.fire(params.event);
-				});
-			}
-		}
-		getWorkspaceFolders(): Thenable<WorkspaceFolder[] | null> {
-			return this.connection.sendRequest(WorkspaceFoldersRequest.type);
-		}
-		get onDidChangeWorkspaceFolders(): Event<WorkspaceFoldersChangeEvent> {
-			if (!this._onDidChangeWorkspaceFolders) {
-				throw new Error('Client doesn\'t support sending workspace folder change events.');
-			}
-			if (!this._unregistration) {
-				this._unregistration = this.connection.client.register(DidChangeWorkspaceFoldersNotification.type);
-			}
-			return this._onDidChangeWorkspaceFolders.event;
-		}
-	}
+export const WorkspaceFoldersFeature: Feature<_RemoteWorkspace, WorkspaceFolders> = Base => {
+    return class extends Base {
+        private _onDidChangeWorkspaceFolders: Emitter<WorkspaceFoldersChangeEvent>;
+        private _unregistration: Thenable<Disposable>;
+        public initialize(capabilities: ClientCapabilities): void {
+            let workspaceCapabilities = capabilities.workspace;
+            if (workspaceCapabilities && workspaceCapabilities.workspaceFolders) {
+                this._onDidChangeWorkspaceFolders = new Emitter<WorkspaceFoldersChangeEvent>();
+                this.connection.onNotification(DidChangeWorkspaceFoldersNotification.type, params => {
+                    this._onDidChangeWorkspaceFolders.fire(params.event);
+                });
+            }
+        }
+        getWorkspaceFolders(): Thenable<WorkspaceFolder[] | null> {
+            return this.connection.sendRequest(WorkspaceFoldersRequest.type);
+        }
+        get onDidChangeWorkspaceFolders(): Event<WorkspaceFoldersChangeEvent> {
+            if (!this._onDidChangeWorkspaceFolders) {
+                throw new Error("Client doesn't support sending workspace folder change events.");
+            }
+            if (!this._unregistration) {
+                this._unregistration = this.connection.client.register(DidChangeWorkspaceFoldersNotification.type);
+            }
+            return this._onDidChangeWorkspaceFolders.event;
+        }
+    };
 };

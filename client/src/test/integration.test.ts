@@ -9,52 +9,66 @@ import * as lsclient from '../main';
 import * as path from 'path';
 
 suite('Client integration', () => {
-
-    test('InitializeResult', (done) => {
+    test('InitializeResult', done => {
         let serverModule = path.join(__dirname, './servers/testInitializeResult.js');
         let serverOptions: lsclient.ServerOptions = {
-            run: { module: serverModule, transport: lsclient.TransportKind.ipc },
-            debug: { module: serverModule, transport: lsclient.TransportKind.ipc, options: { execArgv: ['--nolazy', '--inspect=6014'] } }
+            run: {
+                module: serverModule,
+                transport: lsclient.TransportKind.ipc,
+            },
+            debug: {
+                module: serverModule,
+                transport: lsclient.TransportKind.ipc,
+                options: { execArgv: ['--nolazy', '--inspect=6014'] },
+            },
         };
         let documentSelector: lsclient.DocumentSelector = ['css'];
         let clientOptions: lsclient.LanguageClientOptions = {
-            documentSelector, synchronize: {}, initializationOptions: {},
+            documentSelector,
+            synchronize: {},
+            initializationOptions: {},
             middleware: {
                 handleDiagnostics: (uri, diagnostics, next) => {
-                    assert.equal(uri, "uri:/test.ts");
+                    assert.equal(uri, 'uri:/test.ts');
                     assert.ok(Array.isArray(diagnostics));
                     assert.equal(diagnostics.length, 0);
                     next(uri, diagnostics);
                     disposable.dispose();
                     done();
-                }
-            }
+                },
+            },
         };
         let client = new lsclient.LanguageClient('css', 'Test Language Server', serverOptions, clientOptions);
         let disposable = client.start();
 
         assert.equal(client.initializeResult, undefined);
 
-        client.onReady().then(_ => {
-            try {
-                let expected = {
-                    capabilities: {
-                        textDocumentSync: 1,
-                        completionProvider: { resolveProvider: true, triggerCharacters: ['"', ':'] },
-                        hoverProvider: true
-                    },
-                    customResults: {
-                        "hello": "world"
-                    }
-                };
-                assert.deepEqual(client.initializeResult, expected);
-            } catch (e) {
+        client.onReady().then(
+            _ => {
+                try {
+                    let expected = {
+                        capabilities: {
+                            textDocumentSync: 1,
+                            completionProvider: {
+                                resolveProvider: true,
+                                triggerCharacters: ['"', ':'],
+                            },
+                            hoverProvider: true,
+                        },
+                        customResults: {
+                            hello: 'world',
+                        },
+                    };
+                    assert.deepEqual(client.initializeResult, expected);
+                } catch (e) {
+                    disposable.dispose();
+                    done(e);
+                }
+            },
+            e => {
                 disposable.dispose();
                 done(e);
             }
-        }, e => {
-            disposable.dispose();
-            done(e);
-        });
+        );
     }).timeout(10000);
 });

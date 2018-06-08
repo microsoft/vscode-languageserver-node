@@ -4,22 +4,20 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import {
-	RequestType, RequestHandler, HandlerResult, CancellationToken
-} from 'vscode-jsonrpc';
+import { RequestType, RequestHandler, HandlerResult, CancellationToken } from 'vscode-jsonrpc';
 
 //---- Get Configuration request ----
 
 export interface ConfigurationClientCapabilities {
-	/**
-	 * The workspace client capabilities
-	 */
-	workspace?: {
-		/**
-		* The client supports `workspace/configuration` requests.
-		*/
-		configuration?: boolean;
-	}
+    /**
+     * The workspace client capabilities
+     */
+    workspace?: {
+        /**
+         * The client supports `workspace/configuration` requests.
+         */
+        configuration?: boolean;
+    };
 }
 
 /**
@@ -27,27 +25,30 @@ export interface ConfigurationClientCapabilities {
  * configuration setting.
  */
 export namespace ConfigurationRequest {
-	export const type = new RequestType<ConfigurationParams, any[], void, void>('workspace/configuration');
-	export type HandlerSignature = RequestHandler<ConfigurationParams, any[], void>;
-	export type MiddlewareSignature = (params: ConfigurationParams, token: CancellationToken, next: HandlerSignature) => HandlerResult<any[], void>;
+    export const type = new RequestType<ConfigurationParams, any[], void, void>('workspace/configuration');
+    export type HandlerSignature = RequestHandler<ConfigurationParams, any[], void>;
+    export type MiddlewareSignature = (
+        params: ConfigurationParams,
+        token: CancellationToken,
+        next: HandlerSignature
+    ) => HandlerResult<any[], void>;
 }
 
-
 export interface ConfigurationItem {
-	/**
-	 * The scope to get the configuration section for.
-	 */
-	scopeUri?: string;
+    /**
+     * The scope to get the configuration section for.
+     */
+    scopeUri?: string;
 
-	/**
-	 * The configuration section asked for.
-	 */
-	section?: string;
+    /**
+     * The configuration section asked for.
+     */
+    section?: string;
 }
 
 /**
  * The parameters of a configuration request.
  */
 export interface ConfigurationParams {
-	items: ConfigurationItem[];
+    items: ConfigurationItem[];
 }

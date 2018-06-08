@@ -9,29 +9,29 @@ import { Definition } from 'vscode-languageserver-types';
 import { TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams } from './protocol';
 
 export interface ImplementationClientCapabilities {
-	/**
-	 * The text document client capabilities
-	 */
-	textDocument?: {
-		/**
-		 * Capabilities specific to the `textDocument/implementation`
-		 */
-		implementation?: {
-			/**
-			 * Whether implementation supports dynamic registration. If this is set to `true`
-			 * the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
-			 * return value for the corresponding server capability as well.
-			 */
-			dynamicRegistration?: boolean;
-		};
-	}
+    /**
+     * The text document client capabilities
+     */
+    textDocument?: {
+        /**
+         * Capabilities specific to the `textDocument/implementation`
+         */
+        implementation?: {
+            /**
+             * Whether implementation supports dynamic registration. If this is set to `true`
+             * the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
+             * return value for the corresponding server capability as well.
+             */
+            dynamicRegistration?: boolean;
+        };
+    };
 }
 
 export interface ImplementationServerCapabilities {
-	/**
-	 * The server provides Goto Implementation support.
-	 */
-	implementationProvider?: boolean | (TextDocumentRegistrationOptions & StaticRegistrationOptions);
+    /**
+     * The server provides Goto Implementation support.
+     */
+    implementationProvider?: boolean | (TextDocumentRegistrationOptions & StaticRegistrationOptions);
 }
 
 /**
@@ -41,6 +41,11 @@ export interface ImplementationServerCapabilities {
  * Thenable that resolves to such.
  */
 export namespace ImplementationRequest {
-	export const type = new RequestType<TextDocumentPositionParams, Definition | null, void, TextDocumentRegistrationOptions>('textDocument/implementation');
-	export type HandlerSignature = RequestHandler<TextDocumentPositionParams, Definition | null, void>;
+    export const type = new RequestType<
+        TextDocumentPositionParams,
+        Definition | null,
+        void,
+        TextDocumentRegistrationOptions
+    >('textDocument/implementation');
+    export type HandlerSignature = RequestHandler<TextDocumentPositionParams, Definition | null, void>;
 }

@@ -13,4 +13,5 @@ See [here](https://github.com/Microsoft/language-server-protocol) for a detailed
 For the history please see the [main repository](https://github.com/Microsoft/vscode-languageserver-node/blob/master/README.md)
 
 ## License
+
 [MIT](https://github.com/Microsoft/vscode-languageserver-node/blob/master/License.txt)
