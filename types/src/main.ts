@@ -2076,7 +2076,10 @@ namespace Is {
 		return toString.call(value) === '[object Function]';
 	}
 
-	export function objectLiteral(value: any): boolean {
+	export function objectLiteral(value: any): value is object {
+		// Strictly speaking class instances pass this check as well. Since the LSP
+		// doesn't use classes we ignore this for now. If we do we need to add something
+		// like this: `Object.getPrototypeOf(Object.getPrototypeOf(x)) === null`
 		return value !== null && typeof value === 'object';
 	}
 
