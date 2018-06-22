@@ -6,7 +6,7 @@
 
 import {
 	ErrorCodes, ResponseError, CancellationToken, CancellationTokenSource,
-	Disposable, Event, Emitter, Trace, SetTraceNotification, LogTraceNotification,
+	Disposable, Event, Emitter, Trace, TraceFormat, SetTraceNotification, LogTraceNotification,
 	Message, NotificationMessage, RequestMessage, MessageType as RPCMessageType,
 	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler,
 	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler, StarNotificationHandler,
@@ -19,7 +19,7 @@ import {
 
 export {
 	ErrorCodes, ResponseError, CancellationToken, CancellationTokenSource,
-	Disposable, Event, Emitter, Trace, SetTraceNotification, LogTraceNotification,
+	Disposable, Event, Emitter, Trace, TraceFormat, SetTraceNotification, LogTraceNotification,
 	Message, NotificationMessage, RequestMessage, RPCMessageType,
 	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler,
 	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler, StarNotificationHandler,
@@ -157,7 +157,7 @@ export interface ProtocolConnection {
 	/**
 	 * Enables tracing mode for the connection.
 	 */
-	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): void;
+	trace(value: Trace, traceFormat: TraceFormat, tracer: Tracer, sendNotification?: boolean): void;
 
 	/**
 	 * An event emitter firing when an error occurs on the connection.

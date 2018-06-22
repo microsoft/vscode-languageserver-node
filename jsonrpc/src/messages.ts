@@ -122,6 +122,23 @@ export interface ResponseMessage extends Message {
 }
 
 /**
+ * A LSP Log Entry.
+ */
+export type LSPMessageType =
+  | 'send-request'
+  | 'receive-request'
+  | 'send-response'
+  | 'receive-response'
+  | 'send-notification'
+  | 'receive-notification';
+
+export interface LSPLogMessage {
+    type: LSPMessageType;
+    message: RequestMessage | ResponseMessage | NotificationMessage;
+    timestamp: number;
+}
+
+/**
  * An interface to type messages.
  */
 export interface MessageType {

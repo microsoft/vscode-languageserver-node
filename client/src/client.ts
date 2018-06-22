@@ -22,7 +22,7 @@ import {
 	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler,
 	NotificationType, NotificationType0,
 	NotificationHandler, NotificationHandler0, GenericNotificationHandler,
-	MessageReader, MessageWriter, Trace, Tracer, Event, Emitter,
+	MessageReader, MessageWriter, Trace, TraceFormat, Tracer, Event, Emitter,
 	createProtocolConnection,
 	ClientCapabilities, WorkspaceEdit,
 	RegistrationRequest, RegistrationParams, UnregistrationRequest, UnregistrationParams, TextDocumentRegistrationOptions,
@@ -100,7 +100,7 @@ interface IConnection {
 	onNotification(method: string, handler: GenericNotificationHandler): void;
 	onNotification(method: string | RPCMessageType, handler: GenericNotificationHandler): void;
 
-	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): void;
+	trace(value: Trace, format: TraceFormat, tracer: Tracer, sendNotification?: boolean): void;
 
 	initialize(params: InitializeParams): Thenable<InitializeResult>;
 	shutdown(): Thenable<void>;
@@ -161,7 +161,7 @@ function createConnection(input: any, output: any, errorHandler: ConnectionError
 		sendNotification: (type: string | RPCMessageType, params?: any): void => connection.sendNotification(Is.string(type) ? type : type.method, params),
 		onNotification: (type: string | RPCMessageType, handler: GenericNotificationHandler): void => connection.onNotification(Is.string(type) ? type : type.method, handler),
 
-		trace: (value: Trace, tracer: Tracer, sendNotification: boolean = false): void => connection.trace(value, tracer, sendNotification),
+		trace: (value: Trace, format: TraceFormat, tracer: Tracer, sendNotification: boolean = false): void => connection.trace(value, format, tracer, sendNotification),
 
 		initialize: (params: InitializeParams) => connection.sendRequest(InitializeRequest.type, params),
 		shutdown: () => connection.sendRequest(ShutdownRequest.type, undefined),
@@ -2249,6 +2249,7 @@ export abstract class BaseLanguageClient {
 	private _stateChangeEmitter: Emitter<StateChangeEvent>;
 
 	private _trace: Trace;
+	private _traceFormat: TraceFormat;
 	private _tracer: Tracer;
 
 	private _c2p: c2p.Converter;
@@ -2302,6 +2303,9 @@ export abstract class BaseLanguageClient {
 		this._tracer = {
 			log: (message: string, data?: string) => {
 				this.logTrace(message, data);
+			},
+			logLSP: (message: string) => {
+				this.logLSPTrace(message);
 			}
 		};
 		this._c2p = c2p.createConverter(clientOptions.uriConverters ? clientOptions.uriConverters.code2Protocol : undefined);
@@ -2438,7 +2442,17 @@ export abstract class BaseLanguageClient {
 		this._trace = value;
 		this.onReady().then(() => {
 			this.resolveConnection().then((connection) => {
-				connection.trace(value, this._tracer);
+				connection.trace(value, this._traceFormat, this._tracer);
+			})
+		}, () => {
+		});
+	}
+
+	public set traceFormat(value: TraceFormat) {
+		this._traceFormat = value;
+		this.onReady().then(() => {
+			this.resolveConnection().then((connection) => {
+				connection.trace(this._trace, value, this._tracer);
 			})
 		}, () => {
 		});
@@ -2496,6 +2510,10 @@ export abstract class BaseLanguageClient {
 		if (data) {
 			this.outputChannel.appendLine(this.data2String(data));
 		}
+	}
+
+	private logLSPTrace(message: string): void {
+		this.outputChannel.appendLine(`[LSP   - ${(new Date().toLocaleTimeString())}] ${message}`);
 	}
 
 	public needsStart(): boolean {
@@ -2846,11 +2864,20 @@ export abstract class BaseLanguageClient {
 	private refreshTrace(connection: IConnection, sendNotification: boolean = false): void {
 		let config = Workspace.getConfiguration(this._id);
 		let trace: Trace = Trace.Off;
+		let traceFormat: TraceFormat = TraceFormat.Text;
 		if (config) {
-			trace = Trace.fromString(config.get('trace.server', 'off'));
+			const traceConfig = config.get('trace.server', 'off');
+
+			if (typeof traceConfig === 'string') {
+				trace = Trace.fromString(traceConfig);
+			} else {
+				trace = Trace.fromString(config.get('trace.server.verbosity', 'off'));
+				traceFormat = TraceFormat.fromString(config.get('trace.server.format', 'text'));
+			}
 		}
 		this._trace = trace;
-		connection.trace(this._trace, this._tracer, sendNotification);
+		this._traceFormat = traceFormat;
+		connection.trace(this._trace, this._traceFormat, this._tracer, sendNotification);
 	}
 
 
