@@ -17,8 +17,8 @@
 	"main": "./lib/main.js",
 	"typings": "./lib/main",
 	"devDependencies": {
-		"shx": "^0.2.2",
-		"vscode": "^1.1.17"
+		"shx": "^0.3.1",
+		"vscode": "^1.1.18"
 	},
 	"dependencies": {
 		"vscode-languageserver-protocol": "^3.8.1"
