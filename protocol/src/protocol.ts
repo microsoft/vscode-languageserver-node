@@ -33,6 +33,10 @@ import {
 	FoldingRangeClientCapabilities, FoldingRangeProviderOptions, FoldingRangeRequest, FoldingRangeRequestParam, FoldingRangeServerCapabilities
 } from './protocol.foldingRange';
 
+import {
+	SemanticHighlightingNotification, SemanticHighlightingParams, SemanticHighlightingInformation, SemanticHighlightingClientCapabilities, SemanticHighlightingServerCapabilities
+} from './protocol.semanticHighlighting.proposed';
+
 /**
  * A document filter denotes a document by different properties like
  * the [language](#TextDocument.languageId), the [scheme](#Uri.scheme) of
@@ -558,7 +562,7 @@ export interface _ClientCapabilities {
 }
 
 export type ClientCapabilities = _ClientCapabilities & ImplementationClientCapabilities & TypeDefinitionClientCapabilities &
-	WorkspaceFoldersClientCapabilities & ConfigurationClientCapabilities & ColorClientCapabilities & FoldingRangeClientCapabilities;
+	WorkspaceFoldersClientCapabilities & ConfigurationClientCapabilities & ColorClientCapabilities & FoldingRangeClientCapabilities & SemanticHighlightingClientCapabilities;
 
 /**
  * Defines how the host (editor) should sync
@@ -811,7 +815,7 @@ export interface _ServerCapabilities {
 }
 
 export type ServerCapabilities = _ServerCapabilities & ImplementationServerCapabilities & TypeDefinitionServerCapabilities & WorkspaceFoldersServerCapabilities &
-	ColorServerCapabilities & FoldingRangeServerCapabilities;
+	ColorServerCapabilities & FoldingRangeServerCapabilities & SemanticHighlightingServerCapabilities;
 
 /**
  * The initialize request is sent from the client to the server.
@@ -1800,5 +1804,6 @@ export {
 	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, WorkspaceFolder, WorkspaceFoldersChangeEvent,
 	ConfigurationRequest, ConfigurationParams, ConfigurationItem,
 	DocumentColorRequest, ColorPresentationRequest, ColorProviderOptions, DocumentColorParams, ColorPresentationParams,
-	FoldingRangeClientCapabilities, FoldingRangeProviderOptions, FoldingRangeRequest, FoldingRangeRequestParam, FoldingRangeServerCapabilities
+	FoldingRangeClientCapabilities, FoldingRangeProviderOptions, FoldingRangeRequest, FoldingRangeRequestParam, FoldingRangeServerCapabilities,
+	SemanticHighlightingNotification, SemanticHighlightingParams, SemanticHighlightingInformation, SemanticHighlightingClientCapabilities, SemanticHighlightingServerCapabilities
 };

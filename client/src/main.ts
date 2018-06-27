@@ -26,6 +26,7 @@ import { ImplementationFeature }  from './implementation'
 import { TypeDefinitionFeature } from './typeDefinition';
 import { WorkspaceFoldersFeature } from './workspaceFolders';
 import { FoldingRangeFeature } from './foldingRange';
+// import { SemanticHighlightingFeature } from './semanticHighlighting.proposed';
 
 import * as Is from './utils/is';
 import * as electron from './utils/electron';
@@ -495,6 +496,7 @@ export class SettingMonitor {
 export namespace ProposedFeatures {
 	export function createAll(_client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
 		let result: (StaticFeature | DynamicFeature<any>)[] = [];
+		// result.push(new SemanticHighlightingFeature(_client));
 		return result;
 	}
 }
