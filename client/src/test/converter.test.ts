@@ -187,6 +187,7 @@ suite('Protocol Converter', () => {
 		strictEqual(result.range, undefined);
 		strictEqual(result.kind, undefined);
 		strictEqual(result.sortText, undefined);
+		strictEqual(result.preselect, undefined);
 		strictEqual(result.textEdit, undefined);
 		strictEqual(result.data, undefined);
 	});
@@ -204,6 +205,7 @@ suite('Protocol Converter', () => {
 			insertTextFormat: proto.InsertTextFormat.PlainText,
 			kind: proto.CompletionItemKind.Field,
 			sortText: 'sort',
+			preselect: true,
 			data: 'data',
 			additionalTextEdits: [proto.TextEdit.insert({ line: 1, character: 2}, 'insert')],
 			command: command
@@ -217,6 +219,7 @@ suite('Protocol Converter', () => {
 		strictEqual(result.insertText, completionItem.insertText);
 		strictEqual(result.kind, vscode.CompletionItemKind.Field);
 		strictEqual(result.sortText, completionItem.sortText);
+		strictEqual(result.preselect, completionItem.preselect);
 		strictEqual(result.textEdit, undefined);
 		strictEqual(result.data, completionItem.data);
 		strictEqual(result.command!.title, command.title);
@@ -735,6 +738,7 @@ suite('Code Converter', () => {
 		item.insertText = 'insert';
 		item.kind = vscode.CompletionItemKind.Interface;
 		item.sortText = 'sort';
+		item.preselect = true;
 		let edit = vscode.TextEdit.insert(new vscode.Position(1, 2), 'insert');
 		item.additionalTextEdits = [edit];
 		item.command = { title: 'title', command: 'commandId' }
@@ -747,6 +751,7 @@ suite('Code Converter', () => {
 		strictEqual(result.insertText, item.insertText);
 		strictEqual(result.kind, proto.CompletionItemKind.Interface);
 		strictEqual(result.sortText, item.sortText);
+		strictEqual(result.preselect, item.preselect);
 		rangeEqual(result.additionalTextEdits![0].range, item.additionalTextEdits[0].range);
 		strictEqual(result.additionalTextEdits![0].newText, item.additionalTextEdits[0].newText);
 	});

@@ -304,6 +304,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			}
 		}
 		if (item.sortText) { result.sortText = item.sortText; }
+		if (item.preselect) { result.preselect = item.preselect; }
 		if (item.additionalTextEdits) { result.additionalTextEdits = asTextEdits(item.additionalTextEdits); }
 		if (Is.stringArray(item.commitCharacters)) { result.commitCharacters = item.commitCharacters.slice(); }
 		if (item.command) { result.command = asCommand(item.command); }
