@@ -315,6 +315,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (Is.number(item.kind)) {
 			result.kind = asCompletionItemKind(item.kind, protocolItem && protocolItem.originalItemKind);
 		}
+		if (item.preselect) { result.preselect = item.preselect; }
 		if (item.sortText) { result.sortText = item.sortText; }
 		if (item.additionalTextEdits) { result.additionalTextEdits = asTextEdits(item.additionalTextEdits); }
 		if (item.commitCharacters) { result.commitCharacters = item.commitCharacters.slice(); }
