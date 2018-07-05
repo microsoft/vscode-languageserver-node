@@ -304,6 +304,11 @@ export interface TextDocumentClientCapabilities {
 			 * Client supports the deprecated property on a completion item.
 			 */
 			deprecatedSupport?: boolean;
+
+			/**
+			 * Client supports the preselect property on a completion item.
+			 */
+			preselectSupport?: boolean;
 		},
 
 		completionItemKind?: {

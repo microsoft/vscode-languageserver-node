@@ -319,6 +319,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (item.additionalTextEdits) { result.additionalTextEdits = asTextEdits(item.additionalTextEdits); }
 		if (item.commitCharacters) { result.commitCharacters = item.commitCharacters.slice(); }
 		if (item.command) { result.command = asCommand(item.command); }
+		if (item.preselect === true || item.preselect === false) { result.preselect = item.preselect; }
 		if (protocolItem) {
 			if (protocolItem.data !== void 0) {
 				result.data = protocolItem.data;

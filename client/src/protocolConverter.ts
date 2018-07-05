@@ -307,7 +307,8 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (item.additionalTextEdits) { result.additionalTextEdits = asTextEdits(item.additionalTextEdits); }
 		if (Is.stringArray(item.commitCharacters)) { result.commitCharacters = item.commitCharacters.slice(); }
 		if (item.command) { result.command = asCommand(item.command); }
-		if (item.deprecated === true || item.deprecated === false) { result.deprecated = item.deprecated };
+		if (item.deprecated === true || item.deprecated === false) { result.deprecated = item.deprecated; }
+		if (item.preselect === true || item.preselect === false) { result.preselect = item.preselect; }
 		if (item.data !== void 0) { result.data = item.data; }
 		return result;
 	}
