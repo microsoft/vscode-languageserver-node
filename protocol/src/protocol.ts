@@ -15,7 +15,7 @@ import {
 	CompletionItem, CompletionList, Hover, SignatureHelp,
 	Definition, ReferenceContext, DocumentHighlight, DocumentSymbolParams,
 	SymbolInformation, CodeLens, CodeActionContext, FormattingOptions, DocumentLink, MarkupKind,
-	SymbolKind, CompletionItemKind, CodeAction, CodeActionKind
+	SymbolKind, CompletionItemKind, CodeAction, CodeActionKind, DocumentSymbol
 } from 'vscode-languageserver-types';
 
 import { ImplementationRequest, ImplementationClientCapabilities, ImplementationServerCapabilities } from './protocol.implementation';
@@ -417,7 +417,12 @@ export interface TextDocumentClientCapabilities {
 			 * the initial version of the protocol.
 			 */
 			valueSet?: SymbolKind[];
-		}
+		},
+
+		/**
+		 * The client support hierarchical document symbols.
+		 */
+		hierarchicalDocumentSymbolSupport?: boolean;
 	};
 
 	/**
@@ -1508,7 +1513,7 @@ export namespace DocumentHighlightRequest {
  * that resolves to such.
  */
 export namespace DocumentSymbolRequest {
-	export const type = new RequestType<DocumentSymbolParams, SymbolInformation[] | null, void, TextDocumentRegistrationOptions>('textDocument/documentSymbol');
+	export const type = new RequestType<DocumentSymbolParams, SymbolInformation[] | DocumentSymbol[] | null, void, TextDocumentRegistrationOptions>('textDocument/documentSymbol');
 }
 
 //---- Workspace Symbol Provider ---------------------------

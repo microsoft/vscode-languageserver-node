@@ -1621,6 +1621,90 @@ export namespace SymbolInformation {
 }
 
 /**
+ * Represents programming constructs like variables, classes, interfaces etc.
+ * that appear in a document. Document symbols can be hierarchical and they
+ * have two ranges: one that encloses its definition and one that points to
+ * its most interesting range, e.g. the range of an identifier.
+ */
+export class DocumentSymbol {
+
+	/**
+	 * The name of this symbol.
+	 */
+	name: string;
+
+	/**
+	 * More detail for this symbol, e.g the signature of a function.
+	 */
+	detail: string;
+
+	/**
+	 * The kind of this symbol.
+	 */
+	kind: SymbolKind;
+
+	/**
+	 * Indicates if this symbol is deprecated.
+	 */
+	deprecated?: boolean;
+
+	/**
+	 * The range enclosing this symbol not including leading/trailing whitespace but everything else
+	 * like comments. This information is typically used to determine if the the clients cursor is
+	 * inside the symbol to reveal in the symbol in the UI.
+	 */
+	range: Range;
+
+	/**
+	 * The range that should be selected and reveal when this symbol is being picked, e.g the name of a function.
+	 * Must be contained by the the `range`.
+	 */
+	selectionRange: Range;
+
+	/**
+	 * Children of this symbol, e.g. properties of a class.
+	 */
+	children?: DocumentSymbol[];
+}
+
+export namespace DocumentSymbol {
+	/**
+	 * Creates a new symbol information literal.
+	 *
+	 * @param name The name of the symbol.
+	 * @param detail The detail of the symbol.
+	 * @param kind The kind of the symbol.
+	 * @param range The range of the symbol.
+	 * @param selectionRange The selectionRange of the symbol.
+	 * @param children Children of the symbol.
+	 */
+	export function create(name: string, detail: string, kind: SymbolKind, range: Range, selectionRange: Range, children?: DocumentSymbol[]): DocumentSymbol {
+		let result: DocumentSymbol = {
+			name,
+			detail,
+			kind,
+			range,
+			selectionRange
+		};
+		if (children !== void 0) {
+			result.children = children;
+		}
+		return result;
+	}
+	/**
+	 * Checks whether the given literal conforms to the [DocumentSymbol](#DocumentSymbol) interface.
+	 */
+	export function is(value: any): value is DocumentSymbol {
+		let candidate: DocumentSymbol = value;
+		return candidate &&
+			Is.string(candidate.name) && Is.string(candidate.detail) && Is.number(candidate.kind) &&
+			Range.is(candidate.range) && Range.is(candidate.selectionRange) &&
+			(candidate.deprecated === void 0 || Is.boolean(candidate.deprecated)) &&
+			(candidate.children === void 0 || Array.isArray(candidate.children));
+	}
+}
+
+/**
  * Parameters for a [DocumentSymbolRequest](#DocumentSymbolRequest).
  */
 export interface DocumentSymbolParams {
