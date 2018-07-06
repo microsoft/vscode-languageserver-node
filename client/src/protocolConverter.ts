@@ -86,6 +86,12 @@ export interface Converter {
 	asSymbolInformations(values: undefined | null, uri?: code.Uri): undefined;
 	asSymbolInformations(values: ls.SymbolInformation[] | undefined | null, uri?: code.Uri): code.SymbolInformation[] | undefined;
 
+	asDocumentSymbol(value: ls.DocumentSymbol): code.DocumentSymbol;
+
+	asDocumentSymbols(value: undefined | null): undefined;
+	asDocumentSymbols(value: ls.DocumentSymbol[]): code.DocumentSymbol[];
+	asDocumentSymbols(value: ls.DocumentSymbol[] | undefined | null): code.DocumentSymbol[] | undefined;
+
 	asCommand(item: ls.Command): code.Command;
 
 	asCommands(items: ls.Command[]): code.Command[];
@@ -484,6 +490,34 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return result;
 	}
 
+	function asDocumentSymbols(values: undefined | null): undefined;
+	function asDocumentSymbols(values: ls.DocumentSymbol[]): code.DocumentSymbol[];
+	function asDocumentSymbols(values: ls.DocumentSymbol[] | undefined | null): code.DocumentSymbol[] | undefined {
+		if (values === void 0 || values === null) {
+			return undefined;
+		}
+		return values.map(asDocumentSymbol);
+	}
+
+	function asDocumentSymbol(value: ls.DocumentSymbol): code.DocumentSymbol {
+		let result = new code.DocumentSymbol(
+			value.name,
+			value.detail,
+			asSymbolKind(value.kind),
+			asRange(value.range),
+			asRange(value.selectionRange)
+		);
+		if (value.children !== void 0 && value.children.length > 0) {
+			let children: code.DocumentSymbol[] = [];
+			for (let child of value.children) {
+				children.push(asDocumentSymbol(child));
+			}
+			result.children = children;
+		}
+		return result;
+	}
+
+
 	function asCommand(item: ls.Command): code.Command {
 		let result: code.Command = { title: item.title, command: item.command };
 		if (item.arguments) { result.arguments = item.arguments; }
@@ -631,6 +665,8 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asDocumentHighlightKind,
 		asSymbolInformations,
 		asSymbolInformation,
+		asDocumentSymbols,
+		asDocumentSymbol,
 		asCommand,
 		asCommands,
 		asCodeAction,
