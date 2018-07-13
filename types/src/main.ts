@@ -533,7 +533,9 @@ export namespace TextEdit {
 
 	export function is(value: any): value is TextEdit {
 		const candidate = value as TextEdit;
-		return Is.string(candidate.newText) && Range.is(candidate.range);
+		return Is.objectLiteral(candidate)
+				&& Is.string(candidate.newText)
+				&& Range.is(candidate.range);
 	}
 }
 

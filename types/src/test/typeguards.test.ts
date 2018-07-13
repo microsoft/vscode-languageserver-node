@@ -5,7 +5,7 @@
 'use strict';
 
 import * as assert from 'assert'
-import { Range, Position, Hover, MarkedString } from '../main';
+import { Range, Position, Hover, MarkedString, TextEdit } from '../main';
 
 suite('Type guards', () => {
 	suite('Position.is', () => {
@@ -143,6 +143,51 @@ suite('Type guards', () => {
 		test('undefined', () => {
 			const hover = undefined
 			assert.strictEqual(Hover.is(hover), false)
+		})
+	})
+	suite('TextEdit.is', () => {
+		test('string contents, range defined', () => {
+			const edit = {
+				newText: 'test',
+				range: Range.create(Position.create(0, 0), Position.create(0, 1)),
+			}
+			assert.strictEqual(TextEdit.is(edit), true)
+		})
+		test('string contents, range undefined', () => {
+			const edit = {
+				newText: 'test',
+				range: undefined,
+			}
+			assert.strictEqual(TextEdit.is(edit), false)
+		})
+		test('string contents, range null', () => {
+			const edit = {
+				newText: 'test',
+				range: null,
+			}
+			assert.strictEqual(TextEdit.is(edit), false)
+		})
+		test('null contents, range defined', () => {
+			const edit = {
+				contents: null,
+				range: Range.create(Position.create(0, 0), Position.create(0, 1)),
+			}
+			assert.strictEqual(TextEdit.is(edit), false)
+		})
+		test('undefined contents, range defined', () => {
+			const edit = {
+				contents: undefined,
+				range: Range.create(Position.create(0, 0), Position.create(0, 1)),
+			}
+			assert.strictEqual(TextEdit.is(edit), false)
+		})
+		test('null', () => {
+			const edit = null
+			assert.strictEqual(TextEdit.is(edit), false)
+		})
+		test('undefined', () => {
+			const edit = undefined
+			assert.strictEqual(TextEdit.is(edit), false)
 		})
 	})
 })
