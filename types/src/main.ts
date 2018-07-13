@@ -388,6 +388,11 @@ export namespace TextEdit {
 	export function del(range: Range): TextEdit {
 		return { range, newText: '' };
 	}
+
+	export function is(value: any): value is TextEdit {
+		const candidate = value as TextEdit;
+		return Is.string(candidate.newText) && Range.is(candidate.range);
+	}
 }
 
 
