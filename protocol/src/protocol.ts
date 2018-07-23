@@ -27,7 +27,7 @@ import {
 import { ConfigurationRequest, ConfigurationParams, ConfigurationItem, ConfigurationClientCapabilities } from './protocol.configuration';
 import {
 	DocumentColorRequest, ColorPresentationRequest, ColorProviderOptions, DocumentColorParams, ColorPresentationParams,
-	Color, ColorInformation, ColorPresentation, ColorServerCapabilities, ColorClientCapabilities,
+	ColorServerCapabilities, ColorClientCapabilities,
 } from './protocol.colorProvider';
 
 /**
@@ -1791,5 +1791,5 @@ export {
 	TypeDefinitionRequest,
 	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, WorkspaceFolder, WorkspaceFoldersChangeEvent,
 	ConfigurationRequest, ConfigurationParams, ConfigurationItem,
-	DocumentColorRequest, ColorPresentationRequest, ColorProviderOptions, DocumentColorParams, ColorPresentationParams, Color, ColorInformation, ColorPresentation
+	DocumentColorRequest, ColorPresentationRequest, ColorProviderOptions, DocumentColorParams, ColorPresentationParams
 };
