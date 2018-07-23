@@ -553,7 +553,7 @@ export interface _ClientCapabilities {
 }
 
 export type ClientCapabilities = _ClientCapabilities & ImplementationClientCapabilities & TypeDefinitionClientCapabilities &
-	WorkspaceFoldersClientCapabilities & ConfigurationClientCapabilities & ColorClientCapabilities;
+	WorkspaceFoldersClientCapabilities & ConfigurationClientCapabilities & ColorClientCapabilities & FoldingRangeClientCapabilities;
 
 /**
  * Defines how the host (editor) should sync
@@ -806,7 +806,7 @@ export interface _ServerCapabilities {
 }
 
 export type ServerCapabilities = _ServerCapabilities & ImplementationServerCapabilities & TypeDefinitionServerCapabilities & WorkspaceFoldersServerCapabilities &
-	ColorServerCapabilities;
+	ColorServerCapabilities & FoldingRangeServerCapabilities;
 
 /**
  * The initialize request is sent from the client to the server.
