@@ -1634,9 +1634,10 @@ export class DocumentSymbol {
 	name: string;
 
 	/**
-	 * More detail for this symbol, e.g the signature of a function.
+	 * More detail for this symbol, e.g the signature of a function. If not provided
+	 * the name is used.
 	 */
-	detail: string;
+	detail?: string;
 
 	/**
 	 * The kind of this symbol.
@@ -1678,7 +1679,7 @@ export namespace DocumentSymbol {
 	 * @param selectionRange The selectionRange of the symbol.
 	 * @param children Children of the symbol.
 	 */
-	export function create(name: string, detail: string, kind: SymbolKind, range: Range, selectionRange: Range, children?: DocumentSymbol[]): DocumentSymbol {
+	export function create(name: string, detail: string | undefined, kind: SymbolKind, range: Range, selectionRange: Range, children?: DocumentSymbol[]): DocumentSymbol {
 		let result: DocumentSymbol = {
 			name,
 			detail,
