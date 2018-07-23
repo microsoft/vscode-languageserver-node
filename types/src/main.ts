@@ -1656,7 +1656,7 @@ export class DocumentSymbol {
 	range: Range;
 
 	/**
-	 * The range that should be selected and reveal when this symbol is being picked, e.g the name of a function.
+	 * The range that should be selected and revealed when this symbol is being picked, e.g the name of a function.
 	 * Must be contained by the the `range`.
 	 */
 	selectionRange: Range;
