@@ -44,7 +44,8 @@ import {
 	ExecuteCommandRequest, ExecuteCommandParams,
 	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse,
 	ClientCapabilities, ServerCapabilities, ProtocolConnection, createProtocolConnection, TypeDefinitionRequest, ImplementationRequest,
-	DocumentColorRequest, DocumentColorParams, ColorInformation, ColorPresentationParams, ColorPresentation, ColorPresentationRequest, CodeAction
+	DocumentColorRequest, DocumentColorParams, ColorInformation, ColorPresentationParams, ColorPresentation, ColorPresentationRequest,
+	CodeAction, FoldingRangeRequestParam, FoldingRange, FoldingRangeRequest
 } from 'vscode-languageserver-protocol';
 
 import { Configuration, ConfigurationFeature } from './configuration';
@@ -1325,6 +1326,14 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	onColorPresentation(handler: RequestHandler<ColorPresentationParams, ColorPresentation[] | undefined | null, void>): void;
 
 	/**
+	 * Installs a handler for the folding ranges request.
+	 *
+	 * @param handler The corresponding handler.
+	 */
+	onFoldingRanges(handler: RequestHandler<FoldingRangeRequestParam, FoldingRange[] | undefined | null, void>): void;
+
+
+	/**
 	 * Installs a handler for the execute command request.
 	 *
 	 * @param handler The corresponding handler.
@@ -1650,6 +1659,7 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 		onDocumentLinkResolve: (handler) => connection.onRequest(DocumentLinkResolveRequest.type, handler),
 		onDocumentColor: (handler) => connection.onRequest(DocumentColorRequest.type, handler),
 		onColorPresentation: (handler) => connection.onRequest(ColorPresentationRequest.type, handler),
+		onFoldingRanges: (handler) => connection.onRequest(FoldingRangeRequest.type, handler),
 		onExecuteCommand: (handler) => connection.onRequest(ExecuteCommandRequest.type, handler),
 
 		dispose: () => connection.dispose()

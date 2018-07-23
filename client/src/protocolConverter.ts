@@ -113,6 +113,15 @@ export interface Converter {
 	asDocumentLinks(items: ls.DocumentLink[]): code.DocumentLink[];
 	asDocumentLinks(items: undefined | null): undefined;
 	asDocumentLinks(items: ls.DocumentLink[] | undefined | null): code.DocumentLink[] | undefined;
+
+	asFoldingRangeKind(kind: string | undefined): code.FoldingRangeKind | undefined;
+
+	asFoldingRange(r: ls.FoldingRange): code.FoldingRange;
+
+	asFoldingRanges(foldingRanges: ls.FoldingRange[]): code.FoldingRange[];
+	asFoldingRanges(foldingRanges: undefined | null): undefined;
+	asFoldingRanges(foldingRanges: ls.FoldingRange[] | undefined | null): code.FoldingRange[] | undefined;
+	asFoldingRanges(foldingRanges: ls.FoldingRange[] | undefined | null): code.FoldingRange[] | undefined;
 }
 
 export interface URIConverter {
@@ -607,6 +616,34 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return items.map(asDocumentLink);
 	}
 
+	function asFoldingRangeKind(kind: string | undefined): code.FoldingRangeKind | undefined {
+		if (kind) {
+			switch (kind) {
+				case ls.FoldingRangeKind.Comment:
+					return code.FoldingRangeKind.Comment;
+				case ls.FoldingRangeKind.Imports:
+					return code.FoldingRangeKind.Imports;
+				case ls.FoldingRangeKind.Region:
+					return code.FoldingRangeKind.Region;
+			}
+		}
+		return void 0;
+	}
+
+	function asFoldingRange(r: ls.FoldingRange): code.FoldingRange {
+		return new code.FoldingRange(r.startLine, r.endLine, asFoldingRangeKind(r.kind));
+	}
+
+	function asFoldingRanges(foldingRanges: ls.FoldingRange[]): code.FoldingRange[];
+	function asFoldingRanges(foldingRanges: undefined | null): undefined;
+	function asFoldingRanges(foldingRanges: ls.FoldingRange[] | undefined | null): code.FoldingRange[] | undefined;
+	function asFoldingRanges(foldingRanges: ls.FoldingRange[] | undefined | null): code.FoldingRange[] | undefined {
+		if (Array.isArray(foldingRanges)) {
+			return foldingRanges.map(asFoldingRange);
+		}
+		return void 0;
+	}
+
 	return {
 		asUri,
 		asDiagnostics,
@@ -639,6 +676,9 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asCodeLenses,
 		asWorkspaceEdit,
 		asDocumentLink,
-		asDocumentLinks
+		asDocumentLinks,
+		asFoldingRangeKind,
+		asFoldingRange,
+		asFoldingRanges
 	}
 }

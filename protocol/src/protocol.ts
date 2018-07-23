@@ -29,6 +29,9 @@ import {
 	DocumentColorRequest, ColorPresentationRequest, ColorProviderOptions, DocumentColorParams, ColorPresentationParams,
 	ColorServerCapabilities, ColorClientCapabilities,
 } from './protocol.colorProvider';
+import {
+	FoldingRangeClientCapabilities, FoldingRangeProviderOptions, FoldingRangeRequest, FoldingRangeRequestParam, FoldingRangeServerCapabilities
+} from './protocol.foldingRange';
 
 /**
  * A document filter denotes a document by different properties like
@@ -1791,5 +1794,6 @@ export {
 	TypeDefinitionRequest,
 	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, WorkspaceFolder, WorkspaceFoldersChangeEvent,
 	ConfigurationRequest, ConfigurationParams, ConfigurationItem,
-	DocumentColorRequest, ColorPresentationRequest, ColorProviderOptions, DocumentColorParams, ColorPresentationParams
+	DocumentColorRequest, ColorPresentationRequest, ColorProviderOptions, DocumentColorParams, ColorPresentationParams,
+	FoldingRangeClientCapabilities, FoldingRangeProviderOptions, FoldingRangeRequest, FoldingRangeRequestParam, FoldingRangeServerCapabilities
 };

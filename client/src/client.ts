@@ -61,6 +61,7 @@ import { ImplementationMiddleware } from './implementation'
 import { TypeDefinitionMiddleware } from './typeDefinition';
 import { ConfigurationWorkspaceMiddleware } from './configuration';
 import { WorkspaceFolderWorkspaceMiddleware } from './workspaceFolders';
+import { FoldingRangeProviderMiddleware } from './foldingRange';
 
 import * as c2p from './codeConverter';
 import * as p2c from './protocolConverter';
@@ -408,7 +409,7 @@ export interface _Middleware {
 	workspace?: WorkspaceMiddleware;
 }
 
-export type Middleware = _Middleware & TypeDefinitionMiddleware & ImplementationMiddleware & ColorProviderMiddleware;
+export type Middleware = _Middleware & TypeDefinitionMiddleware & ImplementationMiddleware & ColorProviderMiddleware & FoldingRangeProviderMiddleware;
 
 export interface LanguageClientOptions {
 	documentSelector?: DocumentSelector | string[];

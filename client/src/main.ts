@@ -25,6 +25,7 @@ import { ConfigurationFeature as PullConfigurationFeature} from './configuration
 import { ImplementationFeature }  from './implementation'
 import { TypeDefinitionFeature } from './typeDefinition';
 import { WorkspaceFoldersFeature } from './workspaceFolders';
+import { FoldingRangeFeature } from './foldingRange';
 
 import * as Is from './utils/is';
 import * as electron from './utils/electron';
@@ -424,6 +425,7 @@ export class LanguageClient extends BaseLanguageClient {
 		this.registerFeature(new ImplementationFeature(this));
 		this.registerFeature(new ColorProviderFeature(this));
 		this.registerFeature(new WorkspaceFoldersFeature(this));
+		this.registerFeature(new FoldingRangeFeature(this));
 	}
 
 	private _mainGetRootPath(): string | undefined {

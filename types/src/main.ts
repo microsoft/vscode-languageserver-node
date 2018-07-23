@@ -287,8 +287,96 @@ export namespace ColorPresentation {
 	export function is(value: any): value is ColorPresentation {
 		const candidate = value as ColorPresentation;
 		return Is.string(candidate.label)
-				&& (Is.undefined(candidate.textEdit) || TextEdit.is(candidate))
-				&& (Is.undefined(candidate.additionalTextEdits) || Is.typedArray<DiagnosticRelatedInformation>(candidate.additionalTextEdits, TextEdit.is));
+			&& (Is.undefined(candidate.textEdit) || TextEdit.is(candidate))
+			&& (Is.undefined(candidate.additionalTextEdits) || Is.typedArray<DiagnosticRelatedInformation>(candidate.additionalTextEdits, TextEdit.is));
+	}
+}
+
+/**
+ * Enum of known range kinds
+ */
+export enum FoldingRangeKind {
+	/**
+	 * Folding range for a comment
+	 */
+	Comment = 'comment',
+	/**
+	 * Folding range for a imports or includes
+	 */
+	Imports = 'imports',
+	/**
+	 * Folding range for a region (e.g. `#region`)
+	 */
+	Region = 'region'
+}
+
+/**
+ * Represents a folding range.
+ */
+export interface FoldingRange {
+
+	/**
+	 * The zero-based line number from where the folded range starts.
+	 */
+	startLine: number;
+
+	/**
+	 * The zero-based character offset from where the folded range starts. If not defined, defaults to the length of the start line.
+	 */
+	startCharacter?: number;
+
+	/**
+	 * The zero-based line number where the folded range ends.
+	 */
+	endLine: number;
+
+	/**
+	 * The zero-based character offset before the folded range ends. If not defined, defaults to the length of the end line.
+	 */
+	endCharacter?: number;
+
+	/**
+	 * Describes the kind of the folding range such as `comment' or 'region'. The kind
+	 * is used to categorize folding ranges and used by commands like 'Fold all comments'. See
+	 * [FoldingRangeKind](#FoldingRangeKind) for an enumeration of standardized kinds.
+	 */
+	kind?: string;
+}
+
+/**
+ * The folding range namespace provides helper functions to work with
+ * [FoldingRange](#FoldingRange) literals.
+ */
+export namespace FoldingRange {
+	/**
+	 * Creates a new FoldingRange literal.
+	 */
+	export function create(startLine: number, endLine: number, startCharacter?: number, endCharacter?: number, kind?: string): FoldingRange {
+		const result: FoldingRange = {
+			startLine,
+			endLine
+		};
+		if (Is.defined(startCharacter)) {
+			result.startCharacter = startCharacter;
+		}
+		if (Is.defined(endCharacter)) {
+			result.endCharacter = endCharacter;
+		}
+		if (Is.defined(kind)) {
+			result.kind = kind;
+		}
+		return result;
+	}
+
+	/**
+	 * Checks whether the given literal conforms to the [FoldingRange](#FoldingRange) interface.
+	 */
+	export function is(value: any): value is FoldingRange {
+		const candidate = value as FoldingRange;
+		return Is.number(candidate.startLine) && Is.number(candidate.startLine)
+			&& (Is.undefined(candidate.startCharacter) || Is.number(candidate.startCharacter))
+			&& (Is.undefined(candidate.endCharacter) || Is.number(candidate.endCharacter))
+			&& (Is.undefined(candidate.kind) || Is.string(candidate.kind))
 	}
 }
 
@@ -534,8 +622,8 @@ export namespace TextEdit {
 	export function is(value: any): value is TextEdit {
 		const candidate = value as TextEdit;
 		return Is.objectLiteral(candidate)
-				&& Is.string(candidate.newText)
-				&& Range.is(candidate.range);
+			&& Is.string(candidate.newText)
+			&& Range.is(candidate.range);
 	}
 }
 
@@ -1252,8 +1340,8 @@ export namespace Hover {
 			MarkedString.is(candidate.contents) ||
 			Is.typedArray(candidate.contents, MarkedString.is)
 		) && (
-			value.range === void 0 || Range.is(value.range)
-		);
+				value.range === void 0 || Range.is(value.range)
+			);
 	}
 }
 
