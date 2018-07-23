@@ -114,6 +114,20 @@ export interface Converter {
 	asDocumentLinks(items: undefined | null): undefined;
 	asDocumentLinks(items: ls.DocumentLink[] | undefined | null): code.DocumentLink[] | undefined;
 
+	asColor(color: ls.Color): code.Color;
+
+	asColorInformation(ci: ls.ColorInformation): code.ColorInformation;
+
+	asColorInformations(colorPresentations: ls.ColorInformation[]): code.ColorInformation[];
+	asColorInformations(colorPresentations: undefined | null): undefined;
+	asColorInformations(colorInformation: ls.ColorInformation[] | undefined | null): code.ColorInformation[];
+
+	asColorPresentation(cp: ls.ColorPresentation): code.ColorPresentation;
+
+	asColorPresentations(colorPresentations: ls.ColorPresentation[]): code.ColorPresentation[];
+	asColorPresentations(colorPresentations: undefined | null): undefined;
+	asColorPresentations(colorPresentations: ls.ColorPresentation[] | undefined | null): undefined;
+
 	asFoldingRangeKind(kind: string | undefined): code.FoldingRangeKind | undefined;
 
 	asFoldingRange(r: ls.FoldingRange): code.FoldingRange;
@@ -616,6 +630,42 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return items.map(asDocumentLink);
 	}
 
+	function asColor(color: ls.Color): code.Color {
+		return new code.Color(color.red, color.green, color.blue, color.alpha);
+	}
+
+	function asColorInformation(ci: ls.ColorInformation): code.ColorInformation {
+		return new code.ColorInformation(asRange(ci.range), asColor(ci.color));
+	}
+
+	function asColorInformations(colorPresentations: ls.ColorInformation[]): code.ColorInformation[];
+	function asColorInformations(colorPresentations: undefined | null): undefined;
+	function asColorInformations(colorInformation: ls.ColorInformation[] | undefined | null): code.ColorInformation[] | undefined {
+		if (Array.isArray(colorInformation)) {
+			return colorInformation.map(asColorInformation);
+		}
+		return undefined;
+	}
+
+	function asColorPresentation(cp: ls.ColorPresentation): code.ColorPresentation {
+		let presentation = new code.ColorPresentation(cp.label);
+		presentation.additionalTextEdits = asTextEdits(cp.additionalTextEdits);
+		if (cp.textEdit) {
+			presentation.textEdit = asTextEdit(cp.textEdit);
+		}
+		return presentation;
+	}
+
+	function asColorPresentations(colorPresentations: ls.ColorPresentation[]): code.ColorPresentation[];
+	function asColorPresentations(colorPresentations: undefined | null): undefined;
+	function asColorPresentations(colorPresentations: ls.ColorPresentation[] | undefined | null): code.ColorPresentation[] | undefined {
+		if (Array.isArray(colorPresentations)) {
+			return colorPresentations.map(asColorPresentation);
+		}
+		return undefined;
+	}
+
+
 	function asFoldingRangeKind(kind: string | undefined): code.FoldingRangeKind | undefined {
 		if (kind) {
 			switch (kind) {
@@ -679,6 +729,11 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asDocumentLinks,
 		asFoldingRangeKind,
 		asFoldingRange,
-		asFoldingRanges
+		asFoldingRanges,
+		asColor,
+		asColorInformation,
+		asColorInformations,
+		asColorPresentation,
+		asColorPresentations
 	}
 }
