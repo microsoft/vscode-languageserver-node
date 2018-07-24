@@ -30,6 +30,10 @@ language servers for [VSCode](https://code.visualstudio.com/).
 ### 4.4.0 Client & 4.4.0 Server & 3.10.0 Protocol
 
 * [Implement hierarchical document outline](https://github.com/Microsoft/vscode-languageserver-node/issues/373)
+* `Color`, `ColorInformation`, `ColorPresentation` moved to Types
+* `FoldingRangeRequest` protocol added:
+  * New APIs in Types: `FoldingRange`, `FoldingRangeKind`
+  * New APIs in Protocol: `FoldingRangeRequest`, `FoldingRangeRequestParam`, `FoldingRangeClientCapabilities`, `FoldingRangeServerCapabilities`, `FoldingRangeProviderOptions`,
 
 ### 4.3.0 Client & 4.3.0 Server & 3.9.0 Protocol
 
@@ -76,6 +80,9 @@ provideCompletionItem?: (this: void, document: TextDocument, position: VPosition
   * [Getting value after executing command programmatically](https://github.com/Microsoft/language-server-protocol/issues/329)
   * [Experiencing infinite recursion in this code in VSCode 1.18.1](https://github.com/Microsoft/language-server-protocol/issues/279)
   * [LangaueClient#handleConnectionClosed fails to restart if this._resolvedConnection.dispose() throws](https://github.com/Microsoft/vscode-languageserver-node/issues/286)
+
+### 3.6.1 Types
+* ESM added as output format (for Webpack and other ESM consumers)
 
 ### 3.5.0 Server and Client
 
