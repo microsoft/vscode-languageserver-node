@@ -27,6 +27,14 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
+### 4.4.0 Client & 4.4.0 Server & 3.10.0 Protocol
+
+* [Implement hierarchical document outline](https://github.com/Microsoft/vscode-languageserver-node/issues/373)
+
+### 4.3.0 Client & 4.3.0 Server & 3.9.0 Protocol
+
+* Add support for `preselect` property on `CompletionItem`
+
 ### 4.2.0 Client & 4.2.0 Server & 3.8.0 Protocol
 
 * [Add CodeAction class](https://github.com/Microsoft/language-server-protocol/issues/389)
