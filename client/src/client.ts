@@ -23,7 +23,7 @@ import {
 	NotificationType, NotificationType0,
 	NotificationHandler, NotificationHandler0, GenericNotificationHandler,
 	MessageReader, MessageWriter, Trace, Tracer, Event, Emitter,
-	createProtocolConnection,
+	createProtocolConnection, ProtocolConnection,
 	ClientCapabilities, WorkspaceEdit,
 	RegistrationRequest, RegistrationParams, UnregistrationRequest, UnregistrationParams, TextDocumentRegistrationOptions,
 	InitializeRequest, InitializeParams, InitializeResult, InitializeError, ServerCapabilities, TextDocumentSyncKind, TextDocumentSyncOptions,
@@ -75,7 +75,7 @@ export { Converter as Protocol2CodeConverter } from './protocolConverter';
 
 export * from 'vscode-languageserver-protocol';
 
-interface IConnection {
+export interface IConnection {
 
 	listen(): void;
 
@@ -138,55 +138,6 @@ class ConsoleLogger implements Logger {
 	}
 }
 
-interface ConnectionErrorHandler {
-	(error: Error, message: Message | undefined, count: number | undefined): void;
-}
-
-interface ConnectionCloseHandler {
-	(): void;
-}
-function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler): IConnection;
-function createConnection(reader: MessageReader, writer: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler): IConnection;
-function createConnection(input: any, output: any, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler): IConnection {
-	let logger = new ConsoleLogger();
-	let connection = createProtocolConnection(input, output, logger);
-	connection.onError((data) => { errorHandler(data[0], data[1], data[2]) });
-	connection.onClose(closeHandler);
-	let result: IConnection = {
-
-		listen: (): void => connection.listen(),
-
-		sendRequest: <R>(type: string | RPCMessageType, ...params: any[]): Thenable<R> => connection.sendRequest(Is.string(type) ? type : type.method, ...params),
-		onRequest: <R, E>(type: string | RPCMessageType, handler: GenericRequestHandler<R, E>): void => connection.onRequest(Is.string(type) ? type : type.method, handler),
-
-		sendNotification: (type: string | RPCMessageType, params?: any): void => connection.sendNotification(Is.string(type) ? type : type.method, params),
-		onNotification: (type: string | RPCMessageType, handler: GenericNotificationHandler): void => connection.onNotification(Is.string(type) ? type : type.method, handler),
-
-		trace: (value: Trace, tracer: Tracer, sendNotification: boolean = false): void => connection.trace(value, tracer, sendNotification),
-
-		initialize: (params: InitializeParams) => connection.sendRequest(InitializeRequest.type, params),
-		shutdown: () => connection.sendRequest(ShutdownRequest.type, undefined),
-		exit: () => connection.sendNotification(ExitNotification.type),
-
-		onLogMessage: (handler: NotificationHandler<LogMessageParams>) => connection.onNotification(LogMessageNotification.type, handler),
-		onShowMessage: (handler: NotificationHandler<ShowMessageParams>) => connection.onNotification(ShowMessageNotification.type, handler),
-		onTelemetry: (handler: NotificationHandler<any>) => connection.onNotification(TelemetryEventNotification.type, handler),
-
-		didChangeConfiguration: (params: DidChangeConfigurationParams) => connection.sendNotification(DidChangeConfigurationNotification.type, params),
-		didChangeWatchedFiles: (params: DidChangeWatchedFilesParams) => connection.sendNotification(DidChangeWatchedFilesNotification.type, params),
-
-		didOpenTextDocument: (params: DidOpenTextDocumentParams) => connection.sendNotification(DidOpenTextDocumentNotification.type, params),
-		didChangeTextDocument: (params: DidChangeTextDocumentParams) => connection.sendNotification(DidChangeTextDocumentNotification.type, params),
-		didCloseTextDocument: (params: DidCloseTextDocumentParams) => connection.sendNotification(DidCloseTextDocumentNotification.type, params),
-		didSaveTextDocument: (params: DidSaveTextDocumentParams) => connection.sendNotification(DidSaveTextDocumentNotification.type, params),
-
-		onDiagnostics: (handler: NotificationHandler<PublishDiagnosticsParams>) => connection.onNotification(PublishDiagnosticsNotification.type, handler),
-
-		dispose: () => connection.dispose()
-	}
-
-	return result;
-}
 
 /**
  * An action to be performed when the connection is producing errors.
@@ -711,7 +662,7 @@ abstract class DocumentNotifiactions<P, E> implements DynamicFeature<TextDocumen
 	}
 }
 
-class DidOpenTextDocumentFeature extends DocumentNotifiactions<DidOpenTextDocumentParams, TextDocument> {
+export class DidOpenTextDocumentFeature extends DocumentNotifiactions<DidOpenTextDocumentParams, TextDocument> {
 	constructor(client: BaseLanguageClient, private _syncedDocuments: Map<string, TextDocument>) {
 		super(
 			client, Workspace.onDidOpenTextDocument, DidOpenTextDocumentNotification.type,
@@ -768,7 +719,7 @@ class DidOpenTextDocumentFeature extends DocumentNotifiactions<DidOpenTextDocume
 	}
 }
 
-class DidCloseTextDocumentFeature extends DocumentNotifiactions<DidCloseTextDocumentParams, TextDocument> {
+export class DidCloseTextDocumentFeature extends DocumentNotifiactions<DidCloseTextDocumentParams, TextDocument> {
 
 	constructor(client: BaseLanguageClient, private _syncedDocuments: Map<string, TextDocument>) {
 		super(
@@ -827,7 +778,7 @@ interface DidChangeTextDocumentData {
 	syncKind: 0 | 1 | 2;
 }
 
-class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeRegistrationOptions> {
+export class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeRegistrationOptions> {
 
 	private _listener: Disposable | undefined;
 	private _changeData: Map<string, DidChangeTextDocumentData> = new Map<string, DidChangeTextDocumentData>();
@@ -953,7 +904,7 @@ class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeR
 }
 
 
-class WillSaveFeature extends DocumentNotifiactions<WillSaveTextDocumentParams, TextDocumentWillSaveEvent> {
+export class WillSaveFeature extends DocumentNotifiactions<WillSaveTextDocumentParams, TextDocumentWillSaveEvent> {
 
 	constructor(client: BaseLanguageClient) {
 		super(
@@ -984,7 +935,7 @@ class WillSaveFeature extends DocumentNotifiactions<WillSaveTextDocumentParams, 
 	}
 }
 
-class WillSaveWaitUntilFeature implements DynamicFeature<TextDocumentRegistrationOptions> {
+export class WillSaveWaitUntilFeature implements DynamicFeature<TextDocumentRegistrationOptions> {
 
 	private _listener: Disposable | undefined;
 	private _selectors: Map<string, DocumentSelector> = new Map<string, DocumentSelector>();
@@ -1056,7 +1007,7 @@ class WillSaveWaitUntilFeature implements DynamicFeature<TextDocumentRegistratio
 	}
 }
 
-class DidSaveTextDocumentFeature extends DocumentNotifiactions<DidSaveTextDocumentParams, TextDocument> {
+export class DidSaveTextDocumentFeature extends DocumentNotifiactions<DidSaveTextDocumentParams, TextDocument> {
 
 	private _includeText: boolean;
 
@@ -1093,7 +1044,7 @@ class DidSaveTextDocumentFeature extends DocumentNotifiactions<DidSaveTextDocume
 	}
 }
 
-class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatchedFilesRegistrationOptions> {
+export class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatchedFilesRegistrationOptions> {
 
 	private _watchers: Map<string, Disposable[]> = new Map<string, Disposable[]>();
 
@@ -1232,7 +1183,7 @@ export abstract class TextDocumentFeature<T extends TextDocumentRegistrationOpti
 	}
 }
 
-abstract class WorkspaceFeature<T> implements DynamicFeature<T> {
+export abstract class WorkspaceFeature<T> implements DynamicFeature<T> {
 
 	protected _providers: Map<string, Disposable> = new Map<string, Disposable>();
 
@@ -1274,7 +1225,7 @@ abstract class WorkspaceFeature<T> implements DynamicFeature<T> {
 	}
 }
 
-class CompletionItemFeature extends TextDocumentFeature<CompletionRegistrationOptions> {
+export class CompletionItemFeature extends TextDocumentFeature<CompletionRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, CompletionRequest.type);
@@ -1344,7 +1295,7 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionRegistrationOp
 	}
 }
 
-class HoverFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
+export class HoverFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, HoverRequest.type);
@@ -1388,7 +1339,7 @@ class HoverFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> 
 	}
 }
 
-class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpRegistrationOptions> {
+export class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, SignatureHelpRequest.type);
@@ -1433,7 +1384,7 @@ class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpRegistration
 	}
 }
 
-class DefinitionFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
+export class DefinitionFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, DefinitionRequest.type);
@@ -1475,7 +1426,7 @@ class DefinitionFeature extends TextDocumentFeature<TextDocumentRegistrationOpti
 	}
 }
 
-class ReferencesFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
+export class ReferencesFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, ReferencesRequest.type);
@@ -1517,7 +1468,7 @@ class ReferencesFeature extends TextDocumentFeature<TextDocumentRegistrationOpti
 	}
 }
 
-class DocumentHighlightFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
+export class DocumentHighlightFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, DocumentHighlightRequest.type);
@@ -1559,7 +1510,7 @@ class DocumentHighlightFeature extends TextDocumentFeature<TextDocumentRegistrat
 	}
 }
 
-class DocumentSymbolFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
+export class DocumentSymbolFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, DocumentSymbolRequest.type);
@@ -1620,7 +1571,7 @@ class DocumentSymbolFeature extends TextDocumentFeature<TextDocumentRegistration
 	}
 }
 
-class WorkspaceSymbolFeature extends WorkspaceFeature<undefined> {
+export class WorkspaceSymbolFeature extends WorkspaceFeature<undefined> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, WorkspaceSymbolRequest.type);
@@ -1666,7 +1617,7 @@ class WorkspaceSymbolFeature extends WorkspaceFeature<undefined> {
 	}
 }
 
-class CodeActionFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
+export class CodeActionFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, CodeActionRequest.type);
@@ -1710,19 +1661,19 @@ class CodeActionFeature extends TextDocumentFeature<TextDocumentRegistrationOpti
 				context: client.code2ProtocolConverter.asCodeActionContext(context)
 			};
 			return client.sendRequest(CodeActionRequest.type, params, token).then((values) => {
-					if (values === null) {
-						return undefined;
-					}
-					let result: (VCommand | VCodeAction)[] = [];
-					for (let item of values) {
-						if (Command.is(item)) {
-							result.push(client.protocol2CodeConverter.asCommand(item))
-						} else {
-							result.push(client.protocol2CodeConverter.asCodeAction(item));
-						};
-					}
-					return result;
-				},
+				if (values === null) {
+					return undefined;
+				}
+				let result: (VCommand | VCodeAction)[] = [];
+				for (let item of values) {
+					if (Command.is(item)) {
+						result.push(client.protocol2CodeConverter.asCommand(item))
+					} else {
+						result.push(client.protocol2CodeConverter.asCodeAction(item));
+					};
+				}
+				return result;
+			},
 				(error) => {
 					client.logFailedRequest(CodeActionRequest.type, error);
 					return Promise.resolve([]);
@@ -1740,7 +1691,7 @@ class CodeActionFeature extends TextDocumentFeature<TextDocumentRegistrationOpti
 	}
 }
 
-class CodeLensFeature extends TextDocumentFeature<CodeLensRegistrationOptions> {
+export class CodeLensFeature extends TextDocumentFeature<CodeLensRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, CodeLensRequest.type);
@@ -1798,7 +1749,7 @@ class CodeLensFeature extends TextDocumentFeature<CodeLensRegistrationOptions> {
 	}
 }
 
-class DocumentFormattingFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
+export class DocumentFormattingFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, DocumentFormattingRequest.type);
@@ -1844,7 +1795,7 @@ class DocumentFormattingFeature extends TextDocumentFeature<TextDocumentRegistra
 	}
 }
 
-class DocumentRangeFormattingFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
+export class DocumentRangeFormattingFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, DocumentRangeFormattingRequest.type);
@@ -1891,7 +1842,7 @@ class DocumentRangeFormattingFeature extends TextDocumentFeature<TextDocumentReg
 	}
 }
 
-class DocumentOnTypeFormattingFeature extends TextDocumentFeature<DocumentOnTypeFormattingRegistrationOptions> {
+export class DocumentOnTypeFormattingFeature extends TextDocumentFeature<DocumentOnTypeFormattingRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, DocumentOnTypeFormattingRequest.type);
@@ -1940,7 +1891,7 @@ class DocumentOnTypeFormattingFeature extends TextDocumentFeature<DocumentOnType
 	}
 }
 
-class RenameFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
+export class RenameFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, RenameRequest.type);
@@ -1987,7 +1938,7 @@ class RenameFeature extends TextDocumentFeature<TextDocumentRegistrationOptions>
 	}
 }
 
-class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkRegistrationOptions> {
+export class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, DocumentLinkRequest.type);
@@ -2045,7 +1996,7 @@ class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkRegistrationOp
 	}
 }
 
-class ConfigurationFeature implements DynamicFeature<DidChangeConfigurationRegistrationOptions> {
+export class ConfigurationFeature implements DynamicFeature<DidChangeConfigurationRegistrationOptions> {
 
 	private _listeners: Map<string, Disposable> = new Map<string, Disposable>();
 
@@ -2167,7 +2118,7 @@ class ConfigurationFeature implements DynamicFeature<DidChangeConfigurationRegis
 	}
 }
 
-class ExecuteCommandFeature implements DynamicFeature<ExecuteCommandRegistrationOptions> {
+export class ExecuteCommandFeature implements DynamicFeature<ExecuteCommandRegistrationOptions> {
 
 	private _commands: Map<string, Disposable[]> = new Map<string, Disposable[]>();
 
@@ -2805,18 +2756,49 @@ export abstract class BaseLanguageClient {
 
 	protected abstract createMessageTransports(encoding: string): Thenable<MessageTransports>;
 
-	private createConnection(): Thenable<IConnection> {
-		let errorHandler = (error: Error, message: Message, count: number) => {
-			this.handleConnectionError(error, message, count);
-		}
-
-		let closeHandler = () => {
-			this.handleConnectionClosed();
-		}
-
+	protected createConnection(): Thenable<IConnection> {
 		return this.createMessageTransports(this._clientOptions.stdioEncoding || 'utf8').then((transports) => {
-			return createConnection(transports.reader, transports.writer, errorHandler, closeHandler);
+			const logger = new ConsoleLogger();
+			const connection = createProtocolConnection(transports.reader, transports.writer, logger);
+			return this.doCreateConnection(connection);
 		});
+	}
+
+	protected doCreateConnection(connection: ProtocolConnection): IConnection {
+		connection.onError(data => this.handleConnectionError(data[0], data[1]!, data[2]!));
+		connection.onClose(() => this.handleConnectionClosed());
+		return {
+
+			listen: (): void => connection.listen(),
+
+			sendRequest: <R>(type: string | RPCMessageType, ...params: any[]): Thenable<R> => connection.sendRequest(Is.string(type) ? type : type.method, ...params),
+			onRequest: <R, E>(type: string | RPCMessageType, handler: GenericRequestHandler<R, E>): void => connection.onRequest(Is.string(type) ? type : type.method, handler),
+
+			sendNotification: (type: string | RPCMessageType, params?: any): void => connection.sendNotification(Is.string(type) ? type : type.method, params),
+			onNotification: (type: string | RPCMessageType, handler: GenericNotificationHandler): void => connection.onNotification(Is.string(type) ? type : type.method, handler),
+
+			trace: (value: Trace, tracer: Tracer, sendNotification: boolean = false): void => connection.trace(value, tracer, sendNotification),
+
+			initialize: (params: InitializeParams) => connection.sendRequest(InitializeRequest.type, params),
+			shutdown: () => connection.sendRequest(ShutdownRequest.type, undefined),
+			exit: () => connection.sendNotification(ExitNotification.type),
+
+			onLogMessage: (handler: NotificationHandler<LogMessageParams>) => connection.onNotification(LogMessageNotification.type, handler),
+			onShowMessage: (handler: NotificationHandler<ShowMessageParams>) => connection.onNotification(ShowMessageNotification.type, handler),
+			onTelemetry: (handler: NotificationHandler<any>) => connection.onNotification(TelemetryEventNotification.type, handler),
+
+			didChangeConfiguration: (params: DidChangeConfigurationParams) => connection.sendNotification(DidChangeConfigurationNotification.type, params),
+			didChangeWatchedFiles: (params: DidChangeWatchedFilesParams) => connection.sendNotification(DidChangeWatchedFilesNotification.type, params),
+
+			didOpenTextDocument: (params: DidOpenTextDocumentParams) => connection.sendNotification(DidOpenTextDocumentNotification.type, params),
+			didChangeTextDocument: (params: DidChangeTextDocumentParams) => connection.sendNotification(DidChangeTextDocumentNotification.type, params),
+			didCloseTextDocument: (params: DidCloseTextDocumentParams) => connection.sendNotification(DidCloseTextDocumentNotification.type, params),
+			didSaveTextDocument: (params: DidSaveTextDocumentParams) => connection.sendNotification(DidSaveTextDocumentNotification.type, params),
+
+			onDiagnostics: (handler: NotificationHandler<PublishDiagnosticsParams>) => connection.onNotification(PublishDiagnosticsNotification.type, handler),
+
+			dispose: () => connection.dispose()
+		};
 	}
 
 	protected handleConnectionClosed() {
@@ -2920,31 +2902,36 @@ export abstract class BaseLanguageClient {
 		}
 	}
 
-	protected registerBuiltinFeatures() {
-		this.registerFeature(new ConfigurationFeature(this));
-		this.registerFeature(new DidOpenTextDocumentFeature(this, this._syncedDocuments));
-		this.registerFeature(new DidChangeTextDocumentFeature(this));
-		this.registerFeature(new WillSaveFeature(this));
-		this.registerFeature(new WillSaveWaitUntilFeature(this));
-		this.registerFeature(new DidSaveTextDocumentFeature(this));
-		this.registerFeature(new DidCloseTextDocumentFeature(this, this._syncedDocuments));
-		this.registerFeature(new FileSystemWatcherFeature(this, (event) => this.notifyFileEvent(event)));
-		this.registerFeature(new CompletionItemFeature(this));
-		this.registerFeature(new HoverFeature(this));
-		this.registerFeature(new SignatureHelpFeature(this));
-		this.registerFeature(new DefinitionFeature(this));
-		this.registerFeature(new ReferencesFeature(this));
-		this.registerFeature(new DocumentHighlightFeature(this));
-		this.registerFeature(new DocumentSymbolFeature(this));
-		this.registerFeature(new WorkspaceSymbolFeature(this));
-		this.registerFeature(new CodeActionFeature(this));
-		this.registerFeature(new CodeLensFeature(this));
-		this.registerFeature(new DocumentFormattingFeature(this));
-		this.registerFeature(new DocumentRangeFormattingFeature(this));
-		this.registerFeature(new DocumentOnTypeFormattingFeature(this));
-		this.registerFeature(new RenameFeature(this));
-		this.registerFeature(new DocumentLinkFeature(this));
-		this.registerFeature(new ExecuteCommandFeature(this));
+	protected registerBuiltinFeatures(): void {
+		this.registerFeatures(this.getBuiltinFeatures());
+	}
+	protected getBuiltinFeatures(): (StaticFeature | DynamicFeature<any>)[] {
+		return [
+			new ConfigurationFeature(this),
+			new DidOpenTextDocumentFeature(this, this._syncedDocuments),
+			new DidChangeTextDocumentFeature(this),
+			new WillSaveFeature(this),
+			new WillSaveWaitUntilFeature(this),
+			new DidSaveTextDocumentFeature(this),
+			new DidCloseTextDocumentFeature(this, this._syncedDocuments),
+			new FileSystemWatcherFeature(this, (event) => this.notifyFileEvent(event)),
+			new CompletionItemFeature(this),
+			new HoverFeature(this),
+			new SignatureHelpFeature(this),
+			new DefinitionFeature(this),
+			new ReferencesFeature(this),
+			new DocumentHighlightFeature(this),
+			new DocumentSymbolFeature(this),
+			new WorkspaceSymbolFeature(this),
+			new CodeActionFeature(this),
+			new CodeLensFeature(this),
+			new DocumentFormattingFeature(this),
+			new DocumentRangeFormattingFeature(this),
+			new DocumentOnTypeFormattingFeature(this),
+			new RenameFeature(this),
+			new DocumentLinkFeature(this),
+			new ExecuteCommandFeature(this)
+		]
 	}
 
 	private fillInitializeParams(params: InitializeParams): void {
