@@ -102,6 +102,10 @@ export interface Converter {
 	asCodeAction(item: undefined | null): undefined;
 	asCodeAction(item: ls.CodeAction | undefined | null): code.CodeAction | undefined;
 
+	asCodeActionKind(item: null | undefined): undefined;
+	asCodeActionKind(item: ls.CodeActionKind): code.CodeActionKind;
+	asCodeActionKind(item: ls.CodeActionKind | null | undefined): code.CodeActionKind | undefined;
+
 	asCodeLens(item: ls.CodeLens): code.CodeLens;
 	asCodeLens(item: undefined | null): undefined;
 	asCodeLens(item: ls.CodeLens | undefined | null): code.CodeLens | undefined;
@@ -758,6 +762,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asCommand,
 		asCommands,
 		asCodeAction,
+		asCodeActionKind,
 		asCodeLens,
 		asCodeLenses,
 		asWorkspaceEdit,
