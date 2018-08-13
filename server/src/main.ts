@@ -8,7 +8,7 @@
 import {
 	TextDocument, TextDocumentChangeEvent, TextDocumentContentChangeEvent, TextDocumentWillSaveEvent,
 	Location, Command, TextEdit, WorkspaceEdit, CompletionItem, CompletionList, Hover,
-	SignatureHelp, Definition, DocumentHighlight, SymbolInformation, WorkspaceSymbolParams, DocumentSymbolParams,
+	SignatureHelp, Definition, DocumentHighlight, SymbolInformation, DocumentSymbol, WorkspaceSymbolParams, DocumentSymbolParams,
 	CodeLens, DocumentLink,
 	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler,
 	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler, StarNotificationHandler,
@@ -1236,7 +1236,7 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentSymbol(handler: RequestHandler<DocumentSymbolParams, SymbolInformation[] | undefined | null, void>): void;
+	onDocumentSymbol(handler: RequestHandler<DocumentSymbolParams, SymbolInformation[] | DocumentSymbol[] | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the `WorkspaceSymbol` request.
@@ -1350,45 +1350,45 @@ export interface IConnection extends Connection {
 }
 
 export interface Feature<B, P> {
-	(Base: new() => B): new() => B & P;
+	(Base: new () => B): new () => B & P;
 }
 
 export type ConsoleFeature<P> = Feature<RemoteConsole, P>;
 export function combineConsoleFeatures<O, T>(one: ConsoleFeature<O>, two: ConsoleFeature<T>): ConsoleFeature<O & T> {
-	return function(Base: new() => RemoteConsole): new () => RemoteConsole & O & T {
+	return function (Base: new () => RemoteConsole): new () => RemoteConsole & O & T {
 		return two(one(Base)) as any;
 	}
 }
 
 export type TelemetryFeature<P> = Feature<Telemetry, P>;
 export function combineTelemetryFeatures<O, T>(one: TelemetryFeature<O>, two: TelemetryFeature<T>): TelemetryFeature<O & T> {
-	return function(Base: new() => Telemetry): new () => Telemetry & O & T {
+	return function (Base: new () => Telemetry): new () => Telemetry & O & T {
 		return two(one(Base)) as any;
 	}
 }
 
 export type TracerFeature<P> = Feature<Tracer, P>;
 export function combineTracerFeatures<O, T>(one: TracerFeature<O>, two: TracerFeature<T>): TracerFeature<O & T> {
-	return function(Base: new() => Tracer): new () => Tracer & O & T {
+	return function (Base: new () => Tracer): new () => Tracer & O & T {
 		return two(one(Base)) as any;
 	}
 }
 
 export type ClientFeature<P> = Feature<RemoteClient, P>;
 export function combineClientFeatures<O, T>(one: ClientFeature<O>, two: ClientFeature<T>): ClientFeature<O & T> {
-	return function(Base: new() => RemoteClient): new () => RemoteClient & O & T {
+	return function (Base: new () => RemoteClient): new () => RemoteClient & O & T {
 		return two(one(Base)) as any;
 	}
 }
 export type WindowFeature<P> = Feature<RemoteWindow, P>;
 export function combineWindowFeatures<O, T>(one: WindowFeature<O>, two: WindowFeature<T>): WindowFeature<O & T> {
-	return function(Base: new() => RemoteWindow): new () => RemoteWindow & O & T {
+	return function (Base: new () => RemoteWindow): new () => RemoteWindow & O & T {
 		return two(one(Base)) as any;
 	}
 }
 export type WorkspaceFeature<P> = Feature<RemoteWorkspace, P>;
 export function combineWorkspaceFeatures<O, T>(one: WorkspaceFeature<O>, two: WorkspaceFeature<T>): WorkspaceFeature<O & T> {
-	return function(Base: new() => RemoteWorkspace): new () => RemoteWorkspace & O & T {
+	return function (Base: new () => RemoteWorkspace): new () => RemoteWorkspace & O & T {
 		return two(one(Base)) as any;
 	}
 }
@@ -1578,7 +1578,7 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 	logger.rawAttach(connection);
 	const tracer = (factories && factories.tracer ? new (factories.tracer(TracerImpl))() : new TracerImpl()) as TracerImpl & PTracer;
 	const telemetry = (factories && factories.telemetry ? new (factories.telemetry(TelemetryImpl))() : new TelemetryImpl()) as Telemetry & PTelemetry;
-	const client = (factories && factories.client ? new (factories.client(RemoteClientImpl))() :  new RemoteClientImpl()) as RemoteClient & PClient;
+	const client = (factories && factories.client ? new (factories.client(RemoteClientImpl))() : new RemoteClientImpl()) as RemoteClient & PClient;
 	const remoteWindow = (factories && factories.window ? new (factories.window(RemoteWindowImpl))() : new RemoteWindowImpl()) as RemoteWindow & PWindow;
 	const workspace = (factories && factories.workspace ? new (factories.workspace(RemoteWorkspaceImpl))() : new RemoteWorkspaceImpl()) as RemoteWorkspace & PWorkspace;
 	const allRemotes: Remote[] = [logger, tracer, telemetry, client, remoteWindow, workspace];
@@ -1714,9 +1714,9 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 			});
 		} else {
 			let result: InitializeResult = { capabilities: { textDocumentSync: TextDocumentSyncKind.None } };
-				for (let remote of allRemotes) {
-					remote.fillServerCapabilities(result.capabilities);
-				}
+			for (let remote of allRemotes) {
+				remote.fillServerCapabilities(result.capabilities);
+			}
 			return result;
 		}
 	});
