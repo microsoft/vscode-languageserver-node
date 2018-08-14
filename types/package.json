@@ -22,7 +22,6 @@
 		"clean": "node ../node_modules/rimraf/bin.js lib",
 		"watch": "node ../build/bin/tsc -w -p ./tsconfig.json",
 		"test": "node ../node_modules/mocha/bin/_mocha",
-		"preversion": "npm test",
-		"postversion": "git push && git push --tags"
+		"preversion": "npm test"
 	}
 }
