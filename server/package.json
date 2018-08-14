@@ -25,6 +25,8 @@
 		"postpublish": "node ../build/npm/post-publish.js",
 		"compile": "node ../build/bin/tsc -p ./tsconfig.json",
 		"watch": "node ../build/bin/tsc -w -p ./tsconfig.json",
-		"test": "node ../node_modules/mocha/bin/_mocha"
+		"test": "node ../node_modules/mocha/bin/_mocha",
+		"preversion": "npm test",
+		"postversion": "git push && git push --tags"
 	}
 }
