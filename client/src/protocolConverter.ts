@@ -526,7 +526,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	function asDocumentSymbol(value: ls.DocumentSymbol): code.DocumentSymbol {
 		let result = new code.DocumentSymbol(
 			value.name,
-			value.detail !== void 0 ? value.detail : value.name,
+			value.detail || '',
 			asSymbolKind(value.kind),
 			asRange(value.range),
 			asRange(value.selectionRange)
