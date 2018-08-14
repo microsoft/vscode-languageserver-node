@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageclient",
 	"description": "VSCode Language client implementation",
-	"version": "4.4.1",
+	"version": "4.4.2",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"engines": {
@@ -21,7 +21,7 @@
 		"vscode": "^1.1.18"
 	},
 	"dependencies": {
-		"vscode-languageserver-protocol": "^3.10.1"
+		"vscode-languageserver-protocol": "^3.10.3"
 	},
 	"scripts": {
 		"prepare": "npm run update-vscode",
