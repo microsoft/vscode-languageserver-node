@@ -13,8 +13,8 @@ function tryLink(module, name, source) {
 		process.chdir(path.join(module, 'node_modules'));
 		if (fs.existsSync(name)) {
 			shell.rm(options , name);
-			shell.ln('-s', path.join('..', '..', source), name);
 		}
+		shell.ln('-s', path.join('..', '..', source), name);
 	} finally {
 		process.chdir(current);
 	}
