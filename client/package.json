@@ -5,7 +5,7 @@
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"engines": {
-		"vscode": "^1.25"
+		"vscode": "^1.26"
 	},
 	"repository": {
 		"type": "git",
@@ -17,10 +17,12 @@
 	"main": "./lib/main.js",
 	"typings": "./lib/main",
 	"devDependencies": {
+		"@types/semver": "^5.5.0",
 		"shx": "^0.3.1",
 		"vscode": "^1.1.18"
 	},
 	"dependencies": {
+		"semver": "^5.5.0",
 		"vscode-languageserver-protocol": "^3.10.3"
 	},
 	"scripts": {

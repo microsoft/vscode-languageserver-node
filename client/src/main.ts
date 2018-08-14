@@ -8,10 +8,12 @@ import * as cp from 'child_process';
 import * as fs from 'fs';
 import ChildProcess = cp.ChildProcess;
 
+import * as SemVer from 'semver';
+
 import { BaseLanguageClient, LanguageClientOptions, MessageTransports, StaticFeature, DynamicFeature } from './client';
 
 import {
-	workspace as Workspace, Disposable
+	workspace as Workspace, Disposable, version as VSCodeVersion
 } from 'vscode';
 
 import {
@@ -28,7 +30,6 @@ import { WorkspaceFoldersFeature } from './workspaceFolders';
 import { FoldingRangeFeature } from './foldingRange';
 
 import * as Is from './utils/is';
-import * as electron from './utils/electron';
 import { terminate } from './utils/processes';
 
 export * from './client';
@@ -135,6 +136,12 @@ namespace ChildProcessInfo {
 
 export type ServerOptions = Executable | { run: Executable; debug: Executable; } | { run: NodeModule; debug: NodeModule } | NodeModule | (() => Thenable<ChildProcess | StreamInfo | MessageTransports | ChildProcessInfo>);
 
+interface PackageJson {
+	engines: {
+		vscode: string;
+	}
+}
+
 export class LanguageClient extends BaseLanguageClient {
 
 	private _serverOptions: ServerOptions;
@@ -145,6 +152,22 @@ export class LanguageClient extends BaseLanguageClient {
 	public constructor(name: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, forceDebug?: boolean);
 	public constructor(id: string, name: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, forceDebug?: boolean);
 	public constructor(arg1: string, arg2: ServerOptions | string, arg3: LanguageClientOptions | ServerOptions, arg4?: boolean | LanguageClientOptions, arg5?: boolean) {
+		let packageJson: PackageJson = require('../package.json');
+		if (!packageJson || !packageJson.engines || !packageJson.engines.vscode) {
+			throw new Error('No vscode engine specified in package.json');
+		}
+		let codeVersion = SemVer.parse(VSCodeVersion);
+		if (!codeVersion) {
+			throw new Error(`No valid VS Code version detected. Version string is: ${VSCodeVersion}`);
+		}
+		// Remove the insider pre-release since we stay API compatible.
+		if (codeVersion.prerelease && codeVersion.prerelease.length > 0) {
+			codeVersion.prerelease = [];
+		}
+		if (!SemVer.satisfies(codeVersion, packageJson.engines.vscode)) {
+			throw new Error(`The language client requires VS Code version ${packageJson.engines.vscode} but recevied version ${VSCodeVersion}`);
+		}
+
 		let id: string;
 		let name: string;
 		let serverOptions: ServerOptions;
@@ -332,7 +355,7 @@ export class LanguageClient extends BaseLanguageClient {
 					}
 				} else {
 					let pipeName: string | undefined = undefined;
-					return new Promise<MessageTransports>((resolve, reject) => {
+					return new Promise<MessageTransports>((resolve, _reject) => {
 						let args = node.args && node.args.slice() || [];
 						if (transport === TransportKind.ipc) {
 							args.push('--node-ipc');
@@ -345,52 +368,38 @@ export class LanguageClient extends BaseLanguageClient {
 							args.push(`--socket=${transport.port}`);
 						}
 						args.push(`--clientProcessId=${process.pid.toString()}`);
-						let options: ForkOptions = node.options || Object.create(null);
+						let options: cp.ForkOptions = node.options || Object.create(null);
 						options.execArgv = options.execArgv || [];
 						options.cwd = serverWorkingDir;
+						options.silent = true;
 						if (transport === TransportKind.ipc || transport === TransportKind.stdio) {
-							electron.fork(node.module, args || [], options, (error, serverProcess) => {
-								if (error || !serverProcess) {
-									reject(error);
-								} else {
-									this._serverProcess = serverProcess;
-									serverProcess.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
-									if (transport === TransportKind.ipc) {
-										serverProcess.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
-										resolve({ reader: new IPCMessageReader(this._serverProcess), writer: new IPCMessageWriter(this._serverProcess) });
-									} else {
-										resolve({ reader: new StreamMessageReader(serverProcess.stdout), writer: new StreamMessageWriter(serverProcess.stdin) });
-									}
-								}
-							});
+							let sp = cp.fork(node.module, args || [], options);
+							this._serverProcess = sp;
+							sp.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+							if (transport === TransportKind.ipc) {
+								sp.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+								resolve({ reader: new IPCMessageReader(this._serverProcess), writer: new IPCMessageWriter(this._serverProcess) });
+							} else {
+								resolve({ reader: new StreamMessageReader(sp.stdout), writer: new StreamMessageWriter(sp.stdin) });
+							}
 						} else if (transport === TransportKind.pipe) {
 							createClientPipeTransport(pipeName!).then((transport) => {
-								electron.fork(node.module, args || [], options, (error, cp) => {
-									if (error || !cp) {
-										reject(error);
-									} else {
-										this._serverProcess = cp;
-										cp.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
-										cp.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
-										transport.onConnected().then((protocol) => {
-											resolve({ reader: protocol[0], writer: protocol[1] });
-										});
-									}
+								let sp = cp.fork(node.module, args || [], options);
+								this._serverProcess = sp;
+								sp.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+								sp.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+								transport.onConnected().then((protocol) => {
+									resolve({ reader: protocol[0], writer: protocol[1] });
 								});
 							});
 						} else if (Transport.isSocket(transport)) {
 							createClientSocketTransport(transport.port).then((transport) => {
-								electron.fork(node.module, args || [], options, (error, cp) => {
-									if (error || !cp) {
-										reject(error);
-									} else {
-										this._serverProcess = cp;
-										cp.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
-										cp.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
-										transport.onConnected().then((protocol) => {
-											resolve({ reader: protocol[0], writer: protocol[1] });
-										});
-									}
+								let sp = cp.fork(node.module, args || [], options);
+								this._serverProcess = sp;
+								sp.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+								sp.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+								transport.onConnected().then((protocol) => {
+									resolve({ reader: protocol[0], writer: protocol[1] });
 								});
 							});
 						}
