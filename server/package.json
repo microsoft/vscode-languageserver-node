@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageserver",
 	"description": "Language server implementation for node",
-	"version": "4.4.2",
+	"version": "5.0.0",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"repository": {
