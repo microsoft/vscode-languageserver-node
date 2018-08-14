@@ -27,6 +27,11 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
+### 5.0.0 Client & 5.0.0 Server
+
+* Make the client work with Electron 2.x. which is used since VS Code 1.26.x
+* Check that the expected client version specified in `engines.vscode` in the `package.json` file matches the VS Code version the client is running on.
+
 ### 4.4.0 Client & 4.4.0 Server & 3.10.0 Protocol
 
 * [Implement hierarchical document outline](https://github.com/Microsoft/vscode-languageserver-node/issues/373)

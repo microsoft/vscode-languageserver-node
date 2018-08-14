@@ -152,22 +152,6 @@ export class LanguageClient extends BaseLanguageClient {
 	public constructor(name: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, forceDebug?: boolean);
 	public constructor(id: string, name: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, forceDebug?: boolean);
 	public constructor(arg1: string, arg2: ServerOptions | string, arg3: LanguageClientOptions | ServerOptions, arg4?: boolean | LanguageClientOptions, arg5?: boolean) {
-		let packageJson: PackageJson = require('../package.json');
-		if (!packageJson || !packageJson.engines || !packageJson.engines.vscode) {
-			throw new Error('No vscode engine specified in package.json');
-		}
-		let codeVersion = SemVer.parse(VSCodeVersion);
-		if (!codeVersion) {
-			throw new Error(`No valid VS Code version detected. Version string is: ${VSCodeVersion}`);
-		}
-		// Remove the insider pre-release since we stay API compatible.
-		if (codeVersion.prerelease && codeVersion.prerelease.length > 0) {
-			codeVersion.prerelease = [];
-		}
-		if (!SemVer.satisfies(codeVersion, packageJson.engines.vscode)) {
-			throw new Error(`The language client requires VS Code version ${packageJson.engines.vscode} but recevied version ${VSCodeVersion}`);
-		}
-
 		let id: string;
 		let name: string;
 		let serverOptions: ServerOptions;
@@ -190,6 +174,32 @@ export class LanguageClient extends BaseLanguageClient {
 		super(id, name, clientOptions);
 		this._serverOptions = serverOptions;
 		this._forceDebug = forceDebug;
+		try {
+			this.checkVersion();
+		} catch (error) {
+			if (Is.string(error.message)) {
+				this.outputChannel.appendLine(error.message)
+			}
+			throw error;
+		}
+	}
+
+	private checkVersion() {
+		let packageJson: PackageJson = require('../package.json');
+		if (!packageJson || !packageJson.engines || !packageJson.engines.vscode) {
+			throw new Error('No vscode engine specified in package.json');
+		}
+		let codeVersion = SemVer.parse(VSCodeVersion);
+		if (!codeVersion) {
+			throw new Error(`No valid VS Code version detected. Version string is: ${VSCodeVersion}`);
+		}
+		// Remove the insider pre-release since we stay API compatible.
+		if (codeVersion.prerelease && codeVersion.prerelease.length > 0) {
+			codeVersion.prerelease = [];
+		}
+		if (!SemVer.satisfies(codeVersion, packageJson.engines.vscode)) {
+			throw new Error(`The language client requires VS Code version ${packageJson.engines.vscode} but recevied version ${VSCodeVersion}`);
+		}
 	}
 
 	public stop(): Thenable<void> {
