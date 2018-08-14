@@ -7,8 +7,10 @@ under which Microsoft received such Third Party Code are set out below. This Thi
 to you under their original license terms set forth below.  Microsoft reserves all other rights not expressly
 granted, whether by implication, estoppel or otherwise.
 
-1.       DefinitelyTyped version 0.0.1 (https://github.com/borisyankov/DefinitelyTyped)
+1. DefinitelyTyped version 0.0.1 (https://github.com/borisyankov/DefinitelyTyped)
 
+%% DefinitelyTyped NOTICES AND INFORMATION BEGIN HERE
+=========================================
 This project is licensed under the MIT license.
 Copyrights are respective of each contributor listed at the beginning of each definition file.
 
@@ -29,3 +31,5 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+=========================================
+END OF DefinitelyTyped NOTICES AND INFORMATION
