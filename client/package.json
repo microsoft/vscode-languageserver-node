@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageclient",
 	"description": "VSCode Language client implementation",
-	"version": "5.0.0",
+	"version": "5.0.1",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"engines": {
@@ -19,7 +19,7 @@
 	"devDependencies": {
 		"@types/semver": "^5.5.0",
 		"shx": "^0.3.1",
-		"vscode": "^1.1.18"
+		"vscode": "^1.1.21"
 	},
 	"dependencies": {
 		"semver": "^5.5.0",
