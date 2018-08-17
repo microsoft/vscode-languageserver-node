@@ -72,8 +72,13 @@ export function resolveModule(workspaceRoot: string, moduleName: string): Thenab
 			} else {
 				newEnv[nodePathKey] = nodePath.join(separator);
 			}
+			newEnv['ELECTRON_RUN_AS_NODE'] = '1';
 			try {
 				let cp: ChildProcess = fork(path.join(__dirname, 'resolve.js'), [], <any>{ env: newEnv, execArgv: [] });
+				if (cp.pid === void 0) {
+					reject(new Error(`Starting process to resolve node module  ${moduleName} failed`));
+					return;
+				}
 				cp.on('message', (message: Message) => {
 					if (message.command === 'resolve') {
 						let toRequire: string = moduleName;
@@ -144,13 +149,17 @@ export function resolve(moduleName: string, nodePath: string | undefined, cwd: s
 				tracer(`NODE_PATH value is: ${newEnv[nodePathKey]}`);
 			}
 		}
-		newEnv['ATOM_SHELL_INTERNAL_RUN_AS_NODE'] = '1';
+		newEnv['ELECTRON_RUN_AS_NODE'] = '1';
 		try {
 			let cp: ChildProcess = fork('', [], <any>{
 				cwd: cwd,
 				env: newEnv,
 				execArgv: ['-e', app]
 			});
+			if (cp.pid === void 0) {
+				reject(new Error(`Starting process to resolve node module  ${moduleName} failed`));
+				return;
+			}
 			cp.on('error', (error: any) => {
 				reject(error);
 			});
@@ -186,27 +195,35 @@ export function resolveGlobalNodePath(tracer?: (message: string) => void): strin
 		options.shell = true;
 	}
 
-	let stdout = spawnSync(npmCommand, ['config', 'get', 'prefix'], options).stdout;
+	let handler = () => {};
+	try {
+		process.on('SIGPIPE', handler);
+		let stdout = spawnSync(npmCommand, ['config', 'get', 'prefix'], options).stdout;
 
-	if (!stdout) {
+		if (!stdout) {
+			if (tracer) {
+				tracer(`'npm config get prefix' didn't return a value.`);
+			}
+			return undefined;
+		}
+		let prefix = stdout.trim();
 		if (tracer) {
-			tracer(`'npm config get prefix' didn't return a value.`);
+			tracer(`'npm config get prefix' value is: ${prefix}`);
+		}
+
+		if (prefix.length > 0) {
+			if (isWindows()) {
+				return path.join(prefix, 'node_modules');
+			} else {
+				return path.join(prefix, 'lib', 'node_modules');
+			}
 		}
 		return undefined;
+	} catch (err) {
+		return undefined;
+	} finally {
+		process.removeListener('SIGPIPE', handler);
 	}
-	let prefix = stdout.trim();
-	if (tracer) {
-		tracer(`'npm config get prefix' value is: ${prefix}`);
-	}
-
-	if (prefix.length > 0) {
-		if (isWindows()) {
-			return path.join(prefix, 'node_modules');
-		} else {
-			return path.join(prefix, 'lib', 'node_modules');
-		}
-	}
-	return undefined;
 }
 
 interface YarnJsonFormat {
@@ -225,30 +242,38 @@ export function resolveGlobalYarnPath(tracer?: (message: string) => void): strin
 		options.shell = true;
 	}
 
-	let results = spawnSync(yarnCommand, ['global', 'dir', '--json'], options);
+	let handler = () => {};
+	try {
+		process.on('SIGPIPE', handler);
+		let results = spawnSync(yarnCommand, ['global', 'dir', '--json'], options);
 
-	let stdout = results.stdout;
-	if (!stdout) {
-		if (tracer) {
-			tracer(`'yarn global dir' didn't return a value.`);
-			if (results.stderr) {
-				tracer(results.stderr);
+		let stdout = results.stdout;
+		if (!stdout) {
+			if (tracer) {
+				tracer(`'yarn global dir' didn't return a value.`);
+				if (results.stderr) {
+					tracer(results.stderr);
+				}
+			}
+			return undefined;
+		}
+		let lines = stdout.trim().split(/\r?\n/);
+		for (let line of lines) {
+			try {
+				let yarn: YarnJsonFormat = JSON.parse(line);
+				if (yarn.type === 'log') {
+					return path.join(yarn.data, 'node_modules');
+				}
+			} catch (e) {
+				// Do nothing. Ignore the line
 			}
 		}
 		return undefined;
+	} catch (err) {
+		return undefined;
+	} finally {
+		process.removeListener('SIGPIPE', handler);
 	}
-	let lines = stdout.trim().split(/\r?\n/);
-	for (let line of lines) {
-		try {
-			let yarn: YarnJsonFormat = JSON.parse(line);
-			if (yarn.type === 'log') {
-				return path.join(yarn.data, 'node_modules');
-			}
-		} catch (e) {
-			// Do nothing. Ignore the line
-		}
-	}
-	return undefined;
 }
 
 export namespace FileSystem {
