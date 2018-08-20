@@ -454,6 +454,7 @@ interface ResolvedClientOptions {
 
 export enum State {
 	Stopped = 1,
+	Starting = 3,
 	Running = 2
 }
 
@@ -2242,6 +2243,29 @@ export namespace MessageTransports {
 	}
 }
 
+class OnReady {
+
+	private _used: boolean;
+
+	constructor(private _resolve: () => void, private _reject: (error: any) => void) {
+		this._used = false;
+	}
+
+	public get isUsed(): boolean {
+		return this._used;
+	}
+
+	public resolve(): void {
+		this._used = true;
+		this._resolve();
+	}
+
+	public reject(error: any): void {
+		this._used = true;
+		this._reject(error);
+	}
+}
+
 export abstract class BaseLanguageClient {
 
 	private _id: string;
@@ -2250,7 +2274,7 @@ export abstract class BaseLanguageClient {
 
 	private _state: ClientState;
 	private _onReady: Promise<void>;
-	private _onReadyCallbacks: { resolve: () => void; reject: (error: any) => void; };
+	private _onReadyCallbacks: OnReady;
 	private _onStop: Thenable<void> | undefined;
 	private _connectionPromise: Thenable<IConnection> | undefined;
 	private _resolvedConnection: IConnection | undefined;
@@ -2316,7 +2340,7 @@ export abstract class BaseLanguageClient {
 		this._fileEvents = [];
 		this._fileEventDelayer = new Delayer<void>(250);
 		this._onReady = new Promise<void>((resolve, reject) => {
-			this._onReadyCallbacks = { resolve, reject };
+			this._onReadyCallbacks = new OnReady(resolve, reject);
 		});
 		this._onStop = undefined;
 		this._telemetryEmitter = new Emitter<any>();
@@ -2348,6 +2372,8 @@ export abstract class BaseLanguageClient {
 	private getPublicState(): State {
 		if (this.state === ClientState.Running) {
 			return State.Running;
+		} else if (this.state === ClientState.Starting) {
+			return State.Starting;
 		} else {
 			return State.Stopped;
 		}
@@ -2537,6 +2563,11 @@ export abstract class BaseLanguageClient {
 	}
 
 	public start(): Disposable {
+		if (this._onReadyCallbacks.isUsed) {
+			this._onReady = new Promise((resolve, reject) => {
+				this._onReadyCallbacks = new OnReady(resolve, reject);
+			});
+		}
 		this._listeners = [];
 		this._providers = [];
 		// If we restart then the diagnostics collection is reused.
