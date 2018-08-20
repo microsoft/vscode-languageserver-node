@@ -708,6 +708,7 @@ abstract class DocumentNotifiactions<P, E> implements DynamicFeature<TextDocumen
 		this._selectors.clear();
 		if (this._listener) {
 			this._listener.dispose();
+			this._listener = undefined;
 		}
 	}
 }
