@@ -15,7 +15,7 @@ export interface FoldingRangeClientCapabilities {
 	 */
 	textDocument?: {
 		/**
-		 * Capabilities specific to `textDocument/foldingRange` requests
+		 * Capabilities specific to `textDocument/foldingRanges` requests
 		 */
 		foldingRange?: {
 			/**
@@ -116,5 +116,5 @@ export interface FoldingRangeRequestParam {
  * that resolves to such.
  */
 export namespace FoldingRangeRequest {
-	export const type: RequestType<FoldingRangeRequestParam, FoldingRange[] | null, any, any> = new RequestType('textDocument/foldingRange');
+	export const type: RequestType<FoldingRangeRequestParam, FoldingRange[] | null, any, any> = new RequestType('textDocument/foldingRanges');
 }
