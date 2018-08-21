@@ -12,7 +12,7 @@ import {
 	CompletionItem as VCompletionItem, CompletionList as VCompletionList, SignatureHelp as VSignatureHelp, Definition as VDefinition, DocumentHighlight as VDocumentHighlight,
 	SymbolInformation as VSymbolInformation, CodeActionContext as VCodeActionContext, Command as VCommand, CodeLens as VCodeLens,
 	FormattingOptions as VFormattingOptions, TextEdit as VTextEdit, WorkspaceEdit as VWorkspaceEdit, MessageItem,
-	Hover as VHover, CodeAction as VCodeAction, DocumentSymbol as VDocumentSymbol,
+	Hover as VHover, CodeActionKind as VCodeActionKind, CodeAction as VCodeAction, DocumentSymbol as VDocumentSymbol,
 	DocumentLink as VDocumentLink, TextDocumentWillSaveEvent,
 	WorkspaceFolder as VWorkspaceFolder, CompletionContext as VCompletionContext, ConfigurationChangeEvent
 } from 'vscode';
@@ -53,7 +53,7 @@ import {
 	DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkRegistrationOptions,
 	ExecuteCommandRequest, ExecuteCommandParams, ExecuteCommandRegistrationOptions,
 	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse,
-	MarkupKind, SymbolKind, CompletionItemKind, Command, CodeActionKind, DocumentSymbol, SymbolInformation
+	MarkupKind, SymbolKind, CompletionItemKind, Command, CodeActionKind, DocumentSymbol, SymbolInformation, CodeActionOptions
 } from 'vscode-languageserver-protocol';
 
 import { ColorProviderMiddleware } from './colorProvider';
@@ -1670,6 +1670,8 @@ class WorkspaceSymbolFeature extends WorkspaceFeature<undefined> {
 
 class CodeActionFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
 
+	private _providedCodeActionKinds: CodeActionKind[] = [];
+
 	constructor(client: BaseLanguageClient) {
 		super(client, CodeActionRequest.type);
 	}
@@ -1696,6 +1698,11 @@ class CodeActionFeature extends TextDocumentFeature<TextDocumentRegistrationOpti
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		if (!capabilities.codeActionProvider || !documentSelector) {
 			return;
+		}
+
+		const codeActionOptions = capabilities.codeActionProvider as CodeActionOptions;
+		if (codeActionOptions !== void 0 && codeActionOptions.providedCodeActionKinds !== void 0) {
+			this._providedCodeActionKinds = codeActionOptions.providedCodeActionKinds;
 		}
 		this.register(this.messages, {
 			id: UUID.generateUuid(),
@@ -1732,12 +1739,18 @@ class CodeActionFeature extends TextDocumentFeature<TextDocumentRegistrationOpti
 			);
 		}
 		let middleware = client.clientOptions.middleware!;
+		let providedCodeActionKinds :VCodeActionKind[] = [];
+		for (let kind of this._providedCodeActionKinds) {
+			providedCodeActionKinds.push(client.protocol2CodeConverter.asCodeActionKind(kind));
+		}
 		return Languages.registerCodeActionsProvider(options.documentSelector!, {
 			provideCodeActions: (document: TextDocument, range: VRange, context: VCodeActionContext, token: CancellationToken): ProviderResult<(VCommand | VCodeAction)[]> => {
 				return middleware.provideCodeActions
 					? middleware.provideCodeActions(document, range, context, token, provideCodeActions)
 					: provideCodeActions(document, range, context, token);
 			}
+		}, {
+			providedCodeActionKinds: providedCodeActionKinds
 		});
 	}
 }
