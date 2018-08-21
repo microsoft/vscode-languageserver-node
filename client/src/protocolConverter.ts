@@ -106,6 +106,10 @@ export interface Converter {
 	asCodeActionKind(item: ls.CodeActionKind): code.CodeActionKind;
 	asCodeActionKind(item: ls.CodeActionKind | null | undefined): code.CodeActionKind | undefined;
 
+	asCodeActionKinds(item: null | undefined): undefined;
+	asCodeActionKinds(items: ls.CodeActionKind[]): code.CodeActionKind[];
+	asCodeActionKinds(item: ls.CodeActionKind[] | null | undefined): code.CodeActionKind[] | undefined;
+
 	asCodeLens(item: ls.CodeLens): code.CodeLens;
 	asCodeLens(item: undefined | null): undefined;
 	asCodeLens(item: ls.CodeLens | undefined | null): code.CodeLens | undefined;
@@ -591,6 +595,18 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return result;
 	}
 
+	function asCodeActionKinds(item: null | undefined): undefined;
+	function asCodeActionKinds(items: ls.CodeActionKind[]): code.CodeActionKind[];
+	function asCodeActionKinds(items: ls.CodeActionKind[] | null | undefined): code.CodeActionKind[] | undefined;
+	function asCodeActionKinds(items: ls.CodeActionKind[] | null | undefined): code.CodeActionKind[] | undefined {
+		if (items === void 0 || items === null) {
+			return undefined;
+		}
+		return items.map(kind => asCodeActionKind(kind));
+	}
+
+
+
 	function asCodeAction(item: ls.CodeAction): code.CodeAction;
 	function asCodeAction(item: undefined | null): undefined;
 	function asCodeAction(item: ls.CodeAction | undefined | null): code.CodeAction | undefined;
@@ -763,6 +779,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asCommands,
 		asCodeAction,
 		asCodeActionKind,
+		asCodeActionKinds,
 		asCodeLens,
 		asCodeLenses,
 		asWorkspaceEdit,

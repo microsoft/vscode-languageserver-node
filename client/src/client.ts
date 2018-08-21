@@ -12,7 +12,7 @@ import {
 	CompletionItem as VCompletionItem, CompletionList as VCompletionList, SignatureHelp as VSignatureHelp, Definition as VDefinition, DocumentHighlight as VDocumentHighlight,
 	SymbolInformation as VSymbolInformation, CodeActionContext as VCodeActionContext, Command as VCommand, CodeLens as VCodeLens,
 	FormattingOptions as VFormattingOptions, TextEdit as VTextEdit, WorkspaceEdit as VWorkspaceEdit, MessageItem,
-	Hover as VHover, CodeActionKind as VCodeActionKind, CodeAction as VCodeAction, DocumentSymbol as VDocumentSymbol,
+	Hover as VHover, CodeAction as VCodeAction, DocumentSymbol as VDocumentSymbol,
 	DocumentLink as VDocumentLink, TextDocumentWillSaveEvent,
 	WorkspaceFolder as VWorkspaceFolder, CompletionContext as VCompletionContext, ConfigurationChangeEvent
 } from 'vscode';
@@ -53,7 +53,8 @@ import {
 	DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkRegistrationOptions,
 	ExecuteCommandRequest, ExecuteCommandParams, ExecuteCommandRegistrationOptions,
 	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse,
-	MarkupKind, SymbolKind, CompletionItemKind, Command, CodeActionKind, DocumentSymbol, SymbolInformation, CodeActionOptions
+	MarkupKind, SymbolKind, CompletionItemKind, Command, CodeActionKind, DocumentSymbol, SymbolInformation,
+	CodeActionRegistrationOptions
 } from 'vscode-languageserver-protocol';
 
 import { ColorProviderMiddleware } from './colorProvider';
@@ -1668,9 +1669,7 @@ class WorkspaceSymbolFeature extends WorkspaceFeature<undefined> {
 	}
 }
 
-class CodeActionFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
-
-	private _providedCodeActionKinds: CodeActionKind[] = [];
+class CodeActionFeature extends TextDocumentFeature<CodeActionRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, CodeActionRequest.type);
@@ -1700,17 +1699,18 @@ class CodeActionFeature extends TextDocumentFeature<TextDocumentRegistrationOpti
 			return;
 		}
 
-		const codeActionOptions = capabilities.codeActionProvider as CodeActionOptions;
-		if (codeActionOptions !== void 0 && codeActionOptions.providedCodeActionKinds !== void 0) {
-			this._providedCodeActionKinds = codeActionOptions.providedCodeActionKinds;
+		let codeActionKinds: CodeActionKind[] | undefined = undefined;
+		if (!Is.boolean(capabilities.codeActionProvider)) {
+			codeActionKinds = capabilities.codeActionProvider.codeActionKinds;
 		}
+
 		this.register(this.messages, {
 			id: UUID.generateUuid(),
-			registerOptions: Object.assign({}, { documentSelector: documentSelector })
+			registerOptions: { documentSelector: documentSelector, codeActionKinds }
 		});
 	}
 
-	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): Disposable {
+	protected registerLanguageProvider(options: CodeActionRegistrationOptions): Disposable {
 		let client = this._client;
 		let provideCodeActions: ProvideCodeActionsSignature = (document, range, context, token) => {
 			let params: CodeActionParams = {
@@ -1739,19 +1739,16 @@ class CodeActionFeature extends TextDocumentFeature<TextDocumentRegistrationOpti
 			);
 		}
 		let middleware = client.clientOptions.middleware!;
-		let providedCodeActionKinds :VCodeActionKind[] = [];
-		for (let kind of this._providedCodeActionKinds) {
-			providedCodeActionKinds.push(client.protocol2CodeConverter.asCodeActionKind(kind));
-		}
 		return Languages.registerCodeActionsProvider(options.documentSelector!, {
 			provideCodeActions: (document: TextDocument, range: VRange, context: VCodeActionContext, token: CancellationToken): ProviderResult<(VCommand | VCodeAction)[]> => {
 				return middleware.provideCodeActions
 					? middleware.provideCodeActions(document, range, context, token, provideCodeActions)
 					: provideCodeActions(document, range, context, token);
 			}
-		}, {
-			providedCodeActionKinds: providedCodeActionKinds
-		});
+		}, options.codeActionKinds
+			? { providedCodeActionKinds: client.protocol2CodeConverter.asCodeActionKinds(options.codeActionKinds) }
+			: undefined
+		);
 	}
 }
 
