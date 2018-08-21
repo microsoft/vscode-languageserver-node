@@ -1565,11 +1565,14 @@ export interface CodeActionParams {
 	context: CodeActionContext;
 }
 
+export interface CodeActionRegistrationOptions extends TextDocumentRegistrationOptions, CodeActionOptions {
+}
+
 /**
  * A request to provide commands for the given text document and range.
  */
 export namespace CodeActionRequest {
-	export const type = new RequestType<CodeActionParams, (Command | CodeAction)[] | null, void, TextDocumentRegistrationOptions>('textDocument/codeAction');
+	export const type = new RequestType<CodeActionParams, (Command | CodeAction)[] | null, void, CodeActionRegistrationOptions>('textDocument/codeAction');
 }
 
 //---- Code Lens Provider -------------------------------------------
