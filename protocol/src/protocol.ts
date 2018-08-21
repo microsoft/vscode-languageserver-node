@@ -652,7 +652,7 @@ export interface CodeActionOptions {
 	 * The list of kinds may be generic, such as `CodeActionKind.Refactor`, or the server
 	 * may list out every specific kind they provide.
 	 */
-	providedCodeActionKinds?: CodeActionKind[];
+	codeActionKinds?: CodeActionKind[];
 }
 
 /**
