@@ -2676,14 +2676,22 @@ export abstract class BaseLanguageClient {
 			this.state = ClientState.Running;
 
 			let textDocumentSyncOptions: TextDocumentSyncOptions | undefined = undefined;
-			if (Is.number(result.capabilities.textDocumentSync) && result.capabilities.textDocumentSync !== TextDocumentSyncKind.None) {
-				textDocumentSyncOptions = {
-					openClose: true,
-					change: result.capabilities.textDocumentSync,
-					save: {
-						includeText: false
-					}
-				};
+			if (Is.number(result.capabilities.textDocumentSync)) {
+				if (result.capabilities.textDocumentSync === TextDocumentSyncKind.None) {
+					textDocumentSyncOptions = {
+						openClose: false,
+						change: TextDocumentSyncKind.None,
+						save: undefined
+					};
+				} else {
+					textDocumentSyncOptions = {
+						openClose: true,
+						change: result.capabilities.textDocumentSync,
+						save: {
+							includeText: false
+						}
+					};
+				}
 			} else if (result.capabilities.textDocumentSync !== void 0 && result.capabilities.textDocumentSync !== null) {
 				textDocumentSyncOptions = result.capabilities.textDocumentSync as TextDocumentSyncOptions;
 			}

@@ -1702,7 +1702,7 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 					capabilities = {}
 					result.capabilities = capabilities;
 				}
-				if (!capabilities.textDocumentSync) {
+				if (capabilities.textDocumentSync === void 0 || capabilities.textDocumentSync === null) {
 					capabilities.textDocumentSync = Is.number(protocolConnection.__textDocumentSync) ? protocolConnection.__textDocumentSync : TextDocumentSyncKind.None;
 				} else if (!Is.number(capabilities.textDocumentSync) && !Is.number(capabilities.textDocumentSync.change)) {
 					capabilities.textDocumentSync.change = Is.number(protocolConnection.__textDocumentSync) ? protocolConnection.__textDocumentSync : TextDocumentSyncKind.None;
