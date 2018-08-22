@@ -22,6 +22,7 @@ connection.onInitialize((params: InitializeParams): any => {
 	assert.equal(params.capabilities.workspace!.workspaceEdit!.documentChanges, true);
 	assert.equal(params.capabilities.textDocument!.completion!.completionItem!.deprecatedSupport, true);
 	assert.equal(params.capabilities.textDocument!.completion!.completionItem!.preselectSupport, true);
+	assert.equal(params.capabilities.textDocument!.rename!.prepareSupport, true);
 	let valueSet = params.capabilities.textDocument!.completion!.completionItemKind!.valueSet!;
 	assert.equal(valueSet[0], 1);
 	assert.equal(valueSet[valueSet.length - 1], CompletionItemKind.TypeParameter);
@@ -30,7 +31,10 @@ connection.onInitialize((params: InitializeParams): any => {
 	let capabilities: ServerCapabilities = {
 		textDocumentSync: documents.syncKind,
 		completionProvider: { resolveProvider: true, triggerCharacters: ['"', ':'] },
-		hoverProvider: true
+		hoverProvider: true,
+		renameProvider: {
+			prepareProvider: true
+		}
 	};
 	return { capabilities, customResults: { "hello": "world" } };
 });

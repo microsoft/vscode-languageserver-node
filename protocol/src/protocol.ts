@@ -524,6 +524,11 @@ export interface TextDocumentClientCapabilities {
 		 * Whether rename supports dynamic registration.
 		 */
 		dynamicRegistration?: boolean;
+		/**
+		 * Client supports testing for validity of rename operations
+		 * before execution.
+		 */
+		prepareSupport?: boolean;
 	};
 
 	/**
@@ -681,6 +686,16 @@ export interface DocumentOnTypeFormattingOptions {
 }
 
 /**
+ * Rename options
+ */
+export interface RenameOptions {
+	/**
+	 * Renames should be checked and tested before being executed.
+	 */
+	prepareProvider?: boolean;
+}
+
+/**
  * Document link options
  */
 export interface DocumentLinkOptions {
@@ -806,9 +821,11 @@ export interface _ServerCapabilities {
 		moreTriggerCharacter?: string[]
 	};
 	/**
-	 * The server provides rename support.
+	 * The server provides rename support. RenameOptions may only be
+	 * specified if the client states that it supports
+	 * `prepareSupport` in its initial `initialize` request.
 	 */
-	renameProvider?: boolean;
+	renameProvider?: boolean | RenameOptions;
 	/**
 	 * The server provides document link support.
 	 */
@@ -1712,7 +1729,20 @@ export interface RenameParams {
  * A request to rename a symbol.
  */
 export namespace RenameRequest {
-	export const type = new RequestType<RenameParams, WorkspaceEdit | null, void, TextDocumentRegistrationOptions>('textDocument/rename');
+	export const type = new RequestType<RenameParams, WorkspaceEdit | null, void, RenameRegistrationOptions>('textDocument/rename');
+}
+
+/**
+ * A request to test and perform the setup necessary for a rename.
+ */
+export namespace PrepareRenameRequest {
+	export const type = new RequestType<TextDocumentPositionParams, Range | { range: Range, placeholder: string } | null, void, void>('textDocument/prepareRename');
+}
+
+/**
+ * Rename registration options.
+ */
+export interface RenameRegistrationOptions extends TextDocumentRegistrationOptions, RenameOptions {
 }
 
 //---- Document Links ----------------------------------------------

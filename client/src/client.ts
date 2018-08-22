@@ -49,11 +49,11 @@ import {
 	CodeLensRequest, CodeLensResolveRequest, CodeLensRegistrationOptions,
 	DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
 	DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams, DocumentOnTypeFormattingRegistrationOptions,
-	RenameRequest, RenameParams,
+	RenameRequest, RenameParams, RenameRegistrationOptions, PrepareRenameRequest, TextDocumentPositionParams,
 	DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkRegistrationOptions,
 	ExecuteCommandRequest, ExecuteCommandParams, ExecuteCommandRegistrationOptions,
 	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse,
-	MarkupKind, SymbolKind, CompletionItemKind, Command, CodeActionKind, DocumentSymbol, SymbolInformation,
+	MarkupKind, SymbolKind, CompletionItemKind, Command, CodeActionKind, DocumentSymbol, SymbolInformation, Range,
 	CodeActionRegistrationOptions
 } from 'vscode-languageserver-protocol';
 
@@ -354,6 +354,10 @@ export interface ProvideRenameEditsSignature {
 	(document: TextDocument, position: VPosition, newName: string, token: CancellationToken): ProviderResult<VWorkspaceEdit>;
 }
 
+export interface PrepareRenameSignature {
+	(document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VRange | { range: VRange, placeholder: string }>;
+}
+
 export interface ProvideDocumentLinksSignature {
 	(document: TextDocument, token: CancellationToken): ProviderResult<VDocumentLink[]>;
 }
@@ -405,6 +409,7 @@ export interface _Middleware {
 	provideDocumentRangeFormattingEdits?: (this: void, document: TextDocument, range: VRange, options: VFormattingOptions, token: CancellationToken, next: ProvideDocumentRangeFormattingEditsSignature) => ProviderResult<VTextEdit[]>;
 	provideOnTypeFormattingEdits?: (this: void, document: TextDocument, position: VPosition, ch: string, options: VFormattingOptions, token: CancellationToken, next: ProvideOnTypeFormattingEditsSignature) => ProviderResult<VTextEdit[]>;
 	provideRenameEdits?: (this: void, document: TextDocument, position: VPosition, newName: string, token: CancellationToken, next: ProvideRenameEditsSignature) => ProviderResult<VWorkspaceEdit>;
+	prepareRename?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: PrepareRenameSignature) => ProviderResult<VRange | { range: VRange, placeholder: string }>;
 	provideDocumentLinks?: (this: void, document: TextDocument, token: CancellationToken, next: ProvideDocumentLinksSignature) => ProviderResult<VDocumentLink[]>;
 	resolveDocumentLink?: (this: void, link: VDocumentLink, token: CancellationToken, next: ResolveDocumentLinkSignature) => ProviderResult<VDocumentLink>;
 	workspace?: WorkspaceMiddleware;
@@ -1952,14 +1957,16 @@ class DocumentOnTypeFormattingFeature extends TextDocumentFeature<DocumentOnType
 	}
 }
 
-class RenameFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
+class RenameFeature extends TextDocumentFeature<RenameRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, RenameRequest.type);
 	}
 
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		ensure(ensure(capabilites, 'textDocument')!, 'rename')!.dynamicRegistration = true;
+		let rename = ensure(ensure(capabilites, 'textDocument')!, 'rename')!;
+		rename.dynamicRegistration = true;
+		rename.prepareSupport = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
@@ -1972,7 +1979,7 @@ class RenameFeature extends TextDocumentFeature<TextDocumentRegistrationOptions>
 		});
 	}
 
-	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): Disposable {
+	protected registerLanguageProvider(options: RenameRegistrationOptions): Disposable {
 		let client = this._client;
 		let provideRenameEdits: ProvideRenameEditsSignature = (document, position, newName, token) => {
 			let params: RenameParams = {
@@ -1988,13 +1995,43 @@ class RenameFeature extends TextDocumentFeature<TextDocumentRegistrationOptions>
 				}
 			);
 		};
+		let prepareRename: PrepareRenameSignature = (document, position, token) => {
+			let params: TextDocumentPositionParams = {
+				textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
+				position: client.code2ProtocolConverter.asPosition(position),
+			};
+			return client.sendRequest(PrepareRenameRequest.type, params, token).then((result) => {
+					if (Range.is(result)) {
+						return client.protocol2CodeConverter.asRange(result);
+					} else if (result && result.range) {
+						return {
+							range: client.protocol2CodeConverter.asRange(result.range),
+							placeholder: result.placeholder
+						}
+					}
+					return null;
+				},
+				(error: ResponseError<void>) => {
+					client.logFailedRequest(PrepareRenameRequest.type, error);
+					return Promise.reject(new Error(error.message));
+				}
+			);
+		};
 		let middleware = client.clientOptions.middleware!;
 		return Languages.registerRenameProvider(options.documentSelector!, {
 			provideRenameEdits: (document: TextDocument, position: VPosition, newName: string, token: CancellationToken): ProviderResult<VWorkspaceEdit> => {
 				return middleware.provideRenameEdits
 					? middleware.provideRenameEdits(document, position, newName, token, provideRenameEdits)
 					: provideRenameEdits(document, position, newName, token);
-			}
+			},
+
+			prepareRename: options.prepareProvider
+				? (document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VRange | { range: VRange, placeholder: string }> => {
+					return middleware.prepareRename
+						? middleware.prepareRename(document, position, token, prepareRename)
+						: prepareRename(document, position, token);
+				}
+				: undefined
 		});
 	}
 }
