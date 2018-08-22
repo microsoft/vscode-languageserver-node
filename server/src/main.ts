@@ -9,7 +9,7 @@ import {
 	TextDocument, TextDocumentChangeEvent, TextDocumentContentChangeEvent, TextDocumentWillSaveEvent,
 	Location, Command, TextEdit, WorkspaceEdit, CompletionItem, CompletionList, Hover,
 	SignatureHelp, Definition, DocumentHighlight, SymbolInformation, DocumentSymbol, WorkspaceSymbolParams, DocumentSymbolParams,
-	CodeLens, DocumentLink,
+	CodeLens, DocumentLink, Range,
 	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler,
 	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler, StarNotificationHandler,
 	RPCMessageType, ResponseError,
@@ -39,7 +39,7 @@ import {
 	CodeActionRequest, CodeActionParams, CodeLensRequest, CodeLensParams, CodeLensResolveRequest,
 	DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
 	DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams,
-	RenameRequest, RenameParams,
+	RenameRequest, RenameParams, PrepareRenameRequest,
 	DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkParams,
 	ExecuteCommandRequest, ExecuteCommandParams,
 	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse,
@@ -1298,6 +1298,13 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	onRenameRequest(handler: RequestHandler<RenameParams, WorkspaceEdit | undefined | null, void>): void;
 
 	/**
+	 * Installs a handler for the prepare rename request.
+	 *
+	 * @param handler The corresponding handler.
+	 */
+	onPrepareRename(handler: RequestHandler<TextDocumentPositionParams, Range | { range: Range, placeholder: string } | undefined | null, void>): void;
+
+	/**
 	 * Installs a handler for the document links request.
 	 *
 	 * @param handler The corresponding handler.
@@ -1655,6 +1662,7 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 		onDocumentRangeFormatting: (handler) => connection.onRequest(DocumentRangeFormattingRequest.type, handler),
 		onDocumentOnTypeFormatting: (handler) => connection.onRequest(DocumentOnTypeFormattingRequest.type, handler),
 		onRenameRequest: (handler) => connection.onRequest(RenameRequest.type, handler),
+		onPrepareRename: (handler) => connection.onRequest(PrepareRenameRequest.type, handler),
 		onDocumentLinks: (handler) => connection.onRequest(DocumentLinkRequest.type, handler),
 		onDocumentLinkResolve: (handler) => connection.onRequest(DocumentLinkResolveRequest.type, handler),
 		onDocumentColor: (handler) => connection.onRequest(DocumentColorRequest.type, handler),

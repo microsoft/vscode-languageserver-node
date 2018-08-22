@@ -41,7 +41,10 @@ suite('Client integration', () => {
                     capabilities: {
                         textDocumentSync: 1,
                         completionProvider: { resolveProvider: true, triggerCharacters: ['"', ':'] },
-                        hoverProvider: true
+                        hoverProvider: true,
+                        renameProvider: {
+                            prepareProvider: true
+                        }
                     },
                     customResults: {
                         "hello": "world"
