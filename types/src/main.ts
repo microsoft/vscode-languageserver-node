@@ -1,4 +1,3 @@
-
 /* --------------------------------------------------------------------------------------------
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
@@ -663,6 +662,107 @@ export namespace TextDocumentEdit {
 	}
 }
 
+export interface CreateFileOptions {
+	overwrite?: boolean;
+	ignoreIfExists?: boolean;
+}
+
+export interface CreateFile {
+	kind: 'create';
+	uri: string;
+	options?: CreateFileOptions;
+}
+
+export namespace CreateFile {
+	export function create(uri: string, options?: CreateFileOptions): CreateFile {
+		let result: CreateFile = {
+			kind: 'create',
+			uri
+		};
+		if (options !== void 0 && (options.overwrite !== void 0 || options.overwrite !== void 0)) {
+			result.options = options;
+		}
+		return result;
+	}
+
+	export function is(value: any): value is CreateFile {
+		let candidate: CreateFile = value;
+		return candidate && candidate.kind === 'create' && Is.string(candidate.uri) &&
+			(
+				candidate.options === void 0 ||
+				((candidate.options.overwrite === void 0 || Is.boolean(candidate.options.overwrite)) && (candidate.options.ignoreIfExists === void 0 || Is.boolean(candidate.options.ignoreIfExists)))
+			)
+	}
+}
+
+export interface RenameFileOptions {
+	overwrite?: boolean;
+	ignoreIfExists?: boolean;
+}
+
+export interface RenameFile {
+	kind: 'rename';
+	oldUri: string;
+	newUri: string;
+	options?: RenameFileOptions;
+}
+
+export namespace RenameFile {
+	export function create(oldUri: string, newUri: string, options?: RenameFileOptions): RenameFile {
+		let result: RenameFile = {
+			kind: 'rename',
+			oldUri,
+			newUri
+		};
+		if (options !== void 0 && (options.overwrite !== void 0 || options.overwrite !== void 0)) {
+			result.options = options;
+		}
+		return result;
+	}
+
+	export function is(value: any): value is RenameFile {
+		let candidate: RenameFile = value;
+		return candidate && candidate.kind === 'rename' && Is.string(candidate.oldUri) && Is.string(candidate.newUri) &&
+			(
+				candidate.options === void 0 ||
+				((candidate.options.overwrite === void 0 || Is.boolean(candidate.options.overwrite)) && (candidate.options.ignoreIfExists === void 0 || Is.boolean(candidate.options.ignoreIfExists)))
+			)
+	}
+}
+
+export interface DeleteFileOptions {
+	recursive?: boolean;
+	ignoreIfNotExists?: boolean;
+}
+
+export interface DeleteFile {
+	kind: 'delete';
+	uri: string;
+	options?: DeleteFileOptions;
+}
+
+export namespace DeleteFile {
+	export function create(uri: string, options?: DeleteFileOptions): DeleteFile {
+		let result: DeleteFile = {
+			kind: 'delete',
+			uri
+		};
+		if (options !== void 0 && (options.recursive !== void 0 || options.ignoreIfNotExists !== void 0)) {
+			result.options = options;
+		}
+		return result;
+	}
+
+	export function is(value: any): value is DeleteFile {
+		let candidate: DeleteFile = value;
+		return candidate && candidate.kind === 'delete' && Is.string(candidate.uri) &&
+			(
+				candidate.options === void 0 ||
+				((candidate.options.recursive === void 0 || Is.boolean(candidate.options.recursive)) && (candidate.options.ignoreIfNotExists === void 0 || Is.boolean(candidate.options.ignoreIfNotExists)))
+			)
+	}
+}
+
 /**
  * A workspace edit represents changes to many resources managed in the workspace. The edit
  * should either provide `changes` or `documentChanges`. If documentChanges are present
@@ -680,7 +780,7 @@ export interface WorkspaceEdit {
 	 * Whether a client supports versioned document edits is expressed via
 	 * `WorkspaceClientCapabilites.workspaceEdit.documentChanges`.
 	 */
-	documentChanges?: TextDocumentEdit[];
+	documentChanges?: (TextDocumentEdit | CreateFile | RenameFile | DeleteFile)[];
 }
 
 export namespace WorkspaceEdit {
@@ -783,9 +883,11 @@ export class WorkspaceChange {
 		if (workspaceEdit) {
 			this._workspaceEdit = workspaceEdit;
 			if (workspaceEdit.documentChanges) {
-				workspaceEdit.documentChanges.forEach((textDocumentEdit) => {
-					let textEditChange = new TextEditChangeImpl(textDocumentEdit.edits);
-					this._textEditChanges[textDocumentEdit.textDocument.uri] = textEditChange;
+				workspaceEdit.documentChanges.forEach((change) => {
+					if (TextDocumentEdit.is(change)) {
+						let textEditChange = new TextEditChangeImpl(change.edits);
+						this._textEditChanges[change.textDocument.uri] = textEditChange;
+					}
 				});
 			} else if (workspaceEdit.changes) {
 				Object.keys(workspaceEdit.changes).forEach((key) => {
@@ -818,7 +920,7 @@ export class WorkspaceChange {
 				};
 			}
 			if (!this._workspaceEdit.documentChanges) {
-				throw new Error('Workspace edit is not configured for versioned document changes.');
+				throw new Error('Workspace edit is not configured for document changes.');
 			}
 			let textDocument: VersionedTextDocumentIdentifier = key;
 			let result: TextEditChange = this._textEditChanges[textDocument.uri];
@@ -850,6 +952,27 @@ export class WorkspaceChange {
 				this._textEditChanges[key] = result;
 			}
 			return result;
+		}
+	}
+
+	public createFile(uri: string, options?: CreateFileOptions): void {
+		this.checkDocumentChanges();
+		this._workspaceEdit!.documentChanges!.push(CreateFile.create(uri, options));
+	}
+
+	public renameFile(oldUri: string, newUri: string, options?: RenameFileOptions): void {
+		this.checkDocumentChanges();
+		this._workspaceEdit!.documentChanges!.push(RenameFile.create(oldUri, newUri, options));
+	}
+
+	public deleteFile(uri: string, options?: DeleteFileOptions): void {
+		this.checkDocumentChanges();
+		this._workspaceEdit!.documentChanges!.push(DeleteFile.create(uri, options));
+	}
+
+	private checkDocumentChanges() {
+		if (!this._workspaceEdit || !this._workspaceEdit.documentChanges) {
+			throw new Error('Workspace edit is not configured for document changes.');
 		}
 	}
 }
