@@ -1957,7 +1957,7 @@ class DocumentOnTypeFormattingFeature extends TextDocumentFeature<DocumentOnType
 	}
 }
 
-class RenameFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
+class RenameFeature extends TextDocumentFeature<RenameRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, RenameRequest.type);
