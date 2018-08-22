@@ -792,7 +792,9 @@ export interface _ServerCapabilities {
 	 */
 	workspaceSymbolProvider?: boolean;
 	/**
-	 * The server provides code actions.
+	 * The server provides code actions. CodeActionOptions may only be
+	 * specified if the client states that it supports
+	 * `codeActionLiteralSupport` in its initial `initialize` request.
 	 */
 	codeActionProvider?: boolean | CodeActionOptions;
 	/**
