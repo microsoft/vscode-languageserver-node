@@ -821,7 +821,9 @@ export interface _ServerCapabilities {
 		moreTriggerCharacter?: string[]
 	};
 	/**
-	 * The server provides rename support.
+	 * The server provides rename support. RenameOptions may only be
+	 * specified if the client states that it supports
+	 * `prepareSupport` in its initial `initialize` request.
 	 */
 	renameProvider?: boolean | RenameOptions;
 	/**
