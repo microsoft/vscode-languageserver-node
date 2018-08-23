@@ -655,7 +655,17 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		let result = new code.WorkspaceEdit();
 		if (item.documentChanges) {
 			item.documentChanges.forEach(change => {
-				result.set(_uriConverter(change.textDocument.uri), asTextEdits(change.edits));
+				if (ls.CreateFile.is(change)) {
+					result.createFile(_uriConverter(change.uri), change.options);
+				} else if (ls.RenameFile.is(change)) {
+					result.renameFile(_uriConverter(change.oldUri), _uriConverter(change.newUri), change.options);
+				} else if (ls.DeleteFile.is(change)) {
+					result.deleteFile(_uriConverter(change.uri), change.options);
+				} else if (ls.TextDocumentEdit.is(change)) {
+					result.set(_uriConverter(change.textDocument.uri), asTextEdits(change.edits));
+				} else {
+					console.error(`Unknown workspace edit change recevied:\n${JSON.stringify(change, undefined, 4)}`);
+				}
 			});
 		} else if (item.changes) {
 			Object.keys(item.changes).forEach(key => {

@@ -54,7 +54,7 @@ import {
 	ExecuteCommandRequest, ExecuteCommandParams, ExecuteCommandRegistrationOptions,
 	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse,
 	MarkupKind, SymbolKind, CompletionItemKind, Command, CodeActionKind, DocumentSymbol, SymbolInformation, Range,
-	CodeActionRegistrationOptions
+	CodeActionRegistrationOptions, TextDocumentEdit, ResourceOperationKind, FailureHandlingKind
 } from 'vscode-languageserver-protocol';
 
 import { ColorProviderMiddleware } from './colorProvider';
@@ -3045,7 +3045,10 @@ export abstract class BaseLanguageClient {
 	private computeClientCapabilities(): ClientCapabilities {
 		let result: ClientCapabilities = {};
 		ensure(result, 'workspace')!.applyEdit = true;
-		ensure(ensure(result, 'workspace')!, 'workspaceEdit')!.documentChanges = true;
+		let workspaceEdit = ensure(ensure(result, 'workspace')!, 'workspaceEdit')!;
+		workspaceEdit.documentChanges = true;
+		workspaceEdit.resourceOperations = [ResourceOperationKind.Create, ResourceOperationKind.Rename, ResourceOperationKind.Delete];
+		workspaceEdit.failureHandling = FailureHandlingKind.TextOnlyTransactional;
 		ensure(ensure(result, 'textDocument')!, 'publishDiagnostics')!.relatedInformation = true;
 		for (let feature of this._features) {
 			feature.fillClientCapabilities(result);
@@ -3103,7 +3106,7 @@ export abstract class BaseLanguageClient {
 		let versionMismatch = false;
 		if (workspaceEdit.documentChanges) {
 			for (const change of workspaceEdit.documentChanges) {
-				if (change.textDocument.version && change.textDocument.version >= 0) {
+				if (TextDocumentEdit.is(change) && change.textDocument.version && change.textDocument.version >= 0) {
 					let textDocument = openTextDocuments.get(change.textDocument.uri);
 					if (textDocument && textDocument.version !== change.textDocument.version) {
 						versionMismatch = true;

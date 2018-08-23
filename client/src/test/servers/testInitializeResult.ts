@@ -6,7 +6,7 @@
 import * as assert from 'assert';
 import {
 	createConnection, IConnection,
-	TextDocuments, InitializeParams, ServerCapabilities, CompletionItemKind
+	TextDocuments, InitializeParams, ServerCapabilities, CompletionItemKind, ResourceOperationKind, FailureHandlingKind
 } from '../../../../server/lib/main';
 
 let connection: IConnection = createConnection();
@@ -20,6 +20,8 @@ documents.listen(connection);
 connection.onInitialize((params: InitializeParams): any => {
 	assert.equal((params.capabilities.workspace as any).applyEdit, true);
 	assert.equal(params.capabilities.workspace!.workspaceEdit!.documentChanges, true);
+	assert.deepEqual(params.capabilities.workspace!.workspaceEdit!.resourceOperations, [ResourceOperationKind.Create, ResourceOperationKind.Rename, ResourceOperationKind.Delete]);
+	assert.equal(params.capabilities.workspace!.workspaceEdit!.failureHandling, FailureHandlingKind.TextOnlyTransactional);
 	assert.equal(params.capabilities.textDocument!.completion!.completionItem!.deprecatedSupport, true);
 	assert.equal(params.capabilities.textDocument!.completion!.completionItem!.preselectSupport, true);
 	assert.equal(params.capabilities.textDocument!.rename!.prepareSupport, true);
