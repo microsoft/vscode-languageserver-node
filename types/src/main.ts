@@ -683,7 +683,7 @@ export namespace CreateFile {
 			kind: 'create',
 			uri
 		};
-		if (options !== void 0 && (options.overwrite !== void 0 || options.overwrite !== void 0)) {
+		if (options !== void 0 && (options.overwrite !== void 0 || options.ignoreIfExists !== void 0)) {
 			result.options = options;
 		}
 		return result;
@@ -718,7 +718,7 @@ export namespace RenameFile {
 			oldUri,
 			newUri
 		};
-		if (options !== void 0 && (options.overwrite !== void 0 || options.overwrite !== void 0)) {
+		if (options !== void 0 && (options.overwrite !== void 0 || options.ignoreIfExists !== void 0)) {
 			result.options = options;
 		}
 		return result;
