@@ -23,6 +23,7 @@
 	"scripts": {
 		"postinstall": "cd types && npm install && cd ../jsonrpc && npm install && cd ../protocol && npm install && cd ../server && npm install && cd ../client && npm install && cd ..",
 		"test": "cd types && npm test && cd ../jsonrpc && npm test && cd ../protocol && npm test && cd ../server && npm test && cd ../client && npm test && cd ..",
+		"clean": "cd types && npm run clean && cd ../jsonrpc && npm run clean && cd ../protocol && npm run clean && cd ../server && npm run clean && cd ../client && npm run clean && cd ..",
 		"symlink": "node ./build/bin/symlink.js",
 		"compile": "npm run compile:types && npm run compile:jsonrpc && npm run compile:protocol && npm run compile:server && npm run compile:client",
 		"compile:types": "tsc -p ./types/tsconfig.json",
