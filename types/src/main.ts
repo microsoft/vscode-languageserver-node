@@ -667,6 +667,10 @@ export interface CreateFileOptions {
 	ignoreIfExists?: boolean;
 }
 
+interface ResourceOperation {
+	kind: string;
+}
+
 export interface CreateFile {
 	kind: 'create';
 	uri: string;
@@ -788,7 +792,13 @@ export namespace WorkspaceEdit {
 		let candidate: WorkspaceEdit = value;
 		return candidate &&
 			(candidate.changes !== void 0 || candidate.documentChanges !== void 0) &&
-			(candidate.documentChanges === void 0 || Is.typedArray(candidate.documentChanges, TextDocumentEdit.is));
+			(candidate.documentChanges === void 0 || candidate.documentChanges.every((change) => {
+				if (Is.string((change as ResourceOperation).kind)) {
+					return CreateFile.is(change) || RenameFile.is(change) || DeleteFile.is(change);
+				} else {
+					return TextDocumentEdit.is(change);
+				}
+			}));
 	}
 }
 
