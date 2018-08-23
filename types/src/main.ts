@@ -1042,7 +1042,7 @@ export namespace VersionedTextDocumentIdentifier {
 	 * @param uri The document's uri.
 	 * @param uri The document's text.
 	 */
-	export function create(uri: string, version: number): VersionedTextDocumentIdentifier {
+	export function create(uri: string, version: number | null): VersionedTextDocumentIdentifier {
 		return { uri, version };
 	}
 
@@ -1051,7 +1051,7 @@ export namespace VersionedTextDocumentIdentifier {
 	 */
 	export function is(value: any): value is VersionedTextDocumentIdentifier {
 		let candidate = value as VersionedTextDocumentIdentifier;
-		return Is.defined(candidate) && Is.string(candidate.uri) && Is.number(candidate.version);
+		return Is.defined(candidate) && Is.string(candidate.uri) && (candidate.version === null || Is.number(candidate.version));
 	}
 }
 
