@@ -207,31 +207,16 @@ export namespace Trace {
 }
 
 export enum TraceFormat {
-	Text, JSON
+	Text = 'text',
+	JSON = 'json'
 }
-
-export type TraceFormatValues = 'text' | 'json'
 export namespace TraceFormat {
 	export function fromString(value: string): TraceFormat {
 		value = value.toLowerCase();
-		switch (value) {
-			case 'text':
-				return TraceFormat.Text;
-			case 'json':
-				return TraceFormat.JSON;
-			default:
-				return TraceFormat.Text;
-		}
-	}
-
-	export function toString(value: TraceFormat): TraceFormatValues {
-		switch (value) {
-			case TraceFormat.Text:
-				return 'text';
-			case TraceFormat.JSON:
-				return 'json';
-			default:
-				return 'text';
+		if (value === 'json') {
+			return TraceFormat.JSON;
+		} else {
+			return TraceFormat.Text;
 		}
 	}
 }
