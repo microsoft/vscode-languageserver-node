@@ -221,6 +221,11 @@ export namespace TraceFormat {
 	}
 }
 
+export interface TraceOptions {
+	sendNotification?: boolean;
+	traceFormat?: TraceFormat;
+}
+
 export interface SetTraceParams {
 	value: TraceValues;
 }
@@ -239,7 +244,7 @@ export namespace LogTraceNotification {
 }
 
 export interface Tracer {
-	log(data: any): void;
+	log(dataObject: any): void;
 	log(message: string, data?: string): void;
 }
 
@@ -338,7 +343,7 @@ export interface MessageConnection {
 	onNotification(handler: StarNotificationHandler): void;
 
 	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): void;
-	trace(value: Trace, tracer: Tracer, sendNotification?: boolean, traceFormat?: TraceFormat): void;
+	trace(value: Trace, tracer: Tracer, traceOptions?: TraceOptions): void;
 
 	onError: Event<[Error, Message | undefined, number | undefined]>;
 	onClose: Event<void>;
@@ -1049,7 +1054,19 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				}
 			}
 		},
-		trace: (_value: Trace, _tracer: Tracer, _sendNotification: boolean = false, _traceFormat: TraceFormat = TraceFormat.Text) => {
+		trace: (_value: Trace, _tracer: Tracer, sendNotificationOrTraceOptions?: boolean | TraceOptions) => {
+			let _sendNotification: boolean = false;
+			let _traceFormat: TraceFormat = TraceFormat.Text;
+
+			if (sendNotificationOrTraceOptions !== void 0) {
+				if (Is.boolean(sendNotificationOrTraceOptions)) {
+					_sendNotification = sendNotificationOrTraceOptions;
+				} else {
+					_sendNotification = sendNotificationOrTraceOptions.sendNotification || false;
+					_traceFormat = sendNotificationOrTraceOptions.traceFormat || TraceFormat.Text;
+				}
+			}
+
 			trace = _value;
 			traceFormat = _traceFormat;
 			if (trace === Trace.Off) {

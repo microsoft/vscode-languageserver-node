@@ -22,7 +22,7 @@ import {
 	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler,
 	NotificationType, NotificationType0,
 	NotificationHandler, NotificationHandler0, GenericNotificationHandler,
-	MessageReader, MessageWriter, Trace, TraceFormat, Tracer, Event, Emitter,
+	MessageReader, MessageWriter, Trace, Tracer, TraceFormat, TraceOptions, Event, Emitter,
 	createProtocolConnection,
 	ClientCapabilities, WorkspaceEdit,
 	RegistrationRequest, RegistrationParams, UnregistrationRequest, UnregistrationParams, TextDocumentRegistrationOptions,
@@ -100,7 +100,8 @@ interface IConnection {
 	onNotification(method: string, handler: GenericNotificationHandler): void;
 	onNotification(method: string | RPCMessageType, handler: GenericNotificationHandler): void;
 
-	trace(value: Trace, tracer: Tracer, sendNotification?: boolean, traceFormat?: TraceFormat): void;
+	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): void;
+	trace(value: Trace, tracer: Tracer, traceOptions?: TraceOptions): void;
 
 	initialize(params: InitializeParams): Thenable<InitializeResult>;
 	shutdown(): Thenable<void>;
@@ -161,7 +162,20 @@ function createConnection(input: any, output: any, errorHandler: ConnectionError
 		sendNotification: (type: string | RPCMessageType, params?: any): void => connection.sendNotification(Is.string(type) ? type : type.method, params),
 		onNotification: (type: string | RPCMessageType, handler: GenericNotificationHandler): void => connection.onNotification(Is.string(type) ? type : type.method, handler),
 
-		trace: (value: Trace, tracer: Tracer, sendNotification: boolean = false, traceFormat: TraceFormat = TraceFormat.Text): void => connection.trace(value, tracer, sendNotification, traceFormat),
+		trace: (value: Trace, tracer: Tracer, sendNotificationOrTraceOptions?: boolean | TraceOptions): void => {
+			const defaultTraceOptions: TraceOptions = {
+				sendNotification: false,
+				traceFormat: TraceFormat.Text
+			};
+
+			if (sendNotificationOrTraceOptions === void 0) {
+				connection.trace(value, tracer, defaultTraceOptions);
+			} else if (Is.boolean(sendNotificationOrTraceOptions)) {
+				connection.trace(value, tracer, sendNotificationOrTraceOptions);
+			} else {
+				connection.trace(value, tracer, sendNotificationOrTraceOptions);
+			}
+		},
 
 		initialize: (params: InitializeParams) => connection.sendRequest(InitializeRequest.type, params),
 		shutdown: () => connection.sendRequest(ShutdownRequest.type, undefined),
@@ -2301,13 +2315,11 @@ export abstract class BaseLanguageClient {
 		this._telemetryEmitter = new Emitter<any>();
 		this._stateChangeEmitter = new Emitter<StateChangeEvent>();
 		this._tracer = {
-			log: (...params: any[]) => {
-				if (typeof params[0] === 'string') {
-					const [message, data] = params;
-					this.logTrace(message, data);
+			log: (messageOrDataObject: string | any, data?: string) => {
+				if (Is.string(messageOrDataObject)) {
+					this.logTrace(messageOrDataObject, data);
 				} else {
-					const [data] = params;
-					this.logObjectTrace(data);
+					this.logObjectTrace(messageOrDataObject);
 				}
 			},
 		};
@@ -2445,7 +2457,10 @@ export abstract class BaseLanguageClient {
 		this._trace = value;
 		this.onReady().then(() => {
 			this.resolveConnection().then((connection) => {
-				connection.trace(this._trace, this._tracer, false, this._traceFormat);
+				connection.trace(this._trace, this._tracer, {
+					sendNotification: false,
+					traceFormat: this._traceFormat
+				});
 			})
 		}, () => {
 		});
@@ -2877,7 +2892,10 @@ export abstract class BaseLanguageClient {
 		}
 		this._trace = trace;
 		this._traceFormat = traceFormat;
-		connection.trace(this._trace, this._tracer, sendNotification, this._traceFormat);
+		connection.trace(this._trace, this._tracer, {
+			sendNotification,
+			traceFormat: this._traceFormat
+		});
 	}
 
 
