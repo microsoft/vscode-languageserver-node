@@ -133,9 +133,9 @@ export type LSPMessageType =
 	| 'receive-notification';
 
 export interface LSPLogMessage {
-    type: LSPMessageType;
-    message: RequestMessage | ResponseMessage | NotificationMessage;
-    timestamp: number;
+	type: LSPMessageType;
+	message: RequestMessage | ResponseMessage | NotificationMessage;
+	timestamp: number;
 }
 
 /**
