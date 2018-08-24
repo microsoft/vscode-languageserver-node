@@ -239,7 +239,7 @@ export namespace LogTraceNotification {
 }
 
 export interface Tracer {
-	log(data: Object): void;
+	log(data: any): void;
 	log(message: string, data?: string): void;
 }
 
@@ -1051,7 +1051,6 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 		},
 		trace: (_value: Trace, _tracer: Tracer, _sendNotification: boolean = false, _traceFormat: TraceFormat = TraceFormat.Text) => {
 			trace = _value;
-
 			traceFormat = _traceFormat;
 			if (trace === Trace.Off) {
 				tracer = undefined;
