@@ -100,7 +100,7 @@ interface IConnection {
 	onNotification(method: string, handler: GenericNotificationHandler): void;
 	onNotification(method: string | RPCMessageType, handler: GenericNotificationHandler): void;
 
-	trace(value: Trace, format: TraceFormat, tracer: Tracer, sendNotification?: boolean): void;
+	trace(value: Trace, tracer: Tracer, sendNotification?: boolean, traceFormat?: TraceFormat): void;
 
 	initialize(params: InitializeParams): Thenable<InitializeResult>;
 	shutdown(): Thenable<void>;
@@ -161,7 +161,7 @@ function createConnection(input: any, output: any, errorHandler: ConnectionError
 		sendNotification: (type: string | RPCMessageType, params?: any): void => connection.sendNotification(Is.string(type) ? type : type.method, params),
 		onNotification: (type: string | RPCMessageType, handler: GenericNotificationHandler): void => connection.onNotification(Is.string(type) ? type : type.method, handler),
 
-		trace: (value: Trace, format: TraceFormat, tracer: Tracer, sendNotification: boolean = false): void => connection.trace(value, format, tracer, sendNotification),
+		trace: (value: Trace, tracer: Tracer, sendNotification: boolean = false, traceFormat: TraceFormat = TraceFormat.Text): void => connection.trace(value, tracer, sendNotification, traceFormat),
 
 		initialize: (params: InitializeParams) => connection.sendRequest(InitializeRequest.type, params),
 		shutdown: () => connection.sendRequest(ShutdownRequest.type, undefined),
@@ -2249,7 +2249,7 @@ export abstract class BaseLanguageClient {
 	private _stateChangeEmitter: Emitter<StateChangeEvent>;
 
 	private _trace: Trace;
-	private _traceFormat: TraceFormat;
+	private _traceFormat: TraceFormat = TraceFormat.Text;
 	private _tracer: Tracer;
 
 	private _c2p: c2p.Converter;
@@ -2301,12 +2301,15 @@ export abstract class BaseLanguageClient {
 		this._telemetryEmitter = new Emitter<any>();
 		this._stateChangeEmitter = new Emitter<StateChangeEvent>();
 		this._tracer = {
-			log: (message: string, data?: string) => {
-				this.logTrace(message, data);
+			log: (...params: any[]) => {
+				if (typeof params[0] === 'string') {
+					const [message, data] = params;
+					this.logTrace(message, data);
+				} else {
+					const [data] = params;
+					this.logObjectTrace(data);
+				}
 			},
-			logLSP: (message: string) => {
-				this.logLSPTrace(message);
-			}
 		};
 		this._c2p = c2p.createConverter(clientOptions.uriConverters ? clientOptions.uriConverters.code2Protocol : undefined);
 		this._p2c = p2c.createConverter(clientOptions.uriConverters ? clientOptions.uriConverters.protocol2Code : undefined);
@@ -2442,17 +2445,7 @@ export abstract class BaseLanguageClient {
 		this._trace = value;
 		this.onReady().then(() => {
 			this.resolveConnection().then((connection) => {
-				connection.trace(value, this._traceFormat, this._tracer);
-			})
-		}, () => {
-		});
-	}
-
-	public set traceFormat(value: TraceFormat) {
-		this._traceFormat = value;
-		this.onReady().then(() => {
-			this.resolveConnection().then((connection) => {
-				connection.trace(this._trace, value, this._tracer);
+				connection.trace(this._trace, this._tracer, false, this._traceFormat);
 			})
 		}, () => {
 		});
@@ -2512,8 +2505,15 @@ export abstract class BaseLanguageClient {
 		}
 	}
 
-	private logLSPTrace(message: string): void {
-		this.outputChannel.appendLine(`[LSP   - ${(new Date().toLocaleTimeString())}] ${message}`);
+	private logObjectTrace(data: any): void {
+		if (data.isLSPMessage && data.type) {
+			this.outputChannel.append(`[LSP   - ${(new Date().toLocaleTimeString())}] `);
+		} else {
+			this.outputChannel.append(`[Trace - ${(new Date().toLocaleTimeString())}] `);
+		}
+		if (data) {
+			this.outputChannel.appendLine(`${JSON.stringify(data)}`);
+		}
 	}
 
 	public needsStart(): boolean {
@@ -2877,7 +2877,7 @@ export abstract class BaseLanguageClient {
 		}
 		this._trace = trace;
 		this._traceFormat = traceFormat;
-		connection.trace(this._trace, this._traceFormat, this._tracer, sendNotification);
+		connection.trace(this._trace, this._tracer, sendNotification, this._traceFormat);
 	}
 
 

@@ -239,8 +239,8 @@ export namespace LogTraceNotification {
 }
 
 export interface Tracer {
+	log(data: Object): void;
 	log(message: string, data?: string): void;
-	logLSP(message: string): void;
 }
 
 export enum ConnectionErrors {
@@ -337,7 +337,8 @@ export interface MessageConnection {
 	onNotification(method: string, handler: GenericNotificationHandler): void;
 	onNotification(handler: StarNotificationHandler): void;
 
-	trace(value: Trace, traceFormat: TraceFormat, tracer: Tracer, sendNotification?: boolean): void;
+	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): void;
+	trace(value: Trace, tracer: Tracer, sendNotification?: boolean, traceFormat?: TraceFormat): void;
 
 	onError: Event<[Error, Message | undefined, number | undefined]>;
 	onClose: Event<void>;
@@ -858,12 +859,13 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 		}
 
 		const lspMessage = {
+			isLSPMessage: true,
 			type,
 			message,
 			timestamp: Date.now()
 		}
 
-		tracer.logLSP(JSON.stringify(lspMessage));
+		tracer.log(lspMessage);
 	}
 
 	function throwIfClosedOrDisposed() {
@@ -1047,15 +1049,16 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				}
 			}
 		},
-		trace: (_value: Trace, _traceFormat: TraceFormat, _tracer: Tracer, sendNotification: boolean = false) => {
+		trace: (_value: Trace, _tracer: Tracer, _sendNotification: boolean = false, _traceFormat: TraceFormat = TraceFormat.Text) => {
 			trace = _value;
+
 			traceFormat = _traceFormat;
 			if (trace === Trace.Off) {
 				tracer = undefined;
 			} else {
 				tracer = _tracer;
 			}
-			if (sendNotification && !isClosed() && !isDisposed()) {
+			if (_sendNotification && !isClosed() && !isDisposed()) {
 				connection.sendNotification(SetTraceNotification.type, { value: Trace.toString(_value) });
 			}
 		},
