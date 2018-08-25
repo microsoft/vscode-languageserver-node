@@ -1,9 +1,10 @@
 .vscode/
 lib/test/
-lib/.vscode-test
+.vscode-test/
 lib/*.map
 src/
 test/
+bin/
 .eslintrc
 .gitignore
 gulpfile.js
