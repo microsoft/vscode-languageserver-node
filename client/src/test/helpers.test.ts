@@ -8,7 +8,7 @@ import { strictEqual, ok } from 'assert';
 
 import {
 	Position, Range, TextDocumentIdentifier, TextDocumentItem, VersionedTextDocumentIdentifier, Command, CodeLens, CodeActionContext,
-	Diagnostic, DiagnosticSeverity, WorkspaceChange
+	Diagnostic, DiagnosticSeverity, WorkspaceChange, TextDocumentEdit, CreateFile, RenameFile, DeleteFile
 } from 'vscode-languageserver-protocol';
 
 suite('Protocol Helper Tests', () => {
@@ -121,7 +121,7 @@ suite('Protocol Helper Tests', () => {
 
 		let workspaceEdit = workspaceChange.edit;
 		strictEqual(workspaceEdit.documentChanges!.length, 2);
-		let edits = workspaceEdit.documentChanges![0].edits;
+		let edits = (workspaceEdit.documentChanges![0] as TextDocumentEdit).edits;
 		strictEqual(edits.length, 3);
 		rangeEqual(edits[0].range, Range.create(0,1,0,1));
 		strictEqual(edits[0].newText, 'insert');
@@ -130,10 +130,23 @@ suite('Protocol Helper Tests', () => {
 		rangeEqual(edits[2].range, Range.create(0,1,2,3));
 		strictEqual(edits[2].newText, '');
 
-		edits = workspaceEdit.documentChanges![1].edits;
+		edits = (workspaceEdit.documentChanges![1] as TextDocumentEdit).edits;
 		strictEqual(edits.length, 1);
 		rangeEqual(edits[0].range, Range.create(2,3,2,3));
 		strictEqual(edits[0].newText, 'insert');
+
+		workspaceChange.createFile('file:///create.txt');
+		workspaceChange.renameFile('file:///old.txt', 'file:///new.txt');
+		workspaceChange.deleteFile('file:///delete.txt');
+
+		let change = workspaceEdit.documentChanges![2];
+		ok(CreateFile.is(change), 'Is create file');
+
+		change = workspaceEdit.documentChanges![3];
+		ok(RenameFile.is(change), 'Is rename file');
+
+		change = workspaceEdit.documentChanges![4];
+		ok(DeleteFile.is(change), 'Is delete file');
 	});
 
 	test('WorkspaceEdit - changes', () => {

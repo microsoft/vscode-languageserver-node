@@ -158,6 +158,59 @@ export interface TextDocumentPositionParams {
 //---- Initialize Method ----
 
 /**
+ * The kind of resource operations supported by the client.
+ */
+export type ResourceOperationKind = 'create' | 'rename' | 'delete';
+
+export namespace ResourceOperationKind {
+
+	/**
+	 * Supports creating new resources.
+	 */
+	export const Create: ResourceOperationKind = 'create';
+
+	/**
+	 * Supports renaming existing resources.
+	 */
+	export const Rename: ResourceOperationKind = 'rename';
+
+	/**
+	 * Supports deleting existing resources.
+	 */
+	export const Delete: ResourceOperationKind = 'delete';
+}
+
+export type FailureHandlingKind = 'abort' | 'transactional' | 'undo' | 'textOnlyTransactional';
+
+export namespace FailureHandlingKind {
+
+	/**
+	 * Applying the workspace change is simply aborted if one of the changes provided
+	 * fails. All operations executed before the failing operation stay executed.
+	 */
+	export const Abort: FailureHandlingKind = 'abort';
+
+	/**
+	 * All operations are executed transactional. That means they either all
+	 * succeed or no changes at all are applied to the workspace.
+	 */
+	export const Transactional: FailureHandlingKind = 'transactional';
+
+
+	/**
+	 * If the workspace edit contains only textual file changes they are executed transactional.
+	 * If resource changes (create, rename or delete file) are part of the change the failure
+	 * handling startegy is abort.
+	 */
+	export const TextOnlyTransactional: FailureHandlingKind = 'textOnlyTransactional';
+
+	/**
+	 * The client tries to undo the operations already executed. But there is no
+	 * guaruntee that this is succeeding.
+	 */
+	export const Undo: FailureHandlingKind = 'undo';
+}
+/**
  * Workspace specific client capabilities.
  */
 export interface WorkspaceClientCapabilities {
@@ -176,6 +229,18 @@ export interface WorkspaceClientCapabilities {
 		 * The client supports versioned document changes in `WorkspaceEdit`s
 		 */
 		documentChanges?: boolean;
+
+		/**
+		 * The resource operations the client supports. Clients should at least
+		 * support 'create', 'rename' and 'delete'.
+		 */
+		resourceOperations?: ResourceOperationKind[];
+
+		/**
+		 * The failure handling strategy of a client if applying the workspace edit
+		 * failes.
+		 */
+		failureHandling?: FailureHandlingKind;
 	};
 
 	/**
@@ -1833,6 +1898,13 @@ export interface ApplyWorkspaceEditResponse {
 	 * Indicates whether the edit was applied or not.
 	 */
 	applied: boolean;
+
+	/**
+	 * Depending on the client's failure handling strategy `failedChange` might
+	 * contain the index of the change that failed. This property is only available
+	 * if the client signals a `failureHandlingStrategy` in its client capabilities.
+	 */
+	failedChange?: number;
 }
 
 /**
