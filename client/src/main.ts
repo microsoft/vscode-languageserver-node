@@ -6,6 +6,7 @@
 
 import * as cp from 'child_process';
 import * as fs from 'fs';
+import * as path from 'path';
 import ChildProcess = cp.ChildProcess;
 
 import * as SemVer from 'semver';
@@ -23,8 +24,8 @@ import {
 } from 'vscode-languageserver-protocol';
 
 import { ColorProviderFeature } from './colorProvider';
-import { ConfigurationFeature as PullConfigurationFeature} from './configuration';
-import { ImplementationFeature }  from './implementation'
+import { ConfigurationFeature as PullConfigurationFeature } from './configuration';
+import { ImplementationFeature } from './implementation'
 import { TypeDefinitionFeature } from './typeDefinition';
 import { WorkspaceFoldersFeature } from './workspaceFolders';
 import { FoldingRangeFeature } from './foldingRange';
@@ -185,7 +186,7 @@ export class LanguageClient extends BaseLanguageClient {
 	}
 
 	private checkVersion() {
-		let packageJson: PackageJson = require('../package.json');
+		let packageJson: PackageJson = JSON.parse(fs.readFileSync(path.join(__dirname, '../package.json')).toString());
 		if (!packageJson || !packageJson.engines || !packageJson.engines.vscode) {
 			throw new Error('No vscode engine specified in package.json');
 		}
