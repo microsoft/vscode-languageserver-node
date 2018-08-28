@@ -489,6 +489,12 @@ export class SettingMonitor {
 		});
 	}
 
+
+
+
+
+
+
 	private onDidChangeConfiguration(): void {
 		let index = this._setting.indexOf('.');
 		let primary = index >= 0 ? this._setting.substr(0, index) : this._setting;
