@@ -15,7 +15,8 @@ import {
 	ResponseMessage, isResponseMessage, ResponseError, ErrorCodes,
 	NotificationMessage, isNotificationMessage,
 	NotificationType, NotificationType0, NotificationType1, NotificationType2, NotificationType3, NotificationType4,
-	NotificationType5, NotificationType6, NotificationType7, NotificationType8, NotificationType9
+	NotificationType5, NotificationType6, NotificationType7, NotificationType8, NotificationType9,
+	LSPMessageType
 } from './messages';
 
 import { MessageReader, DataCallback, StreamMessageReader, IPCMessageReader, SocketMessageReader } from './messageReader';
@@ -205,6 +206,26 @@ export namespace Trace {
 	}
 }
 
+export enum TraceFormat {
+	Text = 'text',
+	JSON = 'json'
+}
+export namespace TraceFormat {
+	export function fromString(value: string): TraceFormat {
+		value = value.toLowerCase();
+		if (value === 'json') {
+			return TraceFormat.JSON;
+		} else {
+			return TraceFormat.Text;
+		}
+	}
+}
+
+export interface TraceOptions {
+	sendNotification?: boolean;
+	traceFormat?: TraceFormat;
+}
+
 export interface SetTraceParams {
 	value: TraceValues;
 }
@@ -223,6 +244,7 @@ export namespace LogTraceNotification {
 }
 
 export interface Tracer {
+	log(dataObject: any): void;
 	log(message: string, data?: string): void;
 }
 
@@ -321,6 +343,7 @@ export interface MessageConnection {
 	onNotification(handler: StarNotificationHandler): void;
 
 	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): void;
+	trace(value: Trace, tracer: Tracer, traceOptions?: TraceOptions): void;
 
 	onError: Event<[Error, Message | undefined, number | undefined]>;
 	onClose: Event<void>;
@@ -365,12 +388,13 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 	let starNotificationHandler: StarNotificationHandler | undefined = undefined;
 	let notificationHandlers: { [name: string]: NotificationHandlerElement | undefined } = Object.create(null);
 
-	let  timer:  NodeJS.Timer | undefined;
+	let timer: NodeJS.Timer | undefined;
 	let messageQueue: MessageQueue = new LinkedMap<string, Message>();
 	let responsePromises: { [name: string]: ResponsePromise } = Object.create(null);
 	let requestTokens: { [id: string]: CancellationTokenSource } = Object.create(null);
 
 	let trace: Trace = Trace.Off;
+	let traceFormat: TraceFormat = TraceFormat.Text;
 	let tracer: Tracer | undefined;
 
 	let state: ConnectionState = ConnectionState.New;
@@ -713,95 +737,140 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 		if (trace === Trace.Off || !tracer) {
 			return;
 		}
-		let data: string | undefined = undefined;
-		if (trace === Trace.Verbose && message.params) {
-			data = `Params: ${JSON.stringify(message.params, null, 4)}\n\n`;
+
+		if (traceFormat === TraceFormat.Text) {
+			let data: string | undefined = undefined;
+			if (trace === Trace.Verbose && message.params) {
+				data = `Params: ${JSON.stringify(message.params, null, 4)}\n\n`;
+			}
+			tracer.log(`Sending request '${message.method} - (${message.id})'.`, data);
+		} else {
+			logLSPMessage('send-request', message);
 		}
-		tracer.log(`Sending request '${message.method} - (${message.id})'.`, data);
 	}
 
-	function traceSendNotification(message: NotificationMessage): void {
+	function traceSendingNotification(message: NotificationMessage): void {
 		if (trace === Trace.Off || !tracer) {
 			return;
 		}
-		let data: string | undefined = undefined;
-		if (trace === Trace.Verbose) {
-			if (message.params) {
-				data = `Params: ${JSON.stringify(message.params, null, 4)}\n\n`;
-			} else {
-				data = 'No parameters provided.\n\n';
+
+		if (traceFormat === TraceFormat.Text) {
+			let data: string | undefined = undefined;
+			if (trace === Trace.Verbose) {
+				if (message.params) {
+					data = `Params: ${JSON.stringify(message.params, null, 4)}\n\n`;
+				} else {
+					data = 'No parameters provided.\n\n';
+				}
 			}
+			tracer.log(`Sending notification '${message.method}'.`, data);
+		} else {
+			logLSPMessage('send-notification', message);
 		}
-		tracer.log(`Sending notification '${message.method}'.`, data);
 	}
 
 	function traceSendingResponse(message: ResponseMessage, method: string, startTime: number): void {
 		if (trace === Trace.Off || !tracer) {
 			return;
 		}
-		let data: string | undefined = undefined;
-		if (trace === Trace.Verbose) {
-			if (message.error && message.error.data) {
-				data = `Error data: ${JSON.stringify(message.error.data, null, 4)}\n\n`;
-			} else {
-				if (message.result) {
-					data = `Result: ${JSON.stringify(message.result, null, 4)}\n\n`;
-				} else if (message.error === void 0) {
-					data = 'No result returned.\n\n';
+
+		if (traceFormat === TraceFormat.Text) {
+			let data: string | undefined = undefined;
+			if (trace === Trace.Verbose) {
+				if (message.error && message.error.data) {
+					data = `Error data: ${JSON.stringify(message.error.data, null, 4)}\n\n`;
+				} else {
+					if (message.result) {
+						data = `Result: ${JSON.stringify(message.result, null, 4)}\n\n`;
+					} else if (message.error === void 0) {
+						data = 'No result returned.\n\n';
+					}
 				}
 			}
+			tracer.log(`Sending response '${method} - (${message.id})'. Processing request took ${Date.now() - startTime}ms`, data)
+		} else {
+			logLSPMessage('send-response', message);
 		}
-		tracer.log(`Sending response '${method} - (${message.id})'. Processing request took ${Date.now() - startTime}ms`, data)
 	}
 
 	function traceReceivedRequest(message: RequestMessage): void {
 		if (trace === Trace.Off || !tracer) {
 			return;
 		}
-		let data: string | undefined = undefined;
-		if (trace === Trace.Verbose && message.params) {
-			data = `Params: ${JSON.stringify(message.params, null, 4)}\n\n`;
+
+		if (traceFormat === TraceFormat.Text) {
+			let data: string | undefined = undefined;
+			if (trace === Trace.Verbose && message.params) {
+				data = `Params: ${JSON.stringify(message.params, null, 4)}\n\n`;
+			}
+			tracer.log(`Received request '${message.method} - (${message.id})'.`, data);
+		} else {
+			logLSPMessage('receive-request', message);
 		}
-		tracer.log(`Received request '${message.method} - (${message.id})'.`, data);
 	}
 
 	function traceReceivedNotification(message: NotificationMessage): void {
 		if (trace === Trace.Off || !tracer || message.method === LogTraceNotification.type.method) {
 			return;
 		}
-		let data: string | undefined = undefined;
-		if (trace === Trace.Verbose) {
-			if (message.params) {
-				data = `Params: ${JSON.stringify(message.params, null, 4)}\n\n`;
-			} else {
-				data = 'No parameters provided.\n\n';
+
+		if (traceFormat === TraceFormat.Text) {
+			let data: string | undefined = undefined;
+			if (trace === Trace.Verbose) {
+				if (message.params) {
+					data = `Params: ${JSON.stringify(message.params, null, 4)}\n\n`;
+				} else {
+					data = 'No parameters provided.\n\n';
+				}
 			}
+			tracer.log(`Received notification '${message.method}'.`, data);
+		} else {
+			logLSPMessage('receive-notification', message);
 		}
-		tracer.log(`Received notification '${message.method}'.`, data);
 	}
 
 	function traceReceivedResponse(message: ResponseMessage, responsePromise: ResponsePromise): void {
 		if (trace === Trace.Off || !tracer) {
 			return;
 		}
-		let data: string | undefined = undefined;
-		if (trace === Trace.Verbose) {
-			if (message.error && message.error.data) {
-				data = `Error data: ${JSON.stringify(message.error.data, null, 4)}\n\n`;
-			} else {
-				if (message.result) {
-					data = `Result: ${JSON.stringify(message.result, null, 4)}\n\n`;
-				} else if (message.error === void 0) {
-					data = 'No result returned.\n\n';
+
+		if (traceFormat === TraceFormat.Text) {
+			let data: string | undefined = undefined;
+			if (trace === Trace.Verbose) {
+				if (message.error && message.error.data) {
+					data = `Error data: ${JSON.stringify(message.error.data, null, 4)}\n\n`;
+				} else {
+					if (message.result) {
+						data = `Result: ${JSON.stringify(message.result, null, 4)}\n\n`;
+					} else if (message.error === void 0) {
+						data = 'No result returned.\n\n';
+					}
 				}
 			}
-		}
-		if (responsePromise) {
-			let error = message.error ? ` Request failed: ${message.error.message} (${message.error.code}).` : '';
-			tracer.log(`Received response '${responsePromise.method} - (${message.id})' in ${Date.now() - responsePromise.timerStart}ms.${error}`, data);
+			if (responsePromise) {
+				let error = message.error ? ` Request failed: ${message.error.message} (${message.error.code}).` : '';
+				tracer.log(`Received response '${responsePromise.method} - (${message.id})' in ${Date.now() - responsePromise.timerStart}ms.${error}`, data);
+			} else {
+				tracer.log(`Received response ${message.id} without active response promise.`, data);
+			}
 		} else {
-			tracer.log(`Received response ${message.id} without active response promise.`, data);
+			logLSPMessage('receive-response', message);
 		}
+	}
+
+	function logLSPMessage(type: LSPMessageType, message: RequestMessage | ResponseMessage | NotificationMessage): void {
+		if (!tracer || trace === Trace.Off) {
+			return;
+		}
+
+		const lspMessage = {
+			isLSPMessage: true,
+			type,
+			message,
+			timestamp: Date.now()
+		}
+
+		tracer.log(lspMessage);
 	}
 
 	function throwIfClosedOrDisposed() {
@@ -886,7 +955,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				method: method,
 				params: messageParams
 			}
-			traceSendNotification(notificationMessage);
+			traceSendingNotification(notificationMessage);
 			messageWriter.write(notificationMessage);
 		},
 		onNotification: (type: string | MessageType | StarNotificationHandler, handler?: GenericNotificationHandler): void => {
@@ -985,14 +1054,27 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				}
 			}
 		},
-		trace: (_value: Trace, _tracer: Tracer, sendNotification: boolean = false) => {
+		trace: (_value: Trace, _tracer: Tracer, sendNotificationOrTraceOptions?: boolean | TraceOptions) => {
+			let _sendNotification: boolean = false;
+			let _traceFormat: TraceFormat = TraceFormat.Text;
+
+			if (sendNotificationOrTraceOptions !== void 0) {
+				if (Is.boolean(sendNotificationOrTraceOptions)) {
+					_sendNotification = sendNotificationOrTraceOptions;
+				} else {
+					_sendNotification = sendNotificationOrTraceOptions.sendNotification || false;
+					_traceFormat = sendNotificationOrTraceOptions.traceFormat || TraceFormat.Text;
+				}
+			}
+
 			trace = _value;
+			traceFormat = _traceFormat;
 			if (trace === Trace.Off) {
 				tracer = undefined;
 			} else {
 				tracer = _tracer;
 			}
-			if (sendNotification && !isClosed() && !isDisposed()) {
+			if (_sendNotification && !isClosed() && !isDisposed()) {
 				connection.sendNotification(SetTraceNotification.type, { value: Trace.toString(_value) });
 			}
 		},

@@ -6,7 +6,7 @@
 
 import {
 	ErrorCodes, ResponseError, CancellationToken, CancellationTokenSource,
-	Disposable, Event, Emitter, Trace, SetTraceNotification, LogTraceNotification,
+	Disposable, Event, Emitter, Trace, Tracer, TraceFormat, TraceOptions, SetTraceNotification, LogTraceNotification,
 	Message, NotificationMessage, RequestMessage, MessageType as RPCMessageType,
 	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler,
 	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler, StarNotificationHandler,
@@ -14,12 +14,12 @@ import {
 	StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageWriter,
 	createClientPipeTransport, createServerPipeTransport, generateRandomPipeName, DataCallback,
 	createClientSocketTransport, createServerSocketTransport,
-	createMessageConnection, Tracer
+	createMessageConnection
 } from 'vscode-jsonrpc';
 
 export {
 	ErrorCodes, ResponseError, CancellationToken, CancellationTokenSource,
-	Disposable, Event, Emitter, Trace, SetTraceNotification, LogTraceNotification,
+	Disposable, Event, Emitter, Trace, Tracer, TraceFormat, TraceOptions, SetTraceNotification, LogTraceNotification,
 	Message, NotificationMessage, RequestMessage, RPCMessageType,
 	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler,
 	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler, StarNotificationHandler,
@@ -28,8 +28,8 @@ export {
 	IPCMessageReader, IPCMessageWriter,
 	createClientPipeTransport, createServerPipeTransport, generateRandomPipeName, DataCallback,
 	createClientSocketTransport, createServerSocketTransport,
-	Tracer
 }
+
 export * from 'vscode-languageserver-types';
 export * from './protocol';
 
@@ -158,6 +158,7 @@ export interface ProtocolConnection {
 	 * Enables tracing mode for the connection.
 	 */
 	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): void;
+	trace(value: Trace, tracer: Tracer, traceOptions?: TraceOptions): void;
 
 	/**
 	 * An event emitter firing when an error occurs on the connection.

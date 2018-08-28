@@ -22,7 +22,7 @@ import {
 	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler,
 	NotificationType, NotificationType0,
 	NotificationHandler, NotificationHandler0, GenericNotificationHandler,
-	MessageReader, MessageWriter, Trace, Tracer, Event, Emitter,
+	MessageReader, MessageWriter, Trace, Tracer, TraceFormat, TraceOptions, Event, Emitter,
 	createProtocolConnection,
 	ClientCapabilities, WorkspaceEdit,
 	RegistrationRequest, RegistrationParams, UnregistrationRequest, UnregistrationParams, TextDocumentRegistrationOptions,
@@ -103,6 +103,7 @@ interface IConnection {
 	onNotification(method: string | RPCMessageType, handler: GenericNotificationHandler): void;
 
 	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): void;
+	trace(value: Trace, tracer: Tracer, traceOptions?: TraceOptions): void;
 
 	initialize(params: InitializeParams): Thenable<InitializeResult>;
 	shutdown(): Thenable<void>;
@@ -163,7 +164,20 @@ function createConnection(input: any, output: any, errorHandler: ConnectionError
 		sendNotification: (type: string | RPCMessageType, params?: any): void => connection.sendNotification(Is.string(type) ? type : type.method, params),
 		onNotification: (type: string | RPCMessageType, handler: GenericNotificationHandler): void => connection.onNotification(Is.string(type) ? type : type.method, handler),
 
-		trace: (value: Trace, tracer: Tracer, sendNotification: boolean = false): void => connection.trace(value, tracer, sendNotification),
+		trace: (value: Trace, tracer: Tracer, sendNotificationOrTraceOptions?: boolean | TraceOptions): void => {
+			const defaultTraceOptions: TraceOptions = {
+				sendNotification: false,
+				traceFormat: TraceFormat.Text
+			};
+
+			if (sendNotificationOrTraceOptions === void 0) {
+				connection.trace(value, tracer, defaultTraceOptions);
+			} else if (Is.boolean(sendNotificationOrTraceOptions)) {
+				connection.trace(value, tracer, sendNotificationOrTraceOptions);
+			} else {
+				connection.trace(value, tracer, sendNotificationOrTraceOptions);
+			}
+		},
 
 		initialize: (params: InitializeParams) => connection.sendRequest(InitializeRequest.type, params),
 		shutdown: () => connection.sendRequest(ShutdownRequest.type, undefined),
@@ -2343,6 +2357,7 @@ export abstract class BaseLanguageClient {
 	private _stateChangeEmitter: Emitter<StateChangeEvent>;
 
 	private _trace: Trace;
+	private _traceFormat: TraceFormat = TraceFormat.Text;
 	private _tracer: Tracer;
 
 	private _c2p: c2p.Converter;
@@ -2394,9 +2409,13 @@ export abstract class BaseLanguageClient {
 		this._telemetryEmitter = new Emitter<any>();
 		this._stateChangeEmitter = new Emitter<StateChangeEvent>();
 		this._tracer = {
-			log: (message: string, data?: string) => {
-				this.logTrace(message, data);
-			}
+			log: (messageOrDataObject: string | any, data?: string) => {
+				if (Is.string(messageOrDataObject)) {
+					this.logTrace(messageOrDataObject, data);
+				} else {
+					this.logObjectTrace(messageOrDataObject);
+				}
+			},
 		};
 		this._c2p = c2p.createConverter(clientOptions.uriConverters ? clientOptions.uriConverters.code2Protocol : undefined);
 		this._p2c = p2c.createConverter(clientOptions.uriConverters ? clientOptions.uriConverters.protocol2Code : undefined);
@@ -2534,7 +2553,10 @@ export abstract class BaseLanguageClient {
 		this._trace = value;
 		this.onReady().then(() => {
 			this.resolveConnection().then((connection) => {
-				connection.trace(value, this._tracer);
+				connection.trace(this._trace, this._tracer, {
+					sendNotification: false,
+					traceFormat: this._traceFormat
+				});
 			})
 		}, () => {
 		});
@@ -2591,6 +2613,17 @@ export abstract class BaseLanguageClient {
 		this.outputChannel.appendLine(`[Trace - ${(new Date().toLocaleTimeString())}] ${message}`);
 		if (data) {
 			this.outputChannel.appendLine(this.data2String(data));
+		}
+	}
+
+	private logObjectTrace(data: any): void {
+		if (data.isLSPMessage && data.type) {
+			this.outputChannel.append(`[LSP   - ${(new Date().toLocaleTimeString())}] `);
+		} else {
+			this.outputChannel.append(`[Trace - ${(new Date().toLocaleTimeString())}] `);
+		}
+		if (data) {
+			this.outputChannel.appendLine(`${JSON.stringify(data)}`);
 		}
 	}
 
@@ -2955,11 +2988,23 @@ export abstract class BaseLanguageClient {
 	private refreshTrace(connection: IConnection, sendNotification: boolean = false): void {
 		let config = Workspace.getConfiguration(this._id);
 		let trace: Trace = Trace.Off;
+		let traceFormat: TraceFormat = TraceFormat.Text;
 		if (config) {
-			trace = Trace.fromString(config.get('trace.server', 'off'));
+			const traceConfig = config.get('trace.server', 'off');
+
+			if (typeof traceConfig === 'string') {
+				trace = Trace.fromString(traceConfig);
+			} else {
+				trace = Trace.fromString(config.get('trace.server.verbosity', 'off'));
+				traceFormat = TraceFormat.fromString(config.get('trace.server.format', 'text'));
+			}
 		}
 		this._trace = trace;
-		connection.trace(this._trace, this._tracer, sendNotification);
+		this._traceFormat = traceFormat;
+		connection.trace(this._trace, this._tracer, {
+			sendNotification,
+			traceFormat: this._traceFormat
+		});
 	}
 
 
