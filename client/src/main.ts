@@ -6,7 +6,7 @@
 
 import * as cp from 'child_process';
 import * as fs from 'fs';
-import * as path from 'path';
+
 import ChildProcess = cp.ChildProcess;
 
 import * as SemVer from 'semver';
@@ -36,6 +36,8 @@ import { terminate } from './utils/processes';
 export * from './client';
 
 declare var v8debug: any;
+
+const REQUIRED_VSCODE_VERSION = '^1.26'; // do not change format, updated by `updateVSCode` script
 
 export interface ExecutableOptions {
 	cwd?: string;
@@ -137,12 +139,6 @@ namespace ChildProcessInfo {
 
 export type ServerOptions = Executable | { run: Executable; debug: Executable; } | { run: NodeModule; debug: NodeModule } | NodeModule | (() => Thenable<ChildProcess | StreamInfo | MessageTransports | ChildProcessInfo>);
 
-interface PackageJson {
-	engines: {
-		vscode: string;
-	}
-}
-
 export class LanguageClient extends BaseLanguageClient {
 
 	private _serverOptions: ServerOptions;
@@ -186,10 +182,6 @@ export class LanguageClient extends BaseLanguageClient {
 	}
 
 	private checkVersion() {
-		let packageJson: PackageJson = JSON.parse(fs.readFileSync(path.join(__dirname, '../package.json')).toString());
-		if (!packageJson || !packageJson.engines || !packageJson.engines.vscode) {
-			throw new Error('No vscode engine specified in package.json');
-		}
 		let codeVersion = SemVer.parse(VSCodeVersion);
 		if (!codeVersion) {
 			throw new Error(`No valid VS Code version detected. Version string is: ${VSCodeVersion}`);
@@ -198,8 +190,8 @@ export class LanguageClient extends BaseLanguageClient {
 		if (codeVersion.prerelease && codeVersion.prerelease.length > 0) {
 			codeVersion.prerelease = [];
 		}
-		if (!SemVer.satisfies(codeVersion, packageJson.engines.vscode)) {
-			throw new Error(`The language client requires VS Code version ${packageJson.engines.vscode} but recevied version ${VSCodeVersion}`);
+		if (!SemVer.satisfies(codeVersion, REQUIRED_VSCODE_VERSION)) {
+			throw new Error(`The language client requires VS Code version ${REQUIRED_VSCODE_VERSION} but recevied version ${VSCodeVersion}`);
 		}
 	}
 
