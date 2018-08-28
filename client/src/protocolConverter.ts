@@ -664,7 +664,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 				} else if (ls.TextDocumentEdit.is(change)) {
 					result.set(_uriConverter(change.textDocument.uri), asTextEdits(change.edits));
 				} else {
-					console.error(`Unknown workspace edit change recevied:\n${JSON.stringify(change, undefined, 4)}`);
+					console.error(`Unknown workspace edit change received:\n${JSON.stringify(change, undefined, 4)}`);
 				}
 			});
 		} else if (item.changes) {
