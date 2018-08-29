@@ -12,8 +12,8 @@ import { Event, Emitter } from './events';
 import * as Is from './is';
 
 let DefaultSize: number = 8192;
-let CR: number = new Buffer('\r', 'ascii')[0];
-let LF: number = new Buffer('\n', 'ascii')[0];
+let CR: number = Buffer.from('\r', 'ascii')[0];
+let LF: number = Buffer.from('\n', 'ascii')[0];
 let CRLF: string = '\r\n';
 
 class MessageBuffer {
@@ -25,7 +25,7 @@ class MessageBuffer {
 	constructor(encoding: string = 'utf8') {
 		this.encoding = encoding;
 		this.index = 0;
-		this.buffer = new Buffer(DefaultSize);
+		this.buffer = Buffer.allocUnsafe(DefaultSize);
 	}
 
 	public append(chunk: Buffer | String): void {
@@ -33,7 +33,7 @@ class MessageBuffer {
 		if (typeof (chunk) === 'string') {
 			var str = <string>chunk;
 			var bufferLen = Buffer.byteLength(str, this.encoding);
-			toAppend = new Buffer(bufferLen);
+			toAppend = Buffer.allocUnsafe(bufferLen);
 			toAppend.write(str, 0, bufferLen, this.encoding);
 		}
 		if (this.buffer.length - this.index >= toAppend.length) {
@@ -41,7 +41,7 @@ class MessageBuffer {
 		} else {
 			var newSize = (Math.ceil((this.index + toAppend.length) / DefaultSize) + 1) * DefaultSize;
 			if (this.index === 0) {
-				this.buffer = new Buffer(newSize);
+				this.buffer = Buffer.allocUnsafe(newSize);
 				toAppend.copy(this.buffer, 0, 0, toAppend.length);
 			} else {
 				this.buffer = Buffer.concat([this.buffer.slice(0, this.index), toAppend], newSize);
