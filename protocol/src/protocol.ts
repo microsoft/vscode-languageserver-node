@@ -30,7 +30,7 @@ import {
 	ColorServerCapabilities, ColorClientCapabilities,
 } from './protocol.colorProvider';
 import {
-	FoldingRangeClientCapabilities, FoldingRangeProviderOptions, FoldingRangeRequest, FoldingRangeRequestParam, FoldingRangeServerCapabilities
+	FoldingRangeClientCapabilities, FoldingRangeProviderOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeServerCapabilities
 } from './protocol.foldingRange';
 
 /**
@@ -49,20 +49,20 @@ export type DocumentFilter = {
 	/** A glob pattern, like `*.{ts,js}`. */
 	pattern?: string;
 } | {
-		/** A language id, like `typescript`. */
-		language?: string;
-		/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */
-		scheme: string;
-		/** A glob pattern, like `*.{ts,js}`. */
-		pattern?: string;
-	} | {
-		/** A language id, like `typescript`. */
-		language?: string;
-		/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */
-		scheme?: string;
-		/** A glob pattern, like `*.{ts,js}`. */
-		pattern: string;
-	};
+	/** A language id, like `typescript`. */
+	language?: string;
+	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */
+	scheme: string;
+	/** A glob pattern, like `*.{ts,js}`. */
+	pattern?: string;
+} | {
+	/** A language id, like `typescript`. */
+	language?: string;
+	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */
+	scheme?: string;
+	/** A glob pattern, like `*.{ts,js}`. */
+	pattern: string;
+};
 
 export namespace DocumentFilter {
 	export function is(value: any): value is DocumentFilter {
@@ -1920,5 +1920,5 @@ export {
 	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, WorkspaceFolder, WorkspaceFoldersChangeEvent,
 	ConfigurationRequest, ConfigurationParams, ConfigurationItem,
 	DocumentColorRequest, ColorPresentationRequest, ColorProviderOptions, DocumentColorParams, ColorPresentationParams,
-	FoldingRangeClientCapabilities, FoldingRangeProviderOptions, FoldingRangeRequest, FoldingRangeRequestParam, FoldingRangeServerCapabilities
+	FoldingRangeClientCapabilities, FoldingRangeProviderOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeServerCapabilities
 };

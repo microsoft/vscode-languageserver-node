@@ -33,6 +33,8 @@ export {
 export * from 'vscode-languageserver-types';
 export * from './protocol';
 
+export { FoldingRangeParams as FoldingRangeRequestParam } from './protocol'; // for backward compatibility
+
 export namespace Proposed {
 }
 

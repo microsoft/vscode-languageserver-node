@@ -11,7 +11,7 @@ import { languages as Languages, Disposable, TextDocument, ProviderResult, Foldi
 
 import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, TextDocumentRegistrationOptions, DocumentSelector, StaticRegistrationOptions,
-	FoldingRange, FoldingRangeKind, FoldingRangeRequest, FoldingRangeProviderOptions, FoldingRangeRequestParam
+	FoldingRange, FoldingRangeKind, FoldingRangeRequest, FoldingRangeProviderOptions, FoldingRangeParams
 } from 'vscode-languageserver-protocol';
 
 import { TextDocumentFeature, BaseLanguageClient } from './client';
@@ -64,7 +64,7 @@ export class FoldingRangeFeature extends TextDocumentFeature<TextDocumentRegistr
 	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): Disposable {
 		let client = this._client;
 		let provideFoldingRanges: ProvideFoldingRangeSignature = (document, _, token) => {
-			const requestParams: FoldingRangeRequestParam = {
+			const requestParams: FoldingRangeParams = {
 				textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document)
 			};
 			return client.sendRequest(FoldingRangeRequest.type, requestParams, token).then(

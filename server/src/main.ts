@@ -45,7 +45,7 @@ import {
 	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse,
 	ClientCapabilities, ServerCapabilities, ProtocolConnection, createProtocolConnection, TypeDefinitionRequest, ImplementationRequest,
 	DocumentColorRequest, DocumentColorParams, ColorInformation, ColorPresentationParams, ColorPresentation, ColorPresentationRequest,
-	CodeAction, FoldingRangeRequestParam, FoldingRange, FoldingRangeRequest
+	CodeAction, FoldingRangeParams, FoldingRange, FoldingRangeRequest
 } from 'vscode-languageserver-protocol';
 
 import { Configuration, ConfigurationFeature } from './configuration';
@@ -1337,7 +1337,7 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onFoldingRanges(handler: RequestHandler<FoldingRangeRequestParam, FoldingRange[] | undefined | null, void>): void;
+	onFoldingRanges(handler: RequestHandler<FoldingRangeParams, FoldingRange[] | undefined | null, void>): void;
 
 
 	/**

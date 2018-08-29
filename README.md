@@ -27,6 +27,9 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
+### 3.13.0 Protocol
+* `FoldingRangeRequestParam` renamed to 'FoldingRangeParams' (`FoldingRangeRequestParam` still provided for backward compatibility)
+
 ### 5.0.0 Client & 5.0.0 Server
 
 * Make the client work with Electron 2.x. which is used since VS Code 1.26.x

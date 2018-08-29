@@ -102,7 +102,7 @@ export interface FoldingRange {
 /**
  * Parameters for a [FoldingRangeRequest](#FoldingRangeRequest).
  */
-export interface FoldingRangeRequestParam {
+export interface FoldingRangeParams {
 	/**
 	 * The text document.
 	 */
@@ -111,10 +111,10 @@ export interface FoldingRangeRequestParam {
 
 /**
  * A request to provide folding ranges in a document. The request's
- * parameter is of type [FoldingRangeRequestParam](#FoldingRangeRequestParam), the
+ * parameter is of type [FoldingRangeParams](#FoldingRangeParams), the
  * response is of type [FoldingRangeList](#FoldingRangeList) or a Thenable
  * that resolves to such.
  */
 export namespace FoldingRangeRequest {
-	export const type: RequestType<FoldingRangeRequestParam, FoldingRange[] | null, any, any> = new RequestType('textDocument/foldingRange');
+	export const type: RequestType<FoldingRangeParams, FoldingRange[] | null, any, any> = new RequestType('textDocument/foldingRange');
 }
