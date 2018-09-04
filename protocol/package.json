@@ -15,7 +15,7 @@
 	"typings": "./lib/main",
 	"dependencies": {
 		"vscode-jsonrpc": "^3.7.0-next.1",
-		"vscode-languageserver-types": "^3.13.0-next.1"
+		"vscode-languageserver-types": "3.13.0-next.1"
 	},
 	"scripts": {
 		"prepublishOnly": "npm run clean && npm run compile && npm test",
