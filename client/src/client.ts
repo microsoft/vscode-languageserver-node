@@ -289,7 +289,20 @@ export interface InitializationFailedHandler {
 }
 
 export interface SynchronizeOptions {
+	/**
+	 * The configuration sections to synchonize. Pushing settings from the
+	 * client to the server is deprecated in favour of the new pull model
+	 * that allows servers to query settings scoped on resources. In this
+	 * model the client can only deliver an empty change event since the
+	 * actually setting value can vary on the provided resource scope.
+	 *
+	 * @deprecated Use the new pull model (`workspace/configuration` request)
+	 */
 	configurationSection?: string | string[];
+
+	/**
+	 *
+	 */
 	fileEvents?: VFileSystemWatcher | VFileSystemWatcher[];
 }
 
