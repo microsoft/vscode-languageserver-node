@@ -1,13 +1,13 @@
 {
 	"extends": "../tsconfig.base.json",
 	"compilerOptions": {
-		"target": "es5",
+		"target": "es6",
 		"module": "commonjs",
 		"moduleResolution": "node",
 		"sourceMap": false,
 		"declaration": true,
 		"stripInternal": true,
-		"lib": [ "es2015", "es2015.promise" ],
+		"lib": [ "es2016" ],
 		"rootDir": "src",
 		"outDir": "lib"
 	},

@@ -47,6 +47,10 @@ connection.listen();
 
 # History
 
+### 4.0.0
+
+- move JS target to ES6.
+
 ### 3.0.0:
 
 - converted the NPM module to use TypeScript 2.0.3.
