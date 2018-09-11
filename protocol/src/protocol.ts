@@ -165,17 +165,17 @@ export type ResourceOperationKind = 'create' | 'rename' | 'delete';
 export namespace ResourceOperationKind {
 
 	/**
-	 * Supports creating new resources.
+	 * Supports creating new files and folders.
 	 */
 	export const Create: ResourceOperationKind = 'create';
 
 	/**
-	 * Supports renaming existing resources.
+	 * Supports renaming existing files and folders.
 	 */
 	export const Rename: ResourceOperationKind = 'rename';
 
 	/**
-	 * Supports deleting existing resources.
+	 * Supports deleting existing files and folders.
 	 */
 	export const Delete: ResourceOperationKind = 'delete';
 }
@@ -210,6 +210,7 @@ export namespace FailureHandlingKind {
 	 */
 	export const Undo: FailureHandlingKind = 'undo';
 }
+
 /**
  * Workspace specific client capabilities.
  */
@@ -232,7 +233,7 @@ export interface WorkspaceClientCapabilities {
 
 		/**
 		 * The resource operations the client supports. Clients should at least
-		 * support 'create', 'rename' and 'delete'.
+		 * support 'create', 'rename' and 'delete' files and folders.
 		 */
 		resourceOperations?: ResourceOperationKind[];
 

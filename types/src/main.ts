@@ -662,18 +662,39 @@ export namespace TextDocumentEdit {
 	}
 }
 
-export interface CreateFileOptions {
-	overwrite?: boolean;
-	ignoreIfExists?: boolean;
-}
-
 interface ResourceOperation {
 	kind: string;
 }
 
-export interface CreateFile {
+/**
+ * Options to create a file.
+ */
+export interface CreateFileOptions {
+	/**
+	 * Overwrite existing file. Overwrite wins over `ignoreIfExists`
+	 */
+	overwrite?: boolean;
+	/**
+	 * Ignore if exists.
+	 */
+	ignoreIfExists?: boolean;
+}
+
+/**
+ * Create file operation.
+ */
+export interface CreateFile extends ResourceOperation {
+	/**
+	 * A create
+	 */
 	kind: 'create';
+	/**
+	 * The resource to create.
+	 */
 	uri: string;
+	/**
+	 * Additional options
+	 */
 	options?: CreateFileOptions;
 }
 
@@ -699,15 +720,39 @@ export namespace CreateFile {
 	}
 }
 
+/**
+ * Rename file options
+ */
 export interface RenameFileOptions {
+	/**
+	 * Overwrite target if existing. Overwrite wins over `ignoreIfExists`
+	 */
 	overwrite?: boolean;
+	/**
+	 * Ignores if target exists.
+	 */
 	ignoreIfExists?: boolean;
 }
 
-export interface RenameFile {
+/**
+ * Rename file operation
+ */
+export interface RenameFile extends ResourceOperation {
+	/**
+	 * A rename
+	 */
 	kind: 'rename';
+	/**
+	 * The old (existing) location.
+	 */
 	oldUri: string;
+	/**
+	 * The new location.
+	 */
 	newUri: string;
+	/**
+	 * Rename options.
+	 */
 	options?: RenameFileOptions;
 }
 
@@ -734,14 +779,35 @@ export namespace RenameFile {
 	}
 }
 
+/**
+ * Delete file options
+ */
 export interface DeleteFileOptions {
+	/**
+	 * Delete the content recursively if a folder is denoted.
+	 */
 	recursive?: boolean;
+	/**
+	 * Ignore the operation if the file doesn't exist.
+	 */
 	ignoreIfNotExists?: boolean;
 }
 
-export interface DeleteFile {
+/**
+ * Delete file operation
+ */
+export interface DeleteFile extends ResourceOperation {
+	/**
+	 * A delete
+	 */
 	kind: 'delete';
+	/**
+	 * The file to delete.
+	 */
 	uri: string;
+	/**
+	 * Delete options.
+	 */
 	options?: DeleteFileOptions;
 }
 
@@ -779,10 +845,16 @@ export interface WorkspaceEdit {
 	changes?: { [uri: string]: TextEdit[]; };
 
 	/**
-	 * An array of `TextDocumentEdit`s to express changes to n different text documents
-	 * where each text document edit addresses a specific version of a text document.
+	 * Depending on the client capability `workspace.workspaceEdit.resourceOperations` document changes
+	 * are either an array of `TextDocumentEdit`s to express changes to n different text documents
+	 * where each text document edit addresses a specific version of a text document. Or it can contain
+	 * above `TextDocumentEdit`s mixed with create, rename and delete file / folder operations.
+	 *
 	 * Whether a client supports versioned document edits is expressed via
-	 * `WorkspaceClientCapabilites.workspaceEdit.documentChanges`.
+	 * `workspace.workspaceEdit.documentChanges` client capability.
+	 *
+	 * If a client neither supports `documentChanges` nor `workspace.workspaceEdit.resourceOperations` then
+	 * only plain `TextEdit`s using the `changes` property are supported.
 	 */
 	documentChanges?: (TextDocumentEdit | CreateFile | RenameFile | DeleteFile)[];
 }
