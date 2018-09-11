@@ -27,8 +27,14 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
+### 5.1.0 Client & 5.1.0 Server
+
+* Adopt protocol version 3.13.0
+
 ### 3.13.0 Protocol
+
 * `FoldingRangeRequestParam` renamed to 'FoldingRangeParams' (`FoldingRangeRequestParam` still provided for backward compatibility)
+* Added support for create, rename and delete file operations in workspace edits.
 
 ### 5.0.0 Client & 5.0.0 Server
 
