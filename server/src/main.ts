@@ -262,7 +262,7 @@ export class TextDocuments {
 				let document = this._documents[td.uri];
 				if (document && isUpdateableDocument(document)) {
 					if (td.version === null || td.version === void 0) {
-						throw new Error(`Recevied document change event for ${td.uri} without valid version identifier`);
+						throw new Error(`Received document change event for ${td.uri} without valid version identifier`);
 					}
 					document.update(last, td.version);
 					this._onDidChangeContent.fire(Object.freeze({ document }));
