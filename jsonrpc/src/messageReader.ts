@@ -165,7 +165,7 @@ export abstract class AbstractMessageReader {
 		if (error instanceof Error) {
 			return error;
 		} else {
-			return new Error(`Reader recevied error. Reason: ${Is.string(error.message) ? error.message : 'unknown'}`);
+			return new Error(`Reader received error. Reason: ${Is.string(error.message) ? error.message : 'unknown'}`);
 		}
 	}
 }
@@ -229,7 +229,7 @@ export class StreamMessageReader extends AbstractMessageReader implements Messag
 			}
 			var msg = this.buffer.tryReadContent(this.nextMessageLength);
 			if (msg === null) {
-				/** We haven't recevied the full message yet. */
+				/** We haven't received the full message yet. */
 				this.setPartialMessageTimer();
 				return;
 			}
