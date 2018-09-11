@@ -64,7 +64,7 @@ export abstract class AbstractMessageWriter {
 		if (error instanceof Error) {
 			return error;
 		} else {
-			return new Error(`Writer recevied error. Reason: ${Is.string(error.message) ? error.message : 'unknown'}`);
+			return new Error(`Writer received error. Reason: ${Is.string(error.message) ? error.message : 'unknown'}`);
 		}
 	}
 }
