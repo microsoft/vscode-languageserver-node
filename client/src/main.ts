@@ -191,7 +191,7 @@ export class LanguageClient extends BaseLanguageClient {
 			codeVersion.prerelease = [];
 		}
 		if (!SemVer.satisfies(codeVersion, REQUIRED_VSCODE_VERSION)) {
-			throw new Error(`The language client requires VS Code version ${REQUIRED_VSCODE_VERSION} but recevied version ${VSCodeVersion}`);
+			throw new Error(`The language client requires VS Code version ${REQUIRED_VSCODE_VERSION} but received version ${VSCodeVersion}`);
 		}
 	}
 
