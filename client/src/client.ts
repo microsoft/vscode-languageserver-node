@@ -9,7 +9,7 @@ import {
 	TextDocumentChangeEvent, TextDocument, Disposable, OutputChannel,
 	FileSystemWatcher as VFileSystemWatcher, DiagnosticCollection, Diagnostic as VDiagnostic, Uri, ProviderResult,
 	CancellationToken, Position as VPosition, Location as VLocation, Range as VRange,
-	CompletionItem as VCompletionItem, CompletionList as VCompletionList, SignatureHelp as VSignatureHelp, Definition as VDefinition, DocumentHighlight as VDocumentHighlight,
+	CompletionItem as VCompletionItem, CompletionList as VCompletionList, SignatureHelp as VSignatureHelp, Definition as VDefinition, DefinitionLink as VDefinitionLink, DocumentHighlight as VDocumentHighlight,
 	SymbolInformation as VSymbolInformation, CodeActionContext as VCodeActionContext, Command as VCommand, CodeLens as VCodeLens,
 	FormattingOptions as VFormattingOptions, TextEdit as VTextEdit, WorkspaceEdit as VWorkspaceEdit, MessageItem,
 	Hover as VHover, CodeAction as VCodeAction, DocumentSymbol as VDocumentSymbol,
@@ -334,7 +334,7 @@ export interface ProvideSignatureHelpSignature {
 }
 
 export interface ProvideDefinitionSignature {
-	(document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDefinition>;
+	(document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDefinition | VDefinitionLink[]>;
 }
 
 export interface ProvideReferencesSignature {
@@ -424,7 +424,7 @@ export interface _Middleware {
 	resolveCompletionItem?: (this: void, item: VCompletionItem, token: CancellationToken, next: ResolveCompletionItemSignature) => ProviderResult<VCompletionItem>;
 	provideHover?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideHoverSignature) => ProviderResult<VHover>;
 	provideSignatureHelp?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideSignatureHelpSignature) => ProviderResult<VSignatureHelp>;
-	provideDefinition?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideDefinitionSignature) => ProviderResult<VDefinition>;
+	provideDefinition?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideDefinitionSignature) => ProviderResult<VDefinition | VDefinitionLink[]>;
 	provideReferences?: (this: void, document: TextDocument, position: VPosition, options: { includeDeclaration: boolean; }, token: CancellationToken, next: ProvideReferencesSignature) => ProviderResult<VLocation[]>;
 	provideDocumentHighlights?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideDocumentHighlightsSignature) => ProviderResult<VDocumentHighlight[]>;
 	provideDocumentSymbols?: (this: void, document: TextDocument, token: CancellationToken, next: ProvideDocumentSymbolsSignature) => ProviderResult<VSymbolInformation[] | VDocumentSymbol[]>;
@@ -1475,7 +1475,9 @@ class DefinitionFeature extends TextDocumentFeature<TextDocumentRegistrationOpti
 	}
 
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		ensure(ensure(capabilites, 'textDocument')!, 'definition')!.dynamicRegistration = true;
+		let definitionSupport = ensure(ensure(capabilites, 'textDocument')!, 'definition')!;
+		definitionSupport.dynamicRegistration = true;
+		definitionSupport.definitionLinkSupport = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
@@ -1501,7 +1503,7 @@ class DefinitionFeature extends TextDocumentFeature<TextDocumentRegistrationOpti
 		};
 		let middleware = client.clientOptions.middleware!;
 		return Languages.registerDefinitionProvider(options.documentSelector!, {
-			provideDefinition: (document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDefinition> => {
+			provideDefinition: (document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDefinition | VDefinitionLink[]> => {
 				return middleware.provideDefinition
 					? middleware.provideDefinition(document, position, token, provideDefinition)
 					: provideDefinition(document, position, token);

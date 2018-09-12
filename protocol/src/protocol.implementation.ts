@@ -23,6 +23,11 @@ export interface ImplementationClientCapabilities {
 			 * return value for the corresponding server capability as well.
 			 */
 			dynamicRegistration?: boolean;
+
+			/**
+			 * The client supports additional metadata in the form of definition links.
+			 */
+			definitionLinkSupport?: boolean;
 		};
 	}
 }

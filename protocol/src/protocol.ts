@@ -529,6 +529,11 @@ export interface TextDocumentClientCapabilities {
 		 * Whether definition supports dynamic registration.
 		 */
 		dynamicRegistration?: boolean;
+
+		/**
+		 * The client supports additional metadata in the form of definition links.
+		 */
+		definitionLinkSupport?: boolean;
 	};
 
 	/**
