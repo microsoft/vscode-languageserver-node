@@ -18,6 +18,8 @@ export interface Converter {
 
 	asTextDocumentIdentifier(textDocument: code.TextDocument): proto.TextDocumentIdentifier;
 
+	asVersionedTextDocumentIdentifier(textDocument: code.TextDocument): proto.VersionedTextDocumentIdentifier;
+
 	asOpenTextDocumentParams(textDocument: code.TextDocument): proto.DidOpenTextDocumentParams;
 
 	asChangeTextDocumentParams(textDocument: code.TextDocument): proto.DidChangeTextDocumentParams;
@@ -432,6 +434,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	return {
 		asUri,
 		asTextDocumentIdentifier,
+		asVersionedTextDocumentIdentifier,
 		asOpenTextDocumentParams,
 		asChangeTextDocumentParams,
 		asCloseTextDocumentParams,
@@ -456,5 +459,5 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asCodeLensParams,
 		asDocumentLink,
 		asDocumentLinkParams
-	}
+	}   
 }
