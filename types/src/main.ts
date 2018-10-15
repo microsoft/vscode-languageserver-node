@@ -1870,6 +1870,16 @@ export class DocumentSymbol {
 	 * Children of this symbol, e.g. properties of a class.
 	 */
 	children?: DocumentSymbol[];
+
+	/**
+	 * The URI of the text document this symbol belongs to. Can be set by the language server,
+	 * if the URI of the text document is not available or cannot be inferred from the request context.
+	 *
+	 * If not defined, it can be inferred from the context of the request. For example, when calling the
+	 * `textDocument/documentSymbol` method, the `DocumentUri` (`string`) can be inferred from the request
+	 * parameter: `DocumentSymbolParams.textDocument.uri`.
+	 */
+	uri?: string;
 }
 
 export namespace DocumentSymbol {
