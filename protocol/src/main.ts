@@ -35,7 +35,19 @@ export * from './protocol';
 
 export { FoldingRangeParams as FoldingRangeRequestParam } from './protocol'; // for backward compatibility
 
+import * as typeHierarchy from './protocol.typeHierarchy.proposed';
+
 export namespace Proposed {
+
+	export type TypeHierarchyCapabilities = typeHierarchy.TypeHierarchyCapabilities;
+	export type TypeHierarchyServerCapabilities = typeHierarchy.TypeHierarchyServerCapabilities;
+	export namespace TypeHierarchyRequest {
+		export const type = typeHierarchy.TypeHierarchyRequest.type
+	};
+	export namespace ResolveTypeHierarchyRequest {
+		export const type = typeHierarchy.ResolveTypeHierarchyRequest.type
+	};
+
 }
 
 export interface ProtocolConnection {
