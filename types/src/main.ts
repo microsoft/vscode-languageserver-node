@@ -2369,7 +2369,7 @@ export namespace TextDocument {
 			if (endOffset <= lastModifiedOffset) {
 				text = text.substring(0, startOffset) + e.newText + text.substring(endOffset, text.length);
 			} else {
-				throw new Error('Ovelapping edit');
+				throw new Error('Overlapping edit');
 			}
 			lastModifiedOffset = startOffset;
 		}
