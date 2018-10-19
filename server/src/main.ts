@@ -1677,12 +1677,13 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 	}
 
 	connection.onRequest(InitializeRequest.type, (params) => {
-		if (Is.number(params.processId) && exitTimer === void 0) {
+		const processId = params.processId;
+		if (Is.number(processId) && exitTimer === void 0) {
 			// We received a parent process id. Set up a timer to periodically check
 			// if the parent is still alive.
 			setInterval(() => {
 				try {
-					process.kill(params.processId, <any>0);
+					process.kill(processId, <any>0);
 				} catch (ex) {
 					// Parent process doesn't exist anymore. Exit the server.
 					process.exit(shutdownReceived ? 0 : 1);

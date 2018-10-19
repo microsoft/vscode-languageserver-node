@@ -930,7 +930,7 @@ export interface _InitializeParams {
 	 * The process Id of the parent process that started
 	 * the server.
 	 */
-	processId: number;
+	processId: number | null;
 
 	/**
 	 * The rootPath of the workspace. Is null
