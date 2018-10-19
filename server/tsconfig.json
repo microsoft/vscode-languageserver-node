@@ -13,5 +13,10 @@
 	},
 	"include": [
 		"src"
+	],
+	"references": [
+		{
+			"path": "./node_modules/vscode-languageserver-protocol"
+		}
 	]
 }

@@ -9,10 +9,19 @@
 		"declaration": true,
 		"stripInternal": true,
 		"lib": [ "es2016" ],
+		"composite": true,
 		"outDir": "lib",
 		"rootDir": "src"
 	},
 	"include": [
 		"src"
+	],
+	"references": [
+		{
+			"path": "./node_modules/vscode-languageserver-types"
+		},
+		{
+			"path": "./node_modules/vscode-jsonrpc"
+		}
 	]
 }
