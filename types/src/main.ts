@@ -467,6 +467,11 @@ export interface Diagnostic {
 	code?: number | string;
 
 	/**
+	 * A HTTP URL to a resource explaining the diagnostic.
+	 */
+	url?: string;
+
+	/**
 	 * A human-readable string describing the source of this
 	 * diagnostic, e.g. 'typescript' or 'super lint'.
 	 */
@@ -492,13 +497,16 @@ export namespace Diagnostic {
 	/**
 	 * Creates a new Diagnostic literal.
 	 */
-	export function create(range: Range, message: string, severity?: DiagnosticSeverity, code?: number | string, source?: string, relatedInformation?: DiagnosticRelatedInformation[]): Diagnostic {
+	export function create(range: Range, message: string, severity?: DiagnosticSeverity, code?: number | string, source?: string, url?: string, relatedInformation?: DiagnosticRelatedInformation[]): Diagnostic {
 		let result: Diagnostic = { range, message };
 		if (Is.defined(severity)) {
 			result.severity = severity;
 		}
 		if (Is.defined(code)) {
 			result.code = code;
+		}
+		if (Is.defined(url)) {
+			result.url = url;
 		}
 		if (Is.defined(source)) {
 			result.source = source;
@@ -519,6 +527,7 @@ export namespace Diagnostic {
 			&& Is.string(candidate.message)
 			&& (Is.number(candidate.severity) || Is.undefined(candidate.severity))
 			&& (Is.number(candidate.code) || Is.string(candidate.code) || Is.undefined(candidate.code))
+			&& (Is.number(candidate.url) || Is.string(candidate.url) || Is.undefined(candidate.url))
 			&& (Is.string(candidate.source) || Is.undefined(candidate.source))
 			&& (Is.undefined(candidate.relatedInformation) || Is.typedArray<DiagnosticRelatedInformation>(candidate.relatedInformation, DiagnosticRelatedInformation.is));
 	}
