@@ -68,6 +68,7 @@ suite('Protocol Converter', () => {
 			message: 'error',
 			severity: proto.DiagnosticSeverity.Error,
 			code: 99,
+			url: 'https://www.example.com/',
 			source: 'source'
 		};
 
@@ -79,6 +80,7 @@ suite('Protocol Converter', () => {
 		strictEqual(range.end.character, end.character);
 		strictEqual(result.message, diagnostic.message);
 		strictEqual(result.code, diagnostic.code);
+		strictEqual(result.url, diagnostic.url);
 		strictEqual(result.source, diagnostic.source);
 		strictEqual(result.severity, vscode.DiagnosticSeverity.Error);
 
@@ -802,6 +804,7 @@ suite('Code Converter', () => {
 	test('Diagnostic', () => {
 		let item: vscode.Diagnostic = new vscode.Diagnostic(new vscode.Range(1, 2, 8, 9), "message", vscode.DiagnosticSeverity.Warning);
 		item.code = 99;
+		item.url = 'https://www.example.com/';
 		item.source = 'source';
 
 		let result = c2p.asDiagnostic(<any>item);
@@ -809,6 +812,7 @@ suite('Code Converter', () => {
 		strictEqual(result.message, item.message);
 		strictEqual(result.severity, proto.DiagnosticSeverity.Warning);
 		strictEqual(result.code, item.code);
+		strictEqual(result.url, item.url);
 		strictEqual(result.source, item.source);
 		ok(c2p.asDiagnostics(<any>[item]).every(elem => proto.Diagnostic.is(elem)));
 	});

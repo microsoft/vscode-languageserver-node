@@ -185,6 +185,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	function asDiagnostic(diagnostic: ls.Diagnostic): code.Diagnostic {
 		let result = new code.Diagnostic(asRange(diagnostic.range), diagnostic.message, asDiagnosticSeverity(diagnostic.severity));
 		if (Is.number(diagnostic.code) || Is.string(diagnostic.code)) { result.code = diagnostic.code; }
+		if (Is.string(diagnostic.url)) { result.url = diagnostic.url; }
 		if (diagnostic.source) { result.source = diagnostic.source; }
 		if (diagnostic.relatedInformation) { result.relatedInformation = asRelatedInformation(diagnostic.relatedInformation); }
 		return result;
