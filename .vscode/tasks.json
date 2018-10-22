@@ -3,15 +3,16 @@
 	"tasks": [
 		{
 			"label": "compile",
-			"dependsOn": [
-				"compile:server",
-				"compile:client"
-			],
-			"group": {
-				"kind": "build",
-				"isDefault": true
+			"type": "shell",
+			"command": "npm run compile",
+			"group": "build",
+			"presentation": {
+				"panel": "dedicated",
+				"reveal": "never"
 			},
-			"problemMatcher": []
+			"problemMatcher": [
+				"$tsc"
+			]
 		},
 		{
 			"label": "compile:types",
@@ -50,10 +51,6 @@
 			},
 			"problemMatcher": [
 				"$tsc"
-			],
-			"dependsOn": [
-				"compile:types",
-				"compile:jsonrpc"
 			]
 		},
 		{
@@ -67,11 +64,6 @@
 			},
 			"problemMatcher": [
 				"$tsc"
-			],
-			"dependsOn": [
-				"compile:types",
-				"compile:jsonrpc",
-				"compile:protocol"
 			]
 		},
 		{
@@ -85,23 +77,24 @@
 			},
 			"problemMatcher": [
 				"$tsc"
-			],
-			"dependsOn": [
-				"compile:types",
-				"compile:jsonrpc",
-				"compile:protocol"
 			]
 		},
 		{
 			"label": "watch",
-			"dependsOn": [
-				"watch:types",
-				"watch:jsonrpc",
-				"watch:protocol",
-				"watch:server",
-				"watch:client"
-			],
-			"problemMatcher": []
+			"type": "shell",
+			"command": "npm run watch",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"presentation": {
+				"panel": "dedicated",
+				"reveal": "never"
+			},
+			"isBackground": true,
+			"problemMatcher": [
+				"$tsc-watch"
+			]
 		},
 		{
 			"label": "watch:types",
