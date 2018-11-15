@@ -462,18 +462,19 @@ export interface Diagnostic {
 	severity?: DiagnosticSeverity;
 
 	/**
-	 * The diagnostic's code, which might appear in the user interface.
+	 * The diagnostic's code, which usually appear in the user interface.
 	 */
 	code?: number | string;
 
 	/**
 	 * A human-readable string describing the source of this
-	 * diagnostic, e.g. 'typescript' or 'super lint'.
+	 * diagnostic, e.g. 'typescript' or 'super lint'. It usually
+	 * appears in the user interface.
 	 */
 	source?: string;
 
 	/**
-	 * The diagnostic's message.
+	 * The diagnostic's message. It usually appears in the user interface
 	 */
 	message: string;
 
