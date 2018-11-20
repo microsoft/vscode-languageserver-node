@@ -39,7 +39,7 @@ export class ImplementationFeature extends TextDocumentFeature<TextDocumentRegis
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
 		let implementationSupport = ensure(ensure(capabilites, 'textDocument')!, 'implementation')!;
 		implementationSupport.dynamicRegistration = true;
-		implementationSupport.definitionLinkSupport = true;
+		implementationSupport.locationLinkSupport = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {

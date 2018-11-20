@@ -153,7 +153,7 @@ export namespace Location {
  * Represents the range and location of where a symbol is defined.
  * Also includes information about the originating source.
  */
-export interface DefinitionLink {
+export interface LocationLink {
 	targetUri: string;
 	targetRange: Range;
 	targetSelectionRange?: Range;
@@ -161,27 +161,27 @@ export interface DefinitionLink {
 }
 
 /**
- * The DefinitionLink namespace provides helper functions to work with
- * [DefinitionLink](#DefinitionLink) literals.
+ * The LocationLink namespace provides helper functions to work with
+ * [LocationLink](#LocationLink) literals.
  */
-export namespace DefinitionLink {
+export namespace LocationLink {
 
 	/**
-	 * Creates a DefinitionLink literal.
+	 * Creates a LocationLink literal.
 	 * @param targetUri The definition's uri.
 	 * @param targetRange The full range of the definition.
 	 * @param targetSelectionRange The span of the symbol definition at the target.
 	 * @param originSelectionRange The span of the symbol being defined in the originating source file.
 	 */
-	export function create(targetUri: string, targetRange: Range, targetSelectionRange?: Range, originSelectionRange?: Range): DefinitionLink {
+	export function create(targetUri: string, targetRange: Range, targetSelectionRange?: Range, originSelectionRange?: Range): LocationLink {
 		return { targetUri, targetRange, targetSelectionRange, originSelectionRange };
 	}
 
 	/**
-	 * Checks whether the given literal conforms to the [DefinitionLink](#DefinitionLink) interface.
+	 * Checks whether the given literal conforms to the [LocationLink](#LocationLink) interface.
 	 */
-	export function is(value: any): value is DefinitionLink {
-		let candidate = value as DefinitionLink;
+	export function is(value: any): value is LocationLink {
+		let candidate = value as LocationLink;
 		return Range.is(candidate.targetRange) && Is.defined(candidate)
 			&& Is.string(candidate.targetUri) && Is.defined(candidate.targetUri)
 			&& (Range.is(candidate.targetSelectionRange) || Is.undefined(candidate.targetSelectionRange))

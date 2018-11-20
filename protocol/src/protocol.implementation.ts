@@ -25,9 +25,9 @@ export interface ImplementationClientCapabilities {
 			dynamicRegistration?: boolean;
 
 			/**
-			 * The client supports additional metadata in the form of definition links.
+			 * The client supports additional metadata in the form of location links.
 			 */
-			definitionLinkSupport?: boolean;
+			locationLinkSupport?: boolean;
 		};
 	}
 }
