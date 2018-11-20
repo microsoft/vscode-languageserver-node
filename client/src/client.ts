@@ -2002,9 +2002,15 @@ class RenameFeature extends TextDocumentFeature<RenameRegistrationOptions> {
 		if (!capabilities.renameProvider || !documentSelector) {
 			return;
 		}
+		let options: RenameRegistrationOptions = Object.assign({}, { documentSelector: documentSelector });
+		if (Is.boolean(capabilities.renameProvider)) {
+			options.prepareProvider = false;
+		} else {
+			options.prepareProvider = capabilities.renameProvider.prepareProvider;
+		}
 		this.register(this.messages, {
 			id: UUID.generateUuid(),
-			registerOptions: Object.assign({}, { documentSelector: documentSelector })
+			registerOptions: options
 		});
 	}
 

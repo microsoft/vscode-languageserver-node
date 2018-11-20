@@ -27,6 +27,10 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
+### 5.1.1 Client
+
+* Fixes [[textDocument/rename] client doesn't obey `RenameOptions` while registering provider](https://github.com/Microsoft/vscode-languageserver-node/issues/416)
+
 ### 5.1.0 Client & 5.1.0 Server
 
 * Adopt protocol version 3.13.0
