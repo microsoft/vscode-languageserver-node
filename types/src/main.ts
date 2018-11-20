@@ -1696,7 +1696,7 @@ export interface SignatureHelp {
  * For most programming languages there is only one location at which a symbol is
  * defined. If no definition can be found `null` is returned.
  */
-export type Definition = Location | Location[] | DefinitionLink | DefinitionLink[] | null;
+export type Definition = Location | Location[] | null;
 
 /**
  * Value-object that contains additional information when
