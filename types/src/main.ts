@@ -1695,6 +1695,9 @@ export interface SignatureHelp {
  * The definition of a symbol represented as one or many [locations](#Location).
  * For most programming languages there is only one location at which a symbol is
  * defined. If no definition can be found `null` is returned.
+ *
+ * @deprecated This type has been deprecated in favour of
+ * [LocationLink](#LocationLink).
  */
 export type Definition = Location | Location[] | null;
 
