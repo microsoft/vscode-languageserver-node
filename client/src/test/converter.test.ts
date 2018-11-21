@@ -13,6 +13,7 @@ import ProtocolCompletionItem from '../protocolCompletionItem';
 import * as Is from '../utils/is';
 
 import * as vscode from 'vscode';
+import { MarkupKind } from 'vscode-languageserver-protocol';
 
 const c2p: codeConverter.Converter = codeConverter.createConverter();
 const p2c: protocolConverter.Converter = protocolConverter.createConverter();
@@ -109,6 +110,24 @@ suite('Protocol Converter', () => {
 		strictEqual(range.start.character, hover.range.start.character);
 		strictEqual(range.end.line, hover.range.end.line);
 		strictEqual(range.end.character, hover.range.end.character);
+
+		let multisegmentHover: proto.Hover = {
+			contents:{
+				kind: MarkupKind.Markdown,
+				value:`First Section
+				---
+				Second Section
+				---
+				Third Section`
+			}
+		}
+		result = p2c.asHover(multisegmentHover);
+		strictEqual(result.contents.length, 3);
+		strictEqual((result.contents[0] as vscode.MarkdownString).value, 'First Section');
+		strictEqual((result.contents[1] as vscode.MarkdownString).value, 'Second Section');
+		strictEqual((result.contents[2] as vscode.MarkdownString).value, 'Third Section');
+		strictEqual(result.range, undefined);
+
 	});
 
 	test('Text Edit undefined | null', () => {

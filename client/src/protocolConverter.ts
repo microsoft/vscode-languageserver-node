@@ -235,6 +235,12 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return code.DiagnosticSeverity.Error;
 	}
 
+	// Avoid allocating a new callback function for every call of asHoverContent
+	// Possible refactoring: Use a loop and an explicit array creation instead of Array.prototype.map
+	function asMarkdownString(value: string): code.MarkdownString{
+		return new code.MarkdownString(value);
+	}
+
 	function asHoverContent(value: ls.MarkedString | ls.MarkedString[] | ls.MarkupContent): code.MarkdownString | code.MarkdownString[] {
 		if (Is.string(value)) {
 			return new code.MarkdownString(value);
@@ -257,7 +263,8 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			let result: code.MarkdownString;
 			switch (value.kind) {
 				case ls.MarkupKind.Markdown:
-					return new code.MarkdownString(value.value);
+					// https://github.com/Microsoft/vscode-languageserver-node/issues/374
+					return value.value.split(/\s*---\s*/g).map(asMarkdownString);
 				case ls.MarkupKind.PlainText:
 					result = new code.MarkdownString();
 					result.appendText(value.value);
