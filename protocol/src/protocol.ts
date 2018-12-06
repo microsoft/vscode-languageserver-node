@@ -13,7 +13,7 @@ import {
 	TextEdit, WorkspaceEdit, WorkspaceSymbolParams,
 	TextDocumentIdentifier, VersionedTextDocumentIdentifier, TextDocumentItem, TextDocumentSaveReason,
 	CompletionItem, CompletionList, Hover, SignatureHelp,
-	Definition, ReferenceContext, DocumentHighlight, DocumentSymbolParams,
+	Definition, LocationLink, ReferenceContext, DocumentHighlight, DocumentSymbolParams,
 	SymbolInformation, CodeLens, CodeActionContext, FormattingOptions, DocumentLink, MarkupKind,
 	SymbolKind, CompletionItemKind, CodeAction, CodeActionKind, DocumentSymbol
 } from 'vscode-languageserver-types';
@@ -529,6 +529,11 @@ export interface TextDocumentClientCapabilities {
 		 * Whether definition supports dynamic registration.
 		 */
 		dynamicRegistration?: boolean;
+
+		/**
+		 * The client supports additional metadata in the form of location links.
+		 */
+		locationLinkSupport?: boolean;
 	};
 
 	/**
@@ -1570,11 +1575,12 @@ export namespace SignatureHelpRequest {
 /**
  * A request to resolve the definition location of a symbol at a given text
  * document position. The request's parameter is of type [TextDocumentPosition]
- * (#TextDocumentPosition) the response is of type [Definition](#Definition) or a
- * Thenable that resolves to such.
+ * (#TextDocumentPosition) the response is of either type [Definition](#Definition)
+ * or a typed array of [LocationLinks](#LocationLink) or a Thenable that resolves
+ * to such.
  */
 export namespace DefinitionRequest {
-	export const type = new RequestType<TextDocumentPositionParams, Definition | null, void, TextDocumentRegistrationOptions>('textDocument/definition');
+	export const type = new RequestType<TextDocumentPositionParams, Definition | LocationLink[] | null, void, TextDocumentRegistrationOptions>('textDocument/definition');
 }
 
 //---- Reference Provider ----------------------------------

@@ -150,6 +150,46 @@ export namespace Location {
 }
 
 /**
+ * Represents the range and location of where a symbol is defined.
+ * Also includes information about the originating source.
+ */
+export interface LocationLink {
+	targetUri: string;
+	targetRange: Range;
+	targetSelectionRange?: Range;
+	originSelectionRange?: Range;
+}
+
+/**
+ * The LocationLink namespace provides helper functions to work with
+ * [LocationLink](#LocationLink) literals.
+ */
+export namespace LocationLink {
+
+	/**
+	 * Creates a LocationLink literal.
+	 * @param targetUri The definition's uri.
+	 * @param targetRange The full range of the definition.
+	 * @param targetSelectionRange The span of the symbol definition at the target.
+	 * @param originSelectionRange The span of the symbol being defined in the originating source file.
+	 */
+	export function create(targetUri: string, targetRange: Range, targetSelectionRange?: Range, originSelectionRange?: Range): LocationLink {
+		return { targetUri, targetRange, targetSelectionRange, originSelectionRange };
+	}
+
+	/**
+	 * Checks whether the given literal conforms to the [LocationLink](#LocationLink) interface.
+	 */
+	export function is(value: any): value is LocationLink {
+		let candidate = value as LocationLink;
+		return Range.is(candidate.targetRange) && Is.defined(candidate)
+			&& Is.string(candidate.targetUri) && Is.defined(candidate.targetUri)
+			&& (Range.is(candidate.targetSelectionRange) || Is.undefined(candidate.targetSelectionRange))
+			&& (Range.is(candidate.originSelectionRange) || Is.undefined(candidate.originSelectionRange));
+	}
+}
+
+/**
  * Represents a color in RGBA space.
  */
 export interface Color {
@@ -1656,6 +1696,9 @@ export interface SignatureHelp {
  * The definition of a symbol represented as one or many [locations](#Location).
  * For most programming languages there is only one location at which a symbol is
  * defined. If no definition can be found `null` is returned.
+ *
+ * @deprecated This type has been deprecated in favour of
+ * [LocationLink](#LocationLink).
  */
 export type Definition = Location | Location[] | null;
 

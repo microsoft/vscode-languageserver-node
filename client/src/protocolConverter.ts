@@ -61,8 +61,9 @@ export interface Converter {
 	asParameterInformations(item: ls.ParameterInformation[]): code.ParameterInformation[];
 
 	asDefinitionResult(item: ls.Definition): code.Definition;
+	asDefinitionResult(item: ls.LocationLink[]): code.Definition;
 	asDefinitionResult(item: undefined | null): undefined;
-	asDefinitionResult(item: ls.Definition | undefined | null): code.Definition | undefined;
+	asDefinitionResult(item: ls.Definition | ls.LocationLink[] | undefined | null): code.Definition | code.DefinitionLink[] | undefined;
 
 	asLocation(item: ls.Location): code.Location;
 	asLocation(item: undefined | null): undefined;
@@ -433,14 +434,25 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asDefinitionResult(item: ls.Definition): code.Definition;
+	function asDefinitionResult(item: ls.LocationLink[]): code.Definition;
 	function asDefinitionResult(item: undefined | null): undefined;
-	function asDefinitionResult(item: ls.Definition | undefined | null): code.Definition | undefined;
-	function asDefinitionResult(item: ls.Definition | undefined | null): code.Definition | undefined {
+	function asDefinitionResult(item: ls.Definition | ls.LocationLink[] | undefined | null): code.Definition | code.DefinitionLink[] | undefined;
+	function asDefinitionResult(item: ls.Definition | ls.LocationLink[] | undefined | null): code.Definition | code.DefinitionLink[] | undefined {
 		if (!item) {
 			return undefined;
 		}
 		if (Is.array(item)) {
-			return item.map((location) => asLocation(location));
+			if (item.length === 0) {
+				return[];
+			} else if (ls.LocationLink.is(item[0])) {
+				let links = item as ls.LocationLink[];
+				return links.map((links) => asDefinitionLink(links));
+			} else {
+				let locations = item as ls.Location[];
+				return locations.map((location) => asLocation(location));
+			}
+		} else if (ls.LocationLink.is(item)) {
+			return [ asDefinitionLink(item) ];
 		} else {
 			return asLocation(item);
 		}
@@ -454,6 +466,21 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			return undefined;
 		}
 		return new code.Location(_uriConverter(item.uri), asRange(item.range));
+	}
+
+	function asDefinitionLink(item: ls.LocationLink): code.DefinitionLink;
+	function asDefinitionLink(item: undefined | null): undefined;
+	function asDefinitionLink(item: ls.LocationLink | undefined | null): code.DefinitionLink | undefined;
+	function asDefinitionLink(item: ls.LocationLink | undefined | null): code.DefinitionLink | undefined {
+		if (!item) {
+			return undefined;
+		}
+		return {
+		   targetUri:_uriConverter(item.targetUri),
+		   targetRange: asRange(item.targetRange),
+		   originSelectionRange: asRange(item.originSelectionRange),
+		   targetSelectionRange: asRange(item.targetSelectionRange)
+		}
 	}
 
 	function asReferences(values: ls.Location[]): code.Location[];

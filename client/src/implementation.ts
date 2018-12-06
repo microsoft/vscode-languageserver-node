@@ -7,7 +7,7 @@
 import * as UUID from './utils/uuid';
 import * as Is from  './utils/is';
 
-import { languages as Languages, Disposable, TextDocument, ProviderResult, Position as VPosition, Definition as VDefinition } from 'vscode';
+import { languages as Languages, Disposable, TextDocument, ProviderResult, Position as VPosition, Definition as VDefinition, DefinitionLink as VDefinitionLink } from 'vscode';
 
 import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, TextDocumentRegistrationOptions, DocumentSelector, ImplementationRequest
@@ -23,11 +23,11 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 }
 
 export interface ProvideImplementationSignature {
-	(document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDefinition>;
+	(document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDefinition | VDefinitionLink[]>;
 }
 
 export interface ImplementationMiddleware {
-	provideImplementation?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideImplementationSignature) => ProviderResult<VDefinition>;
+	provideImplementation?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideImplementationSignature) => ProviderResult<VDefinition | VDefinitionLink[]>;
 }
 
 export class ImplementationFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
@@ -37,7 +37,9 @@ export class ImplementationFeature extends TextDocumentFeature<TextDocumentRegis
 	}
 
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		ensure(ensure(capabilites, 'textDocument')!, 'implementation')!.dynamicRegistration = true;
+		let implementationSupport = ensure(ensure(capabilites, 'textDocument')!, 'implementation')!;
+		implementationSupport.dynamicRegistration = true;
+		implementationSupport.locationLinkSupport = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
@@ -78,7 +80,7 @@ export class ImplementationFeature extends TextDocumentFeature<TextDocumentRegis
 		};
 		let middleware = client.clientOptions.middleware!;
 		return Languages.registerImplementationProvider(options.documentSelector!, {
-			provideImplementation: (document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDefinition> => {
+			provideImplementation: (document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDefinition | VDefinitionLink[]> => {
 				return middleware.provideImplementation
 					? middleware.provideImplementation(document, position, token, provideImplementation)
 					: provideImplementation(document, position, token);

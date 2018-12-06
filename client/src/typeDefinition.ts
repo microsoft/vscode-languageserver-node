@@ -7,7 +7,7 @@
 import * as UUID from './utils/uuid';
 import * as Is from  './utils/is';
 
-import { languages as Languages, Disposable, TextDocument, ProviderResult, Position as VPosition, Definition as VDefinition } from 'vscode';
+import { languages as Languages, Disposable, TextDocument, ProviderResult, Position as VPosition, Definition as VDefinition, DefinitionLink as VDefinitionLink } from 'vscode';
 
 import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, TextDocumentRegistrationOptions, DocumentSelector, TypeDefinitionRequest
@@ -23,11 +23,11 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 }
 
 export interface ProvideTypeDefinitionSignature {
-	(document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDefinition>;
+	(document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDefinition | VDefinitionLink[]>;
 }
 
 export interface TypeDefinitionMiddleware {
-	provideTypeDefinition?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideTypeDefinitionSignature) => ProviderResult<VDefinition>;
+	provideTypeDefinition?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideTypeDefinitionSignature) => ProviderResult<VDefinition | VDefinitionLink[]>;
 }
 
 export class TypeDefinitionFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
@@ -38,6 +38,9 @@ export class TypeDefinitionFeature extends TextDocumentFeature<TextDocumentRegis
 
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
 		ensure(ensure(capabilites, 'textDocument')!, 'typeDefinition')!.dynamicRegistration = true;
+		let typeDefinitionSupport = ensure(ensure(capabilites, 'textDocument')!, 'typeDefinition')!;
+		typeDefinitionSupport.dynamicRegistration = true;
+		typeDefinitionSupport.locationLinkSupport = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
@@ -78,7 +81,7 @@ export class TypeDefinitionFeature extends TextDocumentFeature<TextDocumentRegis
 		};
 		let middleware = client.clientOptions.middleware!;
 		return Languages.registerTypeDefinitionProvider(options.documentSelector!, {
-			provideTypeDefinition: (document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDefinition> => {
+			provideTypeDefinition: (document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDefinition | VDefinitionLink[]> => {
 				return middleware.provideTypeDefinition
 					? middleware.provideTypeDefinition(document, position, token, provideTypeDefinition)
 					: provideTypeDefinition(document, position, token);
