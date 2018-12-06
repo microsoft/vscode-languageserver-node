@@ -150,14 +150,32 @@ export namespace Location {
 }
 
 /**
- * Represents the range and location of where a symbol is defined.
- * Also includes information about the originating source.
+	 * Represents the connection of two locations. Provides additional metadata over normal [locations](#Location),
+	 * including an origin range.
  */
 export interface LocationLink {
-	targetUri: string;
-	targetRange: Range;
-	targetSelectionRange?: Range;
+	/**
+	 * Span of the origin of this link.
+	 *
+	 * Used as the underlined span for mouse definition hover. Defaults to the word range at
+	 * the definition position.
+	 */
 	originSelectionRange?: Range;
+
+	/**
+	 * The target resource identifier of this link.
+	 */
+	targetUri: string;
+
+	/**
+	 * The full target range of this link.
+	 */
+	targetRange: Range;
+
+	/**
+	 * The span of this link.
+	 */
+	targetSelectionRange?: Range;
 }
 
 /**
@@ -1695,12 +1713,36 @@ export interface SignatureHelp {
 /**
  * The definition of a symbol represented as one or many [locations](#Location).
  * For most programming languages there is only one location at which a symbol is
- * defined. If no definition can be found `null` is returned.
+ * defined.
  *
- * @deprecated This type has been deprecated in favour of
- * [LocationLink](#LocationLink).
+ * Servers should prefer returning `DefinitionLink` over `Definition` if supported
+ * by the client.
  */
-export type Definition = Location | Location[] | null;
+export type Definition = Location | Location[];
+
+/**
+ * Information about where a symbol is defined.
+ *
+ * Provides additional metadata over normal [location](#Location) definitions, including the range of
+ * the defining symbol
+ */
+export type DefinitionLink = LocationLink;
+
+/**
+ * The declaration of a symbol representation as one or many [locations](#Location).
+ */
+export type Declaration = Location | Location[];
+
+/**
+ * Information about where a symbol is declared.
+ *
+ * Provides additional metadata over normal [location](#Location) declarations, including the range of
+ * the declaring symbol.
+ *
+ * Servers should prefer returning `DeclarationLink` over `Declaration` if supported
+ * by the client.
+ */
+export type DeclarationLink = LocationLink;
 
 /**
  * Value-object that contains additional information when

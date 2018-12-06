@@ -29,6 +29,7 @@ import { ImplementationFeature } from './implementation'
 import { TypeDefinitionFeature } from './typeDefinition';
 import { WorkspaceFoldersFeature } from './workspaceFolders';
 import { FoldingRangeFeature } from './foldingRange';
+import { DeclarationFeature } from './declaration';
 
 import * as Is from './utils/is';
 import { terminate } from './utils/processes';
@@ -37,7 +38,7 @@ export * from './client';
 
 declare var v8debug: any;
 
-const REQUIRED_VSCODE_VERSION = '^1.26'; // do not change format, updated by `updateVSCode` script
+const REQUIRED_VSCODE_VERSION = '*'; // do not change format, updated by `updateVSCode` script
 
 export interface ExecutableOptions {
 	cwd?: string;
@@ -438,6 +439,7 @@ export class LanguageClient extends BaseLanguageClient {
 		this.registerFeature(new ColorProviderFeature(this));
 		this.registerFeature(new WorkspaceFoldersFeature(this));
 		this.registerFeature(new FoldingRangeFeature(this));
+		this.registerFeature(new DeclarationFeature(this));
 	}
 
 	private _mainGetRootPath(): string | undefined {

@@ -12,7 +12,7 @@
 		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
 	},
 	"devDependencies": {
-		"typescript": "2.9.1",
+		"typescript": "3.2.1",
 		"mocha": "^5.2.0",
 		"@types/node": "^8.9.3",
 		"@types/mocha": "^2.2.42",
