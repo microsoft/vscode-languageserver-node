@@ -1479,7 +1479,7 @@ class DefinitionFeature extends TextDocumentFeature<TextDocumentRegistrationOpti
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
 		let definitionSupport = ensure(ensure(capabilites, 'textDocument')!, 'definition')!;
 		definitionSupport.dynamicRegistration = true;
-		definitionSupport.definitionLinkSupport = true;
+		definitionSupport.linkSupport = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {

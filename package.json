@@ -12,13 +12,13 @@
 		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
 	},
 	"devDependencies": {
-		"typescript": "3.2.1",
-		"mocha": "^5.2.0",
-		"@types/node": "^8.9.3",
 		"@types/mocha": "^2.2.42",
+		"@types/node": "^8.9.3",
+		"mocha": "^5.2.0",
 		"rimraf": "^2.6.2",
 		"shelljs": "^0.8.1",
-		"shx": "^0.2.2"
+		"shx": "^0.2.2",
+		"typescript": "^2.9.1"
 	},
 	"scripts": {
 		"postinstall": "cd types && npm install && cd ../jsonrpc && npm install && cd ../protocol && npm install && cd ../server && npm install && cd ../client && npm install && cd ..",

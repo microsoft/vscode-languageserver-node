@@ -24,10 +24,10 @@ connection.onInitialize((params: InitializeParams): any => {
 	assert.equal(params.capabilities.workspace!.workspaceEdit!.failureHandling, FailureHandlingKind.TextOnlyTransactional);
 	assert.equal(params.capabilities.textDocument!.completion!.completionItem!.deprecatedSupport, true);
 	assert.equal(params.capabilities.textDocument!.completion!.completionItem!.preselectSupport, true);
-	assert.equal(params.capabilities.textDocument!.definition!.definitionLinkSupport, true);
-	assert.equal(params.capabilities.textDocument!.declaration!.declarationLinkSupport, true);
-	assert.equal(params.capabilities.textDocument!.implementation!.locationLinkSupport, true);
-	assert.equal(params.capabilities.textDocument!.typeDefinition!.locationLinkSupport, true);
+	assert.equal(params.capabilities.textDocument!.definition!.linkSupport, true);
+	assert.equal(params.capabilities.textDocument!.declaration!.linkSupport, true);
+	assert.equal(params.capabilities.textDocument!.implementation!.linkSupport, true);
+	assert.equal(params.capabilities.textDocument!.typeDefinition!.linkSupport, true);
 	assert.equal(params.capabilities.textDocument!.rename!.prepareSupport, true);
 	let valueSet = params.capabilities.textDocument!.completion!.completionItemKind!.valueSet!;
 	assert.equal(valueSet[0], 1);

@@ -27,7 +27,7 @@ export interface DeclarationClientCapabilities {
 			/**
 			 * The client supports additional metadata in the form of declaration links.
 			 */
-			declarationLinkSupport?: boolean;
+			linkSupport?: boolean;
 		};
 	}
 }
