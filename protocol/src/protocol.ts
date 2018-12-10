@@ -9,11 +9,11 @@ import * as Is from './utils/is';
 import { RequestType, RequestType0, NotificationType, NotificationType0 } from 'vscode-jsonrpc';
 
 import {
-	TextDocumentContentChangeEvent, Position, Range, Location, Diagnostic, Command,
+	TextDocumentContentChangeEvent, Position, Range, Location, LocationLink, Diagnostic, Command,
 	TextEdit, WorkspaceEdit, WorkspaceSymbolParams,
 	TextDocumentIdentifier, VersionedTextDocumentIdentifier, TextDocumentItem, TextDocumentSaveReason,
 	CompletionItem, CompletionList, Hover, SignatureHelp,
-	Definition, ReferenceContext, DocumentHighlight, DocumentSymbolParams,
+	Definition, DefinitionLink, ReferenceContext, DocumentHighlight, DocumentSymbolParams,
 	SymbolInformation, CodeLens, CodeActionContext, FormattingOptions, DocumentLink, MarkupKind,
 	SymbolKind, CompletionItemKind, CodeAction, CodeActionKind, DocumentSymbol
 } from 'vscode-languageserver-types';
@@ -35,6 +35,10 @@ import {
 import {
 	DeclarationClientCapabilities, DeclarationRequest, DeclarationServerCapabilities
 } from './protocol.declaration';
+
+
+// @ts-ignore: to avoid inlining LocatioLink as dynamic import
+let __noDynamicImport: LocationLink | undefined;
 
 /**
  * A document filter denotes a document by different properties like
@@ -1584,7 +1588,7 @@ export namespace SignatureHelpRequest {
  * to such.
  */
 export namespace DefinitionRequest {
-	export const type = new RequestType<TextDocumentPositionParams, Definition | /*DefinitionLink[] | */null, void, TextDocumentRegistrationOptions>('textDocument/definition');
+	export const type = new RequestType<TextDocumentPositionParams, Definition | DefinitionLink[] | null, void, TextDocumentRegistrationOptions>('textDocument/definition');
 }
 
 //---- Reference Provider ----------------------------------
