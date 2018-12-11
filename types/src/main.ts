@@ -1598,7 +1598,7 @@ export namespace Hover {
 	 */
 	export function is(value: any): value is Hover {
 		let candidate = value as Hover;
-		return candidate && Is.objectLiteral(candidate) && (
+		return !!candidate && Is.objectLiteral(candidate) && (
 			MarkupContent.is(candidate.contents) ||
 			MarkedString.is(candidate.contents) ||
 			Is.typedArray(candidate.contents, MarkedString.is)
