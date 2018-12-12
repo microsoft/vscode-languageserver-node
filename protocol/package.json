@@ -6,7 +6,8 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/Microsoft/vscode-languageserver-node.git"
+		"url": "https://github.com/Microsoft/vscode-languageserver-node.git",
+		"directory": "protocol"
 	},
 	"bugs": {
 		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
