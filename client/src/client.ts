@@ -290,7 +290,7 @@ export interface InitializationFailedHandler {
 
 export interface SynchronizeOptions {
 	/**
-	 * The configuration sections to synchonize. Pushing settings from the
+	 * The configuration sections to synchronize. Pushing settings from the
 	 * client to the server is deprecated in favour of the new pull model
 	 * that allows servers to query settings scoped on resources. In this
 	 * model the client can only deliver an empty change event since the
@@ -505,7 +505,7 @@ enum ClientState {
 	Stopped
 }
 
-const SupporedSymbolKinds: SymbolKind[] = [
+const SupportedSymbolKinds: SymbolKind[] = [
 	SymbolKind.File,
 	SymbolKind.Module,
 	SymbolKind.Namespace,
@@ -599,12 +599,12 @@ export interface StaticFeature {
 
 	/**
 	 * Initialize the feature. This method is called on a feature instance
-	 * when the client has successfully received the initalize request from
+	 * when the client has successfully received the initialize request from
 	 * the server and before the client sends the initialized notification
 	 * to the server.
 	 *
 	 * @param capabilities the server capabilities
-	 * @param documentSelector the document selector pass to the client's constuctor.
+	 * @param documentSelector the document selector pass to the client's constructor.
 	 *  May be `undefined` if the client was created without a selector.
 	 */
 	initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector | undefined): void;
@@ -1433,6 +1433,7 @@ class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpRegistration
 		let config = ensure(ensure(capabilites, 'textDocument')!, 'signatureHelp')!;
 		config.dynamicRegistration = true;
 		config.signatureInformation = { documentationFormat: [MarkupKind.Markdown, MarkupKind.PlainText] };
+		config.signatureInformation.parameterInformation = { labelOffsetSupport: true };
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
@@ -1606,7 +1607,7 @@ class DocumentSymbolFeature extends TextDocumentFeature<TextDocumentRegistration
 		let symbolCapabilities = ensure(ensure(capabilites, 'textDocument')!, 'documentSymbol')!;
 		symbolCapabilities.dynamicRegistration = true;
 		symbolCapabilities.symbolKind = {
-			valueSet: SupporedSymbolKinds
+			valueSet: SupportedSymbolKinds
 		}
 		symbolCapabilities.hierarchicalDocumentSymbolSupport = true;
 	}
@@ -1667,7 +1668,7 @@ class WorkspaceSymbolFeature extends WorkspaceFeature<undefined> {
 		let symbolCapabilities = ensure(ensure(capabilites, 'workspace')!, 'symbol')!;
 		symbolCapabilities.dynamicRegistration = true;
 		symbolCapabilities.symbolKind = {
-			valueSet: SupporedSymbolKinds
+			valueSet: SupportedSymbolKinds
 		};
 	}
 
@@ -2733,7 +2734,7 @@ export abstract class BaseLanguageClient {
 				this._telemetryEmitter.fire(data);
 			});
 			connection.listen();
-			// Error is handled in the intialize call.
+			// Error is handled in the initialize call.
 			return this.initialize(connection);
 		}).then(undefined, (error) => {
 			this.state = ClientState.StartFailed;
@@ -2865,7 +2866,7 @@ export abstract class BaseLanguageClient {
 		}
 		this.state = ClientState.Stopping;
 		this.cleanUp();
-		// unkook listeners
+		// unhook listeners
 		return this._onStop = this.resolveConnection().then(connection => {
 			return connection.shutdown().then(() => {
 				connection.exit();

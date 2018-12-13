@@ -436,6 +436,17 @@ export interface TextDocumentClientCapabilities {
 			 * property. The order describes the preferred format of the client.
 			 */
 			documentationFormat?: MarkupKind[];
+
+			/**
+			 * Client capabilities specific to parameter information.
+			 */
+			parameterInformation?: {
+				/**
+				 * The client supports processing label offsets instead of a
+				 * simple label string.
+				 */
+				labelOffsetSupport?: boolean;
+			}
 		};
 	};
 

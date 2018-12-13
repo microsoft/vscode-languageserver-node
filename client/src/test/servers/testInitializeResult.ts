@@ -27,6 +27,7 @@ connection.onInitialize((params: InitializeParams): any => {
 	assert.equal(params.capabilities.textDocument!.definition!.locationLinkSupport, true);
 	assert.equal(params.capabilities.textDocument!.implementation!.locationLinkSupport, true);
 	assert.equal(params.capabilities.textDocument!.typeDefinition!.locationLinkSupport, true);
+	assert.equal(params.capabilities.textDocument!.signatureHelp!.signatureInformation!.parameterInformation!.labelOffsetSupport, true);
 	assert.equal(params.capabilities.textDocument!.rename!.prepareSupport, true);
 	let valueSet = params.capabilities.textDocument!.completion!.completionItemKind!.valueSet!;
 	assert.equal(valueSet[0], 1);

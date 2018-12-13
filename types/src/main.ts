@@ -1596,11 +1596,15 @@ export namespace Hover {
  * have a label and a doc-comment.
  */
 export interface ParameterInformation {
+
 	/**
-	 * The label of this signature. Will be shown in
-	 * the UI.
+	 * The label of this signature.
+	 *
+	 * Either a string or inclusive start and exclusive end offsets within its containing
+	 * [signature label](#SignatureInformation.label). *Note*: A label of type string must be
+	 * a substring of its containing signature information's [label](#SignatureInformation.label).
 	 */
-	label: string;
+	label: string | [number, number];
 
 	/**
 	 * The human-readable doc-comment of this signature. Will be shown
@@ -1620,7 +1624,7 @@ export namespace ParameterInformation {
 	 * @param label A label string.
 	 * @param documentation A doc string.
 	 */
-	export function create(label: string, documentation?: string): ParameterInformation {
+	export function create(label: string | [number, number], documentation?: string): ParameterInformation {
 		return documentation ? { label, documentation } : { label };
 	};
 }
