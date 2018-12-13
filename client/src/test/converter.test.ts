@@ -111,6 +111,7 @@ suite('Protocol Converter', () => {
 		strictEqual(range.end.line, hover.range.end.line);
 		strictEqual(range.end.character, hover.range.end.character);
 
+		/*
 		let multisegmentHover: proto.Hover = {
 			contents:{
 				kind: MarkupKind.Markdown,
@@ -127,7 +128,7 @@ suite('Protocol Converter', () => {
 		strictEqual((result.contents[1] as vscode.MarkdownString).value, 'Second Section');
 		strictEqual((result.contents[2] as vscode.MarkdownString).value, 'Third Section');
 		strictEqual(result.range, undefined);
-
+		*/
 	});
 
 	test('Text Edit undefined | null', () => {
