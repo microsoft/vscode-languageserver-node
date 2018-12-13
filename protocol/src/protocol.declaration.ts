@@ -5,47 +5,48 @@
 'use strict';
 
 import { RequestType, RequestHandler } from 'vscode-jsonrpc';
-import { Definition, DefinitionLink } from 'vscode-languageserver-types';
+import { Declaration, DeclarationLink } from 'vscode-languageserver-types';
 import { TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams } from './protocol';
 
-export interface TypeDefinitionClientCapabilities {
+export interface DeclarationClientCapabilities {
 	/**
 	 * The text document client capabilities
 	 */
 	textDocument?: {
 		/**
-		 * Capabilities specific to the `textDocument/typeDefinition`
+		 * Capabilities specific to the `textDocument/declaration`
 		 */
-		typeDefinition?: {
+		declaration?: {
 			/**
-			 * Whether implementation supports dynamic registration. If this is set to `true`
+			 * Whether declaration supports dynamic registration. If this is set to `true`
 			 * the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
 			 * return value for the corresponding server capability as well.
 			 */
 			dynamicRegistration?: boolean;
 
 			/**
-			 * The client supports additional metadata in the form of definition links.
+			 * The client supports additional metadata in the form of declaration links.
 			 */
 			linkSupport?: boolean;
 		};
 	}
 }
 
-export interface  TypeDefinitionServerCapabilities {
+export interface  DeclarationServerCapabilities {
 	/**
 	 * The server provides Goto Type Definition support.
 	 */
-	typeDefinitionProvider?: boolean | (TextDocumentRegistrationOptions & StaticRegistrationOptions);
+	declarationProvider?: boolean | (TextDocumentRegistrationOptions & StaticRegistrationOptions);
 }
 
 /**
  * A request to resolve the type definition locations of a symbol at a given text
  * document position. The request's parameter is of type [TextDocumentPositioParams]
- * (#TextDocumentPositionParams) the response is of type [Definition](#Definition) or a
- * Thenable that resolves to such.
+ * (#TextDocumentPositionParams) the response is of type [Declaration](#Declaration)
+ * or a typed array of [DeclarationLink](#DeclarationLink) or a Thenable that resolves
+ * to such.
  */
-export namespace TypeDefinitionRequest {
-	export const type = new RequestType<TextDocumentPositionParams, Definition | DefinitionLink[] | null, void, TextDocumentRegistrationOptions>('textDocument/typeDefinition');
-	export type HandlerSignature = RequestHandler<TextDocumentPositionParams, Definition | DefinitionLink[] | null, void>;
+export namespace DeclarationRequest {
+	export const type = new RequestType<TextDocumentPositionParams, Declaration | DeclarationLink[] | null, void, TextDocumentRegistrationOptions>('textDocument/declaration');
+	export type HandlerSignature = RequestHandler<TextDocumentPositionParams, Declaration | DeclarationLink[] | null, void>;
 }

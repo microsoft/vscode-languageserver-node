@@ -63,6 +63,7 @@ import { TypeDefinitionMiddleware } from './typeDefinition';
 import { ConfigurationWorkspaceMiddleware } from './configuration';
 import { WorkspaceFolderWorkspaceMiddleware } from './workspaceFolders';
 import { FoldingRangeProviderMiddleware } from './foldingRange';
+import { DeclarationMiddleware } from './declaration';
 
 import * as c2p from './codeConverter';
 import * as p2c from './protocolConverter';
@@ -442,7 +443,8 @@ export interface _Middleware {
 	workspace?: WorkspaceMiddleware;
 }
 
-export type Middleware = _Middleware & TypeDefinitionMiddleware & ImplementationMiddleware & ColorProviderMiddleware & FoldingRangeProviderMiddleware;
+export type Middleware = _Middleware & TypeDefinitionMiddleware & ImplementationMiddleware & ColorProviderMiddleware &
+	FoldingRangeProviderMiddleware & DeclarationMiddleware;
 
 export interface LanguageClientOptions {
 	documentSelector?: DocumentSelector | string[];
@@ -1478,7 +1480,7 @@ class DefinitionFeature extends TextDocumentFeature<TextDocumentRegistrationOpti
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
 		let definitionSupport = ensure(ensure(capabilites, 'textDocument')!, 'definition')!;
 		definitionSupport.dynamicRegistration = true;
-		definitionSupport.locationLinkSupport = true;
+		definitionSupport.linkSupport = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {

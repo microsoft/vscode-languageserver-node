@@ -40,7 +40,7 @@ export class TypeDefinitionFeature extends TextDocumentFeature<TextDocumentRegis
 		ensure(ensure(capabilites, 'textDocument')!, 'typeDefinition')!.dynamicRegistration = true;
 		let typeDefinitionSupport = ensure(ensure(capabilites, 'textDocument')!, 'typeDefinition')!;
 		typeDefinitionSupport.dynamicRegistration = true;
-		typeDefinitionSupport.locationLinkSupport = true;
+		typeDefinitionSupport.linkSupport = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {

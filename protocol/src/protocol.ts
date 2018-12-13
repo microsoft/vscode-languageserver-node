@@ -9,11 +9,11 @@ import * as Is from './utils/is';
 import { RequestType, RequestType0, NotificationType, NotificationType0 } from 'vscode-jsonrpc';
 
 import {
-	TextDocumentContentChangeEvent, Position, Range, Location, Diagnostic, Command,
+	TextDocumentContentChangeEvent, Position, Range, Location, LocationLink, Diagnostic, Command,
 	TextEdit, WorkspaceEdit, WorkspaceSymbolParams,
 	TextDocumentIdentifier, VersionedTextDocumentIdentifier, TextDocumentItem, TextDocumentSaveReason,
 	CompletionItem, CompletionList, Hover, SignatureHelp,
-	Definition, LocationLink, ReferenceContext, DocumentHighlight, DocumentSymbolParams,
+	Definition, DefinitionLink, ReferenceContext, DocumentHighlight, DocumentSymbolParams,
 	SymbolInformation, CodeLens, CodeActionContext, FormattingOptions, DocumentLink, MarkupKind,
 	SymbolKind, CompletionItemKind, CodeAction, CodeActionKind, DocumentSymbol
 } from 'vscode-languageserver-types';
@@ -32,6 +32,13 @@ import {
 import {
 	FoldingRangeClientCapabilities, FoldingRangeProviderOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeServerCapabilities
 } from './protocol.foldingRange';
+import {
+	DeclarationClientCapabilities, DeclarationRequest, DeclarationServerCapabilities
+} from './protocol.declaration';
+
+
+// @ts-ignore: to avoid inlining LocatioLink as dynamic import
+let __noDynamicImport: LocationLink | undefined;
 
 /**
  * A document filter denotes a document by different properties like
@@ -542,9 +549,9 @@ export interface TextDocumentClientCapabilities {
 		dynamicRegistration?: boolean;
 
 		/**
-		 * The client supports additional metadata in the form of location links.
+		 * The client supports additional metadata in the form of definition links.
 		 */
-		locationLinkSupport?: boolean;
+		linkSupport?: boolean;
 	};
 
 	/**
@@ -645,7 +652,8 @@ export interface _ClientCapabilities {
 }
 
 export type ClientCapabilities = _ClientCapabilities & ImplementationClientCapabilities & TypeDefinitionClientCapabilities &
-	WorkspaceFoldersClientCapabilities & ConfigurationClientCapabilities & ColorClientCapabilities & FoldingRangeClientCapabilities;
+	WorkspaceFoldersClientCapabilities & ConfigurationClientCapabilities & ColorClientCapabilities & FoldingRangeClientCapabilities &
+	DeclarationClientCapabilities;
 
 /**
  * Defines how the host (editor) should sync
@@ -925,7 +933,7 @@ export interface _ServerCapabilities {
 }
 
 export type ServerCapabilities = _ServerCapabilities & ImplementationServerCapabilities & TypeDefinitionServerCapabilities & WorkspaceFoldersServerCapabilities &
-	ColorServerCapabilities & FoldingRangeServerCapabilities;
+	ColorServerCapabilities & FoldingRangeServerCapabilities & DeclarationServerCapabilities;
 
 /**
  * The initialize request is sent from the client to the server.
@@ -1587,11 +1595,11 @@ export namespace SignatureHelpRequest {
  * A request to resolve the definition location of a symbol at a given text
  * document position. The request's parameter is of type [TextDocumentPosition]
  * (#TextDocumentPosition) the response is of either type [Definition](#Definition)
- * or a typed array of [LocationLinks](#LocationLink) or a Thenable that resolves
+ * or a typed array of [DefinitionLink](#DefinitionLink) or a Thenable that resolves
  * to such.
  */
 export namespace DefinitionRequest {
-	export const type = new RequestType<TextDocumentPositionParams, Definition | LocationLink[] | null, void, TextDocumentRegistrationOptions>('textDocument/definition');
+	export const type = new RequestType<TextDocumentPositionParams, Definition | DefinitionLink[] | null, void, TextDocumentRegistrationOptions>('textDocument/definition');
 }
 
 //---- Reference Provider ----------------------------------
@@ -1944,5 +1952,6 @@ export {
 	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, WorkspaceFolder, WorkspaceFoldersChangeEvent,
 	ConfigurationRequest, ConfigurationParams, ConfigurationItem,
 	DocumentColorRequest, ColorPresentationRequest, ColorProviderOptions, DocumentColorParams, ColorPresentationParams,
-	FoldingRangeClientCapabilities, FoldingRangeProviderOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeServerCapabilities
+	FoldingRangeClientCapabilities, FoldingRangeProviderOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeServerCapabilities,
+	DeclarationClientCapabilities, DeclarationRequest, DeclarationServerCapabilities
 };

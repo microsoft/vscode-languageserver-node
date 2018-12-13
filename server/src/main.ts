@@ -45,7 +45,7 @@ import {
 	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse,
 	ClientCapabilities, ServerCapabilities, ProtocolConnection, createProtocolConnection, TypeDefinitionRequest, ImplementationRequest,
 	DocumentColorRequest, DocumentColorParams, ColorInformation, ColorPresentationParams, ColorPresentation, ColorPresentationRequest,
-	CodeAction, FoldingRangeParams, FoldingRange, FoldingRangeRequest
+	CodeAction, FoldingRangeParams, FoldingRange, FoldingRangeRequest, Declaration, DeclarationLink, DefinitionLink, DeclarationRequest
 } from 'vscode-languageserver-protocol';
 
 import { Configuration, ConfigurationFeature } from './configuration';
@@ -1197,11 +1197,18 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	onSignatureHelp(handler: RequestHandler<TextDocumentPositionParams, SignatureHelp | undefined | null, void>): void;
 
 	/**
+	 * Installs a handler for the `Declaration` request.
+	 *
+	 * @param handler The corresponding handler.
+	 */
+	onDeclaration(handler: RequestHandler<TextDocumentPositionParams, Declaration | DeclarationLink[] | undefined | null, void>): void;
+
+	/**
 	 * Installs a handler for the `Definition` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDefinition(handler: RequestHandler<TextDocumentPositionParams, Definition | undefined | null, void>): void;
+	onDefinition(handler: RequestHandler<TextDocumentPositionParams, Definition | DefinitionLink[] | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the `Type Definition` request.
@@ -1648,6 +1655,7 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 		onCompletion: (handler) => connection.onRequest(CompletionRequest.type, handler),
 		onCompletionResolve: (handler) => connection.onRequest(CompletionResolveRequest.type, handler),
 		onSignatureHelp: (handler) => connection.onRequest(SignatureHelpRequest.type, handler),
+		onDeclaration: (handler) => connection.onRequest(DeclarationRequest.type, handler),
 		onDefinition: (handler) => connection.onRequest(DefinitionRequest.type, handler),
 		onTypeDefinition: (handler) => connection.onRequest(TypeDefinitionRequest.type, handler),
 		onImplementation: (handler) => connection.onRequest(ImplementationRequest.type, handler),

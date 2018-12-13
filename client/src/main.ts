@@ -29,6 +29,7 @@ import { ImplementationFeature } from './implementation'
 import { TypeDefinitionFeature } from './typeDefinition';
 import { WorkspaceFoldersFeature } from './workspaceFolders';
 import { FoldingRangeFeature } from './foldingRange';
+import { DeclarationFeature } from './declaration';
 
 import * as Is from './utils/is';
 import { terminate } from './utils/processes';
@@ -438,6 +439,7 @@ export class LanguageClient extends BaseLanguageClient {
 		this.registerFeature(new ColorProviderFeature(this));
 		this.registerFeature(new WorkspaceFoldersFeature(this));
 		this.registerFeature(new FoldingRangeFeature(this));
+		this.registerFeature(new DeclarationFeature(this));
 	}
 
 	private _mainGetRootPath(): string | undefined {

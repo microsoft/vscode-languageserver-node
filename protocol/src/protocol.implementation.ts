@@ -5,7 +5,7 @@
 'use strict';
 
 import { RequestType, RequestHandler } from 'vscode-jsonrpc';
-import { Definition } from 'vscode-languageserver-types';
+import { Definition, DefinitionLink } from 'vscode-languageserver-types';
 import { TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams } from './protocol';
 
 export interface ImplementationClientCapabilities {
@@ -25,9 +25,9 @@ export interface ImplementationClientCapabilities {
 			dynamicRegistration?: boolean;
 
 			/**
-			 * The client supports additional metadata in the form of location links.
+			 * The client supports additional metadata in the form of definition links.
 			 */
-			locationLinkSupport?: boolean;
+			linkSupport?: boolean;
 		};
 	}
 }
@@ -46,6 +46,6 @@ export interface ImplementationServerCapabilities {
  * Thenable that resolves to such.
  */
 export namespace ImplementationRequest {
-	export const type = new RequestType<TextDocumentPositionParams, Definition | null, void, TextDocumentRegistrationOptions>('textDocument/implementation');
-	export type HandlerSignature = RequestHandler<TextDocumentPositionParams, Definition | null, void>;
+	export const type = new RequestType<TextDocumentPositionParams, Definition | DefinitionLink[] | null, void, TextDocumentRegistrationOptions>('textDocument/implementation');
+	export type HandlerSignature = RequestHandler<TextDocumentPositionParams, Definition | DefinitionLink[] | null, void>;
 }
