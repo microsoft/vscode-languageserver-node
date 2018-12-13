@@ -5,8 +5,11 @@
 'use strict';
 
 import { RequestType, RequestHandler } from 'vscode-jsonrpc';
-import { Definition, DefinitionLink } from 'vscode-languageserver-types';
+import { Definition, DefinitionLink, LocationLink, Location } from 'vscode-languageserver-types';
 import { TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams } from './protocol';
+
+// @ts-ignore: to avoid inlining LocatioLink as dynamic import
+let __noDynamicImport: LocationLink | Declaration | DeclarationLink | Location | undefined;
 
 export interface TypeDefinitionClientCapabilities {
 	/**
