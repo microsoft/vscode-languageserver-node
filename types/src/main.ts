@@ -1598,7 +1598,7 @@ export namespace Hover {
 export interface ParameterInformation {
 
 	/**
-	 * The label of this signature.
+	 * The label of this parameter information.
 	 *
 	 * Either a string or inclusive start and exclusive end offsets within its containing
 	 * [signature label](#SignatureInformation.label). *Note*: A label of type string must be
