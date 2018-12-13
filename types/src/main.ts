@@ -168,14 +168,17 @@ export interface LocationLink {
 	targetUri: string;
 
 	/**
-	 * The full target range of this link.
+	 * The full target range of this link. If the target for example is a symbol then target range is the
+	 * range enclosing this symbol not including leading/trailing whitespace but everything else
+	 * like comments. This information is typically used to highlight the range in the editor.
 	 */
 	targetRange: Range;
 
 	/**
-	 * The span of this link.
+	 * The range that should be selected and revealed when this link is being followed, e.g the name of a function.
+	 * Must be contained by the the `targetRange`. See also `DocumentSymbol#range`
 	 */
-	targetSelectionRange?: Range;
+	targetSelectionRange: Range;
 }
 
 /**
@@ -191,7 +194,7 @@ export namespace LocationLink {
 	 * @param targetSelectionRange The span of the symbol definition at the target.
 	 * @param originSelectionRange The span of the symbol being defined in the originating source file.
 	 */
-	export function create(targetUri: string, targetRange: Range, targetSelectionRange?: Range, originSelectionRange?: Range): LocationLink {
+	export function create(targetUri: string, targetRange: Range, targetSelectionRange: Range, originSelectionRange?: Range): LocationLink {
 		return { targetUri, targetRange, targetSelectionRange, originSelectionRange };
 	}
 

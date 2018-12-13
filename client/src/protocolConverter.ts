@@ -477,7 +477,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		}
 		return {
 		   targetUri:_uriConverter(item.targetUri),
-		   targetRange: asRange(item.targetRange),
+		   targetRange: asRange(item.targetSelectionRange), // See issue: https://github.com/Microsoft/vscode/issues/58649
 		   originSelectionRange: asRange(item.originSelectionRange),
 		   targetSelectionRange: asRange(item.targetSelectionRange)
 		}
