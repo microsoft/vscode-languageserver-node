@@ -13,7 +13,6 @@ import ProtocolCompletionItem from '../protocolCompletionItem';
 import * as Is from '../utils/is';
 
 import * as vscode from 'vscode';
-import { MarkupKind } from 'vscode-languageserver-protocol';
 
 const c2p: codeConverter.Converter = codeConverter.createConverter();
 const p2c: protocolConverter.Converter = protocolConverter.createConverter();
