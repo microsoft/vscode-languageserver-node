@@ -381,7 +381,11 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (context === void 0 || context === null) {
 			return context;
 		}
-		return proto.CodeActionContext.create(asDiagnostics(context.diagnostics), Is.string(context.only) ? [context.only] : undefined);
+		let only: proto.CodeActionKind[] | undefined;
+		if(context.only && Is.string(context.only.value)) {
+			only = [context.only.value];
+		}
+		return proto.CodeActionContext.create(asDiagnostics(context.diagnostics), only);
 	}
 
 	function asCommand(item: code.Command): proto.Command {
@@ -459,5 +463,5 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asCodeLensParams,
 		asDocumentLink,
 		asDocumentLinkParams
-	}   
+	}
 }
