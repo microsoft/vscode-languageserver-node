@@ -505,6 +505,19 @@ export namespace DiagnosticSeverity {
 
 export type DiagnosticSeverity = 1 | 2 | 3 | 4;
 
+export namespace DiagnosticTag {
+
+	/**
+	 * Unused or unnecessary code.
+	 *
+	 * Clients are allowed to render diagnostics with this tag faded out instead of having
+	 * an error squiggle.
+	 */
+	export const Unnecessary: 1 =1;
+}
+
+export type DiagnosticTag = 1;
+
 /**
  * Represents a diagnostic, such as a compiler error or warning. Diagnostic objects
  * are only valid in the scope of a resource.
@@ -537,6 +550,11 @@ export interface Diagnostic {
 	 * The diagnostic's message. It usually appears in the user interface
 	 */
 	message: string;
+
+	/**
+	 * Additional metadata about the diagnostic.
+	 */
+	tags?: DiagnosticTag[];
 
 	/**
 	 * An array of related diagnostic information, e.g. when symbol-names within
@@ -1926,7 +1944,8 @@ export namespace SymbolInformation {
 export class DocumentSymbol {
 
 	/**
-	 * The name of this symbol.
+	 * The name of this symbol. Will be displayed in the user interface and therefore must not be
+	 * an empty string or a string only consisting of white spaces.
 	 */
 	name: string;
 

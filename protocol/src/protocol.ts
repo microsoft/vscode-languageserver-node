@@ -45,6 +45,14 @@ let __noDynamicImport: LocationLink | undefined;
  * the [language](#TextDocument.languageId), the [scheme](#Uri.scheme) of
  * its resource, or a glob-pattern that is applied to the [path](#TextDocument.fileName).
  *
+ * Glob patterns can have the following syntax:
+ * - `*` to match one or more characters in a path segment
+ * - `?` to match on one character in a path segment
+ * - `**` to match any number of path segments, including none
+ * - `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)
+ * - `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
+ * - `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)
+ *
  * @sample A language filter that applies to typescript files on disk: `{ language: 'typescript', scheme: 'file' }`
  * @sample A language filter that applies to all package.json paths: `{ language: 'json', pattern: '**package.json' }`
  */
@@ -628,6 +636,11 @@ export interface TextDocumentClientCapabilities {
 		 * Whether the clients accepts diagnostics with related information.
 		 */
 		relatedInformation?: boolean;
+
+		/**
+		 * Client supports the tag property to provide meta data about a diagnostic.
+		 */
+		tagSupport?: boolean;
 	};
 }
 

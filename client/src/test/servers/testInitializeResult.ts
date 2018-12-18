@@ -30,6 +30,8 @@ connection.onInitialize((params: InitializeParams): any => {
 	assert.equal(params.capabilities.textDocument!.implementation!.linkSupport, true);
 	assert.equal(params.capabilities.textDocument!.typeDefinition!.linkSupport, true);
 	assert.equal(params.capabilities.textDocument!.rename!.prepareSupport, true);
+	assert.equal(params.capabilities.textDocument!.publishDiagnostics!.relatedInformation, true);
+	assert.equal(params.capabilities.textDocument!.publishDiagnostics!.tagSupport, true);
 	let valueSet = params.capabilities.textDocument!.completion!.completionItemKind!.valueSet!;
 	assert.equal(valueSet[0], 1);
 	assert.equal(valueSet[valueSet.length - 1], CompletionItemKind.TypeParameter);
