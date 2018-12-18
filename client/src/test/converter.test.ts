@@ -68,7 +68,8 @@ suite('Protocol Converter', () => {
 			message: 'error',
 			severity: proto.DiagnosticSeverity.Error,
 			code: 99,
-			source: 'source'
+			source: 'source',
+			tags: [proto.DiagnosticTag.Unnecessary]
 		};
 
 		let result = p2c.asDiagnostic(diagnostic);
@@ -81,6 +82,8 @@ suite('Protocol Converter', () => {
 		strictEqual(result.code, diagnostic.code);
 		strictEqual(result.source, diagnostic.source);
 		strictEqual(result.severity, vscode.DiagnosticSeverity.Error);
+		strictEqual(result.tags !== undefined, true);
+		strictEqual(result.tags![0], vscode.DiagnosticTag.Unnecessary);
 
 		ok(p2c.asDiagnostics([diagnostic]).every(value => value instanceof vscode.Diagnostic));
 	});
@@ -822,6 +825,7 @@ suite('Code Converter', () => {
 		let item: vscode.Diagnostic = new vscode.Diagnostic(new vscode.Range(1, 2, 8, 9), "message", vscode.DiagnosticSeverity.Warning);
 		item.code = 99;
 		item.source = 'source';
+		item.tags = [vscode.DiagnosticTag.Unnecessary];
 
 		let result = c2p.asDiagnostic(<any>item);
 		rangeEqual(result.range, item.range);
@@ -829,6 +833,8 @@ suite('Code Converter', () => {
 		strictEqual(result.severity, proto.DiagnosticSeverity.Warning);
 		strictEqual(result.code, item.code);
 		strictEqual(result.source, item.source);
+		strictEqual(result.tags !== undefined, true);
+		strictEqual(result.tags![0], proto.DiagnosticTag.Unnecessary);
 		ok(c2p.asDiagnostics(<any>[item]).every(elem => proto.Diagnostic.is(elem)));
 	});
 

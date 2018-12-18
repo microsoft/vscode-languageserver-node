@@ -193,6 +193,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (Is.number(diagnostic.code) || Is.string(diagnostic.code)) { result.code = diagnostic.code; }
 		if (diagnostic.source) { result.source = diagnostic.source; }
 		if (diagnostic.relatedInformation) { result.relatedInformation = asRelatedInformation(diagnostic.relatedInformation); }
+		if (Array.isArray(diagnostic.tags)) { result.tags = asDiagnosticTags(diagnostic.tags); }
 		return result;
 	}
 
@@ -202,6 +203,32 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 
 	function asDiagnosticRelatedInformation(information: ls.DiagnosticRelatedInformation): code.DiagnosticRelatedInformation {
 		return new code.DiagnosticRelatedInformation(asLocation(information.location), information.message);
+	}
+
+	function asDiagnosticTags(tags: undefined | null): undefined;
+	function asDiagnosticTags(tags: ls.DiagnosticTag[]): code.DiagnosticTag[];
+	function asDiagnosticTags(tags: ls.DiagnosticTag[] | undefined | null): code.DiagnosticTag[] | undefined;
+	function asDiagnosticTags(tags: ls.DiagnosticTag[] | undefined | null): code.DiagnosticTag[] | undefined {
+		if (!tags) {
+			return undefined;
+		}
+		let result: code.DiagnosticTag[] = [];
+		for (let tag of tags) {
+			let converted = asDiagnosticTag(tag);
+			if (converted !== undefined) {
+				result.push(converted);
+			}
+		}
+		return result.length > 0 ? result : undefined;
+	}
+
+	function asDiagnosticTag(tag: ls.DiagnosticTag): code.DiagnosticTag | undefined {
+		switch (tag) {
+			case ls.DiagnosticTag.Unnecessary:
+				return code.DiagnosticTag.Unnecessary;
+			default:
+				return undefined;
+		}
 	}
 
 	function asPosition(value: undefined | null): undefined;

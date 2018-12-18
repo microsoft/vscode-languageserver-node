@@ -264,10 +264,37 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		}
 	}
 
+	function asDiagnosticTags(tags: undefined | null): undefined;
+	function asDiagnosticTags(tags: code.DiagnosticTag[]): proto.DiagnosticTag[];
+	function asDiagnosticTags(tags: code.DiagnosticTag[] | undefined | null): proto.DiagnosticTag[] | undefined;
+	function asDiagnosticTags(tags: code.DiagnosticTag[] | undefined | null): proto.DiagnosticTag[] | undefined {
+		if (!tags) {
+			return undefined;
+		}
+		let result: code.DiagnosticTag[] = [];
+		for (let tag of tags) {
+			let converted = asDiagnosticTag(tag);
+			if (converted !== undefined) {
+				result.push(converted);
+			}
+		}
+		return result.length > 0 ? result : undefined;
+	}
+
+	function asDiagnosticTag(tag: code.DiagnosticTag): proto.DiagnosticTag | undefined {
+		switch (tag) {
+			case code.DiagnosticTag.Unnecessary:
+				return proto.DiagnosticTag.Unnecessary;
+			default:
+				return undefined;
+		}
+	}
+
 	function asDiagnostic(item: code.Diagnostic): proto.Diagnostic {
 		let result: proto.Diagnostic = proto.Diagnostic.create(asRange(item.range), item.message);
 		if (Is.number(item.severity)) { result.severity = asDiagnosticSeverity(item.severity); }
 		if (Is.number(item.code) || Is.string(item.code)) { result.code = item.code; }
+		if (Array.isArray(item.tags)) { result.tags = asDiagnosticTags(item.tags) };
 		if (item.source) { result.source = item.source; }
 		return result;
 	}
