@@ -1489,6 +1489,11 @@ export interface PublishDiagnosticsParams {
 	uri: string;
 
 	/**
+	 * Optional the version number of the document the diagnostics are published for.
+	 */
+	version?: number;
+
+	/**
 	 * An array of diagnostic information items.
 	 */
 	diagnostics: Diagnostic[];
