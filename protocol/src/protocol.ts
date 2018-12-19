@@ -734,6 +734,13 @@ export interface CompletionOptions {
 	triggerCharacters?: string[];
 
 	/**
+	 * The list of all possible characters that commit a completion. This field can be used
+	 * if clients don't support individual commmit characters per completion item. See
+	 * `ClientCapabilities.textDocument.completion.completionItem.commitCharactersSupport`
+	 */
+	allCommitCharacters?: string[];
+
+	/**
 	 * The server provides support to resolve additional
 	 * information for a completion item.
 	 */
