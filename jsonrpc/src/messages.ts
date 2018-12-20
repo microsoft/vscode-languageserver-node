@@ -51,6 +51,7 @@ export namespace ErrorCodes {
 
 	// Defined by the protocol.
 	export const RequestCancelled: number = -32800;
+	export const ContentModified: number = -32801;
 
 	// Defined by VSCode library.
 	export const MessageWriteError: number = 1;
