@@ -35,6 +35,10 @@ import {
 import {
 	DeclarationClientCapabilities, DeclarationRequest, DeclarationServerCapabilities
 } from './protocol.declaration';
+import {
+	SelectionRangeClientCapabilities, SelectionRangeProviderOptions, SelectionRangeRequest, SelectionRangeServerCapabilities,
+	SelectionRangeKind, SelectionRange,
+} from './protocol.selectionRange';
 
 
 // @ts-ignore: to avoid inlining LocatioLink as dynamic import
@@ -668,7 +672,7 @@ export interface _ClientCapabilities {
 
 export type ClientCapabilities = _ClientCapabilities & ImplementationClientCapabilities & TypeDefinitionClientCapabilities &
 	WorkspaceFoldersClientCapabilities & ConfigurationClientCapabilities & ColorClientCapabilities & FoldingRangeClientCapabilities &
-	DeclarationClientCapabilities;
+	DeclarationClientCapabilities & SelectionRangeClientCapabilities;
 
 /**
  * Defines how the host (editor) should sync
@@ -955,7 +959,7 @@ export interface _ServerCapabilities {
 }
 
 export type ServerCapabilities = _ServerCapabilities & ImplementationServerCapabilities & TypeDefinitionServerCapabilities & WorkspaceFoldersServerCapabilities &
-	ColorServerCapabilities & FoldingRangeServerCapabilities & DeclarationServerCapabilities;
+	ColorServerCapabilities & FoldingRangeServerCapabilities &  DeclarationServerCapabilities & SelectionRangeServerCapabilities;
 
 /**
  * The initialize request is sent from the client to the server.
@@ -1987,5 +1991,7 @@ export {
 	ConfigurationRequest, ConfigurationParams, ConfigurationItem,
 	DocumentColorRequest, ColorPresentationRequest, ColorProviderOptions, DocumentColorParams, ColorPresentationParams,
 	FoldingRangeClientCapabilities, FoldingRangeProviderOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeServerCapabilities,
-	DeclarationClientCapabilities, DeclarationRequest, DeclarationServerCapabilities
+	DeclarationClientCapabilities, DeclarationRequest, DeclarationServerCapabilities,
+	SelectionRangeClientCapabilities, SelectionRangeProviderOptions, SelectionRangeRequest, SelectionRangeServerCapabilities,
+	SelectionRangeKind, SelectionRange
 };

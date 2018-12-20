@@ -64,6 +64,7 @@ import { ConfigurationWorkspaceMiddleware } from './configuration';
 import { WorkspaceFolderWorkspaceMiddleware } from './workspaceFolders';
 import { FoldingRangeProviderMiddleware } from './foldingRange';
 import { DeclarationMiddleware } from './declaration';
+import { SelectionRangeProviderMiddleware } from './selectionRange.proposed';
 
 import * as c2p from './codeConverter';
 import * as p2c from './protocolConverter';
@@ -444,7 +445,7 @@ export interface _Middleware {
 }
 
 export type Middleware = _Middleware & TypeDefinitionMiddleware & ImplementationMiddleware & ColorProviderMiddleware &
-	FoldingRangeProviderMiddleware & DeclarationMiddleware;
+	FoldingRangeProviderMiddleware & DeclarationMiddleware & SelectionRangeProviderMiddleware;
 
 export interface LanguageClientOptions {
 	documentSelector?: DocumentSelector | string[];
