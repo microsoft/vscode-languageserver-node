@@ -452,6 +452,8 @@ export interface LanguageClientOptions {
 	diagnosticCollectionName?: string;
 	outputChannel?: OutputChannel;
 	outputChannelName?: string;
+	traceOutputChannel?: OutputChannel;
+	traceOutputChannelName?: string;
 	revealOutputChannelOn?: RevealOutputChannelOn;
 	/**
 	 * The encoding use to read stdout and stderr. Defaults
@@ -474,6 +476,7 @@ interface ResolvedClientOptions {
 	synchronize: SynchronizeOptions;
 	diagnosticCollectionName?: string;
 	outputChannelName: string;
+	traceOutputChannelName?: string;
 	revealOutputChannelOn: RevealOutputChannelOn;
 	stdioEncoding: string;
 	initializationOptions?: any | (() => any);
@@ -2367,6 +2370,8 @@ export abstract class BaseLanguageClient {
 	private _initializeResult: InitializeResult | undefined;
 	private _outputChannel: OutputChannel | undefined;
 	private _disposeOutputChannel: boolean;
+	private _traceOutputChannel: OutputChannel | undefined;
+	private _disposeTraceOutputChannel: boolean;
 	private _capabilities: ServerCapabilities & ResolvedTextDocumentSyncCapabilities;
 
 	private _listeners: Disposable[] | undefined;
@@ -2397,6 +2402,7 @@ export abstract class BaseLanguageClient {
 			synchronize: clientOptions.synchronize || {},
 			diagnosticCollectionName: clientOptions.diagnosticCollectionName,
 			outputChannelName: clientOptions.outputChannelName || this._name,
+			traceOutputChannelName: clientOptions.traceOutputChannelName,
 			revealOutputChannelOn: clientOptions.revealOutputChannelOn || RevealOutputChannelOn.Error,
 			stdioEncoding: clientOptions.stdioEncoding || 'utf8',
 			initializationOptions: clientOptions.initializationOptions,
@@ -2418,6 +2424,13 @@ export abstract class BaseLanguageClient {
 		} else {
 			this._outputChannel = undefined;
 			this._disposeOutputChannel = true;
+		}
+		if (clientOptions.traceOutputChannel) {
+			this._traceOutputChannel = clientOptions.traceOutputChannel;
+			this._disposeTraceOutputChannel = false;
+		} else {
+			this._traceOutputChannel = undefined;
+			this._disposeTraceOutputChannel = true;
 		}
 
 		this._listeners = undefined;
@@ -2565,6 +2578,17 @@ export abstract class BaseLanguageClient {
 		return this._outputChannel;
 	}
 
+	public get traceOutputChannel(): OutputChannel {
+		if (this._traceOutputChannel) {
+			return this._traceOutputChannel;
+		}
+		if (this._clientOptions.traceOutputChannelName !== undefined) {
+			this._traceOutputChannel = Window.createOutputChannel(this._clientOptions.traceOutputChannelName);
+			return this._traceOutputChannel;
+		}
+		return this.outputChannel;
+	}
+
 	public get diagnostics(): DiagnosticCollection | undefined {
 		return this._diagnostics;
 	}
@@ -2634,20 +2658,20 @@ export abstract class BaseLanguageClient {
 	}
 
 	private logTrace(message: string, data?: any): void {
-		this.outputChannel.appendLine(`[Trace - ${(new Date().toLocaleTimeString())}] ${message}`);
+		this.traceOutputChannel.appendLine(`[Trace - ${(new Date().toLocaleTimeString())}] ${message}`);
 		if (data) {
-			this.outputChannel.appendLine(this.data2String(data));
+			this.traceOutputChannel.appendLine(this.data2String(data));
 		}
 	}
 
 	private logObjectTrace(data: any): void {
 		if (data.isLSPMessage && data.type) {
-			this.outputChannel.append(`[LSP   - ${(new Date().toLocaleTimeString())}] `);
+			this.traceOutputChannel.append(`[LSP   - ${(new Date().toLocaleTimeString())}] `);
 		} else {
-			this.outputChannel.append(`[Trace - ${(new Date().toLocaleTimeString())}] `);
+			this.traceOutputChannel.append(`[Trace - ${(new Date().toLocaleTimeString())}] `);
 		}
 		if (data) {
-			this.outputChannel.appendLine(`${JSON.stringify(data)}`);
+			this.traceOutputChannel.appendLine(`${JSON.stringify(data)}`);
 		}
 	}
 
@@ -2899,6 +2923,10 @@ export abstract class BaseLanguageClient {
 		if (channel && this._outputChannel && this._disposeOutputChannel) {
 			this._outputChannel.dispose();
 			this._outputChannel = undefined;
+		}
+		if (channel && this._traceOutputChannel && this._disposeTraceOutputChannel) {
+			this._traceOutputChannel.dispose();
+			this._traceOutputChannel = undefined;
 		}
 		if (diagnostics && this._diagnostics) {
 			this._diagnostics.dispose();
