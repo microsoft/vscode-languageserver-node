@@ -453,7 +453,6 @@ export interface LanguageClientOptions {
 	outputChannel?: OutputChannel;
 	outputChannelName?: string;
 	traceOutputChannel?: OutputChannel;
-	traceOutputChannelName?: string;
 	revealOutputChannelOn?: RevealOutputChannelOn;
 	/**
 	 * The encoding use to read stdout and stderr. Defaults
@@ -476,7 +475,6 @@ interface ResolvedClientOptions {
 	synchronize: SynchronizeOptions;
 	diagnosticCollectionName?: string;
 	outputChannelName: string;
-	traceOutputChannelName?: string;
 	revealOutputChannelOn: RevealOutputChannelOn;
 	stdioEncoding: string;
 	initializationOptions?: any | (() => any);
@@ -1759,19 +1757,19 @@ class CodeActionFeature extends TextDocumentFeature<CodeActionRegistrationOption
 				context: client.code2ProtocolConverter.asCodeActionContext(context)
 			};
 			return client.sendRequest(CodeActionRequest.type, params, token).then((values) => {
-					if (values === null) {
-						return undefined;
-					}
-					let result: (VCommand | VCodeAction)[] = [];
-					for (let item of values) {
-						if (Command.is(item)) {
-							result.push(client.protocol2CodeConverter.asCommand(item))
-						} else {
-							result.push(client.protocol2CodeConverter.asCodeAction(item));
-						};
-					}
-					return result;
-				},
+				if (values === null) {
+					return undefined;
+				}
+				let result: (VCommand | VCodeAction)[] = [];
+				for (let item of values) {
+					if (Command.is(item)) {
+						result.push(client.protocol2CodeConverter.asCommand(item))
+					} else {
+						result.push(client.protocol2CodeConverter.asCodeAction(item));
+					};
+				}
+				return result;
+			},
 				(error) => {
 					client.logFailedRequest(CodeActionRequest.type, error);
 					return Promise.resolve([]);
@@ -1786,8 +1784,8 @@ class CodeActionFeature extends TextDocumentFeature<CodeActionRegistrationOption
 					: provideCodeActions(document, range, context, token);
 			}
 		}, options.codeActionKinds
-			? { providedCodeActionKinds: client.protocol2CodeConverter.asCodeActionKinds(options.codeActionKinds) }
-			: undefined
+				? { providedCodeActionKinds: client.protocol2CodeConverter.asCodeActionKinds(options.codeActionKinds) }
+				: undefined
 		);
 	}
 }
@@ -2042,16 +2040,16 @@ class RenameFeature extends TextDocumentFeature<RenameRegistrationOptions> {
 				position: client.code2ProtocolConverter.asPosition(position),
 			};
 			return client.sendRequest(PrepareRenameRequest.type, params, token).then((result) => {
-					if (Range.is(result)) {
-						return client.protocol2CodeConverter.asRange(result);
-					} else if (result && result.range) {
-						return {
-							range: client.protocol2CodeConverter.asRange(result.range),
-							placeholder: result.placeholder
-						}
+				if (Range.is(result)) {
+					return client.protocol2CodeConverter.asRange(result);
+				} else if (result && result.range) {
+					return {
+						range: client.protocol2CodeConverter.asRange(result.range),
+						placeholder: result.placeholder
 					}
-					return null;
-				},
+				}
+				return null;
+			},
 				(error: ResponseError<void>) => {
 					client.logFailedRequest(PrepareRenameRequest.type, error);
 					return Promise.reject(new Error(error.message));
@@ -2402,7 +2400,6 @@ export abstract class BaseLanguageClient {
 			synchronize: clientOptions.synchronize || {},
 			diagnosticCollectionName: clientOptions.diagnosticCollectionName,
 			outputChannelName: clientOptions.outputChannelName || this._name,
-			traceOutputChannelName: clientOptions.traceOutputChannelName,
 			revealOutputChannelOn: clientOptions.revealOutputChannelOn || RevealOutputChannelOn.Error,
 			stdioEncoding: clientOptions.stdioEncoding || 'utf8',
 			initializationOptions: clientOptions.initializationOptions,
@@ -2580,10 +2577,6 @@ export abstract class BaseLanguageClient {
 
 	public get traceOutputChannel(): OutputChannel {
 		if (this._traceOutputChannel) {
-			return this._traceOutputChannel;
-		}
-		if (this._clientOptions.traceOutputChannelName !== undefined) {
-			this._traceOutputChannel = Window.createOutputChannel(this._clientOptions.traceOutputChannelName);
 			return this._traceOutputChannel;
 		}
 		return this.outputChannel;
