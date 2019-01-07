@@ -2912,6 +2912,7 @@ export abstract class BaseLanguageClient {
 			this.onReady().then(() => {
 				this.resolveConnection().then(connection => {
 					if (this.isConnectionActive()) {
+						this.forceDocumentSync();
 						connection.didChangeWatchedFiles({ changes: this._fileEvents });
 					}
 					this._fileEvents = [];
