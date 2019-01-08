@@ -2041,13 +2041,14 @@ class RenameFeature extends TextDocumentFeature<RenameRegistrationOptions> {
 			return client.sendRequest(PrepareRenameRequest.type, params, token).then((result) => {
 					if (Range.is(result)) {
 						return client.protocol2CodeConverter.asRange(result);
-					} else if (result && result.range) {
+					} else if (result && Range.is(result.range)) {
 						return {
 							range: client.protocol2CodeConverter.asRange(result.range),
 							placeholder: result.placeholder
 						}
 					}
-					return null;
+					// To cancel the rename vscode API expects a rejected promise.
+					return Promise.reject(new Error(`The element can't be renamed.`));
 				},
 				(error: ResponseError<void>) => {
 					client.logFailedRequest(PrepareRenameRequest.type, error);
