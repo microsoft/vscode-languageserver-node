@@ -2369,7 +2369,6 @@ export abstract class BaseLanguageClient {
 	private _outputChannel: OutputChannel | undefined;
 	private _disposeOutputChannel: boolean;
 	private _traceOutputChannel: OutputChannel | undefined;
-	private _disposeTraceOutputChannel: boolean;
 	private _capabilities: ServerCapabilities & ResolvedTextDocumentSyncCapabilities;
 
 	private _listeners: Disposable[] | undefined;
@@ -2422,14 +2421,7 @@ export abstract class BaseLanguageClient {
 			this._outputChannel = undefined;
 			this._disposeOutputChannel = true;
 		}
-		if (clientOptions.traceOutputChannel) {
-			this._traceOutputChannel = clientOptions.traceOutputChannel;
-			this._disposeTraceOutputChannel = false;
-		} else {
-			this._traceOutputChannel = undefined;
-			this._disposeTraceOutputChannel = true;
-		}
-
+		this._traceOutputChannel = clientOptions.traceOutputChannel;
 		this._listeners = undefined;
 		this._providers = undefined;
 		this._diagnostics = undefined;
@@ -2916,10 +2908,6 @@ export abstract class BaseLanguageClient {
 		if (channel && this._outputChannel && this._disposeOutputChannel) {
 			this._outputChannel.dispose();
 			this._outputChannel = undefined;
-		}
-		if (channel && this._traceOutputChannel && this._disposeTraceOutputChannel) {
-			this._traceOutputChannel.dispose();
-			this._traceOutputChannel = undefined;
 		}
 		if (diagnostics && this._diagnostics) {
 			this._diagnostics.dispose();
