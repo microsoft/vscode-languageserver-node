@@ -452,6 +452,7 @@ export interface LanguageClientOptions {
 	diagnosticCollectionName?: string;
 	outputChannel?: OutputChannel;
 	outputChannelName?: string;
+	traceOutputChannel?: OutputChannel;
 	revealOutputChannelOn?: RevealOutputChannelOn;
 	/**
 	 * The encoding use to read stdout and stderr. Defaults
@@ -1756,19 +1757,19 @@ class CodeActionFeature extends TextDocumentFeature<CodeActionRegistrationOption
 				context: client.code2ProtocolConverter.asCodeActionContext(context)
 			};
 			return client.sendRequest(CodeActionRequest.type, params, token).then((values) => {
-					if (values === null) {
-						return undefined;
-					}
-					let result: (VCommand | VCodeAction)[] = [];
-					for (let item of values) {
-						if (Command.is(item)) {
-							result.push(client.protocol2CodeConverter.asCommand(item))
-						} else {
-							result.push(client.protocol2CodeConverter.asCodeAction(item));
-						};
-					}
-					return result;
-				},
+				if (values === null) {
+					return undefined;
+				}
+				let result: (VCommand | VCodeAction)[] = [];
+				for (let item of values) {
+					if (Command.is(item)) {
+						result.push(client.protocol2CodeConverter.asCommand(item))
+					} else {
+						result.push(client.protocol2CodeConverter.asCodeAction(item));
+					};
+				}
+				return result;
+			},
 				(error) => {
 					client.logFailedRequest(CodeActionRequest.type, error);
 					return Promise.resolve([]);
@@ -1783,8 +1784,8 @@ class CodeActionFeature extends TextDocumentFeature<CodeActionRegistrationOption
 					: provideCodeActions(document, range, context, token);
 			}
 		}, options.codeActionKinds
-			? { providedCodeActionKinds: client.protocol2CodeConverter.asCodeActionKinds(options.codeActionKinds) }
-			: undefined
+				? { providedCodeActionKinds: client.protocol2CodeConverter.asCodeActionKinds(options.codeActionKinds) }
+				: undefined
 		);
 	}
 }
@@ -2368,6 +2369,7 @@ export abstract class BaseLanguageClient {
 	private _initializeResult: InitializeResult | undefined;
 	private _outputChannel: OutputChannel | undefined;
 	private _disposeOutputChannel: boolean;
+	private _traceOutputChannel: OutputChannel | undefined;
 	private _capabilities: ServerCapabilities & ResolvedTextDocumentSyncCapabilities;
 
 	private _listeners: Disposable[] | undefined;
@@ -2420,7 +2422,7 @@ export abstract class BaseLanguageClient {
 			this._outputChannel = undefined;
 			this._disposeOutputChannel = true;
 		}
-
+		this._traceOutputChannel = clientOptions.traceOutputChannel;
 		this._listeners = undefined;
 		this._providers = undefined;
 		this._diagnostics = undefined;
@@ -2566,6 +2568,13 @@ export abstract class BaseLanguageClient {
 		return this._outputChannel;
 	}
 
+	public get traceOutputChannel(): OutputChannel {
+		if (this._traceOutputChannel) {
+			return this._traceOutputChannel;
+		}
+		return this.outputChannel;
+	}
+
 	public get diagnostics(): DiagnosticCollection | undefined {
 		return this._diagnostics;
 	}
@@ -2635,20 +2644,20 @@ export abstract class BaseLanguageClient {
 	}
 
 	private logTrace(message: string, data?: any): void {
-		this.outputChannel.appendLine(`[Trace - ${(new Date().toLocaleTimeString())}] ${message}`);
+		this.traceOutputChannel.appendLine(`[Trace - ${(new Date().toLocaleTimeString())}] ${message}`);
 		if (data) {
-			this.outputChannel.appendLine(this.data2String(data));
+			this.traceOutputChannel.appendLine(this.data2String(data));
 		}
 	}
 
 	private logObjectTrace(data: any): void {
 		if (data.isLSPMessage && data.type) {
-			this.outputChannel.append(`[LSP   - ${(new Date().toLocaleTimeString())}] `);
+			this.traceOutputChannel.append(`[LSP   - ${(new Date().toLocaleTimeString())}] `);
 		} else {
-			this.outputChannel.append(`[Trace - ${(new Date().toLocaleTimeString())}] `);
+			this.traceOutputChannel.append(`[Trace - ${(new Date().toLocaleTimeString())}] `);
 		}
 		if (data) {
-			this.outputChannel.appendLine(`${JSON.stringify(data)}`);
+			this.traceOutputChannel.appendLine(`${JSON.stringify(data)}`);
 		}
 	}
 
