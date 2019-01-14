@@ -502,12 +502,16 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (!item) {
 			return undefined;
 		}
-		return {
+		let result = {
 		   targetUri:_uriConverter(item.targetUri),
 		   targetRange: asRange(item.targetSelectionRange), // See issue: https://github.com/Microsoft/vscode/issues/58649
 		   originSelectionRange: asRange(item.originSelectionRange),
 		   targetSelectionRange: asRange(item.targetSelectionRange)
 		}
+		if (!result.targetSelectionRange) {
+			throw new Error(`targetSelectionRange must not be undefined or null`);
+		}
+		return result;
 	}
 
 	function asLocationResult(item: ls.Location | ls.Location[] | ls.LocationLink[] | undefined | null): code.Location | code.Location[] | code.LocationLink[] | undefined {
