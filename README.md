@@ -25,6 +25,10 @@ All four npm modules are built using one travis build. Its status is:
 Click [here](https://code.visualstudio.com/docs/extensions/example-language-server) for a detailed document on how to use these npm modules to implement
 language servers for [VSCode](https://code.visualstudio.com/).
 
+## Contributing
+
+After cloning the repository, run `npm install` to install dependencies and `npm run symlink` to point packages in this repository to each other.
+
 ## History
 
 ### 5.1.1 Client
