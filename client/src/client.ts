@@ -2619,7 +2619,7 @@ export abstract class BaseLanguageClient {
 			this.outputChannel.appendLine(this.data2String(data));
 		}
 		if (this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Info) {
-			this.outputChannel.show(true);
+			this.showNotificationMessage();
 		}
 	}
 
@@ -2629,7 +2629,7 @@ export abstract class BaseLanguageClient {
 			this.outputChannel.appendLine(this.data2String(data));
 		}
 		if (this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Warn) {
-			this.outputChannel.show(true);
+			this.showNotificationMessage();
 		}
 	}
 
@@ -2639,8 +2639,14 @@ export abstract class BaseLanguageClient {
 			this.outputChannel.appendLine(this.data2String(data));
 		}
 		if (this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Error) {
-			this.outputChannel.show(true);
+			this.showNotificationMessage();
 		}
+	}
+
+	private showNotificationMessage() {
+		Window.showInformationMessage('A request has failed. See the output for more information.', 'Go to output').then(() => {
+			this.outputChannel.show(true);
+		});
 	}
 
 	private logTrace(message: string, data?: any): void {
