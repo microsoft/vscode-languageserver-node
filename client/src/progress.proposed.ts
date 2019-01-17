@@ -55,7 +55,7 @@ class WindowProgress {
 
     private progress: Progress<{ message?: string; }>;
 
-    private title: string | undefined;
+    private title: string;
     private message: string | undefined;
 
     constructor(progress: Progress<{ message?: string; }>) {
@@ -68,11 +68,11 @@ class WindowProgress {
     }
 
     public updateProgress(params: Proposed.ProgressParams) {
-        this.title = params.title || this.message;
+        this.title = params.title;
         this.message = params.message || this.message;
 
-        const displayedMessage = this.message || this.title;
-        this.progress.report({message: displayedMessage});
+        const details = this.message ? ` (${this.message})` : '';
+        this.progress.report({message: `${this.title}${details}`});
     }
 
     public finish() {

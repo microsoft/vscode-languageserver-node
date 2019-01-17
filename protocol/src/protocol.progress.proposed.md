@@ -28,24 +28,28 @@ The `window/progress` notification is sent from the server to the client to ask 
 ```ts
 export interface ProgressParams {
     /**
-     * A unique identifier to associate multiple progress notifications with the same progress.
+     * A unique identifier to associate multiple progress notifications with
+     * the same progress.
      */
     id: string;
 
     /**
-     * Optional title of the progress.
-     * If unset, the previous title (if any) is still valid.
+     * Mandatory title of the progress operation. Used to briefly inform about
+     * the kind of operation being performed.
+     * Examples: "Indexing" or "Linking dependencies".
      */
-    title?: string;
+    title: string;
 
     /**
-     * Optional progress message to display.
+     * Optional, more detailed associated progress message. Contains
+     * complementary information to the `title`.
+     * Examples: "3/25 files", "project/src/module2", "node_modules/some_dep".
      * If unset, the previous progress message (if any) is still valid.
      */
     message?: string;
 
     /**
-     * Optional progress percentage to display (value 1 is considered 1%).
+     * Optional progress percentage to display (value 100 is considered 100%).
      * If unset, the previous progress percentage (if any) is still valid.
      */
     percentage?: number;
