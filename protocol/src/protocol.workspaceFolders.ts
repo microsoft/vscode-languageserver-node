@@ -62,8 +62,8 @@ export interface WorkspaceFolder {
 	uri: string;
 
 	/**
-	 * The name of the workspace folder. Defaults to the
-	 * uri's basename.
+	 * The name of the workspace folder. Used to refer to this
+	 * workspace folder in thge user interface.
 	 */
 	name: string;
 }
