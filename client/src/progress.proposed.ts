@@ -15,9 +15,9 @@ export class WindowProgressFeature implements StaticFeature {
     constructor(private _client: BaseLanguageClient) {}
 
     public fillClientCapabilities(capabilities: ClientCapabilities): void {
-        capabilities.experimental = capabilities.experimental || {};
+        capabilities.experimental = capabilities.window || {};
         let windowProgressCapabilities = capabilities as Proposed.WindowProgressClientCapabilities;
-        windowProgressCapabilities.experimental.progress = true;
+        windowProgressCapabilities.window.progress = true;
     }
 
     public initialize(): void {
