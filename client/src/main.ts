@@ -30,6 +30,7 @@ import { TypeDefinitionFeature } from './typeDefinition';
 import { WorkspaceFoldersFeature } from './workspaceFolders';
 import { FoldingRangeFeature } from './foldingRange';
 import { DeclarationFeature } from './declaration';
+import { SelectionRangeFeature } from './selectionRange.proposed';
 
 import * as Is from './utils/is';
 import { terminate } from './utils/processes';
@@ -507,8 +508,10 @@ export class SettingMonitor {
 // Exporting proposed protocol.
 
 export namespace ProposedFeatures {
-	export function createAll(_client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
-		let result: (StaticFeature | DynamicFeature<any>)[] = [];
+	export function createAll(client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
+		let result: (StaticFeature | DynamicFeature<any>)[] = [
+			new SelectionRangeFeature(client)
+		];
 		return result;
 	}
 }
