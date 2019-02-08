@@ -1772,6 +1772,6 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 
 export namespace ProposedFeatures {
 	export const all: Features<_, _, _, _, _, _> = {
-		__brand: 'features',
+		__brand: 'features'
 	}
 }
