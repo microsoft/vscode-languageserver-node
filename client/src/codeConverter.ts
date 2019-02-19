@@ -41,6 +41,8 @@ export interface Converter {
 	asPosition(value: null): null;
 	asPosition(value: code.Position | undefined | null): proto.Position | undefined | null;
 
+	asPositions(value: code.Position[]): proto.Position[];
+
 	asRange(value: code.Range): proto.Range;
 	asRange(value: undefined): undefined;
 	asRange(value: null): null;
@@ -238,6 +240,14 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			return null;
 		}
 		return { line: value.line, character: value.character };
+	}
+
+	function asPositions(value: code.Position[]): proto.Position[] {
+		let result: proto.Position[] = [];
+		for (let elem of value) {
+			result.push(asPosition(elem));
+		}
+		return result;
 	}
 
 	function asRange(value: code.Range): proto.Range;
@@ -476,6 +486,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asWorkerPosition,
 		asRange,
 		asPosition,
+		asPositions,
 		asDiagnosticSeverity,
 		asDiagnostic,
 		asDiagnostics,

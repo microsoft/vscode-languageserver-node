@@ -4,8 +4,8 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { RequestType } from 'vscode-jsonrpc';
-import { Range } from 'vscode-languageserver-types';
-import { TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams } from './protocol';
+import { Range, TextDocumentIdentifier, Position } from 'vscode-languageserver-types';
+import { TextDocumentRegistrationOptions, StaticRegistrationOptions } from './protocol';
 
 // ---- capabilities
 
@@ -74,11 +74,27 @@ export interface SelectionRange {
 }
 
 /**
+ * A parameter literal used in selection range requests.
+ */
+export interface SelectionRangeParams {
+	/**
+	 * The text document.
+	 */
+	textDocument: TextDocumentIdentifier;
+
+	/**
+	 * The positions inside the text document.
+	 */
+	positions: Position[];
+}
+
+
+/**
  * A request to provide selection ranges in a document. The request's
  * parameter is of type [TextDocumentPositionParams](#TextDocumentPositionParams), the
- * response is of type [SelectionRange[]](#SelectionRange[]) or a Thenable
+ * response is of type [SelectionRange[][]](#SelectionRange[][]) or a Thenable
  * that resolves to such.
  */
 export namespace SelectionRangeRequest {
-	export const type: RequestType<TextDocumentPositionParams, SelectionRange[] | null, any, any> = new RequestType('textDocument/selectionRange');
+	export const type: RequestType<SelectionRangeParams, SelectionRange[][] | null, any, any> = new RequestType('textDocument/selectionRange');
 }
