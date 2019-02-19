@@ -286,7 +286,17 @@ class DefaultErrorHandler implements ErrorHandler {
 	}
 }
 
+/**
+ * A handler that is invoked when the initialization of the server failed.
+ */
 export interface InitializationFailedHandler {
+	/**
+	 * @param error The error returned from the server
+	 * @returns if true is returned the client tries to reinitialize the server.
+	 *  Implementors of a handler are responsible to not initialize the server
+	 *  infinitely. Return false if initialization should stop and an error
+	 *  should be reported.
+	 */
 	(error: ResponseError<InitializeError> | Error | any): boolean;
 }
 
