@@ -869,7 +869,7 @@ export interface TextDocumentSyncOptions {
  * Defines the capabilities provided by a language
  * server.
  */
-export interface _ServerCapabilities {
+export interface _ServerCapabilities<T = any> {
 	/**
 	 * Defines how text documents are synced. Is either a detailed structure defining each notification or
 	 * for backwards compatibility the TextDocumentSyncKind number.
@@ -955,10 +955,10 @@ export interface _ServerCapabilities {
 	/**
 	 * Experimental server capabilities.
 	 */
-	experimental?: any;
+	experimental?: T;
 }
 
-export type ServerCapabilities = _ServerCapabilities & ImplementationServerCapabilities & TypeDefinitionServerCapabilities & WorkspaceFoldersServerCapabilities &
+export type ServerCapabilities<T = any> = _ServerCapabilities<T> & ImplementationServerCapabilities & TypeDefinitionServerCapabilities & WorkspaceFoldersServerCapabilities &
 	ColorServerCapabilities & FoldingRangeServerCapabilities &  DeclarationServerCapabilities & SelectionRangeServerCapabilities;
 
 /**
@@ -1020,11 +1020,11 @@ export type InitializeParams = _InitializeParams & WorkspaceFoldersInitializePar
 /**
  * The result returned from an initialize request.
  */
-export interface InitializeResult {
+export interface InitializeResult<T = any> {
 	/**
 	 * The capabilities the language server provides.
 	 */
-	capabilities: ServerCapabilities;
+	capabilities: ServerCapabilities<T>;
 	/**
 	 * Custom initialization results.
 	 */
