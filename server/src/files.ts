@@ -7,7 +7,7 @@
 import * as url from 'url';
 import * as path from 'path';
 import * as fs from 'fs';
-import { exec, spawnSync, fork, ChildProcess, SpawnSyncOptionsWithStringEncoding } from 'child_process';
+import { spawnSync, fork, ChildProcess, SpawnSyncOptionsWithStringEncoding } from 'child_process';
 
 /**
  * @deprecated Use the `vscode-uri` npm module which provides a more
@@ -38,73 +38,6 @@ export function uriToFilePath(uri: string): string | undefined {
 function isWindows(): boolean {
 	return process.platform === 'win32';
 }
-
-export function resolveModule(workspaceRoot: string, moduleName: string): Thenable<any> {
-	interface Message {
-		command: string;
-		success?: boolean;
-		args?: any;
-		result?: any
-	}
-	let nodePathKey: string = 'NODE_PATH';
-	return new Promise<any>((resolve, reject) => {
-		let nodePath: string[] = [];
-		if (workspaceRoot) {
-			nodePath.push(path.join(workspaceRoot, 'node_modules'));
-		}
-		exec('npm config get prefix', (error: Error, stdout: string, _stderr: string) => {
-			if (!error) {
-				let globalPath = stdout.replace(/[\s\r\n]+$/, '');
-				if (globalPath.length > 0) {
-					if (isWindows()) {
-						nodePath.push(path.join(globalPath, 'node_modules'));
-					} else {
-						nodePath.push(path.join(globalPath, 'lib', 'node_modules'));
-					}
-				}
-			}
-			let separator = isWindows() ? ';' : ':';
-			let env = process.env;
-			let newEnv = Object.create(null);
-			Object.keys(env).forEach(key => newEnv[key] = env[key]);
-			if (newEnv[nodePathKey]) {
-				newEnv[nodePathKey] = nodePath.join(separator) + separator + newEnv[nodePathKey];
-			} else {
-				newEnv[nodePathKey] = nodePath.join(separator);
-			}
-			newEnv['ELECTRON_RUN_AS_NODE'] = '1';
-			try {
-				let cp: ChildProcess = fork(path.join(__dirname, 'resolve.js'), [], <any>{ env: newEnv, execArgv: [] });
-				if (cp.pid === void 0) {
-					reject(new Error(`Starting process to resolve node module  ${moduleName} failed`));
-					return;
-				}
-				cp.on('message', (message: Message) => {
-					if (message.command === 'resolve') {
-						let toRequire: string = moduleName;
-						if (message.success) {
-							toRequire = message.result;
-						}
-						cp.send({ command: 'exit' });
-						try {
-							resolve(require(toRequire));
-						} catch (error) {
-							reject(error);
-						}
-					}
-				});
-				let message: Message = {
-					command: 'resolve',
-					args: moduleName
-				};
-				cp.send(message);
-			} catch (error) {
-				reject(error);
-			}
-		});
-	});
-}
-
 
 export function resolve(moduleName: string, nodePath: string | undefined, cwd: string | undefined, tracer: (message: string, verbose?: string) => void): Thenable<string> {
 	interface Message {
@@ -320,18 +253,4 @@ export function resolveModulePath(workspaceRoot: string, moduleName: string, nod
 	} else {
 		return resolve(moduleName, resolveGlobalNodePath(tracer), workspaceRoot, tracer);
 	}
-}
-
-/**
- * Resolves the given module relative to the given workspace root. In contrast to
- * `resolveModule` this method considers the parent chain as well.
- */
-export function resolveModule2(workspaceRoot: string, moduleName: string, nodePath: string, tracer: (message: string, verbose?: string) => void): Thenable<any> {
-
-	return resolveModulePath(workspaceRoot, moduleName, nodePath, tracer).then((path) => {
-		if (tracer) {
-			tracer(`Module ${moduleName} got resolved to ${path}`);
-		}
-		return require(path);
-	});
 }
