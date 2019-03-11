@@ -11,8 +11,7 @@ import { languages as Languages, Disposable, TextDocument, ProviderResult, Posit
 
 import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, TextDocumentRegistrationOptions, DocumentSelector, StaticRegistrationOptions,
-	TextDocumentPositionParams,
-	SelectionRangeRequest, SelectionRangeProviderOptions, SelectionRangeKind, SelectionRange
+	SelectionRangeRequest, SelectionRangeProviderOptions, SelectionRangeKind, SelectionRange, SelectionRangeParams
 } from 'vscode-languageserver-protocol';
 
 import { TextDocumentFeature, BaseLanguageClient } from './client';
@@ -25,12 +24,12 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 }
 
 export interface ProvideSelectionRangeSignature {
-	(document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VSelectionRange[] | null>;
+	(document: TextDocument, positions: VPosition[], token: CancellationToken): ProviderResult<VSelectionRange[][]>;
 }
 
 
 export interface SelectionRangeProviderMiddleware {
-	provideSelectionRanges?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideSelectionRangeSignature) => ProviderResult<VSelectionRange[]>;
+	provideSelectionRanges?: (this: void, document: TextDocument, positions: VPosition[], token: CancellationToken, next: ProvideSelectionRangeSignature) => ProviderResult<VSelectionRange[][]>;
 }
 
 export class SelectionRangeFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
@@ -61,10 +60,10 @@ export class SelectionRangeFeature extends TextDocumentFeature<TextDocumentRegis
 
 	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): Disposable {
 		let client = this._client;
-		let provideSelectionRanges: ProvideSelectionRangeSignature = (document, position, token) => {
-			const requestParams: TextDocumentPositionParams = {
+		let provideSelectionRanges: ProvideSelectionRangeSignature = (document, positions, token) => {
+			const requestParams: SelectionRangeParams = {
 				textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
-				position: client.code2ProtocolConverter.asPosition(position),
+				positions: client.code2ProtocolConverter.asPositions(positions)
 			};
 			return client.sendRequest(SelectionRangeRequest.type, requestParams, token).then(
 				(ranges) => this.asSelectionRanges(ranges),
@@ -76,23 +75,34 @@ export class SelectionRangeFeature extends TextDocumentFeature<TextDocumentRegis
 		};
 		let middleware = client.clientOptions.middleware!;
 		return Languages.registerSelectionRangeProvider(options.documentSelector!, {
-			provideSelectionRanges(document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VSelectionRange[]> {
+			provideSelectionRanges(document: TextDocument, positions: VPosition[], token: CancellationToken): ProviderResult<VSelectionRange[][]> {
 				return middleware.provideSelectionRanges
-					? middleware.provideSelectionRanges(document, position, token, provideSelectionRanges)
-					: provideSelectionRanges(document, position, token);
+					? middleware.provideSelectionRanges(document, positions, token, provideSelectionRanges)
+					: provideSelectionRanges(document, positions, token);
 
 			}
 		});
 	}
 
-	private asSelectionRanges(selectionRanges: SelectionRange[] | null): VSelectionRange[] {
-		if (!Array.isArray(selectionRanges)) return [];
-		return selectionRanges.map(r => {
-			return new VSelectionRange(
-				this._client.protocol2CodeConverter.asRange(r.range),
-				this.asSelectionRangeKind(r.kind),
-			);
-		});
+	private asSelectionRanges(selectionRanges: SelectionRange[][] | null): VSelectionRange[][] {
+		if (!Array.isArray(selectionRanges)) {
+			return [];
+		}
+		let result:  VSelectionRange[][] = [];
+		for (let ranges of selectionRanges) {
+			if (!Array.isArray(ranges)) {
+				return [];
+			}
+			let inner: VSelectionRange[] = [];
+			result.push(inner);
+			for (let range of ranges) {
+				inner.push(new VSelectionRange(
+					this._client.protocol2CodeConverter.asRange(range.range),
+					this.asSelectionRangeKind(range.kind),
+				));
+			}
+		}
+		return result;
 	}
 
 	private asSelectionRangeKind(kind?: string): VSelectionRangeKind {
@@ -148,9 +158,10 @@ declare module 'vscode' {
 		 * Provide selection ranges starting at a given position. The first range must [contain](#Range.contains)
 		 * position and subsequent ranges must contain the previous range.
 		 */
-		provideSelectionRanges(document: TextDocument, position: Position, token: CancellationToken): ProviderResult<SelectionRange[]>;
+		provideSelectionRanges(document: TextDocument, position: Position[], token: CancellationToken): ProviderResult<SelectionRange[][]>;
 	}
 
 	export namespace languages {
 		export function registerSelectionRangeProvider(selector: DocumentSelector, provider: SelectionRangeProvider): Disposable;
-}}
+	}
+}

@@ -37,7 +37,7 @@ import {
 } from './protocol.declaration';
 import {
 	SelectionRangeClientCapabilities, SelectionRangeProviderOptions, SelectionRangeRequest, SelectionRangeServerCapabilities,
-	SelectionRangeKind, SelectionRange,
+	SelectionRangeKind, SelectionRange, SelectionRangeParams
 } from './protocol.selectionRange';
 
 
@@ -1993,5 +1993,5 @@ export {
 	FoldingRangeClientCapabilities, FoldingRangeProviderOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeServerCapabilities,
 	DeclarationClientCapabilities, DeclarationRequest, DeclarationServerCapabilities,
 	SelectionRangeClientCapabilities, SelectionRangeProviderOptions, SelectionRangeRequest, SelectionRangeServerCapabilities,
-	SelectionRangeKind, SelectionRange
+	SelectionRangeKind, SelectionRange, SelectionRangeParams
 };
