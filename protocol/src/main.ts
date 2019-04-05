@@ -35,7 +35,19 @@ export * from './protocol';
 
 export { FoldingRangeParams as FoldingRangeRequestParam } from './protocol'; // for backward compatibility
 
+import * as callHierarchy from './protocol.callHierarchy.proposed';
+
 export namespace Proposed {
+	export type CallHierarchyClientCapabilities = callHierarchy.CallHierarchyClientCapabilities;
+	export type CallHierarchyServerCapabilities = callHierarchy.CallHierarchyServerCapabilities;
+
+	export namespace CallHierarchyRequest {
+		export const type = callHierarchy.CallHierarchyRequest.type;
+		export type HandlerSignature = callHierarchy.CallHierarchyRequest.HandlerSignature;
+	}
+
+	export type CallHierarchyParams = callHierarchy.CallHierarchyParams;
+	export type CallHierarchyCall = callHierarchy.CallHierarchyCall;
 }
 
 export interface ProtocolConnection {
