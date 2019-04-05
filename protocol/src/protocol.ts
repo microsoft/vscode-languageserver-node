@@ -35,11 +35,6 @@ import {
 import {
 	DeclarationClientCapabilities, DeclarationRequest, DeclarationServerCapabilities
 } from './protocol.declaration';
-import {
-	SelectionRangeClientCapabilities, SelectionRangeProviderOptions, SelectionRangeRequest, SelectionRangeServerCapabilities,
-	SelectionRangeParams, SelectionRange
-} from './protocol.selectionRange';
-
 
 // @ts-ignore: to avoid inlining LocatioLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
@@ -672,7 +667,7 @@ export interface _ClientCapabilities {
 
 export type ClientCapabilities = _ClientCapabilities & ImplementationClientCapabilities & TypeDefinitionClientCapabilities &
 	WorkspaceFoldersClientCapabilities & ConfigurationClientCapabilities & ColorClientCapabilities & FoldingRangeClientCapabilities &
-	DeclarationClientCapabilities & SelectionRangeClientCapabilities;
+	DeclarationClientCapabilities /* & SelectionRangeClientCapabilities */;
 
 /**
  * Defines how the host (editor) should sync
@@ -959,7 +954,7 @@ export interface _ServerCapabilities<T = any> {
 }
 
 export type ServerCapabilities<T = any> = _ServerCapabilities<T> & ImplementationServerCapabilities & TypeDefinitionServerCapabilities & WorkspaceFoldersServerCapabilities &
-	ColorServerCapabilities & FoldingRangeServerCapabilities &  DeclarationServerCapabilities & SelectionRangeServerCapabilities;
+	ColorServerCapabilities & FoldingRangeServerCapabilities &  DeclarationServerCapabilities /* & SelectionRangeServerCapabilities */;
 
 /**
  * The initialize request is sent from the client to the server.
@@ -1991,7 +1986,5 @@ export {
 	ConfigurationRequest, ConfigurationParams, ConfigurationItem,
 	DocumentColorRequest, ColorPresentationRequest, ColorProviderOptions, DocumentColorParams, ColorPresentationParams,
 	FoldingRangeClientCapabilities, FoldingRangeProviderOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeServerCapabilities,
-	DeclarationClientCapabilities, DeclarationRequest, DeclarationServerCapabilities,
-	SelectionRangeClientCapabilities, SelectionRangeProviderOptions, SelectionRangeRequest, SelectionRangeServerCapabilities,
-	SelectionRange, SelectionRangeParams
+	DeclarationClientCapabilities, DeclarationRequest, DeclarationServerCapabilities
 };
