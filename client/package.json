@@ -5,7 +5,7 @@
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"engines": {
-		"vscode": "^1.32"
+		"vscode": "^1.33"
 	},
 	"repository": {
 		"type": "git",
@@ -20,7 +20,7 @@
 	"devDependencies": {
 		"@types/semver": "^5.5.0",
 		"shx": "^0.3.2",
-		"vscode": "^1.1.30"
+		"vscode": "^1.1.33"
 	},
 	"dependencies": {
 		"semver": "^5.5.0",

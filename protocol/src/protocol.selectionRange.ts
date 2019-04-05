@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { RequestType } from 'vscode-jsonrpc';
-import { Range, TextDocumentIdentifier, Position } from 'vscode-languageserver-types';
+import { TextDocumentIdentifier, Position, Range } from 'vscode-languageserver-types';
 import { TextDocumentRegistrationOptions, StaticRegistrationOptions } from './protocol';
 
 // ---- capabilities
@@ -39,41 +39,6 @@ export interface SelectionRangeServerCapabilities {
 }
 
 /**
- * Enum of known selection range kinds
- */
-export enum SelectionRangeKind {
-	/**
-	 * Empty Kind.
-	 */
-	Empty = '',
-	/**
-	 * The statment kind, its value is `statement`, possible extensions can be
-	 * `statement.if` etc
-	 */
-	Statement = 'statement',
-	/**
-	 * The declaration kind, its value is `declaration`, possible extensions can be
-	 * `declaration.function`, `declaration.class` etc.
-	 */
-	Declaration = 'declaration',
-}
-
-/**
- * Represents a selection range
- */
-export interface SelectionRange {
-	/**
-	 * Range of the selection.
-	 */
-	range: Range;
-	/**
-	 * Describes the kind of the selection range such as `statemet' or 'declaration'. See
-	 * [SelectionRangeKind](#SelectionRangeKind) for an enumeration of standardized kinds.
-	 */
-	kind: string;
-}
-
-/**
  * A parameter literal used in selection range requests.
  */
 export interface SelectionRangeParams {
@@ -88,13 +53,50 @@ export interface SelectionRangeParams {
 	positions: Position[];
 }
 
+/**
+ * A selection range represents a part of a selection hierarchy. A selection range
+ * may have a parent selection range that contains it.
+ */
+export interface SelectionRange {
+
+	/**
+	 * The [range](#Range) of this selection range.
+	 */
+	range: Range;
+
+	/**
+	 * The parent selection range containing this range. Therfore `parent.range` must contain `this.range`.
+	 */
+	parent?: SelectionRange;
+
+}
+
+/**
+ * The SelectionRange namespace provides helper function to work with
+ * SelectionRange literals.
+ */
+export namespace SelectionRange {
+	/**
+	 * Creates a new SelectionRange
+	 * @param range the range.
+	 * @param parent an optional parent.
+	 */
+	export function create(range: Range, parent?: SelectionRange): SelectionRange {
+		return { range, parent };
+	}
+
+	export function is(value: any): value is SelectionRange {
+		let candidate = value as SelectionRange;
+		return candidate !== undefined && Range.is(candidate.range) && (candidate.parent === undefined || SelectionRange.is(candidate.parent));
+	}
+}
 
 /**
  * A request to provide selection ranges in a document. The request's
- * parameter is of type [TextDocumentPositionParams](#TextDocumentPositionParams), the
- * response is of type [SelectionRange[][]](#SelectionRange[][]) or a Thenable
+ * parameter is of type [SelectionRangeParams](#SelectionRangeParams), the
+ * response is of type [SelectionRange[]](#SelectionRange[]) or a Thenable
  * that resolves to such.
  */
 export namespace SelectionRangeRequest {
-	export const type: RequestType<SelectionRangeParams, SelectionRange[][] | null, any, any> = new RequestType('textDocument/selectionRange');
+	export const type: RequestType<SelectionRangeParams, SelectionRange[] | null, any, any> = new RequestType('textDocument/selectionRange');
 }
