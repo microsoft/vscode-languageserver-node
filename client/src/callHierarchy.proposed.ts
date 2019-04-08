@@ -14,9 +14,11 @@ import {
 
 import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, TextDocumentRegistrationOptions, DocumentSelector, StaticRegistrationOptions, Proposed,
+	Range
 } from 'vscode-languageserver-protocol';
 
 import { TextDocumentFeature, BaseLanguageClient, Middleware } from './client';
+import { CallHierarchyItem } from 'vscode-languageserver-protocol/lib/protocol.callHierarchy.proposed';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -41,8 +43,6 @@ export interface CallHierarchyMiddleware {
 class CallHierarchyProvider implements CallHierarchyItemProvider{
 
 	private middleware: Middleware & CallHierarchyMiddleware;
-
-	private
 
 	constructor(private client: BaseLanguageClient) {
 		this.middleware = client.clientOptions.middleware!;
@@ -81,8 +81,42 @@ class CallHierarchyProvider implements CallHierarchyItemProvider{
 			direction: direction
 		};
 
-		return client.sendRequest(Proposed.CallHierarchyRequest.type, params, token).then(values => {
+		const makeKey = (item: CallHierarchyItem): string => {
+			let key: { uri: string; range: Range } = {
+				uri: item.uri,
+				range: {
+					start: {
+						line: item.selectionRange.start.line,
+						character: item.selectionRange.start.character
+					},
+					end: {
+						line: item.selectionRange.end.line,
+						character: item.selectionRange.end.character
+					}
+				}
+			}
+			return JSON.stringify(key);
+		};
 
+		return client.sendRequest(Proposed.CallHierarchyRequest.type, params, token).then(values => {
+			if (!Array.isArray(values) || values.length === 0) {
+				return undefined;
+			}
+
+			const result: Map<string, [VCallHierarchyItem, VLocation[]]> = new Map();
+
+			for (let relation of values) {
+				let key = makeKey(relation.from);
+				let resultItem: [VCallHierarchyItem, VLocation[]] | undefined = result.get(key);
+				if (resultItem === undefined) {
+					const callItem = this.asCallHierarchyItem(relation.from);
+					resultItem = [callItem, []];
+					result.set(key, resultItem);
+				}
+				resultItem[1].push(this.asLocation(relation.to));
+			}
+
+			return Array.from(result.values());
 		});
 	}
 
@@ -105,6 +139,11 @@ class CallHierarchyProvider implements CallHierarchyItemProvider{
 			converter.asRange(value.range),
 			converter.asRange(value.selectionRange)
 		);
+	}
+
+	private asLocation(value: Proposed.CallHierarchyItem): VLocation {
+		const converter = this.client.protocol2CodeConverter;
+		return new VLocation(converter.asUri(value.uri), converter.asRange(value.selectionRange));
 	}
 }
 
