@@ -88,7 +88,11 @@ export class SelectionRangeFeature extends TextDocumentFeature<TextDocumentRegis
 		if (!Array.isArray(selectionRanges)) {
 			return [];
 		}
-		return selectionRanges.map(this.asSelectionRange);
+		let result: VSelectionRange[] = [];
+		for (let range of selectionRanges) {
+			result.push(this.asSelectionRange(range));
+		}
+		return result;
 	}
 
 	private asSelectionRange(selectionRange: Proposed.SelectionRange): VSelectionRange {
