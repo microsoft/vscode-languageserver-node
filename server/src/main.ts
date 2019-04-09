@@ -123,6 +123,7 @@ interface ConnectionState {
 export class TextDocuments {
 
 	private _documents: { [uri: string]: TextDocument };
+	private _syncKind: TextDocumentSyncKind;
 
 	private _onDidChangeContent: Emitter<TextDocumentChangeEvent>;
 	private _onDidOpen: Emitter<TextDocumentChangeEvent>;
@@ -134,8 +135,10 @@ export class TextDocuments {
 	/**
 	 * Create a new text document manager.
 	 */
-	public constructor() {
+	public constructor(syncKind: TextDocumentSyncKind = TextDocumentSyncKind.Full) {
 		this._documents = Object.create(null);
+		this._syncKind = syncKind;
+
 		this._onDidChangeContent = new Emitter<TextDocumentChangeEvent>();
 		this._onDidOpen = new Emitter<TextDocumentChangeEvent>();
 		this._onDidClose = new Emitter<TextDocumentChangeEvent>();
@@ -148,7 +151,7 @@ export class TextDocuments {
 	 * this text document manager.
 	 */
 	public get syncKind(): TextDocumentSyncKind {
-		return TextDocumentSyncKind.Full;
+		return this._syncKind;
 	}
 
 	/**
@@ -255,17 +258,50 @@ export class TextDocuments {
 		connection.onDidChangeTextDocument((event: DidChangeTextDocumentParams) => {
 			let td = event.textDocument;
 			let changes = event.contentChanges;
-			let last: TextDocumentContentChangeEvent | undefined = changes.length > 0 ? changes[changes.length - 1] : undefined;
-			if (last) {
-				let document = this._documents[td.uri];
-				if (document && isUpdateableDocument(document)) {
-					if (td.version === null || td.version === void 0) {
-						throw new Error(`Received document change event for ${td.uri} without valid version identifier`);
-					}
-					document.update(last, td.version);
-					this._onDidChangeContent.fire(Object.freeze({ document }));
-				}
+			if (changes.length === 0) {
+				return;
 			}
+
+			let document = this._documents[td.uri];
+			if (!document || !isUpdateableDocument(document)) {
+				return;
+			}
+
+			const { version } = td;
+			if (version == null || version === void 0) {
+				throw new Error(`Received document change event for ${td.uri} without valid version identifier`);
+			}
+
+			switch (this.syncKind) {
+				case TextDocumentSyncKind.Full:
+					let last = changes[changes.length - 1];
+					document.update(last, version);
+					this._onDidChangeContent.fire(Object.freeze({ document }));
+					break;
+				case TextDocumentSyncKind.Incremental:
+					let edits: TextEdit[] = changes.map(change => {
+						let { text, range } = change;
+						if (range === null || range === void 0) {
+							throw new Error(`Received document change has null range for ${td.uri}`);
+						}
+						return { newText: text, range };
+					});
+
+					let updatedDoc: UpdateableDocument = edits.reduce(
+						(workingTextDoc: UpdateableDocument, edit) => {
+							let newText = TextDocument.applyEdits(workingTextDoc, [edit]);
+							workingTextDoc.update({ text: newText }, version);
+							return workingTextDoc;
+						},
+						document,
+					);
+					this._onDidChangeContent.fire(Object.freeze({ document: updatedDoc }));
+					break
+				case TextDocumentSyncKind.None:
+					break;
+			}
+
+
 		});
 		connection.onDidCloseTextDocument((event: DidCloseTextDocumentParams) => {
 			let document = this._documents[event.textDocument.uri];
