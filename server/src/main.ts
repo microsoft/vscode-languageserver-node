@@ -1213,14 +1213,14 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onTypeDefinition(handler: RequestHandler<TextDocumentPositionParams, Definition | undefined | null, void>): void;
+	onTypeDefinition(handler: RequestHandler<TextDocumentPositionParams, Definition | DefinitionLink[] | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the `Implementation` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onImplementation(handler: RequestHandler<TextDocumentPositionParams, Definition | undefined | null, void>): void;
+	onImplementation(handler: RequestHandler<TextDocumentPositionParams, Definition | DefinitionLink[] | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the `References` request.
