@@ -8,11 +8,11 @@ import { NotificationType, NotificationHandler } from 'vscode-jsonrpc';
 
 export interface WindowProgressClientCapabilities {
 	/**
-	 * Experimental client capabilities.
+	 * Window specific client capabilities.
 	 */
-	experimental: {
+	window?: {
 		/**
-		 * The client has support for reporting progress.
+		 * Whether client supports handling progress notifications.
 		 */
 		progress?: boolean;
 	}
