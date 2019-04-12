@@ -31,6 +31,7 @@ import { WorkspaceFoldersFeature } from './workspaceFolders';
 import { FoldingRangeFeature } from './foldingRange';
 import { DeclarationFeature } from './declaration';
 import { SelectionRangeFeature } from './selectionRange.proposed';
+import { CallHierarchyFeature } from './callHierarchy.proposed';
 
 import * as Is from './utils/is';
 import { terminate } from './utils/processes';
@@ -39,7 +40,7 @@ export * from './client';
 
 declare var v8debug: any;
 
-const REQUIRED_VSCODE_VERSION = '^1.33'; // do not change format, updated by `updateVSCode` script
+const REQUIRED_VSCODE_VERSION = '^1.33.0'; // do not change format, updated by `updateVSCode` script
 
 export interface ExecutableOptions {
 	cwd?: string;
@@ -510,7 +511,8 @@ export class SettingMonitor {
 export namespace ProposedFeatures {
 	export function createAll(client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
 		let result: (StaticFeature | DynamicFeature<any>)[] = [
-			new SelectionRangeFeature(client)
+			new SelectionRangeFeature(client),
+			new CallHierarchyFeature(client)
 		];
 		return result;
 	}

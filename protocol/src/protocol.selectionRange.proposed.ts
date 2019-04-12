@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { RequestType } from 'vscode-jsonrpc';
+import { RequestType, RequestHandler } from 'vscode-jsonrpc';
 import { TextDocumentIdentifier, Position, Range } from 'vscode-languageserver-types';
 import { TextDocumentRegistrationOptions, StaticRegistrationOptions } from './protocol';
 
@@ -28,14 +28,11 @@ export interface SelectionRangeClientCapabilities {
 	};
 }
 
-export interface SelectionRangeProviderOptions {
-}
-
 export interface SelectionRangeServerCapabilities {
 	/**
 	 * The server provides selection range support.
 	 */
-	selectionRangeProvider?: boolean | SelectionRangeProviderOptions | (SelectionRangeProviderOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions);
+	selectionRangeProvider?: boolean | (TextDocumentRegistrationOptions & StaticRegistrationOptions);
 }
 
 /**
@@ -99,4 +96,5 @@ export namespace SelectionRange {
  */
 export namespace SelectionRangeRequest {
 	export const type: RequestType<SelectionRangeParams, SelectionRange[] | null, any, any> = new RequestType('textDocument/selectionRange');
+	export type HandlerSignature = RequestHandler<SelectionRangeParams, SelectionRange[] | null, void>;
 }
