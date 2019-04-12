@@ -646,6 +646,16 @@ export interface TextDocumentClientCapabilities {
 }
 
 /**
+ * Window specific client capabilities.
+ */
+export interface WindowClientCapabilities {
+    /**
+     * Whether client supports handling progress notifications.
+     */
+    progress?: boolean;
+}
+
+/**
  * Defines the capabilities provided by the client.
  */
 export interface _ClientCapabilities {
@@ -658,6 +668,11 @@ export interface _ClientCapabilities {
 	 * Text document specific client capabilities.
 	 */
 	textDocument?: TextDocumentClientCapabilities;
+
+    /**
+     * Window specific client capabilities.
+     */
+    window?: WindowClientCapabilities;
 
 	/**
 	 * Experimental client capabilities.
