@@ -42,21 +42,21 @@ export interface CallHierarchyMiddleware {
 
 class CallHierarchyProvider implements CallHierarchyItemProvider{
 
-	private middleware: Middleware & CallHierarchyMiddleware;
+	private _middleware: Middleware & CallHierarchyMiddleware;
 
 	constructor(private client: BaseLanguageClient) {
-		this.middleware = client.clientOptions.middleware!;
+		this._middleware = client.clientOptions.middleware!;
 	}
 
 	public provideCallHierarchyItem(document: TextDocument, postion: VPosition, token: VCancellationToken): ProviderResult<VCallHierarchyItem> {
-		return this.middleware.provideCallHierarchy
-			? this.middleware.provideCallHierarchy(document, postion, token, (document, position, token) => this.doProvideCallHierarchyItem(document, position, token))
+		return this._middleware.provideCallHierarchy
+			? this._middleware.provideCallHierarchy(document, postion, token, (document, position, token) => this.doProvideCallHierarchyItem(document, position, token))
 			: this.doProvideCallHierarchyItem(document, postion, token);
 	}
 
 	public resolveCallHierarchyItem(item: VCallHierarchyItem, direction: VCallHierarchyDirection, token: VCancellationToken): ProviderResult<[VCallHierarchyItem, VLocation[]][]> {
-		return this.middleware.resolveCallHierarchy
-			? this.middleware.resolveCallHierarchy(item, direction, token, (item, direction, token) => this.doResolveCallHierarchyItem(item, direction, token))
+		return this._middleware.resolveCallHierarchy
+			? this._middleware.resolveCallHierarchy(item, direction, token, (item, direction, token) => this.doResolveCallHierarchyItem(item, direction, token))
 			: this.doResolveCallHierarchyItem(item, direction, token);
 	}
 

@@ -17,7 +17,7 @@ import { TextDocumentFeature, BaseLanguageClient } from './client';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
-		target[key] = {} as any;
+		target[key] = Object.create(null) as any;
 	}
 	return target[key];
 }

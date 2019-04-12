@@ -18,45 +18,109 @@ export interface WindowProgressClientCapabilities {
 	}
 }
 
-export interface ProgressParams {
-    /**
-     * A unique identifier to associate multiple progress notifications with the same progress.
-     */
-    id: string;
+export interface WindowProgressServerCapabilities {
+	/**
+	 * Window specific server capabilities.
+	 */
+	window?: {
+		/**
+		 * The requests for which the server will report progress (e.g. `textDocument/references`).
+		 * The client might not hook a progress monitor / UI for requests which will not provide
+		 * progress.
+		 */
+		progress?: string[];
+	}
+}
 
-    /**
-     * Mandatory title of the progress operation. Used to briefly inform about
-     * the kind of operation being performed.
-     * Examples: "Indexing" or "Linking dependencies".
-     */
-    title: string;
+export interface ProgressStartParams {
 
-    /**
-     * Optional, more detailed associated progress message. Contains
-     * complementary information to the `title`.
-     * Examples: "3/25 files", "project/src/module2", "node_modules/some_dep".
-     * If unset, the previous progress message (if any) is still valid.
-     */
-    message?: string;
+	/**
+	 * A unique identifier to associate multiple progress notifications with the same progress.
+	 */
+	id: string;
 
-    /**
-     * Optional progress percentage to display (value 100 is considered 100%).
-     * If unset, the previous progress percentage (if any) is still valid.
-     */
-    percentage?: number;
+	/**
+	 * Mandatory title of the progress operation. Used to briefly inform about
+	 * the kind of operation being performed.
+	 * Examples: "Indexing" or "Linking dependencies".
+	 */
+	title: string;
 
-    /**
-     * Set to true on the final progress update.
-     * No more progress notifications with the same ID should be sent.
-     */
-    done?: boolean;
+	/**
+	 * Controls if a cancel button should show to allow the user to
+	 * cancel the long running operation. Clients that don't support
+	 * cancellation can ignore the setting.
+	 */
+	cancellable?: boolean;
+
+	/**
+	 * Optional, more detailed associated progress message. Contains
+	 * complementary information to the `title`.
+	 * Examples: "3/25 files", "project/src/module2", "node_modules/some_dep".
+	 * If unset, the previous progress message (if any) is still valid.
+	 */
+	message?: string;
+
+	/**
+	 * Optional progress percentage to display(value 100 is considered 100%).
+	 * If not provided infinite progress is assumed and clients are allowed
+	 * to ignore the value in report notifications.
+	 */
+	percentage?: number;
 }
 
 /**
- * The `window/progress` notification is sent from the server to the client
- * to inform the client about ongoing progress.
+ * The `window/progressStart` notification is sent from the server to the client
+ * to initiate a progress.
  */
-export namespace WindowProgressNotification {
-	export const type = new NotificationType<ProgressParams, void>('window/progress');
-	export type HandlerSignature = NotificationHandler<ProgressParams>;
+export namespace ProgressStartNotification {
+	export const type = new NotificationType<ProgressStartParams, void>('window/progressStart');
+	export type HandlerSignature = NotificationHandler<ProgressStartParams>;
+}
+
+export interface ProgressReportParams {
+
+	/**
+	 * A unique identifier to associate multiple progress notifications with the same progress.
+	 */
+	id: string;
+
+	/**
+	 * Optional, more detailed associated progress message. Contains
+	 * complementary information to the `title`.
+	 * Examples: "3/25 files", "project/src/module2", "node_modules/some_dep".
+	 * If unset, the previous progress message (if any) is still valid.
+	 */
+	message?: string;
+
+	/**
+	 * Optional progress percentage to display (value 100 is considered 100%).
+	 * If unset, the previous progress percentage (if any) is still valid.
+	 */
+	percentage?: number;
+}
+
+/**
+ * The `window/progressReport` notification is sent from the server to the client
+ * to initiate a progress.
+ */
+export namespace ProgressReportNotification {
+	export const type = new NotificationType<ProgressReportParams, void>('window/progressReport');
+	export type HandlerSignature = NotificationHandler<ProgressReportParams>;
+}
+
+export interface ProgressDoneParams {
+	/**
+	 * A unique identifier to associate multiple progress notifications with the same progress.
+	 */
+	id: string;
+}
+
+/**
+ * The `window/progressDone` notification is sent from the server to the client
+ * to initiate a progress.
+ */
+export namespace ProgressDoneNotification {
+	export const type = new NotificationType<ProgressDoneParams, void>('window/progressDone');
+	export type HandlerSignature = NotificationHandler<ProgressDoneParams>;
 }

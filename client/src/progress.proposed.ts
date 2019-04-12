@@ -6,81 +6,100 @@
 
 import { window, Progress, ProgressLocation } from 'vscode';
 
+import { ClientCapabilities, Proposed, CancellationToken } from 'vscode-languageserver-protocol';
+
 import { BaseLanguageClient, StaticFeature } from './client';
-import { ClientCapabilities, Proposed } from 'vscode-languageserver-protocol';
+import * as Is from './utils/is';
 
-export class WindowProgressFeature implements StaticFeature {
-    private _progresses: Map<string, WindowProgress> = new Map<string, WindowProgress>();
-
-    constructor(private _client: BaseLanguageClient) {}
-
-    public fillClientCapabilities(capabilities: ClientCapabilities): void {
-        let windowProgressCapabilities = capabilities as Proposed.WindowProgressClientCapabilities;
-
-        windowProgressCapabilities.window = windowProgressCapabilities.window || {};
-        windowProgressCapabilities.window.progress = true;
-    }
-
-    public initialize(): void {
-        let client = this._client;
-        let progresses = this._progresses;
-
-        let handler = function (params: Proposed.ProgressParams) {
-            let progress = progresses.get(params.id);
-            if (progress !== undefined) {
-                progress.updateProgress(params);
-            } else {
-                window.withProgress({ location: ProgressLocation.Window }, p => {
-                    progress = new WindowProgress(p);
-                    progresses.set(params.id, progress);
-
-                    progress.updateProgress(params);
-                    return progress.promise;
-                });
-            }
-            // In both cases progress shouldn't be undefined, but make the compiler happy.
-            if (params.done && progress !== undefined) {
-                progress.finish();
-                progresses.delete(params.id);
-            }
-        };
-
-        client.onNotification(Proposed.WindowProgressNotification.type, handler);
-    }
+function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
+	if (target[key] === void 0) {
+		target[key] = Object.create(null) as any;
+	}
+	return target[key];
 }
 
-class WindowProgress {
-    public promise: Promise<{}>;
-    private resolve: (value?: {} | PromiseLike<{}> | undefined) => void;
-    private reject: (reason?: any) => void;
+class ProgressPart {
 
-    private progress: Progress<{ message?: string; }>;
+	private _infinite: boolean;
+	private _reported: number;
+	private _progress: Progress<{ message?: string, increment?: number}>;
+	private _token: CancellationToken;
 
-    private title: string;
-    private message: string | undefined;
+	private _resolve: () => void;
+	private _reject: (reason?: any) => void;
 
-    constructor(progress: Progress<{ message?: string; }>) {
-        this.progress = progress;
+	public constructor(params: Proposed.ProgressStartParams) {
+		let location: ProgressLocation = params.cancellable ? ProgressLocation.Notification : ProgressLocation.Window;
+		this._reported = 0;
+		window.withProgress<void>({ location, cancellable: params.cancellable, title: params.title}, async (progress, token) => {
+			this._progress = progress;
+			this._infinite = params.percentage === undefined;
+			this._token == token;
+			this.report(params);
+			return new Promise<void>((resolve, reject) => {
+				this._resolve = resolve;
+				this._reject = reject;
+			});
+		});
+	}
 
-        this.promise = new Promise((resolve, reject) => {
-            this.resolve = resolve;
-            this.reject = reject;
-        });
-    }
+	public report(params: Proposed.ProgressReportParams): void {
+		if (this._infinite && Is.string(params.message)) {
+			this._progress.report({ message: params.message });
+		} else if (Is.number(params.percentage)) {
+			let percentage = Math.max(params.percentage, 100);
+			let delta = Math.max(0, percentage - this._reported);
+			this._progress.report({ message: params.message, increment: delta });
+			this._reported+= delta;
+		}
+	}
 
-    public updateProgress(params: Proposed.ProgressParams) {
-        this.title = params.title;
-        this.message = params.message || this.message;
+	public cancel(): void {
+		this._reject();
+	}
 
-        const details = this.message ? ` (${this.message})` : '';
-        this.progress.report({message: `${this.title}${details}`});
-    }
+	public done(): void {
+		this._resolve();
+	}
+}
 
-    public finish() {
-        this.resolve();
-    }
+export class WindowProgressFeature implements StaticFeature {
+	private _progresses: Map<string, ProgressPart> = new Map<string, ProgressPart>();
 
-    public cancel() {
-        this.reject();
-    }
+	constructor(private _client: BaseLanguageClient) {}
+
+	public fillClientCapabilities(cap: ClientCapabilities): void {
+		let capabilities: ClientCapabilities & Proposed.WindowProgressClientCapabilities = cap as ClientCapabilities & Proposed.WindowProgressClientCapabilities;
+		ensure(capabilities, 'window')!.progress = true;
+	}
+
+	public initialize(): void {
+		let client = this._client;
+		let progresses = this._progresses;
+
+		let startHandler = (params: Proposed.ProgressStartParams) => {
+			if (Is.string(params.id)) {
+				let progress = new ProgressPart(params);
+				this._progresses.set(params.id, progress);
+			}
+		}
+		client.onNotification(Proposed.ProgressStartNotification.type, startHandler);
+
+		let reportHandler = (params: Proposed.ProgressReportParams) => {
+			let progress = this._progresses.get(params.id);
+			if (progress !== undefined) {
+				progress.report(params);
+			}
+		}
+		client.onNotification(Proposed.ProgressReportNotification.type, reportHandler);
+
+		let doneHandler = (params: Proposed.ProgressDoneParams) => {
+			let progress = progresses.get(params.id);
+			if (progress !== undefined) {
+				progress.done();
+				progresses.delete(params.id);
+			}
+		}
+		client.onNotification(Proposed.ProgressDoneNotification.type, doneHandler);
+	}
 }
