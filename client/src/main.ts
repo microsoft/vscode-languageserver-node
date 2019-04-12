@@ -513,7 +513,7 @@ export namespace ProposedFeatures {
 	export function createAll(client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
 		let result: (StaticFeature | DynamicFeature<any>)[] = [
 			new SelectionRangeFeature(client),
-			new WindowProgressFeature(client)
+			new WindowProgressFeature(client),
 			new CallHierarchyFeature(client)
 		];
 		return result;
