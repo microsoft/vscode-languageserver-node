@@ -86,6 +86,7 @@ export interface Converter {
 	asDocumentHighlights(values: undefined | null): undefined;
 	asDocumentHighlights(values: ls.DocumentHighlight[] | undefined | null): code.DocumentHighlight[] | undefined;
 
+	asSymbolKind(item: ls.SymbolKind): code.SymbolKind;
 	asSymbolInformation(item: ls.SymbolInformation, uri?: code.Uri): code.SymbolInformation;
 
 	asSymbolInformations(values: ls.SymbolInformation[], uri?: code.Uri): code.SymbolInformation[];
@@ -861,6 +862,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asDocumentHighlights,
 		asDocumentHighlight,
 		asDocumentHighlightKind,
+		asSymbolKind,
 		asSymbolInformations,
 		asSymbolInformation,
 		asDocumentSymbols,

@@ -37,8 +37,21 @@ export { FoldingRangeParams as FoldingRangeRequestParam } from './protocol'; // 
 
 import * as callHierarchy from './protocol.callHierarchy.proposed';
 import * as progress from './protocol.progress.proposed';
+import * as sr from './protocol.selectionRange.proposed';
 
 export namespace Proposed {
+
+	export type SelectionRangeClientCapabilities = sr.SelectionRangeClientCapabilities;
+	export type SelectionRangeServerCapabilities = sr.SelectionRangeServerCapabilities;
+
+	export type SelectionRange = sr.SelectionRange;
+	export type SelectionRangeParams = sr.SelectionRangeParams;
+
+	export namespace SelectionRangeRequest {
+		export const type = sr.SelectionRangeRequest.type;
+		export type HandlerSignature = sr.SelectionRangeRequest.HandlerSignature;
+	}
+
 	export type CallHierarchyClientCapabilities = callHierarchy.CallHierarchyClientCapabilities;
 	export type CallHierarchyServerCapabilities = callHierarchy.CallHierarchyServerCapabilities;
 
@@ -47,7 +60,14 @@ export namespace Proposed {
 		export type HandlerSignature = callHierarchy.CallHierarchyRequest.HandlerSignature;
 	}
 
+	export namespace CallHierarchyDirection {
+		export const CallsFrom = callHierarchy.CallHierarchyDirection.CallsFrom;
+		export const CallsTo = callHierarchy.CallHierarchyDirection.CallsTo;
+	}
+
 	export type CallHierarchyParams = callHierarchy.CallHierarchyParams;
+	export type CallHierarchyDirection = callHierarchy.CallHierarchyDirection;
+	export type CallHierarchyItem = callHierarchy.CallHierarchyItem;
 	export type CallHierarchyCall = callHierarchy.CallHierarchyCall;
 
 	export type WindowProgressClientCapabilities = progress.WindowProgressClientCapabilities;

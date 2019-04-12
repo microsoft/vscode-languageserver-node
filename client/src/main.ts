@@ -32,6 +32,7 @@ import { FoldingRangeFeature } from './foldingRange';
 import { DeclarationFeature } from './declaration';
 import { SelectionRangeFeature } from './selectionRange.proposed';
 import { WindowProgressFeature } from './progress.proposed';
+import { CallHierarchyFeature } from './callHierarchy.proposed';
 
 import * as Is from './utils/is';
 import { terminate } from './utils/processes';
@@ -40,7 +41,7 @@ export * from './client';
 
 declare var v8debug: any;
 
-const REQUIRED_VSCODE_VERSION = '^1.32'; // do not change format, updated by `updateVSCode` script
+const REQUIRED_VSCODE_VERSION = '^1.33.0'; // do not change format, updated by `updateVSCode` script
 
 export interface ExecutableOptions {
 	cwd?: string;
@@ -513,6 +514,7 @@ export namespace ProposedFeatures {
 		let result: (StaticFeature | DynamicFeature<any>)[] = [
 			new SelectionRangeFeature(client),
 			new WindowProgressFeature(client)
+			new CallHierarchyFeature(client)
 		];
 		return result;
 	}
