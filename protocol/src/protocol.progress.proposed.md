@@ -8,11 +8,11 @@ The client sets the following capability if it is supporting notifying task prog
 
 ```ts
 /**
- * Experimental client capabilities.
+ * Window specific client capabilities.
  */
-experimental: {
+window?: {
   /**
-   * The client has support for reporting progress.
+   * Whether client supports handling progress notifications.
    */
   progress?: boolean;
 }
