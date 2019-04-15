@@ -35,36 +35,42 @@ export interface ProgressServerCapabilities {
 export interface ProgressStartParams {
 
 	/**
-	 * A unique identifier to associate multiple progress notifications with the same progress.
+	 * A unique identifier to associate multiple progress notifications with
+	 * the same progress.
 	 */
 	id: string;
 
 	/**
 	 * Mandatory title of the progress operation. Used to briefly inform about
 	 * the kind of operation being performed.
+	 *
 	 * Examples: "Indexing" or "Linking dependencies".
 	 */
 	title: string;
 
 	/**
-	 * Controls if a cancel button should show to allow the user to
-	 * cancel the long running operation. Clients that don't support
-	 * cancellation can ignore the setting.
+	 * Controls if a cancel button should show to allow the user to cancel the
+	 * long running operation. Clients that don't support cancellation are allowed
+	 * to ignore the setting.
 	 */
 	cancellable?: boolean;
 
 	/**
 	 * Optional, more detailed associated progress message. Contains
 	 * complementary information to the `title`.
+	 *
 	 * Examples: "3/25 files", "project/src/module2", "node_modules/some_dep".
 	 * If unset, the previous progress message (if any) is still valid.
 	 */
 	message?: string;
 
 	/**
-	 * Optional progress percentage to display(value 100 is considered 100%).
+	 * Optional progress percentage to display (value 100 is considered 100%).
 	 * If not provided infinite progress is assumed and clients are allowed
-	 * to ignore the value in report notifications.
+	 * to ignore the `percentage` value in subsequent in report notifications.
+	 *
+	 * The value should be steadily rising. Clients are free to ignore values
+	 * that are not following this rule.
 	 */
 	percentage?: number;
 }
@@ -88,6 +94,7 @@ export interface ProgressReportParams {
 	/**
 	 * Optional, more detailed associated progress message. Contains
 	 * complementary information to the `title`.
+	 *
 	 * Examples: "3/25 files", "project/src/module2", "node_modules/some_dep".
 	 * If unset, the previous progress message (if any) is still valid.
 	 */
@@ -95,7 +102,11 @@ export interface ProgressReportParams {
 
 	/**
 	 * Optional progress percentage to display (value 100 is considered 100%).
-	 * If unset, the previous progress percentage (if any) is still valid.
+	 * If not provided infinite progress is assumed and clients are allowed
+	 * to ignore the `percentage` value in subsequent in report notifications.
+	 *
+	 * The value should be steadily rising. Clients are free to ignore values
+	 * that are not following this rule.
 	 */
 	percentage?: number;
 }
