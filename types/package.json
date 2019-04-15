@@ -24,5 +24,8 @@
 		"watch": "node ../build/bin/tsc -w -p ./tsconfig.json",
 		"test": "node ../node_modules/mocha/bin/_mocha",
 		"preversion": "npm test"
+	},
+	"dependencies": {
+		"vscode-piece-tree": "^1.1.1"
 	}
 }

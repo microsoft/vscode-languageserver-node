@@ -249,7 +249,19 @@ export class TextDocuments {
 		(<ConnectionState><any>connection).__textDocumentSync = TextDocumentSyncKind.Full;
 		connection.onDidOpenTextDocument((event: DidOpenTextDocumentParams) => {
 			let td = event.textDocument;
-			let document = TextDocument.create(td.uri, td.languageId, td.version, td.text);
+
+			let document: TextDocument;
+			switch (this.syncKind) {
+				case TextDocumentSyncKind.Full:
+					document = TextDocument.create(td.uri, td.languageId, td.version, td.text, true /* isFullSync */);
+					break;
+				case TextDocumentSyncKind.Incremental:
+					document = TextDocument.create(td.uri, td.languageId, td.version, td.text, false /* isFullSync */);
+					break;
+				default:
+					throw new Error(`Invalid TextDocumentSyncKind: ${this.syncKind}`);
+			}
+
 			this._documents[td.uri] = document;
 			let toFire = Object.freeze({ document });
 			this._onDidOpen.fire(toFire);
@@ -271,36 +283,29 @@ export class TextDocuments {
 			if (version == null || version === void 0) {
 				throw new Error(`Received document change event for ${td.uri} without valid version identifier`);
 			}
-
-			switch (this.syncKind) {
-				case TextDocumentSyncKind.Full:
-					let last = changes[changes.length - 1];
-					document.update(last, version);
-					this._onDidChangeContent.fire(Object.freeze({ document }));
-					break;
-				case TextDocumentSyncKind.Incremental:
-					let edits: TextEdit[] = changes.map(change => {
-						let { text, range } = change;
-						if (range === null || range === void 0) {
-							throw new Error(`Received document change has null range for ${td.uri}`);
-						}
-						return { newText: text, range };
-					});
-
-					let updatedDoc: UpdateableDocument = edits.reduce(
-						(workingTextDoc: UpdateableDocument, edit) => {
-							let newText = TextDocument.applyEdits(workingTextDoc, [edit]);
-							workingTextDoc.update({ text: newText }, version);
-							return workingTextDoc;
-						},
-						document,
-					);
-					this._onDidChangeContent.fire(Object.freeze({ document: updatedDoc }));
-					break
-				case TextDocumentSyncKind.None:
-					break;
+			try {
+				switch (this.syncKind) {
+					case TextDocumentSyncKind.Full:
+						let last = changes[changes.length - 1];
+						document.update(last, version);
+						this._onDidChangeContent.fire(Object.freeze({ document }));
+						break;
+					case TextDocumentSyncKind.Incremental:
+						let updatedDoc: UpdateableDocument = changes.reduce(
+							(workingTextDoc: UpdateableDocument, change) => {
+								workingTextDoc.update(change, version);
+								return workingTextDoc;
+							},
+							document,
+						);
+						this._onDidChangeContent.fire(Object.freeze({ document: updatedDoc }));
+						break
+					case TextDocumentSyncKind.None:
+						break;
+				}
+			} catch (ex) {
+				console.log(ex);
 			}
-
 
 		});
 		connection.onDidCloseTextDocument((event: DidCloseTextDocumentParams) => {

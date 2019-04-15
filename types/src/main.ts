@@ -4,6 +4,10 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
+import { PieceTreeTextBufferBuilder, PieceTreeBase, DefaultEndOfLine } from 'vscode-piece-tree';
+import { Range as PieceTreeRange } from 'vscode-piece-tree/out/common/range';
+import { Position as PieceTreePosition } from 'vscode-piece-tree/out/common/position';
+
 /**
  * Position in a text document expressed as zero-based line and character offset.
  * The offsets are based on a UTF-16 string representation. So a string of the form
@@ -513,7 +517,7 @@ export namespace DiagnosticTag {
 	 * Clients are allowed to render diagnostics with this tag faded out instead of having
 	 * an error squiggle.
 	 */
-	export const Unnecessary: 1 =1;
+	export const Unnecessary: 1 = 1;
 }
 
 export type DiagnosticTag = 1;
@@ -2473,8 +2477,8 @@ export namespace TextDocument {
 	 * @param languageId  The document's language Id.
 	 * @param content The document's content.
 	 */
-	export function create(uri: string, languageId: string, version: number, content: string): TextDocument {
-		return new FullTextDocument(uri, languageId, version, content);
+	export function create(uri: string, languageId: string, version: number, content: string, isFullSync: boolean = true): TextDocument {
+		return isFullSync ? new FullTextDocument(uri, languageId, version, content) : new IncrementalTextDocument(uri, languageId, version, content);
 	}
 	/**
 	 * Checks whether the given literal conforms to the [ITextDocument](#ITextDocument) interface.
@@ -2611,6 +2615,15 @@ export interface TextDocumentContentChangeEvent {
 	text: string;
 }
 
+/**
+ * Full-synchronized Text Document implementation that leverages a simple JS string
+ * as a text buffer.
+ *
+ * This text document implementation only supports "Full" text document sync. If you
+ * wish to use "Incremental" text document sync, use IncrementalTextDocument, as it
+ * uses a "Piece Tree" buffer for strings, for efficient incremental edits to the
+ * document.
+ */
 class FullTextDocument implements TextDocument {
 
 	private _uri: string;
@@ -2714,6 +2727,103 @@ class FullTextDocument implements TextDocument {
 
 	public get lineCount() {
 		return this.getLineOffsets().length;
+	}
+}
+
+/**
+ * Incrementally-synchronized Text Document implementation that leverages a
+ * "Piece Tree" as text buffer. See the following for details:
+ *  - https://github.com/rebornix/PieceTree
+ *  - https://code.visualstudio.com/blogs/2018/03/23/text-buffer-reimplementation
+ *
+ * This text document implementation only supports "Incremental" text document
+ * sync. If you wish to use "Full" text document sync, use FullTextDocument, as it
+ * uses a simple JS string as an underlying text buffer, since the full text gets
+ * swapped out on every update.
+ */
+class IncrementalTextDocument implements TextDocument {
+
+	private _uri: string;
+	private _languageId: string;
+	private _version: number;
+	private _tree: PieceTreeBase;
+
+	public constructor(uri: string, languageId: string, version: number, content: string) {
+		this._uri = uri;
+		this._languageId = languageId;
+		this._version = version;
+
+		// Prepare Piece Tree
+		const ptBuilder = new PieceTreeTextBufferBuilder();
+		ptBuilder.acceptChunk(content);
+		const ptFactory = ptBuilder.finish(true);
+		this._tree = ptFactory.create(DefaultEndOfLine.LF);
+	}
+
+	public get uri(): string {
+		return this._uri;
+	}
+
+	public get languageId(): string {
+		return this._languageId;
+	}
+
+	public get version(): number {
+		return this._version;
+	}
+
+	public getText(range?: Range): string {
+		if (range) {
+			const { start, end } = range;
+			// Clamp last line and last character appropriately when
+			// given range is beyond the documents' end
+			const [clampedEndLine, clampedEndChar] = end.line + 1 > this.lineCount
+				? [this.lineCount, this._tree.getLineLength(this.lineCount) + 1]
+				: [end.line + 1, end.character + 1];
+
+			const ptRange = new PieceTreeRange(start.line + 1, start.character + 1, clampedEndLine, clampedEndChar);
+			return this._tree.getValueInRange(ptRange);
+		}
+		return this._tree.getLinesRawContent();
+	}
+
+	public update(event: TextDocumentContentChangeEvent, version: number): void {
+		const { text, range } = event;
+
+		if (range == null) {
+			throw new Error(`FullPieceTreeTextDocument#update called with invalid event range ${range}`);
+		}
+
+		// Delete previous text at range and insert new text at appropriate offset
+		const startOffset = this.offsetAt(range.start);
+		const endOffset = this.offsetAt(range.end);
+
+		this._tree.delete(startOffset, endOffset - startOffset);
+		this._tree.insert(startOffset, text);
+
+		this._version = version;
+	}
+
+	public positionAt(offset: number) {
+		const boxedOffset = Math.min(offset, this._tree.getLength());
+		const ptPosition: PieceTreePosition = this._tree.getPositionAt(boxedOffset);
+		return Position.create(ptPosition.lineNumber - 1, ptPosition.column - 1);
+	}
+
+	public offsetAt(position: Position) {
+		if (position.line < 0) {
+			return 0;
+		}
+
+		const clampedChar = Math.max(1, position.character + 1);
+		return Math.min(
+			this._tree.getOffsetAt(position.line + 1, clampedChar),
+			this._tree.getLength()
+		);
+	}
+
+	public get lineCount() {
+		return this._tree.getLineCount();
 	}
 }
 
