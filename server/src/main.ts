@@ -1767,9 +1767,11 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 }
 
 // Export the protocol currently in proposed state.
+import { ProgressFeature, WindowProgress } from './proposed.progress';
 
 export namespace ProposedFeatures {
-	export const all: Features<_, _, _, _, _, _> = {
-		__brand: 'features'
+	export const all: Features<_, _, _, _, WindowProgress, _> = {
+		__brand: 'features',
+		window: ProgressFeature
 	}
 }

@@ -24,7 +24,7 @@ export interface Progress {
 }
 
 export interface WindowProgress {
-	createProgress(title: string, percentage?: number, message?: string): Progress;
+	createProgress(title: string, percentage?: number, message?: string, cancellable?: boolean): Progress;
 }
 
 class ProgressImpl implements Progress {
@@ -42,7 +42,7 @@ class ProgressImpl implements Progress {
 			cancellable
 		}
 		if (percentage !== undefined) {
-			params.percentage;
+			params.percentage = percentage;
 		}
 		if (message !== undefined) {
 			params.message = message;
@@ -118,9 +118,9 @@ export const ProgressFeature: Feature<RemoteWindow, WindowProgress> = (Base) => 
 				});
 			}
 		}
-		createProgress(title: string, percentage?: number, message?: string): Progress {
+		createProgress(title: string, percentage?: number, message?: string, cancellable?: boolean): Progress {
 			if (this._progressSupported) {
-				return new ProgressImpl(this.connection, title, percentage, message)
+				return new ProgressImpl(this.connection, title, percentage, message, cancellable)
 			} else {
 				return new NullProgress();
 			}

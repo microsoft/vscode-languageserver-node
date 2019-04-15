@@ -28,13 +28,16 @@ class ProgressPart {
 	private _resolve: () => void;
 	private _reject: (reason?: any) => void;
 
-	public constructor(params: Proposed.ProgressStartParams) {
+	public constructor(client: BaseLanguageClient, params: Proposed.ProgressStartParams) {
 		let location: ProgressLocation = params.cancellable ? ProgressLocation.Notification : ProgressLocation.Window;
 		this._reported = 0;
 		window.withProgress<void>({ location, cancellable: params.cancellable, title: params.title}, async (progress, token) => {
 			this._progress = progress;
 			this._infinite = params.percentage === undefined;
-			this._token == token;
+			this._token = token;
+			this._token.onCancellationRequested(() => {
+				client.sendNotification(Proposed.ProgressCancelNotification.type, { id: params.id });
+			});
 			this.report(params);
 			return new Promise<void>((resolve, reject) => {
 				this._resolve = resolve;
@@ -47,7 +50,7 @@ class ProgressPart {
 		if (this._infinite && Is.string(params.message)) {
 			this._progress.report({ message: params.message });
 		} else if (Is.number(params.percentage)) {
-			let percentage = Math.max(params.percentage, 100);
+			let percentage =  Math.max(0, Math.min(params.percentage, 100));
 			let delta = Math.max(0, percentage - this._reported);
 			this._progress.report({ message: params.message, increment: delta });
 			this._reported+= delta;
@@ -79,7 +82,7 @@ export class ProgressFeature implements StaticFeature {
 
 		let startHandler = (params: Proposed.ProgressStartParams) => {
 			if (Is.string(params.id)) {
-				let progress = new ProgressPart(params);
+				let progress = new ProgressPart(this._client, params);
 				this._progresses.set(params.id, progress);
 			}
 		}
