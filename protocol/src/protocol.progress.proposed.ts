@@ -18,19 +18,19 @@ export interface ProgressClientCapabilities {
 	}
 }
 
-export interface ProgressServerCapabilities {
-	/**
-	 * Window specific server capabilities.
-	 */
-	window?: {
-		/**
-		 * The requests for which the server will report progress (e.g. `textDocument/references`).
-		 * The client might not hook a progress monitor / UI for requests which will not provide
-		 * progress.
-		 */
-		progress?: string[];
-	}
-}
+// export interface ProgressServerCapabilities {
+// 	/**
+// 	 * Window specific server capabilities.
+// 	 */
+// 	window?: {
+// 		/**
+// 		 * The requests for which the server will report progress (e.g. `textDocument/references`).
+// 		 * The client might not hook a progress monitor / UI for requests which will not provide
+// 		 * progress.
+// 		 */
+// 		progress?: string[];
+// 	}
+// }
 
 export interface ProgressStartParams {
 

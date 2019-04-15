@@ -71,7 +71,7 @@ export namespace Proposed {
 	export type CallHierarchyCall = callHierarchy.CallHierarchyCall;
 
 	export type ProgressClientCapabilities = progress.ProgressClientCapabilities;
-	export type ProgressServerCapabilities = progress.ProgressServerCapabilities;
+	// export type ProgressServerCapabilities = progress.ProgressServerCapabilities;
 
 	export type ProgressStartParams = progress.ProgressStartParams;
 	export namespace ProgressStartNotification {
