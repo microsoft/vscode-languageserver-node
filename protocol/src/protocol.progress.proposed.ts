@@ -6,7 +6,7 @@
 
 import { NotificationType, NotificationHandler } from 'vscode-jsonrpc';
 
-export interface WindowProgressClientCapabilities {
+export interface ProgressClientCapabilities {
 	/**
 	 * Window specific client capabilities.
 	 */
@@ -18,7 +18,7 @@ export interface WindowProgressClientCapabilities {
 	}
 }
 
-export interface WindowProgressServerCapabilities {
+export interface ProgressServerCapabilities {
 	/**
 	 * Window specific server capabilities.
 	 */
@@ -70,11 +70,11 @@ export interface ProgressStartParams {
 }
 
 /**
- * The `window/progressStart` notification is sent from the server to the client
+ * The `window/progress/start` notification is sent from the server to the client
  * to initiate a progress.
  */
 export namespace ProgressStartNotification {
-	export const type = new NotificationType<ProgressStartParams, void>('window/progressStart');
+	export const type = new NotificationType<ProgressStartParams, void>('window/progress/start');
 	export type HandlerSignature = NotificationHandler<ProgressStartParams>;
 }
 
@@ -101,11 +101,11 @@ export interface ProgressReportParams {
 }
 
 /**
- * The `window/progressReport` notification is sent from the server to the client
+ * The `window/progress/report` notification is sent from the server to the client
  * to initiate a progress.
  */
 export namespace ProgressReportNotification {
-	export const type = new NotificationType<ProgressReportParams, void>('window/progressReport');
+	export const type = new NotificationType<ProgressReportParams, void>('window/progress/report');
 	export type HandlerSignature = NotificationHandler<ProgressReportParams>;
 }
 
@@ -117,10 +117,26 @@ export interface ProgressDoneParams {
 }
 
 /**
- * The `window/progressDone` notification is sent from the server to the client
+ * The `window/progress/done` notification is sent from the server to the client
  * to initiate a progress.
  */
 export namespace ProgressDoneNotification {
-	export const type = new NotificationType<ProgressDoneParams, void>('window/progressDone');
+	export const type = new NotificationType<ProgressDoneParams, void>('window/progress/done');
 	export type HandlerSignature = NotificationHandler<ProgressDoneParams>;
+}
+
+export interface ProgressCancelParams {
+	/**
+	 * A unique identifier to associate multiple progress notifications with the same progress.
+	 */
+	id: string;
+}
+
+/**
+ * The `window/progress/cancel` notification is sent client to the server to cancel a progress
+ * initiated on the server side.
+ */
+export namespace ProgressCancelNotification {
+	export const type = new NotificationType<ProgressCancelParams, void>('window/progress/cancel');
+	export type HandlerSignature = NotificationHandler<ProgressCancelParams>;
 }

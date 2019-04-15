@@ -70,8 +70,8 @@ export namespace Proposed {
 	export type CallHierarchyItem = callHierarchy.CallHierarchyItem;
 	export type CallHierarchyCall = callHierarchy.CallHierarchyCall;
 
-	export type WindowProgressClientCapabilities = progress.WindowProgressClientCapabilities;
-	export type WindowProgressServerCapabilities = progress.WindowProgressServerCapabilities;
+	export type ProgressClientCapabilities = progress.ProgressClientCapabilities;
+	export type ProgressServerCapabilities = progress.ProgressServerCapabilities;
 
 	export type ProgressStartParams = progress.ProgressStartParams;
 	export namespace ProgressStartNotification {
@@ -89,6 +89,12 @@ export namespace Proposed {
 	export namespace ProgressDoneNotification {
 		export const type = progress.ProgressDoneNotification.type;
 		export type HandlerSignature = progress.ProgressDoneNotification.HandlerSignature;
+	}
+
+	export type ProgressCancelParams = progress.ProgressCancelParams;
+	export namespace ProgressCancelNotification {
+		export const type = progress.ProgressCancelNotification.type;
+		export type HandlerSignature = progress.ProgressCancelNotification.HandlerSignature;
 	}
 }
 

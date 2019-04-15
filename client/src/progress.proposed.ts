@@ -63,13 +63,13 @@ class ProgressPart {
 	}
 }
 
-export class WindowProgressFeature implements StaticFeature {
+export class ProgressFeature implements StaticFeature {
 	private _progresses: Map<string, ProgressPart> = new Map<string, ProgressPart>();
 
 	constructor(private _client: BaseLanguageClient) {}
 
 	public fillClientCapabilities(cap: ClientCapabilities): void {
-		let capabilities: ClientCapabilities & Proposed.WindowProgressClientCapabilities = cap as ClientCapabilities & Proposed.WindowProgressClientCapabilities;
+		let capabilities: ClientCapabilities & Proposed.ProgressClientCapabilities = cap as ClientCapabilities & Proposed.ProgressClientCapabilities;
 		ensure(capabilities, 'window')!.progress = true;
 	}
 

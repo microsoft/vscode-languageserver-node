@@ -31,7 +31,7 @@ import { WorkspaceFoldersFeature } from './workspaceFolders';
 import { FoldingRangeFeature } from './foldingRange';
 import { DeclarationFeature } from './declaration';
 import { SelectionRangeFeature } from './selectionRange.proposed';
-import { WindowProgressFeature } from './progress.proposed';
+import { ProgressFeature } from './progress.proposed';
 import { CallHierarchyFeature } from './callHierarchy.proposed';
 
 import * as Is from './utils/is';
@@ -513,7 +513,7 @@ export namespace ProposedFeatures {
 	export function createAll(client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
 		let result: (StaticFeature | DynamicFeature<any>)[] = [
 			new SelectionRangeFeature(client),
-			new WindowProgressFeature(client),
+			new ProgressFeature(client),
 			new CallHierarchyFeature(client)
 		];
 		return result;
