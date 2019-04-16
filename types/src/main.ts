@@ -2794,10 +2794,10 @@ class IncrementalTextDocument implements TextDocument {
 			throw new Error(`FullPieceTreeTextDocument#update called with invalid event range ${range}`);
 		}
 
-		// Delete previous text at range and insert new text at appropriate offset
 		const startOffset = this.offsetAt(range.start);
 		const endOffset = this.offsetAt(range.end);
 
+		// Delete previous text at range and insert new text at appropriate offset
 		this._tree.delete(startOffset, endOffset - startOffset);
 		this._tree.insert(startOffset, text);
 
@@ -2805,8 +2805,8 @@ class IncrementalTextDocument implements TextDocument {
 	}
 
 	public positionAt(offset: number) {
-		const boxedOffset = Math.min(offset, this._tree.getLength());
-		const ptPosition: PieceTreePosition = this._tree.getPositionAt(boxedOffset);
+		const clampedOffset = Math.min(offset, this._tree.getLength());
+		const ptPosition: PieceTreePosition = this._tree.getPositionAt(clampedOffset);
 		return Position.create(ptPosition.lineNumber - 1, ptPosition.column - 1);
 	}
 
