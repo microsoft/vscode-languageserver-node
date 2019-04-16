@@ -62,7 +62,7 @@ export interface SelectionRange {
 	range: Range;
 
 	/**
-	 * The parent selection range containing this range. Therfore `parent.range` must contain `this.range`.
+	 * The parent selection range containing this range. Therefore `parent.range` must contain `this.range`.
 	 */
 	parent?: SelectionRange;
 
