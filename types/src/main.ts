@@ -2776,7 +2776,7 @@ class IncrementalTextDocument implements TextDocument {
 		if (range) {
 			const { start, end } = range;
 			// Clamp last line and last character appropriately when
-			// given range is beyond the documents' end
+			// given range is beyond the document's end
 			const [clampedEndLine, clampedEndChar] = end.line + 1 > this.lineCount
 				? [this.lineCount, this._tree.getLineLength(this.lineCount) + 1]
 				: [end.line + 1, end.character + 1];
