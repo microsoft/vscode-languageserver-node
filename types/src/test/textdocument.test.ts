@@ -199,21 +199,33 @@ suite('Updateable TextDocument Validator', () => {
 	});
 
 	test('IncrementalTextDocument - invalid update ranges', () => {
-		// Before the document starts
+		// Before the document starts -> before the document starts
 		let lm = newDocument("foo\nbar", false);
+		lm.update({ text: "abc123", range: Range.create(-2, 0, -1, 3) }, 2);
+		assert.equal(lm.getText(), "abc123foo\nbar");
+		assert.equal(lm.version, 2);
+
+		// Before the document starts -> the middle of document
+		lm = newDocument("foo\nbar", false);
 		lm.update({ text: "foobar", range: Range.create(-1, 0, 0, 3) }, 2);
 		assert.equal(lm.getText(), "foobar\nbar");
 		assert.equal(lm.version, 2);
 		assert.equal(lm.offsetAt(Position.create(1, 0)), 7);
 
-		// After the document ends
+		// The middle of document -> after the document ends
 		lm = newDocument("foo\nbar", false);
 		lm.update({ text: "foobar", range: Range.create(1, 0, 1, 10) }, 2);
 		assert.equal(lm.getText(), "foo\nfoobar");
 		assert.equal(lm.version, 2);
 		assert.equal(lm.offsetAt(Position.create(1, 1000)), 10);
 
-		// Before the document starts and after the document ends
+		// After the document ends -> after the document ends
+		lm = newDocument("foo\nbar", false);
+		lm.update({ text: "abc123", range: Range.create(3, 0, 6, 10) }, 2);
+		assert.equal(lm.getText(), "foo\nbarabc123");
+		assert.equal(lm.version, 2);
+
+		// Before the document starts -> after the document ends
 		lm = newDocument("foo\nbar", false);
 		lm.update({ text: "entirely new content", range: Range.create(-1, 1, 2, 10000) }, 2);
 		assert.equal(lm.getText(), "entirely new content");

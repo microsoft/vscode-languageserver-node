@@ -2476,6 +2476,7 @@ export namespace TextDocument {
 	 * @param uri The document's uri.
 	 * @param languageId  The document's language Id.
 	 * @param content The document's content.
+	 * @param isFullSync true for `Full` text sync, false for `Incremental` text sync
 	 */
 	export function create(uri: string, languageId: string, version: number, content: string, isFullSync: boolean = true): TextDocument {
 		return isFullSync ? new FullTextDocument(uri, languageId, version, content) : new IncrementalTextDocument(uri, languageId, version, content);
