@@ -5,8 +5,8 @@
 'use strict';
 
 import { PieceTreeTextBufferBuilder, PieceTreeBase, DefaultEndOfLine } from 'vscode-piece-tree';
-import { Range as PieceTreeRange } from 'vscode-piece-tree/out/common/range';
-import { Position as PieceTreePosition } from 'vscode-piece-tree/out/common/position';
+import { Range as PieceTreeRange } from 'vscode-piece-tree/lib/common/range';
+import { Position as PieceTreePosition } from 'vscode-piece-tree/lib/common/position';
 
 /**
  * Position in a text document expressed as zero-based line and character offset.

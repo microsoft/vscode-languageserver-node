@@ -26,6 +26,6 @@
 		"preversion": "npm test"
 	},
 	"dependencies": {
-		"vscode-piece-tree": "^1.1.1"
+		"vscode-piece-tree": "^1.2.0"
 	}
 }
