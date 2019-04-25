@@ -176,6 +176,11 @@ export class IPCMessageWriter extends AbstractMessageWriter implements MessageWr
 		this.socket.on('close', () => this.fireClose());
 	}
 
+	public dispose(): void {
+		super.dispose();
+		this.socket.destroy();
+	}
+
 	public write(msg: Message): void {
 		if (!this.sending && this.queue.length === 0) {
 			// See https://github.com/nodejs/node/issues/7657
