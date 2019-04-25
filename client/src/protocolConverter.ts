@@ -699,6 +699,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (item.diagnostics) { result.diagnostics = asDiagnostics(item.diagnostics); }
 		if (item.edit) { result.edit = asWorkspaceEdit(item.edit); }
 		if (item.command) { result.command = asCommand(item.command); }
+		if (item.isPreferred !== void 0) { result.isPreferred = item.isPreferred; }
 		return result;
 	}
 
