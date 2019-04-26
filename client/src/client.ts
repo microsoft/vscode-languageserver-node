@@ -2761,7 +2761,8 @@ export abstract class BaseLanguageClient {
 			});
 			connection.onRequest(ShowTextDocumentRequest.type, async (params) => {
 				const document = await Workspace.openTextDocument(params.fileName);
-				return Window.showTextDocument(document, this.protocol2CodeConverter.asTextDocumentShowOptions(params.options));
+				await Window.showTextDocument(document, this.protocol2CodeConverter.asTextDocumentShowOptions(params.options));
+				return null;
 			});
 			connection.onTelemetry((data) => {
 				this._telemetryEmitter.fire(data);
