@@ -27,6 +27,10 @@ export interface Converter {
 	asRange(value: ls.Range): code.Range;
 	asRange(value: ls.Range | undefined | null): code.Range | undefined;
 
+	asTextDocumentShowOptions(value: undefined | null): undefined;
+	asTextDocumentShowOptions(value: ls.TextDocumentShowOptions): code.TextDocumentShowOptions;
+	asTextDocumentShowOptions(value: ls.TextDocumentShowOptions | undefined | null): code.TextDocumentShowOptions | undefined;
+
 	asDiagnosticSeverity(value: number | undefined | null): code.DiagnosticSeverity;
 
 	asHover(hover: ls.Hover): code.Hover;
@@ -250,6 +254,28 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			return undefined;
 		}
 		return new code.Range(asPosition(value.start), asPosition(value.end));
+	}
+
+	function asTextDocumentShowOptions(value: undefined | null): undefined;
+	function asTextDocumentShowOptions(value: ls.TextDocumentShowOptions): code.TextDocumentShowOptions;
+	function asTextDocumentShowOptions(value: ls.TextDocumentShowOptions | undefined | null): code.TextDocumentShowOptions | undefined {
+		if (!value) {
+			return undefined;
+		}
+		return {
+			...(value.viewColumn && {
+				viewColumn: value.viewColumn,
+			}),
+			...(value.preserveFocus && {
+				preserveFocus: value.preserveFocus,
+			}),
+			...(value.preview && {
+				preview: value.preview,
+			}),
+			...(value.selection && {
+				selection: new code.Selection(asPosition(value.selection.start), asPosition(value.selection.end)),
+			}),
+		};
 	}
 
 	function asDiagnosticSeverity(value: number | undefined | null): code.DiagnosticSeverity {
@@ -843,6 +869,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asDiagnostics,
 		asDiagnostic,
 		asRange,
+		asTextDocumentShowOptions,
 		asPosition,
 		asDiagnosticSeverity,
 		asHover,

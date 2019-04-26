@@ -15,7 +15,7 @@ import {
 	CompletionItem, CompletionList, Hover, SignatureHelp,
 	Definition, DefinitionLink, ReferenceContext, DocumentHighlight, DocumentSymbolParams,
 	SymbolInformation, CodeLens, CodeActionContext, FormattingOptions, DocumentLink, MarkupKind,
-	SymbolKind, CompletionItemKind, CodeAction, CodeActionKind, DocumentSymbol
+	SymbolKind, CompletionItemKind, CodeAction, CodeActionKind, DocumentSymbol, TextDocumentShowOptions
 } from 'vscode-languageserver-types';
 
 import { ImplementationRequest, ImplementationClientCapabilities, ImplementationServerCapabilities } from './protocol.implementation';
@@ -1205,6 +1205,26 @@ export interface ShowMessageRequestParams {
  */
 export namespace ShowMessageRequest {
 	export const type = new RequestType<ShowMessageRequestParams, MessageActionItem | null, void, void>('window/showMessageRequest');
+}
+
+export interface ShowTextDocumentRequestParams {
+	/**
+	 * A name of a file on disk.
+	 */
+	fileName: string;
+
+	/**
+	 * Editor options to configure the behavior of showing the editor.
+	 */
+	options: TextDocumentShowOptions;
+}
+
+/**
+ * Show the given document in a text editor. Options can be provided
+ * to control options of the editor is being shown. Might change the active editor.
+ */
+export namespace ShowTextDocumentRequest {
+	export const type = new RequestType<ShowTextDocumentRequestParams, null, void, void>('window/showTextDocumentRequest');
 }
 
 /**
