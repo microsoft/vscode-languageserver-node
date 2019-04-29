@@ -592,6 +592,11 @@ export interface TextDocumentClientCapabilities {
 				valueSet: CodeActionKind[];
 			};
 		};
+
+		/**
+		 * Whether code action supports flagging actions for `auto fix`
+		 */
+		isPreferred?: boolean;
 	};
 
 	/**
