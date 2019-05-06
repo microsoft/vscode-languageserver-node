@@ -1209,14 +1209,14 @@ export namespace ShowMessageRequest {
 
 export interface ShowTextDocumentRequestParams {
 	/**
-	 * A name of a file on disk.
+	 * A Text Document Identifier.
 	 */
-	fileName: string;
+	textDocument: TextDocumentIdentifier;
 
 	/**
 	 * Editor options to configure the behavior of showing the editor.
 	 */
-	options: TextDocumentShowOptions;
+	options?: TextDocumentShowOptions;
 }
 
 /**
@@ -1224,7 +1224,7 @@ export interface ShowTextDocumentRequestParams {
  * to control options of the editor is being shown. Might change the active editor.
  */
 export namespace ShowTextDocumentRequest {
-	export const type = new RequestType<ShowTextDocumentRequestParams, null, void, void>('window/showTextDocumentRequest');
+	export const type = new RequestType<ShowTextDocumentRequestParams, boolean, void, void>('window/showTextDocumentRequest');
 }
 
 /**
