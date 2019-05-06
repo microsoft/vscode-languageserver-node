@@ -263,9 +263,6 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			return undefined;
 		}
 		return {
-			...(value.viewColumn && {
-				viewColumn: value.viewColumn,
-			}),
 			...(value.preserveFocus && {
 				preserveFocus: value.preserveFocus,
 			}),

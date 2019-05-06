@@ -2672,15 +2672,6 @@ export enum ViewColumn {
  */
 export interface TextDocumentShowOptions {
 	/**
-	 * An optional view column in which the editor should be shown.
-	 * The default is the [active](#ViewColumn.Active), other values are adjusted to
-	 * be `Min(column, columnCount + 1)`, the [active](#ViewColumn.Active)-column is
-	 * not adjusted. Use [`ViewColumn.Beside`](#ViewColumn.Beside) to open the
-	 * editor to the side of the currently active one.
-	 */
-	viewColumn?: ViewColumn;
-
-	/**
 	 * An optional flag that when `true` will stop the editor from taking focus.
 	 */
 	preserveFocus?: boolean;
