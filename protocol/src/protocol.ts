@@ -1224,7 +1224,7 @@ export interface ShowTextDocumentRequestParams {
  * to control options of the editor is being shown. Might change the active editor.
  */
 export namespace ShowTextDocumentRequest {
-	export const type = new RequestType<ShowTextDocumentRequestParams, boolean, void, void>('window/showTextDocumentRequest');
+	export const type = new RequestType<ShowTextDocumentRequestParams, void, void, void>('window/showTextDocumentRequest');
 }
 
 /**

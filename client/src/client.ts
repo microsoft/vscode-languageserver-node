@@ -2760,13 +2760,9 @@ export abstract class BaseLanguageClient {
 				return messageFunc(params.message, ...actions);
 			});
 			connection.onRequest(ShowTextDocumentRequest.type, async (params) => {
-				try {
-					const { textDocument: { uri }, options } = params;
-					const document = await Workspace.openTextDocument(Uri.parse(uri));
-					return Boolean(await Window.showTextDocument(document, this.protocol2CodeConverter.asTextDocumentShowOptions(options)));
-				} catch (err) {
-					return false;
-				}
+				const { textDocument: { uri }, options } = params;
+				const document = await Workspace.openTextDocument(Uri.parse(uri));
+				await Window.showTextDocument(document, this.protocol2CodeConverter.asTextDocumentShowOptions(options));
 			});
 			connection.onTelemetry((data) => {
 				this._telemetryEmitter.fire(data);
