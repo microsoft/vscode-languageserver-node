@@ -6,16 +6,13 @@
 
 import { Uri, workspace, window } from 'vscode';
 import { StaticFeature, BaseLanguageClient, ShowTextDocumentRequest } from './client';
-import { ClientCapabilities } from 'vscode-languageserver-protocol';
 
 export class ShowTextDocumentFeature implements StaticFeature {
 
 	constructor(private _client: BaseLanguageClient) {
 	}
 
-	public fillClientCapabilities(capabilities: ClientCapabilities): void {
-		capabilities.workspace = capabilities.workspace || {};
-		capabilities.workspace!.configuration = true;
+	public fillClientCapabilities(): void {
 	}
 
 	public initialize(): void {
