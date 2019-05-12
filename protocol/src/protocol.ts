@@ -15,7 +15,7 @@ import {
 	CompletionItem, CompletionList, Hover, SignatureHelp,
 	Definition, DefinitionLink, ReferenceContext, DocumentHighlight, DocumentSymbolParams,
 	SymbolInformation, CodeLens, CodeActionContext, FormattingOptions, DocumentLink, MarkupKind,
-	SymbolKind, CompletionItemKind, CodeAction, CodeActionKind, DocumentSymbol, TextDocumentShowOptions
+	SymbolKind, CompletionItemKind, CodeAction, CodeActionKind, DocumentSymbol
 } from 'vscode-languageserver-types';
 
 import { ImplementationRequest, ImplementationClientCapabilities, ImplementationServerCapabilities } from './protocol.implementation';
@@ -35,6 +35,7 @@ import {
 import {
 	DeclarationClientCapabilities, DeclarationRequest, DeclarationServerCapabilities
 } from './protocol.declaration';
+import { ShowTextDocumentRequest, ShowTextDocumentRequestParams } from './protocol.showTextDocument.proposed';
 
 // @ts-ignore: to avoid inlining LocatioLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
@@ -1207,26 +1208,6 @@ export namespace ShowMessageRequest {
 	export const type = new RequestType<ShowMessageRequestParams, MessageActionItem | null, void, void>('window/showMessageRequest');
 }
 
-export interface ShowTextDocumentRequestParams {
-	/**
-	 * A Text Document Identifier.
-	 */
-	textDocument: TextDocumentIdentifier;
-
-	/**
-	 * Editor options to configure the behavior of showing the editor.
-	 */
-	options?: TextDocumentShowOptions;
-}
-
-/**
- * Show the given document in a text editor. Options can be provided
- * to control options of the editor is being shown. Might change the active editor.
- */
-export namespace ShowTextDocumentRequest {
-	export const type = new RequestType<ShowTextDocumentRequestParams, void, void, void>('window/showTextDocumentRequest');
-}
-
 /**
  * The log message notification is sent from the server to the client to ask
  * the client to log a particular message.
@@ -2021,5 +2002,6 @@ export {
 	ConfigurationRequest, ConfigurationParams, ConfigurationItem,
 	DocumentColorRequest, ColorPresentationRequest, ColorProviderOptions, DocumentColorParams, ColorPresentationParams,
 	FoldingRangeClientCapabilities, FoldingRangeProviderOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeServerCapabilities,
-	DeclarationClientCapabilities, DeclarationRequest, DeclarationServerCapabilities
+	DeclarationClientCapabilities, DeclarationRequest, DeclarationServerCapabilities,
+	ShowTextDocumentRequest, ShowTextDocumentRequestParams,
 };

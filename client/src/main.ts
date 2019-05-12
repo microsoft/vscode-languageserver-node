@@ -33,6 +33,7 @@ import { DeclarationFeature } from './declaration';
 import { SelectionRangeFeature } from './selectionRange.proposed';
 import { ProgressFeature } from './progress.proposed';
 import { CallHierarchyFeature } from './callHierarchy.proposed';
+import { ShowTextDocumentFeature } from './showTextDocument.proposed';
 
 import * as Is from './utils/is';
 import { terminate } from './utils/processes';
@@ -443,6 +444,7 @@ export class LanguageClient extends BaseLanguageClient {
 		this.registerFeature(new WorkspaceFoldersFeature(this));
 		this.registerFeature(new FoldingRangeFeature(this));
 		this.registerFeature(new DeclarationFeature(this));
+		this.registerFeature(new ShowTextDocumentFeature(this));
 	}
 
 	private _mainGetRootPath(): string | undefined {

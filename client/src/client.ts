@@ -54,7 +54,7 @@ import {
 	ExecuteCommandRequest, ExecuteCommandParams, ExecuteCommandRegistrationOptions,
 	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse,
 	MarkupKind, SymbolKind, CompletionItemKind, Command, CodeActionKind, DocumentSymbol, SymbolInformation, Range,
-	CodeActionRegistrationOptions, TextDocumentEdit, ResourceOperationKind, FailureHandlingKind, ShowTextDocumentRequest
+	CodeActionRegistrationOptions, TextDocumentEdit, ResourceOperationKind, FailureHandlingKind
 } from 'vscode-languageserver-protocol';
 
 import { ColorProviderMiddleware } from './colorProvider';
@@ -2758,11 +2758,6 @@ export abstract class BaseLanguageClient {
 				}
 				let actions = params.actions || [];
 				return messageFunc(params.message, ...actions);
-			});
-			connection.onRequest(ShowTextDocumentRequest.type, async (params) => {
-				const { textDocument: { uri }, options } = params;
-				const document = await Workspace.openTextDocument(Uri.parse(uri));
-				await Window.showTextDocument(document, this.protocol2CodeConverter.asTextDocumentShowOptions(options));
 			});
 			connection.onTelemetry((data) => {
 				this._telemetryEmitter.fire(data);
