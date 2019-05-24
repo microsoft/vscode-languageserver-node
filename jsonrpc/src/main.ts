@@ -975,7 +975,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			throwIfNotListening();
 
 			let method: string;
-			let messageParams: any | any[] | null;
+			let messageParams: object | object[] | null;
 			let token: CancellationToken | undefined = undefined;
 			if (Is.string(type)) {
 				method = type;

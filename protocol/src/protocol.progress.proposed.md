@@ -83,7 +83,7 @@ _Notification_:
 
 ```ts
 export interface ProgressReportParams {
-
+ 
 	/**
 	 * A unique identifier to associate multiple progress notifications with the same progress.
 	 */

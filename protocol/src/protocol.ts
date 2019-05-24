@@ -10,7 +10,7 @@ import { RequestType, RequestType0, NotificationType, NotificationType0 } from '
 
 import {
 	TextDocumentContentChangeEvent, Position, Range, Location, LocationLink, Diagnostic, Command,
-	TextEdit, WorkspaceEdit, WorkspaceSymbolParams,
+	TextEdit, WorkspaceEdit, WorkspaceSymbolParams, DocumentUri,
 	TextDocumentIdentifier, VersionedTextDocumentIdentifier, TextDocumentItem, TextDocumentSaveReason,
 	CompletionItem, CompletionList, Hover, SignatureHelp,
 	Definition, DefinitionLink, ReferenceContext, DocumentHighlight, DocumentSymbolParams,
@@ -1011,7 +1011,7 @@ export interface _InitializeParams {
 	 *
 	 * @deprecated in favour of workspaceFolders.
 	 */
-	rootUri: string | null;
+	rootUri: DocumentUri | null;
 
 	/**
 	 * The capabilities provided by the client (editor or tool)
@@ -1442,7 +1442,7 @@ export interface FileEvent {
 	/**
 	 * The file's uri.
 	 */
-	uri: string;
+	uri: DocumentUri;
 	/**
 	 * The change type.
 	 */
@@ -1513,10 +1513,12 @@ export interface PublishDiagnosticsParams {
 	/**
 	 * The URI for which diagnostic information is reported.
 	 */
-	uri: string;
+	uri: DocumentUri;
 
 	/**
 	 * Optional the version number of the document the diagnostics are published for.
+	 *
+	 * @since 3.15
 	 */
 	version?: number;
 
