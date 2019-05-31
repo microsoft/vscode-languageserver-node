@@ -518,7 +518,7 @@ export namespace DiagnosticTag {
 	 * Clients are allowed to render diagnostics with this tag faded out instead of having
 	 * an error squiggle.
 	 */
-	export const Unnecessary: 1 =1;
+	export const Unnecessary: 1 = 1;
 }
 
 export type DiagnosticTag = 1;

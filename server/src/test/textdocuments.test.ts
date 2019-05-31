@@ -162,7 +162,7 @@ suite('TextDocuments Tests', () => {
 	});
 })
 
-// The IncrementalTextDocumentsclass is not exported, but it can be created and maintained by
+// The IncrementalTextDocuments class is not exported, but it can be created and maintained by
 // TextDocuments document manager.  In these tests, the document manager creates the incrementally
 // synced document.  The tests fetch the document from the manager and call TextDocument API functions
 // on it to check functionality
