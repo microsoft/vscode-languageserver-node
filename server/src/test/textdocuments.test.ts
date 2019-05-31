@@ -62,6 +62,7 @@ suite('TextDocuments Tests', () => {
 		textDocs.listen(server);
 		textDocs.onDidChangeContent(event => {
 			if (event.document.version === 2) {
+				debugger;
 				assert.equal(event.document.getText(), 'efg456');
 				done();
 			}

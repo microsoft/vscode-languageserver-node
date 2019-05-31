@@ -404,26 +404,6 @@ export class TextDocuments {
 				case TextDocumentSyncKind.None:
 					break;
 			}
-
-			switch (this.syncKind) {
-				case TextDocumentSyncKind.Full:
-					let last = changes[changes.length - 1];
-					document.update(last, version);
-					this._onDidChangeContent.fire(Object.freeze({ document }));
-					break;
-				case TextDocumentSyncKind.Incremental:
-					let updatedDoc: UpdateableDocument = changes.reduce(
-						(workingTextDoc: UpdateableDocument, change) => {
-							workingTextDoc.update(change, version);
-							return workingTextDoc;
-						},
-						document,
-					);
-					this._onDidChangeContent.fire(Object.freeze({ document: updatedDoc }));
-					break
-				case TextDocumentSyncKind.None:
-					break;
-			}
 		});
 		connection.onDidCloseTextDocument((event: DidCloseTextDocumentParams) => {
 			let document = this._documents[event.textDocument.uri];
