@@ -7,47 +7,47 @@
 import * as UUID from './utils/uuid';
 import * as Is from './utils/is';
 
-import { languages as Languages, Disposable, TextDocument, ProviderResult, Position as VPosition, SelectionRange as VSelectionRange, SelectionRangeKind as VSelectionRangeKind } from 'vscode';
+import { languages as Languages, Disposable, TextDocument, ProviderResult, Position as VPosition, SelectionRange as VSelectionRange } from 'vscode';
 
 import {
-	ClientCapabilities, CancellationToken, ServerCapabilities, TextDocumentRegistrationOptions, DocumentSelector, StaticRegistrationOptions,
-	SelectionRangeRequest, SelectionRangeProviderOptions, SelectionRangeKind, SelectionRange, SelectionRangeParams
+	ClientCapabilities, CancellationToken, ServerCapabilities, TextDocumentRegistrationOptions, DocumentSelector, StaticRegistrationOptions, Proposed
 } from 'vscode-languageserver-protocol';
 
 import { TextDocumentFeature, BaseLanguageClient } from './client';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
-		target[key] = {} as any;
+		target[key] = Object.create(null) as any;
 	}
 	return target[key];
 }
 
 export interface ProvideSelectionRangeSignature {
-	(document: TextDocument, positions: VPosition[], token: CancellationToken): ProviderResult<VSelectionRange[][]>;
+	(document: TextDocument, positions: VPosition[], token: CancellationToken): ProviderResult<VSelectionRange[]>;
 }
 
-
 export interface SelectionRangeProviderMiddleware {
-	provideSelectionRanges?: (this: void, document: TextDocument, positions: VPosition[], token: CancellationToken, next: ProvideSelectionRangeSignature) => ProviderResult<VSelectionRange[][]>;
+	provideSelectionRanges?: (this: void, document: TextDocument, positions: VPosition[], token: CancellationToken, next: ProvideSelectionRangeSignature) => ProviderResult<VSelectionRange[]>;
 }
 
 export class SelectionRangeFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
 	constructor(client: BaseLanguageClient) {
-		super(client, SelectionRangeRequest.type);
+		super(client, Proposed.SelectionRangeRequest.type);
 	}
 
-	public fillClientCapabilities(capabilites: ClientCapabilities): void {
+	public fillClientCapabilities(cap: ClientCapabilities): void {
+		let capabilites: ClientCapabilities & Proposed.SelectionRangeClientCapabilities = cap as ClientCapabilities & Proposed.SelectionRangeClientCapabilities;
 		let capability = ensure(ensure(capabilites, 'textDocument')!, 'selectionRange')!;
 		capability.dynamicRegistration = true;
 	}
 
-	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
+	public initialize(cap: ServerCapabilities, documentSelector: DocumentSelector): void {
+		let capabilities: ServerCapabilities & Proposed.SelectionRangeServerCapabilities = cap;
 		if (!capabilities.selectionRangeProvider) {
 			return;
 		}
 
-		const implCapabilities = capabilities.selectionRangeProvider as TextDocumentRegistrationOptions & StaticRegistrationOptions & SelectionRangeProviderOptions;
+		const implCapabilities = capabilities.selectionRangeProvider as TextDocumentRegistrationOptions & StaticRegistrationOptions;
 		const id = Is.string(implCapabilities.id) && implCapabilities.id.length > 0 ? implCapabilities.id : UUID.generateUuid();
 		const selector = implCapabilities.documentSelector || documentSelector;
 		if (selector) {
@@ -61,21 +61,21 @@ export class SelectionRangeFeature extends TextDocumentFeature<TextDocumentRegis
 	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): Disposable {
 		let client = this._client;
 		let provideSelectionRanges: ProvideSelectionRangeSignature = (document, positions, token) => {
-			const requestParams: SelectionRangeParams = {
+			const requestParams: Proposed.SelectionRangeParams = {
 				textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
 				positions: client.code2ProtocolConverter.asPositions(positions)
 			};
-			return client.sendRequest(SelectionRangeRequest.type, requestParams, token).then(
+			return client.sendRequest(Proposed.SelectionRangeRequest.type, requestParams, token).then(
 				(ranges) => this.asSelectionRanges(ranges),
 				(error: any) => {
-					client.logFailedRequest(SelectionRangeRequest.type, error);
+					client.logFailedRequest(Proposed.SelectionRangeRequest.type, error);
 					return Promise.resolve(null);
 				}
 			);
 		};
 		let middleware = client.clientOptions.middleware!;
 		return Languages.registerSelectionRangeProvider(options.documentSelector!, {
-			provideSelectionRanges(document: TextDocument, positions: VPosition[], token: CancellationToken): ProviderResult<VSelectionRange[][]> {
+			provideSelectionRanges(document: TextDocument, positions: VPosition[], token: CancellationToken): ProviderResult<VSelectionRange[]> {
 				return middleware.provideSelectionRanges
 					? middleware.provideSelectionRanges(document, positions, token, provideSelectionRanges)
 					: provideSelectionRanges(document, positions, token);
@@ -84,84 +84,20 @@ export class SelectionRangeFeature extends TextDocumentFeature<TextDocumentRegis
 		});
 	}
 
-	private asSelectionRanges(selectionRanges: SelectionRange[][] | null): VSelectionRange[][] {
+	private asSelectionRanges(selectionRanges: Proposed.SelectionRange[] | null): VSelectionRange[] {
 		if (!Array.isArray(selectionRanges)) {
 			return [];
 		}
-		let result:  VSelectionRange[][] = [];
-		for (let ranges of selectionRanges) {
-			if (!Array.isArray(ranges)) {
-				return [];
-			}
-			let inner: VSelectionRange[] = [];
-			result.push(inner);
-			for (let range of ranges) {
-				inner.push(new VSelectionRange(
-					this._client.protocol2CodeConverter.asRange(range.range),
-					this.asSelectionRangeKind(range.kind),
-				));
-			}
+		let result: VSelectionRange[] = [];
+		for (let range of selectionRanges) {
+			result.push(this.asSelectionRange(range));
 		}
 		return result;
 	}
 
-	private asSelectionRangeKind(kind?: string): VSelectionRangeKind {
-		switch (kind) {
-			case SelectionRangeKind.Empty:
-				return VSelectionRangeKind.Empty;
-			case SelectionRangeKind.Statement:
-				return VSelectionRangeKind.Statement;
-			case SelectionRangeKind.Declaration:
-				return VSelectionRangeKind.Declaration;
-			default:
-				return VSelectionRangeKind.Empty
-		}
-	}
-}
-
-declare module 'vscode' {
-
-	export class SelectionRangeKind {
-
-		/**
-		 * Empty Kind.
-		 */
-		static readonly Empty: SelectionRangeKind;
-
-		/**
-		 * The statment kind, its value is `statement`, possible extensions can be
-		 * `statement.if` etc
-		 */
-		static readonly Statement: SelectionRangeKind;
-
-		/**
-		 * The declaration kind, its value is `declaration`, possible extensions can be
-		 * `declaration.function`, `declaration.class` etc.
-		 */
-		static readonly Declaration: SelectionRangeKind;
-
-		readonly value: string;
-
-		private constructor(value: string);
-
-		append(value: string): SelectionRangeKind;
-	}
-
-	export class SelectionRange {
-		kind: SelectionRangeKind;
-		range: Range;
-		constructor(range: Range, kind: SelectionRangeKind);
-	}
-
-	export interface SelectionRangeProvider {
-		/**
-		 * Provide selection ranges starting at a given position. The first range must [contain](#Range.contains)
-		 * position and subsequent ranges must contain the previous range.
-		 */
-		provideSelectionRanges(document: TextDocument, position: Position[], token: CancellationToken): ProviderResult<SelectionRange[][]>;
-	}
-
-	export namespace languages {
-		export function registerSelectionRangeProvider(selector: DocumentSelector, provider: SelectionRangeProvider): Disposable;
+	private asSelectionRange(selectionRange: Proposed.SelectionRange): VSelectionRange {
+		return new VSelectionRange(this._client.protocol2CodeConverter.asRange(selectionRange.range),
+			selectionRange.parent ? this.asSelectionRange(selectionRange.parent) : undefined
+		);
 	}
 }

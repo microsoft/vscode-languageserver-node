@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageserver",
 	"description": "Language server implementation for node",
-	"version": "5.3.0-next.4",
+	"version": "5.3.0-next.6",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"repository": {
@@ -19,7 +19,7 @@
 	"typings": "./lib/main",
 	"dependencies": {
 		"vscode-uri": "^1.0.6",
-		"vscode-languageserver-protocol": "3.15.0-next.3",
+		"vscode-languageserver-protocol": "3.15.0-next.5",
 		"vscode-piece-tree": "^1.2.0"
 	},
 	"scripts": {

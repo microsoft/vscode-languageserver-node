@@ -1,7 +1,7 @@
 
 #### Call Hierarchy
 
-The LSP provides retrieving the call hierachy information with the following request.
+The LSP provides retrieving the call hierarchy information with the following request.
 
 _Client Capabilities_:
 
@@ -57,8 +57,8 @@ export interface CallHierarchyParams extends TextDocumentPositionParams {
 }
 
 export namespace CallHierarchyDirection {
-    export const Incoming: 1 = 1;
-    export const Outgoing: 2 = 2;
+	export const CallsFrom: 1 = 1;
+	export const CallsTo: 2 = 2;
 }
 ```
 

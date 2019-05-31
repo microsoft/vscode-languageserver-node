@@ -36,8 +36,22 @@ export * from './protocol';
 export { FoldingRangeParams as FoldingRangeRequestParam } from './protocol'; // for backward compatibility
 
 import * as callHierarchy from './protocol.callHierarchy.proposed';
+import * as progress from './protocol.progress.proposed';
+import * as sr from './protocol.selectionRange.proposed';
 
 export namespace Proposed {
+
+	export type SelectionRangeClientCapabilities = sr.SelectionRangeClientCapabilities;
+	export type SelectionRangeServerCapabilities = sr.SelectionRangeServerCapabilities;
+
+	export type SelectionRange = sr.SelectionRange;
+	export type SelectionRangeParams = sr.SelectionRangeParams;
+
+	export namespace SelectionRangeRequest {
+		export const type = sr.SelectionRangeRequest.type;
+		export type HandlerSignature = sr.SelectionRangeRequest.HandlerSignature;
+	}
+
 	export type CallHierarchyClientCapabilities = callHierarchy.CallHierarchyClientCapabilities;
 	export type CallHierarchyServerCapabilities = callHierarchy.CallHierarchyServerCapabilities;
 
@@ -46,8 +60,42 @@ export namespace Proposed {
 		export type HandlerSignature = callHierarchy.CallHierarchyRequest.HandlerSignature;
 	}
 
+	export namespace CallHierarchyDirection {
+		export const CallsFrom = callHierarchy.CallHierarchyDirection.CallsFrom;
+		export const CallsTo = callHierarchy.CallHierarchyDirection.CallsTo;
+	}
+
 	export type CallHierarchyParams = callHierarchy.CallHierarchyParams;
+	export type CallHierarchyDirection = callHierarchy.CallHierarchyDirection;
+	export type CallHierarchyItem = callHierarchy.CallHierarchyItem;
 	export type CallHierarchyCall = callHierarchy.CallHierarchyCall;
+
+	export type ProgressClientCapabilities = progress.ProgressClientCapabilities;
+	// export type ProgressServerCapabilities = progress.ProgressServerCapabilities;
+
+	export type ProgressStartParams = progress.ProgressStartParams;
+	export namespace ProgressStartNotification {
+		export const type = progress.ProgressStartNotification.type;
+		export type HandlerSignature = progress.ProgressStartNotification.HandlerSignature;
+	}
+
+	export type ProgressReportParams = progress.ProgressReportParams;
+	export namespace ProgressReportNotification {
+		export const type = progress.ProgressReportNotification.type;
+		export type HandlerSignature = progress.ProgressReportNotification.HandlerSignature;
+	}
+
+	export type ProgressDoneParams = progress.ProgressDoneParams;
+	export namespace ProgressDoneNotification {
+		export const type = progress.ProgressDoneNotification.type;
+		export type HandlerSignature = progress.ProgressDoneNotification.HandlerSignature;
+	}
+
+	export type ProgressCancelParams = progress.ProgressCancelParams;
+	export namespace ProgressCancelNotification {
+		export const type = progress.ProgressCancelNotification.type;
+		export type HandlerSignature = progress.ProgressCancelNotification.HandlerSignature;
+	}
 }
 
 export interface ProtocolConnection {

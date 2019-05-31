@@ -10,7 +10,7 @@ import { RequestType, RequestType0, NotificationType, NotificationType0 } from '
 
 import {
 	TextDocumentContentChangeEvent, Position, Range, Location, LocationLink, Diagnostic, Command,
-	TextEdit, WorkspaceEdit, WorkspaceSymbolParams,
+	TextEdit, WorkspaceEdit, WorkspaceSymbolParams, DocumentUri,
 	TextDocumentIdentifier, VersionedTextDocumentIdentifier, TextDocumentItem, TextDocumentSaveReason,
 	CompletionItem, CompletionList, Hover, SignatureHelp,
 	Definition, DefinitionLink, ReferenceContext, DocumentHighlight, DocumentSymbolParams,
@@ -35,11 +35,6 @@ import {
 import {
 	DeclarationClientCapabilities, DeclarationRequest, DeclarationServerCapabilities
 } from './protocol.declaration';
-import {
-	SelectionRangeClientCapabilities, SelectionRangeProviderOptions, SelectionRangeRequest, SelectionRangeServerCapabilities,
-	SelectionRangeKind, SelectionRange, SelectionRangeParams
-} from './protocol.selectionRange';
-
 
 // @ts-ignore: to avoid inlining LocatioLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
@@ -651,6 +646,16 @@ export interface TextDocumentClientCapabilities {
 }
 
 /**
+ * Window specific client capabilities.
+ */
+export interface WindowClientCapabilities {
+    /**
+     * Whether client supports handling progress notifications.
+     */
+    progress?: boolean;
+}
+
+/**
  * Defines the capabilities provided by the client.
  */
 export interface _ClientCapabilities {
@@ -664,6 +669,11 @@ export interface _ClientCapabilities {
 	 */
 	textDocument?: TextDocumentClientCapabilities;
 
+    /**
+     * Window specific client capabilities.
+     */
+    window?: WindowClientCapabilities;
+
 	/**
 	 * Experimental client capabilities.
 	 */
@@ -672,7 +682,7 @@ export interface _ClientCapabilities {
 
 export type ClientCapabilities = _ClientCapabilities & ImplementationClientCapabilities & TypeDefinitionClientCapabilities &
 	WorkspaceFoldersClientCapabilities & ConfigurationClientCapabilities & ColorClientCapabilities & FoldingRangeClientCapabilities &
-	DeclarationClientCapabilities & SelectionRangeClientCapabilities;
+	DeclarationClientCapabilities /* & SelectionRangeClientCapabilities */;
 
 /**
  * Defines how the host (editor) should sync
@@ -843,24 +853,28 @@ export interface SaveOptions {
 
 export interface TextDocumentSyncOptions {
 	/**
-	 * Open and close notifications are sent to the server.
+	 * Open and close notifications are sent to the server. If omitted open close notification should not
+	 * be sent.
 	 */
 	openClose?: boolean;
 	/**
 	 * Change notifications are sent to the server. See TextDocumentSyncKind.None, TextDocumentSyncKind.Full
-	 * and TextDocumentSyncKind.Incremental.
+	 * and TextDocumentSyncKind.Incremental. If omitted it defaults to TextDocumentSyncKind.None.
 	 */
 	change?: TextDocumentSyncKind;
 	/**
-	 * Will save notifications are sent to the server.
+	 * If present will save notifications are sent to the server. If omitted the notification should not be
+	 * sent.
 	 */
 	willSave?: boolean;
 	/**
-	 * Will save wait until requests are sent to the server.
+	 * If present will save wait until requests are sent to the server. If omitted the request should not be
+	 * sent.
 	 */
 	willSaveWaitUntil?: boolean;
 	/**
-	 * Save notifications are sent to the server.
+	 * If present save notifications are sent to the server. If omitted the notification should not be
+	 * sent.
 	 */
 	save?: SaveOptions;
 }
@@ -959,7 +973,7 @@ export interface _ServerCapabilities<T = any> {
 }
 
 export type ServerCapabilities<T = any> = _ServerCapabilities<T> & ImplementationServerCapabilities & TypeDefinitionServerCapabilities & WorkspaceFoldersServerCapabilities &
-	ColorServerCapabilities & FoldingRangeServerCapabilities &  DeclarationServerCapabilities & SelectionRangeServerCapabilities;
+	ColorServerCapabilities & FoldingRangeServerCapabilities &  DeclarationServerCapabilities /* & SelectionRangeServerCapabilities */;
 
 /**
  * The initialize request is sent from the client to the server.
@@ -997,7 +1011,7 @@ export interface _InitializeParams {
 	 *
 	 * @deprecated in favour of workspaceFolders.
 	 */
-	rootUri: string | null;
+	rootUri: DocumentUri | null;
 
 	/**
 	 * The capabilities provided by the client (editor or tool)
@@ -1428,7 +1442,7 @@ export interface FileEvent {
 	/**
 	 * The file's uri.
 	 */
-	uri: string;
+	uri: DocumentUri;
 	/**
 	 * The change type.
 	 */
@@ -1499,10 +1513,12 @@ export interface PublishDiagnosticsParams {
 	/**
 	 * The URI for which diagnostic information is reported.
 	 */
-	uri: string;
+	uri: DocumentUri;
 
 	/**
 	 * Optional the version number of the document the diagnostics are published for.
+	 *
+	 * @since 3.15
 	 */
 	version?: number;
 
@@ -1991,7 +2007,5 @@ export {
 	ConfigurationRequest, ConfigurationParams, ConfigurationItem,
 	DocumentColorRequest, ColorPresentationRequest, ColorProviderOptions, DocumentColorParams, ColorPresentationParams,
 	FoldingRangeClientCapabilities, FoldingRangeProviderOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeServerCapabilities,
-	DeclarationClientCapabilities, DeclarationRequest, DeclarationServerCapabilities,
-	SelectionRangeClientCapabilities, SelectionRangeProviderOptions, SelectionRangeRequest, SelectionRangeServerCapabilities,
-	SelectionRangeKind, SelectionRange, SelectionRangeParams
+	DeclarationClientCapabilities, DeclarationRequest, DeclarationServerCapabilities
 };
