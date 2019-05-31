@@ -4,9 +4,10 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { PieceTreeTextBufferBuilder, PieceTreeBase, DefaultEndOfLine } from 'vscode-piece-tree';
-import { Range as PieceTreeRange } from 'vscode-piece-tree/lib/common/range';
-import { Position as PieceTreePosition } from 'vscode-piece-tree/lib/common/position';
+/**
+ * A tagging type for string properties that are actually URIs.
+ */
+export type DocumentUri = string;
 
 /**
  * Position in a text document expressed as zero-based line and character offset.
@@ -127,7 +128,7 @@ export namespace Range {
  * inside a text file.
  */
 export interface Location {
-	uri: string;
+	uri: DocumentUri;
 	range: Range;
 }
 
@@ -141,7 +142,7 @@ export namespace Location {
 	 * @param uri The location's uri.
 	 * @param range The location's range.
 	 */
-	export function create(uri: string, range: Range): Location {
+	export function create(uri: DocumentUri, range: Range): Location {
 		return { uri, range };
 	}
 	/**
@@ -169,7 +170,7 @@ export interface LocationLink {
 	/**
 	 * The target resource identifier of this link.
 	 */
-	targetUri: string;
+	targetUri: DocumentUri;
 
 	/**
 	 * The full target range of this link. If the target for example is a symbol then target range is the
@@ -198,7 +199,7 @@ export namespace LocationLink {
 	 * @param targetSelectionRange The span of the symbol definition at the target.
 	 * @param originSelectionRange The span of the symbol being defined in the originating source file.
 	 */
-	export function create(targetUri: string, targetRange: Range, targetSelectionRange: Range, originSelectionRange?: Range): LocationLink {
+	export function create(targetUri: DocumentUri, targetRange: Range, targetSelectionRange: Range, originSelectionRange?: Range): LocationLink {
 		return { targetUri, targetRange, targetSelectionRange, originSelectionRange };
 	}
 
@@ -517,7 +518,7 @@ export namespace DiagnosticTag {
 	 * Clients are allowed to render diagnostics with this tag faded out instead of having
 	 * an error squiggle.
 	 */
-	export const Unnecessary: 1 = 1;
+	export const Unnecessary: 1 =1;
 }
 
 export type DiagnosticTag = 1;
@@ -774,7 +775,7 @@ export interface CreateFile extends ResourceOperation {
 	/**
 	 * The resource to create.
 	 */
-	uri: string;
+	uri: DocumentUri;
 	/**
 	 * Additional options
 	 */
@@ -782,7 +783,7 @@ export interface CreateFile extends ResourceOperation {
 }
 
 export namespace CreateFile {
-	export function create(uri: string, options?: CreateFileOptions): CreateFile {
+	export function create(uri: DocumentUri, options?: CreateFileOptions): CreateFile {
 		let result: CreateFile = {
 			kind: 'create',
 			uri
@@ -828,11 +829,11 @@ export interface RenameFile extends ResourceOperation {
 	/**
 	 * The old (existing) location.
 	 */
-	oldUri: string;
+	oldUri: DocumentUri;
 	/**
 	 * The new location.
 	 */
-	newUri: string;
+	newUri: DocumentUri;
 	/**
 	 * Rename options.
 	 */
@@ -840,7 +841,7 @@ export interface RenameFile extends ResourceOperation {
 }
 
 export namespace RenameFile {
-	export function create(oldUri: string, newUri: string, options?: RenameFileOptions): RenameFile {
+	export function create(oldUri: DocumentUri, newUri: DocumentUri, options?: RenameFileOptions): RenameFile {
 		let result: RenameFile = {
 			kind: 'rename',
 			oldUri,
@@ -887,7 +888,7 @@ export interface DeleteFile extends ResourceOperation {
 	/**
 	 * The file to delete.
 	 */
-	uri: string;
+	uri: DocumentUri;
 	/**
 	 * Delete options.
 	 */
@@ -895,7 +896,7 @@ export interface DeleteFile extends ResourceOperation {
 }
 
 export namespace DeleteFile {
-	export function create(uri: string, options?: DeleteFileOptions): DeleteFile {
+	export function create(uri: DocumentUri, options?: DeleteFileOptions): DeleteFile {
 		let result: DeleteFile = {
 			kind: 'delete',
 			uri
@@ -1076,8 +1077,8 @@ export class WorkspaceChange {
 	 * for resources.
 	 */
 	public getTextEditChange(textDocument: VersionedTextDocumentIdentifier): TextEditChange;
-	public getTextEditChange(uri: string): TextEditChange;
-	public getTextEditChange(key: string | VersionedTextDocumentIdentifier): TextEditChange {
+	public getTextEditChange(uri: DocumentUri): TextEditChange;
+	public getTextEditChange(key: DocumentUri | VersionedTextDocumentIdentifier): TextEditChange {
 		if (VersionedTextDocumentIdentifier.is(key)) {
 			if (!this._workspaceEdit) {
 				this._workspaceEdit = {
@@ -1120,17 +1121,17 @@ export class WorkspaceChange {
 		}
 	}
 
-	public createFile(uri: string, options?: CreateFileOptions): void {
+	public createFile(uri: DocumentUri, options?: CreateFileOptions): void {
 		this.checkDocumentChanges();
 		this._workspaceEdit!.documentChanges!.push(CreateFile.create(uri, options));
 	}
 
-	public renameFile(oldUri: string, newUri: string, options?: RenameFileOptions): void {
+	public renameFile(oldUri: DocumentUri, newUri: DocumentUri, options?: RenameFileOptions): void {
 		this.checkDocumentChanges();
 		this._workspaceEdit!.documentChanges!.push(RenameFile.create(oldUri, newUri, options));
 	}
 
-	public deleteFile(uri: string, options?: DeleteFileOptions): void {
+	public deleteFile(uri: DocumentUri, options?: DeleteFileOptions): void {
 		this.checkDocumentChanges();
 		this._workspaceEdit!.documentChanges!.push(DeleteFile.create(uri, options));
 	}
@@ -1149,7 +1150,7 @@ export interface TextDocumentIdentifier {
 	/**
 	 * The text document's uri.
 	 */
-	uri: string;
+	uri: DocumentUri;
 }
 
 /**
@@ -1161,7 +1162,7 @@ export namespace TextDocumentIdentifier {
 	 * Creates a new TextDocumentIdentifier literal.
 	 * @param uri The document's uri.
 	 */
-	export function create(uri: string): TextDocumentIdentifier {
+	export function create(uri: DocumentUri): TextDocumentIdentifier {
 		return { uri };
 	}
 	/**
@@ -1197,7 +1198,7 @@ export namespace VersionedTextDocumentIdentifier {
 	 * @param uri The document's uri.
 	 * @param uri The document's text.
 	 */
-	export function create(uri: string, version: number | null): VersionedTextDocumentIdentifier {
+	export function create(uri: DocumentUri, version: number | null): VersionedTextDocumentIdentifier {
 		return { uri, version };
 	}
 
@@ -1219,7 +1220,7 @@ export interface TextDocumentItem {
 	/**
 	 * The text document's uri.
 	 */
-	uri: string;
+	uri: DocumentUri;
 
 	/**
 	 * The text document's language identifier
@@ -1250,7 +1251,7 @@ export namespace TextDocumentItem {
 	 * @param version The document's version number.
 	 * @param text The document's text.
 	 */
-	export function create(uri: string, languageId: string, version: number, text: string): TextDocumentItem {
+	export function create(uri: DocumentUri, languageId: string, version: number, text: string): TextDocumentItem {
 		return { uri, languageId, version, text };
 	}
 
@@ -2411,7 +2412,7 @@ export interface TextDocument {
 	 *
 	 * @readonly
 	 */
-	readonly uri: string;
+	readonly uri: DocumentUri;
 
 	/**
 	 * The identifier of the language associated with this document.
@@ -2476,10 +2477,9 @@ export namespace TextDocument {
 	 * @param uri The document's uri.
 	 * @param languageId  The document's language Id.
 	 * @param content The document's content.
-	 * @param isFullSync true for `Full` text sync, false for `Incremental` text sync
 	 */
-	export function create(uri: string, languageId: string, version: number, content: string, isFullSync: boolean = true): TextDocument {
-		return isFullSync ? new FullTextDocument(uri, languageId, version, content) : new IncrementalTextDocument(uri, languageId, version, content);
+	export function create(uri: DocumentUri, languageId: string, version: number, content: string): TextDocument {
+		return new FullTextDocument(uri, languageId, version, content);
 	}
 	/**
 	 * Checks whether the given literal conforms to the [ITextDocument](#ITextDocument) interface.
@@ -2616,24 +2616,15 @@ export interface TextDocumentContentChangeEvent {
 	text: string;
 }
 
-/**
- * Full-synchronized Text Document implementation that leverages a simple JS string
- * as a text buffer.
- *
- * This text document implementation only supports "Full" text document sync. If you
- * wish to use "Incremental" text document sync, use IncrementalTextDocument, as it
- * uses a "Piece Tree" buffer for strings, for efficient incremental edits to the
- * document.
- */
 class FullTextDocument implements TextDocument {
 
-	private _uri: string;
+	private _uri: DocumentUri;
 	private _languageId: string;
 	private _version: number;
 	private _content: string;
 	private _lineOffsets: number[] | null;
 
-	public constructor(uri: string, languageId: string, version: number, content: string) {
+	public constructor(uri: DocumentUri, languageId: string, version: number, content: string) {
 		this._uri = uri;
 		this._languageId = languageId;
 		this._version = version;
@@ -2728,103 +2719,6 @@ class FullTextDocument implements TextDocument {
 
 	public get lineCount() {
 		return this.getLineOffsets().length;
-	}
-}
-
-/**
- * Incrementally-synchronized Text Document implementation that leverages a
- * "Piece Tree" as text buffer. See the following for details:
- *  - https://github.com/rebornix/PieceTree
- *  - https://code.visualstudio.com/blogs/2018/03/23/text-buffer-reimplementation
- *
- * This text document implementation only supports "Incremental" text document
- * sync. If you wish to use "Full" text document sync, use FullTextDocument, as it
- * uses a simple JS string as an underlying text buffer, since the full text gets
- * swapped out on every update.
- */
-class IncrementalTextDocument implements TextDocument {
-
-	private _uri: string;
-	private _languageId: string;
-	private _version: number;
-	private _tree: PieceTreeBase;
-
-	public constructor(uri: string, languageId: string, version: number, content: string) {
-		this._uri = uri;
-		this._languageId = languageId;
-		this._version = version;
-
-		// Prepare Piece Tree
-		const ptBuilder = new PieceTreeTextBufferBuilder();
-		ptBuilder.acceptChunk(content);
-		const ptFactory = ptBuilder.finish(true);
-		this._tree = ptFactory.create(DefaultEndOfLine.LF);
-	}
-
-	public get uri(): string {
-		return this._uri;
-	}
-
-	public get languageId(): string {
-		return this._languageId;
-	}
-
-	public get version(): number {
-		return this._version;
-	}
-
-	public getText(range?: Range): string {
-		if (range) {
-			const { start, end } = range;
-			// Clamp last line and last character appropriately when
-			// given range is beyond the document's end
-			const [clampedEndLine, clampedEndChar] = end.line + 1 > this.lineCount
-				? [this.lineCount, this._tree.getLineLength(this.lineCount) + 1]
-				: [end.line + 1, end.character + 1];
-
-			const ptRange = new PieceTreeRange(start.line + 1, start.character + 1, clampedEndLine, clampedEndChar);
-			return this._tree.getValueInRange(ptRange);
-		}
-		return this._tree.getLinesRawContent();
-	}
-
-	public update(event: TextDocumentContentChangeEvent, version: number): void {
-		const { text, range } = event;
-
-		if (range == null) {
-			throw new Error(`FullPieceTreeTextDocument#update called with invalid event range ${range}`);
-		}
-
-		const startOffset = this.offsetAt(range.start);
-		const endOffset = this.offsetAt(range.end);
-
-		// Delete previous text at range and insert new text at appropriate offset
-		this._tree.delete(startOffset, endOffset - startOffset);
-		this._tree.insert(startOffset, text);
-
-		this._version = version;
-	}
-
-	public positionAt(offset: number) {
-		const clampedOffset = Math.min(offset, this._tree.getLength());
-		const ptPosition: PieceTreePosition = this._tree.getPositionAt(clampedOffset);
-		return Position.create(ptPosition.lineNumber - 1, ptPosition.column - 1);
-	}
-
-	public offsetAt(position: Position) {
-		if (position.line < 0) {
-			return 0;
-		}
-
-		const clampedChar = Math.max(1, position.character + 1);
-		return Math.min(
-			this._tree.getOffsetAt(position.line + 1, clampedChar),
-			this._tree.getLength()
-		);
-	}
-
-	public get lineCount() {
-		return this._tree.getLineCount();
 	}
 }
 

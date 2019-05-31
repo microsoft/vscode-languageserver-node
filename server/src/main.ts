@@ -45,7 +45,7 @@ import {
 	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse,
 	ClientCapabilities, ServerCapabilities, ProtocolConnection, createProtocolConnection, TypeDefinitionRequest, ImplementationRequest,
 	DocumentColorRequest, DocumentColorParams, ColorInformation, ColorPresentationParams, ColorPresentation, ColorPresentationRequest,
-	CodeAction, FoldingRangeParams, FoldingRange, FoldingRangeRequest, Declaration, DeclarationLink, DefinitionLink, DeclarationRequest
+	CodeAction, FoldingRangeParams, FoldingRange, FoldingRangeRequest, Declaration, DeclarationLink, DefinitionLink, DeclarationRequest, Position
 } from 'vscode-languageserver-protocol';
 
 import { Configuration, ConfigurationFeature } from './configuration';
@@ -59,6 +59,10 @@ export * from 'vscode-languageserver-protocol';
 export { Event }
 
 import * as fm from './files';
+
+import { PieceTreeTextBufferBuilder, PieceTreeBase, DefaultEndOfLine } from 'vscode-piece-tree';
+import { Range as PieceTreeRange } from 'vscode-piece-tree/out/common/range';
+import { Position as PieceTreePosition } from 'vscode-piece-tree/out/common/position';
 
 export namespace Files {
 	export let uriToFilePath = fm.uriToFilePath;
@@ -115,6 +119,103 @@ function null2Undefined<T>(value: T | null): T | undefined {
 
 interface ConnectionState {
 	__textDocumentSync: TextDocumentSyncKind | undefined;
+}
+
+/**
+ * Incrementally-synchronized Text Document implementation that leverages a
+ * "Piece Tree" as text buffer. See the following for details:
+ *  - https://github.com/rebornix/PieceTree
+ *  - https://code.visualstudio.com/blogs/2018/03/23/text-buffer-reimplementation
+ *
+ * This text document implementation only supports "Incremental" text document
+ * sync. If you wish to use "Full" text document sync, use FullTextDocument, as it
+ * uses a simple JS string as an underlying text buffer, since the full text gets
+ * swapped out on every update.
+ */
+class IncrementalTextDocument implements TextDocument {
+
+	private _uri: string;
+	private _languageId: string;
+	private _version: number;
+	private _tree: PieceTreeBase;
+
+	public constructor(uri: string, languageId: string, version: number, content: string) {
+		this._uri = uri;
+		this._languageId = languageId;
+		this._version = version;
+
+		// Prepare Piece Tree
+		const ptBuilder = new PieceTreeTextBufferBuilder();
+		ptBuilder.acceptChunk(content);
+		const ptFactory = ptBuilder.finish(true);
+		this._tree = ptFactory.create(DefaultEndOfLine.LF);
+	}
+
+	public get uri(): string {
+		return this._uri;
+	}
+
+	public get languageId(): string {
+		return this._languageId;
+	}
+
+	public get version(): number {
+		return this._version;
+	}
+
+	public getText(range?: Range): string {
+		if (range) {
+			const { start, end } = range;
+			// Clamp last line and last character appropriately when
+			// given range is beyond the document's end
+			const [clampedEndLine, clampedEndChar] = end.line + 1 > this.lineCount
+				? [this.lineCount, this._tree.getLineLength(this.lineCount) + 1]
+				: [end.line + 1, end.character + 1];
+
+			const ptRange = new PieceTreeRange(start.line + 1, start.character + 1, clampedEndLine, clampedEndChar);
+			return this._tree.getValueInRange(ptRange);
+		}
+		return this._tree.getLinesRawContent();
+	}
+
+	public update(event: TextDocumentContentChangeEvent, version: number): void {
+		const { text, range } = event;
+
+		if (range == null) {
+			throw new Error(`FullPieceTreeTextDocument#update called with invalid event range ${range}`);
+		}
+
+		const startOffset = this.offsetAt(range.start);
+		const endOffset = this.offsetAt(range.end);
+
+		// Delete previous text at range and insert new text at appropriate offset
+		this._tree.delete(startOffset, endOffset - startOffset);
+		this._tree.insert(startOffset, text);
+
+		this._version = version;
+	}
+
+	public positionAt(offset: number) {
+		const clampedOffset = Math.min(offset, this._tree.getLength());
+		const ptPosition: PieceTreePosition = this._tree.getPositionAt(clampedOffset);
+		return Position.create(ptPosition.lineNumber - 1, ptPosition.column - 1);
+	}
+
+	public offsetAt(position: Position) {
+		if (position.line < 0) {
+			return 0;
+		}
+
+		const clampedChar = Math.max(1, position.character + 1);
+		return Math.min(
+			this._tree.getOffsetAt(position.line + 1, clampedChar),
+			this._tree.getLength()
+		);
+	}
+
+	public get lineCount() {
+		return this._tree.getLineCount();
+	}
 }
 
 /**
@@ -253,10 +354,10 @@ export class TextDocuments {
 			let document: TextDocument;
 			switch (this.syncKind) {
 				case TextDocumentSyncKind.Full:
-					document = TextDocument.create(td.uri, td.languageId, td.version, td.text, true /* isFullSync */);
+					document = TextDocument.create(td.uri, td.languageId, td.version, td.text);
 					break;
 				case TextDocumentSyncKind.Incremental:
-					document = TextDocument.create(td.uri, td.languageId, td.version, td.text, false /* isFullSync */);
+					document = new IncrementalTextDocument(td.uri, td.languageId, td.version, td.text);
 					break;
 				default:
 					throw new Error(`Invalid TextDocumentSyncKind: ${this.syncKind}`);
@@ -282,6 +383,26 @@ export class TextDocuments {
 			const { version } = td;
 			if (version == null || version === void 0) {
 				throw new Error(`Received document change event for ${td.uri} without valid version identifier`);
+			}
+
+			switch (this.syncKind) {
+				case TextDocumentSyncKind.Full:
+					let last = changes[changes.length - 1];
+					document.update(last, version);
+					this._onDidChangeContent.fire(Object.freeze({ document }));
+					break;
+				case TextDocumentSyncKind.Incremental:
+					let updatedDoc: UpdateableDocument = changes.reduce(
+						(workingTextDoc: UpdateableDocument, change) => {
+							workingTextDoc.update(change, version);
+							return workingTextDoc;
+						},
+						document,
+					);
+					this._onDidChangeContent.fire(Object.freeze({ document: updatedDoc }));
+					break
+				case TextDocumentSyncKind.None:
+					break;
 			}
 
 			switch (this.syncKind) {
@@ -1250,14 +1371,14 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onTypeDefinition(handler: RequestHandler<TextDocumentPositionParams, Definition | undefined | null, void>): void;
+	onTypeDefinition(handler: RequestHandler<TextDocumentPositionParams, Definition | DefinitionLink[] | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the `Implementation` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onImplementation(handler: RequestHandler<TextDocumentPositionParams, Definition | undefined | null, void>): void;
+	onImplementation(handler: RequestHandler<TextDocumentPositionParams, Definition | DefinitionLink[] | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the `References` request.
@@ -1804,9 +1925,11 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 }
 
 // Export the protocol currently in proposed state.
+import { ProgressFeature, WindowProgress } from './proposed.progress';
 
 export namespace ProposedFeatures {
-	export const all: Features<_, _, _, _, _, _> = {
-		__brand: 'features'
+	export const all: Features<_, _, _, _, WindowProgress, _> = {
+		__brand: 'features',
+		window: ProgressFeature
 	}
 }
