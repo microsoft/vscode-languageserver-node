@@ -318,7 +318,7 @@ suite('IncrementalTextDocument', () => {
 		assert.equal(lm.offsetAt(Position.create(2, 0)), 7);
 	});
 
-	test('IncrementalTextDocument - multi-line delete', async () => {
+	test('Multi-line delete', async () => {
 		let lm = await generateTextDocument("foooo\nbar\nbaz");
 
 		assert.equal(lm.offsetAt(Position.create(2, 0)), 10);
