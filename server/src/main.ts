@@ -61,8 +61,8 @@ export { Event }
 import * as fm from './files';
 
 import { PieceTreeTextBufferBuilder, PieceTreeBase, DefaultEndOfLine } from 'vscode-textbuffer';
-import { Range as PieceTreeRange } from 'vscode-textbuffer/out/common/range';
-import { Position as PieceTreePosition } from 'vscode-textbuffer/out/common/position';
+import { Range as PieceTreeRange } from 'vscode-textbuffer/lib/common/range';
+import { Position as PieceTreePosition } from 'vscode-textbuffer/lib/common/position';
 
 export namespace Files {
 	export let uriToFilePath = fm.uriToFilePath;
