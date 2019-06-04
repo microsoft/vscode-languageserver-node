@@ -60,9 +60,9 @@ export { Event }
 
 import * as fm from './files';
 
-import { PieceTreeTextBufferBuilder, PieceTreeBase, DefaultEndOfLine } from 'vscode-piece-tree';
-import { Range as PieceTreeRange } from 'vscode-piece-tree/out/common/range';
-import { Position as PieceTreePosition } from 'vscode-piece-tree/out/common/position';
+import { PieceTreeTextBufferBuilder, PieceTreeBase, DefaultEndOfLine } from 'vscode-textbuffer';
+import { Range as PieceTreeRange } from 'vscode-textbuffer/out/common/range';
+import { Position as PieceTreePosition } from 'vscode-textbuffer/out/common/position';
 
 export namespace Files {
 	export let uriToFilePath = fm.uriToFilePath;
@@ -124,7 +124,7 @@ interface ConnectionState {
 /**
  * Incrementally-synchronized Text Document implementation that leverages a
  * "Piece Tree" as text buffer. See the following for details:
- *  - https://github.com/rebornix/PieceTree
+ *  - https://github.com/microsoft/vscode-textbuffer
  *  - https://code.visualstudio.com/blogs/2018/03/23/text-buffer-reimplementation
  *
  * This text document implementation only supports "Incremental" text document
