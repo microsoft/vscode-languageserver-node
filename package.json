@@ -18,7 +18,7 @@
 		"rimraf": "^2.6.2",
 		"shelljs": "^0.8.1",
 		"shx": "^0.2.2",
-		"typescript": "^2.9.1"
+		"typescript": "^3.5.1"
 	},
 	"scripts": {
 		"postinstall": "cd types && npm install && cd ../jsonrpc && npm install && cd ../protocol && npm install && cd ../server && npm install && cd ../client && npm install && cd ..",
