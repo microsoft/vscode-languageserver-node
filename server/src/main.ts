@@ -45,7 +45,7 @@ import {
 	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse,
 	ClientCapabilities, ServerCapabilities, ProtocolConnection, createProtocolConnection, TypeDefinitionRequest, ImplementationRequest,
 	DocumentColorRequest, DocumentColorParams, ColorInformation, ColorPresentationParams, ColorPresentation, ColorPresentationRequest,
-	CodeAction, FoldingRangeParams, FoldingRange, FoldingRangeRequest, Declaration, DeclarationLink, DefinitionLink, DeclarationRequest
+	CodeAction, FoldingRangeParams, FoldingRange, FoldingRangeRequest, Declaration, DeclarationLink, DefinitionLink, DeclarationRequest, Position
 } from 'vscode-languageserver-protocol';
 
 import { Configuration, ConfigurationFeature } from './configuration';
@@ -59,6 +59,10 @@ export * from 'vscode-languageserver-protocol';
 export { Event }
 
 import * as fm from './files';
+
+import { PieceTreeTextBufferBuilder, PieceTreeBase, DefaultEndOfLine } from 'vscode-textbuffer';
+import { Range as PieceTreeRange } from 'vscode-textbuffer/lib/common/range';
+import { Position as PieceTreePosition } from 'vscode-textbuffer/lib/common/position';
 
 export namespace Files {
 	export let uriToFilePath = fm.uriToFilePath;
@@ -118,11 +122,109 @@ interface ConnectionState {
 }
 
 /**
+ * Incrementally-synchronized Text Document implementation that leverages a
+ * "Piece Tree" as text buffer. See the following for details:
+ *  - https://github.com/microsoft/vscode-textbuffer
+ *  - https://code.visualstudio.com/blogs/2018/03/23/text-buffer-reimplementation
+ *
+ * This text document implementation only supports "Incremental" text document
+ * sync. If you wish to use "Full" text document sync, use FullTextDocument, as it
+ * uses a simple JS string as an underlying text buffer, since the full text gets
+ * swapped out on every update.
+ */
+class IncrementalTextDocument implements TextDocument {
+
+	private _uri: string;
+	private _languageId: string;
+	private _version: number;
+	private _tree: PieceTreeBase;
+
+	public constructor(uri: string, languageId: string, version: number, content: string) {
+		this._uri = uri;
+		this._languageId = languageId;
+		this._version = version;
+
+		// Prepare Piece Tree
+		const ptBuilder = new PieceTreeTextBufferBuilder();
+		ptBuilder.acceptChunk(content);
+		const ptFactory = ptBuilder.finish(true);
+		this._tree = ptFactory.create(DefaultEndOfLine.LF);
+	}
+
+	public get uri(): string {
+		return this._uri;
+	}
+
+	public get languageId(): string {
+		return this._languageId;
+	}
+
+	public get version(): number {
+		return this._version;
+	}
+
+	public getText(range?: Range): string {
+		if (range) {
+			const { start, end } = range;
+			// Clamp last line and last character appropriately when
+			// given range is beyond the document's end
+			const [clampedEndLine, clampedEndChar] = end.line + 1 > this.lineCount
+				? [this.lineCount, this._tree.getLineLength(this.lineCount) + 1]
+				: [end.line + 1, end.character + 1];
+
+			const ptRange = new PieceTreeRange(start.line + 1, start.character + 1, clampedEndLine, clampedEndChar);
+			return this._tree.getValueInRange(ptRange);
+		}
+		return this._tree.getLinesRawContent();
+	}
+
+	public update(event: TextDocumentContentChangeEvent, version: number): void {
+		const { text, range } = event;
+
+		if (range == null) {
+			throw new Error(`FullPieceTreeTextDocument#update called with invalid event range ${range}`);
+		}
+
+		const startOffset = this.offsetAt(range.start);
+		const endOffset = this.offsetAt(range.end);
+
+		// Delete previous text at range and insert new text at appropriate offset
+		this._tree.delete(startOffset, endOffset - startOffset);
+		this._tree.insert(startOffset, text);
+
+		this._version = version;
+	}
+
+	public positionAt(offset: number) {
+		const clampedOffset = Math.min(offset, this._tree.getLength());
+		const ptPosition: PieceTreePosition = this._tree.getPositionAt(clampedOffset);
+		return Position.create(ptPosition.lineNumber - 1, ptPosition.column - 1);
+	}
+
+	public offsetAt(position: Position) {
+		if (position.line < 0) {
+			return 0;
+		}
+
+		const clampedChar = Math.max(1, position.character + 1);
+		return Math.min(
+			this._tree.getOffsetAt(position.line + 1, clampedChar),
+			this._tree.getLength()
+		);
+	}
+
+	public get lineCount() {
+		return this._tree.getLineCount();
+	}
+}
+
+/**
  * A manager for simple text documents
  */
 export class TextDocuments {
 
 	private _documents: { [uri: string]: TextDocument };
+	private _syncKind: TextDocumentSyncKind;
 
 	private _onDidChangeContent: Emitter<TextDocumentChangeEvent>;
 	private _onDidOpen: Emitter<TextDocumentChangeEvent>;
@@ -134,8 +236,10 @@ export class TextDocuments {
 	/**
 	 * Create a new text document manager.
 	 */
-	public constructor() {
+	public constructor(syncKind: TextDocumentSyncKind = TextDocumentSyncKind.Full) {
 		this._documents = Object.create(null);
+		this._syncKind = syncKind;
+
 		this._onDidChangeContent = new Emitter<TextDocumentChangeEvent>();
 		this._onDidOpen = new Emitter<TextDocumentChangeEvent>();
 		this._onDidClose = new Emitter<TextDocumentChangeEvent>();
@@ -148,7 +252,7 @@ export class TextDocuments {
 	 * this text document manager.
 	 */
 	public get syncKind(): TextDocumentSyncKind {
-		return TextDocumentSyncKind.Full;
+		return this._syncKind;
 	}
 
 	/**
@@ -246,7 +350,19 @@ export class TextDocuments {
 		(<ConnectionState><any>connection).__textDocumentSync = TextDocumentSyncKind.Full;
 		connection.onDidOpenTextDocument((event: DidOpenTextDocumentParams) => {
 			let td = event.textDocument;
-			let document = TextDocument.create(td.uri, td.languageId, td.version, td.text);
+
+			let document: TextDocument;
+			switch (this.syncKind) {
+				case TextDocumentSyncKind.Full:
+					document = TextDocument.create(td.uri, td.languageId, td.version, td.text);
+					break;
+				case TextDocumentSyncKind.Incremental:
+					document = new IncrementalTextDocument(td.uri, td.languageId, td.version, td.text);
+					break;
+				default:
+					throw new Error(`Invalid TextDocumentSyncKind: ${this.syncKind}`);
+			}
+
 			this._documents[td.uri] = document;
 			let toFire = Object.freeze({ document });
 			this._onDidOpen.fire(toFire);
@@ -255,16 +371,38 @@ export class TextDocuments {
 		connection.onDidChangeTextDocument((event: DidChangeTextDocumentParams) => {
 			let td = event.textDocument;
 			let changes = event.contentChanges;
-			let last: TextDocumentContentChangeEvent | undefined = changes.length > 0 ? changes[changes.length - 1] : undefined;
-			if (last) {
-				let document = this._documents[td.uri];
-				if (document && isUpdateableDocument(document)) {
-					if (td.version === null || td.version === void 0) {
-						throw new Error(`Received document change event for ${td.uri} without valid version identifier`);
-					}
-					document.update(last, td.version);
+			if (changes.length === 0) {
+				return;
+			}
+
+			let document = this._documents[td.uri];
+			if (!document || !isUpdateableDocument(document)) {
+				return;
+			}
+
+			const { version } = td;
+			if (version == null || version === void 0) {
+				throw new Error(`Received document change event for ${td.uri} without valid version identifier`);
+			}
+
+			switch (this.syncKind) {
+				case TextDocumentSyncKind.Full:
+					let last = changes[changes.length - 1];
+					document.update(last, version);
 					this._onDidChangeContent.fire(Object.freeze({ document }));
-				}
+					break;
+				case TextDocumentSyncKind.Incremental:
+					let updatedDoc: UpdateableDocument = changes.reduce(
+						(workingTextDoc: UpdateableDocument, change) => {
+							workingTextDoc.update(change, version);
+							return workingTextDoc;
+						},
+						document,
+					);
+					this._onDidChangeContent.fire(Object.freeze({ document: updatedDoc }));
+					break
+				case TextDocumentSyncKind.None:
+					break;
 			}
 		});
 		connection.onDidCloseTextDocument((event: DidCloseTextDocumentParams) => {
