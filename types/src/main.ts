@@ -2396,6 +2396,45 @@ export namespace DocumentLink {
 	}
 }
 
+/**
+ * A selection range represents a part of a selection hierarchy. A selection range
+ * may have a parent selection range that contains it.
+ */
+export interface SelectionRange {
+
+	/**
+	 * The [range](#Range) of this selection range.
+	 */
+	range: Range;
+
+	/**
+	 * The parent selection range containing this range. Therefore `parent.range` must contain `this.range`.
+	 */
+	parent?: SelectionRange;
+
+}
+
+/**
+ * The SelectionRange namespace provides helper function to work with
+ * SelectionRange literals.
+ */
+export namespace SelectionRange {
+	/**
+	 * Creates a new SelectionRange
+	 * @param range the range.
+	 * @param parent an optional parent.
+	 */
+	export function create(range: Range, parent?: SelectionRange): SelectionRange {
+		return { range, parent };
+	}
+
+	export function is(value: any): value is SelectionRange {
+		let candidate = value as SelectionRange;
+		return candidate !== undefined && Range.is(candidate.range) && (candidate.parent === undefined || SelectionRange.is(candidate.parent));
+	}
+}
+
+
 export const EOL: string[] = ['\n', '\r\n', '\r'];
 
 /**
