@@ -157,6 +157,13 @@ export interface Converter {
 	asFoldingRanges(foldingRanges: undefined | null): undefined;
 	asFoldingRanges(foldingRanges: ls.FoldingRange[] | undefined | null): code.FoldingRange[] | undefined;
 	asFoldingRanges(foldingRanges: ls.FoldingRange[] | undefined | null): code.FoldingRange[] | undefined;
+
+	asSelectionRange(selectionRange: ls.SelectionRange): code.SelectionRange;
+
+	asSelectionRanges(selectionRanges: ls.SelectionRange[]): code.SelectionRange[];
+	asSelectionRanges(selectionRanges: undefined | null): undefined;
+	asSelectionRanges(selectionRanges: ls.SelectionRange[] | undefined | null): code.SelectionRange[] | undefined;
+	asSelectionRanges(selectionRanges: ls.SelectionRange[] | undefined | null): code.SelectionRange[] | undefined;
 }
 
 export interface URIConverter {
@@ -504,10 +511,10 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			return undefined;
 		}
 		let result = {
-		   targetUri:_uriConverter(item.targetUri),
-		   targetRange: asRange(item.targetSelectionRange), // See issue: https://github.com/Microsoft/vscode/issues/58649
-		   originSelectionRange: asRange(item.originSelectionRange),
-		   targetSelectionRange: asRange(item.targetSelectionRange)
+			targetUri: _uriConverter(item.targetUri),
+			targetRange: asRange(item.targetSelectionRange), // See issue: https://github.com/Microsoft/vscode/issues/58649
+			originSelectionRange: asRange(item.originSelectionRange),
+			targetSelectionRange: asRange(item.targetSelectionRange)
 		}
 		if (!result.targetSelectionRange) {
 			throw new Error(`targetSelectionRange must not be undefined or null`);
@@ -521,7 +528,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		}
 		if (Is.array(item)) {
 			if (item.length === 0) {
-				return[];
+				return [];
 			} else if (ls.LocationLink.is(item[0])) {
 				let links = item as ls.LocationLink[];
 				return links.map((link) => asLocationLink(link));
@@ -530,7 +537,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 				return locations.map((location) => asLocation(location));
 			}
 		} else if (ls.LocationLink.is(item)) {
-			return [ asLocationLink(item) ];
+			return [asLocationLink(item)];
 		} else {
 			return asLocation(item);
 		}
@@ -838,6 +845,25 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return void 0;
 	}
 
+	function asSelectionRange(selectionRange: ls.SelectionRange): code.SelectionRange {
+		return new code.SelectionRange(asRange(selectionRange.range),
+			selectionRange.parent ? asSelectionRange(selectionRange.parent) : undefined
+		);
+	}
+	function asSelectionRanges(selectionRanges: ls.SelectionRange[]): code.SelectionRange[];
+	function asSelectionRanges(selectionRanges: undefined | null): undefined;
+	function asSelectionRanges(selectionRanges: ls.SelectionRange[] | undefined | null): code.SelectionRange[] | undefined;
+	function asSelectionRanges(selectionRanges: ls.SelectionRange[] | undefined | null): code.SelectionRange[] | undefined {
+		if (!Array.isArray(selectionRanges)) {
+			return [];
+		}
+		let result: code.SelectionRange[] = [];
+		for (let range of selectionRanges) {
+			result.push(asSelectionRange(range));
+		}
+		return result;
+	}
+
 	return {
 		asUri,
 		asDiagnostics,
@@ -884,6 +910,8 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asColorInformation,
 		asColorInformations,
 		asColorPresentation,
-		asColorPresentations
+		asColorPresentations,
+		asSelectionRange,
+		asSelectionRanges
 	}
 }

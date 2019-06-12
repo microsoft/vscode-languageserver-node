@@ -64,7 +64,7 @@ import { ConfigurationWorkspaceMiddleware } from './configuration';
 import { WorkspaceFolderWorkspaceMiddleware } from './workspaceFolders';
 import { FoldingRangeProviderMiddleware } from './foldingRange';
 import { DeclarationMiddleware } from './declaration';
-import { SelectionRangeProviderMiddleware } from './selectionRange.proposed';
+import { SelectionRangeProviderMiddleware } from './selectionRange';
 
 import * as c2p from './codeConverter';
 import * as p2c from './protocolConverter';

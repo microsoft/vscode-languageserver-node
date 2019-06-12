@@ -31,6 +31,12 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 
 ## History
 
+## 3.15.0 Protocol, 5.3.0 Client & 5.3.0 Server
+
+* `SelectionRangeRequest` protocol added:
+  * New APIs in Types: `SelectionRange`
+  * New APIs in Protocol: `SelectionRangeRequest`, `SelectionRangeParams`, `SelectionRangeClientCapabilities`, `SelectionRangeServerCapabilities`, `SelectionRangeProviderOptions`,
+
 ### 5.1.1 Client
 
 * Fixes [[textDocument/rename] client doesn't obey `RenameOptions` while registering provider](https://github.com/Microsoft/vscode-languageserver-node/issues/416)

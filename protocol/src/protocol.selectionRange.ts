@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { RequestType, RequestHandler } from 'vscode-jsonrpc';
-import { TextDocumentIdentifier, Position, Range } from 'vscode-languageserver-types';
+import { TextDocumentIdentifier, Position, SelectionRange } from 'vscode-languageserver-types';
 import { TextDocumentRegistrationOptions, StaticRegistrationOptions } from './protocol';
 
 // ---- capabilities
@@ -28,11 +28,14 @@ export interface SelectionRangeClientCapabilities {
 	};
 }
 
+export interface SelectionRangeProviderOptions {
+}
+
 export interface SelectionRangeServerCapabilities {
 	/**
 	 * The server provides selection range support.
 	 */
-	selectionRangeProvider?: boolean | (TextDocumentRegistrationOptions & StaticRegistrationOptions);
+	selectionRangeProvider?: boolean | (TextDocumentRegistrationOptions & StaticRegistrationOptions & SelectionRangeProviderOptions);
 }
 
 /**
@@ -48,44 +51,6 @@ export interface SelectionRangeParams {
 	 * The positions inside the text document.
 	 */
 	positions: Position[];
-}
-
-/**
- * A selection range represents a part of a selection hierarchy. A selection range
- * may have a parent selection range that contains it.
- */
-export interface SelectionRange {
-
-	/**
-	 * The [range](#Range) of this selection range.
-	 */
-	range: Range;
-
-	/**
-	 * The parent selection range containing this range. Therefore `parent.range` must contain `this.range`.
-	 */
-	parent?: SelectionRange;
-
-}
-
-/**
- * The SelectionRange namespace provides helper function to work with
- * SelectionRange literals.
- */
-export namespace SelectionRange {
-	/**
-	 * Creates a new SelectionRange
-	 * @param range the range.
-	 * @param parent an optional parent.
-	 */
-	export function create(range: Range, parent?: SelectionRange): SelectionRange {
-		return { range, parent };
-	}
-
-	export function is(value: any): value is SelectionRange {
-		let candidate = value as SelectionRange;
-		return candidate !== undefined && Range.is(candidate.range) && (candidate.parent === undefined || SelectionRange.is(candidate.parent));
-	}
 }
 
 /**

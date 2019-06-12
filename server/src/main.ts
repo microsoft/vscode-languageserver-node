@@ -45,7 +45,8 @@ import {
 	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse,
 	ClientCapabilities, ServerCapabilities, ProtocolConnection, createProtocolConnection, TypeDefinitionRequest, ImplementationRequest,
 	DocumentColorRequest, DocumentColorParams, ColorInformation, ColorPresentationParams, ColorPresentation, ColorPresentationRequest,
-	CodeAction, FoldingRangeParams, FoldingRange, FoldingRangeRequest, Declaration, DeclarationLink, DefinitionLink, DeclarationRequest, Position
+	CodeAction, FoldingRangeParams, FoldingRange, FoldingRangeRequest, Declaration, DeclarationLink, DefinitionLink, DeclarationRequest, Position,
+	SelectionRangeRequest, SelectionRange, SelectionRangeParams
 } from 'vscode-languageserver-protocol';
 
 import { Configuration, ConfigurationFeature } from './configuration';
@@ -1482,6 +1483,12 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 */
 	onFoldingRanges(handler: RequestHandler<FoldingRangeParams, FoldingRange[] | undefined | null, void>): void;
 
+	/**
+	 * Installs a handler for the selection ranges request.
+	 *
+	 * @param handler The corresponding handler.
+	 */
+	onSelectionRanges(handler: RequestHandler<SelectionRangeParams, SelectionRange[] | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the execute command request.
@@ -1812,6 +1819,7 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 		onDocumentColor: (handler) => connection.onRequest(DocumentColorRequest.type, handler),
 		onColorPresentation: (handler) => connection.onRequest(ColorPresentationRequest.type, handler),
 		onFoldingRanges: (handler) => connection.onRequest(FoldingRangeRequest.type, handler),
+		onSelectionRanges: (handler) => connection.onRequest(SelectionRangeRequest.type, handler),
 		onExecuteCommand: (handler) => connection.onRequest(ExecuteCommandRequest.type, handler),
 
 		dispose: () => connection.dispose()
