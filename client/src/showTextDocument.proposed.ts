@@ -5,6 +5,7 @@
 'use strict';
 
 import { Uri, workspace, window } from 'vscode';
+import { ClientCapabilities } from 'vscode-languageserver-protocol';
 import { StaticFeature, BaseLanguageClient, ShowTextDocumentRequest } from './client';
 
 export class ShowTextDocumentFeature implements StaticFeature {
@@ -12,7 +13,9 @@ export class ShowTextDocumentFeature implements StaticFeature {
 	constructor(private _client: BaseLanguageClient) {
 	}
 
-	public fillClientCapabilities(): void {
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
+		capabilities.window = capabilities.window || {};
+		capabilities.window!.showTextDocument = true;
 	}
 
 	public initialize(): void {

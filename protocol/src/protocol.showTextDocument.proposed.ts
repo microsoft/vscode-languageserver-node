@@ -7,6 +7,18 @@
 import { RequestType } from 'vscode-jsonrpc';
 import { TextDocumentIdentifier, TextDocumentShowOptions } from "vscode-languageserver-types";
 
+export interface ShowTextDocumentClientCapabilities {
+    /**
+     * The window client capabilities
+     */
+    window?: {
+        /**
+        * The client supports `window/showTextDocument` requests.
+        */
+	   showTextDocument?: boolean;
+    };
+}
+
 export interface ShowTextDocumentRequestParams {
 	/**
 	 * A Text Document Identifier.

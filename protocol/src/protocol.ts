@@ -35,7 +35,7 @@ import {
 import {
 	DeclarationClientCapabilities, DeclarationRequest, DeclarationServerCapabilities
 } from './protocol.declaration';
-import { ShowTextDocumentRequest, ShowTextDocumentRequestParams } from './protocol.showTextDocument.proposed';
+import { ShowTextDocumentRequest, ShowTextDocumentRequestParams, ShowTextDocumentClientCapabilities } from './protocol.showTextDocument.proposed';
 
 // @ts-ignore: to avoid inlining LocatioLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
@@ -683,7 +683,7 @@ export interface _ClientCapabilities {
 
 export type ClientCapabilities = _ClientCapabilities & ImplementationClientCapabilities & TypeDefinitionClientCapabilities &
 	WorkspaceFoldersClientCapabilities & ConfigurationClientCapabilities & ColorClientCapabilities & FoldingRangeClientCapabilities &
-	DeclarationClientCapabilities /* & SelectionRangeClientCapabilities */;
+	DeclarationClientCapabilities & ShowTextDocumentClientCapabilities /* & SelectionRangeClientCapabilities */;
 
 /**
  * Defines how the host (editor) should sync
