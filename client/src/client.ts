@@ -64,7 +64,7 @@ import { ConfigurationWorkspaceMiddleware } from './configuration';
 import { WorkspaceFolderWorkspaceMiddleware } from './workspaceFolders';
 import { FoldingRangeProviderMiddleware } from './foldingRange';
 import { DeclarationMiddleware } from './declaration';
-import { SelectionRangeProviderMiddleware } from './selectionRange';
+import { SelectionRangeProviderMiddleware, SelectionRangeFeature } from './selectionRange';
 
 import * as c2p from './codeConverter';
 import * as p2c from './protocolConverter';
@@ -3129,6 +3129,7 @@ export abstract class BaseLanguageClient {
 		this.registerFeature(new RenameFeature(this));
 		this.registerFeature(new DocumentLinkFeature(this));
 		this.registerFeature(new ExecuteCommandFeature(this));
+		this.registerFeature(new SelectionRangeFeature(this));
 	}
 
 	private fillInitializeParams(params: InitializeParams): void {
