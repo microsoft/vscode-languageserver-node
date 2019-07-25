@@ -30,7 +30,6 @@ import { TypeDefinitionFeature } from './typeDefinition';
 import { WorkspaceFoldersFeature } from './workspaceFolders';
 import { FoldingRangeFeature } from './foldingRange';
 import { DeclarationFeature } from './declaration';
-import { SelectionRangeFeature } from './selectionRange';
 import { ProgressFeature } from './progress.proposed';
 import { CallHierarchyFeature } from './callHierarchy.proposed';
 
