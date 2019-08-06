@@ -654,7 +654,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	const kindMapping: Map<ls.CodeActionKind, code.CodeActionKind> = new Map();
-	kindMapping.set('', code.CodeActionKind.Empty);
+	kindMapping.set(ls.CodeActionKind.Empty, code.CodeActionKind.Empty);
 	kindMapping.set(ls.CodeActionKind.QuickFix, code.CodeActionKind.QuickFix);
 	kindMapping.set(ls.CodeActionKind.Refactor, code.CodeActionKind.Refactor);
 	kindMapping.set(ls.CodeActionKind.RefactorExtract, code.CodeActionKind.RefactorExtract);

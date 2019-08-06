@@ -2061,6 +2061,12 @@ export type CodeActionKind = string;
  * A set of predefined code action kinds
  */
 export namespace CodeActionKind {
+
+	/**
+	 * Empty kind.
+	 */
+	export const Empty: CodeActionKind = '';
+
 	/**
 	 * Base kind for quickfix actions: 'quickfix'
 	 */

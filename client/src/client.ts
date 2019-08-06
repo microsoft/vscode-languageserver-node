@@ -1730,7 +1730,7 @@ class CodeActionFeature extends TextDocumentFeature<CodeActionRegistrationOption
 		cap.codeActionLiteralSupport = {
 			codeActionKind: {
 				valueSet: [
-					'',
+					CodeActionKind.Empty,
 					CodeActionKind.QuickFix,
 					CodeActionKind.Refactor,
 					CodeActionKind.RefactorExtract,
