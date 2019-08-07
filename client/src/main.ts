@@ -30,6 +30,7 @@ import { TypeDefinitionFeature } from './typeDefinition';
 import { WorkspaceFoldersFeature } from './workspaceFolders';
 import { FoldingRangeFeature } from './foldingRange';
 import { DeclarationFeature } from './declaration';
+import { SelectionRangeFeature } from './selectionRange';
 import { ProgressFeature } from './progress.proposed';
 import { CallHierarchyFeature } from './callHierarchy.proposed';
 
@@ -442,6 +443,7 @@ export class LanguageClient extends BaseLanguageClient {
 		this.registerFeature(new WorkspaceFoldersFeature(this));
 		this.registerFeature(new FoldingRangeFeature(this));
 		this.registerFeature(new DeclarationFeature(this));
+		this.registerFeature(new SelectionRangeFeature(this));
 	}
 
 	private _mainGetRootPath(): string | undefined {

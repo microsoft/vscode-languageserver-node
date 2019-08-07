@@ -7,7 +7,7 @@ import * as assert from 'assert';
 import {
 	createConnection, IConnection,
 	TextDocuments, InitializeParams, ServerCapabilities, CompletionItemKind, ResourceOperationKind, FailureHandlingKind
-} from '../../../../server/lib/main';
+} from 'vscode-languageserver/lib/main';
 
 let connection: IConnection = createConnection();
 

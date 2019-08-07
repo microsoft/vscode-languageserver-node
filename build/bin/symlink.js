@@ -50,3 +50,11 @@ let clientFolder = path.join(root, 'client');
 tryLinkJsonRpc(clientFolder);
 tryLinkTypes(clientFolder);
 tryLinkProtocol(clientFolder);
+
+// test-extension
+let extensionFolder = path.join(root, 'client-tests');
+tryLinkJsonRpc(extensionFolder);
+tryLinkTypes(extensionFolder);
+tryLinkProtocol(extensionFolder);
+tryLink(extensionFolder, 'vscode-languageclient', 'client');
+tryLink(extensionFolder, 'vscode-languageserver', 'server');
