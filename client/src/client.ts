@@ -2894,13 +2894,14 @@ export abstract class BaseLanguageClient {
 			return this._onStop;
 		}
 		this.state = ClientState.Stopping;
-		this.cleanUp();
+		this.cleanUp(false);
 		// unhook listeners
 		return this._onStop = this.resolveConnection().then(connection => {
 			return connection.shutdown().then(() => {
 				connection.exit();
 				connection.dispose();
 				this.state = ClientState.Stopped;
+				this.cleanUpChannel();
 				this._onStop = undefined;
 				this._connectionPromise = undefined;
 				this._resolvedConnection = undefined;
@@ -2923,13 +2924,19 @@ export abstract class BaseLanguageClient {
 		for (let handler of this._dynamicFeatures.values()) {
 			handler.dispose();
 		}
-		if (channel && this._outputChannel && this._disposeOutputChannel) {
-			this._outputChannel.dispose();
-			this._outputChannel = undefined;
+		if (channel) {
+			this.cleanUpChannel();
 		}
 		if (diagnostics && this._diagnostics) {
 			this._diagnostics.dispose();
 			this._diagnostics = undefined;
+		}
+	}
+
+	private cleanUpChannel(): void {
+		if (this._outputChannel && this._disposeOutputChannel) {
+			this._outputChannel.dispose();
+			this._outputChannel = undefined;
 		}
 	}
 
