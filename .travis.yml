@@ -10,6 +10,9 @@ dist:
 node_js:
   - "10.15.1"
 
+services:
+  - xvfb
+
 addons:
   apt:
     packages:
@@ -18,7 +21,8 @@ addons:
 before_install:
   - if [ $TRAVIS_OS_NAME == "linux" ]; then
       export DISPLAY=':99.0'
-      /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+      service xvfb start;
+      sleep 3;
     fi
 
 install:
