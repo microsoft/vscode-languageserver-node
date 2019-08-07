@@ -557,25 +557,34 @@ export interface RemoteConsole extends Remote {
  */
 export interface RemoteWindow extends Remote {
 	/**
-	 * Show an error message.
+	 * Shows an error message in the client's user interface. Depending on the client this might
+	 * be a modal dialog with a confirmation button or a notification in a notification center
 	 *
 	 * @param message The message to show.
+	 * @param actions Possible additional actions presented in the user interface. The selected action
+	 *  will be the value of the resolved promise
 	 */
 	showErrorMessage(message: string): void;
 	showErrorMessage<T extends MessageActionItem>(message: string, ...actions: T[]): Thenable<T | undefined>;
 
 	/**
-	 * Show a warning message.
+	 * Shows a warning message in the client's user interface. Depending on the client this might
+	 * be a modal dialog with a confirmation button or a notification in a notification center
 	 *
 	 * @param message The message to show.
+	 * @param actions Possible additional actions presented in the user interface. The selected action
+	 *  will be the value of the resolved promise
 	 */
 	showWarningMessage(message: string): void;
 	showWarningMessage<T extends MessageActionItem>(message: string, ...actions: T[]): Thenable<T | undefined>;
 
 	/**
-	 * Show an information message.
+	 * Shows an information message in the client's user interface. Depending on the client this might
+	 * be a modal dialog with a confirmation button or a notification in a notification center
 	 *
 	 * @param message The message to show.
+	 * @param actions Possible additional actions presented in the user interface. The selected action
+	 *  will be the value of the resolved promise
 	 */
 	showInformationMessage(message: string): void;
 	showInformationMessage<T extends MessageActionItem>(message: string, ...actions: T[]): Thenable<T | undefined>;
