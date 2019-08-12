@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { RequestType } from 'vscode-jsonrpc';
+import { RequestType, RequestHandler } from 'vscode-jsonrpc';
 import { TextDocumentIdentifier } from 'vscode-languageserver-types';
 import { TextDocumentRegistrationOptions, StaticRegistrationOptions } from './protocol';
 
@@ -116,5 +116,6 @@ export interface FoldingRangeParams {
  * that resolves to such.
  */
 export namespace FoldingRangeRequest {
-	export const type: RequestType<FoldingRangeParams, FoldingRange[] | null, any, any> = new RequestType('textDocument/foldingRange');
+	export const type: RequestType<FoldingRangeParams, FoldingRange[] | null, any, TextDocumentRegistrationOptions> = new RequestType('textDocument/foldingRange');
+	export type HandlerSignature = RequestHandler<FoldingRangeParams, FoldingRange[] | null, void>;
 }
