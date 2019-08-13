@@ -12,7 +12,7 @@ import { Feature, RemoteWindow, IConnection } from './main';
 import { generateUuid } from './utils/uuid';
 
 
-export interface Progress {
+export interface WorkDoneProgress {
 
 	readonly token: CancellationToken;
 
@@ -24,59 +24,54 @@ export interface Progress {
 }
 
 export interface WindowProgress {
-	createProgress(title: string, percentage?: number, message?: string, cancellable?: boolean): Progress;
+	createWorkDoneProgress(title: string, percentage?: number, message?: string, cancellable?: boolean): Thenable<WorkDoneProgress>;
 }
 
-class ProgressImpl implements Progress {
+class WorkDoneProgressImpl implements WorkDoneProgress {
 
-	public static Instances: Map<string, ProgressImpl> = new Map();
+	public static Instances: Map<string | number, WorkDoneProgressImpl> = new Map();
 
-	private _id: string;
 	private _source: CancellationTokenSource;
 
-	constructor(private _connection: IConnection, title: string, percentage?: number, message?: string, cancellable?: boolean) {
-		this._id = generateUuid();
-		let params: Proposed.ProgressStartParams  = {
-			id: this._id,
-			title,
-			cancellable
-		}
-		if (percentage !== undefined) {
-			params.percentage = percentage;
-		}
-		if (message !== undefined) {
-			params.message = message;
-		}
-		if (cancellable !== undefined) {
-			params.cancellable = cancellable;
-		}
-		ProgressImpl.Instances.set(this._id, this);
+	constructor(private _connection: IConnection, private _token: number | string) {
+		WorkDoneProgressImpl.Instances.set(this._token, this);
 		this._source = new CancellationTokenSource();
-		this._connection.sendNotification(Proposed.ProgressStartNotification.type, params);
 	}
 
 	get token(): CancellationToken {
 		return this._source.token;
 	}
 
+	public start(title: string, percentage?: number, message?: string, cancellable?: boolean): void {
+		let param: Proposed.WorkDoneProgressStart = {
+			kind: 'start',
+			title,
+			percentage,
+			message,
+			cancellable
+		};
+		this._connection.sendProgress(Proposed.WorkDoneProgress.type, this._token, param);
+	}
+
 	report(arg0: number | string, arg1?: string): void {
-		let percentage: number | undefined;
-		let message: string | undefined;
+		let param: Proposed.WorkDoneProgressReport = {
+			kind: 'report'
+		};
 		if (typeof arg0 === 'number') {
-			percentage = arg0;
+			param.percentage = arg0;
 			if (arg1 !== undefined) {
-				message = arg1;
+				param.message = arg1;
 			}
 		} else {
-			message = arg0;
+			param.message = arg0;
 		}
-		this._connection.sendNotification(Proposed.ProgressReportNotification.type, { id: this._id, percentage, message });
+		this._connection.sendProgress(Proposed.WorkDoneProgress.type, this._token, param);
 	}
 
 	done(): void {
-		ProgressImpl.Instances.delete(this._id);
+		WorkDoneProgressImpl.Instances.delete(this._token);
 		this._source.dispose();
-		this._connection.sendNotification(Proposed.ProgressDoneNotification.type, {id: this._id });
+		this._connection.sendProgress(Proposed.WorkDoneProgress.type, this._token, { kind: 'done' } );
 	}
 
 	cancel(): void {
@@ -84,7 +79,7 @@ class ProgressImpl implements Progress {
 	}
 }
 
-class NullProgress implements Progress {
+class NullProgress implements WorkDoneProgress {
 
 	private _source: CancellationTokenSource;
 
@@ -107,22 +102,27 @@ export const ProgressFeature: Feature<RemoteWindow, WindowProgress> = (Base) => 
 	return class extends Base {
 		private _progressSupported: boolean;
 		public initialize(cap: ClientCapabilities): void {
-			let capabilities: ClientCapabilities & Proposed.ProgressClientCapabilities = cap;
-			if (capabilities.window && capabilities.window.progress) {
+			const capabilities: ClientCapabilities & Proposed.WorkDoneProgressClientCapabilities = cap;
+			if (capabilities.window && capabilities.window.workDoneProgress) {
 				this._progressSupported = true;
-				this.connection.onNotification(Proposed.ProgressCancelNotification.type, (params) => {
-					let progress = ProgressImpl.Instances.get(params.id);
+				this.connection.onNotification(Proposed.WorkDoneProgressCancelNotification.type, (params) => {
+					let progress = WorkDoneProgressImpl.Instances.get(params.token);
 					if (progress !== undefined) {
 						progress.cancel();
 					}
 				});
 			}
 		}
-		createProgress(title: string, percentage?: number, message?: string, cancellable?: boolean): Progress {
+		createWorkDoneProgress(title: string, percentage?: number, message?: string, cancellable?: boolean): Thenable<WorkDoneProgress> {
 			if (this._progressSupported) {
-				return new ProgressImpl(this.connection, title, percentage, message, cancellable)
+				const token: string = generateUuid();
+				return this.connection.sendRequest(Proposed.WorkDoneProgressCreateRequest.type, { token }).then(() => {
+					const result: WorkDoneProgressImpl = new WorkDoneProgressImpl(this.connection, token);
+					result.start(title, percentage, message, cancellable);
+					return result;
+				});
 			} else {
-				return new NullProgress();
+				return Promise.resolve(new NullProgress());
 			}
 		}
 	}

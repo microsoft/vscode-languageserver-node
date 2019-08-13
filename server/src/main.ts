@@ -46,7 +46,7 @@ import {
 	ClientCapabilities, ServerCapabilities, ProtocolConnection, createProtocolConnection, TypeDefinitionRequest, ImplementationRequest,
 	DocumentColorRequest, DocumentColorParams, ColorInformation, ColorPresentationParams, ColorPresentation, ColorPresentationRequest,
 	CodeAction, FoldingRangeParams, FoldingRange, FoldingRangeRequest, Declaration, DeclarationLink, DefinitionLink, DeclarationRequest, Position,
-	SelectionRangeRequest, SelectionRange, SelectionRangeParams
+	SelectionRangeRequest, SelectionRange, SelectionRangeParams, ProgressType
 } from 'vscode-languageserver-protocol';
 
 import { Configuration, ConfigurationFeature } from './configuration';
@@ -1183,6 +1183,22 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	sendNotification(method: string, params?: any): void;
 
 	/**
+	 * Installs a progress handler for a given token.
+	 * @param type the progress type
+	 * @param token the token
+	 * @param handler the handler
+	 */
+	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable;
+
+	/**
+	 * Sends progress.
+	 * @param type the progress type
+	 * @param token the token to use
+	 * @param value the progress value
+	 */
+	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): void;
+
+	/**
 	 * Installs a handler for the initialize request.
 	 *
 	 * @param handler The initialize handler.
@@ -1777,6 +1793,9 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 			}
 		},
 		onNotification: (type: string | RPCMessageType | StarNotificationHandler, handler?: GenericNotificationHandler): void => (connection as any).onNotification(type, handler),
+
+		onProgress: connection.onProgress,
+		sendProgress: connection.sendProgress,
 
 		onInitialize: (handler) => initializeHandler = handler,
 		onInitialized: (handler) => connection.onNotification(InitializedNotification.type, handler),

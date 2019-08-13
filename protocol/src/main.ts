@@ -13,7 +13,7 @@ import {
 	MessageReader, MessageWriter, Logger, ConnectionStrategy,
 	StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageWriter,
 	createClientPipeTransport, createServerPipeTransport, generateRandomPipeName, DataCallback,
-	createClientSocketTransport, createServerSocketTransport,
+	createClientSocketTransport, createServerSocketTransport, ProgressType,
 	createMessageConnection
 } from 'vscode-jsonrpc';
 
@@ -27,7 +27,7 @@ export {
 	StreamMessageReader, StreamMessageWriter,
 	IPCMessageReader, IPCMessageWriter,
 	createClientPipeTransport, createServerPipeTransport, generateRandomPipeName, DataCallback,
-	createClientSocketTransport, createServerSocketTransport,
+	createClientSocketTransport, createServerSocketTransport, ProgressType
 }
 
 export * from 'vscode-languageserver-types';
@@ -58,31 +58,26 @@ export namespace Proposed {
 	export type CallHierarchyItem = callHierarchy.CallHierarchyItem;
 	export type CallHierarchyCall = callHierarchy.CallHierarchyCall;
 
-	export type ProgressClientCapabilities = progress.ProgressClientCapabilities;
+	export type WorkDoneProgressClientCapabilities = progress.WorkDoneProgressClientCapabilities;
+	export type WorkDoneProgressStart = progress.WorkDoneProgressStart;
+	export type WorkDoneProgressReport = progress.WorkDoneProgressReport;
+	export type WorkDoneProgressDone = progress.WorkDoneProgressDone;
 	// export type ProgressServerCapabilities = progress.ProgressServerCapabilities;
 
-	export type ProgressStartParams = progress.ProgressStartParams;
-	export namespace ProgressStartNotification {
-		export const type = progress.ProgressStartNotification.type;
-		export type HandlerSignature = progress.ProgressStartNotification.HandlerSignature;
+	export namespace WorkDoneProgress {
+		export const type = progress.WorkDoneProgress.type;
 	}
 
-	export type ProgressReportParams = progress.ProgressReportParams;
-	export namespace ProgressReportNotification {
-		export const type = progress.ProgressReportNotification.type;
-		export type HandlerSignature = progress.ProgressReportNotification.HandlerSignature;
+	export type WorkDoneProgressCreateParams = progress.WorkDoneProgressCreateParams;
+	export namespace WorkDoneProgressCreateRequest {
+		export const type = progress.WorkDoneProgressCreateRequest.type;
+		export type HandlerSignature = progress.WorkDoneProgressCreateRequest.HandlerSignature;
 	}
 
-	export type ProgressDoneParams = progress.ProgressDoneParams;
-	export namespace ProgressDoneNotification {
-		export const type = progress.ProgressDoneNotification.type;
-		export type HandlerSignature = progress.ProgressDoneNotification.HandlerSignature;
-	}
-
-	export type ProgressCancelParams = progress.ProgressCancelParams;
-	export namespace ProgressCancelNotification {
-		export const type = progress.ProgressCancelNotification.type;
-		export type HandlerSignature = progress.ProgressCancelNotification.HandlerSignature;
+	export type WorkDoneProgressCancelParams = progress.WorkDoneProgressCancelParams;
+	export namespace WorkDoneProgressCancelNotification {
+		export const type = progress.WorkDoneProgressCancelNotification.type;
+		export type HandlerSignature = progress.WorkDoneProgressCancelNotification.HandlerSignature;
 	}
 }
 
@@ -203,6 +198,22 @@ export interface ProtocolConnection {
 	 * @param handler The actual handler.
 	 */
 	onNotification(method: string, handler: GenericNotificationHandler): void;
+
+	/**
+	 * Installs a progress handler for a given token.
+	 * @param type the progress type
+	 * @param token the token
+	 * @param handler the handler
+	 */
+	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable;
+
+	/**
+	 * Sends progress.
+	 * @param type the progress type
+	 * @param token the token to use
+	 * @param value the progress value
+	 */
+	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): void;
 
 	/**
 	 * Enables tracing mode for the connection.
