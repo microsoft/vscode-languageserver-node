@@ -24,4 +24,13 @@ const root = path.dirname(path.dirname(__dirname));
 	await ln.tryLinkJsonRpc(clientFolder);
 	await ln.tryLinkTypes(clientFolder);
 	await ln.tryLinkProtocol(clientFolder);
+
+	// test-extension
+	let extensionFolder = path.join(root, 'client-tests');
+	await ln.tryLinkJsonRpc(extensionFolder);
+	await ln.tryLinkTypes(extensionFolder);
+	await ln.tryLinkProtocol(extensionFolder);
+	await ln.tryLink(extensionFolder, 'vscode-languageserver', 'server');
+	await ln.tryLink(extensionFolder, 'vscode-languageclient', 'client');
+
 })();

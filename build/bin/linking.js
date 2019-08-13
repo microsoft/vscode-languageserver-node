@@ -10,8 +10,6 @@ const readdir = promisify(fs.readdir);
 const mkdir = promisify(fs.mkdir);
 const exists = promisify(fs.exists);
 
-const options = "-rf";
-
 /**
  * @param {string} source
  * @param {string} dest
@@ -50,7 +48,7 @@ const tryLink = exports.tryLink = async function(module, name, source) {
 	try {
 		process.chdir(path.join(module, 'node_modules'));
 		if (await exists(name)) {
-			shell.rm(options , name);
+			shell.rm('-rf' , name);
 		}
 		shell.ln('-s', path.join('..', '..', source), name);
 	} finally {
