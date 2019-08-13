@@ -30,6 +30,7 @@ class ProgressPart {
 
 	public constructor(private _client: BaseLanguageClient, private _token: number | string) {
 		this._reported = 0;
+		this._client.on
 	}
 
 	public start(params: Proposed.WorkDoneProgressStart): void {

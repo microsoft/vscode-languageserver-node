@@ -54,7 +54,7 @@ import {
 	ExecuteCommandRequest, ExecuteCommandParams, ExecuteCommandRegistrationOptions,
 	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse,
 	MarkupKind, SymbolKind, CompletionItemKind, Command, CodeActionKind, DocumentSymbol, SymbolInformation, Range,
-	CodeActionRegistrationOptions, TextDocumentEdit, ResourceOperationKind, FailureHandlingKind
+	CodeActionRegistrationOptions, TextDocumentEdit, ResourceOperationKind, FailureHandlingKind, ProgressType
 } from 'vscode-languageserver-protocol';
 
 import { ColorProviderMiddleware } from './colorProvider';
@@ -103,6 +103,9 @@ interface IConnection {
 	onNotification<P, RO>(type: NotificationType<P, RO>, handler: NotificationHandler<P>): void;
 	onNotification(method: string, handler: GenericNotificationHandler): void;
 	onNotification(method: string | RPCMessageType, handler: GenericNotificationHandler): void;
+
+	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable;
+	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): void;
 
 	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): void;
 	trace(value: Trace, tracer: Tracer, traceOptions?: TraceOptions): void;
@@ -165,6 +168,9 @@ function createConnection(input: any, output: any, errorHandler: ConnectionError
 
 		sendNotification: (type: string | RPCMessageType, params?: any): void => connection.sendNotification(Is.string(type) ? type : type.method, params),
 		onNotification: (type: string | RPCMessageType, handler: GenericNotificationHandler): void => connection.onNotification(Is.string(type) ? type : type.method, handler),
+
+		onProgress: connection.onProgress,
+		sendProgress: connection.sendProgress,
 
 		trace: (value: Trace, tracer: Tracer, sendNotificationOrTraceOptions?: boolean | TraceOptions): void => {
 			const defaultTraceOptions: TraceOptions = {
@@ -2548,6 +2554,18 @@ export abstract class BaseLanguageClient {
 			this._resolvedConnection!.onNotification(type, handler);
 		} catch (error) {
 			this.error(`Registering notification handler ${Is.string(type) ? type : type.method} failed.`, error);
+			throw error;
+		}
+	}
+
+	public onProgress<P>(type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable {
+		if (!this.isConnectionActive()) {
+			throw new Error('Language client is not ready yet');
+		}
+		try {
+			return this._resolvedConnection!.onProgress(type, token, handler);
+		} catch (error) {
+			this.error(`Registering progress handler for token ${token} failed.`, error);
 			throw error;
 		}
 	}
