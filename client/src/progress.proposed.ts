@@ -6,10 +6,11 @@
 
 import { window, Progress, ProgressLocation } from 'vscode';
 
-import { ClientCapabilities, Proposed, CancellationToken } from 'vscode-languageserver-protocol';
+import { ClientCapabilities, Proposed, CancellationToken, Disposable } from 'vscode-languageserver-protocol';
 
 import { BaseLanguageClient, StaticFeature } from './client';
 import * as Is from './utils/is';
+import { WorkDoneProgress } from 'vscode-languageserver-protocol/lib/protocol.progress.proposed';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -24,16 +25,29 @@ class ProgressPart {
 	private _reported: number;
 	private _progress: Progress<{ message?: string, increment?: number}>;
 	private _cancellationToken: CancellationToken;
+	private _disposable: Disposable;
 
 	private _resolve: () => void;
 	private _reject: (reason?: any) => void;
 
 	public constructor(private _client: BaseLanguageClient, private _token: number | string) {
 		this._reported = 0;
-		this._client.on
+		this._disposable = this._client.onProgress(WorkDoneProgress.type, this._token, (value) => {
+			switch (value.kind) {
+				case 'start':
+					this.start(value);
+					break;
+				case 'report':
+					this.report(value);
+					break;
+				case 'done':
+					this.done();
+					break;
+			}
+		});
 	}
 
-	public start(params: Proposed.WorkDoneProgressStart): void {
+	private start(params: Proposed.WorkDoneProgressStart): void {
 		let location: ProgressLocation = params.cancellable ? ProgressLocation.Notification : ProgressLocation.Window;
 		window.withProgress<void>({ location, cancellable: params.cancellable, title: params.title}, async (progress, cancellationToken) => {
 			this._progress = progress;
@@ -51,7 +65,7 @@ class ProgressPart {
 
 	}
 
-	public report(params: Proposed.WorkDoneProgressReport | Proposed.WorkDoneProgressStart): void {
+	private report(params: Proposed.WorkDoneProgressReport | Proposed.WorkDoneProgressStart): void {
 		if (this._infinite && Is.string(params.message)) {
 			this._progress.report({ message: params.message });
 		} else if (Is.number(params.percentage)) {
@@ -67,13 +81,12 @@ class ProgressPart {
 	}
 
 	public done(): void {
+		this._disposable.dispose();
 		this._resolve();
 	}
 }
 
 export class ProgressFeature implements StaticFeature {
-
-	private _progresses: Map<string | number, ProgressPart> = new Map<string, ProgressPart>();
 
 	constructor(private _client: BaseLanguageClient) {}
 
@@ -84,29 +97,10 @@ export class ProgressFeature implements StaticFeature {
 
 	public initialize(): void {
 		let client = this._client;
-		let progresses = this._progresses;
 
 		let createHandler = (params: Proposed.WorkDoneProgressCreateParams) => {
-			let progress = new ProgressPart(this._client, params.token);
-			this._progresses.set(params.token, progress);
+			new ProgressPart(this._client, params.token);
 		}
 		client.onRequest(Proposed.WorkDoneProgressCreateRequest.type, createHandler);
-
-		let reportHandler = (params: Proposed.ProgressReportParams) => {
-			let progress = this._progresses.get(params.id);
-			if (progress !== undefined) {
-				progress.report(params);
-			}
-		}
-		client.onNotification(Proposed.ProgressReportNotification.type, reportHandler);
-
-		let doneHandler = (params: Proposed.ProgressDoneParams) => {
-			let progress = progresses.get(params.id);
-			if (progress !== undefined) {
-				progress.done();
-				progresses.delete(params.id);
-			}
-		}
-		client.onNotification(Proposed.ProgressDoneNotification.type, doneHandler);
 	}
 }

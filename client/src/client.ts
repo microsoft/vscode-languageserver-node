@@ -2570,6 +2570,19 @@ export abstract class BaseLanguageClient {
 		}
 	}
 
+	public sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): void {
+		if (!this.isConnectionActive()) {
+			throw new Error('Language client is not ready yet');
+		}
+		this.forceDocumentSync();
+		try {
+			this._resolvedConnection!.sendProgress(type, token, value);
+		} catch (error) {
+			this.error(`Sending progress for token ${token} failed.`, error);
+			throw error;
+		}
+	}
+
 	public get clientOptions(): LanguageClientOptions {
 		return this._clientOptions;
 	}
