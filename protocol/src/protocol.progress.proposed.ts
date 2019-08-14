@@ -76,6 +76,15 @@ export interface WorkDoneProgressReport {
 	kind: 'report';
 
 	/**
+	 * Controls enablement state of a cancel button. This property is only valid if a cancel
+	 * button got requested in the `WorkDoneProgressStart` payload.
+	 *
+	 * Clients that don't support cancellation or don't support control the button's
+	 * enablement state are allowed to ignore the setting.
+	 */
+	cancellable?: boolean;
+
+	/**
 	 * Optional, more detailed associated progress message. Contains
 	 * complementary information to the `title`.
 	 *
@@ -98,6 +107,12 @@ export interface WorkDoneProgressReport {
 export interface WorkDoneProgressDone {
 
 	kind: 'done';
+
+	/**
+	 * Optional, a final message indicating to for example indicate the outcome
+	 * of the operation.
+	 */
+	message?: string;
 }
 
 export namespace WorkDoneProgress {

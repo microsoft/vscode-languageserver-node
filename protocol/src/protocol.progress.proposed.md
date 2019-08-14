@@ -1,10 +1,10 @@
 #### Reporting server task progress
 
-Many tools are capable of performing some background task processing or data streaming. From a UX point of view, it's good to report both the fact that the tool is performing some background work, but also report the progress being made for it. To realize that and to provide a simple proposal based on which the feature can be later improved, the following additions are proposed:
+Many tools are capable of performing some background task processing or data streaming. From a UX point of view, it's good to report both the fact that the tool is performing some background work, but also report the progress being made for it. Work done progress reporting leverages the generic progress reporting provided by LSP using the `$/progress` notification. The reporting uses tokens issued either by the client or requested by the server using the `window/workDoneProgress/create` request.
 
 _Client Capabilities_:
 
-The client sets the following capability if it is supporting notifying task progress.
+The client sets the following capability if it supports initiating work done progress from the server side.
 
 ```ts
 	/**
@@ -12,29 +12,45 @@ The client sets the following capability if it is supporting notifying task prog
 	 */
 	window?: {
 		/**
-		 * Whether client supports handling progress notifications.
+		 * Whether client supports create a work done progress UI from the server side.
 		 */
-		progress?: boolean;
+		workDoneProgress?: boolean;
 	}
 ```
 
-##### Progress Start Notification
+##### Work Done Progress create Request (:rightwards_arrow_with_hook:)
 
-The `window/progress/start` notification is sent from the server to the client to ask the client to start progress.
+The `window/workDoneProgress/create` request is sent from the server to the client to ask the client to create a work done progress.
 
-_Notification_:
+_Request_:
 
-* method: 'window/progress/start'
-* params: `ProgressStartParams` defined as follows:
+* method: 'window/workDoneProgress/create'
+* params: `WorkDoneProgressCreateParams` defined as follows:
 
 ```ts
-export interface ProgressStartParams {
-
+export interface WorkDoneProgressCreateParams {
 	/**
-	 * A unique identifier to associate multiple progress notifications with
-	 * the same progress.
+	 * The token to be used to report progress.
 	 */
-	id: string;
+	token: ProgressToken;
+}
+```
+
+_Response_:
+
+* result: void
+* error: code and message set in case an exception happens during the 'window/workDoneProgress/create' request
+
+As mentioned earlier the actual progress reporting is done using the generic `$/progress` notification as specified in LSP. The following value payloads are valid for work done progress tokens:
+
+###### WorkDoneProgressStart
+
+This payload is defined as follows:
+
+```ts
+export interface WorkDoneProgressStart {
+
+	kind: 'start';
 
 	/**
 	 * Mandatory title of the progress operation. Used to briefly inform about
@@ -46,8 +62,9 @@ export interface ProgressStartParams {
 
 	/**
 	 * Controls if a cancel button should show to allow the user to cancel the
-	 * long running operation. Clients that don't support cancellation are allowed
-	 * to ignore the setting.
+	 * long running operation.
+	 *
+	 * Clients that don't support cancellation are allowed to ignore the setting.
 	 */
 	cancellable?: boolean;
 
@@ -72,22 +89,26 @@ export interface ProgressStartParams {
 }
 ```
 
-##### Progress Report Notification
+and should only be sent once per work done progress token.
 
-The `window/progress/report` notification is sent from the server to the client to report progress for a previously started progress.
+###### WorkDoneProgressReport
 
-_Notification_:
-
-* method: 'window/progress/report'
-* params: `ProgressReportParams` defined as follows:
+This payload is defined as follows:
 
 ```ts
-export interface ProgressReportParams {
- 
+
+export interface WorkDoneProgressReport {
+
+	kind: 'report';
+
 	/**
-	 * A unique identifier to associate multiple progress notifications with the same progress.
+	 * Controls enablement state of a cancel button. This property is only valid if a cancel
+	 * button got requested in the `WorkDoneProgressStart` payload.
+	 *
+	 * Clients that don't support cancellation or don't support control the button's
+	 * enablement state are allowed to ignore the setting.
 	 */
-	id: string;
+	cancellable?: boolean;
 
 	/**
 	 * Optional, more detailed associated progress message. Contains
@@ -100,47 +121,51 @@ export interface ProgressReportParams {
 
 	/**
 	 * Optional progress percentage to display (value 100 is considered 100%).
-	 * If infinite progress was indicated in the start notification client
-	 * are allowed to ignore the value. In addition the value should be steadily
-	 * rising. Clients are free to ignore values that are not following this rule.
+	 * If not provided infinite progress is assumed and clients are allowed
+	 * to ignore the `percentage` value in subsequent in report notifications.
+	 *
+	 * The value should be steadily rising. Clients are free to ignore values
+	 * that are not following this rule.
 	 */
 	percentage?: number;
 }
 ```
 
-##### Progress Done Notification
+The payload can be sent n times.
 
-The `window/progress/done` notification is sent from the server to the client to stop a previously started progress.
+###### WorkDoneProgressDone
 
-_Notification_:
-
-* method: 'window/progress/done'
-* params: `ProgressDoneParams` defined as follows:
+This payload is defined as follows:
 
 ```ts
-export interface ProgressDoneParams {
+export interface WorkDoneProgressDone {
+
+	kind: 'done';
+
 	/**
-	 * A unique identifier to associate multiple progress notifications with the same progress.
+	 * Optional, a final message indicating to for example indicate the outcome
+	 * of the operation.
 	 */
-	id: string;
+	message?: string;
 }
 ```
 
-##### Progress Cancel Notification
+The payload should only be sent once.
 
-The `window/progress/cancel` notification is sent from the client to the server to inform the server that the user has pressed the
-cancel button on the progress UX. A server receiving a cancel request must still close a progress using the done notification.
+##### Work Done Progress cancel Notification (:leftwards_arrow:)
+
+The `window/workDoneProgress/cancel` is sent from the client to the server to indicate that the user has pressed cancel on a server initiated work done progress.
 
 _Notification_:
 
-* method: 'window/progress/cancel'
-* params: `ProgressCancelParams` defined as follows:
+* method: 'window/workDoneProgress/cancel'
+* params: `WorkDoneProgressCancelParams` defined as follows:
 
 ```ts
-export interface ProgressCancelParams {
+export interface WorkDoneProgressCancelParams {
 	/**
-	 * A unique identifier to associate multiple progress notifications with the same progress.
+	 * The token to be used to report progress.
 	 */
-	id: string;
+	token: ProgressToken;
 }
 ```
