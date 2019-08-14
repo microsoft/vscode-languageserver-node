@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { NotificationType, NotificationHandler, RequestType, RequestHandler, ProgressType } from 'vscode-jsonrpc';
+import { NotificationType, NotificationHandler, RequestType, RequestHandler, ProgressType, ProgressToken } from 'vscode-jsonrpc';
 
 export interface WorkDoneProgressClientCapabilities {
 	/**
@@ -108,7 +108,7 @@ export interface WorkDoneProgressCreateParams  {
 	/**
 	 * The token to be used to report progress.
 	 */
-	token: number | string;
+	token: ProgressToken;
 }
 
 /**
@@ -124,7 +124,7 @@ export interface WorkDoneProgressCancelParams {
 	/**
 	 * The token to be used to report progress.
 	 */
-	token: string;
+	token: ProgressToken;
 }
 
 /**

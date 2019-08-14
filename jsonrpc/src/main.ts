@@ -53,11 +53,12 @@ namespace CancelNotification {
 	export const type = new NotificationType<CancelParams, void>('$/cancelRequest');
 }
 
+export type ProgressToken = number | string;
 interface ProgressParams<T> {
 	/**
 	 * The progress token provided by the client.
 	 */
-	token: number | string;
+	token: ProgressToken;
 
 	/**
 	 * The progress data.
