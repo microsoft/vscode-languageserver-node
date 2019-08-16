@@ -32,9 +32,9 @@ export interface WorkDoneProgressClientCapabilities {
 // 	}
 // }
 
-export interface WorkDoneProgressStart {
+export interface WorkDoneProgressBegin {
 
-	kind: 'start';
+	kind: 'begin';
 
 	/**
 	 * Mandatory title of the progress operation. Used to briefly inform about
@@ -116,7 +116,7 @@ export interface WorkDoneProgressDone {
 }
 
 export namespace WorkDoneProgress {
-	export const type = new ProgressType<WorkDoneProgressStart | WorkDoneProgressReport | WorkDoneProgressDone>();
+	export const type = new ProgressType<WorkDoneProgressBegin | WorkDoneProgressReport | WorkDoneProgressDone>();
 }
 
 export interface WorkDoneProgressCreateParams  {

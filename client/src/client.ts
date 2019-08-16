@@ -14,7 +14,7 @@ import {
 	FormattingOptions as VFormattingOptions, TextEdit as VTextEdit, WorkspaceEdit as VWorkspaceEdit, MessageItem,
 	Hover as VHover, CodeAction as VCodeAction, DocumentSymbol as VDocumentSymbol,
 	DocumentLink as VDocumentLink, TextDocumentWillSaveEvent,
-	WorkspaceFolder as VWorkspaceFolder, CompletionContext as VCompletionContext, ConfigurationChangeEvent
+	WorkspaceFolder as VWorkspaceFolder, CompletionContext as VCompletionContext, ConfigurationChangeEvent,
 } from 'vscode';
 
 import {
@@ -54,7 +54,12 @@ import {
 	ExecuteCommandRequest, ExecuteCommandParams, ExecuteCommandRegistrationOptions,
 	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse,
 	MarkupKind, SymbolKind, CompletionItemKind, Command, CodeActionKind, DocumentSymbol, SymbolInformation, Range,
-	CodeActionRegistrationOptions, TextDocumentEdit, ResourceOperationKind, FailureHandlingKind, ProgressType, WorkDoneProgressOptions, StaticRegistrationOptions, CompletionOptions, HoverRegistrationOptions, HoverOptions, SignatureHelpOptions, DefinitionRegistrationOptions, DefinitionOptions, ReferenceRegistrationOptions, ReferenceOptions, DocumentHighlightRegistrationOptions, DocumentHighlightOptions, DocumentSymbolRegistrationOptions, DocumentSymbolOptions, WorkspaceSymbolRegistrationOptions, CodeActionOptions, CodeLensOptions, DocumentFormattingOptions, DocumentRangeFormattingRegistrationOptions, DocumentRangeFormattingOptions, DocumentOnTypeFormattingOptions, RenameOptions, DocumentLinkOptions
+	CodeActionRegistrationOptions, TextDocumentEdit, ResourceOperationKind, FailureHandlingKind, ProgressType, ProgressToken,
+	WorkDoneProgressOptions, StaticRegistrationOptions, CompletionOptions, HoverRegistrationOptions, HoverOptions,
+	SignatureHelpOptions, DefinitionRegistrationOptions, DefinitionOptions, ReferenceRegistrationOptions, ReferenceOptions,
+	DocumentHighlightRegistrationOptions, DocumentHighlightOptions, DocumentSymbolRegistrationOptions, DocumentSymbolOptions,
+	WorkspaceSymbolRegistrationOptions, CodeActionOptions, CodeLensOptions, DocumentFormattingOptions, DocumentRangeFormattingRegistrationOptions,
+	DocumentRangeFormattingOptions, DocumentOnTypeFormattingOptions, RenameOptions, DocumentLinkOptions
 } from 'vscode-languageserver-protocol';
 
 import { ColorProviderMiddleware } from './colorProvider';
@@ -72,6 +77,7 @@ import * as p2c from './protocolConverter';
 import * as Is from './utils/is';
 import { Delayer } from './utils/async'
 import * as UUID from './utils/uuid';
+import { ProgressPart } from './progressPart';
 
 export { Converter as Code2ProtocolConverter } from './codeConverter';
 export { Converter as Protocol2CodeConverter } from './protocolConverter';
@@ -478,6 +484,7 @@ export interface LanguageClientOptions {
 	stdioEncoding?: string;
 	initializationOptions?: any | (() => any);
 	initializationFailedHandler?: InitializationFailedHandler;
+	showProgressOnInitialization?: boolean;
 	errorHandler?: ErrorHandler;
 	middleware?: Middleware;
 	uriConverters?: {
@@ -496,6 +503,7 @@ interface ResolvedClientOptions {
 	stdioEncoding: string;
 	initializationOptions?: any | (() => any);
 	initializationFailedHandler?: InitializationFailedHandler;
+	showProgressOnInitialization: boolean;
 	errorHandler: ErrorHandler;
 	middleware: Middleware;
 	uriConverters?: {
@@ -2419,6 +2427,7 @@ export abstract class BaseLanguageClient {
 			stdioEncoding: clientOptions.stdioEncoding || 'utf8',
 			initializationOptions: clientOptions.initializationOptions,
 			initializationFailedHandler: clientOptions.initializationFailedHandler,
+			showProgressOnInitialization: !!clientOptions.showProgressOnInitialization,
 			errorHandler: clientOptions.errorHandler || new DefaultErrorHandler(this._name),
 			middleware: clientOptions.middleware || {},
 			uriConverters: clientOptions.uriConverters,
@@ -2830,6 +2839,23 @@ export abstract class BaseLanguageClient {
 			workspaceFolders: null
 		};
 		this.fillInitializeParams(initParams);
+		if (this._clientOptions.showProgressOnInitialization) {
+			const token: ProgressToken = UUID.generateUuid();
+			const part: ProgressPart = new ProgressPart(connection, token);
+			initParams.workDoneToken = token;
+			return this.doInitialize(connection, initParams).then((result) => {
+				part.done();
+				return result;
+			}, (error) => {
+				part.cancel();
+				throw error;
+			});
+		} else {
+			return this.doInitialize(connection, initParams);
+		}
+	}
+
+	private doInitialize(connection: IConnection, initParams: InitializeParams): Thenable<InitializeResult> {
 		return connection.initialize(initParams).then((result) => {
 			this._resolvedConnection = connection;
 			this._initializeResult = result;

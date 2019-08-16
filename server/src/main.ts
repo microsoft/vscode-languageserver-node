@@ -10,7 +10,7 @@ import {
 	Location, Command, TextEdit, WorkspaceEdit, CompletionItem, CompletionList, Hover,
 	SignatureHelp, Definition, DocumentHighlight, SymbolInformation, DocumentSymbol, WorkspaceSymbolParams, DocumentSymbolParams,
 	CodeLens, DocumentLink, Range,
-	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler,
+	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler, HandlerResult,
 	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler, StarNotificationHandler,
 	RPCMessageType, ResponseError,
 	Logger, MessageReader, IPCMessageReader,
@@ -1089,6 +1089,10 @@ class TelemetryImpl implements Telemetry {
 	}
 }
 
+export interface ServerRequestHandler<P, R, E> {
+	(params: P, token: CancellationToken, workDoneProgress?: WorkDoneProgress, resultProgress?: ResultProgress<R>): HandlerResult<R, E>;
+}
+
 /**
  * Interface to describe the shape of the server connection.
  */
@@ -1203,7 +1207,7 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The initialize handler.
 	 */
-	onInitialize(handler: RequestHandler<InitializeParams, InitializeResult, InitializeError>): void;
+	onInitialize(handler: ServerRequestHandler<InitializeParams, InitializeResult, InitializeError>): void;
 
 	/**
 	 * Installs a handler for the initialized notification.
@@ -1335,7 +1339,7 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onHover(handler: RequestHandler<TextDocumentPositionParams, Hover | undefined | null, void>): void;
+	onHover(handler: ServerRequestHandler<TextDocumentPositionParams, Hover | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the `Completion` request.
@@ -1405,7 +1409,7 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentSymbol(handler: RequestHandler<DocumentSymbolParams, SymbolInformation[] | DocumentSymbol[] | undefined | null, void>): void;
+	onDocumentSymbol(handler: ServerRequestHandler<DocumentSymbolParams, SymbolInformation[] | DocumentSymbol[] | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the `WorkspaceSymbol` request.
@@ -1776,7 +1780,7 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 	}
 
 	let shutdownHandler: RequestHandler0<void, void> | undefined = undefined;
-	let initializeHandler: RequestHandler<InitializeParams, InitializeResult, InitializeError> | undefined = undefined;
+	let initializeHandler: ServerRequestHandler<InitializeParams, InitializeResult, InitializeError> | undefined = undefined;
 	let exitHandler: NotificationHandler0 | undefined = undefined;
 	let protocolConnection: Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace> & ConnectionState = {
 		listen: (): void => connection.listen(),
@@ -1822,7 +1826,9 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 
 		sendDiagnostics: (params) => connection.sendNotification(PublishDiagnosticsNotification.type, params),
 
-		onHover: (handler) => connection.onRequest(HoverRequest.type, handler),
+		onHover: (handler) => connection.onRequest(HoverRequest.type, (params, cancel) => {
+			return handler(params, cancel, attachWorkDone(connection, params), undefined);
+		}),
 		onCompletion: (handler) => connection.onRequest(CompletionRequest.type, handler),
 		onCompletionResolve: (handler) => connection.onRequest(CompletionResolveRequest.type, handler),
 		onSignatureHelp: (handler) => connection.onRequest(SignatureHelpRequest.type, handler),
@@ -1832,7 +1838,9 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 		onImplementation: (handler) => connection.onRequest(ImplementationRequest.type, handler),
 		onReferences: (handler) => connection.onRequest(ReferencesRequest.type, handler),
 		onDocumentHighlight: (handler) => connection.onRequest(DocumentHighlightRequest.type, handler),
-		onDocumentSymbol: (handler) => connection.onRequest(DocumentSymbolRequest.type, handler),
+		onDocumentSymbol: (handler) => connection.onRequest(DocumentSymbolRequest.type, (params, cancel) => {
+			return handler(params, cancel, attachWorkDone(connection, params), attachPartialResult(connection, params));
+		}),
 		onWorkspaceSymbol: (handler) => connection.onRequest(WorkspaceSymbolRequest.type, handler),
 		onCodeAction: (handler) => connection.onRequest(CodeActionRequest.type, handler),
 		onCodeLens: (handler) => connection.onRequest(CodeLensRequest.type, handler),
@@ -1877,7 +1885,7 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 			remote.initialize(params.capabilities);
 		}
 		if (initializeHandler) {
-			let result = initializeHandler(params, new CancellationTokenSource().token);
+			let result = initializeHandler(params, new CancellationTokenSource().token, attachWorkDone(connection, params), undefined);
 			return asThenable(result).then((value) => {
 				if (value instanceof ResponseError) {
 					return value;
@@ -1941,7 +1949,7 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 }
 
 // Export the protocol currently in proposed state.
-import { ProgressFeature, WindowProgress } from './proposed.progress';
+import { ProgressFeature, WindowProgress, WorkDoneProgress, ResultProgress, attachWorkDone, attachPartialResult } from './proposed.progress';
 
 export namespace ProposedFeatures {
 	export const all: Features<_, _, _, _, WindowProgress, _> = {

@@ -8,12 +8,12 @@ import {
 	ErrorCodes, ResponseError, CancellationToken, CancellationTokenSource,
 	Disposable, Event, Emitter, Trace, Tracer, TraceFormat, TraceOptions, SetTraceNotification, LogTraceNotification,
 	Message, NotificationMessage, RequestMessage, MessageType as RPCMessageType,
-	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler,
+	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler, HandlerResult,
 	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler, StarNotificationHandler,
 	MessageReader, MessageWriter, Logger, ConnectionStrategy,
 	StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageWriter,
 	createClientPipeTransport, createServerPipeTransport, generateRandomPipeName, DataCallback,
-	createClientSocketTransport, createServerSocketTransport, ProgressType,
+	createClientSocketTransport, createServerSocketTransport, ProgressType, ProgressToken,
 	createMessageConnection
 } from 'vscode-jsonrpc';
 
@@ -21,13 +21,13 @@ export {
 	ErrorCodes, ResponseError, CancellationToken, CancellationTokenSource,
 	Disposable, Event, Emitter, Trace, Tracer, TraceFormat, TraceOptions, SetTraceNotification, LogTraceNotification,
 	Message, NotificationMessage, RequestMessage, RPCMessageType,
-	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler,
+	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler, HandlerResult,
 	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler, StarNotificationHandler,
 	MessageReader, MessageWriter, Logger, ConnectionStrategy,
 	StreamMessageReader, StreamMessageWriter,
 	IPCMessageReader, IPCMessageWriter,
 	createClientPipeTransport, createServerPipeTransport, generateRandomPipeName, DataCallback,
-	createClientSocketTransport, createServerSocketTransport, ProgressType
+	createClientSocketTransport, createServerSocketTransport, ProgressType, ProgressToken
 }
 
 export * from 'vscode-languageserver-types';
@@ -59,7 +59,7 @@ export namespace Proposed {
 	export type CallHierarchyCall = callHierarchy.CallHierarchyCall;
 
 	export type WorkDoneProgressClientCapabilities = progress.WorkDoneProgressClientCapabilities;
-	export type WorkDoneProgressStart = progress.WorkDoneProgressStart;
+	export type WorkDoneProgressBegin = progress.WorkDoneProgressBegin;
 	export type WorkDoneProgressReport = progress.WorkDoneProgressReport;
 	export type WorkDoneProgressDone = progress.WorkDoneProgressDone;
 	// export type ProgressServerCapabilities = progress.ProgressServerCapabilities;

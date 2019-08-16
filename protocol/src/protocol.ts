@@ -1099,7 +1099,7 @@ export namespace InitializeRequest {
 /**
  * The initialize parameters
  */
-export interface _InitializeParams {
+export interface _InitializeParams extends WorkDoneProgressParams {
 	/**
 	 * The process Id of the parent process that started
 	 * the server.
