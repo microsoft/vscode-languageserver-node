@@ -5,7 +5,7 @@
 
 import { RequestType, RequestHandler } from 'vscode-jsonrpc';
 import { TextDocumentIdentifier, Position, SelectionRange } from 'vscode-languageserver-types';
-import { TextDocumentRegistrationOptions, StaticRegistrationOptions } from './protocol';
+import { TextDocumentRegistrationOptions, WorkDoneProgressOptions, StaticRegistrationOptions } from './protocol';
 
 // ---- capabilities
 
@@ -28,14 +28,17 @@ export interface SelectionRangeClientCapabilities {
 	};
 }
 
-export interface SelectionRangeProviderOptions {
+export interface SelectionRangeOptions extends WorkDoneProgressOptions {
+}
+
+export interface SelectionRangeRegistrationOptions extends SelectionRangeOptions, TextDocumentRegistrationOptions {
 }
 
 export interface SelectionRangeServerCapabilities {
 	/**
 	 * The server provides selection range support.
 	 */
-	selectionRangeProvider?: boolean | (TextDocumentRegistrationOptions & StaticRegistrationOptions & SelectionRangeProviderOptions);
+	selectionRangeProvider?: boolean | SelectionRangeOptions | (SelectionRangeRegistrationOptions & StaticRegistrationOptions);
 }
 
 /**
@@ -60,6 +63,6 @@ export interface SelectionRangeParams {
  * that resolves to such.
  */
 export namespace SelectionRangeRequest {
-	export const type: RequestType<SelectionRangeParams, SelectionRange[] | null, any, any> = new RequestType('textDocument/selectionRange');
+	export const type: RequestType<SelectionRangeParams, SelectionRange[] | null, any, SelectionRangeRegistrationOptions> = new RequestType('textDocument/selectionRange');
 	export type HandlerSignature = RequestHandler<SelectionRangeParams, SelectionRange[] | null, void>;
 }

@@ -39,3 +39,10 @@ export function typedArray<T>(value: any, check: (value: any) => boolean): value
 export function thenable<T>(value: any): value is Thenable<T> {
 	return value && func(value.then);
 }
+
+export function objectLiteral(value: any): value is object {
+	// Strictly speaking class instances pass this check as well. Since the LSP
+	// doesn't use classes we ignore this for now. If we do we need to add something
+	// like this: `Object.getPrototypeOf(Object.getPrototypeOf(x)) === null`
+	return value !== null && typeof value === 'object';
+}

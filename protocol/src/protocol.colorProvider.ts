@@ -4,8 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { RequestType } from 'vscode-jsonrpc';
-import { TextDocumentRegistrationOptions, StaticRegistrationOptions } from './protocol';
+import { RequestType, RequestHandler } from 'vscode-jsonrpc';
+import { TextDocumentRegistrationOptions, StaticRegistrationOptions, PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions } from './protocol';
 import { TextDocumentIdentifier, Range, Color, ColorInformation, ColorPresentation } from 'vscode-languageserver-types';
 
 //---- Server capability ----
@@ -21,7 +21,7 @@ export interface ColorClientCapabilities {
 		colorProvider?: {
 			/**
 			 * Whether implementation supports dynamic registration. If this is set to `true`
-			 * the client supports the new `(ColorProviderOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions)`
+			 * the client supports the new `(ColorRegistrationOptions & StaticRegistrationOptions)`
 			 * return value for the corresponding server capability as well.
 			 */
 			dynamicRegistration?: boolean;
@@ -29,14 +29,17 @@ export interface ColorClientCapabilities {
 	}
 }
 
-export interface ColorProviderOptions {
+export interface ColorOptions extends WorkDoneProgressOptions {
+}
+
+export interface ColorRegistrationOptions extends TextDocumentRegistrationOptions, ColorOptions {
 }
 
 export interface ColorServerCapabilities {
 	/**
 	 * The server provides color provider support.
 	 */
-	colorProvider?: boolean | ColorProviderOptions | (ColorProviderOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions);
+	colorProvider?: boolean | ColorOptions | (ColorRegistrationOptions & StaticRegistrationOptions);
 }
 
 //---- Color Symbol Provider ---------------------------
@@ -44,7 +47,7 @@ export interface ColorServerCapabilities {
 /**
  * Parameters for a [DocumentColorRequest](#DocumentColorRequest).
  */
-export interface DocumentColorParams {
+export interface DocumentColorParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
 	 * The text document.
 	 */
@@ -58,13 +61,14 @@ export interface DocumentColorParams {
  * that resolves to such.
  */
 export namespace DocumentColorRequest {
-	export const type = new RequestType<DocumentColorParams, ColorInformation[], void, TextDocumentRegistrationOptions>('textDocument/documentColor');
+	export const type = new RequestType<DocumentColorParams, ColorInformation[], void, ColorRegistrationOptions>('textDocument/documentColor');
+	export type HandlerSignature = RequestHandler<DocumentColorParams, ColorInformation[], void>;
 }
 
 /**
  * Parameters for a [ColorPresentationRequest](#ColorPresentationRequest).
  */
-export interface ColorPresentationParams {
+export interface ColorPresentationParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
 	 * The text document.
 	 */
@@ -88,5 +92,6 @@ export interface ColorPresentationParams {
  * that resolves to such.
  */
 export namespace ColorPresentationRequest {
-	export const type = new RequestType<ColorPresentationParams, ColorPresentation[], void, TextDocumentRegistrationOptions>('textDocument/colorPresentation');
+	export const type = new RequestType<ColorPresentationParams, ColorPresentation[], void, WorkDoneProgressOptions & TextDocumentRegistrationOptions>('textDocument/colorPresentation');
+	export type HandlerSignature = RequestHandler<ColorPresentationParams, ColorPresentation[], void>;
 }

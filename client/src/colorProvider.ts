@@ -4,17 +4,14 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import * as UUID from './utils/uuid';
-import * as Is from './utils/is';
-
 import { languages as Languages, Disposable, TextDocument, ProviderResult, Range as VRange, Color as VColor, ColorPresentation as VColorPresentation, ColorInformation as VColorInformation} from 'vscode';
 
 import {
-	ClientCapabilities, CancellationToken, ServerCapabilities, TextDocumentRegistrationOptions, DocumentSelector, StaticRegistrationOptions,
-	DocumentColorRequest, ColorPresentationRequest, Color, ColorInformation, ColorPresentation, ColorProviderOptions
+	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, DocumentColorRequest, ColorPresentationRequest, Color, ColorInformation, ColorPresentation
 } from 'vscode-languageserver-protocol';
 
 import { TextDocumentFeature, BaseLanguageClient } from './client';
+import { ColorRegistrationOptions, ColorOptions } from 'vscode-languageserver-protocol/lib/protocol.colorProvider';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -36,7 +33,7 @@ export interface ColorProviderMiddleware {
 	provideColorPresentations?: (this: void, color: VColor, context: { document: TextDocument, range: VRange }, token: CancellationToken, next: ProvideColorPresentationSignature) => ProviderResult<VColorPresentation[]>;
 }
 
-export class ColorProviderFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
+export class ColorProviderFeature extends TextDocumentFeature<boolean | ColorOptions, ColorRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, DocumentColorRequest.type);
@@ -47,22 +44,14 @@ export class ColorProviderFeature extends TextDocumentFeature<TextDocumentRegist
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		if (!capabilities.colorProvider) {
+		let [id, options] = this.getRegistration(documentSelector, capabilities.colorProvider);
+		if (!id || !options) {
 			return;
 		}
-
-		const implCapabilities = capabilities.colorProvider as TextDocumentRegistrationOptions & StaticRegistrationOptions & ColorProviderOptions;
-		const id = Is.string(implCapabilities.id) && implCapabilities.id.length > 0 ? implCapabilities.id : UUID.generateUuid();
-		const selector = implCapabilities.documentSelector || documentSelector;
-		if (selector) {
-			this.register(this.messages, {
-				id,
-				registerOptions: Object.assign({}, { documentSelector: selector })
-			});
-		}
+		this.register(this.messages, { id: id, registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): Disposable {
+	protected registerLanguageProvider(options: ColorRegistrationOptions): Disposable {
 		let client = this._client;
 		let provideColorPresentations: ProvideColorPresentationSignature = (color, context, token) => {
 			const requestParams = {

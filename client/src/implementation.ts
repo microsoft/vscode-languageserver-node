@@ -4,16 +4,14 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import * as UUID from './utils/uuid';
-import * as Is from  './utils/is';
-
 import { languages as Languages, Disposable, TextDocument, ProviderResult, Position as VPosition, Definition as VDefinition, DefinitionLink as VDefinitionLink } from 'vscode';
 
 import {
-	ClientCapabilities, CancellationToken, ServerCapabilities, TextDocumentRegistrationOptions, DocumentSelector, ImplementationRequest
+	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, ImplementationRequest
 } from 'vscode-languageserver-protocol';
 
 import { TextDocumentFeature, BaseLanguageClient } from './client';
+import { ImplementationRegistrationOptions, ImplementationOptions } from 'vscode-languageserver-protocol/lib/protocol.implementation';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -30,7 +28,7 @@ export interface ImplementationMiddleware {
 	provideImplementation?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideImplementationSignature) => ProviderResult<VDefinition | VDefinitionLink[]>;
 }
 
-export class ImplementationFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
+export class ImplementationFeature extends TextDocumentFeature<boolean | ImplementationOptions, ImplementationRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, ImplementationRequest.type);
@@ -43,31 +41,14 @@ export class ImplementationFeature extends TextDocumentFeature<TextDocumentRegis
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		if (!capabilities.implementationProvider) {
+		let [id, options] = this.getRegistration(documentSelector, capabilities.implementationProvider);
+		if (!id || !options) {
 			return;
 		}
-		if (capabilities.implementationProvider === true) {
-			if (!documentSelector) {
-				return;
-			}
-			this.register(this.messages, {
-				id: UUID.generateUuid(),
-				registerOptions: Object.assign({}, { documentSelector: documentSelector })
-			});
-		} else {
-			const implCapabilities = capabilities.implementationProvider;
-			const id = Is.string(implCapabilities.id) && implCapabilities.id.length > 0 ? implCapabilities.id : UUID.generateUuid();
-			const selector = implCapabilities.documentSelector || documentSelector;
-			if (selector) {
-				this.register(this.messages, {
-					id,
-					registerOptions: Object.assign({}, { documentSelector: selector })
-				});
-			}
-		}
+		this.register(this.messages, { id: id, registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): Disposable {
+	protected registerLanguageProvider(options: ImplementationRegistrationOptions): Disposable {
 		let client = this._client;
 		let provideImplementation: ProvideImplementationSignature = (document, position, token) => {
 			return client.sendRequest(ImplementationRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(

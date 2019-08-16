@@ -6,7 +6,7 @@
 
 import { RequestType, RequestHandler } from 'vscode-jsonrpc';
 import { Declaration, DeclarationLink, Location, LocationLink } from 'vscode-languageserver-types';
-import { TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams } from './protocol';
+import { TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams, PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions } from './protocol';
 
 // @ts-ignore: to avoid inlining LocatioLink as dynamic import
 let __noDynamicImport: LocationLink | Declaration | DeclarationLink | Location | undefined;
@@ -35,11 +35,20 @@ export interface DeclarationClientCapabilities {
 	}
 }
 
+export interface DeclarationOptions extends WorkDoneProgressOptions {
+}
+
+export interface DeclarationRegistrationOptions extends TextDocumentRegistrationOptions, DeclarationOptions {
+}
+
 export interface  DeclarationServerCapabilities {
 	/**
 	 * The server provides Goto Type Definition support.
 	 */
-	declarationProvider?: boolean | (TextDocumentRegistrationOptions & StaticRegistrationOptions);
+	declarationProvider?: boolean | DeclarationOptions | (DeclarationRegistrationOptions & StaticRegistrationOptions);
+}
+
+export interface DeclarationParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {
 }
 
 /**
@@ -50,6 +59,6 @@ export interface  DeclarationServerCapabilities {
  * to such.
  */
 export namespace DeclarationRequest {
-	export const type = new RequestType<TextDocumentPositionParams, Declaration | DeclarationLink[] | null, void, TextDocumentRegistrationOptions>('textDocument/declaration');
-	export type HandlerSignature = RequestHandler<TextDocumentPositionParams, Declaration | DeclarationLink[] | null, void>;
+	export const type = new RequestType<DeclarationParams, Declaration | DeclarationLink[] | null, void, DeclarationRegistrationOptions>('textDocument/declaration');
+	export type HandlerSignature = RequestHandler<DeclarationParams, Declaration | DeclarationLink[] | null, void>;
 }

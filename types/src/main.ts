@@ -2028,26 +2028,6 @@ export namespace DocumentSymbol {
 }
 
 /**
- * Parameters for a [DocumentSymbolRequest](#DocumentSymbolRequest).
- */
-export interface DocumentSymbolParams {
-	/**
-	 * The text document.
-	 */
-	textDocument: TextDocumentIdentifier;
-}
-
-/**
- * The parameters of a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest).
- */
-export interface WorkspaceSymbolParams {
-	/**
-	 * A non-empty query string
-	 */
-	query: string;
-}
-
-/**
  * The kind of a code action.
  *
  * Kinds are a hierarchical list of identifiers separated by `.`, e.g. `"refactor.extract.function"`.
