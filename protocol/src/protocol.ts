@@ -1712,6 +1712,7 @@ export interface CompletionRegistrationOptions extends TextDocumentRegistrationO
  */
 export namespace CompletionRequest {
 	export const type = new RequestType<CompletionParams, CompletionItem[] | CompletionList | null, void, CompletionRegistrationOptions>('textDocument/completion');
+	export const resultType = new ProgressType<CompletionItem[]>();
 }
 
 /**
@@ -1813,6 +1814,7 @@ export interface ReferenceRegistrationOptions extends TextDocumentRegistrationOp
  */
 export namespace ReferencesRequest {
 	export const type = new RequestType<ReferenceParams, Location[] | null, void, ReferenceRegistrationOptions>('textDocument/references');
+	export const resultType = new ProgressType<Location[]>();
 }
 
 //---- Document Highlight ----------------------------------
@@ -1837,6 +1839,7 @@ export interface DocumentHighlightRegistrationOptions extends TextDocumentRegist
  */
 export namespace DocumentHighlightRequest {
 	export const type = new RequestType<DocumentHighlightParams, DocumentHighlight[] | null, void, DocumentHighlightRegistrationOptions>('textDocument/documentHighlight');
+	export const resultType = new ProgressType<DocumentHighlight[]>();
 }
 
 //---- Document Symbol Provider ---------------------------
@@ -1865,6 +1868,7 @@ export interface DocumentSymbolRegistrationOptions extends TextDocumentRegistrat
  */
 export namespace DocumentSymbolRequest {
 	export const type = new RequestType<DocumentSymbolParams, SymbolInformation[] | DocumentSymbol[] | null, void, DocumentSymbolRegistrationOptions>('textDocument/documentSymbol');
+	export const resultType = new ProgressType<SymbolInformation[] | DocumentSymbol[]>();
 }
 
 //---- Workspace Symbol Provider ---------------------------
@@ -1893,6 +1897,7 @@ export interface WorkspaceSymbolRegistrationOptions extends WorkspaceSymbolOptio
  */
 export namespace WorkspaceSymbolRequest {
 	export const type = new RequestType<WorkspaceSymbolParams, SymbolInformation[] | null, void, WorkspaceSymbolRegistrationOptions>('workspace/symbol');
+	export const resultType = new ProgressType<SymbolInformation[]>();
 }
 
 //---- Code Action Provider ----------------------------------
@@ -1928,6 +1933,7 @@ export interface CodeActionRegistrationOptions extends TextDocumentRegistrationO
  */
 export namespace CodeActionRequest {
 	export const type = new RequestType<CodeActionParams, (Command | CodeAction)[] | null, void, CodeActionRegistrationOptions>('textDocument/codeAction');
+	export const resultType = new ProgressType<(Command | CodeAction)[]>();
 }
 
 //---- Code Lens Provider -------------------------------------------
@@ -1953,6 +1959,7 @@ export interface CodeLensRegistrationOptions extends TextDocumentRegistrationOpt
  */
 export namespace CodeLensRequest {
 	export const type = new RequestType<CodeLensParams, CodeLens[] | null, void, CodeLensRegistrationOptions>('textDocument/codeLens');
+	export const resultType = new ProgressType<CodeLens[]>();
 }
 
 /**
@@ -2133,6 +2140,7 @@ export interface DocumentLinkRegistrationOptions extends TextDocumentRegistratio
  */
 export namespace DocumentLinkRequest {
 	export const type = new RequestType<DocumentLinkParams, DocumentLink[] | null, void, DocumentLinkRegistrationOptions>('textDocument/documentLink');
+	export const resultType = new ProgressType<DocumentLink[]>();
 }
 
 /**

@@ -9,7 +9,7 @@ import * as assert from 'assert';
 import { Duplex } from 'stream';
 import {
 	InitializeParams, InitializeRequest, InitializeResult, createConnection, DidChangeConfigurationNotification,
-	DidChangeConfigurationParams, IConnection, ProgressType, DeclarationRequest, ProgressToken, Location
+	DidChangeConfigurationParams, IConnection, DeclarationRequest, ProgressToken
 } from '../main';
 import { DeclarationParams } from 'vscode-languageserver-protocol/lib/protocol.declaration';
 import { WorkDoneProgress } from 'vscode-languageserver-protocol/lib/protocol.progress.proposed';
@@ -168,8 +168,8 @@ describe('Connection Tests', () => {
 			},
 			partialResultToken: resultToken
 		};
-		const result: LocationLink[] = [];
-		clientConnection.onProgress(DeclarationRequest.resultProgress, resultToken, (values) => {
+		const result: any[] = [];
+		clientConnection.onProgress(DeclarationRequest.resultType, resultToken, (values) => {
 			result.push(...values);
 		});
 		clientConnection.sendRequest(DeclarationRequest.type, params).then((values) => {
