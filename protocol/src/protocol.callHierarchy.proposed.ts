@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { RequestType, RequestHandler } from 'vscode-jsonrpc';
+import { RequestType, RequestHandler, ProgressType } from 'vscode-jsonrpc';
 import { SymbolKind, Range } from 'vscode-languageserver-types';
 import { TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams, PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions } from './protocol';
 
@@ -135,5 +135,6 @@ export interface CallHierarchyCall {
  */
 export namespace CallHierarchyRequest {
 	export const type = new RequestType<CallHierarchyParams, CallHierarchyCall[], void, CallHierarchyRegistrationOptions>('textDocument/callHierarchy');
+	export const resultType = new ProgressType<CallHierarchyCall[]>();
 	export type HandlerSignature = RequestHandler<CallHierarchyParams, CallHierarchyCall[] | null, void>;
 }

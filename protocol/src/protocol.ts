@@ -6,7 +6,7 @@
 
 import * as Is from './utils/is';
 
-import { RequestType, RequestType0, NotificationType, NotificationType0, ProgressToken } from 'vscode-jsonrpc';
+import { RequestType, RequestType0, NotificationType, NotificationType0, ProgressToken, ProgressType } from 'vscode-jsonrpc';
 
 import {
 	TextDocumentContentChangeEvent, Position, Range, Location, LocationLink, Diagnostic, Command,
@@ -1787,6 +1787,7 @@ export interface DefinitionRegistrationOptions extends TextDocumentRegistrationO
  */
 export namespace DefinitionRequest {
 	export const type = new RequestType<DefinitionParams, Definition | DefinitionLink[] | null, void, DefinitionRegistrationOptions>('textDocument/definition');
+	export const resultType = new ProgressType<Location[] | DefinitionLink[]>();
 }
 
 //---- Reference Provider ----------------------------------

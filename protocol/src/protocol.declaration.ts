@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { RequestType, RequestHandler } from 'vscode-jsonrpc';
+import { RequestType, RequestHandler, ProgressType } from 'vscode-jsonrpc';
 import { Declaration, DeclarationLink, Location, LocationLink } from 'vscode-languageserver-types';
 import { TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams, PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions } from './protocol';
 
@@ -60,5 +60,6 @@ export interface DeclarationParams extends TextDocumentPositionParams, WorkDoneP
  */
 export namespace DeclarationRequest {
 	export const type = new RequestType<DeclarationParams, Declaration | DeclarationLink[] | null, void, DeclarationRegistrationOptions>('textDocument/declaration');
+	export const resultType = new ProgressType<Location[] | DeclarationLink[]>();
 	export type HandlerSignature = RequestHandler<DeclarationParams, Declaration | DeclarationLink[] | null, void>;
 }

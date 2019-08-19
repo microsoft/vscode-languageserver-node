@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { RequestType, RequestHandler } from 'vscode-jsonrpc';
+import { RequestType, RequestHandler, ProgressType } from 'vscode-jsonrpc';
 import { TextDocumentRegistrationOptions, StaticRegistrationOptions, PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions } from './protocol';
 import { TextDocumentIdentifier, Range, Color, ColorInformation, ColorPresentation } from 'vscode-languageserver-types';
 
@@ -62,6 +62,7 @@ export interface DocumentColorParams extends WorkDoneProgressParams, PartialResu
  */
 export namespace DocumentColorRequest {
 	export const type = new RequestType<DocumentColorParams, ColorInformation[], void, ColorRegistrationOptions>('textDocument/documentColor');
+	export const resultType = new ProgressType<ColorInformation[]>();
 	export type HandlerSignature = RequestHandler<DocumentColorParams, ColorInformation[], void>;
 }
 
