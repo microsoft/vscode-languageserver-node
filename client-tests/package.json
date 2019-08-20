@@ -21,8 +21,8 @@
 		"test": "node ../build/bin/symlink-tests && node bin/runTests"
 	},
 	"dependencies": {
-		"vscode-languageclient": "5.2.1",
-		"vscode-languageserver": "5.2.1"
+		"vscode-languageclient": "5.3.0-next.7",
+		"vscode-languageserver": "5.3.0-next.9"
 	},
 	"devDependencies": {
 		"vscode": "^1.1.36"
