@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageclient",
 	"description": "VSCode Language client implementation",
-	"version": "5.3.0-next.6",
+	"version": "5.3.0-next.7",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"engines": {
@@ -18,13 +18,13 @@
 	"main": "./lib/main.js",
 	"typings": "./lib/main",
 	"devDependencies": {
-		"@types/semver": "^5.5.0",
+		"@types/semver": "^6.0.1",
 		"shx": "^0.3.2",
 		"vscode": "^1.1.36"
 	},
 	"dependencies": {
-		"semver": "^5.5.0",
-		"vscode-languageserver-protocol": "^3.15.0-next.6"
+		"semver": "^6.3.0",
+		"vscode-languageserver-protocol": "^3.15.0-next.7"
 	},
 	"scripts": {
 		"prepare": "npm run update-vscode",
@@ -32,6 +32,7 @@
 		"postpublish": "node ../build/npm/post-publish.js",
 		"compile": "node ../build/bin/tsc -p ./tsconfig.json && shx cp src/utils/terminateProcess.sh lib/utils/terminateProcess.sh",
 		"watch": "node ../build/bin/tsc -w -p ./tsconfig.json",
+		"test": "cd ../client-tests && npm test && cd ../client",
 		"update-vscode": "node ./node_modules/vscode/bin/install && node bin/updateVSCode",
 		"clean": "node ../node_modules/rimraf/bin.js lib",
 		"preversion": "npm test"
