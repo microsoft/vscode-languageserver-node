@@ -5,16 +5,21 @@
 'use strict';
 
 import {
-	ClientCapabilities, CancellationToken, CancellationTokenSource, Proposed
+	ClientCapabilities, CancellationToken, CancellationTokenSource, Proposed, ProgressToken, ProgressType, WorkDoneProgressParams, PartialResultParams
 } from 'vscode-languageserver-protocol';
 
-import { Feature, RemoteWindow, IConnection } from './main';
+import { Feature, RemoteWindow } from './main';
 import { generateUuid } from './utils/uuid';
 
+export interface ProgressContext {
+	sendProgress<P>(type: ProgressType<P>, token: ProgressToken, value: P): void;
+}
 
-export interface Progress {
+export interface WorkDoneProgress {
 
 	readonly token: CancellationToken;
+
+	begin(title: string, percentage?: number, message?: string, cancellable?: boolean): void;
 
 	report(percentage: number): void;
 	report(message: string): void;
@@ -24,59 +29,55 @@ export interface Progress {
 }
 
 export interface WindowProgress {
-	createProgress(title: string, percentage?: number, message?: string, cancellable?: boolean): Progress;
+	attachWorkDoneProgress(token: ProgressToken | undefined): WorkDoneProgress;
+	createWorkDoneProgress(): Thenable<WorkDoneProgress>;
 }
 
-class ProgressImpl implements Progress {
+class WorkDoneProgressImpl implements WorkDoneProgress {
 
-	public static Instances: Map<string, ProgressImpl> = new Map();
+	public static Instances: Map<string | number, WorkDoneProgressImpl> = new Map();
 
-	private _id: string;
 	private _source: CancellationTokenSource;
 
-	constructor(private _connection: IConnection, title: string, percentage?: number, message?: string, cancellable?: boolean) {
-		this._id = generateUuid();
-		let params: Proposed.ProgressStartParams  = {
-			id: this._id,
-			title,
-			cancellable
-		}
-		if (percentage !== undefined) {
-			params.percentage = percentage;
-		}
-		if (message !== undefined) {
-			params.message = message;
-		}
-		if (cancellable !== undefined) {
-			params.cancellable = cancellable;
-		}
-		ProgressImpl.Instances.set(this._id, this);
+	constructor(private _connection: ProgressContext, private _token: ProgressToken) {
+		WorkDoneProgressImpl.Instances.set(this._token, this);
 		this._source = new CancellationTokenSource();
-		this._connection.sendNotification(Proposed.ProgressStartNotification.type, params);
 	}
 
 	get token(): CancellationToken {
 		return this._source.token;
 	}
 
+	public begin(title: string, percentage?: number, message?: string, cancellable?: boolean): void {
+		let param: Proposed.WorkDoneProgressBegin = {
+			kind: 'begin',
+			title,
+			percentage,
+			message,
+			cancellable
+		};
+		this._connection.sendProgress(Proposed.WorkDoneProgress.type, this._token, param);
+	}
+
 	report(arg0: number | string, arg1?: string): void {
-		let percentage: number | undefined;
-		let message: string | undefined;
+		let param: Proposed.WorkDoneProgressReport = {
+			kind: 'report'
+		};
 		if (typeof arg0 === 'number') {
-			percentage = arg0;
+			param.percentage = arg0;
 			if (arg1 !== undefined) {
-				message = arg1;
+				param.message = arg1;
 			}
 		} else {
-			message = arg0;
+			param.message = arg0;
 		}
-		this._connection.sendNotification(Proposed.ProgressReportNotification.type, { id: this._id, percentage, message });
+		this._connection.sendProgress(Proposed.WorkDoneProgress.type, this._token, param);
 	}
 
 	done(): void {
-		ProgressImpl.Instances.delete(this._id);
+		WorkDoneProgressImpl.Instances.delete(this._token);
 		this._source.dispose();
-		this._connection.sendNotification(Proposed.ProgressDoneNotification.type, {id: this._id });
+		this._connection.sendProgress(Proposed.WorkDoneProgress.type, this._token, { kind: 'done' } );
 	}
 
 	cancel(): void {
@@ -84,7 +85,7 @@ class ProgressImpl implements Progress {
 	}
 }
 
-class NullProgress implements Progress {
+class NullProgress implements WorkDoneProgress {
 
 	private _source: CancellationTokenSource;
 
@@ -96,6 +97,9 @@ class NullProgress implements Progress {
 		return this._source.token;
 	}
 
+	begin(): void {
+	}
+
 	report(): void {
 	}
 
@@ -103,27 +107,75 @@ class NullProgress implements Progress {
 	}
 }
 
+export function attachWorkDone(connection: ProgressContext, params: WorkDoneProgressParams): WorkDoneProgress {
+	if (params === undefined || params.workDoneToken === undefined) {
+		return new NullProgress();
+	}
+
+	const token = params.workDoneToken;
+	delete params.workDoneToken;
+	return new WorkDoneProgressImpl(connection, token);
+}
+
 export const ProgressFeature: Feature<RemoteWindow, WindowProgress> = (Base) => {
 	return class extends Base {
 		private _progressSupported: boolean;
 		public initialize(cap: ClientCapabilities): void {
-			let capabilities: ClientCapabilities & Proposed.ProgressClientCapabilities = cap;
-			if (capabilities.window && capabilities.window.progress) {
+			const capabilities: ClientCapabilities & Proposed.WorkDoneProgressClientCapabilities = cap;
+			if (capabilities.window && capabilities.window.workDoneProgress) {
 				this._progressSupported = true;
-				this.connection.onNotification(Proposed.ProgressCancelNotification.type, (params) => {
-					let progress = ProgressImpl.Instances.get(params.id);
+				this.connection.onNotification(Proposed.WorkDoneProgressCancelNotification.type, (params) => {
+					let progress = WorkDoneProgressImpl.Instances.get(params.token);
 					if (progress !== undefined) {
 						progress.cancel();
 					}
 				});
 			}
 		}
-		createProgress(title: string, percentage?: number, message?: string, cancellable?: boolean): Progress {
-			if (this._progressSupported) {
-				return new ProgressImpl(this.connection, title, percentage, message, cancellable)
-			} else {
+		public attachWorkDoneProgress(token: ProgressToken | undefined): WorkDoneProgress {
+			if (token === undefined) {
 				return new NullProgress();
+			} else {
+				return new WorkDoneProgressImpl(this.connection, token);
+			}
+		}
+		public createWorkDoneProgress(): Thenable<WorkDoneProgress> {
+			if (this._progressSupported) {
+				const token: string = generateUuid();
+				return this.connection.sendRequest(Proposed.WorkDoneProgressCreateRequest.type, { token }).then(() => {
+					const result: WorkDoneProgressImpl = new WorkDoneProgressImpl(this.connection, token);
+					return result;
+				});
+			} else {
+				return Promise.resolve(new NullProgress());
 			}
 		}
 	}
 };
+
+export interface ResultProgress<R> {
+	report(data: R): void;
+}
+
+namespace ResultProgress {
+	export const type = new ProgressType<any>();
+}
+
+class ResultProgressImpl<R> implements ResultProgress<R> {
+	constructor(private _connection: ProgressContext, private _token: ProgressToken) {
+	}
+
+	public report(data: R): void {
+		this._connection.sendProgress(ResultProgress.type, this._token, data);
+	}
+}
+
+export function attachPartialResult<R>(connection: ProgressContext, params: PartialResultParams): ResultProgress<R> | undefined {
+	if (params === undefined || params.partialResultToken === undefined) {
+		return undefined;
+	}
+
+	const token = params.partialResultToken;
+	delete params.partialResultToken;
+	return new ResultProgressImpl<R>(connection, token);
+}

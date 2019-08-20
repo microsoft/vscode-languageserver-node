@@ -3,9 +3,9 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { RequestType, RequestHandler } from 'vscode-jsonrpc';
+import { RequestType, RequestHandler, ProgressType } from 'vscode-jsonrpc';
 import { TextDocumentIdentifier, Position, SelectionRange } from 'vscode-languageserver-types';
-import { TextDocumentRegistrationOptions, StaticRegistrationOptions } from './protocol';
+import { TextDocumentRegistrationOptions, WorkDoneProgressOptions, StaticRegistrationOptions, WorkDoneProgressParams, PartialResultParams } from './protocol';
 
 // ---- capabilities
 
@@ -28,20 +28,23 @@ export interface SelectionRangeClientCapabilities {
 	};
 }
 
-export interface SelectionRangeProviderOptions {
+export interface SelectionRangeOptions extends WorkDoneProgressOptions {
+}
+
+export interface SelectionRangeRegistrationOptions extends SelectionRangeOptions, TextDocumentRegistrationOptions {
 }
 
 export interface SelectionRangeServerCapabilities {
 	/**
 	 * The server provides selection range support.
 	 */
-	selectionRangeProvider?: boolean | (TextDocumentRegistrationOptions & StaticRegistrationOptions & SelectionRangeProviderOptions);
+	selectionRangeProvider?: boolean | SelectionRangeOptions | (SelectionRangeRegistrationOptions & StaticRegistrationOptions);
 }
 
 /**
  * A parameter literal used in selection range requests.
  */
-export interface SelectionRangeParams {
+export interface SelectionRangeParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
 	 * The text document.
 	 */
@@ -60,6 +63,7 @@ export interface SelectionRangeParams {
  * that resolves to such.
  */
 export namespace SelectionRangeRequest {
-	export const type: RequestType<SelectionRangeParams, SelectionRange[] | null, any, any> = new RequestType('textDocument/selectionRange');
+	export const type: RequestType<SelectionRangeParams, SelectionRange[] | null, any, SelectionRangeRegistrationOptions> = new RequestType('textDocument/selectionRange');
+	export const resultType = new ProgressType<SelectionRange[]>();
 	export type HandlerSignature = RequestHandler<SelectionRangeParams, SelectionRange[] | null, void>;
 }

@@ -4,21 +4,17 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import * as UUID from './utils/uuid';
-import * as Is from './utils/is';
-
 import {
 	languages as Languages, Disposable, TextDocument, ProviderResult, Position as VPosition, CancellationToken as VCancellationToken,
 	CallHierarchyDirection as VCallHierarchyDirection, CallHierarchyItem as VCallHierarchyItem, CallHierarchyItemProvider, Location as VLocation
  } from 'vscode';
 
 import {
-	ClientCapabilities, CancellationToken, ServerCapabilities, TextDocumentRegistrationOptions, DocumentSelector, StaticRegistrationOptions, Proposed,
-	Range
+	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, Proposed, Range
 } from 'vscode-languageserver-protocol';
 
 import { TextDocumentFeature, BaseLanguageClient, Middleware } from './client';
-import { CallHierarchyItem } from 'vscode-languageserver-protocol/lib/protocol.callHierarchy.proposed';
+import { CallHierarchyItem, CallHierarchyRegistrationOptions, CallHierarchyOptions } from 'vscode-languageserver-protocol/lib/protocol.callHierarchy.proposed';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -40,7 +36,7 @@ export interface CallHierarchyMiddleware {
 	resolveCallHierarchy?: (this: void,item: VCallHierarchyItem, direction: VCallHierarchyDirection, token: CancellationToken, next: ResolveCallHierarchySignature) => ProviderResult<[VCallHierarchyItem, VLocation[]][]>;
 }
 
-class CallHierarchyProvider implements CallHierarchyItemProvider{
+class CallHierarchyProvider implements CallHierarchyItemProvider {
 
 	private _middleware: Middleware & CallHierarchyMiddleware;
 
@@ -147,7 +143,7 @@ class CallHierarchyProvider implements CallHierarchyItemProvider{
 	}
 }
 
-export class CallHierarchyFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
+export class CallHierarchyFeature extends TextDocumentFeature<boolean | CallHierarchyOptions, CallHierarchyRegistrationOptions> {
 	constructor(client: BaseLanguageClient) {
 		super(client, Proposed.CallHierarchyRequest.type);
 	}
@@ -160,22 +156,14 @@ export class CallHierarchyFeature extends TextDocumentFeature<TextDocumentRegist
 
 	public initialize(cap: ServerCapabilities, documentSelector: DocumentSelector): void {
 		let capabilities: ServerCapabilities & Proposed.CallHierarchyServerCapabilities = cap;
-		if (!capabilities.callHierarchyProvider) {
+		let [id, options] = this.getRegistration(documentSelector, capabilities.callHierarchyProvider);
+		if (!id || !options) {
 			return;
 		}
-
-		const implCapabilities = capabilities.callHierarchyProvider as TextDocumentRegistrationOptions & StaticRegistrationOptions;
-		const id = Is.string(implCapabilities.id) && implCapabilities.id.length > 0 ? implCapabilities.id : UUID.generateUuid();
-		const selector = implCapabilities.documentSelector || documentSelector;
-		if (selector) {
-			this.register(this.messages, {
-				id,
-				registerOptions: Object.assign({}, { documentSelector: selector })
-			});
-		}
+		this.register(this.messages, { id: id, registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): Disposable {
+	protected registerLanguageProvider(options: CallHierarchyRegistrationOptions): Disposable {
 		let client = this._client;
 		let provider = new CallHierarchyProvider(client);
 		return Languages.registerCallHierarchyProvider(options.documentSelector!, provider);

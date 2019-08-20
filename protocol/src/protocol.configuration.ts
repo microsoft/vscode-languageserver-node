@@ -7,6 +7,7 @@
 import {
 	RequestType, RequestHandler, HandlerResult, CancellationToken
 } from 'vscode-jsonrpc';
+import { PartialResultParams } from './protocol';
 
 //---- Get Configuration request ----
 
@@ -32,7 +33,7 @@ export interface ConfigurationClientCapabilities {
  * change event and empty the cache if such an event is received.
  */
 export namespace ConfigurationRequest {
-	export const type = new RequestType<ConfigurationParams, any[], void, void>('workspace/configuration');
+	export const type = new RequestType<ConfigurationParams & PartialResultParams, any[], void, void>('workspace/configuration');
 	export type HandlerSignature = RequestHandler<ConfigurationParams, any[], void>;
 	export type MiddlewareSignature = (params: ConfigurationParams, token: CancellationToken, next: HandlerSignature) => HandlerResult<any[], void>;
 }

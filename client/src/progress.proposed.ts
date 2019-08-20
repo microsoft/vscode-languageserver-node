@@ -4,12 +4,10 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { window, Progress, ProgressLocation } from 'vscode';
-
-import { ClientCapabilities, Proposed, CancellationToken } from 'vscode-languageserver-protocol';
+import { ClientCapabilities, Proposed } from 'vscode-languageserver-protocol';
 
 import { BaseLanguageClient, StaticFeature } from './client';
-import * as Is from './utils/is';
+import { ProgressPart } from './progressPart';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -18,91 +16,21 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	return target[key];
 }
 
-class ProgressPart {
-
-	private _infinite: boolean;
-	private _reported: number;
-	private _progress: Progress<{ message?: string, increment?: number}>;
-	private _token: CancellationToken;
-
-	private _resolve: () => void;
-	private _reject: (reason?: any) => void;
-
-	public constructor(client: BaseLanguageClient, params: Proposed.ProgressStartParams) {
-		let location: ProgressLocation = params.cancellable ? ProgressLocation.Notification : ProgressLocation.Window;
-		this._reported = 0;
-		window.withProgress<void>({ location, cancellable: params.cancellable, title: params.title}, async (progress, token) => {
-			this._progress = progress;
-			this._infinite = params.percentage === undefined;
-			this._token = token;
-			this._token.onCancellationRequested(() => {
-				client.sendNotification(Proposed.ProgressCancelNotification.type, { id: params.id });
-			});
-			this.report(params);
-			return new Promise<void>((resolve, reject) => {
-				this._resolve = resolve;
-				this._reject = reject;
-			});
-		});
-	}
-
-	public report(params: Proposed.ProgressReportParams): void {
-		if (this._infinite && Is.string(params.message)) {
-			this._progress.report({ message: params.message });
-		} else if (Is.number(params.percentage)) {
-			let percentage =  Math.max(0, Math.min(params.percentage, 100));
-			let delta = Math.max(0, percentage - this._reported);
-			this._progress.report({ message: params.message, increment: delta });
-			this._reported+= delta;
-		}
-	}
-
-	public cancel(): void {
-		this._reject();
-	}
-
-	public done(): void {
-		this._resolve();
-	}
-}
-
 export class ProgressFeature implements StaticFeature {
-	private _progresses: Map<string, ProgressPart> = new Map<string, ProgressPart>();
 
 	constructor(private _client: BaseLanguageClient) {}
 
 	public fillClientCapabilities(cap: ClientCapabilities): void {
-		let capabilities: ClientCapabilities & Proposed.ProgressClientCapabilities = cap as ClientCapabilities & Proposed.ProgressClientCapabilities;
-		ensure(capabilities, 'window')!.progress = true;
+		let capabilities: ClientCapabilities & Proposed.WorkDoneProgressClientCapabilities = cap as ClientCapabilities & Proposed.WorkDoneProgressClientCapabilities;
+		ensure(capabilities, 'window')!.workDoneProgress = true;
 	}
 
 	public initialize(): void {
 		let client = this._client;
-		let progresses = this._progresses;
 
-		let startHandler = (params: Proposed.ProgressStartParams) => {
-			if (Is.string(params.id)) {
-				let progress = new ProgressPart(this._client, params);
-				this._progresses.set(params.id, progress);
-			}
+		let createHandler = (params: Proposed.WorkDoneProgressCreateParams) => {
+			new ProgressPart(this._client, params.token);
 		}
-		client.onNotification(Proposed.ProgressStartNotification.type, startHandler);
-
-		let reportHandler = (params: Proposed.ProgressReportParams) => {
-			let progress = this._progresses.get(params.id);
-			if (progress !== undefined) {
-				progress.report(params);
-			}
-		}
-		client.onNotification(Proposed.ProgressReportNotification.type, reportHandler);
-
-		let doneHandler = (params: Proposed.ProgressDoneParams) => {
-			let progress = progresses.get(params.id);
-			if (progress !== undefined) {
-				progress.done();
-				progresses.delete(params.id);
-			}
-		}
-		client.onNotification(Proposed.ProgressDoneNotification.type, doneHandler);
+		client.onRequest(Proposed.WorkDoneProgressCreateRequest.type, createHandler);
 	}
 }

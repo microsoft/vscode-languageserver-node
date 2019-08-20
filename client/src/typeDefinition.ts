@@ -4,16 +4,14 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import * as UUID from './utils/uuid';
-import * as Is from  './utils/is';
-
 import { languages as Languages, Disposable, TextDocument, ProviderResult, Position as VPosition, Definition as VDefinition, DefinitionLink as VDefinitionLink } from 'vscode';
 
 import {
-	ClientCapabilities, CancellationToken, ServerCapabilities, TextDocumentRegistrationOptions, DocumentSelector, TypeDefinitionRequest
+	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, TypeDefinitionRequest
 } from 'vscode-languageserver-protocol';
 
 import { TextDocumentFeature, BaseLanguageClient } from './client';
+import { TypeDefinitionRegistrationOptions, TypeDefinitionOptions } from 'vscode-languageserver-protocol/lib/protocol.typeDefinition';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -30,7 +28,7 @@ export interface TypeDefinitionMiddleware {
 	provideTypeDefinition?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideTypeDefinitionSignature) => ProviderResult<VDefinition | VDefinitionLink[]>;
 }
 
-export class TypeDefinitionFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
+export class TypeDefinitionFeature extends TextDocumentFeature<boolean | TypeDefinitionOptions, TypeDefinitionRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, TypeDefinitionRequest.type);
@@ -44,31 +42,14 @@ export class TypeDefinitionFeature extends TextDocumentFeature<TextDocumentRegis
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		if (!capabilities.typeDefinitionProvider) {
+		let [id, options] = this.getRegistration(documentSelector, capabilities.typeDefinitionProvider);
+		if (!id || !options) {
 			return;
 		}
-		if (capabilities.typeDefinitionProvider === true) {
-			if (!documentSelector) {
-				return;
-			}
-			this.register(this.messages, {
-				id: UUID.generateUuid(),
-				registerOptions: Object.assign({}, { documentSelector: documentSelector })
-			});
-		} else {
-			const implCapabilities = capabilities.typeDefinitionProvider;
-			const id = Is.string(implCapabilities.id) && implCapabilities.id.length > 0 ? implCapabilities.id : UUID.generateUuid();
-			const selector = implCapabilities.documentSelector || documentSelector;
-			if (selector) {
-				this.register(this.messages, {
-					id,
-					registerOptions: Object.assign({}, { documentSelector: selector })
-				});
-			}
-		}
+		this.register(this.messages, { id: id, registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): Disposable {
+	protected registerLanguageProvider(options: TypeDefinitionRegistrationOptions): Disposable {
 		let client = this._client;
 		let provideTypeDefinition: ProvideTypeDefinitionSignature = (document, position, token) => {
 			return client.sendRequest(TypeDefinitionRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
@@ -89,5 +70,3 @@ export class TypeDefinitionFeature extends TextDocumentFeature<TextDocumentRegis
 		});
 	}
 }
-
-

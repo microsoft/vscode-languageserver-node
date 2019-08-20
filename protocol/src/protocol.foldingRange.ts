@@ -3,9 +3,9 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { RequestType, RequestHandler } from 'vscode-jsonrpc';
+import { RequestType, RequestHandler, ProgressType } from 'vscode-jsonrpc';
 import { TextDocumentIdentifier } from 'vscode-languageserver-types';
-import { TextDocumentRegistrationOptions, StaticRegistrationOptions } from './protocol';
+import { TextDocumentRegistrationOptions, StaticRegistrationOptions, PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions } from './protocol';
 
 // ---- capabilities
 
@@ -38,14 +38,17 @@ export interface FoldingRangeClientCapabilities {
 	};
 }
 
-export interface FoldingRangeProviderOptions {
+export interface FoldingRangeOptions extends WorkDoneProgressOptions {
+}
+
+export interface FoldingRangeRegistrationOptions extends TextDocumentRegistrationOptions, FoldingRangeOptions {
 }
 
 export interface FoldingRangeServerCapabilities {
 	/**
 	 * The server provides folding provider support.
 	 */
-	foldingRangeProvider?: boolean | FoldingRangeProviderOptions | (FoldingRangeProviderOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions);
+	foldingRangeProvider?: boolean | FoldingRangeOptions | (FoldingRangeRegistrationOptions & StaticRegistrationOptions);
 }
 
 /**
@@ -102,7 +105,7 @@ export interface FoldingRange {
 /**
  * Parameters for a [FoldingRangeRequest](#FoldingRangeRequest).
  */
-export interface FoldingRangeParams {
+export interface FoldingRangeParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
 	 * The text document.
 	 */
@@ -116,6 +119,7 @@ export interface FoldingRangeParams {
  * that resolves to such.
  */
 export namespace FoldingRangeRequest {
-	export const type: RequestType<FoldingRangeParams, FoldingRange[] | null, any, TextDocumentRegistrationOptions> = new RequestType('textDocument/foldingRange');
+	export const type: RequestType<FoldingRangeParams, FoldingRange[] | null, any, FoldingRangeRegistrationOptions> = new RequestType('textDocument/foldingRange');
+	export const resultType = new ProgressType<FoldingRange[]>();
 	export type HandlerSignature = RequestHandler<FoldingRangeParams, FoldingRange[] | null, void>;
 }

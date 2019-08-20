@@ -4,9 +4,9 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { NotificationType, NotificationHandler } from 'vscode-jsonrpc';
+import { NotificationType, NotificationHandler, RequestType, RequestHandler, ProgressType, ProgressToken } from 'vscode-jsonrpc';
 
-export interface ProgressClientCapabilities {
+export interface WorkDoneProgressClientCapabilities {
 	/**
 	 * Window specific client capabilities.
 	 */
@@ -14,7 +14,7 @@ export interface ProgressClientCapabilities {
 		/**
 		 * Whether client supports handling progress notifications.
 		 */
-		progress?: boolean;
+		workDoneProgress?: boolean;
 	}
 }
 
@@ -32,13 +32,9 @@ export interface ProgressClientCapabilities {
 // 	}
 // }
 
-export interface ProgressStartParams {
+export interface WorkDoneProgressBegin {
 
-	/**
-	 * A unique identifier to associate multiple progress notifications with
-	 * the same progress.
-	 */
-	id: string;
+	kind: 'begin';
 
 	/**
 	 * Mandatory title of the progress operation. Used to briefly inform about
@@ -75,21 +71,18 @@ export interface ProgressStartParams {
 	percentage?: number;
 }
 
-/**
- * The `window/progress/start` notification is sent from the server to the client
- * to initiate a progress.
- */
-export namespace ProgressStartNotification {
-	export const type = new NotificationType<ProgressStartParams, void>('window/progress/start');
-	export type HandlerSignature = NotificationHandler<ProgressStartParams>;
-}
+export interface WorkDoneProgressReport {
 
-export interface ProgressReportParams {
+	kind: 'report';
 
 	/**
-	 * A unique identifier to associate multiple progress notifications with the same progress.
+	 * Controls enablement state of a cancel button. This property is only valid if a cancel
+	 * button got requested in the `WorkDoneProgressStart` payload.
+	 *
+	 * Clients that don't support cancellation or don't support control the button's
+	 * enablement state are allowed to ignore the setting.
 	 */
-	id: string;
+	cancellable?: boolean;
 
 	/**
 	 * Optional, more detailed associated progress message. Contains
@@ -111,43 +104,49 @@ export interface ProgressReportParams {
 	percentage?: number;
 }
 
-/**
- * The `window/progress/report` notification is sent from the server to the client
- * to initiate a progress.
- */
-export namespace ProgressReportNotification {
-	export const type = new NotificationType<ProgressReportParams, void>('window/progress/report');
-	export type HandlerSignature = NotificationHandler<ProgressReportParams>;
-}
+export interface WorkDoneProgressDone {
 
-export interface ProgressDoneParams {
+	kind: 'done';
+
 	/**
-	 * A unique identifier to associate multiple progress notifications with the same progress.
+	 * Optional, a final message indicating to for example indicate the outcome
+	 * of the operation.
 	 */
-	id: string;
+	message?: string;
 }
 
-/**
- * The `window/progress/done` notification is sent from the server to the client
- * to initiate a progress.
- */
-export namespace ProgressDoneNotification {
-	export const type = new NotificationType<ProgressDoneParams, void>('window/progress/done');
-	export type HandlerSignature = NotificationHandler<ProgressDoneParams>;
+export namespace WorkDoneProgress {
+	export const type = new ProgressType<WorkDoneProgressBegin | WorkDoneProgressReport | WorkDoneProgressDone>();
 }
 
-export interface ProgressCancelParams {
+export interface WorkDoneProgressCreateParams  {
 	/**
-	 * A unique identifier to associate multiple progress notifications with the same progress.
+	 * The token to be used to report progress.
 	 */
-	id: string;
+	token: ProgressToken;
 }
 
 /**
- * The `window/progress/cancel` notification is sent client to the server to cancel a progress
+ * The `window/workDoneProgress/create` request is sent from the server to the client to initiate progress
+ * reporting from the server.
+ */
+export namespace WorkDoneProgressCreateRequest {
+	export const type = new RequestType<WorkDoneProgressCreateParams, void, void, void>('window/workDoneProgress/create');
+	export type HandlerSignature = RequestHandler<WorkDoneProgressCreateParams, void, void>;
+}
+
+export interface WorkDoneProgressCancelParams {
+	/**
+	 * The token to be used to report progress.
+	 */
+	token: ProgressToken;
+}
+
+/**
+ * The `window/workDoneProgress/cancel` notification is sent from  the client to the server to cancel a progress
  * initiated on the server side.
  */
-export namespace ProgressCancelNotification {
-	export const type = new NotificationType<ProgressCancelParams, void>('window/progress/cancel');
-	export type HandlerSignature = NotificationHandler<ProgressCancelParams>;
+export namespace WorkDoneProgressCancelNotification {
+	export const type = new NotificationType<WorkDoneProgressCancelParams, void>('window/workDoneProgress/cancel');
+	export type HandlerSignature = NotificationHandler<WorkDoneProgressCancelParams>;
 }

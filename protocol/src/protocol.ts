@@ -6,14 +6,14 @@
 
 import * as Is from './utils/is';
 
-import { RequestType, RequestType0, NotificationType, NotificationType0 } from 'vscode-jsonrpc';
+import { RequestType, RequestType0, NotificationType, NotificationType0, ProgressToken, ProgressType } from 'vscode-jsonrpc';
 
 import {
 	TextDocumentContentChangeEvent, Position, Range, Location, LocationLink, Diagnostic, Command,
-	TextEdit, WorkspaceEdit, WorkspaceSymbolParams, DocumentUri,
+	TextEdit, WorkspaceEdit, DocumentUri,
 	TextDocumentIdentifier, VersionedTextDocumentIdentifier, TextDocumentItem, TextDocumentSaveReason,
 	CompletionItem, CompletionList, Hover, SignatureHelp,
-	Definition, DefinitionLink, ReferenceContext, DocumentHighlight, DocumentSymbolParams,
+	Definition, DefinitionLink, ReferenceContext, DocumentHighlight,
 	SymbolInformation, CodeLens, CodeActionContext, FormattingOptions, DocumentLink, MarkupKind,
 	SymbolKind, CompletionItemKind, CodeAction, CodeActionKind, DocumentSymbol
 } from 'vscode-languageserver-types';
@@ -26,17 +26,17 @@ import {
 } from './protocol.workspaceFolders';
 import { ConfigurationRequest, ConfigurationParams, ConfigurationItem, ConfigurationClientCapabilities } from './protocol.configuration';
 import {
-	DocumentColorRequest, ColorPresentationRequest, ColorProviderOptions, DocumentColorParams, ColorPresentationParams,
+	DocumentColorRequest, ColorPresentationRequest, ColorOptions, DocumentColorParams, ColorPresentationParams,
 	ColorServerCapabilities, ColorClientCapabilities,
 } from './protocol.colorProvider';
 import {
-	FoldingRangeClientCapabilities, FoldingRangeProviderOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeServerCapabilities
+	FoldingRangeClientCapabilities, FoldingRangeOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeServerCapabilities
 } from './protocol.foldingRange';
 import {
 	DeclarationClientCapabilities, DeclarationRequest, DeclarationServerCapabilities
 } from './protocol.declaration';
 
-import { SelectionRangeClientCapabilities, SelectionRangeProviderOptions, SelectionRangeRequest, SelectionRangeServerCapabilities, SelectionRangeParams} from './protocol.selectionRange';
+import { SelectionRangeClientCapabilities, SelectionRangeOptions, SelectionRangeRequest, SelectionRangeServerCapabilities, SelectionRangeParams} from './protocol.selectionRange';
 
 // @ts-ignore: to avoid inlining LocatioLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
@@ -80,9 +80,13 @@ export type DocumentFilter = {
 	pattern: string;
 };
 
+/**
+ * The DocumentFilter namespace provides helper functions to work with
+ * [DocumentFilter](#DocumentFilter) literals.
+ */
 export namespace DocumentFilter {
 	export function is(value: any): value is DocumentFilter {
-		let candidate: DocumentFilter = value;
+		const candidate: DocumentFilter = value;
 		return Is.string(candidate.language) || Is.string(candidate.scheme) || Is.string(candidate.pattern);
 	}
 }
@@ -93,6 +97,24 @@ export namespace DocumentFilter {
  * @sample `let sel:DocumentSelector = [{ language: 'typescript' }, { language: 'json', pattern: '**∕tsconfig.json' }]`;
  */
 export type DocumentSelector = (string | DocumentFilter)[];
+
+/**
+ * The DocumentSelector namespace provides helper functions to work with
+ * [DocumentSelector](#DocumentSelector)s.
+ */
+export namespace DocumentSelector {
+	export function is(value: any[] | undefined | null): value is DocumentSelector {
+		if (!Array.isArray(value)) {
+			return false;
+		}
+		for (let elem of value) {
+			if (!Is.string(elem) && !DocumentFilter.is(elem)) {
+				return false;
+			}
+		}
+		return true;
+	}
+}
 
 /**
  * General parameters to to register for an notification or to register a provider.
@@ -153,6 +175,21 @@ export interface UnregistrationParams {
  */
 export namespace UnregistrationRequest {
 	export const type = new RequestType<UnregistrationParams, void, void, void>('client/unregisterCapability');
+}
+
+export interface WorkDoneProgressParams {
+	/**
+	 * An optional token that a server can use to report work done progress.
+	 */
+	workDoneToken?: ProgressToken;
+}
+
+export interface PartialResultParams {
+	/**
+	 * An optional token that a server can use to report partial results (e.g. streaming) to
+	 * the client.
+	 */
+	partialResultToken?: ProgressToken;
 }
 
 /**
@@ -648,16 +685,6 @@ export interface TextDocumentClientCapabilities {
 }
 
 /**
- * Window specific client capabilities.
- */
-export interface WindowClientCapabilities {
-    /**
-     * Whether client supports handling progress notifications.
-     */
-    progress?: boolean;
-}
-
-/**
  * Defines the capabilities provided by the client.
  */
 export interface _ClientCapabilities {
@@ -674,7 +701,7 @@ export interface _ClientCapabilities {
     /**
      * Window specific client capabilities.
      */
-    window?: WindowClientCapabilities;
+    window?: object;
 
 	/**
 	 * Experimental client capabilities.
@@ -725,6 +752,17 @@ export interface StaticRegistrationOptions {
 }
 
 /**
+ * The StaticRegistrationOptions namespace provides helper functions to work with
+ * [StaticRegistrationOptions](#StaticRegistrationOptions) literals.
+ */
+export namespace StaticRegistrationOptions {
+	export function hasId(value: object): value is { id: string } {
+		const candidate = value as StaticRegistrationOptions;
+		return candidate && Is.string(candidate.id) && candidate.id.length > 0;
+	}
+}
+
+/**
  * General text document registration options.
  */
 export interface TextDocumentRegistrationOptions {
@@ -736,9 +774,20 @@ export interface TextDocumentRegistrationOptions {
 }
 
 /**
+ * The TextDocumentRegistrationOptions namespace provides helper functions to work with
+ * [TextDocumentRegistrationOptions](#TextDocumentRegistrationOptions) literals.
+ */
+export namespace TextDocumentRegistrationOptions {
+	export function is(value: any): value is TextDocumentRegistrationOptions {
+		const candidate = value as TextDocumentRegistrationOptions;
+		return candidate && (candidate.documentSelector === null || DocumentSelector.is(candidate.documentSelector));
+	}
+}
+
+/**
  * Completion options.
  */
-export interface CompletionOptions {
+export interface CompletionOptions extends WorkDoneProgressOptions {
 	/**
 	 * Most tools trigger completion request automatically without explicitly requesting
 	 * it using a keyboard shortcut (e.g. Ctrl+Space). Typically they do so when the user
@@ -764,10 +813,17 @@ export interface CompletionOptions {
 	 */
 	resolveProvider?: boolean;
 }
+
+/**
+ * Hover options.
+ */
+export interface HoverOptions extends WorkDoneProgressOptions {
+}
+
 /**
  * Signature help options.
  */
-export interface SignatureHelpOptions {
+export interface SignatureHelpOptions extends WorkDoneProgressOptions {
 	/**
 	 * The characters that trigger signature help
 	 * automatically.
@@ -776,9 +832,39 @@ export interface SignatureHelpOptions {
 }
 
 /**
+ * Definition options.
+ */
+export interface DefinitionOptions extends WorkDoneProgressOptions {
+}
+
+/**
+ * Reference options.
+ */
+export interface ReferenceOptions extends WorkDoneProgressOptions {
+}
+
+/**
+ * Document highlight options.
+ */
+export interface DocumentHighlightOptions extends WorkDoneProgressOptions {
+}
+
+/**
+ * Document symbol options.
+ */
+export interface DocumentSymbolOptions extends WorkDoneProgressOptions {
+}
+
+/**
+ * Workspace symbol options.
+ */
+export interface WorkspaceSymbolOptions extends WorkDoneProgressOptions {
+}
+
+/**
  * Code Action options.
  */
-export interface CodeActionOptions {
+export interface CodeActionOptions extends WorkDoneProgressOptions {
 	/**
 	 * CodeActionKinds that this server may return.
 	 *
@@ -791,11 +877,23 @@ export interface CodeActionOptions {
 /**
  * Code Lens options.
  */
-export interface CodeLensOptions {
+export interface CodeLensOptions extends WorkDoneProgressOptions {
 	/**
 	 * Code lens has a resolve provider as well.
 	 */
 	resolveProvider?: boolean;
+}
+
+/**
+ * Document formatting options.
+ */
+export interface DocumentFormattingOptions extends WorkDoneProgressOptions {
+}
+
+/**
+ * Document range formatting options.
+ */
+export interface DocumentRangeFormattingOptions extends WorkDoneProgressOptions {
 }
 
 /**
@@ -816,7 +914,7 @@ export interface DocumentOnTypeFormattingOptions {
 /**
  * Rename options
  */
-export interface RenameOptions {
+export interface RenameOptions extends WorkDoneProgressOptions {
 	/**
 	 * Renames should be checked and tested before being executed.
 	 */
@@ -826,7 +924,7 @@ export interface RenameOptions {
 /**
  * Document link options
  */
-export interface DocumentLinkOptions {
+export interface DocumentLinkOptions extends WorkDoneProgressOptions {
 	/**
 	 * Document links have a resolve provider as well.
 	 */
@@ -836,7 +934,7 @@ export interface DocumentLinkOptions {
 /**
  * Execute command options.
  */
-export interface ExecuteCommandOptions {
+export interface ExecuteCommandOptions extends WorkDoneProgressOptions {
 	/**
 	 * The commands to be executed on the server
 	 */
@@ -881,6 +979,25 @@ export interface TextDocumentSyncOptions {
 	save?: SaveOptions;
 }
 
+export interface WorkDoneProgressOptions {
+	workDoneProgress?: boolean;
+}
+
+/**
+ * The WorkDoneProgressOptions namespace provides helper functions to work with
+ * [WorkDoneProgressOptions](#WorkDoneProgressOptions) literals.
+ */
+export namespace WorkDoneProgressOptions {
+	export function is(value: any): value is WorkDoneProgressOptions {
+		const candidate = value as WorkDoneProgressOptions;
+		return Is.objectLiteral(candidate) && (candidate.workDoneProgress === undefined || Is.boolean(candidate.workDoneProgress));
+	}
+	export function hasWorkDoneProgress(value: any): value is { workDoneProgress: boolean } {
+		const candidate = value as WorkDoneProgressOptions;
+		return candidate && Is.boolean(candidate.workDoneProgress);
+	}
+}
+
 /**
  * Defines the capabilities provided by a language
  * server.
@@ -894,7 +1011,7 @@ export interface _ServerCapabilities<T = any> {
 	/**
 	 * The server provides hover support.
 	 */
-	hoverProvider?: boolean;
+	hoverProvider?: boolean | HoverOptions;
 	/**
 	 * The server provides completion support.
 	 */
@@ -906,23 +1023,23 @@ export interface _ServerCapabilities<T = any> {
 	/**
 	 * The server provides goto definition support.
 	 */
-	definitionProvider?: boolean;
+	definitionProvider?: boolean | DefinitionOptions;
 	/**
 	 * The server provides find references support.
 	 */
-	referencesProvider?: boolean;
+	referencesProvider?: boolean | ReferenceOptions;
 	/**
 	 * The server provides document highlight support.
 	 */
-	documentHighlightProvider?: boolean;
+	documentHighlightProvider?: boolean | DocumentHighlightOptions;
 	/**
 	 * The server provides document symbol support.
 	 */
-	documentSymbolProvider?: boolean;
+	documentSymbolProvider?: boolean | DocumentSymbolOptions;
 	/**
 	 * The server provides workspace symbol support.
 	 */
-	workspaceSymbolProvider?: boolean;
+	workspaceSymbolProvider?: boolean | WorkspaceSymbolOptions;
 	/**
 	 * The server provides code actions. CodeActionOptions may only be
 	 * specified if the client states that it supports
@@ -936,24 +1053,15 @@ export interface _ServerCapabilities<T = any> {
 	/**
 	 * The server provides document formatting.
 	 */
-	documentFormattingProvider?: boolean;
+	documentFormattingProvider?: boolean | DocumentFormattingOptions;
 	/**
 	 * The server provides document range formatting.
 	 */
-	documentRangeFormattingProvider?: boolean;
+	documentRangeFormattingProvider?: boolean | DocumentRangeFormattingOptions;
 	/**
 	 * The server provides document formatting on typing.
 	 */
-	documentOnTypeFormattingProvider?: {
-		/**
-		 * A character on which formatting should be triggered, like `}`.
-		 */
-		firstTriggerCharacter: string;
-		/**
-		 * More trigger characters.
-		 */
-		moreTriggerCharacter?: string[]
-	};
+	documentOnTypeFormattingProvider?: DocumentOnTypeFormattingOptions;
 	/**
 	 * The server provides rename support. RenameOptions may only be
 	 * specified if the client states that it supports
@@ -985,13 +1093,13 @@ export type ServerCapabilities<T = any> = _ServerCapabilities<T> & Implementatio
  * resolves to such.
  */
 export namespace InitializeRequest {
-	export const type = new RequestType<InitializeParams, InitializeResult, InitializeError, void>('initialize');
+	export const type = new RequestType<InitializeParams & WorkDoneProgressParams, InitializeResult, InitializeError, void>('initialize');
 }
 
 /**
  * The initialize parameters
  */
-export interface _InitializeParams {
+export interface _InitializeParams extends WorkDoneProgressParams {
 	/**
 	 * The process Id of the parent process that started
 	 * the server.
@@ -1533,12 +1641,6 @@ export interface PublishDiagnosticsParams {
 //---- Completion Support --------------------------
 
 /**
- * Completion registration options.
- */
-export interface CompletionRegistrationOptions extends TextDocumentRegistrationOptions, CompletionOptions {
-}
-
-/**
  * How a completion was triggered
  */
 export namespace CompletionTriggerKind {
@@ -1582,13 +1684,19 @@ export interface CompletionContext {
 /**
  * Completion parameters
  */
-export interface CompletionParams extends TextDocumentPositionParams {
+export interface CompletionParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {
 
 	/**
 	 * The completion context. This is only available it the client specifies
 	 * to send this using `ClientCapabilities.textDocument.completion.contextSupport === true`
 	 */
 	context?: CompletionContext;
+}
+
+/**
+ * Registration options for a [CompletionRequest](#CompletionRequest).
+ */
+export interface CompletionRegistrationOptions extends TextDocumentRegistrationOptions, CompletionOptions {
 }
 
 /**
@@ -1604,6 +1712,7 @@ export interface CompletionParams extends TextDocumentPositionParams {
  */
 export namespace CompletionRequest {
 	export const type = new RequestType<CompletionParams, CompletionItem[] | CompletionList | null, void, CompletionRegistrationOptions>('textDocument/completion');
+	export const resultType = new ProgressType<CompletionItem[]>();
 }
 
 /**
@@ -1618,27 +1727,57 @@ export namespace CompletionResolveRequest {
 //---- Hover Support -------------------------------
 
 /**
+ * Parameters for a [HoverRequest](#HoverRequest).
+ */
+export interface HoverParams extends TextDocumentPositionParams, WorkDoneProgressParams {
+}
+
+/**
+ * Registration options for a [HoverRequest](#HoverRequest).
+ */
+export interface HoverRegistrationOptions extends TextDocumentRegistrationOptions, HoverOptions {
+}
+
+/**
  * Request to request hover information at a given text document position. The request's
  * parameter is of type [TextDocumentPosition](#TextDocumentPosition) the response is of
  * type [Hover](#Hover) or a Thenable that resolves to such.
  */
 export namespace HoverRequest {
-	export const type = new RequestType<TextDocumentPositionParams, Hover | null, void, TextDocumentRegistrationOptions>('textDocument/hover');
+	export const type = new RequestType<HoverParams, Hover | null, void, HoverRegistrationOptions>('textDocument/hover');
 }
 
 //---- SignatureHelp ----------------------------------
 
 /**
- * Signature help registration options.
+ * Parameters for a [SignatureHelpRequest](#SignatureHelpRequest).
+ */
+export interface SignatureHelpParams extends TextDocumentPositionParams, WorkDoneProgressParams {
+}
+
+/**
+ * Registration options for a [SignatureHelpRequest](#SignatureHelpRequest).
  */
 export interface SignatureHelpRegistrationOptions extends TextDocumentRegistrationOptions, SignatureHelpOptions {
 }
 
 export namespace SignatureHelpRequest {
-	export const type = new RequestType<TextDocumentPositionParams, SignatureHelp | null, void, SignatureHelpRegistrationOptions>('textDocument/signatureHelp');
+	export const type = new RequestType<SignatureHelpParams, SignatureHelp | null, void, SignatureHelpRegistrationOptions>('textDocument/signatureHelp');
 }
 
 //---- Goto Definition -------------------------------------
+
+/**
+ * Parameters for a [DefinitionParams](#DefinitionParams).
+ */
+export interface DefinitionParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {
+}
+
+/**
+ * Registration options for a [DefinitionRequest](#DefinitionRequest).
+ */
+export interface DefinitionRegistrationOptions extends TextDocumentRegistrationOptions, DefinitionOptions {
+}
 
 /**
  * A request to resolve the definition location of a symbol at a given text
@@ -1648,7 +1787,8 @@ export namespace SignatureHelpRequest {
  * to such.
  */
 export namespace DefinitionRequest {
-	export const type = new RequestType<TextDocumentPositionParams, Definition | DefinitionLink[] | null, void, TextDocumentRegistrationOptions>('textDocument/definition');
+	export const type = new RequestType<DefinitionParams, Definition | DefinitionLink[] | null, void, DefinitionRegistrationOptions>('textDocument/definition');
+	export const resultType = new ProgressType<Location[] | DefinitionLink[]>();
 }
 
 //---- Reference Provider ----------------------------------
@@ -1656,8 +1796,14 @@ export namespace DefinitionRequest {
 /**
  * Parameters for a [ReferencesRequest](#ReferencesRequest).
  */
-export interface ReferenceParams extends TextDocumentPositionParams {
+export interface ReferenceParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {
 	context: ReferenceContext
+}
+
+/**
+ * Registration options for a [ReferencesRequest](#ReferencesRequest).
+ */
+export interface ReferenceRegistrationOptions extends TextDocumentRegistrationOptions, ReferenceOptions {
 }
 
 /**
@@ -1667,10 +1813,23 @@ export interface ReferenceParams extends TextDocumentPositionParams {
  * [Location[]](#Location) or a Thenable that resolves to such.
  */
 export namespace ReferencesRequest {
-	export const type = new RequestType<ReferenceParams, Location[] | null, void, TextDocumentRegistrationOptions>('textDocument/references');
+	export const type = new RequestType<ReferenceParams, Location[] | null, void, ReferenceRegistrationOptions>('textDocument/references');
+	export const resultType = new ProgressType<Location[]>();
 }
 
 //---- Document Highlight ----------------------------------
+
+/**
+ * Parameters for a [DocumentHighlightRequest](#DocumentHighlightRequest).
+ */
+export interface DocumentHighlightParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {
+}
+
+/**
+ * Registration options for a [DocumentHighlightRequest](#DocumentHighlightRequest).
+ */
+export interface DocumentHighlightRegistrationOptions extends TextDocumentRegistrationOptions, DocumentHighlightOptions {
+}
 
 /**
  * Request to resolve a [DocumentHighlight](#DocumentHighlight) for a given
@@ -1679,10 +1838,27 @@ export namespace ReferencesRequest {
  * (#DocumentHighlight) or a Thenable that resolves to such.
  */
 export namespace DocumentHighlightRequest {
-	export const type = new RequestType<TextDocumentPositionParams, DocumentHighlight[] | null, void, TextDocumentRegistrationOptions>('textDocument/documentHighlight');
+	export const type = new RequestType<DocumentHighlightParams, DocumentHighlight[] | null, void, DocumentHighlightRegistrationOptions>('textDocument/documentHighlight');
+	export const resultType = new ProgressType<DocumentHighlight[]>();
 }
 
 //---- Document Symbol Provider ---------------------------
+
+/**
+ * Parameters for a [DocumentSymbolRequest](#DocumentSymbolRequest).
+ */
+export interface DocumentSymbolParams extends WorkDoneProgressParams, PartialResultParams {
+	/**
+	 * The text document.
+	 */
+	textDocument: TextDocumentIdentifier;
+}
+
+/**
+ * Registration options for a [DocumentSymbolRequest](#DocumentSymbolRequest).
+ */
+export interface DocumentSymbolRegistrationOptions extends TextDocumentRegistrationOptions, DocumentSymbolOptions {
+}
 
 /**
  * A request to list all symbols found in a given text document. The request's
@@ -1691,10 +1867,27 @@ export namespace DocumentHighlightRequest {
  * that resolves to such.
  */
 export namespace DocumentSymbolRequest {
-	export const type = new RequestType<DocumentSymbolParams, SymbolInformation[] | DocumentSymbol[] | null, void, TextDocumentRegistrationOptions>('textDocument/documentSymbol');
+	export const type = new RequestType<DocumentSymbolParams, SymbolInformation[] | DocumentSymbol[] | null, void, DocumentSymbolRegistrationOptions>('textDocument/documentSymbol');
+	export const resultType = new ProgressType<SymbolInformation[] | DocumentSymbol[]>();
 }
 
 //---- Workspace Symbol Provider ---------------------------
+
+/**
+ * The parameters of a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest).
+ */
+export interface WorkspaceSymbolParams extends WorkDoneProgressParams, PartialResultParams {
+	/**
+	 * A non-empty query string
+	 */
+	query: string;
+}
+
+/**
+ * Registration options for a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest).
+ */
+export interface WorkspaceSymbolRegistrationOptions extends WorkspaceSymbolOptions {
+}
 
 /**
  * A request to list project-wide symbols matching the query string given
@@ -1703,17 +1896,16 @@ export namespace DocumentSymbolRequest {
  * resolves to such.
  */
 export namespace WorkspaceSymbolRequest {
-	export const type = new RequestType<WorkspaceSymbolParams, SymbolInformation[] | null, void, void>('workspace/symbol');
+	export const type = new RequestType<WorkspaceSymbolParams, SymbolInformation[] | null, void, WorkspaceSymbolRegistrationOptions>('workspace/symbol');
+	export const resultType = new ProgressType<SymbolInformation[]>();
 }
 
 //---- Code Action Provider ----------------------------------
 
-
-
 /**
- * Params for the CodeActionRequest
+ * The parameters of a [CodeActionRequest](#CodeActionRequest).
  */
-export interface CodeActionParams {
+export interface CodeActionParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
 	 * The document in which the command was invoked.
 	 */
@@ -1730,6 +1922,9 @@ export interface CodeActionParams {
 	context: CodeActionContext;
 }
 
+/**
+ * Registration options for a [CodeActionRequest](#CodeActionRequest).
+ */
 export interface CodeActionRegistrationOptions extends TextDocumentRegistrationOptions, CodeActionOptions {
 }
 
@@ -1738,14 +1933,15 @@ export interface CodeActionRegistrationOptions extends TextDocumentRegistrationO
  */
 export namespace CodeActionRequest {
 	export const type = new RequestType<CodeActionParams, (Command | CodeAction)[] | null, void, CodeActionRegistrationOptions>('textDocument/codeAction');
+	export const resultType = new ProgressType<(Command | CodeAction)[]>();
 }
 
 //---- Code Lens Provider -------------------------------------------
 
 /**
- * Params for the Code Lens request.
+ * The parameters of a [CodeLensRequest](#CodeLensRequest).
  */
-export interface CodeLensParams {
+export interface CodeLensParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
 	 * The document to request code lens for.
 	 */
@@ -1753,7 +1949,7 @@ export interface CodeLensParams {
 }
 
 /**
- * Code Lens registration options.
+ * Registration options for a [CodeLensRequest](#CodeLensRequest).
  */
 export interface CodeLensRegistrationOptions extends TextDocumentRegistrationOptions, CodeLensOptions {
 }
@@ -1763,6 +1959,7 @@ export interface CodeLensRegistrationOptions extends TextDocumentRegistrationOpt
  */
 export namespace CodeLensRequest {
 	export const type = new RequestType<CodeLensParams, CodeLens[] | null, void, CodeLensRegistrationOptions>('textDocument/codeLens');
+	export const resultType = new ProgressType<CodeLens[]>();
 }
 
 /**
@@ -1774,7 +1971,10 @@ export namespace CodeLensResolveRequest {
 
 //---- Formatting ----------------------------------------------
 
-export interface DocumentFormattingParams {
+/**
+ * The parameters of a [DocumentFormattingRequest](#DocumentFormattingRequest).
+ */
+export interface DocumentFormattingParams extends WorkDoneProgressParams {
 	/**
 	 * The document to format.
 	 */
@@ -1787,13 +1987,22 @@ export interface DocumentFormattingParams {
 }
 
 /**
+ * Registration options for a [DocumentFormattingRequest](#DocumentFormattingRequest).
+ */
+export interface DocumentFormattingRegistrationOptions extends TextDocumentRegistrationOptions, DocumentFormattingOptions {
+}
+
+/**
  * A request to to format a whole document.
  */
 export namespace DocumentFormattingRequest {
-	export const type = new RequestType<DocumentFormattingParams, TextEdit[] | null, void, TextDocumentRegistrationOptions>('textDocument/formatting');
+	export const type = new RequestType<DocumentFormattingParams, TextEdit[] | null, void, DocumentFormattingRegistrationOptions>('textDocument/formatting');
 }
 
-export interface DocumentRangeFormattingParams {
+/**
+ * The parameters of a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest).
+ */
+export interface DocumentRangeFormattingParams extends WorkDoneProgressParams {
 	/**
 	 * The document to format.
 	 */
@@ -1811,12 +2020,21 @@ export interface DocumentRangeFormattingParams {
 }
 
 /**
+ * Registration options for a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest).
+ */
+export interface DocumentRangeFormattingRegistrationOptions extends TextDocumentRegistrationOptions, DocumentRangeFormattingOptions {
+}
+
+/**
  * A request to to format a range in a document.
  */
 export namespace DocumentRangeFormattingRequest {
-	export const type = new RequestType<DocumentRangeFormattingParams, TextEdit[] | null, void, TextDocumentRegistrationOptions>('textDocument/rangeFormatting');
+	export const type = new RequestType<DocumentRangeFormattingParams, TextEdit[] | null, void, DocumentRangeFormattingRegistrationOptions>('textDocument/rangeFormatting');
 }
 
+/**
+ * The parameters of a [DocumentOnTypeFormattingRequest](#DocumentOnTypeFormattingRequest).
+ */
 export interface DocumentOnTypeFormattingParams {
 	/**
 	 * The document to format.
@@ -1840,7 +2058,7 @@ export interface DocumentOnTypeFormattingParams {
 }
 
 /**
- * Format document on type options
+ * Registration options for a [DocumentOnTypeFormattingRequest](#DocumentOnTypeFormattingRequest).
  */
 export interface DocumentOnTypeFormattingRegistrationOptions extends TextDocumentRegistrationOptions, DocumentOnTypeFormattingOptions {
 }
@@ -1854,7 +2072,10 @@ export namespace DocumentOnTypeFormattingRequest {
 
 //---- Rename ----------------------------------------------
 
-export interface RenameParams {
+/**
+ * The parameters of a [RenameRequest](#RenameRequest).
+ */
+export interface RenameParams extends WorkDoneProgressParams {
 	/**
 	 * The document to rename.
 	 */
@@ -1874,28 +2095,34 @@ export interface RenameParams {
 }
 
 /**
+ * Registration options for a [RenameRequest](#RenameRequest).
+ */
+export interface RenameRegistrationOptions extends TextDocumentRegistrationOptions, RenameOptions {
+}
+
+/**
  * A request to rename a symbol.
  */
 export namespace RenameRequest {
 	export const type = new RequestType<RenameParams, WorkspaceEdit | null, void, RenameRegistrationOptions>('textDocument/rename');
 }
 
+export interface PrepareRenameParams extends TextDocumentPositionParams, WorkDoneProgressParams {
+}
+
 /**
  * A request to test and perform the setup necessary for a rename.
  */
 export namespace PrepareRenameRequest {
-	export const type = new RequestType<TextDocumentPositionParams, Range | { range: Range, placeholder: string } | null, void, void>('textDocument/prepareRename');
-}
-
-/**
- * Rename registration options.
- */
-export interface RenameRegistrationOptions extends TextDocumentRegistrationOptions, RenameOptions {
+	export const type = new RequestType<PrepareRenameParams, Range | { range: Range, placeholder: string } | null, void, void>('textDocument/prepareRename');
 }
 
 //---- Document Links ----------------------------------------------
 
-export interface DocumentLinkParams {
+/**
+ * The parameters of a [DocumentLinkRequest](#DocumentLinkRequest).
+ */
+export interface DocumentLinkParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
 	 * The document to provide document links for.
 	 */
@@ -1903,7 +2130,7 @@ export interface DocumentLinkParams {
 }
 
 /**
- * Document link registration options
+ * Registration options for a [DocumentLinkRequest](#DocumentLinkRequest).
  */
 export interface DocumentLinkRegistrationOptions extends TextDocumentRegistrationOptions, DocumentLinkOptions {
 }
@@ -1913,6 +2140,7 @@ export interface DocumentLinkRegistrationOptions extends TextDocumentRegistratio
  */
 export namespace DocumentLinkRequest {
 	export const type = new RequestType<DocumentLinkParams, DocumentLink[] | null, void, DocumentLinkRegistrationOptions>('textDocument/documentLink');
+	export const resultType = new ProgressType<DocumentLink[]>();
 }
 
 /**
@@ -1926,7 +2154,10 @@ export namespace DocumentLinkResolveRequest {
 
 //---- Command Execution -------------------------------------------
 
-export interface ExecuteCommandParams {
+/**
+ * The parameters of a [ExecuteCommandRequest](#ExecuteCommandRequest).
+ */
+export interface ExecuteCommandParams extends WorkDoneProgressParams {
 
 	/**
 	 * The identifier of the actual command handler.
@@ -1939,7 +2170,7 @@ export interface ExecuteCommandParams {
 }
 
 /**
- * Execute command registration options.
+ * Registration options for a [ExecuteCommandRequest](#ExecuteCommandRequest).
  */
 export interface ExecuteCommandRegistrationOptions extends ExecuteCommandOptions {
 }
@@ -2007,8 +2238,13 @@ export {
 	TypeDefinitionRequest,
 	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, WorkspaceFolder, WorkspaceFoldersChangeEvent,
 	ConfigurationRequest, ConfigurationParams, ConfigurationItem,
-	DocumentColorRequest, ColorPresentationRequest, ColorProviderOptions, DocumentColorParams, ColorPresentationParams,
-	FoldingRangeClientCapabilities, FoldingRangeProviderOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeServerCapabilities,
+	DocumentColorRequest, ColorPresentationRequest, ColorOptions, DocumentColorParams, ColorPresentationParams,
+	FoldingRangeClientCapabilities, FoldingRangeOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeServerCapabilities,
 	DeclarationClientCapabilities, DeclarationRequest, DeclarationServerCapabilities,
-	SelectionRangeClientCapabilities, SelectionRangeProviderOptions, SelectionRangeServerCapabilities, SelectionRangeParams, SelectionRangeRequest
+	SelectionRangeClientCapabilities, SelectionRangeOptions, SelectionRangeServerCapabilities, SelectionRangeParams, SelectionRangeRequest
 };
+
+// To be backwards compatible
+export {
+	ColorOptions as ColorProviderOptions, FoldingRangeOptions as FoldingRangeProviderOptions, SelectionRangeOptions as SelectionRangeProviderOptions
+}

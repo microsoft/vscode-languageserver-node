@@ -14,7 +14,7 @@ import {
 	FormattingOptions as VFormattingOptions, TextEdit as VTextEdit, WorkspaceEdit as VWorkspaceEdit, MessageItem,
 	Hover as VHover, CodeAction as VCodeAction, DocumentSymbol as VDocumentSymbol,
 	DocumentLink as VDocumentLink, TextDocumentWillSaveEvent,
-	WorkspaceFolder as VWorkspaceFolder, CompletionContext as VCompletionContext, ConfigurationChangeEvent
+	WorkspaceFolder as VWorkspaceFolder, CompletionContext as VCompletionContext, ConfigurationChangeEvent,
 } from 'vscode';
 
 import {
@@ -54,7 +54,12 @@ import {
 	ExecuteCommandRequest, ExecuteCommandParams, ExecuteCommandRegistrationOptions,
 	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse,
 	MarkupKind, SymbolKind, CompletionItemKind, Command, CodeActionKind, DocumentSymbol, SymbolInformation, Range,
-	CodeActionRegistrationOptions, TextDocumentEdit, ResourceOperationKind, FailureHandlingKind
+	CodeActionRegistrationOptions, TextDocumentEdit, ResourceOperationKind, FailureHandlingKind, ProgressType, ProgressToken,
+	WorkDoneProgressOptions, StaticRegistrationOptions, CompletionOptions, HoverRegistrationOptions, HoverOptions,
+	SignatureHelpOptions, DefinitionRegistrationOptions, DefinitionOptions, ReferenceRegistrationOptions, ReferenceOptions,
+	DocumentHighlightRegistrationOptions, DocumentHighlightOptions, DocumentSymbolRegistrationOptions, DocumentSymbolOptions,
+	WorkspaceSymbolRegistrationOptions, CodeActionOptions, CodeLensOptions, DocumentFormattingOptions, DocumentRangeFormattingRegistrationOptions,
+	DocumentRangeFormattingOptions, DocumentOnTypeFormattingOptions, RenameOptions, DocumentLinkOptions
 } from 'vscode-languageserver-protocol';
 
 import { ColorProviderMiddleware } from './colorProvider';
@@ -72,6 +77,7 @@ import * as p2c from './protocolConverter';
 import * as Is from './utils/is';
 import { Delayer } from './utils/async'
 import * as UUID from './utils/uuid';
+import { ProgressPart } from './progressPart';
 
 export { Converter as Code2ProtocolConverter } from './codeConverter';
 export { Converter as Protocol2CodeConverter } from './protocolConverter';
@@ -103,6 +109,9 @@ interface IConnection {
 	onNotification<P, RO>(type: NotificationType<P, RO>, handler: NotificationHandler<P>): void;
 	onNotification(method: string, handler: GenericNotificationHandler): void;
 	onNotification(method: string | RPCMessageType, handler: GenericNotificationHandler): void;
+
+	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable;
+	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): void;
 
 	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): void;
 	trace(value: Trace, tracer: Tracer, traceOptions?: TraceOptions): void;
@@ -165,6 +174,9 @@ function createConnection(input: any, output: any, errorHandler: ConnectionError
 
 		sendNotification: (type: string | RPCMessageType, params?: any): void => connection.sendNotification(Is.string(type) ? type : type.method, params),
 		onNotification: (type: string | RPCMessageType, handler: GenericNotificationHandler): void => connection.onNotification(Is.string(type) ? type : type.method, handler),
+
+		onProgress: connection.onProgress,
+		sendProgress: connection.sendProgress,
 
 		trace: (value: Trace, tracer: Tracer, sendNotificationOrTraceOptions?: boolean | TraceOptions): void => {
 			const defaultTraceOptions: TraceOptions = {
@@ -472,6 +484,7 @@ export interface LanguageClientOptions {
 	stdioEncoding?: string;
 	initializationOptions?: any | (() => any);
 	initializationFailedHandler?: InitializationFailedHandler;
+	showProgressOnInitialization?: boolean;
 	errorHandler?: ErrorHandler;
 	middleware?: Middleware;
 	uriConverters?: {
@@ -490,6 +503,7 @@ interface ResolvedClientOptions {
 	stdioEncoding: string;
 	initializationOptions?: any | (() => any);
 	initializationFailedHandler?: InitializationFailedHandler;
+	showProgressOnInitialization: boolean;
 	errorHandler: ErrorHandler;
 	middleware: Middleware;
 	uriConverters?: {
@@ -624,7 +638,7 @@ export interface StaticFeature {
 	initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector | undefined): void;
 }
 
-export interface DynamicFeature<T> {
+export interface DynamicFeature<RO> {
 
 	/**
 	 * The message for which this features support dynamic activation / registration.
@@ -663,7 +677,7 @@ export interface DynamicFeature<T> {
 	 * @param message the message to register for.
 	 * @param data additional registration data as defined in the protocol.
 	 */
-	register(message: RPCMessageType, data: RegistrationData<T>): void;
+	register(message: RPCMessageType, data: RegistrationData<RO>): void;
 
 	/**
 	 * Is called when the server wants to unregister a feature.
@@ -1236,7 +1250,7 @@ class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatchedFilesRe
 	}
 }
 
-export abstract class TextDocumentFeature<T extends TextDocumentRegistrationOptions> implements DynamicFeature<T> {
+export abstract class TextDocumentFeature<PO, RO extends TextDocumentRegistrationOptions & PO> implements DynamicFeature<RO> {
 
 	protected _providers: Map<string, Disposable> = new Map<string, Disposable>();
 
@@ -1251,7 +1265,7 @@ export abstract class TextDocumentFeature<T extends TextDocumentRegistrationOpti
 
 	public abstract initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void;
 
-	public register(message: RPCMessageType, data: RegistrationData<T>): void {
+	public register(message: RPCMessageType, data: RegistrationData<RO>): void {
 		if (message.method !== this.messages.method) {
 			throw new Error(`Register called on wrong feature. Requested ${message.method} but reached feature ${this.messages.method}`);
 		}
@@ -1264,7 +1278,7 @@ export abstract class TextDocumentFeature<T extends TextDocumentRegistrationOpti
 		}
 	}
 
-	protected abstract registerLanguageProvider(options: T): Disposable;
+	protected abstract registerLanguageProvider(options: RO): Disposable;
 
 	public unregister(id: string): void {
 		let provider = this._providers.get(id);
@@ -1279,9 +1293,35 @@ export abstract class TextDocumentFeature<T extends TextDocumentRegistrationOpti
 		});
 		this._providers.clear();
 	}
+
+	protected getRegistration(documentSelector: DocumentSelector | undefined, capability: undefined | PO | (RO & StaticRegistrationOptions)): [string | undefined, (RO & { documentSelector: DocumentSelector }) | undefined] {
+		if (!capability) {
+			return [undefined, undefined];
+		} else if (TextDocumentRegistrationOptions.is(capability)) {
+			const id = StaticRegistrationOptions.hasId(capability) ? capability.id : UUID.generateUuid();
+			const selector = capability.documentSelector || documentSelector;
+			if (selector) {
+				return [id, Object.assign({}, capability, { documentSelector: selector })];
+			}
+		} else if (Is.boolean(capability) && capability === true || WorkDoneProgressOptions.is(capability)) {
+			if (!documentSelector) {
+				return [undefined, undefined];
+			}
+			let options: RO & { documentSelector: DocumentSelector } = (Is.boolean(capability) && capability === true ? { documentSelector } : Object.assign({}, capability, { documentSelector })) as any;
+			return [UUID.generateUuid(), options];
+		}
+		return [undefined, undefined];
+	}
+
+	protected getRegistrationOptions(documentSelector: DocumentSelector | undefined, capability: undefined | PO) : (RO & { documentSelector: DocumentSelector }) | undefined {
+		if (!documentSelector || !capability) {
+			return undefined;
+		}
+		return (Is.boolean(capability) && capability === true ? { documentSelector } : Object.assign({}, capability, { documentSelector })) as RO & { documentSelector: DocumentSelector };
+	}
 }
 
-abstract class WorkspaceFeature<T> implements DynamicFeature<T> {
+abstract class WorkspaceFeature<RO> implements DynamicFeature<RO> {
 
 	protected _providers: Map<string, Disposable> = new Map<string, Disposable>();
 
@@ -1296,7 +1336,7 @@ abstract class WorkspaceFeature<T> implements DynamicFeature<T> {
 
 	public abstract initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector | undefined): void;
 
-	public register(message: RPCMessageType, data: RegistrationData<T>): void {
+	public register(message: RPCMessageType, data: RegistrationData<RO>): void {
 		if (message.method !== this.messages.method) {
 			throw new Error(`Register called on wron feature. Requested ${message.method} but reached feature ${this.messages.method}`);
 		}
@@ -1306,7 +1346,7 @@ abstract class WorkspaceFeature<T> implements DynamicFeature<T> {
 		}
 	}
 
-	protected abstract registerLanguageProvider(options: T): Disposable;
+	protected abstract registerLanguageProvider(options: RO): Disposable;
 
 	public unregister(id: string): void {
 		let provider = this._providers.get(id);
@@ -1323,7 +1363,7 @@ abstract class WorkspaceFeature<T> implements DynamicFeature<T> {
 	}
 }
 
-class CompletionItemFeature extends TextDocumentFeature<CompletionRegistrationOptions> {
+class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, CompletionRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, CompletionRequest.type);
@@ -1344,12 +1384,13 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionRegistrationOp
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		if (!capabilities.completionProvider || !documentSelector) {
+		const options = this.getRegistrationOptions(documentSelector, capabilities.completionProvider);
+		if (!options) {
 			return;
 		}
 		this.register(this.messages, {
 			id: UUID.generateUuid(),
-			registerOptions: Object.assign({}, { documentSelector: documentSelector }, capabilities.completionProvider)
+			registerOptions: options
 		});
 	}
 
@@ -1393,7 +1434,7 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionRegistrationOp
 	}
 }
 
-class HoverFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
+class HoverFeature extends TextDocumentFeature<boolean | HoverOptions, HoverRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, HoverRequest.type);
@@ -1406,16 +1447,17 @@ class HoverFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> 
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		if (!capabilities.hoverProvider || !documentSelector) {
+		const options = this.getRegistrationOptions(documentSelector, capabilities.hoverProvider);
+		if (!options) {
 			return;
 		}
 		this.register(this.messages, {
 			id: UUID.generateUuid(),
-			registerOptions: Object.assign({}, { documentSelector: documentSelector })
+			registerOptions: options
 		});
 	}
 
-	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): Disposable {
+	protected registerLanguageProvider(options: HoverRegistrationOptions): Disposable {
 		let client = this._client;
 		let provideHover: ProvideHoverSignature = (document, position, token) => {
 			return client.sendRequest(HoverRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
@@ -1437,7 +1479,7 @@ class HoverFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> 
 	}
 }
 
-class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpRegistrationOptions> {
+class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpOptions, SignatureHelpRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, SignatureHelpRequest.type);
@@ -1451,12 +1493,13 @@ class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpRegistration
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		if (!capabilities.signatureHelpProvider || !documentSelector) {
+		const options = this.getRegistrationOptions(documentSelector, capabilities.signatureHelpProvider);
+		if (!options) {
 			return;
 		}
 		this.register(this.messages, {
 			id: UUID.generateUuid(),
-			registerOptions: Object.assign({}, { documentSelector: documentSelector }, capabilities.signatureHelpProvider)
+			registerOptions: options
 		});
 	}
 
@@ -1483,7 +1526,7 @@ class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpRegistration
 	}
 }
 
-class DefinitionFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
+class DefinitionFeature extends TextDocumentFeature<boolean | DefinitionOptions, DefinitionRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, DefinitionRequest.type);
@@ -1496,16 +1539,14 @@ class DefinitionFeature extends TextDocumentFeature<TextDocumentRegistrationOpti
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		if (!capabilities.definitionProvider || !documentSelector) {
+		const options = this.getRegistrationOptions(documentSelector, capabilities.definitionProvider);
+		if (!options) {
 			return;
 		}
-		this.register(this.messages, {
-			id: UUID.generateUuid(),
-			registerOptions: Object.assign({}, { documentSelector: documentSelector })
-		});
+		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): Disposable {
+	protected registerLanguageProvider(options: DefinitionRegistrationOptions): Disposable {
 		let client = this._client;
 		let provideDefinition: ProvideDefinitionSignature = (document, position, token) => {
 			return client.sendRequest(DefinitionRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
@@ -1527,7 +1568,7 @@ class DefinitionFeature extends TextDocumentFeature<TextDocumentRegistrationOpti
 	}
 }
 
-class ReferencesFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
+class ReferencesFeature extends TextDocumentFeature<boolean | ReferenceOptions, ReferenceRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, ReferencesRequest.type);
@@ -1538,13 +1579,11 @@ class ReferencesFeature extends TextDocumentFeature<TextDocumentRegistrationOpti
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		if (!capabilities.referencesProvider || !documentSelector) {
+		const options = this.getRegistrationOptions(documentSelector, capabilities.referencesProvider);
+		if (!options) {
 			return;
 		}
-		this.register(this.messages, {
-			id: UUID.generateUuid(),
-			registerOptions: Object.assign({}, { documentSelector: documentSelector })
-		});
+		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): Disposable {
@@ -1569,7 +1608,7 @@ class ReferencesFeature extends TextDocumentFeature<TextDocumentRegistrationOpti
 	}
 }
 
-class DocumentHighlightFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
+class DocumentHighlightFeature extends TextDocumentFeature<boolean | DocumentHighlightOptions, DocumentHighlightRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, DocumentHighlightRequest.type);
@@ -1580,13 +1619,11 @@ class DocumentHighlightFeature extends TextDocumentFeature<TextDocumentRegistrat
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		if (!capabilities.documentHighlightProvider || !documentSelector) {
+		const options = this.getRegistrationOptions(documentSelector, capabilities.documentHighlightProvider);
+		if (!options) {
 			return;
 		}
-		this.register(this.messages, {
-			id: UUID.generateUuid(),
-			registerOptions: Object.assign({}, { documentSelector: documentSelector })
-		});
+		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): Disposable {
@@ -1611,7 +1648,7 @@ class DocumentHighlightFeature extends TextDocumentFeature<TextDocumentRegistrat
 	}
 }
 
-class DocumentSymbolFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
+class DocumentSymbolFeature extends TextDocumentFeature<boolean | DocumentSymbolOptions, DocumentSymbolRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, DocumentSymbolRequest.type);
@@ -1627,13 +1664,11 @@ class DocumentSymbolFeature extends TextDocumentFeature<TextDocumentRegistration
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		if (!capabilities.documentSymbolProvider || !documentSelector) {
+		const options = this.getRegistrationOptions(documentSelector, capabilities.documentSymbolProvider);
+		if (!options) {
 			return;
 		}
-		this.register(this.messages, {
-			id: UUID.generateUuid(),
-			registerOptions: Object.assign({}, { documentSelector: documentSelector })
-		});
+		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): Disposable {
@@ -1672,7 +1707,7 @@ class DocumentSymbolFeature extends TextDocumentFeature<TextDocumentRegistration
 	}
 }
 
-class WorkspaceSymbolFeature extends WorkspaceFeature<undefined> {
+class WorkspaceSymbolFeature extends WorkspaceFeature<WorkspaceSymbolRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, WorkspaceSymbolRequest.type);
@@ -1692,11 +1727,11 @@ class WorkspaceSymbolFeature extends WorkspaceFeature<undefined> {
 		}
 		this.register(this.messages, {
 			id: UUID.generateUuid(),
-			registerOptions: undefined
+			registerOptions: capabilities.workspaceSymbolProvider === true ? { workDoneProgress: false } : capabilities.workspaceSymbolProvider
 		});
 	}
 
-	protected registerLanguageProvider(_options: undefined): Disposable {
+	protected registerLanguageProvider(_options: WorkspaceSymbolRegistrationOptions): Disposable {
 		let client = this._client;
 		let provideWorkspaceSymbols: ProvideWorkspaceSymbolsSignature = (query, token) => {
 			return client.sendRequest(WorkspaceSymbolRequest.type, { query }, token).then(
@@ -1718,7 +1753,7 @@ class WorkspaceSymbolFeature extends WorkspaceFeature<undefined> {
 	}
 }
 
-class CodeActionFeature extends TextDocumentFeature<CodeActionRegistrationOptions> {
+class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions, CodeActionRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, CodeActionRequest.type);
@@ -1744,19 +1779,11 @@ class CodeActionFeature extends TextDocumentFeature<CodeActionRegistrationOption
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		if (!capabilities.codeActionProvider || !documentSelector) {
+		const options = this.getRegistrationOptions(documentSelector, capabilities.codeActionProvider);
+		if (!options) {
 			return;
 		}
-
-		let codeActionKinds: CodeActionKind[] | undefined = undefined;
-		if (!Is.boolean(capabilities.codeActionProvider)) {
-			codeActionKinds = capabilities.codeActionProvider.codeActionKinds;
-		}
-
-		this.register(this.messages, {
-			id: UUID.generateUuid(),
-			registerOptions: { documentSelector: documentSelector, codeActionKinds }
-		});
+		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: CodeActionRegistrationOptions): Disposable {
@@ -1801,7 +1828,7 @@ class CodeActionFeature extends TextDocumentFeature<CodeActionRegistrationOption
 	}
 }
 
-class CodeLensFeature extends TextDocumentFeature<CodeLensRegistrationOptions> {
+class CodeLensFeature extends TextDocumentFeature<CodeLensOptions, CodeLensRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, CodeLensRequest.type);
@@ -1812,13 +1839,11 @@ class CodeLensFeature extends TextDocumentFeature<CodeLensRegistrationOptions> {
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		if (!capabilities.codeLensProvider || !documentSelector) {
+		const options = this.getRegistrationOptions(documentSelector, capabilities.codeLensProvider);
+		if (!options) {
 			return;
 		}
-		this.register(this.messages, {
-			id: UUID.generateUuid(),
-			registerOptions: Object.assign({}, { documentSelector: documentSelector }, capabilities.codeLensProvider)
-		});
+		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: CodeLensRegistrationOptions): Disposable {
@@ -1859,7 +1884,7 @@ class CodeLensFeature extends TextDocumentFeature<CodeLensRegistrationOptions> {
 	}
 }
 
-class DocumentFormattingFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
+class DocumentFormattingFeature extends TextDocumentFeature<boolean | DocumentFormattingOptions, DocumentHighlightRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, DocumentFormattingRequest.type);
@@ -1870,13 +1895,11 @@ class DocumentFormattingFeature extends TextDocumentFeature<TextDocumentRegistra
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		if (!capabilities.documentFormattingProvider || !documentSelector) {
+		const options = this.getRegistrationOptions(documentSelector, capabilities.documentFormattingProvider);
+		if (!options) {
 			return;
 		}
-		this.register(this.messages, {
-			id: UUID.generateUuid(),
-			registerOptions: Object.assign({}, { documentSelector: documentSelector })
-		});
+		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): Disposable {
@@ -1905,7 +1928,7 @@ class DocumentFormattingFeature extends TextDocumentFeature<TextDocumentRegistra
 	}
 }
 
-class DocumentRangeFormattingFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
+class DocumentRangeFormattingFeature extends TextDocumentFeature<boolean | DocumentRangeFormattingOptions, DocumentRangeFormattingRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, DocumentRangeFormattingRequest.type);
@@ -1916,13 +1939,11 @@ class DocumentRangeFormattingFeature extends TextDocumentFeature<TextDocumentReg
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		if (!capabilities.documentRangeFormattingProvider || !documentSelector) {
+		const options = this.getRegistrationOptions(documentSelector, capabilities.documentRangeFormattingProvider);
+		if (!options) {
 			return;
 		}
-		this.register(this.messages, {
-			id: UUID.generateUuid(),
-			registerOptions: Object.assign({}, { documentSelector: documentSelector })
-		});
+		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): Disposable {
@@ -1952,7 +1973,7 @@ class DocumentRangeFormattingFeature extends TextDocumentFeature<TextDocumentReg
 	}
 }
 
-class DocumentOnTypeFormattingFeature extends TextDocumentFeature<DocumentOnTypeFormattingRegistrationOptions> {
+class DocumentOnTypeFormattingFeature extends TextDocumentFeature<DocumentOnTypeFormattingOptions, DocumentOnTypeFormattingRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, DocumentOnTypeFormattingRequest.type);
@@ -1963,13 +1984,11 @@ class DocumentOnTypeFormattingFeature extends TextDocumentFeature<DocumentOnType
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		if (!capabilities.documentOnTypeFormattingProvider || !documentSelector) {
+		const options = this.getRegistrationOptions(documentSelector, capabilities.documentOnTypeFormattingProvider);
+		if (!options) {
 			return;
 		}
-		this.register(this.messages, {
-			id: UUID.generateUuid(),
-			registerOptions: Object.assign({}, { documentSelector: documentSelector }, capabilities.documentOnTypeFormattingProvider)
-		});
+		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: DocumentOnTypeFormattingRegistrationOptions): Disposable {
@@ -2001,7 +2020,7 @@ class DocumentOnTypeFormattingFeature extends TextDocumentFeature<DocumentOnType
 	}
 }
 
-class RenameFeature extends TextDocumentFeature<RenameRegistrationOptions> {
+class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, RenameRequest.type);
@@ -2014,19 +2033,14 @@ class RenameFeature extends TextDocumentFeature<RenameRegistrationOptions> {
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		if (!capabilities.renameProvider || !documentSelector) {
+		const options = this.getRegistrationOptions(documentSelector, capabilities.renameProvider);
+		if (!options) {
 			return;
 		}
-		let options: RenameRegistrationOptions = Object.assign({}, { documentSelector: documentSelector });
 		if (Is.boolean(capabilities.renameProvider)) {
 			options.prepareProvider = false;
-		} else {
-			options.prepareProvider = capabilities.renameProvider.prepareProvider;
 		}
-		this.register(this.messages, {
-			id: UUID.generateUuid(),
-			registerOptions: options
-		});
+		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: RenameRegistrationOptions): Disposable {
@@ -2087,7 +2101,7 @@ class RenameFeature extends TextDocumentFeature<RenameRegistrationOptions> {
 	}
 }
 
-class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkRegistrationOptions> {
+class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkOptions, DocumentLinkRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, DocumentLinkRequest.type);
@@ -2098,13 +2112,11 @@ class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkRegistrationOp
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		if (!capabilities.documentLinkProvider || !documentSelector) {
+		const options = this.getRegistrationOptions(documentSelector, capabilities.documentLinkProvider);
+		if (!options) {
 			return;
 		}
-		this.register(this.messages, {
-			id: UUID.generateUuid(),
-			registerOptions: Object.assign({}, { documentSelector: documentSelector }, capabilities.documentLinkProvider)
-		});
+		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: DocumentLinkRegistrationOptions): Disposable {
@@ -2415,6 +2427,7 @@ export abstract class BaseLanguageClient {
 			stdioEncoding: clientOptions.stdioEncoding || 'utf8',
 			initializationOptions: clientOptions.initializationOptions,
 			initializationFailedHandler: clientOptions.initializationFailedHandler,
+			showProgressOnInitialization: !!clientOptions.showProgressOnInitialization,
 			errorHandler: clientOptions.errorHandler || new DefaultErrorHandler(this._name),
 			middleware: clientOptions.middleware || {},
 			uriConverters: clientOptions.uriConverters,
@@ -2548,6 +2561,31 @@ export abstract class BaseLanguageClient {
 			this._resolvedConnection!.onNotification(type, handler);
 		} catch (error) {
 			this.error(`Registering notification handler ${Is.string(type) ? type : type.method} failed.`, error);
+			throw error;
+		}
+	}
+
+	public onProgress<P>(type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable {
+		if (!this.isConnectionActive()) {
+			throw new Error('Language client is not ready yet');
+		}
+		try {
+			return this._resolvedConnection!.onProgress(type, token, handler);
+		} catch (error) {
+			this.error(`Registering progress handler for token ${token} failed.`, error);
+			throw error;
+		}
+	}
+
+	public sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): void {
+		if (!this.isConnectionActive()) {
+			throw new Error('Language client is not ready yet');
+		}
+		this.forceDocumentSync();
+		try {
+			this._resolvedConnection!.sendProgress(type, token, value);
+		} catch (error) {
+			this.error(`Sending progress for token ${token} failed.`, error);
 			throw error;
 		}
 	}
@@ -2801,6 +2839,23 @@ export abstract class BaseLanguageClient {
 			workspaceFolders: null
 		};
 		this.fillInitializeParams(initParams);
+		if (this._clientOptions.showProgressOnInitialization) {
+			const token: ProgressToken = UUID.generateUuid();
+			const part: ProgressPart = new ProgressPart(connection, token);
+			initParams.workDoneToken = token;
+			return this.doInitialize(connection, initParams).then((result) => {
+				part.done();
+				return result;
+			}, (error) => {
+				part.cancel();
+				throw error;
+			});
+		} else {
+			return this.doInitialize(connection, initParams);
+		}
+	}
+
+	private doInitialize(connection: IConnection, initParams: InitializeParams): Thenable<InitializeResult> {
 		return connection.initialize(initParams).then((result) => {
 			this._resolvedConnection = connection;
 			this._initializeResult = result;

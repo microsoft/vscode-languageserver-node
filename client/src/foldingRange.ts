@@ -4,17 +4,14 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import * as UUID from './utils/uuid';
-import * as Is from './utils/is';
-
 import { languages as Languages, Disposable, TextDocument, ProviderResult, FoldingRangeKind as VFoldingRangeKind, FoldingRange as VFoldingRange, FoldingContext } from 'vscode';
 
 import {
-	ClientCapabilities, CancellationToken, ServerCapabilities, TextDocumentRegistrationOptions, DocumentSelector, StaticRegistrationOptions,
-	FoldingRange, FoldingRangeKind, FoldingRangeRequest, FoldingRangeProviderOptions, FoldingRangeParams
+	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, FoldingRange, FoldingRangeKind, FoldingRangeRequest, FoldingRangeParams
 } from 'vscode-languageserver-protocol';
 
 import { TextDocumentFeature, BaseLanguageClient } from './client';
+import { FoldingRangeRegistrationOptions, FoldingRangeOptions } from 'vscode-languageserver-protocol/lib/protocol.foldingRange';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -32,7 +29,7 @@ export interface FoldingRangeProviderMiddleware {
 	provideFoldingRanges?: (this: void, document: TextDocument, context: FoldingContext, token: CancellationToken, next: ProvideFoldingRangeSignature) => ProviderResult<VFoldingRange[]>;
 }
 
-export class FoldingRangeFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
+export class FoldingRangeFeature extends TextDocumentFeature<boolean | FoldingRangeOptions, FoldingRangeRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, FoldingRangeRequest.type);
@@ -46,22 +43,14 @@ export class FoldingRangeFeature extends TextDocumentFeature<TextDocumentRegistr
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		if (!capabilities.foldingRangeProvider) {
+		let [id, options] = this.getRegistration(documentSelector, capabilities.foldingRangeProvider);
+		if (!id || !options) {
 			return;
 		}
-
-		const implCapabilities = capabilities.foldingRangeProvider as TextDocumentRegistrationOptions & StaticRegistrationOptions & FoldingRangeProviderOptions;
-		const id = Is.string(implCapabilities.id) && implCapabilities.id.length > 0 ? implCapabilities.id : UUID.generateUuid();
-		const selector = implCapabilities.documentSelector || documentSelector;
-		if (selector) {
-			this.register(this.messages, {
-				id,
-				registerOptions: Object.assign({}, { documentSelector: selector })
-			});
-		}
+		this.register(this.messages, { id: id, registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): Disposable {
+	protected registerLanguageProvider(options: FoldingRangeRegistrationOptions): Disposable {
 		let client = this._client;
 		let provideFoldingRanges: ProvideFoldingRangeSignature = (document, _, token) => {
 			const requestParams: FoldingRangeParams = {

@@ -4,9 +4,9 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { RequestType, RequestHandler } from 'vscode-jsonrpc';
+import { RequestType, RequestHandler, ProgressType } from 'vscode-jsonrpc';
 import { Definition, DefinitionLink, Location, LocationLink } from 'vscode-languageserver-types';
-import { TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams } from './protocol';
+import { TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams, PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions } from './protocol';
 
 // @ts-ignore: to avoid inlining LocatioLink as dynamic import
 let __noDynamicImport: LocationLink | Declaration | DeclarationLink | Location | undefined;
@@ -35,11 +35,20 @@ export interface ImplementationClientCapabilities {
 	}
 }
 
+export interface ImplementationOptions extends WorkDoneProgressOptions {
+}
+
+export interface ImplementationRegistrationOptions extends TextDocumentRegistrationOptions, ImplementationOptions {
+}
+
 export interface ImplementationServerCapabilities {
 	/**
 	 * The server provides Goto Implementation support.
 	 */
-	implementationProvider?: boolean | (TextDocumentRegistrationOptions & StaticRegistrationOptions);
+	implementationProvider?: boolean | ImplementationOptions | (ImplementationRegistrationOptions & StaticRegistrationOptions);
+}
+
+export interface ImplementationParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {
 }
 
 /**
@@ -49,6 +58,7 @@ export interface ImplementationServerCapabilities {
  * Thenable that resolves to such.
  */
 export namespace ImplementationRequest {
-	export const type = new RequestType<TextDocumentPositionParams, Definition | DefinitionLink[] | null, void, TextDocumentRegistrationOptions>('textDocument/implementation');
-	export type HandlerSignature = RequestHandler<TextDocumentPositionParams, Definition | DefinitionLink[] | null, void>;
+	export const type = new RequestType<ImplementationParams, Definition | DefinitionLink[] | null, void, ImplementationRegistrationOptions>('textDocument/implementation');
+	export const resultType = new ProgressType<Location[] | DefinitionLink[]>();
+	export type HandlerSignature = RequestHandler<ImplementationParams, Definition | DefinitionLink[] | null, void>;
 }

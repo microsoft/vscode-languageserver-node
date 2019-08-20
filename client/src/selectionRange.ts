@@ -4,17 +4,15 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import * as UUID from './utils/uuid';
-import * as Is from './utils/is';
-
 import { languages as Languages, Disposable, TextDocument, ProviderResult, Position as VPosition, SelectionRange as VSelectionRange } from 'vscode';
 
 import {
-	ClientCapabilities, CancellationToken, ServerCapabilities, TextDocumentRegistrationOptions, DocumentSelector, StaticRegistrationOptions,
-	SelectionRangeParams, SelectionRangeRequest, SelectionRangeClientCapabilities, SelectionRangeServerCapabilities
+	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector,
+	SelectionRangeParams, SelectionRangeRequest, SelectionRangeClientCapabilities, SelectionRangeServerCapabilities, SelectionRangeOptions
 } from 'vscode-languageserver-protocol';
 
 import { TextDocumentFeature, BaseLanguageClient  } from './client';
+import { SelectionRangeRegistrationOptions } from 'vscode-languageserver-protocol/lib/protocol.selectionRange';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -31,7 +29,7 @@ export interface SelectionRangeProviderMiddleware {
 	provideSelectionRanges?: (this: void, document: TextDocument, positions: VPosition[], token: CancellationToken, next: ProvideSelectionRangeSignature) => ProviderResult<VSelectionRange[]>;
 }
 
-export class SelectionRangeFeature extends TextDocumentFeature<TextDocumentRegistrationOptions> {
+export class SelectionRangeFeature extends TextDocumentFeature<boolean | SelectionRangeOptions, SelectionRangeRegistrationOptions> {
 	constructor(client: BaseLanguageClient) {
 		super(client, SelectionRangeRequest.type);
 	}
@@ -44,22 +42,14 @@ export class SelectionRangeFeature extends TextDocumentFeature<TextDocumentRegis
 
 	public initialize(cap: ServerCapabilities, documentSelector: DocumentSelector): void {
 		let capabilities: ServerCapabilities & SelectionRangeServerCapabilities = cap;
-		if (!capabilities.selectionRangeProvider) {
+		let [id, options] = this.getRegistration(documentSelector, capabilities.selectionRangeProvider);
+		if (!id || !options) {
 			return;
 		}
-
-		const implCapabilities = capabilities.selectionRangeProvider as TextDocumentRegistrationOptions & StaticRegistrationOptions;
-		const id = Is.string(implCapabilities.id) && implCapabilities.id.length > 0 ? implCapabilities.id : UUID.generateUuid();
-		const selector = implCapabilities.documentSelector || documentSelector;
-		if (selector) {
-			this.register(this.messages, {
-				id,
-				registerOptions: Object.assign({}, { documentSelector: selector })
-			});
-		}
+		this.register(this.messages, { id: id, registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): Disposable {
+	protected registerLanguageProvider(options: SelectionRangeRegistrationOptions): Disposable {
 		let client = this._client;
 		let provideSelectionRanges: ProvideSelectionRangeSignature = (document, positions, token) => {
 			const requestParams: SelectionRangeParams = {

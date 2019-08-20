@@ -16,7 +16,8 @@ import {
 	NotificationMessage, isNotificationMessage,
 	NotificationType, NotificationType0, NotificationType1, NotificationType2, NotificationType3, NotificationType4,
 	NotificationType5, NotificationType6, NotificationType7, NotificationType8, NotificationType9,
-	LSPMessageType
+	LSPMessageType,
+	_EM
 } from './messages';
 
 import { MessageReader, DataCallback, StreamMessageReader, IPCMessageReader, SocketMessageReader } from './messageReader';
@@ -50,6 +51,30 @@ interface CancelParams {
 
 namespace CancelNotification {
 	export const type = new NotificationType<CancelParams, void>('$/cancelRequest');
+}
+
+export type ProgressToken = number | string;
+interface ProgressParams<T> {
+	/**
+	 * The progress token provided by the client.
+	 */
+	token: ProgressToken;
+
+	/**
+	 * The progress data.
+	 */
+	value: T;
+}
+
+namespace ProgressNotification {
+	export const type = new NotificationType<ProgressParams<any>, void>('$/progress');
+}
+
+export class ProgressType<P> {
+	public readonly _?: [P, _EM];
+	constructor() {
+		this._ = undefined;
+	}
 }
 
 export type HandlerResult<R, E> = R | ResponseError<E> | Thenable<R> | Thenable<ResponseError<E>> | Thenable<R | ResponseError<E>>;
@@ -342,15 +367,23 @@ export interface MessageConnection {
 	onNotification(method: string, handler: GenericNotificationHandler): void;
 	onNotification(handler: StarNotificationHandler): void;
 
+	onUnhandledNotification: Event<NotificationMessage>;
+
+	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable;
+	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): void;
+
+	onUnhandledProgress: Event<ProgressParams<any>>;
+
 	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): void;
 	trace(value: Trace, tracer: Tracer, traceOptions?: TraceOptions): void;
 
 	onError: Event<[Error, Message | undefined, number | undefined]>;
 	onClose: Event<void>;
-	onUnhandledNotification: Event<NotificationMessage>;
 	listen(): void;
+
 	onDispose: Event<void>;
 	dispose(): void;
+
 	inspect(): void;
 }
 
@@ -387,6 +420,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 	let requestHandlers: { [name: string]: RequestHandlerElement | undefined } = Object.create(null);
 	let starNotificationHandler: StarNotificationHandler | undefined = undefined;
 	let notificationHandlers: { [name: string]: NotificationHandlerElement | undefined } = Object.create(null);
+	let progressHandlers: Map<number | string, NotificationHandler1<any>> = new Map();
 
 	let timer: NodeJS.Timer | undefined;
 	let messageQueue: MessageQueue = new LinkedMap<string, Message>();
@@ -401,6 +435,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 	let errorEmitter: Emitter<[Error, Message | undefined, number | undefined]> = new Emitter<[Error, Message, number]>();
 	let closeEmitter: Emitter<void> = new Emitter<void>();
 	let unhandledNotificationEmitter: Emitter<NotificationMessage> = new Emitter<NotificationMessage>();
+	let unhandledProgressEmitter: Emitter<ProgressParams<any>> = new Emitter<ProgressParams<any>>();
 
 	let disposeEmitter: Emitter<void> = new Emitter<void>();
 
@@ -970,6 +1005,21 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				}
 			}
 		},
+		onProgress: <P>(_type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable => {
+			if (progressHandlers.has(token)) {
+				throw new Error(`Progress handler for token ${token} already registered`);
+			}
+			progressHandlers.set(token, handler);
+			return {
+				dispose: () => {
+					progressHandlers.delete(token);
+				}
+			}
+		},
+		sendProgress: <P>(_type: ProgressType<P>, token: string | number, value: P): void => {
+			connection.sendNotification(ProgressNotification.type, { token, value });
+		},
+		onUnhandledProgress: unhandledProgressEmitter.event,
 		sendRequest: <R, E>(type: string | MessageType, ...params: any[]) => {
 			throwIfClosedOrDisposed();
 			throwIfNotListening();
@@ -1120,6 +1170,14 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			return;
 		}
 		tracer.log(params.message, trace === Trace.Verbose ? params.verbose : undefined);
+	});
+	connection.onNotification(ProgressNotification.type, (params) => {
+		const handler = progressHandlers.get(params.token);
+		if (handler) {
+			handler(params.value);
+		} else {
+			unhandledProgressEmitter.fire(params);
+		}
 	});
 
 	return connection;

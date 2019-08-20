@@ -4,9 +4,9 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { RequestType, RequestHandler } from 'vscode-jsonrpc';
+import { RequestType, RequestHandler, ProgressType } from 'vscode-jsonrpc';
 import { SymbolKind, Range } from 'vscode-languageserver-types';
-import { TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams } from './protocol';
+import { TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams, PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions } from './protocol';
 
 export interface CallHierarchyClientCapabilities {
 	/**
@@ -27,17 +27,23 @@ export interface CallHierarchyClientCapabilities {
 	}
 }
 
+export interface CallHierarchyOptions extends WorkDoneProgressOptions {
+}
+
+export interface CallHierarchyRegistrationOptions extends TextDocumentRegistrationOptions, CallHierarchyOptions {
+}
+
 export interface CallHierarchyServerCapabilities {
 	/**
 	 * The server provides Call Hierarchy support.
 	 */
-	callHierarchyProvider?: boolean | (TextDocumentRegistrationOptions & StaticRegistrationOptions);
+	callHierarchyProvider?: boolean | CallHierarchyOptions | (CallHierarchyRegistrationOptions & StaticRegistrationOptions);
 }
 
 /**
  * The parameter of a `textDocument/callHierarchy` request extends the `TextDocumentPositionParams` with the direction of calls to resolve.
  */
-export interface CallHierarchyParams extends TextDocumentPositionParams {
+export interface CallHierarchyParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {
 	/**
 	 * The direction of calls to provide.
 	 */
@@ -128,6 +134,7 @@ export interface CallHierarchyCall {
  * Evaluates the symbol defined (or referenced) at the given position, and returns all incoming or outgoing calls to the symbol(s).
  */
 export namespace CallHierarchyRequest {
-	export const type = new RequestType<CallHierarchyParams, CallHierarchyCall[], void, TextDocumentRegistrationOptions>('textDocument/callHierarchy');
+	export const type = new RequestType<CallHierarchyParams, CallHierarchyCall[], void, CallHierarchyRegistrationOptions>('textDocument/callHierarchy');
+	export const resultType = new ProgressType<CallHierarchyCall[]>();
 	export type HandlerSignature = RequestHandler<CallHierarchyParams, CallHierarchyCall[] | null, void>;
 }
