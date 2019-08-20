@@ -484,7 +484,7 @@ export interface LanguageClientOptions {
 	stdioEncoding?: string;
 	initializationOptions?: any | (() => any);
 	initializationFailedHandler?: InitializationFailedHandler;
-	showProgressOnInitialization?: boolean;
+	progressOnInitialization?: boolean;
 	errorHandler?: ErrorHandler;
 	middleware?: Middleware;
 	uriConverters?: {
@@ -503,7 +503,7 @@ interface ResolvedClientOptions {
 	stdioEncoding: string;
 	initializationOptions?: any | (() => any);
 	initializationFailedHandler?: InitializationFailedHandler;
-	showProgressOnInitialization: boolean;
+	progressOnInitialization: boolean;
 	errorHandler: ErrorHandler;
 	middleware: Middleware;
 	uriConverters?: {
@@ -2427,7 +2427,7 @@ export abstract class BaseLanguageClient {
 			stdioEncoding: clientOptions.stdioEncoding || 'utf8',
 			initializationOptions: clientOptions.initializationOptions,
 			initializationFailedHandler: clientOptions.initializationFailedHandler,
-			showProgressOnInitialization: !!clientOptions.showProgressOnInitialization,
+			progressOnInitialization: !!clientOptions.progressOnInitialization,
 			errorHandler: clientOptions.errorHandler || new DefaultErrorHandler(this._name),
 			middleware: clientOptions.middleware || {},
 			uriConverters: clientOptions.uriConverters,
@@ -2839,7 +2839,7 @@ export abstract class BaseLanguageClient {
 			workspaceFolders: null
 		};
 		this.fillInitializeParams(initParams);
-		if (this._clientOptions.showProgressOnInitialization) {
+		if (this._clientOptions.progressOnInitialization) {
 			const token: ProgressToken = UUID.generateUuid();
 			const part: ProgressPart = new ProgressPart(connection, token);
 			initParams.workDoneToken = token;
