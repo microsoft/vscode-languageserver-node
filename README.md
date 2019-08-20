@@ -33,6 +33,8 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 
 ## 3.15.0 Protocol, 5.3.0 Client & 5.3.0 Server
 
+* Progress support for work done and partial result progress.
+* Proposed implementation for call hierarchies.
 * `SelectionRangeRequest` protocol added:
   * New APIs in Types: `SelectionRange`
   * New APIs in Protocol: `SelectionRangeRequest`, `SelectionRangeParams`, `SelectionRangeClientCapabilities`, `SelectionRangeServerCapabilities`, `SelectionRangeProviderOptions`,
