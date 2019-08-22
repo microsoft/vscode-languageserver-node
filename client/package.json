@@ -5,7 +5,7 @@
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"engines": {
-		"vscode": "^1.33.0"
+		"vscode": "^1.37.0"
 	},
 	"repository": {
 		"type": "git",

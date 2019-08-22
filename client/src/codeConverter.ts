@@ -295,6 +295,8 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		switch (tag) {
 			case code.DiagnosticTag.Unnecessary:
 				return proto.DiagnosticTag.Unnecessary;
+			case code.DiagnosticTag.Deprecated:
+				return proto.DiagnosticTag.Deprecated;
 			default:
 				return undefined;
 		}
@@ -309,7 +311,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return result;
 	}
 
-	function asDiagnostics(items: code.Diagnostic[]): proto.Diagnostic[] {
+	function asDiagnostics(items: ReadonlyArray<code.Diagnostic>): proto.Diagnostic[] {
 		if (items === void 0 || items === null) {
 			return items;
 		}

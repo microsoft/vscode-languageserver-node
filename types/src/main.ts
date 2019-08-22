@@ -518,10 +518,17 @@ export namespace DiagnosticTag {
 	 * Clients are allowed to render diagnostics with this tag faded out instead of having
 	 * an error squiggle.
 	 */
-	export const Unnecessary: 1 =1;
+	export const Unnecessary: 1 = 1;
+
+	/**
+	 * Deprecated or obsolete code.
+	 *
+	 * Clients are allowed to rendered diagnostics with this tag strike through.
+	 */
+	export const Deprecated: 2 = 2;
 }
 
-export type DiagnosticTag = 1;
+export type DiagnosticTag = 1 | 2;
 
 /**
  * Represents a diagnostic, such as a compiler error or warning. Diagnostic objects

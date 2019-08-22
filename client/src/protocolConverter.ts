@@ -234,6 +234,8 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		switch (tag) {
 			case ls.DiagnosticTag.Unnecessary:
 				return code.DiagnosticTag.Unnecessary;
+			case ls.DiagnosticTag.Deprecated:
+				return code.DiagnosticTag.Deprecated;
 			default:
 				return undefined;
 		}

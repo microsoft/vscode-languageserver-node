@@ -41,7 +41,7 @@ export * from './client';
 
 declare var v8debug: any;
 
-const REQUIRED_VSCODE_VERSION = '^1.33.0'; // do not change format, updated by `updateVSCode` script
+const REQUIRED_VSCODE_VERSION = '^1.37.0'; // do not change format, updated by `updateVSCode` script
 
 export interface ExecutableOptions {
 	cwd?: string;
