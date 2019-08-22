@@ -60,6 +60,11 @@ suite('Protocol Converter', () => {
 		strictEqual(p2c.asDiagnosticSeverity(proto.DiagnosticSeverity.Hint), vscode.DiagnosticSeverity.Hint);
 	});
 
+	test('Diagnostic Tag', () => {
+		strictEqual(p2c.asDiagnosticTag(proto.DiagnosticTag.Unnecessary), vscode.DiagnosticTag.Unnecessary);
+		strictEqual(p2c.asDiagnosticTag(proto.DiagnosticTag.Deprecated), vscode.DiagnosticTag.Deprecated);
+	});
+
 	test('Diagnostic', () => {
 		let start: proto.Position = { line: 1, character: 2 };
 		let end: proto.Position = { line: 8, character: 9 };
@@ -819,6 +824,11 @@ suite('Code Converter', () => {
 		strictEqual(c2p.asDiagnosticSeverity(<any>vscode.DiagnosticSeverity.Warning), proto.DiagnosticSeverity.Warning);
 		strictEqual(c2p.asDiagnosticSeverity(<any>vscode.DiagnosticSeverity.Information), proto.DiagnosticSeverity.Information);
 		strictEqual(c2p.asDiagnosticSeverity(<any>vscode.DiagnosticSeverity.Hint), proto.DiagnosticSeverity.Hint);
+	});
+
+	test('DiagnosticTag', () => {
+		strictEqual(c2p.asDiagnosticTag(<any>vscode.DiagnosticTag.Unnecessary), proto.DiagnosticTag.Unnecessary);
+		strictEqual(c2p.asDiagnosticTag(<any>vscode.DiagnosticTag.Deprecated), proto.DiagnosticTag.Deprecated);
 	});
 
 	test('Diagnostic', () => {

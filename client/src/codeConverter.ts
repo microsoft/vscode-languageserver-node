@@ -49,6 +49,7 @@ export interface Converter {
 	asRange(value: code.Range | undefined | null): proto.Range | undefined | null;
 
 	asDiagnosticSeverity(value: code.DiagnosticSeverity): number;
+	asDiagnosticTag(value: code.DiagnosticTag): number | undefined;
 
 	asDiagnostic(item: code.Diagnostic): proto.Diagnostic;
 	asDiagnostics(items: code.Diagnostic[]): proto.Diagnostic[];
@@ -490,6 +491,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asPosition,
 		asPositions,
 		asDiagnosticSeverity,
+		asDiagnosticTag,
 		asDiagnostic,
 		asDiagnostics,
 		asCompletionItem,

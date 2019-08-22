@@ -28,6 +28,7 @@ export interface Converter {
 	asRange(value: ls.Range | undefined | null): code.Range | undefined;
 
 	asDiagnosticSeverity(value: number | undefined | null): code.DiagnosticSeverity;
+	asDiagnosticTag(tag: ls.DiagnosticTag): code.DiagnosticTag | undefined
 
 	asHover(hover: ls.Hover): code.Hover;
 	asHover(hover: undefined | null): undefined;
@@ -873,6 +874,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asRange,
 		asPosition,
 		asDiagnosticSeverity,
+		asDiagnosticTag,
 		asHover,
 		asCompletionResult,
 		asCompletionItem,
