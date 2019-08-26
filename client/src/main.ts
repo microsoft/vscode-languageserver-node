@@ -235,13 +235,19 @@ export class LanguageClient extends BaseLanguageClient {
 
 	protected createMessageTransports(encoding: string): Thenable<MessageTransports> {
 
-		function getEnvironment(env: any): any {
-			if (!env) {
-				return process.env;
+		function getEnvironment(env: any, fork: boolean): any {
+			if (!env && !fork) {
+				return undefined;
 			}
 			let result: any = Object.create(null);
 			Object.keys(process.env).forEach(key => result[key] = process.env[key]);
-			Object.keys(env).forEach(key => result[key] = env[key]);
+			if (fork) {
+				result['ELECTRON_RUN_AS_NODE'] = '1';
+				result['ELECTRON_NO_ASAR'] = '1';
+			}
+			if (env) {
+				Object.keys(env).forEach(key => result[key] = env[key]);
+			}
 			return result;
 		}
 
@@ -305,7 +311,7 @@ export class LanguageClient extends BaseLanguageClient {
 					}
 					let execOptions: ExecutableOptions = Object.create(null);
 					execOptions.cwd = serverWorkingDir;
-					execOptions.env = getEnvironment(options.env);
+					execOptions.env = getEnvironment(options.env, false);
 					let pipeName: string | undefined = undefined;
 					if (transport === TransportKind.ipc) {
 						// exec options not correctly typed in lib
@@ -376,6 +382,7 @@ export class LanguageClient extends BaseLanguageClient {
 						}
 						args.push(`--clientProcessId=${process.pid.toString()}`);
 						let options: cp.ForkOptions = node.options || Object.create(null);
+						options.env = getEnvironment(options.env, true);
 						options.execArgv = options.execArgv || [];
 						options.cwd = serverWorkingDir;
 						options.silent = true;
