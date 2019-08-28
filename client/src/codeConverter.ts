@@ -48,6 +48,11 @@ export interface Converter {
 	asRange(value: null): null;
 	asRange(value: code.Range | undefined | null): proto.Range | undefined | null;
 
+	asLocation(value: code.Location): proto.Location;
+	asLocation(value: undefined): undefined;
+	asLocation(value: null): null;
+	asLocation(value: code.Location | undefined | null): proto.Location | undefined | null;
+
 	asDiagnosticSeverity(value: code.DiagnosticSeverity): number;
 	asDiagnosticTag(value: code.DiagnosticTag): number | undefined;
 
@@ -235,10 +240,8 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	function asPosition(value: null): null;
 	function asPosition(value: code.Position | undefined | null): proto.Position | undefined | null
 	function asPosition(value: code.Position | undefined | null): proto.Position | undefined | null {
-		if (value === void 0) {
-			return undefined;
-		} else if (value === null) {
-			return null;
+		if (value === undefined || value === null) {
+			return value;
 		}
 		return { line: value.line, character: value.character };
 	}
@@ -256,10 +259,20 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	function asRange(value: null): null;
 	function asRange(value: code.Range | undefined | null): proto.Range | undefined | null;
 	function asRange(value: code.Range | undefined | null): proto.Range | undefined | null {
-		if (value === void 0 || value === null) {
+		if (value === undefined || value === null) {
 			return value;
 		}
 		return { start: asPosition(value.start), end: asPosition(value.end) };
+	}
+
+	function asLocation(value: code.Location): proto.Location;
+	function asLocation(value: undefined): undefined;
+	function asLocation(value: null): null;
+	function asLocation(value: code.Location | undefined | null): proto.Location | undefined | null {
+		if (value === undefined || value === null) {
+			return value;
+		}
+		return proto.Location.create(asUri(value.uri), asRange(value.range));
 	}
 
 	function asDiagnosticSeverity(value: code.DiagnosticSeverity): proto.DiagnosticSeverity {
@@ -303,17 +316,29 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		}
 	}
 
+	function asRelatedInformation(item: code.DiagnosticRelatedInformation): proto.DiagnosticRelatedInformation {
+		return {
+			message: item.message,
+			location: asLocation(item.location)
+		};
+	}
+
+	function asRelatedInformations(items: code.DiagnosticRelatedInformation[]): proto.DiagnosticRelatedInformation[] {
+		return items.map(asRelatedInformation);
+	}
+
 	function asDiagnostic(item: code.Diagnostic): proto.Diagnostic {
 		let result: proto.Diagnostic = proto.Diagnostic.create(asRange(item.range), item.message);
 		if (Is.number(item.severity)) { result.severity = asDiagnosticSeverity(item.severity); }
 		if (Is.number(item.code) || Is.string(item.code)) { result.code = item.code; }
 		if (Array.isArray(item.tags)) { result.tags = asDiagnosticTags(item.tags) };
+		if (item.relatedInformation) { result.relatedInformation = asRelatedInformations(item.relatedInformation) };
 		if (item.source) { result.source = item.source; }
 		return result;
 	}
 
 	function asDiagnostics(items: ReadonlyArray<code.Diagnostic>): proto.Diagnostic[] {
-		if (items === void 0 || items === null) {
+		if (items === undefined || items === null) {
 			return items;
 		}
 		return items.map(asDiagnostic);
@@ -333,7 +358,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asCompletionItemKind(value: code.CompletionItemKind, original: proto.CompletionItemKind | undefined): proto.CompletionItemKind {
-		if (original !== void 0) {
+		if (original !== undefined) {
 			return original;
 		}
 		return value + 1 as proto.CompletionItemKind;
@@ -363,7 +388,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (item.command) { result.command = asCommand(item.command); }
 		if (item.preselect === true || item.preselect === false) { result.preselect = item.preselect; }
 		if (protocolItem) {
-			if (protocolItem.data !== void 0) {
+			if (protocolItem.data !== undefined) {
 				result.data = protocolItem.data;
 			}
 			if (protocolItem.deprecated === true || protocolItem.deprecated === false) {
@@ -403,7 +428,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asTextEdits(edits: code.TextEdit[]): proto.TextEdit[] {
-		if (edits === void 0 || edits === null) {
+		if (edits === undefined || edits === null) {
 			return edits;
 		}
 		return edits.map(asTextEdit);
@@ -418,7 +443,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asCodeActionContext(context: code.CodeActionContext): proto.CodeActionContext {
-		if (context === void 0 || context === null) {
+		if (context === undefined || context === null) {
 			return context;
 		}
 		let only: proto.CodeActionKind[] | undefined;
@@ -490,6 +515,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asRange,
 		asPosition,
 		asPositions,
+		asLocation,
 		asDiagnosticSeverity,
 		asDiagnosticTag,
 		asDiagnostic,
@@ -505,5 +531,5 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asCodeLensParams,
 		asDocumentLink,
 		asDocumentLinkParams
-	}
+	};
 }

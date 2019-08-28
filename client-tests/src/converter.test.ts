@@ -68,13 +68,17 @@ suite('Protocol Converter', () => {
 	test('Diagnostic', () => {
 		let start: proto.Position = { line: 1, character: 2 };
 		let end: proto.Position = { line: 8, character: 9 };
+		const location: proto.Location = proto.Location.create('file://localhost/folder/file', proto.Range.create(0, 1, 2, 3));
 		let diagnostic: proto.Diagnostic = {
-			range: { start, end},
+			range: { start, end },
 			message: 'error',
 			severity: proto.DiagnosticSeverity.Error,
 			code: 99,
 			source: 'source',
-			tags: [proto.DiagnosticTag.Unnecessary]
+			tags: [proto.DiagnosticTag.Unnecessary],
+			relatedInformation: [
+				{ message: 'related', location: location }
+			]
 		};
 
 		let result = p2c.asDiagnostic(diagnostic);
@@ -89,6 +93,11 @@ suite('Protocol Converter', () => {
 		strictEqual(result.severity, vscode.DiagnosticSeverity.Error);
 		strictEqual(result.tags !== undefined, true);
 		strictEqual(result.tags![0], vscode.DiagnosticTag.Unnecessary);
+		strictEqual(Array.isArray(result.relatedInformation), true);
+		strictEqual(result.relatedInformation!.length, 1);
+		strictEqual(result.relatedInformation![0].message, 'related');
+		strictEqual(result.relatedInformation![0].location.uri.toString(), 'file://localhost/folder/file');
+		strictEqual(result.relatedInformation![0].location.range.end.character, 3);
 
 		ok(p2c.asDiagnostics([diagnostic]).every(value => value instanceof vscode.Diagnostic));
 	});
@@ -836,6 +845,9 @@ suite('Code Converter', () => {
 		item.code = 99;
 		item.source = 'source';
 		item.tags = [vscode.DiagnosticTag.Unnecessary];
+		item.relatedInformation = [
+			new vscode.DiagnosticRelatedInformation(new vscode.Location(vscode.Uri.parse('file://localhost/folder/file'), new vscode.Range(0, 1, 2, 3)), 'related')
+		];
 
 		let result = c2p.asDiagnostic(<any>item);
 		rangeEqual(result.range, item.range);
@@ -845,6 +857,11 @@ suite('Code Converter', () => {
 		strictEqual(result.source, item.source);
 		strictEqual(result.tags !== undefined, true);
 		strictEqual(result.tags![0], proto.DiagnosticTag.Unnecessary);
+		strictEqual(Array.isArray(result.relatedInformation), true);
+		strictEqual(result.relatedInformation!.length, 1);
+		strictEqual(result.relatedInformation![0].message, 'related');
+		strictEqual(result.relatedInformation![0].location.uri, 'file://localhost/folder/file');
+		strictEqual(result.relatedInformation![0].location.range.end.character, 3);
 		ok(c2p.asDiagnostics(<any>[item]).every(elem => proto.Diagnostic.is(elem)));
 	});
 

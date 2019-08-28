@@ -93,13 +93,30 @@
 			]
 		},
 		{
+			"label": "compile:client-tests",
+			"type": "shell",
+			"command": "npm run compile:client-tests",
+			"group": "build",
+			"presentation": {
+				"panel": "dedicated",
+				"reveal": "never"
+			},
+			"problemMatcher": [
+				"$tsc"
+			],
+			"dependsOn": [
+				"compile:client"
+			]
+		},
+		{
 			"label": "watch",
 			"dependsOn": [
 				"watch:types",
 				"watch:jsonrpc",
 				"watch:protocol",
 				"watch:server",
-				"watch:client"
+				"watch:client",
+				"watch:client-tests"
 			],
 			"problemMatcher": []
 		},
@@ -163,6 +180,20 @@
 			"label": "watch:client",
 			"type": "shell",
 			"command": "npm run watch:client",
+			"group": "build",
+			"presentation": {
+				"panel": "dedicated",
+				"reveal": "never"
+			},
+			"isBackground": true,
+			"problemMatcher": [
+				"$tsc-watch"
+			]
+		},
+		{
+			"label": "watch:client-tests",
+			"type": "shell",
+			"command": "npm run watch:client-tests",
 			"group": "build",
 			"presentation": {
 				"panel": "dedicated",
