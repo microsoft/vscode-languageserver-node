@@ -9,7 +9,9 @@
 		"stripInternal": true,
 		"lib": [ "es2016" ],
 		"rootDir": "src",
-		"outDir": "lib"
+		"outDir": "lib",
+		"incremental": true,
+		"tsBuildInfoFile":"./lib/tsconfig.tsbuildInfo"
 	},
 	"include": [
 		"src"

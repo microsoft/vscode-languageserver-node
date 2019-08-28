@@ -16,15 +16,17 @@
 	"contributes": {},
 	"scripts": {
 		"clean": "node ../node_modules/rimraf/bin.js lib",
-		"compile": "node ../build/bin/tsc -p ./tsconfig.json",
-		"watch": "node ../build/bin/tsc -w -p ./tsconfig.json",
-		"test": "node ../build/bin/symlink-tests && node bin/runTests"
+		"compile": "node ../build/bin/tsc -b ./tsconfig.json",
+		"watch": "node ../build/bin/tsc -b ./tsconfig.json -w",
+		"test": "node ../build/bin/symlink-tests && node lib/runTests.js"
 	},
 	"dependencies": {
 		"vscode-languageclient": "5.3.0-next.7",
 		"vscode-languageserver": "5.3.0-next.9"
 	},
 	"devDependencies": {
-		"vscode": "^1.1.36"
+		"vscode-test": "^1.2.0",
+		"glob": "^7.1.4",
+		"@types/glob": "^7.1.1"
 	}
 }

@@ -1,6 +1,7 @@
 .vscode/
 lib/test/
 lib/*.map
+lib/tsconfig.tsbuildInfo
 src/
 test/
 .eslintrc

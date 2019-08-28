@@ -8,6 +8,8 @@
 		"stripInternal": true,
 		"lib": [ "es2015" ],
 		"outDir": "lib/esm",
+		"incremental": true,
+		"tsBuildInfoFile":"./lib/tsconfig.esm.tsbuildInfo",
 		"rootDir": "src"
 	},
 	"include": [

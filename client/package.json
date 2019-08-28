@@ -19,8 +19,8 @@
 	"typings": "./lib/main",
 	"devDependencies": {
 		"@types/semver": "^6.0.1",
-		"shx": "^0.3.2",
-		"vscode": "^1.1.36"
+		"@types/vscode": "^1.37.0",
+		"shx": "^0.3.2"
 	},
 	"dependencies": {
 		"semver": "^6.3.0",
@@ -30,10 +30,10 @@
 		"prepare": "npm run update-vscode",
 		"prepublishOnly": "npm run clean && npm run compile && npm test",
 		"postpublish": "node ../build/npm/post-publish.js",
-		"compile": "node ../build/bin/tsc -p ./tsconfig.json && shx cp src/utils/terminateProcess.sh lib/utils/terminateProcess.sh",
-		"watch": "node ../build/bin/tsc -w -p ./tsconfig.json",
+		"compile": "node ../build/bin/tsc -b ./tsconfig.json && shx cp src/utils/terminateProcess.sh lib/utils/terminateProcess.sh",
+		"watch": "node ../build/bin/tsc -b ./tsconfig.json -w",
 		"test": "cd ../client-tests && npm test && cd ../client",
-		"update-vscode": "node ./node_modules/vscode/bin/install && node bin/updateVSCode",
+		"update-vscode": "node bin/updateVSCode",
 		"clean": "node ../node_modules/rimraf/bin.js lib",
 		"preversion": "npm test"
 	}

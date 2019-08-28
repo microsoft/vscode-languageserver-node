@@ -2,6 +2,7 @@
 lib/test/
 .vscode-test/
 lib/*.map
+lib/tsconfig.tsbuildInfo
 src/
 test/
 bin/
