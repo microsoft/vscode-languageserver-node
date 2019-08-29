@@ -2247,4 +2247,4 @@ export {
 // To be backwards compatible
 export {
 	ColorOptions as ColorProviderOptions, FoldingRangeOptions as FoldingRangeProviderOptions, SelectionRangeOptions as SelectionRangeProviderOptions
-}
+};

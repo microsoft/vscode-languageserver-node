@@ -28,7 +28,7 @@ export {
 	IPCMessageReader, IPCMessageWriter,
 	createClientPipeTransport, createServerPipeTransport, generateRandomPipeName, DataCallback,
 	createClientSocketTransport, createServerSocketTransport, ProgressType, ProgressToken
-}
+};
 
 export * from 'vscode-languageserver-types';
 export * from './protocol';

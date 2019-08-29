@@ -359,7 +359,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		// Protocol item kind is 1 based, codes item kind is zero based.
 		if (ls.CompletionItemKind.Text <= value && value <= ls.CompletionItemKind.TypeParameter) {
 			return [value - 1, undefined];
-		};
+		}
 		return [code.CompletionItemKind.Text, value];
 	}
 
@@ -369,7 +369,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (item.documentation) {
 			result.documentation = asDocumentation(item.documentation);
 			result.documentationFormat = Is.string(item.documentation) ? '$string' : item.documentation.kind;
-		};
+		}
 		if (item.filterText) { result.filterText = item.filterText; }
 		let insertText = asCompletionInsertText(item);
 		if (insertText) {
@@ -472,7 +472,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 
 	function asParameterInformation(item: ls.ParameterInformation): code.ParameterInformation {
 		let result = new code.ParameterInformation(item.label);
-		if (item.documentation) { result.documentation = asDocumentation(item.documentation); };
+		if (item.documentation) { result.documentation = asDocumentation(item.documentation); }
 		return result;
 	}
 
@@ -518,7 +518,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			targetRange: asRange(item.targetSelectionRange), // See issue: https://github.com/Microsoft/vscode/issues/58649
 			originSelectionRange: asRange(item.originSelectionRange),
 			targetSelectionRange: asRange(item.targetSelectionRange)
-		}
+		};
 		if (!result.targetSelectionRange) {
 			throw new Error(`targetSelectionRange must not be undefined or null`);
 		}
@@ -671,7 +671,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	function asCodeActionKind(item: ls.CodeActionKind | null | undefined): code.CodeActionKind | undefined;
 	function asCodeActionKind(item: ls.CodeActionKind | null | undefined): code.CodeActionKind | undefined {
 		if (item === void 0 || item === null) {
-			return undefined
+			return undefined;
 		}
 		let result: code.CodeActionKind | undefined = kindMapping.get(item);
 		if (result) {
@@ -917,5 +917,5 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asColorPresentations,
 		asSelectionRange,
 		asSelectionRanges
-	}
+	};
 }

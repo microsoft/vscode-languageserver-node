@@ -44,7 +44,7 @@ export namespace ErrorCodes {
 	export const MethodNotFound: number = -32601;
 	export const InvalidParams: number = -32602;
 	export const InternalError: number = -32603;
-	export const serverErrorStart: number = -32099
+	export const serverErrorStart: number = -32099;
 	export const serverErrorEnd: number = -32000;
 	export const ServerNotInitialized: number = -32002;
 	export const UnknownErrorCode: number = -32001;

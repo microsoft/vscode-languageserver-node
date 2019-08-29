@@ -14,11 +14,13 @@
 	"devDependencies": {
 		"@types/mocha": "^2.2.42",
 		"@types/node": "^8.9.3",
+		"eslint": "^6.2.2",
+		"@typescript-eslint/parser": "^2.0.0",
 		"mocha": "^5.2.0",
 		"rimraf": "^2.6.2",
 		"shelljs": "^0.8.1",
 		"shx": "^0.2.2",
-		"typescript": "^3.5.1"
+		"typescript": "3.5.x"
 	},
 	"scripts": {
 		"postinstall": "cd types && npm install && cd ../jsonrpc && npm install && cd ../protocol && npm install && cd ../server && npm install && cd ../client && npm install && cd ../client-tests && npm install && cd ..",
@@ -38,6 +40,13 @@
 		"watch:protocol": "tsc -b ./protocol/tsconfig.json -w",
 		"watch:server": "tsc -b ./server/tsconfig.json -w",
 		"watch:client": "tsc -b ./client/tsconfig.json -w",
-		"watch:client-tests": "tsc -b ./client-tests/tsconfig.json -w"
+		"watch:client-tests": "tsc -b ./client-tests/tsconfig.json -w",
+		"lint": "npm run lint:types && npm run lint:jsonrpc && npm run lint:protocol && npm run lint:server && npm run lint:client && npm run lint:client-tests",
+		"lint:types": "eslint --config ./types/.eslintrc.json ./types/src/*.ts",
+		"lint:jsonrpc": "eslint --config ./jsonrpc/.eslintrc.json ./jsonrpc/src/*.ts",
+		"lint:protocol": "eslint --config ./protocol/.eslintrc.json ./protocol/src/*.ts",
+		"lint:server": "eslint --config ./server/.eslintrc.json ./server/src/*.ts",
+		"lint:client": "eslint --config ./client/.eslintrc.json ./client/src/*.ts",
+		"lint:client-tests": "eslint --config ./client-tests/.eslintrc.json ./client-tests/src/*.ts"
 	}
 }

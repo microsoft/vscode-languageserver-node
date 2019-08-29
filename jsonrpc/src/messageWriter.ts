@@ -155,9 +155,9 @@ export class IPCMessageWriter extends AbstractMessageWriter implements MessageWr
 		}
 
 	}
- }
+}
 
- export class SocketMessageWriter extends AbstractMessageWriter implements MessageWriter {
+export class SocketMessageWriter extends AbstractMessageWriter implements MessageWriter {
 
 	private socket: Socket;
 	private queue: Message[];

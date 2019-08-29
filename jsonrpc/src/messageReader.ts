@@ -70,7 +70,7 @@ class MessageBuffer {
 			let key = header.substr(0, index);
 			let value = header.substr(index + 1).trim();
 			result![key] = value;
-		})
+		});
 
 		let nextStart = current + 4;
 		this.buffer = this.buffer.slice(nextStart);

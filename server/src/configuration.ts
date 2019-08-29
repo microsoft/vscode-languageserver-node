@@ -26,7 +26,7 @@ export const ConfigurationFeature: Feature<_RemoteWorkspace, Configuration> = (B
 			if (!arg) {
 				return this._getConfiguration({});
 			} else if (Is.string(arg)) {
-				return this._getConfiguration({ section: arg })
+				return this._getConfiguration({ section: arg });
 			} else {
 				return this._getConfiguration(arg);
 			}
@@ -40,5 +40,5 @@ export const ConfigurationFeature: Feature<_RemoteWorkspace, Configuration> = (B
 				return Array.isArray(arg) ? result : result[0];
 			});
 		}
-	}
-}
+	};
+};

@@ -26,4 +26,5 @@ install:
 
 script:
   - npm run compile
+  - npm run lint
   - npm run test

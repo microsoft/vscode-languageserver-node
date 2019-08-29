@@ -38,7 +38,7 @@ export {
 	MessageWriter, StreamMessageWriter, IPCMessageWriter, SocketMessageWriter,
 	CancellationTokenSource, CancellationToken,
 	Disposable, Event, Emitter
-}
+};
 export * from './pipeSupport';
 export * from './socketSupport';
 
@@ -487,7 +487,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			closeEmitter.fire(undefined);
 		}
 		// If the connection is disposed don't sent close events.
-	};
+	}
 
 	function readErrorHandler(error: Error): void {
 		errorEmitter.fire([error, undefined, undefined]);
@@ -721,7 +721,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				if (source) {
 					source.cancel();
 				}
-			}
+			};
 		} else {
 			let element = notificationHandlers[message.method];
 			if (element) {
@@ -822,7 +822,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 					}
 				}
 			}
-			tracer.log(`Sending response '${method} - (${message.id})'. Processing request took ${Date.now() - startTime}ms`, data)
+			tracer.log(`Sending response '${method} - (${message.id})'. Processing request took ${Date.now() - startTime}ms`, data);
 		} else {
 			logLSPMessage('send-response', message);
 		}
@@ -903,7 +903,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			type,
 			message,
 			timestamp: Date.now()
-		}
+		};
 
 		tracer.log(lspMessage);
 	}
@@ -989,7 +989,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				jsonrpc: version,
 				method: method,
 				params: messageParams
-			}
+			};
 			traceSendingNotification(notificationMessage);
 			messageWriter.write(notificationMessage);
 		},
@@ -999,7 +999,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				starNotificationHandler = type as StarNotificationHandler;
 			} else if (handler) {
 				if (Is.string(type)) {
-					notificationHandlers[type] = { type: undefined, handler }
+					notificationHandlers[type] = { type: undefined, handler };
 				} else {
 					notificationHandlers[type.method] = { type, handler };
 				}
@@ -1014,7 +1014,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				dispose: () => {
 					progressHandlers.delete(token);
 				}
-			}
+			};
 		},
 		sendProgress: <P>(_type: ProgressType<P>, token: string | number, value: P): void => {
 			connection.sendNotification(ProgressNotification.type, { token, value });
@@ -1070,7 +1070,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 					id: id,
 					method: method,
 					params: messageParams
-				}
+				};
 				let responsePromise: ResponsePromise | null = { method: method, timerStart: Date.now(), resolve, reject };
 				traceSendingRequest(requestMessage);
 				try {
@@ -1161,7 +1161,8 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			messageReader.listen(callback);
 		},
 		inspect: (): void => {
-			console.log("inspect");
+			// eslint-disable-next-line no-console
+			console.log('inspect');
 		}
 	};
 

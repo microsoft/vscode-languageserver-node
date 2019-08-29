@@ -7,7 +7,7 @@
 import {
 	languages as Languages, Disposable, TextDocument, ProviderResult, Position as VPosition, CancellationToken as VCancellationToken,
 	CallHierarchyDirection as VCallHierarchyDirection, CallHierarchyItem as VCallHierarchyItem, CallHierarchyItemProvider, Location as VLocation
- } from 'vscode';
+} from 'vscode';
 
 import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, Proposed, Range
@@ -90,7 +90,7 @@ class CallHierarchyProvider implements CallHierarchyItemProvider {
 						character: item.selectionRange.end.character
 					}
 				}
-			}
+			};
 			return JSON.stringify(key);
 		};
 

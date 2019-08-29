@@ -31,7 +31,7 @@ let TestWritable: TestWritableConstructor = function (): TestWritableConstructor
 	TestWritable.prototype._write = function (this: any, chunk: string | Buffer, _encoding: string, done: Function) {
 		this.data += chunk.toString();
 		done();
-	}
+	};
 	return (<any>TestWritable) as TestWritableConstructor;
 } ();
 
@@ -48,7 +48,7 @@ describe('Messages', () => {
 		};
 		writer.write(request);
 		writable.end();
-		assert.equal(writable.data, data)
+		assert.equal(writable.data, data);
 	});
 	it('Reading', (done) => {
 		let readable = new Readable();
@@ -71,7 +71,7 @@ describe('Messages', () => {
 			assert.equal(message.method, 'example');
 			setTimeout(() => {
 				done();
-			}, 200)
+			}, 200);
 		});
 		reader.onPartialMessage((_info) => {
 			setTimeout(() => {

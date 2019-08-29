@@ -57,7 +57,7 @@ import * as UUID from './utils/uuid';
 
 // ------------- Reexport the API surface of the language worker API ----------------------
 export * from 'vscode-languageserver-protocol';
-export { Event }
+export { Event };
 
 import * as fm from './files';
 
@@ -182,7 +182,7 @@ class IncrementalTextDocument implements TextDocument {
 	public update(event: TextDocumentContentChangeEvent, version: number): void {
 		const { text, range } = event;
 
-		if (range == null) {
+		if (range === null || range === undefined) {
 			throw new Error(`FullPieceTreeTextDocument#update called with invalid event range ${range}`);
 		}
 
@@ -382,7 +382,7 @@ export class TextDocuments {
 			}
 
 			const { version } = td;
-			if (version == null || version === void 0) {
+			if (version === null || version === void 0) {
 				throw new Error(`Received document change event for ${td.uri} without valid version identifier`);
 			}
 
@@ -401,7 +401,7 @@ export class TextDocuments {
 						document,
 					);
 					this._onDidChangeContent.fire(Object.freeze({ document: updatedDoc }));
-					break
+					break;
 				case TextDocumentSyncKind.None:
 					break;
 			}
@@ -708,7 +708,7 @@ class BulkUnregistrationImpl implements BulkUnregistration {
 
 		let params: UnregistrationParams = {
 			unregisterations: [unregistration]
-		}
+		};
 		this._connection!.sendRequest(UnregistrationRequest.type, params).then(() => {
 			this._unregistrations.delete(method);
 		}, (_error) => {
@@ -895,7 +895,7 @@ class RemoteClientImpl implements RemoteClient {
 		const id = UUID.generateUuid();
 		let params: RegistrationParams = {
 			registrations: [{ id, method, registerOptions: registerOptions || {} }]
-		}
+		};
 		if (!unregistration.isAttached) {
 			unregistration.attach(this._connection);
 		}
@@ -913,7 +913,7 @@ class RemoteClientImpl implements RemoteClient {
 		const id = UUID.generateUuid();
 		let params: RegistrationParams = {
 			registrations: [{ id, method, registerOptions: registerOptions || {} }]
-		}
+		};
 		return this._connection.sendRequest(RegistrationRequest.type, params).then((_result) => {
 			return Disposable.create(() => {
 				this.unregisterSingle(id, method);
@@ -937,7 +937,7 @@ class RemoteClientImpl implements RemoteClient {
 	private registerMany(registrations: BulkRegistrationImpl): Thenable<BulkUnregistration> {
 		let params = registrations.asRegistrationParams();
 		return this._connection.sendRequest(RegistrationRequest.type, params).then(() => {
-			return new BulkUnregistrationImpl(this._connection, params.registrations.map(registration => { return { id: registration.id, method: registration.method } }));
+			return new BulkUnregistrationImpl(this._connection, params.registrations.map(registration => { return { id: registration.id, method: registration.method }; }));
 		}, (_error) => {
 			this.connection.console.info(`Bulk registration failed.`);
 			return Promise.reject(_error);
@@ -1543,40 +1543,40 @@ export type ConsoleFeature<P> = Feature<RemoteConsole, P>;
 export function combineConsoleFeatures<O, T>(one: ConsoleFeature<O>, two: ConsoleFeature<T>): ConsoleFeature<O & T> {
 	return function (Base: new () => RemoteConsole): new () => RemoteConsole & O & T {
 		return two(one(Base)) as any;
-	}
+	};
 }
 
 export type TelemetryFeature<P> = Feature<Telemetry, P>;
 export function combineTelemetryFeatures<O, T>(one: TelemetryFeature<O>, two: TelemetryFeature<T>): TelemetryFeature<O & T> {
 	return function (Base: new () => Telemetry): new () => Telemetry & O & T {
 		return two(one(Base)) as any;
-	}
+	};
 }
 
 export type TracerFeature<P> = Feature<Tracer, P>;
 export function combineTracerFeatures<O, T>(one: TracerFeature<O>, two: TracerFeature<T>): TracerFeature<O & T> {
 	return function (Base: new () => Tracer): new () => Tracer & O & T {
 		return two(one(Base)) as any;
-	}
+	};
 }
 
 export type ClientFeature<P> = Feature<RemoteClient, P>;
 export function combineClientFeatures<O, T>(one: ClientFeature<O>, two: ClientFeature<T>): ClientFeature<O & T> {
 	return function (Base: new () => RemoteClient): new () => RemoteClient & O & T {
 		return two(one(Base)) as any;
-	}
+	};
 }
 export type WindowFeature<P> = Feature<RemoteWindow, P>;
 export function combineWindowFeatures<O, T>(one: WindowFeature<O>, two: WindowFeature<T>): WindowFeature<O & T> {
 	return function (Base: new () => RemoteWindow): new () => RemoteWindow & O & T {
 		return two(one(Base)) as any;
-	}
+	};
 }
 export type WorkspaceFeature<P> = Feature<RemoteWorkspace, P>;
 export function combineWorkspaceFeatures<O, T>(one: WorkspaceFeature<O>, two: WorkspaceFeature<T>): WorkspaceFeature<O & T> {
 	return function (Base: new () => RemoteWorkspace): new () => RemoteWorkspace & O & T {
 		return two(one(Base)) as any;
-	}
+	};
 }
 
 export interface Features<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _> {
@@ -1740,12 +1740,12 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 			output = transport[1];
 		}
 	}
-	var commandLineMessage = "Use arguments of createConnection or set command line parameters: '--node-ipc', '--stdio' or '--socket={number}'";
+	var commandLineMessage = 'Use arguments of createConnection or set command line parameters: \'--node-ipc\', \'--stdio\' or \'--socket={number}\'';
 	if (!input) {
-		throw new Error("Connection input stream is not set. " + commandLineMessage);
+		throw new Error('Connection input stream is not set. ' + commandLineMessage);
 	}
 	if (!output) {
-		throw new Error("Connection output stream is not set. " + commandLineMessage);
+		throw new Error('Connection output stream is not set. ' + commandLineMessage);
 	}
 
 	// Backwards compatibility
@@ -1791,7 +1791,7 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 		sendNotification: (type: string | RPCMessageType, param?: any): void => {
 			const method = Is.string(type) ? type : type.method;
 			if (arguments.length === 1) {
-				connection.sendNotification(method)
+				connection.sendNotification(method);
 			} else {
 				connection.sendNotification(method, param);
 			}
@@ -1938,7 +1938,7 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 				}
 				let capabilities = result.capabilities;
 				if (!capabilities) {
-					capabilities = {}
+					capabilities = {};
 					result.capabilities = capabilities;
 				}
 				if (capabilities.textDocumentSync === void 0 || capabilities.textDocumentSync === null) {
@@ -1997,5 +1997,5 @@ export namespace ProposedFeatures {
 	export const all: Features<_, _, _, _, WindowProgress, _> = {
 		__brand: 'features',
 		window: ProgressFeature
-	}
+	};
 }

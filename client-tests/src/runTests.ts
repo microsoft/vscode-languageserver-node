@@ -4,13 +4,13 @@
  *--------------------------------------------------------------------------------------------*/
 'use strict';
 
-import * as path from 'path'
+import * as path from 'path';
 
-import { runTests } from 'vscode-test'
+import { runTests } from 'vscode-test';
 
 async function go() {
 	try {
-		const extensionDevelopmentPath = path.resolve(__dirname, '..')
+		const extensionDevelopmentPath = path.resolve(__dirname, '..');
 		const extensionTestsPath = __dirname;
 
 		/**
@@ -21,7 +21,7 @@ async function go() {
 			extensionTestsPath
 		});
 	} catch (err) {
-		console.error('Failed to run tests')
+		console.error('Failed to run tests');
 		process.exitCode = 1;
 	}
 }

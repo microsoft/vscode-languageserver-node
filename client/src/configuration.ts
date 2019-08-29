@@ -35,7 +35,7 @@ export class ConfigurationFeature implements StaticFeature {
 					result.push(this.getConfiguration(resource, item.section !== null ? item.section : undefined));
 				}
 				return result;
-			}
+			};
 			let middleware = client.clientOptions.middleware!.workspace;
 			return middleware && middleware.configuration
 				? middleware.configuration(params, token, configuration)
@@ -52,7 +52,7 @@ export class ConfigurationFeature implements StaticFeature {
 			} else {
 				let config = workspace.getConfiguration(section.substr(0, index), resource);
 				if (config) {
-					result = config.get(section.substr(index + 1))
+					result = config.get(section.substr(index + 1));
 				}
 			}
 		} else {

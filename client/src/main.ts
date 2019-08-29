@@ -25,7 +25,7 @@ import {
 
 import { ColorProviderFeature } from './colorProvider';
 import { ConfigurationFeature as PullConfigurationFeature } from './configuration';
-import { ImplementationFeature } from './implementation'
+import { ImplementationFeature } from './implementation';
 import { TypeDefinitionFeature } from './typeDefinition';
 import { WorkspaceFoldersFeature } from './workspaceFolders';
 import { FoldingRangeFeature } from './foldingRange';
@@ -179,7 +179,7 @@ export class LanguageClient extends BaseLanguageClient {
 			this.checkVersion();
 		} catch (error) {
 			if (Is.string(error.message)) {
-				this.outputChannel.appendLine(error.message)
+				this.outputChannel.appendLine(error.message);
 			}
 			throw error;
 		}
@@ -255,7 +255,7 @@ export class LanguageClient extends BaseLanguageClient {
 			let args: string[] = (process as any).execArgv;
 			if (args) {
 				return args.some((arg) => /^--debug=?/.test(arg) || /^--debug-brk=?/.test(arg) || /^--inspect=?/.test(arg) || /^--inspect-brk=?/.test(arg));
-			};
+			}
 			return false;
 		}
 
@@ -339,7 +339,7 @@ export class LanguageClient extends BaseLanguageClient {
 						} else {
 							return Promise.resolve({ reader: new StreamMessageReader(serverProcess.stdout), writer: new StreamMessageWriter(serverProcess.stdin) });
 						}
-					} else if (transport == TransportKind.pipe) {
+					} else if (transport === TransportKind.pipe) {
 						return createClientPipeTransport(pipeName!).then((transport) => {
 							let process = cp.spawn(node.runtime!, args, execOptions);
 							if (!process || !process.pid) {
@@ -351,7 +351,7 @@ export class LanguageClient extends BaseLanguageClient {
 							return transport.onConnected().then((protocol) => {
 								return { reader: protocol[0], writer: protocol[1] };
 							});
-						})
+						});
 					} else if (Transport.isSocket(transport)) {
 						return createClientSocketTransport(transport.port).then((transport) => {
 							let process = cp.spawn(node.runtime!, args, execOptions);
@@ -478,7 +478,7 @@ export class LanguageClient extends BaseLanguageClient {
 				fs.lstat(cwd!, (err, stats) => {
 					s(!err && stats.isDirectory() ? cwd : undefined);
 				});
-			})
+			});
 		}
 		return Promise.resolve(undefined);
 	}

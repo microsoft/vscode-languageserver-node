@@ -95,9 +95,9 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 						added: event.added.map(folder => this.asProtocol(folder)),
 						removed: event.removed.map(folder => this.asProtocol(folder))
 					}
-				}
+				};
 				this._client.sendNotification(DidChangeWorkspaceFoldersNotification.type, params);
-			}
+			};
 			let middleware = client.clientOptions.middleware!.workspace;
 			middleware && middleware.didChangeWorkspaceFolders
 				? middleware.didChangeWorkspaceFolders(event, didChangeWorkspaceFolders)

@@ -30,7 +30,7 @@ export class ProgressFeature implements StaticFeature {
 
 		let createHandler = (params: Proposed.WorkDoneProgressCreateParams) => {
 			new ProgressPart(this._client, params.token);
-		}
+		};
 		client.onRequest(Proposed.WorkDoneProgressCreateRequest.type, createHandler);
 	}
 }

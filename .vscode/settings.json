@@ -20,8 +20,19 @@
 
 	"javascript.validate.enable": false,
 
-	"eslint.enable": false,
 	"tslint.enable": false,
+	"eslint.enable": true,
+	"eslint.validate": [
+		{ "language": "typescript", "autoFix": true }
+	],
+	"eslint.workingDirectories": [
+		{ "directory": "./types", "changeProcessCWD": true },
+		{ "directory": "./jsonrpc", "changeProcessCWD": true },
+		{ "directory": "./protocol", "changeProcessCWD": true },
+		{ "directory": "./server", "changeProcessCWD": true },
+		{ "directory": "./client", "changeProcessCWD": true },
+		{ "directory": "./client-tests", "changeProcessCWD": true }
+	],
 
 	"npm.autoDetect": "off",
 	"typescript.tsc.autoDetect": "off"

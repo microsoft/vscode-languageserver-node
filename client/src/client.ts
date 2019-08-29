@@ -63,7 +63,7 @@ import {
 } from 'vscode-languageserver-protocol';
 
 import { ColorProviderMiddleware } from './colorProvider';
-import { ImplementationMiddleware } from './implementation'
+import { ImplementationMiddleware } from './implementation';
 import { TypeDefinitionMiddleware } from './typeDefinition';
 import { ConfigurationWorkspaceMiddleware } from './configuration';
 import { WorkspaceFolderWorkspaceMiddleware } from './workspaceFolders';
@@ -75,7 +75,7 @@ import * as c2p from './codeConverter';
 import * as p2c from './protocolConverter';
 
 import * as Is from './utils/is';
-import { Delayer } from './utils/async'
+import { Delayer } from './utils/async';
 import * as UUID from './utils/uuid';
 import { ProgressPart } from './progressPart';
 
@@ -163,7 +163,7 @@ function createConnection(reader: MessageReader, writer: MessageWriter, errorHan
 function createConnection(input: any, output: any, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler): IConnection {
 	let logger = new ConsoleLogger();
 	let connection = createProtocolConnection(input, output, logger);
-	connection.onError((data) => { errorHandler(data[0], data[1], data[2]) });
+	connection.onError((data) => { errorHandler(data[0], data[1], data[2]); });
 	connection.onClose(closeHandler);
 	let result: IConnection = {
 
@@ -212,7 +212,7 @@ function createConnection(input: any, output: any, errorHandler: ConnectionError
 		onDiagnostics: (handler: NotificationHandler<PublishDiagnosticsParams>) => connection.onNotification(PublishDiagnosticsNotification.type, handler),
 
 		dispose: () => connection.dispose()
-	}
+	};
 
 	return result;
 }
@@ -968,7 +968,7 @@ class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeR
 							this._changeDelayer = {
 								uri: event.document.uri.toString(),
 								delayer: new Delayer<void>(200)
-							}
+							};
 							this._changeDelayer.delayer.trigger(() => {
 								this._client.sendNotification(DidChangeTextDocumentNotification.type, this._client.code2ProtocolConverter.asChangeTextDocumentParams(event.document));
 							}, -1);
@@ -1024,7 +1024,7 @@ class WillSaveFeature extends DocumentNotifiactions<WillSaveTextDocumentParams, 
 			client.clientOptions.middleware!.willSave,
 			(willSaveEvent) => client.code2ProtocolConverter.asWillSaveTextDocumentParams(willSaveEvent),
 			(selectors, willSaveEvent) => DocumentNotifiactions.textDocumentFilter(selectors, willSaveEvent.document)
-		)
+		);
 	}
 
 	public get messages(): RPCMessageType {
@@ -1090,9 +1090,9 @@ class WillSaveWaitUntilFeature implements DynamicFeature<TextDocumentRegistratio
 			let willSaveWaitUntil = (event: TextDocumentWillSaveEvent): Thenable<VTextEdit[]> => {
 				return this._client.sendRequest(WillSaveTextDocumentWaitUntilRequest.type,
 					this._client.code2ProtocolConverter.asWillSaveTextDocumentParams(event)).then((edits) => {
-						let vEdits = this._client.protocol2CodeConverter.asTextEdits(edits);
-						return vEdits === void 0 ? [] : vEdits;
-					});
+					let vEdits = this._client.protocol2CodeConverter.asTextEdits(edits);
+					return vEdits === void 0 ? [] : vEdits;
+				});
 			};
 			event.waitUntil(
 				middleware.willSaveWaitUntil
@@ -1186,8 +1186,8 @@ class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatchedFilesRe
 			let watchCreate: boolean = true, watchChange: boolean = true, watchDelete: boolean = true;
 			if (watcher.kind !== void 0 && watcher.kind !== null) {
 				watchCreate = (watcher.kind & WatchKind.Create) !== 0;
-				watchChange = (watcher.kind & WatchKind.Change) != 0;
-				watchDelete = (watcher.kind & WatchKind.Delete) != 0;
+				watchChange = (watcher.kind & WatchKind.Change) !== 0;
+				watchDelete = (watcher.kind & WatchKind.Delete) !== 0;
 			}
 			let fileSystemWatcher: VFileSystemWatcher = Workspace.createFileSystemWatcher(watcher.globPattern, !watchCreate, !watchChange, !watchDelete);
 			this.hookListeners(fileSystemWatcher, watchCreate, watchChange, watchDelete);
@@ -1602,7 +1602,7 @@ class ReferencesFeature extends TextDocumentFeature<boolean | ReferenceOptions, 
 			provideReferences: (document: TextDocument, position: VPosition, options: { includeDeclaration: boolean; }, token: CancellationToken): ProviderResult<VLocation[]> => {
 				return middleware.provideReferences
 					? middleware.provideReferences(document, position, options, token, providerReferences)
-					: providerReferences(document, position, options, token)
+					: providerReferences(document, position, options, token);
 			}
 		});
 	}
@@ -1659,7 +1659,7 @@ class DocumentSymbolFeature extends TextDocumentFeature<boolean | DocumentSymbol
 		symbolCapabilities.dynamicRegistration = true;
 		symbolCapabilities.symbolKind = {
 			valueSet: SupportedSymbolKinds
-		}
+		};
 		symbolCapabilities.hierarchicalDocumentSymbolSupport = true;
 	}
 
@@ -1801,19 +1801,19 @@ class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions,
 				let result: (VCommand | VCodeAction)[] = [];
 				for (let item of values) {
 					if (Command.is(item)) {
-						result.push(client.protocol2CodeConverter.asCommand(item))
+						result.push(client.protocol2CodeConverter.asCommand(item));
 					} else {
 						result.push(client.protocol2CodeConverter.asCodeAction(item));
-					};
+					}
 				}
 				return result;
 			},
-				(error) => {
-					client.logFailedRequest(CodeActionRequest.type, error);
-					return Promise.resolve([]);
-				}
+			(error) => {
+				client.logFailedRequest(CodeActionRequest.type, error);
+				return Promise.resolve([]);
+			}
 			);
-		}
+		};
 		let middleware = client.clientOptions.middleware!;
 		return Languages.registerCodeActionsProvider(options.documentSelector!, {
 			provideCodeActions: (document: TextDocument, range: VRange, context: VCodeActionContext, token: CancellationToken): ProviderResult<(VCommand | VCodeAction)[]> => {
@@ -1822,8 +1822,8 @@ class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions,
 					: provideCodeActions(document, range, context, token);
 			}
 		}, options.codeActionKinds
-				? { providedCodeActionKinds: client.protocol2CodeConverter.asCodeActionKinds(options.codeActionKinds) }
-				: undefined
+			? { providedCodeActionKinds: client.protocol2CodeConverter.asCodeActionKinds(options.codeActionKinds) }
+			: undefined
 		);
 	}
 }
@@ -2065,21 +2065,21 @@ class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameR
 				position: client.code2ProtocolConverter.asPosition(position),
 			};
 			return client.sendRequest(PrepareRenameRequest.type, params, token).then((result) => {
-					if (Range.is(result)) {
-						return client.protocol2CodeConverter.asRange(result);
-					} else if (result && Range.is(result.range)) {
-						return {
-							range: client.protocol2CodeConverter.asRange(result.range),
-							placeholder: result.placeholder
-						}
-					}
-					// To cancel the rename vscode API expects a rejected promise.
-					return Promise.reject(new Error(`The element can't be renamed.`));
-				},
-				(error: ResponseError<void>) => {
-					client.logFailedRequest(PrepareRenameRequest.type, error);
-					return Promise.reject(new Error(error.message));
+				if (Range.is(result)) {
+					return client.protocol2CodeConverter.asRange(result);
+				} else if (result && Range.is(result.range)) {
+					return {
+						range: client.protocol2CodeConverter.asRange(result.range),
+						placeholder: result.placeholder
+					};
 				}
+				// To cancel the rename vscode API expects a rejected promise.
+				return Promise.reject(new Error(`The element can't be renamed.`));
+			},
+			(error: ResponseError<void>) => {
+				client.logFailedRequest(PrepareRenameRequest.type, error);
+				return Promise.reject(new Error(error.message));
+			}
 			);
 		};
 		let middleware = client.clientOptions.middleware!;
@@ -2138,7 +2138,7 @@ class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkOptions, Docum
 					Promise.resolve(new Error(error.message));
 				}
 			);
-		}
+		};
 		let middleware = client.clientOptions.middleware!;
 		return Languages.registerDocumentLinkProvider(options.documentSelector!, {
 			provideDocumentLinks: (document: TextDocument, token: CancellationToken): ProviderResult<VDocumentLink[]> => {
@@ -2180,7 +2180,7 @@ class ConfigurationFeature implements DynamicFeature<DidChangeConfigurationRegis
 				registerOptions: {
 					section: section
 				}
-			})
+			});
 		}
 	}
 
@@ -2228,7 +2228,7 @@ class ConfigurationFeature implements DynamicFeature<DidChangeConfigurationRegis
 				return;
 			}
 			this._client.sendNotification(DidChangeConfigurationNotification.type, { settings: this.extractSettingsInformation(sections) });
-		}
+		};
 		let middleware = this.getMiddleware();
 		middleware
 			? middleware(sections, didChangeConfiguration)
@@ -2640,7 +2640,7 @@ export abstract class BaseLanguageClient {
 					sendNotification: false,
 					traceFormat: this._traceFormat
 				});
-			})
+			});
 		}, () => {
 		});
 	}
@@ -2648,7 +2648,7 @@ export abstract class BaseLanguageClient {
 	private data2String(data: any): string {
 		if (data instanceof ResponseError) {
 			const responseError = data as ResponseError<any>;
-			return `  Message: ${responseError.message}\n  Code: ${responseError.code} ${responseError.data ? '\n' + responseError.data.toString() : ''}`
+			return `  Message: ${responseError.message}\n  Code: ${responseError.code} ${responseError.data ? '\n' + responseError.data.toString() : ''}`;
 		}
 		if (data instanceof Error) {
 			if (Is.string(data.stack)) {
@@ -2908,7 +2908,7 @@ export abstract class BaseLanguageClient {
 					this._onReadyCallbacks.reject(error);
 				}
 			} else if (error instanceof ResponseError && error.data && error.data.retry) {
-				Window.showErrorMessage(error.message, { title: 'Retry', id: "retry" }).then(item => {
+				Window.showErrorMessage(error.message, { title: 'Retry', id: 'retry' }).then(item => {
 					if (item && item.id === 'retry') {
 						this.initialize(connection);
 					} else {
@@ -3005,7 +3005,7 @@ export abstract class BaseLanguageClient {
 						connection.didChangeWatchedFiles({ changes: this._fileEvents });
 					}
 					this._fileEvents = [];
-				})
+				});
 			}, (error) => {
 				this.error(`Notify file events failed.`, error);
 			});
@@ -3042,11 +3042,11 @@ export abstract class BaseLanguageClient {
 	private createConnection(): Thenable<IConnection> {
 		let errorHandler = (error: Error, message: Message, count: number) => {
 			this.handleConnectionError(error, message, count);
-		}
+		};
 
 		let closeHandler = () => {
 			this.handleConnectionClosed();
-		}
+		};
 
 		return this.createMessageTransports(this._clientOptions.stdioEncoding || 'utf8').then((transports) => {
 			return createConnection(transports.reader, transports.writer, errorHandler, closeHandler);
@@ -3088,7 +3088,7 @@ export abstract class BaseLanguageClient {
 	private handleConnectionError(error: Error, message: Message, count: number) {
 		let action = this._clientOptions.errorHandler!.error(error, message, count);
 		if (action === ErrorAction.Shutdown) {
-			this.error('Connection to server is erroring. Shutting down server.')
+			this.error('Connection to server is erroring. Shutting down server.');
 			this.stop();
 		}
 	}
@@ -3237,7 +3237,7 @@ export abstract class BaseLanguageClient {
 				const data: RegistrationData<any> = {
 					id: registration.id,
 					registerOptions: options
-				}
+				};
 				feature.register(this._method2Message.get(registration.method)!, data);
 			}
 			resolve();
@@ -3253,7 +3253,7 @@ export abstract class BaseLanguageClient {
 					return;
 				}
 				feature.unregister(unregistration.id);
-			};
+			}
 			resolve();
 		});
 	}
@@ -3280,7 +3280,7 @@ export abstract class BaseLanguageClient {
 			return Promise.resolve({ applied: false });
 		}
 		return Workspace.applyEdit(this._p2c.asWorkspaceEdit(params.edit)).then((value) => { return { applied: value }; });
-	};
+	}
 
 	public logFailedRequest(type: RPCMessageType, error: any): void {
 		// If we get a request cancel don't log anything.

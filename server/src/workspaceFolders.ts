@@ -41,5 +41,5 @@ export const WorkspaceFoldersFeature: Feature<_RemoteWorkspace, WorkspaceFolders
 			}
 			return this._onDidChangeWorkspaceFolders.event;
 		}
-	}
+	};
 };

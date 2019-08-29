@@ -150,7 +150,7 @@ export const ProgressFeature: Feature<RemoteWindow, WindowProgress> = (Base) => 
 				return Promise.resolve(new NullProgress());
 			}
 		}
-	}
+	};
 };
 
 export interface ResultProgress<R> {

@@ -440,7 +440,7 @@ export namespace FoldingRange {
 		return Is.number(candidate.startLine) && Is.number(candidate.startLine)
 			&& (Is.undefined(candidate.startCharacter) || Is.number(candidate.startCharacter))
 			&& (Is.undefined(candidate.endCharacter) || Is.number(candidate.endCharacter))
-			&& (Is.undefined(candidate.kind) || Is.string(candidate.kind))
+			&& (Is.undefined(candidate.kind) || Is.string(candidate.kind));
 	}
 }
 
@@ -807,7 +807,7 @@ export namespace CreateFile {
 			(
 				candidate.options === void 0 ||
 				((candidate.options.overwrite === void 0 || Is.boolean(candidate.options.overwrite)) && (candidate.options.ignoreIfExists === void 0 || Is.boolean(candidate.options.ignoreIfExists)))
-			)
+			);
 	}
 }
 
@@ -866,7 +866,7 @@ export namespace RenameFile {
 			(
 				candidate.options === void 0 ||
 				((candidate.options.overwrite === void 0 || Is.boolean(candidate.options.overwrite)) && (candidate.options.ignoreIfExists === void 0 || Is.boolean(candidate.options.ignoreIfExists)))
-			)
+			);
 	}
 }
 
@@ -920,7 +920,7 @@ export namespace DeleteFile {
 			(
 				candidate.options === void 0 ||
 				((candidate.options.recursive === void 0 || Is.boolean(candidate.options.recursive)) && (candidate.options.ignoreIfNotExists === void 0 || Is.boolean(candidate.options.ignoreIfNotExists)))
-			)
+			);
 	}
 }
 
@@ -1112,7 +1112,7 @@ export class WorkspaceChange {
 			if (!this._workspaceEdit) {
 				this._workspaceEdit = {
 					changes: Object.create(null)
-				}
+				};
 			}
 			if (!this._workspaceEdit.changes) {
 				throw new Error('Workspace edit is not configured for normal text edit changes.');
@@ -1596,7 +1596,7 @@ export namespace MarkedString {
 	 * @param plainText The plain text.
 	 */
 	export function fromPlainText(plainText: string): string {
-		return plainText.replace(/[\\`*_{}[\]()#+\-.!]/g, "\\$&"); // escape markdown syntax tokens: http://daringfireball.net/projects/markdown/syntax#backslash
+		return plainText.replace(/[\\`*_{}[\]()#+\-.!]/g, '\\$&'); // escape markdown syntax tokens: http://daringfireball.net/projects/markdown/syntax#backslash
 	}
 
 	/**
@@ -1634,8 +1634,8 @@ export namespace Hover {
 			MarkedString.is(candidate.contents) ||
 			Is.typedArray(candidate.contents, MarkedString.is)
 		) && (
-				value.range === void 0 || Range.is(value.range)
-			);
+			value.range === void 0 || Range.is(value.range)
+		);
 	}
 }
 
@@ -1677,7 +1677,7 @@ export namespace ParameterInformation {
 	 */
 	export function create(label: string | [number, number], documentation?: string): ParameterInformation {
 		return documentation ? { label, documentation } : { label };
-	};
+	}
 }
 
 /**
@@ -1940,7 +1940,7 @@ export namespace SymbolInformation {
 			name,
 			kind,
 			location: { uri: uri as any, range }
-		}
+		};
 		if (containerName) {
 			result.containerName = containerName;
 		}
@@ -2278,7 +2278,7 @@ export namespace CodeLens {
 	 */
 	export function create(range: Range, data?: any): CodeLens {
 		let result: CodeLens = { range };
-		if (Is.defined(data)) result.data = data;
+		if (Is.defined(data)) { result.data = data; }
 		return result;
 	}
 	/**

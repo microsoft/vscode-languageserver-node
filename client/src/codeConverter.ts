@@ -140,7 +140,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 					version: arg.version
 				},
 				contentChanges: [{ text: arg.getText() }]
-			}
+			};
 			return result;
 		} else if (isTextDocumentChangeEvent(arg)) {
 			let document = arg.document;
@@ -158,9 +158,9 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 						},
 						rangeLength: change.rangeLength,
 						text: change.text
-					}
+					};
 				})
-			}
+			};
 			return result;
 		} else {
 			throw Error('Unsupported text document change parameter');
@@ -176,9 +176,9 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	function asSaveTextDocumentParams(textDocument: code.TextDocument, includeContent: boolean = false): proto.DidSaveTextDocumentParams {
 		let result: proto.DidSaveTextDocumentParams = {
 			textDocument: asVersionedTextDocumentIdentifier(textDocument)
-		}
+		};
 		if (includeContent) {
-			result.text = textDocument.getText()
+			result.text = textDocument.getText();
 		}
 		return result;
 	}
@@ -199,7 +199,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return {
 			textDocument: asTextDocumentIdentifier(event.document),
 			reason: asTextDocumentSaveReason(event.reason)
-		}
+		};
 	}
 
 	function asTextDocumentPositionParams(textDocument: code.TextDocument, position: code.Position): proto.TextDocumentPositionParams {
@@ -331,8 +331,8 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		let result: proto.Diagnostic = proto.Diagnostic.create(asRange(item.range), item.message);
 		if (Is.number(item.severity)) { result.severity = asDiagnosticSeverity(item.severity); }
 		if (Is.number(item.code) || Is.string(item.code)) { result.code = item.code; }
-		if (Array.isArray(item.tags)) { result.tags = asDiagnosticTags(item.tags) };
-		if (item.relatedInformation) { result.relatedInformation = asRelatedInformations(item.relatedInformation) };
+		if (Array.isArray(item.tags)) { result.tags = asDiagnosticTags(item.tags); }
+		if (item.relatedInformation) { result.relatedInformation = asRelatedInformations(item.relatedInformation); }
 		if (item.source) { result.source = item.source; }
 		return result;
 	}
@@ -463,7 +463,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		let result = proto.CodeLens.create(asRange(item.range));
 		if (item.command) { result.command = asCommand(item.command); }
 		if (item instanceof ProtocolCodeLens) {
-			if (item.data) { result.data = item.data };
+			if (item.data) { result.data = item.data; }
 		}
 		return result;
 	}
@@ -475,7 +475,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	function asDocumentSymbolParams(textDocument: code.TextDocument): proto.DocumentSymbolParams {
 		return {
 			textDocument: asTextDocumentIdentifier(textDocument)
-		}
+		};
 	}
 
 	function asCodeLensParams(textDocument: code.TextDocument): proto.CodeLensParams {

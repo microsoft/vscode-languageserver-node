@@ -112,14 +112,14 @@ suite('Protocol Converter', () => {
 
 		let result = p2c.asHover(hover);
 		strictEqual(result.contents.length, 1);
-		ok(result.contents[0] instanceof vscode.MarkdownString)
+		ok(result.contents[0] instanceof vscode.MarkdownString);
 		strictEqual((result.contents[0] as vscode.MarkdownString).value, 'hover');
 		strictEqual(result.range, undefined);
 
 		hover.range = {
 			start: { line: 1, character: 2 },
 			end: { line: 8, character: 9 }
-		}
+		};
 		result = p2c.asHover(hover);
 		let range = result.range!;
 		strictEqual(range.start.line, hover.range.start.line);
@@ -267,33 +267,33 @@ suite('Protocol Converter', () => {
 	test('Completion Item Preserve Insert Text', () => {
 		let completionItem: proto.CompletionItem = {
 			label: 'item',
-			insertText: "insert"
+			insertText: 'insert'
 		};
 
 		let result = p2c.asCompletionItem(completionItem);
 		strictEqual(result.label, completionItem.label);
-		strictEqual(result.insertText, "insert");
+		strictEqual(result.insertText, 'insert');
 		let back = c2p.asCompletionItem(result);
-		strictEqual(back.insertText, "insert");
+		strictEqual(back.insertText, 'insert');
 	});
 
 	test('Completion Item Snippet String', () => {
 		let completionItem: proto.CompletionItem = {
 			label: 'item',
-			insertText: "${value}",
+			insertText: '${value}',
 			insertTextFormat: proto.InsertTextFormat.Snippet
 		};
 
 		let result = p2c.asCompletionItem(completionItem);
 		strictEqual(result.label, completionItem.label);
 		ok(result.insertText instanceof vscode.SnippetString);
-		strictEqual((<vscode.SnippetString> result.insertText).value, "${value}");
+		strictEqual((<vscode.SnippetString> result.insertText).value, '${value}');
 		strictEqual(result.range, undefined);
 		strictEqual(result.textEdit, undefined);
 
 		let back = c2p.asCompletionItem(result);
 		strictEqual(back.insertTextFormat, proto.InsertTextFormat.Snippet);
-		strictEqual(back.insertText, "${value}");
+		strictEqual(back.insertText, '${value}');
 	});
 
 	test('Completion Item Text Edit', () => {
@@ -305,7 +305,7 @@ suite('Protocol Converter', () => {
 		let result = p2c.asCompletionItem(completionItem);
 		strictEqual(result.label, completionItem.label);
 		strictEqual(result.textEdit, undefined);
-		strictEqual(result.insertText, "insert");
+		strictEqual(result.insertText, 'insert');
 		rangeEqual(result.range!, completionItem.textEdit!.range);
 
 		let back = c2p.asCompletionItem(result);
@@ -523,7 +523,7 @@ suite('Protocol Converter', () => {
 		let location: proto.Location = {
 			uri: 'file://localhost/folder/file',
 			range: { start, end }
-		}
+		};
 
 		let single = <vscode.Location>p2c.asDefinitionResult(location);
 		ok(single.uri instanceof vscode.Uri);
@@ -773,7 +773,7 @@ suite('Code Converter', () => {
 		item.sortText = 'sort';
 		let edit = vscode.TextEdit.insert(new vscode.Position(1, 2), 'insert');
 		item.additionalTextEdits = [edit];
-		item.command = { title: 'title', command: 'commandId' }
+		item.command = { title: 'title', command: 'commandId' };
 
 		let result = c2p.asCompletionItem(<any>item);
 		strictEqual(result.label, item.label);
@@ -841,7 +841,7 @@ suite('Code Converter', () => {
 	});
 
 	test('Diagnostic', () => {
-		let item: vscode.Diagnostic = new vscode.Diagnostic(new vscode.Range(1, 2, 8, 9), "message", vscode.DiagnosticSeverity.Warning);
+		let item: vscode.Diagnostic = new vscode.Diagnostic(new vscode.Range(1, 2, 8, 9), 'message', vscode.DiagnosticSeverity.Warning);
 		item.code = 99;
 		item.source = 'source';
 		item.tags = [vscode.DiagnosticTag.Unnecessary];
@@ -865,9 +865,9 @@ suite('Code Converter', () => {
 		ok(c2p.asDiagnostics(<any>[item]).every(elem => proto.Diagnostic.is(elem)));
 	});
 
-	test("CodeActionContext", () => {
+	test('CodeActionContext', () => {
 		let item: vscode.CodeActionContext = {
-			diagnostics: [new vscode.Diagnostic(new vscode.Range(1, 2, 8, 9), "message", vscode.DiagnosticSeverity.Warning)]
+			diagnostics: [new vscode.Diagnostic(new vscode.Range(1, 2, 8, 9), 'message', vscode.DiagnosticSeverity.Warning)]
 		};
 
 		let result = c2p.asCodeActionContext(<any>item);

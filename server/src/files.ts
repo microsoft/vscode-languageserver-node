@@ -50,21 +50,21 @@ export function resolve(moduleName: string, nodePath: string | undefined, cwd: s
 	const nodePathKey: string = 'NODE_PATH';
 
 	const app: string = [
-		"var p = process;",
-		"p.on('message',function(m){",
-		"if(m.c==='e'){",
-		"p.exit(0);",
-		"}",
-		"else if(m.c==='rs'){",
-		"try{",
-		"var r=require.resolve(m.a);",
-		"p.send({c:'r',s:true,r:r});",
-		"}",
-		"catch(err){",
-		"p.send({c:'r',s:false});",
-		"}",
-		"}",
-		"});"
+		'var p = process;',
+		'p.on(\'message\',function(m){',
+		'if(m.c===\'e\'){',
+		'p.exit(0);',
+		'}',
+		'else if(m.c===\'rs\'){',
+		'try{',
+		'var r=require.resolve(m.a);',
+		'p.send({c:\'r\',s:true,r:r});',
+		'}',
+		'catch(err){',
+		'p.send({c:\'r\',s:false});',
+		'}',
+		'}',
+		'});'
 	].join('');
 
 	return new Promise<any>((resolve, reject) => {
@@ -230,7 +230,7 @@ export namespace FileSystem {
 		if (isCaseSensitive()) {
 			return path.normalize(child).indexOf(path.normalize(parent)) === 0;
 		} else {
-			return path.normalize(child).toLowerCase().indexOf(path.normalize(parent).toLowerCase()) == 0;
+			return path.normalize(child).toLowerCase().indexOf(path.normalize(parent).toLowerCase()) === 0;
 		}
 	}
 }
