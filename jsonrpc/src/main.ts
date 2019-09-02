@@ -56,7 +56,7 @@ namespace CancelNotification {
 export type ProgressToken = number | string;
 interface ProgressParams<T> {
 	/**
-	 * The progress token provided by the client.
+	 * The progress token provided by the client or server.
 	 */
 	token: ProgressToken;
 

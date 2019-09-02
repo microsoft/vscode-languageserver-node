@@ -16,13 +16,13 @@ import { WorkDoneProgress } from 'vscode-languageserver-protocol/lib/protocol.pr
 import { LocationLink } from 'vscode-languageserver-types';
 
 class TestStream extends Duplex {
-  _write(chunk: string, _encoding: string, done: () => void) {
-	this.emit('data', chunk);
-	done();
-  }
+	_write(chunk: string, _encoding: string, done: () => void) {
+		this.emit('data', chunk);
+		done();
+	}
 
-  _read(_size: number) {
-  }
+	_read(_size: number) {
+	}
 }
 
 describe('Connection Tests', () => {
@@ -130,7 +130,7 @@ describe('Connection Tests', () => {
 				case 'report':
 					report = true;
 					break;
-				case 'done':
+				case 'end':
 					assert.ok(begin && report, 'Recevied begin, report and done');
 					done();
 					break;
@@ -155,7 +155,7 @@ describe('Connection Tests', () => {
 				targetUri: 'file:///home/dirkb/test.ts',
 				targetRange: range,
 				targetSelectionRange: range
-			}
+			};
 			result!.report(new Array(10).fill(location));
 			result!.report(new Array(20).fill(location));
 			return [];

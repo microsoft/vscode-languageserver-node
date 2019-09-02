@@ -104,9 +104,9 @@ export interface WorkDoneProgressReport {
 	percentage?: number;
 }
 
-export interface WorkDoneProgressDone {
+export interface WorkDoneProgressEnd {
 
-	kind: 'done';
+	kind: 'end';
 
 	/**
 	 * Optional, a final message indicating to for example indicate the outcome
@@ -116,7 +116,7 @@ export interface WorkDoneProgressDone {
 }
 
 export namespace WorkDoneProgress {
-	export const type = new ProgressType<WorkDoneProgressBegin | WorkDoneProgressReport | WorkDoneProgressDone>();
+	export const type = new ProgressType<WorkDoneProgressBegin | WorkDoneProgressReport | WorkDoneProgressEnd>();
 }
 
 export interface WorkDoneProgressCreateParams  {

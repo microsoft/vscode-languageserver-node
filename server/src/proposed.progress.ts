@@ -77,7 +77,7 @@ class WorkDoneProgressImpl implements WorkDoneProgress {
 	done(): void {
 		WorkDoneProgressImpl.Instances.delete(this._token);
 		this._source.dispose();
-		this._connection.sendProgress(Proposed.WorkDoneProgress.type, this._token, { kind: 'done' } );
+		this._connection.sendProgress(Proposed.WorkDoneProgress.type, this._token, { kind: 'end' } );
 	}
 
 	cancel(): void {

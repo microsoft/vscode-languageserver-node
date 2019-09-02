@@ -38,7 +38,7 @@ export class ProgressPart {
 				case 'report':
 					this.report(value);
 					break;
-				case 'done':
+				case 'end':
 					this.done();
 					break;
 			}

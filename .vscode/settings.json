@@ -35,5 +35,13 @@
 	],
 
 	"npm.autoDetect": "off",
-	"typescript.tsc.autoDetect": "off"
+	"typescript.tsc.autoDetect": "off",
+	"spellright.language": [
+		"en_US"
+	],
+	"spellright.documentTypes": [
+		"markdown",
+		"latex",
+		"plaintext"
+	]
 }

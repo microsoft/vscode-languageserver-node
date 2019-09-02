@@ -61,7 +61,7 @@ export namespace Proposed {
 	export type WorkDoneProgressClientCapabilities = progress.WorkDoneProgressClientCapabilities;
 	export type WorkDoneProgressBegin = progress.WorkDoneProgressBegin;
 	export type WorkDoneProgressReport = progress.WorkDoneProgressReport;
-	export type WorkDoneProgressDone = progress.WorkDoneProgressDone;
+	export type WorkDoneProgressEnd = progress.WorkDoneProgressEnd;
 	// export type ProgressServerCapabilities = progress.ProgressServerCapabilities;
 
 	export namespace WorkDoneProgress {
