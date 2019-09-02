@@ -322,39 +322,12 @@ export interface WorkspaceClientCapabilities {
 	/**
 	 * Capabilities specific to the `workspace/symbol` request.
 	 */
-	symbol?: {
-		/**
-		 * Symbol request supports dynamic registration.
-		 */
-		dynamicRegistration?: boolean;
-
-		/**
-		 * Specific capabilities for the `SymbolKind` in the `workspace/symbol` request.
-		 */
-		symbolKind?: {
-			/**
-			 * The symbol kind values the client supports. When this
-			 * property exists the client also guarantees that it will
-			 * handle values outside its set gracefully and falls back
-			 * to a default value when unknown.
-			 *
-			 * If this property is not present the client only supports
-			 * the symbol kinds from `File` to `Array` as defined in
-			 * the initial version of the protocol.
-			 */
-			valueSet?: SymbolKind[];
-		}
-	};
+	symbol?: WorkspaceSymbolClientCapabilities;
 
 	/**
 	 * Capabilities specific to the `workspace/executeCommand` request.
 	 */
-	executeCommand?: {
-		/**
-		 * Execute command supports dynamic registration.
-		 */
-		dynamicRegistration?: boolean;
-	};
+	executeCommand?: ExecuteCommandClientCapabilities;
 }
 
 /**
@@ -856,12 +829,6 @@ export interface DocumentSymbolOptions extends WorkDoneProgressOptions {
 }
 
 /**
- * Workspace symbol options.
- */
-export interface WorkspaceSymbolOptions extends WorkDoneProgressOptions {
-}
-
-/**
  * Code Action options.
  */
 export interface CodeActionOptions extends WorkDoneProgressOptions {
@@ -929,16 +896,6 @@ export interface DocumentLinkOptions extends WorkDoneProgressOptions {
 	 * Document links have a resolve provider as well.
 	 */
 	resolveProvider?: boolean;
-}
-
-/**
- * Execute command options.
- */
-export interface ExecuteCommandOptions extends WorkDoneProgressOptions {
-	/**
-	 * The commands to be executed on the server
-	 */
-	commands: string[]
 }
 
 /**
@@ -1874,6 +1831,33 @@ export namespace DocumentSymbolRequest {
 //---- Workspace Symbol Provider ---------------------------
 
 /**
+ * Client capabilities for a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest).
+ */
+export interface WorkspaceSymbolClientCapabilities {
+	/**
+	 * Symbol request supports dynamic registration.
+	 */
+	dynamicRegistration?: boolean;
+
+	/**
+	 * Specific capabilities for the `SymbolKind` in the `workspace/symbol` request.
+	 */
+	symbolKind?: {
+		/**
+		 * The symbol kind values the client supports. When this
+		 * property exists the client also guarantees that it will
+		 * handle values outside its set gracefully and falls back
+		 * to a default value when unknown.
+		 *
+		 * If this property is not present the client only supports
+		 * the symbol kinds from `File` to `Array` as defined in
+		 * the initial version of the protocol.
+		 */
+		valueSet?: SymbolKind[];
+	}
+}
+
+/**
  * The parameters of a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest).
  */
 export interface WorkspaceSymbolParams extends WorkDoneProgressParams, PartialResultParams {
@@ -1882,6 +1866,13 @@ export interface WorkspaceSymbolParams extends WorkDoneProgressParams, PartialRe
 	 */
 	query: string;
 }
+
+/**
+ * Server capabilities for a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest).
+ */
+export interface WorkspaceSymbolOptions extends WorkDoneProgressOptions {
+}
+
 
 /**
  * Registration options for a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest).
@@ -2155,6 +2146,16 @@ export namespace DocumentLinkResolveRequest {
 //---- Command Execution -------------------------------------------
 
 /**
+ * The client capabilities of a [ExecuteCommandRequest](#ExecuteCommandRequest).
+ */
+export interface ExecuteCommandClientCapabilities {
+	/**
+	 * Execute command supports dynamic registration.
+	 */
+	dynamicRegistration?: boolean;
+}
+
+/**
  * The parameters of a [ExecuteCommandRequest](#ExecuteCommandRequest).
  */
 export interface ExecuteCommandParams extends WorkDoneProgressParams {
@@ -2167,6 +2168,16 @@ export interface ExecuteCommandParams extends WorkDoneProgressParams {
 	 * Arguments that the command should be invoked with.
 	 */
 	arguments?: any[];
+}
+
+/**
+ * The server capabilities of a [ExecuteCommandRequest](#ExecuteCommandRequest).
+ */
+export interface ExecuteCommandOptions extends WorkDoneProgressOptions {
+	/**
+	 * The commands to be executed on the server
+	 */
+	commands: string[]
 }
 
 /**
