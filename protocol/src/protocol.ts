@@ -278,46 +278,17 @@ export interface WorkspaceClientCapabilities {
 	/**
 	 * Capabilities specific to `WorkspaceEdit`s
 	 */
-	workspaceEdit?: {
-		/**
-		 * The client supports versioned document changes in `WorkspaceEdit`s
-		 */
-		documentChanges?: boolean;
-
-		/**
-		 * The resource operations the client supports. Clients should at least
-		 * support 'create', 'rename' and 'delete' files and folders.
-		 */
-		resourceOperations?: ResourceOperationKind[];
-
-		/**
-		 * The failure handling strategy of a client if applying the workspace edit
-		 * failes.
-		 */
-		failureHandling?: FailureHandlingKind;
-	};
+	workspaceEdit?: WorkspaceEditClientCapabilities;
 
 	/**
 	 * Capabilities specific to the `workspace/didChangeConfiguration` notification.
 	 */
-	didChangeConfiguration?: {
-		/**
-		 * Did change configuration notification supports dynamic registration.
-		 */
-		dynamicRegistration?: boolean;
-	};
+	didChangeConfiguration?: DidChangeConfigurationClientCapabilities;
 
 	/**
 	 * Capabilities specific to the `workspace/didChangeWatchedFiles` notification.
 	 */
-	didChangeWatchedFiles?: {
-		/**
-		 * Did change watched files notification supports dynamic registration. Please note
-		 * that the current protocol doesn't support static configuration for file changes
-		 * from the server side.
-		 */
-		dynamicRegistration?: boolean;
-	};
+	didChangeWatchedFiles?: DidChangeWatchedFilesClientCapabilities;
 
 	/**
 	 * Capabilities specific to the `workspace/symbol` request.
@@ -1174,6 +1145,13 @@ export namespace ExitNotification {
 
 //---- Configuration notification ----
 
+export interface DidChangeConfigurationClientCapabilities {
+	/**
+	 * Did change configuration notification supports dynamic registration.
+	 */
+	dynamicRegistration?: boolean;
+}
+
 /**
  * The configuration change notification is sent from the client to the server
  * when the client's configuration has changed. The notification contains
@@ -1463,6 +1441,15 @@ export namespace WillSaveTextDocumentWaitUntilRequest {
 }
 
 //---- File eventing ----
+
+export interface DidChangeWatchedFilesClientCapabilities {
+	/**
+	 * Did change watched files notification supports dynamic registration. Please note
+	 * that the current protocol doesn't support static configuration for file changes
+	 * from the server side.
+	 */
+	dynamicRegistration?: boolean;
+}
 
 /**
  * The watched files notification is sent from the client to the server when
@@ -2195,6 +2182,29 @@ export namespace ExecuteCommandRequest {
 }
 
 //---- Apply Edit request ----------------------------------------
+
+export interface WorkspaceEditClientCapabilities {
+	/**
+	 * The client supports versioned document changes in `WorkspaceEdit`s
+	 */
+	documentChanges?: boolean;
+
+	/**
+	 * The resource operations the client supports. Clients should at least
+	 * support 'create', 'rename' and 'delete' files and folders.
+	 *
+	 * Since 3.13
+	 */
+	resourceOperations?: ResourceOperationKind[];
+
+	/**
+	 * The failure handling strategy of a client if applying the workspace edit
+	 * fails.
+	 *
+	 * Since 3.13
+	 */
+	failureHandling?: FailureHandlingKind;
+}
 
 /**
  * The parameters passed via a apply workspace edit request.
