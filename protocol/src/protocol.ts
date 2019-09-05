@@ -615,17 +615,7 @@ export interface TextDocumentClientCapabilities {
 	/**
 	 * Capabilities specific to `textDocument/publishDiagnostics`.
 	 */
-	publishDiagnostics?: {
-		/**
-		 * Whether the clients accepts diagnostics with related information.
-		 */
-		relatedInformation?: boolean;
-
-		/**
-		 * Client supports the tag property to provide meta data about a diagnostic.
-		 */
-		tagSupport?: boolean;
-	};
+	publishDiagnostics?: PublishDiagnosticsClientCapabilities;
 }
 
 /**
@@ -1553,11 +1543,18 @@ export namespace WatchKind {
 //---- Diagnostic notification ----
 
 /**
- * Diagnostics notification are sent from the server to the client to signal
- * results of validation runs.
+ * The publish diagnostic client capabilities.
  */
-export namespace PublishDiagnosticsNotification {
-	export const type = new NotificationType<PublishDiagnosticsParams, void>('textDocument/publishDiagnostics');
+export interface PublishDiagnosticsClientCapabilities {
+	/**
+	 * Whether the clients accepts diagnostics with related information.
+	 */
+	relatedInformation?: boolean;
+
+	/**
+	 * Client supports the tag property to provide meta data about a diagnostic.
+	 */
+	tagSupport?: boolean;
 }
 
 /**
@@ -1580,6 +1577,14 @@ export interface PublishDiagnosticsParams {
 	 * An array of diagnostic information items.
 	 */
 	diagnostics: Diagnostic[];
+}
+
+/**
+ * Diagnostics notification are sent from the server to the client to signal
+ * results of validation runs.
+ */
+export namespace PublishDiagnosticsNotification {
+	export const type = new NotificationType<PublishDiagnosticsParams, void>('textDocument/publishDiagnostics');
 }
 
 //---- Completion Support --------------------------
