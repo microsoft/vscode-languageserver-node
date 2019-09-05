@@ -309,29 +309,7 @@ export interface TextDocumentClientCapabilities {
 	/**
 	 * Defines which synchronization capabilities the client supports.
 	 */
-	synchronization?: {
-		/**
-		 * Whether text document synchronization supports dynamic registration.
-		 */
-		dynamicRegistration?: boolean;
-
-		/**
-		 * The client supports sending will save notifications.
-		 */
-		willSave?: boolean;
-
-		/**
-		 * The client supports sending a will save request and
-		 * waits for a response providing text edits which will
-		 * be applied to the document before it is saved.
-		 */
-		willSaveWaitUntil?: boolean;
-
-		/**
-		 * The client supports did save notifications.
-		 */
-		didSave?: boolean;
-	};
+	synchronization?: TextDocumentSyncClientCapabilities;
 
 	/**
 	 * Capabilities specific to the `textDocument/completion`
@@ -648,32 +626,6 @@ export type ClientCapabilities = _ClientCapabilities & ImplementationClientCapab
 	DeclarationClientCapabilities & SelectionRangeClientCapabilities;
 
 /**
- * Defines how the host (editor) should sync
- * document changes to the language server.
- */
-export namespace TextDocumentSyncKind {
-	/**
-	 * Documents should not be synced at all.
-	 */
-	export const None = 0;
-
-	/**
-	 * Documents are synced by always sending the full content
-	 * of the document.
-	 */
-	export const Full = 1;
-
-	/**
-	 * Documents are synced by sending the full content on open.
-	 * After that only incremental updates to the document are
-	 * send.
-	 */
-	export const Incremental = 2;
-}
-
-export type TextDocumentSyncKind = 0 | 1 | 2;
-
-/**
  * Static registration options to be returned in the initialize
  * request.
  */
@@ -867,34 +819,6 @@ export interface SaveOptions {
 	 * The client is supposed to include the content on save.
 	 */
 	includeText?: boolean;
-}
-
-export interface TextDocumentSyncOptions {
-	/**
-	 * Open and close notifications are sent to the server. If omitted open close notification should not
-	 * be sent.
-	 */
-	openClose?: boolean;
-	/**
-	 * Change notifications are sent to the server. See TextDocumentSyncKind.None, TextDocumentSyncKind.Full
-	 * and TextDocumentSyncKind.Incremental. If omitted it defaults to TextDocumentSyncKind.None.
-	 */
-	change?: TextDocumentSyncKind;
-	/**
-	 * If present will save notifications are sent to the server. If omitted the notification should not be
-	 * sent.
-	 */
-	willSave?: boolean;
-	/**
-	 * If present will save wait until requests are sent to the server. If omitted the request should not be
-	 * sent.
-	 */
-	willSaveWaitUntil?: boolean;
-	/**
-	 * If present save notifications are sent to the server. If omitted the notification should not be
-	 * sent.
-	 */
-	save?: SaveOptions;
 }
 
 export interface WorkDoneProgressOptions {
@@ -1281,6 +1205,84 @@ export namespace TelemetryEventNotification {
 
 //---- Text document notifications ----
 
+export interface TextDocumentSyncClientCapabilities {
+	/**
+	 * Whether text document synchronization supports dynamic registration.
+	 */
+	dynamicRegistration?: boolean;
+
+	/**
+	 * The client supports sending will save notifications.
+	 */
+	willSave?: boolean;
+
+	/**
+	 * The client supports sending a will save request and
+	 * waits for a response providing text edits which will
+	 * be applied to the document before it is saved.
+	 */
+	willSaveWaitUntil?: boolean;
+
+	/**
+	 * The client supports did save notifications.
+	 */
+	didSave?: boolean;
+}
+
+/**
+ * Defines how the host (editor) should sync
+ * document changes to the language server.
+ */
+export namespace TextDocumentSyncKind {
+	/**
+	 * Documents should not be synced at all.
+	 */
+	export const None = 0;
+
+	/**
+	 * Documents are synced by always sending the full content
+	 * of the document.
+	 */
+	export const Full = 1;
+
+	/**
+	 * Documents are synced by sending the full content on open.
+	 * After that only incremental updates to the document are
+	 * send.
+	 */
+	export const Incremental = 2;
+}
+
+export type TextDocumentSyncKind = 0 | 1 | 2;
+
+export interface TextDocumentSyncOptions {
+	/**
+	 * Open and close notifications are sent to the server. If omitted open close notification should not
+	 * be sent.
+	 */
+	openClose?: boolean;
+	/**
+	 * Change notifications are sent to the server. See TextDocumentSyncKind.None, TextDocumentSyncKind.Full
+	 * and TextDocumentSyncKind.Incremental. If omitted it defaults to TextDocumentSyncKind.None.
+	 */
+	change?: TextDocumentSyncKind;
+	/**
+	 * If present will save notifications are sent to the server. If omitted the notification should not be
+	 * sent.
+	 */
+	willSave?: boolean;
+	/**
+	 * If present will save wait until requests are sent to the server. If omitted the request should not be
+	 * sent.
+	 */
+	willSaveWaitUntil?: boolean;
+	/**
+	 * If present save notifications are sent to the server. If omitted the notification should not be
+	 * sent.
+	 */
+	save?: SaveOptions;
+}
+
 /**
  * The parameters send in a open text document notification
  */
@@ -1553,6 +1555,8 @@ export interface PublishDiagnosticsClientCapabilities {
 
 	/**
 	 * Client supports the tag property to provide meta data about a diagnostic.
+	 *
+	 * Since 3.15
 	 */
 	tagSupport?: boolean;
 }
