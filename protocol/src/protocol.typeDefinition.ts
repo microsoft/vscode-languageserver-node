@@ -11,41 +11,36 @@ import { TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumen
 // @ts-ignore: to avoid inlining LocatioLink as dynamic import
 let __noDynamicImport: LocationLink | Declaration | DeclarationLink | Location | undefined;
 
+/**
+ * Since 3.6.0
+ */
 export interface TypeDefinitionClientCapabilities {
 	/**
-	 * The text document client capabilities
+	 * Whether implementation supports dynamic registration. If this is set to `true`
+	 * the client supports the new `TypeDefinitionRegistrationOptions` return value
+	 * for the corresponding server capability as well.
 	 */
-	textDocument?: {
-		/**
-		 * Capabilities specific to the `textDocument/typeDefinition`
-		 */
-		typeDefinition?: {
-			/**
-			 * Whether implementation supports dynamic registration. If this is set to `true`
-			 * the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
-			 * return value for the corresponding server capability as well.
-			 */
-			dynamicRegistration?: boolean;
+	dynamicRegistration?: boolean;
 
-			/**
-			 * The client supports additional metadata in the form of definition links.
-			 */
-			linkSupport?: boolean;
-		};
-	}
+	/**
+	 * The client supports additional metadata in the form of definition links.
+	 *
+	 * Since 3.14.0
+	 */
+	linkSupport?: boolean;
 }
 
 export interface TypeDefinitionOptions extends WorkDoneProgressOptions {
 }
 
-export interface TypeDefinitionRegistrationOptions extends TextDocumentRegistrationOptions, TypeDefinitionOptions {
+export interface TypeDefinitionRegistrationOptions extends TextDocumentRegistrationOptions, TypeDefinitionOptions, StaticRegistrationOptions {
 }
 
 export interface  TypeDefinitionServerCapabilities {
 	/**
 	 * The server provides Goto Type Definition support.
 	 */
-	typeDefinitionProvider?: boolean | TypeDefinitionOptions | (TypeDefinitionRegistrationOptions & StaticRegistrationOptions);
+	typeDefinitionProvider?: boolean | TypeDefinitionOptions | TypeDefinitionRegistrationOptions;
 }
 
 export interface TypeDefinitionParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {

@@ -339,56 +339,38 @@ export interface TextDocumentClientCapabilities {
 	definition?: DefinitionClientCapabilities;
 
 	/**
+	 * Capabilities specific to the `textDocument/typeDefinition`
+	 *
+	 * Since 3.6.0
+	 */
+	typeDefinition?: TypeDefinitionClientCapabilities;
+
+	/**
+	 * Capabilities specific to the `textDocument/implementation`
+	 *
+	 * Since 3.6.0
+	 */
+	implementation?: ImplementationClientCapabilities;
+
+	/**
 	 * Capabilities specific to the `textDocument/references`
 	 */
-	references?: {
-		/**
-		 * Whether references supports dynamic registration.
-		 */
-		dynamicRegistration?: boolean;
-	};
+	references?: ReferenceClientCapabilities;
 
 	/**
 	 * Capabilities specific to the `textDocument/documentHighlight`
 	 */
-	documentHighlight?: {
-		/**
-		 * Whether document highlight supports dynamic registration.
-		 */
-		dynamicRegistration?: boolean;
-	};
+	documentHighlight?: DocumentHighlightClientCapabilities;
 
 	/**
 	 * Capabilities specific to the `textDocument/documentSymbol`
 	 */
-	documentSymbol?: {
-		/**
-		 * Whether document symbol supports dynamic registration.
-		 */
-		dynamicRegistration?: boolean;
+	documentSymbol?: DocumentSymbolClientCapabilities;
 
-		/**
-		 * Specific capabilities for the `SymbolKind`.
-		 */
-		symbolKind?: {
-			/**
-			 * The symbol kind values the client supports. When this
-			 * property exists the client also guarantees that it will
-			 * handle values outside its set gracefully and falls back
-			 * to a default value when unknown.
-			 *
-			 * If this property is not present the client only supports
-			 * the symbol kinds from `File` to `Array` as defined in
-			 * the initial version of the protocol.
-			 */
-			valueSet?: SymbolKind[];
-		},
-
-		/**
-		 * The client support hierarchical document symbols.
-		 */
-		hierarchicalDocumentSymbolSupport?: boolean;
-	};
+	/**
+	 * Capabilities specific to the `textDocument/codeAction`
+	 */
+	codeAction?: CodeActionClientCapabilities;
 
 	/**
 	 * Capabilities specific to the `textDocument/formatting`
@@ -418,37 +400,6 @@ export interface TextDocumentClientCapabilities {
 		 * Whether on type formatting supports dynamic registration.
 		 */
 		dynamicRegistration?: boolean;
-	};
-
-	/**
-	 * Capabilities specific to the `textDocument/codeAction`
-	 */
-	codeAction?: {
-		/**
-		 * Whether code action supports dynamic registration.
-		 */
-		dynamicRegistration?: boolean;
-
-		/**
-		 * The client support code action literals as a valid
-		 * response of the `textDocument/codeAction` request.
-		 */
-		codeActionLiteralSupport?: {
-			/**
-			 * The code action kind is support with the following value
-			 * set.
-			 */
-			codeActionKind: {
-
-				/**
-				 * The code action kind values the client supports. When this
-				 * property exists the client also guarantees that it will
-				 * handle values outside its set gracefully and falls back
-				 * to a default value when unknown.
-				 */
-				valueSet: CodeActionKind[];
-			};
-		};
 	};
 
 	/**
@@ -564,37 +515,6 @@ export namespace TextDocumentRegistrationOptions {
 		const candidate = value as TextDocumentRegistrationOptions;
 		return candidate && (candidate.documentSelector === null || DocumentSelector.is(candidate.documentSelector));
 	}
-}
-
-/**
- * Reference options.
- */
-export interface ReferenceOptions extends WorkDoneProgressOptions {
-}
-
-/**
- * Document highlight options.
- */
-export interface DocumentHighlightOptions extends WorkDoneProgressOptions {
-}
-
-/**
- * Document symbol options.
- */
-export interface DocumentSymbolOptions extends WorkDoneProgressOptions {
-}
-
-/**
- * Code Action options.
- */
-export interface CodeActionOptions extends WorkDoneProgressOptions {
-	/**
-	 * CodeActionKinds that this server may return.
-	 *
-	 * The list of kinds may be generic, such as `CodeActionKind.Refactor`, or the server
-	 * may list out every specific kind they provide.
-	 */
-	codeActionKinds?: CodeActionKind[];
 }
 
 /**
@@ -722,15 +642,15 @@ export interface _ServerCapabilities<T = any> {
 	 */
 	documentSymbolProvider?: boolean | DocumentSymbolOptions;
 	/**
-	 * The server provides workspace symbol support.
-	 */
-	workspaceSymbolProvider?: boolean | WorkspaceSymbolOptions;
-	/**
 	 * The server provides code actions. CodeActionOptions may only be
 	 * specified if the client states that it supports
 	 * `codeActionLiteralSupport` in its initial `initialize` request.
 	 */
 	codeActionProvider?: boolean | CodeActionOptions;
+	/**
+	 * The server provides workspace symbol support.
+	 */
+	workspaceSymbolProvider?: boolean | WorkspaceSymbolOptions;
 	/**
 	 * The server provides code lens.
 	 */
@@ -1777,10 +1697,26 @@ export namespace DefinitionRequest {
 //---- Reference Provider ----------------------------------
 
 /**
+ * Client Capabilities for a [ReferencesRequest](#ReferencesRequest).
+ */
+export interface ReferenceClientCapabilities {
+	/**
+	 * Whether references supports dynamic registration.
+	 */
+	dynamicRegistration?: boolean;
+}
+
+/**
  * Parameters for a [ReferencesRequest](#ReferencesRequest).
  */
 export interface ReferenceParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {
 	context: ReferenceContext
+}
+
+/**
+ * Reference options.
+ */
+export interface ReferenceOptions extends WorkDoneProgressOptions {
 }
 
 /**
@@ -1803,9 +1739,25 @@ export namespace ReferencesRequest {
 //---- Document Highlight ----------------------------------
 
 /**
+ * Client Capabilities for a [DocumentHighlightRequest](#DocumentHighlightRequest).
+ */
+export interface DocumentHighlightClientCapabilities {
+	/**
+	 * Whether document highlight supports dynamic registration.
+	 */
+	dynamicRegistration?: boolean;
+}
+
+/**
  * Parameters for a [DocumentHighlightRequest](#DocumentHighlightRequest).
  */
 export interface DocumentHighlightParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {
+}
+
+/**
+ * Provider options for a [DocumentHighlightRequest](#DocumentHighlightRequest).
+ */
+export interface DocumentHighlightOptions extends WorkDoneProgressOptions {
 }
 
 /**
@@ -1828,6 +1780,38 @@ export namespace DocumentHighlightRequest {
 //---- Document Symbol Provider ---------------------------
 
 /**
+ * Client Capabilities for a [DocumentSymbolRequest](#DocumentSymbolRequest).
+ */
+export interface DocumentSymbolClientCapabilities {
+	/**
+	 * Whether document symbol supports dynamic registration.
+	 */
+	dynamicRegistration?: boolean;
+
+	/**
+	 * Specific capabilities for the `SymbolKind`.
+	 */
+	symbolKind?: {
+		/**
+		 * The symbol kind values the client supports. When this
+		 * property exists the client also guarantees that it will
+		 * handle values outside its set gracefully and falls back
+		 * to a default value when unknown.
+		 *
+		 * If this property is not present the client only supports
+		 * the symbol kinds from `File` to `Array` as defined in
+		 * the initial version of the protocol.
+		 */
+		valueSet?: SymbolKind[];
+	};
+
+	/**
+	 * The client support hierarchical document symbols.
+	 */
+	hierarchicalDocumentSymbolSupport?: boolean;
+};
+
+/**
  * Parameters for a [DocumentSymbolRequest](#DocumentSymbolRequest).
  */
 export interface DocumentSymbolParams extends WorkDoneProgressParams, PartialResultParams {
@@ -1835,6 +1819,12 @@ export interface DocumentSymbolParams extends WorkDoneProgressParams, PartialRes
 	 * The text document.
 	 */
 	textDocument: TextDocumentIdentifier;
+}
+
+/**
+ * Provider options for a [DocumentSymbolRequest](#DocumentSymbolRequest).
+ */
+export interface DocumentSymbolOptions extends WorkDoneProgressOptions {
 }
 
 /**
@@ -1852,6 +1842,88 @@ export interface DocumentSymbolRegistrationOptions extends TextDocumentRegistrat
 export namespace DocumentSymbolRequest {
 	export const type = new RequestType<DocumentSymbolParams, SymbolInformation[] | DocumentSymbol[] | null, void, DocumentSymbolRegistrationOptions>('textDocument/documentSymbol');
 	export const resultType = new ProgressType<SymbolInformation[] | DocumentSymbol[]>();
+}
+
+//---- Code Action Provider ----------------------------------
+
+/**
+ * The Client Capabilities of a [CodeActionRequest](#CodeActionRequest).
+ */
+export interface CodeActionClientCapabilities {
+	/**
+	 * Whether code action supports dynamic registration.
+	 */
+	dynamicRegistration?: boolean;
+
+	/**
+	 * The client support code action literals as a valid
+	 * response of the `textDocument/codeAction` request.
+	 *
+	 * Since 3.8.0
+	 */
+	codeActionLiteralSupport?: {
+		/**
+		 * The code action kind is support with the following value
+		 * set.
+		 */
+		codeActionKind: {
+
+			/**
+			 * The code action kind values the client supports. When this
+			 * property exists the client also guarantees that it will
+			 * handle values outside its set gracefully and falls back
+			 * to a default value when unknown.
+			 */
+			valueSet: CodeActionKind[];
+		};
+	};
+}
+
+/**
+ * The parameters of a [CodeActionRequest](#CodeActionRequest).
+ */
+export interface CodeActionParams extends WorkDoneProgressParams, PartialResultParams {
+	/**
+	 * The document in which the command was invoked.
+	 */
+	textDocument: TextDocumentIdentifier;
+
+	/**
+	 * The range for which the command was invoked.
+	 */
+	range: Range;
+
+	/**
+	 * Context carrying additional information.
+	 */
+	context: CodeActionContext;
+}
+
+/**
+ * Provider options for a [CodeActionRequest](#CodeActionRequest).
+ */
+export interface CodeActionOptions extends WorkDoneProgressOptions {
+	/**
+	 * CodeActionKinds that this server may return.
+	 *
+	 * The list of kinds may be generic, such as `CodeActionKind.Refactor`, or the server
+	 * may list out every specific kind they provide.
+	 */
+	codeActionKinds?: CodeActionKind[];
+}
+
+/**
+ * Registration options for a [CodeActionRequest](#CodeActionRequest).
+ */
+export interface CodeActionRegistrationOptions extends TextDocumentRegistrationOptions, CodeActionOptions {
+}
+
+/**
+ * A request to provide commands for the given text document and range.
+ */
+export namespace CodeActionRequest {
+	export const type = new RequestType<CodeActionParams, (Command | CodeAction)[] | null, void, CodeActionRegistrationOptions>('textDocument/codeAction');
+	export const resultType = new ProgressType<(Command | CodeAction)[]>();
 }
 
 //---- Workspace Symbol Provider ---------------------------
@@ -1915,42 +1987,6 @@ export interface WorkspaceSymbolRegistrationOptions extends WorkspaceSymbolOptio
 export namespace WorkspaceSymbolRequest {
 	export const type = new RequestType<WorkspaceSymbolParams, SymbolInformation[] | null, void, WorkspaceSymbolRegistrationOptions>('workspace/symbol');
 	export const resultType = new ProgressType<SymbolInformation[]>();
-}
-
-//---- Code Action Provider ----------------------------------
-
-/**
- * The parameters of a [CodeActionRequest](#CodeActionRequest).
- */
-export interface CodeActionParams extends WorkDoneProgressParams, PartialResultParams {
-	/**
-	 * The document in which the command was invoked.
-	 */
-	textDocument: TextDocumentIdentifier;
-
-	/**
-	 * The range for which the command was invoked.
-	 */
-	range: Range;
-
-	/**
-	 * Context carrying additional information.
-	 */
-	context: CodeActionContext;
-}
-
-/**
- * Registration options for a [CodeActionRequest](#CodeActionRequest).
- */
-export interface CodeActionRegistrationOptions extends TextDocumentRegistrationOptions, CodeActionOptions {
-}
-
-/**
- * A request to provide commands for the given text document and range.
- */
-export namespace CodeActionRequest {
-	export const type = new RequestType<CodeActionParams, (Command | CodeAction)[] | null, void, CodeActionRegistrationOptions>('textDocument/codeAction');
-	export const resultType = new ProgressType<(Command | CodeAction)[]>();
 }
 
 //---- Code Lens Provider -------------------------------------------

@@ -11,41 +11,36 @@ import { TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumen
 // @ts-ignore: to avoid inlining LocatioLink as dynamic import
 let __noDynamicImport: LocationLink | Declaration | DeclarationLink | Location | undefined;
 
+/**
+ * Since 3.6.0
+ */
 export interface ImplementationClientCapabilities {
 	/**
-	 * The text document client capabilities
+	 * Whether implementation supports dynamic registration. If this is set to `true`
+	 * the client supports the new `ImplementationRegistrationOptions` return value
+	 * for the corresponding server capability as well.
 	 */
-	textDocument?: {
-		/**
-		 * Capabilities specific to the `textDocument/implementation`
-		 */
-		implementation?: {
-			/**
-			 * Whether implementation supports dynamic registration. If this is set to `true`
-			 * the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
-			 * return value for the corresponding server capability as well.
-			 */
-			dynamicRegistration?: boolean;
+	dynamicRegistration?: boolean;
 
-			/**
-			 * The client supports additional metadata in the form of definition links.
-			 */
-			linkSupport?: boolean;
-		};
-	}
+	/**
+	 * The client supports additional metadata in the form of definition links.
+	 *
+	 * Since 3.14.0
+	 */
+	linkSupport?: boolean;
 }
 
 export interface ImplementationOptions extends WorkDoneProgressOptions {
 }
 
-export interface ImplementationRegistrationOptions extends TextDocumentRegistrationOptions, ImplementationOptions {
+export interface ImplementationRegistrationOptions extends TextDocumentRegistrationOptions, ImplementationOptions, StaticRegistrationOptions {
 }
 
 export interface ImplementationServerCapabilities {
 	/**
 	 * The server provides Goto Implementation support.
 	 */
-	implementationProvider?: boolean | ImplementationOptions | (ImplementationRegistrationOptions & StaticRegistrationOptions);
+	implementationProvider?: boolean | ImplementationOptions | ImplementationRegistrationOptions;
 }
 
 export interface ImplementationParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {

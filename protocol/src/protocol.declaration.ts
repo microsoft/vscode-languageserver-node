@@ -11,11 +11,14 @@ import { TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumen
 // @ts-ignore: to avoid inlining LocatioLink as dynamic import
 let __noDynamicImport: LocationLink | Declaration | DeclarationLink | Location | undefined;
 
+/**
+ * Since 3.14.0
+ */
 export interface DeclarationClientCapabilities {
 	/**
 	 * Whether declaration supports dynamic registration. If this is set to `true`
-	 * the client supports the new `(DeclarationRegistrationOptions & StaticRegistrationOptions)`
-	 * return value for the corresponding server capability as well.
+	 * the client supports the new `DeclarationRegistrationOptions` return value
+	 * for the corresponding server capability as well.
 	 */
 	dynamicRegistration?: boolean;
 
