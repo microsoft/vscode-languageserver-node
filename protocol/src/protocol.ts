@@ -319,51 +319,24 @@ export interface TextDocumentClientCapabilities {
 	/**
 	 * Capabilities specific to the `textDocument/hover`
 	 */
-	hover?: {
-		/**
-		 * Whether hover supports dynamic registration.
-		 */
-		dynamicRegistration?: boolean;
-
-		/**
-		 * Client supports the follow content formats for the content
-		 * property. The order describes the preferred format of the client.
-		 */
-		contentFormat?: MarkupKind[];
-	};
+	hover?: HoverClientCapabilities;
 
 	/**
 	 * Capabilities specific to the `textDocument/signatureHelp`
 	 */
-	signatureHelp?: {
-		/**
-		 * Whether signature help supports dynamic registration.
-		 */
-		dynamicRegistration?: boolean;
+	signatureHelp?: SignatureHelpClientCapabilities;
 
-		/**
-		 * The client supports the following `SignatureInformation`
-		 * specific properties.
-		 */
-		signatureInformation?: {
-			/**
-			 * Client supports the follow content formats for the documentation
-			 * property. The order describes the preferred format of the client.
-			 */
-			documentationFormat?: MarkupKind[];
+	/**
+	 * Capabilities specific to the `textDocument/declaration`
+	 *
+	 * Since 3.14.0
+	 */
+	declaration?: DeclarationClientCapabilities;
 
-			/**
-			 * Client capabilities specific to parameter information.
-			 */
-			parameterInformation?: {
-				/**
-				 * The client supports processing label offsets instead of a
-				 * simple label string.
-				 */
-				labelOffsetSupport?: boolean;
-			}
-		};
-	};
+	/**
+	 * Capabilities specific to the `textDocument/definition`
+	 */
+	definition?: DefinitionClientCapabilities;
 
 	/**
 	 * Capabilities specific to the `textDocument/references`
@@ -445,21 +418,6 @@ export interface TextDocumentClientCapabilities {
 		 * Whether on type formatting supports dynamic registration.
 		 */
 		dynamicRegistration?: boolean;
-	};
-
-	/**
-	 * Capabilities specific to the `textDocument/definition`
-	 */
-	definition?: {
-		/**
-		 * Whether definition supports dynamic registration.
-		 */
-		dynamicRegistration?: boolean;
-
-		/**
-		 * The client supports additional metadata in the form of definition links.
-		 */
-		linkSupport?: boolean;
 	};
 
 	/**
@@ -561,7 +519,7 @@ export interface _ClientCapabilities {
 
 export type ClientCapabilities = _ClientCapabilities & ImplementationClientCapabilities & TypeDefinitionClientCapabilities &
 	WorkspaceFoldersClientCapabilities & ConfigurationClientCapabilities & ColorClientCapabilities & FoldingRangeClientCapabilities &
-	DeclarationClientCapabilities & SelectionRangeClientCapabilities;
+	SelectionRangeClientCapabilities;
 
 /**
  * Static registration options to be returned in the initialize
@@ -606,29 +564,6 @@ export namespace TextDocumentRegistrationOptions {
 		const candidate = value as TextDocumentRegistrationOptions;
 		return candidate && (candidate.documentSelector === null || DocumentSelector.is(candidate.documentSelector));
 	}
-}
-
-/**
- * Hover options.
- */
-export interface HoverOptions extends WorkDoneProgressOptions {
-}
-
-/**
- * Signature help options.
- */
-export interface SignatureHelpOptions extends WorkDoneProgressOptions {
-	/**
-	 * The characters that trigger signature help
-	 * automatically.
-	 */
-	triggerCharacters?: string[];
-}
-
-/**
- * Definition options.
- */
-export interface DefinitionOptions extends WorkDoneProgressOptions {
 }
 
 /**
@@ -1686,6 +1621,25 @@ export namespace CompletionResolveRequest {
 
 //---- Hover Support -------------------------------
 
+export interface HoverClientCapabilities {
+	/**
+	 * Whether hover supports dynamic registration.
+	 */
+	dynamicRegistration?: boolean;
+
+	/**
+	 * Client supports the follow content formats for the content
+	 * property. The order describes the preferred format of the client.
+	 */
+	contentFormat?: MarkupKind[];
+}
+
+/**
+ * Hover options.
+ */
+export interface HoverOptions extends WorkDoneProgressOptions {
+}
+
 /**
  * Parameters for a [HoverRequest](#HoverRequest).
  */
@@ -1710,6 +1664,52 @@ export namespace HoverRequest {
 //---- SignatureHelp ----------------------------------
 
 /**
+ * Client Capabilities for a [SignatureHelpRequest](#SignatureHelpRequest).
+ */
+export interface SignatureHelpClientCapabilities {
+	/**
+	 * Whether signature help supports dynamic registration.
+	 */
+	dynamicRegistration?: boolean;
+
+	/**
+	 * The client supports the following `SignatureInformation`
+	 * specific properties.
+	 */
+	signatureInformation?: {
+		/**
+		 * Client supports the follow content formats for the documentation
+		 * property. The order describes the preferred format of the client.
+		 */
+		documentationFormat?: MarkupKind[];
+
+		/**
+		 * Client capabilities specific to parameter information.
+		 */
+		parameterInformation?: {
+			/**
+			 * The client supports processing label offsets instead of a
+			 * simple label string.
+			 *
+			 * Since 3.14.0
+			 */
+			labelOffsetSupport?: boolean;
+		};
+	};
+}
+
+/**
+ * Server Capabilities for a [SignatureHelpRequest](#SignatureHelpRequest).
+ */
+export interface SignatureHelpOptions extends WorkDoneProgressOptions {
+	/**
+	 * The characters that trigger signature help
+	 * automatically.
+	 */
+	triggerCharacters?: string[];
+}
+
+/**
  * Parameters for a [SignatureHelpRequest](#SignatureHelpRequest).
  */
 export interface SignatureHelpParams extends TextDocumentPositionParams, WorkDoneProgressParams {
@@ -1728,7 +1728,30 @@ export namespace SignatureHelpRequest {
 //---- Goto Definition -------------------------------------
 
 /**
- * Parameters for a [DefinitionParams](#DefinitionParams).
+ * Client Capabilities for a [DefinitionRequest](#DefinitionRequest).
+ */
+export interface DefinitionClientCapabilities {
+	/**
+	 * Whether definition supports dynamic registration.
+	 */
+	dynamicRegistration?: boolean;
+
+	/**
+	 * The client supports additional metadata in the form of definition links.
+	 *
+	 * Since 3.14.0
+	 */
+	linkSupport?: boolean;
+}
+
+/**
+ * Server Capabilities for a [DefinitionRequest](#DefinitionRequest).
+ */
+export interface DefinitionOptions extends WorkDoneProgressOptions {
+}
+
+/**
+ * Parameters for a [DefinitionRequest](#DefinitionRequest).
  */
 export interface DefinitionParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {
 }

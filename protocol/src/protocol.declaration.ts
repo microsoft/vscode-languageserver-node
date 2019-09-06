@@ -13,39 +13,29 @@ let __noDynamicImport: LocationLink | Declaration | DeclarationLink | Location |
 
 export interface DeclarationClientCapabilities {
 	/**
-	 * The text document client capabilities
+	 * Whether declaration supports dynamic registration. If this is set to `true`
+	 * the client supports the new `(DeclarationRegistrationOptions & StaticRegistrationOptions)`
+	 * return value for the corresponding server capability as well.
 	 */
-	textDocument?: {
-		/**
-		 * Capabilities specific to the `textDocument/declaration`
-		 */
-		declaration?: {
-			/**
-			 * Whether declaration supports dynamic registration. If this is set to `true`
-			 * the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
-			 * return value for the corresponding server capability as well.
-			 */
-			dynamicRegistration?: boolean;
+	dynamicRegistration?: boolean;
 
-			/**
-			 * The client supports additional metadata in the form of declaration links.
-			 */
-			linkSupport?: boolean;
-		};
-	}
+	/**
+	 * The client supports additional metadata in the form of declaration links.
+	 */
+	linkSupport?: boolean;
 }
 
 export interface DeclarationOptions extends WorkDoneProgressOptions {
 }
 
-export interface DeclarationRegistrationOptions extends TextDocumentRegistrationOptions, DeclarationOptions {
+export interface DeclarationRegistrationOptions extends DeclarationOptions, TextDocumentRegistrationOptions, StaticRegistrationOptions  {
 }
 
 export interface  DeclarationServerCapabilities {
 	/**
 	 * The server provides Goto Type Definition support.
 	 */
-	declarationProvider?: boolean | DeclarationOptions | (DeclarationRegistrationOptions & StaticRegistrationOptions);
+	declarationProvider?: boolean | DeclarationOptions | DeclarationRegistrationOptions;
 }
 
 export interface DeclarationParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {
