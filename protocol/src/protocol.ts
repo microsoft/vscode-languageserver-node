@@ -538,23 +538,6 @@ export namespace WorkDoneProgressOptions {
 export interface _ServerCapabilities<T = any> {
 
 	/**
-	 * Information about the server.
-	 *
-	 * Since 3.15.0
-	 */
-	serverInfo?: {
-		/**
-		 * The name of the server as defined by the server.
-		 */
-		name: string;
-
-		/**
-		 * The servers's version as defined by the server.
-		 */
-		version?: string;
-	};
-
-	/**
 	 * Defines how text documents are synced. Is either a detailed structure defining each notification or
 	 * for backwards compatibility the TextDocumentSyncKind number.
 	 */
@@ -759,10 +742,29 @@ export type InitializeParams = _InitializeParams & WorkspaceFoldersInitializePar
  * The result returned from an initialize request.
  */
 export interface InitializeResult<T = any> {
+
 	/**
 	 * The capabilities the language server provides.
 	 */
 	capabilities: ServerCapabilities<T>;
+
+	/**
+	 * Information about the server.
+	 *
+	 * Since 3.15.0
+	 */
+	serverInfo?: {
+		/**
+		 * The name of the server as defined by the server.
+		 */
+		name: string;
+
+		/**
+		 * The servers's version as defined by the server.
+		 */
+		version?: string;
+	};
+
 	/**
 	 * Custom initialization results.
 	 */
