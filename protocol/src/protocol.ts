@@ -536,6 +536,24 @@ export namespace WorkDoneProgressOptions {
  * server.
  */
 export interface _ServerCapabilities<T = any> {
+
+	/**
+	 * Information about the server.
+	 *
+	 * Since 3.15.0
+	 */
+	serverInfo?: {
+		/**
+		 * The name of the server as defined by the server.
+		 */
+		name: string;
+
+		/**
+		 * The servers's version as defined by the server.
+		 */
+		version?: string;
+	};
+
 	/**
 	 * Defines how text documents are synced. Is either a detailed structure defining each notification or
 	 * for backwards compatibility the TextDocumentSyncKind number.
@@ -684,6 +702,23 @@ export interface _InitializeParams extends WorkDoneProgressParams {
 	 * the server.
 	 */
 	processId: number | null;
+
+	/**
+	 * Information about the client
+	 *
+	 * Since 3.15.0
+	 */
+	clientInfo?: {
+		/**
+		 * The name of the client as defined by the client.
+		 */
+		name: string;
+
+		/**
+		 * The client's version as defined by the client.
+		 */
+		version?: string;
+	};
 
 	/**
 	 * The rootPath of the workspace. Is null

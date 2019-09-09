@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-	workspace as Workspace, window as Window, languages as Languages, commands as Commands,
+	workspace as Workspace, window as Window, languages as Languages, commands as Commands,  version as VSCodeVersion,
 	TextDocumentChangeEvent, TextDocument, Disposable, OutputChannel,
 	FileSystemWatcher as VFileSystemWatcher, DiagnosticCollection, Diagnostic as VDiagnostic, Uri, ProviderResult,
 	CancellationToken, Position as VPosition, Location as VLocation, Range as VRange,
@@ -14,7 +14,7 @@ import {
 	FormattingOptions as VFormattingOptions, TextEdit as VTextEdit, WorkspaceEdit as VWorkspaceEdit, MessageItem,
 	Hover as VHover, CodeAction as VCodeAction, DocumentSymbol as VDocumentSymbol,
 	DocumentLink as VDocumentLink, TextDocumentWillSaveEvent,
-	WorkspaceFolder as VWorkspaceFolder, CompletionContext as VCompletionContext, ConfigurationChangeEvent,
+	WorkspaceFolder as VWorkspaceFolder, CompletionContext as VCompletionContext, ConfigurationChangeEvent
 } from 'vscode';
 
 import {
@@ -2831,6 +2831,10 @@ export abstract class BaseLanguageClient {
 			: this._clientGetRootPath();
 		let initParams: InitializeParams = {
 			processId: process.pid,
+			clientInfo: {
+				name: 'vscode',
+				version: VSCodeVersion
+			},
 			rootPath: rootPath ? rootPath : null,
 			rootUri: rootPath ? this._c2p.asUri(Uri.file(rootPath)) : null,
 			capabilities: this.computeClientCapabilities(),
