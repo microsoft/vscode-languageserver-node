@@ -13,13 +13,17 @@ import { TextDocumentIdentifier, Range, Color, ColorInformation, ColorPresentati
 export interface DocumentColorClientCapabilities {
 	/**
 	 * Whether implementation supports dynamic registration. If this is set to `true`
-	 * the client supports the new `(ColorRegistrationOptions & StaticRegistrationOptions)`
-	 * return value for the corresponding server capability as well.
+	 * the client supports the new `DocumentColorRegistrationOptions` return value
+	 * for the corresponding server capability as well.
 	 */
 	dynamicRegistration?: boolean;
 }
 
 export interface DocumentColorOptions extends WorkDoneProgressOptions {
+	/**
+	 * Code lens has a resolve provider as well.
+	 */
+	resolveProvider?: boolean;
 }
 
 export interface DocumentColorRegistrationOptions extends TextDocumentRegistrationOptions, StaticRegistrationOptions, DocumentColorOptions {
