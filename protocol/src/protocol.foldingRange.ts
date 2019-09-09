@@ -11,44 +11,27 @@ import { TextDocumentRegistrationOptions, StaticRegistrationOptions, PartialResu
 
 export interface FoldingRangeClientCapabilities {
 	/**
-	 * The text document client capabilities
+	 * Whether implementation supports dynamic registration for folding range providers. If this is set to `true`
+	 * the client supports the new `FoldingRangeRegistrationOptions` return value for the corresponding server
+	 * capability as well.
 	 */
-	textDocument?: {
-		/**
-		 * Capabilities specific to `textDocument/foldingRange` requests
-		 */
-		foldingRange?: {
-			/**
-			 * Whether implementation supports dynamic registration for folding range providers. If this is set to `true`
-			 * the client supports the new `(FoldingRangeProviderOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions)`
-			 * return value for the corresponding server capability as well.
-			 */
-			dynamicRegistration?: boolean;
-			/**
-			 * The maximum number of folding ranges that the client prefers to receive per document. The value serves as a
-			 * hint, servers are free to follow the limit.
-			 */
-			rangeLimit?: number;
-			/**
-			 * If set, the client signals that it only supports folding complete lines. If set, client will
-			 * ignore specified `startCharacter` and `endCharacter` properties in a FoldingRange.
-			 */
-			lineFoldingOnly?: boolean;
-		};
-	};
+	dynamicRegistration?: boolean;
+	/**
+	 * The maximum number of folding ranges that the client prefers to receive per document. The value serves as a
+	 * hint, servers are free to follow the limit.
+	 */
+	rangeLimit?: number;
+	/**
+	 * If set, the client signals that it only supports folding complete lines. If set, client will
+	 * ignore specified `startCharacter` and `endCharacter` properties in a FoldingRange.
+	 */
+	lineFoldingOnly?: boolean;
 }
 
 export interface FoldingRangeOptions extends WorkDoneProgressOptions {
 }
 
-export interface FoldingRangeRegistrationOptions extends TextDocumentRegistrationOptions, FoldingRangeOptions {
-}
-
-export interface FoldingRangeServerCapabilities {
-	/**
-	 * The server provides folding provider support.
-	 */
-	foldingRangeProvider?: boolean | FoldingRangeOptions | (FoldingRangeRegistrationOptions & StaticRegistrationOptions);
+export interface FoldingRangeRegistrationOptions extends TextDocumentRegistrationOptions, FoldingRangeOptions, StaticRegistrationOptions {
 }
 
 /**

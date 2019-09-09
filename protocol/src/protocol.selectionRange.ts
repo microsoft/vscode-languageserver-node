@@ -11,34 +11,17 @@ import { TextDocumentRegistrationOptions, WorkDoneProgressOptions, StaticRegistr
 
 export interface SelectionRangeClientCapabilities {
 	/**
-	 * The text document client capabilities
+	 * Whether implementation supports dynamic registration for selection range providers. If this is set to `true`
+	 * the client supports the new `(SelectionRangeProviderOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions)`
+	 * return value for the corresponding server capability as well.
 	 */
-	textDocument?: {
-		/**
-		 * Capabilities specific to `textDocument/selectionRange` requests
-		 */
-		selectionRange?: {
-			/**
-			 * Whether implementation supports dynamic registration for selection range providers. If this is set to `true`
-			 * the client supports the new `(SelectionRangeProviderOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions)`
-			 * return value for the corresponding server capability as well.
-			 */
-			dynamicRegistration?: boolean;
-		};
-	};
+	dynamicRegistration?: boolean;
 }
 
 export interface SelectionRangeOptions extends WorkDoneProgressOptions {
 }
 
-export interface SelectionRangeRegistrationOptions extends SelectionRangeOptions, TextDocumentRegistrationOptions {
-}
-
-export interface SelectionRangeServerCapabilities {
-	/**
-	 * The server provides selection range support.
-	 */
-	selectionRangeProvider?: boolean | SelectionRangeOptions | (SelectionRangeRegistrationOptions & StaticRegistrationOptions);
+export interface SelectionRangeRegistrationOptions extends SelectionRangeOptions, TextDocumentRegistrationOptions, StaticRegistrationOptions {
 }
 
 /**

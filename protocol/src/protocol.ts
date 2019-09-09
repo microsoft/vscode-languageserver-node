@@ -30,13 +30,13 @@ import {
 	DocumentColorClientCapabilities, DocumentColorRegistrationOptions,
 } from './protocol.colorProvider';
 import {
-	FoldingRangeClientCapabilities, FoldingRangeOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeServerCapabilities
+	FoldingRangeClientCapabilities, FoldingRangeOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeRegistrationOptions
 } from './protocol.foldingRange';
 import {
 	DeclarationClientCapabilities, DeclarationRequest, DeclarationOptions, DeclarationRegistrationOptions
 } from './protocol.declaration';
 
-import { SelectionRangeClientCapabilities, SelectionRangeOptions, SelectionRangeRequest, SelectionRangeServerCapabilities, SelectionRangeParams} from './protocol.selectionRange';
+import { SelectionRangeClientCapabilities, SelectionRangeOptions, SelectionRangeRequest, SelectionRangeParams, SelectionRangeRegistrationOptions} from './protocol.selectionRange';
 
 // @ts-ignore: to avoid inlining LocatioLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
@@ -304,7 +304,7 @@ export interface WorkspaceClientCapabilities {
 /**
  * Text document specific client capabilities.
  */
-export interface _TextDocumentClientCapabilities {
+export interface TextDocumentClientCapabilities {
 
 	/**
 	 * Defines which synchronization capabilities the client supports.
@@ -408,13 +408,24 @@ export interface _TextDocumentClientCapabilities {
 	rename?: RenameClientCapabilities;
 
 	/**
+	 * Capabilities specific to `textDocument/foldingRange` requests.
+	 *
+	 * Since 3.10.0
+	 */
+	foldingRange?: FoldingRangeClientCapabilities;
+
+	/**
+	 * Capabilities specific to `textDocument/selectionRange` requests
+	 *
+	 * Since 3.15.0
+	 */
+	selectionRange?: SelectionRangeClientCapabilities;
+
+	/**
 	 * Capabilities specific to `textDocument/publishDiagnostics`.
 	 */
 	publishDiagnostics?: PublishDiagnosticsClientCapabilities;
 }
-
-export type TextDocumentClientCapabilities =  _TextDocumentClientCapabilities
-
 
 /**
  * Defines the capabilities provided by the client.
@@ -442,7 +453,7 @@ export interface _ClientCapabilities {
 }
 
 export type ClientCapabilities = _ClientCapabilities &
-	WorkspaceFoldersClientCapabilities & ConfigurationClientCapabilities & FoldingRangeClientCapabilities &
+	WorkspaceFoldersClientCapabilities & ConfigurationClientCapabilities &
 	SelectionRangeClientCapabilities;
 
 /**
@@ -631,6 +642,16 @@ export interface _ServerCapabilities<T = any> {
 	renameProvider?: boolean | RenameOptions;
 
 	/**
+	 * The server provides folding provider support.
+	 */
+	foldingRangeProvider?: boolean | FoldingRangeOptions | FoldingRangeRegistrationOptions;
+
+	/**
+	 * The server provides selection range support.
+	 */
+	selectionRangeProvider?: boolean | SelectionRangeOptions | SelectionRangeRegistrationOptions;
+
+	/**
 	 * The server provides execute command support.
 	 */
 	executeCommandProvider?: ExecuteCommandOptions;
@@ -641,8 +662,7 @@ export interface _ServerCapabilities<T = any> {
 	experimental?: T;
 }
 
-export type ServerCapabilities<T = any> = _ServerCapabilities<T> & WorkspaceFoldersServerCapabilities &
-	FoldingRangeServerCapabilities &  SelectionRangeServerCapabilities;
+export type ServerCapabilities<T = any> = _ServerCapabilities<T> & WorkspaceFoldersServerCapabilities;
 
 /**
  * The initialize request is sent from the client to the server.
@@ -2413,9 +2433,9 @@ export {
 	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, WorkspaceFolder, WorkspaceFoldersChangeEvent,
 	ConfigurationRequest, ConfigurationParams, ConfigurationItem,
 	DocumentColorRequest, ColorPresentationRequest, DocumentColorOptions, DocumentColorParams, ColorPresentationParams,
-	FoldingRangeClientCapabilities, FoldingRangeOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeServerCapabilities,
+	FoldingRangeClientCapabilities, FoldingRangeOptions, FoldingRangeRequest, FoldingRangeParams,
 	DeclarationClientCapabilities, DeclarationRequest,
-	SelectionRangeClientCapabilities, SelectionRangeOptions, SelectionRangeServerCapabilities, SelectionRangeParams, SelectionRangeRequest
+	SelectionRangeClientCapabilities, SelectionRangeOptions, SelectionRangeParams, SelectionRangeRequest
 };
 
 // To be backwards compatible
