@@ -373,6 +373,11 @@ export interface TextDocumentClientCapabilities {
 	codeAction?: CodeActionClientCapabilities;
 
 	/**
+	 * Capabilities specific to the `textDocument/codeLens`
+	 */
+	codeLens?: CodeLensClientCapabilities;
+
+	/**
 	 * Capabilities specific to the `textDocument/formatting`
 	 */
 	formatting?: {
@@ -398,16 +403,6 @@ export interface TextDocumentClientCapabilities {
 	onTypeFormatting?: {
 		/**
 		 * Whether on type formatting supports dynamic registration.
-		 */
-		dynamicRegistration?: boolean;
-	};
-
-	/**
-	 * Capabilities specific to the `textDocument/codeLens`
-	 */
-	codeLens?: {
-		/**
-		 * Whether code lens supports dynamic registration.
 		 */
 		dynamicRegistration?: boolean;
 	};
@@ -515,16 +510,6 @@ export namespace TextDocumentRegistrationOptions {
 		const candidate = value as TextDocumentRegistrationOptions;
 		return candidate && (candidate.documentSelector === null || DocumentSelector.is(candidate.documentSelector));
 	}
-}
-
-/**
- * Code Lens options.
- */
-export interface CodeLensOptions extends WorkDoneProgressOptions {
-	/**
-	 * Code lens has a resolve provider as well.
-	 */
-	resolveProvider?: boolean;
 }
 
 /**
@@ -648,13 +633,13 @@ export interface _ServerCapabilities<T = any> {
 	 */
 	codeActionProvider?: boolean | CodeActionOptions;
 	/**
-	 * The server provides workspace symbol support.
-	 */
-	workspaceSymbolProvider?: boolean | WorkspaceSymbolOptions;
-	/**
 	 * The server provides code lens.
 	 */
 	codeLensProvider?: CodeLensOptions;
+	/**
+	 * The server provides workspace symbol support.
+	 */
+	workspaceSymbolProvider?: boolean | WorkspaceSymbolOptions;
 	/**
 	 * The server provides document formatting.
 	 */
@@ -1992,6 +1977,16 @@ export namespace WorkspaceSymbolRequest {
 //---- Code Lens Provider -------------------------------------------
 
 /**
+ * The client capabilities  of a [CodeLensRequest](#CodeLensRequest).
+ */
+export interface CodeLensClientCapabilities {
+	/**
+	 * Whether code lens supports dynamic registration.
+	 */
+	dynamicRegistration?: boolean;
+}
+
+/**
  * The parameters of a [CodeLensRequest](#CodeLensRequest).
  */
 export interface CodeLensParams extends WorkDoneProgressParams, PartialResultParams {
@@ -1999,6 +1994,16 @@ export interface CodeLensParams extends WorkDoneProgressParams, PartialResultPar
 	 * The document to request code lens for.
 	 */
 	textDocument: TextDocumentIdentifier;
+}
+
+/**
+ * Code Lens provider options of a [CodeLensRequest](#CodeLensRequest).
+ */
+export interface CodeLensOptions extends WorkDoneProgressOptions {
+	/**
+	 * Code lens has a resolve provider as well.
+	 */
+	resolveProvider?: boolean;
 }
 
 /**
