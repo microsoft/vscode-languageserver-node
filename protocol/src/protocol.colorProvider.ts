@@ -8,38 +8,21 @@ import { RequestType, RequestHandler, ProgressType } from 'vscode-jsonrpc';
 import { TextDocumentRegistrationOptions, StaticRegistrationOptions, PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions } from './protocol';
 import { TextDocumentIdentifier, Range, Color, ColorInformation, ColorPresentation } from 'vscode-languageserver-types';
 
-//---- Server capability ----
+//---- Client capability ----
 
-export interface ColorClientCapabilities {
+export interface DocumentColorClientCapabilities {
 	/**
-	 * The text document client capabilities
+	 * Whether implementation supports dynamic registration. If this is set to `true`
+	 * the client supports the new `(ColorRegistrationOptions & StaticRegistrationOptions)`
+	 * return value for the corresponding server capability as well.
 	 */
-	textDocument?: {
-		/**
-		 * Capabilities specific to the colorProvider
-		 */
-		colorProvider?: {
-			/**
-			 * Whether implementation supports dynamic registration. If this is set to `true`
-			 * the client supports the new `(ColorRegistrationOptions & StaticRegistrationOptions)`
-			 * return value for the corresponding server capability as well.
-			 */
-			dynamicRegistration?: boolean;
-		};
-	}
+	dynamicRegistration?: boolean;
 }
 
-export interface ColorOptions extends WorkDoneProgressOptions {
+export interface DocumentColorOptions extends WorkDoneProgressOptions {
 }
 
-export interface ColorRegistrationOptions extends TextDocumentRegistrationOptions, ColorOptions {
-}
-
-export interface ColorServerCapabilities {
-	/**
-	 * The server provides color provider support.
-	 */
-	colorProvider?: boolean | ColorOptions | (ColorRegistrationOptions & StaticRegistrationOptions);
+export interface DocumentColorRegistrationOptions extends TextDocumentRegistrationOptions, StaticRegistrationOptions, DocumentColorOptions {
 }
 
 //---- Color Symbol Provider ---------------------------
@@ -61,7 +44,7 @@ export interface DocumentColorParams extends WorkDoneProgressParams, PartialResu
  * that resolves to such.
  */
 export namespace DocumentColorRequest {
-	export const type = new RequestType<DocumentColorParams, ColorInformation[], void, ColorRegistrationOptions>('textDocument/documentColor');
+	export const type = new RequestType<DocumentColorParams, ColorInformation[], void, DocumentColorRegistrationOptions>('textDocument/documentColor');
 	export const resultType = new ProgressType<ColorInformation[]>();
 	export type HandlerSignature = RequestHandler<DocumentColorParams, ColorInformation[], void>;
 }

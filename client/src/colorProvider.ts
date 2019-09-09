@@ -11,7 +11,7 @@ import {
 } from 'vscode-languageserver-protocol';
 
 import { TextDocumentFeature, BaseLanguageClient } from './client';
-import { ColorRegistrationOptions, ColorOptions } from 'vscode-languageserver-protocol/lib/protocol.colorProvider';
+import { DocumentColorRegistrationOptions, DocumentColorOptions } from 'vscode-languageserver-protocol/lib/protocol.colorProvider';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -33,7 +33,7 @@ export interface ColorProviderMiddleware {
 	provideColorPresentations?: (this: void, color: VColor, context: { document: TextDocument, range: VRange }, token: CancellationToken, next: ProvideColorPresentationSignature) => ProviderResult<VColorPresentation[]>;
 }
 
-export class ColorProviderFeature extends TextDocumentFeature<boolean | ColorOptions, ColorRegistrationOptions> {
+export class ColorProviderFeature extends TextDocumentFeature<boolean | DocumentColorOptions, DocumentColorRegistrationOptions> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, DocumentColorRequest.type);
@@ -51,7 +51,7 @@ export class ColorProviderFeature extends TextDocumentFeature<boolean | ColorOpt
 		this.register(this.messages, { id: id, registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: ColorRegistrationOptions): Disposable {
+	protected registerLanguageProvider(options: DocumentColorRegistrationOptions): Disposable {
 		let client = this._client;
 		let provideColorPresentations: ProvideColorPresentationSignature = (color, context, token) => {
 			const requestParams = {

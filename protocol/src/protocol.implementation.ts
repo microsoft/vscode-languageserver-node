@@ -36,13 +36,6 @@ export interface ImplementationOptions extends WorkDoneProgressOptions {
 export interface ImplementationRegistrationOptions extends TextDocumentRegistrationOptions, ImplementationOptions, StaticRegistrationOptions {
 }
 
-export interface ImplementationServerCapabilities {
-	/**
-	 * The server provides Goto Implementation support.
-	 */
-	implementationProvider?: boolean | ImplementationOptions | ImplementationRegistrationOptions;
-}
-
 export interface ImplementationParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {
 }
 

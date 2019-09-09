@@ -36,13 +36,6 @@ export interface TypeDefinitionOptions extends WorkDoneProgressOptions {
 export interface TypeDefinitionRegistrationOptions extends TextDocumentRegistrationOptions, TypeDefinitionOptions, StaticRegistrationOptions {
 }
 
-export interface  TypeDefinitionServerCapabilities {
-	/**
-	 * The server provides Goto Type Definition support.
-	 */
-	typeDefinitionProvider?: boolean | TypeDefinitionOptions | TypeDefinitionRegistrationOptions;
-}
-
 export interface TypeDefinitionParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {
 }
 

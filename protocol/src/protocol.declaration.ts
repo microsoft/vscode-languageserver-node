@@ -34,13 +34,6 @@ export interface DeclarationOptions extends WorkDoneProgressOptions {
 export interface DeclarationRegistrationOptions extends DeclarationOptions, TextDocumentRegistrationOptions, StaticRegistrationOptions  {
 }
 
-export interface  DeclarationServerCapabilities {
-	/**
-	 * The server provides Goto Type Definition support.
-	 */
-	declarationProvider?: boolean | DeclarationOptions | DeclarationRegistrationOptions;
-}
-
 export interface DeclarationParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {
 }
 

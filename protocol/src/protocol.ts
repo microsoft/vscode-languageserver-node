@@ -18,22 +18,22 @@ import {
 	SymbolKind, CompletionItemKind, CodeAction, CodeActionKind, DocumentSymbol
 } from 'vscode-languageserver-types';
 
-import { ImplementationRequest, ImplementationClientCapabilities, ImplementationServerCapabilities } from './protocol.implementation';
-import { TypeDefinitionRequest, TypeDefinitionClientCapabilities, TypeDefinitionServerCapabilities } from './protocol.typeDefinition';
+import { ImplementationRequest, ImplementationClientCapabilities, ImplementationOptions, ImplementationRegistrationOptions } from './protocol.implementation';
+import { TypeDefinitionRequest, TypeDefinitionClientCapabilities, TypeDefinitionOptions, TypeDefinitionRegistrationOptions } from './protocol.typeDefinition';
 import {
 	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, WorkspaceFolder,
 	WorkspaceFoldersChangeEvent, WorkspaceFoldersInitializeParams, WorkspaceFoldersClientCapabilities, WorkspaceFoldersServerCapabilities
 } from './protocol.workspaceFolders';
 import { ConfigurationRequest, ConfigurationParams, ConfigurationItem, ConfigurationClientCapabilities } from './protocol.configuration';
 import {
-	DocumentColorRequest, ColorPresentationRequest, ColorOptions, DocumentColorParams, ColorPresentationParams,
-	ColorServerCapabilities, ColorClientCapabilities,
+	DocumentColorRequest, ColorPresentationRequest, DocumentColorOptions, DocumentColorParams, ColorPresentationParams,
+	DocumentColorClientCapabilities, DocumentColorRegistrationOptions,
 } from './protocol.colorProvider';
 import {
 	FoldingRangeClientCapabilities, FoldingRangeOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeServerCapabilities
 } from './protocol.foldingRange';
 import {
-	DeclarationClientCapabilities, DeclarationRequest, DeclarationServerCapabilities
+	DeclarationClientCapabilities, DeclarationRequest, DeclarationOptions, DeclarationRegistrationOptions
 } from './protocol.declaration';
 
 import { SelectionRangeClientCapabilities, SelectionRangeOptions, SelectionRangeRequest, SelectionRangeServerCapabilities, SelectionRangeParams} from './protocol.selectionRange';
@@ -304,7 +304,7 @@ export interface WorkspaceClientCapabilities {
 /**
  * Text document specific client capabilities.
  */
-export interface TextDocumentClientCapabilities {
+export interface _TextDocumentClientCapabilities {
 
 	/**
 	 * Defines which synchronization capabilities the client supports.
@@ -383,6 +383,11 @@ export interface TextDocumentClientCapabilities {
 	documentLink?: DocumentLinkClientCapabilities;
 
 	/**
+	 * Capabilities specific to the `textDocument/documentColor`
+	 */
+	colorProvider?: DocumentColorClientCapabilities;
+
+	/**
 	 * Capabilities specific to the `textDocument/formatting`
 	 */
 	formatting?: {
@@ -433,6 +438,9 @@ export interface TextDocumentClientCapabilities {
 	publishDiagnostics?: PublishDiagnosticsClientCapabilities;
 }
 
+export type TextDocumentClientCapabilities =  _TextDocumentClientCapabilities
+
+
 /**
  * Defines the capabilities provided by the client.
  */
@@ -458,8 +466,8 @@ export interface _ClientCapabilities {
 	experimental?: any;
 }
 
-export type ClientCapabilities = _ClientCapabilities & ImplementationClientCapabilities & TypeDefinitionClientCapabilities &
-	WorkspaceFoldersClientCapabilities & ConfigurationClientCapabilities & ColorClientCapabilities & FoldingRangeClientCapabilities &
+export type ClientCapabilities = _ClientCapabilities &
+	WorkspaceFoldersClientCapabilities & ConfigurationClientCapabilities & FoldingRangeClientCapabilities &
 	SelectionRangeClientCapabilities;
 
 /**
@@ -583,82 +591,119 @@ export interface _ServerCapabilities<T = any> {
 	 * for backwards compatibility the TextDocumentSyncKind number.
 	 */
 	textDocumentSync?: TextDocumentSyncOptions | TextDocumentSyncKind;
-	/**
-	 * The server provides hover support.
-	 */
-	hoverProvider?: boolean | HoverOptions;
+
 	/**
 	 * The server provides completion support.
 	 */
 	completionProvider?: CompletionOptions;
+
+	/**
+	 * The server provides hover support.
+	 */
+	hoverProvider?: boolean | HoverOptions;
+
 	/**
 	 * The server provides signature help support.
 	 */
 	signatureHelpProvider?: SignatureHelpOptions;
+
+	/**
+	 * The server provides Goto Declaration support.
+	 */
+	declarationProvider?: boolean | DeclarationOptions | DeclarationRegistrationOptions;
+
 	/**
 	 * The server provides goto definition support.
 	 */
 	definitionProvider?: boolean | DefinitionOptions;
+
+	/**
+	 * The server provides Goto Type Definition support.
+	 */
+	typeDefinitionProvider?: boolean | TypeDefinitionOptions | TypeDefinitionRegistrationOptions;
+
+	/**
+	 * The server provides Goto Implementation support.
+	 */
+	implementationProvider?: boolean | ImplementationOptions | ImplementationRegistrationOptions;
+
 	/**
 	 * The server provides find references support.
 	 */
 	referencesProvider?: boolean | ReferenceOptions;
+
 	/**
 	 * The server provides document highlight support.
 	 */
 	documentHighlightProvider?: boolean | DocumentHighlightOptions;
+
 	/**
 	 * The server provides document symbol support.
 	 */
 	documentSymbolProvider?: boolean | DocumentSymbolOptions;
+
 	/**
 	 * The server provides code actions. CodeActionOptions may only be
 	 * specified if the client states that it supports
 	 * `codeActionLiteralSupport` in its initial `initialize` request.
 	 */
 	codeActionProvider?: boolean | CodeActionOptions;
+
 	/**
 	 * The server provides code lens.
 	 */
 	codeLensProvider?: CodeLensOptions;
+
 	/**
 	 * The server provides document link support.
 	 */
 	documentLinkProvider?: DocumentLinkOptions;
+
+	/**
+	 * The server provides color provider support.
+	 */
+	colorProvider?: boolean | DocumentColorOptions | DocumentColorRegistrationOptions;
+
 	/**
 	 * The server provides workspace symbol support.
 	 */
 	workspaceSymbolProvider?: boolean | WorkspaceSymbolOptions;
+
 	/**
 	 * The server provides document formatting.
 	 */
 	documentFormattingProvider?: boolean | DocumentFormattingOptions;
+
 	/**
 	 * The server provides document range formatting.
 	 */
 	documentRangeFormattingProvider?: boolean | DocumentRangeFormattingOptions;
+
 	/**
 	 * The server provides document formatting on typing.
 	 */
 	documentOnTypeFormattingProvider?: DocumentOnTypeFormattingOptions;
+
 	/**
 	 * The server provides rename support. RenameOptions may only be
 	 * specified if the client states that it supports
 	 * `prepareSupport` in its initial `initialize` request.
 	 */
 	renameProvider?: boolean | RenameOptions;
+
 	/**
 	 * The server provides execute command support.
 	 */
 	executeCommandProvider?: ExecuteCommandOptions;
+
 	/**
 	 * Experimental server capabilities.
 	 */
 	experimental?: T;
 }
 
-export type ServerCapabilities<T = any> = _ServerCapabilities<T> & ImplementationServerCapabilities & TypeDefinitionServerCapabilities & WorkspaceFoldersServerCapabilities &
-	ColorServerCapabilities & FoldingRangeServerCapabilities &  DeclarationServerCapabilities & SelectionRangeServerCapabilities;
+export type ServerCapabilities<T = any> = _ServerCapabilities<T> & WorkspaceFoldersServerCapabilities &
+	FoldingRangeServerCapabilities &  SelectionRangeServerCapabilities;
 
 /**
  * The initialize request is sent from the client to the server.
@@ -2344,13 +2389,15 @@ export {
 	TypeDefinitionRequest,
 	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, WorkspaceFolder, WorkspaceFoldersChangeEvent,
 	ConfigurationRequest, ConfigurationParams, ConfigurationItem,
-	DocumentColorRequest, ColorPresentationRequest, ColorOptions, DocumentColorParams, ColorPresentationParams,
+	DocumentColorRequest, ColorPresentationRequest, DocumentColorOptions, DocumentColorParams, ColorPresentationParams,
 	FoldingRangeClientCapabilities, FoldingRangeOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeServerCapabilities,
-	DeclarationClientCapabilities, DeclarationRequest, DeclarationServerCapabilities,
+	DeclarationClientCapabilities, DeclarationRequest,
 	SelectionRangeClientCapabilities, SelectionRangeOptions, SelectionRangeServerCapabilities, SelectionRangeParams, SelectionRangeRequest
 };
 
 // To be backwards compatible
 export {
-	ColorOptions as ColorProviderOptions, FoldingRangeOptions as FoldingRangeProviderOptions, SelectionRangeOptions as SelectionRangeProviderOptions
+	DocumentColorOptions as ColorProviderOptions, DocumentColorOptions as ColorOptions,
+	FoldingRangeOptions as FoldingRangeProviderOptions, SelectionRangeOptions as SelectionRangeProviderOptions,
+	DocumentColorRegistrationOptions as ColorRegistrationOptions
 };
