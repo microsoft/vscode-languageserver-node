@@ -378,6 +378,11 @@ export interface TextDocumentClientCapabilities {
 	codeLens?: CodeLensClientCapabilities;
 
 	/**
+	 * Capabilities specific to the `textDocument/documentLink`
+	 */
+	documentLink?: DocumentLinkClientCapabilities;
+
+	/**
 	 * Capabilities specific to the `textDocument/formatting`
 	 */
 	formatting?: {
@@ -403,16 +408,6 @@ export interface TextDocumentClientCapabilities {
 	onTypeFormatting?: {
 		/**
 		 * Whether on type formatting supports dynamic registration.
-		 */
-		dynamicRegistration?: boolean;
-	};
-
-	/**
-	 * Capabilities specific to the `textDocument/documentLink`
-	 */
-	documentLink?: {
-		/**
-		 * Whether document link supports dynamic registration.
 		 */
 		dynamicRegistration?: boolean;
 	};
@@ -550,16 +545,6 @@ export interface RenameOptions extends WorkDoneProgressOptions {
 }
 
 /**
- * Document link options
- */
-export interface DocumentLinkOptions extends WorkDoneProgressOptions {
-	/**
-	 * Document links have a resolve provider as well.
-	 */
-	resolveProvider?: boolean;
-}
-
-/**
  * Save options.
  */
 export interface SaveOptions {
@@ -637,6 +622,10 @@ export interface _ServerCapabilities<T = any> {
 	 */
 	codeLensProvider?: CodeLensOptions;
 	/**
+	 * The server provides document link support.
+	 */
+	documentLinkProvider?: DocumentLinkOptions;
+	/**
 	 * The server provides workspace symbol support.
 	 */
 	workspaceSymbolProvider?: boolean | WorkspaceSymbolOptions;
@@ -658,10 +647,6 @@ export interface _ServerCapabilities<T = any> {
 	 * `prepareSupport` in its initial `initialize` request.
 	 */
 	renameProvider?: boolean | RenameOptions;
-	/**
-	 * The server provides document link support.
-	 */
-	documentLinkProvider?: DocumentLinkOptions;
 	/**
 	 * The server provides execute command support.
 	 */
@@ -2027,6 +2012,61 @@ export namespace CodeLensResolveRequest {
 	export const type = new RequestType<CodeLens, CodeLens, void, void>('codeLens/resolve');
 }
 
+//---- Document Links ----------------------------------------------
+
+/**
+ * The client capabilities of a [DocumentLinkRequest](#DocumentLinkRequest).
+ */
+export interface DocumentLinkClientCapabilities {
+	/**
+	 * Whether document link supports dynamic registration.
+	 */
+	dynamicRegistration?: boolean;
+}
+
+/**
+ * The parameters of a [DocumentLinkRequest](#DocumentLinkRequest).
+ */
+export interface DocumentLinkParams extends WorkDoneProgressParams, PartialResultParams {
+	/**
+	 * The document to provide document links for.
+	 */
+	textDocument: TextDocumentIdentifier;
+}
+
+/**
+ * Provider options for a [DocumentLinkRequest](#DocumentLinkRequest).
+ */
+export interface DocumentLinkOptions extends WorkDoneProgressOptions {
+	/**
+	 * Document links have a resolve provider as well.
+	 */
+	resolveProvider?: boolean;
+}
+
+/**
+ * Registration options for a [DocumentLinkRequest](#DocumentLinkRequest).
+ */
+export interface DocumentLinkRegistrationOptions extends TextDocumentRegistrationOptions, DocumentLinkOptions {
+}
+
+/**
+ * A request to provide document links
+ */
+export namespace DocumentLinkRequest {
+	export const type = new RequestType<DocumentLinkParams, DocumentLink[] | null, void, DocumentLinkRegistrationOptions>('textDocument/documentLink');
+	export const resultType = new ProgressType<DocumentLink[]>();
+}
+
+/**
+ * Request to resolve additional information for a given document link. The request's
+ * parameter is of type [DocumentLink](#DocumentLink) the response
+ * is of type [DocumentLink](#DocumentLink) or a Thenable that resolves to such.
+ */
+export namespace DocumentLinkResolveRequest {
+	export const type = new RequestType<DocumentLink, DocumentLink, void, void>('documentLink/resolve');
+}
+
 //---- Formatting ----------------------------------------------
 
 /**
@@ -2173,41 +2213,6 @@ export interface PrepareRenameParams extends TextDocumentPositionParams, WorkDon
  */
 export namespace PrepareRenameRequest {
 	export const type = new RequestType<PrepareRenameParams, Range | { range: Range, placeholder: string } | null, void, void>('textDocument/prepareRename');
-}
-
-//---- Document Links ----------------------------------------------
-
-/**
- * The parameters of a [DocumentLinkRequest](#DocumentLinkRequest).
- */
-export interface DocumentLinkParams extends WorkDoneProgressParams, PartialResultParams {
-	/**
-	 * The document to provide document links for.
-	 */
-	textDocument: TextDocumentIdentifier;
-}
-
-/**
- * Registration options for a [DocumentLinkRequest](#DocumentLinkRequest).
- */
-export interface DocumentLinkRegistrationOptions extends TextDocumentRegistrationOptions, DocumentLinkOptions {
-}
-
-/**
- * A request to provide document links
- */
-export namespace DocumentLinkRequest {
-	export const type = new RequestType<DocumentLinkParams, DocumentLink[] | null, void, DocumentLinkRegistrationOptions>('textDocument/documentLink');
-	export const resultType = new ProgressType<DocumentLink[]>();
-}
-
-/**
- * Request to resolve additional information for a given document link. The request's
- * parameter is of type [DocumentLink](#DocumentLink) the response
- * is of type [DocumentLink](#DocumentLink) or a Thenable that resolves to such.
- */
-export namespace DocumentLinkResolveRequest {
-	export const type = new RequestType<DocumentLink, DocumentLink, void, void>('documentLink/resolve');
 }
 
 //---- Command Execution -------------------------------------------
