@@ -390,47 +390,22 @@ export interface _TextDocumentClientCapabilities {
 	/**
 	 * Capabilities specific to the `textDocument/formatting`
 	 */
-	formatting?: {
-		/**
-		 * Whether formatting supports dynamic registration.
-		 */
-		dynamicRegistration?: boolean;
-	};
+	formatting?: DocumentFormattingClientCapabilities;
 
 	/**
 	 * Capabilities specific to the `textDocument/rangeFormatting`
 	 */
-	rangeFormatting?: {
-		/**
-		 * Whether range formatting supports dynamic registration.
-		 */
-		dynamicRegistration?: boolean;
-	};
+	rangeFormatting?: DocumentRangeFormattingClientCapabilities;
 
 	/**
 	 * Capabilities specific to the `textDocument/onTypeFormatting`
 	 */
-	onTypeFormatting?: {
-		/**
-		 * Whether on type formatting supports dynamic registration.
-		 */
-		dynamicRegistration?: boolean;
-	};
+	onTypeFormatting?: DocumentOnTypeFormattingClientCapabilities;
 
 	/**
 	 * Capabilities specific to the `textDocument/rename`
 	 */
-	rename?: {
-		/**
-		 * Whether rename supports dynamic registration.
-		 */
-		dynamicRegistration?: boolean;
-		/**
-		 * Client supports testing for validity of rename operations
-		 * before execution.
-		 */
-		prepareSupport?: boolean;
-	};
+	rename?: RenameClientCapabilities;
 
 	/**
 	 * Capabilities specific to `textDocument/publishDiagnostics`.
@@ -515,42 +490,6 @@ export namespace TextDocumentRegistrationOptions {
 	}
 }
 
-/**
- * Document formatting options.
- */
-export interface DocumentFormattingOptions extends WorkDoneProgressOptions {
-}
-
-/**
- * Document range formatting options.
- */
-export interface DocumentRangeFormattingOptions extends WorkDoneProgressOptions {
-}
-
-/**
- * Format document on type options
- */
-export interface DocumentOnTypeFormattingOptions {
-	/**
-	 * A character on which formatting should be triggered, like `}`.
-	 */
-	firstTriggerCharacter: string;
-
-	/**
-	 * More trigger characters.
-	 */
-	moreTriggerCharacter?: string[];
-}
-
-/**
- * Rename options
- */
-export interface RenameOptions extends WorkDoneProgressOptions {
-	/**
-	 * Renames should be checked and tested before being executed.
-	 */
-	prepareProvider?: boolean;
-}
 
 /**
  * Save options.
@@ -1824,7 +1763,7 @@ export interface DocumentSymbolClientCapabilities {
 	 * The client support hierarchical document symbols.
 	 */
 	hierarchicalDocumentSymbolSupport?: boolean;
-};
+}
 
 /**
  * Parameters for a [DocumentSymbolRequest](#DocumentSymbolRequest).
@@ -2115,6 +2054,16 @@ export namespace DocumentLinkResolveRequest {
 //---- Formatting ----------------------------------------------
 
 /**
+ * Client capabilities of a [DocumentFormattingRequest](#DocumentFormattingRequest).
+ */
+export interface DocumentFormattingClientCapabilities {
+	/**
+	 * Whether formatting supports dynamic registration.
+	 */
+	dynamicRegistration?: boolean;
+}
+
+/**
  * The parameters of a [DocumentFormattingRequest](#DocumentFormattingRequest).
  */
 export interface DocumentFormattingParams extends WorkDoneProgressParams {
@@ -2130,6 +2079,12 @@ export interface DocumentFormattingParams extends WorkDoneProgressParams {
 }
 
 /**
+ * Provider options for a [DocumentFormattingRequest](#DocumentFormattingRequest).
+ */
+export interface DocumentFormattingOptions extends WorkDoneProgressOptions {
+}
+
+/**
  * Registration options for a [DocumentFormattingRequest](#DocumentFormattingRequest).
  */
 export interface DocumentFormattingRegistrationOptions extends TextDocumentRegistrationOptions, DocumentFormattingOptions {
@@ -2140,6 +2095,16 @@ export interface DocumentFormattingRegistrationOptions extends TextDocumentRegis
  */
 export namespace DocumentFormattingRequest {
 	export const type = new RequestType<DocumentFormattingParams, TextEdit[] | null, void, DocumentFormattingRegistrationOptions>('textDocument/formatting');
+}
+
+/**
+ * Client capabilities of a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest).
+ */
+export interface DocumentRangeFormattingClientCapabilities {
+	/**
+	 * Whether range formatting supports dynamic registration.
+	 */
+	dynamicRegistration?: boolean;
 }
 
 /**
@@ -2163,6 +2128,12 @@ export interface DocumentRangeFormattingParams extends WorkDoneProgressParams {
 }
 
 /**
+ * Provider options for a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest).
+ */
+export interface DocumentRangeFormattingOptions extends WorkDoneProgressOptions {
+}
+
+/**
  * Registration options for a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest).
  */
 export interface DocumentRangeFormattingRegistrationOptions extends TextDocumentRegistrationOptions, DocumentRangeFormattingOptions {
@@ -2173,6 +2144,16 @@ export interface DocumentRangeFormattingRegistrationOptions extends TextDocument
  */
 export namespace DocumentRangeFormattingRequest {
 	export const type = new RequestType<DocumentRangeFormattingParams, TextEdit[] | null, void, DocumentRangeFormattingRegistrationOptions>('textDocument/rangeFormatting');
+}
+
+/**
+ * Client capabilities of a [DocumentOnTypeFormattingRequest](#DocumentOnTypeFormattingRequest).
+ */
+export interface DocumentOnTypeFormattingClientCapabilities {
+	/**
+	 * Whether on type formatting supports dynamic registration.
+	 */
+	dynamicRegistration?: boolean;
 }
 
 /**
@@ -2201,6 +2182,21 @@ export interface DocumentOnTypeFormattingParams {
 }
 
 /**
+ * Provider options for a [DocumentOnTypeFormattingRequest](#DocumentOnTypeFormattingRequest).
+ */
+export interface DocumentOnTypeFormattingOptions {
+	/**
+	 * A character on which formatting should be triggered, like `}`.
+	 */
+	firstTriggerCharacter: string;
+
+	/**
+	 * More trigger characters.
+	 */
+	moreTriggerCharacter?: string[];
+}
+
+/**
  * Registration options for a [DocumentOnTypeFormattingRequest](#DocumentOnTypeFormattingRequest).
  */
 export interface DocumentOnTypeFormattingRegistrationOptions extends TextDocumentRegistrationOptions, DocumentOnTypeFormattingOptions {
@@ -2214,6 +2210,21 @@ export namespace DocumentOnTypeFormattingRequest {
 }
 
 //---- Rename ----------------------------------------------
+
+export interface RenameClientCapabilities {
+	/**
+	 * Whether rename supports dynamic registration.
+	 */
+	dynamicRegistration?: boolean;
+
+	/**
+	 * Client supports testing for validity of rename operations
+	 * before execution.
+	 *
+	 * Since version 3.12.0
+	 */
+	prepareSupport?: boolean;
+}
 
 /**
  * The parameters of a [RenameRequest](#RenameRequest).
@@ -2235,6 +2246,18 @@ export interface RenameParams extends WorkDoneProgressParams {
 	 * appropriate message set.
 	 */
 	newName: string;
+}
+
+/**
+ * Provider options for a [RenameRequest](#RenameRequest).
+ */
+export interface RenameOptions extends WorkDoneProgressOptions {
+	/**
+	 * Renames should be checked and tested before being executed.
+	 *
+	 * Since version 3.12.0
+	 */
+	prepareProvider?: boolean;
 }
 
 /**
