@@ -12,8 +12,8 @@ import { TextDocumentRegistrationOptions, WorkDoneProgressOptions, StaticRegistr
 export interface SelectionRangeClientCapabilities {
 	/**
 	 * Whether implementation supports dynamic registration for selection range providers. If this is set to `true`
-	 * the client supports the new `(SelectionRangeProviderOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions)`
-	 * return value for the corresponding server capability as well.
+	 * the client supports the new `SelectionRangeRegistrationOptions` return value for the corresponding server
+	 * capability as well.
 	 */
 	dynamicRegistration?: boolean;
 }

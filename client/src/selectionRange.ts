@@ -8,7 +8,7 @@ import { languages as Languages, Disposable, TextDocument, ProviderResult, Posit
 
 import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector,
-	SelectionRangeParams, SelectionRangeRequest, SelectionRangeClientCapabilities, SelectionRangeServerCapabilities, SelectionRangeOptions
+	SelectionRangeParams, SelectionRangeRequest, SelectionRangeClientCapabilities, SelectionRangeOptions
 } from 'vscode-languageserver-protocol';
 
 import { TextDocumentFeature, BaseLanguageClient  } from './client';
@@ -40,8 +40,7 @@ export class SelectionRangeFeature extends TextDocumentFeature<boolean | Selecti
 		capability.dynamicRegistration = true;
 	}
 
-	public initialize(cap: ServerCapabilities, documentSelector: DocumentSelector): void {
-		let capabilities: ServerCapabilities & SelectionRangeServerCapabilities = cap;
+	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		let [id, options] = this.getRegistration(documentSelector, capabilities.selectionRangeProvider);
 		if (!id || !options) {
 			return;
