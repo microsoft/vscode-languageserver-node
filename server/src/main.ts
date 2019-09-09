@@ -28,8 +28,7 @@ import {
 	DidCloseTextDocumentNotification, DidCloseTextDocumentParams, DidSaveTextDocumentNotification, DidSaveTextDocumentParams,
 	WillSaveTextDocumentNotification, WillSaveTextDocumentParams, WillSaveTextDocumentWaitUntilRequest,
 	DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams,
-	PublishDiagnosticsNotification, PublishDiagnosticsParams,
-	TextDocumentPositionParams, CompletionParams, TextDocumentSyncKind,
+	PublishDiagnosticsNotification, PublishDiagnosticsParams, CompletionParams, TextDocumentSyncKind,
 	HoverRequest,
 	CompletionRequest, CompletionResolveRequest,
 	SignatureHelpRequest,
@@ -46,7 +45,7 @@ import {
 	ClientCapabilities, ServerCapabilities, ProtocolConnection, createProtocolConnection, TypeDefinitionRequest, ImplementationRequest,
 	DocumentColorRequest, DocumentColorParams, ColorInformation, ColorPresentationParams, ColorPresentation, ColorPresentationRequest,
 	CodeAction, FoldingRangeParams, FoldingRange, FoldingRangeRequest, Declaration, DeclarationLink, DefinitionLink, DeclarationRequest, Position,
-	SelectionRangeRequest, SelectionRange, SelectionRangeParams, ProgressType
+	SelectionRangeRequest, SelectionRange, SelectionRangeParams, ProgressType, HoverParams, SignatureHelpParams, DefinitionParams, DocumentHighlightParams, PrepareRenameParams
 } from 'vscode-languageserver-protocol';
 
 import { Configuration, ConfigurationFeature } from './configuration';
@@ -1339,7 +1338,7 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onHover(handler: ServerRequestHandler<TextDocumentPositionParams, Hover | undefined | null, void>): void;
+	onHover(handler: ServerRequestHandler<HoverParams, Hover | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the `Completion` request.
@@ -1360,35 +1359,35 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onSignatureHelp(handler: ServerRequestHandler<TextDocumentPositionParams, SignatureHelp | undefined | null, void>): void;
+	onSignatureHelp(handler: ServerRequestHandler<SignatureHelpParams, SignatureHelp | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the `Declaration` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDeclaration(handler: ServerRequestHandler<TextDocumentPositionParams, Declaration | DeclarationLink[] | undefined | null, void>): void;
+	onDeclaration(handler: ServerRequestHandler<DeclarationParams, Declaration | DeclarationLink[] | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the `Definition` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDefinition(handler: ServerRequestHandler<TextDocumentPositionParams, Definition | DefinitionLink[] | undefined | null, void>): void;
+	onDefinition(handler: ServerRequestHandler<DefinitionParams, Definition | DefinitionLink[] | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the `Type Definition` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onTypeDefinition(handler: ServerRequestHandler<TextDocumentPositionParams, Definition | DefinitionLink[] | undefined | null, void>): void;
+	onTypeDefinition(handler: ServerRequestHandler<TypeDefinitionParams, Definition | DefinitionLink[] | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the `Implementation` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onImplementation(handler: ServerRequestHandler<TextDocumentPositionParams, Definition | DefinitionLink[] | undefined | null, void>): void;
+	onImplementation(handler: ServerRequestHandler<ImplementationParams, Definition | DefinitionLink[] | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the `References` request.
@@ -1402,7 +1401,7 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentHighlight(handler: ServerRequestHandler<TextDocumentPositionParams, DocumentHighlight[] | undefined | null, void>): void;
+	onDocumentHighlight(handler: ServerRequestHandler<DocumentHighlightParams, DocumentHighlight[] | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the `DocumentSymbol` request.
@@ -1475,7 +1474,7 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onPrepareRename(handler: ServerRequestHandler<TextDocumentPositionParams, Range | { range: Range, placeholder: string } | undefined | null, void>): void;
+	onPrepareRename(handler: ServerRequestHandler<PrepareRenameParams, Range | { range: Range, placeholder: string } | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the document links request.
@@ -1992,6 +1991,9 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 
 // Export the protocol currently in proposed state.
 import { ProgressFeature, WindowProgress, WorkDoneProgress, ResultProgress, attachWorkDone, attachPartialResult } from './proposed.progress';
+import { DeclarationParams } from 'vscode-languageserver-protocol/lib/protocol.declaration';
+import { TypeDefinitionParams } from 'vscode-languageserver-protocol/lib/protocol.typeDefinition';
+import { ImplementationParams } from 'vscode-languageserver-protocol/lib/protocol.implementation';
 
 export namespace ProposedFeatures {
 	export const all: Features<_, _, _, _, WindowProgress, _> = {
