@@ -34,6 +34,8 @@ export interface Converter {
 
 	asCompletionParams(textDocument: code.TextDocument, position: code.Position, context: code.CompletionContext): proto.CompletionParams
 
+	asSignatureHelpParams(textDocument: code.TextDocument, position: code.Position, context: code.SignatureHelpContext): proto.SignatureHelpParams;
+
 	asWorkerPosition(position: code.Position): proto.Position;
 
 	asPosition(value: code.Position): proto.Position;
@@ -209,7 +211,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		};
 	}
 
-	function asTriggerKind(triggerKind: code.CompletionTriggerKind): proto.CompletionTriggerKind {
+	function asCompletionTriggerKind(triggerKind: code.CompletionTriggerKind): proto.CompletionTriggerKind {
 		switch(triggerKind) {
 			case code.CompletionTriggerKind.TriggerCharacter:
 				return proto.CompletionTriggerKind.TriggerCharacter;
@@ -225,8 +227,68 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			textDocument: asTextDocumentIdentifier(textDocument),
 			position: asWorkerPosition(position),
 			context: {
-				triggerKind: asTriggerKind(context.triggerKind),
+				triggerKind: asCompletionTriggerKind(context.triggerKind),
 				triggerCharacter: context.triggerCharacter
+			}
+		};
+	}
+
+	function asSignatureHelpTriggerKind(triggerKind: code.SignatureHelpTriggerKind): proto.SignatureHelpTriggerKind {
+		switch (triggerKind) {
+			case code.SignatureHelpTriggerKind.Invoke:
+				return proto.SignatureHelpTriggerKind.Invoked;
+			case code.SignatureHelpTriggerKind.TriggerCharacter:
+				return proto.SignatureHelpTriggerKind.TriggerCharacter;
+			case code.SignatureHelpTriggerKind.ContentChange:
+				return proto.SignatureHelpTriggerKind.ContentChange;
+		}
+	}
+
+	function asParameterInformation(value: code.ParameterInformation): proto.ParameterInformation {
+		// We leave the documentation out on purpose since it usually adds no
+		// value for the server.
+		return {
+			label: value.label
+		};
+	}
+
+	function asParameterInformations(values: code.ParameterInformation[]): proto.ParameterInformation[] {
+		return values.map(asParameterInformation);
+	}
+
+	function asSignatureInformation(value: code.SignatureInformation): proto.SignatureInformation {
+		// We leave the documentation out on purpose since it usually adds no
+		// value for the server.
+		return {
+			label: value.label,
+			parameters: asParameterInformations(value.parameters)
+		};
+	}
+
+	function asSignatureInformations(values: code.SignatureInformation[]): proto.SignatureInformation[] {
+		return values.map(asSignatureInformation);
+	}
+
+	function asSignatureHelp(value: code.SignatureHelp | undefined): proto.SignatureHelp | undefined {
+		if (value === undefined) {
+			return value;
+		}
+		return {
+			signatures: asSignatureInformations(value.signatures),
+			activeSignature: value.activeSignature,
+			activeParameter: value.activeParameter
+		};
+	}
+
+	function asSignatureHelpParams(textDocument: code.TextDocument, position: code.Position, context: code.SignatureHelpContext): proto.SignatureHelpParams {
+		return {
+			textDocument: asTextDocumentIdentifier(textDocument),
+			position: asWorkerPosition(position),
+			context: {
+				isRetrigger: context.isRetrigger,
+				triggerCharacter: context.triggerCharacter,
+				triggerKind: asSignatureHelpTriggerKind(context.triggerKind),
+				activeSignatureHelp: asSignatureHelp(context.activeSignatureHelp)
 			}
 		};
 	}
@@ -511,6 +573,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asWillSaveTextDocumentParams,
 		asTextDocumentPositionParams,
 		asCompletionParams,
+		asSignatureHelpParams,
 		asWorkerPosition,
 		asRange,
 		asPosition,

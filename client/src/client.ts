@@ -9,7 +9,8 @@ import {
 	TextDocumentChangeEvent, TextDocument, Disposable, OutputChannel,
 	FileSystemWatcher as VFileSystemWatcher, DiagnosticCollection, Diagnostic as VDiagnostic, Uri, ProviderResult,
 	CancellationToken, Position as VPosition, Location as VLocation, Range as VRange,
-	CompletionItem as VCompletionItem, CompletionList as VCompletionList, SignatureHelp as VSignatureHelp, Definition as VDefinition, DefinitionLink as VDefinitionLink, DocumentHighlight as VDocumentHighlight,
+	CompletionItem as VCompletionItem, CompletionList as VCompletionList, SignatureHelp as VSignatureHelp, SignatureHelpContext as VSignatureHelpContext,
+	Definition as VDefinition, DefinitionLink as VDefinitionLink, DocumentHighlight as VDocumentHighlight,
 	SymbolInformation as VSymbolInformation, CodeActionContext as VCodeActionContext, Command as VCommand, CodeLens as VCodeLens,
 	FormattingOptions as VFormattingOptions, TextEdit as VTextEdit, WorkspaceEdit as VWorkspaceEdit, MessageItem,
 	Hover as VHover, CodeAction as VCodeAction, DocumentSymbol as VDocumentSymbol,
@@ -354,7 +355,7 @@ export interface ProvideHoverSignature {
 }
 
 export interface ProvideSignatureHelpSignature {
-	(document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VSignatureHelp>;
+	(document: TextDocument, position: VPosition, context: VSignatureHelpContext, token: CancellationToken): ProviderResult<VSignatureHelp>;
 }
 
 export interface ProvideDefinitionSignature {
@@ -447,7 +448,7 @@ export interface _Middleware {
 	provideCompletionItem?: (this: void, document: TextDocument, position: VPosition, context: VCompletionContext, token: CancellationToken, next: ProvideCompletionItemsSignature) => ProviderResult<VCompletionItem[] | VCompletionList>;
 	resolveCompletionItem?: (this: void, item: VCompletionItem, token: CancellationToken, next: ResolveCompletionItemSignature) => ProviderResult<VCompletionItem>;
 	provideHover?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideHoverSignature) => ProviderResult<VHover>;
-	provideSignatureHelp?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideSignatureHelpSignature) => ProviderResult<VSignatureHelp>;
+	provideSignatureHelp?: (this: void, document: TextDocument, position: VPosition, context: VSignatureHelpContext, token: CancellationToken, next: ProvideSignatureHelpSignature) => ProviderResult<VSignatureHelp>;
 	provideDefinition?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideDefinitionSignature) => ProviderResult<VDefinition | VDefinitionLink[]>;
 	provideReferences?: (this: void, document: TextDocument, position: VPosition, options: { includeDeclaration: boolean; }, token: CancellationToken, next: ProvideReferencesSignature) => ProviderResult<VLocation[]>;
 	provideDocumentHighlights?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideDocumentHighlightsSignature) => ProviderResult<VDocumentHighlight[]>;
@@ -1490,6 +1491,7 @@ class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpOptions, Sig
 		config.dynamicRegistration = true;
 		config.signatureInformation = { documentationFormat: [MarkupKind.Markdown, MarkupKind.PlainText] };
 		config.signatureInformation.parameterInformation = { labelOffsetSupport: true };
+		config.contextSupport = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
@@ -1505,8 +1507,8 @@ class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpOptions, Sig
 
 	protected registerLanguageProvider(options: SignatureHelpRegistrationOptions): Disposable {
 		let client = this._client;
-		let providerSignatureHelp: ProvideSignatureHelpSignature = (document, position, token) => {
-			return client.sendRequest(SignatureHelpRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
+		let providerSignatureHelp: ProvideSignatureHelpSignature = (document, position, context, token) => {
+			return client.sendRequest(SignatureHelpRequest.type, client.code2ProtocolConverter.asSignatureHelpParams(document, position, context), token).then(
 				client.protocol2CodeConverter.asSignatureHelp,
 				(error) => {
 					client.logFailedRequest(SignatureHelpRequest.type, error);
@@ -1517,10 +1519,10 @@ class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpOptions, Sig
 		let middleware = client.clientOptions.middleware!;
 		let triggerCharacters = options.triggerCharacters || [];
 		return Languages.registerSignatureHelpProvider(options.documentSelector!, {
-			provideSignatureHelp: (document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VSignatureHelp> => {
+			provideSignatureHelp: (document: TextDocument, position: VPosition, token: CancellationToken, context: VSignatureHelpContext): ProviderResult<VSignatureHelp> => {
 				return middleware.provideSignatureHelp
-					? middleware.provideSignatureHelp(document, position, token, providerSignatureHelp)
-					: providerSignatureHelp(document, position, token);
+					? middleware.provideSignatureHelp(document, position, context, token, providerSignatureHelp)
+					: providerSignatureHelp(document, position, context, token);
 			}
 		}, ...triggerCharacters);
 	}
