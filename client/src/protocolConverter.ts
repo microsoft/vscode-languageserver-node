@@ -263,7 +263,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asDiagnosticSeverity(value: number | undefined | null): code.DiagnosticSeverity {
-		if (value === void 0 || value === null) {
+		if (value === undefined || value === null) {
 			return code.DiagnosticSeverity.Error;
 		}
 		switch (value) {
@@ -390,7 +390,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (item.command) { result.command = asCommand(item.command); }
 		if (item.deprecated === true || item.deprecated === false) { result.deprecated = item.deprecated; }
 		if (item.preselect === true || item.preselect === false) { result.preselect = item.preselect; }
-		if (item.data !== void 0) { result.data = item.data; }
+		if (item.data !== undefined) { result.data = item.data; }
 		return result;
 	}
 
@@ -615,7 +615,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	function asDocumentSymbols(values: undefined | null): undefined;
 	function asDocumentSymbols(values: ls.DocumentSymbol[]): code.DocumentSymbol[];
 	function asDocumentSymbols(values: ls.DocumentSymbol[] | undefined | null): code.DocumentSymbol[] | undefined {
-		if (values === void 0 || values === null) {
+		if (values === undefined || values === null) {
 			return undefined;
 		}
 		return values.map(asDocumentSymbol);
@@ -629,7 +629,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			asRange(value.range),
 			asRange(value.selectionRange)
 		);
-		if (value.children !== void 0 && value.children.length > 0) {
+		if (value.children !== undefined && value.children.length > 0) {
 			let children: code.DocumentSymbol[] = [];
 			for (let child of value.children) {
 				children.push(asDocumentSymbol(child));
@@ -670,7 +670,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	function asCodeActionKind(item: ls.CodeActionKind): code.CodeActionKind;
 	function asCodeActionKind(item: ls.CodeActionKind | null | undefined): code.CodeActionKind | undefined;
 	function asCodeActionKind(item: ls.CodeActionKind | null | undefined): code.CodeActionKind | undefined {
-		if (item === void 0 || item === null) {
+		if (item === undefined || item === null) {
 			return undefined;
 		}
 		let result: code.CodeActionKind | undefined = kindMapping.get(item);
@@ -689,7 +689,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	function asCodeActionKinds(items: ls.CodeActionKind[]): code.CodeActionKind[];
 	function asCodeActionKinds(items: ls.CodeActionKind[] | null | undefined): code.CodeActionKind[] | undefined;
 	function asCodeActionKinds(items: ls.CodeActionKind[] | null | undefined): code.CodeActionKind[] | undefined {
-		if (items === void 0 || items === null) {
+		if (items === undefined || items === null) {
 			return undefined;
 		}
 		return items.map(kind => asCodeActionKind(kind));
@@ -701,11 +701,11 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	function asCodeAction(item: undefined | null): undefined;
 	function asCodeAction(item: ls.CodeAction | undefined | null): code.CodeAction | undefined;
 	function asCodeAction(item: ls.CodeAction | undefined | null): code.CodeAction | undefined {
-		if (item === void 0 || item === null) {
+		if (item === undefined || item === null) {
 			return undefined;
 		}
 		let result = new code.CodeAction(item.title);
-		if (item.kind !== void 0) { result.kind = asCodeActionKind(item.kind); }
+		if (item.kind !== undefined) { result.kind = asCodeActionKind(item.kind); }
 		if (item.diagnostics) { result.diagnostics = asDiagnostics(item.diagnostics); }
 		if (item.edit) { result.edit = asWorkspaceEdit(item.edit); }
 		if (item.command) { result.command = asCommand(item.command); }
@@ -721,7 +721,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		}
 		let result: ProtocolCodeLens = new ProtocolCodeLens(asRange(item.range));
 		if (item.command) { result.command = asCommand(item.command); }
-		if (item.data !== void 0 && item.data !== null) { result.data = item.data; }
+		if (item.data !== undefined && item.data !== null) { result.data = item.data; }
 		return result;
 	}
 
@@ -770,7 +770,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		let target = item.target ? asUri(item.target) : undefined;
 		// target must be optional in DocumentLink
 		let link = new ProtocolDocumentLink(range, target);
-		if (item.data !== void 0 && item.data !== null) { link.data = item.data; }
+		if (item.data !== undefined && item.data !== null) { link.data = item.data; }
 		return link;
 	}
 
@@ -831,7 +831,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 					return code.FoldingRangeKind.Region;
 			}
 		}
-		return void 0;
+		return undefined;
 	}
 
 	function asFoldingRange(r: ls.FoldingRange): code.FoldingRange {
@@ -845,7 +845,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (Array.isArray(foldingRanges)) {
 			return foldingRanges.map(asFoldingRange);
 		}
-		return void 0;
+		return undefined;
 	}
 
 	function asSelectionRange(selectionRange: ls.SelectionRange): code.SelectionRange {
