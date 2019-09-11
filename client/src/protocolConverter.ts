@@ -639,7 +639,6 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return result;
 	}
 
-
 	function asCommand(item: ls.Command): code.Command {
 		let result: code.Command = { title: item.title, command: item.command };
 		if (item.arguments) { result.arguments = item.arguments; }

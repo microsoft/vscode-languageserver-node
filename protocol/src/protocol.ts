@@ -329,7 +329,7 @@ export interface TextDocumentClientCapabilities {
 	/**
 	 * Capabilities specific to the `textDocument/declaration`
 	 *
-	 * Since 3.14.0
+	 * @since 3.14.0
 	 */
 	declaration?: DeclarationClientCapabilities;
 
@@ -341,14 +341,14 @@ export interface TextDocumentClientCapabilities {
 	/**
 	 * Capabilities specific to the `textDocument/typeDefinition`
 	 *
-	 * Since 3.6.0
+	 * @since 3.6.0
 	 */
 	typeDefinition?: TypeDefinitionClientCapabilities;
 
 	/**
 	 * Capabilities specific to the `textDocument/implementation`
 	 *
-	 * Since 3.6.0
+	 * @since 3.6.0
 	 */
 	implementation?: ImplementationClientCapabilities;
 
@@ -410,14 +410,14 @@ export interface TextDocumentClientCapabilities {
 	/**
 	 * Capabilities specific to `textDocument/foldingRange` requests.
 	 *
-	 * Since 3.10.0
+	 * @since 3.10.0
 	 */
 	foldingRange?: FoldingRangeClientCapabilities;
 
 	/**
 	 * Capabilities specific to `textDocument/selectionRange` requests
 	 *
-	 * Since 3.15.0
+	 * @since 3.15.0
 	 */
 	selectionRange?: SelectionRangeClientCapabilities;
 
@@ -689,7 +689,7 @@ export interface _InitializeParams extends WorkDoneProgressParams {
 	/**
 	 * Information about the client
 	 *
-	 * Since 3.15.0
+	 * @since 3.15.0
 	 */
 	clientInfo?: {
 		/**
@@ -751,7 +751,7 @@ export interface InitializeResult<T = any> {
 	/**
 	 * Information about the server.
 	 *
-	 * Since 3.15.0
+	 * @since 3.15.0
 	 */
 	serverInfo?: {
 		/**
@@ -1330,7 +1330,7 @@ export interface PublishDiagnosticsClientCapabilities {
 	/**
 	 * Client supports the tag property to provide meta data about a diagnostic.
 	 *
-	 * Since 3.15
+	 * @since 3.15.0
 	 */
 	tagSupport?: boolean;
 }
@@ -1347,7 +1347,7 @@ export interface PublishDiagnosticsParams {
 	/**
 	 * Optional the version number of the document the diagnostics are published for.
 	 *
-	 * @since 3.15
+	 * @since 3.15.0
 	 */
 	version?: number;
 
@@ -1508,7 +1508,7 @@ export interface CompletionOptions extends WorkDoneProgressOptions {
 	 * if clients don't support individual commmit characters per completion item. See
 	 * `ClientCapabilities.textDocument.completion.completionItem.commitCharactersSupport`
 	 *
-	 * Since 3.2.0
+	 * @since 3.2.0
 	 */
 	allCommitCharacters?: string[];
 
@@ -1622,7 +1622,7 @@ export interface SignatureHelpClientCapabilities {
 			 * The client supports processing label offsets instead of a
 			 * simple label string.
 			 *
-			 * Since 3.14.0
+			 * @since 3.14.0
 			 */
 			labelOffsetSupport?: boolean;
 		};
@@ -1632,7 +1632,7 @@ export interface SignatureHelpClientCapabilities {
 	 * The client supports to send additional context information for a
 	 * `textDocument/signatureHelp` request.
 	 *
-	 * Since 3.15.0
+	 * @since 3.15.0
 	 */
 	contextSupport?: boolean;
 }
@@ -1651,7 +1651,7 @@ export interface SignatureHelpOptions extends WorkDoneProgressOptions {
 /**
  * How a signature help was triggered.
  *
- * Since 3.15.0
+ * @since 3.15.0
  */
 export namespace SignatureHelpTriggerKind {
 	/**
@@ -1672,7 +1672,7 @@ export type SignatureHelpTriggerKind = 1 | 2 | 3;
 /**
  * Additional information about the context in which a signature help request was triggered.
  *
- * Since 3.15.0
+ * @since 3.15.0
  */
 export interface SignatureHelpContext {
 	/**
@@ -1712,7 +1712,7 @@ export interface SignatureHelpParams extends TextDocumentPositionParams, WorkDon
 	 * The signature help context. This is only available if the client specifies
 	 * to send this using the client capability `textDocument.signatureHelp.contextSupport === true`
 	 *
-	 * Since 3.15.0
+	 * @since 3.15.0
 	 */
 	context?: SignatureHelpContext;
 }
@@ -1741,7 +1741,7 @@ export interface DefinitionClientCapabilities {
 	/**
 	 * The client supports additional metadata in the form of definition links.
 	 *
-	 * Since 3.14.0
+	 * @since 3.14.0
 	 */
 	linkSupport?: boolean;
 }
@@ -1941,7 +1941,7 @@ export interface CodeActionClientCapabilities {
 	 * The client support code action literals as a valid
 	 * response of the `textDocument/codeAction` request.
 	 *
-	 * Since 3.8.0
+	 * @since 3.8.0
 	 */
 	codeActionLiteralSupport?: {
 		/**
@@ -2349,7 +2349,7 @@ export interface RenameClientCapabilities {
 	 * Client supports testing for validity of rename operations
 	 * before execution.
 	 *
-	 * Since version 3.12.0
+	 * @since version 3.12.0
 	 */
 	prepareSupport?: boolean;
 }
@@ -2383,7 +2383,7 @@ export interface RenameOptions extends WorkDoneProgressOptions {
 	/**
 	 * Renames should be checked and tested before being executed.
 	 *
-	 * Since version 3.12.0
+	 * @since version 3.12.0
 	 */
 	prepareProvider?: boolean;
 }
@@ -2474,7 +2474,7 @@ export interface WorkspaceEditClientCapabilities {
 	 * The resource operations the client supports. Clients should at least
 	 * support 'create', 'rename' and 'delete' files and folders.
 	 *
-	 * Since 3.13
+	 * @since 3.13.0
 	 */
 	resourceOperations?: ResourceOperationKind[];
 
@@ -2482,7 +2482,7 @@ export interface WorkspaceEditClientCapabilities {
 	 * The failure handling strategy of a client if applying the workspace edit
 	 * fails.
 	 *
-	 * Since 3.13
+	 * @since 3.13.0
 	 */
 	failureHandling?: FailureHandlingKind;
 }
