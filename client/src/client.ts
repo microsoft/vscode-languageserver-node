@@ -10,6 +10,7 @@ import {
 	FileSystemWatcher as VFileSystemWatcher, DiagnosticCollection, Diagnostic as VDiagnostic, Uri, ProviderResult,
 	CancellationToken, Position as VPosition, Location as VLocation, Range as VRange,
 	CompletionItem as VCompletionItem, CompletionList as VCompletionList, SignatureHelp as VSignatureHelp, SignatureHelpContext as VSignatureHelpContext,
+	SignatureHelpProvider as VSignatureHelpProvider, SignatureHelpProviderMetadata as VSignatureHelpProviderMetadata,
 	Definition as VDefinition, DefinitionLink as VDefinitionLink, DocumentHighlight as VDocumentHighlight,
 	SymbolInformation as VSymbolInformation, CodeActionContext as VCodeActionContext, Command as VCommand, CodeLens as VCodeLens,
 	FormattingOptions as VFormattingOptions, TextEdit as VTextEdit, WorkspaceEdit as VWorkspaceEdit, MessageItem,
@@ -1506,8 +1507,8 @@ class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpOptions, Sig
 	}
 
 	protected registerLanguageProvider(options: SignatureHelpRegistrationOptions): Disposable {
-		let client = this._client;
-		let providerSignatureHelp: ProvideSignatureHelpSignature = (document, position, context, token) => {
+		const client = this._client;
+		const providerSignatureHelp: ProvideSignatureHelpSignature = (document, position, context, token) => {
 			return client.sendRequest(SignatureHelpRequest.type, client.code2ProtocolConverter.asSignatureHelpParams(document, position, context), token).then(
 				client.protocol2CodeConverter.asSignatureHelp,
 				(error) => {
@@ -1516,15 +1517,24 @@ class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpOptions, Sig
 				}
 			);
 		};
-		let middleware = client.clientOptions.middleware!;
-		let triggerCharacters = options.triggerCharacters || [];
-		return Languages.registerSignatureHelpProvider(options.documentSelector!, {
+		const middleware = client.clientOptions.middleware!;
+		const provider: VSignatureHelpProvider = {
 			provideSignatureHelp: (document: TextDocument, position: VPosition, token: CancellationToken, context: VSignatureHelpContext): ProviderResult<VSignatureHelp> => {
 				return middleware.provideSignatureHelp
 					? middleware.provideSignatureHelp(document, position, context, token, providerSignatureHelp)
 					: providerSignatureHelp(document, position, context, token);
 			}
-		}, ...triggerCharacters);
+		};
+		if (options.retriggerCharacters === undefined) {
+			const triggerCharacters = options.triggerCharacters || [];
+			return Languages.registerSignatureHelpProvider(options.documentSelector!, provider, ...triggerCharacters);
+		} else {
+			const metaData: VSignatureHelpProviderMetadata = {
+				triggerCharacters: options.triggerCharacters || [],
+				retriggerCharacters: options.retriggerCharacters || []
+			};
+			return Languages.registerSignatureHelpProvider(options.documentSelector!, provider, metaData);
+		}
 	}
 }
 

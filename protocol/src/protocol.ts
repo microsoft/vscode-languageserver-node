@@ -1630,7 +1630,9 @@ export interface SignatureHelpClientCapabilities {
 
 	/**
 	 * The client supports to send additional context information for a
-	 * `textDocument/signatureHelp` request.
+	 * `textDocument/signatureHelp` request. A client that opts into
+	 * contextSupport will also support the `retriggerCharacters` on
+	 * `SignatureHelpOptions`.
 	 *
 	 * @since 3.15.0
 	 */
@@ -1642,10 +1644,19 @@ export interface SignatureHelpClientCapabilities {
  */
 export interface SignatureHelpOptions extends WorkDoneProgressOptions {
 	/**
-	 * The characters that trigger signature help
-	 * automatically.
+	 * List of characters that trigger signature help.
 	 */
 	triggerCharacters?: string[];
+
+	/**
+	 * List of characters that re-trigger signature help.
+	 *
+	 * These trigger characters are only active when signature help is already showing. All trigger characters
+	 * are also counted as re-trigger characters.
+	 *
+	 * @since 3.15.0
+	 */
+	retriggerCharacters?: string[];
 }
 
 /**

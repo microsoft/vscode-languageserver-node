@@ -1,6 +1,7 @@
 # Logs
 logs
 *.log
+*.lsif
 
 # Runtime data
 pids
