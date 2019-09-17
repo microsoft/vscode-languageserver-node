@@ -1973,6 +1973,12 @@ export interface CodeActionClientCapabilities {
 			valueSet: CodeActionKind[];
 		};
 	};
+
+	/**
+	 * Whether code action supports the `isPreferred` property.
+	 * @since 3.15.0
+	 */
+	isPreferredSupport?: boolean;
 }
 
 /**

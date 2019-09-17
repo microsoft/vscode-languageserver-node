@@ -2190,6 +2190,17 @@ export interface CodeAction {
 	diagnostics?: Diagnostic[];
 
 	/**
+	 * Marks this as a preferred action. Preferred actions are used by the `auto fix` command and can be targeted
+	 * by keybindings.
+	 *
+	 * A quick fix should be marked preferred if it properly addresses the underlying error.
+	 * A refactoring should be marked preferred if it is the most reasonable choice of actions to take.
+	 *
+	 * @since 3.15.0
+	 */
+	isPreferred?: boolean;
+
+	/**
 	 * The workspace edit this code action performs.
 	 */
 	edit?: WorkspaceEdit;
@@ -2226,7 +2237,7 @@ export namespace CodeAction {
 		} else {
 			result.edit = commandOrEdit;
 		}
-		if (kind !== void null) {
+		if (kind !== void 0) {
 			result.kind = kind;
 		}
 		return result;
@@ -2238,6 +2249,7 @@ export namespace CodeAction {
 			(candidate.kind === void 0 || Is.string(candidate.kind)) &&
 			(candidate.edit !== void 0 || candidate.command !== void 0) &&
 			(candidate.command === void 0 || Command.is(candidate.command)) &&
+			(candidate.isPreferred === void 0 || Is.boolean(candidate.isPreferred)) &&
 			(candidate.edit === void 0 || WorkspaceEdit.is(candidate.edit));
 	}
 }
