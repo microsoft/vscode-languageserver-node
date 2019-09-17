@@ -166,6 +166,9 @@ export interface Unregistration {
 }
 
 export interface UnregistrationParams {
+	// Should correctly be named `unregistrations`. However
+	// this is a breaking change which has to wait for
+	// protocol version 4.0.
 	unregisterations: Unregistration[];
 }
 
