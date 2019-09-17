@@ -1,14 +1,14 @@
 {
 	"extends": "../tsconfig.base.json",
 	"compilerOptions": {
-		"target": "es6",
+		"target": "es2017",
 		"module": "commonjs",
 		"moduleResolution": "node",
 		"sourceMap": false,
 		"inlineSources": false,
 		"declaration": true,
 		"stripInternal": true,
-		"lib": [ "es2016" ],
+		"lib": [ "es2017" ],
 		"outDir": "lib",
 		"incremental": true,
 		"tsBuildInfoFile":"./lib/tsconfig.tsbuildInfo",

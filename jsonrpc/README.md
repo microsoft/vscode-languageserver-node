@@ -47,6 +47,11 @@ connection.listen();
 
 # History
 
+### 5.0.0
+
+- add progress support
+- move JS target to ES2017
+
 ### 4.0.0
 
 - move JS target to ES6.

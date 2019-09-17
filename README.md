@@ -111,6 +111,15 @@ provideCompletionItem?: (this: void, document: TextDocument, position: VPosition
   * [Experiencing infinite recursion in this code in VSCode 1.18.1](https://github.com/Microsoft/language-server-protocol/issues/279)
   * [LangaueClient#handleConnectionClosed fails to restart if this._resolvedConnection.dispose() throws](https://github.com/Microsoft/vscode-languageserver-node/issues/286)
 
+### 6.0.0 Server and Client
+
+* Move to Protocol 3.15.0
+* move JS target to ES2017
+
+### 3.15.0 Types and Protocol
+
+* Implement LSP 3.15.0
+
 ### 3.6.1 Types
 * ESM added as output format (for Webpack and other ESM consumers)
 
