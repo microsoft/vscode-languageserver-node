@@ -118,6 +118,12 @@ export function resolve(moduleName: string, nodePath: string | undefined, cwd: s
 
 }
 
+/**
+ * Resolve the global npm package path.
+ * @deprecated Since this depends on the used package manager and their version the best is that servers
+ * implement this themselves since they know best what kind of package managers to support.
+ * @param tracer the tracer to use
+ */
 export function resolveGlobalNodePath(tracer?: (message: string) => void): string | undefined {
 	let npmCommand = 'npm';
 	let options: SpawnSyncOptionsWithStringEncoding = {
@@ -164,6 +170,12 @@ interface YarnJsonFormat {
 	data: string;
 }
 
+/*
+ * Resolve the global yarn pakage path.
+ * @deprecated Since this depends on the used package manager and their version the best is that servers
+ * implement this themselves since they know best what kind of package managers to support.
+ * @param tracer the tracer to use
+ */
 export function resolveGlobalYarnPath(tracer?: (message: string) => void): string | undefined {
 	let yarnCommand = 'yarn';
 	let options: SpawnSyncOptionsWithStringEncoding = {
