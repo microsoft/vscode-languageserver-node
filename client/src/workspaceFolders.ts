@@ -92,7 +92,6 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 				id: id,
 				registerOptions: undefined
 			});
-			this.sendInitialEvent(workspace.workspaceFolders);
 		}
 	}
 
@@ -133,6 +132,7 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 				: didChangeWorkspaceFolders(event);
 		});
 		this._listeners.set(id, disposable);
+		this.sendInitialEvent(workspace.workspaceFolders);
 	}
 
 	public unregister(id: string): void {
