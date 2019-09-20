@@ -159,7 +159,7 @@ suite('TextDocuments Tests', () => {
 		});
 		client.sendNotification(DidChangeTextDocumentNotification.type, changeDocNotif);
 	});
-})
+});
 
 // The IncrementalTextDocuments class is not exported, but it can be created and maintained by
 // TextDocuments document manager.  In these tests, the document manager creates the incrementally
@@ -195,15 +195,15 @@ suite('IncrementalTextDocument', () => {
 			textDocs.listen(server);
 			textDocs.onDidOpen(event => {
 				const { document } = event;
-				isUpdateableDocument(document) ? resolve(document) : reject(new Error("Document must be updateable!"));
+				isUpdateableDocument(document) ? resolve(document) : reject(new Error('Document must be updateable!'));
 			});
 			const openDocNotif = mockOpenDocNotif({ version: 1, text });
 			client.sendNotification(DidOpenTextDocumentNotification.type, openDocNotif);
-		})
+		});
 	}
 
 	test('Single line document', async () => {
-		let str = "Hello World";
+		let str = 'Hello World';
 		let lm = await generateTextDocument(str);
 		assert.equal(lm.lineCount, 1);
 
@@ -214,7 +214,7 @@ suite('IncrementalTextDocument', () => {
 	});
 
 	test('Multiple line document', async () => {
-		let str = "ABCDE\nFGHIJ\nKLMNO\n";
+		let str = 'ABCDE\nFGHIJ\nKLMNO\n';
 		let lm = await generateTextDocument(str);
 		assert.equal(lm.lineCount, 4);
 
@@ -233,39 +233,39 @@ suite('IncrementalTextDocument', () => {
 	});
 
 	test('Varying newline characters', async () => {
-		let str = "ABCDE\rFGHIJ";
+		let str = 'ABCDE\rFGHIJ';
 		assert.equal((await generateTextDocument(str)).lineCount, 2);
 
-		str = "ABCDE\nFGHIJ";
+		str = 'ABCDE\nFGHIJ';
 		assert.equal((await generateTextDocument(str)).lineCount, 2);
 
-		str = "ABCDE\r\nFGHIJ";
+		str = 'ABCDE\r\nFGHIJ';
 		assert.equal((await generateTextDocument(str)).lineCount, 2);
 
-		str = "ABCDE\n\nFGHIJ";
+		str = 'ABCDE\n\nFGHIJ';
 		assert.equal((await generateTextDocument(str)).lineCount, 3);
 
-		str = "ABCDE\r\rFGHIJ";
+		str = 'ABCDE\r\rFGHIJ';
 		assert.equal((await generateTextDocument(str)).lineCount, 3);
 
-		str = "ABCDE\n\rFGHIJ";
+		str = 'ABCDE\n\rFGHIJ';
 		assert.equal((await generateTextDocument(str)).lineCount, 3);
-	})
+	});
 
 	test('getText(Range)', async () => {
-		let str = "12345\n12345\n12345";
+		let str = '12345\n12345\n12345';
 		let lm = await generateTextDocument(str);
 		assert.equal(lm.getText(), str);
-		assert.equal(lm.getText(Range.create(-1, 0, 0, 5)), "12345");
-		assert.equal(lm.getText(Range.create(0, 0, 0, 5)), "12345");
-		assert.equal(lm.getText(Range.create(0, 4, 1, 1)), "5\n1");
-		assert.equal(lm.getText(Range.create(0, 4, 2, 1)), "5\n12345\n1");
-		assert.equal(lm.getText(Range.create(0, 4, 3, 1)), "5\n12345\n12345");
+		assert.equal(lm.getText(Range.create(-1, 0, 0, 5)), '12345');
+		assert.equal(lm.getText(Range.create(0, 0, 0, 5)), '12345');
+		assert.equal(lm.getText(Range.create(0, 4, 1, 1)), '5\n1');
+		assert.equal(lm.getText(Range.create(0, 4, 2, 1)), '5\n12345\n1');
+		assert.equal(lm.getText(Range.create(0, 4, 3, 1)), '5\n12345\n12345');
 		assert.equal(lm.getText(Range.create(0, 0, 3, 5)), str);
 	});
 
 	test('Invalid inputs', async () => {
-		let str = "Hello World";
+		let str = 'Hello World';
 		let lm = await generateTextDocument(str);
 
 		// invalid position
@@ -284,103 +284,103 @@ suite('IncrementalTextDocument', () => {
 	});
 
 	test('Basic append', async () => {
-		let lm = await generateTextDocument("foooo\nbar\nbaz");
+		let lm = await generateTextDocument('foooo\nbar\nbaz');
 
 		assert.equal(lm.offsetAt(Position.create(2, 0)), 10);
 
-		lm.update({ text: " some extra content", range: Range.create(1, 3, 1, 3) }, 2);
-		assert.equal(lm.getText(), "foooo\nbar some extra content\nbaz");
+		lm.update({ text: ' some extra content', range: Range.create(1, 3, 1, 3) }, 2);
+		assert.equal(lm.getText(), 'foooo\nbar some extra content\nbaz');
 		assert.equal(lm.version, 2);
 		assert.equal(lm.offsetAt(Position.create(2, 0)), 29);
 	});
 
 	test('Multi-line append', async () => {
-		let lm = await generateTextDocument("foooo\nbar\nbaz");
+		let lm = await generateTextDocument('foooo\nbar\nbaz');
 
 		assert.equal(lm.offsetAt(Position.create(2, 0)), 10);
 
-		lm.update({ text: " some extra\ncontent", range: Range.create(1, 3, 1, 3) }, 2);
-		assert.equal(lm.getText(), "foooo\nbar some extra\ncontent\nbaz");
+		lm.update({ text: ' some extra\ncontent', range: Range.create(1, 3, 1, 3) }, 2);
+		assert.equal(lm.getText(), 'foooo\nbar some extra\ncontent\nbaz');
 		assert.equal(lm.version, 2);
 		assert.equal(lm.offsetAt(Position.create(3, 0)), 29);
 		assert.equal(lm.lineCount, 4);
 	});
 
 	test('Basic delete', async () => {
-		let lm = await generateTextDocument("foooo\nbar\nbaz");
+		let lm = await generateTextDocument('foooo\nbar\nbaz');
 
 		assert.equal(lm.offsetAt(Position.create(2, 0)), 10);
 
-		lm.update({ text: "", range: Range.create(1, 0, 1, 3) }, 2);
-		assert.equal(lm.getText(), "foooo\n\nbaz");
+		lm.update({ text: '', range: Range.create(1, 0, 1, 3) }, 2);
+		assert.equal(lm.getText(), 'foooo\n\nbaz');
 		assert.equal(lm.version, 2);
 		assert.equal(lm.offsetAt(Position.create(2, 0)), 7);
 	});
 
 	test('Multi-line delete', async () => {
-		let lm = await generateTextDocument("foooo\nbar\nbaz");
+		let lm = await generateTextDocument('foooo\nbar\nbaz');
 
 		assert.equal(lm.offsetAt(Position.create(2, 0)), 10);
 
-		lm.update({ text: "", range: Range.create(0, 5, 1, 3) }, 2);
-		assert.equal(lm.getText(), "foooo\nbaz");
+		lm.update({ text: '', range: Range.create(0, 5, 1, 3) }, 2);
+		assert.equal(lm.getText(), 'foooo\nbaz');
 		assert.equal(lm.version, 2);
 		assert.equal(lm.offsetAt(Position.create(1, 0)), 6);
 	});
 
 	test('Single character replace', async () => {
-		let lm = await generateTextDocument("foooo\nbar\nbaz");
+		let lm = await generateTextDocument('foooo\nbar\nbaz');
 
 		assert.equal(lm.offsetAt(Position.create(2, 0)), 10);
 
-		lm.update({ text: "z", range: Range.create(1, 2, 1, 3) }, 2);
-		assert.equal(lm.getText(), "foooo\nbaz\nbaz");
+		lm.update({ text: 'z', range: Range.create(1, 2, 1, 3) }, 2);
+		assert.equal(lm.getText(), 'foooo\nbaz\nbaz');
 		assert.equal(lm.version, 2);
 		assert.equal(lm.offsetAt(Position.create(2, 0)), 10);
 	});
 
 	test('Multi-character replace', async () => {
-		let lm = await generateTextDocument("foo\nbar");
+		let lm = await generateTextDocument('foo\nbar');
 
 		assert.equal(lm.offsetAt(Position.create(1, 0)), 4);
 
-		lm.update({ text: "foobar", range: Range.create(1, 0, 1, 3) }, 2);
-		assert.equal(lm.getText(), "foo\nfoobar");
+		lm.update({ text: 'foobar', range: Range.create(1, 0, 1, 3) }, 2);
+		assert.equal(lm.getText(), 'foo\nfoobar');
 		assert.equal(lm.version, 2);
 		assert.equal(lm.offsetAt(Position.create(1, 0)), 4);
 	});
 
 	test('Invalid update ranges', async () => {
 		// Before the document starts -> before the document starts
-		let lm = await generateTextDocument("foo\nbar");
-		lm.update({ text: "abc123", range: Range.create(-2, 0, -1, 3) }, 2);
-		assert.equal(lm.getText(), "abc123foo\nbar");
+		let lm = await generateTextDocument('foo\nbar');
+		lm.update({ text: 'abc123', range: Range.create(-2, 0, -1, 3) }, 2);
+		assert.equal(lm.getText(), 'abc123foo\nbar');
 		assert.equal(lm.version, 2);
 
 		// Before the document starts -> the middle of document
-		lm = await generateTextDocument("foo\nbar");
-		lm.update({ text: "foobar", range: Range.create(-1, 0, 0, 3) }, 2);
-		assert.equal(lm.getText(), "foobar\nbar");
+		lm = await generateTextDocument('foo\nbar');
+		lm.update({ text: 'foobar', range: Range.create(-1, 0, 0, 3) }, 2);
+		assert.equal(lm.getText(), 'foobar\nbar');
 		assert.equal(lm.version, 2);
 		assert.equal(lm.offsetAt(Position.create(1, 0)), 7);
 
 		// The middle of document -> after the document ends
-		lm = await generateTextDocument("foo\nbar");
-		lm.update({ text: "foobar", range: Range.create(1, 0, 1, 10) }, 2);
-		assert.equal(lm.getText(), "foo\nfoobar");
+		lm = await generateTextDocument('foo\nbar');
+		lm.update({ text: 'foobar', range: Range.create(1, 0, 1, 10) }, 2);
+		assert.equal(lm.getText(), 'foo\nfoobar');
 		assert.equal(lm.version, 2);
 		assert.equal(lm.offsetAt(Position.create(1, 1000)), 10);
 
 		// After the document ends -> after the document ends
-		lm = await generateTextDocument("foo\nbar");
-		lm.update({ text: "abc123", range: Range.create(3, 0, 6, 10) }, 2);
-		assert.equal(lm.getText(), "foo\nbarabc123");
+		lm = await generateTextDocument('foo\nbar');
+		lm.update({ text: 'abc123', range: Range.create(3, 0, 6, 10) }, 2);
+		assert.equal(lm.getText(), 'foo\nbarabc123');
 		assert.equal(lm.version, 2);
 
 		// Before the document starts -> after the document ends
-		lm = await generateTextDocument("foo\nbar");
-		lm.update({ text: "entirely new content", range: Range.create(-1, 1, 2, 10000) }, 2);
-		assert.equal(lm.getText(), "entirely new content");
+		lm = await generateTextDocument('foo\nbar');
+		lm.update({ text: 'entirely new content', range: Range.create(-1, 1, 2, 10000) }, 2);
+		assert.equal(lm.getText(), 'entirely new content');
 		assert.equal(lm.version, 2);
 		assert.equal(lm.lineCount, 1);
 	});

@@ -21,13 +21,13 @@ class NullLogger implements Logger {
 }
 
 class TestStream extends Duplex {
-  _write(chunk: string, _encoding: string, done: () => void) {
-	this.emit('data', chunk);
-	done();
-  }
+	_write(chunk: string, _encoding: string, done: () => void) {
+		this.emit('data', chunk);
+		done();
+	}
 
-  _read(_size: number) {
-  }
+	_read(_size: number) {
+	}
 }
 
 describe('Connection Tests', () => {
