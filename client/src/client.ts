@@ -3301,8 +3301,8 @@ export abstract class BaseLanguageClient {
 	}
 
 	public logFailedRequest(type: RPCMessageType, error: any): void {
-		// If we get a request cancel don't log anything.
-		if (error instanceof ResponseError && error.code === ErrorCodes.RequestCancelled) {
+		// If we get a request cancel or a content modified don't log anything.
+		if (error instanceof ResponseError && (error.code === ErrorCodes.RequestCancelled || error.code === ErrorCodes.ContentModified)) {
 			return;
 		}
 		this.error(`Request ${type.method} failed.`, error);
