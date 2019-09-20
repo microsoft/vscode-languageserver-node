@@ -61,7 +61,7 @@ import {
 	SignatureHelpOptions, DefinitionRegistrationOptions, DefinitionOptions, ReferenceRegistrationOptions, ReferenceOptions,
 	DocumentHighlightRegistrationOptions, DocumentHighlightOptions, DocumentSymbolRegistrationOptions, DocumentSymbolOptions,
 	WorkspaceSymbolRegistrationOptions, CodeActionOptions, CodeLensOptions, DocumentFormattingOptions, DocumentRangeFormattingRegistrationOptions,
-	DocumentRangeFormattingOptions, DocumentOnTypeFormattingOptions, RenameOptions, DocumentLinkOptions
+	DocumentRangeFormattingOptions, DocumentOnTypeFormattingOptions, RenameOptions, DocumentLinkOptions, CompletionItemTag
 } from 'vscode-languageserver-protocol';
 
 import { ColorProviderMiddleware } from './colorProvider';
@@ -1380,7 +1380,8 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 			commitCharactersSupport: true,
 			documentationFormat: [MarkupKind.Markdown, MarkupKind.PlainText],
 			deprecatedSupport: true,
-			preselectSupport: true
+			preselectSupport: true,
+			tagSupport: { valueSet:  [ CompletionItemTag.Deprecated ] }
 		};
 		completion.completionItemKind = { valueSet: SupportedCompletionItemKinds };
 	}

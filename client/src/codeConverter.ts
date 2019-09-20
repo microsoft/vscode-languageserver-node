@@ -419,6 +419,28 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		}
 	}
 
+	function asCompletionItemTag(tag: code.CompletionItemTag): proto.CompletionItemTag | undefined {
+		switch (tag) {
+			case code.CompletionItemTag.Deprecated:
+				return proto.CompletionItemTag.Deprecated;
+		}
+		return undefined;
+	}
+
+	function asCompletionItemTags(tags: code.CompletionItemTag[] | undefined): proto.CompletionItemTag[] | undefined {
+		if (tags === undefined) {
+			return tags;
+		}
+		const result: proto.CompletionItemTag[] = [];
+		for (let tag of tags) {
+			const converted = asCompletionItemTag(tag);
+			if (converted !== undefined) {
+				result.push(converted);
+			}
+		}
+		return result;
+	}
+
 	function asCompletionItemKind(value: code.CompletionItemKind, original: proto.CompletionItemKind | undefined): proto.CompletionItemKind {
 		if (original !== undefined) {
 			return original;
@@ -449,13 +471,23 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (item.commitCharacters) { result.commitCharacters = item.commitCharacters.slice(); }
 		if (item.command) { result.command = asCommand(item.command); }
 		if (item.preselect === true || item.preselect === false) { result.preselect = item.preselect; }
+		const tags = asCompletionItemTags(item.tags);
 		if (protocolItem) {
 			if (protocolItem.data !== undefined) {
 				result.data = protocolItem.data;
 			}
 			if (protocolItem.deprecated === true || protocolItem.deprecated === false) {
+				if (protocolItem.deprecated === true && tags !== undefined && tags.length > 0) {
+					const index = tags.indexOf(code.CompletionItemTag.Deprecated);
+					if (index !== -1) {
+						tags.splice(index, 1);
+					}
+				}
 				result.deprecated = protocolItem.deprecated;
 			}
+		}
+		if (tags !== undefined && tags.length > 0) {
+			result.tags = tags;
 		}
 		return result;
 	}

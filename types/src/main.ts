@@ -1406,6 +1406,21 @@ export namespace InsertTextFormat {
 
 export type InsertTextFormat = 1 | 2;
 
+
+/**
+ * Completion item tags are extra annotations that tweak the rendering of a completion
+ * item.
+ *
+ * @since 3.15.0
+ */
+export namespace CompletionItemTag {
+	/**
+	 * Render a completion as obsolete, usually using a strike-out.
+	 */
+	export const Deprecated = 1
+}
+
+export type CompletionItemTag = 1;
 /**
  * A completion item represents a text snippet that is
  * proposed to complete text that is being typed.
@@ -1426,6 +1441,13 @@ export interface CompletionItem {
 	kind?: CompletionItemKind;
 
 	/**
+	 * Tags for this completion item.
+	 *
+	 * @since 3.15.0
+	 */
+	tags?: CompletionItemTag[];
+
+	/**
 	 * A human-readable string with additional information
 	 * about this item, like type or symbol information.
 	 */
@@ -1438,6 +1460,7 @@ export interface CompletionItem {
 
 	/**
 	 * Indicates if this item is deprecated.
+	 * @deprecated Use `tags` instead.
 	 */
 	deprecated?: boolean;
 

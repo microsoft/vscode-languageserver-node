@@ -363,7 +363,30 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return [code.CompletionItemKind.Text, value];
 	}
 
+	function asCompletionItemTag(tag: ls.CompletionItemTag): code.CompletionItemTag | undefined {
+		switch (tag) {
+			case ls.CompletionItemTag.Deprecated:
+				return code.CompletionItemTag.Deprecated;
+		}
+		return undefined;
+	}
+
+	function asCompletionItemTags(tags: ls.CompletionItemTag[] | undefined | null): code.CompletionItemTag[] {
+		if (tags === undefined || tags === null) {
+			return [];
+		}
+		const result: code.CompletionItemTag[] = [];
+		for (let tag of tags) {
+			const converted = asCompletionItemTag(tag);
+			if (converted !== undefined) {
+				result.push(converted);
+			}
+		}
+		return result;
+	}
+
 	function asCompletionItem(item: ls.CompletionItem): ProtocolCompletionItem {
+		let tags: code.CompletionItemTag[] = asCompletionItemTags(item.tags);
 		let result = new ProtocolCompletionItem(item.label);
 		if (item.detail) { result.detail = item.detail; }
 		if (item.documentation) {
@@ -388,9 +411,17 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (item.additionalTextEdits) { result.additionalTextEdits = asTextEdits(item.additionalTextEdits); }
 		if (Is.stringArray(item.commitCharacters)) { result.commitCharacters = item.commitCharacters.slice(); }
 		if (item.command) { result.command = asCommand(item.command); }
-		if (item.deprecated === true || item.deprecated === false) { result.deprecated = item.deprecated; }
+		if (item.deprecated === true || item.deprecated === false) {
+			result.deprecated = item.deprecated;
+			if (item.deprecated === true) {
+				tags.push(code.CompletionItemTag.Deprecated);
+			}
+		}
 		if (item.preselect === true || item.preselect === false) { result.preselect = item.preselect; }
 		if (item.data !== undefined) { result.data = item.data; }
+		if (tags.length > 0) {
+			result.tags = tags;
+		}
 		return result;
 	}
 

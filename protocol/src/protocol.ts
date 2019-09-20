@@ -15,7 +15,7 @@ import {
 	CompletionItem, CompletionList, Hover, SignatureHelp,
 	Definition, DefinitionLink, ReferenceContext, DocumentHighlight,
 	SymbolInformation, CodeLens, CodeActionContext, FormattingOptions, DocumentLink, MarkupKind,
-	SymbolKind, CompletionItemKind, CodeAction, CodeActionKind, DocumentSymbol
+	SymbolKind, CompletionItemKind, CodeAction, CodeActionKind, DocumentSymbol, CompletionItemTag
 } from 'vscode-languageserver-types';
 
 import { ImplementationRequest, ImplementationClientCapabilities, ImplementationOptions, ImplementationRegistrationOptions } from './protocol.implementation';
@@ -1414,6 +1414,18 @@ export interface CompletionClientCapabilities {
 		 * Client supports the preselect property on a completion item.
 		 */
 		preselectSupport?: boolean;
+
+		/**
+		 * Client supports the tag property on a completion item.
+		 *
+		 * @since 3.15.0
+		 */
+		tagSupport?: {
+			/**
+			 * The tags supported by the client.
+			 */
+			valueSet: CompletionItemTag[]
+		}
 	};
 
 	completionItemKind?: {

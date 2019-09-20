@@ -13,6 +13,7 @@ import ProtocolCompletionItem from 'vscode-languageclient/lib/protocolCompletion
 import * as Is from 'vscode-languageclient/lib/utils/is';
 
 import * as vscode from 'vscode';
+import { CompletionItemTag } from 'vscode-languageserver-protocol';
 
 const c2p: codeConverter.Converter = codeConverter.createConverter();
 const p2c: protocolConverter.Converter = protocolConverter.createConverter();
@@ -227,7 +228,29 @@ suite('Protocol Converter', () => {
 		strictEqual(result.data, undefined);
 	});
 
-	test('Completion Item Full', () => {
+	test('Completion Item - Deprecated boolean', () => {
+		let completionItem: proto.CompletionItem = {
+			label: 'item',
+			deprecated: true
+		};
+
+		let result = p2c.asCompletionItem(completionItem);
+		strictEqual(result.label, completionItem.label);
+		strictEqual(result.tags![0], CompletionItemTag.Deprecated);
+	});
+
+	test('Completion Item - Deprecated tag', () => {
+		let completionItem: proto.CompletionItem = {
+			label: 'item',
+			tags: [proto.CompletionItemTag.Deprecated]
+		};
+
+		let result = p2c.asCompletionItem(completionItem);
+		strictEqual(result.label, completionItem.label);
+		strictEqual(result.tags![0], CompletionItemTag.Deprecated);
+	});
+
+	test('Completion Item - Full', () => {
 		let command = proto.Command.create('title', 'commandId');
 		command.arguments = ['args'];
 
@@ -242,7 +265,8 @@ suite('Protocol Converter', () => {
 			sortText: 'sort',
 			data: 'data',
 			additionalTextEdits: [proto.TextEdit.insert({ line: 1, character: 2}, 'insert')],
-			command: command
+			command: command,
+			tags: [proto.CompletionItemTag.Deprecated]
 		};
 
 		let result = p2c.asCompletionItem(completionItem);
@@ -258,13 +282,14 @@ suite('Protocol Converter', () => {
 		strictEqual(result.command!.title, command.title);
 		strictEqual(result.command!.command, command.command);
 		strictEqual(result.command!.arguments, command.arguments);
+		strictEqual(result.tags![0], CompletionItemTag.Deprecated);
 		ok(result.additionalTextEdits![0] instanceof vscode.TextEdit);
 
 		let completionResult = p2c.asCompletionResult([completionItem]);
 		ok(completionResult.every(value => value instanceof vscode.CompletionItem));
 	});
 
-	test('Completion Item Preserve Insert Text', () => {
+	test('Completion Item - Preserve Insert Text', () => {
 		let completionItem: proto.CompletionItem = {
 			label: 'item',
 			insertText: 'insert'
@@ -277,7 +302,7 @@ suite('Protocol Converter', () => {
 		strictEqual(back.insertText, 'insert');
 	});
 
-	test('Completion Item Snippet String', () => {
+	test('Completion Item - Snippet String', () => {
 		let completionItem: proto.CompletionItem = {
 			label: 'item',
 			insertText: '${value}',
@@ -296,7 +321,7 @@ suite('Protocol Converter', () => {
 		strictEqual(back.insertText, '${value}');
 	});
 
-	test('Completion Item Text Edit', () => {
+	test('Completion Item - Text Edit', () => {
 		let completionItem: proto.CompletionItem = {
 			label: 'item',
 			textEdit: proto.TextEdit.insert({ line: 1, character: 2}, 'insert')
@@ -315,7 +340,7 @@ suite('Protocol Converter', () => {
 		rangeEqual(back.textEdit!.range, result.range!);
 	});
 
-	test('Completion Item Text Edit Snippet String', () => {
+	test('Completion Item - Text Edit Snippet String', () => {
 		let completionItem: proto.CompletionItem = {
 			label: 'item',
 			textEdit: proto.TextEdit.insert({ line: 1, character: 2}, '${insert}'),
@@ -335,7 +360,7 @@ suite('Protocol Converter', () => {
 		rangeEqual(back.textEdit!.range, result.range!);
 	});
 
-	test('Completion Item Preserve Data', () => {
+	test('Completion Item - Preserve Data', () => {
 		let completionItem: proto.CompletionItem = {
 			label: 'item',
 			data: 'data'
@@ -345,7 +370,7 @@ suite('Protocol Converter', () => {
 		strictEqual(result.data, completionItem.data);
 	});
 
-	test('Completion Item Preserve Data === 0', () => {
+	test('Completion Item - Preserve Data === 0', () => {
 		let completionItem: proto.CompletionItem = {
 			label: 'item',
 			data: 0
@@ -355,7 +380,7 @@ suite('Protocol Converter', () => {
 		strictEqual(result.data, completionItem.data);
 	});
 
-	test('Completion Item Preserve Data === false', () => {
+	test('Completion Item - Preserve Data === false', () => {
 		let completionItem: proto.CompletionItem = {
 			label: 'item',
 			data: false
@@ -365,7 +390,7 @@ suite('Protocol Converter', () => {
 		strictEqual(result.data, completionItem.data);
 	});
 
-	test('Completion Item Preserve Data === ""', () => {
+	test('Completion Item - Preserve Data === ""', () => {
 		let completionItem: proto.CompletionItem = {
 			label: 'item',
 			data: ''
@@ -375,7 +400,29 @@ suite('Protocol Converter', () => {
 		strictEqual(result.data, completionItem.data);
 	});
 
-	test('Completion Item Documentation as string', () => {
+	test('Completion Item - Preserve deprecated', () => {
+		let completionItem: proto.CompletionItem = {
+			label: 'item',
+			deprecated: true
+		};
+
+		let result = c2p.asCompletionItem(p2c.asCompletionItem(completionItem));
+		strictEqual(result.deprecated, true);
+		strictEqual(result.tags, undefined);
+	});
+
+	test('Completion Item - Preserve tag', () => {
+		let completionItem: proto.CompletionItem = {
+			label: 'item',
+			tags: [ proto.CompletionItemTag.Deprecated ]
+		};
+
+		let result = c2p.asCompletionItem(p2c.asCompletionItem(completionItem));
+		strictEqual(result.deprecated, undefined);
+		strictEqual(result.tags![0], proto.CompletionItemTag.Deprecated);
+	});
+
+	test('Completion Item - Documentation as string', () => {
 		let completionItem: proto.CompletionItem = {
 			label: 'item',
 			documentation: 'doc'
@@ -384,7 +431,7 @@ suite('Protocol Converter', () => {
 		ok(Is.string(result.documentation) && result.documentation === 'doc');
 	});
 
-	test('Completion Item Documentation as PlainText', () => {
+	test('Completion Item - Documentation as PlainText', () => {
 		let completionItem: proto.CompletionItem = {
 			label: 'item',
 			documentation: {
@@ -397,7 +444,7 @@ suite('Protocol Converter', () => {
 		strictEqual((result.documentation as proto.MarkupContent).value, 'doc');
 	});
 
-	test('Completion Item Documentation as Markdown', () => {
+	test('Completion Item - Documentation as Markdown', () => {
 		let completionItem: proto.CompletionItem = {
 			label: 'item',
 			documentation: {
@@ -410,7 +457,7 @@ suite('Protocol Converter', () => {
 		strictEqual((result.documentation as proto.MarkupContent).value, '# Header');
 	});
 
-	test('Completion Item Kind Outside', () => {
+	test('Completion Item - Kind Outside', () => {
 		let completionItem: proto.CompletionItem = {
 			label: 'item',
 			kind: Number.MAX_VALUE as any
@@ -761,6 +808,8 @@ suite('Code Converter', () => {
 		strictEqual(result.data, undefined);
 		strictEqual(result.additionalTextEdits, undefined);
 		strictEqual(result.command, undefined);
+		strictEqual(result.deprecated, undefined);
+		strictEqual(result.tags, undefined);
 	});
 
 	test('Completion Item Full', () => {
@@ -773,6 +822,7 @@ suite('Code Converter', () => {
 		item.sortText = 'sort';
 		let edit = vscode.TextEdit.insert(new vscode.Position(1, 2), 'insert');
 		item.additionalTextEdits = [edit];
+		item.tags = [ vscode.CompletionItemTag.Deprecated ];
 		item.command = { title: 'title', command: 'commandId' };
 
 		let result = c2p.asCompletionItem(<any>item);
@@ -785,9 +835,11 @@ suite('Code Converter', () => {
 		strictEqual(result.sortText, item.sortText);
 		rangeEqual(result.additionalTextEdits![0].range, item.additionalTextEdits[0].range);
 		strictEqual(result.additionalTextEdits![0].newText, item.additionalTextEdits[0].newText);
+		strictEqual(result.tags![0], proto.CompletionItemTag.Deprecated);
+		strictEqual(result.deprecated, undefined);
 	});
 
-	test('Completion Item insertText', () => {
+	test('Completion Item - insertText', () => {
 		let item: ProtocolCompletionItem = new ProtocolCompletionItem ('label');
 		item.insertText = 'insert';
 		item.fromEdit = false;
@@ -796,7 +848,7 @@ suite('Code Converter', () => {
 		strictEqual(result.insertText, item.insertText);
 	});
 
-	test('Completion Item TextEdit', () => {
+	test('Completion Item - TextEdit', () => {
 		let item: ProtocolCompletionItem = new ProtocolCompletionItem ('label');
 		item.textEdit = vscode.TextEdit.insert(new vscode.Position(1, 2), 'insert');
 		item.fromEdit = false;
@@ -805,7 +857,7 @@ suite('Code Converter', () => {
 		strictEqual(result.insertText, item.textEdit.newText);
 	});
 
-	test('Completion Item Insert Text and Range', () => {
+	test('Completion Item - Insert Text and Range', () => {
 		let item: ProtocolCompletionItem = new ProtocolCompletionItem('label');
 		item.insertText = 'insert';
 		item.range = new vscode.Range(1, 2, 1, 2);
@@ -817,7 +869,7 @@ suite('Code Converter', () => {
 		strictEqual(result.textEdit!.newText, item.insertText);
 	});
 
-	test('Completion Item TextEdit from Edit', () => {
+	test('Completion Item - TextEdit from Edit', () => {
 		let item: ProtocolCompletionItem = new ProtocolCompletionItem ('label');
 		item.textEdit = vscode.TextEdit.insert(new vscode.Position(1, 2), 'insert');
 		item.fromEdit = true;
