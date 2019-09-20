@@ -21,6 +21,10 @@ function access<T, K extends keyof T>(target: T | undefined, key: K): T[K] | und
 	return target[key];
 }
 
+export function arrayDiff<T>(left: T[], right: T[]): T[] {
+	return left.filter(element => right.indexOf(element) < 0);
+}
+
 export interface WorkspaceFolderWorkspaceMiddleware {
 	workspaceFolders?: WorkspaceFoldersRequest.MiddlewareSignature;
 	didChangeWorkspaceFolders?: NextSignature<VWorkspaceFoldersChangeEvent, void>
@@ -29,6 +33,7 @@ export interface WorkspaceFolderWorkspaceMiddleware {
 export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 
 	private _listeners: Map<string, Disposable> = new Map<string, Disposable>();
+	private _initialFolders: VWorkspaceFolder[] | undefined;
 
 	constructor(private _client: BaseLanguageClient) {
 	}
@@ -39,12 +44,17 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 
 	public fillInitializeParams(params: InitializeParams): void {
 		let folders = workspace.workspaceFolders;
+		this.initializeWithFolders(folders);
 
 		if (folders === void 0) {
 			params.workspaceFolders = null;
 		} else {
 			params.workspaceFolders = folders.map(folder => this.asProtocol(folder));
 		}
+	}
+
+	protected initializeWithFolders(currentWorkspaceFolders: VWorkspaceFolder[] | undefined) {
+		this._initialFolders = currentWorkspaceFolders;
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
@@ -85,18 +95,36 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 		}
 	}
 
+	protected sendInitialEvent(currentWorkspaceFolders: VWorkspaceFolder[] | undefined) {
+		if (this._initialFolders && currentWorkspaceFolders) {
+			const removed: VWorkspaceFolder[] = arrayDiff(this._initialFolders, currentWorkspaceFolders);
+			const added: VWorkspaceFolder[] = arrayDiff(currentWorkspaceFolders, this._initialFolders);
+			if (added.length > 0 || removed.length > 0) {
+				this.doSendEvent(added, removed);
+			}
+		} else if (this._initialFolders) {
+			this.doSendEvent([], this._initialFolders);
+		} else if (currentWorkspaceFolders) {
+			this.doSendEvent(currentWorkspaceFolders, []);
+		}
+	}
+
+	private doSendEvent(addedFolders: ReadonlyArray<VWorkspaceFolder>, removedFolders: ReadonlyArray<VWorkspaceFolder>) {
+		let params: DidChangeWorkspaceFoldersParams = {
+			event: {
+				added: addedFolders.map(folder => this.asProtocol(folder)),
+				removed: removedFolders.map(folder => this.asProtocol(folder))
+			}
+		};
+		this._client.sendNotification(DidChangeWorkspaceFoldersNotification.type, params);
+	}
+
 	public register(_message: RPCMessageType, data: RegistrationData<undefined>): void {
 		let id = data.id;
 		let client = this._client;
 		let disposable = workspace.onDidChangeWorkspaceFolders((event) => {
 			let didChangeWorkspaceFolders = (event: VWorkspaceFoldersChangeEvent) => {
-				let params: DidChangeWorkspaceFoldersParams = {
-					event: {
-						added: event.added.map(folder => this.asProtocol(folder)),
-						removed: event.removed.map(folder => this.asProtocol(folder))
-					}
-				};
-				this._client.sendNotification(DidChangeWorkspaceFoldersNotification.type, params);
+				this.doSendEvent(event.added, event.removed);
 			};
 			let middleware = client.clientOptions.middleware!.workspace;
 			middleware && middleware.didChangeWorkspaceFolders
@@ -104,6 +132,7 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 				: didChangeWorkspaceFolders(event);
 		});
 		this._listeners.set(id, disposable);
+		this.sendInitialEvent(workspace.workspaceFolders);
 	}
 
 	public unregister(id: string): void {
