@@ -1417,10 +1417,11 @@ export namespace CompletionItemTag {
 	/**
 	 * Render a completion as obsolete, usually using a strike-out.
 	 */
-	export const Deprecated = 1
+	export const Deprecated = 1;
 }
 
 export type CompletionItemTag = 1;
+
 /**
  * A completion item represents a text snippet that is
  * proposed to complete text that is being typed.
