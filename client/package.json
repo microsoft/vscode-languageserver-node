@@ -19,7 +19,7 @@
 	"typings": "./lib/main",
 	"devDependencies": {
 		"@types/semver": "^6.0.1",
-		"@types/vscode": "^1.37.0",
+		"@types/vscode": "^1.38.0",
 		"shx": "^0.3.2"
 	},
 	"dependencies": {
@@ -27,13 +27,11 @@
 		"vscode-languageserver-protocol": "^3.15.0-next.8"
 	},
 	"scripts": {
-		"prepare": "npm run update-vscode",
 		"prepublishOnly": "npm run clean && npm run compile && npm test",
 		"postpublish": "node ../build/npm/post-publish.js",
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json && shx cp src/utils/terminateProcess.sh lib/utils/terminateProcess.sh",
 		"watch": "node ../build/bin/tsc -b ./tsconfig.json -w",
 		"test": "cd ../client-tests && npm test && cd ../client",
-		"update-vscode": "node bin/updateVSCode",
 		"clean": "node ../node_modules/rimraf/bin.js lib",
 		"preversion": "npm test"
 	}
