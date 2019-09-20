@@ -510,6 +510,11 @@ export namespace DiagnosticSeverity {
 
 export type DiagnosticSeverity = 1 | 2 | 3 | 4;
 
+/**
+ * The diagnostic tags.
+ *
+ * @since 3.15.0
+ */
 export namespace DiagnosticTag {
 
 	/**

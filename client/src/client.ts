@@ -61,7 +61,7 @@ import {
 	SignatureHelpOptions, DefinitionRegistrationOptions, DefinitionOptions, ReferenceRegistrationOptions, ReferenceOptions,
 	DocumentHighlightRegistrationOptions, DocumentHighlightOptions, DocumentSymbolRegistrationOptions, DocumentSymbolOptions,
 	WorkspaceSymbolRegistrationOptions, CodeActionOptions, CodeLensOptions, DocumentFormattingOptions, DocumentRangeFormattingRegistrationOptions,
-	DocumentRangeFormattingOptions, DocumentOnTypeFormattingOptions, RenameOptions, DocumentLinkOptions, CompletionItemTag
+	DocumentRangeFormattingOptions, DocumentOnTypeFormattingOptions, RenameOptions, DocumentLinkOptions, CompletionItemTag, DiagnosticTag
 } from 'vscode-languageserver-protocol';
 
 import { ColorProviderMiddleware } from './colorProvider';
@@ -3228,7 +3228,7 @@ export abstract class BaseLanguageClient {
 		workspaceEdit.failureHandling = FailureHandlingKind.TextOnlyTransactional;
 		let diagnostics = ensure(ensure(result, 'textDocument')!, 'publishDiagnostics')!;
 		diagnostics.relatedInformation = true;
-		diagnostics.tagSupport = true;
+		diagnostics.tagSupport = { valueSet: [ DiagnosticTag.Unnecessary, DiagnosticTag.Deprecated ] };
 		for (let feature of this._features) {
 			feature.fillClientCapabilities(result);
 		}

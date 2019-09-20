@@ -15,7 +15,7 @@ import {
 	CompletionItem, CompletionList, Hover, SignatureHelp,
 	Definition, DefinitionLink, ReferenceContext, DocumentHighlight,
 	SymbolInformation, CodeLens, CodeActionContext, FormattingOptions, DocumentLink, MarkupKind,
-	SymbolKind, CompletionItemKind, CodeAction, CodeActionKind, DocumentSymbol, CompletionItemTag
+	SymbolKind, CompletionItemKind, CodeAction, CodeActionKind, DocumentSymbol, CompletionItemTag, DiagnosticTag
 } from 'vscode-languageserver-types';
 
 import { ImplementationRequest, ImplementationClientCapabilities, ImplementationOptions, ImplementationRegistrationOptions } from './protocol.implementation';
@@ -1332,10 +1332,16 @@ export interface PublishDiagnosticsClientCapabilities {
 
 	/**
 	 * Client supports the tag property to provide meta data about a diagnostic.
+	 * Clients supporting tags have to handle unknown tags gracefully.
 	 *
 	 * @since 3.15.0
 	 */
-	tagSupport?: boolean;
+	tagSupport?: {
+		/**
+		 * The tags supported by the client.
+		 */
+		valueSet: DiagnosticTag[];
+	};
 }
 
 /**
@@ -1416,7 +1422,10 @@ export interface CompletionClientCapabilities {
 		preselectSupport?: boolean;
 
 		/**
-		 * Client supports the tag property on a completion item.
+		 * Client supports the tag property on a completion item. Clients supporting
+		 * tags have to handle unknown tags gracefully. Clients especially need to
+		 * preserve unknown tags when sending a completion item back to the server in
+		 * a resolve call.
 		 *
 		 * @since 3.15.0
 		 */
