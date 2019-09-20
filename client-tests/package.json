@@ -29,7 +29,7 @@
 		"glob": "^7.1.4",
 		"@types/glob": "^7.1.1",
 		"@types/sinon": "^7.0.13",
-		"@types/vscode": "^1.37.0",
+		"@types/vscode": "^1.38.0",
 		"sinon": "7.4.1"
 	}
 }
