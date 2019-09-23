@@ -614,15 +614,18 @@ suite('Protocol Converter', () => {
 
 	test ('Document Links', () => {
 		let location = 'file:///foo/bar';
+		let tooltip = 'tooltip';
 		let start: proto.Position = { line: 1, character: 2 };
 		let end: proto.Position = { line: 8, character: 9 };
 		let documentLink = proto.DocumentLink.create(
 			{ start, end }, location
 		);
+		documentLink.tooltip = tooltip;
 
 		let result = p2c.asDocumentLink(documentLink);
 		ok(result.range instanceof vscode.Range);
 		strictEqual(result.target!.toString(), location);
+		strictEqual(result.tooltip, tooltip);
 
 		ok(p2c.asDocumentLinks([documentLink]).every(value => value instanceof vscode.DocumentLink));
 		strictEqual(p2c.asDocumentLinks(undefined), undefined);

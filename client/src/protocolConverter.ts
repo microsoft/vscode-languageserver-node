@@ -801,6 +801,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		let target = item.target ? asUri(item.target) : undefined;
 		// target must be optional in DocumentLink
 		let link = new ProtocolDocumentLink(range, target);
+		if (item.tooltip !== undefined) { link.tooltip = item.tooltip; }
 		if (item.data !== undefined && item.data !== null) { link.data = item.data; }
 		return link;
 	}

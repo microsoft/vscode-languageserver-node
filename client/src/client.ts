@@ -2122,7 +2122,9 @@ class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkOptions, Docum
 	}
 
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		ensure(ensure(capabilites, 'textDocument')!, 'documentLink')!.dynamicRegistration = true;
+		const documentLinkCapabilities = ensure(ensure(capabilites, 'textDocument')!, 'documentLink')!;
+		documentLinkCapabilities.dynamicRegistration = true;
+		documentLinkCapabilities.tooltipSupport = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {

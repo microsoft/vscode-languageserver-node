@@ -2176,6 +2176,13 @@ export interface DocumentLinkClientCapabilities {
 	 * Whether document link supports dynamic registration.
 	 */
 	dynamicRegistration?: boolean;
+
+	/**
+	 * Whether the client support the `tooltip` property on `DocumentLink`.
+	 *
+	 * @since 3.15.0
+	 */
+	tooltipSupport?: boolean;
 }
 
 /**
