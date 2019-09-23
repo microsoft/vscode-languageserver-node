@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageserver-protocol",
 	"description": "VSCode Language Server Protocol implementation",
-	"version": "3.15.0-next.8",
+	"version": "3.15.0-next.9",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"repository": {
@@ -15,8 +15,8 @@
 	"main": "./lib/main.js",
 	"typings": "./lib/main",
 	"dependencies": {
-		"vscode-jsonrpc": "^4.1.0-next.3",
-		"vscode-languageserver-types": "^3.15.0-next.4"
+		"vscode-jsonrpc": "^5.0.0-next.2",
+		"vscode-languageserver-types": "^3.15.0-next.5"
 	},
 	"scripts": {
 		"prepublishOnly": "npm run clean && npm run compile && npm test",
