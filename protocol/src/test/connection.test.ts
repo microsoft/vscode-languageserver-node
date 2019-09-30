@@ -7,7 +7,11 @@
 import * as assert from 'assert';
 
 import { Duplex } from 'stream';
-import { InitializeParams, InitializeRequest, InitializeResult, createProtocolConnection, StreamMessageReader, StreamMessageWriter, Logger } from '../main';
+import { InitializeParams, InitializeRequest, InitializeResult, createProtocolConnection, StreamMessageReader, StreamMessageWriter, Logger, ProtocolConnection } from '../main';
+import { DocumentSymbolRequest, DocumentSymbolParams } from '../protocol';
+import { ProgressType } from 'vscode-jsonrpc';
+import { SymbolInformation, SymbolKind } from 'vscode-languageserver-types';
+import { WorkDoneProgressBegin, WorkDoneProgressReport, WorkDoneProgressEnd } from '../protocol.progress.proposed';
 
 class NullLogger implements Logger {
 	error(_message: string): void {
@@ -31,7 +35,7 @@ class TestStream extends Duplex {
 }
 
 describe('Connection Tests', () => {
-	it('Ensure propert param passing', async() => {
+	it('Ensure proper param passing', async() => {
 		const up = new TestStream();
 		const down = new TestStream();
 		const logger = new NullLogger();
@@ -59,5 +63,122 @@ describe('Connection Tests', () => {
 		};
 		await clientConnection.sendRequest(InitializeRequest.type, init);
 		assert.ok(paramsCorrect, 'Parameters are transferred correctly');
+	});
+});
+
+describe('Partial result tests', () => {
+
+	let serverConnection: ProtocolConnection;
+	let clientConnection: ProtocolConnection;
+	let progressType: ProgressType<any> = new ProgressType();
+
+	beforeEach(() => {
+		const up = new TestStream();
+		const down = new TestStream();
+		const logger = new NullLogger();
+		serverConnection = createProtocolConnection(new StreamMessageReader(up), new StreamMessageWriter(down), logger);
+		clientConnection = createProtocolConnection(new StreamMessageReader(down), new StreamMessageWriter(up), logger);
+		serverConnection.listen();
+		clientConnection.listen();
+	});
+
+	it ('Token provided', async () => {
+		serverConnection.onRequest(DocumentSymbolRequest.type, (params) => {
+			assert.ok(params.partialResultToken === '3b1db4c9-e011-489e-a9d1-0653e64707c2');
+			return [];
+		});
+
+		const params: DocumentSymbolParams = {
+			textDocument: { uri: 'file:///abc.txt' },
+			partialResultToken: '3b1db4c9-e011-489e-a9d1-0653e64707c2'
+		};
+		await clientConnection.sendRequest(DocumentSymbolRequest.type, params);
+	});
+
+	it ('Result reported', async () => {
+		let result: SymbolInformation = {
+			name: 'abc',
+			kind: SymbolKind.Class,
+			location: {
+				uri: 'file:///abc.txt',
+				range: { start: { line: 0, character: 1 }, end: { line: 2, character: 3} }
+			}
+		};
+		serverConnection.onRequest(DocumentSymbolRequest.type, (params) => {
+			assert.ok(params.partialResultToken === '3b1db4c9-e011-489e-a9d1-0653e64707c2');
+			serverConnection.sendProgress(progressType, params.partialResultToken!, [ result ]);
+			return [];
+		});
+
+		const params: DocumentSymbolParams = {
+			textDocument: { uri: 'file:///abc.txt' },
+			partialResultToken: '3b1db4c9-e011-489e-a9d1-0653e64707c2'
+		};
+		let progressOK: boolean = false;
+		clientConnection.onProgress(progressType, '3b1db4c9-e011-489e-a9d1-0653e64707c2', (values) => {
+			progressOK = (values !== undefined && values.length === 1);
+		});
+		await clientConnection.sendRequest(DocumentSymbolRequest.type, params);
+		assert.ok(progressOK);
+	});
+});
+
+describe('Work done tests', () => {
+
+	let serverConnection: ProtocolConnection;
+	let clientConnection: ProtocolConnection;
+	const progressType: ProgressType<WorkDoneProgressBegin | WorkDoneProgressReport | WorkDoneProgressEnd> = new ProgressType();
+
+	beforeEach(() => {
+		const up = new TestStream();
+		const down = new TestStream();
+		const logger = new NullLogger();
+		serverConnection = createProtocolConnection(new StreamMessageReader(up), new StreamMessageWriter(down), logger);
+		clientConnection = createProtocolConnection(new StreamMessageReader(down), new StreamMessageWriter(up), logger);
+		serverConnection.listen();
+		clientConnection.listen();
+	});
+
+	it ('Token provided', async () => {
+		serverConnection.onRequest(DocumentSymbolRequest.type, (params) => {
+			assert.ok(params.workDoneToken === '3b1db4c9-e011-489e-a9d1-0653e64707c2');
+			return [];
+		});
+
+		const params: DocumentSymbolParams = {
+			textDocument: { uri: 'file:///abc.txt' },
+			workDoneToken: '3b1db4c9-e011-489e-a9d1-0653e64707c2'
+		};
+		await clientConnection.sendRequest(DocumentSymbolRequest.type, params);
+	});
+
+	it ('Result reported', async () => {
+		serverConnection.onRequest(DocumentSymbolRequest.type, (params) => {
+			assert.ok(params.workDoneToken === '3b1db4c9-e011-489e-a9d1-0653e64707c2');
+			serverConnection.sendProgress(progressType, params.workDoneToken!, {
+				kind: 'begin',
+				title: 'progress'
+			});
+			serverConnection.sendProgress(progressType, params.workDoneToken!, {
+				kind: 'report',
+				message: 'message'
+			});
+			serverConnection.sendProgress(progressType, params.workDoneToken!, {
+				kind: 'end',
+				message: 'message'
+			});
+			return [];
+		});
+
+		const params: DocumentSymbolParams = {
+			textDocument: { uri: 'file:///abc.txt' },
+			workDoneToken: '3b1db4c9-e011-489e-a9d1-0653e64707c2'
+		};
+		let result: string = '';
+		clientConnection.onProgress(progressType, '3b1db4c9-e011-489e-a9d1-0653e64707c2', (value) => {
+			result += value.kind;
+		});
+		await clientConnection.sendRequest(DocumentSymbolRequest.type, params);
+		assert.ok(result === 'beginreportend');
 	});
 });

@@ -29,7 +29,7 @@ describe('Connection Tests', () => {
 	let serverConnection: IConnection;
 	let clientConnection: IConnection;
 
-	setup(() => {
+	beforeEach(() => {
 		const up = new TestStream();
 		const down = new TestStream();
 		serverConnection = createConnection(up, down);
@@ -37,6 +37,7 @@ describe('Connection Tests', () => {
 		serverConnection.listen();
 		clientConnection.listen();
 	});
+
 	it('Ensure request parameter passing', async() => {
 		let paramsCorrect: boolean = false;
 		serverConnection.onRequest(InitializeRequest.type, (params) => {

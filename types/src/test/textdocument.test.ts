@@ -9,11 +9,11 @@ import { TextDocument, Range, Position } from '../main';
 
 suite('Text Document Lines Model Validator', () => {
 	function newDocument(str: string) {
-		return TextDocument.create('file://foo/bar', "text", 0, str);
+		return TextDocument.create('file://foo/bar', 'text', 0, str);
 	}
 
 	test('Single line', () => {
-		var str = "Hello World";
+		var str = 'Hello World';
 		var lm = newDocument(str);
 		assert.equal(lm.lineCount, 1);
 
@@ -24,7 +24,7 @@ suite('Text Document Lines Model Validator', () => {
 	});
 
 	test('Multiple lines', () => {
-		var str = "ABCDE\nFGHIJ\nKLMNO\n";
+		var str = 'ABCDE\nFGHIJ\nKLMNO\n';
 		var lm = newDocument(str);
 		assert.equal(lm.lineCount, 4);
 
@@ -43,39 +43,39 @@ suite('Text Document Lines Model Validator', () => {
 	});
 
 	test('New line characters', () => {
-		var str = "ABCDE\rFGHIJ";
+		var str = 'ABCDE\rFGHIJ';
 		assert.equal(newDocument(str).lineCount, 2);
 
-		var str = "ABCDE\nFGHIJ";
+		var str = 'ABCDE\nFGHIJ';
 		assert.equal(newDocument(str).lineCount, 2);
 
-		var str = "ABCDE\r\nFGHIJ";
+		var str = 'ABCDE\r\nFGHIJ';
 		assert.equal(newDocument(str).lineCount, 2);
 
-		str = "ABCDE\n\nFGHIJ";
+		str = 'ABCDE\n\nFGHIJ';
 		assert.equal(newDocument(str).lineCount, 3);
 
-		str = "ABCDE\r\rFGHIJ";
+		str = 'ABCDE\r\rFGHIJ';
 		assert.equal(newDocument(str).lineCount, 3);
 
-		str = "ABCDE\n\rFGHIJ";
+		str = 'ABCDE\n\rFGHIJ';
 		assert.equal(newDocument(str).lineCount, 3);
-	})
+	});
 
 	test('getText(Range)', () => {
-		var str = "12345\n12345\n12345";
+		var str = '12345\n12345\n12345';
 		var lm = newDocument(str);
 		assert.equal(lm.getText(), str);
-		assert.equal(lm.getText(Range.create(-1, 0, 0, 5)), "12345");
-		assert.equal(lm.getText(Range.create(0, 0, 0, 5)), "12345");
-		assert.equal(lm.getText(Range.create(0, 4, 1, 1)), "5\n1");
-		assert.equal(lm.getText(Range.create(0, 4, 2, 1)), "5\n12345\n1");
-		assert.equal(lm.getText(Range.create(0, 4, 3, 1)), "5\n12345\n12345");
+		assert.equal(lm.getText(Range.create(-1, 0, 0, 5)), '12345');
+		assert.equal(lm.getText(Range.create(0, 0, 0, 5)), '12345');
+		assert.equal(lm.getText(Range.create(0, 4, 1, 1)), '5\n1');
+		assert.equal(lm.getText(Range.create(0, 4, 2, 1)), '5\n12345\n1');
+		assert.equal(lm.getText(Range.create(0, 4, 3, 1)), '5\n12345\n12345');
 		assert.equal(lm.getText(Range.create(0, 0, 3, 5)), str);
 	});
 
 	test('Invalid inputs', () => {
-		var str = "Hello World";
+		var str = 'Hello World';
 		var lm = newDocument(str);
 
 		// invalid position

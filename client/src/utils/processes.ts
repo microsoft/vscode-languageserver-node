@@ -22,7 +22,7 @@ export function terminate(process: ChildProcess, cwd?: string): boolean {
 				stdio: ['pipe', 'pipe', 'ignore']
 			};
 			if (cwd) {
-				options.cwd = cwd
+				options.cwd = cwd;
 			}
 			(<any>cp).execFileSync('taskkill', ['/T', '/F', '/PID', process.pid.toString()], options);
 			return true;

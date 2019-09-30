@@ -29,7 +29,8 @@ let TestDuplex: TestDuplexConstructor = function (): TestDuplexConstructor {
 	}
 	inherits(TestDuplex, Duplex);
 	TestDuplex.prototype._write = function (this: any, chunk: string | Buffer, _encoding: string, done: Function) {
-		if (this.dbg) console.log(this.name + ': write: ' + chunk.toString());
+		// eslint-disable-next-line no-console
+		if (this.dbg) { console.log(this.name + ': write: ' + chunk.toString()); }
 		setImmediate(() => {
 			this.emit('data', chunk);
 		});
@@ -59,14 +60,14 @@ describe('Connection', () => {
 		let connection = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		connection.listen();
 		let counter = 0;
-		let content: string = "";
-        duplexStream2.on('data', (chunk) => {
+		let content: string = '';
+		duplexStream2.on('data', (chunk) => {
 			content += chunk.toString();
 			if (++counter === 2) {
-				assert.strictEqual(content.indexOf("Content-Length: 75"), 0);
+				assert.strictEqual(content.indexOf('Content-Length: 75'), 0);
 				done();
 			}
-        });
+		});
 		connection.sendRequest(type, 'foo');
 	});
 
@@ -142,7 +143,7 @@ describe('Connection', () => {
 		server.onRequest(type, (param) => {
 			assert.strictEqual(param, null);
 			return '';
-		})
+		});
 		server.listen();
 
 		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
@@ -192,7 +193,7 @@ describe('Connection', () => {
  		});
  	});
 
-	let testNotification = new NotificationType<{ value: boolean }, void>("testNotification");
+	let testNotification = new NotificationType<{ value: boolean }, void>('testNotification');
 	it('Send and Receive Notification', (done) => {
 
 		let duplexStream1 = new TestDuplex('ds1');
