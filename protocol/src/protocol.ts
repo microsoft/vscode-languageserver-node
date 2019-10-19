@@ -1149,7 +1149,7 @@ export namespace DidCloseTextDocumentNotification {
  */
 export interface DidSaveTextDocumentParams {
 	/**
-	 * The document that was closed.
+	 * The document that was saved.
 	 */
 	textDocument: VersionedTextDocumentIdentifier;
 
