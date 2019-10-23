@@ -16,7 +16,6 @@ import {
 	DidChangeTextDocumentParams,
 	DidOpenTextDocumentNotification,
 	DidChangeTextDocumentNotification,
-	TextDocumentSyncKind,
 	Range
 } from '../main';
 import { TextDocument, Position } from 'vscode-languageserver-types';
@@ -57,8 +56,8 @@ suite('TextDocuments Tests', () => {
 		client.listen();
 	});
 
-	test('onDidChangeContent TextDocumentSyncKind.Full change file content', done => {
-		const textDocs = new TextDocuments(TextDocumentSyncKind.Full);
+	test('onDidChangeContent - change full file content', done => {
+		const textDocs = TextDocuments.create();
 		textDocs.listen(server);
 		textDocs.onDidChangeContent(event => {
 			if (event.document.version === 2) {
@@ -73,8 +72,8 @@ suite('TextDocuments Tests', () => {
 		client.sendNotification(DidChangeTextDocumentNotification.type, changeDocNotif);
 	});
 
-	test('onDidChangeContent TextDocumentSyncKind.Full several content updates', done => {
-		const textDocs = new TextDocuments(TextDocumentSyncKind.Full);
+	test('onDidChangeContent - several full content updates', done => {
+		const textDocs = TextDocuments.create();
 		textDocs.listen(server);
 		textDocs.onDidChangeContent(event => {
 			if (event.document.version === 2) {
@@ -89,8 +88,8 @@ suite('TextDocuments Tests', () => {
 		client.sendNotification(DidChangeTextDocumentNotification.type, changeDocNotif);
 	});
 
-	test('onDidChangeContent TextDocumentSyncKind.Incremental removing content', done => {
-		const textDocs = new TextDocuments(TextDocumentSyncKind.Incremental);
+	test('onDidChangeContent incrementally removing content', done => {
+		const textDocs = TextDocuments.create();
 		textDocs.listen(server);
 		textDocs.onDidChangeContent(event => {
 			if (event.document.version === 2) {
@@ -105,8 +104,8 @@ suite('TextDocuments Tests', () => {
 		client.sendNotification(DidChangeTextDocumentNotification.type, changeDocNotif);
 	});
 
-	test('onDidChangeContent TextDocumentSyncKind.Incremental adding content', done => {
-		const textDocs = new TextDocuments(TextDocumentSyncKind.Incremental);
+	test('onDidChangeContent incrementally adding content', done => {
+		const textDocs = TextDocuments.create();
 		textDocs.listen(server);
 		textDocs.onDidChangeContent(event => {
 			if (event.document.version === 2) {
@@ -121,8 +120,8 @@ suite('TextDocuments Tests', () => {
 		client.sendNotification(DidChangeTextDocumentNotification.type, changeDocNotif);
 	});
 
-	test('onDidChangeContent TextDocumentSyncKind.Incremental replacing content', done => {
-		const textDocs = new TextDocuments(TextDocumentSyncKind.Incremental);
+	test('onDidChangeContent incrementally replacing content', done => {
+		const textDocs = TextDocuments.create();
 		textDocs.listen(server);
 		textDocs.onDidChangeContent(event => {
 			if (event.document.version === 2) {
@@ -137,8 +136,8 @@ suite('TextDocuments Tests', () => {
 		client.sendNotification(DidChangeTextDocumentNotification.type, changeDocNotif);
 	});
 
-	test('onDidChangeContent TextDocumentSyncKind.Incremental several content changes', done => {
-		const textDocs = new TextDocuments(TextDocumentSyncKind.Incremental);
+	test('onDidChangeContent several incremental content changes', done => {
+		const textDocs = TextDocuments.create();
 		textDocs.listen(server);
 		textDocs.onDidChangeContent(event => {
 			if (event.document.version === 2) {
@@ -191,7 +190,7 @@ suite('IncrementalTextDocument', () => {
 
 	function generateTextDocument(text: string): Promise<UpdateableDocument> {
 		return new Promise((resolve, reject) => {
-			const textDocs = new TextDocuments(TextDocumentSyncKind.Incremental);
+			const textDocs = TextDocuments.create();
 			textDocs.listen(server);
 			textDocs.onDidOpen(event => {
 				const { document } = event;
