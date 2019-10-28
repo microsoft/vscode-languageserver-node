@@ -799,7 +799,12 @@ suite('Protocol Converter', () => {
 			'data': '1'
 		};
 		const converted = p2c.asCompletionItem(item);
-		strictEqual(item.label, converted.label);
+		strictEqual(converted.label, item.label);
+		strictEqual((converted.insertText as vscode.SnippetString).value, '');
+		strictEqual(converted.range!.start.line, 5);
+		strictEqual(converted.range!.start.character, 0);
+		strictEqual(converted.range!.end.line, 5);
+		strictEqual(converted.range!.end.character, 16);
 	});
 });
 
