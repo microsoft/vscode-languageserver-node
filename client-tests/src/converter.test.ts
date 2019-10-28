@@ -748,6 +748,59 @@ suite('Protocol Converter', () => {
 		let result = converter.asUri('file://localhost/folder/file');
 		strictEqual('file://localhost/folder/file.vscode', result.toString());
 	});
+
+	test('Bug #361', () => {
+		const item: proto.CompletionItem = {
+			"label":"foo.nested.bar.bar",
+			"kind": proto.SymbolKind.Field,
+			"detail":"String",
+			"sortText":"00000",
+			"filterText":"foo.nested.bar.bar",
+			"insertTextFormat": proto.InsertTextFormat.Snippet,
+			"textEdit":{
+			   "range":{
+				  "start":{
+					 "line":5,
+					 "character":0
+				  },
+				  "end":{
+					 "line":5,
+					 "character":16
+				  }
+			   },
+			   "newText":""
+			},
+			"additionalTextEdits":[
+			   {
+				  "range":{
+					 "start":{
+						"line":3,
+						"character":10
+					 },
+					 "end":{
+						"line":5,
+						"character":0
+					 }
+				  },
+				  "newText":"\n      bar: \nother:"
+			   }
+			],
+			"command":{
+			   "title":"Move Cursor",
+			   "command":"sts.vscode-boot.moveCursor",
+			   "arguments":[
+				  "file:/tmp/workingcopy7749208753331224087.yml",
+				  {
+					 "line":4,
+					 "character":11
+				  }
+			   ]
+			},
+			"data":"1"
+		};
+		const converted = p2c.asCompletionItem(item);
+		strictEqual(item.label, converted.label);
+	});
 });
 
 suite('Code Converter', () => {
