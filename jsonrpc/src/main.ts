@@ -204,6 +204,9 @@ export enum Trace {
 export type TraceValues = 'off' | 'messages' | 'verbose';
 export namespace Trace {
 	export function fromString(value: string): Trace {
+		if (!Is.string(value)) {
+			return Trace.Off;
+		}
 		value = value.toLowerCase();
 		switch (value) {
 			case 'off':
