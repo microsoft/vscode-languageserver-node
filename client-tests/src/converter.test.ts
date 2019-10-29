@@ -751,60 +751,36 @@ suite('Protocol Converter', () => {
 
 	test('Bug #361', () => {
 		const item: proto.CompletionItem = {
-			'label': 'foo.nested.bar.bar',
-			'kind': proto.SymbolKind.Field,
-			'detail': 'String',
-			'sortText': '00000',
-			'filterText': 'foo.nested.bar.bar',
-			'insertTextFormat': proto.InsertTextFormat.Snippet,
+			'label': 'MyLabel',
 			'textEdit': {
 				'range': {
 					'start': {
-						'line': 5,
+						'line': 0,
 						'character': 0
 					},
 					'end': {
-						'line': 5,
-						'character': 16
+						'line': 0,
+						'character': 10
 					}
 				},
 				'newText': ''
-			},
-			'additionalTextEdits': [
-				{
-					'range': {
-						'start': {
-							'line': 3,
-							'character': 10
-						},
-						'end': {
-							'line': 5,
-							'character': 0
-						}
-					},
-					'newText': '\n      bar: \nother:'
-				}
-			],
-			'command': {
-				'title': 'Move Cursor',
-				'command': 'sts.vscode-boot.moveCursor',
-				'arguments': [
-					'file:/tmp/workingcopy7749208753331224087.yml',
-					{
-						'line': 4,
-						'character': 11
-					}
-				]
-			},
-			'data': '1'
+			}
 		};
 		const converted = p2c.asCompletionItem(item);
-		strictEqual(converted.label, item.label);
-		strictEqual((converted.insertText as vscode.SnippetString).value, '');
-		strictEqual(converted.range!.start.line, 5);
-		strictEqual(converted.range!.start.character, 0);
-		strictEqual(converted.range!.end.line, 5);
-		strictEqual(converted.range!.end.character, 16);
+		const toResolve = c2p.asCompletionItem(converted);
+		strictEqual(toResolve.textEdit!.range.start.line, 0);
+		strictEqual(toResolve.textEdit!.range.start.character, 0);
+		strictEqual(toResolve.textEdit!.range.end.line, 0);
+		strictEqual(toResolve.textEdit!.range.end.character, 10);
+		strictEqual(toResolve.textEdit!.newText, '');
+
+		const resolved = p2c.asCompletionItem(toResolve);
+		strictEqual(resolved.label, item.label);
+		strictEqual(resolved.range!.start.line, 0);
+		strictEqual(resolved.range!.start.character, 0);
+		strictEqual(resolved.range!.end.line, 0);
+		strictEqual(resolved.range!.end.character, 10);
+		strictEqual(resolved.insertText, '');
 	});
 });
 
