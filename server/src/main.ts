@@ -179,7 +179,8 @@ class IncrementalTextDocument implements TextDocument {
 	}
 
 	public update(event: TextDocumentContentChangeEvent, version: number): void {
-		const { text, range } = event;
+		const text = event.text;
+		const range = TextDocumentContentChangeEvent.isIncremental(event) ? event.range : undefined;
 
 		if (range === null || range === undefined) {
 			throw new Error(`FullPieceTreeTextDocument#update called with invalid event range ${range}`);

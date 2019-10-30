@@ -2712,6 +2712,21 @@ export type TextDocumentContentChangeEvent = {
 	text: string;
 }
 
+export namespace TextDocumentContentChangeEvent {
+	export function isIncremental(event: TextDocumentContentChangeEvent): event is { range: Range; rangeLength?: number; text: string; } {
+		let candidate: { range: Range; rangeLength?: number; text: string; } = event as any;
+		return candidate !== undefined && candidate !== null &&
+			Is.string(candidate.text) && Range.is(candidate.range) &&
+			(candidate.rangeLength === undefined || Is.number(candidate.rangeLength));
+	}
+
+	export function isFull(event: TextDocumentContentChangeEvent): event is { text: string; } {
+		let candidate: { range?: Range; rangeLength?: number; text: string; } = event as any;
+		return candidate !== undefined && candidate !== null &&
+			Is.string(candidate.text) && candidate.range === undefined && candidate.rangeLength === undefined;
+	}
+}
+
 class FullTextDocument implements TextDocument {
 
 	private _uri: DocumentUri;
