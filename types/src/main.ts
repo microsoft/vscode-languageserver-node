@@ -1664,8 +1664,8 @@ export namespace Hover {
 			MarkedString.is(candidate.contents) ||
 			Is.typedArray(candidate.contents, MarkedString.is)
 		) && (
-			value.range === void 0 || Range.is(value.range)
-		);
+				value.range === void 0 || Range.is(value.range)
+			);
 	}
 }
 
@@ -2490,7 +2490,8 @@ export namespace SelectionRange {
 export const EOL: string[] = ['\n', '\r\n', '\r'];
 
 /**
- * A simple text document. Not to be implemented.
+ * A simple text document. Not to be implemented. The document keeps the content
+ * as string.
  */
 export interface TextDocument {
 
@@ -2560,6 +2561,15 @@ export interface TextDocument {
 	readonly lineCount: number;
 }
 
+/**
+ * A simple text document that is updatable. Not to be implemented. The document keeps the content
+ * as string.
+ */
+interface UpdatableTextDocument extends TextDocument {
+	update(changes: TextDocumentContentChangeEvent, version: number): void;
+}
+
+
 export namespace TextDocument {
 	/**
 	 * Creates a new ITextDocument literal from the given uri and content.
@@ -2567,7 +2577,7 @@ export namespace TextDocument {
 	 * @param languageId  The document's language Id.
 	 * @param content The document's content.
 	 */
-	export function create(uri: DocumentUri, languageId: string, version: number, content: string): TextDocument {
+	export function create(uri: DocumentUri, languageId: string, version: number, content: string): UpdatableTextDocument {
 		return new FullTextDocument(uri, languageId, version, content);
 	}
 	/**
@@ -2639,7 +2649,7 @@ export namespace TextDocument {
 }
 
 /**
- * Event to signal changes to a simple text document.
+ * @deprecated No longer used, use TextDocumentChangeEvent<TextDocument> from vscode-languageserver instead.
  */
 export interface TextDocumentChangeEvent {
 	/**
@@ -2672,6 +2682,10 @@ export namespace TextDocumentSaveReason {
 
 export type TextDocumentSaveReason = 1 | 2 | 3;
 
+/**
+ * Represents reasons why a text document is saved.
+ * @deprecated No longer used, use TextDocumentWillSaveEvent<TextDocument> from vscode-languageserver instead.
+ */
 export interface TextDocumentWillSaveEvent {
 	/**
 	 * The document that will be saved
@@ -2727,8 +2741,8 @@ export namespace TextDocumentContentChangeEvent {
 	}
 }
 
-class FullTextDocument implements TextDocument {
-
+class FullTextDocument implements UpdatableTextDocument {
+  
 	private _uri: DocumentUri;
 	private _languageId: string;
 	private _version: number;
@@ -2764,10 +2778,19 @@ class FullTextDocument implements TextDocument {
 		return this._content;
 	}
 
-	public update(event: TextDocumentContentChangeEvent, version: number): void {
-		this._content = event.text;
+	public update(event: TextDocumentContentChangeEvent | TextDocumentContentChangeEvent[], version: number): void {
+		const changes = Array.isArray(event) ? event : [event];
+		for (let change of changes) {
+			if (!change.range) {
+				this._content = change.text;
+			} else {
+				let startOffset = this.offsetAt(change.range.start);
+				let endOffset = this.offsetAt(change.range.end);
+				this._content = this._content.substring(0, startOffset) + change.text + this._content.substring(endOffset, this._content.length);
+			}
+			this._lineOffsets = null;
+		}
 		this._version = version;
-		this._lineOffsets = null;
 	}
 
 	private getLineOffsets(): number[] {

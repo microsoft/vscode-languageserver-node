@@ -6,7 +6,7 @@
 'use strict';
 
 import {
-	TextDocument, TextDocumentChangeEvent, TextDocumentContentChangeEvent, TextDocumentWillSaveEvent,
+	TextDocument, TextDocumentContentChangeEvent, TextDocumentSaveReason,
 	Location, Command, TextEdit, WorkspaceEdit, CompletionItem, CompletionList, Hover,
 	SignatureHelp, Definition, DocumentHighlight, SymbolInformation, DocumentSymbol, WorkspaceSymbolParams, DocumentSymbolParams,
 	CodeLens, DocumentLink, Range,
@@ -44,7 +44,7 @@ import {
 	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse,
 	ClientCapabilities, ServerCapabilities, ProtocolConnection, createProtocolConnection, TypeDefinitionRequest, ImplementationRequest,
 	DocumentColorRequest, DocumentColorParams, ColorInformation, ColorPresentationParams, ColorPresentation, ColorPresentationRequest,
-	CodeAction, FoldingRangeParams, FoldingRange, FoldingRangeRequest, Declaration, DeclarationLink, DefinitionLink, DeclarationRequest, Position,
+	CodeAction, FoldingRangeParams, FoldingRange, FoldingRangeRequest, Declaration, DeclarationLink, DefinitionLink, DeclarationRequest,
 	SelectionRangeRequest, SelectionRange, SelectionRangeParams, ProgressType, HoverParams, SignatureHelpParams, DefinitionParams, DocumentHighlightParams, PrepareRenameParams
 } from 'vscode-languageserver-protocol';
 
@@ -59,10 +59,6 @@ export * from 'vscode-languageserver-protocol';
 export { Event };
 
 import * as fm from './files';
-
-import { PieceTreeTextBufferBuilder, PieceTreeBase, DefaultEndOfLine } from 'vscode-textbuffer';
-import { Range as PieceTreeRange } from 'vscode-textbuffer/lib/common/range';
-import { Position as PieceTreePosition } from 'vscode-textbuffer/lib/common/position';
 
 export namespace Files {
 	export let uriToFilePath = fm.uriToFilePath;
@@ -121,146 +117,89 @@ interface ConnectionState {
 	__textDocumentSync: TextDocumentSyncKind | undefined;
 }
 
+export interface TextDocumentsConfiguration<T> {
+	create: (uri: string, languageId: string, version: number, content: string) => T
+	update: (document: T, changes: TextDocumentContentChangeEvent[], version: number) => T
+}
+
+function getFullTextDocumentConfiguration(): TextDocumentsConfiguration<TextDocument> {
+	interface UpdateableDocument extends TextDocument {
+		update(changes: TextDocumentContentChangeEvent[], version: number): void;
+	}
+	function isUpdateableDocument(value: TextDocument): value is UpdateableDocument {
+		return Is.func((value as UpdateableDocument).update);
+	}
+	return {
+		create: TextDocument.create,
+		update: (d: TextDocument, changes: TextDocumentContentChangeEvent[], version) => {
+			if (isUpdateableDocument(d)) {
+				d.update(changes, version);
+				return d;
+			}
+			return d;
+		}
+	}
+}
+
 /**
- * Incrementally-synchronized Text Document implementation that leverages a
- * "Piece Tree" as text buffer. See the following for details:
- *  - https://github.com/microsoft/vscode-textbuffer
- *  - https://code.visualstudio.com/blogs/2018/03/23/text-buffer-reimplementation
- *
- * This text document implementation only supports "Incremental" text document
- * sync. If you wish to use "Full" text document sync, use FullTextDocument, as it
- * uses a simple JS string as an underlying text buffer, since the full text gets
- * swapped out on every update.
+ * Event to signal changes to a text document.
  */
-class IncrementalTextDocument implements TextDocument {
+export interface TextDocumentChangeEvent<T> {
+    /**
+     * The document that has changed.
+     */
+	document: T;
+}
 
-	private _uri: string;
-	private _languageId: string;
-	private _version: number;
-	private _tree: PieceTreeBase;
-
-	public constructor(uri: string, languageId: string, version: number, content: string) {
-		this._uri = uri;
-		this._languageId = languageId;
-		this._version = version;
-
-		// Prepare Piece Tree
-		const ptBuilder = new PieceTreeTextBufferBuilder();
-		ptBuilder.acceptChunk(content);
-		const ptFactory = ptBuilder.finish(true);
-		this._tree = ptFactory.create(DefaultEndOfLine.LF);
-	}
-
-	public get uri(): string {
-		return this._uri;
-	}
-
-	public get languageId(): string {
-		return this._languageId;
-	}
-
-	public get version(): number {
-		return this._version;
-	}
-
-	public getText(range?: Range): string {
-		if (range) {
-			const { start, end } = range;
-			// Clamp last line and last character appropriately when
-			// given range is beyond the document's end
-			const [clampedEndLine, clampedEndChar] = end.line + 1 > this.lineCount
-				? [this.lineCount, this._tree.getLineLength(this.lineCount) + 1]
-				: [end.line + 1, end.character + 1];
-
-			const ptRange = new PieceTreeRange(start.line + 1, start.character + 1, clampedEndLine, clampedEndChar);
-			return this._tree.getValueInRange(ptRange);
-		}
-		return this._tree.getLinesRawContent();
-	}
-
-	public update(event: TextDocumentContentChangeEvent, version: number): void {
-		const text = event.text;
-		const range = TextDocumentContentChangeEvent.isIncremental(event) ? event.range : undefined;
-
-		if (range === null || range === undefined) {
-			throw new Error(`FullPieceTreeTextDocument#update called with invalid event range ${range}`);
-		}
-
-		const startOffset = this.offsetAt(range.start);
-		const endOffset = this.offsetAt(range.end);
-
-		// Delete previous text at range and insert new text at appropriate offset
-		this._tree.delete(startOffset, endOffset - startOffset);
-		this._tree.insert(startOffset, text);
-
-		this._version = version;
-	}
-
-	public positionAt(offset: number) {
-		const clampedOffset = Math.min(offset, this._tree.getLength());
-		const ptPosition: PieceTreePosition = this._tree.getPositionAt(clampedOffset);
-		return Position.create(ptPosition.lineNumber - 1, ptPosition.column - 1);
-	}
-
-	public offsetAt(position: Position) {
-		if (position.line < 0) {
-			return 0;
-		}
-
-		const clampedChar = Math.max(1, position.character + 1);
-		return Math.min(
-			this._tree.getOffsetAt(position.line + 1, clampedChar),
-			this._tree.getLength()
-		);
-	}
-
-	public get lineCount() {
-		return this._tree.getLineCount();
-	}
+/**
+ * Event to signal that a document will be saved.
+ */
+export interface TextDocumentWillSaveEvent<T> {
+    /**
+     * The document that will be saved
+     */
+	document: T;
+    /**
+     * The reason why save was triggered.
+     */
+	reason: TextDocumentSaveReason;
 }
 
 /**
  * A manager for simple text documents
  */
-export class TextDocuments {
+export class TextDocuments<T = TextDocument> {
 
-	private _documents: { [uri: string]: TextDocument };
-	private _syncKind: TextDocumentSyncKind;
+	private _configuration: TextDocumentsConfiguration<T>;
 
-	private _onDidChangeContent: Emitter<TextDocumentChangeEvent>;
-	private _onDidOpen: Emitter<TextDocumentChangeEvent>;
-	private _onDidClose: Emitter<TextDocumentChangeEvent>;
-	private _onDidSave: Emitter<TextDocumentChangeEvent>;
-	private _onWillSave: Emitter<TextDocumentWillSaveEvent>;
-	private _willSaveWaitUntil: RequestHandler<TextDocumentWillSaveEvent, TextEdit[], void>;
+	private _documents: { [uri: string]: T };
+
+	private _onDidChangeContent: Emitter<TextDocumentChangeEvent<T>>;
+	private _onDidOpen: Emitter<TextDocumentChangeEvent<T>>;
+	private _onDidClose: Emitter<TextDocumentChangeEvent<T>>;
+	private _onDidSave: Emitter<TextDocumentChangeEvent<T>>;
+	private _onWillSave: Emitter<TextDocumentWillSaveEvent<T>>;
+	private _willSaveWaitUntil: RequestHandler<TextDocumentWillSaveEvent<T>, TextEdit[], void>;
 
 	/**
 	 * Create a new text document manager.
 	 */
-	public constructor(syncKind: TextDocumentSyncKind = TextDocumentSyncKind.Full) {
+	public constructor(configuration: TextDocumentsConfiguration<T>) {
 		this._documents = Object.create(null);
-		this._syncKind = syncKind;
+		this._configuration = configuration;
 
-		this._onDidChangeContent = new Emitter<TextDocumentChangeEvent>();
-		this._onDidOpen = new Emitter<TextDocumentChangeEvent>();
-		this._onDidClose = new Emitter<TextDocumentChangeEvent>();
-		this._onDidSave = new Emitter<TextDocumentChangeEvent>();
-		this._onWillSave = new Emitter<TextDocumentWillSaveEvent>();
-	}
-
-	/**
-	 * Returns the [TextDocumentSyncKind](#TextDocumentSyncKind) used by
-	 * this text document manager.
-	 */
-	public get syncKind(): TextDocumentSyncKind {
-		return this._syncKind;
+		this._onDidChangeContent = new Emitter<TextDocumentChangeEvent<T>>();
+		this._onDidOpen = new Emitter<TextDocumentChangeEvent<T>>();
+		this._onDidClose = new Emitter<TextDocumentChangeEvent<T>>();
+		this._onDidSave = new Emitter<TextDocumentChangeEvent<T>>();
+		this._onWillSave = new Emitter<TextDocumentWillSaveEvent<T>>();
 	}
 
 	/**
 	 * An event that fires when a text document managed by this manager
 	 * has been opened or the content changes.
 	 */
-	public get onDidChangeContent(): Event<TextDocumentChangeEvent> {
+	public get onDidChangeContent(): Event<TextDocumentChangeEvent<T>> {
 		return this._onDidChangeContent.event;
 	}
 
@@ -268,7 +207,7 @@ export class TextDocuments {
 	 * An event that fires when a text document managed by this manager
 	 * has been opened.
 	 */
-	public get onDidOpen(): Event<TextDocumentChangeEvent> {
+	public get onDidOpen(): Event<TextDocumentChangeEvent<T>> {
 		return this._onDidOpen.event;
 	}
 
@@ -276,7 +215,7 @@ export class TextDocuments {
 	 * An event that fires when a text document managed by this manager
 	 * will be saved.
 	 */
-	public get onWillSave(): Event<TextDocumentWillSaveEvent> {
+	public get onWillSave(): Event<TextDocumentWillSaveEvent<T>> {
 		return this._onWillSave.event;
 	}
 
@@ -284,7 +223,7 @@ export class TextDocuments {
 	 * Sets a handler that will be called if a participant wants to provide
 	 * edits during a text document save.
 	 */
-	public onWillSaveWaitUntil(handler: RequestHandler<TextDocumentWillSaveEvent, TextEdit[], void>) {
+	public onWillSaveWaitUntil(handler: RequestHandler<TextDocumentWillSaveEvent<T>, TextEdit[], void>) {
 		this._willSaveWaitUntil = handler;
 	}
 
@@ -292,7 +231,7 @@ export class TextDocuments {
 	 * An event that fires when a text document managed by this manager
 	 * has been saved.
 	 */
-	public get onDidSave(): Event<TextDocumentChangeEvent> {
+	public get onDidSave(): Event<TextDocumentChangeEvent<T>> {
 		return this._onDidSave.event;
 	}
 
@@ -300,7 +239,7 @@ export class TextDocuments {
 	 * An event that fires when a text document managed by this manager
 	 * has been closed.
 	 */
-	public get onDidClose(): Event<TextDocumentChangeEvent> {
+	public get onDidClose(): Event<TextDocumentChangeEvent<T>> {
 		return this._onDidClose.event;
 	}
 
@@ -311,7 +250,7 @@ export class TextDocuments {
 	 * @param uri The text document's URI to retrieve.
 	 * @return the text document or `undefined`.
 	 */
-	public get(uri: string): TextDocument | undefined {
+	public get(uri: string): T | undefined {
 		return this._documents[uri];
 	}
 
@@ -320,7 +259,7 @@ export class TextDocuments {
 	 *
 	 * @return all text documents.
 	 */
-	public all(): TextDocument[] {
+	public all(): T[] {
 		return Object.keys(this._documents).map(key => this._documents[key]);
 	}
 
@@ -340,29 +279,12 @@ export class TextDocuments {
 	 * @param connection The connection to listen on.
 	 */
 	public listen(connection: IConnection): void {
-		interface UpdateableDocument extends TextDocument {
-			update(event: TextDocumentContentChangeEvent, version: number): void;
-		}
-
-		function isUpdateableDocument(value: TextDocument): value is UpdateableDocument {
-			return Is.func((value as UpdateableDocument).update);
-		}
 
 		(<ConnectionState><any>connection).__textDocumentSync = TextDocumentSyncKind.Full;
 		connection.onDidOpenTextDocument((event: DidOpenTextDocumentParams) => {
 			let td = event.textDocument;
 
-			let document: TextDocument;
-			switch (this.syncKind) {
-				case TextDocumentSyncKind.Full:
-					document = TextDocument.create(td.uri, td.languageId, td.version, td.text);
-					break;
-				case TextDocumentSyncKind.Incremental:
-					document = new IncrementalTextDocument(td.uri, td.languageId, td.version, td.text);
-					break;
-				default:
-					throw new Error(`Invalid TextDocumentSyncKind: ${this.syncKind}`);
-			}
+			let document = this._configuration.create(td.uri, td.languageId, td.version, td.text);
 
 			this._documents[td.uri] = document;
 			let toFire = Object.freeze({ document });
@@ -377,34 +299,16 @@ export class TextDocuments {
 			}
 
 			let document = this._documents[td.uri];
-			if (!document || !isUpdateableDocument(document)) {
-				return;
-			}
 
 			const { version } = td;
 			if (version === null || version === void 0) {
 				throw new Error(`Received document change event for ${td.uri} without valid version identifier`);
 			}
 
-			switch (this.syncKind) {
-				case TextDocumentSyncKind.Full:
-					let last = changes[changes.length - 1];
-					document.update(last, version);
-					this._onDidChangeContent.fire(Object.freeze({ document }));
-					break;
-				case TextDocumentSyncKind.Incremental:
-					let updatedDoc: UpdateableDocument = changes.reduce(
-						(workingTextDoc: UpdateableDocument, change) => {
-							workingTextDoc.update(change, version);
-							return workingTextDoc;
-						},
-						document,
-					);
-					this._onDidChangeContent.fire(Object.freeze({ document: updatedDoc }));
-					break;
-				case TextDocumentSyncKind.None:
-					break;
-			}
+			document = this._configuration.update(document, changes, version);
+
+			this._documents[td.uri] = document;
+			this._onDidChangeContent.fire(Object.freeze({ document }));
 		});
 		connection.onDidCloseTextDocument((event: DidCloseTextDocumentParams) => {
 			let document = this._documents[event.textDocument.uri];
@@ -433,6 +337,17 @@ export class TextDocuments {
 				this._onDidSave.fire(Object.freeze({ document }));
 			}
 		});
+	}
+}
+
+export namespace TextDocuments {
+	export function create(): TextDocuments<TextDocument>
+	export function create<T>(configuration: TextDocumentsConfiguration<T>): TextDocuments<T>;
+	export function create<T>(configuration?: TextDocumentsConfiguration<T>): TextDocuments<T> | TextDocuments<TextDocument> {
+		if (configuration) {
+			return new TextDocuments(configuration);
+		}
+		return new TextDocuments(getFullTextDocumentConfiguration());
 	}
 }
 
