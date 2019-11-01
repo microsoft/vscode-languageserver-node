@@ -504,7 +504,6 @@ export namespace TextDocumentRegistrationOptions {
 	}
 }
 
-
 /**
  * Save options.
  */
