@@ -1,0 +1,4 @@
+lib/umd/test
+--recursive
+--ui tdd
+--useColors true

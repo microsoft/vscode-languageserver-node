@@ -2486,12 +2486,13 @@ export namespace SelectionRange {
 	}
 }
 
-
 export const EOL: string[] = ['\n', '\r\n', '\r'];
 
 /**
  * A simple text document. Not to be implemented. The document keeps the content
  * as string.
+ *
+ * @deprecated Use the text document from the new vscode-languageserver-textdocument package.
  */
 export interface TextDocument {
 
@@ -2562,14 +2563,8 @@ export interface TextDocument {
 }
 
 /**
- * A simple text document that is updatable. Not to be implemented. The document keeps the content
- * as string.
+ * @deprecated Use the text document from the new vscode-languageserver-textdocument package.
  */
-interface UpdatableTextDocument extends TextDocument {
-	update(changes: TextDocumentContentChangeEvent, version: number): void;
-}
-
-
 export namespace TextDocument {
 	/**
 	 * Creates a new ITextDocument literal from the given uri and content.
@@ -2577,7 +2572,7 @@ export namespace TextDocument {
 	 * @param languageId  The document's language Id.
 	 * @param content The document's content.
 	 */
-	export function create(uri: DocumentUri, languageId: string, version: number, content: string): UpdatableTextDocument {
+	export function create(uri: DocumentUri, languageId: string, version: number, content: string): TextDocument {
 		return new FullTextDocument(uri, languageId, version, content);
 	}
 	/**
@@ -2726,35 +2721,20 @@ export type TextDocumentContentChangeEvent = {
 	text: string;
 }
 
-export namespace TextDocumentContentChangeEvent {
-	export function isIncremental(event: TextDocumentContentChangeEvent): event is { range: Range; rangeLength?: number; text: string; } {
-		let candidate: { range: Range; rangeLength?: number; text: string; } = event as any;
-		return candidate !== undefined && candidate !== null &&
-			Is.string(candidate.text) && Range.is(candidate.range) &&
-			(candidate.rangeLength === undefined || Is.number(candidate.rangeLength));
-	}
+class FullTextDocument implements TextDocument {
 
-	export function isFull(event: TextDocumentContentChangeEvent): event is { text: string; } {
-		let candidate: { range?: Range; rangeLength?: number; text: string; } = event as any;
-		return candidate !== undefined && candidate !== null &&
-			Is.string(candidate.text) && candidate.range === undefined && candidate.rangeLength === undefined;
-	}
-}
-
-class FullTextDocument implements UpdatableTextDocument {
-  
 	private _uri: DocumentUri;
 	private _languageId: string;
 	private _version: number;
 	private _content: string;
-	private _lineOffsets: number[] | null;
+	private _lineOffsets: number[] | undefined;
 
 	public constructor(uri: DocumentUri, languageId: string, version: number, content: string) {
 		this._uri = uri;
 		this._languageId = languageId;
 		this._version = version;
 		this._content = content;
-		this._lineOffsets = null;
+		this._lineOffsets = undefined;
 	}
 
 	public get uri(): string {
@@ -2778,23 +2758,14 @@ class FullTextDocument implements UpdatableTextDocument {
 		return this._content;
 	}
 
-	public update(event: TextDocumentContentChangeEvent | TextDocumentContentChangeEvent[], version: number): void {
-		const changes = Array.isArray(event) ? event : [event];
-		for (let change of changes) {
-			if (!change.range) {
-				this._content = change.text;
-			} else {
-				let startOffset = this.offsetAt(change.range.start);
-				let endOffset = this.offsetAt(change.range.end);
-				this._content = this._content.substring(0, startOffset) + change.text + this._content.substring(endOffset, this._content.length);
-			}
-			this._lineOffsets = null;
-		}
+	public update(event: TextDocumentContentChangeEvent, version: number): void {
+		this._content = event.text;
 		this._version = version;
+		this._lineOffsets = undefined;
 	}
 
 	private getLineOffsets(): number[] {
-		if (this._lineOffsets === null) {
+		if (this._lineOffsets === undefined) {
 			let lineOffsets: number[] = [];
 			let text = this._content;
 			let isLineStart = true;
