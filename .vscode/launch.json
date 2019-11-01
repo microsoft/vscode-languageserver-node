@@ -66,10 +66,10 @@
 			"request": "launch",
 			"name": "test:client",
 			"runtimeExecutable": "${execPath}",
-			"args": ["--extensionDevelopmentPath=${workspaceRoot}/client", "--extensionTestsPath=${workspaceRoot}/client/lib/test" ],
+			"args": ["--extensionDevelopmentPath=${workspaceFolder}/client-tests", "--extensionTestsPath=${workspaceFolder}/client-tests/lib" ],
 			"stopOnEntry": false,
 			"sourceMaps": true,
-			"outFiles": ["${workspaceRoot}/client/lib/test/**/*.js"],
+			"outFiles": ["${workspaceRoot}/client-tests/lib/test/**/*.js"],
 			"preLaunchTask": "watch:client"
 		}
 	]

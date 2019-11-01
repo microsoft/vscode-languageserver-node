@@ -129,7 +129,6 @@ function getFullTextDocumentConfiguration(): TextDocumentsConfiguration<TextDocu
 	function isUpdateableDocument(value: TextDocument): value is UpdateableDocument {
 		return Is.func((value as UpdateableDocument).update);
 	}
-
 	return {
 		create: TextDocument.create,
 		update: (d: TextDocument, changes: TextDocumentContentChangeEvent[], version) => {

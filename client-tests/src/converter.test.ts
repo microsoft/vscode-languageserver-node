@@ -20,9 +20,9 @@ const p2c: protocolConverter.Converter = protocolConverter.createConverter();
 
 suite('Protocol Converter', () => {
 
-	function rangeEqual(actual: vscode.Range, expected: proto.Range) : void;
-	function rangeEqual(actual: proto.Range, expected: vscode.Range) : void;
-	function rangeEqual(actual: vscode.Range | proto.Range, expected: proto.Range | proto.Range) : void {
+	function rangeEqual(actual: vscode.Range, expected: proto.Range): void;
+	function rangeEqual(actual: proto.Range, expected: vscode.Range): void;
+	function rangeEqual(actual: vscode.Range | proto.Range, expected: proto.Range | proto.Range): void {
 		strictEqual(actual.start.line, expected.start.line);
 		strictEqual(actual.start.character, expected.start.character);
 		strictEqual(actual.end.line, expected.end.line);
@@ -44,7 +44,7 @@ suite('Protocol Converter', () => {
 		let start: proto.Position = { line: 1, character: 2 };
 		let end: proto.Position = { line: 8, character: 9 };
 
-		let result = p2c.asRange({start, end});
+		let result = p2c.asRange({ start, end });
 		strictEqual(result.start.line, start.line);
 		strictEqual(result.start.character, start.character);
 		strictEqual(result.end.line, end.line);
@@ -264,7 +264,7 @@ suite('Protocol Converter', () => {
 			kind: proto.CompletionItemKind.Field,
 			sortText: 'sort',
 			data: 'data',
-			additionalTextEdits: [proto.TextEdit.insert({ line: 1, character: 2}, 'insert')],
+			additionalTextEdits: [proto.TextEdit.insert({ line: 1, character: 2 }, 'insert')],
 			command: command,
 			tags: [proto.CompletionItemTag.Deprecated]
 		};
@@ -312,7 +312,7 @@ suite('Protocol Converter', () => {
 		let result = p2c.asCompletionItem(completionItem);
 		strictEqual(result.label, completionItem.label);
 		ok(result.insertText instanceof vscode.SnippetString);
-		strictEqual((<vscode.SnippetString> result.insertText).value, '${value}');
+		strictEqual((<vscode.SnippetString>result.insertText).value, '${value}');
 		strictEqual(result.range, undefined);
 		strictEqual(result.textEdit, undefined);
 
@@ -324,7 +324,7 @@ suite('Protocol Converter', () => {
 	test('Completion Item - Text Edit', () => {
 		let completionItem: proto.CompletionItem = {
 			label: 'item',
-			textEdit: proto.TextEdit.insert({ line: 1, character: 2}, 'insert')
+			textEdit: proto.TextEdit.insert({ line: 1, character: 2 }, 'insert')
 		};
 
 		let result = p2c.asCompletionItem(completionItem);
@@ -343,7 +343,7 @@ suite('Protocol Converter', () => {
 	test('Completion Item - Text Edit Snippet String', () => {
 		let completionItem: proto.CompletionItem = {
 			label: 'item',
-			textEdit: proto.TextEdit.insert({ line: 1, character: 2}, '${insert}'),
+			textEdit: proto.TextEdit.insert({ line: 1, character: 2 }, '${insert}'),
 			insertTextFormat: proto.InsertTextFormat.Snippet
 		};
 
@@ -414,7 +414,7 @@ suite('Protocol Converter', () => {
 	test('Completion Item - Preserve tag', () => {
 		let completionItem: proto.CompletionItem = {
 			label: 'item',
-			tags: [ proto.CompletionItemTag.Deprecated ]
+			tags: [proto.CompletionItemTag.Deprecated]
 		};
 
 		let result = c2p.asCompletionItem(p2c.asCompletionItem(completionItem));
@@ -472,7 +472,7 @@ suite('Protocol Converter', () => {
 	test('Completion Result', () => {
 		let completionResult: proto.CompletionList = {
 			isIncomplete: true,
-			items: [ { label: 'item', data: 'data' } ]
+			items: [{ label: 'item', data: 'data' }]
 		};
 		let result = p2c.asCompletionResult(completionResult);
 		strictEqual(result.isIncomplete, completionResult.isIncomplete);
@@ -512,7 +512,7 @@ suite('Protocol Converter', () => {
 		deepEqual(result.parameters, []);
 
 		signatureInfo.documentation = 'documentation';
-		signatureInfo.parameters = [ { label: 'label' } ];
+		signatureInfo.parameters = [{ label: 'label' }];
 		result = p2c.asSignatureInformation(signatureInfo);
 		strictEqual(result.label, signatureInfo.label);
 		strictEqual(result.documentation, signatureInfo.documentation);
@@ -590,7 +590,7 @@ suite('Protocol Converter', () => {
 		strictEqual(p2c.asDocumentHighlightKind(<any>proto.DocumentHighlightKind.Write), vscode.DocumentHighlightKind.Write);
 	});
 
-	test ('Document Highlight', () => {
+	test('Document Highlight', () => {
 		let start: proto.Position = { line: 1, character: 2 };
 		let end: proto.Position = { line: 8, character: 9 };
 		let documentHighlight = proto.DocumentHighlight.create(
@@ -612,7 +612,7 @@ suite('Protocol Converter', () => {
 		deepEqual(p2c.asDocumentHighlights([]), []);
 	});
 
-	test ('Document Links', () => {
+	test('Document Links', () => {
 		let location = 'file:///foo/bar';
 		let tooltip = 'tooltip';
 		let start: proto.Position = { line: 1, character: 2 };
@@ -694,7 +694,7 @@ suite('Protocol Converter', () => {
 	});
 
 	test('Code Lens', () => {
-		let codeLens: proto.CodeLens = proto.CodeLens.create(proto.Range.create(1,2,8,9), 'data');
+		let codeLens: proto.CodeLens = proto.CodeLens.create(proto.Range.create(1, 2, 8, 9), 'data');
 
 		let result = p2c.asCodeLens(codeLens);
 		rangeEqual(result.range, codeLens.range);
@@ -711,7 +711,7 @@ suite('Protocol Converter', () => {
 	});
 
 	test('Code Lens Preserve Data', () => {
-		let codeLens: proto.CodeLens = proto.CodeLens.create(proto.Range.create(1,2,8,9), 'data');
+		let codeLens: proto.CodeLens = proto.CodeLens.create(proto.Range.create(1, 2, 8, 9), 'data');
 		let result = c2p.asCodeLens(p2c.asCodeLens(codeLens));
 		strictEqual(result.data, codeLens.data);
 	});
@@ -719,21 +719,21 @@ suite('Protocol Converter', () => {
 	test('WorkspaceEdit', () => {
 		let workspaceChange = new proto.WorkspaceChange();
 		let uri1 = 'file:///abc.txt';
-		let change1 = workspaceChange.getTextEditChange({uri: uri1, version: 1});
-		change1.insert(proto.Position.create(0,1), 'insert');
+		let change1 = workspaceChange.getTextEditChange({ uri: uri1, version: 1 });
+		change1.insert(proto.Position.create(0, 1), 'insert');
 		let uri2 = 'file:///xyz.txt';
-		let change2 = workspaceChange.getTextEditChange({uri: uri2, version: 99});
-		change2.replace(proto.Range.create(0,1,2,3), 'replace');
+		let change2 = workspaceChange.getTextEditChange({ uri: uri2, version: 99 });
+		change2.replace(proto.Range.create(0, 1, 2, 3), 'replace');
 
 		let result = p2c.asWorkspaceEdit(workspaceChange.edit);
 		let edits = result.get(vscode.Uri.parse(uri1));
 		strictEqual(edits.length, 1);
-		rangeEqual(edits[0].range, proto.Range.create(0,1,0,1));
+		rangeEqual(edits[0].range, proto.Range.create(0, 1, 0, 1));
 		strictEqual(edits[0].newText, 'insert');
 
 		edits = result.get(vscode.Uri.parse(uri2));
 		strictEqual(edits.length, 1);
-		rangeEqual(edits[0].range, proto.Range.create(0,1,2,3));
+		rangeEqual(edits[0].range, proto.Range.create(0, 1, 2, 3));
 		strictEqual(edits[0].newText, 'replace');
 
 		strictEqual(p2c.asWorkspaceEdit(undefined), undefined);
@@ -747,6 +747,40 @@ suite('Protocol Converter', () => {
 
 		let result = converter.asUri('file://localhost/folder/file');
 		strictEqual('file://localhost/folder/file.vscode', result.toString());
+	});
+
+	test('Bug #361', () => {
+		const item: proto.CompletionItem = {
+			'label': 'MyLabel',
+			'textEdit': {
+				'range': {
+					'start': {
+						'line': 0,
+						'character': 0
+					},
+					'end': {
+						'line': 0,
+						'character': 10
+					}
+				},
+				'newText': ''
+			}
+		};
+		const converted = p2c.asCompletionItem(item);
+		const toResolve = c2p.asCompletionItem(converted);
+		strictEqual(toResolve.textEdit!.range.start.line, 0);
+		strictEqual(toResolve.textEdit!.range.start.character, 0);
+		strictEqual(toResolve.textEdit!.range.end.line, 0);
+		strictEqual(toResolve.textEdit!.range.end.character, 10);
+		strictEqual(toResolve.textEdit!.newText, '');
+
+		const resolved = p2c.asCompletionItem(toResolve);
+		strictEqual(resolved.label, item.label);
+		strictEqual(resolved.range!.start.line, 0);
+		strictEqual(resolved.range!.start.character, 0);
+		strictEqual(resolved.range!.end.line, 0);
+		strictEqual(resolved.range!.end.character, 10);
+		strictEqual(resolved.insertText, '');
 	});
 });
 
@@ -825,7 +859,7 @@ suite('Code Converter', () => {
 		item.sortText = 'sort';
 		let edit = vscode.TextEdit.insert(new vscode.Position(1, 2), 'insert');
 		item.additionalTextEdits = [edit];
-		item.tags = [ vscode.CompletionItemTag.Deprecated ];
+		item.tags = [vscode.CompletionItemTag.Deprecated];
 		item.command = { title: 'title', command: 'commandId' };
 
 		let result = c2p.asCompletionItem(<any>item);
@@ -843,7 +877,7 @@ suite('Code Converter', () => {
 	});
 
 	test('Completion Item - insertText', () => {
-		let item: ProtocolCompletionItem = new ProtocolCompletionItem ('label');
+		let item: ProtocolCompletionItem = new ProtocolCompletionItem('label');
 		item.insertText = 'insert';
 		item.fromEdit = false;
 
@@ -852,7 +886,7 @@ suite('Code Converter', () => {
 	});
 
 	test('Completion Item - TextEdit', () => {
-		let item: ProtocolCompletionItem = new ProtocolCompletionItem ('label');
+		let item: ProtocolCompletionItem = new ProtocolCompletionItem('label');
 		item.textEdit = vscode.TextEdit.insert(new vscode.Position(1, 2), 'insert');
 		item.fromEdit = false;
 
@@ -873,7 +907,7 @@ suite('Code Converter', () => {
 	});
 
 	test('Completion Item - TextEdit from Edit', () => {
-		let item: ProtocolCompletionItem = new ProtocolCompletionItem ('label');
+		let item: ProtocolCompletionItem = new ProtocolCompletionItem('label');
 		item.textEdit = vscode.TextEdit.insert(new vscode.Position(1, 2), 'insert');
 		item.fromEdit = true;
 

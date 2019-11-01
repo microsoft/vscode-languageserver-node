@@ -2702,25 +2702,47 @@ export interface TextDocumentWillSaveEvent {
  * An event describing a change to a text document. If range and rangeLength are omitted
  * the new text is considered to be the full content of the document.
  */
-export interface TextDocumentContentChangeEvent {
+export type TextDocumentContentChangeEvent = {
 	/**
 	 * The range of the document that changed.
 	 */
-	range?: Range;
+	range: Range;
 
 	/**
-	 * The length of the range that got replaced.
+	 * The optional length of the range that got replaced.
+	 *
+	 * @deprecated use range instead.
 	 */
 	rangeLength?: number;
 
 	/**
-	 * The new text of the document.
+	 * The new text for the provided range.
+	 */
+	text: string;
+} | {
+	/**
+	 * The new text of the whole document.
 	 */
 	text: string;
 }
 
-class FullTextDocument implements UpdatableTextDocument {
+export namespace TextDocumentContentChangeEvent {
+	export function isIncremental(event: TextDocumentContentChangeEvent): event is { range: Range; rangeLength?: number; text: string; } {
+		let candidate: { range: Range; rangeLength?: number; text: string; } = event as any;
+		return candidate !== undefined && candidate !== null &&
+			Is.string(candidate.text) && Range.is(candidate.range) &&
+			(candidate.rangeLength === undefined || Is.number(candidate.rangeLength));
+	}
 
+	export function isFull(event: TextDocumentContentChangeEvent): event is { text: string; } {
+		let candidate: { range?: Range; rangeLength?: number; text: string; } = event as any;
+		return candidate !== undefined && candidate !== null &&
+			Is.string(candidate.text) && candidate.range === undefined && candidate.rangeLength === undefined;
+	}
+}
+
+class FullTextDocument implements UpdatableTextDocument {
+  
 	private _uri: DocumentUri;
 	private _languageId: string;
 	private _version: number;

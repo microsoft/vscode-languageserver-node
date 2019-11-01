@@ -494,7 +494,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 
 	function fillPrimaryInsertText(target: proto.CompletionItem, source: ProtocolCompletionItem): void {
 		let format: proto.InsertTextFormat = proto.InsertTextFormat.PlainText;
-		let text: string | undefined;
+		let text: string | undefined = undefined;
 		let range: proto.Range | undefined = undefined;
 		if (source.textEdit) {
 			text = source.textEdit.newText;
@@ -510,7 +510,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		}
 
 		target.insertTextFormat = format;
-		if (source.fromEdit && text && range) {
+		if (source.fromEdit && text !== undefined && range !== undefined) {
 			target.textEdit = { newText: text, range: range };
 		} else {
 			target.insertText = text;
