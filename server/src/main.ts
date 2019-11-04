@@ -6,7 +6,7 @@
 'use strict';
 
 import {
-	TextDocument, TextDocumentContentChangeEvent, TextDocumentSaveReason,
+	TextDocumentContentChangeEvent, TextDocumentSaveReason,
 	Location, Command, TextEdit, WorkspaceEdit, CompletionItem, CompletionList, Hover,
 	SignatureHelp, Definition, DocumentHighlight, SymbolInformation, DocumentSymbol, WorkspaceSymbolParams, DocumentSymbolParams,
 	CodeLens, DocumentLink, Range,
@@ -149,7 +149,7 @@ export interface TextDocumentWillSaveEvent<T> {
 /**
  * A manager for simple text documents
  */
-export class TextDocuments<T = TextDocument> {
+export class TextDocuments<T> {
 
 	private _configuration: TextDocumentsConfiguration<T>;
 
