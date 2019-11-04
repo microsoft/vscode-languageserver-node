@@ -3163,7 +3163,6 @@ export abstract class BaseLanguageClient {
 	private readonly _method2Message: Map<string, RPCMessageType> = new Map<string, RPCMessageType>();
 	private readonly _dynamicFeatures: Map<string, DynamicFeature<any>> = new Map<string, DynamicFeature<any>>();
 
-
 	public registerFeatures(features: (StaticFeature | DynamicFeature<any>)[]): void {
 		for (let feature of features) {
 			this.registerFeature(feature);
@@ -3184,6 +3183,10 @@ export abstract class BaseLanguageClient {
 				this._dynamicFeatures.set(messages.method, feature);
 			}
 		}
+	}
+
+	public getDynamicFeature(message: RPCMessageType): DynamicFeature<any> | undefined {
+		return this._dynamicFeatures.get(message.method);
 	}
 
 	protected registerBuiltinFeatures() {
