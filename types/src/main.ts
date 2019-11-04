@@ -2655,30 +2655,6 @@ export interface TextDocumentChangeEvent {
 
 /**
  * Represents reasons why a text document is saved.
- */
-export namespace TextDocumentSaveReason {
-
-	/**
-	 * Manually triggered, e.g. by the user pressing save, by starting debugging,
-	 * or by an API call.
-	 */
-	export const Manual: 1 = 1;
-
-	/**
-	 * Automatic after a delay.
-	 */
-	export const AfterDelay: 2 = 2;
-
-	/**
-	 * When the editor lost focus.
-	 */
-	export const FocusOut: 3 = 3;
-}
-
-export type TextDocumentSaveReason = 1 | 2 | 3;
-
-/**
- * Represents reasons why a text document is saved.
  * @deprecated No longer used, use TextDocumentWillSaveEvent<TextDocument> from vscode-languageserver instead.
  */
 export interface TextDocumentWillSaveEvent {
@@ -2690,14 +2666,14 @@ export interface TextDocumentWillSaveEvent {
 	/**
 	 * The reason why save was triggered.
 	 */
-	reason: TextDocumentSaveReason;
+	reason: 1 | 2 | 3;
 }
 
 /**
  * An event describing a change to a text document. If range and rangeLength are omitted
  * the new text is considered to be the full content of the document.
  */
-export type TextDocumentContentChangeEvent = {
+type TextDocumentContentChangeEvent = {
 	/**
 	 * The range of the document that changed.
 	 */

@@ -9,13 +9,11 @@ import * as Is from './utils/is';
 import { RequestType, RequestType0, NotificationType, NotificationType0, ProgressToken, ProgressType } from 'vscode-jsonrpc';
 
 import {
-	TextDocumentContentChangeEvent, Position, Range, Location, LocationLink, Diagnostic, Command,
-	TextEdit, WorkspaceEdit, DocumentUri,
-	TextDocumentIdentifier, VersionedTextDocumentIdentifier, TextDocumentItem, TextDocumentSaveReason,
-	CompletionItem, CompletionList, Hover, SignatureHelp,
-	Definition, DefinitionLink, ReferenceContext, DocumentHighlight,
-	SymbolInformation, CodeLens, CodeActionContext, FormattingOptions, DocumentLink, MarkupKind,
-	SymbolKind, CompletionItemKind, CodeAction, CodeActionKind, DocumentSymbol, CompletionItemTag, DiagnosticTag
+	Position, Range, Location, LocationLink, Diagnostic, Command, TextEdit, WorkspaceEdit, DocumentUri,
+	TextDocumentIdentifier, VersionedTextDocumentIdentifier, TextDocumentItem, CompletionItem, CompletionList,
+	Hover, SignatureHelp, Definition, DefinitionLink, ReferenceContext, DocumentHighlight, SymbolInformation,
+	CodeLens, CodeActionContext, FormattingOptions, DocumentLink, MarkupKind, SymbolKind, CompletionItemKind,
+	CodeAction, CodeActionKind, DocumentSymbol, CompletionItemTag, DiagnosticTag
 } from 'vscode-languageserver-types';
 
 import { ImplementationRequest, ImplementationClientCapabilities, ImplementationOptions, ImplementationRegistrationOptions } from './protocol.implementation';
@@ -1084,6 +1082,34 @@ export namespace DidOpenTextDocumentNotification {
 }
 
 /**
+ * An event describing a change to a text document. If range and rangeLength are omitted
+ * the new text is considered to be the full content of the document.
+ */
+export type TextDocumentContentChangeEvent = {
+	/**
+	 * The range of the document that changed.
+	 */
+	range: Range;
+
+	/**
+	 * The optional length of the range that got replaced.
+	 *
+	 * @deprecated use range instead.
+	 */
+	rangeLength?: number;
+
+	/**
+	 * The new text for the provided range.
+	 */
+	text: string;
+} | {
+	/**
+	 * The new text of the whole document.
+	 */
+	text: string;
+}
+
+/**
  * The change text document notification's parameters.
  */
 export interface DidChangeTextDocumentParams {
@@ -1172,6 +1198,30 @@ export interface TextDocumentSaveRegistrationOptions extends TextDocumentRegistr
 export namespace DidSaveTextDocumentNotification {
 	export const type = new NotificationType<DidSaveTextDocumentParams, TextDocumentSaveRegistrationOptions>('textDocument/didSave');
 }
+
+/**
+ * Represents reasons why a text document is saved.
+ */
+export namespace TextDocumentSaveReason {
+
+	/**
+	 * Manually triggered, e.g. by the user pressing save, by starting debugging,
+	 * or by an API call.
+	 */
+	export const Manual: 1 = 1;
+
+	/**
+	 * Automatic after a delay.
+	 */
+	export const AfterDelay: 2 = 2;
+
+	/**
+	 * When the editor lost focus.
+	 */
+	export const FocusOut: 3 = 3;
+}
+
+export type TextDocumentSaveReason = 1 | 2 | 3;
 
 /**
  * The parameters send in a will save text document notification.
