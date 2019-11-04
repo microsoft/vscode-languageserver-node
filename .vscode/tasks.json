@@ -27,6 +27,19 @@
 			]
 		},
 		{
+			"label": "compile:textDocument",
+			"type": "shell",
+			"command": "npm run compile:textDocument",
+			"group": "build",
+			"presentation": {
+				"panel": "dedicated",
+				"reveal": "never"
+			},
+			"problemMatcher": [
+				"$tsc"
+			]
+		},
+		{
 			"label": "compile:jsonrpc",
 			"type": "shell",
 			"command": "npm run compile:jsonrpc",
@@ -112,6 +125,7 @@
 			"label": "watch",
 			"dependsOn": [
 				"watch:types",
+				"watch:textDocument",
 				"watch:jsonrpc",
 				"watch:protocol",
 				"watch:server",
@@ -124,6 +138,20 @@
 			"label": "watch:types",
 			"type": "shell",
 			"command": "npm run watch:types",
+			"group": "build",
+			"presentation": {
+				"panel": "dedicated",
+				"reveal": "never"
+			},
+			"isBackground": true,
+			"problemMatcher": [
+				"$tsc-watch"
+			]
+		},
+		{
+			"label": "watch:textDocument",
+			"type": "shell",
+			"command": "npm run watch:textDocument",
 			"group": "build",
 			"presentation": {
 				"panel": "dedicated",

@@ -189,6 +189,11 @@ export interface TextDocument {
 	readonly lineCount: number;
 }
 
+export interface TextDocumentsConfiguration {
+	create(uri: string, languageId: string, version: number, content: string): TextDocument;
+	update(document: TextDocument, changes: TextDocumentContentChangeEvent[], version: number): TextDocument;
+}
+
 class FullTextDocument implements TextDocument {
 
 	private _uri: DocumentUri;
@@ -329,6 +334,19 @@ export namespace TextDocument {
 	 */
 	export function create(uri: DocumentUri, languageId: string, version: number, content: string): TextDocument {
 		return new FullTextDocument(uri, languageId, version, content);
+	}
+
+	/**
+	 * Creates a text document configuration.
+	 */
+	export function createTextDocumentsConfiguration(): TextDocumentsConfiguration {
+		return {
+			create: TextDocument.create,
+			update: (document, changes, version) => {
+				document.update(changes, version);
+				return document;
+			}
+		};
 	}
 
 	export function applyEdits(document: TextDocument, edits: TextEdit[]): string {

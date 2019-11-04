@@ -118,27 +118,8 @@ interface ConnectionState {
 }
 
 export interface TextDocumentsConfiguration<T> {
-	create: (uri: string, languageId: string, version: number, content: string) => T
-	update: (document: T, changes: TextDocumentContentChangeEvent[], version: number) => T
-}
-
-function getFullTextDocumentConfiguration(): TextDocumentsConfiguration<TextDocument> {
-	interface UpdateableDocument extends TextDocument {
-		update(changes: TextDocumentContentChangeEvent[], version: number): void;
-	}
-	function isUpdateableDocument(value: TextDocument): value is UpdateableDocument {
-		return Is.func((value as UpdateableDocument).update);
-	}
-	return {
-		create: TextDocument.create,
-		update: (d: TextDocument, changes: TextDocumentContentChangeEvent[], version) => {
-			if (isUpdateableDocument(d)) {
-				d.update(changes, version);
-				return d;
-			}
-			return d;
-		}
-	}
+	create(uri: string, languageId: string, version: number, content: string): T;
+	update(document: T, changes: TextDocumentContentChangeEvent[], version: number): T;
 }
 
 /**
@@ -337,17 +318,6 @@ export class TextDocuments<T = TextDocument> {
 				this._onDidSave.fire(Object.freeze({ document }));
 			}
 		});
-	}
-}
-
-export namespace TextDocuments {
-	export function create(): TextDocuments<TextDocument>
-	export function create<T>(configuration: TextDocumentsConfiguration<T>): TextDocuments<T>;
-	export function create<T>(configuration?: TextDocumentsConfiguration<T>): TextDocuments<T> | TextDocuments<TextDocument> {
-		if (configuration) {
-			return new TextDocuments(configuration);
-		}
-		return new TextDocuments(getFullTextDocumentConfiguration());
 	}
 }
 

@@ -1664,8 +1664,8 @@ export namespace Hover {
 			MarkedString.is(candidate.contents) ||
 			Is.typedArray(candidate.contents, MarkedString.is)
 		) && (
-				value.range === void 0 || Range.is(value.range)
-			);
+			value.range === void 0 || Range.is(value.range)
+		);
 	}
 }
 
