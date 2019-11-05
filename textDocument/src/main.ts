@@ -181,11 +181,6 @@ export interface TextDocument {
 	readonly lineCount: number;
 }
 
-export interface TextDocumentsConfiguration {
-	create(uri: string, languageId: string, version: number, content: string): TextDocument;
-	update(document: TextDocument, changes: TextDocumentContentChangeEvent[], version: number): TextDocument;
-}
-
 class FullTextDocument implements TextDocument {
 
 	private _uri: DocumentUri;
@@ -326,16 +321,20 @@ export namespace TextDocument {
 	}
 
 	/**
-	 * Creates a text document configuration.
+	 * Updates a TextDocument by modifing its content.
+	 *
+	 * @param document the document to update. Only documents created by TextDocument.create are valid inputs.
+	 * @param changes the changes to apply to the document.
+	 * @returns The updated TextDocument. Note: That's the same document instance passed in as first parameter.
+	 *
 	 */
-	export function createTextDocumentsConfiguration(): TextDocumentsConfiguration {
-		return {
-			create: TextDocument.create,
-			update: (document, changes, version) => {
-				(document as FullTextDocument).update(changes, version);
-				return document;
-			}
-		};
+	export function update(document: TextDocument, changes: TextDocumentContentChangeEvent[], version: number): TextDocument {
+		if (document instanceof FullTextDocument) {
+			document.update(changes, version);
+			return document;
+		} else {
+			throw new Error('TextDocument.update: document must be created by TextDocument.create');
+		}
 	}
 
 	export function applyEdits(document: TextDocument, edits: TextEdit[]): string {
