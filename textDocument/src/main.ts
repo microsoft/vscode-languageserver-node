@@ -417,7 +417,7 @@ function computeLineOffsets(text: string, isAtLineStart: boolean, textOffset = 0
 function getWellformedRange(range: Range): Range {
 	const start = range.start;
 	const end = range.end;
-	if (start.line > end.line || (start.line == end.line && start.character > end.character)) {
+	if (start.line > end.line || (start.line === end.line && start.character > end.character)) {
 		return { start: end, end: start };
 	}
 	return range;
