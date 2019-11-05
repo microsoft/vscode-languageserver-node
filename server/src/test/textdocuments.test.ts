@@ -58,7 +58,7 @@ suite('Legacy standard text documents', () => {
 	});
 
 	test('Change full file content', done => {
-		const textDocs = new TextDocuments(TextDocument.createTextDocumentsConfiguration());
+		const textDocs = new TextDocuments(TextDocument);
 		textDocs.listen(server);
 		textDocs.onDidChangeContent(event => {
 			if (event.document.version === 2) {
@@ -74,7 +74,7 @@ suite('Legacy standard text documents', () => {
 	});
 
 	test('Several full content updates', done => {
-		const textDocs = new TextDocuments(TextDocument.createTextDocumentsConfiguration());
+		const textDocs = new TextDocuments(TextDocument);
 		textDocs.listen(server);
 		textDocs.onDidChangeContent(event => {
 			if (event.document.version === 2) {
@@ -106,7 +106,7 @@ suite('New custom text Documents', () => {
 	});
 
 	test('Incrementally removing content', done => {
-		const textDocs = new TextDocuments(TextDocument.createTextDocumentsConfiguration());
+		const textDocs = new TextDocuments(TextDocument);
 		textDocs.listen(server);
 		textDocs.onDidChangeContent(event => {
 			if (event.document.version === 2) {
@@ -122,7 +122,7 @@ suite('New custom text Documents', () => {
 	});
 
 	test('Incrementally adding content', done => {
-		const textDocs = new TextDocuments(TextDocument.createTextDocumentsConfiguration());
+		const textDocs = new TextDocuments(TextDocument);
 		textDocs.listen(server);
 		textDocs.onDidChangeContent(event => {
 			if (event.document.version === 2) {
@@ -138,7 +138,7 @@ suite('New custom text Documents', () => {
 	});
 
 	test('Incrementally replacing content', done => {
-		const textDocs = new TextDocuments(TextDocument.createTextDocumentsConfiguration());
+		const textDocs = new TextDocuments(TextDocument);
 		textDocs.listen(server);
 		textDocs.onDidChangeContent(event => {
 			if (event.document.version === 2) {
@@ -154,7 +154,7 @@ suite('New custom text Documents', () => {
 	});
 
 	test('Several incremental content changes', done => {
-		const textDocs = new TextDocuments(TextDocument.createTextDocumentsConfiguration());
+		const textDocs = new TextDocuments(TextDocument);
 		textDocs.listen(server);
 		textDocs.onDidChangeContent(event => {
 			if (event.document.version === 2) {
