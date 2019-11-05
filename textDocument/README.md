@@ -12,7 +12,7 @@ to implement language servers for [VSCode](https://code.visualstudio.com/).
 
 ### 1.0.0
 
-Initialial version.
+Initial version.
 
 ## License
 [MIT](https://github.com/Microsoft/vscode-languageserver-node/blob/master/License.txt)

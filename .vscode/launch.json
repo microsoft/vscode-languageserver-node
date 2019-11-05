@@ -13,8 +13,23 @@
 			"runtimeArgs": [],
 			"env": { },
 			"sourceMaps": true,
-			"outFiles": ["${workspaceRoot}/types/lib/**/*.js"],
+			"outFiles": ["${workspaceRoot}/types/lib/umd/**/*.js"],
 			"preLaunchTask": "watch:types"
+		},
+		{
+			"request": "launch",
+			"type": "node",
+			"name": "test:textDocument",
+			"program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
+			"stopOnEntry": false,
+			"args": ["--timeout", "999999"],
+			"cwd": "${workspaceRoot}/textDocument",
+			"runtimeExecutable": null,
+			"runtimeArgs": [],
+			"env": { },
+			"sourceMaps": true,
+			"outFiles": ["${workspaceRoot}/textDocument/lib/umd/**/*.js"],
+			"preLaunchTask": "watch:textDocument"
 		},
 		{
 			"request": "launch",
