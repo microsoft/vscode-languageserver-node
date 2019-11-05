@@ -5,8 +5,18 @@
 'use strict';
 
 import * as assert from 'assert';
-import { TextDocument } from '../main';
+import { TextDocument as SimpleTextDocument, TextDocumentContentChangeEvent, DocumentUri } from '../main';
 import { Positions as Position, Ranges as Range } from './helper';
+
+interface TextDocument extends SimpleTextDocument {
+	update(changes: TextDocumentContentChangeEvent[], version: number): void;
+}
+
+namespace TextDocument {
+	export function create(uri: DocumentUri, languageId: string, version: number, content: string): TextDocument {
+		return SimpleTextDocument.create(uri, languageId, version, content) as TextDocument;
+	}
+}
 
 suite('Text Document Lines Model Validator', () => {
 	function newDocument(str: string) {
