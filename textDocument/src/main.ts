@@ -174,14 +174,6 @@ export interface TextDocument {
 	offsetAt(position: Position): number;
 
 	/**
-	 * Updates the text document to a new state using the provided change events.
-	 *
-	 * @param changes the text document changes
-	 * @param version the version number after all changes have been applied
-	 */
-	update(changes: TextDocumentContentChangeEvent[], version: number): void;
-
-	/**
 	 * The number of lines in this document.
 	 *
 	 * @readonly
@@ -343,7 +335,7 @@ export namespace TextDocument {
 		return {
 			create: TextDocument.create,
 			update: (document, changes, version) => {
-				document.update(changes, version);
+				(document as FullTextDocument).update(changes, version);
 				return document;
 			}
 		};
