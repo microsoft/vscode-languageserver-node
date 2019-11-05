@@ -216,8 +216,8 @@ class FullTextDocument implements TextDocument {
 
 	public getText(range?: Range): string {
 		if (range) {
-			let start = this.offsetAt(range.start);
-			let end = this.offsetAt(range.end);
+			const start = this.offsetAt(range.start);
+			const end = this.offsetAt(range.end);
 			return this._content.substring(start, end);
 		}
 		return this._content;
@@ -226,39 +226,36 @@ class FullTextDocument implements TextDocument {
 	public update(changes: TextDocumentContentChangeEvent[], version: number): void {
 		for (let change of changes) {
 			if (FullTextDocument.isIncremental(change)) {
-				let startOffset = this.offsetAt(change.range.start);
-				let endOffset = this.offsetAt(change.range.end);
+				// makes sure start is before end
+				const range = getWellformedRange(change.range);
+
+				// update content
+				const startOffset = this.offsetAt(range.start);
+				const endOffset = this.offsetAt(range.end);
 				this._content = this._content.substring(0, startOffset) + change.text + this._content.substring(endOffset, this._content.length);
+
+				// update the offsets
+				const oldOffsets = this._lineOffsets!;
+				const newLineOffsets = oldOffsets.slice(0, Math.max(range.start.line, 0) + 1);
+				computeLineOffsets(change.text, false, startOffset, newLineOffsets);
+				const diff = change.text.length - (endOffset - startOffset);
+				for (let i = Math.max(range.end.line, 0) + 1; i < oldOffsets.length; i++) {
+					newLineOffsets.push(oldOffsets[i] + diff);
+				}
+				this._lineOffsets = newLineOffsets;
 			} else if (FullTextDocument.isFull(change)) {
 				this._content = change.text;
+				this._lineOffsets = undefined;
 			} else {
 				throw new Error('Unknown change event received');
 			}
-			this._lineOffsets = undefined;
 		}
 		this._version = version;
 	}
 
 	private getLineOffsets(): number[] {
 		if (this._lineOffsets === undefined) {
-			let lineOffsets: number[] = [];
-			let text = this._content;
-			let isLineStart = true;
-			for (let i = 0; i < text.length; i++) {
-				if (isLineStart) {
-					lineOffsets.push(i);
-					isLineStart = false;
-				}
-				let ch = text.charAt(i);
-				isLineStart = (ch === '\r' || ch === '\n');
-				if (ch === '\r' && i + 1 < text.length && text.charAt(i + 1) === '\n') {
-					i++;
-				}
-			}
-			if (isLineStart && text.length > 0) {
-				lineOffsets.push(text.length);
-			}
-			this._lineOffsets = lineOffsets;
+			this._lineOffsets = computeLineOffsets(this._content, true);
 		}
 		return this._lineOffsets;
 	}
@@ -343,7 +340,7 @@ export namespace TextDocument {
 
 	export function applyEdits(document: TextDocument, edits: TextEdit[]): string {
 		let text = document.getText();
-		let sortedEdits = mergeSort(edits, (a, b) => {
+		let sortedEdits = mergeSort(edits.map(getWellformedEdit), (a, b) => {
 			let diff = a.range.start.line - b.range.start.line;
 			if (diff === 0) {
 				return a.range.start.character - b.range.start.character;
@@ -364,38 +361,72 @@ export namespace TextDocument {
 		}
 		return text;
 	}
+}
 
-	function mergeSort<T>(data: T[], compare: (a: T, b: T) => number): T[] {
-		if (data.length <= 1) {
-			// sorted
-			return data;
-		}
-		const p = (data.length / 2) | 0;
-		const left = data.slice(0, p);
-		const right = data.slice(p);
-
-		mergeSort(left, compare);
-		mergeSort(right, compare);
-
-		let leftIdx = 0;
-		let rightIdx = 0;
-		let i = 0;
-		while (leftIdx < left.length && rightIdx < right.length) {
-			let ret = compare(left[leftIdx], right[rightIdx]);
-			if (ret <= 0) {
-				// smaller_equal -> take left to preserve order
-				data[i++] = left[leftIdx++];
-			} else {
-				// greater -> take right
-				data[i++] = right[rightIdx++];
-			}
-		}
-		while (leftIdx < left.length) {
-			data[i++] = left[leftIdx++];
-		}
-		while (rightIdx < right.length) {
-			data[i++] = right[rightIdx++];
-		}
+function mergeSort<T>(data: T[], compare: (a: T, b: T) => number): T[] {
+	if (data.length <= 1) {
+		// sorted
 		return data;
 	}
+	const p = (data.length / 2) | 0;
+	const left = data.slice(0, p);
+	const right = data.slice(p);
+
+	mergeSort(left, compare);
+	mergeSort(right, compare);
+
+	let leftIdx = 0;
+	let rightIdx = 0;
+	let i = 0;
+	while (leftIdx < left.length && rightIdx < right.length) {
+		let ret = compare(left[leftIdx], right[rightIdx]);
+		if (ret <= 0) {
+			// smaller_equal -> take left to preserve order
+			data[i++] = left[leftIdx++];
+		} else {
+			// greater -> take right
+			data[i++] = right[rightIdx++];
+		}
+	}
+	while (leftIdx < left.length) {
+		data[i++] = left[leftIdx++];
+	}
+	while (rightIdx < right.length) {
+		data[i++] = right[rightIdx++];
+	}
+	return data;
+}
+
+function computeLineOffsets(text: string, isAtLineStart: boolean, textOffset = 0, result: number[] = []): number[] {
+	for (let i = 0; i < text.length; i++) {
+		if (isAtLineStart) {
+			result.push(i + textOffset);
+		}
+		let ch = text.charAt(i);
+		isAtLineStart = ch === '\r' || ch === '\n';
+		if (ch === '\r' && i + 1 < text.length && text.charAt(i + 1) === '\n') {
+			i++;
+		}
+	}
+	if (isAtLineStart) {
+		result.push(text.length + textOffset);
+	}
+	return result;
+}
+
+function getWellformedRange(range: Range): Range {
+	const start = range.start;
+	const end = range.end;
+	if (start.line > end.line || (start.line == end.line && start.character > end.character)) {
+		return { start: end, end: start };
+	}
+	return range;
+}
+
+function getWellformedEdit(textEdit: TextEdit): TextEdit {
+	const range = getWellformedRange(textEdit.range);
+	if (range !== textEdit.range) {
+		return { newText: textEdit.newText, range }
+	}
+	return textEdit;
 }

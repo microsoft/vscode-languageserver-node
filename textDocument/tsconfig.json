@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"target": "es5",
 		"module": "umd",
-		"sourceMap": false,
+		"sourceMap": true,
 		"declaration": true,
 		"stripInternal": true,
 		"lib": [ "es2015" ],
