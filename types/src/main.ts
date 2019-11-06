@@ -2644,6 +2644,30 @@ export namespace TextDocument {
 }
 
 /**
+ * Represents reasons why a text document is saved.
+ */
+export namespace TextDocumentSaveReason {
+
+	/**
+	 * Manually triggered, e.g. by the user pressing save, by starting debugging,
+	 * or by an API call.
+	 */
+	export const Manual: 1 = 1;
+
+	/**
+	 * Automatic after a delay.
+	 */
+	export const AfterDelay: 2 = 2;
+
+	/**
+	 * When the editor lost focus.
+	 */
+	export const FocusOut: 3 = 3;
+}
+
+export type TextDocumentSaveReason = 1 | 2 | 3;
+
+/**
  * @deprecated No longer used, use TextDocumentChangeEvent<TextDocument> from vscode-languageserver instead.
  */
 export interface TextDocumentChangeEvent {
