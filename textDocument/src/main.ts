@@ -230,14 +230,27 @@ class FullTextDocument implements TextDocument {
 				this._content = this._content.substring(0, startOffset) + change.text + this._content.substring(endOffset, this._content.length);
 
 				// update the offsets
-				const oldOffsets = this._lineOffsets!;
-				const newLineOffsets = oldOffsets.slice(0, Math.max(range.start.line, 0) + 1);
-				computeLineOffsets(change.text, false, startOffset, newLineOffsets);
-				const diff = change.text.length - (endOffset - startOffset);
-				for (let i = Math.max(range.end.line, 0) + 1; i < oldOffsets.length; i++) {
-					newLineOffsets.push(oldOffsets[i] + diff);
+				const startLine = Math.max(range.start.line, 0);
+				const endLine = Math.max(range.end.line, 0);
+				let lineOffsets = this._lineOffsets!;
+				const addedLineOffsets = computeLineOffsets(change.text, false, startOffset);
+				if (endLine - startLine === addedLineOffsets.length) {
+					for (let i = 0, len = addedLineOffsets.length; i < len; i++) {
+						lineOffsets[i + startLine + 1] = addedLineOffsets[i];
+					}
+				} else {
+					if (addedLineOffsets.length < 10000) {
+						lineOffsets.splice(startLine + 1, endLine - startLine, ...addedLineOffsets);
+					} else { // avoid too many arguments for splice
+						this._lineOffsets = lineOffsets = lineOffsets.slice(0, startLine + 1).concat(addedLineOffsets, lineOffsets.slice(endLine + 1));
+					}
 				}
-				this._lineOffsets = newLineOffsets;
+				const diff = change.text.length - (endOffset - startOffset);
+				if (diff !== 0) {
+					for (let i = startLine + 1 + addedLineOffsets.length, len = lineOffsets.length; i < len; i++) {
+						lineOffsets[i] = lineOffsets[i] + diff;
+					}
+				}
 			} else if (FullTextDocument.isFull(change)) {
 				this._content = change.text;
 				this._lineOffsets = undefined;
@@ -396,19 +409,27 @@ function mergeSort<T>(data: T[], compare: (a: T, b: T) => number): T[] {
 	return data;
 }
 
-function computeLineOffsets(text: string, isAtLineStart: boolean, textOffset = 0, result: number[] = []): number[] {
+const enum CharCode {
+	/**
+	 * The `\n` character.
+	 */
+	LineFeed = 10,
+	/**
+	 * The `\r` character.
+	 */
+	CarriageReturn = 13,
+}
+
+function computeLineOffsets(text: string, isAtLineStart: boolean, textOffset = 0): number[] {
+	const result: number[] = isAtLineStart ? [textOffset] : [];
 	for (let i = 0; i < text.length; i++) {
-		if (isAtLineStart) {
-			result.push(i + textOffset);
+		let ch = text.charCodeAt(i);
+		if (ch === CharCode.CarriageReturn || ch === CharCode.LineFeed) {
+			if (ch === CharCode.CarriageReturn && i + 1 < text.length && text.charCodeAt(i + 1) === CharCode.LineFeed) {
+				i++;
+			}
+			result.push(textOffset + i + 1);
 		}
-		let ch = text.charAt(i);
-		isAtLineStart = ch === '\r' || ch === '\n';
-		if (ch === '\r' && i + 1 < text.length && text.charAt(i + 1) === '\n') {
-			i++;
-		}
-	}
-	if (isAtLineStart) {
-		result.push(text.length + textOffset);
 	}
 	return result;
 }

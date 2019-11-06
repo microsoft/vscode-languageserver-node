@@ -202,7 +202,7 @@ suite('Text Document Incremental Updates', () => {
 		assertValidLineNumbers(document);
 	});
 
-	test('Incrementally replacing content', () => {
+	test('Incrementally replacing single-line content, more chars', () => {
 		const document = newDocument('function abc() {\n  console.log("hello, world!");\n}');
 		assert.equal(document.lineCount, 3);
 		assertValidLineNumbers(document);
@@ -213,7 +213,29 @@ suite('Text Document Incremental Updates', () => {
 		assertValidLineNumbers(document);
 	});
 
-	test('Incrementally replacing multi-line content', () => {
+	test('Incrementally replacing single-line content, less chars', () => {
+		const document = newDocument('function abc() {\n  console.log("hello, world!");\n}');
+		assert.equal(document.lineCount, 3);
+		assertValidLineNumbers(document);
+		TextDocument.update(document, [{ text: 'hey', range: Ranges.forSubstring(document, 'hello, world!') }], 1);
+		assert.strictEqual(document.version, 1);
+		assert.strictEqual(document.getText(), 'function abc() {\n  console.log("hey");\n}');
+		assert.equal(document.lineCount, 3);
+		assertValidLineNumbers(document);
+	});
+
+	test('Incrementally replacing single-line content, same num of chars', () => {
+		const document = newDocument('function abc() {\n  console.log("hello, world!");\n}');
+		assert.equal(document.lineCount, 3);
+		assertValidLineNumbers(document);
+		TextDocument.update(document, [{ text: 'world, hello!', range: Ranges.forSubstring(document, 'hello, world!') }], 1);
+		assert.strictEqual(document.version, 1);
+		assert.strictEqual(document.getText(), 'function abc() {\n  console.log("world, hello!");\n}');
+		assert.equal(document.lineCount, 3);
+		assertValidLineNumbers(document);
+	});
+
+	test('Incrementally replacing multi-line content, more lines', () => {
 		const document = newDocument('function abc() {\n  console.log("hello, world!");\n}');
 		assert.equal(document.lineCount, 3);
 		assertValidLineNumbers(document);
@@ -224,6 +246,50 @@ suite('Text Document Incremental Updates', () => {
 		assertValidLineNumbers(document);
 	});
 
+	test('Incrementally replacing multi-line content, less lines', () => {
+		const document = newDocument('a1\nb1\na2\nb2\na3\nb3\na4\nb4\n');
+		assert.equal(document.lineCount, 9);
+		assertValidLineNumbers(document);
+		TextDocument.update(document, [{ text: 'xx\nyy', range: Ranges.forSubstring(document, '\na3\nb3\na4\nb4\n') }], 1);
+		assert.strictEqual(document.version, 1);
+		assert.strictEqual(document.getText(), 'a1\nb1\na2\nb2xx\nyy');
+		assert.equal(document.lineCount, 5);
+		assertValidLineNumbers(document);
+	});
+
+	test('Incrementally replacing multi-line content, same num of lines and chars', () => {
+		const document = newDocument('a1\nb1\na2\nb2\na3\nb3\na4\nb4\n');
+		assert.equal(document.lineCount, 9);
+		assertValidLineNumbers(document);
+		TextDocument.update(document, [{ text: '\nxx1\nxx2', range: Ranges.forSubstring(document, 'a2\nb2\na3') }], 1);
+		assert.strictEqual(document.version, 1);
+		assert.strictEqual(document.getText(), 'a1\nb1\n\nxx1\nxx2\nb3\na4\nb4\n');
+		assert.equal(document.lineCount, 9);
+		assertValidLineNumbers(document);
+	});
+
+	test('Incrementally replacing multi-line content, same num of lines but diff chars', () => {
+		const document = newDocument('a1\nb1\na2\nb2\na3\nb3\na4\nb4\n');
+		assert.equal(document.lineCount, 9);
+		assertValidLineNumbers(document);
+		TextDocument.update(document, [{ text: '\ny\n', range: Ranges.forSubstring(document, 'a2\nb2\na3') }], 1);
+		assert.strictEqual(document.version, 1);
+		assert.strictEqual(document.getText(), 'a1\nb1\n\ny\n\nb3\na4\nb4\n');
+		assert.equal(document.lineCount, 9);
+		assertValidLineNumbers(document);
+	});
+
+	test('Incrementally replacing multi-line content, huge number of lines', () => {
+		const document = newDocument('a1\ncc\nb1');
+		assert.equal(document.lineCount, 3);
+		assertValidLineNumbers(document);
+		const text = new Array(20000).join('\ndd'); // a string with 19999 `\n`
+		TextDocument.update(document, [{ text, range: Ranges.forSubstring(document, '\ncc') }], 1);
+		assert.strictEqual(document.version, 1);
+		assert.strictEqual(document.getText(), 'a1' + text + '\nb1');
+		assert.equal(document.lineCount, 20001);
+		assertValidLineNumbers(document);
+	});
 
 	test('Several incremental content changes', () => {
 		const document = newDocument('function abc() {\n  console.log("hello, world!");\n}');
