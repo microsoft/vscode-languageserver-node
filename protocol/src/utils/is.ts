@@ -36,10 +36,6 @@ export function typedArray<T>(value: any, check: (value: any) => boolean): value
 	return Array.isArray(value) && (<any[]>value).every(check);
 }
 
-export function thenable<T>(value: any): value is Thenable<T> {
-	return value && func(value.then);
-}
-
 export function objectLiteral(value: any): value is object {
 	// Strictly speaking class instances pass this check as well. Since the LSP
 	// doesn't use classes we ignore this for now. If we do we need to add something

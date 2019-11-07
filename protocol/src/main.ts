@@ -90,7 +90,7 @@ export interface ProtocolConnection {
 	 * @param token An optional cancellation token.
 	 * @returns A promise resolving to the request's result.
 	 */
-	sendRequest<R, E, RO>(type: RequestType0<R, E, RO>, token?: CancellationToken): Thenable<R>;
+	sendRequest<R, E, RO>(type: RequestType0<R, E, RO>, token?: CancellationToken): Promise<R>;
 
 	/**
 	 * Sends a request and returns a promise resolving to the result of the request.
@@ -100,7 +100,7 @@ export interface ProtocolConnection {
 	 * @param token An optional cancellation token.
 	 * @returns A promise resolving to the request's result.
 	 */
-	sendRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, params: P, token?: CancellationToken): Thenable<R>;
+	sendRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, params: P, token?: CancellationToken): Promise<R>;
 
 	/**
 	 * Sends a request and returns a promise resolving to the result of the request.
@@ -109,7 +109,7 @@ export interface ProtocolConnection {
 	 * @param token An optional cancellation token.
 	 * @returns A promise resolving to the request's result.
 	 */
-	sendRequest<R>(method: string, token?: CancellationToken): Thenable<R>;
+	sendRequest<R>(method: string, token?: CancellationToken): Promise<R>;
 
 	/**
 	 * Sends a request and returns a promise resolving to the result of the request.
@@ -119,7 +119,7 @@ export interface ProtocolConnection {
 	 * @param token An optional cancellation token.
 	 * @returns A promise resolving to the request's result.
 	 */
-	sendRequest<R>(method: string, param: any, token?: CancellationToken): Thenable<R>;
+	sendRequest<R>(method: string, param: any, token?: CancellationToken): Promise<R>;
 
 	/**
 	 * Installs a request handler.

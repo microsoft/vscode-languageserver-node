@@ -12,14 +12,14 @@ import { Feature, _RemoteWorkspace } from './main';
 
 
 export interface WorkspaceFolders {
-	getWorkspaceFolders(): Thenable<WorkspaceFolder[] | null>;
+	getWorkspaceFolders(): Promise<WorkspaceFolder[] | null>;
 	onDidChangeWorkspaceFolders: Event<WorkspaceFoldersChangeEvent>;
 }
 
 export const WorkspaceFoldersFeature: Feature<_RemoteWorkspace, WorkspaceFolders> = (Base) => {
 	return class extends Base {
 		private _onDidChangeWorkspaceFolders: Emitter<WorkspaceFoldersChangeEvent>;
-		private _unregistration: Thenable<Disposable>;
+		private _unregistration: Promise<Disposable>;
 		public initialize(capabilities: ClientCapabilities): void {
 			let workspaceCapabilities = capabilities.workspace;
 			if (workspaceCapabilities && workspaceCapabilities.workspaceFolders) {
@@ -29,7 +29,7 @@ export const WorkspaceFoldersFeature: Feature<_RemoteWorkspace, WorkspaceFolders
 				});
 			}
 		}
-		getWorkspaceFolders(): Thenable<WorkspaceFolder[] | null> {
+		getWorkspaceFolders(): Promise<WorkspaceFolder[] | null> {
 			return this.connection.sendRequest(WorkspaceFoldersRequest.type);
 		}
 		get onDidChangeWorkspaceFolders(): Event<WorkspaceFoldersChangeEvent> {

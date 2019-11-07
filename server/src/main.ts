@@ -450,7 +450,7 @@ export interface RemoteWindow extends Remote {
 	 *  will be the value of the resolved promise
 	 */
 	showErrorMessage(message: string): void;
-	showErrorMessage<T extends MessageActionItem>(message: string, ...actions: T[]): Thenable<T | undefined>;
+	showErrorMessage<T extends MessageActionItem>(message: string, ...actions: T[]): Promise<T | undefined>;
 
 	/**
 	 * Shows a warning message in the client's user interface. Depending on the client this might
@@ -461,7 +461,7 @@ export interface RemoteWindow extends Remote {
 	 *  will be the value of the resolved promise
 	 */
 	showWarningMessage(message: string): void;
-	showWarningMessage<T extends MessageActionItem>(message: string, ...actions: T[]): Thenable<T | undefined>;
+	showWarningMessage<T extends MessageActionItem>(message: string, ...actions: T[]): Promise<T | undefined>;
 
 	/**
 	 * Shows an information message in the client's user interface. Depending on the client this might
@@ -472,7 +472,7 @@ export interface RemoteWindow extends Remote {
 	 *  will be the value of the resolved promise
 	 */
 	showInformationMessage(message: string): void;
-	showInformationMessage<T extends MessageActionItem>(message: string, ...actions: T[]): Thenable<T | undefined>;
+	showInformationMessage<T extends MessageActionItem>(message: string, ...actions: T[]): Promise<T | undefined>;
 }
 
 /**
@@ -613,8 +613,8 @@ export interface RemoteClient extends Remote {
 	 * @param registerParams special registration parameters.
 	 * @return a `Disposable` to unregister the listener again.
 	 */
-	register<RO>(type: NotificationType0<RO>, registerParams?: RO): Thenable<Disposable>;
-	register<P, RO>(type: NotificationType<P, RO>, registerParams?: RO): Thenable<Disposable>;
+	register<RO>(type: NotificationType0<RO>, registerParams?: RO): Promise<Disposable>;
+	register<P, RO>(type: NotificationType<P, RO>, registerParams?: RO): Promise<Disposable>;
 
 	/**
 	 * Registers a listener for the given notification.
@@ -623,8 +623,8 @@ export interface RemoteClient extends Remote {
 	 * @param registerParams special registration parameters.
 	 * @return the updated unregistration.
 	 */
-	register<RO>(unregisteration: BulkUnregistration, type: NotificationType0<RO>, registerParams?: RO): Thenable<BulkUnregistration>;
-	register<P, RO>(unregisteration: BulkUnregistration, type: NotificationType<P, RO>, registerParams?: RO): Thenable<BulkUnregistration>;
+	register<RO>(unregisteration: BulkUnregistration, type: NotificationType0<RO>, registerParams?: RO): Promise<BulkUnregistration>;
+	register<P, RO>(unregisteration: BulkUnregistration, type: NotificationType<P, RO>, registerParams?: RO): Promise<BulkUnregistration>;
 
 	/**
 	 * Registers a listener for the given request.
@@ -632,8 +632,8 @@ export interface RemoteClient extends Remote {
 	 * @param registerParams special registration parameters.
 	 * @return a `Disposable` to unregister the listener again.
 	 */
-	register<R, E, RO>(type: RequestType0<R, E, RO>, registerParams?: RO): Thenable<Disposable>;
-	register<P, R, E, RO>(type: RequestType<P, R, E, RO>, registerParams?: RO): Thenable<Disposable>;
+	register<R, E, RO>(type: RequestType0<R, E, RO>, registerParams?: RO): Promise<Disposable>;
+	register<P, R, E, RO>(type: RequestType<P, R, E, RO>, registerParams?: RO): Promise<Disposable>;
 
 	/**
 	 * Registers a listener for the given request.
@@ -642,14 +642,14 @@ export interface RemoteClient extends Remote {
 	 * @param registerParams special registration parameters.
 	 * @return the updated unregistration.
 	 */
-	register<R, E, RO>(unregisteration: BulkUnregistration, type: RequestType0<R, E, RO>, registerParams?: RO): Thenable<BulkUnregistration>;
-	register<P, R, E, RO>(unregisteration: BulkUnregistration, type: RequestType<P, R, E, RO>, registerParams?: RO): Thenable<BulkUnregistration>;
+	register<R, E, RO>(unregisteration: BulkUnregistration, type: RequestType0<R, E, RO>, registerParams?: RO): Promise<BulkUnregistration>;
+	register<P, R, E, RO>(unregisteration: BulkUnregistration, type: RequestType<P, R, E, RO>, registerParams?: RO): Promise<BulkUnregistration>;
 	/**
 	 * Registers a set of listeners.
 	 * @param registrations the bulk registration
 	 * @return a `Disposable` to unregister the listeners again.
 	 */
-	register(registrations: BulkRegistration): Thenable<BulkUnregistration>;
+	register(registrations: BulkRegistration): Promise<BulkUnregistration>;
 }
 
 class ConnectionLogger implements Logger, RemoteConsole {
@@ -728,17 +728,17 @@ class RemoteWindowImpl implements RemoteWindow {
 	public fillServerCapabilities(_capabilities: ServerCapabilities): void {
 	}
 
-	public showErrorMessage(message: string, ...actions: MessageActionItem[]): Thenable<MessageActionItem | undefined> {
+	public showErrorMessage(message: string, ...actions: MessageActionItem[]): Promise<MessageActionItem | undefined> {
 		let params: ShowMessageRequestParams = { type: MessageType.Error, message, actions };
 		return this._connection.sendRequest(ShowMessageRequest.type, params).then(null2Undefined);
 	}
 
-	public showWarningMessage(message: string, ...actions: MessageActionItem[]): Thenable<MessageActionItem | undefined> {
+	public showWarningMessage(message: string, ...actions: MessageActionItem[]): Promise<MessageActionItem | undefined> {
 		let params: ShowMessageRequestParams = { type: MessageType.Warning, message, actions };
 		return this._connection.sendRequest(ShowMessageRequest.type, params).then(null2Undefined);
 	}
 
-	public showInformationMessage(message: string, ...actions: MessageActionItem[]): Thenable<MessageActionItem | undefined> {
+	public showInformationMessage(message: string, ...actions: MessageActionItem[]): Promise<MessageActionItem | undefined> {
 		let params: ShowMessageRequestParams = { type: MessageType.Info, message, actions };
 		return this._connection.sendRequest(ShowMessageRequest.type, params).then(null2Undefined);
 	}
@@ -765,7 +765,7 @@ class RemoteClientImpl implements RemoteClient {
 	public fillServerCapabilities(_capabilities: ServerCapabilities): void {
 	}
 
-	public register(typeOrRegistrations: string | RPCMessageType | BulkRegistration | BulkUnregistration, registerOptionsOrType?: string | RPCMessageType | any, registerOptions?: any): Thenable<any>  /* Thenable<Disposable | BulkUnregistration> */ {
+	public register(typeOrRegistrations: string | RPCMessageType | BulkRegistration | BulkUnregistration, registerOptionsOrType?: string | RPCMessageType | any, registerOptions?: any): Promise<any>  /* Promise<Disposable | BulkUnregistration> */ {
 		if (typeOrRegistrations instanceof BulkRegistrationImpl) {
 			return this.registerMany(typeOrRegistrations);
 		} else if (typeOrRegistrations instanceof BulkUnregistrationImpl) {
@@ -775,7 +775,7 @@ class RemoteClientImpl implements RemoteClient {
 		}
 	}
 
-	private registerSingle1(unregistration: BulkUnregistrationImpl, type: string | RPCMessageType, registerOptions: any): Thenable<Disposable> {
+	private registerSingle1(unregistration: BulkUnregistrationImpl, type: string | RPCMessageType, registerOptions: any): Promise<Disposable> {
 		const method = Is.string(type) ? type : type.method;
 		const id = UUID.generateUuid();
 		let params: RegistrationParams = {
@@ -793,7 +793,7 @@ class RemoteClientImpl implements RemoteClient {
 		});
 	}
 
-	private registerSingle2(type: string | RPCMessageType, registerOptions: any): Thenable<Disposable> {
+	private registerSingle2(type: string | RPCMessageType, registerOptions: any): Promise<Disposable> {
 		const method = Is.string(type) ? type : type.method;
 		const id = UUID.generateUuid();
 		let params: RegistrationParams = {
@@ -809,7 +809,7 @@ class RemoteClientImpl implements RemoteClient {
 		});
 	}
 
-	private unregisterSingle(id: string, method: string): Thenable<void> {
+	private unregisterSingle(id: string, method: string): Promise<void> {
 		let params: UnregistrationParams = {
 			unregisterations: [{ id, method }]
 		};
@@ -819,7 +819,7 @@ class RemoteClientImpl implements RemoteClient {
 		});
 	}
 
-	private registerMany(registrations: BulkRegistrationImpl): Thenable<BulkUnregistration> {
+	private registerMany(registrations: BulkRegistrationImpl): Promise<BulkUnregistration> {
 		let params = registrations.asRegistrationParams();
 		return this._connection.sendRequest(RegistrationRequest.type, params).then(() => {
 			return new BulkUnregistrationImpl(this._connection, params.registrations.map(registration => { return { id: registration.id, method: registration.method }; }));
@@ -839,7 +839,7 @@ export interface _RemoteWorkspace extends Remote {
 	 * @param param the workspace edit params.
 	 * @return a thenable that resolves to the `ApplyWorkspaceEditResponse`.
 	 */
-	applyEdit(paramOrEdit: ApplyWorkspaceEditParams | WorkspaceEdit): Thenable<ApplyWorkspaceEditResponse>;
+	applyEdit(paramOrEdit: ApplyWorkspaceEditParams | WorkspaceEdit): Promise<ApplyWorkspaceEditResponse>;
 }
 
 export type RemoteWorkspace = _RemoteWorkspace & Configuration & WorkspaceFolders;
@@ -868,7 +868,7 @@ class _RemoteWorkspaceImpl implements _RemoteWorkspace {
 	public fillServerCapabilities(_capabilities: ServerCapabilities): void {
 	}
 
-	public applyEdit(paramOrEdit: ApplyWorkspaceEditParams | WorkspaceEdit): Thenable<ApplyWorkspaceEditResponse> {
+	public applyEdit(paramOrEdit: ApplyWorkspaceEditParams | WorkspaceEdit): Promise<ApplyWorkspaceEditResponse> {
 		function isApplyWorkspaceEditParams(value: ApplyWorkspaceEditParams | WorkspaceEdit): value is ApplyWorkspaceEditParams {
 			return value && !!(value as ApplyWorkspaceEditParams).edit;
 		}
@@ -1018,8 +1018,8 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 * @param type The [RequestType](#RequestType) describing the request.
 	 * @param params The request's parameters.
 	 */
-	sendRequest<R, E, RO>(type: RequestType0<R, E, RO>, token?: CancellationToken): Thenable<R>;
-	sendRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, params: P, token?: CancellationToken): Thenable<R>;
+	sendRequest<R, E, RO>(type: RequestType0<R, E, RO>, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, params: P, token?: CancellationToken): Promise<R>;
 
 	/**
 	 * Send a request to the client.
@@ -1027,8 +1027,8 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 * @param method The method to invoke on the client.
 	 * @param params The request's parameters.
 	 */
-	sendRequest<R>(method: string, token?: CancellationToken): Thenable<R>;
-	sendRequest<R>(method: string, params: any, token?: CancellationToken): Thenable<R>;
+	sendRequest<R>(method: string, token?: CancellationToken): Promise<R>;
+	sendRequest<R>(method: string, params: any, token?: CancellationToken): Promise<R>;
 
 	/**
 	 * Installs a notification handler described by the given [NotificationType](#NotificationType).
@@ -1654,13 +1654,18 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 	const workspace = (factories && factories.workspace ? new (factories.workspace(RemoteWorkspaceImpl))() : new RemoteWorkspaceImpl()) as RemoteWorkspace & PWorkspace;
 	const allRemotes: Remote[] = [logger, tracer, telemetry, client, remoteWindow, workspace];
 
-	function asThenable<T>(value: Thenable<T>): Thenable<T>;
-	function asThenable<T>(value: T): Thenable<T>;
-	function asThenable<T>(value: T | Thenable<T>): Thenable<T> {
-		if (Is.thenable(value)) {
+	function asPromise<T>(value: Promise<T>): Promise<T>;
+	function asPromise<T>(value: Thenable<T>): Promise<T>;
+	function asPromise<T>(value: T): Promise<T>;
+	function asPromise(value: any): Promise<any> {
+		if (value instanceof Promise) {
 			return value;
+		} else if (Is.thenable(value)) {
+			return new Promise((resolve, reject) => {
+				value.then((resolved) => resolve(resolved), (error) => reject(error));
+			});
 		} else {
-			return Promise.resolve<T>(<T>value);
+			return Promise.resolve(value);
 		}
 	}
 
@@ -1670,7 +1675,7 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 	let protocolConnection: Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace> & ConnectionState = {
 		listen: (): void => connection.listen(),
 
-		sendRequest: <R>(type: string | RPCMessageType, ...params: any[]): Thenable<R> => connection.sendRequest(Is.string(type) ? type : type.method, ...params),
+		sendRequest: <R>(type: string | RPCMessageType, ...params: any[]): Promise<R> => connection.sendRequest(Is.string(type) ? type : type.method, ...params),
 		onRequest: <R, E>(type: string | RPCMessageType | StarRequestHandler, handler?: GenericRequestHandler<R, E>): void => (connection as any).onRequest(type, handler),
 
 		sendNotification: (type: string | RPCMessageType, param?: any): void => {
@@ -1813,7 +1818,7 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 		}
 		if (initializeHandler) {
 			let result = initializeHandler(params, new CancellationTokenSource().token, attachWorkDone(connection, params), undefined);
-			return asThenable(result).then((value) => {
+			return asPromise(result).then((value) => {
 				if (value instanceof ResponseError) {
 					return value;
 				}

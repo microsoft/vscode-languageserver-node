@@ -30,7 +30,7 @@ export interface WorkDoneProgress {
 
 export interface WindowProgress {
 	attachWorkDoneProgress(token: ProgressToken | undefined): WorkDoneProgress;
-	createWorkDoneProgress(): Thenable<WorkDoneProgress>;
+	createWorkDoneProgress(): Promise<WorkDoneProgress>;
 }
 
 class WorkDoneProgressImpl implements WorkDoneProgress {
@@ -139,7 +139,7 @@ export const ProgressFeature: Feature<RemoteWindow, WindowProgress> = (Base) => 
 				return new WorkDoneProgressImpl(this.connection, token);
 			}
 		}
-		public createWorkDoneProgress(): Thenable<WorkDoneProgress> {
+		public createWorkDoneProgress(): Promise<WorkDoneProgress> {
 			if (this._progressSupported) {
 				const token: string = generateUuid();
 				return this.connection.sendRequest(Proposed.WorkDoneProgressCreateRequest.type, { token }).then(() => {

@@ -141,7 +141,7 @@ namespace ChildProcessInfo {
 	}
 }
 
-export type ServerOptions = Executable | { run: Executable; debug: Executable; } | { run: NodeModule; debug: NodeModule } | NodeModule | (() => Thenable<ChildProcess | StreamInfo | MessageTransports | ChildProcessInfo>);
+export type ServerOptions = Executable | { run: Executable; debug: Executable; } | { run: NodeModule; debug: NodeModule } | NodeModule | (() => Promise<ChildProcess | StreamInfo | MessageTransports | ChildProcessInfo>);
 
 export class LanguageClient extends BaseLanguageClient {
 
@@ -199,7 +199,7 @@ export class LanguageClient extends BaseLanguageClient {
 		}
 	}
 
-	public stop(): Thenable<void> {
+	public stop(): Promise<void> {
 		return super.stop().then(() => {
 			if (this._serverProcess) {
 				let toCheck = this._serverProcess;
@@ -233,7 +233,7 @@ export class LanguageClient extends BaseLanguageClient {
 	}
 
 
-	protected createMessageTransports(encoding: string): Thenable<MessageTransports> {
+	protected createMessageTransports(encoding: string): Promise<MessageTransports> {
 
 		function getEnvironment(env: any, fork: boolean): any {
 			if (!env && !fork) {
@@ -465,7 +465,7 @@ export class LanguageClient extends BaseLanguageClient {
 		return undefined;
 	}
 
-	private _getServerWorkingDir(options?: { cwd?: string }): Thenable<string | undefined> {
+	private _getServerWorkingDir(options?: { cwd?: string }): Promise<string | undefined> {
 		let cwd = options && options.cwd;
 		if (!cwd) {
 			cwd = this.clientOptions.workspaceFolder

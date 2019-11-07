@@ -13,7 +13,7 @@ export class Delayer<T> {
 	public defaultDelay: number;
 	private timeout: NodeJS.Timer | undefined;
 	private completionPromise: Promise<T> | undefined;
-	private onSuccess: ((value?: T | Thenable<T>) => void) | undefined;
+	private onSuccess: ((value?: T | Promise<T>) => void) | undefined;
 	private task: ITask<T> | undefined;
 
 	constructor(defaultDelay: number) {

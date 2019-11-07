@@ -90,11 +90,11 @@ interface IConnection {
 
 	listen(): void;
 
-	sendRequest<R, E, RO>(type: RequestType0<R, E, RO>, token?: CancellationToken): Thenable<R>;
-	sendRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, params: P, token?: CancellationToken): Thenable<R>;
-	sendRequest<R>(method: string, token?: CancellationToken): Thenable<R>;
-	sendRequest<R>(method: string, param: any, token?: CancellationToken): Thenable<R>;
-	sendRequest<R>(type: string | RPCMessageType, ...params: any[]): Thenable<R>;
+	sendRequest<R, E, RO>(type: RequestType0<R, E, RO>, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, params: P, token?: CancellationToken): Promise<R>;
+	sendRequest<R>(method: string, token?: CancellationToken): Promise<R>;
+	sendRequest<R>(method: string, param: any, token?: CancellationToken): Promise<R>;
+	sendRequest<R>(type: string | RPCMessageType, ...params: any[]): Promise<R>;
 
 	onRequest<R, E, RO>(type: RequestType0<R, E, RO>, handler: RequestHandler0<R, E>): void;
 	onRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, handler: RequestHandler<P, R, E>): void;
@@ -118,8 +118,8 @@ interface IConnection {
 	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): void;
 	trace(value: Trace, tracer: Tracer, traceOptions?: TraceOptions): void;
 
-	initialize(params: InitializeParams): Thenable<InitializeResult>;
-	shutdown(): Thenable<void>;
+	initialize(params: InitializeParams): Promise<InitializeResult>;
+	shutdown(): Promise<void>;
 	exit(): void;
 
 	onLogMessage(handle: NotificationHandler<LogMessageParams>): void;
@@ -171,7 +171,7 @@ function createConnection(input: any, output: any, errorHandler: ConnectionError
 
 		listen: (): void => connection.listen(),
 
-		sendRequest: <R>(type: string | RPCMessageType, ...params: any[]): Thenable<R> => connection.sendRequest(Is.string(type) ? type : type.method, ...params),
+		sendRequest: <R>(type: string | RPCMessageType, ...params: any[]): Promise<R> => connection.sendRequest(Is.string(type) ? type : type.method, ...params),
 		onRequest: <R, E>(type: string | RPCMessageType, handler: GenericRequestHandler<R, E>): void => connection.onRequest(Is.string(type) ? type : type.method, handler),
 
 		sendNotification: (type: string | RPCMessageType, params?: any): void => connection.sendNotification(Is.string(type) ? type : type.method, params),
@@ -2142,7 +2142,7 @@ class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkOptions, Docum
 				client.protocol2CodeConverter.asDocumentLinks,
 				(error: ResponseError<void>) => {
 					client.logFailedRequest(DocumentLinkRequest.type, error);
-					Promise.resolve(new Error(error.message));
+					return Promise.resolve([]);
 				}
 			);
 		};
@@ -2151,7 +2151,7 @@ class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkOptions, Docum
 				client.protocol2CodeConverter.asDocumentLink,
 				(error: ResponseError<void>) => {
 					client.logFailedRequest(DocumentLinkResolveRequest.type, error);
-					Promise.resolve(new Error(error.message));
+					return Promise.resolve(link);
 				}
 			);
 		};
@@ -2402,8 +2402,8 @@ export abstract class BaseLanguageClient {
 	private _state: ClientState;
 	private _onReady: Promise<void>;
 	private _onReadyCallbacks: OnReady;
-	private _onStop: Thenable<void> | undefined;
-	private _connectionPromise: Thenable<IConnection> | undefined;
+	private _onStop: Promise<void> | undefined;
+	private _connectionPromise: Promise<IConnection> | undefined;
 	private _resolvedConnection: IConnection | undefined;
 	private _initializeResult: InitializeResult | undefined;
 	private _outputChannel: OutputChannel | undefined;
@@ -2517,11 +2517,11 @@ export abstract class BaseLanguageClient {
 		return this._initializeResult;
 	}
 
-	public sendRequest<R, E, RO>(type: RequestType0<R, E, RO>, token?: CancellationToken): Thenable<R>;
-	public sendRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, params: P, token?: CancellationToken): Thenable<R>;
-	public sendRequest<R>(method: string, token?: CancellationToken): Thenable<R>;
-	public sendRequest<R>(method: string, param: any, token?: CancellationToken): Thenable<R>;
-	public sendRequest<R>(type: string | RPCMessageType, ...params: any[]): Thenable<R> {
+	public sendRequest<R, E, RO>(type: RequestType0<R, E, RO>, token?: CancellationToken): Promise<R>;
+	public sendRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, params: P, token?: CancellationToken): Promise<R>;
+	public sendRequest<R>(method: string, token?: CancellationToken): Promise<R>;
+	public sendRequest<R>(method: string, param: any, token?: CancellationToken): Promise<R>;
+	public sendRequest<R>(type: string | RPCMessageType, ...params: any[]): Promise<R> {
 		if (!this.isConnectionActive()) {
 			throw new Error('Language client is not ready yet');
 		}
@@ -2832,14 +2832,14 @@ export abstract class BaseLanguageClient {
 		});
 	}
 
-	private resolveConnection(): Thenable<IConnection> {
+	private resolveConnection(): Promise<IConnection> {
 		if (!this._connectionPromise) {
 			this._connectionPromise = this.createConnection();
 		}
 		return this._connectionPromise;
 	}
 
-	private initialize(connection: IConnection): Thenable<InitializeResult> {
+	private initialize(connection: IConnection): Promise<InitializeResult> {
 		this.refreshTrace(connection, false);
 		let initOption = this._clientOptions.initializationOptions;
 		let rootPath = this._clientOptions.workspaceFolder
@@ -2875,7 +2875,7 @@ export abstract class BaseLanguageClient {
 		}
 	}
 
-	private doInitialize(connection: IConnection, initParams: InitializeParams): Thenable<InitializeResult> {
+	private doInitialize(connection: IConnection, initParams: InitializeParams): Promise<InitializeResult> {
 		return connection.initialize(initParams).then((result) => {
 			this._resolvedConnection = connection;
 			this._initializeResult = result;
@@ -2944,6 +2944,7 @@ export abstract class BaseLanguageClient {
 				this.stop();
 				this._onReadyCallbacks.reject(error);
 			}
+			throw error;
 		});
 	}
 
@@ -2959,7 +2960,7 @@ export abstract class BaseLanguageClient {
 		return undefined;
 	}
 
-	public stop(): Thenable<void> {
+	public stop(): Promise<void> {
 		this._initializeResult = undefined;
 		if (!this._connectionPromise) {
 			this.state = ClientState.Stopped;
@@ -3057,9 +3058,9 @@ export abstract class BaseLanguageClient {
 		this._diagnostics.set(uri, diagnostics);
 	}
 
-	protected abstract createMessageTransports(encoding: string): Thenable<MessageTransports>;
+	protected abstract createMessageTransports(encoding: string): Promise<MessageTransports>;
 
-	private createConnection(): Thenable<IConnection> {
+	private createConnection(): Promise<IConnection> {
 		let errorHandler = (error: Error, message: Message, count: number) => {
 			this.handleConnectionError(error, message, count);
 		};
@@ -3247,7 +3248,7 @@ export abstract class BaseLanguageClient {
 		}
 	}
 
-	private handleRegistrationRequest(params: RegistrationParams): Thenable<void> {
+	private handleRegistrationRequest(params: RegistrationParams): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
 			for (let registration of params.registrations) {
 				const feature = this._dynamicFeatures.get(registration.method);
@@ -3267,7 +3268,7 @@ export abstract class BaseLanguageClient {
 		});
 	}
 
-	private handleUnregistrationRequest(params: UnregistrationParams): Thenable<void> {
+	private handleUnregistrationRequest(params: UnregistrationParams): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
 			for (let unregistration of params.unregisterations) {
 				const feature = this._dynamicFeatures.get(unregistration.method);
@@ -3281,7 +3282,7 @@ export abstract class BaseLanguageClient {
 		});
 	}
 
-	private handleApplyWorkspaceEdit(params: ApplyWorkspaceEditParams): Thenable<ApplyWorkspaceEditResponse> {
+	private handleApplyWorkspaceEdit(params: ApplyWorkspaceEditParams): Promise<ApplyWorkspaceEditResponse> {
 		// This is some sort of workaround since the version check should be done by VS Code in the Workspace.applyEdit.
 		// However doing it here adds some safety since the server can lag more behind then an extension.
 		let workspaceEdit: WorkspaceEdit = params.edit;
@@ -3302,7 +3303,7 @@ export abstract class BaseLanguageClient {
 		if (versionMismatch) {
 			return Promise.resolve({ applied: false });
 		}
-		return Workspace.applyEdit(this._p2c.asWorkspaceEdit(params.edit)).then((value) => { return { applied: value }; });
+		return Is.asPromise(Workspace.applyEdit(this._p2c.asWorkspaceEdit(params.edit)).then((value) => { return { applied: value }; }));
 	}
 
 	public logFailedRequest(type: RPCMessageType, error: any): void {

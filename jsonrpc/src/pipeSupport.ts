@@ -24,10 +24,10 @@ export function generateRandomPipeName(): string {
 }
 
 export interface PipeTransport {
-	onConnected(): Thenable<[MessageReader, MessageWriter]>;
+	onConnected(): Promise<[MessageReader, MessageWriter]>;
 }
 
-export function createClientPipeTransport(pipeName: string, encoding: string = 'utf-8'): Thenable<PipeTransport> {
+export function createClientPipeTransport(pipeName: string, encoding: string = 'utf-8'): Promise<PipeTransport> {
 	let connectResolve: any;
 	let connected = new Promise<[MessageReader, MessageWriter]>((resolve, _reject) => {
 		connectResolve = resolve;

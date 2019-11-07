@@ -13,16 +13,16 @@ import { Feature, _RemoteWorkspace } from './main';
 import * as Is from './utils/is';
 
 export interface Configuration {
-	getConfiguration(): Thenable<any>;
-	getConfiguration(section: string): Thenable<any>;
-	getConfiguration(item: ConfigurationItem): Thenable<any>;
-	getConfiguration(items: ConfigurationItem[]): Thenable<any[]>;
+	getConfiguration(): Promise<any>;
+	getConfiguration(section: string): Promise<any>;
+	getConfiguration(item: ConfigurationItem): Promise<any>;
+	getConfiguration(items: ConfigurationItem[]): Promise<any[]>;
 }
 
 export const ConfigurationFeature: Feature<_RemoteWorkspace, Configuration> = (Base) => {
 	return class extends Base {
 
-		getConfiguration(arg?: string | ConfigurationItem | ConfigurationItem[]): Thenable<any> {
+		getConfiguration(arg?: string | ConfigurationItem | ConfigurationItem[]): Promise<any> {
 			if (!arg) {
 				return this._getConfiguration({});
 			} else if (Is.string(arg)) {
@@ -32,7 +32,7 @@ export const ConfigurationFeature: Feature<_RemoteWorkspace, Configuration> = (B
 			}
 		}
 
-		private _getConfiguration(arg: ConfigurationItem | ConfigurationItem[]): Thenable<any> {
+		private _getConfiguration(arg: ConfigurationItem | ConfigurationItem[]): Promise<any> {
 			let params: ConfigurationParams = {
 				items: Array.isArray(arg) ? arg : [arg]
 			};

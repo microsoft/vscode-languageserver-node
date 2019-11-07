@@ -10,10 +10,10 @@ import { MessageReader, SocketMessageReader } from './messageReader';
 import { MessageWriter, SocketMessageWriter } from './messageWriter';
 
 export interface SocketTransport {
-	onConnected(): Thenable<[MessageReader, MessageWriter]>;
+	onConnected(): Promise<[MessageReader, MessageWriter]>;
 }
 
-export function createClientSocketTransport(port: number, encoding: string = 'utf-8'): Thenable<SocketTransport> {
+export function createClientSocketTransport(port: number, encoding: string = 'utf-8'): Promise<SocketTransport> {
 	let connectResolve: any;
 	let connected = new Promise<[MessageReader, MessageWriter]>((resolve, _reject) => {
 		connectResolve = resolve;

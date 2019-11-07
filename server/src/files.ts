@@ -39,7 +39,7 @@ function isWindows(): boolean {
 	return process.platform === 'win32';
 }
 
-export function resolve(moduleName: string, nodePath: string | undefined, cwd: string | undefined, tracer: (message: string, verbose?: string) => void): Thenable<string> {
+export function resolve(moduleName: string, nodePath: string | undefined, cwd: string | undefined, tracer: (message: string, verbose?: string) => void): Promise<string> {
 	interface Message {
 		c: string;
 		s?: boolean;
@@ -247,7 +247,7 @@ export namespace FileSystem {
 	}
 }
 
-export function resolveModulePath(workspaceRoot: string, moduleName: string, nodePath: string, tracer: (message: string, verbose?: string) => void): Thenable<string> {
+export function resolveModulePath(workspaceRoot: string, moduleName: string, nodePath: string, tracer: (message: string, verbose?: string) => void): Promise<string> {
 	if (nodePath) {
 		if (!path.isAbsolute(nodePath)) {
 			nodePath = path.join(workspaceRoot, nodePath);

@@ -104,7 +104,7 @@ describe('Connection', () => {
 
 		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
-		let promises: Thenable<string>[] = [];
+		let promises: Promise<string>[] = [];
 		promises.push(client.sendRequest(type, 'foo'));
 		promises.push(client.sendRequest(type, 'bar'));
 

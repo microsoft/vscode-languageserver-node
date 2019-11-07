@@ -39,3 +39,18 @@ export function typedArray<T>(value: any, check: (value: any) => boolean): value
 export function thenable<T>(value: any): value is Thenable<T> {
 	return value && func(value.then);
 }
+
+export function asPromise<T>(value: Promise<T>): Promise<T>;
+export function asPromise<T>(value: Thenable<T>): Promise<T>;
+export function asPromise<T>(value: T): Promise<T>;
+export function asPromise(value: any): Promise<any> {
+	if (value instanceof Promise) {
+		return value;
+	} else if (thenable(value)) {
+		return new Promise((resolve, reject) => {
+			value.then((resolved) => resolve(resolved), (error) => reject(error));
+		});
+	} else {
+		return Promise.resolve(value);
+	}
+}
