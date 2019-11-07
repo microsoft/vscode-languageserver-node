@@ -8,7 +8,7 @@ import { BaseLanguageClient, MessageTransports, DidChangeWorkspaceFoldersParams 
 import * as proto from 'vscode-languageserver-protocol';
 
 class TestLanguageClient extends BaseLanguageClient {
-	protected createMessageTransports(): Thenable<MessageTransports> {
+	protected createMessageTransports(): Promise<MessageTransports> {
 		throw new Error('Method not implemented.');
 	}
 	onRequest() {
