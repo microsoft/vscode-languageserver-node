@@ -8,7 +8,7 @@ dist:
   - xenial
 
 node_js:
-  - "10.15.1"
+  - "12.4.0"
 
 services:
   - xvfb
