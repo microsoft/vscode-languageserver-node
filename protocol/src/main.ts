@@ -41,22 +41,32 @@ import * as progress from './protocol.progress.proposed';
 export namespace Proposed {
 
 	export type CallHierarchyClientCapabilities = callHierarchy.CallHierarchyClientCapabilities;
+
+	export type CallHierarchyItem = callHierarchy.CallHierarchyItem;
+	export type CallHierarchyIncomingCall = callHierarchy.CallHierarchyIncomingCall
+	export type CallHierarchyOutgoingCall = callHierarchy.CallHierarchyOutgoingCall
+
+	export type CallHierarchyOptions = callHierarchy.CallHierarchyOptions;
+	export type CallHierarchyRegistrationOptions = callHierarchy.CallHierarchyRegistrationOptions;
 	export type CallHierarchyServerCapabilities = callHierarchy.CallHierarchyServerCapabilities;
 
-	export namespace CallHierarchyRequest {
-		export const type = callHierarchy.CallHierarchyRequest.type;
-		export type HandlerSignature = callHierarchy.CallHierarchyRequest.HandlerSignature;
+	export type CallHierarchyPrepareParams = callHierarchy.CallHierarchyPrepareParams;
+	export namespace CallHierarchyPrepareRequest {
+		export const type = callHierarchy.CallHierarchyPrepareRequest.type;
+		export type HandlerSignature = callHierarchy.CallHierarchyPrepareRequest.HandlerSignature;
 	}
 
-	export namespace CallHierarchyDirection {
-		export const CallsFrom = callHierarchy.CallHierarchyDirection.CallsFrom;
-		export const CallsTo = callHierarchy.CallHierarchyDirection.CallsTo;
+	export type CallHierarchyIncomingCallsParams = callHierarchy.CallHierarchyIncomingCallsParams;
+	export namespace CallHierarchyIncomingCallsRequest {
+		export const type = callHierarchy.CallHierarchyIncomingCallsRequest;
+		export type HandlerSignature = callHierarchy.CallHierarchyIncomingCallsRequest.HandlerSignature;
 	}
 
-	export type CallHierarchyParams = callHierarchy.CallHierarchyParams;
-	export type CallHierarchyDirection = callHierarchy.CallHierarchyDirection;
-	export type CallHierarchyItem = callHierarchy.CallHierarchyItem;
-	export type CallHierarchyCall = callHierarchy.CallHierarchyCall;
+	export type CallHierarchyOutgoingCallsParams= callHierarchy.CallHierarchyOutgoingCallsParams;
+	export namespace CallHierarchyOutgoingCallsRequest {
+		export const type = callHierarchy.CallHierarchyOutgoingCallsRequest;
+		export type HandlerSignature = callHierarchy.CallHierarchyOutgoingCallsRequest.HandlerSignature;
+	}
 
 	export type WorkDoneProgressClientCapabilities = progress.WorkDoneProgressClientCapabilities;
 	export type WorkDoneProgressBegin = progress.WorkDoneProgressBegin;

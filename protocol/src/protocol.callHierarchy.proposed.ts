@@ -5,8 +5,84 @@
 'use strict';
 
 import { RequestType, RequestHandler, ProgressType } from 'vscode-jsonrpc';
-import { SymbolKind, Range } from 'vscode-languageserver-types';
-import { TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams, PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions } from './protocol';
+import { SymbolKind, SymbolTag, Range, DocumentUri } from 'vscode-languageserver-types';
+import {
+	TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams, PartialResultParams,
+	WorkDoneProgressParams, WorkDoneProgressOptions
+} from './protocol';
+
+export interface CallHierarchyItem {
+	/**
+	 * The name of this item.
+	 */
+	name: string;
+
+	/**
+	 * The kind of this item.
+	 */
+	kind: SymbolKind;
+
+	/**
+	 * Tags for this item.
+	 */
+	tags?: SymbolTag[];
+
+	/**
+	 * More detail for this item, e.g. the signature of a function.
+	 */
+	detail?: string;
+
+	/**
+	 * The resource identifier of this item.
+	 */
+	uri: DocumentUri;
+
+	/**
+	 * The range enclosing this symbol not including leading/trailing whitespace but everything else, e.g. comments and code.
+	 */
+	range: Range;
+
+	/**
+	 * The range that should be selected and revealed when this symbol is being picked, e.g. the name of a function.
+	 * Must be contained by the [`range`](#CallHierarchyItem.range).
+	 */
+	selectionRange: Range;
+}
+
+/**
+ * Represents an incoming call, e.g. a caller of a method or constructor.
+ */
+export interface CallHierarchyIncomingCall {
+
+	/**
+	 * The item that makes the call.
+	 */
+	from: CallHierarchyItem;
+
+	/**
+	 * The range at which at which the calls appears. This is relative to the caller
+	 * denoted by [`this.from`](#CallHierarchyIncomingCall.from).
+	 */
+	fromRanges: Range[];
+}
+
+/**
+ * Represents an outgoing call, e.g. calling a getter from a method or a method from a constructor etc.
+ */
+export interface CallHierarchyOutgoingCall {
+
+	/**
+	 * The item that is called.
+	 */
+	to: CallHierarchyItem;
+
+	/**
+	 * The range at which this item is called. This is the range relative to the caller, e.g the item
+	 * passed to [`provideCallHierarchyOutgoingCalls`](#CallHierarchyItemProvider.provideCallHierarchyOutgoingCalls)
+	 * and not [`this.to`](#CallHierarchyOutgoingCall.to).
+	 */
+	fromRanges: Range[];
+}
 
 export interface CallHierarchyClientCapabilities {
 	/**
@@ -41,100 +117,32 @@ export interface CallHierarchyServerCapabilities {
 }
 
 /**
- * The parameter of a `textDocument/callHierarchy` request extends the `TextDocumentPositionParams` with the direction of calls to resolve.
+ * The parameter of a `textDocument/prepareCallHierarchy` request.
  */
-export interface CallHierarchyParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {
-	/**
-	 * The direction of calls to provide.
-	 */
-	direction: CallHierarchyDirection;
+export interface CallHierarchyPrepareParams extends TextDocumentPositionParams, WorkDoneProgressParams {
 }
 
-/**
- * The direction of a call hierarchy request.
- */
-export namespace CallHierarchyDirection {
-
-	/**
-	 * The callers
-	 */
-	export const CallsFrom: 1 = 1;
-
-	/**
-	 * The callees
-	 */
-	export const CallsTo: 2 = 2;
+export namespace CallHierarchyPrepareRequest {
+	export const type = new RequestType<CallHierarchyPrepareParams, CallHierarchyItem | null, void, CallHierarchyRegistrationOptions>('textDocument/prepareCallHierarchy');
+	export type HandlerSignature = RequestHandler<CallHierarchyPrepareParams, CallHierarchyItem | null, void>;
 }
 
-export type CallHierarchyDirection = 1 | 2;
-
-export interface CallHierarchyItem {
-
-	/**
-	 * The name of the symbol targeted by the call hierarchy request.
-	 */
-	name: string;
-
-	/**
-	 * More detail for this symbol, e.g the signature of a function.
-	 */
-	detail?: string;
-
-	/**
-	 * The kind of this symbol.
-	 */
-	kind: SymbolKind;
-
-	/**
-	 * URI of the document containing the symbol.
-	 */
-	uri: string;
-
-	/**
-	 * The range enclosing this symbol not including leading/trailing whitespace but everything else
-	 * like comments. This information is typically used to determine if the the clients cursor is
-	 * inside the symbol to reveal in the symbol in the UI.
-	 */
-	range: Range;
-
-	/**
-	 * The range that should be selected and revealed when this symbol is being picked, e.g the name of a function.
-	 * Must be contained by the the `range`.
-	 */
-	selectionRange: Range;
+export interface CallHierarchyIncomingCallsParams extends WorkDoneProgressParams, PartialResultParams {
+	item: CallHierarchyItem;
 }
 
-/**
- * The result of a `textDocument/callHierarchy` request.
- */
-export interface CallHierarchyCall {
-
-	/**
-	 * The source range of the reference. The range is a sub range of the `from` symbol range.
-	 */
-	range: Range;
-
-	/**
-	 * The symbol that contains the reference.
-	 */
-	from: CallHierarchyItem;
-
-	/**
-	 * The symbol that is referenced.
-	 */
-	to: CallHierarchyItem;
+export namespace CallHierarchyIncomingCallsRequest {
+	export const type = new RequestType<CallHierarchyIncomingCallsParams, CallHierarchyIncomingCall[] | null, void, void>('callHierarchy/incomingCalls');
+	export const resultType = new ProgressType<CallHierarchyIncomingCall[]>();
+	export type HandlerSignature = RequestHandler<CallHierarchyIncomingCallsParams, CallHierarchyIncomingCall[] | null, void>;
 }
 
-/**
- * Request to provide the call hierarchy at a given text document position.
- *
- * The request's parameter is of type [CallHierarchyParams](#CallHierarchyParams). The response
- * is of type [CallHierarchyCall[]](#CallHierarchyCall) or a Thenable that resolves to such.
- *
- * Evaluates the symbol defined (or referenced) at the given position, and returns all incoming or outgoing calls to the symbol(s).
- */
-export namespace CallHierarchyRequest {
-	export const type = new RequestType<CallHierarchyParams, CallHierarchyCall[], void, CallHierarchyRegistrationOptions>('textDocument/callHierarchy');
-	export const resultType = new ProgressType<CallHierarchyCall[]>();
-	export type HandlerSignature = RequestHandler<CallHierarchyParams, CallHierarchyCall[] | null, void>;
+export interface CallHierarchyOutgoingCallsParams extends WorkDoneProgressParams, PartialResultParams {
+	item: CallHierarchyItem;
+}
+
+export namespace CallHierarchyOutgoingCallsRequest {
+	export const type = new RequestType<CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCall[] | null, void, void>('callHierarchy/outgoingCalls');
+	export const resultType = new ProgressType<CallHierarchyOutgoingCall[]>();
+	export type HandlerSignature = RequestHandler<CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCall[] | null, void>;
 }

@@ -1914,6 +1914,21 @@ export namespace SymbolKind {
 export type SymbolKind = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 25 | 26;
 
 /**
+ * Symbol tags are extra annotations that tweak the rendering of a symbol.
+ * @since 3.15
+ */
+export namespace SymbolTag {
+
+	/**
+	 * Render a symbol as obsolete, usually using a strike-out.
+	 */
+	export const Deprecated: 1 = 1;
+}
+
+export type SymbolTag = 1;
+
+
+/**
  * Represents information about programming constructs like variables, classes,
  * interfaces etc.
  */

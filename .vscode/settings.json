@@ -23,7 +23,7 @@
 	"tslint.enable": false,
 	"eslint.enable": true,
 	"eslint.validate": [
-		{ "language": "typescript", "autoFix": true }
+		"typescript"
 	],
 	"eslint.workingDirectories": [
 		{ "directory": "./types", "changeProcessCWD": true },
@@ -43,5 +43,8 @@
 		"markdown",
 		"latex",
 		"plaintext"
-	]
+	],
+	"editor.codeActionsOnSave": {
+		"source.fixAll.eslint": true
+	}
 }

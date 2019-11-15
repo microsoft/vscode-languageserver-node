@@ -7,15 +7,6 @@
 import * as code from 'vscode';
 import * as proto from 'vscode-languageserver-protocol';
 
-declare module 'vscode' {
-	export enum CompletionItemTag {
-		Deprecated = 1
-	}
-	export interface CompletionItem {
-		tags?: CompletionItemTag[];
-	}
-}
-
 export default class ProtocolCompletionItem extends code.CompletionItem {
 
 	public data: any;
