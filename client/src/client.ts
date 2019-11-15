@@ -419,6 +419,10 @@ export interface ResolveDocumentLinkSignature {
 	(link: VDocumentLink, token: CancellationToken): ProviderResult<VDocumentLink>;
 }
 
+export interface ExecuteCommandSignature {
+	(command: string, args: any[]): ProviderResult<any>
+}
+
 export interface NextSignature<P, R> {
 	(this: void, data: P, next: (data: P) => R): R;
 }
@@ -465,6 +469,7 @@ export interface _Middleware {
 	prepareRename?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: PrepareRenameSignature) => ProviderResult<VRange | { range: VRange, placeholder: string }>;
 	provideDocumentLinks?: (this: void, document: TextDocument, token: CancellationToken, next: ProvideDocumentLinksSignature) => ProviderResult<VDocumentLink[]>;
 	resolveDocumentLink?: (this: void, link: VDocumentLink, token: CancellationToken, next: ResolveDocumentLinkSignature) => ProviderResult<VDocumentLink>;
+	executeCommand?: (this: void, command: string, args: any[], next: ExecuteCommandSignature) => ProviderResult<any>;
 	workspace?: WorkspaceMiddleware;
 }
 
@@ -2321,21 +2326,28 @@ class ExecuteCommandFeature implements DynamicFeature<ExecuteCommandRegistration
 	}
 
 	public register(_message: RPCMessageType, data: RegistrationData<ExecuteCommandRegistrationOptions>): void {
-		let client = this._client;
+		const client = this._client;
+		const middleware = client.clientOptions.middleware!;
+		const executeCommand: ExecuteCommandSignature = (command: string, args: any[]): any => {
+			let params: ExecuteCommandParams = {
+				command,
+				arguments: args
+			};
+			return client.sendRequest(ExecuteCommandRequest.type, params).then(
+				undefined,
+				(error) => {
+					client.logFailedRequest(ExecuteCommandRequest.type, error);
+				}
+			);
+		};
+
 		if (data.registerOptions.commands) {
-			let disposeables: Disposable[] = [];
+			const disposeables: Disposable[] = [];
 			for (const command of data.registerOptions.commands) {
 				disposeables.push(Commands.registerCommand(command, (...args: any[]) => {
-					let params: ExecuteCommandParams = {
-						command,
-						arguments: args
-					};
-					return client.sendRequest(ExecuteCommandRequest.type, params).then(
-						undefined,
-						(error) => {
-							client.logFailedRequest(ExecuteCommandRequest.type, error);
-						}
-					);
+					return middleware.executeCommand
+						? middleware.executeCommand(command, args, executeCommand)
+						: executeCommand(command, args);
 				}));
 			}
 			this._commands.set(data.id, disposeables);
