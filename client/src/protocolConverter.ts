@@ -27,6 +27,8 @@ export interface Converter {
 	asRange(value: ls.Range): code.Range;
 	asRange(value: ls.Range | undefined | null): code.Range | undefined;
 
+	asRanges(values: ls.Range[]): code.Range[];
+
 	asDiagnosticSeverity(value: number | undefined | null): code.DiagnosticSeverity;
 	asDiagnosticTag(tag: ls.DiagnosticTag): code.DiagnosticTag | undefined
 
@@ -88,6 +90,12 @@ export interface Converter {
 	asDocumentHighlights(values: ls.DocumentHighlight[] | undefined | null): code.DocumentHighlight[] | undefined;
 
 	asSymbolKind(item: ls.SymbolKind): code.SymbolKind;
+
+	asSymbolTag(item: ls.SymbolTag): code.SymbolTag;
+	asSymbolTags(items: undefined | null): undefined;
+	asSymbolTags(items: ReadonlyArray<ls.SymbolTag>): code.SymbolTag[];
+	asSymbolTags(items: ReadonlyArray<ls.SymbolTag> | undefined | null): code.SymbolTag[] | undefined;
+
 	asSymbolInformation(item: ls.SymbolInformation, uri?: code.Uri): code.SymbolInformation;
 
 	asSymbolInformations(values: ls.SymbolInformation[], uri?: code.Uri): code.SymbolInformation[];
@@ -260,6 +268,10 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			return undefined;
 		}
 		return new code.Range(asPosition(value.start), asPosition(value.end));
+	}
+
+	function asRanges(value: ReadonlyArray<ls.Range>): code.Range[] {
+		return value.map(value => asRange(value));
 	}
 
 	function asDiagnosticSeverity(value: number | undefined | null): code.DiagnosticSeverity {
@@ -633,6 +645,20 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return code.SymbolKind.Property;
 	}
 
+	function asSymbolTag(value: ls.SymbolTag): code.SymbolTag {
+		return value as code.SymbolTag;
+	}
+
+	function asSymbolTags(items: undefined | null): undefined;
+	function asSymbolTags(items: ReadonlyArray<ls.SymbolTag>): code.SymbolTag[];
+	function asSymbolTags(items: ReadonlyArray<ls.SymbolTag> | undefined | null): code.SymbolTag[] | undefined;
+	function asSymbolTags(items: ReadonlyArray<ls.SymbolTag> | undefined | null): code.SymbolTag[] | undefined {
+		if (items === undefined || items === null) {
+			return undefined;
+		}
+		return items.map(asSymbolTag);
+	}
+
 	function asSymbolInformation(item: ls.SymbolInformation, uri?: code.Uri): code.SymbolInformation {
 		// Symbol kind is one based in the protocol and zero based in code.
 		let result = new code.SymbolInformation(
@@ -904,6 +930,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asDiagnostics,
 		asDiagnostic,
 		asRange,
+		asRanges,
 		asPosition,
 		asDiagnosticSeverity,
 		asDiagnosticTag,
@@ -925,6 +952,8 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asDocumentHighlight,
 		asDocumentHighlightKind,
 		asSymbolKind,
+		asSymbolTag,
+		asSymbolTags,
 		asSymbolInformations,
 		asSymbolInformation,
 		asDocumentSymbols,

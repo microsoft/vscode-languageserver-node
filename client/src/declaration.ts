@@ -35,13 +35,13 @@ export class DeclarationFeature extends TextDocumentFeature<boolean | Declaratio
 	}
 
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		let declarationSupport = ensure(ensure(capabilites, 'textDocument')!, 'declaration')!;
+		const declarationSupport = ensure(ensure(capabilites, 'textDocument')!, 'declaration')!;
 		declarationSupport.dynamicRegistration = true;
 		declarationSupport.linkSupport = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		let [id, options] = this.getRegistration(documentSelector, capabilities.declarationProvider);
+		const [id, options] = this.getRegistration(documentSelector, capabilities.declarationProvider);
 		if (!id || !options) {
 			return;
 		}
@@ -49,8 +49,8 @@ export class DeclarationFeature extends TextDocumentFeature<boolean | Declaratio
 	}
 
 	protected registerLanguageProvider(options: DeclarationRegistrationOptions): Disposable {
-		let client = this._client;
-		let provideDeclaration: ProvideDeclarationSignature = (document, position, token) => {
+		const client = this._client;
+		const provideDeclaration: ProvideDeclarationSignature = (document, position, token) => {
 			return client.sendRequest(DeclarationRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
 				client.protocol2CodeConverter.asDeclarationResult,
 				(error) => {
@@ -59,7 +59,7 @@ export class DeclarationFeature extends TextDocumentFeature<boolean | Declaratio
 				}
 			);
 		};
-		let middleware = client.clientOptions.middleware!;
+		const middleware = client.clientOptions.middleware!;
 		return Languages.registerDeclarationProvider(options.documentSelector!, {
 			provideDeclaration: (document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDeclaration> => {
 				return middleware.provideDeclaration

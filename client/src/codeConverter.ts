@@ -63,6 +63,11 @@ export interface Converter {
 
 	asCompletionItem(item: code.CompletionItem): proto.CompletionItem;
 
+	asSymbolKind(item: code.SymbolKind): proto.SymbolKind;
+
+	asSymbolTag(item: code.SymbolTag): proto.SymbolTag;
+	asSymbolTags(items: ReadonlyArray<code.SymbolTag>): proto.SymbolTag[];
+
 	asTextEdit(edit: code.TextEdit): proto.TextEdit;
 
 	asReferenceParams(textDocument: code.TextDocument, position: code.Position, options: { includeDeclaration: boolean; }): proto.ReferenceParams;
@@ -427,7 +432,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return undefined;
 	}
 
-	function asCompletionItemTags(tags: code.CompletionItemTag[] | undefined): proto.CompletionItemTag[] | undefined {
+	function asCompletionItemTags(tags: ReadonlyArray<code.CompletionItemTag> | undefined): proto.CompletionItemTag[] | undefined {
 		if (tags === undefined) {
 			return tags;
 		}
@@ -528,6 +533,22 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return edits.map(asTextEdit);
 	}
 
+	function asSymbolKind(item: code.SymbolKind): proto.SymbolKind {
+		if (item <= code.SymbolKind.TypeParameter) {
+			// Symbol kind is one based in the protocol and zero based in code.
+			return (item + 1) as proto.SymbolKind;
+		}
+		return proto.SymbolKind.Property;
+	}
+
+	function asSymbolTag(item: code.SymbolTag): proto.SymbolTag {
+		return item as proto.SymbolTag;
+	}
+
+	function asSymbolTags(items: ReadonlyArray<code.SymbolTag>): proto.SymbolTag[] {
+		return items.map(asSymbolTag);
+	}
+
 	function asReferenceParams(textDocument: code.TextDocument, position: code.Position, options: { includeDeclaration: boolean; }): proto.ReferenceParams {
 		return {
 			textDocument: asTextDocumentIdentifier(textDocument),
@@ -618,6 +639,9 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asDiagnostics,
 		asCompletionItem,
 		asTextEdit,
+		asSymbolKind,
+		asSymbolTag,
+		asSymbolTags,
 		asReferenceParams,
 		asCodeActionContext,
 		asCommand,
