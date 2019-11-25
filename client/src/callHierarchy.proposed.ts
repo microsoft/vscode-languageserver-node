@@ -47,23 +47,34 @@ export interface CallHierarchyMiddleware {
 
 namespace protocol2code {
 
-	export function asCallHierarchyItem(converter: p2c.Converter, value: null): undefined;
-	export function asCallHierarchyItem(converter: p2c.Converter, value: Proposed.CallHierarchyItem): VCallHierarchyItem;
-	export function asCallHierarchyItem(converter: p2c.Converter, value: Proposed.CallHierarchyItem | null): VCallHierarchyItem | undefined;
-	export function asCallHierarchyItem(converter: p2c.Converter, value: Proposed.CallHierarchyItem | null): VCallHierarchyItem | undefined {
-		if (value === null) {
+	export function asCallHierarchyItem(converter: p2c.Converter, item: null): undefined;
+	export function asCallHierarchyItem(converter: p2c.Converter, item: Proposed.CallHierarchyItem): VCallHierarchyItem;
+	export function asCallHierarchyItem(converter: p2c.Converter, item: Proposed.CallHierarchyItem | null): VCallHierarchyItem | undefined;
+	export function asCallHierarchyItem(converter: p2c.Converter, item: Proposed.CallHierarchyItem | null): VCallHierarchyItem | undefined {
+		if (item === null) {
 			return undefined;
 		}
 		let result = new VCallHierarchyItem(
-			converter.asSymbolKind(value.kind),
-			value.name,
-			value.detail || '',
-			converter.asUri(value.uri),
-			converter.asRange(value.range),
-			converter.asRange(value.selectionRange)
+			converter.asSymbolKind(item.kind),
+			item.name,
+			item.detail || '',
+			converter.asUri(item.uri),
+			converter.asRange(item.range),
+			converter.asRange(item.selectionRange)
 		);
-		if (value.tags !== undefined) { result.tags = converter.asSymbolTags(value.tags); }
+		if (item.tags !== undefined) { result.tags = converter.asSymbolTags(item.tags); }
 		return result;
+	}
+
+	export function asCallHierarchyItems(converter: p2c.Converter, items: null): undefined;
+	export function asCallHierarchyItems(converter: p2c.Converter, items: Proposed.CallHierarchyItem[]): VCallHierarchyItem;
+	export function asCallHierarchyItems(converter: p2c.Converter, items: Proposed.CallHierarchyItem[] | null): VCallHierarchyItem | undefined;
+	export function asCallHierarchyItems(converter: p2c.Converter, items: Proposed.CallHierarchyItem[] | null): VCallHierarchyItem | undefined {
+		if (items === null) {
+			return undefined;
+		}
+		let result = items.map(item => asCallHierarchyItem(converter, item));
+		return result[0];
 	}
 
 	export function asCallHierarchyIncomingCall(converter: p2c.Converter, item: Proposed.CallHierarchyIncomingCall): VCallHierarchyIncomingCall {
@@ -130,7 +141,7 @@ class CallHierarchyProvider implements CallHierarchyProvider {
 			const params = client.code2ProtocolConverter.asTextDocumentPositionParams(document, position);
 			return client.sendRequest(CallHierarchyPrepareRequest.type, params, token).then(
 				(result) => {
-					return protocol2code.asCallHierarchyItem(this.client.protocol2CodeConverter, result);
+					return protocol2code.asCallHierarchyItems(this.client.protocol2CodeConverter, result);
 				},
 				(error) => {
 					client.logFailedRequest(CallHierarchyPrepareRequest.type, error);
