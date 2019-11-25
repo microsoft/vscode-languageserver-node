@@ -251,10 +251,15 @@ export class LanguageClient extends BaseLanguageClient {
 			return result;
 		}
 
+		const debugStartWith: string[] = ['--debug=', '--debug-brk=', '--inspect=', '--inspect-brk='];
+		const debugEquals: string[] = ['--debug', '--debug-brk', '--inspect', '--inspect-brk'];
 		function startedInDebugMode(): boolean {
 			let args: string[] = (process as any).execArgv;
 			if (args) {
-				return args.some((arg) => /^--debug=?/.test(arg) || /^--debug-brk=?/.test(arg) || /^--inspect=?/.test(arg) || /^--inspect-brk=?/.test(arg));
+				return args.some((arg) => {
+					return debugStartWith.some(value => arg.startsWith(value)) ||
+						debugEquals.some(value => arg === value);
+				});
 			}
 			return false;
 		}
@@ -286,8 +291,7 @@ export class LanguageClient extends BaseLanguageClient {
 		let json: NodeModule | Executable;
 		let runDebug = <{ run: any; debug: any; }>server;
 		if (runDebug.run || runDebug.debug) {
-			// We are under debugging. So use debug as well.
-			if (typeof v8debug === 'object' || this._forceDebug || startedInDebugMode()) {
+			if (this._forceDebug || startedInDebugMode()) {
 				json = runDebug.debug;
 			} else {
 				json = runDebug.run;
