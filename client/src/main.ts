@@ -43,7 +43,6 @@ const REQUIRED_VSCODE_VERSION = '^1.37.0'; // do not change format, updated by `
 
 export interface ExecutableOptions {
 	cwd?: string;
-	stdio?: cp.StdioOptions;
 	env?: any;
 	detached?: boolean;
 	shell?: boolean;
@@ -311,7 +310,7 @@ export class LanguageClient extends BaseLanguageClient {
 					if (node.args) {
 						node.args.forEach(element => args.push(element));
 					}
-					let execOptions: ExecutableOptions = Object.create(null);
+					let execOptions: cp.SpawnOptionsWithoutStdio = Object.create(null);
 					execOptions.cwd = serverWorkingDir;
 					execOptions.env = getEnvironment(options.env, false);
 					let pipeName: string | undefined = undefined;
@@ -391,19 +390,19 @@ export class LanguageClient extends BaseLanguageClient {
 						if (transport === TransportKind.ipc || transport === TransportKind.stdio) {
 							let sp = cp.fork(node.module, args || [], options);
 							this._serverProcess = sp;
-							sp.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+							sp.stderr!.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 							if (transport === TransportKind.ipc) {
-								sp.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+								sp.stdout!.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 								resolve({ reader: new IPCMessageReader(this._serverProcess), writer: new IPCMessageWriter(this._serverProcess) });
 							} else {
-								resolve({ reader: new StreamMessageReader(sp.stdout), writer: new StreamMessageWriter(sp.stdin) });
+								resolve({ reader: new StreamMessageReader(sp.stdout!), writer: new StreamMessageWriter(sp.stdin!) });
 							}
 						} else if (transport === TransportKind.pipe) {
 							createClientPipeTransport(pipeName!).then((transport) => {
 								let sp = cp.fork(node.module, args || [], options);
 								this._serverProcess = sp;
-								sp.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
-								sp.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+								sp.stderr!.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+								sp.stdout!.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 								transport.onConnected().then((protocol) => {
 									resolve({ reader: protocol[0], writer: protocol[1] });
 								});
@@ -412,8 +411,8 @@ export class LanguageClient extends BaseLanguageClient {
 							createClientSocketTransport(transport.port).then((transport) => {
 								let sp = cp.fork(node.module, args || [], options);
 								this._serverProcess = sp;
-								sp.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
-								sp.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+								sp.stderr!.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+								sp.stdout!.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 								transport.onConnected().then((protocol) => {
 									resolve({ reader: protocol[0], writer: protocol[1] });
 								});
