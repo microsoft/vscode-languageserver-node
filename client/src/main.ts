@@ -43,7 +43,7 @@ const REQUIRED_VSCODE_VERSION = '^1.37.0'; // do not change format, updated by `
 
 export interface ExecutableOptions {
 	cwd?: string;
-	stdio?: string | string[];
+	stdio?: cp.StdioOptions;
 	env?: any;
 	detached?: boolean;
 	shell?: boolean;
@@ -281,8 +281,8 @@ export class LanguageClient extends BaseLanguageClient {
 						cp = result;
 						this._isDetached = false;
 					}
-					cp.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
-					return { reader: new StreamMessageReader(cp.stdout), writer: new StreamMessageWriter(cp.stdin) };
+					cp.stderr!.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+					return { reader: new StreamMessageReader(cp.stdout!), writer: new StreamMessageWriter(cp.stdin!) };
 				}
 			});
 		}

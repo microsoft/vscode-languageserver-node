@@ -425,7 +425,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 	let notificationHandlers: { [name: string]: NotificationHandlerElement | undefined } = Object.create(null);
 	let progressHandlers: Map<number | string, NotificationHandler1<any>> = new Map();
 
-	let timer: NodeJS.Timer | undefined;
+	let timer: NodeJS.Immediate | undefined;
 	let messageQueue: MessageQueue = new LinkedMap<string, Message>();
 	let responsePromises: { [name: string]: ResponsePromise } = Object.create(null);
 	let requestTokens: { [id: string]: CancellationTokenSource } = Object.create(null);

@@ -27,7 +27,7 @@ export interface PipeTransport {
 	onConnected(): Promise<[MessageReader, MessageWriter]>;
 }
 
-export function createClientPipeTransport(pipeName: string, encoding: string = 'utf-8'): Promise<PipeTransport> {
+export function createClientPipeTransport(pipeName: string, encoding: BufferEncoding = 'utf-8'): Promise<PipeTransport> {
 	let connectResolve: any;
 	let connected = new Promise<[MessageReader, MessageWriter]>((resolve, _reject) => {
 		connectResolve = resolve;
@@ -50,7 +50,7 @@ export function createClientPipeTransport(pipeName: string, encoding: string = '
 	});
 }
 
-export function createServerPipeTransport(pipeName: string, encoding: string = 'utf-8'): [MessageReader, MessageWriter] {
+export function createServerPipeTransport(pipeName: string, encoding: BufferEncoding = 'utf-8'): [MessageReader, MessageWriter] {
 	const socket: Socket = createConnection(pipeName);
 	return [
 		new SocketMessageReader(socket, encoding),

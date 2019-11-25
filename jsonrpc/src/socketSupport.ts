@@ -13,7 +13,7 @@ export interface SocketTransport {
 	onConnected(): Promise<[MessageReader, MessageWriter]>;
 }
 
-export function createClientSocketTransport(port: number, encoding: string = 'utf-8'): Promise<SocketTransport> {
+export function createClientSocketTransport(port: number, encoding: BufferEncoding = 'utf-8'): Promise<SocketTransport> {
 	let connectResolve: any;
 	let connected = new Promise<[MessageReader, MessageWriter]>((resolve, _reject) => {
 		connectResolve = resolve;
@@ -36,7 +36,7 @@ export function createClientSocketTransport(port: number, encoding: string = 'ut
 	});
 }
 
-export function createServerSocketTransport(port: number, encoding: string = 'utf-8'): [MessageReader, MessageWriter] {
+export function createServerSocketTransport(port: number, encoding: BufferEncoding = 'utf-8'): [MessageReader, MessageWriter] {
 	const socket: Socket = createConnection(port, '127.0.0.1');
 	return [
 		new SocketMessageReader(socket, encoding),

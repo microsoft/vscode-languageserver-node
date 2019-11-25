@@ -18,11 +18,11 @@ let CRLF: string = '\r\n';
 
 class MessageBuffer {
 
-	private encoding: string;
+	private encoding: BufferEncoding;
 	private index: number;
 	private buffer: Buffer;
 
-	constructor(encoding: string = 'utf8') {
+	constructor(encoding: BufferEncoding = 'utf8') {
 		this.encoding = encoding;
 		this.index = 0;
 		this.buffer = Buffer.allocUnsafe(DefaultSize);
@@ -180,7 +180,7 @@ export class StreamMessageReader extends AbstractMessageReader implements Messag
 	private partialMessageTimer: NodeJS.Timer | undefined;
 	private _partialMessageTimeout: number;
 
-	public constructor(readable: NodeJS.ReadableStream, encoding: string = 'utf8') {
+	public constructor(readable: NodeJS.ReadableStream, encoding: BufferEncoding = 'utf8') {
 		super();
 		this.readable = readable;
 		this.buffer = new MessageBuffer(encoding);
@@ -281,7 +281,7 @@ export class IPCMessageReader extends AbstractMessageReader implements MessageRe
 }
 
 export class SocketMessageReader extends StreamMessageReader {
-	public constructor(socket: Socket, encoding: string = 'utf-8') {
+	public constructor(socket: Socket, encoding: BufferEncoding = 'utf-8') {
 		super(socket as NodeJS.ReadableStream, encoding);
 	}
 }

@@ -123,8 +123,8 @@ export interface CallHierarchyPrepareParams extends TextDocumentPositionParams, 
 }
 
 export namespace CallHierarchyPrepareRequest {
-	export const type = new RequestType<CallHierarchyPrepareParams, CallHierarchyItem | null, void, CallHierarchyRegistrationOptions>('textDocument/prepareCallHierarchy');
-	export type HandlerSignature = RequestHandler<CallHierarchyPrepareParams, CallHierarchyItem | null, void>;
+	export const type = new RequestType<CallHierarchyPrepareParams, CallHierarchyItem[] | null, void, CallHierarchyRegistrationOptions>('textDocument/prepareCallHierarchy');
+	export type HandlerSignature = RequestHandler<CallHierarchyPrepareParams, CallHierarchyItem[] | null, void>;
 }
 
 export interface CallHierarchyIncomingCallsParams extends WorkDoneProgressParams, PartialResultParams {

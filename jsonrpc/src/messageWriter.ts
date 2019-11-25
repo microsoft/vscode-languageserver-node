@@ -72,10 +72,10 @@ export abstract class AbstractMessageWriter {
 export class StreamMessageWriter extends AbstractMessageWriter implements MessageWriter {
 
 	private writable: NodeJS.WritableStream;
-	private encoding: string;
+	private encoding: BufferEncoding;
 	private errorCount: number;
 
-	public constructor(writable: NodeJS.WritableStream, encoding: string = 'utf8') {
+	public constructor(writable: NodeJS.WritableStream, encoding: BufferEncoding = 'utf8') {
 		super();
 		this.writable = writable;
 		this.encoding = encoding;
@@ -162,10 +162,10 @@ export class SocketMessageWriter extends AbstractMessageWriter implements Messag
 	private socket: Socket;
 	private queue: Message[];
 	private sending: boolean;
-	private encoding: string;
+	private encoding: BufferEncoding;
 	private errorCount: number;
 
-	public constructor(socket: Socket, encoding: string = 'utf8') {
+	public constructor(socket: Socket, encoding: BufferEncoding = 'utf8') {
 		super();
 		this.socket = socket;
 		this.queue = [];
