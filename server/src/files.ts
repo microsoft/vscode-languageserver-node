@@ -72,7 +72,7 @@ export function resolve(moduleName: string, nodePath: string | undefined, cwd: s
 		let newEnv = Object.create(null);
 		Object.keys(env).forEach(key => newEnv[key] = env[key]);
 
-		if (nodePath) {
+		if (nodePath && fs.existsSync(nodePath) /* see issue 545 */) {
 			if (newEnv[nodePathKey]) {
 				newEnv[nodePathKey] = nodePath + path.delimiter + newEnv[nodePathKey];
 			} else {
