@@ -705,6 +705,13 @@ export interface DynamicFeature<RO> {
 	dispose(): void;
 }
 
+export interface ProvideFeature<T extends Function> {
+	/**
+	 * Trigger the corresponding RPC method (request or notification).
+	 */
+	provide: T;
+}
+
 namespace DynamicFeature {
 	export function is<T>(value: any): value is DynamicFeature<T> {
 		let candidate: DynamicFeature<T> = value;
@@ -716,7 +723,7 @@ interface CreateParamsSignature<E, P> {
 	(data: E): P;
 }
 
-abstract class DocumentNotifiactions<P, E> implements DynamicFeature<TextDocumentRegistrationOptions> {
+abstract class DocumentNotifiactions<P, E> implements DynamicFeature<TextDocumentRegistrationOptions>, ProvideFeature<(data: E) => void> {
 
 	private _listener: Disposable | undefined;
 	protected _selectors: Map<string, DocumentSelector> = new Map<string, DocumentSelector>();
@@ -783,6 +790,10 @@ abstract class DocumentNotifiactions<P, E> implements DynamicFeature<TextDocumen
 			this._listener.dispose();
 			this._listener = undefined;
 		}
+	}
+
+	public provide(data: E): void {
+		this.callback(data);
 	}
 }
 
@@ -902,7 +913,7 @@ interface DidChangeTextDocumentData {
 	syncKind: 0 | 1 | 2;
 }
 
-class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeRegistrationOptions> {
+class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeRegistrationOptions>, ProvideFeature<(event: TextDocumentChangeEvent) => void> {
 
 	private _listener: Disposable | undefined;
 	private _changeData: Map<string, DidChangeTextDocumentData> = new Map<string, DidChangeTextDocumentData>();
@@ -1024,6 +1035,10 @@ class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeR
 		} finally {
 			this._forcingDelivery = false;
 		}
+	}
+
+	public provide(event: TextDocumentChangeEvent): void {
+		return this.callback(event);
 	}
 }
 
@@ -1264,7 +1279,7 @@ class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatchedFilesRe
 
 export abstract class TextDocumentFeature<PO, RO extends TextDocumentRegistrationOptions & PO> implements DynamicFeature<RO> {
 
-	protected _providers: Map<string, Disposable> = new Map<string, Disposable>();
+	private _providers: Map<string, [Disposable, RegistrationData<RO>]> = new Map<string, [Disposable, RegistrationData<RO>]>();
 
 	constructor(protected _client: BaseLanguageClient, private _message: RPCMessageType) {
 	}
@@ -1286,7 +1301,7 @@ export abstract class TextDocumentFeature<PO, RO extends TextDocumentRegistratio
 		}
 		let provider = this.registerLanguageProvider(data.registerOptions);
 		if (provider) {
-			this._providers.set(data.id, provider);
+			this._providers.set(data.id, [provider, data]);
 		}
 	}
 
@@ -1295,13 +1310,13 @@ export abstract class TextDocumentFeature<PO, RO extends TextDocumentRegistratio
 	public unregister(id: string): void {
 		let provider = this._providers.get(id);
 		if (provider) {
-			provider.dispose();
+			provider[0].dispose();
 		}
 	}
 
 	public dispose(): void {
 		this._providers.forEach((value) => {
-			value.dispose();
+			value[0].dispose();
 		});
 		this._providers.clear();
 	}
@@ -1330,6 +1345,16 @@ export abstract class TextDocumentFeature<PO, RO extends TextDocumentRegistratio
 			return undefined;
 		}
 		return (Is.boolean(capability) && capability === true ? { documentSelector } : Object.assign({}, capability, { documentSelector })) as RO & { documentSelector: DocumentSelector };
+	}
+
+	protected assertRegistered(textDocument: TextDocument): void {
+		for (const item of this._providers.values()) {
+			let selector = item[1].registerOptions.documentSelector;
+			if (selector !== null && Languages.match(selector, textDocument)) {
+				return;
+			}
+		}
+		throw new Error(`The feature has no registration for the provided text document ${textDocument.uri.toString()}`);
 	}
 }
 
@@ -1375,7 +1400,12 @@ abstract class WorkspaceFeature<RO> implements DynamicFeature<RO> {
 	}
 }
 
-class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, CompletionRegistrationOptions> {
+export interface ProvideResolveFeature<T1 extends Function, T2 extends Function> {
+	provide: T1;
+	resolve: T2;
+}
+
+class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, CompletionRegistrationOptions> implements ProvideResolveFeature<ProvideCompletionItemsSignature, ResolveCompletionItemSignature> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, CompletionRequest.type);
@@ -1409,8 +1439,23 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 
 	protected registerLanguageProvider(options: CompletionRegistrationOptions): Disposable {
 		let triggerCharacters = options.triggerCharacters || [];
-		let client = this._client;
-		let provideCompletionItems: ProvideCompletionItemsSignature = (document, position, context, token) => {
+		return Languages.registerCompletionItemProvider(options.documentSelector!, {
+			provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken, context: VCompletionContext): ProviderResult<VCompletionList | VCompletionItem[]> => {
+				return this.provide(document, position, context, token);
+			},
+			resolveCompletionItem: options.resolveProvider
+				? (item: VCompletionItem, token: CancellationToken): ProviderResult<VCompletionItem> => {
+					return this.resolve(item, token);
+				}
+				: undefined
+		}, ...triggerCharacters);
+	}
+
+	public provide: ProvideCompletionItemsSignature = (document, position, context, token) => {
+		this.assertRegistered(document);
+		const client = this._client;
+		const middleware = this._client.clientOptions.middleware!;
+		const _provideCompletionItems: ProvideCompletionItemsSignature = (document, position, context, token) => {
 			return client.sendRequest(CompletionRequest.type, client.code2ProtocolConverter.asCompletionParams(document, position, context), token).then(
 				client.protocol2CodeConverter.asCompletionResult,
 				(error) => {
@@ -1419,7 +1464,15 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 				}
 			);
 		};
-		let resolveCompletionItem: ResolveCompletionItemSignature = (item, token) => {
+		return middleware.provideCompletionItem
+			? middleware.provideCompletionItem(document, position, context, token, _provideCompletionItems)
+			: _provideCompletionItems(document, position, context, token);
+	}
+
+	public resolve: ResolveCompletionItemSignature = (item, token) => {
+		const client = this._client;
+		const middleware = this._client.clientOptions.middleware!;
+		const _resolveCompletionItem: ResolveCompletionItemSignature = (item, token) => {
 			return client.sendRequest(CompletionResolveRequest.type, client.code2ProtocolConverter.asCompletionItem(item), token).then(
 				client.protocol2CodeConverter.asCompletionItem,
 				(error) => {
@@ -1428,26 +1481,13 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 				}
 			);
 		};
-
-		let middleware = this._client.clientOptions.middleware!;
-		return Languages.registerCompletionItemProvider(options.documentSelector!, {
-			provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken, context: VCompletionContext): ProviderResult<VCompletionList | VCompletionItem[]> => {
-				return middleware.provideCompletionItem
-					? middleware.provideCompletionItem(document, position, context, token, provideCompletionItems)
-					: provideCompletionItems(document, position, context, token);
-			},
-			resolveCompletionItem: options.resolveProvider
-				? (item: VCompletionItem, token: CancellationToken): ProviderResult<VCompletionItem> => {
-					return middleware.resolveCompletionItem
-						? middleware.resolveCompletionItem(item, token, resolveCompletionItem)
-						: resolveCompletionItem(item, token);
-				}
-				: undefined
-		}, ...triggerCharacters);
+		return middleware.resolveCompletionItem
+			? middleware.resolveCompletionItem(item, token, _resolveCompletionItem)
+			: _resolveCompletionItem(item, token);
 	}
 }
 
-class HoverFeature extends TextDocumentFeature<boolean | HoverOptions, HoverRegistrationOptions> {
+class HoverFeature extends TextDocumentFeature<boolean | HoverOptions, HoverRegistrationOptions> implements ProvideFeature<ProvideHoverSignature> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, HoverRequest.type);
@@ -1471,8 +1511,13 @@ class HoverFeature extends TextDocumentFeature<boolean | HoverOptions, HoverRegi
 	}
 
 	protected registerLanguageProvider(options: HoverRegistrationOptions): Disposable {
-		let client = this._client;
-		let provideHover: ProvideHoverSignature = (document, position, token) => {
+		return Languages.registerHoverProvider(options.documentSelector!, this);
+	}
+
+	public provideHover: ProvideHoverSignature = (document, position, token) => {
+		const client = this._client;
+		const middleware = client.clientOptions.middleware!;
+		const _provideHover: ProvideHoverSignature = (document, position, token) => {
 			return client.sendRequest(HoverRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
 				client.protocol2CodeConverter.asHover,
 				(error) => {
@@ -1481,18 +1526,18 @@ class HoverFeature extends TextDocumentFeature<boolean | HoverOptions, HoverRegi
 				}
 			);
 		};
-		let middleware = client.clientOptions.middleware!;
-		return Languages.registerHoverProvider(options.documentSelector!, {
-			provideHover: (document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VHover> => {
-				return middleware.provideHover
-					? middleware.provideHover(document, position, token, provideHover)
-					: provideHover(document, position, token);
-			}
-		});
-	}
+		return middleware.provideHover
+			? middleware.provideHover(document, position, token, _provideHover)
+			: _provideHover(document, position, token);
+	};
+
+	public provide: ProvideHoverSignature = (document, position, token) => {
+		this.assertRegistered(document);
+		return this.provideHover(document, position, token);
+	};
 }
 
-class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpOptions, SignatureHelpRegistrationOptions> {
+class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpOptions, SignatureHelpRegistrationOptions> implements VSignatureHelpProvider, ProvideFeature<ProvideSignatureHelpSignature> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, SignatureHelpRequest.type);
@@ -1518,7 +1563,21 @@ class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpOptions, Sig
 	}
 
 	protected registerLanguageProvider(options: SignatureHelpRegistrationOptions): Disposable {
+		if (options.retriggerCharacters === undefined) {
+			const triggerCharacters = options.triggerCharacters || [];
+			return Languages.registerSignatureHelpProvider(options.documentSelector!, this, ...triggerCharacters);
+		} else {
+			const metaData: VSignatureHelpProviderMetadata = {
+				triggerCharacters: options.triggerCharacters || [],
+				retriggerCharacters: options.retriggerCharacters || []
+			};
+			return Languages.registerSignatureHelpProvider(options.documentSelector!, this, metaData);
+		}
+	}
+
+	public provideSignatureHelp(document: TextDocument, position: VPosition, token: CancellationToken, context: VSignatureHelpContext): ProviderResult<VSignatureHelp> {
 		const client = this._client;
+		const middleware = client.clientOptions.middleware!;
 		const providerSignatureHelp: ProvideSignatureHelpSignature = (document, position, context, token) => {
 			return client.sendRequest(SignatureHelpRequest.type, client.code2ProtocolConverter.asSignatureHelpParams(document, position, context), token).then(
 				client.protocol2CodeConverter.asSignatureHelp,
@@ -1528,28 +1587,18 @@ class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpOptions, Sig
 				}
 			);
 		};
-		const middleware = client.clientOptions.middleware!;
-		const provider: VSignatureHelpProvider = {
-			provideSignatureHelp: (document: TextDocument, position: VPosition, token: CancellationToken, context: VSignatureHelpContext): ProviderResult<VSignatureHelp> => {
-				return middleware.provideSignatureHelp
-					? middleware.provideSignatureHelp(document, position, context, token, providerSignatureHelp)
-					: providerSignatureHelp(document, position, context, token);
-			}
-		};
-		if (options.retriggerCharacters === undefined) {
-			const triggerCharacters = options.triggerCharacters || [];
-			return Languages.registerSignatureHelpProvider(options.documentSelector!, provider, ...triggerCharacters);
-		} else {
-			const metaData: VSignatureHelpProviderMetadata = {
-				triggerCharacters: options.triggerCharacters || [],
-				retriggerCharacters: options.retriggerCharacters || []
-			};
-			return Languages.registerSignatureHelpProvider(options.documentSelector!, provider, metaData);
-		}
+		return middleware.provideSignatureHelp
+			? middleware.provideSignatureHelp(document, position, context, token, providerSignatureHelp)
+			: providerSignatureHelp(document, position, context, token);
+	}
+
+	public provide: ProvideSignatureHelpSignature = (document, position, context, token) => {
+		this.assertRegistered(document);
+		return this.provideSignatureHelp(document, position, token, context);
 	}
 }
 
-class DefinitionFeature extends TextDocumentFeature<boolean | DefinitionOptions, DefinitionRegistrationOptions> {
+class DefinitionFeature extends TextDocumentFeature<boolean | DefinitionOptions, DefinitionRegistrationOptions> implements ProvideFeature<ProvideDefinitionSignature> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, DefinitionRequest.type);
@@ -1570,8 +1619,13 @@ class DefinitionFeature extends TextDocumentFeature<boolean | DefinitionOptions,
 	}
 
 	protected registerLanguageProvider(options: DefinitionRegistrationOptions): Disposable {
-		let client = this._client;
-		let provideDefinition: ProvideDefinitionSignature = (document, position, token) => {
+		return Languages.registerDefinitionProvider(options.documentSelector!, this);
+	}
+
+	public provideDefinition: ProvideDefinitionSignature = (document, position, token) => {
+		const client = this._client;
+		const middleware = client.clientOptions.middleware!;
+		const _provideDefinition: ProvideDefinitionSignature = (document, position, token) => {
 			return client.sendRequest(DefinitionRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
 				client.protocol2CodeConverter.asDefinitionResult,
 				(error) => {
@@ -1580,18 +1634,18 @@ class DefinitionFeature extends TextDocumentFeature<boolean | DefinitionOptions,
 				}
 			);
 		};
-		let middleware = client.clientOptions.middleware!;
-		return Languages.registerDefinitionProvider(options.documentSelector!, {
-			provideDefinition: (document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDefinition | VDefinitionLink[]> => {
-				return middleware.provideDefinition
-					? middleware.provideDefinition(document, position, token, provideDefinition)
-					: provideDefinition(document, position, token);
-			}
-		});
+		return middleware.provideDefinition
+			? middleware.provideDefinition(document, position, token, _provideDefinition)
+			: _provideDefinition(document, position, token);
+	}
+
+	public provide: ProvideDefinitionSignature = (document, position, token) => {
+		this.assertRegistered(document);
+		return this.provideDefinition(document, position, token);
 	}
 }
 
-class ReferencesFeature extends TextDocumentFeature<boolean | ReferenceOptions, ReferenceRegistrationOptions> {
+class ReferencesFeature extends TextDocumentFeature<boolean | ReferenceOptions, ReferenceRegistrationOptions> implements ProvideFeature<ProvideReferencesSignature> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, ReferencesRequest.type);
@@ -1610,8 +1664,12 @@ class ReferencesFeature extends TextDocumentFeature<boolean | ReferenceOptions, 
 	}
 
 	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): Disposable {
-		let client = this._client;
-		let providerReferences: ProvideReferencesSignature = (document, position, options, token) => {
+		return Languages.registerReferenceProvider(options.documentSelector!, this);
+	}
+
+	public provideReferences: ProvideReferencesSignature = (document, position, options, token) => {
+		const client = this._client;
+		const _providerReferences: ProvideReferencesSignature = (document, position, options, token) => {
 			return client.sendRequest(ReferencesRequest.type, client.code2ProtocolConverter.asReferenceParams(document, position, options), token).then(
 				client.protocol2CodeConverter.asReferences,
 				(error) => {
@@ -1620,14 +1678,15 @@ class ReferencesFeature extends TextDocumentFeature<boolean | ReferenceOptions, 
 				}
 			);
 		};
-		let middleware = client.clientOptions.middleware!;
-		return Languages.registerReferenceProvider(options.documentSelector!, {
-			provideReferences: (document: TextDocument, position: VPosition, options: { includeDeclaration: boolean; }, token: CancellationToken): ProviderResult<VLocation[]> => {
-				return middleware.provideReferences
-					? middleware.provideReferences(document, position, options, token, providerReferences)
-					: providerReferences(document, position, options, token);
-			}
-		});
+		const middleware = client.clientOptions.middleware!;
+		return middleware.provideReferences
+			? middleware.provideReferences(document, position, options, token, _providerReferences)
+			: _providerReferences(document, position, options, token);
+	}
+
+	public provide: ProvideReferencesSignature = (document, position, options, token) => {
+		this.assertRegistered(document);
+		return this.provideReferences(document, position, options, token);
 	}
 }
 
@@ -3208,8 +3267,20 @@ export abstract class BaseLanguageClient {
 		}
 	}
 
-	public getDynamicFeature(message: RPCMessageType): DynamicFeature<any> | undefined {
-		return this._dynamicFeatures.get(message.method);
+	public getFeature(request: typeof DidOpenTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & ProvideFeature<(textDocument: TextDocument) => void>;
+	public getFeature(request: typeof DidChangeTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & ProvideFeature<(textDocument: TextDocument) => void>;
+	public getFeature(request: typeof WillSaveTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & ProvideFeature<(textDocument: TextDocument) => void>;
+	public getFeature(request: typeof WillSaveTextDocumentWaitUntilRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & ProvideFeature<(textDocument: TextDocument) => ProviderResult<VTextEdit[]>>;
+	public getFeature(request: typeof DidSaveTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & ProvideFeature<(textDocument: TextDocument) => void>;
+	public getFeature(request: typeof DidCloseTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & ProvideFeature<(textDocument: TextDocument) => void>;
+	public getFeature(request: typeof CompletionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & ProvideResolveFeature<ProvideCompletionItemsSignature, ResolveCompletionItemSignature>;
+	public getFeature(request: typeof HoverRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & ProvideFeature<ProvideHoverSignature>;
+	public getFeature(request: typeof SignatureHelpRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & ProvideFeature<ProvideSignatureHelpSignature>;
+	public getFeature(request: typeof DefinitionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & ProvideFeature<ProvideDefinitionSignature>;
+	public getFeature(request: typeof ReferencesRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & ProvideFeature<ProvideReferencesSignature>;
+
+	public getFeature(request: string): DynamicFeature<any> | undefined {
+		return this._dynamicFeatures.get(request);
 	}
 
 	protected registerBuiltinFeatures() {

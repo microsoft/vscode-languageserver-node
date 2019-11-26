@@ -1078,7 +1078,8 @@ export interface DidOpenTextDocumentParams {
  * is one.
  */
 export namespace DidOpenTextDocumentNotification {
-	export const type = new NotificationType<DidOpenTextDocumentParams, TextDocumentRegistrationOptions>('textDocument/didOpen');
+	export const method: 'textDocument/didOpen' = 'textDocument/didOpen';
+	export const type = new NotificationType<DidOpenTextDocumentParams, TextDocumentRegistrationOptions>(method);
 }
 
 /**
@@ -1143,7 +1144,8 @@ export interface TextDocumentChangeRegistrationOptions extends TextDocumentRegis
  * changes to a text document.
  */
 export namespace DidChangeTextDocumentNotification {
-	export const type = new NotificationType<DidChangeTextDocumentParams, TextDocumentChangeRegistrationOptions>('textDocument/didChange');
+	export const method: 'textDocument/didChange' = 'textDocument/didChange';
+	export const type = new NotificationType<DidChangeTextDocumentParams, TextDocumentChangeRegistrationOptions>(method);
 }
 
 /**
@@ -1166,7 +1168,8 @@ export interface DidCloseTextDocumentParams {
  * notification requires a previous open notification to be sent.
  */
 export namespace DidCloseTextDocumentNotification {
-	export const type = new NotificationType<DidCloseTextDocumentParams, TextDocumentRegistrationOptions>('textDocument/didClose');
+	export const method: 'textDocument/didClose' = 'textDocument/didClose';
+	export const type = new NotificationType<DidCloseTextDocumentParams, TextDocumentRegistrationOptions>(method);
 }
 
 /**
@@ -1196,7 +1199,8 @@ export interface TextDocumentSaveRegistrationOptions extends TextDocumentRegistr
  * the document got saved in the client.
  */
 export namespace DidSaveTextDocumentNotification {
-	export const type = new NotificationType<DidSaveTextDocumentParams, TextDocumentSaveRegistrationOptions>('textDocument/didSave');
+	export const method: 'textDocument/didSave' = 'textDocument/didSave';
+	export const type = new NotificationType<DidSaveTextDocumentParams, TextDocumentSaveRegistrationOptions>(method);
 }
 
 /**
@@ -1243,7 +1247,8 @@ export interface WillSaveTextDocumentParams {
  * the document is actually saved.
  */
 export namespace WillSaveTextDocumentNotification {
-	export const type = new NotificationType<WillSaveTextDocumentParams, TextDocumentRegistrationOptions>('textDocument/willSave');
+	export const method: 'textDocument/willSave' = 'textDocument/willSave';
+	export const type = new NotificationType<WillSaveTextDocumentParams, TextDocumentRegistrationOptions>(method);
 }
 
 /**
@@ -1255,7 +1260,8 @@ export namespace WillSaveTextDocumentNotification {
  * reliable.
  */
 export namespace WillSaveTextDocumentWaitUntilRequest {
-	export const type = new RequestType<WillSaveTextDocumentParams, TextEdit[] | null, void, TextDocumentRegistrationOptions>('textDocument/willSaveWaitUntil');
+	export const method: 'textDocument/willSaveWaitUntil' = 'textDocument/willSaveWaitUntil';
+	export const type = new RequestType<WillSaveTextDocumentParams, TextEdit[] | null, void, TextDocumentRegistrationOptions>(method);
 }
 
 //---- File eventing ----
@@ -1613,7 +1619,8 @@ export interface CompletionRegistrationOptions extends TextDocumentRegistrationO
  * `filterText`, `insertText`, and `textEdit`, must not be changed during resolve.
  */
 export namespace CompletionRequest {
-	export const type = new RequestType<CompletionParams, CompletionItem[] | CompletionList | null, void, CompletionRegistrationOptions>('textDocument/completion');
+	export const method: 'textDocument/completion' = 'textDocument/completion';
+	export const type = new RequestType<CompletionParams, CompletionItem[] | CompletionList | null, void, CompletionRegistrationOptions>(method);
 	export const resultType = new ProgressType<CompletionItem[]>();
 }
 
@@ -1623,7 +1630,8 @@ export namespace CompletionRequest {
  * is of type [CompletionItem](#CompletionItem) or a Thenable that resolves to such.
  */
 export namespace CompletionResolveRequest {
-	export const type = new RequestType<CompletionItem, CompletionItem, void, void>('completionItem/resolve');
+	export const method: 'completionItem/resolve' = 'completionItem/resolve';
+	export const type = new RequestType<CompletionItem, CompletionItem, void, void>(method);
 }
 
 //---- Hover Support -------------------------------
@@ -1665,7 +1673,8 @@ export interface HoverRegistrationOptions extends TextDocumentRegistrationOption
  * type [Hover](#Hover) or a Thenable that resolves to such.
  */
 export namespace HoverRequest {
-	export const type = new RequestType<HoverParams, Hover | null, void, HoverRegistrationOptions>('textDocument/hover');
+	export const method: 'textDocument/hover' = 'textDocument/hover';
+	export const type = new RequestType<HoverParams, Hover | null, void, HoverRegistrationOptions>(method);
 }
 
 //---- SignatureHelp ----------------------------------
@@ -1811,7 +1820,8 @@ export interface SignatureHelpRegistrationOptions extends TextDocumentRegistrati
 }
 
 export namespace SignatureHelpRequest {
-	export const type = new RequestType<SignatureHelpParams, SignatureHelp | null, void, SignatureHelpRegistrationOptions>('textDocument/signatureHelp');
+	export const method: 'textDocument/signatureHelp' = 'textDocument/signatureHelp';
+	export const type = new RequestType<SignatureHelpParams, SignatureHelp | null, void, SignatureHelpRegistrationOptions>(method);
 }
 
 //---- Goto Definition -------------------------------------
@@ -1859,7 +1869,8 @@ export interface DefinitionRegistrationOptions extends TextDocumentRegistrationO
  * to such.
  */
 export namespace DefinitionRequest {
-	export const type = new RequestType<DefinitionParams, Definition | DefinitionLink[] | null, void, DefinitionRegistrationOptions>('textDocument/definition');
+	export const method: 'textDocument/definition' = 'textDocument/definition';
+	export const type = new RequestType<DefinitionParams, Definition | DefinitionLink[] | null, void, DefinitionRegistrationOptions>(method);
 	export const resultType = new ProgressType<Location[] | DefinitionLink[]>();
 }
 
@@ -1901,7 +1912,8 @@ export interface ReferenceRegistrationOptions extends TextDocumentRegistrationOp
  * [Location[]](#Location) or a Thenable that resolves to such.
  */
 export namespace ReferencesRequest {
-	export const type = new RequestType<ReferenceParams, Location[] | null, void, ReferenceRegistrationOptions>('textDocument/references');
+	export const method: 'textDocument/references' = 'textDocument/references';
+	export const type = new RequestType<ReferenceParams, Location[] | null, void, ReferenceRegistrationOptions>(method);
 	export const resultType = new ProgressType<Location[]>();
 }
 
