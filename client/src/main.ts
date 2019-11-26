@@ -261,6 +261,12 @@ export class LanguageClient extends BaseLanguageClient {
 			return false;
 		}
 
+		function assertStdio(process: cp.ChildProcess): asserts process is cp.ChildProcessWithoutNullStreams {
+			if (process.stdin === null || process.stdout === null || process.stderr === null) {
+				throw new Error('Process created without stdio streams');
+			}
+		}
+
 		let server = this._serverOptions;
 		// We got a function.
 		if (Is.func(server)) {
@@ -389,20 +395,22 @@ export class LanguageClient extends BaseLanguageClient {
 						options.silent = true;
 						if (transport === TransportKind.ipc || transport === TransportKind.stdio) {
 							let sp = cp.fork(node.module, args || [], options);
+							assertStdio(sp);
 							this._serverProcess = sp;
-							sp.stderr!.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+							sp.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 							if (transport === TransportKind.ipc) {
-								sp.stdout!.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+								sp.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 								resolve({ reader: new IPCMessageReader(this._serverProcess), writer: new IPCMessageWriter(this._serverProcess) });
 							} else {
-								resolve({ reader: new StreamMessageReader(sp.stdout!), writer: new StreamMessageWriter(sp.stdin!) });
+								resolve({ reader: new StreamMessageReader(sp.stdout), writer: new StreamMessageWriter(sp.stdin) });
 							}
 						} else if (transport === TransportKind.pipe) {
 							createClientPipeTransport(pipeName!).then((transport) => {
 								let sp = cp.fork(node.module, args || [], options);
+								assertStdio(sp);
 								this._serverProcess = sp;
-								sp.stderr!.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
-								sp.stdout!.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+								sp.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+								sp.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 								transport.onConnected().then((protocol) => {
 									resolve({ reader: protocol[0], writer: protocol[1] });
 								});
@@ -410,9 +418,10 @@ export class LanguageClient extends BaseLanguageClient {
 						} else if (Transport.isSocket(transport)) {
 							createClientSocketTransport(transport.port).then((transport) => {
 								let sp = cp.fork(node.module, args || [], options);
+								assertStdio(sp);
 								this._serverProcess = sp;
-								sp.stderr!.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
-								sp.stdout!.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+								sp.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+								sp.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 								transport.onConnected().then((protocol) => {
 									resolve({ reader: protocol[0], writer: protocol[1] });
 								});
