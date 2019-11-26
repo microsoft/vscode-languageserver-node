@@ -431,8 +431,13 @@ export interface DidChangeConfigurationSignature {
 	(sections: string[] | undefined): void;
 }
 
+export interface DidChangeWatchedFileSignature {
+	(event: FileEvent): void;
+}
+
 export interface _WorkspaceMiddleware {
 	didChangeConfiguration?: (this: void, sections: string[] | undefined, next: DidChangeConfigurationSignature) => void;
+	didChangeWatchedFile?: (this: void, event: FileEvent, next: DidChangeWatchedFileSignature) => void;
 }
 
 export type WorkspaceMiddleware = _WorkspaceMiddleware & ConfigurationWorkspaceMiddleware & WorkspaceFolderWorkspaceMiddleware;
@@ -3029,20 +3034,25 @@ export abstract class BaseLanguageClient {
 	}
 
 	private notifyFileEvent(event: FileEvent): void {
-		this._fileEvents.push(event);
-		this._fileEventDelayer.trigger(() => {
-			this.onReady().then(() => {
-				this.resolveConnection().then(connection => {
-					if (this.isConnectionActive()) {
-						this.forceDocumentSync();
-						connection.didChangeWatchedFiles({ changes: this._fileEvents });
-					}
-					this._fileEvents = [];
+		const client = this;
+		function didChangeWatchedFile(this: void, event: FileEvent) {
+			client._fileEvents.push(event);
+			client._fileEventDelayer.trigger(() => {
+				client.onReady().then(() => {
+					client.resolveConnection().then(connection => {
+						if (client.isConnectionActive()) {
+							client.forceDocumentSync();
+							connection.didChangeWatchedFiles({ changes: client._fileEvents });
+						}
+						client._fileEvents = [];
+					});
+				}, (error) => {
+					client.error(`Notify file events failed.`, error);
 				});
-			}, (error) => {
-				this.error(`Notify file events failed.`, error);
 			});
-		});
+		}
+		const middleware = this.clientOptions.middleware?.workspace?.didChangeWatchedFile;
+		middleware ? middleware(event, didChangeWatchedFile) : didChangeWatchedFile(event);
 	}
 
 	private forceDocumentSync(): void {
