@@ -340,87 +340,87 @@ export enum RevealOutputChannelOn {
 }
 
 export interface HandleDiagnosticsSignature {
-	(uri: Uri, diagnostics: VDiagnostic[]): void;
+	(this: void, uri: Uri, diagnostics: VDiagnostic[]): void;
 }
 
 export interface ProvideCompletionItemsSignature {
-	(document: TextDocument, position: VPosition, context: VCompletionContext, token: CancellationToken): ProviderResult<VCompletionItem[] | VCompletionList>;
+	(this: void, document: TextDocument, position: VPosition, context: VCompletionContext, token: CancellationToken): ProviderResult<VCompletionItem[] | VCompletionList>;
 }
 
 export interface ResolveCompletionItemSignature {
-	(item: VCompletionItem, token: CancellationToken): ProviderResult<VCompletionItem>;
+	(this: void, item: VCompletionItem, token: CancellationToken): ProviderResult<VCompletionItem>;
 }
 
 export interface ProvideHoverSignature {
-	(document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VHover>;
+	(this: void, document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VHover>;
 }
 
 export interface ProvideSignatureHelpSignature {
-	(document: TextDocument, position: VPosition, context: VSignatureHelpContext, token: CancellationToken): ProviderResult<VSignatureHelp>;
+	(this: void, document: TextDocument, position: VPosition, context: VSignatureHelpContext, token: CancellationToken): ProviderResult<VSignatureHelp>;
 }
 
 export interface ProvideDefinitionSignature {
-	(document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDefinition | VDefinitionLink[]>;
+	(this: void, document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDefinition | VDefinitionLink[]>;
 }
 
 export interface ProvideReferencesSignature {
-	(document: TextDocument, position: VPosition, options: { includeDeclaration: boolean; }, token: CancellationToken): ProviderResult<VLocation[]>;
+	(this: void, document: TextDocument, position: VPosition, options: { includeDeclaration: boolean; }, token: CancellationToken): ProviderResult<VLocation[]>;
 }
 
 export interface ProvideDocumentHighlightsSignature {
-	(document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDocumentHighlight[]>;
+	(this: void, document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDocumentHighlight[]>;
 }
 
 export interface ProvideDocumentSymbolsSignature {
-	(document: TextDocument, token: CancellationToken): ProviderResult<VSymbolInformation[] | VDocumentSymbol[]>;
+	(this: void, document: TextDocument, token: CancellationToken): ProviderResult<VSymbolInformation[] | VDocumentSymbol[]>;
 }
 
 export interface ProvideWorkspaceSymbolsSignature {
-	(query: string, token: CancellationToken): ProviderResult<VSymbolInformation[]>;
+	(this: void, query: string, token: CancellationToken): ProviderResult<VSymbolInformation[]>;
 }
 
 export interface ProvideCodeActionsSignature {
-	(document: TextDocument, range: VRange, context: VCodeActionContext, token: CancellationToken): ProviderResult<(VCommand | VCodeAction)[]>;
+	(this: void, document: TextDocument, range: VRange, context: VCodeActionContext, token: CancellationToken): ProviderResult<(VCommand | VCodeAction)[]>;
 }
 
 export interface ProvideCodeLensesSignature {
-	(document: TextDocument, token: CancellationToken): ProviderResult<VCodeLens[]>;
+	(this: void, document: TextDocument, token: CancellationToken): ProviderResult<VCodeLens[]>;
 }
 
 export interface ResolveCodeLensSignature {
-	(codeLens: VCodeLens, token: CancellationToken): ProviderResult<VCodeLens>;
+	(this: void, codeLens: VCodeLens, token: CancellationToken): ProviderResult<VCodeLens>;
 }
 
 export interface ProvideDocumentFormattingEditsSignature {
-	(document: TextDocument, options: VFormattingOptions, token: CancellationToken): ProviderResult<VTextEdit[]>;
+	(this: void, document: TextDocument, options: VFormattingOptions, token: CancellationToken): ProviderResult<VTextEdit[]>;
 }
 
 export interface ProvideDocumentRangeFormattingEditsSignature {
-	(document: TextDocument, range: VRange, options: VFormattingOptions, token: CancellationToken): ProviderResult<VTextEdit[]>;
+	(this: void, document: TextDocument, range: VRange, options: VFormattingOptions, token: CancellationToken): ProviderResult<VTextEdit[]>;
 }
 
 export interface ProvideOnTypeFormattingEditsSignature {
-	(document: TextDocument, position: VPosition, ch: string, options: VFormattingOptions, token: CancellationToken): ProviderResult<VTextEdit[]>;
+	(this: void, document: TextDocument, position: VPosition, ch: string, options: VFormattingOptions, token: CancellationToken): ProviderResult<VTextEdit[]>;
 }
 
 export interface ProvideRenameEditsSignature {
-	(document: TextDocument, position: VPosition, newName: string, token: CancellationToken): ProviderResult<VWorkspaceEdit>;
+	(this: void, document: TextDocument, position: VPosition, newName: string, token: CancellationToken): ProviderResult<VWorkspaceEdit>;
 }
 
 export interface PrepareRenameSignature {
-	(document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VRange | { range: VRange, placeholder: string }>;
+	(this: void, document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VRange | { range: VRange, placeholder: string }>;
 }
 
 export interface ProvideDocumentLinksSignature {
-	(document: TextDocument, token: CancellationToken): ProviderResult<VDocumentLink[]>;
+	(this: void, document: TextDocument, token: CancellationToken): ProviderResult<VDocumentLink[]>;
 }
 
 export interface ResolveDocumentLinkSignature {
-	(link: VDocumentLink, token: CancellationToken): ProviderResult<VDocumentLink>;
+	(this: void, link: VDocumentLink, token: CancellationToken): ProviderResult<VDocumentLink>;
 }
 
 export interface ExecuteCommandSignature {
-	(command: string, args: any[]): ProviderResult<any>
+	(this: void, command: string, args: any[]): ProviderResult<any>
 }
 
 export interface NextSignature<P, R> {
@@ -428,11 +428,11 @@ export interface NextSignature<P, R> {
 }
 
 export interface DidChangeConfigurationSignature {
-	(sections: string[] | undefined): void;
+	(this: void, sections: string[] | undefined): void;
 }
 
 export interface DidChangeWatchedFileSignature {
-	(event: FileEvent): void;
+	(this: void, event: FileEvent): void;
 }
 
 export interface _WorkspaceMiddleware {

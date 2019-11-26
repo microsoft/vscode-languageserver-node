@@ -21,7 +21,7 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 }
 
 export interface ProvideDeclarationSignature {
-	(document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDeclaration>;
+	(this: void, document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDeclaration>;
 }
 
 export interface DeclarationMiddleware {

@@ -28,15 +28,15 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 }
 
 export interface PrepareCallHierachySignature {
-	(document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VCallHierarchyItem>;
+	(this: void, document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VCallHierarchyItem>;
 }
 
 export interface CallHierarchyIncomingCallsSignature {
-	(item: VCallHierarchyItem, token: CancellationToken): ProviderResult<VCallHierarchyIncomingCall[]>;
+	(this: void, item: VCallHierarchyItem, token: CancellationToken): ProviderResult<VCallHierarchyIncomingCall[]>;
 }
 
 export interface CallHierarchyOutgoingCallsSignature {
-	(item: VCallHierarchyItem, token: CancellationToken): ProviderResult<VCallHierarchyOutgoingCall[]>;
+	(this: void, item: VCallHierarchyItem, token: CancellationToken): ProviderResult<VCallHierarchyOutgoingCall[]>;
 }
 
 export interface CallHierarchyMiddleware {
