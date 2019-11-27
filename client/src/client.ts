@@ -716,7 +716,7 @@ export interface NotificationFeature<T extends Function> {
 	/**
 	 * Triggers the corresponding RPC method.
 	 */
-	send: T;
+	getProvider(document: TextDocument): T;
 }
 
 namespace DynamicFeature {
@@ -799,8 +799,15 @@ abstract class DocumentNotifiactions<P, E> implements DynamicFeature<TextDocumen
 		}
 	}
 
-	public send(data: E): void {
-		this.callback(data);
+	public getProvider(document: TextDocument): (data: E) => void {
+		for (const selector of this._selectors.values()) {
+			if (Languages.match(selector, document)) {
+				return (data: E) => {
+					this.callback(data);
+				};
+			}
+		}
+		throw new Error(`No provider available for the given text document`);
 	}
 }
 
@@ -1044,8 +1051,15 @@ class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeR
 		}
 	}
 
-	public send(event: TextDocumentChangeEvent): void {
-		return this.callback(event);
+	public getProvider(document: TextDocument): (event: TextDocumentChangeEvent) => void {
+		for (const changeData of this._changeData.values()) {
+			if (Languages.match(changeData.documentSelector, document)) {
+				return (event: TextDocumentChangeEvent): void => {
+					this.callback(event);
+				};
+			}
+		}
+		throw new Error(`No provider available for the given text document`);
 	}
 }
 
