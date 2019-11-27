@@ -86,6 +86,24 @@
 			"sourceMaps": true,
 			"outFiles": ["${workspaceRoot}/client-tests/lib/test/**/*.js"],
 			"preLaunchTask": "watch:client"
+		},
+		{
+			"type": "extensionHost",
+			"request": "launch",
+			"name": "Launch TestBed Client",
+			"runtimeExecutable": "${execPath}",
+			"args": ["--extensionDevelopmentPath=${workspaceRoot}"],
+			"outFiles": ["${workspaceRoot}/testbed/client/out/**/*.js"],
+			"sourceMaps": true
+		},
+		{
+			"type": "node",
+			"request": "attach",
+			"name": "Attach to Server",
+			"port": 6012,
+			"restart": true,
+			"outFiles": ["${workspaceRoot}/testbed/server/out/**/*.js"],
+			"sourceMaps": true
 		}
 	]
 }

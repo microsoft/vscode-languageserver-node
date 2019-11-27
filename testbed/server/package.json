@@ -1,0 +1,13 @@
+{
+	"name": "testbed-server",
+	"version": "0.1.0",
+	"description": "TestBed Server",
+	"private": true,
+	"engines": {
+		"node": "*"
+	},
+	"scripts": {
+		"compile": "tsc -b ./tsconfig.json",
+		"watch": "tsc --watch -b ./tsconfig.json"
+	}
+}

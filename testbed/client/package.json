@@ -1,0 +1,18 @@
+{
+	"name": "testbed-client",
+	"description": "Testbed client",
+	"version": "0.1.0",
+	"private": true,
+	"publisher": "vscode",
+	"engines": {
+		"vscode": "^1.40.0"
+	},
+	"scripts": {
+		"watch": "tsc -watch -b ./tsconfig.json",
+		"compile": "tsc -b ./tsconfig.json"
+	},
+	"dependencies": {
+	},
+	"devDependencies": {
+	}
+}

@@ -1,0 +1,21 @@
+{
+	"compilerOptions": {
+		"module": "commonjs",
+		"target": "es2017",
+		"outDir": "out",
+		"rootDir": "src",
+		"lib": [ "es2017" ],
+		"sourceMap": true
+	},
+	"include": [
+		"src"
+	],
+	"exclude": [
+		"node_modules",
+		".vscode-test"
+	],
+	"references": [
+		{ "path": "./client" },
+		{ "path": "./server" }
+	]
+}

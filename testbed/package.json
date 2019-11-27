@@ -1,0 +1,43 @@
+{
+	"name": "testbed",
+	"description": "testbed",
+	"version": "0.1.0",
+	"publisher": "vscode",
+	"engines": {
+		"vscode": "^1.33.0"
+	},
+	"main": "./client/out/extension",
+	"activationEvents": [
+		"onLanguage:bat"
+	],
+	"enableProposedApi": true,
+	"contributes": {
+		"commands": [
+			{
+				"command": "testbed.helloWorld",
+				"title": "Hello World"
+			}
+		],
+		"configuration": {
+			"type": "object",
+			"title": "TestBed configuration",
+			"properties": {
+				"testbed.enable": {
+					"type": "boolean",
+					"default": true,
+					"description": "Control whether eslint is enabled for JavaScript files or not."
+				},
+				"testbed.options": {
+					"type": "object",
+					"default": {},
+					"description": "The eslint options object to provide args to the eslint command."
+				}
+			}
+		}
+	},
+	"scripts": {
+		"compile": "tsc -b",
+		"clean": "tsc -b --clean",
+		"watch": "tsc -b -w"
+	}
+}
