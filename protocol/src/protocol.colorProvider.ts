@@ -48,7 +48,8 @@ export interface DocumentColorParams extends WorkDoneProgressParams, PartialResu
  * that resolves to such.
  */
 export namespace DocumentColorRequest {
-	export const type = new RequestType<DocumentColorParams, ColorInformation[], void, DocumentColorRegistrationOptions>('textDocument/documentColor');
+	export const method: 'textDocument/documentColor' = 'textDocument/documentColor';
+	export const type = new RequestType<DocumentColorParams, ColorInformation[], void, DocumentColorRegistrationOptions>(method);
 	export const resultType = new ProgressType<ColorInformation[]>();
 	export type HandlerSignature = RequestHandler<DocumentColorParams, ColorInformation[], void>;
 }

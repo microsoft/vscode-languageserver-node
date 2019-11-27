@@ -45,7 +45,8 @@ export interface DeclarationParams extends TextDocumentPositionParams, WorkDoneP
  * to such.
  */
 export namespace DeclarationRequest {
-	export const type = new RequestType<DeclarationParams, Declaration | DeclarationLink[] | null, void, DeclarationRegistrationOptions>('textDocument/declaration');
+	export const method: 'textDocument/declaration' = 'textDocument/declaration';
+	export const type = new RequestType<DeclarationParams, Declaration | DeclarationLink[] | null, void, DeclarationRegistrationOptions>(method);
 	export const resultType = new ProgressType<Location[] | DeclarationLink[]>();
 	export type HandlerSignature = RequestHandler<DeclarationParams, Declaration | DeclarationLink[] | null, void>;
 }

@@ -46,7 +46,8 @@ export interface TypeDefinitionParams extends TextDocumentPositionParams, WorkDo
  * Thenable that resolves to such.
  */
 export namespace TypeDefinitionRequest {
-	export const type = new RequestType<TypeDefinitionParams, Definition | DefinitionLink[] | null, void, TypeDefinitionRegistrationOptions>('textDocument/typeDefinition');
+	export const method: 'textDocument/typeDefinition' = 'textDocument/typeDefinition';
+	export const type = new RequestType<TypeDefinitionParams, Definition | DefinitionLink[] | null, void, TypeDefinitionRegistrationOptions>(method);
 	export const resultType = new ProgressType<Location[] | DefinitionLink[]>();
 	export type HandlerSignature = RequestHandler<TypeDefinitionParams, Definition | DefinitionLink[] | null, void>;
 }

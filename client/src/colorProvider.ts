@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { languages as Languages, Disposable, TextDocument, ProviderResult, Range as VRange, Color as VColor, ColorPresentation as VColorPresentation, ColorInformation as VColorInformation} from 'vscode';
+import { languages as Languages, Disposable, TextDocument, ProviderResult, Range as VRange, Color as VColor, ColorPresentation as VColorPresentation, ColorInformation as VColorInformation, DocumentColorProvider} from 'vscode';
 
 import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, DocumentColorRequest, ColorPresentationRequest, Color, ColorInformation, ColorPresentation
@@ -33,7 +33,7 @@ export interface ColorProviderMiddleware {
 	provideColorPresentations?: (this: void, color: VColor, context: { document: TextDocument, range: VRange }, token: CancellationToken, next: ProvideColorPresentationSignature) => ProviderResult<VColorPresentation[]>;
 }
 
-export class ColorProviderFeature extends TextDocumentFeature<boolean | DocumentColorOptions, DocumentColorRegistrationOptions> {
+export class ColorProviderFeature extends TextDocumentFeature<boolean | DocumentColorOptions, DocumentColorRegistrationOptions, DocumentColorProvider> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, DocumentColorRequest.type);
@@ -51,47 +51,50 @@ export class ColorProviderFeature extends TextDocumentFeature<boolean | Document
 		this.register(this.messages, { id: id, registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: DocumentColorRegistrationOptions): Disposable {
-		let client = this._client;
-		let provideColorPresentations: ProvideColorPresentationSignature = (color, context, token) => {
-			const requestParams = {
-				color,
-				textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(context.document),
-				range: client.code2ProtocolConverter.asRange(context.range)
-			};
-			return client.sendRequest(ColorPresentationRequest.type, requestParams, token).then(
-				this.asColorPresentations.bind(this),
-				(error: any) => {
-					client.logFailedRequest(ColorPresentationRequest.type, error);
-					return Promise.resolve(null);
-				}
-			);
-		};
-		let provideDocumentColors: ProvideDocumentColorsSignature = (document, token) => {
-			const requestParams = {
-				textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document)
-			};
-			return client.sendRequest(DocumentColorRequest.type, requestParams, token).then(
-				this.asColorInformations.bind(this),
-				(error: any) => {
-					client.logFailedRequest(ColorPresentationRequest.type, error);
-					return Promise.resolve(null);
-				}
-			);
-		};
-		let middleware = client.clientOptions.middleware!;
-		return Languages.registerColorProvider(options.documentSelector!, {
-			provideColorPresentations: (color: VColor, context: { document: TextDocument, range: VRange }, token: CancellationToken) => {
+	protected registerLanguageProvider(options: DocumentColorRegistrationOptions): [Disposable, DocumentColorProvider] {
+		const provider: DocumentColorProvider = {
+			provideColorPresentations: (color, context, token) => {
+				const client = this._client;
+				const provideColorPresentations: ProvideColorPresentationSignature = (color, context, token) => {
+					const requestParams = {
+						color,
+						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(context.document),
+						range: client.code2ProtocolConverter.asRange(context.range)
+					};
+					return client.sendRequest(ColorPresentationRequest.type, requestParams, token).then(
+						this.asColorPresentations.bind(this),
+						(error: any) => {
+							client.logFailedRequest(ColorPresentationRequest.type, error);
+							return Promise.resolve(null);
+						}
+					);
+				};
+				const middleware = client.clientOptions.middleware!;
 				return middleware.provideColorPresentations
 					? middleware.provideColorPresentations(color, context, token, provideColorPresentations)
 					: provideColorPresentations(color, context, token);
 			},
-			provideDocumentColors: (document: TextDocument, token: CancellationToken) => {
+			provideDocumentColors: (document, token) => {
+				const client = this._client;
+				const provideDocumentColors: ProvideDocumentColorsSignature = (document, token) => {
+					const requestParams = {
+						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document)
+					};
+					return client.sendRequest(DocumentColorRequest.type, requestParams, token).then(
+						this.asColorInformations.bind(this),
+						(error: any) => {
+							client.logFailedRequest(ColorPresentationRequest.type, error);
+							return Promise.resolve(null);
+						}
+					);
+				};
+				const middleware = client.clientOptions.middleware!;
 				return middleware.provideDocumentColors
 					? middleware.provideDocumentColors(document, token, provideDocumentColors)
 					: provideDocumentColors(document, token);
 			}
-		});
+		};
+		return [Languages.registerColorProvider(options.documentSelector!, provider), provider];
 	}
 
 	private asColor(color: Color): VColor {

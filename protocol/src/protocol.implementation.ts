@@ -46,7 +46,8 @@ export interface ImplementationParams extends TextDocumentPositionParams, WorkDo
  * Thenable that resolves to such.
  */
 export namespace ImplementationRequest {
-	export const type = new RequestType<ImplementationParams, Definition | DefinitionLink[] | null, void, ImplementationRegistrationOptions>('textDocument/implementation');
+	export const method: 'textDocument/implementation' = 'textDocument/implementation';
+	export const type = new RequestType<ImplementationParams, Definition | DefinitionLink[] | null, void, ImplementationRegistrationOptions>(method);
 	export const resultType = new ProgressType<Location[] | DefinitionLink[]>();
 	export type HandlerSignature = RequestHandler<ImplementationParams, Definition | DefinitionLink[] | null, void>;
 }

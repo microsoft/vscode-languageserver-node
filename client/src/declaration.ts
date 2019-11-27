@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { languages as Languages, Disposable, TextDocument, ProviderResult, Position as VPosition, Declaration as VDeclaration } from 'vscode';
+import { languages as Languages, Disposable, TextDocument, ProviderResult, Position as VPosition, Declaration as VDeclaration, DeclarationProvider } from 'vscode';
 
 import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, DeclarationRequest
@@ -28,7 +28,7 @@ export interface DeclarationMiddleware {
 	provideDeclaration?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideDeclarationSignature) => ProviderResult<VDeclaration>;
 }
 
-export class DeclarationFeature extends TextDocumentFeature<boolean | DeclarationOptions, DeclarationRegistrationOptions> {
+export class DeclarationFeature extends TextDocumentFeature<boolean | DeclarationOptions, DeclarationRegistrationOptions, DeclarationProvider> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, DeclarationRequest.type);
@@ -48,24 +48,25 @@ export class DeclarationFeature extends TextDocumentFeature<boolean | Declaratio
 		this.register(this.messages, { id: id, registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: DeclarationRegistrationOptions): Disposable {
-		const client = this._client;
-		const provideDeclaration: ProvideDeclarationSignature = (document, position, token) => {
-			return client.sendRequest(DeclarationRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
-				client.protocol2CodeConverter.asDeclarationResult,
-				(error) => {
-					client.logFailedRequest(DeclarationRequest.type, error);
-					return Promise.resolve(null);
-				}
-			);
-		};
-		const middleware = client.clientOptions.middleware!;
-		return Languages.registerDeclarationProvider(options.documentSelector!, {
+	protected registerLanguageProvider(options: DeclarationRegistrationOptions): [Disposable, DeclarationProvider] {
+		const provider: DeclarationProvider = {
 			provideDeclaration: (document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDeclaration> => {
+				const client = this._client;
+				const provideDeclaration: ProvideDeclarationSignature = (document, position, token) => {
+					return client.sendRequest(DeclarationRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
+						client.protocol2CodeConverter.asDeclarationResult,
+						(error) => {
+							client.logFailedRequest(DeclarationRequest.type, error);
+							return Promise.resolve(null);
+						}
+					);
+				};
+				const middleware = client.clientOptions.middleware!;
 				return middleware.provideDeclaration
 					? middleware.provideDeclaration(document, position, token, provideDeclaration)
 					: provideDeclaration(document, position, token);
 			}
-		});
+		};
+		return [Languages.registerDeclarationProvider(options.documentSelector!, provider), provider];
 	}
 }

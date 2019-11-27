@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { languages as Languages, Disposable, TextDocument, ProviderResult, Position as VPosition, SelectionRange as VSelectionRange } from 'vscode';
+import { languages as Languages, Disposable, TextDocument, ProviderResult, Position as VPosition, SelectionRange as VSelectionRange, SelectionRangeProvider } from 'vscode';
 
 import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector,
@@ -29,7 +29,7 @@ export interface SelectionRangeProviderMiddleware {
 	provideSelectionRanges?: (this: void, document: TextDocument, positions: VPosition[], token: CancellationToken, next: ProvideSelectionRangeSignature) => ProviderResult<VSelectionRange[]>;
 }
 
-export class SelectionRangeFeature extends TextDocumentFeature<boolean | SelectionRangeOptions, SelectionRangeRegistrationOptions> {
+export class SelectionRangeFeature extends TextDocumentFeature<boolean | SelectionRangeOptions, SelectionRangeRegistrationOptions, SelectionRangeProvider> {
 	constructor(client: BaseLanguageClient) {
 		super(client, SelectionRangeRequest.type);
 	}
@@ -48,31 +48,30 @@ export class SelectionRangeFeature extends TextDocumentFeature<boolean | Selecti
 		this.register(this.messages, { id: id, registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: SelectionRangeRegistrationOptions): Disposable {
-		let client = this._client;
-		let provideSelectionRanges: ProvideSelectionRangeSignature = (document, positions, token) => {
-			const requestParams: SelectionRangeParams = {
-				textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
-				positions: client.code2ProtocolConverter.asPositions(positions)
-			};
-			return client.sendRequest(SelectionRangeRequest.type, requestParams, token).then(
-				(ranges) => client.protocol2CodeConverter.asSelectionRanges(ranges),
-				(error: any) => {
-					client.logFailedRequest(SelectionRangeRequest.type, error);
-					return Promise.resolve(null);
-				}
-			);
-		};
-		let middleware = client.clientOptions.middleware!;
-		return Languages.registerSelectionRangeProvider(options.documentSelector!, {
-			provideSelectionRanges(document: TextDocument, positions: VPosition[], token: CancellationToken): ProviderResult<VSelectionRange[]> {
+	protected registerLanguageProvider(options: SelectionRangeRegistrationOptions): [Disposable, SelectionRangeProvider] {
+		const provider: SelectionRangeProvider = {
+			provideSelectionRanges: (document, positions, token) => {
+				const client = this._client;
+				const provideSelectionRanges: ProvideSelectionRangeSignature = (document, positions, token) => {
+					const requestParams: SelectionRangeParams = {
+						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
+						positions: client.code2ProtocolConverter.asPositions(positions)
+					};
+					return client.sendRequest(SelectionRangeRequest.type, requestParams, token).then(
+						(ranges) => client.protocol2CodeConverter.asSelectionRanges(ranges),
+						(error: any) => {
+							client.logFailedRequest(SelectionRangeRequest.type, error);
+							return Promise.resolve(null);
+						}
+					);
+				};
+				const middleware = client.clientOptions.middleware!;
 				return middleware.provideSelectionRanges
 					? middleware.provideSelectionRanges(document, positions, token, provideSelectionRanges)
 					: provideSelectionRanges(document, positions, token);
 
 			}
-		});
+		};
+		return [Languages.registerSelectionRangeProvider(options.documentSelector!, provider), provider];
 	}
-
-
 }

@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { languages as Languages, Disposable, TextDocument, ProviderResult, Position as VPosition, Definition as VDefinition, DefinitionLink as VDefinitionLink } from 'vscode';
+import { languages as Languages, Disposable, TextDocument, ProviderResult, Position as VPosition, Definition as VDefinition, DefinitionLink as VDefinitionLink, TypeDefinitionProvider } from 'vscode';
 
 import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, TypeDefinitionRequest
@@ -28,7 +28,7 @@ export interface TypeDefinitionMiddleware {
 	provideTypeDefinition?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideTypeDefinitionSignature) => ProviderResult<VDefinition | VDefinitionLink[]>;
 }
 
-export class TypeDefinitionFeature extends TextDocumentFeature<boolean | TypeDefinitionOptions, TypeDefinitionRegistrationOptions> {
+export class TypeDefinitionFeature extends TextDocumentFeature<boolean | TypeDefinitionOptions, TypeDefinitionRegistrationOptions, TypeDefinitionProvider> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, TypeDefinitionRequest.type);
@@ -49,24 +49,25 @@ export class TypeDefinitionFeature extends TextDocumentFeature<boolean | TypeDef
 		this.register(this.messages, { id: id, registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: TypeDefinitionRegistrationOptions): Disposable {
-		let client = this._client;
-		let provideTypeDefinition: ProvideTypeDefinitionSignature = (document, position, token) => {
-			return client.sendRequest(TypeDefinitionRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
-				client.protocol2CodeConverter.asDefinitionResult,
-				(error) => {
-					client.logFailedRequest(TypeDefinitionRequest.type, error);
-					return Promise.resolve(null);
-				}
-			);
-		};
-		let middleware = client.clientOptions.middleware!;
-		return Languages.registerTypeDefinitionProvider(options.documentSelector!, {
-			provideTypeDefinition: (document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDefinition | VDefinitionLink[]> => {
+	protected registerLanguageProvider(options: TypeDefinitionRegistrationOptions): [Disposable, TypeDefinitionProvider] {
+		const provider: TypeDefinitionProvider = {
+			provideTypeDefinition: (document, position, token) => {
+				const client = this._client;
+				const provideTypeDefinition: ProvideTypeDefinitionSignature = (document, position, token) => {
+					return client.sendRequest(TypeDefinitionRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
+						client.protocol2CodeConverter.asDefinitionResult,
+						(error) => {
+							client.logFailedRequest(TypeDefinitionRequest.type, error);
+							return Promise.resolve(null);
+						}
+					);
+				};
+				const middleware = client.clientOptions.middleware!;
 				return middleware.provideTypeDefinition
 					? middleware.provideTypeDefinition(document, position, token, provideTypeDefinition)
 					: provideTypeDefinition(document, position, token);
 			}
-		});
+		};
+		return [Languages.registerTypeDefinitionProvider(options.documentSelector!, provider), provider];
 	}
 }

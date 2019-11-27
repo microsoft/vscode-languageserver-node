@@ -52,19 +52,24 @@ export namespace Proposed {
 
 	export type CallHierarchyPrepareParams = callHierarchy.CallHierarchyPrepareParams;
 	export namespace CallHierarchyPrepareRequest {
+		export const method = callHierarchy.CallHierarchyPrepareRequest.method;
 		export const type = callHierarchy.CallHierarchyPrepareRequest.type;
 		export type HandlerSignature = callHierarchy.CallHierarchyPrepareRequest.HandlerSignature;
 	}
 
 	export type CallHierarchyIncomingCallsParams = callHierarchy.CallHierarchyIncomingCallsParams;
 	export namespace CallHierarchyIncomingCallsRequest {
+		export const method = callHierarchy.CallHierarchyIncomingCallsRequest.method;
 		export const type = callHierarchy.CallHierarchyIncomingCallsRequest;
+		export const resultType = callHierarchy.CallHierarchyIncomingCallsRequest.resultType;
 		export type HandlerSignature = callHierarchy.CallHierarchyIncomingCallsRequest.HandlerSignature;
 	}
 
 	export type CallHierarchyOutgoingCallsParams= callHierarchy.CallHierarchyOutgoingCallsParams;
 	export namespace CallHierarchyOutgoingCallsRequest {
+		export const method =  callHierarchy.CallHierarchyOutgoingCallsRequest.method;
 		export const type = callHierarchy.CallHierarchyOutgoingCallsRequest;
+		export const resultType = callHierarchy.CallHierarchyOutgoingCallsRequest.resultType;
 		export type HandlerSignature = callHierarchy.CallHierarchyOutgoingCallsRequest.HandlerSignature;
 	}
 

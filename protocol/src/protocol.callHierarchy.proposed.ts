@@ -123,7 +123,8 @@ export interface CallHierarchyPrepareParams extends TextDocumentPositionParams, 
 }
 
 export namespace CallHierarchyPrepareRequest {
-	export const type = new RequestType<CallHierarchyPrepareParams, CallHierarchyItem[] | null, void, CallHierarchyRegistrationOptions>('textDocument/prepareCallHierarchy');
+	export const method: 'textDocument/prepareCallHierarchy' = 'textDocument/prepareCallHierarchy';
+	export const type = new RequestType<CallHierarchyPrepareParams, CallHierarchyItem[] | null, void, CallHierarchyRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<CallHierarchyPrepareParams, CallHierarchyItem[] | null, void>;
 }
 
@@ -132,7 +133,8 @@ export interface CallHierarchyIncomingCallsParams extends WorkDoneProgressParams
 }
 
 export namespace CallHierarchyIncomingCallsRequest {
-	export const type = new RequestType<CallHierarchyIncomingCallsParams, CallHierarchyIncomingCall[] | null, void, void>('callHierarchy/incomingCalls');
+	export const method: 'callHierarchy/incomingCalls' = 'callHierarchy/incomingCalls';
+	export const type = new RequestType<CallHierarchyIncomingCallsParams, CallHierarchyIncomingCall[] | null, void, void>(method);
 	export const resultType = new ProgressType<CallHierarchyIncomingCall[]>();
 	export type HandlerSignature = RequestHandler<CallHierarchyIncomingCallsParams, CallHierarchyIncomingCall[] | null, void>;
 }
@@ -142,7 +144,8 @@ export interface CallHierarchyOutgoingCallsParams extends WorkDoneProgressParams
 }
 
 export namespace CallHierarchyOutgoingCallsRequest {
-	export const type = new RequestType<CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCall[] | null, void, void>('callHierarchy/outgoingCalls');
+	export const method: 'callHierarchy/outgoingCalls' = 'callHierarchy/outgoingCalls';
+	export const type = new RequestType<CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCall[] | null, void, void>(method);
 	export const resultType = new ProgressType<CallHierarchyOutgoingCall[]>();
 	export type HandlerSignature = RequestHandler<CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCall[] | null, void>;
 }

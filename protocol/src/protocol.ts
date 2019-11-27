@@ -1954,7 +1954,8 @@ export interface DocumentHighlightRegistrationOptions extends TextDocumentRegist
  * (#DocumentHighlight) or a Thenable that resolves to such.
  */
 export namespace DocumentHighlightRequest {
-	export const type = new RequestType<DocumentHighlightParams, DocumentHighlight[] | null, void, DocumentHighlightRegistrationOptions>('textDocument/documentHighlight');
+	export const method: 'textDocument/documentHighlight' = 'textDocument/documentHighlight';
+	export const type = new RequestType<DocumentHighlightParams, DocumentHighlight[] | null, void, DocumentHighlightRegistrationOptions>(method);
 	export const resultType = new ProgressType<DocumentHighlight[]>();
 }
 
@@ -2021,7 +2022,8 @@ export interface DocumentSymbolRegistrationOptions extends TextDocumentRegistrat
  * that resolves to such.
  */
 export namespace DocumentSymbolRequest {
-	export const type = new RequestType<DocumentSymbolParams, SymbolInformation[] | DocumentSymbol[] | null, void, DocumentSymbolRegistrationOptions>('textDocument/documentSymbol');
+	export const method: 'textDocument/documentSymbol' = 'textDocument/documentSymbol';
+	export const type = new RequestType<DocumentSymbolParams, SymbolInformation[] | DocumentSymbol[] | null, void, DocumentSymbolRegistrationOptions>(method);
 	export const resultType = new ProgressType<SymbolInformation[] | DocumentSymbol[]>();
 }
 
@@ -2109,7 +2111,8 @@ export interface CodeActionRegistrationOptions extends TextDocumentRegistrationO
  * A request to provide commands for the given text document and range.
  */
 export namespace CodeActionRequest {
-	export const type = new RequestType<CodeActionParams, (Command | CodeAction)[] | null, void, CodeActionRegistrationOptions>('textDocument/codeAction');
+	export const method: 'textDocument/codeAction' = 'textDocument/codeAction';
+	export const type = new RequestType<CodeActionParams, (Command | CodeAction)[] | null, void, CodeActionRegistrationOptions>(method);
 	export const resultType = new ProgressType<(Command | CodeAction)[]>();
 }
 
@@ -2173,7 +2176,8 @@ export interface WorkspaceSymbolRegistrationOptions extends WorkspaceSymbolOptio
  * resolves to such.
  */
 export namespace WorkspaceSymbolRequest {
-	export const type = new RequestType<WorkspaceSymbolParams, SymbolInformation[] | null, void, WorkspaceSymbolRegistrationOptions>('workspace/symbol');
+	export const method: 'workspace/symbol' = 'workspace/symbol';
+	export const type = new RequestType<WorkspaceSymbolParams, SymbolInformation[] | null, void, WorkspaceSymbolRegistrationOptions>(method);
 	export const resultType = new ProgressType<SymbolInformation[]>();
 }
 
@@ -2279,7 +2283,8 @@ export interface DocumentLinkRegistrationOptions extends TextDocumentRegistratio
  * A request to provide document links
  */
 export namespace DocumentLinkRequest {
-	export const type = new RequestType<DocumentLinkParams, DocumentLink[] | null, void, DocumentLinkRegistrationOptions>('textDocument/documentLink');
+	export const method: 'textDocument/documentLink' = 'textDocument/documentLink';
+	export const type = new RequestType<DocumentLinkParams, DocumentLink[] | null, void, DocumentLinkRegistrationOptions>(method);
 	export const resultType = new ProgressType<DocumentLink[]>();
 }
 
@@ -2335,7 +2340,8 @@ export interface DocumentFormattingRegistrationOptions extends TextDocumentRegis
  * A request to to format a whole document.
  */
 export namespace DocumentFormattingRequest {
-	export const type = new RequestType<DocumentFormattingParams, TextEdit[] | null, void, DocumentFormattingRegistrationOptions>('textDocument/formatting');
+	export const method: 'textDocument/formatting' = 'textDocument/formatting';
+	export const type = new RequestType<DocumentFormattingParams, TextEdit[] | null, void, DocumentFormattingRegistrationOptions>(method);
 }
 
 /**
@@ -2384,7 +2390,8 @@ export interface DocumentRangeFormattingRegistrationOptions extends TextDocument
  * A request to to format a range in a document.
  */
 export namespace DocumentRangeFormattingRequest {
-	export const type = new RequestType<DocumentRangeFormattingParams, TextEdit[] | null, void, DocumentRangeFormattingRegistrationOptions>('textDocument/rangeFormatting');
+	export const method: 'textDocument/rangeFormatting' = 'textDocument/rangeFormatting';
+	export const type = new RequestType<DocumentRangeFormattingParams, TextEdit[] | null, void, DocumentRangeFormattingRegistrationOptions>(method);
 }
 
 /**
@@ -2447,7 +2454,8 @@ export interface DocumentOnTypeFormattingRegistrationOptions extends TextDocumen
  * A request to format a document on type.
  */
 export namespace DocumentOnTypeFormattingRequest {
-	export const type = new RequestType<DocumentOnTypeFormattingParams, TextEdit[] | null, void, DocumentOnTypeFormattingRegistrationOptions>('textDocument/onTypeFormatting');
+	export const method: 'textDocument/onTypeFormatting' = 'textDocument/onTypeFormatting';
+	export const type = new RequestType<DocumentOnTypeFormattingParams, TextEdit[] | null, void, DocumentOnTypeFormattingRegistrationOptions>(method);
 }
 
 //---- Rename ----------------------------------------------
@@ -2511,7 +2519,8 @@ export interface RenameRegistrationOptions extends TextDocumentRegistrationOptio
  * A request to rename a symbol.
  */
 export namespace RenameRequest {
-	export const type = new RequestType<RenameParams, WorkspaceEdit | null, void, RenameRegistrationOptions>('textDocument/rename');
+	export const method: 'textDocument/rename' = 'textDocument/rename';
+	export const type = new RequestType<RenameParams, WorkspaceEdit | null, void, RenameRegistrationOptions>(method);
 }
 
 export interface PrepareRenameParams extends TextDocumentPositionParams, WorkDoneProgressParams {
@@ -2521,7 +2530,8 @@ export interface PrepareRenameParams extends TextDocumentPositionParams, WorkDon
  * A request to test and perform the setup necessary for a rename.
  */
 export namespace PrepareRenameRequest {
-	export const type = new RequestType<PrepareRenameParams, Range | { range: Range, placeholder: string } | null, void, void>('textDocument/prepareRename');
+	export const method: 'textDocument/prepareRename' = 'textDocument/prepareRename';
+	export const type = new RequestType<PrepareRenameParams, Range | { range: Range, placeholder: string } | null, void, void>(method);
 }
 
 //---- Command Execution -------------------------------------------

@@ -199,29 +199,29 @@ class CallHierarchyProvider implements CallHierarchyProvider {
 	}
 }
 
-export class CallHierarchyFeature extends TextDocumentFeature<boolean | CallHierarchyOptions, CallHierarchyRegistrationOptions> {
+export class CallHierarchyFeature extends TextDocumentFeature<boolean | CallHierarchyOptions, CallHierarchyRegistrationOptions, CallHierarchyProvider> {
 	constructor(client: BaseLanguageClient) {
 		super(client, Proposed.CallHierarchyPrepareRequest.type);
 	}
 
 	public fillClientCapabilities(cap: ClientCapabilities): void {
-		let capabilites: ClientCapabilities & Proposed.CallHierarchyClientCapabilities = cap as ClientCapabilities & Proposed.CallHierarchyClientCapabilities;
-		let capability = ensure(ensure(capabilites, 'textDocument')!, 'callHierarchy')!;
+		const capabilites: ClientCapabilities & Proposed.CallHierarchyClientCapabilities = cap as ClientCapabilities & Proposed.CallHierarchyClientCapabilities;
+		const capability = ensure(ensure(capabilites, 'textDocument')!, 'callHierarchy')!;
 		capability.dynamicRegistration = true;
 	}
 
 	public initialize(cap: ServerCapabilities, documentSelector: DocumentSelector): void {
-		let capabilities: ServerCapabilities & Proposed.CallHierarchyServerCapabilities = cap;
-		let [id, options] = this.getRegistration(documentSelector, capabilities.callHierarchyProvider);
+		const capabilities: ServerCapabilities & Proposed.CallHierarchyServerCapabilities = cap;
+		const [id, options] = this.getRegistration(documentSelector, capabilities.callHierarchyProvider);
 		if (!id || !options) {
 			return;
 		}
 		this.register(this.messages, { id: id, registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: CallHierarchyRegistrationOptions): Disposable {
-		let client = this._client;
-		let provider = new CallHierarchyProvider(client);
-		return Languages.registerCallHierarchyProvider(options.documentSelector!, provider);
+	protected registerLanguageProvider(options: CallHierarchyRegistrationOptions): [Disposable, CallHierarchyProvider] {
+		const client = this._client;
+		const provider = new CallHierarchyProvider(client);
+		return [Languages.registerCallHierarchyProvider(options.documentSelector!, provider), provider];
 	}
 }

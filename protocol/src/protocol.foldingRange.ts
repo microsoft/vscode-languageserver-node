@@ -102,7 +102,8 @@ export interface FoldingRangeParams extends WorkDoneProgressParams, PartialResul
  * that resolves to such.
  */
 export namespace FoldingRangeRequest {
-	export const type: RequestType<FoldingRangeParams, FoldingRange[] | null, any, FoldingRangeRegistrationOptions> = new RequestType('textDocument/foldingRange');
+	export const method: 'textDocument/foldingRange' = 'textDocument/foldingRange';
+	export const type: RequestType<FoldingRangeParams, FoldingRange[] | null, any, FoldingRangeRegistrationOptions> = new RequestType(method);
 	export const resultType = new ProgressType<FoldingRange[]>();
 	export type HandlerSignature = RequestHandler<FoldingRangeParams, FoldingRange[] | null, void>;
 }

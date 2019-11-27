@@ -16,7 +16,7 @@ import {
 	FormattingOptions as VFormattingOptions, TextEdit as VTextEdit, WorkspaceEdit as VWorkspaceEdit, MessageItem,
 	Hover as VHover, CodeAction as VCodeAction, DocumentSymbol as VDocumentSymbol,
 	DocumentLink as VDocumentLink, TextDocumentWillSaveEvent,
-	WorkspaceFolder as VWorkspaceFolder, CompletionContext as VCompletionContext, ConfigurationChangeEvent
+	WorkspaceFolder as VWorkspaceFolder, CompletionContext as VCompletionContext, ConfigurationChangeEvent, CompletionItemProvider, HoverProvider, SignatureHelpProvider, DefinitionProvider, ReferenceProvider, DocumentHighlightProvider, CodeActionProvider, DocumentSymbolProvider, CodeLensProvider, DocumentFormattingEditProvider, DocumentRangeFormattingEditProvider, OnTypeFormattingEditProvider, RenameProvider, DocumentLinkProvider, DocumentColorProvider, DeclarationProvider, FoldingRangeProvider, ImplementationProvider, SelectionRangeProvider, TypeDefinitionProvider, WorkspaceSymbolProvider
 } from 'vscode';
 
 import {
@@ -61,7 +61,14 @@ import {
 	SignatureHelpOptions, DefinitionRegistrationOptions, DefinitionOptions, ReferenceRegistrationOptions, ReferenceOptions,
 	DocumentHighlightRegistrationOptions, DocumentHighlightOptions, DocumentSymbolRegistrationOptions, DocumentSymbolOptions,
 	WorkspaceSymbolRegistrationOptions, CodeActionOptions, CodeLensOptions, DocumentFormattingOptions, DocumentRangeFormattingRegistrationOptions,
-	DocumentRangeFormattingOptions, DocumentOnTypeFormattingOptions, RenameOptions, DocumentLinkOptions, CompletionItemTag, DiagnosticTag
+	DocumentRangeFormattingOptions, DocumentOnTypeFormattingOptions, RenameOptions, DocumentLinkOptions, CompletionItemTag, DiagnosticTag,
+	DocumentColorRequest,
+	DeclarationRequest,
+	FoldingRangeRequest,
+	ImplementationRequest,
+	SelectionRangeRequest,
+	TypeDefinitionRequest,
+	Proposed
 } from 'vscode-languageserver-protocol';
 
 import { ColorProviderMiddleware } from './colorProvider';
@@ -705,11 +712,11 @@ export interface DynamicFeature<RO> {
 	dispose(): void;
 }
 
-export interface ProvideFeature<T extends Function> {
+export interface NotificationFeature<T extends Function> {
 	/**
-	 * Trigger the corresponding RPC method (request or notification).
+	 * Triggers the corresponding RPC method.
 	 */
-	provide: T;
+	send: T;
 }
 
 namespace DynamicFeature {
@@ -723,7 +730,7 @@ interface CreateParamsSignature<E, P> {
 	(data: E): P;
 }
 
-abstract class DocumentNotifiactions<P, E> implements DynamicFeature<TextDocumentRegistrationOptions>, ProvideFeature<(data: E) => void> {
+abstract class DocumentNotifiactions<P, E> implements DynamicFeature<TextDocumentRegistrationOptions>, NotificationFeature<(data: E) => void> {
 
 	private _listener: Disposable | undefined;
 	protected _selectors: Map<string, DocumentSelector> = new Map<string, DocumentSelector>();
@@ -792,7 +799,7 @@ abstract class DocumentNotifiactions<P, E> implements DynamicFeature<TextDocumen
 		}
 	}
 
-	public provide(data: E): void {
+	public send(data: E): void {
 		this.callback(data);
 	}
 }
@@ -913,7 +920,7 @@ interface DidChangeTextDocumentData {
 	syncKind: 0 | 1 | 2;
 }
 
-class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeRegistrationOptions>, ProvideFeature<(event: TextDocumentChangeEvent) => void> {
+class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeRegistrationOptions>, NotificationFeature<(event: TextDocumentChangeEvent) => void> {
 
 	private _listener: Disposable | undefined;
 	private _changeData: Map<string, DidChangeTextDocumentData> = new Map<string, DidChangeTextDocumentData>();
@@ -1037,7 +1044,7 @@ class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeR
 		}
 	}
 
-	public provide(event: TextDocumentChangeEvent): void {
+	public send(event: TextDocumentChangeEvent): void {
 		return this.callback(event);
 	}
 }
@@ -1277,9 +1284,22 @@ class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatchedFilesRe
 	}
 }
 
-export abstract class TextDocumentFeature<PO, RO extends TextDocumentRegistrationOptions & PO> implements DynamicFeature<RO> {
+interface TextDocumentFeatureRegistration<RO, PR> {
+	disposable: Disposable;
+	data: RegistrationData<RO>;
+	provider: PR;
+}
 
-	private _providers: Map<string, [Disposable, RegistrationData<RO>]> = new Map<string, [Disposable, RegistrationData<RO>]>();
+export interface TextDocumentProviderFeature<T> {
+	/**
+	 * Triggers the corresponding RPC method.
+	 */
+	getProvider(textDocument: TextDocument): T;
+}
+
+export abstract class TextDocumentFeature<PO, RO extends TextDocumentRegistrationOptions & PO, PR> implements DynamicFeature<RO> {
+
+	private _registrations: Map<string, TextDocumentFeatureRegistration<RO, PR>> = new Map();
 
 	constructor(protected _client: BaseLanguageClient, private _message: RPCMessageType) {
 	}
@@ -1299,26 +1319,24 @@ export abstract class TextDocumentFeature<PO, RO extends TextDocumentRegistratio
 		if (!data.registerOptions.documentSelector) {
 			return;
 		}
-		let provider = this.registerLanguageProvider(data.registerOptions);
-		if (provider) {
-			this._providers.set(data.id, [provider, data]);
-		}
+		let registration = this.registerLanguageProvider(data.registerOptions);
+		this._registrations.set(data.id, { disposable: registration[0], data, provider: registration[1] });
 	}
 
-	protected abstract registerLanguageProvider(options: RO): Disposable;
+	protected abstract registerLanguageProvider(options: RO): [Disposable, PR];
 
 	public unregister(id: string): void {
-		let provider = this._providers.get(id);
-		if (provider) {
-			provider[0].dispose();
+		let registration = this._registrations.get(id);
+		if (registration !== undefined) {
+			registration.disposable.dispose();
 		}
 	}
 
 	public dispose(): void {
-		this._providers.forEach((value) => {
-			value[0].dispose();
+		this._registrations.forEach((value) => {
+			value.disposable.dispose();
 		});
-		this._providers.clear();
+		this._registrations.clear();
 	}
 
 	protected getRegistration(documentSelector: DocumentSelector | undefined, capability: undefined | PO | (RO & StaticRegistrationOptions)): [string | undefined, (RO & { documentSelector: DocumentSelector }) | undefined] {
@@ -1347,20 +1365,29 @@ export abstract class TextDocumentFeature<PO, RO extends TextDocumentRegistratio
 		return (Is.boolean(capability) && capability === true ? { documentSelector } : Object.assign({}, capability, { documentSelector })) as RO & { documentSelector: DocumentSelector };
 	}
 
-	protected assertRegistered(textDocument: TextDocument): void {
-		for (const item of this._providers.values()) {
-			let selector = item[1].registerOptions.documentSelector;
+	public getProvider(textDocument: TextDocument): PR {
+		for (const registration of this._registrations.values()) {
+			let selector = registration.data.registerOptions.documentSelector;
 			if (selector !== null && Languages.match(selector, textDocument)) {
-				return;
+				return registration.provider;
 			}
 		}
 		throw new Error(`The feature has no registration for the provided text document ${textDocument.uri.toString()}`);
 	}
 }
 
-abstract class WorkspaceFeature<RO> implements DynamicFeature<RO> {
+export interface WorkspaceProviderFeature<PR> {
+	getProviders(): PR[];
+}
 
-	protected _providers: Map<string, Disposable> = new Map<string, Disposable>();
+interface WorkspaceFeatureRegistration<PR> {
+	disposable: Disposable;
+	provider: PR;
+}
+
+abstract class WorkspaceFeature<RO, PR> implements DynamicFeature<RO> {
+
+	protected _registrations: Map<string, WorkspaceFeatureRegistration<PR>> = new Map();
 
 	constructor(protected _client: BaseLanguageClient, private _message: RPCMessageType) {
 	}
@@ -1377,26 +1404,32 @@ abstract class WorkspaceFeature<RO> implements DynamicFeature<RO> {
 		if (message.method !== this.messages.method) {
 			throw new Error(`Register called on wron feature. Requested ${message.method} but reached feature ${this.messages.method}`);
 		}
-		let provider = this.registerLanguageProvider(data.registerOptions);
-		if (provider) {
-			this._providers.set(data.id, provider);
-		}
+		const registration = this.registerLanguageProvider(data.registerOptions);
+		this._registrations.set(data.id, { disposable: registration[0], provider: registration[1] });
 	}
 
-	protected abstract registerLanguageProvider(options: RO): Disposable;
+	protected abstract registerLanguageProvider(options: RO): [Disposable, PR];
 
 	public unregister(id: string): void {
-		let provider = this._providers.get(id);
-		if (provider) {
-			provider.dispose();
+		let registration = this._registrations.get(id);
+		if (registration !== undefined) {
+			registration.disposable.dispose();
 		}
 	}
 
 	public dispose(): void {
-		this._providers.forEach((value) => {
-			value.dispose();
+		this._registrations.forEach((registration) => {
+			registration.disposable.dispose();
 		});
-		this._providers.clear();
+		this._registrations.clear();
+	}
+
+	public getProviders(): PR[] {
+		const result: PR[] = [];
+		for (const registration of this._registrations.values()) {
+			result.push(registration.provider);
+		}
+		return result;
 	}
 }
 
@@ -1405,7 +1438,7 @@ export interface ProvideResolveFeature<T1 extends Function, T2 extends Function>
 	resolve: T2;
 }
 
-class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, CompletionRegistrationOptions> implements ProvideResolveFeature<ProvideCompletionItemsSignature, ResolveCompletionItemSignature> {
+class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, CompletionRegistrationOptions, CompletionItemProvider> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, CompletionRequest.type);
@@ -1437,57 +1470,49 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 		});
 	}
 
-	protected registerLanguageProvider(options: CompletionRegistrationOptions): Disposable {
-		let triggerCharacters = options.triggerCharacters || [];
-		return Languages.registerCompletionItemProvider(options.documentSelector!, {
+	protected registerLanguageProvider(options: CompletionRegistrationOptions): [Disposable, CompletionItemProvider] {
+		const triggerCharacters = options.triggerCharacters || [];
+		const provider: CompletionItemProvider = {
 			provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken, context: VCompletionContext): ProviderResult<VCompletionList | VCompletionItem[]> => {
-				return this.provide(document, position, context, token);
+				const client = this._client;
+				const middleware = this._client.clientOptions.middleware!;
+				const provideCompletionItems: ProvideCompletionItemsSignature = (document, position, context, token) => {
+					return client.sendRequest(CompletionRequest.type, client.code2ProtocolConverter.asCompletionParams(document, position, context), token).then(
+						client.protocol2CodeConverter.asCompletionResult,
+						(error) => {
+							client.logFailedRequest(CompletionRequest.type, error);
+							return Promise.resolve([]);
+						}
+					);
+				};
+				return middleware.provideCompletionItem
+					? middleware.provideCompletionItem(document, position, context, token, provideCompletionItems)
+					: provideCompletionItems(document, position, context, token);
 			},
 			resolveCompletionItem: options.resolveProvider
 				? (item: VCompletionItem, token: CancellationToken): ProviderResult<VCompletionItem> => {
-					return this.resolve(item, token);
+					const client = this._client;
+					const middleware = this._client.clientOptions.middleware!;
+					const resolveCompletionItem: ResolveCompletionItemSignature = (item, token) => {
+						return client.sendRequest(CompletionResolveRequest.type, client.code2ProtocolConverter.asCompletionItem(item), token).then(
+							client.protocol2CodeConverter.asCompletionItem,
+							(error) => {
+								client.logFailedRequest(CompletionResolveRequest.type, error);
+								return Promise.resolve(item);
+							}
+						);
+					};
+					return middleware.resolveCompletionItem
+						? middleware.resolveCompletionItem(item, token, resolveCompletionItem)
+						: resolveCompletionItem(item, token);
 				}
 				: undefined
-		}, ...triggerCharacters);
-	}
-
-	public provide: ProvideCompletionItemsSignature = (document, position, context, token) => {
-		this.assertRegistered(document);
-		const client = this._client;
-		const middleware = this._client.clientOptions.middleware!;
-		const _provideCompletionItems: ProvideCompletionItemsSignature = (document, position, context, token) => {
-			return client.sendRequest(CompletionRequest.type, client.code2ProtocolConverter.asCompletionParams(document, position, context), token).then(
-				client.protocol2CodeConverter.asCompletionResult,
-				(error) => {
-					client.logFailedRequest(CompletionRequest.type, error);
-					return Promise.resolve([]);
-				}
-			);
 		};
-		return middleware.provideCompletionItem
-			? middleware.provideCompletionItem(document, position, context, token, _provideCompletionItems)
-			: _provideCompletionItems(document, position, context, token);
-	}
-
-	public resolve: ResolveCompletionItemSignature = (item, token) => {
-		const client = this._client;
-		const middleware = this._client.clientOptions.middleware!;
-		const _resolveCompletionItem: ResolveCompletionItemSignature = (item, token) => {
-			return client.sendRequest(CompletionResolveRequest.type, client.code2ProtocolConverter.asCompletionItem(item), token).then(
-				client.protocol2CodeConverter.asCompletionItem,
-				(error) => {
-					client.logFailedRequest(CompletionResolveRequest.type, error);
-					return Promise.resolve(item);
-				}
-			);
-		};
-		return middleware.resolveCompletionItem
-			? middleware.resolveCompletionItem(item, token, _resolveCompletionItem)
-			: _resolveCompletionItem(item, token);
+		return [Languages.registerCompletionItemProvider(options.documentSelector!, provider, ...triggerCharacters), provider];
 	}
 }
 
-class HoverFeature extends TextDocumentFeature<boolean | HoverOptions, HoverRegistrationOptions> implements ProvideFeature<ProvideHoverSignature> {
+class HoverFeature extends TextDocumentFeature<boolean | HoverOptions, HoverRegistrationOptions, HoverProvider> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, HoverRequest.type);
@@ -1510,34 +1535,30 @@ class HoverFeature extends TextDocumentFeature<boolean | HoverOptions, HoverRegi
 		});
 	}
 
-	protected registerLanguageProvider(options: HoverRegistrationOptions): Disposable {
-		return Languages.registerHoverProvider(options.documentSelector!, this);
-	}
-
-	public provideHover: ProvideHoverSignature = (document, position, token) => {
-		const client = this._client;
-		const middleware = client.clientOptions.middleware!;
-		const _provideHover: ProvideHoverSignature = (document, position, token) => {
-			return client.sendRequest(HoverRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
-				client.protocol2CodeConverter.asHover,
-				(error) => {
-					client.logFailedRequest(HoverRequest.type, error);
-					return Promise.resolve(null);
-				}
-			);
+	protected registerLanguageProvider(options: HoverRegistrationOptions): [Disposable, HoverProvider] {
+		const provider: HoverProvider = {
+			provideHover: (document, position, token) => {
+				const client = this._client;
+				const provideHover: ProvideHoverSignature = (document, position, token) => {
+					return client.sendRequest(HoverRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
+						client.protocol2CodeConverter.asHover,
+						(error) => {
+							client.logFailedRequest(HoverRequest.type, error);
+							return Promise.resolve(null);
+						}
+					);
+				};
+				const middleware = client.clientOptions.middleware!;
+				return middleware.provideHover
+					? middleware.provideHover(document, position, token, provideHover)
+					: provideHover(document, position, token);
+			}
 		};
-		return middleware.provideHover
-			? middleware.provideHover(document, position, token, _provideHover)
-			: _provideHover(document, position, token);
-	};
-
-	public provide: ProvideHoverSignature = (document, position, token) => {
-		this.assertRegistered(document);
-		return this.provideHover(document, position, token);
-	};
+		return [Languages.registerHoverProvider(options.documentSelector!, provider), provider];
+	}
 }
 
-class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpOptions, SignatureHelpRegistrationOptions> implements VSignatureHelpProvider, ProvideFeature<ProvideSignatureHelpSignature> {
+class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpOptions, SignatureHelpRegistrationOptions, VSignatureHelpProvider> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, SignatureHelpRequest.type);
@@ -1562,43 +1583,41 @@ class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpOptions, Sig
 		});
 	}
 
-	protected registerLanguageProvider(options: SignatureHelpRegistrationOptions): Disposable {
+	protected registerLanguageProvider(options: SignatureHelpRegistrationOptions): [Disposable, VSignatureHelpProvider] {
+		const provider: VSignatureHelpProvider = {
+			provideSignatureHelp: (document, position, token, context) => {
+				const client = this._client;
+				const providerSignatureHelp: ProvideSignatureHelpSignature = (document, position, context, token) => {
+					return client.sendRequest(SignatureHelpRequest.type, client.code2ProtocolConverter.asSignatureHelpParams(document, position, context), token).then(
+						client.protocol2CodeConverter.asSignatureHelp,
+						(error) => {
+							client.logFailedRequest(SignatureHelpRequest.type, error);
+							return Promise.resolve(null);
+						}
+					);
+				};
+				const middleware = client.clientOptions.middleware!;
+				return middleware.provideSignatureHelp
+					? middleware.provideSignatureHelp(document, position, context, token, providerSignatureHelp)
+					: providerSignatureHelp(document, position, context, token);
+			}
+		};
+		let disposable: Disposable;
 		if (options.retriggerCharacters === undefined) {
 			const triggerCharacters = options.triggerCharacters || [];
-			return Languages.registerSignatureHelpProvider(options.documentSelector!, this, ...triggerCharacters);
+			disposable = Languages.registerSignatureHelpProvider(options.documentSelector!, provider, ...triggerCharacters);
 		} else {
 			const metaData: VSignatureHelpProviderMetadata = {
 				triggerCharacters: options.triggerCharacters || [],
 				retriggerCharacters: options.retriggerCharacters || []
 			};
-			return Languages.registerSignatureHelpProvider(options.documentSelector!, this, metaData);
+			disposable = Languages.registerSignatureHelpProvider(options.documentSelector!, provider, metaData);
 		}
-	}
-
-	public provideSignatureHelp(document: TextDocument, position: VPosition, token: CancellationToken, context: VSignatureHelpContext): ProviderResult<VSignatureHelp> {
-		const client = this._client;
-		const middleware = client.clientOptions.middleware!;
-		const providerSignatureHelp: ProvideSignatureHelpSignature = (document, position, context, token) => {
-			return client.sendRequest(SignatureHelpRequest.type, client.code2ProtocolConverter.asSignatureHelpParams(document, position, context), token).then(
-				client.protocol2CodeConverter.asSignatureHelp,
-				(error) => {
-					client.logFailedRequest(SignatureHelpRequest.type, error);
-					return Promise.resolve(null);
-				}
-			);
-		};
-		return middleware.provideSignatureHelp
-			? middleware.provideSignatureHelp(document, position, context, token, providerSignatureHelp)
-			: providerSignatureHelp(document, position, context, token);
-	}
-
-	public provide: ProvideSignatureHelpSignature = (document, position, context, token) => {
-		this.assertRegistered(document);
-		return this.provideSignatureHelp(document, position, token, context);
+		return [disposable, provider];
 	}
 }
 
-class DefinitionFeature extends TextDocumentFeature<boolean | DefinitionOptions, DefinitionRegistrationOptions> implements ProvideFeature<ProvideDefinitionSignature> {
+class DefinitionFeature extends TextDocumentFeature<boolean | DefinitionOptions, DefinitionRegistrationOptions, DefinitionProvider> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, DefinitionRequest.type);
@@ -1618,34 +1637,30 @@ class DefinitionFeature extends TextDocumentFeature<boolean | DefinitionOptions,
 		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: DefinitionRegistrationOptions): Disposable {
-		return Languages.registerDefinitionProvider(options.documentSelector!, this);
-	}
-
-	public provideDefinition: ProvideDefinitionSignature = (document, position, token) => {
-		const client = this._client;
-		const middleware = client.clientOptions.middleware!;
-		const _provideDefinition: ProvideDefinitionSignature = (document, position, token) => {
-			return client.sendRequest(DefinitionRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
-				client.protocol2CodeConverter.asDefinitionResult,
-				(error) => {
-					client.logFailedRequest(DefinitionRequest.type, error);
-					return Promise.resolve(null);
-				}
-			);
+	protected registerLanguageProvider(options: DefinitionRegistrationOptions): [Disposable, DefinitionProvider] {
+		const provider: DefinitionProvider = {
+			provideDefinition:  (document, position, token) => {
+				const client = this._client;
+				const provideDefinition: ProvideDefinitionSignature = (document, position, token) => {
+					return client.sendRequest(DefinitionRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
+						client.protocol2CodeConverter.asDefinitionResult,
+						(error) => {
+							client.logFailedRequest(DefinitionRequest.type, error);
+							return Promise.resolve(null);
+						}
+					);
+				};
+				const middleware = client.clientOptions.middleware!;
+				return middleware.provideDefinition
+					? middleware.provideDefinition(document, position, token, provideDefinition)
+					: provideDefinition(document, position, token);
+			}
 		};
-		return middleware.provideDefinition
-			? middleware.provideDefinition(document, position, token, _provideDefinition)
-			: _provideDefinition(document, position, token);
-	}
-
-	public provide: ProvideDefinitionSignature = (document, position, token) => {
-		this.assertRegistered(document);
-		return this.provideDefinition(document, position, token);
+		return [Languages.registerDefinitionProvider(options.documentSelector!, provider), provider];
 	}
 }
 
-class ReferencesFeature extends TextDocumentFeature<boolean | ReferenceOptions, ReferenceRegistrationOptions> implements ProvideFeature<ProvideReferencesSignature> {
+class ReferencesFeature extends TextDocumentFeature<boolean | ReferenceOptions, ReferenceRegistrationOptions, ReferenceProvider> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, ReferencesRequest.type);
@@ -1663,34 +1678,30 @@ class ReferencesFeature extends TextDocumentFeature<boolean | ReferenceOptions, 
 		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): Disposable {
-		return Languages.registerReferenceProvider(options.documentSelector!, this);
-	}
-
-	public provideReferences: ProvideReferencesSignature = (document, position, options, token) => {
-		const client = this._client;
-		const _providerReferences: ProvideReferencesSignature = (document, position, options, token) => {
-			return client.sendRequest(ReferencesRequest.type, client.code2ProtocolConverter.asReferenceParams(document, position, options), token).then(
-				client.protocol2CodeConverter.asReferences,
-				(error) => {
-					client.logFailedRequest(ReferencesRequest.type, error);
-					return Promise.resolve([]);
-				}
-			);
+	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): [Disposable, ReferenceProvider] {
+		const provider: ReferenceProvider = {
+			provideReferences: (document, position, options, token) => {
+				const client = this._client;
+				const _providerReferences: ProvideReferencesSignature = (document, position, options, token) => {
+					return client.sendRequest(ReferencesRequest.type, client.code2ProtocolConverter.asReferenceParams(document, position, options), token).then(
+						client.protocol2CodeConverter.asReferences,
+						(error) => {
+							client.logFailedRequest(ReferencesRequest.type, error);
+							return Promise.resolve([]);
+						}
+					);
+				};
+				const middleware = client.clientOptions.middleware!;
+				return middleware.provideReferences
+					? middleware.provideReferences(document, position, options, token, _providerReferences)
+					: _providerReferences(document, position, options, token);
+			}
 		};
-		const middleware = client.clientOptions.middleware!;
-		return middleware.provideReferences
-			? middleware.provideReferences(document, position, options, token, _providerReferences)
-			: _providerReferences(document, position, options, token);
-	}
-
-	public provide: ProvideReferencesSignature = (document, position, options, token) => {
-		this.assertRegistered(document);
-		return this.provideReferences(document, position, options, token);
+		return [Languages.registerReferenceProvider(options.documentSelector!, provider), provider];
 	}
 }
 
-class DocumentHighlightFeature extends TextDocumentFeature<boolean | DocumentHighlightOptions, DocumentHighlightRegistrationOptions> {
+class DocumentHighlightFeature extends TextDocumentFeature<boolean | DocumentHighlightOptions, DocumentHighlightRegistrationOptions, DocumentHighlightProvider> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, DocumentHighlightRequest.type);
@@ -1708,29 +1719,30 @@ class DocumentHighlightFeature extends TextDocumentFeature<boolean | DocumentHig
 		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): Disposable {
-		let client = this._client;
-		let provideDocumentHighlights: ProvideDocumentHighlightsSignature = (document, position, token) => {
-			return client.sendRequest(DocumentHighlightRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
-				client.protocol2CodeConverter.asDocumentHighlights,
-				(error) => {
-					client.logFailedRequest(DocumentHighlightRequest.type, error);
-					return Promise.resolve([]);
-				}
-			);
-		};
-		let middleware = client.clientOptions.middleware!;
-		return Languages.registerDocumentHighlightProvider(options.documentSelector!, {
-			provideDocumentHighlights: (document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDocumentHighlight[]> => {
+	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): [Disposable, DocumentHighlightProvider] {
+		const provider: DocumentHighlightProvider = {
+			provideDocumentHighlights: (document, position, token) => {
+				const client = this._client;
+				const _provideDocumentHighlights: ProvideDocumentHighlightsSignature = (document, position, token) => {
+					return client.sendRequest(DocumentHighlightRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
+						client.protocol2CodeConverter.asDocumentHighlights,
+						(error) => {
+							client.logFailedRequest(DocumentHighlightRequest.type, error);
+							return Promise.resolve([]);
+						}
+					);
+				};
+				const middleware = client.clientOptions.middleware!;
 				return middleware.provideDocumentHighlights
-					? middleware.provideDocumentHighlights(document, position, token, provideDocumentHighlights)
-					: provideDocumentHighlights(document, position, token);
+					? middleware.provideDocumentHighlights(document, position, token, _provideDocumentHighlights)
+					: _provideDocumentHighlights(document, position, token);
 			}
-		});
+		};
+		return [Languages.registerDocumentHighlightProvider(options.documentSelector!, provider), provider];
 	}
 }
 
-class DocumentSymbolFeature extends TextDocumentFeature<boolean | DocumentSymbolOptions, DocumentSymbolRegistrationOptions> {
+class DocumentSymbolFeature extends TextDocumentFeature<boolean | DocumentSymbolOptions, DocumentSymbolRegistrationOptions, DocumentSymbolProvider> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, DocumentSymbolRequest.type);
@@ -1753,43 +1765,44 @@ class DocumentSymbolFeature extends TextDocumentFeature<boolean | DocumentSymbol
 		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): Disposable {
-		let client = this._client;
-		let provideDocumentSymbols: ProvideDocumentSymbolsSignature = (document, token) => {
-			return client.sendRequest(DocumentSymbolRequest.type, client.code2ProtocolConverter.asDocumentSymbolParams(document), token).then(
-				(data) => {
-					if (data === null) {
-						return undefined;
-					}
-					if (data.length === 0) {
-						return [];
-					} else {
-						let element = data[0];
-						if (DocumentSymbol.is(element)) {
-							return client.protocol2CodeConverter.asDocumentSymbols(data as DocumentSymbol[]);
-						} else {
-							return client.protocol2CodeConverter.asSymbolInformations(data as SymbolInformation[]);
+	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): [Disposable, DocumentSymbolProvider] {
+		const provider: DocumentSymbolProvider = {
+			provideDocumentSymbols: (document, token) => {
+				const client = this._client;
+				const _provideDocumentSymbols: ProvideDocumentSymbolsSignature = (document, token) => {
+					return client.sendRequest(DocumentSymbolRequest.type, client.code2ProtocolConverter.asDocumentSymbolParams(document), token).then(
+						(data) => {
+							if (data === null) {
+								return undefined;
+							}
+							if (data.length === 0) {
+								return [];
+							} else {
+								let element = data[0];
+								if (DocumentSymbol.is(element)) {
+									return client.protocol2CodeConverter.asDocumentSymbols(data as DocumentSymbol[]);
+								} else {
+									return client.protocol2CodeConverter.asSymbolInformations(data as SymbolInformation[]);
+								}
+							}
+						},
+						(error) => {
+							client.logFailedRequest(DocumentSymbolRequest.type, error);
+							return Promise.resolve([]);
 						}
-					}
-				},
-				(error) => {
-					client.logFailedRequest(DocumentSymbolRequest.type, error);
-					return Promise.resolve([]);
-				}
-			);
-		};
-		let middleware = client.clientOptions.middleware!;
-		return Languages.registerDocumentSymbolProvider(options.documentSelector!, {
-			provideDocumentSymbols: (document: TextDocument, token: CancellationToken): ProviderResult<VSymbolInformation[] | VDocumentSymbol[]> => {
+					);
+				};
+				const middleware = client.clientOptions.middleware!;
 				return middleware.provideDocumentSymbols
-					? middleware.provideDocumentSymbols(document, token, provideDocumentSymbols)
-					: provideDocumentSymbols(document, token);
+					? middleware.provideDocumentSymbols(document, token, _provideDocumentSymbols)
+					: _provideDocumentSymbols(document, token);
 			}
-		});
+		};
+		return [Languages.registerDocumentSymbolProvider(options.documentSelector!, provider), provider];
 	}
 }
 
-class WorkspaceSymbolFeature extends WorkspaceFeature<WorkspaceSymbolRegistrationOptions> {
+class WorkspaceSymbolFeature extends WorkspaceFeature<WorkspaceSymbolRegistrationOptions, WorkspaceSymbolProvider> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, WorkspaceSymbolRequest.type);
@@ -1813,29 +1826,30 @@ class WorkspaceSymbolFeature extends WorkspaceFeature<WorkspaceSymbolRegistratio
 		});
 	}
 
-	protected registerLanguageProvider(_options: WorkspaceSymbolRegistrationOptions): Disposable {
-		let client = this._client;
-		let provideWorkspaceSymbols: ProvideWorkspaceSymbolsSignature = (query, token) => {
-			return client.sendRequest(WorkspaceSymbolRequest.type, { query }, token).then(
-				client.protocol2CodeConverter.asSymbolInformations,
-				(error) => {
-					client.logFailedRequest(WorkspaceSymbolRequest.type, error);
-					return Promise.resolve([]);
-				}
-			);
-		};
-		let middleware = client.clientOptions.middleware!;
-		return Languages.registerWorkspaceSymbolProvider({
-			provideWorkspaceSymbols: (query: string, token: CancellationToken): ProviderResult<VSymbolInformation[]> => {
+	protected registerLanguageProvider(_options: WorkspaceSymbolRegistrationOptions): [Disposable, WorkspaceSymbolProvider] {
+		const provider: WorkspaceSymbolProvider = {
+			provideWorkspaceSymbols:  (query, token) => {
+				const client = this._client;
+				const provideWorkspaceSymbols: ProvideWorkspaceSymbolsSignature = (query, token) => {
+					return client.sendRequest(WorkspaceSymbolRequest.type, { query }, token).then(
+						client.protocol2CodeConverter.asSymbolInformations,
+						(error) => {
+							client.logFailedRequest(WorkspaceSymbolRequest.type, error);
+							return Promise.resolve([]);
+						}
+					);
+				};
+				const middleware = client.clientOptions.middleware!;
 				return middleware.provideWorkspaceSymbols
 					? middleware.provideWorkspaceSymbols(query, token, provideWorkspaceSymbols)
 					: provideWorkspaceSymbols(query, token);
 			}
-		});
+		};
+		return [Languages.registerWorkspaceSymbolProvider(provider), provider];
 	}
 }
 
-class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions, CodeActionRegistrationOptions> {
+class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions, CodeActionRegistrationOptions, CodeActionProvider> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, CodeActionRequest.type);
@@ -1869,49 +1883,50 @@ class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions,
 		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: CodeActionRegistrationOptions): Disposable {
-		let client = this._client;
-		let provideCodeActions: ProvideCodeActionsSignature = (document, range, context, token) => {
-			let params: CodeActionParams = {
-				textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
-				range: client.code2ProtocolConverter.asRange(range),
-				context: client.code2ProtocolConverter.asCodeActionContext(context)
-			};
-			return client.sendRequest(CodeActionRequest.type, params, token).then((values) => {
-				if (values === null) {
-					return undefined;
-				}
-				let result: (VCommand | VCodeAction)[] = [];
-				for (let item of values) {
-					if (Command.is(item)) {
-						result.push(client.protocol2CodeConverter.asCommand(item));
-					} else {
-						result.push(client.protocol2CodeConverter.asCodeAction(item));
+	protected registerLanguageProvider(options: CodeActionRegistrationOptions): [Disposable, CodeActionProvider] {
+		const provider: CodeActionProvider = {
+			provideCodeActions: (document, range, context, token) => {
+				const client = this._client;
+				const _provideCodeActions: ProvideCodeActionsSignature = (document, range, context, token) => {
+					const params: CodeActionParams = {
+						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
+						range: client.code2ProtocolConverter.asRange(range),
+						context: client.code2ProtocolConverter.asCodeActionContext(context)
+					};
+					return client.sendRequest(CodeActionRequest.type, params, token).then((values) => {
+						if (values === null) {
+							return undefined;
+						}
+						const result: (VCommand | VCodeAction)[] = [];
+						for (let item of values) {
+							if (Command.is(item)) {
+								result.push(client.protocol2CodeConverter.asCommand(item));
+							} else {
+								result.push(client.protocol2CodeConverter.asCodeAction(item));
+							}
+						}
+						return result;
+					},
+					(error) => {
+						client.logFailedRequest(CodeActionRequest.type, error);
+						return Promise.resolve([]);
 					}
-				}
-				return result;
-			},
-			(error) => {
-				client.logFailedRequest(CodeActionRequest.type, error);
-				return Promise.resolve([]);
-			}
-			);
-		};
-		let middleware = client.clientOptions.middleware!;
-		return Languages.registerCodeActionsProvider(options.documentSelector!, {
-			provideCodeActions: (document: TextDocument, range: VRange, context: VCodeActionContext, token: CancellationToken): ProviderResult<(VCommand | VCodeAction)[]> => {
+					);
+				};
+				const middleware = client.clientOptions.middleware!;
 				return middleware.provideCodeActions
-					? middleware.provideCodeActions(document, range, context, token, provideCodeActions)
-					: provideCodeActions(document, range, context, token);
+					? middleware.provideCodeActions(document, range, context, token, _provideCodeActions)
+					: _provideCodeActions(document, range, context, token);
 			}
-		}, options.codeActionKinds
-			? { providedCodeActionKinds: client.protocol2CodeConverter.asCodeActionKinds(options.codeActionKinds) }
-			: undefined
-		);
+		};
+		return [Languages.registerCodeActionsProvider(options.documentSelector!, provider,
+			(options.codeActionKinds
+				? { providedCodeActionKinds: this._client.protocol2CodeConverter.asCodeActionKinds(options.codeActionKinds) }
+				: undefined)), provider];
 	}
 }
 
-class CodeLensFeature extends TextDocumentFeature<CodeLensOptions, CodeLensRegistrationOptions> {
+class CodeLensFeature extends TextDocumentFeature<CodeLensOptions, CodeLensRegistrationOptions, CodeLensProvider> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, CodeLensRequest.type);
@@ -1929,45 +1944,48 @@ class CodeLensFeature extends TextDocumentFeature<CodeLensOptions, CodeLensRegis
 		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: CodeLensRegistrationOptions): Disposable {
-		let client = this._client;
-		let provideCodeLenses: ProvideCodeLensesSignature = (document, token) => {
-			return client.sendRequest(CodeLensRequest.type, client.code2ProtocolConverter.asCodeLensParams(document), token).then(
-				client.protocol2CodeConverter.asCodeLenses,
-				(error) => {
-					client.logFailedRequest(CodeLensRequest.type, error);
-					return Promise.resolve([]);
-				}
-			);
-		};
-		let resolveCodeLens: ResolveCodeLensSignature = (codeLens, token) => {
-			return client.sendRequest(CodeLensResolveRequest.type, client.code2ProtocolConverter.asCodeLens(codeLens), token).then(
-				client.protocol2CodeConverter.asCodeLens,
-				(error) => {
-					client.logFailedRequest(CodeLensResolveRequest.type, error);
-					return codeLens;
-				}
-			);
-		};
-		let middleware = client.clientOptions.middleware!;
-		return Languages.registerCodeLensProvider(options.documentSelector!, {
-			provideCodeLenses: (document: TextDocument, token: CancellationToken): ProviderResult<VCodeLens[]> => {
+	protected registerLanguageProvider(options: CodeLensRegistrationOptions): [Disposable, CodeLensProvider] {
+		const provider: CodeLensProvider = {
+			provideCodeLenses: (document, token) => {
+				const client = this._client;
+				const provideCodeLenses: ProvideCodeLensesSignature = (document, token) => {
+					return client.sendRequest(CodeLensRequest.type, client.code2ProtocolConverter.asCodeLensParams(document), token).then(
+						client.protocol2CodeConverter.asCodeLenses,
+						(error) => {
+							client.logFailedRequest(CodeLensRequest.type, error);
+							return Promise.resolve([]);
+						}
+					);
+				};
+				const middleware = client.clientOptions.middleware!;
 				return middleware.provideCodeLenses
 					? middleware.provideCodeLenses(document, token, provideCodeLenses)
 					: provideCodeLenses(document, token);
 			},
 			resolveCodeLens: (options.resolveProvider)
 				? (codeLens: VCodeLens, token: CancellationToken): ProviderResult<VCodeLens> => {
+					const client = this._client;
+					const resolveCodeLens: ResolveCodeLensSignature = (codeLens, token) => {
+						return client.sendRequest(CodeLensResolveRequest.type, client.code2ProtocolConverter.asCodeLens(codeLens), token).then(
+							client.protocol2CodeConverter.asCodeLens,
+							(error) => {
+								client.logFailedRequest(CodeLensResolveRequest.type, error);
+								return codeLens;
+							}
+						);
+					};
+					const middleware = client.clientOptions.middleware!;
 					return middleware.resolveCodeLens
 						? middleware.resolveCodeLens(codeLens, token, resolveCodeLens)
 						: resolveCodeLens(codeLens, token);
 				}
 				: undefined
-		});
+		};
+		return [Languages.registerCodeLensProvider(options.documentSelector!, provider), provider];
 	}
 }
 
-class DocumentFormattingFeature extends TextDocumentFeature<boolean | DocumentFormattingOptions, DocumentHighlightRegistrationOptions> {
+class DocumentFormattingFeature extends TextDocumentFeature<boolean | DocumentFormattingOptions, DocumentHighlightRegistrationOptions, DocumentFormattingEditProvider> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, DocumentFormattingRequest.type);
@@ -1985,33 +2003,34 @@ class DocumentFormattingFeature extends TextDocumentFeature<boolean | DocumentFo
 		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): Disposable {
-		let client = this._client;
-		let provideDocumentFormattingEdits: ProvideDocumentFormattingEditsSignature = (document, options, token) => {
-			let params: DocumentFormattingParams = {
-				textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
-				options: client.code2ProtocolConverter.asFormattingOptions(options)
-			};
-			return client.sendRequest(DocumentFormattingRequest.type, params, token).then(
-				client.protocol2CodeConverter.asTextEdits,
-				(error) => {
-					client.logFailedRequest(DocumentFormattingRequest.type, error);
-					return Promise.resolve([]);
-				}
-			);
-		};
-		let middleware = client.clientOptions.middleware!;
-		return Languages.registerDocumentFormattingEditProvider(options.documentSelector!, {
-			provideDocumentFormattingEdits: (document: TextDocument, options: VFormattingOptions, token: CancellationToken): ProviderResult<VTextEdit[]> => {
+	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): [Disposable, DocumentFormattingEditProvider] {
+		const provider: DocumentFormattingEditProvider = {
+			provideDocumentFormattingEdits: (document, options, token) => {
+				const client = this._client;
+				const provideDocumentFormattingEdits: ProvideDocumentFormattingEditsSignature = (document, options, token) => {
+					const params: DocumentFormattingParams = {
+						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
+						options: client.code2ProtocolConverter.asFormattingOptions(options)
+					};
+					return client.sendRequest(DocumentFormattingRequest.type, params, token).then(
+						client.protocol2CodeConverter.asTextEdits,
+						(error) => {
+							client.logFailedRequest(DocumentFormattingRequest.type, error);
+							return Promise.resolve([]);
+						}
+					);
+				};
+				const middleware = client.clientOptions.middleware!;
 				return middleware.provideDocumentFormattingEdits
 					? middleware.provideDocumentFormattingEdits(document, options, token, provideDocumentFormattingEdits)
 					: provideDocumentFormattingEdits(document, options, token);
 			}
-		});
+		};
+		return [Languages.registerDocumentFormattingEditProvider(options.documentSelector!, provider), provider];
 	}
 }
 
-class DocumentRangeFormattingFeature extends TextDocumentFeature<boolean | DocumentRangeFormattingOptions, DocumentRangeFormattingRegistrationOptions> {
+class DocumentRangeFormattingFeature extends TextDocumentFeature<boolean | DocumentRangeFormattingOptions, DocumentRangeFormattingRegistrationOptions, DocumentRangeFormattingEditProvider> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, DocumentRangeFormattingRequest.type);
@@ -2029,34 +2048,35 @@ class DocumentRangeFormattingFeature extends TextDocumentFeature<boolean | Docum
 		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): Disposable {
-		let client = this._client;
-		let provideDocumentRangeFormattingEdits: ProvideDocumentRangeFormattingEditsSignature = (document, range, options, token) => {
-			let params: DocumentRangeFormattingParams = {
-				textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
-				range: client.code2ProtocolConverter.asRange(range),
-				options: client.code2ProtocolConverter.asFormattingOptions(options)
-			};
-			return client.sendRequest(DocumentRangeFormattingRequest.type, params, token).then(
-				client.protocol2CodeConverter.asTextEdits,
-				(error) => {
-					client.logFailedRequest(DocumentRangeFormattingRequest.type, error);
-					return Promise.resolve([]);
-				}
-			);
-		};
-		let middleware = client.clientOptions.middleware!;
-		return Languages.registerDocumentRangeFormattingEditProvider(options.documentSelector!, {
-			provideDocumentRangeFormattingEdits: (document: TextDocument, range: VRange, options: VFormattingOptions, token: CancellationToken): ProviderResult<VTextEdit[]> => {
+	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): [Disposable, DocumentRangeFormattingEditProvider] {
+		const provider: DocumentRangeFormattingEditProvider = {
+			provideDocumentRangeFormattingEdits: (document, range, options, token) => {
+				const client = this._client;
+				const provideDocumentRangeFormattingEdits: ProvideDocumentRangeFormattingEditsSignature = (document, range, options, token) => {
+					let params: DocumentRangeFormattingParams = {
+						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
+						range: client.code2ProtocolConverter.asRange(range),
+						options: client.code2ProtocolConverter.asFormattingOptions(options)
+					};
+					return client.sendRequest(DocumentRangeFormattingRequest.type, params, token).then(
+						client.protocol2CodeConverter.asTextEdits,
+						(error) => {
+							client.logFailedRequest(DocumentRangeFormattingRequest.type, error);
+							return Promise.resolve([]);
+						}
+					);
+				};
+				let middleware = client.clientOptions.middleware!;
 				return middleware.provideDocumentRangeFormattingEdits
 					? middleware.provideDocumentRangeFormattingEdits(document, range, options, token, provideDocumentRangeFormattingEdits)
 					: provideDocumentRangeFormattingEdits(document, range, options, token);
 			}
-		});
+		};
+		return [Languages.registerDocumentRangeFormattingEditProvider(options.documentSelector!, provider), provider];
 	}
 }
 
-class DocumentOnTypeFormattingFeature extends TextDocumentFeature<DocumentOnTypeFormattingOptions, DocumentOnTypeFormattingRegistrationOptions> {
+class DocumentOnTypeFormattingFeature extends TextDocumentFeature<DocumentOnTypeFormattingOptions, DocumentOnTypeFormattingRegistrationOptions, OnTypeFormattingEditProvider> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, DocumentOnTypeFormattingRequest.type);
@@ -2074,36 +2094,38 @@ class DocumentOnTypeFormattingFeature extends TextDocumentFeature<DocumentOnType
 		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: DocumentOnTypeFormattingRegistrationOptions): Disposable {
-		let client = this._client;
-		let moreTriggerCharacter = options.moreTriggerCharacter || [];
-		let provideOnTypeFormattingEdits: ProvideOnTypeFormattingEditsSignature = (document, position, ch, options, token) => {
-			let params: DocumentOnTypeFormattingParams = {
-				textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
-				position: client.code2ProtocolConverter.asPosition(position),
-				ch: ch,
-				options: client.code2ProtocolConverter.asFormattingOptions(options)
-			};
-			return client.sendRequest(DocumentOnTypeFormattingRequest.type, params, token).then(
-				client.protocol2CodeConverter.asTextEdits,
-				(error) => {
-					client.logFailedRequest(DocumentOnTypeFormattingRequest.type, error);
-					return Promise.resolve([]);
-				}
-			);
-		};
-		let middleware = client.clientOptions.middleware!;
-		return Languages.registerOnTypeFormattingEditProvider(options.documentSelector!, {
-			provideOnTypeFormattingEdits: (document: TextDocument, position: VPosition, ch: string, options: VFormattingOptions, token: CancellationToken): ProviderResult<VTextEdit[]> => {
+	protected registerLanguageProvider(options: DocumentOnTypeFormattingRegistrationOptions): [Disposable, OnTypeFormattingEditProvider] {
+		const provider: OnTypeFormattingEditProvider = {
+			provideOnTypeFormattingEdits: (document, position, ch, options, token) => {
+				const client = this._client;
+				const provideOnTypeFormattingEdits: ProvideOnTypeFormattingEditsSignature = (document, position, ch, options, token) => {
+					let params: DocumentOnTypeFormattingParams = {
+						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
+						position: client.code2ProtocolConverter.asPosition(position),
+						ch: ch,
+						options: client.code2ProtocolConverter.asFormattingOptions(options)
+					};
+					return client.sendRequest(DocumentOnTypeFormattingRequest.type, params, token).then(
+						client.protocol2CodeConverter.asTextEdits,
+						(error) => {
+							client.logFailedRequest(DocumentOnTypeFormattingRequest.type, error);
+							return Promise.resolve([]);
+						}
+					);
+				};
+				const middleware = client.clientOptions.middleware!;
 				return middleware.provideOnTypeFormattingEdits
 					? middleware.provideOnTypeFormattingEdits(document, position, ch, options, token, provideOnTypeFormattingEdits)
 					: provideOnTypeFormattingEdits(document, position, ch, options, token);
 			}
-		}, options.firstTriggerCharacter, ...moreTriggerCharacter);
+		};
+
+		const moreTriggerCharacter = options.moreTriggerCharacter || [];
+		return [Languages.registerOnTypeFormattingEditProvider(options.documentSelector!, provider, options.firstTriggerCharacter, ...moreTriggerCharacter), provider];
 	}
 }
 
-class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameRegistrationOptions> {
+class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameRegistrationOptions, RenameProvider> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, RenameRequest.type);
@@ -2126,65 +2148,67 @@ class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameR
 		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: RenameRegistrationOptions): Disposable {
-		let client = this._client;
-		let provideRenameEdits: ProvideRenameEditsSignature = (document, position, newName, token) => {
-			let params: RenameParams = {
-				textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
-				position: client.code2ProtocolConverter.asPosition(position),
-				newName: newName
-			};
-			return client.sendRequest(RenameRequest.type, params, token).then(
-				client.protocol2CodeConverter.asWorkspaceEdit,
-				(error: ResponseError<void>) => {
-					client.logFailedRequest(RenameRequest.type, error);
-					return Promise.reject(new Error(error.message));
-				}
-			);
-		};
-		let prepareRename: PrepareRenameSignature = (document, position, token) => {
-			let params: TextDocumentPositionParams = {
-				textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
-				position: client.code2ProtocolConverter.asPosition(position),
-			};
-			return client.sendRequest(PrepareRenameRequest.type, params, token).then((result) => {
-				if (Range.is(result)) {
-					return client.protocol2CodeConverter.asRange(result);
-				} else if (result && Range.is(result.range)) {
-					return {
-						range: client.protocol2CodeConverter.asRange(result.range),
-						placeholder: result.placeholder
+	protected registerLanguageProvider(options: RenameRegistrationOptions): [Disposable, RenameProvider] {
+		const provider: RenameProvider = {
+			provideRenameEdits: (document, position, newName, token) => {
+				const client = this._client;
+				const provideRenameEdits: ProvideRenameEditsSignature = (document, position, newName, token) => {
+					let params: RenameParams = {
+						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
+						position: client.code2ProtocolConverter.asPosition(position),
+						newName: newName
 					};
-				}
-				// To cancel the rename vscode API expects a rejected promise.
-				return Promise.reject(new Error(`The element can't be renamed.`));
-			},
-			(error: ResponseError<void>) => {
-				client.logFailedRequest(PrepareRenameRequest.type, error);
-				return Promise.reject(new Error(error.message));
-			}
-			);
-		};
-		let middleware = client.clientOptions.middleware!;
-		return Languages.registerRenameProvider(options.documentSelector!, {
-			provideRenameEdits: (document: TextDocument, position: VPosition, newName: string, token: CancellationToken): ProviderResult<VWorkspaceEdit> => {
+					return client.sendRequest(RenameRequest.type, params, token).then(
+						client.protocol2CodeConverter.asWorkspaceEdit,
+						(error: ResponseError<void>) => {
+							client.logFailedRequest(RenameRequest.type, error);
+							return Promise.reject(new Error(error.message));
+						}
+					);
+				};
+				const middleware = client.clientOptions.middleware!;
 				return middleware.provideRenameEdits
 					? middleware.provideRenameEdits(document, position, newName, token, provideRenameEdits)
 					: provideRenameEdits(document, position, newName, token);
 			},
-
 			prepareRename: options.prepareProvider
-				? (document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VRange | { range: VRange, placeholder: string }> => {
+				? (document, position, token) => {
+					const client = this._client;
+					const prepareRename: PrepareRenameSignature = (document, position, token) => {
+						let params: TextDocumentPositionParams = {
+							textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
+							position: client.code2ProtocolConverter.asPosition(position),
+						};
+						return client.sendRequest(PrepareRenameRequest.type, params, token).then((result) => {
+							if (Range.is(result)) {
+								return client.protocol2CodeConverter.asRange(result);
+							} else if (result && Range.is(result.range)) {
+								return {
+									range: client.protocol2CodeConverter.asRange(result.range),
+									placeholder: result.placeholder
+								};
+							}
+							// To cancel the rename vscode API expects a rejected promise.
+							return Promise.reject(new Error(`The element can't be renamed.`));
+						},
+						(error: ResponseError<void>) => {
+							client.logFailedRequest(PrepareRenameRequest.type, error);
+							return Promise.reject(new Error(error.message));
+						}
+						);
+					};
+					const middleware = client.clientOptions.middleware!;
 					return middleware.prepareRename
 						? middleware.prepareRename(document, position, token, prepareRename)
 						: prepareRename(document, position, token);
 				}
 				: undefined
-		});
+		};
+		return [Languages.registerRenameProvider(options.documentSelector!, provider), provider];
 	}
 }
 
-class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkOptions, DocumentLinkRegistrationOptions> {
+class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkOptions, DocumentLinkRegistrationOptions, DocumentLinkProvider> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, DocumentLinkRequest.type);
@@ -2204,41 +2228,44 @@ class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkOptions, Docum
 		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: DocumentLinkRegistrationOptions): Disposable {
-		let client = this._client;
-		let provideDocumentLinks: ProvideDocumentLinksSignature = (document, token) => {
-			return client.sendRequest(DocumentLinkRequest.type, client.code2ProtocolConverter.asDocumentLinkParams(document), token).then(
-				client.protocol2CodeConverter.asDocumentLinks,
-				(error: ResponseError<void>) => {
-					client.logFailedRequest(DocumentLinkRequest.type, error);
-					return Promise.resolve([]);
-				}
-			);
-		};
-		let resolveDocumentLink: ResolveDocumentLinkSignature = (link, token) => {
-			return client.sendRequest(DocumentLinkResolveRequest.type, client.code2ProtocolConverter.asDocumentLink(link), token).then(
-				client.protocol2CodeConverter.asDocumentLink,
-				(error: ResponseError<void>) => {
-					client.logFailedRequest(DocumentLinkResolveRequest.type, error);
-					return Promise.resolve(link);
-				}
-			);
-		};
-		let middleware = client.clientOptions.middleware!;
-		return Languages.registerDocumentLinkProvider(options.documentSelector!, {
+	protected registerLanguageProvider(options: DocumentLinkRegistrationOptions): [Disposable, DocumentLinkProvider] {
+		const provider: DocumentLinkProvider = {
 			provideDocumentLinks: (document: TextDocument, token: CancellationToken): ProviderResult<VDocumentLink[]> => {
+				const client = this._client;
+				const provideDocumentLinks: ProvideDocumentLinksSignature = (document, token) => {
+					return client.sendRequest(DocumentLinkRequest.type, client.code2ProtocolConverter.asDocumentLinkParams(document), token).then(
+						client.protocol2CodeConverter.asDocumentLinks,
+						(error: ResponseError<void>) => {
+							client.logFailedRequest(DocumentLinkRequest.type, error);
+							return Promise.resolve([]);
+						}
+					);
+				};
+				const middleware = client.clientOptions.middleware!;
 				return middleware.provideDocumentLinks
 					? middleware.provideDocumentLinks(document, token, provideDocumentLinks)
 					: provideDocumentLinks(document, token);
 			},
 			resolveDocumentLink: options.resolveProvider
-				? (link: VDocumentLink, token: CancellationToken): ProviderResult<VDocumentLink> => {
+				? (link, token) => {
+					const client = this._client;
+					let resolveDocumentLink: ResolveDocumentLinkSignature = (link, token) => {
+						return client.sendRequest(DocumentLinkResolveRequest.type, client.code2ProtocolConverter.asDocumentLink(link), token).then(
+							client.protocol2CodeConverter.asDocumentLink,
+							(error: ResponseError<void>) => {
+								client.logFailedRequest(DocumentLinkResolveRequest.type, error);
+								return Promise.resolve(link);
+							}
+						);
+					};
+					const middleware = client.clientOptions.middleware!;
 					return middleware.resolveDocumentLink
 						? middleware.resolveDocumentLink(link, token, resolveDocumentLink)
 						: resolveDocumentLink(link, token);
 				}
 				: undefined
-		});
+		};
+		return [Languages.registerDocumentLinkProvider(options.documentSelector!, provider), provider];
 	}
 }
 
@@ -3267,18 +3294,33 @@ export abstract class BaseLanguageClient {
 		}
 	}
 
-	public getFeature(request: typeof DidOpenTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & ProvideFeature<(textDocument: TextDocument) => void>;
-	public getFeature(request: typeof DidChangeTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & ProvideFeature<(textDocument: TextDocument) => void>;
-	public getFeature(request: typeof WillSaveTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & ProvideFeature<(textDocument: TextDocument) => void>;
-	public getFeature(request: typeof WillSaveTextDocumentWaitUntilRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & ProvideFeature<(textDocument: TextDocument) => ProviderResult<VTextEdit[]>>;
-	public getFeature(request: typeof DidSaveTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & ProvideFeature<(textDocument: TextDocument) => void>;
-	public getFeature(request: typeof DidCloseTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & ProvideFeature<(textDocument: TextDocument) => void>;
-	public getFeature(request: typeof CompletionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & ProvideResolveFeature<ProvideCompletionItemsSignature, ResolveCompletionItemSignature>;
-	public getFeature(request: typeof HoverRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & ProvideFeature<ProvideHoverSignature>;
-	public getFeature(request: typeof SignatureHelpRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & ProvideFeature<ProvideSignatureHelpSignature>;
-	public getFeature(request: typeof DefinitionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & ProvideFeature<ProvideDefinitionSignature>;
-	public getFeature(request: typeof ReferencesRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & ProvideFeature<ProvideReferencesSignature>;
+	public getFeature(request: typeof DidOpenTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & NotificationFeature<(textDocument: TextDocument) => void>;
+	public getFeature(request: typeof DidChangeTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & NotificationFeature<(textDocument: TextDocument) => void>;
+	public getFeature(request: typeof WillSaveTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & NotificationFeature<(textDocument: TextDocument) => void>;
+	public getFeature(request: typeof WillSaveTextDocumentWaitUntilRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & NotificationFeature<(textDocument: TextDocument) => ProviderResult<VTextEdit[]>>;
+	public getFeature(request: typeof DidSaveTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & NotificationFeature<(textDocument: TextDocument) => void>;
+	public getFeature(request: typeof DidCloseTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & NotificationFeature<(textDocument: TextDocument) => void>;
+	public getFeature(request: typeof CompletionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<CompletionItemProvider>;
+	public getFeature(request: typeof HoverRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<HoverProvider>;
+	public getFeature(request: typeof SignatureHelpRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<SignatureHelpProvider>;
+	public getFeature(request: typeof DefinitionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DefinitionProvider>;
+	public getFeature(request: typeof ReferencesRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<ReferenceProvider>;
+	public getFeature(request: typeof DocumentHighlightRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DocumentHighlightProvider>;
+	public getFeature(request: typeof CodeActionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<CodeActionProvider>;
+	public getFeature(request: typeof DocumentFormattingRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DocumentFormattingEditProvider>;
+	public getFeature(request: typeof DocumentRangeFormattingRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DocumentRangeFormattingEditProvider>;
+	public getFeature(request: typeof DocumentOnTypeFormattingRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<OnTypeFormattingEditProvider>;
+	public getFeature(request: typeof RenameRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<RenameProvider>;
+	public getFeature(request: typeof DocumentLinkRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DocumentLinkProvider>;
+	public getFeature(request: typeof DocumentColorRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DocumentColorProvider>;
+	public getFeature(request: typeof DeclarationRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DeclarationProvider>;
+	public getFeature(request: typeof FoldingRangeRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<FoldingRangeProvider>;
+	public getFeature(request: typeof ImplementationRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<ImplementationProvider>;
+	public getFeature(request: typeof SelectionRangeRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<SelectionRangeProvider>;
+	public getFeature(request: typeof TypeDefinitionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<TypeDefinitionProvider>;
+	public getFeature(request: typeof Proposed.CallHierarchyPrepareRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<TypeDefinitionProvider>;
 
+	public getFeature(request: typeof WorkspaceSymbolRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & WorkspaceProviderFeature<WorkspaceSymbolProvider>;
 	public getFeature(request: string): DynamicFeature<any> | undefined {
 		return this._dynamicFeatures.get(request);
 	}

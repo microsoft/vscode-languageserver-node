@@ -26,12 +26,12 @@
 		"typescript"
 	],
 	"eslint.workingDirectories": [
-		{ "directory": "./types", "changeProcessCWD": true },
-		{ "directory": "./jsonrpc", "changeProcessCWD": true },
-		{ "directory": "./protocol", "changeProcessCWD": true },
-		{ "directory": "./server", "changeProcessCWD": true },
-		{ "directory": "./client", "changeProcessCWD": true },
-		{ "directory": "./client-tests", "changeProcessCWD": true }
+		"./types",
+		"./jsonrpc",
+		"./protocol",
+		"./server",
+		"./client",
+		"./client-tests"
 	],
 
 	"npm.autoDetect": "off",
@@ -46,5 +46,6 @@
 	],
 	"editor.codeActionsOnSave": {
 		"source.fixAll.eslint": true
-	}
+	},
+	"editor.codeActionsOnSaveTimeout": 2000
 }

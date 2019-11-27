@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { languages as Languages, Disposable, TextDocument, ProviderResult, Position as VPosition, Definition as VDefinition, DefinitionLink as VDefinitionLink } from 'vscode';
+import { languages as Languages, Disposable, TextDocument, ProviderResult, Position as VPosition, Definition as VDefinition, DefinitionLink as VDefinitionLink, ImplementationProvider } from 'vscode';
 
 import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, ImplementationRequest
@@ -28,7 +28,7 @@ export interface ImplementationMiddleware {
 	provideImplementation?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideImplementationSignature) => ProviderResult<VDefinition | VDefinitionLink[]>;
 }
 
-export class ImplementationFeature extends TextDocumentFeature<boolean | ImplementationOptions, ImplementationRegistrationOptions> {
+export class ImplementationFeature extends TextDocumentFeature<boolean | ImplementationOptions, ImplementationRegistrationOptions, ImplementationProvider> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, ImplementationRequest.type);
@@ -48,26 +48,25 @@ export class ImplementationFeature extends TextDocumentFeature<boolean | Impleme
 		this.register(this.messages, { id: id, registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: ImplementationRegistrationOptions): Disposable {
-		let client = this._client;
-		let provideImplementation: ProvideImplementationSignature = (document, position, token) => {
-			return client.sendRequest(ImplementationRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
-				client.protocol2CodeConverter.asDefinitionResult,
-				(error) => {
-					client.logFailedRequest(ImplementationRequest.type, error);
-					return Promise.resolve(null);
-				}
-			);
-		};
-		let middleware = client.clientOptions.middleware!;
-		return Languages.registerImplementationProvider(options.documentSelector!, {
-			provideImplementation: (document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDefinition | VDefinitionLink[]> => {
+	protected registerLanguageProvider(options: ImplementationRegistrationOptions): [Disposable, ImplementationProvider] {
+		const provider: ImplementationProvider = {
+			provideImplementation: (document, position, token) => {
+				const client = this._client;
+				const provideImplementation: ProvideImplementationSignature = (document, position, token) => {
+					return client.sendRequest(ImplementationRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
+						client.protocol2CodeConverter.asDefinitionResult,
+						(error) => {
+							client.logFailedRequest(ImplementationRequest.type, error);
+							return Promise.resolve(null);
+						}
+					);
+				};
+				const middleware = client.clientOptions.middleware!;
 				return middleware.provideImplementation
 					? middleware.provideImplementation(document, position, token, provideImplementation)
 					: provideImplementation(document, position, token);
 			}
-		});
+		};
+		return [Languages.registerImplementationProvider(options.documentSelector!, provider), provider];
 	}
 }
-
-
