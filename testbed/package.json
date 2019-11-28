@@ -8,7 +8,8 @@
 	},
 	"main": "./client/out/extension",
 	"activationEvents": [
-		"onLanguage:bat"
+		"onLanguage:bat",
+		"onCommand:testbed.helloWorld"
 	],
 	"enableProposedApi": true,
 	"contributes": {

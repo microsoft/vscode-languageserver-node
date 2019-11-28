@@ -92,7 +92,7 @@
 			"request": "launch",
 			"name": "Launch TestBed Client",
 			"runtimeExecutable": "${execPath}",
-			"args": ["--extensionDevelopmentPath=${workspaceRoot}"],
+			"args": ["--extensionDevelopmentPath=${workspaceRoot}/testbed"],
 			"outFiles": ["${workspaceRoot}/testbed/client/out/**/*.js"],
 			"sourceMaps": true
 		},
