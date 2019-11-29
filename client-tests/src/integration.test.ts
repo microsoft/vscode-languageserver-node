@@ -93,7 +93,7 @@ suite('Client integration', () => {
 
 	test('Goto Declaration', async () => {
 		const provider = client.getFeature(lsclient.DeclarationRequest.method).getProvider(document);
-		const result = (await provider.provideDeclaration(document, new vscode.Position(1 , 1), tokenSource.token)) as vscode.Location;
+		const result = (await provider.provideDeclaration(document, new vscode.Position(1, 1), tokenSource.token)) as vscode.Location;
 		assert.ok(result instanceof vscode.Location);
 		uriEqual(result.uri, uri);
 		rangeEqual(result.range, 1, 1, 1, 2);
@@ -103,14 +103,14 @@ suite('Client integration', () => {
 			middlewareCalled = true;
 			return next(document, position, token);
 		};
-		await provider.provideDeclaration(document, new vscode.Position(1 , 1), tokenSource.token);
+		await provider.provideDeclaration(document, new vscode.Position(1, 1), tokenSource.token);
 		middleware.provideDeclaration = undefined;
 		assert.strictEqual(middlewareCalled, true);
 	});
 
 	test('Goto Definition', async () => {
 		const provider = client.getFeature(lsclient.DefinitionRequest.method).getProvider(document);
-		const result = (await provider.provideDefinition(document, new vscode.Position(1 , 1), tokenSource.token)) as vscode.Location;
+		const result = (await provider.provideDefinition(document, new vscode.Position(1, 1), tokenSource.token)) as vscode.Location;
 		assert.ok(result instanceof vscode.Location);
 		uriEqual(result.uri, uri);
 		rangeEqual(result.range, 0, 0, 0, 1);
@@ -120,14 +120,14 @@ suite('Client integration', () => {
 			middlewareCalled = true;
 			return next(document, position, token);
 		};
-		await provider.provideDefinition(document, new vscode.Position(1 , 1), tokenSource.token);
+		await provider.provideDefinition(document, new vscode.Position(1, 1), tokenSource.token);
 		middleware.provideDefinition = undefined;
 		assert.strictEqual(middlewareCalled, true);
 	});
 
 	test('Hover', async () => {
 		const provider = client.getFeature(lsclient.HoverRequest.method).getProvider(document);
-		const result = (await provider.provideHover(document, new vscode.Position(1 , 1), tokenSource.token)) as vscode.Hover;
+		const result = (await provider.provideHover(document, new vscode.Position(1, 1), tokenSource.token)) as vscode.Hover;
 		assert.ok(result instanceof vscode.Hover);
 		assert.strictEqual(result.contents.length, 1);
 		assert.strictEqual((result.contents[0] as vscode.MarkdownString).value, 'foo');
@@ -137,7 +137,7 @@ suite('Client integration', () => {
 			middlewareCalled = true;
 			return next(document, position, token);
 		};
-		await provider.provideHover(document, new vscode.Position(1 , 1), tokenSource.token);
+		await provider.provideHover(document, new vscode.Position(1, 1), tokenSource.token);
 		middleware.provideHover = undefined;
 		assert.strictEqual(middlewareCalled, true);
 	});
