@@ -5,8 +5,8 @@
 'use strict';
 
 import * as assert from 'assert';
-import * as lsclient from 'vscode-languageclient/lib/main';
 import * as path from 'path';
+import * as lsclient from '../../client/lib/main';
 
 suite('Client integration', () => {
 
