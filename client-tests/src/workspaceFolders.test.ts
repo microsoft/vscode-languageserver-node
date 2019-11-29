@@ -4,9 +4,9 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as sinon from 'sinon';
 
-import { WorkspaceFoldersFeature } from '../../client/lib/workspaceFolders';
-import { BaseLanguageClient, MessageTransports, DidChangeWorkspaceFoldersParams } from '../../client/lib/main';
-import * as proto from '../../protocol/lib/main';
+import { WorkspaceFoldersFeature } from 'vscode-languageclient/lib/workspaceFolders';
+import { BaseLanguageClient, MessageTransports, DidChangeWorkspaceFoldersParams } from 'vscode-languageclient';
+import * as proto from 'vscode-languageserver-protocol';
 
 class TestLanguageClient extends BaseLanguageClient {
 	protected createMessageTransports(): Promise<MessageTransports> {

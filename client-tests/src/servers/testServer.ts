@@ -6,7 +6,7 @@
 import * as assert from 'assert';
 import {
 	createConnection, IConnection, InitializeParams, ServerCapabilities, CompletionItemKind, ResourceOperationKind, FailureHandlingKind,
-	DiagnosticTag, CompletionItemTag, TextDocumentSyncKind
+	DiagnosticTag, CompletionItemTag, TextDocumentSyncKind, MarkupKind
 } from '../../../server/lib/main';
 
 let connection: IConnection = createConnection();
@@ -41,8 +41,10 @@ connection.onInitialize((params: InitializeParams): any => {
 
 	let capabilities: ServerCapabilities = {
 		textDocumentSync: TextDocumentSyncKind.Full,
-		completionProvider: { resolveProvider: true, triggerCharacters: ['"', ':'] },
+		declarationProvider: true,
+		definitionProvider: true,
 		hoverProvider: true,
+		completionProvider: { resolveProvider: true, triggerCharacters: ['"', ':'] },
 		renameProvider: {
 			prepareProvider: true
 		}
@@ -51,7 +53,27 @@ connection.onInitialize((params: InitializeParams): any => {
 });
 
 connection.onInitialized(() => {
-	connection.sendDiagnostics({ uri: 'uri:/test.ts', diagnostics: [] });
+});
+
+connection.onDeclaration((params) => {
+	assert.equal(params.position.line, 1);
+	assert.equal(params.position.character, 1);
+	return { uri: params.textDocument.uri, range: { start: { line: 1, character: 1}, end: {line: 1, character: 2 }}};
+});
+
+connection.onDefinition((params) => {
+	assert.equal(params.position.line, 1);
+	assert.equal(params.position.character, 1);
+	return { uri: params.textDocument.uri, range: { start: { line: 0, character: 0}, end: {line: 0, character: 1 }}};
+});
+
+connection.onHover((_params) => {
+	return {
+		contents: {
+			kind: MarkupKind.PlainText,
+			value: 'foo'
+		}
+	};
 });
 
 // Listen on the connection
