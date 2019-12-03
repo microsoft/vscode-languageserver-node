@@ -28,6 +28,12 @@ suite('Client integration', () => {
 		assert.strictEqual(actual.toString(), expected.toString());
 	}
 
+	function defined<T>(value: T | undefined | null): asserts value is T {
+		if (value === undefined || value === null) {
+			throw new Error(`Value is null or undefined`);
+		}
+	}
+
 	suiteSetup(async () => {
 		vscode.workspace.registerTextDocumentContentProvider('lsptests', {
 			provideTextDocumentContent: (_uri: vscode.Uri) => {
@@ -140,5 +146,37 @@ suite('Client integration', () => {
 		await provider.provideHover(document, new vscode.Position(1, 1), tokenSource.token);
 		middleware.provideHover = undefined;
 		assert.strictEqual(middlewareCalled, true);
+	});
+
+	test('Completion', async () => {
+		const provider = client.getFeature(lsclient.CompletionRequest.method).getProvider(document);
+		const result = (await provider.provideCompletionItems(document, new vscode.Position(1, 1), tokenSource.token, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ':' })) as vscode.CompletionItem[];
+		assert.ok(Array.isArray(result));
+		assert.strictEqual(result.length, 1);
+		const item = result[0];
+		assert.ok(item instanceof vscode.CompletionItem);
+		assert.strictEqual(item.label, 'item');
+		assert.strictEqual(item.insertText, 'text');
+		assert.strictEqual(item.detail, undefined);
+		defined(provider.resolveCompletionItem);
+
+		const resolved = await provider.resolveCompletionItem(item, tokenSource.token);
+		defined(resolved);
+		assert.strictEqual(resolved.detail, 'detail');
+
+		let middlewareCalled: number = 0;
+		middleware.provideCompletionItem = (document, position, context, token, next) => {
+			middlewareCalled++;
+			return next(document, position, context, token);
+		};
+		middleware.resolveCompletionItem = (item, token, next) => {
+			middlewareCalled++;
+			return next(item, token);
+		};
+		await provider.provideCompletionItems(document, new vscode.Position(1, 1), tokenSource.token, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ':' });
+		await provider.resolveCompletionItem(item, tokenSource.token);
+		middleware.provideCompletionItem = undefined;
+		middleware.resolveCompletionItem = undefined;
+		assert.strictEqual(middlewareCalled, 2);
 	});
 });

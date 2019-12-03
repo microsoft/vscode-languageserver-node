@@ -76,5 +76,16 @@ connection.onHover((_params) => {
 	};
 });
 
+connection.onCompletion((_params) => {
+	return [
+		{ label: 'item', insertText: 'text' }
+	];
+});
+
+connection.onCompletionResolve((item) => {
+	item.detail = 'detail';
+	return item;
+});
+
 // Listen on the connection
 connection.listen();
