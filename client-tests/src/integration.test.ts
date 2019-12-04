@@ -86,6 +86,10 @@ suite('Client integration', () => {
 				definitionProvider: true,
 				hoverProvider: true,
 				completionProvider: { resolveProvider: true, triggerCharacters: ['"', ':'] },
+				signatureHelpProvider: {
+					triggerCharacters: [':'],
+					retriggerCharacters: [':']
+				},
 				renameProvider: {
 					prepareProvider: true
 				}
@@ -178,5 +182,46 @@ suite('Client integration', () => {
 		middleware.provideCompletionItem = undefined;
 		middleware.resolveCompletionItem = undefined;
 		assert.strictEqual(middlewareCalled, 2);
+	});
+
+	test('SignatureHelpRequest', async () => {
+		const provider = client.getFeature(lsclient.SignatureHelpRequest.method).getProvider(document);
+		const result = (await provider.provideSignatureHelp(document, new vscode.Position(1, 1), tokenSource.token,
+			{
+				isRetrigger: false,
+				triggerKind: lsclient.SignatureHelpTriggerKind.Invoked,
+				triggerCharacter: ':'
+			}
+		)) as vscode.SignatureHelp;
+		assert.ok(result instanceof vscode.SignatureHelp);
+		assert.strictEqual(result.activeSignature, 1);
+		assert.strictEqual(result.activeParameter, 1);
+		assert.strictEqual(result.signatures.length, 1);
+
+		const signature = result.signatures[0];
+		assert.ok(signature instanceof vscode.SignatureInformation);
+		assert.strictEqual(signature.label, 'label');
+		assert.strictEqual(signature.documentation, 'doc');
+		assert.strictEqual(signature.parameters.length, 1);
+
+		const parameter = signature.parameters[0];
+		assert.ok(parameter instanceof vscode.ParameterInformation);
+		assert.strictEqual(parameter.label, 'label');
+		assert.strictEqual(parameter.documentation, 'doc');
+
+		let middlewareCalled: boolean = false;
+		middleware.provideSignatureHelp = (d, p, c, t, n) => {
+			middlewareCalled = true;
+			return n(d, p, c, t);
+		};
+		await provider.provideSignatureHelp(document, new vscode.Position(1, 1), tokenSource.token,
+			{
+				isRetrigger: false,
+				triggerKind: lsclient.SignatureHelpTriggerKind.Invoked,
+				triggerCharacter: ':'
+			}
+		);
+		assert.ok(middlewareCalled);
+		middleware.provideSignatureHelp = undefined;
 	});
 });

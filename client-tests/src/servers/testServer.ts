@@ -6,7 +6,7 @@
 import * as assert from 'assert';
 import {
 	createConnection, IConnection, InitializeParams, ServerCapabilities, CompletionItemKind, ResourceOperationKind, FailureHandlingKind,
-	DiagnosticTag, CompletionItemTag, TextDocumentSyncKind, MarkupKind
+	DiagnosticTag, CompletionItemTag, TextDocumentSyncKind, MarkupKind, SignatureHelp, SignatureInformation, ParameterInformation
 } from '../../../server/lib/main';
 
 let connection: IConnection = createConnection();
@@ -45,6 +45,10 @@ connection.onInitialize((params: InitializeParams): any => {
 		definitionProvider: true,
 		hoverProvider: true,
 		completionProvider: { resolveProvider: true, triggerCharacters: ['"', ':'] },
+		signatureHelpProvider: {
+			triggerCharacters: [':'],
+			retriggerCharacters: [':']
+		},
 		renameProvider: {
 			prepareProvider: true
 		}
@@ -85,6 +89,17 @@ connection.onCompletion((_params) => {
 connection.onCompletionResolve((item) => {
 	item.detail = 'detail';
 	return item;
+});
+
+connection.onSignatureHelp((_params) => {
+	const result: SignatureHelp = {
+		signatures: [
+			SignatureInformation.create('label', 'doc', ParameterInformation.create('label', 'doc'))
+		],
+		activeSignature: 1,
+		activeParameter: 1
+	};
+	return result;
 });
 
 // Listen on the connection
