@@ -6,7 +6,8 @@
 import * as assert from 'assert';
 import {
 	createConnection, IConnection, InitializeParams, ServerCapabilities, CompletionItemKind, ResourceOperationKind, FailureHandlingKind,
-	DiagnosticTag, CompletionItemTag, TextDocumentSyncKind, MarkupKind, SignatureHelp, SignatureInformation, ParameterInformation
+	DiagnosticTag, CompletionItemTag, TextDocumentSyncKind, MarkupKind, SignatureHelp, SignatureInformation, ParameterInformation,
+	Location, Range
 } from '../../../server/lib/main';
 
 let connection: IConnection = createConnection();
@@ -49,6 +50,7 @@ connection.onInitialize((params: InitializeParams): any => {
 			triggerCharacters: [':'],
 			retriggerCharacters: [':']
 		},
+		referencesProvider: true,
 		renameProvider: {
 			prepareProvider: true
 		}
@@ -100,6 +102,13 @@ connection.onSignatureHelp((_params) => {
 		activeParameter: 1
 	};
 	return result;
+});
+
+connection.onReferences((params) => {
+	return [
+		Location.create(params.textDocument.uri, Range.create(0,0,0,0)),
+		Location.create(params.textDocument.uri, Range.create(1,1,1,1))
+	];
 });
 
 // Listen on the connection

@@ -90,6 +90,7 @@ suite('Client integration', () => {
 					triggerCharacters: [':'],
 					retriggerCharacters: [':']
 				},
+				referencesProvider: true,
 				renameProvider: {
 					prepareProvider: true
 				}
@@ -223,5 +224,31 @@ suite('Client integration', () => {
 		);
 		assert.ok(middlewareCalled);
 		middleware.provideSignatureHelp = undefined;
+	});
+
+	test ('References', async () => {
+		const provider = client.getFeature(lsclient.ReferencesRequest.method).getProvider(document);
+		const result = (await provider.provideReferences(document, new vscode.Position(1, 1), {
+			includeDeclaration: true
+		}, tokenSource.token)) as vscode.Location[];
+
+		assert.ok(Array.isArray(result));
+		assert.strictEqual(result.length, 2);
+		for (let i = 0; i < result.length; i++) {
+			const location = result[i];
+			rangeEqual(location.range, i, i, i ,i);
+			assert.strictEqual(location.uri.toString(), document.uri.toString());
+		}
+
+		let middlewareCalled: boolean = false;
+		middleware.provideReferences = (d, p, c, t, n) => {
+			middlewareCalled = true;
+			return n(d, p, c, t);
+		};
+		await provider.provideReferences(document, new vscode.Position(1, 1), {
+			includeDeclaration: true
+		}, tokenSource.token);
+		assert.ok(middlewareCalled);
+		middleware.provideReferences = undefined;
 	});
 });
