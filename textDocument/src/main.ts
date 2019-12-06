@@ -446,7 +446,7 @@ function getWellformedRange(range: Range): Range {
 function getWellformedEdit(textEdit: TextEdit): TextEdit {
 	const range = getWellformedRange(textEdit.range);
 	if (range !== textEdit.range) {
-		return { newText: textEdit.newText, range }
+		return { newText: textEdit.newText, range };
 	}
 	return textEdit;
 }

@@ -1,4 +1,3 @@
 lib/test
 --recursive
 --ui tdd
---useColors true

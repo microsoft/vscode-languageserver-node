@@ -41,9 +41,9 @@ let TestDuplex: TestDuplexConstructor = function (): TestDuplexConstructor {
 	return (<any>TestDuplex) as TestDuplexConstructor;
 } ();
 
-describe('Connection', () => {
+suite('Connection', () => {
 
-	it('Test Duplex Stream', (done) => {
+	test('Test Duplex Stream', (done) => {
 		let stream = new TestDuplex('ds1');
 		stream.on('data', (chunk) => {
 			assert.strictEqual('Hello World', chunk.toString());
@@ -52,7 +52,7 @@ describe('Connection', () => {
 		stream.write('Hello World');
 	});
 
-	it('Test Duplex Stream Connection', (done) => {
+	test('Test Duplex Stream Connection', (done) => {
 		let type = new RequestType<string, string, void, void>('test/handleSingleRequest');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
@@ -71,7 +71,7 @@ describe('Connection', () => {
 		connection.sendRequest(type, 'foo');
 	});
 
-	it('Handle Single Request', (done) => {
+	test('Handle Single Request', (done) => {
 		let type = new RequestType<string, string, void, void>('test/handleSingleRequest');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
@@ -91,7 +91,7 @@ describe('Connection', () => {
 		});
 	});
 
-	it('Handle Multiple Requests', (done) => {
+	test('Handle Multiple Requests', (done) => {
 		let type = new RequestType<string, string, void, void>('test/handleSingleRequest');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
@@ -117,7 +117,7 @@ describe('Connection', () => {
 	});
 
 
-	it('Unhandled Request', (done) => {
+	test('Unhandled Request', (done) => {
 		let type = new RequestType<string, string, void, void>('test/handleSingleRequest');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
@@ -134,7 +134,7 @@ describe('Connection', () => {
 		});
 	});
 
-	it('Receives undefined param as null', (done) => {
+	test('Receives undefined param as null', (done) => {
 		let type = new RequestType<string, string, void, void>('test/handleSingleRequest');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
@@ -153,7 +153,7 @@ describe('Connection', () => {
 		});
 	});
 
-	it('Receives null as null', (done) => {
+	test('Receives null as null', (done) => {
 		let type = new RequestType<string | null, string | null, void, void>('test/handleSingleRequest');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
@@ -173,7 +173,7 @@ describe('Connection', () => {
 		});
 	});
 
-	it('Receives 0 as 0', (done) => {
+	test('Receives 0 as 0', (done) => {
  		let type = new RequestType<number, number, void, void>('test/handleSingleRequest');
  		let duplexStream1 = new TestDuplex('ds1');
  		let duplexStream2 = new TestDuplex('ds2');
@@ -194,7 +194,7 @@ describe('Connection', () => {
  	});
 
 	let testNotification = new NotificationType<{ value: boolean }, void>('testNotification');
-	it('Send and Receive Notification', (done) => {
+	test('Send and Receive Notification', (done) => {
 
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
@@ -211,7 +211,7 @@ describe('Connection', () => {
 		client.sendNotification(testNotification, { value: true });
 	});
 
-	it('Unhandled notification event', (done) => {
+	test('Unhandled notification event', (done) => {
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
@@ -227,7 +227,7 @@ describe('Connection', () => {
 		client.sendNotification(testNotification, { value: true });
 	});
 
-	it('Dispose connection', (done) => {
+	test('Dispose connection', (done) => {
 		let type = new RequestType<string | null, string | null, void, void>('test/handleSingleRequest');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
@@ -248,7 +248,7 @@ describe('Connection', () => {
 		});
 	});
 
-	it('Disposed connection throws', (done) => {
+	test('Disposed connection throws', (done) => {
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
@@ -263,7 +263,7 @@ describe('Connection', () => {
 		}
 	});
 
-	it('Two listen throw', (done) => {
+	test('Two listen throw', (done) => {
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
@@ -277,7 +277,7 @@ describe('Connection', () => {
 		}
 	});
 
-	it('Notify on connection dispose', (done) => {
+	test('Notify on connection dispose', (done) => {
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
@@ -289,7 +289,7 @@ describe('Connection', () => {
 		client.dispose();
 	});
 
-	it('N params in notifications', (done) => {
+	test('N params in notifications', (done) => {
 		let type = new NotificationType2<number, string, void>('test');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
@@ -307,7 +307,7 @@ describe('Connection', () => {
 		client.sendNotification(type, 10, 'vscode');
 	});
 
-	it('N params in request / response', (done) => {
+	test('N params in request / response', (done) => {
 		let type = new RequestType3<number, number, number, number, void, void>('add');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
@@ -332,7 +332,7 @@ describe('Connection', () => {
 		});
 	});
 
-	it('N params in request / response with token', (done) => {
+	test('N params in request / response with token', (done) => {
 		let type = new RequestType3<number, number, number, number, void, void>('add');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
@@ -358,7 +358,7 @@ describe('Connection', () => {
 		});
 	});
 
-	it('One Param as array in request', (done) => {
+	test('One Param as array in request', (done) => {
 		let type = new RequestType<number[], number, void, void>('add');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
@@ -385,7 +385,7 @@ describe('Connection', () => {
 		});
 	});
 
-	it('One Param as array in notification', (done) => {
+	test('One Param as array in notification', (done) => {
 		let type = new NotificationType<number[], void>('add');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
@@ -405,7 +405,7 @@ describe('Connection', () => {
 		client.sendNotification(type, [10, 20, 30]);
 	});
 
-	it('Untyped request / response', (done) => {
+	test('Untyped request / response', (done) => {
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
@@ -430,7 +430,7 @@ describe('Connection', () => {
 		});
 	});
 
-	it('Cancellation token is undefined', (done) => {
+	test('Cancellation token is undefined', (done) => {
 		let type = new RequestType3<number, number, number, number, void, void>('add');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
@@ -455,7 +455,7 @@ describe('Connection', () => {
 		});
 	});
 
-	it('Missing params in request', (done) => {
+	test('Missing params in request', (done) => {
 		let type = new RequestType3<number, number, number, number, void, void>('add');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
@@ -480,7 +480,7 @@ describe('Connection', () => {
 		});
 	});
 
-	it('Missing params in notifications', (done) => {
+	test('Missing params in notifications', (done) => {
 		let type = new NotificationType2<number, string, void>('test');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');

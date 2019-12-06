@@ -25,11 +25,11 @@ class TestStream extends Duplex {
 	}
 }
 
-describe('Connection Tests', () => {
+suite('Connection Tests', () => {
 	let serverConnection: IConnection;
 	let clientConnection: IConnection;
 
-	beforeEach(() => {
+	setup(() => {
 		const up = new TestStream();
 		const down = new TestStream();
 		serverConnection = createConnection(up, down);
@@ -38,7 +38,7 @@ describe('Connection Tests', () => {
 		clientConnection.listen();
 	});
 
-	it('Ensure request parameter passing', async() => {
+	test('Ensure request parameter passing', async() => {
 		let paramsCorrect: boolean = false;
 		serverConnection.onRequest(InitializeRequest.type, (params) => {
 			paramsCorrect = !Array.isArray(params) && params.workDoneToken === 'token';
@@ -60,7 +60,7 @@ describe('Connection Tests', () => {
 		assert.ok(paramsCorrect, 'Parameters are transferred correctly');
 	});
 
-	it('Ensure notification parameter passing', (done) => {
+	test('Ensure notification parameter passing', (done) => {
 		serverConnection.onNotification(DidChangeConfigurationNotification.type, (params) => {
 			assert.ok(!Array.isArray(params), 'Parameters are transferred correctly');
 			done();
@@ -72,7 +72,7 @@ describe('Connection Tests', () => {
 		clientConnection.sendNotification(DidChangeConfigurationNotification.type, param);
 	});
 
-	it ('Ensure work done converted', (done) => {
+	test('Ensure work done converted', (done) => {
 		serverConnection.onDeclaration((_params, _cancel, workDone, result) => {
 			assert.ok(workDone !== undefined, 'Work Done token converted.');
 			assert.ok(result === undefined, 'Result token undefined.');
@@ -89,7 +89,7 @@ describe('Connection Tests', () => {
 		clientConnection.sendRequest(DeclarationRequest.type, params);
 	});
 
-	it ('Ensure result converted', (done) => {
+	test('Ensure result converted', (done) => {
 		serverConnection.onDeclaration((_params, _cancel, workDone, result) => {
 			assert.ok(workDone === undefined || workDone.constructor.name === 'NullProgress', 'Work Done token undefined or null progress.');
 			assert.ok(result !== undefined, 'Result token converted.');
@@ -106,7 +106,7 @@ describe('Connection Tests', () => {
 		clientConnection.sendRequest(DeclarationRequest.type, params);
 	});
 
-	it ('Report progress test', (done) => {
+	test('Report progress test', (done) => {
 		serverConnection.onDeclaration((_params, _cancel, workDone, _result) => {
 			workDone.begin('title', 0, 'message', false);
 			workDone.report(100, 'report');
@@ -140,7 +140,7 @@ describe('Connection Tests', () => {
 		clientConnection.sendRequest(DeclarationRequest.type, params);
 	});
 
-	it ('Report result test', (done) => {
+	test('Report result test', (done) => {
 		serverConnection.onDeclaration((_params, _cancel, _workDone, result) => {
 			const range = {
 				start: {

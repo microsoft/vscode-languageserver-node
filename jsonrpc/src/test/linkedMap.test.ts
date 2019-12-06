@@ -7,8 +7,8 @@
 import { LinkedMap, Touch } from '../linkedMap';
 import * as assert from 'assert';
 
-describe('Linked Map', () => {
-	it('Simple', () => {
+suite('Linked Map', () => {
+	test('Simple', () => {
 		let map = new LinkedMap<string, string>();
 		map.set('ak', 'av');
 		map.set('bk', 'bv');
@@ -16,7 +16,7 @@ describe('Linked Map', () => {
 		assert.deepStrictEqual(map.values(), ['av', 'bv']);
 	});
 
-	it('Touch First one', () => {
+	test('Touch First one', () => {
 		let map = new LinkedMap<string, string>();
 		map.set('ak', 'av');
 		map.set('ak', 'av', Touch.First);
@@ -24,7 +24,7 @@ describe('Linked Map', () => {
 		assert.deepStrictEqual(map.values(), ['av']);
 	});
 
-	it('Touch Last one', () => {
+	test('Touch Last one', () => {
 		let map = new LinkedMap<string, string>();
 		map.set('ak', 'av');
 		map.set('ak', 'av', Touch.Last);
@@ -32,7 +32,7 @@ describe('Linked Map', () => {
 		assert.deepStrictEqual(map.values(), ['av']);
 	});
 
-	it('Touch First two', () => {
+	test('Touch First two', () => {
 		let map = new LinkedMap<string, string>();
 		map.set('ak', 'av');
 		map.set('bk', 'bv');
@@ -41,7 +41,7 @@ describe('Linked Map', () => {
 		assert.deepStrictEqual(map.values(), ['bv', 'av']);
 	});
 
-	it('Touch Last two', () => {
+	test('Touch Last two', () => {
 		let map = new LinkedMap<string, string>();
 		map.set('ak', 'av');
 		map.set('bk', 'bv');
@@ -50,7 +50,7 @@ describe('Linked Map', () => {
 		assert.deepStrictEqual(map.values(), ['bv', 'av']);
 	});
 
-	it('Touch Frist from middle', () => {
+	test('Touch Frist from middle', () => {
 		let map = new LinkedMap<string, string>();
 		map.set('ak', 'av');
 		map.set('bk', 'bv');
@@ -60,7 +60,7 @@ describe('Linked Map', () => {
 		assert.deepStrictEqual(map.values(), ['bv', 'av', 'cv']);
 	});
 
-	it('Touch Last from middle', () => {
+	test('Touch Last from middle', () => {
 		let map = new LinkedMap<string, string>();
 		map.set('ak', 'av');
 		map.set('bk', 'bv');

@@ -7,8 +7,8 @@
 import * as assert from 'assert';
 import { Trace } from '../main';
 
-describe('General Tests', () => {
-	it('Trace#fromString', () => {
+suite('General Tests', () => {
+	test('Trace#fromString', () => {
 		assert(Trace.Off === Trace.fromString(10 as any));
 	});
 });

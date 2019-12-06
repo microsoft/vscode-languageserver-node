@@ -34,8 +34,8 @@ class TestStream extends Duplex {
 	}
 }
 
-describe('Connection Tests', () => {
-	it('Ensure proper param passing', async() => {
+suite('Connection Tests', () => {
+	test('Ensure proper param passing', async() => {
 		const up = new TestStream();
 		const down = new TestStream();
 		const logger = new NullLogger();
@@ -66,13 +66,13 @@ describe('Connection Tests', () => {
 	});
 });
 
-describe('Partial result tests', () => {
+suite('Partial result tests', () => {
 
 	let serverConnection: ProtocolConnection;
 	let clientConnection: ProtocolConnection;
 	let progressType: ProgressType<any> = new ProgressType();
 
-	beforeEach(() => {
+	setup(() => {
 		const up = new TestStream();
 		const down = new TestStream();
 		const logger = new NullLogger();
@@ -82,7 +82,7 @@ describe('Partial result tests', () => {
 		clientConnection.listen();
 	});
 
-	it ('Token provided', async () => {
+	test('Token provided', async () => {
 		serverConnection.onRequest(DocumentSymbolRequest.type, (params) => {
 			assert.ok(params.partialResultToken === '3b1db4c9-e011-489e-a9d1-0653e64707c2');
 			return [];
@@ -95,7 +95,7 @@ describe('Partial result tests', () => {
 		await clientConnection.sendRequest(DocumentSymbolRequest.type, params);
 	});
 
-	it ('Result reported', async () => {
+	test('Result reported', async () => {
 		let result: SymbolInformation = {
 			name: 'abc',
 			kind: SymbolKind.Class,
@@ -123,13 +123,13 @@ describe('Partial result tests', () => {
 	});
 });
 
-describe('Work done tests', () => {
+suite('Work done tests', () => {
 
 	let serverConnection: ProtocolConnection;
 	let clientConnection: ProtocolConnection;
 	const progressType: ProgressType<WorkDoneProgressBegin | WorkDoneProgressReport | WorkDoneProgressEnd> = new ProgressType();
 
-	beforeEach(() => {
+	setup(() => {
 		const up = new TestStream();
 		const down = new TestStream();
 		const logger = new NullLogger();
@@ -139,7 +139,7 @@ describe('Work done tests', () => {
 		clientConnection.listen();
 	});
 
-	it ('Token provided', async () => {
+	test('Token provided', async () => {
 		serverConnection.onRequest(DocumentSymbolRequest.type, (params) => {
 			assert.ok(params.workDoneToken === '3b1db4c9-e011-489e-a9d1-0653e64707c2');
 			return [];
@@ -152,7 +152,7 @@ describe('Work done tests', () => {
 		await clientConnection.sendRequest(DocumentSymbolRequest.type, params);
 	});
 
-	it ('Result reported', async () => {
+	test('Result reported', async () => {
 		serverConnection.onRequest(DocumentSymbolRequest.type, (params) => {
 			assert.ok(params.workDoneToken === '3b1db4c9-e011-489e-a9d1-0653e64707c2');
 			serverConnection.sendProgress(progressType, params.workDoneToken!, {

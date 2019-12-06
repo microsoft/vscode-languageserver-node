@@ -46,7 +46,7 @@ suite('Legacy standard text documents', () => {
 	let server: IConnection;
 	let client: IConnection;
 
-	beforeEach(() => {
+	setup(() => {
 		const up = new TestStream();
 		const down = new TestStream();
 
@@ -94,7 +94,7 @@ suite('New custom text Documents', () => {
 	let server: IConnection;
 	let client: IConnection;
 
-	beforeEach(() => {
+	setup(() => {
 		const up = new TestStream();
 		const down = new TestStream();
 

@@ -35,9 +35,9 @@ let TestWritable: TestWritableConstructor = function (): TestWritableConstructor
 	return (<any>TestWritable) as TestWritableConstructor;
 } ();
 
-describe('Messages', () => {
+suite('Messages', () => {
 	let data: string = 'Content-Length: 43\r\n\r\n{"jsonrpc":"2.0","id":1,"method":"example"}';
-	it('Writing', () => {
+	test('Writing', () => {
 		let writable = new TestWritable();
 		let writer = new StreamMessageWriter(writable, 'ascii');
 
@@ -50,7 +50,7 @@ describe('Messages', () => {
 		writable.end();
 		assert.equal(writable.data, data);
 	});
-	it('Reading', (done) => {
+	test('Reading', (done) => {
 		let readable = new Readable();
 		new StreamMessageReader(readable).listen((message: RequestMessage) => {
 			assert.equal(message.id, 1);
@@ -60,7 +60,7 @@ describe('Messages', () => {
 		readable.push(data);
 		readable.push(null);
 	});
-	it('Read partial', (done) => {
+	test('Read partial', (done) => {
 		let readable = new Readable();
 		let reader = new StreamMessageReader(readable);
 		reader.partialMessageTimeout = 100;
