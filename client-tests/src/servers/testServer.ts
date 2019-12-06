@@ -7,7 +7,7 @@ import * as assert from 'assert';
 import {
 	createConnection, IConnection, InitializeParams, ServerCapabilities, CompletionItemKind, ResourceOperationKind, FailureHandlingKind,
 	DiagnosticTag, CompletionItemTag, TextDocumentSyncKind, MarkupKind, SignatureHelp, SignatureInformation, ParameterInformation,
-	Location, Range
+	Location, Range, DocumentHighlight, DocumentHighlightKind
 } from '../../../server/lib/main';
 
 let connection: IConnection = createConnection();
@@ -51,6 +51,7 @@ connection.onInitialize((params: InitializeParams): any => {
 			retriggerCharacters: [':']
 		},
 		referencesProvider: true,
+		documentHighlightProvider: true,
 		renameProvider: {
 			prepareProvider: true
 		}
@@ -108,6 +109,12 @@ connection.onReferences((params) => {
 	return [
 		Location.create(params.textDocument.uri, Range.create(0,0,0,0)),
 		Location.create(params.textDocument.uri, Range.create(1,1,1,1))
+	];
+});
+
+connection.onDocumentHighlight((_params) => {
+	return [
+		DocumentHighlight.create(Range.create(2, 2, 2, 2), DocumentHighlightKind.Read)
 	];
 });
 
