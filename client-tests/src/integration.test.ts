@@ -17,6 +17,7 @@ suite('Client integration', () => {
 	let document!: vscode.TextDocument;
 	let tokenSource!: vscode.CancellationTokenSource;
 	const position: vscode.Position = new vscode.Position(1, 1);
+	const range: vscode.Range = new vscode.Range(1, 1, 1, 2);
 
 	function rangeEqual(range: vscode.Range, sl: number, sc: number, el: number, ec: number): void {
 		assert.strictEqual(range.start.line, sl);
@@ -27,6 +28,14 @@ suite('Client integration', () => {
 
 	function uriEqual(actual: vscode.Uri, expected: vscode.Uri): void {
 		assert.strictEqual(actual.toString(), expected.toString());
+	}
+
+	function isArray<T>(value: Array<any>, clazz: any, length: number = 1): asserts value is Array<T> {
+		assert.ok(Array.isArray(value), `value is array`);
+		assert.strictEqual(value.length, length, 'value has given length');
+		if (length > 0) {
+			assert.ok(value[0] instanceof clazz);
+		}
 	}
 
 	function defined<T>(value: T | undefined | null): asserts value is T {
@@ -93,6 +102,7 @@ suite('Client integration', () => {
 				},
 				referencesProvider: true,
 				documentHighlightProvider: true,
+				codeActionProvider: true,
 				renameProvider: {
 					prepareProvider: true
 				}
@@ -158,10 +168,8 @@ suite('Client integration', () => {
 	test('Completion', async () => {
 		const provider = client.getFeature(lsclient.CompletionRequest.method).getProvider(document);
 		const result = (await provider.provideCompletionItems(document, position, tokenSource.token, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ':' })) as vscode.CompletionItem[];
-		assert.ok(Array.isArray(result));
-		assert.strictEqual(result.length, 1);
+		isArray(result, vscode.CompletionItem);
 		const item = result[0];
-		assert.ok(item instanceof vscode.CompletionItem);
 		assert.strictEqual(item.label, 'item');
 		assert.strictEqual(item.insertText, 'text');
 		assert.strictEqual(item.detail, undefined);
@@ -199,16 +207,14 @@ suite('Client integration', () => {
 		assert.ok(result instanceof vscode.SignatureHelp);
 		assert.strictEqual(result.activeSignature, 1);
 		assert.strictEqual(result.activeParameter, 1);
-		assert.strictEqual(result.signatures.length, 1);
+		isArray(result.signatures, vscode.SignatureInformation);
 
 		const signature = result.signatures[0];
-		assert.ok(signature instanceof vscode.SignatureInformation);
 		assert.strictEqual(signature.label, 'label');
 		assert.strictEqual(signature.documentation, 'doc');
-		assert.strictEqual(signature.parameters.length, 1);
+		isArray(signature.parameters, vscode.ParameterInformation);
 
 		const parameter = signature.parameters[0];
-		assert.ok(parameter instanceof vscode.ParameterInformation);
 		assert.strictEqual(parameter.label, 'label');
 		assert.strictEqual(parameter.documentation, 'doc');
 
@@ -234,8 +240,7 @@ suite('Client integration', () => {
 			includeDeclaration: true
 		}, tokenSource.token)) as vscode.Location[];
 
-		assert.ok(Array.isArray(result));
-		assert.strictEqual(result.length, 2);
+		isArray(result, vscode.Location, 2);
 		for (let i = 0; i < result.length; i++) {
 			const location = result[i];
 			rangeEqual(location.range, i, i, i ,i);
@@ -258,11 +263,9 @@ suite('Client integration', () => {
 		const provider = client.getFeature(lsclient.DocumentHighlightRequest.method).getProvider(document);
 		const result = (await provider.provideDocumentHighlights(document, position, tokenSource.token)) as vscode.DocumentHighlight[];
 
-		assert.ok(Array.isArray(result));
-		assert.strictEqual(result.length, 1);
+		isArray(result, vscode.DocumentHighlight, 1);
 
 		const highlight = result[0];
-		assert.ok(highlight instanceof vscode.DocumentHighlight);
 		assert.strictEqual(highlight.kind, vscode.DocumentHighlightKind.Read);
 		rangeEqual(highlight.range, 2, 2, 2, 2);
 
@@ -273,6 +276,29 @@ suite('Client integration', () => {
 		};
 		await provider.provideDocumentHighlights(document, position, tokenSource.token);
 		middleware.provideDocumentHighlights = undefined;
+		assert.ok(middlewareCalled);
+	});
+
+	test('Code Actions', async () => {
+		const provider = client.getFeature(lsclient.CodeActionRequest.method).getProvider(document);
+		const result = (await provider.provideCodeActions(document, range, {
+			diagnostics: []
+		}, tokenSource.token)) as vscode.CodeAction[];
+
+		isArray(result, vscode.CodeAction);
+		const action = result[0];
+		assert.strictEqual(action.title, 'title');
+		assert.strictEqual(action.command?.title, 'title');
+		assert.strictEqual(action.command?.command, 'id');
+
+		let middlewareCalled: boolean = false;
+		middleware.provideCodeActions = (d, r, c, t, n) => {
+			middlewareCalled = true;
+			return n(d, r, c, t);
+		};
+
+		await provider.provideCodeActions(document, range, { diagnostics: [] }, tokenSource.token);
+		middleware.provideCodeActions = undefined;
 		assert.ok(middlewareCalled);
 	});
 });
