@@ -148,5 +148,13 @@ connection.onDocumentOnTypeFormatting((_params) => {
 	];
 });
 
+connection.onPrepareRename((_params) => {
+	return Range.create(1, 1, 1, 2);
+});
+
+connection.onRenameRequest((_params) => {
+	return { documentChanges: [] };
+});
+
 // Listen on the connection
 connection.listen();

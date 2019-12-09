@@ -38,7 +38,7 @@ suite('Client integration', () => {
 		}
 	}
 
-	function defined<T>(value: T | undefined | null): asserts value is Exclude<T, undefined | null> {
+	function isDefined<T>(value: T | undefined | null): asserts value is Exclude<T, undefined | null> {
 		if (value === undefined || value === null) {
 			throw new Error(`Value is null or undefined`);
 		}
@@ -186,10 +186,10 @@ suite('Client integration', () => {
 		assert.strictEqual(item.label, 'item');
 		assert.strictEqual(item.insertText, 'text');
 		assert.strictEqual(item.detail, undefined);
-		defined(provider.resolveCompletionItem);
+		isDefined(provider.resolveCompletionItem);
 
 		const resolved = await provider.resolveCompletionItem(item, tokenSource.token);
-		defined(resolved);
+		isDefined(resolved);
 		assert.strictEqual(resolved.detail, 'detail');
 
 		let middlewareCalled: number = 0;
@@ -371,5 +371,32 @@ suite('Client integration', () => {
 		await provider.provideOnTypeFormattingEdits(document, position, 'a', { tabSize: 4, insertSpaces: false }, tokenSource.token);
 		middleware.provideDocumentFormattingEdits = undefined;
 		assert.ok(middlewareCalled);
+	});
+
+	test('Rename', async () => {
+		const provider = client.getFeature(lsclient.RenameRequest.method).getProvider(document);
+		isDefined(provider.prepareRename);
+		const prepareResult = await provider.prepareRename(document, position, tokenSource.token) as vscode.Range;
+
+		isInstanceOf(prepareResult, vscode.Range);
+		rangeEqual(prepareResult, 1, 1, 1, 2);
+
+		const renameResult = await provider.provideRenameEdits(document, position, 'newName', tokenSource.token);
+		isInstanceOf(renameResult, vscode.WorkspaceEdit);
+
+		let middlewareCalled: number = 0;
+		middleware.prepareRename = (d, p, t, n) => {
+			middlewareCalled++;
+			return n(d, p, t);
+		};
+		await provider.prepareRename(document, position, tokenSource.token);
+		middleware.prepareRename = undefined;
+		middleware.provideRenameEdits = (d, p, w, t, n) => {
+			middlewareCalled++;
+			return n(d, p, w, t);
+		};
+		await provider.provideRenameEdits(document, position, 'newName', tokenSource.token);
+		middleware.provideRenameEdits = undefined;
+		assert.strictEqual(middlewareCalled, 2);
 	});
 });
