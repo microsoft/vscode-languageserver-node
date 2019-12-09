@@ -7,7 +7,7 @@ import * as assert from 'assert';
 import {
 	createConnection, IConnection, InitializeParams, ServerCapabilities, CompletionItemKind, ResourceOperationKind, FailureHandlingKind,
 	DiagnosticTag, CompletionItemTag, TextDocumentSyncKind, MarkupKind, SignatureHelp, SignatureInformation, ParameterInformation,
-	Location, Range, DocumentHighlight, DocumentHighlightKind, CodeAction, Command
+	Location, Range, DocumentHighlight, DocumentHighlightKind, CodeAction, Command, TextEdit, Position
 } from '../../../server/lib/main';
 
 let connection: IConnection = createConnection();
@@ -53,6 +53,7 @@ connection.onInitialize((params: InitializeParams): any => {
 		referencesProvider: true,
 		documentHighlightProvider: true,
 		codeActionProvider: true,
+		documentFormattingProvider: true,
 		renameProvider: {
 			prepareProvider: true
 		}
@@ -122,6 +123,12 @@ connection.onDocumentHighlight((_params) => {
 connection.onCodeAction((_params) => {
 	return [
 		CodeAction.create('title', Command.create('title', 'id'))
+	];
+});
+
+connection.onDocumentFormatting((_params) => {
+	return [
+		TextEdit.insert(Position.create(0, 0), 'insert')
 	];
 });
 

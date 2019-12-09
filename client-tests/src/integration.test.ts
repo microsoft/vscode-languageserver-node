@@ -30,18 +30,22 @@ suite('Client integration', () => {
 		assert.strictEqual(actual.toString(), expected.toString());
 	}
 
-	function isArray<T>(value: Array<any>, clazz: any, length: number = 1): asserts value is Array<T> {
+	function isArray<T>(value: Array<T> | undefined | null, clazz: any, length: number = 1): asserts value is Array<T> {
 		assert.ok(Array.isArray(value), `value is array`);
-		assert.strictEqual(value.length, length, 'value has given length');
+		assert.strictEqual(value!.length, length, 'value has given length');
 		if (length > 0) {
-			assert.ok(value[0] instanceof clazz);
+			assert.ok(value![0] instanceof clazz);
 		}
 	}
 
-	function defined<T>(value: T | undefined | null): asserts value is T {
+	function defined<T>(value: T | undefined | null): asserts value is Exclude<T, undefined | null> {
 		if (value === undefined || value === null) {
 			throw new Error(`Value is null or undefined`);
 		}
+	}
+
+	function isInstanceOf<T>(value: T, clazz: any): asserts value is Exclude<T, undefined | null> {
+		assert.ok(value instanceof clazz);
 	}
 
 	suiteSetup(async () => {
@@ -103,6 +107,7 @@ suite('Client integration', () => {
 				referencesProvider: true,
 				documentHighlightProvider: true,
 				codeActionProvider: true,
+				documentFormattingProvider: true,
 				renameProvider: {
 					prepareProvider: true
 				}
@@ -117,7 +122,8 @@ suite('Client integration', () => {
 	test('Goto Declaration', async () => {
 		const provider = client.getFeature(lsclient.DeclarationRequest.method).getProvider(document);
 		const result = (await provider.provideDeclaration(document, position, tokenSource.token)) as vscode.Location;
-		assert.ok(result instanceof vscode.Location);
+
+		isInstanceOf(result, vscode.Location);
 		uriEqual(result.uri, uri);
 		rangeEqual(result.range, 1, 1, 1, 2);
 
@@ -134,7 +140,8 @@ suite('Client integration', () => {
 	test('Goto Definition', async () => {
 		const provider = client.getFeature(lsclient.DefinitionRequest.method).getProvider(document);
 		const result = (await provider.provideDefinition(document, position, tokenSource.token)) as vscode.Location;
-		assert.ok(result instanceof vscode.Location);
+
+		isInstanceOf(result, vscode.Location);
 		uriEqual(result.uri, uri);
 		rangeEqual(result.range, 0, 0, 0, 1);
 
@@ -150,8 +157,9 @@ suite('Client integration', () => {
 
 	test('Hover', async () => {
 		const provider = client.getFeature(lsclient.HoverRequest.method).getProvider(document);
-		const result = (await provider.provideHover(document, position, tokenSource.token)) as vscode.Hover;
-		assert.ok(result instanceof vscode.Hover);
+		const result = await provider.provideHover(document, position, tokenSource.token);
+
+		isInstanceOf(result, vscode.Hover);
 		assert.strictEqual(result.contents.length, 1);
 		assert.strictEqual((result.contents[0] as vscode.MarkdownString).value, 'foo');
 
@@ -168,6 +176,7 @@ suite('Client integration', () => {
 	test('Completion', async () => {
 		const provider = client.getFeature(lsclient.CompletionRequest.method).getProvider(document);
 		const result = (await provider.provideCompletionItems(document, position, tokenSource.token, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ':' })) as vscode.CompletionItem[];
+
 		isArray(result, vscode.CompletionItem);
 		const item = result[0];
 		assert.strictEqual(item.label, 'item');
@@ -197,14 +206,15 @@ suite('Client integration', () => {
 
 	test('SignatureHelpRequest', async () => {
 		const provider = client.getFeature(lsclient.SignatureHelpRequest.method).getProvider(document);
-		const result = (await provider.provideSignatureHelp(document, position, tokenSource.token,
+		const result = await provider.provideSignatureHelp(document, position, tokenSource.token,
 			{
 				isRetrigger: false,
 				triggerKind: lsclient.SignatureHelpTriggerKind.Invoked,
 				triggerCharacter: ':'
 			}
-		)) as vscode.SignatureHelp;
-		assert.ok(result instanceof vscode.SignatureHelp);
+		);
+
+		isInstanceOf(result, vscode.SignatureHelp);
 		assert.strictEqual(result.activeSignature, 1);
 		assert.strictEqual(result.activeParameter, 1);
 		isArray(result.signatures, vscode.SignatureInformation);
@@ -236,9 +246,9 @@ suite('Client integration', () => {
 
 	test('References', async () => {
 		const provider = client.getFeature(lsclient.ReferencesRequest.method).getProvider(document);
-		const result = (await provider.provideReferences(document, position, {
+		const result = await provider.provideReferences(document, position, {
 			includeDeclaration: true
-		}, tokenSource.token)) as vscode.Location[];
+		}, tokenSource.token);
 
 		isArray(result, vscode.Location, 2);
 		for (let i = 0; i < result.length; i++) {
@@ -261,7 +271,7 @@ suite('Client integration', () => {
 
 	test('Document Highlight', async () => {
 		const provider = client.getFeature(lsclient.DocumentHighlightRequest.method).getProvider(document);
-		const result = (await provider.provideDocumentHighlights(document, position, tokenSource.token)) as vscode.DocumentHighlight[];
+		const result = await provider.provideDocumentHighlights(document, position, tokenSource.token);
 
 		isArray(result, vscode.DocumentHighlight, 1);
 
@@ -299,6 +309,25 @@ suite('Client integration', () => {
 
 		await provider.provideCodeActions(document, range, { diagnostics: [] }, tokenSource.token);
 		middleware.provideCodeActions = undefined;
+		assert.ok(middlewareCalled);
+	});
+
+	test('Document Formatting', async () => {
+		const provider = client.getFeature(lsclient.DocumentFormattingRequest.method).getProvider(document);
+		const result = await provider.provideDocumentFormattingEdits(document, { tabSize: 4, insertSpaces: false }, tokenSource.token);
+
+		isArray(result, vscode.TextEdit);
+		const edit = result[0];
+		assert.strictEqual(edit.newText, 'insert');
+		rangeEqual(edit.range, 0, 0, 0, 0);
+
+		let middlewareCalled: boolean = true;
+		middleware.provideDocumentFormattingEdits = (d, c, t, n) => {
+			middlewareCalled = true;
+			return n(d, c, t);
+		};
+		await provider.provideDocumentFormattingEdits(document, { tabSize: 4, insertSpaces: false }, tokenSource.token);
+		middleware.provideDocumentFormattingEdits = undefined;
 		assert.ok(middlewareCalled);
 	});
 });
