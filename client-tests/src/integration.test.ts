@@ -109,6 +109,9 @@ suite('Client integration', () => {
 				codeActionProvider: true,
 				documentFormattingProvider: true,
 				documentRangeFormattingProvider: true,
+				documentOnTypeFormattingProvider: {
+					firstTriggerCharacter: ':'
+				},
 				renameProvider: {
 					prepareProvider: true
 				}
@@ -347,6 +350,25 @@ suite('Client integration', () => {
 			return n(d, r, c, t);
 		};
 		await provider.provideDocumentRangeFormattingEdits(document, range, { tabSize: 4, insertSpaces: false }, tokenSource.token);
+		middleware.provideDocumentFormattingEdits = undefined;
+		assert.ok(middlewareCalled);
+	});
+
+	test('Document on Type Formatting', async () => {
+		const provider = client.getFeature(lsclient.DocumentOnTypeFormattingRequest.method).getProvider(document);
+		const result = await provider.provideOnTypeFormattingEdits(document, position, 'a', { tabSize: 4, insertSpaces: false }, tokenSource.token);
+
+		isArray(result, vscode.TextEdit);
+		const edit = result[0];
+		assert.strictEqual(edit.newText, 'replace');
+		rangeEqual(edit.range, 2, 2, 2, 3);
+
+		let middlewareCalled: boolean = true;
+		middleware.provideOnTypeFormattingEdits = (d, p, s, c, t, n) => {
+			middlewareCalled = true;
+			return n(d, p, s, c, t);
+		};
+		await provider.provideOnTypeFormattingEdits(document, position, 'a', { tabSize: 4, insertSpaces: false }, tokenSource.token);
 		middleware.provideDocumentFormattingEdits = undefined;
 		assert.ok(middlewareCalled);
 	});

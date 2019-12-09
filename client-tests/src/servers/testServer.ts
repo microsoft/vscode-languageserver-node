@@ -55,6 +55,9 @@ connection.onInitialize((params: InitializeParams): any => {
 		codeActionProvider: true,
 		documentFormattingProvider: true,
 		documentRangeFormattingProvider: true,
+		documentOnTypeFormattingProvider: {
+			firstTriggerCharacter: ':'
+		},
 		renameProvider: {
 			prepareProvider: true
 		}
@@ -136,6 +139,12 @@ connection.onDocumentFormatting((_params) => {
 connection.onDocumentRangeFormatting((_params) => {
 	return [
 		TextEdit.del(Range.create(1, 1, 1, 2))
+	];
+});
+
+connection.onDocumentOnTypeFormatting((_params) => {
+	return [
+		TextEdit.replace(Range.create(2, 2, 2, 3), 'replace')
 	];
 });
 
