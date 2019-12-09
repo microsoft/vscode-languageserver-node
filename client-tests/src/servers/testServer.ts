@@ -54,6 +54,7 @@ connection.onInitialize((params: InitializeParams): any => {
 		documentHighlightProvider: true,
 		codeActionProvider: true,
 		documentFormattingProvider: true,
+		documentRangeFormattingProvider: true,
 		renameProvider: {
 			prepareProvider: true
 		}
@@ -129,6 +130,12 @@ connection.onCodeAction((_params) => {
 connection.onDocumentFormatting((_params) => {
 	return [
 		TextEdit.insert(Position.create(0, 0), 'insert')
+	];
+});
+
+connection.onDocumentRangeFormatting((_params) => {
+	return [
+		TextEdit.del(Range.create(1, 1, 1, 2))
 	];
 });
 

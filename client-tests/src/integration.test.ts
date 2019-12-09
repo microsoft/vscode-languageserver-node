@@ -108,6 +108,7 @@ suite('Client integration', () => {
 				documentHighlightProvider: true,
 				codeActionProvider: true,
 				documentFormattingProvider: true,
+				documentRangeFormattingProvider: true,
 				renameProvider: {
 					prepareProvider: true
 				}
@@ -327,6 +328,25 @@ suite('Client integration', () => {
 			return n(d, c, t);
 		};
 		await provider.provideDocumentFormattingEdits(document, { tabSize: 4, insertSpaces: false }, tokenSource.token);
+		middleware.provideDocumentFormattingEdits = undefined;
+		assert.ok(middlewareCalled);
+	});
+
+	test('Document Range Formatting', async () => {
+		const provider = client.getFeature(lsclient.DocumentRangeFormattingRequest.method).getProvider(document);
+		const result = await provider.provideDocumentRangeFormattingEdits(document, range, { tabSize: 4, insertSpaces: false }, tokenSource.token);
+
+		isArray(result, vscode.TextEdit);
+		const edit = result[0];
+		assert.strictEqual(edit.newText, '');
+		rangeEqual(edit.range, 1, 1, 1, 2);
+
+		let middlewareCalled: boolean = true;
+		middleware.provideDocumentRangeFormattingEdits = (d, r, c, t, n) => {
+			middlewareCalled = true;
+			return n(d, r, c, t);
+		};
+		await provider.provideDocumentRangeFormattingEdits(document, range, { tabSize: 4, insertSpaces: false }, tokenSource.token);
 		middleware.provideDocumentFormattingEdits = undefined;
 		assert.ok(middlewareCalled);
 	});
