@@ -7,7 +7,8 @@ import * as assert from 'assert';
 import {
 	createConnection, IConnection, InitializeParams, ServerCapabilities, CompletionItemKind, ResourceOperationKind, FailureHandlingKind,
 	DiagnosticTag, CompletionItemTag, TextDocumentSyncKind, MarkupKind, SignatureHelp, SignatureInformation, ParameterInformation,
-	Location, Range, DocumentHighlight, DocumentHighlightKind, CodeAction, Command, TextEdit, Position, DocumentLink
+	Location, Range, DocumentHighlight, DocumentHighlightKind, CodeAction, Command, TextEdit, Position, DocumentLink,
+	ColorInformation, Color, ColorPresentation
 } from '../../../server/lib/main';
 
 import { URI } from 'vscode-uri';
@@ -65,7 +66,8 @@ connection.onInitialize((params: InitializeParams): any => {
 		},
 		documentLinkProvider: {
 			resolveProvider: true
-		}
+		},
+		colorProvider: true
 	};
 	return { capabilities, customResults: { hello: 'world' } };
 });
@@ -172,5 +174,16 @@ connection.onDocumentLinkResolve((link) => {
 	return link;
 });
 
+connection.onDocumentColor((_params) => {
+	return [
+		ColorInformation.create(Range.create(1, 1, 1, 2), Color.create(1, 2, 3, 4))
+	];
+});
+
+connection.onColorPresentation((_params) => {
+	return [
+		ColorPresentation.create('label')
+	];
+});
 // Listen on the connection
 connection.listen();

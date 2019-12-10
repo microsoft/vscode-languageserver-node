@@ -20,10 +20,6 @@ export interface DocumentColorClientCapabilities {
 }
 
 export interface DocumentColorOptions extends WorkDoneProgressOptions {
-	/**
-	 * Code lens has a resolve provider as well.
-	 */
-	resolveProvider?: boolean;
 }
 
 export interface DocumentColorRegistrationOptions extends TextDocumentRegistrationOptions, StaticRegistrationOptions, DocumentColorOptions {

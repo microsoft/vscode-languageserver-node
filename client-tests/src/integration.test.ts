@@ -26,6 +26,13 @@ suite('Client integration', () => {
 		assert.strictEqual(range.end.character, ec);
 	}
 
+	function colorEqual(color: vscode.Color, red: number, green: number, blue: number, alpha: number): void {
+		assert.strictEqual(color.red, red);
+		assert.strictEqual(color.green, green);
+		assert.strictEqual(color.blue, blue);
+		assert.strictEqual(color.alpha, alpha);
+	}
+
 	function uriEqual(actual: vscode.Uri, expected: vscode.Uri): void {
 		assert.strictEqual(actual.toString(), expected.toString());
 	}
@@ -117,7 +124,8 @@ suite('Client integration', () => {
 				},
 				documentLinkProvider: {
 					resolveProvider: true
-				}
+				},
+				colorProvider: true
 			},
 			customResults: {
 				'hello': 'world'
@@ -431,6 +439,39 @@ suite('Client integration', () => {
 		};
 		await provider.resolveDocumentLink(documentLink, tokenSource.token);
 		middleware.resolveDocumentLink = undefined;
+		assert.strictEqual(middlewareCalled, 2);
+	});
+
+	test('Document Color', async () => {
+		const provider = client.getFeature(lsclient.DocumentColorRequest.method).getProvider(document);
+		const colors = await provider.provideDocumentColors(document, tokenSource.token);
+
+		isArray(colors, vscode.ColorInformation);
+		const color = colors[0];
+
+		rangeEqual(color.range, 1, 1, 1, 2);
+		colorEqual(color.color, 1, 2, 3, 4);
+
+		let middlewareCalled: number = 0;
+		middleware.provideDocumentColors = (d, t, n) => {
+			middlewareCalled++;
+			return n(d, t);
+		};
+		await provider.provideDocumentColors(document, tokenSource.token);
+		middleware.provideDocumentColors = undefined;
+
+		const presentations = await provider.provideColorPresentations(color.color, { document, range}, tokenSource.token);
+
+		isArray(presentations, vscode.ColorPresentation);
+		const presentation = presentations[0];
+		assert.strictEqual(presentation.label, 'label');
+
+		middleware.provideColorPresentations = (c, x, t, n) => {
+			middlewareCalled++;
+			return n(c, x, t);
+		};
+		await provider.provideColorPresentations(color.color, { document, range}, tokenSource.token);
+		middleware.provideColorPresentations = undefined;
 		assert.strictEqual(middlewareCalled, 2);
 	});
 });
