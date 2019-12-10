@@ -45,7 +45,6 @@ connection.onInitialize((params: InitializeParams): any => {
 
 	let capabilities: ServerCapabilities = {
 		textDocumentSync: TextDocumentSyncKind.Full,
-		declarationProvider: true,
 		definitionProvider: true,
 		hoverProvider: true,
 		completionProvider: { resolveProvider: true, triggerCharacters: ['"', ':'] },
@@ -67,7 +66,9 @@ connection.onInitialize((params: InitializeParams): any => {
 		documentLinkProvider: {
 			resolveProvider: true
 		},
-		colorProvider: true
+		colorProvider: true,
+		declarationProvider: true,
+		foldingRangeProvider: true
 	};
 	return { capabilities, customResults: { hello: 'world' } };
 });

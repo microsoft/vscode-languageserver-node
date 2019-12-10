@@ -103,7 +103,6 @@ suite('Client integration', () => {
 		let expected = {
 			capabilities: {
 				textDocumentSync: 1,
-				declarationProvider: true,
 				definitionProvider: true,
 				hoverProvider: true,
 				completionProvider: { resolveProvider: true, triggerCharacters: ['"', ':'] },
@@ -125,31 +124,15 @@ suite('Client integration', () => {
 				documentLinkProvider: {
 					resolveProvider: true
 				},
-				colorProvider: true
+				colorProvider: true,
+				declarationProvider: true,
+				foldingRangeProvider: true
 			},
 			customResults: {
 				'hello': 'world'
 			}
 		};
 		assert.deepEqual(client.initializeResult, expected);
-	});
-
-	test('Goto Declaration', async () => {
-		const provider = client.getFeature(lsclient.DeclarationRequest.method).getProvider(document);
-		const result = (await provider.provideDeclaration(document, position, tokenSource.token)) as vscode.Location;
-
-		isInstanceOf(result, vscode.Location);
-		uriEqual(result.uri, uri);
-		rangeEqual(result.range, 1, 1, 1, 2);
-
-		let middlewareCalled: boolean = false;
-		middleware.provideDeclaration = (document, position, token, next) => {
-			middlewareCalled = true;
-			return next(document, position, token);
-		};
-		await provider.provideDeclaration(document, position, tokenSource.token);
-		middleware.provideDeclaration = undefined;
-		assert.strictEqual(middlewareCalled, true);
 	});
 
 	test('Goto Definition', async () => {
@@ -474,4 +457,23 @@ suite('Client integration', () => {
 		middleware.provideColorPresentations = undefined;
 		assert.strictEqual(middlewareCalled, 2);
 	});
+
+	test('Goto Declaration', async () => {
+		const provider = client.getFeature(lsclient.DeclarationRequest.method).getProvider(document);
+		const result = (await provider.provideDeclaration(document, position, tokenSource.token)) as vscode.Location;
+
+		isInstanceOf(result, vscode.Location);
+		uriEqual(result.uri, uri);
+		rangeEqual(result.range, 1, 1, 1, 2);
+
+		let middlewareCalled: boolean = false;
+		middleware.provideDeclaration = (document, position, token, next) => {
+			middlewareCalled = true;
+			return next(document, position, token);
+		};
+		await provider.provideDeclaration(document, position, tokenSource.token);
+		middleware.provideDeclaration = undefined;
+		assert.strictEqual(middlewareCalled, true);
+	});
+
 });
