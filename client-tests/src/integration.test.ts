@@ -114,6 +114,9 @@ suite('Client integration', () => {
 				},
 				renameProvider: {
 					prepareProvider: true
+				},
+				documentLinkProvider: {
+					resolveProvider: true
 				}
 			},
 			customResults: {
@@ -397,6 +400,37 @@ suite('Client integration', () => {
 		};
 		await provider.provideRenameEdits(document, position, 'newName', tokenSource.token);
 		middleware.provideRenameEdits = undefined;
+		assert.strictEqual(middlewareCalled, 2);
+	});
+
+	test('Document Link', async () => {
+		const provider = client.getFeature(lsclient.DocumentLinkRequest.method).getProvider(document);
+		const result = await provider.provideDocumentLinks(document, tokenSource.token);
+
+		isArray(result, vscode.DocumentLink);
+		const documentLink = result[0];
+		rangeEqual(documentLink.range, 1, 1, 1, 2);
+
+		let middlewareCalled: number = 0;
+		middleware.provideDocumentLinks = (d, t, n) => {
+			middlewareCalled++;
+			return n(d, t);
+		};
+		await provider.provideDocumentLinks(document, tokenSource.token);
+		middleware.provideDocumentLinks = undefined;
+
+		isDefined(provider.resolveDocumentLink);
+		const resolved = await provider.resolveDocumentLink(documentLink, tokenSource.token);
+		isInstanceOf(resolved, vscode.DocumentLink);
+		isDefined(resolved.target);
+		assert.strictEqual(resolved.target.toString(), vscode.Uri.file('/target.txt').toString());
+
+		middleware.resolveDocumentLink = (i, t, n) => {
+			middlewareCalled++;
+			return n(i, t);
+		};
+		await provider.resolveDocumentLink(documentLink, tokenSource.token);
+		middleware.resolveDocumentLink = undefined;
 		assert.strictEqual(middlewareCalled, 2);
 	});
 });

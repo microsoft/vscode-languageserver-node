@@ -7,8 +7,10 @@ import * as assert from 'assert';
 import {
 	createConnection, IConnection, InitializeParams, ServerCapabilities, CompletionItemKind, ResourceOperationKind, FailureHandlingKind,
 	DiagnosticTag, CompletionItemTag, TextDocumentSyncKind, MarkupKind, SignatureHelp, SignatureInformation, ParameterInformation,
-	Location, Range, DocumentHighlight, DocumentHighlightKind, CodeAction, Command, TextEdit, Position
+	Location, Range, DocumentHighlight, DocumentHighlightKind, CodeAction, Command, TextEdit, Position, DocumentLink
 } from '../../../server/lib/main';
+
+import { URI } from 'vscode-uri';
 
 let connection: IConnection = createConnection();
 
@@ -60,6 +62,9 @@ connection.onInitialize((params: InitializeParams): any => {
 		},
 		renameProvider: {
 			prepareProvider: true
+		},
+		documentLinkProvider: {
+			resolveProvider: true
 		}
 	};
 	return { capabilities, customResults: { hello: 'world' } };
@@ -154,6 +159,17 @@ connection.onPrepareRename((_params) => {
 
 connection.onRenameRequest((_params) => {
 	return { documentChanges: [] };
+});
+
+connection.onDocumentLinks((_params) => {
+	return [
+		DocumentLink.create(Range.create(1, 1, 1, 2))
+	];
+});
+
+connection.onDocumentLinkResolve((link) => {
+	link.target = URI.file('/target.txt').toString();
+	return link;
 });
 
 // Listen on the connection
