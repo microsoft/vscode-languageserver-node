@@ -3155,8 +3155,8 @@ export abstract class BaseLanguageClient {
 				});
 			});
 		}
-		const middleware = this.clientOptions.middleware?.workspace?.didChangeWatchedFile;
-		middleware ? middleware(event, didChangeWatchedFile) : didChangeWatchedFile(event);
+		const workSpaceMiddleware = this.clientOptions.middleware?.workspace;
+		workSpaceMiddleware?.didChangeWatchedFile ? workSpaceMiddleware.didChangeWatchedFile(event, didChangeWatchedFile) : didChangeWatchedFile(event);
 	}
 
 	private forceDocumentSync(): void {
@@ -3169,9 +3169,9 @@ export abstract class BaseLanguageClient {
 		}
 		let uri = this._p2c.asUri(params.uri);
 		let diagnostics = this._p2c.asDiagnostics(params.diagnostics);
-		let middleware = this.clientOptions.middleware!.handleDiagnostics;
-		if (middleware) {
-			middleware(uri, diagnostics, (uri, diagnostics) => this.setDiagnostics(uri, diagnostics));
+		let middleware = this.clientOptions.middleware!;
+		if (middleware.handleDiagnostics) {
+			middleware.handleDiagnostics(uri, diagnostics, (uri, diagnostics) => this.setDiagnostics(uri, diagnostics));
 		} else {
 			this.setDiagnostics(uri, diagnostics);
 		}
