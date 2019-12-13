@@ -141,7 +141,7 @@ class CallHierarchyProvider implements CallHierarchyProvider {
 			const params = client.code2ProtocolConverter.asTextDocumentPositionParams(document, position);
 			return client.sendRequest(CallHierarchyPrepareRequest.type, params, token).then(
 				(result) => {
-					return protocol2code.asCallHierarchyItems(this.client.protocol2CodeConverter, result);
+					return protocol2code.asCallHierarchyItem(this.client.protocol2CodeConverter, result);
 				},
 				(error) => {
 					client.logFailedRequest(CallHierarchyPrepareRequest.type, error);
