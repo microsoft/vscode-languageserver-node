@@ -63,7 +63,7 @@ export interface WorkspaceFolder {
 
 	/**
 	 * The name of the workspace folder. Used to refer to this
-	 * workspace folder in thge user interface.
+	 * workspace folder in the user interface.
 	 */
 	name: string;
 }
