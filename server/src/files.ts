@@ -126,8 +126,12 @@ export function resolve(moduleName: string, nodePath: string | undefined, cwd: s
  */
 export function resolveGlobalNodePath(tracer?: (message: string) => void): string | undefined {
 	let npmCommand = 'npm';
-	let options: SpawnSyncOptionsWithStringEncoding = {
-		encoding: 'utf8'
+	const env: typeof process.env = Object.create(null);
+	Object.keys(process.env).forEach(key => env[key] = process.env[key]);
+	env['NO_UPDATE_NOTIFIER'] = 'true';
+	const options: SpawnSyncOptionsWithStringEncoding = {
+		encoding: 'utf8',
+		env
 	};
 	if (isWindows()) {
 		npmCommand = 'npm.cmd';
