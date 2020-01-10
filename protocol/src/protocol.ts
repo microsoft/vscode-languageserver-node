@@ -16,8 +16,8 @@ import {
 	CodeAction, CodeActionKind, DocumentSymbol, CompletionItemTag, DiagnosticTag
 } from 'vscode-languageserver-types';
 
-import { ImplementationRequest, ImplementationClientCapabilities, ImplementationOptions, ImplementationRegistrationOptions } from './protocol.implementation';
-import { TypeDefinitionRequest, TypeDefinitionClientCapabilities, TypeDefinitionOptions, TypeDefinitionRegistrationOptions } from './protocol.typeDefinition';
+import { ImplementationRequest, ImplementationClientCapabilities, ImplementationOptions, ImplementationRegistrationOptions, ImplementationParams } from './protocol.implementation';
+import { TypeDefinitionRequest, TypeDefinitionClientCapabilities, TypeDefinitionOptions, TypeDefinitionRegistrationOptions, TypeDefinitionParams } from './protocol.typeDefinition';
 import {
 	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, WorkspaceFolder,
 	WorkspaceFoldersChangeEvent, WorkspaceFoldersInitializeParams, WorkspaceFoldersClientCapabilities, WorkspaceFoldersServerCapabilities
@@ -31,10 +31,17 @@ import {
 	FoldingRangeClientCapabilities, FoldingRangeOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeRegistrationOptions
 } from './protocol.foldingRange';
 import {
-	DeclarationClientCapabilities, DeclarationRequest, DeclarationOptions, DeclarationRegistrationOptions
+	DeclarationClientCapabilities, DeclarationRequest, DeclarationOptions, DeclarationRegistrationOptions, DeclarationParams
 } from './protocol.declaration';
 
-import { SelectionRangeClientCapabilities, SelectionRangeOptions, SelectionRangeRequest, SelectionRangeParams, SelectionRangeRegistrationOptions} from './protocol.selectionRange';
+import {
+	SelectionRangeClientCapabilities, SelectionRangeOptions, SelectionRangeRequest, SelectionRangeParams, SelectionRangeRegistrationOptions
+} from './protocol.selectionRange';
+
+import {
+	WorkDoneProgressClientCapabilities, WorkDoneProgressBegin, WorkDoneProgressReport, WorkDoneProgressEnd, WorkDoneProgress, WorkDoneProgressCreateParams,
+	WorkDoneProgressCreateRequest, WorkDoneProgressCancelParams, WorkDoneProgressCancelNotification
+} from './protocol.progress';
 
 // @ts-ignore: to avoid inlining LocatioLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
@@ -450,12 +457,10 @@ export interface _ClientCapabilities {
 	/**
 	 * Experimental client capabilities.
 	 */
-	experimental?: any;
+	experimental?: object;
 }
 
-export type ClientCapabilities = _ClientCapabilities &
-	WorkspaceFoldersClientCapabilities & ConfigurationClientCapabilities &
-	SelectionRangeClientCapabilities;
+export type ClientCapabilities = _ClientCapabilities & WorkspaceFoldersClientCapabilities & ConfigurationClientCapabilities & WorkDoneProgressClientCapabilities;
 
 /**
  * Static registration options to be returned in the initialize
@@ -2659,14 +2664,16 @@ export namespace ApplyWorkspaceEditRequest {
 }
 
 export {
-	ImplementationRequest,
-	TypeDefinitionRequest,
+	ImplementationRequest, ImplementationParams, ImplementationRegistrationOptions, ImplementationOptions,
+	TypeDefinitionRequest, TypeDefinitionParams, TypeDefinitionRegistrationOptions, TypeDefinitionOptions,
 	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, WorkspaceFolder, WorkspaceFoldersChangeEvent,
 	ConfigurationRequest, ConfigurationParams, ConfigurationItem,
-	DocumentColorRequest, ColorPresentationRequest, DocumentColorOptions, DocumentColorParams, ColorPresentationParams,
-	FoldingRangeClientCapabilities, FoldingRangeOptions, FoldingRangeRequest, FoldingRangeParams,
-	DeclarationClientCapabilities, DeclarationRequest,
-	SelectionRangeClientCapabilities, SelectionRangeOptions, SelectionRangeParams, SelectionRangeRequest
+	DocumentColorRequest, ColorPresentationRequest, DocumentColorOptions, DocumentColorParams, ColorPresentationParams, DocumentColorRegistrationOptions,
+	FoldingRangeClientCapabilities, FoldingRangeOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeRegistrationOptions,
+	DeclarationClientCapabilities, DeclarationRequest, DeclarationParams, DeclarationRegistrationOptions, DeclarationOptions,
+	SelectionRangeClientCapabilities, SelectionRangeOptions, SelectionRangeParams, SelectionRangeRequest, SelectionRangeRegistrationOptions,
+	WorkDoneProgressBegin, WorkDoneProgressReport, WorkDoneProgressEnd, WorkDoneProgress, WorkDoneProgressCreateParams,
+	WorkDoneProgressCreateRequest, WorkDoneProgressCancelParams, WorkDoneProgressCancelNotification
 };
 
 // To be backwards compatible

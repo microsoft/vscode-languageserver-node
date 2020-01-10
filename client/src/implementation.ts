@@ -7,11 +7,10 @@
 import { languages as Languages, Disposable, TextDocument, ProviderResult, Position as VPosition, Definition as VDefinition, DefinitionLink as VDefinitionLink, ImplementationProvider } from 'vscode';
 
 import {
-	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, ImplementationRequest
+	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, ImplementationRequest, ImplementationRegistrationOptions, ImplementationOptions
 } from 'vscode-languageserver-protocol';
 
 import { TextDocumentFeature, BaseLanguageClient } from './client';
-import { ImplementationRegistrationOptions, ImplementationOptions } from 'vscode-languageserver-protocol/lib/protocol.implementation';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {

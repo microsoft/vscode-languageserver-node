@@ -36,7 +36,6 @@ export * from './protocol';
 export { FoldingRangeParams as FoldingRangeRequestParam } from './protocol'; // for backward compatibility
 
 import * as callHierarchy from './protocol.callHierarchy.proposed';
-import * as progress from './protocol.progress.proposed';
 
 export namespace Proposed {
 
@@ -71,28 +70,6 @@ export namespace Proposed {
 		export const type = callHierarchy.CallHierarchyOutgoingCallsRequest;
 		export const resultType = callHierarchy.CallHierarchyOutgoingCallsRequest.resultType;
 		export type HandlerSignature = callHierarchy.CallHierarchyOutgoingCallsRequest.HandlerSignature;
-	}
-
-	export type WorkDoneProgressClientCapabilities = progress.WorkDoneProgressClientCapabilities;
-	export type WorkDoneProgressBegin = progress.WorkDoneProgressBegin;
-	export type WorkDoneProgressReport = progress.WorkDoneProgressReport;
-	export type WorkDoneProgressEnd = progress.WorkDoneProgressEnd;
-	// export type ProgressServerCapabilities = progress.ProgressServerCapabilities;
-
-	export namespace WorkDoneProgress {
-		export const type = progress.WorkDoneProgress.type;
-	}
-
-	export type WorkDoneProgressCreateParams = progress.WorkDoneProgressCreateParams;
-	export namespace WorkDoneProgressCreateRequest {
-		export const type = progress.WorkDoneProgressCreateRequest.type;
-		export type HandlerSignature = progress.WorkDoneProgressCreateRequest.HandlerSignature;
-	}
-
-	export type WorkDoneProgressCancelParams = progress.WorkDoneProgressCancelParams;
-	export namespace WorkDoneProgressCancelNotification {
-		export const type = progress.WorkDoneProgressCancelNotification.type;
-		export type HandlerSignature = progress.WorkDoneProgressCancelNotification.HandlerSignature;
 	}
 }
 

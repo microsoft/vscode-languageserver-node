@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { ClientCapabilities, Proposed } from 'vscode-languageserver-protocol';
+import { ClientCapabilities, WorkDoneProgressCreateParams, WorkDoneProgressCreateRequest } from 'vscode-languageserver-protocol';
 
 import { BaseLanguageClient, StaticFeature } from './client';
 import { ProgressPart } from './progressPart';
@@ -20,17 +20,16 @@ export class ProgressFeature implements StaticFeature {
 
 	constructor(private _client: BaseLanguageClient) {}
 
-	public fillClientCapabilities(cap: ClientCapabilities): void {
-		let capabilities: ClientCapabilities & Proposed.WorkDoneProgressClientCapabilities = cap as ClientCapabilities & Proposed.WorkDoneProgressClientCapabilities;
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
 		ensure(capabilities, 'window')!.workDoneProgress = true;
 	}
 
 	public initialize(): void {
 		let client = this._client;
 
-		let createHandler = (params: Proposed.WorkDoneProgressCreateParams) => {
+		let createHandler = (params: WorkDoneProgressCreateParams) => {
 			new ProgressPart(this._client, params.token);
 		};
-		client.onRequest(Proposed.WorkDoneProgressCreateRequest.type, createHandler);
+		client.onRequest(WorkDoneProgressCreateRequest.type, createHandler);
 	}
 }

@@ -45,11 +45,14 @@ import {
 	ClientCapabilities, ServerCapabilities, ProtocolConnection, createProtocolConnection, TypeDefinitionRequest, ImplementationRequest,
 	DocumentColorRequest, DocumentColorParams, ColorInformation, ColorPresentationParams, ColorPresentation, ColorPresentationRequest,
 	CodeAction, FoldingRangeParams, FoldingRange, FoldingRangeRequest, Declaration, DeclarationLink, DefinitionLink, DeclarationRequest,
-	SelectionRangeRequest, SelectionRange, SelectionRangeParams, ProgressType, HoverParams, SignatureHelpParams, DefinitionParams, DocumentHighlightParams, PrepareRenameParams
+	SelectionRangeRequest, SelectionRange, SelectionRangeParams, ProgressType, HoverParams, SignatureHelpParams, DefinitionParams, DocumentHighlightParams, PrepareRenameParams,
+	DeclarationParams, TypeDefinitionParams, ImplementationParams
 } from 'vscode-languageserver-protocol';
 
 import { Configuration, ConfigurationFeature } from './configuration';
 import { WorkspaceFolders, WorkspaceFoldersFeature } from './workspaceFolders';
+
+import { ProgressFeature, WindowProgress, WorkDoneProgress, ResultProgress, attachWorkDone, attachPartialResult } from './progress';
 
 import * as Is from './utils/is';
 import * as UUID from './utils/uuid';
@@ -440,7 +443,7 @@ export interface RemoteConsole extends Remote {
  * The RemoteWindow interface contains all functions to interact with
  * the visual window of VS Code.
  */
-export interface RemoteWindow extends Remote {
+export interface _RemoteWindow extends Remote {
 	/**
 	 * Shows an error message in the client's user interface. Depending on the client this might
 	 * be a modal dialog with a confirmation button or a notification in a notification center
@@ -474,6 +477,8 @@ export interface RemoteWindow extends Remote {
 	showInformationMessage(message: string): void;
 	showInformationMessage<T extends MessageActionItem>(message: string, ...actions: T[]): Promise<T | undefined>;
 }
+
+export type RemoteWindow = _RemoteWindow & WindowProgress;
 
 /**
  * A bulk registration manages n single registration to be able to register
@@ -704,7 +709,7 @@ class ConnectionLogger implements Logger, RemoteConsole {
 	}
 }
 
-class RemoteWindowImpl implements RemoteWindow {
+class _RemoteWindowImpl implements _RemoteWindow {
 
 	private _connection: IConnection;
 
@@ -743,6 +748,8 @@ class RemoteWindowImpl implements RemoteWindow {
 		return this._connection.sendRequest(ShowMessageRequest.type, params).then(null2Undefined);
 	}
 }
+
+const RemoteWindowImpl: new () => RemoteWindow = ProgressFeature(_RemoteWindowImpl) as (new () => RemoteWindow);
 
 class RemoteClientImpl implements RemoteClient {
 
@@ -1881,14 +1888,9 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 }
 
 // Export the protocol currently in proposed state.
-import { ProgressFeature, WindowProgress, WorkDoneProgress, ResultProgress, attachWorkDone, attachPartialResult } from './proposed.progress';
-import { DeclarationParams } from 'vscode-languageserver-protocol/lib/protocol.declaration';
-import { TypeDefinitionParams } from 'vscode-languageserver-protocol/lib/protocol.typeDefinition';
-import { ImplementationParams } from 'vscode-languageserver-protocol/lib/protocol.implementation';
 
 export namespace ProposedFeatures {
-	export const all: Features<_, _, _, _, WindowProgress, _> = {
-		__brand: 'features',
-		window: ProgressFeature
+	export const all: Features<_, _, _, _, _, _> = {
+		__brand: 'features'
 	};
 }

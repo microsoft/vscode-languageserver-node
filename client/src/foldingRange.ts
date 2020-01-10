@@ -7,11 +7,10 @@
 import { languages as Languages, Disposable, TextDocument, ProviderResult, FoldingRangeKind as VFoldingRangeKind, FoldingRange as VFoldingRange, FoldingContext, FoldingRangeProvider } from 'vscode';
 
 import {
-	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, FoldingRange, FoldingRangeKind, FoldingRangeRequest, FoldingRangeParams
+	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, FoldingRange, FoldingRangeKind, FoldingRangeRequest, FoldingRangeParams, FoldingRangeRegistrationOptions, FoldingRangeOptions
 } from 'vscode-languageserver-protocol';
 
 import { TextDocumentFeature, BaseLanguageClient } from './client';
-import { FoldingRangeRegistrationOptions, FoldingRangeOptions } from 'vscode-languageserver-protocol/lib/protocol.foldingRange';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {

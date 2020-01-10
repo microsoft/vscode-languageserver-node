@@ -5,10 +5,11 @@
 'use strict';
 
 import {
-	ClientCapabilities, CancellationToken, CancellationTokenSource, Proposed, ProgressToken, ProgressType, WorkDoneProgressParams, PartialResultParams
+	ClientCapabilities, CancellationToken, CancellationTokenSource, ProgressToken, ProgressType, WorkDoneProgressParams, PartialResultParams,
+	WorkDoneProgressBegin, WorkDoneProgress, WorkDoneProgressReport, WorkDoneProgressCancelNotification, WorkDoneProgressCreateRequest
 } from 'vscode-languageserver-protocol';
 
-import { Feature, RemoteWindow } from './main';
+import { Feature, _RemoteWindow } from './main';
 import { generateUuid } from './utils/uuid';
 
 export interface ProgressContext {
@@ -49,18 +50,18 @@ class WorkDoneProgressImpl implements WorkDoneProgress {
 	}
 
 	public begin(title: string, percentage?: number, message?: string, cancellable?: boolean): void {
-		let param: Proposed.WorkDoneProgressBegin = {
+		let param: WorkDoneProgressBegin = {
 			kind: 'begin',
 			title,
 			percentage,
 			message,
 			cancellable
 		};
-		this._connection.sendProgress(Proposed.WorkDoneProgress.type, this._token, param);
+		this._connection.sendProgress(WorkDoneProgress.type, this._token, param);
 	}
 
 	report(arg0: number | string, arg1?: string): void {
-		let param: Proposed.WorkDoneProgressReport = {
+		let param: WorkDoneProgressReport = {
 			kind: 'report'
 		};
 		if (typeof arg0 === 'number') {
@@ -71,13 +72,13 @@ class WorkDoneProgressImpl implements WorkDoneProgress {
 		} else {
 			param.message = arg0;
 		}
-		this._connection.sendProgress(Proposed.WorkDoneProgress.type, this._token, param);
+		this._connection.sendProgress(WorkDoneProgress.type, this._token, param);
 	}
 
 	done(): void {
 		WorkDoneProgressImpl.Instances.delete(this._token);
 		this._source.dispose();
-		this._connection.sendProgress(Proposed.WorkDoneProgress.type, this._token, { kind: 'end' } );
+		this._connection.sendProgress(WorkDoneProgress.type, this._token, { kind: 'end' } );
 	}
 
 	cancel(): void {
@@ -117,14 +118,13 @@ export function attachWorkDone(connection: ProgressContext, params: WorkDoneProg
 	return new WorkDoneProgressImpl(connection, token);
 }
 
-export const ProgressFeature: Feature<RemoteWindow, WindowProgress> = (Base) => {
+export const ProgressFeature: Feature<_RemoteWindow, WindowProgress> = (Base) => {
 	return class extends Base {
 		private _progressSupported: boolean;
-		public initialize(cap: ClientCapabilities): void {
-			const capabilities: ClientCapabilities & Proposed.WorkDoneProgressClientCapabilities = cap;
-			if (capabilities.window && capabilities.window.workDoneProgress) {
+		public initialize(capabilities: ClientCapabilities): void {
+			if (capabilities?.window?.workDoneProgress === true) {
 				this._progressSupported = true;
-				this.connection.onNotification(Proposed.WorkDoneProgressCancelNotification.type, (params) => {
+				this.connection.onNotification(WorkDoneProgressCancelNotification.type, (params) => {
 					let progress = WorkDoneProgressImpl.Instances.get(params.token);
 					if (progress !== undefined) {
 						progress.cancel();
@@ -142,7 +142,7 @@ export const ProgressFeature: Feature<RemoteWindow, WindowProgress> = (Base) => 
 		public createWorkDoneProgress(): Promise<WorkDoneProgress> {
 			if (this._progressSupported) {
 				const token: string = generateUuid();
-				return this.connection.sendRequest(Proposed.WorkDoneProgressCreateRequest.type, { token }).then(() => {
+				return this.connection.sendRequest(WorkDoneProgressCreateRequest.type, { token }).then(() => {
 					const result: WorkDoneProgressImpl = new WorkDoneProgressImpl(this.connection, token);
 					return result;
 				});

@@ -7,11 +7,13 @@
 import * as assert from 'assert';
 
 import { Duplex } from 'stream';
-import { InitializeParams, InitializeRequest, InitializeResult, createProtocolConnection, StreamMessageReader, StreamMessageWriter, Logger, ProtocolConnection } from '../main';
+import {
+	InitializeParams, InitializeRequest, InitializeResult, createProtocolConnection, StreamMessageReader, StreamMessageWriter, Logger, ProtocolConnection,
+	WorkDoneProgressBegin, WorkDoneProgressReport, WorkDoneProgressEnd
+} from '../main';
 import { DocumentSymbolRequest, DocumentSymbolParams } from '../protocol';
 import { ProgressType } from 'vscode-jsonrpc';
 import { SymbolInformation, SymbolKind } from 'vscode-languageserver-types';
-import { WorkDoneProgressBegin, WorkDoneProgressReport, WorkDoneProgressEnd } from '../protocol.progress.proposed';
 
 class NullLogger implements Logger {
 	error(_message: string): void {

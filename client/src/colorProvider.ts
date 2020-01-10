@@ -7,11 +7,11 @@
 import { languages as Languages, Disposable, TextDocument, ProviderResult, Range as VRange, Color as VColor, ColorPresentation as VColorPresentation, ColorInformation as VColorInformation, DocumentColorProvider} from 'vscode';
 
 import {
-	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, DocumentColorRequest, ColorPresentationRequest, Color, ColorInformation, ColorPresentation
+	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, DocumentColorRequest, ColorPresentationRequest, Color, ColorInformation, ColorPresentation,
+	DocumentColorRegistrationOptions, DocumentColorOptions
 } from 'vscode-languageserver-protocol';
 
 import { TextDocumentFeature, BaseLanguageClient } from './client';
-import { DocumentColorRegistrationOptions, DocumentColorOptions } from 'vscode-languageserver-protocol/lib/protocol.colorProvider';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {

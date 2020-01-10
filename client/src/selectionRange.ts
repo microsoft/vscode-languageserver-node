@@ -8,11 +8,10 @@ import { languages as Languages, Disposable, TextDocument, ProviderResult, Posit
 
 import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector,
-	SelectionRangeParams, SelectionRangeRequest, SelectionRangeClientCapabilities, SelectionRangeOptions
+	SelectionRangeParams, SelectionRangeRequest, SelectionRangeOptions, SelectionRangeRegistrationOptions
 } from 'vscode-languageserver-protocol';
 
 import { TextDocumentFeature, BaseLanguageClient  } from './client';
-import { SelectionRangeRegistrationOptions } from 'vscode-languageserver-protocol/lib/protocol.selectionRange';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -34,8 +33,7 @@ export class SelectionRangeFeature extends TextDocumentFeature<boolean | Selecti
 		super(client, SelectionRangeRequest.type);
 	}
 
-	public fillClientCapabilities(cap: ClientCapabilities): void {
-		let capabilites: ClientCapabilities & SelectionRangeClientCapabilities = cap as ClientCapabilities & SelectionRangeClientCapabilities;
+	public fillClientCapabilities(capabilites: ClientCapabilities): void {
 		let capability = ensure(ensure(capabilites, 'textDocument')!, 'selectionRange')!;
 		capability.dynamicRegistration = true;
 	}

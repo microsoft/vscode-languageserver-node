@@ -8,7 +8,7 @@ import {
 	window as Window, Progress, ProgressLocation, CancellationToken, Disposable
 } from 'vscode';
 
-import { Proposed, ProgressToken, ProgressType, NotificationHandler, NotificationType } from 'vscode-languageserver-protocol';
+import { ProgressToken, ProgressType, NotificationHandler, NotificationType, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressCancelNotification, WorkDoneProgressReport } from 'vscode-languageserver-protocol';
 
 import * as Is from './utils/is';
 
@@ -30,7 +30,7 @@ export class ProgressPart {
 
 	public constructor(private _client: ProgressContext , private _token: ProgressToken) {
 		this._reported = 0;
-		this._disposable = this._client.onProgress(Proposed.WorkDoneProgress.type, this._token, (value) => {
+		this._disposable = this._client.onProgress(WorkDoneProgress.type, this._token, (value) => {
 			switch (value.kind) {
 				case 'begin':
 					this.begin(value);
@@ -45,14 +45,14 @@ export class ProgressPart {
 		});
 	}
 
-	private begin(params: Proposed.WorkDoneProgressBegin): void {
+	private begin(params: WorkDoneProgressBegin): void {
 		let location: ProgressLocation = params.cancellable ? ProgressLocation.Notification : ProgressLocation.Window;
 		Window.withProgress<void>({ location, cancellable: params.cancellable, title: params.title}, async (progress, cancellationToken) => {
 			this._progress = progress;
 			this._infinite = params.percentage === undefined;
 			this._cancellationToken = cancellationToken;
 			this._cancellationToken.onCancellationRequested(() => {
-				this._client.sendNotification(Proposed.WorkDoneProgressCancelNotification.type, { token: this._token });
+				this._client.sendNotification(WorkDoneProgressCancelNotification.type, { token: this._token });
 			});
 			this.report(params);
 			return new Promise<void>((resolve, reject) => {
@@ -62,7 +62,7 @@ export class ProgressPart {
 		});
 	}
 
-	private report(params: Proposed.WorkDoneProgressReport | Proposed.WorkDoneProgressBegin): void {
+	private report(params: WorkDoneProgressReport | WorkDoneProgressBegin): void {
 		if (this._infinite && Is.string(params.message)) {
 			this._progress.report({ message: params.message });
 		} else if (Is.number(params.percentage)) {

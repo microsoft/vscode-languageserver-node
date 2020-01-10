@@ -9,10 +9,8 @@ import * as assert from 'assert';
 import { Duplex } from 'stream';
 import {
 	InitializeParams, InitializeRequest, InitializeResult, createConnection, DidChangeConfigurationNotification,
-	DidChangeConfigurationParams, IConnection, DeclarationRequest, ProgressToken
+	DidChangeConfigurationParams, IConnection, DeclarationRequest, DeclarationParams, ProgressToken, WorkDoneProgress
 } from '../main';
-import { DeclarationParams } from 'vscode-languageserver-protocol/lib/protocol.declaration';
-import { WorkDoneProgress } from 'vscode-languageserver-protocol/lib/protocol.progress.proposed';
 import { LocationLink } from 'vscode-languageserver-types';
 
 class TestStream extends Duplex {
