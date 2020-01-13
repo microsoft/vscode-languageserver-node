@@ -128,7 +128,8 @@ suite('Client integration', () => {
 				declarationProvider: true,
 				foldingRangeProvider: true,
 				implementationProvider: true,
-				selectionRangeProvider: true
+				selectionRangeProvider: true,
+				typeDefinitionProvider: true
 			},
 			customResults: {
 				'hello': 'world'
@@ -529,6 +530,24 @@ suite('Client integration', () => {
 		};
 		await provider.provideSelectionRanges(document, [position], tokenSource.token);
 		middleware.provideSelectionRanges = undefined;
+		assert.strictEqual(middlewareCalled, true);
+	});
+
+	test('Type Definition', async() => {
+		const provider = client.getFeature(lsclient.TypeDefinitionRequest.method).getProvider(document);
+		const result = (await provider.provideTypeDefinition(document, position, tokenSource.token)) as vscode.Location;
+
+		isInstanceOf(result, vscode.Location);
+		uriEqual(result.uri, uri);
+		rangeEqual(result.range, 2, 2, 3, 3);
+
+		let middlewareCalled: boolean = false;
+		middleware.provideTypeDefinition = (document, position, token, next) => {
+			middlewareCalled = true;
+			return next(document, position, token);
+		};
+		await provider.provideTypeDefinition(document, position, tokenSource.token);
+		middleware.provideTypeDefinition = undefined;
 		assert.strictEqual(middlewareCalled, true);
 	});
 });

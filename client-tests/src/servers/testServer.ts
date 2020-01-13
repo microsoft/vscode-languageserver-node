@@ -70,7 +70,8 @@ connection.onInitialize((params: InitializeParams): any => {
 		declarationProvider: true,
 		foldingRangeProvider: true,
 		implementationProvider: true,
-		selectionRangeProvider: true
+		selectionRangeProvider: true,
+		typeDefinitionProvider: true
 	};
 	return { capabilities, customResults: { hello: 'world' } };
 });
@@ -205,6 +206,12 @@ connection.onSelectionRanges((_params) => {
 	return [
 		SelectionRange.create(Range.create(1,2,3,4))
 	];
+});
+
+connection.onTypeDefinition((params) => {
+	assert.equal(params.position.line, 1);
+	assert.equal(params.position.character, 1);
+	return { uri: params.textDocument.uri, range: { start: { line: 2, character: 2}, end: {line: 3, character: 3 }}};
 });
 
 // Listen on the connection
