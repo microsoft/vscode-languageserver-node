@@ -127,7 +127,8 @@ suite('Client integration', () => {
 				colorProvider: true,
 				declarationProvider: true,
 				foldingRangeProvider: true,
-				implementationProvider: true
+				implementationProvider: true,
+				selectionRangeProvider: true
 			},
 			customResults: {
 				'hello': 'world'
@@ -511,6 +512,23 @@ suite('Client integration', () => {
 		};
 		await provider.provideImplementation(document, position, tokenSource.token);
 		middleware.provideImplementation = undefined;
+		assert.strictEqual(middlewareCalled, true);
+	});
+
+	test('Selection Range', async () => {
+		const provider = client.getFeature(lsclient.SelectionRangeRequest.method).getProvider(document);
+		const result = (await provider.provideSelectionRanges(document, [position], tokenSource.token));
+
+		isArray(result, vscode.SelectionRange, 1);
+		const range = result[0];
+		rangeEqual(range.range, 1, 2, 3, 4);
+		let middlewareCalled: boolean = true;
+		middleware.provideSelectionRanges = (d, p, t, n) => {
+			middlewareCalled = true;
+			return n(d, p, t);
+		};
+		await provider.provideSelectionRanges(document, [position], tokenSource.token);
+		middleware.provideSelectionRanges = undefined;
 		assert.strictEqual(middlewareCalled, true);
 	});
 });

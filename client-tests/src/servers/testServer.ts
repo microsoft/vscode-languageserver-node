@@ -8,7 +8,7 @@ import {
 	createConnection, IConnection, InitializeParams, ServerCapabilities, CompletionItemKind, ResourceOperationKind, FailureHandlingKind,
 	DiagnosticTag, CompletionItemTag, TextDocumentSyncKind, MarkupKind, SignatureHelp, SignatureInformation, ParameterInformation,
 	Location, Range, DocumentHighlight, DocumentHighlightKind, CodeAction, Command, TextEdit, Position, DocumentLink,
-	ColorInformation, Color, ColorPresentation, FoldingRange
+	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange
 } from '../../../server/lib/main';
 
 import { URI } from 'vscode-uri';
@@ -69,7 +69,8 @@ connection.onInitialize((params: InitializeParams): any => {
 		colorProvider: true,
 		declarationProvider: true,
 		foldingRangeProvider: true,
-		implementationProvider: true
+		implementationProvider: true,
+		selectionRangeProvider: true
 	};
 	return { capabilities, customResults: { hello: 'world' } };
 });
@@ -198,6 +199,12 @@ connection.onImplementation((params) => {
 	assert.equal(params.position.line, 1);
 	assert.equal(params.position.character, 1);
 	return { uri: params.textDocument.uri, range: { start: { line: 2, character: 2}, end: {line: 3, character: 3 }}};
+});
+
+connection.onSelectionRanges((_params) => {
+	return [
+		SelectionRange.create(Range.create(1,2,3,4))
+	];
 });
 
 // Listen on the connection
