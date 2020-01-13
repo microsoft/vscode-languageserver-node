@@ -126,7 +126,8 @@ suite('Client integration', () => {
 				},
 				colorProvider: true,
 				declarationProvider: true,
-				foldingRangeProvider: true
+				foldingRangeProvider: true,
+				implementationProvider: true
 			},
 			customResults: {
 				'hello': 'world'
@@ -493,5 +494,23 @@ suite('Client integration', () => {
 		await provider.provideFoldingRanges(document, {}, tokenSource.token);
 		middleware.provideFoldingRanges = undefined;
 		assert.ok(middlewareCalled);
+	});
+
+	test('Goto Implementation', async () => {
+		const provider = client.getFeature(lsclient.ImplementationRequest.method).getProvider(document);
+		const result = (await provider.provideImplementation(document, position, tokenSource.token)) as vscode.Location;
+
+		isInstanceOf(result, vscode.Location);
+		uriEqual(result.uri, uri);
+		rangeEqual(result.range, 2, 2, 3, 3);
+
+		let middlewareCalled: boolean = false;
+		middleware.provideImplementation = (document, position, token, next) => {
+			middlewareCalled = true;
+			return next(document, position, token);
+		};
+		await provider.provideImplementation(document, position, tokenSource.token);
+		middleware.provideImplementation = undefined;
+		assert.strictEqual(middlewareCalled, true);
 	});
 });
