@@ -7,7 +7,7 @@
 import {
 	languages as Languages, Disposable, TextDocument, ProviderResult, Position as VPosition,
 	CallHierarchyItem as VCallHierarchyItem, CallHierarchyIncomingCall as VCallHierarchyIncomingCall,
-	CallHierarchyOutgoingCall as VCallHierarchyOutgoingCall, CancellationToken
+	CallHierarchyOutgoingCall as VCallHierarchyOutgoingCall, CancellationToken, CallHierarchyProvider as VCallHierarchyProvider
 } from 'vscode';
 
 import {
@@ -126,7 +126,7 @@ namespace code2protocol {
 	}
 }
 
-class CallHierarchyProvider implements CallHierarchyProvider {
+class CallHierarchyProvider implements VCallHierarchyProvider {
 
 	private middleware: Middleware & CallHierarchyMiddleware;
 
