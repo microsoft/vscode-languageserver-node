@@ -8,7 +8,7 @@ import {
 	createConnection, IConnection, InitializeParams, ServerCapabilities, CompletionItemKind, ResourceOperationKind, FailureHandlingKind,
 	DiagnosticTag, CompletionItemTag, TextDocumentSyncKind, MarkupKind, SignatureHelp, SignatureInformation, ParameterInformation,
 	Location, Range, DocumentHighlight, DocumentHighlightKind, CodeAction, Command, TextEdit, Position, DocumentLink,
-	ColorInformation, Color, ColorPresentation
+	ColorInformation, Color, ColorPresentation, FoldingRange
 } from '../../../server/lib/main';
 
 import { URI } from 'vscode-uri';
@@ -184,6 +184,12 @@ connection.onDocumentColor((_params) => {
 connection.onColorPresentation((_params) => {
 	return [
 		ColorPresentation.create('label')
+	];
+});
+
+connection.onFoldingRanges((_params) => {
+	return [
+		FoldingRange.create(1,2)
 	];
 });
 // Listen on the connection

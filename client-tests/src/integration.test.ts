@@ -476,4 +476,22 @@ suite('Client integration', () => {
 		assert.strictEqual(middlewareCalled, true);
 	});
 
+	test('Folding Ranges', async () => {
+		const provider = client.getFeature(lsclient.FoldingRangeRequest.method).getProvider(document);
+		const result = (await provider.provideFoldingRanges(document, {}, tokenSource.token));
+
+		isArray(result, vscode.FoldingRange, 1);
+		const range = result[0];
+		assert.strictEqual(range.start, 1);
+		assert.strictEqual(range.end, 2);
+
+		let middlewareCalled: boolean = true;
+		middleware.provideFoldingRanges = (d, c, t, n) => {
+			middlewareCalled = true;
+			return n(d, c, t);
+		};
+		await provider.provideFoldingRanges(document, {}, tokenSource.token);
+		middleware.provideFoldingRanges = undefined;
+		assert.ok(middlewareCalled);
+	});
 });
