@@ -1404,6 +1404,14 @@ export interface PublishDiagnosticsClientCapabilities {
 		 */
 		valueSet: DiagnosticTag[];
 	};
+
+	/**
+	 * Whether the client interprets the version property of the
+	 * `textDocument/publishDiagnostics` notification`s parameter.
+	 *
+	 * @since 3.15.0
+	 */
+	versionSupport?: boolean;
 }
 
 /**

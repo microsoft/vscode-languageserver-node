@@ -3387,6 +3387,7 @@ export abstract class BaseLanguageClient {
 		workspaceEdit.failureHandling = FailureHandlingKind.TextOnlyTransactional;
 		let diagnostics = ensure(ensure(result, 'textDocument')!, 'publishDiagnostics')!;
 		diagnostics.relatedInformation = true;
+		diagnostics.versionSupport = false;
 		diagnostics.tagSupport = { valueSet: [ DiagnosticTag.Unnecessary, DiagnosticTag.Deprecated ] };
 		for (let feature of this._features) {
 			feature.fillClientCapabilities(result);
