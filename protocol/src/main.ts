@@ -36,6 +36,7 @@ export * from './protocol';
 export { FoldingRangeParams as FoldingRangeRequestParam } from './protocol'; // for backward compatibility
 
 import * as callHierarchy from './protocol.callHierarchy.proposed';
+import * as st from './protocol.sematicTokens.proposed';
 
 export namespace Proposed {
 
@@ -70,6 +71,32 @@ export namespace Proposed {
 		export const type = callHierarchy.CallHierarchyOutgoingCallsRequest;
 		export const resultType = callHierarchy.CallHierarchyOutgoingCallsRequest.resultType;
 		export type HandlerSignature = callHierarchy.CallHierarchyOutgoingCallsRequest.HandlerSignature;
+	}
+
+	export type SemanticTokensLegend = st.SemanticTokensLegend;
+	export type SemanticTokens = st.SemanticTokens;
+	export type SematnicTokensPartialResult = st.SematnicTokensPartialResult;
+	export type SemanticTokensEdit = st.SemanticTokensEdit;
+	export type SemanticTokensEdits = st.SemanticTokensEdits;
+	export type SemanticTokensEditPartialResult = st.SemanticTokensEditPartialResult;
+
+	export type SemanticTokensClientCapabilities = st.SemanticTokensClientCapabilities;
+	export type SemanticTokenOptions = st.SemanticTokenOptions;
+	export type SemanticTokensRegistrationOptions = st.SemanticTokensRegistrationOptions;
+	export type SemanticTokensServerCapabilities = st.SemanticTokensServerCapabilities;
+
+	export type SemanticTokensParams = st.SemanticTokensParams;
+	export namespace SemanticTokensRequest {
+		export const method = st.SemanticTokensRequest.method;
+		export const type = st.SemanticTokensRequest.type;
+		export const resultType = st.SemanticTokensRequest.resultType;
+	}
+
+	export type SemanticTokensRangeParams = st.SemanticTokensRangeParams;
+	export namespace SemanticTokensRangeRequest {
+		export const method = st.SemanticTokensRangeRequest.method;
+		export const type = st.SemanticTokensRangeRequest.type;
+		export const resultType = st.SemanticTokensRangeRequest.resultType;
 	}
 }
 
