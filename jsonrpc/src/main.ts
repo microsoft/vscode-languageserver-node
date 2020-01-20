@@ -16,8 +16,7 @@ import {
 	NotificationMessage, isNotificationMessage,
 	NotificationType, NotificationType0, NotificationType1, NotificationType2, NotificationType3, NotificationType4,
 	NotificationType5, NotificationType6, NotificationType7, NotificationType8, NotificationType9,
-	LSPMessageType,
-	_EM
+	LSPMessageType, _EM
 } from './messages';
 
 import { MessageReader, PartialMessageInfo, DataCallback, StreamMessageReader, IPCMessageReader, SocketMessageReader } from './messageReader';
@@ -28,7 +27,7 @@ import { LinkedMap } from './linkedMap';
 
 export {
 	Message, MessageType, ErrorCodes, ResponseError,
-	RequestMessage, RequestType,
+	RequestMessage, _EM, RequestType,
 	RequestType0, RequestType1, RequestType2, RequestType3, RequestType4,
 	RequestType5, RequestType6, RequestType7, RequestType8, RequestType9,
 	NotificationMessage, NotificationType,
@@ -71,9 +70,11 @@ namespace ProgressNotification {
 }
 
 export class ProgressType<P> {
-	public readonly _?: [P, _EM];
+	/**
+	 * Clients must not use this property. It is here to ensure correct typing.
+	 */
+	public readonly __?: [P, _EM];
 	constructor() {
-		this._ = undefined;
 	}
 }
 

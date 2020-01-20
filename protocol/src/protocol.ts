@@ -6,7 +6,9 @@
 
 import * as Is from './utils/is';
 
-import { RequestType, RequestType0, NotificationType, NotificationType0, ProgressToken, ProgressType } from 'vscode-jsonrpc';
+import { ProgressToken, ProgressType } from 'vscode-jsonrpc';
+
+import { ProtocolRequestType, ProtocolRequestType0, ProtocolNotificationType, ProtocolNotificationType0 } from './messages';
 
 import {
 	Position, Range, Location, LocationLink, Diagnostic, Command, TextEdit, WorkspaceEdit, DocumentUri,
@@ -45,6 +47,7 @@ import {
 
 // @ts-ignore: to avoid inlining LocatioLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
+
 
 /**
  * A document filter denotes a document by different properties like
@@ -151,7 +154,7 @@ export interface RegistrationParams {
  * handler on the client side.
  */
 export namespace RegistrationRequest {
-	export const type = new RequestType<RegistrationParams, void, void, void>('client/registerCapability');
+	export const type = new ProtocolRequestType<RegistrationParams, void, never, void, void>('client/registerCapability');
 }
 
 /**
@@ -182,7 +185,7 @@ export interface UnregistrationParams {
  * handler on the client side.
  */
 export namespace UnregistrationRequest {
-	export const type = new RequestType<UnregistrationParams, void, void, void>('client/unregisterCapability');
+	export const type = new ProtocolRequestType<UnregistrationParams, void, never, void, void>('client/unregisterCapability');
 }
 
 export interface WorkDoneProgressParams {
@@ -678,7 +681,7 @@ export type ServerCapabilities<T = any> = _ServerCapabilities<T> & WorkspaceFold
  * resolves to such.
  */
 export namespace InitializeRequest {
-	export const type = new RequestType<InitializeParams & WorkDoneProgressParams, InitializeResult, InitializeError, void>('initialize');
+	export const type = new ProtocolRequestType<InitializeParams & WorkDoneProgressParams, InitializeResult, never, InitializeError, void>('initialize');
 }
 
 /**
@@ -811,7 +814,7 @@ export interface InitializedParams {
  * is allowed to send requests from the server to the client.
  */
 export namespace InitializedNotification {
-	export const type = new NotificationType<InitializedParams, void>('initialized');
+	export const type = new ProtocolNotificationType<InitializedParams, void>('initialized');
 }
 
 //---- Shutdown Method ----
@@ -823,7 +826,7 @@ export namespace InitializedNotification {
  * is the exit event.
  */
 export namespace ShutdownRequest {
-	export const type = new RequestType0<void, void, void>('shutdown');
+	export const type = new ProtocolRequestType0<void, never, void, void>('shutdown');
 }
 
 //---- Exit Notification ----
@@ -833,7 +836,7 @@ export namespace ShutdownRequest {
  * ask the server to exit its process.
  */
 export namespace ExitNotification {
-	export const type = new NotificationType0<void>('exit');
+	export const type = new ProtocolNotificationType0<void>('exit');
 }
 
 //---- Configuration notification ----
@@ -851,7 +854,7 @@ export interface DidChangeConfigurationClientCapabilities {
  * the changed configuration as defined by the language client.
  */
 export namespace DidChangeConfigurationNotification {
-	export const type = new NotificationType<DidChangeConfigurationParams, DidChangeConfigurationRegistrationOptions>('workspace/didChangeConfiguration');
+	export const type = new ProtocolNotificationType<DidChangeConfigurationParams, DidChangeConfigurationRegistrationOptions>('workspace/didChangeConfiguration');
 }
 
 export interface DidChangeConfigurationRegistrationOptions {
@@ -914,7 +917,7 @@ export interface ShowMessageParams {
  * the client to display a particular message in the user interface.
  */
 export namespace ShowMessageNotification {
-	export const type = new NotificationType<ShowMessageParams, void>('window/showMessage');
+	export const type = new ProtocolNotificationType<ShowMessageParams, void>('window/showMessage');
 }
 
 export interface MessageActionItem {
@@ -946,7 +949,7 @@ export interface ShowMessageRequestParams {
  * and a set of options actions to the user.
  */
 export namespace ShowMessageRequest {
-	export const type = new RequestType<ShowMessageRequestParams, MessageActionItem | null, void, void>('window/showMessageRequest');
+	export const type = new ProtocolRequestType<ShowMessageRequestParams, MessageActionItem | null, never, void, void>('window/showMessageRequest');
 }
 
 /**
@@ -954,7 +957,7 @@ export namespace ShowMessageRequest {
  * the client to log a particular message.
  */
 export namespace LogMessageNotification {
-	export const type = new NotificationType<LogMessageParams, void>('window/logMessage');
+	export const type = new ProtocolNotificationType<LogMessageParams, void>('window/logMessage');
 }
 
 /**
@@ -979,7 +982,7 @@ export interface LogMessageParams {
  * the client to log telemetry data.
  */
 export namespace TelemetryEventNotification {
-	export const type = new NotificationType<any, void>('telemetry/event');
+	export const type = new ProtocolNotificationType<any, void>('telemetry/event');
 }
 
 //---- Text document notifications ----
@@ -1084,7 +1087,7 @@ export interface DidOpenTextDocumentParams {
  */
 export namespace DidOpenTextDocumentNotification {
 	export const method: 'textDocument/didOpen' = 'textDocument/didOpen';
-	export const type = new NotificationType<DidOpenTextDocumentParams, TextDocumentRegistrationOptions>(method);
+	export const type = new ProtocolNotificationType<DidOpenTextDocumentParams, TextDocumentRegistrationOptions>(method);
 }
 
 /**
@@ -1158,7 +1161,7 @@ export interface TextDocumentChangeRegistrationOptions extends TextDocumentRegis
  */
 export namespace DidChangeTextDocumentNotification {
 	export const method: 'textDocument/didChange' = 'textDocument/didChange';
-	export const type = new NotificationType<DidChangeTextDocumentParams, TextDocumentChangeRegistrationOptions>(method);
+	export const type = new ProtocolNotificationType<DidChangeTextDocumentParams, TextDocumentChangeRegistrationOptions>(method);
 }
 
 /**
@@ -1182,7 +1185,7 @@ export interface DidCloseTextDocumentParams {
  */
 export namespace DidCloseTextDocumentNotification {
 	export const method: 'textDocument/didClose' = 'textDocument/didClose';
-	export const type = new NotificationType<DidCloseTextDocumentParams, TextDocumentRegistrationOptions>(method);
+	export const type = new ProtocolNotificationType<DidCloseTextDocumentParams, TextDocumentRegistrationOptions>(method);
 }
 
 /**
@@ -1213,7 +1216,7 @@ export interface TextDocumentSaveRegistrationOptions extends TextDocumentRegistr
  */
 export namespace DidSaveTextDocumentNotification {
 	export const method: 'textDocument/didSave' = 'textDocument/didSave';
-	export const type = new NotificationType<DidSaveTextDocumentParams, TextDocumentSaveRegistrationOptions>(method);
+	export const type = new ProtocolNotificationType<DidSaveTextDocumentParams, TextDocumentSaveRegistrationOptions>(method);
 }
 
 /**
@@ -1261,7 +1264,7 @@ export interface WillSaveTextDocumentParams {
  */
 export namespace WillSaveTextDocumentNotification {
 	export const method: 'textDocument/willSave' = 'textDocument/willSave';
-	export const type = new NotificationType<WillSaveTextDocumentParams, TextDocumentRegistrationOptions>(method);
+	export const type = new ProtocolNotificationType<WillSaveTextDocumentParams, TextDocumentRegistrationOptions>(method);
 }
 
 /**
@@ -1274,7 +1277,7 @@ export namespace WillSaveTextDocumentNotification {
  */
 export namespace WillSaveTextDocumentWaitUntilRequest {
 	export const method: 'textDocument/willSaveWaitUntil' = 'textDocument/willSaveWaitUntil';
-	export const type = new RequestType<WillSaveTextDocumentParams, TextEdit[] | null, void, TextDocumentRegistrationOptions>(method);
+	export const type = new ProtocolRequestType<WillSaveTextDocumentParams, TextEdit[] | null, never, void, TextDocumentRegistrationOptions>(method);
 }
 
 //---- File eventing ----
@@ -1293,7 +1296,7 @@ export interface DidChangeWatchedFilesClientCapabilities {
  * the client detects changes to file watched by the language client.
  */
 export namespace DidChangeWatchedFilesNotification {
-	export const type = new NotificationType<DidChangeWatchedFilesParams, DidChangeWatchedFilesRegistrationOptions>('workspace/didChangeWatchedFiles');
+	export const type = new ProtocolNotificationType<DidChangeWatchedFilesParams, DidChangeWatchedFilesRegistrationOptions>('workspace/didChangeWatchedFiles');
 }
 
 /**
@@ -1447,7 +1450,7 @@ export interface PublishDiagnosticsParams {
  * results of validation runs.
  */
 export namespace PublishDiagnosticsNotification {
-	export const type = new NotificationType<PublishDiagnosticsParams, void>('textDocument/publishDiagnostics');
+	export const type = new ProtocolNotificationType<PublishDiagnosticsParams, void>('textDocument/publishDiagnostics');
 }
 
 //---- Completion Support --------------------------
@@ -1641,7 +1644,8 @@ export interface CompletionRegistrationOptions extends TextDocumentRegistrationO
  */
 export namespace CompletionRequest {
 	export const method: 'textDocument/completion' = 'textDocument/completion';
-	export const type = new RequestType<CompletionParams, CompletionItem[] | CompletionList | null, void, CompletionRegistrationOptions>(method);
+	export const type = new ProtocolRequestType<CompletionParams, CompletionItem[] | CompletionList | null, CompletionItem[], void, CompletionRegistrationOptions>(method);
+	/** @deprecated Use CompletionRequest.type */
 	export const resultType = new ProgressType<CompletionItem[]>();
 }
 
@@ -1652,7 +1656,7 @@ export namespace CompletionRequest {
  */
 export namespace CompletionResolveRequest {
 	export const method: 'completionItem/resolve' = 'completionItem/resolve';
-	export const type = new RequestType<CompletionItem, CompletionItem, void, void>(method);
+	export const type = new ProtocolRequestType<CompletionItem, CompletionItem, never, void, void>(method);
 }
 
 //---- Hover Support -------------------------------
@@ -1695,7 +1699,7 @@ export interface HoverRegistrationOptions extends TextDocumentRegistrationOption
  */
 export namespace HoverRequest {
 	export const method: 'textDocument/hover' = 'textDocument/hover';
-	export const type = new RequestType<HoverParams, Hover | null, void, HoverRegistrationOptions>(method);
+	export const type = new ProtocolRequestType<HoverParams, Hover | null, never, void, HoverRegistrationOptions>(method);
 }
 
 //---- SignatureHelp ----------------------------------
@@ -1842,7 +1846,7 @@ export interface SignatureHelpRegistrationOptions extends TextDocumentRegistrati
 
 export namespace SignatureHelpRequest {
 	export const method: 'textDocument/signatureHelp' = 'textDocument/signatureHelp';
-	export const type = new RequestType<SignatureHelpParams, SignatureHelp | null, void, SignatureHelpRegistrationOptions>(method);
+	export const type = new ProtocolRequestType<SignatureHelpParams, SignatureHelp | null, never, void, SignatureHelpRegistrationOptions>(method);
 }
 
 //---- Goto Definition -------------------------------------
@@ -1891,7 +1895,8 @@ export interface DefinitionRegistrationOptions extends TextDocumentRegistrationO
  */
 export namespace DefinitionRequest {
 	export const method: 'textDocument/definition' = 'textDocument/definition';
-	export const type = new RequestType<DefinitionParams, Definition | DefinitionLink[] | null, void, DefinitionRegistrationOptions>(method);
+	export const type = new ProtocolRequestType<DefinitionParams, Definition | DefinitionLink[] | null, Location[] | DefinitionLink[], void, DefinitionRegistrationOptions>(method);
+	/** @deprecated Use DefinitionRequest.type */
 	export const resultType = new ProgressType<Location[] | DefinitionLink[]>();
 }
 
@@ -1934,7 +1939,8 @@ export interface ReferenceRegistrationOptions extends TextDocumentRegistrationOp
  */
 export namespace ReferencesRequest {
 	export const method: 'textDocument/references' = 'textDocument/references';
-	export const type = new RequestType<ReferenceParams, Location[] | null, void, ReferenceRegistrationOptions>(method);
+	export const type = new ProtocolRequestType<ReferenceParams, Location[] | null, Location[], void, ReferenceRegistrationOptions>(method);
+	/** @deprecated Use ReferencesRequest.type */
 	export const resultType = new ProgressType<Location[]>();
 }
 
@@ -1976,7 +1982,8 @@ export interface DocumentHighlightRegistrationOptions extends TextDocumentRegist
  */
 export namespace DocumentHighlightRequest {
 	export const method: 'textDocument/documentHighlight' = 'textDocument/documentHighlight';
-	export const type = new RequestType<DocumentHighlightParams, DocumentHighlight[] | null, void, DocumentHighlightRegistrationOptions>(method);
+	export const type = new ProtocolRequestType<DocumentHighlightParams, DocumentHighlight[] | null, DocumentHighlight[], void, DocumentHighlightRegistrationOptions>(method);
+	/** @deprecated Use DocumentHighlightRequest.type */
 	export const resultType = new ProgressType<DocumentHighlight[]>();
 }
 
@@ -2044,7 +2051,8 @@ export interface DocumentSymbolRegistrationOptions extends TextDocumentRegistrat
  */
 export namespace DocumentSymbolRequest {
 	export const method: 'textDocument/documentSymbol' = 'textDocument/documentSymbol';
-	export const type = new RequestType<DocumentSymbolParams, SymbolInformation[] | DocumentSymbol[] | null, void, DocumentSymbolRegistrationOptions>(method);
+	export const type = new ProtocolRequestType<DocumentSymbolParams, SymbolInformation[] | DocumentSymbol[] | null, SymbolInformation[] | DocumentSymbol[], void, DocumentSymbolRegistrationOptions>(method);
+	/** @deprecated Use DocumentSymbolRequest.type */
 	export const resultType = new ProgressType<SymbolInformation[] | DocumentSymbol[]>();
 }
 
@@ -2133,7 +2141,8 @@ export interface CodeActionRegistrationOptions extends TextDocumentRegistrationO
  */
 export namespace CodeActionRequest {
 	export const method: 'textDocument/codeAction' = 'textDocument/codeAction';
-	export const type = new RequestType<CodeActionParams, (Command | CodeAction)[] | null, void, CodeActionRegistrationOptions>(method);
+	export const type = new ProtocolRequestType<CodeActionParams, (Command | CodeAction)[] | null, (Command | CodeAction)[], void, CodeActionRegistrationOptions>(method);
+	/** @deprecated Use CodeActionRequest.type */
 	export const resultType = new ProgressType<(Command | CodeAction)[]>();
 }
 
@@ -2198,7 +2207,8 @@ export interface WorkspaceSymbolRegistrationOptions extends WorkspaceSymbolOptio
  */
 export namespace WorkspaceSymbolRequest {
 	export const method: 'workspace/symbol' = 'workspace/symbol';
-	export const type = new RequestType<WorkspaceSymbolParams, SymbolInformation[] | null, void, WorkspaceSymbolRegistrationOptions>(method);
+	export const type = new ProtocolRequestType<WorkspaceSymbolParams, SymbolInformation[] | null, SymbolInformation[], void, WorkspaceSymbolRegistrationOptions>(method);
+	/** @deprecated Use WorkspaceSymbolRequest.type */
 	export const resultType = new ProgressType<SymbolInformation[]>();
 }
 
@@ -2244,7 +2254,8 @@ export interface CodeLensRegistrationOptions extends TextDocumentRegistrationOpt
  * A request to provide code lens for the given text document.
  */
 export namespace CodeLensRequest {
-	export const type = new RequestType<CodeLensParams, CodeLens[] | null, void, CodeLensRegistrationOptions>('textDocument/codeLens');
+	export const type = new ProtocolRequestType<CodeLensParams, CodeLens[] | null, CodeLens[], void, CodeLensRegistrationOptions>('textDocument/codeLens');
+	/** @deprecated Use CodeLensRequest.type */
 	export const resultType = new ProgressType<CodeLens[]>();
 }
 
@@ -2252,7 +2263,7 @@ export namespace CodeLensRequest {
  * A request to resolve a command for a given code lens.
  */
 export namespace CodeLensResolveRequest {
-	export const type = new RequestType<CodeLens, CodeLens, void, void>('codeLens/resolve');
+	export const type = new ProtocolRequestType<CodeLens, CodeLens, never, void, void>('codeLens/resolve');
 }
 
 //---- Document Links ----------------------------------------------
@@ -2305,7 +2316,8 @@ export interface DocumentLinkRegistrationOptions extends TextDocumentRegistratio
  */
 export namespace DocumentLinkRequest {
 	export const method: 'textDocument/documentLink' = 'textDocument/documentLink';
-	export const type = new RequestType<DocumentLinkParams, DocumentLink[] | null, void, DocumentLinkRegistrationOptions>(method);
+	export const type = new ProtocolRequestType<DocumentLinkParams, DocumentLink[] | null, DocumentLink[], void, DocumentLinkRegistrationOptions>(method);
+	/** @deprecated Use DocumentLinkRequest.type */
 	export const resultType = new ProgressType<DocumentLink[]>();
 }
 
@@ -2315,7 +2327,7 @@ export namespace DocumentLinkRequest {
  * is of type [DocumentLink](#DocumentLink) or a Thenable that resolves to such.
  */
 export namespace DocumentLinkResolveRequest {
-	export const type = new RequestType<DocumentLink, DocumentLink, void, void>('documentLink/resolve');
+	export const type = new ProtocolRequestType<DocumentLink, DocumentLink, never, void, void>('documentLink/resolve');
 }
 
 //---- Formatting ----------------------------------------------
@@ -2362,7 +2374,7 @@ export interface DocumentFormattingRegistrationOptions extends TextDocumentRegis
  */
 export namespace DocumentFormattingRequest {
 	export const method: 'textDocument/formatting' = 'textDocument/formatting';
-	export const type = new RequestType<DocumentFormattingParams, TextEdit[] | null, void, DocumentFormattingRegistrationOptions>(method);
+	export const type = new ProtocolRequestType<DocumentFormattingParams, TextEdit[] | null, never, void, DocumentFormattingRegistrationOptions>(method);
 }
 
 /**
@@ -2412,7 +2424,7 @@ export interface DocumentRangeFormattingRegistrationOptions extends TextDocument
  */
 export namespace DocumentRangeFormattingRequest {
 	export const method: 'textDocument/rangeFormatting' = 'textDocument/rangeFormatting';
-	export const type = new RequestType<DocumentRangeFormattingParams, TextEdit[] | null, void, DocumentRangeFormattingRegistrationOptions>(method);
+	export const type = new ProtocolRequestType<DocumentRangeFormattingParams, TextEdit[] | null, never, void, DocumentRangeFormattingRegistrationOptions>(method);
 }
 
 /**
@@ -2476,7 +2488,7 @@ export interface DocumentOnTypeFormattingRegistrationOptions extends TextDocumen
  */
 export namespace DocumentOnTypeFormattingRequest {
 	export const method: 'textDocument/onTypeFormatting' = 'textDocument/onTypeFormatting';
-	export const type = new RequestType<DocumentOnTypeFormattingParams, TextEdit[] | null, void, DocumentOnTypeFormattingRegistrationOptions>(method);
+	export const type = new ProtocolRequestType<DocumentOnTypeFormattingParams, TextEdit[] | null, never, void, DocumentOnTypeFormattingRegistrationOptions>(method);
 }
 
 //---- Rename ----------------------------------------------
@@ -2541,7 +2553,7 @@ export interface RenameRegistrationOptions extends TextDocumentRegistrationOptio
  */
 export namespace RenameRequest {
 	export const method: 'textDocument/rename' = 'textDocument/rename';
-	export const type = new RequestType<RenameParams, WorkspaceEdit | null, void, RenameRegistrationOptions>(method);
+	export const type = new ProtocolRequestType<RenameParams, WorkspaceEdit | null, never, void, RenameRegistrationOptions>(method);
 }
 
 export interface PrepareRenameParams extends TextDocumentPositionParams, WorkDoneProgressParams {
@@ -2552,7 +2564,7 @@ export interface PrepareRenameParams extends TextDocumentPositionParams, WorkDon
  */
 export namespace PrepareRenameRequest {
 	export const method: 'textDocument/prepareRename' = 'textDocument/prepareRename';
-	export const type = new RequestType<PrepareRenameParams, Range | { range: Range, placeholder: string } | null, void, void>(method);
+	export const type = new ProtocolRequestType<PrepareRenameParams, Range | { range: Range, placeholder: string } | null, never, void, void>(method);
 }
 
 //---- Command Execution -------------------------------------------
@@ -2603,7 +2615,7 @@ export interface ExecuteCommandRegistrationOptions extends ExecuteCommandOptions
  * a workspace edit which the client will apply to the workspace.
  */
 export namespace ExecuteCommandRequest {
-	export const type = new RequestType<ExecuteCommandParams, any | null, void, ExecuteCommandRegistrationOptions>('workspace/executeCommand');
+	export const type = new ProtocolRequestType<ExecuteCommandParams, any | null, never, void, ExecuteCommandRegistrationOptions>('workspace/executeCommand');
 }
 
 //---- Apply Edit request ----------------------------------------
@@ -2676,7 +2688,7 @@ export interface ApplyWorkspaceEditResponse {
  * A request sent from the server to the client to modified certain resources.
  */
 export namespace ApplyWorkspaceEditRequest {
-	export const type = new RequestType<ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse, void, void>('workspace/applyEdit');
+	export const type = new ProtocolRequestType<ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse, never, void, void>('workspace/applyEdit');
 }
 
 export {

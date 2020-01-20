@@ -4,7 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { NotificationType, NotificationHandler, RequestType, RequestHandler, ProgressType, ProgressToken } from 'vscode-jsonrpc';
+import { NotificationHandler, RequestHandler, ProgressType, ProgressToken } from 'vscode-jsonrpc';
+import { ProtocolRequestType, ProtocolNotificationType } from './messages';
 
 export interface WorkDoneProgressClientCapabilities {
 	/**
@@ -120,7 +121,7 @@ export interface WorkDoneProgressCreateParams  {
  * reporting from the server.
  */
 export namespace WorkDoneProgressCreateRequest {
-	export const type = new RequestType<WorkDoneProgressCreateParams, void, void, void>('window/workDoneProgress/create');
+	export const type = new ProtocolRequestType<WorkDoneProgressCreateParams, void, never, void, void>('window/workDoneProgress/create');
 	export type HandlerSignature = RequestHandler<WorkDoneProgressCreateParams, void, void>;
 }
 
@@ -136,6 +137,6 @@ export interface WorkDoneProgressCancelParams {
  * initiated on the server side.
  */
 export namespace WorkDoneProgressCancelNotification {
-	export const type = new NotificationType<WorkDoneProgressCancelParams, void>('window/workDoneProgress/cancel');
+	export const type = new ProtocolNotificationType<WorkDoneProgressCancelParams, void>('window/workDoneProgress/cancel');
 	export type HandlerSignature = NotificationHandler<WorkDoneProgressCancelParams>;
 }

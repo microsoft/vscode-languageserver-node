@@ -108,7 +108,7 @@ class NullProgress implements WorkDoneProgress {
 	}
 }
 
-export function attachWorkDone(connection: ProgressContext, params: WorkDoneProgressParams): WorkDoneProgress {
+export function attachWorkDone(connection: ProgressContext, params: WorkDoneProgressParams | undefined): WorkDoneProgress {
 	if (params === undefined || params.workDoneToken === undefined) {
 		return new NullProgress();
 	}
