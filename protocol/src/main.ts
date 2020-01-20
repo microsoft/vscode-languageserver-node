@@ -60,16 +60,14 @@ export namespace Proposed {
 	export type CallHierarchyIncomingCallsParams = callHierarchy.CallHierarchyIncomingCallsParams;
 	export namespace CallHierarchyIncomingCallsRequest {
 		export const method = callHierarchy.CallHierarchyIncomingCallsRequest.method;
-		export const type = callHierarchy.CallHierarchyIncomingCallsRequest;
-		export const resultType = callHierarchy.CallHierarchyIncomingCallsRequest.resultType;
+		export const type = callHierarchy.CallHierarchyIncomingCallsRequest.type;
 		export type HandlerSignature = callHierarchy.CallHierarchyIncomingCallsRequest.HandlerSignature;
 	}
 
 	export type CallHierarchyOutgoingCallsParams= callHierarchy.CallHierarchyOutgoingCallsParams;
 	export namespace CallHierarchyOutgoingCallsRequest {
 		export const method =  callHierarchy.CallHierarchyOutgoingCallsRequest.method;
-		export const type = callHierarchy.CallHierarchyOutgoingCallsRequest;
-		export const resultType = callHierarchy.CallHierarchyOutgoingCallsRequest.resultType;
+		export const type = callHierarchy.CallHierarchyOutgoingCallsRequest.type;
 		export type HandlerSignature = callHierarchy.CallHierarchyOutgoingCallsRequest.HandlerSignature;
 	}
 
