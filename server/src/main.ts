@@ -981,8 +981,8 @@ class TelemetryImpl implements Telemetry {
 	}
 }
 
-export interface ServerRequestHandler<P, R, E> {
-	(params: P, token: CancellationToken, workDoneProgress: WorkDoneProgress, resultProgress?: ResultProgress<R>): HandlerResult<R, E>;
+export interface ServerRequestHandler<P, R, PR, E> {
+	(params: P, token: CancellationToken, workDoneProgress: WorkDoneProgress, resultProgress?: ResultProgress<PR>): HandlerResult<R, E>;
 }
 
 /**
@@ -1099,7 +1099,7 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The initialize handler.
 	 */
-	onInitialize(handler: ServerRequestHandler<InitializeParams, InitializeResult, InitializeError>): void;
+	onInitialize(handler: ServerRequestHandler<InitializeParams, InitializeResult, never, InitializeError>): void;
 
 	/**
 	 * Installs a handler for the initialized notification.
@@ -1231,14 +1231,14 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onHover(handler: ServerRequestHandler<HoverParams, Hover | undefined | null, void>): void;
+	onHover(handler: ServerRequestHandler<HoverParams, Hover | undefined | null, never, void>): void;
 
 	/**
 	 * Installs a handler for the `Completion` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCompletion(handler: ServerRequestHandler<CompletionParams, CompletionItem[] | CompletionList | undefined | null, void>): void;
+	onCompletion(handler: ServerRequestHandler<CompletionParams, CompletionItem[] | CompletionList | undefined | null, CompletionItem[], void>): void;
 
 	/**
 	 * Installs a handler for the `CompletionResolve` request.
@@ -1252,70 +1252,70 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onSignatureHelp(handler: ServerRequestHandler<SignatureHelpParams, SignatureHelp | undefined | null, void>): void;
+	onSignatureHelp(handler: ServerRequestHandler<SignatureHelpParams, SignatureHelp | undefined | null, never, void>): void;
 
 	/**
 	 * Installs a handler for the `Declaration` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDeclaration(handler: ServerRequestHandler<DeclarationParams, Declaration | DeclarationLink[] | undefined | null, void>): void;
+	onDeclaration(handler: ServerRequestHandler<DeclarationParams, Declaration | DeclarationLink[] | undefined | null, Location[] | DeclarationLink[], void>): void;
 
 	/**
 	 * Installs a handler for the `Definition` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDefinition(handler: ServerRequestHandler<DefinitionParams, Definition | DefinitionLink[] | undefined | null, void>): void;
+	onDefinition(handler: ServerRequestHandler<DefinitionParams, Definition | DefinitionLink[] | undefined | null, Location[] | DefinitionLink[], void>): void;
 
 	/**
 	 * Installs a handler for the `Type Definition` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onTypeDefinition(handler: ServerRequestHandler<TypeDefinitionParams, Definition | DefinitionLink[] | undefined | null, void>): void;
+	onTypeDefinition(handler: ServerRequestHandler<TypeDefinitionParams, Definition | DefinitionLink[] | undefined | null, Location[] | DefinitionLink[], void>): void;
 
 	/**
 	 * Installs a handler for the `Implementation` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onImplementation(handler: ServerRequestHandler<ImplementationParams, Definition | DefinitionLink[] | undefined | null, void>): void;
+	onImplementation(handler: ServerRequestHandler<ImplementationParams, Definition | DefinitionLink[] | undefined | null, Location[] | DefinitionLink[], void>): void;
 
 	/**
 	 * Installs a handler for the `References` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onReferences(handler: ServerRequestHandler<ReferenceParams, Location[] | undefined | null, void>): void;
+	onReferences(handler: ServerRequestHandler<ReferenceParams, Location[] | undefined | null, Location[], void>): void;
 
 	/**
 	 * Installs a handler for the `DocumentHighlight` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentHighlight(handler: ServerRequestHandler<DocumentHighlightParams, DocumentHighlight[] | undefined | null, void>): void;
+	onDocumentHighlight(handler: ServerRequestHandler<DocumentHighlightParams, DocumentHighlight[] | undefined | null, DocumentHighlight[], void>): void;
 
 	/**
 	 * Installs a handler for the `DocumentSymbol` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentSymbol(handler: ServerRequestHandler<DocumentSymbolParams, SymbolInformation[] | DocumentSymbol[] | undefined | null, void>): void;
+	onDocumentSymbol(handler: ServerRequestHandler<DocumentSymbolParams, SymbolInformation[] | DocumentSymbol[] | undefined | null, SymbolInformation[] | DocumentSymbol[], void>): void;
 
 	/**
 	 * Installs a handler for the `WorkspaceSymbol` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onWorkspaceSymbol(handler: ServerRequestHandler<WorkspaceSymbolParams, SymbolInformation[] | undefined | null, void>): void;
+	onWorkspaceSymbol(handler: ServerRequestHandler<WorkspaceSymbolParams, SymbolInformation[] | undefined | null, SymbolInformation[], void>): void;
 
 	/**
 	 * Installs a handler for the `CodeAction` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCodeAction(handler: ServerRequestHandler<CodeActionParams, (Command | CodeAction)[] | undefined | null, void>): void;
+	onCodeAction(handler: ServerRequestHandler<CodeActionParams, (Command | CodeAction)[] | undefined | null, (Command | CodeAction)[], void>): void;
 
 	/**
 	 * Compute a list of [lenses](#CodeLens). This call should return as fast as possible and if
@@ -1324,7 +1324,7 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCodeLens(handler: ServerRequestHandler<CodeLensParams, CodeLens[] | undefined | null, void>): void;
+	onCodeLens(handler: ServerRequestHandler<CodeLensParams, CodeLens[] | undefined | null, CodeLens[], void>): void;
 
 	/**
 	 * This function will be called for each visible code lens, usually when scrolling and after
@@ -1332,91 +1332,91 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCodeLensResolve(handler: RequestHandler<CodeLens, CodeLens, void>): void;
+	onCodeLensResolve(handler: ServerRequestHandler<CodeLens, CodeLens, never, void>): void;
 
 	/**
 	 * Installs a handler for the document formatting request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentFormatting(handler: ServerRequestHandler<DocumentFormattingParams, TextEdit[] | undefined | null, void>): void;
+	onDocumentFormatting(handler: ServerRequestHandler<DocumentFormattingParams, TextEdit[] | undefined | null, never, void>): void;
 
 	/**
 	 * Installs a handler for the document range formatting request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentRangeFormatting(handler: ServerRequestHandler<DocumentRangeFormattingParams, TextEdit[] | undefined | null, void>): void;
+	onDocumentRangeFormatting(handler: ServerRequestHandler<DocumentRangeFormattingParams, TextEdit[] | undefined | null, never, void>): void;
 
 	/**
 	 * Installs a handler for the document on type formatting request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentOnTypeFormatting(handler: RequestHandler<DocumentOnTypeFormattingParams, TextEdit[] | undefined | null, void>): void;
+	onDocumentOnTypeFormatting(handler: ServerRequestHandler<DocumentOnTypeFormattingParams, TextEdit[] | undefined | null, never, void>): void;
 
 	/**
 	 * Installs a handler for the rename request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onRenameRequest(handler: ServerRequestHandler<RenameParams, WorkspaceEdit | undefined | null, void>): void;
+	onRenameRequest(handler: ServerRequestHandler<RenameParams, WorkspaceEdit | undefined | null, never, void>): void;
 
 	/**
 	 * Installs a handler for the prepare rename request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onPrepareRename(handler: ServerRequestHandler<PrepareRenameParams, Range | { range: Range, placeholder: string } | undefined | null, void>): void;
+	onPrepareRename(handler: ServerRequestHandler<PrepareRenameParams, Range | { range: Range, placeholder: string } | undefined | null, never, void>): void;
 
 	/**
 	 * Installs a handler for the document links request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentLinks(handler: ServerRequestHandler<DocumentLinkParams, DocumentLink[] | undefined | null, void>): void;
+	onDocumentLinks(handler: ServerRequestHandler<DocumentLinkParams, DocumentLink[] | undefined | null, DocumentLink[], void>): void;
 
 	/**
 	 * Installs a handler for the document links resolve request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentLinkResolve(handler: RequestHandler<DocumentLink, DocumentLink | undefined | null, void>): void;
+	onDocumentLinkResolve(handler: ServerRequestHandler<DocumentLink, DocumentLink | undefined | null, never, void>): void;
 
 	/**
 	 * Installs a handler for the document color request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentColor(handler: ServerRequestHandler<DocumentColorParams, ColorInformation[] | undefined | null, void>): void;
+	onDocumentColor(handler: ServerRequestHandler<DocumentColorParams, ColorInformation[] | undefined | null, ColorInformation[], void>): void;
 
 	/**
 	 * Installs a handler for the document color request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onColorPresentation(handler: ServerRequestHandler<ColorPresentationParams, ColorPresentation[] | undefined | null, void>): void;
+	onColorPresentation(handler: ServerRequestHandler<ColorPresentationParams, ColorPresentation[] | undefined | null, never, void>): void;
 
 	/**
 	 * Installs a handler for the folding ranges request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onFoldingRanges(handler: ServerRequestHandler<FoldingRangeParams, FoldingRange[] | undefined | null, void>): void;
+	onFoldingRanges(handler: ServerRequestHandler<FoldingRangeParams, FoldingRange[] | undefined | null, FoldingRange[], void>): void;
 
 	/**
 	 * Installs a handler for the selection ranges request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onSelectionRanges(handler: ServerRequestHandler<SelectionRangeParams, SelectionRange[] | undefined | null, void>): void;
+	onSelectionRanges(handler: ServerRequestHandler<SelectionRangeParams, SelectionRange[] | undefined | null, SelectionRange[], void>): void;
 
 	/**
 	 * Installs a handler for the execute command request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onExecuteCommand(handler: ServerRequestHandler<ExecuteCommandParams, any | undefined | null, void>): void;
+	onExecuteCommand(handler: ServerRequestHandler<ExecuteCommandParams, any | undefined | null, never, void>): void;
 
 	/**
 	 * Disposes the connection
@@ -1677,7 +1677,7 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 	}
 
 	let shutdownHandler: RequestHandler0<void, void> | undefined = undefined;
-	let initializeHandler: ServerRequestHandler<InitializeParams, InitializeResult, InitializeError> | undefined = undefined;
+	let initializeHandler: ServerRequestHandler<InitializeParams, InitializeResult, never, InitializeError> | undefined = undefined;
 	let exitHandler: NotificationHandler0 | undefined = undefined;
 	let protocolConnection: Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace> & ConnectionState = {
 		listen: (): void => connection.listen(),
@@ -1763,14 +1763,18 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 		onCodeLens: (handler) => connection.onRequest(CodeLensRequest.type, (params, cancel) => {
 			return handler(params, cancel, attachWorkDone(connection, params), attachPartialResult(connection, params));
 		}),
-		onCodeLensResolve: (handler) => connection.onRequest(CodeLensResolveRequest.type, handler),
+		onCodeLensResolve: (handler) => connection.onRequest(CodeLensResolveRequest.type, (params, cancel) => {
+			return handler(params, cancel, attachWorkDone(connection, undefined), undefined);
+		}),
 		onDocumentFormatting: (handler) => connection.onRequest(DocumentFormattingRequest.type, (params, cancel) => {
 			return handler(params, cancel, attachWorkDone(connection, params), undefined);
 		}),
 		onDocumentRangeFormatting: (handler) => connection.onRequest(DocumentRangeFormattingRequest.type, (params, cancel) => {
 			return handler(params, cancel, attachWorkDone(connection, params), undefined);
 		}),
-		onDocumentOnTypeFormatting: (handler) => connection.onRequest(DocumentOnTypeFormattingRequest.type, handler),
+		onDocumentOnTypeFormatting: (handler) => connection.onRequest(DocumentOnTypeFormattingRequest.type, (params, cancel) => {
+			return handler(params, cancel, attachWorkDone(connection, undefined), undefined);
+		}),
 		onRenameRequest: (handler) => connection.onRequest(RenameRequest.type, (params, cancel) => {
 			return handler(params, cancel, attachWorkDone(connection, params), undefined);
 		}),
@@ -1780,7 +1784,9 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 		onDocumentLinks: (handler) => connection.onRequest(DocumentLinkRequest.type, (params, cancel) => {
 			return handler(params, cancel, attachWorkDone(connection, params), attachPartialResult(connection, params));
 		}),
-		onDocumentLinkResolve: (handler) => connection.onRequest(DocumentLinkResolveRequest.type, handler),
+		onDocumentLinkResolve: (handler) => connection.onRequest(DocumentLinkResolveRequest.type, (params, cancel) => {
+			return handler(params, cancel, attachWorkDone(connection, undefined), undefined);
+		}),
 		onDocumentColor: (handler) => connection.onRequest(DocumentColorRequest.type, (params, cancel) => {
 			return handler(params, cancel, attachWorkDone(connection, params), attachPartialResult(connection, params));
 		}),

@@ -4,9 +4,13 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { RequestType, RequestHandler, ProgressType } from 'vscode-jsonrpc';
+import { RequestHandler, ProgressType } from 'vscode-jsonrpc';
 import { Declaration, DeclarationLink, Location, LocationLink } from 'vscode-languageserver-types';
-import { TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams, PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions } from './protocol';
+import { ProtocolRequestType } from './messages';
+import {
+	TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams, PartialResultParams, WorkDoneProgressParams,
+	WorkDoneProgressOptions
+} from './protocol';
 
 // @ts-ignore: to avoid inlining LocatioLink as dynamic import
 let __noDynamicImport: LocationLink | Declaration | DeclarationLink | Location | undefined;
@@ -46,7 +50,8 @@ export interface DeclarationParams extends TextDocumentPositionParams, WorkDoneP
  */
 export namespace DeclarationRequest {
 	export const method: 'textDocument/declaration' = 'textDocument/declaration';
-	export const type = new RequestType<DeclarationParams, Declaration | DeclarationLink[] | null, void, DeclarationRegistrationOptions>(method);
+	export const type = new ProtocolRequestType<DeclarationParams, Declaration | DeclarationLink[] | null, Location[] | DeclarationLink[], void, DeclarationRegistrationOptions>(method);
+	/** @deprecated Use DeclarationRequest.type */
 	export const resultType = new ProgressType<Location[] | DeclarationLink[]>();
 	export type HandlerSignature = RequestHandler<DeclarationParams, Declaration | DeclarationLink[] | null, void>;
 }

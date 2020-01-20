@@ -4,9 +4,13 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { RequestType, RequestHandler, ProgressType } from 'vscode-jsonrpc';
+import { RequestHandler, ProgressType } from 'vscode-jsonrpc';
 import { Definition, DefinitionLink, Location, LocationLink } from 'vscode-languageserver-types';
-import { TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams, PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions } from './protocol';
+import { ProtocolRequestType } from './messages';
+import {
+	TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams, PartialResultParams, WorkDoneProgressParams,
+	WorkDoneProgressOptions
+} from './protocol';
 
 // @ts-ignore: to avoid inlining LocatioLink as dynamic import
 let __noDynamicImport: LocationLink | Declaration | DeclarationLink | Location | undefined;
@@ -47,7 +51,8 @@ export interface ImplementationParams extends TextDocumentPositionParams, WorkDo
  */
 export namespace ImplementationRequest {
 	export const method: 'textDocument/implementation' = 'textDocument/implementation';
-	export const type = new RequestType<ImplementationParams, Definition | DefinitionLink[] | null, void, ImplementationRegistrationOptions>(method);
+	export const type = new ProtocolRequestType<ImplementationParams, Definition | DefinitionLink[] | null, Location[] | DefinitionLink[], void, ImplementationRegistrationOptions>(method);
+	/** @deprecated Use ImplementationRequest.type */
 	export const resultType = new ProgressType<Location[] | DefinitionLink[]>();
 	export type HandlerSignature = RequestHandler<ImplementationParams, Definition | DefinitionLink[] | null, void>;
 }

@@ -4,8 +4,9 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { RequestType, RequestHandler, ProgressType } from 'vscode-jsonrpc';
+import { RequestHandler, ProgressType } from 'vscode-jsonrpc';
 import { SymbolKind, SymbolTag, Range, DocumentUri } from 'vscode-languageserver-types';
+import { ProtocolRequestType } from './messages';
 import {
 	TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams, PartialResultParams,
 	WorkDoneProgressParams, WorkDoneProgressOptions
@@ -124,7 +125,7 @@ export interface CallHierarchyPrepareParams extends TextDocumentPositionParams, 
 
 export namespace CallHierarchyPrepareRequest {
 	export const method: 'textDocument/prepareCallHierarchy' = 'textDocument/prepareCallHierarchy';
-	export const type = new RequestType<CallHierarchyPrepareParams, CallHierarchyItem[] | null, void, CallHierarchyRegistrationOptions>(method);
+	export const type = new ProtocolRequestType<CallHierarchyPrepareParams, CallHierarchyItem[] | null, never, void, CallHierarchyRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<CallHierarchyPrepareParams, CallHierarchyItem[] | null, void>;
 }
 
@@ -134,7 +135,8 @@ export interface CallHierarchyIncomingCallsParams extends WorkDoneProgressParams
 
 export namespace CallHierarchyIncomingCallsRequest {
 	export const method: 'callHierarchy/incomingCalls' = 'callHierarchy/incomingCalls';
-	export const type = new RequestType<CallHierarchyIncomingCallsParams, CallHierarchyIncomingCall[] | null, void, void>(method);
+	export const type = new ProtocolRequestType<CallHierarchyIncomingCallsParams, CallHierarchyIncomingCall[] | null, CallHierarchyIncomingCall[], void, void>(method);
+	/** @deprecated Use CallHierarchyIncomingCallsRequest.type */
 	export const resultType = new ProgressType<CallHierarchyIncomingCall[]>();
 	export type HandlerSignature = RequestHandler<CallHierarchyIncomingCallsParams, CallHierarchyIncomingCall[] | null, void>;
 }
@@ -145,7 +147,8 @@ export interface CallHierarchyOutgoingCallsParams extends WorkDoneProgressParams
 
 export namespace CallHierarchyOutgoingCallsRequest {
 	export const method: 'callHierarchy/outgoingCalls' = 'callHierarchy/outgoingCalls';
-	export const type = new RequestType<CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCall[] | null, void, void>(method);
+	export const type = new ProtocolRequestType<CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCall[] | null, CallHierarchyOutgoingCall[], void, void>(method);
+	/** @deprecated Use CallHierarchyOutgoingCallsRequest.type */
 	export const resultType = new ProgressType<CallHierarchyOutgoingCall[]>();
 	export type HandlerSignature = RequestHandler<CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCall[] | null, void>;
 }

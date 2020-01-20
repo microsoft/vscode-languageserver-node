@@ -172,93 +172,118 @@ export interface _EM {
 
 /**
  * Classes to type request response pairs
+ *
+ * The type parameter RO will be removed in the next major version
+ * of the JSON RPC library since it is a LSP concept and doesn't
+ * belong here. For now it is tagged as default never.
  */
-export class RequestType0<R, E, RO> extends AbstractMessageType {
+export class RequestType0<R, E, RO = never> extends AbstractMessageType {
+	/**
+	 * Clients must not use this property. It is here to ensure correct typing.
+	 */
 	public readonly _?: [R, E, RO, _EM];
 	constructor(method: string) {
 		super(method, 0);
-		this._ = undefined;
 	}
 }
 
-export class RequestType<P, R, E, RO> extends AbstractMessageType {
+export class RequestType<P, R, E, RO = never> extends AbstractMessageType {
+	/**
+	 * Clients must not use this property. It is here to ensure correct typing.
+	 */
 	public readonly _?: [P, R, E, RO, _EM];
 	constructor(method: string) {
 		super(method, 1);
-		this._ = undefined;
 	}
 }
 
-
-export class RequestType1<P1, R, E, RO> extends AbstractMessageType {
+export class RequestType1<P1, R, E, RO = never> extends AbstractMessageType {
+	/**
+	 * Clients must not use this property. It is here to ensure correct typing.
+	 */
 	public readonly _?: [P1, R, E, RO, _EM];
 	constructor(method: string) {
 		super(method, 1);
-		this._ = undefined;
 	}
 }
 
-export class RequestType2<P1, P2, R, E, RO> extends AbstractMessageType {
+export class RequestType2<P1, P2, R, E, RO = never> extends AbstractMessageType {
+	/**
+	 * Clients must not use this property. It is here to ensure correct typing.
+	 */
 	public readonly _?: [P1, P2, R, E, RO, _EM];
 	constructor(method: string) {
 		super(method, 2);
-		this._ = undefined;
 	}
 }
 
-export class RequestType3<P1, P2, P3, R, E, RO> extends AbstractMessageType {
+export class RequestType3<P1, P2, P3, R, E, RO = never> extends AbstractMessageType {
+	/**
+	 * Clients must not use this property. It is here to ensure correct typing.
+	 */
 	public readonly _?: [P1, P2, P3, R, E, RO, _EM];
 	constructor(method: string) {
 		super(method, 3);
-		this._ = undefined;
 	}
 }
 
-export class RequestType4<P1, P2, P3, P4, R, E, RO> extends AbstractMessageType {
+export class RequestType4<P1, P2, P3, P4, R, E, RO = never> extends AbstractMessageType {
+	/**
+	 * Clients must not use this property. It is here to ensure correct typing.
+	 */
 	public readonly _?: [P1, P2, P3, P4, R, E, RO, _EM];
 	constructor(method: string) {
 		super(method, 4);
-		this._ = undefined;
 	}
 }
 
-export class RequestType5<P1, P2, P3, P4, P5, R, E, RO> extends AbstractMessageType {
+export class RequestType5<P1, P2, P3, P4, P5, R, E, RO = never> extends AbstractMessageType {
+	/**
+	 * Clients must not use this property. It is here to ensure correct typing.
+	 */
 	public readonly _?: [P1, P2, P3, P4, P5, R, E, RO, _EM];
 	constructor(method: string) {
 		super(method, 5);
-		this._ = undefined;
 	}
 }
 
-export class RequestType6<P1, P2, P3, P4, P5, P6, R, E, RO> extends AbstractMessageType {
+export class RequestType6<P1, P2, P3, P4, P5, P6, R, E, RO = never> extends AbstractMessageType {
+	/**
+	 * Clients must not use this property. It is here to ensure correct typing.
+	 */
 	public readonly _?: [P1, P2, P3, P4, P5, P6, R, E, RO, _EM];
 	constructor(method: string) {
 		super(method, 6);
-		this._ = undefined;
 	}
 }
 
-export class RequestType7<P1, P2, P3, P4, P5, P6, P7, R, E, RO> extends AbstractMessageType {
+export class RequestType7<P1, P2, P3, P4, P5, P6, P7, R, E, RO = never> extends AbstractMessageType {
+	/**
+	 * Clients must not use this property. It is here to ensure correct typing.
+	 */
 	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, R, E, RO, _EM];
 	constructor(method: string) {
 		super(method, 7);
-		this._ = undefined;
 	}
 }
 
-export class RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO> extends AbstractMessageType {
+export class RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO = never> extends AbstractMessageType {
+	/**
+	 * Clients must not use this property. It is here to ensure correct typing.
+	 */
 	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO, _EM];
 	constructor(method: string) {
 		super(method, 8);
-		this._ = undefined;
 	}
 }
 
-export class RequestType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO> extends AbstractMessageType {
+export class RequestType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO = never> extends AbstractMessageType {
+	/**
+	 * Clients must not use this property. It is here to ensure correct typing.
+	 */
 	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO, _EM];
 	constructor(method: string) {
 		super(method, 9);
-		this._ = undefined;
 	}
 }
 
@@ -277,7 +302,15 @@ export interface NotificationMessage extends Message {
 	params?: any
 }
 
-export class NotificationType<P, RO> extends AbstractMessageType {
+/**
+ * The type parameter RO will be removed in the next major version
+ * of the JSON RPC library since it is a LSP concept and doesn't
+ * belong here. For now it is tagged as default never.
+ */
+export class NotificationType<P, RO = never> extends AbstractMessageType {
+	/**
+	 * Clients must not use this property. It is here to ensure correct typing.
+	 */
 	public readonly _?: [P, RO, _EM];
 	constructor(method: string) {
 		super(method, 1);
@@ -285,83 +318,103 @@ export class NotificationType<P, RO> extends AbstractMessageType {
 	}
 }
 
-export class NotificationType0<RO> extends AbstractMessageType {
+export class NotificationType0<RO = never> extends AbstractMessageType {
+	/**
+	 * Clients must not use this property. It is here to ensure correct typing.
+	 */
 	public readonly _?: [RO, _EM];
 	constructor(method: string) {
 		super(method, 0);
-		this._ = undefined;
 	}
 }
 
-export class NotificationType1<P1, RO> extends AbstractMessageType {
+export class NotificationType1<P1, RO = never> extends AbstractMessageType {
+	/**
+	 * Clients must not use this property. It is here to ensure correct typing.
+	 */
 	public readonly _?: [P1, RO, _EM];
 	constructor(method: string) {
 		super(method, 1);
-		this._ = undefined;
 	}
 }
 
-export class NotificationType2<P1, P2, RO> extends AbstractMessageType {
+export class NotificationType2<P1, P2, RO = never> extends AbstractMessageType {
+	/**
+	 * Clients must not use this property. It is here to ensure correct typing.
+	 */
 	public readonly _?: [P1, P2, RO, _EM];
 	constructor(method: string) {
 		super(method, 2);
-		this._ = undefined;
 	}
 }
 
-export class NotificationType3<P1, P2, P3, RO> extends AbstractMessageType {
+export class NotificationType3<P1, P2, P3, RO = never> extends AbstractMessageType {
+	/**
+	 * Clients must not use this property. It is here to ensure correct typing.
+	 */
 	public readonly _?: [P1, P2, P3, RO, _EM];
 	constructor(method: string) {
 		super(method, 3);
-		this._ = undefined;
 	}
 }
 
-export class NotificationType4<P1, P2, P3, P4, RO> extends AbstractMessageType {
+export class NotificationType4<P1, P2, P3, P4, RO = never> extends AbstractMessageType {
+	/**
+	 * Clients must not use this property. It is here to ensure correct typing.
+	 */
 	public readonly _?: [P1, P2, P3, P4, RO, _EM];
 	constructor(method: string) {
 		super(method, 4);
-		this._ = undefined;
 	}
 }
 
-export class NotificationType5<P1, P2, P3, P4, P5, RO> extends AbstractMessageType {
+export class NotificationType5<P1, P2, P3, P4, P5, RO = never> extends AbstractMessageType {
+	/**
+	 * Clients must not use this property. It is here to ensure correct typing.
+	 */
 	public readonly _?: [P1, P2, P3, P4, P5, RO, _EM];
 	constructor(method: string) {
 		super(method, 5);
-		this._ = undefined;
 	}
 }
 
-export class NotificationType6<P1, P2, P3, P4, P5, P6, RO> extends AbstractMessageType {
+export class NotificationType6<P1, P2, P3, P4, P5, P6, RO = never> extends AbstractMessageType {
+	/**
+	 * Clients must not use this property. It is here to ensure correct typing.
+	 */
 	public readonly _?: [P1, P2, P3, P4, P5, P6, RO, _EM];
 	constructor(method: string) {
 		super(method, 6);
-		this._ = undefined;
 	}
 }
 
-export class NotificationType7<P1, P2, P3, P4, P5, P6, P7, RO> extends AbstractMessageType {
+export class NotificationType7<P1, P2, P3, P4, P5, P6, P7, RO = never> extends AbstractMessageType {
+	/**
+	 * Clients must not use this property. It is here to ensure correct typing.
+	 */
 	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, RO, _EM];
 	constructor(method: string) {
 		super(method, 7);
-		this._ = undefined;
 	}
 }
 
-export class NotificationType8<P1, P2, P3, P4, P5, P6, P7, P8, RO> extends AbstractMessageType {
+export class NotificationType8<P1, P2, P3, P4, P5, P6, P7, P8, RO = never> extends AbstractMessageType {
+	/**
+	 * Clients must not use this property. It is here to ensure correct typing.
+	 */
 	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, P8, RO, _EM];
 	constructor(method: string) {
 		super(method, 8);
-		this._ = undefined;
 	}
 }
 
-export class NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, RO> extends AbstractMessageType {
+export class NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, RO = never> extends AbstractMessageType {
+	/**
+	 * Clients must not use this property. It is here to ensure correct typing.
+	 */
 	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, P8, P9, RO, _EM];
 	constructor(method: string) {
 		super(method, 9);
-		this._ = undefined;
 	}
 }
 

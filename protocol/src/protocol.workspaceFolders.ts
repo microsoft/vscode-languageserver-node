@@ -5,9 +5,10 @@
 'use strict';
 
 import {
-	RequestType0, RequestHandler0, NotificationType, NotificationHandler, HandlerResult,
-	CancellationToken
+	RequestHandler0, NotificationHandler, HandlerResult, CancellationToken
 } from 'vscode-jsonrpc';
+
+import { ProtocolRequestType0, ProtocolNotificationType } from './messages';
 
 export interface WorkspaceFoldersInitializeParams {
 	/**
@@ -72,7 +73,7 @@ export interface WorkspaceFolder {
  * The `workspace/workspaceFolders` is sent from the server to the client to fetch the open workspace folders.
  */
 export namespace WorkspaceFoldersRequest {
-	export const type = new RequestType0<WorkspaceFolder[] | null, void, void>('workspace/workspaceFolders');
+	export const type = new ProtocolRequestType0<WorkspaceFolder[] | null, never, void, void>('workspace/workspaceFolders');
 	export type HandlerSignature = RequestHandler0<WorkspaceFolder[] | null, void>;
 	export type MiddlewareSignature = (token: CancellationToken, next: HandlerSignature) => HandlerResult<WorkspaceFolder[] | null, void>;
 }
@@ -82,7 +83,7 @@ export namespace WorkspaceFoldersRequest {
  * folder configuration changes.
  */
 export namespace DidChangeWorkspaceFoldersNotification {
-	export const type = new NotificationType<DidChangeWorkspaceFoldersParams, void>('workspace/didChangeWorkspaceFolders');
+	export const type = new ProtocolNotificationType<DidChangeWorkspaceFoldersParams, void>('workspace/didChangeWorkspaceFolders');
 	export type HandlerSignature = NotificationHandler<DidChangeWorkspaceFoldersParams>;
 	export type MiddlewareSignature = (params: DidChangeWorkspaceFoldersParams, next: HandlerSignature) => void;
 }

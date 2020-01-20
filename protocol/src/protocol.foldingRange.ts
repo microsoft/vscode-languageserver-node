@@ -3,9 +3,12 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { RequestType, RequestHandler, ProgressType } from 'vscode-jsonrpc';
+import { RequestHandler, ProgressType } from 'vscode-jsonrpc';
 import { TextDocumentIdentifier } from 'vscode-languageserver-types';
-import { TextDocumentRegistrationOptions, StaticRegistrationOptions, PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions } from './protocol';
+import { ProtocolRequestType } from './messages';
+import {
+	TextDocumentRegistrationOptions, StaticRegistrationOptions, PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions
+} from './protocol';
 
 // ---- capabilities
 
@@ -103,7 +106,8 @@ export interface FoldingRangeParams extends WorkDoneProgressParams, PartialResul
  */
 export namespace FoldingRangeRequest {
 	export const method: 'textDocument/foldingRange' = 'textDocument/foldingRange';
-	export const type: RequestType<FoldingRangeParams, FoldingRange[] | null, any, FoldingRangeRegistrationOptions> = new RequestType(method);
+	export const type = new ProtocolRequestType<FoldingRangeParams, FoldingRange[] | null, FoldingRange[], any, FoldingRangeRegistrationOptions>(method);
+	/** @deprecated Use FoldingRangeRequest.type */
 	export const resultType = new ProgressType<FoldingRange[]>();
 	export type HandlerSignature = RequestHandler<FoldingRangeParams, FoldingRange[] | null, void>;
 }
