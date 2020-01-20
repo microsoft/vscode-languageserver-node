@@ -1332,7 +1332,7 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCodeLensResolve(handler: ServerRequestHandler<CodeLens, CodeLens, never, void>): void;
+	onCodeLensResolve(handler: RequestHandler<CodeLens, CodeLens, void>): void;
 
 	/**
 	 * Installs a handler for the document formatting request.
@@ -1353,7 +1353,7 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentOnTypeFormatting(handler: ServerRequestHandler<DocumentOnTypeFormattingParams, TextEdit[] | undefined | null, never, void>): void;
+	onDocumentOnTypeFormatting(handler: RequestHandler<DocumentOnTypeFormattingParams, TextEdit[] | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the rename request.
@@ -1367,7 +1367,7 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onPrepareRename(handler: ServerRequestHandler<PrepareRenameParams, Range | { range: Range, placeholder: string } | undefined | null, never, void>): void;
+	onPrepareRename(handler: RequestHandler<PrepareRenameParams, Range | { range: Range, placeholder: string } | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the document links request.
@@ -1381,7 +1381,7 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentLinkResolve(handler: ServerRequestHandler<DocumentLink, DocumentLink | undefined | null, never, void>): void;
+	onDocumentLinkResolve(handler: RequestHandler<DocumentLink, DocumentLink | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the document color request.
@@ -1395,7 +1395,7 @@ export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient =
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onColorPresentation(handler: ServerRequestHandler<ColorPresentationParams, ColorPresentation[] | undefined | null, never, void>): void;
+	onColorPresentation(handler: ServerRequestHandler<ColorPresentationParams, ColorPresentation[] | undefined | null, ColorPresentation[], void>): void;
 
 	/**
 	 * Installs a handler for the folding ranges request.
@@ -1764,7 +1764,7 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 			return handler(params, cancel, attachWorkDone(connection, params), attachPartialResult(connection, params));
 		}),
 		onCodeLensResolve: (handler) => connection.onRequest(CodeLensResolveRequest.type, (params, cancel) => {
-			return handler(params, cancel, attachWorkDone(connection, undefined), undefined);
+			return handler(params, cancel);
 		}),
 		onDocumentFormatting: (handler) => connection.onRequest(DocumentFormattingRequest.type, (params, cancel) => {
 			return handler(params, cancel, attachWorkDone(connection, params), undefined);
@@ -1773,19 +1773,19 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 			return handler(params, cancel, attachWorkDone(connection, params), undefined);
 		}),
 		onDocumentOnTypeFormatting: (handler) => connection.onRequest(DocumentOnTypeFormattingRequest.type, (params, cancel) => {
-			return handler(params, cancel, attachWorkDone(connection, undefined), undefined);
+			return handler(params, cancel);
 		}),
 		onRenameRequest: (handler) => connection.onRequest(RenameRequest.type, (params, cancel) => {
 			return handler(params, cancel, attachWorkDone(connection, params), undefined);
 		}),
 		onPrepareRename: (handler) => connection.onRequest(PrepareRenameRequest.type, (params, cancel) => {
-			return handler(params, cancel, attachWorkDone(connection, params), undefined);
+			return handler(params, cancel);
 		}),
 		onDocumentLinks: (handler) => connection.onRequest(DocumentLinkRequest.type, (params, cancel) => {
 			return handler(params, cancel, attachWorkDone(connection, params), attachPartialResult(connection, params));
 		}),
 		onDocumentLinkResolve: (handler) => connection.onRequest(DocumentLinkResolveRequest.type, (params, cancel) => {
-			return handler(params, cancel, attachWorkDone(connection, undefined), undefined);
+			return handler(params, cancel);
 		}),
 		onDocumentColor: (handler) => connection.onRequest(DocumentColorRequest.type, (params, cancel) => {
 			return handler(params, cancel, attachWorkDone(connection, params), attachPartialResult(connection, params));

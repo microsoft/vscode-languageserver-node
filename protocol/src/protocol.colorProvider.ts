@@ -79,6 +79,6 @@ export interface ColorPresentationParams extends WorkDoneProgressParams, Partial
  * that resolves to such.
  */
 export namespace ColorPresentationRequest {
-	export const type = new ProtocolRequestType<ColorPresentationParams, ColorPresentation[], never, void, WorkDoneProgressOptions & TextDocumentRegistrationOptions>('textDocument/colorPresentation');
+	export const type = new ProtocolRequestType<ColorPresentationParams, ColorPresentation[], ColorPresentation[], void, WorkDoneProgressOptions & TextDocumentRegistrationOptions>('textDocument/colorPresentation');
 	export type HandlerSignature = RequestHandler<ColorPresentationParams, ColorPresentation[], void>;
 }
