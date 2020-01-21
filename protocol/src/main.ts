@@ -79,7 +79,7 @@ export namespace Proposed {
 	export type SemanticTokensEditsPartialResult = st.SemanticTokensEditsPartialResult;
 
 	export type SemanticTokensClientCapabilities = st.SemanticTokensClientCapabilities;
-	export type SemanticTokenOptions = st.SemanticTokenOptions;
+	export type SemanticTokensOptions = st.SemanticTokensOptions;
 	export type SemanticTokensRegistrationOptions = st.SemanticTokensRegistrationOptions;
 	export type SemanticTokensServerCapabilities = st.SemanticTokensServerCapabilities;
 

@@ -10,15 +10,11 @@ import {
 	CallHierarchyOutgoingCall as VCallHierarchyOutgoingCall, CancellationToken, CallHierarchyProvider as VCallHierarchyProvider
 } from 'vscode';
 
-import {
-	ClientCapabilities, ServerCapabilities, DocumentSelector, Proposed
-} from 'vscode-languageserver-protocol';
+import { ClientCapabilities, ServerCapabilities, DocumentSelector, Proposed } from 'vscode-languageserver-protocol';
 
 import { TextDocumentFeature, BaseLanguageClient, Middleware } from './client';
 import * as c2p from './codeConverter';
 import * as p2c from './protocolConverter';
-
-import { CallHierarchyRegistrationOptions, CallHierarchyOptions, CallHierarchyPrepareRequest, CallHierarchyIncomingCallsRequest, CallHierarchyIncomingCallsParams, CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCallsRequest } from 'vscode-languageserver-protocol/lib/protocol.callHierarchy.proposed';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -41,8 +37,8 @@ export interface CallHierarchyOutgoingCallsSignature {
 
 export interface CallHierarchyMiddleware {
 	prepareCallHierarchy?: (this: void, document: TextDocument, positions: VPosition, token: CancellationToken, next: PrepareCallHierachySignature) => ProviderResult<VCallHierarchyItem>;
-	callHierarchyIncomingCalls?: (this: void, item: VCallHierarchyItem, token: CancellationToken, next: CallHierarchyIncomingCallsSignature) => ProviderResult<VCallHierarchyIncomingCall[]>;
-	callHierarchyOutgingCalls?: (this: void, item: VCallHierarchyItem, token: CancellationToken, next: CallHierarchyOutgoingCallsSignature) => ProviderResult<VCallHierarchyOutgoingCall[]>;
+	provideCallHierarchyIncomingCalls?: (this: void, item: VCallHierarchyItem, token: CancellationToken, next: CallHierarchyIncomingCallsSignature) => ProviderResult<VCallHierarchyIncomingCall[]>;
+	provideCallHierarchyOutgingCalls?: (this: void, item: VCallHierarchyItem, token: CancellationToken, next: CallHierarchyOutgoingCallsSignature) => ProviderResult<VCallHierarchyOutgoingCall[]>;
 }
 
 namespace protocol2code {
@@ -139,12 +135,12 @@ class CallHierarchyProvider implements VCallHierarchyProvider {
 		const middleware = this.middleware;
 		const prepareCallHierarchy: PrepareCallHierachySignature = (document, position, token) => {
 			const params = client.code2ProtocolConverter.asTextDocumentPositionParams(document, position);
-			return client.sendRequest(CallHierarchyPrepareRequest.type, params, token).then(
+			return client.sendRequest(Proposed.CallHierarchyPrepareRequest.type, params, token).then(
 				(result) => {
 					return protocol2code.asCallHierarchyItems(this.client.protocol2CodeConverter, result);
 				},
 				(error) => {
-					client.logFailedRequest(CallHierarchyPrepareRequest.type, error);
+					client.logFailedRequest(Proposed.CallHierarchyPrepareRequest.type, error);
 					return Promise.resolve(null);
 				}
 			);
@@ -158,21 +154,21 @@ class CallHierarchyProvider implements VCallHierarchyProvider {
 		const client = this.client;
 		const middleware = this.middleware;
 		const provideCallHierarchyIncomingCalls: CallHierarchyIncomingCallsSignature = (item, token) => {
-			const params: CallHierarchyIncomingCallsParams = {
+			const params: Proposed.CallHierarchyIncomingCallsParams = {
 				item:  code2protocol.asCallHierarchyItem(client.code2ProtocolConverter, item)
 			};
-			return client.sendRequest(CallHierarchyIncomingCallsRequest.type, params, token).then(
+			return client.sendRequest(Proposed.CallHierarchyIncomingCallsRequest.type, params, token).then(
 				(result) => {
 					return protocol2code.asCallHierarchyIncomingCalls(client.protocol2CodeConverter, result);
 				},
 				(error) => {
-					client.logFailedRequest(CallHierarchyIncomingCallsRequest.type, error);
+					client.logFailedRequest(Proposed.CallHierarchyIncomingCallsRequest.type, error);
 					return Promise.resolve(null);
 				}
 			);
 		};
-		return middleware.callHierarchyIncomingCalls
-			? middleware.callHierarchyIncomingCalls(item, token, provideCallHierarchyIncomingCalls)
+		return middleware.provideCallHierarchyIncomingCalls
+			? middleware.provideCallHierarchyIncomingCalls(item, token, provideCallHierarchyIncomingCalls)
 			: provideCallHierarchyIncomingCalls(item, token);
 	}
 
@@ -180,26 +176,26 @@ class CallHierarchyProvider implements VCallHierarchyProvider {
 		const client = this.client;
 		const middleware = this.middleware;
 		const provideCallHierarchyOutgoingCalls: CallHierarchyOutgoingCallsSignature = (item, token) => {
-			const params: CallHierarchyOutgoingCallsParams = {
+			const params: Proposed.CallHierarchyOutgoingCallsParams = {
 				item: code2protocol.asCallHierarchyItem(client.code2ProtocolConverter, item)
 			};
-			return client.sendRequest(CallHierarchyOutgoingCallsRequest.type, params, token).then(
+			return client.sendRequest(Proposed.CallHierarchyOutgoingCallsRequest.type, params, token).then(
 				(result) => {
 					return protocol2code.asCallHierarchyOutgoingCalls(client.protocol2CodeConverter, result);
 				},
 				(error) => {
-					client.logFailedRequest(CallHierarchyOutgoingCallsRequest.type, error);
+					client.logFailedRequest(Proposed.CallHierarchyOutgoingCallsRequest.type, error);
 					return Promise.resolve(null);
 				}
 			);
 		};
-		return middleware.callHierarchyOutgingCalls
-			? middleware.callHierarchyOutgingCalls(item, token, provideCallHierarchyOutgoingCalls)
+		return middleware.provideCallHierarchyOutgingCalls
+			? middleware.provideCallHierarchyOutgingCalls(item, token, provideCallHierarchyOutgoingCalls)
 			: provideCallHierarchyOutgoingCalls(item, token);
 	}
 }
 
-export class CallHierarchyFeature extends TextDocumentFeature<boolean | CallHierarchyOptions, CallHierarchyRegistrationOptions, CallHierarchyProvider> {
+export class CallHierarchyFeature extends TextDocumentFeature<boolean | Proposed.CallHierarchyOptions, Proposed.CallHierarchyRegistrationOptions, CallHierarchyProvider> {
 	constructor(client: BaseLanguageClient) {
 		super(client, Proposed.CallHierarchyPrepareRequest.type);
 	}
@@ -219,7 +215,7 @@ export class CallHierarchyFeature extends TextDocumentFeature<boolean | CallHier
 		this.register(this.messages, { id: id, registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: CallHierarchyRegistrationOptions): [Disposable, CallHierarchyProvider] {
+	protected registerLanguageProvider(options: Proposed.CallHierarchyRegistrationOptions): [Disposable, CallHierarchyProvider] {
 		const client = this._client;
 		const provider = new CallHierarchyProvider(client);
 		return [Languages.registerCallHierarchyProvider(options.documentSelector!, provider), provider];

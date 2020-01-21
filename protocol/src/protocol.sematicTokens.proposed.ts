@@ -75,7 +75,7 @@ export interface SemanticTokensClientCapabilities {
 	}
 }
 
-export interface SemanticTokenOptions extends WorkDoneProgressOptions {
+export interface SemanticTokensOptions extends WorkDoneProgressOptions {
 	/**
 	 * The legend used by the server
 	 */
@@ -98,11 +98,11 @@ export interface SemanticTokenOptions extends WorkDoneProgressOptions {
 	}
 }
 
-export interface SemanticTokensRegistrationOptions extends TextDocumentRegistrationOptions, SemanticTokenOptions, StaticRegistrationOptions {
+export interface SemanticTokensRegistrationOptions extends TextDocumentRegistrationOptions, SemanticTokensOptions, StaticRegistrationOptions {
 }
 
 export interface SemanticTokensServerCapabilities {
-	semanticTokensProvider: SemanticTokenOptions | SemanticTokensRegistrationOptions;
+	semanticTokensProvider: SemanticTokensOptions | SemanticTokensRegistrationOptions;
 }
 
 //------- 'textDocument/semanticTokens' -----
@@ -135,7 +135,7 @@ export interface SemanticTokensEditsParams extends WorkDoneProgressParams, Parti
 
 export namespace SemanticTokensEditsRequest {
 	export const method: 'textDocument/semanticTokens/edits' = 'textDocument/semanticTokens/edits';
-	export const type = new ProtocolRequestType<SemanticTokensEditsParams, SemanticTokensEdits | null, SemanticTokensEditsPartialResult, void, SemanticTokensRegistrationOptions>(method);
+	export const type = new ProtocolRequestType<SemanticTokensEditsParams, SemanticTokens | SemanticTokensEdits | null, SemanticTokensPartialResult | SemanticTokensEditsPartialResult, void, SemanticTokensRegistrationOptions>(method);
 }
 
 //------- 'textDocument/semanticTokens/range' -----
