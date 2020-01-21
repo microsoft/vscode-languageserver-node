@@ -253,8 +253,7 @@ connection.onDeclaration((params): DeclarationLink[] => {
 	}];
 });
 
-connection.onImplementation((params, token): Promise<Definition> => {
-	token.onCancellationRequested
+connection.onImplementation((params): Promise<Definition> => {
 	return new Promise((resolve, reject) => {
 		setTimeout(() => {
 			resolve({ uri: params.textDocument.uri, range: { start: { line: 1, character: 0}, end: {line: 1, character: 10 }}});
@@ -401,8 +400,12 @@ connection.onRequest(SelectionRangeRequest.type, (params) => {
 	return [result];
 });
 
-connection.onRequest(Proposed.CallHierarchyPrepareRequest.type, (params) => {
-	return null;
+connection.languages.callHierarchy.onPrepare((params) => {
+	return [];
+});
+
+connection.languages.semanticTokens.on((params) => {
+	return { data: [] };
 });
 
 connection.listen();

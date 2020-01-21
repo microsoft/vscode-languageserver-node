@@ -62,7 +62,6 @@ export * from 'vscode-languageserver-protocol';
 export { Event };
 
 import * as fm from './files';
-import { CallHierarchy, CallHierarchyFeature } from './callHierarchy.proposed';
 
 export namespace Files {
 	export let uriToFilePath = fm.uriToFilePath;
@@ -376,7 +375,7 @@ export class ErrorMessageTracker {
 /**
  *
  */
-export interface Remote {
+interface Remote {
 	/**
 	 * Attach the remote to the given connection.
 	 *
@@ -410,7 +409,12 @@ export interface Remote {
  * the tools / clients console or log system. Interally it used `window/logMessage`
  * notifications.
  */
-export interface RemoteConsole extends Remote {
+export interface RemoteConsole {
+	/**
+	 * The connection this remote is attached to.
+	 */
+	connection: IConnection;
+
 	/**
 	 * Show an error message.
 	 *
@@ -440,11 +444,68 @@ export interface RemoteConsole extends Remote {
 	log(message: string): void;
 }
 
+class RemoteConsoleImpl implements Logger, RemoteConsole, Remote {
+
+	private _rawConnection: ProtocolConnection;
+	private _connection: IConnection;
+
+	public constructor() {
+	}
+
+	public rawAttach(connection: ProtocolConnection): void {
+		this._rawConnection = connection;
+	}
+
+	public attach(connection: IConnection) {
+		this._connection = connection;
+	}
+
+	public get connection(): IConnection {
+		if (!this._connection) {
+			throw new Error('Remote is not attached to a connection yet.');
+		}
+		return this._connection;
+	}
+
+	public fillServerCapabilities(_capabilities: ServerCapabilities): void {
+	}
+
+	public initialize(_capabilities: ClientCapabilities): void {
+	}
+
+	public error(message: string): void {
+		this.send(MessageType.Error, message);
+	}
+
+	public warn(message: string): void {
+		this.send(MessageType.Warning, message);
+	}
+
+	public info(message: string): void {
+		this.send(MessageType.Info, message);
+	}
+
+	public log(message: string): void {
+		this.send(MessageType.Log, message);
+	}
+
+	private send(type: MessageType, message: string) {
+		if (this._rawConnection) {
+			this._rawConnection.sendNotification(LogMessageNotification.type, { type, message });
+		}
+	}
+}
+
 /**
  * The RemoteWindow interface contains all functions to interact with
  * the visual window of VS Code.
  */
-export interface _RemoteWindow extends Remote {
+export interface _RemoteWindow {
+	/**
+	 * The connection this remote is attached to.
+	 */
+	connection: IConnection;
+
 	/**
 	 * Shows an error message in the client's user interface. Depending on the client this might
 	 * be a modal dialog with a confirmation button or a notification in a notification center
@@ -480,6 +541,48 @@ export interface _RemoteWindow extends Remote {
 }
 
 export type RemoteWindow = _RemoteWindow & WindowProgress;
+
+class _RemoteWindowImpl implements _RemoteWindow, Remote {
+
+	private _connection: IConnection;
+
+	constructor() {
+	}
+
+	public attach(connection: IConnection) {
+		this._connection = connection;
+	}
+
+	public get connection(): IConnection {
+		if (!this._connection) {
+			throw new Error('Remote is not attached to a connection yet.');
+		}
+		return this._connection;
+	}
+
+	public initialize(_capabilities: ClientCapabilities): void {
+	}
+
+	public fillServerCapabilities(_capabilities: ServerCapabilities): void {
+	}
+
+	public showErrorMessage(message: string, ...actions: MessageActionItem[]): Promise<MessageActionItem | undefined> {
+		let params: ShowMessageRequestParams = { type: MessageType.Error, message, actions };
+		return this._connection.sendRequest(ShowMessageRequest.type, params).then(null2Undefined);
+	}
+
+	public showWarningMessage(message: string, ...actions: MessageActionItem[]): Promise<MessageActionItem | undefined> {
+		let params: ShowMessageRequestParams = { type: MessageType.Warning, message, actions };
+		return this._connection.sendRequest(ShowMessageRequest.type, params).then(null2Undefined);
+	}
+
+	public showInformationMessage(message: string, ...actions: MessageActionItem[]): Promise<MessageActionItem | undefined> {
+		let params: ShowMessageRequestParams = { type: MessageType.Info, message, actions };
+		return this._connection.sendRequest(ShowMessageRequest.type, params).then(null2Undefined);
+	}
+}
+
+const RemoteWindowImpl: new () => RemoteWindow = ProgressFeature(_RemoteWindowImpl) as (new () => RemoteWindow);
 
 /**
  * A bulk registration manages n single registration to be able to register
@@ -612,7 +715,12 @@ class BulkUnregistrationImpl implements BulkUnregistration {
 /**
  * Interface to register and unregister `listeners` on the client / tools side.
  */
-export interface RemoteClient extends Remote {
+export interface RemoteClient {
+	/**
+	 * The connection this remote is attached to.
+	 */
+	connection: IConnection;
+
 	/**
 	 * Registers a listener for the given notification.
 	 * @param type the notification type to register for.
@@ -658,101 +766,7 @@ export interface RemoteClient extends Remote {
 	register(registrations: BulkRegistration): Promise<BulkUnregistration>;
 }
 
-class ConnectionLogger implements Logger, RemoteConsole {
-
-	private _rawConnection: ProtocolConnection;
-	private _connection: IConnection;
-
-	public constructor() {
-	}
-
-	public rawAttach(connection: ProtocolConnection): void {
-		this._rawConnection = connection;
-	}
-
-	public attach(connection: IConnection) {
-		this._connection = connection;
-	}
-
-	public get connection(): IConnection {
-		if (!this._connection) {
-			throw new Error('Remote is not attached to a connection yet.');
-		}
-		return this._connection;
-	}
-
-	public fillServerCapabilities(_capabilities: ServerCapabilities): void {
-	}
-
-	public initialize(_capabilities: ClientCapabilities): void {
-	}
-
-	public error(message: string): void {
-		this.send(MessageType.Error, message);
-	}
-
-	public warn(message: string): void {
-		this.send(MessageType.Warning, message);
-	}
-
-	public info(message: string): void {
-		this.send(MessageType.Info, message);
-	}
-
-	public log(message: string): void {
-		this.send(MessageType.Log, message);
-	}
-
-	private send(type: MessageType, message: string) {
-		if (this._rawConnection) {
-			this._rawConnection.sendNotification(LogMessageNotification.type, { type, message });
-		}
-	}
-}
-
-class _RemoteWindowImpl implements _RemoteWindow {
-
-	private _connection: IConnection;
-
-	constructor() {
-	}
-
-	public attach(connection: IConnection) {
-		this._connection = connection;
-	}
-
-	public get connection(): IConnection {
-		if (!this._connection) {
-			throw new Error('Remote is not attached to a connection yet.');
-		}
-		return this._connection;
-	}
-
-	public initialize(_capabilities: ClientCapabilities): void {
-	}
-
-	public fillServerCapabilities(_capabilities: ServerCapabilities): void {
-	}
-
-	public showErrorMessage(message: string, ...actions: MessageActionItem[]): Promise<MessageActionItem | undefined> {
-		let params: ShowMessageRequestParams = { type: MessageType.Error, message, actions };
-		return this._connection.sendRequest(ShowMessageRequest.type, params).then(null2Undefined);
-	}
-
-	public showWarningMessage(message: string, ...actions: MessageActionItem[]): Promise<MessageActionItem | undefined> {
-		let params: ShowMessageRequestParams = { type: MessageType.Warning, message, actions };
-		return this._connection.sendRequest(ShowMessageRequest.type, params).then(null2Undefined);
-	}
-
-	public showInformationMessage(message: string, ...actions: MessageActionItem[]): Promise<MessageActionItem | undefined> {
-		let params: ShowMessageRequestParams = { type: MessageType.Info, message, actions };
-		return this._connection.sendRequest(ShowMessageRequest.type, params).then(null2Undefined);
-	}
-}
-
-const RemoteWindowImpl: new () => RemoteWindow = ProgressFeature(_RemoteWindowImpl) as (new () => RemoteWindow);
-
-class RemoteClientImpl implements RemoteClient {
+class RemoteClientImpl implements RemoteClient, Remote {
 
 	private _connection: IConnection;
 
@@ -841,7 +855,12 @@ class RemoteClientImpl implements RemoteClient {
 /**
  * Represents the workspace managed by the client.
  */
-export interface _RemoteWorkspace extends Remote {
+export interface _RemoteWorkspace {
+	/**
+	 * The connection this remote is attached to.
+	 */
+	connection: IConnection;
+
 	/**
 	 * Applies a `WorkspaceEdit` to the workspace
 	 * @param param the workspace edit params.
@@ -852,7 +871,7 @@ export interface _RemoteWorkspace extends Remote {
 
 export type RemoteWorkspace = _RemoteWorkspace & Configuration & WorkspaceFolders;
 
-class _RemoteWorkspaceImpl implements _RemoteWorkspace {
+class _RemoteWorkspaceImpl implements _RemoteWorkspace, Remote {
 
 	private _connection: IConnection;
 
@@ -892,7 +911,12 @@ const RemoteWorkspaceImpl: new () => RemoteWorkspace = WorkspaceFoldersFeature(C
  * Interface to log telemetry events. The events are actually send to the client
  * and the client needs to feed the event into a proper telemetry system.
  */
-export interface Telemetry extends Remote {
+export interface Telemetry {
+	/**
+	 * The connection this remote is attached to.
+	 */
+	connection: IConnection;
+
 	/**
 	 * Log the given data to telemetry.
 	 *
@@ -905,14 +929,48 @@ export interface Telemetry extends Remote {
  * Interface to log traces to the client. The events are sent to the client and the
  * client needs to log the trace events.
  */
-export interface Tracer extends Remote {
+export interface Tracer {
+	/**
+	 * The connection this remote is attached to.
+	 */
+	connection: IConnection;
+
 	/**
 	 * Log the given data to the trace Log
 	 */
 	log(message: string, verbose?: string): void;
 }
 
-class TracerImpl implements Tracer {
+class TelemetryImpl implements Telemetry, Remote {
+
+	private _connection: IConnection;
+
+	constructor() {
+	}
+
+	public attach(connection: IConnection) {
+		this._connection = connection;
+	}
+
+	public get connection(): IConnection {
+		if (!this._connection) {
+			throw new Error('Remote is not attached to a connection yet.');
+		}
+		return this._connection;
+	}
+
+	public initialize(_capabilities: ClientCapabilities): void {
+	}
+
+	public fillServerCapabilities(_capabilities: ServerCapabilities): void {
+	}
+
+	public logEvent(data: any): void {
+		this._connection.sendNotification(TelemetryEventNotification.type, data);
+	}
+}
+
+class TracerImpl implements Tracer, Remote {
 
 	private _trace: Trace;
 	private _connection: IConnection;
@@ -953,41 +1011,13 @@ class TracerImpl implements Tracer {
 	}
 }
 
-class TelemetryImpl implements Telemetry {
-
-	private _connection: IConnection;
-
-	constructor() {
-	}
-
-	public attach(connection: IConnection) {
-		this._connection = connection;
-	}
-
-	public get connection(): IConnection {
-		if (!this._connection) {
-			throw new Error('Remote is not attached to a connection yet.');
-		}
-		return this._connection;
-	}
-
-	public initialize(_capabilities: ClientCapabilities): void {
-	}
-
-	public fillServerCapabilities(_capabilities: ServerCapabilities): void {
-	}
-
-	public logEvent(data: any): void {
-		this._connection.sendNotification(TelemetryEventNotification.type, data);
-	}
-}
-
-export interface _Languages extends Remote {
+export interface _Languages {
+	connection: IConnection;
 	attachWorkDoneProgress(params: WorkDoneProgressParams): WorkDoneProgress;
 	attachPartialResultProgress<PR>(type: ProgressType<PR>, params: PartialResultParams): ResultProgress<PR> | undefined;
 }
 
-export class LanguagesImpl implements _Languages {
+export class LanguagesImpl implements Remote, _Languages {
 	private _connection: IConnection;
 
 	constructor() {
@@ -1008,10 +1038,6 @@ export class LanguagesImpl implements _Languages {
 	}
 
 	public fillServerCapabilities(_capabilities: ServerCapabilities): void {
-	}
-
-	public logEvent(data: any): void {
-		this._connection.sendNotification(TelemetryEventNotification.type, data);
 	}
 
 	public attachWorkDoneProgress(params: WorkDoneProgressParams): WorkDoneProgress {
@@ -1593,10 +1619,10 @@ export function createConnection(reader: MessageReader, writer: MessageWriter, s
  * @param factories: the factories to use to implement the proposed API
  * @param strategy An optional connection strategy to control additional settings
  */
-export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _>(
-	factories: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,
+export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _>(
+	factories: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages>,
 	strategy?: ConnectionStrategy
-): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>;
+): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages>;
 
 /**
  * Creates a new connection using a the given streams.
@@ -1606,10 +1632,10 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
  * @param strategy An optional connection strategy to control additional settings
  * @return a [connection](#IConnection)
  */
-export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _>(
-	factories: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,
+export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _>(
+	factories: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages>,
 	inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, strategy?: ConnectionStrategy
-): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>;
+): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages>;
 
 /**
  * Creates a new connection.
@@ -1618,10 +1644,10 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
  * @param writer The message writer to write message to.
  * @param strategy An optional connection strategy to control additional settings
  */
-export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _>(
-	factories: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>,
+export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _,  PLanguages = _>(
+	factories: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages>,
 	reader: MessageReader, writer: MessageWriter, strategy?: ConnectionStrategy
-): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>;
+): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages>;
 
 export function createConnection(arg1?: any, arg2?: any, arg3?: any, arg4?: any): IConnection {
 	let factories: Features | undefined;
@@ -1644,7 +1670,7 @@ export function createConnection(arg1?: any, arg2?: any, arg3?: any, arg4?: any)
 
 function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages= _>(
 	input?: NodeJS.ReadableStream | MessageReader, output?: NodeJS.WritableStream | MessageWriter, strategy?: ConnectionStrategy,
-	factories?: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace>
+	factories?: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages>
 ): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages> {
 	if (!input && !output && process.argv.length > 2) {
 		let port: number | undefined = void 0;
@@ -1707,15 +1733,15 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 		});
 	}
 
-	const logger = (factories && factories.console ? new (factories.console(ConnectionLogger))() : new ConnectionLogger()) as ConnectionLogger & PConsole;
+	const logger = (factories && factories.console ? new (factories.console(RemoteConsoleImpl))() : new RemoteConsoleImpl()) as RemoteConsoleImpl & PConsole;
 	const connection = createProtocolConnection(input as any, output as any, logger, strategy);
 	logger.rawAttach(connection);
 	const tracer = (factories && factories.tracer ? new (factories.tracer(TracerImpl))() : new TracerImpl()) as TracerImpl & PTracer;
-	const telemetry = (factories && factories.telemetry ? new (factories.telemetry(TelemetryImpl))() : new TelemetryImpl()) as Telemetry & PTelemetry;
-	const client = (factories && factories.client ? new (factories.client(RemoteClientImpl))() : new RemoteClientImpl()) as RemoteClient & PClient;
-	const remoteWindow = (factories && factories.window ? new (factories.window(RemoteWindowImpl))() : new RemoteWindowImpl()) as RemoteWindow & PWindow;
-	const workspace = (factories && factories.workspace ? new (factories.workspace(RemoteWorkspaceImpl))() : new RemoteWorkspaceImpl()) as RemoteWorkspace & PWorkspace;
-	const languages = (factories && factories.languages ? new (factories.languages(LanguagesImpl))() : new LanguagesImpl()) as Languages & PLanguages;
+	const telemetry = (factories && factories.telemetry ? new (factories.telemetry(TelemetryImpl))() : new TelemetryImpl()) as TelemetryImpl & PTelemetry;
+	const client = (factories && factories.client ? new (factories.client(RemoteClientImpl))() : new RemoteClientImpl()) as RemoteClientImpl & PClient;
+	const remoteWindow = (factories && factories.window ? new (factories.window(RemoteWindowImpl))() : new RemoteWindowImpl()) as Remote & RemoteWindow & PWindow;
+	const workspace = (factories && factories.workspace ? new (factories.workspace(RemoteWorkspaceImpl))() : new RemoteWorkspaceImpl()) as Remote & RemoteWorkspace & PWorkspace;
+	const languages = (factories && factories.languages ? new (factories.languages(LanguagesImpl))() : new LanguagesImpl()) as LanguagesImpl & Languages & PLanguages;
 	const allRemotes: Remote[] = [logger, tracer, telemetry, client, remoteWindow, workspace, languages];
 
 	function asPromise<T>(value: Promise<T>): Promise<T>;
@@ -1953,9 +1979,12 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 
 // Export the protocol currently in proposed state.
 
+import { CallHierarchy, CallHierarchyFeature } from './callHierarchy.proposed';
+import { SemanticTokens, SemanticTokensFeature } from './sematicTokens.proposed';
+
 export namespace ProposedFeatures {
-	export const all: Features<_, _, _, _, _, _, CallHierarchy> = {
+	export const all: Features<_, _, _, _, _, _, CallHierarchy & SemanticTokens> = {
 		__brand: 'features',
-		languages: CallHierarchyFeature
+		languages: combineLanguagesFeatures(CallHierarchyFeature, SemanticTokensFeature)
 	};
 }
