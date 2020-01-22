@@ -35,6 +35,14 @@ export interface SemanticTokens {
 	data: number[];
 }
 
+export namespace SemanticTokens {
+	export function is(value: any): value is SemanticTokens {
+		const candidate = value as SemanticTokens;
+		return candidate !== undefined && (candidate.resultId === undefined || typeof candidate.resultId === 'string') &&
+			Array.isArray(candidate.data) && (candidate.data.length === 0 || typeof candidate.data[0] === 'number');
+	}
+}
+
 export interface SemanticTokensPartialResult {
 	data: number[];
 }

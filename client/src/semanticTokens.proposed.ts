@@ -5,8 +5,8 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import { Middleware, BaseLanguageClient, Proposed, TextDocumentFeature } from './client';
-import { ClientCapabilities, ServerCapabilities, DocumentSelector } from 'vscode-languageserver-protocol';
+import { Middleware, BaseLanguageClient, TextDocumentFeature } from './client';
+import { ClientCapabilities, ServerCapabilities, DocumentSelector, Proposed } from 'vscode-languageserver-protocol';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -55,17 +55,13 @@ declare module 'vscode' {
 		constructor(edits: SemanticTokensEdit[], resultId?: string);
 	}
 
-	export interface SemanticTokensEdit {
+	export class SemanticTokensEdit {
 		readonly start: number;
 		readonly deleteCount: number;
 		readonly data?: Uint32Array;
-	}
 
-	export interface SemanticTokensEditConstructor {
-		new(start: number, deleteCount: number, data?: Uint32Array): SemanticTokensEdit;
+		constructor(start: number, deleteCount: number, data?: Uint32Array);
 	}
-
-	const SemanticTokensEdit: SemanticTokensEditConstructor;
 
 	/**
 	 * The document semantic tokens provider interface defines the contract between extensions and
@@ -278,12 +274,12 @@ namespace protocol2code {
 	}
 }
 
-export interface SemanticTokensProviderAccess {
+export interface SemanticTokensProviders {
 	document: vscode.DocumentSemanticTokensProvider;
-	range: vscode.DocumentRangeSemanticTokensProvider;
+	range?: vscode.DocumentRangeSemanticTokensProvider;
 }
 
-export class SemanticTokensFeature extends TextDocumentFeature<boolean | Proposed.SemanticTokensOptions, Proposed.SemanticTokensRegistrationOptions, SemanticTokensProviderAccess> {
+export class SemanticTokensFeature extends TextDocumentFeature<boolean | Proposed.SemanticTokensOptions, Proposed.SemanticTokensRegistrationOptions, SemanticTokensProviders> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, Proposed.SemanticTokensRequest.type);
@@ -304,7 +300,7 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Propose
 		this.register(this.messages, { id: id, registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: Proposed.SemanticTokensRegistrationOptions): [vscode.Disposable, SemanticTokensProviderAccess] {
+	protected registerLanguageProvider(options: Proposed.SemanticTokensRegistrationOptions): [vscode.Disposable, SemanticTokensProviders] {
 		const hasEditProvider = options.documentProvider !== undefined && typeof options.documentProvider !== 'boolean' && options.documentProvider.edits === true;
 		const documentProvider: vscode.DocumentSemanticTokensProvider = {
 			provideDocumentSemanticTokens: (document, token) => {
@@ -335,7 +331,11 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Propose
 							previousResultId
 						};
 						return client.sendRequest(Proposed.SemanticTokensEditsRequest.type, params, token).then((result) => {
-							return protocol2code.asSemanticTokens(result);
+							if (Proposed.SemanticTokens.is(result)) {
+								return protocol2code.asSemanticTokens(result);
+							} else {
+								return protocol2code.asSemanticTokensEdits(result);
+							}
 						}, (error: any) => {
 							client.logFailedRequest(Proposed.SemanticTokensEditsRequest.type, error);
 							return undefined;
@@ -347,7 +347,38 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Propose
 				}
 				: undefined
 		};
-		const d1 = vscode.languages.registerDocumentSemanticTokensProvider(options.documentSelector!, documentProvider, protocol2code.asLedgend(options.legend));
-		return [, documentProvider];
+		const hasRangeProvider: boolean = options.rangeProvider === true;
+		const rangeProvider: vscode.DocumentRangeSemanticTokensProvider | undefined = hasRangeProvider
+			? {
+				provideDocumentRangeSemanticTokens: (document: vscode.TextDocument, range: vscode.Range, token: vscode.CancellationToken) => {
+					const client = this._client;
+					const middleware = client.clientOptions.middleware! as Middleware & SemanticTokensMiddleware;
+					const provideDocumentRangeSemanticTokens: DocumentRangeSemanticTokensSignature = (document, range, token) => {
+						const params: Proposed.SemanticTokensRangeParams = {
+							textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
+							range: client.code2ProtocolConverter.asRange(range)
+						};
+						return client.sendRequest(Proposed.SemanticTokensRangeRequest.type, params, token).then((result) => {
+							return protocol2code.asSemanticTokens(result);
+						}, (error: any) => {
+							client.logFailedRequest(Proposed.SemanticTokensRangeRequest.type, error);
+							return undefined;
+						});
+					};
+					return middleware.provideDocumentRangeSemanticTokens
+						? middleware.provideDocumentRangeSemanticTokens(document, range, token, provideDocumentRangeSemanticTokens)
+						: provideDocumentRangeSemanticTokens(document, range, token);
+				}
+			}
+			: undefined;
+
+		const disposables: vscode.Disposable[] = [];
+		const legend: vscode.SemanticTokensLegend = protocol2code.asLedgend(options.legend);
+		disposables.push(vscode.languages.registerDocumentSemanticTokensProvider(options.documentSelector!, documentProvider, legend));
+		if (rangeProvider !== undefined) {
+			disposables.push(vscode.languages.registerDocumentRangeSemanticTokensProvider(options.documentSelector!, rangeProvider, legend));
+		}
+
+		return [new vscode.Disposable(() => disposables.forEach(item => item.dispose())), { document: documentProvider, range: rangeProvider }];
 	}
 }

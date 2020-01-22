@@ -73,6 +73,7 @@ export namespace Proposed {
 
 	export type SemanticTokensLegend = st.SemanticTokensLegend;
 	export type SemanticTokens = st.SemanticTokens;
+	export const SemanticTokens = st.SemanticTokens;
 	export type SemanticTokensPartialResult = st.SemanticTokensPartialResult;
 	export type SemanticTokensEdit = st.SemanticTokensEdit;
 	export type SemanticTokensEdits = st.SemanticTokensEdits;
