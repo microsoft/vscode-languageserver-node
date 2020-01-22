@@ -359,19 +359,22 @@ export namespace TextDocument {
 			}
 			return diff;
 		});
-		let lastModifiedOffset = text.length;
-		for (let i = sortedEdits.length - 1; i >= 0; i--) {
-			let e = sortedEdits[i];
+		let lastModifiedOffset = 0;
+		const spans = [];
+		for (const e of sortedEdits) {
 			let startOffset = document.offsetAt(e.range.start);
-			let endOffset = document.offsetAt(e.range.end);
-			if (endOffset <= lastModifiedOffset) {
-				text = text.substring(0, startOffset) + e.newText + text.substring(endOffset, text.length);
-			} else {
+			if (startOffset < lastModifiedOffset) {
 				throw new Error('Overlapping edit');
+			} else if (startOffset > lastModifiedOffset) {
+				spans.push(text.substring(lastModifiedOffset, startOffset));
 			}
-			lastModifiedOffset = startOffset;
+			if (e.newText.length) {
+				spans.push(e.newText);
+			}
+			lastModifiedOffset = document.offsetAt(e.range.end);
 		}
-		return text;
+		spans.push(text.substr(lastModifiedOffset));
+		return spans.join('');
 	}
 }
 
