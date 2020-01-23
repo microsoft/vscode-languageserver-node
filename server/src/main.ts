@@ -1980,11 +1980,14 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 // Export the protocol currently in proposed state.
 
 import { CallHierarchy, CallHierarchyFeature } from './callHierarchy.proposed';
-import { SemanticTokens, SemanticTokensFeature } from './sematicTokens.proposed';
+import * as st from './sematicTokens.proposed';
 
 export namespace ProposedFeatures {
-	export const all: Features<_, _, _, _, _, _, CallHierarchy & SemanticTokens> = {
+	export const all: Features<_, _, _, _, _, _, CallHierarchy & st.SemanticTokens> = {
 		__brand: 'features',
-		languages: combineLanguagesFeatures(CallHierarchyFeature, SemanticTokensFeature)
+		languages: combineLanguagesFeatures(CallHierarchyFeature, st.SemanticTokensFeature)
 	};
+
+	export type SemanticTokensBuilder = st.SemanticTokensBuilder;
+	export const SemanticTokensBuilder = st.SemanticTokensBuilder;
 }

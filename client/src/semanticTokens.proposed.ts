@@ -252,7 +252,7 @@ namespace protocol2code {
 		if (value === undefined || value === null) {
 			return undefined;
 		}
-		return new vscode.SemanticTokens(new Uint32Array(value.data));
+		return new vscode.SemanticTokens(new Uint32Array(value.data), value.resultId);
 	}
 
 	export function asSemanticTokensEdit(value: Proposed.SemanticTokensEdit): vscode.SemanticTokensEdit {
@@ -289,6 +289,36 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Propose
 		const capabilites: ClientCapabilities & Proposed.SemanticTokensClientCapabilities = cap as any;
 		let capability = ensure(ensure(capabilites, 'textDocument')!, 'semanticTokens')!;
 		capability.dynamicRegistration = true;
+		capability.tokenTypes = [
+			Proposed.SemanticTokenTypes.comment,
+			Proposed.SemanticTokenTypes.comment,
+			Proposed.SemanticTokenTypes.keyword,
+			Proposed.SemanticTokenTypes.number,
+			Proposed.SemanticTokenTypes.regexp,
+			Proposed.SemanticTokenTypes.operator,
+			Proposed.SemanticTokenTypes.namespace,
+			Proposed.SemanticTokenTypes.type,
+			Proposed.SemanticTokenTypes.struct,
+			Proposed.SemanticTokenTypes.class,
+			Proposed.SemanticTokenTypes.interface,
+			Proposed.SemanticTokenTypes.enum,
+			Proposed.SemanticTokenTypes.typeParameter,
+			Proposed.SemanticTokenTypes.function,
+			Proposed.SemanticTokenTypes.member,
+			Proposed.SemanticTokenTypes.marco,
+			Proposed.SemanticTokenTypes.variable,
+			Proposed.SemanticTokenTypes.parameter,
+			Proposed.SemanticTokenTypes.property,
+			Proposed.SemanticTokenTypes.label
+		];
+		capability.tokenModifiers = [
+			Proposed.SemanticTokenModifiers.declaration,
+			Proposed.SemanticTokenModifiers.documentation,
+			Proposed.SemanticTokenModifiers.static,
+			Proposed.SemanticTokenModifiers.abstract,
+			Proposed.SemanticTokenModifiers.deprecated,
+			Proposed.SemanticTokenModifiers.async
+		];
 	}
 
 	public initialize(cap: ServerCapabilities, documentSelector: DocumentSelector): void {

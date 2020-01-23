@@ -71,6 +71,8 @@ export namespace Proposed {
 		export type HandlerSignature = callHierarchy.CallHierarchyOutgoingCallsRequest.HandlerSignature;
 	}
 
+	export const SemanticTokenTypes = st.SemanticTokenTypes;
+	export const SemanticTokenModifiers = st.SemanticTokenModifiers;
 	export type SemanticTokensLegend = st.SemanticTokensLegend;
 	export type SemanticTokens = st.SemanticTokens;
 	export const SemanticTokens = st.SemanticTokens;

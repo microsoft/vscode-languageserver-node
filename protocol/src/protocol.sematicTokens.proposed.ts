@@ -8,6 +8,52 @@ import { TextDocumentIdentifier, Range } from 'vscode-languageserver-types';
 import { PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions, TextDocumentRegistrationOptions, StaticRegistrationOptions } from './protocol';
 import { ProtocolRequestType } from './messages';
 
+/**
+ * A set of predefined token types. This set is not fixed
+ * an clients can specify additional token types via the
+ * corresponding client capabilities.
+ */
+export enum SemanticTokenTypes {
+	comment = 'comment',
+	keyword = 'keyword',
+	string = 'string',
+	number = 'number',
+	regexp = 'regexp',
+	operator = 'operator',
+	namespace = 'namespace',
+	type = 'type',
+	struct = 'struct',
+	class = 'class',
+	interface = 'interface',
+	enum = 'enum',
+	typeParameter = 'typeParameter',
+	function = 'function',
+	member = 'member',
+	property = 'property',
+	marco = 'marco',
+	variable = 'variable',
+	parameter = 'parameter',
+	label = 'label'
+}
+
+/**
+ * A set of predefined token modifiers. This set is not fixed
+ * an clients can specify additional token types via the
+ * corresponding client capabilities.
+ */
+export enum SemanticTokenModifiers {
+	documentation = 'documentation',
+	declaration = 'declaration',
+	definition = 'definition',
+	reference = 'reference',
+	static = 'static',
+	abstract = 'abstract',
+	deprecated = 'deprected',
+	async = 'async',
+	volatile = 'volatile',
+	final = 'final'
+}
+
 export interface SemanticTokensLegend {
 	/**
 	 * The token types a server uses.
@@ -79,6 +125,16 @@ export interface SemanticTokensClientCapabilities {
 			 * return value for the corresponding server capability as well.
 			 */
 			dynamicRegistration?: boolean;
+
+			/**
+			 * The token types know by the client.
+			 */
+			tokenTypes: string[];
+
+			/**
+			 * The token modifiers know by the client.
+			 */
+			tokenModifiers: string[]
 		};
 	}
 }

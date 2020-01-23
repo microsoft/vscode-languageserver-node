@@ -6,7 +6,7 @@
 
 import * as path from 'path';
 import { commands, ExtensionContext, Uri } from 'vscode';
-import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from '../../../client/lib/main';
+import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient';
 
 let client: LanguageClient;
 
