@@ -12,6 +12,8 @@ import { ProtocolRequestType } from './messages';
  * A set of predefined token types. This set is not fixed
  * an clients can specify additional token types via the
  * corresponding client capabilities.
+ *
+ * @since 3.16.0 - Proposed state
  */
 export enum SemanticTokenTypes {
 	comment = 'comment',
@@ -40,6 +42,8 @@ export enum SemanticTokenTypes {
  * A set of predefined token modifiers. This set is not fixed
  * an clients can specify additional token types via the
  * corresponding client capabilities.
+ *
+ * @since 3.16.0 - Proposed state
  */
 export enum SemanticTokenModifiers {
 	documentation = 'documentation',
@@ -54,6 +58,9 @@ export enum SemanticTokenModifiers {
 	final = 'final'
 }
 
+/**
+ * @since 3.16.0 - Proposed state
+ */
 export interface SemanticTokensLegend {
 	/**
 	 * The token types a server uses.
@@ -66,6 +73,9 @@ export interface SemanticTokensLegend {
 	tokenModifiers: string[];
 }
 
+/**
+ * @since 3.16.0 - Proposed state
+ */
 export interface SemanticTokens {
 	/**
 	 * An optional result id. If provided and clients support delta updating
@@ -76,11 +86,16 @@ export interface SemanticTokens {
 	resultId?: string;
 
 	/**
-	 * The actual tokens
+	 * The actual tokens. For a detailed description about how the data is
+	 * structured pls see
+	 * https://github.com/microsoft/vscode-extension-samples/blob/5ae1f7787122812dcc84e37427ca90af5ee09f14/semantic-tokens-sample/vscode.proposed.d.ts#L71
 	 */
 	data: number[];
 }
 
+/**
+ * @since 3.16.0 - Proposed state
+ */
 export namespace SemanticTokens {
 	export function is(value: any): value is SemanticTokens {
 		const candidate = value as SemanticTokens;
@@ -89,27 +104,46 @@ export namespace SemanticTokens {
 	}
 }
 
+/**
+ * @since 3.16.0 - Proposed state
+ */
 export interface SemanticTokensPartialResult {
 	data: number[];
 }
 
+/**
+ * @since 3.16.0 - Proposed state
+ */
 export interface SemanticTokensEdit {
 	start: number;
 	deleteCount: number;
 	data?: number[];
 }
 
+/**
+ * @since 3.16.0 - Proposed state
+ */
 export interface SemanticTokensEdits {
 	readonly resultId?: string;
+	/**
+	 * For a detailed description how these edits are structured pls see
+	 * https://github.com/microsoft/vscode-extension-samples/blob/5ae1f7787122812dcc84e37427ca90af5ee09f14/semantic-tokens-sample/vscode.proposed.d.ts#L131
+	 */
 	edits: SemanticTokensEdit[];
 }
 
+/**
+ * @since 3.16.0 - Proposed state
+ */
 export interface SemanticTokensEditsPartialResult {
 	edits: SemanticTokensEdit[]
 }
 
 //------- 'textDocument/semanticTokens' -----
 
+/**
+ * @since 3.16.0 - Proposed state
+ */
 export interface SemanticTokensClientCapabilities {
 	/**
 	 * The text document client capabilities
@@ -117,6 +151,8 @@ export interface SemanticTokensClientCapabilities {
 	textDocument?: {
 		/**
 		 * Capabilities specific to the `textDocument/semanticTokens`
+		 *
+		 * @since 3.16.0 - Proposed state
 		 */
 		semanticTokens?: {
 			/**
@@ -139,6 +175,9 @@ export interface SemanticTokensClientCapabilities {
 	}
 }
 
+/**
+ * @since 3.16.0 - Proposed state
+ */
 export interface SemanticTokensOptions extends WorkDoneProgressOptions {
 	/**
 	 * The legend used by the server
@@ -162,15 +201,24 @@ export interface SemanticTokensOptions extends WorkDoneProgressOptions {
 	}
 }
 
+/**
+ * @since 3.16.0 - Proposed state
+ */
 export interface SemanticTokensRegistrationOptions extends TextDocumentRegistrationOptions, SemanticTokensOptions, StaticRegistrationOptions {
 }
 
+/**
+ * @since 3.16.0 - Proposed state
+ */
 export interface SemanticTokensServerCapabilities {
 	semanticTokensProvider: SemanticTokensOptions | SemanticTokensRegistrationOptions;
 }
 
 //------- 'textDocument/semanticTokens' -----
 
+/**
+ * @since 3.16.0 - Proposed state
+ */
 export interface SemanticTokensParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
 	 * The text document.
@@ -178,6 +226,9 @@ export interface SemanticTokensParams extends WorkDoneProgressParams, PartialRes
 	textDocument: TextDocumentIdentifier;
 }
 
+/**
+ * @since 3.16.0 - Proposed state
+ */
 export namespace SemanticTokensRequest {
 	export const method: 'textDocument/semanticTokens' = 'textDocument/semanticTokens';
 	export const type = new ProtocolRequestType<SemanticTokensParams, SemanticTokens | null, SemanticTokensPartialResult, void, SemanticTokensRegistrationOptions>(method);
@@ -185,6 +236,9 @@ export namespace SemanticTokensRequest {
 
 //------- 'textDocument/semanticTokens/edits' -----
 
+/**
+ * @since 3.16.0 - Proposed state
+ */
 export interface SemanticTokensEditsParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
 	 * The text document.
@@ -197,6 +251,9 @@ export interface SemanticTokensEditsParams extends WorkDoneProgressParams, Parti
 	previousResultId: string;
 }
 
+/**
+ * @since 3.16.0 - Proposed state
+ */
 export namespace SemanticTokensEditsRequest {
 	export const method: 'textDocument/semanticTokens/edits' = 'textDocument/semanticTokens/edits';
 	export const type = new ProtocolRequestType<SemanticTokensEditsParams, SemanticTokens | SemanticTokensEdits | null, SemanticTokensPartialResult | SemanticTokensEditsPartialResult, void, SemanticTokensRegistrationOptions>(method);
@@ -204,6 +261,9 @@ export namespace SemanticTokensEditsRequest {
 
 //------- 'textDocument/semanticTokens/range' -----
 
+/**
+ * @since 3.16.0 - Proposed state
+ */
 export interface SemanticTokensRangeParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
 	 * The text document.
@@ -216,6 +276,9 @@ export interface SemanticTokensRangeParams extends WorkDoneProgressParams, Parti
 	range: Range;
 }
 
+/**
+ * @since 3.16.0 - Proposed state
+ */
 export namespace SemanticTokensRangeRequest {
 	export const method: 'textDocument/semanticTokens/range' = 'textDocument/semanticTokens/range';
 	export const type = new ProtocolRequestType<SemanticTokensRangeParams, SemanticTokens | null, SemanticTokensPartialResult, void, void>(method);
