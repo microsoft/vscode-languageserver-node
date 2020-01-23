@@ -33,6 +33,7 @@ import { DeclarationFeature } from './declaration';
 import { SelectionRangeFeature } from './selectionRange';
 import { ProgressFeature } from './progress';
 import { CallHierarchyFeature } from './callHierarchy.proposed';
+import { SemanticTokensFeature } from './semanticTokens.proposed';
 
 import * as Is from './utils/is';
 import { terminate } from './utils/processes';
@@ -531,7 +532,8 @@ export class SettingMonitor {
 export namespace ProposedFeatures {
 	export function createAll(client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
 		let result: (StaticFeature | DynamicFeature<any>)[] = [
-			new CallHierarchyFeature(client)
+			new CallHierarchyFeature(client),
+			new SemanticTokensFeature(client)
 		];
 		return result;
 	}

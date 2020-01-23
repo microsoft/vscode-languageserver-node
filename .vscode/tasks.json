@@ -231,6 +231,20 @@
 			"problemMatcher": [
 				"$tsc-watch"
 			]
+		},
+		{
+			"label": "watch:testbed",
+			"type": "shell",
+			"command": "npm run watch:client-tests",
+			"group": "build",
+			"presentation": {
+				"panel": "dedicated",
+				"reveal": "never"
+			},
+			"isBackground": true,
+			"problemMatcher": [
+				"$tsc-watch"
+			]
 		}
 	]
 }

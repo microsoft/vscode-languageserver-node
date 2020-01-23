@@ -11,11 +11,11 @@ import {
 	SignatureHelp, SymbolInformation, SymbolKind, TextDocumentEdit, TextDocuments, TextDocumentSyncKind,
 	TextEdit, VersionedTextDocumentIdentifier, ProposedFeatures, DiagnosticTag, Proposed, InsertTextFormat,
 	SelectionRangeRequest, SelectionRange
-} from '../../../server/lib/main';
+} from 'vscode-languageserver';
 
 import {
 	TextDocument
-} from '../../../textDocument/lib/umd/main';
+} from 'vscode-languageserver-textdocument';
 
 let connection = createConnection(ProposedFeatures.all);
 let documents = new TextDocuments(TextDocument);
@@ -37,7 +37,65 @@ interface ActionItem extends MessageActionItem {
 	id: string;
 }
 
-let folder;
+let folder: string;
+
+enum TokenTypes {
+	comment = 0,
+	keyword = 1,
+	string = 2,
+	number = 3,
+	regexp = 4,
+	type = 5,
+	class = 6,
+	interface = 7,
+	enum = 8,
+	typeParameter = 9,
+	function = 10,
+	member = 11,
+	property = 12,
+	variable = 13,
+	parameter = 14,
+	lambdaFunction = 15,
+	_ = 16
+}
+
+enum TokenModifiers {
+    abstract = 0,
+    deprecated = 1,
+	_ = 2,
+}
+
+
+function computeLegend(capability: Proposed.SemanticTokensClientCapabilities): Proposed.SemanticTokensLegend {
+
+	const clientTokenTypes = new Set<string>(capability.textDocument.semanticTokens.tokenTypes);
+	const clientTokenModifiers = new Set<string>(capability.textDocument.semanticTokens.tokenModifiers);
+
+	const tokenTypes: string[] = [];
+	for (let i = 0; i < TokenTypes._; i++) {
+		const str = TokenTypes[i];
+		if (clientTokenTypes.has(str)) {
+			tokenTypes.push(str);
+		} else {
+			if (str === 'lambdaFunction') {
+				tokenTypes.push('function')
+			} else {
+				tokenTypes.push('type');
+			}
+		}
+	}
+
+	const tokenModifiers: string[] = [];
+	for (let i = 0; i < TokenModifiers._; i++) {
+		const str = TokenModifiers[i];
+		if (clientTokenModifiers.has(str)) {
+			tokenModifiers.push(str)
+		}
+	}
+
+	return { tokenTypes, tokenModifiers };
+}
+
 
 connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> | ResponseError<InitializeError> | InitializeResult => {
 	progress.begin('Initializing test server');
@@ -50,7 +108,8 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 	}
 
 	return new Promise((resolve, reject) => {
-		let result: InitializeResult & { capabilities: Proposed.CallHierarchyServerCapabilities } = {
+		const tokenLegend = computeLegend(params.capabilities as Proposed.SemanticTokensClientCapabilities);
+		let result: InitializeResult & { capabilities: Proposed.CallHierarchyServerCapabilities & Proposed.SemanticTokensServerCapabilities } = {
 			capabilities: {
 				textDocumentSync: TextDocumentSyncKind.Full,
 				hoverProvider: true,
@@ -94,7 +153,14 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 					commands: ['testbed.helloWorld']
 				},
 				callHierarchyProvider: true,
-				selectionRangeProvider: { workDoneProgress: true }
+				selectionRangeProvider: { workDoneProgress: true },
+				semanticTokensProvider: {
+					legend: tokenLegend,
+					documentProvider: {
+						edits: true,
+					},
+					rangeProvider: true
+				}
 			}
 		};
 		setTimeout(() => {
@@ -153,22 +219,22 @@ connection.onDidChangeConfiguration((params) => {
  * @param document
  */
 function validate(document: TextDocument): Diagnostic[] {
-	connection.window.createWorkDoneProgress().then((progress) => {
-		progress.begin('Validating', 0, 'happy coding', true);
-		let counter = 1;
-		let interval = setInterval(() => {
-			if (counter === 11) {
-				clearInterval(interval);
-				progress.done();
-			} else {
-				progress.report(counter++ * 10);
-			}
-		}, 1000);
-		progress.token.onCancellationRequested(() => {
-			progress.done();
-			clearInterval(interval);
-		});
-	});
+	// connection.window.createWorkDoneProgress().then((progress) => {
+	// 	progress.begin('Validating', 0, 'happy coding', true);
+	// 	let counter = 1;
+	// 	let interval = setInterval(() => {
+	// 		if (counter === 11) {
+	// 			clearInterval(interval);
+	// 			progress.done();
+	// 		} else {
+	// 			progress.report(counter++ * 10);
+	// 		}
+	// 	}, 1000);
+	// 	progress.token.onCancellationRequested(() => {
+	// 		progress.done();
+	// 		clearInterval(interval);
+	// 	});
+	// });
 	connection.console.log("Validaing document " + document.uri);
 	return [ {
 		range: Range.create(0, 0, 0, 10),
@@ -253,8 +319,7 @@ connection.onDeclaration((params): DeclarationLink[] => {
 	}];
 });
 
-connection.onImplementation((params, token): Promise<Definition> => {
-	token.onCancellationRequested
+connection.onImplementation((params): Promise<Definition> => {
 	return new Promise((resolve, reject) => {
 		setTimeout(() => {
 			resolve({ uri: params.textDocument.uri, range: { start: { line: 1, character: 0}, end: {line: 1, character: 10 }}});
@@ -401,8 +466,55 @@ connection.onRequest(SelectionRangeRequest.type, (params) => {
 	return [result];
 });
 
-connection.onRequest(Proposed.CallHierarchyPrepareRequest.type, (params) => {
-	return null;
+connection.languages.callHierarchy.onPrepare((params) => {
+	return [];
+});
+
+
+
+let builder: ProposedFeatures.SemanticTokensBuilder;
+function buildTokens(builder: ProposedFeatures.SemanticTokensBuilder, document: TextDocument) {
+	const text = document.getText();
+	const regexp = /\w+/g;
+	let match: RegExpMatchArray;
+	let tokenCounter: number = 0;
+	let modifierCounter: number = 0;
+	while ((match = regexp.exec(text)) !== null) {
+		const word = match[0];
+		const position = document.positionAt(match.index);
+		const tokenType = tokenCounter % TokenTypes._;
+		const tokenModifier = 1 << modifierCounter % TokenModifiers._;
+		builder.push(position.line, position.character, word.length, tokenType, tokenModifier);
+		tokenCounter++;
+		modifierCounter++;
+	}
+}
+
+connection.languages.semanticTokens.on((params) => {
+	const document = documents.get(params.textDocument.uri);
+	if (document === undefined) {
+		return { data: [] };
+	}
+	builder = new ProposedFeatures.SemanticTokensBuilder();
+	buildTokens(builder, document);
+	return builder.build();
+});
+
+connection.languages.semanticTokens.onEdits((params) => {
+	const document = documents.get(params.textDocument.uri);
+	if (document === undefined) {
+		return { edits: [] };
+	}
+	if (builder === undefined) {
+		builder = new ProposedFeatures.SemanticTokensBuilder();
+	}
+	builder.previousResult(params.previousResultId);
+	buildTokens(builder, document);
+	return builder.buildEdits();
+});
+
+connection.languages.semanticTokens.onRange((params) => {
+	return { data: [] };
 });
 
 connection.listen();
