@@ -132,13 +132,12 @@ export class SemanticTokensBuilder {
 				};
 				return result;
 			} else if (startIndex < dataLength) {
-				// prefix match but new data is smaller.
 				return { resultId: this.id, edits: [
-					{ start: startIndex, deleteCount: prevDataLength - startIndex }
+					{ start: startIndex, deleteCount: 0, data: this._data.slice(startIndex) }
 				]};
 			} else if (startIndex < prevDataLength) {
 				return { resultId: this.id, edits: [
-					{ start: startIndex, deleteCount: 0, data: this._data.slice(startIndex) }
+					{ start: startIndex, deleteCount: prevDataLength - startIndex }
 				]};
 			} else {
 				return { resultId: this.id, edits: [] };
