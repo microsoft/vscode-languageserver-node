@@ -12,6 +12,12 @@ import {
 	WorkDoneProgressParams, WorkDoneProgressOptions
 } from './protocol';
 
+/**
+ * Represents programming constructs like functions or constructors in the context
+ * of call hierarchy.
+ *
+ * @since 3.16.0 - Proposed state
+ */
 export interface CallHierarchyItem {
 	/**
 	 * The name of this item.
@@ -52,6 +58,8 @@ export interface CallHierarchyItem {
 
 /**
  * Represents an incoming call, e.g. a caller of a method or constructor.
+ *
+ * @since 3.16.0 - Proposed state
  */
 export interface CallHierarchyIncomingCall {
 
@@ -69,6 +77,8 @@ export interface CallHierarchyIncomingCall {
 
 /**
  * Represents an outgoing call, e.g. calling a getter from a method or a method from a constructor etc.
+ *
+ * @since 3.16.0 - Proposed state
  */
 export interface CallHierarchyOutgoingCall {
 
@@ -85,13 +95,18 @@ export interface CallHierarchyOutgoingCall {
 	fromRanges: Range[];
 }
 
+/**
+ * @since 3.16.0 - Proposed state
+ */
 export interface CallHierarchyClientCapabilities {
 	/**
 	 * The text document client capabilities
 	 */
 	textDocument?: {
 		/**
-		 * Capabilities specific to the `textDocument/callHierarchy`
+		 * Capabilities specific to the `textDocument/callHierarchy`.
+		 *
+		 * @since 3.16.0 - Proposed state
 		 */
 		callHierarchy?: {
 			/**
@@ -104,12 +119,27 @@ export interface CallHierarchyClientCapabilities {
 	}
 }
 
+/**
+ * Call hierarchy options used during static registration.
+ *
+ * @since 3.16.0 - Proposed state
+ */
 export interface CallHierarchyOptions extends WorkDoneProgressOptions {
 }
 
+/**
+ * Call hierarchy options used during static or dynamic registration.
+ *
+ * @since 3.16.0 - Proposed state
+ */
 export interface CallHierarchyRegistrationOptions extends TextDocumentRegistrationOptions, CallHierarchyOptions {
 }
 
+/**
+ * The call hierarchy server capabilities.
+ *
+ * @since 3.16.0 - Proposed state
+ */
 export interface CallHierarchyServerCapabilities {
 	/**
 	 * The server provides Call Hierarchy support.
@@ -119,30 +149,58 @@ export interface CallHierarchyServerCapabilities {
 
 /**
  * The parameter of a `textDocument/prepareCallHierarchy` request.
+ *
+ * @since 3.16.0 - Proposed state
  */
 export interface CallHierarchyPrepareParams extends TextDocumentPositionParams, WorkDoneProgressParams {
 }
 
+/**
+ * A request to result a `CallHierarchyItem` in a document at a given position.
+ * Can be used as an input to a incoming or outgoing call hierarchy.
+ *
+ * @since 3.16.0 - Proposed state
+ */
 export namespace CallHierarchyPrepareRequest {
 	export const method: 'textDocument/prepareCallHierarchy' = 'textDocument/prepareCallHierarchy';
 	export const type = new ProtocolRequestType<CallHierarchyPrepareParams, CallHierarchyItem[] | null, never, void, CallHierarchyRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<CallHierarchyPrepareParams, CallHierarchyItem[] | null, void>;
 }
 
+/**
+ * The parameter of a `callHierarchy/incomingCalls` request.
+ *
+ * @since 3.16.0 - Proposed state
+ */
 export interface CallHierarchyIncomingCallsParams extends WorkDoneProgressParams, PartialResultParams {
 	item: CallHierarchyItem;
 }
 
+/**
+ * A request to resolve the incoming calls for a given `CallHierarchyItem`.
+ *
+ * @since 3.16.0 - Proposed state
+ */
 export namespace CallHierarchyIncomingCallsRequest {
 	export const method: 'callHierarchy/incomingCalls' = 'callHierarchy/incomingCalls';
 	export const type = new ProtocolRequestType<CallHierarchyIncomingCallsParams, CallHierarchyIncomingCall[] | null, CallHierarchyIncomingCall[], void, void>(method);
 	export type HandlerSignature = RequestHandler<CallHierarchyIncomingCallsParams, CallHierarchyIncomingCall[] | null, void>;
 }
 
+/**
+ * The parameter of a `callHierarchy/outgoingCalls` request.
+ *
+ * @since 3.16.0 - Proposed state
+ */
 export interface CallHierarchyOutgoingCallsParams extends WorkDoneProgressParams, PartialResultParams {
 	item: CallHierarchyItem;
 }
 
+/**
+ * A request to resolve the outgoing calls for a given `CallHierarchyItem`.
+ *
+ * @since 3.16.0 - Proposed state
+ */
 export namespace CallHierarchyOutgoingCallsRequest {
 	export const method: 'callHierarchy/outgoingCalls' = 'callHierarchy/outgoingCalls';
 	export const type = new ProtocolRequestType<CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCall[] | null, CallHierarchyOutgoingCall[], void, void>(method);
