@@ -32,7 +32,7 @@ export enum SemanticTokenTypes {
 	function = 'function',
 	member = 'member',
 	property = 'property',
-	marco = 'marco',
+	macro = 'macro',
 	variable = 'variable',
 	parameter = 'parameter',
 	label = 'label'
