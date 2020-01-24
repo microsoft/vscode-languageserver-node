@@ -305,7 +305,7 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Propose
 			Proposed.SemanticTokenTypes.typeParameter,
 			Proposed.SemanticTokenTypes.function,
 			Proposed.SemanticTokenTypes.member,
-			Proposed.SemanticTokenTypes.marco,
+			Proposed.SemanticTokenTypes.macro,
 			Proposed.SemanticTokenTypes.variable,
 			Proposed.SemanticTokenTypes.parameter,
 			Proposed.SemanticTokenTypes.property,
