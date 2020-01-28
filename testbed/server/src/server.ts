@@ -472,7 +472,16 @@ connection.languages.callHierarchy.onPrepare((params) => {
 
 
 
-let builder: ProposedFeatures.SemanticTokensBuilder;
+let tokenBuilders: Map<string, ProposedFeatures.SemanticTokensBuilder> = new Map();
+function getTokenBuilder(document: TextDocument): ProposedFeatures.SemanticTokensBuilder {
+	let result = tokenBuilders.get(document.uri);
+	if (result !== undefined) {
+		return result;
+	}
+	result = new ProposedFeatures.SemanticTokensBuilder();
+	tokenBuilders.set(document.uri, result);
+	return result;
+}
 function buildTokens(builder: ProposedFeatures.SemanticTokensBuilder, document: TextDocument) {
 	const text = document.getText();
 	const regexp = /\w+/g;
@@ -495,7 +504,7 @@ connection.languages.semanticTokens.on((params) => {
 	if (document === undefined) {
 		return { data: [] };
 	}
-	builder = new ProposedFeatures.SemanticTokensBuilder();
+	const builder = getTokenBuilder(document);
 	buildTokens(builder, document);
 	return builder.build();
 });
@@ -505,9 +514,7 @@ connection.languages.semanticTokens.onEdits((params) => {
 	if (document === undefined) {
 		return { edits: [] };
 	}
-	if (builder === undefined) {
-		builder = new ProposedFeatures.SemanticTokensBuilder();
-	}
+	const builder = getTokenBuilder(document);
 	builder.previousResult(params.previousResultId);
 	buildTokens(builder, document);
 	return builder.buildEdits();
