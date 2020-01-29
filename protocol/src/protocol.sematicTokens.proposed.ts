@@ -52,10 +52,10 @@ export enum SemanticTokenModifiers {
 	reference = 'reference',
 	static = 'static',
 	abstract = 'abstract',
-	deprecated = 'deprected',
+	deprecated = 'deprecated',
 	async = 'async',
 	volatile = 'volatile',
-	final = 'final'
+	readonly = 'readonly'
 }
 
 /**
