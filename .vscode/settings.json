@@ -46,6 +46,5 @@
 	],
 	"editor.codeActionsOnSave": {
 		"source.fixAll.eslint": true
-	},
-	"editor.codeActionsOnSaveTimeout": 2000
+	}
 }
