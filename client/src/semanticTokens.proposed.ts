@@ -269,7 +269,7 @@ namespace protocol2code {
 		return new vscode.SemanticTokensEdits(value.edits.map(asSemanticTokensEdit), value.resultId);
 	}
 
-	export function asLedgend(value: Proposed.SemanticTokensLegend): vscode.SemanticTokensLegend {
+	export function asLegend(value: Proposed.SemanticTokensLegend): vscode.SemanticTokensLegend {
 		return value;
 	}
 }
@@ -403,7 +403,7 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Propose
 			: undefined;
 
 		const disposables: vscode.Disposable[] = [];
-		const legend: vscode.SemanticTokensLegend = protocol2code.asLedgend(options.legend);
+		const legend: vscode.SemanticTokensLegend = protocol2code.asLegend(options.legend);
 		disposables.push(vscode.languages.registerDocumentSemanticTokensProvider(options.documentSelector!, documentProvider, legend));
 		if (rangeProvider !== undefined) {
 			disposables.push(vscode.languages.registerDocumentRangeSemanticTokensProvider(options.documentSelector!, rangeProvider, legend));
