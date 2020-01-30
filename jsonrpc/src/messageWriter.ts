@@ -72,13 +72,13 @@ export abstract class AbstractMessageWriter {
 export class StreamMessageWriter extends AbstractMessageWriter implements MessageWriter {
 
 	private writable: NodeJS.WritableStream;
-	private encoding: BufferEncoding;
+	private charset: BufferEncoding;
 	private errorCount: number;
 
-	public constructor(writable: NodeJS.WritableStream, encoding: BufferEncoding = 'utf8') {
+	public constructor(writable: NodeJS.WritableStream, charset: BufferEncoding = 'utf8') {
 		super();
 		this.writable = writable;
-		this.encoding = encoding;
+		this.charset = charset;
 		this.errorCount = 0;
 		this.writable.on('error', (error: any) => this.fireError(error));
 		this.writable.on('close', () => this.fireClose());
@@ -86,7 +86,7 @@ export class StreamMessageWriter extends AbstractMessageWriter implements Messag
 
 	public write(msg: Message): void {
 		let json = JSON.stringify(msg);
-		let contentLength = Buffer.byteLength(json, this.encoding);
+		let contentLength = Buffer.byteLength(json, this.charset);
 
 		let headers: string[] = [
 			ContentLength, contentLength.toString(), CRLF,
@@ -96,7 +96,7 @@ export class StreamMessageWriter extends AbstractMessageWriter implements Messag
 			// Header must be written in ASCII encoding
 			this.writable.write(headers.join(''), 'ascii');
 			// Now write the content. This can be written in any encoding
-			this.writable.write(json, this.encoding);
+			this.writable.write(json, this.charset);
 			this.errorCount = 0;
 		} catch (error) {
 			this.errorCount++;
@@ -134,7 +134,7 @@ export class IPCMessageWriter extends AbstractMessageWriter implements MessageWr
 
 	public doWriteMessage(msg: Message): void {
 		try {
-			if (this.process.send) {
+			if (typeof this.process.send === 'function') {
 				this.sending = true;
 				(this.process.send as Function)(msg, undefined, undefined, (error: any) => {
 					this.sending = false;
@@ -232,3 +232,5 @@ export class SocketMessageWriter extends AbstractMessageWriter implements Messag
 		this.fireError(error, msg, this.errorCount);
 	}
 }
+
+export class 
