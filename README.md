@@ -31,6 +31,10 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 
 ## History
 
+## 3.15.2 Protocol, 6.1.x client and 6.1.x server
+
+* Proposed support for semantic tokens.
+
 ## 3.15.0 Protocol, 6.0.0 Client & 6.0.0 Server
 
 * Progress support for work done and partial result progress.
@@ -41,7 +45,17 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 * Support for custom text document implementations:
   * new npm package `vscode-languageserver-textdocument` which ships a standard text document implementation with basic incremental update. Server now need to prereq this npm package.
   * deprecated text document implementation in types.
-  * this resulted in a small breakage on the server side. Instead of doing `new TextDocuments` you now have to pass in a text document configuration to provide callbacks to create and uppdate a text document.
+  * this resulted in a small breakage on the server side. Instead of doing `new TextDocuments` you now have to pass in a text document configuration to provide callbacks to create and uppdate a text document. Here are examples in TypeScript and JavaScript
+```typescript
+import { TextDocuments } from 'vscode-languageserver';
+import { TextDocument } from 'vscode-languageserver-textdocument';
+const documents = new TextDocuments(TextDocument);
+```
+```javascript
+const server = require("vscode-languageserver");
+const textDocument = require("vscode-languageserver-textdocument");
+const documents = new server.TextDocuments(textDocument.TextDocument);
+```
 
 ### 5.1.1 Client
 
