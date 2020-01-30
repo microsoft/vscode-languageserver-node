@@ -291,7 +291,6 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Propose
 		capability.dynamicRegistration = true;
 		capability.tokenTypes = [
 			Proposed.SemanticTokenTypes.comment,
-			Proposed.SemanticTokenTypes.comment,
 			Proposed.SemanticTokenTypes.keyword,
 			Proposed.SemanticTokenTypes.number,
 			Proposed.SemanticTokenTypes.regexp,
