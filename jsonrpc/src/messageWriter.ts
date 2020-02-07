@@ -287,6 +287,7 @@ export class WriteableStreamMessageWriter extends AbstractMessageWriter implemen
 		} else {
 			return undefined;
 		}
+		if (isRequestMessage(msg))
 	}
 
 	private handleError(error: any, msg: Message): void {
