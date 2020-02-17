@@ -31,6 +31,10 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 
 ## History
 
+## 3.15.3 Protocol, 6.1.x client and 6.1.x server
+
+* Small changes to the proposed support for semantic tokens.
+
 ## 3.15.2 Protocol, 6.1.x client and 6.1.x server
 
 * Proposed support for semantic tokens.

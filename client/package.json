@@ -1,11 +1,11 @@
 {
 	"name": "vscode-languageclient",
 	"description": "VSCode Language client implementation",
-	"version": "6.1.0",
+	"version": "6.1.1",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"engines": {
-		"vscode": "^1.41.0"
+		"vscode": "^1.42.0"
 	},
 	"repository": {
 		"type": "git",
@@ -19,12 +19,12 @@
 	"typings": "./lib/main",
 	"devDependencies": {
 		"@types/semver": "^6.0.1",
-		"@types/vscode": "^1.41.0",
+		"@types/vscode": "^1.42.0",
 		"shx": "^0.3.2"
 	},
 	"dependencies": {
 		"semver": "^6.3.0",
-		"vscode-languageserver-protocol": "^3.15.2"
+		"vscode-languageserver-protocol": "^3.15.3"
 	},
 	"scripts": {
 		"prepublishOnly": "npm run clean && node ./bin/updateVSCode.js && npm run compile && npm test",
