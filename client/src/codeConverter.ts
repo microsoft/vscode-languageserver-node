@@ -12,6 +12,11 @@ import ProtocolCodeLens from './protocolCodeLens';
 import ProtocolDocumentLink from './protocolDocumentLink';
 import { MarkdownString } from 'vscode';
 
+interface InsertReplaceRange {
+	inserting: code.Range;
+	replacing: code.Range;
+}
+
 export interface Converter {
 
 	asUri(uri: code.Uri): string;
@@ -321,13 +326,22 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return result;
 	}
 
-	function asRange(value: code.Range): proto.Range;
+	function isInsertReplace(value: code.Range | InsertReplaceRange): value is InsertReplaceRange {
+		const candidate = value as InsertReplaceRange;
+		return candidate && !!candidate.inserting && !!candidate.replacing;
+	}
+
+	function asRange(value: code.Range | { inserting: code.Range; replacing: code.Range; }): proto.Range;
 	function asRange(value: undefined): undefined;
 	function asRange(value: null): null;
-	function asRange(value: code.Range | undefined | null): proto.Range | undefined | null;
-	function asRange(value: code.Range | undefined | null): proto.Range | undefined | null {
+	function asRange(value: code.Range | { inserting: code.Range; replacing: code.Range; } | undefined | null): proto.Range | undefined | null;
+	function asRange(value: code.Range | { inserting: code.Range; replacing: code.Range; } | undefined | null): proto.Range | undefined | null {
 		if (value === undefined || value === null) {
 			return value;
+		}
+		// The LSP has no support yet for insert replace. So this can never happen.
+		if (isInsertReplace(value)) {
+			throw new Error(`Receving unknown insert replace range.`);
 		}
 		return { start: asPosition(value.start), end: asPosition(value.end) };
 	}
