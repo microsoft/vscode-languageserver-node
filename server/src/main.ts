@@ -53,7 +53,7 @@ import { Configuration, ConfigurationFeature } from './configuration';
 import { WorkspaceFolders, WorkspaceFoldersFeature } from './workspaceFolders';
 
 import { ProgressFeature, WindowProgress, WorkDoneProgress, ResultProgress, attachWorkDone, attachPartialResult } from './progress';
-export { WorkDoneProgress };
+export { WorkDoneProgress, ResultProgress };
 
 import * as Is from './utils/is';
 import * as UUID from './utils/uuid';
