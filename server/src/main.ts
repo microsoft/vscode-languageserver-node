@@ -52,8 +52,8 @@ import {
 import { Configuration, ConfigurationFeature } from './configuration';
 import { WorkspaceFolders, WorkspaceFoldersFeature } from './workspaceFolders';
 
-import { ProgressFeature, WindowProgress, WorkDoneProgress, ResultProgress, attachWorkDone, attachPartialResult } from './progress';
-export { WorkDoneProgress, ResultProgress };
+import { ProgressFeature, WindowProgress, WorkDoneProgressReporter, ResultProgressReporter, attachWorkDone, attachPartialResult } from './progress';
+export { WorkDoneProgressReporter, ResultProgressReporter };
 
 import * as Is from './utils/is';
 import * as UUID from './utils/uuid';
@@ -1014,8 +1014,8 @@ class TracerImpl implements Tracer, Remote {
 
 export interface _Languages {
 	connection: IConnection;
-	attachWorkDoneProgress(params: WorkDoneProgressParams): WorkDoneProgress;
-	attachPartialResultProgress<PR>(type: ProgressType<PR>, params: PartialResultParams): ResultProgress<PR> | undefined;
+	attachWorkDoneProgress(params: WorkDoneProgressParams): WorkDoneProgressReporter;
+	attachPartialResultProgress<PR>(type: ProgressType<PR>, params: PartialResultParams): ResultProgressReporter<PR> | undefined;
 }
 
 export class LanguagesImpl implements Remote, _Languages {
@@ -1041,11 +1041,11 @@ export class LanguagesImpl implements Remote, _Languages {
 	public fillServerCapabilities(_capabilities: ServerCapabilities): void {
 	}
 
-	public attachWorkDoneProgress(params: WorkDoneProgressParams): WorkDoneProgress {
+	public attachWorkDoneProgress(params: WorkDoneProgressParams): WorkDoneProgressReporter {
 		return attachWorkDone(this.connection, params);
 	}
 
-	public attachPartialResultProgress<PR>(_type: ProgressType<PR>, params: PartialResultParams): ResultProgress<PR> | undefined {
+	public attachPartialResultProgress<PR>(_type: ProgressType<PR>, params: PartialResultParams): ResultProgressReporter<PR> | undefined {
 		return attachPartialResult(this.connection, params);
 	}
 }
@@ -1053,7 +1053,7 @@ export class LanguagesImpl implements Remote, _Languages {
 export type Languages = _Languages;
 
 export interface ServerRequestHandler<P, R, PR, E> {
-	(params: P, token: CancellationToken, workDoneProgress: WorkDoneProgress, resultProgress?: ResultProgress<PR>): HandlerResult<R, E>;
+	(params: P, token: CancellationToken, workDoneProgress: WorkDoneProgressReporter, resultProgress?: ResultProgressReporter<PR>): HandlerResult<R, E>;
 }
 
 /**
