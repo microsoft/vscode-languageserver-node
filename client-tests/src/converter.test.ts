@@ -18,11 +18,32 @@ import { CompletionItemTag } from 'vscode-languageserver-protocol';
 const c2p: codeConverter.Converter = codeConverter.createConverter();
 const p2c: protocolConverter.Converter = protocolConverter.createConverter();
 
+interface InsertReplaceRange {
+	inserting: vscode.Range;
+	replacing: vscode.Range;
+}
+
+namespace InsertReplaceRange {
+	export function is(value: vscode.Range | InsertReplaceRange | proto.Range): value is InsertReplaceRange {
+		const candidate = value as InsertReplaceRange;
+		return candidate && !!candidate.inserting && !!candidate.replacing;
+	}
+}
+
 suite('Protocol Converter', () => {
 
-	function rangeEqual(actual: vscode.Range, expected: proto.Range): void;
-	function rangeEqual(actual: proto.Range, expected: vscode.Range): void;
-	function rangeEqual(actual: vscode.Range | proto.Range, expected: proto.Range | proto.Range): void {
+	function isRange(value: vscode.Range | InsertReplaceRange): asserts value is vscode.Range {
+		if (InsertReplaceRange.is(value)) {
+			throw new Error(`Insert / Replace range currently not supported.`);
+		}
+	}
+
+	function rangeEqual(actual: vscode.Range | InsertReplaceRange, expected: proto.Range): void;
+	function rangeEqual(actual: proto.Range, expected: vscode.Range | InsertReplaceRange): void;
+	function rangeEqual(actual: vscode.Range | InsertReplaceRange | proto.Range, expected: vscode.Range | InsertReplaceRange | proto.Range): void {
+		if (InsertReplaceRange.is(actual) || InsertReplaceRange.is(expected)) {
+			throw new Error(`Insert / Replace range currently not supported.`);
+		}
 		strictEqual(actual.start.line, expected.start.line);
 		strictEqual(actual.start.character, expected.start.character);
 		strictEqual(actual.end.line, expected.end.line);
@@ -776,10 +797,12 @@ suite('Protocol Converter', () => {
 
 		const resolved = p2c.asCompletionItem(toResolve);
 		strictEqual(resolved.label, item.label);
-		strictEqual(resolved.range!.start.line, 0);
-		strictEqual(resolved.range!.start.character, 0);
-		strictEqual(resolved.range!.end.line, 0);
-		strictEqual(resolved.range!.end.character, 10);
+		const range = resolved.range!;
+		isRange(range);
+		strictEqual(range.start.line, 0);
+		strictEqual(range.start.character, 0);
+		strictEqual(range.end.line, 0);
+		strictEqual(range.end.character, 10);
 		strictEqual(resolved.insertText, '');
 	});
 });
