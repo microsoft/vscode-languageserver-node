@@ -16,7 +16,7 @@ export interface ProgressContext {
 	sendProgress<P>(type: ProgressType<P>, token: ProgressToken, value: P): void;
 }
 
-export interface WorkDoneProgress {
+export interface WorkDoneProgressReporter {
 
 	readonly token: CancellationToken;
 
@@ -30,18 +30,18 @@ export interface WorkDoneProgress {
 }
 
 export interface WindowProgress {
-	attachWorkDoneProgress(token: ProgressToken | undefined): WorkDoneProgress;
-	createWorkDoneProgress(): Promise<WorkDoneProgress>;
+	attachWorkDoneProgress(token: ProgressToken | undefined): WorkDoneProgressReporter;
+	createWorkDoneProgress(): Promise<WorkDoneProgressReporter>;
 }
 
-class WorkDoneProgressImpl implements WorkDoneProgress {
+class WorkDoneProgressReporterImpl implements WorkDoneProgressReporter {
 
-	public static Instances: Map<string | number, WorkDoneProgressImpl> = new Map();
+	public static Instances: Map<string | number, WorkDoneProgressReporterImpl> = new Map();
 
 	private _source: CancellationTokenSource;
 
 	constructor(private _connection: ProgressContext, private _token: ProgressToken) {
-		WorkDoneProgressImpl.Instances.set(this._token, this);
+		WorkDoneProgressReporterImpl.Instances.set(this._token, this);
 		this._source = new CancellationTokenSource();
 	}
 
@@ -76,7 +76,7 @@ class WorkDoneProgressImpl implements WorkDoneProgress {
 	}
 
 	done(): void {
-		WorkDoneProgressImpl.Instances.delete(this._token);
+		WorkDoneProgressReporterImpl.Instances.delete(this._token);
 		this._source.dispose();
 		this._connection.sendProgress(WorkDoneProgress.type, this._token, { kind: 'end' } );
 	}
@@ -86,7 +86,7 @@ class WorkDoneProgressImpl implements WorkDoneProgress {
 	}
 }
 
-class NullProgress implements WorkDoneProgress {
+class NullProgressReporter implements WorkDoneProgressReporter {
 
 	private _source: CancellationTokenSource;
 
@@ -108,14 +108,14 @@ class NullProgress implements WorkDoneProgress {
 	}
 }
 
-export function attachWorkDone(connection: ProgressContext, params: WorkDoneProgressParams | undefined): WorkDoneProgress {
+export function attachWorkDone(connection: ProgressContext, params: WorkDoneProgressParams | undefined): WorkDoneProgressReporter {
 	if (params === undefined || params.workDoneToken === undefined) {
-		return new NullProgress();
+		return new NullProgressReporter();
 	}
 
 	const token = params.workDoneToken;
 	delete params.workDoneToken;
-	return new WorkDoneProgressImpl(connection, token);
+	return new WorkDoneProgressReporterImpl(connection, token);
 }
 
 export const ProgressFeature: Feature<_RemoteWindow, WindowProgress> = (Base) => {
@@ -125,35 +125,35 @@ export const ProgressFeature: Feature<_RemoteWindow, WindowProgress> = (Base) =>
 			if (capabilities?.window?.workDoneProgress === true) {
 				this._progressSupported = true;
 				this.connection.onNotification(WorkDoneProgressCancelNotification.type, (params) => {
-					let progress = WorkDoneProgressImpl.Instances.get(params.token);
+					let progress = WorkDoneProgressReporterImpl.Instances.get(params.token);
 					if (progress !== undefined) {
 						progress.cancel();
 					}
 				});
 			}
 		}
-		public attachWorkDoneProgress(token: ProgressToken | undefined): WorkDoneProgress {
+		public attachWorkDoneProgress(token: ProgressToken | undefined): WorkDoneProgressReporter {
 			if (token === undefined) {
-				return new NullProgress();
+				return new NullProgressReporter();
 			} else {
-				return new WorkDoneProgressImpl(this.connection, token);
+				return new WorkDoneProgressReporterImpl(this.connection, token);
 			}
 		}
-		public createWorkDoneProgress(): Promise<WorkDoneProgress> {
+		public createWorkDoneProgress(): Promise<WorkDoneProgressReporter> {
 			if (this._progressSupported) {
 				const token: string = generateUuid();
 				return this.connection.sendRequest(WorkDoneProgressCreateRequest.type, { token }).then(() => {
-					const result: WorkDoneProgressImpl = new WorkDoneProgressImpl(this.connection, token);
+					const result: WorkDoneProgressReporterImpl = new WorkDoneProgressReporterImpl(this.connection, token);
 					return result;
 				});
 			} else {
-				return Promise.resolve(new NullProgress());
+				return Promise.resolve(new NullProgressReporter());
 			}
 		}
 	};
 };
 
-export interface ResultProgress<R> {
+export interface ResultProgressReporter<R> {
 	report(data: R): void;
 }
 
@@ -161,7 +161,7 @@ namespace ResultProgress {
 	export const type = new ProgressType<any>();
 }
 
-class ResultProgressImpl<R> implements ResultProgress<R> {
+class ResultProgressReporterImpl<R> implements ResultProgressReporter<R> {
 	constructor(private _connection: ProgressContext, private _token: ProgressToken) {
 	}
 
@@ -170,12 +170,12 @@ class ResultProgressImpl<R> implements ResultProgress<R> {
 	}
 }
 
-export function attachPartialResult<R>(connection: ProgressContext, params: PartialResultParams): ResultProgress<R> | undefined {
+export function attachPartialResult<R>(connection: ProgressContext, params: PartialResultParams): ResultProgressReporter<R> | undefined {
 	if (params === undefined || params.partialResultToken === undefined) {
 		return undefined;
 	}
 
 	const token = params.partialResultToken;
 	delete params.partialResultToken;
-	return new ResultProgressImpl<R>(connection, token);
+	return new ResultProgressReporterImpl<R>(connection, token);
 }
