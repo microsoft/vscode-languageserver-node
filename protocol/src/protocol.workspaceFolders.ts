@@ -24,6 +24,8 @@ export interface WorkspaceFoldersClientCapabilities {
 	workspace?: {
 		/**
 		 * The client has support for workspace folders
+		 *
+		 * @since 3.6.0
 		 */
 		workspaceFolders?: boolean;
 	}

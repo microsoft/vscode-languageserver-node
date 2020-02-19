@@ -18,8 +18,10 @@ export interface ConfigurationClientCapabilities {
 	 */
 	workspace?: {
 		/**
-		* The client supports `workspace/configuration` requests.
-		*/
+		 * The client supports `workspace/configuration` requests.
+		 *
+		 * @since 3.6.0
+		 */
 		configuration?: boolean;
 	}
 }
