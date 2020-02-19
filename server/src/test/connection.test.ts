@@ -89,7 +89,7 @@ suite('Connection Tests', () => {
 
 	test('Ensure result converted', (done) => {
 		serverConnection.onDeclaration((_params, _cancel, workDone, result) => {
-			assert.ok(workDone === undefined || workDone.constructor.name === 'NullProgress', 'Work Done token undefined or null progress.');
+			assert.ok(workDone === undefined || workDone.constructor.name === 'NullProgressReporter', 'Work Done token undefined or null progress.');
 			assert.ok(result !== undefined, 'Result token converted.');
 			done();
 			return [];
