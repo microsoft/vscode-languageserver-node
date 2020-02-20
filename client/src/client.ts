@@ -1472,7 +1472,8 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 			documentationFormat: [MarkupKind.Markdown, MarkupKind.PlainText],
 			deprecatedSupport: true,
 			preselectSupport: true,
-			tagSupport: { valueSet:  [ CompletionItemTag.Deprecated ] }
+			tagSupport: { valueSet:  [ CompletionItemTag.Deprecated ] },
+			insertReplaceSupport: true
 		};
 		completion.completionItemKind = { valueSet: SupportedCompletionItemKinds };
 	}

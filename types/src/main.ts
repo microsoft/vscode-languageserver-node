@@ -1431,6 +1431,51 @@ export namespace CompletionItemTag {
 export type CompletionItemTag = 1;
 
 /**
+ * A special text edit to provide a insert or a replace operation.
+ *
+ * @since 3.16.0 - Proposed state
+ */
+export interface InsertReplaceEdit {
+	/**
+	 * The string to be inserted.
+	 */
+	newText: string;
+
+	/**
+	 * The range if the insert is requested
+	 */
+	insert: Range;
+
+	/**
+	 * The range if the replace is requested.
+	 */
+	replace: Range;
+}
+
+/**
+ * The InsertReplaceEdit namespace provides functions to deal with insert / replace edits.
+ *
+ * @since 3.16.0 - Proposed state
+ */
+export namespace InsertReplaceEdit {
+
+	/**
+	 * Creates a new insert / replace edit
+	 */
+	export function create(newText: string, insert: Range, replace: Range): InsertReplaceEdit {
+		return { newText, insert, replace };
+	}
+
+	/**
+	 * Checks whether the given liternal conforms to the [InsertReplaceEdit](#InsertReplaceEdit) interface.
+	 */
+	export function is(value: TextEdit | InsertReplaceEdit): value is InsertReplaceEdit {
+		const candidate: InsertReplaceEdit = value as InsertReplaceEdit;
+		return candidate && Is.string(candidate.newText) && Range.is(candidate.insert) && Range.is(candidate.replace);
+	}
+}
+
+/**
  * A completion item represents a text snippet that is
  * proposed to complete text that is being typed.
  */
@@ -1522,10 +1567,12 @@ export interface CompletionItem {
 	 * this completion. When an edit is provided the value of
 	 * [insertText](#CompletionItem.insertText) is ignored.
 	 *
-	 * *Note:* The text edit's range must be a [single line] and it must contain the position
-	 * at which completion has been requested.
+	 * *Note:* The text edit's range as well as both ranges from a insert replace edit must be a
+	 * [single line] and they must contain the position at which completion has been requested.
+	 *
+	 * @since 3.16.0 additional type `InsertReplaceEdit` - Proposed state
 	 */
-	textEdit?: TextEdit;
+	textEdit?: TextEdit | InsertReplaceEdit;
 
 	/**
 	 * An optional array of additional [text edits](#TextEdit) that are applied when

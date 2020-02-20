@@ -17,6 +17,13 @@ interface InsertReplaceRange {
 	replacing: code.Range;
 }
 
+namespace InsertReplaceRange {
+	export function is(value: code.Range | InsertReplaceRange): value is InsertReplaceRange {
+		const candidate = value as InsertReplaceRange;
+		return candidate && !!candidate.inserting && !!candidate.replacing;
+	}
+}
+
 export interface Converter {
 
 	asUri(uri: code.Uri): string;
@@ -326,22 +333,13 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return result;
 	}
 
-	function isInsertReplace(value: code.Range | InsertReplaceRange): value is InsertReplaceRange {
-		const candidate = value as InsertReplaceRange;
-		return candidate && !!candidate.inserting && !!candidate.replacing;
-	}
-
-	function asRange(value: code.Range | { inserting: code.Range; replacing: code.Range; }): proto.Range;
+	function asRange(value: code.Range): proto.Range;
 	function asRange(value: undefined): undefined;
 	function asRange(value: null): null;
-	function asRange(value: code.Range | { inserting: code.Range; replacing: code.Range; } | undefined | null): proto.Range | undefined | null;
-	function asRange(value: code.Range | { inserting: code.Range; replacing: code.Range; } | undefined | null): proto.Range | undefined | null {
+	function asRange(value: code.Range | undefined | null): proto.Range | undefined | null;
+	function asRange(value: code.Range | undefined | null): proto.Range | undefined | null {
 		if (value === undefined || value === null) {
 			return value;
-		}
-		// The LSP has no support yet for insert replace. So this can never happen.
-		if (isInsertReplace(value)) {
-			throw new Error(`Receving unknown insert replace range.`);
 		}
 		return { start: asPosition(value.start), end: asPosition(value.end) };
 	}
@@ -514,10 +512,10 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	function fillPrimaryInsertText(target: proto.CompletionItem, source: ProtocolCompletionItem): void {
 		let format: proto.InsertTextFormat = proto.InsertTextFormat.PlainText;
 		let text: string | undefined = undefined;
-		let range: proto.Range | undefined = undefined;
+		let range: code.Range | InsertReplaceRange | undefined = undefined;
 		if (source.textEdit) {
 			text = source.textEdit.newText;
-			range = asRange(source.textEdit.range);
+			range = source.textEdit.range;
 		} else if (source.insertText instanceof code.SnippetString) {
 			format = proto.InsertTextFormat.Snippet;
 			text = source.insertText.value;
@@ -525,14 +523,22 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			text = source.insertText;
 		}
 		if (source.range) {
-			range = asRange(source.range);
+			range = source.range;
 		}
 
 		target.insertTextFormat = format;
 		if (source.fromEdit && text !== undefined && range !== undefined) {
-			target.textEdit = { newText: text, range: range };
+			target.textEdit = asCompletionTextEdit(text, range);
 		} else {
 			target.insertText = text;
+		}
+	}
+
+	function asCompletionTextEdit(newText: string, range: code.Range | InsertReplaceRange): proto.TextEdit | proto.InsertReplaceEdit {
+		if (InsertReplaceRange.is(range)) {
+			return proto.InsertReplaceEdit.create(newText, asRange(range.inserting), asRange(range.replacing));
+		} else {
+			return { newText, range: asRange(range) };
 		}
 	}
 

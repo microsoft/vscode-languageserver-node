@@ -30,24 +30,49 @@ namespace InsertReplaceRange {
 	}
 }
 
+function isRange(value: vscode.Range | InsertReplaceRange | undefined | null): asserts value is vscode.Range {
+	if (!value || InsertReplaceRange.is(value)) {
+		throw new Error(`Expected a normal range but got an insert / replace range.`);
+	}
+}
+
+function isInsertReplaceRange(value: vscode.Range | InsertReplaceRange | undefined | null): asserts value is InsertReplaceRange {
+	if (!value || !InsertReplaceRange.is(value)) {
+		throw new Error(`Expected an insert / replace range but got a normal range.`);
+	}
+}
+
+function isTextEdit(value: proto.TextEdit | proto.InsertReplaceEdit | undefined | null): asserts value is proto.TextEdit {
+	if (!value || proto.InsertReplaceEdit.is(value)) {
+		throw new Error(`Expected a text edit but got an insert replace edit.`);
+	}
+}
+
+function isInsertReplaceEdit(value: proto.TextEdit | proto.InsertReplaceEdit | undefined | null): asserts value is proto.InsertReplaceEdit {
+	if (!value || !proto.InsertReplaceEdit.is(value)) {
+		throw new Error(`Expected an insert replace edit but got a normal text edit.`);
+	}
+}
+
 suite('Protocol Converter', () => {
 
-	function isRange(value: vscode.Range | InsertReplaceRange): asserts value is vscode.Range {
-		if (InsertReplaceRange.is(value)) {
-			throw new Error(`Insert / Replace range currently not supported.`);
-		}
-	}
-
-	function rangeEqual(actual: vscode.Range | InsertReplaceRange, expected: proto.Range): void;
-	function rangeEqual(actual: proto.Range, expected: vscode.Range | InsertReplaceRange): void;
-	function rangeEqual(actual: vscode.Range | InsertReplaceRange | proto.Range, expected: vscode.Range | InsertReplaceRange | proto.Range): void {
-		if (InsertReplaceRange.is(actual) || InsertReplaceRange.is(expected)) {
-			throw new Error(`Insert / Replace range currently not supported.`);
-		}
+	function rangeEqual(actual: vscode.Range, expected: proto.Range): void;
+	function rangeEqual(actual: proto.Range, expected: vscode.Range): void;
+	function rangeEqual(actual: vscode.Range | proto.Range, expected: vscode.Range | proto.Range): void {
 		strictEqual(actual.start.line, expected.start.line);
 		strictEqual(actual.start.character, expected.start.character);
 		strictEqual(actual.end.line, expected.end.line);
 		strictEqual(actual.end.character, expected.end.character);
+	}
+
+	function competionEditEqual(text: string, range: vscode.Range | InsertReplaceRange, expected: proto.TextEdit | proto.InsertReplaceEdit): void {
+		strictEqual(text, expected.newText);
+		if (InsertReplaceRange.is(range)) {
+			ok(proto.InsertReplaceEdit.is(expected));
+		} else {
+			isTextEdit(expected);
+			rangeEqual(range, expected.range);
+		}
 	}
 
 	test('Position Converter', () => {
@@ -352,13 +377,40 @@ suite('Protocol Converter', () => {
 		strictEqual(result.label, completionItem.label);
 		strictEqual(result.textEdit, undefined);
 		strictEqual(result.insertText, 'insert');
-		rangeEqual(result.range!, completionItem.textEdit!.range);
+		isRange(result.range);
+		isTextEdit(completionItem.textEdit);
+		rangeEqual(result.range, completionItem.textEdit.range);
 
 		let back = c2p.asCompletionItem(result);
 		strictEqual(back.insertTextFormat, proto.InsertTextFormat.PlainText);
 		strictEqual(back.insertText, undefined);
-		strictEqual(back.textEdit!.newText, 'insert');
-		rangeEqual(back.textEdit!.range, result.range!);
+		isTextEdit(back.textEdit);
+		strictEqual(back.textEdit.newText, 'insert');
+		rangeEqual(back.textEdit.range, result.range!);
+	});
+
+	test('Completion Item - Insert / Replace Edit', () => {
+		let completionItem: proto.CompletionItem = {
+			label: 'item',
+			textEdit: proto.InsertReplaceEdit.create('text', proto.Range.create(0,0,0,0), proto.Range.create(0, 0, 0, 2))
+		};
+
+		let result = p2c.asCompletionItem(completionItem);
+		strictEqual(result.label, completionItem.label);
+		strictEqual(result.textEdit, undefined);
+		strictEqual(result.insertText, 'text');
+		isInsertReplaceRange(result.range);
+		isInsertReplaceEdit(completionItem.textEdit);
+		competionEditEqual(result.insertText as string, result.range, completionItem.textEdit);
+
+		let back = c2p.asCompletionItem(result);
+		strictEqual(back.insertTextFormat, proto.InsertTextFormat.PlainText);
+		strictEqual(back.insertText, undefined);
+		isInsertReplaceEdit(back.textEdit);
+		isInsertReplaceRange(result.range);
+		strictEqual(back.textEdit.newText, 'text');
+		rangeEqual(back.textEdit.insert, result.range.inserting);
+		rangeEqual(back.textEdit.replace, result.range.replacing);
 	});
 
 	test('Completion Item - Text Edit Snippet String', () => {
@@ -372,13 +424,16 @@ suite('Protocol Converter', () => {
 		strictEqual(result.label, completionItem.label);
 		strictEqual(result.textEdit, undefined);
 		ok(result.insertText instanceof vscode.SnippetString && result.insertText.value === '${insert}');
-		rangeEqual(result.range!, completionItem.textEdit!.range);
+		isRange(result.range);
+		isTextEdit(completionItem.textEdit);
+		rangeEqual(result.range, completionItem.textEdit.range);
 
 		let back = c2p.asCompletionItem(result);
 		strictEqual(back.insertText, undefined);
 		strictEqual(back.insertTextFormat, proto.InsertTextFormat.Snippet);
-		strictEqual(back.textEdit!.newText, '${insert}');
-		rangeEqual(back.textEdit!.range, result.range!);
+		isTextEdit(back.textEdit);
+		strictEqual(back.textEdit.newText, '${insert}');
+		rangeEqual(back.textEdit.range, result.range!);
 	});
 
 	test('Completion Item - Preserve Data', () => {
@@ -789,11 +844,12 @@ suite('Protocol Converter', () => {
 		};
 		const converted = p2c.asCompletionItem(item);
 		const toResolve = c2p.asCompletionItem(converted);
-		strictEqual(toResolve.textEdit!.range.start.line, 0);
-		strictEqual(toResolve.textEdit!.range.start.character, 0);
-		strictEqual(toResolve.textEdit!.range.end.line, 0);
-		strictEqual(toResolve.textEdit!.range.end.character, 10);
-		strictEqual(toResolve.textEdit!.newText, '');
+		isTextEdit(toResolve.textEdit);
+		strictEqual(toResolve.textEdit.range.start.line, 0);
+		strictEqual(toResolve.textEdit.range.start.character, 0);
+		strictEqual(toResolve.textEdit.range.end.line, 0);
+		strictEqual(toResolve.textEdit.range.end.character, 10);
+		strictEqual(toResolve.textEdit.newText, '');
 
 		const resolved = p2c.asCompletionItem(toResolve);
 		strictEqual(resolved.label, item.label);
@@ -925,8 +981,9 @@ suite('Code Converter', () => {
 
 		let result = c2p.asCompletionItem(<any>item);
 		strictEqual(result.insertText, undefined);
-		rangeEqual(result.textEdit!.range, item.range);
-		strictEqual(result.textEdit!.newText, item.insertText);
+		isTextEdit(result.textEdit);
+		rangeEqual(result.textEdit.range, item.range);
+		strictEqual(result.textEdit.newText, item.insertText);
 	});
 
 	test('Completion Item - TextEdit from Edit', () => {
@@ -936,8 +993,9 @@ suite('Code Converter', () => {
 
 		let result = c2p.asCompletionItem(<any>item);
 		strictEqual(result.insertText, undefined);
-		rangeEqual(result.textEdit!.range, item.textEdit.range);
-		strictEqual(result.textEdit!.newText, item.textEdit.newText);
+		isTextEdit(result.textEdit);
+		rangeEqual(result.textEdit.range, item.textEdit.range);
+		strictEqual(result.textEdit.newText, item.textEdit.newText);
 	});
 
 	test('DiagnosticSeverity', () => {
