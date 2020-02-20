@@ -62,12 +62,7 @@ import {
 	DocumentHighlightRegistrationOptions, DocumentHighlightOptions, DocumentSymbolRegistrationOptions, DocumentSymbolOptions,
 	WorkspaceSymbolRegistrationOptions, CodeActionOptions, CodeLensOptions, DocumentFormattingOptions, DocumentRangeFormattingRegistrationOptions,
 	DocumentRangeFormattingOptions, DocumentOnTypeFormattingOptions, RenameOptions, DocumentLinkOptions, CompletionItemTag, DiagnosticTag,
-	DocumentColorRequest,
-	DeclarationRequest,
-	FoldingRangeRequest,
-	ImplementationRequest,
-	SelectionRangeRequest,
-	TypeDefinitionRequest,
+	DocumentColorRequest, DeclarationRequest, FoldingRangeRequest, ImplementationRequest, SelectionRangeRequest,TypeDefinitionRequest, SymbolTag,
 	Proposed
 } from 'vscode-languageserver-protocol';
 
@@ -607,6 +602,10 @@ const SupportedCompletionItemKinds: CompletionItemKind[] = [
 	CompletionItemKind.Event,
 	CompletionItemKind.Operator,
 	CompletionItemKind.TypeParameter
+];
+
+const SupportedSymbolTags: SymbolTag[] = [
+	SymbolTag.Deprecated
 ];
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
@@ -1774,6 +1773,9 @@ class DocumentSymbolFeature extends TextDocumentFeature<boolean | DocumentSymbol
 			valueSet: SupportedSymbolKinds
 		};
 		symbolCapabilities.hierarchicalDocumentSymbolSupport = true;
+		symbolCapabilities.tagSupport = {
+			valueSet: SupportedSymbolTags
+		};
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
@@ -1832,6 +1834,9 @@ class WorkspaceSymbolFeature extends WorkspaceFeature<WorkspaceSymbolRegistratio
 		symbolCapabilities.dynamicRegistration = true;
 		symbolCapabilities.symbolKind = {
 			valueSet: SupportedSymbolKinds
+		};
+		symbolCapabilities.tagSupport = {
+			valueSet: SupportedSymbolTags
 		};
 	}
 
