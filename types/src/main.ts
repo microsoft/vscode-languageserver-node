@@ -1994,7 +1994,16 @@ export interface SymbolInformation {
 	kind: SymbolKind;
 
 	/**
+	 * Tags for this completion item.
+	 *
+	 * @since 3.16.0 - Proposed state
+	 */
+	tags?: SymbolTag[];
+
+	/**
 	 * Indicates if this symbol is deprecated.
+	 *
+	 * @deprecated Use tags instead
 	 */
 	deprecated?: boolean;
 
@@ -2068,7 +2077,16 @@ export interface DocumentSymbol {
 	kind: SymbolKind;
 
 	/**
+	 * Tags for this completion item.
+	 *
+	 * @since 3.16.0 - Proposed state
+	 */
+	tags?: SymbolTag[];
+
+	/**
 	 * Indicates if this symbol is deprecated.
+	 *
+	 * @deprecated Use tags instead
 	 */
 	deprecated?: boolean;
 

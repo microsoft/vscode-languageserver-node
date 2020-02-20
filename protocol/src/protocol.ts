@@ -15,7 +15,7 @@ import {
 	TextDocumentIdentifier, VersionedTextDocumentIdentifier, TextDocumentItem, CompletionItem, CompletionList,
 	Hover, SignatureHelp, Definition, DefinitionLink, ReferenceContext, DocumentHighlight, SymbolInformation,
 	CodeLens, CodeActionContext, FormattingOptions, DocumentLink, MarkupKind, SymbolKind, CompletionItemKind,
-	CodeAction, CodeActionKind, DocumentSymbol, CompletionItemTag, DiagnosticTag
+	CodeAction, CodeActionKind, DocumentSymbol, CompletionItemTag, DiagnosticTag, SymbolTag
 } from 'vscode-languageserver-types';
 
 import { ImplementationRequest, ImplementationClientCapabilities, ImplementationOptions, ImplementationRegistrationOptions, ImplementationParams } from './protocol.implementation';
@@ -1518,7 +1518,7 @@ export interface CompletionClientCapabilities {
 		/**
 		 * Client support insert replace edit to control different behavior if a
 		 * completion item is inserted in the text or should replace text.
-		 * 
+		 *
 		 * @since 3.16.0 - Proposed state
 		 */
 		insertReplaceSupport?: boolean;
@@ -2027,6 +2027,20 @@ export interface DocumentSymbolClientCapabilities {
 	 * The client support hierarchical document symbols.
 	 */
 	hierarchicalDocumentSymbolSupport?: boolean;
+
+	/**
+	 * The client supports tags on `SymbolInformation`. Tags are supported on
+	 * `DocumentSymbol` if `hierarchicalDocumentSymbolSupport` is set tot true.
+	 * Clients supporting tags have to handle unknown tags gracefully.
+	 *
+	 * @since 3.16.0 - Proposed state
+	 */
+	tagSupport?: {
+		/**
+		 * The tags supported by the client.
+		 */
+		valueSet: SymbolTag[]
+	}
 }
 
 /**
@@ -2180,6 +2194,19 @@ export interface WorkspaceSymbolClientCapabilities {
 		 * the initial version of the protocol.
 		 */
 		valueSet?: SymbolKind[];
+	}
+
+	/**
+	 * The client supports tags on `SymbolInformation`.
+	 * Clients supporting tags have to handle unknown tags gracefully.
+	 *
+	 * @since 3.16.0 - Proposed state
+	 */
+	tagSupport?: {
+		/**
+		 * The tags supported by the client.
+		 */
+		valueSet: SymbolTag[]
 	}
 }
 

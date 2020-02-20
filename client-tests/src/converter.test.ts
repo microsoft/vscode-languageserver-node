@@ -13,7 +13,7 @@ import ProtocolCompletionItem from 'vscode-languageclient/lib/protocolCompletion
 import * as Is from 'vscode-languageclient/lib/utils/is';
 
 import * as vscode from 'vscode';
-import { CompletionItemTag } from 'vscode-languageserver-protocol';
+import { CompletionItemTag, SymbolTag } from 'vscode-languageserver-protocol';
 
 const c2p: codeConverter.Converter = codeConverter.createConverter();
 const p2c: protocolConverter.Converter = protocolConverter.createConverter();
@@ -52,6 +52,10 @@ function isInsertReplaceEdit(value: proto.TextEdit | proto.InsertReplaceEdit | u
 	if (!value || !proto.InsertReplaceEdit.is(value)) {
 		throw new Error(`Expected an insert replace edit but got a normal text edit.`);
 	}
+}
+
+function isDefined<T>(value: T | undefined | null): asserts value is T {
+	ok(value !== undefined && value !== null);
 }
 
 suite('Protocol Converter', () => {
@@ -709,7 +713,7 @@ suite('Protocol Converter', () => {
 		deepEqual(p2c.asDocumentLinks([]), []);
 	});
 
-	test('Symbol Information', () => {
+	test('SymbolInformation', () => {
 		let start: proto.Position = { line: 1, character: 2 };
 		let end: proto.Position = { line: 8, character: 9 };
 		let location: proto.Location = {
@@ -719,6 +723,7 @@ suite('Protocol Converter', () => {
 		let symbolInformation: proto.SymbolInformation = {
 			name: 'name',
 			kind: proto.SymbolKind.Array,
+			tags: [proto.SymbolTag.Deprecated],
 			location: location
 		};
 
@@ -726,6 +731,9 @@ suite('Protocol Converter', () => {
 		strictEqual(result.name, symbolInformation.name);
 		strictEqual(result.kind, vscode.SymbolKind.Array);
 		strictEqual(result.containerName, undefined);
+		isDefined(result.tags);
+		strictEqual(result.tags.length, 1);
+		strictEqual(result.tags[0], vscode.SymbolTag.Deprecated);
 		ok(result.location instanceof vscode.Location);
 
 		symbolInformation.containerName = 'container';
@@ -736,6 +744,42 @@ suite('Protocol Converter', () => {
 		strictEqual(p2c.asSymbolInformations(undefined), undefined);
 		strictEqual(p2c.asSymbolInformations(null), undefined);
 		deepEqual(p2c.asSymbolInformations([]), []);
+	});
+
+	test('SymbolInformation Tag outside', () => {
+		let start: proto.Position = { line: 1, character: 2 };
+		let end: proto.Position = { line: 8, character: 9 };
+		let location: proto.Location = {
+			uri: 'file://localhost/folder/file',
+			range: { start, end }
+		};
+		let symbolInformation: proto.SymbolInformation = {
+			name: 'name',
+			kind: proto.SymbolKind.Array,
+			tags: [Number.MAX_VALUE as SymbolTag],
+			location: location
+		};
+		let result = p2c.asSymbolInformation(symbolInformation);
+		strictEqual(result.tags, undefined);
+	});
+
+	test('SymbolInformation deprecated', () => {
+		let start: proto.Position = { line: 1, character: 2 };
+		let end: proto.Position = { line: 8, character: 9 };
+		let location: proto.Location = {
+			uri: 'file://localhost/folder/file',
+			range: { start, end }
+		};
+		let symbolInformation: proto.SymbolInformation = {
+			name: 'name',
+			kind: proto.SymbolKind.Array,
+			location: location,
+			deprecated: true
+		};
+		let result = p2c.asSymbolInformation(symbolInformation);
+		isDefined(result.tags);
+		strictEqual(result.tags.length, 1);
+		strictEqual(result.tags[0], vscode.SymbolTag.Deprecated);
 	});
 
 	test('SymbolInformation Kind outside', () => {
@@ -752,6 +796,28 @@ suite('Protocol Converter', () => {
 		};
 		let result = p2c.asSymbolInformation(symbolInformation);
 		strictEqual(result.kind, vscode.SymbolKind.Property);
+	});
+
+	test('DocumentSymbol', () => {
+		let start: proto.Position = { line: 1, character: 2 };
+		let end: proto.Position = { line: 8, character: 9 };
+		let documentSymbol: proto.DocumentSymbol = {
+			name: 'name',
+			kind: proto.SymbolKind.Array,
+			tags: [proto.SymbolTag.Deprecated],
+			range: { start, end },
+			selectionRange: { start, end }
+		};
+
+		let result = p2c.asDocumentSymbol(documentSymbol);
+		strictEqual(result.name, documentSymbol.name);
+		strictEqual(result.kind, vscode.SymbolKind.Array);
+		strictEqual(result.children.length, 0);
+		isDefined(result.tags);
+		strictEqual(result.tags.length, 1);
+		strictEqual(result.tags[0], vscode.SymbolTag.Deprecated);
+		rangeEqual(result.range, documentSymbol.range);
+		rangeEqual(result.selectionRange, documentSymbol.selectionRange);
 	});
 
 	test('Command', () => {

@@ -96,7 +96,7 @@ export interface Converter {
 
 	asSymbolKind(item: ls.SymbolKind): code.SymbolKind;
 
-	asSymbolTag(item: ls.SymbolTag): code.SymbolTag;
+	asSymbolTag(item: ls.SymbolTag): code.SymbolTag | undefined;
 	asSymbolTags(items: undefined | null): undefined;
 	asSymbolTags(items: ReadonlyArray<ls.SymbolTag>): code.SymbolTag[];
 	asSymbolTags(items: ReadonlyArray<ls.SymbolTag> | undefined | null): code.SymbolTag[] | undefined;
@@ -658,8 +658,13 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return code.SymbolKind.Property;
 	}
 
-	function asSymbolTag(value: ls.SymbolTag): code.SymbolTag {
-		return value as code.SymbolTag;
+	function asSymbolTag(value: ls.SymbolTag): code.SymbolTag | undefined {
+		switch(value) {
+			case ls.SymbolTag.Deprecated:
+				return code.SymbolTag.Deprecated;
+			default:
+				return undefined;
+		}
 	}
 
 	function asSymbolTags(items: undefined | null): undefined;
@@ -669,7 +674,14 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (items === undefined || items === null) {
 			return undefined;
 		}
-		return items.map(asSymbolTag);
+		const result: code.SymbolTag[] = [];
+		for (const item of items) {
+			const converted = asSymbolTag(item);
+			if (converted !== undefined) {
+				result.push(converted);
+			}
+		}
+		return result.length === 0 ? undefined : result;
 	}
 
 	function asSymbolInformation(item: ls.SymbolInformation, uri?: code.Uri): code.SymbolInformation {
@@ -678,6 +690,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			item.name, asSymbolKind(item.kind),
 			asRange(item.location.range),
 			item.location.uri ? _uriConverter(item.location.uri) : uri);
+		fillTags(result, item);
 		if (item.containerName) { result.containerName = item.containerName; }
 		return result;
 	}
@@ -699,6 +712,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			asRange(value.range),
 			asRange(value.selectionRange)
 		);
+		fillTags(result, value);
 		if (value.children !== undefined && value.children.length > 0) {
 			let children: code.DocumentSymbol[] = [];
 			for (let child of value.children) {
@@ -707,6 +721,19 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			result.children = children;
 		}
 		return result;
+	}
+
+	function fillTags(result: { tags?: ReadonlyArray<code.SymbolTag>; }, value: { tags?: ls.SymbolTag[]; deprecated?: boolean; }): void {
+		result.tags = asSymbolTags(value.tags);
+		if (value.deprecated) {
+			if (!result.tags) {
+				result.tags = [code.SymbolTag.Deprecated];
+			} else {
+				if (!result.tags.includes(code.SymbolTag.Deprecated)) {
+					result.tags = result.tags.concat(code.SymbolTag.Deprecated);
+				}
+			}
+		}
 	}
 
 	function asCommand(item: ls.Command): code.Command {
