@@ -49,7 +49,7 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 * Support for custom text document implementations:
   * new npm package `vscode-languageserver-textdocument` which ships a standard text document implementation with basic incremental update. Server now need to prereq this npm package.
   * deprecated text document implementation in types.
-  * this resulted in a small breakage on the server side. Instead of doing `new TextDocuments` you now have to pass in a text document configuration to provide callbacks to create and uppdate a text document. Here are examples in TypeScript and JavaScript
+  * this resulted in a small breakage on the server side. Instead of doing `new TextDocuments` you now have to pass in a text document configuration to provide callbacks to create and update a text document. Here are examples in TypeScript and JavaScript
 ```typescript
 import { TextDocuments } from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
