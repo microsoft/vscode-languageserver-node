@@ -20,7 +20,7 @@
 		"rimraf": "^2.6.2",
 		"shelljs": "^0.8.1",
 		"shx": "^0.2.2",
-		"typescript": "next"
+		"typescript": "^3.7.5"
 	},
 	"scripts": {
 		"postinstall": "cd types && npm install && cd ../textDocument && npm install && cd ../jsonrpc && npm install && cd ../protocol && npm install && cd ../server && npm install && cd ../client && npm install && cd ../client-tests && npm install && cd ..",

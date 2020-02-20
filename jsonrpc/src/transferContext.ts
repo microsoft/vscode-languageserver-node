@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Message, isResponseMessage, isRequestMessage } from './messages';
+import { Message, isRequestMessage } from './messages';
 
 export class TransferContext {
 
@@ -24,15 +24,23 @@ export class TransferContext {
 		this.state.set(msg.id, headers);
 	}
 
-	public getEncoding(msg: Message, supportedEncodings: Set<string>): string | undefined {
-		if (!isResponseMessage(msg)) {
-			return undefined;
-		}
-		if (msg.id === null) {
-			return undefined;
-		}
+	public getNotificationContentEncoding(_supportedEncoding: { has(value: string): boolean; }): string | undefined {
+		return undefined;
+	}
 
-		const headers = this.state.get(msg.id);
+	public getRequestContentEncoding(_supportedEncoding: { has(value: string): boolean; }): string | undefined {
+		return undefined;
+	}
+
+	public getResponseAcceptEncodings(_supportedEncoding: { has(value: string): boolean; }): string[] | undefined {
+		return undefined;
+	}
+
+	public getResponseContentEncoding(id: string | number | null, supportedEncodings: { has(value: string): boolean; }): string | undefined {
+		if (id === null) {
+			return undefined;
+		}
+		const headers = this.state.get(id);
 		if (headers === undefined) {
 			return undefined;
 		}
