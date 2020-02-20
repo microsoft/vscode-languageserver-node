@@ -11,6 +11,11 @@ import ProtocolCompletionItem from './protocolCompletionItem';
 import ProtocolCodeLens from './protocolCodeLens';
 import ProtocolDocumentLink from './protocolDocumentLink';
 
+interface InsertReplaceRange {
+	inserting: code.Range;
+	replacing: code.Range;
+}
+
 export interface Converter {
 
 	asUri(value: string): code.Uri;
@@ -437,12 +442,12 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return result;
 	}
 
-	function asCompletionInsertText(item: ls.CompletionItem): { text: string | code.SnippetString, range?: code.Range, fromEdit: boolean } | undefined {
+	function asCompletionInsertText(item: ls.CompletionItem): { text: string | code.SnippetString, range?: code.Range | InsertReplaceRange, fromEdit: boolean } | undefined {
 		if (item.textEdit) {
 			if (item.insertTextFormat === ls.InsertTextFormat.Snippet) {
-				return { text: new code.SnippetString(item.textEdit.newText), range: asRange(item.textEdit.range), fromEdit: true };
+				return { text: new code.SnippetString(item.textEdit.newText), range: asCompletionRange(item.textEdit), fromEdit: true };
 			} else {
-				return { text: item.textEdit.newText, range: asRange(item.textEdit.range), fromEdit: true };
+				return { text: item.textEdit.newText, range: asCompletionRange(item.textEdit), fromEdit: true };
 			}
 		} else if (item.insertText) {
 			if (item.insertTextFormat === ls.InsertTextFormat.Snippet) {
@@ -452,6 +457,14 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			}
 		} else {
 			return undefined;
+		}
+	}
+
+	function asCompletionRange(value: ls.TextEdit | ls.InsertReplaceEdit): code.Range | InsertReplaceRange {
+		if (ls.InsertReplaceEdit.is(value)) {
+			return { inserting: asRange(value.insert), replacing: asRange(value.replace) };
+		} else {
+			return asRange(value.range);
 		}
 	}
 

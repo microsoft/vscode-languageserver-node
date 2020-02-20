@@ -1514,6 +1514,14 @@ export interface CompletionClientCapabilities {
 			 */
 			valueSet: CompletionItemTag[]
 		}
+
+		/**
+		 * Client support insert replace edit to control different behavior if a
+		 * completion item is inserted in the text or should replace text.
+		 * 
+		 * @since 3.16.0 - Proposed state
+		 */
+		insertReplaceSupport?: boolean;
 	};
 
 	completionItemKind?: {
