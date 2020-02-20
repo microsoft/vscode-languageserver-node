@@ -5,9 +5,16 @@
 'use strict';
 
 /**
- * A tagging type for string properties that are actually URIs.
+ * A tagging type for string properties that are actually document URIs.
  */
 export type DocumentUri = string;
+
+/**
+ * A tagging type for string properties that are actually URIs
+ *
+ * @since 3.16.0 - Proposed state
+ */
+export type URI = string;
 
 /**
  * Position in a text document expressed as zero-based line and character offset.
@@ -536,6 +543,38 @@ export namespace DiagnosticTag {
 export type DiagnosticTag = 1 | 2;
 
 /**
+ * Structure to capture more complex diagnostic codes.
+ *
+ * @since 3.16.0 - Proposed state
+ */
+export interface DiagnosticCode {
+	/**
+	 * The actual code
+	 */
+	value: string | number;
+
+	/**
+	 * A target URI to open with more information about the diagnostic error.
+	 */
+	target: URI;
+}
+
+/**
+ * The DiagnosticCode namespace provides functions to deal with complex diagnostic codes.
+ *
+ * @since 3.16.0 - Proposed state
+ */
+export namespace DiagnosticCode {
+	/**
+	 * Checks whether the given liternal conforms to the [DiagnosticCode](#DiagnosticCode) interface.
+	 */
+	export function is(value: string | number | DiagnosticCode | undefined | null): value is DiagnosticCode {
+		const candidate: DiagnosticCode = value as DiagnosticCode;
+		return candidate !== undefined && candidate !== null && (Is.number(candidate.value) || Is.string(candidate.value)) && Is.string(candidate.target);
+	}
+}
+
+/**
  * Represents a diagnostic, such as a compiler error or warning. Diagnostic objects
  * are only valid in the scope of a resource.
  */
@@ -553,8 +592,10 @@ export interface Diagnostic {
 
 	/**
 	 * The diagnostic's code, which usually appear in the user interface.
+	 *
+	 * @since 3.16.0 Support for `DiagnosticCode` - Proposed state
 	 */
-	code?: number | string;
+	code?: number | string | DiagnosticCode;
 
 	/**
 	 * A human-readable string describing the source of this
@@ -570,6 +611,8 @@ export interface Diagnostic {
 
 	/**
 	 * Additional metadata about the diagnostic.
+	 *
+	 * @since 3.15.0
 	 */
 	tags?: DiagnosticTag[];
 
@@ -2143,7 +2186,8 @@ export namespace DocumentSymbol {
 			Range.is(candidate.range) && Range.is(candidate.selectionRange) &&
 			(candidate.detail === void 0 || Is.string(candidate.detail)) &&
 			(candidate.deprecated === void 0 || Is.boolean(candidate.deprecated)) &&
-			(candidate.children === void 0 || Array.isArray(candidate.children));
+			(candidate.children === void 0 || Array.isArray(candidate.children)) &&
+			(candidate.tags === void 0 || Array.isArray(candidate.tags));
 	}
 }
 
