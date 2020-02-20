@@ -1421,6 +1421,13 @@ export interface PublishDiagnosticsClientCapabilities {
 	 * @since 3.15.0
 	 */
 	versionSupport?: boolean;
+
+	/**
+	 * Clients support complex diagnostic codes (e.g. code and target URI).
+	 *
+	 * @since 3.16.0 - Proposed state
+	 */
+	complexDiagnosticCodeSupport?: boolean;
 }
 
 /**

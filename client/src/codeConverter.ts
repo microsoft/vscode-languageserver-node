@@ -24,6 +24,15 @@ namespace InsertReplaceRange {
 	}
 }
 
+declare module 'vscode' {
+	export interface Diagnostic {
+		code2?: {
+			value: string | number;
+			target: Uri;
+		}
+	}
+}
+
 export interface Converter {
 
 	asUri(uri: code.Uri): string;
@@ -406,11 +415,21 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return items.map(asRelatedInformation);
 	}
 
+	function asDiagnosticCode(value: number | string | { value: string | number; target: code.Uri; } | undefined | null): number | string | proto.DiagnosticCode | undefined {
+		if (value === undefined || value === null) {
+			return undefined;
+		}
+		if (Is.number(value) || Is.string(value)) {
+			return value;
+		}
+		return { value: value.value, target: asUri(value.target) };
+	}
+
 	function asDiagnostic(item: code.Diagnostic): proto.Diagnostic {
 		let result: proto.Diagnostic = proto.Diagnostic.create(asRange(item.range), item.message);
 		if (Is.number(item.severity)) { result.severity = asDiagnosticSeverity(item.severity); }
-		if (Is.number(item.code) || Is.string(item.code)) { result.code = item.code; }
-		if (Array.isArray(item.tags)) { result.tags = asDiagnosticTags(item.tags); }
+		result.code = asDiagnosticCode(item.code2 || item.code);
+		{if (Array.isArray(item.tags)) { result.tags = asDiagnosticTags(item.tags); }}
 		if (item.relatedInformation) { result.relatedInformation = asRelatedInformations(item.relatedInformation); }
 		if (item.source) { result.source = item.source; }
 		return result;
