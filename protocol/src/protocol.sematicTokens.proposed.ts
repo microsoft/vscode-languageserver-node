@@ -49,7 +49,6 @@ export enum SemanticTokenModifiers {
 	documentation = 'documentation',
 	declaration = 'declaration',
 	definition = 'definition',
-	reference = 'reference',
 	static = 'static',
 	abstract = 'abstract',
 	deprecated = 'deprecated',
