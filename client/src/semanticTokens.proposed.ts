@@ -344,7 +344,7 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Propose
 						return protocol2code.asSemanticTokens(result);
 					}, (error: any) => {
 						client.logFailedRequest(Proposed.SemanticTokensRequest.type, error);
-						return undefined;
+						throw error;
 					});
 				};
 				return middleware.provideDocumentSemanticTokens
@@ -368,7 +368,7 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Propose
 							}
 						}, (error: any) => {
 							client.logFailedRequest(Proposed.SemanticTokensEditsRequest.type, error);
-							return undefined;
+							throw error;
 						});
 					};
 					return middleware.provideDocumentSemanticTokensEdits
@@ -392,7 +392,7 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Propose
 							return protocol2code.asSemanticTokens(result);
 						}, (error: any) => {
 							client.logFailedRequest(Proposed.SemanticTokensRangeRequest.type, error);
-							return undefined;
+							throw error;
 						});
 					};
 					return middleware.provideDocumentRangeSemanticTokens
