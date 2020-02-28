@@ -316,7 +316,6 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Propose
 			Proposed.SemanticTokenModifiers.static,
 			Proposed.SemanticTokenModifiers.abstract,
 			Proposed.SemanticTokenModifiers.deprecated,
-			Proposed.SemanticTokenModifiers.async,
 			Proposed.SemanticTokenModifiers.readonly
 		];
 	}
