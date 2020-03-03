@@ -114,8 +114,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 				textDocumentSync: TextDocumentSyncKind.Full,
 				hoverProvider: true,
 				completionProvider: {
-					resolveProvider: true,
-					triggerCharacters: ['::']
+					resolveProvider: false,
 				},
 				signatureHelpProvider: {
 				},
@@ -269,12 +268,27 @@ connection.onHover((textPosition): Hover => {
 });
 
 connection.onCompletion((params, token): CompletionItem[] => {
-	let item = CompletionItem.create('negate');
-	item.insertTextFormat = InsertTextFormat.Snippet;
-	item.textEdit = TextEdit.insert(params.position, 'negate ${1:number}');
-	return [
-		item
-	]
+	const result: CompletionItem[] = [];
+	let item = CompletionItem.create('foo');
+	result.push(item);
+
+	item = CompletionItem.create('foo-text');
+	item.insertText = 'foo-text';
+	result.push(item);
+
+	item = CompletionItem.create('foo-text-range-insert');
+	item.textEdit = TextEdit.insert(params.position, 'foo-text-range-insert');
+	result.push(item);
+
+	item = CompletionItem.create('foo-text-range-replace');
+	item.textEdit = TextEdit.replace(
+		Range.create(Position.create(params.position.line, params.position.character - 1), params.position),
+		'foo-text-range-replace'
+	);
+	item.filterText = 'b';
+	result.push(item);
+
+	return result;
 });
 
 connection.onCompletionResolve((item): CompletionItem => {
