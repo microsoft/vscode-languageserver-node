@@ -125,22 +125,6 @@ interface CharsetOptions {
 }
 
 namespace MessageWriterOptions {
-	export function asResolvedOptions(options: BufferEncoding | MessageWriterOptions | undefined): ResolvedMessageWriterOptions {
-		if (options === undefined || typeof options === 'string') {
-			return { charset: options ?? 'utf8' };
-		} else {
-			const charset: BufferEncoding = options.charset ?? 'utf8';
-			const encoderMap: Map<string, Encoder> = new Map();
-			for (const encoder of options.encoders) {
-				encoderMap.set(encoder.name, encoder);
-			}
-			const decoderMap: Map<string, Decoder> = new Map();
-			for (const decoder of options.decoders) {
-				decoderMap.set(decoder.name, decoder);
-			}
-			return { charset, context: options.context, encoders: options.encoders, encoderMap, decoders: options.decoders, decoderMap };
-		}
-	}
 }
 
 interface ContextOptions {
@@ -159,6 +143,23 @@ namespace ResolvedMessageWriterOptions {
 		const candidate: ContextOptions = value as ContextOptions;
 		return candidate && candidate.context !== undefined;
 	}
+
+	export function fromOptions(options: BufferEncoding | MessageWriterOptions | undefined): ResolvedMessageWriterOptions {
+		if (options === undefined || typeof options === 'string') {
+			return { charset: options ?? 'utf8' };
+		} else {
+			const charset: BufferEncoding = options.charset ?? 'utf8';
+			const encoderMap: Map<string, Encoder> = new Map();
+			for (const encoder of options.encoders) {
+				encoderMap.set(encoder.name, encoder);
+			}
+			const decoderMap: Map<string, Decoder> = new Map();
+			for (const decoder of options.decoders) {
+				decoderMap.set(decoder.name, decoder);
+			}
+			return { charset, context: options.context, encoders: options.encoders, encoderMap, decoders: options.decoders, decoderMap };
+		}
+	}
 }
 
 export class WriteableStreamMessageWriter extends AbstractMessageWriter implements MessageWriter {
@@ -171,7 +172,7 @@ export class WriteableStreamMessageWriter extends AbstractMessageWriter implemen
 	public constructor(writable: NodeJS.WritableStream, options?: BufferEncoding | MessageWriterOptions) {
 		super();
 		this.writable = writable;
-		this.options = MessageWriterOptions.asResolvedOptions(options);
+		this.options = ResolvedMessageWriterOptions.fromOptions(options);
 		this.errorCount = 0;
 		this.writeSemaphore = new Semaphore(1);
 		this.writable.on('error', (error: any) => this.fireError(error));
@@ -287,7 +288,6 @@ export class WriteableStreamMessageWriter extends AbstractMessageWriter implemen
 		} else {
 			return undefined;
 		}
-		if (isRequestMessage(msg))
 	}
 
 	private handleError(error: any, msg: Message): void {

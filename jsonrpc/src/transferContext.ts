@@ -11,9 +11,15 @@ export class TransferContext {
 	private static ACCEPT_ENCODING = 'Accept-Encoding';
 
 	private state: Map<string | number, Map<string, string>>;
+	private defaultRequestEncodings: string[];
 
 	constructor() {
 		this.state = new Map();
+		this.defaultRequestEncodings = [];
+	}
+
+	public setDefaultRequestEncodings(value: string): void {
+		this.defaultRequestEncodings = [value];
 	}
 
 	public capture(msg: Message, headers: Map<string, string>): void {
@@ -28,7 +34,15 @@ export class TransferContext {
 		return undefined;
 	}
 
-	public getRequestContentEncoding(_supportedEncoding: { has(value: string): boolean; }): string | undefined {
+	public getRequestContentEncoding(supportedEncoding: { has(value: string): boolean; }): string | undefined {
+		if (this.defaultRequestEncodings.length === 0) {
+			return undefined;
+		}
+		for (const encoding of this.defaultRequestEncodings) {
+			if (supportedEncoding.has(encoding)) {
+				return encoding;
+			}
+		}
 		return undefined;
 	}
 

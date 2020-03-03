@@ -35,7 +35,7 @@ export interface DecoderOptions {
 
 export interface FunctionDecoder {
 	name: string;
-	decode(buffer: Buffer, options: DecoderOptions): Message;
+	decode(buffer: Buffer, options: DecoderOptions): Promise<Message>;
 }
 
 export interface StreamDecoder {

@@ -4,7 +4,7 @@
 		"target": "es2017",
 		"module": "commonjs",
 		"moduleResolution": "node",
-		"sourceMap": false,
+		"sourceMap": true,
 		"declaration": true,
 		"stripInternal": true,
 		"lib": [ "es2017" ],
