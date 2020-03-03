@@ -29,8 +29,8 @@
 	"scripts": {
 		"prepublishOnly": "npm run clean && node ./bin/updateVSCode.js && npm run compile && npm test",
 		"postpublish": "node ../build/npm/post-publish.js",
-		"compile": "node ../build/bin/tsc -b ./tsconfig.json && shx cp src/utils/terminateProcess.sh lib/utils/terminateProcess.sh",
-		"watch": "node ../build/bin/tsc -b ./tsconfig.json -w",
+		"compile": "node ../build/bin/tsc -p ./tsconfig.json && shx cp src/utils/terminateProcess.sh lib/utils/terminateProcess.sh",
+		"watch": "node ../build/bin/tsc -w -p ./tsconfig.json",
 		"test": "cd ../client-tests && npm test && cd ../client",
 		"clean": "node ../node_modules/rimraf/bin.js lib",
 		"preversion": "npm test"
