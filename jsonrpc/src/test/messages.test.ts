@@ -193,4 +193,24 @@ suite('Messages', () => {
 		readable.push(payload);
 		readable.push(null);
 	});
+
+	test('Generate Accept Encoding', () => {
+		const transferContext = new TransferContext();
+		assert.deepStrictEqual(
+			transferContext.getResponseAcceptEncodings([ { name: 'gzip'} ]),
+			['gzip']
+		);
+		assert.deepStrictEqual(
+			transferContext.getResponseAcceptEncodings([ { name: 'gzip'}, {name: 'compress' } ]),
+			['gzip;q=1', 'compress;q=0']
+		);
+		assert.deepStrictEqual(
+			transferContext.getResponseAcceptEncodings([ { name: 'gzip'}, {name: 'compress' }, { name: 'deflate'} ]),
+			['gzip;q=1', 'compress;q=0.5', 'deflate;q=0']
+		);
+		assert.deepStrictEqual(
+			transferContext.getResponseAcceptEncodings([ { name: 'gzip'}, {name: 'compress' }, { name: 'deflate'}, { name: 'br'} ]),
+			['gzip;q=1', 'compress;q=0.7', 'deflate;q=0.4', 'br;q=0.1']
+		);
+	});
 });
