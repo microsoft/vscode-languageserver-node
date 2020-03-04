@@ -36,7 +36,7 @@ export * from './protocol';
 export { FoldingRangeParams as FoldingRangeRequestParam } from './protocol'; // for backward compatibility
 
 import * as callHierarchy from './protocol.callHierarchy.proposed';
-import * as st from './protocol.sematicTokens.proposed';
+import * as st from './protocol.semanticTokens.proposed';
 
 export namespace Proposed {
 

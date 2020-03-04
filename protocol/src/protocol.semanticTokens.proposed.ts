@@ -77,7 +77,7 @@ export interface SemanticTokens {
 	/**
 	 * An optional result id. If provided and clients support delta updating
 	 * the client will include the result id in the next semantic token request.
-	 * A server can then instead of computing all sematic tokens again simply
+	 * A server can then instead of computing all semantic tokens again simply
 	 * send a delta.
 	 */
 	resultId?: string;
