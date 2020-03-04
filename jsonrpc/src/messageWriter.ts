@@ -257,7 +257,7 @@ export class WriteableStreamMessageWriter extends AbstractMessageWriter implemen
 				return undefined;
 			}
 			const encoder = options.encoderMap.get(encoding);
-			const responseEncodings = options.context.getResponseAcceptEncodings(options.decoderMap);
+			const responseEncodings = options.context.getResponseAcceptEncodings(options.decoders);
 			const headers: string[] = [];
 			if (responseEncodings !== undefined) {
 				headers.push(AccepttEncoding, responseEncodings.join(', '), CRLF);
