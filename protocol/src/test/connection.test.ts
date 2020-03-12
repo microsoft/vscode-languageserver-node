@@ -5,6 +5,10 @@
 'use strict';
 
 import * as assert from 'assert';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import * as rimraf from 'rimraf';
 
 import { Duplex } from 'stream';
 import {
@@ -12,8 +16,9 @@ import {
 	WorkDoneProgressBegin, WorkDoneProgressReport, WorkDoneProgressEnd
 } from '../main';
 import { DocumentSymbolRequest, DocumentSymbolParams } from '../protocol';
-import { ProgressType } from 'vscode-jsonrpc';
+import { ProgressType, CancellationTokenSource, ResponseError, ErrorCodes, ConnectionOptions } from 'vscode-jsonrpc';
 import { SymbolInformation, SymbolKind } from 'vscode-languageserver-types';
+import { randomBytes } from 'crypto';
 
 class NullLogger implements Logger {
 	error(_message: string): void {
@@ -36,8 +41,12 @@ class TestStream extends Duplex {
 	}
 }
 
+function delay(ms: number) {
+	return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 suite('Connection Tests', () => {
-	test('Ensure proper param passing', async() => {
+	test('Ensure proper param passing', async () => {
 		const up = new TestStream();
 		const down = new TestStream();
 		const logger = new NullLogger();
@@ -65,6 +74,94 @@ suite('Connection Tests', () => {
 		};
 		await clientConnection.sendRequest(InitializeRequest.type, init);
 		assert.ok(paramsCorrect, 'Parameters are transferred correctly');
+	});
+
+	test('Cancellation Tests', async () => {
+		const up = new TestStream();
+		const down = new TestStream();
+		const logger = new NullLogger();
+		const serverConnection = createProtocolConnection(new StreamMessageReader(up), new StreamMessageWriter(down), logger);
+		const clientConnection = createProtocolConnection(new StreamMessageReader(down), new StreamMessageWriter(up), logger);
+		serverConnection.listen();
+		clientConnection.listen();
+
+		const source = new CancellationTokenSource();
+		serverConnection.onRequest(InitializeRequest.type, async (_, token) => {
+			source.cancel();
+
+			while (!token.isCancellationRequested) {
+				await delay(0);
+			}
+
+			if (token.isCancellationRequested) {
+				return new ResponseError(ErrorCodes.RequestCancelled, 'request cancelled');
+			}
+
+			throw new Error('shouldn\'t reach here');
+		});
+
+		const init: InitializeParams = {
+			rootUri: 'file:///home/dirkb',
+			processId: 1,
+			capabilities: {},
+			workspaceFolders: null,
+		};
+
+		try {
+			await clientConnection.sendRequest(InitializeRequest.type, init, source.token);
+		}
+		catch (e) {
+			assert(e instanceof ResponseError);
+			assert((<ResponseError<any>>e).code === ErrorCodes.RequestCancelled);
+		}
+	});
+
+	test('File based cancellation Tests', async () => {
+		const up = new TestStream();
+		const down = new TestStream();
+		const logger = new NullLogger();
+
+		const randomName = randomBytes(21).toString('hex');
+		const cancellationFolder = path.join(os.tmpdir(), `jsonrpc-connection-tests`, randomName);
+		fs.mkdirSync(cancellationFolder, { recursive: true });
+
+		const options: ConnectionOptions = { folderForFileBasedCancellation: cancellationFolder };
+		const serverConnection = createProtocolConnection(new StreamMessageReader(up), new StreamMessageWriter(down), logger, undefined, options);
+		const clientConnection = createProtocolConnection(new StreamMessageReader(down), new StreamMessageWriter(up), logger, undefined, options);
+		serverConnection.listen();
+		clientConnection.listen();
+
+		const source = new CancellationTokenSource();
+		serverConnection.onRequest(InitializeRequest.type, (_, token) => {
+			source.cancel();
+
+			while (!token.isCancellationRequested) {
+				// synchronously check cancellation
+			}
+
+			if (token.isCancellationRequested) {
+				return new ResponseError(ErrorCodes.RequestCancelled, 'request cancelled');
+			}
+
+			throw new Error('shouldn\'t reach here');
+		});
+
+		const init: InitializeParams = {
+			rootUri: 'file:///home/dirkb',
+			processId: 1,
+			capabilities: {},
+			workspaceFolders: null,
+		};
+
+		try {
+			await clientConnection.sendRequest(InitializeRequest.type, init, source.token);
+		}
+		catch (e) {
+			assert(e instanceof ResponseError);
+			assert((<ResponseError<any>>e).code === ErrorCodes.RequestCancelled);
+		}
+
+		rimraf.sync(cancellationFolder);
 	});
 });
 
@@ -103,12 +200,12 @@ suite('Partial result tests', () => {
 			kind: SymbolKind.Class,
 			location: {
 				uri: 'file:///abc.txt',
-				range: { start: { line: 0, character: 1 }, end: { line: 2, character: 3} }
+				range: { start: { line: 0, character: 1 }, end: { line: 2, character: 3 } }
 			}
 		};
 		serverConnection.onRequest(DocumentSymbolRequest.type, (params) => {
 			assert.ok(params.partialResultToken === '3b1db4c9-e011-489e-a9d1-0653e64707c2');
-			serverConnection.sendProgress(progressType, params.partialResultToken!, [ result ]);
+			serverConnection.sendProgress(progressType, params.partialResultToken!, [result]);
 			return [];
 		});
 

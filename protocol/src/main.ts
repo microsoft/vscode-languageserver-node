@@ -10,7 +10,7 @@ import {
 	Message, NotificationMessage, RequestMessage, MessageType as RPCMessageType,
 	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler, HandlerResult,
 	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler, StarNotificationHandler,
-	MessageReader, PartialMessageInfo, MessageWriter, Logger, ConnectionStrategy,
+	MessageReader, PartialMessageInfo, MessageWriter, Logger, ConnectionStrategy, ConnectionOptions,
 	StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageWriter,
 	createClientPipeTransport, createServerPipeTransport, generateRandomPipeName, DataCallback,
 	createClientSocketTransport, createServerSocketTransport, ProgressType, ProgressToken,
@@ -23,7 +23,7 @@ export {
 	Message, NotificationMessage, RequestMessage, RPCMessageType,
 	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler, HandlerResult,
 	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler, StarNotificationHandler,
-	MessageReader, PartialMessageInfo, MessageWriter, Logger, ConnectionStrategy,
+	MessageReader, PartialMessageInfo, MessageWriter, Logger, ConnectionStrategy, ConnectionOptions,
 	StreamMessageReader, StreamMessageWriter,
 	IPCMessageReader, IPCMessageWriter,
 	createClientPipeTransport, createServerPipeTransport, generateRandomPipeName, DataCallback,
@@ -64,9 +64,9 @@ export namespace Proposed {
 		export type HandlerSignature = callHierarchy.CallHierarchyIncomingCallsRequest.HandlerSignature;
 	}
 
-	export type CallHierarchyOutgoingCallsParams= callHierarchy.CallHierarchyOutgoingCallsParams;
+	export type CallHierarchyOutgoingCallsParams = callHierarchy.CallHierarchyOutgoingCallsParams;
 	export namespace CallHierarchyOutgoingCallsRequest {
-		export const method =  callHierarchy.CallHierarchyOutgoingCallsRequest.method;
+		export const method = callHierarchy.CallHierarchyOutgoingCallsRequest.method;
 		export const type = callHierarchy.CallHierarchyOutgoingCallsRequest.type;
 		export type HandlerSignature = callHierarchy.CallHierarchyOutgoingCallsRequest.HandlerSignature;
 	}
@@ -282,6 +282,6 @@ export interface ProtocolConnection {
  */
 export type ProtocolConnetion = ProtocolConnection;
 
-export function createProtocolConnection(reader: MessageReader, writer: MessageWriter, logger: Logger, strategy?: ConnectionStrategy): ProtocolConnection {
-	return createMessageConnection(reader, writer, logger, strategy);
+export function createProtocolConnection(reader: MessageReader, writer: MessageWriter, logger: Logger, strategy?: ConnectionStrategy, options?: ConnectionOptions): ProtocolConnection {
+	return createMessageConnection(reader, writer, logger, strategy, options);
 }
