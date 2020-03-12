@@ -194,10 +194,10 @@ export interface Logger {
 }
 
 export const NullLogger: Logger = Object.freeze({
-	error: () => {},
-	warn: () => {},
-	info: () => {},
-	log: () => {}
+	error: () => { },
+	warn: () => { },
+	info: () => { },
+	log: () => { }
 });
 
 export enum Trace {
@@ -435,7 +435,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 	let timer: NodeJS.Immediate | undefined;
 	let messageQueue: MessageQueue = new LinkedMap<string, Message>();
 	let responsePromises: { [name: string]: ResponsePromise } = Object.create(null);
-	let requestTokens: { [id: string]: CancellationTokenSource } = Object.create(null);
+	let requestTokens: { [id: string]: CancellationTokenSourceImpl } = Object.create(null);
 
 	let trace: Trace = Trace.Off;
 	let traceFormat: TraceFormat = TraceFormat.Text;
@@ -623,6 +623,12 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			traceSendingResponse(message, method, startTime);
 			messageWriter.write(message);
 		}
+		function deleteRequestToken(id: string) {
+			const source = requestTokens[id];
+			delete requestTokens[id];
+
+			source.dispose();
+		}
 
 		traceReceivedRequest(requestMessage);
 
@@ -656,14 +662,14 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 
 				let promise = handlerResult as Thenable<any | ResponseError<any>>;
 				if (!handlerResult) {
-					delete requestTokens[tokenKey];
+					deleteRequestToken(tokenKey);
 					replySuccess(handlerResult, requestMessage.method, startTime);
 				} else if (promise.then) {
 					promise.then((resultOrError): any | ResponseError<any> => {
-						delete requestTokens[tokenKey];
+						deleteRequestToken(tokenKey);
 						reply(resultOrError, requestMessage.method, startTime);
 					}, error => {
-						delete requestTokens[tokenKey];
+						deleteRequestToken(tokenKey);
 						if (error instanceof ResponseError) {
 							replyError(<ResponseError<any>>error, requestMessage.method, startTime);
 						} else if (error && Is.string(error.message)) {
@@ -673,11 +679,11 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 						}
 					});
 				} else {
-					delete requestTokens[tokenKey];
+					deleteRequestToken(tokenKey);
 					reply(handlerResult, requestMessage.method, startTime);
 				}
 			} catch (error) {
-				delete requestTokens[tokenKey];
+				deleteRequestToken(tokenKey);
 				if (error instanceof ResponseError) {
 					reply(<ResponseError<any>>error, requestMessage.method, startTime);
 				} else if (error && Is.string(error.message)) {

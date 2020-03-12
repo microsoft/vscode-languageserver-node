@@ -62,7 +62,7 @@ class MutableToken implements CancellationToken {
 			this._isCancelled = true;
 			if (this._emitter) {
 				this._emitter.fire(undefined);
-				this.dispose();
+				this.disposeEvent();
 			}
 		}
 	}
@@ -82,6 +82,10 @@ class MutableToken implements CancellationToken {
 	}
 
 	public dispose(): void {
+		this.disposeEvent();
+	}
+
+	private disposeEvent() : void {
 		if (this._emitter) {
 			this._emitter.dispose();
 			this._emitter = undefined;
@@ -116,6 +120,25 @@ class FileBasedToken extends MutableToken {
 		}
 
 		return super.isCancellationRequested;
+	}
+
+	public dispose() : void {
+		super.dispose();
+
+		if (!super.isCancellationRequested) {
+			// this could be micro optimization we don't want to keep
+			return;
+		}
+
+		try {
+			// attempt to delete cancellation file.
+			// if it fails, that's fine, owner of this connection is supposed to take care of
+			// files left at the end of the session
+			fs.unlinkSync(this._cancellationName);
+		}
+		catch (e) {
+			// noop
+		}
 	}
 
 	private pipeExists(): boolean {
