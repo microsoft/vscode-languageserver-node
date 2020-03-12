@@ -5,6 +5,8 @@
 /// <reference path="../typings/thenable.d.ts" />
 'use strict';
 
+import * as fs from 'fs';
+import * as path from 'path';
 import * as Is from './is';
 
 import {
@@ -22,7 +24,7 @@ import {
 import { MessageReader, PartialMessageInfo, DataCallback, StreamMessageReader, IPCMessageReader, SocketMessageReader } from './messageReader';
 import { MessageWriter, StreamMessageWriter, IPCMessageWriter, SocketMessageWriter } from './messageWriter';
 import { Disposable, Event, Emitter } from './events';
-import { CancellationTokenSource, CancellationToken } from './cancellation';
+import { CancellationTokenSource, CancellationTokenSourceImpl, CancellationToken, createCancellationFile } from './cancellation';
 import { LinkedMap } from './linkedMap';
 
 export {
@@ -316,6 +318,10 @@ export namespace ConnectionStrategy {
 	}
 }
 
+export interface ConnectionOptions {
+	folderForFileBasedCancellation?: string
+}
+
 export interface MessageConnection {
 	sendRequest<R, E, RO>(type: RequestType0<R, E, RO>, token?: CancellationToken): Promise<R>;
 	sendRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, params: P, token?: CancellationToken): Promise<R>;
@@ -414,7 +420,7 @@ interface NotificationHandlerElement {
 	handler: GenericNotificationHandler;
 }
 
-function _createMessageConnection(messageReader: MessageReader, messageWriter: MessageWriter, logger: Logger, strategy?: ConnectionStrategy): MessageConnection {
+function _createMessageConnection(messageReader: MessageReader, messageWriter: MessageWriter, logger: Logger, strategy?: ConnectionStrategy, options?: ConnectionOptions): MessageConnection {
 	let sequenceNumber = 0;
 	let notificationSquenceNumber = 0;
 	let unknownResponseSquenceNumber = 0;
@@ -442,6 +448,19 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 	let unhandledProgressEmitter: Emitter<ProgressParams<any>> = new Emitter<ProgressParams<any>>();
 
 	let disposeEmitter: Emitter<void> = new Emitter<void>();
+
+	let folderForFileBasedCancellation = options?.folderForFileBasedCancellation;
+	if (folderForFileBasedCancellation) {
+		// this folder should be owned by the caller. and the caller should take care of it when it is no longer needed.
+		if (!fs.existsSync(folderForFileBasedCancellation)) {
+			logger.error(`base folder ('${folderForFileBasedCancellation}') for the file based cancellation doesn't exist, fallback to normal cancellation mode`);
+			folderForFileBasedCancellation = undefined;
+		}
+	}
+
+	function getCancellationFilename(id: string) {
+		return folderForFileBasedCancellation ? path.join(folderForFileBasedCancellation, `cancellation-${id}.tmp`) : undefined;
+	}
 
 	function createRequestQueueKey(id: string | number): string {
 		return 'req-' + id.toString();
@@ -616,8 +635,8 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 		}
 		let startTime = Date.now();
 		if (requestHandler || starRequestHandler) {
-			let cancellationSource = new CancellationTokenSource();
 			let tokenKey = String(requestMessage.id);
+			let cancellationSource = new CancellationTokenSourceImpl(getCancellationFilename(tokenKey));
 			requestTokens[tokenKey] = cancellationSource;
 			try {
 				let handlerResult: any;
@@ -1090,6 +1109,12 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			});
 			if (token) {
 				token.onCancellationRequested(() => {
+					// create cancellation file for the cancel request
+					const cancellationFilename = getCancellationFilename(String(id));
+					if (cancellationFilename) {
+						createCancellationFile(cancellationFilename);
+					}
+
 					connection.sendNotification(CancelNotification.type, { id });
 				});
 			}
@@ -1196,13 +1221,13 @@ function isMessageWriter(value: any): value is MessageWriter {
 	return value.write !== void 0 && value.end === void 0;
 }
 
-export function createMessageConnection(reader: MessageReader, writer: MessageWriter, logger?: Logger, strategy?: ConnectionStrategy): MessageConnection;
-export function createMessageConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger?: Logger, strategy?: ConnectionStrategy): MessageConnection;
-export function createMessageConnection(input: MessageReader | NodeJS.ReadableStream, output: MessageWriter | NodeJS.WritableStream, logger?: Logger, strategy?: ConnectionStrategy): MessageConnection {
+export function createMessageConnection(reader: MessageReader, writer: MessageWriter, logger?: Logger, strategy?: ConnectionStrategy, options?: ConnectionOptions): MessageConnection;
+export function createMessageConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger?: Logger, strategy?: ConnectionStrategy, options?: ConnectionOptions): MessageConnection;
+export function createMessageConnection(input: MessageReader | NodeJS.ReadableStream, output: MessageWriter | NodeJS.WritableStream, logger?: Logger, strategy?: ConnectionStrategy, options?: ConnectionOptions): MessageConnection {
 	if (!logger) {
 		logger = NullLogger;
 	}
 	let reader = isMessageReader(input) ? input : new StreamMessageReader(input);
 	let writer = isMessageWriter(output) ? output : new StreamMessageWriter(output);
-	return _createMessageConnection(reader, writer, logger, strategy);
+	return _createMessageConnection(reader, writer, logger, strategy, options);
 }

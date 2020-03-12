@@ -5,11 +5,16 @@
 'use strict';
 
 import * as assert from 'assert';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import * as rimraf from 'rimraf';
 
-import { Duplex  } from 'stream';
+import { randomBytes } from 'crypto';
+import { Duplex } from 'stream';
 import { inherits } from 'util';
 
-import { RequestType, RequestType3, ResponseError, NotificationType, NotificationType2, ErrorCodes } from '../messages';
+import { RequestType0, RequestType, RequestType3, ResponseError, NotificationType, NotificationType2, ErrorCodes } from '../messages';
 import { CancellationTokenSource } from '../cancellation';
 
 import * as hostConnection from '../main';
@@ -18,7 +23,7 @@ interface TestDuplex extends Duplex {
 }
 
 interface TestDuplexConstructor {
-	new (name?: string, dbg?: boolean): TestDuplex;
+	new(name?: string, dbg?: boolean): TestDuplex;
 }
 
 let TestDuplex: TestDuplexConstructor = function (): TestDuplexConstructor {
@@ -39,7 +44,11 @@ let TestDuplex: TestDuplexConstructor = function (): TestDuplexConstructor {
 	TestDuplex.prototype._read = function (this: any, _size: number) {
 	};
 	return (<any>TestDuplex) as TestDuplexConstructor;
-} ();
+}();
+
+function delay(ms: number) {
+	return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 suite('Connection', () => {
 
@@ -174,24 +183,24 @@ suite('Connection', () => {
 	});
 
 	test('Receives 0 as 0', (done) => {
- 		let type = new RequestType<number, number, void, void>('test/handleSingleRequest');
- 		let duplexStream1 = new TestDuplex('ds1');
- 		let duplexStream2 = new TestDuplex('ds2');
+		let type = new RequestType<number, number, void, void>('test/handleSingleRequest');
+		let duplexStream1 = new TestDuplex('ds1');
+		let duplexStream2 = new TestDuplex('ds2');
 
- 		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
- 		server.onRequest(type, (param) => {
- 			assert.strictEqual(param, 0);
- 			return 0;
- 		});
- 		server.listen();
+		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		server.onRequest(type, (param) => {
+			assert.strictEqual(param, 0);
+			return 0;
+		});
+		server.listen();
 
- 		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
- 		client.listen();
- 		client.sendRequest(type, 0).then(result => {
- 			assert.deepEqual(result, 0);
- 			done();
- 		});
- 	});
+		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		client.listen();
+		client.sendRequest(type, 0).then(result => {
+			assert.deepEqual(result, 0);
+			done();
+		});
+	});
 
 	let testNotification = new NotificationType<{ value: boolean }, void>('testNotification');
 	test('Send and Receive Notification', (done) => {
@@ -496,5 +505,118 @@ suite('Connection', () => {
 		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
 		(client.sendNotification as Function)(type, 10);
+	});
+
+	test('Regular Cancellation', (done) => {
+		let type = new RequestType0<void, void>('cancelTest');
+		let duplexStream1 = new TestDuplex('ds1');
+		let duplexStream2 = new TestDuplex('ds2');
+
+		const source = new CancellationTokenSource();
+		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		server.onRequest(type, async t => {
+			source.cancel();
+
+			// wait until cancellation is set
+			while (!t.isCancellationRequested) {
+				await delay(0);
+			}
+
+			done();
+		});
+		server.listen();
+
+		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		client.listen();
+		client.sendRequest(type, source.token);
+	});
+
+	test('File Based Cancellation', (done) => {
+		let type = new RequestType0<void, void>('cancelTest');
+		let duplexStream1 = new TestDuplex('ds1');
+		let duplexStream2 = new TestDuplex('ds2');
+
+		const randomName = randomBytes(21).toString('hex');
+		const cancellationFolder = path.join(os.tmpdir(), `jsonrpc-connection-tests`, randomName);
+		fs.mkdirSync(cancellationFolder, { recursive: true });
+
+		const source = new CancellationTokenSource();
+		const options: hostConnection.ConnectionOptions = { folderForFileBasedCancellation: cancellationFolder };
+
+		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, undefined, options);
+		server.onRequest(type, t => {
+			source.cancel();
+
+			// source.token and t we got here are 2 different tokens from 2 different sources.
+			while (!t.isCancellationRequested) {
+				// file based cancellation works with synchronous code path
+			}
+
+			rimraf.sync(cancellationFolder);
+			done();
+		});
+		server.listen();
+
+		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger, undefined, options);
+		client.listen();
+		client.sendRequest(type, source.token);
+	});
+
+	test('Mixed Cancellation 1', (done) => {
+		let type = new RequestType0<void, void>('cancelTest');
+		let duplexStream1 = new TestDuplex('ds1');
+		let duplexStream2 = new TestDuplex('ds2');
+
+		const randomName = randomBytes(21).toString('hex');
+		const cancellationFolder = path.join(os.tmpdir(), `jsonrpc-connection-tests`, randomName);
+		fs.mkdirSync(cancellationFolder, { recursive: true });
+
+		const source = new CancellationTokenSource();
+		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, undefined, { folderForFileBasedCancellation: cancellationFolder });
+		server.onRequest(type, async t => {
+			source.cancel();
+
+			// when 2 different modes are fixed, it behaves like regular cancellation mode
+			while (!t.isCancellationRequested) {
+				await delay(0);
+			}
+
+			rimraf.sync(cancellationFolder);
+			done();
+		});
+		server.listen();
+
+		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		client.listen();
+		client.sendRequest(type, source.token);
+	});
+
+	test('Mixed Cancellation 2', (done) => {
+		let type = new RequestType0<void, void>('cancelTest');
+		let duplexStream1 = new TestDuplex('ds1');
+		let duplexStream2 = new TestDuplex('ds2');
+
+		const randomName = randomBytes(21).toString('hex');
+		const cancellationFolder = path.join(os.tmpdir(), `jsonrpc-connection-tests`, randomName);
+		fs.mkdirSync(cancellationFolder, { recursive: true });
+
+		const source = new CancellationTokenSource();
+		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		server.onRequest(type, async t => {
+			source.cancel();
+
+			// when 2 different modes are fixed, it behaves like regular cancellation mode
+			while (!t.isCancellationRequested) {
+				await delay(0);
+			}
+
+			rimraf.sync(cancellationFolder);
+			done();
+		});
+		server.listen();
+
+		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger, undefined, { folderForFileBasedCancellation: cancellationFolder });
+		client.listen();
+		client.sendRequest(type, source.token);
 	});
 });
