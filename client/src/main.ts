@@ -37,6 +37,7 @@ import { SemanticTokensFeature } from './semanticTokens.proposed';
 
 import * as Is from './utils/is';
 import { terminate } from './utils/processes';
+import { getUniqueName } from './utils/name';
 
 export * from './client';
 
@@ -106,6 +107,7 @@ export interface NodeModule {
 	args?: string[];
 	runtime?: string;
 	options?: ForkOptions;
+	cancellationFolderName?: string;
 }
 
 namespace NodeModule {
@@ -317,6 +319,9 @@ export class LanguageClient extends BaseLanguageClient {
 					if (node.args) {
 						node.args.forEach(element => args.push(element));
 					}
+					if (node.cancellationFolderName) {
+						args.push(`--cancellation=${getUniqueName(node.cancellationFolderName)}`);
+					}
 					let execOptions: cp.SpawnOptionsWithoutStdio = Object.create(null);
 					execOptions.cwd = serverWorkingDir;
 					execOptions.env = getEnvironment(options.env, false);
@@ -378,6 +383,9 @@ export class LanguageClient extends BaseLanguageClient {
 					let pipeName: string | undefined = undefined;
 					return new Promise<MessageTransports>((resolve, _reject) => {
 						let args = node.args && node.args.slice() || [];
+						if (node.cancellationFolderName) {
+							args.push(`--cancellation=${getUniqueName(node.cancellationFolderName)}`);
+						}
 						if (transport === TransportKind.ipc) {
 							args.push('--node-ipc');
 						} else if (transport === TransportKind.stdio) {

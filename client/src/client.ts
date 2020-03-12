@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-	workspace as Workspace, window as Window, languages as Languages, commands as Commands,  version as VSCodeVersion,
+	workspace as Workspace, window as Window, languages as Languages, commands as Commands, version as VSCodeVersion,
 	TextDocumentChangeEvent, TextDocument, Disposable, OutputChannel,
 	FileSystemWatcher as VFileSystemWatcher, DiagnosticCollection, Diagnostic as VDiagnostic, Uri, ProviderResult,
 	CancellationToken, Position as VPosition, Location as VLocation, Range as VRange,
@@ -25,7 +25,7 @@ import {
 	NotificationType, NotificationType0,
 	NotificationHandler, NotificationHandler0, GenericNotificationHandler,
 	MessageReader, MessageWriter, Trace, Tracer, TraceFormat, TraceOptions, Event, Emitter,
-	createProtocolConnection,
+	createProtocolConnection, ConnectionOptions,
 	ClientCapabilities, WorkspaceEdit,
 	RegistrationRequest, RegistrationParams, UnregistrationRequest, UnregistrationParams, TextDocumentRegistrationOptions,
 	InitializeRequest, InitializeParams, InitializeResult, InitializeError, ServerCapabilities, TextDocumentSyncKind, TextDocumentSyncOptions,
@@ -62,9 +62,13 @@ import {
 	DocumentHighlightRegistrationOptions, DocumentHighlightOptions, DocumentSymbolRegistrationOptions, DocumentSymbolOptions,
 	WorkspaceSymbolRegistrationOptions, CodeActionOptions, CodeLensOptions, DocumentFormattingOptions, DocumentRangeFormattingRegistrationOptions,
 	DocumentRangeFormattingOptions, DocumentOnTypeFormattingOptions, RenameOptions, DocumentLinkOptions, CompletionItemTag, DiagnosticTag,
-	DocumentColorRequest, DeclarationRequest, FoldingRangeRequest, ImplementationRequest, SelectionRangeRequest,TypeDefinitionRequest, SymbolTag,
+	DocumentColorRequest, DeclarationRequest, FoldingRangeRequest, ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, SymbolTag,
 	Proposed
 } from 'vscode-languageserver-protocol';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import * as rimraf from 'rimraf';
 
 import { ColorProviderMiddleware } from './colorProvider';
 import { ImplementationMiddleware } from './implementation';
@@ -82,6 +86,7 @@ import * as Is from './utils/is';
 import { Delayer } from './utils/async';
 import * as UUID from './utils/uuid';
 import { ProgressPart } from './progressPart';
+import { getUniqueName } from './utils/name';
 
 export { Converter as Code2ProtocolConverter } from './codeConverter';
 export { Converter as Protocol2CodeConverter } from './protocolConverter';
@@ -162,11 +167,11 @@ interface ConnectionErrorHandler {
 interface ConnectionCloseHandler {
 	(): void;
 }
-function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler): IConnection;
-function createConnection(reader: MessageReader, writer: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler): IConnection;
-function createConnection(input: any, output: any, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler): IConnection {
+function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): IConnection;
+function createConnection(reader: MessageReader, writer: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): IConnection;
+function createConnection(input: any, output: any, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): IConnection {
 	let logger = new ConsoleLogger();
-	let connection = createProtocolConnection(input, output, logger);
+	let connection = createProtocolConnection(input, output, logger, undefined, options);
 	connection.onError((data) => { errorHandler(data[0], data[1], data[2]); });
 	connection.onClose(closeHandler);
 	let result: IConnection = {
@@ -506,6 +511,7 @@ export interface LanguageClientOptions {
 		protocol2Code: p2c.URIConverter
 	};
 	workspaceFolder?: VWorkspaceFolder;
+	cancellationFolderName?: string;
 }
 
 interface ResolvedClientOptions {
@@ -524,7 +530,8 @@ interface ResolvedClientOptions {
 		code2Protocol: c2p.URIConverter,
 		protocol2Code: p2c.URIConverter
 	};
-	workspaceFolder?: VWorkspaceFolder
+	workspaceFolder?: VWorkspaceFolder;
+	cancellationFolderName?: string;
 }
 
 export enum State {
@@ -798,7 +805,7 @@ abstract class DocumentNotifiactions<P, E> implements DynamicFeature<TextDocumen
 		}
 	}
 
-	public getProvider(document: TextDocument):  { send: (data: E) => void } {
+	public getProvider(document: TextDocument): { send: (data: E) => void } {
 		for (const selector of this._selectors.values()) {
 			if (Languages.match(selector, document)) {
 				return {
@@ -1375,7 +1382,7 @@ export abstract class TextDocumentFeature<PO, RO extends TextDocumentRegistratio
 		return [undefined, undefined];
 	}
 
-	protected getRegistrationOptions(documentSelector: DocumentSelector | undefined, capability: undefined | PO) : (RO & { documentSelector: DocumentSelector }) | undefined {
+	protected getRegistrationOptions(documentSelector: DocumentSelector | undefined, capability: undefined | PO): (RO & { documentSelector: DocumentSelector }) | undefined {
 		if (!documentSelector || !capability) {
 			return undefined;
 		}
@@ -1471,7 +1478,7 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 			documentationFormat: [MarkupKind.Markdown, MarkupKind.PlainText],
 			deprecatedSupport: true,
 			preselectSupport: true,
-			tagSupport: { valueSet:  [ CompletionItemTag.Deprecated ] },
+			tagSupport: { valueSet: [CompletionItemTag.Deprecated] },
 			insertReplaceSupport: true
 		};
 		completion.completionItemKind = { valueSet: SupportedCompletionItemKinds };
@@ -1657,7 +1664,7 @@ class DefinitionFeature extends TextDocumentFeature<boolean | DefinitionOptions,
 
 	protected registerLanguageProvider(options: DefinitionRegistrationOptions): [Disposable, DefinitionProvider] {
 		const provider: DefinitionProvider = {
-			provideDefinition:  (document, position, token) => {
+			provideDefinition: (document, position, token) => {
 				const client = this._client;
 				const provideDefinition: ProvideDefinitionSignature = (document, position, token) => {
 					return client.sendRequest(DefinitionRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
@@ -1852,7 +1859,7 @@ class WorkspaceSymbolFeature extends WorkspaceFeature<WorkspaceSymbolRegistratio
 
 	protected registerLanguageProvider(_options: WorkspaceSymbolRegistrationOptions): [Disposable, WorkspaceSymbolProvider] {
 		const provider: WorkspaceSymbolProvider = {
-			provideWorkspaceSymbols:  (query, token) => {
+			provideWorkspaceSymbols: (query, token) => {
 				const client = this._client;
 				const provideWorkspaceSymbols: ProvideWorkspaceSymbolsSignature = (query, token) => {
 					return client.sendRequest(WorkspaceSymbolRequest.type, { query }, token).then(
@@ -2561,6 +2568,25 @@ export abstract class BaseLanguageClient {
 		this._name = name;
 
 		clientOptions = clientOptions || {};
+
+		let resolvedCancellationFolderName: string | undefined;
+		const uniqueName = getUniqueName(clientOptions.cancellationFolderName);
+		if (uniqueName) {
+			const folder = this.getFolderForFileBasedCancellation(uniqueName)!;
+			try {
+				if (!fs.existsSync(folder)) {
+					// this client owns this cancellation folder. when client stops, it will clean up the folder
+					fs.mkdirSync(folder, { recursive: true });
+					resolvedCancellationFolderName = uniqueName;
+				}
+				else {
+					this.error(`Failed to create cancellation folder '${folder}', it already exists. fallback to regular cancellation mode`);
+				}
+			} catch (e) {
+				this.error(`Failed to create cancellation folder '${folder}'. fallback to regular cancellation mode`);
+			}
+		}
+
 		this._clientOptions = {
 			documentSelector: clientOptions.documentSelector || [],
 			synchronize: clientOptions.synchronize || {},
@@ -2574,7 +2600,8 @@ export abstract class BaseLanguageClient {
 			errorHandler: clientOptions.errorHandler || new DefaultErrorHandler(this._name),
 			middleware: clientOptions.middleware || {},
 			uriConverters: clientOptions.uriConverters,
-			workspaceFolder: clientOptions.workspaceFolder
+			workspaceFolder: clientOptions.workspaceFolder,
+			cancellationFolderName: resolvedCancellationFolderName
 		};
 		this._clientOptions.synchronize = this._clientOptions.synchronize || {};
 
@@ -3134,6 +3161,10 @@ export abstract class BaseLanguageClient {
 			this._diagnostics.dispose();
 			this._diagnostics = undefined;
 		}
+		const folder = this.getFolderForFileBasedCancellation(this._clientOptions.cancellationFolderName);
+		if (folder) {
+			rimraf.sync(folder);
+		}
 	}
 
 	private cleanUpChannel(): void {
@@ -3190,6 +3221,11 @@ export abstract class BaseLanguageClient {
 		this._diagnostics.set(uri, diagnostics);
 	}
 
+	private getFolderForFileBasedCancellation(folderName?: string) {
+		// client and server must use same logic to create actual folder name. but don't have a good way to share logic.
+		return folderName ? path.join(os.tmpdir(), 'vscode-languageserver-cancellation', folderName) : undefined;
+	}
+
 	protected abstract createMessageTransports(encoding: string): Promise<MessageTransports>;
 
 	private createConnection(): Promise<IConnection> {
@@ -3202,7 +3238,9 @@ export abstract class BaseLanguageClient {
 		};
 
 		return this.createMessageTransports(this._clientOptions.stdioEncoding || 'utf8').then((transports) => {
-			return createConnection(transports.reader, transports.writer, errorHandler, closeHandler);
+			const folder = this.getFolderForFileBasedCancellation(this._clientOptions.cancellationFolderName);
+			const options = folder ? { folderForFileBasedCancellation: folder } : undefined;
+			return createConnection(transports.reader, transports.writer, errorHandler, closeHandler, options);
 		});
 	}
 
@@ -3394,7 +3432,7 @@ export abstract class BaseLanguageClient {
 		let diagnostics = ensure(ensure(result, 'textDocument')!, 'publishDiagnostics')!;
 		diagnostics.relatedInformation = true;
 		diagnostics.versionSupport = false;
-		diagnostics.tagSupport = { valueSet: [ DiagnosticTag.Unnecessary, DiagnosticTag.Deprecated ] };
+		diagnostics.tagSupport = { valueSet: [DiagnosticTag.Unnecessary, DiagnosticTag.Deprecated] };
 		diagnostics.complexDiagnosticCodeSupport = false;
 		for (let feature of this._features) {
 			feature.fillClientCapabilities(result);

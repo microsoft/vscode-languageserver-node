@@ -5,13 +5,19 @@
 'use strict';
 
 import * as assert from 'assert';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import * as rimraf from 'rimraf';
 
 import { Duplex } from 'stream';
 import {
 	InitializeParams, InitializeRequest, InitializeResult, createConnection, DidChangeConfigurationNotification,
-	DidChangeConfigurationParams, IConnection, DeclarationRequest, DeclarationParams, ProgressToken, WorkDoneProgress
+	DidChangeConfigurationParams, IConnection, DeclarationRequest, DeclarationParams, ProgressToken, WorkDoneProgress,
+	ResponseError, CancellationTokenSource, ErrorCodes, ConnectionOptions
 } from '../main';
 import { LocationLink } from 'vscode-languageserver-types';
+import { randomBytes } from 'crypto';
 
 class TestStream extends Duplex {
 	_write(chunk: string, _encoding: string, done: () => void) {
@@ -36,7 +42,7 @@ suite('Connection Tests', () => {
 		clientConnection.listen();
 	});
 
-	test('Ensure request parameter passing', async() => {
+	test('Ensure request parameter passing', async () => {
 		let paramsCorrect: boolean = false;
 		serverConnection.onRequest(InitializeRequest.type, (params) => {
 			paramsCorrect = !Array.isArray(params) && params.workDoneToken === 'token';
@@ -176,5 +182,96 @@ suite('Connection Tests', () => {
 			assert.ok((values as LocationLink[]).length === 0, 'No final values');
 			done();
 		});
+	});
+});
+
+suite('Cancellation Tests', () => {
+	function delay(ms: number) {
+		return new Promise(resolve => setTimeout(resolve, ms));
+	}
+
+	test('Regular Cancellation Tests', async () => {
+		const up = new TestStream();
+		const down = new TestStream();
+		const serverConnection = createConnection(up, down);
+		const clientConnection = createConnection(down, up);
+		serverConnection.listen();
+		clientConnection.listen();
+
+		const source = new CancellationTokenSource();
+		serverConnection.onRequest(InitializeRequest.type, async (_, token) => {
+			source.cancel();
+
+			while (!token.isCancellationRequested) {
+				await delay(0);
+			}
+
+			if (token.isCancellationRequested) {
+				return new ResponseError(ErrorCodes.RequestCancelled, 'request cancelled');
+			}
+
+			throw new Error('shouldn\'t reach here');
+		});
+
+		const init: InitializeParams = {
+			rootUri: 'file:///home/dirkb',
+			processId: 1,
+			capabilities: {},
+			workspaceFolders: null
+		};
+
+		try {
+			await clientConnection.sendRequest(InitializeRequest.type, init, source.token);
+		}
+		catch (e) {
+			assert(e instanceof ResponseError);
+			assert((<ResponseError<any>>e).code === ErrorCodes.RequestCancelled);
+		}
+	});
+
+	test('File based cancellation Tests', async () => {
+		const up = new TestStream();
+		const down = new TestStream();
+		const randomName = randomBytes(21).toString('hex');
+		const cancellationFolder = path.join(os.tmpdir(), `jsonrpc-connection-tests`, randomName);
+		fs.mkdirSync(cancellationFolder, { recursive: true });
+
+		const options: ConnectionOptions = { folderForFileBasedCancellation: cancellationFolder };
+		const serverConnection = createConnection(up, down, undefined, options);
+		const clientConnection = createConnection(down, up, undefined, options);
+		serverConnection.listen();
+		clientConnection.listen();
+
+		const source = new CancellationTokenSource();
+		serverConnection.onRequest(InitializeRequest.type, (_, token) => {
+			source.cancel();
+
+			while (!token.isCancellationRequested) {
+				// synchronously check cancellation
+			}
+
+			if (token.isCancellationRequested) {
+				return new ResponseError(ErrorCodes.RequestCancelled, 'request cancelled');
+			}
+
+			throw new Error('shouldn\'t reach here');
+		});
+
+		const init: InitializeParams = {
+			rootUri: 'file:///home/dirkb',
+			processId: 1,
+			capabilities: {},
+			workspaceFolders: null,
+		};
+
+		try {
+			await clientConnection.sendRequest(InitializeRequest.type, init, source.token);
+		}
+		catch (e) {
+			assert(e instanceof ResponseError);
+			assert((<ResponseError<any>>e).code === ErrorCodes.RequestCancelled);
+		}
+
+		rimraf.sync(cancellationFolder);
 	});
 });
