@@ -8,7 +8,7 @@ import {
 	createConnection, IConnection, InitializeParams, ServerCapabilities, CompletionItemKind, ResourceOperationKind, FailureHandlingKind,
 	DiagnosticTag, CompletionItemTag, TextDocumentSyncKind, MarkupKind, SignatureHelp, SignatureInformation, ParameterInformation,
 	Location, Range, DocumentHighlight, DocumentHighlightKind, CodeAction, Command, TextEdit, Position, DocumentLink,
-	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange
+	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, RequestType0, ResponseError, ErrorCodes
 } from '../../../server/lib/main';
 
 import { URI } from 'vscode-uri';
@@ -17,6 +17,13 @@ let connection: IConnection = createConnection();
 
 console.log = connection.console.log.bind(connection.console);
 console.error = connection.console.error.bind(connection.console);
+
+const regularCancellationTestType = new RequestType0<number, void>('regularCancellationTest');
+const fileCancellationTestType = new RequestType0<number, void>('fileCancellationTest');
+
+function delay(ms: number) {
+	return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 connection.onInitialize((params: InitializeParams): any => {
 	assert.equal((params.capabilities.workspace as any).applyEdit, true);
@@ -82,13 +89,13 @@ connection.onInitialized(() => {
 connection.onDeclaration((params) => {
 	assert.equal(params.position.line, 1);
 	assert.equal(params.position.character, 1);
-	return { uri: params.textDocument.uri, range: { start: { line: 1, character: 1}, end: {line: 1, character: 2 }}};
+	return { uri: params.textDocument.uri, range: { start: { line: 1, character: 1 }, end: { line: 1, character: 2 } } };
 });
 
 connection.onDefinition((params) => {
 	assert.equal(params.position.line, 1);
 	assert.equal(params.position.character, 1);
-	return { uri: params.textDocument.uri, range: { start: { line: 0, character: 0}, end: {line: 0, character: 1 }}};
+	return { uri: params.textDocument.uri, range: { start: { line: 0, character: 0 }, end: { line: 0, character: 1 } } };
 });
 
 connection.onHover((_params) => {
@@ -124,8 +131,8 @@ connection.onSignatureHelp((_params) => {
 
 connection.onReferences((params) => {
 	return [
-		Location.create(params.textDocument.uri, Range.create(0,0,0,0)),
-		Location.create(params.textDocument.uri, Range.create(1,1,1,1))
+		Location.create(params.textDocument.uri, Range.create(0, 0, 0, 0)),
+		Location.create(params.textDocument.uri, Range.create(1, 1, 1, 1))
 	];
 });
 
@@ -192,26 +199,39 @@ connection.onColorPresentation((_params) => {
 
 connection.onFoldingRanges((_params) => {
 	return [
-		FoldingRange.create(1,2)
+		FoldingRange.create(1, 2)
 	];
 });
 
 connection.onImplementation((params) => {
 	assert.equal(params.position.line, 1);
 	assert.equal(params.position.character, 1);
-	return { uri: params.textDocument.uri, range: { start: { line: 2, character: 2}, end: {line: 3, character: 3 }}};
+	return { uri: params.textDocument.uri, range: { start: { line: 2, character: 2 }, end: { line: 3, character: 3 } } };
 });
 
 connection.onSelectionRanges((_params) => {
 	return [
-		SelectionRange.create(Range.create(1,2,3,4))
+		SelectionRange.create(Range.create(1, 2, 3, 4))
 	];
 });
 
 connection.onTypeDefinition((params) => {
 	assert.equal(params.position.line, 1);
 	assert.equal(params.position.character, 1);
-	return { uri: params.textDocument.uri, range: { start: { line: 2, character: 2}, end: {line: 3, character: 3 }}};
+	return { uri: params.textDocument.uri, range: { start: { line: 2, character: 2 }, end: { line: 3, character: 3 } } };
+});
+
+connection.onRequest(regularCancellationTestType, async (token) => {
+	while (!token.isCancellationRequested) {
+		await delay(0);
+	}
+	return new ResponseError(ErrorCodes.RequestCancelled, 'cancelled');
+});
+
+connection.onRequest(fileCancellationTestType, token => {
+	while (!token.isCancellationRequested) {
+	}
+	return new ResponseError(ErrorCodes.RequestCancelled, 'cancelled');
 });
 
 // Listen on the connection

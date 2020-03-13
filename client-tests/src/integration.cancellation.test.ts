@@ -71,9 +71,33 @@ suite('Cancellation integration', () => {
 		assert(!fs.existsSync(getFolderForFileBasedCancellation()));
 	});
 
-	test('Confirm Cancellation File', async () => {
-		// TODO: figure out how to test cancellation
-	});
+	test('Regular Cancellation', async () => {
+		const sourceToken = new lsclient.CancellationTokenSource();
+		const request = client.sendRequest(new lsclient.RequestType0<number, void>('regularCancellationTest'), sourceToken.token);
+		await delay(100);
+		sourceToken.cancel();
+
+		try {
+			await request;
+		} catch (e) {
+			assert(e instanceof lsclient.ResponseError);
+			assert((<lsclient.ResponseError<any>>e).code === lsclient.ErrorCodes.RequestCancelled);
+		}
+	}).timeout(10000);
+
+	test('File Based Cancellation', async () => {
+		const sourceToken = new lsclient.CancellationTokenSource();
+		const request = client.sendRequest(new lsclient.RequestType0<number, void>('fileCancellationTest'), sourceToken.token);
+		await delay(100);
+		sourceToken.cancel();
+
+		try {
+			await request;
+		} catch (e) {
+			assert(e instanceof lsclient.ResponseError);
+			assert((<lsclient.ResponseError<any>>e).code === lsclient.ErrorCodes.RequestCancelled);
+		}
+	}).timeout(10000);
 
 	function getFolderForFileBasedCancellation() {
 		// client and server must use same logic to create actual folder name. but don't have a good way to share logic.
@@ -83,5 +107,9 @@ suite('Cancellation integration', () => {
 
 	function getUniqueName(name: string) {
 		return crypto.createHash('sha1').update(name).digest('hex');
+	}
+
+	function delay(ms: number) {
+		return new Promise(resolve => setTimeout(resolve, ms));
 	}
 });
