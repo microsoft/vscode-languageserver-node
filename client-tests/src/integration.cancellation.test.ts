@@ -45,10 +45,9 @@ suite('Cancellation integration', () => {
 
 		const serverModule = path.join(__dirname, './servers/testServer.js');
 		const serverOptions: lsclient.ServerOptions = {
-			run: { module: serverModule, transport: lsclient.TransportKind.ipc, cancellationFolderName: folderName },
+			run: { module: serverModule, transport: lsclient.TransportKind.ipc },
 			debug: {
-				module: serverModule, transport: lsclient.TransportKind.ipc,
-				cancellationFolderName: folderName, options: { execArgv: ['--nolazy', '--inspect=6014'] }
+				module: serverModule, transport: lsclient.TransportKind.ipc, options: { execArgv: ['--nolazy', '--inspect=6014'] }
 			}
 		};
 		const documentSelector: lsclient.DocumentSelector = [{ scheme: 'lsptests', language: 'bat' }];
