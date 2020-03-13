@@ -6,17 +6,13 @@
 
 import * as assert from 'assert';
 import * as fs from 'fs';
-import * as crypto from 'crypto';
 import * as os from 'os';
 import * as path from 'path';
 
 import * as lsclient from 'vscode-languageclient';
 import * as vscode from 'vscode';
-import { randomBytes } from 'crypto';
 
 suite('Cancellation integration', () => {
-
-	const folderName = randomBytes(21).toString('hex');
 
 	let client!: lsclient.LanguageClient;
 	let middleware: lsclient.Middleware;
@@ -54,7 +50,7 @@ suite('Cancellation integration', () => {
 
 		middleware = {};
 		const clientOptions: lsclient.LanguageClientOptions = {
-			documentSelector, synchronize: {}, initializationOptions: {}, middleware, cancellationFolderName: folderName
+			documentSelector, synchronize: {}, initializationOptions: {}, middleware, useFileBasedCancellation: true
 		};
 
 		client = new lsclient.LanguageClient('css', 'Test Language Server', serverOptions, clientOptions);
@@ -100,12 +96,8 @@ suite('Cancellation integration', () => {
 
 	function getFolderForFileBasedCancellation() {
 		// client and server must use same logic to create actual folder name. but don't have a good way to share logic.
-		const folder = path.join(os.tmpdir(), 'vscode-languageserver-cancellation', getUniqueName(folderName));
+		const folder = path.join(os.tmpdir(), 'vscode-languageserver-cancellation', client.CancellationFolderName!);
 		return folder;
-	}
-
-	function getUniqueName(name: string) {
-		return crypto.createHash('sha1').update(name).digest('hex');
 	}
 
 	function delay(ms: number) {

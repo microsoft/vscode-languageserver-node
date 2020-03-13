@@ -86,7 +86,6 @@ import * as Is from './utils/is';
 import { Delayer } from './utils/async';
 import * as UUID from './utils/uuid';
 import { ProgressPart } from './progressPart';
-import { getUniqueName } from './utils/name';
 
 export { Converter as Code2ProtocolConverter } from './codeConverter';
 export { Converter as Protocol2CodeConverter } from './protocolConverter';
@@ -511,7 +510,7 @@ export interface LanguageClientOptions {
 		protocol2Code: p2c.URIConverter
 	};
 	workspaceFolder?: VWorkspaceFolder;
-	cancellationFolderName?: string;
+	useFileBasedCancellation?: boolean;
 }
 
 interface ResolvedClientOptions {
@@ -2570,14 +2569,14 @@ export abstract class BaseLanguageClient {
 		clientOptions = clientOptions || {};
 
 		let resolvedCancellationFolderName: string | undefined;
-		const uniqueName = getUniqueName(clientOptions.cancellationFolderName);
-		if (uniqueName) {
-			const folder = this.getFolderForFileBasedCancellation(uniqueName)!;
+		if (clientOptions.useFileBasedCancellation) {
+			const cancellationFolderName = UUID.generateUuid();
+			const folder = this.getFolderForFileBasedCancellation(cancellationFolderName)!;
 			try {
 				if (!fs.existsSync(folder)) {
 					// this client owns this cancellation folder. when client stops, it will clean up the folder
 					fs.mkdirSync(folder, { recursive: true });
-					resolvedCancellationFolderName = uniqueName;
+					resolvedCancellationFolderName = cancellationFolderName;
 				}
 				else {
 					this.error(`Failed to create cancellation folder '${folder}', it already exists. fallback to regular cancellation mode`);
@@ -2758,6 +2757,10 @@ export abstract class BaseLanguageClient {
 			this.error(`Sending progress for token ${token} failed.`, error);
 			throw error;
 		}
+	}
+
+	public get CancellationFolderName(): string | undefined {
+		return this._clientOptions.cancellationFolderName;
 	}
 
 	public get clientOptions(): LanguageClientOptions {

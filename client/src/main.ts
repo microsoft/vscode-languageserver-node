@@ -317,8 +317,8 @@ export class LanguageClient extends BaseLanguageClient {
 					if (node.args) {
 						node.args.forEach(element => args.push(element));
 					}
-					if (this.clientOptions.cancellationFolderName) {
-						args.push(`--cancellation=${this.clientOptions.cancellationFolderName}`);
+					if (this.CancellationFolderName) {
+						args.push(`--cancellation=${this.CancellationFolderName}`);
 					}
 					let execOptions: cp.SpawnOptionsWithoutStdio = Object.create(null);
 					execOptions.cwd = serverWorkingDir;
@@ -381,8 +381,8 @@ export class LanguageClient extends BaseLanguageClient {
 					let pipeName: string | undefined = undefined;
 					return new Promise<MessageTransports>((resolve, _reject) => {
 						let args = node.args && node.args.slice() || [];
-						if (this.clientOptions.cancellationFolderName) {
-							args.push(`--cancellation=${this.clientOptions.cancellationFolderName}`);
+						if (this.CancellationFolderName) {
+							args.push(`--cancellation=${this.CancellationFolderName}`);
 						}
 						if (transport === TransportKind.ipc) {
 							args.push('--node-ipc');
