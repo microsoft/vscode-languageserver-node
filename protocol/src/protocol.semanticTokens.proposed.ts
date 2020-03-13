@@ -160,12 +160,12 @@ export interface SemanticTokensClientCapabilities {
 			dynamicRegistration?: boolean;
 
 			/**
-			 * The token types know by the client.
+			 * The token types that the client supports.
 			 */
 			tokenTypes: string[];
 
 			/**
-			 * The token modifiers know by the client.
+			 * The token modifiers that the client supports.
 			 */
 			tokenModifiers: string[]
 		};
