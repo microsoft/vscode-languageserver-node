@@ -68,7 +68,6 @@ import {
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import * as rimraf from 'rimraf';
 
 import { ColorProviderMiddleware } from './colorProvider';
 import { ImplementationMiddleware } from './implementation';
@@ -3166,7 +3165,27 @@ export abstract class BaseLanguageClient {
 		}
 		const folder = this.getFolderForFileBasedCancellation(this._clientOptions.cancellationFolderName);
 		if (folder) {
-			rimraf.sync(folder);
+			try {
+				rimraf(folder);
+			} catch (error) {
+				this.error(`Failed to remove folder '${folder}'`, error);
+			}
+		}
+
+		function rimraf(location: string) {
+			const stat = fs.lstatSync(location);
+			if (stat) {
+				if (stat.isDirectory() && !stat.isSymbolicLink()) {
+					for (const dir of fs.readdirSync(location)) {
+						rimraf(path.join(location, dir));
+					}
+
+					fs.rmdirSync(location);
+				}
+				else {
+					fs.unlinkSync(location);
+				}
+			}
 		}
 	}
 

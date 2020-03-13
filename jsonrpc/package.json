@@ -17,10 +17,6 @@
 	},
 	"main": "./lib/main.js",
 	"typings": "./lib/main.d.ts",
-	"devDependencies": {
-		"@types/rimraf": "2.0.2",
-		"rimraf": "^2.6.2"
-	},
 	"scripts": {
 		"prepublishOnly": "npm run clean && npm run compile && npm test",
 		"postpublish": "node ../build/npm/post-publish.js",
