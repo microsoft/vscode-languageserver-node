@@ -99,14 +99,6 @@ class FileBasedToken extends MutableToken {
 		super();
 	}
 
-	public cancel() {
-		if (!super.isCancellationRequested && createCancellationFile(this._cancellationName)) {
-			// change state only when writing cancellation file succeeded
-			// otherwise, ignore cancellation request
-			super.cancel();
-		}
-	}
-
 	get isCancellationRequested(): boolean {
 		if (super.isCancellationRequested) {
 			return super.isCancellationRequested;
