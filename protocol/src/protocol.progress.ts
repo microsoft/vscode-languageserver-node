@@ -67,7 +67,7 @@ export interface WorkDoneProgressReport {
 
 	/**
 	 * Controls enablement state of a cancel button. This property is only valid if a cancel
-	 * button got requested in the `WorkDoneProgressStart` payload.
+	 * button got requested in the `window/workDoneProgress/create` payload.
 	 *
 	 * Clients that don't support cancellation or don't support control the button's
 	 * enablement state are allowed to ignore the setting.
