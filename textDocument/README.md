@@ -1,7 +1,7 @@
 # Text Document implementation for a LSP Node server
 
-[![NPM Version](https://img.shields.io/npm/v/vscode-languageserver-textDocument.svg)](https://npmjs.org/package/vscode-languageserver-textDocument)
-[![NPM Downloads](https://img.shields.io/npm/dm/vscode-languageserver-textDocument.svg)](https://npmjs.org/package/vscode-languageserver-textDocument)
+[![NPM Version](https://img.shields.io/npm/v/vscode-languageserver-textdocument.svg)](https://npmjs.org/package/vscode-languageserver-textdocument)
+[![NPM Downloads](https://img.shields.io/npm/dm/vscode-languageserver-textdocument.svg)](https://npmjs.org/package/vscode-languageserver-textdocument)
 
 Npm module containing a simple text document implementation for [Node.js](https://nodejs.org/) language server
 
