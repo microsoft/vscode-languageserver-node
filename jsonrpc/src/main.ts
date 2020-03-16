@@ -5,7 +5,6 @@
 /// <reference path="../typings/thenable.d.ts" />
 'use strict';
 
-import * as fs from 'fs';
 import * as path from 'path';
 import * as Is from './is';
 
@@ -26,7 +25,7 @@ import { MessageWriter, StreamMessageWriter, IPCMessageWriter, SocketMessageWrit
 import { Disposable, Event, Emitter } from './events';
 import { CancellationTokenSource, CancellationToken, AbstractCancellationTokenSource } from './cancellation';
 import { LinkedMap } from './linkedMap';
-import { createCancellationTokenSource, createCancellationFile } from './cancellation.fileBased';
+import { createCancellationTokenSource, createCancellationFile, validateCancellationFolder } from './cancellation.fileBased';
 
 export {
 	Message, MessageType, ErrorCodes, ResponseError,
@@ -460,8 +459,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 
 	let folderForFileBasedCancellation = options?.folderForFileBasedCancellation;
 	if (folderForFileBasedCancellation) {
-		// this folder should be owned by the caller. and the caller should take care of it when it is no longer needed.
-		if (!fs.existsSync(folderForFileBasedCancellation)) {
+		if (!validateCancellationFolder(folderForFileBasedCancellation)) {
 			logger.error(`base folder ('${folderForFileBasedCancellation}') for the file based cancellation doesn't exist, fallback to normal cancellation mode`);
 			folderForFileBasedCancellation = undefined;
 		}

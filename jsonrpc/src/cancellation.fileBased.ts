@@ -68,7 +68,6 @@ class FileBasedCancellationTokenSource extends AbstractCancellationTokenSource {
 	}
 }
 
-// internal usage only
 export function createCancellationFile(cancellationFilename: string) {
 	try {
 		if (!fs.existsSync(cancellationFilename)) {
@@ -86,4 +85,9 @@ export function createCancellationFile(cancellationFilename: string) {
 
 export function createCancellationTokenSource(cancellationFilename?: string): AbstractCancellationTokenSource {
 	return cancellationFilename ? new FileBasedCancellationTokenSource(cancellationFilename) : new CancellationTokenSource();
+}
+
+export function validateCancellationFolder(folderForFileBasedCancellation: string): boolean {
+	// this folder should be owned by the caller. and the caller should take care of it when it is no longer needed.
+	return fs.existsSync(folderForFileBasedCancellation);
 }
