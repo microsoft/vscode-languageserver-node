@@ -5,8 +5,6 @@
 
 'use strict';
 
-import * as fs from 'fs';
-
 import { Event, Emitter } from './events';
 import * as Is from './is';
 
@@ -52,7 +50,7 @@ const shortcutEvent: Event<any> = Object.freeze(function (callback: Function, co
 	return { dispose() { clearTimeout(handle); } };
 });
 
-class MutableToken implements CancellationToken {
+export class MutableToken implements CancellationToken {
 
 	private _isCancelled: boolean = false;
 	private _emitter: Emitter<any> | undefined;
@@ -85,7 +83,7 @@ class MutableToken implements CancellationToken {
 		this.disposeEvent();
 	}
 
-	private disposeEvent() : void {
+	private disposeEvent(): void {
 		if (this._emitter) {
 			this._emitter.dispose();
 			this._emitter = undefined;
@@ -93,69 +91,17 @@ class MutableToken implements CancellationToken {
 	}
 }
 
-class FileBasedToken extends MutableToken {
-
-	constructor(private _cancellationName: string) {
-		super();
-	}
-
-	get isCancellationRequested(): boolean {
-		if (super.isCancellationRequested) {
-			return super.isCancellationRequested;
-		}
-
-		if (this.pipeExists()) {
-			// the first time it encounters cancellation file, it will
-			// cancel itself and raise cancellation event.
-			// in this mode, cancel() might not be called explicitly by jsonrpc layer
-			this.cancel();
-		}
-
-		return super.isCancellationRequested;
-	}
-
-	public dispose() : void {
-		super.dispose();
-
-		if (!super.isCancellationRequested) {
-			// this could be micro optimization we don't want to keep
-			return;
-		}
-
-		try {
-			// attempt to delete cancellation file.
-			// if it fails, that's fine, owner of this connection is supposed to take care of
-			// files left at the end of the session
-			fs.unlinkSync(this._cancellationName);
-		}
-		catch (e) {
-			// noop
-		}
-	}
-
-	private pipeExists(): boolean {
-		try {
-			fs.statSync(this._cancellationName);
-			return true;
-		}
-		catch (e) {
-			return false;
-		}
-	}
-}
-
-// internal usage only
-export class CancellationTokenSourceImpl {
+export abstract class AbstractCancellationTokenSource {
 
 	private _token: CancellationToken;
 
-	constructor(private _cancellationName?: string) { }
+	protected abstract createToken(): CancellationToken;
 
 	get token(): CancellationToken {
 		if (!this._token) {
 			// be lazy and create the token only when
 			// actually needed
-			this._token = this._cancellationName ? new FileBasedToken(this._cancellationName) : new MutableToken();
+			this._token = this.createToken();
 		}
 		return this._token;
 	}
@@ -182,25 +128,8 @@ export class CancellationTokenSourceImpl {
 	}
 }
 
-export class CancellationTokenSource extends CancellationTokenSourceImpl {
-	constructor() {
-		// this hides cancellation name from external people
-		super();
-	}
-}
-
-// internal usage only
-export function createCancellationFile(cancellationFilename: string) {
-	try {
-		if (!fs.existsSync(cancellationFilename)) {
-			// this file won't be deleted individually since there is no good way
-			// to know whether this file is no longer needed. instead, it is up to the
-			// owner of the connection this cancellation belong to to decide when to
-			// delete these files (such as connection is closed)
-			fs.writeFileSync(cancellationFilename, '', { flag: 'w' });
-		}
-		return true;
-	} catch (e) {
-		return false;
+export class CancellationTokenSource extends AbstractCancellationTokenSource {
+	protected createToken(): CancellationToken {
+		return new MutableToken();
 	}
 }

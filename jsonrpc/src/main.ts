@@ -24,8 +24,9 @@ import {
 import { MessageReader, PartialMessageInfo, DataCallback, StreamMessageReader, IPCMessageReader, SocketMessageReader } from './messageReader';
 import { MessageWriter, StreamMessageWriter, IPCMessageWriter, SocketMessageWriter } from './messageWriter';
 import { Disposable, Event, Emitter } from './events';
-import { CancellationTokenSource, CancellationTokenSourceImpl, CancellationToken, createCancellationFile } from './cancellation';
+import { CancellationTokenSource, CancellationToken, AbstractCancellationTokenSource } from './cancellation';
 import { LinkedMap } from './linkedMap';
+import { createCancellationTokenSource, createCancellationFile } from './cancellation.fileBased';
 
 export {
 	Message, MessageType, ErrorCodes, ResponseError,
@@ -443,7 +444,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 	let timer: NodeJS.Immediate | undefined;
 	let messageQueue: MessageQueue = new LinkedMap<string, Message>();
 	let responsePromises: { [name: string]: ResponsePromise } = Object.create(null);
-	let requestTokens: { [id: string]: CancellationTokenSourceImpl } = Object.create(null);
+	let requestTokens: { [id: string]: AbstractCancellationTokenSource } = Object.create(null);
 
 	let trace: Trace = Trace.Off;
 	let traceFormat: TraceFormat = TraceFormat.Text;
@@ -652,7 +653,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 		let startTime = Date.now();
 		if (requestHandler || starRequestHandler) {
 			let tokenKey = String(requestMessage.id);
-			let cancellationSource = new CancellationTokenSourceImpl(getCancellationFilename(tokenKey));
+			let cancellationSource = createCancellationTokenSource(getCancellationFilename(tokenKey));
 			requestTokens[tokenKey] = cancellationSource;
 			try {
 				let handlerResult: any;
