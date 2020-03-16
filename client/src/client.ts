@@ -808,7 +808,7 @@ abstract class DocumentNotifiactions<P, E> implements DynamicFeature<TextDocumen
 		}
 	}
 
-	public getProvider(document: TextDocument): { send: (data: E) => void } {
+	public getProvider(document: TextDocument):  { send: (data: E) => void } {
 		for (const selector of this._selectors.values()) {
 			if (Languages.match(selector, document)) {
 				return {
@@ -1385,7 +1385,7 @@ export abstract class TextDocumentFeature<PO, RO extends TextDocumentRegistratio
 		return [undefined, undefined];
 	}
 
-	protected getRegistrationOptions(documentSelector: DocumentSelector | undefined, capability: undefined | PO): (RO & { documentSelector: DocumentSelector }) | undefined {
+	protected getRegistrationOptions(documentSelector: DocumentSelector | undefined, capability: undefined | PO) : (RO & { documentSelector: DocumentSelector }) | undefined {
 		if (!documentSelector || !capability) {
 			return undefined;
 		}
@@ -1481,7 +1481,7 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 			documentationFormat: [MarkupKind.Markdown, MarkupKind.PlainText],
 			deprecatedSupport: true,
 			preselectSupport: true,
-			tagSupport: { valueSet: [CompletionItemTag.Deprecated] },
+			tagSupport: { valueSet:  [ CompletionItemTag.Deprecated ] },
 			insertReplaceSupport: true
 		};
 		completion.completionItemKind = { valueSet: SupportedCompletionItemKinds };
@@ -1667,7 +1667,7 @@ class DefinitionFeature extends TextDocumentFeature<boolean | DefinitionOptions,
 
 	protected registerLanguageProvider(options: DefinitionRegistrationOptions): [Disposable, DefinitionProvider] {
 		const provider: DefinitionProvider = {
-			provideDefinition: (document, position, token) => {
+			provideDefinition:  (document, position, token) => {
 				const client = this._client;
 				const provideDefinition: ProvideDefinitionSignature = (document, position, token) => {
 					return client.sendRequest(DefinitionRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
@@ -1862,7 +1862,7 @@ class WorkspaceSymbolFeature extends WorkspaceFeature<WorkspaceSymbolRegistratio
 
 	protected registerLanguageProvider(_options: WorkspaceSymbolRegistrationOptions): [Disposable, WorkspaceSymbolProvider] {
 		const provider: WorkspaceSymbolProvider = {
-			provideWorkspaceSymbols: (query, token) => {
+			provideWorkspaceSymbols:  (query, token) => {
 				const client = this._client;
 				const provideWorkspaceSymbols: ProvideWorkspaceSymbolsSignature = (query, token) => {
 					return client.sendRequest(WorkspaceSymbolRequest.type, { query }, token).then(
@@ -3459,7 +3459,7 @@ export abstract class BaseLanguageClient {
 		let diagnostics = ensure(ensure(result, 'textDocument')!, 'publishDiagnostics')!;
 		diagnostics.relatedInformation = true;
 		diagnostics.versionSupport = false;
-		diagnostics.tagSupport = { valueSet: [DiagnosticTag.Unnecessary, DiagnosticTag.Deprecated] };
+		diagnostics.tagSupport = { valueSet: [ DiagnosticTag.Unnecessary, DiagnosticTag.Deprecated ] };
 		diagnostics.complexDiagnosticCodeSupport = false;
 		for (let feature of this._features) {
 			feature.fillClientCapabilities(result);

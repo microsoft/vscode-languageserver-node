@@ -46,7 +46,7 @@ function delay(ms: number) {
 }
 
 suite('Connection Tests', () => {
-	test('Ensure proper param passing', async () => {
+	test('Ensure proper param passing', async() => {
 		const up = new TestStream();
 		const down = new TestStream();
 		const logger = new NullLogger();
@@ -200,12 +200,12 @@ suite('Partial result tests', () => {
 			kind: SymbolKind.Class,
 			location: {
 				uri: 'file:///abc.txt',
-				range: { start: { line: 0, character: 1 }, end: { line: 2, character: 3 } }
+				range: { start: { line: 0, character: 1 }, end: { line: 2, character: 3} }
 			}
 		};
 		serverConnection.onRequest(DocumentSymbolRequest.type, (params) => {
 			assert.ok(params.partialResultToken === '3b1db4c9-e011-489e-a9d1-0653e64707c2');
-			serverConnection.sendProgress(progressType, params.partialResultToken!, [result]);
+			serverConnection.sendProgress(progressType, params.partialResultToken!, [ result ]);
 			return [];
 		});
 

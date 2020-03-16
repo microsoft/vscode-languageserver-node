@@ -1061,7 +1061,7 @@ export interface ServerRequestHandler<P, R, PR, E> {
 /**
  * Interface to describe the shape of the server connection.
  */
-export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _> {
+export interface Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages= _> {
 
 	/**
 	 * Start listening on the input stream for messages to process.

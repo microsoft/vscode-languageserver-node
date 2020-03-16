@@ -64,9 +64,9 @@ export namespace Proposed {
 		export type HandlerSignature = callHierarchy.CallHierarchyIncomingCallsRequest.HandlerSignature;
 	}
 
-	export type CallHierarchyOutgoingCallsParams = callHierarchy.CallHierarchyOutgoingCallsParams;
+	export type CallHierarchyOutgoingCallsParams= callHierarchy.CallHierarchyOutgoingCallsParams;
 	export namespace CallHierarchyOutgoingCallsRequest {
-		export const method = callHierarchy.CallHierarchyOutgoingCallsRequest.method;
+		export const method =  callHierarchy.CallHierarchyOutgoingCallsRequest.method;
 		export const type = callHierarchy.CallHierarchyOutgoingCallsRequest.type;
 		export type HandlerSignature = callHierarchy.CallHierarchyOutgoingCallsRequest.HandlerSignature;
 	}

@@ -195,10 +195,10 @@ export interface Logger {
 }
 
 export const NullLogger: Logger = Object.freeze({
-	error: () => { },
-	warn: () => { },
-	info: () => { },
-	log: () => { }
+	error: () => {},
+	warn: () => {},
+	info: () => {},
+	log: () => {}
 });
 
 export enum Trace {

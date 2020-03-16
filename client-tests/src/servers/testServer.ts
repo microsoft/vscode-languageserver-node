@@ -89,13 +89,13 @@ connection.onInitialized(() => {
 connection.onDeclaration((params) => {
 	assert.equal(params.position.line, 1);
 	assert.equal(params.position.character, 1);
-	return { uri: params.textDocument.uri, range: { start: { line: 1, character: 1 }, end: { line: 1, character: 2 } } };
+	return { uri: params.textDocument.uri, range: { start: { line: 1, character: 1}, end: {line: 1, character: 2 }}};
 });
 
 connection.onDefinition((params) => {
 	assert.equal(params.position.line, 1);
 	assert.equal(params.position.character, 1);
-	return { uri: params.textDocument.uri, range: { start: { line: 0, character: 0 }, end: { line: 0, character: 1 } } };
+	return { uri: params.textDocument.uri, range: { start: { line: 0, character: 0}, end: {line: 0, character: 1 }}};
 });
 
 connection.onHover((_params) => {
@@ -131,8 +131,8 @@ connection.onSignatureHelp((_params) => {
 
 connection.onReferences((params) => {
 	return [
-		Location.create(params.textDocument.uri, Range.create(0, 0, 0, 0)),
-		Location.create(params.textDocument.uri, Range.create(1, 1, 1, 1))
+		Location.create(params.textDocument.uri, Range.create(0,0,0,0)),
+		Location.create(params.textDocument.uri, Range.create(1,1,1,1))
 	];
 });
 
@@ -199,26 +199,26 @@ connection.onColorPresentation((_params) => {
 
 connection.onFoldingRanges((_params) => {
 	return [
-		FoldingRange.create(1, 2)
+		FoldingRange.create(1,2)
 	];
 });
 
 connection.onImplementation((params) => {
 	assert.equal(params.position.line, 1);
 	assert.equal(params.position.character, 1);
-	return { uri: params.textDocument.uri, range: { start: { line: 2, character: 2 }, end: { line: 3, character: 3 } } };
+	return { uri: params.textDocument.uri, range: { start: { line: 2, character: 2}, end: {line: 3, character: 3 }}};
 });
 
 connection.onSelectionRanges((_params) => {
 	return [
-		SelectionRange.create(Range.create(1, 2, 3, 4))
+		SelectionRange.create(Range.create(1,2,3,4))
 	];
 });
 
 connection.onTypeDefinition((params) => {
 	assert.equal(params.position.line, 1);
 	assert.equal(params.position.character, 1);
-	return { uri: params.textDocument.uri, range: { start: { line: 2, character: 2 }, end: { line: 3, character: 3 } } };
+	return { uri: params.textDocument.uri, range: { start: { line: 2, character: 2}, end: {line: 3, character: 3 }}};
 });
 
 connection.onRequest(regularCancellationTestType, async (token) => {
