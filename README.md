@@ -8,6 +8,9 @@ This repository contains the code for the following npm modules:
 * _vscode-languageserver_: npm module to implement a VSCode language server using [Node.js](https://nodejs.org/) as a runtime:<br>
 [![NPM Version](https://img.shields.io/npm/v/vscode-languageserver.svg)](https://npmjs.org/package/vscode-languageserver)
 [![NPM Downloads](https://img.shields.io/npm/dm/vscode-languageserver.svg)](https://npmjs.org/package/vscode-languageserver)
+* _vscode-textdocument_: npm module to implement text documents usable in a LSP server using [Node.js](https://nodejs.org/) as a runtime:<br>
+[![NPM Version](https://img.shields.io/npm/v/vscode-languageserver-textdocument.svg)](https://npmjs.org/package/vscode-languageserver-textdocument)
+[![NPM Downloads](https://img.shields.io/npm/dm/vscode-languageserver-textdocument.svg)](https://npmjs.org/package/vscode-languageserver-textdocument)
 * _vscode-languageserver-protocol_: the actual language server protocol definition in TypeScript:<br>
 [![NPM Version](https://img.shields.io/npm/v/vscode-languageserver-protocol.svg)](https://npmjs.org/package/vscode-languageserver-protocol)
 [![NPM Downloads](https://img.shields.io/npm/dm/vscode-languageserver-protocol.svg)](https://npmjs.org/package/vscode-languageserver-protocol)
