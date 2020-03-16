@@ -1595,7 +1595,7 @@ export function combineFeatures<OConsole, OTracer, OTelemetry, OClient, OWindow,
  *
  * @param strategy An optional connection strategy to control additional settings
  */
-export function createConnection(strategy?: ConnectionStrategy, options?: ConnectionOptions): IConnection;
+export function createConnection(options?: ConnectionStrategy | ConnectionOptions): IConnection;
 
 /**
  * Creates a new connection using a the given streams.
@@ -1605,7 +1605,7 @@ export function createConnection(strategy?: ConnectionStrategy, options?: Connec
  * @param strategy An optional connection strategy to control additional settings
  * @return a [connection](#IConnection)
  */
-export function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, strategy?: ConnectionStrategy, options?: ConnectionOptions): IConnection;
+export function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, options?: ConnectionStrategy | ConnectionOptions): IConnection;
 
 /**
  * Creates a new connection.
@@ -1614,7 +1614,7 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
  * @param writer The message writer to write message to.
  * @param strategy An optional connection strategy to control additional settings
  */
-export function createConnection(reader: MessageReader, writer: MessageWriter, strategy?: ConnectionStrategy, options?: ConnectionOptions): IConnection;
+export function createConnection(reader: MessageReader, writer: MessageWriter, options?: ConnectionStrategy | ConnectionOptions): IConnection;
 
 /**
  * Creates a new connection based on the processes command line arguments. The new connection surfaces proposed API
@@ -1624,7 +1624,7 @@ export function createConnection(reader: MessageReader, writer: MessageWriter, s
  */
 export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _>(
 	factories: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages>,
-	strategy?: ConnectionStrategy, options?: ConnectionOptions
+	options?: ConnectionStrategy | ConnectionOptions
 ): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages>;
 
 /**
@@ -1637,7 +1637,7 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
  */
 export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _>(
 	factories: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages>,
-	inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, strategy?: ConnectionStrategy, options?: ConnectionOptions
+	inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, options?: ConnectionStrategy | ConnectionOptions
 ): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages>;
 
 /**
@@ -1649,34 +1649,32 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
  */
 export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _>(
 	factories: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages>,
-	reader: MessageReader, writer: MessageWriter, strategy?: ConnectionStrategy, options?: ConnectionOptions
+	reader: MessageReader, writer: MessageWriter, options?: ConnectionStrategy | ConnectionOptions
 ): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages>;
 
-export function createConnection(arg1?: any, arg2?: any, arg3?: any, arg4?: any, arg5?: any): IConnection {
+export function createConnection(arg1?: any, arg2?: any, arg3?: any, arg4?: any): IConnection {
 	let factories: Features | undefined;
 	let input: NodeJS.ReadableStream | MessageReader | undefined;
 	let output: NodeJS.WritableStream | MessageWriter | undefined;
-	let strategy: ConnectionStrategy | undefined;
-	let options: ConnectionOptions | undefined;
+	let options: ConnectionStrategy | ConnectionOptions | undefined;
 	if (arg1 !== void 0 && (arg1 as Features).__brand === 'features') {
 		factories = arg1;
-		arg1 = arg2; arg2 = arg3; arg3 = arg4; arg4 = arg5;
+		arg1 = arg2; arg2 = arg3; arg3 = arg4;
 	}
-	if (ConnectionStrategy.is(arg1)) {
-		strategy = arg1;
-		options = arg2;
+	if (ConnectionStrategy.is(arg1) || ConnectionOptions.is(arg1)) {
+		options = arg1;
 	} else {
 		input = arg1;
 		output = arg2;
-		strategy = arg3;
-		options = arg4;
+		options = arg3;
 	}
-	return _createConnection(input, output, strategy, factories, options);
+	return _createConnection(input, output, options, factories);
 }
 
 function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _>(
-	input?: NodeJS.ReadableStream | MessageReader, output?: NodeJS.WritableStream | MessageWriter, strategy?: ConnectionStrategy,
-	factories?: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages>, options?: ConnectionOptions
+	input?: NodeJS.ReadableStream | MessageReader, output?: NodeJS.WritableStream | MessageWriter,
+	options?: ConnectionStrategy | ConnectionOptions,
+	factories?: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages>,
 ): Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages> {
 	if (!input && !output && process.argv.length > 2) {
 		let port: number | undefined = void 0;
@@ -1739,31 +1737,43 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 		});
 	}
 
-	if (!options && process.argv.length > 2) {
-		let cancellationFolderName: string | undefined = void 0;
-		let argv = process.argv.slice(2);
-		for (let i = 0; i < argv.length; i++) {
-			let arg = argv[i];
-			if (arg === '--cancellation') {
-				cancellationFolderName = argv[i + 1];
-				break;
+	function getConnectionOptions(): ConnectionOptions | undefined {
+		let strategy: ConnectionStrategy | undefined;
+		if (options) {
+			if (ConnectionStrategy.is(options)) {
+				strategy = options as ConnectionStrategy;
 			}
 			else {
-				var args = arg.split('=');
-				if (args[0] === '--cancellation') {
-					cancellationFolderName = args[1];
-					break;
-				}
+				return options;
 			}
 		}
-		if (cancellationFolderName) {
-			// client and server must use same logic to create actual folder name. but don't have a good way to share logic.
-			options = { folderForFileBasedCancellation: path.join(os.tmpdir(), 'vscode-languageserver-cancellation', cancellationFolderName) };
+		if (process.argv.length > 2) {
+			let cancellationFolderName: string | undefined = void 0;
+			let argv = process.argv.slice(2);
+			for (let i = 0; i < argv.length; i++) {
+				let arg = argv[i];
+				if (arg === '--cancellation') {
+					cancellationFolderName = argv[i + 1];
+					break;
+				}
+				else {
+					var args = arg.split('=');
+					if (args[0] === '--cancellation') {
+						cancellationFolderName = args[1];
+						break;
+					}
+				}
+			}
+			if (cancellationFolderName) {
+				// client and server must use same logic to create actual folder name. but don't have a good way to share logic.
+				return { folderForFileBasedCancellation: path.join(os.tmpdir(), 'vscode-languageserver-cancellation', cancellationFolderName), strategy };
+			}
 		}
+		return strategy ? { strategy } : undefined;
 	}
 
 	const logger = (factories && factories.console ? new (factories.console(RemoteConsoleImpl))() : new RemoteConsoleImpl()) as RemoteConsoleImpl & PConsole;
-	const connection = createProtocolConnection(input as any, output as any, logger, strategy, options);
+	const connection = createProtocolConnection(input as any, output as any, logger, getConnectionOptions());
 	logger.rawAttach(connection);
 	const tracer = (factories && factories.tracer ? new (factories.tracer(TracerImpl))() : new TracerImpl()) as TracerImpl & PTracer;
 	const telemetry = (factories && factories.telemetry ? new (factories.telemetry(TelemetryImpl))() : new TelemetryImpl()) as TelemetryImpl & PTelemetry;

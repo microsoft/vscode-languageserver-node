@@ -282,6 +282,6 @@ export interface ProtocolConnection {
  */
 export type ProtocolConnetion = ProtocolConnection;
 
-export function createProtocolConnection(reader: MessageReader, writer: MessageWriter, logger: Logger, strategy?: ConnectionStrategy, options?: ConnectionOptions): ProtocolConnection {
-	return createMessageConnection(reader, writer, logger, strategy, options);
+export function createProtocolConnection(reader: MessageReader, writer: MessageWriter, logger: Logger, options?: ConnectionStrategy | ConnectionOptions): ProtocolConnection {
+	return createMessageConnection(reader, writer, logger, options);
 }

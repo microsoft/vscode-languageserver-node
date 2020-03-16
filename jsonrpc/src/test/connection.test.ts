@@ -543,7 +543,7 @@ suite('Connection', () => {
 		const source = new CancellationTokenSource();
 		const options: hostConnection.ConnectionOptions = { folderForFileBasedCancellation: cancellationFolder };
 
-		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, undefined, options);
+		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, options);
 		server.onRequest(type, t => {
 			source.cancel();
 
@@ -557,7 +557,7 @@ suite('Connection', () => {
 		});
 		server.listen();
 
-		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger, undefined, options);
+		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger, options);
 		client.listen();
 		client.sendRequest(type, source.token);
 	});
@@ -572,7 +572,7 @@ suite('Connection', () => {
 		fs.mkdirSync(cancellationFolder, { recursive: true });
 
 		const source = new CancellationTokenSource();
-		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, undefined, { folderForFileBasedCancellation: cancellationFolder });
+		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, { folderForFileBasedCancellation: cancellationFolder });
 		server.onRequest(type, async t => {
 			source.cancel();
 
@@ -615,7 +615,7 @@ suite('Connection', () => {
 		});
 		server.listen();
 
-		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger, undefined, { folderForFileBasedCancellation: cancellationFolder });
+		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger, { folderForFileBasedCancellation: cancellationFolder });
 		client.listen();
 		client.sendRequest(type, source.token);
 	});

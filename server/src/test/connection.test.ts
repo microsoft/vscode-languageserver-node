@@ -237,8 +237,8 @@ suite('Cancellation Tests', () => {
 		fs.mkdirSync(cancellationFolder, { recursive: true });
 
 		const options: ConnectionOptions = { folderForFileBasedCancellation: cancellationFolder };
-		const serverConnection = createConnection(up, down, undefined, options);
-		const clientConnection = createConnection(down, up, undefined, options);
+		const serverConnection = createConnection(up, down, options);
+		const clientConnection = createConnection(down, up, options);
 		serverConnection.listen();
 		clientConnection.listen();
 

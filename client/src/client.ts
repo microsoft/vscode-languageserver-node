@@ -25,7 +25,7 @@ import {
 	NotificationType, NotificationType0,
 	NotificationHandler, NotificationHandler0, GenericNotificationHandler,
 	MessageReader, MessageWriter, Trace, Tracer, TraceFormat, TraceOptions, Event, Emitter,
-	createProtocolConnection, ConnectionOptions,
+	createProtocolConnection,
 	ClientCapabilities, WorkspaceEdit,
 	RegistrationRequest, RegistrationParams, UnregistrationRequest, UnregistrationParams, TextDocumentRegistrationOptions,
 	InitializeRequest, InitializeParams, InitializeResult, InitializeError, ServerCapabilities, TextDocumentSyncKind, TextDocumentSyncOptions,
@@ -165,11 +165,16 @@ interface ConnectionErrorHandler {
 interface ConnectionCloseHandler {
 	(): void;
 }
+
+interface ConnectionOptions {
+    folderForFileBasedCancellation?: string;
+}
+
 function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): IConnection;
 function createConnection(reader: MessageReader, writer: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): IConnection;
 function createConnection(input: any, output: any, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): IConnection {
 	let logger = new ConsoleLogger();
-	let connection = createProtocolConnection(input, output, logger, undefined, options);
+	let connection = createProtocolConnection(input, output, logger, options);
 	connection.onError((data) => { errorHandler(data[0], data[1], data[2]); });
 	connection.onClose(closeHandler);
 	let result: IConnection = {

@@ -320,6 +320,14 @@ export namespace ConnectionStrategy {
 
 export interface ConnectionOptions {
 	folderForFileBasedCancellation?: string
+	strategy?: ConnectionStrategy
+}
+
+export namespace ConnectionOptions {
+	export function is(value: any): value is ConnectionOptions {
+		let candidate: ConnectionOptions = value;
+		return candidate && (Is.string(candidate.folderForFileBasedCancellation) || ConnectionStrategy.is(candidate.strategy));
+	}
 }
 
 export interface MessageConnection {
@@ -420,7 +428,7 @@ interface NotificationHandlerElement {
 	handler: GenericNotificationHandler;
 }
 
-function _createMessageConnection(messageReader: MessageReader, messageWriter: MessageWriter, logger: Logger, strategy?: ConnectionStrategy, options?: ConnectionOptions): MessageConnection {
+function _createMessageConnection(messageReader: MessageReader, messageWriter: MessageWriter, logger: Logger, options?: ConnectionOptions): MessageConnection {
 	let sequenceNumber = 0;
 	let notificationSquenceNumber = 0;
 	let unknownResponseSquenceNumber = 0;
@@ -564,7 +572,9 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				let key = createRequestQueueKey((message.params as CancelParams).id);
 				let toCancel = messageQueue.get(key);
 				if (isRequestMessage(toCancel)) {
-					let response = strategy && strategy.cancelUndispatched ? strategy.cancelUndispatched(toCancel, cancelUndispatched) : cancelUndispatched(toCancel);
+					let response = (options && options.strategy && options.strategy.cancelUndispatched) ?
+						options.strategy.cancelUndispatched(toCancel, cancelUndispatched) : cancelUndispatched(toCancel);
+
 					if (response && (response.error !== void 0 || response.result !== void 0)) {
 						messageQueue.delete(key);
 						response.id = toCancel.id;
@@ -1227,13 +1237,18 @@ function isMessageWriter(value: any): value is MessageWriter {
 	return value.write !== void 0 && value.end === void 0;
 }
 
-export function createMessageConnection(reader: MessageReader, writer: MessageWriter, logger?: Logger, strategy?: ConnectionStrategy, options?: ConnectionOptions): MessageConnection;
-export function createMessageConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger?: Logger, strategy?: ConnectionStrategy, options?: ConnectionOptions): MessageConnection;
-export function createMessageConnection(input: MessageReader | NodeJS.ReadableStream, output: MessageWriter | NodeJS.WritableStream, logger?: Logger, strategy?: ConnectionStrategy, options?: ConnectionOptions): MessageConnection {
+export function createMessageConnection(reader: MessageReader, writer: MessageWriter, logger?: Logger, options?: ConnectionStrategy | ConnectionOptions): MessageConnection;
+export function createMessageConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger?: Logger, options?: ConnectionStrategy | ConnectionOptions): MessageConnection;
+export function createMessageConnection(input: MessageReader | NodeJS.ReadableStream, output: MessageWriter | NodeJS.WritableStream, logger?: Logger, options?: ConnectionStrategy | ConnectionOptions): MessageConnection {
 	if (!logger) {
 		logger = NullLogger;
 	}
 	let reader = isMessageReader(input) ? input : new StreamMessageReader(input);
 	let writer = isMessageWriter(output) ? output : new StreamMessageWriter(output);
-	return _createMessageConnection(reader, writer, logger, strategy, options);
+
+	if (ConnectionStrategy.is(options)) {
+		options = { strategy: options } as ConnectionOptions;
+	}
+
+	return _createMessageConnection(reader, writer, logger, options);
 }

@@ -126,8 +126,8 @@ suite('Connection Tests', () => {
 		fs.mkdirSync(cancellationFolder, { recursive: true });
 
 		const options: ConnectionOptions = { folderForFileBasedCancellation: cancellationFolder };
-		const serverConnection = createProtocolConnection(new StreamMessageReader(up), new StreamMessageWriter(down), logger, undefined, options);
-		const clientConnection = createProtocolConnection(new StreamMessageReader(down), new StreamMessageWriter(up), logger, undefined, options);
+		const serverConnection = createProtocolConnection(new StreamMessageReader(up), new StreamMessageWriter(down), logger, options);
+		const clientConnection = createProtocolConnection(new StreamMessageReader(down), new StreamMessageWriter(up), logger, options);
 		serverConnection.listen();
 		clientConnection.listen();
 
