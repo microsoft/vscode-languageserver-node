@@ -31,25 +31,6 @@ class FileBasedToken extends MutableToken {
 		return super.isCancellationRequested;
 	}
 
-	public dispose(): void {
-		super.dispose();
-
-		if (!super.isCancellationRequested) {
-			// this could be micro optimization we don't want to keep
-			return;
-		}
-
-		try {
-			// attempt to delete cancellation file.
-			// if it fails, that's fine, owner of this connection is supposed to take care of
-			// files left at the end of the session
-			fs.unlinkSync(this._cancellationName);
-		}
-		catch (e) {
-			// noop
-		}
-	}
-
 	private pipeExists(): boolean {
 		try {
 			fs.statSync(this._cancellationName);
@@ -81,6 +62,18 @@ export function createCancellationFile(cancellationFilename: string) {
 		return true;
 	} catch (e) {
 		return false;
+	}
+}
+
+export function deleteCancellationFile(cancellationFilename: string) {
+	try {
+		// attempt to delete cancellation file.
+		// if it fails, that's fine, owner of this connection is supposed to take care of
+		// files left at the end of the session
+		fs.unlinkSync(cancellationFilename);
+	}
+	catch (e) {
+		// noop
 	}
 }
 

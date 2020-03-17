@@ -24,7 +24,7 @@ import { MessageWriter, StreamMessageWriter, IPCMessageWriter, SocketMessageWrit
 import { Disposable, Event, Emitter } from './events';
 import { CancellationTokenSource, CancellationToken, AbstractCancellationTokenSource } from './cancellation';
 import { LinkedMap } from './linkedMap';
-import { createCancellationTokenSource, createCancellationFile, validateCancellationFolder, getCancellationFilename } from './cancellation.fileBased';
+import { createCancellationTokenSource, createCancellationFile, validateCancellationFolder, getCancellationFilename, deleteCancellationFile } from './cancellation.fileBased';
 
 export {
 	Message, MessageType, ErrorCodes, ResponseError,
@@ -627,13 +627,6 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			traceSendingResponse(message, method, startTime);
 			messageWriter.write(message);
 		}
-		function deleteRequestToken(id: string) {
-			const source = requestTokens[id];
-			delete requestTokens[id];
-
-			source.dispose();
-		}
-
 		traceReceivedRequest(requestMessage);
 
 		let element = requestHandlers[requestMessage.method];
@@ -666,14 +659,14 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 
 				let promise = handlerResult as Thenable<any | ResponseError<any>>;
 				if (!handlerResult) {
-					deleteRequestToken(tokenKey);
+					delete requestTokens[tokenKey];
 					replySuccess(handlerResult, requestMessage.method, startTime);
 				} else if (promise.then) {
 					promise.then((resultOrError): any | ResponseError<any> => {
-						deleteRequestToken(tokenKey);
+						delete requestTokens[tokenKey];
 						reply(resultOrError, requestMessage.method, startTime);
 					}, error => {
-						deleteRequestToken(tokenKey);
+						delete requestTokens[tokenKey];
 						if (error instanceof ResponseError) {
 							replyError(<ResponseError<any>>error, requestMessage.method, startTime);
 						} else if (error && Is.string(error.message)) {
@@ -683,11 +676,11 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 						}
 					});
 				} else {
-					deleteRequestToken(tokenKey);
+					delete requestTokens[tokenKey];
 					reply(handlerResult, requestMessage.method, startTime);
 				}
 			} catch (error) {
-				deleteRequestToken(tokenKey);
+				delete requestTokens[tokenKey];
 				if (error instanceof ResponseError) {
 					reply(<ResponseError<any>>error, requestMessage.method, startTime);
 				} else if (error && Is.string(error.message)) {
@@ -1097,6 +1090,8 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			}
 
 			let id = sequenceNumber++;
+			const cancellationFilename = getCancellationFilename(folderForFileBasedCancellation, String(id));
+
 			let result = new Promise<R | ResponseError<E>>((resolve, reject) => {
 				let requestMessage: RequestMessage = {
 					jsonrpc: version,
@@ -1104,7 +1099,21 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 					method: method,
 					params: messageParams
 				};
-				let responsePromise: ResponsePromise | null = { method: method, timerStart: Date.now(), resolve, reject };
+
+				const resolve1 = (r: any) => {
+					resolve(r);
+					if (cancellationFilename) {
+						deleteCancellationFile(cancellationFilename);
+					}
+				};
+				const reject1 = (r: any) => {
+					reject(r);
+					if (cancellationFilename) {
+						deleteCancellationFile(cancellationFilename);
+					}
+				};
+
+				let responsePromise: ResponsePromise | null = { method: method, timerStart: Date.now(), resolve: resolve1, reject: reject1 };
 				traceSendingRequest(requestMessage);
 				try {
 					messageWriter.write(requestMessage);
@@ -1120,7 +1129,6 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			if (token) {
 				token.onCancellationRequested(() => {
 					// create cancellation file for the cancel request
-					const cancellationFilename = getCancellationFilename(folderForFileBasedCancellation, String(id));
 					if (cancellationFilename) {
 						createCancellationFile(cancellationFilename);
 					}
