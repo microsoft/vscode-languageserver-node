@@ -53,7 +53,7 @@ suite('Cancellation integration', () => {
 			documentSelector, synchronize: {}, initializationOptions: {}, middleware, useFileBasedCancellation: true
 		};
 
-		client = new lsclient.LanguageClient('css', 'Test Language Server', serverOptions, clientOptions);
+		client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
 		client.start();
 		await client.onReady();
 
@@ -65,20 +65,6 @@ suite('Cancellation integration', () => {
 
 		assert(!fs.existsSync(getFolderForFileBasedCancellation()));
 	});
-
-	test('Regular Cancellation', async () => {
-		const sourceToken = new lsclient.CancellationTokenSource();
-		const request = client.sendRequest(new lsclient.RequestType0<number, void>('regularCancellationTest'), sourceToken.token);
-		await delay(100);
-		sourceToken.cancel();
-
-		try {
-			await request;
-		} catch (e) {
-			assert(e instanceof lsclient.ResponseError);
-			assert((<lsclient.ResponseError<any>>e).code === lsclient.ErrorCodes.RequestCancelled);
-		}
-	}).timeout(10000);
 
 	test('File Based Cancellation', async () => {
 		const sourceToken = new lsclient.CancellationTokenSource();

@@ -223,6 +223,8 @@ connection.onTypeDefinition((params) => {
 
 connection.onRequest(regularCancellationTestType, async (token) => {
 	while (!token.isCancellationRequested) {
+		// regular message based cancellation only works with async code since it requires
+		// control to go back to the event loop to handle cancellation notification
 		await delay(0);
 	}
 	return new ResponseError(ErrorCodes.RequestCancelled, 'cancelled');
@@ -230,6 +232,8 @@ connection.onRequest(regularCancellationTestType, async (token) => {
 
 connection.onRequest(fileCancellationTestType, token => {
 	while (!token.isCancellationRequested) {
+		// file based cancellation works with the sync code path. no need to go back
+		// to the event loop
 	}
 	return new ResponseError(ErrorCodes.RequestCancelled, 'cancelled');
 });
