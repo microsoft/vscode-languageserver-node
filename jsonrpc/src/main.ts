@@ -5,7 +5,6 @@
 /// <reference path="../typings/thenable.d.ts" />
 'use strict';
 
-import * as path from 'path';
 import * as Is from './is';
 
 import {
@@ -25,7 +24,7 @@ import { MessageWriter, StreamMessageWriter, IPCMessageWriter, SocketMessageWrit
 import { Disposable, Event, Emitter } from './events';
 import { CancellationTokenSource, CancellationToken, AbstractCancellationTokenSource } from './cancellation';
 import { LinkedMap } from './linkedMap';
-import { createCancellationTokenSource, createCancellationFile, validateCancellationFolder } from './cancellation.fileBased';
+import { createCancellationTokenSource, createCancellationFile, validateCancellationFolder, getCancellationFilename } from './cancellation.fileBased';
 
 export {
 	Message, MessageType, ErrorCodes, ResponseError,
@@ -465,10 +464,6 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 		}
 	}
 
-	function getCancellationFilename(id: string) {
-		return folderForFileBasedCancellation ? path.join(folderForFileBasedCancellation, `cancellation-${id}.tmp`) : undefined;
-	}
-
 	function createRequestQueueKey(id: string | number): string {
 		return 'req-' + id.toString();
 	}
@@ -651,7 +646,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 		let startTime = Date.now();
 		if (requestHandler || starRequestHandler) {
 			let tokenKey = String(requestMessage.id);
-			let cancellationSource = createCancellationTokenSource(getCancellationFilename(tokenKey));
+			let cancellationSource = createCancellationTokenSource(getCancellationFilename(folderForFileBasedCancellation, tokenKey));
 			requestTokens[tokenKey] = cancellationSource;
 			try {
 				let handlerResult: any;
@@ -1125,7 +1120,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			if (token) {
 				token.onCancellationRequested(() => {
 					// create cancellation file for the cancel request
-					const cancellationFilename = getCancellationFilename(String(id));
+					const cancellationFilename = getCancellationFilename(folderForFileBasedCancellation, String(id));
 					if (cancellationFilename) {
 						createCancellationFile(cancellationFilename);
 					}

@@ -6,6 +6,7 @@
 'use strict';
 
 import * as fs from 'fs';
+import * as path from 'path';
 import { MutableToken, AbstractCancellationTokenSource, CancellationTokenSource } from './cancellation';
 import { CancellationToken } from './cancellation';
 
@@ -85,6 +86,10 @@ export function createCancellationFile(cancellationFilename: string) {
 
 export function createCancellationTokenSource(cancellationFilename?: string): AbstractCancellationTokenSource {
 	return cancellationFilename ? new FileBasedCancellationTokenSource(cancellationFilename) : new CancellationTokenSource();
+}
+
+export function getCancellationFilename(folder: string | undefined, id: string) {
+	return folder ? path.join(folder, `cancellation-${id}.tmp`) : undefined;
 }
 
 export function validateCancellationFolder(folderForFileBasedCancellation: string): boolean {
