@@ -566,9 +566,8 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				let key = createRequestQueueKey((message.params as CancelParams).id);
 				let toCancel = messageQueue.get(key);
 				if (isRequestMessage(toCancel)) {
-					let response = (options && options.strategy && options.strategy.cancelUndispatched) ?
-						options.strategy.cancelUndispatched(toCancel, cancelUndispatched) : cancelUndispatched(toCancel);
-
+					const strategy = options?.strategy;
+					let response = (strategy && strategy.cancelUndispatched) ? strategy.cancelUndispatched(toCancel, cancelUndispatched) : cancelUndispatched(toCancel);
 					if (response && (response.error !== void 0 || response.result !== void 0)) {
 						messageQueue.delete(key);
 						response.id = toCancel.id;
