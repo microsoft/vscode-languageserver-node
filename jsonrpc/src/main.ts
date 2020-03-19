@@ -319,6 +319,7 @@ export namespace ConnectionStrategy {
 export type CancellationId = number | string;
 export interface CancellationReceiverStrategy {
 	createCancellationTokenSource(id: CancellationId): AbstractCancellationTokenSource;
+	dispose?(): void;
 }
 export namespace CancellationReceiverStrategy {
 	export const Message: CancellationReceiverStrategy = Object.freeze({
@@ -336,6 +337,7 @@ export namespace CancellationReceiverStrategy {
 export interface CancellationSenderStrategy {
 	sendCancellation(conn: MessageConnection, id: CancellationId): void;
 	cleanup(id: CancellationId): void;
+	dispose?(): void;
 }
 export namespace CancellationSenderStrategy {
 	export const Message: CancellationSenderStrategy = Object.freeze({
