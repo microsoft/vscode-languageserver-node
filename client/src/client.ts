@@ -2799,32 +2799,32 @@ export abstract class BaseLanguageClient {
 		return data.toString();
 	}
 
-	public info(message: string, data?: any): void {
+	public info(message: string, data?: any, showNotification: boolean = true): void {
 		this.outputChannel.appendLine(`[Info  - ${(new Date().toLocaleTimeString())}] ${message}`);
 		if (data) {
 			this.outputChannel.appendLine(this.data2String(data));
 		}
-		if (this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Info) {
+		if (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Info) {
 			this.showNotificationMessage();
 		}
 	}
 
-	public warn(message: string, data?: any): void {
+	public warn(message: string, data?: any, showNotification: boolean = true): void {
 		this.outputChannel.appendLine(`[Warn  - ${(new Date().toLocaleTimeString())}] ${message}`);
 		if (data) {
 			this.outputChannel.appendLine(this.data2String(data));
 		}
-		if (this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Warn) {
+		if (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Warn) {
 			this.showNotificationMessage();
 		}
 	}
 
-	public error(message: string, data?: any): void {
+	public error(message: string, data?: any, showNotification: boolean = true): void {
 		this.outputChannel.appendLine(`[Error - ${(new Date().toLocaleTimeString())}] ${message}`);
 		if (data) {
 			this.outputChannel.appendLine(this.data2String(data));
 		}
-		if (this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Error) {
+		if (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Error) {
 			this.showNotificationMessage();
 		}
 	}
@@ -2889,13 +2889,13 @@ export abstract class BaseLanguageClient {
 			connection.onLogMessage((message) => {
 				switch (message.type) {
 					case MessageType.Error:
-						this.error(message.message);
+						this.error(message.message, undefined, false);
 						break;
 					case MessageType.Warning:
-						this.warn(message.message);
+						this.warn(message.message, undefined, false);
 						break;
 					case MessageType.Info:
-						this.info(message.message);
+						this.info(message.message, undefined, false);
 						break;
 					default:
 						this.outputChannel.appendLine(message.message);
