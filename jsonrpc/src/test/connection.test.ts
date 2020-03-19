@@ -607,7 +607,7 @@ suite('Connection', () => {
 			source.cancel();
 
 			while (!t.isCancellationRequested) {
-				await delay(0);
+				// file based cancellation works with synchronous code path
 			}
 
 			rimraf.sync(cancellationFolder);
