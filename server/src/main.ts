@@ -48,9 +48,8 @@ import {
 	SelectionRangeRequest, SelectionRange, SelectionRangeParams, ProgressType, HoverParams, SignatureHelpParams, DefinitionParams, DocumentHighlightParams, PrepareRenameParams,
 	DeclarationParams, TypeDefinitionParams, ImplementationParams, WorkDoneProgressParams, PartialResultParams
 } from 'vscode-languageserver-protocol';
-import * as path from 'path';
-import * as os from 'os';
 
+import { parseCancellationStrategy } from './cancellation';
 import { Configuration, ConfigurationFeature } from './configuration';
 import { WorkspaceFolders, WorkspaceFoldersFeature } from './workspaceFolders';
 
@@ -1738,38 +1737,18 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 	}
 
 	function getConnectionOptions(): ConnectionOptions | undefined {
-		let strategy: ConnectionStrategy | undefined;
+		let connectionStrategy: ConnectionStrategy | undefined;
 		if (options) {
 			if (ConnectionStrategy.is(options)) {
-				strategy = options as ConnectionStrategy;
+				connectionStrategy = options as ConnectionStrategy;
 			}
 			else {
 				return options;
 			}
 		}
-		if (process.argv.length > 2) {
-			let cancellationFolderName: string | undefined = void 0;
-			let argv = process.argv.slice(2);
-			for (let i = 0; i < argv.length; i++) {
-				let arg = argv[i];
-				if (arg === '--cancellation') {
-					cancellationFolderName = argv[i + 1];
-					break;
-				}
-				else {
-					var args = arg.split('=');
-					if (args[0] === '--cancellation') {
-						cancellationFolderName = args[1];
-						break;
-					}
-				}
-			}
-			if (cancellationFolderName) {
-				// client and server must use same logic to create actual folder name. but don't have a good way to share logic.
-				return { folderForFileBasedCancellation: path.join(os.tmpdir(), 'vscode-languageserver-cancellation', cancellationFolderName), strategy };
-			}
-		}
-		return strategy ? { strategy } : undefined;
+
+		const cancellationStrategy = process.argv.length > 2 ? parseCancellationStrategy(process.argv.slice(2)) : undefined;
+		return cancellationStrategy ? { cancellationStrategy, connectionStrategy } : connectionStrategy ? { connectionStrategy } : undefined;
 	}
 
 	const logger = (factories && factories.console ? new (factories.console(RemoteConsoleImpl))() : new RemoteConsoleImpl()) as RemoteConsoleImpl & PConsole;

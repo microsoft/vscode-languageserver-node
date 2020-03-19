@@ -37,6 +37,7 @@ import { SemanticTokensFeature } from './semanticTokens.proposed';
 
 import * as Is from './utils/is';
 import { terminate } from './utils/processes';
+import { getSenderStrategyArgument, getReceiverStrategyArgument } from './cancellation';
 
 export * from './client';
 
@@ -318,7 +319,8 @@ export class LanguageClient extends BaseLanguageClient {
 						node.args.forEach(element => args.push(element));
 					}
 					if (this.CancellationFolderName) {
-						args.push(`--cancellation=${this.CancellationFolderName}`);
+						args.push(getSenderStrategyArgument());
+						args.push(getReceiverStrategyArgument(this.CancellationFolderName));
 					}
 					let execOptions: cp.SpawnOptionsWithoutStdio = Object.create(null);
 					execOptions.cwd = serverWorkingDir;
@@ -382,7 +384,8 @@ export class LanguageClient extends BaseLanguageClient {
 					return new Promise<MessageTransports>((resolve, _reject) => {
 						let args = node.args && node.args.slice() || [];
 						if (this.CancellationFolderName) {
-							args.push(`--cancellation=${this.CancellationFolderName}`);
+							args.push(getSenderStrategyArgument());
+							args.push(getReceiverStrategyArgument(this.CancellationFolderName));
 						}
 						if (transport === TransportKind.ipc) {
 							args.push('--node-ipc');

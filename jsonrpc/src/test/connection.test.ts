@@ -18,6 +18,7 @@ import { RequestType0, RequestType, RequestType3, ResponseError, NotificationTyp
 import { CancellationTokenSource } from '../cancellation';
 
 import * as hostConnection from '../main';
+import { getReceiverStrategy, getSenderStrategy } from './testCancellationStrategy';
 
 interface TestDuplex extends Duplex {
 }
@@ -536,12 +537,12 @@ suite('Connection', () => {
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
-		const randomName = randomBytes(21).toString('hex');
-		const cancellationFolder = path.join(os.tmpdir(), `jsonrpc-connection-tests`, randomName);
+		const cancellationFolder = path.join(os.tmpdir(), `jsonrpc-connection-tests`, randomBytes(21).toString('hex'));
 		fs.mkdirSync(cancellationFolder, { recursive: true });
 
 		const source = new CancellationTokenSource();
-		const options: hostConnection.ConnectionOptions = { folderForFileBasedCancellation: cancellationFolder };
+		const strategy = { receiver: getReceiverStrategy(cancellationFolder), sender: getSenderStrategy(cancellationFolder) };
+		const options = { cancellationStrategy: strategy };
 
 		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, options);
 		server.onRequest(type, t => {
@@ -567,16 +568,15 @@ suite('Connection', () => {
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
-		const randomName = randomBytes(21).toString('hex');
-		const cancellationFolder = path.join(os.tmpdir(), `jsonrpc-connection-tests`, randomName);
+		const cancellationFolder = path.join(os.tmpdir(), `jsonrpc-connection-tests`, randomBytes(21).toString('hex'));
 		fs.mkdirSync(cancellationFolder, { recursive: true });
 
 		const source = new CancellationTokenSource();
-		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, { folderForFileBasedCancellation: cancellationFolder });
+		const serverStrategy = { receiver: hostConnection.CancellationReceiverStrategy.Message, sender: getSenderStrategy(cancellationFolder) };
+		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, { cancellationStrategy: serverStrategy });
 		server.onRequest(type, async t => {
 			source.cancel();
 
-			// when 2 different modes are fixed, it behaves like regular cancellation mode
 			while (!t.isCancellationRequested) {
 				await delay(0);
 			}
@@ -586,7 +586,8 @@ suite('Connection', () => {
 		});
 		server.listen();
 
-		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const clientStrategy = { receiver: getReceiverStrategy(cancellationFolder), sender: hostConnection.CancellationSenderStrategy.Message };
+		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger, { cancellationStrategy: clientStrategy });
 		client.listen();
 		client.sendRequest(type, source.token);
 	});
@@ -596,16 +597,15 @@ suite('Connection', () => {
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
-		const randomName = randomBytes(21).toString('hex');
-		const cancellationFolder = path.join(os.tmpdir(), `jsonrpc-connection-tests`, randomName);
+		const cancellationFolder = path.join(os.tmpdir(), `jsonrpc-connection-tests`, randomBytes(21).toString('hex'));
 		fs.mkdirSync(cancellationFolder, { recursive: true });
 
 		const source = new CancellationTokenSource();
-		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		const serverStrategy = { receiver: getReceiverStrategy(cancellationFolder), sender: hostConnection.CancellationSenderStrategy.Message };
+		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, { cancellationStrategy: serverStrategy });
 		server.onRequest(type, async t => {
 			source.cancel();
 
-			// when 2 different modes are fixed, it behaves like regular cancellation mode
 			while (!t.isCancellationRequested) {
 				await delay(0);
 			}
@@ -615,7 +615,8 @@ suite('Connection', () => {
 		});
 		server.listen();
 
-		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger, { folderForFileBasedCancellation: cancellationFolder });
+		const clientStrategy = { receiver: hostConnection.CancellationReceiverStrategy.Message, sender: getSenderStrategy(cancellationFolder) };
+		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger, { cancellationStrategy: clientStrategy });
 		client.listen();
 		client.sendRequest(type, source.token);
 	});

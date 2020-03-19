@@ -6,18 +6,17 @@
 
 import * as assert from 'assert';
 import * as fs from 'fs';
-import * as os from 'os';
-import * as path from 'path';
 import * as rimraf from 'rimraf';
 
 import { Duplex } from 'stream';
 import {
 	InitializeParams, InitializeRequest, InitializeResult, createConnection, DidChangeConfigurationNotification,
 	DidChangeConfigurationParams, IConnection, DeclarationRequest, DeclarationParams, ProgressToken, WorkDoneProgress,
-	ResponseError, CancellationTokenSource, ErrorCodes, ConnectionOptions
+	ResponseError, CancellationTokenSource, ErrorCodes
 } from '../main';
 import { LocationLink } from 'vscode-languageserver-types';
 import { randomBytes } from 'crypto';
+import { parseCancellationStrategy, getFolderForCancellation } from '../cancellation';
 
 class TestStream extends Duplex {
 	_write(chunk: string, _encoding: string, done: () => void) {
@@ -232,11 +231,11 @@ suite('Cancellation Tests', () => {
 	test('File based cancellation Tests', async () => {
 		const up = new TestStream();
 		const down = new TestStream();
-		const randomName = randomBytes(21).toString('hex');
-		const cancellationFolder = path.join(os.tmpdir(), `jsonrpc-connection-tests`, randomName);
+		const folderName = randomBytes(21).toString('hex');
+		const cancellationFolder = getFolderForCancellation(folderName);
 		fs.mkdirSync(cancellationFolder, { recursive: true });
 
-		const options: ConnectionOptions = { folderForFileBasedCancellation: cancellationFolder };
+		const options = { cancellationStrategy: parseCancellationStrategy(['--cancellationSend', `file:${folderName}`, '--cancellationReceive', `file:${folderName}`]) };
 		const serverConnection = createConnection(up, down, options);
 		const clientConnection = createConnection(down, up, options);
 		serverConnection.listen();

@@ -16,7 +16,10 @@ import {
 	FormattingOptions as VFormattingOptions, TextEdit as VTextEdit, WorkspaceEdit as VWorkspaceEdit, MessageItem,
 	Hover as VHover, CodeAction as VCodeAction, DocumentSymbol as VDocumentSymbol,
 	DocumentLink as VDocumentLink, TextDocumentWillSaveEvent,
-	WorkspaceFolder as VWorkspaceFolder, CompletionContext as VCompletionContext, ConfigurationChangeEvent, CompletionItemProvider, HoverProvider, SignatureHelpProvider, DefinitionProvider, ReferenceProvider, DocumentHighlightProvider, CodeActionProvider, DocumentSymbolProvider, CodeLensProvider, DocumentFormattingEditProvider, DocumentRangeFormattingEditProvider, OnTypeFormattingEditProvider, RenameProvider, DocumentLinkProvider, DocumentColorProvider, DeclarationProvider, FoldingRangeProvider, ImplementationProvider, SelectionRangeProvider, TypeDefinitionProvider, WorkspaceSymbolProvider
+	WorkspaceFolder as VWorkspaceFolder, CompletionContext as VCompletionContext, ConfigurationChangeEvent, CompletionItemProvider, HoverProvider, SignatureHelpProvider,
+	DefinitionProvider, ReferenceProvider, DocumentHighlightProvider, CodeActionProvider, DocumentSymbolProvider, CodeLensProvider, DocumentFormattingEditProvider,
+	DocumentRangeFormattingEditProvider, OnTypeFormattingEditProvider, RenameProvider, DocumentLinkProvider, DocumentColorProvider, DeclarationProvider,
+	FoldingRangeProvider, ImplementationProvider, SelectionRangeProvider, TypeDefinitionProvider, WorkspaceSymbolProvider
 } from 'vscode';
 
 import {
@@ -66,7 +69,6 @@ import {
 	Proposed
 } from 'vscode-languageserver-protocol';
 import * as fs from 'fs';
-import * as os from 'os';
 import * as path from 'path';
 
 import { ColorProviderMiddleware } from './colorProvider';
@@ -85,6 +87,8 @@ import * as Is from './utils/is';
 import { Delayer } from './utils/async';
 import * as UUID from './utils/uuid';
 import { ProgressPart } from './progressPart';
+import { CancellationStrategy, CancellationReceiverStrategy } from 'vscode-jsonrpc';
+import { getFolderForCancellation, getSenderStrategy } from './cancellation';
 
 export { Converter as Code2ProtocolConverter } from './codeConverter';
 export { Converter as Protocol2CodeConverter } from './protocolConverter';
@@ -167,7 +171,7 @@ interface ConnectionCloseHandler {
 }
 
 interface ConnectionOptions {
-    folderForFileBasedCancellation?: string;
+    cancellationStrategy: CancellationStrategy
 }
 
 function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): IConnection;
@@ -2575,7 +2579,7 @@ export abstract class BaseLanguageClient {
 		let resolvedCancellationFolderName: string | undefined;
 		if (clientOptions.useFileBasedCancellation) {
 			const cancellationFolderName = UUID.generateUuid();
-			const folder = this.getFolderForFileBasedCancellation(cancellationFolderName)!;
+			const folder = getFolderForCancellation(cancellationFolderName)!;
 			try {
 				if (!fs.existsSync(folder)) {
 					// this client owns this cancellation folder. when client stops, it will clean up the folder
@@ -3168,8 +3172,8 @@ export abstract class BaseLanguageClient {
 			this._diagnostics.dispose();
 			this._diagnostics = undefined;
 		}
-		const folder = this.getFolderForFileBasedCancellation(this._clientOptions.cancellationFolderName);
-		if (folder) {
+		if (this._clientOptions.cancellationFolderName) {
+			const folder = getFolderForCancellation(this._clientOptions.cancellationFolderName);
 			try {
 				rimraf(folder);
 			} catch (error) {
@@ -3248,11 +3252,6 @@ export abstract class BaseLanguageClient {
 		this._diagnostics.set(uri, diagnostics);
 	}
 
-	private getFolderForFileBasedCancellation(folderName?: string) {
-		// client and server must use same logic to create actual folder name. but don't have a good way to share logic.
-		return folderName ? path.join(os.tmpdir(), 'vscode-languageserver-cancellation', folderName) : undefined;
-	}
-
 	protected abstract createMessageTransports(encoding: string): Promise<MessageTransports>;
 
 	private createConnection(): Promise<IConnection> {
@@ -3265,8 +3264,12 @@ export abstract class BaseLanguageClient {
 		};
 
 		return this.createMessageTransports(this._clientOptions.stdioEncoding || 'utf8').then((transports) => {
-			const folder = this.getFolderForFileBasedCancellation(this._clientOptions.cancellationFolderName);
-			const options = folder ? { folderForFileBasedCancellation: folder } : undefined;
+			const options = this._clientOptions.cancellationFolderName ? {
+				cancellationStrategy: {
+					receiver: CancellationReceiverStrategy.Message,
+					sender: getSenderStrategy(this._clientOptions.cancellationFolderName)
+				}
+			} : undefined;
 			return createConnection(transports.reader, transports.writer, errorHandler, closeHandler, options);
 		});
 	}

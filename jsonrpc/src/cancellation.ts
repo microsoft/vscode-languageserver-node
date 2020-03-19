@@ -5,7 +5,7 @@
 
 'use strict';
 
-import { Event, Emitter } from './events';
+import { Disposable, Event, Emitter } from './events';
 import * as Is from './is';
 
 /**
@@ -50,7 +50,7 @@ const shortcutEvent: Event<any> = Object.freeze(function (callback: Function, co
 	return { dispose() { clearTimeout(handle); } };
 });
 
-export class MutableToken implements CancellationToken {
+class MutableToken implements CancellationToken {
 
 	private _isCancelled: boolean = false;
 	private _emitter: Emitter<any> | undefined;
@@ -60,7 +60,7 @@ export class MutableToken implements CancellationToken {
 			this._isCancelled = true;
 			if (this._emitter) {
 				this._emitter.fire(undefined);
-				this.disposeEvent();
+				this.dispose();
 			}
 		}
 	}
@@ -80,10 +80,6 @@ export class MutableToken implements CancellationToken {
 	}
 
 	public dispose(): void {
-		this.disposeEvent();
-	}
-
-	private disposeEvent(): void {
 		if (this._emitter) {
 			this._emitter.dispose();
 			this._emitter = undefined;
@@ -91,17 +87,21 @@ export class MutableToken implements CancellationToken {
 	}
 }
 
-export abstract class AbstractCancellationTokenSource {
+export abstract class AbstractCancellationTokenSource implements Disposable {
+	abstract get token(): CancellationToken;
+	abstract cancel(): void;
+	abstract dispose(): void;
+}
+
+export class CancellationTokenSource extends AbstractCancellationTokenSource {
 
 	private _token: CancellationToken;
-
-	protected abstract createToken(): CancellationToken;
 
 	get token(): CancellationToken {
 		if (!this._token) {
 			// be lazy and create the token only when
 			// actually needed
-			this._token = this.createToken();
+			this._token = new MutableToken();
 		}
 		return this._token;
 	}
@@ -125,11 +125,5 @@ export abstract class AbstractCancellationTokenSource {
 			// actually dispose
 			this._token.dispose();
 		}
-	}
-}
-
-export class CancellationTokenSource extends AbstractCancellationTokenSource {
-	protected createToken(): CancellationToken {
-		return new MutableToken();
 	}
 }

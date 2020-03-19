@@ -24,7 +24,6 @@ import { MessageWriter, StreamMessageWriter, IPCMessageWriter, SocketMessageWrit
 import { Disposable, Event, Emitter } from './events';
 import { CancellationTokenSource, CancellationToken, AbstractCancellationTokenSource } from './cancellation';
 import { LinkedMap } from './linkedMap';
-import { createCancellationTokenSource, createCancellationFile, validateCancellationFolder, getCancellationFilename, deleteCancellationFile } from './cancellation.fileBased';
 
 export {
 	Message, MessageType, ErrorCodes, ResponseError,
@@ -36,7 +35,7 @@ export {
 	NotificationType5, NotificationType6, NotificationType7, NotificationType8, NotificationType9,
 	MessageReader, PartialMessageInfo, DataCallback, StreamMessageReader, IPCMessageReader, SocketMessageReader,
 	MessageWriter, StreamMessageWriter, IPCMessageWriter, SocketMessageWriter,
-	CancellationTokenSource, CancellationToken,
+	AbstractCancellationTokenSource, CancellationTokenSource, CancellationToken,
 	Disposable, Event, Emitter
 };
 export * from './pipeSupport';
@@ -317,15 +316,65 @@ export namespace ConnectionStrategy {
 	}
 }
 
-export interface ConnectionOptions {
-	folderForFileBasedCancellation?: string
-	strategy?: ConnectionStrategy
+export type CancellationId = number | string;
+export interface CancellationReceiverStrategy {
+	createCancellationTokenSource(id: CancellationId): AbstractCancellationTokenSource;
+}
+export namespace CancellationReceiverStrategy {
+	export const Message: CancellationReceiverStrategy = Object.freeze({
+		createCancellationTokenSource(_: CancellationId): AbstractCancellationTokenSource {
+			return new CancellationTokenSource();
+		}
+	});
+
+	export function is(value: any): value is CancellationReceiverStrategy {
+		let candidate: CancellationReceiverStrategy = value;
+		return candidate && Is.func(candidate.createCancellationTokenSource);
+	}
 }
 
+export interface CancellationSenderStrategy {
+	sendCancellation(conn: MessageConnection, id: CancellationId): void;
+	cleanup(id: CancellationId): void;
+}
+export namespace CancellationSenderStrategy {
+	export const Message: CancellationSenderStrategy = Object.freeze({
+		sendCancellation(conn: MessageConnection, id: CancellationId): void {
+			conn.sendNotification(CancelNotification.type, { id });
+		},
+		cleanup(_: CancellationId): void { }
+	});
+
+	export function is(value: any): value is CancellationSenderStrategy {
+		let candidate: CancellationSenderStrategy = value;
+		return candidate && Is.func(candidate.sendCancellation) && Is.func(candidate.cleanup);
+	}
+}
+
+export interface CancellationStrategy {
+	receiver: CancellationReceiverStrategy;
+	sender: CancellationSenderStrategy;
+}
+export namespace CancellationStrategy {
+	export const Message: CancellationStrategy = Object.freeze({
+		receiver: CancellationReceiverStrategy.Message,
+		sender: CancellationSenderStrategy.Message
+	});
+
+	export function is(value: any): value is CancellationStrategy {
+		let candidate: CancellationStrategy = value;
+		return candidate && CancellationReceiverStrategy.is(candidate.receiver) && CancellationSenderStrategy.is(candidate.sender);
+	}
+}
+
+export interface ConnectionOptions {
+	cancellationStrategy?: CancellationStrategy
+	connectionStrategy?: ConnectionStrategy
+}
 export namespace ConnectionOptions {
 	export function is(value: any): value is ConnectionOptions {
 		let candidate: ConnectionOptions = value;
-		return candidate && (Is.string(candidate.folderForFileBasedCancellation) || ConnectionStrategy.is(candidate.strategy));
+		return candidate && (CancellationStrategy.is(candidate.cancellationStrategy) || ConnectionStrategy.is(candidate.connectionStrategy));
 	}
 }
 
@@ -455,14 +504,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 	let unhandledProgressEmitter: Emitter<ProgressParams<any>> = new Emitter<ProgressParams<any>>();
 
 	let disposeEmitter: Emitter<void> = new Emitter<void>();
-
-	let folderForFileBasedCancellation = options?.folderForFileBasedCancellation;
-	if (folderForFileBasedCancellation) {
-		if (!validateCancellationFolder(folderForFileBasedCancellation)) {
-			logger.error(`base folder ('${folderForFileBasedCancellation}') for the file based cancellation doesn't exist, fallback to normal cancellation mode`);
-			folderForFileBasedCancellation = undefined;
-		}
-	}
+	let cancellationStrategy = (options && options.cancellationStrategy) ? options.cancellationStrategy : CancellationStrategy.Message;
 
 	function createRequestQueueKey(id: string | number): string {
 		return 'req-' + id.toString();
@@ -566,7 +608,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				let key = createRequestQueueKey((message.params as CancelParams).id);
 				let toCancel = messageQueue.get(key);
 				if (isRequestMessage(toCancel)) {
-					const strategy = options?.strategy;
+					const strategy = options?.connectionStrategy;
 					let response = (strategy && strategy.cancelUndispatched) ? strategy.cancelUndispatched(toCancel, cancelUndispatched) : cancelUndispatched(toCancel);
 					if (response && (response.error !== void 0 || response.result !== void 0)) {
 						messageQueue.delete(key);
@@ -638,7 +680,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 		let startTime = Date.now();
 		if (requestHandler || starRequestHandler) {
 			let tokenKey = String(requestMessage.id);
-			let cancellationSource = createCancellationTokenSource(getCancellationFilename(folderForFileBasedCancellation, tokenKey));
+			let cancellationSource = cancellationStrategy.receiver.createCancellationTokenSource(tokenKey);
 			requestTokens[tokenKey] = cancellationSource;
 			try {
 				let handlerResult: any;
@@ -1089,8 +1131,12 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			}
 
 			let id = sequenceNumber++;
-			const cancellationFilename = getCancellationFilename(folderForFileBasedCancellation, String(id));
-
+			let disposable: Disposable;
+			if (token) {
+				disposable = token.onCancellationRequested(() => {
+					cancellationStrategy.sender.sendCancellation(connection, id);
+				});
+			}
 			let result = new Promise<R | ResponseError<E>>((resolve, reject) => {
 				let requestMessage: RequestMessage = {
 					jsonrpc: version,
@@ -1099,20 +1145,19 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 					params: messageParams
 				};
 
-				const resolve1 = (r: any) => {
+				const resolveWithCleanup = (r: any) => {
 					resolve(r);
-					if (cancellationFilename) {
-						deleteCancellationFile(cancellationFilename);
-					}
+					cancellationStrategy.sender.cleanup(id);
+					disposable?.dispose();
+
 				};
-				const reject1 = (r: any) => {
+				const rejectWithCleanup = (r: any) => {
 					reject(r);
-					if (cancellationFilename) {
-						deleteCancellationFile(cancellationFilename);
-					}
+					cancellationStrategy.sender.cleanup(id);
+					disposable?.dispose();
 				};
 
-				let responsePromise: ResponsePromise | null = { method: method, timerStart: Date.now(), resolve: resolve1, reject: reject1 };
+				let responsePromise: ResponsePromise | null = { method: method, timerStart: Date.now(), resolve: resolveWithCleanup, reject: rejectWithCleanup };
 				traceSendingRequest(requestMessage);
 				try {
 					messageWriter.write(requestMessage);
@@ -1125,16 +1170,6 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 					responsePromises[String(id)] = responsePromise;
 				}
 			});
-			if (token) {
-				token.onCancellationRequested(() => {
-					// create cancellation file for the cancel request
-					if (cancellationFilename) {
-						createCancellationFile(cancellationFilename);
-					}
-
-					connection.sendNotification(CancelNotification.type, { id });
-				});
-			}
 			return result;
 		},
 		onRequest: <R, E>(type: string | MessageType | StarRequestHandler, handler?: GenericRequestHandler<R, E>): void => {
@@ -1248,7 +1283,7 @@ export function createMessageConnection(input: MessageReader | NodeJS.ReadableSt
 	let writer = isMessageWriter(output) ? output : new StreamMessageWriter(output);
 
 	if (ConnectionStrategy.is(options)) {
-		options = { strategy: options } as ConnectionOptions;
+		options = { connectionStrategy: options } as ConnectionOptions;
 	}
 
 	return _createMessageConnection(reader, writer, logger, options);

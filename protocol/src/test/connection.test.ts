@@ -19,6 +19,7 @@ import { DocumentSymbolRequest, DocumentSymbolParams } from '../protocol';
 import { ProgressType, CancellationTokenSource, ResponseError, ErrorCodes, ConnectionOptions } from 'vscode-jsonrpc';
 import { SymbolInformation, SymbolKind } from 'vscode-languageserver-types';
 import { randomBytes } from 'crypto';
+import { getReceiverStrategy, getSenderStrategy } from './testCancellationStrategy';
 
 class NullLogger implements Logger {
 	error(_message: string): void {
@@ -121,11 +122,10 @@ suite('Connection Tests', () => {
 		const down = new TestStream();
 		const logger = new NullLogger();
 
-		const randomName = randomBytes(21).toString('hex');
-		const cancellationFolder = path.join(os.tmpdir(), `jsonrpc-connection-tests`, randomName);
+		const cancellationFolder = path.join(os.tmpdir(), `jsonrpc-connection-tests`, randomBytes(21).toString('hex'));
 		fs.mkdirSync(cancellationFolder, { recursive: true });
 
-		const options: ConnectionOptions = { folderForFileBasedCancellation: cancellationFolder };
+		const options: ConnectionOptions = { cancellationStrategy: { receiver: getReceiverStrategy(cancellationFolder), sender: getSenderStrategy(cancellationFolder) } };
 		const serverConnection = createProtocolConnection(new StreamMessageReader(up), new StreamMessageWriter(down), logger, options);
 		const clientConnection = createProtocolConnection(new StreamMessageReader(down), new StreamMessageWriter(up), logger, options);
 		serverConnection.listen();
