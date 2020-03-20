@@ -1,6 +1,6 @@
 {
-	"name": "vscode-languageserver-filebasedcancellation",
-	"description": "VSCode Language Server File Based Cancellation Implementation",
+	"name": "vscode-languageserver-cancellation",
+	"description": "VSCode Language Server Cancellation Strategies Implementation",
 	"version": "1.0.0",
 	"author": "Microsoft Corporation",
 	"license": "MIT",

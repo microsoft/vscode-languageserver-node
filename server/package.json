@@ -17,6 +17,9 @@
 		"installServerIntoExtension": "./bin/installServerIntoExtension"
 	},
 	"typings": "./lib/main",
+	"devDependencies": {
+		"vscode-languageserver-cancellation": "^1.0.0"
+	},
 	"dependencies": {
 		"vscode-languageserver-protocol": "^3.15.3"
 	},

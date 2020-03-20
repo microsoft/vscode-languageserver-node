@@ -12,8 +12,9 @@ import {
 } from '../../../server/lib/main';
 
 import { URI } from 'vscode-uri';
+import { FileBasedCancellationStrategy } from 'vscode-languageserver-cancellation';
 
-let connection: IConnection = createConnection();
+let connection: IConnection = createConnection({ cancellationStrategy: FileBasedCancellationStrategy.fromArgv(process.argv) });
 
 console.log = connection.console.log.bind(connection.console);
 console.error = connection.console.error.bind(connection.console);

@@ -5,8 +5,6 @@
 'use strict';
 
 import * as assert from 'assert';
-import * as fs from 'fs';
-import * as rimraf from 'rimraf';
 
 import { Duplex } from 'stream';
 import {
@@ -15,8 +13,8 @@ import {
 	ResponseError, CancellationTokenSource, ErrorCodes
 } from '../main';
 import { LocationLink } from 'vscode-languageserver-types';
-import { randomBytes } from 'crypto';
-import { parseCancellationStrategy, getFolderForCancellation } from '../cancellation';
+import { FileBasedCancellationStrategy } from 'vscode-languageserver-cancellation';
+import { CancellationReceiverStrategy } from '../../../jsonrpc/lib/main';
 
 class TestStream extends Duplex {
 	_write(chunk: string, _encoding: string, done: () => void) {
@@ -231,13 +229,13 @@ suite('Cancellation Tests', () => {
 	test('File based cancellation Tests', async () => {
 		const up = new TestStream();
 		const down = new TestStream();
-		const folderName = randomBytes(21).toString('hex');
-		const cancellationFolder = getFolderForCancellation(folderName);
-		fs.mkdirSync(cancellationFolder, { recursive: true });
 
-		const options = { cancellationStrategy: parseCancellationStrategy(['--cancellationSend', `file:${folderName}`, '--cancellationReceive', `file:${folderName}`]) };
-		const serverConnection = createConnection(up, down, options);
-		const clientConnection = createConnection(down, up, options);
+		const clientStrategy = new FileBasedCancellationStrategy({receiver: CancellationReceiverStrategy.Message});
+		const serverStrategy = FileBasedCancellationStrategy.fromArgv(clientStrategy.getCommandLineArguments());
+
+		const clientConnection = createConnection(down, up, { cancellationStrategy: clientStrategy });
+		const serverConnection = createConnection(up, down, { cancellationStrategy: serverStrategy });
+
 		serverConnection.listen();
 		clientConnection.listen();
 
@@ -270,7 +268,5 @@ suite('Cancellation Tests', () => {
 			assert(e instanceof ResponseError);
 			assert((<ResponseError<any>>e).code === ErrorCodes.RequestCancelled);
 		}
-
-		rimraf.sync(cancellationFolder);
 	});
 });

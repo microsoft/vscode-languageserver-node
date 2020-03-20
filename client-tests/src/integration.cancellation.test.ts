@@ -5,18 +5,19 @@
 'use strict';
 
 import * as assert from 'assert';
-import * as fs from 'fs';
-import * as os from 'os';
 import * as path from 'path';
 
 import * as lsclient from 'vscode-languageclient';
 import * as vscode from 'vscode';
+import { FileBasedCancellationStrategy } from 'vscode-languageserver-cancellation';
+import { CancellationReceiverStrategy } from '../../jsonrpc/lib/main';
 
 suite('Cancellation integration', () => {
 
 	let client!: lsclient.LanguageClient;
 	let middleware: lsclient.Middleware;
 	let uri!: vscode.Uri;
+	let strategy!: FileBasedCancellationStrategy;
 
 	suiteSetup(async () => {
 		vscode.workspace.registerTextDocumentContentProvider('lsptests', {
@@ -39,31 +40,32 @@ suite('Cancellation integration', () => {
 		uri = vscode.Uri.parse('lsptests://localhist/test.bat');
 		await vscode.workspace.openTextDocument(uri);
 
+		strategy = new FileBasedCancellationStrategy({ receiver: CancellationReceiverStrategy.Message });
+
 		const serverModule = path.join(__dirname, './servers/testServer.js');
 		const serverOptions: lsclient.ServerOptions = {
-			run: { module: serverModule, transport: lsclient.TransportKind.ipc },
+			run: { module: serverModule, transport: lsclient.TransportKind.ipc, args: strategy.getCommandLineArguments() },
 			debug: {
-				module: serverModule, transport: lsclient.TransportKind.ipc, options: { execArgv: ['--nolazy', '--inspect=6014'] }
+				module: serverModule, transport: lsclient.TransportKind.ipc, args: strategy.getCommandLineArguments(),
+				options: { execArgv: ['--nolazy', '--inspect=6014'] }
 			}
 		};
 		const documentSelector: lsclient.DocumentSelector = [{ scheme: 'lsptests', language: 'bat' }];
 
 		middleware = {};
 		const clientOptions: lsclient.LanguageClientOptions = {
-			documentSelector, synchronize: {}, initializationOptions: {}, middleware, useFileBasedCancellation: true
+			documentSelector, synchronize: {}, initializationOptions: {}, middleware, connectionOptions: { cancellationStrategy: strategy }
 		};
 
 		client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
 		client.start();
 		await client.onReady();
-
-		assert(fs.existsSync(getFolderForFileBasedCancellation()));
 	});
 
 	suiteTeardown(async () => {
 		await client.stop();
 
-		assert(!fs.existsSync(getFolderForFileBasedCancellation()));
+		strategy.dispose();
 	});
 
 	test('File Based Cancellation', async () => {
@@ -79,12 +81,6 @@ suite('Cancellation integration', () => {
 			assert((<lsclient.ResponseError<any>>e).code === lsclient.ErrorCodes.RequestCancelled);
 		}
 	}).timeout(10000);
-
-	function getFolderForFileBasedCancellation() {
-		// client and server must use same logic to create actual folder name. but don't have a good way to share logic.
-		const folder = path.join(os.tmpdir(), 'vscode-languageserver-cancellation', client.CancellationFolderName!);
-		return folder;
-	}
 
 	function delay(ms: number) {
 		return new Promise(resolve => setTimeout(resolve, ms));

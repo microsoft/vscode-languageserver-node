@@ -49,7 +49,6 @@ import {
 	DeclarationParams, TypeDefinitionParams, ImplementationParams, WorkDoneProgressParams, PartialResultParams
 } from 'vscode-languageserver-protocol';
 
-import { parseCancellationStrategy } from './cancellation';
 import { Configuration, ConfigurationFeature } from './configuration';
 import { WorkspaceFolders, WorkspaceFoldersFeature } from './workspaceFolders';
 
@@ -1736,23 +1735,8 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 		});
 	}
 
-	function getConnectionOptions(): ConnectionOptions | undefined {
-		let connectionStrategy: ConnectionStrategy | undefined;
-		if (options) {
-			if (ConnectionStrategy.is(options)) {
-				connectionStrategy = options as ConnectionStrategy;
-			}
-			else {
-				return options;
-			}
-		}
-
-		const cancellationStrategy = process.argv.length > 2 ? parseCancellationStrategy(process.argv.slice(2)) : undefined;
-		return cancellationStrategy ? { cancellationStrategy, connectionStrategy } : connectionStrategy ? { connectionStrategy } : undefined;
-	}
-
 	const logger = (factories && factories.console ? new (factories.console(RemoteConsoleImpl))() : new RemoteConsoleImpl()) as RemoteConsoleImpl & PConsole;
-	const connection = createProtocolConnection(input as any, output as any, logger, getConnectionOptions());
+	const connection = createProtocolConnection(input as any, output as any, logger, options);
 	logger.rawAttach(connection);
 	const tracer = (factories && factories.tracer ? new (factories.tracer(TracerImpl))() : new TracerImpl()) as TracerImpl & PTracer;
 	const telemetry = (factories && factories.telemetry ? new (factories.telemetry(TelemetryImpl))() : new TelemetryImpl()) as TelemetryImpl & PTelemetry;

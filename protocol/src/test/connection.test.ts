@@ -5,10 +5,6 @@
 'use strict';
 
 import * as assert from 'assert';
-import * as fs from 'fs';
-import * as os from 'os';
-import * as path from 'path';
-import * as rimraf from 'rimraf';
 
 import { Duplex } from 'stream';
 import {
@@ -18,8 +14,7 @@ import {
 import { DocumentSymbolRequest, DocumentSymbolParams } from '../protocol';
 import { ProgressType, CancellationTokenSource, ResponseError, ErrorCodes, ConnectionOptions } from 'vscode-jsonrpc';
 import { SymbolInformation, SymbolKind } from 'vscode-languageserver-types';
-import { randomBytes } from 'crypto';
-import { getReceiverStrategy, getSenderStrategy } from './testCancellationStrategy';
+import { FileBasedCancellationStrategy } from 'vscode-languageserver-cancellation';
 
 class NullLogger implements Logger {
 	error(_message: string): void {
@@ -122,10 +117,8 @@ suite('Connection Tests', () => {
 		const down = new TestStream();
 		const logger = new NullLogger();
 
-		const cancellationFolder = path.join(os.tmpdir(), `jsonrpc-connection-tests`, randomBytes(21).toString('hex'));
-		fs.mkdirSync(cancellationFolder, { recursive: true });
-
-		const options: ConnectionOptions = { cancellationStrategy: { receiver: getReceiverStrategy(cancellationFolder), sender: getSenderStrategy(cancellationFolder) } };
+		const strategy = new FileBasedCancellationStrategy();
+		const options: ConnectionOptions = { cancellationStrategy: strategy };
 		const serverConnection = createProtocolConnection(new StreamMessageReader(up), new StreamMessageWriter(down), logger, options);
 		const clientConnection = createProtocolConnection(new StreamMessageReader(down), new StreamMessageWriter(up), logger, options);
 		serverConnection.listen();
@@ -161,7 +154,7 @@ suite('Connection Tests', () => {
 			assert((<ResponseError<any>>e).code === ErrorCodes.RequestCancelled);
 		}
 
-		rimraf.sync(cancellationFolder);
+		strategy.dispose();
 	});
 });
 

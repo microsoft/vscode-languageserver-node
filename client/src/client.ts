@@ -68,8 +68,6 @@ import {
 	DocumentColorRequest, DeclarationRequest, FoldingRangeRequest, ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, SymbolTag,
 	Proposed
 } from 'vscode-languageserver-protocol';
-import * as fs from 'fs';
-import * as path from 'path';
 
 import { ColorProviderMiddleware } from './colorProvider';
 import { ImplementationMiddleware } from './implementation';
@@ -87,9 +85,7 @@ import * as Is from './utils/is';
 import { Delayer } from './utils/async';
 import * as UUID from './utils/uuid';
 import { ProgressPart } from './progressPart';
-import { CancellationStrategy, CancellationReceiverStrategy } from 'vscode-jsonrpc';
-import { getFolderForCancellation, getSenderStrategy } from './cancellation';
-
+import { CancellationStrategy } from 'vscode-jsonrpc';
 export { Converter as Code2ProtocolConverter } from './codeConverter';
 export { Converter as Protocol2CodeConverter } from './protocolConverter';
 
@@ -518,7 +514,7 @@ export interface LanguageClientOptions {
 		protocol2Code: p2c.URIConverter
 	};
 	workspaceFolder?: VWorkspaceFolder;
-	useFileBasedCancellation?: boolean;
+	connectionOptions?: ConnectionOptions;
 }
 
 interface ResolvedClientOptions {
@@ -538,7 +534,7 @@ interface ResolvedClientOptions {
 		protocol2Code: p2c.URIConverter
 	};
 	workspaceFolder?: VWorkspaceFolder;
-	cancellationFolderName?: string;
+	connectionOptions?: ConnectionOptions;
 }
 
 export enum State {
@@ -2576,24 +2572,6 @@ export abstract class BaseLanguageClient {
 
 		clientOptions = clientOptions || {};
 
-		let resolvedCancellationFolderName: string | undefined;
-		if (clientOptions.useFileBasedCancellation) {
-			const cancellationFolderName = UUID.generateUuid();
-			const folder = getFolderForCancellation(cancellationFolderName)!;
-			try {
-				if (!fs.existsSync(folder)) {
-					// this client owns this cancellation folder. when client stops, it will clean up the folder
-					fs.mkdirSync(folder, { recursive: true });
-					resolvedCancellationFolderName = cancellationFolderName;
-				}
-				else {
-					this.error(`Failed to create cancellation folder '${folder}', it already exists. fallback to regular cancellation mode`);
-				}
-			} catch (e) {
-				this.error(`Failed to create cancellation folder '${folder}'. fallback to regular cancellation mode`);
-			}
-		}
-
 		this._clientOptions = {
 			documentSelector: clientOptions.documentSelector || [],
 			synchronize: clientOptions.synchronize || {},
@@ -2608,7 +2586,7 @@ export abstract class BaseLanguageClient {
 			middleware: clientOptions.middleware || {},
 			uriConverters: clientOptions.uriConverters,
 			workspaceFolder: clientOptions.workspaceFolder,
-			cancellationFolderName: resolvedCancellationFolderName
+			connectionOptions: clientOptions.connectionOptions
 		};
 		this._clientOptions.synchronize = this._clientOptions.synchronize || {};
 
@@ -2765,10 +2743,6 @@ export abstract class BaseLanguageClient {
 			this.error(`Sending progress for token ${token} failed.`, error);
 			throw error;
 		}
-	}
-
-	public get CancellationFolderName(): string | undefined {
-		return this._clientOptions.cancellationFolderName;
 	}
 
 	public get clientOptions(): LanguageClientOptions {
@@ -3172,30 +3146,6 @@ export abstract class BaseLanguageClient {
 			this._diagnostics.dispose();
 			this._diagnostics = undefined;
 		}
-		if (this._clientOptions.cancellationFolderName) {
-			const folder = getFolderForCancellation(this._clientOptions.cancellationFolderName);
-			try {
-				rimraf(folder);
-			} catch (error) {
-				this.error(`Failed to remove folder '${folder}'`, error);
-			}
-		}
-
-		function rimraf(location: string) {
-			const stat = fs.lstatSync(location);
-			if (stat) {
-				if (stat.isDirectory() && !stat.isSymbolicLink()) {
-					for (const dir of fs.readdirSync(location)) {
-						rimraf(path.join(location, dir));
-					}
-
-					fs.rmdirSync(location);
-				}
-				else {
-					fs.unlinkSync(location);
-				}
-			}
-		}
 	}
 
 	private cleanUpChannel(): void {
@@ -3264,13 +3214,7 @@ export abstract class BaseLanguageClient {
 		};
 
 		return this.createMessageTransports(this._clientOptions.stdioEncoding || 'utf8').then((transports) => {
-			const options = this._clientOptions.cancellationFolderName ? {
-				cancellationStrategy: {
-					receiver: CancellationReceiverStrategy.Message,
-					sender: getSenderStrategy(this._clientOptions.cancellationFolderName)
-				}
-			} : undefined;
-			return createConnection(transports.reader, transports.writer, errorHandler, closeHandler, options);
+			return createConnection(transports.reader, transports.writer, errorHandler, closeHandler, this._clientOptions.connectionOptions);
 		});
 	}
 
