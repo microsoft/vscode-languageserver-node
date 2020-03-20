@@ -268,5 +268,7 @@ suite('Cancellation Tests', () => {
 			assert(e instanceof ResponseError);
 			assert((<ResponseError<any>>e).code === ErrorCodes.RequestCancelled);
 		}
+
+		clientStrategy.dispose();
 	});
 });
