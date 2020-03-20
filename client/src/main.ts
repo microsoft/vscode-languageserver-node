@@ -40,7 +40,7 @@ import { terminate } from './utils/processes';
 
 export * from './client';
 
-const REQUIRED_VSCODE_VERSION = '^1.42.0'; // do not change format, updated by `updateVSCode` script
+const REQUIRED_VSCODE_VERSION = '^1.41.0'; // do not change format, updated by `updateVSCode` script
 
 export interface ExecutableOptions {
 	cwd?: string;
