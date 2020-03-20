@@ -13,7 +13,7 @@ const root = path.dirname(path.dirname(__dirname));
 		let testbedClientFolder = path.join(root, 'testbed', 'client');
 		await ln.softLink(path.join(root, 'jsonrpc'), path.join(testbedClientFolder, 'node_modules', 'vscode-jsonrpc'));
 		await ln.softLink(path.join(root, 'types'), path.join(testbedClientFolder, 'node_modules', 'vscode-languageserver-types'));
-		await ln.softLink(path.join(root, 'fileBasedCancellation'), path.join(testbedClientFolder, 'node_modules', 'vscode-languageserver-cancellation'));
+		await ln.softLink(path.join(root, 'cancellation'), path.join(testbedClientFolder, 'node_modules', 'vscode-languageserver-cancellation'));
 		await ln.softLink(path.join(root, 'protocol'), path.join(testbedClientFolder, 'node_modules', 'vscode-languageserver-protocol'));
 		await ln.tryHardLink(path.join(root, 'client'), path.join(testbedClientFolder, 'node_modules', 'vscode-languageclient'));
 	}
@@ -21,7 +21,7 @@ const root = path.dirname(path.dirname(__dirname));
 		let testbedServerFolder = path.join(root, 'testbed', 'server');
 		await ln.softLink(path.join(root, 'jsonrpc'), path.join(testbedServerFolder, 'node_modules', 'vscode-jsonrpc'));
 		await ln.softLink(path.join(root, 'types'), path.join(testbedServerFolder, 'node_modules', 'vscode-languageserver-types'));
-		await ln.softLink(path.join(root, 'fileBasedCancellation'), path.join(testbedServerFolder, 'node_modules', 'vscode-languageserver-cancellation'));
+		await ln.softLink(path.join(root, 'cancellation'), path.join(testbedServerFolder, 'node_modules', 'vscode-languageserver-cancellation'));
 		await ln.softLink(path.join(root, 'protocol'), path.join(testbedServerFolder, 'node_modules', 'vscode-languageserver-protocol'));
 		await ln.softLink(path.join(root, 'textDocument'), path.join(testbedServerFolder, 'node_modules', 'vscode-languageserver-textdocument'));
 		await ln.softLink(path.join(root, 'server'), path.join(testbedServerFolder, 'node_modules', 'vscode-languageserver'));

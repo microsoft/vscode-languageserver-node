@@ -53,13 +53,13 @@
 			"program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
 			"stopOnEntry": false,
 			"args": ["--timeout", "999999"],
-			"cwd": "${workspaceRoot}/fileBasedCancellation",
+			"cwd": "${workspaceRoot}/cancellation",
 			"runtimeExecutable": null,
 			"runtimeArgs": [],
 			"env": { },
 			"sourceMaps": true,
-			"outFiles": ["${workspaceRoot}/fileBasedCancellation/lib/**/*.js"],
-			"preLaunchTask": "watch:fileBasedCancellation"
+			"outFiles": ["${workspaceRoot}/cancellation/lib/**/*.js"],
+			"preLaunchTask": "watch:cancellation"
 		},
 		{
 			"request": "launch",

@@ -85,5 +85,5 @@ exports.tryLinkProtocol = async function(module) {
 }
 
 exports.tryLinkCancellations = async function(module) {
-	return tryLink(module, 'vscode-languageserver-cancellation', path.join('..', '..', 'fileBasedCancellation'));
+	return tryLink(module, 'vscode-languageserver-cancellation', path.join('..', '..', 'cancellation'));
 }
