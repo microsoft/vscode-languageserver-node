@@ -24,15 +24,6 @@ namespace InsertReplaceRange {
 	}
 }
 
-declare module 'vscode' {
-	export interface Diagnostic {
-		code2?: {
-			value: string | number;
-			target: Uri;
-		}
-	}
-}
-
 export interface Converter {
 
 	asUri(uri: code.Uri): string;
@@ -428,7 +419,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	function asDiagnostic(item: code.Diagnostic): proto.Diagnostic {
 		let result: proto.Diagnostic = proto.Diagnostic.create(asRange(item.range), item.message);
 		if (Is.number(item.severity)) { result.severity = asDiagnosticSeverity(item.severity); }
-		result.code = asDiagnosticCode(item.code2 || item.code);
+		result.code = asDiagnosticCode(item.code);
 		{if (Array.isArray(item.tags)) { result.tags = asDiagnosticTags(item.tags); }}
 		if (item.relatedInformation) { result.relatedInformation = asRelatedInformations(item.relatedInformation); }
 		if (item.source) { result.source = item.source; }

@@ -196,15 +196,6 @@ namespace CodeBlock {
 	}
 }
 
-declare module 'vscode' {
-	export interface Diagnostic {
-		code2?: {
-			value: string | number;
-			target: Uri;
-		}
-	}
-}
-
 export function createConverter(uriConverter?: URIConverter): Converter {
 
 	const nullConverter = (value: string) => code.Uri.parse(value);
@@ -223,7 +214,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		let result = new code.Diagnostic(asRange(diagnostic.range), diagnostic.message, asDiagnosticSeverity(diagnostic.severity));
 		if (Is.number(diagnostic.code) || Is.string(diagnostic.code)) { result.code = diagnostic.code; }
 		if (ls.DiagnosticCode.is(diagnostic.code)) {
-			result.code2 = { value: diagnostic.code.value, target: asUri(diagnostic.code.target) };
+			result.code = { value: diagnostic.code.value, target: asUri(diagnostic.code.target) };
 		}
 		if (diagnostic.source) { result.source = diagnostic.source; }
 		if (diagnostic.relatedInformation) { result.relatedInformation = asRelatedInformation(diagnostic.relatedInformation); }

@@ -1,4 +1,5 @@
 {
+	"private": true,
 	"name": "vscode-lsp",
 	"description": "VSCode Language Server Protocol Implementation",
 	"version": "1.0.0",

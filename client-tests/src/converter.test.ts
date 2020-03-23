@@ -23,15 +23,6 @@ interface InsertReplaceRange {
 	replacing: vscode.Range;
 }
 
-declare module 'vscode' {
-	export interface Diagnostic {
-		code2?: {
-			value: string | number;
-			target: Uri;
-		}
-	}
-}
-
 namespace InsertReplaceRange {
 	export function is(value: vscode.Range | InsertReplaceRange | proto.Range): value is InsertReplaceRange {
 		const candidate = value as InsertReplaceRange;
@@ -41,6 +32,17 @@ namespace InsertReplaceRange {
 
 function assertDefined<T>(value: T | undefined | null): asserts value is T {
 	ok(value !== undefined && value !== null);
+}
+
+interface ComplexCode {
+	value: string | number;
+	target: vscode.Uri
+}
+
+function assertComplexCode(value: undefined | number | string | ComplexCode ): asserts value is ComplexCode {
+	if (value === undefined || typeof value === 'number' || typeof value === 'string') {
+		throw new Error(`Code is not complex`);
+	}
 }
 
 function assertRange(value: vscode.Range | InsertReplaceRange | undefined | null): asserts value is vscode.Range {
@@ -180,9 +182,10 @@ suite('Protocol Converter', () => {
 		};
 
 		let result = p2c.asDiagnostic(diagnostic);
-		assertDefined(result.code2);
-		strictEqual(result.code2.value, 99);
-		strictEqual(result.code2.target.toString(), 'https://code.visualstudio.com/');
+		assertDefined(result.code);
+		assertComplexCode(result.code);
+		strictEqual(result.code.value, 99);
+		strictEqual(result.code.target.toString(), 'https://code.visualstudio.com/');
 	});
 
 	test('Hover', () => {
@@ -1135,7 +1138,7 @@ suite('Code Converter', () => {
 
 	test('Diagnostic - Complex Code', () => {
 		let item: vscode.Diagnostic = new vscode.Diagnostic(new vscode.Range(1, 2, 8, 9), 'message', vscode.DiagnosticSeverity.Warning);
-		item.code2 = { value: 99, target: vscode.Uri.parse('https://code.visualstudio.com/') };
+		item.code = { value: 99, target: vscode.Uri.parse('https://code.visualstudio.com/') };
 
 		let result = c2p.asDiagnostic(<any>item);
 		assertDiagnosticCode(result.code);

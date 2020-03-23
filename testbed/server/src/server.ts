@@ -10,7 +10,7 @@ import {
 	InitializeResult, Location, MarkupKind, MessageActionItem, NotificationType, Position, Range, ResponseError,
 	SignatureHelp, SymbolInformation, SymbolKind, TextDocumentEdit, TextDocuments, TextDocumentSyncKind,
 	TextEdit, VersionedTextDocumentIdentifier, ProposedFeatures, DiagnosticTag, Proposed, InsertTextFormat,
-	SelectionRangeRequest, SelectionRange
+	SelectionRangeRequest, SelectionRange, InsertReplaceEdit
 } from 'vscode-languageserver';
 
 import {
@@ -286,6 +286,13 @@ connection.onCompletion((params, token): CompletionItem[] => {
 		'foo-text-range-replace'
 	);
 	item.filterText = 'b';
+	result.push(item);
+
+	item = CompletionItem.create('bar');
+	item.textEdit = InsertReplaceEdit.create('bar',
+		Range.create(params.position, params.position),
+		Range.create(params.position, Position.create(params.position.line, params.position.character +1))
+	);
 	result.push(item);
 
 	return result;

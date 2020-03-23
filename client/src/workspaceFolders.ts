@@ -21,7 +21,7 @@ function access<T, K extends keyof T>(target: T | undefined, key: K): T[K] | und
 	return target[key];
 }
 
-export function arrayDiff<T>(left: T[], right: T[]): T[] {
+export function arrayDiff<T>(left: ReadonlyArray<T>, right: ReadonlyArray<T>): T[] {
 	return left.filter(element => right.indexOf(element) < 0);
 }
 
@@ -33,7 +33,7 @@ export interface WorkspaceFolderWorkspaceMiddleware {
 export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 
 	private _listeners: Map<string, Disposable> = new Map<string, Disposable>();
-	private _initialFolders: VWorkspaceFolder[] | undefined;
+	private _initialFolders: ReadonlyArray<VWorkspaceFolder> | undefined;
 
 	constructor(private _client: BaseLanguageClient) {
 	}
@@ -53,7 +53,7 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 		}
 	}
 
-	protected initializeWithFolders(currentWorkspaceFolders: VWorkspaceFolder[] | undefined) {
+	protected initializeWithFolders(currentWorkspaceFolders: ReadonlyArray<VWorkspaceFolder> | undefined) {
 		this._initialFolders = currentWorkspaceFolders;
 	}
 
@@ -95,7 +95,7 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 		}
 	}
 
-	protected sendInitialEvent(currentWorkspaceFolders: VWorkspaceFolder[] | undefined) {
+	protected sendInitialEvent(currentWorkspaceFolders: ReadonlyArray<VWorkspaceFolder> | undefined) {
 		if (this._initialFolders && currentWorkspaceFolders) {
 			const removed: VWorkspaceFolder[] = arrayDiff(this._initialFolders, currentWorkspaceFolders);
 			const added: VWorkspaceFolder[] = arrayDiff(currentWorkspaceFolders, this._initialFolders);
