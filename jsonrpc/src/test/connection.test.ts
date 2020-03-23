@@ -13,6 +13,7 @@ import { RequestType, RequestType3, ResponseError, NotificationType, Notificatio
 import { CancellationTokenSource } from '../cancellation';
 
 import * as hostConnection from '../main';
+import { getCustomCancellationStrategy } from './customCancellationStrategy';
 
 interface TestDuplex extends Duplex {
 }
@@ -496,5 +497,60 @@ suite('Connection', () => {
 		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
 		(client.sendNotification as Function)(type, 10);
+	});
+
+	test('Regular Cancellation', (done) => {
+		let type = new hostConnection.RequestType0<void, void>('cancelTest');
+		let duplexStream1 = new TestDuplex('ds1');
+		let duplexStream2 = new TestDuplex('ds2');
+
+		const source = new CancellationTokenSource();
+		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		server.onRequest(type, async t => {
+			source.cancel();
+
+			while (!t.isCancellationRequested) {
+				// regular cancellation requires async for it to work
+				await delay(0);
+			}
+
+			done();
+		});
+		server.listen();
+
+		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		client.listen();
+		client.sendRequest(type, source.token);
+
+		function delay(ms: number) {
+			return new Promise(resolve => setTimeout(resolve, ms));
+		}
+	});
+
+	test('Custom Cancellation', (done) => {
+		let type = new hostConnection.RequestType0<void, void>('cancelTest');
+		let duplexStream1 = new TestDuplex('ds1');
+		let duplexStream2 = new TestDuplex('ds2');
+
+		const source = new CancellationTokenSource();
+		const strategy = getCustomCancellationStrategy();
+		const options = { cancellationStrategy: strategy };
+
+		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, options);
+		server.onRequest(type, t => {
+			source.cancel();
+
+			while (!t.isCancellationRequested) {
+				// custom cancellation that doesn't require async to work
+			}
+
+			strategy.dispose();
+			done();
+		});
+		server.listen();
+
+		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger, options);
+		client.listen();
+		client.sendRequest(type, source.token);
 	});
 });
