@@ -83,7 +83,3 @@ exports.tryLinkTypes = async function(module) {
 exports.tryLinkProtocol = async function(module) {
 	return tryLink(module, 'vscode-languageserver-protocol', path.join('..', '..', 'protocol'));
 }
-
-exports.tryLinkCancellations = async function(module) {
-	return tryLink(module, 'vscode-languageserver-cancellation', path.join('..', '..', 'cancellation'));
-}

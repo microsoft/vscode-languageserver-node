@@ -8,23 +8,15 @@ import {
 	createConnection, IConnection, InitializeParams, ServerCapabilities, CompletionItemKind, ResourceOperationKind, FailureHandlingKind,
 	DiagnosticTag, CompletionItemTag, TextDocumentSyncKind, MarkupKind, SignatureHelp, SignatureInformation, ParameterInformation,
 	Location, Range, DocumentHighlight, DocumentHighlightKind, CodeAction, Command, TextEdit, Position, DocumentLink,
-	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, RequestType0, ResponseError, ErrorCodes
+	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange
 } from '../../../server/lib/main';
 
 import { URI } from 'vscode-uri';
-import { FileBasedCancellationStrategy } from 'vscode-languageserver-cancellation';
 
-let connection: IConnection = createConnection({ cancellationStrategy: FileBasedCancellationStrategy.fromArgv(process.argv) });
+let connection: IConnection = createConnection();
 
 console.log = connection.console.log.bind(connection.console);
 console.error = connection.console.error.bind(connection.console);
-
-const regularCancellationTestType = new RequestType0<number, void>('regularCancellationTest');
-const fileCancellationTestType = new RequestType0<number, void>('fileCancellationTest');
-
-function delay(ms: number) {
-	return new Promise(resolve => setTimeout(resolve, ms));
-}
 
 connection.onInitialize((params: InitializeParams): any => {
 	assert.equal((params.capabilities.workspace as any).applyEdit, true);
@@ -220,23 +212,6 @@ connection.onTypeDefinition((params) => {
 	assert.equal(params.position.line, 1);
 	assert.equal(params.position.character, 1);
 	return { uri: params.textDocument.uri, range: { start: { line: 2, character: 2}, end: {line: 3, character: 3 }}};
-});
-
-connection.onRequest(regularCancellationTestType, async (token) => {
-	while (!token.isCancellationRequested) {
-		// regular message based cancellation only works with async code since it requires
-		// control to go back to the event loop to handle cancellation notification
-		await delay(0);
-	}
-	return new ResponseError(ErrorCodes.RequestCancelled, 'cancelled');
-});
-
-connection.onRequest(fileCancellationTestType, token => {
-	while (!token.isCancellationRequested) {
-		// file based cancellation works with the sync code path. no need to go back
-		// to the event loop
-	}
-	return new ResponseError(ErrorCodes.RequestCancelled, 'cancelled');
 });
 
 // Listen on the connection

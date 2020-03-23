@@ -12,9 +12,8 @@ import {
 	WorkDoneProgressBegin, WorkDoneProgressReport, WorkDoneProgressEnd
 } from '../main';
 import { DocumentSymbolRequest, DocumentSymbolParams } from '../protocol';
-import { ProgressType, CancellationTokenSource, ResponseError, ErrorCodes, ConnectionOptions } from 'vscode-jsonrpc';
+import { ProgressType } from 'vscode-jsonrpc';
 import { SymbolInformation, SymbolKind } from 'vscode-languageserver-types';
-import { FileBasedCancellationStrategy } from 'vscode-languageserver-cancellation';
 
 class NullLogger implements Logger {
 	error(_message: string): void {
@@ -35,10 +34,6 @@ class TestStream extends Duplex {
 
 	_read(_size: number) {
 	}
-}
-
-function delay(ms: number) {
-	return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 suite('Connection Tests', () => {
@@ -70,91 +65,6 @@ suite('Connection Tests', () => {
 		};
 		await clientConnection.sendRequest(InitializeRequest.type, init);
 		assert.ok(paramsCorrect, 'Parameters are transferred correctly');
-	});
-
-	test('Cancellation Tests', async () => {
-		const up = new TestStream();
-		const down = new TestStream();
-		const logger = new NullLogger();
-		const serverConnection = createProtocolConnection(new StreamMessageReader(up), new StreamMessageWriter(down), logger);
-		const clientConnection = createProtocolConnection(new StreamMessageReader(down), new StreamMessageWriter(up), logger);
-		serverConnection.listen();
-		clientConnection.listen();
-
-		const source = new CancellationTokenSource();
-		serverConnection.onRequest(InitializeRequest.type, async (_, token) => {
-			source.cancel();
-
-			while (!token.isCancellationRequested) {
-				await delay(0);
-			}
-
-			if (token.isCancellationRequested) {
-				return new ResponseError(ErrorCodes.RequestCancelled, 'request cancelled');
-			}
-
-			throw new Error('shouldn\'t reach here');
-		});
-
-		const init: InitializeParams = {
-			rootUri: 'file:///home/dirkb',
-			processId: 1,
-			capabilities: {},
-			workspaceFolders: null,
-		};
-
-		try {
-			await clientConnection.sendRequest(InitializeRequest.type, init, source.token);
-		}
-		catch (e) {
-			assert(e instanceof ResponseError);
-			assert((<ResponseError<any>>e).code === ErrorCodes.RequestCancelled);
-		}
-	});
-
-	test('File based cancellation Tests', async () => {
-		const up = new TestStream();
-		const down = new TestStream();
-		const logger = new NullLogger();
-
-		const strategy = new FileBasedCancellationStrategy();
-		const options: ConnectionOptions = { cancellationStrategy: strategy };
-		const serverConnection = createProtocolConnection(new StreamMessageReader(up), new StreamMessageWriter(down), logger, options);
-		const clientConnection = createProtocolConnection(new StreamMessageReader(down), new StreamMessageWriter(up), logger, options);
-		serverConnection.listen();
-		clientConnection.listen();
-
-		const source = new CancellationTokenSource();
-		serverConnection.onRequest(InitializeRequest.type, (_, token) => {
-			source.cancel();
-
-			while (!token.isCancellationRequested) {
-				// synchronously check cancellation
-			}
-
-			if (token.isCancellationRequested) {
-				return new ResponseError(ErrorCodes.RequestCancelled, 'request cancelled');
-			}
-
-			throw new Error('shouldn\'t reach here');
-		});
-
-		const init: InitializeParams = {
-			rootUri: 'file:///home/dirkb',
-			processId: 1,
-			capabilities: {},
-			workspaceFolders: null,
-		};
-
-		try {
-			await clientConnection.sendRequest(InitializeRequest.type, init, source.token);
-		}
-		catch (e) {
-			assert(e instanceof ResponseError);
-			assert((<ResponseError<any>>e).code === ErrorCodes.RequestCancelled);
-		}
-
-		strategy.dispose();
 	});
 });
 

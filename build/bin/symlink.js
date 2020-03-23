@@ -8,11 +8,6 @@ const root = path.dirname(path.dirname(__dirname));
 (async function main() {
 	console.log('Symlinking node modules for development setup');
 
-	// file based cancellation folder
-	let cancellationFolder = path.join(root, 'cancellation');
-	await ln.tryLinkJsonRpc(cancellationFolder);
-	await ln.tryLinkTypes(cancellationFolder);
-
 	// protocol folder
 	let protocolFolder = path.join(root, 'protocol');
 	await ln.tryLinkJsonRpc(protocolFolder);

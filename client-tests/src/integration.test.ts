@@ -550,22 +550,4 @@ suite('Client integration', () => {
 		middleware.provideTypeDefinition = undefined;
 		assert.strictEqual(middlewareCalled, true);
 	});
-
-	test('Cancellation', async () => {
-		const sourceToken = new lsclient.CancellationTokenSource();
-		const request = client.sendRequest(new lsclient.RequestType0<number, void>('regularCancellationTest'), sourceToken.token);
-		await delay(100);
-		sourceToken.cancel();
-
-		try {
-			await request;
-		} catch (e) {
-			assert(e instanceof lsclient.ResponseError);
-			assert((<lsclient.ResponseError<any>>e).code === lsclient.ErrorCodes.RequestCancelled);
-		}
-	}).timeout(10000);
-
-	function delay(ms: number) {
-		return new Promise(resolve => setTimeout(resolve, ms));
-	}
 });

@@ -53,23 +53,6 @@
 			]
 		},
 		{
-			"label": "compile:cancellation",
-			"type": "shell",
-			"command": "npm run compile:cancellation",
-			"group": "build",
-			"presentation": {
-				"panel": "dedicated",
-				"reveal": "never"
-			},
-			"problemMatcher": [
-				"$tsc"
-			],
-			"dependsOn": [
-				"compile:types",
-				"compile:jsonrpc"
-			]
-		},
-		{
 			"label": "compile:protocol",
 			"type": "shell",
 			"command": "npm run compile:protocol",
@@ -144,7 +127,6 @@
 				"watch:types",
 				"watch:textDocument",
 				"watch:jsonrpc",
-				"watch:cancellation",
 				"watch:protocol",
 				"watch:server",
 				"watch:client",
@@ -184,20 +166,6 @@
 			"label": "watch:jsonrpc",
 			"type": "shell",
 			"command": "npm run watch:jsonrpc",
-			"group": "build",
-			"presentation": {
-				"panel": "dedicated",
-				"reveal": "never"
-			},
-			"isBackground": true,
-			"problemMatcher": [
-				"$tsc-watch"
-			]
-		},
-		{
-			"label": "watch:cancellation",
-			"type": "shell",
-			"command": "npm run watch:cancellation",
 			"group": "build",
 			"presentation": {
 				"panel": "dedicated",
