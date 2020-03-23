@@ -87,13 +87,12 @@ class MutableToken implements CancellationToken {
 	}
 }
 
-export abstract class AbstractCancellationTokenSource implements Disposable {
-	abstract get token(): CancellationToken;
-	abstract cancel(): void;
-	abstract dispose(): void;
+export interface AbstractCancellationTokenSource extends Disposable {
+	token: CancellationToken;
+	cancel(): void;
 }
 
-export class CancellationTokenSource extends AbstractCancellationTokenSource {
+export class CancellationTokenSource implements AbstractCancellationTokenSource {
 
 	private _token: CancellationToken;
 

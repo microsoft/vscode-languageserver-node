@@ -66,11 +66,11 @@ class FileBasedToken implements CancellationToken {
 	}
 }
 
-class FileBasedCancellationTokenSource extends AbstractCancellationTokenSource {
+class FileBasedCancellationTokenSource implements AbstractCancellationTokenSource {
 
 	private _token: CancellationToken;
 
-	constructor(private _cancellationName: string) { super(); }
+	constructor(private _cancellationName: string) { }
 
 	get token(): CancellationToken {
 		if (!this._token) {
