@@ -1591,7 +1591,7 @@ export function combineFeatures<OConsole, OTracer, OTelemetry, OClient, OWindow,
 /**
  * Creates a new connection based on the processes command line arguments:
  *
- * @param strategy An optional connection strategy to control additional settings
+ * @param options An optional connection strategy or connection options to control additional settings
  */
 export function createConnection(options?: ConnectionStrategy | ConnectionOptions): IConnection;
 
@@ -1600,7 +1600,7 @@ export function createConnection(options?: ConnectionStrategy | ConnectionOption
  *
  * @param inputStream The stream to read messages from.
  * @param outputStream The stream to write messages to.
- * @param strategy An optional connection strategy to control additional settings
+ * @param options An optional connection strategy or connection options to control additional settings
  * @return a [connection](#IConnection)
  */
 export function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, options?: ConnectionStrategy | ConnectionOptions): IConnection;
@@ -1610,7 +1610,7 @@ export function createConnection(inputStream: NodeJS.ReadableStream, outputStrea
  *
  * @param reader The message reader to read messages from.
  * @param writer The message writer to write message to.
- * @param strategy An optional connection strategy to control additional settings
+ * @param options An optional connection strategy or connection options to control additional settings
  */
 export function createConnection(reader: MessageReader, writer: MessageWriter, options?: ConnectionStrategy | ConnectionOptions): IConnection;
 
@@ -1618,7 +1618,7 @@ export function createConnection(reader: MessageReader, writer: MessageWriter, o
  * Creates a new connection based on the processes command line arguments. The new connection surfaces proposed API
  *
  * @param factories: the factories to use to implement the proposed API
- * @param strategy An optional connection strategy to control additional settings
+ * @param options An optional connection strategy or connection options to control additional settings
  */
 export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _>(
 	factories: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages>,
@@ -1630,7 +1630,7 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
  *
  * @param inputStream The stream to read messages from.
  * @param outputStream The stream to write messages to.
- * @param strategy An optional connection strategy to control additional settings
+ * @param options An optional connection strategy or connection options to control additional settings
  * @return a [connection](#IConnection)
  */
 export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _>(
@@ -1643,7 +1643,7 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
  *
  * @param reader The message reader to read messages from.
  * @param writer The message writer to write message to.
- * @param strategy An optional connection strategy to control additional settings
+ * @param options An optional connection strategy or connection options to control additional settings
  */
 export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _>(
 	factories: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages>,

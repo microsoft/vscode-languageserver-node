@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-	ErrorCodes, ResponseError, CancellationToken, CancellationTokenSource,
+	ErrorCodes, ResponseError, CancellationToken, CancellationTokenSource, CancellationStrategy, CancellationReceiverStrategy, CancellationSenderStrategy,
 	Disposable, Event, Emitter, Trace, Tracer, TraceFormat, TraceOptions, SetTraceNotification, LogTraceNotification,
 	Message, NotificationMessage, RequestMessage, MessageType as RPCMessageType,
 	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler, HandlerResult,
@@ -18,7 +18,7 @@ import {
 } from 'vscode-jsonrpc';
 
 export {
-	ErrorCodes, ResponseError, CancellationToken, CancellationTokenSource,
+	ErrorCodes, ResponseError, CancellationToken, CancellationTokenSource, CancellationStrategy, CancellationReceiverStrategy, CancellationSenderStrategy,
 	Disposable, Event, Emitter, Trace, Tracer, TraceFormat, TraceOptions, SetTraceNotification, LogTraceNotification,
 	Message, NotificationMessage, RequestMessage, RPCMessageType,
 	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler, HandlerResult,
