@@ -6,7 +6,7 @@
 
 import {
 	ErrorCodes, ResponseError, CancellationToken, CancellationTokenSource, CancellationStrategy, CancellationReceiverStrategy, CancellationSenderStrategy,
-	Disposable, Event, Emitter, Trace, Tracer, TraceFormat, TraceOptions, SetTraceNotification, LogTraceNotification,
+	AbstractCancellationTokenSource, Disposable, Event, Emitter, Trace, Tracer, TraceFormat, TraceOptions, SetTraceNotification, LogTraceNotification,
 	Message, NotificationMessage, RequestMessage, MessageType as RPCMessageType,
 	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler, HandlerResult,
 	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler, StarNotificationHandler,
@@ -19,7 +19,7 @@ import {
 
 export {
 	ErrorCodes, ResponseError, CancellationToken, CancellationTokenSource, CancellationStrategy, CancellationReceiverStrategy, CancellationSenderStrategy,
-	Disposable, Event, Emitter, Trace, Tracer, TraceFormat, TraceOptions, SetTraceNotification, LogTraceNotification,
+	AbstractCancellationTokenSource, Disposable, Event, Emitter, Trace, Tracer, TraceFormat, TraceOptions, SetTraceNotification, LogTraceNotification,
 	Message, NotificationMessage, RequestMessage, RPCMessageType,
 	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler, HandlerResult,
 	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler, StarNotificationHandler,

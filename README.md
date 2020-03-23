@@ -34,6 +34,13 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 
 ## History
 
+## 3.16.0-next.1 Protocol, 5.1.0-next.1 JSON-RPC, 6.2.0-next.1 Client and 6.2.0-next.1 Server.
+
+* support for complex diagnostic codes
+* support for pluggable cancellation strategy
+* support for insert / replace edits in completion items.
+
+
 ## 3.15.3 Protocol, 6.1.x client and 6.1.x server
 
 * Small changes to the proposed support for semantic tokens.
