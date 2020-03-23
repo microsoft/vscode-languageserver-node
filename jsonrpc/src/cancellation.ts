@@ -5,7 +5,7 @@
 
 'use strict';
 
-import { Event, Emitter } from './events';
+import { Disposable, Event, Emitter } from './events';
 import * as Is from './is';
 
 /**
@@ -87,7 +87,12 @@ class MutableToken implements CancellationToken {
 	}
 }
 
-export class CancellationTokenSource {
+export interface AbstractCancellationTokenSource extends Disposable {
+	token: CancellationToken;
+	cancel(): void;
+}
+
+export class CancellationTokenSource implements AbstractCancellationTokenSource {
 
 	private _token: CancellationToken;
 
@@ -115,7 +120,6 @@ export class CancellationTokenSource {
 		if (!this._token) {
 			// ensure to initialize with an empty token if we had none
 			this._token = CancellationToken.None;
-
 		} else if (this._token instanceof MutableToken) {
 			// actually dispose
 			this._token.dispose();

@@ -5,12 +5,12 @@
 'use strict';
 
 import {
-	ErrorCodes, ResponseError, CancellationToken, CancellationTokenSource,
+	ErrorCodes, ResponseError, CancellationToken, CancellationTokenSource, CancellationStrategy, CancellationReceiverStrategy, CancellationSenderStrategy,
 	Disposable, Event, Emitter, Trace, Tracer, TraceFormat, TraceOptions, SetTraceNotification, LogTraceNotification,
 	Message, NotificationMessage, RequestMessage, MessageType as RPCMessageType,
 	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler, HandlerResult,
 	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler, StarNotificationHandler,
-	MessageReader, PartialMessageInfo, MessageWriter, Logger, ConnectionStrategy,
+	MessageReader, PartialMessageInfo, MessageWriter, Logger, ConnectionStrategy, ConnectionOptions,
 	StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageWriter,
 	createClientPipeTransport, createServerPipeTransport, generateRandomPipeName, DataCallback,
 	createClientSocketTransport, createServerSocketTransport, ProgressType, ProgressToken,
@@ -18,12 +18,12 @@ import {
 } from 'vscode-jsonrpc';
 
 export {
-	ErrorCodes, ResponseError, CancellationToken, CancellationTokenSource,
+	ErrorCodes, ResponseError, CancellationToken, CancellationTokenSource, CancellationStrategy, CancellationReceiverStrategy, CancellationSenderStrategy,
 	Disposable, Event, Emitter, Trace, Tracer, TraceFormat, TraceOptions, SetTraceNotification, LogTraceNotification,
 	Message, NotificationMessage, RequestMessage, RPCMessageType,
 	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler, HandlerResult,
 	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler, StarNotificationHandler,
-	MessageReader, PartialMessageInfo, MessageWriter, Logger, ConnectionStrategy,
+	MessageReader, PartialMessageInfo, MessageWriter, Logger, ConnectionStrategy, ConnectionOptions,
 	StreamMessageReader, StreamMessageWriter,
 	IPCMessageReader, IPCMessageWriter,
 	createClientPipeTransport, createServerPipeTransport, generateRandomPipeName, DataCallback,
@@ -282,6 +282,6 @@ export interface ProtocolConnection {
  */
 export type ProtocolConnetion = ProtocolConnection;
 
-export function createProtocolConnection(reader: MessageReader, writer: MessageWriter, logger: Logger, strategy?: ConnectionStrategy): ProtocolConnection {
-	return createMessageConnection(reader, writer, logger, strategy);
+export function createProtocolConnection(reader: MessageReader, writer: MessageWriter, logger: Logger, options?: ConnectionStrategy | ConnectionOptions): ProtocolConnection {
+	return createMessageConnection(reader, writer, logger, options);
 }

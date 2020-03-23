@@ -144,9 +144,14 @@ export class Emitter<T> {
 				let result: Disposable;
 				result = {
 					dispose: () => {
-						this._callbacks!.remove(listener, thisArgs);
+						if (!this._callbacks) {
+							// disposable is disposed after emitter is disposed.
+							return;
+						}
+
+						this._callbacks.remove(listener, thisArgs);
 						result.dispose = Emitter._noop;
-						if (this._options && this._options.onLastListenerRemove && this._callbacks!.isEmpty()) {
+						if (this._options && this._options.onLastListenerRemove && this._callbacks.isEmpty()) {
 							this._options.onLastListenerRemove(this);
 						}
 					}

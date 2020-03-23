@@ -5,7 +5,7 @@
 'use strict';
 
 import {
-	workspace as Workspace, window as Window, languages as Languages, commands as Commands,  version as VSCodeVersion,
+	workspace as Workspace, window as Window, languages as Languages, commands as Commands, version as VSCodeVersion,
 	TextDocumentChangeEvent, TextDocument, Disposable, OutputChannel,
 	FileSystemWatcher as VFileSystemWatcher, DiagnosticCollection, Diagnostic as VDiagnostic, Uri, ProviderResult,
 	CancellationToken, Position as VPosition, Location as VLocation, Range as VRange,
@@ -16,7 +16,10 @@ import {
 	FormattingOptions as VFormattingOptions, TextEdit as VTextEdit, WorkspaceEdit as VWorkspaceEdit, MessageItem,
 	Hover as VHover, CodeAction as VCodeAction, DocumentSymbol as VDocumentSymbol,
 	DocumentLink as VDocumentLink, TextDocumentWillSaveEvent,
-	WorkspaceFolder as VWorkspaceFolder, CompletionContext as VCompletionContext, ConfigurationChangeEvent, CompletionItemProvider, HoverProvider, SignatureHelpProvider, DefinitionProvider, ReferenceProvider, DocumentHighlightProvider, CodeActionProvider, DocumentSymbolProvider, CodeLensProvider, DocumentFormattingEditProvider, DocumentRangeFormattingEditProvider, OnTypeFormattingEditProvider, RenameProvider, DocumentLinkProvider, DocumentColorProvider, DeclarationProvider, FoldingRangeProvider, ImplementationProvider, SelectionRangeProvider, TypeDefinitionProvider, WorkspaceSymbolProvider
+	WorkspaceFolder as VWorkspaceFolder, CompletionContext as VCompletionContext, ConfigurationChangeEvent, CompletionItemProvider, HoverProvider, SignatureHelpProvider,
+	DefinitionProvider, ReferenceProvider, DocumentHighlightProvider, CodeActionProvider, DocumentSymbolProvider, CodeLensProvider, DocumentFormattingEditProvider,
+	DocumentRangeFormattingEditProvider, OnTypeFormattingEditProvider, RenameProvider, DocumentLinkProvider, DocumentColorProvider, DeclarationProvider,
+	FoldingRangeProvider, ImplementationProvider, SelectionRangeProvider, TypeDefinitionProvider, WorkspaceSymbolProvider
 } from 'vscode';
 
 import {
@@ -62,8 +65,8 @@ import {
 	DocumentHighlightRegistrationOptions, DocumentHighlightOptions, DocumentSymbolRegistrationOptions, DocumentSymbolOptions,
 	WorkspaceSymbolRegistrationOptions, CodeActionOptions, CodeLensOptions, DocumentFormattingOptions, DocumentRangeFormattingRegistrationOptions,
 	DocumentRangeFormattingOptions, DocumentOnTypeFormattingOptions, RenameOptions, DocumentLinkOptions, CompletionItemTag, DiagnosticTag,
-	DocumentColorRequest, DeclarationRequest, FoldingRangeRequest, ImplementationRequest, SelectionRangeRequest,TypeDefinitionRequest, SymbolTag,
-	Proposed
+	DocumentColorRequest, DeclarationRequest, FoldingRangeRequest, ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, SymbolTag,
+	Proposed, CancellationStrategy
 } from 'vscode-languageserver-protocol';
 
 import { ColorProviderMiddleware } from './colorProvider';
@@ -82,7 +85,6 @@ import * as Is from './utils/is';
 import { Delayer } from './utils/async';
 import * as UUID from './utils/uuid';
 import { ProgressPart } from './progressPart';
-
 export { Converter as Code2ProtocolConverter } from './codeConverter';
 export { Converter as Protocol2CodeConverter } from './protocolConverter';
 
@@ -162,11 +164,16 @@ interface ConnectionErrorHandler {
 interface ConnectionCloseHandler {
 	(): void;
 }
-function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler): IConnection;
-function createConnection(reader: MessageReader, writer: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler): IConnection;
-function createConnection(input: any, output: any, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler): IConnection {
+
+interface ConnectionOptions {
+    cancellationStrategy: CancellationStrategy
+}
+
+function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): IConnection;
+function createConnection(reader: MessageReader, writer: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): IConnection;
+function createConnection(input: any, output: any, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): IConnection {
 	let logger = new ConsoleLogger();
-	let connection = createProtocolConnection(input, output, logger);
+	let connection = createProtocolConnection(input, output, logger, options);
 	connection.onError((data) => { errorHandler(data[0], data[1], data[2]); });
 	connection.onClose(closeHandler);
 	let result: IConnection = {
@@ -506,6 +513,7 @@ export interface LanguageClientOptions {
 		protocol2Code: p2c.URIConverter
 	};
 	workspaceFolder?: VWorkspaceFolder;
+	connectionOptions?: ConnectionOptions;
 }
 
 interface ResolvedClientOptions {
@@ -524,7 +532,8 @@ interface ResolvedClientOptions {
 		code2Protocol: c2p.URIConverter,
 		protocol2Code: p2c.URIConverter
 	};
-	workspaceFolder?: VWorkspaceFolder
+	workspaceFolder?: VWorkspaceFolder;
+	connectionOptions?: ConnectionOptions;
 }
 
 export enum State {
@@ -2561,6 +2570,7 @@ export abstract class BaseLanguageClient {
 		this._name = name;
 
 		clientOptions = clientOptions || {};
+
 		this._clientOptions = {
 			documentSelector: clientOptions.documentSelector || [],
 			synchronize: clientOptions.synchronize || {},
@@ -2574,7 +2584,8 @@ export abstract class BaseLanguageClient {
 			errorHandler: clientOptions.errorHandler || new DefaultErrorHandler(this._name),
 			middleware: clientOptions.middleware || {},
 			uriConverters: clientOptions.uriConverters,
-			workspaceFolder: clientOptions.workspaceFolder
+			workspaceFolder: clientOptions.workspaceFolder,
+			connectionOptions: clientOptions.connectionOptions
 		};
 		this._clientOptions.synchronize = this._clientOptions.synchronize || {};
 
@@ -3202,7 +3213,7 @@ export abstract class BaseLanguageClient {
 		};
 
 		return this.createMessageTransports(this._clientOptions.stdioEncoding || 'utf8').then((transports) => {
-			return createConnection(transports.reader, transports.writer, errorHandler, closeHandler);
+			return createConnection(transports.reader, transports.writer, errorHandler, closeHandler, this._clientOptions.connectionOptions);
 		});
 	}
 

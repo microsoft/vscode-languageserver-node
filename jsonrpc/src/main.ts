@@ -22,7 +22,7 @@ import {
 import { MessageReader, PartialMessageInfo, DataCallback, StreamMessageReader, IPCMessageReader, SocketMessageReader } from './messageReader';
 import { MessageWriter, StreamMessageWriter, IPCMessageWriter, SocketMessageWriter } from './messageWriter';
 import { Disposable, Event, Emitter } from './events';
-import { CancellationTokenSource, CancellationToken } from './cancellation';
+import { CancellationTokenSource, CancellationToken, AbstractCancellationTokenSource } from './cancellation';
 import { LinkedMap } from './linkedMap';
 
 export {
@@ -35,7 +35,7 @@ export {
 	NotificationType5, NotificationType6, NotificationType7, NotificationType8, NotificationType9,
 	MessageReader, PartialMessageInfo, DataCallback, StreamMessageReader, IPCMessageReader, SocketMessageReader,
 	MessageWriter, StreamMessageWriter, IPCMessageWriter, SocketMessageWriter,
-	CancellationTokenSource, CancellationToken,
+	AbstractCancellationTokenSource, CancellationTokenSource, CancellationToken,
 	Disposable, Event, Emitter
 };
 export * from './pipeSupport';
@@ -316,6 +316,70 @@ export namespace ConnectionStrategy {
 	}
 }
 
+export type CancellationId = number | string;
+export interface CancellationReceiverStrategy {
+	createCancellationTokenSource(id: CancellationId): AbstractCancellationTokenSource;
+	dispose?(): void;
+}
+export namespace CancellationReceiverStrategy {
+	export const Message: CancellationReceiverStrategy = Object.freeze({
+		createCancellationTokenSource(_: CancellationId): AbstractCancellationTokenSource {
+			return new CancellationTokenSource();
+		}
+	});
+
+	export function is(value: any): value is CancellationReceiverStrategy {
+		let candidate: CancellationReceiverStrategy = value;
+		return candidate && Is.func(candidate.createCancellationTokenSource);
+	}
+}
+
+export interface CancellationSenderStrategy {
+	sendCancellation(conn: MessageConnection, id: CancellationId): void;
+	cleanup(id: CancellationId): void;
+	dispose?(): void;
+}
+export namespace CancellationSenderStrategy {
+	export const Message: CancellationSenderStrategy = Object.freeze({
+		sendCancellation(conn: MessageConnection, id: CancellationId): void {
+			conn.sendNotification(CancelNotification.type, { id });
+		},
+		cleanup(_: CancellationId): void { }
+	});
+
+	export function is(value: any): value is CancellationSenderStrategy {
+		let candidate: CancellationSenderStrategy = value;
+		return candidate && Is.func(candidate.sendCancellation) && Is.func(candidate.cleanup);
+	}
+}
+
+export interface CancellationStrategy {
+	receiver: CancellationReceiverStrategy;
+	sender: CancellationSenderStrategy;
+}
+export namespace CancellationStrategy {
+	export const Message: CancellationStrategy = Object.freeze({
+		receiver: CancellationReceiverStrategy.Message,
+		sender: CancellationSenderStrategy.Message
+	});
+
+	export function is(value: any): value is CancellationStrategy {
+		let candidate: CancellationStrategy = value;
+		return candidate && CancellationReceiverStrategy.is(candidate.receiver) && CancellationSenderStrategy.is(candidate.sender);
+	}
+}
+
+export interface ConnectionOptions {
+	cancellationStrategy?: CancellationStrategy
+	connectionStrategy?: ConnectionStrategy
+}
+export namespace ConnectionOptions {
+	export function is(value: any): value is ConnectionOptions {
+		let candidate: ConnectionOptions = value;
+		return candidate && (CancellationStrategy.is(candidate.cancellationStrategy) || ConnectionStrategy.is(candidate.connectionStrategy));
+	}
+}
+
 export interface MessageConnection {
 	sendRequest<R, E, RO>(type: RequestType0<R, E, RO>, token?: CancellationToken): Promise<R>;
 	sendRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, params: P, token?: CancellationToken): Promise<R>;
@@ -414,7 +478,7 @@ interface NotificationHandlerElement {
 	handler: GenericNotificationHandler;
 }
 
-function _createMessageConnection(messageReader: MessageReader, messageWriter: MessageWriter, logger: Logger, strategy?: ConnectionStrategy): MessageConnection {
+function _createMessageConnection(messageReader: MessageReader, messageWriter: MessageWriter, logger: Logger, options?: ConnectionOptions): MessageConnection {
 	let sequenceNumber = 0;
 	let notificationSquenceNumber = 0;
 	let unknownResponseSquenceNumber = 0;
@@ -429,7 +493,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 	let timer: NodeJS.Immediate | undefined;
 	let messageQueue: MessageQueue = new LinkedMap<string, Message>();
 	let responsePromises: { [name: string]: ResponsePromise } = Object.create(null);
-	let requestTokens: { [id: string]: CancellationTokenSource } = Object.create(null);
+	let requestTokens: { [id: string]: AbstractCancellationTokenSource } = Object.create(null);
 
 	let trace: Trace = Trace.Off;
 	let traceFormat: TraceFormat = TraceFormat.Text;
@@ -442,6 +506,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 	let unhandledProgressEmitter: Emitter<ProgressParams<any>> = new Emitter<ProgressParams<any>>();
 
 	let disposeEmitter: Emitter<void> = new Emitter<void>();
+	let cancellationStrategy = (options && options.cancellationStrategy) ? options.cancellationStrategy : CancellationStrategy.Message;
 
 	function createRequestQueueKey(id: string | number): string {
 		return 'req-' + id.toString();
@@ -545,7 +610,8 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				let key = createRequestQueueKey((message.params as CancelParams).id);
 				let toCancel = messageQueue.get(key);
 				if (isRequestMessage(toCancel)) {
-					let response = strategy && strategy.cancelUndispatched ? strategy.cancelUndispatched(toCancel, cancelUndispatched) : cancelUndispatched(toCancel);
+					const strategy = options?.connectionStrategy;
+					let response = (strategy && strategy.cancelUndispatched) ? strategy.cancelUndispatched(toCancel, cancelUndispatched) : cancelUndispatched(toCancel);
 					if (response && (response.error !== void 0 || response.result !== void 0)) {
 						messageQueue.delete(key);
 						response.id = toCancel.id;
@@ -604,7 +670,6 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			traceSendingResponse(message, method, startTime);
 			messageWriter.write(message);
 		}
-
 		traceReceivedRequest(requestMessage);
 
 		let element = requestHandlers[requestMessage.method];
@@ -616,8 +681,8 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 		}
 		let startTime = Date.now();
 		if (requestHandler || starRequestHandler) {
-			let cancellationSource = new CancellationTokenSource();
 			let tokenKey = String(requestMessage.id);
+			let cancellationSource = cancellationStrategy.receiver.createCancellationTokenSource(tokenKey);
 			requestTokens[tokenKey] = cancellationSource;
 			try {
 				let handlerResult: any;
@@ -1068,6 +1133,12 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			}
 
 			let id = sequenceNumber++;
+			let disposable: Disposable;
+			if (token) {
+				disposable = token.onCancellationRequested(() => {
+					cancellationStrategy.sender.sendCancellation(connection, id);
+				});
+			}
 			let result = new Promise<R | ResponseError<E>>((resolve, reject) => {
 				let requestMessage: RequestMessage = {
 					jsonrpc: version,
@@ -1075,7 +1146,20 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 					method: method,
 					params: messageParams
 				};
-				let responsePromise: ResponsePromise | null = { method: method, timerStart: Date.now(), resolve, reject };
+
+				const resolveWithCleanup = (r: any) => {
+					resolve(r);
+					cancellationStrategy.sender.cleanup(id);
+					disposable?.dispose();
+
+				};
+				const rejectWithCleanup = (r: any) => {
+					reject(r);
+					cancellationStrategy.sender.cleanup(id);
+					disposable?.dispose();
+				};
+
+				let responsePromise: ResponsePromise | null = { method: method, timerStart: Date.now(), resolve: resolveWithCleanup, reject: rejectWithCleanup };
 				traceSendingRequest(requestMessage);
 				try {
 					messageWriter.write(requestMessage);
@@ -1088,11 +1172,6 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 					responsePromises[String(id)] = responsePromise;
 				}
 			});
-			if (token) {
-				token.onCancellationRequested(() => {
-					connection.sendNotification(CancelNotification.type, { id });
-				});
-			}
 			return result;
 		},
 		onRequest: <R, E>(type: string | MessageType | StarRequestHandler, handler?: GenericRequestHandler<R, E>): void => {
@@ -1196,13 +1275,18 @@ function isMessageWriter(value: any): value is MessageWriter {
 	return value.write !== void 0 && value.end === void 0;
 }
 
-export function createMessageConnection(reader: MessageReader, writer: MessageWriter, logger?: Logger, strategy?: ConnectionStrategy): MessageConnection;
-export function createMessageConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger?: Logger, strategy?: ConnectionStrategy): MessageConnection;
-export function createMessageConnection(input: MessageReader | NodeJS.ReadableStream, output: MessageWriter | NodeJS.WritableStream, logger?: Logger, strategy?: ConnectionStrategy): MessageConnection {
+export function createMessageConnection(reader: MessageReader, writer: MessageWriter, logger?: Logger, options?: ConnectionStrategy | ConnectionOptions): MessageConnection;
+export function createMessageConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger?: Logger, options?: ConnectionStrategy | ConnectionOptions): MessageConnection;
+export function createMessageConnection(input: MessageReader | NodeJS.ReadableStream, output: MessageWriter | NodeJS.WritableStream, logger?: Logger, options?: ConnectionStrategy | ConnectionOptions): MessageConnection {
 	if (!logger) {
 		logger = NullLogger;
 	}
 	let reader = isMessageReader(input) ? input : new StreamMessageReader(input);
 	let writer = isMessageWriter(output) ? output : new StreamMessageWriter(output);
-	return _createMessageConnection(reader, writer, logger, strategy);
+
+	if (ConnectionStrategy.is(options)) {
+		options = { connectionStrategy: options } as ConnectionOptions;
+	}
+
+	return _createMessageConnection(reader, writer, logger, options);
 }

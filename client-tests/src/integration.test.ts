@@ -90,7 +90,7 @@ suite('Client integration', () => {
 			documentSelector, synchronize: {}, initializationOptions: {}, middleware
 		};
 
-		client = new lsclient.LanguageClient('css', 'Test Language Server', serverOptions, clientOptions);
+		client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
 		client.start();
 		await client.onReady();
 	});
