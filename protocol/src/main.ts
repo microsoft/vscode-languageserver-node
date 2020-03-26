@@ -7,7 +7,7 @@
 import {
 	ErrorCodes, ResponseError, CancellationToken, CancellationTokenSource, CancellationStrategy, CancellationReceiverStrategy, CancellationSenderStrategy,
 	AbstractCancellationTokenSource, Disposable, Event, Emitter, Trace, Tracer, TraceFormat, TraceOptions, SetTraceNotification, LogTraceNotification,
-	Message, NotificationMessage, RequestMessage, MessageType as RPCMessageType,
+	Message, MessageConnection, NotificationMessage, RequestMessage, MessageType as RPCMessageType,
 	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler, HandlerResult,
 	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler, StarNotificationHandler,
 	MessageReader, PartialMessageInfo, MessageWriter, Logger, ConnectionStrategy, ConnectionOptions,
@@ -20,7 +20,7 @@ import {
 export {
 	ErrorCodes, ResponseError, CancellationToken, CancellationTokenSource, CancellationStrategy, CancellationReceiverStrategy, CancellationSenderStrategy,
 	AbstractCancellationTokenSource, Disposable, Event, Emitter, Trace, Tracer, TraceFormat, TraceOptions, SetTraceNotification, LogTraceNotification,
-	Message, NotificationMessage, RequestMessage, RPCMessageType,
+	Message, MessageConnection, NotificationMessage, RequestMessage, RPCMessageType,
 	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler, HandlerResult,
 	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler, StarNotificationHandler,
 	MessageReader, PartialMessageInfo, MessageWriter, Logger, ConnectionStrategy, ConnectionOptions,
