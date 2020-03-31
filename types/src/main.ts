@@ -359,7 +359,7 @@ export namespace ColorPresentation {
 		const candidate = value as ColorPresentation;
 		return Is.string(candidate.label)
 			&& (Is.undefined(candidate.textEdit) || TextEdit.is(candidate))
-			&& (Is.undefined(candidate.additionalTextEdits) || Is.typedArray<DiagnosticRelatedInformation>(candidate.additionalTextEdits, TextEdit.is));
+			&& (Is.undefined(candidate.additionalTextEdits) || Is.typedArray(candidate.additionalTextEdits, TextEdit.is));
 	}
 }
 
