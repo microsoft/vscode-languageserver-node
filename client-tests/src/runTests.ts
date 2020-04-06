@@ -37,6 +37,8 @@ async function go() {
 		fs.mkdirSync(testDir, { recursive: true });
 		const userDataDir = path.join(testDir, 'userData');
 		fs.mkdirSync(userDataDir);
+		const extensionDir = path.join(testDir, 'extensions');
+		fs.mkdirSync(extensionDir);
 		const workspaceFolder = path.join(testDir, 'workspace');
 		fs.mkdirSync(workspaceFolder);
 
@@ -44,10 +46,13 @@ async function go() {
 		 * Basic usage
 		 */
 		await runTests({
+			version: '1.43.2',
 			extensionDevelopmentPath,
 			extensionTestsPath,
 			launchArgs: [
-				'--user-data-dir', userDataDir, workspaceFolder
+				'--user-data-dir', userDataDir,
+				'--extensions-dir', extensionDir,
+				workspaceFolder
 			]
 		});
 		rimraf(testDir);
