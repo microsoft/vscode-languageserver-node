@@ -5,7 +5,7 @@
 	"description": "",
 	"version": "0.0.1",
 	"engines": {
-		"vscode": "^1.43.0"
+		"vscode": "^1.44.0"
 	},
 	"categories": [
 		"Other"
@@ -29,7 +29,7 @@
 		"@types/glob": "^7.1.1",
 		"@types/sinon": "^7.0.13",
 		"@types/uuid": "^7.0.2",
-		"@types/vscode": "1.43.0",
+		"@types/vscode": "1.44.0",
 		"glob": "^7.1.4",
 		"sinon": "7.4.1",
 		"uuid": "7.0.3",

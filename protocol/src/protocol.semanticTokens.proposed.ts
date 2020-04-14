@@ -112,8 +112,17 @@ export interface SemanticTokensPartialResult {
  * @since 3.16.0 - Proposed state
  */
 export interface SemanticTokensEdit {
+	/**
+	 * The start offset of the edit.
+	 */
 	start: number;
+	/**
+	 * The count of elements to remove.
+	 */
 	deleteCount: number;
+	/**
+	 * The elements to insert.
+	 */
 	data?: number[];
 }
 
