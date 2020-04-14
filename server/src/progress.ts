@@ -18,8 +18,6 @@ export interface ProgressContext {
 
 export interface WorkDoneProgressReporter {
 
-	readonly token: CancellationToken;
-
 	begin(title: string, percentage?: number, message?: string, cancellable?: boolean): void;
 
 	report(percentage: number): void;
@@ -29,24 +27,21 @@ export interface WorkDoneProgressReporter {
 	done(): void;
 }
 
+export interface WorkDoneProgressServerReporter extends WorkDoneProgressReporter {
+	readonly token: CancellationToken;
+}
+
 export interface WindowProgress {
 	attachWorkDoneProgress(token: ProgressToken | undefined): WorkDoneProgressReporter;
-	createWorkDoneProgress(): Promise<WorkDoneProgressReporter>;
+	createWorkDoneProgress(): Promise<WorkDoneProgressServerReporter>;
 }
 
 class WorkDoneProgressReporterImpl implements WorkDoneProgressReporter {
 
 	public static Instances: Map<string | number, WorkDoneProgressReporterImpl> = new Map();
 
-	private _source: CancellationTokenSource;
-
 	constructor(private _connection: ProgressContext, private _token: ProgressToken) {
 		WorkDoneProgressReporterImpl.Instances.set(this._token, this);
-		this._source = new CancellationTokenSource();
-	}
-
-	get token(): CancellationToken {
-		return this._source.token;
 	}
 
 	public begin(title: string, percentage?: number, message?: string, cancellable?: boolean): void {
@@ -77,8 +72,26 @@ class WorkDoneProgressReporterImpl implements WorkDoneProgressReporter {
 
 	done(): void {
 		WorkDoneProgressReporterImpl.Instances.delete(this._token);
-		this._source.dispose();
 		this._connection.sendProgress(WorkDoneProgress.type, this._token, { kind: 'end' } );
+	}
+
+}
+
+class WorkDoneProgressServerReporterImpl extends WorkDoneProgressReporterImpl implements WorkDoneProgressServerReporter {
+
+	private _source: CancellationTokenSource;
+
+	constructor(connection: ProgressContext, token: ProgressToken) {
+		super(connection, token);
+	}
+
+	get token(): CancellationToken {
+		return this._source.token;
+	}
+
+	done(): void {
+		this._source.dispose();
+		super.done();
 	}
 
 	cancel(): void {
@@ -88,14 +101,7 @@ class WorkDoneProgressReporterImpl implements WorkDoneProgressReporter {
 
 class NullProgressReporter implements WorkDoneProgressReporter {
 
-	private _source: CancellationTokenSource;
-
 	constructor() {
-		this._source = new CancellationTokenSource();
-	}
-
-	get token(): CancellationToken {
-		return this._source.token;
 	}
 
 	begin(): void {
@@ -105,6 +111,28 @@ class NullProgressReporter implements WorkDoneProgressReporter {
 	}
 
 	done(): void {
+	}
+}
+
+class NullProgressServerReporter extends NullProgressReporter implements WorkDoneProgressServerReporter {
+
+	private _source: CancellationTokenSource;
+
+	constructor() {
+		super();
+		this._source = new CancellationTokenSource();
+	}
+
+	get token(): CancellationToken {
+		return this._source.token;
+	}
+
+	done(): void {
+		this._source.dispose();
+	}
+
+	cancel(): void {
+		this._source.cancel();
 	}
 }
 
@@ -126,7 +154,7 @@ export const ProgressFeature: Feature<_RemoteWindow, WindowProgress> = (Base) =>
 				this._progressSupported = true;
 				this.connection.onNotification(WorkDoneProgressCancelNotification.type, (params) => {
 					let progress = WorkDoneProgressReporterImpl.Instances.get(params.token);
-					if (progress !== undefined) {
+					if (progress instanceof WorkDoneProgressServerReporterImpl || progress instanceof NullProgressServerReporter) {
 						progress.cancel();
 					}
 				});
@@ -139,15 +167,15 @@ export const ProgressFeature: Feature<_RemoteWindow, WindowProgress> = (Base) =>
 				return new WorkDoneProgressReporterImpl(this.connection, token);
 			}
 		}
-		public createWorkDoneProgress(): Promise<WorkDoneProgressReporter> {
+		public createWorkDoneProgress(): Promise<WorkDoneProgressServerReporter> {
 			if (this._progressSupported) {
 				const token: string = generateUuid();
 				return this.connection.sendRequest(WorkDoneProgressCreateRequest.type, { token }).then(() => {
-					const result: WorkDoneProgressReporterImpl = new WorkDoneProgressReporterImpl(this.connection, token);
+					const result: WorkDoneProgressServerReporterImpl = new WorkDoneProgressServerReporterImpl(this.connection, token);
 					return result;
 				});
 			} else {
-				return Promise.resolve(new NullProgressReporter());
+				return Promise.resolve(new NullProgressServerReporter());
 			}
 		}
 	};
