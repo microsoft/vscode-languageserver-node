@@ -1062,7 +1062,7 @@ export interface TextDocumentSyncOptions {
 	 * If present save notifications are sent to the server. If omitted the notification should not be
 	 * sent.
 	 */
-	save?: SaveOptions;
+	save?: boolean | SaveOptions;
 }
 
 /**

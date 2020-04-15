@@ -66,7 +66,7 @@ import {
 	WorkspaceSymbolRegistrationOptions, CodeActionOptions, CodeLensOptions, DocumentFormattingOptions, DocumentRangeFormattingRegistrationOptions,
 	DocumentRangeFormattingOptions, DocumentOnTypeFormattingOptions, RenameOptions, DocumentLinkOptions, CompletionItemTag, DiagnosticTag,
 	DocumentColorRequest, DeclarationRequest, FoldingRangeRequest, ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, SymbolTag,
-	Proposed, CancellationStrategy
+	Proposed, CancellationStrategy, SaveOptions
 } from 'vscode-languageserver-protocol';
 
 import { ColorProviderMiddleware } from './colorProvider';
@@ -1201,11 +1201,14 @@ class DidSaveTextDocumentFeature extends DocumentNotifiactions<DidSaveTextDocume
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		let textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
+		const textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
 		if (documentSelector && textDocumentSyncOptions && textDocumentSyncOptions.save) {
+			const saveOptions: SaveOptions = typeof textDocumentSyncOptions.save === 'boolean'
+				? { includeText: false }
+				: { includeText: !!textDocumentSyncOptions.save.includeText };
 			this.register(this.messages, {
 				id: UUID.generateUuid(),
-				registerOptions: Object.assign({}, { documentSelector: documentSelector }, { includeText: !!textDocumentSyncOptions.save.includeText })
+				registerOptions: Object.assign({}, { documentSelector: documentSelector }, saveOptions)
 			});
 		}
 	}
