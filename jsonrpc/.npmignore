@@ -5,6 +5,7 @@ lib/tsconfig.tsbuildInfo
 src/
 test/
 .eslintrc*
+.mocharc*
 .gitignore
 gulpfile.js
 tsd.json

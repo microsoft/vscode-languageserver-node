@@ -7,6 +7,7 @@ src/
 test/
 bin/
 .eslintrc*
+.mocharc*
 .gitignore
 gulpfile.js
 tsd.json
