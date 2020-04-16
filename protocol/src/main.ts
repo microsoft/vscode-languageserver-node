@@ -32,6 +32,7 @@ export {
 
 export * from 'vscode-languageserver-types';
 export * from './protocol';
+export * from './messages';
 
 export { FoldingRangeParams as FoldingRangeRequestParam } from './protocol'; // for backward compatibility
 
