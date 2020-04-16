@@ -1,0 +1,6 @@
+{
+	"spec": "lib/umd/test",
+	"extension": ["js"],
+	"recursive": true,
+	"ui": "tdd"
+}
