@@ -45,6 +45,13 @@ import {
 	WorkDoneProgressCreateRequest, WorkDoneProgressCancelParams, WorkDoneProgressCancelNotification
 } from './protocol.progress';
 
+import {
+	CallHierarchyClientCapabilities, CallHierarchyOptions, CallHierarchyRegistrationOptions,
+	CallHierarchyIncomingCall, CallHierarchyIncomingCallsParams, CallHierarchyIncomingCallsRequest,
+	CallHierarchyOutgoingCall, CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCallsRequest,
+	CallHierarchyPrepareParams, CallHierarchyPrepareRequest, CallHierarchyItem
+} from './protocol.callHierarchy';
+
 // @ts-ignore: to avoid inlining LocatioLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
 
@@ -436,6 +443,13 @@ export interface TextDocumentClientCapabilities {
 	 * Capabilities specific to `textDocument/publishDiagnostics`.
 	 */
 	publishDiagnostics?: PublishDiagnosticsClientCapabilities;
+
+	/**
+	 * Capabilities specific to the `textDocument/callHierarchy`.
+	 *
+	 * @since 3.16.0 - Proposed state
+	 */
+	callHierarchy?: CallHierarchyClientCapabilities;
 }
 
 /**
@@ -664,6 +678,11 @@ export interface _ServerCapabilities<T = any> {
 	 * The server provides execute command support.
 	 */
 	executeCommandProvider?: ExecuteCommandOptions;
+
+	/**
+	 * The server provides Call Hierarchy support.
+	 */
+	callHierarchyProvider?: boolean | CallHierarchyOptions | CallHierarchyRegistrationOptions;
 
 	/**
 	 * Experimental server capabilities.
@@ -2743,7 +2762,11 @@ export {
 	DeclarationClientCapabilities, DeclarationRequest, DeclarationParams, DeclarationRegistrationOptions, DeclarationOptions,
 	SelectionRangeClientCapabilities, SelectionRangeOptions, SelectionRangeParams, SelectionRangeRequest, SelectionRangeRegistrationOptions,
 	WorkDoneProgressBegin, WorkDoneProgressReport, WorkDoneProgressEnd, WorkDoneProgress, WorkDoneProgressCreateParams,
-	WorkDoneProgressCreateRequest, WorkDoneProgressCancelParams, WorkDoneProgressCancelNotification
+	WorkDoneProgressCreateRequest, WorkDoneProgressCancelParams, WorkDoneProgressCancelNotification,
+	CallHierarchyClientCapabilities, CallHierarchyOptions, CallHierarchyRegistrationOptions,
+	CallHierarchyIncomingCall, CallHierarchyIncomingCallsParams, CallHierarchyIncomingCallsRequest,
+	CallHierarchyOutgoingCall, CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCallsRequest,
+	CallHierarchyPrepareParams, CallHierarchyPrepareRequest, CallHierarchyItem
 };
 
 // To be backwards compatible

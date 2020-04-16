@@ -16,7 +16,7 @@ import {
  * Represents programming constructs like functions or constructors in the context
  * of call hierarchy.
  *
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export interface CallHierarchyItem {
 	/**
@@ -59,7 +59,7 @@ export interface CallHierarchyItem {
 /**
  * Represents an incoming call, e.g. a caller of a method or constructor.
  *
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export interface CallHierarchyIncomingCall {
 
@@ -78,7 +78,7 @@ export interface CallHierarchyIncomingCall {
 /**
  * Represents an outgoing call, e.g. calling a getter from a method or a method from a constructor etc.
  *
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export interface CallHierarchyOutgoingCall {
 
@@ -96,33 +96,21 @@ export interface CallHierarchyOutgoingCall {
 }
 
 /**
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export interface CallHierarchyClientCapabilities {
 	/**
-	 * The text document client capabilities
+	 * Whether implementation supports dynamic registration. If this is set to `true`
+	 * the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
+	 * return value for the corresponding server capability as well.
 	 */
-	textDocument?: {
-		/**
-		 * Capabilities specific to the `textDocument/callHierarchy`.
-		 *
-		 * @since 3.16.0 - Proposed state
-		 */
-		callHierarchy?: {
-			/**
-			 * Whether implementation supports dynamic registration. If this is set to `true`
-			 * the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
-			 * return value for the corresponding server capability as well.
-			 */
-			dynamicRegistration?: boolean;
-		};
-	}
+	dynamicRegistration?: boolean;
 }
 
 /**
  * Call hierarchy options used during static registration.
  *
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export interface CallHierarchyOptions extends WorkDoneProgressOptions {
 }
@@ -130,27 +118,15 @@ export interface CallHierarchyOptions extends WorkDoneProgressOptions {
 /**
  * Call hierarchy options used during static or dynamic registration.
  *
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
-export interface CallHierarchyRegistrationOptions extends TextDocumentRegistrationOptions, CallHierarchyOptions {
-}
-
-/**
- * The call hierarchy server capabilities.
- *
- * @since 3.16.0 - Proposed state
- */
-export interface CallHierarchyServerCapabilities {
-	/**
-	 * The server provides Call Hierarchy support.
-	 */
-	callHierarchyProvider?: boolean | CallHierarchyOptions | (CallHierarchyRegistrationOptions & StaticRegistrationOptions);
+export interface CallHierarchyRegistrationOptions extends TextDocumentRegistrationOptions, CallHierarchyOptions, StaticRegistrationOptions {
 }
 
 /**
  * The parameter of a `textDocument/prepareCallHierarchy` request.
  *
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export interface CallHierarchyPrepareParams extends TextDocumentPositionParams, WorkDoneProgressParams {
 }
@@ -159,7 +135,7 @@ export interface CallHierarchyPrepareParams extends TextDocumentPositionParams, 
  * A request to result a `CallHierarchyItem` in a document at a given position.
  * Can be used as an input to a incoming or outgoing call hierarchy.
  *
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export namespace CallHierarchyPrepareRequest {
 	export const method: 'textDocument/prepareCallHierarchy' = 'textDocument/prepareCallHierarchy';
@@ -170,7 +146,7 @@ export namespace CallHierarchyPrepareRequest {
 /**
  * The parameter of a `callHierarchy/incomingCalls` request.
  *
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export interface CallHierarchyIncomingCallsParams extends WorkDoneProgressParams, PartialResultParams {
 	item: CallHierarchyItem;
@@ -179,7 +155,7 @@ export interface CallHierarchyIncomingCallsParams extends WorkDoneProgressParams
 /**
  * A request to resolve the incoming calls for a given `CallHierarchyItem`.
  *
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export namespace CallHierarchyIncomingCallsRequest {
 	export const method: 'callHierarchy/incomingCalls' = 'callHierarchy/incomingCalls';
@@ -190,7 +166,7 @@ export namespace CallHierarchyIncomingCallsRequest {
 /**
  * The parameter of a `callHierarchy/outgoingCalls` request.
  *
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export interface CallHierarchyOutgoingCallsParams extends WorkDoneProgressParams, PartialResultParams {
 	item: CallHierarchyItem;
@@ -199,7 +175,7 @@ export interface CallHierarchyOutgoingCallsParams extends WorkDoneProgressParams
 /**
  * A request to resolve the outgoing calls for a given `CallHierarchyItem`.
  *
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export namespace CallHierarchyOutgoingCallsRequest {
 	export const method: 'callHierarchy/outgoingCalls' = 'callHierarchy/outgoingCalls';
