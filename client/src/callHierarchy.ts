@@ -209,7 +209,6 @@ export class CallHierarchyFeature extends TextDocumentFeature<boolean | CallHier
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		//const capabilities: ServerCapabilities & CallHierarchyServerCapabilities = cap;
 		const [id, options] = this.getRegistration(documentSelector, capabilities.callHierarchyProvider);
 		if (!id || !options) {
 			return;

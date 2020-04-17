@@ -447,7 +447,7 @@ export interface TextDocumentClientCapabilities {
 	/**
 	 * Capabilities specific to the `textDocument/callHierarchy`.
 	 *
-	 * @since 3.16.0 - Proposed state
+	 * @since 3.16.0
 	 */
 	callHierarchy?: CallHierarchyClientCapabilities;
 }
