@@ -140,8 +140,7 @@ class CallHierarchyProvider implements VCallHierarchyProvider {
 					return protocol2code.asCallHierarchyItems(this.client.protocol2CodeConverter, result);
 				},
 				(error) => {
-					client.logFailedRequest(Proposed.CallHierarchyPrepareRequest.type, error);
-					return Promise.resolve(null);
+					return client.handleFailedRequest(Proposed.CallHierarchyPrepareRequest.type, error, null);
 				}
 			);
 		};
@@ -162,8 +161,7 @@ class CallHierarchyProvider implements VCallHierarchyProvider {
 					return protocol2code.asCallHierarchyIncomingCalls(client.protocol2CodeConverter, result);
 				},
 				(error) => {
-					client.logFailedRequest(Proposed.CallHierarchyIncomingCallsRequest.type, error);
-					return Promise.resolve(null);
+					return client.handleFailedRequest(Proposed.CallHierarchyIncomingCallsRequest.type, error, null);
 				}
 			);
 		};
@@ -184,8 +182,7 @@ class CallHierarchyProvider implements VCallHierarchyProvider {
 					return protocol2code.asCallHierarchyOutgoingCalls(client.protocol2CodeConverter, result);
 				},
 				(error) => {
-					client.logFailedRequest(Proposed.CallHierarchyOutgoingCallsRequest.type, error);
-					return Promise.resolve(null);
+					return client.handleFailedRequest(Proposed.CallHierarchyOutgoingCallsRequest.type, error, null);
 				}
 			);
 		};

@@ -85,6 +85,7 @@ import * as Is from './utils/is';
 import { Delayer } from './utils/async';
 import * as UUID from './utils/uuid';
 import { ProgressPart } from './progressPart';
+import { LanguageClient } from './main';
 export { Converter as Code2ProtocolConverter } from './codeConverter';
 export { Converter as Protocol2CodeConverter } from './protocolConverter';
 
@@ -1510,8 +1511,7 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 					return client.sendRequest(CompletionRequest.type, client.code2ProtocolConverter.asCompletionParams(document, position, context), token).then(
 						client.protocol2CodeConverter.asCompletionResult,
 						(error) => {
-							client.logFailedRequest(CompletionRequest.type, error);
-							return Promise.resolve([]);
+							return client.handleFailedRequest(CompletionRequest.type, error, null);
 						}
 					);
 				};
@@ -1527,8 +1527,7 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 						return client.sendRequest(CompletionResolveRequest.type, client.code2ProtocolConverter.asCompletionItem(item), token).then(
 							client.protocol2CodeConverter.asCompletionItem,
 							(error) => {
-								client.logFailedRequest(CompletionResolveRequest.type, error);
-								return Promise.resolve(item);
+								return client.handleFailedRequest(CompletionResolveRequest.type, error, item);
 							}
 						);
 					};
@@ -1573,8 +1572,7 @@ class HoverFeature extends TextDocumentFeature<boolean | HoverOptions, HoverRegi
 					return client.sendRequest(HoverRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
 						client.protocol2CodeConverter.asHover,
 						(error) => {
-							client.logFailedRequest(HoverRequest.type, error);
-							return Promise.resolve(null);
+							return client.handleFailedRequest(HoverRequest.type, error, null);
 						}
 					);
 				};
@@ -1621,8 +1619,7 @@ class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpOptions, Sig
 					return client.sendRequest(SignatureHelpRequest.type, client.code2ProtocolConverter.asSignatureHelpParams(document, position, context), token).then(
 						client.protocol2CodeConverter.asSignatureHelp,
 						(error) => {
-							client.logFailedRequest(SignatureHelpRequest.type, error);
-							return Promise.resolve(null);
+							return client.handleFailedRequest(SignatureHelpRequest.type, error, null);
 						}
 					);
 				};
@@ -1675,8 +1672,7 @@ class DefinitionFeature extends TextDocumentFeature<boolean | DefinitionOptions,
 					return client.sendRequest(DefinitionRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
 						client.protocol2CodeConverter.asDefinitionResult,
 						(error) => {
-							client.logFailedRequest(DefinitionRequest.type, error);
-							return Promise.resolve(null);
+							return client.handleFailedRequest(DefinitionRequest.type, error, null);
 						}
 					);
 				};
@@ -1716,8 +1712,7 @@ class ReferencesFeature extends TextDocumentFeature<boolean | ReferenceOptions, 
 					return client.sendRequest(ReferencesRequest.type, client.code2ProtocolConverter.asReferenceParams(document, position, options), token).then(
 						client.protocol2CodeConverter.asReferences,
 						(error) => {
-							client.logFailedRequest(ReferencesRequest.type, error);
-							return Promise.resolve([]);
+							return client.handleFailedRequest(ReferencesRequest.type, error, null);
 						}
 					);
 				};
@@ -1757,8 +1752,7 @@ class DocumentHighlightFeature extends TextDocumentFeature<boolean | DocumentHig
 					return client.sendRequest(DocumentHighlightRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
 						client.protocol2CodeConverter.asDocumentHighlights,
 						(error) => {
-							client.logFailedRequest(DocumentHighlightRequest.type, error);
-							return Promise.resolve([]);
+							return client.handleFailedRequest(DocumentHighlightRequest.type, error, null);
 						}
 					);
 				};
@@ -1820,8 +1814,7 @@ class DocumentSymbolFeature extends TextDocumentFeature<boolean | DocumentSymbol
 							}
 						},
 						(error) => {
-							client.logFailedRequest(DocumentSymbolRequest.type, error);
-							return Promise.resolve([]);
+							return client.handleFailedRequest(DocumentSymbolRequest.type, error, null);
 						}
 					);
 				};
@@ -1870,8 +1863,7 @@ class WorkspaceSymbolFeature extends WorkspaceFeature<WorkspaceSymbolRegistratio
 					return client.sendRequest(WorkspaceSymbolRequest.type, { query }, token).then(
 						client.protocol2CodeConverter.asSymbolInformations,
 						(error) => {
-							client.logFailedRequest(WorkspaceSymbolRequest.type, error);
-							return Promise.resolve([]);
+							return client.handleFailedRequest(WorkspaceSymbolRequest.type, error, null);
 						}
 					);
 				};
@@ -1944,8 +1936,7 @@ class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions,
 						return result;
 					},
 					(error) => {
-						client.logFailedRequest(CodeActionRequest.type, error);
-						return Promise.resolve([]);
+						return client.handleFailedRequest(CodeActionRequest.type, error, null);
 					}
 					);
 				};
@@ -1988,8 +1979,7 @@ class CodeLensFeature extends TextDocumentFeature<CodeLensOptions, CodeLensRegis
 					return client.sendRequest(CodeLensRequest.type, client.code2ProtocolConverter.asCodeLensParams(document), token).then(
 						client.protocol2CodeConverter.asCodeLenses,
 						(error) => {
-							client.logFailedRequest(CodeLensRequest.type, error);
-							return Promise.resolve([]);
+							return client.handleFailedRequest(CodeLensRequest.type, error, null);
 						}
 					);
 				};
@@ -2005,8 +1995,7 @@ class CodeLensFeature extends TextDocumentFeature<CodeLensOptions, CodeLensRegis
 						return client.sendRequest(CodeLensResolveRequest.type, client.code2ProtocolConverter.asCodeLens(codeLens), token).then(
 							client.protocol2CodeConverter.asCodeLens,
 							(error) => {
-								client.logFailedRequest(CodeLensResolveRequest.type, error);
-								return codeLens;
+								return client.handleFailedRequest(CodeLensResolveRequest.type, error, codeLens);
 							}
 						);
 					};
@@ -2051,8 +2040,7 @@ class DocumentFormattingFeature extends TextDocumentFeature<boolean | DocumentFo
 					return client.sendRequest(DocumentFormattingRequest.type, params, token).then(
 						client.protocol2CodeConverter.asTextEdits,
 						(error) => {
-							client.logFailedRequest(DocumentFormattingRequest.type, error);
-							return Promise.resolve([]);
+							return client.handleFailedRequest(DocumentFormattingRequest.type, error, null);
 						}
 					);
 				};
@@ -2097,8 +2085,7 @@ class DocumentRangeFormattingFeature extends TextDocumentFeature<boolean | Docum
 					return client.sendRequest(DocumentRangeFormattingRequest.type, params, token).then(
 						client.protocol2CodeConverter.asTextEdits,
 						(error) => {
-							client.logFailedRequest(DocumentRangeFormattingRequest.type, error);
-							return Promise.resolve([]);
+							return client.handleFailedRequest(DocumentRangeFormattingRequest.type, error, null);
 						}
 					);
 				};
@@ -2144,8 +2131,7 @@ class DocumentOnTypeFormattingFeature extends TextDocumentFeature<DocumentOnType
 					return client.sendRequest(DocumentOnTypeFormattingRequest.type, params, token).then(
 						client.protocol2CodeConverter.asTextEdits,
 						(error) => {
-							client.logFailedRequest(DocumentOnTypeFormattingRequest.type, error);
-							return Promise.resolve([]);
+							return client.handleFailedRequest(DocumentOnTypeFormattingRequest.type, error, null);
 						}
 					);
 				};
@@ -2197,8 +2183,7 @@ class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameR
 					return client.sendRequest(RenameRequest.type, params, token).then(
 						client.protocol2CodeConverter.asWorkspaceEdit,
 						(error: ResponseError<void>) => {
-							client.logFailedRequest(RenameRequest.type, error);
-							return Promise.reject(new Error(error.message));
+							return client.handleFailedRequest(RenameRequest.type, error, null);
 						}
 					);
 				};
@@ -2228,8 +2213,7 @@ class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameR
 							return Promise.reject(new Error(`The element can't be renamed.`));
 						},
 						(error: ResponseError<void>) => {
-							client.logFailedRequest(PrepareRenameRequest.type, error);
-							return Promise.reject(new Error(error.message));
+							return client.handleFailedRequest(PrepareRenameRequest.type, error, undefined);
 						}
 						);
 					};
@@ -2272,8 +2256,7 @@ class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkOptions, Docum
 					return client.sendRequest(DocumentLinkRequest.type, client.code2ProtocolConverter.asDocumentLinkParams(document), token).then(
 						client.protocol2CodeConverter.asDocumentLinks,
 						(error: ResponseError<void>) => {
-							client.logFailedRequest(DocumentLinkRequest.type, error);
-							return Promise.resolve([]);
+							return client.handleFailedRequest(DocumentLinkRequest.type, error, null);
 						}
 					);
 				};
@@ -2289,8 +2272,7 @@ class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkOptions, Docum
 						return client.sendRequest(DocumentLinkResolveRequest.type, client.code2ProtocolConverter.asDocumentLink(link), token).then(
 							client.protocol2CodeConverter.asDocumentLink,
 							(error: ResponseError<void>) => {
-								client.logFailedRequest(DocumentLinkResolveRequest.type, error);
-								return Promise.resolve(link);
+								return client.handleFailedRequest(DocumentLinkResolveRequest.type, error, link);
 							}
 						);
 					};
@@ -2463,7 +2445,7 @@ class ExecuteCommandFeature implements DynamicFeature<ExecuteCommandRegistration
 			return client.sendRequest(ExecuteCommandRequest.type, params).then(
 				undefined,
 				(error) => {
-					client.logFailedRequest(ExecuteCommandRequest.type, error);
+					return client.handleFailedRequest(ExecuteCommandRequest.type, error, undefined);
 				}
 			);
 		};
@@ -3481,11 +3463,24 @@ export abstract class BaseLanguageClient {
 		return Is.asPromise(Workspace.applyEdit(this._p2c.asWorkspaceEdit(params.edit)).then((value) => { return { applied: value }; }));
 	}
 
-	public logFailedRequest(type: RPCMessageType, error: any): void {
+	public handleFailedRequest<T>(type: RPCMessageType, error: any, defaultValue: T): T {
 		// If we get a request cancel or a content modified don't log anything.
-		if (error instanceof ResponseError && (error.code === ErrorCodes.RequestCancelled || error.code === ErrorCodes.ContentModified)) {
-			return;
+		if (error instanceof ResponseError) {
+			if (error.code === ErrorCodes.RequestCancelled) {
+				throw this.makeCancelError();
+			} else if (error.code === ErrorCodes.ContentModified) {
+				return defaultValue;
+			}
 		}
 		this.error(`Request ${type.method} failed.`, error);
+		throw error;
 	}
+
+	private static Canceled = 'Canceled';
+	private makeCancelError(): Error {
+		const result = new Error(LanguageClient.Canceled);
+		result.name = LanguageClient.Canceled;
+		return result;
+	}
+
 }

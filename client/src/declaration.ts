@@ -55,8 +55,7 @@ export class DeclarationFeature extends TextDocumentFeature<boolean | Declaratio
 					return client.sendRequest(DeclarationRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
 						client.protocol2CodeConverter.asDeclarationResult,
 						(error) => {
-							client.logFailedRequest(DeclarationRequest.type, error);
-							return Promise.resolve(null);
+							return client.handleFailedRequest(DeclarationRequest.type, error, null);
 						}
 					);
 				};
