@@ -2097,8 +2097,9 @@ export interface CodeActionClientCapabilities {
 	dynamicRegistration?: boolean;
 
 	/**
-	 * The client support code action literals as a valid
-	 * response of the `textDocument/codeAction` request.
+	 * The client support code action literals of type `CodeAction` as a valid
+	 * response of the `textDocument/codeAction` request. If the property is not
+	 * set the request can only return `Command` literals.
 	 *
 	 * @since 3.8.0
 	 */
