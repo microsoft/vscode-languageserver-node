@@ -47,9 +47,9 @@ import {
 
 import {
 	CallHierarchyClientCapabilities, CallHierarchyOptions, CallHierarchyRegistrationOptions,
-	CallHierarchyIncomingCall, CallHierarchyIncomingCallsParams, CallHierarchyIncomingCallsRequest,
-	CallHierarchyOutgoingCall, CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCallsRequest,
-	CallHierarchyPrepareParams, CallHierarchyPrepareRequest, CallHierarchyItem
+	CallHierarchyIncomingCallsParams, CallHierarchyIncomingCallsRequest,
+	CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCallsRequest,
+	CallHierarchyPrepareParams, CallHierarchyPrepareRequest
 } from './protocol.callHierarchy';
 
 // @ts-ignore: to avoid inlining LocatioLink as dynamic import
@@ -2764,9 +2764,9 @@ export {
 	WorkDoneProgressBegin, WorkDoneProgressReport, WorkDoneProgressEnd, WorkDoneProgress, WorkDoneProgressCreateParams,
 	WorkDoneProgressCreateRequest, WorkDoneProgressCancelParams, WorkDoneProgressCancelNotification,
 	CallHierarchyClientCapabilities, CallHierarchyOptions, CallHierarchyRegistrationOptions,
-	CallHierarchyIncomingCall, CallHierarchyIncomingCallsParams, CallHierarchyIncomingCallsRequest,
-	CallHierarchyOutgoingCall, CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCallsRequest,
-	CallHierarchyPrepareParams, CallHierarchyPrepareRequest, CallHierarchyItem
+	CallHierarchyIncomingCallsParams, CallHierarchyIncomingCallsRequest,
+	CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCallsRequest,
+	CallHierarchyPrepareParams, CallHierarchyPrepareRequest,
 };
 
 // To be backwards compatible
