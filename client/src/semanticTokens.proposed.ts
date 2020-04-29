@@ -76,7 +76,7 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Propose
 
 	public fillClientCapabilities(cap: ClientCapabilities): void {
 		const capabilites: ClientCapabilities & Proposed.SemanticTokensClientCapabilities = cap as any;
-		let capability = ensure(ensure(capabilites, 'textDocument')!, 'semanticTokens')!;
+		const capability = ensure(ensure(capabilites, 'textDocument')!, 'semanticTokens')!;
 		capability.dynamicRegistration = true;
 		capability.tokenTypes = [
 			Proposed.SemanticTokenTypes.comment,
@@ -111,7 +111,7 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Propose
 
 	public initialize(cap: ServerCapabilities, documentSelector: DocumentSelector): void {
 		const capabilities: ServerCapabilities & Proposed.SemanticTokensServerCapabilities = cap as any;
-		let [id, options] = this.getRegistration(documentSelector, capabilities.semanticTokensProvider);
+		const [id, options] = this.getRegistration(documentSelector, capabilities.semanticTokensProvider);
 		if (!id || !options) {
 			return;
 		}
