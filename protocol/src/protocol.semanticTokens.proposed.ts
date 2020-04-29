@@ -16,26 +16,28 @@ import { ProtocolRequestType } from './messages';
  * @since 3.16.0 - Proposed state
  */
 export enum SemanticTokenTypes {
-	comment = 'comment',
+	namespace = 'namespace',
+	type = 'type',
+	class = 'class',
+	enum = 'enum',
+	interface = 'interface',
+	struct = 'struct',
+	typeParameter = 'typeParameter',
+	parameter = 'parameter',
+	variable = 'variable',
+	property = 'property',
+	enumMember = 'enumMember',
+	event = 'event',
+	function = 'function',
+	member = 'member',
+	macro = 'macro',
 	keyword = 'keyword',
+	modifier = 'modifier',
+	comment = 'comment',
 	string = 'string',
 	number = 'number',
 	regexp = 'regexp',
-	operator = 'operator',
-	namespace = 'namespace',
-	type = 'type',
-	struct = 'struct',
-	class = 'class',
-	interface = 'interface',
-	enum = 'enum',
-	typeParameter = 'typeParameter',
-	function = 'function',
-	member = 'member',
-	property = 'property',
-	macro = 'macro',
-	variable = 'variable',
-	parameter = 'parameter',
-	label = 'label'
+	operator = 'operator'
 }
 
 /**
@@ -46,13 +48,17 @@ export enum SemanticTokenTypes {
  * @since 3.16.0 - Proposed state
  */
 export enum SemanticTokenModifiers {
-	documentation = 'documentation',
 	declaration = 'declaration',
 	definition = 'definition',
+	readonly = 'readonly',
 	static = 'static',
-	abstract = 'abstract',
 	deprecated = 'deprecated',
-	readonly = 'readonly'
+	abstract = 'abstract',
+	async = 'async',
+	import = 'import',
+	modification = 'modification',
+	documentation = 'documentation',
+	defaultLibrary = 'defaultLibrary'
 }
 
 /**
