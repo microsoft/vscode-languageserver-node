@@ -281,7 +281,7 @@ export interface ErrorHandler {
 
 class DefaultErrorHandler implements ErrorHandler {
 
-	private restarts: number[];
+	private readonly restarts: number[];
 
 	constructor(private name: string) {
 		this.restarts = [];
