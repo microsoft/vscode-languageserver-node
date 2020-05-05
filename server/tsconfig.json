@@ -1,18 +1,22 @@
 {
 	"extends": "../tsconfig.base.json",
 	"compilerOptions": {
-		"target": "es2017",
-		"module": "commonjs",
-		"moduleResolution": "node",
+		"incremental": true,
+		"composite": true,
+		"tsBuildInfoFile":"./lib/tsconfig.tsbuildInfo",
 		"sourceMap": true,
 		"declaration": true,
 		"stripInternal": true,
+		"target": "es2017",
+		"module": "commonjs",
+		"moduleResolution": "node",
 		"lib": [ "es2017" ],
-		"outDir": "lib",
-		"incremental": true,
-		"tsBuildInfoFile":"./lib/tsconfig.tsbuildInfo",
-		"rootDir": "src"
+		"rootDir": "src",
+		"outDir": "lib"
 	},
+	"references": [
+		{ "path": "../protocol/tsconfig.json" }
+	],
 	"include": [
 		"src"
 	]

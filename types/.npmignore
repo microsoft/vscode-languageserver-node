@@ -2,6 +2,7 @@
 lib/**/test/
 lib/**/*.map
 lib/tsconfig.tsbuildInfo
+lib/tsconfig-watch.tsbuildInfo
 src/
 test/
 .eslintrc*

@@ -79,33 +79,41 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Propose
 		const capability = ensure(ensure(capabilites, 'textDocument')!, 'semanticTokens')!;
 		capability.dynamicRegistration = true;
 		capability.tokenTypes = [
-			Proposed.SemanticTokenTypes.comment,
-			Proposed.SemanticTokenTypes.keyword,
-			Proposed.SemanticTokenTypes.number,
-			Proposed.SemanticTokenTypes.regexp,
-			Proposed.SemanticTokenTypes.operator,
-			Proposed.SemanticTokenTypes.namespace,
-			Proposed.SemanticTokenTypes.type,
-			Proposed.SemanticTokenTypes.struct,
-			Proposed.SemanticTokenTypes.class,
-			Proposed.SemanticTokenTypes.interface,
-			Proposed.SemanticTokenTypes.enum,
-			Proposed.SemanticTokenTypes.typeParameter,
-			Proposed.SemanticTokenTypes.function,
-			Proposed.SemanticTokenTypes.member,
-			Proposed.SemanticTokenTypes.macro,
-			Proposed.SemanticTokenTypes.variable,
-			Proposed.SemanticTokenTypes.parameter,
-			Proposed.SemanticTokenTypes.property,
-			Proposed.SemanticTokenTypes.label
+    		Proposed.SemanticTokenTypes.namespace,
+    		Proposed.SemanticTokenTypes.type,
+    		Proposed.SemanticTokenTypes.class,
+    		Proposed.SemanticTokenTypes.enum,
+    		Proposed.SemanticTokenTypes.interface,
+    		Proposed.SemanticTokenTypes.struct,
+    		Proposed.SemanticTokenTypes.typeParameter,
+    		Proposed.SemanticTokenTypes.parameter,
+    		Proposed.SemanticTokenTypes.variable,
+    		Proposed.SemanticTokenTypes.property,
+    		Proposed.SemanticTokenTypes.enumMember,
+    		Proposed.SemanticTokenTypes.event,
+    		Proposed.SemanticTokenTypes.function,
+    		Proposed.SemanticTokenTypes.member,
+    		Proposed.SemanticTokenTypes.macro,
+    		Proposed.SemanticTokenTypes.keyword,
+    		Proposed.SemanticTokenTypes.modifier,
+    		Proposed.SemanticTokenTypes.comment,
+    		Proposed.SemanticTokenTypes.string,
+    		Proposed.SemanticTokenTypes.number,
+    		Proposed.SemanticTokenTypes.regexp,
+    		Proposed.SemanticTokenTypes.operator
 		];
 		capability.tokenModifiers = [
-			Proposed.SemanticTokenModifiers.declaration,
-			Proposed.SemanticTokenModifiers.documentation,
-			Proposed.SemanticTokenModifiers.static,
-			Proposed.SemanticTokenModifiers.abstract,
-			Proposed.SemanticTokenModifiers.deprecated,
-			Proposed.SemanticTokenModifiers.readonly
+    		Proposed.SemanticTokenModifiers.declaration,
+    		Proposed.SemanticTokenModifiers.definition,
+    		Proposed.SemanticTokenModifiers.readonly,
+    		Proposed.SemanticTokenModifiers.static,
+    		Proposed.SemanticTokenModifiers.deprecated,
+    		Proposed.SemanticTokenModifiers.abstract,
+    		Proposed.SemanticTokenModifiers.async,
+    		Proposed.SemanticTokenModifiers.import,
+    		Proposed.SemanticTokenModifiers.modification,
+    		Proposed.SemanticTokenModifiers.documentation,
+    		Proposed.SemanticTokenModifiers.defaultLibrary
 		];
 	}
 

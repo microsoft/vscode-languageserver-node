@@ -1,17 +1,18 @@
 {
 	"extends": "../tsconfig.base.json",
 	"compilerOptions": {
+		"incremental": true,
+		"composite": true,
+		"tsBuildInfoFile":"./lib/tsconfig.tsbuildInfo",
+		"sourceMap": true,
+		"declaration": true,
+		"stripInternal": true,
 		"target": "es2017",
 		"module": "commonjs",
 		"moduleResolution": "node",
-		"sourceMap": false,
-		"declaration": true,
-		"stripInternal": true,
 		"lib": [ "es2017" ],
 		"rootDir": "src",
-		"outDir": "lib",
-		"incremental": true,
-		"tsBuildInfoFile":"./lib/tsconfig.tsbuildInfo"
+		"outDir": "lib"
 	},
 	"include": [
 		"src"
