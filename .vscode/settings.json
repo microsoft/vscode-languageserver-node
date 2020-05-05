@@ -33,8 +33,6 @@
 		"./client",
 		"./client-tests"
 	],
-
-	"npm.autoDetect": "off",
 	"typescript.tsc.autoDetect": "off",
 	"spellright.language": [
 		"en"

@@ -2,249 +2,43 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "compile",
-			"dependsOn": [
-				"compile:server",
-				"compile:client"
+			"label": "npm: watch",
+			"type": "npm",
+			"script": "watch",
+			"problemMatcher": [
+				"$tsc-watch"
 			],
-			"group": {
-				"kind": "build",
-				"isDefault": true
+			"group": "build",
+			"isBackground": true,
+			"presentation": {
+				"panel": "dedicated",
+				"reveal": "never"
+			}
+		},
+		{
+			"label": "npm: compile",
+			"type": "npm",
+			"script": "compile",
+			"problemMatcher": [
+				"$tsc"
+			],
+			"presentation": {
+				"panel": "dedicated",
+				"reveal": "silent"
+			}
+		},
+		{
+			"label": "npm: clean",
+			"type": "npm",
+			"script": "clean",
+			"presentation": {
+				"reveal": "never",
+				"focus": false,
+				"panel": "shared",
+				"showReuseMessage": true,
+				"clear": false
 			},
 			"problemMatcher": []
-		},
-		{
-			"label": "compile:types",
-			"type": "shell",
-			"command": "npm run compile:types",
-			"group": "build",
-			"presentation": {
-				"panel": "dedicated",
-				"reveal": "never"
-			},
-			"problemMatcher": [
-				"$tsc"
-			]
-		},
-		{
-			"label": "compile:textDocument",
-			"type": "shell",
-			"command": "npm run compile:textDocument",
-			"group": "build",
-			"presentation": {
-				"panel": "dedicated",
-				"reveal": "never"
-			},
-			"problemMatcher": [
-				"$tsc"
-			]
-		},
-		{
-			"label": "compile:jsonrpc",
-			"type": "shell",
-			"command": "npm run compile:jsonrpc",
-			"group": "build",
-			"presentation": {
-				"panel": "dedicated",
-				"reveal": "never"
-			},
-			"problemMatcher": [
-				"$tsc"
-			]
-		},
-		{
-			"label": "compile:protocol",
-			"type": "shell",
-			"command": "npm run compile:protocol",
-			"group": "build",
-			"presentation": {
-				"panel": "dedicated",
-				"reveal": "never"
-			},
-			"problemMatcher": [
-				"$tsc"
-			],
-			"dependsOn": [
-				"compile:types",
-				"compile:jsonrpc"
-			]
-		},
-		{
-			"label": "compile:server",
-			"type": "shell",
-			"command": "npm run compile:server",
-			"group": "build",
-			"presentation": {
-				"panel": "dedicated",
-				"reveal": "never"
-			},
-			"problemMatcher": [
-				"$tsc"
-			],
-			"dependsOn": [
-				"compile:types",
-				"compile:jsonrpc",
-				"compile:protocol"
-			]
-		},
-		{
-			"label": "compile:client",
-			"type": "shell",
-			"command": "npm run compile:client",
-			"group": "build",
-			"presentation": {
-				"panel": "dedicated",
-				"reveal": "never"
-			},
-			"problemMatcher": [
-				"$tsc"
-			],
-			"dependsOn": [
-				"compile:types",
-				"compile:jsonrpc",
-				"compile:protocol"
-			]
-		},
-		{
-			"label": "compile:client-tests",
-			"type": "shell",
-			"command": "npm run compile:client-tests",
-			"group": "build",
-			"presentation": {
-				"panel": "dedicated",
-				"reveal": "never"
-			},
-			"problemMatcher": [
-				"$tsc"
-			],
-			"dependsOn": [
-				"compile:client"
-			]
-		},
-		{
-			"label": "watch",
-			"dependsOn": [
-				"watch:types",
-				"watch:textDocument",
-				"watch:jsonrpc",
-				"watch:protocol",
-				"watch:server",
-				"watch:client",
-				"watch:client-tests"
-			],
-			"problemMatcher": []
-		},
-		{
-			"label": "watch:types",
-			"type": "shell",
-			"command": "npm run watch:types",
-			"group": "build",
-			"presentation": {
-				"panel": "dedicated",
-				"reveal": "never"
-			},
-			"isBackground": true,
-			"problemMatcher": [
-				"$tsc-watch"
-			]
-		},
-		{
-			"label": "watch:textDocument",
-			"type": "shell",
-			"command": "npm run watch:textDocument",
-			"group": "build",
-			"presentation": {
-				"panel": "dedicated",
-				"reveal": "never"
-			},
-			"isBackground": true,
-			"problemMatcher": [
-				"$tsc-watch"
-			]
-		},
-		{
-			"label": "watch:jsonrpc",
-			"type": "shell",
-			"command": "npm run watch:jsonrpc",
-			"group": "build",
-			"presentation": {
-				"panel": "dedicated",
-				"reveal": "never"
-			},
-			"isBackground": true,
-			"problemMatcher": [
-				"$tsc-watch"
-			]
-		},
-		{
-			"label": "watch:protocol",
-			"type": "shell",
-			"command": "npm run watch:protocol",
-			"group": "build",
-			"presentation": {
-				"panel": "dedicated",
-				"reveal": "never"
-			},
-			"isBackground": true,
-			"problemMatcher": [
-				"$tsc-watch"
-			]
-		},
-		{
-			"label": "watch:server",
-			"type": "shell",
-			"command": "npm run watch:server",
-			"group": "build",
-			"presentation": {
-				"panel": "dedicated",
-				"reveal": "never"
-			},
-			"isBackground": true,
-			"problemMatcher": [
-				"$tsc-watch"
-			]
-		},
-		{
-			"label": "watch:client",
-			"type": "shell",
-			"command": "npm run watch:client",
-			"group": "build",
-			"presentation": {
-				"panel": "dedicated",
-				"reveal": "never"
-			},
-			"isBackground": true,
-			"problemMatcher": [
-				"$tsc-watch"
-			]
-		},
-		{
-			"label": "watch:client-tests",
-			"type": "shell",
-			"command": "npm run watch:client-tests",
-			"group": "build",
-			"presentation": {
-				"panel": "dedicated",
-				"reveal": "never"
-			},
-			"isBackground": true,
-			"problemMatcher": [
-				"$tsc-watch"
-			]
-		},
-		{
-			"label": "watch:testbed",
-			"type": "shell",
-			"command": "npm run watch:client-tests",
-			"group": "build",
-			"presentation": {
-				"panel": "dedicated",
-				"reveal": "never"
-			},
-			"isBackground": true,
-			"problemMatcher": [
-				"$tsc-watch"
-			]
 		}
 	]
 }
