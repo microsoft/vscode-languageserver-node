@@ -5,15 +5,15 @@
 			"label": "npm: watch",
 			"type": "npm",
 			"script": "watch",
-			"problemMatcher": [
-				"$tsc-watch"
-			],
 			"group": "build",
 			"isBackground": true,
 			"presentation": {
 				"panel": "dedicated",
 				"reveal": "never"
-			}
+			},
+			"problemMatcher": [
+				"$tsc-watch"
+			]
 		},
 		{
 			"label": "npm: compile",

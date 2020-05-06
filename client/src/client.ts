@@ -1598,6 +1598,7 @@ class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpOptions, Sig
 		config.dynamicRegistration = true;
 		config.signatureInformation = { documentationFormat: [MarkupKind.Markdown, MarkupKind.PlainText] };
 		config.signatureInformation.parameterInformation = { labelOffsetSupport: true };
+		config.signatureInformation.activeParameterSupport = true;
 		config.contextSupport = true;
 	}
 

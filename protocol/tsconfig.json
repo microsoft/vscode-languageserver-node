@@ -15,10 +15,10 @@
 		"outDir": "lib",
 		"baseUrl": "./src",
 		"paths": {
-			"vscode-languageserver-types": ["../../types/lib/main"],
-			"vscode-languageserver-types/*": ["../../types/lib"],
-			"vscode-jsonrpc": ["../../jsonrpc/lib/main"],
-			"vscode-jsonrpc/*": ["../../jsonrpc/lib"]
+			"vscode-languageserver-types": ["../../types/src/main"],
+			"vscode-languageserver-types/*": ["../../types/src/*"],
+			"vscode-jsonrpc": ["../../jsonrpc/src/main"],
+			"vscode-jsonrpc/*": ["../../jsonrpc/src/*"]
 		}
 	},
 	"references": [

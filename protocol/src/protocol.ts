@@ -1770,6 +1770,14 @@ export interface SignatureHelpClientCapabilities {
 			 */
 			labelOffsetSupport?: boolean;
 		};
+
+		/**
+		 * The client support the `activeParameter` property on `SignatureInformation`
+		 * literal.
+		 *
+		 * @since 3.16.0 - proposed state
+		 */
+		activeParameterSupport?: boolean;
 	};
 
 	/**

@@ -1833,6 +1833,15 @@ export interface SignatureInformation {
 	 * The parameters of this signature.
 	 */
 	parameters?: ParameterInformation[];
+
+	/**
+	 * The index of the active parameter.
+	 *
+	 * If provided, this is used in place of `SignatureHelp.activeSignature`.
+	 *
+	 * @since 3.16.0 - proposed state
+	 */
+	activeParameter?: number;
 }
 
 /**

@@ -15,10 +15,10 @@
 		"outDir": "lib",
 		"baseUrl": "./src",
 		"paths": {
-			"vscode-languageclient": ["../../client/lib/main"],
-			"vscode-languageclient/*": ["../../client/lib"],
-			"vscode-languageserver": ["../../server/lib/main"],
-			"vscode-languageserver/*": ["../../server/lib"]
+			"vscode-languageclient": ["../../client/src/main"],
+			"vscode-languageclient/lib/*": ["../../client/src/*"],
+			"vscode-languageserver": ["../../server/src/main"],
+			"vscode-languageserver/lib/*": ["../../server/src/*"]
 		}
 	},
 	"references": [

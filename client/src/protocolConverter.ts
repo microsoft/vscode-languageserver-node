@@ -11,6 +11,13 @@ import ProtocolCompletionItem from './protocolCompletionItem';
 import ProtocolCodeLens from './protocolCodeLens';
 import ProtocolDocumentLink from './protocolDocumentLink';
 
+// Proposed API.
+declare module 'vscode' {
+	export interface SignatureInformation {
+		activeParameter?: number;
+	}
+}
+
 interface InsertReplaceRange {
 	inserting: code.Range;
 	replacing: code.Range;
@@ -520,9 +527,10 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 
 	function asSignatureInformation(item: ls.SignatureInformation): code.SignatureInformation {
 		let result = new code.SignatureInformation(item.label);
-		if (item.documentation) { result.documentation = asDocumentation(item.documentation); }
-		if (item.parameters) { result.parameters = asParameterInformations(item.parameters); }
-		return result;
+		if (item.documentation !== undefined) { result.documentation = asDocumentation(item.documentation); }
+		if (item.parameters !== undefined) { result.parameters = asParameterInformations(item.parameters); }
+		if (item.activeParameter !== undefined) { result.activeParameter = item.activeParameter; }
+		{return result;}
 	}
 
 	function asParameterInformations(item: ls.ParameterInformation[]): code.ParameterInformation[] {
