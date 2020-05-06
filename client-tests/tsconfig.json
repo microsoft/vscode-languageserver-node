@@ -12,8 +12,20 @@
 		"moduleResolution": "node",
 		"lib": [ "es2017" ],
 		"rootDir": "src",
-		"outDir": "lib"
+		"outDir": "lib",
+		"baseUrl": "./src",
+		"paths": {
+			"vscode-languageclient": ["../../client/lib/main"],
+			"vscode-languageclient/*": ["../../client/lib"],
+			"vscode-languageserver": ["../../server/lib/main"],
+			"vscode-languageserver/*": ["../../server/lib"]
+		}
 	},
+	"references": [
+		{ "path": "../protocol/tsconfig.json" },
+		{ "path": "../client/tsconfig.json" },
+		{ "path": "../server/tsconfig.json" }
+	],
 	"include": [
 		"src"
 	]

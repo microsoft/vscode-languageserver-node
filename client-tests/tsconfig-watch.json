@@ -6,6 +6,8 @@
 		"tsBuildInfoFile":"./lib/tsconfig-watch.tsbuildInfo"
 	},
 	"references": [
-		{ "path": "../protocol/tsconfig-watch.json" }
+		{ "path": "../protocol/tsconfig-watch.json" },
+		{ "path": "../client/tsconfig-watch.json" },
+		{ "path": "../server/tsconfig-watch.json" }
 	]
 }

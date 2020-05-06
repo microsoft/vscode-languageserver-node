@@ -51,6 +51,7 @@ import {
 
 import { Configuration, ConfigurationFeature } from './configuration';
 import { WorkspaceFolders, WorkspaceFoldersFeature } from './workspaceFolders';
+import { CallHierarchyFeature, CallHierarchy } from './callHierarchy';
 
 import { ProgressFeature, WindowProgress, WorkDoneProgressReporter, ResultProgressReporter, attachWorkDone, attachPartialResult } from './progress';
 export { WorkDoneProgressReporter, ResultProgressReporter };
@@ -1018,7 +1019,7 @@ export interface _Languages {
 	attachPartialResultProgress<PR>(type: ProgressType<PR>, params: PartialResultParams): ResultProgressReporter<PR> | undefined;
 }
 
-export class LanguagesImpl implements Remote, _Languages {
+export class _LanguagesImpl implements Remote, _Languages {
 	private _connection: IConnection;
 
 	constructor() {
@@ -1050,7 +1051,9 @@ export class LanguagesImpl implements Remote, _Languages {
 	}
 }
 
-export type Languages = _Languages;
+export type Languages = _Languages & CallHierarchy;
+const LanguagesImpl: new () => Languages = CallHierarchyFeature(_LanguagesImpl) as (new () => Languages);
+
 
 export interface ServerRequestHandler<P, R, PR, E> {
 	(params: P, token: CancellationToken, workDoneProgress: WorkDoneProgressReporter, resultProgress?: ResultProgressReporter<PR>): HandlerResult<R, E>;
@@ -1534,19 +1537,19 @@ export function combineClientFeatures<O, T>(one: ClientFeature<O>, two: ClientFe
 		return two(one(Base)) as any;
 	};
 }
-export type WindowFeature<P> = Feature<RemoteWindow, P>;
+export type WindowFeature<P> = Feature<_RemoteWindow, P>;
 export function combineWindowFeatures<O, T>(one: WindowFeature<O>, two: WindowFeature<T>): WindowFeature<O & T> {
 	return function (Base: new () => RemoteWindow): new () => RemoteWindow & O & T {
 		return two(one(Base)) as any;
 	};
 }
-export type WorkspaceFeature<P> = Feature<RemoteWorkspace, P>;
+export type WorkspaceFeature<P> = Feature<_RemoteWorkspace, P>;
 export function combineWorkspaceFeatures<O, T>(one: WorkspaceFeature<O>, two: WorkspaceFeature<T>): WorkspaceFeature<O & T> {
 	return function (Base: new () => RemoteWorkspace): new () => RemoteWorkspace & O & T {
 		return two(one(Base)) as any;
 	};
 }
-export type LanguagesFeature<P> = Feature<Languages, P>;
+export type LanguagesFeature<P> = Feature<_Languages, P>;
 export function combineLanguagesFeatures<O, T>(one: LanguagesFeature<O>, two: LanguagesFeature<T>): LanguagesFeature<O & T> {
 	return function (Base: new () => Languages): new () => Languages & O & T {
 		return two(one(Base)) as any;
@@ -1743,7 +1746,7 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 	const client = (factories && factories.client ? new (factories.client(RemoteClientImpl))() : new RemoteClientImpl()) as RemoteClientImpl & PClient;
 	const remoteWindow = (factories && factories.window ? new (factories.window(RemoteWindowImpl))() : new RemoteWindowImpl()) as Remote & RemoteWindow & PWindow;
 	const workspace = (factories && factories.workspace ? new (factories.workspace(RemoteWorkspaceImpl))() : new RemoteWorkspaceImpl()) as Remote & RemoteWorkspace & PWorkspace;
-	const languages = (factories && factories.languages ? new (factories.languages(LanguagesImpl))() : new LanguagesImpl()) as LanguagesImpl & Languages & PLanguages;
+	const languages = (factories && factories.languages ? new (factories.languages(LanguagesImpl))() : new LanguagesImpl()) as Remote & Languages & PLanguages;
 	const allRemotes: Remote[] = [logger, tracer, telemetry, client, remoteWindow, workspace, languages];
 
 	function asPromise<T>(value: Promise<T>): Promise<T>;

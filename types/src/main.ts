@@ -2688,7 +2688,7 @@ export interface CallHierarchyIncomingCall {
 	from: CallHierarchyItem;
 
 	/**
-	 * The range at which at which the calls appears. This is relative to the caller
+	 * The ranges at which the calls appear. This is relative to the caller
 	 * denoted by [`this.from`](#CallHierarchyIncomingCall.from).
 	 */
 	fromRanges: Range[];

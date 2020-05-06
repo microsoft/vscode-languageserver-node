@@ -8,7 +8,7 @@ import {
 	createConnection, IConnection, InitializeParams, ServerCapabilities, CompletionItemKind, ResourceOperationKind, FailureHandlingKind,
 	DiagnosticTag, CompletionItemTag, TextDocumentSyncKind, MarkupKind, SignatureHelp, SignatureInformation, ParameterInformation,
 	Location, Range, DocumentHighlight, DocumentHighlightKind, CodeAction, Command, TextEdit, Position, DocumentLink,
-	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange
+	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, SymbolKind
 } from '../../../server/lib/main';
 
 import { URI } from 'vscode-uri';
@@ -71,7 +71,8 @@ connection.onInitialize((params: InitializeParams): any => {
 		foldingRangeProvider: true,
 		implementationProvider: true,
 		selectionRangeProvider: true,
-		typeDefinitionProvider: true
+		typeDefinitionProvider: true,
+		callHierarchyProvider: true
 	};
 	return { capabilities, customResults: { hello: 'world' } };
 });
@@ -212,6 +213,36 @@ connection.onTypeDefinition((params) => {
 	assert.equal(params.position.line, 1);
 	assert.equal(params.position.character, 1);
 	return { uri: params.textDocument.uri, range: { start: { line: 2, character: 2}, end: {line: 3, character: 3 }}};
+});
+
+connection.languages.callHierarchy.onPrepare((params) => {
+	return [
+		{
+			kind: SymbolKind.Function,
+			name: 'name',
+			range: Range.create(1, 1, 1, 1),
+			selectionRange: Range.create(2, 2, 2, 2),
+			uri: params.textDocument.uri
+		}
+	];
+});
+
+connection.languages.callHierarchy.onIncomingCalls((params) => {
+	return [
+		{
+			from: params.item,
+			fromRanges: [ Range.create(1, 1, 1, 1)]
+		}
+	];
+});
+
+connection.languages.callHierarchy.onOutgoingCalls((params) => {
+	return [
+		{
+			to: params.item,
+			fromRanges: [ Range.create(1, 1, 1, 1)]
+		}
+	];
 });
 
 // Listen on the connection

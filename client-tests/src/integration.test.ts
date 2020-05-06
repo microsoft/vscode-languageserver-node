@@ -129,7 +129,8 @@ suite('Client integration', () => {
 				foldingRangeProvider: true,
 				implementationProvider: true,
 				selectionRangeProvider: true,
-				typeDefinitionProvider: true
+				typeDefinitionProvider: true,
+				callHierarchyProvider: true
 			},
 			customResults: {
 				'hello': 'world'
@@ -523,7 +524,7 @@ suite('Client integration', () => {
 		isArray(result, vscode.SelectionRange, 1);
 		const range = result[0];
 		rangeEqual(range.range, 1, 2, 3, 4);
-		let middlewareCalled: boolean = true;
+		let middlewareCalled: boolean = false;
 		middleware.provideSelectionRanges = (d, p, t, n) => {
 			middlewareCalled = true;
 			return n(d, p, t);
@@ -548,6 +549,45 @@ suite('Client integration', () => {
 		};
 		await provider.provideTypeDefinition(document, position, tokenSource.token);
 		middleware.provideTypeDefinition = undefined;
+		assert.strictEqual(middlewareCalled, true);
+	});
+
+	test('Call Hierarchy', async () => {
+		const provider = client.getFeature(lsclient.CallHierarchyPrepareRequest.method).getProvider(document);
+		const result = (await provider.prepareCallHierarchy(document, position, tokenSource.token)) as vscode.CallHierarchyItem[];
+
+		isArray(result, vscode.CallHierarchyItem, 1);
+		const item = result[0];
+
+		let middlewareCalled: boolean = false;
+		middleware.prepareCallHierarchy = (d, p, t, n) => {
+			middlewareCalled = true;
+			return n(d, p, t);
+		};
+		await provider.prepareCallHierarchy(document, position, tokenSource.token);
+		middleware.prepareCallHierarchy = undefined;
+		assert.strictEqual(middlewareCalled, true);
+
+		const incoming = (await provider.provideCallHierarchyIncomingCalls(item, tokenSource.token)) as vscode.CallHierarchyIncomingCall[];
+		isArray(incoming, vscode.CallHierarchyIncomingCall, 1);
+		middlewareCalled = false;
+		middleware.provideCallHierarchyIncomingCalls = (i, t, n) => {
+			middlewareCalled = true;
+			return n(i, t);
+		};
+		await provider.provideCallHierarchyIncomingCalls(item, tokenSource.token);
+		middleware.provideCallHierarchyIncomingCalls = undefined;
+		assert.strictEqual(middlewareCalled, true);
+
+		const outgoing = (await provider.provideCallHierarchyOutgoingCalls(item, tokenSource.token)) as vscode.CallHierarchyOutgoingCall[];
+		isArray(outgoing, vscode.CallHierarchyOutgoingCall, 1);
+		middlewareCalled = false;
+		middleware.provideCallHierarchyOutgingCalls = (i, t, n) => {
+			middlewareCalled = true;
+			return n(i, t);
+		};
+		await provider.provideCallHierarchyOutgoingCalls(item, tokenSource.token);
+		middleware.provideCallHierarchyOutgingCalls = undefined;
 		assert.strictEqual(middlewareCalled, true);
 	});
 });

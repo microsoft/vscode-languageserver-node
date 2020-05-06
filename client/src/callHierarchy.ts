@@ -29,7 +29,7 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 }
 
 export interface PrepareCallHierachySignature {
-	(this: void, document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VCallHierarchyItem>;
+	(this: void, document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VCallHierarchyItem | VCallHierarchyItem[]>;
 }
 
 export interface CallHierarchyIncomingCallsSignature {
@@ -41,7 +41,7 @@ export interface CallHierarchyOutgoingCallsSignature {
 }
 
 export interface CallHierarchyMiddleware {
-	prepareCallHierarchy?: (this: void, document: TextDocument, positions: VPosition, token: CancellationToken, next: PrepareCallHierachySignature) => ProviderResult<VCallHierarchyItem>;
+	prepareCallHierarchy?: (this: void, document: TextDocument, positions: VPosition, token: CancellationToken, next: PrepareCallHierachySignature) => ProviderResult<VCallHierarchyItem | VCallHierarchyItem[]>;
 	provideCallHierarchyIncomingCalls?: (this: void, item: VCallHierarchyItem, token: CancellationToken, next: CallHierarchyIncomingCallsSignature) => ProviderResult<VCallHierarchyIncomingCall[]>;
 	provideCallHierarchyOutgingCalls?: (this: void, item: VCallHierarchyItem, token: CancellationToken, next: CallHierarchyOutgoingCallsSignature) => ProviderResult<VCallHierarchyOutgoingCall[]>;
 }
@@ -68,14 +68,13 @@ namespace protocol2code {
 	}
 
 	export function asCallHierarchyItems(converter: p2c.Converter, items: null): undefined;
-	export function asCallHierarchyItems(converter: p2c.Converter, items: CallHierarchyItem[]): VCallHierarchyItem;
-	export function asCallHierarchyItems(converter: p2c.Converter, items: CallHierarchyItem[] | null): VCallHierarchyItem | undefined;
-	export function asCallHierarchyItems(converter: p2c.Converter, items: CallHierarchyItem[] | null): VCallHierarchyItem | undefined {
+	export function asCallHierarchyItems(converter: p2c.Converter, items: CallHierarchyItem[]): VCallHierarchyItem[];
+	export function asCallHierarchyItems(converter: p2c.Converter, items: CallHierarchyItem[] | null): VCallHierarchyItem[] | undefined;
+	export function asCallHierarchyItems(converter: p2c.Converter, items: CallHierarchyItem[] | null): VCallHierarchyItem[] | undefined {
 		if (items === null) {
 			return undefined;
 		}
-		let result = items.map(item => asCallHierarchyItem(converter, item));
-		return result[0];
+		return items.map(item => asCallHierarchyItem(converter, item));
 	}
 
 	export function asCallHierarchyIncomingCall(converter: p2c.Converter, item: CallHierarchyIncomingCall): VCallHierarchyIncomingCall {
@@ -135,7 +134,7 @@ class CallHierarchyProvider implements VCallHierarchyProvider {
 		this.middleware = client.clientOptions.middleware!;
 	}
 
-	public prepareCallHierarchy(document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VCallHierarchyItem> {
+	public prepareCallHierarchy(document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VCallHierarchyItem | VCallHierarchyItem[]> {
 		const client = this.client;
 		const middleware = this.middleware;
 		const prepareCallHierarchy: PrepareCallHierachySignature = (document, position, token) => {
