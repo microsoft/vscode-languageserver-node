@@ -380,6 +380,9 @@ export namespace ConnectionOptions {
 	}
 }
 
+interface RequestMessage<R, E> {
+}
+
 export interface MessageConnection {
 	sendRequest<R, E, RO>(type: RequestType0<R, E, RO>, token?: CancellationToken): Promise<R>;
 	sendRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, params: P, token?: CancellationToken): Promise<R>;
@@ -393,6 +396,13 @@ export interface MessageConnection {
 	sendRequest<P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO>(type: RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8, token?: CancellationToken): Promise<R>;
 	sendRequest<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO>(type: RequestType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8, p9: P9, token?: CancellationToken): Promise<R>;
 	sendRequest<R>(method: string, ...params: any[]): Promise<R>;
+
+	createRequestMessage<R, E, RO>(type: RequestType0<R, E, RO>, token?: CancellationToken): RequestMessage<R, E>;
+	createRequestMessage<P1, R, E, RO>(type: RequestType1<P1, R, E, RO>, token?: CancellationToken): RequestMessage<R, E>;
+	createRequestMessage<P1, P2, R, E, RO>(type: RequestType2<P1, P2, R, E, RO>, token?: CancellationToken): RequestMessage<R, E>;
+
+	sendRequests<R1, E1, R2, E2>(m1: RequestMessage<R1, E1>, m2: RequestMessage<R2, E2>): Promise<[R1, R2]>;
+	sendRequests<R1, E1, R2, E2, R3, E3>(m1: RequestMessage<R1, E1>, m2: RequestMessage<R2, E2>, m3: RequestMessage<R3, E3>): Promise<[R1, R2, R3]>;
 
 	onRequest<R, E, RO>(type: RequestType0<R, E, RO>, handler: RequestHandler0<R, E>): void;
 	onRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, handler: RequestHandler<P, R, E>): void;
