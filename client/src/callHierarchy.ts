@@ -10,7 +10,12 @@ import {
 	CallHierarchyOutgoingCall as VCallHierarchyOutgoingCall, CancellationToken, CallHierarchyProvider as VCallHierarchyProvider
 } from 'vscode';
 
-import { ClientCapabilities, ServerCapabilities, DocumentSelector, Proposed } from 'vscode-languageserver-protocol';
+import { ClientCapabilities, ServerCapabilities, DocumentSelector,
+	CallHierarchyItem, CallHierarchyOptions, CallHierarchyRegistrationOptions, CallHierarchyClientCapabilities,
+	CallHierarchyIncomingCall, CallHierarchyIncomingCallsParams, CallHierarchyIncomingCallsRequest,
+	CallHierarchyOutgoingCall, CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCallsRequest,
+	CallHierarchyPrepareRequest
+} from 'vscode-languageserver-protocol';
 
 import { TextDocumentFeature, BaseLanguageClient, Middleware } from './client';
 import * as c2p from './codeConverter';
@@ -44,9 +49,9 @@ export interface CallHierarchyMiddleware {
 namespace protocol2code {
 
 	export function asCallHierarchyItem(converter: p2c.Converter, item: null): undefined;
-	export function asCallHierarchyItem(converter: p2c.Converter, item: Proposed.CallHierarchyItem): VCallHierarchyItem;
-	export function asCallHierarchyItem(converter: p2c.Converter, item: Proposed.CallHierarchyItem | null): VCallHierarchyItem | undefined;
-	export function asCallHierarchyItem(converter: p2c.Converter, item: Proposed.CallHierarchyItem | null): VCallHierarchyItem | undefined {
+	export function asCallHierarchyItem(converter: p2c.Converter, item: CallHierarchyItem): VCallHierarchyItem;
+	export function asCallHierarchyItem(converter: p2c.Converter, item: CallHierarchyItem | null): VCallHierarchyItem | undefined;
+	export function asCallHierarchyItem(converter: p2c.Converter, item: CallHierarchyItem | null): VCallHierarchyItem | undefined {
 		if (item === null) {
 			return undefined;
 		}
@@ -63,9 +68,9 @@ namespace protocol2code {
 	}
 
 	export function asCallHierarchyItems(converter: p2c.Converter, items: null): undefined;
-	export function asCallHierarchyItems(converter: p2c.Converter, items: Proposed.CallHierarchyItem[]): VCallHierarchyItem;
-	export function asCallHierarchyItems(converter: p2c.Converter, items: Proposed.CallHierarchyItem[] | null): VCallHierarchyItem | undefined;
-	export function asCallHierarchyItems(converter: p2c.Converter, items: Proposed.CallHierarchyItem[] | null): VCallHierarchyItem | undefined {
+	export function asCallHierarchyItems(converter: p2c.Converter, items: CallHierarchyItem[]): VCallHierarchyItem;
+	export function asCallHierarchyItems(converter: p2c.Converter, items: CallHierarchyItem[] | null): VCallHierarchyItem | undefined;
+	export function asCallHierarchyItems(converter: p2c.Converter, items: CallHierarchyItem[] | null): VCallHierarchyItem | undefined {
 		if (items === null) {
 			return undefined;
 		}
@@ -73,23 +78,23 @@ namespace protocol2code {
 		return result[0];
 	}
 
-	export function asCallHierarchyIncomingCall(converter: p2c.Converter, item: Proposed.CallHierarchyIncomingCall): VCallHierarchyIncomingCall {
+	export function asCallHierarchyIncomingCall(converter: p2c.Converter, item: CallHierarchyIncomingCall): VCallHierarchyIncomingCall {
 		return new VCallHierarchyIncomingCall(
 			asCallHierarchyItem(converter, item.from),
 			converter.asRanges(item.fromRanges)
 		);
 	}
 	export function asCallHierarchyIncomingCalls(converter: p2c.Converter, items: null): undefined;
-	export function asCallHierarchyIncomingCalls(converter: p2c.Converter, items: ReadonlyArray<Proposed.CallHierarchyIncomingCall>): VCallHierarchyIncomingCall[];
-	export function asCallHierarchyIncomingCalls(converter: p2c.Converter, items: ReadonlyArray<Proposed.CallHierarchyIncomingCall> | null): VCallHierarchyIncomingCall[] | undefined;
-	export function asCallHierarchyIncomingCalls(converter: p2c.Converter, items: ReadonlyArray<Proposed.CallHierarchyIncomingCall> | null): VCallHierarchyIncomingCall[] | undefined {
+	export function asCallHierarchyIncomingCalls(converter: p2c.Converter, items: ReadonlyArray<CallHierarchyIncomingCall>): VCallHierarchyIncomingCall[];
+	export function asCallHierarchyIncomingCalls(converter: p2c.Converter, items: ReadonlyArray<CallHierarchyIncomingCall> | null): VCallHierarchyIncomingCall[] | undefined;
+	export function asCallHierarchyIncomingCalls(converter: p2c.Converter, items: ReadonlyArray<CallHierarchyIncomingCall> | null): VCallHierarchyIncomingCall[] | undefined {
 		if (items === null) {
 			return undefined;
 		}
 		return items.map(item => asCallHierarchyIncomingCall(converter, item));
 	}
 
-	export function asCallHierarchyOutgoingCall(converter: p2c.Converter, item: Proposed.CallHierarchyOutgoingCall): VCallHierarchyOutgoingCall {
+	export function asCallHierarchyOutgoingCall(converter: p2c.Converter, item: CallHierarchyOutgoingCall): VCallHierarchyOutgoingCall {
 		return new VCallHierarchyOutgoingCall(
 			asCallHierarchyItem(converter, item.to),
 			converter.asRanges(item.fromRanges)
@@ -97,9 +102,9 @@ namespace protocol2code {
 	}
 
 	export function asCallHierarchyOutgoingCalls(converter: p2c.Converter, items: null): undefined;
-	export function asCallHierarchyOutgoingCalls(converter: p2c.Converter, items: ReadonlyArray<Proposed.CallHierarchyOutgoingCall>): VCallHierarchyOutgoingCall[];
-	export function asCallHierarchyOutgoingCalls(converter: p2c.Converter, items: ReadonlyArray<Proposed.CallHierarchyOutgoingCall> | null): VCallHierarchyOutgoingCall[] | undefined;
-	export function asCallHierarchyOutgoingCalls(converter: p2c.Converter, items: ReadonlyArray<Proposed.CallHierarchyOutgoingCall> | null): VCallHierarchyOutgoingCall[] | undefined {
+	export function asCallHierarchyOutgoingCalls(converter: p2c.Converter, items: ReadonlyArray<CallHierarchyOutgoingCall>): VCallHierarchyOutgoingCall[];
+	export function asCallHierarchyOutgoingCalls(converter: p2c.Converter, items: ReadonlyArray<CallHierarchyOutgoingCall> | null): VCallHierarchyOutgoingCall[] | undefined;
+	export function asCallHierarchyOutgoingCalls(converter: p2c.Converter, items: ReadonlyArray<CallHierarchyOutgoingCall> | null): VCallHierarchyOutgoingCall[] | undefined {
 		if (items === null) {
 			return undefined;
 		}
@@ -108,8 +113,8 @@ namespace protocol2code {
 }
 
 namespace code2protocol {
-	export function asCallHierarchyItem(converter: c2p.Converter, value: VCallHierarchyItem): Proposed.CallHierarchyItem {
-		const result: Proposed.CallHierarchyItem = {
+	export function asCallHierarchyItem(converter: c2p.Converter, value: VCallHierarchyItem): CallHierarchyItem {
+		const result: CallHierarchyItem = {
 			name: value.name,
 			kind: converter.asSymbolKind(value.kind),
 			uri: converter.asUri(value.uri),
@@ -135,12 +140,12 @@ class CallHierarchyProvider implements VCallHierarchyProvider {
 		const middleware = this.middleware;
 		const prepareCallHierarchy: PrepareCallHierachySignature = (document, position, token) => {
 			const params = client.code2ProtocolConverter.asTextDocumentPositionParams(document, position);
-			return client.sendRequest(Proposed.CallHierarchyPrepareRequest.type, params, token).then(
+			return client.sendRequest(CallHierarchyPrepareRequest.type, params, token).then(
 				(result) => {
 					return protocol2code.asCallHierarchyItems(this.client.protocol2CodeConverter, result);
 				},
 				(error) => {
-					return client.handleFailedRequest(Proposed.CallHierarchyPrepareRequest.type, error, null);
+					return client.handleFailedRequest(CallHierarchyPrepareRequest.type, error, null);
 				}
 			);
 		};
@@ -153,15 +158,15 @@ class CallHierarchyProvider implements VCallHierarchyProvider {
 		const client = this.client;
 		const middleware = this.middleware;
 		const provideCallHierarchyIncomingCalls: CallHierarchyIncomingCallsSignature = (item, token) => {
-			const params: Proposed.CallHierarchyIncomingCallsParams = {
+			const params: CallHierarchyIncomingCallsParams = {
 				item:  code2protocol.asCallHierarchyItem(client.code2ProtocolConverter, item)
 			};
-			return client.sendRequest(Proposed.CallHierarchyIncomingCallsRequest.type, params, token).then(
+			return client.sendRequest(CallHierarchyIncomingCallsRequest.type, params, token).then(
 				(result) => {
 					return protocol2code.asCallHierarchyIncomingCalls(client.protocol2CodeConverter, result);
 				},
 				(error) => {
-					return client.handleFailedRequest(Proposed.CallHierarchyIncomingCallsRequest.type, error, null);
+					return client.handleFailedRequest(CallHierarchyIncomingCallsRequest.type, error, null);
 				}
 			);
 		};
@@ -174,15 +179,15 @@ class CallHierarchyProvider implements VCallHierarchyProvider {
 		const client = this.client;
 		const middleware = this.middleware;
 		const provideCallHierarchyOutgoingCalls: CallHierarchyOutgoingCallsSignature = (item, token) => {
-			const params: Proposed.CallHierarchyOutgoingCallsParams = {
+			const params: CallHierarchyOutgoingCallsParams = {
 				item: code2protocol.asCallHierarchyItem(client.code2ProtocolConverter, item)
 			};
-			return client.sendRequest(Proposed.CallHierarchyOutgoingCallsRequest.type, params, token).then(
+			return client.sendRequest(CallHierarchyOutgoingCallsRequest.type, params, token).then(
 				(result) => {
 					return protocol2code.asCallHierarchyOutgoingCalls(client.protocol2CodeConverter, result);
 				},
 				(error) => {
-					return client.handleFailedRequest(Proposed.CallHierarchyOutgoingCallsRequest.type, error, null);
+					return client.handleFailedRequest(CallHierarchyOutgoingCallsRequest.type, error, null);
 				}
 			);
 		};
@@ -192,19 +197,18 @@ class CallHierarchyProvider implements VCallHierarchyProvider {
 	}
 }
 
-export class CallHierarchyFeature extends TextDocumentFeature<boolean | Proposed.CallHierarchyOptions, Proposed.CallHierarchyRegistrationOptions, CallHierarchyProvider> {
+export class CallHierarchyFeature extends TextDocumentFeature<boolean | CallHierarchyOptions, CallHierarchyRegistrationOptions, CallHierarchyProvider> {
 	constructor(client: BaseLanguageClient) {
-		super(client, Proposed.CallHierarchyPrepareRequest.type);
+		super(client, CallHierarchyPrepareRequest.type);
 	}
 
 	public fillClientCapabilities(cap: ClientCapabilities): void {
-		const capabilites: ClientCapabilities & Proposed.CallHierarchyClientCapabilities = cap as ClientCapabilities & Proposed.CallHierarchyClientCapabilities;
+		const capabilites: ClientCapabilities & CallHierarchyClientCapabilities = cap as ClientCapabilities & CallHierarchyClientCapabilities;
 		const capability = ensure(ensure(capabilites, 'textDocument')!, 'callHierarchy')!;
 		capability.dynamicRegistration = true;
 	}
 
-	public initialize(cap: ServerCapabilities, documentSelector: DocumentSelector): void {
-		const capabilities: ServerCapabilities & Proposed.CallHierarchyServerCapabilities = cap;
+	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		const [id, options] = this.getRegistration(documentSelector, capabilities.callHierarchyProvider);
 		if (!id || !options) {
 			return;
@@ -212,7 +216,7 @@ export class CallHierarchyFeature extends TextDocumentFeature<boolean | Proposed
 		this.register(this.messages, { id: id, registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: Proposed.CallHierarchyRegistrationOptions): [Disposable, CallHierarchyProvider] {
+	protected registerLanguageProvider(options: CallHierarchyRegistrationOptions): [Disposable, CallHierarchyProvider] {
 		const client = this._client;
 		const provider = new CallHierarchyProvider(client);
 		return [Languages.registerCallHierarchyProvider(options.documentSelector!, provider), provider];

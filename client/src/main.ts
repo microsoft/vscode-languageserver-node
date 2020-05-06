@@ -32,7 +32,7 @@ import { FoldingRangeFeature } from './foldingRange';
 import { DeclarationFeature } from './declaration';
 import { SelectionRangeFeature } from './selectionRange';
 import { ProgressFeature } from './progress';
-import { CallHierarchyFeature } from './callHierarchy.proposed';
+import { CallHierarchyFeature } from './callHierarchy';
 import { SemanticTokensFeature } from './semanticTokens.proposed';
 
 import * as Is from './utils/is';
@@ -463,6 +463,7 @@ export class LanguageClient extends BaseLanguageClient {
 		this.registerFeature(new DeclarationFeature(this));
 		this.registerFeature(new SelectionRangeFeature(this));
 		this.registerFeature(new ProgressFeature(this));
+		this.registerFeature(new CallHierarchyFeature(this));
 	}
 
 	private _mainGetRootPath(): string | undefined {
@@ -532,7 +533,6 @@ export class SettingMonitor {
 export namespace ProposedFeatures {
 	export function createAll(client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
 		let result: (StaticFeature | DynamicFeature<any>)[] = [
-			new CallHierarchyFeature(client),
 			new SemanticTokensFeature(client)
 		];
 		return result;

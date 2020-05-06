@@ -36,42 +36,9 @@ export * from './messages';
 
 export { FoldingRangeParams as FoldingRangeRequestParam } from './protocol'; // for backward compatibility
 
-import * as callHierarchy from './protocol.callHierarchy.proposed';
 import * as st from './protocol.semanticTokens.proposed';
 
 export namespace Proposed {
-
-	export type CallHierarchyClientCapabilities = callHierarchy.CallHierarchyClientCapabilities;
-
-	export type CallHierarchyItem = callHierarchy.CallHierarchyItem;
-	export type CallHierarchyIncomingCall = callHierarchy.CallHierarchyIncomingCall
-	export type CallHierarchyOutgoingCall = callHierarchy.CallHierarchyOutgoingCall
-
-	export type CallHierarchyOptions = callHierarchy.CallHierarchyOptions;
-	export type CallHierarchyRegistrationOptions = callHierarchy.CallHierarchyRegistrationOptions;
-	export type CallHierarchyServerCapabilities = callHierarchy.CallHierarchyServerCapabilities;
-
-	export type CallHierarchyPrepareParams = callHierarchy.CallHierarchyPrepareParams;
-	export namespace CallHierarchyPrepareRequest {
-		export const method = callHierarchy.CallHierarchyPrepareRequest.method;
-		export const type = callHierarchy.CallHierarchyPrepareRequest.type;
-		export type HandlerSignature = callHierarchy.CallHierarchyPrepareRequest.HandlerSignature;
-	}
-
-	export type CallHierarchyIncomingCallsParams = callHierarchy.CallHierarchyIncomingCallsParams;
-	export namespace CallHierarchyIncomingCallsRequest {
-		export const method = callHierarchy.CallHierarchyIncomingCallsRequest.method;
-		export const type = callHierarchy.CallHierarchyIncomingCallsRequest.type;
-		export type HandlerSignature = callHierarchy.CallHierarchyIncomingCallsRequest.HandlerSignature;
-	}
-
-	export type CallHierarchyOutgoingCallsParams= callHierarchy.CallHierarchyOutgoingCallsParams;
-	export namespace CallHierarchyOutgoingCallsRequest {
-		export const method =  callHierarchy.CallHierarchyOutgoingCallsRequest.method;
-		export const type = callHierarchy.CallHierarchyOutgoingCallsRequest.type;
-		export type HandlerSignature = callHierarchy.CallHierarchyOutgoingCallsRequest.HandlerSignature;
-	}
-
 	export const SemanticTokenTypes = st.SemanticTokenTypes;
 	export const SemanticTokenModifiers = st.SemanticTokenModifiers;
 	export type SemanticTokensLegend = st.SemanticTokensLegend;
