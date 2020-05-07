@@ -10,20 +10,59 @@ import { ChildProcess } from 'child_process';
 import { Message } from './messages';
 import { Event, Emitter } from './events';
 import * as Is from './is';
+import { Decoder } from './encoding';
 
 let DefaultSize: number = 8192;
 let CR: number = Buffer.from('\r', 'ascii')[0];
 let LF: number = Buffer.from('\n', 'ascii')[0];
 let CRLF: string = '\r\n';
 
-class MessageBuffer {
+export interface MessageReaderOptions {
+	charset?: BufferEncoding;
+	decoders: Decoder[];
+}
 
-	private encoding: BufferEncoding;
+interface CharsetOptions {
+	charset: BufferEncoding;
+}
+
+interface ContextOptions {
+	charset: BufferEncoding;
+	decoders: Decoder[];
+	decoderMap: Map<string, Decoder>;
+}
+
+type ResolvedMessageReaderOptions = CharsetOptions | ContextOptions;
+
+namespace ResolvedMessageReaderOptions {
+
+	export function isContext(value: ResolvedMessageReaderOptions): value is ContextOptions {
+		const candidate: ContextOptions = value as ContextOptions;
+		return candidate && candidate.decoders !== undefined && candidate.decoderMap !== undefined;
+	}
+
+	export function fromOptions(options?: BufferEncoding | MessageReaderOptions): ResolvedMessageReaderOptions {
+		if (options === undefined || typeof options === 'string') {
+			return { charset: options ?? 'utf8' };
+		} else {
+			const charset: BufferEncoding = options.charset ?? 'utf8';
+			const decoderMap: Map<string, Decoder> = new Map();
+			for (const decoder of options.decoders) {
+				decoderMap.set(decoder.name, decoder);
+			}
+			return { charset, decoders: options.decoders, decoderMap };
+		}
+	}
+}
+
+export class MessageBuffer {
+
+	private options: ResolvedMessageReaderOptions;
 	private index: number;
 	private buffer: Buffer;
 
-	constructor(encoding: BufferEncoding = 'utf8') {
-		this.encoding = encoding;
+	constructor(options?: BufferEncoding | MessageReaderOptions) {
+		this.options = ResolvedMessageReaderOptions.fromOptions(options);
 		this.index = 0;
 		this.buffer = Buffer.allocUnsafe(DefaultSize);
 	}
@@ -32,9 +71,9 @@ class MessageBuffer {
 		var toAppend: Buffer = <Buffer>chunk;
 		if (typeof (chunk) === 'string') {
 			var str = <string>chunk;
-			var bufferLen = Buffer.byteLength(str, this.encoding);
+			var bufferLen = Buffer.byteLength(str, this.options.charset);
 			toAppend = Buffer.allocUnsafe(bufferLen);
-			toAppend.write(str, 0, bufferLen, this.encoding);
+			toAppend.write(str, 0, bufferLen, this.options.charset);
 		}
 		if (this.buffer.length - this.index >= toAppend.length) {
 			toAppend.copy(this.buffer, this.index, 0, toAppend.length);
@@ -78,11 +117,28 @@ class MessageBuffer {
 		return result;
 	}
 
-	public tryReadContent(length: number): string | null {
+	public tryReadContent(length: number, encoding: string | undefined): Promise<Message> | undefined {
 		if (this.index < length) {
-			return null;
+			return undefined;
 		}
-		let result = this.buffer.toString(this.encoding, 0, length);
+		let result: Promise<Message> | undefined = undefined;
+		if (encoding !== undefined) {
+			if (!ResolvedMessageReaderOptions.isContext(this.options)) {
+				throw new Error(`No decoder found for encoding ${encoding}`);
+			}
+			const decoder = this.options.decoderMap.get(encoding);
+			if (decoder === undefined || !Decoder.isFunction(decoder)) {
+				throw new Error(`No decoder found for encoding ${encoding}`);
+			}
+			// We need to pass a copy of of the buffer since we shift bytes at the end of the method.
+			// We should get may be smarter here and pass the original buffer if no additional data
+			// has been received yet.
+			const toDecode = Buffer.alloc(length);
+			this.buffer.copy(toDecode, 0, 0, length);
+			result = decoder.decode(toDecode, this.options);
+		} else {
+			result = Promise.resolve(JSON.parse(this.buffer.toString(this.options.charset, 0, length)));
+		}
 		let nextStart = length;
 		this.buffer.copy(this.buffer, 0, nextStart);
 		this.index = this.index - nextStart;
@@ -176,14 +232,15 @@ export class StreamMessageReader extends AbstractMessageReader implements Messag
 	private callback: DataCallback;
 	private buffer: MessageBuffer;
 	private nextMessageLength: number;
+	private nextMessageContentEncoding: string | undefined;
 	private messageToken: number;
 	private partialMessageTimer: NodeJS.Timer | undefined;
 	private _partialMessageTimeout: number;
 
-	public constructor(readable: NodeJS.ReadableStream, encoding: BufferEncoding = 'utf8') {
+	public constructor(readable: NodeJS.ReadableStream, options?: BufferEncoding | MessageReaderOptions) {
 		super();
 		this.readable = readable;
-		this.buffer = new MessageBuffer(encoding);
+		this.buffer = new MessageBuffer(options);
 		this._partialMessageTimeout = 10000;
 	}
 
@@ -197,6 +254,7 @@ export class StreamMessageReader extends AbstractMessageReader implements Messag
 
 	public listen(callback: DataCallback): void {
 		this.nextMessageLength = -1;
+		this.nextMessageContentEncoding = undefined;
 		this.messageToken = 0;
 		this.partialMessageTimer = undefined;
 		this.callback = callback;
@@ -224,20 +282,23 @@ export class StreamMessageReader extends AbstractMessageReader implements Messag
 					throw new Error('Content-Length value must be a number.');
 				}
 				this.nextMessageLength = length;
+				this.nextMessageContentEncoding = headers['Content-Encoding'];
 				// Take the encoding form the header. For compatibility
 				// treat both utf-8 and utf8 as node utf8
 			}
-			var msg = this.buffer.tryReadContent(this.nextMessageLength);
-			if (msg === null) {
+			var msg = this.buffer.tryReadContent(this.nextMessageLength, this.nextMessageContentEncoding);
+			if (msg === undefined) {
 				/** We haven't received the full message yet. */
 				this.setPartialMessageTimer();
 				return;
 			}
 			this.clearPartialMessageTimer();
 			this.nextMessageLength = -1;
+			this.nextMessageContentEncoding = undefined;
 			this.messageToken++;
-			var json = JSON.parse(msg);
-			this.callback(json);
+			msg.then((value) => {
+				this.callback(value);
+			});
 		}
 	}
 
