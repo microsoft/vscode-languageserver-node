@@ -2,7 +2,8 @@
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
 		"noUnusedLocals": false,
-		"noUnusedParameters": false
+		"noUnusedParameters": false,
+		"assumeChangesOnlyAffectDirectDependencies": true
 	},
 	"references": [
 		{ "path": "./textDocument/tsconfig-watch.json" },

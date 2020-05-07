@@ -3,6 +3,7 @@
 	"compilerOptions": {
 		"noUnusedLocals": false,
 		"noUnusedParameters": false,
+		"assumeChangesOnlyAffectDirectDependencies": true,
 		"tsBuildInfoFile":"./lib/tsconfig-watch.tsbuildInfo"
 	},
 	"references": [
