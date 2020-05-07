@@ -62,8 +62,8 @@ class CallbackList {
 			return;
 		}
 
-		var foundCallbackWithDifferentContext = false;
-		for (var i = 0, len = this._callbacks.length; i < len; i++) {
+		let foundCallbackWithDifferentContext = false;
+		for (let i = 0, len = this._callbacks.length; i < len; i++) {
 			if (this._callbacks[i] === callback) {
 				if (this._contexts![i] === context) {
 					// callback & context match => remove it
@@ -86,11 +86,11 @@ class CallbackList {
 			return [];
 		}
 
-		var ret: any[] = [],
+		const ret: any[] = [],
 			callbacks = this._callbacks.slice(0),
 			contexts = this._contexts!.slice(0);
 
-		for (var i = 0, len = callbacks.length; i < len; i++) {
+		for (let i = 0, len = callbacks.length; i < len; i++) {
 			try {
 				ret.push(callbacks[i].apply(contexts[i], args));
 			} catch (e) {
@@ -141,8 +141,7 @@ export class Emitter<T> {
 				}
 				this._callbacks.add(listener, thisArgs);
 
-				let result: Disposable;
-				result = {
+				const result: Disposable = {
 					dispose: () => {
 						if (!this._callbacks) {
 							// disposable is disposed after emitter is disposed.
