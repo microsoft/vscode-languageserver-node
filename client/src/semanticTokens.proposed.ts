@@ -110,7 +110,6 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Propose
     		Proposed.SemanticTokenModifiers.deprecated,
     		Proposed.SemanticTokenModifiers.abstract,
     		Proposed.SemanticTokenModifiers.async,
-    		Proposed.SemanticTokenModifiers.import,
     		Proposed.SemanticTokenModifiers.modification,
     		Proposed.SemanticTokenModifiers.documentation,
     		Proposed.SemanticTokenModifiers.defaultLibrary

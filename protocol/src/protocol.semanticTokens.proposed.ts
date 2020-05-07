@@ -55,7 +55,6 @@ export enum SemanticTokenModifiers {
 	deprecated = 'deprecated',
 	abstract = 'abstract',
 	async = 'async',
-	import = 'import',
 	modification = 'modification',
 	documentation = 'documentation',
 	defaultLibrary = 'defaultLibrary'

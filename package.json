@@ -39,7 +39,7 @@
 		"compile:client": "tsc -b ./client/tsconfig.json",
 		"compile:client-tests": "tsc -b ./client-tests/tsconfig.json",
 		"compile:testbed": "tsc -b ./testbed/tsconfig.json",
-		"watch": "tsc -b tsconfig-watch.json -w --pretty false",
+		"watch": "tsc -b tsconfig-watch.json -w",
 		"watch:testbed": "tsc -b ./testbed/tsconfig.json -w",
 		"lint": "npm run lint:types && npm run lint:textDocument && npm run lint:jsonrpc && npm run lint:protocol && npm run lint:server && npm run lint:client && npm run lint:client-tests",
 		"lint:types": "eslint --config ./types/.eslintrc.json ./types/src/**/*.ts",
