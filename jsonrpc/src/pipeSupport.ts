@@ -28,8 +28,8 @@ export interface PipeTransport {
 }
 
 export function createClientPipeTransport(pipeName: string, encoding: BufferEncoding = 'utf-8'): Promise<PipeTransport> {
-	let connectResolve: any;
-	let connected = new Promise<[MessageReader, MessageWriter]>((resolve, _reject) => {
+	let connectResolve: (value: [MessageReader, MessageWriter]) => void;
+	const connected = new Promise<[MessageReader, MessageWriter]>((resolve, _reject) => {
 		connectResolve = resolve;
 	});
 	return new Promise<PipeTransport>((resolve, reject) => {

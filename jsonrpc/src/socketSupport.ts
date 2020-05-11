@@ -14,12 +14,12 @@ export interface SocketTransport {
 }
 
 export function createClientSocketTransport(port: number, encoding: BufferEncoding = 'utf-8'): Promise<SocketTransport> {
-	let connectResolve: any;
-	let connected = new Promise<[MessageReader, MessageWriter]>((resolve, _reject) => {
+	let connectResolve: (value: [MessageReader, MessageWriter]) => void;
+	const connected = new Promise<[MessageReader, MessageWriter]>((resolve, _reject) => {
 		connectResolve = resolve;
 	});
 	return new Promise<SocketTransport>((resolve, reject) => {
-		let server: Server = createServer((socket: Socket) => {
+		const server: Server = createServer((socket: Socket) => {
 			server.close();
 			connectResolve([
 				new SocketMessageReader(socket, encoding),

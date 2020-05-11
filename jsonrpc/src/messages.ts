@@ -422,7 +422,7 @@ export class NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, RO = never> e
  * Tests if the given message is a request message
  */
 export function isRequestMessage(message: Message | undefined): message is RequestMessage {
-	let candidate = <RequestMessage>message;
+	const candidate = <RequestMessage>message;
 	return candidate && is.string(candidate.method) && (is.string(candidate.id) || is.number(candidate.id));
 }
 
@@ -430,7 +430,7 @@ export function isRequestMessage(message: Message | undefined): message is Reque
  * Tests if the given message is a notification message
  */
 export function isNotificationMessage(message: Message | undefined): message is NotificationMessage {
-	let candidate = <NotificationMessage>message;
+	const candidate = <NotificationMessage>message;
 	return candidate && is.string(candidate.method) && (<any>message).id === void 0;
 }
 
@@ -438,6 +438,6 @@ export function isNotificationMessage(message: Message | undefined): message is 
  * Tests if the given message is a response message
  */
 export function isResponseMessage(message: Message | undefined): message is ResponseMessage {
-	let candidate = <ResponseMessage>message;
+	const candidate = <ResponseMessage>message;
 	return candidate && (candidate.result !== void 0 || !!candidate.error) && (is.string(candidate.id) || is.number(candidate.id) || candidate.id === null);
 }
