@@ -13,23 +13,30 @@ interface Item<K, V> {
 export namespace Touch {
 	export const None: 0 = 0;
 	export const First: 1 = 1;
+	export const AsOld: 1 = Touch.First;
 	export const Last: 2 = 2;
+	export const AsNew: 2 = Touch.Last;
 }
 
 export type Touch = 0 | 1 | 2;
 
-export class LinkedMap<K, V> {
+export class LinkedMap<K, V> implements Map<K, V> {
+
+	readonly [Symbol.toStringTag] = 'LinkedMap';
 
 	private _map: Map<K, Item<K, V>>;
 	private _head: Item<K, V> | undefined;
 	private _tail: Item<K, V> | undefined;
 	private _size: number;
 
-	constructor() {
+	private _state: number;
+
+	public constructor() {
 		this._map = new Map<K, Item<K, V>>();
 		this._head = undefined;
 		this._tail = undefined;
 		this._size = 0;
+		this._state = 0;
 	}
 
 	public clear(): void {
@@ -37,6 +44,7 @@ export class LinkedMap<K, V> {
 		this._head = undefined;
 		this._tail = undefined;
 		this._size = 0;
+		this._state++;
 	}
 
 	public isEmpty(): boolean {
@@ -47,19 +55,30 @@ export class LinkedMap<K, V> {
 		return this._size;
 	}
 
+	public get first(): V | undefined {
+		return this._head?.value;
+	}
+
+	public get last(): V | undefined {
+		return this._tail?.value;
+	}
+
 	public has(key: K): boolean {
 		return this._map.has(key);
 	}
 
-	public get(key: K): V | undefined {
+	public get(key: K, touch: Touch = Touch.None): V | undefined {
 		const item = this._map.get(key);
 		if (!item) {
 			return undefined;
 		}
+		if (touch !== Touch.None) {
+			this.touch(item, touch);
+		}
 		return item.value;
 	}
 
-	public set(key: K, value: V, touch: Touch = Touch.None): void {
+	public set(key: K, value: V, touch: Touch = Touch.None): this {
 		let item = this._map.get(key);
 		if (item) {
 			item.value = value;
@@ -68,7 +87,7 @@ export class LinkedMap<K, V> {
 			}
 		} else {
 			item = { key, value, next: undefined, previous: undefined };
-			switch(touch) {
+			switch (touch) {
 				case Touch.None:
 					this.addItemLast(item);
 					break;
@@ -85,17 +104,22 @@ export class LinkedMap<K, V> {
 			this._map.set(key, item);
 			this._size++;
 		}
+		return this;
 	}
 
 	public delete(key: K): boolean {
+		return !!this.remove(key);
+	}
+
+	public remove(key: K): V | undefined {
 		const item = this._map.get(key);
 		if (!item) {
-			return false;
+			return undefined;
 		}
 		this._map.delete(key);
 		this.removeItem(item);
 		this._size--;
-		return true;
+		return item.value;
 	}
 
 	public shift(): V | undefined {
@@ -113,59 +137,35 @@ export class LinkedMap<K, V> {
 	}
 
 	public forEach(callbackfn: (value: V, key: K, map: LinkedMap<K, V>) => void, thisArg?: any): void {
+		const state = this._state;
 		let current = this._head;
-		while(current) {
-			if (thisArg) {
-				callbackfn.bind(thisArg)(current.value, current.key, this);
-			} else {
-				callbackfn(current.value, current.key, this);
-			}
-			current = current.next;
-		}
-	}
-
-	public forEachReverse(callbackfn: (value: V, key: K, map: LinkedMap<K, V>) => void, thisArg?: any): void {
-		let current = this._tail;
 		while (current) {
 			if (thisArg) {
 				callbackfn.bind(thisArg)(current.value, current.key, this);
 			} else {
 				callbackfn(current.value, current.key, this);
 			}
-			current = current.previous;
-		}
-	}
-
-	public values(): V[] {
-		let result: V[] = [];
-		let current = this._head;
-		while(current) {
-			result.push(current.value);
+			if (this._state !== state) {
+				throw new Error(`LinkedMap got modified during iteration.`);
+			}
 			current = current.next;
 		}
- 		return result;
 	}
 
-	public keys(): K[] {
-		let result: K[] = [];
-		let current = this._head;
-		while(current) {
-			result.push(current.key);
-			current = current.next;
-		}
- 		return result;
-	}
-
-	/* JSON RPC run on es5 which has no Symbol.iterator
 	public keys(): IterableIterator<K> {
+		const map = this;
+		const state = this._state;
 		let current = this._head;
-		let iterator: IterableIterator<K> = {
+		const iterator: IterableIterator<K> = {
 			[Symbol.iterator]() {
 				return iterator;
 			},
-			next():IteratorResult<K> {
+			next(): IteratorResult<K> {
+				if (map._state !== state) {
+					throw new Error(`LinkedMap got modified during iteration.`);
+				}
 				if (current) {
-					let result = { value: current.key, done: false };
+					const result = { value: current.key, done: false };
 					current = current.next;
 					return result;
 				} else {
@@ -177,14 +177,19 @@ export class LinkedMap<K, V> {
 	}
 
 	public values(): IterableIterator<V> {
+		const map = this;
+		const state = this._state;
 		let current = this._head;
-		let iterator: IterableIterator<V> = {
+		const iterator: IterableIterator<V> = {
 			[Symbol.iterator]() {
 				return iterator;
 			},
-			next():IteratorResult<V> {
+			next(): IteratorResult<V> {
+				if (map._state !== state) {
+					throw new Error(`LinkedMap got modified during iteration.`);
+				}
 				if (current) {
-					let result = { value: current.value, done: false };
+					const result = { value: current.value, done: false };
 					current = current.next;
 					return result;
 				} else {
@@ -194,7 +199,57 @@ export class LinkedMap<K, V> {
 		};
 		return iterator;
 	}
-	*/
+
+	public entries(): IterableIterator<[K, V]> {
+		const map = this;
+		const state = this._state;
+		let current = this._head;
+		const iterator: IterableIterator<[K, V]> = {
+			[Symbol.iterator]() {
+				return iterator;
+			},
+			next(): IteratorResult<[K, V]> {
+				if (map._state !== state) {
+					throw new Error(`LinkedMap got modified during iteration.`);
+				}
+				if (current) {
+					const result: IteratorResult<[K, V]> = { value: [current.key, current.value], done: false };
+					current = current.next;
+					return result;
+				} else {
+					return { value: undefined, done: true };
+				}
+			}
+		};
+		return iterator;
+	}
+
+	public [Symbol.iterator](): IterableIterator<[K, V]> {
+		return this.entries();
+	}
+
+	protected trimOld(newSize: number) {
+		if (newSize >= this.size) {
+			return;
+		}
+		if (newSize === 0) {
+			this.clear();
+			return;
+		}
+		let current = this._head;
+		let currentSize = this.size;
+		while (current && currentSize > newSize) {
+			this._map.delete(current.key);
+			current = current.next;
+			currentSize--;
+		}
+		this._head = current;
+		this._size = currentSize;
+		if (current) {
+			current.previous = undefined;
+		}
+		this._state++;
+	}
 
 	private addItemFirst(item: Item<K, V>): void {
 		// First time Insert
@@ -207,6 +262,7 @@ export class LinkedMap<K, V> {
 			this._head.previous = item;
 		}
 		this._head = item;
+		this._state++;
 	}
 
 	private addItemLast(item: Item<K, V>): void {
@@ -220,6 +276,7 @@ export class LinkedMap<K, V> {
 			this._tail.next = item;
 		}
 		this._tail = item;
+		this._state++;
 	}
 
 	private removeItem(item: Item<K, V>): void {
@@ -228,9 +285,21 @@ export class LinkedMap<K, V> {
 			this._tail = undefined;
 		}
 		else if (item === this._head) {
+			// This can only happend if size === 1 which is handle
+			// by the case above.
+			if (!item.next) {
+				throw new Error('Invalid list');
+			}
+			item.next.previous = undefined;
 			this._head = item.next;
 		}
 		else if (item === this._tail) {
+			// This can only happend if size === 1 which is handle
+			// by the case above.
+			if (!item.previous) {
+				throw new Error('Invalid list');
+			}
+			item.previous.next = undefined;
 			this._tail = item.previous;
 		}
 		else {
@@ -242,6 +311,9 @@ export class LinkedMap<K, V> {
 			next.previous = previous;
 			previous.next = next;
 		}
+		item.next = undefined;
+		item.previous = undefined;
+		this._state++;
 	}
 
 	private touch(item: Item<K, V>, touch: Touch): void {
@@ -278,6 +350,7 @@ export class LinkedMap<K, V> {
 			item.next = this._head;
 			this._head.previous = item;
 			this._head = item;
+			this._state++;
 		} else if (touch === Touch.Last) {
 			if (item === this._tail) {
 				return;
@@ -301,6 +374,75 @@ export class LinkedMap<K, V> {
 			item.previous = this._tail;
 			this._tail.next = item;
 			this._tail = item;
+			this._state++;
+		}
+	}
+
+	public toJSON(): [K, V][] {
+		const data: [K, V][] = [];
+
+		this.forEach((value, key) => {
+			data.push([key, value]);
+		});
+
+		return data;
+	}
+
+	public fromJSON(data: [K, V][]): void {
+		this.clear();
+
+		for (const [key, value] of data) {
+			this.set(key, value);
+		}
+	}
+}
+
+export class LRUCache<K, V> extends LinkedMap<K, V> {
+
+	private _limit: number;
+	private _ratio: number;
+
+	public constructor(limit: number, ratio: number = 1) {
+		super();
+		this._limit = limit;
+		this._ratio = Math.min(Math.max(0, ratio), 1);
+	}
+
+	public get limit(): number {
+		return this._limit;
+	}
+
+	public set limit(limit: number) {
+		this._limit = limit;
+		this.checkTrim();
+	}
+
+	public get ratio(): number {
+		return this._ratio;
+	}
+
+	public set ratio(ratio: number) {
+		this._ratio = Math.min(Math.max(0, ratio), 1);
+		this.checkTrim();
+	}
+
+	public get(key: K, touch: Touch = Touch.AsNew): V | undefined {
+		return super.get(key, touch);
+	}
+
+	public peek(key: K): V | undefined {
+		return super.get(key, Touch.None);
+	}
+
+	public set(key: K, value: V): this {
+		super.set(key, value, Touch.Last);
+		this.checkTrim();
+		return this;
+	}
+
+	private checkTrim() {
+		if (this.size > this._limit) {
+			this.trimOld(Math.round(this._limit * this._ratio));
 		}
 	}
 }
