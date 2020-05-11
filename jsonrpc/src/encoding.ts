@@ -4,6 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
+import { InputType } from 'zlib';
 import { Message } from './messages';
 
 export interface EncoderOptions {
@@ -12,7 +13,7 @@ export interface EncoderOptions {
 
 export interface FunctionEncoder {
 	name: string;
-	encode(msg: Message, options: EncoderOptions): Promise<Buffer>;
+	encode(input: InputType): Promise<Buffer>;
 }
 
 export interface StreamEncoder {
@@ -29,13 +30,9 @@ export namespace Encoder {
 	}
 }
 
-export interface DecoderOptions {
-	charset: BufferEncoding;
-}
-
 export interface FunctionDecoder {
 	name: string;
-	decode(buffer: Buffer, options: DecoderOptions): Promise<Message>;
+	decode(buffer: Buffer): Promise<Buffer>;
 }
 
 export interface StreamDecoder {
@@ -52,3 +49,25 @@ export namespace Decoder {
 	}
 }
 
+export interface ContentDecoderOptions {
+	charset: BufferEncoding;
+}
+
+export interface FunctionContentDecoder {
+	name: string;
+	decode(buffer: Buffer, options: ContentDecoderOptions): Promise<Message>
+}
+
+export interface StreamContentDecoder {
+	name: string;
+	create(options: ContentDecoderOptions): NodeJS.WritableStream;
+}
+
+export type ContentDecoder = FunctionContentDecoder | StreamContentDecoder | FunctionContentDecoder & StreamContentDecoder;
+
+export namespace ContentDecoder {
+	export function isFunction(value: ContentDecoder | undefined | null): value is FunctionContentDecoder {
+		const candidate: FunctionContentDecoder = value as any;
+		return candidate && typeof candidate.decode === 'function';
+	}
+}

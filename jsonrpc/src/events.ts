@@ -120,7 +120,7 @@ export class Emitter<T> {
 
 	private static _noop = function () { };
 
-	private _event: Event<T>;
+	private _event: Event<T> | undefined;
 	private _callbacks: CallbackList | undefined;
 
 	constructor(private _options?: EmitterOptions) {

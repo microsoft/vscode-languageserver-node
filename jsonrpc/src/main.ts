@@ -562,7 +562,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 		errorEmitter.fire([error, undefined, undefined]);
 	}
 
-	function writeErrorHandler(data: [Error, Message, number]): void {
+	function writeErrorHandler(data: [Error, Message | undefined, number | undefined]): void {
 		errorEmitter.fire(data);
 	}
 

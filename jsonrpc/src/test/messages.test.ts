@@ -10,12 +10,13 @@ import * as zlib from 'zlib';
 import { Writable, Readable } from 'stream';
 import { inherits } from 'util';
 
-import { RequestMessage } from '../messages';
+import { RequestMessage, isRequestMessage } from '../messages';
 import { StreamMessageWriter } from '../messageWriter';
 import { StreamMessageReader, MessageBuffer } from '../messageReader';
 import { TransferContext } from '../transferContext';
 import { Encoder, Decoder } from '../encoding';
 import { Buffer } from 'buffer';
+import { Message } from '../main';
 
 function assertDefined<T>(value: T | undefined | null): asserts value is T {
 	assert.ok(value !== undefined && value !== null);
@@ -51,9 +52,9 @@ const TestWritable: TestWritableConstructor = function (): TestWritableConstruct
 
 const gzipEncoder: Encoder = {
 	name: 'gzip',
-	encode: async (msg, options) => {
+	encode: async (input) => {
 		return new Promise((resolve, reject) => {
-			zlib.gzip(Buffer.from(JSON.stringify(msg), options.charset), (error, buffer) => {
+			zlib.gzip(input, (error, buffer) => {
 				if (error) {
 					reject(error);
 				} else {
@@ -66,13 +67,13 @@ const gzipEncoder: Encoder = {
 
 const gzipDecoder: Decoder = {
 	name: 'gzip',
-	decode: async (buffer, options) => {
+	decode: async (buffer) => {
 		return new Promise((resolve, reject) => {
 			zlib.gunzip(buffer, (error, value) => {
 				if (error) {
 					reject(error);
 				} else {
-					resolve(JSON.parse(value.toString(options.charset)));
+					resolve(value);
 				}
 			});
 		});
@@ -98,7 +99,8 @@ suite('Messages', () => {
 
 	test('Reading', (done) => {
 		const readable = new Readable();
-		new StreamMessageReader(readable).listen((message: RequestMessage) => {
+		new StreamMessageReader(readable).listen((msg: Message) => {
+			const message: RequestMessage = msg as RequestMessage;
 			assert.equal(message.id, 1);
 			assert.equal(message.method, 'example');
 			done();
@@ -113,7 +115,8 @@ suite('Messages', () => {
 		reader.partialMessageTimeout = 100;
 		const partOne = 'Content-Length: 43\r\n\r\n';
 		const partTwo = '{"jsonrpc":"2.0","id":1,"method":"example"}';
-		reader.listen((message: RequestMessage) => {
+		reader.listen((msg: Message) => {
+			const message: RequestMessage = msg as RequestMessage;
 			assert.equal(message.id, 1);
 			assert.equal(message.method, 'example');
 			setTimeout(() => {
@@ -131,9 +134,9 @@ suite('Messages', () => {
 
 	test('Basic Zip / Unzip', async () => {
 		const msg: RequestMessage = { jsonrpc: '2.0', id: 1, method: 'example' };
-		const zipped = await gzipEncoder.encode(msg, { charset: 'utf8'} );
+		const zipped = await gzipEncoder.encode(Buffer.from(JSON.stringify(msg), 'utf8'));
 		assert.strictEqual(zipped.toString('base64'), 'H4sIAAAAAAAACqtWyirOzysqSFayUjLSM1DSUcpMUbIy1FHKTS3JyAcylVIrEnMLclKVagH7JiWtKwAAAA==');
-		const unzipped: RequestMessage = await gzipDecoder.decode(zipped, { charset: 'utf8'} ) as RequestMessage;
+		const unzipped: RequestMessage = JSON.parse((await gzipDecoder.decode(zipped)).toString('utf8')) as RequestMessage;
 		assert.strictEqual(unzipped.id, 1);
 		assert.strictEqual(unzipped.method, 'example');
 	});
@@ -181,7 +184,10 @@ suite('Messages', () => {
 			charset: 'utf8',
 			decoders: [gzipDecoder]
 		});
-		reader.listen((message: RequestMessage) => {
+		reader.listen((message: Message) => {
+			if (!isRequestMessage(message)) {
+				throw new Error(`No request message`);
+			}
 			assert.equal(message.id, 1);
 			assert.equal(message.method, 'example');
 			done();

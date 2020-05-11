@@ -1099,7 +1099,7 @@ class TextEditChangeImpl implements TextEditChange {
  * A workspace change helps constructing changes to a workspace.
  */
 export class WorkspaceChange {
-	private _workspaceEdit: WorkspaceEdit;
+	private _workspaceEdit: WorkspaceEdit | undefined;
 	private _textEditChanges: { [uri: string]: TextEditChange };
 
 	constructor(workspaceEdit?: WorkspaceEdit) {
@@ -1109,13 +1109,13 @@ export class WorkspaceChange {
 			if (workspaceEdit.documentChanges) {
 				workspaceEdit.documentChanges.forEach((change) => {
 					if (TextDocumentEdit.is(change)) {
-						let textEditChange = new TextEditChangeImpl(change.edits);
+						const textEditChange = new TextEditChangeImpl(change.edits);
 						this._textEditChanges[change.textDocument.uri] = textEditChange;
 					}
 				});
 			} else if (workspaceEdit.changes) {
 				Object.keys(workspaceEdit.changes).forEach((key) => {
-					let textEditChange = new TextEditChangeImpl(workspaceEdit.changes![key]);
+					const textEditChange = new TextEditChangeImpl(workspaceEdit.changes![key]);
 					this._textEditChanges[key] = textEditChange;
 				});
 			}
@@ -1127,6 +1127,9 @@ export class WorkspaceChange {
 	 * use to be returned from a workspace edit operation like rename.
 	 */
 	public get edit(): WorkspaceEdit {
+		if (this._workspaceEdit === undefined) {
+			return { documentChanges: [] };
+		}
 		return this._workspaceEdit;
 	}
 
