@@ -19,10 +19,10 @@ export interface ProgressContext {
 
 export class ProgressPart {
 
-	private _infinite: boolean;
+	private _infinite!: boolean;
 	private _reported: number;
-	private _progress: Progress<{ message?: string, increment?: number}>;
-	private _cancellationToken: CancellationToken;
+	private _progress!: Progress<{ message?: string, increment?: number}>;
+	private _cancellationToken!: CancellationToken;
 	private _disposable: Disposable | undefined;
 
 	private _resolve: (() => void) | undefined;

@@ -7,67 +7,58 @@
 import { InputType } from 'zlib';
 import { Message } from './messages';
 
-export interface EncoderOptions {
-	charset: BufferEncoding;
-}
-
-export interface FunctionEncoder {
+export interface FunctionContentEncoder {
 	name: string;
 	encode(input: InputType): Promise<Buffer>;
 }
 
-export interface StreamEncoder {
+export interface StreamContentEncoder {
 	name: string;
 	create(): NodeJS.WritableStream;
 }
 
-export type Encoder = FunctionEncoder | StreamEncoder | FunctionEncoder & StreamEncoder;
+export type ContentEncoder = FunctionContentEncoder | (FunctionContentEncoder & StreamContentEncoder);
 
-export namespace Encoder {
-	export function isFunction(value: Encoder | undefined | null): value is FunctionEncoder {
-		const candidate: FunctionEncoder = value as any;
-		return candidate && typeof candidate.encode === 'function';
-	}
-}
-
-export interface FunctionDecoder {
+export interface FunctionContentDecoder {
 	name: string;
 	decode(buffer: Buffer): Promise<Buffer>;
 }
 
-export interface StreamDecoder {
+export interface StreamContentDecoder {
 	name: string;
 	create(): NodeJS.WritableStream;
 }
 
-export type Decoder = FunctionDecoder | StreamDecoder | FunctionEncoder & StreamDecoder;
+export type ContentDecoder = FunctionContentDecoder | (FunctionContentDecoder & StreamContentDecoder);
 
-export namespace Decoder {
-	export function isFunction(value: Decoder | undefined | null): value is FunctionDecoder {
-		const candidate: FunctionDecoder = value as any;
-		return candidate && typeof candidate.decode === 'function';
-	}
-}
-
-export interface ContentDecoderOptions {
+export interface ContentTypeEncoderOptions {
 	charset: BufferEncoding;
 }
 
-export interface FunctionContentDecoder {
+export interface FunctionContentTypeEncoder {
 	name: string;
-	decode(buffer: Buffer, options: ContentDecoderOptions): Promise<Message>
+	encode(msg: Message, options: ContentTypeEncoderOptions): Promise<Buffer>;
 }
 
-export interface StreamContentDecoder {
+export interface StreamContentTypeEncoder {
 	name: string;
-	create(options: ContentDecoderOptions): NodeJS.WritableStream;
+	create(options: ContentTypeEncoderOptions): NodeJS.WritableStream;
 }
 
-export type ContentDecoder = FunctionContentDecoder | StreamContentDecoder | FunctionContentDecoder & StreamContentDecoder;
+export type ContentTypeEncoder = FunctionContentTypeEncoder | (FunctionContentTypeEncoder & StreamContentTypeEncoder);
 
-export namespace ContentDecoder {
-	export function isFunction(value: ContentDecoder | undefined | null): value is FunctionContentDecoder {
-		const candidate: FunctionContentDecoder = value as any;
-		return candidate && typeof candidate.decode === 'function';
-	}
+export interface ContentTypeDecoderOptions {
+	charset: BufferEncoding;
 }
+
+export interface FunctionContentTypeDecoder {
+	name: string;
+	decode(buffer: Buffer, options: ContentTypeDecoderOptions): Promise<Message>
+}
+
+export interface StreamContentTypeDecoder {
+	name: string;
+	create(options: ContentTypeDecoderOptions): NodeJS.WritableStream;
+}
+
+export type ContentTypeDecoder = FunctionContentTypeDecoder | (FunctionContentTypeDecoder & StreamContentTypeDecoder);

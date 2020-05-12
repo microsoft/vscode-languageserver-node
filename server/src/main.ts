@@ -165,7 +165,7 @@ export class TextDocuments<T> {
 	private _onDidClose: Emitter<TextDocumentChangeEvent<T>>;
 	private _onDidSave: Emitter<TextDocumentChangeEvent<T>>;
 	private _onWillSave: Emitter<TextDocumentWillSaveEvent<T>>;
-	private _willSaveWaitUntil: RequestHandler<TextDocumentWillSaveEvent<T>, TextEdit[], void>;
+	private _willSaveWaitUntil: RequestHandler<TextDocumentWillSaveEvent<T>, TextEdit[], void> | undefined;
 
 	/**
 	 * Create a new text document manager.
@@ -448,8 +448,8 @@ export interface RemoteConsole {
 
 class RemoteConsoleImpl implements Logger, RemoteConsole, Remote {
 
-	private _rawConnection: ProtocolConnection;
-	private _connection: IConnection;
+	private _rawConnection: ProtocolConnection | undefined;
+	private _connection: IConnection | undefined;
 
 	public constructor() {
 	}
@@ -546,7 +546,7 @@ export type RemoteWindow = _RemoteWindow & WindowProgress;
 
 class _RemoteWindowImpl implements _RemoteWindow, Remote {
 
-	private _connection: IConnection;
+	private _connection: IConnection | undefined;
 
 	constructor() {
 	}
@@ -570,17 +570,17 @@ class _RemoteWindowImpl implements _RemoteWindow, Remote {
 
 	public showErrorMessage(message: string, ...actions: MessageActionItem[]): Promise<MessageActionItem | undefined> {
 		let params: ShowMessageRequestParams = { type: MessageType.Error, message, actions };
-		return this._connection.sendRequest(ShowMessageRequest.type, params).then(null2Undefined);
+		return this.connection.sendRequest(ShowMessageRequest.type, params).then(null2Undefined);
 	}
 
 	public showWarningMessage(message: string, ...actions: MessageActionItem[]): Promise<MessageActionItem | undefined> {
 		let params: ShowMessageRequestParams = { type: MessageType.Warning, message, actions };
-		return this._connection.sendRequest(ShowMessageRequest.type, params).then(null2Undefined);
+		return this.connection.sendRequest(ShowMessageRequest.type, params).then(null2Undefined);
 	}
 
 	public showInformationMessage(message: string, ...actions: MessageActionItem[]): Promise<MessageActionItem | undefined> {
 		let params: ShowMessageRequestParams = { type: MessageType.Info, message, actions };
-		return this._connection.sendRequest(ShowMessageRequest.type, params).then(null2Undefined);
+		return this.connection.sendRequest(ShowMessageRequest.type, params).then(null2Undefined);
 	}
 }
 
@@ -770,7 +770,7 @@ export interface RemoteClient {
 
 class RemoteClientImpl implements RemoteClient, Remote {
 
-	private _connection: IConnection;
+	private _connection: IConnection | undefined;
 
 	public attach(connection: IConnection) {
 		this._connection = connection;
@@ -806,9 +806,9 @@ class RemoteClientImpl implements RemoteClient, Remote {
 			registrations: [{ id, method, registerOptions: registerOptions || {} }]
 		};
 		if (!unregistration.isAttached) {
-			unregistration.attach(this._connection);
+			unregistration.attach(this.connection);
 		}
-		return this._connection.sendRequest(RegistrationRequest.type, params).then((_result) => {
+		return this.connection.sendRequest(RegistrationRequest.type, params).then((_result) => {
 			unregistration.add({ id: id, method: method });
 			return unregistration;
 		}, (_error) => {
@@ -823,7 +823,7 @@ class RemoteClientImpl implements RemoteClient, Remote {
 		let params: RegistrationParams = {
 			registrations: [{ id, method, registerOptions: registerOptions || {} }]
 		};
-		return this._connection.sendRequest(RegistrationRequest.type, params).then((_result) => {
+		return this.connection.sendRequest(RegistrationRequest.type, params).then((_result) => {
 			return Disposable.create(() => {
 				this.unregisterSingle(id, method);
 			});
@@ -838,14 +838,14 @@ class RemoteClientImpl implements RemoteClient, Remote {
 			unregisterations: [{ id, method }]
 		};
 
-		return this._connection.sendRequest(UnregistrationRequest.type, params).then(undefined, (_error) => {
+		return this.connection.sendRequest(UnregistrationRequest.type, params).then(undefined, (_error) => {
 			this.connection.console.info(`Unregistering request handler for ${id} failed.`);
 		});
 	}
 
 	private registerMany(registrations: BulkRegistrationImpl): Promise<BulkUnregistration> {
 		let params = registrations.asRegistrationParams();
-		return this._connection.sendRequest(RegistrationRequest.type, params).then(() => {
+		return this.connection.sendRequest(RegistrationRequest.type, params).then(() => {
 			return new BulkUnregistrationImpl(this._connection, params.registrations.map(registration => { return { id: registration.id, method: registration.method }; }));
 		}, (_error) => {
 			this.connection.console.info(`Bulk registration failed.`);
@@ -875,7 +875,7 @@ export type RemoteWorkspace = _RemoteWorkspace & Configuration & WorkspaceFolder
 
 class _RemoteWorkspaceImpl implements _RemoteWorkspace, Remote {
 
-	private _connection: IConnection;
+	private _connection: IConnection | undefined;
 
 	public constructor() {
 	}
@@ -903,7 +903,7 @@ class _RemoteWorkspaceImpl implements _RemoteWorkspace, Remote {
 		}
 
 		let params: ApplyWorkspaceEditParams = isApplyWorkspaceEditParams(paramOrEdit) ? paramOrEdit : { edit: paramOrEdit };
-		return this._connection.sendRequest(ApplyWorkspaceEditRequest.type, params);
+		return this.connection.sendRequest(ApplyWorkspaceEditRequest.type, params);
 	}
 }
 
@@ -945,7 +945,7 @@ export interface Tracer {
 
 class TelemetryImpl implements Telemetry, Remote {
 
-	private _connection: IConnection;
+	private _connection: IConnection | undefined;
 
 	constructor() {
 	}
@@ -968,14 +968,14 @@ class TelemetryImpl implements Telemetry, Remote {
 	}
 
 	public logEvent(data: any): void {
-		this._connection.sendNotification(TelemetryEventNotification.type, data);
+		this.connection.sendNotification(TelemetryEventNotification.type, data);
 	}
 }
 
 class TracerImpl implements Tracer, Remote {
 
 	private _trace: Trace;
-	private _connection: IConnection;
+	private _connection: IConnection | undefined;
 
 	constructor() {
 		this._trace = Trace.Off;
@@ -1006,7 +1006,7 @@ class TracerImpl implements Tracer, Remote {
 		if (this._trace === Trace.Off) {
 			return;
 		}
-		this._connection.sendNotification(LogTraceNotification.type, {
+		this.connection.sendNotification(LogTraceNotification.type, {
 			message: message,
 			verbose: this._trace === Trace.Verbose ? verbose : undefined
 		});
@@ -1020,7 +1020,8 @@ export interface _Languages {
 }
 
 export class _LanguagesImpl implements Remote, _Languages {
-	private _connection: IConnection;
+
+	private _connection: IConnection | undefined;
 
 	constructor() {
 	}
@@ -1539,19 +1540,19 @@ export function combineClientFeatures<O, T>(one: ClientFeature<O>, two: ClientFe
 }
 export type WindowFeature<P> = Feature<_RemoteWindow, P>;
 export function combineWindowFeatures<O, T>(one: WindowFeature<O>, two: WindowFeature<T>): WindowFeature<O & T> {
-	return function (Base: new () => RemoteWindow): new () => RemoteWindow & O & T {
+	return function (Base: new () => _RemoteWindow): new () => _RemoteWindow & O & T {
 		return two(one(Base)) as any;
 	};
 }
 export type WorkspaceFeature<P> = Feature<_RemoteWorkspace, P>;
 export function combineWorkspaceFeatures<O, T>(one: WorkspaceFeature<O>, two: WorkspaceFeature<T>): WorkspaceFeature<O & T> {
-	return function (Base: new () => RemoteWorkspace): new () => RemoteWorkspace & O & T {
+	return function (Base: new () => _RemoteWorkspace): new () => _RemoteWorkspace & O & T {
 		return two(one(Base)) as any;
 	};
 }
 export type LanguagesFeature<P> = Feature<_Languages, P>;
 export function combineLanguagesFeatures<O, T>(one: LanguagesFeature<O>, two: LanguagesFeature<T>): LanguagesFeature<O & T> {
-	return function (Base: new () => Languages): new () => Languages & O & T {
+	return function (Base: new () => _Languages): new () => _Languages & O & T {
 		return two(one(Base)) as any;
 	};
 }
@@ -1570,7 +1571,7 @@ export function combineFeatures<OConsole, OTracer, OTelemetry, OClient, OWindow,
 	one: Features<OConsole, OTracer, OTelemetry, OClient, OWindow, OWorkspace>,
 	two: Features<TConsole, TTracer, TTelemetry, TClient, TWindow, TWorkspace>
 ): Features<OConsole & TConsole, OTracer & TTracer, OTelemetry & TTelemetry, OClient & TClient, OWindow & TWindow, OWorkspace & TWorkspace> {
-	function combine<O, T>(one: O, two: T, func: (one: O, two: T) => any): any {
+	function combine<O, T>(one: O | undefined, two: T | undefined, func: (one: O, two: T) => any): any {
 		if (one && two) {
 			return func(one, two);
 		} else if (one) {

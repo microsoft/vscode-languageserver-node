@@ -8,15 +8,12 @@ import { ChildProcess } from 'child_process';
 import { Socket } from 'net';
 
 import { Semaphore } from './semaphore';
-import { Message, isRequestMessage, isResponseMessage, isNotificationMessage } from './messages';
+import { Message } from './messages';
 import { Event, Emitter } from './events';
 import * as Is from './is';
-import { TransferContext } from './transferContext';
-import { Encoder, Decoder, FunctionEncoder } from './encoding';
+import { ContentEncoder, ContentTypeEncoder, ContentTypeEncoderOptions } from './encoding';
 
 const ContentLength: string = 'Content-Length: ';
-const ContentEncoding: string = 'Content-Encoding: ';
-const AccepttEncoding: string = 'Accept-Encoding: ';
 const CRLF = '\r\n';
 
 export interface MessageWriter {
@@ -113,51 +110,31 @@ export class IPCMessageWriter extends AbstractMessageWriter implements MessageWr
 	}
 }
 
+const ApplicationJsonContentTypeEncoder: ContentTypeEncoder = {
+	name: 'application/json',
+	encode: (msg: Message, options: ContentTypeEncoderOptions): Promise<Buffer> => {
+		return Promise.resolve(Buffer.from(JSON.stringify(msg, undefined, 0), options.charset));
+	}
+};
+
 export interface MessageWriterOptions {
 	charset?: BufferEncoding;
-	context: TransferContext;
-	encoders: Encoder[];
-	decoders: Decoder[];
+	contentEncoder?: ContentEncoder;
+	contentTypeEncoder?: ContentTypeEncoder;
 }
 
-interface CharsetOptions {
+interface ResolvedMessageWriterOptions {
 	charset: BufferEncoding;
+	contentEncoder?: ContentEncoder;
+	contentTypeEncoder: ContentTypeEncoder;
 }
-
-namespace MessageWriterOptions {
-}
-
-interface ContextOptions {
-	charset: BufferEncoding;
-	context: TransferContext;
-	encoders: Encoder[];
-	encoderMap: Map<string, Encoder>;
-	decoders: Decoder[];
-	decoderMap: Map<string, Decoder>;
-}
-
-type ResolvedMessageWriterOptions = CharsetOptions | ContextOptions;
 
 namespace ResolvedMessageWriterOptions {
-	export function isContext(value: ResolvedMessageWriterOptions): value is ContextOptions {
-		const candidate: ContextOptions = value as ContextOptions;
-		return candidate && candidate.context !== undefined;
-	}
-
 	export function fromOptions(options: BufferEncoding | MessageWriterOptions | undefined): ResolvedMessageWriterOptions {
 		if (options === undefined || typeof options === 'string') {
-			return { charset: options ?? 'utf8' };
+			return { charset: options ?? 'utf8', contentTypeEncoder: ApplicationJsonContentTypeEncoder };
 		} else {
-			const charset: BufferEncoding = options.charset ?? 'utf8';
-			const encoderMap: Map<string, Encoder> = new Map();
-			for (const encoder of options.encoders) {
-				encoderMap.set(encoder.name, encoder);
-			}
-			const decoderMap: Map<string, Decoder> = new Map();
-			for (const decoder of options.decoders) {
-				decoderMap.set(decoder.name, decoder);
-			}
-			return { charset, context: options.context, encoders: options.encoders, encoderMap, decoders: options.decoders, decoderMap };
+			return { charset : options.charset ?? 'utf8', contentEncoder : options.contentEncoder, contentTypeEncoder : options.contentTypeEncoder ?? ApplicationJsonContentTypeEncoder };
 		}
 	}
 }
@@ -180,24 +157,22 @@ export class WriteableStreamMessageWriter extends AbstractMessageWriter implemen
 	}
 
 	public write(msg: Message): Promise<void> {
-		const encodingInfo = this.getEncoder(msg);
-		if (encodingInfo !== undefined && encodingInfo.encoder) {
-			const { headers, encoder } = encodingInfo;
-			return encoder.encode(msg, { charset: this.options.charset }).then((buffer) => {
-				headers.push(ContentLength, buffer.byteLength.toString(), CRLF);
-				headers.push(CRLF);
-				return this.doWrite(msg, headers, buffer);
-			});
-		} else {
-			const json = JSON.stringify(msg);
-			const contentLength = Buffer.byteLength(json, this.options.charset);
-			const headers: string[] = encodingInfo !== undefined ? encodingInfo.headers : [];
-			headers.push(
-				ContentLength, contentLength.toString(), CRLF,
-				CRLF
-			);
-			return this.doWrite(msg, headers, json, this.options.charset);
-		}
+		const payload = this.options.contentTypeEncoder.encode(msg, this.options).then((buffer) => {
+			if (this.options.contentEncoder !== undefined) {
+				return this.options.contentEncoder.encode(buffer);
+			} else {
+				return buffer;
+			}
+		});
+		return payload.then((buffer) => {
+			const headers: string[] = [];
+			headers.push(ContentLength, buffer.byteLength.toString(), CRLF);
+			headers.push(CRLF);
+			return this.doWrite(msg, headers, buffer);
+		}, (error) => {
+			this.fireError(error);
+			throw error;
+		});
 	}
 
 	private doWrite(msg: Message, headers: string[], data: Buffer): Promise<void>;
@@ -228,66 +203,6 @@ export class WriteableStreamMessageWriter extends AbstractMessageWriter implemen
 				});
 			});
 		});
-	}
-
-	private getEncoder(msg: Message): { headers: string[], encoder?: FunctionEncoder } | undefined {
-		const options = this.options;
-		if (!ResolvedMessageWriterOptions.isContext(options)) {
-			return undefined;
-		}
-
-		if (isNotificationMessage(msg)) {
-			const encoding = options.context.getNotificationContentEncoding(options.encoderMap);
-			if (encoding === undefined) {
-				return undefined;
-			}
-			const encoder = options.encoderMap.get(encoding);
-			if (encoder === undefined || !Encoder.isFunction(encoder)) {
-				return undefined;
-			}
-			return {
-				headers: [
-					ContentEncoding, encoder.name, CRLF
-				],
-				encoder: encoder
-			};
-		} else if (isRequestMessage(msg)) {
-			const encoding = options.context.getRequestContentEncoding(options.encoderMap);
-			if (encoding === undefined) {
-				return undefined;
-			}
-			const encoder = options.encoderMap.get(encoding);
-			const responseEncodings = options.context.getResponseAcceptEncodings(options.decoders);
-			const headers: string[] = [];
-			if (responseEncodings !== undefined) {
-				headers.push(AccepttEncoding, responseEncodings.join(', '), CRLF);
-			}
-			if (encoder !== undefined && Encoder.isFunction(encoder)) {
-				headers.push(ContentEncoding, encoder.name, CRLF);
-			}
-			if (headers.length === 0) {
-				return undefined;
-			} else {
-				return { headers, encoder: Encoder.isFunction(encoder) ? encoder : undefined };
-			}
-		} else if (isResponseMessage(msg)) {
-			const encoding = options.context.getResponseContentEncoding(msg.id, options.encoderMap);
-			if (encoding === undefined) {
-				return undefined;
-			}
-			const encoder = options.encoderMap.get(encoding);
-			if (encoder === undefined || !Encoder.isFunction(encoder)) {
-				return undefined;
-			}
-			return {
-				headers: [
-					ContentEncoding, encoder.name, CRLF
-				],
-				encoder: encoder
-			};
-		} else {
-			return undefined;
-		}
 	}
 
 	private handleError(error: any, msg: Message): void {

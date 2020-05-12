@@ -18,14 +18,14 @@ export interface WorkspaceFolders {
 
 export const WorkspaceFoldersFeature: Feature<_RemoteWorkspace, WorkspaceFolders> = (Base) => {
 	return class extends Base {
-		private _onDidChangeWorkspaceFolders: Emitter<WorkspaceFoldersChangeEvent>;
-		private _unregistration: Promise<Disposable>;
+		private _onDidChangeWorkspaceFolders: Emitter<WorkspaceFoldersChangeEvent> | undefined;
+		private _unregistration: Promise<Disposable> | undefined;
 		public initialize(capabilities: ClientCapabilities): void {
 			let workspaceCapabilities = capabilities.workspace;
 			if (workspaceCapabilities && workspaceCapabilities.workspaceFolders) {
 				this._onDidChangeWorkspaceFolders = new Emitter<WorkspaceFoldersChangeEvent>();
 				this.connection.onNotification(DidChangeWorkspaceFoldersNotification.type, (params) => {
-					this._onDidChangeWorkspaceFolders.fire(params.event);
+					this._onDidChangeWorkspaceFolders!.fire(params.event);
 				});
 			}
 		}

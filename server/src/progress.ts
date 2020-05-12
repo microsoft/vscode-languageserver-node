@@ -83,6 +83,7 @@ class WorkDoneProgressServerReporterImpl extends WorkDoneProgressReporterImpl im
 
 	constructor(connection: ProgressContext, token: ProgressToken) {
 		super(connection, token);
+		this._source = new CancellationTokenSource();
 	}
 
 	get token(): CancellationToken {
@@ -149,6 +150,10 @@ export function attachWorkDone(connection: ProgressContext, params: WorkDoneProg
 export const ProgressFeature: Feature<_RemoteWindow, WindowProgress> = (Base) => {
 	return class extends Base {
 		private _progressSupported: boolean;
+		public constructor() {
+			super();
+			this._progressSupported = false;
+		}
 		public initialize(capabilities: ClientCapabilities): void {
 			if (capabilities?.window?.workDoneProgress === true) {
 				this._progressSupported = true;

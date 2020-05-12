@@ -57,7 +57,7 @@ export class FoldingRangeFeature extends TextDocumentFeature<boolean | FoldingRa
 						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document)
 					};
 					return client.sendRequest(FoldingRangeRequest.type, requestParams, token).then(
-						this.asFoldingRanges.bind(this),
+						FoldingRangeFeature.asFoldingRanges,
 						(error: any) => {
 							return client.handleFailedRequest(FoldingRangeRequest.type, error, null);
 						}
@@ -72,7 +72,7 @@ export class FoldingRangeFeature extends TextDocumentFeature<boolean | FoldingRa
 		return [Languages.registerFoldingRangeProvider(options.documentSelector!, provider), provider];
 	}
 
-	private asFoldingRangeKind(kind: string | undefined): VFoldingRangeKind | undefined {
+	private static asFoldingRangeKind(kind: string | undefined): VFoldingRangeKind | undefined {
 		if (kind) {
 			switch (kind) {
 				case FoldingRangeKind.Comment:
@@ -86,10 +86,10 @@ export class FoldingRangeFeature extends TextDocumentFeature<boolean | FoldingRa
 		return void 0;
 	}
 
-	private asFoldingRanges(foldingRanges: FoldingRange[]): VFoldingRange[] {
+	private static asFoldingRanges(foldingRanges: FoldingRange[] | null | undefined): VFoldingRange[] {
 		if (Array.isArray(foldingRanges)) {
 			return foldingRanges.map(r => {
-				return new VFoldingRange(r.startLine, r.endLine, this.asFoldingRangeKind(r.kind));
+				return new VFoldingRange(r.startLine, r.endLine, FoldingRangeFeature.asFoldingRangeKind(r.kind));
 			});
 		}
 		return [];

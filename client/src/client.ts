@@ -272,7 +272,7 @@ export interface ErrorHandler {
 	 * @param count - a count indicating how often an error is received. Will
 	 *  be reset if a message got successfully send or received.
 	 */
-	error(error: Error, message: Message, count: number): ErrorAction;
+	error(error: Error, message: Message | undefined, count: number | undefined): ErrorAction;
 
 	/**
 	 * The connection to the server got closed.
@@ -1192,6 +1192,7 @@ class DidSaveTextDocumentFeature extends DocumentNotifiactions<DidSaveTextDocume
 			(textDocument) => client.code2ProtocolConverter.asSaveTextDocumentParams(textDocument, this._includeText),
 			DocumentNotifiactions.textDocumentFilter
 		);
+		this._includeText = false;
 	}
 
 	public get messages(): RPCMessageType {
@@ -2524,7 +2525,7 @@ export abstract class BaseLanguageClient {
 
 	private _state: ClientState;
 	private _onReady: Promise<void>;
-	private _onReadyCallbacks: OnReady;
+	private _onReadyCallbacks!: OnReady;
 	private _onStop: Promise<void> | undefined;
 	private _connectionPromise: Promise<IConnection> | undefined;
 	private _resolvedConnection: IConnection | undefined;
@@ -2532,7 +2533,7 @@ export abstract class BaseLanguageClient {
 	private _outputChannel: OutputChannel | undefined;
 	private _disposeOutputChannel: boolean;
 	private _traceOutputChannel: OutputChannel | undefined;
-	private _capabilities: ServerCapabilities & ResolvedTextDocumentSyncCapabilities;
+	private _capabilities!: ServerCapabilities & ResolvedTextDocumentSyncCapabilities;
 
 	private _listeners: Disposable[] | undefined;
 	private _providers: Disposable[] | undefined;
@@ -2576,7 +2577,7 @@ export abstract class BaseLanguageClient {
 		};
 		this._clientOptions.synchronize = this._clientOptions.synchronize || {};
 
-		this.state = ClientState.Initial;
+		this._state = ClientState.Initial;
 		this._connectionPromise = undefined;
 		this._resolvedConnection = undefined;
 		this._initializeResult = undefined;
@@ -2600,6 +2601,7 @@ export abstract class BaseLanguageClient {
 		this._onStop = undefined;
 		this._telemetryEmitter = new Emitter<any>();
 		this._stateChangeEmitter = new Emitter<StateChangeEvent>();
+		this._trace = Trace.Off;
 		this._tracer = {
 			log: (messageOrDataObject: string | any, data?: string) => {
 				if (Is.string(messageOrDataObject)) {
@@ -3191,7 +3193,7 @@ export abstract class BaseLanguageClient {
 	protected abstract createMessageTransports(encoding: string): Promise<MessageTransports>;
 
 	private createConnection(): Promise<IConnection> {
-		let errorHandler = (error: Error, message: Message, count: number) => {
+		let errorHandler = (error: Error, message: Message | undefined, count: number | undefined) => {
 			this.handleConnectionError(error, message, count);
 		};
 
@@ -3236,7 +3238,7 @@ export abstract class BaseLanguageClient {
 		}
 	}
 
-	private handleConnectionError(error: Error, message: Message, count: number) {
+	private handleConnectionError(error: Error, message: Message | undefined, count: number | undefined) {
 		let action = this._clientOptions.errorHandler!.error(error, message, count);
 		if (action === ErrorAction.Shutdown) {
 			this.error('Connection to server is erroring. Shutting down server.');

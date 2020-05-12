@@ -12,9 +12,9 @@ import { inherits } from 'util';
 
 import { RequestMessage, isRequestMessage } from '../messages';
 import { StreamMessageWriter } from '../messageWriter';
-import { StreamMessageReader, MessageBuffer } from '../messageReader';
+import { StreamMessageReader } from '../messageReader';
 import { TransferContext } from '../transferContext';
-import { Encoder, Decoder } from '../encoding';
+import { ContentEncoder, ContentDecoder } from '../encoding';
 import { Buffer } from 'buffer';
 import { Message } from '../main';
 
@@ -50,7 +50,7 @@ const TestWritable: TestWritableConstructor = function (): TestWritableConstruct
 	return (<any>TestWritable) as TestWritableConstructor;
 } ();
 
-const gzipEncoder: Encoder = {
+const gzipEncoder: ContentEncoder = {
 	name: 'gzip',
 	encode: async (input) => {
 		return new Promise((resolve, reject) => {
@@ -65,7 +65,7 @@ const gzipEncoder: Encoder = {
 	}
 };
 
-const gzipDecoder: Decoder = {
+const gzipDecoder: ContentDecoder = {
 	name: 'gzip',
 	decode: async (buffer) => {
 		return new Promise((resolve, reject) => {
@@ -135,21 +135,17 @@ suite('Messages', () => {
 	test('Basic Zip / Unzip', async () => {
 		const msg: RequestMessage = { jsonrpc: '2.0', id: 1, method: 'example' };
 		const zipped = await gzipEncoder.encode(Buffer.from(JSON.stringify(msg), 'utf8'));
-		assert.strictEqual(zipped.toString('base64'), 'H4sIAAAAAAAACqtWyirOzysqSFayUjLSM1DSUcpMUbIy1FHKTS3JyAcylVIrEnMLclKVagH7JiWtKwAAAA==');
+		assert.strictEqual(zipped.toString('base64'), 'H4sIAAAAAAAAA6tWyirOzysqSFayUjLSM1DSUcpMUbIy1FHKTS3JyAcylVIrEnMLclKVagH7JiWtKwAAAA==');
 		const unzipped: RequestMessage = JSON.parse((await gzipDecoder.decode(zipped)).toString('utf8')) as RequestMessage;
 		assert.strictEqual(unzipped.id, 1);
 		assert.strictEqual(unzipped.method, 'example');
 	});
 
-	test('Encode', async () => {
-		const context = new TransferContext();
-		context.setDefaultRequestEncodings('gzip');
+	test('Encode', (done) => {
 		const writable = new TestWritable();
 		const writer = new StreamMessageWriter(writable, {
 			charset: 'utf8',
-			context: context,
-			encoders: [gzipEncoder],
-			decoders: []
+			contentEncoder: gzipEncoder,
 		});
 
 		const request: RequestMessage = {
@@ -157,32 +153,35 @@ suite('Messages', () => {
 			id: 1,
 			method: 'example'
 		};
-		await writer.write(request);
-		writable.end();
-		assertDefined(writable.data);
+		writer.write(request).then(() => {
+			writable.end();
+			assertDefined(writable.data);
 
-		const messageBuffer = new MessageBuffer({
-			charset: 'utf8',
-			decoders: [gzipDecoder]
+
+			const readable = new Readable();
+			const reader = new StreamMessageReader(readable, {
+				charset: 'utf8',
+				contentDecoder: gzipDecoder
+			});
+
+			reader.listen((message) => {
+				if (!isRequestMessage(message)) {
+					throw new Error(`No request message`);
+				}
+				assert.equal(message.id, 1);
+				assert.equal(message.method, 'example');
+				done();
+			});
+			readable.push(writable.data);
+			readable.push(null);
 		});
-
-		messageBuffer.append(writable.data);
-		const headers = messageBuffer.tryReadHeaders();
-		assertDefined(headers);
-		const encoding = headers['Content-Encoding'];
-		assert.strictEqual(encoding, 'gzip');
-		const length: number = parseInt(headers['Content-Length']);
-		const msg: RequestMessage | undefined = await messageBuffer.tryReadContent(length, encoding) as RequestMessage;
-		assertDefined(msg);
-		assert.strictEqual(msg.id, 1);
-		assert.strictEqual(msg.method, 'example');
 	});
 
 	test('Decode', (done) => {
 		const readable = new Readable();
 		const reader = new StreamMessageReader(readable, {
 			charset: 'utf8',
-			decoders: [gzipDecoder]
+			contentDecoder: gzipDecoder
 		});
 		reader.listen((message: Message) => {
 			if (!isRequestMessage(message)) {

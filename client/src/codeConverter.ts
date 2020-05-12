@@ -485,7 +485,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			if (!protocolItem || protocolItem.documentationFormat === '$string') {
 				result.documentation = item.documentation as string;
 			} else {
-				result.documentation = asDocumentation(protocolItem.documentationFormat, item.documentation);
+				result.documentation = asDocumentation(protocolItem.documentationFormat!, item.documentation);
 			}
 		}
 		if (item.filterText) { result.filterText = item.filterText; }

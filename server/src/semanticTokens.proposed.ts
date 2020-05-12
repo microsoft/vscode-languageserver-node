@@ -44,12 +44,12 @@ export const SemanticTokensFeature: Feature<_Languages, SemanticTokens> = (Base)
 
 export class SemanticTokensBuilder {
 
-	private _id: number;
+	private _id!: number;
 
-	private _prevLine: number;
-	private _prevChar: number;
-	private _data: number[];
-	private _dataLen: number;
+	private _prevLine!: number;
+	private _prevChar!: number;
+	private _data!: number[];
+	private _dataLen!: number;
 
 	private _prevData: number[] | undefined;
 

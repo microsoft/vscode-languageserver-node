@@ -10,10 +10,10 @@ import * as proto from 'vscode-languageserver-protocol';
 export default class ProtocolCompletionItem extends code.CompletionItem {
 
 	public data: any;
-	public fromEdit: boolean;
-	public documentationFormat: string;
-	public originalItemKind: proto.CompletionItemKind;
-	public deprecated: boolean;
+	public fromEdit: boolean | undefined;
+	public documentationFormat: string | undefined;
+	public originalItemKind: proto.CompletionItemKind | undefined;
+	public deprecated: boolean | undefined;
 
 	constructor(label: string) {
 		super(label);
