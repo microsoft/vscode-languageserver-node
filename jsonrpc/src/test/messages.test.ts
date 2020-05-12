@@ -13,8 +13,7 @@ import { inherits } from 'util';
 import { RequestMessage, isRequestMessage } from '../messages';
 import { StreamMessageWriter } from '../messageWriter';
 import { StreamMessageReader } from '../messageReader';
-import { TransferContext } from '../transferContext';
-import { ContentEncoder, ContentDecoder } from '../encoding';
+import { ContentEncoder, ContentDecoder, Encodings } from '../encoding';
 import { Buffer } from 'buffer';
 import { Message } from '../main';
 
@@ -200,22 +199,21 @@ suite('Messages', () => {
 	});
 
 	test('Generate Accept Encoding', () => {
-		const transferContext = new TransferContext();
 		assert.deepStrictEqual(
-			transferContext.getResponseAcceptEncodings([ { name: 'gzip'} ]),
-			['gzip']
+			Encodings.getEncodingHeaderValue([ { name: 'gzip'} ]),
+			'gzip'
 		);
 		assert.deepStrictEqual(
-			transferContext.getResponseAcceptEncodings([ { name: 'gzip'}, {name: 'compress' } ]),
-			['gzip;q=1', 'compress;q=0']
+			Encodings.getEncodingHeaderValue([ { name: 'gzip'}, {name: 'compress' } ]),
+			'gzip;q=1, compress;q=0'
 		);
 		assert.deepStrictEqual(
-			transferContext.getResponseAcceptEncodings([ { name: 'gzip'}, {name: 'compress' }, { name: 'deflate'} ]),
-			['gzip;q=1', 'compress;q=0.5', 'deflate;q=0']
+			Encodings.getEncodingHeaderValue([ { name: 'gzip'}, {name: 'compress' }, { name: 'deflate'} ]),
+			'gzip;q=1, compress;q=0.5, deflate;q=0'
 		);
 		assert.deepStrictEqual(
-			transferContext.getResponseAcceptEncodings([ { name: 'gzip'}, {name: 'compress' }, { name: 'deflate'}, { name: 'br'} ]),
-			['gzip;q=1', 'compress;q=0.7', 'deflate;q=0.4', 'br;q=0.1']
+			Encodings.getEncodingHeaderValue([ { name: 'gzip'}, {name: 'compress' }, { name: 'deflate'}, { name: 'br'} ]),
+			'gzip;q=1, compress;q=0.7, deflate;q=0.4, br;q=0.1'
 		);
 	});
 });
