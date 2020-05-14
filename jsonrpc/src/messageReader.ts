@@ -7,10 +7,9 @@
 import { Socket } from 'net';
 import { ChildProcess } from 'child_process';
 
-import { Message } from './messages';
-import { Event, Emitter } from './events';
-import * as Is from './is';
-import { ContentDecoder, ContentTypeDecoder, ContentTypeDecoderOptions } from './encoding';
+import { Message } from './common/messages';
+import { AbstractMessageReader, MessageReader, DataCallback } from './common/messageReader';
+import { ContentDecoder, ContentTypeDecoder, ContentTypeDecoderOptions } from './common/encoding';
 
 const DefaultSize: number = 8192;
 const CR: number = Buffer.from('\r', 'ascii')[0];
@@ -161,82 +160,6 @@ export class MessageBuffer {
 	}
 }
 
-export interface DataCallback {
-	(data: Message): void;
-}
-
-export interface PartialMessageInfo {
-	readonly messageToken: number;
-	readonly waitingTime: number;
-}
-
-export interface MessageReader {
-	readonly onError: Event<Error>;
-	readonly onClose: Event<void>;
-	readonly onPartialMessage: Event<PartialMessageInfo>;
-	listen(callback: DataCallback): void;
-	dispose(): void;
-}
-
-export namespace MessageReader {
-	export function is(value: any): value is MessageReader {
-		let candidate: MessageReader = value;
-		return candidate && Is.func(candidate.listen) && Is.func(candidate.dispose) &&
-			Is.func(candidate.onError) && Is.func(candidate.onClose) && Is.func(candidate.onPartialMessage);
-	}
-}
-
-export abstract class AbstractMessageReader {
-
-	private errorEmitter: Emitter<Error>;
-	private closeEmitter: Emitter<void>;
-
-	private partialMessageEmitter: Emitter<PartialMessageInfo>;
-
-	constructor() {
-		this.errorEmitter = new Emitter<Error>();
-		this.closeEmitter = new Emitter<void>();
-		this.partialMessageEmitter = new Emitter<PartialMessageInfo>();
-	}
-
-	public dispose(): void {
-		this.errorEmitter.dispose();
-		this.closeEmitter.dispose();
-	}
-
-	public get onError(): Event<Error> {
-		return this.errorEmitter.event;
-	}
-
-	protected fireError(error: any): void {
-		this.errorEmitter.fire(this.asError(error));
-	}
-
-	public get onClose(): Event<void> {
-		return this.closeEmitter.event;
-	}
-
-	protected fireClose(): void {
-		this.closeEmitter.fire(undefined);
-	}
-
-	public get onPartialMessage(): Event<PartialMessageInfo> {
-		return this.partialMessageEmitter.event;
-	}
-
-	protected firePartialMessage(info: PartialMessageInfo): void {
-		this.partialMessageEmitter.fire(info);
-	}
-
-	private asError(error: any): Error {
-		if (error instanceof Error) {
-			return error;
-		} else {
-			return new Error(`Reader received error. Reason: ${Is.string(error.message) ? error.message : 'unknown'}`);
-		}
-	}
-}
-
 export class StreamMessageReader extends AbstractMessageReader implements MessageReader {
 
 	private readable: NodeJS.ReadableStream;
@@ -305,7 +228,7 @@ export class StreamMessageReader extends AbstractMessageReader implements Messag
 			}
 			this.clearPartialMessageTimer();
 			this.nextMessageLength = -1;
-			let p: Promise<Buffer>;
+			let p: Promise<Uint8Array>;
 			if (this.options.contentDecoder !== undefined) {
 				p = this.options.contentDecoder.decode(body);
 			} else {

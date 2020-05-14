@@ -4,12 +4,11 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { InputType } from 'zlib';
 import { Message } from './messages';
 
 export interface FunctionContentEncoder {
 	name: string;
-	encode(input: InputType): Promise<Buffer>;
+	encode(input: Uint8Array): Promise<Uint8Array>;
 }
 
 export interface StreamContentEncoder {
@@ -21,7 +20,7 @@ export type ContentEncoder = FunctionContentEncoder | (FunctionContentEncoder & 
 
 export interface FunctionContentDecoder {
 	name: string;
-	decode(buffer: Buffer): Promise<Buffer>;
+	decode(buffer: Uint8Array): Promise<Uint8Array>;
 }
 
 export interface StreamContentDecoder {
@@ -37,7 +36,7 @@ export interface ContentTypeEncoderOptions {
 
 export interface FunctionContentTypeEncoder {
 	name: string;
-	encode(msg: Message, options: ContentTypeEncoderOptions): Promise<Buffer>;
+	encode(msg: Message, options: ContentTypeEncoderOptions): Promise<Uint8Array>;
 }
 
 export interface StreamContentTypeEncoder {
@@ -53,7 +52,7 @@ export interface ContentTypeDecoderOptions {
 
 export interface FunctionContentTypeDecoder {
 	name: string;
-	decode(buffer: Buffer, options: ContentTypeDecoderOptions): Promise<Message>
+	decode(buffer: Uint8Array, options: ContentTypeDecoderOptions): Promise<Message>
 }
 
 export interface StreamContentTypeDecoder {
