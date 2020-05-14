@@ -4,6 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
+import RAL from './ral';
+
 import { Message } from './messages';
 
 export interface FunctionContentEncoder {
@@ -13,7 +15,7 @@ export interface FunctionContentEncoder {
 
 export interface StreamContentEncoder {
 	name: string;
-	create(): NodeJS.WritableStream;
+	create(): RAL.WritableStream;
 }
 
 export type ContentEncoder = FunctionContentEncoder | (FunctionContentEncoder & StreamContentEncoder);
@@ -25,13 +27,13 @@ export interface FunctionContentDecoder {
 
 export interface StreamContentDecoder {
 	name: string;
-	create(): NodeJS.WritableStream;
+	create(): RAL.WritableStream;
 }
 
 export type ContentDecoder = FunctionContentDecoder | (FunctionContentDecoder & StreamContentDecoder);
 
 export interface ContentTypeEncoderOptions {
-	charset: BufferEncoding;
+	charset: RAL.MessageBufferEncoding;
 }
 
 export interface FunctionContentTypeEncoder {
@@ -41,13 +43,13 @@ export interface FunctionContentTypeEncoder {
 
 export interface StreamContentTypeEncoder {
 	name: string;
-	create(options: ContentTypeEncoderOptions): NodeJS.WritableStream;
+	create(options: ContentTypeEncoderOptions): RAL.WritableStream;
 }
 
 export type ContentTypeEncoder = FunctionContentTypeEncoder | (FunctionContentTypeEncoder & StreamContentTypeEncoder);
 
 export interface ContentTypeDecoderOptions {
-	charset: BufferEncoding;
+	charset: RAL.MessageBufferEncoding;
 }
 
 export interface FunctionContentTypeDecoder {
@@ -57,7 +59,7 @@ export interface FunctionContentTypeDecoder {
 
 export interface StreamContentTypeDecoder {
 	name: string;
-	create(options: ContentTypeDecoderOptions): NodeJS.WritableStream;
+	create(options: ContentTypeDecoderOptions): RAL.WritableStream;
 }
 
 export type ContentTypeDecoder = FunctionContentTypeDecoder | (FunctionContentTypeDecoder & StreamContentTypeDecoder);

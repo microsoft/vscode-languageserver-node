@@ -3,10 +3,13 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
+import RAL from './ral';
+const ral = RAL();
+
 import * as Is from './is';
 import { Event, Emitter } from './events';
 import { Message } from './messages';
-import { ReadableStream } from './streams';
+import { ContentDecoder, ContentTypeDecoder } from './encoding';
 
 export interface DataCallback {
 	(data: Message): void;
@@ -84,23 +87,79 @@ export abstract class AbstractMessageReader {
 	}
 }
 
+export interface MessageReaderOptions {
+	charset?: RAL.MessageBufferEncoding;
+	contentDecoder?: ContentDecoder;
+	contentDecoders?: ContentDecoder[];
+	contentTypeDecoder?: ContentTypeDecoder;
+	contentTypeDecoders?: ContentTypeDecoder[];
+}
+
+interface ResolvedMessageReaderOptions {
+	charset: RAL.MessageBufferEncoding;
+	contentDecoder?: ContentDecoder;
+	contentDecoders: Map<string, ContentDecoder>;
+	contentTypeDecoder: ContentTypeDecoder;
+	contentTypeDecoders: Map<string, ContentTypeDecoder>;
+}
+
+namespace ResolvedMessageReaderOptions {
+
+	export function fromOptions(options?: RAL.MessageBufferEncoding | MessageReaderOptions): ResolvedMessageReaderOptions {
+		let charset: RAL.MessageBufferEncoding;
+		let result: ResolvedMessageReaderOptions;
+		let contentDecoder: ContentDecoder | undefined;
+		const contentDecoders: typeof result.contentDecoders = new Map();
+		let contentTypeDecoder: ContentTypeDecoder | undefined;
+		const contentTypeDecoders: typeof result.contentTypeDecoders = new Map();
+		if (options === undefined || typeof options === 'string') {
+			charset = options ?? 'utf8';
+		} else {
+			charset = options.charset ?? 'utf8';
+			if (options.contentDecoder !== undefined) {
+				contentDecoder = options.contentDecoder;
+				contentDecoders.set(contentDecoder.name, contentDecoder);
+			}
+			if (options.contentDecoders !== undefined) {
+				for (const decoder of options.contentDecoders) {
+					contentDecoders.set(decoder.name, decoder);
+				}
+			}
+			if (options.contentTypeDecoder !== undefined) {
+				contentTypeDecoder = options.contentTypeDecoder;
+				contentTypeDecoders.set(contentTypeDecoder.name, contentTypeDecoder);
+			}
+			if (options.contentTypeDecoders !== undefined) {
+				for (const decoder of options.contentTypeDecoders) {
+					contentTypeDecoders.set(decoder.name, decoder);
+				}
+			}
+		}
+		if (contentTypeDecoder === undefined) {
+			contentTypeDecoder = ral.applicationJson.decoder;
+			contentTypeDecoders.set(contentTypeDecoder.name, contentTypeDecoder);
+		}
+		return { charset, contentDecoder, contentDecoders, contentTypeDecoder, contentTypeDecoders };
+	}
+}
+
 export class StreamMessageReader extends AbstractMessageReader implements MessageReader {
 
-	private readable: ReadableStream;
+	private readable: RAL.ReadableStream;
 	private options: ResolvedMessageReaderOptions;
 	private callback!: DataCallback;
 
 	private nextMessageLength: number;
 	private messageToken: number;
-	private buffer: MessageBuffer;
+	private buffer: RAL.MessageBuffer;
 	private partialMessageTimer: NodeJS.Timer | undefined;
 	private _partialMessageTimeout: number;
 
-	public constructor(readable: ReadableStream, options?: BufferEncoding | MessageReaderOptions) {
+	public constructor(readable: RAL.ReadableStream, options?: RAL.MessageBufferEncoding | MessageReaderOptions) {
 		super();
 		this.readable = readable;
-		this.buffer = new MessageBuffer();
 		this.options = ResolvedMessageReaderOptions.fromOptions(options);
+		this.buffer = ral.messageBuffer.create(this.options.charset);
 		this._partialMessageTimeout = 10000;
 		this.nextMessageLength = -1;
 		this.messageToken = 0;
@@ -126,7 +185,7 @@ export class StreamMessageReader extends AbstractMessageReader implements Messag
 		this.readable.onClose(() => this.fireClose());
 	}
 
-	private onData(data: Buffer | String): void {
+	private onData(data: Uint8Array): void {
 		this.buffer.append(data);
 		while (true) {
 			if (this.nextMessageLength === -1) {
@@ -134,7 +193,7 @@ export class StreamMessageReader extends AbstractMessageReader implements Messag
 				if (!headers) {
 					return;
 				}
-				const contentLength = headers['Content-Length'];
+				const contentLength = headers.get('Content-Length');
 				if (!contentLength) {
 					throw new Error('Header must provide a Content-Length property.');
 				}

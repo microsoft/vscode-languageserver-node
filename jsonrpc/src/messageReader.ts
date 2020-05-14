@@ -9,75 +9,11 @@ import { ChildProcess } from 'child_process';
 
 import { Message } from './common/messages';
 import { AbstractMessageReader, MessageReader, DataCallback } from './common/messageReader';
-import { ContentDecoder, ContentTypeDecoder, ContentTypeDecoderOptions } from './common/encoding';
 
 const DefaultSize: number = 8192;
 const CR: number = Buffer.from('\r', 'ascii')[0];
 const LF: number = Buffer.from('\n', 'ascii')[0];
 const CRLF: string = '\r\n';
-
-export interface MessageReaderOptions {
-	charset?: BufferEncoding;
-	contentDecoder?: ContentDecoder;
-	contentDecoders?: ContentDecoder[];
-	contentTypeDecoder?: ContentTypeDecoder;
-	contentTypeDecoders?: ContentTypeDecoder[];
-}
-
-interface ResolvedMessageReaderOptions {
-	charset: BufferEncoding;
-	contentDecoder?: ContentDecoder;
-	contentDecoders: Map<string, ContentDecoder>;
-	contentTypeDecoder: ContentTypeDecoder;
-	contentTypeDecoders: Map<string, ContentTypeDecoder>;
-}
-
-const ApplicationJsonContentTypeDecoder: ContentTypeDecoder = {
-	name: 'application/json',
-	decode: (value: Buffer, options: ContentTypeDecoderOptions): Promise<Message> => {
-		return Promise.resolve(JSON.parse(value.toString(options.charset)));
-	}
-};
-
-namespace ResolvedMessageReaderOptions {
-
-	export function fromOptions(options?: BufferEncoding | MessageReaderOptions): ResolvedMessageReaderOptions {
-		let charset: BufferEncoding;
-		let result: ResolvedMessageReaderOptions;
-		let contentDecoder: ContentDecoder | undefined;
-		const contentDecoders: typeof result.contentDecoders = new Map();
-		let contentTypeDecoder: ContentTypeDecoder | undefined;
-		const contentTypeDecoders: typeof result.contentTypeDecoders = new Map();
-		if (options === undefined || typeof options === 'string') {
-			charset = options ?? 'utf8';
-		} else {
-			charset = options.charset ?? 'utf8';
-			if (options.contentDecoder !== undefined) {
-				contentDecoder = options.contentDecoder;
-				contentDecoders.set(contentDecoder.name, contentDecoder);
-			}
-			if (options.contentDecoders !== undefined) {
-				for (const decoder of options.contentDecoders) {
-					contentDecoders.set(decoder.name, decoder);
-				}
-			}
-			if (options.contentTypeDecoder !== undefined) {
-				contentTypeDecoder = options.contentTypeDecoder;
-				contentTypeDecoders.set(contentTypeDecoder.name, contentTypeDecoder);
-			}
-			if (options.contentTypeDecoders !== undefined) {
-				for (const decoder of options.contentTypeDecoders) {
-					contentTypeDecoders.set(decoder.name, decoder);
-				}
-			}
-		}
-		if (contentTypeDecoder === undefined) {
-			contentTypeDecoder = ApplicationJsonContentTypeDecoder;
-			contentTypeDecoders.set(contentTypeDecoder.name, contentTypeDecoder);
-		}
-		return { charset, contentDecoder, contentDecoders, contentTypeDecoder, contentTypeDecoders };
-	}
-}
 
 export class MessageBuffer {
 
