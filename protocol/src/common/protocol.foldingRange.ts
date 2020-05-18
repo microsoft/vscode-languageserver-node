@@ -5,6 +5,7 @@
 
 import { RequestHandler, ProgressType } from 'vscode-jsonrpc';
 import { TextDocumentIdentifier } from 'vscode-languageserver-types';
+
 import { ProtocolRequestType } from './messages';
 import {
 	TextDocumentRegistrationOptions, StaticRegistrationOptions, PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions

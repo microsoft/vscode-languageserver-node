@@ -17,7 +17,8 @@
 		"paths": {
 			"vscode-languageserver-types": ["../../types/src/main"],
 			"vscode-languageserver-types/*": ["../../types/src/*"],
-			"vscode-jsonrpc": ["../../jsonrpc/src/main"],
+			"vscode-jsonrpc": ["../../jsonrpc/src/common/common"],
+			"vscode-jsonrpc/node": ["../../jsonrpc/node"],
 			"vscode-jsonrpc/*": ["../../jsonrpc/src/*"]
 		}
 	},

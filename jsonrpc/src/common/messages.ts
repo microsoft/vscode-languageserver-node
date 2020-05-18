@@ -141,7 +141,7 @@ export interface LSPLogMessage {
 /**
  * An interface to type messages.
  */
-export interface MessageType {
+export interface MessageSignature {
 	readonly method: string;
 	readonly numberOfParams: number;
 }
@@ -149,7 +149,7 @@ export interface MessageType {
 /**
  * An abstract implementation of a MessageType.
  */
-export abstract class AbstractMessageType implements MessageType {
+export abstract class AbstractMessageSignature implements MessageSignature {
 	constructor(private _method: string, private _numberOfParams: number) {
 	}
 
@@ -176,7 +176,7 @@ export interface _EM {
  * of the JSON RPC library since it is a LSP concept and doesn't
  * belong here. For now it is tagged as default never.
  */
-export class RequestType0<R, E, RO = never> extends AbstractMessageType {
+export class RequestType0<R, E, RO = never> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
@@ -186,7 +186,7 @@ export class RequestType0<R, E, RO = never> extends AbstractMessageType {
 	}
 }
 
-export class RequestType<P, R, E, RO = never> extends AbstractMessageType {
+export class RequestType<P, R, E, RO = never> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
@@ -196,7 +196,7 @@ export class RequestType<P, R, E, RO = never> extends AbstractMessageType {
 	}
 }
 
-export class RequestType1<P1, R, E, RO = never> extends AbstractMessageType {
+export class RequestType1<P1, R, E, RO = never> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
@@ -206,7 +206,7 @@ export class RequestType1<P1, R, E, RO = never> extends AbstractMessageType {
 	}
 }
 
-export class RequestType2<P1, P2, R, E, RO = never> extends AbstractMessageType {
+export class RequestType2<P1, P2, R, E, RO = never> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
@@ -216,7 +216,7 @@ export class RequestType2<P1, P2, R, E, RO = never> extends AbstractMessageType 
 	}
 }
 
-export class RequestType3<P1, P2, P3, R, E, RO = never> extends AbstractMessageType {
+export class RequestType3<P1, P2, P3, R, E, RO = never> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
@@ -226,7 +226,7 @@ export class RequestType3<P1, P2, P3, R, E, RO = never> extends AbstractMessageT
 	}
 }
 
-export class RequestType4<P1, P2, P3, P4, R, E, RO = never> extends AbstractMessageType {
+export class RequestType4<P1, P2, P3, P4, R, E, RO = never> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
@@ -236,7 +236,7 @@ export class RequestType4<P1, P2, P3, P4, R, E, RO = never> extends AbstractMess
 	}
 }
 
-export class RequestType5<P1, P2, P3, P4, P5, R, E, RO = never> extends AbstractMessageType {
+export class RequestType5<P1, P2, P3, P4, P5, R, E, RO = never> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
@@ -246,7 +246,7 @@ export class RequestType5<P1, P2, P3, P4, P5, R, E, RO = never> extends Abstract
 	}
 }
 
-export class RequestType6<P1, P2, P3, P4, P5, P6, R, E, RO = never> extends AbstractMessageType {
+export class RequestType6<P1, P2, P3, P4, P5, P6, R, E, RO = never> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
@@ -256,7 +256,7 @@ export class RequestType6<P1, P2, P3, P4, P5, P6, R, E, RO = never> extends Abst
 	}
 }
 
-export class RequestType7<P1, P2, P3, P4, P5, P6, P7, R, E, RO = never> extends AbstractMessageType {
+export class RequestType7<P1, P2, P3, P4, P5, P6, P7, R, E, RO = never> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
@@ -266,7 +266,7 @@ export class RequestType7<P1, P2, P3, P4, P5, P6, P7, R, E, RO = never> extends 
 	}
 }
 
-export class RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO = never> extends AbstractMessageType {
+export class RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO = never> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
@@ -276,7 +276,7 @@ export class RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO = never> exte
 	}
 }
 
-export class RequestType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO = never> extends AbstractMessageType {
+export class RequestType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO = never> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
@@ -306,7 +306,7 @@ export interface NotificationMessage extends Message {
  * of the JSON RPC library since it is a LSP concept and doesn't
  * belong here. For now it is tagged as default never.
  */
-export class NotificationType<P, RO = never> extends AbstractMessageType {
+export class NotificationType<P, RO = never> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
@@ -317,7 +317,7 @@ export class NotificationType<P, RO = never> extends AbstractMessageType {
 	}
 }
 
-export class NotificationType0<RO = never> extends AbstractMessageType {
+export class NotificationType0<RO = never> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
@@ -327,7 +327,7 @@ export class NotificationType0<RO = never> extends AbstractMessageType {
 	}
 }
 
-export class NotificationType1<P1, RO = never> extends AbstractMessageType {
+export class NotificationType1<P1, RO = never> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
@@ -337,7 +337,7 @@ export class NotificationType1<P1, RO = never> extends AbstractMessageType {
 	}
 }
 
-export class NotificationType2<P1, P2, RO = never> extends AbstractMessageType {
+export class NotificationType2<P1, P2, RO = never> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
@@ -347,7 +347,7 @@ export class NotificationType2<P1, P2, RO = never> extends AbstractMessageType {
 	}
 }
 
-export class NotificationType3<P1, P2, P3, RO = never> extends AbstractMessageType {
+export class NotificationType3<P1, P2, P3, RO = never> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
@@ -357,7 +357,7 @@ export class NotificationType3<P1, P2, P3, RO = never> extends AbstractMessageTy
 	}
 }
 
-export class NotificationType4<P1, P2, P3, P4, RO = never> extends AbstractMessageType {
+export class NotificationType4<P1, P2, P3, P4, RO = never> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
@@ -367,7 +367,7 @@ export class NotificationType4<P1, P2, P3, P4, RO = never> extends AbstractMessa
 	}
 }
 
-export class NotificationType5<P1, P2, P3, P4, P5, RO = never> extends AbstractMessageType {
+export class NotificationType5<P1, P2, P3, P4, P5, RO = never> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
@@ -377,7 +377,7 @@ export class NotificationType5<P1, P2, P3, P4, P5, RO = never> extends AbstractM
 	}
 }
 
-export class NotificationType6<P1, P2, P3, P4, P5, P6, RO = never> extends AbstractMessageType {
+export class NotificationType6<P1, P2, P3, P4, P5, P6, RO = never> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
@@ -387,7 +387,7 @@ export class NotificationType6<P1, P2, P3, P4, P5, P6, RO = never> extends Abstr
 	}
 }
 
-export class NotificationType7<P1, P2, P3, P4, P5, P6, P7, RO = never> extends AbstractMessageType {
+export class NotificationType7<P1, P2, P3, P4, P5, P6, P7, RO = never> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
@@ -397,7 +397,7 @@ export class NotificationType7<P1, P2, P3, P4, P5, P6, P7, RO = never> extends A
 	}
 }
 
-export class NotificationType8<P1, P2, P3, P4, P5, P6, P7, P8, RO = never> extends AbstractMessageType {
+export class NotificationType8<P1, P2, P3, P4, P5, P6, P7, P8, RO = never> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
@@ -407,7 +407,7 @@ export class NotificationType8<P1, P2, P3, P4, P5, P6, P7, P8, RO = never> exten
 	}
 }
 
-export class NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, RO = never> extends AbstractMessageType {
+export class NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, RO = never> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */

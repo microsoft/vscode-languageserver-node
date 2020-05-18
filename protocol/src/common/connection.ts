@@ -2,76 +2,13 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
-'use strict';
 
 import {
-	ErrorCodes, ResponseError, CancellationToken, CancellationTokenSource, CancellationStrategy, CancellationReceiverStrategy, CancellationSenderStrategy,
-	AbstractCancellationTokenSource, Disposable, Event, Emitter, Trace, Tracer, TraceFormat, TraceOptions, SetTraceNotification, LogTraceNotification,
-	Message, MessageConnection, NotificationMessage, RequestMessage, MessageType as RPCMessageType,
-	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler, HandlerResult,
-	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler, StarNotificationHandler,
-	MessageReader, PartialMessageInfo, MessageWriter, Logger, ConnectionStrategy, ConnectionOptions,
-	StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageWriter,
-	createClientPipeTransport, createServerPipeTransport, generateRandomPipeName, DataCallback,
-	createClientSocketTransport, createServerSocketTransport, ProgressType, ProgressToken,
-	createMessageConnection
+	Message, NotificationMessage, CancellationToken,
+	RequestType0, RequestType, RequestHandler0, RequestHandler, GenericRequestHandler,
+	NotificationType0, NotificationType, NotificationHandler0, NotificationHandler, GenericNotificationHandler,
+	ProgressType, Trace, Tracer, TraceOptions, Disposable, Event
 } from 'vscode-jsonrpc';
-
-export {
-	ErrorCodes, ResponseError, CancellationToken, CancellationTokenSource, CancellationStrategy, CancellationReceiverStrategy, CancellationSenderStrategy,
-	AbstractCancellationTokenSource, Disposable, Event, Emitter, Trace, Tracer, TraceFormat, TraceOptions, SetTraceNotification, LogTraceNotification,
-	Message, MessageConnection, NotificationMessage, RequestMessage, RPCMessageType,
-	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler, StarRequestHandler, HandlerResult,
-	NotificationType, NotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler, StarNotificationHandler,
-	MessageReader, PartialMessageInfo, MessageWriter, Logger, ConnectionStrategy, ConnectionOptions,
-	StreamMessageReader, StreamMessageWriter,
-	IPCMessageReader, IPCMessageWriter,
-	createClientPipeTransport, createServerPipeTransport, generateRandomPipeName, DataCallback,
-	createClientSocketTransport, createServerSocketTransport, ProgressType, ProgressToken
-};
-
-export * from 'vscode-languageserver-types';
-export * from './protocol';
-export * from './messages';
-
-export { FoldingRangeParams as FoldingRangeRequestParam } from './protocol'; // for backward compatibility
-
-import * as st from './protocol.semanticTokens.proposed';
-
-export namespace Proposed {
-	export const SemanticTokenTypes = st.SemanticTokenTypes;
-	export const SemanticTokenModifiers = st.SemanticTokenModifiers;
-	export type SemanticTokensLegend = st.SemanticTokensLegend;
-	export type SemanticTokens = st.SemanticTokens;
-	export const SemanticTokens = st.SemanticTokens;
-	export type SemanticTokensPartialResult = st.SemanticTokensPartialResult;
-	export type SemanticTokensEdit = st.SemanticTokensEdit;
-	export type SemanticTokensEdits = st.SemanticTokensEdits;
-	export type SemanticTokensEditsPartialResult = st.SemanticTokensEditsPartialResult;
-
-	export type SemanticTokensClientCapabilities = st.SemanticTokensClientCapabilities;
-	export type SemanticTokensOptions = st.SemanticTokensOptions;
-	export type SemanticTokensRegistrationOptions = st.SemanticTokensRegistrationOptions;
-	export type SemanticTokensServerCapabilities = st.SemanticTokensServerCapabilities;
-
-	export type SemanticTokensParams = st.SemanticTokensParams;
-	export namespace SemanticTokensRequest {
-		export const method = st.SemanticTokensRequest.method;
-		export const type = st.SemanticTokensRequest.type;
-	}
-
-	export type SemanticTokensEditsParams = st.SemanticTokensEditsParams;
-	export namespace SemanticTokensEditsRequest {
-		export const method = st.SemanticTokensEditsRequest.method;
-		export const type = st.SemanticTokensEditsRequest.type;
-	}
-
-	export type SemanticTokensRangeParams = st.SemanticTokensRangeParams;
-	export namespace SemanticTokensRangeRequest {
-		export const method = st.SemanticTokensRangeRequest.method;
-		export const type = st.SemanticTokensRangeRequest.type;
-	}
-}
 
 export interface ProtocolConnection {
 
@@ -243,13 +180,4 @@ export interface ProtocolConnection {
 	 * Turns the connection into listening mode
 	 */
 	listen(): void;
-}
-
-/**
- * @deprecated Use ProtocolConnection instead.
- */
-export type ProtocolConnetion = ProtocolConnection;
-
-export function createProtocolConnection(reader: MessageReader, writer: MessageWriter, logger: Logger, options?: ConnectionStrategy | ConnectionOptions): ProtocolConnection {
-	return createMessageConnection(reader, writer, logger, options);
 }

@@ -13,7 +13,7 @@
 		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
 	},
 	"main": "./lib/main.js",
-	"typings": "./lib/main",
+	"typings": "./lib/common/common.d.ts",
 	"dependencies": {
 		"vscode-jsonrpc": "5.1.0-next.1",
 		"vscode-languageserver-types": "3.16.0-next.1"

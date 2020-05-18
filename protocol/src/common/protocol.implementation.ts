@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
-'use strict';
 
 import { RequestHandler, ProgressType } from 'vscode-jsonrpc';
-import { Definition, DefinitionLink, LocationLink, Location } from 'vscode-languageserver-types';
+import { Definition, DefinitionLink, Location, LocationLink } from 'vscode-languageserver-types';
+
 import { ProtocolRequestType } from './messages';
 import {
 	TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams, PartialResultParams, WorkDoneProgressParams,
@@ -18,10 +18,10 @@ let __noDynamicImport: LocationLink | Declaration | DeclarationLink | Location |
 /**
  * Since 3.6.0
  */
-export interface TypeDefinitionClientCapabilities {
+export interface ImplementationClientCapabilities {
 	/**
 	 * Whether implementation supports dynamic registration. If this is set to `true`
-	 * the client supports the new `TypeDefinitionRegistrationOptions` return value
+	 * the client supports the new `ImplementationRegistrationOptions` return value
 	 * for the corresponding server capability as well.
 	 */
 	dynamicRegistration?: boolean;
@@ -34,25 +34,25 @@ export interface TypeDefinitionClientCapabilities {
 	linkSupport?: boolean;
 }
 
-export interface TypeDefinitionOptions extends WorkDoneProgressOptions {
+export interface ImplementationOptions extends WorkDoneProgressOptions {
 }
 
-export interface TypeDefinitionRegistrationOptions extends TextDocumentRegistrationOptions, TypeDefinitionOptions, StaticRegistrationOptions {
+export interface ImplementationRegistrationOptions extends TextDocumentRegistrationOptions, ImplementationOptions, StaticRegistrationOptions {
 }
 
-export interface TypeDefinitionParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {
+export interface ImplementationParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {
 }
 
 /**
- * A request to resolve the type definition locations of a symbol at a given text
+ * A request to resolve the implementation locations of a symbol at a given text
  * document position. The request's parameter is of type [TextDocumentPositioParams]
  * (#TextDocumentPositionParams) the response is of type [Definition](#Definition) or a
  * Thenable that resolves to such.
  */
-export namespace TypeDefinitionRequest {
-	export const method: 'textDocument/typeDefinition' = 'textDocument/typeDefinition';
-	export const type = new ProtocolRequestType<TypeDefinitionParams, Definition | DefinitionLink[] | null, Location[] | DefinitionLink[], void, TypeDefinitionRegistrationOptions>(method);
-	/** @deprecated Use TypeDefinitionRequest.type */
+export namespace ImplementationRequest {
+	export const method: 'textDocument/implementation' = 'textDocument/implementation';
+	export const type = new ProtocolRequestType<ImplementationParams, Definition | DefinitionLink[] | null, Location[] | DefinitionLink[], void, ImplementationRegistrationOptions>(method);
+	/** @deprecated Use ImplementationRequest.type */
 	export const resultType = new ProgressType<Location[] | DefinitionLink[]>();
-	export type HandlerSignature = RequestHandler<TypeDefinitionParams, Definition | DefinitionLink[] | null, void>;
+	export type HandlerSignature = RequestHandler<ImplementationParams, Definition | DefinitionLink[] | null, void>;
 }

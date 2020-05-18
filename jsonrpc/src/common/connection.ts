@@ -6,7 +6,7 @@
 import * as Is from './is';
 
 import {
-	Message, MessageType, RequestMessage, RequestType, isRequestMessage, RequestType0, RequestType1, RequestType2, RequestType3,
+	Message, MessageSignature, RequestMessage, RequestType, isRequestMessage, RequestType0, RequestType1, RequestType2, RequestType3,
 	RequestType4, RequestType5, RequestType6, RequestType7, RequestType8, RequestType9, ResponseMessage, isResponseMessage,
 	ResponseError, ErrorCodes, NotificationMessage, isNotificationMessage, NotificationType, NotificationType0, NotificationType1,
 	NotificationType2, NotificationType3, NotificationType4, NotificationType5, NotificationType6, NotificationType7, NotificationType8,
@@ -450,11 +450,11 @@ enum ConnectionState {
 }
 
 interface RequestHandlerElement {
-	type: MessageType | undefined;
+	type: MessageSignature | undefined;
 	handler: GenericRequestHandler<any, any>;
 }
 interface NotificationHandlerElement {
-	type: MessageType | undefined;
+	type: MessageSignature | undefined;
 	handler: GenericNotificationHandler;
 }
 
@@ -653,7 +653,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		traceReceivedRequest(requestMessage);
 
 		const element = requestHandlers[requestMessage.method];
-		let type: MessageType | undefined;
+		let type: MessageSignature | undefined;
 		let requestHandler: GenericRequestHandler<any, any> | undefined;
 		if (element) {
 			type = element.type;
@@ -761,7 +761,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			// See handle request.
 			return;
 		}
-		let type: MessageType | undefined = undefined;
+		let type: MessageSignature | undefined = undefined;
 		let notificationHandler: GenericNotificationHandler | undefined;
 		if (message.method === CancelNotification.type.method) {
 			notificationHandler = (params: CancelParams) => {
@@ -986,7 +986,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		}
 	}
 
-	function computeMessageParams(type: MessageType, params: any[]): any | any[] | null {
+	function computeMessageParams(type: MessageSignature, params: any[]): any | any[] | null {
 		let result: any | any[] | null;
 		const numberOfParams = type.numberOfParams;
 		switch (numberOfParams) {
@@ -1012,7 +1012,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 	}
 
 	const connection: MessageConnection = {
-		sendNotification: (type: string | MessageType, ...params: any[]): void => {
+		sendNotification: (type: string | MessageSignature, ...params: any[]): void => {
 			throwIfClosedOrDisposed();
 
 			let method: string;
@@ -1042,7 +1042,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			traceSendingNotification(notificationMessage);
 			messageWriter.write(notificationMessage);
 		},
-		onNotification: (type: string | MessageType | StarNotificationHandler, handler?: GenericNotificationHandler): void => {
+		onNotification: (type: string | MessageSignature | StarNotificationHandler, handler?: GenericNotificationHandler): void => {
 			throwIfClosedOrDisposed();
 			if (Is.func(type)) {
 				starNotificationHandler = type as StarNotificationHandler;
@@ -1069,7 +1069,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			connection.sendNotification(ProgressNotification.type, { token, value });
 		},
 		onUnhandledProgress: unhandledProgressEmitter.event,
-		sendRequest: <R, E>(type: string | MessageType, ...params: any[]) => {
+		sendRequest: <R, E>(type: string | MessageSignature, ...params: any[]) => {
 			throwIfClosedOrDisposed();
 			throwIfNotListening();
 
@@ -1154,7 +1154,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			});
 			return result;
 		},
-		onRequest: <R, E>(type: string | MessageType | StarRequestHandler, handler?: GenericRequestHandler<R, E>): void => {
+		onRequest: <R, E>(type: string | MessageSignature | StarRequestHandler, handler?: GenericRequestHandler<R, E>): void => {
 			throwIfClosedOrDisposed();
 
 			if (Is.func(type)) {
