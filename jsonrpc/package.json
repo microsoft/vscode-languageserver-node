@@ -16,7 +16,7 @@
 		"node": ">=8.0.0 || >=10.0.0"
 	},
 	"main": "./lib/node/main.js",
-	"typings": "./lib/common/common.d.ts",
+	"typings": "./lib/common/api.d.ts",
 	"scripts": {
 		"prepublishOnly": "npm run clean && npm run compile && npm test",
 		"postpublish": "node ../build/npm/post-publish.js",

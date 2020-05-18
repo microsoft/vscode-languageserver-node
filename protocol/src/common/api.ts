@@ -9,7 +9,7 @@ export * from 'vscode-languageserver-types';
 export * from './messages';
 export * from './protocol';
 
-export { ProtocolConnection } from './connection';
+export { ProtocolConnection, createProtocolConnection } from './connection';
 
 import * as st from './protocol.semanticTokens.proposed';
 

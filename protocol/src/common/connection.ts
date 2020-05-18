@@ -7,7 +7,7 @@ import {
 	Message, NotificationMessage, CancellationToken,
 	RequestType0, RequestType, RequestHandler0, RequestHandler, GenericRequestHandler,
 	NotificationType0, NotificationType, NotificationHandler0, NotificationHandler, GenericNotificationHandler,
-	ProgressType, Trace, Tracer, TraceOptions, Disposable, Event
+	ProgressType, Trace, Tracer, TraceOptions, Disposable, Event, MessageReader, MessageWriter, Logger, ConnectionStrategy, ConnectionOptions, createMessageConnection
 } from 'vscode-jsonrpc';
 
 export interface ProtocolConnection {
@@ -180,4 +180,11 @@ export interface ProtocolConnection {
 	 * Turns the connection into listening mode
 	 */
 	listen(): void;
+}
+
+export function createProtocolConnection(input: MessageReader, output: MessageWriter, logger?: Logger, options?: ConnectionStrategy | ConnectionOptions): ProtocolConnection {
+	if (ConnectionStrategy.is(options)) {
+		options = { connectionStrategy: options } as ConnectionOptions;
+	}
+	return createMessageConnection(input, output, logger, options);
 }

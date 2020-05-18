@@ -458,7 +458,9 @@ interface NotificationHandlerElement {
 	handler: GenericNotificationHandler;
 }
 
-export function createMessageConnection(messageReader: MessageReader, messageWriter: MessageWriter, logger: Logger, options?: ConnectionOptions): MessageConnection {
+export function createMessageConnection(messageReader: MessageReader, messageWriter: MessageWriter, _logger?: Logger, options?: ConnectionOptions): MessageConnection {
+	const logger: Logger = _logger !== undefined ? _logger : NullLogger;
+
 	let sequenceNumber = 0;
 	let notificationSquenceNumber = 0;
 	let unknownResponseSquenceNumber = 0;
