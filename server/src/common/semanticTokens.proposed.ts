@@ -2,10 +2,9 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
-'use strict';
 
 import { Proposed } from 'vscode-languageserver-protocol';
-import { Feature, _Languages, ServerRequestHandler } from './main';
+import type { Feature, _Languages, ServerRequestHandler } from './server';
 
 export interface SemanticTokens {
 	semanticTokens: {

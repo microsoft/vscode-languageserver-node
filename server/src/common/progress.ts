@@ -2,15 +2,14 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
-'use strict';
 
 import {
 	ClientCapabilities, CancellationToken, CancellationTokenSource, ProgressToken, ProgressType, WorkDoneProgressParams, PartialResultParams,
 	WorkDoneProgressBegin, WorkDoneProgress, WorkDoneProgressReport, WorkDoneProgressCancelNotification, WorkDoneProgressCreateRequest
 } from 'vscode-languageserver-protocol';
 
-import { Feature, _RemoteWindow } from './main';
 import { generateUuid } from './utils/uuid';
+import type { Feature, _RemoteWindow } from './server';
 
 export interface ProgressContext {
 	sendProgress<P>(type: ProgressType<P>, token: ProgressToken, value: P): void;

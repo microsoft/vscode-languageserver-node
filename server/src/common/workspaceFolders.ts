@@ -8,7 +8,7 @@ import {
 	Event, Emitter, Disposable, ClientCapabilities, WorkspaceFolder, WorkspaceFoldersChangeEvent, DidChangeWorkspaceFoldersNotification, WorkspaceFoldersRequest
 } from 'vscode-languageserver-protocol';
 
-import { Feature, _RemoteWorkspace } from './main';
+import type { Feature, _RemoteWorkspace } from './server';
 
 
 export interface WorkspaceFolders {

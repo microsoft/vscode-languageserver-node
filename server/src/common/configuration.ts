@@ -8,7 +8,7 @@ import {
 	ConfigurationItem, ConfigurationParams, ConfigurationRequest
 } from 'vscode-languageserver-protocol';
 
-import { Feature, _RemoteWorkspace } from './main';
+import type { Feature, _RemoteWorkspace } from './server';
 
 import * as Is from './utils/is';
 

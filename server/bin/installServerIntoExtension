@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 #!/usr/bin/env node
 
 var path = require('path');
@@ -7,9 +8,9 @@ var cp = require('child_process');
 var extensionDirectory = process.argv[2];
 if (!extensionDirectory) {
 	console.error('No extension directory provided.');
-	process.exit(1)
+	process.exit(1);
 }
-extensionDirectory = path.resolve(extensionDirectory)
+extensionDirectory = path.resolve(extensionDirectory);
 if (!fs.existsSync(extensionDirectory)) {
 	console.error('Extension directory ' + extensionDirectory + ' doesn\'t exist on disk.');
 	process.exit(1);
@@ -32,11 +33,11 @@ if (!tsconfigFile) {
 }
 tsconfigFile = path.resolve(tsconfigFile);
 if (!fs.existsSync(tsconfigFile)) {
-	console.error('tsconfig file ' + tsconfigFile + ' doesn\'t exist on disk.')
+	console.error('tsconfig file ' + tsconfigFile + ' doesn\'t exist on disk.');
 	process.exit(1);
 }
 
-var extensionServerDirectory = path.join(extensionDirectory, 'server')
+var extensionServerDirectory = path.join(extensionDirectory, 'server');
 
 var json = require(tsconfigFile);
 var compilerOptions = json.compilerOptions;

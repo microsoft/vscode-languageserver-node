@@ -4,8 +4,12 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { CallHierarchyItem, CallHierarchyPrepareParams, CallHierarchyIncomingCallsParams, CallHierarchyIncomingCall, CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCall, CallHierarchyPrepareRequest, CallHierarchyIncomingCallsRequest, CallHierarchyOutgoingCallsRequest } from 'vscode-languageserver-protocol';
-import { Feature, _Languages, ServerRequestHandler } from './main';
+import {
+	CallHierarchyItem, CallHierarchyPrepareParams, CallHierarchyIncomingCallsParams, CallHierarchyIncomingCall, CallHierarchyOutgoingCallsParams,
+	CallHierarchyOutgoingCall, CallHierarchyPrepareRequest, CallHierarchyIncomingCallsRequest, CallHierarchyOutgoingCallsRequest
+} from 'vscode-languageserver-protocol';
+
+import type { Feature, _Languages, ServerRequestHandler } from './server';
 
 export interface CallHierarchy {
 	callHierarchy: {
