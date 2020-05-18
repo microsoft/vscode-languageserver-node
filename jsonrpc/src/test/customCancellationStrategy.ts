@@ -3,12 +3,14 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-'use strict';
+import {
+	CancellationReceiverStrategy, CancellationId, CancellationSenderStrategy, MessageConnection, Event, CancellationToken,
+	AbstractCancellationTokenSource
+} from '../node/main';
 
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { CancellationReceiverStrategy, CancellationId, CancellationSenderStrategy, MessageConnection, Event, CancellationToken, AbstractCancellationTokenSource } from '../main';
 import { randomBytes } from 'crypto';
 
 class CustomCancellationToken implements CancellationToken {

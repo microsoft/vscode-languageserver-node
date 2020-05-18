@@ -4,7 +4,6 @@
  * ------------------------------------------------------------------------------------------ */
 
 import RAL from './ral';
-const ral = RAL();
 
 import * as Is from './is';
 import { Event, Emitter } from './events';
@@ -113,9 +112,9 @@ namespace ResolvedMessageReaderOptions {
 		let contentTypeDecoder: ContentTypeDecoder | undefined;
 		const contentTypeDecoders: typeof result.contentTypeDecoders = new Map();
 		if (options === undefined || typeof options === 'string') {
-			charset = options ?? 'utf8';
+			charset = options ?? 'utf-8';
 		} else {
-			charset = options.charset ?? 'utf8';
+			charset = options.charset ?? 'utf-8';
 			if (options.contentDecoder !== undefined) {
 				contentDecoder = options.contentDecoder;
 				contentDecoders.set(contentDecoder.name, contentDecoder);
@@ -136,14 +135,14 @@ namespace ResolvedMessageReaderOptions {
 			}
 		}
 		if (contentTypeDecoder === undefined) {
-			contentTypeDecoder = ral.applicationJson.decoder;
+			contentTypeDecoder = RAL().applicationJson.decoder;
 			contentTypeDecoders.set(contentTypeDecoder.name, contentTypeDecoder);
 		}
 		return { charset, contentDecoder, contentDecoders, contentTypeDecoder, contentTypeDecoders };
 	}
 }
 
-export class StreamMessageReader extends AbstractMessageReader implements MessageReader {
+export class ReadableStreamMessageReader extends AbstractMessageReader implements MessageReader {
 
 	private readable: RAL.ReadableStream;
 	private options: ResolvedMessageReaderOptions;
@@ -159,7 +158,7 @@ export class StreamMessageReader extends AbstractMessageReader implements Messag
 		super();
 		this.readable = readable;
 		this.options = ResolvedMessageReaderOptions.fromOptions(options);
-		this.buffer = ral.messageBuffer.create(this.options.charset);
+		this.buffer = RAL().messageBuffer.create(this.options.charset);
 		this._partialMessageTimeout = 10000;
 		this.nextMessageLength = -1;
 		this.messageToken = 0;

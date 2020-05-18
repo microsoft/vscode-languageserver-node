@@ -9,10 +9,9 @@ import * as assert from 'assert';
 import { Duplex  } from 'stream';
 import { inherits } from 'util';
 
-import { RequestType, RequestType3, ResponseError, NotificationType, NotificationType2, ErrorCodes } from '../messages';
-import { CancellationTokenSource } from '../cancellation';
+import { CancellationTokenSource, RequestType, RequestType3, ResponseError, NotificationType, NotificationType2, ErrorCodes } from '../node/main';
 
-import * as hostConnection from '../main';
+import * as hostConnection from '../node/main';
 import { getCustomCancellationStrategy } from './customCancellationStrategy';
 
 interface TestDuplex extends Duplex {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { Disposable } from './events';
+import { Disposable } from './disposable';
 import { ContentTypeEncoder, ContentTypeDecoder } from './encoding';
 
 interface _MessageBuffer {
@@ -33,7 +33,7 @@ interface _MessageBuffer {
 	tryReadBody(length: number): Uint8Array | undefined;
 }
 
-type _MessageBufferEncoding = "ascii" | "utf-8";
+type _MessageBufferEncoding = 'ascii' | 'utf-8';
 
 interface _ReadableStream {
 	onData(listener: (data: Uint8Array) => void): Disposable;
@@ -46,7 +46,8 @@ interface _WritableStream {
 	onClose(listener: () => void): Disposable;
 	onError(listener: (error: any) => void): Disposable;
 	onEnd(listener: () => void): Disposable;
-	write(data: Uint8Array): void;
+	write(data: Uint8Array): Promise<void>;
+	write(data: string, encoding: _MessageBufferEncoding): Promise<void>;
 	end(): void;
 }
 

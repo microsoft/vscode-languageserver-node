@@ -2,44 +2,24 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
-/// <reference path="../typings/thenable.d.ts" />
-'use strict';
 
 import * as Is from './is';
 
 import {
-	Message, MessageType,
-	RequestMessage, RequestType, isRequestMessage,
-	RequestType0, RequestType1, RequestType2, RequestType3, RequestType4,
-	RequestType5, RequestType6, RequestType7, RequestType8, RequestType9,
-	ResponseMessage, isResponseMessage, ResponseError, ErrorCodes,
-	NotificationMessage, isNotificationMessage,
-	NotificationType, NotificationType0, NotificationType1, NotificationType2, NotificationType3, NotificationType4,
-	NotificationType5, NotificationType6, NotificationType7, NotificationType8, NotificationType9,
-	LSPMessageType, _EM
+	Message, MessageType, RequestMessage, RequestType, isRequestMessage, RequestType0, RequestType1, RequestType2, RequestType3,
+	RequestType4, RequestType5, RequestType6, RequestType7, RequestType8, RequestType9, ResponseMessage, isResponseMessage,
+	ResponseError, ErrorCodes, NotificationMessage, isNotificationMessage, NotificationType, NotificationType0, NotificationType1,
+	NotificationType2, NotificationType3, NotificationType4, NotificationType5, NotificationType6, NotificationType7, NotificationType8,
+	NotificationType9, LSPMessageType, _EM
 } from './messages';
 
-import { MessageReader, PartialMessageInfo, DataCallback, StreamMessageReader, IPCMessageReader, SocketMessageReader } from './messageReader';
-import { MessageWriter, StreamMessageWriter, IPCMessageWriter, SocketMessageWriter } from './messageWriter';
-import { Disposable, Event, Emitter } from './events';
-import { CancellationTokenSource, CancellationToken, AbstractCancellationTokenSource } from './cancellation';
 import { LinkedMap } from './linkedMap';
+import type { Disposable } from './disposable';
+import { Event, Emitter } from './events';
+import { CancellationTokenSource, CancellationToken, AbstractCancellationTokenSource } from './cancellation';
+import { MessageReader, DataCallback } from './messageReader';
+import { MessageWriter } from './messageWriter';
 
-export {
-	Message, MessageType, ErrorCodes, ResponseError,
-	RequestMessage, _EM, RequestType,
-	RequestType0, RequestType1, RequestType2, RequestType3, RequestType4,
-	RequestType5, RequestType6, RequestType7, RequestType8, RequestType9,
-	NotificationMessage, NotificationType,
-	NotificationType0, NotificationType1, NotificationType2, NotificationType3, NotificationType4,
-	NotificationType5, NotificationType6, NotificationType7, NotificationType8, NotificationType9,
-	MessageReader, PartialMessageInfo, DataCallback, StreamMessageReader, IPCMessageReader, SocketMessageReader,
-	MessageWriter, StreamMessageWriter, IPCMessageWriter, SocketMessageWriter,
-	AbstractCancellationTokenSource, CancellationTokenSource, CancellationToken,
-	Disposable, Event, Emitter
-};
-export * from './pipeSupport';
-export * from './socketSupport';
 
 interface CancelParams {
 	/**
@@ -303,7 +283,7 @@ export class ConnectionError extends Error {
 	}
 }
 
-export type MessageQueue = LinkedMap<string, Message>;
+type MessageQueue = LinkedMap<string, Message>;
 
 export type ConnectionStrategy = {
 	cancelUndispatched?: (message: Message, next: (message: Message) => ResponseMessage | undefined) => ResponseMessage | undefined;
@@ -478,7 +458,7 @@ interface NotificationHandlerElement {
 	handler: GenericNotificationHandler;
 }
 
-function _createMessageConnection(messageReader: MessageReader, messageWriter: MessageWriter, logger: Logger, options?: ConnectionOptions): MessageConnection {
+export function createMessageConnection(messageReader: MessageReader, messageWriter: MessageWriter, logger: Logger, options?: ConnectionOptions): MessageConnection {
 	let sequenceNumber = 0;
 	let notificationSquenceNumber = 0;
 	let unknownResponseSquenceNumber = 0;
@@ -612,7 +592,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				if (isRequestMessage(toCancel)) {
 					const strategy = options?.connectionStrategy;
 					const response = (strategy && strategy.cancelUndispatched) ? strategy.cancelUndispatched(toCancel, cancelUndispatched) : cancelUndispatched(toCancel);
-					if (response && (response.error !== void 0 || response.result !== void 0)) {
+					if (response && (response.error !== undefined || response.result !== undefined)) {
 						messageQueue.delete(key);
 						response.id = toCancel.id;
 						traceSendingResponse(response, message.method, Date.now());
@@ -642,7 +622,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			if (resultOrError instanceof ResponseError) {
 				message.error = (<ResponseError<any>>resultOrError).toJson();
 			} else {
-				message.result = resultOrError === void 0 ? null : resultOrError;
+				message.result = resultOrError === undefined ? null : resultOrError;
 			}
 			traceSendingResponse(message, method, startTime);
 			messageWriter.write(message);
@@ -659,7 +639,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 		function replySuccess(result: any, method: string, startTime: number) {
 			// The JSON RPC defines that a response must either have a result or an error
 			// So we can't treat undefined as a valid response result.
-			if (result === void 0) {
+			if (result === undefined) {
 				result = null;
 			}
 			const message: ResponseMessage = {
@@ -686,11 +666,11 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			requestTokens[tokenKey] = cancellationSource;
 			try {
 				let handlerResult: any;
-				if (requestMessage.params === void 0 || (type !== void 0 && type.numberOfParams === 0)) {
+				if (requestMessage.params === undefined || (type !== undefined && type.numberOfParams === 0)) {
 					handlerResult = requestHandler
 						? requestHandler(cancellationSource.token)
 						: starRequestHandler!(requestMessage.method, cancellationSource.token);
-				} else if (Is.array(requestMessage.params) && (type === void 0 || type.numberOfParams > 1)) {
+				} else if (Is.array(requestMessage.params) && (type === undefined || type.numberOfParams > 1)) {
 					handlerResult = requestHandler
 						? requestHandler(...requestMessage.params, cancellationSource.token)
 						: starRequestHandler!(requestMessage.method, ...requestMessage.params, cancellationSource.token);
@@ -759,7 +739,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 					if (responseMessage.error) {
 						const error = responseMessage.error;
 						responsePromise.reject(new ResponseError(error.code, error.message, error.data));
-					} else if (responseMessage.result !== void 0) {
+					} else if (responseMessage.result !== undefined) {
 						responsePromise.resolve(responseMessage.result);
 					} else {
 						throw new Error('Should never happen.');
@@ -801,9 +781,9 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 		if (notificationHandler || starNotificationHandler) {
 			try {
 				traceReceivedNotification(message);
-				if (message.params === void 0 || (type !== void 0 && type.numberOfParams === 0)) {
+				if (message.params === undefined || (type !== undefined && type.numberOfParams === 0)) {
 					notificationHandler ? notificationHandler() : starNotificationHandler!(message.method);
-				} else if (Is.array(message.params) && (type === void 0 || type.numberOfParams > 1)) {
+				} else if (Is.array(message.params) && (type === undefined || type.numberOfParams > 1)) {
 					notificationHandler ? notificationHandler(...message.params) : starNotificationHandler!(message.method, ...message.params);
 				} else {
 					notificationHandler ? notificationHandler(message.params) : starNotificationHandler!(message.method, message.params);
@@ -886,7 +866,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				} else {
 					if (message.result) {
 						data = `Result: ${JSON.stringify(message.result, null, 4)}\n\n`;
-					} else if (message.error === void 0) {
+					} else if (message.error === undefined) {
 						data = 'No result returned.\n\n';
 					}
 				}
@@ -946,7 +926,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 				} else {
 					if (message.result) {
 						data = `Result: ${JSON.stringify(message.result, null, 4)}\n\n`;
-					} else if (message.error === void 0) {
+					} else if (message.error === undefined) {
 						data = 'No result returned.\n\n';
 					}
 				}
@@ -999,7 +979,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 	}
 
 	function undefinedToNull(param: any) {
-		if (param === void 0) {
+		if (param === undefined) {
 			return null;
 		} else {
 			return param;
@@ -1191,7 +1171,7 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 			let _sendNotification: boolean = false;
 			let _traceFormat: TraceFormat = TraceFormat.Text;
 
-			if (sendNotificationOrTraceOptions !== void 0) {
+			if (sendNotificationOrTraceOptions !== undefined) {
 				if (Is.boolean(sendNotificationOrTraceOptions)) {
 					_sendNotification = sendNotificationOrTraceOptions;
 				} else {
@@ -1265,28 +1245,4 @@ function _createMessageConnection(messageReader: MessageReader, messageWriter: M
 	});
 
 	return connection;
-}
-
-function isMessageReader(value: any): value is MessageReader {
-	return value.listen !== void 0 && value.read === void 0;
-}
-
-function isMessageWriter(value: any): value is MessageWriter {
-	return value.write !== void 0 && value.end === void 0;
-}
-
-export function createMessageConnection(reader: MessageReader, writer: MessageWriter, logger?: Logger, options?: ConnectionStrategy | ConnectionOptions): MessageConnection;
-export function createMessageConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, logger?: Logger, options?: ConnectionStrategy | ConnectionOptions): MessageConnection;
-export function createMessageConnection(input: MessageReader | NodeJS.ReadableStream, output: MessageWriter | NodeJS.WritableStream, logger?: Logger, options?: ConnectionStrategy | ConnectionOptions): MessageConnection {
-	if (!logger) {
-		logger = NullLogger;
-	}
-	const reader = isMessageReader(input) ? input : new StreamMessageReader(input);
-	const writer = isMessageWriter(output) ? output : new StreamMessageWriter(output);
-
-	if (ConnectionStrategy.is(options)) {
-		options = { connectionStrategy: options } as ConnectionOptions;
-	}
-
-	return _createMessageConnection(reader, writer, logger, options);
 }

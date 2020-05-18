@@ -5,8 +5,9 @@
 
 'use strict';
 
-import { Disposable, Event, Emitter } from './events';
 import * as Is from './is';
+import { Event, Emitter } from './events';
+import { Disposable } from './disposable';
 
 /**
  * Defines a CancellationToken. This interface is not

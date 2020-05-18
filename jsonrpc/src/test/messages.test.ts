@@ -7,15 +7,13 @@
 import * as assert from 'assert';
 import * as zlib from 'zlib';
 
+import { Message, RequestMessage, isRequestMessage } from '../common/messages';
+import { ContentEncoder, ContentDecoder, Encodings } from '../common/encoding';
+import { StreamMessageWriter, StreamMessageReader } from '../node/main';
+
 import { Writable, Readable } from 'stream';
 import { inherits } from 'util';
-
-import { RequestMessage, isRequestMessage } from '../messages';
-import { StreamMessageWriter } from '../messageWriter';
-import { StreamMessageReader } from '../messageReader';
-import { ContentEncoder, ContentDecoder, Encodings } from '../encoding';
 import { Buffer } from 'buffer';
-import { Message } from '../main';
 
 function assertDefined<T>(value: T | undefined | null): asserts value is T {
 	assert.ok(value !== undefined && value !== null);
@@ -134,8 +132,8 @@ suite('Messages', () => {
 	test('Basic Zip / Unzip', async () => {
 		const msg: RequestMessage = { jsonrpc: '2.0', id: 1, method: 'example' };
 		const zipped = await gzipEncoder.encode(Buffer.from(JSON.stringify(msg), 'utf8'));
-		assert.strictEqual(zipped.toString('base64'), 'H4sIAAAAAAAAA6tWyirOzysqSFayUjLSM1DSUcpMUbIy1FHKTS3JyAcylVIrEnMLclKVagH7JiWtKwAAAA==');
-		const unzipped: RequestMessage = JSON.parse((await gzipDecoder.decode(zipped)).toString('utf8')) as RequestMessage;
+		assert.strictEqual(Buffer.from(zipped).toString('base64'), 'H4sIAAAAAAAAA6tWyirOzysqSFayUjLSM1DSUcpMUbIy1FHKTS3JyAcylVIrEnMLclKVagH7JiWtKwAAAA==');
+		const unzipped: RequestMessage = JSON.parse(Buffer.from(await gzipDecoder.decode(zipped)).toString('utf-8')) as RequestMessage;
 		assert.strictEqual(unzipped.id, 1);
 		assert.strictEqual(unzipped.method, 'example');
 	});
@@ -143,7 +141,7 @@ suite('Messages', () => {
 	test('Encode', (done) => {
 		const writable = new TestWritable();
 		const writer = new StreamMessageWriter(writable, {
-			charset: 'utf8',
+			charset: 'utf-8',
 			contentEncoder: gzipEncoder,
 		});
 
@@ -159,7 +157,7 @@ suite('Messages', () => {
 
 			const readable = new Readable();
 			const reader = new StreamMessageReader(readable, {
-				charset: 'utf8',
+				charset: 'utf-8',
 				contentDecoder: gzipDecoder
 			});
 
@@ -179,7 +177,7 @@ suite('Messages', () => {
 	test('Decode', (done) => {
 		const readable = new Readable();
 		const reader = new StreamMessageReader(readable, {
-			charset: 'utf8',
+			charset: 'utf-8',
 			contentDecoder: gzipDecoder
 		});
 		reader.listen((message: Message) => {
