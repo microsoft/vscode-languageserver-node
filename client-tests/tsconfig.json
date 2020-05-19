@@ -16,8 +16,10 @@
 		"baseUrl": "./src",
 		"paths": {
 			"vscode-languageclient": ["../../client/src/main"],
+			"vscode-languageclient/node": ["../../client/node"],
 			"vscode-languageclient/lib/*": ["../../client/src/*"],
 			"vscode-languageserver": ["../../server/src/main"],
+			"vscode-languageserver/node": ["../../server/node"],
 			"vscode-languageserver/lib/*": ["../../server/src/*"]
 		}
 	},

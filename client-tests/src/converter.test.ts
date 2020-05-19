@@ -2,15 +2,14 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-'use strict';
 
 import { strictEqual, deepEqual, ok } from 'assert';
 
 import * as proto from 'vscode-languageserver-protocol';
-import * as codeConverter from 'vscode-languageclient/lib/codeConverter';
-import * as protocolConverter from 'vscode-languageclient/lib/protocolConverter';
-import ProtocolCompletionItem from 'vscode-languageclient/lib/protocolCompletionItem';
-import * as Is from 'vscode-languageclient/lib/utils/is';
+import * as codeConverter from 'vscode-languageclient/lib/common/codeConverter';
+import * as protocolConverter from 'vscode-languageclient/lib/common/protocolConverter';
+import ProtocolCompletionItem from 'vscode-languageclient/lib/common/protocolCompletionItem';
+import * as Is from 'vscode-languageclient/lib/common/utils/is';
 
 import * as vscode from 'vscode';
 import { CompletionItemTag, SymbolTag } from 'vscode-languageserver-protocol';

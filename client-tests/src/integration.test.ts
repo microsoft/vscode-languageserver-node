@@ -6,7 +6,7 @@
 
 import * as assert from 'assert';
 import * as path from 'path';
-import * as lsclient from 'vscode-languageclient';
+import * as lsclient from 'vscode-languageclient/node';
 import * as vscode from 'vscode';
 
 suite('Client integration', () => {

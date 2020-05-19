@@ -2,18 +2,18 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-'use strict';
+
 import * as assert from 'assert';
 import {
-	createConnection, IConnection, InitializeParams, ServerCapabilities, CompletionItemKind, ResourceOperationKind, FailureHandlingKind,
+	createConnection, Connection, InitializeParams, ServerCapabilities, CompletionItemKind, ResourceOperationKind, FailureHandlingKind,
 	DiagnosticTag, CompletionItemTag, TextDocumentSyncKind, MarkupKind, SignatureHelp, SignatureInformation, ParameterInformation,
 	Location, Range, DocumentHighlight, DocumentHighlightKind, CodeAction, Command, TextEdit, Position, DocumentLink,
 	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, SymbolKind
-} from '../../../server/lib/main';
+} from '../../../server/node';
 
 import { URI } from 'vscode-uri';
 
-let connection: IConnection = createConnection();
+let connection: Connection = createConnection();
 
 console.log = connection.console.log.bind(connection.console);
 console.error = connection.console.error.bind(connection.console);
