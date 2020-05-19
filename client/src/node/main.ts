@@ -2,43 +2,23 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
-'use strict';
 
 import * as cp from 'child_process';
-import * as fs from 'fs';
-
 import ChildProcess = cp.ChildProcess;
+import * as fs from 'fs';
 
 import * as SemVer from 'semver';
 
-import { BaseLanguageClient, LanguageClientOptions, MessageTransports, StaticFeature, DynamicFeature } from './client';
+import { workspace as Workspace, Disposable, version as VSCodeVersion } from 'vscode';
 
-import {
-	workspace as Workspace, Disposable, version as VSCodeVersion
-} from 'vscode';
+import * as Is from '../common/utils/is';
+import { CommonLanguageClient } from '../common/commonClient';
+import { LanguageClientOptions, MessageTransports } from '../common/client';
 
-import {
-	StreamMessageReader, StreamMessageWriter,
-	IPCMessageReader, IPCMessageWriter,
-	createClientPipeTransport, generateRandomPipeName, createClientSocketTransport
-} from 'vscode-languageserver-protocol';
+import { terminate } from './processes';
+import { StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageWriter, createClientPipeTransport, generateRandomPipeName, createClientSocketTransport} from 'vscode-languageserver-protocol/node';
 
-import { ColorProviderFeature } from './colorProvider';
-import { ConfigurationFeature as PullConfigurationFeature } from './configuration';
-import { ImplementationFeature } from './implementation';
-import { TypeDefinitionFeature } from './typeDefinition';
-import { WorkspaceFoldersFeature } from './workspaceFolders';
-import { FoldingRangeFeature } from './foldingRange';
-import { DeclarationFeature } from './declaration';
-import { SelectionRangeFeature } from './selectionRange';
-import { ProgressFeature } from './progress';
-import { CallHierarchyFeature } from './callHierarchy';
-import { SemanticTokensFeature } from './semanticTokens.proposed';
-
-import * as Is from './utils/is';
-import { terminate } from './utils/processes';
-
-export * from './client';
+export * from '../common/api';
 
 const REQUIRED_VSCODE_VERSION = '^1.44.0'; // do not change format, updated by `updateVSCode` script
 
@@ -141,7 +121,7 @@ namespace ChildProcessInfo {
 
 export type ServerOptions = Executable | { run: Executable; debug: Executable; } | { run: NodeModule; debug: NodeModule } | NodeModule | (() => Promise<ChildProcess | StreamInfo | MessageTransports | ChildProcessInfo>);
 
-export class LanguageClient extends BaseLanguageClient {
+export class LanguageClient extends CommonLanguageClient {
 
 	private _serverOptions: ServerOptions;
 	private _forceDebug: boolean;
@@ -448,24 +428,6 @@ export class LanguageClient extends BaseLanguageClient {
 		});
 	}
 
-	public registerProposedFeatures() {
-		this.registerFeatures(ProposedFeatures.createAll(this));
-	}
-
-	protected registerBuiltinFeatures() {
-		super.registerBuiltinFeatures();
-		this.registerFeature(new PullConfigurationFeature(this));
-		this.registerFeature(new TypeDefinitionFeature(this));
-		this.registerFeature(new ImplementationFeature(this));
-		this.registerFeature(new ColorProviderFeature(this));
-		this.registerFeature(new WorkspaceFoldersFeature(this));
-		this.registerFeature(new FoldingRangeFeature(this));
-		this.registerFeature(new DeclarationFeature(this));
-		this.registerFeature(new SelectionRangeFeature(this));
-		this.registerFeature(new ProgressFeature(this));
-		this.registerFeature(new CallHierarchyFeature(this));
-	}
-
 	private _mainGetRootPath(): string | undefined {
 		let folders = Workspace.workspaceFolders;
 		if (!folders || folders.length === 0) {
@@ -525,16 +487,5 @@ export class SettingMonitor {
 		} else if (!enabled && this._client.needsStop()) {
 			this._client.stop();
 		}
-	}
-}
-
-// Exporting proposed protocol.
-
-export namespace ProposedFeatures {
-	export function createAll(client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
-		let result: (StaticFeature | DynamicFeature<any>)[] = [
-			new SemanticTokensFeature(client)
-		];
-		return result;
 	}
 }

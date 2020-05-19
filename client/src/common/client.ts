@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
-'use strict';
 
 import {
 	workspace as Workspace, window as Window, languages as Languages, commands as Commands, version as VSCodeVersion,
@@ -23,7 +22,7 @@ import {
 } from 'vscode';
 
 import {
-	Message, RPCMessageType, Logger, ErrorCodes, ResponseError,
+	Message, MessageSignature, Logger, ErrorCodes, ResponseError,
 	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler,
 	NotificationType, NotificationType0,
 	NotificationHandler, NotificationHandler0, GenericNotificationHandler,
@@ -69,15 +68,15 @@ import {
 	CallHierarchyPrepareRequest, CancellationStrategy, SaveOptions
 } from 'vscode-languageserver-protocol';
 
-import { ColorProviderMiddleware } from './colorProvider';
-import { ImplementationMiddleware } from './implementation';
-import { TypeDefinitionMiddleware } from './typeDefinition';
-import { ConfigurationWorkspaceMiddleware } from './configuration';
-import { WorkspaceFolderWorkspaceMiddleware } from './workspaceFolders';
-import { FoldingRangeProviderMiddleware } from './foldingRange';
-import { DeclarationMiddleware } from './declaration';
-import { SelectionRangeProviderMiddleware } from './selectionRange';
-import { CallHierarchyMiddleware } from './callHierarchy';
+import type { ColorProviderMiddleware } from './colorProvider';
+import type { ImplementationMiddleware } from './implementation';
+import type { TypeDefinitionMiddleware } from './typeDefinition';
+import type { ConfigurationWorkspaceMiddleware } from './configuration';
+import type { WorkspaceFolderWorkspaceMiddleware } from './workspaceFolders';
+import type { FoldingRangeProviderMiddleware } from './foldingRange';
+import type { DeclarationMiddleware } from './declaration';
+import type { SelectionRangeProviderMiddleware } from './selectionRange';
+import type { CallHierarchyMiddleware } from './callHierarchy';
 
 import * as c2p from './codeConverter';
 import * as p2c from './protocolConverter';
@@ -86,13 +85,8 @@ import * as Is from './utils/is';
 import { Delayer } from './utils/async';
 import * as UUID from './utils/uuid';
 import { ProgressPart } from './progressPart';
-import { LanguageClient } from './main';
-export { Converter as Code2ProtocolConverter } from './codeConverter';
-export { Converter as Protocol2CodeConverter } from './protocolConverter';
 
-export * from 'vscode-languageserver-protocol';
-
-interface IConnection {
+interface Connection {
 
 	listen(): void;
 
@@ -100,23 +94,23 @@ interface IConnection {
 	sendRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, params: P, token?: CancellationToken): Promise<R>;
 	sendRequest<R>(method: string, token?: CancellationToken): Promise<R>;
 	sendRequest<R>(method: string, param: any, token?: CancellationToken): Promise<R>;
-	sendRequest<R>(type: string | RPCMessageType, ...params: any[]): Promise<R>;
+	sendRequest<R>(type: string | MessageSignature, ...params: any[]): Promise<R>;
 
 	onRequest<R, E, RO>(type: RequestType0<R, E, RO>, handler: RequestHandler0<R, E>): void;
 	onRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, handler: RequestHandler<P, R, E>): void;
 	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): void;
-	onRequest<R, E>(method: string | RPCMessageType, handler: GenericRequestHandler<R, E>): void;
+	onRequest<R, E>(method: string | MessageSignature, handler: GenericRequestHandler<R, E>): void;
 
 	sendNotification<RO>(type: NotificationType0<RO>): void;
 	sendNotification<P, RO>(type: NotificationType<P, RO>, params?: P): void;
 	sendNotification(method: string): void;
 	sendNotification(method: string, params: any): void;
-	sendNotification(method: string | RPCMessageType, params?: any): void;
+	sendNotification(method: string | MessageSignature, params?: any): void;
 
 	onNotification<RO>(type: NotificationType0<RO>, handler: NotificationHandler0): void;
 	onNotification<P, RO>(type: NotificationType<P, RO>, handler: NotificationHandler<P>): void;
 	onNotification(method: string, handler: GenericNotificationHandler): void;
-	onNotification(method: string | RPCMessageType, handler: GenericNotificationHandler): void;
+	onNotification(method: string | MessageSignature, handler: GenericNotificationHandler): void;
 
 	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable;
 	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): void;
@@ -171,22 +165,22 @@ interface ConnectionOptions {
     cancellationStrategy: CancellationStrategy
 }
 
-function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): IConnection;
-function createConnection(reader: MessageReader, writer: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): IConnection;
-function createConnection(input: any, output: any, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): IConnection {
+function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): Connection;
+function createConnection(reader: MessageReader, writer: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): Connection;
+function createConnection(input: any, output: any, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): Connection {
 	let logger = new ConsoleLogger();
 	let connection = createProtocolConnection(input, output, logger, options);
 	connection.onError((data) => { errorHandler(data[0], data[1], data[2]); });
 	connection.onClose(closeHandler);
-	let result: IConnection = {
+	let result: Connection = {
 
 		listen: (): void => connection.listen(),
 
-		sendRequest: <R>(type: string | RPCMessageType, ...params: any[]): Promise<R> => connection.sendRequest(Is.string(type) ? type : type.method, ...params),
-		onRequest: <R, E>(type: string | RPCMessageType, handler: GenericRequestHandler<R, E>): void => connection.onRequest(Is.string(type) ? type : type.method, handler),
+		sendRequest: <R>(type: string | MessageSignature, ...params: any[]): Promise<R> => connection.sendRequest(Is.string(type) ? type : type.method, ...params),
+		onRequest: <R, E>(type: string | MessageSignature, handler: GenericRequestHandler<R, E>): void => connection.onRequest(Is.string(type) ? type : type.method, handler),
 
-		sendNotification: (type: string | RPCMessageType, params?: any): void => connection.sendNotification(Is.string(type) ? type : type.method, params),
-		onNotification: (type: string | RPCMessageType, handler: GenericNotificationHandler): void => connection.onNotification(Is.string(type) ? type : type.method, handler),
+		sendNotification: (type: string | MessageSignature, params?: any): void => connection.sendNotification(Is.string(type) ? type : type.method, params),
+		onNotification: (type: string | MessageSignature, handler: GenericNotificationHandler): void => connection.onNotification(Is.string(type) ? type : type.method, handler),
 
 		onProgress: connection.onProgress,
 		sendProgress: connection.sendProgress,
@@ -672,7 +666,7 @@ export interface DynamicFeature<RO> {
 	/**
 	 * The message for which this features support dynamic activation / registration.
 	 */
-	messages: RPCMessageType | RPCMessageType[];
+	messages: MessageSignature | MessageSignature[];
 
 	/**
 	 * Called to fill the initialize params.
@@ -706,7 +700,7 @@ export interface DynamicFeature<RO> {
 	 * @param message the message to register for.
 	 * @param data additional registration data as defined in the protocol.
 	 */
-	register(message: RPCMessageType, data: RegistrationData<RO>): void;
+	register(message: MessageSignature, data: RegistrationData<RO>): void;
 
 	/**
 	 * Is called when the server wants to unregister a feature.
@@ -762,13 +756,13 @@ abstract class DocumentNotifiactions<P, E> implements DynamicFeature<TextDocumen
 		protected _selectorFilter?: (selectors: IterableIterator<DocumentSelector>, data: E) => boolean) {
 	}
 
-	public abstract messages: RPCMessageType | RPCMessageType[];
+	public abstract messages: MessageSignature | MessageSignature[];
 
 	public abstract fillClientCapabilities(capabilities: ClientCapabilities): void;
 
 	public abstract initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector | undefined): void;
 
-	public register(_message: RPCMessageType, data: RegistrationData<TextDocumentRegistrationOptions>): void {
+	public register(_message: MessageSignature, data: RegistrationData<TextDocumentRegistrationOptions>): void {
 
 		if (!data.registerOptions.documentSelector) {
 			return;
@@ -848,7 +842,7 @@ class DidOpenTextDocumentFeature extends DocumentNotifiactions<DidOpenTextDocume
 		}
 	}
 
-	public register(message: RPCMessageType, data: RegistrationData<TextDocumentRegistrationOptions>): void {
+	public register(message: MessageSignature, data: RegistrationData<TextDocumentRegistrationOptions>): void {
 		super.register(message, data);
 		if (!data.registerOptions.documentSelector) {
 			return;
@@ -969,7 +963,7 @@ class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeR
 		}
 	}
 
-	public register(_message: RPCMessageType, data: RegistrationData<TextDocumentChangeRegistrationOptions>): void {
+	public register(_message: MessageSignature, data: RegistrationData<TextDocumentChangeRegistrationOptions>): void {
 		if (!data.registerOptions.documentSelector) {
 			return;
 		}
@@ -1089,7 +1083,7 @@ class WillSaveFeature extends DocumentNotifiactions<WillSaveTextDocumentParams, 
 		);
 	}
 
-	public get messages(): RPCMessageType {
+	public get messages(): MessageSignature {
 		return WillSaveTextDocumentNotification.type;
 	}
 
@@ -1117,7 +1111,7 @@ class WillSaveWaitUntilFeature implements DynamicFeature<TextDocumentRegistratio
 	constructor(private _client: BaseLanguageClient) {
 	}
 
-	public get messages(): RPCMessageType {
+	public get messages(): MessageSignature {
 		return WillSaveTextDocumentWaitUntilRequest.type;
 	}
 
@@ -1136,7 +1130,7 @@ class WillSaveWaitUntilFeature implements DynamicFeature<TextDocumentRegistratio
 		}
 	}
 
-	public register(_message: RPCMessageType, data: RegistrationData<TextDocumentRegistrationOptions>): void {
+	public register(_message: MessageSignature, data: RegistrationData<TextDocumentRegistrationOptions>): void {
 		if (!data.registerOptions.documentSelector) {
 			return;
 		}
@@ -1195,7 +1189,7 @@ class DidSaveTextDocumentFeature extends DocumentNotifiactions<DidSaveTextDocume
 		this._includeText = false;
 	}
 
-	public get messages(): RPCMessageType {
+	public get messages(): MessageSignature {
 		return DidSaveTextDocumentNotification.type;
 	}
 
@@ -1216,7 +1210,7 @@ class DidSaveTextDocumentFeature extends DocumentNotifiactions<DidSaveTextDocume
 		}
 	}
 
-	public register(method: RPCMessageType, data: RegistrationData<TextDocumentSaveRegistrationOptions>): void {
+	public register(method: MessageSignature, data: RegistrationData<TextDocumentSaveRegistrationOptions>): void {
 		this._includeText = !!data.registerOptions.includeText;
 		super.register(method, data);
 	}
@@ -1229,7 +1223,7 @@ class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatchedFilesRe
 	constructor(private _client: BaseLanguageClient, private _notifyFileEvent: (event: FileEvent) => void) {
 	}
 
-	public get messages(): RPCMessageType {
+	public get messages(): MessageSignature {
 		return DidChangeWatchedFilesNotification.type;
 	}
 
@@ -1240,7 +1234,7 @@ class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatchedFilesRe
 	public initialize(_capabilities: ServerCapabilities, _documentSelector: DocumentSelector): void {
 	}
 
-	public register(_method: RPCMessageType, data: RegistrationData<DidChangeWatchedFilesRegistrationOptions>): void {
+	public register(_method: MessageSignature, data: RegistrationData<DidChangeWatchedFilesRegistrationOptions>): void {
 		if (!Array.isArray(data.registerOptions.watchers)) {
 			return;
 		}
@@ -1333,10 +1327,10 @@ export abstract class TextDocumentFeature<PO, RO extends TextDocumentRegistratio
 
 	private _registrations: Map<string, TextDocumentFeatureRegistration<RO, PR>> = new Map();
 
-	constructor(protected _client: BaseLanguageClient, private _message: RPCMessageType) {
+	constructor(protected _client: BaseLanguageClient, private _message: MessageSignature) {
 	}
 
-	public get messages(): RPCMessageType {
+	public get messages(): MessageSignature {
 		return this._message;
 	}
 
@@ -1344,7 +1338,7 @@ export abstract class TextDocumentFeature<PO, RO extends TextDocumentRegistratio
 
 	public abstract initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void;
 
-	public register(message: RPCMessageType, data: RegistrationData<RO>): void {
+	public register(message: MessageSignature, data: RegistrationData<RO>): void {
 		if (message.method !== this.messages.method) {
 			throw new Error(`Register called on wrong feature. Requested ${message.method} but reached feature ${this.messages.method}`);
 		}
@@ -1421,10 +1415,10 @@ abstract class WorkspaceFeature<RO, PR> implements DynamicFeature<RO> {
 
 	protected _registrations: Map<string, WorkspaceFeatureRegistration<PR>> = new Map();
 
-	constructor(protected _client: BaseLanguageClient, private _message: RPCMessageType) {
+	constructor(protected _client: BaseLanguageClient, private _message: MessageSignature) {
 	}
 
-	public get messages(): RPCMessageType {
+	public get messages(): MessageSignature {
 		return this._message;
 	}
 
@@ -1432,7 +1426,7 @@ abstract class WorkspaceFeature<RO, PR> implements DynamicFeature<RO> {
 
 	public abstract initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector | undefined): void;
 
-	public register(message: RPCMessageType, data: RegistrationData<RO>): void {
+	public register(message: MessageSignature, data: RegistrationData<RO>): void {
 		if (message.method !== this.messages.method) {
 			throw new Error(`Register called on wron feature. Requested ${message.method} but reached feature ${this.messages.method}`);
 		}
@@ -2297,7 +2291,7 @@ class ConfigurationFeature implements DynamicFeature<DidChangeConfigurationRegis
 	constructor(private _client: BaseLanguageClient) {
 	}
 
-	public get messages(): RPCMessageType {
+	public get messages(): MessageSignature {
 		return DidChangeConfigurationNotification.type;
 	}
 
@@ -2317,7 +2311,7 @@ class ConfigurationFeature implements DynamicFeature<DidChangeConfigurationRegis
 		}
 	}
 
-	public register(_message: RPCMessageType, data: RegistrationData<DidChangeConfigurationRegistrationOptions>): void {
+	public register(_message: MessageSignature, data: RegistrationData<DidChangeConfigurationRegistrationOptions>): void {
 		let disposable = Workspace.onDidChangeConfiguration((event) => {
 			this.onDidChangeConfiguration(data.registerOptions.section, event);
 		});
@@ -2419,7 +2413,7 @@ class ExecuteCommandFeature implements DynamicFeature<ExecuteCommandRegistration
 	constructor(private _client: BaseLanguageClient) {
 	}
 
-	public get messages(): RPCMessageType {
+	public get messages(): MessageSignature {
 		return ExecuteCommandRequest.type;
 	}
 
@@ -2437,7 +2431,7 @@ class ExecuteCommandFeature implements DynamicFeature<ExecuteCommandRegistration
 		});
 	}
 
-	public register(_message: RPCMessageType, data: RegistrationData<ExecuteCommandRegistrationOptions>): void {
+	public register(_message: MessageSignature, data: RegistrationData<ExecuteCommandRegistrationOptions>): void {
 		const client = this._client;
 		const middleware = client.clientOptions.middleware!;
 		const executeCommand: ExecuteCommandSignature = (command: string, args: any[]): any => {
@@ -2527,8 +2521,8 @@ export abstract class BaseLanguageClient {
 	private _onReady: Promise<void>;
 	private _onReadyCallbacks!: OnReady;
 	private _onStop: Promise<void> | undefined;
-	private _connectionPromise: Promise<IConnection> | undefined;
-	private _resolvedConnection: IConnection | undefined;
+	private _connectionPromise: Promise<Connection> | undefined;
+	private _resolvedConnection: Connection | undefined;
 	private _initializeResult: InitializeResult | undefined;
 	private _outputChannel: OutputChannel | undefined;
 	private _disposeOutputChannel: boolean;
@@ -2648,7 +2642,7 @@ export abstract class BaseLanguageClient {
 	public sendRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, params: P, token?: CancellationToken): Promise<R>;
 	public sendRequest<R>(method: string, token?: CancellationToken): Promise<R>;
 	public sendRequest<R>(method: string, param: any, token?: CancellationToken): Promise<R>;
-	public sendRequest<R>(type: string | RPCMessageType, ...params: any[]): Promise<R> {
+	public sendRequest<R>(type: string | MessageSignature, ...params: any[]): Promise<R> {
 		if (!this.isConnectionActive()) {
 			throw new Error('Language client is not ready yet');
 		}
@@ -2664,7 +2658,7 @@ export abstract class BaseLanguageClient {
 	public onRequest<R, E, RO>(type: RequestType0<R, E, RO>, handler: RequestHandler0<R, E>): void;
 	public onRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, handler: RequestHandler<P, R, E>): void;
 	public onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): void;
-	public onRequest<R, E>(type: string | RPCMessageType, handler: GenericRequestHandler<R, E>): void {
+	public onRequest<R, E>(type: string | MessageSignature, handler: GenericRequestHandler<R, E>): void {
 		if (!this.isConnectionActive()) {
 			throw new Error('Language client is not ready yet');
 		}
@@ -2680,7 +2674,7 @@ export abstract class BaseLanguageClient {
 	public sendNotification<P, RO>(type: NotificationType<P, RO>, params?: P): void;
 	public sendNotification(method: string): void;
 	public sendNotification(method: string, params: any): void;
-	public sendNotification<P>(type: string | RPCMessageType, params?: P): void {
+	public sendNotification<P>(type: string | MessageSignature, params?: P): void {
 		if (!this.isConnectionActive()) {
 			throw new Error('Language client is not ready yet');
 		}
@@ -2696,7 +2690,7 @@ export abstract class BaseLanguageClient {
 	public onNotification<RO>(type: NotificationType0<RO>, handler: NotificationHandler0): void;
 	public onNotification<P, RO>(type: NotificationType<P, RO>, handler: NotificationHandler<P>): void;
 	public onNotification(method: string, handler: GenericNotificationHandler): void;
-	public onNotification(type: string | RPCMessageType, handler: GenericNotificationHandler): void {
+	public onNotification(type: string | MessageSignature, handler: GenericNotificationHandler): void {
 		if (!this.isConnectionActive()) {
 			throw new Error('Language client is not ready yet');
 		}
@@ -2959,14 +2953,14 @@ export abstract class BaseLanguageClient {
 		});
 	}
 
-	private resolveConnection(): Promise<IConnection> {
+	private resolveConnection(): Promise<Connection> {
 		if (!this._connectionPromise) {
 			this._connectionPromise = this.createConnection();
 		}
 		return this._connectionPromise;
 	}
 
-	private initialize(connection: IConnection): Promise<InitializeResult> {
+	private initialize(connection: Connection): Promise<InitializeResult> {
 		this.refreshTrace(connection, false);
 		let initOption = this._clientOptions.initializationOptions;
 		let rootPath = this._clientOptions.workspaceFolder
@@ -3002,7 +2996,7 @@ export abstract class BaseLanguageClient {
 		}
 	}
 
-	private doInitialize(connection: IConnection, initParams: InitializeParams): Promise<InitializeResult> {
+	private doInitialize(connection: Connection, initParams: InitializeParams): Promise<InitializeResult> {
 		return connection.initialize(initParams).then((result) => {
 			this._resolvedConnection = connection;
 			this._initializeResult = result;
@@ -3192,7 +3186,7 @@ export abstract class BaseLanguageClient {
 
 	protected abstract createMessageTransports(encoding: string): Promise<MessageTransports>;
 
-	private createConnection(): Promise<IConnection> {
+	private createConnection(): Promise<Connection> {
 		let errorHandler = (error: Error, message: Message | undefined, count: number | undefined) => {
 			this.handleConnectionError(error, message, count);
 		};
@@ -3246,13 +3240,13 @@ export abstract class BaseLanguageClient {
 		}
 	}
 
-	private hookConfigurationChanged(connection: IConnection): void {
+	private hookConfigurationChanged(connection: Connection): void {
 		Workspace.onDidChangeConfiguration(() => {
 			this.refreshTrace(connection, true);
 		});
 	}
 
-	private refreshTrace(connection: IConnection, sendNotification: boolean = false): void {
+	private refreshTrace(connection: Connection, sendNotification: boolean = false): void {
 		let config = Workspace.getConfiguration(this._id);
 		let trace: Trace = Trace.Off;
 		let traceFormat: TraceFormat = TraceFormat.Text;
@@ -3275,7 +3269,7 @@ export abstract class BaseLanguageClient {
 	}
 
 
-	private hookFileEvents(_connection: IConnection): void {
+	private hookFileEvents(_connection: Connection): void {
 		let fileEvents = this._clientOptions.synchronize.fileEvents;
 		if (!fileEvents) {
 			return;
@@ -3293,7 +3287,7 @@ export abstract class BaseLanguageClient {
 	}
 
 	private readonly _features: (StaticFeature | DynamicFeature<any>)[] = [];
-	private readonly _method2Message: Map<string, RPCMessageType> = new Map<string, RPCMessageType>();
+	private readonly _method2Message: Map<string, MessageSignature> = new Map<string, MessageSignature>();
 	private readonly _dynamicFeatures: Map<string, DynamicFeature<any>> = new Map<string, DynamicFeature<any>>();
 
 	public registerFeatures(features: (StaticFeature | DynamicFeature<any>)[]): void {
@@ -3402,7 +3396,7 @@ export abstract class BaseLanguageClient {
 		return result;
 	}
 
-	private initializeFeatures(_connection: IConnection): void {
+	private initializeFeatures(_connection: Connection): void {
 		let documentSelector = this._clientOptions.documentSelector;
 		for (let feature of this._features) {
 			feature.initialize(this._capabilities, documentSelector);
@@ -3467,7 +3461,7 @@ export abstract class BaseLanguageClient {
 		return Is.asPromise(Workspace.applyEdit(this._p2c.asWorkspaceEdit(params.edit)).then((value) => { return { applied: value }; }));
 	}
 
-	public handleFailedRequest<T>(type: RPCMessageType, error: any, defaultValue: T): T {
+	public handleFailedRequest<T>(type: MessageSignature, error: any, defaultValue: T): T {
 		// If we get a request cancel or a content modified don't log anything.
 		if (error instanceof ResponseError) {
 			if (error.code === ErrorCodes.RequestCancelled) {
@@ -3482,9 +3476,8 @@ export abstract class BaseLanguageClient {
 
 	private static Canceled = 'Canceled';
 	private makeCancelError(): Error {
-		const result = new Error(LanguageClient.Canceled);
-		result.name = LanguageClient.Canceled;
+		const result = new Error(BaseLanguageClient.Canceled);
+		result.name = BaseLanguageClient.Canceled;
 		return result;
 	}
-
 }

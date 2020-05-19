@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
-'use strict';
 
 import * as UUID from './utils/uuid';
 
@@ -10,7 +9,7 @@ import { workspace, Disposable, WorkspaceFolder as VWorkspaceFolder, WorkspaceFo
 
 import { DynamicFeature, RegistrationData, BaseLanguageClient, NextSignature } from './client';
 import {
-	ClientCapabilities, InitializeParams, RPCMessageType, CancellationToken, ServerCapabilities, WorkspaceFoldersRequest, WorkspaceFolder,
+	ClientCapabilities, InitializeParams, MessageSignature, CancellationToken, ServerCapabilities, WorkspaceFoldersRequest, WorkspaceFolder,
 	DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams
 } from 'vscode-languageserver-protocol';
 
@@ -38,7 +37,7 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 	constructor(private _client: BaseLanguageClient) {
 	}
 
-	public get messages(): RPCMessageType {
+	public get messages(): MessageSignature {
 		return DidChangeWorkspaceFoldersNotification.type;
 	}
 
@@ -119,7 +118,7 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 		this._client.sendNotification(DidChangeWorkspaceFoldersNotification.type, params);
 	}
 
-	public register(_message: RPCMessageType, data: RegistrationData<undefined>): void {
+	public register(_message: MessageSignature, data: RegistrationData<undefined>): void {
 		let id = data.id;
 		let client = this._client;
 		let disposable = workspace.onDidChangeWorkspaceFolders((event) => {

@@ -16,6 +16,7 @@
 		"baseUrl": "./src",
 		"paths": {
 			"vscode-languageserver-protocol": ["../../protocol/src/main"],
+			"vscode-languageserver-protocol/node": ["../../protocol/node"],
 			"vscode-languageserver-protocol/*": ["../../protocol/src/*"]
 		}
 	},

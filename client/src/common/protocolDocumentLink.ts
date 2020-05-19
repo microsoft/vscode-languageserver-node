@@ -2,20 +2,14 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
-'use strict';
 
 import * as code from 'vscode';
-import * as proto from 'vscode-languageserver-protocol';
 
-export default class ProtocolCompletionItem extends code.CompletionItem {
+export default class ProtocolDocumentLink extends code.DocumentLink {
 
 	public data: any;
-	public fromEdit: boolean | undefined;
-	public documentationFormat: string | undefined;
-	public originalItemKind: proto.CompletionItemKind | undefined;
-	public deprecated: boolean | undefined;
 
-	constructor(label: string) {
-		super(label);
+	constructor(range: code.Range, target?: code.Uri | undefined) {
+		super(range, target);
 	}
 }
