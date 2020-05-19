@@ -3,11 +3,14 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-export { WorkDoneProgressReporter, ResultProgressReporter };
-
-import { _, Features } from 'common/server';
-
+import { _, Features } from './server';
+import type { WorkDoneProgressReporter, ResultProgressReporter } from './progress';
 import * as st from './semanticTokens.proposed';
+
+export * from 'vscode-languageserver-protocol/';
+export { WorkDoneProgressReporter, ResultProgressReporter };
+export * from './server';
+
 
 export namespace ProposedFeatures {
 	export const all: Features<_, _, _, _, _, _, st.SemanticTokens> = {

@@ -2,15 +2,18 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
-/// <reference path="../typings/thenable.d.ts" />
-'use strict';
+/// <reference path="../../typings/thenable.d.ts" />
+
+import * as Is from '../common/utils/is';
+import { Connection, _, _Connection, Features, WatchDog, createConnection as createCommonConnection } from '../common/server';
 
 import * as fm from './files';
-import { Connection, _, _Connection, Features } from 'common/server';
-
 import {
-	ConnectionStrategy, ConnectionOptions, MessageReader, MessageWriter, IPCMessageReader, IPCMessageWriter, createServerPipeTransport, createServerSocketTransport
+	ConnectionStrategy, ConnectionOptions, MessageReader, MessageWriter, IPCMessageReader, IPCMessageWriter, createServerPipeTransport,
+	createServerSocketTransport, InitializeParams, createProtocolConnection, Logger, ProtocolConnection
 } from 'vscode-languageserver-protocol/node';
+
+export * from '../common/api';
 
 export namespace Files {
 	export let uriToFilePath = fm.uriToFilePath;
@@ -20,7 +23,7 @@ export namespace Files {
 	export let resolveModulePath = fm.resolveModulePath;
 }
 
-let shutdownReceived: boolean = false;
+let _shutdownReceived: boolean = false;
 let exitTimer: NodeJS.Timer | undefined = undefined;
 
 function setupExitTimer(): void {
@@ -34,7 +37,7 @@ function setupExitTimer(): void {
 						process.kill(processId, <any>0);
 					} catch (ex) {
 						// Parent process doesn't exist anymore. Exit the server.
-						process.exit(shutdownReceived ? 0 : 1);
+						process.exit(_shutdownReceived ? 0 : 1);
 					}
 				}, 3000);
 			}
@@ -57,6 +60,30 @@ function setupExitTimer(): void {
 	}
 }
 setupExitTimer();
+
+const watchDog: WatchDog = {
+	initialize: (params: InitializeParams): void => {
+		const processId = params.processId;
+		if (Is.number(processId) && exitTimer === undefined) {
+			// We received a parent process id. Set up a timer to periodically check
+			// if the parent is still alive.
+			setInterval(() => {
+				try {
+					process.kill(processId, <any>0);
+				} catch (ex) {
+					// Parent process doesn't exist anymore. Exit the server.
+					process.exit(_shutdownReceived ? 0 : 1);
+				}
+			}, 3000);
+		}
+	},
+	get shutdownReceived(): boolean {
+		return _shutdownReceived;
+	},
+	set shutdownReceived(value: boolean) {
+		_shutdownReceived = value;
+	}
+};
 
 
 /**
@@ -199,10 +226,15 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 	if (Is.func((input as NodeJS.ReadableStream).read) && Is.func((input as NodeJS.ReadableStream).on)) {
 		let inputStream = <NodeJS.ReadableStream>input;
 		inputStream.on('end', () => {
-			process.exit(shutdownReceived ? 0 : 1);
+			process.exit(_shutdownReceived ? 0 : 1);
 		});
 		inputStream.on('close', () => {
-			process.exit(shutdownReceived ? 0 : 1);
+			process.exit(_shutdownReceived ? 0 : 1);
 		});
 	}
+
+	const connectionFactory = (logger: Logger): ProtocolConnection => {
+		return createProtocolConnection(input as any, output as any, logger, options);
+	};
+	return createCommonConnection(connectionFactory, watchDog, factories);
 }

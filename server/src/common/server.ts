@@ -17,9 +17,8 @@ import {
 	MessageType, LogMessageNotification, ShowMessageRequestParams, ShowMessageRequest, TextDocumentSyncKind, TextDocumentContentChangeEvent, TextDocumentSaveReason,
 	Emitter, Event, RegistrationRequest, UnregistrationRequest, UnregistrationParams, MessageSignature, Registration, RegistrationParams, Unregistration,
 	ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse, ApplyWorkspaceEditRequest, TelemetryEventNotification, Trace, LogTraceNotification, WorkDoneProgressParams,
-	PartialResultParams, ShutdownRequest, CancellationTokenSource, ExitNotification, SetTraceNotification, MessageReader, MessageWriter, ConnectionStrategy,
-	ConnectionOptions, createProtocolConnection, InitializedNotification, DidChangeConfigurationNotification, DidChangeWatchedFilesNotification,
-	DidOpenTextDocumentNotification, DidChangeTextDocumentNotification, DidCloseTextDocumentNotification, WillSaveTextDocumentNotification,
+	PartialResultParams, ShutdownRequest, CancellationTokenSource, ExitNotification, SetTraceNotification, InitializedNotification, DidChangeConfigurationNotification,
+	DidChangeWatchedFilesNotification, DidOpenTextDocumentNotification, DidChangeTextDocumentNotification, DidCloseTextDocumentNotification, WillSaveTextDocumentNotification,
 	WillSaveTextDocumentWaitUntilRequest, DidSaveTextDocumentNotification, PublishDiagnosticsNotification, HoverRequest, CompletionRequest, CompletionResolveRequest,
 	SignatureHelpRequest, DeclarationRequest, DefinitionRequest, TypeDefinitionRequest, ImplementationRequest, ReferencesRequest, DocumentHighlightRequest,
 	DocumentSymbolRequest, WorkspaceSymbolRequest, CodeActionRequest, CodeLensRequest, CodeLensResolveRequest, DocumentFormattingRequest, DocumentRangeFormattingRequest,
@@ -33,7 +32,6 @@ import { WorkDoneProgressReporter, ResultProgressReporter, WindowProgress, Progr
 import { Configuration, ConfigurationFeature } from './configuration';
 import { WorkspaceFolders, WorkspaceFoldersFeature } from './workspaceFolders';
 import { CallHierarchy, CallHierarchyFeature } from './callHierarchy';
-import { watch } from 'fs';
 
 function null2Undefined<T>(value: T | null): T | undefined {
 	if (value === null) {
@@ -248,10 +246,6 @@ export class TextDocuments<T> {
 			}
 		});
 	}
-}
-
-export interface ServerRequestHandler<P, R, PR, E> {
-	(params: P, token: CancellationToken, workDoneProgress: WorkDoneProgressReporter, resultProgress?: ResultProgressReporter<PR>): HandlerResult<R, E>;
 }
 
 /**
@@ -851,7 +845,7 @@ export interface Telemetry {
  * Interface to log traces to the client. The events are sent to the client and the
  * client needs to log the trace events.
  */
-export interface Tracer {
+export interface RemoteTracer {
 	/**
 	 * The connection this remote is attached to.
 	 */
@@ -863,36 +857,7 @@ export interface Tracer {
 	log(message: string, verbose?: string): void;
 }
 
-class TelemetryImpl implements Telemetry, Remote {
-
-	private _connection: Connection | undefined;
-
-	constructor() {
-	}
-
-	public attach(connection: Connection) {
-		this._connection = connection;
-	}
-
-	public get connection(): Connection {
-		if (!this._connection) {
-			throw new Error('Remote is not attached to a connection yet.');
-		}
-		return this._connection;
-	}
-
-	public initialize(_capabilities: ClientCapabilities): void {
-	}
-
-	public fillServerCapabilities(_capabilities: ServerCapabilities): void {
-	}
-
-	public logEvent(data: any): void {
-		this.connection.sendNotification(TelemetryEventNotification.type, data);
-	}
-}
-
-class TracerImpl implements Tracer, Remote {
+class TracerImpl implements RemoteTracer, Remote {
 
 	private _trace: Trace;
 	private _connection: Connection | undefined;
@@ -930,6 +895,35 @@ class TracerImpl implements Tracer, Remote {
 			message: message,
 			verbose: this._trace === Trace.Verbose ? verbose : undefined
 		});
+	}
+}
+
+class TelemetryImpl implements Telemetry, Remote {
+
+	private _connection: Connection | undefined;
+
+	constructor() {
+	}
+
+	public attach(connection: Connection) {
+		this._connection = connection;
+	}
+
+	public get connection(): Connection {
+		if (!this._connection) {
+			throw new Error('Remote is not attached to a connection yet.');
+		}
+		return this._connection;
+	}
+
+	public initialize(_capabilities: ClientCapabilities): void {
+	}
+
+	public fillServerCapabilities(_capabilities: ServerCapabilities): void {
+	}
+
+	public logEvent(data: any): void {
+		this.connection.sendNotification(TelemetryEventNotification.type, data);
 	}
 }
 
@@ -1131,7 +1125,7 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	/**
 	 * A property to provide access to tracer specific features.
 	 */
-	tracer: Tracer & PTracer;
+	tracer: RemoteTracer & PTracer;
 
 	/**
 	 * A property to provide access to telemetry specific features.
@@ -1451,9 +1445,9 @@ export function combineTelemetryFeatures<O, T>(one: TelemetryFeature<O>, two: Te
 	};
 }
 
-export type TracerFeature<P> = Feature<Tracer, P>;
+export type TracerFeature<P> = Feature<RemoteTracer, P>;
 export function combineTracerFeatures<O, T>(one: TracerFeature<O>, two: TracerFeature<T>): TracerFeature<O & T> {
-	return function (Base: new () => Tracer): new () => Tracer & O & T {
+	return function (Base: new () => RemoteTracer): new () => RemoteTracer & O & T {
 		return two(one(Base)) as any;
 	};
 }
@@ -1525,13 +1519,12 @@ export interface WatchDog {
 }
 
 export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _>(
-	input: MessageReader, output: MessageWriter, watchDog: WatchDog,
-	options?: ConnectionStrategy | ConnectionOptions,
+	connectionFactory: (logger: Logger) => ProtocolConnection, watchDog: WatchDog,
 	factories?: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages>,
 ): _Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages> {
 
 	const logger = (factories && factories.console ? new (factories.console(RemoteConsoleImpl))() : new RemoteConsoleImpl()) as RemoteConsoleImpl & PConsole;
-	const connection = createProtocolConnection(input as any, output as any, logger, options);
+	const connection = connectionFactory(logger);
 	logger.rawAttach(connection);
 	const tracer = (factories && factories.tracer ? new (factories.tracer(TracerImpl))() : new TracerImpl()) as TracerImpl & PTracer;
 	const telemetry = (factories && factories.telemetry ? new (factories.telemetry(TelemetryImpl))() : new TelemetryImpl()) as TelemetryImpl & PTelemetry;
@@ -1692,19 +1685,6 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 
 	connection.onRequest(InitializeRequest.type, (params) => {
 		watchDog.initialize(params);
-		const processId = params.processId;
-		if (Is.number(processId) && exitTimer === undefined) {
-			// We received a parent process id. Set up a timer to periodically check
-			// if the parent is still alive.
-			setInterval(() => {
-				try {
-					process.kill(processId, <any>0);
-				} catch (ex) {
-					// Parent process doesn't exist anymore. Exit the server.
-					process.exit(shutdownReceived ? 0 : 1);
-				}
-			}, 3000);
-		}
 		if (Is.string(params.trace)) {
 			tracer.trace = Trace.fromString(params.trace);
 		}

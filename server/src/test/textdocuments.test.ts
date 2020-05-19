@@ -8,16 +8,16 @@ import * as assert from 'assert';
 
 import { Duplex } from 'stream';
 import {
-	TextDocuments,
-	IConnection,
+	Connection,
 	createConnection,
+	TextDocuments,
 	DidOpenTextDocumentParams,
 	TextDocumentContentChangeEvent,
 	DidChangeTextDocumentParams,
 	DidOpenTextDocumentNotification,
 	DidChangeTextDocumentNotification,
-	Range
-} from '../main';
+	Range,
+} from '../node/main';
 
 import { TextDocument } from '../../../textDocument/lib/umd/main';
 
@@ -43,8 +43,8 @@ function mockChangeDocNotif(config: { version: number, contentChanges: TextDocum
 }
 
 suite('Legacy standard text documents', () => {
-	let server: IConnection;
-	let client: IConnection;
+	let server: Connection;
+	let client: Connection;
 
 	setup(() => {
 		const up = new TestStream();
@@ -91,8 +91,8 @@ suite('Legacy standard text documents', () => {
 });
 
 suite('New custom text Documents', () => {
-	let server: IConnection;
-	let client: IConnection;
+	let server: Connection;
+	let client: Connection;
 
 	setup(() => {
 		const up = new TestStream();

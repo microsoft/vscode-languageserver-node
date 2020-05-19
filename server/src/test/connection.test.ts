@@ -9,9 +9,9 @@ import * as assert from 'assert';
 import { Duplex } from 'stream';
 import {
 	InitializeParams, InitializeRequest, InitializeResult, createConnection, DidChangeConfigurationNotification,
-	DidChangeConfigurationParams, IConnection, DeclarationRequest, DeclarationParams, ProgressToken, WorkDoneProgress
-} from '../main';
-import { LocationLink } from 'vscode-languageserver-types';
+	DidChangeConfigurationParams, Connection, DeclarationRequest, DeclarationParams, ProgressToken, WorkDoneProgress,
+	LocationLink
+} from '../node/main';
 
 class TestStream extends Duplex {
 	_write(chunk: string, _encoding: string, done: () => void) {
@@ -24,8 +24,8 @@ class TestStream extends Duplex {
 }
 
 suite('Connection Tests', () => {
-	let serverConnection: IConnection;
-	let clientConnection: IConnection;
+	let serverConnection: Connection;
+	let clientConnection: Connection;
 
 	setup(() => {
 		const up = new TestStream();
