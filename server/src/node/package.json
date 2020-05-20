@@ -7,7 +7,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/Microsoft/vscode-languageserver-node.git",
-		"directory": "jsonrpc/src/node"
+		"directory": "server/src/node"
 	},
 	"bugs": {
 		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"

@@ -82,6 +82,9 @@ const watchDog: WatchDog = {
 	},
 	set shutdownReceived(value: boolean) {
 		_shutdownReceived = value;
+	},
+	exit: (code: number): void => {
+		process.exit(code);
 	}
 };
 

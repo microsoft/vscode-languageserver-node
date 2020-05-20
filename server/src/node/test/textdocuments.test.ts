@@ -19,7 +19,7 @@ import {
 	Range,
 } from '../main';
 
-import { TextDocument } from '../../../textDocument/lib/umd/main';
+import { TextDocument } from '../../../../textDocument/lib/umd/main';
 
 class TestStream extends Duplex {
 	_write(chunk: string, _encoding: string, done: () => void) {

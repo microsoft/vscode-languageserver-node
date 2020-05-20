@@ -9,6 +9,6 @@
 		"target": "es2017",
 		"module": "commonjs",
 		"moduleResolution": "node",
-		"lib": [ "es2017" ],
+		"lib": [ "es2017" ]
 	}
 }

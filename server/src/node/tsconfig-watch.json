@@ -4,9 +4,10 @@
 		"noUnusedLocals": false,
 		"noUnusedParameters": false,
 		"assumeChangesOnlyAffectDirectDependencies": true,
-		"tsBuildInfoFile":"../../lib/common-watch.tsbuildInfo"
+		"tsBuildInfoFile":"../../lib/node-watch.tsbuildInfo"
 	},
 	"references": [
-		{ "path": "../../../protocol/src/common/tsconfig-watch.json" }
+		{ "path": "../common/tsconfig-watch.json" },
+		{ "path": "../../../protocol/src/node/tsconfig-watch.json" }
 	]
 }

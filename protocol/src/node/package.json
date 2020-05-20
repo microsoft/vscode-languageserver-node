@@ -1,13 +1,13 @@
 {
 	"private": true,
-	"name": "vscode-jsonrpc-node",
+	"name": "vscode-languageserver-protocol-node",
 	"version": "0.0.0",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/Microsoft/vscode-languageserver-node.git",
-		"directory": "jsonrpc/src/node"
+		"directory": "protocol/src/node"
 	},
 	"bugs": {
 		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"

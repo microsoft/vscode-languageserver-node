@@ -1516,6 +1516,7 @@ export function combineFeatures<OConsole, OTracer, OTelemetry, OClient, OWindow,
 export interface WatchDog {
 	shutdownReceived: boolean;
 	initialize(params: InitializeParams): void;
+	exit(code: number): void;
 }
 
 export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _>(
@@ -1741,9 +1742,9 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 			}
 		} finally {
 			if (watchDog.shutdownReceived) {
-				process.exit(0);
+				watchDog.exit(0);
 			} else {
-				process.exit(1);
+				watchDog.exit(1);
 			}
 		}
 	});
