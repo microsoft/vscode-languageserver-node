@@ -199,6 +199,21 @@ const _ril: RIL = Object.freeze<RIL>({
 	stream: Object.freeze({
 		asReadableStream: (socket: NodeJS.ReadableStream) => new ReadableStreamWrapper(socket),
 		asWritableStream: (socket: NodeJS.WritableStream) => new WritableStreamWrapper(socket)
+	}),
+	console: console,
+	timer: Object.freeze({
+		setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): RAL.TimeoutHandle {
+			return setTimeout(callback, ms, ...args) as unknown as RAL.TimeoutHandle;
+		},
+		clearTimeout(handle: RAL.TimeoutHandle): void {
+			clearTimeout(handle as unknown as NodeJS.Timeout);
+		},
+		setImmediate(callback: (...args: any[]) => void, ...args: any[]): RAL.ImmediateHandle {
+			return setImmediate(callback, ...args) as unknown as RAL.ImmediateHandle;
+		},
+		clearImmediate(handle: RAL.ImmediateHandle): void {
+			clearImmediate(handle as unknown as NodeJS.Immediate);
+		}
 	})
 });
 

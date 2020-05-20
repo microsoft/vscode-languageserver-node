@@ -7,9 +7,9 @@
 import * as assert from 'assert';
 import * as zlib from 'zlib';
 
-import { Message, RequestMessage, isRequestMessage } from '../common/messages';
-import { ContentEncoder, ContentDecoder, Encodings } from '../common/encoding';
-import { StreamMessageWriter, StreamMessageReader } from '../node/main';
+import { Message, RequestMessage, isRequestMessage } from '../../common/messages';
+import { ContentEncoder, ContentDecoder, Encodings } from '../../common/encoding';
+import { StreamMessageWriter, StreamMessageReader } from '../../node/main';
 
 import { Writable, Readable } from 'stream';
 import { inherits } from 'util';

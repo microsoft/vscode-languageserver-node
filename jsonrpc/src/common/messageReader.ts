@@ -151,7 +151,7 @@ export class ReadableStreamMessageReader extends AbstractMessageReader implement
 	private nextMessageLength: number;
 	private messageToken: number;
 	private buffer: RAL.MessageBuffer;
-	private partialMessageTimer: NodeJS.Timer | undefined;
+	private partialMessageTimer: RAL.TimeoutHandle | undefined;
 	private _partialMessageTimeout: number;
 
 	public constructor(readable: RAL.ReadableStream, options?: RAL.MessageBufferEncoding | MessageReaderOptions) {
@@ -230,7 +230,7 @@ export class ReadableStreamMessageReader extends AbstractMessageReader implement
 
 	private clearPartialMessageTimer(): void {
 		if (this.partialMessageTimer) {
-			clearTimeout(this.partialMessageTimer);
+			RAL().timer.clearTimeout(this.partialMessageTimer);
 			this.partialMessageTimer = undefined;
 		}
 	}
@@ -240,7 +240,7 @@ export class ReadableStreamMessageReader extends AbstractMessageReader implement
 		if (this._partialMessageTimeout <= 0) {
 			return;
 		}
-		this.partialMessageTimer = setTimeout((token, timeout) => {
+		this.partialMessageTimer = RAL().timer.setTimeout((token, timeout) => {
 			this.partialMessageTimer = undefined;
 			if (token === this.messageToken) {
 				this.firePartialMessage({ messageToken: token, waitingTime: timeout });

@@ -17,7 +17,7 @@ import {
 	DidOpenTextDocumentNotification,
 	DidChangeTextDocumentNotification,
 	Range,
-} from '../node/main';
+} from '../main';
 
 import { TextDocument } from '../../../textDocument/lib/umd/main';
 

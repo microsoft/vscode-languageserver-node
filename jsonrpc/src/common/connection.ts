@@ -3,6 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
+import RAL from './ral';
 import * as Is from './is';
 
 import {
@@ -472,7 +473,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 	const notificationHandlers: { [name: string]: NotificationHandlerElement | undefined } = Object.create(null);
 	const progressHandlers: Map<number | string, NotificationHandler1<any>> = new Map();
 
-	let timer: NodeJS.Immediate | undefined;
+	let timer: RAL.ImmediateHandle | undefined;
 	let messageQueue: MessageQueue = new LinkedMap<string, Message>();
 	let responsePromises: { [name: string]: ResponsePromise } = Object.create(null);
 	let requestTokens: { [id: string]: AbstractCancellationTokenSource } = Object.create(null);
@@ -558,7 +559,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		if (timer || messageQueue.size === 0) {
 			return;
 		}
-		timer = setImmediate(() => {
+		timer = RAL().timer.setImmediate(() => {
 			timer = undefined;
 			processMessageQueue();
 		});
@@ -1227,7 +1228,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		},
 		inspect: (): void => {
 			// eslint-disable-next-line no-console
-			console.log('inspect');
+			RAL().console.log('inspect');
 		}
 	};
 

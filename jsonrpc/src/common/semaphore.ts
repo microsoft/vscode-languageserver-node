@@ -3,6 +3,8 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
+import RAL from './ral';
+
 interface Thunk<T> {
 	(): T;
 }
@@ -43,7 +45,7 @@ export class Semaphore<T = void> {
 		if (this._waiting.length === 0 || this._active === this._capacity) {
 			return;
 		}
-		setImmediate(() => this.doRunNext());
+		RAL().timer.setImmediate(() => this.doRunNext());
 	}
 
 	private doRunNext(): void {

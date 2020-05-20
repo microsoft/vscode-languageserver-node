@@ -54,6 +54,14 @@ interface _WritableStream {
 interface _DuplexStream extends _ReadableStream, _WritableStream {
 }
 
+interface _TimeoutHandle {
+	_timerBrand: undefined;
+}
+
+interface _ImmediateHandle {
+	_immediateBrand: undefined;
+}
+
 interface RAL {
 
 	readonly applicationJson: {
@@ -62,7 +70,21 @@ interface RAL {
 	};
 
 	readonly messageBuffer: {
-		readonly create: (encoding: RAL.MessageBufferEncoding) => RAL.MessageBuffer;
+		create(encoding: RAL.MessageBufferEncoding): RAL.MessageBuffer;
+	}
+
+	readonly console: {
+	    info(message?: any, ...optionalParams: any[]): void;
+	    log(message?: any, ...optionalParams: any[]): void;
+	    warn(message?: any, ...optionalParams: any[]): void;
+	    error(message?: any, ...optionalParams: any[]): void;
+	}
+
+	readonly timer: {
+		setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): RAL.TimeoutHandle;
+		clearTimeout(handle: RAL.TimeoutHandle): void;
+		setImmediate(callback: (...args: any[]) => void, ...args: any[]): RAL.ImmediateHandle;
+		clearImmediate(handle: RAL.ImmediateHandle): void;
 	}
 }
 
@@ -81,6 +103,8 @@ namespace RAL {
 	export type ReadableStream = _ReadableStream;
 	export type WritableStream = _WritableStream;
 	export type DuplexStream = _DuplexStream;
+	export type TimeoutHandle = _TimeoutHandle;
+	export type ImmediateHandle = _ImmediateHandle
 	export function install(ral: RAL): void {
 		if (ral === undefined) {
 			throw new Error(`No runtime abstraction layer provided`);

@@ -3,8 +3,8 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
+import RAL from './ral';
 import { Disposable } from './disposable';
-
 
 /**
  * Represents a typed event.
@@ -82,7 +82,7 @@ class CallbackList {
 				ret.push(callbacks[i].apply(contexts[i], args));
 			} catch (e) {
 				// eslint-disable-next-line no-console
-				console.error(e);
+				RAL().console.error(e);
 			}
 		}
 		return ret;

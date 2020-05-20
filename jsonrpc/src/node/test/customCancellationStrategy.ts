@@ -6,7 +6,7 @@
 import {
 	CancellationReceiverStrategy, CancellationId, CancellationSenderStrategy, MessageConnection, Event, CancellationToken,
 	AbstractCancellationTokenSource
-} from '../node/main';
+} from '../main';
 
 import * as fs from 'fs';
 import * as os from 'os';

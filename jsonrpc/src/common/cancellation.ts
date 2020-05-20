@@ -3,6 +3,8 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import RAL from './ral';
+
 import * as Is from './is';
 import { Event, Emitter } from './events';
 import { Disposable } from './disposable';
@@ -45,8 +47,8 @@ export namespace CancellationToken {
 }
 
 const shortcutEvent: Event<any> = Object.freeze(function (callback: Function, context?: any): any {
-	const handle = setTimeout(callback.bind(context), 0);
-	return { dispose() { clearTimeout(handle); } };
+	const handle = RAL().timer.setTimeout(callback.bind(context), 0);
+	return { dispose() { RAL().timer.clearTimeout(handle); } };
 });
 
 class MutableToken implements CancellationToken {

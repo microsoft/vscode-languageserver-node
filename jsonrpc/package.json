@@ -18,10 +18,11 @@
 	"main": "./lib/node/main.js",
 	"typings": "./lib/common/api.d.ts",
 	"scripts": {
+		"postinstall": "cd src/node && npm install",
 		"prepublishOnly": "npm run clean && npm run compile && npm test",
 		"postpublish": "node ../build/npm/post-publish.js",
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json",
-		"watch": "node ../build/bin/tsc -b ./tsconfig.json -w",
+		"watch": "node ../build/bin/tsc -b ./tsconfig-watch.json -w",
 		"test": "node ../node_modules/mocha/bin/_mocha",
 		"clean": "node ../node_modules/rimraf/bin.js lib",
 		"preversion": "npm test"

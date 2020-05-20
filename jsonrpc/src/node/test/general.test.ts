@@ -5,7 +5,7 @@
 'use strict';
 
 import * as assert from 'assert';
-import { Trace } from '../common/connection';
+import { Trace } from '../main';
 
 suite('General Tests', () => {
 	test('Trace#fromString', () => {
