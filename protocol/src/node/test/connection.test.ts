@@ -10,8 +10,8 @@ import { Duplex } from 'stream';
 import {
 	InitializeParams, InitializeRequest, InitializeResult, createProtocolConnection, StreamMessageReader, StreamMessageWriter, Logger, ProtocolConnection,
 	WorkDoneProgressBegin, WorkDoneProgressReport, WorkDoneProgressEnd
-} from '../node/main';
-import { DocumentSymbolRequest, DocumentSymbolParams } from '../common/protocol';
+} from '../main';
+import { DocumentSymbolRequest, DocumentSymbolParams } from '../../common/protocol';
 import { ProgressType } from 'vscode-jsonrpc';
 import { SymbolInformation, SymbolKind } from 'vscode-languageserver-types';
 

@@ -19,6 +19,7 @@
 		"vscode-languageserver-types": "3.16.0-next.1"
 	},
 	"scripts": {
+		"postinstall": "cd src/node && npm install",
 		"prepublishOnly": "npm run clean && npm run compile && npm test",
 		"postpublish": "node ../build/npm/post-publish.js",
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json",
