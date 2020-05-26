@@ -64,8 +64,8 @@ export class ConfigurationFeature implements StaticFeature {
 				}
 			}
 		}
-		if (!result) {
-			return null;
+		if (result === undefined) {
+			result = null;
 		}
 		return result;
 	}
