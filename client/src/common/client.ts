@@ -22,7 +22,7 @@ import {
 } from 'vscode';
 
 import {
-	Message, MessageSignature, Logger, ErrorCodes, ResponseError,
+	RAL, Message, MessageSignature, Logger, ErrorCodes, ResponseError,
 	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler,
 	NotificationType, NotificationType0,
 	NotificationHandler, NotificationHandler0, GenericNotificationHandler,
@@ -140,16 +140,16 @@ interface Connection {
 
 class ConsoleLogger implements Logger {
 	public error(message: string): void {
-		console.error(message);
+		RAL().console.error(message);
 	}
 	public warn(message: string): void {
-		console.warn(message);
+		RAL().console.warn(message);
 	}
 	public info(message: string): void {
-		console.info(message);
+		RAL().console.info(message);
 	}
 	public log(message: string): void {
-		console.log(message);
+		RAL().console.log(message);
 	}
 }
 
@@ -165,9 +165,7 @@ interface ConnectionOptions {
     cancellationStrategy: CancellationStrategy
 }
 
-function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): Connection;
-function createConnection(reader: MessageReader, writer: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): Connection;
-function createConnection(input: any, output: any, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): Connection {
+function createConnection(input: MessageReader, output: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): Connection {
 	let logger = new ConsoleLogger();
 	let connection = createProtocolConnection(input, output, logger, options);
 	connection.onError((data) => { errorHandler(data[0], data[1], data[2]); });
@@ -2967,7 +2965,7 @@ export abstract class BaseLanguageClient {
 			? this._clientOptions.workspaceFolder.uri.fsPath
 			: this._clientGetRootPath();
 		let initParams: InitializeParams = {
-			processId: process.pid,
+			processId: null,
 			clientInfo: {
 				name: 'vscode',
 				version: VSCodeVersion
@@ -3370,7 +3368,7 @@ export abstract class BaseLanguageClient {
 		this.registerFeature(new ExecuteCommandFeature(this));
 	}
 
-	private fillInitializeParams(params: InitializeParams): void {
+	protected fillInitializeParams(params: InitializeParams): void {
 		for (let feature of this._features) {
 			if (Is.func(feature.fillInitializeParams)) {
 				feature.fillInitializeParams(params);

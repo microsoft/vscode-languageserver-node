@@ -3,6 +3,8 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
+import { RAL } from 'vscode-languageserver-protocol';
+
 export interface ITask<T> {
 	(): T;
 }
@@ -10,7 +12,7 @@ export interface ITask<T> {
 export class Delayer<T> {
 
 	public defaultDelay: number;
-	private timeout: NodeJS.Timer | undefined;
+	private timeout: RAL.TimeoutHandle | undefined;
 	private completionPromise: Promise<T> | undefined;
 	private onSuccess: ((value?: T | Promise<T>) => void) | undefined;
 	private task: ITask<T> | undefined;
@@ -42,7 +44,7 @@ export class Delayer<T> {
 		}
 
 		if (delay >= 0 || this.timeout === void 0) {
-			this.timeout = setTimeout(() => {
+			this.timeout = RAL().timer.setTimeout(() => {
 				this.timeout = undefined;
 				this.onSuccess!(undefined);
 			}, delay >= 0 ? delay : this.defaultDelay);
@@ -74,7 +76,7 @@ export class Delayer<T> {
 
 	private cancelTimeout(): void {
 		if (this.timeout !== void 0) {
-			clearTimeout(this.timeout);
+			RAL().timer.clearTimeout(this.timeout);
 			this.timeout = undefined;
 		}
 	}

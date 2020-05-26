@@ -16,7 +16,7 @@ import { CommonLanguageClient } from '../common/commonClient';
 import { LanguageClientOptions, MessageTransports } from '../common/client';
 
 import { terminate } from './processes';
-import { StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageWriter, createClientPipeTransport, generateRandomPipeName, createClientSocketTransport} from 'vscode-languageserver-protocol/node';
+import { StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageWriter, createClientPipeTransport, generateRandomPipeName, createClientSocketTransport, InitializeParams} from 'vscode-languageserver-protocol/node';
 
 export * from '../common/api';
 
@@ -210,6 +210,12 @@ export class LanguageClient extends CommonLanguageClient {
 		super.handleConnectionClosed();
 	}
 
+	protected fillInitializeParams(params: InitializeParams): void {
+		super.fillInitializeParams(params);
+		if (params.processId === null) {
+			params.processId = process.pid;
+		}
+	}
 
 	protected createMessageTransports(encoding: string): Promise<MessageTransports> {
 

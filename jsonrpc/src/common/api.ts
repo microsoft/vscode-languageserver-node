@@ -26,7 +26,10 @@ import {
 	CancellationReceiverStrategy, CancellationSenderStrategy, CancellationStrategy,
 } from '../common/connection';
 
+import RAL from './ral';
+
 export {
+	RAL,
 	// Export from messages
 	Message, MessageSignature, RequestMessage, RequestType, RequestType0, RequestType1, RequestType2, RequestType3, RequestType4, RequestType5, RequestType6,
 	RequestType7, RequestType8, RequestType9, ResponseError, ErrorCodes, NotificationMessage, NotificationType, NotificationType0, NotificationType1,

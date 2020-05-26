@@ -27,6 +27,7 @@
 		"vscode-languageserver-protocol": "3.16.0-next.2"
 	},
 	"scripts": {
+		"postinstall": "cd src/node && npm install",
 		"prepublishOnly": "npm run clean && node ./bin/updateVSCode.js && npm run compile && npm test",
 		"postpublish": "node ../build/npm/post-publish.js",
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json && shx cp src/node/terminateProcess.sh lib/node/terminateProcess.sh",

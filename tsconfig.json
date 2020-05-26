@@ -2,24 +2,11 @@
 	"extends": "./tsconfig.base.json",
 	"compilerOptions": {
 	},
+	"files": [],
 	"references": [
 		{ "path": "./textDocument/tsconfig.json" },
 		{ "path": "./server/tsconfig.json" },
 		{ "path": "./client/tsconfig.json" },
 		{ "path": "./client-tests/tsconfig.json" }
-	],
-	"exclude": [
-		".github",
-		".vscode",
-		"build",
-		"client",
-		"client-tests",
-		"jsonrpc",
-		"node_modules",
-		"protocol",
-		"server",
-		"testbed",
-		"textDocument",
-		"types",
 	]
 }
