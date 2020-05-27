@@ -5,7 +5,7 @@
 
 import RIL from './ril';
 
-// Install the node runtime abstract.
+// Install the browser runtime abstract.
 RIL.install();
 
 import {
