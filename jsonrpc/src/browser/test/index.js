@@ -79,7 +79,13 @@ async function runTests() {
 			emitter.on('end', async () => {
 				process.exitCode = failCount === 0 ? 0 : 1;
 				await browser.close();
-				server.close();
+				server.close((err) => {
+					if (err) {
+						reject(err);
+					} else {
+						resolve();
+					}
+				});
 			});
 			const echoRunner = new EchoRunner(emitter, 'Chromium');
 			if (process.platform === 'win32') {
