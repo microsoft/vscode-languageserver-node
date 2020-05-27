@@ -12,6 +12,7 @@ import {
 	AbstractMessageReader, DataCallback, AbstractMessageWriter, Message, Disposable, Emitter
 } from '../common/api';
 
+export * from '../common/api';
 
 export class BrowserMessageReader extends AbstractMessageReader {
 
