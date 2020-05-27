@@ -11,7 +11,7 @@ import RAL from '../common/ral';
 import {
 	AbstractMessageReader, DataCallback, AbstractMessageWriter, Message, ReadableStreamMessageReader, WriteableStreamMessageWriter,
 	MessageWriterOptions, MessageReaderOptions, MessageReader, MessageWriter, NullLogger, ConnectionStrategy, ConnectionOptions,
-	MessageConnection, Logger, createMessageConnection as _createMessageConnection
+	MessageConnection, Logger, createMessageConnection as _createMessageConnection, Disposable
 } from '../common/api';
 
 import * as path from 'path';
@@ -34,8 +34,9 @@ export class IPCMessageReader extends AbstractMessageReader {
 		eventEmitter.on('close', () => this.fireClose());
 	}
 
-	public listen(callback: DataCallback): void {
+	public listen(callback: DataCallback): Disposable {
 		(this.process as NodeJS.EventEmitter).on('message', callback);
+		return Disposable.create(() => (this.process as NodeJS.EventEmitter).off('message', callback));
 	}
 }
 

@@ -3,6 +3,7 @@
 	"files": [],
 	"references": [
 		{ "path": "./src/common/tsconfig-watch.json" },
-		{ "path": "./src/node/tsconfig-watch.json" }
+		{ "path": "./src/node/tsconfig-watch.json" },
+		{ "path": "./src/browser/tsconfig-watch.json" }
 	]
 }

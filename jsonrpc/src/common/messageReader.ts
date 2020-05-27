@@ -9,6 +9,7 @@ import * as Is from './is';
 import { Event, Emitter } from './events';
 import { Message } from './messages';
 import { ContentDecoder, ContentTypeDecoder } from './encoding';
+import { Disposable } from './api';
 
 export interface DataCallback {
 	(data: Message): void;
@@ -23,7 +24,7 @@ export interface MessageReader {
 	readonly onError: Event<Error>;
 	readonly onClose: Event<void>;
 	readonly onPartialMessage: Event<PartialMessageInfo>;
-	listen(callback: DataCallback): void;
+	listen(callback: DataCallback): Disposable;
 	dispose(): void;
 }
 
@@ -35,7 +36,7 @@ export namespace MessageReader {
 	}
 }
 
-export abstract class AbstractMessageReader {
+export abstract class AbstractMessageReader implements MessageReader {
 
 	private errorEmitter: Emitter<Error>;
 	private closeEmitter: Emitter<void>;
@@ -84,6 +85,8 @@ export abstract class AbstractMessageReader {
 			return new Error(`Reader received error. Reason: ${Is.string(error.message) ? error.message : 'unknown'}`);
 		}
 	}
+
+	public abstract listen(callback: DataCallback): Disposable;
 }
 
 export interface MessageReaderOptions {
@@ -142,7 +145,7 @@ namespace ResolvedMessageReaderOptions {
 	}
 }
 
-export class ReadableStreamMessageReader extends AbstractMessageReader implements MessageReader {
+export class ReadableStreamMessageReader extends AbstractMessageReader {
 
 	private readable: RAL.ReadableStream;
 	private options: ResolvedMessageReaderOptions;
@@ -172,16 +175,17 @@ export class ReadableStreamMessageReader extends AbstractMessageReader implement
 		return this._partialMessageTimeout;
 	}
 
-	public listen(callback: DataCallback): void {
+	public listen(callback: DataCallback): Disposable {
 		this.nextMessageLength = -1;
 		this.messageToken = 0;
 		this.partialMessageTimer = undefined;
 		this.callback = callback;
-		this.readable.onData((data: Uint8Array) => {
+		const result = this.readable.onData((data: Uint8Array) => {
 			this.onData(data);
 		});
 		this.readable.onError((error: any) => this.fireError(error));
 		this.readable.onClose(() => this.fireClose());
+		return result;
 	}
 
 	private onData(data: Uint8Array): void {

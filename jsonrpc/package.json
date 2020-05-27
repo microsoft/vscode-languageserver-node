@@ -16,9 +16,10 @@
 		"node": ">=8.0.0 || >=10.0.0"
 	},
 	"main": "./lib/node/main.js",
+	"browser": "./lib/browser/main.js",
 	"typings": "./lib/common/api.d.ts",
 	"scripts": {
-		"postinstall": "cd src/node && npm install",
+		"postinstall": "cd src/node && npm install && cd ../browser && npm install && cd ../..",
 		"prepublishOnly": "npm run clean && npm run compile && npm test",
 		"postpublish": "node ../build/npm/post-publish.js",
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json",

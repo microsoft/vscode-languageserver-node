@@ -1,0 +1,15 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"tsBuildInfoFile":"../../lib/browser.tsbuildInfo",
+		"rootDir": ".",
+		"outDir": "../../lib/browser",
+		"lib": [ "es2017", "webworker"]
+	},
+	"include": [
+		"."
+	],
+	"references": [
+		{ "path": "../common/tsconfig.json" },
+	]
+}
