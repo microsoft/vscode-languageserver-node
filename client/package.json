@@ -16,7 +16,7 @@
 		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
 	},
 	"main": "./lib/node/main.js",
-	"typings": "./lib/common/api",
+	"typings": "./lib/common/api.d.ts",
 	"devDependencies": {
 		"@types/semver": "^6.0.1",
 		"@types/vscode": "1.44.0",
