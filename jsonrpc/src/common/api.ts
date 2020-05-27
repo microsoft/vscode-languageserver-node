@@ -8,7 +8,7 @@ import {
 	Message, MessageSignature, RequestMessage, RequestType, RequestType0, RequestType1, RequestType2, RequestType3, RequestType4, RequestType5, RequestType6,
 	RequestType7, RequestType8, RequestType9, ResponseError, ErrorCodes, NotificationMessage, NotificationType, NotificationType0, NotificationType1,
 	NotificationType2, NotificationType3, NotificationType4, NotificationType5, NotificationType6, NotificationType7, NotificationType8,
-	NotificationType9, _EM
+	NotificationType9, ResponseMessage, _EM
 } from '../common/messages';
 
 import { Disposable } from '../common/disposable';
@@ -34,7 +34,7 @@ export {
 	Message, MessageSignature, RequestMessage, RequestType, RequestType0, RequestType1, RequestType2, RequestType3, RequestType4, RequestType5, RequestType6,
 	RequestType7, RequestType8, RequestType9, ResponseError, ErrorCodes, NotificationMessage, NotificationType, NotificationType0, NotificationType1,
 	NotificationType2, NotificationType3, NotificationType4, NotificationType5, NotificationType6, NotificationType7, NotificationType8,
-	NotificationType9, _EM,
+	NotificationType9, ResponseMessage, _EM,
 	// Export from disposable
 	Disposable,
 	// Export from events

@@ -2,41 +2,18 @@
 
 <head>
 	<meta charset="utf-8">
-	<title>VSCode Tests</title>
-	<link href="../../../node_modules/mocha/mocha.css" rel="stylesheet" />
+	<title>JSON RPC Browser Tests</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link href="/node_modules/mocha/mocha.css" rel="stylesheet" />
+	<script src="/node_modules/mocha/mocha.js"></script>
 </head>
 
 <body>
 	<div id="mocha"></div>
-	<script src="../../../../node_modules/mocha/mocha.js"></script>
-	<script>
-		// !!! DO NOT CHANGE !!!
-		// Our unit tests may run in environments without
-		// display (e.g. from builds) and tests may by
-		// accident bring up native dialogs or even open
-		// windows. This we cannot allow as it may crash
-		// the test run.
-		// !!! DO NOT CHANGE !!!
-		window.open = function () { throw new Error('window.open() is not supported in tests!'); };
-		window.alert = function () { throw new Error('window.alert() is not supported in tests!'); }
-		window.confirm = function () { throw new Error('window.confirm() is not supported in tests!'); }
-
-		// Ignore uncaught cancelled promise errors
-		window.addEventListener('unhandledrejection', e => {
-			const name = e && e.reason && e.reason.name;
-
-			if (name === 'Canceled') {
-				e.preventDefault();
-				e.stopPropagation();
-			}
-		});
-
-		mocha.setup({
-			ui: 'tdd',
-			timeout: 5000
-		});
+	<script class="mocha-init">
+		mocha.setup({ ui: 'tdd', timeout: 5000 });
 	</script>
-
+	<script src="/dist/tests.js"></script>
 	<script>
 		function serializeSuite(suite) {
 			return {
@@ -86,38 +63,8 @@
 			runner.on('fail', (test, err) => window.mocha_report('fail', serializeRunnable(test), serializeError(err)));
 			runner.on('pending', test => window.mocha_report('pending', serializeRunnable(test)));
 		};
-
-		window.loadAndRun = async function loadAndRun(modules, manual = false) {
-			// load
-			await Promise.all(modules.map(module => new Promise((resolve, reject) => {
-				require([module], resolve, err => {
-					console.log("BAD " + module + JSON.stringify(err, undefined, '\t'));
-					// console.log(module);
-					resolve({});
-				});
-			})));
-			// await new Promise((resolve, reject) => {
-			// 	require(modules, resolve, err => {
-			// 		console.log(err);
-			// 		reject(err);
-			// 	});
-			// });
-
-			// run
-			return new Promise((resolve, reject) => {
-				if (!manual) {
-					mocha.reporter(PlaywrightReporter);
-				}
-				mocha.run(failCount => resolve(failCount === 0));
-			});
-		}
-
-		const modules = new URL(window.location.href).searchParams.getAll('m');
-		if (Array.isArray(modules) && modules.length > 0) {
-			console.log('MANUALLY running tests', modules);
-
-			loadAndRun(modules, true).then(() => console.log('done'), err => console.log(err));
-		}
+		mocha.reporter(PlaywrightReporter);
+		mocha.run();
 	</script>
 </body>
 
