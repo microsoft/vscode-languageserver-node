@@ -68,11 +68,16 @@ async function runTests() {
 		const root = path.join(__dirname, '..', '..', '..');
 		const server = httpServer.createServer({ root: root, showDir: true, });
 		server.listen(8080, '127.0.0.1', async () => {
+			let failCount = 0;
 			const browser = await playwright['chromium'].launch({ headless: true });
 			const context = await browser.newContext();
 			const page = await context.newPage();
 			const emitter = new events.EventEmitter();
+			emitter.on('fail', () => {
+				failCount++;
+			});
 			emitter.on('end', async () => {
+				process.exitCode = failCount === 0 ? 0 : 1;
 				await browser.close();
 				server.close();
 			});
