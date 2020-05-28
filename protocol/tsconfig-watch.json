@@ -5,6 +5,7 @@
 		{ "path": "../jsonrpc/tsconfig-watch.json" },
 		{ "path": "../types/tsconfig-watch.json" },
 		{ "path": "./src/common/tsconfig-watch.json" },
-		{ "path": "./src/node/tsconfig-watch.json" }
+		{ "path": "./src/node/tsconfig-watch.json" },
+		{ "path": "./src/browser/tsconfig-watch.json" }
 	]
 }

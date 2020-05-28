@@ -5,6 +5,7 @@
 		{ "path": "../jsonrpc/tsconfig.json" },
 		{ "path": "../types/tsconfig.json" },
 		{ "path": "./src/common/tsconfig.json" },
-		{ "path": "./src/node/tsconfig.json" }
+		{ "path": "./src/node/tsconfig.json" },
+		{ "path": "./src/browser/tsconfig.json" },
 	]
 }

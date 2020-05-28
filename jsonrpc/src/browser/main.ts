@@ -9,7 +9,8 @@ import RIL from './ril';
 RIL.install();
 
 import {
-	AbstractMessageReader, DataCallback, AbstractMessageWriter, Message, Disposable, Emitter
+	AbstractMessageReader, DataCallback, AbstractMessageWriter, Message, Disposable, Emitter, NullLogger, ConnectionStrategy, ConnectionOptions,
+	createMessageConnection as _createMessageConnection, MessageReader, MessageWriter, Logger, MessageConnection
 } from '../common/api';
 
 export * from '../common/api';
@@ -19,17 +20,17 @@ export class BrowserMessageReader extends AbstractMessageReader {
 	private _onData: Emitter<Message>;
 	private _messageListener: (event: MessageEvent) => void;
 
-	public constructor(worker: Worker | DedicatedWorkerGlobalScope) {
+	public constructor(context: Worker | DedicatedWorkerGlobalScope) {
 		super();
 		this._onData = new Emitter<Message>();
 		this._messageListener = (event: MessageEvent) => {
 			this._onData.fire(event.data);
 		};
-		worker.addEventListener('error', (event) => this.fireError(event));
-		if (worker instanceof Worker) {
-			worker.addEventListener('message', this._messageListener);
+		context.addEventListener('error', (event) => this.fireError(event));
+		if (context instanceof Worker) {
+			context.addEventListener('message', this._messageListener);
 		} else {
-			worker.addEventListener('message', this._messageListener);
+			context.addEventListener('message', this._messageListener);
 		}
 	}
 
@@ -42,15 +43,15 @@ export class BrowserMessageWriter extends AbstractMessageWriter {
 
 	private errorCount: number;
 
-	public constructor(private worker: Worker | DedicatedWorkerGlobalScope) {
+	public constructor(private context: Worker | DedicatedWorkerGlobalScope) {
 		super();
 		this.errorCount = 0;
-		worker.addEventListener('error', (event) => this.fireError(event));
+		context.addEventListener('error', (event) => this.fireError(event));
 	}
 
 	public write(msg: Message): Promise<void> {
 		try {
-			this.worker.postMessage(msg);
+			this.context.postMessage(msg);
 			return Promise.resolve();
 		} catch (error) {
 			this.handleError(error, msg);
@@ -62,4 +63,16 @@ export class BrowserMessageWriter extends AbstractMessageWriter {
 		this.errorCount++;
 		this.fireError(error, msg, this.errorCount);
 	}
+}
+
+export function createMessageConnection(reader: MessageReader, writer: MessageWriter, logger?: Logger, options?: ConnectionStrategy | ConnectionOptions): MessageConnection {
+	if (logger === undefined) {
+		logger = NullLogger;
+	}
+
+	if (ConnectionStrategy.is(options)) {
+		options = { connectionStrategy: options } as ConnectionOptions;
+	}
+
+	return _createMessageConnection(reader, writer, logger, options);
 }
