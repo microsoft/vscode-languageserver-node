@@ -13,6 +13,7 @@
 		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
 	},
 	"main": "./lib/node/main.js",
+	"browser": "./lib/browser/main.js",
 	"typings": "./lib/common/api.d.ts",
 	"bin": {
 		"installServerIntoExtension": "./bin/installServerIntoExtension"
