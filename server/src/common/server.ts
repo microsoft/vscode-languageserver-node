@@ -183,6 +183,13 @@ export class TextDocuments<T> {
 	/**
 	 * Listens for `low level` notification on the given connection to
 	 * update the text documents managed by this instance.
+     *
+	 * Please note that the connection only provides handlers not an event model. Therefore
+	 * listening on a connection will overwrite the following handlers on a connection:
+	 * `onDidOpenTextDocument`, `onDidChangeTextDocument`, `onDidCloseTextDocument`,
+	 * `onWillSaveTextDocument`, `onWillSaveTextDocumentWaitUntil` and `onDidSaveTextDocument`.
+	 *
+	 * Use the correspnding events on the TextDocuments instance instead.
 	 *
 	 * @param connection The connection to listen on.
 	 */
