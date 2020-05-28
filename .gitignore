@@ -31,4 +31,4 @@ node_modules
 # Debug log from npm
 npm-debug.log
 
-client-tests/.vscode-test
+client-node-tests/.vscode-test

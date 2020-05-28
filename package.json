@@ -25,9 +25,9 @@
 		"typescript": "^3.8.3"
 	},
 	"scripts": {
-		"postinstall": "cd types && npm install && cd ../textDocument && npm install && cd ../jsonrpc && npm install && cd ../protocol && npm install && cd ../server && npm install && cd ../client && npm install && cd ../client-tests && npm install && cd ..",
-		"test": "cd types && npm test && cd ../textDocument && npm test && cd ../jsonrpc && npm test && cd ../protocol && npm test && cd ../server && npm test && cd ../client-tests && npm test && cd ..",
-		"clean": "cd types && npm run clean && cd ../textDocument && npm run clean && cd ../jsonrpc && npm run clean && cd ../protocol && npm run clean && cd ../server && npm run clean && cd ../client && npm run clean && cd ../client-tests && npm run clean && cd ..",
+		"postinstall": "cd types && npm install && cd ../textDocument && npm install && cd ../jsonrpc && npm install && cd ../protocol && npm install && cd ../server && npm install && cd ../client && npm install && cd ../client-node-tests && npm install && cd ..",
+		"test": "cd types && npm test && cd ../textDocument && npm test && cd ../jsonrpc && npm test && cd ../protocol && npm test && cd ../server && npm test && cd ../client-node-tests && npm test && cd ..",
+		"clean": "cd types && npm run clean && cd ../textDocument && npm run clean && cd ../jsonrpc && npm run clean && cd ../protocol && npm run clean && cd ../server && npm run clean && cd ../client && npm run clean && cd ../client-node-tests && npm run clean && cd ..",
 		"symlink": "node ./build/bin/symlink.js",
 		"symlink:tests": "node ./build/bin/symlink-tests.js",
 		"symlink:testbed": "node ./build/bin/symlink-testbed.js",
@@ -38,19 +38,20 @@
 		"compile:protocol": "tsc -b ./protocol/tsconfig.json",
 		"compile:server": "tsc -b ./server/tsconfig.json",
 		"compile:client": "tsc -b ./client/tsconfig.json",
-		"compile:client-tests": "tsc -b ./client-tests/tsconfig.json",
+		"compile:client-node-tests": "tsc -b ./client-node-tests/tsconfig.json",
 		"compile:testbed": "tsc -b ./testbed/tsconfig.json",
 		"watch": "tsc -b tsconfig-watch.json -w",
 		"watch:testbed": "tsc -b ./testbed/tsconfig.json -w",
-		"lint": "npm run lint:types && npm run lint:textDocument && npm run lint:jsonrpc && npm run lint:protocol && npm run lint:server && npm run lint:client && npm run lint:client-tests",
+		"lint": "npm run lint:types && npm run lint:textDocument && npm run lint:jsonrpc && npm run lint:protocol && npm run lint:server && npm run lint:client && npm run lint:client-node-tests",
 		"lint:types": "eslint --config ./types/.eslintrc.json ./types/src/**/*.ts",
 		"lint:textDocument": "eslint --config ./textDocument/.eslintrc.json ./types/src/**/*.ts",
 		"lint:jsonrpc": "eslint --config ./jsonrpc/.eslintrc.json ./jsonrpc/src/**/*.ts",
 		"lint:protocol": "eslint --config ./protocol/.eslintrc.json ./protocol/src/**/*.ts",
 		"lint:server": "eslint --config ./server/.eslintrc.json ./server/src/**/*.ts",
 		"lint:client": "eslint --config ./client/.eslintrc.json ./client/src/**/*.ts",
-		"lint:client-tests": "eslint --config ./client-tests/.eslintrc.json ./client-tests/src/**/*.ts",
+		"lint:client-node-tests": "eslint --config ./client-node-tests/.eslintrc.json ./client-node-tests/src/**/*.ts",
 		"all": "npm run symlink && npm run compile && npm run test",
 		"rebuildAll": "npm run clean && npm run symlink && npm run compile && npm run test"
-	}
+	},
+	"dependencies": {}
 }

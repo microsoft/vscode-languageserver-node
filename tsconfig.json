@@ -7,6 +7,6 @@
 		{ "path": "./textDocument/tsconfig.json" },
 		{ "path": "./server/tsconfig.json" },
 		{ "path": "./client/tsconfig.json" },
-		{ "path": "./client-tests/tsconfig.json" }
+		{ "path": "./client-node-tests/tsconfig.json" }
 	]
 }
