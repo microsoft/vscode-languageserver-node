@@ -10,7 +10,7 @@ if (!engineVersion) {
 
 const regexp = /const REQUIRED_VSCODE_VERSION = '([^\']+)';/;
 
-const mainPath = path.join(__dirname, '../src/main.ts');
+const mainPath = path.join(__dirname, '../src/node/main.ts');
 const mainSource = fs.readFileSync(mainPath).toString();
 const match = mainSource.match(regexp);
 if (!match && match[1]) {
