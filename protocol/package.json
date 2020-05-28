@@ -28,7 +28,7 @@
 		"vscode-languageserver-types": "3.16.0-next.2"
 	},
 	"scripts": {
-		"postinstall": "cd src/node && npm install && cd ../browser && npm install && cd ../..",
+		"install:dev": "cd src/node && npm install && cd ../browser && npm run install:dev && cd ../..",
 		"prepublishOnly": "npm run clean && npm run compile && npm test",
 		"postpublish": "node ../build/npm/post-publish.js",
 		"preversion": "npm test",

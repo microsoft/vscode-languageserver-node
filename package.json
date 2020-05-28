@@ -25,7 +25,7 @@
 		"typescript": "^3.8.3"
 	},
 	"scripts": {
-		"postinstall": "cd types && npm install && cd ../textDocument && npm install && cd ../jsonrpc && npm install && cd ../protocol && npm install && cd ../server && npm install && cd ../client && npm install && cd ../client-node-tests && npm install && cd ..",
+		"postinstall": "cd types && npm install && cd ../textDocument && npm install && cd ../jsonrpc && npm install && npm run install:dev && cd ../protocol && npm install && npm run install:dev && cd ../server && npm install && npm run install:dev && cd ../client && npm install && npm run install:dev && cd ../client-node-tests && npm install && cd ..",
 		"test": "cd types && npm test && cd ../textDocument && npm test && cd ../jsonrpc && npm test && cd ../protocol && npm test && cd ../server && npm test && cd ../client-node-tests && npm test && cd ..",
 		"clean": "cd types && npm run clean && cd ../textDocument && npm run clean && cd ../jsonrpc && npm run clean && cd ../protocol && npm run clean && cd ../server && npm run clean && cd ../client && npm run clean && cd ../client-node-tests && npm run clean && cd ..",
 		"symlink": "node ./build/bin/symlink.js",
