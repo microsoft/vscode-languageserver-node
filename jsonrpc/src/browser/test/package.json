@@ -1,6 +1,6 @@
 {
 	"private": true,
-	"name": "vscode-jsonrpc-browser",
+	"name": "vscode-jsonrpc-browser-test",
 	"version": "0.0.0",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
@@ -12,7 +12,7 @@
 	"bugs": {
 		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
 	},
-	"scripts": {
-		"postinstall": "cd ./test && npm install"
+	"devDependencies": {
+		"playwright": "1.0.2"
 	}
 }
