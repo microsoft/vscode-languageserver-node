@@ -1,0 +1,71 @@
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>JSON RPC Browser Tests</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link href="/node_modules/mocha/mocha.css" rel="stylesheet" />
+	<script src="/node_modules/mocha/mocha.js"></script>
+</head>
+
+<body>
+	<div id="mocha"></div>
+	<script class="mocha-init">
+		mocha.setup({ ui: 'tdd', timeout: 5000 });
+	</script>
+	<script src="/dist/tests.js"></script>
+	<script>
+		function serializeSuite(suite) {
+			return {
+				root: suite.root,
+				suites: suite.suites.map(serializeSuite),
+				tests: suite.tests.map(serializeRunnable),
+				title: suite.title,
+				fullTitle: suite.fullTitle(),
+				timeout: suite.timeout(),
+				retries: suite.retries(),
+				enableTimeouts: suite.enableTimeouts(),
+				slow: suite.slow(),
+				bail: suite.bail()
+			};
+		}
+		function serializeRunnable(runnable) {
+			return {
+				title: runnable.title,
+				fullTitle: runnable.fullTitle(),
+				async: runnable.async,
+				slow: runnable.slow(),
+				speed: runnable.speed,
+				duration: runnable.duration
+			};
+		}
+		function serializeError(err) {
+			return {
+				message: err.message,
+				stack: err.stack,
+				actual: err.actual,
+				expected: err.expected,
+				uncaught: err.uncaught,
+				showDiff: err.showDiff,
+				inspect: typeof err.inspect === 'function' ? err.inspect() : ''
+			};
+		}
+		function PlaywrightReporter(runner) {
+			runner.on('start', () => window.mocha_report('start'));
+			runner.on('end', () => window.mocha_report('end'));
+			runner.on('suite', suite => window.mocha_report('suite', serializeSuite(suite)));
+			runner.on('suite end', suite => window.mocha_report('suite end', serializeSuite(suite)));
+			runner.on('test', test => window.mocha_report('test', serializeRunnable(test)));
+			runner.on('test end', test => window.mocha_report('test end', serializeRunnable(test)));
+			runner.on('hook', hook => window.mocha_report('hook', serializeRunnable(hook)));
+			runner.on('hook end', hook => window.mocha_report('hook end', serializeRunnable(hook)));
+			runner.on('pass', test => window.mocha_report('pass', serializeRunnable(test)));
+			runner.on('fail', (test, err) => window.mocha_report('fail', serializeRunnable(test), serializeError(err)));
+			runner.on('pending', test => window.mocha_report('pending', serializeRunnable(test)));
+		};
+		mocha.reporter(PlaywrightReporter);
+		mocha.run();
+	</script>
+</body>
+
+</html>

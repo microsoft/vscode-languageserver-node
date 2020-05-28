@@ -9,7 +9,7 @@ const root = path.dirname(path.dirname(__dirname));
 	console.log('Symlinking node modules for test setup');
 
 	// test-extension
-	let extensionFolder = path.join(root, 'client-tests');
+	let extensionFolder = path.join(root, 'client-node-tests');
 	await ln.tryLinkJsonRpc(extensionFolder);
 	await ln.tryLinkTypes(extensionFolder);
 	await ln.tryLinkProtocol(extensionFolder);

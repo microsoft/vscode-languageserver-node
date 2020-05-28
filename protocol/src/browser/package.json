@@ -1,13 +1,13 @@
 {
 	"private": true,
-	"name": "vscode-jsonrpc-browser",
+	"name": "vscode-languageserver-protocol-browser",
 	"version": "0.0.0",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/Microsoft/vscode-languageserver-node.git",
-		"directory": "jsonrpc/src/browser"
+		"directory": "protocol/src/browser"
 	},
 	"bugs": {
 		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
