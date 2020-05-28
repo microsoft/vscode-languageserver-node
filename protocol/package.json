@@ -12,19 +12,33 @@
 	"bugs": {
 		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
 	},
-	"main": "./lib/main.js",
-	"typings": "./lib/main",
+	"main": "./lib/node/main.js",
+	"browser": {
+		"./lib/node/main.js": "./lib/browser/main.js"
+	},
+	"typings": "./lib/common/api.d.ts",
+	"devDependencies": {
+		"webpack": "^4.43.0",
+		"webpack-cli": "^3.3.11",
+		"mocha": "^7.1.2",
+		"http-server": "0.12.3"
+	},
 	"dependencies": {
 		"vscode-jsonrpc": "5.1.0-next.1",
 		"vscode-languageserver-types": "3.16.0-next.1"
 	},
 	"scripts": {
+		"postinstall": "cd src/node && npm install && cd ../browser && npm install && cd ../..",
 		"prepublishOnly": "npm run clean && npm run compile && npm test",
 		"postpublish": "node ../build/npm/post-publish.js",
+		"preversion": "npm test",
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json",
 		"watch": "node ../build/bin/tsc -b ./tsconfig.json -w",
-		"test": "node ../node_modules/mocha/bin/_mocha",
-		"clean": "node ../node_modules/rimraf/bin.js lib",
-		"preversion": "npm test"
+		"clean": "node ../node_modules/rimraf/bin.js lib && node ../node_modules/rimraf/bin.js dist",
+		"test": "npm run test:node && npm run test:browser",
+		"test:node": "node ../node_modules/mocha/bin/_mocha",
+		"test:browser": "npm run webpack:test:silent && node ./src/browser/test/index.js",
+		"webpack:test": "cd ../types && npm run compile:esm && cd ../protocol && webpack --mode none --config ./src/browser/test/webpack.config.js",
+		"webpack:test:silent": "cd ../types && npm run compile:esm && cd ../protocol && webpack --silent --mode none --config ./src/browser/test/webpack.config.js"
 	}
 }

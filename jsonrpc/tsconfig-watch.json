@@ -1,9 +1,9 @@
 {
-	"extends": "./tsconfig.json",
-	"compilerOptions": {
-		"noUnusedLocals": false,
-		"noUnusedParameters": false,
-		"assumeChangesOnlyAffectDirectDependencies": true,
-		"tsBuildInfoFile":"./lib/tsconfig-watch.tsbuildInfo"
-	}
+	"extends": "./tsconfig.base.json",
+	"files": [],
+	"references": [
+		{ "path": "./src/common/tsconfig-watch.json" },
+		{ "path": "./src/node/tsconfig-watch.json" },
+		{ "path": "./src/browser/tsconfig-watch.json" }
+	]
 }

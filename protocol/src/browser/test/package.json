@@ -1,0 +1,18 @@
+{
+	"private": true,
+	"name": "vscode-languageserver-protocol-browser-test",
+	"version": "0.0.0",
+	"author": "Microsoft Corporation",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Microsoft/vscode-languageserver-node.git",
+		"directory": "jsonrpc/src/node"
+	},
+	"bugs": {
+		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
+	},
+	"devDependencies": {
+		"playwright": "1.0.2"
+	}
+}

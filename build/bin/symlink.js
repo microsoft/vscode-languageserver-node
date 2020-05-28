@@ -26,7 +26,7 @@ const root = path.dirname(path.dirname(__dirname));
 	await ln.tryLinkProtocol(clientFolder);
 
 	// test-extension
-	let extensionFolder = path.join(root, 'client-tests');
+	let extensionFolder = path.join(root, 'client-node-tests');
 	await ln.tryLinkJsonRpc(extensionFolder);
 	await ln.tryLinkTypes(extensionFolder);
 	await ln.tryLinkProtocol(extensionFolder);

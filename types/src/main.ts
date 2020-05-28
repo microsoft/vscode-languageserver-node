@@ -2884,32 +2884,6 @@ export namespace TextDocument {
 }
 
 /**
- * @deprecated No longer used, use TextDocumentChangeEvent<TextDocument> from vscode-languageserver instead.
- */
-export interface TextDocumentChangeEvent {
-	/**
-	 * The document that has changed.
-	 */
-	document: TextDocument;
-}
-
-/**
- * Represents reasons why a text document is saved.
- * @deprecated No longer used, use TextDocumentWillSaveEvent<TextDocument> from vscode-languageserver instead.
- */
-export interface TextDocumentWillSaveEvent {
-	/**
-	 * The document that will be saved
-	 */
-	document: TextDocument;
-
-	/**
-	 * The reason why save was triggered.
-	 */
-	reason: 1 | 2 | 3;
-}
-
-/**
  * An event describing a change to a text document. If range and rangeLength are omitted
  * the new text is considered to be the full content of the document.
  */

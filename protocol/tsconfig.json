@@ -1,31 +1,11 @@
 {
-	"extends": "../tsconfig.base.json",
-	"compilerOptions": {
-		"incremental": true,
-		"composite": true,
-		"tsBuildInfoFile":"./lib/tsconfig.tsbuildInfo",
-		"sourceMap": true,
-		"declaration": true,
-		"stripInternal": true,
-		"target": "es6",
-		"module": "commonjs",
-		"moduleResolution": "node",
-		"lib": [ "es2016" ],
-		"rootDir": "src",
-		"outDir": "lib",
-		"baseUrl": "./src",
-		"paths": {
-			"vscode-languageserver-types": ["../../types/src/main"],
-			"vscode-languageserver-types/*": ["../../types/src/*"],
-			"vscode-jsonrpc": ["../../jsonrpc/src/main"],
-			"vscode-jsonrpc/*": ["../../jsonrpc/src/*"]
-		}
-	},
+	"extends": "./tsconfig.base.json",
+	"files": [],
 	"references": [
+		{ "path": "../jsonrpc/tsconfig.json" },
 		{ "path": "../types/tsconfig.json" },
-		{ "path": "../jsonrpc/tsconfig.json" }
-	],
-	"include": [
-		"src"
+		{ "path": "./src/common/tsconfig.json" },
+		{ "path": "./src/node/tsconfig.json" },
+		{ "path": "./src/browser/tsconfig.json" },
 	]
 }
