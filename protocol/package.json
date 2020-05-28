@@ -13,7 +13,9 @@
 		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
 	},
 	"main": "./lib/node/main.js",
-	"browser": "./lib/browser/main.js",
+	"browser": {
+		"./lib/node/main.js": "./lib/browser/main.js"
+	},
 	"typings": "./lib/common/api.d.ts",
 	"devDependencies": {
 		"webpack": "^4.43.0",
@@ -36,8 +38,7 @@
 		"test": "npm run test:node && npm run test:browser",
 		"test:node": "node ../node_modules/mocha/bin/_mocha",
 		"test:browser": "npm run webpack:test:silent && node ./src/browser/test/index.js",
-		"webpack": "webpack --mode none --config ./webpack.config.js",
-		"webpack:test": "webpack --mode none --config ./src/browser/test/webpack.config.js",
-		"webpack:test:silent": "webpack --silent --mode none --config ./src/browser/test/webpack.config.js"
+		"webpack:test": "cd ../types && npm run compile:esm && cd ../protocol && webpack --mode none --config ./src/browser/test/webpack.config.js",
+		"webpack:test:silent": "cd ../types && npm run compile:esm && cd ../protocol && webpack --silent --mode none --config ./src/browser/test/webpack.config.js"
 	}
 }

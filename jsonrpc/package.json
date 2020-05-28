@@ -16,7 +16,9 @@
 		"node": ">=8.0.0 || >=10.0.0"
 	},
 	"main": "./lib/node/main.js",
-	"browser": "./lib/browser/main.js",
+	"browser": {
+		"./lib/node/main.js": "./lib/browser/main.js"
+	},
 	"typings": "./lib/common/api.d.ts",
 	"devDependencies": {
 		"webpack": "^4.43.0",
