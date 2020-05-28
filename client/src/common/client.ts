@@ -71,7 +71,7 @@ import {
 import type { ColorProviderMiddleware } from './colorProvider';
 import type { ImplementationMiddleware } from './implementation';
 import type { TypeDefinitionMiddleware } from './typeDefinition';
-import type { ConfigurationWorkspaceMiddleware } from './configuration';
+import { ConfigurationWorkspaceMiddleware, toJSONObject } from './configuration';
 import type { WorkspaceFolderWorkspaceMiddleware } from './workspaceFolders';
 import type { FoldingRangeProviderMiddleware } from './foldingRange';
 import type { DeclarationMiddleware } from './declaration';
@@ -2384,11 +2384,11 @@ class ConfigurationFeature implements DynamicFeature<DidChangeConfigurationRegis
 			if (index >= 0) {
 				config = Workspace.getConfiguration(key.substr(0, index), resource).get(key.substr(index + 1));
 			} else {
-				config = Workspace.getConfiguration(key, resource);
+				config = Workspace.getConfiguration(key, resource).get('');
 			}
 			if (config) {
 				let path = keys[i].split('.');
-				ensurePath(result, path)[path[path.length - 1]] = config;
+				ensurePath(result, path)[path[path.length - 1]] = toJSONObject(config);
 			}
 		}
 		return result;
