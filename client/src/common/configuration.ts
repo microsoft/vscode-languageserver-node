@@ -47,11 +47,11 @@ export class ConfigurationFeature implements StaticFeature {
 		if (section) {
 			let index = section.lastIndexOf('.');
 			if (index === -1) {
-				result = workspace.getConfiguration(undefined, resource).get(section);
+				result = toJSONObject(workspace.getConfiguration(undefined, resource).get(section));
 			} else {
 				let config = workspace.getConfiguration(section.substr(0, index), resource);
 				if (config) {
-					result = config.get(section.substr(index + 1));
+					result = toJSONObject(config.get(section.substr(index + 1)));
 				}
 			}
 		} else {
@@ -59,7 +59,7 @@ export class ConfigurationFeature implements StaticFeature {
 			result = {};
 			for (let key of Object.keys(config)) {
 				if (config.has(key)) {
-					result[key] = config.get(key);
+					result[key] = toJSONObject(config.get(key));
 				}
 			}
 		}
@@ -68,4 +68,22 @@ export class ConfigurationFeature implements StaticFeature {
 		}
 		return result;
 	}
+}
+
+export function toJSONObject(obj: any): any {
+	if (obj) {
+		if (Array.isArray(obj)) {
+			return obj.map(toJSONObject);
+		} else if (typeof obj === 'object') {
+			const res = Object.create(null);
+			for (const key in obj) {
+				if (Object.hasOwnProperty(obj)) {
+					res[key] = toJSONObject(obj[key]);
+				}
+			}
+			return res;
+		}
+	}
+	return obj;
+
 }
