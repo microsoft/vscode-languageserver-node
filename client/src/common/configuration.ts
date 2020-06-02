@@ -77,7 +77,7 @@ export function toJSONObject(obj: any): any {
 		} else if (typeof obj === 'object') {
 			const res = Object.create(null);
 			for (const key in obj) {
-				if (Object.hasOwnProperty(obj)) {
+				if (Object.prototype.hasOwnProperty.call(obj, key)) {
 					res[key] = toJSONObject(obj[key]);
 				}
 			}
