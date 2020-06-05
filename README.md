@@ -34,6 +34,10 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 
 ## History
 
+## 3.16.0-next.4 Protocol, 6.0.0-next.2 JSON-RPC, 7.0.0-next.5 Client and 7.0.0-next.3 Server.
+
+* split code into common, node and browser to allow using the LSP client and server npm modules in a Web browser via webpack. This is a **breaking change** and might lead to compile / runtime errors if not adopted. Every module has now three different exports which represent the split into common, node and browser. Let look a `vscode-jsonrpc` for an example: (a) the import `vscode-jsonrpc` will only import the common code, (b) the import `vscode-jsonrpc\node` will import the common and the node code and (c) the import `vscode-jsonrpc\browser` will import the common and browser code.
+
 ## 3.16.0-next.1 Protocol, 5.1.0-next.1 JSON-RPC, 6.2.0-next.1 Client and 6.2.0-next.1 Server.
 
 * support for complex diagnostic codes
