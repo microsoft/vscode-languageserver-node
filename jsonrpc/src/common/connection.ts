@@ -491,8 +491,8 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 	const disposeEmitter: Emitter<void> = new Emitter<void>();
 	const cancellationStrategy = (options && options.cancellationStrategy) ? options.cancellationStrategy : CancellationStrategy.Message;
 
-	function createRequestQueueKey(id: string | number): string {
-		return 'req-' + id.toString();
+	function createRequestQueueKey(id: string | number | null): string {
+		return 'req-' + id?.toString();
 	}
 
 	function createResponseQueueKey(id: string | number | null): string {
@@ -1019,12 +1019,12 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			throwIfClosedOrDisposed();
 
 			let method: string;
-			let messageParams: any | any[] | null;
+			let messageParams: object | [] | undefined;
 			if (Is.string(type)) {
 				method = type;
 				switch (params.length) {
 					case 0:
-						messageParams = null;
+						messageParams = undefined;
 						break;
 					case 1:
 						messageParams = params[0];
@@ -1077,18 +1077,18 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			throwIfNotListening();
 
 			let method: string;
-			let messageParams: object | object[] | null;
+			let messageParams: object | [] | undefined;
 			let token: CancellationToken | undefined = undefined;
 			if (Is.string(type)) {
 				method = type;
 				switch (params.length) {
 					case 0:
-						messageParams = null;
+						messageParams = undefined;
 						break;
 					case 1:
 						// The cancellation token is optional so it can also be undefined.
 						if (CancellationToken.is(params[0])) {
-							messageParams = null;
+							messageParams = undefined;
 							token = params[0];
 						} else {
 							messageParams = undefinedToNull(params[0]);
