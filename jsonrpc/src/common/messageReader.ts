@@ -11,6 +11,9 @@ import { Message } from './messages';
 import { ContentDecoder, ContentTypeDecoder } from './encoding';
 import { Disposable } from './api';
 
+/**
+ * A callback that receives each incoming JSON-RPC message.
+ */
 export interface DataCallback {
 	(data: Message): void;
 }
@@ -20,11 +23,27 @@ export interface PartialMessageInfo {
 	readonly waitingTime: number;
 }
 
+/** Reads JSON-RPC messages from some underlying transport. */
 export interface MessageReader {
+	/** Raised whenever an error occurs while reading a message. */
 	readonly onError: Event<Error>;
+
+	/** An event raised when the end of the underlying transport has been reached. */
 	readonly onClose: Event<void>;
+
+	/**
+	 * An event that *may* be raised to inform the owner that only part of a message has been received.
+	 * A MessageReader implementation may choose to raise this event after a timeout elapses while waiting for more of a partially received message to be received.
+	 */
 	readonly onPartialMessage: Event<PartialMessageInfo>;
+
+	/**
+	 * Begins listening for incoming messages. To be called at most once.
+	 * @param callback A callback for receiving decoded messages.
+	 */
 	listen(callback: DataCallback): Disposable;
+
+	/** Releases resources incurred from reading or raising events. Does NOT close the underlying transport, if any. */
 	dispose(): void;
 }
 
