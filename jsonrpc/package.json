@@ -21,6 +21,8 @@
 	},
 	"typings": "./lib/common/api.d.ts",
 	"devDependencies": {
+		"@types/msgpack-lite": "^0.1.7",
+		"msgpack-lite": "^0.1.26",
 		"webpack": "^4.43.0",
 		"webpack-cli": "^3.3.11",
 		"mocha": "^7.1.2",
