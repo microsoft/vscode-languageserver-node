@@ -120,33 +120,34 @@ export class WriteableStreamMessageWriter extends AbstractMessageWriter implemen
 	}
 
 	public async write(msg: Message): Promise<void> {
-		const payload = this.options.contentTypeEncoder.encode(msg, this.options).then((buffer) => {
-			if (this.options.contentEncoder !== undefined) {
-				return this.options.contentEncoder.encode(buffer);
-			} else {
-				return buffer;
-			}
-		});
-		return payload.then((buffer) => {
-			const headers: string[] = [];
-			headers.push(ContentLength, buffer.byteLength.toString(), CRLF);
-			headers.push(CRLF);
-			return this.doWrite(msg, headers, buffer);
-		}, (error) => {
-			this.fireError(error);
-			throw error;
+		return this.writeSemaphore.lock(async () => {
+			const payload = this.options.contentTypeEncoder.encode(msg, this.options).then((buffer) => {
+				if (this.options.contentEncoder !== undefined) {
+					return this.options.contentEncoder.encode(buffer);
+				} else {
+					return buffer;
+				}
+			});
+			return payload.then((buffer) => {
+				const headers: string[] = [];
+				headers.push(ContentLength, buffer.byteLength.toString(), CRLF);
+				headers.push(CRLF);
+				return this.doWrite(msg, headers, buffer);
+			}, (error) => {
+				this.fireError(error);
+				throw error;
+			});
 		});
 	}
 
-	private doWrite(msg: Message, headers: string[], data: Uint8Array): Promise<void> {
-		return this.writeSemaphore.lock(async () => {
-			try {
-				await this.writable.write(headers.join(''), 'ascii');
-				return this.writable.write(data);
-			} catch (error) {
-				this.handleError(error, msg);
-			}
-		});
+	private async doWrite(msg: Message, headers: string[], data: Uint8Array): Promise<void> {
+		try {
+			await this.writable.write(headers.join(''), 'ascii');
+			return this.writable.write(data);
+		} catch (error) {
+			this.handleError(error, msg);
+			return Promise.reject(error);
+		}
 	}
 
 	private handleError(error: any, msg: Message): void {
