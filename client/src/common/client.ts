@@ -1502,7 +1502,8 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 				const client = this._client;
 				const middleware = this._client.clientOptions.middleware!;
 				const provideCompletionItems: ProvideCompletionItemsSignature = (document, position, context, token) => {
-					return client.sendRequest(CompletionRequest.type, client.code2ProtocolConverter.asCompletionParams(document, position, context), token).then(
+					const validatedPosition = document.validatePosition(position);
+					return client.sendRequest(CompletionRequest.type, client.code2ProtocolConverter.asCompletionParams(document, validatedPosition, context), token).then(
 						client.protocol2CodeConverter.asCompletionResult,
 						(error) => {
 							return client.handleFailedRequest(CompletionRequest.type, error, null);
@@ -1664,7 +1665,8 @@ class DefinitionFeature extends TextDocumentFeature<boolean | DefinitionOptions,
 			provideDefinition:  (document, position, token) => {
 				const client = this._client;
 				const provideDefinition: ProvideDefinitionSignature = (document, position, token) => {
-					return client.sendRequest(DefinitionRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
+					const validatedPosition = document.validatedPosition(position);
+					return client.sendRequest(DefinitionRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, validatedPosition), token).then(
 						client.protocol2CodeConverter.asDefinitionResult,
 						(error) => {
 							return client.handleFailedRequest(DefinitionRequest.type, error, null);
