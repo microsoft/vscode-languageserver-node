@@ -492,7 +492,10 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 	const cancellationStrategy = (options && options.cancellationStrategy) ? options.cancellationStrategy : CancellationStrategy.Message;
 
 	function createRequestQueueKey(id: string | number | null): string {
-		return 'req-' + id?.toString();
+		if (id === null) {
+			throw new Error(`Can't send requests with id null since the response can't be correlated.`);
+		}
+		return 'req-' + id.toString();
 	}
 
 	function createResponseQueueKey(id: string | number | null): string {
