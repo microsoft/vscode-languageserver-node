@@ -20,7 +20,7 @@ export interface RequestMessage extends Message {
 	/**
 	 * The request id.
 	 */
-	id: number | string;
+	id: number | string | null;
 
 	/**
 	 * The method to be invoked.
@@ -30,7 +30,7 @@ export interface RequestMessage extends Message {
 	/**
 	 * The method's params.
 	 */
-	params?: any
+	params?: [] | object
 }
 
 /**
@@ -298,7 +298,7 @@ export interface NotificationMessage extends Message {
 	/**
 	 * The notification's params.
 	 */
-	params?: any
+	params?: [] | object
 }
 
 /**
