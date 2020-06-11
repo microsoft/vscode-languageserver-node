@@ -52,7 +52,7 @@ export class TypeDefinitionFeature extends TextDocumentFeature<boolean | TypeDef
 			provideTypeDefinition: (document, position, token) => {
 				const client = this._client;
 				const provideTypeDefinition: ProvideTypeDefinitionSignature = (document, position, token) => {
-					const validatedPosition = document.validatedPosition(position);
+					const validatedPosition = document.validatePosition(position);
 					return client.sendRequest(TypeDefinitionRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, validatedPosition), token).then(
 						client.protocol2CodeConverter.asDefinitionResult,
 						(error) => {

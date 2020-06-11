@@ -1665,7 +1665,7 @@ class DefinitionFeature extends TextDocumentFeature<boolean | DefinitionOptions,
 			provideDefinition:  (document, position, token) => {
 				const client = this._client;
 				const provideDefinition: ProvideDefinitionSignature = (document, position, token) => {
-					const validatedPosition = document.validatedPosition(position);
+					const validatedPosition = document.validatePosition(position);
 					return client.sendRequest(DefinitionRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, validatedPosition), token).then(
 						client.protocol2CodeConverter.asDefinitionResult,
 						(error) => {
