@@ -4,11 +4,11 @@
  * ------------------------------------------------------------------------------------------ */
 
 import { _, Features } from './server';
-import type { WorkDoneProgressReporter, ResultProgressReporter } from './progress';
+import type { WorkDoneProgressReporter, WorkDoneProgressServerReporter, ResultProgressReporter } from './progress';
 import * as st from './semanticTokens.proposed';
 
 export * from 'vscode-languageserver-protocol/';
-export { WorkDoneProgressReporter, ResultProgressReporter };
+export { WorkDoneProgressReporter, WorkDoneProgressServerReporter, ResultProgressReporter };
 export * from './server';
 
 
