@@ -2,7 +2,6 @@
 lib/**/test/
 lib/**/*.map
 lib/**/*.tsbuildInfo
-lib/**/*.tsbuildInfo
 src/
 test/
 .eslintrc*
