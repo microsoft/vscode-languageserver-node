@@ -1,13 +1,14 @@
 .vscode/
 lib/**/test/
 lib/**/*.map
-lib/tsconfig.tsbuildInfo
-lib/tsconfig-watch.tsbuildInfo
+lib/**/*.tsbuildInfo
+lib/**/*.tsbuildInfo
 src/
 test/
 .eslintrc*
+.eslintignore
 .mocharc*
 .gitignore
 gulpfile.js
 tsd.json
-tsconfig.json
+tsconfig*.json

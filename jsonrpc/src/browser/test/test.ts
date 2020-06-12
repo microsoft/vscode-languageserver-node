@@ -10,7 +10,7 @@ import { BrowserMessageReader, BrowserMessageWriter } from '../main';
 
 suite('Browser IPC Reader / Writer', () => {
 	test('Simple request message with response', (done) => {
-		const worker = new Worker('/dist/worker.js');
+		const worker = new Worker('/jsonrpc/dist/worker.js');
 		const reader = new BrowserMessageReader(worker);
 		const writer = new BrowserMessageWriter(worker);
 		reader.listen((message) => {

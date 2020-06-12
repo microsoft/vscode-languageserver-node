@@ -63,13 +63,13 @@ class EchoRunner extends events.EventEmitter {
 }
 
 
-async function runTests() {
+async function runTests(location) {
 	return new Promise((resolve, reject) => {
-		const root = path.join(__dirname, '..', '..', '..');
+		const root = path.join(__dirname, '..', '..');
 		const server = httpServer.createServer({ root: root, showDir: true, });
 		server.listen(8080, '127.0.0.1', async () => {
 			let failCount = 0;
-			const browser = await playwright['chromium'].launch({ headless: true });
+			const browser = await playwright['chromium'].launch({ headless: true, devtools: false });
 			const context = await browser.newContext();
 			const page = await context.newPage();
 			const emitter = new events.EventEmitter();
@@ -97,10 +97,10 @@ async function runTests() {
 				emitter.emit(type, data1, data2);
 			});
 
-			const target = new url.URL('http://127.0.0.1:8080/src/browser/test/');
+			const target = new url.URL(location);
 			page.goto(target.href);
 		});
 	});
 }
 
-runTests();
+runTests(process.argv[2]);

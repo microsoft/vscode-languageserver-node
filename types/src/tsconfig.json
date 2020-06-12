@@ -1,0 +1,22 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"incremental": true,
+		"composite": true,
+		"tsBuildInfoFile": "../lib/umd/compile.tsbuildInfo",
+		"sourceMap": true,
+		"declaration": true,
+		"stripInternal": true,
+		"target": "es5",
+		"module": "umd",
+		"lib": [ "es2015" ],
+		"rootDir": ".",
+		"outDir": "../lib/umd"
+	},
+	"include": [
+		"."
+	],
+	"exclude": [
+		"test"
+	]
+}

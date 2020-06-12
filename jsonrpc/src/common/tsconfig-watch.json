@@ -4,6 +4,6 @@
 		"noUnusedLocals": false,
 		"noUnusedParameters": false,
 		"assumeChangesOnlyAffectDirectDependencies": true,
-		"tsBuildInfoFile":"../../lib/common-watch.tsbuildInfo"
+		"tsBuildInfoFile":"../../lib/common/watch.tsbuildInfo",
 	}
 }

@@ -1,0 +1,18 @@
+{
+	"extends": "../../../tsconfig.base.json",
+	"compilerOptions": {
+		"incremental": true,
+		"tsBuildInfoFile":"../../lib/umd/test/compile.tsbuildInfo",
+		"rootDir": ".",
+		"outDir": "../../lib/umd/test",
+		"types": [
+			"mocha"
+		]
+	},
+	"include": [
+		"."
+	],
+	"references": [
+		{ "path": "../tsconfig.json" },
+	]
+}

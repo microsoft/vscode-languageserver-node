@@ -1,0 +1,18 @@
+{
+	"extends": "../../../tsconfig.base.json",
+	"compilerOptions": {
+		"tsBuildInfoFile":"../../../lib/node/test/compile.tsbuildInfo",
+		"rootDir": ".",
+		"outDir": "../../../lib/node/test",
+		"types": [
+			"node",
+			"mocha"
+		]
+	},
+	"include": [
+		"."
+	],
+	"references": [
+		{ "path": "../tsconfig.json" },
+	]
+}

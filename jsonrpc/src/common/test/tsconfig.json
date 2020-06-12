@@ -1,0 +1,17 @@
+{
+	"extends": "../../../tsconfig.base.json",
+	"compilerOptions": {
+		"tsBuildInfoFile":"../../../lib/common/test/compile.tsbuildInfo",
+		"rootDir": ".",
+		"outDir": "../../../lib/common/test",
+		"types": [
+			"mocha"
+		]
+	},
+	"include": [
+		"."
+	],
+	"references": [
+		{ "path": "../tsconfig.json" },
+	]
+}

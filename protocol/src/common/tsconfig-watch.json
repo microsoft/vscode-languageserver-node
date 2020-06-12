@@ -4,7 +4,7 @@
 		"noUnusedLocals": false,
 		"noUnusedParameters": false,
 		"assumeChangesOnlyAffectDirectDependencies": true,
-		"tsBuildInfoFile":"../../lib/common-watch.tsbuildInfo"
+		"tsBuildInfoFile":"../../lib/common/watch.tsbuildInfo"
 	},
 	"references": [
 		{ "path": "../../../types/tsconfig-watch.json" },

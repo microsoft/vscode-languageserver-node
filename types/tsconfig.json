@@ -1,19 +1,8 @@
 {
 	"extends": "../tsconfig.base.json",
-	"compilerOptions": {
-		"incremental": true,
-		"composite": true,
-		"tsBuildInfoFile":"./lib/tsconfig.tsbuildInfo",
-		"sourceMap": true,
-		"declaration": true,
-		"stripInternal": true,
-		"target": "es5",
-		"module": "umd",
-		"lib": [ "es2015" ],
-		"rootDir": "src",
-		"outDir": "lib/umd"
-	},
-	"include": [
-		"src"
+	"files": [],
+	"references": [
+		{ "path": "./src/tsconfig.json" },
+		{ "path": "./src/test/tsconfig.json" }
 	]
 }
