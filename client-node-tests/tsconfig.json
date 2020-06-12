@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"incremental": true,
 		"composite": true,
-		"tsBuildInfoFile":"./lib/tsconfig.tsbuildInfo",
+		"tsBuildInfoFile":"./lib/compile.tsbuildInfo",
 		"sourceMap": true,
 		"declaration": true,
 		"stripInternal": true,
@@ -21,7 +21,10 @@
 			"vscode-languageserver": ["../../server/src/node/main"],
 			"vscode-languageserver/node": ["../../server/node"],
 			"vscode-languageserver/lib/*": ["../../server/src/*"]
-		}
+		},
+		"types": [
+			"node"
+		]
 	},
 	"references": [
 		{ "path": "../protocol/tsconfig.json" },

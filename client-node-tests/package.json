@@ -18,7 +18,7 @@
 	"scripts": {
 		"clean": "node ../node_modules/rimraf/bin.js lib",
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json",
-		"watch": "node ../build/bin/tsc -b ./tsconfig.json -w",
+		"watch": "node ../build/bin/tsc -b ./tsconfig-watch.json -w",
 		"test": "node ../build/bin/symlink-tests.js && node lib/runTests.js"
 	},
 	"dependencies": {
@@ -31,7 +31,6 @@
 		"@types/sinon": "^7.0.13",
 		"@types/uuid": "^7.0.2",
 		"@types/vscode": "1.44.0",
-		"@types/node": "12.12.12",
 		"glob": "^7.1.4",
 		"sinon": "7.4.1",
 		"uuid": "7.0.3",
