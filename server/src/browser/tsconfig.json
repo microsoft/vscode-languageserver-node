@@ -1,7 +1,7 @@
 {
 	"extends": "../../tsconfig.base.json",
 	"compilerOptions": {
-		"tsBuildInfoFile":"../../lib/browser.tsbuildInfo",
+		"tsBuildInfoFile":"../../lib/browser/compile.tsbuildInfo",
 		"rootDir": ".",
 		"outDir": "../../lib/browser",
 		"lib": [ "es2017", "webworker"]

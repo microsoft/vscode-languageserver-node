@@ -36,3 +36,4 @@ vscode-languageserver-types*.tgz
 vscode-languageserver-textdocument*.tgz
 vscode-jsonrpc*.tgz
 vscode-languageserver-protocol*.tgz
+vscode-languageserver*.tgz

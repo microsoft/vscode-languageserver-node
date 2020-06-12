@@ -24,7 +24,6 @@
 		"vscode-languageserver-protocol": "3.16.0-next.4"
 	},
 	"scripts": {
-		"install:dev": "cd src/node && npm install",
 		"prepublishOnly": "npm run clean && npm run compile && npm test",
 		"postpublish": "node ../build/npm/post-publish.js",
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json",
