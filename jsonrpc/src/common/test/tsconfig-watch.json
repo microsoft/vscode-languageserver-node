@@ -5,5 +5,8 @@
 		"noUnusedParameters": false,
 		"assumeChangesOnlyAffectDirectDependencies": true,
 		"tsBuildInfoFile":"../../../lib/common/test/watch.tsbuildInfo",
-	}
+	},
+	"references": [
+		{ "path": "../tsconfig-watch.json" },
+	]
 }

@@ -9,7 +9,7 @@ import { CompletionRequest, CompletionParams, CompletionItem } from '../../commo
 import { BrowserMessageReader, BrowserMessageWriter, createProtocolConnection } from '../main';
 
 suite('Browser Protocol Tests', () => {
-	const worker = new Worker('/dist/worker.js');
+	const worker = new Worker('/protocol/dist/worker.js');
 	const reader = new BrowserMessageReader(worker);
 	const writer = new BrowserMessageWriter(worker);
 	const connection = createProtocolConnection(reader, writer);

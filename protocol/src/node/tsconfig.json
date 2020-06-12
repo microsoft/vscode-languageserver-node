@@ -1,12 +1,15 @@
 {
 	"extends": "../../tsconfig.base.json",
 	"compilerOptions": {
-		"tsBuildInfoFile":"../../lib/node.tsbuildInfo",
+		"tsBuildInfoFile":"../../lib/node/compile.tsbuildInfo",
 		"rootDir": ".",
 		"outDir": "../../lib/node"
 	},
 	"include": [
 		"."
+	],
+	"exclude": [
+		"test"
 	],
 	"references": [
 		{ "path": "../common/tsconfig.json" },

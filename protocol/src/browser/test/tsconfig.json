@@ -1,0 +1,18 @@
+{
+	"extends": "../../../tsconfig.base.json",
+	"compilerOptions": {
+		"tsBuildInfoFile":"../../../lib/browser/test/compile.tsbuildInfo",
+		"rootDir": ".",
+		"outDir": "../../../lib/browser/test",
+		"lib": [ "es2017", "webworker"],
+		"types": [
+			"mocha"
+		]
+	},
+	"include": [
+		"."
+	],
+	"references": [
+		{ "path": "../tsconfig.json" },
+	]
+}
