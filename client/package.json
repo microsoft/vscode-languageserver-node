@@ -34,7 +34,7 @@
 		"prepublishOnly": "npm run clean && node ./bin/updateVSCode.js && npm run compile && npm test",
 		"postpublish": "node ../build/npm/post-publish.js",
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json && shx cp src/node/terminateProcess.sh lib/node/terminateProcess.sh",
-		"watch": "node ../build/bin/tsc -b ./tsconfig.json -w",
+		"watch": "node ../build/bin/tsc -b ./tsconfig-watch.json -w",
 		"test": "cd ../client-node-tests && npm test && cd ../client",
 		"clean": "node ../node_modules/rimraf/bin.js lib",
 		"preversion": "npm test"
