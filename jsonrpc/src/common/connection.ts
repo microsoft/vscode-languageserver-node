@@ -11,7 +11,7 @@ import {
 	RequestType4, RequestType5, RequestType6, RequestType7, RequestType8, RequestType9, ResponseMessage, isResponseMessage,
 	ResponseError, ErrorCodes, NotificationMessage, isNotificationMessage, NotificationType, NotificationType0, NotificationType1,
 	NotificationType2, NotificationType3, NotificationType4, NotificationType5, NotificationType6, NotificationType7, NotificationType8,
-	NotificationType9, LSPMessageType, _EM
+	NotificationType9, LSPMessageType, _EM, ParameterStructures
 } from './messages';
 
 import { LinkedMap } from './linkedMap';
@@ -62,7 +62,13 @@ export class ProgressType<P> {
 export type HandlerResult<R, E> = R | ResponseError<E> | Thenable<R> | Thenable<ResponseError<E>> | Thenable<R | ResponseError<E>>;
 
 export interface StarRequestHandler {
-	(method: string, ...params: any[]): HandlerResult<any, any>;
+	(method: string, params: any[] | object | undefined, token: CancellationToken): HandlerResult<any, any>;
+}
+
+namespace StarRequestHandler {
+	export function is(value: any): value is StarRequestHandler {
+		return Is.func(value);
+	}
 }
 
 export interface GenericRequestHandler<R, E> {
@@ -114,7 +120,7 @@ export interface RequestHandler9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E> {
 }
 
 export interface StarNotificationHandler {
-	(method: string, ...params: any[]): void;
+	(method: string, params: any[] | object | undefined): void;
 }
 
 export interface GenericNotificationHandler {
@@ -373,7 +379,7 @@ export interface MessageConnection {
 	sendRequest<P1, P2, P3, P4, P5, P6, P7, R, E, RO>(type: RequestType7<P1, P2, P3, P4, P5, P6, P7, R, E, RO>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, token?: CancellationToken): Promise<R>;
 	sendRequest<P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO>(type: RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8, token?: CancellationToken): Promise<R>;
 	sendRequest<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO>(type: RequestType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8, p9: P9, token?: CancellationToken): Promise<R>;
-	sendRequest<R>(method: string, ...params: any[]): Promise<R>;
+	sendRequest<R>(method: string, r0?: ParameterStructures | any, ...rest: any[]): Promise<R>;
 
 	onRequest<R, E, RO>(type: RequestType0<R, E, RO>, handler: RequestHandler0<R, E>): void;
 	onRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, handler: RequestHandler<P, R, E>): void;
@@ -400,7 +406,7 @@ export interface MessageConnection {
 	sendNotification<P1, P2, P3, P4, P5, P6, P7, RO>(type: NotificationType7<P1, P2, P3, P4, P5, P6, P7, RO>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7): void;
 	sendNotification<P1, P2, P3, P4, P5, P6, P7, P8, RO>(type: NotificationType8<P1, P2, P3, P4, P5, P6, P7, P8, RO>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8): void;
 	sendNotification<P1, P2, P3, P4, P5, P6, P7, P8, P9, RO>(type: NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, RO>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8, p9: P9): void;
-	sendNotification(method: string, ...params: any[]): void;
+	sendNotification(method: string, r0?: ParameterStructures | any, ...rest: any[]): void;
 
 	onNotification<RO>(type: NotificationType0<RO>, handler: NotificationHandler0): void;
 	onNotification<P, RO>(type: NotificationType<P, RO>, handler: NotificationHandler<P>): void;
@@ -672,18 +678,28 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			requestTokens[tokenKey] = cancellationSource;
 			try {
 				let handlerResult: any;
-				if (requestMessage.params === undefined || (type !== undefined && type.numberOfParams === 0)) {
-					handlerResult = requestHandler
-						? requestHandler(cancellationSource.token)
-						: starRequestHandler!(requestMessage.method, cancellationSource.token);
-				} else if (Is.array(requestMessage.params) && (type === undefined || type.numberOfParams > 1)) {
-					handlerResult = requestHandler
-						? requestHandler(...requestMessage.params, cancellationSource.token)
-						: starRequestHandler!(requestMessage.method, ...requestMessage.params, cancellationSource.token);
-				} else {
-					handlerResult = requestHandler
-						? requestHandler(requestMessage.params, cancellationSource.token)
-						: starRequestHandler!(requestMessage.method, requestMessage.params, cancellationSource.token);
+				if (requestHandler) {
+					if (requestMessage.params === undefined) {
+						if (type !== undefined && type.numberOfParams !== 0) {
+							replyError(new ResponseError<void>(ErrorCodes.InvalidParams, `Request ${requestMessage.method} defines ${type.numberOfParams} params but recevied none.`), requestMessage.method, startTime);
+							return;
+						}
+						handlerResult = requestHandler(cancellationSource.token);
+					} else if (Array.isArray(requestMessage.params)) {
+						if (type !== undefined && type.parameterStructures === ParameterStructures.byName) {
+							replyError(new ResponseError<void>(ErrorCodes.InvalidParams, `Request ${requestMessage.method} defines parameters by name but received parameters by position`), requestMessage.method, startTime);
+							return;
+						}
+						handlerResult = requestHandler(...requestMessage.params, cancellationSource.token);
+					} else {
+						if (type !== undefined && type.parameterStructures === ParameterStructures.byPosition) {
+							replyError(new ResponseError<void>(ErrorCodes.InvalidParams, `Request ${requestMessage.method} defines parameters by position but received parameters by name`), requestMessage.method, startTime);
+							return;
+						}
+						handlerResult = requestHandler(requestMessage.params, cancellationSource.token);
+					}
+				} else if (starRequestHandler) {
+					handlerResult = starRequestHandler(requestMessage.method, requestMessage.params, cancellationSource.token);
 				}
 
 				const promise = handlerResult as Thenable<any | ResponseError<any>>;
@@ -787,12 +803,25 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		if (notificationHandler || starNotificationHandler) {
 			try {
 				traceReceivedNotification(message);
-				if (message.params === undefined || (type !== undefined && type.numberOfParams === 0)) {
-					notificationHandler ? notificationHandler() : starNotificationHandler!(message.method);
-				} else if (Is.array(message.params) && (type === undefined || type.numberOfParams > 1)) {
-					notificationHandler ? notificationHandler(...message.params) : starNotificationHandler!(message.method, ...message.params);
-				} else {
-					notificationHandler ? notificationHandler(message.params) : starNotificationHandler!(message.method, message.params);
+				if (notificationHandler) {
+					if (message.params === undefined) {
+						if (type !== undefined && type.numberOfParams !== 0) {
+							logger.error(`Notification ${message.method} defines ${type.numberOfParams} params but recevied none.`);
+						}
+						notificationHandler();
+					} else if (Array.isArray(message.params)) {
+						if (type !== undefined && type.parameterStructures === ParameterStructures.byName) {
+							logger.error(`Notification ${message.method} defines parameters by name but received parameters by position`);
+						}
+						notificationHandler(...message.params);
+					} else {
+						if (type !== undefined && type.parameterStructures === ParameterStructures.byPosition) {
+							logger.error(`Notification ${message.method} defines parameters by position but received parameters by name`);
+						}
+						notificationHandler(message.params);
+					}
+				} else if (starNotificationHandler) {
+					starNotificationHandler(message.method, message.params);
 				}
 			} catch (error) {
 				if (error.message) {
@@ -1000,7 +1029,11 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				result = null;
 				break;
 			case 1:
-				result = undefinedToNull(params[0]);
+				if (type.parameterStructures === ParameterStructures.byPosition) {
+					result = [undefinedToNull(params[0])];
+				} else {
+					result = undefinedToNull(params[0]);
+				}
 				break;
 			default:
 				result = [];
@@ -1018,25 +1051,43 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 	}
 
 	const connection: MessageConnection = {
-		sendNotification: (type: string | MessageSignature, ...params: any[]): void => {
+		sendNotification: (type: string | MessageSignature, ...args: any[]): void => {
 			throwIfClosedOrDisposed();
 
 			let method: string;
 			let messageParams: object | [] | undefined;
 			if (Is.string(type)) {
 				method = type;
-				switch (params.length) {
+				const first: unknown = args[0];
+				let paramStart: number = 0;
+				let parameterStructures: ParameterStructures | undefined = undefined;
+				if (first === ParameterStructures.byName || first === ParameterStructures.byPosition) {
+					paramStart = 1;
+					parameterStructures = first as ParameterStructures;
+				}
+				let paramEnd: number = args.length;
+				const numberOfParams = paramEnd - paramStart;
+				switch (numberOfParams) {
 					case 0:
 						messageParams = undefined;
 						break;
 					case 1:
-						messageParams = params[0];
+						const param = args[paramStart];
+						if (parameterStructures === ParameterStructures.byPosition) {
+							messageParams = [undefinedToNull(param)];
+						} else {
+							messageParams = undefinedToNull(param);
+						}
 						break;
 					default:
-						messageParams = params;
+						if (parameterStructures === ParameterStructures.byName) {
+							throw new Error(`Recevied ${numberOfParams} parameters for 'by Name' notification parameter structure.`);
+						}
+						messageParams = args.slice(paramStart, paramEnd).map(value => undefinedToNull(value));
 						break;
 				}
 			} else {
+				const params = args;
 				method = type.method;
 				messageParams = computeMessageParams(type, params);
 			}
@@ -1075,7 +1126,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			connection.sendNotification(ProgressNotification.type, { token, value });
 		},
 		onUnhandledProgress: unhandledProgressEmitter.event,
-		sendRequest: <R, E>(type: string | MessageSignature, ...params: any[]) => {
+		sendRequest: <R, E>(type: string | MessageSignature, ...args: any[]) => {
 			throwIfClosedOrDisposed();
 			throwIfNotListening();
 
@@ -1084,34 +1135,44 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			let token: CancellationToken | undefined = undefined;
 			if (Is.string(type)) {
 				method = type;
-				switch (params.length) {
+				const first: unknown = args[0];
+				const last: unknown = args[args.length - 1];
+				let paramStart: number = 0;
+				let parameterStructures: ParameterStructures | undefined = undefined;
+				if (first === ParameterStructures.byName || first === ParameterStructures.byPosition) {
+					paramStart = 1;
+					parameterStructures = first as ParameterStructures;
+				}
+				let paramEnd: number = args.length;
+				if (CancellationToken.is(last)) {
+					paramEnd = paramEnd - 1;
+					token = last;
+				}
+				const numberOfParams = paramEnd - paramStart;
+				switch (numberOfParams) {
 					case 0:
 						messageParams = undefined;
 						break;
 					case 1:
-						// The cancellation token is optional so it can also be undefined.
-						if (CancellationToken.is(params[0])) {
-							messageParams = undefined;
-							token = params[0];
+						const param = args[paramStart];
+						if (parameterStructures === ParameterStructures.byPosition) {
+							messageParams = [undefinedToNull(param)];
 						} else {
-							messageParams = undefinedToNull(params[0]);
+							messageParams = undefinedToNull(param);
+							if (messageParams !== null && typeof messageParams !== 'object') {
+								throw new Error(`Recevied parameters by name but param is not an object literal.`);
+							}
 						}
 						break;
 					default:
-						const last = params.length - 1;
-						if (CancellationToken.is(params[last])) {
-							token = params[last];
-							if (params.length === 2) {
-								messageParams = undefinedToNull(params[0]);
-							} else {
-								messageParams = params.slice(0, last).map(value => undefinedToNull(value));
-							}
-						} else {
-							messageParams = params.map(value => undefinedToNull(value));
+						if (parameterStructures === ParameterStructures.byName) {
+							throw new Error(`Recevied ${numberOfParams} parameters for 'by Name' request parameter structure.`);
 						}
+						messageParams = args.slice(paramStart, paramEnd).map(value => undefinedToNull(value));
 						break;
 				}
 			} else {
+				const params = args;
 				method = type.method;
 				messageParams = computeMessageParams(type, params);
 				const numberOfParams = type.numberOfParams;
@@ -1163,12 +1224,14 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		onRequest: <R, E>(type: string | MessageSignature | StarRequestHandler, handler?: GenericRequestHandler<R, E>): void => {
 			throwIfClosedOrDisposed();
 
-			if (Is.func(type)) {
-				starRequestHandler = type as StarRequestHandler;
-			} else if (handler) {
-				if (Is.string(type)) {
-					requestHandlers[type] = { type: undefined, handler };
-				} else {
+			if (StarRequestHandler.is(type)) {
+				starRequestHandler = type;
+			} else if (Is.string(type)) {
+				if (handler !== undefined) {
+					requestHandlers[type] = { handler: handler, type: undefined };
+				}
+			} else {
+				if (handler !== undefined) {
 					requestHandlers[type.method] = { type, handler };
 				}
 			}

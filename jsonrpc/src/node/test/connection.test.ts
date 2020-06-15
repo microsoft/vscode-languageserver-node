@@ -12,6 +12,7 @@ import { CancellationTokenSource, RequestType, RequestType3, ResponseError, Noti
 
 import * as hostConnection from '../main';
 import { getCustomCancellationStrategy } from './customCancellationStrategy';
+import { ParameterStructures } from '../../common/messages';
 
 interface TestDuplex extends Duplex {
 }
@@ -358,7 +359,7 @@ suite('Connection', () => {
 	});
 
 	test('One Param as array in request', (done) => {
-		let type = new RequestType<number[], number, void, void>('add');
+		let type = new RequestType<number[], number, void, void>('add', ParameterStructures.byPosition);
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
@@ -385,7 +386,7 @@ suite('Connection', () => {
 	});
 
 	test('One Param as array in notification', (done) => {
-		let type = new NotificationType<number[], void>('add');
+		let type = new NotificationType<number[], void>('add', ParameterStructures.byPosition);
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 

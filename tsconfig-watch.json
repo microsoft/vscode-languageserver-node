@@ -9,6 +9,6 @@
 		{ "path": "./textDocument/tsconfig-watch.json" },
 		{ "path": "./server/tsconfig-watch.json" },
 		{ "path": "./client/tsconfig-watch.json" },
-		{ "path": "./client-tests/tsconfig-watch.json" }
+		{ "path": "./client-node-tests/tsconfig-watch.json" }
 	]
 }

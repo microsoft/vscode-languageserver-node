@@ -14,7 +14,7 @@
 			"env": { },
 			"sourceMaps": true,
 			"outFiles": ["${workspaceRoot}/types/lib/umd/**/*.js"],
-			"preLaunchTask": "watch:types"
+			"preLaunchTask": "npm: watch"
 		},
 		{
 			"request": "launch",
@@ -29,7 +29,7 @@
 			"env": { },
 			"sourceMaps": true,
 			"outFiles": ["${workspaceRoot}/textDocument/lib/umd/**/*.js"],
-			"preLaunchTask": "watch:textDocument"
+			"preLaunchTask": "npm: watch"
 		},
 		{
 			"request": "launch",
@@ -44,7 +44,7 @@
 			"env": { },
 			"sourceMaps": true,
 			"outFiles": ["${workspaceRoot}/jsonrpc/lib/**/*.js"],
-			"preLaunchTask": "watch:jsonrpc"
+			"preLaunchTask": "npm: watch"
 		},
 		{
 			"request": "launch",
@@ -59,7 +59,7 @@
 			"env": { },
 			"sourceMaps": true,
 			"outFiles": ["${workspaceRoot}/protocol/lib/**/*.js"],
-			"preLaunchTask": "watch:protocol"
+			"preLaunchTask": "npm: watch"
 		},
 		{
 			"request": "launch",
@@ -74,7 +74,7 @@
 			"env": { },
 			"sourceMaps": true,
 			"outFiles": ["${workspaceRoot}/server/lib/**/*.js"],
-			"preLaunchTask": "watch:server"
+			"preLaunchTask": "npm: watch"
 		},
 		{
 			"type": "extensionHost",
@@ -85,7 +85,7 @@
 			"stopOnEntry": false,
 			"sourceMaps": true,
 			"outFiles": ["${workspaceRoot}/client-tests/lib/test/**/*.js"],
-			"preLaunchTask": "watch:client"
+			"preLaunchTask": "npm: watch"
 		},
 		{
 			"type": "extensionHost",

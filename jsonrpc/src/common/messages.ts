@@ -30,7 +30,7 @@ export interface RequestMessage extends Message {
 	/**
 	 * The method's params.
 	 */
-	params?: [] | object
+	params?: any[] | object
 }
 
 /**
@@ -138,12 +138,22 @@ export interface LSPLogMessage {
 	timestamp: number;
 }
 
+export class ParameterStructures {
+	public static readonly byPosition = new ParameterStructures('byPosition');
+	public static readonly byName = new ParameterStructures('byName');
+
+	private constructor(private readonly kind: string) {
+		this.kind;
+	}
+}
+
 /**
  * An interface to type messages.
  */
 export interface MessageSignature {
 	readonly method: string;
 	readonly numberOfParams: number;
+	readonly parameterStructures: ParameterStructures;
 }
 
 /**
@@ -159,6 +169,10 @@ export abstract class AbstractMessageSignature implements MessageSignature {
 
 	get numberOfParams(): number {
 		return this._numberOfParams;
+	}
+
+	get parameterStructures(): ParameterStructures {
+		return ParameterStructures.byPosition;
 	}
 }
 
@@ -191,8 +205,12 @@ export class RequestType<P, R, E, RO = never> extends AbstractMessageSignature {
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
 	public readonly _?: [P, R, E, RO, _EM];
-	constructor(method: string) {
+	constructor(method: string, private _parameterStructures: ParameterStructures = ParameterStructures.byName) {
 		super(method, 1);
+	}
+
+	get parameterStructures(): ParameterStructures {
+		return this._parameterStructures;
 	}
 }
 
@@ -201,8 +219,12 @@ export class RequestType1<P1, R, E, RO = never> extends AbstractMessageSignature
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
 	public readonly _?: [P1, R, E, RO, _EM];
-	constructor(method: string) {
+	constructor(method: string, private _parameterStructures: ParameterStructures = ParameterStructures.byName) {
 		super(method, 1);
+	}
+
+	get parameterStructures(): ParameterStructures {
+		return this._parameterStructures;
 	}
 }
 
@@ -311,9 +333,13 @@ export class NotificationType<P, RO = never> extends AbstractMessageSignature {
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
 	public readonly _?: [P, RO, _EM];
-	constructor(method: string) {
+	constructor(method: string, private _parameterStructures: ParameterStructures = ParameterStructures.byName) {
 		super(method, 1);
 		this._ = undefined;
+	}
+
+	get parameterStructures(): ParameterStructures {
+		return this._parameterStructures;
 	}
 }
 
@@ -332,8 +358,12 @@ export class NotificationType1<P1, RO = never> extends AbstractMessageSignature 
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
 	public readonly _?: [P1, RO, _EM];
-	constructor(method: string) {
+	constructor(method: string, private _parameterStructures: ParameterStructures = ParameterStructures.byName) {
 		super(method, 1);
+	}
+
+	get parameterStructures(): ParameterStructures {
+		return this._parameterStructures;
 	}
 }
 
