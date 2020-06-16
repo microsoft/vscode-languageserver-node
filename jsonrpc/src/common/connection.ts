@@ -805,13 +805,20 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				traceReceivedNotification(message);
 				if (notificationHandler) {
 					if (message.params === undefined) {
-						if (type !== undefined && type.numberOfParams !== 0) {
-							logger.error(`Notification ${message.method} defines ${type.numberOfParams} params but recevied none.`);
+						if (type !== undefined) {
+							if (type.numberOfParams !== 0 && type.parameterStructures !== ParameterStructures.byName) {
+								logger.error(`Notification ${message.method} defines ${type.numberOfParams} params but recevied none.`);
+							}
 						}
 						notificationHandler();
 					} else if (Array.isArray(message.params)) {
-						if (type !== undefined && type.parameterStructures === ParameterStructures.byName) {
-							logger.error(`Notification ${message.method} defines parameters by name but received parameters by position`);
+						if (type !== undefined) {
+							if (type.parameterStructures === ParameterStructures.byName) {
+								logger.error(`Notification ${message.method} defines parameters by name but received parameters by position`);
+							}
+							if (type.numberOfParams !== message.params.length) {
+								logger.error(`Notification ${message.method} defines ${type.numberOfParams} params but received ${message.params.length} argumennts`);
+							}
 						}
 						notificationHandler(...message.params);
 					} else {
@@ -1021,19 +1028,48 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		}
 	}
 
+	function nullToUndefined(param: any) {
+		if (param === null) {
+			return undefined;
+		} else {
+			return param;
+		}
+	}
+
+	function isNamedParam(param: any): boolean {
+		return param !== undefined && param !== null && !Array.isArray(param) && typeof param === 'object';
+	}
+
+	function computeSingleParam(parameterStructures: ParameterStructures, param: any): any | any[] {
+		switch(parameterStructures) {
+			case ParameterStructures.auto:
+				if (isNamedParam(param)) {
+					return nullToUndefined(param);
+				} else {
+					return [undefinedToNull(param)];
+				}
+				break;
+			case ParameterStructures.byName:
+				if (!isNamedParam(param)) {
+					throw new Error(`Recevied parameters by name but param is not an object literal.`);
+				}
+				return nullToUndefined(param);
+			case ParameterStructures.byPosition:
+				return [undefinedToNull(param)];
+			default:
+				throw new Error(`Unknown parameter structure ${parameterStructures.toString()}`);
+		}
+	}
+
 	function computeMessageParams(type: MessageSignature, params: any[]): any | any[] | null {
 		let result: any | any[] | null;
 		const numberOfParams = type.numberOfParams;
 		switch (numberOfParams) {
 			case 0:
-				result = null;
+				result = undefined;
 				break;
 			case 1:
-				if (type.parameterStructures === ParameterStructures.byPosition) {
-					result = [undefinedToNull(params[0])];
-				} else {
-					result = undefinedToNull(params[0]);
-				}
+				result = computeSingleParam(type.parameterStructures, params[0]);
 				break;
 			default:
 				result = [];
@@ -1060,10 +1096,10 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				method = type;
 				const first: unknown = args[0];
 				let paramStart: number = 0;
-				let parameterStructures: ParameterStructures | undefined = undefined;
-				if (first === ParameterStructures.byName || first === ParameterStructures.byPosition) {
+				let parameterStructures: ParameterStructures = ParameterStructures.auto;
+				if (ParameterStructures.is(first)) {
 					paramStart = 1;
-					parameterStructures = first as ParameterStructures;
+					parameterStructures = first;
 				}
 				let paramEnd: number = args.length;
 				const numberOfParams = paramEnd - paramStart;
@@ -1072,12 +1108,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 						messageParams = undefined;
 						break;
 					case 1:
-						const param = args[paramStart];
-						if (parameterStructures === ParameterStructures.byPosition) {
-							messageParams = [undefinedToNull(param)];
-						} else {
-							messageParams = undefinedToNull(param);
-						}
+						messageParams = computeSingleParam(parameterStructures, args[paramStart]);
 						break;
 					default:
 						if (parameterStructures === ParameterStructures.byName) {
@@ -1138,10 +1169,10 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				const first: unknown = args[0];
 				const last: unknown = args[args.length - 1];
 				let paramStart: number = 0;
-				let parameterStructures: ParameterStructures | undefined = undefined;
-				if (first === ParameterStructures.byName || first === ParameterStructures.byPosition) {
+				let parameterStructures: ParameterStructures = ParameterStructures.auto;
+				if (ParameterStructures.is(first)) {
 					paramStart = 1;
-					parameterStructures = first as ParameterStructures;
+					parameterStructures = first;
 				}
 				let paramEnd: number = args.length;
 				if (CancellationToken.is(last)) {
@@ -1154,15 +1185,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 						messageParams = undefined;
 						break;
 					case 1:
-						const param = args[paramStart];
-						if (parameterStructures === ParameterStructures.byPosition) {
-							messageParams = [undefinedToNull(param)];
-						} else {
-							messageParams = undefinedToNull(param);
-							if (messageParams !== null && typeof messageParams !== 'object') {
-								throw new Error(`Recevied parameters by name but param is not an object literal.`);
-							}
-						}
+						messageParams = computeSingleParam(parameterStructures, args[paramStart]);
 						break;
 					default:
 						if (parameterStructures === ParameterStructures.byName) {

@@ -139,11 +139,34 @@ export interface LSPLogMessage {
 }
 
 export class ParameterStructures {
+	/**
+	 * The parameter structure is automatically inferred on the number of parameters
+	 * and the parameter type in case of a single param.
+	 */
+	public static readonly auto = new ParameterStructures('auto');
+
+	/**
+	 * Forces `byPosition` parameter structure. This is useful if you have a single
+	 * parameter which has a literal type.
+	 */
 	public static readonly byPosition = new ParameterStructures('byPosition');
+
+	/**
+	 * Forces `byName` parameter structure. This is only useful when having a single
+	 * parameter. The library will report errors if used with a different number of
+	 * parameters.
+	 */
 	public static readonly byName = new ParameterStructures('byName');
 
 	private constructor(private readonly kind: string) {
-		this.kind;
+	}
+
+	public static is(value: any): value is ParameterStructures {
+		return value === ParameterStructures.auto || value === ParameterStructures.byName || value === ParameterStructures.byPosition;
+	}
+
+	public toString(): string {
+		return this.kind;
 	}
 }
 
@@ -172,7 +195,7 @@ export abstract class AbstractMessageSignature implements MessageSignature {
 	}
 
 	get parameterStructures(): ParameterStructures {
-		return ParameterStructures.byPosition;
+		return ParameterStructures.auto;
 	}
 }
 
@@ -205,7 +228,7 @@ export class RequestType<P, R, E, RO = never> extends AbstractMessageSignature {
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
 	public readonly _?: [P, R, E, RO, _EM];
-	constructor(method: string, private _parameterStructures: ParameterStructures = ParameterStructures.byName) {
+	constructor(method: string, private _parameterStructures: ParameterStructures = ParameterStructures.auto) {
 		super(method, 1);
 	}
 
@@ -219,7 +242,7 @@ export class RequestType1<P1, R, E, RO = never> extends AbstractMessageSignature
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
 	public readonly _?: [P1, R, E, RO, _EM];
-	constructor(method: string, private _parameterStructures: ParameterStructures = ParameterStructures.byName) {
+	constructor(method: string, private _parameterStructures: ParameterStructures = ParameterStructures.auto) {
 		super(method, 1);
 	}
 
@@ -333,7 +356,7 @@ export class NotificationType<P, RO = never> extends AbstractMessageSignature {
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
 	public readonly _?: [P, RO, _EM];
-	constructor(method: string, private _parameterStructures: ParameterStructures = ParameterStructures.byName) {
+	constructor(method: string, private _parameterStructures: ParameterStructures = ParameterStructures.auto) {
 		super(method, 1);
 		this._ = undefined;
 	}
@@ -358,7 +381,7 @@ export class NotificationType1<P1, RO = never> extends AbstractMessageSignature 
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
 	public readonly _?: [P1, RO, _EM];
-	constructor(method: string, private _parameterStructures: ParameterStructures = ParameterStructures.byName) {
+	constructor(method: string, private _parameterStructures: ParameterStructures = ParameterStructures.auto) {
 		super(method, 1);
 	}
 

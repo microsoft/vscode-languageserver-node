@@ -64,11 +64,68 @@ suite('Connection', () => {
 		duplexStream2.on('data', (chunk) => {
 			content += chunk.toString();
 			if (++counter === 2) {
-				assert.strictEqual(content.indexOf('Content-Length: 75'), 0);
+				assert.strictEqual(content.indexOf('Content-Length: 77'), 0);
 				done();
 			}
 		});
 		connection.sendRequest(type, 'foo');
+	});
+
+	test('Primitive param as positional', (done) => {
+		let type = new RequestType<boolean, number, void, void>('test/handleSingleRequest');
+		let duplexStream1 = new TestDuplex('ds1');
+		let duplexStream2 = new TestDuplex('ds2');
+
+		let connection = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		connection.listen();
+		let counter = 0;
+		let content: string = '';
+		duplexStream2.on('data', (chunk) => {
+			content += chunk.toString();
+			if (++counter === 2) {
+				assert.ok(content.indexOf('"params":[true]') !== -1);
+				done();
+			}
+		});
+		connection.sendRequest(type, true);
+	});
+
+	test('Array param as positional', (done) => {
+		let type = new RequestType<boolean[], number, void, void>('test/handleSingleRequest');
+		let duplexStream1 = new TestDuplex('ds1');
+		let duplexStream2 = new TestDuplex('ds2');
+
+		let connection = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		connection.listen();
+		let counter = 0;
+		let content: string = '';
+		duplexStream2.on('data', (chunk) => {
+			content += chunk.toString();
+			if (++counter === 2) {
+				assert.ok(content.indexOf('"params":[[true]]') !== -1);
+				done();
+			}
+		});
+		connection.sendRequest(type, [true]);
+	});
+
+	test('Literal param as named', (done) => {
+		let type = new RequestType<{ value: boolean }, number, void, void>('test/handleSingleRequest');
+		let duplexStream1 = new TestDuplex('ds1');
+		let duplexStream2 = new TestDuplex('ds2');
+
+		let connection = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		connection.listen();
+		let counter = 0;
+		let content: string = '';
+		duplexStream2.on('data', (chunk) => {
+			content += chunk.toString();
+			if (++counter === 2) {
+				assert.ok(content.indexOf('"params":{"value":true}') !== -1);
+				done();
+			}
+		});
+		connection.sendRequest(type, { value: true });
 	});
 
 	test('Handle Single Request', (done) => {
@@ -423,6 +480,29 @@ suite('Connection', () => {
 		client.listen();
 		client.sendRequest('test', 10, 20, 30, token).then((result) => {
 			assert.strictEqual(result, 60);
+			done();
+		}, () => {
+			assert(false);
+			done();
+		});
+	});
+
+	test('Untyped request / response with parameter structure', (done) => {
+		let duplexStream1 = new TestDuplex('ds1');
+		let duplexStream2 = new TestDuplex('ds2');
+
+		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		server.onRequest('test', (p1, _token) => {
+			assert.strictEqual(p1.value, 10);
+			return p1.value;
+		});
+		server.listen();
+
+		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		let token = new CancellationTokenSource().token;
+		client.listen();
+		client.sendRequest('test', ParameterStructures.byName, { value: 10 }, token).then((result) => {
+			assert.strictEqual(result, 10);
 			done();
 		}, () => {
 			assert(false);
