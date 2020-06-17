@@ -18,5 +18,5 @@ steps:
   displayName: 'Hygiene Checks'
 
 - script: |
-    DISPLAY=:10 npm run test
+    npm run test
   displayName: 'Unit Tests'

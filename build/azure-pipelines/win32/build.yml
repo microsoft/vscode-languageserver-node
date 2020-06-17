@@ -18,5 +18,6 @@ steps:
   displayName: 'Hygiene Checks'
 
 - script: |
+    set PATHEXT=.COM;.EXE;.BAT;.CMD;
     npm run test
   displayName: 'Unit Tests'
