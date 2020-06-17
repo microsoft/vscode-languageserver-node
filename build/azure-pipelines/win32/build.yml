@@ -1,0 +1,21 @@
+- task: NodeTool@0
+  inputs:
+    versionSpec: '12.8.1'
+  displayName: 'Install Node.js'
+
+- script: |
+    npm install
+    npm run symlink
+  displayName: 'Install Dependencies'
+
+- script: |
+    npm run compile
+  displayName: 'Compile'
+
+- script: |
+    npm run lint
+  displayName: 'Hygiene Checks'
+
+- script: |
+    DISPLAY=:10 npm run test
+  displayName: 'Unit Tests'

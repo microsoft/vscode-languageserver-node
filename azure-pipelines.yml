@@ -1,42 +1,21 @@
-# Node.js
-# Build a general Node.js project with npm.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
-
 trigger:
 - master
 
-pool:
-  vmImage: 'ubuntu-latest'
+jobs:
+- job: Windows
+  pool:
+    vmImage: VS2017-Win2016
+  steps:
+  - template: build/azure-pipelines/win32/build.yml
 
-steps:
-- script: |
-    set -e
-    sudo apt-get update
-    sudo apt-get install -y libxkbfile-dev pkg-config libsecret-1-dev libxss1 dbus xvfb libgtk-3-0
-    sudo cp build/azure-pipelines/linux/xvfb.init /etc/init.d/xvfb
-    sudo chmod +x /etc/init.d/xvfb
-    sudo update-rc.d xvfb defaults
-    sudo service xvfb start
+- job: Linux
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - template: build/azure-pipelines/linux/build.yml
 
-- task: NodeTool@0
-  inputs:
-    versionSpec: '12.8.1'
-  displayName: 'Install Node.js'
-
-- script: |
-    npm install
-    npm run symlink
-  displayName: 'Install'
-
-- script: |
-    npm run compile
-  displayName: 'Compile'
-
-- script: |
-    npm run lint
-  displayName: 'Hygiene Checks'
-
-- script: |
-    DISPLAY=:10 npm run test
-  displayName: 'Unit Tests'
+- job: macOS
+  pool:
+    vmImage: macOS-latest
+  steps:
+  - template: build/azure-pipelines/darwin/build.yml
