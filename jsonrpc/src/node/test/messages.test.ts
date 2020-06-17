@@ -129,6 +129,10 @@ suite('Messages', () => {
 	});
 
 	test('Basic Zip / Unzip', async () => {
+		// The zip / unzip value is different per platform. Only test under Linux.
+		if (process.platform !== 'linux') {
+			return;
+		}
 		const msg: RequestMessage = { jsonrpc: '2.0', id: 1, method: 'example' };
 		const zipped = await gzipEncoder.encode(Buffer.from(JSON.stringify(msg), 'utf8'));
 		assert.strictEqual(Buffer.from(zipped).toString('base64'), 'H4sIAAAAAAAAA6tWyirOzysqSFayUjLSM1DSUcpMUbIy1FHKTS3JyAcylVIrEnMLclKVagH7JiWtKwAAAA==');
