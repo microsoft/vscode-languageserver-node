@@ -1,3 +1,4 @@
+steps:
 - task: NodeTool@0
   inputs:
     versionSpec: '12.8.1'
@@ -17,5 +18,5 @@
   displayName: 'Hygiene Checks'
 
 - script: |
-    DISPLAY=:10 npm run test
+    npm run test
   displayName: 'Unit Tests'
