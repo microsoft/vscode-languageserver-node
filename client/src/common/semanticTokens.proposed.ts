@@ -6,6 +6,7 @@
 import * as vscode from 'vscode';
 import { Middleware, BaseLanguageClient, TextDocumentFeature } from './client';
 import { ClientCapabilities, ServerCapabilities, DocumentSelector, Proposed } from 'vscode-languageserver-protocol';
+import { TokenFormat } from 'vscode-languageserver-protocol/lib/common/protocol.semanticTokens.proposed';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -47,10 +48,10 @@ namespace protocol2code {
 		return new vscode.SemanticTokensEdit(value.start, value.deleteCount, value.data !== undefined ? new Uint32Array(value.data) : undefined);
 	}
 
-	export function asSemanticTokensEdits(value: Proposed.SemanticTokensEdits): vscode.SemanticTokensEdits;
+	export function asSemanticTokensEdits(value: Proposed.SemanticTokensDelta): vscode.SemanticTokensEdits;
 	export function asSemanticTokensEdits(value: undefined | null): undefined;
-	export function asSemanticTokensEdits(value: Proposed.SemanticTokensEdits | undefined | null): vscode.SemanticTokensEdits | undefined;
-	export function asSemanticTokensEdits(value: Proposed.SemanticTokensEdits | undefined | null): vscode.SemanticTokensEdits | undefined {
+	export function asSemanticTokensEdits(value: Proposed.SemanticTokensDelta | undefined | null): vscode.SemanticTokensEdits | undefined;
+	export function asSemanticTokensEdits(value: Proposed.SemanticTokensDelta | undefined | null): vscode.SemanticTokensEdits | undefined {
 		if (value === undefined || value === null) {
 			return undefined;
 		}
@@ -113,6 +114,13 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Propose
     		Proposed.SemanticTokenModifiers.documentation,
     		Proposed.SemanticTokenModifiers.defaultLibrary
 		];
+		capability.formats = [TokenFormat.Relative];
+		capability.requests = {
+			range: true,
+			full: {
+				delta: true
+			}
+		};
 	}
 
 	public initialize(cap: ServerCapabilities, documentSelector: DocumentSelector): void {
@@ -125,7 +133,7 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Propose
 	}
 
 	protected registerLanguageProvider(options: Proposed.SemanticTokensRegistrationOptions): [vscode.Disposable, SemanticTokensProviders] {
-		const hasEditProvider = options.documentProvider !== undefined && typeof options.documentProvider !== 'boolean' && options.documentProvider.edits === true;
+		const hasEditProvider = options.full !== undefined && typeof options.full !== 'boolean' && options.full.delta === true;
 		const documentProvider: vscode.DocumentSemanticTokensProvider = {
 			provideDocumentSemanticTokens: (document, token) => {
 				const client = this._client;
@@ -149,18 +157,18 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Propose
 					const client = this._client;
 					const middleware = client.clientOptions.middleware! as Middleware & SemanticTokensMiddleware;
 					const provideDocumentSemanticTokensEdits: DocumentSemanticsTokensEditsSignature = (document, previousResultId, token) => {
-						const params: Proposed.SemanticTokensEditsParams =  {
+						const params: Proposed.SemanticTokensDeltaParams =  {
 							textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
 							previousResultId
 						};
-						return client.sendRequest(Proposed.SemanticTokensEditsRequest.type, params, token).then((result) => {
+						return client.sendRequest(Proposed.SemanticTokensDeltaRequest.type, params, token).then((result) => {
 							if (Proposed.SemanticTokens.is(result)) {
 								return protocol2code.asSemanticTokens(result);
 							} else {
 								return protocol2code.asSemanticTokensEdits(result);
 							}
 						}, (error: any) => {
-							return client.handleFailedRequest(Proposed.SemanticTokensEditsRequest.type, error, null);
+							return client.handleFailedRequest(Proposed.SemanticTokensDeltaRequest.type, error, null);
 						});
 					};
 					return middleware.provideDocumentSemanticTokensEdits
@@ -169,7 +177,7 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Propose
 				}
 				: undefined
 		};
-		const hasRangeProvider: boolean = options.rangeProvider === true;
+		const hasRangeProvider: boolean = options.range === true;
 		const rangeProvider: vscode.DocumentRangeSemanticTokensProvider | undefined = hasRangeProvider
 			? {
 				provideDocumentRangeSemanticTokens: (document: vscode.TextDocument, range: vscode.Range, token: vscode.CancellationToken) => {

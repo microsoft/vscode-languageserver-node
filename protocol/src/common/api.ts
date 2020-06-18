@@ -21,8 +21,8 @@ export namespace Proposed {
 	export const SemanticTokens = st.SemanticTokens;
 	export type SemanticTokensPartialResult = st.SemanticTokensPartialResult;
 	export type SemanticTokensEdit = st.SemanticTokensEdit;
-	export type SemanticTokensEdits = st.SemanticTokensEdits;
-	export type SemanticTokensEditsPartialResult = st.SemanticTokensEditsPartialResult;
+	export type SemanticTokensDelta = st.SemanticTokensDelta;
+	export type SemanticTokensDeltaPartialResult = st.SemanticTokensDeltaPartialResult;
 
 	export type SemanticTokensClientCapabilities = st.SemanticTokensClientCapabilities;
 	export type SemanticTokensOptions = st.SemanticTokensOptions;
@@ -35,10 +35,10 @@ export namespace Proposed {
 		export const type = st.SemanticTokensRequest.type;
 	}
 
-	export type SemanticTokensEditsParams = st.SemanticTokensEditsParams;
-	export namespace SemanticTokensEditsRequest {
-		export const method = st.SemanticTokensEditsRequest.method;
-		export const type = st.SemanticTokensEditsRequest.type;
+	export type SemanticTokensDeltaParams = st.SemanticTokensDeltaParams;
+	export namespace SemanticTokensDeltaRequest {
+		export const method = st.SemanticTokensDeltaRequest.method;
+		export const type = st.SemanticTokensDeltaRequest.type;
 	}
 
 	export type SemanticTokensRangeParams = st.SemanticTokensRangeParams;

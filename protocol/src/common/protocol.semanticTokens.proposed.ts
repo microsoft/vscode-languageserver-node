@@ -121,10 +121,12 @@ export interface SemanticTokensEdit {
 	 * The start offset of the edit.
 	 */
 	start: number;
+
 	/**
 	 * The count of elements to remove.
 	 */
 	deleteCount: number;
+
 	/**
 	 * The elements to insert.
 	 */
@@ -134,7 +136,7 @@ export interface SemanticTokensEdit {
 /**
  * @since 3.16.0 - Proposed state
  */
-export interface SemanticTokensEdits {
+export interface SemanticTokensDelta {
 	readonly resultId?: string;
 	/**
 	 * For a detailed description how these edits are structured pls see
@@ -146,11 +148,17 @@ export interface SemanticTokensEdits {
 /**
  * @since 3.16.0 - Proposed state
  */
-export interface SemanticTokensEditsPartialResult {
+export interface SemanticTokensDeltaPartialResult {
 	edits: SemanticTokensEdit[]
 }
 
 //------- 'textDocument/semanticTokens' -----
+
+export namespace TokenFormat {
+	export const Relative: 'relative' = 'relative';
+}
+
+export type TokenFormat = 'relative';
 
 /**
  * @since 3.16.0 - Proposed state
@@ -174,6 +182,30 @@ export interface SemanticTokensClientCapabilities {
 			dynamicRegistration?: boolean;
 
 			/**
+			 * Which requests the client supports and might send to the
+			 */
+			requests: {
+				/**
+				 * The client supports sending the `textDocument/semanticTokens/range`
+				 * request.
+				 */
+				range?: boolean | {
+				};
+
+				/**
+				 * The client supports sending the `textDocument/semanticTokens/full`
+				 * request.
+				 */
+				full?: boolean | {
+					/**
+					* The client supports sending the `textDocument/semanticTokens/full/delta`
+					* request.
+					*/
+					delta?: boolean
+				}
+			}
+
+			/**
 			 * The token types that the client supports.
 			 */
 			tokenTypes: string[];
@@ -181,7 +213,12 @@ export interface SemanticTokensClientCapabilities {
 			/**
 			 * The token modifiers that the client supports.
 			 */
-			tokenModifiers: string[]
+			tokenModifiers: string[];
+
+			/**
+			 * The formats the clients supports.
+			 */
+			formats: TokenFormat[];
 		};
 	}
 }
@@ -199,16 +236,17 @@ export interface SemanticTokensOptions extends WorkDoneProgressOptions {
 	 * Server supports providing semantic tokens for a sepcific range
 	 * of a document.
 	 */
-	rangeProvider?: boolean;
+	range?: boolean | {
+	};
 
 	/**
 	 * Server supports providing semantic tokens for a full document.
 	 */
-	documentProvider?: boolean | {
+	full?: boolean | {
 		/**
 		 * The server supports deltas for full documents.
 		 */
-		edits?: boolean;
+		delta?: boolean;
 	}
 }
 
@@ -241,7 +279,7 @@ export interface SemanticTokensParams extends WorkDoneProgressParams, PartialRes
  * @since 3.16.0 - Proposed state
  */
 export namespace SemanticTokensRequest {
-	export const method: 'textDocument/semanticTokens' = 'textDocument/semanticTokens';
+	export const method: 'textDocument/semanticTokens/full' = 'textDocument/semanticTokens/full';
 	export const type = new ProtocolRequestType<SemanticTokensParams, SemanticTokens | null, SemanticTokensPartialResult, void, SemanticTokensRegistrationOptions>(method);
 }
 
@@ -250,7 +288,7 @@ export namespace SemanticTokensRequest {
 /**
  * @since 3.16.0 - Proposed state
  */
-export interface SemanticTokensEditsParams extends WorkDoneProgressParams, PartialResultParams {
+export interface SemanticTokensDeltaParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
 	 * The text document.
 	 */
@@ -265,9 +303,9 @@ export interface SemanticTokensEditsParams extends WorkDoneProgressParams, Parti
 /**
  * @since 3.16.0 - Proposed state
  */
-export namespace SemanticTokensEditsRequest {
-	export const method: 'textDocument/semanticTokens/edits' = 'textDocument/semanticTokens/edits';
-	export const type = new ProtocolRequestType<SemanticTokensEditsParams, SemanticTokens | SemanticTokensEdits | null, SemanticTokensPartialResult | SemanticTokensEditsPartialResult, void, SemanticTokensRegistrationOptions>(method);
+export namespace SemanticTokensDeltaRequest {
+	export const method: 'textDocument/semanticTokens/full/delta' = 'textDocument/semanticTokens/full/delta';
+	export const type = new ProtocolRequestType<SemanticTokensDeltaParams, SemanticTokens | SemanticTokensDelta | null, SemanticTokensPartialResult | SemanticTokensDeltaPartialResult, void, SemanticTokensRegistrationOptions>(method);
 }
 
 //------- 'textDocument/semanticTokens/range' -----

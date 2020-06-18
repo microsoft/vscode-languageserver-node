@@ -5,7 +5,10 @@
 			"label": "npm: watch",
 			"type": "npm",
 			"script": "watch",
-			"group": "build",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
 			"isBackground": true,
 			"presentation": {
 				"panel": "dedicated",
@@ -39,6 +42,20 @@
 				"clear": false
 			},
 			"problemMatcher": []
-		}
+		},
+		{
+			"label": "npm: watch:testbed",
+			"type": "npm",
+			"script": "watch:testbed",
+			"group": "build",
+			"isBackground": true,
+			"presentation": {
+				"panel": "dedicated",
+				"reveal": "never"
+			},
+			"problemMatcher": [
+				"$tsc-watch"
+			]
+		},
 	]
 }

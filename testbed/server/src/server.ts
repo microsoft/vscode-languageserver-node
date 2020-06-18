@@ -11,7 +11,7 @@ import {
 	SignatureHelp, SymbolInformation, SymbolKind, TextDocumentEdit, TextDocuments, TextDocumentSyncKind,
 	TextEdit, VersionedTextDocumentIdentifier, ProposedFeatures, DiagnosticTag, Proposed, InsertTextFormat,
 	SelectionRangeRequest, SelectionRange, InsertReplaceEdit
-} from 'vscode-languageserver';
+} from 'vscode-languageserver/node';
 
 import {
 	TextDocument
@@ -109,7 +109,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 
 	return new Promise((resolve, reject) => {
 		const tokenLegend = computeLegend(params.capabilities as Proposed.SemanticTokensClientCapabilities);
-		let result: InitializeResult & { capabilities: Proposed.CallHierarchyServerCapabilities & Proposed.SemanticTokensServerCapabilities } = {
+		let result: InitializeResult & { capabilities: Proposed.SemanticTokensServerCapabilities } = {
 			capabilities: {
 				textDocumentSync: TextDocumentSyncKind.Full,
 				hoverProvider: true,
@@ -155,10 +155,10 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 				selectionRangeProvider: { workDoneProgress: true },
 				semanticTokensProvider: {
 					legend: tokenLegend,
-					documentProvider: {
-						edits: true,
-					},
-					rangeProvider: true
+					range: true,
+					full: {
+						delta: true
+					}
 				}
 			}
 		};

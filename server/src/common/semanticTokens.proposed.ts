@@ -9,7 +9,7 @@ import type { Feature, _Languages, ServerRequestHandler } from './server';
 export interface SemanticTokens {
 	semanticTokens: {
 		on(handler: ServerRequestHandler<Proposed.SemanticTokensParams, Proposed.SemanticTokens, Proposed.SemanticTokensPartialResult, void>): void;
-		onEdits(handler: ServerRequestHandler<Proposed.SemanticTokensEditsParams, Proposed.SemanticTokensEdits | Proposed.SemanticTokens, Proposed.SemanticTokensEditsPartialResult | Proposed.SemanticTokensEditsPartialResult, void>): void;
+		onEdits(handler: ServerRequestHandler<Proposed.SemanticTokensDeltaParams, Proposed.SemanticTokensDelta | Proposed.SemanticTokens, Proposed.SemanticTokensDeltaPartialResult | Proposed.SemanticTokensDeltaPartialResult, void>): void;
 		onRange(handler: ServerRequestHandler<Proposed.SemanticTokensRangeParams, Proposed.SemanticTokens, Proposed.SemanticTokensPartialResult, void>): void;
 	}
 }
@@ -24,8 +24,8 @@ export const SemanticTokensFeature: Feature<_Languages, SemanticTokens> = (Base)
 						return handler(params, cancel, this.attachWorkDoneProgress(params), this.attachPartialResultProgress(type, params));
 					});
 				},
-				onEdits: (handler: ServerRequestHandler<Proposed.SemanticTokensEditsParams, Proposed.SemanticTokensEdits | Proposed.SemanticTokens, Proposed.SemanticTokensEditsPartialResult | Proposed.SemanticTokensEditsPartialResult, void>): void => {
-					const type = Proposed.SemanticTokensEditsRequest.type;
+				onEdits: (handler: ServerRequestHandler<Proposed.SemanticTokensDeltaParams, Proposed.SemanticTokensDelta | Proposed.SemanticTokens, Proposed.SemanticTokensDeltaPartialResult | Proposed.SemanticTokensDeltaPartialResult, void>): void => {
+					const type = Proposed.SemanticTokensDeltaRequest.type;
 					this.connection.onRequest(type, (params, cancel) => {
 						return handler(params, cancel, this.attachWorkDoneProgress(params), this.attachPartialResultProgress(type, params));
 					});
@@ -108,7 +108,7 @@ export class SemanticTokensBuilder {
 		return this._prevData !== undefined;
 	}
 
-	public buildEdits(): Proposed.SemanticTokens | Proposed.SemanticTokensEdits {
+	public buildEdits(): Proposed.SemanticTokens | Proposed.SemanticTokensDelta {
 		if (this._prevData !== undefined) {
 			const prevDataLength = this._prevData.length;
 			const dataLength = this._data.length;
@@ -123,7 +123,7 @@ export class SemanticTokensBuilder {
 					endIndex++;
 				}
 				const newData = this._data.slice(startIndex, dataLength - endIndex);
-				const result: Proposed.SemanticTokensEdits = {
+				const result: Proposed.SemanticTokensDelta = {
 					resultId: this.id,
 					edits: [
 						{ start: startIndex, deleteCount: prevDataLength - endIndex - startIndex, data: newData }
