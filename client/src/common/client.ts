@@ -330,7 +330,9 @@ export interface SynchronizeOptions {
 	configurationSection?: string | string[];
 
 	/**
-	 *
+	 * Asks the client to send file change events to the server. Watchers
+	 * operate on workspace folders. The LSP client doesn't support watching
+	 * files outside a workspace folder.
 	 */
 	fileEvents?: VFileSystemWatcher | VFileSystemWatcher[];
 }
