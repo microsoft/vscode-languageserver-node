@@ -88,9 +88,7 @@ export interface SemanticTokens {
 	resultId?: string;
 
 	/**
-	 * The actual tokens. For a detailed description about how the data is
-	 * structured pls see
-	 * https://github.com/microsoft/vscode-extension-samples/blob/5ae1f7787122812dcc84e37427ca90af5ee09f14/semantic-tokens-sample/vscode.proposed.d.ts#L71
+	 * The actual tokens.
 	 */
 	data: number[];
 }
@@ -139,8 +137,7 @@ export interface SemanticTokensEdit {
 export interface SemanticTokensDelta {
 	readonly resultId?: string;
 	/**
-	 * For a detailed description how these edits are structured pls see
-	 * https://github.com/microsoft/vscode-extension-samples/blob/5ae1f7787122812dcc84e37427ca90af5ee09f14/semantic-tokens-sample/vscode.proposed.d.ts#L131
+	 * The semantic token edits to transform a previous result into a new result.
 	 */
 	edits: SemanticTokensEdit[];
 }
@@ -182,24 +179,24 @@ export interface SemanticTokensClientCapabilities {
 			dynamicRegistration?: boolean;
 
 			/**
-			 * Which requests the client supports and might send to the
+			 * Which requests the client supports and might send to the server
 			 */
 			requests: {
 				/**
-				 * The client supports sending the `textDocument/semanticTokens/range`
-				 * request.
+				 * The client will send the `textDocument/semanticTokens/range` request if
+				 * the server provides a corresponding handler.
 				 */
 				range?: boolean | {
 				};
 
 				/**
-				 * The client supports sending the `textDocument/semanticTokens/full`
-				 * request.
+				 * The client will send the `textDocument/semanticTokens/full` request if
+				 * the server provides a corresponding handler.
 				 */
 				full?: boolean | {
 					/**
-					* The client supports sending the `textDocument/semanticTokens/full/delta`
-					* request.
+					 * The client will send the `textDocument/semanticTokens/full/delta` request if
+					 * the server provides a corresponding handler.
 					*/
 					delta?: boolean
 				}
