@@ -1547,6 +1547,14 @@ export interface CompletionClientCapabilities {
 		 * @since 3.16.0 - Proposed state
 		 */
 		insertReplaceSupport?: boolean;
+
+		/**
+		 * Client supports to resolve `additionalTextEdits` in the `completionItem/resolve`
+		 * request. So servers can postpone computing them.
+		 *
+		 * @since 3.16.0 - Proposed state
+		 */
+		resolveAdditionalTextEditsSupport?: boolean;
 	};
 
 	completionItemKind?: {

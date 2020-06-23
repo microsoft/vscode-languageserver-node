@@ -1481,7 +1481,8 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 			deprecatedSupport: true,
 			preselectSupport: true,
 			tagSupport: { valueSet:  [ CompletionItemTag.Deprecated ] },
-			insertReplaceSupport: true
+			insertReplaceSupport: true,
+			resolveAdditionalTextEditsSupport: true
 		};
 		completion.completionItemKind = { valueSet: SupportedCompletionItemKinds };
 	}
@@ -3329,6 +3330,7 @@ export abstract class BaseLanguageClient {
 	public getFeature(request: typeof DocumentRangeFormattingRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DocumentRangeFormattingEditProvider>;
 	public getFeature(request: typeof DocumentOnTypeFormattingRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<OnTypeFormattingEditProvider>;
 	public getFeature(request: typeof RenameRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<RenameProvider>;
+	public getFeature(request: typeof DocumentSymbolRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DocumentSymbolProvider>;
 	public getFeature(request: typeof DocumentLinkRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DocumentLinkProvider>;
 	public getFeature(request: typeof DocumentColorRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DocumentColorProvider>;
 	public getFeature(request: typeof DeclarationRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DeclarationProvider>;
