@@ -182,16 +182,24 @@ const _ril: RIL = Object.freeze<RIL>({
 		encoder: Object.freeze({
 			name: 'application/json',
 			encode: (msg: Message, options: ContentTypeEncoderOptions): Promise<Buffer> => {
-				return Promise.resolve(Buffer.from(JSON.stringify(msg, undefined, 0), options.charset));
+				try {
+					return Promise.resolve(Buffer.from(JSON.stringify(msg, undefined, 0), options.charset));
+				} catch (err) {
+					return Promise.reject(err);
+				}
 			}
 		}),
 		decoder: Object.freeze({
 			name: 'application/json',
 			decode: (buffer: Uint8Array | Buffer, options: ContentTypeDecoderOptions): Promise<Message> => {
-				if (buffer instanceof Buffer) {
-					return Promise.resolve(JSON.parse(buffer.toString(options.charset)));
-				} else {
-					return Promise.resolve(JSON.parse(new TextDecoder(options.charset).decode(buffer)));
+				try {
+					if (buffer instanceof Buffer) {
+						return Promise.resolve(JSON.parse(buffer.toString(options.charset)));
+					} else {
+						return Promise.resolve(JSON.parse(new TextDecoder(options.charset).decode(buffer)));
+					}
+				} catch (err) {
+					return Promise.reject(err);
 				}
 			}
 		})
