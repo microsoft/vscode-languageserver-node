@@ -2387,7 +2387,7 @@ class ConfigurationFeature implements DynamicFeature<DidChangeConfigurationRegis
 			if (index >= 0) {
 				config = Workspace.getConfiguration(key.substr(0, index), resource).get(key.substr(index + 1));
 			} else {
-				config = Workspace.getConfiguration(key, resource).get('');
+				config = Workspace.getConfiguration(undefined, resource).get(key);
 			}
 			if (config) {
 				let path = keys[i].split('.');
