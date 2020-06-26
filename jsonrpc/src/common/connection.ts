@@ -247,7 +247,7 @@ export interface SetTraceParams {
 }
 
 export namespace SetTraceNotification {
-	export const type = new NotificationType<SetTraceParams, void>('$/setTraceNotification');
+	export const type = new NotificationType<SetTraceParams, void>('$/setTrace');
 }
 
 export interface LogTraceParams {
@@ -256,7 +256,7 @@ export interface LogTraceParams {
 }
 
 export namespace LogTraceNotification {
-	export const type = new NotificationType<LogTraceParams, void>('$/logTraceNotification');
+	export const type = new NotificationType<LogTraceParams, void>('$/logTrace');
 }
 
 export interface Tracer {
