@@ -720,7 +720,7 @@ export interface NotificationFeature<T extends Function> {
 	/**
 	 * Triggers the corresponding RPC method.
 	 */
-	getProvider(document: TextDocument): { send: T };
+	getProvider(document: TextDocument): { send: T } | undefined;
 }
 
 namespace DynamicFeature {
@@ -803,7 +803,7 @@ abstract class DocumentNotifiactions<P, E> implements DynamicFeature<TextDocumen
 		}
 	}
 
-	public getProvider(document: TextDocument):  { send: (data: E) => void } {
+	public getProvider(document: TextDocument):  { send: (data: E) => void } | undefined {
 		for (const selector of this._selectors.values()) {
 			if (Languages.match(selector, document)) {
 				return {
@@ -813,7 +813,7 @@ abstract class DocumentNotifiactions<P, E> implements DynamicFeature<TextDocumen
 				};
 			}
 		}
-		throw new Error(`No provider available for the given text document`);
+		return undefined;
 	}
 }
 
@@ -1057,7 +1057,7 @@ class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeR
 		}
 	}
 
-	public getProvider(document: TextDocument): { send: (event: TextDocumentChangeEvent) => void } {
+	public getProvider(document: TextDocument): { send: (event: TextDocumentChangeEvent) => void } | undefined {
 		for (const changeData of this._changeData.values()) {
 			if (Languages.match(changeData.documentSelector, document)) {
 				return {
@@ -1067,7 +1067,7 @@ class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeR
 				};
 			}
 		}
-		throw new Error(`No provider available for the given text document`);
+		return undefined;
 	}
 }
 
@@ -1320,7 +1320,7 @@ export interface TextDocumentProviderFeature<T> {
 	/**
 	 * Triggers the corresponding RPC method.
 	 */
-	getProvider(textDocument: TextDocument): T;
+	getProvider(textDocument: TextDocument): T | undefined;
 }
 
 export abstract class TextDocumentFeature<PO, RO extends TextDocumentRegistrationOptions & PO, PR> implements DynamicFeature<RO> {
@@ -1391,19 +1391,19 @@ export abstract class TextDocumentFeature<PO, RO extends TextDocumentRegistratio
 		return (Is.boolean(capability) && capability === true ? { documentSelector } : Object.assign({}, capability, { documentSelector })) as RO & { documentSelector: DocumentSelector };
 	}
 
-	public getProvider(textDocument: TextDocument): PR {
+	public getProvider(textDocument: TextDocument): PR | undefined {
 		for (const registration of this._registrations.values()) {
 			let selector = registration.data.registerOptions.documentSelector;
 			if (selector !== null && Languages.match(selector, textDocument)) {
 				return registration.provider;
 			}
 		}
-		throw new Error(`The feature has no registration for the provided text document ${textDocument.uri.toString()}`);
+		return undefined;
 	}
 }
 
 export interface WorkspaceProviderFeature<PR> {
-	getProviders(): PR[];
+	getProviders(): PR[] | undefined;
 }
 
 interface WorkspaceFeatureRegistration<PR> {

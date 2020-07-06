@@ -141,6 +141,7 @@ suite('Client integration', () => {
 
 	test('Goto Definition', async () => {
 		const provider = client.getFeature(lsclient.DefinitionRequest.method).getProvider(document);
+		isDefined(provider);
 		const result = (await provider.provideDefinition(document, position, tokenSource.token)) as vscode.Location;
 
 		isInstanceOf(result, vscode.Location);
@@ -159,6 +160,7 @@ suite('Client integration', () => {
 
 	test('Hover', async () => {
 		const provider = client.getFeature(lsclient.HoverRequest.method).getProvider(document);
+		isDefined(provider);
 		const result = await provider.provideHover(document, position, tokenSource.token);
 
 		isInstanceOf(result, vscode.Hover);
@@ -177,6 +179,7 @@ suite('Client integration', () => {
 
 	test('Completion', async () => {
 		const provider = client.getFeature(lsclient.CompletionRequest.method).getProvider(document);
+		isDefined(provider);
 		const result = (await provider.provideCompletionItems(document, position, tokenSource.token, { triggerKind: vscode.CompletionTriggerKind.Invoke, triggerCharacter: ':' })) as vscode.CompletionItem[];
 
 		isArray(result, vscode.CompletionItem);
@@ -208,6 +211,7 @@ suite('Client integration', () => {
 
 	test('SignatureHelpRequest', async () => {
 		const provider = client.getFeature(lsclient.SignatureHelpRequest.method).getProvider(document);
+		isDefined(provider);
 		const result = await provider.provideSignatureHelp(document, position, tokenSource.token,
 			{
 				isRetrigger: false,
@@ -248,6 +252,7 @@ suite('Client integration', () => {
 
 	test('References', async () => {
 		const provider = client.getFeature(lsclient.ReferencesRequest.method).getProvider(document);
+		isDefined(provider);
 		const result = await provider.provideReferences(document, position, {
 			includeDeclaration: true
 		}, tokenSource.token);
@@ -273,6 +278,7 @@ suite('Client integration', () => {
 
 	test('Document Highlight', async () => {
 		const provider = client.getFeature(lsclient.DocumentHighlightRequest.method).getProvider(document);
+		isDefined(provider);
 		const result = await provider.provideDocumentHighlights(document, position, tokenSource.token);
 
 		isArray(result, vscode.DocumentHighlight, 1);
@@ -293,6 +299,7 @@ suite('Client integration', () => {
 
 	test('Code Actions', async () => {
 		const provider = client.getFeature(lsclient.CodeActionRequest.method).getProvider(document);
+		isDefined(provider);
 		const result = (await provider.provideCodeActions(document, range, {
 			diagnostics: []
 		}, tokenSource.token)) as vscode.CodeAction[];
@@ -316,6 +323,7 @@ suite('Client integration', () => {
 
 	test('Document Formatting', async () => {
 		const provider = client.getFeature(lsclient.DocumentFormattingRequest.method).getProvider(document);
+		isDefined(provider);
 		const result = await provider.provideDocumentFormattingEdits(document, { tabSize: 4, insertSpaces: false }, tokenSource.token);
 
 		isArray(result, vscode.TextEdit);
@@ -335,6 +343,7 @@ suite('Client integration', () => {
 
 	test('Document Range Formatting', async () => {
 		const provider = client.getFeature(lsclient.DocumentRangeFormattingRequest.method).getProvider(document);
+		isDefined(provider);
 		const result = await provider.provideDocumentRangeFormattingEdits(document, range, { tabSize: 4, insertSpaces: false }, tokenSource.token);
 
 		isArray(result, vscode.TextEdit);
@@ -354,6 +363,7 @@ suite('Client integration', () => {
 
 	test('Document on Type Formatting', async () => {
 		const provider = client.getFeature(lsclient.DocumentOnTypeFormattingRequest.method).getProvider(document);
+		isDefined(provider);
 		const result = await provider.provideOnTypeFormattingEdits(document, position, 'a', { tabSize: 4, insertSpaces: false }, tokenSource.token);
 
 		isArray(result, vscode.TextEdit);
@@ -373,6 +383,7 @@ suite('Client integration', () => {
 
 	test('Rename', async () => {
 		const provider = client.getFeature(lsclient.RenameRequest.method).getProvider(document);
+		isDefined(provider);
 		isDefined(provider.prepareRename);
 		const prepareResult = await provider.prepareRename(document, position, tokenSource.token) as vscode.Range;
 
@@ -400,6 +411,7 @@ suite('Client integration', () => {
 
 	test('Document Link', async () => {
 		const provider = client.getFeature(lsclient.DocumentLinkRequest.method).getProvider(document);
+		isDefined(provider);
 		const result = await provider.provideDocumentLinks(document, tokenSource.token);
 
 		isArray(result, vscode.DocumentLink);
@@ -431,6 +443,7 @@ suite('Client integration', () => {
 
 	test('Document Color', async () => {
 		const provider = client.getFeature(lsclient.DocumentColorRequest.method).getProvider(document);
+		isDefined(provider);
 		const colors = await provider.provideDocumentColors(document, tokenSource.token);
 
 		isArray(colors, vscode.ColorInformation);
@@ -464,6 +477,7 @@ suite('Client integration', () => {
 
 	test('Goto Declaration', async () => {
 		const provider = client.getFeature(lsclient.DeclarationRequest.method).getProvider(document);
+		isDefined(provider);
 		const result = (await provider.provideDeclaration(document, position, tokenSource.token)) as vscode.Location;
 
 		isInstanceOf(result, vscode.Location);
@@ -482,6 +496,7 @@ suite('Client integration', () => {
 
 	test('Folding Ranges', async () => {
 		const provider = client.getFeature(lsclient.FoldingRangeRequest.method).getProvider(document);
+		isDefined(provider);
 		const result = (await provider.provideFoldingRanges(document, {}, tokenSource.token));
 
 		isArray(result, vscode.FoldingRange, 1);
@@ -501,6 +516,7 @@ suite('Client integration', () => {
 
 	test('Goto Implementation', async () => {
 		const provider = client.getFeature(lsclient.ImplementationRequest.method).getProvider(document);
+		isDefined(provider);
 		const result = (await provider.provideImplementation(document, position, tokenSource.token)) as vscode.Location;
 
 		isInstanceOf(result, vscode.Location);
@@ -519,6 +535,7 @@ suite('Client integration', () => {
 
 	test('Selection Range', async () => {
 		const provider = client.getFeature(lsclient.SelectionRangeRequest.method).getProvider(document);
+		isDefined(provider);
 		const result = (await provider.provideSelectionRanges(document, [position], tokenSource.token));
 
 		isArray(result, vscode.SelectionRange, 1);
@@ -536,6 +553,7 @@ suite('Client integration', () => {
 
 	test('Type Definition', async() => {
 		const provider = client.getFeature(lsclient.TypeDefinitionRequest.method).getProvider(document);
+		isDefined(provider);
 		const result = (await provider.provideTypeDefinition(document, position, tokenSource.token)) as vscode.Location;
 
 		isInstanceOf(result, vscode.Location);
@@ -554,6 +572,7 @@ suite('Client integration', () => {
 
 	test('Call Hierarchy', async () => {
 		const provider = client.getFeature(lsclient.CallHierarchyPrepareRequest.method).getProvider(document);
+		isDefined(provider);
 		const result = (await provider.prepareCallHierarchy(document, position, tokenSource.token)) as vscode.CallHierarchyItem[];
 
 		isArray(result, vscode.CallHierarchyItem, 1);
