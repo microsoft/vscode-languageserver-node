@@ -107,7 +107,7 @@ export type TextDocumentContentChangeEvent = {
 	 * The new text of the whole document.
 	 */
 	text: string;
-}
+};
 
 /**
  * A simple text document. Not to be implemented. The document keeps the content

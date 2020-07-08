@@ -2909,7 +2909,7 @@ type TextDocumentContentChangeEvent = {
 	 * The new text of the whole document.
 	 */
 	text: string;
-}
+};
 
 class FullTextDocument implements TextDocument {
 
