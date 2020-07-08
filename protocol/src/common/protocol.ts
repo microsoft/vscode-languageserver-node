@@ -762,7 +762,7 @@ export interface _InitializeParams extends WorkDoneProgressParams {
 	trace?: 'off' | 'messages' | 'verbose';
 }
 
-export type InitializeParams = _InitializeParams & WorkspaceFoldersInitializeParams
+export type InitializeParams = _InitializeParams & WorkspaceFoldersInitializeParams;
 
 /**
  * The result returned from an initialize request.
@@ -1134,7 +1134,7 @@ export type TextDocumentContentChangeEvent = {
 	 * The new text of the whole document.
 	 */
 	text: string;
-}
+};
 
 /**
  * The change text document notification's parameters.

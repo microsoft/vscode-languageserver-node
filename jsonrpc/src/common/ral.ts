@@ -104,7 +104,7 @@ namespace RAL {
 	export type WritableStream = _WritableStream;
 	export type DuplexStream = _DuplexStream;
 	export type TimeoutHandle = _TimeoutHandle;
-	export type ImmediateHandle = _ImmediateHandle
+	export type ImmediateHandle = _ImmediateHandle;
 	export function install(ral: RAL): void {
 		if (ral === undefined) {
 			throw new Error(`No runtime abstraction layer provided`);

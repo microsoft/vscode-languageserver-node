@@ -317,7 +317,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	function asPosition(value: code.Position): proto.Position;
 	function asPosition(value: undefined): undefined;
 	function asPosition(value: null): null;
-	function asPosition(value: code.Position | undefined | null): proto.Position | undefined | null
+	function asPosition(value: code.Position | undefined | null): proto.Position | undefined | null;
 	function asPosition(value: code.Position | undefined | null): proto.Position | undefined | null {
 		if (value === undefined || value === null) {
 			return value;

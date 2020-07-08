@@ -17,6 +17,7 @@
 		"@types/assert": "^1.4.7",
 		"@types/mocha": "^7.0.2",
 		"@typescript-eslint/parser": "^2.31.0",
+		"@typescript-eslint/eslint-plugin": "^3.6.0",
 		"assert": "^2.0.0",
 		"eslint": "^6.8.0",
 		"mocha": "^7.1.2",

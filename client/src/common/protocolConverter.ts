@@ -754,7 +754,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asCommands(items: ls.Command[]): code.Command[];
-	function asCommands(items: undefined | null): undefined
+	function asCommands(items: undefined | null): undefined;
 	function asCommands(items: ls.Command[] | undefined | null): code.Command[] | undefined;
 	function asCommands(items: ls.Command[] | undefined | null): code.Command[] | undefined {
 		if (!items) {
