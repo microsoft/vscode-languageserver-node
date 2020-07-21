@@ -13,6 +13,7 @@ import {
 	createServerSocketTransport, InitializeParams, createProtocolConnection, Logger, ProtocolConnection
 } from 'vscode-languageserver-protocol/node';
 
+export * from 'vscode-languageserver-protocol/node';
 export * from '../common/api';
 
 export namespace Files {

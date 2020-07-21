@@ -18,6 +18,7 @@ import { LanguageClientOptions, MessageTransports } from '../common/client';
 import { terminate } from './processes';
 import { StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageWriter, createClientPipeTransport, generateRandomPipeName, createClientSocketTransport, InitializeParams} from 'vscode-languageserver-protocol/node';
 
+export * from 'vscode-languageserver-protocol/node';
 export * from '../common/api';
 
 const REQUIRED_VSCODE_VERSION = '^1.44.0'; // do not change format, updated by `updateVSCode` script
