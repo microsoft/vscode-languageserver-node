@@ -2028,7 +2028,7 @@ export type SymbolKind = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
 
 /**
  * Symbol tags are extra annotations that tweak the rendering of a symbol.
- * @since 3.15
+ * @since 3.16
  */
 export namespace SymbolTag {
 
