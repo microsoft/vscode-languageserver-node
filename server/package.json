@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageserver",
 	"description": "Language server implementation for node",
-	"version": "7.0.0-next.5",
+	"version": "7.0.0-next.6",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"repository": {
@@ -21,7 +21,7 @@
 		"installServerIntoExtension": "./bin/installServerIntoExtension"
 	},
 	"dependencies": {
-		"vscode-languageserver-protocol": "3.16.0-next.5"
+		"vscode-languageserver-protocol": "3.16.0-next.6"
 	},
 	"scripts": {
 		"prepublishOnly": "npm run clean && npm run compile && npm test",
