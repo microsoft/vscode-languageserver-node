@@ -163,6 +163,7 @@ interface ConnectionCloseHandler {
 
 interface ConnectionOptions {
     cancellationStrategy: CancellationStrategy
+    restartTimes: number
 }
 
 function createConnection(input: MessageReader, output: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): Connection {
@@ -276,7 +277,7 @@ class DefaultErrorHandler implements ErrorHandler {
 
 	private readonly restarts: number[];
 
-	constructor(private name: string) {
+	constructor(private name: string, private restartTimes: number) {
 		this.restarts = [];
 	}
 
@@ -288,12 +289,12 @@ class DefaultErrorHandler implements ErrorHandler {
 	}
 	public closed(): CloseAction {
 		this.restarts.push(Date.now());
-		if (this.restarts.length < 5) {
+		if (this.restarts.length < this.restartTimes) {
 			return CloseAction.Restart;
 		} else {
 			let diff = this.restarts[this.restarts.length - 1] - this.restarts[0];
 			if (diff <= 3 * 60 * 1000) {
-				Window.showErrorMessage(`The ${this.name} server crashed 5 times in the last 3 minutes. The server will not be restarted.`);
+				Window.showErrorMessage(`The ${this.name} server crashed ${this.restartTimes} times in the last 3 minutes. The server will not be restarted.`);
 				return CloseAction.DoNotRestart;
 			} else {
 				this.restarts.shift();
@@ -2564,7 +2565,7 @@ export abstract class BaseLanguageClient {
 			initializationOptions: clientOptions.initializationOptions,
 			initializationFailedHandler: clientOptions.initializationFailedHandler,
 			progressOnInitialization: !!clientOptions.progressOnInitialization,
-			errorHandler: clientOptions.errorHandler || new DefaultErrorHandler(this._name),
+			errorHandler: clientOptions.errorHandler || this.createDefaultErrorHandler(clientOptions.connectionOptions?.restartTimes || 5),
 			middleware: clientOptions.middleware || {},
 			uriConverters: clientOptions.uriConverters,
 			workspaceFolder: clientOptions.workspaceFolder,
@@ -2766,8 +2767,8 @@ export abstract class BaseLanguageClient {
 		return this._diagnostics;
 	}
 
-	public createDefaultErrorHandler(): ErrorHandler {
-		return new DefaultErrorHandler(this._name);
+	public createDefaultErrorHandler(restartTimes: number): ErrorHandler {
+		return new DefaultErrorHandler(this._name, restartTimes);
 	}
 
 	public set trace(value: Trace) {
