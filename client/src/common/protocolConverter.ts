@@ -582,7 +582,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		}
 		let result = {
 			targetUri: _uriConverter(item.targetUri),
-			targetRange: asRange(item.targetSelectionRange), // See issue: https://github.com/Microsoft/vscode/issues/58649
+			targetRange: asRange(item.targetRange), // See issue: https://github.com/Microsoft/vscode/issues/58649
 			originSelectionRange: asRange(item.originSelectionRange),
 			targetSelectionRange: asRange(item.targetSelectionRange)
 		};
