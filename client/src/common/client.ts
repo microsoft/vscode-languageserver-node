@@ -163,7 +163,7 @@ interface ConnectionCloseHandler {
 
 interface ConnectionOptions {
     cancellationStrategy: CancellationStrategy
-    maxRestartCount: number
+    maxRestartCount?: number
 }
 
 function createConnection(input: MessageReader, output: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): Connection {
@@ -2565,7 +2565,7 @@ export abstract class BaseLanguageClient {
 			initializationOptions: clientOptions.initializationOptions,
 			initializationFailedHandler: clientOptions.initializationFailedHandler,
 			progressOnInitialization: !!clientOptions.progressOnInitialization,
-			errorHandler: clientOptions.errorHandler || this.createDefaultErrorHandler(clientOptions.connectionOptions?.maxRestartCount || 5),
+			errorHandler: clientOptions.errorHandler || this.createDefaultErrorHandler(clientOptions.connectionOptions?.maxRestartCount),
 			middleware: clientOptions.middleware || {},
 			uriConverters: clientOptions.uriConverters,
 			workspaceFolder: clientOptions.workspaceFolder,
@@ -2767,8 +2767,8 @@ export abstract class BaseLanguageClient {
 		return this._diagnostics;
 	}
 
-	public createDefaultErrorHandler(maxRestartCount: number): ErrorHandler {
-		return new DefaultErrorHandler(this._name, maxRestartCount);
+	public createDefaultErrorHandler(maxRestartCount?: number): ErrorHandler {
+		return new DefaultErrorHandler(this._name, maxRestartCount || 5);
 	}
 
 	public set trace(value: Trace) {
