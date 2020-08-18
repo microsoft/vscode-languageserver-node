@@ -5,7 +5,7 @@
 /// <reference path="../../typings/thenable.d.ts" />
 
 import * as Is from '../common/utils/is';
-import { Connection, _, _Connection, Features, WatchDog, createConnection as createCommonConnection } from '../common/server';
+import { Connection, _, _Connection, Features, WatchDog, createCommonConnection } from '../common/server';
 
 import * as fm from './files';
 import {

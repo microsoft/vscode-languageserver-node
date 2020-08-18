@@ -1526,7 +1526,7 @@ export interface WatchDog {
 	exit(code: number): void;
 }
 
-export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _>(
+export function createCommonConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _>(
 	connectionFactory: (logger: Logger) => ProtocolConnection, watchDog: WatchDog,
 	factories?: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages>,
 ): _Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages> {

@@ -5,7 +5,7 @@
 
 import {
 	MessageReader, MessageWriter, Logger, ConnectionStrategy, ConnectionOptions, ProtocolConnection, WatchDog, InitializeParams, createProtocolConnection,
-	createConnection as createCommonConnection, Connection, Features, _Connection, _
+	createCommonConnection, Connection, Features, _Connection, _
 } from '../common/api';
 
 export * from 'vscode-languageserver-protocol/browser';
