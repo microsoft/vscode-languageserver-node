@@ -292,7 +292,8 @@ export interface SemanticTokensDeltaParams extends WorkDoneProgressParams, Parti
 	textDocument: TextDocumentIdentifier;
 
 	/**
-	 * The previous result id.
+	 * The result id of a previous response. The result Id can either point to a full response
+	 * or a delta response depending on what was recevied last.
 	 */
 	previousResultId: string;
 }
