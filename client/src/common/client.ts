@@ -289,12 +289,12 @@ class DefaultErrorHandler implements ErrorHandler {
 	}
 	public closed(): CloseAction {
 		this.restarts.push(Date.now());
-		if (this.restarts.length < this.maxRestartCount) {
+		if (this.restarts.length <= this.maxRestartCount) {
 			return CloseAction.Restart;
 		} else {
 			let diff = this.restarts[this.restarts.length - 1] - this.restarts[0];
 			if (diff <= 3 * 60 * 1000) {
-				Window.showErrorMessage(`The ${this.name} server crashed ${this.maxRestartCount} times in the last 3 minutes. The server will not be restarted.`);
+				Window.showErrorMessage(`The ${this.name} server crashed ${this.maxRestartCount+1} times in the last 3 minutes. The server will not be restarted.`);
 				return CloseAction.DoNotRestart;
 			} else {
 				this.restarts.shift();
@@ -1429,7 +1429,7 @@ abstract class WorkspaceFeature<RO, PR> implements DynamicFeature<RO> {
 
 	public register(message: MessageSignature, data: RegistrationData<RO>): void {
 		if (message.method !== this.messages.method) {
-			throw new Error(`Register called on wron feature. Requested ${message.method} but reached feature ${this.messages.method}`);
+			throw new Error(`Register called on wrong feature. Requested ${message.method} but reached feature ${this.messages.method}`);
 		}
 		const registration = this.registerLanguageProvider(data.registerOptions);
 		this._registrations.set(data.id, { disposable: registration[0], provider: registration[1] });
@@ -2768,7 +2768,9 @@ export abstract class BaseLanguageClient {
 	}
 
 	public createDefaultErrorHandler(maxRestartCount?: number): ErrorHandler {
-		return new DefaultErrorHandler(this._name, maxRestartCount || 5);
+		if (maxRestartCount && maxRestartCount < 0)
+		  throw new Error(`Invalid maxRestartCount: ${maxRestartCount}`);
+		return new DefaultErrorHandler(this._name, maxRestartCount??4);
 	}
 
 	public set trace(value: Trace) {
