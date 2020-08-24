@@ -16,7 +16,7 @@ import {
 let __noDynamicImport: LocationLink | Declaration | DeclarationLink | Location | undefined;
 
 /**
- * Since 3.6.0
+ * @since 3.6.0
  */
 export interface ImplementationClientCapabilities {
 	/**
@@ -29,7 +29,7 @@ export interface ImplementationClientCapabilities {
 	/**
 	 * The client supports additional metadata in the form of definition links.
 	 *
-	 * Since 3.14.0
+	 * @since 3.14.0
 	 */
 	linkSupport?: boolean;
 }

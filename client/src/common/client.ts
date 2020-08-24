@@ -65,7 +65,7 @@ import {
 	WorkspaceSymbolRegistrationOptions, CodeActionOptions, CodeLensOptions, DocumentFormattingOptions, DocumentRangeFormattingRegistrationOptions,
 	DocumentRangeFormattingOptions, DocumentOnTypeFormattingOptions, RenameOptions, DocumentLinkOptions, CompletionItemTag, DiagnosticTag,
 	DocumentColorRequest, DeclarationRequest, FoldingRangeRequest, ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, SymbolTag,
-	CallHierarchyPrepareRequest, CancellationStrategy, SaveOptions
+	CallHierarchyPrepareRequest, CancellationStrategy, SaveOptions, SemanticTokensRequest
 } from 'vscode-languageserver-protocol';
 
 import type { ColorProviderMiddleware } from './colorProvider';
@@ -77,6 +77,7 @@ import type { FoldingRangeProviderMiddleware } from './foldingRange';
 import type { DeclarationMiddleware } from './declaration';
 import type { SelectionRangeProviderMiddleware } from './selectionRange';
 import type { CallHierarchyMiddleware } from './callHierarchy';
+import type { SemanticTokensMiddleware, SemanticTokensProviders } from './semanticTokens';
 
 import * as c2p from './codeConverter';
 import * as p2c from './protocolConverter';
@@ -484,7 +485,7 @@ export interface _Middleware {
 }
 
 export type Middleware = _Middleware & TypeDefinitionMiddleware & ImplementationMiddleware & ColorProviderMiddleware &
-	FoldingRangeProviderMiddleware & DeclarationMiddleware & SelectionRangeProviderMiddleware & CallHierarchyMiddleware;
+	FoldingRangeProviderMiddleware & DeclarationMiddleware & SelectionRangeProviderMiddleware & CallHierarchyMiddleware & SemanticTokensMiddleware;
 
 export interface LanguageClientOptions {
 	documentSelector?: DocumentSelector | string[];
@@ -1399,6 +1400,14 @@ export abstract class TextDocumentFeature<PO, RO extends TextDocumentRegistratio
 			}
 		}
 		return undefined;
+	}
+
+	protected getAllProviders(): Iterable<PR> {
+		const result: PR[] = [];
+		for (const item of this._registrations.values()) {
+			result.push(item.provider);
+		}
+		return result;
 	}
 }
 
@@ -3339,6 +3348,7 @@ export abstract class BaseLanguageClient {
 	public getFeature(request: typeof SelectionRangeRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<SelectionRangeProvider>;
 	public getFeature(request: typeof TypeDefinitionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<TypeDefinitionProvider>;
 	public getFeature(request: typeof CallHierarchyPrepareRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<CallHierarchyProvider>;
+	public getFeature(request: typeof SemanticTokensRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<SemanticTokensProviders>;
 
 	public getFeature(request: typeof WorkspaceSymbolRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & WorkspaceProviderFeature<WorkspaceSymbolProvider>;
 	public getFeature(request: string): DynamicFeature<any> | undefined {

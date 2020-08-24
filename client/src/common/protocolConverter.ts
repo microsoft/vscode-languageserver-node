@@ -185,6 +185,44 @@ export interface Converter {
 	asSelectionRanges(selectionRanges: undefined | null): undefined;
 	asSelectionRanges(selectionRanges: ls.SelectionRange[] | undefined | null): code.SelectionRange[] | undefined;
 	asSelectionRanges(selectionRanges: ls.SelectionRange[] | undefined | null): code.SelectionRange[] | undefined;
+
+	asSemanticTokensLegend(value: ls.SemanticTokensLegend): code.SemanticTokensLegend;
+
+	asSemanticTokens(value: ls.SemanticTokens): code.SemanticTokens;
+	asSemanticTokens(value: undefined | null): undefined;
+	asSemanticTokens(value: ls.SemanticTokens | undefined | null): code.SemanticTokens | undefined;
+	asSemanticTokens(value: ls.SemanticTokens | undefined | null): code.SemanticTokens | undefined;
+
+	asSemanticTokensEdit(value: ls.SemanticTokensEdit): code.SemanticTokensEdit;
+
+	asSemanticTokensEdits(value: ls.SemanticTokensDelta): code.SemanticTokensEdits;
+	asSemanticTokensEdits(value: undefined | null): undefined;
+	asSemanticTokensEdits(value: ls.SemanticTokensDelta | undefined | null): code.SemanticTokensEdits | undefined;
+	asSemanticTokensEdits(value: ls.SemanticTokensDelta | undefined | null): code.SemanticTokensEdits | undefined;
+
+	asCallHierarchyItem(item: null): undefined;
+	asCallHierarchyItem(item: ls.CallHierarchyItem): code.CallHierarchyItem;
+	asCallHierarchyItem(item: ls.CallHierarchyItem | null): code.CallHierarchyItem | undefined;
+	asCallHierarchyItem(item: ls.CallHierarchyItem | null): code.CallHierarchyItem | undefined;
+
+	asCallHierarchyItems(items: null): undefined;
+	asCallHierarchyItems(items: ls.CallHierarchyItem[]): code.CallHierarchyItem[];
+	asCallHierarchyItems(items: ls.CallHierarchyItem[] | null): code.CallHierarchyItem[] | undefined;
+	asCallHierarchyItems(items: ls.CallHierarchyItem[] | null): code.CallHierarchyItem[] | undefined;
+
+	asCallHierarchyIncomingCall(item: ls.CallHierarchyIncomingCall): code.CallHierarchyIncomingCall;
+
+	asCallHierarchyIncomingCalls(items: null): undefined;
+	asCallHierarchyIncomingCalls(items: ReadonlyArray<ls.CallHierarchyIncomingCall>): code.CallHierarchyIncomingCall[];
+	asCallHierarchyIncomingCalls(items: ReadonlyArray<ls.CallHierarchyIncomingCall> | null): code.CallHierarchyIncomingCall[] | undefined;
+	asCallHierarchyIncomingCalls(items: ReadonlyArray<ls.CallHierarchyIncomingCall> | null): code.CallHierarchyIncomingCall[] | undefined;
+
+	asCallHierarchyOutgoingCall(item: ls.CallHierarchyOutgoingCall): code.CallHierarchyOutgoingCall;
+
+	asCallHierarchyOutgoingCalls(items: null): undefined;
+	asCallHierarchyOutgoingCalls(items: ReadonlyArray<ls.CallHierarchyOutgoingCall>): code.CallHierarchyOutgoingCall[];
+	asCallHierarchyOutgoingCalls(items: ReadonlyArray<ls.CallHierarchyOutgoingCall> | null): code.CallHierarchyOutgoingCall[] | undefined;
+	asCallHierarchyOutgoingCalls(items: ReadonlyArray<ls.CallHierarchyOutgoingCall> | null): code.CallHierarchyOutgoingCall[] | undefined;
 }
 
 export interface URIConverter {
@@ -976,6 +1014,100 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return result;
 	}
 
+	//----- call hierarchy
+
+	function asCallHierarchyItem(item: null): undefined;
+	function asCallHierarchyItem(item: ls.CallHierarchyItem): code.CallHierarchyItem;
+	function asCallHierarchyItem(item: ls.CallHierarchyItem | null): code.CallHierarchyItem | undefined;
+	function asCallHierarchyItem(item: ls.CallHierarchyItem | null): code.CallHierarchyItem | undefined {
+		if (item === null) {
+			return undefined;
+		}
+		let result = new code.CallHierarchyItem(
+			asSymbolKind(item.kind),
+			item.name,
+			item.detail || '',
+			asUri(item.uri),
+			asRange(item.range),
+			asRange(item.selectionRange)
+		);
+		if (item.tags !== undefined) { result.tags = asSymbolTags(item.tags); }
+		return result;
+	}
+
+	function asCallHierarchyItems(items: null): undefined;
+	function asCallHierarchyItems(items: ls.CallHierarchyItem[]): code.CallHierarchyItem[];
+	function asCallHierarchyItems(items: ls.CallHierarchyItem[] | null): code.CallHierarchyItem[] | undefined;
+	function asCallHierarchyItems(items: ls.CallHierarchyItem[] | null): code.CallHierarchyItem[] | undefined {
+		if (items === null) {
+			return undefined;
+		}
+		return items.map(item => asCallHierarchyItem(item));
+	}
+
+	function asCallHierarchyIncomingCall(item: ls.CallHierarchyIncomingCall): code.CallHierarchyIncomingCall {
+		return new code.CallHierarchyIncomingCall(
+			asCallHierarchyItem(item.from),
+			asRanges(item.fromRanges)
+		);
+	}
+	function asCallHierarchyIncomingCalls(items: null): undefined;
+	function asCallHierarchyIncomingCalls(items: ReadonlyArray<ls.CallHierarchyIncomingCall>): code.CallHierarchyIncomingCall[];
+	function asCallHierarchyIncomingCalls(items: ReadonlyArray<ls.CallHierarchyIncomingCall> | null): code.CallHierarchyIncomingCall[] | undefined;
+	function asCallHierarchyIncomingCalls(items: ReadonlyArray<ls.CallHierarchyIncomingCall> | null): code.CallHierarchyIncomingCall[] | undefined {
+		if (items === null) {
+			return undefined;
+		}
+		return items.map(item => asCallHierarchyIncomingCall(item));
+	}
+
+	function asCallHierarchyOutgoingCall(item: ls.CallHierarchyOutgoingCall): code.CallHierarchyOutgoingCall {
+		return new code.CallHierarchyOutgoingCall(
+			asCallHierarchyItem(item.to),
+			asRanges(item.fromRanges)
+		);
+	}
+
+	function asCallHierarchyOutgoingCalls(items: null): undefined;
+	function asCallHierarchyOutgoingCalls(items: ReadonlyArray<ls.CallHierarchyOutgoingCall>): code.CallHierarchyOutgoingCall[];
+	function asCallHierarchyOutgoingCalls(items: ReadonlyArray<ls.CallHierarchyOutgoingCall> | null): code.CallHierarchyOutgoingCall[] | undefined;
+	function asCallHierarchyOutgoingCalls(items: ReadonlyArray<ls.CallHierarchyOutgoingCall> | null): code.CallHierarchyOutgoingCall[] | undefined {
+		if (items === null) {
+			return undefined;
+		}
+		return items.map(item => asCallHierarchyOutgoingCall(item));
+	}
+
+	//----- semantic tokens
+
+	function asSemanticTokens(value: ls.SemanticTokens): code.SemanticTokens;
+	function asSemanticTokens(value: undefined | null): undefined;
+	function asSemanticTokens(value: ls.SemanticTokens | undefined | null): code.SemanticTokens | undefined;
+	function asSemanticTokens(value: ls.SemanticTokens | undefined | null): code.SemanticTokens | undefined {
+		if (value === undefined || value === null) {
+			return undefined;
+		}
+		return new code.SemanticTokens(new Uint32Array(value.data), value.resultId);
+	}
+
+	function asSemanticTokensEdit(value: ls.SemanticTokensEdit): code.SemanticTokensEdit {
+		return new code.SemanticTokensEdit(value.start, value.deleteCount, value.data !== undefined ? new Uint32Array(value.data) : undefined);
+	}
+
+	function asSemanticTokensEdits(value: ls.SemanticTokensDelta): code.SemanticTokensEdits;
+	function asSemanticTokensEdits(value: undefined | null): undefined;
+	function asSemanticTokensEdits(value: ls.SemanticTokensDelta | undefined | null): code.SemanticTokensEdits | undefined;
+	function asSemanticTokensEdits(value: ls.SemanticTokensDelta | undefined | null): code.SemanticTokensEdits | undefined {
+		if (value === undefined || value === null) {
+			return undefined;
+		}
+		return new code.SemanticTokensEdits(value.edits.map(asSemanticTokensEdit), value.resultId);
+	}
+
+	function asSemanticTokensLegend(value: ls.SemanticTokensLegend): code.SemanticTokensLegend {
+		return value;
+	}
+
 	return {
 		asUri,
 		asDiagnostics,
@@ -1028,6 +1160,16 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asColorPresentation,
 		asColorPresentations,
 		asSelectionRange,
-		asSelectionRanges
+		asSelectionRanges,
+		asSemanticTokensLegend,
+		asSemanticTokens,
+		asSemanticTokensEdit,
+		asSemanticTokensEdits,
+		asCallHierarchyItem,
+		asCallHierarchyItems,
+		asCallHierarchyIncomingCall,
+		asCallHierarchyIncomingCalls,
+		asCallHierarchyOutgoingCall,
+		asCallHierarchyOutgoingCalls
 	};
 }

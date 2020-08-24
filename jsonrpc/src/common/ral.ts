@@ -3,8 +3,8 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { Disposable } from './disposable';
-import { ContentTypeEncoder, ContentTypeDecoder } from './encoding';
+import type { Disposable } from './disposable';
+import type { ContentTypeEncoder, ContentTypeDecoder } from './encoding';
 
 interface _MessageBuffer {
 

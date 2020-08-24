@@ -3,35 +3,39 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { Proposed } from 'vscode-languageserver-protocol';
+import {
+	SemanticTokens, SemanticTokensPartialResult, SemanticTokensDelta, SemanticTokensDeltaPartialResult, SemanticTokensParams,
+	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest
+} from 'vscode-languageserver-protocol';
+
 import type { Feature, _Languages, ServerRequestHandler } from './server';
 
-export interface SemanticTokens {
+export interface SemanticTokensFeatureShape {
 	semanticTokens: {
-		on(handler: ServerRequestHandler<Proposed.SemanticTokensParams, Proposed.SemanticTokens, Proposed.SemanticTokensPartialResult, void>): void;
-		onEdits(handler: ServerRequestHandler<Proposed.SemanticTokensDeltaParams, Proposed.SemanticTokensDelta | Proposed.SemanticTokens, Proposed.SemanticTokensDeltaPartialResult | Proposed.SemanticTokensDeltaPartialResult, void>): void;
-		onRange(handler: ServerRequestHandler<Proposed.SemanticTokensRangeParams, Proposed.SemanticTokens, Proposed.SemanticTokensPartialResult, void>): void;
+		on(handler: ServerRequestHandler<SemanticTokensParams, SemanticTokens, SemanticTokensPartialResult, void>): void;
+		onDelta(handler: ServerRequestHandler<SemanticTokensDeltaParams, SemanticTokensDelta | SemanticTokens, SemanticTokensDeltaPartialResult | SemanticTokensDeltaPartialResult, void>): void;
+		onRange(handler: ServerRequestHandler<SemanticTokensRangeParams, SemanticTokens, SemanticTokensPartialResult, void>): void;
 	}
 }
 
-export const SemanticTokensFeature: Feature<_Languages, SemanticTokens> = (Base) => {
+export const SemanticTokensFeature: Feature<_Languages, SemanticTokensFeatureShape> = (Base) => {
 	return class extends Base {
 		public get semanticTokens() {
 			return {
-				on: (handler: ServerRequestHandler<Proposed.SemanticTokensParams, Proposed.SemanticTokens, Proposed.SemanticTokensPartialResult, void>): void => {
-					const type = Proposed.SemanticTokensRequest.type;
+				on: (handler: ServerRequestHandler<SemanticTokensParams, SemanticTokens, SemanticTokensPartialResult, void>): void => {
+					const type = SemanticTokensRequest.type;
 					this.connection.onRequest(type, (params, cancel) => {
 						return handler(params, cancel, this.attachWorkDoneProgress(params), this.attachPartialResultProgress(type, params));
 					});
 				},
-				onEdits: (handler: ServerRequestHandler<Proposed.SemanticTokensDeltaParams, Proposed.SemanticTokensDelta | Proposed.SemanticTokens, Proposed.SemanticTokensDeltaPartialResult | Proposed.SemanticTokensDeltaPartialResult, void>): void => {
-					const type = Proposed.SemanticTokensDeltaRequest.type;
+				onDelta: (handler: ServerRequestHandler<SemanticTokensDeltaParams, SemanticTokensDelta | SemanticTokens, SemanticTokensDeltaPartialResult | SemanticTokensDeltaPartialResult, void>): void => {
+					const type = SemanticTokensDeltaRequest.type;
 					this.connection.onRequest(type, (params, cancel) => {
 						return handler(params, cancel, this.attachWorkDoneProgress(params), this.attachPartialResultProgress(type, params));
 					});
 				},
-				onRange: (handler: ServerRequestHandler<Proposed.SemanticTokensRangeParams, Proposed.SemanticTokens, Proposed.SemanticTokensPartialResult, void>): void => {
-					const type = Proposed.SemanticTokensRangeRequest.type;
+				onRange: (handler: ServerRequestHandler<SemanticTokensRangeParams, SemanticTokens, SemanticTokensPartialResult, void>): void => {
+					const type = SemanticTokensRangeRequest.type;
 					this.connection.onRequest(type, (params, cancel) => {
 						return handler(params, cancel, this.attachWorkDoneProgress(params), this.attachPartialResultProgress(type, params));
 					});
@@ -96,7 +100,7 @@ export class SemanticTokensBuilder {
 		this.initialize();
 	}
 
-	public build(): Proposed.SemanticTokens {
+	public build(): SemanticTokens {
 		this._prevData = undefined;
 		return {
 			resultId: this.id,
@@ -108,7 +112,7 @@ export class SemanticTokensBuilder {
 		return this._prevData !== undefined;
 	}
 
-	public buildEdits(): Proposed.SemanticTokens | Proposed.SemanticTokensDelta {
+	public buildEdits(): SemanticTokens | SemanticTokensDelta {
 		if (this._prevData !== undefined) {
 			const prevDataLength = this._prevData.length;
 			const dataLength = this._data.length;
@@ -123,7 +127,7 @@ export class SemanticTokensBuilder {
 					endIndex++;
 				}
 				const newData = this._data.slice(startIndex, dataLength - endIndex);
-				const result: Proposed.SemanticTokensDelta = {
+				const result: SemanticTokensDelta = {
 					resultId: this.id,
 					edits: [
 						{ start: startIndex, deleteCount: prevDataLength - endIndex - startIndex, data: newData }

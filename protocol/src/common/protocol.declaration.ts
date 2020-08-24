@@ -16,7 +16,7 @@ import {
 let __noDynamicImport: LocationLink | Declaration | DeclarationLink | Location | undefined;
 
 /**
- * Since 3.14.0
+ * @since 3.14.0
  */
 export interface DeclarationClientCapabilities {
 	/**

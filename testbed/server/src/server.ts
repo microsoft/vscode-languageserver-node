@@ -10,7 +10,8 @@ import {
 	InitializeResult, Location, MarkupKind, MessageActionItem, NotificationType, Position, Range, ResponseError,
 	SignatureHelp, SymbolInformation, SymbolKind, TextDocumentEdit, TextDocuments, TextDocumentSyncKind,
 	TextEdit, VersionedTextDocumentIdentifier, ProposedFeatures, DiagnosticTag, Proposed, InsertTextFormat,
-	SelectionRangeRequest, SelectionRange, InsertReplaceEdit
+	SelectionRangeRequest, SelectionRange, InsertReplaceEdit, SemanticTokensClientCapabilities, SemanticTokensLegend,
+	SemanticTokensBuilder
 } from 'vscode-languageserver/node';
 
 import {
@@ -66,7 +67,7 @@ enum TokenModifiers {
 }
 
 
-function computeLegend(capability: Proposed.SemanticTokensClientCapabilities): Proposed.SemanticTokensLegend {
+function computeLegend(capability: SemanticTokensClientCapabilities): SemanticTokensLegend {
 
 	const clientTokenTypes = new Set<string>(capability.textDocument.semanticTokens.tokenTypes);
 	const clientTokenModifiers = new Set<string>(capability.textDocument.semanticTokens.tokenModifiers);
@@ -108,8 +109,8 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 	}
 
 	return new Promise((resolve, reject) => {
-		const tokenLegend = computeLegend(params.capabilities as Proposed.SemanticTokensClientCapabilities);
-		let result: InitializeResult & { capabilities: Proposed.SemanticTokensServerCapabilities } = {
+		const tokenLegend = computeLegend(params.capabilities as SemanticTokensClientCapabilities);
+		let result: InitializeResult = {
 			capabilities: {
 				textDocumentSync: TextDocumentSyncKind.Full,
 				hoverProvider: true,
@@ -491,19 +492,17 @@ connection.languages.callHierarchy.onPrepare((params) => {
 	return [];
 });
 
-
-
-let tokenBuilders: Map<string, ProposedFeatures.SemanticTokensBuilder> = new Map();
-function getTokenBuilder(document: TextDocument): ProposedFeatures.SemanticTokensBuilder {
+let tokenBuilders: Map<string, SemanticTokensBuilder> = new Map();
+function getTokenBuilder(document: TextDocument): SemanticTokensBuilder {
 	let result = tokenBuilders.get(document.uri);
 	if (result !== undefined) {
 		return result;
 	}
-	result = new ProposedFeatures.SemanticTokensBuilder();
+	result = new SemanticTokensBuilder();
 	tokenBuilders.set(document.uri, result);
 	return result;
 }
-function buildTokens(builder: ProposedFeatures.SemanticTokensBuilder, document: TextDocument) {
+function buildTokens(builder: SemanticTokensBuilder, document: TextDocument) {
 	const text = document.getText();
 	const regexp = /\w+/g;
 	let match: RegExpMatchArray;

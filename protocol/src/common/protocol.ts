@@ -45,11 +45,15 @@ import {
 } from './protocol.progress';
 
 import {
-	CallHierarchyClientCapabilities, CallHierarchyOptions, CallHierarchyRegistrationOptions,
-	CallHierarchyIncomingCallsParams, CallHierarchyIncomingCallsRequest,
-	CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCallsRequest,
-	CallHierarchyPrepareParams, CallHierarchyPrepareRequest
+	CallHierarchyClientCapabilities, CallHierarchyOptions, CallHierarchyRegistrationOptions, CallHierarchyIncomingCallsParams, CallHierarchyIncomingCallsRequest,
+	CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCallsRequest, CallHierarchyPrepareParams, CallHierarchyPrepareRequest,
 } from './protocol.callHierarchy';
+
+import {
+	SemanticTokenTypes, SemanticTokenModifiers, SemanticTokensLegend, SemanticTokens, SemanticTokensPartialResult, SemanticTokensEdit, SemanticTokensDelta,
+	SemanticTokensDeltaPartialResult, TokenFormat, SemanticTokensClientCapabilities,SemanticTokensOptions, SemanticTokensRegistrationOptions, SemanticTokensParams,
+	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest, SemanticTokensRefreshNotification
+} from './protocol.semanticTokens';
 
 // @ts-ignore: to avoid inlining LocatioLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
@@ -680,8 +684,17 @@ export interface _ServerCapabilities<T = any> {
 
 	/**
 	 * The server provides Call Hierarchy support.
+	 *
+	 * @since 3.16.0 - Proposed state
 	 */
 	callHierarchyProvider?: boolean | CallHierarchyOptions | CallHierarchyRegistrationOptions;
+
+	/**
+	 * The server provides semantic tokens support.
+	 *
+	 * @since 3.16.0 - Proposed state
+	 */
+	semanticTokensProvider?: SemanticTokensOptions | SemanticTokensRegistrationOptions;
 
 	/**
 	 * Experimental server capabilities.
@@ -2779,10 +2792,13 @@ export {
 	SelectionRangeClientCapabilities, SelectionRangeOptions, SelectionRangeParams, SelectionRangeRequest, SelectionRangeRegistrationOptions,
 	WorkDoneProgressBegin, WorkDoneProgressReport, WorkDoneProgressEnd, WorkDoneProgress, WorkDoneProgressCreateParams,
 	WorkDoneProgressCreateRequest, WorkDoneProgressCancelParams, WorkDoneProgressCancelNotification,
-	CallHierarchyClientCapabilities, CallHierarchyOptions, CallHierarchyRegistrationOptions,
-	CallHierarchyIncomingCallsParams, CallHierarchyIncomingCallsRequest,
-	CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCallsRequest,
-	CallHierarchyPrepareParams, CallHierarchyPrepareRequest,
+	// Call Hierarchy
+	CallHierarchyClientCapabilities, CallHierarchyOptions, CallHierarchyRegistrationOptions, CallHierarchyIncomingCallsParams, CallHierarchyIncomingCallsRequest,
+	CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCallsRequest, CallHierarchyPrepareParams, CallHierarchyPrepareRequest,
+	// Semantic Tokene
+	SemanticTokenTypes, SemanticTokenModifiers, SemanticTokensLegend, SemanticTokens, SemanticTokensPartialResult, SemanticTokensEdit, SemanticTokensDelta,
+	SemanticTokensDeltaPartialResult, TokenFormat, SemanticTokensClientCapabilities, SemanticTokensOptions, SemanticTokensRegistrationOptions, SemanticTokensParams,
+	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest, SemanticTokensRefreshNotification
 };
 
 // To be backwards compatible

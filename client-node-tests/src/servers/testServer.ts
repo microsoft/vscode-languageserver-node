@@ -72,7 +72,17 @@ connection.onInitialize((params: InitializeParams): any => {
 		implementationProvider: true,
 		selectionRangeProvider: true,
 		typeDefinitionProvider: true,
-		callHierarchyProvider: true
+		callHierarchyProvider: true,
+		semanticTokensProvider: {
+			legend: {
+				tokenTypes: [],
+				tokenModifiers: []
+			},
+			range: true,
+			full: {
+				delta: true
+			}
+		}
 	};
 	return { capabilities, customResults: { hello: 'world' } };
 });
@@ -243,6 +253,27 @@ connection.languages.callHierarchy.onOutgoingCalls((params) => {
 			fromRanges: [ Range.create(1, 1, 1, 1)]
 		}
 	];
+});
+
+connection.languages.semanticTokens.onRange(() => {
+	return {
+		resultId: '1',
+		data: []
+	};
+});
+
+connection.languages.semanticTokens.on(() => {
+	return {
+		resultId: '2',
+		data: []
+	};
+});
+
+connection.languages.semanticTokens.onDelta(() => {
+	return {
+		resultId: '3',
+		data: []
+	};
 });
 
 // Listen on the connection

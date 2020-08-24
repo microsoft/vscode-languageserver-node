@@ -5,7 +5,7 @@
 
 import { TextDocumentIdentifier, Range } from 'vscode-languageserver-types';
 
-import { ProtocolRequestType } from './messages';
+import { ProtocolRequestType, ProtocolNotificationType0 } from './messages';
 import { PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions, TextDocumentRegistrationOptions, StaticRegistrationOptions } from './protocol';
 
 /**
@@ -179,6 +179,13 @@ export interface SemanticTokensClientCapabilities {
 			dynamicRegistration?: boolean;
 
 			/**
+			 * Whether the client implementation supports a refresh notification to refresh all semantic
+			 * token models. This is useful if a server detects a project wide configuration change which
+			 * requires a re-calculation of all semantic tokens.
+			 */
+			refreshNotification?: boolean;
+
+			/**
 			 * Which requests the client supports and might send to the server
 			 */
 			requests: {
@@ -253,13 +260,6 @@ export interface SemanticTokensOptions extends WorkDoneProgressOptions {
 export interface SemanticTokensRegistrationOptions extends TextDocumentRegistrationOptions, SemanticTokensOptions, StaticRegistrationOptions {
 }
 
-/**
- * @since 3.16.0 - Proposed state
- */
-export interface SemanticTokensServerCapabilities {
-	semanticTokensProvider: SemanticTokensOptions | SemanticTokensRegistrationOptions;
-}
-
 //------- 'textDocument/semanticTokens' -----
 
 /**
@@ -329,4 +329,11 @@ export interface SemanticTokensRangeParams extends WorkDoneProgressParams, Parti
 export namespace SemanticTokensRangeRequest {
 	export const method: 'textDocument/semanticTokens/range' = 'textDocument/semanticTokens/range';
 	export const type = new ProtocolRequestType<SemanticTokensRangeParams, SemanticTokens | null, SemanticTokensPartialResult, void, void>(method);
+}
+
+//------- 'textDocument/semanticTokens/refresh' -----
+
+export namespace SemanticTokensRefreshNotification {
+	export const method: `workspace/semanticTokens/refresh` = `workspace/semanticTokens/refresh`;
+	export const type = new ProtocolNotificationType0<void>(method);
 }

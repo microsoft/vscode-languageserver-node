@@ -130,7 +130,17 @@ suite('Client integration', () => {
 				implementationProvider: true,
 				selectionRangeProvider: true,
 				typeDefinitionProvider: true,
-				callHierarchyProvider: true
+				callHierarchyProvider: true,
+				semanticTokensProvider: {
+					legend: {
+						tokenTypes: [],
+						tokenModifiers: []
+					},
+					range: true,
+					full: {
+						delta: true
+					}
+				}
 			},
 			customResults: {
 				'hello': 'world'
@@ -607,6 +617,45 @@ suite('Client integration', () => {
 		};
 		await provider.provideCallHierarchyOutgoingCalls(item, tokenSource.token);
 		middleware.provideCallHierarchyOutgingCalls = undefined;
+		assert.strictEqual(middlewareCalled, true);
+	});
+	test('Semantic Tokens', async () => {
+		const provider = client.getFeature(lsclient.SemanticTokensRequest.method).getProvider(document);
+		const rangeProvider = provider?.range;
+		isDefined(rangeProvider);
+		const rangeResult = (await rangeProvider.provideDocumentRangeSemanticTokens(document, range, tokenSource.token)) as vscode.SemanticTokens;
+		assert.ok(rangeResult !== undefined);
+
+		let middlewareCalled: boolean = false;
+		middleware.provideDocumentRangeSemanticTokens = (d, r, t, n) => {
+			middlewareCalled = true;
+			return n(d, r, t);
+		};
+		await rangeProvider.provideDocumentRangeSemanticTokens(document, range, tokenSource.token);
+		middleware.provideDocumentRangeSemanticTokens = undefined;
+		assert.strictEqual(middlewareCalled, true);
+
+		const fullProvider = provider?.full;
+		isDefined(fullProvider);
+		const fullResult = (await fullProvider.provideDocumentSemanticTokens(document, tokenSource.token)) as vscode.SemanticTokens;
+		assert.ok(fullResult !== undefined);
+
+		middlewareCalled = false;
+		middleware.provideDocumentSemanticTokens = (d, t, n) => {
+			middlewareCalled = true;
+			return n(d, t);
+		};
+		await fullProvider.provideDocumentSemanticTokens(document, tokenSource.token);
+		middleware.provideDocumentSemanticTokens = undefined;
+		assert.strictEqual(middlewareCalled, true);
+
+		middlewareCalled = false;
+		middleware.provideDocumentSemanticTokensEdits = (d, i, t, n) => {
+			middlewareCalled = true;
+			return n(d, i, t);
+		};
+		await fullProvider.provideDocumentSemanticTokensEdits!(document, '2', tokenSource.token);
+		middleware.provideDocumentSemanticTokensEdits = undefined;
 		assert.strictEqual(middlewareCalled, true);
 	});
 });

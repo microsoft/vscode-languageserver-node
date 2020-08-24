@@ -99,6 +99,8 @@ export interface Converter {
 	asDocumentLink(item: code.DocumentLink): proto.DocumentLink;
 
 	asDocumentLinkParams(textDocument: code.TextDocument): proto.DocumentLinkParams;
+
+	asCallHierarchyItem(value: code.CallHierarchyItem): proto.CallHierarchyItem;
 }
 
 export interface URIConverter {
@@ -646,6 +648,19 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		};
 	}
 
+	function asCallHierarchyItem(value: code.CallHierarchyItem): proto.CallHierarchyItem {
+		const result: proto.CallHierarchyItem = {
+			name: value.name,
+			kind: asSymbolKind(value.kind),
+			uri: asUri(value.uri),
+			range: asRange(value.range),
+			selectionRange: asRange(value.selectionRange)
+		};
+		if (value.detail !== undefined && value.detail.length > 0) { result.detail = value.detail; }
+		if (value.tags !== undefined) { result.tags = asSymbolTags(value.tags); }
+		return result;
+	}
+
 	return {
 		asUri,
 		asTextDocumentIdentifier,
@@ -680,6 +695,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asDocumentSymbolParams,
 		asCodeLensParams,
 		asDocumentLink,
-		asDocumentLinkParams
+		asDocumentLinkParams,
+		asCallHierarchyItem
 	};
 }

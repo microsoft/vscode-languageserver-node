@@ -15,7 +15,7 @@ import { DeclarationFeature } from './declaration';
 import { SelectionRangeFeature } from './selectionRange';
 import { ProgressFeature } from './progress';
 import { CallHierarchyFeature } from './callHierarchy';
-import { SemanticTokensFeature } from './semanticTokens.proposed';
+import { SemanticTokensFeature } from './semanticTokens';
 
 export abstract class CommonLanguageClient extends BaseLanguageClient {
 
@@ -39,15 +39,15 @@ export abstract class CommonLanguageClient extends BaseLanguageClient {
 		this.registerFeature(new SelectionRangeFeature(this));
 		this.registerFeature(new ProgressFeature(this));
 		this.registerFeature(new CallHierarchyFeature(this));
+		this.registerFeature(new SemanticTokensFeature(this));
 	}
 }
 
 // Exporting proposed protocol.
 
 export namespace ProposedFeatures {
-	export function createAll(client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
+	export function createAll(_client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
 		let result: (StaticFeature | DynamicFeature<any>)[] = [
-			new SemanticTokensFeature(client)
 		];
 		return result;
 	}
