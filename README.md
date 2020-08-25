@@ -34,6 +34,10 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 
 ## History
 
+## 3.16.0-next.7 Protocol, 6.0.0-next.5 JSON-RPC, 7.0.0-next.9 Client and 7.0.0-next.7 Server.
+
+* Moved semantic tokens out of proposed state.
+
 ## 3.16.0-next.4 Protocol, 6.0.0-next.2 JSON-RPC, 7.0.0-next.5 Client and 7.0.0-next.3 Server.
 
 * split code into common, node and browser to allow using the LSP client and server npm modules in a Web browser via webpack. This is a **breaking change** and might lead to compile / runtime errors if not adopted. Every module has now three different exports which represent the split into common, node and browser. Lets look at `vscode-jsonrpc` for an example: (a) the import `vscode-jsonrpc` will only import the common code, (b) the import `vscode-jsonrpc\node` will import the common and the node code and (c) the import `vscode-jsonrpc\browser` will import the common and browser code.
@@ -67,12 +71,14 @@ After cloning the repository, run `npm install` to install dependencies and `npm
   * new npm package `vscode-languageserver-textdocument` which ships a standard text document implementation with basic incremental update. Server now need to prereq this npm package.
   * deprecated text document implementation in types.
   * this resulted in a small breakage on the server side. Instead of doing `new TextDocuments` you now have to pass in a text document configuration to provide callbacks to create and update a text document. Here are examples in TypeScript and JavaScript
-```typescript
+
+```ts
 import { TextDocuments } from 'vscode-languageserver';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 const documents = new TextDocuments(TextDocument);
 ```
-```javascript
+
+```js
 const server = require("vscode-languageserver");
 const textDocument = require("vscode-languageserver-textdocument");
 const documents = new server.TextDocuments(textDocument.TextDocument);
@@ -137,11 +143,11 @@ const documents = new server.TextDocuments(textDocument.TextDocument);
 ### 4.0.0 Server and Client
 
 * implemented the latest protocol additions. Noteworthy are completion context, extensible completion item and symbol kind as well as markdown support for completion item and signature help. Moved to 4.0.0 version since the introduction of the completion context required a breaking change in the client middleware. The old signature:
-```typescript
+```ts
 provideCompletionItem?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideCompletionItemsSignature) => ProviderResult<VCompletionItem[] | VCompletionList>;
 ```
 contains now an additional argument `context`:
-```typescript
+```ts
 provideCompletionItem?: (this: void, document: TextDocument, position: VPosition, context: VCompletionContext, token: CancellationToken, next: ProvideCompletionItemsSignature) => ProviderResult<VCompletionItem[] | VCompletionList>;
 ```
 
