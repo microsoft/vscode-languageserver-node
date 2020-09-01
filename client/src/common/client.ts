@@ -164,6 +164,7 @@ interface ConnectionCloseHandler {
 
 interface ConnectionOptions {
     cancellationStrategy: CancellationStrategy
+    maxRestartCount?: number
 }
 
 function createConnection(input: MessageReader, output: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): Connection {
@@ -277,7 +278,7 @@ class DefaultErrorHandler implements ErrorHandler {
 
 	private readonly restarts: number[];
 
-	constructor(private name: string) {
+	constructor(private name: string, private maxRestartCount: number) {
 		this.restarts = [];
 	}
 
@@ -289,12 +290,12 @@ class DefaultErrorHandler implements ErrorHandler {
 	}
 	public closed(): CloseAction {
 		this.restarts.push(Date.now());
-		if (this.restarts.length < 5) {
+		if (this.restarts.length <= this.maxRestartCount) {
 			return CloseAction.Restart;
 		} else {
 			let diff = this.restarts[this.restarts.length - 1] - this.restarts[0];
 			if (diff <= 3 * 60 * 1000) {
-				Window.showErrorMessage(`The ${this.name} server crashed 5 times in the last 3 minutes. The server will not be restarted.`);
+				Window.showErrorMessage(`The ${this.name} server crashed ${this.maxRestartCount+1} times in the last 3 minutes. The server will not be restarted.`);
 				return CloseAction.DoNotRestart;
 			} else {
 				this.restarts.shift();
@@ -1437,7 +1438,7 @@ abstract class WorkspaceFeature<RO, PR> implements DynamicFeature<RO> {
 
 	public register(message: MessageSignature, data: RegistrationData<RO>): void {
 		if (message.method !== this.messages.method) {
-			throw new Error(`Register called on wron feature. Requested ${message.method} but reached feature ${this.messages.method}`);
+			throw new Error(`Register called on wrong feature. Requested ${message.method} but reached feature ${this.messages.method}`);
 		}
 		const registration = this.registerLanguageProvider(data.registerOptions);
 		this._registrations.set(data.id, { disposable: registration[0], provider: registration[1] });
@@ -2573,7 +2574,7 @@ export abstract class BaseLanguageClient {
 			initializationOptions: clientOptions.initializationOptions,
 			initializationFailedHandler: clientOptions.initializationFailedHandler,
 			progressOnInitialization: !!clientOptions.progressOnInitialization,
-			errorHandler: clientOptions.errorHandler || new DefaultErrorHandler(this._name),
+			errorHandler: clientOptions.errorHandler || this.createDefaultErrorHandler(clientOptions.connectionOptions?.maxRestartCount),
 			middleware: clientOptions.middleware || {},
 			uriConverters: clientOptions.uriConverters,
 			workspaceFolder: clientOptions.workspaceFolder,
@@ -2775,8 +2776,10 @@ export abstract class BaseLanguageClient {
 		return this._diagnostics;
 	}
 
-	public createDefaultErrorHandler(): ErrorHandler {
-		return new DefaultErrorHandler(this._name);
+	public createDefaultErrorHandler(maxRestartCount?: number): ErrorHandler {
+		if (maxRestartCount && maxRestartCount < 0)
+		  throw new Error(`Invalid maxRestartCount: ${maxRestartCount}`);
+		return new DefaultErrorHandler(this._name, maxRestartCount??4);
 	}
 
 	public set trace(value: Trace) {
