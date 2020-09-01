@@ -2777,9 +2777,10 @@ export abstract class BaseLanguageClient {
 	}
 
 	public createDefaultErrorHandler(maxRestartCount?: number): ErrorHandler {
-		if (maxRestartCount && maxRestartCount < 0)
-		  throw new Error(`Invalid maxRestartCount: ${maxRestartCount}`);
-		return new DefaultErrorHandler(this._name, maxRestartCount??4);
+		if (maxRestartCount !== undefined && maxRestartCount < 0) {
+			throw new Error(`Invalid maxRestartCount: ${maxRestartCount}`);
+		}
+		return new DefaultErrorHandler(this._name, maxRestartCount ?? 4);
 	}
 
 	public set trace(value: Trace) {
