@@ -2155,6 +2155,10 @@ class DocumentOnTypeFormattingFeature extends TextDocumentFeature<DocumentOnType
 	}
 }
 
+interface DefaultBehavior {
+	defaultBehavior: boolean;
+}
+
 class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameRegistrationOptions, RenameProvider> {
 
 	constructor(client: BaseLanguageClient) {
@@ -2165,6 +2169,7 @@ class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameR
 		let rename = ensure(ensure(capabilites, 'textDocument')!, 'rename')!;
 		rename.dynamicRegistration = true;
 		rename.prepareSupport = true;
+		rename.prepareSupportDefaultBehavior = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
@@ -2211,6 +2216,10 @@ class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameR
 						return client.sendRequest(PrepareRenameRequest.type, params, token).then((result) => {
 							if (Range.is(result)) {
 								return client.protocol2CodeConverter.asRange(result);
+							} else if (this.isDefaultBehavior(result)) {
+								return result.defaultBehavior === true
+									? null
+									: Promise.reject(new Error(`The element can't be renamed.`));
 							} else if (result && Range.is(result.range)) {
 								return {
 									range: client.protocol2CodeConverter.asRange(result.range),
@@ -2233,6 +2242,11 @@ class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameR
 				: undefined
 		};
 		return [Languages.registerRenameProvider(options.documentSelector!, provider), provider];
+	}
+
+	private isDefaultBehavior(value: any): value is DefaultBehavior {
+		const candidate: DefaultBehavior = value;
+		return candidate && Is.boolean(candidate.defaultBehavior);
 	}
 }
 

@@ -2596,6 +2596,13 @@ export interface RenameClientCapabilities {
 	 * @since version 3.12.0
 	 */
 	prepareSupport?: boolean;
+
+	/**
+	 * Client supports the default behavior result.
+	 *
+	 * @since version 3.16.0
+	 */
+	prepareSupportDefaultBehavior?: boolean;
 }
 
 /**
@@ -2651,10 +2658,12 @@ export interface PrepareRenameParams extends TextDocumentPositionParams, WorkDon
 
 /**
  * A request to test and perform the setup necessary for a rename.
+ *
+ * @since 3.16 - support for default behavior
  */
 export namespace PrepareRenameRequest {
 	export const method: 'textDocument/prepareRename' = 'textDocument/prepareRename';
-	export const type = new ProtocolRequestType<PrepareRenameParams, Range | { range: Range, placeholder: string } | null, never, void, void>(method);
+	export const type = new ProtocolRequestType<PrepareRenameParams, Range | { range: Range, placeholder: string } | { defaultBehavior: boolean } | null, never, void, void>(method);
 }
 
 //---- Command Execution -------------------------------------------
