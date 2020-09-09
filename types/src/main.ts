@@ -1654,7 +1654,7 @@ export interface CompletionItem {
 	command?: Command;
 
 	/**
-	 * An data entry field that is preserved on a completion item between
+	 * A data entry field that is preserved on a completion item between
 	 * a [CompletionRequest](#CompletionRequest) and a [CompletionResolveRequest]
 	 * (#CompletionResolveRequest)
 	 */
@@ -2460,7 +2460,7 @@ export interface CodeLens {
 	command?: Command;
 
 	/**
-	 * An data entry field that is preserved on a code lens item between
+	 * A data entry field that is preserved on a code lens item between
 	 * a [CodeLensRequest](#CodeLensRequest) and a [CodeLensResolveRequest]
 	 * (#CodeLensResolveRequest)
 	 */
