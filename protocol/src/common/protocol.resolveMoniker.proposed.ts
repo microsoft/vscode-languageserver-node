@@ -6,7 +6,7 @@
 
 import { ProtocolRequestType } from './messages';
 import {
-	TextDocumentRegistrationOptions, TextDocumentPositionParams
+	WorkDoneProgressOptions, WorkDoneProgressParams, PartialResultParams, TextDocumentRegistrationOptions, TextDocumentPositionParams
 } from './protocol';
 
 /**
@@ -90,10 +90,13 @@ export interface Moniker {
 	kind?: MonikerKind;
 }
 
-export interface ResolveMonikerParams extends TextDocumentPositionParams {
+export interface ResolveMonikerOptions extends WorkDoneProgressOptions {
 }
 
-export interface ResolveMonikerRegistrationOptions extends TextDocumentRegistrationOptions {
+export interface ResolveMonikerParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {
+}
+
+export interface ResolveMonikerRegistrationOptions extends TextDocumentRegistrationOptions, ResolveMonikerOptions {
 }
 
 /**
