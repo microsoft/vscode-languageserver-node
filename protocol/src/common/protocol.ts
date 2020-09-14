@@ -55,6 +55,10 @@ import {
 	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest, SemanticTokensRefreshNotification
 } from './protocol.semanticTokens';
 
+import {
+	Moniker, ResolveMonikerParams, ResolveMonikerRegistrationOptions, ResolveMonikerRequest
+} from './protocol.resolveMoniker.proposed';
+
 // @ts-ignore: to avoid inlining LocatioLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
 
@@ -2807,7 +2811,9 @@ export {
 	// Semantic Tokene
 	SemanticTokenTypes, SemanticTokenModifiers, SemanticTokensLegend, SemanticTokens, SemanticTokensPartialResult, SemanticTokensEdit, SemanticTokensDelta,
 	SemanticTokensDeltaPartialResult, TokenFormat, SemanticTokensClientCapabilities, SemanticTokensOptions, SemanticTokensRegistrationOptions, SemanticTokensParams,
-	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest, SemanticTokensRefreshNotification
+	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest, SemanticTokensRefreshNotification,
+	// Resolve moniker support
+	Moniker, ResolveMonikerParams, ResolveMonikerRegistrationOptions, ResolveMonikerRequest
 };
 
 // To be backwards compatible

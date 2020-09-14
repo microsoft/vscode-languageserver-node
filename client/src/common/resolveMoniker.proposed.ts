@@ -40,7 +40,7 @@ export class ResolveMonikerFeature implements DynamicFeature<undefined> {
 				return client.sendRequest(
 					ResolveMonikerRequest.type,
 					client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
-					// TBD,
+					ResolveMonikerFeature.asMoniker,
 					(error) => {
 						return client.handleFailedRequest(ResolveMonikerRequest.type, error, null);
 					}
@@ -68,5 +68,9 @@ export class ResolveMonikerFeature implements DynamicFeature<undefined> {
 		return middleware && middleware.provideSymbolMoniker
 			? middleware.provideSymbolMoniker as ResolveMonikerMiddleware
 			: {};
+	}
+
+	private static asMoniker(monikers: Moniker[]): Moniker[] {
+		return monikers;
 	}
 }
