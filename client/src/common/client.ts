@@ -78,6 +78,7 @@ import type { DeclarationMiddleware } from './declaration';
 import type { SelectionRangeProviderMiddleware } from './selectionRange';
 import type { CallHierarchyMiddleware } from './callHierarchy';
 import type { SemanticTokensMiddleware, SemanticTokensProviders } from './semanticTokens';
+import type { ResolveMonikerMiddleware } from './resolveMoniker.proposed';
 
 import * as c2p from './codeConverter';
 import * as p2c from './protocolConverter';
@@ -486,7 +487,7 @@ export interface _Middleware {
 }
 
 export type Middleware = _Middleware & TypeDefinitionMiddleware & ImplementationMiddleware & ColorProviderMiddleware &
-	FoldingRangeProviderMiddleware & DeclarationMiddleware & SelectionRangeProviderMiddleware & CallHierarchyMiddleware & SemanticTokensMiddleware;
+	FoldingRangeProviderMiddleware & DeclarationMiddleware & SelectionRangeProviderMiddleware & CallHierarchyMiddleware & SemanticTokensMiddleware & ResolveMonikerMiddleware
 
 export interface LanguageClientOptions {
 	documentSelector?: DocumentSelector | string[];
