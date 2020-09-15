@@ -4,24 +4,22 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import {
-	Moniker, ResolveMonikerParams, ResolveMonikerRequest
-} from 'vscode-languageserver-protocol';
+import { Proposed } from 'vscode-languageserver-protocol';
 
 import type { Feature, _Languages, ServerRequestHandler } from './server';
 
-export interface ResolveMonikerFeatureShape {
+export interface MonikerFeatureShape {
 	resolveMoniker: {
-		on(handler: ServerRequestHandler<ResolveMonikerParams, Moniker[], Moniker[], void>): void;
+		on(handler: ServerRequestHandler<Proposed.MonikerParams, Proposed.Moniker[], Proposed.Moniker[], void>): void;
 	}
 }
 
-export const ResolveMonikerFeature : Feature<_Languages, ResolveMonikerFeatureShape> = (Base) => {
+export const MonikerFeature : Feature<_Languages, MonikerFeatureShape> = (Base) => {
 	return class extends Base {
 		public get resolveMoniker() {
 			return {
-				on: (handler: ServerRequestHandler<ResolveMonikerParams, Moniker[], Moniker[], void>): void => {
-					const type = ResolveMonikerRequest.type;
+				on: (handler: ServerRequestHandler<Proposed.MonikerParams, Proposed.Moniker[], Proposed.Moniker[], void>): void => {
+					const type = Proposed.MonikerRequest.type;
 					this.connection.onRequest(type, (params, cancel) => {
 						return handler(params, cancel, this.attachWorkDoneProgress(params), this.attachPartialResultProgress(type, params));
 					});

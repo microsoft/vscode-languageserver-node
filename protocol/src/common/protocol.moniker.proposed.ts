@@ -90,21 +90,41 @@ export interface Moniker {
 	kind?: MonikerKind;
 }
 
-export interface ResolveMonikerOptions extends WorkDoneProgressOptions {
+export interface MonikerClientCapabilities {
+	textDocument?: {
+		moniker?: {
+			/**
+			 * Whether moniker supports dynamic registration. If this is set to `true`
+	 		 * the client supports the new `MonikerRegistrationOptions` return value
+	 		 * for the corresponding server capability as well.
+	 		 */
+			dynamicRegistration?: boolean;
+		}
+	}
 }
 
-export interface ResolveMonikerParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {
+export interface MonikerServerCapabilities {
+	/**
+	 * Whether server supports textDocument/moniker request.
+	 */
+    monikerProvider?: boolean | MonikerRegistrationOptions;
 }
 
-export interface ResolveMonikerRegistrationOptions extends TextDocumentRegistrationOptions, ResolveMonikerOptions {
+export interface MonikerOptions extends WorkDoneProgressOptions {
+}
+
+export interface MonikerParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {
+}
+
+export interface MonikerRegistrationOptions extends TextDocumentRegistrationOptions, MonikerOptions {
 }
 
 /**
- * A request to resolve the moniker of a symbol at a given text document position.
+ * A request to get the moniker of a symbol at a given text document position.
  * The request parameter is of type [TextDocumentPositionParams](#TextDocumentPositionParams).
  * The response is of type [Moniker[]](#Moniker[]).
  */
-export namespace ResolveMonikerRequest {
-	export const method: 'textDocument/resolveMoniker' = 'textDocument/resolveMoniker';
-	export const type = new ProtocolRequestType<ResolveMonikerParams, Moniker[], Moniker[], void, ResolveMonikerRegistrationOptions>(method);
+export namespace MonikerRequest {
+	export const method: 'textDocument/moniker' = 'textDocument/moniker';
+	export const type = new ProtocolRequestType<MonikerParams, Moniker[], Moniker[], void, MonikerRegistrationOptions>(method);
 }
