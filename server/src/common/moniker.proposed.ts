@@ -9,14 +9,14 @@ import { Proposed } from 'vscode-languageserver-protocol';
 import type { Feature, _Languages, ServerRequestHandler } from './server';
 
 export interface MonikerFeatureShape {
-	resolveMoniker: {
+	moniker: {
 		on(handler: ServerRequestHandler<Proposed.MonikerParams, Proposed.Moniker[], Proposed.Moniker[], void>): void;
 	}
 }
 
 export const MonikerFeature : Feature<_Languages, MonikerFeatureShape> = (Base) => {
 	return class extends Base {
-		public get resolveMoniker() {
+		public get moniker() {
 			return {
 				on: (handler: ServerRequestHandler<Proposed.MonikerParams, Proposed.Moniker[], Proposed.Moniker[], void>): void => {
 					const type = Proposed.MonikerRequest.type;
