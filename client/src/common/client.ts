@@ -22,7 +22,7 @@ import {
 } from 'vscode';
 
 import {
-	RAL, Message, MessageSignature, Logger, ErrorCodes, ResponseError,
+	RAL, Message, MessageSignature, Logger, ResponseError,
 	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler,
 	NotificationType, NotificationType0,
 	NotificationHandler, NotificationHandler0, GenericNotificationHandler,
@@ -65,7 +65,7 @@ import {
 	WorkspaceSymbolRegistrationOptions, CodeActionOptions, CodeLensOptions, DocumentFormattingOptions, DocumentRangeFormattingRegistrationOptions,
 	DocumentRangeFormattingOptions, DocumentOnTypeFormattingOptions, RenameOptions, DocumentLinkOptions, CompletionItemTag, DiagnosticTag,
 	DocumentColorRequest, DeclarationRequest, FoldingRangeRequest, ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, SymbolTag,
-	CallHierarchyPrepareRequest, CancellationStrategy, SaveOptions, SemanticTokensRequest
+	CallHierarchyPrepareRequest, CancellationStrategy, SaveOptions, SemanticTokensRequest, LSPErrorCodes
 } from 'vscode-languageserver-protocol';
 
 import type { ColorProviderMiddleware } from './colorProvider';
@@ -3494,9 +3494,9 @@ export abstract class BaseLanguageClient {
 	public handleFailedRequest<T>(type: MessageSignature, error: any, defaultValue: T): T {
 		// If we get a request cancel or a content modified don't log anything.
 		if (error instanceof ResponseError) {
-			if (error.code === ErrorCodes.RequestCancelled) {
+			if (error.code === LSPErrorCodes.RequestCancelled) {
 				throw this.makeCancelError();
-			} else if (error.code === ErrorCodes.ContentModified) {
+			} else if (error.code === LSPErrorCodes.ContentModified) {
 				return defaultValue;
 			}
 		}

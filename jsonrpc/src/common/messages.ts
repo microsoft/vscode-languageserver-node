@@ -46,7 +46,7 @@ export namespace ErrorCodes {
 
 	/**
 	 * This is the start range of JSON RPC reserved error codes.
-	 * It doesn't denote a real error code. No error codes should
+	 * It doesn't denote a real error code. No application error codes should
 	 * be defined between the start and end range. For backwards
 	 * compatibility the `ServerNotInitialized` and the `UnknownErrorCode`
 	 * are left in the range.
@@ -57,11 +57,14 @@ export namespace ErrorCodes {
 	/** @deprecated use  jsonrpcReservedErrorRangeStart */
 	export const serverErrorStart: number = jsonrpcReservedErrorRangeStart;
 
+	export const MessageWriteError: number = -32099;
+	export const MessageReadError: number = -32098;
+
 	export const ServerNotInitialized: number = -32002;
 	export const UnknownErrorCode: number = -32001;
 
 	/**
-	 * This is the start range of JSON RPC reserved error codes.
+	 * This is the end range of JSON RPC reserved error codes.
 	 * It doesn't denote a real error code.
 	 *
 	 * @since 3.16.0
@@ -69,29 +72,6 @@ export namespace ErrorCodes {
 	export const jsonrpcReservedErrorRangeEnd = -32000;
 	/** @deprecated use  jsonrpcReservedErrorRangeEnd */
 	export const serverErrorEnd: number = jsonrpcReservedErrorRangeEnd;
-
-	/**
-	 * This is the start range of LSP reserved error codes.
-	 * It doesn't denote a real error code.
-	 *
-	 * @since 3.16.0
-	 */
-	export const lspReservedErrorRangeStart: number = -32899;
-
-	export const ContentModified: number = -32801;
-	export const RequestCancelled: number = -32800;
-
-	/**
-	 * This is the end range of LSP reserved error codes.
-	 * It doesn't denote a real error code.
-	 *
-	 * @since 3.16.0
-	 */
-	export const lspReservedErrorRangeEnd: number = -32800;
-
-	// Defined by VSCode library.
-	export const MessageWriteError: number = 1;
-	export const MessageReadError: number = 2;
 }
 
 export interface ResponseErrorLiteral<D> {
