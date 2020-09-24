@@ -2432,10 +2432,19 @@ export namespace CodeAction {
 	 * Creates a new code action.
 	 *
 	 * @param title The title of the code action.
+	 * @param kind The kind of the code action.
+	 */
+	export function create(title: string, kind?: CodeActionKind): CodeAction;
+
+	/**
+	 * Creates a new code action.
+	 *
+	 * @param title The title of the code action.
 	 * @param command The command to execute.
 	 * @param kind The kind of the code action.
 	 */
 	export function create(title: string, command: Command, kind?: CodeActionKind): CodeAction;
+
 	/**
 	 * Creates a new code action.
 	 *
@@ -2444,14 +2453,19 @@ export namespace CodeAction {
 	 * @param kind The kind of the code action.
 	 */
 	export function create(title: string, edit: WorkspaceEdit, kind?: CodeActionKind): CodeAction;
-	export function create(title: string, commandOrEdit: Command | WorkspaceEdit, kind?: CodeActionKind): CodeAction {
+
+	export function create(title: string, kindOrCommandOrEdit?: CodeActionKind | Command | WorkspaceEdit, kind?: CodeActionKind): CodeAction {
 		let result: CodeAction = { title };
-		if (Command.is(commandOrEdit)) {
-			result.command = commandOrEdit;
+		let checkKind: boolean = true;
+		if (typeof kindOrCommandOrEdit === 'string') {
+			checkKind = false;
+			result.kind = kindOrCommandOrEdit;
+		} else if (Command.is(kindOrCommandOrEdit)) {
+			result.command = kindOrCommandOrEdit;
 		} else {
-			result.edit = commandOrEdit;
+			result.edit = kindOrCommandOrEdit;
 		}
-		if (kind !== void 0) {
+		if (checkKind && kind !== void 0) {
 			result.kind = kind;
 		}
 		return result;

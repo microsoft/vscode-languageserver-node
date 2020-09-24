@@ -65,7 +65,7 @@ import {
 	WorkspaceSymbolRegistrationOptions, CodeActionOptions, CodeLensOptions, DocumentFormattingOptions, DocumentRangeFormattingRegistrationOptions,
 	DocumentRangeFormattingOptions, DocumentOnTypeFormattingOptions, RenameOptions, DocumentLinkOptions, CompletionItemTag, DiagnosticTag,
 	DocumentColorRequest, DeclarationRequest, FoldingRangeRequest, ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, SymbolTag,
-	CallHierarchyPrepareRequest, CancellationStrategy, SaveOptions, SemanticTokensRequest, LSPErrorCodes
+	CallHierarchyPrepareRequest, CancellationStrategy, SaveOptions, SemanticTokensRequest, LSPErrorCodes, CodeActionResolveRequest
 } from 'vscode-languageserver-protocol';
 
 import type { ColorProviderMiddleware } from './colorProvider';
@@ -390,6 +390,10 @@ export interface ProvideCodeActionsSignature {
 	(this: void, document: TextDocument, range: VRange, context: VCodeActionContext, token: CancellationToken): ProviderResult<(VCommand | VCodeAction)[]>;
 }
 
+export interface ResolveCodeActionSignature {
+	(this: void, item: VCodeAction, token: CancellationToken): ProviderResult<VCodeAction>;
+}
+
 export interface ProvideCodeLensesSignature {
 	(this: void, document: TextDocument, token: CancellationToken): ProviderResult<VCodeLens[]>;
 }
@@ -472,6 +476,7 @@ export interface _Middleware {
 	provideDocumentSymbols?: (this: void, document: TextDocument, token: CancellationToken, next: ProvideDocumentSymbolsSignature) => ProviderResult<VSymbolInformation[] | VDocumentSymbol[]>;
 	provideWorkspaceSymbols?: (this: void, query: string, token: CancellationToken, next: ProvideWorkspaceSymbolsSignature) => ProviderResult<VSymbolInformation[]>;
 	provideCodeActions?: (this: void, document: TextDocument, range: VRange, context: VCodeActionContext, token: CancellationToken, next: ProvideCodeActionsSignature) => ProviderResult<(VCommand | VCodeAction)[]>;
+	resolveCodeAction?: (this: void, item:  VCodeAction, token: CancellationToken, next: ResolveCodeActionSignature) => ProviderResult<VCodeAction>;
 	provideCodeLenses?: (this: void, document: TextDocument, token: CancellationToken, next: ProvideCodeLensesSignature) => ProviderResult<VCodeLens[]>;
 	resolveCodeLens?: (this: void, codeLens: VCodeLens, token: CancellationToken, next: ResolveCodeLensSignature) => ProviderResult<VCodeLens>;
 	provideDocumentFormattingEdits?: (this: void, document: TextDocument, options: VFormattingOptions, token: CancellationToken, next: ProvideDocumentFormattingEditsSignature) => ProviderResult<VTextEdit[]>;
@@ -1885,6 +1890,12 @@ class WorkspaceSymbolFeature extends WorkspaceFeature<WorkspaceSymbolRegistratio
 	}
 }
 
+declare module 'vscode' {
+	export interface CodeActionProvider<T extends CodeAction = CodeAction> {
+		resolveCodeAction?(codeAction: T, token: CancellationToken): ProviderResult<T>;
+	}
+}
+
 class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions, CodeActionRegistrationOptions, CodeActionProvider> {
 
 	constructor(client: BaseLanguageClient) {
@@ -1895,7 +1906,11 @@ class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions,
 		const cap = ensure(ensure(capabilites, 'textDocument')!, 'codeAction')!;
 		cap.dynamicRegistration = true;
 		cap.isPreferredSupport = true;
-		cap.disabledSupupport = true;
+		cap.disabledSupport = true;
+		// We can only resolve the edit property.
+		cap.resolveSupport = {
+			properties: ['edit']
+		};
 		cap.codeActionLiteralSupport = {
 			codeActionKind: {
 				valueSet: [
@@ -1953,7 +1968,24 @@ class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions,
 				return middleware.provideCodeActions
 					? middleware.provideCodeActions(document, range, context, token, _provideCodeActions)
 					: _provideCodeActions(document, range, context, token);
-			}
+			},
+			resolveCodeAction: options.resolveProvider
+				? (item: VCodeAction, token: CancellationToken) => {
+					const client = this._client;
+					const middleware = this._client.clientOptions.middleware!;
+					const resolveCodeAction: ResolveCodeActionSignature = (item, token) => {
+						return client.sendRequest(CodeActionResolveRequest.type, client.code2ProtocolConverter.asCodeAction(item), token).then(
+							client.protocol2CodeConverter.asCodeAction,
+							(error) => {
+								return client.handleFailedRequest(CodeActionResolveRequest.type, error, item);
+							}
+						);
+					};
+					return middleware.resolveCodeAction
+						? middleware.resolveCodeAction(item, token, resolveCodeAction)
+						: resolveCodeAction(item, token);
+				}
+				: undefined
 		};
 		return [Languages.registerCodeActionsProvider(options.documentSelector!, provider,
 			(options.codeActionKinds

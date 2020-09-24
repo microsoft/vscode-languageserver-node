@@ -840,8 +840,6 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return items.map(kind => asCodeActionKind(kind));
 	}
 
-
-
 	function asCodeAction(item: ls.CodeAction): code.CodeAction;
 	function asCodeAction(item: undefined | null): undefined;
 	function asCodeAction(item: ls.CodeAction | undefined | null): code.CodeAction | undefined;
@@ -851,11 +849,11 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		}
 		let result = new code.CodeAction(item.title);
 		if (item.kind !== undefined) { result.kind = asCodeActionKind(item.kind); }
-		if (item.diagnostics) { result.diagnostics = asDiagnostics(item.diagnostics); }
-		if (item.edit) { result.edit = asWorkspaceEdit(item.edit); }
-		if (item.command) { result.command = asCommand(item.command); }
+		if (item.diagnostics !== undefined) { result.diagnostics = asDiagnostics(item.diagnostics); }
+		if (item.edit !== undefined) { result.edit = asWorkspaceEdit(item.edit); }
+		if (item.command !== undefined) { result.command = asCommand(item.command); }
 		if (item.isPreferred !== undefined) { result.isPreferred = item.isPreferred; }
-		if (item.disabled !== undefined) { result.disabled = item.disabled; }
+		if (item.disabled !== undefined) { result.disabled = { reason: item.disabled.reason }; }
 		return result;
 	}
 

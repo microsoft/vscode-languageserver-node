@@ -2179,7 +2179,20 @@ export interface CodeActionClientCapabilities {
 	 *
 	 * @since 3.16.0
 	 */
-	disabledSupupport?: boolean;
+	disabledSupport?: boolean;
+
+	/**
+	 * Whether the client support resolving additional code action
+	 * properties.
+	 *
+	 * @since 3.16.0
+	 */
+	 resolveSupport?: {
+		 /**
+		  * The properties that a client can resolve lazily.
+		  */
+		 properties: string[];
+	 };
 }
 
 /**
@@ -2213,6 +2226,12 @@ export interface CodeActionOptions extends WorkDoneProgressOptions {
 	 * may list out every specific kind they provide.
 	 */
 	codeActionKinds?: CodeActionKind[];
+
+	/**
+	 * The server provides support to resolve additional
+	 * information for a code action.
+	 */
+	resolveProvider?: boolean;
 }
 
 /**
@@ -2229,6 +2248,16 @@ export namespace CodeActionRequest {
 	export const type = new ProtocolRequestType<CodeActionParams, (Command | CodeAction)[] | null, (Command | CodeAction)[], void, CodeActionRegistrationOptions>(method);
 	/** @deprecated Use CodeActionRequest.type */
 	export const resultType = new ProgressType<(Command | CodeAction)[]>();
+}
+
+/**
+ * Request to resolve additional information for a given code action.The request's
+ * parameter is of type [CodeAction](#CodeAction) the response
+ * is of type [CodeAction](#CodeAction) or a Thenable that resolves to such.
+ */
+export namespace CodeActionResolveRequest {
+	export const method: 'codeAction/resolve' = 'codeAction/resolve';
+	export const type = new ProtocolRequestType<CodeAction, CodeAction, never, void, void>(method);
 }
 
 //---- Workspace Symbol Provider ---------------------------

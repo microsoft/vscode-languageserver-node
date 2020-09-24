@@ -84,6 +84,8 @@ export interface Converter {
 
 	asReferenceParams(textDocument: code.TextDocument, position: code.Position, options: { includeDeclaration: boolean; }): proto.ReferenceParams;
 
+	asCodeAction(item: code.CodeAction): proto.CodeAction;
+
 	asCodeActionContext(context: code.CodeActionContext): proto.CodeActionContext;
 
 	asCommand(item: code.Command): proto.Command;
@@ -589,6 +591,17 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		};
 	}
 
+	function asCodeAction(item: code.CodeAction): proto.CodeAction {
+		let result = proto.CodeAction.create(item.title);
+		if (item.kind !== undefined) { result.kind = asCodeActionKind(item.kind); }
+		if (item.diagnostics !== undefined) { result.diagnostics = asDiagnostics(item.diagnostics); }
+		if (item.edit !== undefined) { throw new Error (`VS Code code actions can only be converted to a protocol code action without an edit.`); }
+		if (item.command !== undefined) { result.command = asCommand(item.command); }
+		if (item.isPreferred !== undefined) { result.isPreferred = item.isPreferred; }
+		if (item.disabled !== undefined) { result.disabled = { reason: item.disabled.reason }; }
+		return result;
+	}
+
 	function asCodeActionContext(context: code.CodeActionContext): proto.CodeActionContext {
 		if (context === undefined || context === null) {
 			return context;
@@ -599,6 +612,14 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		}
 		return proto.CodeActionContext.create(asDiagnostics(context.diagnostics), only);
 	}
+
+	function asCodeActionKind(item: code.CodeActionKind | null | undefined): proto.CodeActionKind | undefined {
+		if (item === undefined || item === null) {
+			return undefined;
+		}
+		return item.value;
+	}
+
 
 	function asCommand(item: code.Command): proto.Command {
 		let result = proto.Command.create(item.title, item.command);
@@ -688,6 +709,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asSymbolTag,
 		asSymbolTags,
 		asReferenceParams,
+		asCodeAction,
 		asCodeActionContext,
 		asCommand,
 		asCodeLens,
