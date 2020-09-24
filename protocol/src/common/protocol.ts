@@ -2169,9 +2169,17 @@ export interface CodeActionClientCapabilities {
 
 	/**
 	 * Whether code action supports the `isPreferred` property.
+	 *
 	 * @since 3.15.0
 	 */
 	isPreferredSupport?: boolean;
+
+	/**
+	 * Whether code action supports the `disabled` property.
+	 *
+	 * @since 3.16.0
+	 */
+	disabledSupupport?: boolean;
 }
 
 /**

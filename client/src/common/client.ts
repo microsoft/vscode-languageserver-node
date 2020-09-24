@@ -1895,6 +1895,7 @@ class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions,
 		const cap = ensure(ensure(capabilites, 'textDocument')!, 'codeAction')!;
 		cap.dynamicRegistration = true;
 		cap.isPreferredSupport = true;
+		cap.disabledSupupport = true;
 		cap.codeActionLiteralSupport = {
 			codeActionKind: {
 				valueSet: [

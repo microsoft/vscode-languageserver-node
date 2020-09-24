@@ -855,6 +855,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (item.edit) { result.edit = asWorkspaceEdit(item.edit); }
 		if (item.command) { result.command = asCommand(item.command); }
 		if (item.isPreferred !== undefined) { result.isPreferred = item.isPreferred; }
+		if (item.disabled !== undefined) { result.disabled = item.disabled; }
 		return result;
 	}
 

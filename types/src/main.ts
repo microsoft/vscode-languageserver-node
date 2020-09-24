@@ -2405,12 +2405,13 @@ export interface CodeAction {
 	 * @since 3.16.0
 	 */
 	disabled?: {
+
 		/**
 		 * Human readable description of why the code action is currently disabled.
 		 *
 		 * This is displayed in the code actions UI.
 		 */
-		readonly reason: string;
+		reason: string;
 	};
 
 	/**
