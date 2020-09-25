@@ -1497,7 +1497,9 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 			preselectSupport: true,
 			tagSupport: { valueSet:  [ CompletionItemTag.Deprecated ] },
 			insertReplaceSupport: true,
-			resolveAdditionalTextEditsSupport: true
+			resolveSupport: {
+				properties: ['documentation', 'detail', 'additionalTextEdits']
+			}
 		};
 		completion.completionItemKind = { valueSet: SupportedCompletionItemKinds };
 	}

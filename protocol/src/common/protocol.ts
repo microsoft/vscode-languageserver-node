@@ -1562,12 +1562,18 @@ export interface CompletionClientCapabilities {
 		insertReplaceSupport?: boolean;
 
 		/**
-		 * Client supports to resolve `additionalTextEdits` in the `completionItem/resolve`
-		 * request. So servers can postpone computing them.
+		 * Indicates which properties a client can resolve lazily on a completion
+		 * item. Before version 3.16.0 only the predefined properties `documentation`
+		 * and `details` could be resolved lazily.
 		 *
 		 * @since 3.16.0 - Proposed state
 		 */
-		resolveAdditionalTextEditsSupport?: boolean;
+		resolveSupport?: {
+			/**
+			 * The properties that a client can resolve lazily.
+			 */
+			properties: string[];
+		};
 	};
 
 	completionItemKind?: {
@@ -2177,15 +2183,15 @@ export interface CodeActionClientCapabilities {
 	/**
 	 * Whether code action supports the `disabled` property.
 	 *
-	 * @since 3.16.0
+	 * @since 3.16.0 - Proposed State
 	 */
 	disabledSupport?: boolean;
 
 	/**
 	 * Whether the client support resolving additional code action
-	 * properties.
+	 * properties via a separate `codeAction/resolve` request.
 	 *
-	 * @since 3.16.0
+	 * @since 3.16.0 - Proposed State
 	 */
 	 resolveSupport?: {
 		 /**
@@ -2230,6 +2236,8 @@ export interface CodeActionOptions extends WorkDoneProgressOptions {
 	/**
 	 * The server provides support to resolve additional
 	 * information for a code action.
+	 *
+	 * @since 3.16.0
 	 */
 	resolveProvider?: boolean;
 }
