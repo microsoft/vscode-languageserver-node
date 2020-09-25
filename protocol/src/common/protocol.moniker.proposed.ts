@@ -3,19 +3,16 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-
 import { ProtocolRequestType } from './messages';
 import {
 	WorkDoneProgressOptions, WorkDoneProgressParams, PartialResultParams, TextDocumentRegistrationOptions, TextDocumentPositionParams
 } from './protocol';
 
 /**
- * Since 3.16.0
+ * Moniker uniqueness level to define scope of the moniker.
+ *
+ * @since 3.16.0
  */
-
- /**
-  * Moniker uniqueness level to define scope of the moniker.
-  */
 export enum UniquenessLevel {
 	/**
 	 * The moniker is only unique inside a document
@@ -45,6 +42,8 @@ export enum UniquenessLevel {
 
 /**
  * The moniker kind.
+ *
+ * @since 3.16.0
  */
 export enum MonikerKind {
 	/**
@@ -66,6 +65,8 @@ export enum MonikerKind {
 
 /**
  * Moniker definition to match LSIF 0.5 moniker definition.
+ *
+ * @since 3.16.0
  */
 export interface Moniker {
 	/**
@@ -107,24 +108,24 @@ export interface MonikerServerCapabilities {
 	/**
 	 * Whether server supports textDocument/moniker request.
 	 */
-    monikerProvider?: boolean | MonikerRegistrationOptions;
+    monikerProvider?: boolean | MonikerOptions | MonikerRegistrationOptions;
 }
 
 export interface MonikerOptions extends WorkDoneProgressOptions {
 }
 
-export interface MonikerParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {
+export interface MonikerRegistrationOptions extends TextDocumentRegistrationOptions, MonikerOptions {
 }
 
-export interface MonikerRegistrationOptions extends TextDocumentRegistrationOptions, MonikerOptions {
+export interface MonikerParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {
 }
 
 /**
  * A request to get the moniker of a symbol at a given text document position.
  * The request parameter is of type [TextDocumentPositionParams](#TextDocumentPositionParams).
- * The response is of type [Moniker[]](#Moniker[]).
+ * The response is of type [Moniker[]](#Moniker[]) or `null`.
  */
 export namespace MonikerRequest {
 	export const method: 'textDocument/moniker' = 'textDocument/moniker';
-	export const type = new ProtocolRequestType<MonikerParams, Moniker[], Moniker[], void, MonikerRegistrationOptions>(method);
+	export const type = new ProtocolRequestType<MonikerParams, Moniker[] | null, Moniker[], void, MonikerRegistrationOptions>(method);
 }

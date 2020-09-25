@@ -25,8 +25,8 @@
 		"shelljs": "^0.8.1",
 		"shx": "^0.2.2",
 		"typescript": "^4.0.3",
-		"webpack": "^4.43.0",
-		"webpack-cli": "^3.3.11",
+		"webpack": "^4.44.2",
+		"webpack-cli": "^3.3.12",
 		"playwright": "^1.2.1",
 		"http-server": "0.12.3"
 	},

@@ -6,6 +6,7 @@
 import { _, Features, _Connection } from './server';
 import { SemanticTokensBuilder } from './semanticTokens';
 import type { WorkDoneProgressReporter, WorkDoneProgressServerReporter, ResultProgressReporter } from './progress';
+
 import * as mk from './moniker.proposed';
 
 export * from 'vscode-languageserver-protocol/';
@@ -19,5 +20,5 @@ export namespace ProposedFeatures {
 		languages: mk.MonikerFeature
 	};
 
-	export type Connection = _Connection<_, _, _, _, _, _, _>;
+	export type Connection = _Connection<_, _, _, _, _, _, mk.MonikerFeatureShape>;
 }
