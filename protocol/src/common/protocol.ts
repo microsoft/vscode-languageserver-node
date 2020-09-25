@@ -55,7 +55,7 @@ import {
 	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest, SemanticTokensRefreshNotification
 } from './protocol.semanticTokens';
 
-// @ts-ignore: to avoid inlining LocatioLink as dynamic import
+// @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
 
 
