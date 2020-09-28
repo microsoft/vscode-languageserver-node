@@ -2425,6 +2425,14 @@ export interface CodeAction {
 	 * executed and then the command.
 	 */
 	command?: Command;
+
+	/**
+	 * A data entry field that is preserved on a code action between
+	 * a `textDocument/codeAction` and a `codeAction/resolve` request.
+	 *
+	 * @since 3.16.0 - Proposed state
+	 */
+	data?: any
 }
 
 export namespace CodeAction {

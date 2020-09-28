@@ -10,6 +10,7 @@ import * as Is from './utils/is';
 import ProtocolCompletionItem from './protocolCompletionItem';
 import ProtocolCodeLens from './protocolCodeLens';
 import ProtocolDocumentLink from './protocolDocumentLink';
+import ProtocolCodeAction from './protocolCodeAction';
 
 // Proposed API.
 declare module 'vscode' {
@@ -847,7 +848,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (item === undefined || item === null) {
 			return undefined;
 		}
-		let result = new code.CodeAction(item.title);
+		let result = new ProtocolCodeAction(item.title, item.data);
 		if (item.kind !== undefined) { result.kind = asCodeActionKind(item.kind); }
 		if (item.diagnostics !== undefined) { result.diagnostics = asDiagnostics(item.diagnostics); }
 		if (item.edit !== undefined) { result.edit = asWorkspaceEdit(item.edit); }

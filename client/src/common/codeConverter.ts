@@ -11,6 +11,7 @@ import ProtocolCompletionItem from './protocolCompletionItem';
 import ProtocolCodeLens from './protocolCodeLens';
 import ProtocolDocumentLink from './protocolDocumentLink';
 import { MarkdownString } from 'vscode';
+import ProtocolCodeAction from './protocolCodeAction';
 
 interface InsertReplaceRange {
 	inserting: code.Range;
@@ -593,6 +594,9 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 
 	function asCodeAction(item: code.CodeAction): proto.CodeAction {
 		let result = proto.CodeAction.create(item.title);
+		if (item instanceof ProtocolCodeAction && item.data !== undefined) {
+			result.data = item.data;
+		}
 		if (item.kind !== undefined) { result.kind = asCodeActionKind(item.kind); }
 		if (item.diagnostics !== undefined) { result.diagnostics = asDiagnostics(item.diagnostics); }
 		if (item.edit !== undefined) { throw new Error (`VS Code code actions can only be converted to a protocol code action without an edit.`); }
