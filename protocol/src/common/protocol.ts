@@ -685,14 +685,14 @@ export interface _ServerCapabilities<T = any> {
 	/**
 	 * The server provides Call Hierarchy support.
 	 *
-	 * @since 3.16.0 - Proposed state
+	 * @since 3.16.0 - proposed state
 	 */
 	callHierarchyProvider?: boolean | CallHierarchyOptions | CallHierarchyRegistrationOptions;
 
 	/**
 	 * The server provides semantic tokens support.
 	 *
-	 * @since 3.16.0 - Proposed state
+	 * @since 3.16.0 - proposed state
 	 */
 	semanticTokensProvider?: SemanticTokensOptions | SemanticTokensRegistrationOptions;
 
@@ -1456,7 +1456,7 @@ export interface PublishDiagnosticsClientCapabilities {
 	/**
 	 * Clients support complex diagnostic codes (e.g. code and target URI).
 	 *
-	 * @since 3.16.0 - Proposed state
+	 * @since 3.16.0 - proposed state
 	 */
 	complexDiagnosticCodeSupport?: boolean;
 }
@@ -1557,7 +1557,7 @@ export interface CompletionClientCapabilities {
 		 * Client support insert replace edit to control different behavior if a
 		 * completion item is inserted in the text or should replace text.
 		 *
-		 * @since 3.16.0 - Proposed state
+		 * @since 3.16.0 - proposed state
 		 */
 		insertReplaceSupport?: boolean;
 
@@ -1566,7 +1566,7 @@ export interface CompletionClientCapabilities {
 		 * item. Before version 3.16.0 only the predefined properties `documentation`
 		 * and `details` could be resolved lazily.
 		 *
-		 * @since 3.16.0 - Proposed state
+		 * @since 3.16.0 - proposed state
 		 */
 		resolveSupport?: {
 			/**
@@ -2093,7 +2093,7 @@ export interface DocumentSymbolClientCapabilities {
 	 * `DocumentSymbol` if `hierarchicalDocumentSymbolSupport` is set to true.
 	 * Clients supporting tags have to handle unknown tags gracefully.
 	 *
-	 * @since 3.16.0 - Proposed state
+	 * @since 3.16.0 - proposed state
 	 */
 	tagSupport?: {
 		/**
@@ -2183,15 +2183,24 @@ export interface CodeActionClientCapabilities {
 	/**
 	 * Whether code action supports the `disabled` property.
 	 *
-	 * @since 3.16.0 - Proposed State
+	 * @since 3.16.0 - proposed state
 	 */
 	disabledSupport?: boolean;
+
+	/**
+	 * Whether code action supports the `data` property which is
+	 * preserved between a `textDocument/codeAction` and a
+	 * `codeAction/resolve` request.
+	 *
+	 * @since 3.16.0 - proposed state
+	 */
+	dataSupport?: boolean;
 
 	/**
 	 * Whether the client support resolving additional code action
 	 * properties via a separate `codeAction/resolve` request.
 	 *
-	 * @since 3.16.0 - Proposed State
+	 * @since 3.16.0 - proposed state
 	 */
 	 resolveSupport?: {
 		 /**
@@ -2300,7 +2309,7 @@ export interface WorkspaceSymbolClientCapabilities {
 	 * The client supports tags on `SymbolInformation`.
 	 * Clients supporting tags have to handle unknown tags gracefully.
 	 *
-	 * @since 3.16.0 - Proposed state
+	 * @since 3.16.0 - proposed state
 	 */
 	tagSupport?: {
 		/**

@@ -12,7 +12,7 @@ export type DocumentUri = string;
 /**
  * A tagging type for string properties that are actually URIs
  *
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0 - proposed state
  */
 export type URI = string;
 
@@ -545,7 +545,7 @@ export type DiagnosticTag = 1 | 2;
 /**
  * Structure to capture more complex diagnostic codes.
  *
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0 - proposed state
  */
 export interface DiagnosticCode {
 	/**
@@ -562,7 +562,7 @@ export interface DiagnosticCode {
 /**
  * The DiagnosticCode namespace provides functions to deal with complex diagnostic codes.
  *
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0 - proposed state
  */
 export namespace DiagnosticCode {
 	/**
@@ -593,7 +593,7 @@ export interface Diagnostic {
 	/**
 	 * The diagnostic's code, which usually appear in the user interface.
 	 *
-	 * @since 3.16.0 Support for `DiagnosticCode` - Proposed state
+	 * @since 3.16.0 Support for `DiagnosticCode` - proposed state
 	 */
 	code?: number | string | DiagnosticCode;
 
@@ -1479,7 +1479,7 @@ export type CompletionItemTag = 1;
 /**
  * A special text edit to provide an insert and a replace operation.
  *
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0 - proposed state
  */
 export interface InsertReplaceEdit {
 	/**
@@ -1501,7 +1501,7 @@ export interface InsertReplaceEdit {
 /**
  * The InsertReplaceEdit namespace provides functions to deal with insert / replace edits.
  *
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0 - proposed state
  */
 export namespace InsertReplaceEdit {
 
@@ -1624,7 +1624,7 @@ export interface CompletionItem {
 	 * *Note 2:* If an `InsertReplaceEdit` is returned the edit's insert range must be a prefix of
 	 * the edit's replace range, that means it must be contained and starting at the same position.
 	 *
-	 * @since 3.16.0 additional type `InsertReplaceEdit` - Proposed state
+	 * @since 3.16.0 additional type `InsertReplaceEdit` - proposed state
 	 */
 	textEdit?: TextEdit | InsertReplaceEdit;
 
@@ -2059,7 +2059,7 @@ export interface SymbolInformation {
 	/**
 	 * Tags for this completion item.
 	 *
-	 * @since 3.16.0 - Proposed state
+	 * @since 3.16.0 - proposed state
 	 */
 	tags?: SymbolTag[];
 
@@ -2142,7 +2142,7 @@ export interface DocumentSymbol {
 	/**
 	 * Tags for this completion item.
 	 *
-	 * @since 3.16.0 - Proposed state
+	 * @since 3.16.0 - proposed state
 	 */
 	tags?: SymbolTag[];
 
@@ -2430,7 +2430,7 @@ export interface CodeAction {
 	 * A data entry field that is preserved on a code action between
 	 * a `textDocument/codeAction` and a `codeAction/resolve` request.
 	 *
-	 * @since 3.16.0 - Proposed state
+	 * @since 3.16.0 - proposed state
 	 */
 	data?: any
 }

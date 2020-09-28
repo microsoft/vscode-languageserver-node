@@ -1909,6 +1909,7 @@ class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions,
 		cap.dynamicRegistration = true;
 		cap.isPreferredSupport = true;
 		cap.disabledSupport = true;
+		cap.dataSupport = true;
 		// We can only resolve the edit property.
 		cap.resolveSupport = {
 			properties: ['edit']
