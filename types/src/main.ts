@@ -624,7 +624,7 @@ export interface Diagnostic {
 
 	/**
 	 * A data entry field that is preserved between a `textDocument/publishDiagnostics`
-	 * and `textDocument/codeAction` request.
+	 * notification and `textDocument/codeAction` request.
 	 *
 	 * @since 3.16.0 - proposed state
 	 */
