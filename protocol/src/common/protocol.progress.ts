@@ -13,8 +13,8 @@ export interface WorkDoneProgressClientCapabilities {
 	 */
 	window?: {
 		/**
-		 * Whether client supports handling progress notifications. If set servers are allowed to
-		 * report in `workDoneProgress` property in the request specific server capabilities.
+		 * Whether client supports server initiated progress using the
+		 * `window/workDoneProgress/create` request.
 		 *
 		 * Since 3.15.0
 		 */
