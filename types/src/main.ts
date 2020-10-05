@@ -621,6 +621,14 @@ export interface Diagnostic {
 	 * a scope collide all definitions can be marked via this property.
 	 */
 	relatedInformation?: DiagnosticRelatedInformation[];
+
+	/**
+	 * A data entry field that is preserved between a `textDocument/publishDiagnostics`
+	 * and `textDocument/codeAction` request.
+	 *
+	 * @since 3.16.0 - proposed state
+	 */
+	data?: unknown;
 }
 
 /**
@@ -2432,7 +2440,7 @@ export interface CodeAction {
 	 *
 	 * @since 3.16.0 - proposed state
 	 */
-	data?: any
+	data?: unknown;
 }
 
 export namespace CodeAction {

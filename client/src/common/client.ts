@@ -3456,6 +3456,7 @@ export abstract class BaseLanguageClient {
 		diagnostics.versionSupport = false;
 		diagnostics.tagSupport = { valueSet: [ DiagnosticTag.Unnecessary, DiagnosticTag.Deprecated ] };
 		diagnostics.complexDiagnosticCodeSupport = true;
+		diagnostics.dataSupport = true;
 		for (let feature of this._features) {
 			feature.fillClientCapabilities(result);
 		}

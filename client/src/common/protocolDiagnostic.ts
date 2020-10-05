@@ -5,12 +5,12 @@
 
 import * as vscode from 'vscode';
 
-export default class ProtocolCodeAction extends vscode.CodeAction {
+export default class ProtocolDiagnostic extends vscode.Diagnostic {
 
 	public readonly data: unknown | undefined;
 
-	constructor(title: string, data: unknown | undefined) {
-		super(title);
+	constructor(range: vscode.Range, message: string, severity: vscode.DiagnosticSeverity, data: unknown | undefined) {
+		super(range, message, severity);
 		this.data = data;
 	}
 }

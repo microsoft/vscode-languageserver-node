@@ -12,6 +12,7 @@ import ProtocolCodeLens from './protocolCodeLens';
 import ProtocolDocumentLink from './protocolDocumentLink';
 import { MarkdownString } from 'vscode';
 import ProtocolCodeAction from './protocolCodeAction';
+import ProtocolDiagnostic from './protocolDiagnostic';
 
 interface InsertReplaceRange {
 	inserting: code.Range;
@@ -423,6 +424,9 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 
 	function asDiagnostic(item: code.Diagnostic): proto.Diagnostic {
 		let result: proto.Diagnostic = proto.Diagnostic.create(asRange(item.range), item.message);
+		if (item instanceof ProtocolDiagnostic && item.data !== undefined) {
+			result.data = item.data;
+		}
 		if (Is.number(item.severity)) { result.severity = asDiagnosticSeverity(item.severity); }
 		result.code = asDiagnosticCode(item.code);
 		{if (Array.isArray(item.tags)) { result.tags = asDiagnosticTags(item.tags); }}

@@ -1459,6 +1459,15 @@ export interface PublishDiagnosticsClientCapabilities {
 	 * @since 3.16.0 - proposed state
 	 */
 	complexDiagnosticCodeSupport?: boolean;
+
+	/**
+	 * Whether code action supports the `data` property which is
+	 * preserved between a `textDocument/publishDiagnostics` and
+	 * `textDocument/codeAction` request.
+	 *
+	 * @since 3.16.0 - proposed state
+	 */
+	dataSupport?: boolean;
 }
 
 /**

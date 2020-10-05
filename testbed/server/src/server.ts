@@ -241,7 +241,8 @@ function validate(document: TextDocument): Diagnostic[] {
 		message: "A error message",
 		tags: [
 			DiagnosticTag.Unnecessary
-		]
+		],
+		data: '11316630-392c-4227-a2c7-3b26cd68f241'
 	}];
 }
 
@@ -529,7 +530,7 @@ connection.languages.semanticTokens.on((params) => {
 	return builder.build();
 });
 
-connection.languages.semanticTokens.onEdits((params) => {
+connection.languages.semanticTokens.onDelta((params) => {
 	const document = documents.get(params.textDocument.uri);
 	if (document === undefined) {
 		return { edits: [] };
