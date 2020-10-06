@@ -2110,6 +2110,14 @@ export interface DocumentSymbolClientCapabilities {
 		 */
 		valueSet: SymbolTag[]
 	}
+
+	/**
+	 * The client supports an additional label presented in the UI when
+	 * registering a document symbol provider.
+	 *
+	 * @since 3.16.0
+	 */
+	labelSupport?: boolean;
 }
 
 /**
@@ -2126,6 +2134,13 @@ export interface DocumentSymbolParams extends WorkDoneProgressParams, PartialRes
  * Provider options for a [DocumentSymbolRequest](#DocumentSymbolRequest).
  */
 export interface DocumentSymbolOptions extends WorkDoneProgressOptions {
+	/**
+	 * A human-readable string that is shown when multiple outlines trees
+	 * are shown for the same document.
+	 *
+	 * @since 3.16.0 - proposed state
+	 */
+	label?: string;
 }
 
 /**

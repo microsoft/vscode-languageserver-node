@@ -18,7 +18,7 @@ import {
 	WorkspaceFolder as VWorkspaceFolder, CompletionContext as VCompletionContext, ConfigurationChangeEvent, CompletionItemProvider, HoverProvider, SignatureHelpProvider,
 	DefinitionProvider, ReferenceProvider, DocumentHighlightProvider, CodeActionProvider, DocumentSymbolProvider, CodeLensProvider, DocumentFormattingEditProvider,
 	DocumentRangeFormattingEditProvider, OnTypeFormattingEditProvider, RenameProvider, DocumentLinkProvider, DocumentColorProvider, DeclarationProvider,
-	FoldingRangeProvider, ImplementationProvider, SelectionRangeProvider, TypeDefinitionProvider, WorkspaceSymbolProvider, CallHierarchyProvider
+	FoldingRangeProvider, ImplementationProvider, SelectionRangeProvider, TypeDefinitionProvider, WorkspaceSymbolProvider, CallHierarchyProvider, DocumentSymbolProviderMetadata
 } from 'vscode';
 
 import {
@@ -1797,6 +1797,7 @@ class DocumentSymbolFeature extends TextDocumentFeature<boolean | DocumentSymbol
 		symbolCapabilities.tagSupport = {
 			valueSet: SupportedSymbolTags
 		};
+		symbolCapabilities.labelSupport = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
@@ -1807,7 +1808,7 @@ class DocumentSymbolFeature extends TextDocumentFeature<boolean | DocumentSymbol
 		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): [Disposable, DocumentSymbolProvider] {
+	protected registerLanguageProvider(options: DocumentSymbolRegistrationOptions): [Disposable, DocumentSymbolProvider] {
 		const provider: DocumentSymbolProvider = {
 			provideDocumentSymbols: (document, token) => {
 				const client = this._client;
@@ -1839,7 +1840,8 @@ class DocumentSymbolFeature extends TextDocumentFeature<boolean | DocumentSymbol
 					: _provideDocumentSymbols(document, token);
 			}
 		};
-		return [Languages.registerDocumentSymbolProvider(options.documentSelector!, provider), provider];
+		const metaData: DocumentSymbolProviderMetadata | undefined = options.label !== undefined ? { label: options.label } : undefined;
+		return [Languages.registerDocumentSymbolProvider(options.documentSelector!, provider, metaData), provider];
 	}
 }
 
