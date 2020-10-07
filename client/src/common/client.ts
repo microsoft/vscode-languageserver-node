@@ -517,6 +517,9 @@ export interface LanguageClientOptions {
 	};
 	workspaceFolder?: VWorkspaceFolder;
 	connectionOptions?: ConnectionOptions;
+	markdown?: {
+		isTrusted?: boolean;
+	}
 }
 
 interface ResolvedClientOptions {
@@ -537,6 +540,9 @@ interface ResolvedClientOptions {
 	};
 	workspaceFolder?: VWorkspaceFolder;
 	connectionOptions?: ConnectionOptions;
+	markdown: {
+		isTrusted: boolean;
+	}
 }
 
 export enum State {
@@ -2616,6 +2622,11 @@ export abstract class BaseLanguageClient {
 
 		clientOptions = clientOptions || {};
 
+		const markdown = { isTrusted: false };
+		if (clientOptions.markdown !== undefined && clientOptions.markdown.isTrusted === true) {
+			markdown.isTrusted = true;
+		}
+
 		this._clientOptions = {
 			documentSelector: clientOptions.documentSelector || [],
 			synchronize: clientOptions.synchronize || {},
@@ -2630,7 +2641,8 @@ export abstract class BaseLanguageClient {
 			middleware: clientOptions.middleware || {},
 			uriConverters: clientOptions.uriConverters,
 			workspaceFolder: clientOptions.workspaceFolder,
-			connectionOptions: clientOptions.connectionOptions
+			connectionOptions: clientOptions.connectionOptions,
+			markdown
 		};
 		this._clientOptions.synchronize = this._clientOptions.synchronize || {};
 
@@ -2669,7 +2681,7 @@ export abstract class BaseLanguageClient {
 			},
 		};
 		this._c2p = c2p.createConverter(clientOptions.uriConverters ? clientOptions.uriConverters.code2Protocol : undefined);
-		this._p2c = p2c.createConverter(clientOptions.uriConverters ? clientOptions.uriConverters.protocol2Code : undefined);
+		this._p2c = p2c.createConverter(clientOptions.uriConverters ? clientOptions.uriConverters.protocol2Code : undefined, this._clientOptions.markdown.isTrusted);
 		this._syncedDocuments = new Map<string, TextDocument>();
 		this.registerBuiltinFeatures();
 	}

@@ -243,7 +243,9 @@ namespace CodeBlock {
 	}
 }
 
-export function createConverter(uriConverter?: URIConverter): Converter {
+export function createConverter(uriConverter: URIConverter | undefined, trustMarkdown: boolean | undefined): Converter {
+
+	trustMarkdown = !trustMarkdown;
 
 	const nullConverter = (value: string) => code.Uri.parse(value);
 
@@ -348,14 +350,14 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 
 	function asHoverContent(value: ls.MarkedString | ls.MarkedString[] | ls.MarkupContent): code.MarkdownString | code.MarkdownString[] {
 		if (Is.string(value)) {
-			return new code.MarkdownString(value);
+			return asMarkdownString(value);
 		} else if (CodeBlock.is(value)) {
-			let result = new code.MarkdownString();
+			let result = asMarkdownString();
 			return result.appendCodeblock(value.value, value.language);
 		} else if (Array.isArray(value)) {
 			let result: code.MarkdownString[] = [];
 			for (let element of value) {
-				let item = new code.MarkdownString();
+				let item = asMarkdownString();
 				if (CodeBlock.is(element)) {
 					item.appendCodeblock(element.value, element.language);
 				} else {
@@ -368,13 +370,13 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			let result: code.MarkdownString;
 			switch (value.kind) {
 				case ls.MarkupKind.Markdown:
-					return new code.MarkdownString(value.value);
+					return asMarkdownString(value.value);
 				case ls.MarkupKind.PlainText:
-					result = new code.MarkdownString();
+					result = asMarkdownString();
 					result.appendText(value.value);
 					return result;
 				default:
-					result = new code.MarkdownString();
+					result = asMarkdownString();
 					result.appendText(`Unsupported Markup content received. Kind is: ${value.kind}`);
 					return result;
 			}
@@ -387,13 +389,21 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		} else {
 			switch (value.kind) {
 				case ls.MarkupKind.Markdown:
-					return new code.MarkdownString(value.value);
+					return asMarkdownString(value.value);
 				case ls.MarkupKind.PlainText:
 					return value.value;
 				default:
 					return `Unsupported Markup content received. Kind is: ${value.kind}`;
 			}
 		}
+	}
+
+	function asMarkdownString(value?: string): code.MarkdownString {
+		const result = new code.MarkdownString(value);
+		if (trustMarkdown === true) {
+			result.isTrusted = trustMarkdown;
+		}
+		return result;
 	}
 
 	function asHover(hover: ls.Hover): code.Hover;

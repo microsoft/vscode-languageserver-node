@@ -15,7 +15,7 @@ import * as vscode from 'vscode';
 import { CompletionItemTag, SymbolTag } from 'vscode-languageserver-protocol';
 
 const c2p: codeConverter.Converter = codeConverter.createConverter();
-const p2c: protocolConverter.Converter = protocolConverter.createConverter();
+const p2c: protocolConverter.Converter = protocolConverter.createConverter(undefined, false);
 
 interface InsertReplaceRange {
 	inserting: vscode.Range;
@@ -919,7 +919,7 @@ suite('Protocol Converter', () => {
 	test('Uri Rewrite', () => {
 		let converter = protocolConverter.createConverter((value: string) => {
 			return vscode.Uri.parse(`${value}.vscode`);
-		});
+		}, false);
 
 		let result = converter.asUri('file://localhost/folder/file');
 		strictEqual('file://localhost/folder/file.vscode', result.toString());
