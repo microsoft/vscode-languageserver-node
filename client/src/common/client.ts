@@ -3288,7 +3288,12 @@ export abstract class BaseLanguageClient {
 		this._resolvedConnection = undefined;
 		if (action === CloseAction.DoNotRestart) {
 			this.error('Connection to server got closed. Server will not be restarted.');
-			this.state = ClientState.Stopped;
+			if (this.state === ClientState.Starting) {
+				this._onReadyCallbacks.reject(new Error(`Connection to server got closed. Server will not be restarted.`));
+				this.state = ClientState.StartFailed;
+			} else {
+				this.state = ClientState.Stopped;
+			}
 			this.cleanUp(false, true);
 		} else if (action === CloseAction.Restart) {
 			this.info('Connection to server got closed. Server will restart.');

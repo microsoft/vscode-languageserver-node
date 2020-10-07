@@ -1,4 +1,4 @@
-REM @ECHO OFF 
+REM @ECHO OFF   
 cd c:\source
 REM This is the location of the files that you want to sort
 FOR %%f IN (*.doc *.txt) DO XCOPY c:\source\"%%f" c:\text /m /y
