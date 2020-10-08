@@ -8,97 +8,45 @@ import { Disposable } from '../common/disposable';
 import { Message } from '../common/messages';
 import { Emitter } from '../common/events';
 import { ContentTypeEncoderOptions, ContentTypeDecoderOptions } from '../common/encoding';
+import { AbstractMessageBuffer } from '../common/messageBuffer';
 
-const DefaultSize: number = 8192;
-const CR: number = 13; // '\r'
-const LF: number = 10; // '\n'
-const CRLF: string = '\r\n';
+class MessageBuffer extends AbstractMessageBuffer {
 
-class MessageBuffer implements RAL.MessageBuffer {
+	private static readonly emptyBuffer: Uint8Array = new Uint8Array(0);
 
-	private _encoding: RAL.MessageBufferEncoding;
-	private index: number;
-	private buffer: Uint8Array;
-	private headerDecoder: TextDecoder;
+	private asciiDecoder: TextDecoder;
 
 	constructor(encoding: RAL.MessageBufferEncoding = 'utf-8') {
-		this._encoding = encoding;
-		if (this._encoding !== 'utf-8') {
-			throw new Error(`In a Browser environments only utf-8 text encding is supported. But got encoding: ${encoding}`);
-		}
-		this.index = 0;
-		this.buffer = new Uint8Array(DefaultSize);
-		this.headerDecoder = new TextDecoder('ascii');
+		super(encoding);
+		this.asciiDecoder = new TextDecoder('ascii');
 	}
 
-	public get encoding(): RAL.MessageBufferEncoding {
-		return this._encoding;
+	protected emptyBuffer(): Uint8Array {
+		return MessageBuffer.emptyBuffer;
 	}
 
-	public append(chunk: Uint8Array | string): void {
-		let toAppend: Uint8Array;
-		if (typeof chunk === 'string') {
-			toAppend = (new TextEncoder()).encode(chunk);
+	protected fromString(value: string, _encoding: RAL.MessageBufferEncoding): Uint8Array {
+		return (new TextEncoder()).encode(value);
+	}
+
+	protected toString(value: Uint8Array, encoding: RAL.MessageBufferEncoding): string {
+		if (encoding === 'ascii') {
+			return this.asciiDecoder.decode(value);
 		} else {
-			toAppend = chunk;
+			return (new TextDecoder(encoding)).decode(value);
 		}
-		if (this.buffer.length - this.index >= toAppend.length) {
-			this.buffer.set(toAppend, this.index);
+	}
+
+	protected asNative(buffer: Uint8Array, length?: number): Uint8Array {
+		if (length === undefined) {
+			return buffer;
 		} else {
-			var newSize = (Math.ceil((this.index + toAppend.length) / DefaultSize) + 1) * DefaultSize;
-			if (this.index === 0) {
-				this.buffer = new Uint8Array(newSize);
-				this.buffer.set(toAppend);
-			} else {
-				const current = this.buffer;
-				this.buffer = new Uint8Array(newSize);
-				this.buffer.set(current);
-				this.buffer.set(toAppend, this.index);
-			}
+			return buffer.slice(0, length);
 		}
-		this.index += toAppend.length;
 	}
 
-	public tryReadHeaders(): Map<string, string> | undefined {
-		let current = 0;
-		while (current + 3 < this.index && (this.buffer[current] !== CR || this.buffer[current + 1] !== LF || this.buffer[current + 2] !== CR || this.buffer[current + 3] !== LF)) {
-			current++;
-		}
-		// No header / body separator found (e.g CRLFCRLF)
-		if (current + 3 >= this.index) {
-			return undefined;
-		}
-		const result: Map<string, string> = new Map();
-		const headers = this.headerDecoder.decode(this.buffer.subarray(0, current)).split(CRLF);
-		headers.forEach((header) => {
-			let index: number = header.indexOf(':');
-			if (index === -1) {
-				throw new Error('Message header must separate key and value using :');
-			}
-			let key = header.substr(0, index);
-			let value = header.substr(index + 1).trim();
-
-			result.set(key, value);
-		});
-
-		let nextStart = current + 4;
-		this.buffer = this.buffer.slice(nextStart);
-		this.index = this.index - nextStart;
-		return result;
-	}
-
-	public tryReadBody(length: number): Uint8Array | undefined {
-		if (this.index < length) {
-			return undefined;
-		}
-		const result = this.buffer.slice(0, length);
-		this.index = this.index - length;
-
-		return result;
-	}
-
-	public get numberOfBytes(): number {
-		return this.index;
+	protected allocNative(length: number): Uint8Array {
+		return new Uint8Array(length);
 	}
 }
 
