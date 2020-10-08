@@ -5,9 +5,10 @@
 
 import * as assert from 'assert';
 import * as zlib from 'zlib';
+import * as msgpack from 'msgpack-lite';
 
 import { Message, RequestMessage, isRequestMessage } from '../../common/messages';
-import { ContentEncoder, ContentDecoder, Encodings } from '../../common/encoding';
+import { ContentEncoder, ContentDecoder, Encodings, FunctionContentTypeEncoder, FunctionContentTypeDecoder  } from '../../common/encoding';
 import { StreamMessageWriter, StreamMessageReader } from '../../node/main';
 import RIL from '../ril';
 
@@ -77,6 +78,16 @@ const gzipDecoder: ContentDecoder = {
 	}
 };
 
+const msgpackEncoder: FunctionContentTypeEncoder = {
+	name: 'messagepack',
+	// A shipping-quality encoder would remove properties with undefined values like JSON.stringify does (https://github.com/kawanet/msgpack-lite/issues/71).
+	encode: (msg) => Promise.resolve(msgpack.encode(msg)),
+};
+
+const msgpackDecoder: FunctionContentTypeDecoder = {
+	name: 'messagepack',
+	decode: (buffer) => Promise.resolve(msgpack.decode(buffer)),
+};
 
 suite('Messages', () => {
 	test('Writing', async () => {
@@ -217,6 +228,44 @@ suite('Messages', () => {
 			Encodings.getEncodingHeaderValue([ { name: 'gzip'}, {name: 'compress' }, { name: 'deflate'}, { name: 'br'} ]),
 			'gzip;q=1, compress;q=0.7, deflate;q=0.4, br;q=0.1'
 		);
+	});
+
+	test('Messagepack encoding', async () => {
+		const writable = new TestWritable();
+		const writer = new StreamMessageWriter(writable, {
+			contentTypeEncoder: msgpackEncoder,
+		});
+
+		const request: RequestMessage = {
+			jsonrpc: '2.0',
+			id: 1,
+			method: 'example'
+		};
+		await writer.write(request);
+		writable.end();
+		assertDefined(writable.data);
+
+		const readable = new Readable();
+		const reader = new StreamMessageReader(readable, {
+			contentTypeDecoder: msgpackDecoder,
+		});
+
+		await new Promise<void>((resolve, reject) => {
+			try {
+				reader.listen((message) => {
+					if (!isRequestMessage(message)) {
+						throw reject(new Error(`No request message`));
+					}
+					assert.strictEqual(message.id, 1);
+					assert.strictEqual(message.method, 'example');
+					resolve();
+				});
+				readable.push(writable.data);
+				readable.push(null);
+			} catch (err) {
+				reject(err);
+			}
+		});
 	});
 
 	test('MessageBuffer Simple', () => {

@@ -20,6 +20,10 @@
 		"./lib/node/main.js": "./lib/browser/main.js"
 	},
 	"typings": "./lib/common/api.d.ts",
+	"devDependencies": {
+		"@types/msgpack-lite": "^0.1.7",
+		"msgpack-lite": "^0.1.26"
+	},
 	"scripts": {
 		"prepublishOnly": "npm run clean && npm run compile && npm test",
 		"postpublish": "node ../build/npm/post-publish.js",
