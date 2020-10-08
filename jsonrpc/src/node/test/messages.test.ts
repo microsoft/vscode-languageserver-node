@@ -9,6 +9,7 @@ import * as zlib from 'zlib';
 import { Message, RequestMessage, isRequestMessage } from '../../common/messages';
 import { ContentEncoder, ContentDecoder, Encodings } from '../../common/encoding';
 import { StreamMessageWriter, StreamMessageReader } from '../../node/main';
+import RIL from '../ril';
 
 import { Writable, Readable } from 'stream';
 import { inherits } from 'util';
@@ -216,5 +217,58 @@ suite('Messages', () => {
 			Encodings.getEncodingHeaderValue([ { name: 'gzip'}, {name: 'compress' }, { name: 'deflate'}, { name: 'br'} ]),
 			'gzip;q=1, compress;q=0.7, deflate;q=0.4, br;q=0.1'
 		);
+	});
+
+	test('MessageBuffer Simple', () => {
+		const buffer = RIL().messageBuffer.create('utf-8');
+		buffer.append(Buffer.from('Content-Length: 43\r\n\r\n', 'ascii'));
+		buffer.append(Buffer.from('{"jsonrpc":"2.0","id":1,"method":"example"}', 'utf8'));
+		const headers = buffer.tryReadHeaders();
+		assertDefined(headers);
+		assert.strictEqual(headers.size, 1);
+		assert.strictEqual(headers.get('Content-Length'), '43');
+		const content = JSON.parse((buffer.tryReadBody(43) as Buffer).toString('utf8'));
+		assert.strictEqual(content.id, 1);
+		assert.strictEqual(content.method, 'example');
+	});
+
+	test('MessageBuffer Random', () => {
+		interface Item {
+			index: number;
+			label: string;
+		}
+		const data: Item[] = [];
+		for (let i = 0; i < 1000; i++) {
+			data.push({ index: i, label: `label${i}`});
+		}
+		const content = Buffer.from(JSON.stringify(data), 'utf8');
+		const header = Buffer.from(`Content-Length: ${content.byteLength}\r\n\r\n`, 'ascii');
+		const payload = Buffer.concat([header, content]);
+		const buffer = RIL().messageBuffer.create('utf-8');
+
+		for (const upper of [10, 64, 512, 1024]) {
+			let sent: number = 0;
+			while (sent < payload.byteLength) {
+				let piece = Math.floor((Math.random() * upper) + 1);
+				if (piece > payload.byteLength - sent) {
+					piece = payload.byteLength - sent;
+				}
+				buffer.append(payload.slice(sent, sent + piece));
+				sent = sent + piece;
+			}
+			const headers = buffer.tryReadHeaders();
+			assertDefined(headers);
+			assert.strictEqual(headers.size, 1);
+			const length = parseInt(headers.get('Content-Length')!);
+			assert.strictEqual(length, content.byteLength);
+			const body: Item[] = JSON.parse((buffer.tryReadBody(length) as Buffer).toString('utf8'));
+			assert.ok(Array.isArray(body));
+			assert.strictEqual(body.length, 1000);
+			for (let i = 0; i < body.length; i++) {
+				const item = body[i];
+				assert.strictEqual(item.index, i);
+				assert.strictEqual(item.label, `label${i}`);
+			}
+		}
 	});
 });
