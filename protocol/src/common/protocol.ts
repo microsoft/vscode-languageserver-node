@@ -1149,6 +1149,28 @@ export type TextDocumentContentChangeEvent = {
 	text: string;
 };
 
+export namespace TextDocumentContentChangeEvent {
+
+	/**
+	 * Checks whether the information descibes a delta event.
+	 */
+	export function isIncremental(event: TextDocumentContentChangeEvent): event is { range: Range; rangeLength?: number; text: string; } {
+		let candidate: { range: Range; rangeLength?: number; text: string; } = event as any;
+		return candidate !== undefined && candidate !== null &&
+			typeof candidate.text === 'string' && candidate.range !== undefined &&
+			(candidate.rangeLength === undefined || typeof candidate.rangeLength === 'number');
+	}
+
+	/**
+	 * Checks whether the information descibes a full replacement event.
+	 */
+	export function isFull(event: TextDocumentContentChangeEvent): event is { text: string; } {
+		let candidate: { range?: Range; rangeLength?: number; text: string; } = event as any;
+		return candidate !== undefined && candidate !== null &&
+			typeof candidate.text === 'string' && candidate.range === undefined && candidate.rangeLength === undefined;
+	}
+}
+
 /**
  * The change text document notification's parameters.
  */

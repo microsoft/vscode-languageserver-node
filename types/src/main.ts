@@ -2943,6 +2943,8 @@ export namespace TextDocument {
 /**
  * An event describing a change to a text document. If range and rangeLength are omitted
  * the new text is considered to be the full content of the document.
+ *
+ * @deprecated Use the text document from the new vscode-languageserver-textdocument package.
  */
 type TextDocumentContentChangeEvent = {
 	/**
@@ -2968,6 +2970,9 @@ type TextDocumentContentChangeEvent = {
 	text: string;
 };
 
+/**
+ * @deprecated Use the text document from the new vscode-languageserver-textdocument package.
+ */
 class FullTextDocument implements TextDocument {
 
 	private _uri: DocumentUri;
