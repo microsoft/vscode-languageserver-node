@@ -1476,11 +1476,11 @@ export interface PublishDiagnosticsClientCapabilities {
 	versionSupport?: boolean;
 
 	/**
-	 * Clients support complex diagnostic codes (e.g. code and target URI).
+	 * Client supports a codeDescription property
 	 *
 	 * @since 3.16.0 - proposed state
 	 */
-	complexDiagnosticCodeSupport?: boolean;
+	codeDescriptionSupport?: boolean;
 
 	/**
 	 * Whether code action supports the `data` property which is
