@@ -12,7 +12,7 @@ import ProtocolCodeLens from './protocolCodeLens';
 import ProtocolDocumentLink from './protocolDocumentLink';
 import { MarkdownString } from 'vscode';
 import ProtocolCodeAction from './protocolCodeAction';
-import ProtocolDiagnostic from './protocolDiagnostic';
+import { ProtocolDiagnostic, DiagnosticCode } from './protocolDiagnostic';
 
 interface InsertReplaceRange {
 	inserting: code.Range;
@@ -412,7 +412,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return items.map(asRelatedInformation);
 	}
 
-	function asDiagnosticCode(value: number | string | { value: string | number; target: code.Uri; } | undefined | null): number | string | proto.DiagnosticCode | undefined {
+	function asDiagnosticCode(value: number | string | { value: string | number; target: code.Uri; } | undefined | null): number | string | DiagnosticCode | undefined {
 		if (value === undefined || value === null) {
 			return undefined;
 		}
@@ -423,13 +423,24 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asDiagnostic(item: code.Diagnostic): proto.Diagnostic {
-		let result: proto.Diagnostic = proto.Diagnostic.create(asRange(item.range), item.message);
-		if (item instanceof ProtocolDiagnostic && item.data !== undefined) {
-			result.data = item.data;
+		const result: proto.Diagnostic = proto.Diagnostic.create(asRange(item.range), item.message);
+		const protocolDiagnostic: ProtocolDiagnostic | undefined = item instanceof ProtocolDiagnostic ? item : undefined;
+		if (protocolDiagnostic !== undefined && protocolDiagnostic.data !== undefined) {
+			result.data = protocolDiagnostic.data;
+		}
+		const code = asDiagnosticCode(item.code);
+		if (DiagnosticCode.is(code)) {
+			if (protocolDiagnostic !== undefined && protocolDiagnostic.hasDiagnosticCode) {
+				(result.code as unknown as DiagnosticCode) = code;
+			} else {
+				result.code = code.value;
+				result.codeDescription =  { href: code.target };
+			}
+		} else {
+			result.code = code;
 		}
 		if (Is.number(item.severity)) { result.severity = asDiagnosticSeverity(item.severity); }
-		result.code = asDiagnosticCode(item.code);
-		{if (Array.isArray(item.tags)) { result.tags = asDiagnosticTags(item.tags); }}
+		if (Array.isArray(item.tags)) { result.tags = asDiagnosticTags(item.tags); }
 		if (item.relatedInformation) { result.relatedInformation = asRelatedInformations(item.relatedInformation); }
 		if (item.source) { result.source = item.source; }
 		return result;

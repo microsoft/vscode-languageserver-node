@@ -543,34 +543,26 @@ export namespace DiagnosticTag {
 export type DiagnosticTag = 1 | 2;
 
 /**
- * Structure to capture more complex diagnostic codes.
+ * Structure to capture a description for an error code.
  *
  * @since 3.16.0 - proposed state
  */
-export interface DiagnosticCode {
+export interface CodeDescription {
 	/**
-	 * The actual code
+	 * An URI to open with more information about the diagnostic error.
 	 */
-	value: string | number;
-
-	/**
-	 * A target URI to open with more information about the diagnostic error.
-	 */
-	target: URI;
+	href: URI;
 }
 
 /**
- * The DiagnosticCode namespace provides functions to deal with complex diagnostic codes.
+ * The CodeDescription namespace provides functions to deal with descriptions for diagnostic codes.
  *
  * @since 3.16.0 - proposed state
  */
-export namespace DiagnosticCode {
-	/**
-	 * Checks whether the given liternal conforms to the [DiagnosticCode](#DiagnosticCode) interface.
-	 */
-	export function is(value: string | number | DiagnosticCode | undefined | null): value is DiagnosticCode {
-		const candidate: DiagnosticCode = value as DiagnosticCode;
-		return candidate !== undefined && candidate !== null && (Is.number(candidate.value) || Is.string(candidate.value)) && Is.string(candidate.target);
+export namespace CodeDescription {
+	export function is(value: CodeDescription | undefined | null): value is CodeDescription {
+		const candidate: CodeDescription = value as CodeDescription;
+		return candidate !== undefined && candidate !== null && Is.string(candidate.href);
 	}
 }
 
@@ -592,10 +584,15 @@ export interface Diagnostic {
 
 	/**
 	 * The diagnostic's code, which usually appear in the user interface.
-	 *
-	 * @since 3.16.0 Support for `DiagnosticCode` - proposed state
 	 */
-	code?: number | string | DiagnosticCode;
+	code?: number | string;
+
+	/**
+	 * An optional property to describe the error code.
+	 *
+	 * @since 3.16.0 - proposed state
+	 */
+	codeDescription?: CodeDescription;
 
 	/**
 	 * A human-readable string describing the source of this

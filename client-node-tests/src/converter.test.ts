@@ -9,6 +9,7 @@ import * as proto from 'vscode-languageserver-protocol';
 import * as codeConverter from 'vscode-languageclient/lib/common/codeConverter';
 import * as protocolConverter from 'vscode-languageclient/lib/common/protocolConverter';
 import ProtocolCompletionItem from 'vscode-languageclient/lib/common/protocolCompletionItem';
+import { DiagnosticCode, ProtocolDiagnostic } from 'vscode-languageclient/lib/common/protocolDiagnostic';
 import * as Is from 'vscode-languageclient/lib/common/utils/is';
 
 import * as vscode from 'vscode';
@@ -68,8 +69,8 @@ function assertInsertReplaceEdit(value: proto.TextEdit | proto.InsertReplaceEdit
 	}
 }
 
-function assertDiagnosticCode(value: string | number | proto.DiagnosticCode | undefined | null): asserts value is proto.DiagnosticCode {
-	if (!value || !proto.DiagnosticCode.is(value)) {
+function assertDiagnosticCode(value: string | number | DiagnosticCode | undefined | null): asserts value is DiagnosticCode {
+	if (!value || !DiagnosticCode.is(value)) {
 		throw new Error(`Expected complex diagnostic code.`);
 	}
 }
@@ -176,7 +177,28 @@ suite('Protocol Converter', () => {
 			range: { start, end },
 			message: 'error',
 			severity: proto.DiagnosticSeverity.Error,
-			code: { value: 99, target: 'https://code.visualstudio.com/'},
+			code: 99,
+			codeDescription: {
+				href: 'https://code.visualstudio.com/'
+			},
+			source: 'source',
+		};
+
+		let result = p2c.asDiagnostic(diagnostic);
+		assertDefined(result.code);
+		assertComplexCode(result.code);
+		strictEqual(result.code.value, 99);
+		strictEqual(result.code.target.toString(), 'https://code.visualstudio.com/');
+	});
+
+	test('Diagnostic - Complex Code - Deprecated', () => {
+		let start: proto.Position = { line: 1, character: 2 };
+		let end: proto.Position = { line: 8, character: 9 };
+		let diagnostic: proto.Diagnostic = {
+			range: { start, end },
+			message: 'error',
+			severity: proto.DiagnosticSeverity.Error,
+			code: { value: 99, target: 'https://code.visualstudio.com/'} as any,
 			source: 'source',
 		};
 
@@ -1140,6 +1162,18 @@ suite('Code Converter', () => {
 		item.code = { value: 99, target: vscode.Uri.parse('https://code.visualstudio.com/') };
 
 		let result = c2p.asDiagnostic(<any>item);
+
+		strictEqual(result.code, 99);
+		strictEqual(result.codeDescription?.href, 'https://code.visualstudio.com/');
+	});
+
+	test('Diagnostic - Complex Code - Deprecated', () => {
+		const item: ProtocolDiagnostic = new ProtocolDiagnostic(new vscode.Range(1, 2, 8, 9), 'message', vscode.DiagnosticSeverity.Warning, undefined);
+		item.hasDiagnosticCode = true;
+		item.code = { value: 99, target: vscode.Uri.parse('https://code.visualstudio.com/') };
+
+		const result = c2p.asDiagnostic(item);
+
 		assertDiagnosticCode(result.code);
 		strictEqual(result.code.value, 99);
 		strictEqual(result.code.target, 'https://code.visualstudio.com/');

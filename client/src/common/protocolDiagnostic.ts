@@ -4,13 +4,32 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as vscode from 'vscode';
+import * as Is from './utils/is';
 
-export default class ProtocolDiagnostic extends vscode.Diagnostic {
+/**
+ * We keep this for a while to not break servers which adopted
+ * proposed API.
+ */
+export interface DiagnosticCode {
+	value: string | number;
+	target: string;
+}
+
+export namespace DiagnosticCode {
+	export function is(value: string | number | DiagnosticCode | undefined | null): value is DiagnosticCode {
+		const candidate: DiagnosticCode = value as DiagnosticCode;
+		return candidate !== undefined && candidate !== null && (Is.number(candidate.value) || Is.string(candidate.value)) && Is.string(candidate.target);
+	}
+}
+
+export class ProtocolDiagnostic extends vscode.Diagnostic {
 
 	public readonly data: unknown | undefined;
+	public hasDiagnosticCode: boolean;
 
 	constructor(range: vscode.Range, message: string, severity: vscode.DiagnosticSeverity, data: unknown | undefined) {
 		super(range, message, severity);
 		this.data = data;
+		this.hasDiagnosticCode = false;
 	}
 }

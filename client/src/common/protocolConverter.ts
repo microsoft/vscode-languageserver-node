@@ -11,7 +11,7 @@ import ProtocolCompletionItem from './protocolCompletionItem';
 import ProtocolCodeLens from './protocolCodeLens';
 import ProtocolDocumentLink from './protocolDocumentLink';
 import ProtocolCodeAction from './protocolCodeAction';
-import ProtocolDiagnostic from './protocolDiagnostic';
+import { ProtocolDiagnostic, DiagnosticCode } from './protocolDiagnostic';
 
 // Proposed API.
 declare module 'vscode' {
@@ -261,9 +261,21 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 
 	function asDiagnostic(diagnostic: ls.Diagnostic): code.Diagnostic {
 		let result = new ProtocolDiagnostic(asRange(diagnostic.range), diagnostic.message, asDiagnosticSeverity(diagnostic.severity), diagnostic.data);
-		if (Is.number(diagnostic.code) || Is.string(diagnostic.code)) { result.code = diagnostic.code; }
-		if (ls.DiagnosticCode.is(diagnostic.code)) {
-			result.code = { value: diagnostic.code.value, target: asUri(diagnostic.code.target) };
+		if (diagnostic.code !== undefined) {
+			if (ls.CodeDescription.is(diagnostic.codeDescription)) {
+				result.code = {
+					value: diagnostic.code,
+					target: asUri(diagnostic.codeDescription.href)
+				};
+			} else if (DiagnosticCode.is(diagnostic.code)) {
+				result.hasDiagnosticCode = true;
+				result.code = {
+					value: diagnostic.code.value,
+					target: asUri(diagnostic.code.target)
+				};
+			} else {
+				result.code = diagnostic.code;
+			}
 		}
 		if (diagnostic.source) { result.source = diagnostic.source; }
 		if (diagnostic.relatedInformation) { result.relatedInformation = asRelatedInformation(diagnostic.relatedInformation); }
