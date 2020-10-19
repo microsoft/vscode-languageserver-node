@@ -3466,10 +3466,12 @@ export abstract class BaseLanguageClient {
 	private computeClientCapabilities(): ClientCapabilities {
 		let result: ClientCapabilities = {};
 		ensure(result, 'workspace')!.applyEdit = true;
+
 		let workspaceEdit = ensure(ensure(result, 'workspace')!, 'workspaceEdit')!;
 		workspaceEdit.documentChanges = true;
 		workspaceEdit.resourceOperations = [ResourceOperationKind.Create, ResourceOperationKind.Rename, ResourceOperationKind.Delete];
 		workspaceEdit.failureHandling = FailureHandlingKind.TextOnlyTransactional;
+		
 		let diagnostics = ensure(ensure(result, 'textDocument')!, 'publishDiagnostics')!;
 		diagnostics.relatedInformation = true;
 		diagnostics.versionSupport = false;
