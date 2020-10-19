@@ -112,14 +112,30 @@ export class StreamMessageWriter extends WriteableStreamMessageWriter {
 	}
 }
 
+const XDG_RUNTIME_DIR = process.env['XDG_RUNTIME_DIR'];
+const safeIpcPathLengths: Map<NodeJS.Platform, number> = new Map([
+	['linux', 107],
+	['darwin', 103]
+]);
+
 export function generateRandomPipeName(): string {
 	const randomSuffix = randomBytes(21).toString('hex');
 	if (process.platform === 'win32') {
 		return `\\\\.\\pipe\\vscode-jsonrpc-${randomSuffix}-sock`;
-	} else {
-		// Mac/Unix: use socket file
-		return path.join(os.tmpdir(), `vscode-${randomSuffix}.sock`);
 	}
+
+	let result: string;
+	if (XDG_RUNTIME_DIR) {
+		result = path.join(XDG_RUNTIME_DIR, `vscode-ipc-${randomSuffix}.sock`);
+	} else {
+		result = path.join(os.tmpdir(), `vscode-${randomSuffix}.sock`);
+	}
+
+	const limit = safeIpcPathLengths.get(process.platform);
+	if (limit !== undefined && result.length >= limit) {
+		RIL().console.warn(`WARNING: IPC handle "${result}" is longer than ${limit} characters.`);
+	}
+	return result;
 }
 
 export interface PipeTransport {
