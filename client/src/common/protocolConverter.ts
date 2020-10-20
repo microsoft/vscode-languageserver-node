@@ -12,6 +12,7 @@ import ProtocolCodeLens from './protocolCodeLens';
 import ProtocolDocumentLink from './protocolDocumentLink';
 import ProtocolCodeAction from './protocolCodeAction';
 import { ProtocolDiagnostic, DiagnosticCode } from './protocolDiagnostic';
+import ProtocolCallHierarchyItem from './protocolCallHierarchyItem';
 
 // Proposed API.
 declare module 'vscode' {
@@ -1046,13 +1047,14 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		if (item === null) {
 			return undefined;
 		}
-		let result = new code.CallHierarchyItem(
+		let result = new ProtocolCallHierarchyItem(
 			asSymbolKind(item.kind),
 			item.name,
 			item.detail || '',
 			asUri(item.uri),
 			asRange(item.range),
-			asRange(item.selectionRange)
+			asRange(item.selectionRange),
+			item.data
 		);
 		if (item.tags !== undefined) { result.tags = asSymbolTags(item.tags); }
 		return result;

@@ -490,6 +490,23 @@ connection.onRequest(SelectionRangeRequest.type, (params) => {
 });
 
 connection.languages.callHierarchy.onPrepare((params) => {
+	return [
+		{
+			name: 'name',
+			uri: params.textDocument.uri,
+			kind: SymbolKind.Function,
+			range: Range.create(1,1,1,1),
+			selectionRange: Range.create(2,2,2,2),
+			data: '47e40ffe-2fbe-4dbf-958d-1dc6bd385be1'
+		}
+	];
+});
+
+connection.languages.callHierarchy.onIncomingCalls((params) => {
+	return [];
+});
+
+connection.languages.callHierarchy.onOutgoingCalls((params) => {
 	return [];
 });
 

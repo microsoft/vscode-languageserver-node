@@ -13,6 +13,7 @@ import ProtocolDocumentLink from './protocolDocumentLink';
 import { MarkdownString } from 'vscode';
 import ProtocolCodeAction from './protocolCodeAction';
 import { ProtocolDiagnostic, DiagnosticCode } from './protocolDiagnostic';
+import ProtocolCallHierarchyItem from './protocolCallHierarchyItem';
 
 interface InsertReplaceRange {
 	inserting: code.Range;
@@ -698,6 +699,9 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		};
 		if (value.detail !== undefined && value.detail.length > 0) { result.detail = value.detail; }
 		if (value.tags !== undefined) { result.tags = asSymbolTags(value.tags); }
+		if (value instanceof ProtocolCallHierarchyItem && value.data !== undefined) {
+			result.data = value.data;
+		}
 		return result;
 	}
 
