@@ -5,7 +5,7 @@
 
 import { TextDocumentIdentifier, Range } from 'vscode-languageserver-types';
 
-import { ProtocolRequestType, ProtocolNotificationType0 } from './messages';
+import { ProtocolRequestType, ProtocolRequestType0 } from './messages';
 import { PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions, TextDocumentRegistrationOptions, StaticRegistrationOptions } from './protocol';
 
 /**
@@ -162,69 +162,50 @@ export type TokenFormat = 'relative';
  */
 export interface SemanticTokensClientCapabilities {
 	/**
-	 * The text document client capabilities
+	 * Whether implementation supports dynamic registration. If this is set to `true`
+	 * the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
+	 * return value for the corresponding server capability as well.
 	 */
-	textDocument?: {
+	dynamicRegistration?: boolean;
+
+	/**
+	 * Which requests the client supports and might send to the server
+	 */
+	requests: {
 		/**
-		 * Capabilities specific to the `textDocument/semanticTokens`
-		 *
-		 * @since 3.16.0 - Proposed state
+		 * The client will send the `textDocument/semanticTokens/range` request if
+		 * the server provides a corresponding handler.
 		 */
-		semanticTokens?: {
-			/**
-			 * Whether implementation supports dynamic registration. If this is set to `true`
-			 * the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
-			 * return value for the corresponding server capability as well.
-			 */
-			dynamicRegistration?: boolean;
-
-			/**
-			 * Whether the client implementation supports a refresh notification to refresh all semantic
-			 * token models. This is useful if a server detects a project wide configuration change which
-			 * requires a re-calculation of all semantic tokens.
-			 */
-			refreshNotification?: boolean;
-
-			/**
-			 * Which requests the client supports and might send to the server
-			 */
-			requests: {
-				/**
-				 * The client will send the `textDocument/semanticTokens/range` request if
-				 * the server provides a corresponding handler.
-				 */
-				range?: boolean | {
-				};
-
-				/**
-				 * The client will send the `textDocument/semanticTokens/full` request if
-				 * the server provides a corresponding handler.
-				 */
-				full?: boolean | {
-					/**
-					 * The client will send the `textDocument/semanticTokens/full/delta` request if
-					 * the server provides a corresponding handler.
-					*/
-					delta?: boolean
-				}
-			}
-
-			/**
-			 * The token types that the client supports.
-			 */
-			tokenTypes: string[];
-
-			/**
-			 * The token modifiers that the client supports.
-			 */
-			tokenModifiers: string[];
-
-			/**
-			 * The formats the clients supports.
-			 */
-			formats: TokenFormat[];
+		range?: boolean | {
 		};
+
+		/**
+		 * The client will send the `textDocument/semanticTokens/full` request if
+		 * the server provides a corresponding handler.
+		 */
+		full?: boolean | {
+			/**
+			 * The client will send the `textDocument/semanticTokens/full/delta` request if
+			 * the server provides a corresponding handler.
+			 */
+			delta?: boolean
+		}
 	}
+
+	/**
+	 * The token types that the client supports.
+	 */
+	tokenTypes: string[];
+
+	/**
+	 * The token modifiers that the client supports.
+	 */
+	tokenModifiers: string[];
+
+	/**
+	 * The formats the clients supports.
+	 */
+	formats: TokenFormat[];
 }
 
 /**
@@ -331,9 +312,22 @@ export namespace SemanticTokensRangeRequest {
 	export const type = new ProtocolRequestType<SemanticTokensRangeParams, SemanticTokens | null, SemanticTokensPartialResult, void, void>(method);
 }
 
-//------- 'textDocument/semanticTokens/refresh' -----
+//------- 'workspace/semanticTokens/refresh' -----
 
-export namespace SemanticTokensRefreshNotification {
+export interface SemanticTokensWorkspaceClientCapabilities {
+	/**
+	 * Whether the client implementation supports a refresh request send from the server
+	 * to the client. This is useful if a server detects a project wide configuration change
+	 * which requires a re-calculation of all semantic tokens provided by the server issuing
+	 * the request.
+	 */
+	refreshSupport?: boolean;
+}
+
+/**
+ * @since 3.16.0 - Proposed state
+ */
+export namespace SemanticTokensRefreshRequest {
 	export const method: `workspace/semanticTokens/refresh` = `workspace/semanticTokens/refresh`;
-	export const type = new ProtocolNotificationType0<void>(method);
+	export const type = new ProtocolRequestType0<void, void, void, SemanticTokensRegistrationOptions>(method);
 }

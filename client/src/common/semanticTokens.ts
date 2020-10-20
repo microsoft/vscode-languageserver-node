@@ -6,8 +6,8 @@
 import * as vscode from 'vscode';
 import { Middleware, BaseLanguageClient, TextDocumentFeature } from './client';
 import { ClientCapabilities, ServerCapabilities, DocumentSelector, SemanticTokenTypes, SemanticTokenModifiers, SemanticTokens,
-	TokenFormat, SemanticTokensClientCapabilities,SemanticTokensOptions, SemanticTokensRegistrationOptions, SemanticTokensParams,
-	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest, SemanticTokensRefreshNotification
+	TokenFormat, SemanticTokensOptions, SemanticTokensRegistrationOptions, SemanticTokensParams,
+	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest, SemanticTokensRefreshRequest
 } from 'vscode-languageserver-protocol';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
@@ -48,8 +48,7 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Semanti
 		super(client, SemanticTokensRequest.type);
 	}
 
-	public fillClientCapabilities(cap: ClientCapabilities): void {
-		const capabilites: ClientCapabilities & SemanticTokensClientCapabilities = cap as any;
+	public fillClientCapabilities(capabilites: ClientCapabilities): void {
 		const capability = ensure(ensure(capabilites, 'textDocument')!, 'semanticTokens')!;
 		capability.dynamicRegistration = true;
 		capability.tokenTypes = [
@@ -95,11 +94,12 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Semanti
 				delta: true
 			}
 		};
+		ensure(ensure(capabilites, 'workspace')!, 'semanticTokens')!.refreshSupport = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		let client = this._client;
-		client.onNotification(SemanticTokensRefreshNotification.type, () => {
+		client.onRequest(SemanticTokensRefreshRequest.type, async () => {
 			for (const provider of this.getAllProviders()) {
 				provider.onDidChangeSemanticTokensEmitter.fire();
 			}

@@ -52,7 +52,8 @@ import {
 import {
 	SemanticTokenTypes, SemanticTokenModifiers, SemanticTokensLegend, SemanticTokens, SemanticTokensPartialResult, SemanticTokensEdit, SemanticTokensDelta,
 	SemanticTokensDeltaPartialResult, TokenFormat, SemanticTokensClientCapabilities,SemanticTokensOptions, SemanticTokensRegistrationOptions, SemanticTokensParams,
-	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest, SemanticTokensRefreshNotification
+	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest, SemanticTokensRefreshRequest,
+	SemanticTokensWorkspaceClientCapabilities
 } from './protocol.semanticTokens';
 
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
@@ -320,6 +321,14 @@ export interface WorkspaceClientCapabilities {
 	 * Capabilities specific to the `workspace/executeCommand` request.
 	 */
 	executeCommand?: ExecuteCommandClientCapabilities;
+
+	/**
+	 * Capabilities specific to the semantic token requsts scoped to the
+	 * workspace.
+	 *
+	 * @since 3.16.0 - proposed state.
+	 */
+	semanticTokens?: SemanticTokensWorkspaceClientCapabilities;
 }
 
 /**
@@ -443,16 +452,23 @@ export interface TextDocumentClientCapabilities {
 	selectionRange?: SelectionRangeClientCapabilities;
 
 	/**
-	 * Capabilities specific to `textDocument/publishDiagnostics`.
+	 * Capabilities specific to `textDocument/publishDiagnostics` notification.
 	 */
 	publishDiagnostics?: PublishDiagnosticsClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/callHierarchy`.
+	 * Capabilities specific to the various call hierarchy requests.
 	 *
 	 * @since 3.16.0
 	 */
 	callHierarchy?: CallHierarchyClientCapabilities;
+
+	/**
+	 * Capabilities specific to the various semantic token requsts.
+	 *
+	 * @since 3.16.0 - Proposed state
+	 */
+	semanticTokens?: SemanticTokensClientCapabilities;
 }
 
 /**
@@ -2907,7 +2923,7 @@ export {
 	// Semantic Tokene
 	SemanticTokenTypes, SemanticTokenModifiers, SemanticTokensLegend, SemanticTokens, SemanticTokensPartialResult, SemanticTokensEdit, SemanticTokensDelta,
 	SemanticTokensDeltaPartialResult, TokenFormat, SemanticTokensClientCapabilities, SemanticTokensOptions, SemanticTokensRegistrationOptions, SemanticTokensParams,
-	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest, SemanticTokensRefreshNotification
+	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest, SemanticTokensRefreshRequest
 };
 
 // To be backwards compatible
