@@ -24,6 +24,18 @@ export namespace Files {
 	export let resolveModulePath = fm.resolveModulePath;
 }
 
+let _protocolConnection: ProtocolConnection | undefined;
+function endProtocolConnection(): void {
+	if (_protocolConnection === undefined) {
+		return;
+	}
+	try {
+		_protocolConnection.end();
+	} catch (_err) {
+		// Ignore. The client process could have already
+		// did and we can't send an end into the connection.
+	}
+}
 let _shutdownReceived: boolean = false;
 let exitTimer: NodeJS.Timer | undefined = undefined;
 
@@ -38,6 +50,7 @@ function setupExitTimer(): void {
 						process.kill(processId, <any>0);
 					} catch (ex) {
 						// Parent process doesn't exist anymore. Exit the server.
+						endProtocolConnection();
 						process.exit(_shutdownReceived ? 0 : 1);
 					}
 				}, 3000);
@@ -85,6 +98,7 @@ const watchDog: WatchDog = {
 		_shutdownReceived = value;
 	},
 	exit: (code: number): void => {
+		endProtocolConnection();
 		process.exit(code);
 	}
 };
@@ -230,15 +244,18 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 	if (Is.func((input as NodeJS.ReadableStream).read) && Is.func((input as NodeJS.ReadableStream).on)) {
 		let inputStream = <NodeJS.ReadableStream>input;
 		inputStream.on('end', () => {
+			endProtocolConnection();
 			process.exit(_shutdownReceived ? 0 : 1);
 		});
 		inputStream.on('close', () => {
+			endProtocolConnection();
 			process.exit(_shutdownReceived ? 0 : 1);
 		});
 	}
 
 	const connectionFactory = (logger: Logger): ProtocolConnection => {
-		return createProtocolConnection(input as any, output as any, logger, options);
+		const result = createProtocolConnection(input as any, output as any, logger, options);
+		return result;
 	};
 	return createCommonConnection(connectionFactory, watchDog, factories);
 }

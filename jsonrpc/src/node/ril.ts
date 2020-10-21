@@ -153,8 +153,8 @@ const _ril: RIL = Object.freeze<RIL>({
 		})
 	}),
 	stream: Object.freeze({
-		asReadableStream: (socket: NodeJS.ReadableStream) => new ReadableStreamWrapper(socket),
-		asWritableStream: (socket: NodeJS.WritableStream) => new WritableStreamWrapper(socket)
+		asReadableStream: (stream: NodeJS.ReadableStream) => new ReadableStreamWrapper(stream),
+		asWritableStream: (stream: NodeJS.WritableStream) => new WritableStreamWrapper(stream)
 	}),
 	console: console,
 	timer: Object.freeze({

@@ -436,6 +436,8 @@ export interface MessageConnection {
 	onClose: Event<void>;
 	listen(): void;
 
+	end(): void;
+
 	onDispose: Event<void>;
 	dispose(): void;
 
@@ -1287,6 +1289,9 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		onClose: closeEmitter.event,
 		onUnhandledNotification: unhandledNotificationEmitter.event,
 		onDispose: disposeEmitter.event,
+		end: () => {
+			messageWriter.end();
+		},
 		dispose: () => {
 			if (isDisposed()) {
 				return;

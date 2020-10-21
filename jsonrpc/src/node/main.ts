@@ -40,7 +40,7 @@ export class IPCMessageReader extends AbstractMessageReader {
 	}
 }
 
-export class IPCMessageWriter extends AbstractMessageWriter {
+export class IPCMessageWriter extends AbstractMessageWriter implements MessageWriter {
 
 	private process: NodeJS.Process | ChildProcess;
 	private errorCount: number;
@@ -76,6 +76,9 @@ export class IPCMessageWriter extends AbstractMessageWriter {
 	private handleError(error: any, msg: Message): void {
 		this.errorCount++;
 		this.fireError(error, msg, this.errorCount);
+	}
+
+	public end(): void {
 	}
 }
 
@@ -208,12 +211,14 @@ export function createServerSocketTransport(port: number, encoding: RAL.MessageB
 	];
 }
 
-function isMessageReader(value: any): value is MessageReader {
-	return value.listen !== undefined && value.read === undefined;
+function isReadableStream(value: any): value is NodeJS.ReadableStream {
+	const candidate: NodeJS.ReadableStream = value;
+	return candidate.read !== undefined && candidate.addListener !== undefined;
 }
 
-function isMessageWriter(value: any): value is MessageWriter {
-	return value.write !== undefined && value.end === undefined;
+function isWritableStream(value: any): value is NodeJS.WritableStream {
+	const candidate: NodeJS.WritableStream = value;
+	return candidate.write !== undefined && candidate.addListener !== undefined;
 }
 
 export function createMessageConnection(reader: MessageReader, writer: MessageWriter, logger?: Logger, options?: ConnectionStrategy | ConnectionOptions): MessageConnection;
@@ -222,8 +227,8 @@ export function createMessageConnection(input: MessageReader | NodeJS.ReadableSt
 	if (!logger) {
 		logger = NullLogger;
 	}
-	const reader = isMessageReader(input) ? input : new StreamMessageReader(input);
-	const writer = isMessageWriter(output) ? output : new StreamMessageWriter(output);
+	const reader = isReadableStream(input) ? new StreamMessageReader(input) : input;
+	const writer = isWritableStream(output) ? new StreamMessageWriter(output) : output;
 
 	if (ConnectionStrategy.is(options)) {
 		options = { connectionStrategy: options } as ConnectionOptions;

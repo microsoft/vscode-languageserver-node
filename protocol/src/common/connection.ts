@@ -172,6 +172,11 @@ export interface ProtocolConnection {
 	onDispose: Event<void>;
 
 	/**
+	 * Ends the connection.
+	 */
+	end(): void;
+
+	/**
 	 * Actively disposes the connection.
 	 */
 	dispose(): void;

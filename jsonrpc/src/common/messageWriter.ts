@@ -28,6 +28,8 @@ export interface MessageWriter {
 	 */
 	write(msg: Message): Promise<void>;
 
+	end(): void;
+
 	/** Releases resources incurred from writing or raising events. Does NOT close the underlying transport, if any. */
 	dispose(): void;
 }
@@ -153,5 +155,9 @@ export class WriteableStreamMessageWriter extends AbstractMessageWriter implemen
 	private handleError(error: any, msg: Message): void {
 		this.errorCount++;
 		this.fireError(error, msg, this.errorCount);
+	}
+
+	public end(): void {
+		this.writable.end();
 	}
 }

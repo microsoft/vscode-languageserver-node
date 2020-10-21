@@ -136,6 +136,7 @@ interface Connection {
 	didSaveTextDocument(params: DidSaveTextDocumentParams): void;
 	onDiagnostics(handler: NotificationHandler<PublishDiagnosticsParams>): void;
 
+	end(): void;
 	dispose(): void;
 }
 
@@ -218,6 +219,7 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 
 		onDiagnostics: (handler: NotificationHandler<PublishDiagnosticsParams>) => connection.onNotification(PublishDiagnosticsNotification.type, handler),
 
+		end: () => connection.end(),
 		dispose: () => connection.dispose()
 	};
 
@@ -3174,6 +3176,7 @@ export abstract class BaseLanguageClient {
 		return this._onStop = this.resolveConnection().then(connection => {
 			return connection.shutdown().then(() => {
 				connection.exit();
+				connection.end();
 				connection.dispose();
 				this.state = ClientState.Stopped;
 				this.cleanUpChannel();
@@ -3471,7 +3474,7 @@ export abstract class BaseLanguageClient {
 		workspaceEdit.documentChanges = true;
 		workspaceEdit.resourceOperations = [ResourceOperationKind.Create, ResourceOperationKind.Rename, ResourceOperationKind.Delete];
 		workspaceEdit.failureHandling = FailureHandlingKind.TextOnlyTransactional;
-		
+
 		let diagnostics = ensure(ensure(result, 'textDocument')!, 'publishDiagnostics')!;
 		diagnostics.relatedInformation = true;
 		diagnostics.versionSupport = false;

@@ -15,7 +15,7 @@ import {
 
 export * from '../common/api';
 
-export class BrowserMessageReader extends AbstractMessageReader {
+export class BrowserMessageReader extends AbstractMessageReader implements MessageReader {
 
 	private _onData: Emitter<Message>;
 	private _messageListener: (event: MessageEvent) => void;
@@ -39,7 +39,7 @@ export class BrowserMessageReader extends AbstractMessageReader {
 	}
 }
 
-export class BrowserMessageWriter extends AbstractMessageWriter {
+export class BrowserMessageWriter extends AbstractMessageWriter implements MessageWriter {
 
 	private errorCount: number;
 
@@ -62,6 +62,9 @@ export class BrowserMessageWriter extends AbstractMessageWriter {
 	private handleError(error: any, msg: Message): void {
 		this.errorCount++;
 		this.fireError(error, msg, this.errorCount);
+	}
+
+	public end(): void {
 	}
 }
 
