@@ -56,7 +56,7 @@ export interface ProtocolConnection {
 	 * @param type The request type to install the handler for.
 	 * @param handler The actual handler.
 	 */
-	onRequest<R, E, RO>(type: RequestType0<R, E, RO>, handler: RequestHandler0<R, E>): void;
+	onRequest<R, E, RO>(type: RequestType0<R, E, RO>, handler: RequestHandler0<R, E>): Disposable;
 
 	/**
 	 * Installs a request handler.
@@ -64,7 +64,7 @@ export interface ProtocolConnection {
 	 * @param type The request type to install the handler for.
 	 * @param handler The actual handler.
 	 */
-	onRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, handler: RequestHandler<P, R, E>): void;
+	onRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, handler: RequestHandler<P, R, E>): Disposable;
 
 	/**
 	 * Installs a request handler.
@@ -72,7 +72,7 @@ export interface ProtocolConnection {
 	 * @param methods The method name to install the handler for.
 	 * @param handler The actual handler.
 	 */
-	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): void;
+	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): Disposable;
 
 	/**
 	 * Sends a notification.
@@ -110,7 +110,7 @@ export interface ProtocolConnection {
 	 * @param type The notification type to install the handler for.
 	 * @param handler The actual handler.
 	 */
-	onNotification<RO>(type: NotificationType0<RO>, handler: NotificationHandler0): void;
+	onNotification<RO>(type: NotificationType0<RO>, handler: NotificationHandler0): Disposable;
 
 	/**
 	 * Installs a notification handler.
@@ -118,7 +118,7 @@ export interface ProtocolConnection {
 	 * @param type The notification type to install the handler for.
 	 * @param handler The actual handler.
 	 */
-	onNotification<P, RO>(type: NotificationType<P, RO>, handler: NotificationHandler<P>): void;
+	onNotification<P, RO>(type: NotificationType<P, RO>, handler: NotificationHandler<P>): Disposable;
 
 	/**
 	 * Installs a notification handler.
@@ -126,7 +126,7 @@ export interface ProtocolConnection {
 	 * @param methods The method name to install the handler for.
 	 * @param handler The actual handler.
 	 */
-	onNotification(method: string, handler: GenericNotificationHandler): void;
+	onNotification(method: string, handler: GenericNotificationHandler): Disposable;
 
 	/**
 	 * Installs a progress handler for a given token.

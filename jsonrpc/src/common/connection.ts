@@ -381,19 +381,19 @@ export interface MessageConnection {
 	sendRequest<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO>(type: RequestType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8, p9: P9, token?: CancellationToken): Promise<R>;
 	sendRequest<R>(method: string, r0?: ParameterStructures | any, ...rest: any[]): Promise<R>;
 
-	onRequest<R, E, RO>(type: RequestType0<R, E, RO>, handler: RequestHandler0<R, E>): void;
-	onRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, handler: RequestHandler<P, R, E>): void;
-	onRequest<P1, R, E, RO>(type: RequestType1<P1, R, E, RO>, handler: RequestHandler1<P1, R, E>): void;
-	onRequest<P1, P2, R, E, RO>(type: RequestType2<P1, P2, R, E, RO>, handler: RequestHandler2<P1, P2, R, E>): void;
-	onRequest<P1, P2, P3, R, E, RO>(type: RequestType3<P1, P2, P3, R, E, RO>, handler: RequestHandler3<P1, P2, P3, R, E>): void;
-	onRequest<P1, P2, P3, P4, R, E, RO>(type: RequestType4<P1, P2, P3, P4, R, E, RO>, handler: RequestHandler4<P1, P2, P3, P4, R, E>): void;
-	onRequest<P1, P2, P3, P4, P5, R, E, RO>(type: RequestType5<P1, P2, P3, P4, P5, R, E, RO>, handler: RequestHandler5<P1, P2, P3, P4, P5, R, E>): void;
-	onRequest<P1, P2, P3, P4, P5, P6, R, E, RO>(type: RequestType6<P1, P2, P3, P4, P5, P6, R, E, RO>, handler: RequestHandler6<P1, P2, P3, P4, P5, P6, R, E>): void;
-	onRequest<P1, P2, P3, P4, P5, P6, P7, R, E, RO>(type: RequestType7<P1, P2, P3, P4, P5, P6, P7, R, E, RO>, handler: RequestHandler7<P1, P2, P3, P4, P5, P6, P7, R, E>): void;
-	onRequest<P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO>(type: RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO>, handler: RequestHandler8<P1, P2, P3, P4, P5, P6, P7, P8, R, E>): void;
-	onRequest<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO>(type: RequestType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO>, handler: RequestHandler9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E>): void;
-	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): void;
-	onRequest(handler: StarRequestHandler): void;
+	onRequest<R, E, RO>(type: RequestType0<R, E, RO>, handler: RequestHandler0<R, E>): Disposable;
+	onRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, handler: RequestHandler<P, R, E>): Disposable;
+	onRequest<P1, R, E, RO>(type: RequestType1<P1, R, E, RO>, handler: RequestHandler1<P1, R, E>): Disposable;
+	onRequest<P1, P2, R, E, RO>(type: RequestType2<P1, P2, R, E, RO>, handler: RequestHandler2<P1, P2, R, E>): Disposable;
+	onRequest<P1, P2, P3, R, E, RO>(type: RequestType3<P1, P2, P3, R, E, RO>, handler: RequestHandler3<P1, P2, P3, R, E>): Disposable;
+	onRequest<P1, P2, P3, P4, R, E, RO>(type: RequestType4<P1, P2, P3, P4, R, E, RO>, handler: RequestHandler4<P1, P2, P3, P4, R, E>): Disposable;
+	onRequest<P1, P2, P3, P4, P5, R, E, RO>(type: RequestType5<P1, P2, P3, P4, P5, R, E, RO>, handler: RequestHandler5<P1, P2, P3, P4, P5, R, E>): Disposable;
+	onRequest<P1, P2, P3, P4, P5, P6, R, E, RO>(type: RequestType6<P1, P2, P3, P4, P5, P6, R, E, RO>, handler: RequestHandler6<P1, P2, P3, P4, P5, P6, R, E>): Disposable;
+	onRequest<P1, P2, P3, P4, P5, P6, P7, R, E, RO>(type: RequestType7<P1, P2, P3, P4, P5, P6, P7, R, E, RO>, handler: RequestHandler7<P1, P2, P3, P4, P5, P6, P7, R, E>): Disposable;
+	onRequest<P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO>(type: RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO>, handler: RequestHandler8<P1, P2, P3, P4, P5, P6, P7, P8, R, E>): Disposable;
+	onRequest<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO>(type: RequestType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO>, handler: RequestHandler9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E>): Disposable;
+	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): Disposable;
+	onRequest(handler: StarRequestHandler): Disposable;
 
 	sendNotification<RO>(type: NotificationType0<RO>): void;
 	sendNotification<P, RO>(type: NotificationType<P, RO>, params?: P): void;
@@ -408,19 +408,19 @@ export interface MessageConnection {
 	sendNotification<P1, P2, P3, P4, P5, P6, P7, P8, P9, RO>(type: NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, RO>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8, p9: P9): void;
 	sendNotification(method: string, r0?: ParameterStructures | any, ...rest: any[]): void;
 
-	onNotification<RO>(type: NotificationType0<RO>, handler: NotificationHandler0): void;
-	onNotification<P, RO>(type: NotificationType<P, RO>, handler: NotificationHandler<P>): void;
-	onNotification<P1, RO>(type: NotificationType1<P1, RO>, handler: NotificationHandler1<P1>): void;
-	onNotification<P1, P2, RO>(type: NotificationType2<P1, P2, RO>, handler: NotificationHandler2<P1, P2>): void;
-	onNotification<P1, P2, P3, RO>(type: NotificationType3<P1, P2, P3, RO>, handler: NotificationHandler3<P1, P2, P3>): void;
-	onNotification<P1, P2, P3, P4, RO>(type: NotificationType4<P1, P2, P3, P4, RO>, handler: NotificationHandler4<P1, P2, P3, P4>): void;
-	onNotification<P1, P2, P3, P4, P5, RO>(type: NotificationType5<P1, P2, P3, P4, P5, RO>, handler: NotificationHandler5<P1, P2, P3, P4, P5>): void;
-	onNotification<P1, P2, P3, P4, P5, P6, RO>(type: NotificationType6<P1, P2, P3, P4, P5, P6, RO>, handler: NotificationHandler6<P1, P2, P3, P4, P5, P6>): void;
-	onNotification<P1, P2, P3, P4, P5, P6, P7, RO>(type: NotificationType7<P1, P2, P3, P4, P5, P6, P7, RO>, handler: NotificationHandler7<P1, P2, P3, P4, P5, P6, P7>): void;
-	onNotification<P1, P2, P3, P4, P5, P6, P7, P8, RO>(type: NotificationType8<P1, P2, P3, P4, P5, P6, P7, P8, RO>, handler: NotificationHandler8<P1, P2, P3, P4, P5, P6, P7, P8>): void;
-	onNotification<P1, P2, P3, P4, P5, P6, P7, P8, P9, RO>(type: NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, RO>, handler: NotificationHandler9<P1, P2, P3, P4, P5, P6, P7, P8, P9>): void;
-	onNotification(method: string, handler: GenericNotificationHandler): void;
-	onNotification(handler: StarNotificationHandler): void;
+	onNotification<RO>(type: NotificationType0<RO>, handler: NotificationHandler0): Disposable;
+	onNotification<P, RO>(type: NotificationType<P, RO>, handler: NotificationHandler<P>): Disposable;
+	onNotification<P1, RO>(type: NotificationType1<P1, RO>, handler: NotificationHandler1<P1>): Disposable;
+	onNotification<P1, P2, RO>(type: NotificationType2<P1, P2, RO>, handler: NotificationHandler2<P1, P2>): Disposable;
+	onNotification<P1, P2, P3, RO>(type: NotificationType3<P1, P2, P3, RO>, handler: NotificationHandler3<P1, P2, P3>): Disposable;
+	onNotification<P1, P2, P3, P4, RO>(type: NotificationType4<P1, P2, P3, P4, RO>, handler: NotificationHandler4<P1, P2, P3, P4>): Disposable;
+	onNotification<P1, P2, P3, P4, P5, RO>(type: NotificationType5<P1, P2, P3, P4, P5, RO>, handler: NotificationHandler5<P1, P2, P3, P4, P5>): Disposable;
+	onNotification<P1, P2, P3, P4, P5, P6, RO>(type: NotificationType6<P1, P2, P3, P4, P5, P6, RO>, handler: NotificationHandler6<P1, P2, P3, P4, P5, P6>): Disposable;
+	onNotification<P1, P2, P3, P4, P5, P6, P7, RO>(type: NotificationType7<P1, P2, P3, P4, P5, P6, P7, RO>, handler: NotificationHandler7<P1, P2, P3, P4, P5, P6, P7>): Disposable;
+	onNotification<P1, P2, P3, P4, P5, P6, P7, P8, RO>(type: NotificationType8<P1, P2, P3, P4, P5, P6, P7, P8, RO>, handler: NotificationHandler8<P1, P2, P3, P4, P5, P6, P7, P8>): Disposable;
+	onNotification<P1, P2, P3, P4, P5, P6, P7, P8, P9, RO>(type: NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, RO>, handler: NotificationHandler9<P1, P2, P3, P4, P5, P6, P7, P8, P9>): Disposable;
+	onNotification(method: string, handler: GenericNotificationHandler): Disposable;
+	onNotification(handler: StarNotificationHandler): Disposable;
 
 	onUnhandledNotification: Event<NotificationMessage>;
 
@@ -1132,17 +1132,29 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			traceSendingNotification(notificationMessage);
 			messageWriter.write(notificationMessage);
 		},
-		onNotification: (type: string | MessageSignature | StarNotificationHandler, handler?: GenericNotificationHandler): void => {
+		onNotification: (type: string | MessageSignature | StarNotificationHandler, handler?: GenericNotificationHandler): Disposable => {
 			throwIfClosedOrDisposed();
+			let method: string | undefined;
 			if (Is.func(type)) {
 				starNotificationHandler = type as StarNotificationHandler;
 			} else if (handler) {
 				if (Is.string(type)) {
+					method = type;
 					notificationHandlers[type] = { type: undefined, handler };
 				} else {
+					method = type.method;
 					notificationHandlers[type.method] = { type, handler };
 				}
 			}
+			return {
+				dispose: () => {
+					if (method !== undefined) {
+						delete notificationHandlers[method];
+					} else {
+						starNotificationHandler = undefined;
+					}
+				}
+			};
 		},
 		onProgress: <P>(_type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable => {
 			if (progressHandlers.has(token)) {
@@ -1246,20 +1258,37 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			});
 			return result;
 		},
-		onRequest: <R, E>(type: string | MessageSignature | StarRequestHandler, handler?: GenericRequestHandler<R, E>): void => {
+		onRequest: <R, E>(type: string | MessageSignature | StarRequestHandler, handler?: GenericRequestHandler<R, E>): Disposable => {
 			throwIfClosedOrDisposed();
 
+			let method: string | undefined | null = null;
 			if (StarRequestHandler.is(type)) {
+				method = undefined;
 				starRequestHandler = type;
 			} else if (Is.string(type)) {
+				method = null;
 				if (handler !== undefined) {
+					method = type;
 					requestHandlers[type] = { handler: handler, type: undefined };
 				}
 			} else {
 				if (handler !== undefined) {
+					method = type.method;
 					requestHandlers[type.method] = { type, handler };
 				}
 			}
+			return {
+				dispose: () => {
+					if (method === null) {
+						return;
+					}
+					if (method !== undefined) {
+						delete requestHandlers[method];
+					} else {
+						starRequestHandler = undefined;
+					}
+				}
+			};
 		},
 		trace: (_value: Trace, _tracer: Tracer, sendNotificationOrTraceOptions?: boolean | TraceOptions) => {
 			let _sendNotification: boolean = false;

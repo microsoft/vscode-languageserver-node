@@ -97,10 +97,10 @@ interface Connection {
 	sendRequest<R>(method: string, param: any, token?: CancellationToken): Promise<R>;
 	sendRequest<R>(type: string | MessageSignature, ...params: any[]): Promise<R>;
 
-	onRequest<R, E, RO>(type: RequestType0<R, E, RO>, handler: RequestHandler0<R, E>): void;
-	onRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, handler: RequestHandler<P, R, E>): void;
-	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): void;
-	onRequest<R, E>(method: string | MessageSignature, handler: GenericRequestHandler<R, E>): void;
+	onRequest<R, E, RO>(type: RequestType0<R, E, RO>, handler: RequestHandler0<R, E>): Disposable;
+	onRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, handler: RequestHandler<P, R, E>): Disposable;
+	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): Disposable;
+	onRequest<R, E>(method: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable;
 
 	sendNotification<RO>(type: NotificationType0<RO>): void;
 	sendNotification<P, RO>(type: NotificationType<P, RO>, params?: P): void;
@@ -108,10 +108,10 @@ interface Connection {
 	sendNotification(method: string, params: any): void;
 	sendNotification(method: string | MessageSignature, params?: any): void;
 
-	onNotification<RO>(type: NotificationType0<RO>, handler: NotificationHandler0): void;
-	onNotification<P, RO>(type: NotificationType<P, RO>, handler: NotificationHandler<P>): void;
-	onNotification(method: string, handler: GenericNotificationHandler): void;
-	onNotification(method: string | MessageSignature, handler: GenericNotificationHandler): void;
+	onNotification<RO>(type: NotificationType0<RO>, handler: NotificationHandler0): Disposable;
+	onNotification<P, RO>(type: NotificationType<P, RO>, handler: NotificationHandler<P>): Disposable;
+	onNotification(method: string, handler: GenericNotificationHandler): Disposable;
+	onNotification(method: string | MessageSignature, handler: GenericNotificationHandler): Disposable;
 
 	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable;
 	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): void;
@@ -178,10 +178,10 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 		listen: (): void => connection.listen(),
 
 		sendRequest: <R>(type: string | MessageSignature, ...params: any[]): Promise<R> => connection.sendRequest(Is.string(type) ? type : type.method, ...params),
-		onRequest: <R, E>(type: string | MessageSignature, handler: GenericRequestHandler<R, E>): void => connection.onRequest(Is.string(type) ? type : type.method, handler),
+		onRequest: <R, E>(type: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable => connection.onRequest(Is.string(type) ? type : type.method, handler),
 
 		sendNotification: (type: string | MessageSignature, params?: any): void => connection.sendNotification(Is.string(type) ? type : type.method, params),
-		onNotification: (type: string | MessageSignature, handler: GenericNotificationHandler): void => connection.onNotification(Is.string(type) ? type : type.method, handler),
+		onNotification: (type: string | MessageSignature, handler: GenericNotificationHandler): Disposable => connection.onNotification(Is.string(type) ? type : type.method, handler),
 
 		onProgress: connection.onProgress,
 		sendProgress: connection.sendProgress,
@@ -2732,15 +2732,15 @@ export abstract class BaseLanguageClient {
 		}
 	}
 
-	public onRequest<R, E, RO>(type: RequestType0<R, E, RO>, handler: RequestHandler0<R, E>): void;
-	public onRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, handler: RequestHandler<P, R, E>): void;
-	public onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): void;
-	public onRequest<R, E>(type: string | MessageSignature, handler: GenericRequestHandler<R, E>): void {
+	public onRequest<R, E, RO>(type: RequestType0<R, E, RO>, handler: RequestHandler0<R, E>): Disposable;
+	public onRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, handler: RequestHandler<P, R, E>): Disposable;
+	public onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): Disposable;
+	public onRequest<R, E>(type: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable {
 		if (!this.isConnectionActive()) {
 			throw new Error('Language client is not ready yet');
 		}
 		try {
-			this._resolvedConnection!.onRequest(type, handler);
+			return this._resolvedConnection!.onRequest(type, handler);
 		} catch (error) {
 			this.error(`Registering request handler ${Is.string(type) ? type : type.method} failed.`, error);
 			throw error;
@@ -2764,15 +2764,15 @@ export abstract class BaseLanguageClient {
 		}
 	}
 
-	public onNotification<RO>(type: NotificationType0<RO>, handler: NotificationHandler0): void;
-	public onNotification<P, RO>(type: NotificationType<P, RO>, handler: NotificationHandler<P>): void;
-	public onNotification(method: string, handler: GenericNotificationHandler): void;
-	public onNotification(type: string | MessageSignature, handler: GenericNotificationHandler): void {
+	public onNotification<RO>(type: NotificationType0<RO>, handler: NotificationHandler0): Disposable;
+	public onNotification<P, RO>(type: NotificationType<P, RO>, handler: NotificationHandler<P>): Disposable;
+	public onNotification(method: string, handler: GenericNotificationHandler): Disposable;
+	public onNotification(type: string | MessageSignature, handler: GenericNotificationHandler): Disposable {
 		if (!this.isConnectionActive()) {
 			throw new Error('Language client is not ready yet');
 		}
 		try {
-			this._resolvedConnection!.onNotification(type, handler);
+			return this._resolvedConnection!.onNotification(type, handler);
 		} catch (error) {
 			this.error(`Registering notification handler ${Is.string(type) ? type : type.method} failed.`, error);
 			throw error;
