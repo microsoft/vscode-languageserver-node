@@ -200,15 +200,13 @@ export interface MessageSignature {
  * An abstract implementation of a MessageType.
  */
 export abstract class AbstractMessageSignature implements MessageSignature {
-	constructor(private _method: string, private _numberOfParams: number) {
-	}
 
-	get method(): string {
-		return this._method;
-	}
+	public readonly method: string;
+	public readonly numberOfParams: number;
 
-	get numberOfParams(): number {
-		return this._numberOfParams;
+	constructor(method: string, numberOfParams: number) {
+		this.method = method;
+		this.numberOfParams = numberOfParams;
 	}
 
 	get parameterStructures(): ParameterStructures {
@@ -225,26 +223,22 @@ export interface _EM {
 
 /**
  * Classes to type request response pairs
- *
- * The type parameter RO will be removed in the next major version
- * of the JSON RPC library since it is a LSP concept and doesn't
- * belong here. For now it is tagged as default never.
  */
-export class RequestType0<R, E, RO = never> extends AbstractMessageSignature {
+export class RequestType0<R, E> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [R, E, RO, _EM];
+	public readonly _?: [R, E, _EM];
 	constructor(method: string) {
 		super(method, 0);
 	}
 }
 
-export class RequestType<P, R, E, RO = never> extends AbstractMessageSignature {
+export class RequestType<P, R, E> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P, R, E, RO, _EM];
+	public readonly _?: [P, R, E, _EM];
 	constructor(method: string, private _parameterStructures: ParameterStructures = ParameterStructures.auto) {
 		super(method, 1);
 	}
@@ -254,11 +248,11 @@ export class RequestType<P, R, E, RO = never> extends AbstractMessageSignature {
 	}
 }
 
-export class RequestType1<P1, R, E, RO = never> extends AbstractMessageSignature {
+export class RequestType1<P1, R, E> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, R, E, RO, _EM];
+	public readonly _?: [P1, R, E, _EM];
 	constructor(method: string, private _parameterStructures: ParameterStructures = ParameterStructures.auto) {
 		super(method, 1);
 	}
@@ -268,81 +262,81 @@ export class RequestType1<P1, R, E, RO = never> extends AbstractMessageSignature
 	}
 }
 
-export class RequestType2<P1, P2, R, E, RO = never> extends AbstractMessageSignature {
+export class RequestType2<P1, P2, R, E> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, R, E, RO, _EM];
+	public readonly _?: [P1, P2, R, E, _EM];
 	constructor(method: string) {
 		super(method, 2);
 	}
 }
 
-export class RequestType3<P1, P2, P3, R, E, RO = never> extends AbstractMessageSignature {
+export class RequestType3<P1, P2, P3, R, E> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, R, E, RO, _EM];
+	public readonly _?: [P1, P2, P3, R, E, _EM];
 	constructor(method: string) {
 		super(method, 3);
 	}
 }
 
-export class RequestType4<P1, P2, P3, P4, R, E, RO = never> extends AbstractMessageSignature {
+export class RequestType4<P1, P2, P3, P4, R, E> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, R, E, RO, _EM];
+	public readonly _?: [P1, P2, P3, P4, R, E, _EM];
 	constructor(method: string) {
 		super(method, 4);
 	}
 }
 
-export class RequestType5<P1, P2, P3, P4, P5, R, E, RO = never> extends AbstractMessageSignature {
+export class RequestType5<P1, P2, P3, P4, P5, R, E> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, R, E, RO, _EM];
+	public readonly _?: [P1, P2, P3, P4, P5, R, E, _EM];
 	constructor(method: string) {
 		super(method, 5);
 	}
 }
 
-export class RequestType6<P1, P2, P3, P4, P5, P6, R, E, RO = never> extends AbstractMessageSignature {
+export class RequestType6<P1, P2, P3, P4, P5, P6, R, E> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, P6, R, E, RO, _EM];
+	public readonly _?: [P1, P2, P3, P4, P5, P6, R, E, _EM];
 	constructor(method: string) {
 		super(method, 6);
 	}
 }
 
-export class RequestType7<P1, P2, P3, P4, P5, P6, P7, R, E, RO = never> extends AbstractMessageSignature {
+export class RequestType7<P1, P2, P3, P4, P5, P6, P7, R, E> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, R, E, RO, _EM];
+	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, R, E, _EM];
 	constructor(method: string) {
 		super(method, 7);
 	}
 }
 
-export class RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO = never> extends AbstractMessageSignature {
+export class RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO, _EM];
+	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, P8, R, E, _EM];
 	constructor(method: string) {
 		super(method, 8);
 	}
 }
 
-export class RequestType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO = never> extends AbstractMessageSignature {
+export class RequestType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO, _EM];
+	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, _EM];
 	constructor(method: string) {
 		super(method, 9);
 	}
@@ -363,16 +357,11 @@ export interface NotificationMessage extends Message {
 	params?: [] | object
 }
 
-/**
- * The type parameter RO will be removed in the next major version
- * of the JSON RPC library since it is a LSP concept and doesn't
- * belong here. For now it is tagged as default never.
- */
-export class NotificationType<P, RO = never> extends AbstractMessageSignature {
+export class NotificationType<P> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P, RO, _EM];
+	public readonly _?: [P, _EM];
 	constructor(method: string, private _parameterStructures: ParameterStructures = ParameterStructures.auto) {
 		super(method, 1);
 		this._ = undefined;
@@ -383,21 +372,21 @@ export class NotificationType<P, RO = never> extends AbstractMessageSignature {
 	}
 }
 
-export class NotificationType0<RO = never> extends AbstractMessageSignature {
+export class NotificationType0 extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [RO, _EM];
+	public readonly _?: [_EM];
 	constructor(method: string) {
 		super(method, 0);
 	}
 }
 
-export class NotificationType1<P1, RO = never> extends AbstractMessageSignature {
+export class NotificationType1<P1> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, RO, _EM];
+	public readonly _?: [P1, _EM];
 	constructor(method: string, private _parameterStructures: ParameterStructures = ParameterStructures.auto) {
 		super(method, 1);
 	}
@@ -407,81 +396,81 @@ export class NotificationType1<P1, RO = never> extends AbstractMessageSignature 
 	}
 }
 
-export class NotificationType2<P1, P2, RO = never> extends AbstractMessageSignature {
+export class NotificationType2<P1, P2> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, RO, _EM];
+	public readonly _?: [P1, P2, _EM];
 	constructor(method: string) {
 		super(method, 2);
 	}
 }
 
-export class NotificationType3<P1, P2, P3, RO = never> extends AbstractMessageSignature {
+export class NotificationType3<P1, P2, P3> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, RO, _EM];
+	public readonly _?: [P1, P2, P3, _EM];
 	constructor(method: string) {
 		super(method, 3);
 	}
 }
 
-export class NotificationType4<P1, P2, P3, P4, RO = never> extends AbstractMessageSignature {
+export class NotificationType4<P1, P2, P3, P4> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, RO, _EM];
+	public readonly _?: [P1, P2, P3, P4, _EM];
 	constructor(method: string) {
 		super(method, 4);
 	}
 }
 
-export class NotificationType5<P1, P2, P3, P4, P5, RO = never> extends AbstractMessageSignature {
+export class NotificationType5<P1, P2, P3, P4, P5> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, RO, _EM];
+	public readonly _?: [P1, P2, P3, P4, P5, _EM];
 	constructor(method: string) {
 		super(method, 5);
 	}
 }
 
-export class NotificationType6<P1, P2, P3, P4, P5, P6, RO = never> extends AbstractMessageSignature {
+export class NotificationType6<P1, P2, P3, P4, P5, P6> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, P6, RO, _EM];
+	public readonly _?: [P1, P2, P3, P4, P5, P6, _EM];
 	constructor(method: string) {
 		super(method, 6);
 	}
 }
 
-export class NotificationType7<P1, P2, P3, P4, P5, P6, P7, RO = never> extends AbstractMessageSignature {
+export class NotificationType7<P1, P2, P3, P4, P5, P6, P7> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, RO, _EM];
+	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, _EM];
 	constructor(method: string) {
 		super(method, 7);
 	}
 }
 
-export class NotificationType8<P1, P2, P3, P4, P5, P6, P7, P8, RO = never> extends AbstractMessageSignature {
+export class NotificationType8<P1, P2, P3, P4, P5, P6, P7, P8> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, P8, RO, _EM];
+	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, P8, _EM];
 	constructor(method: string) {
 		super(method, 8);
 	}
 }
 
-export class NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, RO = never> extends AbstractMessageSignature {
+export class NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, P8, P9, RO, _EM];
+	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, P8, P9, _EM];
 	constructor(method: string) {
 		super(method, 9);
 	}

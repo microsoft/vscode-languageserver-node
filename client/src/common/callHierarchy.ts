@@ -127,7 +127,7 @@ export class CallHierarchyFeature extends TextDocumentFeature<boolean | CallHier
 		if (!id || !options) {
 			return;
 		}
-		this.register(this.messages, { id: id, registerOptions: options });
+		this.register({ id: id, registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: CallHierarchyRegistrationOptions): [Disposable, CallHierarchyProvider] {

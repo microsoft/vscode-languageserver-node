@@ -9,8 +9,8 @@ import { workspace, Disposable, WorkspaceFolder as VWorkspaceFolder, WorkspaceFo
 
 import { DynamicFeature, RegistrationData, BaseLanguageClient, NextSignature } from './client';
 import {
-	ClientCapabilities, InitializeParams, MessageSignature, CancellationToken, ServerCapabilities, WorkspaceFoldersRequest, WorkspaceFolder,
-	DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams
+	ClientCapabilities, InitializeParams, CancellationToken, ServerCapabilities, WorkspaceFoldersRequest, WorkspaceFolder,
+	DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, RegistrationType
 } from 'vscode-languageserver-protocol';
 
 function access<T, K extends keyof T>(target: T | undefined, key: K): T[K] | undefined {
@@ -37,7 +37,7 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 	constructor(private _client: BaseLanguageClient) {
 	}
 
-	public get messages(): MessageSignature {
+	public get registrationType(): RegistrationType<undefined> {
 		return DidChangeWorkspaceFoldersNotification.type;
 	}
 
@@ -87,10 +87,7 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 			id = UUID.generateUuid();
 		}
 		if (id) {
-			this.register(this.messages, {
-				id: id,
-				registerOptions: undefined
-			});
+			this.register({ id: id, registerOptions: undefined });
 		}
 	}
 
@@ -118,7 +115,7 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 		this._client.sendNotification(DidChangeWorkspaceFoldersNotification.type, params);
 	}
 
-	public register(_message: MessageSignature, data: RegistrationData<undefined>): void {
+	public register(data: RegistrationData<undefined>): void {
 		let id = data.id;
 		let client = this._client;
 		let disposable = workspace.onDidChangeWorkspaceFolders((event) => {

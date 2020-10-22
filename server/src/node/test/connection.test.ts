@@ -168,7 +168,7 @@ suite('Connection Tests', () => {
 			partialResultToken: resultToken
 		};
 		const result: any[] = [];
-		clientConnection.onProgress(DeclarationRequest.resultType, resultToken, (values) => {
+		clientConnection.onProgress(DeclarationRequest.type, resultToken, (values) => {
 			result.push(...values);
 		});
 		clientConnection.sendRequest(DeclarationRequest.type, params).then((values) => {

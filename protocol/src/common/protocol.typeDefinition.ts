@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { RequestHandler, ProgressType } from 'vscode-jsonrpc';
+import { RequestHandler } from 'vscode-jsonrpc';
 import { Definition, DefinitionLink, LocationLink, Location } from 'vscode-languageserver-types';
 
 import { ProtocolRequestType } from './messages';
@@ -52,7 +52,5 @@ export interface TypeDefinitionParams extends TextDocumentPositionParams, WorkDo
 export namespace TypeDefinitionRequest {
 	export const method: 'textDocument/typeDefinition' = 'textDocument/typeDefinition';
 	export const type = new ProtocolRequestType<TypeDefinitionParams, Definition | DefinitionLink[] | null, Location[] | DefinitionLink[], void, TypeDefinitionRegistrationOptions>(method);
-	/** @deprecated Use TypeDefinitionRequest.type */
-	export const resultType = new ProgressType<Location[] | DefinitionLink[]>();
 	export type HandlerSignature = RequestHandler<TypeDefinitionParams, Definition | DefinitionLink[] | null, void>;
 }

@@ -53,7 +53,7 @@ suite('Connection', () => {
 	});
 
 	test('Test Duplex Stream Connection', (done) => {
-		let type = new RequestType<string, string, void, void>('test/handleSingleRequest');
+		let type = new RequestType<string, string, void>('test/handleSingleRequest');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
@@ -72,7 +72,7 @@ suite('Connection', () => {
 	});
 
 	test('Primitive param as positional', (done) => {
-		let type = new RequestType<boolean, number, void, void>('test/handleSingleRequest');
+		let type = new RequestType<boolean, number, void>('test/handleSingleRequest');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
@@ -91,7 +91,7 @@ suite('Connection', () => {
 	});
 
 	test('Array param as positional', (done) => {
-		let type = new RequestType<boolean[], number, void, void>('test/handleSingleRequest');
+		let type = new RequestType<boolean[], number, void>('test/handleSingleRequest');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
@@ -110,7 +110,7 @@ suite('Connection', () => {
 	});
 
 	test('Literal param as named', (done) => {
-		let type = new RequestType<{ value: boolean }, number, void, void>('test/handleSingleRequest');
+		let type = new RequestType<{ value: boolean }, number, void>('test/handleSingleRequest');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
@@ -129,7 +129,7 @@ suite('Connection', () => {
 	});
 
 	test('Literal param as positional', (done) => {
-		let type = new RequestType<{ value: boolean }, number, void, void>('test/handleSingleRequest', ParameterStructures.byPosition);
+		let type = new RequestType<{ value: boolean }, number, void>('test/handleSingleRequest', ParameterStructures.byPosition);
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
@@ -148,7 +148,7 @@ suite('Connection', () => {
 	});
 
 	test('Handle Single Request', (done) => {
-		let type = new RequestType<string, string, void, void>('test/handleSingleRequest');
+		let type = new RequestType<string, string, void>('test/handleSingleRequest');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
@@ -168,7 +168,7 @@ suite('Connection', () => {
 	});
 
 	test('Handle Multiple Requests', (done) => {
-		let type = new RequestType<string, string, void, void>('test/handleSingleRequest');
+		let type = new RequestType<string, string, void>('test/handleSingleRequest');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
@@ -194,7 +194,7 @@ suite('Connection', () => {
 
 
 	test('Unhandled Request', (done) => {
-		let type = new RequestType<string, string, void, void>('test/handleSingleRequest');
+		let type = new RequestType<string, string, void>('test/handleSingleRequest');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
@@ -211,7 +211,7 @@ suite('Connection', () => {
 	});
 
 	test('Receives undefined param as null', (done) => {
-		let type = new RequestType<string, string, void, void>('test/handleSingleRequest');
+		let type = new RequestType<string, string, void>('test/handleSingleRequest');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
@@ -230,7 +230,7 @@ suite('Connection', () => {
 	});
 
 	test('Receives null as null', (done) => {
-		let type = new RequestType<string | null, string | null, void, void>('test/handleSingleRequest');
+		let type = new RequestType<string | null, string | null, void>('test/handleSingleRequest');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
@@ -250,7 +250,7 @@ suite('Connection', () => {
 	});
 
 	test('Receives 0 as 0', (done) => {
- 		let type = new RequestType<number, number, void, void>('test/handleSingleRequest');
+ 		let type = new RequestType<number, number, void>('test/handleSingleRequest');
  		let duplexStream1 = new TestDuplex('ds1');
  		let duplexStream2 = new TestDuplex('ds2');
 
@@ -269,7 +269,7 @@ suite('Connection', () => {
  		});
  	});
 
-	let testNotification = new NotificationType<{ value: boolean }, void>('testNotification');
+	let testNotification = new NotificationType<{ value: boolean }>('testNotification');
 	test('Send and Receive Notification', (done) => {
 
 		let duplexStream1 = new TestDuplex('ds1');
@@ -304,7 +304,7 @@ suite('Connection', () => {
 	});
 
 	test('Dispose connection', (done) => {
-		let type = new RequestType<string | null, string | null, void, void>('test/handleSingleRequest');
+		let type = new RequestType<string | null, string | null, void>('test/handleSingleRequest');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
@@ -366,7 +366,7 @@ suite('Connection', () => {
 	});
 
 	test('N params in notifications', (done) => {
-		let type = new NotificationType2<number, string, void>('test');
+		let type = new NotificationType2<number, string>('test');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
@@ -384,7 +384,7 @@ suite('Connection', () => {
 	});
 
 	test('N params in request / response', (done) => {
-		let type = new RequestType3<number, number, number, number, void, void>('add');
+		let type = new RequestType3<number, number, number, number, void>('add');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
@@ -409,7 +409,7 @@ suite('Connection', () => {
 	});
 
 	test('N params in request / response with token', (done) => {
-		let type = new RequestType3<number, number, number, number, void, void>('add');
+		let type = new RequestType3<number, number, number, number, void>('add');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
@@ -435,7 +435,7 @@ suite('Connection', () => {
 	});
 
 	test('One Param as array in request', (done) => {
-		let type = new RequestType<number[], number, void, void>('add', ParameterStructures.byPosition);
+		let type = new RequestType<number[], number, void>('add', ParameterStructures.byPosition);
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
@@ -462,7 +462,7 @@ suite('Connection', () => {
 	});
 
 	test('One Param as array in notification', (done) => {
-		let type = new NotificationType<number[], void>('add', ParameterStructures.byPosition);
+		let type = new NotificationType<number[]>('add', ParameterStructures.byPosition);
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
@@ -530,7 +530,7 @@ suite('Connection', () => {
 	});
 
 	test('Cancellation token is undefined', (done) => {
-		let type = new RequestType3<number, number, number, number, void, void>('add');
+		let type = new RequestType3<number, number, number, number, void>('add');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
@@ -555,7 +555,7 @@ suite('Connection', () => {
 	});
 
 	test('Missing params in request', (done) => {
-		let type = new RequestType3<number, number, number, number, void, void>('add');
+		let type = new RequestType3<number, number, number, number, void>('add');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 
@@ -580,7 +580,7 @@ suite('Connection', () => {
 	});
 
 	test('Missing params in notifications', (done) => {
-		let type = new NotificationType2<number, string, void>('test');
+		let type = new NotificationType2<number, string>('test');
 		let duplexStream1 = new TestDuplex('ds1');
 		let duplexStream2 = new TestDuplex('ds2');
 

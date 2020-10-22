@@ -620,7 +620,7 @@ suite('Client integration', () => {
 		assert.strictEqual(middlewareCalled, true);
 	});
 	test('Semantic Tokens', async () => {
-		const provider = client.getFeature(lsclient.SemanticTokensRequest.method).getProvider(document);
+		const provider = client.getFeature(lsclient.SemanticTokensRegistrationType.method).getProvider(document);
 		const rangeProvider = provider?.range;
 		isDefined(rangeProvider);
 		const rangeResult = (await rangeProvider.provideDocumentRangeSemanticTokens(document, range, tokenSource.token)) as vscode.SemanticTokens;

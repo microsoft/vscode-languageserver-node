@@ -23,8 +23,8 @@ import {
 
 import {
 	RAL, Message, MessageSignature, Logger, ResponseError,
-	RequestType, RequestType0, RequestHandler, RequestHandler0, GenericRequestHandler,
-	NotificationType, NotificationType0,
+	ProtocolRequestType, ProtocolRequestType0, RequestHandler, RequestHandler0, GenericRequestHandler,
+	ProtocolNotificationType, ProtocolNotificationType0,
 	NotificationHandler, NotificationHandler0, GenericNotificationHandler,
 	MessageReader, MessageWriter, Trace, Tracer, TraceFormat, TraceOptions, Event, Emitter,
 	createProtocolConnection,
@@ -65,7 +65,7 @@ import {
 	WorkspaceSymbolRegistrationOptions, CodeActionOptions, CodeLensOptions, DocumentFormattingOptions, DocumentRangeFormattingRegistrationOptions,
 	DocumentRangeFormattingOptions, DocumentOnTypeFormattingOptions, RenameOptions, DocumentLinkOptions, CompletionItemTag, DiagnosticTag,
 	DocumentColorRequest, DeclarationRequest, FoldingRangeRequest, ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, SymbolTag,
-	CallHierarchyPrepareRequest, CancellationStrategy, SaveOptions, SemanticTokensRequest, LSPErrorCodes, CodeActionResolveRequest
+	CallHierarchyPrepareRequest, CancellationStrategy, SaveOptions, LSPErrorCodes, CodeActionResolveRequest, RegistrationType, SemanticTokensRegistrationType
 } from 'vscode-languageserver-protocol';
 
 import type { ColorProviderMiddleware } from './colorProvider';
@@ -91,25 +91,25 @@ interface Connection {
 
 	listen(): void;
 
-	sendRequest<R, E, RO>(type: RequestType0<R, E, RO>, token?: CancellationToken): Promise<R>;
-	sendRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, params: P, token?: CancellationToken): Promise<R>;
+	sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: P, token?: CancellationToken): Promise<R>;
 	sendRequest<R>(method: string, token?: CancellationToken): Promise<R>;
 	sendRequest<R>(method: string, param: any, token?: CancellationToken): Promise<R>;
 	sendRequest<R>(type: string | MessageSignature, ...params: any[]): Promise<R>;
 
-	onRequest<R, E, RO>(type: RequestType0<R, E, RO>, handler: RequestHandler0<R, E>): Disposable;
-	onRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, handler: RequestHandler<P, R, E>): Disposable;
+	onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: RequestHandler0<R, E>): Disposable;
+	onRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, handler: RequestHandler<P, R, E>): Disposable;
 	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): Disposable;
 	onRequest<R, E>(method: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable;
 
-	sendNotification<RO>(type: NotificationType0<RO>): void;
-	sendNotification<P, RO>(type: NotificationType<P, RO>, params?: P): void;
+	sendNotification<RO>(type: ProtocolNotificationType0<RO>): void;
+	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): void;
 	sendNotification(method: string): void;
 	sendNotification(method: string, params: any): void;
 	sendNotification(method: string | MessageSignature, params?: any): void;
 
-	onNotification<RO>(type: NotificationType0<RO>, handler: NotificationHandler0): Disposable;
-	onNotification<P, RO>(type: NotificationType<P, RO>, handler: NotificationHandler<P>): Disposable;
+	onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): Disposable;
+	onNotification<P, RO>(type: ProtocolNotificationType<P, RO>, handler: NotificationHandler<P>): Disposable;
 	onNotification(method: string, handler: GenericNotificationHandler): Disposable;
 	onNotification(method: string | MessageSignature, handler: GenericNotificationHandler): Disposable;
 
@@ -192,7 +192,7 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 				traceFormat: TraceFormat.Text
 			};
 
-			if (sendNotificationOrTraceOptions === void 0) {
+			if (sendNotificationOrTraceOptions === undefined) {
 				connection.trace(value, tracer, defaultTraceOptions);
 			} else if (Is.boolean(sendNotificationOrTraceOptions)) {
 				connection.trace(value, tracer, sendNotificationOrTraceOptions);
@@ -629,7 +629,7 @@ const SupportedSymbolTags: SymbolTag[] = [
 ];
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
-	if (target[key] === void 0) {
+	if (target[key] === undefined) {
 		target[key] = {} as any;
 	}
 	return target[key];
@@ -679,11 +679,6 @@ export interface StaticFeature {
 export interface DynamicFeature<RO> {
 
 	/**
-	 * The message for which this features support dynamic activation / registration.
-	 */
-	messages: MessageSignature | MessageSignature[];
-
-	/**
 	 * Called to fill the initialize params.
 	 *
 	 * @params the initialize params.
@@ -710,12 +705,16 @@ export interface DynamicFeature<RO> {
 	initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector | undefined): void;
 
 	/**
+	 * The signature (e.g. method) for which this features support dynamic activation / registration.
+	 */
+	registrationType: RegistrationType<RO>;
+
+	/**
 	 * Is called when the server send a register request for the given message.
 	 *
-	 * @param message the message to register for.
 	 * @param data additional registration data as defined in the protocol.
 	 */
-	register(message: MessageSignature, data: RegistrationData<RO>): void;
+	register(data: RegistrationData<RO>): void;
 
 	/**
 	 * Is called when the server wants to unregister a feature.
@@ -741,7 +740,7 @@ export interface NotificationFeature<T extends Function> {
 namespace DynamicFeature {
 	export function is<T>(value: any): value is DynamicFeature<T> {
 		let candidate: DynamicFeature<T> = value;
-		return candidate && Is.func(candidate.register) && Is.func(candidate.unregister) && Is.func(candidate.dispose) && candidate.messages !== void 0;
+		return candidate && Is.func(candidate.register) && Is.func(candidate.unregister) && Is.func(candidate.dispose) && candidate.registrationType !== undefined;
 	}
 }
 
@@ -765,19 +764,19 @@ abstract class DocumentNotifiactions<P, E> implements DynamicFeature<TextDocumen
 
 	constructor(
 		protected _client: BaseLanguageClient, private _event: Event<E>,
-		protected _type: NotificationType<P, TextDocumentRegistrationOptions>,
+		protected _type: ProtocolNotificationType<P, TextDocumentRegistrationOptions>,
 		protected _middleware: NextSignature<E, void> | undefined,
 		protected _createParams: CreateParamsSignature<E, P>,
 		protected _selectorFilter?: (selectors: IterableIterator<DocumentSelector>, data: E) => boolean) {
 	}
 
-	public abstract messages: MessageSignature | MessageSignature[];
+	public abstract registrationType: RegistrationType<TextDocumentRegistrationOptions>;
 
 	public abstract fillClientCapabilities(capabilities: ClientCapabilities): void;
 
 	public abstract initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector | undefined): void;
 
-	public register(_message: MessageSignature, data: RegistrationData<TextDocumentRegistrationOptions>): void {
+	public register(data: RegistrationData<TextDocumentRegistrationOptions>): void {
 
 		if (!data.registerOptions.documentSelector) {
 			return;
@@ -842,10 +841,6 @@ class DidOpenTextDocumentFeature extends DocumentNotifiactions<DidOpenTextDocume
 		);
 	}
 
-	public get messages(): typeof DidOpenTextDocumentNotification.type {
-		return DidOpenTextDocumentNotification.type;
-	}
-
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
 		ensure(ensure(capabilities, 'textDocument')!, 'synchronization')!.dynamicRegistration = true;
 	}
@@ -853,12 +848,16 @@ class DidOpenTextDocumentFeature extends DocumentNotifiactions<DidOpenTextDocume
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		let textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
 		if (documentSelector && textDocumentSyncOptions && textDocumentSyncOptions.openClose) {
-			this.register(this.messages, { id: UUID.generateUuid(), registerOptions: { documentSelector: documentSelector } });
+			this.register({ id: UUID.generateUuid(), registerOptions: { documentSelector: documentSelector } });
 		}
 	}
 
-	public register(message: MessageSignature, data: RegistrationData<TextDocumentRegistrationOptions>): void {
-		super.register(message, data);
+	public get registrationType(): RegistrationType<TextDocumentRegistrationOptions> {
+		return DidOpenTextDocumentNotification.type;
+	}
+
+	public register(data: RegistrationData<TextDocumentRegistrationOptions>): void {
+		super.register(data);
 		if (!data.registerOptions.documentSelector) {
 			return;
 		}
@@ -900,7 +899,7 @@ class DidCloseTextDocumentFeature extends DocumentNotifiactions<DidCloseTextDocu
 		);
 	}
 
-	public get messages(): typeof DidCloseTextDocumentNotification.type {
+	public get registrationType(): RegistrationType<TextDocumentRegistrationOptions> {
 		return DidCloseTextDocumentNotification.type;
 	}
 
@@ -911,7 +910,7 @@ class DidCloseTextDocumentFeature extends DocumentNotifiactions<DidCloseTextDocu
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		let textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
 		if (documentSelector && textDocumentSyncOptions && textDocumentSyncOptions.openClose) {
-			this.register(this.messages, { id: UUID.generateUuid(), registerOptions: { documentSelector: documentSelector } });
+			this.register({ id: UUID.generateUuid(), registerOptions: { documentSelector: documentSelector } });
 		}
 	}
 
@@ -958,7 +957,7 @@ class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeR
 	constructor(private _client: BaseLanguageClient) {
 	}
 
-	public get messages(): typeof DidChangeTextDocumentNotification.type {
+	public get registrationType(): RegistrationType<TextDocumentChangeRegistrationOptions> {
 		return DidChangeTextDocumentNotification.type;
 	}
 
@@ -968,17 +967,15 @@ class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeR
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		let textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
-		if (documentSelector && textDocumentSyncOptions && textDocumentSyncOptions.change !== void 0 && textDocumentSyncOptions.change !== TextDocumentSyncKind.None) {
-			this.register(this.messages,
-				{
-					id: UUID.generateUuid(),
-					registerOptions: Object.assign({}, { documentSelector: documentSelector }, { syncKind: textDocumentSyncOptions.change })
-				}
-			);
+		if (documentSelector && textDocumentSyncOptions && textDocumentSyncOptions.change !== undefined && textDocumentSyncOptions.change !== TextDocumentSyncKind.None) {
+			this.register({
+				id: UUID.generateUuid(),
+				registerOptions: Object.assign({}, { documentSelector: documentSelector }, { syncKind: textDocumentSyncOptions.change })
+			});
 		}
 	}
 
-	public register(_message: MessageSignature, data: RegistrationData<TextDocumentChangeRegistrationOptions>): void {
+	public register(data: RegistrationData<TextDocumentChangeRegistrationOptions>): void {
 		if (!data.registerOptions.documentSelector) {
 			return;
 		}
@@ -1098,7 +1095,7 @@ class WillSaveFeature extends DocumentNotifiactions<WillSaveTextDocumentParams, 
 		);
 	}
 
-	public get messages(): MessageSignature {
+	public get registrationType(): RegistrationType<TextDocumentRegistrationOptions> {
 		return WillSaveTextDocumentNotification.type;
 	}
 
@@ -1110,7 +1107,7 @@ class WillSaveFeature extends DocumentNotifiactions<WillSaveTextDocumentParams, 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		let textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
 		if (documentSelector && textDocumentSyncOptions && textDocumentSyncOptions.willSave) {
-			this.register(this.messages, {
+			this.register({
 				id: UUID.generateUuid(),
 				registerOptions: { documentSelector: documentSelector }
 			});
@@ -1126,7 +1123,7 @@ class WillSaveWaitUntilFeature implements DynamicFeature<TextDocumentRegistratio
 	constructor(private _client: BaseLanguageClient) {
 	}
 
-	public get messages(): MessageSignature {
+	public get registrationType(): RegistrationType<TextDocumentRegistrationOptions> {
 		return WillSaveTextDocumentWaitUntilRequest.type;
 	}
 
@@ -1138,14 +1135,14 @@ class WillSaveWaitUntilFeature implements DynamicFeature<TextDocumentRegistratio
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		let textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
 		if (documentSelector && textDocumentSyncOptions && textDocumentSyncOptions.willSaveWaitUntil) {
-			this.register(this.messages, {
+			this.register({
 				id: UUID.generateUuid(),
 				registerOptions: { documentSelector: documentSelector }
 			});
 		}
 	}
 
-	public register(_message: MessageSignature, data: RegistrationData<TextDocumentRegistrationOptions>): void {
+	public register(data: RegistrationData<TextDocumentRegistrationOptions>): void {
 		if (!data.registerOptions.documentSelector) {
 			return;
 		}
@@ -1162,7 +1159,7 @@ class WillSaveWaitUntilFeature implements DynamicFeature<TextDocumentRegistratio
 				return this._client.sendRequest(WillSaveTextDocumentWaitUntilRequest.type,
 					this._client.code2ProtocolConverter.asWillSaveTextDocumentParams(event)).then((edits) => {
 					let vEdits = this._client.protocol2CodeConverter.asTextEdits(edits);
-					return vEdits === void 0 ? [] : vEdits;
+					return vEdits === undefined ? [] : vEdits;
 				});
 			};
 			event.waitUntil(
@@ -1204,7 +1201,7 @@ class DidSaveTextDocumentFeature extends DocumentNotifiactions<DidSaveTextDocume
 		this._includeText = false;
 	}
 
-	public get messages(): MessageSignature {
+	public get registrationType(): RegistrationType<TextDocumentSaveRegistrationOptions> {
 		return DidSaveTextDocumentNotification.type;
 	}
 
@@ -1218,16 +1215,16 @@ class DidSaveTextDocumentFeature extends DocumentNotifiactions<DidSaveTextDocume
 			const saveOptions: SaveOptions = typeof textDocumentSyncOptions.save === 'boolean'
 				? { includeText: false }
 				: { includeText: !!textDocumentSyncOptions.save.includeText };
-			this.register(this.messages, {
+			this.register({
 				id: UUID.generateUuid(),
 				registerOptions: Object.assign({}, { documentSelector: documentSelector }, saveOptions)
 			});
 		}
 	}
 
-	public register(method: MessageSignature, data: RegistrationData<TextDocumentSaveRegistrationOptions>): void {
+	public register(data: RegistrationData<TextDocumentSaveRegistrationOptions>): void {
 		this._includeText = !!data.registerOptions.includeText;
-		super.register(method, data);
+		super.register(data);
 	}
 }
 
@@ -1238,7 +1235,7 @@ class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatchedFilesRe
 	constructor(private _client: BaseLanguageClient, private _notifyFileEvent: (event: FileEvent) => void) {
 	}
 
-	public get messages(): MessageSignature {
+	public get registrationType(): RegistrationType<DidChangeWatchedFilesRegistrationOptions> {
 		return DidChangeWatchedFilesNotification.type;
 	}
 
@@ -1249,7 +1246,7 @@ class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatchedFilesRe
 	public initialize(_capabilities: ServerCapabilities, _documentSelector: DocumentSelector): void {
 	}
 
-	public register(_method: MessageSignature, data: RegistrationData<DidChangeWatchedFilesRegistrationOptions>): void {
+	public register(data: RegistrationData<DidChangeWatchedFilesRegistrationOptions>): void {
 		if (!Array.isArray(data.registerOptions.watchers)) {
 			return;
 		}
@@ -1259,7 +1256,7 @@ class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatchedFilesRe
 				continue;
 			}
 			let watchCreate: boolean = true, watchChange: boolean = true, watchDelete: boolean = true;
-			if (watcher.kind !== void 0 && watcher.kind !== null) {
+			if (watcher.kind !== undefined && watcher.kind !== null) {
 				watchCreate = (watcher.kind & WatchKind.Create) !== 0;
 				watchChange = (watcher.kind & WatchKind.Change) !== 0;
 				watchDelete = (watcher.kind & WatchKind.Delete) !== 0;
@@ -1342,21 +1339,18 @@ export abstract class TextDocumentFeature<PO, RO extends TextDocumentRegistratio
 
 	private _registrations: Map<string, TextDocumentFeatureRegistration<RO, PR>> = new Map();
 
-	constructor(protected _client: BaseLanguageClient, private _message: MessageSignature) {
+	constructor(protected _client: BaseLanguageClient, private _registrationType: RegistrationType<RO>) {
 	}
 
-	public get messages(): MessageSignature {
-		return this._message;
+	public get registrationType():  RegistrationType<RO> {
+		return this._registrationType;
 	}
 
 	public abstract fillClientCapabilities(capabilities: ClientCapabilities): void;
 
 	public abstract initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void;
 
-	public register(message: MessageSignature, data: RegistrationData<RO>): void {
-		if (message.method !== this.messages.method) {
-			throw new Error(`Register called on wrong feature. Requested ${message.method} but reached feature ${this.messages.method}`);
-		}
+	public register(data: RegistrationData<RO>): void {
 		if (!data.registerOptions.documentSelector) {
 			return;
 		}
@@ -1438,21 +1432,18 @@ abstract class WorkspaceFeature<RO, PR> implements DynamicFeature<RO> {
 
 	protected _registrations: Map<string, WorkspaceFeatureRegistration<PR>> = new Map();
 
-	constructor(protected _client: BaseLanguageClient, private _message: MessageSignature) {
+	constructor(protected _client: BaseLanguageClient, private _registrationType: RegistrationType<RO>) {
 	}
 
-	public get messages(): MessageSignature {
-		return this._message;
+	public get registrationType(): RegistrationType<RO> {
+		return this._registrationType;
 	}
 
 	public abstract fillClientCapabilities(capabilities: ClientCapabilities): void;
 
 	public abstract initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector | undefined): void;
 
-	public register(message: MessageSignature, data: RegistrationData<RO>): void {
-		if (message.method !== this.messages.method) {
-			throw new Error(`Register called on wrong feature. Requested ${message.method} but reached feature ${this.messages.method}`);
-		}
+	public register(data: RegistrationData<RO>): void {
 		const registration = this.registerLanguageProvider(data.registerOptions);
 		this._registrations.set(data.id, { disposable: registration[0], provider: registration[1] });
 	}
@@ -1517,7 +1508,7 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 		if (!options) {
 			return;
 		}
-		this.register(this.messages, {
+		this.register({
 			id: UUID.generateUuid(),
 			registerOptions: options
 		});
@@ -1580,7 +1571,7 @@ class HoverFeature extends TextDocumentFeature<boolean | HoverOptions, HoverRegi
 		if (!options) {
 			return;
 		}
-		this.register(this.messages, {
+		this.register({
 			id: UUID.generateUuid(),
 			registerOptions: options
 		});
@@ -1628,7 +1619,7 @@ class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpOptions, Sig
 		if (!options) {
 			return;
 		}
-		this.register(this.messages, {
+		this.register({
 			id: UUID.generateUuid(),
 			registerOptions: options
 		});
@@ -1684,7 +1675,7 @@ class DefinitionFeature extends TextDocumentFeature<boolean | DefinitionOptions,
 		if (!options) {
 			return;
 		}
-		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
+		this.register({ id: UUID.generateUuid(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: DefinitionRegistrationOptions): [Disposable, DefinitionProvider] {
@@ -1724,7 +1715,7 @@ class ReferencesFeature extends TextDocumentFeature<boolean | ReferenceOptions, 
 		if (!options) {
 			return;
 		}
-		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
+		this.register({ id: UUID.generateUuid(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): [Disposable, ReferenceProvider] {
@@ -1764,7 +1755,7 @@ class DocumentHighlightFeature extends TextDocumentFeature<boolean | DocumentHig
 		if (!options) {
 			return;
 		}
-		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
+		this.register({ id: UUID.generateUuid(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): [Disposable, DocumentHighlightProvider] {
@@ -1813,7 +1804,7 @@ class DocumentSymbolFeature extends TextDocumentFeature<boolean | DocumentSymbol
 		if (!options) {
 			return;
 		}
-		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
+		this.register({ id: UUID.generateUuid(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: DocumentSymbolRegistrationOptions): [Disposable, DocumentSymbolProvider] {
@@ -1874,7 +1865,7 @@ class WorkspaceSymbolFeature extends WorkspaceFeature<WorkspaceSymbolRegistratio
 		if (!capabilities.workspaceSymbolProvider) {
 			return;
 		}
-		this.register(this.messages, {
+		this.register({
 			id: UUID.generateUuid(),
 			registerOptions: capabilities.workspaceSymbolProvider === true ? { workDoneProgress: false } : capabilities.workspaceSymbolProvider
 		});
@@ -1945,7 +1936,7 @@ class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions,
 		if (!options) {
 			return;
 		}
-		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
+		this.register({ id: UUID.generateUuid(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: CodeActionRegistrationOptions): [Disposable, CodeActionProvider] {
@@ -2022,7 +2013,7 @@ class CodeLensFeature extends TextDocumentFeature<CodeLensOptions, CodeLensRegis
 		if (!options) {
 			return;
 		}
-		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
+		this.register({ id: UUID.generateUuid(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: CodeLensRegistrationOptions): [Disposable, CodeLensProvider] {
@@ -2079,7 +2070,7 @@ class DocumentFormattingFeature extends TextDocumentFeature<boolean | DocumentFo
 		if (!options) {
 			return;
 		}
-		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
+		this.register({ id: UUID.generateUuid(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): [Disposable, DocumentFormattingEditProvider] {
@@ -2123,7 +2114,7 @@ class DocumentRangeFormattingFeature extends TextDocumentFeature<boolean | Docum
 		if (!options) {
 			return;
 		}
-		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
+		this.register({ id: UUID.generateUuid(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): [Disposable, DocumentRangeFormattingEditProvider] {
@@ -2168,7 +2159,7 @@ class DocumentOnTypeFormattingFeature extends TextDocumentFeature<DocumentOnType
 		if (!options) {
 			return;
 		}
-		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
+		this.register({ id: UUID.generateUuid(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: DocumentOnTypeFormattingRegistrationOptions): [Disposable, OnTypeFormattingEditProvider] {
@@ -2226,7 +2217,7 @@ class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameR
 		if (Is.boolean(capabilities.renameProvider)) {
 			options.prepareProvider = false;
 		}
-		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
+		this.register({ id: UUID.generateUuid(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: RenameRegistrationOptions): [Disposable, RenameProvider] {
@@ -2313,7 +2304,7 @@ class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkOptions, Docum
 		if (!options) {
 			return;
 		}
-		this.register(this.messages, { id: UUID.generateUuid(), registerOptions: options });
+		this.register({ id: UUID.generateUuid(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: DocumentLinkRegistrationOptions): [Disposable, DocumentLinkProvider] {
@@ -2362,7 +2353,7 @@ class ConfigurationFeature implements DynamicFeature<DidChangeConfigurationRegis
 	constructor(private _client: BaseLanguageClient) {
 	}
 
-	public get messages(): MessageSignature {
+	public get registrationType(): RegistrationType<DidChangeConfigurationRegistrationOptions> {
 		return DidChangeConfigurationNotification.type;
 	}
 
@@ -2372,8 +2363,8 @@ class ConfigurationFeature implements DynamicFeature<DidChangeConfigurationRegis
 
 	public initialize(): void {
 		let section = this._client.clientOptions.synchronize!.configurationSection;
-		if (section !== void 0) {
-			this.register(this.messages, {
+		if (section !== undefined) {
+			this.register({
 				id: UUID.generateUuid(),
 				registerOptions: {
 					section: section
@@ -2382,12 +2373,12 @@ class ConfigurationFeature implements DynamicFeature<DidChangeConfigurationRegis
 		}
 	}
 
-	public register(_message: MessageSignature, data: RegistrationData<DidChangeConfigurationRegistrationOptions>): void {
+	public register(data: RegistrationData<DidChangeConfigurationRegistrationOptions>): void {
 		let disposable = Workspace.onDidChangeConfiguration((event) => {
 			this.onDidChangeConfiguration(data.registerOptions.section, event);
 		});
 		this._listeners.set(data.id, disposable);
-		if (data.registerOptions.section !== void 0) {
+		if (data.registerOptions.section !== undefined) {
 			this.onDidChangeConfiguration(data.registerOptions.section, undefined);
 		}
 	}
@@ -2414,14 +2405,14 @@ class ConfigurationFeature implements DynamicFeature<DidChangeConfigurationRegis
 		} else {
 			sections = configurationSection;
 		}
-		if (sections !== void 0 && event !== void 0) {
+		if (sections !== undefined && event !== undefined) {
 			let affected = sections.some((section) => event.affectsConfiguration(section));
 			if (!affected) {
 				return;
 			}
 		}
 		let didChangeConfiguration = (sections: string[] | undefined): void => {
-			if (sections === void 0) {
+			if (sections === undefined) {
 				this._client.sendNotification(DidChangeConfigurationNotification.type, { settings: null });
 				return;
 			}
@@ -2484,7 +2475,7 @@ class ExecuteCommandFeature implements DynamicFeature<ExecuteCommandRegistration
 	constructor(private _client: BaseLanguageClient) {
 	}
 
-	public get messages(): MessageSignature {
+	public get registrationType(): RegistrationType<ExecuteCommandRegistrationOptions> {
 		return ExecuteCommandRequest.type;
 	}
 
@@ -2496,13 +2487,13 @@ class ExecuteCommandFeature implements DynamicFeature<ExecuteCommandRegistration
 		if (!capabilities.executeCommandProvider) {
 			return;
 		}
-		this.register(this.messages, {
+		this.register({
 			id: UUID.generateUuid(),
 			registerOptions: Object.assign({}, capabilities.executeCommandProvider)
 		});
 	}
 
-	public register(_message: MessageSignature, data: RegistrationData<ExecuteCommandRegistrationOptions>): void {
+	public register(data: RegistrationData<ExecuteCommandRegistrationOptions>): void {
 		const client = this._client;
 		const middleware = client.clientOptions.middleware!;
 		const executeCommand: ExecuteCommandSignature = (command: string, args: any[]): any => {
@@ -2715,8 +2706,8 @@ export abstract class BaseLanguageClient {
 		return this._initializeResult;
 	}
 
-	public sendRequest<R, E, RO>(type: RequestType0<R, E, RO>, token?: CancellationToken): Promise<R>;
-	public sendRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, params: P, token?: CancellationToken): Promise<R>;
+	public sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): Promise<R>;
+	public sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: P, token?: CancellationToken): Promise<R>;
 	public sendRequest<R>(method: string, token?: CancellationToken): Promise<R>;
 	public sendRequest<R>(method: string, param: any, token?: CancellationToken): Promise<R>;
 	public sendRequest<R>(type: string | MessageSignature, ...params: any[]): Promise<R> {
@@ -2732,8 +2723,8 @@ export abstract class BaseLanguageClient {
 		}
 	}
 
-	public onRequest<R, E, RO>(type: RequestType0<R, E, RO>, handler: RequestHandler0<R, E>): Disposable;
-	public onRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, handler: RequestHandler<P, R, E>): Disposable;
+	public onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: RequestHandler0<R, E>): Disposable;
+	public onRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, handler: RequestHandler<P, R, E>): Disposable;
 	public onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): Disposable;
 	public onRequest<R, E>(type: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable {
 		if (!this.isConnectionActive()) {
@@ -2747,8 +2738,8 @@ export abstract class BaseLanguageClient {
 		}
 	}
 
-	public sendNotification<RO>(type: NotificationType0<RO>): void;
-	public sendNotification<P, RO>(type: NotificationType<P, RO>, params?: P): void;
+	public sendNotification<RO>(type: ProtocolNotificationType0<RO>): void;
+	public sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): void;
 	public sendNotification(method: string): void;
 	public sendNotification(method: string, params: any): void;
 	public sendNotification<P>(type: string | MessageSignature, params?: P): void {
@@ -2764,8 +2755,8 @@ export abstract class BaseLanguageClient {
 		}
 	}
 
-	public onNotification<RO>(type: NotificationType0<RO>, handler: NotificationHandler0): Disposable;
-	public onNotification<P, RO>(type: NotificationType<P, RO>, handler: NotificationHandler<P>): Disposable;
+	public onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): Disposable;
+	public onNotification<P, RO>(type: ProtocolNotificationType<P, RO>, handler: NotificationHandler<P>): Disposable;
 	public onNotification(method: string, handler: GenericNotificationHandler): Disposable;
 	public onNotification(type: string | MessageSignature, handler: GenericNotificationHandler): Disposable {
 		if (!this.isConnectionActive()) {
@@ -3099,7 +3090,7 @@ export abstract class BaseLanguageClient {
 						}
 					};
 				}
-			} else if (result.capabilities.textDocumentSync !== void 0 && result.capabilities.textDocumentSync !== null) {
+			} else if (result.capabilities.textDocumentSync !== undefined && result.capabilities.textDocumentSync !== null) {
 				textDocumentSyncOptions = result.capabilities.textDocumentSync as TextDocumentSyncOptions;
 			}
 			this._capabilities = Object.assign({}, result.capabilities, { resolvedTextDocumentSync: textDocumentSyncOptions });
@@ -3373,7 +3364,6 @@ export abstract class BaseLanguageClient {
 	}
 
 	private readonly _features: (StaticFeature | DynamicFeature<any>)[] = [];
-	private readonly _method2Message: Map<string, MessageSignature> = new Map<string, MessageSignature>();
 	private readonly _dynamicFeatures: Map<string, DynamicFeature<any>> = new Map<string, DynamicFeature<any>>();
 
 	public registerFeatures(features: (StaticFeature | DynamicFeature<any>)[]): void {
@@ -3385,16 +3375,8 @@ export abstract class BaseLanguageClient {
 	public registerFeature(feature: StaticFeature | DynamicFeature<any>): void {
 		this._features.push(feature);
 		if (DynamicFeature.is(feature)) {
-			let messages = feature.messages;
-			if (Array.isArray(messages)) {
-				for (let message of messages) {
-					this._method2Message.set(message.method, message);
-					this._dynamicFeatures.set(message.method, feature);
-				}
-			} else {
-				this._method2Message.set(messages.method, messages);
-				this._dynamicFeatures.set(messages.method, feature);
-			}
+			const registrationType = feature.registrationType;
+			this._dynamicFeatures.set(registrationType.method, feature);
 		}
 	}
 
@@ -3424,7 +3406,7 @@ export abstract class BaseLanguageClient {
 	public getFeature(request: typeof SelectionRangeRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<SelectionRangeProvider>;
 	public getFeature(request: typeof TypeDefinitionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<TypeDefinitionProvider>;
 	public getFeature(request: typeof CallHierarchyPrepareRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<CallHierarchyProvider>;
-	public getFeature(request: typeof SemanticTokensRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<SemanticTokensProviders>;
+	public getFeature(request: typeof SemanticTokensRegistrationType.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<SemanticTokensProviders>;
 
 	public getFeature(request: typeof WorkspaceSymbolRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & WorkspaceProviderFeature<WorkspaceSymbolProvider>;
 	public getFeature(request: string): DynamicFeature<any> | undefined {
@@ -3508,7 +3490,7 @@ export abstract class BaseLanguageClient {
 					id: registration.id,
 					registerOptions: options
 				};
-				feature.register(this._method2Message.get(registration.method)!, data);
+				feature.register(data);
 			}
 			resolve();
 		});

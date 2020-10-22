@@ -44,7 +44,7 @@ export class TypeDefinitionFeature extends TextDocumentFeature<boolean | TypeDef
 		if (!id || !options) {
 			return;
 		}
-		this.register(this.messages, { id: id, registerOptions: options });
+		this.register({ id: id, registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: TypeDefinitionRegistrationOptions): [Disposable, TypeDefinitionProvider] {

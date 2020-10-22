@@ -5,7 +5,7 @@
 
 import { TextDocumentIdentifier, Range } from 'vscode-languageserver-types';
 
-import { ProtocolRequestType, ProtocolRequestType0 } from './messages';
+import { ProtocolRequestType, ProtocolRequestType0, RegistrationType } from './messages';
 import { PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions, TextDocumentRegistrationOptions, StaticRegistrationOptions } from './protocol';
 
 /**
@@ -239,6 +239,11 @@ export interface SemanticTokensOptions extends WorkDoneProgressOptions {
  * @since 3.16.0 - Proposed state
  */
 export interface SemanticTokensRegistrationOptions extends TextDocumentRegistrationOptions, SemanticTokensOptions, StaticRegistrationOptions {
+}
+
+export namespace SemanticTokensRegistrationType {
+	export const method: 'textDocument/semanticTokens' = 'textDocument/semanticTokens';
+	export const type = new RegistrationType<SemanticTokensRegistrationOptions>(method);
 }
 
 //------- 'textDocument/semanticTokens' -----

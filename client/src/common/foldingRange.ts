@@ -44,7 +44,7 @@ export class FoldingRangeFeature extends TextDocumentFeature<boolean | FoldingRa
 		if (!id || !options) {
 			return;
 		}
-		this.register(this.messages, { id: id, registerOptions: options });
+		this.register({ id: id, registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: FoldingRangeRegistrationOptions): [Disposable, FoldingRangeProvider] {

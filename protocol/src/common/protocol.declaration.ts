@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { RequestHandler, ProgressType } from 'vscode-jsonrpc';
+import { RequestHandler } from 'vscode-jsonrpc';
 import { Declaration, DeclarationLink, Location, LocationLink } from 'vscode-languageserver-types';
 
 import { ProtocolRequestType } from './messages';
@@ -51,7 +51,5 @@ export interface DeclarationParams extends TextDocumentPositionParams, WorkDoneP
 export namespace DeclarationRequest {
 	export const method: 'textDocument/declaration' = 'textDocument/declaration';
 	export const type = new ProtocolRequestType<DeclarationParams, Declaration | DeclarationLink[] | null, Location[] | DeclarationLink[], void, DeclarationRegistrationOptions>(method);
-	/** @deprecated Use DeclarationRequest.type */
-	export const resultType = new ProgressType<Location[] | DeclarationLink[]>();
 	export type HandlerSignature = RequestHandler<DeclarationParams, Declaration | DeclarationLink[] | null, void>;
 }

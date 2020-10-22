@@ -4,11 +4,14 @@
  * ------------------------------------------------------------------------------------------ */
 
 import {
-	Message, NotificationMessage, CancellationToken,
-	RequestType0, RequestType, RequestHandler0, RequestHandler, GenericRequestHandler,
-	NotificationType0, NotificationType, NotificationHandler0, NotificationHandler, GenericNotificationHandler,
-	ProgressType, Trace, Tracer, TraceOptions, Disposable, Event, MessageReader, MessageWriter, Logger, ConnectionStrategy, ConnectionOptions, createMessageConnection
+	Message, NotificationMessage, CancellationToken, RequestHandler0, RequestHandler, GenericRequestHandler,
+	NotificationHandler0, NotificationHandler, GenericNotificationHandler, ProgressType, Trace, Tracer, TraceOptions,
+	Disposable, Event, MessageReader, MessageWriter, Logger, ConnectionStrategy, ConnectionOptions, createMessageConnection
 } from 'vscode-jsonrpc';
+
+import {
+	ProtocolRequestType, ProtocolRequestType0, ProtocolNotificationType, ProtocolNotificationType0
+} from './messages';
 
 export interface ProtocolConnection {
 
@@ -19,7 +22,7 @@ export interface ProtocolConnection {
 	 * @param token An optional cancellation token.
 	 * @returns A promise resolving to the request's result.
 	 */
-	sendRequest<R, E, RO>(type: RequestType0<R, E, RO>, token?: CancellationToken): Promise<R>;
+	sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): Promise<R>;
 
 	/**
 	 * Sends a request and returns a promise resolving to the result of the request.
@@ -29,7 +32,7 @@ export interface ProtocolConnection {
 	 * @param token An optional cancellation token.
 	 * @returns A promise resolving to the request's result.
 	 */
-	sendRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, params: P, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: P, token?: CancellationToken): Promise<R>;
 
 	/**
 	 * Sends a request and returns a promise resolving to the result of the request.
@@ -56,7 +59,7 @@ export interface ProtocolConnection {
 	 * @param type The request type to install the handler for.
 	 * @param handler The actual handler.
 	 */
-	onRequest<R, E, RO>(type: RequestType0<R, E, RO>, handler: RequestHandler0<R, E>): Disposable;
+	onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: RequestHandler0<R, E>): Disposable;
 
 	/**
 	 * Installs a request handler.
@@ -64,7 +67,7 @@ export interface ProtocolConnection {
 	 * @param type The request type to install the handler for.
 	 * @param handler The actual handler.
 	 */
-	onRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, handler: RequestHandler<P, R, E>): Disposable;
+	onRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, handler: RequestHandler<P, R, E>): Disposable;
 
 	/**
 	 * Installs a request handler.
@@ -79,7 +82,7 @@ export interface ProtocolConnection {
 	 *
 	 * @param type the notification's type to send.
 	 */
-	sendNotification<RO>(type: NotificationType0<RO>): void;
+	sendNotification<RO>(type: ProtocolNotificationType0<RO>): void;
 
 	/**
 	 * Sends a notification.
@@ -87,7 +90,7 @@ export interface ProtocolConnection {
 	 * @param type the notification's type to send.
 	 * @param params the notification's parameters.
 	 */
-	sendNotification<P, RO>(type: NotificationType<P, RO>, params?: P): void;
+	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): void;
 
 	/**
 	 * Sends a notification.
@@ -110,7 +113,7 @@ export interface ProtocolConnection {
 	 * @param type The notification type to install the handler for.
 	 * @param handler The actual handler.
 	 */
-	onNotification<RO>(type: NotificationType0<RO>, handler: NotificationHandler0): Disposable;
+	onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): Disposable;
 
 	/**
 	 * Installs a notification handler.
@@ -118,7 +121,7 @@ export interface ProtocolConnection {
 	 * @param type The notification type to install the handler for.
 	 * @param handler The actual handler.
 	 */
-	onNotification<P, RO>(type: NotificationType<P, RO>, handler: NotificationHandler<P>): Disposable;
+	onNotification<P, RO>(type: ProtocolNotificationType<P, RO>, handler: NotificationHandler<P>): Disposable;
 
 	/**
 	 * Installs a notification handler.

@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { RequestHandler, ProgressType } from 'vscode-jsonrpc';
+import { RequestHandler } from 'vscode-jsonrpc';
 import { TextDocumentIdentifier, Position, SelectionRange } from 'vscode-languageserver-types';
 
 import { ProtocolRequestType } from './messages';
@@ -50,7 +50,5 @@ export interface SelectionRangeParams extends WorkDoneProgressParams, PartialRes
 export namespace SelectionRangeRequest {
 	export const method: 'textDocument/selectionRange' = 'textDocument/selectionRange';
 	export const type = new ProtocolRequestType<SelectionRangeParams, SelectionRange[] | null, SelectionRange[], any, SelectionRangeRegistrationOptions>(method);
-	/** @deprecated  Use SelectionRangeRequest.type */
-	export const resultType = new ProgressType<SelectionRange[]>();
 	export type HandlerSignature = RequestHandler<SelectionRangeParams, SelectionRange[] | null, void>;
 }

@@ -5,7 +5,7 @@
 
 import * as Is from './utils/is';
 
-import { ProgressToken, ProgressType } from 'vscode-jsonrpc';
+import { ProgressToken } from 'vscode-jsonrpc';
 
 import { ProtocolRequestType, ProtocolRequestType0, ProtocolNotificationType, ProtocolNotificationType0 } from './messages';
 
@@ -53,7 +53,7 @@ import {
 	SemanticTokenTypes, SemanticTokenModifiers, SemanticTokensLegend, SemanticTokens, SemanticTokensPartialResult, SemanticTokensEdit, SemanticTokensDelta,
 	SemanticTokensDeltaPartialResult, TokenFormat, SemanticTokensClientCapabilities,SemanticTokensOptions, SemanticTokensRegistrationOptions, SemanticTokensParams,
 	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest, SemanticTokensRefreshRequest,
-	SemanticTokensWorkspaceClientCapabilities
+	SemanticTokensWorkspaceClientCapabilities, SemanticTokensRegistrationType
 } from './protocol.semanticTokens';
 
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
@@ -1752,8 +1752,6 @@ export interface CompletionRegistrationOptions extends TextDocumentRegistrationO
 export namespace CompletionRequest {
 	export const method: 'textDocument/completion' = 'textDocument/completion';
 	export const type = new ProtocolRequestType<CompletionParams, CompletionItem[] | CompletionList | null, CompletionItem[], void, CompletionRegistrationOptions>(method);
-	/** @deprecated Use CompletionRequest.type */
-	export const resultType = new ProgressType<CompletionItem[]>();
 }
 
 /**
@@ -2011,8 +2009,6 @@ export interface DefinitionRegistrationOptions extends TextDocumentRegistrationO
 export namespace DefinitionRequest {
 	export const method: 'textDocument/definition' = 'textDocument/definition';
 	export const type = new ProtocolRequestType<DefinitionParams, Definition | DefinitionLink[] | null, Location[] | DefinitionLink[], void, DefinitionRegistrationOptions>(method);
-	/** @deprecated Use DefinitionRequest.type */
-	export const resultType = new ProgressType<Location[] | DefinitionLink[]>();
 }
 
 //---- Reference Provider ----------------------------------
@@ -2055,8 +2051,6 @@ export interface ReferenceRegistrationOptions extends TextDocumentRegistrationOp
 export namespace ReferencesRequest {
 	export const method: 'textDocument/references' = 'textDocument/references';
 	export const type = new ProtocolRequestType<ReferenceParams, Location[] | null, Location[], void, ReferenceRegistrationOptions>(method);
-	/** @deprecated Use ReferencesRequest.type */
-	export const resultType = new ProgressType<Location[]>();
 }
 
 //---- Document Highlight ----------------------------------
@@ -2098,8 +2092,6 @@ export interface DocumentHighlightRegistrationOptions extends TextDocumentRegist
 export namespace DocumentHighlightRequest {
 	export const method: 'textDocument/documentHighlight' = 'textDocument/documentHighlight';
 	export const type = new ProtocolRequestType<DocumentHighlightParams, DocumentHighlight[] | null, DocumentHighlight[], void, DocumentHighlightRegistrationOptions>(method);
-	/** @deprecated Use DocumentHighlightRequest.type */
-	export const resultType = new ProgressType<DocumentHighlight[]>();
 }
 
 //---- Document Symbol Provider ---------------------------
@@ -2196,8 +2188,6 @@ export interface DocumentSymbolRegistrationOptions extends TextDocumentRegistrat
 export namespace DocumentSymbolRequest {
 	export const method: 'textDocument/documentSymbol' = 'textDocument/documentSymbol';
 	export const type = new ProtocolRequestType<DocumentSymbolParams, SymbolInformation[] | DocumentSymbol[] | null, SymbolInformation[] | DocumentSymbol[], void, DocumentSymbolRegistrationOptions>(method);
-	/** @deprecated Use DocumentSymbolRequest.type */
-	export const resultType = new ProgressType<SymbolInformation[] | DocumentSymbol[]>();
 }
 
 //---- Code Action Provider ----------------------------------
@@ -2325,8 +2315,6 @@ export interface CodeActionRegistrationOptions extends TextDocumentRegistrationO
 export namespace CodeActionRequest {
 	export const method: 'textDocument/codeAction' = 'textDocument/codeAction';
 	export const type = new ProtocolRequestType<CodeActionParams, (Command | CodeAction)[] | null, (Command | CodeAction)[], void, CodeActionRegistrationOptions>(method);
-	/** @deprecated Use CodeActionRequest.type */
-	export const resultType = new ProgressType<(Command | CodeAction)[]>();
 }
 
 /**
@@ -2414,8 +2402,6 @@ export interface WorkspaceSymbolRegistrationOptions extends WorkspaceSymbolOptio
 export namespace WorkspaceSymbolRequest {
 	export const method: 'workspace/symbol' = 'workspace/symbol';
 	export const type = new ProtocolRequestType<WorkspaceSymbolParams, SymbolInformation[] | null, SymbolInformation[], void, WorkspaceSymbolRegistrationOptions>(method);
-	/** @deprecated Use WorkspaceSymbolRequest.type */
-	export const resultType = new ProgressType<SymbolInformation[]>();
 }
 
 //---- Code Lens Provider -------------------------------------------
@@ -2460,16 +2446,16 @@ export interface CodeLensRegistrationOptions extends TextDocumentRegistrationOpt
  * A request to provide code lens for the given text document.
  */
 export namespace CodeLensRequest {
-	export const type = new ProtocolRequestType<CodeLensParams, CodeLens[] | null, CodeLens[], void, CodeLensRegistrationOptions>('textDocument/codeLens');
-	/** @deprecated Use CodeLensRequest.type */
-	export const resultType = new ProgressType<CodeLens[]>();
+	export const method: 'textDocument/codeLens' = 'textDocument/codeLens';
+	export const type = new ProtocolRequestType<CodeLensParams, CodeLens[] | null, CodeLens[], void, CodeLensRegistrationOptions>(method);
 }
 
 /**
  * A request to resolve a command for a given code lens.
  */
 export namespace CodeLensResolveRequest {
-	export const type = new ProtocolRequestType<CodeLens, CodeLens, never, void, void>('codeLens/resolve');
+	export const method: 'codeLens/resolve' = 'codeLens/resolve';
+	export const type = new ProtocolRequestType<CodeLens, CodeLens, never, void, void>(method);
 }
 
 //---- Document Links ----------------------------------------------
@@ -2523,8 +2509,6 @@ export interface DocumentLinkRegistrationOptions extends TextDocumentRegistratio
 export namespace DocumentLinkRequest {
 	export const method: 'textDocument/documentLink' = 'textDocument/documentLink';
 	export const type = new ProtocolRequestType<DocumentLinkParams, DocumentLink[] | null, DocumentLink[], void, DocumentLinkRegistrationOptions>(method);
-	/** @deprecated Use DocumentLinkRequest.type */
-	export const resultType = new ProgressType<DocumentLink[]>();
 }
 
 /**
@@ -2533,7 +2517,8 @@ export namespace DocumentLinkRequest {
  * is of type [DocumentLink](#DocumentLink) or a Thenable that resolves to such.
  */
 export namespace DocumentLinkResolveRequest {
-	export const type = new ProtocolRequestType<DocumentLink, DocumentLink, never, void, void>('documentLink/resolve');
+	export const method: 'documentLink/resolve' = 'documentLink/resolve';
+	export const type = new ProtocolRequestType<DocumentLink, DocumentLink, never, void, void>(method);
 }
 
 //---- Formatting ----------------------------------------------
@@ -2923,7 +2908,8 @@ export {
 	// Semantic Tokene
 	SemanticTokenTypes, SemanticTokenModifiers, SemanticTokensLegend, SemanticTokens, SemanticTokensPartialResult, SemanticTokensEdit, SemanticTokensDelta,
 	SemanticTokensDeltaPartialResult, TokenFormat, SemanticTokensClientCapabilities, SemanticTokensOptions, SemanticTokensRegistrationOptions, SemanticTokensParams,
-	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest, SemanticTokensRefreshRequest
+	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest, SemanticTokensRefreshRequest,
+	SemanticTokensRegistrationType
 };
 
 // To be backwards compatible

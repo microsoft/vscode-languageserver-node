@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { RequestHandler, ProgressType } from 'vscode-jsonrpc';
+import { RequestHandler } from 'vscode-jsonrpc';
 import { TextDocumentIdentifier, Range, Color, ColorInformation, ColorPresentation } from 'vscode-languageserver-types';
 
 import { ProtocolRequestType } from './messages';
@@ -47,8 +47,6 @@ export interface DocumentColorParams extends WorkDoneProgressParams, PartialResu
 export namespace DocumentColorRequest {
 	export const method: 'textDocument/documentColor' = 'textDocument/documentColor';
 	export const type = new ProtocolRequestType<DocumentColorParams, ColorInformation[], ColorInformation[], void, DocumentColorRegistrationOptions>(method);
-	/** @deprecated Use DocumentColorRequest.type */
-	export const resultType = new ProgressType<ColorInformation[]>();
 	export type HandlerSignature = RequestHandler<DocumentColorParams, ColorInformation[], void>;
 }
 

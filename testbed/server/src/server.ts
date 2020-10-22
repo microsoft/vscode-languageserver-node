@@ -11,7 +11,7 @@ import {
 	SignatureHelp, SymbolInformation, SymbolKind, TextDocumentEdit, TextDocuments, TextDocumentSyncKind,
 	TextEdit, VersionedTextDocumentIdentifier, ProposedFeatures, DiagnosticTag, Proposed, InsertTextFormat,
 	SelectionRangeRequest, SelectionRange, InsertReplaceEdit, SemanticTokensClientCapabilities, SemanticTokensLegend,
-	SemanticTokensBuilder
+	SemanticTokensBuilder, SemanticTokensRegistrationType, SemanticTokensRegistrationOptions, ProtocolNotificationType
 } from 'vscode-languageserver/node';
 
 import {
@@ -66,11 +66,11 @@ enum TokenModifiers {
 	_ = 2,
 }
 
-
+let semanticTokensLegend: SemanticTokensLegend | undefined;
 function computeLegend(capability: SemanticTokensClientCapabilities): SemanticTokensLegend {
 
-	const clientTokenTypes = new Set<string>(capability.textDocument.semanticTokens.tokenTypes);
-	const clientTokenModifiers = new Set<string>(capability.textDocument.semanticTokens.tokenModifiers);
+	const clientTokenTypes = new Set<string>(capability.tokenTypes);
+	const clientTokenModifiers = new Set<string>(capability.tokenModifiers);
 
 	const tokenTypes: string[] = [];
 	for (let i = 0; i < TokenTypes._; i++) {
@@ -108,8 +108,8 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 		folder = params.workspaceFolders[0].uri;
 	}
 
+	semanticTokensLegend = computeLegend(params.capabilities.textDocument!.semanticTokens!);
 	return new Promise((resolve, reject) => {
-		const tokenLegend = computeLegend(params.capabilities as SemanticTokensClientCapabilities);
 		let result: InitializeResult = {
 			capabilities: {
 				textDocumentSync: TextDocumentSyncKind.Full,
@@ -153,14 +153,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 					commands: ['testbed.helloWorld']
 				},
 				callHierarchyProvider: true,
-				selectionRangeProvider: { workDoneProgress: true },
-				semanticTokensProvider: {
-					legend: tokenLegend,
-					range: true,
-					full: {
-						delta: true
-					}
-				}
+				selectionRangeProvider: { workDoneProgress: true }
 			}
 		};
 		setTimeout(() => {
@@ -178,6 +171,15 @@ connection.onInitialized((params) => {
 			connection.console.log(`Get workspace folders: ${folder.name} ${folder.uri}`);
 		}
 	});
+	const registrationOptions: SemanticTokensRegistrationOptions = {
+		documentSelector: ['bat'],
+		legend: semanticTokensLegend,
+		range: true,
+		full: {
+			delta: true
+		}
+	}
+	connection.client.register(SemanticTokensRegistrationType.type, registrationOptions);
 });
 
 connection.onShutdown((handler) => {
@@ -467,7 +469,7 @@ connection.onRequest('addTwenty', (param) => {
 	return { value: param.value + 20 };
 });
 
-let not: NotificationType<string[], void> = new NotificationType<string[], void>('testbed/notification');
+let not: ProtocolNotificationType<string[], void> = new ProtocolNotificationType<string[], void>('testbed/notification');
 connection.onNotification(not, (arr) => {
 	connection.console.log('Is array: ' + Array.isArray(arr));
 });

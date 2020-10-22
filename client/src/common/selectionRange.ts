@@ -42,7 +42,7 @@ export class SelectionRangeFeature extends TextDocumentFeature<boolean | Selecti
 		if (!id || !options) {
 			return;
 		}
-		this.register(this.messages, { id: id, registerOptions: options });
+		this.register({ id: id, registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: SelectionRangeRegistrationOptions): [Disposable, SelectionRangeProvider] {

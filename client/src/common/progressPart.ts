@@ -8,14 +8,14 @@ import {
 } from 'vscode';
 
 import {
-	ProgressToken, ProgressType, NotificationHandler, NotificationType, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressCancelNotification, WorkDoneProgressReport
+	ProgressToken, ProgressType, NotificationHandler, ProtocolNotificationType, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressCancelNotification, WorkDoneProgressReport
 } from 'vscode-languageserver-protocol';
 
 import * as Is from './utils/is';
 
 export interface ProgressContext {
 	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable;
-	sendNotification<P, RO>(type: NotificationType<P, RO>, params?: P): void;
+	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): void;
 }
 
 export class ProgressPart {

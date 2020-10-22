@@ -43,7 +43,7 @@ export class DeclarationFeature extends TextDocumentFeature<boolean | Declaratio
 		if (!id || !options) {
 			return;
 		}
-		this.register(this.messages, { id: id, registerOptions: options });
+		this.register({ id: id, registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: DeclarationRegistrationOptions): [Disposable, DeclarationProvider] {

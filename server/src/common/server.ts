@@ -4,8 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 
 import {
-	CancellationToken, RequestType0, RequestHandler0, RequestType, RequestHandler, GenericRequestHandler, StarRequestHandler, HandlerResult,
-	NotificationType0, NotificationHandler0, NotificationType, NotificationHandler, GenericNotificationHandler, StarNotificationHandler, ProgressType,
+	CancellationToken, ProtocolRequestType0, RequestHandler0, ProtocolRequestType, RequestHandler, GenericRequestHandler, StarRequestHandler, HandlerResult,
+	ProtocolNotificationType0, NotificationHandler0, ProtocolNotificationType, NotificationHandler, GenericNotificationHandler, StarNotificationHandler, ProgressType,
 	Disposable, InitializeParams, InitializeResult, InitializeError, InitializedParams, DidChangeConfigurationParams, DidChangeWatchedFilesParams,
 	DidOpenTextDocumentParams, DidChangeTextDocumentParams, DidCloseTextDocumentParams, WillSaveTextDocumentParams, TextEdit, DidSaveTextDocumentParams,
 	PublishDiagnosticsParams, HoverParams, Hover, CompletionParams, CompletionItem, CompletionList, SignatureHelpParams, SignatureHelp, DeclarationParams,
@@ -23,7 +23,7 @@ import {
 	SignatureHelpRequest, DeclarationRequest, DefinitionRequest, TypeDefinitionRequest, ImplementationRequest, ReferencesRequest, DocumentHighlightRequest,
 	DocumentSymbolRequest, WorkspaceSymbolRequest, CodeActionRequest, CodeLensRequest, CodeLensResolveRequest, DocumentFormattingRequest, DocumentRangeFormattingRequest,
 	DocumentOnTypeFormattingRequest, RenameRequest, PrepareRenameRequest, DocumentLinkRequest, DocumentLinkResolveRequest, DocumentColorRequest, ColorPresentationRequest,
-	FoldingRangeRequest, SelectionRangeRequest, ExecuteCommandRequest, InitializeRequest, ResponseError
+	FoldingRangeRequest, SelectionRangeRequest, ExecuteCommandRequest, InitializeRequest, ResponseError, RegistrationType
 } from 'vscode-languageserver-protocol';
 
 import * as Is from './utils/is';
@@ -518,15 +518,7 @@ export interface BulkRegistration {
 	 * @param type the notification type to register for.
 	 * @param registerParams special registration parameters.
 	 */
-	add<RO>(type: NotificationType0<RO>, registerParams: RO): void;
-	add<P, RO>(type: NotificationType<P, RO>, registerParams: RO): void;
-	/**
-	 * Adds a single registration.
-	 * @param type the request type to register for.
-	 * @param registerParams special registration parameters.
-	 */
-	add<R, E, RO>(type: RequestType0<R, E, RO>, registerParams: RO): void;
-	add<P, R, E, RO>(type: RequestType<P, R, E, RO>, registerParams: RO): void;
+	add<RO>(type: RegistrationType<RO>, registerParams: RO): void;
 }
 
 export namespace BulkRegistration {
@@ -543,7 +535,7 @@ class BulkRegistrationImpl {
 	private _registrations: Registration[] = [];
 	private _registered: Set<string> = new Set<string>();
 
-	public add<RO>(type: string | MessageSignature, registerOptions?: RO): void {
+	public add<RO>(type: string | RegistrationType<any>, registerOptions?: RO): void {
 		const method = Is.string(type) ? type : type.method;
 		if (this._registered.has(method)) {
 			throw new Error(`${method} is already added to this registration`);
@@ -646,32 +638,13 @@ export interface RemoteClient {
 	connection: Connection;
 
 	/**
-	 * Registers a listener for the given notification.
-	 * @param type the notification type to register for.
-	 * @param registerParams special registration parameters.
-	 * @return a `Disposable` to unregister the listener again.
-	 */
-	register<RO>(type: NotificationType0<RO>, registerParams?: RO): Promise<Disposable>;
-	register<P, RO>(type: NotificationType<P, RO>, registerParams?: RO): Promise<Disposable>;
-
-	/**
-	 * Registers a listener for the given notification.
-	 * @param unregisteration the unregistration to add a corresponding unregister action to.
-	 * @param type the notification type to register for.
-	 * @param registerParams special registration parameters.
-	 * @return the updated unregistration.
-	 */
-	register<RO>(unregisteration: BulkUnregistration, type: NotificationType0<RO>, registerParams?: RO): Promise<BulkUnregistration>;
-	register<P, RO>(unregisteration: BulkUnregistration, type: NotificationType<P, RO>, registerParams?: RO): Promise<BulkUnregistration>;
-
-	/**
 	 * Registers a listener for the given request.
 	 * @param type the request type to register for.
 	 * @param registerParams special registration parameters.
 	 * @return a `Disposable` to unregister the listener again.
 	 */
-	register<R, E, RO>(type: RequestType0<R, E, RO>, registerParams?: RO): Promise<Disposable>;
-	register<P, R, E, RO>(type: RequestType<P, R, E, RO>, registerParams?: RO): Promise<Disposable>;
+	register<RO>(type: RegistrationType<RO>, registerParams?: RO): Promise<Disposable>;
+	register<RO>(type: RegistrationType<RO>, registerParams?: RO): Promise<Disposable>;
 
 	/**
 	 * Registers a listener for the given request.
@@ -680,8 +653,9 @@ export interface RemoteClient {
 	 * @param registerParams special registration parameters.
 	 * @return the updated unregistration.
 	 */
-	register<R, E, RO>(unregisteration: BulkUnregistration, type: RequestType0<R, E, RO>, registerParams?: RO): Promise<BulkUnregistration>;
-	register<P, R, E, RO>(unregisteration: BulkUnregistration, type: RequestType<P, R, E, RO>, registerParams?: RO): Promise<BulkUnregistration>;
+	register<RO>(unregisteration: BulkUnregistration, type: RegistrationType<RO>, registerParams?: RO): Promise<BulkUnregistration>;
+	register<RO>(unregisteration: BulkUnregistration, type: RegistrationType<RO>, registerParams?: RO): Promise<BulkUnregistration>;
+
 	/**
 	 * Registers a set of listeners.
 	 * @param registrations the bulk registration
@@ -711,17 +685,17 @@ class RemoteClientImpl implements RemoteClient, Remote {
 	public fillServerCapabilities(_capabilities: ServerCapabilities): void {
 	}
 
-	public register(typeOrRegistrations: string | MessageSignature | BulkRegistration | BulkUnregistration, registerOptionsOrType?: string | MessageSignature | any, registerOptions?: any): Promise<any>  /* Promise<Disposable | BulkUnregistration> */ {
+	public register(typeOrRegistrations: string | RegistrationType<any> | BulkRegistration | BulkUnregistration, registerOptionsOrType?: string | RegistrationType<any> | any, registerOptions?: any): Promise<any>  /* Promise<Disposable | BulkUnregistration> */ {
 		if (typeOrRegistrations instanceof BulkRegistrationImpl) {
 			return this.registerMany(typeOrRegistrations);
 		} else if (typeOrRegistrations instanceof BulkUnregistrationImpl) {
-			return this.registerSingle1(<BulkUnregistrationImpl>typeOrRegistrations, <string | MessageSignature>registerOptionsOrType, registerOptions);
+			return this.registerSingle1(<BulkUnregistrationImpl>typeOrRegistrations, <string | RegistrationType<any>>registerOptionsOrType, registerOptions);
 		} else {
 			return this.registerSingle2(<string | MessageSignature>typeOrRegistrations, registerOptionsOrType);
 		}
 	}
 
-	private registerSingle1(unregistration: BulkUnregistrationImpl, type: string | MessageSignature, registerOptions: any): Promise<Disposable> {
+	private registerSingle1(unregistration: BulkUnregistrationImpl, type: string | RegistrationType<any>, registerOptions: any): Promise<Disposable> {
 		const method = Is.string(type) ? type : type.method;
 		const id = UUID.generateUuid();
 		let params: RegistrationParams = {
@@ -739,7 +713,7 @@ class RemoteClientImpl implements RemoteClient, Remote {
 		});
 	}
 
-	private registerSingle2(type: string | MessageSignature, registerOptions: any): Promise<Disposable> {
+	private registerSingle2(type: string | RegistrationType<any>, registerOptions: any): Promise<Disposable> {
 		const method = Is.string(type) ? type : type.method;
 		const id = UUID.generateUuid();
 		let params: RegistrationParams = {
@@ -1003,8 +977,8 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 * @param type The [RequestType](#RequestType) describing the request.
 	 * @param handler The handler to install
 	 */
-	onRequest<R, E, RO>(type: RequestType0<R, E, RO>, handler: RequestHandler0<R, E>): void;
-	onRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, handler: RequestHandler<P, R, E>): void;
+	onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: RequestHandler0<R, E>): void;
+	onRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, handler: RequestHandler<P, R, E>): void;
 
 	/**
 	 * Installs a request handler for the given method.
@@ -1027,8 +1001,8 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 * @param type The [RequestType](#RequestType) describing the request.
 	 * @param params The request's parameters.
 	 */
-	sendRequest<R, E, RO>(type: RequestType0<R, E, RO>, token?: CancellationToken): Promise<R>;
-	sendRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, params: P, token?: CancellationToken): Promise<R>;
+	sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: P, token?: CancellationToken): Promise<R>;
 
 	/**
 	 * Send a request to the client.
@@ -1045,8 +1019,8 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 * @param type The [NotificationType](#NotificationType) describing the notification.
 	 * @param handler The handler to install.
 	 */
-	onNotification<RO>(type: NotificationType0<RO>, handler: NotificationHandler0): void;
-	onNotification<P, RO>(type: NotificationType<P, RO>, handler: NotificationHandler<P>): void;
+	onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): void;
+	onNotification<P, RO>(type: ProtocolNotificationType<P, RO>, handler: NotificationHandler<P>): void;
 
 	/**
 	 * Installs a notification handler for the given method.
@@ -1069,8 +1043,8 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 * @param type The [NotificationType](#NotificationType) describing the notification.
 	 * @param params The notification's parameters.
 	 */
-	sendNotification<RO>(type: NotificationType0<RO>): void;
-	sendNotification<P, RO>(type: NotificationType<P, RO>, params: P): void;
+	sendNotification<RO>(type: ProtocolNotificationType0<RO>): void;
+	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params: P): void;
 
 	/**
 	 * Send a notification to the client.
@@ -1733,7 +1707,7 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 		}
 	});
 
-	connection.onRequest<void, void, void>(ShutdownRequest.type, () => {
+	connection.onRequest<void, void, void, unknown>(ShutdownRequest.type, () => {
 		watchDog.shutdownReceived = true;
 		if (shutdownHandler) {
 			return shutdownHandler(new CancellationTokenSource().token);

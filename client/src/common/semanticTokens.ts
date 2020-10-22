@@ -7,7 +7,8 @@ import * as vscode from 'vscode';
 import { Middleware, BaseLanguageClient, TextDocumentFeature } from './client';
 import { ClientCapabilities, ServerCapabilities, DocumentSelector, SemanticTokenTypes, SemanticTokenModifiers, SemanticTokens,
 	TokenFormat, SemanticTokensOptions, SemanticTokensRegistrationOptions, SemanticTokensParams,
-	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest, SemanticTokensRefreshRequest
+	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest, SemanticTokensRefreshRequest,
+	SemanticTokensRegistrationType
 } from 'vscode-languageserver-protocol';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
@@ -45,7 +46,7 @@ export interface SemanticTokensProviders {
 export class SemanticTokensFeature extends TextDocumentFeature<boolean | SemanticTokensOptions, SemanticTokensRegistrationOptions, SemanticTokensProviders> {
 
 	constructor(client: BaseLanguageClient) {
-		super(client, SemanticTokensRequest.type);
+		super(client, SemanticTokensRegistrationType.type);
 	}
 
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
@@ -108,7 +109,7 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Semanti
 		if (!id || !options) {
 			return;
 		}
-		this.register(this.messages, { id: id, registerOptions: options });
+		this.register({ id: id, registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: SemanticTokensRegistrationOptions): [vscode.Disposable, SemanticTokensProviders] {
