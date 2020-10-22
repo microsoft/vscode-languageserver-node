@@ -6,6 +6,7 @@
 import * as cp from 'child_process';
 import ChildProcess = cp.ChildProcess;
 import * as fs from 'fs';
+import * as path from 'path';
 
 import * as SemVer from 'semver';
 
@@ -304,9 +305,10 @@ export class LanguageClient extends CommonLanguageClient {
 					if (node.args) {
 						node.args.forEach(element => args.push(element));
 					}
-					let execOptions: cp.SpawnOptionsWithoutStdio = Object.create(null);
+					const execOptions: cp.SpawnOptionsWithoutStdio = Object.create(null);
 					execOptions.cwd = serverWorkingDir;
 					execOptions.env = getEnvironment(options.env, false);
+					const runtime = this._getRuntimePath(node.runtime, serverWorkingDir);
 					let pipeName: string | undefined = undefined;
 					if (transport === TransportKind.ipc) {
 						// exec options not correctly typed in lib
@@ -322,9 +324,9 @@ export class LanguageClient extends CommonLanguageClient {
 					}
 					args.push(`--clientProcessId=${process.pid.toString()}`);
 					if (transport === TransportKind.ipc || transport === TransportKind.stdio) {
-						let serverProcess = cp.spawn(node.runtime, args, execOptions);
+						let serverProcess = cp.spawn(runtime, args, execOptions);
 						if (!serverProcess || !serverProcess.pid) {
-							return Promise.reject<MessageTransports>(`Launching server using runtime ${node.runtime} failed.`);
+							return Promise.reject<MessageTransports>(`Launching server using runtime ${runtime} failed.`);
 						}
 						this._serverProcess = serverProcess;
 						serverProcess.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
@@ -336,9 +338,9 @@ export class LanguageClient extends CommonLanguageClient {
 						}
 					} else if (transport === TransportKind.pipe) {
 						return createClientPipeTransport(pipeName!).then((transport) => {
-							let process = cp.spawn(node.runtime!, args, execOptions);
+							let process = cp.spawn(runtime, args, execOptions);
 							if (!process || !process.pid) {
-								return Promise.reject<MessageTransports>(`Launching server using runtime ${node.runtime} failed.`);
+								return Promise.reject<MessageTransports>(`Launching server using runtime ${runtime} failed.`);
 							}
 							this._serverProcess = process;
 							process.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
@@ -349,9 +351,9 @@ export class LanguageClient extends CommonLanguageClient {
 						});
 					} else if (Transport.isSocket(transport)) {
 						return createClientSocketTransport(transport.port).then((transport) => {
-							let process = cp.spawn(node.runtime!, args, execOptions);
+							let process = cp.spawn(runtime, args, execOptions);
 							if (!process || !process.pid) {
-								return Promise.reject<MessageTransports>(`Launching server using runtime ${node.runtime} failed.`);
+								return Promise.reject<MessageTransports>(`Launching server using runtime ${runtime} failed.`);
 							}
 							this._serverProcess = process;
 							process.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
@@ -433,6 +435,26 @@ export class LanguageClient extends CommonLanguageClient {
 			}
 			return Promise.reject<MessageTransports>(new Error(`Unsupported server configuration ` + JSON.stringify(server, null, 4)));
 		});
+	}
+
+	private _getRuntimePath(runtime: string, serverWorkingDirectory: string | undefined): string {
+		if (path.isAbsolute(runtime)) {
+			return runtime;
+		}
+		const mainRootPath = this._mainGetRootPath();
+		if (mainRootPath !== undefined) {
+			const result = path.join(mainRootPath, runtime);
+			if (fs.existsSync(result)) {
+				return result;
+			}
+		}
+		if (serverWorkingDirectory !== undefined) {
+			const result = path.join(serverWorkingDirectory, runtime);
+			if (fs.existsSync(result)) {
+				return result;
+			}
+		}
+		return runtime;
 	}
 
 	private _mainGetRootPath(): string | undefined {
