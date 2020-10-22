@@ -22,7 +22,7 @@ import {
 } from 'vscode';
 
 import {
-	RAL, Message, MessageSignature, Logger, ResponseError,
+	RAL, Message, MessageSignature, Logger, ResponseError, RequestType0, RequestType, NotificationType0, NotificationType,
 	ProtocolRequestType, ProtocolRequestType0, RequestHandler, RequestHandler0, GenericRequestHandler,
 	ProtocolNotificationType, ProtocolNotificationType0,
 	NotificationHandler, NotificationHandler0, GenericNotificationHandler,
@@ -93,23 +93,31 @@ interface Connection {
 
 	sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): Promise<R>;
 	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: P, token?: CancellationToken): Promise<R>;
+	sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): Promise<R>;
 	sendRequest<R>(method: string, token?: CancellationToken): Promise<R>;
 	sendRequest<R>(method: string, param: any, token?: CancellationToken): Promise<R>;
 	sendRequest<R>(type: string | MessageSignature, ...params: any[]): Promise<R>;
 
 	onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: RequestHandler0<R, E>): Disposable;
 	onRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, handler: RequestHandler<P, R, E>): Disposable;
+	onRequest<R, E>(type: RequestType0<R, E>, handler: RequestHandler0<R, E>): Disposable;
+	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): Disposable;
 	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): Disposable;
 	onRequest<R, E>(method: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable;
 
 	sendNotification<RO>(type: ProtocolNotificationType0<RO>): void;
 	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): void;
+	sendNotification(type: NotificationType0): void;
+	sendNotification<P>(type: NotificationType<P>, params?: P): void;
 	sendNotification(method: string): void;
 	sendNotification(method: string, params: any): void;
 	sendNotification(method: string | MessageSignature, params?: any): void;
 
 	onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): Disposable;
 	onNotification<P, RO>(type: ProtocolNotificationType<P, RO>, handler: NotificationHandler<P>): Disposable;
+	onNotification(type: NotificationType0, handler: NotificationHandler0): Disposable;
+	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): Disposable;
 	onNotification(method: string, handler: GenericNotificationHandler): Disposable;
 	onNotification(method: string | MessageSignature, handler: GenericNotificationHandler): Disposable;
 
@@ -2708,6 +2716,8 @@ export abstract class BaseLanguageClient {
 
 	public sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): Promise<R>;
 	public sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: P, token?: CancellationToken): Promise<R>;
+	public sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): Promise<R>;
+	public sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): Promise<R>;
 	public sendRequest<R>(method: string, token?: CancellationToken): Promise<R>;
 	public sendRequest<R>(method: string, param: any, token?: CancellationToken): Promise<R>;
 	public sendRequest<R>(type: string | MessageSignature, ...params: any[]): Promise<R> {
@@ -2725,6 +2735,8 @@ export abstract class BaseLanguageClient {
 
 	public onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: RequestHandler0<R, E>): Disposable;
 	public onRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, handler: RequestHandler<P, R, E>): Disposable;
+	public onRequest<R, E>(type: RequestType0<R, E>, handler: RequestHandler0<R, E>): Disposable;
+	public onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): Disposable;
 	public onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): Disposable;
 	public onRequest<R, E>(type: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable {
 		if (!this.isConnectionActive()) {
@@ -2740,6 +2752,8 @@ export abstract class BaseLanguageClient {
 
 	public sendNotification<RO>(type: ProtocolNotificationType0<RO>): void;
 	public sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): void;
+	public sendNotification(type: NotificationType0): void;
+	public sendNotification<P>(type: NotificationType<P>, params?: P): void;
 	public sendNotification(method: string): void;
 	public sendNotification(method: string, params: any): void;
 	public sendNotification<P>(type: string | MessageSignature, params?: P): void {
@@ -2757,6 +2771,8 @@ export abstract class BaseLanguageClient {
 
 	public onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): Disposable;
 	public onNotification<P, RO>(type: ProtocolNotificationType<P, RO>, handler: NotificationHandler<P>): Disposable;
+	public onNotification(type: NotificationType0, handler: NotificationHandler0): Disposable;
+	public onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): Disposable;
 	public onNotification(method: string, handler: GenericNotificationHandler): Disposable;
 	public onNotification(type: string | MessageSignature, handler: GenericNotificationHandler): Disposable {
 		if (!this.isConnectionActive()) {

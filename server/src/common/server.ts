@@ -23,7 +23,8 @@ import {
 	SignatureHelpRequest, DeclarationRequest, DefinitionRequest, TypeDefinitionRequest, ImplementationRequest, ReferencesRequest, DocumentHighlightRequest,
 	DocumentSymbolRequest, WorkspaceSymbolRequest, CodeActionRequest, CodeLensRequest, CodeLensResolveRequest, DocumentFormattingRequest, DocumentRangeFormattingRequest,
 	DocumentOnTypeFormattingRequest, RenameRequest, PrepareRenameRequest, DocumentLinkRequest, DocumentLinkResolveRequest, DocumentColorRequest, ColorPresentationRequest,
-	FoldingRangeRequest, SelectionRangeRequest, ExecuteCommandRequest, InitializeRequest, ResponseError, RegistrationType
+	FoldingRangeRequest, SelectionRangeRequest, ExecuteCommandRequest, InitializeRequest, ResponseError, RegistrationType, RequestType0, RequestType,
+	NotificationType0, NotificationType
 } from 'vscode-languageserver-protocol';
 
 import * as Is from './utils/is';
@@ -979,6 +980,8 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 */
 	onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: RequestHandler0<R, E>): void;
 	onRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, handler: RequestHandler<P, R, E>): void;
+	onRequest<R, PR, E, RO>(type: RequestType0<R, E>, handler: RequestHandler0<R, E>): void;
+	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): void;
 
 	/**
 	 * Installs a request handler for the given method.
@@ -1003,6 +1006,8 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 */
 	sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): Promise<R>;
 	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: P, token?: CancellationToken): Promise<R>;
+	sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): Promise<R>;
 
 	/**
 	 * Send a request to the client.
@@ -1021,6 +1026,8 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 */
 	onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): void;
 	onNotification<P, RO>(type: ProtocolNotificationType<P, RO>, handler: NotificationHandler<P>): void;
+	onNotification(type: NotificationType0, handler: NotificationHandler0): void;
+	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): void;
 
 	/**
 	 * Installs a notification handler for the given method.
@@ -1045,6 +1052,8 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 */
 	sendNotification<RO>(type: ProtocolNotificationType0<RO>): void;
 	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params: P): void;
+	sendNotification(type: NotificationType0): void;
+	sendNotification<P>(type: NotificationType<P>, params: P): void;
 
 	/**
 	 * Send a notification to the client.
