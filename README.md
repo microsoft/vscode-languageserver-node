@@ -34,6 +34,11 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 
 ## History
 
+## 3.16.0-next.10 Protocol, 6.0.0-next.7 JSON-RPC, 7.0.0-next.12 Client and 7.0.0-next.10 Server.
+
+* cleanup of Request and Notification types. Removed the unecessary generic parameter RO. This is a breaking change. To adapt simply remove the type argument.
+* added the new concept of a RegistrationType which decouple the registration method from the actual request or notification method. This is a breaking change for implementors of custom features. To adapt rename the `messages` property to `registrationType` and return a corresponding `RegistrationType`. Additional remove the first parameter from the `register` method.
+
 ## 3.16.0-next.7 Protocol, 6.0.0-next.5 JSON-RPC, 7.0.0-next.9 Client and 7.0.0-next.7 Server.
 
 * Moved semantic tokens out of proposed state.
