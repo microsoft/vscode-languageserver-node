@@ -246,8 +246,6 @@ namespace CodeBlock {
 
 export function createConverter(uriConverter: URIConverter | undefined, trustMarkdown: boolean | undefined): Converter {
 
-	trustMarkdown = !trustMarkdown;
-
 	const nullConverter = (value: string) => code.Uri.parse(value);
 
 	const _uriConverter: URIConverter = uriConverter || nullConverter;
