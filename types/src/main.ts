@@ -663,6 +663,7 @@ export namespace Diagnostic {
 			&& Is.string(candidate.message)
 			&& (Is.number(candidate.severity) || Is.undefined(candidate.severity))
 			&& (Is.number(candidate.code) || Is.string(candidate.code) || Is.undefined(candidate.code))
+			&& (Is.undefined(candidate.codeDescription) || (Is.string(candidate.codeDescription?.href)))
 			&& (Is.string(candidate.source) || Is.undefined(candidate.source))
 			&& (Is.undefined(candidate.relatedInformation) || Is.typedArray<DiagnosticRelatedInformation>(candidate.relatedInformation, DiagnosticRelatedInformation.is));
 	}
