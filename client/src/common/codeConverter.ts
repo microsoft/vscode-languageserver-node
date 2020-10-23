@@ -95,7 +95,7 @@ export interface Converter {
 
 	asCodeLens(item: code.CodeLens): proto.CodeLens;
 
-	asFormattingOptions(item: code.FormattingOptions): proto.FormattingOptions;
+	asFormattingOptions(item: code.FormattingOptions, config: code.WorkspaceConfiguration): proto.FormattingOptions;
 
 	asDocumentSymbolParams(textDocument: code.TextDocument): proto.DocumentSymbolParams;
 
@@ -656,8 +656,18 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return result;
 	}
 
-	function asFormattingOptions(item: code.FormattingOptions): proto.FormattingOptions {
-		return { tabSize: item.tabSize, insertSpaces: item.insertSpaces };
+	function asFormattingOptions(item: code.FormattingOptions, config: code.WorkspaceConfiguration): proto.FormattingOptions {
+		const result: proto.FormattingOptions = { tabSize: item.tabSize, insertSpaces: item.insertSpaces };
+		if (config.get('trimTrailingWhitespace') === true) {
+			result.trimTrailingWhitespace = true;
+		}
+		if (config.get('trimFinalNewlines') === true) {
+			result.trimFinalNewlines = true;
+		}
+		if (config.get('insertFinalNewline') === true) {
+			result.insertFinalNewline = true;
+		}
+		return result;
 	}
 
 	function asDocumentSymbolParams(textDocument: code.TextDocument): proto.DocumentSymbolParams {
