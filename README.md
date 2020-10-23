@@ -38,6 +38,7 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 
 * cleanup of Request and Notification types. Removed the unecessary generic parameter RO. This is a breaking change. To adapt simply remove the type argument.
 * added the new concept of a RegistrationType which decouple the registration method from the actual request or notification method. This is a breaking change for implementors of custom features. To adapt rename the `messages` property to `registrationType` and return a corresponding `RegistrationType`. Additional remove the first parameter from the `register` method.
+* cleanup of `ErrorCodes`. LSP specific error codes got moved to a new namespace `LSPErrorCodes`. The namespace `ErrorCodes` in `jsonrpc` is not correctly reserved for JSON RPC specific error codes. This is a breaking change. To resolve it use `LSPErrorCodes` instead.
 
 ## 3.16.0-next.7 Protocol, 6.0.0-next.5 JSON-RPC, 7.0.0-next.9 Client and 7.0.0-next.7 Server.
 
