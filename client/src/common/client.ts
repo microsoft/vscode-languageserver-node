@@ -682,6 +682,12 @@ export interface StaticFeature {
 	 *  May be `undefined` if the client was created without a selector.
 	 */
 	initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector | undefined): void;
+
+	/**
+	 * Called when the client is stopped to dispose this feature. Usually a feature
+	 * unregisters listeners registerd hooked up with the VS Code extension host.
+	 */
+	dispose(): void;
 }
 
 export interface DynamicFeature<RO> {
@@ -3206,8 +3212,8 @@ export abstract class BaseLanguageClient {
 		if (this._syncedDocuments) {
 			this._syncedDocuments.clear();
 		}
-		for (let handler of this._dynamicFeatures.values()) {
-			handler.dispose();
+		for (const feature of this._features.values()) {
+			feature.dispose();
 		}
 		if (channel) {
 			this.cleanUpChannel();

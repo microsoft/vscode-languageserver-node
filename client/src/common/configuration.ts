@@ -68,6 +68,9 @@ export class ConfigurationFeature implements StaticFeature {
 		}
 		return result;
 	}
+
+	public dispose(): void {
+	}
 }
 
 export function toJSONObject(obj: any): any {

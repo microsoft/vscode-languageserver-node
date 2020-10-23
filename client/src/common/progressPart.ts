@@ -29,7 +29,7 @@ export class ProgressPart {
 	private _resolve: (() => void) | undefined;
 	private _reject: ((reason?: any) => void) | undefined;
 
-	public constructor(private _client: ProgressContext , private _token: ProgressToken) {
+	public constructor(private _client: ProgressContext, private _token: ProgressToken, done?: (part: ProgressPart) => void) {
 		this._reported = 0;
 		this._disposable = this._client.onProgress(WorkDoneProgress.type, this._token, (value) => {
 			switch (value.kind) {
@@ -41,6 +41,7 @@ export class ProgressPart {
 					break;
 				case 'end':
 					this.done();
+					done && done(this);
 					break;
 			}
 		});

@@ -17,18 +17,34 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 
 export class ProgressFeature implements StaticFeature {
 
-	constructor(private _client: BaseLanguageClient) {}
+	private activeParts: Set<ProgressPart>;
+
+	constructor(private _client: BaseLanguageClient) {
+		this.activeParts = new Set();
+	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
 		ensure(capabilities, 'window')!.workDoneProgress = true;
 	}
 
 	public initialize(): void {
-		let client = this._client;
+		const client = this._client;
 
-		let createHandler = (params: WorkDoneProgressCreateParams) => {
-			new ProgressPart(this._client, params.token);
+		const deleteHandler = (part: ProgressPart) => {
+			this.activeParts.delete(part);
 		};
+
+		const createHandler = (params: WorkDoneProgressCreateParams) => {
+			this.activeParts.add(new ProgressPart(this._client, params.token, deleteHandler));
+		};
+
 		client.onRequest(WorkDoneProgressCreateRequest.type, createHandler);
+	}
+
+	public dispose(): void {
+		for (const part of this.activeParts) {
+			part.done();
+		}
+		this.activeParts.clear();
 	}
 }
