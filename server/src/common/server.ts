@@ -24,7 +24,7 @@ import {
 	DocumentSymbolRequest, WorkspaceSymbolRequest, CodeActionRequest, CodeLensRequest, CodeLensResolveRequest, DocumentFormattingRequest, DocumentRangeFormattingRequest,
 	DocumentOnTypeFormattingRequest, RenameRequest, PrepareRenameRequest, DocumentLinkRequest, DocumentLinkResolveRequest, DocumentColorRequest, ColorPresentationRequest,
 	FoldingRangeRequest, SelectionRangeRequest, ExecuteCommandRequest, InitializeRequest, ResponseError, RegistrationType, RequestType0, RequestType,
-	NotificationType0, NotificationType
+	NotificationType0, NotificationType, CreateFilesParams, WillCreateFilesRequest
 } from 'vscode-languageserver-protocol';
 
 import * as Is from './utils/is';
@@ -92,6 +92,8 @@ export class TextDocuments<T> {
 	private _onDidSave: Emitter<TextDocumentChangeEvent<T>>;
 	private _onWillSave: Emitter<TextDocumentWillSaveEvent<T>>;
 	private _willSaveWaitUntil: RequestHandler<TextDocumentWillSaveEvent<T>, TextEdit[], void> | undefined;
+
+	private _willCreateFiles: RequestHandler<CreateFilesParams, TextEdit[], void> | undefined;
 
 	/**
 	 * Create a new text document manager.
@@ -254,6 +256,13 @@ export class TextDocuments<T> {
 			let document = this._documents[event.textDocument.uri];
 			if (document) {
 				this._onDidSave.fire(Object.freeze({ document }));
+			}
+		});
+		connection.onWillCreateFiles((event: CreateFilesParams, token: CancellationToken) => {
+			if (this._willCreateFiles) {
+				return this._willCreateFiles(Object.freeze({ files: event.files }), token);
+			} else {
+				return [];
 			}
 		});
 	}
@@ -1211,6 +1220,18 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	onDidSaveTextDocument(handler: NotificationHandler<DidSaveTextDocumentParams>): void;
 
 	/**
+	 * Installs a handler for the `WillCreateFiles` request.
+	 *
+	 * Note that this request is opt-in. The client will not send it unless
+	 * your server has the `files.willCreate` capability,
+	 * or you've dynamically registered for the `workspace/willCreateFiles`
+	 * method.
+	 *
+	 * @param handler The corresponding handler.
+	 */
+	onWillCreateFiles(handler: RequestHandler<CreateFilesParams, TextEdit[] | undefined | null, void>): void;
+
+	/**
 	 * Sends diagnostics computed for a given document to VSCode to render them in the
 	 * user interface.
 	 *
@@ -1587,6 +1608,8 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 		onWillSaveTextDocument: (handler) => connection.onNotification(WillSaveTextDocumentNotification.type, handler),
 		onWillSaveTextDocumentWaitUntil: (handler) => connection.onRequest(WillSaveTextDocumentWaitUntilRequest.type, handler),
 		onDidSaveTextDocument: (handler) => connection.onNotification(DidSaveTextDocumentNotification.type, handler),
+
+		onWillCreateFiles: (handler) => connection.onRequest(WillCreateFilesRequest.type, handler),
 
 		sendDiagnostics: (params) => connection.sendNotification(PublishDiagnosticsNotification.type, params),
 

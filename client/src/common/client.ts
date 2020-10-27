@@ -49,7 +49,7 @@ import {
 	DocumentRangeFormattingOptions, DocumentOnTypeFormattingOptions, RenameOptions, DocumentLinkOptions, CompletionItemTag, DiagnosticTag, DocumentColorRequest,
 	DeclarationRequest, FoldingRangeRequest, ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, SymbolTag, CallHierarchyPrepareRequest,
 	CancellationStrategy, SaveOptions, LSPErrorCodes, CodeActionResolveRequest, RegistrationType, SemanticTokensRegistrationType, InsertTextMode, ShowDocumentRequest,
-	ShowDocumentParams, ShowDocumentResult, OnTypeRenameRequest
+	ShowDocumentParams, ShowDocumentResult, OnTypeRenameRequest, FileOperationRegistrationOptions, WillCreateFilesRequest
 } from 'vscode-languageserver-protocol';
 
 import type { ColorProviderMiddleware } from './colorProvider';
@@ -73,6 +73,12 @@ import * as UUID from './utils/uuid';
 import { ProgressPart } from './progressPart';
 import { env } from 'vscode';
 import { TextDocumentShowOptions } from 'vscode';
+import { FileWillCreateEvent } from 'vscode';
+import { FileCreateEvent } from 'vscode';
+import { FileRenameEvent } from 'vscode';
+import { FileWillRenameEvent } from 'vscode';
+import { FileWillDeleteEvent } from 'vscode';
+import { FileDeleteEvent } from 'vscode';
 
 interface Connection {
 
@@ -467,6 +473,13 @@ export interface _Middleware {
 	willSaveWaitUntil?: NextSignature<TextDocumentWillSaveEvent, Thenable<VTextEdit[]>>;
 	didSave?: NextSignature<TextDocument, void>;
 	didClose?: NextSignature<TextDocument, void>;
+
+	didCreateFiles?: NextSignature<FileCreateEvent, void>;
+	willCreateFiles?: NextSignature<FileWillCreateEvent, Thenable<VTextEdit[]>>;
+	didRenameFiles?: NextSignature<FileRenameEvent, void>;
+	willRenameFiles?: NextSignature<FileWillRenameEvent, Thenable<VTextEdit[]>>;
+	didDeleteFiles?: NextSignature<FileDeleteEvent, void>;
+	willDeleteFiles?: NextSignature<FileWillDeleteEvent, Thenable<VTextEdit[]>>;
 
 	handleDiagnostics?: (this: void, uri: Uri, diagnostics: VDiagnostic[], next: HandleDiagnosticsSignature) => void;
 	provideCompletionItem?: (this: void, document: TextDocument, position: VPosition, context: VCompletionContext, token: CancellationToken, next: ProvideCompletionItemsSignature) => ProviderResult<VCompletionItem[] | VCompletionList>;
@@ -1189,6 +1202,83 @@ class WillSaveWaitUntilFeature implements DynamicFeature<TextDocumentRegistratio
 
 	public dispose(): void {
 		this._selectors.clear();
+		if (this._listener) {
+			this._listener.dispose();
+			this._listener = undefined;
+		}
+	}
+}
+
+class WillCreateFilesFeature implements DynamicFeature<FileOperationRegistrationOptions> {
+
+	private _listener: Disposable | undefined;
+	private _globPatterns: Map<string, string> = new Map<string, string>();
+
+	constructor(private _client: BaseLanguageClient) {
+	}
+
+	public get registrationType(): RegistrationType<FileOperationRegistrationOptions> {
+		return WillCreateFilesRequest.type;
+	}
+
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
+		let value = ensure(capabilities, 'files')!;
+		value.willCreate = true;
+	}
+
+	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
+		let syncOptions = capabilities.files;
+		if (syncOptions && syncOptions.willCreate) {
+			this.register({
+				id: UUID.generateUuid(),
+				// TODO(dantup): Is it reasonable to use **/* for static registration that
+				// don't have a glob?
+				registerOptions: { globPattern: '**/*' }
+			});
+		}
+	}
+
+	public register(data: RegistrationData<FileOperationRegistrationOptions>): void {
+		if (!data.registerOptions.globPattern) {
+			return;
+		}
+		if (!this._listener) {
+			this._listener = Workspace.onWillCreateFiles(this.callback, this);
+		}
+		this._globPatterns.set(data.id, data.registerOptions.globPattern);
+	}
+
+	private callback(event: FileWillCreateEvent): void {
+		// TODO(dantup): How can we match globs? VS Code's doesn't seem accessible (DocumentFilters use Language.match?)
+		if (true/*....*/) {
+			let middleware = this._client.clientOptions.middleware!;
+			let willCreateFiles = (event: FileWillCreateEvent): Thenable<VTextEdit[]> => {
+				return this._client.sendRequest(WillCreateFilesRequest.type,
+					this._client.code2ProtocolConverter.asWillCreateFilesParams(event)).then((edits) => {
+					let vEdits = this._client.protocol2CodeConverter.asTextEdits(edits);
+					return vEdits === undefined ? [] : vEdits;
+				});
+			};
+			// TODO(dantup): Is it right that middleware gets the VS Code event (FileWillCreateEvent)
+			// and not the converted event (CreteFilesParams)?
+			event.waitUntil(
+				middleware.willCreateFiles
+					? middleware.willCreateFiles(event, willCreateFiles)
+					: willCreateFiles(event)
+			);
+		}
+	}
+
+	public unregister(id: string): void {
+		this._globPatterns.delete(id);
+		if (this._globPatterns.size === 0 && this._listener) {
+			this._listener.dispose();
+			this._listener = undefined;
+		}
+	}
+
+	public dispose(): void {
+		this._globPatterns.clear();
 		if (this._listener) {
 			this._listener.dispose();
 			this._listener = undefined;

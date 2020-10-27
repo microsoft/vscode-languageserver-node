@@ -46,6 +46,8 @@ export interface Converter {
 	asSaveTextDocumentParams(textDocument: code.TextDocument, includeContent?: boolean): proto.DidSaveTextDocumentParams;
 	asWillSaveTextDocumentParams(event: code.TextDocumentWillSaveEvent): proto.WillSaveTextDocumentParams;
 
+	asWillCreateFilesParams(event: code.FileWillCreateEvent): proto.CreateFilesParams;
+
 	asTextDocumentPositionParams(textDocument: code.TextDocument, position: code.Position): proto.TextDocumentPositionParams;
 
 	asCompletionParams(textDocument: code.TextDocument, position: code.Position, context: code.CompletionContext): proto.CompletionParams
@@ -226,6 +228,14 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return {
 			textDocument: asTextDocumentIdentifier(event.document),
 			reason: asTextDocumentSaveReason(event.reason)
+		};
+	}
+
+	function asWillCreateFilesParams(event: code.FileWillCreateEvent): proto.CreateFilesParams {
+		return {
+			files: event.files.map((fileUri) => ({
+				uri: _uriConverter(fileUri),
+			})),
 		};
 	}
 
@@ -731,6 +741,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asCloseTextDocumentParams,
 		asSaveTextDocumentParams,
 		asWillSaveTextDocumentParams,
+		asWillCreateFilesParams,
 		asTextDocumentPositionParams,
 		asCompletionParams,
 		asSignatureHelpParams,
