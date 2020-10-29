@@ -17,6 +17,10 @@ import { PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions, T
  */
 export enum SemanticTokenTypes {
 	namespace = 'namespace',
+	/**
+	 * Represents a generic type. Acts as a fallback for types which can't be mapped to
+	 * a specific type like class or enum.
+	 */
 	type = 'type',
 	class = 'class',
 	enum = 'enum',
