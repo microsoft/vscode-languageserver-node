@@ -3256,8 +3256,12 @@ export abstract class BaseLanguageClient {
 		workSpaceMiddleware?.didChangeWatchedFile ? workSpaceMiddleware.didChangeWatchedFile(event, didChangeWatchedFile) : didChangeWatchedFile(event);
 	}
 
+	private _didChangeTextDocumentFeature: DidChangeTextDocumentFeature | undefined;
 	private forceDocumentSync(): void {
-		(this._dynamicFeatures.get(DidChangeTextDocumentNotification.type.method) as DidChangeTextDocumentFeature).forceDelivery();
+		if (this._didChangeTextDocumentFeature === undefined) {
+			this._didChangeTextDocumentFeature = this._dynamicFeatures.get(DidChangeTextDocumentNotification.type.method) as DidChangeTextDocumentFeature;
+		}
+		this._didChangeTextDocumentFeature.forceDelivery();
 	}
 
 	private handleDiagnostics(params: PublishDiagnosticsParams) {
