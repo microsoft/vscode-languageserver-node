@@ -207,9 +207,19 @@ export interface SemanticTokensClientCapabilities {
 	tokenModifiers: string[];
 
 	/**
-	 * The formats the clients supports.
+	 * The token formats the clients supports.
 	 */
 	formats: TokenFormat[];
+
+	/**
+	 * Whether the client supports tokens that can overlap each other.
+	 */
+	overlappingTokenSupport?: boolean;
+
+	/**
+	 * Whether the client supports tokens that can span multiple lines.
+	 */
+	multilineTokenSupport?: boolean;
 }
 
 /**
