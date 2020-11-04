@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { RequestHandler } from 'vscode-jsonrpc';
-import { TextDocumentIdentifier } from 'vscode-languageserver-types';
+import { TextDocumentIdentifier, uinteger, FoldingRange } from 'vscode-languageserver-types';
 
 import { ProtocolRequestType } from './messages';
 import {
@@ -24,7 +24,7 @@ export interface FoldingRangeClientCapabilities {
 	 * The maximum number of folding ranges that the client prefers to receive per document. The value serves as a
 	 * hint, servers are free to follow the limit.
 	 */
-	rangeLimit?: number;
+	rangeLimit?: uinteger;
 	/**
 	 * If set, the client signals that it only supports folding complete lines. If set, client will
 	 * ignore specified `startCharacter` and `endCharacter` properties in a FoldingRange.
@@ -54,39 +54,6 @@ export enum FoldingRangeKind {
 	 * Folding range for a region (e.g. `#region`)
 	 */
 	Region = 'region'
-}
-
-/**
- * Represents a folding range.
- */
-export interface FoldingRange {
-
-	/**
-	 * The zero-based line number from where the folded range starts.
-	 */
-	startLine: number;
-
-	/**
-	 * The zero-based character offset from where the folded range starts. If not defined, defaults to the length of the start line.
-	 */
-	startCharacter?: number;
-
-	/**
-	 * The zero-based line number where the folded range ends.
-	 */
-	endLine: number;
-
-	/**
-	 * The zero-based character offset before the folded range ends. If not defined, defaults to the length of the end line.
-	 */
-	endCharacter?: number;
-
-	/**
-	 * Describes the kind of the folding range such as `comment' or 'region'. The kind
-	 * is used to categorize folding ranges and used by commands like 'Fold all comments'. See
-	 * [FoldingRangeKind](#FoldingRangeKind) for an enumeration of standardized kinds.
-	 */
-	kind?: string;
 }
 
 /**

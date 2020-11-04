@@ -4,6 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import { NotificationHandler, RequestHandler, ProgressType, ProgressToken } from 'vscode-jsonrpc';
+import { uinteger } from 'vscode-languageserver-types';
 
 import { ProtocolRequestType, ProtocolNotificationType } from './messages';
 
@@ -56,9 +57,9 @@ export interface WorkDoneProgressBegin {
 	 * to ignore the `percentage` value in subsequent in report notifications.
 	 *
 	 * The value should be steadily rising. Clients are free to ignore values
-	 * that are not following this rule.
+	 * that are not following this rule. The value range is [0, 100].
 	 */
-	percentage?: number;
+	percentage?: uinteger;
 }
 
 export interface WorkDoneProgressReport {
@@ -88,9 +89,9 @@ export interface WorkDoneProgressReport {
 	 * to ignore the `percentage` value in subsequent in report notifications.
 	 *
 	 * The value should be steadily rising. Clients are free to ignore values
-	 * that are not following this rule.
+	 * that are not following this rule. The value range is [0, 100]
 	 */
-	percentage?: number;
+	percentage?: uinteger;
 }
 
 export interface WorkDoneProgressEnd {

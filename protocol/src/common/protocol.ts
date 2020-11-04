@@ -14,7 +14,7 @@ import {
 	TextDocumentIdentifier, VersionedTextDocumentIdentifier, TextDocumentItem, CompletionItem, CompletionList,
 	Hover, SignatureHelp, Definition, DefinitionLink, ReferenceContext, DocumentHighlight, SymbolInformation,
 	CodeLens, CodeActionContext, FormattingOptions, DocumentLink, MarkupKind, SymbolKind, CompletionItemKind,
-	CodeAction, CodeActionKind, DocumentSymbol, CompletionItemTag, DiagnosticTag, SymbolTag
+	CodeAction, CodeActionKind, DocumentSymbol, CompletionItemTag, DiagnosticTag, SymbolTag, uinteger, integer
 } from 'vscode-languageserver-types';
 
 import { ImplementationRequest, ImplementationClientCapabilities, ImplementationOptions, ImplementationRegistrationOptions, ImplementationParams } from './protocol.implementation';
@@ -739,7 +739,7 @@ export interface _InitializeParams extends WorkDoneProgressParams {
 	 * The process Id of the parent process that started
 	 * the server.
 	 */
-	processId: number | null;
+	processId: integer | null;
 
 	/**
 	 * Information about the client
@@ -835,7 +835,7 @@ export namespace InitializeError {
 	 * @deprecated This initialize error got replaced by client capabilities. There is
 	 * no version handshake in version 3.0x
 	 */
-	export const unknownProtocolVersion: number = 1;
+	export const unknownProtocolVersion: 1 = 1;
 }
 
 /**
@@ -1152,7 +1152,7 @@ export type TextDocumentContentChangeEvent = {
 	 *
 	 * @deprecated use range instead.
 	 */
-	rangeLength?: number;
+	rangeLength?: uinteger;
 
 	/**
 	 * The new text for the provided range.
@@ -1170,8 +1170,8 @@ export namespace TextDocumentContentChangeEvent {
 	/**
 	 * Checks whether the information descibes a delta event.
 	 */
-	export function isIncremental(event: TextDocumentContentChangeEvent): event is { range: Range; rangeLength?: number; text: string; } {
-		let candidate: { range: Range; rangeLength?: number; text: string; } = event as any;
+	export function isIncremental(event: TextDocumentContentChangeEvent): event is { range: Range; rangeLength?: uinteger; text: string; } {
+		let candidate: { range: Range; rangeLength?: uinteger; text: string; } = event as any;
 		return candidate !== undefined && candidate !== null &&
 			typeof candidate.text === 'string' && candidate.range !== undefined &&
 			(candidate.rangeLength === undefined || typeof candidate.rangeLength === 'number');
@@ -1181,7 +1181,7 @@ export namespace TextDocumentContentChangeEvent {
 	 * Checks whether the information descibes a full replacement event.
 	 */
 	export function isFull(event: TextDocumentContentChangeEvent): event is { text: string; } {
-		let candidate: { range?: Range; rangeLength?: number; text: string; } = event as any;
+		let candidate: { range?: Range; rangeLength?: uinteger; text: string; } = event as any;
 		return candidate !== undefined && candidate !== null &&
 			typeof candidate.text === 'string' && candidate.range === undefined && candidate.rangeLength === undefined;
 	}
@@ -1439,7 +1439,7 @@ export interface FileSystemWatcher {
 	 * to WatchKind.Create | WatchKind.Change | WatchKind.Delete
 	 * which is 7.
 	 */
-	kind?: number;
+	kind?: uinteger;
 }
 
 export namespace WatchKind {
@@ -1522,7 +1522,7 @@ export interface PublishDiagnosticsParams {
 	 *
 	 * @since 3.15.0
 	 */
-	version?: number;
+	version?: integer;
 
 	/**
 	 * An array of diagnostic information items.
@@ -2881,7 +2881,7 @@ export interface ApplyWorkspaceEditResponse {
 	 * contain the index of the change that failed. This property is only available
 	 * if the client signals a `failureHandlingStrategy` in its client capabilities.
 	 */
-	failedChange?: number;
+	failedChange?: uinteger;
 }
 
 /**

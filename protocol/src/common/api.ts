@@ -3,6 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
+import type { integer } from 'vscode-languageserver-types';
 import * as mk from './protocol.moniker.proposed';
 
 export * from 'vscode-jsonrpc';
@@ -20,10 +21,10 @@ export namespace LSPErrorCodes {
 	*
 	* @since 3.16.0
 	*/
-	export const lspReservedErrorRangeStart: number = -32899;
+	export const lspReservedErrorRangeStart: integer = -32899;
 
-	export const ContentModified: number = -32801;
-	export const RequestCancelled: number = -32800;
+	export const ContentModified: integer = -32801;
+	export const RequestCancelled: integer = -32800;
 
 	/**
 	* This is the end range of LSP reserved error codes.
@@ -31,7 +32,7 @@ export namespace LSPErrorCodes {
 	*
 	* @since 3.16.0
 	*/
-	export const lspReservedErrorRangeEnd: number = -32800;
+	export const lspReservedErrorRangeEnd: integer = -32800;
 }
 
 export namespace Proposed {

@@ -17,6 +17,25 @@ export type DocumentUri = string;
 export type URI = string;
 
 /**
+ * Defines an integer in the range of -2^31 to 2^31 - 1.
+ */
+export type integer = number;
+
+/**
+ * Defines an unsigned integer in the range of 0 to 2^31 - 1.
+ */
+export type uinteger = number;
+
+/**
+ * Defines a decimal number. Since decimal numbers are very
+ * rare in the language server specification we denote the
+ * exact range with every decimal using the mathematics
+ * inveral notations (e.g. [0, 1] denotes all decimals d with
+ * 0 <= d <= 1.
+ */
+export type decimal = number;
+
+/**
  * Position in a text document expressed as zero-based line and character offset.
  * The offsets are based on a UTF-16 string representation. So a string of the form
  * `a𐐀b` the character offset of the character `a` is 0, the character offset of `𐐀`
@@ -29,10 +48,8 @@ export type URI = string;
 export interface Position {
 	/**
 	 * Line position in a document (zero-based).
-	 * If a line number is greater than the number of lines in a document, it defaults back to the number of lines in the document.
-	 * If a line number is negative, it defaults to 0.
 	 */
-	line: number;
+	line: uinteger;
 
 	/**
 	 * Character offset on a line in a document (zero-based). Assuming that the line is
@@ -41,9 +58,8 @@ export interface Position {
 	 *
 	 * If the character value is greater than the line length it defaults back to the
 	 * line length.
-	 * If a line number is negative, it defaults to 0.
 	 */
-	character: number;
+	character: uinteger;
 }
 
 /**
@@ -56,7 +72,7 @@ export namespace Position {
 	 * @param line The position's line.
 	 * @param character The position's character.
 	 */
-	export function create(line: number, character: number): Position {
+	export function create(line: uinteger, character: uinteger): Position {
 		return { line, character };
 	}
 	/**
@@ -64,7 +80,7 @@ export namespace Position {
 	 */
 	export function is(value: any): value is Position {
 		let candidate = value as Position;
-		return Is.objectLiteral(candidate) && Is.number(candidate.line) && Is.number(candidate.character);
+		return Is.objectLiteral(candidate) && Is.uinteger(candidate.line) && Is.uinteger(candidate.character);
 	}
 }
 
@@ -111,9 +127,9 @@ export namespace Range {
 	 * @param endLine The end line number.
 	 * @param endCharacter The end character.
 	 */
-	export function create(startLine: number, startCharacter: number, endLine: number, endCharacter: number): Range;
-	export function create(one: Position | number, two: Position | number, three?: number, four?: number): Range {
-		if (Is.number(one) && Is.number(two) && Is.number(three) && Is.number(four)) {
+	export function create(startLine: uinteger, startCharacter: uinteger, endLine: uinteger, endCharacter: uinteger): Range;
+	export function create(one: Position | uinteger, two: Position | uinteger, three?: uinteger, four?: uinteger): Range {
+		if (Is.uinteger(one) && Is.uinteger(two) && Is.uinteger(three) && Is.uinteger(four)) {
 			return { start: Position.create(one, two), end: Position.create(three, four) };
 		} else if (Position.is(one) && Position.is(two)) {
 			return { start: one, end: two };
@@ -229,22 +245,22 @@ export interface Color {
 	/**
 	 * The red component of this color in the range [0-1].
 	 */
-	readonly red: number;
+	readonly red: decimal;
 
 	/**
 	 * The green component of this color in the range [0-1].
 	 */
-	readonly green: number;
+	readonly green: decimal;
 
 	/**
 	 * The blue component of this color in the range [0-1].
 	 */
-	readonly blue: number;
+	readonly blue: decimal;
 
 	/**
 	 * The alpha component of this color in the range [0-1].
 	 */
-	readonly alpha: number;
+	readonly alpha: decimal;
 }
 
 /**
@@ -255,7 +271,7 @@ export namespace Color {
 	/**
 	 * Creates a new Color literal.
 	 */
-	export function create(red: number, green: number, blue: number, alpha: number): Color {
+	export function create(red: decimal, green: decimal, blue: decimal, alpha: decimal): Color {
 		return {
 			red,
 			green,
@@ -269,10 +285,10 @@ export namespace Color {
 	 */
 	export function is(value: any): value is Color {
 		const candidate = value as Color;
-		return Is.number(candidate.red)
-			&& Is.number(candidate.green)
-			&& Is.number(candidate.blue)
-			&& Is.number(candidate.alpha);
+		return Is.numberRange(candidate.red, 0, 1)
+			&& Is.numberRange(candidate.green, 0, 1)
+			&& Is.numberRange(candidate.blue, 0, 1)
+			&& Is.numberRange(candidate.alpha, 0, 1);
 	}
 }
 
@@ -382,29 +398,32 @@ export enum FoldingRangeKind {
 }
 
 /**
- * Represents a folding range.
+ * Represents a folding range. To be valid, start and end line must be bigger than zero and smaller
+ * than the number of lines in the document. Clients are free to ignore invalid ranges.
  */
 export interface FoldingRange {
 
 	/**
-	 * The zero-based line number from where the folded range starts.
+	 * The zero-based start line of the range to fold. The folded area starts after the line's last character.
+	 * To be valid, the end must be zero or larger and smaller than the number of lines in the document.
 	 */
-	startLine: number;
+	startLine: uinteger;
 
 	/**
 	 * The zero-based character offset from where the folded range starts. If not defined, defaults to the length of the start line.
 	 */
-	startCharacter?: number;
+	startCharacter?: uinteger;
 
 	/**
-	 * The zero-based line number where the folded range ends.
+	 * The zero-based end line of the range to fold. The folded area ends with the line's last character.
+	 * To be valid, the end must be zero or larger and smaller than the number of lines in the document.
 	 */
-	endLine: number;
+	endLine: uinteger;
 
 	/**
 	 * The zero-based character offset before the folded range ends. If not defined, defaults to the length of the end line.
 	 */
-	endCharacter?: number;
+	endCharacter?: uinteger;
 
 	/**
 	 * Describes the kind of the folding range such as `comment' or 'region'. The kind
@@ -422,7 +441,7 @@ export namespace FoldingRange {
 	/**
 	 * Creates a new FoldingRange literal.
 	 */
-	export function create(startLine: number, endLine: number, startCharacter?: number, endCharacter?: number, kind?: string): FoldingRange {
+	export function create(startLine: uinteger, endLine: uinteger, startCharacter?: uinteger, endCharacter?: uinteger, kind?: string): FoldingRange {
 		const result: FoldingRange = {
 			startLine,
 			endLine
@@ -444,9 +463,9 @@ export namespace FoldingRange {
 	 */
 	export function is(value: any): value is FoldingRange {
 		const candidate = value as FoldingRange;
-		return Is.number(candidate.startLine) && Is.number(candidate.startLine)
-			&& (Is.undefined(candidate.startCharacter) || Is.number(candidate.startCharacter))
-			&& (Is.undefined(candidate.endCharacter) || Is.number(candidate.endCharacter))
+		return Is.uinteger(candidate.startLine) && Is.uinteger(candidate.startLine)
+			&& (Is.undefined(candidate.startCharacter) || Is.uinteger(candidate.startCharacter))
+			&& (Is.undefined(candidate.endCharacter) || Is.uinteger(candidate.endCharacter))
 			&& (Is.undefined(candidate.kind) || Is.string(candidate.kind));
 	}
 }
@@ -585,7 +604,7 @@ export interface Diagnostic {
 	/**
 	 * The diagnostic's code, which usually appear in the user interface.
 	 */
-	code?: number | string;
+	code?: integer | string;
 
 	/**
 	 * An optional property to describe the error code.
@@ -636,7 +655,7 @@ export namespace Diagnostic {
 	/**
 	 * Creates a new Diagnostic literal.
 	 */
-	export function create(range: Range, message: string, severity?: DiagnosticSeverity, code?: number | string, source?: string, relatedInformation?: DiagnosticRelatedInformation[]): Diagnostic {
+	export function create(range: Range, message: string, severity?: DiagnosticSeverity, code?: integer | string, source?: string, relatedInformation?: DiagnosticRelatedInformation[]): Diagnostic {
 		let result: Diagnostic = { range, message };
 		if (Is.defined(severity)) {
 			result.severity = severity;
@@ -662,7 +681,7 @@ export namespace Diagnostic {
 			&& Range.is(candidate.range)
 			&& Is.string(candidate.message)
 			&& (Is.number(candidate.severity) || Is.undefined(candidate.severity))
-			&& (Is.number(candidate.code) || Is.string(candidate.code) || Is.undefined(candidate.code))
+			&& (Is.integer(candidate.code) || Is.string(candidate.code) || Is.undefined(candidate.code))
 			&& (Is.undefined(candidate.codeDescription) || (Is.string(candidate.codeDescription?.href)))
 			&& (Is.string(candidate.source) || Is.undefined(candidate.source))
 			&& (Is.undefined(candidate.relatedInformation) || Is.typedArray<DiagnosticRelatedInformation>(candidate.relatedInformation, DiagnosticRelatedInformation.is));
@@ -1252,7 +1271,7 @@ export interface VersionedTextDocumentIdentifier extends TextDocumentIdentifier 
 	 * `null` to indicate that the version is unknown and the content on disk is the
 	 * truth (as speced with document content ownership).
 	 */
-	version: number | null;
+	version: integer | null;
 }
 
 /**
@@ -1265,7 +1284,7 @@ export namespace VersionedTextDocumentIdentifier {
 	 * @param uri The document's uri.
 	 * @param uri The document's text.
 	 */
-	export function create(uri: DocumentUri, version: number | null): VersionedTextDocumentIdentifier {
+	export function create(uri: DocumentUri, version: integer | null): VersionedTextDocumentIdentifier {
 		return { uri, version };
 	}
 
@@ -1274,7 +1293,7 @@ export namespace VersionedTextDocumentIdentifier {
 	 */
 	export function is(value: any): value is VersionedTextDocumentIdentifier {
 		let candidate = value as VersionedTextDocumentIdentifier;
-		return Is.defined(candidate) && Is.string(candidate.uri) && (candidate.version === null || Is.number(candidate.version));
+		return Is.defined(candidate) && Is.string(candidate.uri) && (candidate.version === null || Is.integer(candidate.version));
 	}
 }
 
@@ -1298,7 +1317,7 @@ export interface TextDocumentItem {
 	 * The version number of this document (it will increase after each
 	 * change, including undo/redo).
 	 */
-	version: number;
+	version: integer;
 
 	/**
 	 * The content of the opened text document.
@@ -1318,7 +1337,7 @@ export namespace TextDocumentItem {
 	 * @param version The document's version number.
 	 * @param text The document's text.
 	 */
-	export function create(uri: DocumentUri, languageId: string, version: number, text: string): TextDocumentItem {
+	export function create(uri: DocumentUri, languageId: string, version: integer, text: string): TextDocumentItem {
 		return { uri, languageId, version, text };
 	}
 
@@ -1327,7 +1346,7 @@ export namespace TextDocumentItem {
 	 */
 	export function is(value: any): value is TextDocumentItem {
 		let candidate = value as TextDocumentItem;
-		return Is.defined(candidate) && Is.string(candidate.uri) && Is.string(candidate.languageId) && Is.number(candidate.version) && Is.string(candidate.text);
+		return Is.defined(candidate) && Is.string(candidate.uri) && Is.string(candidate.languageId) && Is.integer(candidate.version) && Is.string(candidate.text);
 	}
 }
 
@@ -1795,7 +1814,7 @@ export interface ParameterInformation {
 	 * *Note*: a label of type string should be a substring of its containing signature label.
 	 * Its intended use case is to highlight the parameter label part in the `SignatureInformation.label`.
 	 */
-	label: string | [number, number];
+	label: string | [uinteger, uinteger];
 
 	/**
 	 * The human-readable doc-comment of this signature. Will be shown
@@ -1815,7 +1834,7 @@ export namespace ParameterInformation {
 	 * @param label A label string.
 	 * @param documentation A doc string.
 	 */
-	export function create(label: string | [number, number], documentation?: string): ParameterInformation {
+	export function create(label: string | [uinteger, uinteger], documentation?: string): ParameterInformation {
 		return documentation ? { label, documentation } : { label };
 	}
 }
@@ -1850,7 +1869,7 @@ export interface SignatureInformation {
 	 *
 	 * @since 3.16.0 - proposed state
 	 */
-	activeParameter?: number;
+	activeParameter?: uinteger;
 }
 
 /**
@@ -1887,13 +1906,13 @@ export interface SignatureHelp {
 	 * The active signature. Set to `null` if no
 	 * signatures exist.
 	 */
-	activeSignature: number | null;
+	activeSignature: uinteger | null;
 
 	/**
 	 * The active parameter of the active signature. Set to `null`
 	 * if the active signature has no parameters.
 	 */
-	activeParameter: number | null;
+	activeParameter: uinteger | null;
 }
 
 /**
@@ -2551,7 +2570,7 @@ export interface FormattingOptions {
 	/**
 	 * Size of a tab in spaces.
 	 */
-	tabSize: number;
+	tabSize: uinteger;
 
 	/**
 	 * Prefer spaces over tabs.
@@ -2582,7 +2601,7 @@ export interface FormattingOptions {
 	/**
 	 * Signature for further properties.
 	 */
-	[key: string]: boolean | number | string | undefined;
+	[key: string]: boolean | integer | string | undefined;
 }
 
 /**
@@ -2593,7 +2612,7 @@ export namespace FormattingOptions {
 	/**
 	 * Creates a new FormattingOptions literal.
 	 */
-	export function create(tabSize: number, insertSpaces: boolean): FormattingOptions {
+	export function create(tabSize: uinteger, insertSpaces: boolean): FormattingOptions {
 		return { tabSize, insertSpaces };
 	}
 	/**
@@ -2601,7 +2620,7 @@ export namespace FormattingOptions {
 	 */
 	export function is(value: any): value is FormattingOptions {
 		let candidate = value as FormattingOptions;
-		return Is.defined(candidate) && Is.number(candidate.tabSize) && Is.boolean(candidate.insertSpaces);
+		return Is.defined(candidate) && Is.uinteger(candidate.tabSize) && Is.boolean(candidate.insertSpaces);
 	}
 }
 
@@ -2819,7 +2838,7 @@ export interface TextDocument {
 	 *
 	 * @readonly
 	 */
-	readonly version: number;
+	readonly version: integer;
 
 	/**
 	 * Get the text of this document. A substring can be retrieved by
@@ -2843,7 +2862,7 @@ export interface TextDocument {
 	 * @param offset A zero-based offset.
 	 * @return A valid [position](#Position).
 	 */
-	positionAt(offset: number): Position;
+	positionAt(offset: uinteger): Position;
 
 	/**
 	 * Converts the position to a zero-based offset.
@@ -2853,14 +2872,14 @@ export interface TextDocument {
 	 * @param position A position.
 	 * @return A valid zero-based offset.
 	 */
-	offsetAt(position: Position): number;
+	offsetAt(position: Position): uinteger;
 
 	/**
 	 * The number of lines in this document.
 	 *
 	 * @readonly
 	 */
-	readonly lineCount: number;
+	readonly lineCount: uinteger;
 }
 
 /**
@@ -2873,7 +2892,7 @@ export namespace TextDocument {
 	 * @param languageId  The document's language Id.
 	 * @param content The document's content.
 	 */
-	export function create(uri: DocumentUri, languageId: string, version: number, content: string): TextDocument {
+	export function create(uri: DocumentUri, languageId: string, version: integer, content: string): TextDocument {
 		return new FullTextDocument(uri, languageId, version, content);
 	}
 	/**
@@ -2881,7 +2900,7 @@ export namespace TextDocument {
 	 */
 	export function is(value: any): value is TextDocument {
 		let candidate = value as TextDocument;
-		return Is.defined(candidate) && Is.string(candidate.uri) && (Is.undefined(candidate.languageId) || Is.string(candidate.languageId)) && Is.number(candidate.lineCount)
+		return Is.defined(candidate) && Is.string(candidate.uri) && (Is.undefined(candidate.languageId) || Is.string(candidate.languageId)) && Is.uinteger(candidate.lineCount)
 			&& Is.func(candidate.getText) && Is.func(candidate.positionAt) && Is.func(candidate.offsetAt) ? true : false;
 	}
 
@@ -2961,7 +2980,7 @@ type TextDocumentContentChangeEvent = {
 	 *
 	 * @deprecated use range instead.
 	 */
-	rangeLength?: number;
+	rangeLength?: uinteger;
 
 	/**
 	 * The new text for the provided range.
@@ -2981,11 +3000,11 @@ class FullTextDocument implements TextDocument {
 
 	private _uri: DocumentUri;
 	private _languageId: string;
-	private _version: number;
+	private _version: integer;
 	private _content: string;
-	private _lineOffsets: number[] | undefined;
+	private _lineOffsets: uinteger[] | undefined;
 
-	public constructor(uri: DocumentUri, languageId: string, version: number, content: string) {
+	public constructor(uri: DocumentUri, languageId: string, version: integer, content: string) {
 		this._uri = uri;
 		this._languageId = languageId;
 		this._version = version;
@@ -3001,7 +3020,7 @@ class FullTextDocument implements TextDocument {
 		return this._languageId;
 	}
 
-	public get version(): number {
+	public get version(): integer {
 		return this._version;
 	}
 
@@ -3014,15 +3033,15 @@ class FullTextDocument implements TextDocument {
 		return this._content;
 	}
 
-	public update(event: TextDocumentContentChangeEvent, version: number): void {
+	public update(event: TextDocumentContentChangeEvent, version: integer): void {
 		this._content = event.text;
 		this._version = version;
 		this._lineOffsets = undefined;
 	}
 
-	private getLineOffsets(): number[] {
+	private getLineOffsets(): uinteger[] {
 		if (this._lineOffsets === undefined) {
-			let lineOffsets: number[] = [];
+			let lineOffsets: uinteger[] = [];
 			let text = this._content;
 			let isLineStart = true;
 			for (let i = 0; i < text.length; i++) {
@@ -3044,7 +3063,7 @@ class FullTextDocument implements TextDocument {
 		return this._lineOffsets;
 	}
 
-	public positionAt(offset: number) {
+	public positionAt(offset: uinteger) {
 		offset = Math.max(Math.min(offset, this._content.length), 0);
 
 		let lineOffsets = this.getLineOffsets();
@@ -3105,6 +3124,18 @@ namespace Is {
 
 	export function number(value: any): value is number {
 		return toString.call(value) === '[object Number]';
+	}
+
+	export function numberRange(value: any, min: number, max: number): value is number {
+		return toString.call(value) === '[object Number]' && min <= value && value <= max;
+	}
+
+	export function integer(value: any): value is integer {
+		return toString.call(value) === '[object Number]' && -2147483648 <= value && value <= 2147483647;
+	}
+
+	export function uinteger(value: any): value is uinteger {
+		return toString.call(value) === '[object Number]' && 0 <= value && value <= 2147483647;
 	}
 
 	export function func(value: any): value is Function {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { TextDocumentIdentifier, Range } from 'vscode-languageserver-types';
+import { TextDocumentIdentifier, Range, uinteger } from 'vscode-languageserver-types';
 
 import { ProtocolRequestType, ProtocolRequestType0, RegistrationType } from './messages';
 import { PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions, TextDocumentRegistrationOptions, StaticRegistrationOptions } from './protocol';
@@ -94,7 +94,7 @@ export interface SemanticTokens {
 	/**
 	 * The actual tokens.
 	 */
-	data: number[];
+	data: uinteger[];
 }
 
 /**
@@ -112,7 +112,7 @@ export namespace SemanticTokens {
  * @since 3.16.0 - Proposed state
  */
 export interface SemanticTokensPartialResult {
-	data: number[];
+	data: uinteger[];
 }
 
 /**
@@ -122,17 +122,17 @@ export interface SemanticTokensEdit {
 	/**
 	 * The start offset of the edit.
 	 */
-	start: number;
+	start: uinteger;
 
 	/**
 	 * The count of elements to remove.
 	 */
-	deleteCount: number;
+	deleteCount: uinteger;
 
 	/**
 	 * The elements to insert.
 	 */
-	data?: number[];
+	data?: uinteger[];
 }
 
 /**
