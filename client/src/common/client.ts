@@ -1231,9 +1231,7 @@ class WillCreateFilesFeature implements DynamicFeature<FileOperationRegistration
 		if (syncOptions && syncOptions.willCreate) {
 			this.register({
 				id: UUID.generateUuid(),
-				// TODO(dantup): Is it reasonable to use **/* for static registration that
-				// don't have a glob?
-				registerOptions: { globPattern: '**/*' }
+				registerOptions: { globPattern: '**{/,}' }
 			});
 		}
 	}
