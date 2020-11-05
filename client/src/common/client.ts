@@ -3478,20 +3478,24 @@ export abstract class BaseLanguageClient {
 	}
 
 	private computeClientCapabilities(): ClientCapabilities {
-		let result: ClientCapabilities = {};
+		const result: ClientCapabilities = {};
 		ensure(result, 'workspace')!.applyEdit = true;
 
-		let workspaceEdit = ensure(ensure(result, 'workspace')!, 'workspaceEdit')!;
+		const workspaceEdit = ensure(ensure(result, 'workspace')!, 'workspaceEdit')!;
 		workspaceEdit.documentChanges = true;
 		workspaceEdit.resourceOperations = [ResourceOperationKind.Create, ResourceOperationKind.Rename, ResourceOperationKind.Delete];
 		workspaceEdit.failureHandling = FailureHandlingKind.TextOnlyTransactional;
 
-		let diagnostics = ensure(ensure(result, 'textDocument')!, 'publishDiagnostics')!;
+		const diagnostics = ensure(ensure(result, 'textDocument')!, 'publishDiagnostics')!;
 		diagnostics.relatedInformation = true;
 		diagnostics.versionSupport = false;
 		diagnostics.tagSupport = { valueSet: [ DiagnosticTag.Unnecessary, DiagnosticTag.Deprecated ] };
 		diagnostics.codeDescriptionSupport = true;
 		diagnostics.dataSupport = true;
+
+		const showMessage = ensure(ensure(result, 'window')!, 'showMessage')!;
+		showMessage.messageActionItem = { additionalPropertiesSupport: true };
+
 		for (let feature of this._features) {
 			feature.fillClientCapabilities(result);
 		}

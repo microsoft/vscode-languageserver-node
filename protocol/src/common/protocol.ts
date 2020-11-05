@@ -471,6 +471,24 @@ export interface TextDocumentClientCapabilities {
 	semanticTokens?: SemanticTokensClientCapabilities;
 }
 
+export interface WindowClientCapabilities {
+	/**
+	 * Whether client supports handling progress notifications. If set
+	 * servers are allowed to report in `workDoneProgress` property in the
+	 * request specific server capabilities.
+	 *
+	 * @since 3.15.0
+	 */
+	workDoneProgress?: boolean;
+
+	/**
+	 * Capabilities specific to the showMessage request
+	 *
+	 * @since 3.16.0 - proposed state
+	 */
+	showMessage : ShowMessageRequestClientCapabilities;
+}
+
 /**
  * Defines the capabilities provided by the client.
  */
@@ -488,7 +506,7 @@ export interface _ClientCapabilities {
     /**
      * Window specific client capabilities.
      */
-    window?: object;
+    window?: WindowClientCapabilities;
 
 	/**
 	 * Experimental client capabilities.
@@ -967,11 +985,35 @@ export namespace ShowMessageNotification {
 	export const type = new ProtocolNotificationType<ShowMessageParams, void>('window/showMessage');
 }
 
+/**
+ * Show message request client capabilities
+ */
+export interface ShowMessageRequestClientCapabilities {
+	/**
+	 * Capabilities specific to the `MessageActionItem` type.
+	 */
+	messageActionItem?: {
+		/**
+		 * Whether the client supports additional attribues which
+		 * are preserved and send back to the server in the
+		 * request's response.
+		 */
+		additionalPropertiesSupport?: boolean;
+	}
+}
+
 export interface MessageActionItem {
 	/**
 	 * A short title like 'Retry', 'Open Log' etc.
 	 */
 	title: string;
+
+	/**
+	 * Additional attributes that the client preserves and
+	 * sends back to the server. This depends on the client
+	 * capability window.messageActionItem.additionalPropertiesSupport
+	 */
+	[key: string]: string | boolean | integer | object;
 }
 
 export interface ShowMessageRequestParams {
