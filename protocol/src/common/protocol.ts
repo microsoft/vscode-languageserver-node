@@ -2883,6 +2883,17 @@ export interface WorkspaceEditClientCapabilities {
 	 * @since 3.13.0
 	 */
 	failureHandling?: FailureHandlingKind;
+
+	/**
+	 * Whether the client normalizes line endings to the client specific
+	 * setting.
+	 * If set to `true` the client will normalize line ending characters
+	 * in a workspace edit containg to the client specific new line
+	 * character.
+	 *
+	 * @since 3.16.0 - proposed state
+	 */
+	normalizesLineEndings?: boolean;
 }
 
 /**

@@ -3485,6 +3485,7 @@ export abstract class BaseLanguageClient {
 		workspaceEdit.documentChanges = true;
 		workspaceEdit.resourceOperations = [ResourceOperationKind.Create, ResourceOperationKind.Rename, ResourceOperationKind.Delete];
 		workspaceEdit.failureHandling = FailureHandlingKind.TextOnlyTransactional;
+		workspaceEdit.normalizesLineEndings = true;
 
 		const diagnostics = ensure(ensure(result, 'textDocument')!, 'publishDiagnostics')!;
 		diagnostics.relatedInformation = true;
