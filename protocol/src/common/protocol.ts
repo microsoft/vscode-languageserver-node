@@ -777,6 +777,18 @@ export interface _InitializeParams extends WorkDoneProgressParams {
 	};
 
 	/**
+	 * The locale the client is currently showing the user interface
+	 * in. This must not necessarily be the locale of the operating
+	 * system.
+	 *
+	 * Uses IETF language tags as the value's syntax
+	 * (See https://en.wikipedia.org/wiki/IETF_language_tag)
+	 *
+	 * @since 3.16.0
+	 */
+	locale?: string;
+
+	/**
 	 * The rootPath of the workspace. Is null
 	 * if no folder is open.
 	 *

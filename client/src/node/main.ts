@@ -486,6 +486,26 @@ export class LanguageClient extends CommonLanguageClient {
 		}
 		return Promise.resolve(undefined);
 	}
+
+	public getLocale(): string {
+		interface NLS_CONFIG {
+			locale: string;
+		}
+		const envValue = process.env['VSCODE_NLS_CONFIG'];
+		if (envValue === undefined) {
+			return 'en';
+		}
+
+		let config: NLS_CONFIG | undefined = undefined;
+		try  {
+			config = JSON.parse(envValue);
+		} catch (err) {
+		}
+		if (config === undefined || typeof config.locale !== 'string') {
+			return 'en';
+		}
+		return config.locale;
+	}
 }
 
 export class SettingMonitor {

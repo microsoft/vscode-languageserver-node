@@ -3068,6 +3068,7 @@ export abstract class BaseLanguageClient {
 				name: 'vscode',
 				version: VSCodeVersion
 			},
+			locale: this.getLocale(),
 			rootPath: rootPath ? rootPath : null,
 			rootUri: rootPath ? this._c2p.asUri(Uri.file(rootPath)) : null,
 			capabilities: this.computeClientCapabilities(),
@@ -3284,6 +3285,8 @@ export abstract class BaseLanguageClient {
 		}
 		this._diagnostics.set(uri, diagnostics);
 	}
+
+	protected abstract getLocale(): string;
 
 	protected abstract createMessageTransports(encoding: string): Promise<MessageTransports>;
 
