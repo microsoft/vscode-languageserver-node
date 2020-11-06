@@ -18,54 +18,37 @@ import {
 	WorkspaceFolder as VWorkspaceFolder, CompletionContext as VCompletionContext, ConfigurationChangeEvent, CompletionItemProvider, HoverProvider, SignatureHelpProvider,
 	DefinitionProvider, ReferenceProvider, DocumentHighlightProvider, CodeActionProvider, DocumentSymbolProvider, CodeLensProvider, DocumentFormattingEditProvider,
 	DocumentRangeFormattingEditProvider, OnTypeFormattingEditProvider, RenameProvider, DocumentLinkProvider, DocumentColorProvider, DeclarationProvider,
-	FoldingRangeProvider, ImplementationProvider, SelectionRangeProvider, TypeDefinitionProvider, WorkspaceSymbolProvider, CallHierarchyProvider, DocumentSymbolProviderMetadata
+	FoldingRangeProvider, ImplementationProvider, SelectionRangeProvider, TypeDefinitionProvider, WorkspaceSymbolProvider, CallHierarchyProvider,
+	DocumentSymbolProviderMetadata, EventEmitter
 } from 'vscode';
 
 import {
 	RAL, Message, MessageSignature, Logger, ResponseError, RequestType0, RequestType, NotificationType0, NotificationType,
 	ProtocolRequestType, ProtocolRequestType0, RequestHandler, RequestHandler0, GenericRequestHandler,
-	ProtocolNotificationType, ProtocolNotificationType0,
-	NotificationHandler, NotificationHandler0, GenericNotificationHandler,
-	MessageReader, MessageWriter, Trace, Tracer, TraceFormat, TraceOptions, Event, Emitter,
-	createProtocolConnection,
-	ClientCapabilities, WorkspaceEdit,
-	RegistrationRequest, RegistrationParams, UnregistrationRequest, UnregistrationParams, TextDocumentRegistrationOptions,
+	ProtocolNotificationType, ProtocolNotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler,
+	MessageReader, MessageWriter, Trace, Tracer, TraceFormat, TraceOptions, Event, Emitter, createProtocolConnection,
+	ClientCapabilities, WorkspaceEdit,RegistrationRequest, RegistrationParams, UnregistrationRequest, UnregistrationParams, TextDocumentRegistrationOptions,
 	InitializeRequest, InitializeParams, InitializeResult, InitializeError, ServerCapabilities, TextDocumentSyncKind, TextDocumentSyncOptions,
-	InitializedNotification, ShutdownRequest, ExitNotification,
-	LogMessageNotification, LogMessageParams, MessageType,
-	ShowMessageNotification, ShowMessageParams, ShowMessageRequest,
-	TelemetryEventNotification,
-	DidChangeConfigurationNotification, DidChangeConfigurationParams, DidChangeConfigurationRegistrationOptions,
-	DocumentSelector,
-	DidOpenTextDocumentNotification, DidOpenTextDocumentParams,
-	DidChangeTextDocumentNotification, DidChangeTextDocumentParams, TextDocumentChangeRegistrationOptions,
-	DidCloseTextDocumentNotification, DidCloseTextDocumentParams,
-	DidSaveTextDocumentNotification, DidSaveTextDocumentParams, TextDocumentSaveRegistrationOptions,
-	WillSaveTextDocumentNotification, WillSaveTextDocumentWaitUntilRequest, WillSaveTextDocumentParams,
-	DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType,
-	DidChangeWatchedFilesRegistrationOptions, WatchKind,
-	PublishDiagnosticsNotification, PublishDiagnosticsParams,
-	CompletionRequest, CompletionResolveRequest, CompletionRegistrationOptions,
-	HoverRequest,
-	SignatureHelpRequest, SignatureHelpRegistrationOptions, DefinitionRequest, ReferencesRequest, DocumentHighlightRequest,
-	DocumentSymbolRequest, WorkspaceSymbolRequest,
-	CodeActionRequest, CodeActionParams,
-	CodeLensRequest, CodeLensResolveRequest, CodeLensRegistrationOptions,
-	DocumentFormattingRequest, DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams,
-	DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams, DocumentOnTypeFormattingRegistrationOptions,
-	RenameRequest, RenameParams, RenameRegistrationOptions, PrepareRenameRequest, TextDocumentPositionParams,
-	DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkRegistrationOptions,
-	ExecuteCommandRequest, ExecuteCommandParams, ExecuteCommandRegistrationOptions,
-	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse,
-	MarkupKind, SymbolKind, CompletionItemKind, Command, CodeActionKind, DocumentSymbol, SymbolInformation, Range,
-	CodeActionRegistrationOptions, TextDocumentEdit, ResourceOperationKind, FailureHandlingKind, ProgressType, ProgressToken,
-	WorkDoneProgressOptions, StaticRegistrationOptions, CompletionOptions, HoverRegistrationOptions, HoverOptions,
-	SignatureHelpOptions, DefinitionRegistrationOptions, DefinitionOptions, ReferenceRegistrationOptions, ReferenceOptions,
-	DocumentHighlightRegistrationOptions, DocumentHighlightOptions, DocumentSymbolRegistrationOptions, DocumentSymbolOptions,
-	WorkspaceSymbolRegistrationOptions, CodeActionOptions, CodeLensOptions, DocumentFormattingOptions, DocumentRangeFormattingRegistrationOptions,
-	DocumentRangeFormattingOptions, DocumentOnTypeFormattingOptions, RenameOptions, DocumentLinkOptions, CompletionItemTag, DiagnosticTag,
-	DocumentColorRequest, DeclarationRequest, FoldingRangeRequest, ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, SymbolTag,
-	CallHierarchyPrepareRequest, CancellationStrategy, SaveOptions, LSPErrorCodes, CodeActionResolveRequest, RegistrationType, SemanticTokensRegistrationType, InsertTextMode
+	InitializedNotification, ShutdownRequest, ExitNotification, LogMessageNotification, LogMessageParams, MessageType, ShowMessageNotification,
+	ShowMessageParams, ShowMessageRequest, TelemetryEventNotification, DidChangeConfigurationNotification, DidChangeConfigurationParams,
+	DidChangeConfigurationRegistrationOptions, DocumentSelector, DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification,
+	DidChangeTextDocumentParams, TextDocumentChangeRegistrationOptions, DidCloseTextDocumentNotification, DidCloseTextDocumentParams, DidSaveTextDocumentNotification,
+	DidSaveTextDocumentParams, TextDocumentSaveRegistrationOptions, WillSaveTextDocumentNotification, WillSaveTextDocumentWaitUntilRequest, WillSaveTextDocumentParams,
+	DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType, DidChangeWatchedFilesRegistrationOptions, WatchKind,
+	PublishDiagnosticsNotification, PublishDiagnosticsParams, CompletionRequest, CompletionResolveRequest, CompletionRegistrationOptions, HoverRequest,
+	SignatureHelpRequest, SignatureHelpRegistrationOptions, DefinitionRequest, ReferencesRequest, DocumentHighlightRequest, DocumentSymbolRequest, WorkspaceSymbolRequest,
+	CodeActionRequest, CodeActionParams, CodeLensRequest, CodeLensResolveRequest, CodeLensRegistrationOptions, CodeLensRefreshRequest, DocumentFormattingRequest,
+	DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams, DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams,
+	DocumentOnTypeFormattingRegistrationOptions, RenameRequest, RenameParams, RenameRegistrationOptions, PrepareRenameRequest, TextDocumentPositionParams,
+	DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkRegistrationOptions,ExecuteCommandRequest, ExecuteCommandParams, ExecuteCommandRegistrationOptions,
+	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse, MarkupKind, SymbolKind, CompletionItemKind, Command, CodeActionKind,
+	DocumentSymbol, SymbolInformation, Range, CodeActionRegistrationOptions, TextDocumentEdit, ResourceOperationKind, FailureHandlingKind, ProgressType, ProgressToken,
+	WorkDoneProgressOptions, StaticRegistrationOptions, CompletionOptions, HoverRegistrationOptions, HoverOptions, SignatureHelpOptions, DefinitionRegistrationOptions,
+	DefinitionOptions, ReferenceRegistrationOptions, ReferenceOptions, DocumentHighlightRegistrationOptions, DocumentHighlightOptions, DocumentSymbolRegistrationOptions,
+	DocumentSymbolOptions, WorkspaceSymbolRegistrationOptions, CodeActionOptions, CodeLensOptions, DocumentFormattingOptions, DocumentRangeFormattingRegistrationOptions,
+	DocumentRangeFormattingOptions, DocumentOnTypeFormattingOptions, RenameOptions, DocumentLinkOptions, CompletionItemTag, DiagnosticTag, DocumentColorRequest,
+	DeclarationRequest, FoldingRangeRequest, ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, SymbolTag, CallHierarchyPrepareRequest,
+	CancellationStrategy, SaveOptions, LSPErrorCodes, CodeActionResolveRequest, RegistrationType, SemanticTokensRegistrationType, InsertTextMode
 } from 'vscode-languageserver-protocol';
 
 import type { ColorProviderMiddleware } from './colorProvider';
@@ -2013,7 +1996,12 @@ class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions,
 	}
 }
 
-class CodeLensFeature extends TextDocumentFeature<CodeLensOptions, CodeLensRegistrationOptions, CodeLensProvider> {
+interface CodeLensProviderData {
+	provider?: CodeLensProvider
+	onDidChangeCodeLensEmitter: EventEmitter<void>;
+}
+
+class CodeLensFeature extends TextDocumentFeature<CodeLensOptions, CodeLensRegistrationOptions, CodeLensProviderData> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, CodeLensRequest.type);
@@ -2021,9 +2009,16 @@ class CodeLensFeature extends TextDocumentFeature<CodeLensOptions, CodeLensRegis
 
 	public fillClientCapabilities(capabilites: ClientCapabilities): void {
 		ensure(ensure(capabilites, 'textDocument')!, 'codeLens')!.dynamicRegistration = true;
+		ensure(ensure(capabilites, 'workspace')!, 'codeLens')!.refreshSupport = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
+		const client = this._client;
+		client.onRequest(CodeLensRefreshRequest.type, async () => {
+			for (const provider of this.getAllProviders()) {
+				provider.onDidChangeCodeLensEmitter.fire();
+			}
+		});
 		const options = this.getRegistrationOptions(documentSelector, capabilities.codeLensProvider);
 		if (!options) {
 			return;
@@ -2031,8 +2026,10 @@ class CodeLensFeature extends TextDocumentFeature<CodeLensOptions, CodeLensRegis
 		this.register({ id: UUID.generateUuid(), registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: CodeLensRegistrationOptions): [Disposable, CodeLensProvider] {
+	protected registerLanguageProvider(options: CodeLensRegistrationOptions): [Disposable, CodeLensProviderData] {
+		const eventEmitter: EventEmitter<void> = new EventEmitter<void>();
 		const provider: CodeLensProvider = {
+			onDidChangeCodeLenses: eventEmitter.event,
 			provideCodeLenses: (document, token) => {
 				const client = this._client;
 				const provideCodeLenses: ProvideCodeLensesSignature = (document, token) => {
@@ -2066,7 +2063,7 @@ class CodeLensFeature extends TextDocumentFeature<CodeLensOptions, CodeLensRegis
 				}
 				: undefined
 		};
-		return [Languages.registerCodeLensProvider(options.documentSelector!, provider), provider];
+		return [Languages.registerCodeLensProvider(options.documentSelector!, provider), { provider, onDidChangeCodeLensEmitter: eventEmitter }];
 	}
 }
 

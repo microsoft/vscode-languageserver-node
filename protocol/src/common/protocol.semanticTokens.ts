@@ -348,5 +348,5 @@ export interface SemanticTokensWorkspaceClientCapabilities {
  */
 export namespace SemanticTokensRefreshRequest {
 	export const method: `workspace/semanticTokens/refresh` = `workspace/semanticTokens/refresh`;
-	export const type = new ProtocolRequestType0<void, void, void, SemanticTokensRegistrationOptions>(method);
+	export const type = new ProtocolRequestType0<void, void, void, void>(method);
 }

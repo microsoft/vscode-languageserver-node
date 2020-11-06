@@ -42,7 +42,6 @@ export interface SemanticTokensProviders {
 	onDidChangeSemanticTokensEmitter: vscode.EventEmitter<void>;
 }
 
-
 export class SemanticTokensFeature extends TextDocumentFeature<boolean | SemanticTokensOptions, SemanticTokensRegistrationOptions, SemanticTokensProviders> {
 
 	constructor(client: BaseLanguageClient) {
@@ -101,7 +100,7 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Semanti
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		let client = this._client;
+		const client = this._client;
 		client.onRequest(SemanticTokensRefreshRequest.type, async () => {
 			for (const provider of this.getAllProviders()) {
 				provider.onDidChangeSemanticTokensEmitter.fire();

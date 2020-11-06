@@ -330,6 +330,14 @@ export interface WorkspaceClientCapabilities {
 	 * @since 3.16.0 - proposed state.
 	 */
 	semanticTokens?: SemanticTokensWorkspaceClientCapabilities;
+
+	/**
+	 * Capabilities specific to the code lens requsts scoped to the
+	 * workspace.
+	 *
+	 * @since 3.16.0 - proposed state.
+	 */
+	codeLens?: CodeLensWorkspaceClientCapabilities;
 }
 
 /**
@@ -2496,6 +2504,18 @@ export interface CodeLensClientCapabilities {
 }
 
 /**
+ * @since 3.16.0 - proposed state
+ */
+export interface CodeLensWorkspaceClientCapabilities {
+	/**
+	 * Whether the client implementation supports a refresh request send from the server
+	 * to the client. This is useful if a server detects a change which requires a
+	 * re-calculation of all code lenses.
+	 */
+	refreshSupport?: boolean;
+}
+
+/**
  * The parameters of a [CodeLensRequest](#CodeLensRequest).
  */
 export interface CodeLensParams extends WorkDoneProgressParams, PartialResultParams {
@@ -2537,6 +2557,15 @@ export namespace CodeLensResolveRequest {
 	export const type = new ProtocolRequestType<CodeLens, CodeLens, never, void, void>(method);
 }
 
+/**
+ * A request to refresh all code actions
+ *
+ * @since 3.16.0 - Proposed state
+ */
+export namespace CodeLensRefreshRequest {
+	export const method: `workspace/codeLens/refresh` = `workspace/codeLens/refresh`;
+	export const type = new ProtocolRequestType0<void, void, void, void>(method);
+}
 //---- Document Links ----------------------------------------------
 
 /**
