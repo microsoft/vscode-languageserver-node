@@ -14,6 +14,7 @@ import { MarkdownString } from 'vscode';
 import ProtocolCodeAction from './protocolCodeAction';
 import { ProtocolDiagnostic, DiagnosticCode } from './protocolDiagnostic';
 import ProtocolCallHierarchyItem from './protocolCallHierarchyItem';
+import { InsertTextMode } from 'vscode-languageserver-protocol';
 
 interface InsertReplaceRange {
 	inserting: code.Range;
@@ -533,9 +534,15 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 				}
 				result.deprecated = protocolItem.deprecated;
 			}
+			if (protocolItem.insertTextMode !== undefined) {
+				result.insertTextMode = protocolItem.insertTextMode;
+			}
 		}
 		if (tags !== undefined && tags.length > 0) {
 			result.tags = tags;
+		}
+		if (result.insertTextMode === undefined && item.keepWhitespace === true) {
+			result.insertTextMode = InsertTextMode.adjustIndentation;
 		}
 		return result;
 	}

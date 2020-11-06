@@ -13,7 +13,7 @@ import { DiagnosticCode, ProtocolDiagnostic } from 'vscode-languageclient/lib/co
 import * as Is from 'vscode-languageclient/lib/common/utils/is';
 
 import * as vscode from 'vscode';
-import { CompletionItemTag, SymbolTag } from 'vscode-languageserver-protocol';
+import { CompletionItemTag, InsertTextMode, SymbolTag } from 'vscode-languageserver-protocol';
 
 const c2p: codeConverter.Converter = codeConverter.createConverter();
 const p2c: protocolConverter.Converter = protocolConverter.createConverter(undefined, false);
@@ -605,6 +605,36 @@ suite('Protocol Converter', () => {
 		strictEqual(back.kind, Number.MAX_VALUE);
 	});
 
+	test('Completion Item - InsertTextMode.asIs', () => {
+		let completionItem: proto.CompletionItem = {
+			label: 'item',
+			kind: Number.MAX_VALUE as any,
+			insertTextMode: InsertTextMode.asIs
+		};
+		let result = p2c.asCompletionItem(completionItem);
+		strictEqual(result.kind, vscode.CompletionItemKind.Text);
+		strictEqual(result.keepWhitespace, true);
+
+		let back = c2p.asCompletionItem(result);
+		strictEqual(back.kind, Number.MAX_VALUE);
+		strictEqual(back.insertTextMode, InsertTextMode.asIs);
+	});
+
+	test('Completion Item - InsertTextMode.adjustIndentation', () => {
+		let completionItem: proto.CompletionItem = {
+			label: 'item',
+			kind: Number.MAX_VALUE as any,
+			insertTextMode: InsertTextMode.adjustIndentation
+		};
+		let result = p2c.asCompletionItem(completionItem);
+		strictEqual(result.kind, vscode.CompletionItemKind.Text);
+		strictEqual(result.keepWhitespace, undefined);
+
+		let back = c2p.asCompletionItem(result);
+		strictEqual(back.kind, Number.MAX_VALUE);
+		strictEqual(back.insertTextMode, InsertTextMode.adjustIndentation);
+	});
+
 	test('Completion Result', () => {
 		let completionResult: proto.CompletionList = {
 			isIncomplete: true,
@@ -1118,6 +1148,20 @@ suite('Code Converter', () => {
 		assertTextEdit(result.textEdit);
 		rangeEqual(result.textEdit.range, item.textEdit.range);
 		strictEqual(result.textEdit.newText, item.textEdit.newText);
+	});
+
+	test('Completion Item - Keepwhitespace', () => {
+		let item: ProtocolCompletionItem = new ProtocolCompletionItem('label');
+		item.textEdit = vscode.TextEdit.insert(new vscode.Position(1, 2), 'insert');
+		item.fromEdit = true;
+		item.keepWhitespace = true;
+
+		let result = c2p.asCompletionItem(<any>item);
+		strictEqual(result.insertText, undefined);
+		assertTextEdit(result.textEdit);
+		rangeEqual(result.textEdit.range, item.textEdit.range);
+		strictEqual(result.textEdit.newText, item.textEdit.newText);
+		strictEqual(result.insertTextMode, InsertTextMode.adjustIndentation);
 	});
 
 	test('DiagnosticSeverity', () => {

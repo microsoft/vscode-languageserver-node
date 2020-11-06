@@ -1547,6 +1547,36 @@ export namespace InsertReplaceEdit {
 }
 
 /**
+ * How whitespace and indentation is handled during completion
+ * item insertion.
+ *
+ * @since 3.16.0 - proposed state
+ */
+export namespace InsertTextMode {
+	/**
+	 * The insertion or replace strings is taken as it is. If the
+	 * value is multi line the lines below the cursor will be
+	 * inserted using the indentation defined in the string value.
+	 * The client will not apply any kind of adjustments to the
+	 * string.
+	 */
+	export const asIs: 1 = 1;
+
+	/**
+	 * The editor adjusts leading whitespace of new lines so that
+	 * they match the indentation of the line for which the item
+	 * is accepted.
+	 *
+	 * For example if the line containing the cursor when a accepting
+	 * a multi line completion item is indented using 3 tabs all
+	 * following lines inserted will be indented using 3 tabs as well.
+	 */
+	export const adjustIndentation: 2 = 2;
+}
+
+export type InsertTextMode = 1 | 2;
+
+/**
  * A completion item represents a text snippet that is
  * proposed to complete text that is being typed.
  */
@@ -1632,6 +1662,14 @@ export interface CompletionItem {
 	 * `InsertTextFormat.PlainText`.
 	 */
 	insertTextFormat?: InsertTextFormat;
+
+	/**
+	 * How whitespace and indentation is handled during completion
+	 * item insertion.
+	 *
+	 * @since 3.16.0 - proposed state
+	 */
+	insertTextMode?: InsertTextMode;
 
 	/**
 	 * An [edit](#TextEdit) which is applied to a document when selecting

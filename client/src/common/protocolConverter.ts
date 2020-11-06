@@ -13,6 +13,7 @@ import ProtocolDocumentLink from './protocolDocumentLink';
 import ProtocolCodeAction from './protocolCodeAction';
 import { ProtocolDiagnostic, DiagnosticCode } from './protocolDiagnostic';
 import ProtocolCallHierarchyItem from './protocolCallHierarchyItem';
+import { InsertTextMode } from 'vscode-languageserver-protocol';
 
 // Proposed API.
 declare module 'vscode' {
@@ -509,6 +510,12 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		if (item.data !== undefined) { result.data = item.data; }
 		if (tags.length > 0) {
 			result.tags = tags;
+		}
+		if (item.insertTextMode !== undefined) {
+			result.insertTextMode = item.insertTextMode;
+			if (item.insertTextMode === InsertTextMode.asIs) {
+				result.keepWhitespace = true;
+			}
 		}
 		return result;
 	}

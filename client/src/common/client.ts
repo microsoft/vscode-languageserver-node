@@ -65,7 +65,7 @@ import {
 	WorkspaceSymbolRegistrationOptions, CodeActionOptions, CodeLensOptions, DocumentFormattingOptions, DocumentRangeFormattingRegistrationOptions,
 	DocumentRangeFormattingOptions, DocumentOnTypeFormattingOptions, RenameOptions, DocumentLinkOptions, CompletionItemTag, DiagnosticTag,
 	DocumentColorRequest, DeclarationRequest, FoldingRangeRequest, ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, SymbolTag,
-	CallHierarchyPrepareRequest, CancellationStrategy, SaveOptions, LSPErrorCodes, CodeActionResolveRequest, RegistrationType, SemanticTokensRegistrationType
+	CallHierarchyPrepareRequest, CancellationStrategy, SaveOptions, LSPErrorCodes, CodeActionResolveRequest, RegistrationType, SemanticTokensRegistrationType, InsertTextMode
 } from 'vscode-languageserver-protocol';
 
 import type { ColorProviderMiddleware } from './colorProvider';
@@ -1512,7 +1512,8 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 			insertReplaceSupport: true,
 			resolveSupport: {
 				properties: ['documentation', 'detail', 'additionalTextEdits']
-			}
+			},
+			insertTextModeSupport: { valueSet: [InsertTextMode.asIs, InsertTextMode.adjustIndentation] }
 		};
 		completion.completionItemKind = { valueSet: SupportedCompletionItemKinds };
 	}

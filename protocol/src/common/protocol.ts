@@ -14,7 +14,8 @@ import {
 	TextDocumentIdentifier, VersionedTextDocumentIdentifier, TextDocumentItem, CompletionItem, CompletionList,
 	Hover, SignatureHelp, Definition, DefinitionLink, ReferenceContext, DocumentHighlight, SymbolInformation,
 	CodeLens, CodeActionContext, FormattingOptions, DocumentLink, MarkupKind, SymbolKind, CompletionItemKind,
-	CodeAction, CodeActionKind, DocumentSymbol, CompletionItemTag, DiagnosticTag, SymbolTag, uinteger, integer
+	CodeAction, CodeActionKind, DocumentSymbol, CompletionItemTag, DiagnosticTag, SymbolTag, uinteger, integer,
+	InsertTextMode
 } from 'vscode-languageserver-types';
 
 import { ImplementationRequest, ImplementationClientCapabilities, ImplementationOptions, ImplementationRegistrationOptions, ImplementationParams } from './protocol.implementation';
@@ -1640,6 +1641,10 @@ export interface CompletionClientCapabilities {
 		preselectSupport?: boolean;
 
 		/**
+		 * Client supports to kee
+		 */
+
+		/**
 		 * Client supports the tag property on a completion item. Clients supporting
 		 * tags have to handle unknown tags gracefully. Clients especially need to
 		 * preserve unknown tags when sending a completion item back to the server in
@@ -1675,6 +1680,17 @@ export interface CompletionClientCapabilities {
 			 */
 			properties: string[];
 		};
+
+		/**
+		 * The client supports the `insertTextMode` propeprty on
+		 * a completion item to override the whitespace handling mode
+		 * as defined by the client (see `insertTextMode`).
+		 *
+		 * @since 3.16.0 - proposed state
+		 */
+		insertTextModeSupport?: {
+			valueSet: InsertTextMode[];
+		}
 	};
 
 	completionItemKind?: {
@@ -1690,6 +1706,15 @@ export interface CompletionClientCapabilities {
 		 */
 		valueSet?: CompletionItemKind[];
 	};
+
+	/**
+	 * Defines how the client handles whitespce and indentation
+	 * when accepting a completion item that uses multi line
+	 * text in either `insertText` or `textEdit`.
+	 *
+	 * @since 3.16.0 - proposed state
+	 */
+	insertTextMode?: InsertTextMode;
 
 	/**
 	 * The client supports to send additional context information for a
