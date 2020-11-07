@@ -512,7 +512,8 @@ export interface LanguageClientOptions {
 	connectionOptions?: ConnectionOptions;
 	markdown?: {
 		isTrusted?: boolean;
-	}
+	};
+	changeDelay?: number;
 }
 
 interface ResolvedClientOptions {
@@ -535,7 +536,8 @@ interface ResolvedClientOptions {
 	connectionOptions?: ConnectionOptions;
 	markdown: {
 		isTrusted: boolean;
-	}
+	};
+	changeDelay: number;
 }
 
 export enum State {
@@ -1019,7 +1021,7 @@ class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeR
 						} else {
 							this._changeDelayer = {
 								uri: event.document.uri.toString(),
-								delayer: new Delayer<void>(200)
+								delayer: new Delayer<void>(this._client.clientOptions.changeDelay)
 							};
 							this._changeDelayer.delayer.trigger(() => {
 								this._client.sendNotification(DidChangeTextDocumentNotification.type, this._client.code2ProtocolConverter.asChangeTextDocumentParams(event.document));
@@ -2650,7 +2652,8 @@ export abstract class BaseLanguageClient {
 			uriConverters: clientOptions.uriConverters,
 			workspaceFolder: clientOptions.workspaceFolder,
 			connectionOptions: clientOptions.connectionOptions,
-			markdown
+			markdown,
+			changeDelay: clientOptions.changeDelay ?? 200,
 		};
 		this._clientOptions.synchronize = this._clientOptions.synchronize || {};
 
@@ -2818,7 +2821,7 @@ export abstract class BaseLanguageClient {
 		}
 	}
 
-	public get clientOptions(): LanguageClientOptions {
+	public get clientOptions(): ResolvedClientOptions {
 		return this._clientOptions;
 	}
 
