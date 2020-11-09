@@ -495,7 +495,7 @@ export interface WindowClientCapabilities {
 	 *
 	 * @since 3.16.0 - proposed state
 	 */
-	showMessage : ShowMessageRequestClientCapabilities;
+	showMessage?: ShowMessageRequestClientCapabilities;
 }
 
 /**
