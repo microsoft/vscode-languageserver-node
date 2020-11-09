@@ -11,7 +11,8 @@ enum NodeType {
 	bracket = 'bracket',
 	questionMark = 'questionMark',
 	star = 'star',
-	globStar = 'globStar'
+	globStar = 'globStar',
+	endOfAlternative = 'endOfAlternative'
 }
 
 interface TextNode {
@@ -40,13 +41,18 @@ interface BracketNode {
 	value: string;
 }
 
-type BraceAlternative = (TextNode | QuestionMarkNode | StarNode | BracketNode | BraceNode);
 interface BraceNode {
 	type: NodeType.brace;
-	alternatives: BraceAlternative[];
+	alternatives: NodeList[];
 }
 
-type Node = TextNode | SeparatorNode | QuestionMarkNode | StarNode | GlobStarNode | BracketNode | BraceNode;
+interface EndOfAlternativeNode {
+	type: NodeType.endOfAlternative;
+}
+
+type Node = TextNode | SeparatorNode | QuestionMarkNode | StarNode | GlobStarNode | BracketNode | BraceNode | EndOfAlternativeNode;
+
+type NodeList = Node[];
 
 function escapeRegExpCharacters(value: string): string {
 	return value.replace(/[\\\{\}\*\+\?\|\^\$\.\[\]\(\)]/g, '\\$&');
@@ -58,23 +64,21 @@ class PatternParser {
 	private index: number;
 
 	private mode: 'pattern' | 'brace';
-	private stopChar: string | undefined;
 
 	constructor(value: string, mode: 'pattern' | 'brace' = 'pattern') {
 		this.value = value;
 		this.index = 0;
 		this.mode = mode;
-		this.stopChar = mode === 'pattern' ? undefined : '}';
 	}
 
 	private makeTextNode(start: number): Node {
 		return { type: NodeType.text, value: escapeRegExpCharacters(this.value.substring(start, this.index)) };
 	}
 
-	next(): Node | undefined {
+	private next(): Node | undefined {
 		let start = this.index;
 		let ch: string | undefined;
-		while ((ch = this.value[this.index]) !== this.stopChar) {
+		while ((ch = this.value[this.index]) !== undefined) {
 			switch (ch) {
 				case '/':
 					if (start < this.index) {
@@ -99,24 +103,30 @@ class PatternParser {
 						return this.makeTextNode(start);
 					} else {
 						const bracketParser = new PatternParser(this.value.substring(this.index + 1), 'brace');
-						const alternatives: BraceAlternative[] = [];
-						let node: Node | undefined;
-						while ((node = bracketParser.next()) !== undefined) {
-							if (node.type === NodeType.globStar || node.type === NodeType.separator) {
-								throw new Error(`Invalid glob pattern ${this.index}. Stopped at ${this.index}`);
+						const alternatives: NodeList[] = [];
+						let childPattern: NodeList | undefined;
+						while ((childPattern = bracketParser.parse()) !== undefined) {
+							alternatives.push(childPattern);
+							// If the end of the pattern was the end of brace, stop
+							// parsing.
+							if (this.value[this.index + bracketParser.index] === '}') {
+								break;
 							}
-							alternatives.push(node);
 						}
-						this.index = this.index + bracketParser.index + 2;
+						this.index = this.index + bracketParser.index + 1;
 						return { type: NodeType.brace, alternatives: alternatives };
 					}
 					break;
+				case '}':
 				case ',':
 					if (this.mode === 'brace') {
 						if (start < this.index) {
 							let result = this.makeTextNode(start);
 							this.index++;
 							return result;
+						} else {
+							this.index++;
+							return { type: NodeType.endOfAlternative };
 						}
 					}
 					this.index++;
@@ -157,50 +167,64 @@ class PatternParser {
 		}
 		return start === this.index ? undefined : this.makeTextNode(start);
 	}
+
+	public parse(): NodeList | undefined {
+		const buffer: NodeList = [];
+		let node: Node | undefined;
+		while (true) {
+			node = this.next();
+			if (node === undefined || node.type === NodeType.endOfAlternative) {
+				break;
+			}
+			buffer.push(node);
+		}
+		return buffer?.length || node?.type === NodeType.endOfAlternative ? buffer : undefined;
+	}
 }
 
-export function convert2RegExp(pattern: string): RegExp | undefined {
-	const separator = process.platform === 'win32' ? '\\\\' : '\\/';
+function nodeList2RegExp(pattern: NodeList) {
+	const separator = '\\/';
 	const fileChar = `[^${separator}]`;
 	function convertNode(node: Node): string {
 		switch (node.type) {
 			case NodeType.separator:
 				return separator;
-				break;
 			case NodeType.text:
 				return node.value;
-				break;
 			case NodeType.questionMark:
 				return fileChar;
-				break;
 			case NodeType.star:
-				return `${fileChar}*?`;
-				break;
+				return `${fileChar}+?`;
 			case NodeType.globStar:
-				return `(?:${fileChar}|(?:(?:${fileChar}${separator})+${fileChar}))*?`;
+				return `.+?`;
 			case NodeType.bracket:
 				return `[${node.value}]`;
 			case NodeType.brace: {
 				let buffer: string[] = [];
 				for (const child of node.alternatives) {
-					buffer.push(convertNode(child));
+					const childRegex = nodeList2RegExp(child);
+					buffer.push(childRegex ?? ''); // Include a blank for empty alternatives
 				}
 				return `(?:${buffer.join('|')})`;
 			}
+			default:
+				throw `Unexpected node type: ${node.type}`;
 		}
 	}
 
-	try {
-		const buffer: string[] = ['^'];
+	if (!pattern.length)
+		return undefined;
 
-		let parser = new PatternParser(pattern);
-		let node: Node | undefined;
-		while ((node = parser.next()) !== undefined) {
-			buffer.push(convertNode(node));
-		}
-		return buffer.length > 0 ? new RegExp(buffer.join('')) : undefined;
+	const buffer = pattern.map(convertNode);
+	return buffer.join('');
+}
+
+export function convert2RegExp(pattern: string): RegExp | undefined {
+	try {
+		const nodes = new PatternParser(pattern).parse();
+		return nodes?.length ? new RegExp(`^${nodeList2RegExp(nodes)}$`) : undefined;
 	} catch (err) {
-		console.error(err);
+		// console.error(err);
 		return undefined;
 	}
 }
