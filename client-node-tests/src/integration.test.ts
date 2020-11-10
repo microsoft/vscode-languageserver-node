@@ -620,6 +620,22 @@ suite('Client integration', () => {
 		middleware.provideCallHierarchyOutgoingCalls = undefined;
 		assert.strictEqual(middlewareCalled, true);
 	});
+
+	suite('Will Create Files', () => {
+		test('Static Registration', async () => {
+			const files: lsclient.FileCreate[] = [
+				{ uri: '???' }
+			];
+			const feature = client.getFeature(lsclient.WillCreateFilesRequest.method);
+			isDefined(feature);
+			feature.fillClientCapabilities(???);
+
+			// Trigger a VS Code file creation event
+
+			// Ensure it triggered a well-known file edit
+		});
+	});
+
 	test('Semantic Tokens', async () => {
 		const provider = client.getFeature(lsclient.SemanticTokensRegistrationType.method).getProvider(document);
 		const rangeProvider = provider?.range;
