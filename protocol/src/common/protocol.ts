@@ -57,6 +57,10 @@ import {
 	SemanticTokensWorkspaceClientCapabilities, SemanticTokensRegistrationType
 } from './protocol.semanticTokens';
 
+import {
+	ShowDocumentParams, ShowDocumentResult, ShowDocumentRequest, ShowDocumentClientCapabilities,
+} from './protocol.showDocument';
+
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
 
@@ -491,11 +495,18 @@ export interface WindowClientCapabilities {
 	workDoneProgress?: boolean;
 
 	/**
-	 * Capabilities specific to the showMessage request
+	 * Capabilities specific to the showMessage request.
 	 *
 	 * @since 3.16.0 - proposed state
 	 */
 	showMessage?: ShowMessageRequestClientCapabilities;
+
+	/**
+	 * Capabilities specific to the showDocument request.
+	 *
+	 * @since 3.16.0 - proposed state
+	 */
+	showDocument?: ShowDocumentClientCapabilities;
 }
 
 /**
@@ -3028,7 +3039,9 @@ export {
 	SemanticTokenTypes, SemanticTokenModifiers, SemanticTokensLegend, SemanticTokens, SemanticTokensPartialResult, SemanticTokensEdit, SemanticTokensDelta,
 	SemanticTokensDeltaPartialResult, TokenFormat, SemanticTokensClientCapabilities, SemanticTokensOptions, SemanticTokensRegistrationOptions, SemanticTokensParams,
 	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest, SemanticTokensRefreshRequest,
-	SemanticTokensRegistrationType
+	SemanticTokensRegistrationType,
+	// Show document
+	ShowDocumentParams, ShowDocumentRequest, ShowDocumentResult, ShowDocumentClientCapabilities
 };
 
 // To be backwards compatible

@@ -34,6 +34,7 @@ import { Configuration, ConfigurationFeature } from './configuration';
 import { WorkspaceFolders, WorkspaceFoldersFeature } from './workspaceFolders';
 import { CallHierarchy, CallHierarchyFeature } from './callHierarchy';
 import { SemanticTokensFeatureShape, SemanticTokensFeature } from './semanticTokens';
+import { ShowDocumentFeatureShape, ShowDocumentFeature } from './showDocument';
 
 function null2Undefined<T>(value: T | null): T | undefined {
 	if (value === null) {
@@ -465,7 +466,7 @@ export interface _RemoteWindow {
 	showInformationMessage<T extends MessageActionItem>(message: string, ...actions: T[]): Promise<T | undefined>;
 }
 
-export type RemoteWindow = _RemoteWindow & WindowProgress;
+export type RemoteWindow = _RemoteWindow & WindowProgress & ShowDocumentFeatureShape;
 
 class _RemoteWindowImpl implements _RemoteWindow, Remote {
 
@@ -507,7 +508,7 @@ class _RemoteWindowImpl implements _RemoteWindow, Remote {
 	}
 }
 
-const RemoteWindowImpl: new () => RemoteWindow = ProgressFeature(_RemoteWindowImpl) as (new () => RemoteWindow);
+const RemoteWindowImpl: new () => RemoteWindow = ShowDocumentFeature(ProgressFeature(_RemoteWindowImpl)) as (new () => RemoteWindow);
 
 /**
  * A bulk registration manages n single registration to be able to register

@@ -48,7 +48,8 @@ import {
 	DocumentSymbolOptions, WorkspaceSymbolRegistrationOptions, CodeActionOptions, CodeLensOptions, DocumentFormattingOptions, DocumentRangeFormattingRegistrationOptions,
 	DocumentRangeFormattingOptions, DocumentOnTypeFormattingOptions, RenameOptions, DocumentLinkOptions, CompletionItemTag, DiagnosticTag, DocumentColorRequest,
 	DeclarationRequest, FoldingRangeRequest, ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, SymbolTag, CallHierarchyPrepareRequest,
-	CancellationStrategy, SaveOptions, LSPErrorCodes, CodeActionResolveRequest, RegistrationType, SemanticTokensRegistrationType, InsertTextMode
+	CancellationStrategy, SaveOptions, LSPErrorCodes, CodeActionResolveRequest, RegistrationType, SemanticTokensRegistrationType, InsertTextMode, ShowDocumentRequest,
+	ShowDocumentParams, ShowDocumentResult
 } from 'vscode-languageserver-protocol';
 
 import type { ColorProviderMiddleware } from './colorProvider';
@@ -69,6 +70,8 @@ import * as Is from './utils/is';
 import { Delayer } from './utils/async';
 import * as UUID from './utils/uuid';
 import { ProgressPart } from './progressPart';
+import { env } from 'vscode';
+import { TextDocumentShowOptions } from 'vscode';
 
 interface Connection {
 
@@ -446,6 +449,12 @@ export interface _WorkspaceMiddleware {
 
 export type WorkspaceMiddleware = _WorkspaceMiddleware & ConfigurationWorkspaceMiddleware & WorkspaceFolderWorkspaceMiddleware;
 
+export interface _WindowMiddleware {
+	showDocument?: (this: void, params: ShowDocumentParams, next: ShowDocumentRequest.HandlerSignature) => Promise<ShowDocumentResult>;
+}
+
+export type WindowMiddleware = _WindowMiddleware;
+
 /**
  * The Middleware lets extensions intercept the request and notications send and received
  * from the server
@@ -481,6 +490,7 @@ export interface _Middleware {
 	resolveDocumentLink?: (this: void, link: VDocumentLink, token: CancellationToken, next: ResolveDocumentLinkSignature) => ProviderResult<VDocumentLink>;
 	executeCommand?: (this: void, command: string, args: any[], next: ExecuteCommandSignature) => ProviderResult<any>;
 	workspace?: WorkspaceMiddleware;
+	window?: WindowMiddleware;
 }
 
 export type Middleware = _Middleware & TypeDefinitionMiddleware & ImplementationMiddleware & ColorProviderMiddleware &
@@ -3031,6 +3041,37 @@ export abstract class BaseLanguageClient {
 			connection.onTelemetry((data) => {
 				this._telemetryEmitter.fire(data);
 			});
+			connection.onRequest(ShowDocumentRequest.type, async (params): Promise<ShowDocumentResult> => {
+				const showDocument = async (params: ShowDocumentParams): Promise<ShowDocumentResult> => {
+					const uri = this.protocol2CodeConverter.asUri(params.uri);
+					try {
+						if (params.external === true) {
+							const success = await env.openExternal(uri);
+							return { success };
+						} else {
+							const options: TextDocumentShowOptions = {};
+							if (params.selection !== undefined) {
+								options.selection = this.protocol2CodeConverter.asRange(params.selection);
+							}
+							if (params.takeFocus === undefined || params.takeFocus === false) {
+								options.preserveFocus = true;
+							} else if (params.takeFocus === true) {
+								options.preserveFocus = false;
+							}
+							await Window.showTextDocument(uri, options);
+							return { success: true };
+						}
+					} catch (error) {
+						return { success: true };
+					}
+				};
+				const middleware = this._clientOptions.middleware.window?.showDocument;
+				if (middleware !== undefined)  {
+					return middleware(params, showDocument);
+				} else {
+					return showDocument(params);
+				}
+			});
 			connection.listen();
 			// Error is handled in the initialize call.
 			return this.initialize(connection);
@@ -3495,8 +3536,11 @@ export abstract class BaseLanguageClient {
 		diagnostics.codeDescriptionSupport = true;
 		diagnostics.dataSupport = true;
 
-		const showMessage = ensure(ensure(result, 'window')!, 'showMessage')!;
+		const windowCapabilities = ensure(result, 'window')!;
+		const showMessage = ensure(windowCapabilities, 'showMessage')!;
 		showMessage.messageActionItem = { additionalPropertiesSupport: true };
+		const showDocument = ensure(windowCapabilities, 'showDocument')!;
+		showDocument.support = true;
 
 		for (let feature of this._features) {
 			feature.fillClientCapabilities(result);
