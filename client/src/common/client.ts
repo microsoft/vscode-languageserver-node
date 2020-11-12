@@ -3542,6 +3542,9 @@ export abstract class BaseLanguageClient {
 		const showDocument = ensure(windowCapabilities, 'showDocument')!;
 		showDocument.support = true;
 
+		const generalCapabilities = ensure(result, 'general')!;
+		generalCapabilities.regularExpressions = { engine: 'ECMAScript', version: 'ES2020' };
+
 		for (let feature of this._features) {
 			feature.fillClientCapabilities(result);
 		}

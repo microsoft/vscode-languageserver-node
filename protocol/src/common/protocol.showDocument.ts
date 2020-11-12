@@ -13,6 +13,10 @@ import { ProtocolRequestType } from './messages';
  * @since 3.16.0 - proposed state
  */
 export interface ShowDocumentClientCapabilities {
+	/**
+	 * The client has support for the show document
+	 * request.
+	 */
 	support: boolean;
 }
 

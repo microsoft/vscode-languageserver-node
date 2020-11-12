@@ -510,6 +510,35 @@ export interface WindowClientCapabilities {
 }
 
 /**
+ * Client capabilities specific to regular expressions.
+ *
+ * @since 3.16.0 - proposed state
+ */
+export interface RegularExpressionsClientCapabilites {
+	/**
+	 * The engine's name.
+	 */
+	engine: string;
+
+	/**
+	 * The engine's version.
+	 */
+	version?: string;
+}
+
+/**
+ * General client capabilities.
+ *
+ * @since 3.16.0 - proposed state
+ */
+export interface GeneralClientCapabilities {
+	/**
+	 * Client capabilities specific to regular expressions.
+	 */
+	regularExpressions?: RegularExpressionsClientCapabilites;
+}
+
+/**
  * Defines the capabilities provided by the client.
  */
 export interface _ClientCapabilities {
@@ -527,6 +556,13 @@ export interface _ClientCapabilities {
      * Window specific client capabilities.
      */
     window?: WindowClientCapabilities;
+
+	/**
+	 * General client capabilities.
+	 *
+	 * @since 3.16.0 - proposed state
+	 */
+	general?: GeneralClientCapabilities;
 
 	/**
 	 * Experimental client capabilities.
