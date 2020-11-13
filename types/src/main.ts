@@ -801,7 +801,7 @@ export interface TextDocumentEdit {
 	/**
 	 * The text document to change.
 	 */
-	textDocument: VersionedTextDocumentIdentifier;
+	textDocument: OptionalVersionedTextDocumentIdentifier;
 
 	/**
 	 * The edits to be applied.
@@ -817,14 +817,14 @@ export namespace TextDocumentEdit {
 	/**
 	 * Creates a new `TextDocumentEdit`
 	 */
-	export function create(textDocument: VersionedTextDocumentIdentifier, edits: TextEdit[]): TextDocumentEdit {
+	export function create(textDocument: OptionalVersionedTextDocumentIdentifier, edits: TextEdit[]): TextDocumentEdit {
 		return { textDocument, edits };
 	}
 
 	export function is(value: any): value is TextDocumentEdit {
 		let candidate = value as TextDocumentEdit;
 		return Is.defined(candidate)
-			&& VersionedTextDocumentIdentifier.is(candidate.textDocument)
+			&& OptionalVersionedTextDocumentIdentifier.is(candidate.textDocument)
 			&& Array.isArray(candidate.edits);
 	}
 }
@@ -1162,10 +1162,10 @@ export class WorkspaceChange {
 	 * Returns the [TextEditChange](#TextEditChange) to manage text edits
 	 * for resources.
 	 */
-	public getTextEditChange(textDocument: VersionedTextDocumentIdentifier): TextEditChange;
+	public getTextEditChange(textDocument: OptionalVersionedTextDocumentIdentifier): TextEditChange;
 	public getTextEditChange(uri: DocumentUri): TextEditChange;
-	public getTextEditChange(key: DocumentUri | VersionedTextDocumentIdentifier): TextEditChange {
-		if (VersionedTextDocumentIdentifier.is(key)) {
+	public getTextEditChange(key: DocumentUri | OptionalVersionedTextDocumentIdentifier): TextEditChange {
+		if (OptionalVersionedTextDocumentIdentifier.is(key)) {
 			if (!this._workspaceEdit) {
 				this._workspaceEdit = {
 					documentChanges: []
@@ -1174,7 +1174,7 @@ export class WorkspaceChange {
 			if (!this._workspaceEdit.documentChanges) {
 				throw new Error('Workspace edit is not configured for document changes.');
 			}
-			let textDocument: VersionedTextDocumentIdentifier = key;
+			let textDocument: OptionalVersionedTextDocumentIdentifier = key;
 			let result: TextEditChange = this._textEditChanges[textDocument.uri];
 			if (!result) {
 				let edits: TextEdit[] = [];
@@ -1261,17 +1261,13 @@ export namespace TextDocumentIdentifier {
 }
 
 /**
- * An identifier to denote a specific version of a text document.
+ * A text document identifier to denote a specific version of a text document.
  */
 export interface VersionedTextDocumentIdentifier extends TextDocumentIdentifier {
 	/**
-	 * The version number of this document. If a versioned text document identifier
-	 * is sent from the server to the client and the file is not open in the editor
-	 * (the server has not received an open notification before) the server can send
-	 * `null` to indicate that the version is unknown and the content on disk is the
-	 * truth (as speced with document content ownership).
+	 * The version number of this document.
 	 */
-	version: integer | null;
+	version: integer;
 }
 
 /**
@@ -1284,7 +1280,7 @@ export namespace VersionedTextDocumentIdentifier {
 	 * @param uri The document's uri.
 	 * @param uri The document's text.
 	 */
-	export function create(uri: DocumentUri, version: integer | null): VersionedTextDocumentIdentifier {
+	export function create(uri: DocumentUri, version: integer): VersionedTextDocumentIdentifier {
 		return { uri, version };
 	}
 
@@ -1293,10 +1289,46 @@ export namespace VersionedTextDocumentIdentifier {
 	 */
 	export function is(value: any): value is VersionedTextDocumentIdentifier {
 		let candidate = value as VersionedTextDocumentIdentifier;
-		return Is.defined(candidate) && Is.string(candidate.uri) && (candidate.version === null || Is.integer(candidate.version));
+		return Is.defined(candidate) && Is.string(candidate.uri) && Is.integer(candidate.version);
 	}
 }
 
+/**
+ * A text document identifier to optionally denote a specific version of a text document.
+ */
+export interface OptionalVersionedTextDocumentIdentifier extends TextDocumentIdentifier {
+	/**
+	 * The version number of this document. If a versioned text document identifier
+	 * is sent from the server to the client and the file is not open in the editor
+	 * (the server has not received an open notification before) the server can send
+	 * `null` to indicate that the version is unknown and the content on disk is the
+	 * truth (as speced with document content ownership).
+	 */
+	version: integer | null;
+}
+
+/**
+ * The OptionalVersionedTextDocumentIdentifier namespace provides helper functions to work with
+ * [OptionalVersionedTextDocumentIdentifier](#OptionalVersionedTextDocumentIdentifier) literals.
+ */
+export namespace OptionalVersionedTextDocumentIdentifier {
+	/**
+	 * Creates a new OptionalVersionedTextDocumentIdentifier literal.
+	 * @param uri The document's uri.
+	 * @param uri The document's text.
+	 */
+	export function create(uri: DocumentUri, version: integer | null): OptionalVersionedTextDocumentIdentifier {
+		return { uri, version };
+	}
+
+	/**
+	 * Checks whether the given literal conforms to the [OptionalVersionedTextDocumentIdentifier](#OptionalVersionedTextDocumentIdentifier) interface.
+	 */
+	export function is(value: any): value is OptionalVersionedTextDocumentIdentifier {
+		let candidate = value as OptionalVersionedTextDocumentIdentifier;
+		return Is.defined(candidate) && Is.string(candidate.uri) && (candidate.version === null || Is.integer(candidate.version));
+	}
+}
 
 /**
  * An item to transfer a text document from the client to the

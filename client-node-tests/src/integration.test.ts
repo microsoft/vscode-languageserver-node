@@ -140,7 +140,8 @@ suite('Client integration', () => {
 					full: {
 						delta: true
 					}
-				}
+				},
+				onTypeRenameProvider: false
 			},
 			customResults: {
 				'hello': 'world'
@@ -656,6 +657,24 @@ suite('Client integration', () => {
 		};
 		await fullProvider.provideDocumentSemanticTokensEdits!(document, '2', tokenSource.token);
 		middleware.provideDocumentSemanticTokensEdits = undefined;
+		assert.strictEqual(middlewareCalled, true);
+	});
+	test.skip('On Type Rename', async () => {
+		const provider = client.getFeature(lsclient.OnTypeRenameRequest.method).getProvider(document);
+		isDefined(provider);
+		const result = (await provider.provideOnTypeRenameRanges(document, position, tokenSource.token)) as vscode.OnTypeRenameRanges;
+
+		isInstanceOf(result, vscode.OnTypeRenameRanges);
+		isArray(result.ranges, vscode.Range, 1);
+		rangeEqual(result.ranges[0], 1, 1, 1, 1);
+
+		let middlewareCalled: boolean = false;
+		middleware.provideOnTypeRename = (document, position, token, next) => {
+			middlewareCalled = true;
+			return next(document, position, token);
+		};
+		await provider.provideOnTypeRenameRanges(document, position, tokenSource.token);
+		middleware.provideTypeDefinition = undefined;
 		assert.strictEqual(middlewareCalled, true);
 	});
 });

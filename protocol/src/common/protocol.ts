@@ -61,6 +61,10 @@ import {
 	ShowDocumentParams, ShowDocumentResult, ShowDocumentRequest, ShowDocumentClientCapabilities,
 } from './protocol.showDocument';
 
+import {
+	OnTypeRenameClientCapabilities, OnTypeRenameRanges, OnTypeRenameOptions, OnTypeRenameParams, OnTypeRenameRegistrationOptions, OnTypeRenameRequest
+} from './protocol.onTypeRename';
+
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
 
@@ -482,6 +486,13 @@ export interface TextDocumentClientCapabilities {
 	 * @since 3.16.0 - Proposed state
 	 */
 	semanticTokens?: SemanticTokensClientCapabilities;
+
+	/**
+	 * Capabilities specific to the on type rename requsts.
+	 *
+	 * @since 3.16.0 - Proposed state
+	 */
+	onTypeRename?: OnTypeRenameClientCapabilities;
 }
 
 export interface WindowClientCapabilities {
@@ -514,7 +525,7 @@ export interface WindowClientCapabilities {
  *
  * @since 3.16.0 - proposed state
  */
-export interface RegularExpressionsClientCapabilites {
+export interface RegularExpressionsClientCapabilities {
 	/**
 	 * The engine's name.
 	 */
@@ -535,7 +546,7 @@ export interface GeneralClientCapabilities {
 	/**
 	 * Client capabilities specific to regular expressions.
 	 */
-	regularExpressions?: RegularExpressionsClientCapabilites;
+	regularExpressions?: RegularExpressionsClientCapabilities;
 }
 
 /**
@@ -773,11 +784,18 @@ export interface _ServerCapabilities<T = any> {
 	executeCommandProvider?: ExecuteCommandOptions;
 
 	/**
-	 * The server provides Call Hierarchy support.
+	 * The server provides call hierarchy support.
 	 *
 	 * @since 3.16.0 - proposed state
 	 */
 	callHierarchyProvider?: boolean | CallHierarchyOptions | CallHierarchyRegistrationOptions;
+
+	/**
+	 * The server provides on type rename support.
+	 *
+	 * @since 3.16.0 - proposed state
+	 */
+	onTypeRenameProvider?: boolean | OnTypeRenameOptions | OnTypeRenameRegistrationOptions;
 
 	/**
 	 * The server provides semantic tokens support.
@@ -3077,7 +3095,9 @@ export {
 	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest, SemanticTokensRefreshRequest,
 	SemanticTokensRegistrationType,
 	// Show document
-	ShowDocumentParams, ShowDocumentRequest, ShowDocumentResult, ShowDocumentClientCapabilities
+	ShowDocumentParams, ShowDocumentRequest, ShowDocumentResult, ShowDocumentClientCapabilities,
+	// On Type rename
+	OnTypeRenameClientCapabilities, OnTypeRenameRanges, OnTypeRenameOptions, OnTypeRenameParams, OnTypeRenameRegistrationOptions, OnTypeRenameRequest
 };
 
 // To be backwards compatible
