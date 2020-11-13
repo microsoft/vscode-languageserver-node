@@ -7,7 +7,7 @@ import { RequestHandler } from 'vscode-jsonrpc';
 import { Range } from 'vscode-languageserver-types';
 
 import { ProtocolRequestType } from './messages';
-import { StaticRegistrationOptions, TextDocumentPositionParams, TextDocumentRegistrationOptions, WorkDoneProgressOptions } from './protocol';
+import { StaticRegistrationOptions, TextDocumentPositionParams, TextDocumentRegistrationOptions, WorkDoneProgressOptions, WorkDoneProgressParams } from './protocol';
 
 /**
  * Client capabilities for the on type rename request.
@@ -23,7 +23,7 @@ export interface OnTypeRenameClientCapabilities {
 	dynamicRegistration?: boolean;
 }
 
-export interface OnTypeRenameParams extends TextDocumentPositionParams {
+export interface OnTypeRenameParams extends TextDocumentPositionParams, WorkDoneProgressParams {
 }
 
 export interface OnTypeRenameOptions extends WorkDoneProgressOptions {

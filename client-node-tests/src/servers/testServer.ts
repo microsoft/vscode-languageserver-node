@@ -82,7 +82,8 @@ connection.onInitialize((params: InitializeParams): any => {
 			full: {
 				delta: true
 			}
-		}
+		},
+		onTypeRenameProvider: false
 	};
 	return { capabilities, customResults: { hello: 'world' } };
 });
@@ -273,6 +274,13 @@ connection.languages.semanticTokens.onDelta(() => {
 	return {
 		resultId: '3',
 		data: []
+	};
+});
+
+connection.languages.onOnTypeRename(() => {
+	return {
+		ranges: [ Range.create(1,1,1,1)],
+		wordPattern: '\\w'
 	};
 });
 

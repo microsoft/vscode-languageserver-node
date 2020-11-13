@@ -35,6 +35,7 @@ import { WorkspaceFolders, WorkspaceFoldersFeature } from './workspaceFolders';
 import { CallHierarchy, CallHierarchyFeature } from './callHierarchy';
 import { SemanticTokensFeatureShape, SemanticTokensFeature } from './semanticTokens';
 import { ShowDocumentFeatureShape, ShowDocumentFeature } from './showDocument';
+import { OnTypeRenameFeature, OnTypeRenameFeatureShape } from './onTypeRename';
 
 function null2Undefined<T>(value: T | null): T | undefined {
 	if (value === null) {
@@ -950,8 +951,8 @@ export class _LanguagesImpl implements Remote, _Languages {
 	}
 }
 
-export type Languages = _Languages & CallHierarchy & SemanticTokensFeatureShape;
-const LanguagesImpl: new () => Languages = SemanticTokensFeature(CallHierarchyFeature(_LanguagesImpl)) as (new () => Languages);
+export type Languages = _Languages & CallHierarchy & SemanticTokensFeatureShape & OnTypeRenameFeatureShape;
+const LanguagesImpl: new () => Languages = OnTypeRenameFeature(SemanticTokensFeature(CallHierarchyFeature(_LanguagesImpl))) as (new () => Languages);
 
 /**
  * An empty interface for new proposed API.
