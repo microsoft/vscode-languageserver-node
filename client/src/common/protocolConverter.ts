@@ -227,6 +227,10 @@ export interface Converter {
 	asCallHierarchyOutgoingCalls(items: ReadonlyArray<ls.CallHierarchyOutgoingCall>): code.CallHierarchyOutgoingCall[];
 	asCallHierarchyOutgoingCalls(items: ReadonlyArray<ls.CallHierarchyOutgoingCall> | null): code.CallHierarchyOutgoingCall[] | undefined;
 	asCallHierarchyOutgoingCalls(items: ReadonlyArray<ls.CallHierarchyOutgoingCall> | null): code.CallHierarchyOutgoingCall[] | undefined;
+
+	asOnTypeRenameRanges(value: null | undefined): undefined;
+	asOnTypeRenameRanges(value: ls.OnTypeRenameRanges): code.OnTypeRenameRanges;
+	asOnTypeRenameRanges(value: ls.OnTypeRenameRanges | null | undefined): code.OnTypeRenameRanges | undefined;
 }
 
 export interface URIConverter {
@@ -1138,6 +1142,26 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return value;
 	}
 
+	function asOnTypeRenameRanges(value: null | undefined): undefined;
+	function asOnTypeRenameRanges(value: ls.OnTypeRenameRanges): code.OnTypeRenameRanges;
+	function asOnTypeRenameRanges(value: ls.OnTypeRenameRanges | null | undefined): code.OnTypeRenameRanges | undefined;
+	function asOnTypeRenameRanges(value: ls.OnTypeRenameRanges | null | undefined): code.OnTypeRenameRanges | undefined {
+		if (value === null || value === undefined) {
+			return undefined;
+		}
+		return new code.OnTypeRenameRanges(asRanges(value.ranges), asRegularExpression(value.wordPattern));
+	}
+
+	function asRegularExpression(value: null | undefined): undefined;
+	function asRegularExpression(value: string): RegExp;
+	function asRegularExpression(value: string | null | undefined): RegExp | undefined;
+	function asRegularExpression(value: string | null | undefined): RegExp | undefined {
+		if (value === null || value === undefined) {
+			return undefined;
+		}
+		return new RegExp(value);
+	}
+
 	return {
 		asUri,
 		asDiagnostics,
@@ -1200,6 +1224,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		asCallHierarchyIncomingCall,
 		asCallHierarchyIncomingCalls,
 		asCallHierarchyOutgoingCall,
-		asCallHierarchyOutgoingCalls
+		asCallHierarchyOutgoingCalls,
+		asOnTypeRenameRanges
 	};
 }
