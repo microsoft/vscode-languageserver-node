@@ -79,6 +79,7 @@ import { FileRenameEvent } from 'vscode';
 import { FileWillRenameEvent } from 'vscode';
 import { FileWillDeleteEvent } from 'vscode';
 import { FileDeleteEvent } from 'vscode';
+import { convert2RegExp } from './utils/patternParser';
 
 interface Connection {
 
@@ -1180,9 +1181,9 @@ class WillSaveWaitUntilFeature implements DynamicFeature<TextDocumentRegistratio
 			let willSaveWaitUntil = (event: TextDocumentWillSaveEvent): Thenable<VTextEdit[]> => {
 				return this._client.sendRequest(WillSaveTextDocumentWaitUntilRequest.type,
 					this._client.code2ProtocolConverter.asWillSaveTextDocumentParams(event)).then((edits) => {
-					let vEdits = this._client.protocol2CodeConverter.asTextEdits(edits);
-					return vEdits === undefined ? [] : vEdits;
-				});
+						let vEdits = this._client.protocol2CodeConverter.asTextEdits(edits);
+						return vEdits === undefined ? [] : vEdits;
+					});
 			};
 			event.waitUntil(
 				middleware.willSaveWaitUntil
@@ -1212,7 +1213,8 @@ class WillSaveWaitUntilFeature implements DynamicFeature<TextDocumentRegistratio
 class WillCreateFilesFeature implements DynamicFeature<FileOperationRegistrationOptions> {
 
 	private _listener: Disposable | undefined;
-	private _globPatterns: Map<string, string> = new Map<string, string>();
+	private _globPatterns: Map<string, RegExp> = new Map<string, RegExp>();
+	private _matchEverythingPattern = '**{/,}';
 
 	constructor(private _client: BaseLanguageClient) {
 	}
@@ -1226,12 +1228,12 @@ class WillCreateFilesFeature implements DynamicFeature<FileOperationRegistration
 		value.willCreate = true;
 	}
 
-	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
+	public initialize(capabilities: ServerCapabilities, _: DocumentSelector): void {
 		let syncOptions = capabilities.files;
 		if (syncOptions && syncOptions.willCreate) {
 			this.register({
 				id: UUID.generateUuid(),
-				registerOptions: { globPattern: '**{/,}' }
+				registerOptions: { globPattern: this._matchEverythingPattern }
 			});
 		}
 	}
@@ -1243,26 +1245,45 @@ class WillCreateFilesFeature implements DynamicFeature<FileOperationRegistration
 		if (!this._listener) {
 			this._listener = Workspace.onWillCreateFiles(this.callback, this);
 		}
-		this._globPatterns.set(data.id, data.registerOptions.globPattern);
+		try {
+			const regex = convert2RegExp(data.registerOptions.globPattern ?? this._matchEverythingPattern);
+			if (!regex) {
+				throw `Invalid pattern ${data.registerOptions.globPattern}!`;
+			}
+			this._globPatterns.set(data.id, regex);
+		} catch (e) {
+			// TODO(dantup): How to handle errors in parsing the glob pattern?
+		}
 	}
 
-	private callback(event: FileWillCreateEvent): void {
-		// TODO(dantup): How can we match globs? VS Code's doesn't seem accessible (DocumentFilters use Language.match?)
-		if (true/*....*/) {
+	private callback(originalEvent: FileWillCreateEvent): void {
+		// Create a copy of the event that has the files filtered to match what the
+		// server wants.
+		const filteredEvent = {
+			...originalEvent,
+			files: originalEvent.files.filter((uri) => {
+				for (const pattern in this._globPatterns.values()) {
+					if (pattern.match(uri.path)) {
+						return true;
+					}
+				}
+				return false;
+			}),
+		};
+
+		if (filteredEvent.files.length) {
 			let middleware = this._client.clientOptions.middleware!;
 			let willCreateFiles = (event: FileWillCreateEvent): Thenable<VTextEdit[]> => {
 				return this._client.sendRequest(WillCreateFilesRequest.type,
 					this._client.code2ProtocolConverter.asWillCreateFilesParams(event)).then((edits) => {
-					let vEdits = this._client.protocol2CodeConverter.asTextEdits(edits);
-					return vEdits === undefined ? [] : vEdits;
-				});
+						let vEdits = this._client.protocol2CodeConverter.asTextEdits(edits);
+						return vEdits === undefined ? [] : vEdits;
+					});
 			};
-			// TODO(dantup): Is it right that middleware gets the VS Code event (FileWillCreateEvent)
-			// and not the converted event (CreteFilesParams)?
-			event.waitUntil(
+			filteredEvent.waitUntil(
 				middleware.willCreateFiles
-					? middleware.willCreateFiles(event, willCreateFiles)
-					: willCreateFiles(event)
+					? middleware.willCreateFiles(filteredEvent, willCreateFiles)
+					: willCreateFiles(filteredEvent)
 			);
 		}
 	}
