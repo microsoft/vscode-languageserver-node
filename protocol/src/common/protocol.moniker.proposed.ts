@@ -106,7 +106,9 @@ export interface MonikerClientCapabilities {
 
 export interface MonikerServerCapabilities {
 	/**
-	 * Whether server supports textDocument/moniker request.
+	 * Whether server provides moniker support.
+	 *
+	 * @since 3.16.0 - proposed state
 	 */
     monikerProvider?: boolean | MonikerOptions | MonikerRegistrationOptions;
 }

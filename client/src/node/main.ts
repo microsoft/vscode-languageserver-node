@@ -77,7 +77,7 @@ namespace Transport {
  * process, waits until the server process has connected to the pipe / socket
  * and then signals that the connection has been established and messages can
  * be send back and forth. If the language server is implemented in a different
- * programm language the server simply needs to create a connection to the
+ * program language the server simply needs to create a connection to the
  * passed pipe name or port number.
  */
 export type Transport = TransportKind | SocketTransport;

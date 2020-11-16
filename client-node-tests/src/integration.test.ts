@@ -64,7 +64,7 @@ suite('Client integration', () => {
 					'REM This is the location of the files that you want to sort',
 					'FOR %%f IN (*.doc *.txt) DO XCOPY c:\source\"%%f" c:\text /m /y',
 					'REM This moves any files with a .doc or',
-					'REM .txt extension from c:\source to c:\textkkk',
+					'REM .txt extension from c:\source to c:\text',
 					'REM %%f is a variable',
 					'FOR %%f IN (*.jpg *.png *.bmp) DO XCOPY C:\source\"%%f" c:\images /m /y',
 					'REM This moves any files with a .jpg, .png,',
@@ -73,7 +73,7 @@ suite('Client integration', () => {
 			}
 		});
 
-		uri = vscode.Uri.parse('lsptests://localhist/test.bat');
+		uri = vscode.Uri.parse('lsptests://localhost/test.bat');
 		document = await vscode.workspace.openTextDocument(uri);
 
 		tokenSource = new vscode.CancellationTokenSource();
@@ -612,12 +612,12 @@ suite('Client integration', () => {
 		const outgoing = (await provider.provideCallHierarchyOutgoingCalls(item, tokenSource.token)) as vscode.CallHierarchyOutgoingCall[];
 		isArray(outgoing, vscode.CallHierarchyOutgoingCall, 1);
 		middlewareCalled = false;
-		middleware.provideCallHierarchyOutgingCalls = (i, t, n) => {
+		middleware.provideCallHierarchyOutgoingCalls = (i, t, n) => {
 			middlewareCalled = true;
 			return n(i, t);
 		};
 		await provider.provideCallHierarchyOutgoingCalls(item, tokenSource.token);
-		middleware.provideCallHierarchyOutgingCalls = undefined;
+		middleware.provideCallHierarchyOutgoingCalls = undefined;
 		assert.strictEqual(middlewareCalled, true);
 	});
 	test('Semantic Tokens', async () => {

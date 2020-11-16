@@ -23,7 +23,7 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	return target[key];
 }
 
-export interface PrepareCallHierachySignature {
+export interface PrepareCallHierarchySignature {
 	(this: void, document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VCallHierarchyItem | VCallHierarchyItem[]>;
 }
 
@@ -36,9 +36,9 @@ export interface CallHierarchyOutgoingCallsSignature {
 }
 
 export interface CallHierarchyMiddleware {
-	prepareCallHierarchy?: (this: void, document: TextDocument, positions: VPosition, token: CancellationToken, next: PrepareCallHierachySignature) => ProviderResult<VCallHierarchyItem | VCallHierarchyItem[]>;
+	prepareCallHierarchy?: (this: void, document: TextDocument, positions: VPosition, token: CancellationToken, next: PrepareCallHierarchySignature) => ProviderResult<VCallHierarchyItem | VCallHierarchyItem[]>;
 	provideCallHierarchyIncomingCalls?: (this: void, item: VCallHierarchyItem, token: CancellationToken, next: CallHierarchyIncomingCallsSignature) => ProviderResult<VCallHierarchyIncomingCall[]>;
-	provideCallHierarchyOutgingCalls?: (this: void, item: VCallHierarchyItem, token: CancellationToken, next: CallHierarchyOutgoingCallsSignature) => ProviderResult<VCallHierarchyOutgoingCall[]>;
+	provideCallHierarchyOutgoingCalls?: (this: void, item: VCallHierarchyItem, token: CancellationToken, next: CallHierarchyOutgoingCallsSignature) => ProviderResult<VCallHierarchyOutgoingCall[]>;
 }
 
 class CallHierarchyProvider implements VCallHierarchyProvider {
@@ -52,7 +52,7 @@ class CallHierarchyProvider implements VCallHierarchyProvider {
 	public prepareCallHierarchy(document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VCallHierarchyItem | VCallHierarchyItem[]> {
 		const client = this.client;
 		const middleware = this.middleware;
-		const prepareCallHierarchy: PrepareCallHierachySignature = (document, position, token) => {
+		const prepareCallHierarchy: PrepareCallHierarchySignature = (document, position, token) => {
 			const params = client.code2ProtocolConverter.asTextDocumentPositionParams(document, position);
 			return client.sendRequest(CallHierarchyPrepareRequest.type, params, token).then(
 				(result) => {
@@ -105,8 +105,8 @@ class CallHierarchyProvider implements VCallHierarchyProvider {
 				}
 			);
 		};
-		return middleware.provideCallHierarchyOutgingCalls
-			? middleware.provideCallHierarchyOutgingCalls(item, token, provideCallHierarchyOutgoingCalls)
+		return middleware.provideCallHierarchyOutgoingCalls
+			? middleware.provideCallHierarchyOutgoingCalls(item, token, provideCallHierarchyOutgoingCalls)
 			: provideCallHierarchyOutgoingCalls(item, token);
 	}
 }
@@ -117,8 +117,8 @@ export class CallHierarchyFeature extends TextDocumentFeature<boolean | CallHier
 	}
 
 	public fillClientCapabilities(cap: ClientCapabilities): void {
-		const capabilites: ClientCapabilities & CallHierarchyClientCapabilities = cap as ClientCapabilities & CallHierarchyClientCapabilities;
-		const capability = ensure(ensure(capabilites, 'textDocument')!, 'callHierarchy')!;
+		const capabilities: ClientCapabilities & CallHierarchyClientCapabilities = cap as ClientCapabilities & CallHierarchyClientCapabilities;
+		const capability = ensure(ensure(capabilities, 'textDocument')!, 'callHierarchy')!;
 		capability.dynamicRegistration = true;
 	}
 

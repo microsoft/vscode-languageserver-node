@@ -44,5 +44,12 @@
 	],
 	"editor.codeActionsOnSave": {
 		"source.fixAll.eslint": true
-	}
+	},
+	"cSpell.words": [
+		"ASAR",
+		"XCOPY",
+		"clazz",
+		"lsclient",
+		"lsptests"
+	]
 }
