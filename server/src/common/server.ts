@@ -92,8 +92,7 @@ export class TextDocuments<T> {
 	private _onDidSave: Emitter<TextDocumentChangeEvent<T>>;
 	private _onWillSave: Emitter<TextDocumentWillSaveEvent<T>>;
 	private _willSaveWaitUntil: RequestHandler<TextDocumentWillSaveEvent<T>, TextEdit[], void> | undefined;
-
-	private _willCreateFiles: RequestHandler<CreateFilesParams, TextEdit[], void> | undefined;
+	private _willCreateFiles: RequestHandler<CreateFilesParams, WorkspaceEdit, void> | undefined;
 
 	/**
 	 * Create a new text document manager.
@@ -262,7 +261,7 @@ export class TextDocuments<T> {
 			if (this._willCreateFiles) {
 				return this._willCreateFiles(Object.freeze({ files: event.files }), token);
 			} else {
-				return [];
+				return undefined;
 			}
 		});
 	}
@@ -1229,7 +1228,7 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onWillCreateFiles(handler: RequestHandler<CreateFilesParams, TextEdit[] | undefined | null, void>): void;
+	onWillCreateFiles(handler: RequestHandler<CreateFilesParams, WorkspaceEdit | undefined | null, void>): void;
 
 	/**
 	 * Sends diagnostics computed for a given document to VSCode to render them in the

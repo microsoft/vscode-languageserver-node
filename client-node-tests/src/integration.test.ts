@@ -141,6 +141,11 @@ suite('Client integration', () => {
 						delta: true
 					}
 				},
+				files: {
+					willCreate: {
+						globPattern: "**/created-static/**{/,*.txt}"
+					}
+				},
 				onTypeRenameProvider: false
 			},
 			customResults: {
@@ -621,18 +626,72 @@ suite('Client integration', () => {
 		assert.strictEqual(middlewareCalled, true);
 	});
 
-	suite('Will Create Files', () => {
-		test('Static Registration', async () => {
-			const files: lsclient.FileCreate[] = [
-				{ uri: '???' }
-			];
+	suite('File Operations', () => {
+		const referenceFileUri = vscode.Uri.parse('/dummy-edit');
+		function ensureReferenceEdit(edits: vscode.WorkspaceEdit, type: string, expectedPaths: string[]) {
+			// Ensure the edits are as expected.
+			assert.strictEqual(edits.size, 1);
+			assert.strictEqual(edits.has(referenceFileUri), true);
+			const edit = edits.get(referenceFileUri);
+			assert.strictEqual(edit.length, 1);
+			const expectedUris = expectedPaths.map((p) => vscode.Uri.parse(p).toString()).join('\n');
+			assert.strictEqual(edit[0].newText.trim(), `${type}:\n${expectedUris}`.trim());
+		}
+
+		test('Will Create Files', async () => {
 			const feature = client.getFeature(lsclient.WillCreateFilesRequest.method);
 			isDefined(feature);
-			feature.fillClientCapabilities(???);
 
-			// Trigger a VS Code file creation event
+			const files = [
+				'/my/file.txt',
+				'/my/file.js',
+				'/my/folder/',
+				// Static registration for tests is created-static and *.txt
+				'/my/created-static/file.txt',
+				'/my/created-static/file.js',
+				'/my/created-static/folder/',
+				// Dynamic registration for tests is created-dynamic and *.js
+				'/my/created-dynamic/file.txt',
+				'/my/created-dynamic/file.js',
+				'/my/created-dynamic/folder/',
+			].map((p) => vscode.Uri.parse(p));
 
-			// Ensure it triggered a well-known file edit
+			const edits: vscode.WorkspaceEdit = await new Promise((resolve, reject) => {
+				feature.send({ files, waitUntil: resolve });
+				// If feature.send didn't call waitUntil then something went wrong.
+				reject(new Error('Feature unexpectedly did not call waitUntil'));
+			});
+
+			ensureReferenceEdit(
+				edits,
+				'WILL CREATE',
+				[
+					'/my/created-static/file.txt',
+					'/my/created-static/folder/',
+					'/my/created-dynamic/file.js',
+					'/my/created-dynamic/folder/',
+				],
+			);
+		});
+
+		test('Did Create Files', async () => {
+			// TODO(dantup): ...
+		});
+
+		test('Will Rename Files', async () => {
+			// TODO(dantup): ...
+		});
+
+		test('Did Rename Files', async () => {
+			// TODO(dantup): ...
+		});
+
+		test('Will Delete Files', async () => {
+			// TODO(dantup): ...
+		});
+
+		test('Did Delete Files', async () => {
+			// TODO(dantup): ...
 		});
 	});
 

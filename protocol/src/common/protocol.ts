@@ -1742,7 +1742,7 @@ export interface FileOperationRegistrationOptions {
 
 export namespace WillCreateFilesRequest {
 	export const method: 'workspace/willCreateFiles' = 'workspace/willCreateFiles';
-	export const type = new ProtocolRequestType<CreateFilesParams, TextEdit[] | null, never, void, FileOperationRegistrationOptions>(method);
+	export const type = new ProtocolRequestType<CreateFilesParams, WorkspaceEdit | null, never, void, FileOperationRegistrationOptions>(method);
 }
 
 //---- Diagnostic notification ----

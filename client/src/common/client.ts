@@ -27,7 +27,7 @@ import {
 	ProtocolRequestType, ProtocolRequestType0, RequestHandler, RequestHandler0, GenericRequestHandler,
 	ProtocolNotificationType, ProtocolNotificationType0, NotificationHandler, NotificationHandler0, GenericNotificationHandler,
 	MessageReader, MessageWriter, Trace, Tracer, TraceFormat, TraceOptions, Event, Emitter, createProtocolConnection,
-	ClientCapabilities, WorkspaceEdit,RegistrationRequest, RegistrationParams, UnregistrationRequest, UnregistrationParams, TextDocumentRegistrationOptions,
+	ClientCapabilities, WorkspaceEdit, RegistrationRequest, RegistrationParams, UnregistrationRequest, UnregistrationParams, TextDocumentRegistrationOptions,
 	InitializeRequest, InitializeParams, InitializeResult, InitializeError, ServerCapabilities, TextDocumentSyncKind, TextDocumentSyncOptions,
 	InitializedNotification, ShutdownRequest, ExitNotification, LogMessageNotification, LogMessageParams, MessageType, ShowMessageNotification,
 	ShowMessageParams, ShowMessageRequest, TelemetryEventNotification, DidChangeConfigurationNotification, DidChangeConfigurationParams,
@@ -40,7 +40,7 @@ import {
 	CodeActionRequest, CodeActionParams, CodeLensRequest, CodeLensResolveRequest, CodeLensRegistrationOptions, CodeLensRefreshRequest, DocumentFormattingRequest,
 	DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams, DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams,
 	DocumentOnTypeFormattingRegistrationOptions, RenameRequest, RenameParams, RenameRegistrationOptions, PrepareRenameRequest, TextDocumentPositionParams,
-	DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkRegistrationOptions,ExecuteCommandRequest, ExecuteCommandParams, ExecuteCommandRegistrationOptions,
+	DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkRegistrationOptions, ExecuteCommandRequest, ExecuteCommandParams, ExecuteCommandRegistrationOptions,
 	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse, MarkupKind, SymbolKind, CompletionItemKind, Command, CodeActionKind,
 	DocumentSymbol, SymbolInformation, Range, CodeActionRegistrationOptions, TextDocumentEdit, ResourceOperationKind, FailureHandlingKind, ProgressType, ProgressToken,
 	WorkDoneProgressOptions, StaticRegistrationOptions, CompletionOptions, HoverRegistrationOptions, HoverOptions, SignatureHelpOptions, DefinitionRegistrationOptions,
@@ -476,11 +476,11 @@ export interface _Middleware {
 	didClose?: NextSignature<TextDocument, void>;
 
 	didCreateFiles?: NextSignature<FileCreateEvent, void>;
-	willCreateFiles?: NextSignature<FileWillCreateEvent, Thenable<VTextEdit[]>>;
+	willCreateFiles?: NextSignature<FileWillCreateEvent, Thenable<VWorkspaceEdit | undefined>>;
 	didRenameFiles?: NextSignature<FileRenameEvent, void>;
-	willRenameFiles?: NextSignature<FileWillRenameEvent, Thenable<VTextEdit[]>>;
+	willRenameFiles?: NextSignature<FileWillRenameEvent, Thenable<VWorkspaceEdit | undefined>>;
 	didDeleteFiles?: NextSignature<FileDeleteEvent, void>;
-	willDeleteFiles?: NextSignature<FileWillDeleteEvent, Thenable<VTextEdit[]>>;
+	willDeleteFiles?: NextSignature<FileWillDeleteEvent, Thenable<VWorkspaceEdit | undefined>>;
 
 	handleDiagnostics?: (this: void, uri: Uri, diagnostics: VDiagnostic[], next: HandleDiagnosticsSignature) => void;
 	provideCompletionItem?: (this: void, document: TextDocument, position: VPosition, context: VCompletionContext, token: CancellationToken, next: ProvideCompletionItemsSignature) => ProviderResult<VCompletionItem[] | VCompletionList>;
@@ -1214,7 +1214,6 @@ class WillCreateFilesFeature implements DynamicFeature<FileOperationRegistration
 
 	private _listener: Disposable | undefined;
 	private _globPatterns: Map<string, RegExp> = new Map<string, RegExp>();
-	private _matchEverythingPattern = '**{/,}';
 
 	constructor(private _client: BaseLanguageClient) {
 	}
@@ -1230,23 +1229,20 @@ class WillCreateFilesFeature implements DynamicFeature<FileOperationRegistration
 
 	public initialize(capabilities: ServerCapabilities, _: DocumentSelector): void {
 		let syncOptions = capabilities.files;
-		if (syncOptions && syncOptions.willCreate) {
+		if (syncOptions?.willCreate?.globPattern) {
 			this.register({
 				id: UUID.generateUuid(),
-				registerOptions: { globPattern: this._matchEverythingPattern }
+				registerOptions: { globPattern: syncOptions.willCreate.globPattern }
 			});
 		}
 	}
 
 	public register(data: RegistrationData<FileOperationRegistrationOptions>): void {
-		if (!data.registerOptions.globPattern) {
-			return;
-		}
 		if (!this._listener) {
-			this._listener = Workspace.onWillCreateFiles(this.callback, this);
+			this._listener = Workspace.onWillCreateFiles(this.send, this);
 		}
 		try {
-			const regex = convert2RegExp(data.registerOptions.globPattern ?? this._matchEverythingPattern);
+			const regex = convert2RegExp(data.registerOptions.globPattern);
 			if (!regex) {
 				throw `Invalid pattern ${data.registerOptions.globPattern}!`;
 			}
@@ -1256,14 +1252,14 @@ class WillCreateFilesFeature implements DynamicFeature<FileOperationRegistration
 		}
 	}
 
-	private callback(originalEvent: FileWillCreateEvent): void {
+	public send(originalEvent: FileWillCreateEvent): void {
 		// Create a copy of the event that has the files filtered to match what the
 		// server wants.
 		const filteredEvent = {
 			...originalEvent,
 			files: originalEvent.files.filter((uri) => {
-				for (const pattern in this._globPatterns.values()) {
-					if (pattern.match(uri.path)) {
+				for (const pattern of this._globPatterns.values()) {
+					if (pattern.test(uri.path)) {
 						return true;
 					}
 				}
@@ -1273,12 +1269,10 @@ class WillCreateFilesFeature implements DynamicFeature<FileOperationRegistration
 
 		if (filteredEvent.files.length) {
 			let middleware = this._client.clientOptions.middleware!;
-			let willCreateFiles = (event: FileWillCreateEvent): Thenable<VTextEdit[]> => {
+			let willCreateFiles = (event: FileWillCreateEvent) => {
 				return this._client.sendRequest(WillCreateFilesRequest.type,
-					this._client.code2ProtocolConverter.asWillCreateFilesParams(event)).then((edits) => {
-						let vEdits = this._client.protocol2CodeConverter.asTextEdits(edits);
-						return vEdits === undefined ? [] : vEdits;
-					});
+					this._client.code2ProtocolConverter.asWillCreateFilesParams(event))
+					.then(this._client.protocol2CodeConverter.asWorkspaceEdit);
 			};
 			filteredEvent.waitUntil(
 				middleware.willCreateFiles
@@ -3568,6 +3562,7 @@ export abstract class BaseLanguageClient {
 	public getFeature(request: typeof WillSaveTextDocumentWaitUntilRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & NotificationFeature<(textDocument: TextDocument) => ProviderResult<VTextEdit[]>>;
 	public getFeature(request: typeof DidSaveTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & NotificationFeature<(textDocument: TextDocument) => void>;
 	public getFeature(request: typeof DidCloseTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & NotificationFeature<(textDocument: TextDocument) => void>;
+	public getFeature(request: typeof WillCreateFilesRequest.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileWillCreateEvent) => void };
 	public getFeature(request: typeof CompletionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<CompletionItemProvider>;
 	public getFeature(request: typeof HoverRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<HoverProvider>;
 	public getFeature(request: typeof SignatureHelpRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<SignatureHelpProvider>;
@@ -3604,6 +3599,7 @@ export abstract class BaseLanguageClient {
 		this.registerFeature(new WillSaveWaitUntilFeature(this));
 		this.registerFeature(new DidSaveTextDocumentFeature(this));
 		this.registerFeature(new DidCloseTextDocumentFeature(this, this._syncedDocuments));
+		this.registerFeature(new WillCreateFilesFeature(this));
 		this.registerFeature(new FileSystemWatcherFeature(this, (event) => this.notifyFileEvent(event)));
 		this.registerFeature(new CompletionItemFeature(this));
 		this.registerFeature(new HoverFeature(this));

@@ -8,7 +8,7 @@ import {
 	createConnection, Connection, InitializeParams, ServerCapabilities, CompletionItemKind, ResourceOperationKind, FailureHandlingKind,
 	DiagnosticTag, CompletionItemTag, TextDocumentSyncKind, MarkupKind, SignatureHelp, SignatureInformation, ParameterInformation,
 	Location, Range, DocumentHighlight, DocumentHighlightKind, CodeAction, Command, TextEdit, Position, DocumentLink,
-	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, SymbolKind
+	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, SymbolKind, WorkspaceEdit, WillCreateFilesRequest, FileOperationRegistrationOptions
 } from '../../../server/node';
 
 import { URI } from 'vscode-uri';
@@ -41,6 +41,7 @@ connection.onInitialize((params: InitializeParams): any => {
 	let valueSet = params.capabilities.textDocument!.completion!.completionItemKind!.valueSet!;
 	assert.equal(valueSet[0], 1);
 	assert.equal(valueSet[valueSet.length - 1], CompletionItemKind.TypeParameter);
+	assert.equal(params.capabilities.files!.willCreate, true);
 	console.log(params.capabilities);
 
 	let capabilities: ServerCapabilities = {
@@ -83,12 +84,20 @@ connection.onInitialize((params: InitializeParams): any => {
 				delta: true
 			}
 		},
+		files: {
+			// Static reg is folders + .txt files with 'created-static' in the path
+			willCreate: { globPattern: '**/created-static/**{/,*.txt}' },
+		},
 		onTypeRenameProvider: false
 	};
 	return { capabilities, customResults: { hello: 'world' } };
 });
 
 connection.onInitialized(() => {
+	// Dynamic reg is folders + .js files with 'created-dynamic' in the path
+	connection.client.register(WillCreateFilesRequest.type, {
+		globPattern: '**/created-dynamic/**{/,*.js}'
+	} as FileOperationRegistrationOptions);
 });
 
 connection.onDeclaration((params) => {
@@ -218,6 +227,18 @@ connection.onSelectionRanges((_params) => {
 	return [
 		SelectionRange.create(Range.create(1,2,3,4))
 	];
+});
+
+connection.onWillCreateFiles((params) => {
+	const createdFilenames = params.files.map((f) => `${f.uri}`).join('\n');
+	return {
+		documentChanges: [{
+			textDocument: { uri: '/dummy-edit', version: null },
+			edits: [
+				TextEdit.insert(Position.create(0, 0), `WILL CREATE:\n${createdFilenames}`),
+			]
+		}],
+	} as WorkspaceEdit;
 });
 
 connection.onTypeDefinition((params) => {

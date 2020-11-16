@@ -7,7 +7,7 @@ import { deepStrictEqual } from 'assert';
 import { convert2RegExp } from 'vscode-languageclient/lib/common/utils/patternParser';
 
 suite('Pattern Parser Tests', () => {
-	// TODO(dantup): Windows
+	// TODO(dantup): Windows?
 	const samplePaths = [
 		'file1',
 		'file2.txt',
@@ -16,10 +16,11 @@ suite('Pattern Parser Tests', () => {
 		'folder1/file1',
 		'folder1/file2.txt',
 		'folder1/file3.js',
-		'folder1/folder1/',
-		'folder1/folder1/file1',
-		'folder1/folder1/file2.txt',
-		'folder1/folder1/file3.js',
+		'folder1/folder2/',
+		'folder1/folder2/file1',
+		'folder1/folder2/file2.txt',
+		'folder1/folder2/file3.js',
+		'folder1/folder2/folder3/',
 	];
 
 	function testPattern(pattern: string, input: string[], expected: string[]) {
@@ -41,7 +42,8 @@ suite('Pattern Parser Tests', () => {
 	test('**/ matches all folders', () => {
 		testPattern('**/', samplePaths, [
 			'folder1/',
-			'folder1/folder1/',
+			'folder1/folder2/',
+			'folder1/folder2/folder3/',
 		]);
 	});
 
@@ -61,9 +63,9 @@ suite('Pattern Parser Tests', () => {
 			'folder1/file1',
 			'folder1/file2.txt',
 			'folder1/file3.js',
-			'folder1/folder1/file1',
-			'folder1/folder1/file2.txt',
-			'folder1/folder1/file3.js',
+			'folder1/folder2/file1',
+			'folder1/folder2/file2.txt',
+			'folder1/folder2/file3.js',
 		]);
 	});
 
@@ -72,9 +74,9 @@ suite('Pattern Parser Tests', () => {
 			'folder1/file1',
 			'folder1/file2.txt',
 			'folder1/file3.js',
-			'folder1/folder1/file1',
-			'folder1/folder1/file2.txt',
-			'folder1/folder1/file3.js',
+			'folder1/folder2/file1',
+			'folder1/folder2/file2.txt',
+			'folder1/folder2/file3.js',
 		]);
 	});
 
@@ -88,7 +90,17 @@ suite('Pattern Parser Tests', () => {
 		testPattern('{**/,}*.js', samplePaths, [
 			'file3.js',
 			'folder1/file3.js',
-			'folder1/folder1/file3.js',
+			'folder1/folder2/file3.js',
+		]);
+	});
+
+	test('**/folder2/**{/,*.js} matches all folders and js files inside folder2', () => {
+		testPattern('**/folder2/**{/,*.js}', samplePaths, [
+			// TODO(dantup): Do we expect folder2 included? It fails because although
+			// ** matches 0 levels, we have an additional slash to match.
+			// 'folder1/folder2/',
+			'folder1/folder2/file3.js',
+			'folder1/folder2/folder3/',
 		]);
 	});
 });
