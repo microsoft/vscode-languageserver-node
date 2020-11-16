@@ -284,7 +284,7 @@ export namespace FailureHandlingKind {
 	/**
 	 * If the workspace edit contains only textual file changes they are executed transactional.
 	 * If resource changes (create, rename or delete file) are part of the change the failure
-	 * handling startegy is abort.
+	 * handling strategy is abort.
 	 */
 	export const TextOnlyTransactional: FailureHandlingKind = 'textOnlyTransactional';
 
@@ -332,7 +332,7 @@ export interface WorkspaceClientCapabilities {
 	executeCommand?: ExecuteCommandClientCapabilities;
 
 	/**
-	 * Capabilities specific to the semantic token requsts scoped to the
+	 * Capabilities specific to the semantic token requests scoped to the
 	 * workspace.
 	 *
 	 * @since 3.16.0 - proposed state.
@@ -340,7 +340,7 @@ export interface WorkspaceClientCapabilities {
 	semanticTokens?: SemanticTokensWorkspaceClientCapabilities;
 
 	/**
-	 * Capabilities specific to the code lens requsts scoped to the
+	 * Capabilities specific to the code lens requests scoped to the
 	 * workspace.
 	 *
 	 * @since 3.16.0 - proposed state.
@@ -455,14 +455,14 @@ export interface TextDocumentClientCapabilities {
 	rename?: RenameClientCapabilities;
 
 	/**
-	 * Capabilities specific to `textDocument/foldingRange` requests.
+	 * Capabilities specific to `textDocument/foldingRange` request.
 	 *
 	 * @since 3.10.0
 	 */
 	foldingRange?: FoldingRangeClientCapabilities;
 
 	/**
-	 * Capabilities specific to `textDocument/selectionRange` requests
+	 * Capabilities specific to `textDocument/selectionRange` request.
 	 *
 	 * @since 3.15.0
 	 */
@@ -474,21 +474,21 @@ export interface TextDocumentClientCapabilities {
 	publishDiagnostics?: PublishDiagnosticsClientCapabilities;
 
 	/**
-	 * Capabilities specific to the various call hierarchy requests.
+	 * Capabilities specific to the various call hierarchy request.
 	 *
 	 * @since 3.16.0
 	 */
 	callHierarchy?: CallHierarchyClientCapabilities;
 
 	/**
-	 * Capabilities specific to the various semantic token requsts.
+	 * Capabilities specific to the various semantic token request.
 	 *
 	 * @since 3.16.0 - Proposed state
 	 */
 	semanticTokens?: SemanticTokensClientCapabilities;
 
 	/**
-	 * Capabilities specific to the on type rename requsts.
+	 * Capabilities specific to the on type rename request.
 	 *
 	 * @since 3.16.0 - Proposed state
 	 */
@@ -919,7 +919,7 @@ export interface InitializeResult<T = any> {
 		name: string;
 
 		/**
-		 * The servers's version as defined by the server.
+		 * The server's version as defined by the server.
 		 */
 		version?: string;
 	};
@@ -960,7 +960,7 @@ export interface InitializedParams {
 }
 
 /**
- * The intialized notification is sent from the client to the
+ * The initialized notification is sent from the client to the
  * server after the client is fully initialized and the server
  * is allowed to send requests from the server to the client.
  */
@@ -1080,7 +1080,7 @@ export interface ShowMessageRequestClientCapabilities {
 	 */
 	messageActionItem?: {
 		/**
-		 * Whether the client supports additional attribues which
+		 * Whether the client supports additional attributes which
 		 * are preserved and send back to the server in the
 		 * request's response.
 		 */
@@ -1296,7 +1296,7 @@ export type TextDocumentContentChangeEvent = {
 export namespace TextDocumentContentChangeEvent {
 
 	/**
-	 * Checks whether the information descibes a delta event.
+	 * Checks whether the information describes a delta event.
 	 */
 	export function isIncremental(event: TextDocumentContentChangeEvent): event is { range: Range; rangeLength?: uinteger; text: string; } {
 		let candidate: { range: Range; rangeLength?: uinteger; text: string; } = event as any;
@@ -1306,7 +1306,7 @@ export namespace TextDocumentContentChangeEvent {
 	}
 
 	/**
-	 * Checks whether the information descibes a full replacement event.
+	 * Checks whether the information describes a full replacement event.
 	 */
 	export function isFull(event: TextDocumentContentChangeEvent): event is { text: string; } {
 		let candidate: { range?: Range; rangeLength?: uinteger; text: string; } = event as any;
@@ -1335,7 +1335,7 @@ export interface DidChangeTextDocumentParams {
 	 *
 	 * To mirror the content of a document using change events use the following approach:
 	 * - start with the same initial content
-	 * - apply the 'textDocument/didChange' notifications in the order you recevie them.
+	 * - apply the 'textDocument/didChange' notifications in the order you receive them.
 	 * - apply the `TextDocumentContentChangeEvent`s in a single notification in the order
 	 *   you receive them.
 	 */
@@ -1755,7 +1755,7 @@ export interface CompletionClientCapabilities {
 		};
 
 		/**
-		 * The client supports the `insertTextMode` propeprty on
+		 * The client supports the `insertTextMode` property on
 		 * a completion item to override the whitespace handling mode
 		 * as defined by the client (see `insertTextMode`).
 		 *
@@ -1781,7 +1781,7 @@ export interface CompletionClientCapabilities {
 	};
 
 	/**
-	 * Defines how the client handles whitespce and indentation
+	 * Defines how the client handles whitespace and indentation
 	 * when accepting a completion item that uses multi line
 	 * text in either `insertText` or `textEdit`.
 	 *
@@ -1791,7 +1791,7 @@ export interface CompletionClientCapabilities {
 
 	/**
 	 * The client supports to send additional context information for a
-	 * `textDocument/completion` requestion.
+	 * `textDocument/completion` request.
 	 */
 	contextSupport?: boolean;
 }
@@ -1867,7 +1867,7 @@ export interface CompletionOptions extends WorkDoneProgressOptions {
 
 	/**
 	 * The list of all possible characters that commit a completion. This field can be used
-	 * if clients don't support individual commmit characters per completion item. See
+	 * if clients don't support individual commit characters per completion item. See
 	 * `ClientCapabilities.textDocument.completion.completionItem.commitCharactersSupport`
 	 *
 	 * If a server provides both `allCommitCharacters` and commit characters on an individual
@@ -2076,7 +2076,7 @@ export interface SignatureHelpContext {
 	/**
 	 * `true` if signature help was already showing when it was triggered.
 	 *
-	 * Retriggers occur when the signature help is already active and can be caused by actions such as
+	 * Retrigger occurs when the signature help is already active and can be caused by actions such as
 	 * typing a trigger character, a cursor move, or document content changes.
 	 */
 	isRetrigger: boolean;
@@ -3019,12 +3019,20 @@ export interface WorkspaceEditClientCapabilities {
 	 * Whether the client normalizes line endings to the client specific
 	 * setting.
 	 * If set to `true` the client will normalize line ending characters
-	 * in a workspace edit containg to the client specific new line
+	 * in a workspace edit containing to the client specific new line
 	 * character.
 	 *
 	 * @since 3.16.0 - proposed state
 	 */
 	normalizesLineEndings?: boolean;
+
+	/**
+	 * Whether the client supports change annotations on text edits,
+	 * create file, rename file and delete file changes.
+	 *
+	 * @since 3.16.0 - proposed state
+	 */
+	changeAnnotationSupport?: boolean;
 }
 
 /**
@@ -3089,7 +3097,7 @@ export {
 	// Call Hierarchy
 	CallHierarchyClientCapabilities, CallHierarchyOptions, CallHierarchyRegistrationOptions, CallHierarchyIncomingCallsParams, CallHierarchyIncomingCallsRequest,
 	CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCallsRequest, CallHierarchyPrepareParams, CallHierarchyPrepareRequest,
-	// Semantic Tokene
+	// Semantic Token
 	SemanticTokenTypes, SemanticTokenModifiers, SemanticTokensLegend, SemanticTokens, SemanticTokensPartialResult, SemanticTokensEdit, SemanticTokensDelta,
 	SemanticTokensDeltaPartialResult, TokenFormat, SemanticTokensClientCapabilities, SemanticTokensOptions, SemanticTokensRegistrationOptions, SemanticTokensParams,
 	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest, SemanticTokensRefreshRequest,

@@ -14,7 +14,7 @@ import ProtocolDocumentLink from './protocolDocumentLink';
 import ProtocolCodeAction from './protocolCodeAction';
 import { ProtocolDiagnostic, DiagnosticCode } from './protocolDiagnostic';
 import ProtocolCallHierarchyItem from './protocolCallHierarchyItem';
-import { InsertTextMode } from 'vscode-languageserver-protocol';
+import { AnnotatedTextEdit, ChangeAnnotation, InsertTextMode } from 'vscode-languageserver-protocol';
 
 // Proposed API.
 declare module 'vscode' {
@@ -924,25 +924,39 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		}
 		let result = new code.WorkspaceEdit();
 		if (item.documentChanges) {
-			item.documentChanges.forEach(change => {
+			for (const change of item.documentChanges) {
 				if (ls.CreateFile.is(change)) {
-					result.createFile(_uriConverter(change.uri), change.options);
+					result.createFile(_uriConverter(change.uri), change.options, asWorkspaceEditEntryMetadata(change.annotation));
 				} else if (ls.RenameFile.is(change)) {
-					result.renameFile(_uriConverter(change.oldUri), _uriConverter(change.newUri), change.options);
+					result.renameFile(_uriConverter(change.oldUri), _uriConverter(change.newUri), change.options, asWorkspaceEditEntryMetadata(change.annotation));
 				} else if (ls.DeleteFile.is(change)) {
-					result.deleteFile(_uriConverter(change.uri), change.options);
+					result.deleteFile(_uriConverter(change.uri), change.options, asWorkspaceEditEntryMetadata(change.annotation));
 				} else if (ls.TextDocumentEdit.is(change)) {
-					result.set(_uriConverter(change.textDocument.uri), asTextEdits(change.edits));
+					const uri = _uriConverter(change.textDocument.uri);
+					for (const edit of change.edits) {
+						if (AnnotatedTextEdit.is(edit)) {
+							result.replace(uri, asRange(edit.range), edit.newText, asWorkspaceEditEntryMetadata(edit.annotation));
+						} else {
+							result.replace(uri, asRange(edit.range), edit.newText);
+						}
+					}
 				} else {
 					throw new Error(`Unknown workspace edit change received:\n${JSON.stringify(change, undefined, 4)}`);
 				}
-			});
+			}
 		} else if (item.changes) {
 			Object.keys(item.changes).forEach(key => {
 				result.set(_uriConverter(key), asTextEdits(item.changes![key]));
 			});
 		}
 		return result;
+	}
+
+	function asWorkspaceEditEntryMetadata(annotation: ChangeAnnotation | undefined): code.WorkspaceEditEntryMetadata | undefined {
+		if (annotation === undefined) {
+			return undefined;
+		}
+		return { label: annotation.label, needsConfirmation: !!annotation.needsConfirmation, description: annotation.description };
 	}
 
 	function asDocumentLink(item: ls.DocumentLink): code.DocumentLink {

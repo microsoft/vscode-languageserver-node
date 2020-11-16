@@ -251,7 +251,7 @@ export enum CloseAction {
 
 
 /**
- * A pluggable error handler that is invoked when the connection is either
+ * A plugable error handler that is invoked when the connection is either
  * producing errors or got closed.
  */
 export interface ErrorHandler {
@@ -457,7 +457,7 @@ export interface _WindowMiddleware {
 export type WindowMiddleware = _WindowMiddleware;
 
 /**
- * The Middleware lets extensions intercept the request and notications send and received
+ * The Middleware lets extensions intercept the request and notifications send and received
  * from the server
  */
 export interface _Middleware {
@@ -508,7 +508,7 @@ export interface LanguageClientOptions {
 	revealOutputChannelOn?: RevealOutputChannelOn;
 	/**
 	 * The encoding use to read stdout and stderr. Defaults
-	 * to 'utf8' if ommitted.
+	 * to 'utf8' if omitted.
 	 */
 	stdioEncoding?: string;
 	initializationOptions?: any | (() => any);
@@ -680,7 +680,7 @@ export interface StaticFeature {
 
 	/**
 	 * Called when the client is stopped to dispose this feature. Usually a feature
-	 * unregisters listeners registerd hooked up with the VS Code extension host.
+	 * un-registers listeners registered hooked up with the VS Code extension host.
 	 */
 	dispose(): void;
 }
@@ -703,12 +703,12 @@ export interface DynamicFeature<RO> {
 
 	/**
 	 * Initialize the feature. This method is called on a feature instance
-	 * when the client has successfully received the initalize request from
+	 * when the client has successfully received the initialize request from
 	 * the server and before the client sends the initialized notification
 	 * to the server.
 	 *
 	 * @param capabilities the server capabilities.
-	 * @param documentSelector the document selector pass to the client's constuctor.
+	 * @param documentSelector the document selector pass to the client's constructor.
 	 *  May be `undefined` if the client was created without a selector.
 	 */
 	initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector | undefined): void;
@@ -734,7 +734,7 @@ export interface DynamicFeature<RO> {
 
 	/**
 	 * Called when the client is stopped to dispose this feature. Usually a feature
-	 * unregisters listeners registerd hooked up with the VS Code extension host.
+	 * un-registers listeners registered hooked up with the VS Code extension host.
 	 */
 	dispose(): void;
 }
@@ -757,7 +757,7 @@ interface CreateParamsSignature<E, P> {
 	(data: E): P;
 }
 
-abstract class DocumentNotifiactions<P, E> implements DynamicFeature<TextDocumentRegistrationOptions>, NotificationFeature<(data: E) => void> {
+abstract class DocumentNotifications<P, E> implements DynamicFeature<TextDocumentRegistrationOptions>, NotificationFeature<(data: E) => void> {
 
 	private _listener: Disposable | undefined;
 	protected _selectors: Map<string, DocumentSelector> = new Map<string, DocumentSelector>();
@@ -840,13 +840,13 @@ abstract class DocumentNotifiactions<P, E> implements DynamicFeature<TextDocumen
 	}
 }
 
-class DidOpenTextDocumentFeature extends DocumentNotifiactions<DidOpenTextDocumentParams, TextDocument> {
+class DidOpenTextDocumentFeature extends DocumentNotifications<DidOpenTextDocumentParams, TextDocument> {
 	constructor(client: BaseLanguageClient, private _syncedDocuments: Map<string, TextDocument>) {
 		super(
 			client, Workspace.onDidOpenTextDocument, DidOpenTextDocumentNotification.type,
 			client.clientOptions.middleware!.didOpen,
 			(textDocument) => client.code2ProtocolConverter.asOpenTextDocumentParams(textDocument),
-			DocumentNotifiactions.textDocumentFilter
+			DocumentNotifications.textDocumentFilter
 		);
 	}
 
@@ -897,14 +897,14 @@ class DidOpenTextDocumentFeature extends DocumentNotifiactions<DidOpenTextDocume
 	}
 }
 
-class DidCloseTextDocumentFeature extends DocumentNotifiactions<DidCloseTextDocumentParams, TextDocument> {
+class DidCloseTextDocumentFeature extends DocumentNotifications<DidCloseTextDocumentParams, TextDocument> {
 
 	constructor(client: BaseLanguageClient, private _syncedDocuments: Map<string, TextDocument>) {
 		super(
 			client, Workspace.onDidCloseTextDocument, DidCloseTextDocumentNotification.type,
 			client.clientOptions.middleware!.didClose,
 			(textDocument) => client.code2ProtocolConverter.asCloseTextDocumentParams(textDocument),
-			DocumentNotifiactions.textDocumentFilter
+			DocumentNotifications.textDocumentFilter
 		);
 	}
 
@@ -1002,7 +1002,7 @@ class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeR
 
 	private callback(event: TextDocumentChangeEvent): void {
 		// Text document changes are send for dirty changes as well. We don't
-		// have dirty / undirty events in the LSP so we ignore content changes
+		// have dirty / un-dirty events in the LSP so we ignore content changes
 		// with length zero.
 		if (event.contentChanges.length === 0) {
 			return;
@@ -1093,14 +1093,14 @@ class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeR
 }
 
 
-class WillSaveFeature extends DocumentNotifiactions<WillSaveTextDocumentParams, TextDocumentWillSaveEvent> {
+class WillSaveFeature extends DocumentNotifications<WillSaveTextDocumentParams, TextDocumentWillSaveEvent> {
 
 	constructor(client: BaseLanguageClient) {
 		super(
 			client, Workspace.onWillSaveTextDocument, WillSaveTextDocumentNotification.type,
 			client.clientOptions.middleware!.willSave,
 			(willSaveEvent) => client.code2ProtocolConverter.asWillSaveTextDocumentParams(willSaveEvent),
-			(selectors, willSaveEvent) => DocumentNotifiactions.textDocumentFilter(selectors, willSaveEvent.document)
+			(selectors, willSaveEvent) => DocumentNotifications.textDocumentFilter(selectors, willSaveEvent.document)
 		);
 	}
 
@@ -1162,7 +1162,7 @@ class WillSaveWaitUntilFeature implements DynamicFeature<TextDocumentRegistratio
 	}
 
 	private callback(event: TextDocumentWillSaveEvent): void {
-		if (DocumentNotifiactions.textDocumentFilter(this._selectors.values(), event.document)) {
+		if (DocumentNotifications.textDocumentFilter(this._selectors.values(), event.document)) {
 			let middleware = this._client.clientOptions.middleware!;
 			let willSaveWaitUntil = (event: TextDocumentWillSaveEvent): Thenable<VTextEdit[]> => {
 				return this._client.sendRequest(WillSaveTextDocumentWaitUntilRequest.type,
@@ -1196,7 +1196,7 @@ class WillSaveWaitUntilFeature implements DynamicFeature<TextDocumentRegistratio
 	}
 }
 
-class DidSaveTextDocumentFeature extends DocumentNotifiactions<DidSaveTextDocumentParams, TextDocument> {
+class DidSaveTextDocumentFeature extends DocumentNotifications<DidSaveTextDocumentParams, TextDocument> {
 
 	private _includeText: boolean;
 
@@ -1205,7 +1205,7 @@ class DidSaveTextDocumentFeature extends DocumentNotifiactions<DidSaveTextDocume
 			client, Workspace.onDidSaveTextDocument, DidSaveTextDocumentNotification.type,
 			client.clientOptions.middleware!.didSave,
 			(textDocument) => client.code2ProtocolConverter.asSaveTextDocumentParams(textDocument, this._includeText),
-			DocumentNotifiactions.textDocumentFilter
+			DocumentNotifications.textDocumentFilter
 		);
 		this._includeText = false;
 	}
@@ -1259,7 +1259,7 @@ class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatchedFilesRe
 		if (!Array.isArray(data.registerOptions.watchers)) {
 			return;
 		}
-		let disposeables: Disposable[] = [];
+		let disposables: Disposable[] = [];
 		for (let watcher of data.registerOptions.watchers) {
 			if (!Is.string(watcher.globPattern)) {
 				continue;
@@ -1272,17 +1272,17 @@ class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatchedFilesRe
 			}
 			let fileSystemWatcher: VFileSystemWatcher = Workspace.createFileSystemWatcher(watcher.globPattern, !watchCreate, !watchChange, !watchDelete);
 			this.hookListeners(fileSystemWatcher, watchCreate, watchChange, watchDelete);
-			disposeables.push(fileSystemWatcher);
+			disposables.push(fileSystemWatcher);
 		}
-		this._watchers.set(data.id, disposeables);
+		this._watchers.set(data.id, disposables);
 	}
 
 	public registerRaw(id: string, fileSystemWatchers: VFileSystemWatcher[]) {
-		let disposeables: Disposable[] = [];
+		let disposables: Disposable[] = [];
 		for (let fileSystemWatcher of fileSystemWatchers) {
-			this.hookListeners(fileSystemWatcher, true, true, true, disposeables);
+			this.hookListeners(fileSystemWatcher, true, true, true, disposables);
 		}
-		this._watchers.set(id, disposeables);
+		this._watchers.set(id, disposables);
 	}
 
 	private hookListeners(fileSystemWatcher: VFileSystemWatcher, watchCreate: boolean, watchChange: boolean, watchDelete: boolean, listeners?: Disposable[]): void {
@@ -1313,17 +1313,17 @@ class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatchedFilesRe
 	}
 
 	public unregister(id: string): void {
-		let disposeables = this._watchers.get(id);
-		if (disposeables) {
-			for (let disposable of disposeables) {
+		let disposables = this._watchers.get(id);
+		if (disposables) {
+			for (let disposable of disposables) {
 				disposable.dispose();
 			}
 		}
 	}
 
 	public dispose(): void {
-		this._watchers.forEach((disposeables) => {
-			for (let disposable of disposeables) {
+		this._watchers.forEach((disposables) => {
+			for (let disposable of disposables) {
 				disposable.dispose();
 			}
 		});
@@ -1493,8 +1493,8 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 		super(client, CompletionRequest.type);
 	}
 
-	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		let completion = ensure(ensure(capabilites, 'textDocument')!, 'completion')!;
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
+		let completion = ensure(ensure(capabilities, 'textDocument')!, 'completion')!;
 		completion.dynamicRegistration = true;
 		completion.contextSupport = true;
 		completion.completionItem = {
@@ -1570,8 +1570,8 @@ class HoverFeature extends TextDocumentFeature<boolean | HoverOptions, HoverRegi
 		super(client, HoverRequest.type);
 	}
 
-	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		const hoverCapability = (ensure(ensure(capabilites, 'textDocument')!, 'hover')!);
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
+		const hoverCapability = (ensure(ensure(capabilities, 'textDocument')!, 'hover')!);
 		hoverCapability.dynamicRegistration = true;
 		hoverCapability.contentFormat = [MarkupKind.Markdown, MarkupKind.PlainText];
 	}
@@ -1615,8 +1615,8 @@ class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpOptions, Sig
 		super(client, SignatureHelpRequest.type);
 	}
 
-	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		let config = ensure(ensure(capabilites, 'textDocument')!, 'signatureHelp')!;
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
+		let config = ensure(ensure(capabilities, 'textDocument')!, 'signatureHelp')!;
 		config.dynamicRegistration = true;
 		config.signatureInformation = { documentationFormat: [MarkupKind.Markdown, MarkupKind.PlainText] };
 		config.signatureInformation.parameterInformation = { labelOffsetSupport: true };
@@ -1674,8 +1674,8 @@ class DefinitionFeature extends TextDocumentFeature<boolean | DefinitionOptions,
 		super(client, DefinitionRequest.type);
 	}
 
-	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		let definitionSupport = ensure(ensure(capabilites, 'textDocument')!, 'definition')!;
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
+		let definitionSupport = ensure(ensure(capabilities, 'textDocument')!, 'definition')!;
 		definitionSupport.dynamicRegistration = true;
 		definitionSupport.linkSupport = true;
 	}
@@ -1716,8 +1716,8 @@ class ReferencesFeature extends TextDocumentFeature<boolean | ReferenceOptions, 
 		super(client, ReferencesRequest.type);
 	}
 
-	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		ensure(ensure(capabilites, 'textDocument')!, 'references')!.dynamicRegistration = true;
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
+		ensure(ensure(capabilities, 'textDocument')!, 'references')!.dynamicRegistration = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
@@ -1756,8 +1756,8 @@ class DocumentHighlightFeature extends TextDocumentFeature<boolean | DocumentHig
 		super(client, DocumentHighlightRequest.type);
 	}
 
-	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		ensure(ensure(capabilites, 'textDocument')!, 'documentHighlight')!.dynamicRegistration = true;
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
+		ensure(ensure(capabilities, 'textDocument')!, 'documentHighlight')!.dynamicRegistration = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
@@ -1796,8 +1796,8 @@ class DocumentSymbolFeature extends TextDocumentFeature<boolean | DocumentSymbol
 		super(client, DocumentSymbolRequest.type);
 	}
 
-	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		let symbolCapabilities = ensure(ensure(capabilites, 'textDocument')!, 'documentSymbol')!;
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
+		let symbolCapabilities = ensure(ensure(capabilities, 'textDocument')!, 'documentSymbol')!;
 		symbolCapabilities.dynamicRegistration = true;
 		symbolCapabilities.symbolKind = {
 			valueSet: SupportedSymbolKinds
@@ -1860,8 +1860,8 @@ class WorkspaceSymbolFeature extends WorkspaceFeature<WorkspaceSymbolRegistratio
 		super(client, WorkspaceSymbolRequest.type);
 	}
 
-	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		let symbolCapabilities = ensure(ensure(capabilites, 'workspace')!, 'symbol')!;
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
+		let symbolCapabilities = ensure(ensure(capabilities, 'workspace')!, 'symbol')!;
 		symbolCapabilities.dynamicRegistration = true;
 		symbolCapabilities.symbolKind = {
 			valueSet: SupportedSymbolKinds
@@ -1915,8 +1915,8 @@ class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions,
 		super(client, CodeActionRequest.type);
 	}
 
-	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		const cap = ensure(ensure(capabilites, 'textDocument')!, 'codeAction')!;
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
+		const cap = ensure(ensure(capabilities, 'textDocument')!, 'codeAction')!;
 		cap.dynamicRegistration = true;
 		cap.isPreferredSupport = true;
 		cap.disabledSupport = true;
@@ -2019,9 +2019,9 @@ class CodeLensFeature extends TextDocumentFeature<CodeLensOptions, CodeLensRegis
 		super(client, CodeLensRequest.type);
 	}
 
-	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		ensure(ensure(capabilites, 'textDocument')!, 'codeLens')!.dynamicRegistration = true;
-		ensure(ensure(capabilites, 'workspace')!, 'codeLens')!.refreshSupport = true;
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
+		ensure(ensure(capabilities, 'textDocument')!, 'codeLens')!.dynamicRegistration = true;
+		ensure(ensure(capabilities, 'workspace')!, 'codeLens')!.refreshSupport = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
@@ -2085,8 +2085,8 @@ class DocumentFormattingFeature extends TextDocumentFeature<boolean | DocumentFo
 		super(client, DocumentFormattingRequest.type);
 	}
 
-	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		ensure(ensure(capabilites, 'textDocument')!, 'formatting')!.dynamicRegistration = true;
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
+		ensure(ensure(capabilities, 'textDocument')!, 'formatting')!.dynamicRegistration = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
@@ -2130,8 +2130,8 @@ class DocumentRangeFormattingFeature extends TextDocumentFeature<boolean | Docum
 		super(client, DocumentRangeFormattingRequest.type);
 	}
 
-	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		ensure(ensure(capabilites, 'textDocument')!, 'rangeFormatting')!.dynamicRegistration = true;
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
+		ensure(ensure(capabilities, 'textDocument')!, 'rangeFormatting')!.dynamicRegistration = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
@@ -2176,8 +2176,8 @@ class DocumentOnTypeFormattingFeature extends TextDocumentFeature<DocumentOnType
 		super(client, DocumentOnTypeFormattingRequest.type);
 	}
 
-	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		ensure(ensure(capabilites, 'textDocument')!, 'onTypeFormatting')!.dynamicRegistration = true;
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
+		ensure(ensure(capabilities, 'textDocument')!, 'onTypeFormatting')!.dynamicRegistration = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
@@ -2229,8 +2229,8 @@ class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameR
 		super(client, RenameRequest.type);
 	}
 
-	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		let rename = ensure(ensure(capabilites, 'textDocument')!, 'rename')!;
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
+		let rename = ensure(ensure(capabilities, 'textDocument')!, 'rename')!;
 		rename.dynamicRegistration = true;
 		rename.prepareSupport = true;
 		rename.prepareSupportDefaultBehavior = true;
@@ -2320,8 +2320,8 @@ class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkOptions, Docum
 		super(client, DocumentLinkRequest.type);
 	}
 
-	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		const documentLinkCapabilities = ensure(ensure(capabilites, 'textDocument')!, 'documentLink')!;
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
+		const documentLinkCapabilities = ensure(ensure(capabilities, 'textDocument')!, 'documentLink')!;
 		documentLinkCapabilities.dynamicRegistration = true;
 		documentLinkCapabilities.tooltipSupport = true;
 	}
@@ -2537,22 +2537,22 @@ class ExecuteCommandFeature implements DynamicFeature<ExecuteCommandRegistration
 		};
 
 		if (data.registerOptions.commands) {
-			const disposeables: Disposable[] = [];
+			const disposables: Disposable[] = [];
 			for (const command of data.registerOptions.commands) {
-				disposeables.push(Commands.registerCommand(command, (...args: any[]) => {
+				disposables.push(Commands.registerCommand(command, (...args: any[]) => {
 					return middleware.executeCommand
 						? middleware.executeCommand(command, args, executeCommand)
 						: executeCommand(command, args);
 				}));
 			}
-			this._commands.set(data.id, disposeables);
+			this._commands.set(data.id, disposables);
 		}
 	}
 
 	public unregister(id: string): void {
-		let disposeables = this._commands.get(id);
-		if (disposeables) {
-			disposeables.forEach(disposable => disposable.dispose());
+		let disposables = this._commands.get(id);
+		if (disposables) {
+			disposables.forEach(disposable => disposable.dispose());
 		}
 	}
 
@@ -3531,6 +3531,7 @@ export abstract class BaseLanguageClient {
 		workspaceEdit.resourceOperations = [ResourceOperationKind.Create, ResourceOperationKind.Rename, ResourceOperationKind.Delete];
 		workspaceEdit.failureHandling = FailureHandlingKind.TextOnlyTransactional;
 		workspaceEdit.normalizesLineEndings = true;
+		workspaceEdit.changeAnnotationSupport = true;
 
 		const diagnostics = ensure(ensure(result, 'textDocument')!, 'publishDiagnostics')!;
 		diagnostics.relatedInformation = true;

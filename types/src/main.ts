@@ -790,6 +790,99 @@ export namespace TextEdit {
 	}
 }
 
+/**
+ * Additional information that describes document changes.
+ *
+ * @since 3.16.0 - proposed state
+ */
+export interface ChangeAnnotation {
+        /**
+         * A human-readable string describing the actual change. The string
+		 * is rendered prominent in the user interface.
+         */
+        label: string;
+
+        /**
+         * A flag which indicates that user confirmation is needed
+		 * before applying the change.
+         */
+        needsConfirmation?: boolean;
+
+        /**
+         * A human-readable string which is rendered less prominent in
+		 * the user interface.
+         */
+        description?: string;
+}
+
+export namespace ChangeAnnotation {
+	export function create(label: string, needsConfirmation?: boolean, description?: string) {
+		const result: ChangeAnnotation = { label };
+		if (needsConfirmation !== undefined) {
+			result.needsConfirmation = needsConfirmation;
+		}
+		if (description !== undefined) {
+			result.description = description;
+		}
+	}
+	export function is(value: any): value is ChangeAnnotation {
+		const candidate = value as ChangeAnnotation;
+		return candidate !== undefined && Is.objectLiteral(candidate) && Is.string(candidate.label) &&
+			(Is.boolean(candidate.needsConfirmation) || candidate.needsConfirmation === undefined) &&
+			(Is.string(candidate.description) || candidate.description === undefined);
+	}
+}
+
+/**
+ * A special text edit with an additional change annotation.
+ *
+ * @since 3.16.0 - proposed state.
+ */
+export interface AnnotatedTextEdit extends TextEdit {
+	/**
+	 * The actual annotation
+	 */
+	annotation: ChangeAnnotation;
+}
+
+export namespace AnnotatedTextEdit {
+
+	/**
+	 * Creates an annotated replace text edit.
+	 *
+	 * @param range The range of text to be replaced.
+	 * @param newText The new text.
+	 * @param annotation The annotation.
+	 */
+	export function replace(range: Range, newText: string, annotation: ChangeAnnotation): AnnotatedTextEdit {
+		return { range, newText, annotation };
+	}
+	/**
+	 * Creates an annotated insert text edit.
+	 *
+	 * @param position The position to insert the text at.
+	 * @param newText The text to be inserted.
+	 * @param annotation The annotation.
+	 */
+	export function insert(position: Position, newText: string, annotation: ChangeAnnotation): AnnotatedTextEdit {
+		return { range: { start: position, end: position }, newText, annotation };
+	}
+	/**
+	 * Creates an annotated delete text edit.
+	 *
+	 * @param range The range of text to be deleted.
+	 * @param annotation The annotation.
+	 */
+	export function del(range: Range, annotation: ChangeAnnotation): AnnotatedTextEdit {
+		return { range, newText: '', annotation };
+	}
+
+	export function is(value: any): value is AnnotatedTextEdit {
+		const candidate: AnnotatedTextEdit = value as AnnotatedTextEdit;
+		return TextEdit.is(candidate) && ChangeAnnotation.is(candidate.annotation);
+	}
+}
+
 
 /**
  * Describes textual changes on a text document. A TextDocumentEdit describes all changes
@@ -805,8 +898,11 @@ export interface TextDocumentEdit {
 
 	/**
 	 * The edits to be applied.
+	 *
+	 * @since 3.16.0 - support for AnnotatedTextEdit. This is guarded using a
+	 * client capability.
 	 */
-	edits: TextEdit[];
+	edits: (TextEdit | AnnotatedTextEdit)[];
 }
 
 /**
@@ -817,7 +913,7 @@ export namespace TextDocumentEdit {
 	/**
 	 * Creates a new `TextDocumentEdit`
 	 */
-	export function create(textDocument: OptionalVersionedTextDocumentIdentifier, edits: TextEdit[]): TextDocumentEdit {
+	export function create(textDocument: OptionalVersionedTextDocumentIdentifier, edits: (TextEdit | AnnotatedTextEdit)[]): TextDocumentEdit {
 		return { textDocument, edits };
 	}
 
@@ -829,8 +925,21 @@ export namespace TextDocumentEdit {
 	}
 }
 
+/**
+ * A generic resource operation.
+ */
 interface ResourceOperation {
+	/**
+	 * The resource operation kind.
+	 */
 	kind: string;
+
+	/**
+	 * An optional annotation describing the operation.
+	 *
+	 * @since 3.16.0 - proposed state
+	 */
+	annotation?: ChangeAnnotation;
 }
 
 /**
@@ -841,6 +950,7 @@ export interface CreateFileOptions {
 	 * Overwrite existing file. Overwrite wins over `ignoreIfExists`
 	 */
 	overwrite?: boolean;
+
 	/**
 	 * Ignore if exists.
 	 */
@@ -855,10 +965,12 @@ export interface CreateFile extends ResourceOperation {
 	 * A create
 	 */
 	kind: 'create';
+
 	/**
 	 * The resource to create.
 	 */
 	uri: DocumentUri;
+
 	/**
 	 * Additional options
 	 */
@@ -866,24 +978,28 @@ export interface CreateFile extends ResourceOperation {
 }
 
 export namespace CreateFile {
-	export function create(uri: DocumentUri, options?: CreateFileOptions): CreateFile {
+	export function create(uri: DocumentUri, options?: CreateFileOptions, annotation?: ChangeAnnotation): CreateFile {
 		let result: CreateFile = {
 			kind: 'create',
 			uri
 		};
-		if (options !== void 0 && (options.overwrite !== void 0 || options.ignoreIfExists !== void 0)) {
+		if (options !== undefined && (options.overwrite !== undefined || options.ignoreIfExists !== undefined)) {
 			result.options = options;
+		}
+		if (annotation !== undefined) {
+			result.annotation = annotation;
 		}
 		return result;
 	}
 
 	export function is(value: any): value is CreateFile {
 		let candidate: CreateFile = value;
-		return candidate && candidate.kind === 'create' && Is.string(candidate.uri) &&
-			(
-				candidate.options === void 0 ||
-				((candidate.options.overwrite === void 0 || Is.boolean(candidate.options.overwrite)) && (candidate.options.ignoreIfExists === void 0 || Is.boolean(candidate.options.ignoreIfExists)))
-			);
+		return candidate && candidate.kind === 'create' && Is.string(candidate.uri) && (
+			candidate.options === undefined ||
+			((candidate.options.overwrite === undefined || Is.boolean(candidate.options.overwrite)) && (candidate.options.ignoreIfExists === undefined || Is.boolean(candidate.options.ignoreIfExists)))
+		) && (
+			candidate.annotation === undefined || ChangeAnnotation.is(candidate.annotation)
+		);
 	}
 }
 
@@ -895,6 +1011,7 @@ export interface RenameFileOptions {
 	 * Overwrite target if existing. Overwrite wins over `ignoreIfExists`
 	 */
 	overwrite?: boolean;
+
 	/**
 	 * Ignores if target exists.
 	 */
@@ -909,14 +1026,17 @@ export interface RenameFile extends ResourceOperation {
 	 * A rename
 	 */
 	kind: 'rename';
+
 	/**
 	 * The old (existing) location.
 	 */
 	oldUri: DocumentUri;
+
 	/**
 	 * The new location.
 	 */
 	newUri: DocumentUri;
+
 	/**
 	 * Rename options.
 	 */
@@ -924,25 +1044,29 @@ export interface RenameFile extends ResourceOperation {
 }
 
 export namespace RenameFile {
-	export function create(oldUri: DocumentUri, newUri: DocumentUri, options?: RenameFileOptions): RenameFile {
+	export function create(oldUri: DocumentUri, newUri: DocumentUri, options?: RenameFileOptions, annotation?: ChangeAnnotation): RenameFile {
 		let result: RenameFile = {
 			kind: 'rename',
 			oldUri,
 			newUri
 		};
-		if (options !== void 0 && (options.overwrite !== void 0 || options.ignoreIfExists !== void 0)) {
+		if (options !== undefined && (options.overwrite !== undefined || options.ignoreIfExists !== undefined)) {
 			result.options = options;
+		}
+		if (annotation !== undefined) {
+			result.annotation = annotation;
 		}
 		return result;
 	}
 
 	export function is(value: any): value is RenameFile {
 		let candidate: RenameFile = value;
-		return candidate && candidate.kind === 'rename' && Is.string(candidate.oldUri) && Is.string(candidate.newUri) &&
-			(
-				candidate.options === void 0 ||
-				((candidate.options.overwrite === void 0 || Is.boolean(candidate.options.overwrite)) && (candidate.options.ignoreIfExists === void 0 || Is.boolean(candidate.options.ignoreIfExists)))
-			);
+		return candidate && candidate.kind === 'rename' && Is.string(candidate.oldUri) && Is.string(candidate.newUri) && (
+			candidate.options === undefined ||
+			((candidate.options.overwrite === undefined || Is.boolean(candidate.options.overwrite)) && (candidate.options.ignoreIfExists === undefined || Is.boolean(candidate.options.ignoreIfExists)))
+		) && (
+			candidate.annotation === undefined || ChangeAnnotation.is(candidate.annotation)
+		);
 	}
 }
 
@@ -954,6 +1078,7 @@ export interface DeleteFileOptions {
 	 * Delete the content recursively if a folder is denoted.
 	 */
 	recursive?: boolean;
+
 	/**
 	 * Ignore the operation if the file doesn't exist.
 	 */
@@ -968,10 +1093,12 @@ export interface DeleteFile extends ResourceOperation {
 	 * A delete
 	 */
 	kind: 'delete';
+
 	/**
 	 * The file to delete.
 	 */
 	uri: DocumentUri;
+
 	/**
 	 * Delete options.
 	 */
@@ -979,24 +1106,28 @@ export interface DeleteFile extends ResourceOperation {
 }
 
 export namespace DeleteFile {
-	export function create(uri: DocumentUri, options?: DeleteFileOptions): DeleteFile {
+	export function create(uri: DocumentUri, options?: DeleteFileOptions, annotation?: ChangeAnnotation): DeleteFile {
 		let result: DeleteFile = {
 			kind: 'delete',
 			uri
 		};
-		if (options !== void 0 && (options.recursive !== void 0 || options.ignoreIfNotExists !== void 0)) {
+		if (options !== undefined && (options.recursive !== undefined || options.ignoreIfNotExists !== undefined)) {
 			result.options = options;
+		}
+		if (annotation !== undefined) {
+			result.annotation = annotation;
 		}
 		return result;
 	}
 
 	export function is(value: any): value is DeleteFile {
 		let candidate: DeleteFile = value;
-		return candidate && candidate.kind === 'delete' && Is.string(candidate.uri) &&
-			(
-				candidate.options === void 0 ||
-				((candidate.options.recursive === void 0 || Is.boolean(candidate.options.recursive)) && (candidate.options.ignoreIfNotExists === void 0 || Is.boolean(candidate.options.ignoreIfNotExists)))
-			);
+		return candidate && candidate.kind === 'delete' && Is.string(candidate.uri) && (
+			candidate.options === undefined ||
+			((candidate.options.recursive === undefined || Is.boolean(candidate.options.recursive)) && (candidate.options.ignoreIfNotExists === undefined || Is.boolean(candidate.options.ignoreIfNotExists)))
+		) && (
+			candidate.annotation === undefined || ChangeAnnotation.is(candidate.annotation)
+		);
 	}
 }
 
@@ -1030,8 +1161,8 @@ export namespace WorkspaceEdit {
 	export function is(value: any): value is WorkspaceEdit {
 		let candidate: WorkspaceEdit = value;
 		return candidate &&
-			(candidate.changes !== void 0 || candidate.documentChanges !== void 0) &&
-			(candidate.documentChanges === void 0 || candidate.documentChanges.every((change) => {
+			(candidate.changes !== undefined || candidate.documentChanges !== undefined) &&
+			(candidate.documentChanges === undefined || candidate.documentChanges.every((change) => {
 				if (Is.string((change as ResourceOperation).kind)) {
 					return CreateFile.is(change) || RenameFile.is(change) || DeleteFile.is(change);
 				} else {
@@ -1049,8 +1180,11 @@ export interface TextEditChange {
 	 * Gets all text edits for this change.
 	 *
 	 * @return An array of text edits.
+	 *
+	 * @since 3.16.0 - support for annotated text edits. This is usually
+	 * guarded using a client capability.
 	 */
-	all(): TextEdit[];
+	all(): (TextEdit | AnnotatedTextEdit)[];
 
 	/**
 	 * Clears the edits for this change.
@@ -1059,59 +1193,78 @@ export interface TextEditChange {
 
 	/**
 	 * Adds a text edit.
+	 *
 	 * @param edit the text edit to add.
+	 *
+	 * @since 3.16.0 - support for annotated text edits. This is usually
+	 * guarded using a client capability.
 	 */
-	add(edit: TextEdit): void;
+	add(edit: TextEdit | AnnotatedTextEdit): void;
 
 	/**
 	 * Insert the given text at the given position.
 	 *
 	 * @param position A position.
 	 * @param newText A string.
+	 * @param annotation An optional annotation.
 	 */
-	insert(position: Position, newText: string): void;
+	insert(position: Position, newText: string, annotation?: ChangeAnnotation): void;
 
 	/**
 	 * Replace the given range with given text for the given resource.
 	 *
 	 * @param range A range.
 	 * @param newText A string.
+	 * @param annotation An optional annotation.
 	 */
-	replace(range: Range, newText: string): void;
+	replace(range: Range, newText: string, annotation?: ChangeAnnotation): void;
 
 	/**
 	 * Delete the text at the given range.
 	 *
 	 * @param range A range.
+	 * @param annotation An optional annotation.
 	 */
-	delete(range: Range): void;
+	delete(range: Range, annotation?: ChangeAnnotation): void;
 }
 
 class TextEditChangeImpl implements TextEditChange {
 
-	private edits: TextEdit[];
+	private edits: (TextEdit | AnnotatedTextEdit)[];
 
-	public constructor(edits: TextEdit[]) {
+	public constructor(edits: (TextEdit | AnnotatedTextEdit)[]) {
 		this.edits = edits;
 	}
 
-	public insert(position: Position, newText: string): void {
-		this.edits.push(TextEdit.insert(position, newText));
+	public insert(position: Position, newText: string, annotation?: ChangeAnnotation): void {
+		if (annotation === undefined) {
+			this.edits.push(TextEdit.insert(position, newText));
+		} else {
+			this.edits.push(AnnotatedTextEdit.insert(position, newText, annotation));
+		}
 	}
 
-	public replace(range: Range, newText: string): void {
-		this.edits.push(TextEdit.replace(range, newText));
+	public replace(range: Range, newText: string, annotation?: ChangeAnnotation): void {
+		if (annotation === undefined) {
+			this.edits.push(TextEdit.replace(range, newText));
+		} else {
+			this.edits.push(AnnotatedTextEdit.replace(range, newText, annotation));
+		}
 	}
 
-	public delete(range: Range): void {
-		this.edits.push(TextEdit.del(range));
+	public delete(range: Range, annotation?: ChangeAnnotation): void {
+		if (annotation === undefined) {
+			this.edits.push(TextEdit.del(range));
+		} else {
+			this.edits.push(AnnotatedTextEdit.del(range, annotation));
+		}
 	}
 
-	public add(edit: TextEdit): void {
+	public add(edit: TextEdit | AnnotatedTextEdit): void {
 		this.edits.push(edit);
 	}
 
-	public all(): TextEdit[] {
+	public all(): (TextEdit | AnnotatedTextEdit)[] {
 		return this.edits;
 	}
 
@@ -1177,7 +1330,7 @@ export class WorkspaceChange {
 			let textDocument: OptionalVersionedTextDocumentIdentifier = key;
 			let result: TextEditChange = this._textEditChanges[textDocument.uri];
 			if (!result) {
-				let edits: TextEdit[] = [];
+				let edits: (TextEdit | AnnotatedTextEdit)[] = [];
 				let textDocumentEdit: TextDocumentEdit = {
 					textDocument,
 					edits
@@ -1198,7 +1351,7 @@ export class WorkspaceChange {
 			}
 			let result: TextEditChange = this._textEditChanges[key];
 			if (!result) {
-				let edits: TextEdit[] = [];
+				let edits: (TextEdit | AnnotatedTextEdit)[] = [];
 				this._workspaceEdit.changes[key] = edits;
 				result = new TextEditChangeImpl(edits);
 				this._textEditChanges[key] = result;
@@ -1864,7 +2017,7 @@ export namespace Hover {
 			MarkedString.is(candidate.contents) ||
 			Is.typedArray(candidate.contents, MarkedString.is)
 		) && (
-			value.range === void 0 || Range.is(value.range)
+			value.range === undefined || Range.is(value.range)
 		);
 	}
 }
@@ -2287,7 +2440,7 @@ export namespace DocumentSymbol {
 			range,
 			selectionRange
 		};
-		if (children !== void 0) {
+		if (children !== undefined) {
 			result.children = children;
 		}
 		return result;
@@ -2300,10 +2453,10 @@ export namespace DocumentSymbol {
 		return candidate &&
 			Is.string(candidate.name) && Is.number(candidate.kind) &&
 			Range.is(candidate.range) && Range.is(candidate.selectionRange) &&
-			(candidate.detail === void 0 || Is.string(candidate.detail)) &&
-			(candidate.deprecated === void 0 || Is.boolean(candidate.deprecated)) &&
-			(candidate.children === void 0 || Array.isArray(candidate.children)) &&
-			(candidate.tags === void 0 || Array.isArray(candidate.tags));
+			(candidate.detail === undefined || Is.string(candidate.detail)) &&
+			(candidate.deprecated === undefined || Is.boolean(candidate.deprecated)) &&
+			(candidate.children === undefined || Array.isArray(candidate.children)) &&
+			(candidate.tags === undefined || Array.isArray(candidate.tags));
 	}
 }
 
@@ -2433,7 +2586,7 @@ export namespace CodeActionContext {
 	 */
 	export function create(diagnostics: Diagnostic[], only?: CodeActionKind[]): CodeActionContext {
 		let result: CodeActionContext = { diagnostics };
-		if (only !== void 0 && only !== null) {
+		if (only !== undefined && only !== null) {
 			result.only = only;
 		}
 		return result;
@@ -2443,7 +2596,7 @@ export namespace CodeActionContext {
 	 */
 	export function is(value: any): value is CodeActionContext {
 		let candidate = value as CodeActionContext;
-		return Is.defined(candidate) && Is.typedArray<Diagnostic[]>(candidate.diagnostics, Diagnostic.is) && (candidate.only === void 0 || Is.typedArray(candidate.only, Is.string));
+		return Is.defined(candidate) && Is.typedArray<Diagnostic[]>(candidate.diagnostics, Diagnostic.is) && (candidate.only === undefined || Is.typedArray(candidate.only, Is.string));
 	}
 }
 
@@ -2569,7 +2722,7 @@ export namespace CodeAction {
 		} else {
 			result.edit = kindOrCommandOrEdit;
 		}
-		if (checkKind && kind !== void 0) {
+		if (checkKind && kind !== undefined) {
 			result.kind = kind;
 		}
 		return result;
@@ -2577,12 +2730,12 @@ export namespace CodeAction {
 	export function is(value: any): value is CodeAction {
 		let candidate: CodeAction = value;
 		return candidate && Is.string(candidate.title) &&
-			(candidate.diagnostics === void 0 || Is.typedArray(candidate.diagnostics, Diagnostic.is)) &&
-			(candidate.kind === void 0 || Is.string(candidate.kind)) &&
-			(candidate.edit !== void 0 || candidate.command !== void 0) &&
-			(candidate.command === void 0 || Command.is(candidate.command)) &&
-			(candidate.isPreferred === void 0 || Is.boolean(candidate.isPreferred)) &&
-			(candidate.edit === void 0 || WorkspaceEdit.is(candidate.edit));
+			(candidate.diagnostics === undefined || Is.typedArray(candidate.diagnostics, Diagnostic.is)) &&
+			(candidate.kind === undefined || Is.string(candidate.kind)) &&
+			(candidate.edit !== undefined || candidate.command !== undefined) &&
+			(candidate.command === undefined || Command.is(candidate.command)) &&
+			(candidate.isPreferred === undefined || Is.boolean(candidate.isPreferred)) &&
+			(candidate.edit === undefined || WorkspaceEdit.is(candidate.edit));
 	}
 }
 

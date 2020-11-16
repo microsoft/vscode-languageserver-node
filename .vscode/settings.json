@@ -49,15 +49,23 @@
 		"ASAR",
 		"LSIF",
 		"Struct",
+		"Unregistration",
 		"XCOPY",
+		"asSymbolInformations",
 		"clazz",
 		"diagnostic's",
 		"hover's",
 		"lsclient",
 		"lsptests",
+		"plugable",
 		"quickfix",
 		"refactorings",
 		"uinteger",
-		"whitespaces"
+		"unregisterations",
+		"unregistrations",
+		"whitespaces",
+		"asSignatureInformations",
+		"asParameterInformations",
+		"asColorInformations"
 	]
 }

@@ -86,7 +86,7 @@ suite('Protocol Converter', () => {
 		strictEqual(actual.end.character, expected.end.character);
 	}
 
-	function competionEditEqual(text: string, range: vscode.Range | InsertReplaceRange, expected: proto.TextEdit | proto.InsertReplaceEdit): void {
+	function completionEditEqual(text: string, range: vscode.Range | InsertReplaceRange, expected: proto.TextEdit | proto.InsertReplaceEdit): void {
 		strictEqual(text, expected.newText);
 		if (InsertReplaceRange.is(range)) {
 			ok(proto.InsertReplaceEdit.is(expected));
@@ -235,7 +235,7 @@ suite('Protocol Converter', () => {
 		strictEqual(range.end.character, hover.range.end.character);
 
 		/*
-		let multisegmentHover: proto.Hover = {
+		let multiSegmentHover: proto.Hover = {
 			contents:{
 				kind: MarkupKind.Markdown,
 				value:`First Section
@@ -245,7 +245,7 @@ suite('Protocol Converter', () => {
 				Third Section`
 			}
 		}
-		result = p2c.asHover(multisegmentHover);
+		result = p2c.asHover(multiSegmentHover);
 		strictEqual(result.contents.length, 3);
 		strictEqual((result.contents[0] as vscode.MarkdownString).value, 'First Section');
 		strictEqual((result.contents[1] as vscode.MarkdownString).value, 'Second Section');
@@ -461,7 +461,7 @@ suite('Protocol Converter', () => {
 		strictEqual(result.insertText, 'text');
 		assertInsertReplaceRange(result.range);
 		assertInsertReplaceEdit(completionItem.textEdit);
-		competionEditEqual(result.insertText as string, result.range, completionItem.textEdit);
+		completionEditEqual(result.insertText as string, result.range, completionItem.textEdit);
 
 		let back = c2p.asCompletionItem(result);
 		strictEqual(back.insertTextFormat, proto.InsertTextFormat.PlainText);
@@ -1150,7 +1150,7 @@ suite('Code Converter', () => {
 		strictEqual(result.textEdit.newText, item.textEdit.newText);
 	});
 
-	test('Completion Item - Keepwhitespace', () => {
+	test('Completion Item - Keep whitespace', () => {
 		let item: ProtocolCompletionItem = new ProtocolCompletionItem('label');
 		item.textEdit = vscode.TextEdit.insert(new vscode.Position(1, 2), 'insert');
 		item.fromEdit = true;
