@@ -1939,6 +1939,7 @@ class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions,
 				]
 			}
 		};
+		cap.honorsChangeAnnotations = false;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
@@ -2234,6 +2235,7 @@ class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameR
 		rename.dynamicRegistration = true;
 		rename.prepareSupport = true;
 		rename.prepareSupportDefaultBehavior = true;
+		rename.honorsChangeAnnotations = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {

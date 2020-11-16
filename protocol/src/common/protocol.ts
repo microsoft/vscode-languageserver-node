@@ -2412,6 +2412,17 @@ export interface CodeActionClientCapabilities {
 		  */
 		 properties: string[];
 	 };
+
+	/**
+	 * Whether th client honors the change annotations in
+	 * text edits and resource operations returned via the
+	 * `CodeAction#edit` property by for example presenting
+	 * the workspace edit in the user interface and asking
+	 * for confirmation.
+	 *
+	 * @since 3.16.0 - proposed state
+	 */
+	honorsChangeAnnotations?: boolean;
 }
 
 /**
@@ -2867,16 +2878,27 @@ export interface RenameClientCapabilities {
 	 * Client supports testing for validity of rename operations
 	 * before execution.
 	 *
-	 * @since version 3.12.0
+	 * @since 3.12.0
 	 */
 	prepareSupport?: boolean;
 
 	/**
 	 * Client supports the default behavior result.
 	 *
-	 * @since version 3.16.0
+	 * @since 3.16.0
 	 */
 	prepareSupportDefaultBehavior?: boolean;
+
+	/**
+	 * Whether th client honors the change annotations in
+	 * text edits and resource operations returned via the
+	 * rename request's workspace edit by for example presenting
+	 * the workspace edit in the user interface and asking
+	 * for confirmation.
+	 *
+	 * @since 3.16.0 - proposed state
+	 */
+	honorsChangeAnnotations?: boolean;
 }
 
 /**
@@ -3027,7 +3049,7 @@ export interface WorkspaceEditClientCapabilities {
 	normalizesLineEndings?: boolean;
 
 	/**
-	 * Whether the client supports change annotations on text edits,
+	 * Whether the client in general supports change annotations on text edits,
 	 * create file, rename file and delete file changes.
 	 *
 	 * @since 3.16.0 - proposed state
