@@ -30,7 +30,7 @@ export type uinteger = number;
  * Defines a decimal number. Since decimal numbers are very
  * rare in the language server specification we denote the
  * exact range with every decimal using the mathematics
- * inveral notations (e.g. [0, 1] denotes all decimals d with
+ * interval notations (e.g. [0, 1] denotes all decimals d with
  * 0 <= d <= 1.
  */
 export type decimal = number;
@@ -76,7 +76,7 @@ export namespace Position {
 		return { line, character };
 	}
 	/**
-	 * Checks whether the given liternal conforms to the [Position](#Position) interface.
+	 * Checks whether the given literal conforms to the [Position](#Position) interface.
 	 */
 	export function is(value: any): value is Position {
 		let candidate = value as Position;
@@ -115,13 +115,13 @@ export interface Range {
  */
 export namespace Range {
 	/**
-	 * Create a new Range liternal.
+	 * Create a new Range literal.
 	 * @param start The range's start position.
 	 * @param end The range's end position.
 	 */
 	export function create(start: Position, end: Position): Range;
 	/**
-	 * Create a new Range liternal.
+	 * Create a new Range literal.
 	 * @param startLine The start line number.
 	 * @param startCharacter The start character.
 	 * @param endLine The end line number.
@@ -298,7 +298,7 @@ export namespace Color {
 export interface ColorInformation {
 
 	/**
-	 * The range in the document where this color appers.
+	 * The range in the document where this color appears.
 	 */
 	range: Range;
 
@@ -1302,7 +1302,7 @@ export interface OptionalVersionedTextDocumentIdentifier extends TextDocumentIde
 	 * is sent from the server to the client and the file is not open in the editor
 	 * (the server has not received an open notification before) the server can send
 	 * `null` to indicate that the version is unknown and the content on disk is the
-	 * truth (as speced with document content ownership).
+	 * truth (as specified with document content ownership).
 	 */
 	version: integer | null;
 }
@@ -1570,7 +1570,7 @@ export namespace InsertReplaceEdit {
 	}
 
 	/**
-	 * Checks whether the given liternal conforms to the [InsertReplaceEdit](#InsertReplaceEdit) interface.
+	 * Checks whether the given literal conforms to the [InsertReplaceEdit](#InsertReplaceEdit) interface.
 	 */
 	export function is(value: TextEdit | InsertReplaceEdit): value is InsertReplaceEdit {
 		const candidate: InsertReplaceEdit = value as InsertReplaceEdit;
@@ -1690,7 +1690,7 @@ export interface CompletionItem {
 
 	/**
 	 * The format of the insert text. The format applies to both the `insertText` property
-	 * and the `newText` property of a provided `textEdit`. If ommitted defaults to
+	 * and the `newText` property of a provided `textEdit`. If omitted defaults to
 	 * `InsertTextFormat.PlainText`.
 	 */
 	insertTextFormat?: InsertTextFormat;
@@ -1710,8 +1710,8 @@ export interface CompletionItem {
 	 * [insertText](#CompletionItem.insertText) is ignored.
 	 *
 	 * Most editors support two different operation when accepting a completion item. One is to insert a
-	 * completion text and the other is to replace an existing text with a competion text. Since this can
-	 * usually not predetermend by a server it can report both ranges. Clients need to signal support for
+	 * completion text and the other is to replace an existing text with a completion text. Since this can
+	 * usually not predetermined by a server it can report both ranges. Clients need to signal support for
 	 * `InsertReplaceEdits` via the `textDocument.completion.insertReplaceSupport` client capability
 	 * property.
 	 *
@@ -2407,7 +2407,7 @@ export namespace CodeActionKind {
 export interface CodeActionContext {
 	/**
 	 * An array of diagnostics known on the client side overlapping the range provided to the
-	 * `textDocument/codeAction` request. They are provied so that the server knows which
+	 * `textDocument/codeAction` request. They are provided so that the server knows which
 	 * errors are currently presented to the user for the given range. There is no guarantee
 	 * that these accurately reflect the error state of the resource. The primary parameter
 	 * to compute code actions is the provided range.

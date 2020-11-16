@@ -47,9 +47,17 @@
 	},
 	"cSpell.words": [
 		"ASAR",
+		"LSIF",
+		"Struct",
 		"XCOPY",
 		"clazz",
+		"diagnostic's",
+		"hover's",
 		"lsclient",
-		"lsptests"
+		"lsptests",
+		"quickfix",
+		"refactorings",
+		"uinteger",
+		"whitespaces"
 	]
 }
