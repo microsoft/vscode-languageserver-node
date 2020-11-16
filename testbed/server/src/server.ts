@@ -11,7 +11,7 @@ import {
 	SignatureHelp, SymbolInformation, SymbolKind, TextDocumentEdit, TextDocuments, TextDocumentSyncKind,
 	TextEdit, VersionedTextDocumentIdentifier, ProposedFeatures, DiagnosticTag, Proposed, InsertTextFormat,
 	SelectionRangeRequest, SelectionRange, InsertReplaceEdit, SemanticTokensClientCapabilities, SemanticTokensLegend,
-	SemanticTokensBuilder, SemanticTokensRegistrationType, SemanticTokensRegistrationOptions, ProtocolNotificationType
+	SemanticTokensBuilder, SemanticTokensRegistrationType, SemanticTokensRegistrationOptions, ProtocolNotificationType, ChangeAnnotation, AnnotatedTextEdit, WorkspaceChange
 } from 'vscode-languageserver/node';
 
 import {
@@ -237,7 +237,7 @@ function validate(document: TextDocument): Diagnostic[] {
 	// 		clearInterval(interval);
 	// 	});
 	// });
-	connection.console.log("Validaing document " + document.uri);
+	connection.console.log("Validating document " + document.uri);
 	return [ {
 		range: Range.create(0, 0, 0, 10),
 		message: "A error message",
@@ -409,12 +409,12 @@ connection.onCodeAction((params) => {
 			documentChanges: [
 				TextDocumentEdit.create(
 					VersionedTextDocumentIdentifier.create(document.uri, document.version),
-					[TextEdit.insert({ line: 0, character: 0}, "Code Action")]
+					[AnnotatedTextEdit.insert({ line: 0, character: 0}, "Code Action", ChangeAnnotation.create('Insert some text', true))]
 				),
 				CreateFile.create(`${folder}/newFile.bat`, { overwrite: true }),
 				TextDocumentEdit.create(
 					VersionedTextDocumentIdentifier.create(`${folder}/newFile.bat`, null),
-					[TextEdit.insert({ line: 0, character: 0 }, 'The initial content')]
+					[AnnotatedTextEdit.insert({ line: 0, character: 0 }, 'The initial content', ChangeAnnotation.create('Add additional content', true))]
 				)
 			]
 		}
@@ -452,10 +452,10 @@ connection.onDocumentOnTypeFormatting((params) => {
 
 connection.onRenameRequest((params) => {
 	connection.console.log(`Rename: ${JSON.stringify(params.position)} ${params.newName}`);
-	return new ResponseError(20, 'Element can\'t be renaned');
-	// let change = new WorkspaceChange();
-	// change.getTextEditChange(params.textDocument.uri).insert(Position.create(0,0), 'Raname inserted\n');
-	// return change.edit;
+	// return new ResponseError(20, 'Element can\'t be renamed');
+	const change = new WorkspaceChange();
+	change.getTextEditChange(params.textDocument.uri).insert(Position.create(0,0), 'Rename inserted\n', ChangeAnnotation.create('Rename symbol', true));
+	return change.edit;
 });
 
 connection.onExecuteCommand((params) => {
