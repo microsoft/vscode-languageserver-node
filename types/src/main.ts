@@ -816,7 +816,7 @@ export interface ChangeAnnotation {
 }
 
 export namespace ChangeAnnotation {
-	export function create(label: string, needsConfirmation?: boolean, description?: string) {
+	export function create(label: string, needsConfirmation?: boolean, description?: string): ChangeAnnotation {
 		const result: ChangeAnnotation = { label };
 		if (needsConfirmation !== undefined) {
 			result.needsConfirmation = needsConfirmation;
@@ -824,6 +824,7 @@ export namespace ChangeAnnotation {
 		if (description !== undefined) {
 			result.description = description;
 		}
+		return result;
 	}
 	export function is(value: any): value is ChangeAnnotation {
 		const candidate = value as ChangeAnnotation;
