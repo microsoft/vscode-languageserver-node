@@ -672,6 +672,8 @@ suite('Client integration', () => {
 					'/my/created-dynamic/folder/',
 				],
 			);
+
+			// TODO(dantup): Test middleware..
 		});
 
 		test('Did Create Files', async () => {
