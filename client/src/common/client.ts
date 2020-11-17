@@ -3567,9 +3567,9 @@ export abstract class BaseLanguageClient {
 
 	private handleRegistrationRequest(params: RegistrationParams): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
-			for (let registration of params.registrations) {
+			for (const registration of params.registrations) {
 				const feature = this._dynamicFeatures.get(registration.method);
-				if (!feature) {
+				if (feature === undefined) {
 					reject(new Error(`No feature implementation for ${registration.method} found. Registration failed.`));
 					return;
 				}
@@ -3579,7 +3579,12 @@ export abstract class BaseLanguageClient {
 					id: registration.id,
 					registerOptions: options
 				};
-				feature.register(data);
+				try {
+					feature.register(data);
+				} catch (err) {
+					reject(err);
+					return;
+				}
 			}
 			resolve();
 		});
