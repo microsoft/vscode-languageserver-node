@@ -347,6 +347,10 @@ export interface HandleDiagnosticsSignature {
 	(this: void, uri: Uri, diagnostics: VDiagnostic[]): void;
 }
 
+export interface HandleProgressSignature<P> {
+	(this: void, type: ProgressType<P>, token: ProgressToken, params: P): void;
+}
+
 export interface ProvideCompletionItemsSignature {
 	(this: void, document: TextDocument, position: VPosition, context: VCompletionContext, token: CancellationToken): ProviderResult<VCompletionItem[] | VCompletionList>;
 }
@@ -469,6 +473,7 @@ export interface _Middleware {
 	didClose?: NextSignature<TextDocument, void>;
 
 	handleDiagnostics?: (this: void, uri: Uri, diagnostics: VDiagnostic[], next: HandleDiagnosticsSignature) => void;
+	handleProgress?: <P>(this: void, type: ProgressType<P>, token: ProgressToken, params: P, next: HandleProgressSignature<P>) => void;
 	provideCompletionItem?: (this: void, document: TextDocument, position: VPosition, context: VCompletionContext, token: CancellationToken, next: ProvideCompletionItemsSignature) => ProviderResult<VCompletionItem[] | VCompletionList>;
 	resolveCompletionItem?: (this: void, item: VCompletionItem, token: CancellationToken, next: ResolveCompletionItemSignature) => ProviderResult<VCompletionItem>;
 	provideHover?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideHoverSignature) => ProviderResult<VHover>;
@@ -2812,7 +2817,14 @@ export abstract class BaseLanguageClient {
 			throw new Error('Language client is not ready yet');
 		}
 		try {
-			return this._resolvedConnection!.onProgress(type, token, handler);
+			const handleProgress = this._clientOptions.middleware!.handleProgress;
+			if (handleProgress !== undefined) {
+				return this._resolvedConnection!.onProgress(type, token, (params: P) => {
+					handleProgress(type, token, params, () => handler(params));
+				});
+			} else {
+				return this._resolvedConnection!.onProgress(type, token, handler);
+			}
 		} catch (error) {
 			this.error(`Registering progress handler for token ${token} failed.`, error);
 			throw error;

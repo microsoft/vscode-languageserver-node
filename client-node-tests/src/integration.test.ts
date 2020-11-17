@@ -332,6 +332,48 @@ suite('Client integration', () => {
 		assert.ok(middlewareCalled);
 	});
 
+	test('Progress', async () => {
+		const progressToken = 'TEST-PROGRESS-TOKEN';
+		const middlewareEvents: Array<lsclient.WorkDoneProgressBegin | lsclient.WorkDoneProgressReport | lsclient.WorkDoneProgressEnd> = [];
+		const handlerEvents: Array<lsclient.WorkDoneProgressBegin | lsclient.WorkDoneProgressReport | lsclient.WorkDoneProgressEnd> = [];
+		await new Promise((resolve) => {
+			// Set up middleware that captures progress events.
+			middleware.handleProgress = (type, token, params, next) => {
+				if (token === progressToken) {
+					middlewareEvents.push(type);
+					// TODO(dantup): Should be when we get end event!
+					if (params.kind === 'end')
+						setImmediate(resolve);
+				}
+				return next(type, token, params);
+			};
+
+			// Register a handler for the real progress events.
+			client.onProgress(lsclient.WorkDoneProgress.type, progressToken, (params) => {
+				handlerEvents.push(params);
+			});
+
+			// Send a request to the server that triggers sample events.
+			client.sendRequest(
+				new lsclient.ProtocolRequestType<any, null, never, any, any>('testing/sendSampleProgress'),
+				{},
+				tokenSource.token,
+			);
+		});
+
+		middleware.handleProgress = undefined;
+
+		// Ensure all events were handled.
+		assert.strictEqual(
+			middlewareEvents.map((p) => p.kind),
+			['begin', 'update', 'end'],
+		);
+		assert.strictEqual(
+			handlerEvents.map((p) => p.kind),
+			['begin', 'update', 'end'],
+		);
+	});
+
 	test('Document Formatting', async () => {
 		const provider = client.getFeature(lsclient.DocumentFormattingRequest.method).getProvider(document);
 		isDefined(provider);

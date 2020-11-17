@@ -8,7 +8,7 @@ import {
 	createConnection, Connection, InitializeParams, ServerCapabilities, CompletionItemKind, ResourceOperationKind, FailureHandlingKind,
 	DiagnosticTag, CompletionItemTag, TextDocumentSyncKind, MarkupKind, SignatureHelp, SignatureInformation, ParameterInformation,
 	Location, Range, DocumentHighlight, DocumentHighlightKind, CodeAction, Command, TextEdit, Position, DocumentLink,
-	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, SymbolKind
+	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, SymbolKind, ProtocolRequestType, WorkDoneProgress
 } from '../../../server/node';
 
 import { URI } from 'vscode-uri';
@@ -283,6 +283,16 @@ connection.languages.onOnTypeRename(() => {
 		wordPattern: '\\w'
 	};
 });
+
+connection.onRequest(
+	new ProtocolRequestType<null, null, never, any, any>('testing/sendSampleProgress'),
+	(_, __) => {
+		const progressToken = 'TEST-PROGRESS-TOKEN';
+		connection.sendProgress(WorkDoneProgress.type, progressToken, { kind: 'begin', title: 'Test Progress' });
+		connection.sendProgress(WorkDoneProgress.type, progressToken, { kind: 'report', percentage: 50, message: 'Halfway!' });
+		connection.sendProgress(WorkDoneProgress.type, progressToken, { kind: 'end', message: 'Completed!' });
+	},
+);
 
 // Listen on the connection
 connection.listen();
