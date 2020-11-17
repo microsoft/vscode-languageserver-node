@@ -538,6 +538,23 @@ export interface RegularExpressionsClientCapabilities {
 }
 
 /**
+ * Client capabilities specific to the used markdown parser.
+ *
+ * @since 3.16.0 - proposed state
+ */
+export interface MarkdownClientCapabilities {
+	/**
+	 * The name of the parser.
+	 */
+	parser: string;
+
+	/**
+	 * The version of the parser.
+	 */
+	version?: string;
+}
+
+/**
  * General client capabilities.
  *
  * @since 3.16.0 - proposed state
@@ -545,8 +562,17 @@ export interface RegularExpressionsClientCapabilities {
 export interface GeneralClientCapabilities {
 	/**
 	 * Client capabilities specific to regular expressions.
+	 *
+	 * @since 3.16.0 - proposed state
 	 */
 	regularExpressions?: RegularExpressionsClientCapabilities;
+
+	/**
+	 * Client capabilities specific to the client's markdown parser.
+	 *
+	 * @since 3.16.0 - proposed state
+	 */
+	markdown?: MarkdownClientCapabilities;
 }
 
 /**

@@ -19,7 +19,7 @@ import {
 	DefinitionProvider, ReferenceProvider, DocumentHighlightProvider, CodeActionProvider, DocumentSymbolProvider, CodeLensProvider, DocumentFormattingEditProvider,
 	DocumentRangeFormattingEditProvider, OnTypeFormattingEditProvider, RenameProvider, DocumentLinkProvider, DocumentColorProvider, DeclarationProvider,
 	FoldingRangeProvider, ImplementationProvider, SelectionRangeProvider, TypeDefinitionProvider, WorkspaceSymbolProvider, CallHierarchyProvider,
-	DocumentSymbolProviderMetadata, EventEmitter, OnTypeRenameProvider
+	DocumentSymbolProviderMetadata, EventEmitter, OnTypeRenameProvider, version
 } from 'vscode';
 
 import {
@@ -3550,6 +3550,7 @@ export abstract class BaseLanguageClient {
 
 		const generalCapabilities = ensure(result, 'general')!;
 		generalCapabilities.regularExpressions = { engine: 'ECMAScript', version: 'ES2020' };
+		generalCapabilities.markdown = { parser: 'marked', version: '0.6.2'};
 
 		for (let feature of this._features) {
 			feature.fillClientCapabilities(result);
