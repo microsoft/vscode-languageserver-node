@@ -48,8 +48,8 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Semanti
 		super(client, SemanticTokensRegistrationType.type);
 	}
 
-	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		const capability = ensure(ensure(capabilites, 'textDocument')!, 'semanticTokens')!;
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
+		const capability = ensure(ensure(capabilities, 'textDocument')!, 'semanticTokens')!;
 		capability.dynamicRegistration = true;
 		capability.tokenTypes = [
     		SemanticTokenTypes.namespace,
@@ -96,7 +96,7 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Semanti
 		};
 		capability.multilineTokenSupport = false;
 		capability.overlappingTokenSupport = false;
-		ensure(ensure(capabilites, 'workspace')!, 'semanticTokens')!.refreshSupport = true;
+		ensure(ensure(capabilities, 'workspace')!, 'semanticTokens')!.refreshSupport = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {

@@ -19,7 +19,7 @@ import {
 	DefinitionProvider, ReferenceProvider, DocumentHighlightProvider, CodeActionProvider, DocumentSymbolProvider, CodeLensProvider, DocumentFormattingEditProvider,
 	DocumentRangeFormattingEditProvider, OnTypeFormattingEditProvider, RenameProvider, DocumentLinkProvider, DocumentColorProvider, DeclarationProvider,
 	FoldingRangeProvider, ImplementationProvider, SelectionRangeProvider, TypeDefinitionProvider, WorkspaceSymbolProvider, CallHierarchyProvider,
-	DocumentSymbolProviderMetadata, EventEmitter, OnTypeRenameProvider, version
+	DocumentSymbolProviderMetadata, EventEmitter, OnTypeRenameProvider
 } from 'vscode';
 
 import {

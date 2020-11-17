@@ -32,8 +32,8 @@ export class FoldingRangeFeature extends TextDocumentFeature<boolean | FoldingRa
 		super(client, FoldingRangeRequest.type);
 	}
 
-	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		let capability = ensure(ensure(capabilites, 'textDocument')!, 'foldingRange')!;
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
+		let capability = ensure(ensure(capabilities, 'textDocument')!, 'foldingRange')!;
 		capability.dynamicRegistration = true;
 		capability.rangeLimit = 5000;
 		capability.lineFoldingOnly = true;

@@ -32,8 +32,8 @@ export class SelectionRangeFeature extends TextDocumentFeature<boolean | Selecti
 		super(client, SelectionRangeRequest.type);
 	}
 
-	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		let capability = ensure(ensure(capabilites, 'textDocument')!, 'selectionRange')!;
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
+		let capability = ensure(ensure(capabilities, 'textDocument')!, 'selectionRange')!;
 		capability.dynamicRegistration = true;
 	}
 

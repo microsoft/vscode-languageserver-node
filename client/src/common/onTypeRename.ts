@@ -30,8 +30,8 @@ export class OnTypeRenameFeature extends TextDocumentFeature<boolean | proto.OnT
 		super(client, proto.OnTypeRenameRequest.type);
 	}
 
-	public fillClientCapabilities(capabilites: proto.ClientCapabilities): void {
-		const onTypeRenameSupport = ensure(ensure(capabilites, 'textDocument')!, 'onTypeRename')!;
+	public fillClientCapabilities(capabilities: proto.ClientCapabilities): void {
+		const onTypeRenameSupport = ensure(ensure(capabilities, 'textDocument')!, 'onTypeRename')!;
 		onTypeRenameSupport.dynamicRegistration = true;
 	}
 

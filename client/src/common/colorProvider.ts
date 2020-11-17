@@ -38,8 +38,8 @@ export class ColorProviderFeature extends TextDocumentFeature<boolean | Document
 		super(client, DocumentColorRequest.type);
 	}
 
-	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		ensure(ensure(capabilites, 'textDocument')!, 'colorProvider')!.dynamicRegistration = true;
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
+		ensure(ensure(capabilities, 'textDocument')!, 'colorProvider')!.dynamicRegistration = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
