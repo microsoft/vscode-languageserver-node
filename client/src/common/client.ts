@@ -1229,11 +1229,19 @@ class WillCreateFilesFeature implements DynamicFeature<FileOperationRegistration
 
 	public initialize(capabilities: ServerCapabilities, _: DocumentSelector): void {
 		let syncOptions = capabilities.files;
-		if (syncOptions?.willCreate?.globPattern) {
-			this.register({
-				id: UUID.generateUuid(),
-				registerOptions: { globPattern: syncOptions.willCreate.globPattern }
-			});
+		if (syncOptions?.willCreate?.globPattern !== undefined) {
+			try {
+				this.register({
+					id: UUID.generateUuid(),
+					registerOptions: { globPattern: syncOptions.willCreate.globPattern }
+				});
+			} catch (e) {
+				if (e instanceof InvalidGlobError) {
+					this._client.warn(`Ignoring invalid glob pattern for willCreate registration: ${syncOptions.willCreate.globPattern}`);
+				} else {
+					throw e;
+				}
+			}
 		}
 	}
 
@@ -1244,7 +1252,7 @@ class WillCreateFilesFeature implements DynamicFeature<FileOperationRegistration
 		try {
 			const regex = convert2RegExp(data.registerOptions.globPattern);
 			if (!regex) {
-				throw `Invalid pattern ${data.registerOptions.globPattern}!`;
+				throw new InvalidGlobError(`Invalid pattern ${data.registerOptions.globPattern}!`);
 			}
 			this._globPatterns.set(data.id, regex);
 		} catch (e) {
@@ -1337,6 +1345,13 @@ class DidSaveTextDocumentFeature extends DocumentNotifications<DidSaveTextDocume
 	public register(data: RegistrationData<TextDocumentSaveRegistrationOptions>): void {
 		this._includeText = !!data.registerOptions.includeText;
 		super.register(data);
+	}
+}
+
+class InvalidGlobError extends Error {
+	constructor(message: string) {
+		super(message);
+		Object.setPrototypeOf(this, new.target.prototype);
 	}
 }
 
