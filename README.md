@@ -34,9 +34,13 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 
 ## History
 
+## 3.16.0-next.11 Protocol, 6.0.0-next.7 JSON-RPC, 7.0.0-next.13 Client and 7.0.0-next.11 Server.
+
+* For a detailed list of changes made in the 3.16.0 version of the protocol see the [change log](https://microsoft.github.io/language-server-protocol/specifications/specification-3-16/#version_3_16_0) of the 3.16 specification.
+
 ## 3.16.0-next.10 Protocol, 6.0.0-next.7 JSON-RPC, 7.0.0-next.12 Client and 7.0.0-next.10 Server.
 
-* cleanup of Request and Notification types. Removed the unecessary generic parameter RO. This is a breaking change. To adapt simply remove the type argument.
+* cleanup of Request and Notification types. Removed the unnecessary generic parameter RO. This is a breaking change. To adapt simply remove the type argument.
 * added the new concept of a RegistrationType which decouple the registration method from the actual request or notification method. This is a breaking change for implementors of custom features. To adapt rename the `messages` property to `registrationType` and return a corresponding `RegistrationType`. Additional remove the first parameter from the `register` method.
 * cleanup of `ErrorCodes`. LSP specific error codes got moved to a new namespace `LSPErrorCodes`. The namespace `ErrorCodes` in `jsonrpc` is not correctly reserved for JSON RPC specific error codes. This is a breaking change. To resolve it use `LSPErrorCodes` instead.
 
@@ -54,7 +58,7 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 ## 3.16.0-next.1 Protocol, 5.1.0-next.1 JSON-RPC, 6.2.0-next.1 Client and 6.2.0-next.1 Server.
 
 * support for complex diagnostic codes
-* support for pluggable cancellation strategy
+* support for plugable cancellation strategy
 * support for insert / replace edits in completion items.
 
 
