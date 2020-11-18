@@ -6,8 +6,8 @@
 
 import * as assert from 'assert';
 import * as path from 'path';
-import * as lsclient from 'vscode-languageclient/node';
 import * as vscode from 'vscode';
+import * as lsclient from 'vscode-languageclient/node';
 
 suite('Client integration', () => {
 
@@ -271,7 +271,7 @@ suite('Client integration', () => {
 		isArray(result, vscode.Location, 2);
 		for (let i = 0; i < result.length; i++) {
 			const location = result[i];
-			rangeEqual(location.range, i, i, i ,i);
+			rangeEqual(location.range, i, i, i, i);
 			assert.strictEqual(location.uri.toString(), document.uri.toString());
 		}
 
@@ -341,7 +341,6 @@ suite('Client integration', () => {
 			middleware.handleProgress = ((type: typeof lsclient.WorkDoneProgress.type, token: lsclient.ProgressToken, params: lsclient.WorkDoneProgressBegin | lsclient.WorkDoneProgressReport | lsclient.WorkDoneProgressEnd, next: lsclient.HandleProgressSignature<lsclient.WorkDoneProgressBegin | lsclient.WorkDoneProgressReport | lsclient.WorkDoneProgressEnd>) => {
 				if (token === progressToken) {
 					middlewareEvents.push(params);
-					// TODO(dantup): Should be when we get end event!
 					if (params.kind === 'end')
 						setImmediate(resolve);
 				}
@@ -513,7 +512,7 @@ suite('Client integration', () => {
 		await provider.provideDocumentColors(document, tokenSource.token);
 		middleware.provideDocumentColors = undefined;
 
-		const presentations = await provider.provideColorPresentations(color.color, { document, range}, tokenSource.token);
+		const presentations = await provider.provideColorPresentations(color.color, { document, range }, tokenSource.token);
 
 		isArray(presentations, vscode.ColorPresentation);
 		const presentation = presentations[0];
@@ -523,7 +522,7 @@ suite('Client integration', () => {
 			middlewareCalled++;
 			return n(c, x, t);
 		};
-		await provider.provideColorPresentations(color.color, { document, range}, tokenSource.token);
+		await provider.provideColorPresentations(color.color, { document, range }, tokenSource.token);
 		middleware.provideColorPresentations = undefined;
 		assert.strictEqual(middlewareCalled, 2);
 	});
@@ -604,7 +603,7 @@ suite('Client integration', () => {
 		assert.strictEqual(middlewareCalled, true);
 	});
 
-	test('Type Definition', async() => {
+	test('Type Definition', async () => {
 		const provider = client.getFeature(lsclient.TypeDefinitionRequest.method).getProvider(document);
 		isDefined(provider);
 		const result = (await provider.provideTypeDefinition(document, position, tokenSource.token)) as vscode.Location;
