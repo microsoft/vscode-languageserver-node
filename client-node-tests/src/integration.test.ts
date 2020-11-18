@@ -338,15 +338,15 @@ suite('Client integration', () => {
 		const handlerEvents: Array<lsclient.WorkDoneProgressBegin | lsclient.WorkDoneProgressReport | lsclient.WorkDoneProgressEnd> = [];
 		await new Promise((resolve) => {
 			// Set up middleware that captures progress events.
-			middleware.handleProgress = (type, token, params, next) => {
+			middleware.handleProgress = ((type: typeof lsclient.WorkDoneProgress.type, token: lsclient.ProgressToken, params: lsclient.WorkDoneProgressBegin | lsclient.WorkDoneProgressReport | lsclient.WorkDoneProgressEnd, next: lsclient.HandleProgressSignature<lsclient.WorkDoneProgressBegin | lsclient.WorkDoneProgressReport | lsclient.WorkDoneProgressEnd>) => {
 				if (token === progressToken) {
-					middlewareEvents.push(type);
+					middlewareEvents.push(params);
 					// TODO(dantup): Should be when we get end event!
 					if (params.kind === 'end')
 						setImmediate(resolve);
 				}
 				return next(type, token, params);
-			};
+			}) as any;
 
 			// Register a handler for the real progress events.
 			client.onProgress(lsclient.WorkDoneProgress.type, progressToken, (params) => {
@@ -364,13 +364,13 @@ suite('Client integration', () => {
 		middleware.handleProgress = undefined;
 
 		// Ensure all events were handled.
-		assert.strictEqual(
+		assert.deepStrictEqual(
 			middlewareEvents.map((p) => p.kind),
-			['begin', 'update', 'end'],
+			['begin', 'report', 'end'],
 		);
-		assert.strictEqual(
+		assert.deepStrictEqual(
 			handlerEvents.map((p) => p.kind),
-			['begin', 'update', 'end'],
+			['begin', 'report', 'end'],
 		);
 	});
 
