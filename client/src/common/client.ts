@@ -2817,11 +2817,11 @@ export abstract class BaseLanguageClient {
 			throw new Error('Language client is not ready yet');
 		}
 		try {
-			if (type == WorkDoneProgress.type) {
+			if (WorkDoneProgress.is(type)) {
 				const handleWorkDoneProgress = this._clientOptions.middleware!.handleWorkDoneProgress;
 				if (handleWorkDoneProgress !== undefined) {
 					return this._resolvedConnection!.onProgress(type, token, (params) => {
-						handleWorkDoneProgress(token, params, () => handler(params));
+						handleWorkDoneProgress(token, params, () => handler(params as unknown as P));
 					});
 				}
 			}
