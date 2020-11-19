@@ -49,7 +49,7 @@ import {
 	DocumentRangeFormattingOptions, DocumentOnTypeFormattingOptions, RenameOptions, DocumentLinkOptions, CompletionItemTag, DiagnosticTag, DocumentColorRequest,
 	DeclarationRequest, FoldingRangeRequest, ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, SymbolTag, CallHierarchyPrepareRequest,
 	CancellationStrategy, SaveOptions, LSPErrorCodes, CodeActionResolveRequest, RegistrationType, SemanticTokensRegistrationType, InsertTextMode, ShowDocumentRequest,
-	ShowDocumentParams, ShowDocumentResult, OnTypeRenameRequest
+	ShowDocumentParams, ShowDocumentResult, OnTypeRenameRequest, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressReport
 } from 'vscode-languageserver-protocol';
 
 import type { ColorProviderMiddleware } from './colorProvider';
@@ -347,8 +347,8 @@ export interface HandleDiagnosticsSignature {
 	(this: void, uri: Uri, diagnostics: VDiagnostic[]): void;
 }
 
-export interface HandleProgressSignature<P> {
-	(this: void, type: ProgressType<P>, token: ProgressToken, params: P): void;
+export interface HandleWorkDoneProgressSignature {
+	(this: void, token: ProgressToken, params: WorkDoneProgressBegin | WorkDoneProgressReport | WorkDoneProgressEnd): void;
 }
 
 export interface ProvideCompletionItemsSignature {
@@ -473,7 +473,7 @@ export interface _Middleware {
 	didClose?: NextSignature<TextDocument, void>;
 
 	handleDiagnostics?: (this: void, uri: Uri, diagnostics: VDiagnostic[], next: HandleDiagnosticsSignature) => void;
-	handleProgress?: <P>(this: void, type: ProgressType<P>, token: ProgressToken, params: P, next: HandleProgressSignature<P>) => void;
+	handleWorkDoneProgress?: (this: void, token: ProgressToken, params: WorkDoneProgressBegin | WorkDoneProgressReport | WorkDoneProgressEnd, next: HandleWorkDoneProgressSignature) => void;
 	provideCompletionItem?: (this: void, document: TextDocument, position: VPosition, context: VCompletionContext, token: CancellationToken, next: ProvideCompletionItemsSignature) => ProviderResult<VCompletionItem[] | VCompletionList>;
 	resolveCompletionItem?: (this: void, item: VCompletionItem, token: CancellationToken, next: ResolveCompletionItemSignature) => ProviderResult<VCompletionItem>;
 	provideHover?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideHoverSignature) => ProviderResult<VHover>;
@@ -2817,14 +2817,16 @@ export abstract class BaseLanguageClient {
 			throw new Error('Language client is not ready yet');
 		}
 		try {
-			const handleProgress = this._clientOptions.middleware!.handleProgress;
-			if (handleProgress !== undefined) {
-				return this._resolvedConnection!.onProgress(type, token, (params: P) => {
-					handleProgress(type, token, params, () => handler(params));
-				});
-			} else {
-				return this._resolvedConnection!.onProgress(type, token, handler);
+			if (type == WorkDoneProgress.type) {
+				const handleWorkDoneProgress = this._clientOptions.middleware!.handleWorkDoneProgress;
+				if (handleWorkDoneProgress !== undefined) {
+					return this._resolvedConnection!.onProgress(type, token, (params) => {
+						handleWorkDoneProgress(token, params, () => handler(params));
+					});
+				}
 			}
+
+			return this._resolvedConnection!.onProgress(type, token, handler);
 		} catch (error) {
 			this.error(`Registering progress handler for token ${token} failed.`, error);
 			throw error;
