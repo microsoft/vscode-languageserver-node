@@ -332,44 +332,39 @@ suite('Client integration', () => {
 		assert.ok(middlewareCalled);
 	});
 
-	test('Progress', async () => {
+	test.only('Progress', async () => {
 		const progressToken = 'TEST-PROGRESS-TOKEN';
 		const middlewareEvents: Array<lsclient.WorkDoneProgressBegin | lsclient.WorkDoneProgressReport | lsclient.WorkDoneProgressEnd> = [];
-		const handlerEvents: Array<lsclient.WorkDoneProgressBegin | lsclient.WorkDoneProgressReport | lsclient.WorkDoneProgressEnd> = [];
-		await new Promise((resolve) => {
-			// Set up middleware that captures progress events.
-			middleware.handleWorkDoneProgress = (token: lsclient.ProgressToken, params, next) => {
-				if (token === progressToken) {
-					middlewareEvents.push(params);
-					if (params.kind === 'end')
-						setImmediate(resolve);
-				}
-				return next(token, params);
-			};
+		let currentProgressResolver: () => void | undefined;
 
-			// Register a handler for the real progress events.
-			client.onProgress(lsclient.WorkDoneProgress.type, progressToken, (params) => {
-				handlerEvents.push(params);
+		// Set up middleware that calls the current resolve function when it gets its 'end' progress event.
+		middleware.handleWorkDoneProgress = (token: lsclient.ProgressToken, params, next) => {
+			if (token === progressToken) {
+				middlewareEvents.push(params);
+				if (params.kind === 'end')
+					setImmediate(currentProgressResolver);
+			}
+			return next(token, params);
+		};
+
+		// Trigger multiple sample progress events.
+		for (let i = 0; i < 2; i++) {
+			await new Promise((resolve) => {
+				currentProgressResolver = resolve;
+				client.sendRequest(
+					new lsclient.ProtocolRequestType<any, null, never, any, any>('testing/sendSampleProgress'),
+					{},
+					tokenSource.token,
+				);
 			});
-
-			// Send a request to the server that triggers sample events.
-			client.sendRequest(
-				new lsclient.ProtocolRequestType<any, null, never, any, any>('testing/sendSampleProgress'),
-				{},
-				tokenSource.token,
-			);
-		});
+		}
 
 		middleware.handleWorkDoneProgress = undefined;
 
 		// Ensure all events were handled.
 		assert.deepStrictEqual(
 			middlewareEvents.map((p) => p.kind),
-			['begin', 'report', 'end'],
-		);
-		assert.deepStrictEqual(
-			handlerEvents.map((p) => p.kind),
-			['begin', 'report', 'end'],
+			['begin', 'report', 'end', 'begin', 'report', 'end'],
 		);
 	});
 
