@@ -332,7 +332,7 @@ suite('Client integration', () => {
 		assert.ok(middlewareCalled);
 	});
 
-	test.only('Progress', async () => {
+	test('Progress', async () => {
 		const progressToken = 'TEST-PROGRESS-TOKEN';
 		const middlewareEvents: Array<lsclient.WorkDoneProgressBegin | lsclient.WorkDoneProgressReport | lsclient.WorkDoneProgressEnd> = [];
 		let currentProgressResolver: () => void | undefined;
