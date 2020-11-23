@@ -202,7 +202,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 
 	function asSaveTextDocumentParams(textDocument: code.TextDocument, includeContent: boolean = false): proto.DidSaveTextDocumentParams {
 		let result: proto.DidSaveTextDocumentParams = {
-			textDocument: asVersionedTextDocumentIdentifier(textDocument)
+			textDocument: asTextDocumentIdentifier(textDocument)
 		};
 		if (includeContent) {
 			result.text = textDocument.getText();

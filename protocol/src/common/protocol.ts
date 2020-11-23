@@ -1420,7 +1420,7 @@ export interface DidSaveTextDocumentParams {
 	/**
 	 * The document that was closed.
 	 */
-	textDocument: VersionedTextDocumentIdentifier;
+	textDocument: TextDocumentIdentifier;
 
 	/**
 	 * Optional the content when saved. Depends on the includeText value
