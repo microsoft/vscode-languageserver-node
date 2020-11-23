@@ -34,7 +34,7 @@ export enum SemanticTokenTypes {
 	enumMember = 'enumMember',
 	event = 'event',
 	function = 'function',
-	member = 'member',
+	method = 'method',
 	macro = 'macro',
 	keyword = 'keyword',
 	modifier = 'modifier',
@@ -233,7 +233,7 @@ export interface SemanticTokensOptions extends WorkDoneProgressOptions {
 	legend: SemanticTokensLegend;
 
 	/**
-	 * Server supports providing semantic tokens for a sepcific range
+	 * Server supports providing semantic tokens for a specific range
 	 * of a document.
 	 */
 	range?: boolean | {
@@ -295,7 +295,7 @@ export interface SemanticTokensDeltaParams extends WorkDoneProgressParams, Parti
 
 	/**
 	 * The result id of a previous response. The result Id can either point to a full response
-	 * or a delta response depending on what was recevied last.
+	 * or a delta response depending on what was received last.
 	 */
 	previousResultId: string;
 }

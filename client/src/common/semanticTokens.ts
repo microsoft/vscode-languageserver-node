@@ -65,7 +65,7 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Semanti
     		SemanticTokenTypes.enumMember,
     		SemanticTokenTypes.event,
     		SemanticTokenTypes.function,
-    		SemanticTokenTypes.member,
+    		SemanticTokenTypes.method,
     		SemanticTokenTypes.macro,
     		SemanticTokenTypes.keyword,
     		SemanticTokenTypes.modifier,
