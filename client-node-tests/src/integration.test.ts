@@ -112,7 +112,9 @@ suite('Client integration', () => {
 				},
 				referencesProvider: true,
 				documentHighlightProvider: true,
-				codeActionProvider: true,
+				codeActionProvider: {
+					resolveProvider: true
+				},
 				documentFormattingProvider: true,
 				documentRangeFormattingProvider: true,
 				documentOnTypeFormattingProvider: {
@@ -321,6 +323,9 @@ suite('Client integration', () => {
 		assert.strictEqual(action.command?.title, 'title');
 		assert.strictEqual(action.command?.command, 'id');
 
+		const resolved = (await provider.resolveCodeAction!(result[0], tokenSource.token));
+		assert.strictEqual(resolved?.title, 'resolved');
+
 		let middlewareCalled: boolean = false;
 		middleware.provideCodeActions = (d, r, c, t, n) => {
 			middlewareCalled = true;
@@ -329,6 +334,15 @@ suite('Client integration', () => {
 
 		await provider.provideCodeActions(document, range, { diagnostics: [] }, tokenSource.token);
 		middleware.provideCodeActions = undefined;
+		assert.ok(middlewareCalled);
+
+		middlewareCalled = false;
+		middleware.resolveCodeAction = (c, t, n) => {
+			middlewareCalled = true;
+			return n(c, t);
+		};
+		await provider.resolveCodeAction!(result[0], tokenSource.token);
+		middleware.resolveCodeAction = undefined;
 		assert.ok(middlewareCalled);
 	});
 

@@ -54,7 +54,9 @@ connection.onInitialize((params: InitializeParams): any => {
 		},
 		referencesProvider: true,
 		documentHighlightProvider: true,
-		codeActionProvider: true,
+		codeActionProvider: {
+			resolveProvider: true
+		},
 		documentFormattingProvider: true,
 		documentRangeFormattingProvider: true,
 		documentOnTypeFormattingProvider: {
@@ -151,6 +153,11 @@ connection.onCodeAction((_params) => {
 	return [
 		CodeAction.create('title', Command.create('title', 'id'))
 	];
+});
+
+connection.onCodeActionResolve((codeAction) => {
+	codeAction.title = 'resolved';
+	return codeAction;
 });
 
 connection.onDocumentFormatting((_params) => {
