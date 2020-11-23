@@ -24,7 +24,7 @@ import {
 	DocumentSymbolRequest, WorkspaceSymbolRequest, CodeActionRequest, CodeLensRequest, CodeLensResolveRequest, DocumentFormattingRequest, DocumentRangeFormattingRequest,
 	DocumentOnTypeFormattingRequest, RenameRequest, PrepareRenameRequest, DocumentLinkRequest, DocumentLinkResolveRequest, DocumentColorRequest, ColorPresentationRequest,
 	FoldingRangeRequest, SelectionRangeRequest, ExecuteCommandRequest, InitializeRequest, ResponseError, RegistrationType, RequestType0, RequestType,
-	NotificationType0, NotificationType
+	NotificationType0, NotificationType, CodeActionResolveRequest
 } from 'vscode-languageserver-protocol';
 
 import * as Is from './utils/is';
@@ -1310,6 +1310,13 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	onCodeAction(handler: ServerRequestHandler<CodeActionParams, (Command | CodeAction)[] | undefined | null, (Command | CodeAction)[], void>): void;
 
 	/**
+	 * Installs a handler for the `CodeAction` resolve request.
+	 *
+	 * @param handler The corresponding handler.
+	 */
+	onCodeActionResolve(handler: RequestHandler<CodeAction, CodeAction, void>): void;
+
+	/**
 	 * Compute a list of [lenses](#CodeLens). This call should return as fast as possible and if
 	 * computing the commands is expensive implementers should only return code lens objects with the
 	 * range set and handle the resolve request.
@@ -1626,6 +1633,9 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 		}),
 		onCodeAction: (handler) => connection.onRequest(CodeActionRequest.type, (params, cancel) => {
 			return handler(params, cancel, attachWorkDone(connection, params), attachPartialResult(connection, params));
+		}),
+		onCodeActionResolve: (handler) => connection.onRequest(CodeActionResolveRequest.type, (params, cancel) => {
+			return handler(params, cancel);
 		}),
 		onCodeLens: (handler) => connection.onRequest(CodeLensRequest.type, (params, cancel) => {
 			return handler(params, cancel, attachWorkDone(connection, params), attachPartialResult(connection, params));
