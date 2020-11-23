@@ -435,10 +435,14 @@ connection.onCodeLens((params) => {
 	return [
 		{
 			range: Range.create(2,0,2,10),
-			command: Command.create('My Code Lens', 'commandId'),
 			data: '1',
 		}
 	]
+});
+
+connection.onCodeLensResolve((codeLens) => {
+	codeLens.command = Command.create('My Code Lens', 'commandId');
+	return codeLens;
 });
 
 connection.onDocumentFormatting((params) => {
