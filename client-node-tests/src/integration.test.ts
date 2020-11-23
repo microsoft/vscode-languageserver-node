@@ -6,8 +6,8 @@
 
 import * as assert from 'assert';
 import * as path from 'path';
-import * as lsclient from 'vscode-languageclient/node';
 import * as vscode from 'vscode';
+import * as lsclient from 'vscode-languageclient/node';
 
 suite('Client integration', () => {
 
@@ -273,7 +273,7 @@ suite('Client integration', () => {
 		isArray(result, vscode.Location, 2);
 		for (let i = 0; i < result.length; i++) {
 			const location = result[i];
-			rangeEqual(location.range, i, i, i ,i);
+			rangeEqual(location.range, i, i, i, i);
 			assert.strictEqual(location.uri.toString(), document.uri.toString());
 		}
 
@@ -344,6 +344,42 @@ suite('Client integration', () => {
 		await provider.resolveCodeAction!(result[0], tokenSource.token);
 		middleware.resolveCodeAction = undefined;
 		assert.ok(middlewareCalled);
+	});
+
+	test('Progress', async () => {
+		const progressToken = 'TEST-PROGRESS-TOKEN';
+		const middlewareEvents: Array<lsclient.WorkDoneProgressBegin | lsclient.WorkDoneProgressReport | lsclient.WorkDoneProgressEnd> = [];
+		let currentProgressResolver: () => void | undefined;
+
+		// Set up middleware that calls the current resolve function when it gets its 'end' progress event.
+		middleware.handleWorkDoneProgress = (token: lsclient.ProgressToken, params, next) => {
+			if (token === progressToken) {
+				middlewareEvents.push(params);
+				if (params.kind === 'end')
+					setImmediate(currentProgressResolver);
+			}
+			return next(token, params);
+		};
+
+		// Trigger multiple sample progress events.
+		for (let i = 0; i < 2; i++) {
+			await new Promise((resolve) => {
+				currentProgressResolver = resolve;
+				client.sendRequest(
+					new lsclient.ProtocolRequestType<any, null, never, any, any>('testing/sendSampleProgress'),
+					{},
+					tokenSource.token,
+				);
+			});
+		}
+
+		middleware.handleWorkDoneProgress = undefined;
+
+		// Ensure all events were handled.
+		assert.deepStrictEqual(
+			middlewareEvents.map((p) => p.kind),
+			['begin', 'report', 'end', 'begin', 'report', 'end'],
+		);
 	});
 
 	test('Document Formatting', async () => {
@@ -485,7 +521,7 @@ suite('Client integration', () => {
 		await provider.provideDocumentColors(document, tokenSource.token);
 		middleware.provideDocumentColors = undefined;
 
-		const presentations = await provider.provideColorPresentations(color.color, { document, range}, tokenSource.token);
+		const presentations = await provider.provideColorPresentations(color.color, { document, range }, tokenSource.token);
 
 		isArray(presentations, vscode.ColorPresentation);
 		const presentation = presentations[0];
@@ -495,7 +531,7 @@ suite('Client integration', () => {
 			middlewareCalled++;
 			return n(c, x, t);
 		};
-		await provider.provideColorPresentations(color.color, { document, range}, tokenSource.token);
+		await provider.provideColorPresentations(color.color, { document, range }, tokenSource.token);
 		middleware.provideColorPresentations = undefined;
 		assert.strictEqual(middlewareCalled, 2);
 	});
@@ -576,7 +612,7 @@ suite('Client integration', () => {
 		assert.strictEqual(middlewareCalled, true);
 	});
 
-	test('Type Definition', async() => {
+	test('Type Definition', async () => {
 		const provider = client.getFeature(lsclient.TypeDefinitionRequest.method).getProvider(document);
 		isDefined(provider);
 		const result = (await provider.provideTypeDefinition(document, position, tokenSource.token)) as vscode.Location;
