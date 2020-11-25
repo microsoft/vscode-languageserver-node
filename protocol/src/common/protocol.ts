@@ -123,6 +123,8 @@ export namespace DocumentFilter {
  * A document selector is the combination of one or many document filters.
  *
  * @sample `let sel:DocumentSelector = [{ language: 'typescript' }, { language: 'json', pattern: '**∕tsconfig.json' }]`;
+ *
+ * The use of a string as a document filter is deprecated @since 3.16.0.
  */
 export type DocumentSelector = (string | DocumentFilter)[];
 
@@ -569,6 +571,23 @@ export interface RegularExpressionsClientCapabilities {
 }
 
 /**
+ * Client capabilities specific to the used markdown parser.
+ *
+ * @since 3.16.0 - proposed state
+ */
+export interface MarkdownClientCapabilities {
+	/**
+	 * The name of the parser.
+	 */
+	parser: string;
+
+	/**
+	 * The version of the parser.
+	 */
+	version?: string;
+}
+
+/**
  * General client capabilities.
  *
  * @since 3.16.0 - proposed state
@@ -576,8 +595,17 @@ export interface RegularExpressionsClientCapabilities {
 export interface GeneralClientCapabilities {
 	/**
 	 * Client capabilities specific to regular expressions.
+	 *
+	 * @since 3.16.0 - proposed state
 	 */
 	regularExpressions?: RegularExpressionsClientCapabilities;
+
+	/**
+	 * Client capabilities specific to the client's markdown parser.
+	 *
+	 * @since 3.16.0 - proposed state
+	 */
+	markdown?: MarkdownClientCapabilities;
 }
 
 /**
@@ -1437,7 +1465,7 @@ export interface DidSaveTextDocumentParams {
 	/**
 	 * The document that was closed.
 	 */
-	textDocument: VersionedTextDocumentIdentifier;
+	textDocument: TextDocumentIdentifier;
 
 	/**
 	 * Optional the content when saved. Depends on the includeText value
@@ -2570,6 +2598,17 @@ export interface CodeActionClientCapabilities {
 		  */
 		 properties: string[];
 	 };
+
+	/**
+	 * Whether th client honors the change annotations in
+	 * text edits and resource operations returned via the
+	 * `CodeAction#edit` property by for example presenting
+	 * the workspace edit in the user interface and asking
+	 * for confirmation.
+	 *
+	 * @since 3.16.0 - proposed state
+	 */
+	honorsChangeAnnotations?: boolean;
 }
 
 /**
@@ -3025,16 +3064,27 @@ export interface RenameClientCapabilities {
 	 * Client supports testing for validity of rename operations
 	 * before execution.
 	 *
-	 * @since version 3.12.0
+	 * @since 3.12.0
 	 */
 	prepareSupport?: boolean;
 
 	/**
 	 * Client supports the default behavior result.
 	 *
-	 * @since version 3.16.0
+	 * @since 3.16.0
 	 */
 	prepareSupportDefaultBehavior?: boolean;
+
+	/**
+	 * Whether th client honors the change annotations in
+	 * text edits and resource operations returned via the
+	 * rename request's workspace edit by for example presenting
+	 * the workspace edit in the user interface and asking
+	 * for confirmation.
+	 *
+	 * @since 3.16.0 - proposed state
+	 */
+	honorsChangeAnnotations?: boolean;
 }
 
 /**
@@ -3185,7 +3235,7 @@ export interface WorkspaceEditClientCapabilities {
 	normalizesLineEndings?: boolean;
 
 	/**
-	 * Whether the client supports change annotations on text edits,
+	 * Whether the client in general supports change annotations on text edits,
 	 * create file, rename file and delete file changes.
 	 *
 	 * @since 3.16.0 - proposed state

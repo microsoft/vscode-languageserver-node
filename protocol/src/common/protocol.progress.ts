@@ -107,6 +107,10 @@ export interface WorkDoneProgressEnd {
 
 export namespace WorkDoneProgress {
 	export const type = new ProgressType<WorkDoneProgressBegin | WorkDoneProgressReport | WorkDoneProgressEnd>();
+
+	export function is(value: ProgressType<any>): value is typeof type {
+		return value === type;
+	}
 }
 
 export interface WorkDoneProgressCreateParams  {

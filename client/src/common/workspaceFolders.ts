@@ -42,7 +42,7 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 	}
 
 	public fillInitializeParams(params: InitializeParams): void {
-		let folders = workspace.workspaceFolders;
+		const folders = workspace.workspaceFolders;
 		this.initializeWithFolders(folders);
 
 		if (folders === void 0) {
@@ -62,24 +62,24 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 	}
 
 	public initialize(capabilities: ServerCapabilities): void {
-		let client = this._client;
+		const client = this._client;
 		client.onRequest(WorkspaceFoldersRequest.type, (token: CancellationToken) => {
-			let workspaceFolders: WorkspaceFoldersRequest.HandlerSignature = () => {
-				let folders = workspace.workspaceFolders;
-				if (folders === void 0) {
+			const workspaceFolders: WorkspaceFoldersRequest.HandlerSignature = () => {
+				const folders = workspace.workspaceFolders;
+				if (folders === undefined) {
 					return null;
 				}
-				let result: WorkspaceFolder[] = folders.map((folder) => {
+				const result: WorkspaceFolder[] = folders.map((folder) => {
 					return this.asProtocol(folder);
 				});
 				return result;
 			};
-			let middleware = client.clientOptions.middleware!.workspace;
+			const middleware = client.clientOptions.middleware!.workspace;
 			return middleware && middleware.workspaceFolders
 				? middleware.workspaceFolders(token, workspaceFolders)
 				: workspaceFolders(token);
 		});
-		let value = access(access(access(capabilities, 'workspace'), 'workspaceFolders'), 'changeNotifications');
+		const value = access(access(access(capabilities, 'workspace'), 'workspaceFolders'), 'changeNotifications');
 		let id: string | undefined;
 		if (typeof value === 'string') {
 			id = value;

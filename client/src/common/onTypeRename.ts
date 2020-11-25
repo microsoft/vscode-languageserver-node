@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
-/// <reference path="./vscode-proposed.d.ts" />
+/// <reference path="../../typings/vscode-proposed.d.ts" />
 
 import * as code from 'vscode';
 import * as proto from 'vscode-languageserver-protocol';
@@ -30,8 +30,8 @@ export class OnTypeRenameFeature extends TextDocumentFeature<boolean | proto.OnT
 		super(client, proto.OnTypeRenameRequest.type);
 	}
 
-	public fillClientCapabilities(capabilites: proto.ClientCapabilities): void {
-		const onTypeRenameSupport = ensure(ensure(capabilites, 'textDocument')!, 'onTypeRename')!;
+	public fillClientCapabilities(capabilities: proto.ClientCapabilities): void {
+		const onTypeRenameSupport = ensure(ensure(capabilities, 'textDocument')!, 'onTypeRename')!;
 		onTypeRenameSupport.dynamicRegistration = true;
 	}
 

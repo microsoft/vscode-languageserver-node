@@ -46,7 +46,7 @@ async function go() {
 		 * Basic usage
 		 */
 		await runTests({
-			version: '1.46.0',
+			version: '1.51.0',
 			extensionDevelopmentPath,
 			extensionTestsPath,
 			launchArgs: [

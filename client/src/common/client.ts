@@ -49,7 +49,7 @@ import {
 	DocumentRangeFormattingOptions, DocumentOnTypeFormattingOptions, RenameOptions, DocumentLinkOptions, CompletionItemTag, DiagnosticTag, DocumentColorRequest,
 	DeclarationRequest, FoldingRangeRequest, ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, SymbolTag, CallHierarchyPrepareRequest,
 	CancellationStrategy, SaveOptions, LSPErrorCodes, CodeActionResolveRequest, RegistrationType, SemanticTokensRegistrationType, InsertTextMode, ShowDocumentRequest,
-	ShowDocumentParams, ShowDocumentResult, OnTypeRenameRequest, FileOperationRegistrationOptions, WillCreateFilesRequest
+	ShowDocumentParams, ShowDocumentResult, OnTypeRenameRequest, WillCreateFilesRequest, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressReport, FileOperationRegistrationOptions
 } from 'vscode-languageserver-protocol';
 
 import type { ColorProviderMiddleware } from './colorProvider';
@@ -354,6 +354,10 @@ export interface HandleDiagnosticsSignature {
 	(this: void, uri: Uri, diagnostics: VDiagnostic[]): void;
 }
 
+export interface HandleWorkDoneProgressSignature {
+	(this: void, token: ProgressToken, params: WorkDoneProgressBegin | WorkDoneProgressReport | WorkDoneProgressEnd): void;
+}
+
 export interface ProvideCompletionItemsSignature {
 	(this: void, document: TextDocument, position: VPosition, context: VCompletionContext, token: CancellationToken): ProviderResult<VCompletionItem[] | VCompletionList>;
 }
@@ -483,6 +487,7 @@ export interface _Middleware {
 	willDeleteFiles?: NextSignature<FileWillDeleteEvent, Thenable<VWorkspaceEdit | undefined>>;
 
 	handleDiagnostics?: (this: void, uri: Uri, diagnostics: VDiagnostic[], next: HandleDiagnosticsSignature) => void;
+	handleWorkDoneProgress?: (this: void, token: ProgressToken, params: WorkDoneProgressBegin | WorkDoneProgressReport | WorkDoneProgressEnd, next: HandleWorkDoneProgressSignature) => void;
 	provideCompletionItem?: (this: void, document: TextDocument, position: VPosition, context: VCompletionContext, token: CancellationToken, next: ProvideCompletionItemsSignature) => ProviderResult<VCompletionItem[] | VCompletionList>;
 	resolveCompletionItem?: (this: void, item: VCompletionItem, token: CancellationToken, next: ResolveCompletionItemSignature) => ProviderResult<VCompletionItem>;
 	provideHover?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideHoverSignature) => ProviderResult<VHover>;
@@ -2046,6 +2051,7 @@ class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions,
 				]
 			}
 		};
+		cap.honorsChangeAnnotations = false;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
@@ -2341,6 +2347,7 @@ class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameR
 		rename.dynamicRegistration = true;
 		rename.prepareSupport = true;
 		rename.prepareSupportDefaultBehavior = true;
+		rename.honorsChangeAnnotations = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
@@ -2917,6 +2924,15 @@ export abstract class BaseLanguageClient {
 			throw new Error('Language client is not ready yet');
 		}
 		try {
+			if (WorkDoneProgress.is(type)) {
+				const handleWorkDoneProgress = this._clientOptions.middleware!.handleWorkDoneProgress;
+				if (handleWorkDoneProgress !== undefined) {
+					return this._resolvedConnection!.onProgress(type, token, (params) => {
+						handleWorkDoneProgress(token, params, () => handler(params as unknown as P));
+					});
+				}
+			}
+
 			return this._resolvedConnection!.onProgress(type, token, handler);
 		} catch (error) {
 			this.error(`Registering progress handler for token ${token} failed.`, error);
@@ -3657,6 +3673,7 @@ export abstract class BaseLanguageClient {
 
 		const generalCapabilities = ensure(result, 'general')!;
 		generalCapabilities.regularExpressions = { engine: 'ECMAScript', version: 'ES2020' };
+		generalCapabilities.markdown = { parser: 'marked', version: '1.1.0'};
 
 		for (let feature of this._features) {
 			feature.fillClientCapabilities(result);
@@ -3673,9 +3690,9 @@ export abstract class BaseLanguageClient {
 
 	private handleRegistrationRequest(params: RegistrationParams): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
-			for (let registration of params.registrations) {
+			for (const registration of params.registrations) {
 				const feature = this._dynamicFeatures.get(registration.method);
-				if (!feature) {
+				if (feature === undefined) {
 					reject(new Error(`No feature implementation for ${registration.method} found. Registration failed.`));
 					return;
 				}
@@ -3685,7 +3702,12 @@ export abstract class BaseLanguageClient {
 					id: registration.id,
 					registerOptions: options
 				};
-				feature.register(data);
+				try {
+					feature.register(data);
+				} catch (err) {
+					reject(err);
+					return;
+				}
 			}
 			resolve();
 		});

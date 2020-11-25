@@ -21,10 +21,20 @@ export type URI = string;
  */
 export type integer = number;
 
+export namespace integer {
+	export const MIN_VALUE = -2147483648;
+	export const MAX_VALUE = 2147483647;
+}
+
 /**
  * Defines an unsigned integer in the range of 0 to 2^31 - 1.
  */
 export type uinteger = number;
+
+export namespace uinteger {
+	export const MIN_VALUE = 0;
+	export const MAX_VALUE = 2147483647;
+}
 
 /**
  * Defines a decimal number. Since decimal numbers are very

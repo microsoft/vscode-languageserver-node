@@ -28,7 +28,7 @@ documents.onWillSave((event) => {
 });
 
 connection.telemetry.logEvent({
-	name: 'my custome event',
+	name: 'my custom event',
 	data: {
 		foo: 10
 	}
@@ -125,7 +125,8 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 				documentSymbolProvider: true,
 				workspaceSymbolProvider: true,
 				codeActionProvider: {
-					codeActionKinds: [CodeActionKind.Refactor, CodeActionKind.Source, CodeActionKind.SourceOrganizeImports]
+					codeActionKinds: [CodeActionKind.Refactor, CodeActionKind.Source, CodeActionKind.SourceOrganizeImports],
+					resolveProvider: true
 				},
 				codeLensProvider: {
 					resolveProvider: true
@@ -144,7 +145,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 					}
 				},
 				implementationProvider: {
-					id: "mdjdjjdnnnndjjjjddd",
+					id: "AStaticImplementationID",
 					documentSelector: ["bat"]
 				},
 				typeDefinitionProvider: true,
@@ -401,37 +402,47 @@ connection.onWorkspaceSymbol((params) => {
 });
 
 connection.onCodeAction((params) => {
-	let document = documents.get(params.textDocument.uri);
-	let codeAction: CodeAction = {
+	const codeAction: CodeAction = {
 		title: "Custom Code Action",
 		kind: CodeActionKind.QuickFix,
-		edit: {
-			documentChanges: [
-				TextDocumentEdit.create(
-					VersionedTextDocumentIdentifier.create(document.uri, document.version),
-					[AnnotatedTextEdit.insert({ line: 0, character: 0}, "Code Action", ChangeAnnotation.create('Insert some text', true))]
-				),
-				CreateFile.create(`${folder}/newFile.bat`, { overwrite: true }),
-				TextDocumentEdit.create(
-					VersionedTextDocumentIdentifier.create(`${folder}/newFile.bat`, null),
-					[AnnotatedTextEdit.insert({ line: 0, character: 0 }, 'The initial content', ChangeAnnotation.create('Add additional content', true))]
-				)
-			]
-		}
+		data: params.textDocument.uri
 	}
 	return [
 		codeAction
 	];
 });
 
+connection.onCodeActionResolve((codeAction) => {
+	const document = documents.get(codeAction.data as string);
+	codeAction.edit = {
+		documentChanges: [
+			TextDocumentEdit.create(
+				VersionedTextDocumentIdentifier.create(document.uri, document.version),
+				[AnnotatedTextEdit.insert({ line: 0, character: 0}, "Code Action", ChangeAnnotation.create('Insert some text', true))]
+			),
+			CreateFile.create(`${folder}/newFile.bat`, { overwrite: true }),
+			TextDocumentEdit.create(
+				VersionedTextDocumentIdentifier.create(`${folder}/newFile.bat`, null),
+				[AnnotatedTextEdit.insert({ line: 0, character: 0 }, 'The initial content', ChangeAnnotation.create('Add additional content', true))]
+			)
+		]
+	};
+
+	return codeAction;
+});
+
 connection.onCodeLens((params) => {
 	return [
 		{
 			range: Range.create(2,0,2,10),
-			command: Command.create('My Code Lens', 'commandId'),
 			data: '1',
 		}
 	]
+});
+
+connection.onCodeLensResolve((codeLens) => {
+	codeLens.command = Command.create('My Code Lens', 'commandId');
+	return codeLens;
 });
 
 connection.onDocumentFormatting((params) => {

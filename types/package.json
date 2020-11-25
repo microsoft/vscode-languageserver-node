@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageserver-types",
 	"description": "Types used by the Language server for node",
-	"version": "3.16.0-next.4",
+	"version": "3.16.0-next.5",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"repository": {
@@ -16,7 +16,7 @@
 	"typings": "./lib/umd/main",
 	"module": "./lib/esm/main.js",
 	"scripts": {
-		"prepublishOnly": "npm run clean && npm run compile:esm && npm run compile && npm run test",
+		"prepublishOnly": "git clean -xfd . && npm install && npm run clean && npm run compile:esm && npm run compile && npm run test",
 		"postpublish": "node ../build/npm/post-publish.js",
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json",
 		"compile:esm": "node ../build/bin/tsc -b ./tsconfig.esm.json",

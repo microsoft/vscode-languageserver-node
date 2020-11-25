@@ -8,7 +8,8 @@ import {
 	createConnection, Connection, InitializeParams, ServerCapabilities, CompletionItemKind, ResourceOperationKind, FailureHandlingKind,
 	DiagnosticTag, CompletionItemTag, TextDocumentSyncKind, MarkupKind, SignatureHelp, SignatureInformation, ParameterInformation,
 	Location, Range, DocumentHighlight, DocumentHighlightKind, CodeAction, Command, TextEdit, Position, DocumentLink,
-	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, SymbolKind, WorkspaceEdit, WillCreateFilesRequest, FileOperationRegistrationOptions
+	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, SymbolKind, ProtocolRequestType, WorkDoneProgress,
+	WorkDoneProgressCreateRequest, WorkspaceEdit, WillCreateFilesRequest, FileOperationRegistrationOptions
 } from '../../../server/node';
 
 import { URI } from 'vscode-uri';
@@ -55,7 +56,9 @@ connection.onInitialize((params: InitializeParams): any => {
 		},
 		referencesProvider: true,
 		documentHighlightProvider: true,
-		codeActionProvider: true,
+		codeActionProvider: {
+			resolveProvider: true
+		},
 		documentFormattingProvider: true,
 		documentRangeFormattingProvider: true,
 		documentOnTypeFormattingProvider: {
@@ -160,6 +163,11 @@ connection.onCodeAction((_params) => {
 	return [
 		CodeAction.create('title', Command.create('title', 'id'))
 	];
+});
+
+connection.onCodeActionResolve((codeAction) => {
+	codeAction.title = 'resolved';
+	return codeAction;
 });
 
 connection.onDocumentFormatting((_params) => {
@@ -304,6 +312,17 @@ connection.languages.onOnTypeRename(() => {
 		wordPattern: '\\w'
 	};
 });
+
+connection.onRequest(
+	new ProtocolRequestType<null, null, never, any, any>('testing/sendSampleProgress'),
+	async (_, __) => {
+		const progressToken = 'TEST-PROGRESS-TOKEN';
+		await connection.sendRequest(WorkDoneProgressCreateRequest.type, { token: progressToken });
+		connection.sendProgress(WorkDoneProgress.type, progressToken, { kind: 'begin', title: 'Test Progress' });
+		connection.sendProgress(WorkDoneProgress.type, progressToken, { kind: 'report', percentage: 50, message: 'Halfway!' });
+		connection.sendProgress(WorkDoneProgress.type, progressToken, { kind: 'end', message: 'Completed!' });
+	},
+);
 
 // Listen on the connection
 connection.listen();

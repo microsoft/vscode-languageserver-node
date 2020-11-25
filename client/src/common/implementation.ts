@@ -32,8 +32,8 @@ export class ImplementationFeature extends TextDocumentFeature<boolean | Impleme
 		super(client, ImplementationRequest.type);
 	}
 
-	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		let implementationSupport = ensure(ensure(capabilites, 'textDocument')!, 'implementation')!;
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
+		let implementationSupport = ensure(ensure(capabilities, 'textDocument')!, 'implementation')!;
 		implementationSupport.dynamicRegistration = true;
 		implementationSupport.linkSupport = true;
 	}
