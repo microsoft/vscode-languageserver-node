@@ -67,7 +67,7 @@ import {
 
 import {
 	FileOperationOptions, FileOperationClientCapabilities, FileOperationRegistrationOptions, WillCreateFilesRequest, CreateFilesParams, FileCreate, FileRename, FileDelete
-} from './protocol.window.fileOperations';
+} from './protocol.fileOperations';
 
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
