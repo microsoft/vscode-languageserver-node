@@ -112,7 +112,4 @@ export interface FileDelete {
 export namespace WillCreateFilesRequest {
 	export const method: 'window/willCreateFiles' = 'window/willCreateFiles';
 	export const type = new ProtocolRequestType<CreateFilesParams, WorkspaceEdit | null, never, void, FileOperationRegistrationOptions>(method);
-	export type HandlerSignature = RequestHandler<CreateFilesParams, WorkspaceEdit | undefined | null, void>;
-	// TODO(dantup): Should this be here? It's currently in _WindowMiddleware.
-	// export type MiddlewareSignature = (params: ShowDocumentParams, next: HandlerSignature) => HandlerResult<ShowDocumentResult, void>;
 }
