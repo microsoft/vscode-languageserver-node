@@ -8,7 +8,7 @@ import * as assert from 'assert';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as lsclient from 'vscode-languageclient/node';
-import { WillCreateFilesRequest } from 'vscode-languageserver-protocol/lib/common/protocol.window.fileOperations';
+import { WillCreateFilesRequest, WillDeleteFilesRequest, WillRenameFilesRequest } from 'vscode-languageserver-protocol/lib/common/protocol.fileOperations';
 
 suite('Client integration', () => {
 
@@ -146,9 +146,9 @@ suite('Client integration', () => {
 				},
 				window: {
 					fileOperations: {
-						willCreate: {
-							globPattern: "**/created-static/**{/,*.txt}"
-						}
+						willCreate: { globPattern: "**/created-static/**{/,*.txt}" },
+						willRename: { globPattern: "**/renamed-static/**{/,*.txt}" },
+						willDelete: { globPattern: "**/deleted-static/**{/,*.txt}" },
 					},
 				},
 				onTypeRenameProvider: false
@@ -681,52 +681,100 @@ suite('Client integration', () => {
 
 	suite('File Operations', () => {
 		const referenceFileUri = vscode.Uri.parse('/dummy-edit');
-		function ensureReferenceEdit(edits: vscode.WorkspaceEdit, type: string, expectedPaths: string[]) {
+		function ensureReferenceEdit(edits: vscode.WorkspaceEdit, type: string, expectedLines: string[]) {
 			// Ensure the edits are as expected.
 			assert.strictEqual(edits.size, 1);
 			assert.strictEqual(edits.has(referenceFileUri), true);
 			const edit = edits.get(referenceFileUri);
 			assert.strictEqual(edit.length, 1);
-			const expectedUris = expectedPaths.map((p) => vscode.Uri.parse(p).toString()).join('\n');
-			assert.strictEqual(edit[0].newText.trim(), `${type}:\n${expectedUris}`.trim());
+			assert.strictEqual(edit[0].newText.trim(), `${type}:\n${expectedLines.join('\n')}`.trim());
 		}
+
+		const createFiles = [
+			'/my/file.txt',
+			'/my/file.js',
+			'/my/folder/',
+			// Static registration for tests is [operation]-static and *.txt
+			'/my/created-static/file.txt',
+			'/my/created-static/file.js',
+			'/my/created-static/folder/',
+			// Dynamic registration for tests is [operation]-dynamic and *.js
+			'/my/created-dynamic/file.txt',
+			'/my/created-dynamic/file.js',
+			'/my/created-dynamic/folder/',
+		].map((p) => vscode.Uri.parse(p));
+
+		const renameFiles = [
+			['/my/file.txt', '/my-new/file.txt'],
+			['/my/file.js', '/my-new/file.js'],
+			['/my/folder/', '/my-new/folder/'],
+			// Static registration for tests is [operation]-static and *.txt
+			['/my/renamed-static/file.txt', '/my-new/renamed-static/file.txt'],
+			['/my/renamed-static/file.js', '/my-new/renamed-static/file.js'],
+			['/my/renamed-static/folder/', '/my-new/renamed-static/folder/'],
+			// Dynamic registration for tests is [operation]-dynamic and *.js
+			['/my/renamed-dynamic/file.txt', '/my-new/renamed-dynamic/file.txt'],
+			['/my/renamed-dynamic/file.js', '/my-new/renamed-dynamic/file.js'],
+			['/my/renamed-dynamic/folder/', '/my-new/renamed-dynamic/folder/'],
+		].map(([o, n]) => ({ oldUri: vscode.Uri.parse(o), newUri: vscode.Uri.parse(n) }));
+
+		const deleteFiles = [
+			'/my/file.txt',
+			'/my/file.js',
+			'/my/folder/',
+			// Static registration for tests is [operation]-static and *.txt
+			'/my/deleted-static/file.txt',
+			'/my/deleted-static/file.js',
+			'/my/deleted-static/folder/',
+			// Dynamic registration for tests is [operation]-dynamic and *.js
+			'/my/deleted-dynamic/file.txt',
+			'/my/deleted-dynamic/file.js',
+			'/my/deleted-dynamic/folder/',
+		].map((p) => vscode.Uri.parse(p));
 
 		test('Will Create Files', async () => {
 			const feature = client.getFeature(WillCreateFilesRequest.method);
 			isDefined(feature);
 
-			const files = [
-				'/my/file.txt',
-				'/my/file.js',
-				'/my/folder/',
-				// Static registration for tests is created-static and *.txt
-				'/my/created-static/file.txt',
-				'/my/created-static/file.js',
-				'/my/created-static/folder/',
-				// Dynamic registration for tests is created-dynamic and *.js
-				'/my/created-dynamic/file.txt',
-				'/my/created-dynamic/file.js',
-				'/my/created-dynamic/folder/',
-			].map((p) => vscode.Uri.parse(p));
-
-			const edits: vscode.WorkspaceEdit = await new Promise((resolve, reject) => {
-				feature.send({ files, waitUntil: resolve });
+			const sendCreateRequest = () => new Promise<vscode.WorkspaceEdit>((resolve, reject) => {
+				feature.send({ files: createFiles, waitUntil: resolve });
 				// If feature.send didn't call waitUntil then something went wrong.
 				reject(new Error('Feature unexpectedly did not call waitUntil'));
 			});
 
+			// Send the event and ensure the server responds with an edit referencing the
+			// correct files.
+			let edits = await sendCreateRequest();
 			ensureReferenceEdit(
 				edits,
 				'WILL CREATE',
 				[
-					'/my/created-static/file.txt',
-					'/my/created-static/folder/',
-					'/my/created-dynamic/file.js',
-					'/my/created-dynamic/folder/',
+					'file:///my/created-static/file.txt',
+					'file:///my/created-static/folder/',
+					'file:///my/created-dynamic/file.js',
+					'file:///my/created-dynamic/folder/',
 				],
 			);
 
-			// TODO(dantup): Test middleware..
+			// Add middleware that strips out any folders.
+			middleware.window = middleware.window || {};
+			middleware.window.willCreateFiles = (event, next) => next({
+				files: event.files.filter((f) => !f.path.endsWith('/')),
+				waitUntil: event.waitUntil,
+			});
+
+			// Ensure we get the same results minus the folders that the middleware removed.
+			edits = await sendCreateRequest();
+			ensureReferenceEdit(
+				edits,
+				'WILL CREATE',
+				[
+					'file:///my/created-static/file.txt',
+					'file:///my/created-dynamic/file.js',
+				],
+			);
+
+			middleware.window.willCreateFiles = undefined;
 		});
 
 		test('Did Create Files', async () => {
@@ -734,7 +782,48 @@ suite('Client integration', () => {
 		});
 
 		test('Will Rename Files', async () => {
-			// TODO(dantup): ...
+			const feature = client.getFeature(WillRenameFilesRequest.method);
+			isDefined(feature);
+
+			const sendRenameRequest = () => new Promise<vscode.WorkspaceEdit>((resolve, reject) => {
+				feature.send({ files: renameFiles, waitUntil: resolve });
+				// If feature.send didn't call waitUntil then something went wrong.
+				reject(new Error('Feature unexpectedly did not call waitUntil'));
+			});
+
+			// Send the event and ensure the server responds with an edit referencing the
+			// correct files.
+			let edits = await sendRenameRequest();
+			ensureReferenceEdit(
+				edits,
+				'WILL RENAME',
+				[
+					'file:///my/renamed-static/file.txt -> file:///my-new/renamed-static/file.txt',
+					'file:///my/renamed-static/folder/ -> file:///my-new/renamed-static/folder/',
+					'file:///my/renamed-dynamic/file.js -> file:///my-new/renamed-dynamic/file.js',
+					'file:///my/renamed-dynamic/folder/ -> file:///my-new/renamed-dynamic/folder/',
+				],
+			);
+
+			// Add middleware that strips out any folders.
+			middleware.window = middleware.window || {};
+			middleware.window.willRenameFiles = (event, next) => next({
+				files: event.files.filter((f) => !f.oldUri.path.endsWith('/')),
+				waitUntil: event.waitUntil,
+			});
+
+			// Ensure we get the same results minus the folders that the middleware removed.
+			edits = await sendRenameRequest();
+			ensureReferenceEdit(
+				edits,
+				'WILL RENAME',
+				[
+					'file:///my/renamed-static/file.txt -> file:///my-new/renamed-static/file.txt',
+					'file:///my/renamed-dynamic/file.js -> file:///my-new/renamed-dynamic/file.js',
+				],
+			);
+
+			middleware.window.willRenameFiles = undefined;
 		});
 
 		test('Did Rename Files', async () => {
@@ -742,7 +831,48 @@ suite('Client integration', () => {
 		});
 
 		test('Will Delete Files', async () => {
-			// TODO(dantup): ...
+			const feature = client.getFeature(WillDeleteFilesRequest.method);
+			isDefined(feature);
+
+			const sendDeleteRequest = () => new Promise<vscode.WorkspaceEdit>((resolve, reject) => {
+				feature.send({ files: deleteFiles, waitUntil: resolve });
+				// If feature.send didn't call waitUntil then something went wrong.
+				reject(new Error('Feature unexpectedly did not call waitUntil'));
+			});
+
+			// Send the event and ensure the server responds with an edit referencing the
+			// correct files.
+			let edits = await sendDeleteRequest();
+			ensureReferenceEdit(
+				edits,
+				'WILL DELETE',
+				[
+					'file:///my/deleted-static/file.txt',
+					'file:///my/deleted-static/folder/',
+					'file:///my/deleted-dynamic/file.js',
+					'file:///my/deleted-dynamic/folder/',
+				],
+			);
+
+			// Add middleware that strips out any folders.
+			middleware.window = middleware.window || {};
+			middleware.window.willDeleteFiles = (event, next) => next({
+				files: event.files.filter((f) => !f.path.endsWith('/')),
+				waitUntil: event.waitUntil,
+			});
+
+			// Ensure we get the same results minus the folders that the middleware removed.
+			edits = await sendDeleteRequest();
+			ensureReferenceEdit(
+				edits,
+				'WILL DELETE',
+				[
+					'file:///my/deleted-static/file.txt',
+					'file:///my/deleted-dynamic/file.js',
+				],
+			);
+
+			middleware.window.willDeleteFiles = undefined;
 		});
 
 		test('Did Delete Files', async () => {

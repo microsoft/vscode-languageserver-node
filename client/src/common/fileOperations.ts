@@ -27,7 +27,6 @@ export interface FileOperationsMiddleware {
 }
 
 export class WillCreateFilesFeature implements DynamicFeature<proto.FileOperationRegistrationOptions> {
-
 	private _listener: code.Disposable | undefined;
 	private _globPatterns: Map<string, RegExp> = new Map<string, RegExp>();
 
@@ -94,6 +93,182 @@ export class WillCreateFilesFeature implements DynamicFeature<proto.FileOperatio
 				windowMiddleware?.willCreateFiles
 					? windowMiddleware.willCreateFiles(filteredEvent, willCreateFiles)
 					: willCreateFiles(filteredEvent)
+			);
+		}
+	}
+
+	public unregister(id: string): void {
+		this._globPatterns.delete(id);
+		if (this._globPatterns.size === 0 && this._listener) {
+			this._listener.dispose();
+			this._listener = undefined;
+		}
+	}
+
+	public dispose(): void {
+		this._globPatterns.clear();
+		if (this._listener) {
+			this._listener.dispose();
+			this._listener = undefined;
+		}
+	}
+}
+
+export class WillRenameFilesFeature implements DynamicFeature<proto.FileOperationRegistrationOptions> {
+	private _listener: code.Disposable | undefined;
+	private _globPatterns: Map<string, RegExp> = new Map<string, RegExp>();
+
+	constructor(private _client: BaseLanguageClient) {
+	}
+
+	public get registrationType(): proto.RegistrationType<proto.FileOperationRegistrationOptions> {
+		return proto.WillRenameFilesRequest.type;
+	}
+
+	public fillClientCapabilities(capabilities: proto.ClientCapabilities): void {
+		let value = ensure(ensure(capabilities, 'window')!, 'fileOperations')!;
+		value.willRename = true;
+	}
+
+	public initialize(capabilities: proto.ServerCapabilities): void {
+		let syncOptions = capabilities.window?.fileOperations;
+		if (syncOptions?.willRename?.globPattern !== undefined) {
+			try {
+				this.register({
+					id: UUID.generateUuid(),
+					registerOptions: { globPattern: syncOptions.willRename.globPattern }
+				});
+			} catch (e) {
+				this._client.warn(`Ignoring invalid glob pattern for willRename registration: ${syncOptions.willRename.globPattern}`);
+			}
+		}
+	}
+
+	public register(data: RegistrationData<proto.FileOperationRegistrationOptions>): void {
+		if (!this._listener) {
+			this._listener = code.workspace.onWillRenameFiles(this.send, this);
+		}
+		const regex = convert2RegExp(data.registerOptions.globPattern);
+		if (!regex) {
+			throw new Error(`Invalid pattern ${data.registerOptions.globPattern}!`);
+		}
+		this._globPatterns.set(data.id, regex);
+	}
+
+	public send(originalEvent: code.FileWillRenameEvent): void {
+		// Create a copy of the event that has the files filtered to match what the
+		// server wants.
+		const filteredEvent = {
+			...originalEvent,
+			files: originalEvent.files.filter((uri) => {
+				for (const pattern of this._globPatterns.values()) {
+					if (pattern.test(uri.oldUri.path)) {
+						return true;
+					}
+				}
+				return false;
+			}),
+		};
+
+		if (filteredEvent.files.length) {
+			const windowMiddleware = this._client.clientOptions.middleware?.window;
+			const willRenameFiles = (event: code.FileWillRenameEvent) => {
+				return this._client.sendRequest(proto.WillRenameFilesRequest.type,
+					this._client.code2ProtocolConverter.asWillRenameFilesParams(event))
+					.then(this._client.protocol2CodeConverter.asWorkspaceEdit);
+			};
+			filteredEvent.waitUntil(
+				windowMiddleware?.willRenameFiles
+					? windowMiddleware.willRenameFiles(filteredEvent, willRenameFiles)
+					: willRenameFiles(filteredEvent)
+			);
+		}
+	}
+
+	public unregister(id: string): void {
+		this._globPatterns.delete(id);
+		if (this._globPatterns.size === 0 && this._listener) {
+			this._listener.dispose();
+			this._listener = undefined;
+		}
+	}
+
+	public dispose(): void {
+		this._globPatterns.clear();
+		if (this._listener) {
+			this._listener.dispose();
+			this._listener = undefined;
+		}
+	}
+}
+
+export class WillDeleteFilesFeature implements DynamicFeature<proto.FileOperationRegistrationOptions> {
+	private _listener: code.Disposable | undefined;
+	private _globPatterns: Map<string, RegExp> = new Map<string, RegExp>();
+
+	constructor(private _client: BaseLanguageClient) {
+	}
+
+	public get registrationType(): proto.RegistrationType<proto.FileOperationRegistrationOptions> {
+		return proto.WillDeleteFilesRequest.type;
+	}
+
+	public fillClientCapabilities(capabilities: proto.ClientCapabilities): void {
+		let value = ensure(ensure(capabilities, 'window')!, 'fileOperations')!;
+		value.willDelete = true;
+	}
+
+	public initialize(capabilities: proto.ServerCapabilities): void {
+		let syncOptions = capabilities.window?.fileOperations;
+		if (syncOptions?.willDelete?.globPattern !== undefined) {
+			try {
+				this.register({
+					id: UUID.generateUuid(),
+					registerOptions: { globPattern: syncOptions.willDelete.globPattern }
+				});
+			} catch (e) {
+				this._client.warn(`Ignoring invalid glob pattern for willDelete registration: ${syncOptions.willDelete.globPattern}`);
+			}
+		}
+	}
+
+	public register(data: RegistrationData<proto.FileOperationRegistrationOptions>): void {
+		if (!this._listener) {
+			this._listener = code.workspace.onWillDeleteFiles(this.send, this);
+		}
+		const regex = convert2RegExp(data.registerOptions.globPattern);
+		if (!regex) {
+			throw new Error(`Invalid pattern ${data.registerOptions.globPattern}!`);
+		}
+		this._globPatterns.set(data.id, regex);
+	}
+
+	public send(originalEvent: code.FileWillDeleteEvent): void {
+		// Create a copy of the event that has the files filtered to match what the
+		// server wants.
+		const filteredEvent = {
+			...originalEvent,
+			files: originalEvent.files.filter((uri) => {
+				for (const pattern of this._globPatterns.values()) {
+					if (pattern.test(uri.path)) {
+						return true;
+					}
+				}
+				return false;
+			}),
+		};
+
+		if (filteredEvent.files.length) {
+			const windowMiddleware = this._client.clientOptions.middleware?.window;
+			const willDeleteFiles = (event: code.FileWillDeleteEvent) => {
+				return this._client.sendRequest(proto.WillDeleteFilesRequest.type,
+					this._client.code2ProtocolConverter.asWillDeleteFilesParams(event))
+					.then(this._client.protocol2CodeConverter.asWorkspaceEdit);
+			};
+			filteredEvent.waitUntil(
+				windowMiddleware?.willDeleteFiles
+					? windowMiddleware.willDeleteFiles(filteredEvent, willDeleteFiles)
+					: willDeleteFiles(filteredEvent)
 			);
 		}
 	}

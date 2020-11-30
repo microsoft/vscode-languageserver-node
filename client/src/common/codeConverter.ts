@@ -15,7 +15,7 @@ import ProtocolCodeAction from './protocolCodeAction';
 import { ProtocolDiagnostic, DiagnosticCode } from './protocolDiagnostic';
 import ProtocolCallHierarchyItem from './protocolCallHierarchyItem';
 import { InsertTextMode } from 'vscode-languageserver-protocol';
-import { CreateFilesParams } from 'vscode-languageserver-protocol/lib/common/protocol.window.fileOperations';
+import { CreateFilesParams, DeleteFilesParams, RenameFilesParams } from 'vscode-languageserver-protocol/lib/common/protocol.fileOperations';
 
 interface InsertReplaceRange {
 	inserting: code.Range;
@@ -48,6 +48,8 @@ export interface Converter {
 	asWillSaveTextDocumentParams(event: code.TextDocumentWillSaveEvent): proto.WillSaveTextDocumentParams;
 
 	asWillCreateFilesParams(event: code.FileWillCreateEvent): CreateFilesParams;
+	asWillRenameFilesParams(event: code.FileWillRenameEvent): RenameFilesParams;
+	asWillDeleteFilesParams(event: code.FileWillDeleteEvent): DeleteFilesParams;
 
 	asTextDocumentPositionParams(textDocument: code.TextDocument, position: code.Position): proto.TextDocumentPositionParams;
 
@@ -233,6 +235,23 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asWillCreateFilesParams(event: code.FileWillCreateEvent): CreateFilesParams {
+		return {
+			files: event.files.map((fileUri) => ({
+				uri: _uriConverter(fileUri),
+			})),
+		};
+	}
+
+	function asWillRenameFilesParams(event: code.FileWillRenameEvent): RenameFilesParams {
+		return {
+			files: event.files.map((file) => ({
+				oldUri: _uriConverter(file.oldUri),
+				newUri: _uriConverter(file.newUri),
+			})),
+		};
+	}
+
+	function asWillDeleteFilesParams(event: code.FileWillDeleteEvent): DeleteFilesParams {
 		return {
 			files: event.files.map((fileUri) => ({
 				uri: _uriConverter(fileUri),
@@ -743,6 +762,8 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asSaveTextDocumentParams,
 		asWillSaveTextDocumentParams,
 		asWillCreateFilesParams,
+		asWillRenameFilesParams,
+		asWillDeleteFilesParams,
 		asTextDocumentPositionParams,
 		asCompletionParams,
 		asSignatureHelpParams,

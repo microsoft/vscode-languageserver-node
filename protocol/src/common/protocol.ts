@@ -66,7 +66,10 @@ import {
 } from './protocol.onTypeRename';
 
 import {
-	FileOperationOptions, FileOperationClientCapabilities, FileOperationRegistrationOptions, WillCreateFilesRequest, CreateFilesParams, FileCreate, FileRename, FileDelete
+	FileOperationOptions, FileOperationClientCapabilities, FileOperationRegistrationOptions,
+	WillCreateFilesRequest, DidCreateFilesNotification, CreateFilesParams, FileCreate,
+	WillRenameFilesRequest, DidRenameFilesNotification, RenameFilesParams, FileRename,
+	WillDeleteFilesRequest, DidDeleteFilesNotification, DeleteFilesParams, FileDelete
 } from './protocol.fileOperations';
 
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
@@ -3180,7 +3183,10 @@ export {
 	// On Type rename
 	OnTypeRenameClientCapabilities, OnTypeRenameRanges, OnTypeRenameOptions, OnTypeRenameParams, OnTypeRenameRegistrationOptions, OnTypeRenameRequest,
 	// File operations
-	FileOperationClientCapabilities, FileOperationOptions, FileOperationRegistrationOptions, CreateFilesParams, WillCreateFilesRequest, FileCreate, FileRename, FileDelete
+	FileOperationClientCapabilities, FileOperationOptions, FileOperationRegistrationOptions,
+	CreateFilesParams, WillCreateFilesRequest, DidCreateFilesNotification, FileCreate,
+	RenameFilesParams, WillRenameFilesRequest, DidRenameFilesNotification, FileRename,
+	DeleteFilesParams, WillDeleteFilesRequest, DidDeleteFilesNotification, FileDelete
 };
 
 // To be backwards compatible

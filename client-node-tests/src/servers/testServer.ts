@@ -9,7 +9,7 @@ import {
 	DiagnosticTag, CompletionItemTag, TextDocumentSyncKind, MarkupKind, SignatureHelp, SignatureInformation, ParameterInformation,
 	Location, Range, DocumentHighlight, DocumentHighlightKind, CodeAction, Command, TextEdit, Position, DocumentLink,
 	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, SymbolKind, ProtocolRequestType, WorkDoneProgress,
-	WorkDoneProgressCreateRequest, WillCreateFilesRequest
+	WorkDoneProgressCreateRequest, WillCreateFilesRequest, WillRenameFilesRequest, WillDeleteFilesRequest
 } from '../../../server/node';
 
 import { URI } from 'vscode-uri';
@@ -89,8 +89,10 @@ connection.onInitialize((params: InitializeParams): any => {
 		},
 		window: {
 			fileOperations: {
-				// Static reg is folders + .txt files with 'created-static' in the path
+				// Static reg is folders + .txt files with operation kind in the path
 				willCreate: { globPattern: '**/created-static/**{/,*.txt}' },
+				willRename: { globPattern: '**/renamed-static/**{/,*.txt}' },
+				willDelete: { globPattern: '**/deleted-static/**{/,*.txt}' },
 			},
 		},
 		onTypeRenameProvider: false
@@ -99,9 +101,15 @@ connection.onInitialize((params: InitializeParams): any => {
 });
 
 connection.onInitialized(() => {
-	// Dynamic reg is folders + .js files with 'created-dynamic' in the path
+	// Dynamic reg is folders + .js files with operation kind in the path
 	connection.client.register(WillCreateFilesRequest.type, {
 		globPattern: '**/created-dynamic/**{/,*.js}'
+	});
+	connection.client.register(WillRenameFilesRequest.type, {
+		globPattern: '**/renamed-dynamic/**{/,*.js}'
+	});
+	connection.client.register(WillDeleteFilesRequest.type, {
+		globPattern: '**/deleted-dynamic/**{/,*.js}'
 	});
 });
 
@@ -239,7 +247,6 @@ connection.onSelectionRanges((_params) => {
 	];
 });
 
-// TODO(dantup): What should this look like now?
 connection.window.onWillCreateFiles((params) => {
 	const createdFilenames = params.files.map((f) => `${f.uri}`).join('\n');
 	return {
@@ -247,6 +254,30 @@ connection.window.onWillCreateFiles((params) => {
 			textDocument: { uri: '/dummy-edit', version: null },
 			edits: [
 				TextEdit.insert(Position.create(0, 0), `WILL CREATE:\n${createdFilenames}`),
+			]
+		}],
+	};
+});
+
+connection.window.onWillRenameFiles((params) => {
+	const renamedFilenames = params.files.map((f) => `${f.oldUri} -> ${f.newUri}`).join('\n');
+	return {
+		documentChanges: [{
+			textDocument: { uri: '/dummy-edit', version: null },
+			edits: [
+				TextEdit.insert(Position.create(0, 0), `WILL RENAME:\n${renamedFilenames}`),
+			]
+		}],
+	};
+});
+
+connection.window.onWillDeleteFiles((params) => {
+	const deletedFilenames = params.files.map((f) => `${f.uri}`).join('\n');
+	return {
+		documentChanges: [{
+			textDocument: { uri: '/dummy-edit', version: null },
+			edits: [
+				TextEdit.insert(Position.create(0, 0), `WILL DELETE:\n${deletedFilenames}`),
 			]
 		}],
 	};
