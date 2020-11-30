@@ -339,10 +339,13 @@ export namespace SemanticTokensRangeRequest {
 
 export interface SemanticTokensWorkspaceClientCapabilities {
 	/**
-	 * Whether the client implementation supports a refresh request send from the server
-	 * to the client. This is useful if a server detects a project wide configuration change
-	 * which requires a re-calculation of all semantic tokens provided by the server issuing
-	 * the request.
+	 * Whether the client implementation supports a refresh request sent from
+	 * the server to the client.
+	 *
+	 * Note that this event is global and will force the client to refresh all
+	 * semantic tokens currently shown. It should be used with absolute care
+	 * and is useful for situation where a server for example detect a project
+	 * wide change that requires such a calculation.
 	 */
 	refreshSupport?: boolean;
 }

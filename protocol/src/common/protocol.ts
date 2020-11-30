@@ -2638,9 +2638,13 @@ export interface CodeLensClientCapabilities {
  */
 export interface CodeLensWorkspaceClientCapabilities {
 	/**
-	 * Whether the client implementation supports a refresh request send from the server
-	 * to the client. This is useful if a server detects a change which requires a
-	 * re-calculation of all code lenses.
+	 * Whether the client implementation supports a refresh request sent from the
+	 * server to the client.
+	 *
+	 * Note that this event is global and will force the client to refresh all
+	 * code lenses currently shown. It should be used with absolute care and is
+	 * useful for situation where a server for example detect a project wide
+	 * change that requires such a calculation.
 	 */
 	refreshSupport?: boolean;
 }
@@ -2922,6 +2926,16 @@ export namespace DocumentOnTypeFormattingRequest {
 
 //---- Rename ----------------------------------------------
 
+export namespace PrepareSupportDefaultBehavior {
+	/**
+	 * The client's default behavior is to select the identifier
+	 * according the to language's syntax rule.
+	 */
+	 export const Identifier: 1 = 1;
+}
+
+export type PrepareSupportDefaultBehavior = 1;
+
 export interface RenameClientCapabilities {
 	/**
 	 * Whether rename supports dynamic registration.
@@ -2939,9 +2953,12 @@ export interface RenameClientCapabilities {
 	/**
 	 * Client supports the default behavior result.
 	 *
+	 * The value indicates the default behavior used by the
+	 * client.
+	 *
 	 * @since 3.16.0
 	 */
-	prepareSupportDefaultBehavior?: boolean;
+	prepareSupportDefaultBehavior?: PrepareSupportDefaultBehavior;
 
 	/**
 	 * Whether th client honors the change annotations in

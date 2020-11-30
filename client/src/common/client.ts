@@ -49,7 +49,8 @@ import {
 	DocumentRangeFormattingOptions, DocumentOnTypeFormattingOptions, RenameOptions, DocumentLinkOptions, CompletionItemTag, DiagnosticTag, DocumentColorRequest,
 	DeclarationRequest, FoldingRangeRequest, ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, SymbolTag, CallHierarchyPrepareRequest,
 	CancellationStrategy, SaveOptions, LSPErrorCodes, CodeActionResolveRequest, RegistrationType, SemanticTokensRegistrationType, InsertTextMode, ShowDocumentRequest,
-	ShowDocumentParams, ShowDocumentResult, OnTypeRenameRequest, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressReport, FileOperationRegistrationOptions, WillCreateFilesRequest, WillRenameFilesRequest, WillDeleteFilesRequest, DidCreateFilesNotification, DidDeleteFilesNotification, DidRenameFilesNotification
+	FileOperationRegistrationOptions, WillCreateFilesRequest, WillRenameFilesRequest, WillDeleteFilesRequest, DidCreateFilesNotification, DidDeleteFilesNotification, DidRenameFilesNotification,
+	ShowDocumentParams, ShowDocumentResult, OnTypeRenameRequest, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressReport, PrepareSupportDefaultBehavior
 } from 'vscode-languageserver-protocol';
 
 import type { ColorProviderMiddleware } from './colorProvider';
@@ -2238,7 +2239,7 @@ class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameR
 		let rename = ensure(ensure(capabilities, 'textDocument')!, 'rename')!;
 		rename.dynamicRegistration = true;
 		rename.prepareSupport = true;
-		rename.prepareSupportDefaultBehavior = true;
+		rename.prepareSupportDefaultBehavior = PrepareSupportDefaultBehavior.Identifier;
 		rename.honorsChangeAnnotations = true;
 	}
 
