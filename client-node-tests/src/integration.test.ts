@@ -8,6 +8,7 @@ import * as assert from 'assert';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as lsclient from 'vscode-languageclient/node';
+import { WillCreateFilesRequest } from 'vscode-languageserver-protocol/lib/common/protocol.window.fileOperations';
 
 suite('Client integration', () => {
 
@@ -143,10 +144,12 @@ suite('Client integration', () => {
 						delta: true
 					}
 				},
-				files: {
-					willCreate: {
-						globPattern: "**/created-static/**{/,*.txt}"
-					}
+				window: {
+					fileOperations: {
+						willCreate: {
+							globPattern: "**/created-static/**{/,*.txt}"
+						}
+					},
 				},
 				onTypeRenameProvider: false
 			},
@@ -689,7 +692,7 @@ suite('Client integration', () => {
 		}
 
 		test('Will Create Files', async () => {
-			const feature = client.getFeature(lsclient.WillCreateFilesRequest.method);
+			const feature = client.getFeature(WillCreateFilesRequest.method);
 			isDefined(feature);
 
 			const files = [

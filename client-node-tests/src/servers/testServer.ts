@@ -9,10 +9,11 @@ import {
 	DiagnosticTag, CompletionItemTag, TextDocumentSyncKind, MarkupKind, SignatureHelp, SignatureInformation, ParameterInformation,
 	Location, Range, DocumentHighlight, DocumentHighlightKind, CodeAction, Command, TextEdit, Position, DocumentLink,
 	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, SymbolKind, ProtocolRequestType, WorkDoneProgress,
-	WorkDoneProgressCreateRequest, WorkspaceEdit, WillCreateFilesRequest, FileOperationRegistrationOptions
+	WorkDoneProgressCreateRequest, FileOperationRegistrationOptions
 } from '../../../server/node';
 
 import { URI } from 'vscode-uri';
+import { CreateFilesParams, WillCreateFilesRequest } from 'vscode-languageserver-protocol/lib/common/protocol.window.fileOperations';
 
 let connection: Connection = createConnection();
 
@@ -42,7 +43,7 @@ connection.onInitialize((params: InitializeParams): any => {
 	let valueSet = params.capabilities.textDocument!.completion!.completionItemKind!.valueSet!;
 	assert.equal(valueSet[0], 1);
 	assert.equal(valueSet[valueSet.length - 1], CompletionItemKind.TypeParameter);
-	assert.equal(params.capabilities.files!.willCreate, true);
+	assert.equal(params.capabilities.window!.fileOperations!.willCreate, true);
 	console.log(params.capabilities);
 
 	let capabilities: ServerCapabilities = {
@@ -87,9 +88,11 @@ connection.onInitialize((params: InitializeParams): any => {
 				delta: true
 			}
 		},
-		files: {
-			// Static reg is folders + .txt files with 'created-static' in the path
-			willCreate: { globPattern: '**/created-static/**{/,*.txt}' },
+		window: {
+			fileOperations: {
+				// Static reg is folders + .txt files with 'created-static' in the path
+				willCreate: { globPattern: '**/created-static/**{/,*.txt}' },
+			},
 		},
 		onTypeRenameProvider: false
 	};
@@ -237,7 +240,8 @@ connection.onSelectionRanges((_params) => {
 	];
 });
 
-connection.onWillCreateFiles((params) => {
+// TODO(dantup): What should this look like now?
+connection.window.onWillCreateFiles((params: CreateFilesParams) => {
 	const createdFilenames = params.files.map((f) => `${f.uri}`).join('\n');
 	return {
 		documentChanges: [{

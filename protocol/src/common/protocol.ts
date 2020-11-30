@@ -64,6 +64,7 @@ import {
 import {
 	OnTypeRenameClientCapabilities, OnTypeRenameRanges, OnTypeRenameOptions, OnTypeRenameParams, OnTypeRenameRegistrationOptions, OnTypeRenameRequest
 } from './protocol.onTypeRename';
+import { FileOperationClientCapabilities } from './protocol.window.fileOperations';
 
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
@@ -350,37 +351,6 @@ export interface WorkspaceClientCapabilities {
 	codeLens?: CodeLensWorkspaceClientCapabilities;
 }
 
-export interface FileClientCapabilities {
-	/**
-	 * Whether the client supports dynamic registration for file requests/notifications.
-	 */
-	dynamicRegistration?: boolean;
-	/**
-	 * The client has support for sending didCreateFiles notifications.
-	 */
-	didCreate?: boolean;
-	/**
-	 * The client has support for willCreateFiles requests.
-	 */
-	willCreate?: boolean;
-	/**
-	 * The client has support for sending didRenameFiles notifications.
-	 */
-	didRename?: boolean;
-	/**
-	 * The client has support for willRenameFiles requests.
-	 */
-	willRename?: boolean;
-	/**
-	 * The client has support for sending didDeleteFiles notifications.
-	 */
-	didDelete?: boolean;
-	/**
-	 * The client has support for willDeleteFiles requests.
-	 */
-	willDelete?: boolean;
-}
-
 /**
  * Text document specific client capabilities.
  */
@@ -551,6 +521,13 @@ export interface WindowClientCapabilities {
 	 * @since 3.16.0 - proposed state
 	 */
 	showDocument?: ShowDocumentClientCapabilities;
+
+	/**
+	 * The client has support for file notifications/requests for user operations on files.
+	 *
+	 * Since 3.16.0
+	 */
+	fileOperations?: FileOperationClientCapabilities
 }
 
 /**
@@ -638,13 +615,6 @@ export interface _ClientCapabilities {
 	 * Experimental client capabilities.
 	 */
 	experimental?: object;
-
-	/**
-	 * The client has support for file requests/notifications.
-	 *
-	 * Since 3.16.0
-	 */
-	files?: FileClientCapabilities
 }
 
 export type ClientCapabilities = _ClientCapabilities & WorkspaceFoldersClientCapabilities & ConfigurationClientCapabilities & WorkDoneProgressClientCapabilities;
@@ -871,11 +841,16 @@ export interface _ServerCapabilities<T = any> {
 	semanticTokensProvider?: SemanticTokensOptions | SemanticTokensRegistrationOptions;
 
 	/**
-	* The server is interested in file notifications/requests.
-	*
-	* @since 3.16.0
-	*/
-	files?: FileOperationOptions;
+	 * Window specific server capabilities.
+	 */
+	window?: {
+		/**
+		* The server is interested in notifications/requests for user operations on files.
+		*
+		* @since 3.16.0
+		*/
+		fileOperations?: FileOperationOptions;
+	}
 
 	/**
 	 * Experimental server capabilities.
@@ -1663,70 +1638,8 @@ export namespace WatchKind {
 //---- User file events ----
 
 /**
- * The parameters sent in file create requests/notifications.
+ * Options for notifications/requests for user operations on files.
  */
-export interface CreateFilesParams {
-	/**
-	 * An array of all files/folders created in this operation.
-	 */
-	files: FileCreate[];
-}
-
-/**
- * Represents information on a file/folder create.
- */
-export interface FileCreate {
-	/**
-	 * A file:// URI for the location of the file/folder being created.
-	 */
-	uri: string;
-}
-
-/**
- * The parameters sent in file rename requests/notifications.
- */
-export interface RenameFilesParams {
-	/**
-	 * An array of all files/folders renamed in this operation. When a folder is renamed, only
-	 * the folder will be included, and not its children.
-	 */
-	files: FileRename[];
-}
-
-/**
- * Represents information on a file/folder rename.
- */
-export interface FileRename {
-	/**
-	 * A file:// URI for the original location of the file/folder being renamed.
-	 */
-	oldUri: string;
-	/**
-	 * A file:// URI for the new location of the file/folder being renamed.
-	 */
-	newUri: string;
-}
-
-/**
- * The parameters sent in file delete requests/notifications.
- */
-export interface DeleteFilesParams {
-	/**
-	 * An array of all files/folders deleted in this operation.
-	 */
-	files: FileDelete[];
-}
-
-/**
- * Represents information on a file/folder delete.
- */
-export interface FileDelete {
-	/**
-	 * A file:// URI for the location of the file/folder being deleted.
-	 */
-	uri: string;
-}
-
 export interface FileOperationOptions {
 	/**
 	* The server is interested in didCreateFiles notifications.
@@ -1766,11 +1679,6 @@ export interface FileOperationRegistrationOptions {
 	 * - `/` suffix to match only folders (e.g. `**{/,*.dart}` matches all Dart files and all folders)
 	 */
 	globPattern: string;
-}
-
-export namespace WillCreateFilesRequest {
-	export const method: 'workspace/willCreateFiles' = 'workspace/willCreateFiles';
-	export const type = new ProtocolRequestType<CreateFilesParams, WorkspaceEdit | null, never, void, FileOperationRegistrationOptions>(method);
 }
 
 //---- Diagnostic notification ----

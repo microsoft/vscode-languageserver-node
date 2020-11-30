@@ -49,7 +49,7 @@ import {
 	DocumentRangeFormattingOptions, DocumentOnTypeFormattingOptions, RenameOptions, DocumentLinkOptions, CompletionItemTag, DiagnosticTag, DocumentColorRequest,
 	DeclarationRequest, FoldingRangeRequest, ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, SymbolTag, CallHierarchyPrepareRequest,
 	CancellationStrategy, SaveOptions, LSPErrorCodes, CodeActionResolveRequest, RegistrationType, SemanticTokensRegistrationType, InsertTextMode, ShowDocumentRequest,
-	ShowDocumentParams, ShowDocumentResult, OnTypeRenameRequest, WillCreateFilesRequest, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressReport, FileOperationRegistrationOptions
+	ShowDocumentParams, ShowDocumentResult, OnTypeRenameRequest, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressReport, FileOperationRegistrationOptions
 } from 'vscode-languageserver-protocol';
 
 import type { ColorProviderMiddleware } from './colorProvider';
@@ -80,6 +80,7 @@ import { FileWillRenameEvent } from 'vscode';
 import { FileWillDeleteEvent } from 'vscode';
 import { FileDeleteEvent } from 'vscode';
 import { convert2RegExp } from './utils/patternParser';
+import { WillCreateFilesRequest } from 'vscode-languageserver-protocol/lib/common/protocol.window.fileOperations';
 
 interface Connection {
 
@@ -463,6 +464,13 @@ export type WorkspaceMiddleware = _WorkspaceMiddleware & ConfigurationWorkspaceM
 
 export interface _WindowMiddleware {
 	showDocument?: (this: void, params: ShowDocumentParams, next: ShowDocumentRequest.HandlerSignature) => Promise<ShowDocumentResult>;
+
+	didCreateFiles?: NextSignature<FileCreateEvent, void>;
+	willCreateFiles?: NextSignature<FileWillCreateEvent, Thenable<VWorkspaceEdit | undefined>>;
+	didRenameFiles?: NextSignature<FileRenameEvent, void>;
+	willRenameFiles?: NextSignature<FileWillRenameEvent, Thenable<VWorkspaceEdit | undefined>>;
+	didDeleteFiles?: NextSignature<FileDeleteEvent, void>;
+	willDeleteFiles?: NextSignature<FileWillDeleteEvent, Thenable<VWorkspaceEdit | undefined>>;
 }
 
 export type WindowMiddleware = _WindowMiddleware;
@@ -478,13 +486,6 @@ export interface _Middleware {
 	willSaveWaitUntil?: NextSignature<TextDocumentWillSaveEvent, Thenable<VTextEdit[]>>;
 	didSave?: NextSignature<TextDocument, void>;
 	didClose?: NextSignature<TextDocument, void>;
-
-	didCreateFiles?: NextSignature<FileCreateEvent, void>;
-	willCreateFiles?: NextSignature<FileWillCreateEvent, Thenable<VWorkspaceEdit | undefined>>;
-	didRenameFiles?: NextSignature<FileRenameEvent, void>;
-	willRenameFiles?: NextSignature<FileWillRenameEvent, Thenable<VWorkspaceEdit | undefined>>;
-	didDeleteFiles?: NextSignature<FileDeleteEvent, void>;
-	willDeleteFiles?: NextSignature<FileWillDeleteEvent, Thenable<VWorkspaceEdit | undefined>>;
 
 	handleDiagnostics?: (this: void, uri: Uri, diagnostics: VDiagnostic[], next: HandleDiagnosticsSignature) => void;
 	handleWorkDoneProgress?: (this: void, token: ProgressToken, params: WorkDoneProgressBegin | WorkDoneProgressReport | WorkDoneProgressEnd, next: HandleWorkDoneProgressSignature) => void;
@@ -1228,12 +1229,12 @@ class WillCreateFilesFeature implements DynamicFeature<FileOperationRegistration
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
-		let value = ensure(capabilities, 'files')!;
+		let value = ensure(ensure(capabilities, 'window')!, 'fileOperations')!;
 		value.willCreate = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, _: DocumentSelector): void {
-		let syncOptions = capabilities.files;
+		let syncOptions = capabilities.window?.fileOperations;
 		if (syncOptions?.willCreate?.globPattern !== undefined) {
 			try {
 				this.register({
@@ -1250,15 +1251,11 @@ class WillCreateFilesFeature implements DynamicFeature<FileOperationRegistration
 		if (!this._listener) {
 			this._listener = Workspace.onWillCreateFiles(this.send, this);
 		}
-		try {
-			const regex = convert2RegExp(data.registerOptions.globPattern);
-			if (!regex) {
-				throw new Error(`Invalid pattern ${data.registerOptions.globPattern}!`);
-			}
-			this._globPatterns.set(data.id, regex);
-		} catch (e) {
-			// TODO(dantup): How to handle errors in parsing the glob pattern?
+		const regex = convert2RegExp(data.registerOptions.globPattern);
+		if (!regex) {
+			throw new Error(`Invalid pattern ${data.registerOptions.globPattern}!`);
 		}
+		this._globPatterns.set(data.id, regex);
 	}
 
 	public send(originalEvent: FileWillCreateEvent): void {

@@ -24,7 +24,7 @@ import {
 	DocumentSymbolRequest, WorkspaceSymbolRequest, CodeActionRequest, CodeLensRequest, CodeLensResolveRequest, DocumentFormattingRequest, DocumentRangeFormattingRequest,
 	DocumentOnTypeFormattingRequest, RenameRequest, PrepareRenameRequest, DocumentLinkRequest, DocumentLinkResolveRequest, DocumentColorRequest, ColorPresentationRequest,
 	FoldingRangeRequest, SelectionRangeRequest, ExecuteCommandRequest, InitializeRequest, ResponseError, RegistrationType, RequestType0, RequestType,
-	NotificationType0, NotificationType, CodeActionResolveRequest, CreateFilesParams, WillCreateFilesRequest
+	NotificationType0, NotificationType, CodeActionResolveRequest
 } from 'vscode-languageserver-protocol';
 
 import * as Is from './utils/is';
@@ -36,6 +36,7 @@ import { CallHierarchy, CallHierarchyFeature } from './callHierarchy';
 import { SemanticTokensFeatureShape, SemanticTokensFeature } from './semanticTokens';
 import { ShowDocumentFeatureShape, ShowDocumentFeature } from './showDocument';
 import { OnTypeRenameFeature, OnTypeRenameFeatureShape } from './onTypeRename';
+import { FileOperationsFeature, FileOperationsFeatureShape } from './fileOperations';
 
 function null2Undefined<T>(value: T | null): T | undefined {
 	if (value === null) {
@@ -92,7 +93,6 @@ export class TextDocuments<T> {
 	private _onDidSave: Emitter<TextDocumentChangeEvent<T>>;
 	private _onWillSave: Emitter<TextDocumentWillSaveEvent<T>>;
 	private _willSaveWaitUntil: RequestHandler<TextDocumentWillSaveEvent<T>, TextEdit[], void> | undefined;
-	private _willCreateFiles: RequestHandler<CreateFilesParams, WorkspaceEdit, void> | undefined;
 
 	/**
 	 * Create a new text document manager.
@@ -255,13 +255,6 @@ export class TextDocuments<T> {
 			let document = this._documents[event.textDocument.uri];
 			if (document) {
 				this._onDidSave.fire(Object.freeze({ document }));
-			}
-		});
-		connection.onWillCreateFiles((event: CreateFilesParams, token: CancellationToken) => {
-			if (this._willCreateFiles) {
-				return this._willCreateFiles(Object.freeze({ files: event.files }), token);
-			} else {
-				return undefined;
 			}
 		});
 	}
@@ -475,7 +468,7 @@ export interface _RemoteWindow {
 	showInformationMessage<T extends MessageActionItem>(message: string, ...actions: T[]): Promise<T | undefined>;
 }
 
-export type RemoteWindow = _RemoteWindow & WindowProgress & ShowDocumentFeatureShape;
+export type RemoteWindow = _RemoteWindow & WindowProgress & ShowDocumentFeatureShape & FileOperationsFeatureShape;
 
 class _RemoteWindowImpl implements _RemoteWindow, Remote {
 
@@ -517,7 +510,7 @@ class _RemoteWindowImpl implements _RemoteWindow, Remote {
 	}
 }
 
-const RemoteWindowImpl: new () => RemoteWindow = ShowDocumentFeature(ProgressFeature(_RemoteWindowImpl)) as (new () => RemoteWindow);
+const RemoteWindowImpl: new () => RemoteWindow = FileOperationsFeature(ShowDocumentFeature(ProgressFeature(_RemoteWindowImpl))) as (new () => RemoteWindow);
 
 /**
  * A bulk registration manages n single registration to be able to register
@@ -1219,18 +1212,6 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	onDidSaveTextDocument(handler: NotificationHandler<DidSaveTextDocumentParams>): void;
 
 	/**
-	 * Installs a handler for the `WillCreateFiles` request.
-	 *
-	 * Note that this request is opt-in. The client will not send it unless
-	 * your server has the `files.willCreate` capability,
-	 * or you've dynamically registered for the `workspace/willCreateFiles`
-	 * method.
-	 *
-	 * @param handler The corresponding handler.
-	 */
-	onWillCreateFiles(handler: RequestHandler<CreateFilesParams, WorkspaceEdit | undefined | null, void>): void;
-
-	/**
 	 * Sends diagnostics computed for a given document to VSCode to render them in the
 	 * user interface.
 	 *
@@ -1614,8 +1595,6 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 		onWillSaveTextDocument: (handler) => connection.onNotification(WillSaveTextDocumentNotification.type, handler),
 		onWillSaveTextDocumentWaitUntil: (handler) => connection.onRequest(WillSaveTextDocumentWaitUntilRequest.type, handler),
 		onDidSaveTextDocument: (handler) => connection.onNotification(DidSaveTextDocumentNotification.type, handler),
-
-		onWillCreateFiles: (handler) => connection.onRequest(WillCreateFilesRequest.type, handler),
 
 		sendDiagnostics: (params) => connection.sendNotification(PublishDiagnosticsNotification.type, params),
 
