@@ -26,6 +26,261 @@ export interface FileOperationsMiddleware {
 	willDeleteFiles?: NextSignature<code.FileWillDeleteEvent, Thenable<code.WorkspaceEdit | null | undefined>>;
 }
 
+export class DidCreateFilesFeature implements DynamicFeature<proto.FileOperationRegistrationOptions> {
+	private _listener: code.Disposable | undefined;
+	private _globPatterns: Map<string, RegExp> = new Map<string, RegExp>();
+
+	constructor(private _client: BaseLanguageClient) {
+	}
+
+	public get registrationType(): proto.RegistrationType<proto.FileOperationRegistrationOptions> {
+		return proto.DidCreateFilesNotification.type;
+	}
+
+	public fillClientCapabilities(capabilities: proto.ClientCapabilities): void {
+		let value = ensure(ensure(capabilities, 'window')!, 'fileOperations')!;
+		value.didCreate = true;
+	}
+
+	public initialize(capabilities: proto.ServerCapabilities): void {
+		let syncOptions = capabilities.window?.fileOperations;
+		if (syncOptions?.didCreate?.globPattern !== undefined) {
+			try {
+				this.register({
+					id: UUID.generateUuid(),
+					registerOptions: { globPattern: syncOptions.didCreate.globPattern }
+				});
+			} catch (e) {
+				this._client.warn(`Ignoring invalid glob pattern for didCreate registration: ${syncOptions.didCreate.globPattern}`);
+			}
+		}
+	}
+
+	public register(data: RegistrationData<proto.FileOperationRegistrationOptions>): void {
+		if (!this._listener) {
+			this._listener = code.workspace.onDidCreateFiles(this.send, this);
+		}
+		const regex = convert2RegExp(data.registerOptions.globPattern);
+		if (!regex) {
+			throw new Error(`Invalid pattern ${data.registerOptions.globPattern}!`);
+		}
+		this._globPatterns.set(data.id, regex);
+	}
+
+	public send(originalEvent: code.FileCreateEvent): void {
+		// Create a copy of the event that has the files filtered to match what the
+		// server wants.
+		const filteredEvent = {
+			...originalEvent,
+			files: originalEvent.files.filter((uri) => {
+				for (const pattern of this._globPatterns.values()) {
+					if (pattern.test(uri.path)) {
+						return true;
+					}
+				}
+				return false;
+			}),
+		};
+
+		if (filteredEvent.files.length) {
+			const windowMiddleware = this._client.clientOptions.middleware?.window;
+			const didCreateFiles = (event: code.FileCreateEvent) => {
+				return this._client.sendRequest(proto.DidCreateFilesNotification.type,
+					this._client.code2ProtocolConverter.asDidCreateFilesParams(event));
+			};
+			windowMiddleware?.didCreateFiles
+				? windowMiddleware.didCreateFiles(filteredEvent, didCreateFiles)
+				: didCreateFiles(filteredEvent);
+		}
+	}
+
+	public unregister(id: string): void {
+		this._globPatterns.delete(id);
+		if (this._globPatterns.size === 0 && this._listener) {
+			this._listener.dispose();
+			this._listener = undefined;
+		}
+	}
+
+	public dispose(): void {
+		this._globPatterns.clear();
+		if (this._listener) {
+			this._listener.dispose();
+			this._listener = undefined;
+		}
+	}
+}
+
+export class DidRenameFilesFeature implements DynamicFeature<proto.FileOperationRegistrationOptions> {
+	private _listener: code.Disposable | undefined;
+	private _globPatterns: Map<string, RegExp> = new Map<string, RegExp>();
+
+	constructor(private _client: BaseLanguageClient) {
+	}
+
+	public get registrationType(): proto.RegistrationType<proto.FileOperationRegistrationOptions> {
+		return proto.DidRenameFilesNotification.type;
+	}
+
+	public fillClientCapabilities(capabilities: proto.ClientCapabilities): void {
+		let value = ensure(ensure(capabilities, 'window')!, 'fileOperations')!;
+		value.didRename = true;
+	}
+
+	public initialize(capabilities: proto.ServerCapabilities): void {
+		let syncOptions = capabilities.window?.fileOperations;
+		if (syncOptions?.didRename?.globPattern !== undefined) {
+			try {
+				this.register({
+					id: UUID.generateUuid(),
+					registerOptions: { globPattern: syncOptions.didRename.globPattern }
+				});
+			} catch (e) {
+				this._client.warn(`Ignoring invalid glob pattern for didRename registration: ${syncOptions.didRename.globPattern}`);
+			}
+		}
+	}
+
+	public register(data: RegistrationData<proto.FileOperationRegistrationOptions>): void {
+		if (!this._listener) {
+			this._listener = code.workspace.onDidRenameFiles(this.send, this);
+		}
+		const regex = convert2RegExp(data.registerOptions.globPattern);
+		if (!regex) {
+			throw new Error(`Invalid pattern ${data.registerOptions.globPattern}!`);
+		}
+		this._globPatterns.set(data.id, regex);
+	}
+
+	public send(originalEvent: code.FileRenameEvent): void {
+		// Create a copy of the event that has the files filtered to match what the
+		// server wants.
+		const filteredEvent = {
+			...originalEvent,
+			files: originalEvent.files.filter((uri) => {
+				for (const pattern of this._globPatterns.values()) {
+					if (pattern.test(uri.oldUri.path)) {
+						return true;
+					}
+				}
+				return false;
+			}),
+		};
+
+		if (filteredEvent.files.length) {
+			const windowMiddleware = this._client.clientOptions.middleware?.window;
+			const didRenameFiles = (event: code.FileRenameEvent) => {
+				return this._client.sendRequest(proto.DidRenameFilesNotification.type,
+					this._client.code2ProtocolConverter.asDidRenameFilesParams(event));
+			};
+			windowMiddleware?.didRenameFiles
+				? windowMiddleware.didRenameFiles(filteredEvent, didRenameFiles)
+				: didRenameFiles(filteredEvent);
+		}
+	}
+
+	public unregister(id: string): void {
+		this._globPatterns.delete(id);
+		if (this._globPatterns.size === 0 && this._listener) {
+			this._listener.dispose();
+			this._listener = undefined;
+		}
+	}
+
+	public dispose(): void {
+		this._globPatterns.clear();
+		if (this._listener) {
+			this._listener.dispose();
+			this._listener = undefined;
+		}
+	}
+}
+
+export class DidDeleteFilesFeature implements DynamicFeature<proto.FileOperationRegistrationOptions> {
+	private _listener: code.Disposable | undefined;
+	private _globPatterns: Map<string, RegExp> = new Map<string, RegExp>();
+
+	constructor(private _client: BaseLanguageClient) {
+	}
+
+	public get registrationType(): proto.RegistrationType<proto.FileOperationRegistrationOptions> {
+		return proto.DidDeleteFilesNotification.type;
+	}
+
+	public fillClientCapabilities(capabilities: proto.ClientCapabilities): void {
+		let value = ensure(ensure(capabilities, 'window')!, 'fileOperations')!;
+		value.didDelete = true;
+	}
+
+	public initialize(capabilities: proto.ServerCapabilities): void {
+		let syncOptions = capabilities.window?.fileOperations;
+		if (syncOptions?.didDelete?.globPattern !== undefined) {
+			try {
+				this.register({
+					id: UUID.generateUuid(),
+					registerOptions: { globPattern: syncOptions.didDelete.globPattern }
+				});
+			} catch (e) {
+				this._client.warn(`Ignoring invalid glob pattern for didDelete registration: ${syncOptions.didDelete.globPattern}`);
+			}
+		}
+	}
+
+	public register(data: RegistrationData<proto.FileOperationRegistrationOptions>): void {
+		if (!this._listener) {
+			this._listener = code.workspace.onDidDeleteFiles(this.send, this);
+		}
+		const regex = convert2RegExp(data.registerOptions.globPattern);
+		if (!regex) {
+			throw new Error(`Invalid pattern ${data.registerOptions.globPattern}!`);
+		}
+		this._globPatterns.set(data.id, regex);
+	}
+
+	public send(originalEvent: code.FileDeleteEvent): void {
+		// Create a copy of the event that has the files filtered to match what the
+		// server wants.
+		const filteredEvent = {
+			...originalEvent,
+			files: originalEvent.files.filter((uri) => {
+				for (const pattern of this._globPatterns.values()) {
+					if (pattern.test(uri.path)) {
+						return true;
+					}
+				}
+				return false;
+			}),
+		};
+
+		if (filteredEvent.files.length) {
+			const windowMiddleware = this._client.clientOptions.middleware?.window;
+			const didDeleteFiles = (event: code.FileDeleteEvent) => {
+				return this._client.sendRequest(proto.DidDeleteFilesNotification.type,
+					this._client.code2ProtocolConverter.asDidDeleteFilesParams(event));
+			};
+			windowMiddleware?.didDeleteFiles
+				? windowMiddleware.didDeleteFiles(filteredEvent, didDeleteFiles)
+				: didDeleteFiles(filteredEvent);
+		}
+	}
+
+	public unregister(id: string): void {
+		this._globPatterns.delete(id);
+		if (this._globPatterns.size === 0 && this._listener) {
+			this._listener.dispose();
+			this._listener = undefined;
+		}
+	}
+
+	public dispose(): void {
+		this._globPatterns.clear();
+		if (this._listener) {
+			this._listener.dispose();
+			this._listener = undefined;
+		}
+	}
+}
+
 export class WillCreateFilesFeature implements DynamicFeature<proto.FileOperationRegistrationOptions> {
 	private _listener: code.Disposable | undefined;
 	private _globPatterns: Map<string, RegExp> = new Map<string, RegExp>();

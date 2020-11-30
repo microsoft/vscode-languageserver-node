@@ -8,7 +8,7 @@ import * as assert from 'assert';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as lsclient from 'vscode-languageclient/node';
-import { WillCreateFilesRequest, WillDeleteFilesRequest, WillRenameFilesRequest } from 'vscode-languageserver-protocol/lib/common/protocol.fileOperations';
+import { DidCreateFilesNotification, DidDeleteFilesNotification, DidRenameFilesNotification, WillCreateFilesRequest, WillDeleteFilesRequest, WillRenameFilesRequest } from 'vscode-languageserver-protocol/lib/common/protocol.fileOperations';
 
 suite('Client integration', () => {
 
@@ -146,6 +146,9 @@ suite('Client integration', () => {
 				},
 				window: {
 					fileOperations: {
+						didCreate: { globPattern: "**/created-static/**{/,*.txt}" },
+						didRename: { globPattern: "**/renamed-static/**{/,*.txt}" },
+						didDelete: { globPattern: "**/deleted-static/**{/,*.txt}" },
 						willCreate: { globPattern: "**/created-static/**{/,*.txt}" },
 						willRename: { globPattern: "**/renamed-static/**{/,*.txt}" },
 						willDelete: { globPattern: "**/deleted-static/**{/,*.txt}" },
@@ -690,6 +693,18 @@ suite('Client integration', () => {
 			assert.strictEqual(edit[0].newText.trim(), `${type}:\n${expectedLines.join('\n')}`.trim());
 		}
 
+		async function ensureNotificationReceived(type: string, params: any) {
+			const result = await client.sendRequest(
+				new lsclient.ProtocolRequestType<any, any, never, any, any>('testing/lastFileOperationRequest'),
+				{},
+				tokenSource.token,
+			);
+			assert.deepStrictEqual(result, {
+				type,
+				params
+			});
+		}
+
 		const createFiles = [
 			'/my/file.txt',
 			'/my/file.js',
@@ -778,7 +793,42 @@ suite('Client integration', () => {
 		});
 
 		test('Did Create Files', async () => {
-			// TODO(dantup): ...
+			const feature = client.getFeature(DidCreateFilesNotification.method);
+			isDefined(feature);
+
+			// Send the event and ensure the server reports the notification was sent.
+			feature.send({ files: createFiles });
+			await ensureNotificationReceived(
+				'create',
+				{
+					files: [
+						{ uri: 'file:///my/created-static/file.txt' },
+						{ uri: 'file:///my/created-static/folder/' },
+						{ uri: 'file:///my/created-dynamic/file.js' },
+						{ uri: 'file:///my/created-dynamic/folder/' },
+					],
+				},
+			);
+
+			// Add middleware that strips out any folders.
+			middleware.window = middleware.window || {};
+			middleware.window.didCreateFiles = (event, next) => next({
+				files: event.files.filter((f) => !f.path.endsWith('/')),
+			});
+
+			// Ensure we get the same results minus the folders that the middleware removed.
+			feature.send({ files: createFiles });
+			await ensureNotificationReceived(
+				'create',
+				{
+					files: [
+						{ uri: 'file:///my/created-static/file.txt' },
+						{ uri: 'file:///my/created-dynamic/file.js' },
+					],
+				},
+			);
+
+			middleware.window.didCreateFiles = undefined;
 		});
 
 		test('Will Rename Files', async () => {
@@ -827,7 +877,42 @@ suite('Client integration', () => {
 		});
 
 		test('Did Rename Files', async () => {
-			// TODO(dantup): ...
+			const feature = client.getFeature(DidRenameFilesNotification.method);
+			isDefined(feature);
+
+			// Send the event and ensure the server reports the notification was sent.
+			feature.send({ files: renameFiles });
+			await ensureNotificationReceived(
+				'rename',
+				{
+					files: [
+						{ oldUri: 'file:///my/renamed-static/file.txt', newUri: 'file:///my-new/renamed-static/file.txt' },
+						{ oldUri: 'file:///my/renamed-static/folder/', newUri: 'file:///my-new/renamed-static/folder/' },
+						{ oldUri: 'file:///my/renamed-dynamic/file.js', newUri: 'file:///my-new/renamed-dynamic/file.js' },
+						{ oldUri: 'file:///my/renamed-dynamic/folder/', newUri: 'file:///my-new/renamed-dynamic/folder/' },
+					],
+				},
+			);
+
+			// Add middleware that strips out any folders.
+			middleware.window = middleware.window || {};
+			middleware.window.didRenameFiles = (event, next) => next({
+				files: event.files.filter((f) => !f.oldUri.path.endsWith('/')),
+			});
+
+			// Ensure we get the same results minus the folders that the middleware removed.
+			feature.send({ files: renameFiles });
+			await ensureNotificationReceived(
+				'rename',
+				{
+					files: [
+						{ oldUri: 'file:///my/renamed-static/file.txt', newUri: 'file:///my-new/renamed-static/file.txt' },
+						{ oldUri: 'file:///my/renamed-dynamic/file.js', newUri: 'file:///my-new/renamed-dynamic/file.js' },
+					],
+				},
+			);
+
+			middleware.window.didRenameFiles = undefined;
 		});
 
 		test('Will Delete Files', async () => {
@@ -876,7 +961,42 @@ suite('Client integration', () => {
 		});
 
 		test('Did Delete Files', async () => {
-			// TODO(dantup): ...
+			const feature = client.getFeature(DidDeleteFilesNotification.method);
+			isDefined(feature);
+
+			// Send the event and ensure the server reports the notification was sent.
+			feature.send({ files: deleteFiles });
+			await ensureNotificationReceived(
+				'delete',
+				{
+					files: [
+						{ uri: 'file:///my/deleted-static/file.txt' },
+						{ uri: 'file:///my/deleted-static/folder/' },
+						{ uri: 'file:///my/deleted-dynamic/file.js' },
+						{ uri: 'file:///my/deleted-dynamic/folder/' },
+					],
+				},
+			);
+
+			// Add middleware that strips out any folders.
+			middleware.window = middleware.window || {};
+			middleware.window.didDeleteFiles = (event, next) => next({
+				files: event.files.filter((f) => !f.path.endsWith('/')),
+			});
+
+			// Ensure we get the same results minus the folders that the middleware removed.
+			feature.send({ files: deleteFiles });
+			await ensureNotificationReceived(
+				'delete',
+				{
+					files: [
+						{ uri: 'file:///my/deleted-static/file.txt' },
+						{ uri: 'file:///my/deleted-dynamic/file.js' },
+					],
+				},
+			);
+
+			middleware.window.didDeleteFiles = undefined;
 		});
 	});
 

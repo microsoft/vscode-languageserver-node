@@ -47,6 +47,9 @@ export interface Converter {
 	asSaveTextDocumentParams(textDocument: code.TextDocument, includeContent?: boolean): proto.DidSaveTextDocumentParams;
 	asWillSaveTextDocumentParams(event: code.TextDocumentWillSaveEvent): proto.WillSaveTextDocumentParams;
 
+	asDidCreateFilesParams(event: code.FileCreateEvent): CreateFilesParams;
+	asDidRenameFilesParams(event: code.FileRenameEvent): RenameFilesParams;
+	asDidDeleteFilesParams(event: code.FileDeleteEvent): DeleteFilesParams;
 	asWillCreateFilesParams(event: code.FileWillCreateEvent): CreateFilesParams;
 	asWillRenameFilesParams(event: code.FileWillRenameEvent): RenameFilesParams;
 	asWillDeleteFilesParams(event: code.FileWillDeleteEvent): DeleteFilesParams;
@@ -231,6 +234,31 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return {
 			textDocument: asTextDocumentIdentifier(event.document),
 			reason: asTextDocumentSaveReason(event.reason)
+		};
+	}
+
+	function asDidCreateFilesParams(event: code.FileCreateEvent): CreateFilesParams {
+		return {
+			files: event.files.map((fileUri) => ({
+				uri: _uriConverter(fileUri),
+			})),
+		};
+	}
+
+	function asDidRenameFilesParams(event: code.FileRenameEvent): RenameFilesParams {
+		return {
+			files: event.files.map((file) => ({
+				oldUri: _uriConverter(file.oldUri),
+				newUri: _uriConverter(file.newUri),
+			})),
+		};
+	}
+
+	function asDidDeleteFilesParams(event: code.FileDeleteEvent): DeleteFilesParams {
+		return {
+			files: event.files.map((fileUri) => ({
+				uri: _uriConverter(fileUri),
+			})),
 		};
 	}
 
@@ -761,6 +789,9 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asCloseTextDocumentParams,
 		asSaveTextDocumentParams,
 		asWillSaveTextDocumentParams,
+		asDidCreateFilesParams,
+		asDidRenameFilesParams,
+		asDidDeleteFilesParams,
 		asWillCreateFilesParams,
 		asWillRenameFilesParams,
 		asWillDeleteFilesParams,

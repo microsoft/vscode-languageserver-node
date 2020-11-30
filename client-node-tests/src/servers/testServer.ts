@@ -9,7 +9,7 @@ import {
 	DiagnosticTag, CompletionItemTag, TextDocumentSyncKind, MarkupKind, SignatureHelp, SignatureInformation, ParameterInformation,
 	Location, Range, DocumentHighlight, DocumentHighlightKind, CodeAction, Command, TextEdit, Position, DocumentLink,
 	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, SymbolKind, ProtocolRequestType, WorkDoneProgress,
-	WorkDoneProgressCreateRequest, WillCreateFilesRequest, WillRenameFilesRequest, WillDeleteFilesRequest
+	WorkDoneProgressCreateRequest, WillCreateFilesRequest, WillRenameFilesRequest, WillDeleteFilesRequest, DidDeleteFilesNotification, DidRenameFilesNotification, DidCreateFilesNotification
 } from '../../../server/node';
 
 import { URI } from 'vscode-uri';
@@ -90,6 +90,9 @@ connection.onInitialize((params: InitializeParams): any => {
 		window: {
 			fileOperations: {
 				// Static reg is folders + .txt files with operation kind in the path
+				didCreate: { globPattern: '**/created-static/**{/,*.txt}' },
+				didRename: { globPattern: '**/renamed-static/**{/,*.txt}' },
+				didDelete: { globPattern: '**/deleted-static/**{/,*.txt}' },
 				willCreate: { globPattern: '**/created-static/**{/,*.txt}' },
 				willRename: { globPattern: '**/renamed-static/**{/,*.txt}' },
 				willDelete: { globPattern: '**/deleted-static/**{/,*.txt}' },
@@ -102,6 +105,15 @@ connection.onInitialize((params: InitializeParams): any => {
 
 connection.onInitialized(() => {
 	// Dynamic reg is folders + .js files with operation kind in the path
+	connection.client.register(DidCreateFilesNotification.type, {
+		globPattern: '**/created-dynamic/**{/,*.js}'
+	});
+	connection.client.register(DidRenameFilesNotification.type, {
+		globPattern: '**/renamed-dynamic/**{/,*.js}'
+	});
+	connection.client.register(DidDeleteFilesNotification.type, {
+		globPattern: '**/deleted-dynamic/**{/,*.js}'
+	});
 	connection.client.register(WillCreateFilesRequest.type, {
 		globPattern: '**/created-dynamic/**{/,*.js}'
 	});
@@ -246,6 +258,18 @@ connection.onSelectionRanges((_params) => {
 		SelectionRange.create(Range.create(1,2,3,4))
 	];
 });
+
+let lastFileOperationRequest: unknown;
+connection.window.onDidCreateFiles((params) => { lastFileOperationRequest = { type: 'create', params }; });
+connection.window.onDidRenameFiles((params) => { lastFileOperationRequest = { type: 'rename', params }; });
+connection.window.onDidDeleteFiles((params) => { lastFileOperationRequest = { type: 'delete', params }; });
+
+connection.onRequest(
+	new ProtocolRequestType<null, null, never, any, any>('testing/lastFileOperationRequest'),
+	async (_, __) => {
+		return lastFileOperationRequest;
+	},
+);
 
 connection.window.onWillCreateFiles((params) => {
 	const createdFilenames = params.files.map((f) => `${f.uri}`).join('\n');
