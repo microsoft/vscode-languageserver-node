@@ -2900,6 +2900,16 @@ export namespace DocumentOnTypeFormattingRequest {
 
 //---- Rename ----------------------------------------------
 
+export namespace PrepareSupportDefaultBehavior {
+	/**
+	 * The client's default behavior is to select the identifier
+	 * according the to language's syntax rule.
+	 */
+	 export const Identifier: 1 = 1;
+}
+
+export type PrepareSupportDefaultBehavior = 1;
+
 export interface RenameClientCapabilities {
 	/**
 	 * Whether rename supports dynamic registration.
@@ -2917,9 +2927,12 @@ export interface RenameClientCapabilities {
 	/**
 	 * Client supports the default behavior result.
 	 *
+	 * The value indicates the default behavior used by the
+	 * client.
+	 *
 	 * @since 3.16.0
 	 */
-	prepareSupportDefaultBehavior?: boolean;
+	prepareSupportDefaultBehavior?: PrepareSupportDefaultBehavior;
 
 	/**
 	 * Whether th client honors the change annotations in
