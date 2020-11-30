@@ -19,7 +19,7 @@ import {
 	DefinitionProvider, ReferenceProvider, DocumentHighlightProvider, CodeActionProvider, DocumentSymbolProvider, CodeLensProvider, DocumentFormattingEditProvider,
 	DocumentRangeFormattingEditProvider, OnTypeFormattingEditProvider, RenameProvider, DocumentLinkProvider, DocumentColorProvider, DeclarationProvider,
 	FoldingRangeProvider, ImplementationProvider, SelectionRangeProvider, TypeDefinitionProvider, WorkspaceSymbolProvider, CallHierarchyProvider,
-	DocumentSymbolProviderMetadata, EventEmitter, OnTypeRenameProvider
+	DocumentSymbolProviderMetadata, EventEmitter, OnTypeRenameProvider, env as Env, TextDocumentShowOptions, FileWillCreateEvent
 } from 'vscode';
 
 import {
@@ -49,7 +49,7 @@ import {
 	DocumentRangeFormattingOptions, DocumentOnTypeFormattingOptions, RenameOptions, DocumentLinkOptions, CompletionItemTag, DiagnosticTag, DocumentColorRequest,
 	DeclarationRequest, FoldingRangeRequest, ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, SymbolTag, CallHierarchyPrepareRequest,
 	CancellationStrategy, SaveOptions, LSPErrorCodes, CodeActionResolveRequest, RegistrationType, SemanticTokensRegistrationType, InsertTextMode, ShowDocumentRequest,
-	ShowDocumentParams, ShowDocumentResult, OnTypeRenameRequest, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressReport, FileOperationRegistrationOptions
+	ShowDocumentParams, ShowDocumentResult, OnTypeRenameRequest, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressReport, FileOperationRegistrationOptions, WillCreateFilesRequest
 } from 'vscode-languageserver-protocol';
 
 import type { ColorProviderMiddleware } from './colorProvider';
@@ -62,7 +62,8 @@ import type { DeclarationMiddleware } from './declaration';
 import type { SelectionRangeProviderMiddleware } from './selectionRange';
 import type { CallHierarchyMiddleware } from './callHierarchy';
 import type { SemanticTokensMiddleware, SemanticTokensProviders } from './semanticTokens';
-import { OnTypeRenameMiddleware } from './onTypeRename';
+import type { OnTypeRenameMiddleware } from './onTypeRename';
+import type { FileOperationsMiddleware } from './fileOperations';
 
 import * as c2p from './codeConverter';
 import * as p2c from './protocolConverter';
@@ -71,16 +72,6 @@ import * as Is from './utils/is';
 import { Delayer } from './utils/async';
 import * as UUID from './utils/uuid';
 import { ProgressPart } from './progressPart';
-import { env } from 'vscode';
-import { TextDocumentShowOptions } from 'vscode';
-import { FileWillCreateEvent } from 'vscode';
-import { FileCreateEvent } from 'vscode';
-import { FileRenameEvent } from 'vscode';
-import { FileWillRenameEvent } from 'vscode';
-import { FileWillDeleteEvent } from 'vscode';
-import { FileDeleteEvent } from 'vscode';
-import { convert2RegExp } from './utils/patternParser';
-import { WillCreateFilesRequest } from 'vscode-languageserver-protocol/lib/common/protocol.window.fileOperations';
 
 interface Connection {
 
@@ -464,16 +455,9 @@ export type WorkspaceMiddleware = _WorkspaceMiddleware & ConfigurationWorkspaceM
 
 export interface _WindowMiddleware {
 	showDocument?: (this: void, params: ShowDocumentParams, next: ShowDocumentRequest.HandlerSignature) => Promise<ShowDocumentResult>;
-
-	didCreateFiles?: NextSignature<FileCreateEvent, void>;
-	willCreateFiles?: NextSignature<FileWillCreateEvent, Thenable<VWorkspaceEdit | undefined>>;
-	didRenameFiles?: NextSignature<FileRenameEvent, void>;
-	willRenameFiles?: NextSignature<FileWillRenameEvent, Thenable<VWorkspaceEdit | undefined>>;
-	didDeleteFiles?: NextSignature<FileDeleteEvent, void>;
-	willDeleteFiles?: NextSignature<FileWillDeleteEvent, Thenable<VWorkspaceEdit | undefined>>;
 }
 
-export type WindowMiddleware = _WindowMiddleware;
+export type WindowMiddleware = _WindowMiddleware & FileOperationsMiddleware;
 
 /**
  * The Middleware lets extensions intercept the request and notifications send and received
@@ -1187,9 +1171,9 @@ class WillSaveWaitUntilFeature implements DynamicFeature<TextDocumentRegistratio
 			let willSaveWaitUntil = (event: TextDocumentWillSaveEvent): Thenable<VTextEdit[]> => {
 				return this._client.sendRequest(WillSaveTextDocumentWaitUntilRequest.type,
 					this._client.code2ProtocolConverter.asWillSaveTextDocumentParams(event)).then((edits) => {
-						let vEdits = this._client.protocol2CodeConverter.asTextEdits(edits);
-						return vEdits === undefined ? [] : vEdits;
-					});
+					let vEdits = this._client.protocol2CodeConverter.asTextEdits(edits);
+					return vEdits === undefined ? [] : vEdits;
+				});
 			};
 			event.waitUntil(
 				middleware.willSaveWaitUntil
@@ -1209,95 +1193,6 @@ class WillSaveWaitUntilFeature implements DynamicFeature<TextDocumentRegistratio
 
 	public dispose(): void {
 		this._selectors.clear();
-		if (this._listener) {
-			this._listener.dispose();
-			this._listener = undefined;
-		}
-	}
-}
-
-class WillCreateFilesFeature implements DynamicFeature<FileOperationRegistrationOptions> {
-
-	private _listener: Disposable | undefined;
-	private _globPatterns: Map<string, RegExp> = new Map<string, RegExp>();
-
-	constructor(private _client: BaseLanguageClient) {
-	}
-
-	public get registrationType(): RegistrationType<FileOperationRegistrationOptions> {
-		return WillCreateFilesRequest.type;
-	}
-
-	public fillClientCapabilities(capabilities: ClientCapabilities): void {
-		let value = ensure(ensure(capabilities, 'window')!, 'fileOperations')!;
-		value.willCreate = true;
-	}
-
-	public initialize(capabilities: ServerCapabilities, _: DocumentSelector): void {
-		let syncOptions = capabilities.window?.fileOperations;
-		if (syncOptions?.willCreate?.globPattern !== undefined) {
-			try {
-				this.register({
-					id: UUID.generateUuid(),
-					registerOptions: { globPattern: syncOptions.willCreate.globPattern }
-				});
-			} catch (e) {
-				this._client.warn(`Ignoring invalid glob pattern for willCreate registration: ${syncOptions.willCreate.globPattern}`);
-			}
-		}
-	}
-
-	public register(data: RegistrationData<FileOperationRegistrationOptions>): void {
-		if (!this._listener) {
-			this._listener = Workspace.onWillCreateFiles(this.send, this);
-		}
-		const regex = convert2RegExp(data.registerOptions.globPattern);
-		if (!regex) {
-			throw new Error(`Invalid pattern ${data.registerOptions.globPattern}!`);
-		}
-		this._globPatterns.set(data.id, regex);
-	}
-
-	public send(originalEvent: FileWillCreateEvent): void {
-		// Create a copy of the event that has the files filtered to match what the
-		// server wants.
-		const filteredEvent = {
-			...originalEvent,
-			files: originalEvent.files.filter((uri) => {
-				for (const pattern of this._globPatterns.values()) {
-					if (pattern.test(uri.path)) {
-						return true;
-					}
-				}
-				return false;
-			}),
-		};
-
-		if (filteredEvent.files.length) {
-			let middleware = this._client.clientOptions.middleware!;
-			let willCreateFiles = (event: FileWillCreateEvent) => {
-				return this._client.sendRequest(WillCreateFilesRequest.type,
-					this._client.code2ProtocolConverter.asWillCreateFilesParams(event))
-					.then(this._client.protocol2CodeConverter.asWorkspaceEdit);
-			};
-			filteredEvent.waitUntil(
-				middleware.willCreateFiles
-					? middleware.willCreateFiles(filteredEvent, willCreateFiles)
-					: willCreateFiles(filteredEvent)
-			);
-		}
-	}
-
-	public unregister(id: string): void {
-		this._globPatterns.delete(id);
-		if (this._globPatterns.size === 0 && this._listener) {
-			this._listener.dispose();
-			this._listener = undefined;
-		}
-	}
-
-	public dispose(): void {
-		this._globPatterns.clear();
 		if (this._listener) {
 			this._listener.dispose();
 			this._listener = undefined;
@@ -3168,7 +3063,7 @@ export abstract class BaseLanguageClient {
 					const uri = this.protocol2CodeConverter.asUri(params.uri);
 					try {
 						if (params.external === true) {
-							const success = await env.openExternal(uri);
+							const success = await Env.openExternal(uri);
 							return { success };
 						} else {
 							const options: TextDocumentShowOptions = {};
@@ -3616,7 +3511,6 @@ export abstract class BaseLanguageClient {
 		this.registerFeature(new WillSaveWaitUntilFeature(this));
 		this.registerFeature(new DidSaveTextDocumentFeature(this));
 		this.registerFeature(new DidCloseTextDocumentFeature(this, this._syncedDocuments));
-		this.registerFeature(new WillCreateFilesFeature(this));
 		this.registerFeature(new FileSystemWatcherFeature(this, (event) => this.notifyFileEvent(event)));
 		this.registerFeature(new CompletionItemFeature(this));
 		this.registerFeature(new HoverFeature(this));

@@ -17,6 +17,7 @@ import { ProgressFeature } from './progress';
 import { CallHierarchyFeature } from './callHierarchy';
 import { SemanticTokensFeature } from './semanticTokens';
 import { OnTypeRenameFeature } from './onTypeRename';
+import { WillCreateFilesFeature } from './fileOperations';
 
 export abstract class CommonLanguageClient extends BaseLanguageClient {
 
@@ -42,6 +43,7 @@ export abstract class CommonLanguageClient extends BaseLanguageClient {
 		this.registerFeature(new CallHierarchyFeature(this));
 		this.registerFeature(new SemanticTokensFeature(this));
 		this.registerFeature(new OnTypeRenameFeature(this));
+		this.registerFeature(new WillCreateFilesFeature(this));
 	}
 }
 

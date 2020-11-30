@@ -9,11 +9,10 @@ import {
 	DiagnosticTag, CompletionItemTag, TextDocumentSyncKind, MarkupKind, SignatureHelp, SignatureInformation, ParameterInformation,
 	Location, Range, DocumentHighlight, DocumentHighlightKind, CodeAction, Command, TextEdit, Position, DocumentLink,
 	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, SymbolKind, ProtocolRequestType, WorkDoneProgress,
-	WorkDoneProgressCreateRequest, FileOperationRegistrationOptions
+	WorkDoneProgressCreateRequest, WillCreateFilesRequest
 } from '../../../server/node';
 
 import { URI } from 'vscode-uri';
-import { CreateFilesParams, WillCreateFilesRequest } from 'vscode-languageserver-protocol/lib/common/protocol.window.fileOperations';
 
 let connection: Connection = createConnection();
 
@@ -103,7 +102,7 @@ connection.onInitialized(() => {
 	// Dynamic reg is folders + .js files with 'created-dynamic' in the path
 	connection.client.register(WillCreateFilesRequest.type, {
 		globPattern: '**/created-dynamic/**{/,*.js}'
-	} as FileOperationRegistrationOptions);
+	});
 });
 
 connection.onDeclaration((params) => {
@@ -241,7 +240,7 @@ connection.onSelectionRanges((_params) => {
 });
 
 // TODO(dantup): What should this look like now?
-connection.window.onWillCreateFiles((params: CreateFilesParams) => {
+connection.window.onWillCreateFiles((params) => {
 	const createdFilenames = params.files.map((f) => `${f.uri}`).join('\n');
 	return {
 		documentChanges: [{
@@ -250,7 +249,7 @@ connection.window.onWillCreateFiles((params: CreateFilesParams) => {
 				TextEdit.insert(Position.create(0, 0), `WILL CREATE:\n${createdFilenames}`),
 			]
 		}],
-	} as WorkspaceEdit;
+	};
 });
 
 connection.onTypeDefinition((params) => {
