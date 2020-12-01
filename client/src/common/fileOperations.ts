@@ -44,11 +44,11 @@ async function addSlashesToDirectories(uri: code.Uri) {
 
 export interface FileOperationsMiddleware {
 	didCreateFiles?: NextSignature<code.FileCreateEvent, void>;
-	willCreateFiles?: NextSignature<code.FileWillCreateEvent, Thenable<code.WorkspaceEdit | null | undefined>>;
+	willCreateFiles?: NextSignature<code.FileCreateEvent, Thenable<code.WorkspaceEdit | null | undefined>>;
 	didRenameFiles?: NextSignature<code.FileRenameEvent, void>;
-	willRenameFiles?: NextSignature<code.FileWillRenameEvent, Thenable<code.WorkspaceEdit | null | undefined>>;
+	willRenameFiles?: NextSignature<code.FileRenameEvent, Thenable<code.WorkspaceEdit | null | undefined>>;
 	didDeleteFiles?: NextSignature<code.FileDeleteEvent, void>;
-	willDeleteFiles?: NextSignature<code.FileWillDeleteEvent, Thenable<code.WorkspaceEdit | null | undefined>>;
+	willDeleteFiles?: NextSignature<code.FileDeleteEvent, Thenable<code.WorkspaceEdit | null | undefined>>;
 }
 
 abstract class FileOperationFeature<I, E extends { readonly files: ReadonlyArray<I>; }> implements DynamicFeature<proto.FileOperationRegistrationOptions> {
@@ -246,7 +246,7 @@ interface RequestEvent<I> {
 	waitUntil(thenable: Thenable<any>): void;
 }
 
-abstract class RequestFileOperationFeature<I, E extends RequestEvent<I>, P> extends FileOperationFeature<I, E> {
+abstract class RequestFileOperationFeature<I, E extends { readonly files: ReadonlyArray<I>; }, P> extends FileOperationFeature<I, E> {
 
 	private _requestType: proto.ProtocolRequestType<P, proto.WorkspaceEdit | null, never, void, proto.FileOperationRegistrationOptions>;
 	private _accessUri: (i: I) => code.Uri;
@@ -266,34 +266,41 @@ abstract class RequestFileOperationFeature<I, E extends RequestEvent<I>, P> exte
 		this._createParams = createParams;
 	}
 
-	public async send(originalEvent: E): Promise<void> {
+	private async filterAndSend(originalEvent: E): Promise<code.WorkspaceEdit | any> {
+		// Fix directories to always end with trailing slashes.
 		const fixedEvent = await this.fixSlashes(originalEvent);
+
 		// Create a copy of the event that has the files filtered to match what the
 		// server wants.
 		const filteredEvent = this.filter(fixedEvent, this._accessUri);
+
 		if (filteredEvent.files.length) {
-			const next = async (event: E): Promise<code.WorkspaceEdit | any> => {
-				return this._client.sendRequest(this._requestType, this._createParams(event)).then(this._client.protocol2CodeConverter.asWorkspaceEdit);
+			const next = (event: E): Promise<code.WorkspaceEdit | any> => {
+				return this._client.sendRequest(this._requestType, this._createParams(event))
+					.then(this._client.protocol2CodeConverter.asWorkspaceEdit);
 			};
-			// TODO(dantup): This doesn't work - we cannot call waitUntil asynchronously...
-			originalEvent.waitUntil(this.doSend(filteredEvent, next));
+			return this.doSend(filteredEvent, next);
 		}
+	}
+
+	public async send(originalEvent: E & RequestEvent<I>): Promise<void> {
+		originalEvent.waitUntil(this.filterAndSend(originalEvent));
 	}
 
 	protected abstract doSend(event: E, next: (event: E) => Thenable<code.WorkspaceEdit> | Thenable<any>): Thenable<code.WorkspaceEdit> | Thenable<any>;
 }
 
-export class WillCreateFilesFeature extends RequestFileOperationFeature<code.Uri, code.FileWillCreateEvent, proto.CreateFilesParams> {
+export class WillCreateFilesFeature extends RequestFileOperationFeature<code.Uri, code.FileCreateEvent, proto.CreateFilesParams> {
 	constructor(client: BaseLanguageClient) {
 		super(
 			client, code.workspace.onWillCreateFiles, proto.WillCreateFilesRequest.type, 'willCreate', 'willCreate',
 			(i: code.Uri) => i,
 			client.code2ProtocolConverter.asWillCreateFilesParams,
-			async (params) => ({ files: await Promise.all(params.files.map(addSlashesToDirectories)), waitUntil: params.waitUntil }),
+			async (params) => ({ files: await Promise.all(params.files.map(addSlashesToDirectories)) }),
 		);
 	}
 
-	protected doSend(event: code.FileWillCreateEvent, next: (event: code.FileWillCreateEvent) => Thenable<code.WorkspaceEdit> | Thenable<any>): Thenable<code.WorkspaceEdit> | Thenable<any> {
+	protected doSend(event: code.FileWillCreateEvent, next: (event: code.FileCreateEvent) => Thenable<code.WorkspaceEdit> | Thenable<any>): Thenable<code.WorkspaceEdit> | Thenable<any> {
 		const middleware = this._client.clientOptions.middleware?.workspace;
 		return middleware?.willCreateFiles
 			? middleware.willCreateFiles(event, next)
@@ -301,7 +308,7 @@ export class WillCreateFilesFeature extends RequestFileOperationFeature<code.Uri
 	}
 }
 
-export class WillRenameFilesFeature extends RequestFileOperationFeature<{ oldUri: code.Uri, newUri: code.Uri }, code.FileWillRenameEvent, proto.RenameFilesParams> {
+export class WillRenameFilesFeature extends RequestFileOperationFeature<{ oldUri: code.Uri, newUri: code.Uri }, code.FileRenameEvent, proto.RenameFilesParams> {
 	constructor(client: BaseLanguageClient) {
 		super(
 			client, code.workspace.onWillRenameFiles, proto.WillRenameFilesRequest.type, 'willRename', 'willRename',
@@ -309,12 +316,12 @@ export class WillRenameFilesFeature extends RequestFileOperationFeature<{ oldUri
 			client.code2ProtocolConverter.asWillRenameFilesParams,
 			async (params) => {
 				const files = await Promise.all(params.files.map(async (i) => ({ oldUri: await addSlashesToDirectories(i.oldUri), newUri: await addSlashesToDirectories(i.newUri) })))
-				return { files, waitUntil: params.waitUntil }
+				return { files }
 			},
 		);
 	}
 
-	protected doSend(event: code.FileWillRenameEvent, next: (event: code.FileWillRenameEvent) => Thenable<code.WorkspaceEdit> | Thenable<any>): Thenable<code.WorkspaceEdit> | Thenable<any> {
+	protected doSend(event: code.FileWillRenameEvent, next: (event: code.FileRenameEvent) => Thenable<code.WorkspaceEdit> | Thenable<any>): Thenable<code.WorkspaceEdit> | Thenable<any> {
 		const middleware = this._client.clientOptions.middleware?.workspace;
 		return middleware?.willRenameFiles
 			? middleware.willRenameFiles(event, next)
@@ -322,17 +329,17 @@ export class WillRenameFilesFeature extends RequestFileOperationFeature<{ oldUri
 	}
 }
 
-export class WillDeleteFilesFeature extends RequestFileOperationFeature<code.Uri, code.FileWillDeleteEvent, proto.DeleteFilesParams> {
+export class WillDeleteFilesFeature extends RequestFileOperationFeature<code.Uri, code.FileDeleteEvent, proto.DeleteFilesParams> {
 	constructor(client: BaseLanguageClient) {
 		super(
 			client, code.workspace.onWillDeleteFiles, proto.WillDeleteFilesRequest.type, 'willDelete', 'willDelete',
 			(i: code.Uri) => i,
 			client.code2ProtocolConverter.asWillDeleteFilesParams,
-			async (params) => ({ files: await Promise.all(params.files.map(addSlashesToDirectories)), waitUntil: params.waitUntil }),
+			async (params) => ({ files: await Promise.all(params.files.map(addSlashesToDirectories)) }),
 		);
 	}
 
-	protected doSend(event: code.FileWillDeleteEvent, next: (event: code.FileWillDeleteEvent) => Thenable<code.WorkspaceEdit> | Thenable<any>): Thenable<code.WorkspaceEdit> | Thenable<any> {
+	protected doSend(event: code.FileWillDeleteEvent, next: (event: code.FileDeleteEvent) => Thenable<code.WorkspaceEdit> | Thenable<any>): Thenable<code.WorkspaceEdit> | Thenable<any> {
 		const middleware = this._client.clientOptions.middleware?.workspace;
 		return middleware?.willDeleteFiles
 			? middleware.willDeleteFiles(event, next)

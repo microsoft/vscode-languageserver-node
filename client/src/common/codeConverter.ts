@@ -50,9 +50,9 @@ export interface Converter {
 	asDidCreateFilesParams(event: code.FileCreateEvent): CreateFilesParams;
 	asDidRenameFilesParams(event: code.FileRenameEvent): RenameFilesParams;
 	asDidDeleteFilesParams(event: code.FileDeleteEvent): DeleteFilesParams;
-	asWillCreateFilesParams(event: code.FileWillCreateEvent): CreateFilesParams;
-	asWillRenameFilesParams(event: code.FileWillRenameEvent): RenameFilesParams;
-	asWillDeleteFilesParams(event: code.FileWillDeleteEvent): DeleteFilesParams;
+	asWillCreateFilesParams(event: code.FileCreateEvent): CreateFilesParams;
+	asWillRenameFilesParams(event: code.FileRenameEvent): RenameFilesParams;
+	asWillDeleteFilesParams(event: code.FileDeleteEvent): DeleteFilesParams;
 
 	asTextDocumentPositionParams(textDocument: code.TextDocument, position: code.Position): proto.TextDocumentPositionParams;
 
