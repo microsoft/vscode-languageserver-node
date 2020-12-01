@@ -355,6 +355,13 @@ export interface WorkspaceClientCapabilities {
 	 * @since 3.16.0 - proposed state.
 	 */
 	codeLens?: CodeLensWorkspaceClientCapabilities;
+
+	/**
+	 * The client has support for file notifications/requests for user operations on files.
+	 *
+	 * Since 3.16.0
+	 */
+	fileOperations?: FileOperationClientCapabilities
 }
 
 /**
@@ -527,13 +534,6 @@ export interface WindowClientCapabilities {
 	 * @since 3.16.0 - proposed state
 	 */
 	showDocument?: ShowDocumentClientCapabilities;
-
-	/**
-	 * The client has support for file notifications/requests for user operations on files.
-	 *
-	 * Since 3.16.0
-	 */
-	fileOperations?: FileOperationClientCapabilities
 }
 
 /**
