@@ -452,13 +452,13 @@ export interface _WorkspaceMiddleware {
 	didChangeWatchedFile?: (this: void, event: FileEvent, next: DidChangeWatchedFileSignature) => void;
 }
 
-export type WorkspaceMiddleware = _WorkspaceMiddleware & ConfigurationWorkspaceMiddleware & WorkspaceFolderWorkspaceMiddleware;
+export type WorkspaceMiddleware = _WorkspaceMiddleware & ConfigurationWorkspaceMiddleware & WorkspaceFolderWorkspaceMiddleware & FileOperationsMiddleware;
 
 export interface _WindowMiddleware {
 	showDocument?: (this: void, params: ShowDocumentParams, next: ShowDocumentRequest.HandlerSignature) => Promise<ShowDocumentResult>;
 }
 
-export type WindowMiddleware = _WindowMiddleware & FileOperationsMiddleware;
+export type WindowMiddleware = _WindowMiddleware;
 
 /**
  * The Middleware lets extensions intercept the request and notifications send and received

@@ -87,7 +87,7 @@ connection.onInitialize((params: InitializeParams): any => {
 				delta: true
 			}
 		},
-		window: {
+		workspace: {
 			fileOperations: {
 				// Static reg is folders + .txt files with operation kind in the path
 				didCreate: { globPattern: '**/created-static/**{/,*.txt}' },
@@ -260,18 +260,18 @@ connection.onSelectionRanges((_params) => {
 });
 
 let lastFileOperationRequest: unknown;
-connection.window.onDidCreateFiles((params) => { lastFileOperationRequest = { type: 'create', params }; });
-connection.window.onDidRenameFiles((params) => { lastFileOperationRequest = { type: 'rename', params }; });
-connection.window.onDidDeleteFiles((params) => { lastFileOperationRequest = { type: 'delete', params }; });
+connection.workspace.onDidCreateFiles((params) => { lastFileOperationRequest = { type: 'create', params }; });
+connection.workspace.onDidRenameFiles((params) => { lastFileOperationRequest = { type: 'rename', params }; });
+connection.workspace.onDidDeleteFiles((params) => { lastFileOperationRequest = { type: 'delete', params }; });
 
 connection.onRequest(
 	new ProtocolRequestType<null, null, never, any, any>('testing/lastFileOperationRequest'),
-	async (_, __) => {
+	() => {
 		return lastFileOperationRequest;
 	},
 );
 
-connection.window.onWillCreateFiles((params) => {
+connection.workspace.onWillCreateFiles((params) => {
 	const createdFilenames = params.files.map((f) => `${f.uri}`).join('\n');
 	return {
 		documentChanges: [{
@@ -283,7 +283,7 @@ connection.window.onWillCreateFiles((params) => {
 	};
 });
 
-connection.window.onWillRenameFiles((params) => {
+connection.workspace.onWillRenameFiles((params) => {
 	const renamedFilenames = params.files.map((f) => `${f.oldUri} -> ${f.newUri}`).join('\n');
 	return {
 		documentChanges: [{
@@ -295,7 +295,7 @@ connection.window.onWillRenameFiles((params) => {
 	};
 });
 
-connection.window.onWillDeleteFiles((params) => {
+connection.workspace.onWillDeleteFiles((params) => {
 	const deletedFilenames = params.files.map((f) => `${f.uri}`).join('\n');
 	return {
 		documentChanges: [{

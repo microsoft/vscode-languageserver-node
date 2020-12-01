@@ -144,14 +144,14 @@ suite('Client integration', () => {
 						delta: true
 					}
 				},
-				window: {
+				workspace: {
 					fileOperations: {
-						didCreate: { globPattern: "**/created-static/**{/,*.txt}" },
-						didRename: { globPattern: "**/renamed-static/**{/,*.txt}" },
-						didDelete: { globPattern: "**/deleted-static/**{/,*.txt}" },
-						willCreate: { globPattern: "**/created-static/**{/,*.txt}" },
-						willRename: { globPattern: "**/renamed-static/**{/,*.txt}" },
-						willDelete: { globPattern: "**/deleted-static/**{/,*.txt}" },
+						didCreate: { globPattern: '**/created-static/**{/,*.txt}' },
+						didRename: { globPattern: '**/renamed-static/**{/,*.txt}' },
+						didDelete: { globPattern: '**/deleted-static/**{/,*.txt}' },
+						willCreate: { globPattern: '**/created-static/**{/,*.txt}' },
+						willRename: { globPattern: '**/renamed-static/**{/,*.txt}' },
+						willDelete: { globPattern: '**/deleted-static/**{/,*.txt}' },
 					},
 				},
 				onTypeRenameProvider: false
@@ -360,21 +360,22 @@ suite('Client integration', () => {
 	test('Progress', async () => {
 		const progressToken = 'TEST-PROGRESS-TOKEN';
 		const middlewareEvents: Array<lsclient.WorkDoneProgressBegin | lsclient.WorkDoneProgressReport | lsclient.WorkDoneProgressEnd> = [];
-		let currentProgressResolver: () => void | undefined;
+		let currentProgressResolver: (value: unknown) => void | undefined;
 
 		// Set up middleware that calls the current resolve function when it gets its 'end' progress event.
 		middleware.handleWorkDoneProgress = (token: lsclient.ProgressToken, params, next) => {
 			if (token === progressToken) {
 				middlewareEvents.push(params);
-				if (params.kind === 'end')
+				if (params.kind === 'end') {
 					setImmediate(currentProgressResolver);
+				}
 			}
 			return next(token, params);
 		};
 
 		// Trigger multiple sample progress events.
 		for (let i = 0; i < 2; i++) {
-			await new Promise((resolve) => {
+			await new Promise<unknown>((resolve) => {
 				currentProgressResolver = resolve;
 				client.sendRequest(
 					new lsclient.ProtocolRequestType<any, null, never, any, any>('testing/sendSampleProgress'),
@@ -772,8 +773,8 @@ suite('Client integration', () => {
 			);
 
 			// Add middleware that strips out any folders.
-			middleware.window = middleware.window || {};
-			middleware.window.willCreateFiles = (event, next) => next({
+			middleware.workspace = middleware.workspace || {};
+			middleware.workspace.willCreateFiles = (event, next) => next({
 				files: event.files.filter((f) => !f.path.endsWith('/')),
 				waitUntil: event.waitUntil,
 			});
@@ -789,7 +790,7 @@ suite('Client integration', () => {
 				],
 			);
 
-			middleware.window.willCreateFiles = undefined;
+			middleware.workspace.willCreateFiles = undefined;
 		});
 
 		test('Did Create Files', async () => {
@@ -811,8 +812,8 @@ suite('Client integration', () => {
 			);
 
 			// Add middleware that strips out any folders.
-			middleware.window = middleware.window || {};
-			middleware.window.didCreateFiles = (event, next) => next({
+			middleware.workspace = middleware.workspace || {};
+			middleware.workspace.didCreateFiles = (event, next) => next({
 				files: event.files.filter((f) => !f.path.endsWith('/')),
 			});
 
@@ -828,7 +829,7 @@ suite('Client integration', () => {
 				},
 			);
 
-			middleware.window.didCreateFiles = undefined;
+			middleware.workspace.didCreateFiles = undefined;
 		});
 
 		test('Will Rename Files', async () => {
@@ -856,8 +857,8 @@ suite('Client integration', () => {
 			);
 
 			// Add middleware that strips out any folders.
-			middleware.window = middleware.window || {};
-			middleware.window.willRenameFiles = (event, next) => next({
+			middleware.workspace = middleware.workspace || {};
+			middleware.workspace.willRenameFiles = (event, next) => next({
 				files: event.files.filter((f) => !f.oldUri.path.endsWith('/')),
 				waitUntil: event.waitUntil,
 			});
@@ -873,7 +874,7 @@ suite('Client integration', () => {
 				],
 			);
 
-			middleware.window.willRenameFiles = undefined;
+			middleware.workspace.willRenameFiles = undefined;
 		});
 
 		test('Did Rename Files', async () => {
@@ -895,8 +896,8 @@ suite('Client integration', () => {
 			);
 
 			// Add middleware that strips out any folders.
-			middleware.window = middleware.window || {};
-			middleware.window.didRenameFiles = (event, next) => next({
+			middleware.workspace = middleware.workspace || {};
+			middleware.workspace.didRenameFiles = (event, next) => next({
 				files: event.files.filter((f) => !f.oldUri.path.endsWith('/')),
 			});
 
@@ -912,7 +913,7 @@ suite('Client integration', () => {
 				},
 			);
 
-			middleware.window.didRenameFiles = undefined;
+			middleware.workspace.didRenameFiles = undefined;
 		});
 
 		test('Will Delete Files', async () => {
@@ -940,8 +941,8 @@ suite('Client integration', () => {
 			);
 
 			// Add middleware that strips out any folders.
-			middleware.window = middleware.window || {};
-			middleware.window.willDeleteFiles = (event, next) => next({
+			middleware.workspace = middleware.workspace || {};
+			middleware.workspace.willDeleteFiles = (event, next) => next({
 				files: event.files.filter((f) => !f.path.endsWith('/')),
 				waitUntil: event.waitUntil,
 			});
@@ -957,7 +958,7 @@ suite('Client integration', () => {
 				],
 			);
 
-			middleware.window.willDeleteFiles = undefined;
+			middleware.workspace.willDeleteFiles = undefined;
 		});
 
 		test('Did Delete Files', async () => {
@@ -979,8 +980,8 @@ suite('Client integration', () => {
 			);
 
 			// Add middleware that strips out any folders.
-			middleware.window = middleware.window || {};
-			middleware.window.didDeleteFiles = (event, next) => next({
+			middleware.workspace = middleware.workspace || {};
+			middleware.workspace.didDeleteFiles = (event, next) => next({
 				files: event.files.filter((f) => !f.path.endsWith('/')),
 			});
 
@@ -996,7 +997,7 @@ suite('Client integration', () => {
 				},
 			);
 
-			middleware.window.didDeleteFiles = undefined;
+			middleware.workspace.didDeleteFiles = undefined;
 		});
 	});
 

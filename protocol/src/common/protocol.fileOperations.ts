@@ -3,9 +3,9 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { RequestHandler } from 'vscode-jsonrpc';
+import { NotificationHandler, RequestHandler } from 'vscode-jsonrpc';
 import { WorkspaceEdit } from 'vscode-languageserver-types';
-import { ProtocolRequestType } from './messages';
+import { ProtocolNotificationType, ProtocolRequestType } from './messages';
 
 /**
  * Options for notifications/requests for user operations on files.
@@ -153,37 +153,37 @@ export interface FileDelete {
 }
 
 export namespace DidCreateFilesNotification {
-	export const method: 'window/didCreateFiles' = 'window/didCreateFiles';
-	export const type = new ProtocolRequestType<CreateFilesParams, void, never, void, FileOperationRegistrationOptions>(method);
-	export type HandlerSignature = RequestHandler<CreateFilesParams, void | null, void>;
+	export const method: 'workspace/didCreateFiles' = 'workspace/didCreateFiles';
+	export const type = new ProtocolNotificationType<CreateFilesParams, FileOperationRegistrationOptions>(method);
+	export type HandlerSignature = NotificationHandler<CreateFilesParams>;
 }
 
 export namespace DidRenameFilesNotification {
-	export const method: 'window/didRenameFiles' = 'window/didRenameFiles';
-	export const type = new ProtocolRequestType<RenameFilesParams, void, never, void, FileOperationRegistrationOptions>(method);
-	export type HandlerSignature = RequestHandler<RenameFilesParams, void | null, void>;
+	export const method: 'workspace/didRenameFiles' = 'workspace/didRenameFiles';
+	export const type = new ProtocolNotificationType<RenameFilesParams, FileOperationRegistrationOptions>(method);
+	export type HandlerSignature = NotificationHandler<RenameFilesParams>;
 }
 
 export namespace DidDeleteFilesNotification {
-	export const method: 'window/didDeleteFiles' = 'window/didDeleteFiles';
-	export const type = new ProtocolRequestType<DeleteFilesParams, void, never, void, FileOperationRegistrationOptions>(method);
-	export type HandlerSignature = RequestHandler<DeleteFilesParams, void | null, void>;
+	export const method: 'workspace/didDeleteFiles' = 'workspace/didDeleteFiles';
+	export const type = new ProtocolNotificationType<DeleteFilesParams, FileOperationRegistrationOptions>(method);
+	export type HandlerSignature = NotificationHandler<DeleteFilesParams>;
 }
 
 export namespace WillCreateFilesRequest {
-	export const method: 'window/willCreateFiles' = 'window/willCreateFiles';
+	export const method: 'workspace/willCreateFiles' = 'workspace/willCreateFiles';
 	export const type = new ProtocolRequestType<CreateFilesParams, WorkspaceEdit | null, never, void, FileOperationRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<CreateFilesParams, WorkspaceEdit | undefined | null, void>;
 }
 
 export namespace WillRenameFilesRequest {
-	export const method: 'window/willRenameFiles' = 'window/willRenameFiles';
+	export const method: 'workspace/willRenameFiles' = 'workspace/willRenameFiles';
 	export const type = new ProtocolRequestType<RenameFilesParams, WorkspaceEdit | null, never, void, FileOperationRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<RenameFilesParams, WorkspaceEdit | undefined | null, void>;
 }
 
 export namespace WillDeleteFilesRequest {
-	export const method: 'window/willDeleteFiles' = 'window/willDeleteFiles';
+	export const method: 'workspace/willDeleteFiles' = 'workspace/willDeleteFiles';
 	export const type = new ProtocolRequestType<DeleteFilesParams, WorkspaceEdit | null, never, void, FileOperationRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<DeleteFilesParams, WorkspaceEdit | undefined | null, void>;
 }

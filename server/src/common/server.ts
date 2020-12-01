@@ -158,7 +158,7 @@ export class TextDocuments<T> {
 
 	/**
 	 * Returns the document for the given URI. Returns undefined if
-	 * the document is not mananged by this instance.
+	 * the document is not managed by this instance.
 	 *
 	 * @param uri The text document's URI to retrieve.
 	 * @return the text document or `undefined`.
@@ -194,7 +194,7 @@ export class TextDocuments<T> {
 	 * `onDidOpenTextDocument`, `onDidChangeTextDocument`, `onDidCloseTextDocument`,
 	 * `onWillSaveTextDocument`, `onWillSaveTextDocumentWaitUntil` and `onDidSaveTextDocument`.
 	 *
-	 * Use the correspnding events on the TextDocuments instance instead.
+	 * Use the corresponding events on the TextDocuments instance instead.
 	 *
 	 * @param connection The connection to listen on.
 	 */
@@ -261,7 +261,7 @@ export class TextDocuments<T> {
 }
 
 /**
- * Helps tracking error message. Equal occurences of the same
+ * Helps tracking error message. Equal occurrences of the same
  * message are only stored once. This class is for example
  * useful if text documents are validated in a loop and equal
  * error message should be folded into one.
@@ -334,7 +334,7 @@ interface Remote {
 
 /**
  * The RemoteConsole interface contains all functions to interact with
- * the tools / clients console or log system. Interally it used `window/logMessage`
+ * the tools / clients console or log system. Internally it used `window/logMessage`
  * notifications.
  */
 export interface RemoteConsole {
@@ -468,7 +468,7 @@ export interface _RemoteWindow {
 	showInformationMessage<T extends MessageActionItem>(message: string, ...actions: T[]): Promise<T | undefined>;
 }
 
-export type RemoteWindow = _RemoteWindow & WindowProgress & ShowDocumentFeatureShape & FileOperationsFeatureShape;
+export type RemoteWindow = _RemoteWindow & WindowProgress & ShowDocumentFeatureShape;
 
 class _RemoteWindowImpl implements _RemoteWindow, Remote {
 
@@ -510,7 +510,7 @@ class _RemoteWindowImpl implements _RemoteWindow, Remote {
 	}
 }
 
-const RemoteWindowImpl: new () => RemoteWindow = FileOperationsFeature(ShowDocumentFeature(ProgressFeature(_RemoteWindowImpl))) as (new () => RemoteWindow);
+const RemoteWindowImpl: new () => RemoteWindow = ShowDocumentFeature(ProgressFeature(_RemoteWindowImpl)) as (new () => RemoteWindow);
 
 /**
  * A bulk registration manages n single registration to be able to register
@@ -771,7 +771,7 @@ export interface _RemoteWorkspace {
 	applyEdit(paramOrEdit: ApplyWorkspaceEditParams | WorkspaceEdit): Promise<ApplyWorkspaceEditResponse>;
 }
 
-export type RemoteWorkspace = _RemoteWorkspace & Configuration & WorkspaceFolders;
+export type RemoteWorkspace = _RemoteWorkspace & Configuration & WorkspaceFolders & FileOperationsFeatureShape;
 
 class _RemoteWorkspaceImpl implements _RemoteWorkspace, Remote {
 
@@ -807,7 +807,7 @@ class _RemoteWorkspaceImpl implements _RemoteWorkspace, Remote {
 	}
 }
 
-const RemoteWorkspaceImpl: new () => RemoteWorkspace = WorkspaceFoldersFeature(ConfigurationFeature(_RemoteWorkspaceImpl)) as (new () => RemoteWorkspace);
+const RemoteWorkspaceImpl: new () => RemoteWorkspace = FileOperationsFeature(WorkspaceFoldersFeature(ConfigurationFeature(_RemoteWorkspaceImpl))) as (new () => RemoteWorkspace);
 
 /**
  * Interface to log telemetry events. The events are actually send to the client

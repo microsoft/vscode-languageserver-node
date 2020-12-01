@@ -67,9 +67,9 @@ import {
 
 import {
 	FileOperationOptions, FileOperationClientCapabilities, FileOperationRegistrationOptions,
-	WillCreateFilesRequest, DidCreateFilesNotification, CreateFilesParams, FileCreate,
-	WillRenameFilesRequest, DidRenameFilesNotification, RenameFilesParams, FileRename,
-	WillDeleteFilesRequest, DidDeleteFilesNotification, DeleteFilesParams, FileDelete
+	DidCreateFilesNotification, CreateFilesParams, FileCreate, WillCreateFilesRequest,
+	DidRenameFilesNotification, RenameFilesParams, FileRename, WillRenameFilesRequest,
+	DidDeleteFilesNotification, DeleteFilesParams, FileDelete, WillDeleteFilesRequest,
 } from './protocol.fileOperations';
 
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
@@ -849,9 +849,9 @@ export interface _ServerCapabilities<T = any> {
 	/**
 	 * Window specific server capabilities.
 	 */
-	window?: {
+	workspace?: {
 		/**
-		* The server is interested in notifications/requests for user operations on files.
+		* The server is interested in notifications/requests for operations on files.
 		*
 		* @since 3.16.0
 		*/
@@ -3200,10 +3200,10 @@ export {
 	// On Type rename
 	OnTypeRenameClientCapabilities, OnTypeRenameRanges, OnTypeRenameOptions, OnTypeRenameParams, OnTypeRenameRegistrationOptions, OnTypeRenameRequest,
 	// File operations
-	FileOperationClientCapabilities, FileOperationOptions, FileOperationRegistrationOptions,
-	CreateFilesParams, WillCreateFilesRequest, DidCreateFilesNotification, FileCreate,
-	RenameFilesParams, WillRenameFilesRequest, DidRenameFilesNotification, FileRename,
-	DeleteFilesParams, WillDeleteFilesRequest, DidDeleteFilesNotification, FileDelete
+	FileOperationOptions, FileOperationClientCapabilities, FileOperationRegistrationOptions,
+	DidCreateFilesNotification, CreateFilesParams, FileCreate, WillCreateFilesRequest,
+	DidRenameFilesNotification, RenameFilesParams, FileRename, WillRenameFilesRequest,
+	DidDeleteFilesNotification, DeleteFilesParams, FileDelete, WillDeleteFilesRequest,
 };
 
 // To be backwards compatible
