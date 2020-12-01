@@ -78,7 +78,7 @@ abstract class FileOperationFeature<I, E extends { readonly files: ReadonlyArray
 					registerOptions: { globPattern: capability.globPattern }
 				});
 			} catch (e) {
-				this._client.warn(`Ignoring invalid glob pattern for didCreate registration: ${capability.globPattern}`);
+				this._client.warn(`Ignoring invalid glob pattern for ${this._serverCapability} registration: ${capability.globPattern}`);
 			}
 		}
 	}
