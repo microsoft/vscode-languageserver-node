@@ -61,7 +61,7 @@ abstract class FileOperationFeature<I, E extends { readonly files: ReadonlyArray
 	}
 
 	public fillClientCapabilities(capabilities: proto.ClientCapabilities): void {
-		const value = ensure(ensure(capabilities, 'window')!, 'fileOperations')!;
+		const value = ensure(ensure(capabilities, 'workspace')!, 'fileOperations')!;
 		// this happens n times but it is the same value so we tolerate this.
 		assign(value, 'dynamicRegistration', true);
 		assign(value, this._clientCapability, true);
