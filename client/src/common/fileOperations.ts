@@ -29,7 +29,7 @@ function assign<T, K extends keyof T>(target: T, key: K, value: T[K]): void {
  * Adds trailing slashes to URIs that represent directories if they
  * do not already have them.
  */
-async function addSlashesToDirectories(uri: code.Uri) {
+async function addSlashesToDirectoryUris(uri: code.Uri) {
 	if (uri.path.endsWith('/')) {
 		return uri;
 	}
@@ -60,20 +60,17 @@ abstract class FileOperationFeature<I, E extends { readonly files: ReadonlyArray
 	private _serverCapability: keyof proto.FileOperationOptions;
 	private _listener: code.Disposable | undefined;
 	private _globPatterns: Map<string, RegExp> = new Map<string, RegExp>();
-	protected fixSlashes: (e: E) => Promise<E>;
 
 	constructor(client: BaseLanguageClient, event: code.Event<E>,
 		registrationType: proto.RegistrationType<proto.FileOperationRegistrationOptions>,
 		clientCapability: keyof proto.FileOperationClientCapabilities,
-		serverCapability: keyof proto.FileOperationOptions,
-		fixSlashes: (e: E) => Promise<E>)
+		serverCapability: keyof proto.FileOperationOptions)
 	{
 		this._client = client;
 		this._event = event;
 		this._registrationType = registrationType;
 		this._clientCapability = clientCapability;
 		this._serverCapability = serverCapability;
-		this.fixSlashes = fixSlashes;
 	}
 
 	public get registrationType(): proto.RegistrationType<proto.FileOperationRegistrationOptions> {
@@ -132,18 +129,24 @@ abstract class FileOperationFeature<I, E extends { readonly files: ReadonlyArray
 		}
 	}
 
-	protected filter(event: E, prop: (i: I) => code.Uri): E {
-		return {
-			...event,
-			files: event.files.filter((item) => {
-				for (const pattern of this._globPatterns.values()) {
-					if (pattern.test(prop(item).path)) {
-						return true;
-					}
+	protected async filter(event: E, prop: (i: I) => code.Uri): Promise<E> {
+		// (Asynchronously) map each file onto a boolean of whether it matches
+		// any of the globs.
+		const fileMatches = await Promise.all(event.files.map(async (item) => {
+			const uri = prop(item);
+			const fixedUri = await addSlashesToDirectoryUris(uri);
+			for (const pattern of this._globPatterns.values()) {
+				if (pattern.test(fixedUri.path)) {
+					return true;
 				}
-				return false;
-			})
-		};
+			}
+			return false;
+		}));
+
+		// Filter the files to those that matched.
+		const files = event.files.filter((_, index) => fileMatches[index]);
+
+		return { ...event, files };
 	}
 }
 
@@ -158,20 +161,18 @@ abstract class NotificationFileOperationFeature<I, E extends { readonly files: R
 		clientCapability: keyof proto.FileOperationClientCapabilities,
 		serverCapability: keyof proto.FileOperationOptions,
 		accessUri: (i: I) => code.Uri,
-		createParams: (e: E) => P,
-		fixSlashes: (e: E) => Promise<E>)
+		createParams: (e: E) => P)
 	{
-		super(client, event, notificationType, clientCapability, serverCapability, fixSlashes);
+		super(client, event, notificationType, clientCapability, serverCapability);
 		this._notificationType = notificationType;
 		this._accessUri = accessUri;
 		this._createParams = createParams;
 	}
 
 	public async send(originalEvent: E): Promise<void> {
-		const fixedEvent = await this.fixSlashes(originalEvent);
 		// Create a copy of the event that has the files filtered to match what the
 		// server wants.
-		const filteredEvent = this.filter(fixedEvent, this._accessUri);
+		const filteredEvent = await this.filter(originalEvent, this._accessUri);
 		if (filteredEvent.files.length) {
 			const next = async (event: E): Promise<void> => {
 				this._client.sendNotification(this._notificationType, this._createParams(event));
@@ -190,7 +191,6 @@ export class DidCreateFilesFeature extends NotificationFileOperationFeature<code
 			client, code.workspace.onDidCreateFiles, proto.DidCreateFilesNotification.type, 'didCreate', 'didCreate',
 			(i: code.Uri) => i,
 			client.code2ProtocolConverter.asDidCreateFilesParams,
-			async (params) => ({ files: await Promise.all(params.files.map(addSlashesToDirectories)) })
 		);
 	}
 
@@ -209,7 +209,6 @@ export class DidRenameFilesFeature extends NotificationFileOperationFeature<{ ol
 			client, code.workspace.onDidRenameFiles, proto.DidRenameFilesNotification.type, 'didRename', 'didRename',
 			(i: { oldUri: code.Uri, newUri: code.Uri }) => i.oldUri,
 			client.code2ProtocolConverter.asDidRenameFilesParams,
-			async (params) => ({ files: await Promise.all(params.files.map(async (i) => ({ oldUri: await addSlashesToDirectories(i.oldUri), newUri: await addSlashesToDirectories(i.newUri) }))) })
 		);
 	}
 
@@ -228,7 +227,6 @@ export class DidDeleteFilesFeature extends NotificationFileOperationFeature<code
 			client, code.workspace.onDidDeleteFiles, proto.DidDeleteFilesNotification.type, 'didDelete', 'didDelete',
 			(i: code.Uri) => i,
 			client.code2ProtocolConverter.asDidDeleteFilesParams,
-			async (params) => ({ files: await Promise.all(params.files.map(addSlashesToDirectories)) }),
 		);
 	}
 
@@ -257,22 +255,18 @@ abstract class RequestFileOperationFeature<I, E extends { readonly files: Readon
 		clientCapability: keyof proto.FileOperationClientCapabilities,
 		serverCapability: keyof proto.FileOperationOptions,
 		accessUri: (i: I) => code.Uri,
-		createParams: (e: E) => P,
-		fixSlashes: (e: E) => Promise<E>)
+		createParams: (e: E) => P)
 	{
-		super(client, event, requestType, clientCapability, serverCapability, fixSlashes);
+		super(client, event, requestType, clientCapability, serverCapability);
 		this._requestType = requestType;
 		this._accessUri = accessUri;
 		this._createParams = createParams;
 	}
 
 	private async filterAndSend(originalEvent: E): Promise<code.WorkspaceEdit | any> {
-		// Fix directories to always end with trailing slashes.
-		const fixedEvent = await this.fixSlashes(originalEvent);
-
 		// Create a copy of the event that has the files filtered to match what the
 		// server wants.
-		const filteredEvent = this.filter(fixedEvent, this._accessUri);
+		const filteredEvent = await this.filter(originalEvent, this._accessUri);
 
 		if (filteredEvent.files.length) {
 			const next = (event: E): Promise<code.WorkspaceEdit | any> => {
@@ -284,7 +278,9 @@ abstract class RequestFileOperationFeature<I, E extends { readonly files: Readon
 	}
 
 	public async send(originalEvent: E & RequestEvent<I>): Promise<void> {
-		originalEvent.waitUntil(this.filterAndSend(originalEvent));
+		const event = this.filterAndSend(originalEvent);
+		originalEvent.waitUntil(event);
+		return event;
 	}
 
 	protected abstract doSend(event: E, next: (event: E) => Thenable<code.WorkspaceEdit> | Thenable<any>): Thenable<code.WorkspaceEdit> | Thenable<any>;
@@ -296,7 +292,6 @@ export class WillCreateFilesFeature extends RequestFileOperationFeature<code.Uri
 			client, code.workspace.onWillCreateFiles, proto.WillCreateFilesRequest.type, 'willCreate', 'willCreate',
 			(i: code.Uri) => i,
 			client.code2ProtocolConverter.asWillCreateFilesParams,
-			async (params) => ({ files: await Promise.all(params.files.map(addSlashesToDirectories)) }),
 		);
 	}
 
@@ -314,10 +309,6 @@ export class WillRenameFilesFeature extends RequestFileOperationFeature<{ oldUri
 			client, code.workspace.onWillRenameFiles, proto.WillRenameFilesRequest.type, 'willRename', 'willRename',
 			(i: { oldUri: code.Uri, newUri: code.Uri }) => i.oldUri,
 			client.code2ProtocolConverter.asWillRenameFilesParams,
-			async (params) => {
-				const files = await Promise.all(params.files.map(async (i) => ({ oldUri: await addSlashesToDirectories(i.oldUri), newUri: await addSlashesToDirectories(i.newUri) })))
-				return { files }
-			},
 		);
 	}
 
@@ -335,7 +326,6 @@ export class WillDeleteFilesFeature extends RequestFileOperationFeature<code.Uri
 			client, code.workspace.onWillDeleteFiles, proto.WillDeleteFilesRequest.type, 'willDelete', 'willDelete',
 			(i: code.Uri) => i,
 			client.code2ProtocolConverter.asWillDeleteFilesParams,
-			async (params) => ({ files: await Promise.all(params.files.map(addSlashesToDirectories)) }),
 		);
 	}
 
