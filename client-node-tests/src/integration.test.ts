@@ -709,7 +709,7 @@ suite('Client integration', () => {
 		middleware.provideDocumentSemanticTokensEdits = undefined;
 		assert.strictEqual(middlewareCalled, true);
 	});
-	test.skip('On Type Rename', async () => {
+	test.skip('Linked Editing Ranges', async () => {
 		const provider = client.getFeature(lsclient.LinkedEditingRangeRequest.method).getProvider(document);
 		isDefined(provider);
 		const result = (await provider.provideLinkedEditingRanges(document, position, tokenSource.token)) as vscode.LinkedEditingRanges;

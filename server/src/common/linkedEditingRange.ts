@@ -9,7 +9,7 @@ import type { Feature, _Languages, ServerRequestHandler } from './server';
 
 export interface LinkedEditingRangeFeatureShape {
 	/**
-	 * Installs a handler for the on type rename request.
+	 * Installs a handler for the linked editing range request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
