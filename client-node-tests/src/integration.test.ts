@@ -752,8 +752,8 @@ suite('Client integration', () => {
 			const feature = client.getFeature(WillCreateFilesRequest.method);
 			isDefined(feature);
 
-			const sendCreateRequest = () => new Promise<vscode.WorkspaceEdit>((resolve, reject) => {
-				feature.send({ files: createFiles, waitUntil: resolve });
+			const sendCreateRequest = () => new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
+				await feature.send({ files: createFiles, waitUntil: resolve });
 				// If feature.send didn't call waitUntil then something went wrong.
 				reject(new Error('Feature unexpectedly did not call waitUntil'));
 			});
@@ -798,7 +798,7 @@ suite('Client integration', () => {
 			isDefined(feature);
 
 			// Send the event and ensure the server reports the notification was sent.
-			feature.send({ files: createFiles });
+			await feature.send({ files: createFiles });
 			await ensureNotificationReceived(
 				'create',
 				{
@@ -818,7 +818,7 @@ suite('Client integration', () => {
 			});
 
 			// Ensure we get the same results minus the folders that the middleware removed.
-			feature.send({ files: createFiles });
+			await feature.send({ files: createFiles });
 			await ensureNotificationReceived(
 				'create',
 				{
@@ -836,8 +836,8 @@ suite('Client integration', () => {
 			const feature = client.getFeature(WillRenameFilesRequest.method);
 			isDefined(feature);
 
-			const sendRenameRequest = () => new Promise<vscode.WorkspaceEdit>((resolve, reject) => {
-				feature.send({ files: renameFiles, waitUntil: resolve });
+			const sendRenameRequest = () => new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
+				await feature.send({ files: renameFiles, waitUntil: resolve });
 				// If feature.send didn't call waitUntil then something went wrong.
 				reject(new Error('Feature unexpectedly did not call waitUntil'));
 			});
@@ -882,7 +882,7 @@ suite('Client integration', () => {
 			isDefined(feature);
 
 			// Send the event and ensure the server reports the notification was sent.
-			feature.send({ files: renameFiles });
+			await feature.send({ files: renameFiles });
 			await ensureNotificationReceived(
 				'rename',
 				{
@@ -902,7 +902,7 @@ suite('Client integration', () => {
 			});
 
 			// Ensure we get the same results minus the folders that the middleware removed.
-			feature.send({ files: renameFiles });
+			await feature.send({ files: renameFiles });
 			await ensureNotificationReceived(
 				'rename',
 				{
@@ -920,8 +920,8 @@ suite('Client integration', () => {
 			const feature = client.getFeature(WillDeleteFilesRequest.method);
 			isDefined(feature);
 
-			const sendDeleteRequest = () => new Promise<vscode.WorkspaceEdit>((resolve, reject) => {
-				feature.send({ files: deleteFiles, waitUntil: resolve });
+			const sendDeleteRequest = () => new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
+				await feature.send({ files: deleteFiles, waitUntil: resolve });
 				// If feature.send didn't call waitUntil then something went wrong.
 				reject(new Error('Feature unexpectedly did not call waitUntil'));
 			});
@@ -966,7 +966,7 @@ suite('Client integration', () => {
 			isDefined(feature);
 
 			// Send the event and ensure the server reports the notification was sent.
-			feature.send({ files: deleteFiles });
+			await feature.send({ files: deleteFiles });
 			await ensureNotificationReceived(
 				'delete',
 				{
@@ -986,7 +986,7 @@ suite('Client integration', () => {
 			});
 
 			// Ensure we get the same results minus the folders that the middleware removed.
-			feature.send({ files: deleteFiles });
+			await feature.send({ files: deleteFiles });
 			await ensureNotificationReceived(
 				'delete',
 				{

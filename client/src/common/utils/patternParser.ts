@@ -221,7 +221,7 @@ function nodeList2RegExp(pattern: NodeList) {
 
 /// Converts an LSP glob pattern to a regex.
 ///
-/// Regex expects all paths are relative and using forward slashes.
+/// Regex expects all paths are using forward slashes (eg. URI.path).
 /// Invalid patterns will throw.
 export function convert2RegExp(pattern: string): RegExp | undefined {
 	const nodes = new PatternParser(pattern).parse();

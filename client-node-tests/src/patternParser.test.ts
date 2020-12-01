@@ -7,7 +7,6 @@ import { deepStrictEqual } from 'assert';
 import { convert2RegExp } from 'vscode-languageclient/lib/common/utils/patternParser';
 
 suite('Pattern Parser Tests', () => {
-	// TODO(dantup): Windows?
 	const samplePaths = [
 		'file1',
 		'file2.txt',

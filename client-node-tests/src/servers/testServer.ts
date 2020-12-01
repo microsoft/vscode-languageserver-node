@@ -42,7 +42,7 @@ connection.onInitialize((params: InitializeParams): any => {
 	let valueSet = params.capabilities.textDocument!.completion!.completionItemKind!.valueSet!;
 	assert.equal(valueSet[0], 1);
 	assert.equal(valueSet[valueSet.length - 1], CompletionItemKind.TypeParameter);
-	assert.equal(params.capabilities.window!.fileOperations!.willCreate, true);
+	assert.equal(params.capabilities.workspace!.fileOperations!.willCreate, true);
 	console.log(params.capabilities);
 
 	let capabilities: ServerCapabilities = {
