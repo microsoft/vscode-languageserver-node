@@ -776,7 +776,6 @@ suite('Client integration', () => {
 			middleware.workspace = middleware.workspace || {};
 			middleware.workspace.willCreateFiles = (event, next) => next({
 				files: event.files.filter((f) => !f.path.endsWith('/')),
-				waitUntil: event.waitUntil,
 			});
 
 			// Ensure we get the same results minus the folders that the middleware removed.
@@ -860,7 +859,6 @@ suite('Client integration', () => {
 			middleware.workspace = middleware.workspace || {};
 			middleware.workspace.willRenameFiles = (event, next) => next({
 				files: event.files.filter((f) => !f.oldUri.path.endsWith('/')),
-				waitUntil: event.waitUntil,
 			});
 
 			// Ensure we get the same results minus the folders that the middleware removed.
@@ -944,7 +942,6 @@ suite('Client integration', () => {
 			middleware.workspace = middleware.workspace || {};
 			middleware.workspace.willDeleteFiles = (event, next) => next({
 				files: event.files.filter((f) => !f.path.endsWith('/')),
-				waitUntil: event.waitUntil,
 			});
 
 			// Ensure we get the same results minus the folders that the middleware removed.
