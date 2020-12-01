@@ -85,7 +85,7 @@ connection.onInitialize((params: InitializeParams): any => {
 				delta: true
 			}
 		},
-		onTypeRenameProvider: false
+		linkedEditingRangeProvider: false
 	};
 	return { capabilities, customResults: { hello: 'world' } };
 });
@@ -284,7 +284,7 @@ connection.languages.semanticTokens.onDelta(() => {
 	};
 });
 
-connection.languages.onOnTypeRename(() => {
+connection.languages.onLinkedEditingRange(() => {
 	return {
 		ranges: [ Range.create(1,1,1,1)],
 		wordPattern: '\\w'

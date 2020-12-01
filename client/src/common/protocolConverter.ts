@@ -16,13 +16,6 @@ import { ProtocolDiagnostic, DiagnosticCode } from './protocolDiagnostic';
 import ProtocolCallHierarchyItem from './protocolCallHierarchyItem';
 import { AnnotatedTextEdit, ChangeAnnotation, InsertTextMode } from 'vscode-languageserver-protocol';
 
-// Proposed API.
-declare module 'vscode' {
-	export interface SignatureInformation {
-		activeParameter?: number;
-	}
-}
-
 interface InsertReplaceRange {
 	inserting: code.Range;
 	replacing: code.Range;
@@ -229,9 +222,9 @@ export interface Converter {
 	asCallHierarchyOutgoingCalls(items: ReadonlyArray<ls.CallHierarchyOutgoingCall> | null): code.CallHierarchyOutgoingCall[] | undefined;
 	asCallHierarchyOutgoingCalls(items: ReadonlyArray<ls.CallHierarchyOutgoingCall> | null): code.CallHierarchyOutgoingCall[] | undefined;
 
-	asOnTypeRenameRanges(value: null | undefined): undefined;
-	asOnTypeRenameRanges(value: ls.OnTypeRenameRanges): code.OnTypeRenameRanges;
-	asOnTypeRenameRanges(value: ls.OnTypeRenameRanges | null | undefined): code.OnTypeRenameRanges | undefined;
+	asLinkedEditingRanges(value: null | undefined): undefined;
+	asLinkedEditingRanges(value: ls.LinkedEditingRanges): code.LinkedEditingRanges;
+	asLinkedEditingRanges(value: ls.LinkedEditingRanges | null | undefined): code.LinkedEditingRanges | undefined;
 }
 
 export interface URIConverter {
@@ -1157,14 +1150,14 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return value;
 	}
 
-	function asOnTypeRenameRanges(value: null | undefined): undefined;
-	function asOnTypeRenameRanges(value: ls.OnTypeRenameRanges): code.OnTypeRenameRanges;
-	function asOnTypeRenameRanges(value: ls.OnTypeRenameRanges | null | undefined): code.OnTypeRenameRanges | undefined;
-	function asOnTypeRenameRanges(value: ls.OnTypeRenameRanges | null | undefined): code.OnTypeRenameRanges | undefined {
+	function asLinkedEditingRanges(value: null | undefined): undefined;
+	function asLinkedEditingRanges(value: ls.LinkedEditingRanges): code.LinkedEditingRanges;
+	function asLinkedEditingRanges(value: ls.LinkedEditingRanges | null | undefined): code.LinkedEditingRanges | undefined;
+	function asLinkedEditingRanges(value: ls.LinkedEditingRanges | null | undefined): code.LinkedEditingRanges | undefined {
 		if (value === null || value === undefined) {
 			return undefined;
 		}
-		return new code.OnTypeRenameRanges(asRanges(value.ranges), asRegularExpression(value.wordPattern));
+		return new code.LinkedEditingRanges(asRanges(value.ranges), asRegularExpression(value.wordPattern));
 	}
 
 	function asRegularExpression(value: null | undefined): undefined;
@@ -1240,6 +1233,6 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		asCallHierarchyIncomingCalls,
 		asCallHierarchyOutgoingCall,
 		asCallHierarchyOutgoingCalls,
-		asOnTypeRenameRanges
+		asLinkedEditingRanges: asLinkedEditingRanges
 	};
 }

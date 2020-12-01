@@ -143,7 +143,7 @@ suite('Client integration', () => {
 						delta: true
 					}
 				},
-				onTypeRenameProvider: false
+				linkedEditingRangeProvider: false
 			},
 			customResults: {
 				'hello': 'world'
@@ -356,7 +356,7 @@ suite('Client integration', () => {
 			if (token === progressToken) {
 				middlewareEvents.push(params);
 				if (params.kind === 'end')
-					setImmediate(currentProgressResolver);
+				{setImmediate(currentProgressResolver);}
 			}
 			return next(token, params);
 		};
@@ -710,20 +710,20 @@ suite('Client integration', () => {
 		assert.strictEqual(middlewareCalled, true);
 	});
 	test.skip('On Type Rename', async () => {
-		const provider = client.getFeature(lsclient.OnTypeRenameRequest.method).getProvider(document);
+		const provider = client.getFeature(lsclient.LinkedEditingRangeRequest.method).getProvider(document);
 		isDefined(provider);
-		const result = (await provider.provideOnTypeRenameRanges(document, position, tokenSource.token)) as vscode.OnTypeRenameRanges;
+		const result = (await provider.provideLinkedEditingRanges(document, position, tokenSource.token)) as vscode.LinkedEditingRanges;
 
-		isInstanceOf(result, vscode.OnTypeRenameRanges);
+		isInstanceOf(result, vscode.LinkedEditingRanges);
 		isArray(result.ranges, vscode.Range, 1);
 		rangeEqual(result.ranges[0], 1, 1, 1, 1);
 
 		let middlewareCalled: boolean = false;
-		middleware.provideOnTypeRename = (document, position, token, next) => {
+		middleware.provideLinkedEditingRange = (document, position, token, next) => {
 			middlewareCalled = true;
 			return next(document, position, token);
 		};
-		await provider.provideOnTypeRenameRanges(document, position, tokenSource.token);
+		await provider.provideLinkedEditingRanges(document, position, tokenSource.token);
 		middleware.provideTypeDefinition = undefined;
 		assert.strictEqual(middlewareCalled, true);
 	});

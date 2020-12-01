@@ -35,7 +35,7 @@ import { WorkspaceFolders, WorkspaceFoldersFeature } from './workspaceFolders';
 import { CallHierarchy, CallHierarchyFeature } from './callHierarchy';
 import { SemanticTokensFeatureShape, SemanticTokensFeature } from './semanticTokens';
 import { ShowDocumentFeatureShape, ShowDocumentFeature } from './showDocument';
-import { OnTypeRenameFeature, OnTypeRenameFeatureShape } from './onTypeRename';
+import { LinkedEditingRangeFeature, LinkedEditingRangeFeatureShape } from './linkedEditingRange';
 
 function null2Undefined<T>(value: T | null): T | undefined {
 	if (value === null) {
@@ -157,7 +157,7 @@ export class TextDocuments<T> {
 
 	/**
 	 * Returns the document for the given URI. Returns undefined if
-	 * the document is not mananged by this instance.
+	 * the document is not managed by this instance.
 	 *
 	 * @param uri The text document's URI to retrieve.
 	 * @return the text document or `undefined`.
@@ -193,7 +193,7 @@ export class TextDocuments<T> {
 	 * `onDidOpenTextDocument`, `onDidChangeTextDocument`, `onDidCloseTextDocument`,
 	 * `onWillSaveTextDocument`, `onWillSaveTextDocumentWaitUntil` and `onDidSaveTextDocument`.
 	 *
-	 * Use the correspnding events on the TextDocuments instance instead.
+	 * Use the corresponding events on the TextDocuments instance instead.
 	 *
 	 * @param connection The connection to listen on.
 	 */
@@ -260,7 +260,7 @@ export class TextDocuments<T> {
 }
 
 /**
- * Helps tracking error message. Equal occurences of the same
+ * Helps tracking error message. Equal occurrences of the same
  * message are only stored once. This class is for example
  * useful if text documents are validated in a loop and equal
  * error message should be folded into one.
@@ -333,7 +333,7 @@ interface Remote {
 
 /**
  * The RemoteConsole interface contains all functions to interact with
- * the tools / clients console or log system. Interally it used `window/logMessage`
+ * the tools / clients console or log system. Internally it used `window/logMessage`
  * notifications.
  */
 export interface RemoteConsole {
@@ -951,8 +951,8 @@ export class _LanguagesImpl implements Remote, _Languages {
 	}
 }
 
-export type Languages = _Languages & CallHierarchy & SemanticTokensFeatureShape & OnTypeRenameFeatureShape;
-const LanguagesImpl: new () => Languages = OnTypeRenameFeature(SemanticTokensFeature(CallHierarchyFeature(_LanguagesImpl))) as (new () => Languages);
+export type Languages = _Languages & CallHierarchy & SemanticTokensFeatureShape & LinkedEditingRangeFeatureShape;
+const LanguagesImpl: new () => Languages = LinkedEditingRangeFeature(SemanticTokensFeature(CallHierarchyFeature(_LanguagesImpl))) as (new () => Languages);
 
 /**
  * An empty interface for new proposed API.
