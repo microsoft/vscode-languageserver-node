@@ -62,8 +62,8 @@ import {
 } from './protocol.showDocument';
 
 import {
-	OnTypeRenameClientCapabilities, OnTypeRenameRanges, OnTypeRenameOptions, OnTypeRenameParams, OnTypeRenameRegistrationOptions, OnTypeRenameRequest
-} from './protocol.onTypeRename';
+	LinkedEditingRangeClientCapabilities, LinkedEditingRanges, LinkedEditingRangeOptions, LinkedEditingRangeParams, LinkedEditingRangeRegistrationOptions, LinkedEditingRangeRequest
+} from './protocol.linkedEditingRange';
 
 import {
 	FileOperationOptions, FileOperationClientCapabilities, FileOperationRegistrationOptions,
@@ -504,11 +504,11 @@ export interface TextDocumentClientCapabilities {
 	semanticTokens?: SemanticTokensClientCapabilities;
 
 	/**
-	 * Capabilities specific to the on type rename request.
+	 * Capabilities specific to the linked editing range request.
 	 *
 	 * @since 3.16.0 - Proposed state
 	 */
-	onTypeRename?: OnTypeRenameClientCapabilities;
+	linkedEditingRange?: LinkedEditingRangeClientCapabilities;
 }
 
 export interface WindowClientCapabilities {
@@ -833,11 +833,11 @@ export interface _ServerCapabilities<T = any> {
 	callHierarchyProvider?: boolean | CallHierarchyOptions | CallHierarchyRegistrationOptions;
 
 	/**
-	 * The server provides on type rename support.
+	 * The server provides linked editing range support.
 	 *
 	 * @since 3.16.0 - proposed state
 	 */
-	onTypeRenameProvider?: boolean | OnTypeRenameOptions | OnTypeRenameRegistrationOptions;
+	linkedEditingRangeProvider?: boolean | LinkedEditingRangeOptions | LinkedEditingRangeRegistrationOptions;
 
 	/**
 	 * The server provides semantic tokens support.
@@ -3198,7 +3198,8 @@ export {
 	// Show document
 	ShowDocumentParams, ShowDocumentRequest, ShowDocumentResult, ShowDocumentClientCapabilities,
 	// On Type rename
-	OnTypeRenameClientCapabilities, OnTypeRenameRanges, OnTypeRenameOptions, OnTypeRenameParams, OnTypeRenameRegistrationOptions, OnTypeRenameRequest,
+	LinkedEditingRangeClientCapabilities, LinkedEditingRanges, LinkedEditingRangeOptions, LinkedEditingRangeParams,
+	LinkedEditingRangeRegistrationOptions, LinkedEditingRangeRequest,
 	// File operations
 	FileOperationOptions, FileOperationClientCapabilities, FileOperationRegistrationOptions,
 	DidCreateFilesNotification, CreateFilesParams, FileCreate, WillCreateFilesRequest,

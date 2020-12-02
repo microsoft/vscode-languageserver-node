@@ -16,8 +16,8 @@ import { SelectionRangeFeature } from './selectionRange';
 import { ProgressFeature } from './progress';
 import { CallHierarchyFeature } from './callHierarchy';
 import { SemanticTokensFeature } from './semanticTokens';
-import { OnTypeRenameFeature } from './onTypeRename';
 import { DidCreateFilesFeature, DidDeleteFilesFeature, DidRenameFilesFeature, WillCreateFilesFeature, WillDeleteFilesFeature, WillRenameFilesFeature } from './fileOperations';
+import { LinkedEditingFeature } from './linkedEditingRange';
 
 export abstract class CommonLanguageClient extends BaseLanguageClient {
 
@@ -42,7 +42,7 @@ export abstract class CommonLanguageClient extends BaseLanguageClient {
 		this.registerFeature(new ProgressFeature(this));
 		this.registerFeature(new CallHierarchyFeature(this));
 		this.registerFeature(new SemanticTokensFeature(this));
-		this.registerFeature(new OnTypeRenameFeature(this));
+		this.registerFeature(new LinkedEditingFeature(this));
 		this.registerFeature(new DidCreateFilesFeature(this));
 		this.registerFeature(new DidRenameFilesFeature(this));
 		this.registerFeature(new DidDeleteFilesFeature(this));

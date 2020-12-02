@@ -4,16 +4,16 @@
  * ------------------------------------------------------------------------------------------ */
 
 declare module 'vscode' {
-	export class OnTypeRenameRanges {
+	export class LinkedEditingRanges {
 		constructor(ranges: Range[], wordPattern?: RegExp);
 		readonly ranges: Range[];
 		readonly wordPattern?: RegExp;
 	}
 
-	export interface OnTypeRenameProvider {
-		provideOnTypeRenameRanges(document: TextDocument, position: Position, token: CancellationToken): ProviderResult<OnTypeRenameRanges>;
+	export interface LinkedEditingRangeProvider  {
+		provideLinkedEditingRanges(document: TextDocument, position: Position, token: CancellationToken): ProviderResult<LinkedEditingRanges>;
 	}
 	export namespace languages {
-		export function registerOnTypeRenameProvider(selector: DocumentSelector, provider: OnTypeRenameProvider): Disposable;
+		export function registerLinkedEditingRangeProvider(selector: DocumentSelector, provider: LinkedEditingRangeProvider): Disposable;
 	}
 }

@@ -19,7 +19,8 @@ import {
 	DefinitionProvider, ReferenceProvider, DocumentHighlightProvider, CodeActionProvider, DocumentSymbolProvider, CodeLensProvider, DocumentFormattingEditProvider,
 	DocumentRangeFormattingEditProvider, OnTypeFormattingEditProvider, RenameProvider, DocumentLinkProvider, DocumentColorProvider, DeclarationProvider,
 	FoldingRangeProvider, ImplementationProvider, SelectionRangeProvider, TypeDefinitionProvider, WorkspaceSymbolProvider, CallHierarchyProvider,
-	DocumentSymbolProviderMetadata, EventEmitter, OnTypeRenameProvider, env as Env, TextDocumentShowOptions, FileWillCreateEvent, FileWillRenameEvent, FileWillDeleteEvent, FileCreateEvent, FileDeleteEvent, FileRenameEvent
+	DocumentSymbolProviderMetadata, EventEmitter, env as Env, TextDocumentShowOptions, FileWillCreateEvent, FileWillRenameEvent, FileWillDeleteEvent, FileCreateEvent, FileDeleteEvent, FileRenameEvent,
+	LinkedEditingRangeProvider
 } from 'vscode';
 
 import {
@@ -50,7 +51,7 @@ import {
 	DeclarationRequest, FoldingRangeRequest, ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, SymbolTag, CallHierarchyPrepareRequest,
 	CancellationStrategy, SaveOptions, LSPErrorCodes, CodeActionResolveRequest, RegistrationType, SemanticTokensRegistrationType, InsertTextMode, ShowDocumentRequest,
 	FileOperationRegistrationOptions, WillCreateFilesRequest, WillRenameFilesRequest, WillDeleteFilesRequest, DidCreateFilesNotification, DidDeleteFilesNotification, DidRenameFilesNotification,
-	ShowDocumentParams, ShowDocumentResult, OnTypeRenameRequest, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressReport, PrepareSupportDefaultBehavior
+	ShowDocumentParams, ShowDocumentResult, LinkedEditingRangeRequest, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressReport, PrepareSupportDefaultBehavior
 } from 'vscode-languageserver-protocol';
 
 import type { ColorProviderMiddleware } from './colorProvider';
@@ -63,8 +64,8 @@ import type { DeclarationMiddleware } from './declaration';
 import type { SelectionRangeProviderMiddleware } from './selectionRange';
 import type { CallHierarchyMiddleware } from './callHierarchy';
 import type { SemanticTokensMiddleware, SemanticTokensProviders } from './semanticTokens';
-import type { OnTypeRenameMiddleware } from './onTypeRename';
 import type { FileOperationsMiddleware } from './fileOperations';
+import { LinkedEditingRangeMiddleware } from './linkedEditingRange';
 
 import * as c2p from './codeConverter';
 import * as p2c from './protocolConverter';
@@ -501,7 +502,7 @@ export interface _Middleware {
 
 export type Middleware = _Middleware & TypeDefinitionMiddleware & ImplementationMiddleware & ColorProviderMiddleware &
 	FoldingRangeProviderMiddleware & DeclarationMiddleware & SelectionRangeProviderMiddleware & CallHierarchyMiddleware & SemanticTokensMiddleware &
-	OnTypeRenameMiddleware;
+	LinkedEditingRangeMiddleware;
 
 export interface LanguageClientOptions {
 	documentSelector?: DocumentSelector | string[];
@@ -3502,7 +3503,7 @@ export abstract class BaseLanguageClient {
 	public getFeature(request: typeof TypeDefinitionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<TypeDefinitionProvider>;
 	public getFeature(request: typeof CallHierarchyPrepareRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<CallHierarchyProvider>;
 	public getFeature(request: typeof SemanticTokensRegistrationType.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<SemanticTokensProviders>;
-	public getFeature(request: typeof OnTypeRenameRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<OnTypeRenameProvider>;
+	public getFeature(request: typeof LinkedEditingRangeRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<LinkedEditingRangeProvider>;
 
 	public getFeature(request: typeof WorkspaceSymbolRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & WorkspaceProviderFeature<WorkspaceSymbolProvider>;
 	public getFeature(request: string): DynamicFeature<any> | undefined {
