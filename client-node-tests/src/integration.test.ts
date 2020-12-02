@@ -753,9 +753,9 @@ suite('Client integration', () => {
 			isDefined(feature);
 
 			const sendCreateRequest = () => new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
-				await feature.send({ files: createFiles, waitUntil: resolve });
-				// If feature.send didn't call waitUntil then something went wrong.
-				reject(new Error('Feature unexpectedly did not call waitUntil'));
+				feature.send({ files: createFiles, waitUntil: resolve });
+				// If feature.send didn't call waitUntil synchronously then something went wrong.
+				reject(new Error('Feature unexpectedly did not call waitUntil synchronously'));
 			});
 
 			// Send the event and ensure the server responds with an edit referencing the
@@ -836,9 +836,9 @@ suite('Client integration', () => {
 			isDefined(feature);
 
 			const sendRenameRequest = () => new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
-				await feature.send({ files: renameFiles, waitUntil: resolve });
-				// If feature.send didn't call waitUntil then something went wrong.
-				reject(new Error('Feature unexpectedly did not call waitUntil'));
+				feature.send({ files: renameFiles, waitUntil: resolve });
+				// If feature.send didn't call waitUntil synchronously then something went wrong.
+				reject(new Error('Feature unexpectedly did not call waitUntil synchronously'));
 			});
 
 			// Send the event and ensure the server responds with an edit referencing the
@@ -919,9 +919,9 @@ suite('Client integration', () => {
 			isDefined(feature);
 
 			const sendDeleteRequest = () => new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
-				await feature.send({ files: deleteFiles, waitUntil: resolve });
-				// If feature.send didn't call waitUntil then something went wrong.
-				reject(new Error('Feature unexpectedly did not call waitUntil'));
+				feature.send({ files: deleteFiles, waitUntil: resolve });
+				// If feature.send didn't call waitUntil synchronously then something went wrong.
+				reject(new Error('Feature unexpectedly did not call waitUntil synchronously'));
 			});
 
 			// Send the event and ensure the server responds with an edit referencing the
