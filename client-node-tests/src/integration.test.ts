@@ -146,12 +146,22 @@ suite('Client integration', () => {
 				},
 				workspace: {
 					fileOperations: {
-						didCreate: { globPattern: '**/created-static/**{/,*.txt}' },
-						didRename: { globPattern: '**/renamed-static/**{/,*.txt}' },
-						didDelete: { globPattern: '**/deleted-static/**{/,*.txt}' },
-						willCreate: { globPattern: '**/created-static/**{/,*.txt}' },
-						willRename: { globPattern: '**/renamed-static/**{/,*.txt}' },
-						willDelete: { globPattern: '**/deleted-static/**{/,*.txt}' },
+						didCreate: { patterns: [{ glob: '**/created-static/**{/,/*.txt}' }] },
+						didRename: {
+							patterns: [
+								{ glob: '**/renamed-static/**/', matches: 'folder' },
+								{ glob: '**/renamed-static/**/*.txt', matches: 'file' }
+							]
+						},
+						didDelete: { patterns: [{ glob: '**/deleted-static/**{/,/*.txt}' }] },
+						willCreate: { patterns: [{ glob: '**/created-static/**{/,/*.txt}' }] },
+						willRename: {
+							patterns: [
+								{ glob: '**/renamed-static/**/', matches: 'folder' },
+								{ glob: '**/renamed-static/**/*.txt', matches: 'file' }
+							]
+						},
+						willDelete: { patterns: [{ glob: '**/deleted-static/**{/,/*.txt}' }] },
 					},
 				},
 				linkedEditingRangeProvider: false

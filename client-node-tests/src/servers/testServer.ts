@@ -90,12 +90,30 @@ connection.onInitialize((params: InitializeParams): any => {
 		workspace: {
 			fileOperations: {
 				// Static reg is folders + .txt files with operation kind in the path
-				didCreate: { globPattern: '**/created-static/**{/,*.txt}' },
-				didRename: { globPattern: '**/renamed-static/**{/,*.txt}' },
-				didDelete: { globPattern: '**/deleted-static/**{/,*.txt}' },
-				willCreate: { globPattern: '**/created-static/**{/,*.txt}' },
-				willRename: { globPattern: '**/renamed-static/**{/,*.txt}' },
-				willDelete: { globPattern: '**/deleted-static/**{/,*.txt}' },
+				didCreate: {
+					patterns: [{ glob: '**/created-static/**{/,/*.txt}' }]
+				},
+				didRename: {
+					patterns: [
+						{ glob: '**/renamed-static/**/', matches: 'folder' },
+						{ glob: '**/renamed-static/**/*.txt', matches: 'file' }
+					]
+				},
+				didDelete: {
+					patterns: [{ glob: '**/deleted-static/**{/,/*.txt}' }]
+				},
+				willCreate: {
+					patterns: [{ glob: '**/created-static/**{/,/*.txt}' }]
+				},
+				willRename: {
+					patterns: [
+						{ glob: '**/renamed-static/**/', matches: 'folder' },
+						{ glob: '**/renamed-static/**/*.txt', matches: 'file' }
+					]
+				},
+				willDelete: {
+					patterns: [{ glob: '**/deleted-static/**{/,/*.txt}' }]
+				},
 			},
 		},
 		linkedEditingRangeProvider: false
@@ -106,22 +124,28 @@ connection.onInitialize((params: InitializeParams): any => {
 connection.onInitialized(() => {
 	// Dynamic reg is folders + .js files with operation kind in the path
 	connection.client.register(DidCreateFilesNotification.type, {
-		globPattern: '**/created-dynamic/**{/,*.js}'
+		patterns: [{ glob: '**/created-dynamic/**{/,/*.js}' }]
 	});
 	connection.client.register(DidRenameFilesNotification.type, {
-		globPattern: '**/renamed-dynamic/**{/,*.js}'
+		patterns: [
+			{ glob: '**/renamed-dynamic/**/', matches: 'folder' },
+			{ glob: '**/renamed-dynamic/**/*.js', matches: 'file' }
+		]
 	});
 	connection.client.register(DidDeleteFilesNotification.type, {
-		globPattern: '**/deleted-dynamic/**{/,*.js}'
+		patterns: [{ glob: '**/deleted-dynamic/**{/,/*.js}' }]
 	});
 	connection.client.register(WillCreateFilesRequest.type, {
-		globPattern: '**/created-dynamic/**{/,*.js}'
+		patterns: [{ glob: '**/created-dynamic/**{/,/*.js}' }]
 	});
 	connection.client.register(WillRenameFilesRequest.type, {
-		globPattern: '**/renamed-dynamic/**{/,*.js}'
+		patterns: [
+			{ glob: '**/renamed-dynamic/**/', matches: 'folder' },
+			{ glob: '**/renamed-dynamic/**/*.js', matches: 'file' }
+		]
 	});
 	connection.client.register(WillDeleteFilesRequest.type, {
-		globPattern: '**/deleted-dynamic/**{/,*.js}'
+		patterns: [{ glob: '**/deleted-dynamic/**{/,/*.js}' }]
 	});
 });
 
