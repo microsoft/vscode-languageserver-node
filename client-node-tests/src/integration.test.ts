@@ -775,6 +775,7 @@ suite('Client integration', () => {
 			// Add middleware that strips out any folders.
 			middleware.workspace = middleware.workspace || {};
 			middleware.workspace.willCreateFiles = (event, next) => next({
+				...event,
 				files: event.files.filter((f) => !f.path.endsWith('/')),
 			});
 
@@ -858,6 +859,7 @@ suite('Client integration', () => {
 			// Add middleware that strips out any folders.
 			middleware.workspace = middleware.workspace || {};
 			middleware.workspace.willRenameFiles = (event, next) => next({
+				...event,
 				files: event.files.filter((f) => !f.oldUri.path.endsWith('/')),
 			});
 
@@ -941,6 +943,7 @@ suite('Client integration', () => {
 			// Add middleware that strips out any folders.
 			middleware.workspace = middleware.workspace || {};
 			middleware.workspace.willDeleteFiles = (event, next) => next({
+				...event,
 				files: event.files.filter((f) => !f.path.endsWith('/')),
 			});
 
