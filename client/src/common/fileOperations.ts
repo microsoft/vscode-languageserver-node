@@ -27,14 +27,18 @@ function assign<T, K extends keyof T>(target: T, key: K, value: T[K]): void {
 
 export interface FileOperationsMiddleware {
 	didCreateFiles?: NextSignature<code.FileCreateEvent, void>;
-	willCreateFiles?: NextSignature<code.FileWillCreateEvent, Thenable<code.WorkspaceEdit | null | undefined>>;
+	willCreateFiles?: NextSignature<code.FileCreateEvent, Thenable<code.WorkspaceEdit | null | undefined>>;
 	didRenameFiles?: NextSignature<code.FileRenameEvent, void>;
-	willRenameFiles?: NextSignature<code.FileWillRenameEvent, Thenable<code.WorkspaceEdit | null | undefined>>;
+	willRenameFiles?: NextSignature<code.FileRenameEvent, Thenable<code.WorkspaceEdit | null | undefined>>;
 	didDeleteFiles?: NextSignature<code.FileDeleteEvent, void>;
-	willDeleteFiles?: NextSignature<code.FileWillDeleteEvent, Thenable<code.WorkspaceEdit | null | undefined>>;
+	willDeleteFiles?: NextSignature<code.FileDeleteEvent, Thenable<code.WorkspaceEdit | null | undefined>>;
 }
 
-abstract class FileOperationFeature<I, E extends { readonly files: ReadonlyArray<I>; }> implements DynamicFeature<proto.FileOperationRegistrationOptions> {
+interface Event<I> {
+	readonly files: ReadonlyArray<I>;
+}
+
+abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFeature<proto.FileOperationRegistrationOptions> {
 
 	protected _client: BaseLanguageClient;
 	private _event: code.Event<E>;
@@ -248,14 +252,14 @@ abstract class RequestFileOperationFeature<I, E extends RequestEvent<I>, P> exte
 
 	private _requestType: proto.ProtocolRequestType<P, proto.WorkspaceEdit | null, never, void, proto.FileOperationRegistrationOptions>;
 	private _accessUri: (i: I) => code.Uri;
-	private _createParams: (e: E) => P;
+	private _createParams: (e: Event<I>) => P;
 
 	constructor(client: BaseLanguageClient, event: code.Event<E>,
 		requestType: proto.ProtocolRequestType<P, proto.WorkspaceEdit | null, never, void, proto.FileOperationRegistrationOptions>,
 		clientCapability: keyof proto.FileOperationClientCapabilities,
 		serverCapability: keyof proto.FileOperationOptions,
 		accessUri: (i: I) => code.Uri,
-		createParams: (e: E) => P)
+		createParams: (e: Event<I>) => P)
 	{
 		super(client, event, requestType, clientCapability, serverCapability);
 		this._requestType = requestType;
@@ -274,7 +278,7 @@ abstract class RequestFileOperationFeature<I, E extends RequestEvent<I>, P> exte
 		const filteredEvent = await this.filter(originalEvent, this._accessUri);
 
 		if (filteredEvent.files.length) {
-			const next = (event: E): Promise<code.WorkspaceEdit | any> => {
+			const next = (event: Event<I>): Promise<code.WorkspaceEdit | any> => {
 				return this._client.sendRequest(this._requestType, this._createParams(event))
 					.then(this._client.protocol2CodeConverter.asWorkspaceEdit);
 			};
@@ -284,7 +288,7 @@ abstract class RequestFileOperationFeature<I, E extends RequestEvent<I>, P> exte
 		}
 	}
 
-	protected abstract doSend(event: E, next: (event: E) => Thenable<code.WorkspaceEdit> | Thenable<any>): Thenable<code.WorkspaceEdit> | Thenable<any>;
+	protected abstract doSend(event: E, next: (event: Event<I>) => Thenable<code.WorkspaceEdit> | Thenable<any>): Thenable<code.WorkspaceEdit> | Thenable<any>;
 }
 
 export class WillCreateFilesFeature extends RequestFileOperationFeature<code.Uri, code.FileWillCreateEvent, proto.CreateFilesParams> {
@@ -296,7 +300,7 @@ export class WillCreateFilesFeature extends RequestFileOperationFeature<code.Uri
 		);
 	}
 
-	protected doSend(event: code.FileWillCreateEvent, next: (event: code.FileWillCreateEvent) => Thenable<code.WorkspaceEdit> | Thenable<any>): Thenable<code.WorkspaceEdit> | Thenable<any> {
+	protected doSend(event: code.FileWillCreateEvent, next: (event: code.FileCreateEvent) => Thenable<code.WorkspaceEdit> | Thenable<any>): Thenable<code.WorkspaceEdit> | Thenable<any> {
 		const middleware = this._client.clientOptions.middleware?.workspace;
 		return middleware?.willCreateFiles
 			? middleware.willCreateFiles(event, next)
@@ -313,7 +317,7 @@ export class WillRenameFilesFeature extends RequestFileOperationFeature<{ oldUri
 		);
 	}
 
-	protected doSend(event: code.FileWillRenameEvent, next: (event: code.FileWillRenameEvent) => Thenable<code.WorkspaceEdit> | Thenable<any>): Thenable<code.WorkspaceEdit> | Thenable<any> {
+	protected doSend(event: code.FileWillRenameEvent, next: (event: code.FileRenameEvent) => Thenable<code.WorkspaceEdit> | Thenable<any>): Thenable<code.WorkspaceEdit> | Thenable<any> {
 		const middleware = this._client.clientOptions.middleware?.workspace;
 		return middleware?.willRenameFiles
 			? middleware.willRenameFiles(event, next)
@@ -330,7 +334,7 @@ export class WillDeleteFilesFeature extends RequestFileOperationFeature<code.Uri
 		);
 	}
 
-	protected doSend(event: code.FileWillDeleteEvent, next: (event: code.FileWillDeleteEvent) => Thenable<code.WorkspaceEdit> | Thenable<any>): Thenable<code.WorkspaceEdit> | Thenable<any> {
+	protected doSend(event: code.FileWillDeleteEvent, next: (event: code.FileDeleteEvent) => Thenable<code.WorkspaceEdit> | Thenable<any>): Thenable<code.WorkspaceEdit> | Thenable<any> {
 		const middleware = this._client.clientOptions.middleware?.workspace;
 		return middleware?.willDeleteFiles
 			? middleware.willDeleteFiles(event, next)
