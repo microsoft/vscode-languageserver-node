@@ -125,11 +125,13 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 		// any of the globs.
 		const fileMatches = await Promise.all(event.files.map(async (item) => {
 			const uri = prop(item);
-			const uriIsFolder = await FileOperationFeature.isFolder(uri);
+			const fixedUri = await FileOperationFeature.addSlashesToFolderUris(uri);
+			const path = fixedUri.path;
+			const uriIsFolder = path.endsWith('/');
 			for (const globs of this._globPatterns.values()) {
 				for (const pattern of globs) {
 					const shouldTest = (uriIsFolder && pattern.matchFolders) || (!uriIsFolder && pattern.matchFiles);
-					if (shouldTest && pattern.matcher.match(uri.path)) {
+					if (shouldTest && pattern.matcher.match(path)) {
 						return true;
 					}
 				}
@@ -144,19 +146,19 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 	}
 
 	/**
-	 * Checks if the given URI is a directory.
-	 *
-	 * Returns false if the URI does not exist on disk.
-	 */
-	private static async isFolder(uri: code.Uri): Promise<boolean> {
+	* Adds trailing slashes to URIs that represent directories if they
+	* do not already have them.
+	*/
+	private static async addSlashesToFolderUris(uri: code.Uri): Promise<code.Uri> {
 		if (uri.path.endsWith('/')) {
-			return true;
+			return uri;
 		}
 		try {
 			const stat = await code.workspace.fs.stat(uri);
-			return stat.type == code.FileType.Directory;
+			return stat.type === code.FileType.Directory ? code.Uri.parse(`${uri}/`) : uri;
 		} catch (e) {
-			return false;
+			// Assume non-existent paths are already correct.
+			return uri;
 		}
 	}
 }
