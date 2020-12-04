@@ -41,6 +41,20 @@ export interface FileOperationRegistrationOptions {
 	patterns: FileOperationPattern[];
 }
 
+export namespace FileOperationPatternKind {
+	/**
+	 * The pattern matches a file only.
+	 */
+	export const file: 'file' = 'file';
+
+	/**
+	 * The pattern matches a folder only.
+	 */
+	export const folder: 'folder' = 'folder';
+}
+
+export type FileOperationPatternKind = 'file' | 'folder';
+
 interface FileOperationPattern {
 	/**
 	 * The glob pattern to match. Glob patterns can have the following syntax:
@@ -58,7 +72,7 @@ interface FileOperationPattern {
 	 *
 	 * Matches both if undefined.
 	 */
-	matches?: 'file' | 'folder';
+	matches?: FileOperationPatternKind;
 }
 
 /**
