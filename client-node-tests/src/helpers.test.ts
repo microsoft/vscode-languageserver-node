@@ -7,7 +7,8 @@ import { strictEqual, ok } from 'assert';
 
 import {
 	Position, Range, TextDocumentIdentifier, TextDocumentItem, VersionedTextDocumentIdentifier, Command, CodeLens, CodeActionContext,
-	Diagnostic, DiagnosticSeverity, WorkspaceChange, TextDocumentEdit, CreateFile, RenameFile, DeleteFile
+	Diagnostic, DiagnosticSeverity, WorkspaceChange, TextDocumentEdit, CreateFile, RenameFile, DeleteFile, ChangeAnnotation,
+	AnnotatedTextEdit
 } from 'vscode-languageserver-protocol';
 
 suite('Protocol Helper Tests', () => {
@@ -119,6 +120,7 @@ suite('Protocol Helper Tests', () => {
 		change2.insert(Position.create(2,3), 'insert');
 
 		let workspaceEdit = workspaceChange.edit;
+		strictEqual(workspaceEdit.changeAnnotations, undefined);
 		strictEqual(workspaceEdit.documentChanges!.length, 2);
 		let edits = (workspaceEdit.documentChanges![0] as TextDocumentEdit).edits;
 		strictEqual(edits.length, 3);
@@ -159,6 +161,7 @@ suite('Protocol Helper Tests', () => {
 		change2.insert(Position.create(2,3), 'insert');
 
 		let workspaceEdit = workspaceChange.edit;
+		strictEqual(workspaceEdit.changeAnnotations, undefined);
 		strictEqual(Object.keys(workspaceEdit.changes!).length, 2);
 		let edits = workspaceEdit.changes![uri];
 		strictEqual(edits.length, 3);
@@ -173,4 +176,25 @@ suite('Protocol Helper Tests', () => {
 		strictEqual(edits.length, 1);
 		rangeEqual(edits[0].range, Range.create(2,3,2,3));
 		strictEqual(edits[0].newText, 'insert');
-	});});
+	});
+
+	test('WorkspaceEdit - change annotations', () => {
+		const workspaceChange = new WorkspaceChange();
+		const uri = 'file:///abc.txt';
+		const change1 = workspaceChange.getTextEditChange({uri: uri, version: 10});
+		change1.insert(Position.create(0,1), 'insert', ChangeAnnotation.create('label', true, 'description'));
+
+		const workspaceEdit = workspaceChange.edit;
+		const documentChanges = workspaceEdit.documentChanges!;
+		ok(workspaceEdit.changeAnnotations !== undefined, 'Change annotation defined');
+		const annotations = workspaceEdit.changeAnnotations!;
+		strictEqual(documentChanges.length, 1);
+		const edits = (documentChanges[0] as TextDocumentEdit).edits;
+		strictEqual(edits.length, 1);
+		strictEqual((edits[0] as AnnotatedTextEdit).annotationId, '1');
+		const annotation = annotations[1];
+		strictEqual(annotation.label, 'label');
+		strictEqual(annotation.needsConfirmation, true);
+		strictEqual(annotation.description, 'description');
+	});
+});

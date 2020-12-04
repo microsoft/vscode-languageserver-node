@@ -922,29 +922,27 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 				sharedMetadata.set(key, metaData);
 			}
 		}
-		const asMetadata = (annotation: ls.ChangeAnnotation | ls.ChangeAnnotationIdentifier | undefined): code.WorkspaceEditEntryMetadata | undefined => {
+		const asMetadata = (annotation: ls.ChangeAnnotationIdentifier | undefined): code.WorkspaceEditEntryMetadata | undefined => {
 			if (annotation === undefined) {
 				return undefined;
-			} else if (ls.ChangeAnnotationIdentifier.is(annotation)) {
-				return sharedMetadata.get(annotation);
 			} else {
-				return asWorkspaceEditEntryMetadata(annotation);
+				return sharedMetadata.get(annotation);
 			}
 		};
 		const result = new code.WorkspaceEdit();
 		if (item.documentChanges) {
 			for (const change of item.documentChanges) {
 				if (ls.CreateFile.is(change)) {
-					result.createFile(_uriConverter(change.uri), change.options, asMetadata(change.annotation));
+					result.createFile(_uriConverter(change.uri), change.options, asMetadata(change.annotationId));
 				} else if (ls.RenameFile.is(change)) {
-					result.renameFile(_uriConverter(change.oldUri), _uriConverter(change.newUri), change.options, asMetadata(change.annotation));
+					result.renameFile(_uriConverter(change.oldUri), _uriConverter(change.newUri), change.options, asMetadata(change.annotationId));
 				} else if (ls.DeleteFile.is(change)) {
-					result.deleteFile(_uriConverter(change.uri), change.options, asMetadata(change.annotation));
+					result.deleteFile(_uriConverter(change.uri), change.options, asMetadata(change.annotationId));
 				} else if (ls.TextDocumentEdit.is(change)) {
 					const uri = _uriConverter(change.textDocument.uri);
 					for (const edit of change.edits) {
 						if (AnnotatedTextEdit.is(edit)) {
-							result.replace(uri, asRange(edit.range), edit.newText, asMetadata(edit.annotation));
+							result.replace(uri, asRange(edit.range), edit.newText, asMetadata(edit.annotationId));
 						} else {
 							result.replace(uri, asRange(edit.range), edit.newText);
 						}
