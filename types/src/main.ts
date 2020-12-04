@@ -844,6 +844,18 @@ export namespace ChangeAnnotation {
 	}
 }
 
+export namespace ChangeAnnotationIdentifier {
+	export function is(value: any): value is ChangeAnnotationIdentifier {
+		const candidate = value as ChangeAnnotationIdentifier;
+		return typeof candidate === 'string';
+	}
+}
+
+/**
+ * An identifier to refer to a change annotation stored with a workspace edit.
+ */
+export type ChangeAnnotationIdentifier = string;
+
 /**
  * A special text edit with an additional change annotation.
  *
@@ -853,7 +865,7 @@ export interface AnnotatedTextEdit extends TextEdit {
 	/**
 	 * The actual annotation
 	 */
-	annotation: ChangeAnnotation;
+	annotation: ChangeAnnotation | ChangeAnnotationIdentifier;
 }
 
 export namespace AnnotatedTextEdit {
@@ -865,7 +877,7 @@ export namespace AnnotatedTextEdit {
 	 * @param newText The new text.
 	 * @param annotation The annotation.
 	 */
-	export function replace(range: Range, newText: string, annotation: ChangeAnnotation): AnnotatedTextEdit {
+	export function replace(range: Range, newText: string, annotation: ChangeAnnotation | ChangeAnnotationIdentifier): AnnotatedTextEdit {
 		return { range, newText, annotation };
 	}
 	/**
@@ -875,7 +887,7 @@ export namespace AnnotatedTextEdit {
 	 * @param newText The text to be inserted.
 	 * @param annotation The annotation.
 	 */
-	export function insert(position: Position, newText: string, annotation: ChangeAnnotation): AnnotatedTextEdit {
+	export function insert(position: Position, newText: string, annotation: ChangeAnnotation | ChangeAnnotationIdentifier): AnnotatedTextEdit {
 		return { range: { start: position, end: position }, newText, annotation };
 	}
 	/**
@@ -884,13 +896,13 @@ export namespace AnnotatedTextEdit {
 	 * @param range The range of text to be deleted.
 	 * @param annotation The annotation.
 	 */
-	export function del(range: Range, annotation: ChangeAnnotation): AnnotatedTextEdit {
+	export function del(range: Range, annotation: ChangeAnnotation | ChangeAnnotationIdentifier): AnnotatedTextEdit {
 		return { range, newText: '', annotation };
 	}
 
 	export function is(value: any): value is AnnotatedTextEdit {
 		const candidate: AnnotatedTextEdit = value as AnnotatedTextEdit;
-		return TextEdit.is(candidate) && ChangeAnnotation.is(candidate.annotation);
+		return TextEdit.is(candidate) && (ChangeAnnotation.is(candidate.annotation) || ChangeAnnotationIdentifier.is(candidate.annotation));
 	}
 }
 
@@ -950,7 +962,7 @@ interface ResourceOperation {
 	 *
 	 * @since 3.16.0 - proposed state
 	 */
-	annotation?: ChangeAnnotation;
+	annotation?: ChangeAnnotation | ChangeAnnotationIdentifier;
 }
 
 /**
@@ -989,7 +1001,7 @@ export interface CreateFile extends ResourceOperation {
 }
 
 export namespace CreateFile {
-	export function create(uri: DocumentUri, options?: CreateFileOptions, annotation?: ChangeAnnotation): CreateFile {
+	export function create(uri: DocumentUri, options?: CreateFileOptions, annotation?: ChangeAnnotation | ChangeAnnotationIdentifier): CreateFile {
 		let result: CreateFile = {
 			kind: 'create',
 			uri
@@ -1009,7 +1021,7 @@ export namespace CreateFile {
 			candidate.options === undefined ||
 			((candidate.options.overwrite === undefined || Is.boolean(candidate.options.overwrite)) && (candidate.options.ignoreIfExists === undefined || Is.boolean(candidate.options.ignoreIfExists)))
 		) && (
-			candidate.annotation === undefined || ChangeAnnotation.is(candidate.annotation)
+			candidate.annotation === undefined || ChangeAnnotation.is(candidate.annotation) || ChangeAnnotationIdentifier.is(candidate.annotation)
 		);
 	}
 }
@@ -1055,7 +1067,7 @@ export interface RenameFile extends ResourceOperation {
 }
 
 export namespace RenameFile {
-	export function create(oldUri: DocumentUri, newUri: DocumentUri, options?: RenameFileOptions, annotation?: ChangeAnnotation): RenameFile {
+	export function create(oldUri: DocumentUri, newUri: DocumentUri, options?: RenameFileOptions, annotation?: ChangeAnnotation | ChangeAnnotationIdentifier): RenameFile {
 		let result: RenameFile = {
 			kind: 'rename',
 			oldUri,
@@ -1076,7 +1088,7 @@ export namespace RenameFile {
 			candidate.options === undefined ||
 			((candidate.options.overwrite === undefined || Is.boolean(candidate.options.overwrite)) && (candidate.options.ignoreIfExists === undefined || Is.boolean(candidate.options.ignoreIfExists)))
 		) && (
-			candidate.annotation === undefined || ChangeAnnotation.is(candidate.annotation)
+			candidate.annotation === undefined || ChangeAnnotation.is(candidate.annotation) || ChangeAnnotationIdentifier.is(candidate.annotation)
 		);
 	}
 }
@@ -1117,7 +1129,7 @@ export interface DeleteFile extends ResourceOperation {
 }
 
 export namespace DeleteFile {
-	export function create(uri: DocumentUri, options?: DeleteFileOptions, annotation?: ChangeAnnotation): DeleteFile {
+	export function create(uri: DocumentUri, options?: DeleteFileOptions, annotation?: ChangeAnnotation | ChangeAnnotationIdentifier): DeleteFile {
 		let result: DeleteFile = {
 			kind: 'delete',
 			uri
@@ -1137,7 +1149,7 @@ export namespace DeleteFile {
 			candidate.options === undefined ||
 			((candidate.options.recursive === undefined || Is.boolean(candidate.options.recursive)) && (candidate.options.ignoreIfNotExists === undefined || Is.boolean(candidate.options.ignoreIfNotExists)))
 		) && (
-			candidate.annotation === undefined || ChangeAnnotation.is(candidate.annotation)
+			candidate.annotation === undefined || ChangeAnnotation.is(candidate.annotation) || ChangeAnnotationIdentifier.is(candidate.annotation)
 		);
 	}
 }
@@ -1166,6 +1178,17 @@ export interface WorkspaceEdit {
 	 * only plain `TextEdit`s using the `changes` property are supported.
 	 */
 	documentChanges?: (TextDocumentEdit | CreateFile | RenameFile | DeleteFile)[];
+
+
+	/**
+	 * A map of change annotations that can be referenced in `AnnotatedTextEdit`s or create, rename and
+	 * delete file / folder operations.
+	 *
+	 * Whether clients honor this property depends on the client capability `workspace.changeAnnotationSupport`
+	 */
+	changeAnnotations?: {
+		[id: string /* ChangeAnnotationIdentifier */]: ChangeAnnotation;
+	}
 }
 
 export namespace WorkspaceEdit {
@@ -1219,7 +1242,7 @@ export interface TextEditChange {
 	 * @param newText A string.
 	 * @param annotation An optional annotation.
 	 */
-	insert(position: Position, newText: string, annotation?: ChangeAnnotation): void;
+	insert(position: Position, newText: string, annotation?: ChangeAnnotation | ChangeAnnotationIdentifier): void;
 
 	/**
 	 * Replace the given range with given text for the given resource.
@@ -1228,7 +1251,7 @@ export interface TextEditChange {
 	 * @param newText A string.
 	 * @param annotation An optional annotation.
 	 */
-	replace(range: Range, newText: string, annotation?: ChangeAnnotation): void;
+	replace(range: Range, newText: string, annotation?: ChangeAnnotation | ChangeAnnotationIdentifier): void;
 
 	/**
 	 * Delete the text at the given range.
@@ -1236,7 +1259,7 @@ export interface TextEditChange {
 	 * @param range A range.
 	 * @param annotation An optional annotation.
 	 */
-	delete(range: Range, annotation?: ChangeAnnotation): void;
+	delete(range: Range, annotation?: ChangeAnnotation | ChangeAnnotationIdentifier): void;
 }
 
 class TextEditChangeImpl implements TextEditChange {
@@ -1247,7 +1270,7 @@ class TextEditChangeImpl implements TextEditChange {
 		this.edits = edits;
 	}
 
-	public insert(position: Position, newText: string, annotation?: ChangeAnnotation): void {
+	public insert(position: Position, newText: string, annotation?: ChangeAnnotation | ChangeAnnotationIdentifier): void {
 		if (annotation === undefined) {
 			this.edits.push(TextEdit.insert(position, newText));
 		} else {
@@ -1255,7 +1278,7 @@ class TextEditChangeImpl implements TextEditChange {
 		}
 	}
 
-	public replace(range: Range, newText: string, annotation?: ChangeAnnotation): void {
+	public replace(range: Range, newText: string, annotation?: ChangeAnnotation | ChangeAnnotationIdentifier): void {
 		if (annotation === undefined) {
 			this.edits.push(TextEdit.replace(range, newText));
 		} else {
@@ -1263,7 +1286,7 @@ class TextEditChangeImpl implements TextEditChange {
 		}
 	}
 
-	public delete(range: Range, annotation?: ChangeAnnotation): void {
+	public delete(range: Range, annotation?: ChangeAnnotation | ChangeAnnotationIdentifier): void {
 		if (annotation === undefined) {
 			this.edits.push(TextEdit.del(range));
 		} else {
@@ -1317,7 +1340,7 @@ export class WorkspaceChange {
 	 */
 	public get edit(): WorkspaceEdit {
 		if (this._workspaceEdit === undefined) {
-			return { documentChanges: [] };
+			this._workspaceEdit = { documentChanges: [] };
 		}
 		return this._workspaceEdit;
 	}
@@ -1371,19 +1394,28 @@ export class WorkspaceChange {
 		}
 	}
 
-	public createFile(uri: DocumentUri, options?: CreateFileOptions): void {
+	public addChangeAnnotation(id: ChangeAnnotationIdentifier, annotation: ChangeAnnotation): void {
 		this.checkDocumentChanges();
-		this._workspaceEdit!.documentChanges!.push(CreateFile.create(uri, options));
+		const workspaceEdit = this._workspaceEdit!;
+		if (workspaceEdit.changeAnnotations === undefined) {
+			workspaceEdit.changeAnnotations = {};
+		}
+		workspaceEdit.changeAnnotations[id] = annotation;
 	}
 
-	public renameFile(oldUri: DocumentUri, newUri: DocumentUri, options?: RenameFileOptions): void {
+	public createFile(uri: DocumentUri, options?: CreateFileOptions, annotation?: ChangeAnnotation | ChangeAnnotationIdentifier): void {
 		this.checkDocumentChanges();
-		this._workspaceEdit!.documentChanges!.push(RenameFile.create(oldUri, newUri, options));
+		this._workspaceEdit!.documentChanges!.push(CreateFile.create(uri, options, annotation));
 	}
 
-	public deleteFile(uri: DocumentUri, options?: DeleteFileOptions): void {
+	public renameFile(oldUri: DocumentUri, newUri: DocumentUri, options?: RenameFileOptions, annotation?: ChangeAnnotation | ChangeAnnotationIdentifier): void {
 		this.checkDocumentChanges();
-		this._workspaceEdit!.documentChanges!.push(DeleteFile.create(uri, options));
+		this._workspaceEdit!.documentChanges!.push(RenameFile.create(oldUri, newUri, options, annotation));
+	}
+
+	public deleteFile(uri: DocumentUri, options?: DeleteFileOptions, annotation?: ChangeAnnotation | ChangeAnnotationIdentifier): void {
+		this.checkDocumentChanges();
+		this._workspaceEdit!.documentChanges!.push(DeleteFile.create(uri, options, annotation));
 	}
 
 	private checkDocumentChanges() {

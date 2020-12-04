@@ -3547,7 +3547,9 @@ export abstract class BaseLanguageClient {
 		workspaceEdit.resourceOperations = [ResourceOperationKind.Create, ResourceOperationKind.Rename, ResourceOperationKind.Delete];
 		workspaceEdit.failureHandling = FailureHandlingKind.TextOnlyTransactional;
 		workspaceEdit.normalizesLineEndings = true;
-		workspaceEdit.changeAnnotationSupport = true;
+		workspaceEdit.changeAnnotationSupport = {
+			groupsOnLabel: true
+		};
 
 		const diagnostics = ensure(ensure(result, 'textDocument')!, 'publishDiagnostics')!;
 		diagnostics.relatedInformation = true;

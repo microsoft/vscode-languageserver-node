@@ -915,20 +915,36 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		if (!item) {
 			return undefined;
 		}
-		let result = new code.WorkspaceEdit();
+		const sharedMetadata: Map<string, code.WorkspaceEditEntryMetadata> = new Map();
+		if (item.changeAnnotations !== undefined) {
+			for (const key of Object.keys(item.changeAnnotations)) {
+				const metaData = asWorkspaceEditEntryMetadata(item.changeAnnotations[key]);
+				sharedMetadata.set(key, metaData);
+			}
+		}
+		const asMetadata = (annotation: ls.ChangeAnnotation | ls.ChangeAnnotationIdentifier | undefined): code.WorkspaceEditEntryMetadata | undefined => {
+			if (annotation === undefined) {
+				return undefined;
+			} else if (ls.ChangeAnnotationIdentifier.is(annotation)) {
+				return sharedMetadata.get(annotation);
+			} else {
+				return asWorkspaceEditEntryMetadata(annotation);
+			}
+		};
+		const result = new code.WorkspaceEdit();
 		if (item.documentChanges) {
 			for (const change of item.documentChanges) {
 				if (ls.CreateFile.is(change)) {
-					result.createFile(_uriConverter(change.uri), change.options, asWorkspaceEditEntryMetadata(change.annotation));
+					result.createFile(_uriConverter(change.uri), change.options, asMetadata(change.annotation));
 				} else if (ls.RenameFile.is(change)) {
-					result.renameFile(_uriConverter(change.oldUri), _uriConverter(change.newUri), change.options, asWorkspaceEditEntryMetadata(change.annotation));
+					result.renameFile(_uriConverter(change.oldUri), _uriConverter(change.newUri), change.options, asMetadata(change.annotation));
 				} else if (ls.DeleteFile.is(change)) {
-					result.deleteFile(_uriConverter(change.uri), change.options, asWorkspaceEditEntryMetadata(change.annotation));
+					result.deleteFile(_uriConverter(change.uri), change.options, asMetadata(change.annotation));
 				} else if (ls.TextDocumentEdit.is(change)) {
 					const uri = _uriConverter(change.textDocument.uri);
 					for (const edit of change.edits) {
 						if (AnnotatedTextEdit.is(edit)) {
-							result.replace(uri, asRange(edit.range), edit.newText, asWorkspaceEditEntryMetadata(edit.annotation));
+							result.replace(uri, asRange(edit.range), edit.newText, asMetadata(edit.annotation));
 						} else {
 							result.replace(uri, asRange(edit.range), edit.newText);
 						}
@@ -945,6 +961,9 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return result;
 	}
 
+	function asWorkspaceEditEntryMetadata(annotation: undefined): undefined;
+	function asWorkspaceEditEntryMetadata(annotation: ChangeAnnotation): code.WorkspaceEditEntryMetadata;
+	function asWorkspaceEditEntryMetadata(annotation: ChangeAnnotation | undefined): code.WorkspaceEditEntryMetadata | undefined;
 	function asWorkspaceEditEntryMetadata(annotation: ChangeAnnotation | undefined): code.WorkspaceEditEntryMetadata | undefined {
 		if (annotation === undefined) {
 			return undefined;
