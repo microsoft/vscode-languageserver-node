@@ -14,7 +14,7 @@ export class Delayer<T> {
 	public defaultDelay: number;
 	private timeout: RAL.TimeoutHandle | undefined;
 	private completionPromise: Promise<T> | undefined;
-	private onSuccess: ((value?: T | Promise<T>) => void) | undefined;
+	private onSuccess: ((value: T | Promise<T> | undefined) => void) | undefined;
 	private task: ITask<T> | undefined;
 
 	constructor(defaultDelay: number) {
@@ -32,7 +32,7 @@ export class Delayer<T> {
 		}
 
 		if (!this.completionPromise) {
-			this.completionPromise = new Promise<T>((resolve) => {
+			this.completionPromise = new Promise<T | undefined>((resolve) => {
 				this.onSuccess = resolve;
 			}).then(() => {
 				this.completionPromise = undefined;

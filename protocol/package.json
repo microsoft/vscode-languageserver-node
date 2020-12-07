@@ -32,6 +32,6 @@
 		"test:node": "node ../node_modules/mocha/bin/_mocha",
 		"test:browser": "npm run webpack:test:silent && node ../build/bin/runBrowserTests.js  http://127.0.0.1:8080/protocol/src/browser/test/",
 		"webpack:test": "cd ../types && npm run compile:esm && cd ../protocol && node ../build/bin/webpack --mode none --config ./src/browser/test/webpack.config.js",
-		"webpack:test:silent": "cd ../types && npm run compile:esm && cd ../protocol && node ../build/bin/webpack --silent --mode none --config ./src/browser/test/webpack.config.js"
+		"webpack:test:silent": "cd ../types && npm run compile:esm && cd ../protocol && node ../build/bin/webpack --no-stats --mode none --config ./src/browser/test/webpack.config.js"
 	}
 }

@@ -6,8 +6,8 @@ export function run(testsRoot: string, cb: (error: any, failures?: number) => vo
 	// Create the mocha test
 	const mocha = new Mocha({
 		ui: 'tdd',
+		color: true
 	});
-	mocha.useColors(true);
 
 	glob('**/**.test.js', { cwd: testsRoot }, (err, files) => {
 		if (err) {
