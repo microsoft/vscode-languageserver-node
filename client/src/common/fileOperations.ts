@@ -148,6 +148,11 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 						if ((fileType === code.FileType.File && pattern.kind === FileOperationPatternKind.file) || (fileType === code.FileType.Directory && pattern.kind === FileOperationPatternKind.folder)) {
 							return true;
 						}
+					} else if (pattern.kind === FileOperationPatternKind.folder) {
+						const fileType = await FileOperationFeature.getFileType(uri);
+						if (fileType === code.FileType.Directory && pattern.matcher.match(`${path}/`)) {
+							return true;
+						}
 					}
 				}
 			}
