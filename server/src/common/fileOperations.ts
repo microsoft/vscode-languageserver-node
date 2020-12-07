@@ -12,6 +12,11 @@ import {
 
 import type { Feature, _RemoteWorkspace } from './server';
 
+/**
+ * Shape of the file operations feature
+ *
+ * @since 3.16.0 - proposed state
+ */
 export interface FileOperationsFeatureShape {
 	onDidCreateFiles(handler: NotificationHandler<CreateFilesParams>): void;
 	onDidRenameFiles(handler: NotificationHandler<RenameFilesParams>): void;

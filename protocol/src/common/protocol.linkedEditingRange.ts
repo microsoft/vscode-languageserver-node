@@ -12,7 +12,7 @@ import { StaticRegistrationOptions, TextDocumentPositionParams, TextDocumentRegi
 /**
  * Client capabilities for the linked editing range request.
  *
- * @since 3.16.0
+ * @since 3.16.0 - proposed state
  */
 export interface LinkedEditingRangeClientCapabilities {
 	/**
@@ -54,6 +54,8 @@ export interface LinkedEditingRanges {
 
 /**
  * A request to provide ranges that can be edited together.
+ *
+ * @since 3.16.0 - proposed state
  */
 export namespace LinkedEditingRangeRequest {
 	export const method: 'textDocument/linkedEditingRange' = 'textDocument/linkedEditingRange';

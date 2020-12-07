@@ -8,6 +8,11 @@ import { Proposed } from 'vscode-languageserver-protocol';
 
 import type { Feature, _Languages, ServerRequestHandler } from './server';
 
+/**
+ * Shape of the moniker feature
+ *
+ * @since 3.16.0 - proposed state
+ */
 export interface MonikerFeatureShape {
 	moniker: {
 		on(handler: ServerRequestHandler<Proposed.MonikerParams, Proposed.Moniker[] | null, Proposed.Moniker[], void>): void;

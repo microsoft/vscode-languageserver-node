@@ -35,6 +35,11 @@ export interface CallHierarchyOutgoingCallsSignature {
 	(this: void, item: VCallHierarchyItem, token: CancellationToken): ProviderResult<VCallHierarchyOutgoingCall[]>;
 }
 
+/**
+ * Call hierarchy middleware
+ *
+ * @since 3.16.0 - proposed state
+ */
 export interface CallHierarchyMiddleware {
 	prepareCallHierarchy?: (this: void, document: TextDocument, positions: VPosition, token: CancellationToken, next: PrepareCallHierarchySignature) => ProviderResult<VCallHierarchyItem | VCallHierarchyItem[]>;
 	provideCallHierarchyIncomingCalls?: (this: void, item: VCallHierarchyItem, token: CancellationToken, next: CallHierarchyIncomingCallsSignature) => ProviderResult<VCallHierarchyIncomingCall[]>;

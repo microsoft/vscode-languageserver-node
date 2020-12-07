@@ -25,6 +25,11 @@ function assign<T, K extends keyof T>(target: T, key: K, value: T[K]): void {
 	target[key] = value;
 }
 
+/**
+ * File operation middleware
+ *
+ * @since 3.16.0 - proposed state
+ */
 export interface FileOperationsMiddleware {
 	didCreateFiles?: NextSignature<code.FileCreateEvent, void>;
 	willCreateFiles?: NextSignature<code.FileCreateEvent, Thenable<code.WorkspaceEdit | null | undefined>>;
@@ -90,7 +95,7 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 		if (!this._listener) {
 			this._listener = this._event(this.send, this);
 		}
-		const regexes = data.registerOptions.patterns.map((rule) => {
+		const regularExpressions = data.registerOptions.patterns.map((rule) => {
 			const matcher = new minimatch.Minimatch(rule.glob);
 			if (!matcher.makeRe()) {
 				throw new Error(`Invalid pattern ${rule.glob}!`);
@@ -99,7 +104,7 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 			const matchFolders = !rule.matches || rule.matches === 'folder';
 			return { matcher, matchFiles, matchFolders };
 		});
-		this._globPatterns.set(data.id, regexes);
+		this._globPatterns.set(data.id, regularExpressions);
 	}
 
 	public abstract send(data: E): Promise<void>;

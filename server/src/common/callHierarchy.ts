@@ -11,6 +11,11 @@ import {
 
 import type { Feature, _Languages, ServerRequestHandler } from './server';
 
+/**
+ * Shape of the call hierarchy feature
+ *
+ * @since 3.16.0 - proposed state
+ */
 export interface CallHierarchy {
 	callHierarchy: {
 		onPrepare(handler: ServerRequestHandler<CallHierarchyPrepareParams, CallHierarchyItem[] | null, never, void>): void;

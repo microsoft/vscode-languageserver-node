@@ -9,38 +9,57 @@ import { ProtocolNotificationType, ProtocolRequestType } from './messages';
 
 /**
  * Options for notifications/requests for user operations on files.
+ *
+ * @since 3.16.0 - proposed state
  */
 export interface FileOperationOptions {
+
 	/**
 	* The server is interested in didCreateFiles notifications.
 	*/
 	didCreate?: FileOperationRegistrationOptions;
+
 	/**
 	* The server is interested in willCreateFiles requests.
 	*/
 	willCreate?: FileOperationRegistrationOptions;
+
 	/**
 	* The server is interested in didRenameFiles notifications.
 	*/
 	didRename?: FileOperationRegistrationOptions;
+
 	/**
 	* The server is interested in willRenameFiles requests.
 	*/
 	willRename?: FileOperationRegistrationOptions;
+
 	/**
 	* The server is interested in didDeleteFiles file notifications.
 	*/
 	didDelete?: FileOperationRegistrationOptions;
+
 	/**
 	* The server is interested in willDeleteFiles file requests.
 	*/
 	willDelete?: FileOperationRegistrationOptions;
 }
 
+/**
+ * The options to register for file operations.
+ *
+ * @since 3.16.0 - proposed state
+ */
 export interface FileOperationRegistrationOptions {
 	patterns: FileOperationPattern[];
 }
 
+/**
+ * A pattern kind describing if a glob pattern matches a file a folder or
+ * both.
+ *
+ * @since 3.16.0 - proposed state
+ */
 export namespace FileOperationPatternKind {
 	/**
 	 * The pattern matches a file only.
@@ -52,9 +71,14 @@ export namespace FileOperationPatternKind {
 	 */
 	export const folder: 'folder' = 'folder';
 }
-
 export type FileOperationPatternKind = 'file' | 'folder';
 
+/**
+ * A pattern to describe in which file operation requests or notifications
+ * the server is interested in.
+ *
+ * @since 3.16.0 - proposed state
+ */
 interface FileOperationPattern {
 	/**
 	 * The glob pattern to match. Glob patterns can have the following syntax:
@@ -78,33 +102,43 @@ interface FileOperationPattern {
 /**
  * Capabilities relating to events from file operations by the user in the client.
  *
- * These events do not come from the file system, they come from user operations like renaming a file in the UI.
+ * These events do not come from the file system, they come from user operations
+ * like renaming a file in the UI.
+ *
+ * @since 3.16.0 - proposed state
  */
 export interface FileOperationClientCapabilities {
+
 	/**
 	 * Whether the client supports dynamic registration for file requests/notifications.
 	 */
 	dynamicRegistration?: boolean;
+
 	/**
 	 * The client has support for sending didCreateFiles notifications.
 	 */
 	didCreate?: boolean;
+
 	/**
 	 * The client has support for willCreateFiles requests.
 	 */
 	willCreate?: boolean;
+
 	/**
 	 * The client has support for sending didRenameFiles notifications.
 	 */
 	didRename?: boolean;
+
 	/**
 	 * The client has support for willRenameFiles requests.
 	 */
 	willRename?: boolean;
+
 	/**
 	 * The client has support for sending didDeleteFiles notifications.
 	 */
 	didDelete?: boolean;
+
 	/**
 	 * The client has support for willDeleteFiles requests.
 	 */
@@ -113,8 +147,11 @@ export interface FileOperationClientCapabilities {
 
 /**
  * The parameters sent in file create requests/notifications.
+ *
+ * @since 3.16.0 - proposed state
  */
 export interface CreateFilesParams {
+
 	/**
 	 * An array of all files/folders created in this operation.
 	 */
@@ -123,8 +160,11 @@ export interface CreateFilesParams {
 
 /**
  * Represents information on a file/folder create.
+ *
+ * @since 3.16.0 - proposed state
  */
 export interface FileCreate {
+
 	/**
 	 * A file:// URI for the location of the file/folder being created.
 	 */
@@ -133,8 +173,11 @@ export interface FileCreate {
 
 /**
  * The parameters sent in file rename requests/notifications.
+ *
+ * @since 3.16.0 - proposed state
  */
 export interface RenameFilesParams {
+
 	/**
 	 * An array of all files/folders renamed in this operation. When a folder is renamed, only
 	 * the folder will be included, and not its children.
@@ -144,12 +187,16 @@ export interface RenameFilesParams {
 
 /**
  * Represents information on a file/folder rename.
+ *
+ * @since 3.16.0 - proposed state
  */
 export interface FileRename {
+
 	/**
 	 * A file:// URI for the original location of the file/folder being renamed.
 	 */
 	oldUri: string;
+
 	/**
 	 * A file:// URI for the new location of the file/folder being renamed.
 	 */
@@ -158,8 +205,11 @@ export interface FileRename {
 
 /**
  * The parameters sent in file delete requests/notifications.
+ *
+ * @since 3.16.0 - proposed state
  */
 export interface DeleteFilesParams {
+
 	/**
 	 * An array of all files/folders deleted in this operation.
 	 */
@@ -168,44 +218,84 @@ export interface DeleteFilesParams {
 
 /**
  * Represents information on a file/folder delete.
+ *
+ * @since 3.16.0 - proposed state
  */
 export interface FileDelete {
+
 	/**
 	 * A file:// URI for the location of the file/folder being deleted.
 	 */
 	uri: string;
 }
 
-export namespace DidCreateFilesNotification {
-	export const method: 'workspace/didCreateFiles' = 'workspace/didCreateFiles';
-	export const type = new ProtocolNotificationType<CreateFilesParams, FileOperationRegistrationOptions>(method);
-	export type HandlerSignature = NotificationHandler<CreateFilesParams>;
-}
 
-export namespace DidRenameFilesNotification {
-	export const method: 'workspace/didRenameFiles' = 'workspace/didRenameFiles';
-	export const type = new ProtocolNotificationType<RenameFilesParams, FileOperationRegistrationOptions>(method);
-	export type HandlerSignature = NotificationHandler<RenameFilesParams>;
-}
-
-export namespace DidDeleteFilesNotification {
-	export const method: 'workspace/didDeleteFiles' = 'workspace/didDeleteFiles';
-	export const type = new ProtocolNotificationType<DeleteFilesParams, FileOperationRegistrationOptions>(method);
-	export type HandlerSignature = NotificationHandler<DeleteFilesParams>;
-}
-
+/**
+ * The will create files request is sent from the client to the server before files are actually
+ * created as long as the creation is trigger from within the client.
+ *
+ * @since 3.16.0 - proposed state
+ */
 export namespace WillCreateFilesRequest {
 	export const method: 'workspace/willCreateFiles' = 'workspace/willCreateFiles';
 	export const type = new ProtocolRequestType<CreateFilesParams, WorkspaceEdit | null, never, void, FileOperationRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<CreateFilesParams, WorkspaceEdit | undefined | null, void>;
 }
 
+/**
+ * The did create files notification is sent from the client to the server when
+ * files were created from within the client.
+ *
+ * @since 3.16.0 - proposed state
+ */
+export namespace DidCreateFilesNotification {
+	export const method: 'workspace/didCreateFiles' = 'workspace/didCreateFiles';
+	export const type = new ProtocolNotificationType<CreateFilesParams, FileOperationRegistrationOptions>(method);
+	export type HandlerSignature = NotificationHandler<CreateFilesParams>;
+}
+
+/**
+ * The will rename files request is sent from the client to the server before files are actually
+ * renamed as long as the rename is trigger from within the client.
+ *
+ * @since 3.16.0 - proposed state
+ */
 export namespace WillRenameFilesRequest {
 	export const method: 'workspace/willRenameFiles' = 'workspace/willRenameFiles';
 	export const type = new ProtocolRequestType<RenameFilesParams, WorkspaceEdit | null, never, void, FileOperationRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<RenameFilesParams, WorkspaceEdit | undefined | null, void>;
 }
 
+/**
+ * The did rename files notification is sent from the client to the server when
+ * files were renamed from within the client.
+ *
+ * @since 3.16.0 - proposed state
+ */
+export namespace DidRenameFilesNotification {
+	export const method: 'workspace/didRenameFiles' = 'workspace/didRenameFiles';
+	export const type = new ProtocolNotificationType<RenameFilesParams, FileOperationRegistrationOptions>(method);
+	export type HandlerSignature = NotificationHandler<RenameFilesParams>;
+}
+
+/**
+ * The will delete files request is sent from the client to the server before files are actually
+ * deleted as long as the deletion is trigger from within the client.
+ *
+ * @since 3.16.0 - proposed state
+ */
+export namespace DidDeleteFilesNotification {
+	export const method: 'workspace/didDeleteFiles' = 'workspace/didDeleteFiles';
+	export const type = new ProtocolNotificationType<DeleteFilesParams, FileOperationRegistrationOptions>(method);
+	export type HandlerSignature = NotificationHandler<DeleteFilesParams>;
+}
+
+/**
+ * The did delete files notification is sent from the client to the server when
+ * files were deleted from within the client.
+ *
+ * @since 3.16.0 - proposed state
+ */
 export namespace WillDeleteFilesRequest {
 	export const method: 'workspace/willDeleteFiles' = 'workspace/willDeleteFiles';
 	export const type = new ProtocolRequestType<DeleteFilesParams, WorkspaceEdit | null, never, void, FileOperationRegistrationOptions>(method);

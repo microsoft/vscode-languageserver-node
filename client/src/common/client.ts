@@ -3123,7 +3123,7 @@ export abstract class BaseLanguageClient {
 		let initParams: InitializeParams = {
 			processId: null,
 			clientInfo: {
-				name: env.appName,
+				name: Env.appName,
 				version: VSCodeVersion
 			},
 			locale: this.getLocale(),
