@@ -1184,7 +1184,9 @@ export interface WorkspaceEdit {
 	 * A map of change annotations that can be referenced in `AnnotatedTextEdit`s or create, rename and
 	 * delete file / folder operations.
 	 *
-	 * Whether clients honor this property depends on the client capability `workspace.changeAnnotationSupport`
+	 * Whether clients honor this property depends on the client capability `workspace.changeAnnotationSupport`.
+	 *
+	 * @since 3.16.0 - proposed state
 	 */
 	changeAnnotations?: {
 		[id: string /* ChangeAnnotationIdentifier */]: ChangeAnnotation;
