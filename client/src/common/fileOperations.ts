@@ -129,8 +129,9 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 		// any of the globs.
 		const fileMatches = await Promise.all(event.files.map(async (item) => {
 			const uri = prop(item);
-			// Use fsPath to make this consistent with file system watchers.
-			const path = uri.fsPath;
+			// Use fsPath to make this consistent with file system watchers but help
+			// minimatch to use '/' instead of `\\` if present.
+			const path = uri.fsPath.replace(/\\/g, '/');
 			for (const globs of this._globPatterns.values()) {
 				for (const pattern of globs) {
 					if (pattern.matcher.match(path)) {
