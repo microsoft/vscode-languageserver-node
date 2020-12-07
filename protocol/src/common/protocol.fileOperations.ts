@@ -232,7 +232,7 @@ export interface FileDelete {
 
 /**
  * The will create files request is sent from the client to the server before files are actually
- * created as long as the creation is trigger from within the client.
+ * created as long as the creation is triggered from within the client.
  *
  * @since 3.16.0 - proposed state
  */
@@ -256,7 +256,7 @@ export namespace DidCreateFilesNotification {
 
 /**
  * The will rename files request is sent from the client to the server before files are actually
- * renamed as long as the rename is trigger from within the client.
+ * renamed as long as the rename is triggered from within the client.
  *
  * @since 3.16.0 - proposed state
  */
@@ -280,7 +280,7 @@ export namespace DidRenameFilesNotification {
 
 /**
  * The will delete files request is sent from the client to the server before files are actually
- * deleted as long as the deletion is trigger from within the client.
+ * deleted as long as the deletion is triggered from within the client.
  *
  * @since 3.16.0 - proposed state
  */
