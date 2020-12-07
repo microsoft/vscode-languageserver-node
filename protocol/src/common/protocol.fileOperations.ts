@@ -73,6 +73,20 @@ export namespace FileOperationPatternKind {
 }
 export type FileOperationPatternKind = 'file' | 'folder';
 
+
+/**
+ * Matching options for the file operation pattern.
+ *
+ * @since 3.16.0 - proposed state
+ */
+export interface FileOperationPatternOptions {
+
+	/**
+	 * The pattern should be match ignoring casing.
+	 */
+	ignoreCase?: boolean;
+}
+
 /**
  * A pattern to describe in which file operation requests or notifications
  * the server is interested in.
@@ -97,6 +111,11 @@ interface FileOperationPattern {
 	 * Matches both if undefined.
 	 */
 	matches?: FileOperationPatternKind;
+
+	/**
+	 * Additional options used during matching.
+	 */
+	options?: FileOperationPatternOptions;
 }
 
 /**

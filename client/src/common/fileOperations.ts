@@ -9,7 +9,6 @@ import * as proto from 'vscode-languageserver-protocol';
 
 import { DynamicFeature, BaseLanguageClient, RegistrationData, NextSignature } from './client';
 import * as UUID from './utils/uuid';
-import { FileOperationPatternKind } from 'vscode-languageserver-protocol/lib/common/protocol.fileOperations';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -52,7 +51,7 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 	private _clientCapability: keyof proto.FileOperationClientCapabilities;
 	private _serverCapability: keyof proto.FileOperationOptions;
 	private _listener: code.Disposable | undefined;
-	private _globPatterns = new Map<string, Array<{ matcher: minimatch.IMinimatch, kind?: FileOperationPatternKind }>>();
+	private _globPatterns = new Map<string, Array<{ matcher: minimatch.IMinimatch, kind?: proto.FileOperationPatternKind }>>();
 
 	constructor(client: BaseLanguageClient, event: code.Event<E>,
 		registrationType: proto.RegistrationType<proto.FileOperationRegistrationOptions>,
@@ -97,7 +96,7 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 			this._listener = this._event(this.send, this);
 		}
 		const regularExpressions = data.registerOptions.patterns.map((rule) => {
-			const matcher = new minimatch.Minimatch(rule.glob);
+			const matcher = new minimatch.Minimatch(rule.glob, FileOperationFeature.asMinimatchOptions(rule.options));
 			if (!matcher.makeRe()) {
 				throw new Error(`Invalid pattern ${rule.glob}!`);
 			}
@@ -146,10 +145,10 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 							this._client.error(`Failed to determine file type for ${uri.toString()}.`);
 							return true;
 						}
-						if ((fileType === code.FileType.File && pattern.kind === FileOperationPatternKind.file) || (fileType === code.FileType.Directory && pattern.kind === FileOperationPatternKind.folder)) {
+						if ((fileType === code.FileType.File && pattern.kind === proto.FileOperationPatternKind.file) || (fileType === code.FileType.Directory && pattern.kind === proto.FileOperationPatternKind.folder)) {
 							return true;
 						}
-					} else if (pattern.kind === FileOperationPatternKind.folder) {
+					} else if (pattern.kind === proto.FileOperationPatternKind.folder) {
 						const fileType = await FileOperationFeature.getFileType(uri);
 						if (fileType === code.FileType.Directory && pattern.matcher.match(`${path}/`)) {
 							return true;
@@ -166,16 +165,22 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 		return { ...event, files };
 	}
 
-	/**
-	* Adds trailing slashes to URIs that represent directories if they
-	* do not already have them.
-	*/
 	private static async getFileType(uri: code.Uri): Promise<code.FileType | undefined> {
 		try {
 			return (await code.workspace.fs.stat(uri)).type;
 		} catch (e) {
 			return undefined;
 		}
+	}
+
+	private static asMinimatchOptions(options: proto.FileOperationPatternOptions | undefined): minimatch.IOptions | undefined {
+		if (options === undefined) {
+			return undefined;
+		}
+		if (options.ignoreCase === true) {
+			return { nocase: true };
+		}
+		return undefined;
 	}
 }
 

@@ -66,7 +66,7 @@ import {
 } from './protocol.linkedEditingRange';
 
 import {
-	FileOperationOptions, FileOperationClientCapabilities, FileOperationRegistrationOptions,
+	FileOperationOptions, FileOperationClientCapabilities, FileOperationRegistrationOptions, FileOperationPatternOptions, FileOperationPatternKind,
 	DidCreateFilesNotification, CreateFilesParams, FileCreate, WillCreateFilesRequest,
 	DidRenameFilesNotification, RenameFilesParams, FileRename, WillRenameFilesRequest,
 	DidDeleteFilesNotification, DeleteFilesParams, FileDelete, WillDeleteFilesRequest,
@@ -3208,7 +3208,7 @@ export {
 	LinkedEditingRangeClientCapabilities, LinkedEditingRanges, LinkedEditingRangeOptions, LinkedEditingRangeParams,
 	LinkedEditingRangeRegistrationOptions, LinkedEditingRangeRequest,
 	// File operations
-	FileOperationOptions, FileOperationClientCapabilities, FileOperationRegistrationOptions,
+	FileOperationOptions, FileOperationClientCapabilities, FileOperationRegistrationOptions, FileOperationPatternOptions, FileOperationPatternKind,
 	DidCreateFilesNotification, CreateFilesParams, FileCreate, WillCreateFilesRequest,
 	DidRenameFilesNotification, RenameFilesParams, FileRename, WillRenameFilesRequest,
 	DidDeleteFilesNotification, DeleteFilesParams, FileDelete, WillDeleteFilesRequest,
