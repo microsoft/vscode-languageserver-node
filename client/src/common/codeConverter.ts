@@ -15,6 +15,7 @@ import ProtocolCodeAction from './protocolCodeAction';
 import { ProtocolDiagnostic, DiagnosticCode } from './protocolDiagnostic';
 import ProtocolCallHierarchyItem from './protocolCallHierarchyItem';
 import { InsertTextMode } from 'vscode-languageserver-protocol';
+import { CreateFilesParams, DeleteFilesParams, RenameFilesParams } from 'vscode-languageserver-protocol/lib/common/protocol.fileOperations';
 
 interface InsertReplaceRange {
 	inserting: code.Range;
@@ -45,6 +46,13 @@ export interface Converter {
 
 	asSaveTextDocumentParams(textDocument: code.TextDocument, includeContent?: boolean): proto.DidSaveTextDocumentParams;
 	asWillSaveTextDocumentParams(event: code.TextDocumentWillSaveEvent): proto.WillSaveTextDocumentParams;
+
+	asDidCreateFilesParams(event: code.FileCreateEvent): CreateFilesParams;
+	asDidRenameFilesParams(event: code.FileRenameEvent): RenameFilesParams;
+	asDidDeleteFilesParams(event: code.FileDeleteEvent): DeleteFilesParams;
+	asWillCreateFilesParams(event: code.FileCreateEvent): CreateFilesParams;
+	asWillRenameFilesParams(event: code.FileRenameEvent): RenameFilesParams;
+	asWillDeleteFilesParams(event: code.FileDeleteEvent): DeleteFilesParams;
 
 	asTextDocumentPositionParams(textDocument: code.TextDocument, position: code.Position): proto.TextDocumentPositionParams;
 
@@ -226,6 +234,56 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return {
 			textDocument: asTextDocumentIdentifier(event.document),
 			reason: asTextDocumentSaveReason(event.reason)
+		};
+	}
+
+	function asDidCreateFilesParams(event: code.FileCreateEvent): CreateFilesParams {
+		return {
+			files: event.files.map((fileUri) => ({
+				uri: _uriConverter(fileUri),
+			})),
+		};
+	}
+
+	function asDidRenameFilesParams(event: code.FileRenameEvent): RenameFilesParams {
+		return {
+			files: event.files.map((file) => ({
+				oldUri: _uriConverter(file.oldUri),
+				newUri: _uriConverter(file.newUri),
+			})),
+		};
+	}
+
+	function asDidDeleteFilesParams(event: code.FileDeleteEvent): DeleteFilesParams {
+		return {
+			files: event.files.map((fileUri) => ({
+				uri: _uriConverter(fileUri),
+			})),
+		};
+	}
+
+	function asWillCreateFilesParams(event: code.FileWillCreateEvent): CreateFilesParams {
+		return {
+			files: event.files.map((fileUri) => ({
+				uri: _uriConverter(fileUri),
+			})),
+		};
+	}
+
+	function asWillRenameFilesParams(event: code.FileWillRenameEvent): RenameFilesParams {
+		return {
+			files: event.files.map((file) => ({
+				oldUri: _uriConverter(file.oldUri),
+				newUri: _uriConverter(file.newUri),
+			})),
+		};
+	}
+
+	function asWillDeleteFilesParams(event: code.FileWillDeleteEvent): DeleteFilesParams {
+		return {
+			files: event.files.map((fileUri) => ({
+				uri: _uriConverter(fileUri),
+			})),
 		};
 	}
 
@@ -731,6 +789,12 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asCloseTextDocumentParams,
 		asSaveTextDocumentParams,
 		asWillSaveTextDocumentParams,
+		asDidCreateFilesParams,
+		asDidRenameFilesParams,
+		asDidDeleteFilesParams,
+		asWillCreateFilesParams,
+		asWillRenameFilesParams,
+		asWillDeleteFilesParams,
 		asTextDocumentPositionParams,
 		asCompletionParams,
 		asSignatureHelpParams,

@@ -8,7 +8,8 @@ import {
 	createConnection, Connection, InitializeParams, ServerCapabilities, CompletionItemKind, ResourceOperationKind, FailureHandlingKind,
 	DiagnosticTag, CompletionItemTag, TextDocumentSyncKind, MarkupKind, SignatureHelp, SignatureInformation, ParameterInformation,
 	Location, Range, DocumentHighlight, DocumentHighlightKind, CodeAction, Command, TextEdit, Position, DocumentLink,
-	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, SymbolKind, ProtocolRequestType, WorkDoneProgress, WorkDoneProgressCreateRequest,
+	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, SymbolKind, ProtocolRequestType, WorkDoneProgress,
+	WorkDoneProgressCreateRequest, WillCreateFilesRequest, WillRenameFilesRequest, WillDeleteFilesRequest, DidDeleteFilesNotification, DidRenameFilesNotification, DidCreateFilesNotification
 } from '../../../server/node';
 
 import { URI } from 'vscode-uri';
@@ -41,6 +42,7 @@ connection.onInitialize((params: InitializeParams): any => {
 	let valueSet = params.capabilities.textDocument!.completion!.completionItemKind!.valueSet!;
 	assert.equal(valueSet[0], 1);
 	assert.equal(valueSet[valueSet.length - 1], CompletionItemKind.TypeParameter);
+	assert.equal(params.capabilities.workspace!.fileOperations!.willCreate, true);
 	console.log(params.capabilities);
 
 	let capabilities: ServerCapabilities = {
@@ -85,12 +87,66 @@ connection.onInitialize((params: InitializeParams): any => {
 				delta: true
 			}
 		},
+		workspace: {
+			fileOperations: {
+				// Static reg is folders + .txt files with operation kind in the path
+				didCreate: {
+					patterns: [{ glob: '**/created-static/**{/,/*.txt}' }]
+				},
+				didRename: {
+					patterns: [
+						{ glob: '**/renamed-static/**/', matches: 'folder' },
+						{ glob: '**/renamed-static/**/*.txt', matches: 'file' }
+					]
+				},
+				didDelete: {
+					patterns: [{ glob: '**/deleted-static/**{/,/*.txt}' }]
+				},
+				willCreate: {
+					patterns: [{ glob: '**/created-static/**{/,/*.txt}' }]
+				},
+				willRename: {
+					patterns: [
+						{ glob: '**/renamed-static/**/', matches: 'folder' },
+						{ glob: '**/renamed-static/**/*.txt', matches: 'file' }
+					]
+				},
+				willDelete: {
+					patterns: [{ glob: '**/deleted-static/**{/,/*.txt}' }]
+				},
+			},
+		},
 		linkedEditingRangeProvider: false
 	};
 	return { capabilities, customResults: { hello: 'world' } };
 });
 
 connection.onInitialized(() => {
+	// Dynamic reg is folders + .js files with operation kind in the path
+	connection.client.register(DidCreateFilesNotification.type, {
+		patterns: [{ glob: '**/created-dynamic/**{/,/*.js}' }]
+	});
+	connection.client.register(DidRenameFilesNotification.type, {
+		patterns: [
+			{ glob: '**/renamed-dynamic/**/', matches: 'folder' },
+			{ glob: '**/renamed-dynamic/**/*.js', matches: 'file' }
+		]
+	});
+	connection.client.register(DidDeleteFilesNotification.type, {
+		patterns: [{ glob: '**/deleted-dynamic/**{/,/*.js}' }]
+	});
+	connection.client.register(WillCreateFilesRequest.type, {
+		patterns: [{ glob: '**/created-dynamic/**{/,/*.js}' }]
+	});
+	connection.client.register(WillRenameFilesRequest.type, {
+		patterns: [
+			{ glob: '**/renamed-dynamic/**/', matches: 'folder' },
+			{ glob: '**/renamed-dynamic/**/*.js', matches: 'file' }
+		]
+	});
+	connection.client.register(WillDeleteFilesRequest.type, {
+		patterns: [{ glob: '**/deleted-dynamic/**{/,/*.js}' }]
+	});
 });
 
 connection.onDeclaration((params) => {
@@ -225,6 +281,54 @@ connection.onSelectionRanges((_params) => {
 	return [
 		SelectionRange.create(Range.create(1,2,3,4))
 	];
+});
+
+let lastFileOperationRequest: unknown;
+connection.workspace.onDidCreateFiles((params) => { lastFileOperationRequest = { type: 'create', params }; });
+connection.workspace.onDidRenameFiles((params) => { lastFileOperationRequest = { type: 'rename', params }; });
+connection.workspace.onDidDeleteFiles((params) => { lastFileOperationRequest = { type: 'delete', params }; });
+
+connection.onRequest(
+	new ProtocolRequestType<null, null, never, any, any>('testing/lastFileOperationRequest'),
+	() => {
+		return lastFileOperationRequest;
+	},
+);
+
+connection.workspace.onWillCreateFiles((params) => {
+	const createdFilenames = params.files.map((f) => `${f.uri}`).join('\n');
+	return {
+		documentChanges: [{
+			textDocument: { uri: '/dummy-edit', version: null },
+			edits: [
+				TextEdit.insert(Position.create(0, 0), `WILL CREATE:\n${createdFilenames}`),
+			]
+		}],
+	};
+});
+
+connection.workspace.onWillRenameFiles((params) => {
+	const renamedFilenames = params.files.map((f) => `${f.oldUri} -> ${f.newUri}`).join('\n');
+	return {
+		documentChanges: [{
+			textDocument: { uri: '/dummy-edit', version: null },
+			edits: [
+				TextEdit.insert(Position.create(0, 0), `WILL RENAME:\n${renamedFilenames}`),
+			]
+		}],
+	};
+});
+
+connection.workspace.onWillDeleteFiles((params) => {
+	const deletedFilenames = params.files.map((f) => `${f.uri}`).join('\n');
+	return {
+		documentChanges: [{
+			textDocument: { uri: '/dummy-edit', version: null },
+			edits: [
+				TextEdit.insert(Position.create(0, 0), `WILL DELETE:\n${deletedFilenames}`),
+			]
+		}],
+	};
 });
 
 connection.onTypeDefinition((params) => {

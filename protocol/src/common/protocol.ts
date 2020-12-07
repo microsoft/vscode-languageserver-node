@@ -65,6 +65,13 @@ import {
 	LinkedEditingRangeClientCapabilities, LinkedEditingRanges, LinkedEditingRangeOptions, LinkedEditingRangeParams, LinkedEditingRangeRegistrationOptions, LinkedEditingRangeRequest
 } from './protocol.linkedEditingRange';
 
+import {
+	FileOperationOptions, FileOperationClientCapabilities, FileOperationRegistrationOptions,
+	DidCreateFilesNotification, CreateFilesParams, FileCreate, WillCreateFilesRequest,
+	DidRenameFilesNotification, RenameFilesParams, FileRename, WillRenameFilesRequest,
+	DidDeleteFilesNotification, DeleteFilesParams, FileDelete, WillDeleteFilesRequest,
+} from './protocol.fileOperations';
+
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
 
@@ -348,6 +355,13 @@ export interface WorkspaceClientCapabilities {
 	 * @since 3.16.0 - proposed state.
 	 */
 	codeLens?: CodeLensWorkspaceClientCapabilities;
+
+	/**
+	 * The client has support for file notifications/requests for user operations on files.
+	 *
+	 * Since 3.16.0
+	 */
+	fileOperations?: FileOperationClientCapabilities
 }
 
 /**
@@ -831,6 +845,18 @@ export interface _ServerCapabilities<T = any> {
 	 * @since 3.16.0 - proposed state
 	 */
 	semanticTokensProvider?: SemanticTokensOptions | SemanticTokensRegistrationOptions;
+
+	/**
+	 * Window specific server capabilities.
+	 */
+	workspace?: {
+		/**
+		* The server is interested in notifications/requests for operations on files.
+		*
+		* @since 3.16.0
+		*/
+		fileOperations?: FileOperationOptions;
+	}
 
 	/**
 	 * Experimental server capabilities.
@@ -3180,7 +3206,12 @@ export {
 	ShowDocumentParams, ShowDocumentRequest, ShowDocumentResult, ShowDocumentClientCapabilities,
 	// On Type rename
 	LinkedEditingRangeClientCapabilities, LinkedEditingRanges, LinkedEditingRangeOptions, LinkedEditingRangeParams,
-	LinkedEditingRangeRegistrationOptions, LinkedEditingRangeRequest
+	LinkedEditingRangeRegistrationOptions, LinkedEditingRangeRequest,
+	// File operations
+	FileOperationOptions, FileOperationClientCapabilities, FileOperationRegistrationOptions,
+	DidCreateFilesNotification, CreateFilesParams, FileCreate, WillCreateFilesRequest,
+	DidRenameFilesNotification, RenameFilesParams, FileRename, WillRenameFilesRequest,
+	DidDeleteFilesNotification, DeleteFilesParams, FileDelete, WillDeleteFilesRequest,
 };
 
 // To be backwards compatible

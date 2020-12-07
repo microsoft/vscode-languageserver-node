@@ -35,6 +35,7 @@ import { WorkspaceFolders, WorkspaceFoldersFeature } from './workspaceFolders';
 import { CallHierarchy, CallHierarchyFeature } from './callHierarchy';
 import { SemanticTokensFeatureShape, SemanticTokensFeature } from './semanticTokens';
 import { ShowDocumentFeatureShape, ShowDocumentFeature } from './showDocument';
+import { FileOperationsFeature, FileOperationsFeatureShape } from './fileOperations';
 import { LinkedEditingRangeFeature, LinkedEditingRangeFeatureShape } from './linkedEditingRange';
 
 function null2Undefined<T>(value: T | null): T | undefined {
@@ -770,7 +771,7 @@ export interface _RemoteWorkspace {
 	applyEdit(paramOrEdit: ApplyWorkspaceEditParams | WorkspaceEdit): Promise<ApplyWorkspaceEditResponse>;
 }
 
-export type RemoteWorkspace = _RemoteWorkspace & Configuration & WorkspaceFolders;
+export type RemoteWorkspace = _RemoteWorkspace & Configuration & WorkspaceFolders & FileOperationsFeatureShape;
 
 class _RemoteWorkspaceImpl implements _RemoteWorkspace, Remote {
 
@@ -806,7 +807,7 @@ class _RemoteWorkspaceImpl implements _RemoteWorkspace, Remote {
 	}
 }
 
-const RemoteWorkspaceImpl: new () => RemoteWorkspace = WorkspaceFoldersFeature(ConfigurationFeature(_RemoteWorkspaceImpl)) as (new () => RemoteWorkspace);
+const RemoteWorkspaceImpl: new () => RemoteWorkspace = FileOperationsFeature(WorkspaceFoldersFeature(ConfigurationFeature(_RemoteWorkspaceImpl))) as (new () => RemoteWorkspace);
 
 /**
  * Interface to log telemetry events. The events are actually send to the client

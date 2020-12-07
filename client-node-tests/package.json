@@ -22,12 +22,14 @@
 		"test": "node ../build/bin/symlink-tests.js && node lib/runTests.js"
 	},
 	"dependencies": {
+		"minimatch": "^3.0.4",
 		"vscode-uri": "2.1.1",
 		"vscode-languageclient": "7.0.0-next.13",
 		"vscode-languageserver": "7.0.0-next.11"
 	},
 	"devDependencies": {
 		"@types/glob": "^7.1.1",
+		"@types/minimatch": "^3.0.3",
 		"@types/sinon": "^7.0.13",
 		"@types/uuid": "^7.0.2",
 		"@types/vscode": "1.51.0",
