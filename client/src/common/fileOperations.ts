@@ -9,6 +9,7 @@ import * as proto from 'vscode-languageserver-protocol';
 
 import { DynamicFeature, BaseLanguageClient, RegistrationData, NextSignature } from './client';
 import * as UUID from './utils/uuid';
+import { FileOperationPatternKind } from 'vscode-languageserver-protocol/lib/common/protocol.fileOperations';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -51,7 +52,7 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 	private _clientCapability: keyof proto.FileOperationClientCapabilities;
 	private _serverCapability: keyof proto.FileOperationOptions;
 	private _listener: code.Disposable | undefined;
-	private _globPatterns = new Map<string, Array<{ matcher: minimatch.IMinimatch, matchFiles: boolean, matchFolders: boolean }>>();
+	private _globPatterns = new Map<string, Array<{ matcher: minimatch.IMinimatch, kind?: FileOperationPatternKind }>>();
 
 	constructor(client: BaseLanguageClient, event: code.Event<E>,
 		registrationType: proto.RegistrationType<proto.FileOperationRegistrationOptions>,
@@ -100,9 +101,7 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 			if (!matcher.makeRe()) {
 				throw new Error(`Invalid pattern ${rule.glob}!`);
 			}
-			const matchFiles = !rule.matches || rule.matches === 'file';
-			const matchFolders = !rule.matches || rule.matches === 'folder';
-			return { matcher, matchFiles, matchFolders };
+			return { matcher, kind: rule.matches };
 		});
 		this._globPatterns.set(data.id, regularExpressions);
 	}
@@ -130,14 +129,25 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 		// any of the globs.
 		const fileMatches = await Promise.all(event.files.map(async (item) => {
 			const uri = prop(item);
-			const fixedUri = await FileOperationFeature.addSlashesToFolderUris(uri);
-			const path = fixedUri.path;
-			const uriIsFolder = path.endsWith('/');
+			// Use fsPath to make this consistent with file system watchers.
+			const path = uri.fsPath;
 			for (const globs of this._globPatterns.values()) {
 				for (const pattern of globs) {
-					const shouldTest = (uriIsFolder && pattern.matchFolders) || (!uriIsFolder && pattern.matchFiles);
-					if (shouldTest && pattern.matcher.match(path)) {
-						return true;
+					if (pattern.matcher.match(path)) {
+						// The pattern matches. If kind is undefined then everything is ok
+						if (pattern.kind === undefined) {
+							return true;
+						}
+						const fileType = await FileOperationFeature.getFileType(uri);
+						// If we can't determine the file type than we treat it as a match.
+						// Dropping it would be another alternative.
+						if (fileType === undefined) {
+							this._client.error(`Failed to determine file type for ${uri.toString()}.`);
+							return true;
+						}
+						if ((fileType === code.FileType.File && pattern.kind === FileOperationPatternKind.file) || (fileType === code.FileType.Directory && pattern.kind === FileOperationPatternKind.folder)) {
+							return true;
+						}
 					}
 				}
 			}
@@ -154,16 +164,11 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 	* Adds trailing slashes to URIs that represent directories if they
 	* do not already have them.
 	*/
-	private static async addSlashesToFolderUris(uri: code.Uri): Promise<code.Uri> {
-		if (uri.path.endsWith('/')) {
-			return uri;
-		}
+	private static async getFileType(uri: code.Uri): Promise<code.FileType | undefined> {
 		try {
-			const stat = await code.workspace.fs.stat(uri);
-			return stat.type === code.FileType.Directory ? code.Uri.parse(`${uri}/`) : uri;
+			return (await code.workspace.fs.stat(uri)).type;
 		} catch (e) {
-			// Assume non-existent paths are already correct.
-			return uri;
+			return undefined;
 		}
 	}
 }
