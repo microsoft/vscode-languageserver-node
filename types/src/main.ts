@@ -1242,7 +1242,8 @@ export interface TextEditChange {
 	 * @param newText A string.
 	 * @param annotation An optional annotation.
 	 */
-	insert(position: Position, newText: string, annotation?: ChangeAnnotation | ChangeAnnotationIdentifier): void;
+	insert(position: Position, newText: string): void;
+	insert(position: Position, newText: string, annotation: ChangeAnnotation | ChangeAnnotationIdentifier): ChangeAnnotationIdentifier;
 
 	/**
 	 * Replace the given range with given text for the given resource.
@@ -1251,7 +1252,8 @@ export interface TextEditChange {
 	 * @param newText A string.
 	 * @param annotation An optional annotation.
 	 */
-	replace(range: Range, newText: string, annotation?: ChangeAnnotation | ChangeAnnotationIdentifier): void;
+	replace(range: Range, newText: string): void;
+	replace(range: Range, newText: string, annotation?: ChangeAnnotation | ChangeAnnotationIdentifier): ChangeAnnotationIdentifier;
 
 	/**
 	 * Delete the text at the given range.
@@ -1259,7 +1261,8 @@ export interface TextEditChange {
 	 * @param range A range.
 	 * @param annotation An optional annotation.
 	 */
-	delete(range: Range, annotation?: ChangeAnnotation | ChangeAnnotationIdentifier): void;
+	delete(range: Range): void;
+	delete(range: Range, annotation?: ChangeAnnotation | ChangeAnnotationIdentifier): ChangeAnnotationIdentifier;
 }
 
 class TextEditChangeImpl implements TextEditChange {
@@ -1272,43 +1275,67 @@ class TextEditChangeImpl implements TextEditChange {
 		this.changeAnnotations = changeAnnotations;
 	}
 
-	public insert(position: Position, newText: string, annotation?: ChangeAnnotation | ChangeAnnotationIdentifier): void {
+	public insert(position: Position, newText: string): void
+	public insert(position: Position, newText: string, annotation: ChangeAnnotation | ChangeAnnotationIdentifier): ChangeAnnotationIdentifier;
+	public insert(position: Position, newText: string, annotation?: ChangeAnnotation | ChangeAnnotationIdentifier): ChangeAnnotationIdentifier | void {
 		let edit: TextEdit;
+		let id: ChangeAnnotationIdentifier | undefined;
 		if (annotation === undefined) {
 			edit = TextEdit.insert(position, newText);
 		} else if (ChangeAnnotationIdentifier.is(annotation)) {
+			id = annotation;
 			edit = AnnotatedTextEdit.insert(position, newText, annotation);
 		} else {
 			this.assertChangeAnnotations(this.changeAnnotations);
-			edit = AnnotatedTextEdit.insert(position, newText, this.changeAnnotations.manage(annotation));
+			id = this.changeAnnotations.manage(annotation);
+			edit = AnnotatedTextEdit.insert(position, newText, id);
 		}
 		this.edits.push(edit);
+		if (id !== undefined) {
+			return id;
+		}
 	}
 
-	public replace(range: Range, newText: string, annotation?: ChangeAnnotation | ChangeAnnotationIdentifier): void {
+	public replace(range: Range, newText: string): void;
+	public replace(range: Range, newText: string, annotation: ChangeAnnotation | ChangeAnnotationIdentifier): ChangeAnnotationIdentifier;
+	public replace(range: Range, newText: string, annotation?: ChangeAnnotation | ChangeAnnotationIdentifier): ChangeAnnotationIdentifier | void {
 		let edit: TextEdit;
+		let id: ChangeAnnotationIdentifier | undefined;
 		if (annotation === undefined) {
 			edit = TextEdit.replace(range, newText);
 		} else if (ChangeAnnotationIdentifier.is(annotation)) {
+			id = annotation;
 			edit = AnnotatedTextEdit.replace(range, newText, annotation);
 		} else {
 			this.assertChangeAnnotations(this.changeAnnotations);
-			edit = AnnotatedTextEdit.replace(range, newText, this.changeAnnotations.manage(annotation));
+			id = this.changeAnnotations.manage(annotation);
+			edit = AnnotatedTextEdit.replace(range, newText, id);
 		}
 		this.edits.push(edit);
+		if (id !== undefined) {
+			return id;
+		}
 	}
 
-	public delete(range: Range, annotation?: ChangeAnnotation | ChangeAnnotationIdentifier): void {
+	public delete(range: Range): void;
+	public delete(range: Range, annotation: ChangeAnnotation | ChangeAnnotationIdentifier): ChangeAnnotationIdentifier;
+	public delete(range: Range, annotation?: ChangeAnnotation | ChangeAnnotationIdentifier): ChangeAnnotationIdentifier | void {
 		let edit: TextEdit;
+		let id: ChangeAnnotationIdentifier | undefined;
 		if (annotation === undefined) {
 			edit = TextEdit.del(range);
 		} else if (ChangeAnnotationIdentifier.is(annotation)) {
+			id = annotation;
 			edit = AnnotatedTextEdit.del(range, annotation);
 		} else {
 			this.assertChangeAnnotations(this.changeAnnotations);
-			edit = AnnotatedTextEdit.del(range, this.changeAnnotations?.manage(annotation));
+			id = this.changeAnnotations.manage(annotation);
+			edit = AnnotatedTextEdit.del(range, id);
 		}
 		this.edits.push(edit);
+		if (id !== undefined) {
+			return id;
+		}
 	}
 
 	public add(edit: TextEdit | AnnotatedTextEdit): void {
@@ -1484,38 +1511,79 @@ export class WorkspaceChange {
 		}
 	}
 
-	public createFile(uri: DocumentUri, options?: CreateFileOptions, annotation?: ChangeAnnotation | ChangeAnnotationIdentifier): void {
+	public createFile(uri: DocumentUri, options?: CreateFileOptions): void;
+	public createFile(uri: DocumentUri, annotation: ChangeAnnotation | ChangeAnnotationIdentifier, options?: CreateFileOptions): ChangeAnnotationIdentifier;
+	public createFile(uri: DocumentUri, optionsOrAnnotation?: CreateFileOptions | ChangeAnnotation | ChangeAnnotationIdentifier, options?: CreateFileOptions): ChangeAnnotationIdentifier | void {
 		this.checkDocumentChanges();
+		let annotation: ChangeAnnotation | ChangeAnnotationIdentifier | undefined;
+		if (ChangeAnnotation.is(optionsOrAnnotation) || ChangeAnnotationIdentifier.is(optionsOrAnnotation)) {
+			annotation = optionsOrAnnotation;
+		} else {
+			options = optionsOrAnnotation;
+		}
 
-		this._workspaceEdit!.documentChanges!.push(
-			annotation === undefined
-				? CreateFile.create(uri, options)
-				: CreateFile.create(uri, options,
-					ChangeAnnotationIdentifier.is(annotation) ? annotation : this._changeAnnotations!.manage(annotation)
-				)
-		);
+		let operation: CreateFile;
+		let id: ChangeAnnotationIdentifier | undefined;
+		if (annotation === undefined) {
+			operation = CreateFile.create(uri, options);
+		} else {
+			id = ChangeAnnotationIdentifier.is(annotation) ? annotation : this._changeAnnotations!.manage(annotation);
+			operation = CreateFile.create(uri, options, id);
+		}
+		this._workspaceEdit!.documentChanges!.push(operation);
+		if (id !== undefined) {
+			return id;
+		}
 	}
 
-	public renameFile(oldUri: DocumentUri, newUri: DocumentUri, options?: RenameFileOptions, annotation?: ChangeAnnotation | ChangeAnnotationIdentifier): void {
+	public renameFile(oldUri: DocumentUri, newUri: DocumentUri, options?: RenameFileOptions): void;
+	public renameFile(oldUri: DocumentUri, newUri: DocumentUri, annotation?: ChangeAnnotation | ChangeAnnotationIdentifier, options?: RenameFileOptions): ChangeAnnotationIdentifier;
+	public renameFile(oldUri: DocumentUri, newUri: DocumentUri, optionsOrAnnotation?: RenameFileOptions | ChangeAnnotation | ChangeAnnotationIdentifier, options?: RenameFileOptions): ChangeAnnotationIdentifier | void {
 		this.checkDocumentChanges();
-		this._workspaceEdit!.documentChanges!.push(
-			annotation === undefined
-				? RenameFile.create(oldUri, newUri, options)
-				: RenameFile.create(oldUri, newUri, options,
-					ChangeAnnotationIdentifier.is(annotation) ? annotation : this._changeAnnotations!.manage(annotation)
-				)
-		);
+		let annotation: ChangeAnnotation | ChangeAnnotationIdentifier | undefined;
+		if (ChangeAnnotation.is(optionsOrAnnotation) || ChangeAnnotationIdentifier.is(optionsOrAnnotation)) {
+			annotation = optionsOrAnnotation;
+		} else {
+			options = optionsOrAnnotation;
+		}
+
+		let operation: RenameFile;
+		let id: ChangeAnnotationIdentifier | undefined;
+		if (annotation === undefined) {
+			operation = RenameFile.create(oldUri, newUri, options);
+		} else {
+			id = ChangeAnnotationIdentifier.is(annotation) ? annotation : this._changeAnnotations!.manage(annotation);
+			operation = RenameFile.create(oldUri, newUri, options, id);
+		}
+		this._workspaceEdit!.documentChanges!.push(operation);
+		if (id !== undefined) {
+			return id;
+		}
 	}
 
-	public deleteFile(uri: DocumentUri, options?: DeleteFileOptions, annotation?: ChangeAnnotation | ChangeAnnotationIdentifier): void {
+	public deleteFile(uri: DocumentUri, options?: DeleteFileOptions): void;
+	public deleteFile(uri: DocumentUri, annotation: ChangeAnnotation | ChangeAnnotationIdentifier, options?: DeleteFileOptions): ChangeAnnotationIdentifier;
+	public deleteFile(uri: DocumentUri, optionsOrAnnotation?: DeleteFileOptions | ChangeAnnotation | ChangeAnnotationIdentifier, options?: DeleteFileOptions): ChangeAnnotationIdentifier | void {
 		this.checkDocumentChanges();
-		this._workspaceEdit!.documentChanges!.push(
-			annotation === undefined
-				? DeleteFile.create(uri, options)
-				: DeleteFile.create(uri, options,
-					ChangeAnnotationIdentifier.is(annotation) ? annotation : this._changeAnnotations!.manage(annotation)
-				)
-		);
+		let annotation: ChangeAnnotation | ChangeAnnotationIdentifier | undefined;
+		if (ChangeAnnotation.is(optionsOrAnnotation) || ChangeAnnotationIdentifier.is(optionsOrAnnotation)) {
+			annotation = optionsOrAnnotation;
+		} else {
+			options = optionsOrAnnotation;
+		}
+
+		let operation: DeleteFile;
+		let id: ChangeAnnotationIdentifier | undefined;
+		if (annotation === undefined) {
+			operation = DeleteFile.create(uri, options);
+		} else {
+			id = ChangeAnnotationIdentifier.is(annotation) ? annotation : this._changeAnnotations!.manage(annotation);
+			operation = DeleteFile.create(uri, options, id);
+		}
+		this._workspaceEdit!.documentChanges!.push(operation);
+		if (id !== undefined) {
+			return id;
+		}
 	}
 
 	private checkDocumentChanges() {
