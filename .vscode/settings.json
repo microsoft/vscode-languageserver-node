@@ -66,8 +66,10 @@
 		"preversion",
 		"quickfix",
 		"refactorings",
+		"serializable",
 		"tsbuild",
 		"uinteger",
+		"unregisteration",
 		"unregisterations",
 		"unregistrations",
 		"whitespaces"

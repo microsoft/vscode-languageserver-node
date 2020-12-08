@@ -37,6 +37,7 @@ import { SemanticTokensFeatureShape, SemanticTokensFeature } from './semanticTok
 import { ShowDocumentFeatureShape, ShowDocumentFeature } from './showDocument';
 import { FileOperationsFeature, FileOperationsFeatureShape } from './fileOperations';
 import { LinkedEditingRangeFeature, LinkedEditingRangeFeatureShape } from './linkedEditingRange';
+import { MonikerFeature, MonikerFeatureShape } from './moniker';
 
 function null2Undefined<T>(value: T | null): T | undefined {
 	if (value === null) {
@@ -626,7 +627,7 @@ class BulkUnregistrationImpl implements BulkUnregistration {
 		this._connection!.sendRequest(UnregistrationRequest.type, params).then(() => {
 			this._unregistrations.delete(method);
 		}, (_error) => {
-			this._connection!.console.info(`Unregistering request handler for ${unregistration.id} failed.`);
+			this._connection!.console.info(`Un-registering request handler for ${unregistration.id} failed.`);
 		});
 		return true;
 	}
@@ -739,7 +740,7 @@ class RemoteClientImpl implements RemoteClient, Remote {
 		};
 
 		return this.connection.sendRequest(UnregistrationRequest.type, params).then(undefined, (_error) => {
-			this.connection.console.info(`Unregistering request handler for ${id} failed.`);
+			this.connection.console.info(`Un-registering request handler for ${id} failed.`);
 		});
 	}
 
@@ -952,8 +953,8 @@ export class _LanguagesImpl implements Remote, _Languages {
 	}
 }
 
-export type Languages = _Languages & CallHierarchy & SemanticTokensFeatureShape & LinkedEditingRangeFeatureShape;
-const LanguagesImpl: new () => Languages = LinkedEditingRangeFeature(SemanticTokensFeature(CallHierarchyFeature(_LanguagesImpl))) as (new () => Languages);
+export type Languages = _Languages & CallHierarchy & SemanticTokensFeatureShape & LinkedEditingRangeFeatureShape & MonikerFeatureShape;
+const LanguagesImpl: new () => Languages = MonikerFeature(LinkedEditingRangeFeature(SemanticTokensFeature(CallHierarchyFeature(_LanguagesImpl)))) as (new () => Languages);
 
 /**
  * An empty interface for new proposed API.

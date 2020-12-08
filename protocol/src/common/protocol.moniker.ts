@@ -91,26 +91,21 @@ export interface Moniker {
 	kind?: MonikerKind;
 }
 
+/**
+ * Client capabilities specific to the moniker request.
+ *
+ * @since 3.16.0
+ */
 export interface MonikerClientCapabilities {
-	textDocument?: {
-		moniker?: {
-			/**
-			 * Whether moniker supports dynamic registration. If this is set to `true`
-	 		 * the client supports the new `MonikerRegistrationOptions` return value
-	 		 * for the corresponding server capability as well.
-	 		 */
-			dynamicRegistration?: boolean;
-		}
-	}
+	/**
+	 * Whether moniker supports dynamic registration. If this is set to `true`
+	 * the client supports the new `MonikerRegistrationOptions` return value
+	 * for the corresponding server capability as well.
+	 */
+	dynamicRegistration?: boolean;
 }
 
 export interface MonikerServerCapabilities {
-	/**
-	 * Whether server provides moniker support.
-	 *
-	 * @since 3.16.0 - proposed state
-	 */
-    monikerProvider?: boolean | MonikerOptions | MonikerRegistrationOptions;
 }
 
 export interface MonikerOptions extends WorkDoneProgressOptions {

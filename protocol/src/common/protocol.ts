@@ -72,6 +72,10 @@ import {
 	DidDeleteFilesNotification, DeleteFilesParams, FileDelete, WillDeleteFilesRequest,
 } from './protocol.fileOperations';
 
+import {
+	UniquenessLevel, MonikerKind, Moniker, MonikerClientCapabilities, MonikerOptions, MonikerRegistrationOptions, MonikerParams, MonikerRequest
+} from './protocol.moniker';
+
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
 
@@ -499,16 +503,23 @@ export interface TextDocumentClientCapabilities {
 	/**
 	 * Capabilities specific to the various semantic token request.
 	 *
-	 * @since 3.16.0 - Proposed state
+	 * @since 3.16.0 - proposed state
 	 */
 	semanticTokens?: SemanticTokensClientCapabilities;
 
 	/**
 	 * Capabilities specific to the linked editing range request.
 	 *
-	 * @since 3.16.0 - Proposed state
+	 * @since 3.16.0 - proposed state
 	 */
 	linkedEditingRange?: LinkedEditingRangeClientCapabilities;
+
+	/**
+	 * Client capabilities specific to the moniker request.
+	 *
+	 * @since 3.16.0 - proposed state
+	 */
+	moniker: MonikerClientCapabilities;
 }
 
 export interface WindowClientCapabilities {
@@ -857,6 +868,13 @@ export interface _ServerCapabilities<T = any> {
 		*/
 		fileOperations?: FileOperationOptions;
 	}
+
+	/**
+	 * The server provides moniker support.
+	 *
+	 * @since 3.16.0 - proposed state
+	 */
+    monikerProvider?: boolean | MonikerOptions | MonikerRegistrationOptions;
 
 	/**
 	 * Experimental server capabilities.
@@ -3212,6 +3230,9 @@ export {
 	DidCreateFilesNotification, CreateFilesParams, FileCreate, WillCreateFilesRequest,
 	DidRenameFilesNotification, RenameFilesParams, FileRename, WillRenameFilesRequest,
 	DidDeleteFilesNotification, DeleteFilesParams, FileDelete, WillDeleteFilesRequest,
+	// Monikers
+	UniquenessLevel, MonikerKind, Moniker, MonikerClientCapabilities, MonikerOptions, MonikerRegistrationOptions, MonikerParams, MonikerRequest
+
 };
 
 // To be backwards compatible
