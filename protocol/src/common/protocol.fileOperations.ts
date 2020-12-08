@@ -82,7 +82,7 @@ export type FileOperationPatternKind = 'file' | 'folder';
 export interface FileOperationPatternOptions {
 
 	/**
-	 * The pattern should be match ignoring casing.
+	 * The pattern should be matched ignoring casing.
 	 */
 	ignoreCase?: boolean;
 }
