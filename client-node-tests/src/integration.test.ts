@@ -146,22 +146,22 @@ suite('Client integration', () => {
 				},
 				workspace: {
 					fileOperations: {
-						didCreate: { patterns: [{ glob: '**/created-static/**{/,/*.txt}' }] },
+						didCreate: { filters: [{ scheme: 'file', pattern: { glob: '**/created-static/**{/,/*.txt}' } }] },
 						didRename: {
-							patterns: [
-								{ glob: '**/renamed-static/**/', matches: 'folder' },
-								{ glob: '**/renamed-static/**/*.txt', matches: 'file' }
+							filters: [
+								{ scheme: 'file', pattern: { glob: '**/renamed-static/**/', matches: 'folder' } },
+								{ scheme: 'file', pattern: { glob: '**/renamed-static/**/*.txt', matches: 'file' } }
 							]
 						},
-						didDelete: { patterns: [{ glob: '**/deleted-static/**{/,/*.txt}' }] },
-						willCreate: { patterns: [{ glob: '**/created-static/**{/,/*.txt}' }] },
+						didDelete: { filters: [{ scheme: 'file', pattern: { glob: '**/deleted-static/**{/,/*.txt}' } }] },
+						willCreate: { filters: [{ scheme: 'file', pattern: { glob: '**/created-static/**{/,/*.txt}' } }] },
 						willRename: {
-							patterns: [
-								{ glob: '**/renamed-static/**/', matches: 'folder' },
-								{ glob: '**/renamed-static/**/*.txt', matches: 'file' }
+							filters: [
+								{ scheme: 'file', pattern: { glob: '**/renamed-static/**/', matches: 'folder' } },
+								{ scheme: 'file', pattern: { glob: '**/renamed-static/**/*.txt', matches: 'file' } }
 							]
 						},
-						willDelete: { patterns: [{ glob: '**/deleted-static/**{/,/*.txt}' }] },
+						willDelete: { filters: [ {scheme: 'file', pattern: { glob: '**/deleted-static/**{/,/*.txt}' } }] },
 					},
 				},
 				linkedEditingRangeProvider: false
@@ -728,7 +728,7 @@ suite('Client integration', () => {
 			'/my/created-dynamic/file.txt',
 			'/my/created-dynamic/file.js',
 			'/my/created-dynamic/folder/',
-		].map((p) => vscode.Uri.parse(p));
+		].map((p) => vscode.Uri.file(p));
 
 		const renameFiles = [
 			['/my/file.txt', '/my-new/file.txt'],
@@ -742,7 +742,7 @@ suite('Client integration', () => {
 			['/my/renamed-dynamic/file.txt', '/my-new/renamed-dynamic/file.txt'],
 			['/my/renamed-dynamic/file.js', '/my-new/renamed-dynamic/file.js'],
 			['/my/renamed-dynamic/folder/', '/my-new/renamed-dynamic/folder/'],
-		].map(([o, n]) => ({ oldUri: vscode.Uri.parse(o), newUri: vscode.Uri.parse(n) }));
+		].map(([o, n]) => ({ oldUri: vscode.Uri.file(o), newUri: vscode.Uri.file(n) }));
 
 		const deleteFiles = [
 			'/my/file.txt',
@@ -756,7 +756,7 @@ suite('Client integration', () => {
 			'/my/deleted-dynamic/file.txt',
 			'/my/deleted-dynamic/file.js',
 			'/my/deleted-dynamic/folder/',
-		].map((p) => vscode.Uri.parse(p));
+		].map((p) => vscode.Uri.file(p));
 
 		test('Will Create Files', async () => {
 			const feature = client.getFeature(WillCreateFilesRequest.method);

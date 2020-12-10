@@ -51,7 +51,11 @@ export interface FileOperationOptions {
  * @since 3.16.0 - proposed state
  */
 export interface FileOperationRegistrationOptions {
-	patterns: FileOperationPattern[];
+
+	/**
+	 * The actual filters.
+	 */
+	filters: FileOperationFilter[];
 }
 
 /**
@@ -61,6 +65,7 @@ export interface FileOperationRegistrationOptions {
  * @since 3.16.0 - proposed state
  */
 export namespace FileOperationPatternKind {
+
 	/**
 	 * The pattern matches a file only.
 	 */
@@ -94,6 +99,7 @@ export interface FileOperationPatternOptions {
  * @since 3.16.0 - proposed state
  */
 interface FileOperationPattern {
+
 	/**
 	 * The glob pattern to match. Glob patterns can have the following syntax:
 	 * - `*` to match one or more characters in a path segment
@@ -116,6 +122,25 @@ interface FileOperationPattern {
 	 * Additional options used during matching.
 	 */
 	options?: FileOperationPatternOptions;
+}
+
+/**
+ * A filter to describe in which file operation requests or notifications
+ * the server is interested in.
+ *
+ * @since 3.16.0
+ */
+export interface FileOperationFilter {
+
+	/**
+	 * A Uri like `file` or `untitled`.
+	 */
+	scheme?: string;
+
+	/**
+	 * The actual file operation pattern.
+	 */
+	pattern: FileOperationPattern;
 }
 
 /**

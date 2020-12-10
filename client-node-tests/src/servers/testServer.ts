@@ -9,7 +9,8 @@ import {
 	DiagnosticTag, CompletionItemTag, TextDocumentSyncKind, MarkupKind, SignatureHelp, SignatureInformation, ParameterInformation,
 	Location, Range, DocumentHighlight, DocumentHighlightKind, CodeAction, Command, TextEdit, Position, DocumentLink,
 	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, SymbolKind, ProtocolRequestType, WorkDoneProgress,
-	WorkDoneProgressCreateRequest, WillCreateFilesRequest, WillRenameFilesRequest, WillDeleteFilesRequest, DidDeleteFilesNotification, DidRenameFilesNotification, DidCreateFilesNotification
+	WorkDoneProgressCreateRequest, WillCreateFilesRequest, WillRenameFilesRequest, WillDeleteFilesRequest, DidDeleteFilesNotification,
+	DidRenameFilesNotification, DidCreateFilesNotification
 } from '../../../server/node';
 
 import { URI } from 'vscode-uri';
@@ -91,28 +92,28 @@ connection.onInitialize((params: InitializeParams): any => {
 			fileOperations: {
 				// Static reg is folders + .txt files with operation kind in the path
 				didCreate: {
-					patterns: [{ glob: '**/created-static/**{/,/*.txt}' }]
+					filters: [{ scheme: 'file', pattern: { glob: '**/created-static/**{/,/*.txt}' }}]
 				},
 				didRename: {
-					patterns: [
-						{ glob: '**/renamed-static/**/', matches: 'folder' },
-						{ glob: '**/renamed-static/**/*.txt', matches: 'file' }
+					filters: [
+						{ scheme: 'file', pattern: { glob: '**/renamed-static/**/', matches: 'folder' } },
+						{ scheme: 'file', pattern: { glob: '**/renamed-static/**/*.txt', matches: 'file' } }
 					]
 				},
 				didDelete: {
-					patterns: [{ glob: '**/deleted-static/**{/,/*.txt}' }]
+					filters: [{ scheme: 'file', pattern: { glob: '**/deleted-static/**{/,/*.txt}' } }]
 				},
 				willCreate: {
-					patterns: [{ glob: '**/created-static/**{/,/*.txt}' }]
+					filters: [{ scheme: 'file', pattern: { glob: '**/created-static/**{/,/*.txt}' } }]
 				},
 				willRename: {
-					patterns: [
-						{ glob: '**/renamed-static/**/', matches: 'folder' },
-						{ glob: '**/renamed-static/**/*.txt', matches: 'file' }
+					filters: [
+						{ scheme: 'file', pattern: { glob: '**/renamed-static/**/', matches: 'folder' } },
+						{ scheme: 'file', pattern: { glob: '**/renamed-static/**/*.txt', matches: 'file' } }
 					]
 				},
 				willDelete: {
-					patterns: [{ glob: '**/deleted-static/**{/,/*.txt}' }]
+					filters: [{ scheme: 'file', pattern: { glob: '**/deleted-static/**{/,/*.txt}' } }]
 				},
 			},
 		},
@@ -124,30 +125,32 @@ connection.onInitialize((params: InitializeParams): any => {
 connection.onInitialized(() => {
 	// Dynamic reg is folders + .js files with operation kind in the path
 	connection.client.register(DidCreateFilesNotification.type, {
-		patterns: [{ glob: '**/created-dynamic/**{/,/*.js}' }]
+		filters: [{ scheme: 'file', pattern: { glob: '**/created-dynamic/**{/,/*.js}' } }]
 	});
 	connection.client.register(DidRenameFilesNotification.type, {
-		patterns: [
-			{ glob: '**/renamed-dynamic/**/', matches: 'folder' },
-			{ glob: '**/renamed-dynamic/**/*.js', matches: 'file' }
+		filters: [
+			{ scheme: 'file', pattern: { glob: '**/renamed-dynamic/**/', matches: 'folder' } },
+			{ scheme: 'file', pattern: { glob: '**/renamed-dynamic/**/*.js', matches: 'file' } }
 		]
 	});
 	connection.client.register(DidDeleteFilesNotification.type, {
-		patterns: [{ glob: '**/deleted-dynamic/**{/,/*.js}' }]
+		filters: [ { scheme: 'file', pattern: { glob: '**/deleted-dynamic/**{/,/*.js}' } }]
 	});
 	connection.client.register(WillCreateFilesRequest.type, {
-		patterns: [{ glob: '**/created-dynamic/**{/,/*.js}' }]
+		filters: [{ scheme: 'file', pattern: { glob: '**/created-dynamic/**{/,/*.js}' } }]
 	});
 	connection.client.register(WillRenameFilesRequest.type, {
-		patterns: [
-			{ glob: '**/renamed-dynamic/**/', matches: 'folder' },
-			{ glob: '**/renamed-dynamic/**/*.js', matches: 'file' }
+		filters: [
+			{ scheme: 'file', pattern: { glob: '**/renamed-dynamic/**/', matches: 'folder' } },
+			{ scheme: 'file', pattern: { glob: '**/renamed-dynamic/**/*.js', matches: 'file' } }
 		]
 	});
 	connection.client.register(WillDeleteFilesRequest.type, {
-		patterns: [{ glob: '**/deleted-dynamic/**{/,/*.js}' }]
+		filters: [{scheme: 'file', pattern: { glob: '**/deleted-dynamic/**{/,/*.js}' } }]
 	});
 });
+
+//const type: typeof SemanticTokensRegistrationType.type = WillDeleteFilesRequest.type;
 
 connection.onDeclaration((params) => {
 	assert.equal(params.position.line, 1);

@@ -51,7 +51,7 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 	private _clientCapability: keyof proto.FileOperationClientCapabilities;
 	private _serverCapability: keyof proto.FileOperationOptions;
 	private _listener: code.Disposable | undefined;
-	private _globPatterns = new Map<string, Array<{ matcher: minimatch.IMinimatch, kind?: proto.FileOperationPatternKind }>>();
+	private _filters = new Map<string, Array<{ scheme?: string, matcher: minimatch.IMinimatch, kind?: proto.FileOperationPatternKind }>>();
 
 	constructor(client: BaseLanguageClient, event: code.Event<E>,
 		registrationType: proto.RegistrationType<proto.FileOperationRegistrationOptions>,
@@ -79,11 +79,11 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 	public initialize(capabilities: proto.ServerCapabilities): void {
 		const options = capabilities.workspace?.fileOperations;
 		const capability = options !== undefined ? access(options, this._serverCapability) : undefined;
-		if (capability?.patterns !== undefined) {
+		if (capability?.filters !== undefined) {
 			try {
 				this.register({
 					id: UUID.generateUuid(),
-					registerOptions: { patterns: capability.patterns }
+					registerOptions: { filters: capability.filters }
 				});
 			} catch (e) {
 				this._client.warn(`Ignoring invalid glob pattern for ${this._serverCapability} registration: ${e}`);
@@ -95,28 +95,28 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 		if (!this._listener) {
 			this._listener = this._event(this.send, this);
 		}
-		const regularExpressions = data.registerOptions.patterns.map((rule) => {
-			const matcher = new minimatch.Minimatch(rule.glob, FileOperationFeature.asMinimatchOptions(rule.options));
+		const minimatchFilter = data.registerOptions.filters.map((filter) => {
+			const matcher = new minimatch.Minimatch(filter.pattern.glob, FileOperationFeature.asMinimatchOptions(filter.pattern.options));
 			if (!matcher.makeRe()) {
-				throw new Error(`Invalid pattern ${rule.glob}!`);
+				throw new Error(`Invalid pattern ${filter.pattern.glob}!`);
 			}
-			return { matcher, kind: rule.matches };
+			return { scheme: filter.scheme, matcher, kind: filter.pattern.matches };
 		});
-		this._globPatterns.set(data.id, regularExpressions);
+		this._filters.set(data.id, minimatchFilter);
 	}
 
 	public abstract send(data: E): Promise<void>;
 
 	public unregister(id: string): void {
-		this._globPatterns.delete(id);
-		if (this._globPatterns.size === 0 && this._listener) {
+		this._filters.delete(id);
+		if (this._filters.size === 0 && this._listener) {
 			this._listener.dispose();
 			this._listener = undefined;
 		}
 	}
 
 	public dispose(): void {
-		this._globPatterns.clear();
+		this._filters.clear();
 		if (this._listener) {
 			this._listener.dispose();
 			this._listener = undefined;
@@ -131,11 +131,14 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 			// Use fsPath to make this consistent with file system watchers but help
 			// minimatch to use '/' instead of `\\` if present.
 			const path = uri.fsPath.replace(/\\/g, '/');
-			for (const globs of this._globPatterns.values()) {
-				for (const pattern of globs) {
-					if (pattern.matcher.match(path)) {
+			for (const filters of this._filters.values()) {
+				for (const filter of filters) {
+					if (filter.scheme !== undefined && filter.scheme !== uri.scheme) {
+						continue;
+					}
+					if (filter.matcher.match(path)) {
 						// The pattern matches. If kind is undefined then everything is ok
-						if (pattern.kind === undefined) {
+						if (filter.kind === undefined) {
 							return true;
 						}
 						const fileType = await FileOperationFeature.getFileType(uri);
@@ -145,12 +148,12 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 							this._client.error(`Failed to determine file type for ${uri.toString()}.`);
 							return true;
 						}
-						if ((fileType === code.FileType.File && pattern.kind === proto.FileOperationPatternKind.file) || (fileType === code.FileType.Directory && pattern.kind === proto.FileOperationPatternKind.folder)) {
+						if ((fileType === code.FileType.File && filter.kind === proto.FileOperationPatternKind.file) || (fileType === code.FileType.Directory && filter.kind === proto.FileOperationPatternKind.folder)) {
 							return true;
 						}
-					} else if (pattern.kind === proto.FileOperationPatternKind.folder) {
+					} else if (filter.kind === proto.FileOperationPatternKind.folder) {
 						const fileType = await FileOperationFeature.getFileType(uri);
-						if (fileType === code.FileType.Directory && pattern.matcher.match(`${path}/`)) {
+						if (fileType === code.FileType.Directory && filter.matcher.match(`${path}/`)) {
 							return true;
 						}
 					}
