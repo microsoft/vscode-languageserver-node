@@ -83,6 +83,8 @@ export namespace Position {
 	 * @param character The position's character.
 	 */
 	export function create(line: uinteger, character: uinteger): Position {
+		if (line === Number.MAX_VALUE) { line = uinteger.MAX_VALUE; }
+		if (character === Number.MAX_VALUE) { character = uinteger.MAX_VALUE; }
 		return { line, character };
 	}
 	/**
