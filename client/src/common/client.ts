@@ -644,6 +644,17 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	return target[key];
 }
 
+namespace FileFormattingOptions {
+	export function fromConfiguration(document: TextDocument): c2p.FileFormattingOptions {
+		const filesConfig = Workspace.getConfiguration('files', document);
+		return {
+			trimTrailingWhitespace: filesConfig.get('trimTrailingWhitespace'),
+			trimFinalNewlines: filesConfig.get('trimFinalNewlines'),
+			insertFinalNewline: filesConfig.get('insertFinalNewline'),
+		};
+	}
+}
+
 interface ResolvedTextDocumentSyncCapabilities {
 	resolvedTextDocumentSync?: TextDocumentSyncOptions;
 }
@@ -2109,10 +2120,9 @@ class DocumentFormattingFeature extends TextDocumentFeature<boolean | DocumentFo
 			provideDocumentFormattingEdits: (document, options, token) => {
 				const client = this._client;
 				const provideDocumentFormattingEdits: ProvideDocumentFormattingEditsSignature = (document, options, token) => {
-					const filesConfig = Workspace.getConfiguration('files', document);
 					const params: DocumentFormattingParams = {
 						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
-						options: client.code2ProtocolConverter.asFormattingOptions(options, filesConfig)
+						options: client.code2ProtocolConverter.asFormattingOptions(options, FileFormattingOptions.fromConfiguration(document))
 					};
 					return client.sendRequest(DocumentFormattingRequest.type, params, token).then(
 						client.protocol2CodeConverter.asTextEdits,
@@ -2154,11 +2164,10 @@ class DocumentRangeFormattingFeature extends TextDocumentFeature<boolean | Docum
 			provideDocumentRangeFormattingEdits: (document, range, options, token) => {
 				const client = this._client;
 				const provideDocumentRangeFormattingEdits: ProvideDocumentRangeFormattingEditsSignature = (document, range, options, token) => {
-					const filesConfig = Workspace.getConfiguration('files', document);
 					const params: DocumentRangeFormattingParams = {
 						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
 						range: client.code2ProtocolConverter.asRange(range),
-						options: client.code2ProtocolConverter.asFormattingOptions(options, filesConfig)
+						options: client.code2ProtocolConverter.asFormattingOptions(options, FileFormattingOptions.fromConfiguration(document))
 					};
 					return client.sendRequest(DocumentRangeFormattingRequest.type, params, token).then(
 						client.protocol2CodeConverter.asTextEdits,
@@ -2200,12 +2209,11 @@ class DocumentOnTypeFormattingFeature extends TextDocumentFeature<DocumentOnType
 			provideOnTypeFormattingEdits: (document, position, ch, options, token) => {
 				const client = this._client;
 				const provideOnTypeFormattingEdits: ProvideOnTypeFormattingEditsSignature = (document, position, ch, options, token) => {
-					const filesConfig = Workspace.getConfiguration('files', document);
 					let params: DocumentOnTypeFormattingParams = {
 						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
 						position: client.code2ProtocolConverter.asPosition(position),
 						ch: ch,
-						options: client.code2ProtocolConverter.asFormattingOptions(options, filesConfig)
+						options: client.code2ProtocolConverter.asFormattingOptions(options, FileFormattingOptions.fromConfiguration(document))
 					};
 					return client.sendRequest(DocumentOnTypeFormattingRequest.type, params, token).then(
 						client.protocol2CodeConverter.asTextEdits,

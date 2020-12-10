@@ -29,7 +29,7 @@ namespace InsertReplaceRange {
 	}
 }
 
-interface FileFormattingOptions {
+export interface FileFormattingOptions {
 	trimTrailingWhitespace?: boolean;
 	trimFinalNewlines?: boolean;
 	insertFinalNewline?: boolean;
