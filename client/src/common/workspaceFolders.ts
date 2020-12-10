@@ -29,7 +29,7 @@ export interface WorkspaceFolderWorkspaceMiddleware {
 	didChangeWorkspaceFolders?: NextSignature<VWorkspaceFoldersChangeEvent, void>
 }
 
-export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
+export class WorkspaceFoldersFeature implements DynamicFeature<void> {
 
 	private _listeners: Map<string, Disposable> = new Map<string, Disposable>();
 	private _initialFolders: ReadonlyArray<VWorkspaceFolder> | undefined;
@@ -37,7 +37,7 @@ export class WorkspaceFoldersFeature implements DynamicFeature<undefined> {
 	constructor(private _client: BaseLanguageClient) {
 	}
 
-	public get registrationType(): RegistrationType<undefined> {
+	public get registrationType(): RegistrationType<void> {
 		return DidChangeWorkspaceFoldersNotification.type;
 	}
 

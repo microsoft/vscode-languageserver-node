@@ -513,11 +513,31 @@ class _RemoteWindowImpl implements _RemoteWindow, Remote {
 
 const RemoteWindowImpl: new () => RemoteWindow = ShowDocumentFeature(ProgressFeature(_RemoteWindowImpl)) as (new () => RemoteWindow);
 
+interface MethodType {
+	method: string;
+}
+
 /**
  * A bulk registration manages n single registration to be able to register
  * for n notifications or requests using one register request.
  */
 export interface BulkRegistration {
+	/**
+	 * Adds a single registration.
+	 * @param type the notification type to register for.
+	 * @param registerParams special registration parameters.
+	 */
+	add<RO>(type: ProtocolNotificationType0<RO>, registerParams: RO): void;
+	add<P, RO>(type: ProtocolNotificationType<P, RO>, registerParams: RO): void;
+
+	/**
+	 * Adds a single registration.
+	 * @param type the request type to register for.
+	 * @param registerParams special registration parameters.
+	 */
+	add<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, registerParams: RO): void;
+	add<P, PR, R, E, RO>(type: ProtocolRequestType<P, PR, R, E, RO>, registerParams: RO): void;
+
 	/**
 	 * Adds a single registration.
 	 * @param type the notification type to register for.
@@ -540,7 +560,7 @@ class BulkRegistrationImpl {
 	private _registrations: Registration[] = [];
 	private _registered: Set<string> = new Set<string>();
 
-	public add<RO>(type: string | RegistrationType<any>, registerOptions?: RO): void {
+	public add<RO>(type: string | MethodType, registerOptions?: RO): void {
 		const method = Is.string(type) ? type : type.method;
 		if (this._registered.has(method)) {
 			throw new Error(`${method} is already added to this registration`);
@@ -637,6 +657,7 @@ class BulkUnregistrationImpl implements BulkUnregistration {
  * Interface to register and unregister `listeners` on the client / tools side.
  */
 export interface RemoteClient {
+
 	/**
 	 * The connection this remote is attached to.
 	 */
@@ -644,22 +665,65 @@ export interface RemoteClient {
 
 	/**
 	 * Registers a listener for the given request.
+	 *
 	 * @param type the request type to register for.
 	 * @param registerParams special registration parameters.
 	 * @return a `Disposable` to unregister the listener again.
 	 */
-	register<RO>(type: RegistrationType<RO>, registerParams?: RO): Promise<Disposable>;
-	register<RO>(type: RegistrationType<RO>, registerParams?: RO): Promise<Disposable>;
+	register<P, RO>(type: ProtocolNotificationType<P, RO>, registerParams?: RO): Promise<Disposable>;
+	register<RO>(type: ProtocolNotificationType0<RO>, registerParams?: RO): Promise<Disposable>;
 
 	/**
 	 * Registers a listener for the given request.
+	 *
 	 * @param unregisteration the unregistration to add a corresponding unregister action to.
 	 * @param type the request type to register for.
 	 * @param registerParams special registration parameters.
 	 * @return the updated unregistration.
 	 */
-	register<RO>(unregisteration: BulkUnregistration, type: RegistrationType<RO>, registerParams?: RO): Promise<BulkUnregistration>;
-	register<RO>(unregisteration: BulkUnregistration, type: RegistrationType<RO>, registerParams?: RO): Promise<BulkUnregistration>;
+	register<P, RO>(unregisteration: BulkUnregistration, type: ProtocolNotificationType<P, RO>, registerParams?: RO): Promise<Disposable>;
+	register<RO>(unregisteration: BulkUnregistration, type: ProtocolNotificationType0<RO>, registerParams?: RO): Promise<Disposable>;
+
+	/**
+	 * Registers a listener for the given request.
+	 *
+	 * @param type the request type to register for.
+	 * @param registerParams special registration parameters.
+	 * @return a `Disposable` to unregister the listener again.
+	 */
+	register<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, registerParams?: RO): Promise<Disposable>;
+	register<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, registerParams?: RO): Promise<Disposable>;
+
+	/**
+	 * Registers a listener for the given request.
+	 *
+	 * @param unregisteration the unregistration to add a corresponding unregister action to.
+	 * @param type the request type to register for.
+	 * @param registerParams special registration parameters.
+	 * @return the updated unregistration.
+	 */
+	register<P, R, PR, E, RO>(unregisteration: BulkUnregistration, type: ProtocolRequestType<P, R, PR, E, RO>, registerParams?: RO): Promise<Disposable>;
+	register<R, PR, E, RO>(unregisteration: BulkUnregistration, type: ProtocolRequestType0<R, PR, E, RO>, registerParams?: RO): Promise<Disposable>;
+
+
+	/**
+	 * Registers a listener for the given registration type.
+	 *
+	 * @param type the registration type.
+	 * @param registerParams special registration parameters.
+	 * @return a `Disposable` to unregister the listener again.
+	 */
+	register<RO>(type: RegistrationType<RO>, registerParams?: RO): Promise<Disposable>;
+
+	/**
+	 * Registers a listener for the given registration type.
+	 *
+	 * @param unregisteration the unregistration to add a corresponding unregister action to.
+	 * @param type the registration type.
+	 * @param registerParams special registration parameters.
+	 * @return the updated unregistration.
+	 */
+	register<RO>(unregisteration: BulkUnregistration, type: RegistrationType<RO>, registerParams?: RO): Promise<Disposable>;
 
 	/**
 	 * Registers a set of listeners.
@@ -690,17 +754,17 @@ class RemoteClientImpl implements RemoteClient, Remote {
 	public fillServerCapabilities(_capabilities: ServerCapabilities): void {
 	}
 
-	public register(typeOrRegistrations: string | RegistrationType<any> | BulkRegistration | BulkUnregistration, registerOptionsOrType?: string | RegistrationType<any> | any, registerOptions?: any): Promise<any>  /* Promise<Disposable | BulkUnregistration> */ {
+	public register(typeOrRegistrations: string | MethodType | BulkRegistration | BulkUnregistration, registerOptionsOrType?: string | MethodType | any, registerOptions?: any): Promise<any>  /* Promise<Disposable | BulkUnregistration> */ {
 		if (typeOrRegistrations instanceof BulkRegistrationImpl) {
 			return this.registerMany(typeOrRegistrations);
 		} else if (typeOrRegistrations instanceof BulkUnregistrationImpl) {
-			return this.registerSingle1(<BulkUnregistrationImpl>typeOrRegistrations, <string | RegistrationType<any>>registerOptionsOrType, registerOptions);
+			return this.registerSingle1(<BulkUnregistrationImpl>typeOrRegistrations, <string | MethodType>registerOptionsOrType, registerOptions);
 		} else {
-			return this.registerSingle2(<string | MessageSignature>typeOrRegistrations, registerOptionsOrType);
+			return this.registerSingle2(<string | MethodType>typeOrRegistrations, registerOptionsOrType);
 		}
 	}
 
-	private registerSingle1(unregistration: BulkUnregistrationImpl, type: string | RegistrationType<any>, registerOptions: any): Promise<Disposable> {
+	private registerSingle1(unregistration: BulkUnregistrationImpl, type: string | MethodType, registerOptions: any): Promise<Disposable> {
 		const method = Is.string(type) ? type : type.method;
 		const id = UUID.generateUuid();
 		let params: RegistrationParams = {
@@ -718,7 +782,7 @@ class RemoteClientImpl implements RemoteClient, Remote {
 		});
 	}
 
-	private registerSingle2(type: string | RegistrationType<any>, registerOptions: any): Promise<Disposable> {
+	private registerSingle2(type: string | MethodType, registerOptions: any): Promise<Disposable> {
 		const method = Is.string(type) ? type : type.method;
 		const id = UUID.generateUuid();
 		let params: RegistrationParams = {

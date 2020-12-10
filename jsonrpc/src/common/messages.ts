@@ -228,7 +228,7 @@ export class RequestType0<R, E> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [R, E, _EM];
+	public readonly _: [R, E, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 0);
 	}
@@ -238,7 +238,7 @@ export class RequestType<P, R, E> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P, R, E, _EM];
+	public readonly _: [P, R, E, _EM] | undefined;
 	constructor(method: string, private _parameterStructures: ParameterStructures = ParameterStructures.auto) {
 		super(method, 1);
 	}
@@ -252,7 +252,7 @@ export class RequestType1<P1, R, E> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, R, E, _EM];
+	public readonly _: [P1, R, E, _EM] | undefined;
 	constructor(method: string, private _parameterStructures: ParameterStructures = ParameterStructures.auto) {
 		super(method, 1);
 	}
@@ -266,7 +266,7 @@ export class RequestType2<P1, P2, R, E> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, R, E, _EM];
+	public readonly _: [P1, P2, R, E, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 2);
 	}
@@ -276,7 +276,7 @@ export class RequestType3<P1, P2, P3, R, E> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, R, E, _EM];
+	public readonly _: [P1, P2, P3, R, E, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 3);
 	}
@@ -286,7 +286,7 @@ export class RequestType4<P1, P2, P3, P4, R, E> extends AbstractMessageSignature
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, R, E, _EM];
+	public readonly _: [P1, P2, P3, P4, R, E, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 4);
 	}
@@ -296,7 +296,7 @@ export class RequestType5<P1, P2, P3, P4, P5, R, E> extends AbstractMessageSigna
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, R, E, _EM];
+	public readonly _: [P1, P2, P3, P4, P5, R, E, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 5);
 	}
@@ -306,7 +306,7 @@ export class RequestType6<P1, P2, P3, P4, P5, P6, R, E> extends AbstractMessageS
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, P6, R, E, _EM];
+	public readonly _: [P1, P2, P3, P4, P5, P6, R, E, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 6);
 	}
@@ -316,7 +316,7 @@ export class RequestType7<P1, P2, P3, P4, P5, P6, P7, R, E> extends AbstractMess
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, R, E, _EM];
+	public readonly _: [P1, P2, P3, P4, P5, P6, P7, R, E, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 7);
 	}
@@ -326,7 +326,7 @@ export class RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E> extends Abstract
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, P8, R, E, _EM];
+	public readonly _: [P1, P2, P3, P4, P5, P6, P7, P8, R, E, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 8);
 	}
@@ -336,7 +336,7 @@ export class RequestType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E> extends Abst
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, _EM];
+	public readonly _: [P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 9);
 	}
@@ -361,10 +361,9 @@ export class NotificationType<P> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P, _EM];
+	public readonly _: [P, _EM] | undefined;
 	constructor(method: string, private _parameterStructures: ParameterStructures = ParameterStructures.auto) {
 		super(method, 1);
-		this._ = undefined;
 	}
 
 	get parameterStructures(): ParameterStructures {
@@ -376,7 +375,7 @@ export class NotificationType0 extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [_EM];
+	public readonly _: [_EM] | undefined;
 	constructor(method: string) {
 		super(method, 0);
 	}
@@ -386,7 +385,7 @@ export class NotificationType1<P1> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, _EM];
+	public readonly _: [P1, _EM] | undefined;
 	constructor(method: string, private _parameterStructures: ParameterStructures = ParameterStructures.auto) {
 		super(method, 1);
 	}
@@ -400,7 +399,7 @@ export class NotificationType2<P1, P2> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, _EM];
+	public readonly _: [P1, P2, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 2);
 	}
@@ -410,7 +409,7 @@ export class NotificationType3<P1, P2, P3> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, _EM];
+	public readonly _: [P1, P2, P3, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 3);
 	}
@@ -420,7 +419,7 @@ export class NotificationType4<P1, P2, P3, P4> extends AbstractMessageSignature 
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, _EM];
+	public readonly _: [P1, P2, P3, P4, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 4);
 	}
@@ -430,7 +429,7 @@ export class NotificationType5<P1, P2, P3, P4, P5> extends AbstractMessageSignat
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, _EM];
+	public readonly _: [P1, P2, P3, P4, P5, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 5);
 	}
@@ -440,7 +439,7 @@ export class NotificationType6<P1, P2, P3, P4, P5, P6> extends AbstractMessageSi
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, P6, _EM];
+	public readonly _: [P1, P2, P3, P4, P5, P6, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 6);
 	}
@@ -450,7 +449,7 @@ export class NotificationType7<P1, P2, P3, P4, P5, P6, P7> extends AbstractMessa
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, _EM];
+	public readonly _: [P1, P2, P3, P4, P5, P6, P7, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 7);
 	}
@@ -460,7 +459,7 @@ export class NotificationType8<P1, P2, P3, P4, P5, P6, P7, P8> extends AbstractM
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, P8, _EM];
+	public readonly _: [P1, P2, P3, P4, P5, P6, P7, P8, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 8);
 	}
@@ -470,7 +469,7 @@ export class NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9> extends Abstr
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, P8, P9, _EM];
+	public readonly _: [P1, P2, P3, P4, P5, P6, P7, P8, P9, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 9);
 	}

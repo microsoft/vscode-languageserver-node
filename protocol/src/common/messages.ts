@@ -9,7 +9,7 @@ export class RegistrationType<RO> {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly ____?: [RO];
+	public readonly ____: [RO, _EM] | undefined;
 
 	public readonly method: string;
 	public constructor(method: string) {
@@ -22,8 +22,9 @@ export class ProtocolRequestType0<R, PR, E, RO> extends RequestType0<R, E> imple
 	 * Clients must not use these properties. They are here to ensure correct typing.
 	 * in TypeScript
 	 */
-	public readonly ___?: [PR, RO, _EM];
-	public readonly _pr?: PR;
+	public readonly ___: [PR, RO, _EM] | undefined;
+	public readonly ____: [RO, _EM] | undefined;
+	public readonly _pr: PR | undefined;
 
 	public constructor(method: string) {
 		super(method);
@@ -34,22 +35,41 @@ export class ProtocolRequestType<P, R, PR, E, RO> extends RequestType<P, R, E> i
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly ___?: [PR, RO, _EM];
-	public readonly _pr?: PR;
+	public readonly ___: [PR, RO, _EM] | undefined;
+	public readonly ____: [RO, _EM] | undefined;
+	public readonly _pr: PR | undefined;
 
 	public constructor(method: string) {
 		super(method, ParameterStructures.byName);
 	}
 }
 
-export class ProtocolNotificationType<P, RO> extends NotificationType<P> implements RegistrationType<RO> {
-	public constructor(method: string) {
-		super(method, ParameterStructures.byName);
-	}
-}
 
 export class ProtocolNotificationType0<RO> extends NotificationType0 implements RegistrationType<RO> {
+	/**
+	 * Clients must not use this property. It is here to ensure correct typing.
+	 */
+	public readonly ___: [RO, _EM] | undefined;
+	public readonly ____: [RO, _EM] | undefined;
+
 	public constructor(method: string) {
 		super(method);
 	}
 }
+
+export class ProtocolNotificationType<P, RO> extends NotificationType<P> implements RegistrationType<RO> {
+	/**
+	 * Clients must not use this property. It is here to ensure correct typing.
+	 */
+	public readonly ___: [RO, _EM] | undefined;
+	public readonly ____: [RO, _EM] | undefined;
+
+	public constructor(method: string) {
+		super(method, ParameterStructures.byName);
+	}
+}
+
+// let x: ProtocolNotificationType<number, { value: number}>;
+// let y: ProtocolNotificationType<string, { value: number}>;
+
+// x = y;

@@ -27,11 +27,7 @@ export class BrowserMessageReader extends AbstractMessageReader implements Messa
 			this._onData.fire(event.data);
 		};
 		context.addEventListener('error', (event) => this.fireError(event));
-		if (context instanceof Worker) {
-			context.addEventListener('message', this._messageListener);
-		} else {
-			context.addEventListener('message', this._messageListener);
-		}
+		context.onmessage = this._messageListener;
 	}
 
 	public listen(callback: DataCallback): Disposable {
