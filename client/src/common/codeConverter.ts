@@ -29,6 +29,12 @@ namespace InsertReplaceRange {
 	}
 }
 
+interface FileFormattingOptions {
+	trimTrailingWhitespace?: boolean;
+	trimFinalNewlines?: boolean;
+	insertFinalNewline?: boolean;
+}
+
 export interface Converter {
 
 	asUri(uri: code.Uri): string;
@@ -104,7 +110,7 @@ export interface Converter {
 
 	asCodeLens(item: code.CodeLens): proto.CodeLens;
 
-	asFormattingOptions(item: code.FormattingOptions, config: code.WorkspaceConfiguration): proto.FormattingOptions;
+	asFormattingOptions(options: code.FormattingOptions, fileOptions: FileFormattingOptions): proto.FormattingOptions;
 
 	asDocumentSymbolParams(textDocument: code.TextDocument): proto.DocumentSymbolParams;
 
@@ -721,15 +727,15 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return result;
 	}
 
-	function asFormattingOptions(item: code.FormattingOptions, config: code.WorkspaceConfiguration): proto.FormattingOptions {
-		const result: proto.FormattingOptions = { tabSize: item.tabSize, insertSpaces: item.insertSpaces };
-		if (config.get('trimTrailingWhitespace') === true) {
+	function asFormattingOptions(options: code.FormattingOptions, fileOptions: FileFormattingOptions): proto.FormattingOptions {
+		const result: proto.FormattingOptions = { tabSize: options.tabSize, insertSpaces: options.insertSpaces };
+		if (fileOptions.trimTrailingWhitespace) {
 			result.trimTrailingWhitespace = true;
 		}
-		if (config.get('trimFinalNewlines') === true) {
+		if (fileOptions.trimFinalNewlines) {
 			result.trimFinalNewlines = true;
 		}
-		if (config.get('insertFinalNewline') === true) {
+		if (fileOptions.insertFinalNewline) {
 			result.insertFinalNewline = true;
 		}
 		return result;
