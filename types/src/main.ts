@@ -1469,14 +1469,14 @@ export class WorkspaceChange {
 	public getTextEditChange(key: DocumentUri | OptionalVersionedTextDocumentIdentifier): TextEditChange {
 		if (OptionalVersionedTextDocumentIdentifier.is(key)) {
 			this.initDocumentChanges();
-			if (this._workspaceEdit.documentChanges === undefined || this._changeAnnotations === undefined) {
+			if (this._workspaceEdit.documentChanges === undefined) {
 				throw new Error('Workspace edit is not configured for document changes.');
 			}
-			let textDocument: OptionalVersionedTextDocumentIdentifier = key;
+			const textDocument: OptionalVersionedTextDocumentIdentifier = { uri: key.uri, version: key.version };
 			let result: TextEditChange = this._textEditChanges[textDocument.uri];
 			if (!result) {
-				let edits: (TextEdit | AnnotatedTextEdit)[] = [];
-				let textDocumentEdit: TextDocumentEdit = {
+				const edits: (TextEdit | AnnotatedTextEdit)[] = [];
+				const textDocumentEdit: TextDocumentEdit = {
 					textDocument,
 					edits
 				};
@@ -1518,7 +1518,10 @@ export class WorkspaceChange {
 	public createFile(uri: DocumentUri, options?: CreateFileOptions): void;
 	public createFile(uri: DocumentUri, annotation: ChangeAnnotation | ChangeAnnotationIdentifier, options?: CreateFileOptions): ChangeAnnotationIdentifier;
 	public createFile(uri: DocumentUri, optionsOrAnnotation?: CreateFileOptions | ChangeAnnotation | ChangeAnnotationIdentifier, options?: CreateFileOptions): ChangeAnnotationIdentifier | void {
-		this.checkDocumentChanges();
+		this.initDocumentChanges();
+		if (this._workspaceEdit.documentChanges === undefined) {
+			throw new Error('Workspace edit is not configured for document changes.');
+		}
 		let annotation: ChangeAnnotation | ChangeAnnotationIdentifier | undefined;
 		if (ChangeAnnotation.is(optionsOrAnnotation) || ChangeAnnotationIdentifier.is(optionsOrAnnotation)) {
 			annotation = optionsOrAnnotation;
@@ -1534,7 +1537,7 @@ export class WorkspaceChange {
 			id = ChangeAnnotationIdentifier.is(annotation) ? annotation : this._changeAnnotations!.manage(annotation);
 			operation = CreateFile.create(uri, options, id);
 		}
-		this._workspaceEdit!.documentChanges!.push(operation);
+		this._workspaceEdit.documentChanges.push(operation);
 		if (id !== undefined) {
 			return id;
 		}
@@ -1543,7 +1546,10 @@ export class WorkspaceChange {
 	public renameFile(oldUri: DocumentUri, newUri: DocumentUri, options?: RenameFileOptions): void;
 	public renameFile(oldUri: DocumentUri, newUri: DocumentUri, annotation?: ChangeAnnotation | ChangeAnnotationIdentifier, options?: RenameFileOptions): ChangeAnnotationIdentifier;
 	public renameFile(oldUri: DocumentUri, newUri: DocumentUri, optionsOrAnnotation?: RenameFileOptions | ChangeAnnotation | ChangeAnnotationIdentifier, options?: RenameFileOptions): ChangeAnnotationIdentifier | void {
-		this.checkDocumentChanges();
+		this.initDocumentChanges();
+		if (this._workspaceEdit.documentChanges === undefined) {
+			throw new Error('Workspace edit is not configured for document changes.');
+		}
 		let annotation: ChangeAnnotation | ChangeAnnotationIdentifier | undefined;
 		if (ChangeAnnotation.is(optionsOrAnnotation) || ChangeAnnotationIdentifier.is(optionsOrAnnotation)) {
 			annotation = optionsOrAnnotation;
@@ -1559,7 +1565,7 @@ export class WorkspaceChange {
 			id = ChangeAnnotationIdentifier.is(annotation) ? annotation : this._changeAnnotations!.manage(annotation);
 			operation = RenameFile.create(oldUri, newUri, options, id);
 		}
-		this._workspaceEdit!.documentChanges!.push(operation);
+		this._workspaceEdit.documentChanges.push(operation);
 		if (id !== undefined) {
 			return id;
 		}
@@ -1568,7 +1574,10 @@ export class WorkspaceChange {
 	public deleteFile(uri: DocumentUri, options?: DeleteFileOptions): void;
 	public deleteFile(uri: DocumentUri, annotation: ChangeAnnotation | ChangeAnnotationIdentifier, options?: DeleteFileOptions): ChangeAnnotationIdentifier;
 	public deleteFile(uri: DocumentUri, optionsOrAnnotation?: DeleteFileOptions | ChangeAnnotation | ChangeAnnotationIdentifier, options?: DeleteFileOptions): ChangeAnnotationIdentifier | void {
-		this.checkDocumentChanges();
+		this.initDocumentChanges();
+		if (this._workspaceEdit.documentChanges === undefined) {
+			throw new Error('Workspace edit is not configured for document changes.');
+		}
 		let annotation: ChangeAnnotation | ChangeAnnotationIdentifier | undefined;
 		if (ChangeAnnotation.is(optionsOrAnnotation) || ChangeAnnotationIdentifier.is(optionsOrAnnotation)) {
 			annotation = optionsOrAnnotation;
@@ -1584,15 +1593,9 @@ export class WorkspaceChange {
 			id = ChangeAnnotationIdentifier.is(annotation) ? annotation : this._changeAnnotations!.manage(annotation);
 			operation = DeleteFile.create(uri, options, id);
 		}
-		this._workspaceEdit!.documentChanges!.push(operation);
+		this._workspaceEdit.documentChanges.push(operation);
 		if (id !== undefined) {
 			return id;
-		}
-	}
-
-	private checkDocumentChanges() {
-		if (this._workspaceEdit.documentChanges === undefined || this._changeAnnotations === undefined) {
-			throw new Error('Workspace edit is not configured for document changes.');
 		}
 	}
 }

@@ -414,20 +414,14 @@ connection.onCodeAction((params) => {
 
 connection.onCodeActionResolve((codeAction) => {
 	const document = documents.get(codeAction.data as string);
-	codeAction.edit = {
-		documentChanges: [
-			TextDocumentEdit.create(
-				VersionedTextDocumentIdentifier.create(document.uri, document.version),
-				[AnnotatedTextEdit.insert({ line: 0, character: 0}, "Code Action", ChangeAnnotation.create('Insert some text', true))]
-			),
-			CreateFile.create(`${folder}/newFile.bat`, { overwrite: true }),
-			TextDocumentEdit.create(
-				VersionedTextDocumentIdentifier.create(`${folder}/newFile.bat`, null),
-				[AnnotatedTextEdit.insert({ line: 0, character: 0 }, 'The initial content', ChangeAnnotation.create('Add additional content', true))]
-			)
-		]
-	};
+	const change: WorkspaceChange = new WorkspaceChange();
+	change.createFile(`${folder}/newFile.bat`, { overwrite: true });
+	const a = change.getTextEditChange(document);
+	a.insert({ line: 0, character: 0}, "Code Action", ChangeAnnotation.create('Insert some text', true));
+	const b = change.getTextEditChange({ uri: `${folder}/newFile.bat`, version: null });
+	b.insert({ line: 0, character: 0 }, 'The initial content', ChangeAnnotation.create('Add additional content', true));
 
+	codeAction.edit = change.edit;
 	return codeAction;
 });
 
