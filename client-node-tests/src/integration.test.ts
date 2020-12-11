@@ -164,7 +164,7 @@ suite('Client integration', () => {
 						willDelete: { filters: [ {scheme: 'file', pattern: { glob: '**/deleted-static/**{/,/*.txt}' } }] },
 					},
 				},
-				linkedEditingRangeProvider: false
+				linkedEditingRangeProvider: true
 			},
 			customResults: {
 				'hello': 'world'
@@ -1050,7 +1050,7 @@ suite('Client integration', () => {
 		middleware.provideDocumentSemanticTokensEdits = undefined;
 		assert.strictEqual(middlewareCalled, true);
 	});
-	test.skip('Linked Editing Ranges', async () => {
+	test('Linked Editing Ranges', async () => {
 		const provider = client.getFeature(lsclient.LinkedEditingRangeRequest.method).getProvider(document);
 		isDefined(provider);
 		const result = (await provider.provideLinkedEditingRanges(document, position, tokenSource.token)) as vscode.LinkedEditingRanges;

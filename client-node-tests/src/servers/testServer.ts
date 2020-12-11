@@ -117,7 +117,7 @@ connection.onInitialize((params: InitializeParams): any => {
 				},
 			},
 		},
-		linkedEditingRangeProvider: false
+		linkedEditingRangeProvider: true
 	};
 	return { capabilities, customResults: { hello: 'world' } };
 });
