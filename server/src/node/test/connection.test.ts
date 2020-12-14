@@ -130,7 +130,7 @@ suite('Connection Tests', () => {
 					report = true;
 					break;
 				case 'end':
-					assert.ok(begin && report, 'Recevied begin, report and done');
+					assert.ok(begin && report, 'Received begin, report and done');
 					done();
 					break;
 			}

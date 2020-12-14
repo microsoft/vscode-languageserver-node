@@ -686,7 +686,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				if (requestHandler) {
 					if (requestMessage.params === undefined) {
 						if (type !== undefined && type.numberOfParams !== 0) {
-							replyError(new ResponseError<void>(ErrorCodes.InvalidParams, `Request ${requestMessage.method} defines ${type.numberOfParams} params but recevied none.`), requestMessage.method, startTime);
+							replyError(new ResponseError<void>(ErrorCodes.InvalidParams, `Request ${requestMessage.method} defines ${type.numberOfParams} params but received none.`), requestMessage.method, startTime);
 							return;
 						}
 						handlerResult = requestHandler(cancellationSource.token);
@@ -812,7 +812,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 					if (message.params === undefined) {
 						if (type !== undefined) {
 							if (type.numberOfParams !== 0 && type.parameterStructures !== ParameterStructures.byName) {
-								logger.error(`Notification ${message.method} defines ${type.numberOfParams} params but recevied none.`);
+								logger.error(`Notification ${message.method} defines ${type.numberOfParams} params but received none.`);
 							}
 						}
 						notificationHandler();
@@ -1056,7 +1056,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				break;
 			case ParameterStructures.byName:
 				if (!isNamedParam(param)) {
-					throw new Error(`Recevied parameters by name but param is not an object literal.`);
+					throw new Error(`Received parameters by name but param is not an object literal.`);
 				}
 				return nullToUndefined(param);
 			case ParameterStructures.byPosition:
@@ -1117,7 +1117,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 						break;
 					default:
 						if (parameterStructures === ParameterStructures.byName) {
-							throw new Error(`Recevied ${numberOfParams} parameters for 'by Name' notification parameter structure.`);
+							throw new Error(`Received ${numberOfParams} parameters for 'by Name' notification parameter structure.`);
 						}
 						messageParams = args.slice(paramStart, paramEnd).map(value => undefinedToNull(value));
 						break;
@@ -1206,7 +1206,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 						break;
 					default:
 						if (parameterStructures === ParameterStructures.byName) {
-							throw new Error(`Recevied ${numberOfParams} parameters for 'by Name' request parameter structure.`);
+							throw new Error(`Received ${numberOfParams} parameters for 'by Name' request parameter structure.`);
 						}
 						messageParams = args.slice(paramStart, paramEnd).map(value => undefinedToNull(value));
 						break;
