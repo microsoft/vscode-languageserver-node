@@ -34,32 +34,19 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 
 ## History
 
-## 3.16.0-next.11 Protocol, 6.0.0-next.7 JSON-RPC, 7.0.0-next.13 Client and 7.0.0-next.11 Server.
+## 3.16.0 Protocol, 6.0.0 JSON-RPC, 7.0.0 Client and 7.0.0 Server.
 
-* For a detailed list of changes made in the 3.16.0 version of the protocol see the [change log](https://microsoft.github.io/language-server-protocol/specifications/specification-3-16/#version_3_16_0) of the 3.16 specification.
+For a detailed list of changes made in the 3.16.0 version of the protocol see the [change log](https://microsoft.github.io/language-server-protocol/specifications/specification-3-16/#version_3_16_0) of the 3.16 specification.
 
-## 3.16.0-next.10 Protocol, 6.0.0-next.7 JSON-RPC, 7.0.0-next.12 Client and 7.0.0-next.10 Server.
+Library specific changes are:
 
 * cleanup of Request and Notification types. Removed the unnecessary generic parameter RO. This is a breaking change. To adapt simply remove the type argument.
 * added the new concept of a RegistrationType which decouple the registration method from the actual request or notification method. This is a breaking change for implementors of custom features. To adapt rename the `messages` property to `registrationType` and return a corresponding `RegistrationType`. Additional remove the first parameter from the `register` method.
 * cleanup of `ErrorCodes`. LSP specific error codes got moved to a new namespace `LSPErrorCodes`. The namespace `ErrorCodes` in `jsonrpc` is not correctly reserved for JSON RPC specific error codes. This is a breaking change. To resolve it use `LSPErrorCodes` instead.
-
-## 3.16.0-next.7 Protocol, 6.0.0-next.5 JSON-RPC, 7.0.0-next.9 Client and 7.0.0-next.7 Server.
-
-* Moved semantic tokens out of proposed state.
-
-## 3.16.0-next.4 Protocol, 6.0.0-next.2 JSON-RPC, 7.0.0-next.5 Client and 7.0.0-next.3 Server.
-
 * split code into common, node and browser to allow using the LSP client and server npm modules in a Web browser via webpack. This is a **breaking change** and might lead to compile / runtime errors if not adopted. Every module has now three different exports which represent the split into common, node and browser. Lets look at `vscode-jsonrpc` for an example: (a) the import `vscode-jsonrpc` will only import the common code, (b) the import `vscode-jsonrpc\node` will import the common and the node code and (c) the import `vscode-jsonrpc\browser` will import the common and browser code.
 * added support to control the [parameter structure](https://www.jsonrpc.org/specification#parameter_structures) when sending requests and notifications in `vscode-jsonrpc`. The parameter structure can be controlled using the additional `parameterStructures` argument when creating a request or notification type or when sending an untyped request or notification using the `sendRequest` or `sendNotification` function. The default is `ParameterStructures.auto` which does the following:
   * use `byPosition` for messages with zero or greater than one parameter
   * for one parameter it used `byName` for parameters which are object literals. Uses `byPosition` for all other parameters.
-
-## 3.16.0-next.1 Protocol, 5.1.0-next.1 JSON-RPC, 6.2.0-next.1 Client and 6.2.0-next.1 Server.
-
-* support for complex diagnostic codes
-* support for plugable cancellation strategy
-* support for insert / replace edits in completion items.
 
 
 ## 3.15.3 Protocol, 6.1.x client and 6.1.x server
