@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageclient",
 	"description": "VSCode Language client implementation",
-	"version": "7.0.0-next.16",
+	"version": "7.0.0",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"engines": {
@@ -29,7 +29,7 @@
 	"dependencies": {
 		"minimatch": "^3.0.4",
 		"semver": "^7.3.4",
-		"vscode-languageserver-protocol": "3.16.0-next.13"
+		"vscode-languageserver-protocol": "3.16.0"
 	},
 	"scripts": {
 		"install:dev": "cd src/node && npm install",
