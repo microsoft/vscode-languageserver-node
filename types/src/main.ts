@@ -2091,7 +2091,7 @@ export interface CompletionItem {
 	 * *Note 2:* If an `InsertReplaceEdit` is returned the edit's insert range must be a prefix of
 	 * the edit's replace range, that means it must be contained and starting at the same position.
 	 *
-	 * @since 3.16.0 additional type `InsertReplaceEdit` - proposed state
+	 * @since 3.16.0 additional type `InsertReplaceEdit`
 	 */
 	textEdit?: TextEdit | InsertReplaceEdit;
 
