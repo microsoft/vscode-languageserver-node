@@ -12,7 +12,7 @@ export type DocumentUri = string;
 /**
  * A tagging type for string properties that are actually URIs
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export type URI = string;
 
@@ -576,7 +576,7 @@ export type DiagnosticTag = 1 | 2;
 /**
  * Structure to capture a description for an error code.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export interface CodeDescription {
 	/**
@@ -588,7 +588,7 @@ export interface CodeDescription {
 /**
  * The CodeDescription namespace provides functions to deal with descriptions for diagnostic codes.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export namespace CodeDescription {
 	export function is(value: CodeDescription | undefined | null): value is CodeDescription {
@@ -621,7 +621,7 @@ export interface Diagnostic {
 	/**
 	 * An optional property to describe the error code.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	codeDescription?: CodeDescription;
 
@@ -654,7 +654,7 @@ export interface Diagnostic {
 	 * A data entry field that is preserved between a `textDocument/publishDiagnostics`
 	 * notification and `textDocument/codeAction` request.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	data?: unknown;
 }
@@ -805,7 +805,7 @@ export namespace TextEdit {
 /**
  * Additional information that describes document changes.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export interface ChangeAnnotation {
         /**
@@ -861,7 +861,7 @@ export type ChangeAnnotationIdentifier = string;
 /**
  * A special text edit with an additional change annotation.
  *
- * @since 3.16.0 - proposed state.
+ * @since 3.16.0.
  */
 export interface AnnotatedTextEdit extends TextEdit {
 	/**
@@ -962,7 +962,7 @@ interface ResourceOperation {
 	/**
 	 * An optional annotation identifier describing the operation.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	annotationId?: ChangeAnnotationIdentifier;
 }
@@ -1188,7 +1188,7 @@ export interface WorkspaceEdit {
 	 *
 	 * Whether clients honor this property depends on the client capability `workspace.changeAnnotationSupport`.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	changeAnnotations?: {
 		[id: string /* ChangeAnnotationIdentifier */]: ChangeAnnotation;
@@ -1907,7 +1907,7 @@ export type CompletionItemTag = 1;
 /**
  * A special text edit to provide an insert and a replace operation.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export interface InsertReplaceEdit {
 	/**
@@ -1929,7 +1929,7 @@ export interface InsertReplaceEdit {
 /**
  * The InsertReplaceEdit namespace provides functions to deal with insert / replace edits.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export namespace InsertReplaceEdit {
 
@@ -1953,7 +1953,7 @@ export namespace InsertReplaceEdit {
  * How whitespace and indentation is handled during completion
  * item insertion.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export namespace InsertTextMode {
 	/**
@@ -2071,7 +2071,7 @@ export interface CompletionItem {
 	 * item insertion. If ignored the clients default value depends on
 	 * the `textDocument.completion.insertTextMode` client capability.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	insertTextMode?: InsertTextMode;
 
@@ -2309,7 +2309,7 @@ export interface SignatureInformation {
 	 *
 	 * If provided, this is used in place of `SignatureHelp.activeParameter`.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	activeParameter?: uinteger;
 }
@@ -2526,7 +2526,7 @@ export interface SymbolInformation {
 	/**
 	 * Tags for this completion item.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	tags?: SymbolTag[];
 
@@ -2609,7 +2609,7 @@ export interface DocumentSymbol {
 	/**
 	 * Tags for this completion item.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	tags?: SymbolTag[];
 
@@ -2897,7 +2897,7 @@ export interface CodeAction {
 	 * A data entry field that is preserved on a code action between
 	 * a `textDocument/codeAction` and a `codeAction/resolve` request.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	data?: unknown;
 }

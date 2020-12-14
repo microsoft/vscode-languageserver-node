@@ -35,7 +35,7 @@ export interface DocumentRangeSemanticTokensSignature {
 /**
  * The semantic token middleware
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export interface SemanticTokensMiddleware {
 	provideDocumentSemanticTokens?: (this: void, document: vscode.TextDocument, token: vscode.CancellationToken, next: DocumentSemanticsTokensSignature) => vscode.ProviderResult<vscode.SemanticTokens>;

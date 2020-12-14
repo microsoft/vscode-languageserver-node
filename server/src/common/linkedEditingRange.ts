@@ -10,7 +10,7 @@ import type { Feature, _Languages, ServerRequestHandler } from './server';
 /**
  * Shape of the linked editing feature
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export interface LinkedEditingRangeFeatureShape {
 	/**

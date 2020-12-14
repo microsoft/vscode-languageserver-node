@@ -38,7 +38,7 @@ export interface CallHierarchyOutgoingCallsSignature {
 /**
  * Call hierarchy middleware
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export interface CallHierarchyMiddleware {
 	prepareCallHierarchy?: (this: void, document: TextDocument, positions: VPosition, token: CancellationToken, next: PrepareCallHierarchySignature) => ProviderResult<VCallHierarchyItem | VCallHierarchyItem[]>;

@@ -10,7 +10,7 @@ import { ProtocolRequestType } from './messages';
 /**
  * Client capabilities for the show document request.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export interface ShowDocumentClientCapabilities {
 	/**
@@ -23,7 +23,7 @@ export interface ShowDocumentClientCapabilities {
 /**
  * Params to show a document.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export interface ShowDocumentParams {
 	/**
@@ -58,7 +58,7 @@ export interface ShowDocumentParams {
 /**
  * The result of an show document request.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export interface ShowDocumentResult {
 	/**
@@ -73,7 +73,7 @@ export interface ShowDocumentResult {
  * For example a request to open `https://code.visualstudio.com/`
  * will very likely open the URI in a WEB browser.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
 */
 export namespace ShowDocumentRequest {
 	export const method: 'window/showDocument' = 'window/showDocument';

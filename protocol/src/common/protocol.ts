@@ -348,7 +348,7 @@ export interface WorkspaceClientCapabilities {
 	 * Capabilities specific to the semantic token requests scoped to the
 	 * workspace.
 	 *
-	 * @since 3.16.0 - proposed state.
+	 * @since 3.16.0.
 	 */
 	semanticTokens?: SemanticTokensWorkspaceClientCapabilities;
 
@@ -356,7 +356,7 @@ export interface WorkspaceClientCapabilities {
 	 * Capabilities specific to the code lens requests scoped to the
 	 * workspace.
 	 *
-	 * @since 3.16.0 - proposed state.
+	 * @since 3.16.0.
 	 */
 	codeLens?: CodeLensWorkspaceClientCapabilities;
 
@@ -503,21 +503,21 @@ export interface TextDocumentClientCapabilities {
 	/**
 	 * Capabilities specific to the various semantic token request.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	semanticTokens?: SemanticTokensClientCapabilities;
 
 	/**
 	 * Capabilities specific to the linked editing range request.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	linkedEditingRange?: LinkedEditingRangeClientCapabilities;
 
 	/**
 	 * Client capabilities specific to the moniker request.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	moniker: MonikerClientCapabilities;
 }
@@ -535,14 +535,14 @@ export interface WindowClientCapabilities {
 	/**
 	 * Capabilities specific to the showMessage request.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	showMessage?: ShowMessageRequestClientCapabilities;
 
 	/**
 	 * Capabilities specific to the showDocument request.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	showDocument?: ShowDocumentClientCapabilities;
 }
@@ -550,7 +550,7 @@ export interface WindowClientCapabilities {
 /**
  * Client capabilities specific to regular expressions.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export interface RegularExpressionsClientCapabilities {
 	/**
@@ -567,7 +567,7 @@ export interface RegularExpressionsClientCapabilities {
 /**
  * Client capabilities specific to the used markdown parser.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export interface MarkdownClientCapabilities {
 	/**
@@ -584,20 +584,20 @@ export interface MarkdownClientCapabilities {
 /**
  * General client capabilities.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export interface GeneralClientCapabilities {
 	/**
 	 * Client capabilities specific to regular expressions.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	regularExpressions?: RegularExpressionsClientCapabilities;
 
 	/**
 	 * Client capabilities specific to the client's markdown parser.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	markdown?: MarkdownClientCapabilities;
 }
@@ -624,7 +624,7 @@ export interface _ClientCapabilities {
 	/**
 	 * General client capabilities.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	general?: GeneralClientCapabilities;
 
@@ -839,21 +839,21 @@ export interface _ServerCapabilities<T = any> {
 	/**
 	 * The server provides call hierarchy support.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	callHierarchyProvider?: boolean | CallHierarchyOptions | CallHierarchyRegistrationOptions;
 
 	/**
 	 * The server provides linked editing range support.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	linkedEditingRangeProvider?: boolean | LinkedEditingRangeOptions | LinkedEditingRangeRegistrationOptions;
 
 	/**
 	 * The server provides semantic tokens support.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	semanticTokensProvider?: SemanticTokensOptions | SemanticTokensRegistrationOptions;
 
@@ -872,7 +872,7 @@ export interface _ServerCapabilities<T = any> {
 	/**
 	 * The server provides moniker support.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
     monikerProvider?: boolean | MonikerOptions | MonikerRegistrationOptions;
 
@@ -1694,7 +1694,7 @@ export interface PublishDiagnosticsClientCapabilities {
 	/**
 	 * Client supports a codeDescription property
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	codeDescriptionSupport?: boolean;
 
@@ -1703,7 +1703,7 @@ export interface PublishDiagnosticsClientCapabilities {
 	 * preserved between a `textDocument/publishDiagnostics` and
 	 * `textDocument/codeAction` request.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	dataSupport?: boolean;
 }
@@ -1808,7 +1808,7 @@ export interface CompletionClientCapabilities {
 		 * Client support insert replace edit to control different behavior if a
 		 * completion item is inserted in the text or should replace text.
 		 *
-		 * @since 3.16.0 - proposed state
+		 * @since 3.16.0
 		 */
 		insertReplaceSupport?: boolean;
 
@@ -1817,7 +1817,7 @@ export interface CompletionClientCapabilities {
 		 * item. Before version 3.16.0 only the predefined properties `documentation`
 		 * and `details` could be resolved lazily.
 		 *
-		 * @since 3.16.0 - proposed state
+		 * @since 3.16.0
 		 */
 		resolveSupport?: {
 			/**
@@ -1831,7 +1831,7 @@ export interface CompletionClientCapabilities {
 		 * a completion item to override the whitespace handling mode
 		 * as defined by the client (see `insertTextMode`).
 		 *
-		 * @since 3.16.0 - proposed state
+		 * @since 3.16.0
 		 */
 		insertTextModeSupport?: {
 			valueSet: InsertTextMode[];
@@ -1857,7 +1857,7 @@ export interface CompletionClientCapabilities {
 	 * when accepting a completion item that uses multi line
 	 * text in either `insertText` or `textEdit`.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	insertTextMode?: InsertTextMode;
 
@@ -2070,7 +2070,7 @@ export interface SignatureHelpClientCapabilities {
 		 * The client support the `activeParameter` property on `SignatureInformation`
 		 * literal.
 		 *
-		 * @since 3.16.0 - proposed state
+		 * @since 3.16.0
 		 */
 		activeParameterSupport?: boolean;
 	};
@@ -2356,7 +2356,7 @@ export interface DocumentSymbolClientCapabilities {
 	 * `DocumentSymbol` if `hierarchicalDocumentSymbolSupport` is set to true.
 	 * Clients supporting tags have to handle unknown tags gracefully.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	tagSupport?: {
 		/**
@@ -2392,7 +2392,7 @@ export interface DocumentSymbolOptions extends WorkDoneProgressOptions {
 	 * A human-readable string that is shown when multiple outlines trees
 	 * are shown for the same document.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	label?: string;
 }
@@ -2459,7 +2459,7 @@ export interface CodeActionClientCapabilities {
 	/**
 	 * Whether code action supports the `disabled` property.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	disabledSupport?: boolean;
 
@@ -2468,7 +2468,7 @@ export interface CodeActionClientCapabilities {
 	 * preserved between a `textDocument/codeAction` and a
 	 * `codeAction/resolve` request.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	dataSupport?: boolean;
 
@@ -2476,7 +2476,7 @@ export interface CodeActionClientCapabilities {
 	 * Whether the client support resolving additional code action
 	 * properties via a separate `codeAction/resolve` request.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	 resolveSupport?: {
 		 /**
@@ -2492,7 +2492,7 @@ export interface CodeActionClientCapabilities {
 	 * the workspace edit in the user interface and asking
 	 * for confirmation.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	honorsChangeAnnotations?: boolean;
 }
@@ -2594,7 +2594,7 @@ export interface WorkspaceSymbolClientCapabilities {
 	 * The client supports tags on `SymbolInformation`.
 	 * Clients supporting tags have to handle unknown tags gracefully.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	tagSupport?: {
 		/**
@@ -2652,7 +2652,7 @@ export interface CodeLensClientCapabilities {
 }
 
 /**
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export interface CodeLensWorkspaceClientCapabilities {
 	/**
@@ -2712,7 +2712,7 @@ export namespace CodeLensResolveRequest {
 /**
  * A request to refresh all code actions
  *
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export namespace CodeLensRefreshRequest {
 	export const method: `workspace/codeLens/refresh` = `workspace/codeLens/refresh`;
@@ -2985,7 +2985,7 @@ export interface RenameClientCapabilities {
 	 * the workspace edit in the user interface and asking
 	 * for confirmation.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	honorsChangeAnnotations?: boolean;
 }
@@ -3133,7 +3133,7 @@ export interface WorkspaceEditClientCapabilities {
 	 * in a workspace edit containing to the client specific new line
 	 * character.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	normalizesLineEndings?: boolean;
 
@@ -3141,7 +3141,7 @@ export interface WorkspaceEditClientCapabilities {
 	 * Whether the client in general supports change annotations on text edits,
 	 * create file, rename file and delete file changes.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	changeAnnotationSupport?: {
 		/**

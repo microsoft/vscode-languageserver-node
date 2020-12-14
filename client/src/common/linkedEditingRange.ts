@@ -23,7 +23,7 @@ export interface ProvideLinkedEditingRangeSignature {
 /**
  * Linked editing middleware
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export interface LinkedEditingRangeMiddleware {
 	provideLinkedEditingRange?: (this: void, document: code.TextDocument, position: code.Position, token: code.CancellationToken, next: ProvideLinkedEditingRangeSignature) => code.ProviderResult<code.LinkedEditingRanges>;

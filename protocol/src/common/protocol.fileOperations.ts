@@ -10,7 +10,7 @@ import { ProtocolNotificationType, ProtocolRequestType } from './messages';
 /**
  * Options for notifications/requests for user operations on files.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export interface FileOperationOptions {
 
@@ -48,7 +48,7 @@ export interface FileOperationOptions {
 /**
  * The options to register for file operations.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export interface FileOperationRegistrationOptions {
 
@@ -62,7 +62,7 @@ export interface FileOperationRegistrationOptions {
  * A pattern kind describing if a glob pattern matches a file a folder or
  * both.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export namespace FileOperationPatternKind {
 
@@ -82,7 +82,7 @@ export type FileOperationPatternKind = 'file' | 'folder';
 /**
  * Matching options for the file operation pattern.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export interface FileOperationPatternOptions {
 
@@ -96,7 +96,7 @@ export interface FileOperationPatternOptions {
  * A pattern to describe in which file operation requests or notifications
  * the server is interested in.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 interface FileOperationPattern {
 
@@ -149,7 +149,7 @@ export interface FileOperationFilter {
  * These events do not come from the file system, they come from user operations
  * like renaming a file in the UI.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export interface FileOperationClientCapabilities {
 
@@ -192,7 +192,7 @@ export interface FileOperationClientCapabilities {
 /**
  * The parameters sent in file create requests/notifications.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export interface CreateFilesParams {
 
@@ -205,7 +205,7 @@ export interface CreateFilesParams {
 /**
  * Represents information on a file/folder create.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export interface FileCreate {
 
@@ -218,7 +218,7 @@ export interface FileCreate {
 /**
  * The parameters sent in file rename requests/notifications.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export interface RenameFilesParams {
 
@@ -232,7 +232,7 @@ export interface RenameFilesParams {
 /**
  * Represents information on a file/folder rename.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export interface FileRename {
 
@@ -250,7 +250,7 @@ export interface FileRename {
 /**
  * The parameters sent in file delete requests/notifications.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export interface DeleteFilesParams {
 
@@ -263,7 +263,7 @@ export interface DeleteFilesParams {
 /**
  * Represents information on a file/folder delete.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export interface FileDelete {
 
@@ -278,7 +278,7 @@ export interface FileDelete {
  * The will create files request is sent from the client to the server before files are actually
  * created as long as the creation is triggered from within the client.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export namespace WillCreateFilesRequest {
 	export const method: 'workspace/willCreateFiles' = 'workspace/willCreateFiles';
@@ -290,7 +290,7 @@ export namespace WillCreateFilesRequest {
  * The did create files notification is sent from the client to the server when
  * files were created from within the client.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export namespace DidCreateFilesNotification {
 	export const method: 'workspace/didCreateFiles' = 'workspace/didCreateFiles';
@@ -302,7 +302,7 @@ export namespace DidCreateFilesNotification {
  * The will rename files request is sent from the client to the server before files are actually
  * renamed as long as the rename is triggered from within the client.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export namespace WillRenameFilesRequest {
 	export const method: 'workspace/willRenameFiles' = 'workspace/willRenameFiles';
@@ -314,7 +314,7 @@ export namespace WillRenameFilesRequest {
  * The did rename files notification is sent from the client to the server when
  * files were renamed from within the client.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export namespace DidRenameFilesNotification {
 	export const method: 'workspace/didRenameFiles' = 'workspace/didRenameFiles';
@@ -326,7 +326,7 @@ export namespace DidRenameFilesNotification {
  * The will delete files request is sent from the client to the server before files are actually
  * deleted as long as the deletion is triggered from within the client.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export namespace DidDeleteFilesNotification {
 	export const method: 'workspace/didDeleteFiles' = 'workspace/didDeleteFiles';
@@ -338,7 +338,7 @@ export namespace DidDeleteFilesNotification {
  * The did delete files notification is sent from the client to the server when
  * files were deleted from within the client.
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export namespace WillDeleteFilesRequest {
 	export const method: 'workspace/willDeleteFiles' = 'workspace/willDeleteFiles';

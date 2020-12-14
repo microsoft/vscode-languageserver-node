@@ -13,7 +13,7 @@ import type { Feature, _Languages, ServerRequestHandler } from './server';
 /**
  * Shape of the semantic token feature
  *
- * @since 3.16.0 - proposed state
+ * @since 3.16.0
  */
 export interface SemanticTokensFeatureShape {
 	semanticTokens: {

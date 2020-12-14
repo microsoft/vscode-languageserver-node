@@ -14,7 +14,7 @@ import { PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions, T
  * an clients can specify additional token types via the
  * corresponding client capabilities.
  *
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export enum SemanticTokenTypes {
 	namespace = 'namespace',
@@ -50,7 +50,7 @@ export enum SemanticTokenTypes {
  * an clients can specify additional token types via the
  * corresponding client capabilities.
  *
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export enum SemanticTokenModifiers {
 	declaration = 'declaration',
@@ -66,7 +66,7 @@ export enum SemanticTokenModifiers {
 }
 
 /**
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export interface SemanticTokensLegend {
 	/**
@@ -81,7 +81,7 @@ export interface SemanticTokensLegend {
 }
 
 /**
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export interface SemanticTokens {
 	/**
@@ -99,7 +99,7 @@ export interface SemanticTokens {
 }
 
 /**
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export namespace SemanticTokens {
 	export function is(value: any): value is SemanticTokens {
@@ -110,14 +110,14 @@ export namespace SemanticTokens {
 }
 
 /**
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export interface SemanticTokensPartialResult {
 	data: uinteger[];
 }
 
 /**
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export interface SemanticTokensEdit {
 	/**
@@ -137,7 +137,7 @@ export interface SemanticTokensEdit {
 }
 
 /**
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export interface SemanticTokensDelta {
 	readonly resultId?: string;
@@ -148,7 +148,7 @@ export interface SemanticTokensDelta {
 }
 
 /**
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export interface SemanticTokensDeltaPartialResult {
 	edits: SemanticTokensEdit[]
@@ -163,7 +163,7 @@ export namespace TokenFormat {
 export type TokenFormat = 'relative';
 
 /**
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export interface SemanticTokensClientCapabilities {
 	/**
@@ -233,7 +233,7 @@ export interface SemanticTokensClientCapabilities {
 }
 
 /**
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export interface SemanticTokensOptions extends WorkDoneProgressOptions {
 	/**
@@ -260,7 +260,7 @@ export interface SemanticTokensOptions extends WorkDoneProgressOptions {
 }
 
 /**
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export interface SemanticTokensRegistrationOptions extends TextDocumentRegistrationOptions, SemanticTokensOptions, StaticRegistrationOptions {
 }
@@ -273,7 +273,7 @@ export namespace SemanticTokensRegistrationType {
 //------- 'textDocument/semanticTokens' -----
 
 /**
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export interface SemanticTokensParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
@@ -283,7 +283,7 @@ export interface SemanticTokensParams extends WorkDoneProgressParams, PartialRes
 }
 
 /**
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export namespace SemanticTokensRequest {
 	export const method: 'textDocument/semanticTokens/full' = 'textDocument/semanticTokens/full';
@@ -294,7 +294,7 @@ export namespace SemanticTokensRequest {
 //------- 'textDocument/semanticTokens/edits' -----
 
 /**
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export interface SemanticTokensDeltaParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
@@ -310,7 +310,7 @@ export interface SemanticTokensDeltaParams extends WorkDoneProgressParams, Parti
 }
 
 /**
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export namespace SemanticTokensDeltaRequest {
 	export const method: 'textDocument/semanticTokens/full/delta' = 'textDocument/semanticTokens/full/delta';
@@ -321,7 +321,7 @@ export namespace SemanticTokensDeltaRequest {
 //------- 'textDocument/semanticTokens/range' -----
 
 /**
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export interface SemanticTokensRangeParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
@@ -336,7 +336,7 @@ export interface SemanticTokensRangeParams extends WorkDoneProgressParams, Parti
 }
 
 /**
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export namespace SemanticTokensRangeRequest {
 	export const method: 'textDocument/semanticTokens/range' = 'textDocument/semanticTokens/range';
@@ -360,7 +360,7 @@ export interface SemanticTokensWorkspaceClientCapabilities {
 }
 
 /**
- * @since 3.16.0 - Proposed state
+ * @since 3.16.0
  */
 export namespace SemanticTokensRefreshRequest {
 	export const method: `workspace/semanticTokens/refresh` = `workspace/semanticTokens/refresh`;
