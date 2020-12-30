@@ -1046,7 +1046,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 	}
 
 	function computeSingleParam(parameterStructures: ParameterStructures, param: any): any | any[] {
-		switch(parameterStructures.kind) {
+		switch(parameterStructures.toString()) {
 			case 'auto':
 				if (isNamedParam(param)) {
 					return nullToUndefined(param);
