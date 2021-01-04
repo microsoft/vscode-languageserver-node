@@ -1068,4 +1068,26 @@ suite('Client integration', () => {
 		middleware.provideTypeDefinition = undefined;
 		assert.strictEqual(middlewareCalled, true);
 	});
+
+	test('Stop fails if server crashes after shutdown request', async () => {
+		let serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/crashOnShutdownServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		let clientOptions: lsclient.LanguageClientOptions = {};
+		let client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		client.start();
+		await client.onReady();
+
+		await assert.rejects(async () => {
+			await client.stop();
+		}, /Connection got disposed/);
+		assert.strictEqual(client.needsStart(), true);
+		assert.strictEqual(client.needsStop(), false);
+
+		// Stopping again should be a no-op.
+		await client.stop();
+		assert.strictEqual(client.needsStart(), true);
+		assert.strictEqual(client.needsStop(), false);
+	});
 });

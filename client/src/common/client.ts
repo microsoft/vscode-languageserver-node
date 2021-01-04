@@ -3372,7 +3372,7 @@ export abstract class BaseLanguageClient {
 
 	protected handleConnectionClosed() {
 		// Check whether this is a normal shutdown in progress or the client stopped normally.
-		if (this.state === ClientState.Stopping || this.state === ClientState.Stopped) {
+		if (this.state === ClientState.Stopped) {
 			return;
 		}
 		try {
@@ -3383,10 +3383,12 @@ export abstract class BaseLanguageClient {
 			// Disposing a connection could fail if error cases.
 		}
 		let action = CloseAction.DoNotRestart;
-		try {
-			action = this._clientOptions.errorHandler!.closed();
-		} catch (error) {
-			// Ignore errors coming from the error handler.
+		if (this.state !== ClientState.Stopping) {
+			try {
+				action = this._clientOptions.errorHandler!.closed();
+			} catch (error) {
+				// Ignore errors coming from the error handler.
+			}
 		}
 		this._connectionPromise = undefined;
 		this._resolvedConnection = undefined;
