@@ -11,7 +11,7 @@ import {
 	SignatureHelp, SymbolInformation, SymbolKind, TextDocumentEdit, TextDocuments, TextDocumentSyncKind,
 	TextEdit, VersionedTextDocumentIdentifier, ProposedFeatures, DiagnosticTag, Proposed, InsertTextFormat,
 	SelectionRangeRequest, SelectionRange, InsertReplaceEdit, SemanticTokensClientCapabilities, SemanticTokensLegend,
-	SemanticTokensBuilder, SemanticTokensRegistrationType, SemanticTokensRegistrationOptions, ProtocolNotificationType, ChangeAnnotation, AnnotatedTextEdit, WorkspaceChange
+	SemanticTokensBuilder, SemanticTokensRegistrationType, SemanticTokensRegistrationOptions, ProtocolNotificationType, ChangeAnnotation, AnnotatedTextEdit, WorkspaceChange, CompletionItemKind
 } from 'vscode-languageserver/node';
 
 import {
@@ -298,6 +298,12 @@ connection.onCompletion((params, token): CompletionItem[] => {
 		Range.create(params.position, params.position),
 		Range.create(params.position, Position.create(params.position.line, params.position.character +1))
 	);
+	result.push(item);
+
+	item = CompletionItem.create('-record');
+	item.insertText = '-record(${1:name}, {${2:field} = ${3:Value} :: ${4:Type}()}).'
+	item.insertTextFormat = InsertTextFormat.Snippet;
+	item.kind = CompletionItemKind.Field;
 	result.push(item);
 
 	return result;
