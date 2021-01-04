@@ -63,7 +63,7 @@ export class ColorProviderFeature extends TextDocumentFeature<boolean | Document
 					return client.sendRequest(ColorPresentationRequest.type, requestParams, token).then(
 						this.asColorPresentations.bind(this),
 						(error: any) => {
-							return client.handleFailedRequest(ColorPresentationRequest.type, error, null);
+							return client.handleFailedRequest(ColorPresentationRequest.type, token, error, null);
 						}
 					);
 				};
@@ -81,7 +81,7 @@ export class ColorProviderFeature extends TextDocumentFeature<boolean | Document
 					return client.sendRequest(DocumentColorRequest.type, requestParams, token).then(
 						this.asColorInformations.bind(this),
 						(error: any) => {
-							return client.handleFailedRequest(ColorPresentationRequest.type, error, null);
+							return client.handleFailedRequest(ColorPresentationRequest.type, token, error, null);
 						}
 					);
 				};

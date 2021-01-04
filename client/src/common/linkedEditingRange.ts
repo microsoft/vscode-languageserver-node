@@ -56,7 +56,7 @@ export class LinkedEditingFeature extends TextDocumentFeature<boolean | proto.Li
 					return client.sendRequest(proto.LinkedEditingRangeRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
 						client.protocol2CodeConverter.asLinkedEditingRanges,
 						(error) => {
-							return client.handleFailedRequest(proto.LinkedEditingRangeRequest.type, error, null);
+							return client.handleFailedRequest(proto.LinkedEditingRangeRequest.type, token, error, null);
 						}
 					);
 				};

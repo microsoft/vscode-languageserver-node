@@ -57,7 +57,7 @@ export class SelectionRangeFeature extends TextDocumentFeature<boolean | Selecti
 					return client.sendRequest(SelectionRangeRequest.type, requestParams, token).then(
 						(ranges) => client.protocol2CodeConverter.asSelectionRanges(ranges),
 						(error: any) => {
-							return client.handleFailedRequest(SelectionRangeRequest.type, error, null);
+							return client.handleFailedRequest(SelectionRangeRequest.type, token, error, null);
 						}
 					);
 				};

@@ -137,7 +137,7 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Semanti
 						return client.sendRequest(SemanticTokensRequest.type, params, token).then((result) => {
 							return client.protocol2CodeConverter.asSemanticTokens(result);
 						}, (error: any) => {
-							return client.handleFailedRequest(SemanticTokensRequest.type, error, null);
+							return client.handleFailedRequest(SemanticTokensRequest.type, token, error, null);
 						});
 					};
 					return middleware.provideDocumentSemanticTokens
@@ -160,7 +160,7 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Semanti
 									return client.protocol2CodeConverter.asSemanticTokensEdits(result);
 								}
 							}, (error: any) => {
-								return client.handleFailedRequest(SemanticTokensDeltaRequest.type, error, null);
+								return client.handleFailedRequest(SemanticTokensDeltaRequest.type, token, error, null);
 							});
 						};
 						return middleware.provideDocumentSemanticTokensEdits
@@ -185,7 +185,7 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Semanti
 						return client.sendRequest(SemanticTokensRangeRequest.type, params, token).then((result) => {
 							return client.protocol2CodeConverter.asSemanticTokens(result);
 						}, (error: any) => {
-							return client.handleFailedRequest(SemanticTokensRangeRequest.type, error, null);
+							return client.handleFailedRequest(SemanticTokensRangeRequest.type, token, error, null);
 						});
 					};
 					return middleware.provideDocumentRangeSemanticTokens

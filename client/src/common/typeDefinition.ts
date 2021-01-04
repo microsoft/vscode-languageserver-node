@@ -55,7 +55,7 @@ export class TypeDefinitionFeature extends TextDocumentFeature<boolean | TypeDef
 					return client.sendRequest(TypeDefinitionRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
 						client.protocol2CodeConverter.asDefinitionResult,
 						(error) => {
-							return client.handleFailedRequest(TypeDefinitionRequest.type, error, null);
+							return client.handleFailedRequest(TypeDefinitionRequest.type, token, error, null);
 						}
 					);
 				};

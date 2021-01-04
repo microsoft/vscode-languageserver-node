@@ -54,7 +54,7 @@ export class ImplementationFeature extends TextDocumentFeature<boolean | Impleme
 					return client.sendRequest(ImplementationRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
 						client.protocol2CodeConverter.asDefinitionResult,
 						(error) => {
-							return client.handleFailedRequest(ImplementationRequest.type, error, null);
+							return client.handleFailedRequest(ImplementationRequest.type, token, error, null);
 						}
 					);
 				};
