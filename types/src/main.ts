@@ -3248,6 +3248,137 @@ export interface CallHierarchyOutgoingCall {
 	fromRanges: Range[];
 }
 
+/**
+ * A set of predefined token types. This set is not fixed
+ * an clients can specify additional token types via the
+ * corresponding client capabilities.
+ *
+ * @since 3.16.0
+ */
+export enum SemanticTokenTypes {
+	namespace = 'namespace',
+	/**
+	 * Represents a generic type. Acts as a fallback for types which can't be mapped to
+	 * a specific type like class or enum.
+	 */
+	type = 'type',
+	class = 'class',
+	enum = 'enum',
+	interface = 'interface',
+	struct = 'struct',
+	typeParameter = 'typeParameter',
+	parameter = 'parameter',
+	variable = 'variable',
+	property = 'property',
+	enumMember = 'enumMember',
+	event = 'event',
+	function = 'function',
+	method = 'method',
+	macro = 'macro',
+	keyword = 'keyword',
+	modifier = 'modifier',
+	comment = 'comment',
+	string = 'string',
+	number = 'number',
+	regexp = 'regexp',
+	operator = 'operator'
+}
+
+/**
+ * A set of predefined token modifiers. This set is not fixed
+ * an clients can specify additional token types via the
+ * corresponding client capabilities.
+ *
+ * @since 3.16.0
+ */
+export enum SemanticTokenModifiers {
+	declaration = 'declaration',
+	definition = 'definition',
+	readonly = 'readonly',
+	static = 'static',
+	deprecated = 'deprecated',
+	abstract = 'abstract',
+	async = 'async',
+	modification = 'modification',
+	documentation = 'documentation',
+	defaultLibrary = 'defaultLibrary'
+}
+
+/**
+ * @since 3.16.0
+ */
+export interface SemanticTokensLegend {
+	/**
+	 * The token types a server uses.
+	 */
+	tokenTypes: string[];
+
+	/**
+	 * The token modifiers a server uses.
+	 */
+	tokenModifiers: string[];
+}
+
+/**
+ * @since 3.16.0
+ */
+export interface SemanticTokens {
+	/**
+	 * An optional result id. If provided and clients support delta updating
+	 * the client will include the result id in the next semantic token request.
+	 * A server can then instead of computing all semantic tokens again simply
+	 * send a delta.
+	 */
+	resultId?: string;
+
+	/**
+	 * The actual tokens.
+	 */
+	data: uinteger[];
+}
+
+/**
+ * @since 3.16.0
+ */
+export namespace SemanticTokens {
+	export function is(value: any): value is SemanticTokens {
+		const candidate = value as SemanticTokens;
+		return candidate !== undefined && (candidate.resultId === undefined || typeof candidate.resultId === 'string') &&
+			Array.isArray(candidate.data) && (candidate.data.length === 0 || typeof candidate.data[0] === 'number');
+	}
+}
+
+/**
+ * @since 3.16.0
+ */
+export interface SemanticTokensEdit {
+	/**
+	 * The start offset of the edit.
+	 */
+	start: uinteger;
+
+	/**
+	 * The count of elements to remove.
+	 */
+	deleteCount: uinteger;
+
+	/**
+	 * The elements to insert.
+	 */
+	data?: uinteger[];
+}
+
+/**
+ * @since 3.16.0
+ */
+export interface SemanticTokensDelta {
+	readonly resultId?: string;
+	/**
+	 * The semantic token edits to transform a previous result into a new result.
+	 */
+	edits: SemanticTokensEdit[];
+}
+
 export const EOL: string[] = ['\n', '\r\n', '\r'];
 
 /**
