@@ -301,22 +301,7 @@ export class ErrorMessageTracker {
 	}
 }
 
-/**
- *
- */
-interface Remote {
-	/**
-	 * Attach the remote to the given connection.
-	 *
-	 * @param connection The connection this remote is operating on.
-	 */
-	attach(connection: Connection): void;
-
-	/**
-	 * The connection this remote is attached to.
-	 */
-	connection: Connection;
-
+export interface FeatureBase {
 	/**
 	 * Called to initialize the remote with the given
 	 * client capabilities
@@ -333,12 +318,26 @@ interface Remote {
 	fillServerCapabilities(capabilities: ServerCapabilities): void;
 }
 
+interface Remote extends FeatureBase {
+	/**
+	 * Attach the remote to the given connection.
+	 *
+	 * @param connection The connection this remote is operating on.
+	 */
+	attach(connection: Connection): void;
+
+	/**
+	 * The connection this remote is attached to.
+	 */
+	connection: Connection;
+}
+
 /**
  * The RemoteConsole interface contains all functions to interact with
  * the tools / clients console or log system. Internally it used `window/logMessage`
  * notifications.
  */
-export interface RemoteConsole {
+export interface RemoteConsole extends FeatureBase {
 	/**
 	 * The connection this remote is attached to.
 	 */
@@ -429,7 +428,7 @@ class RemoteConsoleImpl implements Logger, RemoteConsole, Remote {
  * The RemoteWindow interface contains all functions to interact with
  * the visual window of VS Code.
  */
-export interface _RemoteWindow {
+export interface _RemoteWindow extends FeatureBase {
 	/**
 	 * The connection this remote is attached to.
 	 */
@@ -656,7 +655,7 @@ class BulkUnregistrationImpl implements BulkUnregistration {
 /**
  * Interface to register and unregister `listeners` on the client / tools side.
  */
-export interface RemoteClient {
+export interface RemoteClient extends FeatureBase {
 
 	/**
 	 * The connection this remote is attached to.
@@ -822,7 +821,7 @@ class RemoteClientImpl implements RemoteClient, Remote {
 /**
  * Represents the workspace managed by the client.
  */
-export interface _RemoteWorkspace {
+export interface _RemoteWorkspace extends FeatureBase {
 	/**
 	 * The connection this remote is attached to.
 	 */
@@ -878,7 +877,7 @@ const RemoteWorkspaceImpl: new () => RemoteWorkspace = FileOperationsFeature(Wor
  * Interface to log telemetry events. The events are actually send to the client
  * and the client needs to feed the event into a proper telemetry system.
  */
-export interface Telemetry {
+export interface Telemetry extends FeatureBase {
 	/**
 	 * The connection this remote is attached to.
 	 */
@@ -896,7 +895,7 @@ export interface Telemetry {
  * Interface to log traces to the client. The events are sent to the client and the
  * client needs to log the trace events.
  */
-export interface RemoteTracer {
+export interface RemoteTracer extends FeatureBase {
 	/**
 	 * The connection this remote is attached to.
 	 */
@@ -978,7 +977,7 @@ class TelemetryImpl implements Telemetry, Remote {
 	}
 }
 
-export interface _Languages {
+export interface _Languages extends FeatureBase {
 	connection: Connection;
 	attachWorkDoneProgress(params: WorkDoneProgressParams): WorkDoneProgressReporter;
 	attachPartialResultProgress<PR>(type: ProgressType<PR>, params: PartialResultParams): ResultProgressReporter<PR> | undefined;
@@ -1492,7 +1491,7 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 export interface Connection extends _Connection {
 }
 
-export interface Feature<B, P> {
+export interface Feature<B extends FeatureBase, P> {
 	(Base: new () => B): new () => B & P;
 }
 
