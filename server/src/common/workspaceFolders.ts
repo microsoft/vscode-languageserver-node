@@ -19,7 +19,6 @@ export interface WorkspaceFolders {
 export const WorkspaceFoldersFeature: Feature<_RemoteWorkspace, WorkspaceFolders> = (Base) => {
 	return class extends Base {
 		private _onDidChangeWorkspaceFolders: Emitter<WorkspaceFoldersChangeEvent> | undefined;
-		private _unregistration: Promise<Disposable> | undefined;
 		public initialize(capabilities: ClientCapabilities): void {
 			let workspaceCapabilities = capabilities.workspace;
 			if (workspaceCapabilities && workspaceCapabilities.workspaceFolders) {
@@ -35,9 +34,6 @@ export const WorkspaceFoldersFeature: Feature<_RemoteWorkspace, WorkspaceFolders
 		get onDidChangeWorkspaceFolders(): Event<WorkspaceFoldersChangeEvent> {
 			if (!this._onDidChangeWorkspaceFolders) {
 				throw new Error('Client doesn\'t support sending workspace folder change events.');
-			}
-			if (!this._unregistration) {
-				this._unregistration = this.connection.client.register(DidChangeWorkspaceFoldersNotification.type);
 			}
 			return this._onDidChangeWorkspaceFolders.event;
 		}
