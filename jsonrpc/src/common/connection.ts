@@ -231,6 +231,9 @@ export enum TraceFormat {
 }
 export namespace TraceFormat {
 	export function fromString(value: string): TraceFormat {
+		if (!Is.string(value)) {
+			return TraceFormat.Text;
+		}
 		value = value.toLowerCase();
 		if (value === 'json') {
 			return TraceFormat.JSON;
