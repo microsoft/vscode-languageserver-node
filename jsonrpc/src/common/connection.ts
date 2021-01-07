@@ -490,6 +490,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 	let timer: RAL.ImmediateHandle | undefined;
 	let messageQueue: MessageQueue = new LinkedMap<string, Message>();
 	let responsePromises: { [name: string]: ResponsePromise } = Object.create(null);
+	let knownCanceledRequests: Set<string | number> = new Set();
 	let requestTokens: { [id: string]: AbstractCancellationTokenSource } = Object.create(null);
 
 	let trace: Trace = Trace.Off;
@@ -607,7 +608,8 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			// We have received a cancellation message. Check if the message is still in the queue
 			// and cancel it if allowed to do so.
 			if (isNotificationMessage(message) && message.method === CancelNotification.type.method) {
-				const key = createRequestQueueKey((message.params as CancelParams).id);
+				const cancelId = (message.params as CancelParams).id;
+				const key = createRequestQueueKey(cancelId);
 				const toCancel = messageQueue.get(key);
 				if (isRequestMessage(toCancel)) {
 					const strategy = options?.connectionStrategy;
@@ -619,6 +621,18 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 						messageWriter.write(response);
 						return;
 					}
+				}
+				const tokenKey = String(cancelId);
+				const cancellationToken = requestTokens[tokenKey];
+				// The request is already running. Cancel the token
+				if (cancellationToken !== undefined) {
+					cancellationToken.cancel();
+					traceReceivedNotification(message);
+					return;
+				} else {
+					// Remember the cancel but still queue the message to
+					// clean up state in process message.
+					knownCanceledRequests.add(cancelId);
 				}
 			}
 			addMessageToQueue(messageQueue, message);
@@ -683,6 +697,9 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		if (requestHandler || starRequestHandler) {
 			const tokenKey = String(requestMessage.id);
 			const cancellationSource = cancellationStrategy.receiver.createCancellationTokenSource(tokenKey);
+			if (requestMessage.id !== null && knownCanceledRequests.has(requestMessage.id)) {
+				cancellationSource.cancel();
+			}
 			requestTokens[tokenKey] = cancellationSource;
 			try {
 				let handlerResult: any;
@@ -794,13 +811,10 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		let type: MessageSignature | undefined = undefined;
 		let notificationHandler: GenericNotificationHandler | undefined;
 		if (message.method === CancelNotification.type.method) {
-			notificationHandler = (params: CancelParams) => {
-				const id = params.id;
-				const source = requestTokens[String(id)];
-				if (source) {
-					source.cancel();
-				}
-			};
+			const cancelId = (message.params as CancelParams).id;
+			knownCanceledRequests.delete(cancelId);
+			traceReceivedNotification(message);
+			return;
 		} else {
 			const element = notificationHandlers[message.method];
 			if (element) {
@@ -1339,6 +1353,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			});
 			responsePromises = Object.create(null);
 			requestTokens = Object.create(null);
+			knownCanceledRequests = new Set();
 			messageQueue = new LinkedMap<string, Message>();
 			// Test for backwards compatibility
 			if (Is.func(messageWriter.dispose)) {
