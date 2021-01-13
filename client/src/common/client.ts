@@ -2310,7 +2310,11 @@ class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameR
 							return Promise.reject(new Error(`The element can't be renamed.`));
 						},
 						(error: ResponseError<void>) => {
-							return client.handleFailedRequest(PrepareRenameRequest.type, token, error, undefined);
+							if (typeof error.message === 'string') {
+								throw new Error(error.message);
+							} else {
+								throw new Error(`The element can't be renamed.`);
+							}
 						}
 						);
 					};
