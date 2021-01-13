@@ -51,7 +51,7 @@ import {
 	DeclarationRequest, FoldingRangeRequest, ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, SymbolTag, CallHierarchyPrepareRequest,
 	CancellationStrategy, SaveOptions, LSPErrorCodes, CodeActionResolveRequest, RegistrationType, SemanticTokensRegistrationType, InsertTextMode, ShowDocumentRequest,
 	FileOperationRegistrationOptions, WillCreateFilesRequest, WillRenameFilesRequest, WillDeleteFilesRequest, DidCreateFilesNotification, DidDeleteFilesNotification, DidRenameFilesNotification,
-	ShowDocumentParams, ShowDocumentResult, LinkedEditingRangeRequest, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressReport, PrepareSupportDefaultBehavior, SemanticTokensRequest, SemanticTokensRangeRequest, SemanticTokensDeltaRequest
+	ShowDocumentParams, ShowDocumentResult, LinkedEditingRangeRequest, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressReport, PrepareSupportDefaultBehavior
 } from 'vscode-languageserver-protocol';
 
 import type { ColorProviderMiddleware } from './colorProvider';
@@ -3661,11 +3661,6 @@ export abstract class BaseLanguageClient {
 		return Is.asPromise(Workspace.applyEdit(this._p2c.asWorkspaceEdit(params.edit)).then((value) => { return { applied: value }; }));
 	}
 
-	private static RequestsToCancelOnContentModified: Set<string> = new Set([
-		SemanticTokensRequest.method,
-		SemanticTokensRangeRequest.method,
-		SemanticTokensDeltaRequest.method
-	]);
 	public handleFailedRequest<T>(type: MessageSignature, token: CancellationToken | undefined, error: any, defaultValue: T): T {
 		// If we get a request cancel or a content modified don't log anything.
 		if (error instanceof ResponseError) {
@@ -3676,11 +3671,7 @@ export abstract class BaseLanguageClient {
 					throw this.makeCancelError();
 				}
 			} else if (error.code === LSPErrorCodes.ContentModified) {
-				if (BaseLanguageClient.RequestsToCancelOnContentModified.has(type.method)) {
-					throw this.makeCancelError();
-				} else {
-					return defaultValue;
-				}
+				return defaultValue;
 			}
 		}
 		this.error(`Request ${type.method} failed.`, error);
