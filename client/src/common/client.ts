@@ -1381,11 +1381,11 @@ export abstract class TextDocumentFeature<PO, RO extends TextDocumentRegistratio
 		if (!data.registerOptions.documentSelector) {
 			return;
 		}
-		let registration = this.registerLanguageProvider(data.registerOptions);
+		let registration = this.registerLanguageProvider(data.registerOptions, data.id);
 		this._registrations.set(data.id, { disposable: registration[0], data, provider: registration[1] });
 	}
 
-	protected abstract registerLanguageProvider(options: RO): [Disposable, PR];
+	protected abstract registerLanguageProvider(options: RO, id: string): [Disposable, PR];
 
 	public unregister(id: string): void {
 		let registration = this._registrations.get(id);
@@ -1507,8 +1507,11 @@ export interface ProvideResolveFeature<T1 extends Function, T2 extends Function>
 
 class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, CompletionRegistrationOptions, CompletionItemProvider> {
 
+	private complexLabelSupport: Map<string, boolean>;
+
 	constructor(client: BaseLanguageClient) {
 		super(client, CompletionRequest.type);
+		this.complexLabelSupport = new Map();
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
@@ -1526,7 +1529,8 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 			resolveSupport: {
 				properties: ['documentation', 'detail', 'additionalTextEdits']
 			},
-			insertTextModeSupport: { valueSet: [InsertTextMode.asIs, InsertTextMode.adjustIndentation] }
+			insertTextModeSupport: { valueSet: [InsertTextMode.asIs, InsertTextMode.adjustIndentation] },
+			complexLabelSupport: true
 		};
 		completion.completionItemKind = { valueSet: SupportedCompletionItemKinds };
 	}
@@ -1542,7 +1546,8 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 		});
 	}
 
-	protected registerLanguageProvider(options: CompletionRegistrationOptions): [Disposable, CompletionItemProvider] {
+	protected registerLanguageProvider(options: CompletionRegistrationOptions, id: string): [Disposable, CompletionItemProvider] {
+		this.complexLabelSupport.set(id, !!options.completionItem?.complexLabelSupport);
 		const triggerCharacters = options.triggerCharacters || [];
 		const provider: CompletionItemProvider = {
 			provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken, context: VCompletionContext): ProviderResult<VCompletionList | VCompletionItem[]> => {
@@ -1565,7 +1570,7 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 					const client = this._client;
 					const middleware = this._client.clientOptions.middleware!;
 					const resolveCompletionItem: ResolveCompletionItemSignature = (item, token) => {
-						return client.sendRequest(CompletionResolveRequest.type, client.code2ProtocolConverter.asCompletionItem(item), token).then(
+						return client.sendRequest(CompletionResolveRequest.type, client.code2ProtocolConverter.asCompletionItem(item, !!this.complexLabelSupport.get(id)), token).then(
 							client.protocol2CodeConverter.asCompletionItem,
 							(error) => {
 								return client.handleFailedRequest(CompletionResolveRequest.type, token, error, item);

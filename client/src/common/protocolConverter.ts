@@ -463,7 +463,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 			return [];
 		}
 		const result: code.CompletionItemTag[] = [];
-		for (let tag of tags) {
+		for (const tag of tags) {
 			const converted = asCompletionItemTag(tag);
 			if (converted !== undefined) {
 				result.push(converted);
@@ -473,15 +473,19 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 	}
 
 	function asCompletionItem(item: ls.CompletionItem): ProtocolCompletionItem {
-		let tags: code.CompletionItemTag[] = asCompletionItemTags(item.tags);
-		let result = new ProtocolCompletionItem(item.label);
+		const tags: code.CompletionItemTag[] = asCompletionItemTags(item.tags);
+		const label = asCompletionItemLabel(item);
+		const result = new ProtocolCompletionItem(label[0]);
+		if (label[1] !== undefined) {
+			result.label2 = label[1];
+		}
 		if (item.detail) { result.detail = item.detail; }
 		if (item.documentation) {
 			result.documentation = asDocumentation(item.documentation);
 			result.documentationFormat = Is.string(item.documentation) ? '$string' : item.documentation.kind;
 		}
 		if (item.filterText) { result.filterText = item.filterText; }
-		let insertText = asCompletionInsertText(item);
+		const insertText = asCompletionInsertText(item);
 		if (insertText) {
 			result.insertText = insertText.text;
 			result.range = insertText.range;
@@ -516,6 +520,14 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 			}
 		}
 		return result;
+	}
+
+	function asCompletionItemLabel(item: ls.CompletionItem): [string, code.CompletionItemLabel | undefined] {
+		if (Is.string(item.label)) {
+			return [item.label, undefined];
+		} else {
+			return [item.label.name, item.label];
+		}
 	}
 
 	function asCompletionInsertText(item: ls.CompletionItem): { text: string | code.SnippetString, range?: code.Range | InsertReplaceRange, fromEdit: boolean } | undefined {

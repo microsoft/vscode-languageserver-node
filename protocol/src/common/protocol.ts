@@ -1857,6 +1857,14 @@ export interface CompletionClientCapabilities {
 		insertTextModeSupport?: {
 			valueSet: InsertTextMode[];
 		}
+
+		/**
+		 * The client has support for a complex completion item
+		 * label (see also `CompletionItemLabel`).
+		 *
+		 * @since 3.17.0 - proposed state
+		 */
+		complexLabelSupport?: boolean;
 	};
 
 	completionItemKind?: {
@@ -1975,6 +1983,23 @@ export interface CompletionOptions extends WorkDoneProgressOptions {
 	 * information for a completion item.
 	 */
 	resolveProvider?: boolean;
+
+	/**
+	 * The server supports the following `CompletionItem` specific
+	 * capabilities.
+	 *
+	 * @since 3.17.0 - proposed state
+	 */
+	completionItem?: {
+		/**
+		 * The server has support for a complex completion item
+		 * label (see also `CompletionItemLabel`) when receiving
+		 * a completion item in a resolve call.
+		 *
+		 * @since 3.17.0 - proposed state
+		 */
+		complexLabelSupport?: boolean;
+	}
 }
 
 /**

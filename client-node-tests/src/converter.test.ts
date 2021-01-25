@@ -635,6 +635,30 @@ suite('Protocol Converter', () => {
 		strictEqual(back.insertTextMode, InsertTextMode.adjustIndentation);
 	});
 
+	test('Completion Item - Complex Label', () => {
+		const completionItem: proto.CompletionItem = {
+			label: { name: 'name', parameters: 'parameters', qualifier: 'qualifier', type: 'type' }
+		};
+		const result = p2c.asCompletionItem(completionItem);
+		strictEqual(result.label, 'name');
+		strictEqual(result.label2?.name, 'name');
+		strictEqual(result.label2?.parameters, 'parameters');
+		strictEqual(result.label2?.qualifier, 'qualifier');
+		strictEqual(result.label2?.type, 'type');
+
+		const back = c2p.asCompletionItem(result, true);
+		strictEqual(proto.CompletionItemLabel.is(back.label), true);
+		const label: proto.CompletionItemLabel = back.label as proto.CompletionItemLabel;
+		strictEqual(label.name, 'name');
+		strictEqual(label.parameters, 'parameters');
+		strictEqual(label.qualifier, 'qualifier');
+		strictEqual(label.type, 'type');
+
+		const back2 = c2p.asCompletionItem(result, false);
+		strictEqual(Is.string(back2.label), true);
+		strictEqual(back2.label, 'name');
+	});
+
 	test('Completion Result', () => {
 		let completionResult: proto.CompletionList = {
 			isIncomplete: true,

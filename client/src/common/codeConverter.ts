@@ -91,7 +91,7 @@ export interface Converter {
 	asDiagnostic(item: code.Diagnostic): proto.Diagnostic;
 	asDiagnostics(items: code.Diagnostic[]): proto.Diagnostic[];
 
-	asCompletionItem(item: code.CompletionItem): proto.CompletionItem;
+	asCompletionItem(item: code.CompletionItem, supportsComplexLabel?: boolean): proto.CompletionItem;
 
 	asSymbolKind(item: code.SymbolKind): proto.SymbolKind;
 
@@ -561,8 +561,18 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return value + 1 as proto.CompletionItemKind;
 	}
 
-	function asCompletionItem(item: code.CompletionItem): proto.CompletionItem {
-		let result: proto.CompletionItem = { label: item.label };
+	function asCompletionItem(item: code.CompletionItem, supportsComplexLabel: boolean = false): proto.CompletionItem {
+		let label: string | proto.CompletionItemLabel;
+		if (item.label2 !== undefined) {
+			if (supportsComplexLabel) {
+				label = Object.assign({}, item.label2);
+			} else {
+				label = item.label2.name;
+			}
+		} else {
+			label = item.label;
+		}
+		let result: proto.CompletionItem = { label: label };
 		let protocolItem = item instanceof ProtocolCompletionItem ? item as ProtocolCompletionItem : undefined;
 		if (item.detail) { result.detail = item.detail; }
 		// We only send items back we created. So this can't be something else than
