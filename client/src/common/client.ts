@@ -1507,11 +1507,11 @@ export interface ProvideResolveFeature<T1 extends Function, T2 extends Function>
 
 class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, CompletionRegistrationOptions, CompletionItemProvider> {
 
-	private complexLabelSupport: Map<string, boolean>;
+	private detailedLabelSupport: Map<string, boolean>;
 
 	constructor(client: BaseLanguageClient) {
 		super(client, CompletionRequest.type);
-		this.complexLabelSupport = new Map();
+		this.detailedLabelSupport = new Map();
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
@@ -1530,7 +1530,7 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 				properties: ['documentation', 'detail', 'additionalTextEdits']
 			},
 			insertTextModeSupport: { valueSet: [InsertTextMode.asIs, InsertTextMode.adjustIndentation] },
-			complexLabelSupport: true
+			detailedLabelSupport: true
 		};
 		completion.completionItemKind = { valueSet: SupportedCompletionItemKinds };
 	}
@@ -1547,7 +1547,7 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 	}
 
 	protected registerLanguageProvider(options: CompletionRegistrationOptions, id: string): [Disposable, CompletionItemProvider] {
-		this.complexLabelSupport.set(id, !!options.completionItem?.complexLabelSupport);
+		this.detailedLabelSupport.set(id, !!options.completionItem?.detailedLabelSupport);
 		const triggerCharacters = options.triggerCharacters || [];
 		const provider: CompletionItemProvider = {
 			provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken, context: VCompletionContext): ProviderResult<VCompletionList | VCompletionItem[]> => {
@@ -1570,7 +1570,7 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 					const client = this._client;
 					const middleware = this._client.clientOptions.middleware!;
 					const resolveCompletionItem: ResolveCompletionItemSignature = (item, token) => {
-						return client.sendRequest(CompletionResolveRequest.type, client.code2ProtocolConverter.asCompletionItem(item, !!this.complexLabelSupport.get(id)), token).then(
+						return client.sendRequest(CompletionResolveRequest.type, client.code2ProtocolConverter.asCompletionItem(item, !!this.detailedLabelSupport.get(id)), token).then(
 							client.protocol2CodeConverter.asCompletionItem,
 							(error) => {
 								return client.handleFailedRequest(CompletionResolveRequest.type, token, error, item);

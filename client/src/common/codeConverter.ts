@@ -561,10 +561,10 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return value + 1 as proto.CompletionItemKind;
 	}
 
-	function asCompletionItem(item: code.CompletionItem, supportsComplexLabel: boolean = false): proto.CompletionItem {
+	function asCompletionItem(item: code.CompletionItem, supportsLabelLiteral: boolean = false): proto.CompletionItem {
 		let label: string | proto.CompletionItemLabel;
 		if (item.label2 !== undefined) {
-			if (supportsComplexLabel) {
+			if (supportsLabelLiteral) {
 				label = Object.assign({}, item.label2);
 			} else {
 				label = item.label2.name;

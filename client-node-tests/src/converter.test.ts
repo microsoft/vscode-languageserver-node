@@ -635,7 +635,7 @@ suite('Protocol Converter', () => {
 		strictEqual(back.insertTextMode, InsertTextMode.adjustIndentation);
 	});
 
-	test('Completion Item - Complex Label', () => {
+	test('Completion Item - Detailed Label', () => {
 		const completionItem: proto.CompletionItem = {
 			label: { name: 'name', parameters: 'parameters', qualifier: 'qualifier', type: 'type' }
 		};
