@@ -34,5 +34,12 @@ export namespace LSPErrorCodes {
 	export const lspReservedErrorRangeEnd: integer = -32800;
 }
 
+import * as op from './protocol.onPasteFormatting.proposed';
+
 export namespace Proposed {
+	export type DocumentOnPasteFormattingClientCapabilities = op.DocumentOnPasteFormattingClientCapabilities;
+	export type DocumentOnPasteFormattingOptions = op.DocumentOnPasteFormattingOptions;
+	export type DocumentOnPasteFormattingRegistrationOptions = op.DocumentOnPasteFormattingRegistrationOptions;
+	export type DocumentOnPasteFormattingParams = op.DocumentOnPasteFormattingParams;
+	export const DocumentOnPasteFormattingRequest = op.DocumentOnPasteFormattingRequest;
 }
