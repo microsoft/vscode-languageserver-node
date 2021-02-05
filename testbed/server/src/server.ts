@@ -175,7 +175,7 @@ connection.onInitialized((params) => {
 	const registrationOptions: SemanticTokensRegistrationOptions = {
 		documentSelector: ['bat'],
 		legend: semanticTokensLegend,
-		range: true,
+		range: false,
 		full: {
 			delta: true
 		}
