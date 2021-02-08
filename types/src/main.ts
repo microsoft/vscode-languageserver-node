@@ -1980,7 +1980,7 @@ export namespace InsertTextMode {
 export type InsertTextMode = 1 | 2;
 
 /**
- * A more detailed label for a completion item.
+ * Additional details for a completion item label.
  *
  * @since 3.17.0 - proposed state
  */
