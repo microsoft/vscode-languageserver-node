@@ -2164,11 +2164,10 @@ export interface CompletionItem {
 	command?: Command;
 
 	/**
-	 * A data entry field that is preserved on a completion item between
-	 * a [CompletionRequest](#CompletionRequest) and a [CompletionResolveRequest]
-	 * (#CompletionResolveRequest)
+	 * A data entry field that is preserved on a completion item between a
+	 * [CompletionRequest](#CompletionRequest) and a [CompletionResolveRequest](#CompletionResolveRequest).
 	 */
-	data?: any
+	data?: any;
 }
 
 /**
