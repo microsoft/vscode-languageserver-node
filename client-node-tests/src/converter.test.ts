@@ -635,9 +635,10 @@ suite('Protocol Converter', () => {
 		strictEqual(back.insertTextMode, InsertTextMode.adjustIndentation);
 	});
 
-	test('Completion Item - Detailed Label', () => {
+	test('Completion Item - Label Details', () => {
 		const completionItem: proto.CompletionItem = {
-			label: { name: 'name', parameters: 'parameters', qualifier: 'qualifier', type: 'type' }
+			label: 'name',
+			labelDetails: { parameters: 'parameters', qualifier: 'qualifier', type: 'type' }
 		};
 		const result = p2c.asCompletionItem(completionItem);
 		strictEqual(result.label, 'name');
@@ -647,15 +648,13 @@ suite('Protocol Converter', () => {
 		strictEqual(result.label2?.type, 'type');
 
 		const back = c2p.asCompletionItem(result, true);
-		strictEqual(proto.CompletionItemLabel.is(back.label), true);
-		const label: proto.CompletionItemLabel = back.label as proto.CompletionItemLabel;
-		strictEqual(label.name, 'name');
-		strictEqual(label.parameters, 'parameters');
-		strictEqual(label.qualifier, 'qualifier');
-		strictEqual(label.type, 'type');
+		strictEqual(proto.CompletionItemLabelDetails.is(back.labelDetails), true);
+		strictEqual(back.labelDetails?.parameters, 'parameters');
+		strictEqual(back.labelDetails?.qualifier, 'qualifier');
+		strictEqual(back.labelDetails?.type, 'type');
 
 		const back2 = c2p.asCompletionItem(result, false);
-		strictEqual(Is.string(back2.label), true);
+		strictEqual(back2.labelDetails, undefined);
 		strictEqual(back2.label, 'name');
 	});
 

@@ -1859,12 +1859,12 @@ export interface CompletionClientCapabilities {
 		}
 
 		/**
-		 * The client has support for a detailed completion item
-		 * label (see also `CompletionItemLabel`).
+		 * The client has support for completion item label
+		 * details (see also `CompletionItemLabelDetails`).
 		 *
 		 * @since 3.17.0 - proposed state
 		 */
-		detailedLabelSupport?: boolean;
+		labelDetailsSupport?: boolean;
 	};
 
 	completionItemKind?: {
@@ -1992,13 +1992,13 @@ export interface CompletionOptions extends WorkDoneProgressOptions {
 	 */
 	completionItem?: {
 		/**
-		 * The server has support for a detailed completion item
-		 * label (see also `CompletionItemLabel`) when receiving
-		 * a completion item in a resolve call.
+		 * The server has support for completion item label
+		 * details (see also `CompletionItemLabelDetails`) when
+		 * receiving a completion item in a resolve call.
 		 *
 		 * @since 3.17.0 - proposed state
 		 */
-		detailedLabelSupport?: boolean;
+		labelDetailsSupport?: boolean;
 	}
 }
 

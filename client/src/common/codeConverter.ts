@@ -91,7 +91,7 @@ export interface Converter {
 	asDiagnostic(item: code.Diagnostic): proto.Diagnostic;
 	asDiagnostics(items: code.Diagnostic[]): proto.Diagnostic[];
 
-	asCompletionItem(item: code.CompletionItem, supportsComplexLabel?: boolean): proto.CompletionItem;
+	asCompletionItem(item: code.CompletionItem, labelDetailsSupport?: boolean): proto.CompletionItem;
 
 	asSymbolKind(item: code.SymbolKind): proto.SymbolKind;
 
@@ -561,18 +561,21 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return value + 1 as proto.CompletionItemKind;
 	}
 
-	function asCompletionItem(item: code.CompletionItem, supportsLabelLiteral: boolean = false): proto.CompletionItem {
-		let label: string | proto.CompletionItemLabel;
+	function asCompletionItem(item: code.CompletionItem, labelDetailsSupport: boolean = false): proto.CompletionItem {
+		let labelDetails: proto.CompletionItemLabelDetails | undefined;
+		let label: string;
 		if (item.label2 !== undefined) {
-			if (supportsLabelLiteral) {
-				label = Object.assign({}, item.label2);
-			} else {
-				label = item.label2.name;
+			label = item.label2.name;
+			if (labelDetailsSupport) {
+				labelDetails = { parameters: item.label2.parameters, qualifier: item.label2.qualifier, type: item.label2.type };
 			}
 		} else {
 			label = item.label;
 		}
 		let result: proto.CompletionItem = { label: label };
+		if (labelDetails !== undefined) {
+			result.labelDetails = labelDetails;
+		}
 		let protocolItem = item instanceof ProtocolCompletionItem ? item as ProtocolCompletionItem : undefined;
 		if (item.detail) { result.detail = item.detail; }
 		// We only send items back we created. So this can't be something else than

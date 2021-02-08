@@ -14,7 +14,7 @@ import ProtocolDocumentLink from './protocolDocumentLink';
 import ProtocolCodeAction from './protocolCodeAction';
 import { ProtocolDiagnostic, DiagnosticCode } from './protocolDiagnostic';
 import ProtocolCallHierarchyItem from './protocolCallHierarchyItem';
-import { AnnotatedTextEdit, ChangeAnnotation, InsertTextMode } from 'vscode-languageserver-protocol';
+import { AnnotatedTextEdit, ChangeAnnotation, CompletionItemLabelDetails, InsertTextMode } from 'vscode-languageserver-protocol';
 
 interface InsertReplaceRange {
 	inserting: code.Range;
@@ -474,11 +474,12 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 
 	function asCompletionItem(item: ls.CompletionItem): ProtocolCompletionItem {
 		const tags: code.CompletionItemTag[] = asCompletionItemTags(item.tags);
-		const label = asCompletionItemLabel(item);
-		const result = new ProtocolCompletionItem(label[0]);
-		if (label[1] !== undefined) {
-			result.label2 = label[1];
+		const result = new ProtocolCompletionItem(item.label);
+		const label2 = asCompletionItemLabel(item);
+		if (label2 !== undefined) {
+			result.label2 = label2;
 		}
+
 		if (item.detail) { result.detail = item.detail; }
 		if (item.documentation) {
 			result.documentation = asDocumentation(item.documentation);
@@ -522,11 +523,11 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return result;
 	}
 
-	function asCompletionItemLabel(item: ls.CompletionItem): [string, code.CompletionItemLabel | undefined] {
-		if (Is.string(item.label)) {
-			return [item.label, undefined];
+	function asCompletionItemLabel(item: ls.CompletionItem): code.CompletionItemLabel | undefined {
+		if (CompletionItemLabelDetails.is(item.labelDetails)) {
+			return { name: item.label, parameters: item.labelDetails.parameters, qualifier: item.labelDetails.qualifier, type: item.labelDetails.type };
 		} else {
-			return [item.label.name, item.label];
+			return undefined;
 		}
 	}
 

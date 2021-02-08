@@ -1984,12 +1984,7 @@ export type InsertTextMode = 1 | 2;
  *
  * @since 3.17.0 - proposed state
  */
-export interface CompletionItemLabel {
-	/**
-	 * The name of a function or variable.
-	 */
-	name: string;
-
+export interface CompletionItemLabelDetails {
 	/**
 	 * The parameters without the return type.
 	 */
@@ -2006,10 +2001,10 @@ export interface CompletionItemLabel {
 	type?: string;
 }
 
-export namespace CompletionItemLabel {
-	export function is(value: any): value is CompletionItemLabel {
-		const candidate = value as CompletionItemLabel;
-		return candidate && Is.string(candidate.name) && (Is.string(candidate.parameters) || candidate.parameters === undefined) &&
+export namespace CompletionItemLabelDetails {
+	export function is(value: any): value is CompletionItemLabelDetails {
+		const candidate = value as CompletionItemLabelDetails;
+		return candidate && (Is.string(candidate.parameters) || candidate.parameters === undefined) &&
 			(Is.string(candidate.qualifier) || candidate.qualifier === undefined) && (Is.string(candidate.type) || candidate.type === undefined);
 	}
 }
@@ -2023,17 +2018,17 @@ export interface CompletionItem {
 	/**
 	 * The label of this completion item.
 	 *
-	 * If the label is of type `string` it is also by
-	 * default the text that is inserted when selecting
-	 * this completion.
-	 *
-	 * If the label is of type `ComnpletionItemLabel`
-	 * the `name` property is also by default the text
-	 * that is inserted when selecting this completion.
-	 *
-	 * @since 3.17.0 - proposed state -  support for CompletionItemLabel
+	 * The label property is also by default the text that
+	 * is inserted when selecting this completion.
 	 */
-	label: string | CompletionItemLabel;
+	label: string;
+
+	/**
+	 * Additional details for the label
+	 *
+	 * @since 3.17.0 - proposed state
+	 */
+	labelDetails?: CompletionItemLabelDetails;
 
 	/**
 	 * The kind of this completion item. Based of the kind
