@@ -408,18 +408,7 @@ connection.onWorkspaceSymbol((params) => {
 });
 
 connection.onCodeAction((params) => {
-	const codeAction: CodeAction = {
-		title: "Custom Code Action",
-		kind: CodeActionKind.QuickFix,
-		data: params.textDocument.uri
-	}
-	return [
-		codeAction
-	];
-});
-
-connection.onCodeActionResolve((codeAction) => {
-	const document = documents.get(codeAction.data as string);
+	const document = documents.get(params.textDocument.uri);
 	const change: WorkspaceChange = new WorkspaceChange();
 	change.createFile(`${folder}/newFile.bat`, { overwrite: true });
 	const a = change.getTextEditChange(document);
@@ -427,7 +416,27 @@ connection.onCodeActionResolve((codeAction) => {
 	const b = change.getTextEditChange({ uri: `${folder}/newFile.bat`, version: null });
 	b.insert({ line: 0, character: 0 }, 'The initial content', ChangeAnnotation.create('Add additional content', true));
 
+	const codeAction: CodeAction = {
+		title: "Custom Code Action",
+		kind: CodeActionKind.QuickFix,
+		data: params.textDocument.uri
+	}
 	codeAction.edit = change.edit;
+	return [
+		codeAction
+	];
+});
+
+connection.onCodeActionResolve((codeAction) => {
+	// const document = documents.get(codeAction.data as string);
+	// const change: WorkspaceChange = new WorkspaceChange();
+	// change.createFile(`${folder}/newFile.bat`, { overwrite: true });
+	// const a = change.getTextEditChange(document);
+	// a.insert({ line: 0, character: 0}, "Code Action", ChangeAnnotation.create('Insert some text', true));
+	// const b = change.getTextEditChange({ uri: `${folder}/newFile.bat`, version: null });
+	// b.insert({ line: 0, character: 0 }, 'The initial content', ChangeAnnotation.create('Add additional content', true));
+
+	// codeAction.edit = change.edit;
 	return codeAction;
 });
 
