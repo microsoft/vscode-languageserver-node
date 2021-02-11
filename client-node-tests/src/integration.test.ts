@@ -9,6 +9,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as lsclient from 'vscode-languageclient/node';
 import { DidCreateFilesNotification, DidDeleteFilesNotification, DidRenameFilesNotification, WillCreateFilesRequest, WillDeleteFilesRequest, WillRenameFilesRequest } from 'vscode-languageserver-protocol/lib/common/protocol.fileOperations';
+import { MemoryFileSystemProvider } from './memoryFileSystemProvider';
 
 suite('Client integration', () => {
 
@@ -19,6 +20,8 @@ suite('Client integration', () => {
 	let tokenSource!: vscode.CancellationTokenSource;
 	const position: vscode.Position = new vscode.Position(1, 1);
 	const range: vscode.Range = new vscode.Range(1, 1, 1, 2);
+	const fsProvider = new MemoryFileSystemProvider();
+	let fsProviderDisposable!: vscode.Disposable;
 
 	function rangeEqual(range: vscode.Range, sl: number, sc: number, el: number, ec: number): void {
 		assert.strictEqual(range.start.line, sl);
@@ -57,6 +60,8 @@ suite('Client integration', () => {
 	}
 
 	suiteSetup(async () => {
+		fsProviderDisposable = vscode.workspace.registerFileSystemProvider(fsProvider.scheme, fsProvider);
+
 		vscode.workspace.registerTextDocumentContentProvider('lsptests', {
 			provideTextDocumentContent: (_uri: vscode.Uri) => {
 				return [
@@ -88,7 +93,8 @@ suite('Client integration', () => {
 
 		middleware = {};
 		const clientOptions: lsclient.LanguageClientOptions = {
-			documentSelector, synchronize: {}, initializationOptions: {}, middleware
+			documentSelector, synchronize: {}, initializationOptions: {}, middleware,
+			workspaceFolder: { index: 0, name: 'test_folder', uri: vscode.Uri.parse(`${fsProvider.scheme}:///`) },
 		};
 
 		client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
@@ -97,6 +103,7 @@ suite('Client integration', () => {
 	});
 
 	suiteTeardown(async () => {
+		fsProviderDisposable.dispose();
 		await client.stop();
 	});
 
@@ -146,22 +153,23 @@ suite('Client integration', () => {
 				},
 				workspace: {
 					fileOperations: {
-						didCreate: { filters: [{ scheme: 'file', pattern: { glob: '**/created-static/**{/,/*.txt}' } }] },
+						didCreate: { filters: [{ scheme: fsProvider.scheme, pattern: { glob: '**/created-static/**{/,/*.txt}' } }] },
 						didRename: {
 							filters: [
-								{ scheme: 'file', pattern: { glob: '**/renamed-static/**/', matches: 'folder' } },
-								{ scheme: 'file', pattern: { glob: '**/renamed-static/**/*.txt', matches: 'file' } }
+								{ scheme: fsProvider.scheme, pattern: { glob: '**/renamed-static/**/', matches: 'folder' } },
+								{ scheme: fsProvider.scheme, pattern: { glob: '**/renamed-static/**/*.txt', matches: 'file' } }
 							]
 						},
-						didDelete: { filters: [{ scheme: 'file', pattern: { glob: '**/deleted-static/**{/,/*.txt}' } }] },
-						willCreate: { filters: [{ scheme: 'file', pattern: { glob: '**/created-static/**{/,/*.txt}' } }] },
+						didDelete:
+							{ filters: [{ scheme: fsProvider.scheme, pattern: { glob: '**/deleted-static/**{/,/*.txt}' } }] },
+						willCreate: { filters: [{ scheme: fsProvider.scheme, pattern: { glob: '**/created-static/**{/,/*.txt}' } }] },
 						willRename: {
 							filters: [
-								{ scheme: 'file', pattern: { glob: '**/renamed-static/**/', matches: 'folder' } },
-								{ scheme: 'file', pattern: { glob: '**/renamed-static/**/*.txt', matches: 'file' } }
+								{ scheme: fsProvider.scheme, pattern: { glob: '**/renamed-static/**/', matches: 'folder' } },
+								{ scheme: fsProvider.scheme, pattern: { glob: '**/renamed-static/**/*.txt', matches: 'file' } }
 							]
 						},
-						willDelete: { filters: [ {scheme: 'file', pattern: { glob: '**/deleted-static/**{/,/*.txt}' } }] },
+						willDelete: { filters: [{ scheme: fsProvider.scheme, pattern: { glob: '**/deleted-static/**{/,/*.txt}' } }] },
 					},
 				},
 				linkedEditingRangeProvider: true
@@ -716,47 +724,50 @@ suite('Client integration', () => {
 			});
 		}
 
+		const toWorkspaceUri = (relative: string) => vscode.Uri.parse(`${fsProvider.scheme}:///${relative}`);
+
 		const createFiles = [
-			'/my/file.txt',
-			'/my/file.js',
-			'/my/folder/',
+			'my/file.txt',
+			'my/file.js',
+			'my/folder/',
 			// Static registration for tests is [operation]-static and *.txt
-			'/my/created-static/file.txt',
-			'/my/created-static/file.js',
-			'/my/created-static/folder/',
+			'my/created-static/file.txt',
+			'my/created-static/file.js',
+			'my/created-static/folder/',
 			// Dynamic registration for tests is [operation]-dynamic and *.js
-			'/my/created-dynamic/file.txt',
-			'/my/created-dynamic/file.js',
-			'/my/created-dynamic/folder/',
-		].map((p) => vscode.Uri.file(p));
+			'my/created-dynamic/file.txt',
+			'my/created-dynamic/file.js',
+			'my/created-dynamic/folder/',
+		].map(toWorkspaceUri);
 
 		const renameFiles = [
-			['/my/file.txt', '/my-new/file.txt'],
-			['/my/file.js', '/my-new/file.js'],
-			['/my/folder/', '/my-new/folder/'],
+			['my/file.txt', 'my-new/file.txt'],
+			['my/file.js', 'my-new/file.js'],
+			['my/folder/', 'my-new/folder/'],
 			// Static registration for tests is [operation]-static and *.txt
-			['/my/renamed-static/file.txt', '/my-new/renamed-static/file.txt'],
-			['/my/renamed-static/file.js', '/my-new/renamed-static/file.js'],
-			['/my/renamed-static/folder/', '/my-new/renamed-static/folder/'],
+			['my/renamed-static/file.txt', 'my-new/renamed-static/file.txt'],
+			['my/renamed-static/file.js', 'my-new/renamed-static/file.js'],
+			['my/renamed-static/folder/', 'my-new/renamed-static/folder/'],
 			// Dynamic registration for tests is [operation]-dynamic and *.js
-			['/my/renamed-dynamic/file.txt', '/my-new/renamed-dynamic/file.txt'],
-			['/my/renamed-dynamic/file.js', '/my-new/renamed-dynamic/file.js'],
-			['/my/renamed-dynamic/folder/', '/my-new/renamed-dynamic/folder/'],
-		].map(([o, n]) => ({ oldUri: vscode.Uri.file(o), newUri: vscode.Uri.file(n) }));
+			['my/renamed-dynamic/file.txt', 'my-new/renamed-dynamic/file.txt'],
+			['my/renamed-dynamic/file.js', 'my-new/renamed-dynamic/file.js'],
+			['my/renamed-dynamic/folder/', 'my-new/renamed-dynamic/folder/'],
+		].map(([o, n]) => ({ oldUri: toWorkspaceUri(o), newUri: toWorkspaceUri(n) }));
 
 		const deleteFiles = [
-			'/my/file.txt',
-			'/my/file.js',
-			'/my/folder/',
+			'my/file.txt',
+			'my/file.js',
+			'my/folder/',
+			'my/folder.js/',
 			// Static registration for tests is [operation]-static and *.txt
-			'/my/deleted-static/file.txt',
-			'/my/deleted-static/file.js',
-			'/my/deleted-static/folder/',
+			'my/deleted-static/file.txt',
+			'my/deleted-static/file.js',
+			'my/deleted-static/folder/',
 			// Dynamic registration for tests is [operation]-dynamic and *.js
-			'/my/deleted-dynamic/file.txt',
-			'/my/deleted-dynamic/file.js',
-			'/my/deleted-dynamic/folder/',
-		].map((p) => vscode.Uri.file(p));
+			'my/deleted-dynamic/file.txt',
+			'my/deleted-dynamic/file.js',
+			'my/deleted-dynamic/folder/',
+		].map(toWorkspaceUri);
 
 		test('Will Create Files', async () => {
 			const feature = client.getFeature(WillCreateFilesRequest.method);
@@ -775,10 +786,10 @@ suite('Client integration', () => {
 				edits,
 				'WILL CREATE',
 				[
-					'file:///my/created-static/file.txt',
-					'file:///my/created-static/folder/',
-					'file:///my/created-dynamic/file.js',
-					'file:///my/created-dynamic/folder/',
+					toWorkspaceUri('my/created-static/file.txt').toString(),
+					toWorkspaceUri('my/created-static/folder/').toString(),
+					toWorkspaceUri('my/created-dynamic/file.js').toString(),
+					toWorkspaceUri('my/created-dynamic/folder/').toString(),
 				],
 			);
 
@@ -795,8 +806,8 @@ suite('Client integration', () => {
 				edits,
 				'WILL CREATE',
 				[
-					'file:///my/created-static/file.txt',
-					'file:///my/created-dynamic/file.js',
+					toWorkspaceUri('my/created-static/file.txt').toString(),
+					toWorkspaceUri('my/created-dynamic/file.js').toString(),
 				],
 			);
 
@@ -813,10 +824,10 @@ suite('Client integration', () => {
 				'create',
 				{
 					files: [
-						{ uri: 'file:///my/created-static/file.txt' },
-						{ uri: 'file:///my/created-static/folder/' },
-						{ uri: 'file:///my/created-dynamic/file.js' },
-						{ uri: 'file:///my/created-dynamic/folder/' },
+						{ uri: toWorkspaceUri('my/created-static/file.txt').toString() },
+						{ uri: toWorkspaceUri('my/created-static/folder/').toString() },
+						{ uri: toWorkspaceUri('my/created-dynamic/file.js').toString() },
+						{ uri: toWorkspaceUri('my/created-dynamic/folder/').toString() },
 					],
 				},
 			);
@@ -833,8 +844,8 @@ suite('Client integration', () => {
 				'create',
 				{
 					files: [
-						{ uri: 'file:///my/created-static/file.txt' },
-						{ uri: 'file:///my/created-dynamic/file.js' },
+						{ uri: toWorkspaceUri('my/created-static/file.txt').toString() },
+						{ uri: toWorkspaceUri('my/created-dynamic/file.js').toString() },
 					],
 				},
 			);
@@ -859,10 +870,10 @@ suite('Client integration', () => {
 				edits,
 				'WILL RENAME',
 				[
-					'file:///my/renamed-static/file.txt -> file:///my-new/renamed-static/file.txt',
-					'file:///my/renamed-static/folder/ -> file:///my-new/renamed-static/folder/',
-					'file:///my/renamed-dynamic/file.js -> file:///my-new/renamed-dynamic/file.js',
-					'file:///my/renamed-dynamic/folder/ -> file:///my-new/renamed-dynamic/folder/',
+					`${toWorkspaceUri('my/renamed-static/file.txt')} -> ${toWorkspaceUri('my-new/renamed-static/file.txt')}`,
+					`${toWorkspaceUri('my/renamed-static/folder/')} -> ${toWorkspaceUri('my-new/renamed-static/folder/')}`,
+					`${toWorkspaceUri('my/renamed-dynamic/file.js')} -> ${toWorkspaceUri('my-new/renamed-dynamic/file.js')}`,
+					`${toWorkspaceUri('my/renamed-dynamic/folder/')} -> ${toWorkspaceUri('my-new/renamed-dynamic/folder/')}`,
 				],
 			);
 
@@ -879,8 +890,8 @@ suite('Client integration', () => {
 				edits,
 				'WILL RENAME',
 				[
-					'file:///my/renamed-static/file.txt -> file:///my-new/renamed-static/file.txt',
-					'file:///my/renamed-dynamic/file.js -> file:///my-new/renamed-dynamic/file.js',
+					`${toWorkspaceUri('my/renamed-static/file.txt')} -> ${toWorkspaceUri('my-new/renamed-static/file.txt')}`,
+					`${toWorkspaceUri('my/renamed-dynamic/file.js')} -> ${toWorkspaceUri('my-new/renamed-dynamic/file.js')}`,
 				],
 			);
 
@@ -897,10 +908,10 @@ suite('Client integration', () => {
 				'rename',
 				{
 					files: [
-						{ oldUri: 'file:///my/renamed-static/file.txt', newUri: 'file:///my-new/renamed-static/file.txt' },
-						{ oldUri: 'file:///my/renamed-static/folder/', newUri: 'file:///my-new/renamed-static/folder/' },
-						{ oldUri: 'file:///my/renamed-dynamic/file.js', newUri: 'file:///my-new/renamed-dynamic/file.js' },
-						{ oldUri: 'file:///my/renamed-dynamic/folder/', newUri: 'file:///my-new/renamed-dynamic/folder/' },
+						{ oldUri: toWorkspaceUri('my/renamed-static/file.txt').toString(), newUri: toWorkspaceUri('my-new/renamed-static/file.txt').toString() },
+						{ oldUri: toWorkspaceUri('my/renamed-static/folder/').toString(), newUri: toWorkspaceUri('my-new/renamed-static/folder/').toString() },
+						{ oldUri: toWorkspaceUri('my/renamed-dynamic/file.js').toString(), newUri: toWorkspaceUri('my-new/renamed-dynamic/file.js').toString() },
+						{ oldUri: toWorkspaceUri('my/renamed-dynamic/folder/').toString(), newUri: toWorkspaceUri('my-new/renamed-dynamic/folder/').toString() },
 					],
 				},
 			);
@@ -917,8 +928,8 @@ suite('Client integration', () => {
 				'rename',
 				{
 					files: [
-						{ oldUri: 'file:///my/renamed-static/file.txt', newUri: 'file:///my-new/renamed-static/file.txt' },
-						{ oldUri: 'file:///my/renamed-dynamic/file.js', newUri: 'file:///my-new/renamed-dynamic/file.js' },
+						{ oldUri: toWorkspaceUri('my/renamed-static/file.txt').toString(), newUri: toWorkspaceUri('my-new/renamed-static/file.txt').toString() },
+						{ oldUri: toWorkspaceUri('my/renamed-dynamic/file.js').toString(), newUri: toWorkspaceUri('my-new/renamed-dynamic/file.js').toString() },
 					],
 				},
 			);
@@ -943,10 +954,10 @@ suite('Client integration', () => {
 				edits,
 				'WILL DELETE',
 				[
-					'file:///my/deleted-static/file.txt',
-					'file:///my/deleted-static/folder/',
-					'file:///my/deleted-dynamic/file.js',
-					'file:///my/deleted-dynamic/folder/',
+					toWorkspaceUri('my/deleted-static/file.txt').toString(),
+					toWorkspaceUri('my/deleted-static/folder/').toString(),
+					toWorkspaceUri('my/deleted-dynamic/file.js').toString(),
+					toWorkspaceUri('my/deleted-dynamic/folder/').toString(),
 				],
 			);
 
@@ -963,8 +974,8 @@ suite('Client integration', () => {
 				edits,
 				'WILL DELETE',
 				[
-					'file:///my/deleted-static/file.txt',
-					'file:///my/deleted-dynamic/file.js',
+					toWorkspaceUri('my/deleted-static/file.txt').toString(),
+					toWorkspaceUri('my/deleted-dynamic/file.js').toString(),
 				],
 			);
 
@@ -981,10 +992,10 @@ suite('Client integration', () => {
 				'delete',
 				{
 					files: [
-						{ uri: 'file:///my/deleted-static/file.txt' },
-						{ uri: 'file:///my/deleted-static/folder/' },
-						{ uri: 'file:///my/deleted-dynamic/file.js' },
-						{ uri: 'file:///my/deleted-dynamic/folder/' },
+						{ uri: toWorkspaceUri('my/deleted-static/file.txt').toString() },
+						{ uri: toWorkspaceUri('my/deleted-static/folder/').toString() },
+						{ uri: toWorkspaceUri('my/deleted-dynamic/file.js').toString() },
+						{ uri: toWorkspaceUri('my/deleted-dynamic/folder/').toString() },
 					],
 				},
 			);
@@ -1001,8 +1012,8 @@ suite('Client integration', () => {
 				'delete',
 				{
 					files: [
-						{ uri: 'file:///my/deleted-static/file.txt' },
-						{ uri: 'file:///my/deleted-dynamic/file.js' },
+						{ uri: toWorkspaceUri('my/deleted-static/file.txt').toString() },
+						{ uri: toWorkspaceUri('my/deleted-dynamic/file.js').toString() },
 					],
 				},
 			);
