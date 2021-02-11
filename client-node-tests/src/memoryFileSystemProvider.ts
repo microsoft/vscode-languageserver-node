@@ -11,7 +11,7 @@ export class MemoryFileSystemProvider implements vscode.FileSystemProvider {
 	public readonly root = new FakeDirectory('');
 	public readonly onDidChangeFile = new vscode.EventEmitter<vscode.FileChangeEvent[]>().event;
 
-	public watch(uri: vscode.Uri, options: { recursive: boolean; excludes: string[]; }): vscode.Disposable {
+	public watch(_: vscode.Uri, __: { recursive: boolean; excludes: string[]; }): vscode.Disposable {
 		return { dispose() { } };
 	}
 
@@ -60,7 +60,7 @@ export class MemoryFileSystemProvider implements vscode.FileSystemProvider {
 		directory.children.set(name, file);
 	}
 
-	public delete(uri: vscode.Uri, options: { recursive: boolean; }): void | Thenable<void> {
+	public delete(uri: vscode.Uri, _: { recursive: boolean; }): void | Thenable<void> {
 		const [directoryUri, name] = this.splitUri(uri);
 		const directory = this.getDirectory(directoryUri);
 		directory.children.delete(name);
