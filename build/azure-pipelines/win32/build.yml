@@ -24,3 +24,9 @@ steps:
     set PATHEXT=.COM;.EXE;.BAT;.CMD;
     npm run test
   displayName: 'Unit Tests'
+  
+- task: RichCodeNavIndexer@0
+  displayName: VS Rich Code Navigation Upload
+  inputs:
+    languages: typescript
+  continueOnError: true
