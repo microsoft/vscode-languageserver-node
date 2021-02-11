@@ -157,11 +157,21 @@ suite('Client integration', () => {
 						didRename: {
 							filters: [
 								{ scheme: fsProvider.scheme, pattern: { glob: '**/renamed-static/**/', matches: 'folder' } },
-								{ scheme: fsProvider.scheme, pattern: { glob: '**/renamed-static/**/*.txt', matches: 'file' } }
+								{ scheme: fsProvider.scheme, pattern: { glob: '**/renamed-static/**/*.txt', matches: 'file' } },
+								// Additionally, to ensure we detect file types correctly, subscribe to only files in
+								// this folder.
+								{ scheme: fsProvider.scheme, pattern: { glob: '**/only-files/**/*', matches: 'file' } },
 							]
 						},
 						didDelete:
-							{ filters: [{ scheme: fsProvider.scheme, pattern: { glob: '**/deleted-static/**{/,/*.txt}' } }] },
+						{
+							filters: [
+								{ scheme: fsProvider.scheme, pattern: { glob: '**/deleted-static/**{/,/*.txt}' } },
+								// Additionally, to ensure we detect file types correctly, subscribe to only files in
+								// this folder.
+								{ scheme: fsProvider.scheme, pattern: { glob: '**/only-files/**/*', matches: 'file' } },
+							]
+						},
 						willCreate: { filters: [{ scheme: fsProvider.scheme, pattern: { glob: '**/created-static/**{/,/*.txt}' } }] },
 						willRename: {
 							filters: [
@@ -752,6 +762,8 @@ suite('Client integration', () => {
 			['my/renamed-dynamic/file.txt', 'my-new/renamed-dynamic/file.txt'],
 			['my/renamed-dynamic/file.js', 'my-new/renamed-dynamic/file.js'],
 			['my/renamed-dynamic/folder/', 'my-new/renamed-dynamic/folder/'],
+			// Special folder that's in something we only watch for files.
+			['my/only-files/folder/', 'my-new/only-files/folder/'],
 		].map(([o, n]) => ({ oldUri: toWorkspaceUri(o), newUri: toWorkspaceUri(n) }));
 
 		const deleteFiles = [
@@ -767,6 +779,8 @@ suite('Client integration', () => {
 			'my/deleted-dynamic/file.txt',
 			'my/deleted-dynamic/file.js',
 			'my/deleted-dynamic/folder/',
+			// Special folder that's in something we only watch for files.
+			'my/only-files/folder/',
 		].map(toWorkspaceUri);
 
 		test('Will Create Files', async () => {

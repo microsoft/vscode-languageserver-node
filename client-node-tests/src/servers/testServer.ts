@@ -97,11 +97,19 @@ connection.onInitialize((params: InitializeParams): any => {
 				didRename: {
 					filters: [
 						{ scheme: 'file-test', pattern: { glob: '**/renamed-static/**/', matches: 'folder' } },
-						{ scheme: 'file-test', pattern: { glob: '**/renamed-static/**/*.txt', matches: 'file' } }
+						{ scheme: 'file-test', pattern: { glob: '**/renamed-static/**/*.txt', matches: 'file' } },
+						// Additionally, to ensure we detect file types correctly, subscribe to only files in
+						// this folder.
+						{ scheme: 'file-test', pattern: { glob: '**/only-files/**/*', matches: 'file' } }
 					]
 				},
 				didDelete: {
-					filters: [{ scheme: 'file-test', pattern: { glob: '**/deleted-static/**{/,/*.txt}' } }]
+					filters: [
+						{ scheme: 'file-test', pattern: { glob: '**/deleted-static/**{/,/*.txt}' } },
+						// Additionally, to ensure we detect file types correctly, subscribe to only files in
+						// this folder.
+						{ scheme: 'file-test', pattern: { glob: '**/only-files/**/*', matches: 'file' } }
+					]
 				},
 				willCreate: {
 					filters: [{ scheme: 'file-test', pattern: { glob: '**/created-static/**{/,/*.txt}' } }]
