@@ -916,6 +916,20 @@ suite('Client integration', () => {
 			const feature = client.getFeature(DidRenameFilesNotification.method);
 			isDefined(feature);
 
+			// DidRename relies on WillRename firing first and the items existing on disk in their correct locations
+			// so that the type of the items can be checked and stashed before they're actually renamed.
+			await createTestItems(renameFiles.map((f) => f.oldUri));
+			await new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
+				const featureWithWillRename = feature as any as { willRename(e: vscode.FileWillRenameEvent): void };
+				featureWithWillRename.willRename({ files: renameFiles, waitUntil: resolve });
+				reject(new Error('Feature unexpectedly did not call waitUntil synchronously'));
+			});
+			// Ensure they don't exist on disk when DidRename fires. In reality they would be
+			// renamed away, but deleting them is good enough for the test, the requirement is
+			// just that they don't exist in the old locations to verify the types were stashed
+			// during WillRename.
+			await deleteTestItems(renameFiles.map((f) => f.oldUri));
+
 			// Send the event and ensure the server reports the notification was sent.
 			await feature.send({ files: renameFiles });
 			await ensureNotificationReceived(
@@ -1000,6 +1014,16 @@ suite('Client integration', () => {
 			const feature = client.getFeature(DidDeleteFilesNotification.method);
 			isDefined(feature);
 
+			// DidDelete relies on WillDelete firing first and the items actually existing on disk
+			// so that the type of the items can be checked and stashed before they're actually deleted.
+			await createTestItems(deleteFiles);
+			await new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
+				const featureWithWillDelete = feature as any as { willDelete(e: vscode.FileWillDeleteEvent): void };
+				featureWithWillDelete.willDelete({ files: deleteFiles, waitUntil: resolve });
+				reject(new Error('Feature unexpectedly did not call waitUntil synchronously'));
+			});
+			await deleteTestItems(deleteFiles);
+
 			// Send the event and ensure the server reports the notification was sent.
 			await feature.send({ files: deleteFiles });
 			await ensureNotificationReceived(
@@ -1034,6 +1058,23 @@ suite('Client integration', () => {
 
 			middleware.workspace.didDeleteFiles = undefined;
 		});
+
+		async function createTestItems(items: vscode.Uri[]): Promise<void> {
+			for (const item of items) {
+				if (item.path.endsWith('/')) {
+					await fsProvider.createDirectory(item);
+				}
+				else {
+					await fsProvider.writeFile(item, new Uint8Array(), { create: true, overwrite: false });
+				}
+			}
+		}
+
+		async function deleteTestItems(items: vscode.Uri[]): Promise<void> {
+			for (const item of items) {
+				await fsProvider.delete(item, { recursive: true });
+			}
+		}
 	});
 
 	test('Semantic Tokens', async () => {

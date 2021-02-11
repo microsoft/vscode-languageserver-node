@@ -51,7 +51,7 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 	private _clientCapability: keyof proto.FileOperationClientCapabilities;
 	private _serverCapability: keyof proto.FileOperationOptions;
 	private _listener: code.Disposable | undefined;
-	private _filters = new Map<string, Array<{ scheme?: string, matcher: minimatch.IMinimatch, kind?: proto.FileOperationPatternKind }>>();
+	protected _filters = new Map<string, Array<{ scheme?: string, matcher: minimatch.IMinimatch, kind?: proto.FileOperationPatternKind }>>();
 
 	constructor(client: BaseLanguageClient, event: code.Event<E>,
 		registrationType: proto.RegistrationType<proto.FileOperationRegistrationOptions>,
@@ -123,6 +123,10 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 		}
 	}
 
+	protected getFileType(uri: code.Uri): Promise<code.FileType | undefined> {
+		return FileOperationFeature.getFileType(uri);;
+	}
+
 	protected async filter(event: E, prop: (i: I) => code.Uri): Promise<E> {
 		// (Asynchronously) map each file onto a boolean of whether it matches
 		// any of the globs.
@@ -141,7 +145,7 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 						if (filter.kind === undefined) {
 							return true;
 						}
-						const fileType = await FileOperationFeature.getFileType(uri);
+						const fileType = await this.getFileType(uri);
 						// If we can't determine the file type than we treat it as a match.
 						// Dropping it would be another alternative.
 						if (fileType === undefined) {
@@ -168,7 +172,7 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 		return { ...event, files };
 	}
 
-	private static async getFileType(uri: code.Uri): Promise<code.FileType | undefined> {
+	protected static async getFileType(uri: code.Uri): Promise<code.FileType | undefined> {
 		try {
 			return (await code.workspace.fs.stat(uri)).type;
 		} catch (e) {
@@ -221,6 +225,38 @@ abstract class NotificationFileOperationFeature<I, E extends { readonly files: R
 	protected abstract doSend(event: E, next: (event: E) => void): void;
 }
 
+abstract class CachingNotificationFileOperationFeature<I, E extends { readonly files: ReadonlyArray<I>; }, P> extends NotificationFileOperationFeature<I, E, P> {
+	protected _willListener: code.Disposable | undefined;
+	private _fsPathFileTypes: { [key: string]: code.FileType } = {};
+
+	protected async getFileType(uri: code.Uri): Promise<code.FileType | undefined> {
+		const fsPath = uri.fsPath;
+		if (this._fsPathFileTypes[fsPath])
+			return this._fsPathFileTypes[fsPath];
+
+		const type = await FileOperationFeature.getFileType(uri);
+		if (type)
+			this._fsPathFileTypes[fsPath] = type;
+		return type;
+	}
+
+	public unregister(id: string): void {
+		super.unregister(id);
+		if (this._filters.size === 0 && this._willListener) {
+			this._willListener.dispose();
+			this._willListener = undefined;
+		}
+	}
+
+	public dispose(): void {
+		super.dispose();
+		if (this._willListener) {
+			this._willListener.dispose();
+			this._willListener = undefined;
+		}
+	}
+}
+
 export class DidCreateFilesFeature extends NotificationFileOperationFeature<code.Uri, code.FileCreateEvent, proto.CreateFilesParams> {
 
 	constructor(client: BaseLanguageClient) {
@@ -239,7 +275,7 @@ export class DidCreateFilesFeature extends NotificationFileOperationFeature<code
 	}
 }
 
-export class DidRenameFilesFeature extends NotificationFileOperationFeature<{ oldUri: code.Uri, newUri: code.Uri }, code.FileRenameEvent, proto.RenameFilesParams> {
+export class DidRenameFilesFeature extends CachingNotificationFileOperationFeature<{ oldUri: code.Uri, newUri: code.Uri }, code.FileRenameEvent, proto.RenameFilesParams> {
 
 	constructor(client: BaseLanguageClient) {
 		super(
@@ -247,6 +283,22 @@ export class DidRenameFilesFeature extends NotificationFileOperationFeature<{ ol
 			(i: { oldUri: code.Uri, newUri: code.Uri }) => i.oldUri,
 			client.code2ProtocolConverter.asDidRenameFilesParams,
 		);
+	}
+
+	public register(data: RegistrationData<proto.FileOperationRegistrationOptions>): void {
+		if (!this._willListener) {
+			this._willListener = code.workspace.onWillRenameFiles(this.willRename, this);
+		}
+		super.register(data);
+	}
+
+	private willRename(e: code.FileWillRenameEvent): void {
+		// Calling filter will force the matching logic to run. For any item
+		// that requires a getFileType lookup, the overriden getFileType will
+		// be called that will cache the result so that when onDidRename fires,
+		// it can still be checked even though the item no longer exists on disk
+		// in its original location.
+		e.waitUntil(this.filter(e, (i) => i.oldUri));
 	}
 
 	protected doSend(event: code.FileRenameEvent, next: (event: code.FileRenameEvent) => void): void {
@@ -257,7 +309,7 @@ export class DidRenameFilesFeature extends NotificationFileOperationFeature<{ ol
 	}
 }
 
-export class DidDeleteFilesFeature extends NotificationFileOperationFeature<code.Uri, code.FileDeleteEvent, proto.DeleteFilesParams> {
+export class DidDeleteFilesFeature extends CachingNotificationFileOperationFeature<code.Uri, code.FileDeleteEvent, proto.DeleteFilesParams> {
 
 	constructor(client: BaseLanguageClient) {
 		super(
@@ -265,6 +317,21 @@ export class DidDeleteFilesFeature extends NotificationFileOperationFeature<code
 			(i: code.Uri) => i,
 			client.code2ProtocolConverter.asDidDeleteFilesParams,
 		);
+	}
+
+	public register(data: RegistrationData<proto.FileOperationRegistrationOptions>): void {
+		if (!this._willListener) {
+			this._willListener = code.workspace.onWillDeleteFiles(this.willDelete, this);
+		}
+		super.register(data);
+	}
+
+	private willDelete(e: code.FileWillDeleteEvent): void {
+		// Calling filter will force the matching logic to run. For any item
+		// that requires a getFileType lookup, the overriden getFileType will
+		// be called that will cache the result so that when onDidDelete fires,
+		// it can still be checked even though the item no longer exists on disk.
+		e.waitUntil(this.filter(e, (i) => i));
 	}
 
 	protected doSend(event: code.FileCreateEvent, next: (event: code.FileCreateEvent) => void): void {
