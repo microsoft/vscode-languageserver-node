@@ -1,13 +1,16 @@
 {
-	"p": "./tsconfig.json",
+	// The root TypeScript project to index
+	"project": "./tsconfig.json",
+	// The name of the output file
 	"out": "lsp.lsif",
-	"package": [
-		{ "project": "./textDocument/tsconfig.json", "package": "./textDocument/package.json" },
-		{ "project": "./types/tsconfig.json", "package": "./types/package.json" },
-		{ "project": "./jsonrpc/tsconfig.json", "package": "./jsonrpc/package.json" },
-		{ "project": "./protocol/tsconfig.json", "package": "./protocol/package.json" },
-		{ "project": "./server/tsconfig.json", "package": "./server/package.json" },
-		{ "project": "./client/tsconfig.json", "package": "./client/package.json" },
-		{ "project": "./client-node-tests/tsconfig.json", "package": "./client-node-tests/package.json" }
+	// A mapping describing which packages are published to npm and what TS project files is used
+	// to generate the package code.
+	"publishedPackages": [
+		{ "package": "./textDocument/package.json", "project": "./textDocument/tsconfig.json" },
+		{ "package": "./types/package.json", "project": "./types/tsconfig.json" },
+		{ "package": "./jsonrpc/package.json", "project": "./jsonrpc/tsconfig.json" },
+		{ "package": "./protocol/package.json", "project": "./protocol/tsconfig.json" },
+		{ "package": "./server/package.json", "project": "./server/tsconfig.json" },
+		{ "package": "./client/package.json", "project": "./client/tsconfig.json" }
 	]
 }

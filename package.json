@@ -31,9 +31,9 @@
 		"http-server": "^0.12.3"
 	},
 	"scripts": {
-		"postinstall": "cd types && npm install && cd ../textDocument && npm install && cd ../jsonrpc && npm install && cd ../protocol && npm install && cd ../server && npm install && cd ../client && npm install && cd ../client-node-tests && npm install && cd ..",
-		"test": "cd types && npm test && cd ../textDocument && npm test && cd ../jsonrpc && npm test && cd ../protocol && npm test && cd ../server && npm test && cd ../client-node-tests && npm test && cd ..",
-		"clean": "cd types && npm run clean && cd ../textDocument && npm run clean && cd ../jsonrpc && npm run clean && cd ../protocol && npm run clean && cd ../server && npm run clean && cd ../client && npm run clean && cd ../client-node-tests && npm run clean && cd ..",
+		"postinstall": "node ./build/bin/all.js install",
+		"test": "node ./build/bin/all.js run test",
+		"clean": "node ./build/bin/all.js run clean",
 		"symlink": "node ./build/bin/symlink.js",
 		"symlink:tests": "node ./build/bin/symlink-tests.js",
 		"symlink:testbed": "node ./build/bin/symlink-testbed.js",
@@ -48,14 +48,7 @@
 		"compile:testbed": "tsc -b ./testbed/tsconfig.json",
 		"watch": "tsc -b tsconfig-watch.json -w",
 		"watch:testbed": "tsc -b ./testbed/tsconfig.json -w",
-		"lint": "npm run lint:types && npm run lint:textDocument && npm run lint:jsonrpc && npm run lint:protocol && npm run lint:server && npm run lint:client && npm run lint:client-node-tests",
-		"lint:types": "eslint --config ./types/.eslintrc.json ./types/src/*.ts",
-		"lint:textDocument": "eslint --config ./textDocument/.eslintrc.json ./textDocument/src/*.ts",
-		"lint:jsonrpc": "eslint --config ./jsonrpc/.eslintrc.json ./jsonrpc/src/**/*.ts",
-		"lint:protocol": "eslint --config ./protocol/.eslintrc.json ./protocol/src/**/*.ts",
-		"lint:server": "eslint --config ./server/.eslintrc.json ./server/src/**/*.ts",
-		"lint:client": "eslint --config ./client/.eslintrc.json ./client/src/**/*.ts",
-		"lint:client-node-tests": "eslint --config ./client-node-tests/.eslintrc.json ./client-node-tests/src/**/*.ts",
+		"lint": "node ./build/bin/all.js run lint",
 		"all": "npm run symlink && npm run compile && npm run test",
 		"rebuildAll": "npm run clean && npm run symlink && npm run compile && npm run test"
 	},

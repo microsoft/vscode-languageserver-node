@@ -59,7 +59,7 @@ export interface TextDocumentsConfiguration<T> {
  * Event to signal changes to a text document.
  */
 export interface TextDocumentChangeEvent<T> {
-    /**
+	/**
      * The document that has changed.
      */
 	document: T;
@@ -69,11 +69,11 @@ export interface TextDocumentChangeEvent<T> {
  * Event to signal that a document will be saved.
  */
 export interface TextDocumentWillSaveEvent<T> {
-    /**
+	/**
      * The document that will be saved
      */
 	document: T;
-    /**
+	/**
      * The reason why save was triggered.
      */
 	reason: TextDocumentSaveReason;

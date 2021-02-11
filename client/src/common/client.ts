@@ -161,8 +161,8 @@ interface ConnectionCloseHandler {
 }
 
 interface ConnectionOptions {
-    cancellationStrategy: CancellationStrategy
-    maxRestartCount?: number
+	cancellationStrategy: CancellationStrategy
+	maxRestartCount?: number
 }
 
 function createConnection(input: MessageReader, output: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): Connection {
@@ -502,8 +502,8 @@ export interface _Middleware {
 }
 
 export type Middleware = _Middleware & TypeDefinitionMiddleware & ImplementationMiddleware & ColorProviderMiddleware &
-	FoldingRangeProviderMiddleware & DeclarationMiddleware & SelectionRangeProviderMiddleware & CallHierarchyMiddleware & SemanticTokensMiddleware &
-	LinkedEditingRangeMiddleware;
+FoldingRangeProviderMiddleware & DeclarationMiddleware & SelectionRangeProviderMiddleware & CallHierarchyMiddleware & SemanticTokensMiddleware &
+LinkedEditingRangeMiddleware;
 
 export interface LanguageClientOptions {
 	documentSelector?: DocumentSelector | string[];

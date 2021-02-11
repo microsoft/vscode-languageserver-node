@@ -22,6 +22,7 @@
 		"compile:esm": "node ../build/bin/tsc -b ./tsconfig.esm.json",
 		"clean": "node ../node_modules/rimraf/bin.js lib",
 		"watch": "node ../build/bin/tsc -b ./tsconfig-watch.json -w",
+		"lint": "node ../node_modules/eslint/bin/eslint.js ./src/**/*.ts",
 		"test": "node ../node_modules/mocha/bin/_mocha",
 		"preversion": "npm test"
 	}

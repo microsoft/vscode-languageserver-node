@@ -637,10 +637,10 @@ export interface _ClientCapabilities {
 	 */
 	textDocument?: TextDocumentClientCapabilities;
 
-    /**
+	/**
      * Window specific client capabilities.
      */
-    window?: WindowClientCapabilities;
+	window?: WindowClientCapabilities;
 
 	/**
 	 * General client capabilities.
@@ -895,7 +895,7 @@ export interface _ServerCapabilities<T = any> {
 	 *
 	 * @since 3.16.0
 	 */
-    monikerProvider?: boolean | MonikerOptions | MonikerRegistrationOptions;
+	monikerProvider?: boolean | MonikerOptions | MonikerRegistrationOptions;
 
 	/**
 	 * Experimental server capabilities.
