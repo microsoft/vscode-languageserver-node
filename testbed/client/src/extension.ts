@@ -33,14 +33,14 @@ export function activate(context: ExtensionContext) {
 		initializationOptions: 'Chris it gets passed to the server',
 		progressOnInitialization: true,
 		stdioEncoding: 'utf8',
-		uriConverters: {
-			code2Protocol: (value: Uri) => {
-				return `vscode-${value.toString()}`
-			},
-			protocol2Code: (value: string) => {
-				return Uri.parse(value.substring(7))
-			}
-		},
+		// uriConverters: {
+		// 	code2Protocol: (value: Uri) => {
+		// 		return `vscode-${value.toString()}`
+		// 	},
+		// 	protocol2Code: (value: string) => {
+		// 		return Uri.parse(value.substring(7))
+		// 	}
+		// },
 		middleware: {
 			didOpen: (document, next) => {
 				next(document);

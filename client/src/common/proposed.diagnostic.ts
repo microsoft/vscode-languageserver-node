@@ -31,6 +31,24 @@ export interface ProvideDiagnosticsSignature {
 	(this: void, resource: Uri, token: CancellationToken): ProviderResult<VDiagnostic[]>;
 }
 
+enum RequestStateKind {
+	active = 'open',
+	reschedule = 'reschedule',
+	outDated = 'drop'
+}
+
+type RequestState = {
+	state: RequestStateKind.active;
+	uri: Uri;
+	tokenSource: CancellationTokenSource;
+} | {
+	state: RequestStateKind.reschedule;
+	uri: Uri;
+} | {
+	state: RequestStateKind.outDated;
+	uri: Uri;
+};
+
 export class DiagnosticFeature extends TextDocumentFeature<boolean | Proposed.DiagnosticOptions, Proposed.DiagnosticRegistrationOptions, DiagnosticProvider> {
 
 	constructor(client: BaseLanguageClient) {
@@ -75,24 +93,35 @@ export class DiagnosticFeature extends TextDocumentFeature<boolean | Proposed.Di
 			}
 		};
 
-		const pendingRequests: Map<string, CancellationTokenSource> = new Map();
-		const requestsToSchedule: Set<string> = new Set();
+		const requestStates: Map<string, RequestState> = new Map();
 		const pullDiagnostics = async (resource: Uri): Promise<void> => {
 			const key = resource.toString();
-			const pending = pendingRequests.get(key);
-			if (pending !== undefined) {
-				pending.cancel();
-				requestsToSchedule.add(key);
-			} else {
-				const tokenSource = new CancellationTokenSource();
-				pendingRequests.set(key, tokenSource);
-				const diagnostics = await provider.provideDiagnostics(resource, tokenSource.token) ?? [];
-				pendingRequests.delete(key);
-				collection.set(resource, diagnostics);
-				if (requestsToSchedule.has(key)) {
-					requestsToSchedule.delete(key);
-					pullDiagnostics(resource);
+			const currentState = requestStates.get(key);
+			if (currentState !== undefined) {
+				if (currentState.state === RequestStateKind.active) {
+					currentState.tokenSource.cancel();
+					requestStates.set(key, { state: RequestStateKind.reschedule, uri: resource });
 				}
+				// We have a state. Wait until the request returns.
+				return;
+			}
+			const tokenSource = new CancellationTokenSource();
+			requestStates.set(key, { state: RequestStateKind.active, uri: resource, tokenSource });
+			const diagnostics = await provider.provideDiagnostics(resource, tokenSource.token) ?? [];
+			const afterState = requestStates.get(key);
+			if (afterState === undefined) {
+				// This shouldn't happen. Log it
+				this._client.error(`Lost request state in diagnostic pull model. Clearing diagnostics for ${key}`);
+				collection.delete(resource);
+				return;
+			}
+			requestStates.delete(key);
+			if (afterState.state === RequestStateKind.outDated) {
+				return;
+			}
+			collection.set(resource, diagnostics);
+			if (afterState.state === RequestStateKind.reschedule) {
+				pullDiagnostics(resource);
 			}
 		};
 
@@ -111,8 +140,20 @@ export class DiagnosticFeature extends TextDocumentFeature<boolean | Proposed.Di
 			}
 			// The once that are still in current are the once that
 			// are not valid anymore. So clear the diagnostics
-			for (const item of current.values()) {
-				collection.delete(item);
+			for (const entry of current.entries()) {
+				const key = entry[0];
+				const uri = entry[1];
+				collection.delete(uri);
+				const requestState = requestStates.get(key);
+				if (requestState === undefined) {
+					continue;
+				}
+				// We have a running request. If it is active, cancel it.
+				if (requestState.state === RequestStateKind.active) {
+					requestState.tokenSource.cancel();
+				}
+				// Mark the result as out dated.
+				requestStates.set(key, { state: RequestStateKind.outDated, uri: entry[1]});
 			}
 			for (const item of added) {
 				pullDiagnostics(item);
