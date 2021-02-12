@@ -1926,12 +1926,6 @@ class WorkspaceSymbolFeature extends WorkspaceFeature<WorkspaceSymbolRegistratio
 	}
 }
 
-declare module 'vscode' {
-	export interface CodeActionProvider<T extends CodeAction = CodeAction> {
-		resolveCodeAction?(codeAction: T, token: CancellationToken): ProviderResult<T>;
-	}
-}
-
 class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions, CodeActionRegistrationOptions, CodeActionProvider> {
 
 	constructor(client: BaseLanguageClient) {

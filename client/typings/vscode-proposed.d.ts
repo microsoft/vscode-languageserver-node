@@ -33,4 +33,16 @@ declare module 'vscode' {
 		 */
 		type?: string;
 	}
+
+	export interface OpenEditorInfo {
+		name: string;
+		resource: Uri;
+	}
+
+	export namespace window {
+		export const openEditors: ReadonlyArray<OpenEditorInfo>;
+
+		// todo@API proper event type
+		export const onDidChangeOpenEditors: Event<void>;
+	}
 }

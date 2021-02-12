@@ -4,6 +4,15 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
+import { promisify } from 'util';
+import * as fs from 'fs';
+
+namespace pfs {
+	export const readFile = promisify(fs.readFile);
+}
+
+import { URI } from 'vscode-uri';
+
 import {
 	CodeAction, CodeActionKind, Command, CompletionItem, createConnection, CreateFile, DeclarationLink,
 	Definition, DefinitionLink, Diagnostic, DocumentHighlight, DocumentHighlightKind, Hover, InitializeError,
@@ -11,7 +20,7 @@ import {
 	SignatureHelp, SymbolInformation, SymbolKind, TextDocumentEdit, TextDocuments, TextDocumentSyncKind,
 	TextEdit, VersionedTextDocumentIdentifier, ProposedFeatures, DiagnosticTag, Proposed, InsertTextFormat,
 	SelectionRangeRequest, SelectionRange, InsertReplaceEdit, SemanticTokensClientCapabilities, SemanticTokensLegend,
-	SemanticTokensBuilder, SemanticTokensRegistrationType, SemanticTokensRegistrationOptions, ProtocolNotificationType, ChangeAnnotation, AnnotatedTextEdit, WorkspaceChange, CompletionItemKind
+	SemanticTokensBuilder, SemanticTokensRegistrationType, SemanticTokensRegistrationOptions, ProtocolNotificationType, ChangeAnnotation, AnnotatedTextEdit, WorkspaceChange, CompletionItemKind, DiagnosticSeverity
 } from 'vscode-languageserver/node';
 
 import {
@@ -110,7 +119,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 
 	semanticTokensLegend = computeLegend(params.capabilities.textDocument!.semanticTokens!);
 	return new Promise((resolve, reject) => {
-		let result: InitializeResult = {
+		let result: InitializeResult & { capabilities : Proposed.$DiagnosticServerCapabilities }= {
 			capabilities: {
 				textDocumentSync: TextDocumentSyncKind.Full,
 				hoverProvider: true,
@@ -154,7 +163,10 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 					commands: ['testbed.helloWorld']
 				},
 				callHierarchyProvider: true,
-				selectionRangeProvider: { workDoneProgress: true }
+				selectionRangeProvider: { workDoneProgress: true },
+				diagnosticProvider: {
+					identifier: "testbed"
+				}
 			}
 		};
 		setTimeout(() => {
@@ -271,6 +283,33 @@ connection.onHover((textPosition): Hover => {
 		// contents: doc
 	};
 });
+
+connection.languages.onDiagnostic(async (param) => {
+	const uri = URI.parse(param.textDocument.uri);
+	const document = documents.get(param.textDocument.uri);
+	const content = document !== undefined
+		? document.getText()
+		: uri.scheme === 'file'
+			? await pfs.readFile(uri.fsPath, { encoding: 'utf8'} )
+			: undefined;
+	if (content === undefined) {
+		return [];
+	}
+	const result: Diagnostic[] = [];
+	const lines: string[] = content.match(/^.*([\n\r]+|$)/gm);
+	let lineNumber: number = 0;
+	for (const line of lines) {
+		const pattern = /\b[A-Z]{2,}\b/g;
+		let match: RegExpExecArray | null;
+		while (match = pattern.exec(line)) {
+			result.push(
+				Diagnostic.create(Range.create(lineNumber, match.index, lineNumber, match.index + match[0].length), `${match[0]} is all uppercase.`, DiagnosticSeverity.Error)
+			)
+		}
+		lineNumber++;
+	}
+	return result;
+})
 
 connection.onCompletion((params, token): CompletionItem[] => {
 	const result: CompletionItem[] = [];

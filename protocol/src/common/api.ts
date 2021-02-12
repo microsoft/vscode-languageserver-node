@@ -34,5 +34,14 @@ export namespace LSPErrorCodes {
 	export const lspReservedErrorRangeEnd: integer = -32800;
 }
 
+import * as diag from './proposed.diagnostic';
+
 export namespace Proposed {
+	export type DiagnosticClientCapabilities = diag.DiagnosticClientCapabilities;
+	export type $DiagnosticClientCapabilities = diag.$DiagnosticClientCapabilities;
+	export type DiagnosticParams = diag.DiagnosticParams;
+	export type DiagnosticOptions = diag.DiagnosticOptions;
+	export type DiagnosticRegistrationOptions = diag.DiagnosticRegistrationOptions;
+	export type $DiagnosticServerCapabilities = diag.$DiagnosticServerCapabilities;
+	export const DiagnosticRequest: typeof diag.DiagnosticRequest = diag.DiagnosticRequest;
 }
