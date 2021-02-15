@@ -5,7 +5,7 @@
 	"description": "",
 	"version": "0.0.1",
 	"engines": {
-		"vscode": "^1.52.0"
+		"vscode": "^1.53.0"
 	},
 	"categories": [
 		"Other"
@@ -25,15 +25,15 @@
 	"dependencies": {
 		"minimatch": "^3.0.4",
 		"vscode-uri": "2.1.1",
-		"vscode-languageclient": "7.0.0",
-		"vscode-languageserver": "7.0.0"
+		"vscode-languageclient": "7.1.0-next.1",
+		"vscode-languageserver": "7.1.0-next.1"
 	},
 	"devDependencies": {
 		"@types/glob": "^7.1.1",
 		"@types/minimatch": "^3.0.3",
 		"@types/sinon": "^7.0.13",
 		"@types/uuid": "^7.0.2",
-		"@types/vscode": "1.52.0",
+		"@types/vscode": "1.53.0",
 		"glob": "^7.1.4",
 		"sinon": "7.4.1",
 		"uuid": "7.0.3",

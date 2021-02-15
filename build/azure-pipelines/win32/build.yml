@@ -1,7 +1,7 @@
 steps:
 - task: NodeTool@0
   inputs:
-    versionSpec: '12.8.1'
+    versionSpec: '12.18.3'
   displayName: 'Install Node.js'
 
 - script: |
@@ -24,7 +24,7 @@ steps:
     set PATHEXT=.COM;.EXE;.BAT;.CMD;
     npm run test
   displayName: 'Unit Tests'
-  
+
 - task: RichCodeNavIndexer@0
   displayName: VS Rich Code Navigation Upload
   inputs:
