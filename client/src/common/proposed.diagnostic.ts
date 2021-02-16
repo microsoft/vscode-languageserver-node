@@ -4,16 +4,19 @@
  * ------------------------------------------------------------------------------------------ */
 
 import {
-	Disposable, languages as Languages, window as Window, TextDocumentChangeEvent, CancellationToken, ProviderResult,
+	Disposable, languages as Languages, window as Window, CancellationToken, ProviderResult,
 	Diagnostic as VDiagnostic, CancellationTokenSource, TextDocument
 } from 'vscode';
 
 import {
-	Proposed, ClientCapabilities, ServerCapabilities, DocumentSelector, DidOpenTextDocumentParams, DidChangeTextDocumentParams, DidCloseTextDocumentParams,
-	DidSaveTextDocumentParams, DidOpenTextDocumentNotification, DidChangeTextDocumentNotification, DidSaveTextDocumentNotification, DidCloseTextDocumentNotification
+	Proposed, ClientCapabilities, ServerCapabilities, DocumentSelector, DidOpenTextDocumentNotification, DidChangeTextDocumentNotification,
+	DidSaveTextDocumentNotification, DidCloseTextDocumentNotification
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, BaseLanguageClient, NotifyingFeature, Middleware, DidOpenTextDocumentFeatureShape, DidChangeTextDocumentFeatureShape, DidSaveTextDocumentFeatureShape, DidCloseTextDocumentFeatureShape } from './client';
+import {
+	TextDocumentFeature, BaseLanguageClient, Middleware, DidOpenTextDocumentFeatureShape, DidChangeTextDocumentFeatureShape, DidSaveTextDocumentFeatureShape,
+	DidCloseTextDocumentFeatureShape
+} from './client';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
