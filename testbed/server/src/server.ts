@@ -165,7 +165,8 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 				callHierarchyProvider: true,
 				selectionRangeProvider: { workDoneProgress: true },
 				diagnosticProvider: {
-					identifier: "testbed"
+					identifier: "testbed",
+					mode: Proposed.DiagnosticPullMode.onType
 				}
 			}
 		};

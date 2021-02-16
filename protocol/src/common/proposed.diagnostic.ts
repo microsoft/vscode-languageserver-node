@@ -28,6 +28,16 @@ export interface $DiagnosticClientCapabilities {
 	}
 }
 
+export namespace DiagnosticPullMode {
+	export const onType: 1 = 1;
+	export const onSave: 2 = 2;
+
+	export function is(value: any): value is DiagnosticPullMode {
+		return value === 1 || value === 2;
+	}
+}
+export type DiagnosticPullMode = 1 | 2;
+
 export interface DiagnosticParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
 	 * The text document.
@@ -37,13 +47,14 @@ export interface DiagnosticParams extends WorkDoneProgressParams, PartialResultP
 
 export interface DiagnosticOptions extends WorkDoneProgressOptions {
 	identifier?: string;
+	mode: DiagnosticPullMode;
 }
 
 export interface DiagnosticRegistrationOptions extends TextDocumentRegistrationOptions, DiagnosticOptions, StaticRegistrationOptions {
 }
 
 export interface $DiagnosticServerCapabilities {
-	diagnosticProvider?: boolean | DiagnosticOptions;
+	diagnosticProvider?: DiagnosticOptions;
 }
 
 export namespace DiagnosticRequest {

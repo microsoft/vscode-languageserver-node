@@ -20,7 +20,7 @@ import {
 	DocumentRangeFormattingEditProvider, OnTypeFormattingEditProvider, RenameProvider, DocumentLinkProvider, DocumentColorProvider, DeclarationProvider,
 	FoldingRangeProvider, ImplementationProvider, SelectionRangeProvider, TypeDefinitionProvider, WorkspaceSymbolProvider, CallHierarchyProvider,
 	DocumentSymbolProviderMetadata, EventEmitter, env as Env, TextDocumentShowOptions, FileWillCreateEvent, FileWillRenameEvent, FileWillDeleteEvent, FileCreateEvent, FileDeleteEvent, FileRenameEvent,
-	LinkedEditingRangeProvider
+	LinkedEditingRangeProvider, Event as VEvent, CancellationError
 } from 'vscode';
 
 import {
@@ -775,10 +775,22 @@ interface CreateParamsSignature<E, P> {
 	(data: E): P;
 }
 
-abstract class DocumentNotifications<P, E> implements DynamicFeature<TextDocumentRegistrationOptions>, NotificationFeature<(data: E) => void> {
+export interface NotificationSendEvent<E, P> {
+	original: E;
+	type: ProtocolNotificationType<P, TextDocumentRegistrationOptions>;
+	params: P;
+}
+
+export interface NotifyingFeature<E, P> {
+	onNotificationSent: VEvent<NotificationSendEvent<E, P>>;
+}
+
+abstract class DocumentNotifications<P, E> implements DynamicFeature<TextDocumentRegistrationOptions>, NotificationFeature<(data: E) => void>, NotifyingFeature<E, P> {
 
 	private _listener: Disposable | undefined;
 	protected _selectors: Map<string, DocumentSelector> = new Map<string, DocumentSelector>();
+
+	private readonly _onNotificationSent: EventEmitter<NotificationSendEvent<E, P>>;
 
 	public static textDocumentFilter(selectors: IterableIterator<DocumentSelector>, textDocument: TextDocument): boolean {
 		for (const selector of selectors) {
@@ -795,6 +807,7 @@ abstract class DocumentNotifications<P, E> implements DynamicFeature<TextDocumen
 		protected _middleware: NextSignature<E, void> | undefined,
 		protected _createParams: CreateParamsSignature<E, P>,
 		protected _selectorFilter?: (selectors: IterableIterator<DocumentSelector>, data: E) => boolean) {
+		this._onNotificationSent = new EventEmitter<NotificationSendEvent<E, P>>();
 	}
 
 	public abstract registrationType: RegistrationType<TextDocumentRegistrationOptions>;
@@ -815,17 +828,26 @@ abstract class DocumentNotifications<P, E> implements DynamicFeature<TextDocumen
 	}
 
 	private callback(data: E): void {
+		const doSend = (data: E): void => {
+			const params = this._createParams(data);
+			this._client.sendNotification(this._type, params);
+			this.notificationSent(data, this._type, params);
+		};
 		if (!this._selectorFilter || this._selectorFilter(this._selectors.values(), data)) {
 			if (this._middleware) {
-				this._middleware(data, (data) => this._client.sendNotification(this._type, this._createParams(data)));
+				this._middleware(data, (data) =>  doSend(data));
 			} else {
-				this._client.sendNotification(this._type, this._createParams(data));
+				doSend(data);
 			}
-			this.notificationSent(data);
 		}
 	}
 
-	protected notificationSent(_data: E): void {
+	public get onNotificationSent(): VEvent<NotificationSendEvent<E, P>> {
+		return this._onNotificationSent.event;
+	}
+
+	protected notificationSent(data: E, type: ProtocolNotificationType<P, TextDocumentRegistrationOptions>, params: P): void {
+		this._onNotificationSent.fire({ original: data, type, params });
 	}
 
 	public unregister(id: string): void {
@@ -838,6 +860,7 @@ abstract class DocumentNotifications<P, E> implements DynamicFeature<TextDocumen
 
 	public dispose(): void {
 		this._selectors.clear();
+		this._onNotificationSent.dispose();
 		if (this._listener) {
 			this._listener.dispose();
 			this._listener = undefined;
@@ -858,7 +881,11 @@ abstract class DocumentNotifications<P, E> implements DynamicFeature<TextDocumen
 	}
 }
 
-class DidOpenTextDocumentFeature extends DocumentNotifications<DidOpenTextDocumentParams, TextDocument> {
+export interface DidOpenTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, NotificationFeature<(textDocument: TextDocument) => void>, NotifyingFeature<TextDocument, DidOpenTextDocumentParams> {
+	openDocuments: Iterable<TextDocument>;
+}
+
+class DidOpenTextDocumentFeature extends DocumentNotifications<DidOpenTextDocumentParams, TextDocument> implements DidOpenTextDocumentFeatureShape {
 	constructor(client: BaseLanguageClient, private _syncedDocuments: Map<string, TextDocument>) {
 		super(
 			client, Workspace.onDidOpenTextDocument, DidOpenTextDocumentNotification.type,
@@ -866,6 +893,10 @@ class DidOpenTextDocumentFeature extends DocumentNotifications<DidOpenTextDocume
 			(textDocument) => client.code2ProtocolConverter.asOpenTextDocumentParams(textDocument),
 			DocumentNotifications.textDocumentFilter
 		);
+	}
+
+	public get openDocuments(): IterableIterator<TextDocument> {
+		return this._syncedDocuments.values();
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
@@ -909,13 +940,16 @@ class DidOpenTextDocumentFeature extends DocumentNotifications<DidOpenTextDocume
 		});
 	}
 
-	protected notificationSent(textDocument: TextDocument): void {
-		super.notificationSent(textDocument);
+	protected notificationSent(textDocument: TextDocument, type: ProtocolNotificationType<DidOpenTextDocumentParams, TextDocumentRegistrationOptions>, params: DidOpenTextDocumentParams): void {
+		super.notificationSent(textDocument, type, params);
 		this._syncedDocuments.set(textDocument.uri.toString(), textDocument);
 	}
 }
 
-class DidCloseTextDocumentFeature extends DocumentNotifications<DidCloseTextDocumentParams, TextDocument> {
+export interface DidCloseTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, NotificationFeature<(textDocument: TextDocument) => void>, NotifyingFeature<TextDocument, DidCloseTextDocumentParams> {
+}
+
+class DidCloseTextDocumentFeature extends DocumentNotifications<DidCloseTextDocumentParams, TextDocument> implements DidCloseTextDocumentFeatureShape {
 
 	constructor(client: BaseLanguageClient, private _syncedDocuments: Map<string, TextDocument>) {
 		super(
@@ -941,8 +975,8 @@ class DidCloseTextDocumentFeature extends DocumentNotifications<DidCloseTextDocu
 		}
 	}
 
-	protected notificationSent(textDocument: TextDocument): void {
-		super.notificationSent(textDocument);
+	protected notificationSent(textDocument: TextDocument, type: ProtocolNotificationType<DidCloseTextDocumentParams, TextDocumentRegistrationOptions>, params: DidCloseTextDocumentParams): void {
+		super.notificationSent(textDocument, type, params);
 		this._syncedDocuments.delete(textDocument.uri.toString());
 	}
 
@@ -974,14 +1008,20 @@ interface DidChangeTextDocumentData {
 	syncKind: 0 | 1 | 2;
 }
 
-class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeRegistrationOptions>, NotificationFeature<(event: TextDocumentChangeEvent) => void> {
+export interface DidChangeTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, NotificationFeature<(event: TextDocumentChangeEvent) => void>, NotifyingFeature<TextDocumentChangeEvent, DidChangeTextDocumentParams> {
+}
+
+class DidChangeTextDocumentFeature implements DidChangeTextDocumentFeatureShape {
 
 	private _listener: Disposable | undefined;
 	private _changeData: Map<string, DidChangeTextDocumentData> = new Map<string, DidChangeTextDocumentData>();
 	private _forcingDelivery: boolean = false;
 	private _changeDelayer: { uri: string; delayer: Delayer<void> } | undefined;
 
+	private readonly _onNotificationSent: EventEmitter<NotificationSendEvent<TextDocumentChangeEvent, DidChangeTextDocumentParams>>;
+
 	constructor(private _client: BaseLanguageClient) {
+		this._onNotificationSent = new EventEmitter();
 	}
 
 	public get registrationType(): RegistrationType<TextDocumentChangeRegistrationOptions> {
@@ -1027,43 +1067,56 @@ class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeR
 		}
 		for (const changeData of this._changeData.values()) {
 			if (Languages.match(changeData.documentSelector, event.document)) {
-				let middleware = this._client.clientOptions.middleware!;
+				const middleware = this._client.clientOptions.middleware!;
 				if (changeData.syncKind === TextDocumentSyncKind.Incremental) {
-					let params = this._client.code2ProtocolConverter.asChangeTextDocumentParams(event);
-					if (middleware.didChange) {
-						middleware.didChange(event, () => this._client.sendNotification(DidChangeTextDocumentNotification.type, params));
-					} else {
+					const didChange = (event: TextDocumentChangeEvent): void => {
+						const params = this._client.code2ProtocolConverter.asChangeTextDocumentParams(event);
 						this._client.sendNotification(DidChangeTextDocumentNotification.type, params);
+						this.notificationSent(event, DidChangeTextDocumentNotification.type, params);
+					};
+					if (middleware.didChange) {
+						middleware.didChange(event, event => didChange(event));
+					} else {
+						didChange(event);
 					}
 				} else if (changeData.syncKind === TextDocumentSyncKind.Full) {
-					let didChange: (event: TextDocumentChangeEvent) => void = (event) => {
+					const didChange = (event: TextDocumentChangeEvent): void => {
+						const doSend = (event: TextDocumentChangeEvent): void => {
+							const params = this._client.code2ProtocolConverter.asChangeTextDocumentParams(event.document);
+							this._client.sendNotification(DidChangeTextDocumentNotification.type, params);
+							this.notificationSent(event, DidChangeTextDocumentNotification.type, params);
+						};
 						if (this._changeDelayer) {
 							if (this._changeDelayer.uri !== event.document.uri.toString()) {
 								// Use this force delivery to track boolean state. Otherwise we might call two times.
 								this.forceDelivery();
 								this._changeDelayer.uri = event.document.uri.toString();
 							}
-							this._changeDelayer.delayer.trigger(() => {
-								this._client.sendNotification(DidChangeTextDocumentNotification.type, this._client.code2ProtocolConverter.asChangeTextDocumentParams(event.document));
-							});
+							this._changeDelayer.delayer.trigger(() => doSend(event));
 						} else {
 							this._changeDelayer = {
 								uri: event.document.uri.toString(),
 								delayer: new Delayer<void>(200)
 							};
-							this._changeDelayer.delayer.trigger(() => {
-								this._client.sendNotification(DidChangeTextDocumentNotification.type, this._client.code2ProtocolConverter.asChangeTextDocumentParams(event.document));
-							}, -1);
+							this._changeDelayer.delayer.trigger(() => doSend(event), -1);
 						}
 					};
 					if (middleware.didChange) {
-						middleware.didChange(event, didChange);
+						middleware.didChange(event, event => didChange(event));
 					} else {
 						didChange(event);
 					}
 				}
 			}
 		}
+	}
+
+	public get onNotificationSent(): Event<NotificationSendEvent<TextDocumentChangeEvent, DidChangeTextDocumentParams>> {
+		return this._onNotificationSent.event;
+	}
+
+	private notificationSent(changeEvent: TextDocumentChangeEvent, type: ProtocolNotificationType<DidChangeTextDocumentParams, TextDocumentRegistrationOptions>, params: DidChangeTextDocumentParams): void {
+		this._onNotificationSent.fire({ original: changeEvent, type, params });
 	}
 
 	public unregister(id: string): void {
@@ -1214,7 +1267,10 @@ class WillSaveWaitUntilFeature implements DynamicFeature<TextDocumentRegistratio
 	}
 }
 
-class DidSaveTextDocumentFeature extends DocumentNotifications<DidSaveTextDocumentParams, TextDocument> {
+export interface DidSaveTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, NotificationFeature<(textDocument: TextDocument) => void>, NotifyingFeature<TextDocument, DidSaveTextDocumentParams> {
+}
+
+class DidSaveTextDocumentFeature extends DocumentNotifications<DidSaveTextDocumentParams, TextDocument> implements DidSaveTextDocumentFeatureShape {
 
 	private _includeText: boolean;
 
@@ -3484,12 +3540,12 @@ export abstract class BaseLanguageClient {
 		}
 	}
 
-	public getFeature(request: typeof DidOpenTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & NotificationFeature<(textDocument: TextDocument) => void>;
-	public getFeature(request: typeof DidChangeTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & NotificationFeature<(textDocument: TextDocument) => void>;
+	public getFeature(request: typeof DidOpenTextDocumentNotification.method): DidOpenTextDocumentFeatureShape;
+	public getFeature(request: typeof DidChangeTextDocumentNotification.method): DidChangeTextDocumentFeatureShape;
 	public getFeature(request: typeof WillSaveTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & NotificationFeature<(textDocument: TextDocument) => void>;
 	public getFeature(request: typeof WillSaveTextDocumentWaitUntilRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & NotificationFeature<(textDocument: TextDocument) => ProviderResult<VTextEdit[]>>;
-	public getFeature(request: typeof DidSaveTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & NotificationFeature<(textDocument: TextDocument) => void>;
-	public getFeature(request: typeof DidCloseTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & NotificationFeature<(textDocument: TextDocument) => void>;
+	public getFeature(request: typeof DidSaveTextDocumentNotification.method): DidSaveTextDocumentFeatureShape;
+	public getFeature(request: typeof DidCloseTextDocumentNotification.method): DidCloseTextDocumentFeatureShape;
 	public getFeature(request: typeof DidCreateFilesNotification.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileCreateEvent) => Promise<void> };
 	public getFeature(request: typeof DidRenameFilesNotification.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileRenameEvent) => Promise<void> };
 	public getFeature(request: typeof DidDeleteFilesNotification.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileDeleteEvent) => Promise<void> };
@@ -3681,11 +3737,11 @@ export abstract class BaseLanguageClient {
 				if (token !== undefined && token.isCancellationRequested) {
 					return defaultValue;
 				} else {
-					throw this.makeCancelError();
+					throw new CancellationError();
 				}
 			} else if (error.code === LSPErrorCodes.ContentModified) {
 				if (BaseLanguageClient.RequestsToCancelOnContentModified.has(type.method)) {
-					throw this.makeCancelError();
+					throw new CancellationError();
 				} else {
 					return defaultValue;
 				}
@@ -3693,12 +3749,5 @@ export abstract class BaseLanguageClient {
 		}
 		this.error(`Request ${type.method} failed.`, error);
 		throw error;
-	}
-
-	private static Canceled = 'Canceled';
-	private makeCancelError(): Error {
-		const result = new Error(BaseLanguageClient.Canceled);
-		result.name = BaseLanguageClient.Canceled;
-		return result;
 	}
 }

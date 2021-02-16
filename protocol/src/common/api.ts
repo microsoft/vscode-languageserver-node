@@ -43,5 +43,7 @@ export namespace Proposed {
 	export type DiagnosticOptions = diag.DiagnosticOptions;
 	export type DiagnosticRegistrationOptions = diag.DiagnosticRegistrationOptions;
 	export type $DiagnosticServerCapabilities = diag.$DiagnosticServerCapabilities;
+	export type DiagnosticPullMode = diag.DiagnosticPullMode;
+	export const DiagnosticPullMode = diag.DiagnosticPullMode;
 	export const DiagnosticRequest: typeof diag.DiagnosticRequest = diag.DiagnosticRequest;
 }
