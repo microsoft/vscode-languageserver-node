@@ -3,18 +3,18 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { RequestHandler } from 'vscode-jsonrpc';
+import { RequestHandler0, RequestHandler } from 'vscode-jsonrpc';
 import { TextDocumentIdentifier, Diagnostic } from 'vscode-languageserver-types';
 
 import * as Is from './utils/is';
-import { ProtocolRequestType } from './messages';
+import { ProtocolRequestType0, ProtocolRequestType } from './messages';
 import {
 	PartialResultParams, StaticRegistrationOptions, WorkDoneProgressParams, TextDocumentRegistrationOptions, WorkDoneProgressOptions, TextDocumentClientCapabilities
 } from './protocol';
 
 
 /**
- * @since 3.17.0
+ * @since 3.17.0 - proposed state
  */
 export interface DiagnosticClientCapabilities {
 	/**
@@ -31,6 +31,9 @@ export interface $DiagnosticClientCapabilities {
 	}
 }
 
+/**
+ * @since 3.17.0 - proposed state
+ */
 export namespace DiagnosticPullModeFlags {
 	/**
 	 * Trigger the diagnostic pull on open only.
@@ -70,6 +73,9 @@ export namespace DiagnosticPullModeFlags {
 export type DiagnosticPullModeFlags = number;
 
 
+/**
+ * @since 3.17.0 - proposed state
+ */
 export namespace DiagnosticTriggerKind {
 	/**
 	 * The request got triggered through some API
@@ -98,10 +104,16 @@ export namespace DiagnosticTriggerKind {
 export type DiagnosticTriggerKind = 1 | 2 | 3 | 4;
 
 
+/**
+ * @since 3.17.0 - proposed state
+ */
 export interface DiagnosticContext {
 	triggerKind: DiagnosticTriggerKind;
 }
 
+/**
+ * @since 3.17.0 - proposed state
+ */
 export interface DiagnosticParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
 	 * The text document.
@@ -114,6 +126,9 @@ export interface DiagnosticParams extends WorkDoneProgressParams, PartialResultP
 	context: DiagnosticContext;
 }
 
+/**
+ * @since 3.17.0 - proposed state
+ */
 export interface DiagnosticOptions extends WorkDoneProgressOptions {
 	/**
 	 * An optional identifier under which the diagnostics are
@@ -128,6 +143,9 @@ export interface DiagnosticOptions extends WorkDoneProgressOptions {
 	mode? : DiagnosticPullModeFlags;
 }
 
+/**
+ * @since 3.17.0 - proposed state
+ */
 export interface DiagnosticRegistrationOptions extends TextDocumentRegistrationOptions, DiagnosticOptions, StaticRegistrationOptions {
 }
 
@@ -135,10 +153,16 @@ export interface $DiagnosticServerCapabilities {
 	diagnosticProvider?: boolean | DiagnosticOptions;
 }
 
+/**
+ * @since 3.17.0 - proposed state
+ */
 export interface DiagnosticServerCancellationData {
 	retriggerRequest: boolean;
 }
 
+/**
+ * @since 3.17.0 - proposed state
+ */
 export namespace DiagnosticServerCancellationData {
 	export function is(value: any): value is DiagnosticServerCancellationData {
 		const candidate = value as DiagnosticServerCancellationData;
@@ -148,13 +172,27 @@ export namespace DiagnosticServerCancellationData {
 
 /**
  * The result of a diagnostic pull request.
+ *
+ * @since 3.17.0 - proposed state
  */
 export interface DiagnosticList {
 	items: Diagnostic[];
 }
 
+/**
+ * @since 3.17.0 - proposed state
+ */
 export namespace DiagnosticRequest {
 	export const method: 'textDocument/diagnostic' = 'textDocument/diagnostic';
 	export const type = new ProtocolRequestType<DiagnosticParams, DiagnosticList, Diagnostic[], DiagnosticServerCancellationData, DiagnosticRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<DiagnosticParams, DiagnosticList | null, void>;
+}
+
+/**
+ * @since 3.17.0 - proposed state
+ */
+export namespace DiagnosticRefreshRequest {
+	export const method: `workspace/diagnostic/refresh` = `workspace/diagnostic/refresh`;
+	export const type = new ProtocolRequestType0<void, void, void, void>(method);
+	export type HandlerSignature = RequestHandler0<void, void>;
 }

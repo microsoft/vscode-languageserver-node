@@ -215,6 +215,9 @@ export namespace SemanticTokensRangeRequest {
 
 //------- 'workspace/semanticTokens/refresh' -----
 
+/**
+ * @since 3.16.0
+ */
 export interface SemanticTokensWorkspaceClientCapabilities {
 	/**
 	 * Whether the client implementation supports a refresh request sent from

@@ -5,7 +5,7 @@
 
 import {
 	Disposable, languages as Languages, window as Window, CancellationToken, ProviderResult,
-	Diagnostic as VDiagnostic, CancellationTokenSource, TextDocument, CancellationError
+	Diagnostic as VDiagnostic, CancellationTokenSource, TextDocument, CancellationError, Event as VEvent, EventEmitter
 } from 'vscode';
 
 import {
@@ -25,20 +25,30 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	return target[key];
 }
 
-interface VDiagnosticList {
+export type VDiagnosticResult = {
 	items: VDiagnostic[];
+} | {
+	unmodified: true
+};
+
+export namespace VDiagnosticResult {
+	export function hasItems(value: VDiagnosticResult): value is VDiagnosticResult & { items: VDiagnostic[]; } {
+		const candidate = value as VDiagnosticResult & { items: VDiagnostic[]; };
+		return candidate && Array.isArray(candidate.items);
+	}
 }
 
-interface DiagnosticProvider {
-	provideDiagnostics (textDocument: TextDocument, context: Proposed.DiagnosticContext, token: CancellationToken): ProviderResult<VDiagnosticList>;
+export interface DiagnosticProvider {
+	onDidChangeDiagnostics: VEvent<void>;
+	provideDiagnostics (textDocument: TextDocument, context: Proposed.DiagnosticContext, token: CancellationToken): ProviderResult<VDiagnosticResult>;
 }
 
 export interface ProvideDiagnosticSignature {
-	(this: void, textDocument: TextDocument, context: Proposed.DiagnosticContext, token: CancellationToken): ProviderResult<VDiagnosticList>;
+	(this: void, textDocument: TextDocument, context: Proposed.DiagnosticContext, token: CancellationToken): ProviderResult<VDiagnosticResult>;
 }
 
 export interface DiagnosticProviderMiddleware {
-	provideDiagnostics?: (this: void, document: TextDocument, context: Proposed.DiagnosticContext, token: CancellationToken, next: ProvideDiagnosticSignature) => ProviderResult<VDiagnosticList>;
+	provideDiagnostics?: (this: void, document: TextDocument, context: Proposed.DiagnosticContext, token: CancellationToken, next: ProvideDiagnosticSignature) => ProviderResult<VDiagnosticResult>;
 }
 
 
@@ -62,7 +72,12 @@ type RequestState = {
 	textDocument: TextDocument;
 };
 
-export class DiagnosticFeature extends TextDocumentFeature<boolean | Proposed.DiagnosticOptions, Proposed.DiagnosticRegistrationOptions, DiagnosticProvider> {
+export interface DiagnosticProviders {
+	onDidChangeDiagnosticsEmitter: EventEmitter<void>;
+	provider: DiagnosticProvider;
+}
+
+export class DiagnosticFeature extends TextDocumentFeature<boolean | Proposed.DiagnosticOptions, Proposed.DiagnosticRegistrationOptions, DiagnosticProviders> {
 
 	private readonly openFeature: DidOpenTextDocumentFeatureShape;
 	private readonly changeFeature: DidChangeTextDocumentFeatureShape;
@@ -83,6 +98,12 @@ export class DiagnosticFeature extends TextDocumentFeature<boolean | Proposed.Di
 	}
 
 	public initialize(capabilities: ServerCapabilities & Proposed.$DiagnosticServerCapabilities, documentSelector: DocumentSelector): void {
+		const client = this._client;
+		client.onRequest(Proposed.DiagnosticRefreshRequest.type, async () => {
+			for (const provider of this.getAllProviders()) {
+				provider.onDidChangeDiagnosticsEmitter.fire();
+			}
+		});
 		let [id, options] = this.getRegistration(documentSelector, capabilities.diagnosticProvider);
 		if (!id || !options) {
 			return;
@@ -90,14 +111,14 @@ export class DiagnosticFeature extends TextDocumentFeature<boolean | Proposed.Di
 		this.register({ id: id, registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: Proposed.DiagnosticRegistrationOptions): [Disposable, DiagnosticProvider] {
+	protected registerLanguageProvider(options: Proposed.DiagnosticRegistrationOptions): [Disposable, DiagnosticProviders] {
 		const documentSelector = options.documentSelector!;
 		const mode = Proposed.DiagnosticPullModeFlags.is(options.mode) ? options.mode : (Proposed.DiagnosticPullModeFlags.onOpen | Proposed.DiagnosticPullModeFlags.onType);
 		const disposables: Disposable[] = [];
 		const collection = Languages.createDiagnosticCollection(options.identifier);
 		disposables.push(collection);
 		const availableEditors: Set<string> = new Set();
-		const managedDocuments: Set<string> = new Set();
+		const managedDocuments: Map<string, TextDocument> = new Map();
 
 		const matches = (textDocument: TextDocument): boolean => {
 			return Languages.match(documentSelector, textDocument) > 0 && availableEditors.has(textDocument.uri.toString());
@@ -107,7 +128,9 @@ export class DiagnosticFeature extends TextDocumentFeature<boolean | Proposed.Di
 			return managedDocuments.has(textDocument.uri.toString());
 		};
 
+		const onDidChangeDiagnosticsEmitter = new EventEmitter<void>();
 		const provider: DiagnosticProvider = {
+			onDidChangeDiagnostics: onDidChangeDiagnosticsEmitter.event,
 			provideDiagnostics: (textDocument, context, token) => {
 				const client = this._client;
 				const provideDiagnostics: ProvideDiagnosticSignature = (textDocument, context, token) => {
@@ -145,7 +168,7 @@ export class DiagnosticFeature extends TextDocumentFeature<boolean | Proposed.Di
 			}
 			const tokenSource = new CancellationTokenSource();
 			requestStates.set(key, { state: RequestStateKind.active, textDocument, trigger, tokenSource });
-			let diagnostics: VDiagnosticList | undefined;
+			let diagnostics: VDiagnosticResult | undefined;
 			let afterState: RequestState | undefined;
 			try {
 				diagnostics = await provider.provideDiagnostics(textDocument, { triggerKind: trigger }, tokenSource.token) ?? { items: [] };
@@ -171,7 +194,7 @@ export class DiagnosticFeature extends TextDocumentFeature<boolean | Proposed.Di
 				return;
 			}
 			// diagnostics is only undefined if the request has thrown.
-			if (diagnostics !== undefined) {
+			if (diagnostics !== undefined && VDiagnosticResult.hasItems(diagnostics)) {
 				collection.set(textDocument.uri, diagnostics.items);
 			}
 			if (afterState.state === RequestStateKind.reschedule) {
@@ -192,14 +215,14 @@ export class DiagnosticFeature extends TextDocumentFeature<boolean | Proposed.Di
 			disposables.push(this.openFeature.onNotificationSent((event) => {
 				const textDocument = event.original;
 				if (matches(textDocument)) {
-					managedDocuments.add(textDocument.uri.toString());
+					managedDocuments.set(textDocument.uri.toString(), textDocument);
 					pullDiagnostics(event.original, Proposed.DiagnosticTriggerKind.Opened);
 				}
 			}));
 			// Pull all diagnostics for documents that are already open
 			for (const textDocument of this.openFeature.openDocuments) {
 				if (matches(textDocument)) {
-					managedDocuments.add(textDocument.uri.toString());
+					managedDocuments.set(textDocument.uri.toString(), textDocument);
 					pullDiagnostics(textDocument, Proposed.DiagnosticTriggerKind.Opened);
 				}
 			}
@@ -231,6 +254,11 @@ export class DiagnosticFeature extends TextDocumentFeature<boolean | Proposed.Di
 				managedDocuments.delete(textDocument.uri.toString());
 			}
 		}));
-		return [Disposable.from(...disposables), provider];
+		onDidChangeDiagnosticsEmitter.event(() => {
+			for (const document of managedDocuments.values()) {
+				pullDiagnostics(document, Proposed.DiagnosticTriggerKind.Invoked);
+			}
+		});
+		return [Disposable.from(...disposables), { onDidChangeDiagnosticsEmitter, provider }];
 	}
 }

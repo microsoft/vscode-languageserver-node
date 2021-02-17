@@ -76,4 +76,5 @@ export namespace Proposed {
 	export const DiagnosticServerCancellationData = diag.DiagnosticServerCancellationData;
 	export type DiagnosticList = diag.DiagnosticList;
 	export const DiagnosticRequest: typeof diag.DiagnosticRequest = diag.DiagnosticRequest;
+	export const DiagnosticRefreshRequest: typeof diag.DiagnosticRefreshRequest = diag.DiagnosticRefreshRequest;
 }
