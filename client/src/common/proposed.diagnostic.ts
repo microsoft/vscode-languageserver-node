@@ -5,7 +5,7 @@
 
 import {
 	Disposable, languages as Languages, window as Window, CancellationToken, ProviderResult,
-	Diagnostic as VDiagnostic, CancellationTokenSource, TextDocument
+	Diagnostic as VDiagnostic, CancellationTokenSource, TextDocument, CancellationError
 } from 'vscode';
 
 import {
@@ -15,7 +15,7 @@ import {
 
 import {
 	TextDocumentFeature, BaseLanguageClient, Middleware, DidOpenTextDocumentFeatureShape, DidChangeTextDocumentFeatureShape, DidSaveTextDocumentFeatureShape,
-	DidCloseTextDocumentFeatureShape
+	DidCloseTextDocumentFeatureShape, LSPCancellationError
 } from './client';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
@@ -25,16 +25,20 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	return target[key];
 }
 
+interface VDiagnosticList {
+	items: VDiagnostic[];
+}
+
 interface DiagnosticProvider {
-	provideDiagnostics (textDocument: TextDocument, token: CancellationToken): ProviderResult<VDiagnostic[]>;
+	provideDiagnostics (textDocument: TextDocument, context: Proposed.DiagnosticContext, token: CancellationToken): ProviderResult<VDiagnosticList>;
 }
 
 export interface ProvideDiagnosticSignature {
-	(this: void, textDocument: TextDocument, token: CancellationToken): ProviderResult<VDiagnostic[]>;
+	(this: void, textDocument: TextDocument, context: Proposed.DiagnosticContext, token: CancellationToken): ProviderResult<VDiagnosticList>;
 }
 
 export interface DiagnosticProviderMiddleware {
-	provideDiagnostics?: (this: void, document: TextDocument, token: CancellationToken, next: ProvideDiagnosticSignature) => ProviderResult<VDiagnostic[]>;
+	provideDiagnostics?: (this: void, document: TextDocument, context: Proposed.DiagnosticContext, token: CancellationToken, next: ProvideDiagnosticSignature) => ProviderResult<VDiagnosticList>;
 }
 
 
@@ -47,16 +51,18 @@ enum RequestStateKind {
 type RequestState = {
 	state: RequestStateKind.active;
 	textDocument: TextDocument;
+	trigger: Proposed.DiagnosticTriggerKind;
 	tokenSource: CancellationTokenSource;
 } | {
 	state: RequestStateKind.reschedule;
 	textDocument: TextDocument;
+	trigger: Proposed.DiagnosticTriggerKind;
 } | {
 	state: RequestStateKind.outDated;
 	textDocument: TextDocument;
 };
 
-export class DiagnosticFeature extends TextDocumentFeature<Proposed.DiagnosticOptions, Proposed.DiagnosticRegistrationOptions, DiagnosticProvider> {
+export class DiagnosticFeature extends TextDocumentFeature<boolean | Proposed.DiagnosticOptions, Proposed.DiagnosticRegistrationOptions, DiagnosticProvider> {
 
 	private readonly openFeature: DidOpenTextDocumentFeatureShape;
 	private readonly changeFeature: DidChangeTextDocumentFeatureShape;
@@ -86,7 +92,7 @@ export class DiagnosticFeature extends TextDocumentFeature<Proposed.DiagnosticOp
 
 	protected registerLanguageProvider(options: Proposed.DiagnosticRegistrationOptions): [Disposable, DiagnosticProvider] {
 		const documentSelector = options.documentSelector!;
-		const mode = Proposed.DiagnosticPullMode.is(options.mode) ? options.mode : Proposed.DiagnosticPullMode.onType;
+		const mode = Proposed.DiagnosticPullModeFlags.is(options.mode) ? options.mode : (Proposed.DiagnosticPullModeFlags.onOpen | Proposed.DiagnosticPullModeFlags.onType);
 		const disposables: Disposable[] = [];
 		const collection = Languages.createDiagnosticCollection(options.identifier);
 		disposables.push(collection);
@@ -102,44 +108,58 @@ export class DiagnosticFeature extends TextDocumentFeature<Proposed.DiagnosticOp
 		};
 
 		const provider: DiagnosticProvider = {
-			provideDiagnostics: (textDocument, token) => {
+			provideDiagnostics: (textDocument, context, token) => {
 				const client = this._client;
-				const provideDiagnostics: ProvideDiagnosticSignature = (textDocument, token) => {
+				const provideDiagnostics: ProvideDiagnosticSignature = (textDocument, context, token) => {
 					const params: Proposed.DiagnosticParams = {
-						textDocument: { uri: client.code2ProtocolConverter.asUri(textDocument.uri) }
+						textDocument: { uri: client.code2ProtocolConverter.asUri(textDocument.uri) },
+						context: context
 					};
 					return client.sendRequest(Proposed.DiagnosticRequest.type, params, token).then((result) => {
-						if (result === null) {
-							return [];
+						if (result === null || !result.items) {
+							return { items: [] };
 						}
-						return client.protocol2CodeConverter.asDiagnostics(result);
+						return { items: client.protocol2CodeConverter.asDiagnostics(result.items) };
 					}, (error) => {
-						return client.handleFailedRequest(Proposed.DiagnosticRequest.type, token, error, []);
+						return client.handleFailedRequest(Proposed.DiagnosticRequest.type, token, error, { items: [] });
 					});
 				};
 				const middleware: Middleware & DiagnosticProviderMiddleware = client.clientOptions.middleware!;
 				return middleware.provideDiagnostics
-					? middleware.provideDiagnostics(textDocument, token, provideDiagnostics)
-					: provideDiagnostics(textDocument, token);
+					? middleware.provideDiagnostics(textDocument, context, token, provideDiagnostics)
+					: provideDiagnostics(textDocument, context, token);
 			}
 		};
 
 		const requestStates: Map<string, RequestState> = new Map();
-		const pullDiagnostics = async (textDocument: TextDocument): Promise<void> => {
+		const pullDiagnostics = async (textDocument: TextDocument, trigger: Proposed.DiagnosticTriggerKind): Promise<void> => {
 			const key = textDocument.uri.toString();
 			const currentState = requestStates.get(key);
 			if (currentState !== undefined) {
 				if (currentState.state === RequestStateKind.active) {
 					currentState.tokenSource.cancel();
-					requestStates.set(key, { state: RequestStateKind.reschedule, textDocument });
 				}
+				requestStates.set(key, { state: RequestStateKind.reschedule, textDocument, trigger: trigger });
 				// We have a state. Wait until the request returns.
 				return;
 			}
 			const tokenSource = new CancellationTokenSource();
-			requestStates.set(key, { state: RequestStateKind.active, textDocument, tokenSource });
-			const diagnostics = await provider.provideDiagnostics(textDocument, tokenSource.token) ?? [];
-			const afterState = requestStates.get(key);
+			requestStates.set(key, { state: RequestStateKind.active, textDocument, trigger, tokenSource });
+			let diagnostics: VDiagnosticList | undefined;
+			let afterState: RequestState | undefined;
+			try {
+				diagnostics = await provider.provideDiagnostics(textDocument, { triggerKind: trigger }, tokenSource.token) ?? { items: [] };
+			} catch (error: unknown) {
+				if (error instanceof LSPCancellationError && Proposed.DiagnosticServerCancellationData.is(error.data) && error.data.retriggerRequest === false) {
+					afterState = { state: RequestStateKind.outDated, textDocument };
+				}
+				if (afterState === undefined && error instanceof CancellationError) {
+					afterState = { state: RequestStateKind.reschedule, textDocument, trigger };
+				} else {
+					throw error;
+				}
+			}
+			afterState = afterState ?? requestStates.get(key);
 			if (afterState === undefined) {
 				// This shouldn't happen. Log it
 				this._client.error(`Lost request state in diagnostic pull model. Clearing diagnostics for ${key}`);
@@ -147,12 +167,15 @@ export class DiagnosticFeature extends TextDocumentFeature<Proposed.DiagnosticOp
 				return;
 			}
 			requestStates.delete(key);
-			if (afterState.state === RequestStateKind.outDated) {
+			if (afterState.state === RequestStateKind.outDated || !manages(textDocument)) {
 				return;
 			}
-			collection.set(textDocument.uri, diagnostics);
+			// diagnostics is only undefined if the request has thrown.
+			if (diagnostics !== undefined) {
+				collection.set(textDocument.uri, diagnostics.items);
+			}
 			if (afterState.state === RequestStateKind.reschedule) {
-				pullDiagnostics(textDocument);
+				pullDiagnostics(textDocument, afterState.trigger);
 			}
 		};
 
@@ -165,37 +188,44 @@ export class DiagnosticFeature extends TextDocumentFeature<Proposed.DiagnosticOp
 		openEditorsHandler();
 		disposables.push(Window.onDidChangeOpenEditors(openEditorsHandler));
 
-		disposables.push(this.openFeature.onNotificationSent((event) => {
-			const textDocument = event.original;
-			if (matches(textDocument)) {
-				managedDocuments.add(textDocument.uri.toString());
-				pullDiagnostics(event.original);
-			}
-		}));
-		// Pull all diagnostics for documents that are already open
-		for (const textDocument of this.openFeature.openDocuments) {
-			if (matches(textDocument)) {
-				managedDocuments.add(textDocument.uri.toString());
-				pullDiagnostics(textDocument);
+		if (Proposed.DiagnosticPullModeFlags.isOpen(mode)) {
+			disposables.push(this.openFeature.onNotificationSent((event) => {
+				const textDocument = event.original;
+				if (matches(textDocument)) {
+					managedDocuments.add(textDocument.uri.toString());
+					pullDiagnostics(event.original, Proposed.DiagnosticTriggerKind.Opened);
+				}
+			}));
+			// Pull all diagnostics for documents that are already open
+			for (const textDocument of this.openFeature.openDocuments) {
+				if (matches(textDocument)) {
+					managedDocuments.add(textDocument.uri.toString());
+					pullDiagnostics(textDocument, Proposed.DiagnosticTriggerKind.Opened);
+				}
 			}
 		}
-		if (mode === Proposed.DiagnosticPullMode.onType) {
+		if (Proposed.DiagnosticPullModeFlags.isType(mode)) {
 			disposables.push(this.changeFeature.onNotificationSent((event) => {
 				const textDocument = event.original.document;
 				if (manages(textDocument) && event.original.contentChanges.length > 0) {
-					pullDiagnostics(textDocument);
+					pullDiagnostics(textDocument, Proposed.DiagnosticTriggerKind.Typed);
 				}
 			}));
-		} else if (mode === Proposed.DiagnosticPullMode.onSave) {
+		}
+		if (Proposed.DiagnosticPullModeFlags.isSave(mode)) {
 			disposables.push(this.saveFeature.onNotificationSent((event) => {
 				const textDocument = event.original;
 				if (manages(textDocument)) {
-					pullDiagnostics(event.original);
+					pullDiagnostics(event.original, Proposed.DiagnosticTriggerKind.Saved);
 				}
 			}));
 		}
 		disposables.push(this.closeFeature.onNotificationSent((event) => {
 			const textDocument = event.original;
+			const requestState = requestStates.get(textDocument.uri.toString());
+			if (requestState !== undefined) {
+				requestStates.set(textDocument.uri.toString(),{ state: RequestStateKind.outDated, textDocument });
+			}
 			if (manages(textDocument)) {
 				collection.delete(textDocument.uri);
 				managedDocuments.delete(textDocument.uri.toString());

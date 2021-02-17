@@ -2676,6 +2676,14 @@ class OnReady {
 	}
 }
 
+export class LSPCancellationError extends CancellationError {
+	public readonly data: object | Object;
+	constructor(data: object | Object) {
+		super();
+		this.data = data;
+	}
+}
+
 export abstract class BaseLanguageClient {
 
 	private _id: string;
@@ -2973,7 +2981,7 @@ export abstract class BaseLanguageClient {
 		});
 	}
 
-	private data2String(data: any): string {
+	private data2String(data: Object): string {
 		if (data instanceof ResponseError) {
 			const responseError = data as ResponseError<any>;
 			return `  Message: ${responseError.message}\n  Code: ${responseError.code} ${responseError.data ? '\n' + responseError.data.toString() : ''}`;
@@ -2992,7 +3000,7 @@ export abstract class BaseLanguageClient {
 
 	public info(message: string, data?: any, showNotification: boolean = true): void {
 		this.outputChannel.appendLine(`[Info  - ${(new Date().toLocaleTimeString())}] ${message}`);
-		if (data) {
+		if (data !== null && data !== undefined) {
 			this.outputChannel.appendLine(this.data2String(data));
 		}
 		if (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Info) {
@@ -3002,7 +3010,7 @@ export abstract class BaseLanguageClient {
 
 	public warn(message: string, data?: any, showNotification: boolean = true): void {
 		this.outputChannel.appendLine(`[Warn  - ${(new Date().toLocaleTimeString())}] ${message}`);
-		if (data) {
+		if (data !== null && data !== undefined) {
 			this.outputChannel.appendLine(this.data2String(data));
 		}
 		if (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Warn) {
@@ -3012,7 +3020,7 @@ export abstract class BaseLanguageClient {
 
 	public error(message: string, data?: any, showNotification: boolean = true): void {
 		this.outputChannel.appendLine(`[Error - ${(new Date().toLocaleTimeString())}] ${message}`);
-		if (data) {
+		if (data !== null && data !== undefined) {
 			this.outputChannel.appendLine(this.data2String(data));
 		}
 		if (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Error) {
@@ -3733,11 +3741,15 @@ export abstract class BaseLanguageClient {
 	public handleFailedRequest<T>(type: MessageSignature, token: CancellationToken | undefined, error: any, defaultValue: T): T {
 		// If we get a request cancel or a content modified don't log anything.
 		if (error instanceof ResponseError) {
-			if (error.code === LSPErrorCodes.RequestCancelled) {
+			if (error.code === LSPErrorCodes.RequestCancelled || error.code === LSPErrorCodes.ServerCancelled) {
 				if (token !== undefined && token.isCancellationRequested) {
 					return defaultValue;
 				} else {
-					throw new CancellationError();
+					if (error.data !== undefined) {
+						throw new LSPCancellationError(error.data);
+					} else {
+						throw new CancellationError();
+					}
 				}
 			} else if (error.code === LSPErrorCodes.ContentModified) {
 				if (BaseLanguageClient.RequestsToCancelOnContentModified.has(type.method)) {

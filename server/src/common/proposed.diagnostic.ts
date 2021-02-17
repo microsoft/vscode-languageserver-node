@@ -18,12 +18,12 @@ export interface DiagnosticsFeatureShape {
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDiagnostic(handler: ServerRequestHandler<Proposed.DiagnosticParams, Diagnostic[] | undefined | null, never, never>): void;
+	onDiagnostic(handler: ServerRequestHandler<Proposed.DiagnosticParams, Proposed.DiagnosticList, Diagnostic[], Proposed.DiagnosticServerCancellationData>): void;
 }
 
 export const DiagnosticFeature: Feature<_Languages, DiagnosticsFeatureShape> = (Base) => {
 	return class extends Base {
-		public onDiagnostic(handler: ServerRequestHandler<Proposed.DiagnosticParams, Diagnostic[] | undefined | null, never, never>): void {
+		public onDiagnostic(handler: ServerRequestHandler<Proposed.DiagnosticParams, Proposed.DiagnosticList, Diagnostic[], Proposed.DiagnosticServerCancellationData>): void {
 			this.connection.onRequest(Proposed.DiagnosticRequest.type, (params, cancel) => {
 				return handler(params, cancel, this.attachWorkDoneProgress(params), undefined);
 			});

@@ -62,7 +62,7 @@ export class ProgressType<PR> {
 	}
 }
 
-export type HandlerResult<R, E> = R | ResponseError<E> | Thenable<R> | Thenable<ResponseError<E>> | Thenable<R | ResponseError<E>>;
+export type HandlerResult<R, E> = R | Thenable<R> | Thenable<ResponseError<E>> | Thenable<R | ResponseError<E>>;
 
 export interface StarRequestHandler {
 	(method: string, params: any[] | object | undefined, token: CancellationToken): HandlerResult<any, any>;
@@ -477,8 +477,8 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 	const logger: Logger = _logger !== undefined ? _logger : NullLogger;
 
 	let sequenceNumber = 0;
-	let notificationSquenceNumber = 0;
-	let unknownResponseSquenceNumber = 0;
+	let notificationSequenceNumber = 0;
+	let unknownResponseSequenceNumber = 0;
 	const version: string = '2.0';
 
 	let starRequestHandler: StarRequestHandler | undefined = undefined;
@@ -515,14 +515,14 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 
 	function createResponseQueueKey(id: string | number | null): string {
 		if (id === null) {
-			return 'res-unknown-' + (++unknownResponseSquenceNumber).toString();
+			return 'res-unknown-' + (++unknownResponseSequenceNumber).toString();
 		} else {
 			return 'res-' + id.toString();
 		}
 	}
 
 	function createNotificationQueueKey(): string {
-		return 'not-' + (++notificationSquenceNumber).toString();
+		return 'not-' + (++notificationSequenceNumber).toString();
 	}
 
 	function addMessageToQueue(queue: MessageQueue, message: Message): void {
@@ -839,7 +839,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 								logger.error(`Notification ${message.method} defines parameters by name but received parameters by position`);
 							}
 							if (type.numberOfParams !== message.params.length) {
-								logger.error(`Notification ${message.method} defines ${type.numberOfParams} params but received ${message.params.length} argumennts`);
+								logger.error(`Notification ${message.method} defines ${type.numberOfParams} params but received ${message.params.length} arguments`);
 							}
 						}
 						notificationHandler(...message.params);

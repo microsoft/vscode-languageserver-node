@@ -74,14 +74,14 @@ export namespace ErrorCodes {
 	export const serverErrorEnd: number = jsonrpcReservedErrorRangeEnd;
 }
 
-export interface ResponseErrorLiteral<D> {
+export interface ResponseErrorLiteral<D = void> {
 	/**
-	 * A number indicating the error type that occured.
+	 * A number indicating the error type that occurred.
 	 */
 	code: number;
 
 	/**
-	 * A string providing a short decription of the error.
+	 * A string providing a short description of the error.
 	 */
 	message: string;
 
@@ -96,7 +96,7 @@ export interface ResponseErrorLiteral<D> {
  * An error object return in a response in case a request
  * has failed.
  */
-export class ResponseError<D> extends Error {
+export class ResponseError<D = void> extends Error {
 
 	public readonly code: number;
 	public readonly data: D | undefined;
@@ -109,11 +109,14 @@ export class ResponseError<D> extends Error {
 	}
 
 	public toJson(): ResponseErrorLiteral<D> {
-		return {
+		const result: ResponseErrorLiteral<D> = {
 			code: this.code,
-			message: this.message,
-			data: this.data,
+			message: this.message
 		};
+		if (this.data !== undefined) {
+			result.data = this.data;
+		}
+		return result;
 	}
 }
 

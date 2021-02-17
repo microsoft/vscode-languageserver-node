@@ -166,7 +166,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 				selectionRangeProvider: { workDoneProgress: true },
 				diagnosticProvider: {
 					identifier: "testbed",
-					mode: Proposed.DiagnosticPullMode.onType
+					mode: Proposed.DiagnosticPullModeFlags.onOpen | Proposed.DiagnosticPullModeFlags.onType
 				}
 			}
 		};
@@ -294,7 +294,7 @@ connection.languages.onDiagnostic(async (param) => {
 			? await pfs.readFile(uri.fsPath, { encoding: 'utf8'} )
 			: undefined;
 	if (content === undefined) {
-		return [];
+		return { items: [] };
 	}
 	const result: Diagnostic[] = [];
 	const lines: string[] = content.match(/^.*([\n\r]+|$)/gm);
@@ -309,7 +309,7 @@ connection.languages.onDiagnostic(async (param) => {
 		}
 		lineNumber++;
 	}
-	return result;
+	return { items: result };
 })
 
 connection.onCompletion((params, token): CompletionItem[] => {

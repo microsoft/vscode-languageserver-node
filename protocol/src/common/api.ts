@@ -22,7 +22,31 @@ export namespace LSPErrorCodes {
 	*/
 	export const lspReservedErrorRangeStart: integer = -32899;
 
+	/**
+	 * The server cancelled the request. This error code should
+	 * only be used for requests that explicitly support being
+	 * server cancellable.
+	 *
+	 * @since 3.17.0
+	 */
+	export const ServerCancelled: integer = -32802;
+
+	/**
+	 * The server detected that the content of a document got
+	 * modified outside normal conditions. A server should
+	 * NOT send this error code if it detects a content change
+	 * in it unprocessed messages. The result even computed
+	 * on an older state might still be useful for the client.
+	 *
+	 * If a client decides that a result is not of any use anymore
+	 * the client should cancel the request.
+	 */
 	export const ContentModified: integer = -32801;
+
+	/**
+	 * The client has canceled a request and a server as detected
+	 * the cancel.
+	 */
 	export const RequestCancelled: integer = -32800;
 
 	/**
@@ -43,7 +67,13 @@ export namespace Proposed {
 	export type DiagnosticOptions = diag.DiagnosticOptions;
 	export type DiagnosticRegistrationOptions = diag.DiagnosticRegistrationOptions;
 	export type $DiagnosticServerCapabilities = diag.$DiagnosticServerCapabilities;
-	export type DiagnosticPullMode = diag.DiagnosticPullMode;
-	export const DiagnosticPullMode = diag.DiagnosticPullMode;
+	export type DiagnosticPullModeFlags = diag.DiagnosticPullModeFlags;
+	export const DiagnosticPullModeFlags = diag.DiagnosticPullModeFlags;
+	export type DiagnosticTriggerKind = diag.DiagnosticTriggerKind;
+	export const DiagnosticTriggerKind = diag.DiagnosticTriggerKind;
+	export type DiagnosticContext = diag.DiagnosticContext;
+	export type DiagnosticServerCancellationData = diag.DiagnosticServerCancellationData;
+	export const DiagnosticServerCancellationData = diag.DiagnosticServerCancellationData;
+	export type DiagnosticList = diag.DiagnosticList;
 	export const DiagnosticRequest: typeof diag.DiagnosticRequest = diag.DiagnosticRequest;
 }
