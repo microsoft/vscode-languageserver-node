@@ -5,7 +5,8 @@
 
 import {
 	SemanticTokens, SemanticTokensPartialResult, SemanticTokensDelta, SemanticTokensDeltaPartialResult, SemanticTokensParams,
-	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest
+	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest,
+	SemanticTokensRefreshRequest
 } from 'vscode-languageserver-protocol';
 
 import type { Feature, _Languages, ServerRequestHandler } from './server';
@@ -17,6 +18,7 @@ import type { Feature, _Languages, ServerRequestHandler } from './server';
  */
 export interface SemanticTokensFeatureShape {
 	semanticTokens: {
+		refresh(): void;
 		on(handler: ServerRequestHandler<SemanticTokensParams, SemanticTokens, SemanticTokensPartialResult, void>): void;
 		onDelta(handler: ServerRequestHandler<SemanticTokensDeltaParams, SemanticTokensDelta | SemanticTokens, SemanticTokensDeltaPartialResult | SemanticTokensDeltaPartialResult, void>): void;
 		onRange(handler: ServerRequestHandler<SemanticTokensRangeParams, SemanticTokens, SemanticTokensPartialResult, void>): void;
@@ -27,6 +29,9 @@ export const SemanticTokensFeature: Feature<_Languages, SemanticTokensFeatureSha
 	return class extends Base {
 		public get semanticTokens() {
 			return {
+				refresh: (): Promise<void> => {
+					return this.connection.sendRequest(SemanticTokensRefreshRequest.type);
+				},
 				on: (handler: ServerRequestHandler<SemanticTokensParams, SemanticTokens, SemanticTokensPartialResult, void>): void => {
 					const type = SemanticTokensRequest.type;
 					this.connection.onRequest(type, (params, cancel) => {

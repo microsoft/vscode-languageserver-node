@@ -285,7 +285,7 @@ connection.onHover((textPosition): Hover => {
 	};
 });
 
-connection.languages.onDiagnostic(async (param) => {
+connection.languages.diagnostics.on(async (param) => {
 	const uri = URI.parse(param.textDocument.uri);
 	const document = documents.get(param.textDocument.uri);
 	const content = document !== undefined
