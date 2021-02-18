@@ -44,6 +44,7 @@ export namespace DiagnosticPullModeFlags {
 	 * Trigger the diagnostic pull on type only
 	 */
 	export const onType: 2 = 2;
+
 	/**
 	 * Trigger the diagnostic pull on save only
 	 */
@@ -52,7 +53,7 @@ export namespace DiagnosticPullModeFlags {
 	/**
 	 * Trigger the diagnostic pull on open, type and save.
 	 */
-	export const all: number = onOpen & onType & onSave;
+	export const all: number = onOpen | onType | onSave;
 
 	export function is(value: any): value is DiagnosticPullModeFlags {
 		return onType <= value && value <= all;
