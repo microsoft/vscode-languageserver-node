@@ -3,6 +3,16 @@
 	"project": "./tsconfig.json",
 	// The name of the output file
 	"out": "lsp.lsif",
+	// The group information.
+	"group": {
+		"name": "Language Server Protocol Group",
+		"uri": "com.microsoft/DevDiv/vscode/lsp",
+		"rootUri": ".",
+		"repository": {
+			"type": "git",
+			"url": "https://github.com/Microsoft/vscode-languageserver-node.git"
+		}
+	},
 	// A mapping describing which packages are published to npm and what TS project files is used
 	// to generate the package code.
 	"publishedPackages": [

@@ -36,39 +36,66 @@ export interface $DiagnosticClientCapabilities {
  */
 export namespace DiagnosticPullModeFlags {
 	/**
-	 * Trigger the diagnostic pull on open only.
+	 * Trigger the diagnostic pull on open.
 	 */
 	export const onOpen: 1 = 1;
 
 	/**
-	 * Trigger the diagnostic pull on type only
+	 * Trigger the diagnostic pull on focus gain.
 	 */
-	export const onType: 2 = 2;
+	export const onFocusGain: 2 = 2;
 
 	/**
-	 * Trigger the diagnostic pull on save only
+	 * Trigger the diagnostic pull on focus lost.
 	 */
-	export const onSave: 4 = 4;
+	export const onFocusLost: 4 = 4;
+
+	/**
+	 * Trigger the diagnostic pull on document change.
+	 */
+	export const onChanged: 8 = 8;
+
+	/**
+	 * Trigger the diagnostic pull on save.
+	 */
+	export const onSave: 16 = 16;
+
+	/**
+	 * Trigger the diagnostic pull on close.
+	 */
+	export const onClose: 32 = 32;
 
 	/**
 	 * Trigger the diagnostic pull on open, type and save.
 	 */
-	export const all: number = onOpen | onType | onSave;
+	export const all: number = onOpen | onChanged | onFocusGain | onFocusLost | onSave | onClose;
 
 	export function is(value: any): value is DiagnosticPullModeFlags {
-		return onType <= value && value <= all;
+		return onChanged <= value && value <= all;
 	}
 
 	export function isOpen(value: number): boolean {
 		return (value & onOpen) !== 0;
 	}
 
-	export function isType(value: number): boolean {
-		return (value & onType) !== 0;
+	export function isChanged(value: number): boolean {
+		return (value & onChanged) !== 0;
+	}
+
+	export function isFocusGain(value: number): boolean {
+		return (value & onFocusGain) !== 0;
+	}
+
+	export function isFocusLost(value: number): boolean {
+		return (value & onFocusLost) !== 0;
 	}
 
 	export function isSave(value: number): boolean {
 		return (value & onSave) !== 0;
+	}
+
+	export function isClose(value: number): boolean {
+		return (value & onClose) !== 0;
 	}
 }
 export type DiagnosticPullModeFlags = number;
@@ -84,25 +111,42 @@ export namespace DiagnosticTriggerKind {
 	export const Invoked: 1 = 1;
 
 	/**
-	 * The request got triggered because the user opened a document.
+	 * The request got triggered because the content of the
+	 * document.
 	 */
 	export const Opened: 2 = 2;
 
 	/**
-	 * The request got triggered because the user typed in a document.
+	 * The request got triggered because an UI element showing the
+	 * document gained focus.
 	 */
-	export const Typed: 3 = 3;
+	export const FocusGained: 3 = 3;
 
 	/**
-	 * The request got triggered because the user saved a document.
+	 * The request got triggered because an UI element showing the
+	 * document lost focus.
 	 */
-	export const Saved: 4 = 4;
+	export const FocusLost: 4 = 4;
+
+	/**
+	 * The request got triggered because the content of the document
+	 * got modified.
+	 */
+	export const Changed: 5 = 5;
+
+	/**
+	 * The request got triggered because the the content of the
+	 * document got saved.
+	 */
+	export const Saved: 6 = 6;
+
+	export const Closed: 7 = 7;
 
 	export function is(value: any): value is DiagnosticTriggerKind {
 		return Invoked <= value && value <= Saved;
 	}
 }
-export type DiagnosticTriggerKind = 1 | 2 | 3 | 4;
+export type DiagnosticTriggerKind = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 
 /**
