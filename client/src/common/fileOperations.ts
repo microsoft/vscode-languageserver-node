@@ -227,17 +227,30 @@ abstract class NotificationFileOperationFeature<I, E extends { readonly files: R
 
 abstract class CachingNotificationFileOperationFeature<I, E extends { readonly files: ReadonlyArray<I>; }, P> extends NotificationFileOperationFeature<I, E, P> {
 	protected _willListener: code.Disposable | undefined;
-	private _fsPathFileTypes: { [key: string]: code.FileType } = {};
+	private readonly _fsPathFileTypes = new Map<String, code.FileType>();
 
 	protected async getFileType(uri: code.Uri): Promise<code.FileType | undefined> {
 		const fsPath = uri.fsPath;
-		if (this._fsPathFileTypes[fsPath])
-			return this._fsPathFileTypes[fsPath];
+		if (this._fsPathFileTypes.has(fsPath))
+			return this._fsPathFileTypes.get(fsPath);
 
 		const type = await FileOperationFeature.getFileType(uri);
 		if (type)
-			this._fsPathFileTypes[fsPath] = type;
+			this._fsPathFileTypes.set(fsPath, type);
 		return type;
+	}
+
+	protected async cacheFileTypes(event: E, prop: (i: I) => code.Uri) {
+		// Calling filter will force the matching logic to run. For any item
+		// that requires a getFileType lookup, the overriden getFileType will
+		// be called that will cache the result so that when onDidRename fires,
+		// it can still be checked even though the item no longer exists on disk
+		// in its original location.
+		await this.filter(event, prop);
+	}
+
+	protected clearFileTypeCache() {
+		this._fsPathFileTypes.clear();
 	}
 
 	public unregister(id: string): void {
@@ -293,15 +306,11 @@ export class DidRenameFilesFeature extends CachingNotificationFileOperationFeatu
 	}
 
 	private willRename(e: code.FileWillRenameEvent): void {
-		// Calling filter will force the matching logic to run. For any item
-		// that requires a getFileType lookup, the overriden getFileType will
-		// be called that will cache the result so that when onDidRename fires,
-		// it can still be checked even though the item no longer exists on disk
-		// in its original location.
-		e.waitUntil(this.filter(e, (i) => i.oldUri));
+		e.waitUntil(this.cacheFileTypes(e, (i) => i.oldUri));
 	}
 
 	protected doSend(event: code.FileRenameEvent, next: (event: code.FileRenameEvent) => void): void {
+		this.clearFileTypeCache();
 		const middleware = this._client.clientOptions.middleware?.workspace;
 		return middleware?.didRenameFiles
 			? middleware.didRenameFiles(event, next)
@@ -327,14 +336,11 @@ export class DidDeleteFilesFeature extends CachingNotificationFileOperationFeatu
 	}
 
 	private willDelete(e: code.FileWillDeleteEvent): void {
-		// Calling filter will force the matching logic to run. For any item
-		// that requires a getFileType lookup, the overriden getFileType will
-		// be called that will cache the result so that when onDidDelete fires,
-		// it can still be checked even though the item no longer exists on disk.
-		e.waitUntil(this.filter(e, (i) => i));
+		e.waitUntil(this.cacheFileTypes(e, (i) => i));
 	}
 
 	protected doSend(event: code.FileCreateEvent, next: (event: code.FileCreateEvent) => void): void {
+		this.clearFileTypeCache();
 		const middleware = this._client.clientOptions.middleware?.workspace;
 		return middleware?.didDeleteFiles
 			? middleware.didDeleteFiles(event, next)
