@@ -1070,7 +1070,6 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				} else {
 					return [undefinedToNull(param)];
 				}
-				break;
 			case ParameterStructures.byName:
 				if (!isNamedParam(param)) {
 					throw new Error(`Received parameters by name but param is not an object literal.`);
