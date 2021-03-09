@@ -105,7 +105,7 @@ export interface StreamInfo {
 namespace StreamInfo {
 	export function is(value: any): value is StreamInfo {
 		let candidate = value as StreamInfo;
-		return candidate && candidate.writer !== void 0 && candidate.reader !== void 0;
+		return candidate && candidate.writer !== undefined && candidate.reader !== undefined;
 	}
 }
 
@@ -117,7 +117,7 @@ export interface ChildProcessInfo {
 namespace ChildProcessInfo {
 	export function is(value: any): value is ChildProcessInfo {
 		let candidate = value as ChildProcessInfo;
-		return candidate && candidate.process !== void 0 && typeof candidate.detached === 'boolean';
+		return candidate && candidate.process !== undefined && typeof candidate.detached === 'boolean';
 	}
 }
 
@@ -129,6 +129,7 @@ export class LanguageClient extends CommonLanguageClient {
 	private _forceDebug: boolean;
 	private _serverProcess: ChildProcess | undefined;
 	private _isDetached: boolean | undefined;
+	private _isInDebugMode: boolean;
 
 	public constructor(name: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, forceDebug?: boolean);
 	public constructor(id: string, name: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, forceDebug?: boolean);
@@ -151,10 +152,11 @@ export class LanguageClient extends CommonLanguageClient {
 			clientOptions = arg3 as LanguageClientOptions;
 			forceDebug = arg4 as boolean;
 		}
-		if (forceDebug === void 0) { forceDebug = false; }
+		if (forceDebug === undefined) { forceDebug = false; }
 		super(id, name, clientOptions);
 		this._serverOptions = serverOptions;
 		this._forceDebug = forceDebug;
+		this._isInDebugMode = forceDebug;
 		try {
 			this.checkVersion();
 		} catch (error) {
@@ -179,12 +181,16 @@ export class LanguageClient extends CommonLanguageClient {
 		}
 	}
 
+	public get isInDebugMode(): boolean {
+		return this._isInDebugMode;
+	}
+
 	public stop(): Promise<void> {
 		return super.stop().then(() => {
 			if (this._serverProcess) {
 				let toCheck = this._serverProcess;
 				this._serverProcess = undefined;
-				if (this._isDetached === void 0 || !this._isDetached) {
+				if (this._isDetached === undefined || !this._isDetached) {
 					this.checkProcessDied(toCheck);
 				}
 				this._isDetached = undefined;
@@ -285,8 +291,10 @@ export class LanguageClient extends CommonLanguageClient {
 		if (runDebug.run || runDebug.debug) {
 			if (this._forceDebug || startedInDebugMode()) {
 				json = runDebug.debug;
+				this._isInDebugMode = true;
 			} else {
 				json = runDebug.run;
+				this._isInDebugMode = false;
 			}
 		} else {
 			json = server as NodeModule | Executable;
