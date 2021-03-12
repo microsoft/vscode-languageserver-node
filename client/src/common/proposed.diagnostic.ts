@@ -40,15 +40,15 @@ export namespace VDiagnosticResult {
 
 export interface DiagnosticProvider {
 	onDidChangeDiagnostics: VEvent<void>;
-	provideDiagnostics (textDocument: TextDocument, context: Proposed.DiagnosticContext, token: CancellationToken): ProviderResult<VDiagnosticResult>;
+	provideDiagnostics (textDocument: TextDocument, token: CancellationToken): ProviderResult<VDiagnosticResult>;
 }
 
 export interface ProvideDiagnosticSignature {
-	(this: void, textDocument: TextDocument, context: Proposed.DiagnosticContext, token: CancellationToken): ProviderResult<VDiagnosticResult>;
+	(this: void, textDocument: TextDocument, token: CancellationToken): ProviderResult<VDiagnosticResult>;
 }
 
 export interface DiagnosticProviderMiddleware {
-	provideDiagnostics?: (this: void, document: TextDocument, context: Proposed.DiagnosticContext, token: CancellationToken, next: ProvideDiagnosticSignature) => ProviderResult<VDiagnosticResult>;
+	provideDiagnostics?: (this: void, document: TextDocument, token: CancellationToken, next: ProvideDiagnosticSignature) => ProviderResult<VDiagnosticResult>;
 }
 
 
@@ -61,12 +61,10 @@ enum RequestStateKind {
 type RequestState = {
 	state: RequestStateKind.active;
 	textDocument: TextDocument;
-	trigger: Proposed.DiagnosticTriggerKind;
 	tokenSource: CancellationTokenSource;
 } | {
 	state: RequestStateKind.reschedule;
 	textDocument: TextDocument;
-	trigger: Proposed.DiagnosticTriggerKind;
 } | {
 	state: RequestStateKind.outDated;
 	textDocument: TextDocument;
@@ -85,7 +83,7 @@ export class DiagnosticFeature extends TextDocumentFeature<boolean | Proposed.Di
 	private readonly closeFeature: DidCloseTextDocumentFeatureShape;
 
 	constructor(client: BaseLanguageClient) {
-		super(client, Proposed.DiagnosticRequest.type);
+		super(client, Proposed.DocumentDiagnosticRequest.type);
 		this.openFeature = client.getFeature(DidOpenTextDocumentNotification.method);
 		this.changeFeature = client.getFeature(DidChangeTextDocumentNotification.method);
 		this.saveFeature = client.getFeature(DidSaveTextDocumentNotification.method);

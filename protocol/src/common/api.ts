@@ -67,14 +67,9 @@ export namespace Proposed {
 	export type DiagnosticOptions = diag.DiagnosticOptions;
 	export type DiagnosticRegistrationOptions = diag.DiagnosticRegistrationOptions;
 	export type $DiagnosticServerCapabilities = diag.$DiagnosticServerCapabilities;
-	export type DiagnosticPullModeFlags = diag.DiagnosticPullModeFlags;
-	export const DiagnosticPullModeFlags = diag.DiagnosticPullModeFlags;
-	export type DiagnosticTriggerKind = diag.DiagnosticTriggerKind;
-	export const DiagnosticTriggerKind = diag.DiagnosticTriggerKind;
-	export type DiagnosticContext = diag.DiagnosticContext;
 	export type DiagnosticServerCancellationData = diag.DiagnosticServerCancellationData;
 	export const DiagnosticServerCancellationData = diag.DiagnosticServerCancellationData;
-	export type DiagnosticList = diag.DiagnosticList;
-	export const DiagnosticRequest: typeof diag.DiagnosticRequest = diag.DiagnosticRequest;
+	export type DocumentDiagnosticReport = diag.DocumentDiagnosticReport;
+	export const DocumentDiagnosticRequest: typeof diag.DocumentDiagnosticRequest = diag.DocumentDiagnosticRequest;
 	export const DiagnosticRefreshRequest: typeof diag.DiagnosticRefreshRequest = diag.DiagnosticRefreshRequest;
 }
