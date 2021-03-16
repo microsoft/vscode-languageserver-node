@@ -338,6 +338,17 @@ export interface SynchronizeOptions {
 	fileEvents?: VFileSystemWatcher | VFileSystemWatcher[];
 }
 
+export enum DiagnosticPullMode {
+	onType = 'onType',
+	onSave = 'onSave'
+}
+
+export interface DiagnosticPullOptions {
+	onType: boolean;
+	onSave: boolean;
+	filter?(document: TextDocument, mode: DiagnosticPullMode): boolean;
+}
+
 export enum RevealOutputChannelOn {
 	Info = 1,
 	Warn = 2,
@@ -531,7 +542,8 @@ export interface LanguageClientOptions {
 	connectionOptions?: ConnectionOptions;
 	markdown?: {
 		isTrusted?: boolean;
-	}
+	};
+	diagnosticPullOptions?: DiagnosticPullOptions;
 }
 
 interface ResolvedClientOptions {
@@ -554,7 +566,8 @@ interface ResolvedClientOptions {
 	connectionOptions?: ConnectionOptions;
 	markdown: {
 		isTrusted: boolean;
-	}
+	};
+	diagnosticPullOptions: DiagnosticPullOptions;
 }
 
 export enum State {
@@ -2732,21 +2745,22 @@ export abstract class BaseLanguageClient {
 		}
 
 		this._clientOptions = {
-			documentSelector: clientOptions.documentSelector || [],
-			synchronize: clientOptions.synchronize || {},
+			documentSelector: clientOptions.documentSelector ?? [],
+			synchronize: clientOptions.synchronize ?? {},
 			diagnosticCollectionName: clientOptions.diagnosticCollectionName,
-			outputChannelName: clientOptions.outputChannelName || this._name,
-			revealOutputChannelOn: clientOptions.revealOutputChannelOn || RevealOutputChannelOn.Error,
-			stdioEncoding: clientOptions.stdioEncoding || 'utf8',
+			outputChannelName: clientOptions.outputChannelName ?? this._name,
+			revealOutputChannelOn: clientOptions.revealOutputChannelOn ?? RevealOutputChannelOn.Error,
+			stdioEncoding: clientOptions.stdioEncoding ?? 'utf8',
 			initializationOptions: clientOptions.initializationOptions,
 			initializationFailedHandler: clientOptions.initializationFailedHandler,
 			progressOnInitialization: !!clientOptions.progressOnInitialization,
-			errorHandler: clientOptions.errorHandler || this.createDefaultErrorHandler(clientOptions.connectionOptions?.maxRestartCount),
-			middleware: clientOptions.middleware || {},
+			errorHandler: clientOptions.errorHandler ?? this.createDefaultErrorHandler(clientOptions.connectionOptions?.maxRestartCount),
+			middleware: clientOptions.middleware ?? {},
 			uriConverters: clientOptions.uriConverters,
 			workspaceFolder: clientOptions.workspaceFolder,
 			connectionOptions: clientOptions.connectionOptions,
-			markdown
+			markdown,
+			diagnosticPullOptions: clientOptions.diagnosticPullOptions ?? { onType: true, onSave: false }
 		};
 		this._clientOptions.synchronize = this._clientOptions.synchronize || {};
 
