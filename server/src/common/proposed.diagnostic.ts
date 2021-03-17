@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { Proposed, Diagnostic } from 'vscode-languageserver-protocol';
+import { Proposed } from 'vscode-languageserver-protocol';
 
 import type { Feature, _Languages, ServerRequestHandler } from './server';
 
@@ -25,7 +25,7 @@ export interface DiagnosticsFeatureShape {
 		*
 		* @param handler The corresponding handler.
 		*/
-		on(handler: ServerRequestHandler<Proposed.DiagnosticParams, Proposed.DiagnosticList, Diagnostic[], Proposed.DiagnosticServerCancellationData>): void;
+		on(handler: ServerRequestHandler<Proposed.DiagnosticParams, Proposed.DocumentDiagnosticReport, void, Proposed.DiagnosticServerCancellationData>): void;
 	}
 }
 
@@ -36,8 +36,8 @@ export const DiagnosticFeature: Feature<_Languages, DiagnosticsFeatureShape> = (
 				refresh: (): Promise<void> => {
 					return this.connection.sendRequest(Proposed.DiagnosticRefreshRequest.type);
 				},
-				on: (handler: ServerRequestHandler<Proposed.DiagnosticParams, Proposed.DiagnosticList, Diagnostic[], Proposed.DiagnosticServerCancellationData>): void => {
-					this.connection.onRequest(Proposed.DiagnosticRequest.type, (params, cancel) => {
+				on: (handler: ServerRequestHandler<Proposed.DiagnosticParams, Proposed.DocumentDiagnosticReport, void, Proposed.DiagnosticServerCancellationData>): void => {
+					this.connection.onRequest(Proposed.DocumentDiagnosticRequest.type, (params, cancel) => {
 						return handler(params, cancel, this.attachWorkDoneProgress(params), undefined);
 					});
 				}

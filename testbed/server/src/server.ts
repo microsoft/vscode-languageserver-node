@@ -165,8 +165,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 				callHierarchyProvider: true,
 				selectionRangeProvider: { workDoneProgress: true },
 				diagnosticProvider: {
-					identifier: "testbed",
-					mode: Proposed.DiagnosticPullModeFlags.onOpen | Proposed.DiagnosticPullModeFlags.onType
+					identifier: "testbed"
 				}
 			}
 		};
@@ -297,7 +296,7 @@ connection.languages.diagnostics.on(async (param) => {
 		return { items: [] };
 	}
 	const result: Diagnostic[] = [];
-	const lines: string[] = content.match(/^.*([\n\r]+|$)/gm);
+	const lines: string[] = content.match(/^.*(\n|\r\n|\r|$)/gm);
 	let lineNumber: number = 0;
 	for (const line of lines) {
 		const pattern = /\b[A-Z]{2,}\b/g;

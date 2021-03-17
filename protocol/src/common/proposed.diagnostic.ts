@@ -34,97 +34,11 @@ export interface $DiagnosticClientCapabilities {
 /**
  * @since 3.17.0 - proposed state
  */
-export namespace DiagnosticPullModeFlags {
-	/**
-	 * Trigger the diagnostic pull on open only.
-	 */
-	export const onOpen: 1 = 1;
-
-	/**
-	 * Trigger the diagnostic pull on type only
-	 */
-	export const onType: 2 = 2;
-
-	/**
-	 * Trigger the diagnostic pull on save only
-	 */
-	export const onSave: 4 = 4;
-
-	/**
-	 * Trigger the diagnostic pull on open, type and save.
-	 */
-	export const all: number = onOpen | onType | onSave;
-
-	export function is(value: any): value is DiagnosticPullModeFlags {
-		return onType <= value && value <= all;
-	}
-
-	export function isOpen(value: number): boolean {
-		return (value & onOpen) !== 0;
-	}
-
-	export function isType(value: number): boolean {
-		return (value & onType) !== 0;
-	}
-
-	export function isSave(value: number): boolean {
-		return (value & onSave) !== 0;
-	}
-}
-export type DiagnosticPullModeFlags = number;
-
-
-/**
- * @since 3.17.0 - proposed state
- */
-export namespace DiagnosticTriggerKind {
-	/**
-	 * The request got triggered through some API
-	 */
-	export const Invoked: 1 = 1;
-
-	/**
-	 * The request got triggered because the user opened a document.
-	 */
-	export const Opened: 2 = 2;
-
-	/**
-	 * The request got triggered because the user typed in a document.
-	 */
-	export const Typed: 3 = 3;
-
-	/**
-	 * The request got triggered because the user saved a document.
-	 */
-	export const Saved: 4 = 4;
-
-	export function is(value: any): value is DiagnosticTriggerKind {
-		return Invoked <= value && value <= Saved;
-	}
-}
-export type DiagnosticTriggerKind = 1 | 2 | 3 | 4;
-
-
-/**
- * @since 3.17.0 - proposed state
- */
-export interface DiagnosticContext {
-	triggerKind: DiagnosticTriggerKind;
-}
-
-/**
- * @since 3.17.0 - proposed state
- */
 export interface DiagnosticParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
 	 * The text document.
 	 */
 	textDocument: TextDocumentIdentifier;
-
-	/**
-	 * Additional context information.
-	 */
-	context: DiagnosticContext;
 }
 
 /**
@@ -136,12 +50,6 @@ export interface DiagnosticOptions extends WorkDoneProgressOptions {
 	 * managed by the client.
 	 */
 	identifier?: string;
-
-	/**
-	 * An optional mode indicating when the client should
-	 * pull. Defaults to `onOpen & onType`.
-	 */
-	mode? : DiagnosticPullModeFlags;
 }
 
 /**
@@ -176,17 +84,17 @@ export namespace DiagnosticServerCancellationData {
  *
  * @since 3.17.0 - proposed state
  */
-export interface DiagnosticList {
+export interface DocumentDiagnosticReport {
 	items: Diagnostic[];
 }
 
 /**
  * @since 3.17.0 - proposed state
  */
-export namespace DiagnosticRequest {
+export namespace DocumentDiagnosticRequest {
 	export const method: 'textDocument/diagnostic' = 'textDocument/diagnostic';
-	export const type = new ProtocolRequestType<DiagnosticParams, DiagnosticList, Diagnostic[], DiagnosticServerCancellationData, DiagnosticRegistrationOptions>(method);
-	export type HandlerSignature = RequestHandler<DiagnosticParams, DiagnosticList | null, void>;
+	export const type = new ProtocolRequestType<DiagnosticParams, DocumentDiagnosticReport, void, DiagnosticServerCancellationData, DiagnosticRegistrationOptions>(method);
+	export type HandlerSignature = RequestHandler<DiagnosticParams, DocumentDiagnosticReport | null, void>;
 }
 
 /**
