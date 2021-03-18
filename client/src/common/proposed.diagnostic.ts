@@ -24,30 +24,51 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	return target[key];
 }
 
-export type VDiagnosticResult = {
+export type VDocumentDiagnosticReport = {
+
+	/**
+	 * A full document diagnostic report.
+	 */
+	kind: 'full';
+
+	/**
+	 * An optional result id. If provided it will
+	 * be sent on the next diagnostic request for the
+	 * same document.
+	 */
+	resultId?: string;
+
+	/**
+	 * The actual items.
+	 */
 	items: VDiagnostic[];
 } | {
-	unmodified: true
-};
+	/**
+	 * A document diagnostic report indicating
+	 * no changes to the last result. A server can
+	 * only return `unchanged` if result ids are
+	 * provided.
+	 */
+	kind: 'unChanged';
 
-export namespace VDiagnosticResult {
-	export function hasItems(value: VDiagnosticResult): value is VDiagnosticResult & { items: VDiagnostic[]; } {
-		const candidate = value as VDiagnosticResult & { items: VDiagnostic[]; };
-		return candidate && Array.isArray(candidate.items);
-	}
-}
+	/**
+	 * A result id which will be sent on the next
+	 * diagnostic request for the same document.
+	 */
+	resultId: string;
+};
 
 export interface DiagnosticProvider {
 	onDidChangeDiagnostics: VEvent<void>;
-	provideDiagnostics (textDocument: TextDocument, token: CancellationToken): ProviderResult<VDiagnosticResult>;
+	provideDiagnostics (textDocument: TextDocument, token: CancellationToken): ProviderResult<VDocumentDiagnosticReport>;
 }
 
 export interface ProvideDiagnosticSignature {
-	(this: void, textDocument: TextDocument, token: CancellationToken): ProviderResult<VDiagnosticResult>;
+	(this: void, textDocument: TextDocument, token: CancellationToken): ProviderResult<VDocumentDiagnosticReport>;
 }
 
 export interface DiagnosticProviderMiddleware {
-	provideDiagnostics?: (this: void, document: TextDocument, token: CancellationToken, next: ProvideDiagnosticSignature) => ProviderResult<VDiagnosticResult>;
+	provideDiagnostics?: (this: void, document: TextDocument, token: CancellationToken, next: ProvideDiagnosticSignature) => ProviderResult<VDocumentDiagnosticReport>;
 }
 
 
@@ -87,7 +108,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 		const collection = Languages.createDiagnosticCollection(options.identifier);
 		disposables.push(collection);
 		const availableEditors: Set<string> = new Set();
-		const managedDocuments: Map<string, TextDocument> = new Map();
+		const managedDocuments: Map<string, { document: TextDocument, resultId: string | undefined }> = new Map();
 
 		const matches = (textDocument: TextDocument): boolean => {
 			return Languages.match(documentSelector, textDocument) > 0 && availableEditors.has(textDocument.uri.toString());
@@ -102,16 +123,22 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 			onDidChangeDiagnostics: this.onDidChangeDiagnosticsEmitter.event,
 			provideDiagnostics: (textDocument, token) => {
 				const provideDiagnostics: ProvideDiagnosticSignature = (textDocument, token) => {
-					const params: Proposed.DiagnosticParams = {
-						textDocument: { uri: client.code2ProtocolConverter.asUri(textDocument.uri) }
+					const key = textDocument.uri.toString();
+					const params: Proposed.DocumentDiagnosticParams = {
+						textDocument: { uri: client.code2ProtocolConverter.asUri(textDocument.uri) },
+						previousResultId: managedDocuments.get(key)?.resultId
 					};
 					return client.sendRequest(Proposed.DocumentDiagnosticRequest.type, params, token).then((result) => {
-						if (result === null || !result.items) {
-							return { items: [] };
+						if (result === undefined || result === null) {
+							return { kind: 'full', items: [] };
 						}
-						return { items: client.protocol2CodeConverter.asDiagnostics(result.items) };
+						if (result.kind === 'full') {
+							return { kind: 'full', resultId: result.resultId, items: client.protocol2CodeConverter.asDiagnostics(result.items) };
+						} else {
+							return result;
+						}
 					}, (error) => {
-						return client.handleFailedRequest(Proposed.DocumentDiagnosticRequest.type, token, error, { items: [] });
+						return client.handleFailedRequest(Proposed.DocumentDiagnosticRequest.type, token, error, { kind: 'full', items: [] });
 					});
 				};
 				const middleware: Middleware & DiagnosticProviderMiddleware = client.clientOptions.middleware!;
@@ -135,10 +162,10 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 			}
 			const tokenSource = new CancellationTokenSource();
 			requestStates.set(key, { state: RequestStateKind.active, textDocument, tokenSource });
-			let diagnostics: VDiagnosticResult | undefined;
+			let diagnosticReport: VDocumentDiagnosticReport | undefined;
 			let afterState: RequestState | undefined;
 			try {
-				diagnostics = await this.provider.provideDiagnostics(textDocument, tokenSource.token) ?? { items: [] };
+				diagnosticReport = await this.provider.provideDiagnostics(textDocument, tokenSource.token) ?? { kind: 'full', items: [] };
 			} catch (error: unknown) {
 				if (error instanceof LSPCancellationError && Proposed.DiagnosticServerCancellationData.is(error.data) && error.data.retriggerRequest === false) {
 					afterState = { state: RequestStateKind.outDated, textDocument };
@@ -161,8 +188,16 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 				return;
 			}
 			// diagnostics is only undefined if the request has thrown.
-			if (diagnostics !== undefined && VDiagnosticResult.hasItems(diagnostics)) {
-				collection.set(textDocument.uri, diagnostics.items);
+			if (diagnosticReport !== undefined) {
+				if (diagnosticReport.kind === 'full') {
+					collection.set(textDocument.uri, diagnosticReport.items);
+				}
+				if (diagnosticReport.resultId !== undefined) {
+					const info = managedDocuments.get(key);
+					if (info !== undefined) {
+						info.resultId = diagnosticReport.resultId;
+					}
+				}
 			}
 			if (afterState.state === RequestStateKind.reschedule) {
 				pullDiagnostics(textDocument);
@@ -183,14 +218,14 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 		disposables.push(openFeature.onNotificationSent((event) => {
 			const textDocument = event.original;
 			if (matches(textDocument)) {
-				managedDocuments.set(textDocument.uri.toString(), textDocument);
+				managedDocuments.set(textDocument.uri.toString(), { document: textDocument, resultId: undefined });
 				pullDiagnostics(event.original);
 			}
 		}));
 		// Pull all diagnostics for documents that are already open
 		for (const textDocument of openFeature.openDocuments) {
 			if (matches(textDocument)) {
-				managedDocuments.set(textDocument.uri.toString(), textDocument);
+				managedDocuments.set(textDocument.uri.toString(), {document: textDocument, resultId: undefined });
 				pullDiagnostics(textDocument);
 			}
 		}
@@ -228,8 +263,8 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 			}
 		}));
 		this.onDidChangeDiagnosticsEmitter.event(() => {
-			for (const document of managedDocuments.values()) {
-				pullDiagnostics(document);
+			for (const item of managedDocuments.values()) {
+				pullDiagnostics(item.document);
 			}
 		});
 
@@ -237,7 +272,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 	}
 }
 
-export class DiagnosticFeature extends TextDocumentFeature<boolean | Proposed.DiagnosticOptions, Proposed.DiagnosticRegistrationOptions, DiagnosticFeatureProvider> {
+export class DiagnosticFeature extends TextDocumentFeature<Proposed.DiagnosticOptions, Proposed.DiagnosticRegistrationOptions, DiagnosticFeatureProvider> {
 
 	constructor(client: BaseLanguageClient) {
 		super(client, Proposed.DocumentDiagnosticRequest.type);

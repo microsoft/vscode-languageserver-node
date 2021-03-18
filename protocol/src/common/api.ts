@@ -63,13 +63,19 @@ import * as diag from './proposed.diagnostic';
 export namespace Proposed {
 	export type DiagnosticClientCapabilities = diag.DiagnosticClientCapabilities;
 	export type $DiagnosticClientCapabilities = diag.$DiagnosticClientCapabilities;
-	export type DiagnosticParams = diag.DiagnosticParams;
 	export type DiagnosticOptions = diag.DiagnosticOptions;
 	export type DiagnosticRegistrationOptions = diag.DiagnosticRegistrationOptions;
 	export type $DiagnosticServerCapabilities = diag.$DiagnosticServerCapabilities;
+
+	export type DocumentDiagnosticParams = diag.DocumentDiagnosticParams;
 	export type DiagnosticServerCancellationData = diag.DiagnosticServerCancellationData;
 	export const DiagnosticServerCancellationData = diag.DiagnosticServerCancellationData;
 	export type DocumentDiagnosticReport = diag.DocumentDiagnosticReport;
+	export type DocumentDiagnosticReportPartialResult = diag.DocumentDiagnosticReportPartialResult;
 	export const DocumentDiagnosticRequest: typeof diag.DocumentDiagnosticRequest = diag.DocumentDiagnosticRequest;
+
+	export type WorkspaceDiagnosticParams = diag.WorkspaceDiagnosticParams;
+	export type WorkspaceDiagnosticReport = diag.WorkspaceDiagnosticReport;
+	export type WorkspaceDiagnosticReportPartialResult = diag.WorkspaceDiagnosticReportPartialResult;
 	export const DiagnosticRefreshRequest: typeof diag.DiagnosticRefreshRequest = diag.DiagnosticRefreshRequest;
 }
