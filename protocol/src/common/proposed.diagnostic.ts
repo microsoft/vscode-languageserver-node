@@ -82,7 +82,6 @@ export namespace DiagnosticServerCancellationData {
 	}
 }
 
-
 /**
  * @since 3.17.0 - proposed state
  */
@@ -104,16 +103,37 @@ export interface DocumentDiagnosticParams extends WorkDoneProgressParams, Partia
 }
 
 /**
- * The result of a diagnostic pull request.
+ * @since 3.17.0 - proposed state
+ */
+export enum DocumentDiagnosticReportKind {
+	/**
+	 * A new diagnostic report with a full
+	 * set of problems.
+	 */
+	new = 'new',
+
+	/**
+	 * A report indicating that the last
+	 * returned reports is still accurate.
+	 */
+	unChanged = 'unChanged'
+}
+
+/**
+ * The result of a document diagnostic pull request. A report can
+ * either be a new report containing all diagnostics for the
+ * requested document or a unchanged report indicating that nothing
+ * has changed in terms of diagnostics in comparison to the last
+ * pull request.
  *
  * @since 3.17.0 - proposed state
  */
 export type DocumentDiagnosticReport = {
 
 	/**
-	 * A full document diagnostic report.
+	 * A new document diagnostic report.
 	 */
-	kind: 'full';
+	kind: DocumentDiagnosticReportKind.new;
 
 	/**
 	 * An optional result id. If provided it will
@@ -133,7 +153,7 @@ export type DocumentDiagnosticReport = {
 	 * only return `unchanged` if result ids are
 	 * provided.
 	 */
-	kind: 'unChanged';
+	kind: DocumentDiagnosticReportKind.unChanged;
 
 	/**
 	 * A result id which will be sent on the next
@@ -142,6 +162,9 @@ export type DocumentDiagnosticReport = {
 	resultId: string;
 };
 
+/**
+ * @since 3.17.0 - proposed state
+ */
 export interface DocumentDiagnosticReportPartialResult {
 	items: Diagnostic[];
 }

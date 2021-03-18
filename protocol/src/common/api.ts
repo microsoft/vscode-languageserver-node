@@ -71,6 +71,8 @@ export namespace Proposed {
 	export type DiagnosticServerCancellationData = diag.DiagnosticServerCancellationData;
 	export const DiagnosticServerCancellationData = diag.DiagnosticServerCancellationData;
 	export type DocumentDiagnosticReport = diag.DocumentDiagnosticReport;
+	export type DocumentDiagnosticReportKind = diag.DocumentDiagnosticReportKind;
+	export const DocumentDiagnosticReportKind = diag.DocumentDiagnosticReportKind;
 	export type DocumentDiagnosticReportPartialResult = diag.DocumentDiagnosticReportPartialResult;
 	export const DocumentDiagnosticRequest: typeof diag.DocumentDiagnosticRequest = diag.DocumentDiagnosticRequest;
 

@@ -24,12 +24,27 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	return target[key];
 }
 
-export type VDocumentDiagnosticReport = {
+
+enum VDocumentDiagnosticReportKind {
+	/**
+	 * A new diagnostic report with a full
+	 * set of problems.
+	 */
+	new = 'new',
+
+	/**
+	 * A report indicating that the last
+	 * returned reports is still accurate.
+	 */
+	unChanged = 'unChanged'
+}
+
+type VDocumentDiagnosticReport = {
 
 	/**
 	 * A full document diagnostic report.
 	 */
-	kind: 'full';
+	kind: VDocumentDiagnosticReportKind.new;
 
 	/**
 	 * An optional result id. If provided it will
@@ -49,7 +64,7 @@ export type VDocumentDiagnosticReport = {
 	 * only return `unchanged` if result ids are
 	 * provided.
 	 */
-	kind: 'unChanged';
+	kind: VDocumentDiagnosticReportKind.unChanged;
 
 	/**
 	 * A result id which will be sent on the next
@@ -130,15 +145,15 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 					};
 					return client.sendRequest(Proposed.DocumentDiagnosticRequest.type, params, token).then((result) => {
 						if (result === undefined || result === null) {
-							return { kind: 'full', items: [] };
+							return { kind: VDocumentDiagnosticReportKind.new, items: [] };
 						}
-						if (result.kind === 'full') {
-							return { kind: 'full', resultId: result.resultId, items: client.protocol2CodeConverter.asDiagnostics(result.items) };
+						if (result.kind === Proposed.DocumentDiagnosticReportKind.new) {
+							return { kind: VDocumentDiagnosticReportKind.new, resultId: result.resultId, items: client.protocol2CodeConverter.asDiagnostics(result.items) };
 						} else {
-							return result;
+							return { kind: VDocumentDiagnosticReportKind.unChanged, resultId: result.resultId };
 						}
 					}, (error) => {
-						return client.handleFailedRequest(Proposed.DocumentDiagnosticRequest.type, token, error, { kind: 'full', items: [] });
+						return client.handleFailedRequest(Proposed.DocumentDiagnosticRequest.type, token, error, { kind: VDocumentDiagnosticReportKind.new, items: [] });
 					});
 				};
 				const middleware: Middleware & DiagnosticProviderMiddleware = client.clientOptions.middleware!;
@@ -165,7 +180,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 			let diagnosticReport: VDocumentDiagnosticReport | undefined;
 			let afterState: RequestState | undefined;
 			try {
-				diagnosticReport = await this.provider.provideDiagnostics(textDocument, tokenSource.token) ?? { kind: 'full', items: [] };
+				diagnosticReport = await this.provider.provideDiagnostics(textDocument, tokenSource.token) ?? { kind: VDocumentDiagnosticReportKind.new, items: [] };
 			} catch (error: unknown) {
 				if (error instanceof LSPCancellationError && Proposed.DiagnosticServerCancellationData.is(error.data) && error.data.retriggerRequest === false) {
 					afterState = { state: RequestStateKind.outDated, textDocument };
@@ -189,7 +204,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 			}
 			// diagnostics is only undefined if the request has thrown.
 			if (diagnosticReport !== undefined) {
-				if (diagnosticReport.kind === 'full') {
+				if (diagnosticReport.kind === VDocumentDiagnosticReportKind.new) {
 					collection.set(textDocument.uri, diagnosticReport.items);
 				}
 				if (diagnosticReport.resultId !== undefined) {
