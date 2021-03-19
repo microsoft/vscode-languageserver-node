@@ -95,6 +95,7 @@ enum RequestStateKind {
 
 type RequestState = {
 	state: RequestStateKind.active;
+	version: number;
 	textDocument: TextDocument;
 	tokenSource: CancellationTokenSource;
 } | {
@@ -104,6 +105,12 @@ type RequestState = {
 	state: RequestStateKind.outDated;
 	textDocument: TextDocument;
 };
+
+interface DocumentPullState {
+	document: TextDocument;
+	pulledVersion: number | undefined;
+	resultId: string | undefined;
+}
 
 export interface DiagnosticFeatureProvider {
 	onDidChangeDiagnosticsEmitter: EventEmitter<void>;
@@ -123,7 +130,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 		const collection = Languages.createDiagnosticCollection(options.identifier);
 		disposables.push(collection);
 		const availableEditors: Set<string> = new Set();
-		const managedDocuments: Map<string, { document: TextDocument, resultId: string | undefined }> = new Map();
+		const managedDocuments: Map<string, DocumentPullState> = new Map();
 
 		const matches = (textDocument: TextDocument): boolean => {
 			return Languages.match(documentSelector, textDocument) > 0 && availableEditors.has(textDocument.uri.toString());
@@ -176,7 +183,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 				return;
 			}
 			const tokenSource = new CancellationTokenSource();
-			requestStates.set(key, { state: RequestStateKind.active, textDocument, tokenSource });
+			requestStates.set(key, { state: RequestStateKind.active, version: textDocument.version, textDocument, tokenSource });
 			let diagnosticReport: VDocumentDiagnosticReport | undefined;
 			let afterState: RequestState | undefined;
 			try {
@@ -233,14 +240,14 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 		disposables.push(openFeature.onNotificationSent((event) => {
 			const textDocument = event.original;
 			if (matches(textDocument)) {
-				managedDocuments.set(textDocument.uri.toString(), { document: textDocument, resultId: undefined });
+				managedDocuments.set(textDocument.uri.toString(), { document: textDocument, pulledVersion: undefined, resultId: undefined });
 				pullDiagnostics(event.original);
 			}
 		}));
 		// Pull all diagnostics for documents that are already open
 		for (const textDocument of openFeature.openDocuments) {
 			if (matches(textDocument)) {
-				managedDocuments.set(textDocument.uri.toString(), {document: textDocument, resultId: undefined });
+				managedDocuments.set(textDocument.uri.toString(), {document: textDocument, pulledVersion: undefined, resultId: undefined });
 				pullDiagnostics(textDocument);
 			}
 		}
@@ -264,18 +271,30 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 			}));
 		}
 
-		// WHen the document closes clear things up
+		// When the document closes clear things up
 		const closeFeature = client.getFeature(DidCloseTextDocumentNotification.method);
 		disposables.push(closeFeature.onNotificationSent((event) => {
 			const textDocument = event.original;
+			if (!manages(textDocument)) {
+				return;
+			}
+			const key = textDocument.uri.toString();
 			const requestState = requestStates.get(textDocument.uri.toString());
-			if (requestState !== undefined) {
-				requestStates.set(textDocument.uri.toString(),{ state: RequestStateKind.outDated, textDocument });
-			}
-			if (manages(textDocument)) {
+			if (options.workspaceProvider || options.interFileDependencies) {
+				// Schedule a last request so that we show accurate information for closed documents
+				// so that a workspace provider can from now on take over.
+				if (requestState !== undefined) {
+					requestStates.set(key, { state: RequestStateKind.reschedule, textDocument });
+				} else {
+					pullDiagnostics(textDocument);
+				}
+			} else {
+				if (requestState !== undefined) {
+					requestStates.set(textDocument.uri.toString(),{ state: RequestStateKind.outDated, textDocument });
+				}
 				collection.delete(textDocument.uri);
-				managedDocuments.delete(textDocument.uri.toString());
 			}
+			managedDocuments.delete(textDocument.uri.toString());
 		}));
 		this.onDidChangeDiagnosticsEmitter.event(() => {
 			for (const item of managedDocuments.values()) {
