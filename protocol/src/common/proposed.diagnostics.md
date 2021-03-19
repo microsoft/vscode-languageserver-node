@@ -62,7 +62,7 @@ export interface DiagnosticRegistrationOptions extends TextDocumentRegistrationO
 }
 ```
 
-#### <a href="#textDocument_diagnostic" name="textDocument_diagnostic" class="anchor">Document Diagnostics(:leftwards_arrow_with_hook:)</a>
+##### <a href="#textDocument_diagnostic" name="textDocument_diagnostic" class="anchor">Document Diagnostics(:leftwards_arrow_with_hook:)</a>
 
 The text document diagnostic request is sent from the client to the server to ask the server to compute the diagnostics for a given document. As with other pull requests the server is aksed to compute the diagnostics for the currently synced version of the document.
 
@@ -157,5 +157,82 @@ export interface DiagnosticServerCancellationData {
 }
 ```
 
-#### <a href="#workspace_diagnostic" name="textDocument_diagnostic" class="anchor">Workspace Diagnostics(:leftwards_arrow_with_hook:)</a>
+##### <a href="#workspace_diagnostic" name="workspace_diagnostic" class="anchor">Workspace Diagnostics(:leftwards_arrow_with_hook:)</a>
 
+The workspace diagnostic request is sent from the client to the server to ask the server to compute workspace wide diagnostics which previously where pushed from the server to the client. In contrast to the document diagnostic request the workspace request can be long running and is not bound to a specific workspace or document state. If the client supports streaming for the workspace diagnostic pull it is legal to provide a document diagnostic report multiple times for the same document URI. The last one reported will win over previous reports.
+
+If a client receives a diagnostic report for a document in a workspace diagnostic request for which the client also issues individual document diagnostic pull requests the client needs to decide which diagnostics win and should be presented. In general:
+
+- diagnostics for a higher document version should win over those from a lower document version (e.g. note that document versions are steadily increasing)
+- diagnostics from a document pull should win over diagnostics form a workspace pull if no version information is provided.
+
+_Request_:
+* method: 'workspace/diagnostic'.
+* params: `WorkspaceDiagnosticParams` defined as follows:
+
+```typescript
+export interface WorkspaceDiagnosticParams extends WorkDoneProgressParams, PartialResultParams {
+	/**
+	 * The additional identifier provided during registration.
+	 */
+	identifier?: string;
+
+	/**
+	 * The currently known diagnostic reports with their
+	 * previous result ids.
+	 */
+	previousResultIds: {
+		/**
+		 * The URI for which the client knowns a
+		 * result id.
+		 */
+		uri: DocumentUri;
+
+		/**
+		 * The value of the previous result id.
+		 */
+		value: string;
+	}[];
+}
+```
+
+_Response_:
+* result: `WorkspaceDiagnosticReport` defined as follows:
+
+```typescript
+export interface WorkspaceDiagnosticReport {
+	items: WorkspaceDocumentDiagnosticReport[];
+}
+
+export type WorkspaceDocumentDiagnosticReport = {
+
+	/**
+	 * The URI for which diagnostic information is reported.
+	 */
+	uri: DocumentUri;
+
+	/**
+	 * The version number for which the diagnostics are reported.
+	 * If the document is not marked as open `null` can be provided.
+	 */
+	version: integer | null;
+} & DocumentDiagnosticReport;
+```
+
+* partial result: The first literal send need to be a `WorkspaceDiagnosticReport` followed by n `DocumentDiagnosticReportPartialResult` literals defined as follows:
+
+```typescript
+export interface WorkspaceDiagnosticReportPartialResult {
+	items: WorkspaceDocumentDiagnosticReport[];
+}
+```
+
+* error: code and message set in case an exception happens during the diagnostic request. A server is also allowed to return and error with code `ServerCancelled` indicating that the server can't compute the result right now. A server can return a `DiagnosticServerCancellationData` data to indicate whether the client should re-trigger the request. If no data is provided it defaults to `{ retriggerRequest: true }`:
+
+##### Implementation Considerations
+
+Generally the language server specification doesn't enforce any specific client implementation since those usually depend on how the client UI behaves. However since diagnostics can be provided on a document and workspace level here are some tips:
+
+- a client should pull actively for the document the users types in.
+- if the server signals inter file dependencies a client should also pull for visible documents to ensure accurate diagnostics. However the pull should happen less frequently.
+- if the server signals workspace pull support a client should also pull for workspace diagnostics. It is recommended for clients to implement partial result progress for the workspace pull to allow servers to keep the request open for a long time. If a server closes a workspace diagnostic pull request the client should re-trigger the request.

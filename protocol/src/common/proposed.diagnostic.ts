@@ -183,6 +183,23 @@ export interface WorkspaceDiagnosticParams extends WorkDoneProgressParams, Parti
 	 * The additional identifier provided during registration.
 	 */
 	identifier?: string;
+
+	/**
+	 * The currently known diagnostic reports with their
+	 * previous result ids.
+	 */
+	previousResultIds: {
+		/**
+		 * The URI for which the client knowns a
+		 * result id.
+		 */
+		uri: DocumentUri;
+
+		/**
+		 * The value of the previous result id.
+		 */
+		value: string;
+	}[];
 }
 
 export type WorkspaceDocumentDiagnosticReport = {
