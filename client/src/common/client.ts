@@ -1601,6 +1601,7 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 			insertTextModeSupport: { valueSet: [InsertTextMode.asIs, InsertTextMode.adjustIndentation] },
 			labelDetailsSupport: true
 		};
+		completion.insertTextMode = InsertTextMode.adjustIndentation;
 		completion.completionItemKind = { valueSet: SupportedCompletionItemKinds };
 	}
 
