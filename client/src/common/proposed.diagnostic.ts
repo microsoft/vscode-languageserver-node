@@ -280,7 +280,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 			}
 			const key = textDocument.uri.toString();
 			const requestState = requestStates.get(textDocument.uri.toString());
-			if (options.workspaceProvider || options.interFileDependencies) {
+			if (options.workspaceDiagnostics || options.interFileDependencies) {
 				// Schedule a last request so that we show accurate information for closed documents
 				// so that a workspace provider can from now on take over.
 				if (requestState !== undefined) {

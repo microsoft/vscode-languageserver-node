@@ -27,11 +27,13 @@ export interface DiagnosticClientCapabilities {
 
 export interface $DiagnosticClientCapabilities {
 	textDocument?: TextDocumentClientCapabilities & {
-		diagnostic: DiagnosticClientCapabilities;
+		diagnostic?: DiagnosticClientCapabilities;
 	}
 }
 
 /**
+ * Diagnostic options.
+ *
  * @since 3.17.0 - proposed state
  */
 export interface DiagnosticOptions extends WorkDoneProgressOptions {
@@ -52,10 +54,12 @@ export interface DiagnosticOptions extends WorkDoneProgressOptions {
 	/**
 	 * The server provides support for workspace diagnostics as well.
 	 */
-	workspaceProvider: boolean;
+	workspaceDiagnostics: boolean;
 }
 
 /**
+ * Diagnostic registration options.
+ *
  * @since 3.17.0 - proposed state
  */
 export interface DiagnosticRegistrationOptions extends TextDocumentRegistrationOptions, DiagnosticOptions, StaticRegistrationOptions {
@@ -66,6 +70,8 @@ export interface $DiagnosticServerCapabilities {
 }
 
 /**
+ * Cancellation data returned from a diagnostic request.
+ *
  * @since 3.17.0 - proposed state
  */
 export interface DiagnosticServerCancellationData {
@@ -83,6 +89,8 @@ export namespace DiagnosticServerCancellationData {
 }
 
 /**
+ * Parameters of the document diagnostic request.
+ *
  * @since 3.17.0 - proposed state
  */
 export interface DocumentDiagnosticParams extends WorkDoneProgressParams, PartialResultParams {
@@ -103,37 +111,34 @@ export interface DocumentDiagnosticParams extends WorkDoneProgressParams, Partia
 }
 
 /**
+ * The document diagnostic report kinds.
+ *
  * @since 3.17.0 - proposed state
  */
 export enum DocumentDiagnosticReportKind {
 	/**
-	 * A new diagnostic report with a full
+	 * A diagnostic report with a full
 	 * set of problems.
 	 */
-	new = 'new',
+	full = 'full',
 
 	/**
 	 * A report indicating that the last
-	 * returned reports is still accurate.
+	 * returned report is still accurate.
 	 */
 	unChanged = 'unChanged'
 }
 
 /**
- * The result of a document diagnostic pull request. A report can
- * either be a new report containing all diagnostics for the
- * requested document or a unchanged report indicating that nothing
- * has changed in terms of diagnostics in comparison to the last
- * pull request.
+ * A diagnostic report with a full set of problems.
  *
  * @since 3.17.0 - proposed state
  */
-export type DocumentDiagnosticReport = {
-
+export interface FullDocumentDiagnosticReport {
 	/**
-	 * A new document diagnostic report.
+	 * A full document diagnostic report.
 	 */
-	kind: DocumentDiagnosticReportKind.new;
+	kind: DocumentDiagnosticReportKind.full;
 
 	/**
 	 * An optional result id. If provided it will
@@ -146,7 +151,35 @@ export type DocumentDiagnosticReport = {
 	 * The actual items.
 	 */
 	items: Diagnostic[];
-} | {
+}
+
+/**
+ * A full diagnostic report with a set of related documents.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export interface RelatedFullDocumentDiagnosticReport extends FullDocumentDiagnosticReport {
+	/**
+	 * Diagnostics of related documents. This information is useful
+	 * in programming languages where code in a file A can generate
+	 * diagnostics in a file B which A depends on. An example of
+	 * such a language is C/C++ where marco definitions in a file
+	 * a.cpp and result in errors in a header file b.hpp.
+	 *
+	 * @since 3.17.0 - proposed state
+	 */
+	relatedDocuments?: {
+		[uri: string /** DocumentUri */]: FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport;
+	}
+}
+
+/**
+ * A diagnostic report indicating that the last returned
+ * report is still accurate.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export interface UnchangedDocumentDiagnosticReport {
 	/**
 	 * A document diagnostic report indicating
 	 * no changes to the last result. A server can
@@ -160,16 +193,53 @@ export type DocumentDiagnosticReport = {
 	 * diagnostic request for the same document.
 	 */
 	resultId: string;
-};
-
-/**
- * @since 3.17.0 - proposed state
- */
-export interface DocumentDiagnosticReportPartialResult {
-	items: Diagnostic[];
 }
 
 /**
+ * An unchanged diagnostic report with a set of related documents.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export interface RelatedUnchangedDocumentDiagnosticReport extends UnchangedDocumentDiagnosticReport {
+	/**
+	 * Diagnostics of related documents. This information is useful
+	 * in programming languages where code in a file A can generate
+	 * diagnostics in a file B which A depends on. An example of
+	 * such a language is C/C++ where marco definitions in a file
+	 * a.cpp and result in errors in a header file b.hpp.
+	 *
+	 * @since 3.17.0 - proposed state
+	 */
+	relatedDocuments?: {
+		[uri: string /** DocumentUri */]: FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport;
+	}
+}
+
+/**
+ * The result of a document diagnostic pull request. A report can
+ * either be a full report containing all diagnostics for the
+ * requested document or a unchanged report indicating that nothing
+ * has changed in terms of diagnostics in comparison to the last
+ * pull request.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export type DocumentDiagnosticReport = RelatedFullDocumentDiagnosticReport | RelatedUnchangedDocumentDiagnosticReport;
+
+/**
+ * A partial result for a document diagnostic report.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export interface DocumentDiagnosticReportPartialResult {
+	relatedDocuments: {
+		[uri: string /** DocumentUri */]: FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport;
+	}
+}
+
+/**
+ * The document diagnostic request definition.
+ *
  * @since 3.17.0 - proposed state
  */
 export namespace DocumentDiagnosticRequest {
@@ -178,6 +248,11 @@ export namespace DocumentDiagnosticRequest {
 	export type HandlerSignature = RequestHandler<DocumentDiagnosticParams, DocumentDiagnosticReport, void>;
 }
 
+/**
+ * Parameters of the workspace diagnostic request.
+ *
+ * @since 3.17.0 - proposed state
+ */
 export interface WorkspaceDiagnosticParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
 	 * The additional identifier provided during registration.
@@ -202,7 +277,12 @@ export interface WorkspaceDiagnosticParams extends WorkDoneProgressParams, Parti
 	}[];
 }
 
-export type WorkspaceDocumentDiagnosticReport = {
+/**
+ * A full document diagnostic report for a workspace diagnostic result.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export interface WorkspaceFullDocumentDiagnosticReport extends FullDocumentDiagnosticReport {
 
 	/**
 	 * The URI for which diagnostic information is reported.
@@ -214,17 +294,56 @@ export type WorkspaceDocumentDiagnosticReport = {
 	 * If the document is not marked as open `null` can be provided.
 	 */
 	version: integer | null;
-} & DocumentDiagnosticReport;
+}
 
+/**
+ * An unchanged document diagnostic report for a workspace diagnostic result.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export interface WorkspaceUnchangedDocumentDiagnosticReport extends UnchangedDocumentDiagnosticReport {
+
+	/**
+	 * The URI for which diagnostic information is reported.
+	 */
+	uri: DocumentUri;
+
+	/**
+	 * The version number for which the diagnostics are reported.
+	 * If the document is not marked as open `null` can be provided.
+	 */
+	version: integer | null;
+}
+
+/**
+ * A workspace diagnostic document report.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export type WorkspaceDocumentDiagnosticReport = WorkspaceFullDocumentDiagnosticReport | WorkspaceUnchangedDocumentDiagnosticReport;
+
+
+/**
+ * A workspace diagnostic report.
+ *
+ * @since 3.17.0 - proposed state
+ */
 export interface WorkspaceDiagnosticReport {
 	items: WorkspaceDocumentDiagnosticReport[];
 }
 
+/**
+ * A partial result for a workspace diagnostic report.
+ *
+ * @since 3.17.0 - proposed state
+ */
 export interface WorkspaceDiagnosticReportPartialResult {
 	items: WorkspaceDocumentDiagnosticReport[];
 }
 
 /**
+ * The workspace diagnostic request definition.
+ *
  * @since 3.17.0 - proposed state
  */
 export namespace WorkspaceDiagnosticRequest {
@@ -234,6 +353,8 @@ export namespace WorkspaceDiagnosticRequest {
 }
 
 /**
+ * The diagnostic refresh request definition.
+ *
  * @since 3.17.0 - proposed state
  */
 export namespace DiagnosticRefreshRequest {

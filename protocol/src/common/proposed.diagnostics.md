@@ -28,6 +28,8 @@ _Server Capability_:
 
 ```typescript
 /**
+ * Diagnostic options.
+ *
  * @since 3.17.0 - proposed state
  */
 export interface DiagnosticOptions extends WorkDoneProgressOptions {
@@ -48,13 +50,15 @@ export interface DiagnosticOptions extends WorkDoneProgressOptions {
 	/**
 	 * The server provides support for workspace diagnostics as well.
 	 */
-	workspaceProvider: boolean;
+	workspaceDiagnostics: boolean;
 }
 ```
 
 _Registration Options_: `DiagnosticRegistrationOptions` options defined as follows:
 ```typescript
 /**
+ * Diagnostic registration options.
+ *
  * @since 3.17.0 - proposed state
  */
 export interface DiagnosticRegistrationOptions extends TextDocumentRegistrationOptions,
@@ -64,7 +68,7 @@ export interface DiagnosticRegistrationOptions extends TextDocumentRegistrationO
 
 ##### <a href="#textDocument_diagnostic" name="textDocument_diagnostic" class="anchor">Document Diagnostics(:leftwards_arrow_with_hook:)</a>
 
-The text document diagnostic request is sent from the client to the server to ask the server to compute the diagnostics for a given document. As with other pull requests the server is aksed to compute the diagnostics for the currently synced version of the document.
+The text document diagnostic request is sent from the client to the server to ask the server to compute the diagnostics for a given document. As with other pull requests the server is asked to compute the diagnostics for the currently synced version of the document.
 
 _Request_:
 * method: 'textDocument/diagnostic'.
@@ -72,6 +76,8 @@ _Request_:
 
 ```typescript
 /**
+ * Parameters of the document diagnostic request.
+ *
  * @since 3.17.0 - proposed state
  */
 export interface DocumentDiagnosticParams extends WorkDoneProgressParams, PartialResultParams {
@@ -98,19 +104,44 @@ _Response_:
 ```typescript
 /**
  * The result of a document diagnostic pull request. A report can
- * either be a new report containing all diagnostics for the
+ * either be a full report containing all diagnostics for the
  * requested document or a unchanged report indicating that nothing
  * has changed in terms of diagnostics in comparison to the last
  * pull request.
  *
  * @since 3.17.0 - proposed state
  */
-export type DocumentDiagnosticReport = {
+export type DocumentDiagnosticReport = RelatedFullDocumentDiagnosticReport | RelatedUnchangedDocumentDiagnosticReport;
+
+/**
+ * The document diagnostic report kinds.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export enum DocumentDiagnosticReportKind {
+	/**
+	 * A diagnostic report with a full
+	 * set of problems.
+	 */
+	full = 'full',
 
 	/**
-	 * A new document diagnostic report.
+	 * A report indicating that the last
+	 * returned report is still accurate.
 	 */
-	kind: DocumentDiagnosticReportKind.new;
+	unChanged = 'unChanged'
+}
+
+/**
+ * A diagnostic report with a full set of problems.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export interface FullDocumentDiagnosticReport {
+	/**
+	 * A full document diagnostic report.
+	 */
+	kind: DocumentDiagnosticReportKind.full;
 
 	/**
 	 * An optional result id. If provided it will
@@ -120,10 +151,18 @@ export type DocumentDiagnosticReport = {
 	resultId?: string;
 
 	/**
-	 * The actual diagnostic items.
+	 * The actual items.
 	 */
 	items: Diagnostic[];
-} | {
+}
+
+/**
+ * A diagnostic report indicating that the last returned
+ * report is still accurate.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export interface UnchangedDocumentDiagnosticReport {
 	/**
 	 * A document diagnostic report indicating
 	 * no changes to the last result. A server can
@@ -137,19 +176,68 @@ export type DocumentDiagnosticReport = {
 	 * diagnostic request for the same document.
 	 */
 	resultId: string;
-};
+}
+
+/**
+ * A full diagnostic report with a set of related documents.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export interface RelatedFullDocumentDiagnosticReport extends FullDocumentDiagnosticReport {
+	/**
+	 * Diagnostics of related documents. This information is useful
+	 * in programming languages where code in a file A can generate
+	 * diagnostics in a file B which A depends on. An example of
+	 * such a language is C/C++ where marco definitions in a file
+	 * a.cpp and result in errors in a header file b.hpp.
+	 *
+	 * @since 3.17.0 - proposed state
+	 */
+	relatedDocuments?: {
+		[uri: string /** DocumentUri */]: FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport;
+	}
+}
+
+/**
+ * An unchanged diagnostic report with a set of related documents.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export interface RelatedUnchangedDocumentDiagnosticReport extends UnchangedDocumentDiagnosticReport {
+	/**
+	 * Diagnostics of related documents. This information is useful
+	 * in programming languages where code in a file A can generate
+	 * diagnostics in a file B which A depends on. An example of
+	 * such a language is C/C++ where marco definitions in a file
+	 * a.cpp and result in errors in a header file b.hpp.
+	 *
+	 * @since 3.17.0 - proposed state
+	 */
+	relatedDocuments?: {
+		[uri: string /** DocumentUri */]: FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport;
+	}
+}
 ```
-* partial result: partial results can only be provided for reports of kind `new`. The first literal send need to be a `DocumentDiagnosticReport` followed by n `DocumentDiagnosticReportPartialResult` literals defined as follows:
+* partial result: The first literal send need to be a `DocumentDiagnosticReport` followed by n `DocumentDiagnosticReportPartialResult` literals defined as follows:
 
 ```typescript
+/**
+ * A partial result for a document diagnostic report.
+ *
+ * @since 3.17.0 - proposed state
+ */
 export interface DocumentDiagnosticReportPartialResult {
-	items: Diagnostic[];
+	relatedDocuments: {
+		[uri: string /** DocumentUri */]: FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport;
+	}
 }
 ```
 * error: code and message set in case an exception happens during the diagnostic request. A server is also allowed to return and error with code `ServerCancelled` indicating that the server can't compute the result right now. A server can return a `DiagnosticServerCancellationData` data to indicate whether the client should re-trigger the request. If no data is provided it defaults to `{ retriggerRequest: true }`:
 
 ```typescript
 /**
+ * Cancellation data returned from a diagnostic request.
+ *
  * @since 3.17.0 - proposed state
  */
 export interface DiagnosticServerCancellationData {
@@ -171,6 +259,11 @@ _Request_:
 * params: `WorkspaceDiagnosticParams` defined as follows:
 
 ```typescript
+/**
+ * Parameters of the workspace diagnostic request.
+ *
+ * @since 3.17.0 - proposed state
+ */
 export interface WorkspaceDiagnosticParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
 	 * The additional identifier provided during registration.
@@ -200,11 +293,21 @@ _Response_:
 * result: `WorkspaceDiagnosticReport` defined as follows:
 
 ```typescript
+/**
+ * A workspace diagnostic report.
+ *
+ * @since 3.17.0 - proposed state
+ */
 export interface WorkspaceDiagnosticReport {
 	items: WorkspaceDocumentDiagnosticReport[];
 }
 
-export type WorkspaceDocumentDiagnosticReport = {
+/**
+ * A full document diagnostic report for a workspace diagnostic result.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export interface WorkspaceFullDocumentDiagnosticReport extends FullDocumentDiagnosticReport {
 
 	/**
 	 * The URI for which diagnostic information is reported.
@@ -216,18 +319,53 @@ export type WorkspaceDocumentDiagnosticReport = {
 	 * If the document is not marked as open `null` can be provided.
 	 */
 	version: integer | null;
-} & DocumentDiagnosticReport;
+}
+
+/**
+ * An unchanged document diagnostic report for a workspace diagnostic result.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export interface WorkspaceUnchangedDocumentDiagnosticReport extends UnchangedDocumentDiagnosticReport {
+
+	/**
+	 * The URI for which diagnostic information is reported.
+	 */
+	uri: DocumentUri;
+
+	/**
+	 * The version number for which the diagnostics are reported.
+	 * If the document is not marked as open `null` can be provided.
+	 */
+	version: integer | null;
+}
+
+/**
+ * A workspace diagnostic document report.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export type WorkspaceDocumentDiagnosticReport = WorkspaceFullDocumentDiagnosticReport | WorkspaceUnchangedDocumentDiagnosticReport;
 ```
 
 * partial result: The first literal send need to be a `WorkspaceDiagnosticReport` followed by n `DocumentDiagnosticReportPartialResult` literals defined as follows:
 
 ```typescript
+/**
+ * A partial result for a workspace diagnostic report.
+ *
+ * @since 3.17.0 - proposed state
+ */
 export interface WorkspaceDiagnosticReportPartialResult {
 	items: WorkspaceDocumentDiagnosticReport[];
 }
 ```
 
 * error: code and message set in case an exception happens during the diagnostic request. A server is also allowed to return and error with code `ServerCancelled` indicating that the server can't compute the result right now. A server can return a `DiagnosticServerCancellationData` data to indicate whether the client should re-trigger the request. If no data is provided it defaults to `{ retriggerRequest: true }`:
+
+##### <a href="#diagnostic_refresh" name="diagnostic_refresh" class="anchor">Diagnostics Refresh(:arrow_right_hook:)</a>
+
+The `workspace/diagnostic/refresh` request is sent from the server to the client. Servers can use it to ask clients to refresh all needed document and workspace diagnostics. This is useful if a server detects a project wide configuration change which requires a re-calculation of all diagnostics.
 
 ##### Implementation Considerations
 

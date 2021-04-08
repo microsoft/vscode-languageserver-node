@@ -67,6 +67,7 @@
 		"preversion",
 		"quickfix",
 		"refactorings",
+		"retriggerRequest",
 		"serializable",
 		"tsbuild",
 		"uinteger",

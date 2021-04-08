@@ -1886,7 +1886,7 @@ export interface CompletionClientCapabilities {
 	 * when accepting a completion item that uses multi line
 	 * text in either `insertText` or `textEdit`.
 	 *
-	 * @since 3.16.0
+	 * @since 3.17.0
 	 */
 	insertTextMode?: InsertTextMode;
 
