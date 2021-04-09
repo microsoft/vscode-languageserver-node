@@ -60,6 +60,10 @@ export namespace ErrorCodes {
 	export const MessageWriteError: number = -32099;
 	export const MessageReadError: number = -32098;
 
+	/**
+	 * Error code indicating that a server received a notification or
+	 * request before the server has received the `initialize` request.
+	 */
 	export const ServerNotInitialized: number = -32002;
 	export const UnknownErrorCode: number = -32001;
 

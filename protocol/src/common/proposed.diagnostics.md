@@ -188,8 +188,8 @@ export interface RelatedFullDocumentDiagnosticReport extends FullDocumentDiagnos
 	 * Diagnostics of related documents. This information is useful
 	 * in programming languages where code in a file A can generate
 	 * diagnostics in a file B which A depends on. An example of
-	 * such a language is C/C++ where marco definitions in a file
-	 * a.cpp and result in errors in a header file b.hpp.
+	 * such a language is C/C++ where macro definitions in a file
+	 * b.hpp can result in errors in a source file a.cpp.
 	 *
 	 * @since 3.17.0 - proposed state
 	 */
@@ -208,8 +208,8 @@ export interface RelatedUnchangedDocumentDiagnosticReport extends UnchangedDocum
 	 * Diagnostics of related documents. This information is useful
 	 * in programming languages where code in a file A can generate
 	 * diagnostics in a file B which A depends on. An example of
-	 * such a language is C/C++ where marco definitions in a file
-	 * a.cpp and result in errors in a header file b.hpp.
+	 * such a language is C/C++ where macro definitions in a file
+	 * b.hpp can result in errors in a source file a.cpp.
 	 *
 	 * @since 3.17.0 - proposed state
 	 */
