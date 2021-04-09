@@ -5,7 +5,7 @@
 
 import {
 	Disposable, languages as Languages, window as Window, CancellationToken, ProviderResult,
-	Diagnostic as VDiagnostic, CancellationTokenSource, TextDocument, CancellationError, Event as VEvent, EventEmitter
+	Diagnostic as VDiagnostic, CancellationTokenSource, TextDocument, CancellationError, Event as VEvent, EventEmitter, DiagnosticCollection
 } from 'vscode';
 
 import {
@@ -24,68 +24,49 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	return target[key];
 }
 
+namespace vscode {
+	export enum DocumentDiagnosticReportKind {
+		full = 'full',
+		unChanged = 'unChanged'
+	}
 
-enum VDocumentDiagnosticReportKind {
-	/**
-	 * A new diagnostic report with a full
-	 * set of problems.
-	 */
-	new = 'new',
+	export interface FullDocumentDiagnosticReport {
+		kind: DocumentDiagnosticReportKind.full;
+		resultId?: string;
+		items: VDiagnostic[];
+	}
 
-	/**
-	 * A report indicating that the last
-	 * returned reports is still accurate.
-	 */
-	unChanged = 'unChanged'
-}
+	export interface RelatedFullDocumentDiagnosticReport extends FullDocumentDiagnosticReport {
+		relatedDocuments?: {
+			[uri: string /** DocumentUri */]: FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport;
+		}
+	}
 
-type VDocumentDiagnosticReport = {
+	export interface UnchangedDocumentDiagnosticReport {
+		kind: DocumentDiagnosticReportKind.unChanged;
+		resultId: string;
+	}
 
-	/**
-	 * A full document diagnostic report.
-	 */
-	kind: VDocumentDiagnosticReportKind.new;
+	export interface RelatedUnchangedDocumentDiagnosticReport extends UnchangedDocumentDiagnosticReport {
+		relatedDocuments?: {
+			[uri: string /** DocumentUri */]: FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport;
+		}
+	}
+	export type DocumentDiagnosticReport = RelatedFullDocumentDiagnosticReport | RelatedUnchangedDocumentDiagnosticReport;
 
-	/**
-	 * An optional result id. If provided it will
-	 * be sent on the next diagnostic request for the
-	 * same document.
-	 */
-	resultId?: string;
-
-	/**
-	 * The actual items.
-	 */
-	items: VDiagnostic[];
-} | {
-	/**
-	 * A document diagnostic report indicating
-	 * no changes to the last result. A server can
-	 * only return `unchanged` if result ids are
-	 * provided.
-	 */
-	kind: VDocumentDiagnosticReportKind.unChanged;
-
-	/**
-	 * A result id which will be sent on the next
-	 * diagnostic request for the same document.
-	 */
-	resultId: string;
-};
-
-export interface DiagnosticProvider {
-	onDidChangeDiagnostics: VEvent<void>;
-	provideDiagnostics (textDocument: TextDocument, token: CancellationToken): ProviderResult<VDocumentDiagnosticReport>;
+	export interface DiagnosticProvider {
+		onDidChangeDiagnostics: VEvent<void>;
+		provideDiagnostics (textDocument: TextDocument, previousResultId: string, token: CancellationToken): ProviderResult<DocumentDiagnosticReport>;
+	}
 }
 
 export interface ProvideDiagnosticSignature {
-	(this: void, textDocument: TextDocument, token: CancellationToken): ProviderResult<VDocumentDiagnosticReport>;
+	(this: void, textDocument: TextDocument, token: CancellationToken): ProviderResult<vscode.DocumentDiagnosticReport>;
 }
 
 export interface DiagnosticProviderMiddleware {
-	provideDiagnostics?: (this: void, document: TextDocument, token: CancellationToken, next: ProvideDiagnosticSignature) => ProviderResult<VDocumentDiagnosticReport>;
+	provideDiagnostics?: (this: void, document: TextDocument, token: CancellationToken, next: ProvideDiagnosticSignature) => ProviderResult<vscode.DocumentDiagnosticReport>;
 }
-
 
 enum RequestStateKind {
 	active = 'open',
@@ -105,6 +86,112 @@ type RequestState = {
 	state: RequestStateKind.outDated;
 	textDocument: TextDocument;
 };
+
+class EditorTracker  {
+
+	private readonly open: Set<string>;
+	private readonly disposable: Disposable;
+
+	constructor() {
+		this.open = new Set();
+		const openEditorsHandler = () => {
+			this.open.clear();
+			for (const info of Window.openEditors) {
+				this.open.add(info.resource.toString());
+			}
+		};
+		openEditorsHandler();
+		this.disposable = Window.onDidChangeOpenEditors(openEditorsHandler);
+	}
+
+	public dispose(): void {
+		this.disposable.dispose();
+	}
+
+	public manages(textDocument: TextDocument): boolean {
+		return this.open.has(textDocument.uri.toString());
+	}
+}
+
+class DocumentDiagnosticScheduler {
+
+	private readonly client: BaseLanguageClient;
+	private readonly editorTracker: EditorTracker;
+	private readonly provider: vscode.DiagnosticProvider;
+	private readonly options: Proposed.DiagnosticRegistrationOptions;
+
+	private readonly diagnostics: DiagnosticCollection;
+	private readonly openRequests: Map<string, RequestState>;
+
+	public constructor(client: BaseLanguageClient, editorTracker: EditorTracker, provider: vscode.DiagnosticProvider, options: Proposed.DiagnosticRegistrationOptions) {
+		this.client = client;
+		this.editorTracker = editorTracker;
+		this.provider = provider;
+		this.options = options;
+
+		this.diagnostics = Languages.createDiagnosticCollection(options.identifier);
+		this.openRequests = new Map();
+	}
+
+	public async pull(textDocument: TextDocument): Promise<void> {
+		const key = textDocument.uri.toString();
+		const currentRequestState = this.openRequests.get(key);
+		if (currentRequestState === undefined) {
+			const tokenSource = new CancellationTokenSource();
+			this.openRequests.set(key, { state: RequestStateKind.active, version: textDocument.version, textDocument, tokenSource });
+			let report: vscode.DocumentDiagnosticReport | undefined;
+			let afterState: RequestState | undefined;
+			try {
+				report = await this.provider.provideDiagnostics(textDocument,  tokenSource.token) ?? { kind: vscode.DocumentDiagnosticReportKind.full, items: [] };
+			} catch (error) {
+				if (error instanceof LSPCancellationError && Proposed.DiagnosticServerCancellationData.is(error.data) && error.data.retriggerRequest === false) {
+					afterState = { state: RequestStateKind.outDated, textDocument };
+				}
+				if (afterState === undefined && error instanceof CancellationError) {
+					afterState = { state: RequestStateKind.reschedule, textDocument };
+				} else {
+					throw error;
+				}
+			}
+			afterState = afterState ?? this.openRequests.get(key);
+			if (afterState === undefined) {
+				// This shouldn't happen. Log it
+				this.client.error(`Lost request state in diagnostic pull model. Clearing diagnostics for ${key}`);
+				this.diagnostics.delete(textDocument.uri);
+				return;
+			}
+			this.openRequests.delete(key);
+			if (afterState.state === RequestStateKind.outDated || !this.editorTracker.manages(textDocument)) {
+				return;
+			}
+			// report is only undefined if the request has thrown.
+			if (report !== undefined) {
+				if (report.kind === vscode.DocumentDiagnosticReportKind.full) {
+					this.diagnostics.set(textDocument.uri, report.items);
+				}
+				if (report.resultId !== undefined) {
+					const info = managedDocuments.get(key);
+					if (info !== undefined) {
+						info.resultId = report.resultId;
+					}
+				}
+			}
+			if (afterState.state === RequestStateKind.reschedule) {
+				this.pull(textDocument);
+			}
+		} else {
+			if (currentRequestState.state === RequestStateKind.active) {
+				// Cancel the current request and reschedule a new one when the old one returned.
+				currentRequestState.tokenSource.cancel();
+				this.openRequests.set(key, { state: RequestStateKind.reschedule, textDocument: currentRequestState.textDocument });
+			} else if (currentRequestState.state === RequestStateKind.outDated) {
+				this.openRequests.set(key, { state: RequestStateKind.reschedule, textDocument: currentRequestState.textDocument });
+			}
+		}
+	}
+}
+
+
 
 interface DocumentPullState {
 	document: TextDocument;
@@ -152,15 +239,15 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 					};
 					return client.sendRequest(Proposed.DocumentDiagnosticRequest.type, params, token).then((result) => {
 						if (result === undefined || result === null) {
-							return { kind: VDocumentDiagnosticReportKind.new, items: [] };
+							return { kind: vscode.DocumentDiagnosticReportKind.full, items: [] };
 						}
-						if (result.kind === Proposed.DocumentDiagnosticReportKind.new) {
-							return { kind: VDocumentDiagnosticReportKind.new, resultId: result.resultId, items: client.protocol2CodeConverter.asDiagnostics(result.items) };
+						if (result.kind === Proposed.DocumentDiagnosticReportKind.full) {
+							return { kind: vscode.DocumentDiagnosticReportKind.full, resultId: result.resultId, items: client.protocol2CodeConverter.asDiagnostics(result.items) };
 						} else {
-							return { kind: VDocumentDiagnosticReportKind.unChanged, resultId: result.resultId };
+							return { kind: vscode.DocumentDiagnosticReportKind.unChanged, resultId: result.resultId };
 						}
 					}, (error) => {
-						return client.handleFailedRequest(Proposed.DocumentDiagnosticRequest.type, token, error, { kind: VDocumentDiagnosticReportKind.new, items: [] });
+						return client.handleFailedRequest(Proposed.DocumentDiagnosticRequest.type, token, error, { kind: vscode.DocumentDiagnosticReportKind.full, items: [] });
 					});
 				};
 				const middleware: Middleware & DiagnosticProviderMiddleware = client.clientOptions.middleware!;
@@ -184,10 +271,10 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 			}
 			const tokenSource = new CancellationTokenSource();
 			requestStates.set(key, { state: RequestStateKind.active, version: textDocument.version, textDocument, tokenSource });
-			let diagnosticReport: VDocumentDiagnosticReport | undefined;
+			let diagnosticReport: vscode.DocumentDiagnosticReport | undefined;
 			let afterState: RequestState | undefined;
 			try {
-				diagnosticReport = await this.provider.provideDiagnostics(textDocument, tokenSource.token) ?? { kind: VDocumentDiagnosticReportKind.new, items: [] };
+				diagnosticReport = await this.provider.provideDiagnostics(textDocument, tokenSource.token) ?? { kind: vscode.DocumentDiagnosticReportKind.full, items: [] };
 			} catch (error: unknown) {
 				if (error instanceof LSPCancellationError && Proposed.DiagnosticServerCancellationData.is(error.data) && error.data.retriggerRequest === false) {
 					afterState = { state: RequestStateKind.outDated, textDocument };
@@ -211,7 +298,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 			}
 			// diagnostics is only undefined if the request has thrown.
 			if (diagnosticReport !== undefined) {
-				if (diagnosticReport.kind === VDocumentDiagnosticReportKind.new) {
+				if (diagnosticReport.kind === vscode.DocumentDiagnosticReportKind.full) {
 					collection.set(textDocument.uri, diagnosticReport.items);
 				}
 				if (diagnosticReport.resultId !== undefined) {

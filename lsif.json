@@ -12,5 +12,12 @@
 		{ "package": "./protocol/package.json", "project": "./protocol/tsconfig.json" },
 		{ "package": "./server/package.json", "project": "./server/tsconfig.json" },
 		{ "package": "./client/package.json", "project": "./client/tsconfig.json" }
-	]
+	],
+	// Get the source info from the package.json file
+	"source": "./package.json",
+	// The catalog information 
+	"catalogInfo": {
+		"uri": "lsif-cat://microsoft.com/azure/devdiv/vscode/vscode-languageserver-node",
+		"name": "VS Code LSP implementation in Node"
+	}
 }
