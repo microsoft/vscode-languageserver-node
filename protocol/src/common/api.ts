@@ -70,13 +70,21 @@ export namespace Proposed {
 	export type DocumentDiagnosticParams = diag.DocumentDiagnosticParams;
 	export type DiagnosticServerCancellationData = diag.DiagnosticServerCancellationData;
 	export const DiagnosticServerCancellationData = diag.DiagnosticServerCancellationData;
-	export type DocumentDiagnosticReport = diag.DocumentDiagnosticReport;
 	export type DocumentDiagnosticReportKind = diag.DocumentDiagnosticReportKind;
 	export const DocumentDiagnosticReportKind = diag.DocumentDiagnosticReportKind;
+	export type FullDocumentDiagnosticReport = diag.FullDocumentDiagnosticReport;
+	export type RelatedFullDocumentDiagnosticReport = diag.RelatedFullDocumentDiagnosticReport;
+	export type UnchangedDocumentDiagnosticReport = diag.UnchangedDocumentDiagnosticReport;
+	export type RelatedUnchangedDocumentDiagnosticReport = diag.RelatedUnchangedDocumentDiagnosticReport;
+	export type DocumentDiagnosticReport = diag.DocumentDiagnosticReport;
 	export type DocumentDiagnosticReportPartialResult = diag.DocumentDiagnosticReportPartialResult;
 	export const DocumentDiagnosticRequest: typeof diag.DocumentDiagnosticRequest = diag.DocumentDiagnosticRequest;
 
+	export type PreviousResultId = diag.PreviousResultId;
 	export type WorkspaceDiagnosticParams = diag.WorkspaceDiagnosticParams;
+	export type WorkspaceFullDocumentDiagnosticReport = diag.WorkspaceFullDocumentDiagnosticReport;
+	export type WorkspaceUnchangedDocumentDiagnosticReport = diag.WorkspaceUnchangedDocumentDiagnosticReport;
+	export type WorkspaceDocumentDiagnosticReport = diag.WorkspaceDocumentDiagnosticReport;
 	export type WorkspaceDiagnosticReport = diag.WorkspaceDiagnosticReport;
 	export type WorkspaceDiagnosticReportPartialResult = diag.WorkspaceDiagnosticReportPartialResult;
 	export const DiagnosticRefreshRequest: typeof diag.DiagnosticRefreshRequest = diag.DiagnosticRefreshRequest;

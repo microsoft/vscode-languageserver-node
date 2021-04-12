@@ -249,6 +249,24 @@ export namespace DocumentDiagnosticRequest {
 }
 
 /**
+ * A previous result id in a workspace pull request.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export type PreviousResultId = {
+	/**
+	 * The URI for which the client knowns a
+	 * result id.
+	 */
+	uri: DocumentUri;
+
+	/**
+	 * The value of the previous result id.
+	 */
+	value: string;
+};
+
+/**
  * Parameters of the workspace diagnostic request.
  *
  * @since 3.17.0 - proposed state
@@ -263,18 +281,7 @@ export interface WorkspaceDiagnosticParams extends WorkDoneProgressParams, Parti
 	 * The currently known diagnostic reports with their
 	 * previous result ids.
 	 */
-	previousResultIds: {
-		/**
-		 * The URI for which the client knowns a
-		 * result id.
-		 */
-		uri: DocumentUri;
-
-		/**
-		 * The value of the previous result id.
-		 */
-		value: string;
-	}[];
+	previousResultIds: PreviousResultId[];
 }
 
 /**

@@ -5,7 +5,7 @@
 
 import {
 	Disposable, languages as Languages, window as Window, CancellationToken, ProviderResult,
-	Diagnostic as VDiagnostic, CancellationTokenSource, TextDocument, CancellationError, Event as VEvent, EventEmitter, DiagnosticCollection
+	Diagnostic as VDiagnostic, CancellationTokenSource, TextDocument, CancellationError, Event as VEvent, EventEmitter, DiagnosticCollection, Uri
 } from 'vscode';
 
 import {
@@ -56,16 +56,16 @@ namespace vscode {
 
 	export interface DiagnosticProvider {
 		onDidChangeDiagnostics: VEvent<void>;
-		provideDiagnostics (textDocument: TextDocument, previousResultId: string, token: CancellationToken): ProviderResult<DocumentDiagnosticReport>;
+		provideDiagnostics (textDocument: TextDocument, previousResultId: string | undefined, token: CancellationToken): ProviderResult<DocumentDiagnosticReport>;
 	}
 }
 
 export interface ProvideDiagnosticSignature {
-	(this: void, textDocument: TextDocument, token: CancellationToken): ProviderResult<vscode.DocumentDiagnosticReport>;
+	(this: void, textDocument: TextDocument, previousResultId: string | undefined, token: CancellationToken): ProviderResult<vscode.DocumentDiagnosticReport>;
 }
 
 export interface DiagnosticProviderMiddleware {
-	provideDiagnostics?: (this: void, document: TextDocument, token: CancellationToken, next: ProvideDiagnosticSignature) => ProviderResult<vscode.DocumentDiagnosticReport>;
+	provideDiagnostics?: (this: void, document: TextDocument, previousResultId: string | undefined, token: CancellationToken, next: ProvideDiagnosticSignature) => ProviderResult<vscode.DocumentDiagnosticReport>;
 }
 
 enum RequestStateKind {
@@ -113,36 +113,96 @@ class EditorTracker  {
 	}
 }
 
-class DocumentDiagnosticScheduler {
+interface DocumentPullState {
+	document: Uri;
+	pulledVersion: number | undefined;
+	resultId: string | undefined;
+}
+
+class DocumentPullStateTracker {
+
+	private readonly states: Map<string, DocumentPullState>;
+
+	constructor() {
+		this.states = new Map();
+	}
+
+	public track(textDocument: TextDocument, resultId?: string): DocumentPullState;
+	public track(uri: string, version?: number, resultId?: string): DocumentPullState;
+	public track(document: TextDocument | string, arg1?: string | number, arg2?: string): DocumentPullState {
+		const [key, uri, version, resultId] = typeof document === 'string'
+			? [document, Uri.parse(document), arg1 as number, arg2]
+			: [document.uri.toString(), document.uri, document.version, arg1 as string];
+		let state = this.states.get(key);
+		if (state === undefined) {
+			state = { document: uri, pulledVersion: version, resultId };
+			this.states.set(key, state);
+		} else {
+			state.pulledVersion = version;
+			state.resultId = resultId;
+		}
+		return state;
+	}
+
+	public unTrack(textDocument: TextDocument): void {
+		this.states.delete(textDocument.uri.toString());
+	}
+
+	public tracks(textDocument: TextDocument): boolean;
+	public tracks(uri: string): boolean;
+	public tracks(document: TextDocument | string): boolean {
+		const key = typeof document === 'string' ? document : document.uri.toString();
+		return this.states.has(key);
+	}
+
+	public getResultId(textDocument: TextDocument): string | undefined {
+		return this.states.get(textDocument.uri.toString())?.resultId;
+	}
+
+	public getAllResultIds(): Proposed.PreviousResultId[] {
+		const result: Proposed.PreviousResultId[] = [];
+		for (const [uri, value] of this.states) {
+			if (value.resultId !== undefined) {
+				result.push({ uri, value: value.resultId });
+			}
+		}
+		return result;
+	}
+}
+
+class DiagnosticScheduler {
 
 	private readonly client: BaseLanguageClient;
 	private readonly editorTracker: EditorTracker;
-	private readonly provider: vscode.DiagnosticProvider;
-	private readonly options: Proposed.DiagnosticRegistrationOptions;
+	public readonly onDidChangeDiagnosticsEmitter: EventEmitter<void>;
+	public readonly provider: vscode.DiagnosticProvider;
 
 	private readonly diagnostics: DiagnosticCollection;
 	private readonly openRequests: Map<string, RequestState>;
+	private readonly documentStates: DocumentPullStateTracker;
 
-	public constructor(client: BaseLanguageClient, editorTracker: EditorTracker, provider: vscode.DiagnosticProvider, options: Proposed.DiagnosticRegistrationOptions) {
+	public constructor(client: BaseLanguageClient, editorTracker: EditorTracker, options: Proposed.DiagnosticRegistrationOptions) {
 		this.client = client;
 		this.editorTracker = editorTracker;
-		this.provider = provider;
-		this.options = options;
+		this.onDidChangeDiagnosticsEmitter = new EventEmitter<void>();
+		this.provider = this.createProvider();
 
 		this.diagnostics = Languages.createDiagnosticCollection(options.identifier);
 		this.openRequests = new Map();
+		this.documentStates = new DocumentPullStateTracker();
 	}
 
 	public async pull(textDocument: TextDocument): Promise<void> {
 		const key = textDocument.uri.toString();
 		const currentRequestState = this.openRequests.get(key);
+		const documentState = this.documentStates.track(textDocument);
 		if (currentRequestState === undefined) {
 			const tokenSource = new CancellationTokenSource();
 			this.openRequests.set(key, { state: RequestStateKind.active, version: textDocument.version, textDocument, tokenSource });
 			let report: vscode.DocumentDiagnosticReport | undefined;
 			let afterState: RequestState | undefined;
 			try {
-				report = await this.provider.provideDiagnostics(textDocument,  tokenSource.token) ?? { kind: vscode.DocumentDiagnosticReportKind.full, items: [] };
+				report = await this.provider.provideDiagnostics(textDocument, this.documentStates.getResultId(textDocument), tokenSource.token) ?? { kind: vscode.DocumentDiagnosticReportKind.full, items: [] };
 			} catch (error) {
 				if (error instanceof LSPCancellationError && Proposed.DiagnosticServerCancellationData.is(error.data) && error.data.retriggerRequest === false) {
 					afterState = { state: RequestStateKind.outDated, textDocument };
@@ -169,12 +229,7 @@ class DocumentDiagnosticScheduler {
 				if (report.kind === vscode.DocumentDiagnosticReportKind.full) {
 					this.diagnostics.set(textDocument.uri, report.items);
 				}
-				if (report.resultId !== undefined) {
-					const info = managedDocuments.get(key);
-					if (info !== undefined) {
-						info.resultId = report.resultId;
-					}
-				}
+				documentState.resultId = report.resultId;
 			}
 			if (afterState.state === RequestStateKind.reschedule) {
 				this.pull(textDocument);
@@ -189,153 +244,73 @@ class DocumentDiagnosticScheduler {
 			}
 		}
 	}
-}
 
-
-
-interface DocumentPullState {
-	document: TextDocument;
-	pulledVersion: number | undefined;
-	resultId: string | undefined;
-}
-
-export interface DiagnosticFeatureProvider {
-	onDidChangeDiagnosticsEmitter: EventEmitter<void>;
-	provider: DiagnosticProvider;
-}
-
-class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
-
-	public readonly onDidChangeDiagnosticsEmitter: EventEmitter<void>;
-	public readonly provider: DiagnosticProvider;
-	public readonly disposable: Disposable;
-
-	constructor(client: BaseLanguageClient, options: Proposed.DiagnosticRegistrationOptions) {
-		const diagnosticPullOptions = client.clientOptions.diagnosticPullOptions ?? { onType: true, onSave: false };
-		const documentSelector = options.documentSelector!;
-		const disposables: Disposable[] = [];
-		const collection = Languages.createDiagnosticCollection(options.identifier);
-		disposables.push(collection);
-		const availableEditors: Set<string> = new Set();
-		const managedDocuments: Map<string, DocumentPullState> = new Map();
-
-		const matches = (textDocument: TextDocument): boolean => {
-			return Languages.match(documentSelector, textDocument) > 0 && availableEditors.has(textDocument.uri.toString());
-		};
-
-		const manages = (textDocument: TextDocument): boolean => {
-			return managedDocuments.has(textDocument.uri.toString());
-		};
-
-		this.onDidChangeDiagnosticsEmitter = new EventEmitter<void>();
-		this.provider = {
+	private createProvider(): vscode.DiagnosticProvider {
+		return {
 			onDidChangeDiagnostics: this.onDidChangeDiagnosticsEmitter.event,
-			provideDiagnostics: (textDocument, token) => {
-				const provideDiagnostics: ProvideDiagnosticSignature = (textDocument, token) => {
-					const key = textDocument.uri.toString();
+			provideDiagnostics: (textDocument, previousResultId, token) => {
+				const provideDiagnostics: ProvideDiagnosticSignature = (textDocument, previousResultId, token) => {
 					const params: Proposed.DocumentDiagnosticParams = {
-						textDocument: { uri: client.code2ProtocolConverter.asUri(textDocument.uri) },
-						previousResultId: managedDocuments.get(key)?.resultId
+						textDocument: { uri: this.client.code2ProtocolConverter.asUri(textDocument.uri) },
+						previousResultId: previousResultId
 					};
-					return client.sendRequest(Proposed.DocumentDiagnosticRequest.type, params, token).then((result) => {
+					return this.client.sendRequest(Proposed.DocumentDiagnosticRequest.type, params, token).then((result) => {
 						if (result === undefined || result === null) {
 							return { kind: vscode.DocumentDiagnosticReportKind.full, items: [] };
 						}
 						if (result.kind === Proposed.DocumentDiagnosticReportKind.full) {
-							return { kind: vscode.DocumentDiagnosticReportKind.full, resultId: result.resultId, items: client.protocol2CodeConverter.asDiagnostics(result.items) };
+							return { kind: vscode.DocumentDiagnosticReportKind.full, resultId: result.resultId, items: this.client.protocol2CodeConverter.asDiagnostics(result.items) };
 						} else {
 							return { kind: vscode.DocumentDiagnosticReportKind.unChanged, resultId: result.resultId };
 						}
 					}, (error) => {
-						return client.handleFailedRequest(Proposed.DocumentDiagnosticRequest.type, token, error, { kind: vscode.DocumentDiagnosticReportKind.full, items: [] });
+						return this.client.handleFailedRequest(Proposed.DocumentDiagnosticRequest.type, token, error, { kind: vscode.DocumentDiagnosticReportKind.full, items: [] });
 					});
 				};
-				const middleware: Middleware & DiagnosticProviderMiddleware = client.clientOptions.middleware!;
+				const middleware: Middleware & DiagnosticProviderMiddleware = this.client.clientOptions.middleware!;
 				return middleware.provideDiagnostics
-					? middleware.provideDiagnostics(textDocument, token, provideDiagnostics)
-					: provideDiagnostics(textDocument, token);
+					? middleware.provideDiagnostics(textDocument, previousResultId, token, provideDiagnostics)
+					: provideDiagnostics(textDocument, previousResultId, token);
 			}
+		};
+	}
+}
+
+
+export interface DiagnosticFeatureProvider {
+	onDidChangeDiagnosticsEmitter: EventEmitter<void>;
+	provider: vscode.DiagnosticProvider;
+}
+
+class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
+
+	public readonly disposable: Disposable;
+	private readonly scheduler: DiagnosticScheduler;
+
+	constructor(client: BaseLanguageClient, editorTracker: EditorTracker, options: Proposed.DiagnosticRegistrationOptions) {
+		const diagnosticPullOptions = client.clientOptions.diagnosticPullOptions ?? { onType: true, onSave: false };
+		const documentSelector = options.documentSelector!;
+		const disposables: Disposable[] = [];
+
+		const matches = (textDocument: TextDocument): boolean => {
+			return Languages.match(documentSelector, textDocument) > 0 && editorTracker.manages(textDocument);
 		};
 
-		const requestStates: Map<string, RequestState> = new Map();
-		const pullDiagnostics = async (textDocument: TextDocument): Promise<void> => {
-			const key = textDocument.uri.toString();
-			const currentState = requestStates.get(key);
-			if (currentState !== undefined) {
-				if (currentState.state === RequestStateKind.active) {
-					currentState.tokenSource.cancel();
-				}
-				requestStates.set(key, { state: RequestStateKind.reschedule, textDocument });
-				// We have a state. Wait until the request returns.
-				return;
-			}
-			const tokenSource = new CancellationTokenSource();
-			requestStates.set(key, { state: RequestStateKind.active, version: textDocument.version, textDocument, tokenSource });
-			let diagnosticReport: vscode.DocumentDiagnosticReport | undefined;
-			let afterState: RequestState | undefined;
-			try {
-				diagnosticReport = await this.provider.provideDiagnostics(textDocument, tokenSource.token) ?? { kind: vscode.DocumentDiagnosticReportKind.full, items: [] };
-			} catch (error: unknown) {
-				if (error instanceof LSPCancellationError && Proposed.DiagnosticServerCancellationData.is(error.data) && error.data.retriggerRequest === false) {
-					afterState = { state: RequestStateKind.outDated, textDocument };
-				}
-				if (afterState === undefined && error instanceof CancellationError) {
-					afterState = { state: RequestStateKind.reschedule, textDocument };
-				} else {
-					throw error;
-				}
-			}
-			afterState = afterState ?? requestStates.get(key);
-			if (afterState === undefined) {
-				// This shouldn't happen. Log it
-				client.error(`Lost request state in diagnostic pull model. Clearing diagnostics for ${key}`);
-				collection.delete(textDocument.uri);
-				return;
-			}
-			requestStates.delete(key);
-			if (afterState.state === RequestStateKind.outDated || !manages(textDocument)) {
-				return;
-			}
-			// diagnostics is only undefined if the request has thrown.
-			if (diagnosticReport !== undefined) {
-				if (diagnosticReport.kind === vscode.DocumentDiagnosticReportKind.full) {
-					collection.set(textDocument.uri, diagnosticReport.items);
-				}
-				if (diagnosticReport.resultId !== undefined) {
-					const info = managedDocuments.get(key);
-					if (info !== undefined) {
-						info.resultId = diagnosticReport.resultId;
-					}
-				}
-			}
-			if (afterState.state === RequestStateKind.reschedule) {
-				pullDiagnostics(textDocument);
-			}
-		};
 
-		const openEditorsHandler = () => {
-			availableEditors.clear();
-			for (const info of Window.openEditors) {
-				availableEditors.add(info.resource.toString());
-			}
-		};
-		openEditorsHandler();
-		disposables.push(Window.onDidChangeOpenEditors(openEditorsHandler));
+		this.scheduler = new DiagnosticScheduler(client, editorTracker, options);
 
 		// We always pull on open.
 		const openFeature = client.getFeature(DidOpenTextDocumentNotification.method);
 		disposables.push(openFeature.onNotificationSent((event) => {
 			const textDocument = event.original;
 			if (matches(textDocument)) {
-				managedDocuments.set(textDocument.uri.toString(), { document: textDocument, pulledVersion: undefined, resultId: undefined });
-				pullDiagnostics(event.original);
+				this.scheduler.pull(textDocument);
 			}
 		}));
 		// Pull all diagnostics for documents that are already open
 		for (const textDocument of openFeature.openDocuments) {
 			if (matches(textDocument)) {
-				managedDocuments.set(textDocument.uri.toString(), {document: textDocument, pulledVersion: undefined, resultId: undefined });
-				pullDiagnostics(textDocument);
+				this.scheduler.pull(textDocument);
 			}
 		}
 
@@ -343,7 +318,8 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 			const changeFeature = client.getFeature(DidChangeTextDocumentNotification.method);
 			disposables.push(changeFeature.onNotificationSent((event) => {
 				const textDocument = event.original.document;
-				if ((diagnosticPullOptions.filter === undefined || !diagnosticPullOptions.filter(textDocument, DiagnosticPullMode.onType)) && manages(textDocument) && event.original.contentChanges.length > 0) {
+				if ((diagnosticPullOptions.filter === undefined || !diagnosticPullOptions.filter(textDocument, DiagnosticPullMode.onType)) &&
+					manages(textDocument) && event.original.contentChanges.length > 0) {
 					pullDiagnostics(textDocument);
 				}
 			}));
@@ -395,8 +371,11 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 
 export class DiagnosticFeature extends TextDocumentFeature<Proposed.DiagnosticOptions, Proposed.DiagnosticRegistrationOptions, DiagnosticFeatureProvider> {
 
+	private readonly editorTracker: EditorTracker;
+
 	constructor(client: BaseLanguageClient) {
 		super(client, Proposed.DocumentDiagnosticRequest.type);
+		this.editorTracker = new EditorTracker();
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities & Proposed.$DiagnosticClientCapabilities): void {
@@ -416,6 +395,11 @@ export class DiagnosticFeature extends TextDocumentFeature<Proposed.DiagnosticOp
 			return;
 		}
 		this.register({ id: id, registerOptions: options });
+	}
+
+	public dispose(): void {
+		this.editorTracker.dispose();
+		super.dispose();
 	}
 
 	protected registerLanguageProvider(options: Proposed.DiagnosticRegistrationOptions): [Disposable, DiagnosticFeatureProvider] {
