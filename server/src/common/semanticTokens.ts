@@ -6,7 +6,7 @@
 import {
 	SemanticTokens, SemanticTokensPartialResult, SemanticTokensDelta, SemanticTokensDeltaPartialResult, SemanticTokensParams,
 	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest,
-	SemanticTokensRefreshRequest
+	SemanticTokensRefreshRequest, SemanticTokensEdit
 } from 'vscode-languageserver-protocol';
 
 import type { Feature, _Languages, ServerRequestHandler } from './server';
@@ -54,6 +54,49 @@ export const SemanticTokensFeature: Feature<_Languages, SemanticTokensFeatureSha
 		}
 	};
 };
+
+export class SemanticTokensDiff {
+	private readonly originalSequence: number[];
+	private readonly modifiedSequence: number[];
+
+	constructor (originalSequence: number[], modifiedSequence: number[]) {
+		this.originalSequence = originalSequence;
+		this.modifiedSequence = modifiedSequence;
+	}
+
+	public computeDiff(): SemanticTokensEdit[] {
+		const originalLength = this.originalSequence.length;
+		const modifiedLength = this.modifiedSequence.length;
+		let startIndex = 0;
+		while(startIndex < modifiedLength && startIndex < originalLength && this.originalSequence[startIndex] === this.modifiedSequence[startIndex]) {
+			startIndex++;
+		}
+		if (startIndex < modifiedLength && startIndex < originalLength) {
+			// Find end index
+			let endIndex = 0;
+			while (endIndex < modifiedLength && endIndex < originalLength && this.originalSequence[originalLength - 1 - endIndex] === this.modifiedSequence[modifiedLength - 1 - endIndex]) {
+				endIndex++;
+			}
+			// The endIndex moves from the back to the front and denotes now the first number that is different.
+			// Since the endIndex on slice is exclusive we need to subtract one to move one number to the back.
+			endIndex--;
+			const newData = this.modifiedSequence.slice(startIndex, modifiedLength - endIndex);
+			return [
+				{ start: startIndex, deleteCount: originalLength - endIndex - startIndex, data: newData }
+			];
+		} else if (startIndex < modifiedLength) {
+			return [
+				{ start: startIndex, deleteCount: 0, data: this.modifiedSequence.slice(startIndex) }
+			];
+		} else if (startIndex < originalLength) {
+			return [
+				{ start: startIndex, deleteCount: originalLength - startIndex }
+			];
+		} else {
+			return [];
+		}
+	}
+}
 
 export class SemanticTokensBuilder {
 
@@ -124,37 +167,10 @@ export class SemanticTokensBuilder {
 
 	public buildEdits(): SemanticTokens | SemanticTokensDelta {
 		if (this._prevData !== undefined) {
-			const prevDataLength = this._prevData.length;
-			const dataLength = this._data.length;
-			let startIndex = 0;
-			while(startIndex < dataLength && startIndex < prevDataLength && this._prevData[startIndex] === this._data[startIndex]) {
-				startIndex++;
-			}
-			if (startIndex < dataLength && startIndex < prevDataLength) {
-				// Find end index
-				let endIndex = 0;
-				while (endIndex < dataLength && endIndex < prevDataLength && this._prevData[prevDataLength - 1 - endIndex] === this._data[dataLength - 1 - endIndex]) {
-					endIndex++;
-				}
-				const newData = this._data.slice(startIndex, dataLength - endIndex);
-				const result: SemanticTokensDelta = {
-					resultId: this.id,
-					edits: [
-						{ start: startIndex, deleteCount: prevDataLength - endIndex - startIndex, data: newData }
-					]
-				};
-				return result;
-			} else if (startIndex < dataLength) {
-				return { resultId: this.id, edits: [
-					{ start: startIndex, deleteCount: 0, data: this._data.slice(startIndex) }
-				]};
-			} else if (startIndex < prevDataLength) {
-				return { resultId: this.id, edits: [
-					{ start: startIndex, deleteCount: prevDataLength - startIndex }
-				]};
-			} else {
-				return { resultId: this.id, edits: [] };
-			}
+			return {
+				resultId: this.id,
+				edits: (new SemanticTokensDiff(this._prevData, this._data)).computeDiff()
+			};
 		} else {
 			return this.build();
 		}
