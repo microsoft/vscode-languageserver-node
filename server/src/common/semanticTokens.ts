@@ -72,18 +72,30 @@ export class SemanticTokensDiff {
 			startIndex++;
 		}
 		if (startIndex < modifiedLength && startIndex < originalLength) {
-			// Find end index
-			let endIndex = 0;
-			while (endIndex < modifiedLength && endIndex < originalLength && this.originalSequence[originalLength - 1 - endIndex] === this.modifiedSequence[modifiedLength - 1 - endIndex]) {
-				endIndex++;
+			let originalEndIndex = originalLength - 1;
+			let modifiedEndIndex = modifiedLength - 1;
+			while (originalEndIndex >= startIndex && modifiedEndIndex >= startIndex && this.originalSequence[originalEndIndex] === this.modifiedSequence[modifiedEndIndex]) {
+				originalEndIndex--;
+				modifiedEndIndex--;
 			}
-			// The endIndex moves from the back to the front and denotes now the first number that is different.
-			// Since the endIndex on slice is exclusive we need to subtract one to move one number to the back.
-			endIndex--;
-			const newData = this.modifiedSequence.slice(startIndex, modifiedLength - endIndex);
-			return [
-				{ start: startIndex, deleteCount: originalLength - endIndex - startIndex, data: newData }
-			];
+			// if one moved behind the start index move them forward again
+			if (originalEndIndex < startIndex || modifiedEndIndex < startIndex) {
+				originalEndIndex++;
+				modifiedEndIndex++;
+			}
+
+			const deleteCount = originalEndIndex - startIndex + 1;
+			const newData = this.modifiedSequence.slice(startIndex, modifiedEndIndex + 1);
+			// If we moved behind the start index we could have missed a simple delete.
+			if (newData.length === 1 && newData[0] === this.originalSequence[originalEndIndex]) {
+				return [
+					{ start: startIndex, deleteCount: deleteCount - 1 }
+				];
+			} else {
+				return [
+					{ start: startIndex, deleteCount, data: newData }
+				];
+			}
 		} else if (startIndex < modifiedLength) {
 			return [
 				{ start: startIndex, deleteCount: 0, data: this.modifiedSequence.slice(startIndex) }
@@ -93,6 +105,7 @@ export class SemanticTokensDiff {
 				{ start: startIndex, deleteCount: originalLength - startIndex }
 			];
 		} else {
+			// The two arrays are the same.
 			return [];
 		}
 	}

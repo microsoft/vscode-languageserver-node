@@ -286,32 +286,32 @@ connection.onHover((textPosition): Hover => {
 	};
 });
 
-connection.languages.diagnostics.on(async (param) => {
-	const uri = URI.parse(param.textDocument.uri);
-	const document = documents.get(param.textDocument.uri);
-	const content = document !== undefined
-		? document.getText()
-		: uri.scheme === 'file'
-			? await pfs.readFile(uri.fsPath, { encoding: 'utf8'} )
-			: undefined;
-	if (content === undefined) {
-		return { kind: 'full', items: [] };
-	}
-	const result: Diagnostic[] = [];
-	const lines: string[] = content.match(/^.*(\n|\r\n|\r|$)/gm);
-	let lineNumber: number = 0;
-	for (const line of lines) {
-		const pattern = /\b[A-Z]{2,}\b/g;
-		let match: RegExpExecArray | null;
-		while (match = pattern.exec(line)) {
-			result.push(
-				Diagnostic.create(Range.create(lineNumber, match.index, lineNumber, match.index + match[0].length), `${match[0]} is all uppercase.`, DiagnosticSeverity.Error)
-			)
-		}
-		lineNumber++;
-	}
-	return { kind: 'full', items: result };
-})
+// connection.languages.diagnostics.on(async (param) => {
+// 	const uri = URI.parse(param.textDocument.uri);
+// 	const document = documents.get(param.textDocument.uri);
+// 	const content = document !== undefined
+// 		? document.getText()
+// 		: uri.scheme === 'file'
+// 			? await pfs.readFile(uri.fsPath, { encoding: 'utf8'} )
+// 			: undefined;
+// 	if (content === undefined) {
+// 		return { kind: 'full', items: [] };
+// 	}
+// 	const result: Diagnostic[] = [];
+// 	const lines: string[] = content.match(/^.*(\n|\r\n|\r|$)/gm);
+// 	let lineNumber: number = 0;
+// 	for (const line of lines) {
+// 		const pattern = /\b[A-Z]{2,}\b/g;
+// 		let match: RegExpExecArray | null;
+// 		while (match = pattern.exec(line)) {
+// 			result.push(
+// 				Diagnostic.create(Range.create(lineNumber, match.index, lineNumber, match.index + match[0].length), `${match[0]} is all uppercase.`, DiagnosticSeverity.Error)
+// 			)
+// 		}
+// 		lineNumber++;
+// 	}
+// 	return { kind: 'full', items: result };
+// })
 
 connection.onCompletion((params, token): CompletionItem[] => {
 	const result: CompletionItem[] = [];
@@ -574,6 +574,9 @@ connection.languages.callHierarchy.onOutgoingCalls((params) => {
 });
 
 let tokenBuilders: Map<string, SemanticTokensBuilder> = new Map();
+documents.onDidClose((event) => {
+	tokenBuilders.delete(event.document.uri);
+});
 function getTokenBuilder(document: TextDocument): SemanticTokensBuilder {
 	let result = tokenBuilders.get(document.uri);
 	if (result !== undefined) {
