@@ -70,8 +70,8 @@ enum TokenTypes {
 }
 
 enum TokenModifiers {
-    abstract = 0,
-    deprecated = 1,
+	abstract = 0,
+	deprecated = 1,
 	_ = 2,
 }
 
@@ -88,7 +88,7 @@ function computeLegend(capability: SemanticTokensClientCapabilities): SemanticTo
 			tokenTypes.push(str);
 		} else {
 			if (str === 'lambdaFunction') {
-				tokenTypes.push('function')
+				tokenTypes.push('function');
 			} else {
 				tokenTypes.push('type');
 			}
@@ -99,7 +99,7 @@ function computeLegend(capability: SemanticTokensClientCapabilities): SemanticTo
 	for (let i = 0; i < TokenModifiers._; i++) {
 		const str = TokenModifiers[i];
 		if (clientTokenModifiers.has(str)) {
-			tokenModifiers.push(str)
+			tokenModifiers.push(str);
 		}
 	}
 
@@ -154,8 +154,8 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 					}
 				},
 				implementationProvider: {
-					id: "AStaticImplementationID",
-					documentSelector: ["bat"]
+					id: 'AStaticImplementationID',
+					documentSelector: ['bat']
 				},
 				typeDefinitionProvider: true,
 				declarationProvider: { workDoneProgress: true },
@@ -165,7 +165,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 				callHierarchyProvider: true,
 				selectionRangeProvider: { workDoneProgress: true },
 				diagnosticProvider: {
-					identifier: "testbed",
+					identifier: 'testbed',
 					interFileDependencies: false,
 					workspaceProvider: false
 				}
@@ -193,12 +193,12 @@ connection.onInitialized((params) => {
 		full: {
 			delta: true
 		}
-	}
+	};
 	connection.client.register(SemanticTokensRegistrationType.type, registrationOptions);
 });
 
 connection.onShutdown((handler) => {
-	connection.console.log("Shutdown received");
+	connection.console.log('Shutdown received');
 	return new Promise((resolve, reject) => {
 		setTimeout(() => {
 			resolve(undefined);
@@ -213,10 +213,10 @@ documents.onDidChangeContent((event) => {
 
 documents.onDidSave((event) => {
 	connection.console.info(`Document got saved: ${event.document.uri} ${event.document.version}`);
-})
+});
 
 connection.onDidChangeWatchedFiles((params) => {
-	connection.console.log("File change event received");
+	connection.console.log('File change event received');
 	documents.all().forEach(document => {
 		connection.sendDiagnostics({ uri: document.uri, diagnostics: validate(document) });
 	});
@@ -227,8 +227,8 @@ connection.onDidChangeConfiguration((params) => {
 		connection.sendDiagnostics({ uri: document.uri, diagnostics: validate(document) });
 	});
 	connection.workspace.getConfiguration('testbed').then((value) => {
-		connection.console.log("Configuration received");
-	})
+		connection.console.log('Configuration received');
+	});
 });
 
 /**
@@ -252,10 +252,10 @@ function validate(document: TextDocument): Diagnostic[] {
 	// 		clearInterval(interval);
 	// 	});
 	// });
-	connection.console.log("Validating document " + document.uri);
+	connection.console.log('Validating document ' + document.uri);
 	return [ {
 		range: Range.create(0, 0, 0, 10),
-		message: "A error message",
+		message: 'A error message',
 		tags: [
 			DiagnosticTag.Unnecessary
 		],
@@ -342,7 +342,7 @@ connection.onCompletion((params, token): CompletionItem[] => {
 	result.push(item);
 
 	item = CompletionItem.create('-record');
-	item.insertText = '-record(${1:name}, {${2:field} = ${3:Value} :: ${4:Type}()}).'
+	item.insertText = '-record(${1:name}, {${2:field} = ${3:Value} :: ${4:Type}()}).';
 	item.insertTextFormat = InsertTextFormat.Snippet;
 	item.kind = CompletionItemKind.Field;
 	result.push(item);
@@ -351,7 +351,7 @@ connection.onCompletion((params, token): CompletionItem[] => {
 });
 
 connection.onCompletionResolve((item): CompletionItem => {
-	item.detail = "This is a special hello world function";
+	item.detail = 'This is a special hello world function';
 	item.documentation =  {
 		kind: MarkupKind.Markdown,
 		value: [
@@ -364,7 +364,7 @@ connection.onCompletionResolve((item): CompletionItem => {
 });
 
 connection.onSignatureHelp((item): SignatureHelp => {
-	return { signatures: [{ label: "Hello World Signature" }], activeSignature: 0, activeParameter: 0 }
+	return { signatures: [{ label: 'Hello World Signature' }], activeSignature: 0, activeParameter: 0 };
 });
 
 connection.onDefinition((params): DefinitionLink[] => {
@@ -408,7 +408,7 @@ connection.onReferences((params): Location[] => {
 	return [
 		{ uri: params.textDocument.uri, range: { start: { line: 0, character: 0}, end: {line: 0, character: 10 }}},
 		{ uri: params.textDocument.uri, range: { start: { line: 2, character: 0}, end: {line: 2, character: 20 }}},
-	]
+	];
 });
 
 connection.onDocumentHighlight((textPosition) => {
@@ -423,11 +423,11 @@ connection.onDocumentHighlight((textPosition) => {
 
 connection.onDocumentSymbol((identifier) => {
 	return [
-		SymbolInformation.create("Item 1", SymbolKind.Function, {
+		SymbolInformation.create('Item 1', SymbolKind.Function, {
 			start: { line: 0, character: 0 },
 			end: { line: 0, character: 10 }
 		}),
-		SymbolInformation.create("Item 2", SymbolKind.Function, {
+		SymbolInformation.create('Item 2', SymbolKind.Function, {
 			start: { line: 1, character: 0 },
 			end: { line: 1, character: 10 }
 		})
@@ -436,12 +436,12 @@ connection.onDocumentSymbol((identifier) => {
 
 connection.onWorkspaceSymbol((params) => {
 	return [
-		SymbolInformation.create("Workspace Item 1", SymbolKind.Function, {
+		SymbolInformation.create('Workspace Item 1', SymbolKind.Function, {
 			start: { line: 0, character: 0 },
 			end: { line: 0, character: 10 }
 
 		}, `${folder}/test.bat`),
-		SymbolInformation.create("Workspace Item 2", SymbolKind.Function, {
+		SymbolInformation.create('Workspace Item 2', SymbolKind.Function, {
 			start: { line: 1, character: 0 },
 			end: { line: 1, character: 10 }
 		}, `${folder}/test.bat`)
@@ -453,15 +453,15 @@ connection.onCodeAction((params) => {
 	const change: WorkspaceChange = new WorkspaceChange();
 	change.createFile(`${folder}/newFile.bat`, { overwrite: true });
 	const a = change.getTextEditChange(document);
-	a.insert({ line: 0, character: 0}, "Code Action", ChangeAnnotation.create('Insert some text', true));
+	a.insert({ line: 0, character: 0}, 'Code Action', ChangeAnnotation.create('Insert some text', true));
 	const b = change.getTextEditChange({ uri: `${folder}/newFile.bat`, version: null });
 	b.insert({ line: 0, character: 0 }, 'The initial content', ChangeAnnotation.create('Add additional content', true));
 
 	const codeAction: CodeAction = {
-		title: "Custom Code Action",
+		title: 'Custom Code Action',
 		kind: CodeActionKind.QuickFix,
 		data: params.textDocument.uri
-	}
+	};
 	codeAction.edit = change.edit;
 	return [
 		codeAction
@@ -487,7 +487,7 @@ connection.onCodeLens((params) => {
 			range: Range.create(2,0,2,10),
 			data: '1',
 		}
-	]
+	];
 });
 
 connection.onCodeLensResolve((codeLens) => {
@@ -499,7 +499,7 @@ connection.onDocumentFormatting((params) => {
 	return [
 		TextEdit.insert(Position.create(1,0), 'A new line\n')
 	];
-})
+});
 
 connection.onDocumentRangeFormatting((params) => {
 	connection.console.log(`Document Range Formatting: ${JSON.stringify(params.range)} ${JSON.stringify(params.options)}`);
