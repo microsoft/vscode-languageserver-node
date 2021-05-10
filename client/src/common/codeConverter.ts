@@ -14,7 +14,7 @@ import { MarkdownString } from 'vscode';
 import ProtocolCodeAction from './protocolCodeAction';
 import { ProtocolDiagnostic, DiagnosticCode } from './protocolDiagnostic';
 import ProtocolCallHierarchyItem from './protocolCallHierarchyItem';
-import { InsertTextMode } from 'vscode-languageserver-protocol';
+import { InsertTextMode, uinteger } from 'vscode-languageserver-protocol';
 import { CreateFilesParams, DeleteFilesParams, RenameFilesParams } from 'vscode-languageserver-protocol/lib/common/protocol.fileOperations';
 
 interface InsertReplaceRange {
@@ -394,7 +394,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (value === undefined || value === null) {
 			return value;
 		}
-		return { line: value.line, character: value.character };
+		return { line: value.line > uinteger.MAX_VALUE ? uinteger.MAX_VALUE : value.line, character: value.character > uinteger.MAX_VALUE ? uinteger.MAX_VALUE : value.character };
 	}
 
 	function asPositions(value: code.Position[]): proto.Position[] {
