@@ -108,7 +108,7 @@ class EditorTracker  {
 		this.disposable.dispose();
 	}
 
-	public manages(textDocument: TextDocument): boolean {
+	public isVisible(textDocument: TextDocument): boolean {
 		return this.open.has(textDocument.uri.toString());
 	}
 }
@@ -192,6 +192,10 @@ class DiagnosticScheduler {
 		this.documentStates = new DocumentPullStateTracker();
 	}
 
+	public knows(textDocument: TextDocument): boolean {
+		return this.documentStates.tracks(textDocument);
+	}
+
 	public async pull(textDocument: TextDocument): Promise<void> {
 		const key = textDocument.uri.toString();
 		const currentRequestState = this.openRequests.get(key);
@@ -221,7 +225,7 @@ class DiagnosticScheduler {
 				return;
 			}
 			this.openRequests.delete(key);
-			if (afterState.state === RequestStateKind.outDated || !this.editorTracker.manages(textDocument)) {
+			if (afterState.state === RequestStateKind.outDated || !this.editorTracker.isVisible(textDocument)) {
 				return;
 			}
 			// report is only undefined if the request has thrown.
@@ -293,7 +297,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 		const disposables: Disposable[] = [];
 
 		const matches = (textDocument: TextDocument): boolean => {
-			return Languages.match(documentSelector, textDocument) > 0 && editorTracker.manages(textDocument);
+			return Languages.match(documentSelector, textDocument) > 0 && editorTracker.isVisible(textDocument);
 		};
 
 
@@ -307,6 +311,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 				this.scheduler.pull(textDocument);
 			}
 		}));
+
 		// Pull all diagnostics for documents that are already open
 		for (const textDocument of openFeature.openDocuments) {
 			if (matches(textDocument)) {
@@ -318,18 +323,18 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 			const changeFeature = client.getFeature(DidChangeTextDocumentNotification.method);
 			disposables.push(changeFeature.onNotificationSent((event) => {
 				const textDocument = event.original.document;
-				if ((diagnosticPullOptions.filter === undefined || !diagnosticPullOptions.filter(textDocument, DiagnosticPullMode.onType)) &&
-					manages(textDocument) && event.original.contentChanges.length > 0) {
-					pullDiagnostics(textDocument);
+				if ((diagnosticPullOptions.filter === undefined || !diagnosticPullOptions.filter(textDocument, DiagnosticPullMode.onType)) && this.scheduler.knows(textDocument) && event.original.contentChanges.length > 0) {
+					this.scheduler.pull(textDocument);
 				}
 			}));
 		}
+
 		if (diagnosticPullOptions.onSave) {
 			const saveFeature = client.getFeature(DidSaveTextDocumentNotification.method);
 			disposables.push(saveFeature.onNotificationSent((event) => {
 				const textDocument = event.original;
-				if ((diagnosticPullOptions.filter === undefined || !diagnosticPullOptions.filter(textDocument, DiagnosticPullMode.onSave)) && manages(textDocument)) {
-					pullDiagnostics(event.original);
+				if ((diagnosticPullOptions.filter === undefined || !diagnosticPullOptions.filter(textDocument, DiagnosticPullMode.onSave)) && this.scheduler.knows(textDocument)) {
+					this.scheduler.pull(event.original);
 				}
 			}));
 		}
@@ -338,7 +343,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 		const closeFeature = client.getFeature(DidCloseTextDocumentNotification.method);
 		disposables.push(closeFeature.onNotificationSent((event) => {
 			const textDocument = event.original;
-			if (!manages(textDocument)) {
+			if (!this.scheduler.knows(textDocument)) {
 				return;
 			}
 			const key = textDocument.uri.toString();
