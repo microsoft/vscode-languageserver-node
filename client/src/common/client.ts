@@ -2840,7 +2840,7 @@ export abstract class BaseLanguageClient {
 	public sendRequest<R>(method: string, param: any, token?: CancellationToken): Promise<R>;
 	public sendRequest<R>(type: string | MessageSignature, ...params: any[]): Promise<R> {
 		if (!this.isConnectionActive()) {
-			throw new Error('Language client is not ready yet');
+			throw new Error(`Language client is not ready yet when handling ${Is.string(type) ? type : type.method}`);
 		}
 		this.forceDocumentSync();
 		try {
@@ -2858,7 +2858,7 @@ export abstract class BaseLanguageClient {
 	public onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): Disposable;
 	public onRequest<R, E>(type: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable {
 		if (!this.isConnectionActive()) {
-			throw new Error('Language client is not ready yet');
+			throw new Error(`Language client is not ready yet when handling ${Is.string(type) ? type : type.method}`);
 		}
 		try {
 			return this._resolvedConnection!.onRequest(type, handler);
@@ -2876,7 +2876,7 @@ export abstract class BaseLanguageClient {
 	public sendNotification(method: string, params: any): void;
 	public sendNotification<P>(type: string | MessageSignature, params?: P): void {
 		if (!this.isConnectionActive()) {
-			throw new Error('Language client is not ready yet');
+			throw new Error(`Language client is not ready yet when handling ${Is.string(type) ? type : type.method}`);
 		}
 		this.forceDocumentSync();
 		try {
@@ -2894,7 +2894,7 @@ export abstract class BaseLanguageClient {
 	public onNotification(method: string, handler: GenericNotificationHandler): Disposable;
 	public onNotification(type: string | MessageSignature, handler: GenericNotificationHandler): Disposable {
 		if (!this.isConnectionActive()) {
-			throw new Error('Language client is not ready yet');
+			throw new Error(`Language client is not ready yet when handling ${Is.string(type) ? type : type.method}`);
 		}
 		try {
 			return this._resolvedConnection!.onNotification(type, handler);
@@ -2906,7 +2906,7 @@ export abstract class BaseLanguageClient {
 
 	public onProgress<P>(type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable {
 		if (!this.isConnectionActive()) {
-			throw new Error('Language client is not ready yet');
+			throw new Error('Language client is not ready yet when trying to send progress');
 		}
 		try {
 			if (WorkDoneProgress.is(type)) {
@@ -2927,7 +2927,7 @@ export abstract class BaseLanguageClient {
 
 	public sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): void {
 		if (!this.isConnectionActive()) {
-			throw new Error('Language client is not ready yet');
+			throw new Error('Language client is not ready yet when trying to send progress');
 		}
 		this.forceDocumentSync();
 		try {
