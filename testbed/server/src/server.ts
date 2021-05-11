@@ -20,7 +20,8 @@ import {
 	SignatureHelp, SymbolInformation, SymbolKind, TextDocumentEdit, TextDocuments, TextDocumentSyncKind,
 	TextEdit, VersionedTextDocumentIdentifier, ProposedFeatures, DiagnosticTag, Proposed, InsertTextFormat,
 	SelectionRangeRequest, SelectionRange, InsertReplaceEdit, SemanticTokensClientCapabilities, SemanticTokensLegend,
-	SemanticTokensBuilder, SemanticTokensRegistrationType, SemanticTokensRegistrationOptions, ProtocolNotificationType, ChangeAnnotation, AnnotatedTextEdit, WorkspaceChange, CompletionItemKind, DiagnosticSeverity
+	SemanticTokensBuilder, SemanticTokensRegistrationType, SemanticTokensRegistrationOptions, ProtocolNotificationType, ChangeAnnotation, AnnotatedTextEdit, WorkspaceChange,
+	CompletionItemKind, DiagnosticSeverity
 } from 'vscode-languageserver/node';
 
 import {
@@ -167,7 +168,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 				diagnosticProvider: {
 					identifier: "testbed",
 					interFileDependencies: false,
-					workspaceProvider: false
+					workspaceDiagnostics: false
 				}
 			}
 		};
@@ -295,7 +296,7 @@ connection.languages.diagnostics.on(async (param) => {
 			? await pfs.readFile(uri.fsPath, { encoding: 'utf8'} )
 			: undefined;
 	if (content === undefined) {
-		return { kind: 'full', items: [] };
+		return { kind: Proposed.DocumentDiagnosticReportKind.full, items: [] };
 	}
 	const result: Diagnostic[] = [];
 	const lines: string[] = content.match(/^.*(\n|\r\n|\r|$)/gm);
@@ -310,7 +311,7 @@ connection.languages.diagnostics.on(async (param) => {
 		}
 		lineNumber++;
 	}
-	return { kind: 'full', items: result };
+	return { kind: Proposed.DocumentDiagnosticReportKind.full, items: result };
 })
 
 connection.onCompletion((params, token): CompletionItem[] => {

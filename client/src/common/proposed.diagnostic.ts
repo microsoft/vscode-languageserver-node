@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import {
-	Disposable, languages as Languages, window as Window, CancellationToken, ProviderResult,
+	Disposable, languages as Languages, window as Window, workspace as Workspace, CancellationToken, ProviderResult,
 	Diagnostic as VDiagnostic, CancellationTokenSource, TextDocument, CancellationError, Event as VEvent, EventEmitter, DiagnosticCollection, Uri
 } from 'vscode';
 
@@ -174,9 +174,10 @@ class DiagnosticScheduler {
 
 	private readonly client: BaseLanguageClient;
 	private readonly editorTracker: EditorTracker;
+	private readonly options: Proposed.DiagnosticRegistrationOptions;
+
 	public readonly onDidChangeDiagnosticsEmitter: EventEmitter<void>;
 	public readonly provider: vscode.DiagnosticProvider;
-
 	private readonly diagnostics: DiagnosticCollection;
 	private readonly openRequests: Map<string, RequestState>;
 	private readonly documentStates: DocumentPullStateTracker;
@@ -184,6 +185,7 @@ class DiagnosticScheduler {
 	public constructor(client: BaseLanguageClient, editorTracker: EditorTracker, options: Proposed.DiagnosticRegistrationOptions) {
 		this.client = client;
 		this.editorTracker = editorTracker;
+		this.options = options;
 		this.onDidChangeDiagnosticsEmitter = new EventEmitter<void>();
 		this.provider = this.createProvider();
 
@@ -225,7 +227,11 @@ class DiagnosticScheduler {
 				return;
 			}
 			this.openRequests.delete(key);
-			if (afterState.state === RequestStateKind.outDated || !this.editorTracker.isVisible(textDocument)) {
+			if (!this.editorTracker.isVisible(textDocument)) {
+				this.documentStates.unTrack(textDocument);
+				return;
+			}
+			if (afterState.state === RequestStateKind.outDated) {
 				return;
 			}
 			// report is only undefined if the request has thrown.
@@ -246,6 +252,23 @@ class DiagnosticScheduler {
 			} else if (currentRequestState.state === RequestStateKind.outDated) {
 				this.openRequests.set(key, { state: RequestStateKind.reschedule, textDocument: currentRequestState.textDocument });
 			}
+		}
+	}
+
+	public cleanupPull(textDocument: TextDocument): void {
+		const key = textDocument.uri.toString();
+		const request = this.openRequests.get(key);
+		if (this.options.workspaceDiagnostics || this.options.interFileDependencies) {
+			if (request !== undefined) {
+				this.openRequests.set(key, { state: RequestStateKind.reschedule, textDocument: textDocument });
+			} else {
+				this.pull(textDocument);
+			}
+		} else {
+			if (request !== undefined) {
+				this.openRequests.set(key, { textDocument: textDocument, state: RequestStateKind.outDated });
+			}
+			this.diagnostics.delete(textDocument.uri);
 		}
 	}
 
@@ -313,7 +336,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 		}));
 
 		// Pull all diagnostics for documents that are already open
-		for (const textDocument of openFeature.openDocuments) {
+		for (const textDocument of Workspace.textDocuments) {
 			if (matches(textDocument)) {
 				this.scheduler.pull(textDocument);
 			}
@@ -342,35 +365,25 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 		// When the document closes clear things up
 		const closeFeature = client.getFeature(DidCloseTextDocumentNotification.method);
 		disposables.push(closeFeature.onNotificationSent((event) => {
-			const textDocument = event.original;
-			if (!this.scheduler.knows(textDocument)) {
-				return;
-			}
-			const key = textDocument.uri.toString();
-			const requestState = requestStates.get(textDocument.uri.toString());
-			if (options.workspaceDiagnostics || options.interFileDependencies) {
-				// Schedule a last request so that we show accurate information for closed documents
-				// so that a workspace provider can from now on take over.
-				if (requestState !== undefined) {
-					requestStates.set(key, { state: RequestStateKind.reschedule, textDocument });
-				} else {
-					pullDiagnostics(textDocument);
-				}
-			} else {
-				if (requestState !== undefined) {
-					requestStates.set(textDocument.uri.toString(),{ state: RequestStateKind.outDated, textDocument });
-				}
-				collection.delete(textDocument.uri);
-			}
-			managedDocuments.delete(textDocument.uri.toString());
+			this.scheduler.cleanupPull(event.original);
 		}));
-		this.onDidChangeDiagnosticsEmitter.event(() => {
-			for (const item of managedDocuments.values()) {
-				pullDiagnostics(item.document);
+		this.scheduler.onDidChangeDiagnosticsEmitter.event(() => {
+			for (const textDocument of Workspace.textDocuments) {
+				if (matches(textDocument)) {
+					this.scheduler.pull(textDocument);
+				}
 			}
 		});
 
 		this.disposable = Disposable.from(...disposables);
+	}
+
+	public get onDidChangeDiagnosticsEmitter(): EventEmitter<void> {
+		return this.scheduler.onDidChangeDiagnosticsEmitter;
+	}
+
+	public get provider(): vscode.DiagnosticProvider {
+		return this.scheduler.provider;
 	}
 }
 
@@ -408,7 +421,7 @@ export class DiagnosticFeature extends TextDocumentFeature<Proposed.DiagnosticOp
 	}
 
 	protected registerLanguageProvider(options: Proposed.DiagnosticRegistrationOptions): [Disposable, DiagnosticFeatureProvider] {
-		const provider = new DiagnosticFeatureProviderImpl(this._client, options);
+		const provider = new DiagnosticFeatureProviderImpl(this._client, this.editorTracker, options);
 		return [provider.disposable, provider];
 	}
 }
