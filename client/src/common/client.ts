@@ -1610,6 +1610,7 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 		if (!options) {
 			return;
 		}
+
 		this.register({
 			id: UUID.generateUuid(),
 			registerOptions: options

@@ -20,7 +20,8 @@ import {
 	SignatureHelp, SymbolInformation, SymbolKind, TextDocumentEdit, TextDocuments, TextDocumentSyncKind,
 	TextEdit, VersionedTextDocumentIdentifier, ProposedFeatures, DiagnosticTag, Proposed, InsertTextFormat,
 	SelectionRangeRequest, SelectionRange, InsertReplaceEdit, SemanticTokensClientCapabilities, SemanticTokensLegend,
-	SemanticTokensBuilder, SemanticTokensRegistrationType, SemanticTokensRegistrationOptions, ProtocolNotificationType, ChangeAnnotation, AnnotatedTextEdit, WorkspaceChange, CompletionItemKind, DiagnosticSeverity
+	SemanticTokensBuilder, SemanticTokensRegistrationType, SemanticTokensRegistrationOptions, ProtocolNotificationType, ChangeAnnotation, AnnotatedTextEdit, WorkspaceChange,
+	CompletionItemKind, DiagnosticSeverity
 } from 'vscode-languageserver/node';
 
 import {
@@ -167,7 +168,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 				diagnosticProvider: {
 					identifier: 'testbed',
 					interFileDependencies: false,
-					workspaceProvider: false
+					workspaceDiagnostics: false
 				}
 			}
 		};
@@ -286,32 +287,32 @@ connection.onHover((textPosition): Hover => {
 	};
 });
 
-// connection.languages.diagnostics.on(async (param) => {
-// 	const uri = URI.parse(param.textDocument.uri);
-// 	const document = documents.get(param.textDocument.uri);
-// 	const content = document !== undefined
-// 		? document.getText()
-// 		: uri.scheme === 'file'
-// 			? await pfs.readFile(uri.fsPath, { encoding: 'utf8'} )
-// 			: undefined;
-// 	if (content === undefined) {
-// 		return { kind: 'full', items: [] };
-// 	}
-// 	const result: Diagnostic[] = [];
-// 	const lines: string[] = content.match(/^.*(\n|\r\n|\r|$)/gm);
-// 	let lineNumber: number = 0;
-// 	for (const line of lines) {
-// 		const pattern = /\b[A-Z]{2,}\b/g;
-// 		let match: RegExpExecArray | null;
-// 		while (match = pattern.exec(line)) {
-// 			result.push(
-// 				Diagnostic.create(Range.create(lineNumber, match.index, lineNumber, match.index + match[0].length), `${match[0]} is all uppercase.`, DiagnosticSeverity.Error)
-// 			)
-// 		}
-// 		lineNumber++;
-// 	}
-// 	return { kind: 'full', items: result };
-// })
+connection.languages.diagnostics.on(async (param) => {
+	const uri = URI.parse(param.textDocument.uri);
+	const document = documents.get(param.textDocument.uri);
+	const content = document !== undefined
+		? document.getText()
+		: uri.scheme === 'file'
+			? await pfs.readFile(uri.fsPath, { encoding: 'utf8'} )
+			: undefined;
+	if (content === undefined) {
+		return { kind: Proposed.DocumentDiagnosticReportKind.full, items: [] };
+	}
+	const result: Diagnostic[] = [];
+	const lines: string[] = content.match(/^.*(\n|\r\n|\r|$)/gm);
+	let lineNumber: number = 0;
+	for (const line of lines) {
+		const pattern = /\b[A-Z]{2,}\b/g;
+		let match: RegExpExecArray | null;
+		while (match = pattern.exec(line)) {
+			result.push(
+				Diagnostic.create(Range.create(lineNumber, match.index, lineNumber, match.index + match[0].length), `${match[0]} is all uppercase.`, DiagnosticSeverity.Error)
+			);
+		}
+		lineNumber++;
+	}
+	return { kind: Proposed.DocumentDiagnosticReportKind.full, items: result };
+});
 
 connection.onCompletion((params, token): CompletionItem[] => {
 	const result: CompletionItem[] = [];
