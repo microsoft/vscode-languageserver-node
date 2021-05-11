@@ -35,7 +35,7 @@
 		"@types/uuid": "^7.0.2",
 		"@types/vscode": "1.53.0",
 		"glob": "^7.1.4",
-		"sinon": "7.4.1",
+		"sinon": "^10.0.0",
 		"uuid": "7.0.3",
 		"vscode-test": "^1.2.0"
 	}
