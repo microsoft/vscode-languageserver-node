@@ -10,7 +10,7 @@ import {
 
 import {
 	Proposed, ClientCapabilities, ServerCapabilities, DocumentSelector, DidOpenTextDocumentNotification, DidChangeTextDocumentNotification,
-	DidSaveTextDocumentNotification, DidCloseTextDocumentNotification, LinkedMap, Touch, RAL, VersionedTextDocumentIdentifier
+	DidSaveTextDocumentNotification, DidCloseTextDocumentNotification, LinkedMap, Touch, RAL
 } from 'vscode-languageserver-protocol';
 
 import {
@@ -320,13 +320,11 @@ class BackgroundScheduler {
 	private readonly diagnosticRequestor: DiagnosticRequestor;
 	private endDocument: TextDocument | undefined;
 	private readonly documents: LinkedMap<string, TextDocument>;
-	private interval: number;
 	private intervalHandle: Disposable | undefined;
 
 	public constructor(diagnosticRequestor: DiagnosticRequestor) {
 		this.diagnosticRequestor = diagnosticRequestor;
 		this.documents = new LinkedMap();
-		this.interval = 0;
 	}
 
 	public add(textDocument: TextDocument): void {
