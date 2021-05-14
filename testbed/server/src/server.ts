@@ -167,7 +167,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 				selectionRangeProvider: { workDoneProgress: true },
 				diagnosticProvider: {
 					identifier: 'testbed',
-					interFileDependencies: false,
+					interFileDependencies: true,
 					workspaceDiagnostics: false
 				}
 			}
@@ -287,6 +287,14 @@ connection.onHover((textPosition): Hover => {
 	};
 });
 
+
+const patterns = [
+	/\b[A-Z]{2,}\b/g,
+	/\b[A-Z]{3,}\b/g,
+	/\b[A-Z]{4,}\b/g,
+	/\b[A-Z]{5,}\b/g
+];
+
 connection.languages.diagnostics.on(async (param) => {
 	const uri = URI.parse(param.textDocument.uri);
 	const document = documents.get(param.textDocument.uri);
@@ -302,7 +310,7 @@ connection.languages.diagnostics.on(async (param) => {
 	const lines: string[] = content.match(/^.*(\n|\r\n|\r|$)/gm);
 	let lineNumber: number = 0;
 	for (const line of lines) {
-		const pattern = /\b[A-Z]{2,}\b/g;
+		const pattern = patterns[Math.floor(Math.random() * 3)];
 		let match: RegExpExecArray | null;
 		while (match = pattern.exec(line)) {
 			result.push(

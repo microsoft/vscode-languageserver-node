@@ -344,7 +344,7 @@ export enum DiagnosticPullMode {
 }
 
 export interface DiagnosticPullOptions {
-	onType: boolean;
+	onChange: boolean;
 	onSave: boolean;
 	filter?(document: TextDocument, mode: DiagnosticPullMode): boolean;
 }
@@ -2762,7 +2762,7 @@ export abstract class BaseLanguageClient {
 			workspaceFolder: clientOptions.workspaceFolder,
 			connectionOptions: clientOptions.connectionOptions,
 			markdown,
-			diagnosticPullOptions: clientOptions.diagnosticPullOptions ?? { onType: true, onSave: false }
+			diagnosticPullOptions: clientOptions.diagnosticPullOptions ?? { onChange: true, onSave: false }
 		};
 		this._clientOptions.synchronize = this._clientOptions.synchronize || {};
 

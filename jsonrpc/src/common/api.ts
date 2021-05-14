@@ -9,13 +9,14 @@ import {
 	RequestType7, RequestType8, RequestType9, ResponseError, ErrorCodes, NotificationMessage, NotificationType, NotificationType0, NotificationType1,
 	NotificationType2, NotificationType3, NotificationType4, NotificationType5, NotificationType6, NotificationType7, NotificationType8,
 	NotificationType9, ResponseMessage, ParameterStructures, _EM
-} from '../common/messages';
+} from './messages';
 
-import { Disposable } from '../common/disposable';
-import { Event, Emitter } from '../common/events';
-import { AbstractCancellationTokenSource, CancellationTokenSource, CancellationToken } from '../common/cancellation';
-import { MessageReader, AbstractMessageReader, ReadableStreamMessageReader, DataCallback, MessageReaderOptions, PartialMessageInfo } from '../common/messageReader';
-import { MessageWriter, AbstractMessageWriter, WriteableStreamMessageWriter, MessageWriterOptions } from '../common/messageWriter';
+import { LinkedMap, LRUCache, Touch } from './linkedMap';
+import { Disposable } from './disposable';
+import { Event, Emitter } from './events';
+import { AbstractCancellationTokenSource, CancellationTokenSource, CancellationToken } from './cancellation';
+import { MessageReader, AbstractMessageReader, ReadableStreamMessageReader, DataCallback, MessageReaderOptions, PartialMessageInfo } from './messageReader';
+import { MessageWriter, AbstractMessageWriter, WriteableStreamMessageWriter, MessageWriterOptions } from './messageWriter';
 import {
 	Logger, ConnectionStrategy, ConnectionOptions, MessageConnection, NullLogger, createMessageConnection,
 	ProgressToken, ProgressType, HandlerResult, StarRequestHandler, GenericRequestHandler,
@@ -24,7 +25,7 @@ import {
 	NotificationHandler4, NotificationHandler5, NotificationHandler6, NotificationHandler7, NotificationHandler8, NotificationHandler9, Trace, TraceValues, TraceFormat,
 	TraceOptions, SetTraceParams, SetTraceNotification, LogTraceParams, LogTraceNotification, Tracer, ConnectionErrors, ConnectionError, CancellationId,
 	CancellationReceiverStrategy, CancellationSenderStrategy, CancellationStrategy
-} from '../common/connection';
+} from './connection';
 
 import RAL from './ral';
 
@@ -35,6 +36,8 @@ export {
 	RequestType7, RequestType8, RequestType9, ResponseError, ErrorCodes, NotificationMessage, NotificationType, NotificationType0, NotificationType1,
 	NotificationType2, NotificationType3, NotificationType4, NotificationType5, NotificationType6, NotificationType7, NotificationType8,
 	NotificationType9, ResponseMessage, ParameterStructures, _EM,
+	// Export from linkedMap
+	LinkedMap, Touch, LRUCache,
 	// Export from disposable
 	Disposable,
 	// Export from events

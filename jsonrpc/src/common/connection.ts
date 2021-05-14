@@ -487,7 +487,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 	const notificationHandlers: { [name: string]: NotificationHandlerElement | undefined } = Object.create(null);
 	const progressHandlers: Map<number | string, NotificationHandler1<any>> = new Map();
 
-	let timer: RAL.ImmediateHandle | undefined;
+	let timer: Disposable | undefined;
 	let messageQueue: MessageQueue = new LinkedMap<string, Message>();
 	let responsePromises: { [name: string]: ResponsePromise } = Object.create(null);
 	let knownCanceledRequests: Set<string | number> = new Set();

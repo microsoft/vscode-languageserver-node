@@ -10,7 +10,7 @@ import {
 
 import {
 	Proposed, ClientCapabilities, ServerCapabilities, DocumentSelector, DidOpenTextDocumentNotification, DidChangeTextDocumentNotification,
-	DidSaveTextDocumentNotification, DidCloseTextDocumentNotification
+	DidSaveTextDocumentNotification, DidCloseTextDocumentNotification, LinkedMap, Touch, RAL, VersionedTextDocumentIdentifier
 } from 'vscode-languageserver-protocol';
 
 import {
@@ -108,6 +108,10 @@ class EditorTracker  {
 		this.disposable.dispose();
 	}
 
+	public isActive(textDocument: TextDocument): boolean {
+		return Window.activeTextEditor?.document === textDocument;
+	}
+
 	public isVisible(textDocument: TextDocument): boolean {
 		return this.open.has(textDocument.uri.toString());
 	}
@@ -170,7 +174,7 @@ class DocumentPullStateTracker {
 	}
 }
 
-class DiagnosticScheduler {
+class DiagnosticRequestor {
 
 	private readonly client: BaseLanguageClient;
 	private readonly editorTracker: EditorTracker;
@@ -266,7 +270,10 @@ class DiagnosticScheduler {
 			}
 		} else {
 			if (request !== undefined) {
-				this.openRequests.set(key, { textDocument: textDocument, state: RequestStateKind.outDated });
+				if (request.state === RequestStateKind.active) {
+					request.tokenSource.cancel();
+				}
+				this.openRequests.set(key, { state: RequestStateKind.outDated, textDocument: textDocument });
 			}
 			this.diagnostics.delete(textDocument.uri);
 		}
@@ -303,19 +310,86 @@ class DiagnosticScheduler {
 	}
 }
 
-
 export interface DiagnosticFeatureProvider {
 	onDidChangeDiagnosticsEmitter: EventEmitter<void>;
 	provider: vscode.DiagnosticProvider;
 }
 
+class BackgroundScheduler {
+
+	private readonly diagnosticRequestor: DiagnosticRequestor;
+	private endDocument: TextDocument | undefined;
+	private readonly documents: LinkedMap<string, TextDocument>;
+	private interval: number;
+	private intervalHandle: Disposable | undefined;
+
+	public constructor(diagnosticRequestor: DiagnosticRequestor) {
+		this.diagnosticRequestor = diagnosticRequestor;
+		this.documents = new LinkedMap();
+		this.interval = 0;
+	}
+
+	public add(textDocument: TextDocument): void {
+		const key = textDocument.uri.toString();
+		if (this.documents.has(key)) {
+			return;
+		}
+		this.documents.set(textDocument.uri.toString(), textDocument, Touch.Last);
+		this.trigger();
+	}
+
+	public remove(textDocument: TextDocument): void {
+		const key = textDocument.uri.toString();
+		if (this.documents.has(key)) {
+			this.documents.delete(key);
+			// Do a last pull
+			this.diagnosticRequestor.pull(textDocument);
+		}
+		// No more documents. Stop background activity.
+		if (this.documents.size === 0) {
+			this.stop();
+		} else if (textDocument === this.endDocument) {
+			// Make sure we have a correct last document. It could have
+			this.endDocument = this.documents.last;
+		}
+	}
+
+	public trigger(): void {
+		// We have a round running. So simply make sure we run up to the
+		// last document
+		if (this.intervalHandle !== undefined) {
+			this.endDocument = this.documents.last;
+			return;
+		}
+		this.endDocument = this.documents.last;
+		this.intervalHandle = RAL().timer.setInterval(() => {
+			const document = this.documents.first;
+			if (document !== undefined) {
+				this.diagnosticRequestor.pull(document);
+				this.documents.set(document.uri.toString(), document, Touch.Last);
+				if (document === this.endDocument) {
+					this.stop();
+				}
+			}
+		}, 200);
+	}
+
+	private stop(): void {
+		this.intervalHandle?.dispose();
+		this.intervalHandle = undefined;
+		this.endDocument = undefined;
+	}
+}
+
 class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 
 	public readonly disposable: Disposable;
-	private readonly scheduler: DiagnosticScheduler;
+	private readonly diagnosticRequestor: DiagnosticRequestor;
+	private activeTextDocument: TextDocument | undefined;
+	private readonly backgroundScheduler: BackgroundScheduler;
 
 	constructor(client: BaseLanguageClient, editorTracker: EditorTracker, options: Proposed.DiagnosticRegistrationOptions) {
-		const diagnosticPullOptions = client.clientOptions.diagnosticPullOptions ?? { onType: true, onSave: false };
+		const diagnosticPullOptions = client.clientOptions.diagnosticPullOptions ?? { onChange: true, onSave: false };
 		const documentSelector = options.documentSelector!;
 		const disposables: Disposable[] = [];
 
@@ -323,31 +397,56 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 			return Languages.match(documentSelector, textDocument) > 0 && editorTracker.isVisible(textDocument);
 		};
 
+		this.diagnosticRequestor = new DiagnosticRequestor(client, editorTracker, options);
+		this.backgroundScheduler = new BackgroundScheduler(this.diagnosticRequestor);
 
-		this.scheduler = new DiagnosticScheduler(client, editorTracker, options);
+		const addToBackgroundIfNeeded = (textDocument: TextDocument): void => {
+			if (!matches(textDocument) || !options.interFileDependencies || this.activeTextDocument === textDocument) {
+				return;
+			}
+			this.backgroundScheduler.add(textDocument);
+		};
+
+		this.activeTextDocument = Window.activeTextEditor?.document;
+		Window.onDidChangeActiveTextEditor((editor) => {
+			const oldActive = this.activeTextDocument;
+			this.activeTextDocument = editor?.document;
+			if (oldActive !== undefined) {
+				addToBackgroundIfNeeded(oldActive);
+			}
+			if (this.activeTextDocument !== undefined) {
+				this.backgroundScheduler.remove(this.activeTextDocument);
+			}
+		});
 
 		// We always pull on open.
 		const openFeature = client.getFeature(DidOpenTextDocumentNotification.method);
 		disposables.push(openFeature.onNotificationSent((event) => {
 			const textDocument = event.original;
 			if (matches(textDocument)) {
-				this.scheduler.pull(textDocument);
+				this.diagnosticRequestor.pull(textDocument).then(() => {
+					addToBackgroundIfNeeded(textDocument);
+				});
 			}
 		}));
 
 		// Pull all diagnostics for documents that are already open
 		for (const textDocument of Workspace.textDocuments) {
 			if (matches(textDocument)) {
-				this.scheduler.pull(textDocument);
+				this.diagnosticRequestor.pull(textDocument).then(() => {
+					addToBackgroundIfNeeded(textDocument);
+				});
 			}
 		}
 
-		if (diagnosticPullOptions.onType) {
+		if (diagnosticPullOptions.onChange) {
 			const changeFeature = client.getFeature(DidChangeTextDocumentNotification.method);
-			disposables.push(changeFeature.onNotificationSent((event) => {
+			disposables.push(changeFeature.onNotificationSent(async (event) => {
 				const textDocument = event.original.document;
-				if ((diagnosticPullOptions.filter === undefined || !diagnosticPullOptions.filter(textDocument, DiagnosticPullMode.onType)) && this.scheduler.knows(textDocument) && event.original.contentChanges.length > 0) {
-					this.scheduler.pull(textDocument);
+				if ((diagnosticPullOptions.filter === undefined || !diagnosticPullOptions.filter(textDocument, DiagnosticPullMode.onType)) && this.diagnosticRequestor.knows(textDocument) && event.original.contentChanges.length > 0) {
+					this.diagnosticRequestor.pull(textDocument).then(() => {
+						this.backgroundScheduler.trigger();
+					});
 				}
 			}));
 		}
@@ -356,8 +455,10 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 			const saveFeature = client.getFeature(DidSaveTextDocumentNotification.method);
 			disposables.push(saveFeature.onNotificationSent((event) => {
 				const textDocument = event.original;
-				if ((diagnosticPullOptions.filter === undefined || !diagnosticPullOptions.filter(textDocument, DiagnosticPullMode.onSave)) && this.scheduler.knows(textDocument)) {
-					this.scheduler.pull(event.original);
+				if ((diagnosticPullOptions.filter === undefined || !diagnosticPullOptions.filter(textDocument, DiagnosticPullMode.onSave)) && this.diagnosticRequestor.knows(textDocument)) {
+					this.diagnosticRequestor.pull(event.original).then(() => {
+						this.backgroundScheduler.trigger();
+					});
 				}
 			}));
 		}
@@ -365,12 +466,16 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 		// When the document closes clear things up
 		const closeFeature = client.getFeature(DidCloseTextDocumentNotification.method);
 		disposables.push(closeFeature.onNotificationSent((event) => {
-			this.scheduler.cleanupPull(event.original);
+			const textDocument = event.original;
+			this.diagnosticRequestor.cleanupPull(textDocument);
+			this.backgroundScheduler.remove(textDocument);
 		}));
-		this.scheduler.onDidChangeDiagnosticsEmitter.event(() => {
+
+		// We received a did change from the server.
+		this.diagnosticRequestor.onDidChangeDiagnosticsEmitter.event(() => {
 			for (const textDocument of Workspace.textDocuments) {
 				if (matches(textDocument)) {
-					this.scheduler.pull(textDocument);
+					this.diagnosticRequestor.pull(textDocument);
 				}
 			}
 		});
@@ -379,11 +484,11 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 	}
 
 	public get onDidChangeDiagnosticsEmitter(): EventEmitter<void> {
-		return this.scheduler.onDidChangeDiagnosticsEmitter;
+		return this.diagnosticRequestor.onDidChangeDiagnosticsEmitter;
 	}
 
 	public get provider(): vscode.DiagnosticProvider {
-		return this.scheduler.provider;
+		return this.diagnosticRequestor.provider;
 	}
 }
 

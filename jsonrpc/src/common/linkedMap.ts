@@ -282,7 +282,7 @@ export class LinkedMap<K, V> implements Map<K, V> {
 			this._tail = undefined;
 		}
 		else if (item === this._head) {
-			// This can only happend if size === 1 which is handle
+			// This can only happened if size === 1 which is handle
 			// by the case above.
 			if (!item.next) {
 				throw new Error('Invalid list');
@@ -291,7 +291,7 @@ export class LinkedMap<K, V> implements Map<K, V> {
 			this._head = item.next;
 		}
 		else if (item === this._tail) {
-			// This can only happend if size === 1 which is handle
+			// This can only happened if size === 1 which is handle
 			// by the case above.
 			if (!item.previous) {
 				throw new Error('Invalid list');
