@@ -89,3 +89,18 @@ export namespace Proposed {
 	export type WorkspaceDiagnosticReportPartialResult = diag.WorkspaceDiagnosticReportPartialResult;
 	export const DiagnosticRefreshRequest: typeof diag.DiagnosticRefreshRequest = diag.DiagnosticRefreshRequest;
 }
+
+import * as inlay from './proposed.inlayHints';
+
+export namespace Proposed {
+	export type InlayHintCategory = inlay.InlayHintCategory;
+	export const InlayHintCategory = inlay.InlayHintCategory;
+	export type InlayHint = inlay.InlayHint;
+	export type InlayHintsClientCapabilities = inlay.InlayHintsClientCapabilities;
+	export type InlayHintsOptions = inlay.InlayHintsOptions;
+	export type InlayHintsRegistrationOptions = inlay.InlayHintsRegistrationOptions;
+	export type $InlayHintsClientCapabilities = inlay.$InlayHintsClientCapabilities;
+	export type $InlayHintsServerCapabilities = inlay.$InlayHintsServerCapabilities;
+	export type InlayHintsParams = inlay.InlayHintsParams;
+	export const InlayHintsRequest: typeof inlay.InlayHintsRequest = inlay.InlayHintsRequest;
+}

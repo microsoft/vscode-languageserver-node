@@ -55,10 +55,13 @@ export abstract class CommonLanguageClient extends BaseLanguageClient {
 // Exporting proposed protocol.
 
 import { DiagnosticFeature } from './proposed.diagnostic';
+import { InlayHintsFeature } from './proposed.inlayHints';
+
 export namespace ProposedFeatures {
 	export function createAll(_client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
 		let result: (StaticFeature | DynamicFeature<any>)[] = [
-			new DiagnosticFeature(_client)
+			new DiagnosticFeature(_client),
+			new InlayHintsFeature(_client),
 		];
 		return result;
 	}
