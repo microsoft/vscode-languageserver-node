@@ -22,7 +22,7 @@
 		"eslint": "^7.26.0",
 		"http-server": "^0.12.3",
 		"mocha": "^8.2.1",
-		"playwright": "^1.6.2",
+		"playwright": "^1.11.1",
 		"rimraf": "^3.0.2",
 		"shelljs": "^0.8.4",
 		"shx": "^0.3.3",
