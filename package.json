@@ -27,8 +27,8 @@
 		"shelljs": "^0.8.4",
 		"shx": "^0.3.3",
 		"typescript": "^4.1.2",
-		"webpack": "^5.10.0",
-		"webpack-cli": "^4.2.0"
+		"webpack": "^5.38.1",
+		"webpack-cli": "^4.7.0"
 	},
 	"scripts": {
 		"postinstall": "node ./build/bin/all.js install && cd testbed && npm install && cd .. && npm run symlink:testbed",
