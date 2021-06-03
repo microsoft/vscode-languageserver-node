@@ -54,9 +54,40 @@ namespace vscode {
 	}
 	export type DocumentDiagnosticReport = RelatedFullDocumentDiagnosticReport | RelatedUnchangedDocumentDiagnosticReport;
 
+	export type PreviousResultId = {
+		uri: Uri;
+		value: string;
+	};
+
+
+	export interface WorkspaceFullDocumentDiagnosticReport extends FullDocumentDiagnosticReport {
+		uri: Uri;
+		version: number | null;
+	}
+
+	export interface WorkspaceUnchangedDocumentDiagnosticReport extends UnchangedDocumentDiagnosticReport {
+		uri: Uri;
+		version: number | null;
+	}
+
+	export type WorkspaceDocumentDiagnosticReport = WorkspaceFullDocumentDiagnosticReport | WorkspaceUnchangedDocumentDiagnosticReport;
+
+	export interface WorkspaceDiagnosticReport {
+		items: WorkspaceDocumentDiagnosticReport[];
+	}
+
+	export interface WorkspaceDiagnosticReportPartialResult {
+		items: WorkspaceDocumentDiagnosticReport[];
+	}
+
+	export interface ResultReporter {
+		(chunk: WorkspaceDiagnosticReport | WorkspaceDiagnosticReportPartialResult | null): void;
+	}
+
 	export interface DiagnosticProvider {
 		onDidChangeDiagnostics: VEvent<void>;
-		provideDiagnostics (textDocument: TextDocument, previousResultId: string | undefined, token: CancellationToken): ProviderResult<DocumentDiagnosticReport>;
+		provideDiagnostics(textDocument: TextDocument, previousResultId: string | undefined, token: CancellationToken): ProviderResult<DocumentDiagnosticReport>;
+		provideWorkspaceDiagnostics?(resultIds: PreviousResultId[], token: CancellationToken, resultReporter: ResultReporter): Promise<void>
 	}
 }
 
@@ -279,8 +310,12 @@ class DiagnosticRequestor {
 		}
 	}
 
+	pullWorkspace(): void {
+
+	}
+
 	private createProvider(): vscode.DiagnosticProvider {
-		return {
+		const result: vscode.DiagnosticProvider = {
 			onDidChangeDiagnostics: this.onDidChangeDiagnosticsEmitter.event,
 			provideDiagnostics: (textDocument, previousResultId, token) => {
 				const provideDiagnostics: ProvideDiagnosticSignature = (textDocument, previousResultId, token) => {
@@ -307,6 +342,9 @@ class DiagnosticRequestor {
 					: provideDiagnostics(textDocument, previousResultId, token);
 			}
 		};
+		if (this.options.workspaceDiagnostics) {
+		}
+		return result;
 	}
 }
 
