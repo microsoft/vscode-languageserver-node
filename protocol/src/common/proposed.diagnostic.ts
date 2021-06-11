@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { RequestHandler0, RequestHandler } from 'vscode-jsonrpc';
+import { RequestHandler0, RequestHandler, ProgressType } from 'vscode-jsonrpc';
 import { TextDocumentIdentifier, Diagnostic, DocumentUri, integer } from 'vscode-languageserver-types';
 
 import * as Is from './utils/is';
@@ -245,6 +245,7 @@ export interface DocumentDiagnosticReportPartialResult {
 export namespace DocumentDiagnosticRequest {
 	export const method: 'textDocument/diagnostic' = 'textDocument/diagnostic';
 	export const type = new ProtocolRequestType<DocumentDiagnosticParams, DocumentDiagnosticReport, DocumentDiagnosticReportPartialResult, DiagnosticServerCancellationData, DiagnosticRegistrationOptions>(method);
+	export const partialResult = new ProgressType<DocumentDiagnosticReportPartialResult>();
 	export type HandlerSignature = RequestHandler<DocumentDiagnosticParams, DocumentDiagnosticReport, void>;
 }
 
@@ -356,6 +357,7 @@ export interface WorkspaceDiagnosticReportPartialResult {
 export namespace WorkspaceDiagnosticRequest {
 	export const method: 'workspace/diagnostic' = 'workspace/diagnostic';
 	export const type = new ProtocolRequestType<WorkspaceDiagnosticParams, WorkspaceDiagnosticReport, WorkspaceDiagnosticReportPartialResult, DiagnosticServerCancellationData, void>(method);
+	export const partialResult = new ProgressType<WorkspaceDiagnosticReportPartialResult>();
 	export type HandlerSignature = RequestHandler<WorkspaceDiagnosticParams, WorkspaceDiagnosticReport | null, void>;
 }
 

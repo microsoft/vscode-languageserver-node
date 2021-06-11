@@ -168,7 +168,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 				diagnosticProvider: {
 					identifier: 'testbed',
 					interFileDependencies: true,
-					workspaceDiagnostics: false
+					workspaceDiagnostics: true
 				}
 			}
 		};
@@ -320,6 +320,14 @@ connection.languages.diagnostics.on(async (param) => {
 		lineNumber++;
 	}
 	return { kind: Proposed.DocumentDiagnosticReportKind.full, items: result };
+});
+
+connection.languages.diagnostics.onWorkspace(async (params, token, _, resultProgress): Promise<Proposed.WorkspaceDiagnosticReport> => {
+	
+
+	return {
+		items: []
+	};
 });
 
 connection.onCompletion((params, token): CompletionItem[] => {
