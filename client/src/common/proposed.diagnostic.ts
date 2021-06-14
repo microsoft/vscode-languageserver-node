@@ -226,8 +226,9 @@ class DocumentPullStateTracker {
 	}
 }
 
-class DiagnosticRequestor {
+class DiagnosticRequestor implements Disposable {
 
+	private isDisposed: boolean;
 	private readonly client: BaseLanguageClient;
 	private readonly editorTracker: EditorTracker;
 	private readonly options: Proposed.DiagnosticRegistrationOptions;
@@ -244,6 +245,8 @@ class DiagnosticRequestor {
 		this.client = client;
 		this.editorTracker = editorTracker;
 		this.options = options;
+
+		this.isDisposed = false;
 		this.onDidChangeDiagnosticsEmitter = new EventEmitter<void>();
 		this.provider = this.createProvider();
 
@@ -375,7 +378,7 @@ class DiagnosticRequestor {
 			};
 		});
 		await this.provider.provideWorkspaceDiagnostics(previousResultIds, this.workspaceCancellation.token, (chunk) => {
-			if (!chunk) {
+			if (!chunk || this.isDisposed) {
 				return;
 			}
 			for (const item of chunk.items) {
@@ -402,7 +405,7 @@ class DiagnosticRequestor {
 						previousResultId: previousResultId
 					};
 					return this.client.sendRequest(Proposed.DocumentDiagnosticRequest.type, params, token).then((result) => {
-						if (result === undefined || result === null) {
+						if (result === undefined || result === null || this.isDisposed) {
 							return { kind: vscode.DocumentDiagnosticReportKind.full, items: [] };
 						}
 						if (result.kind === Proposed.DocumentDiagnosticReportKind.full) {
@@ -490,6 +493,19 @@ class DiagnosticRequestor {
 		}
 		return result;
 	}
+
+	public dispose(): void {
+		this.isDisposed = true;
+
+		// Cancel all request and mark open requests as outdated.
+		this.workspaceCancellation?.cancel();
+		for (const [key, request] of this.openRequests) {
+			if (request.state === RequestStateKind.active) {
+				request.tokenSource.cancel();
+			}
+			this.openRequests.set(key, { state: RequestStateKind.outDated, textDocument: request.textDocument });
+		}
+	}
 }
 
 export interface DiagnosticFeatureProvider {
@@ -497,7 +513,7 @@ export interface DiagnosticFeatureProvider {
 	provider: vscode.DiagnosticProvider;
 }
 
-class BackgroundScheduler {
+class BackgroundScheduler implements Disposable {
 
 	private readonly diagnosticRequestor: DiagnosticRequestor;
 	private endDocument: TextDocument | undefined;
@@ -552,6 +568,11 @@ class BackgroundScheduler {
 				}
 			}
 		}, 200);
+	}
+
+	public dispose(): void {
+		this.stop();
+		this.documents.clear();
 	}
 
 	private stop(): void {
@@ -656,7 +677,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 			this.diagnosticRequestor.pullWorkspace();
 		}
 
-		this.disposable = Disposable.from(...disposables);
+		this.disposable = Disposable.from(...disposables, this.backgroundScheduler, this.diagnosticRequestor);
 	}
 
 	public get onDidChangeDiagnosticsEmitter(): EventEmitter<void> {
@@ -666,6 +687,8 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 	public get provider(): vscode.DiagnosticProvider {
 		return this.diagnosticRequestor.provider;
 	}
+
+
 }
 
 export class DiagnosticFeature extends TextDocumentFeature<Proposed.DiagnosticOptions, Proposed.DiagnosticRegistrationOptions, DiagnosticFeatureProvider> {
