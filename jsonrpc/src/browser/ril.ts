@@ -61,6 +61,8 @@ class ReadableStreamWrapper implements RAL.ReadableStream {
 			const blob = event.data as Blob;
 			blob.arrayBuffer().then((buffer) => {
 				this._onData.fire(new Uint8Array(buffer));
+			}, () => {
+				RAL().console.error(`Converting blob to array buffer failed.`);
 			});
 		};
 		this.socket.addEventListener('message', this._messageListener);

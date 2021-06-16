@@ -789,7 +789,7 @@ class RemoteClientImpl implements RemoteClient, Remote {
 		};
 		return this.connection.sendRequest(RegistrationRequest.type, params).then((_result) => {
 			return Disposable.create(() => {
-				this.unregisterSingle(id, method);
+				this.unregisterSingle(id, method).then(undefined, () => { this.connection.console.info(`Un-registering capability with id ${id} failed.`); });
 			});
 		}, (_error) => {
 			this.connection.console.info(`Registering request handler for ${method} failed.`);

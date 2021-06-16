@@ -4,6 +4,5 @@
 		"project": ["src/browser/tsconfig.json", "src/common/tsconfig.json", "src/node/tsconfig.json"]
 	},
 	"rules": {
-		"@typescript-eslint/no-floating-promises": "error"
 	}
 }

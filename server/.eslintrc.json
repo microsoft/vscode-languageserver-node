@@ -1,5 +1,8 @@
 {
 	"extends": "../.eslintrc.base.json",
+	"parserOptions": {
+		"project": ["src/browser/tsconfig.json", "src/common/tsconfig.json", "src/node/tsconfig.json", "src/node/test/tsconfig.json"]
+	},
 	"rules": {
 	}
 }

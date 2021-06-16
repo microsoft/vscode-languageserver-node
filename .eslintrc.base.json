@@ -18,6 +18,7 @@
 		"quotes": ["error", "single", { "allowTemplateLiterals": true } ],
 		"eqeqeq": "error",
 		"indent": "off",
-		"@typescript-eslint/indent": ["warn", "tab", { "SwitchCase": 1 } ]
+		"@typescript-eslint/indent": ["warn", "tab", { "SwitchCase": 1 } ],
+		"@typescript-eslint/no-floating-promises": "error"
 	}
 }

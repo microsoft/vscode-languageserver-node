@@ -618,7 +618,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 						messageQueue.delete(key);
 						response.id = toCancel.id;
 						traceSendingResponse(response, message.method, Date.now());
-						messageWriter.write(response);
+						messageWriter.write(response).then(undefined, () => logger.error(`Sending response for canceled message failed.`));
 						return;
 					}
 				}
@@ -659,7 +659,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				message.result = resultOrError === undefined ? null : resultOrError;
 			}
 			traceSendingResponse(message, method, startTime);
-			messageWriter.write(message);
+			messageWriter.write(message).then(undefined, () => logger.error(`Sending response failed.`));
 		}
 		function replyError(error: ResponseError<any>, method: string, startTime: number) {
 			const message: ResponseMessage = {
@@ -668,7 +668,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				error: error.toJson()
 			};
 			traceSendingResponse(message, method, startTime);
-			messageWriter.write(message);
+			messageWriter.write(message).then(undefined, () => logger.error(`Sending response failed.`));
 		}
 		function replySuccess(result: any, method: string, startTime: number) {
 			// The JSON RPC defines that a response must either have a result or an error
@@ -682,7 +682,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				result: result
 			};
 			traceSendingResponse(message, method, startTime);
-			messageWriter.write(message);
+			messageWriter.write(message).then(undefined, () => logger.error(`Sending response failed.`));
 		}
 		traceReceivedRequest(requestMessage);
 
@@ -1149,7 +1149,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				params: messageParams
 			};
 			traceSendingNotification(notificationMessage);
-			messageWriter.write(notificationMessage);
+			messageWriter.write(notificationMessage).then(undefined, () => logger.error(`Sending notification failed.`));
 		},
 		onNotification: (type: string | MessageSignature | StarNotificationHandler, handler?: GenericNotificationHandler): Disposable => {
 			throwIfClosedOrDisposed();
@@ -1265,7 +1265,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				let responsePromise: ResponsePromise | null = { method: method, timerStart: Date.now(), resolve: resolveWithCleanup, reject: rejectWithCleanup };
 				traceSendingRequest(requestMessage);
 				try {
-					messageWriter.write(requestMessage);
+					messageWriter.write(requestMessage).then(undefined, () => logger.error(`Sending request failed.`));
 				} catch (e) {
 					// Writing the message failed. So we need to reject the promise.
 					responsePromise.reject(new ResponseError<void>(ErrorCodes.MessageWriteError, e.message ? e.message : 'Unknown reason'));
