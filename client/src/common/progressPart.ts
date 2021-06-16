@@ -49,7 +49,7 @@ export class ProgressPart {
 
 	private begin(params: WorkDoneProgressBegin): void {
 		// Since we don't use commands this will be a silent window progress with a hidden notification.
-		Window.withProgress<void>({ location: ProgressLocation.Window, cancellable: params.cancellable, title: params.title}, async (progress, cancellationToken) => {
+		void Window.withProgress<void>({ location: ProgressLocation.Window, cancellable: params.cancellable, title: params.title}, async (progress, cancellationToken) => {
 			this._progress = progress;
 			this._infinite = params.percentage === undefined;
 			this._cancellationToken = cancellationToken;

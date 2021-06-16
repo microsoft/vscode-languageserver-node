@@ -4,12 +4,9 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { promisify } from 'util';
-import * as fs from 'fs';
-
-namespace pfs {
-	export const readFile = promisify(fs.readFile);
-}
+import * as path from 'path';
+import * as _fs from 'fs';
+const fs = _fs.promises;
 
 import { URI } from 'vscode-uri';
 
@@ -20,7 +17,8 @@ import {
 	SignatureHelp, SymbolInformation, SymbolKind, TextDocumentEdit, TextDocuments, TextDocumentSyncKind,
 	TextEdit, VersionedTextDocumentIdentifier, ProposedFeatures, DiagnosticTag, Proposed, InsertTextFormat,
 	SelectionRangeRequest, SelectionRange, InsertReplaceEdit, SemanticTokensClientCapabilities, SemanticTokensLegend,
-	SemanticTokensBuilder, SemanticTokensRegistrationType, SemanticTokensRegistrationOptions, ProtocolNotificationType, ChangeAnnotation, AnnotatedTextEdit, WorkspaceChange,
+	SemanticTokensBuilder, SemanticTokensRegistrationType, SemanticTokensRegistrationOptions, ProtocolNotificationType, ChangeAnnotation, AnnotatedTextEdit,
+	WorkspaceChange,
 	CompletionItemKind, DiagnosticSeverity
 } from 'vscode-languageserver/node';
 
@@ -168,7 +166,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 				diagnosticProvider: {
 					identifier: 'testbed',
 					interFileDependencies: true,
-					workspaceDiagnostics: false
+					workspaceDiagnostics: true
 				}
 			}
 		};
@@ -295,17 +293,7 @@ const patterns = [
 	/\b[A-Z]{5,}\b/g
 ];
 
-connection.languages.diagnostics.on(async (param) => {
-	const uri = URI.parse(param.textDocument.uri);
-	const document = documents.get(param.textDocument.uri);
-	const content = document !== undefined
-		? document.getText()
-		: uri.scheme === 'file'
-			? await pfs.readFile(uri.fsPath, { encoding: 'utf8'} )
-			: undefined;
-	if (content === undefined) {
-		return { kind: Proposed.DocumentDiagnosticReportKind.full, items: [] };
-	}
+function computeDiagnostics(content: string): Diagnostic[] {
 	const result: Diagnostic[] = [];
 	const lines: string[] = content.match(/^.*(\n|\r\n|\r|$)/gm);
 	let lineNumber: number = 0;
@@ -319,7 +307,56 @@ connection.languages.diagnostics.on(async (param) => {
 		}
 		lineNumber++;
 	}
-	return { kind: Proposed.DocumentDiagnosticReportKind.full, items: result };
+	return result;
+}
+
+connection.languages.diagnostics.on(async (param) => {
+	const uri = URI.parse(param.textDocument.uri);
+	const document = documents.get(param.textDocument.uri);
+	const content = document !== undefined
+		? document.getText()
+		: uri.scheme === 'file'
+			? await fs.readFile(uri.fsPath, { encoding: 'utf8'} )
+			: undefined;
+	if (content === undefined) {
+		return { kind: Proposed.DocumentDiagnosticReportKind.full, items: [] };
+	}
+	return { kind: Proposed.DocumentDiagnosticReportKind.full, items: computeDiagnostics(content) };
+});
+
+connection.languages.diagnostics.onWorkspace(async (params, token, _, resultProgress): Promise<Proposed.WorkspaceDiagnosticReport> => {
+	const fsPath = URI.parse(folder).fsPath;
+
+	const toValidate: string[] = [];
+	for (const child of await fs.readdir(fsPath)) {
+		if (path.extname(child) === '.bat') {
+			toValidate.push(path.join(fsPath, child));
+		}
+	}
+
+	if (toValidate.length === 0) {
+		return { items: [] };
+	}
+
+	const doValidate = async (index: number) => {
+		if (index >= toValidate.length) {
+			index = 0;
+		}
+		const diagnostics = computeDiagnostics(await fs.readFile(toValidate[index], { encoding: 'utf8'} ));
+		resultProgress.report({ items: [
+			{
+				kind: Proposed.DocumentDiagnosticReportKind.full,
+				uri: URI.file(toValidate[index]).toString(),
+				version: null,
+				items: diagnostics
+			}
+		]});
+		setTimeout(() => { doValidate(++index); }, 500);
+	};
+	doValidate(0);
+	return new Promise((resolve) => {
+		setTimeout(resolve, 120000);
+	});
 });
 
 connection.onCompletion((params, token): CompletionItem[] => {

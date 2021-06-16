@@ -87,5 +87,6 @@ export namespace Proposed {
 	export type WorkspaceDocumentDiagnosticReport = diag.WorkspaceDocumentDiagnosticReport;
 	export type WorkspaceDiagnosticReport = diag.WorkspaceDiagnosticReport;
 	export type WorkspaceDiagnosticReportPartialResult = diag.WorkspaceDiagnosticReportPartialResult;
+	export const WorkspaceDiagnosticRequest: typeof diag.WorkspaceDiagnosticRequest = diag.WorkspaceDiagnosticRequest;
 	export const DiagnosticRefreshRequest: typeof diag.DiagnosticRefreshRequest = diag.DiagnosticRefreshRequest;
 }

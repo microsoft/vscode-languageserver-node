@@ -19,6 +19,11 @@ export interface DiagnosticClientCapabilities {
 	 * return value for the corresponding server capability as well.
 	 */
 	dynamicRegistration?: boolean;
+
+	/**
+	 * Whether the clients supports related documents for document diagnostic pulls.
+	 */
+	relatedDocumentSupport?: boolean;
 }
 ```
 

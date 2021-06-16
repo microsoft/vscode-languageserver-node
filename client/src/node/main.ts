@@ -373,7 +373,7 @@ export class LanguageClient extends CommonLanguageClient {
 					}
 				} else {
 					let pipeName: string | undefined = undefined;
-					return new Promise<MessageTransports>((resolve, _reject) => {
+					return new Promise<MessageTransports>((resolve, reject) => {
 						let args = node.args && node.args.slice() || [];
 						if (transport === TransportKind.ipc) {
 							args.push('--node-ipc');
@@ -411,8 +411,8 @@ export class LanguageClient extends CommonLanguageClient {
 								sp.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 								transport.onConnected().then((protocol) => {
 									resolve({ reader: protocol[0], writer: protocol[1] });
-								});
-							});
+								}, reject);
+							}, reject);
 						} else if (Transport.isSocket(transport)) {
 							createClientSocketTransport(transport.port).then((transport) => {
 								let sp = cp.fork(node.module, args || [], options);
@@ -422,8 +422,8 @@ export class LanguageClient extends CommonLanguageClient {
 								sp.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 								transport.onConnected().then((protocol) => {
 									resolve({ reader: protocol[0], writer: protocol[1] });
-								});
-							});
+								}, reject);
+							}, reject);
 						}
 					});
 				}
@@ -529,7 +529,7 @@ export class SettingMonitor {
 		this.onDidChangeConfiguration();
 		return new Disposable(() => {
 			if (this._client.needsStop()) {
-				this._client.stop();
+				void this._client.stop();
 			}
 		});
 	}
@@ -542,7 +542,7 @@ export class SettingMonitor {
 		if (enabled && this._client.needsStart()) {
 			this._client.start();
 		} else if (!enabled && this._client.needsStop()) {
-			this._client.stop();
+			void this._client.stop();
 		}
 	}
 }

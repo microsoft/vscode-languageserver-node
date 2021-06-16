@@ -294,7 +294,7 @@ class DefaultErrorHandler implements ErrorHandler {
 		} else {
 			let diff = this.restarts[this.restarts.length - 1] - this.restarts[0];
 			if (diff <= 3 * 60 * 1000) {
-				Window.showErrorMessage(`The ${this.name} server crashed ${this.maxRestartCount+1} times in the last 3 minutes. The server will not be restarted.`);
+				void Window.showErrorMessage(`The ${this.name} server crashed ${this.maxRestartCount+1} times in the last 3 minutes. The server will not be restarted.`);
 				return CloseAction.DoNotRestart;
 			} else {
 				this.restarts.shift();
@@ -1105,13 +1105,13 @@ class DidChangeTextDocumentFeature implements DidChangeTextDocumentFeatureShape 
 								this.forceDelivery();
 								this._changeDelayer.uri = event.document.uri.toString();
 							}
-							this._changeDelayer.delayer.trigger(() => doSend(event));
+							void this._changeDelayer.delayer.trigger(() => doSend(event));
 						} else {
 							this._changeDelayer = {
 								uri: event.document.uri.toString(),
 								delayer: new Delayer<void>(200)
 							};
-							this._changeDelayer.delayer.trigger(() => doSend(event), -1);
+							void this._changeDelayer.delayer.trigger(() => doSend(event), -1);
 						}
 					};
 					if (middleware.didChange) {
@@ -2992,7 +2992,7 @@ export abstract class BaseLanguageClient {
 					sendNotification: false,
 					traceFormat: this._traceFormat
 				});
-			});
+			}, () => this.info(`Setting trace value failed`, undefined, false));
 		}, () => {
 		});
 	}
@@ -3045,7 +3045,7 @@ export abstract class BaseLanguageClient {
 	}
 
 	private showNotificationMessage() {
-		Window.showInformationMessage('A request has failed. See the output for more information.', 'Go to output').then(() => {
+		void Window.showInformationMessage('A request has failed. See the output for more information.', 'Go to output').then(() => {
 			this.outputChannel.show(true);
 		});
 	}
@@ -3119,16 +3119,16 @@ export abstract class BaseLanguageClient {
 			connection.onShowMessage((message) => {
 				switch (message.type) {
 					case MessageType.Error:
-						Window.showErrorMessage(message.message);
+						void Window.showErrorMessage(message.message);
 						break;
 					case MessageType.Warning:
-						Window.showWarningMessage(message.message);
+						void Window.showWarningMessage(message.message);
 						break;
 					case MessageType.Info:
-						Window.showInformationMessage(message.message);
+						void Window.showInformationMessage(message.message);
 						break;
 					default:
-						Window.showInformationMessage(message.message);
+						void Window.showInformationMessage(message.message);
 				}
 			});
 			connection.onRequest(ShowMessageRequest.type, (params) => {
@@ -3190,11 +3190,13 @@ export abstract class BaseLanguageClient {
 			this.state = ClientState.StartFailed;
 			this._onReadyCallbacks.reject(error);
 			this.error('Starting client failed', error);
-			Window.showErrorMessage(`Couldn't start client ${this._name}`);
+			void Window.showErrorMessage(`Couldn't start client ${this._name}`);
 		});
 		return new Disposable(() => {
 			if (this.needsStop()) {
-				this.stop();
+				this.stop().then(undefined, (error) => {
+					this.error(`Stopping server failed.`, error, false);
+				});
 			}
 		});
 	}
@@ -3290,26 +3292,26 @@ export abstract class BaseLanguageClient {
 		}).then<InitializeResult>(undefined, (error: any) => {
 			if (this._clientOptions.initializationFailedHandler) {
 				if (this._clientOptions.initializationFailedHandler(error)) {
-					this.initialize(connection);
+					void this.initialize(connection);
 				} else {
-					this.stop();
+					void this.stop();
 					this._onReadyCallbacks.reject(error);
 				}
 			} else if (error instanceof ResponseError && error.data && error.data.retry) {
-				Window.showErrorMessage(error.message, { title: 'Retry', id: 'retry' }).then(item => {
+				void Window.showErrorMessage(error.message, { title: 'Retry', id: 'retry' }).then(item => {
 					if (item && item.id === 'retry') {
-						this.initialize(connection);
+						void this.initialize(connection);
 					} else {
-						this.stop();
+						void this.stop();
 						this._onReadyCallbacks.reject(error);
 					}
 				});
 			} else {
 				if (error && error.message) {
-					Window.showErrorMessage(error.message);
+					void Window.showErrorMessage(error.message);
 				}
 				this.error('Server initialization failed.', error);
-				this.stop();
+				void this.stop();
 				this._onReadyCallbacks.reject(error);
 			}
 			throw error;
@@ -3389,9 +3391,9 @@ export abstract class BaseLanguageClient {
 		const client = this;
 		function didChangeWatchedFile(this: void, event: FileEvent) {
 			client._fileEvents.push(event);
-			client._fileEventDelayer.trigger(() => {
+			void client._fileEventDelayer.trigger(() => {
 				client.onReady().then(() => {
-					client.resolveConnection().then(connection => {
+					void client.resolveConnection().then(connection => {
 						if (client.isConnectionActive()) {
 							client.forceDocumentSync();
 							connection.didChangeWatchedFiles({ changes: client._fileEvents });
@@ -3497,7 +3499,9 @@ export abstract class BaseLanguageClient {
 		let action = this._clientOptions.errorHandler!.error(error, message, count);
 		if (action === ErrorAction.Shutdown) {
 			this.error('Connection to server is erroring. Shutting down server.');
-			this.stop();
+			this.stop().then(undefined, (error) => {
+				this.error(`Stopping server failed`, error, false);
+			});
 		}
 	}
 

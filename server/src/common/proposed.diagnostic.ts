@@ -21,11 +21,18 @@ export interface DiagnosticsFeatureShape {
 		refresh(): void;
 
 		/**
-		* Installs a handler for the diagnostic request.
+		* Installs a handler for the document diagnostic request.
 		*
 		* @param handler The corresponding handler.
 		*/
 		on(handler: ServerRequestHandler<Proposed.DocumentDiagnosticParams, Proposed.DocumentDiagnosticReport, Proposed.DocumentDiagnosticReportPartialResult, Proposed.DiagnosticServerCancellationData>): void;
+
+		/**
+		 * Installs a handler for the workspace diagnostic request.
+		 *
+		 * @param handler The corresponding handler.
+		 */
+		 onWorkspace(handler: ServerRequestHandler<Proposed.WorkspaceDiagnosticParams, Proposed.WorkspaceDiagnosticReport, Proposed.WorkspaceDiagnosticReportPartialResult, Proposed.DiagnosticServerCancellationData>): void;
 	}
 }
 
@@ -38,7 +45,12 @@ export const DiagnosticFeature: Feature<_Languages, DiagnosticsFeatureShape> = (
 				},
 				on: (handler: ServerRequestHandler<Proposed.DocumentDiagnosticParams, Proposed.DocumentDiagnosticReport, Proposed.DocumentDiagnosticReportPartialResult, Proposed.DiagnosticServerCancellationData>): void => {
 					this.connection.onRequest(Proposed.DocumentDiagnosticRequest.type, (params, cancel) => {
-						return handler(params, cancel, this.attachWorkDoneProgress(params), undefined);
+						return handler(params, cancel, this.attachWorkDoneProgress(params), this.attachPartialResultProgress(Proposed.DocumentDiagnosticRequest.partialResult, params));
+					});
+				},
+				onWorkspace: (handler: ServerRequestHandler<Proposed.WorkspaceDiagnosticParams, Proposed.WorkspaceDiagnosticReport, Proposed.WorkspaceDiagnosticReportPartialResult, Proposed.DiagnosticServerCancellationData>): void => {
+					this.connection.onRequest(Proposed.WorkspaceDiagnosticRequest.type, (params, cancel) => {
+						return handler(params, cancel, this.attachWorkDoneProgress(params), this.attachPartialResultProgress(Proposed.WorkspaceDiagnosticRequest.partialResult, params));
 					});
 				}
 			};

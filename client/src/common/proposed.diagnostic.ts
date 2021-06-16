@@ -13,9 +13,11 @@ import {
 	DidSaveTextDocumentNotification, DidCloseTextDocumentNotification, LinkedMap, Touch, RAL
 } from 'vscode-languageserver-protocol';
 
+import { generateUuid } from './utils/uuid';
 import {
 	TextDocumentFeature, BaseLanguageClient, Middleware, LSPCancellationError, DiagnosticPullMode
 } from './client';
+import { PreviousResultId, WorkspaceDocumentDiagnosticReport } from 'vscode-languageserver-protocol/src/common/proposed.diagnostic';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -87,7 +89,7 @@ namespace vscode {
 	export interface DiagnosticProvider {
 		onDidChangeDiagnostics: VEvent<void>;
 		provideDiagnostics(textDocument: TextDocument, previousResultId: string | undefined, token: CancellationToken): ProviderResult<DocumentDiagnosticReport>;
-		provideWorkspaceDiagnostics?(resultIds: PreviousResultId[], token: CancellationToken, resultReporter: ResultReporter): Promise<void>
+		provideWorkspaceDiagnostics?(resultIds: PreviousResultId[], token: CancellationToken, resultReporter: ResultReporter): ProviderResult<WorkspaceDiagnosticReport>;
 	}
 }
 
@@ -95,8 +97,13 @@ export interface ProvideDiagnosticSignature {
 	(this: void, textDocument: TextDocument, previousResultId: string | undefined, token: CancellationToken): ProviderResult<vscode.DocumentDiagnosticReport>;
 }
 
+export interface ProvideWorkspaceDiagnosticSignature {
+	(this: void, resultIds: vscode.PreviousResultId[], token: CancellationToken, resultReporter: vscode.ResultReporter): ProviderResult<vscode.WorkspaceDiagnosticReport>;
+}
+
 export interface DiagnosticProviderMiddleware {
 	provideDiagnostics?: (this: void, document: TextDocument, previousResultId: string | undefined, token: CancellationToken, next: ProvideDiagnosticSignature) => ProviderResult<vscode.DocumentDiagnosticReport>;
+	provideWorkspaceDiagnostics?: (this: void, resultIds: vscode.PreviousResultId[], token: CancellationToken, resultReporter: vscode.ResultReporter, next: ProvideWorkspaceDiagnosticSignature) => ProviderResult<vscode.WorkspaceDiagnosticReport>;
 }
 
 enum RequestStateKind {
@@ -154,24 +161,32 @@ interface DocumentPullState {
 	resultId: string | undefined;
 }
 
+enum PullState {
+	document = 1,
+	workspace = 2
+}
+
 class DocumentPullStateTracker {
 
-	private readonly states: Map<string, DocumentPullState>;
+	private readonly documentPullStates: Map<string, DocumentPullState>;
+	private readonly workspacePullStates: Map<string, DocumentPullState>;
 
 	constructor() {
-		this.states = new Map();
+		this.documentPullStates = new Map();
+		this.workspacePullStates = new Map();
 	}
 
-	public track(textDocument: TextDocument, resultId?: string): DocumentPullState;
-	public track(uri: string, version?: number, resultId?: string): DocumentPullState;
-	public track(document: TextDocument | string, arg1?: string | number, arg2?: string): DocumentPullState {
+	public track(kind: PullState, textDocument: TextDocument, resultId?: string): DocumentPullState;
+	public track(kind: PullState, uri: string, version?: number, resultId?: string): DocumentPullState;
+	public track(kind: PullState, document: TextDocument | string, arg1?: string | number, arg2?: string): DocumentPullState {
+		const states = kind === PullState.document ? this.documentPullStates : this.workspacePullStates;
 		const [key, uri, version, resultId] = typeof document === 'string'
 			? [document, Uri.parse(document), arg1 as number, arg2]
 			: [document.uri.toString(), document.uri, document.version, arg1 as string];
-		let state = this.states.get(key);
+		let state = states.get(key);
 		if (state === undefined) {
 			state = { document: uri, pulledVersion: version, resultId };
-			this.states.set(key, state);
+			states.set(key, state);
 		} else {
 			state.pulledVersion = version;
 			state.resultId = resultId;
@@ -179,24 +194,30 @@ class DocumentPullStateTracker {
 		return state;
 	}
 
-	public unTrack(textDocument: TextDocument): void {
-		this.states.delete(textDocument.uri.toString());
+	public unTrack(kind: PullState, textDocument: TextDocument): void {
+		const states = kind === PullState.document ? this.documentPullStates : this.workspacePullStates;
+		states.delete(textDocument.uri.toString());
 	}
 
-	public tracks(textDocument: TextDocument): boolean;
-	public tracks(uri: string): boolean;
-	public tracks(document: TextDocument | string): boolean {
+	public tracks(kind: PullState, textDocument: TextDocument): boolean;
+	public tracks(kind: PullState, uri: string): boolean;
+	public tracks(kind: PullState, document: TextDocument | string): boolean {
 		const key = typeof document === 'string' ? document : document.uri.toString();
-		return this.states.has(key);
+		const states = kind === PullState.document ? this.documentPullStates : this.workspacePullStates;
+		return states.has(key);
 	}
 
-	public getResultId(textDocument: TextDocument): string | undefined {
-		return this.states.get(textDocument.uri.toString())?.resultId;
+	public getResultId(kind: PullState, textDocument: TextDocument): string | undefined {
+		const states = kind === PullState.document ? this.documentPullStates : this.workspacePullStates;
+		return states.get(textDocument.uri.toString())?.resultId;
 	}
 
 	public getAllResultIds(): Proposed.PreviousResultId[] {
 		const result: Proposed.PreviousResultId[] = [];
-		for (const [uri, value] of this.states) {
+		for (let [uri, value] of this.workspacePullStates) {
+			if (this.documentPullStates.has(uri)) {
+				value = this.documentPullStates.get(uri)!;
+			}
 			if (value.resultId !== undefined) {
 				result.push({ uri, value: value.resultId });
 			}
@@ -205,8 +226,9 @@ class DocumentPullStateTracker {
 	}
 }
 
-class DiagnosticRequestor {
+class DiagnosticRequestor implements Disposable {
 
+	private isDisposed: boolean;
 	private readonly client: BaseLanguageClient;
 	private readonly editorTracker: EditorTracker;
 	private readonly options: Proposed.DiagnosticRegistrationOptions;
@@ -217,33 +239,50 @@ class DiagnosticRequestor {
 	private readonly openRequests: Map<string, RequestState>;
 	private readonly documentStates: DocumentPullStateTracker;
 
+	private workspaceErrorCounter: number;
+	private workspaceCancellation: CancellationTokenSource | undefined;
+	private workspaceTimeout: Disposable | undefined;
+
 	public constructor(client: BaseLanguageClient, editorTracker: EditorTracker, options: Proposed.DiagnosticRegistrationOptions) {
 		this.client = client;
 		this.editorTracker = editorTracker;
 		this.options = options;
+
+		this.isDisposed = false;
 		this.onDidChangeDiagnosticsEmitter = new EventEmitter<void>();
 		this.provider = this.createProvider();
 
 		this.diagnostics = Languages.createDiagnosticCollection(options.identifier);
 		this.openRequests = new Map();
 		this.documentStates = new DocumentPullStateTracker();
+		this.workspaceErrorCounter = 0;
 	}
 
-	public knows(textDocument: TextDocument): boolean {
-		return this.documentStates.tracks(textDocument);
+	public knows(kind: PullState, textDocument: TextDocument): boolean {
+		return this.documentStates.tracks(kind, textDocument);
 	}
 
-	public async pull(textDocument: TextDocument): Promise<void> {
+	public pull(textDocument: TextDocument, cb?: () => void): void {
+		this.pullAsync(textDocument).then(() => {
+			if (cb) {
+				cb();
+			}
+		}, (error) => {
+			this.client.error(`Document pull failed for text document ${textDocument.uri.toString()}`, error, false);
+		});
+	}
+
+	private async pullAsync(textDocument: TextDocument): Promise<void> {
 		const key = textDocument.uri.toString();
 		const currentRequestState = this.openRequests.get(key);
-		const documentState = this.documentStates.track(textDocument);
+		const documentState = this.documentStates.track(PullState.document, textDocument);
 		if (currentRequestState === undefined) {
 			const tokenSource = new CancellationTokenSource();
 			this.openRequests.set(key, { state: RequestStateKind.active, version: textDocument.version, textDocument, tokenSource });
 			let report: vscode.DocumentDiagnosticReport | undefined;
 			let afterState: RequestState | undefined;
 			try {
-				report = await this.provider.provideDiagnostics(textDocument, this.documentStates.getResultId(textDocument), tokenSource.token) ?? { kind: vscode.DocumentDiagnosticReportKind.full, items: [] };
+				report = await this.provider.provideDiagnostics(textDocument, this.documentStates.getResultId(PullState.document, textDocument), tokenSource.token) ?? { kind: vscode.DocumentDiagnosticReportKind.full, items: [] };
 			} catch (error) {
 				if (error instanceof LSPCancellationError && Proposed.DiagnosticServerCancellationData.is(error.data) && error.data.retriggerRequest === false) {
 					afterState = { state: RequestStateKind.outDated, textDocument };
@@ -263,7 +302,7 @@ class DiagnosticRequestor {
 			}
 			this.openRequests.delete(key);
 			if (!this.editorTracker.isVisible(textDocument)) {
-				this.documentStates.unTrack(textDocument);
+				this.documentStates.unTrack(PullState.document, textDocument);
 				return;
 			}
 			if (afterState.state === RequestStateKind.outDated) {
@@ -310,8 +349,54 @@ class DiagnosticRequestor {
 		}
 	}
 
-	pullWorkspace(): void {
+	public pullWorkspace(): void {
+		this.pullWorkspaceAsync().then(() => {
+			this.workspaceTimeout = RAL().timer.setTimeout(() => {
+				this.pullWorkspace();
+			}, 2000);
+		}, (error) => {
+			if (!(error instanceof LSPCancellationError) && !Proposed.DiagnosticServerCancellationData.is(error.data)) {
+				this.client.error(`Workspace diagnostic pull failed.`, error, false);
+				this.workspaceErrorCounter++;
+			}
+			if (this.workspaceErrorCounter <= 5) {
+				this.workspaceTimeout = RAL().timer.setTimeout(() => {
+					this.pullWorkspace();
+				}, 2000);
+			}
+		});
+	}
 
+	private async pullWorkspaceAsync(): Promise<void> {
+		if (!this.provider.provideWorkspaceDiagnostics) {
+			return;
+		}
+		if (this.workspaceCancellation !== undefined) {
+			this.workspaceCancellation.cancel();
+			this.workspaceCancellation = undefined;
+		}
+		this.workspaceCancellation = new CancellationTokenSource();
+		const previousResultIds: vscode.PreviousResultId[] = this.documentStates.getAllResultIds().map((item) => {
+			return {
+				uri: this.client.protocol2CodeConverter.asUri(item.uri),
+				value: item.value
+			};
+		});
+		await this.provider.provideWorkspaceDiagnostics(previousResultIds, this.workspaceCancellation.token, (chunk) => {
+			if (!chunk || this.isDisposed) {
+				return;
+			}
+			for (const item of chunk.items) {
+				if (item.kind === vscode.DocumentDiagnosticReportKind.full) {
+					// Favour document pull result over workspace results. So skip if it is tracked
+					// as a document result.
+					if (!this.documentStates.tracks(PullState.document, item.uri.toString())) {
+						this.diagnostics.set(item.uri, item.items);
+					}
+				}
+				this.documentStates.track(PullState.workspace, item.uri.toString(), item.version ?? undefined, item.resultId);
+			}
+		});
 	}
 
 	private createProvider(): vscode.DiagnosticProvider {
@@ -320,11 +405,12 @@ class DiagnosticRequestor {
 			provideDiagnostics: (textDocument, previousResultId, token) => {
 				const provideDiagnostics: ProvideDiagnosticSignature = (textDocument, previousResultId, token) => {
 					const params: Proposed.DocumentDiagnosticParams = {
+						identifier: this.options.identifier,
 						textDocument: { uri: this.client.code2ProtocolConverter.asUri(textDocument.uri) },
 						previousResultId: previousResultId
 					};
 					return this.client.sendRequest(Proposed.DocumentDiagnosticRequest.type, params, token).then((result) => {
-						if (result === undefined || result === null) {
+						if (result === undefined || result === null || this.isDisposed) {
 							return { kind: vscode.DocumentDiagnosticReportKind.full, items: [] };
 						}
 						if (result.kind === Proposed.DocumentDiagnosticReportKind.full) {
@@ -343,8 +429,90 @@ class DiagnosticRequestor {
 			}
 		};
 		if (this.options.workspaceDiagnostics) {
+			result.provideWorkspaceDiagnostics = (resultIds, token, resultReporter): ProviderResult<vscode.WorkspaceDiagnosticReport> => {
+				const convertReport = (report: WorkspaceDocumentDiagnosticReport): vscode.WorkspaceDocumentDiagnosticReport => {
+					if (report.kind === Proposed.DocumentDiagnosticReportKind.full) {
+						return {
+							kind: vscode.DocumentDiagnosticReportKind.full,
+							uri: this.client.protocol2CodeConverter.asUri(report.uri),
+							resultId: report.resultId,
+							version: report.version,
+							items: this.client.protocol2CodeConverter.asDiagnostics(report.items)
+						};
+					} else {
+						return {
+							kind: vscode.DocumentDiagnosticReportKind.unChanged,
+							uri: this.client.protocol2CodeConverter.asUri(report.uri),
+							resultId: report.resultId,
+							version: report.version
+						};
+					}
+				};
+				const convertPreviousResultIds = (resultIds: vscode.PreviousResultId[]): PreviousResultId[] => {
+					const converted: PreviousResultId[] = [];
+					for (const item of resultIds) {
+						converted.push({ uri: this.client.code2ProtocolConverter.asUri(item.uri), value: item.value});
+					}
+					return converted;
+				};
+				const provideDiagnostics: ProvideWorkspaceDiagnosticSignature = (resultIds, token): ProviderResult<vscode.WorkspaceDiagnosticReport> => {
+					const partialResultToken: string = generateUuid();
+					const disposable = this.client.onProgress(Proposed.WorkspaceDiagnosticRequest.partialResult, partialResultToken, (partialResult) => {
+						if (partialResult === undefined || partialResult === null) {
+							resultReporter(null);
+							return;
+						}
+						const converted: vscode.WorkspaceDiagnosticReportPartialResult = {
+							items: []
+						};
+						for (const item of partialResult.items) {
+							converted.items.push(convertReport(item));
+						}
+						resultReporter(converted);
+					});
+					const params: Proposed.WorkspaceDiagnosticParams = {
+						identifier: this.options.identifier,
+						previousResultIds: convertPreviousResultIds(resultIds),
+						partialResultToken: partialResultToken
+					};
+					return this.client.sendRequest(Proposed.WorkspaceDiagnosticRequest.type, params, token).then((result): vscode.WorkspaceDiagnosticReport => {
+						const converted: vscode.WorkspaceDiagnosticReport = {
+							items: []
+						};
+						for (const item of result.items) {
+							converted.items.push(convertReport(item));
+						}
+						disposable.dispose();
+						resultReporter(converted);
+						return { items: [] };
+					}, (error) => {
+						disposable.dispose();
+						return this.client.handleFailedRequest(Proposed.DocumentDiagnosticRequest.type, token, error, { items: [] });
+					});
+				};
+				const middleware: Middleware & DiagnosticProviderMiddleware = this.client.clientOptions.middleware!;
+				return middleware.provideWorkspaceDiagnostics
+					? middleware.provideWorkspaceDiagnostics(resultIds, token, resultReporter, provideDiagnostics)
+					: provideDiagnostics(resultIds, token, resultReporter);
+			};
 		}
 		return result;
+	}
+
+	public dispose(): void {
+		this.isDisposed = true;
+
+		// Cancel and clear workspace pull if present.
+		this.workspaceCancellation?.cancel();
+		this.workspaceTimeout?.dispose();
+
+		// Cancel all request and mark open requests as outdated.
+		for (const [key, request] of this.openRequests) {
+			if (request.state === RequestStateKind.active) {
+				request.tokenSource.cancel();
+			}
+			this.openRequests.set(key, { state: RequestStateKind.outDated, textDocument: request.textDocument });
+		}
 	}
 }
 
@@ -353,7 +521,7 @@ export interface DiagnosticFeatureProvider {
 	provider: vscode.DiagnosticProvider;
 }
 
-class BackgroundScheduler {
+class BackgroundScheduler implements Disposable {
 
 	private readonly diagnosticRequestor: DiagnosticRequestor;
 	private endDocument: TextDocument | undefined;
@@ -410,6 +578,11 @@ class BackgroundScheduler {
 		}, 200);
 	}
 
+	public dispose(): void {
+		this.stop();
+		this.documents.clear();
+	}
+
 	private stop(): void {
 		this.intervalHandle?.dispose();
 		this.intervalHandle = undefined;
@@ -460,18 +633,14 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 		disposables.push(openFeature.onNotificationSent((event) => {
 			const textDocument = event.original;
 			if (matches(textDocument)) {
-				this.diagnosticRequestor.pull(textDocument).then(() => {
-					addToBackgroundIfNeeded(textDocument);
-				});
+				this.diagnosticRequestor.pull(textDocument, () => { addToBackgroundIfNeeded(textDocument); });
 			}
 		}));
 
 		// Pull all diagnostics for documents that are already open
 		for (const textDocument of Workspace.textDocuments) {
 			if (matches(textDocument)) {
-				this.diagnosticRequestor.pull(textDocument).then(() => {
-					addToBackgroundIfNeeded(textDocument);
-				});
+				this.diagnosticRequestor.pull(textDocument, () => { addToBackgroundIfNeeded(textDocument); });
 			}
 		}
 
@@ -479,10 +648,8 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 			const changeFeature = client.getFeature(DidChangeTextDocumentNotification.method);
 			disposables.push(changeFeature.onNotificationSent(async (event) => {
 				const textDocument = event.original.document;
-				if ((diagnosticPullOptions.filter === undefined || !diagnosticPullOptions.filter(textDocument, DiagnosticPullMode.onType)) && this.diagnosticRequestor.knows(textDocument) && event.original.contentChanges.length > 0) {
-					this.diagnosticRequestor.pull(textDocument).then(() => {
-						this.backgroundScheduler.trigger();
-					});
+				if ((diagnosticPullOptions.filter === undefined || !diagnosticPullOptions.filter(textDocument, DiagnosticPullMode.onType)) && this.diagnosticRequestor.knows(PullState.document, textDocument) && event.original.contentChanges.length > 0) {
+					this.diagnosticRequestor.pull(textDocument, () => { this.backgroundScheduler.trigger(); });
 				}
 			}));
 		}
@@ -491,10 +658,8 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 			const saveFeature = client.getFeature(DidSaveTextDocumentNotification.method);
 			disposables.push(saveFeature.onNotificationSent((event) => {
 				const textDocument = event.original;
-				if ((diagnosticPullOptions.filter === undefined || !diagnosticPullOptions.filter(textDocument, DiagnosticPullMode.onSave)) && this.diagnosticRequestor.knows(textDocument)) {
-					this.diagnosticRequestor.pull(event.original).then(() => {
-						this.backgroundScheduler.trigger();
-					});
+				if ((diagnosticPullOptions.filter === undefined || !diagnosticPullOptions.filter(textDocument, DiagnosticPullMode.onSave)) && this.diagnosticRequestor.knows(PullState.document, textDocument)) {
+					this.diagnosticRequestor.pull(event.original, () => { this.backgroundScheduler.trigger(); });
 				}
 			}));
 		}
@@ -516,7 +681,11 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 			}
 		});
 
-		this.disposable = Disposable.from(...disposables);
+		if (options.workspaceDiagnostics === true) {
+			this.diagnosticRequestor.pullWorkspace();
+		}
+
+		this.disposable = Disposable.from(...disposables, this.backgroundScheduler, this.diagnosticRequestor);
 	}
 
 	public get onDidChangeDiagnosticsEmitter(): EventEmitter<void> {
@@ -526,6 +695,8 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 	public get provider(): vscode.DiagnosticProvider {
 		return this.diagnosticRequestor.provider;
 	}
+
+
 }
 
 export class DiagnosticFeature extends TextDocumentFeature<Proposed.DiagnosticOptions, Proposed.DiagnosticRegistrationOptions, DiagnosticFeatureProvider> {
@@ -540,6 +711,10 @@ export class DiagnosticFeature extends TextDocumentFeature<Proposed.DiagnosticOp
 	public fillClientCapabilities(capabilities: ClientCapabilities & Proposed.$DiagnosticClientCapabilities): void {
 		let capability = ensure(ensure(capabilities, 'textDocument')!, 'diagnostic')!;
 		capability.dynamicRegistration = true;
+		// We first need to decide how a UI will look with related documents.
+		// An easy implementation would be to only show related diagnostics for
+		// the active editor.
+		capability.relatedDocumentSupport = false;
 	}
 
 	public initialize(capabilities: ServerCapabilities & Proposed.$DiagnosticServerCapabilities, documentSelector: DocumentSelector): void {
