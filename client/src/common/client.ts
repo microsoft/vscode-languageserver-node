@@ -52,13 +52,14 @@ import {
 	CancellationStrategy, SaveOptions, LSPErrorCodes, CodeActionResolveRequest, RegistrationType, SemanticTokensRegistrationType, InsertTextMode, ShowDocumentRequest,
 	FileOperationRegistrationOptions, WillCreateFilesRequest, WillRenameFilesRequest, WillDeleteFilesRequest, DidCreateFilesNotification, DidDeleteFilesNotification, DidRenameFilesNotification,
 	ShowDocumentParams, ShowDocumentResult, LinkedEditingRangeRequest, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressReport, PrepareSupportDefaultBehavior,
-	SemanticTokensRequest, SemanticTokensRangeRequest, SemanticTokensDeltaRequest
+	SemanticTokensRequest, SemanticTokensRangeRequest, SemanticTokensDeltaRequest, Proposed
 } from 'vscode-languageserver-protocol';
 
+import { toJSONObject } from './configuration';
+import type { ConfigurationWorkspaceMiddleware } from './configuration';
 import type { ColorProviderMiddleware } from './colorProvider';
 import type { ImplementationMiddleware } from './implementation';
 import type { TypeDefinitionMiddleware } from './typeDefinition';
-import { ConfigurationWorkspaceMiddleware, toJSONObject } from './configuration';
 import type { WorkspaceFolderWorkspaceMiddleware } from './workspaceFolders';
 import type { FoldingRangeProviderMiddleware } from './foldingRange';
 import type { DeclarationMiddleware } from './declaration';
@@ -66,7 +67,8 @@ import type { SelectionRangeProviderMiddleware } from './selectionRange';
 import type { CallHierarchyMiddleware } from './callHierarchy';
 import type { SemanticTokensMiddleware, SemanticTokensProviders } from './semanticTokens';
 import type { FileOperationsMiddleware } from './fileOperations';
-import { LinkedEditingRangeMiddleware } from './linkedEditingRange';
+import type { LinkedEditingRangeMiddleware } from './linkedEditingRange';
+import type { DiagnosticFeatureProvider } from './proposed.diagnostic';
 
 import * as c2p from './codeConverter';
 import * as p2c from './protocolConverter';
@@ -3602,6 +3604,7 @@ export abstract class BaseLanguageClient {
 	public getFeature(request: typeof CallHierarchyPrepareRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<CallHierarchyProvider>;
 	public getFeature(request: typeof SemanticTokensRegistrationType.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<SemanticTokensProviders>;
 	public getFeature(request: typeof LinkedEditingRangeRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<LinkedEditingRangeProvider>;
+	public getFeature(request: typeof Proposed.DocumentDiagnosticRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DiagnosticFeatureProvider>;
 
 	public getFeature(request: typeof WorkspaceSymbolRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & WorkspaceProviderFeature<WorkspaceSymbolProvider>;
 	public getFeature(request: string): DynamicFeature<any> | undefined {

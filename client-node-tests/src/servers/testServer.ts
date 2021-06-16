@@ -3,19 +3,21 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import * as fs from 'fs';
 import * as assert from 'assert';
 import {
-	createConnection, Connection, InitializeParams, ServerCapabilities, CompletionItemKind, ResourceOperationKind, FailureHandlingKind,
+	createConnection, InitializeParams, ServerCapabilities, CompletionItemKind, ResourceOperationKind, FailureHandlingKind,
 	DiagnosticTag, CompletionItemTag, TextDocumentSyncKind, MarkupKind, SignatureHelp, SignatureInformation, ParameterInformation,
 	Location, Range, DocumentHighlight, DocumentHighlightKind, CodeAction, Command, TextEdit, Position, DocumentLink,
 	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, SymbolKind, ProtocolRequestType, WorkDoneProgress,
 	WorkDoneProgressCreateRequest, WillCreateFilesRequest, WillRenameFilesRequest, WillDeleteFilesRequest, DidDeleteFilesNotification,
-	DidRenameFilesNotification, DidCreateFilesNotification
+	DidRenameFilesNotification, DidCreateFilesNotification, Proposed, ProposedFeatures, Diagnostic, DiagnosticSeverity
 } from '../../../server/node';
 
 import { URI } from 'vscode-uri';
+import { $DiagnosticClientCapabilities } from 'vscode-languageserver-protocol/src/common/proposed.diagnostic';
 
-let connection: Connection = createConnection();
+let connection: ProposedFeatures.Connection = createConnection(ProposedFeatures.all);
 
 console.log = connection.console.log.bind(connection.console);
 console.error = connection.console.error.bind(connection.console);
@@ -40,13 +42,18 @@ connection.onInitialize((params: InitializeParams): any => {
 	assert.equal(params.capabilities.textDocument!.publishDiagnostics!.tagSupport!.valueSet[0], DiagnosticTag.Unnecessary);
 	assert.equal(params.capabilities.textDocument!.publishDiagnostics!.tagSupport!.valueSet[1], DiagnosticTag.Deprecated);
 	assert.equal(params.capabilities.textDocument!.documentLink!.tooltipSupport, true);
-	let valueSet = params.capabilities.textDocument!.completion!.completionItemKind!.valueSet!;
+
+	const valueSet = params.capabilities.textDocument!.completion!.completionItemKind!.valueSet!;
 	assert.equal(valueSet[0], 1);
 	assert.equal(valueSet[valueSet.length - 1], CompletionItemKind.TypeParameter);
 	assert.equal(params.capabilities.workspace!.fileOperations!.willCreate, true);
-	console.log(params.capabilities);
 
-	let capabilities: ServerCapabilities = {
+	const diagnosticClientCapabilities = (params.capabilities as $DiagnosticClientCapabilities).textDocument!.diagnostic;
+	fs.writeFileSync('/tmp/testrun/log.txt', JSON.stringify(diagnosticClientCapabilities, undefined, 4));
+	assert.equal(diagnosticClientCapabilities?.dynamicRegistration, true);
+	assert.equal(diagnosticClientCapabilities?.relatedDocumentSupport, false);
+
+	const capabilities: ServerCapabilities & Proposed.$DiagnosticServerCapabilities = {
 		textDocumentSync: TextDocumentSyncKind.Full,
 		definitionProvider: true,
 		hoverProvider: true,
@@ -117,7 +124,12 @@ connection.onInitialize((params: InitializeParams): any => {
 				},
 			},
 		},
-		linkedEditingRangeProvider: true
+		linkedEditingRangeProvider: true,
+		diagnosticProvider: {
+			identifier: 'da348dc5-c30a-4515-9d98-31ff3be38d14',
+			interFileDependencies: true,
+			workspaceDiagnostics: true
+		}
 	};
 	return { capabilities, customResults: { hello: 'world' } };
 });
@@ -395,6 +407,28 @@ connection.languages.onLinkedEditingRange(() => {
 	return {
 		ranges: [ Range.create(1,1,1,1)],
 		wordPattern: '\\w'
+	};
+});
+
+connection.languages.diagnostics.on(() => {
+	return {
+		kind: Proposed.DocumentDiagnosticReportKind.full,
+		items: [
+			Diagnostic.create(Range.create(1, 1, 1, 1), 'diagnostic', DiagnosticSeverity.Error)
+		]
+	};
+});
+
+connection.languages.diagnostics.onWorkspace(() => {
+	return {
+		items: [ {
+			kind: Proposed.DocumentDiagnosticReportKind.full,
+			uri: 'uri',
+			version: 1,
+			items: [
+				Diagnostic.create(Range.create(1, 1, 1, 1), 'diagnostic', DiagnosticSeverity.Error)
+			]
+		}]
 	};
 });
 

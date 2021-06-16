@@ -26,7 +26,7 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	return target[key];
 }
 
-namespace vscode {
+export namespace vsdiag {
 	export enum DocumentDiagnosticReportKind {
 		full = 'full',
 		unChanged = 'unChanged'
@@ -83,7 +83,7 @@ namespace vscode {
 	}
 
 	export interface ResultReporter {
-		(chunk: WorkspaceDiagnosticReport | WorkspaceDiagnosticReportPartialResult | null): void;
+		(chunk: WorkspaceDiagnosticReportPartialResult | null): void;
 	}
 
 	export interface DiagnosticProvider {
@@ -94,16 +94,16 @@ namespace vscode {
 }
 
 export interface ProvideDiagnosticSignature {
-	(this: void, textDocument: TextDocument, previousResultId: string | undefined, token: CancellationToken): ProviderResult<vscode.DocumentDiagnosticReport>;
+	(this: void, textDocument: TextDocument, previousResultId: string | undefined, token: CancellationToken): ProviderResult<vsdiag.DocumentDiagnosticReport>;
 }
 
 export interface ProvideWorkspaceDiagnosticSignature {
-	(this: void, resultIds: vscode.PreviousResultId[], token: CancellationToken, resultReporter: vscode.ResultReporter): ProviderResult<vscode.WorkspaceDiagnosticReport>;
+	(this: void, resultIds: vsdiag.PreviousResultId[], token: CancellationToken, resultReporter: vsdiag.ResultReporter): ProviderResult<vsdiag.WorkspaceDiagnosticReport>;
 }
 
 export interface DiagnosticProviderMiddleware {
-	provideDiagnostics?: (this: void, document: TextDocument, previousResultId: string | undefined, token: CancellationToken, next: ProvideDiagnosticSignature) => ProviderResult<vscode.DocumentDiagnosticReport>;
-	provideWorkspaceDiagnostics?: (this: void, resultIds: vscode.PreviousResultId[], token: CancellationToken, resultReporter: vscode.ResultReporter, next: ProvideWorkspaceDiagnosticSignature) => ProviderResult<vscode.WorkspaceDiagnosticReport>;
+	provideDiagnostics?: (this: void, document: TextDocument, previousResultId: string | undefined, token: CancellationToken, next: ProvideDiagnosticSignature) => ProviderResult<vsdiag.DocumentDiagnosticReport>;
+	provideWorkspaceDiagnostics?: (this: void, resultIds: vsdiag.PreviousResultId[], token: CancellationToken, resultReporter: vsdiag.ResultReporter, next: ProvideWorkspaceDiagnosticSignature) => ProviderResult<vsdiag.WorkspaceDiagnosticReport>;
 }
 
 enum RequestStateKind {
@@ -234,7 +234,7 @@ class DiagnosticRequestor implements Disposable {
 	private readonly options: Proposed.DiagnosticRegistrationOptions;
 
 	public readonly onDidChangeDiagnosticsEmitter: EventEmitter<void>;
-	public readonly provider: vscode.DiagnosticProvider;
+	public readonly provider: vsdiag.DiagnosticProvider;
 	private readonly diagnostics: DiagnosticCollection;
 	private readonly openRequests: Map<string, RequestState>;
 	private readonly documentStates: DocumentPullStateTracker;
@@ -279,10 +279,10 @@ class DiagnosticRequestor implements Disposable {
 		if (currentRequestState === undefined) {
 			const tokenSource = new CancellationTokenSource();
 			this.openRequests.set(key, { state: RequestStateKind.active, version: textDocument.version, textDocument, tokenSource });
-			let report: vscode.DocumentDiagnosticReport | undefined;
+			let report: vsdiag.DocumentDiagnosticReport | undefined;
 			let afterState: RequestState | undefined;
 			try {
-				report = await this.provider.provideDiagnostics(textDocument, this.documentStates.getResultId(PullState.document, textDocument), tokenSource.token) ?? { kind: vscode.DocumentDiagnosticReportKind.full, items: [] };
+				report = await this.provider.provideDiagnostics(textDocument, this.documentStates.getResultId(PullState.document, textDocument), tokenSource.token) ?? { kind: vsdiag.DocumentDiagnosticReportKind.full, items: [] };
 			} catch (error) {
 				if (error instanceof LSPCancellationError && Proposed.DiagnosticServerCancellationData.is(error.data) && error.data.retriggerRequest === false) {
 					afterState = { state: RequestStateKind.outDated, textDocument };
@@ -310,7 +310,7 @@ class DiagnosticRequestor implements Disposable {
 			}
 			// report is only undefined if the request has thrown.
 			if (report !== undefined) {
-				if (report.kind === vscode.DocumentDiagnosticReportKind.full) {
+				if (report.kind === vsdiag.DocumentDiagnosticReportKind.full) {
 					this.diagnostics.set(textDocument.uri, report.items);
 				}
 				documentState.resultId = report.resultId;
@@ -376,7 +376,7 @@ class DiagnosticRequestor implements Disposable {
 			this.workspaceCancellation = undefined;
 		}
 		this.workspaceCancellation = new CancellationTokenSource();
-		const previousResultIds: vscode.PreviousResultId[] = this.documentStates.getAllResultIds().map((item) => {
+		const previousResultIds: vsdiag.PreviousResultId[] = this.documentStates.getAllResultIds().map((item) => {
 			return {
 				uri: this.client.protocol2CodeConverter.asUri(item.uri),
 				value: item.value
@@ -387,7 +387,7 @@ class DiagnosticRequestor implements Disposable {
 				return;
 			}
 			for (const item of chunk.items) {
-				if (item.kind === vscode.DocumentDiagnosticReportKind.full) {
+				if (item.kind === vsdiag.DocumentDiagnosticReportKind.full) {
 					// Favour document pull result over workspace results. So skip if it is tracked
 					// as a document result.
 					if (!this.documentStates.tracks(PullState.document, item.uri.toString())) {
@@ -399,8 +399,8 @@ class DiagnosticRequestor implements Disposable {
 		});
 	}
 
-	private createProvider(): vscode.DiagnosticProvider {
-		const result: vscode.DiagnosticProvider = {
+	private createProvider(): vsdiag.DiagnosticProvider {
+		const result: vsdiag.DiagnosticProvider = {
 			onDidChangeDiagnostics: this.onDidChangeDiagnosticsEmitter.event,
 			provideDiagnostics: (textDocument, previousResultId, token) => {
 				const provideDiagnostics: ProvideDiagnosticSignature = (textDocument, previousResultId, token) => {
@@ -411,15 +411,15 @@ class DiagnosticRequestor implements Disposable {
 					};
 					return this.client.sendRequest(Proposed.DocumentDiagnosticRequest.type, params, token).then((result) => {
 						if (result === undefined || result === null || this.isDisposed) {
-							return { kind: vscode.DocumentDiagnosticReportKind.full, items: [] };
+							return { kind: vsdiag.DocumentDiagnosticReportKind.full, items: [] };
 						}
 						if (result.kind === Proposed.DocumentDiagnosticReportKind.full) {
-							return { kind: vscode.DocumentDiagnosticReportKind.full, resultId: result.resultId, items: this.client.protocol2CodeConverter.asDiagnostics(result.items) };
+							return { kind: vsdiag.DocumentDiagnosticReportKind.full, resultId: result.resultId, items: this.client.protocol2CodeConverter.asDiagnostics(result.items) };
 						} else {
-							return { kind: vscode.DocumentDiagnosticReportKind.unChanged, resultId: result.resultId };
+							return { kind: vsdiag.DocumentDiagnosticReportKind.unChanged, resultId: result.resultId };
 						}
 					}, (error) => {
-						return this.client.handleFailedRequest(Proposed.DocumentDiagnosticRequest.type, token, error, { kind: vscode.DocumentDiagnosticReportKind.full, items: [] });
+						return this.client.handleFailedRequest(Proposed.DocumentDiagnosticRequest.type, token, error, { kind: vsdiag.DocumentDiagnosticReportKind.full, items: [] });
 					});
 				};
 				const middleware: Middleware & DiagnosticProviderMiddleware = this.client.clientOptions.middleware!;
@@ -429,11 +429,11 @@ class DiagnosticRequestor implements Disposable {
 			}
 		};
 		if (this.options.workspaceDiagnostics) {
-			result.provideWorkspaceDiagnostics = (resultIds, token, resultReporter): ProviderResult<vscode.WorkspaceDiagnosticReport> => {
-				const convertReport = (report: WorkspaceDocumentDiagnosticReport): vscode.WorkspaceDocumentDiagnosticReport => {
+			result.provideWorkspaceDiagnostics = (resultIds, token, resultReporter): ProviderResult<vsdiag.WorkspaceDiagnosticReport> => {
+				const convertReport = (report: WorkspaceDocumentDiagnosticReport): vsdiag.WorkspaceDocumentDiagnosticReport => {
 					if (report.kind === Proposed.DocumentDiagnosticReportKind.full) {
 						return {
-							kind: vscode.DocumentDiagnosticReportKind.full,
+							kind: vsdiag.DocumentDiagnosticReportKind.full,
 							uri: this.client.protocol2CodeConverter.asUri(report.uri),
 							resultId: report.resultId,
 							version: report.version,
@@ -441,28 +441,28 @@ class DiagnosticRequestor implements Disposable {
 						};
 					} else {
 						return {
-							kind: vscode.DocumentDiagnosticReportKind.unChanged,
+							kind: vsdiag.DocumentDiagnosticReportKind.unChanged,
 							uri: this.client.protocol2CodeConverter.asUri(report.uri),
 							resultId: report.resultId,
 							version: report.version
 						};
 					}
 				};
-				const convertPreviousResultIds = (resultIds: vscode.PreviousResultId[]): PreviousResultId[] => {
+				const convertPreviousResultIds = (resultIds: vsdiag.PreviousResultId[]): PreviousResultId[] => {
 					const converted: PreviousResultId[] = [];
 					for (const item of resultIds) {
 						converted.push({ uri: this.client.code2ProtocolConverter.asUri(item.uri), value: item.value});
 					}
 					return converted;
 				};
-				const provideDiagnostics: ProvideWorkspaceDiagnosticSignature = (resultIds, token): ProviderResult<vscode.WorkspaceDiagnosticReport> => {
+				const provideDiagnostics: ProvideWorkspaceDiagnosticSignature = (resultIds, token): ProviderResult<vsdiag.WorkspaceDiagnosticReport> => {
 					const partialResultToken: string = generateUuid();
 					const disposable = this.client.onProgress(Proposed.WorkspaceDiagnosticRequest.partialResult, partialResultToken, (partialResult) => {
 						if (partialResult === undefined || partialResult === null) {
 							resultReporter(null);
 							return;
 						}
-						const converted: vscode.WorkspaceDiagnosticReportPartialResult = {
+						const converted: vsdiag.WorkspaceDiagnosticReportPartialResult = {
 							items: []
 						};
 						for (const item of partialResult.items) {
@@ -475,8 +475,8 @@ class DiagnosticRequestor implements Disposable {
 						previousResultIds: convertPreviousResultIds(resultIds),
 						partialResultToken: partialResultToken
 					};
-					return this.client.sendRequest(Proposed.WorkspaceDiagnosticRequest.type, params, token).then((result): vscode.WorkspaceDiagnosticReport => {
-						const converted: vscode.WorkspaceDiagnosticReport = {
+					return this.client.sendRequest(Proposed.WorkspaceDiagnosticRequest.type, params, token).then((result): vsdiag.WorkspaceDiagnosticReport => {
+						const converted: vsdiag.WorkspaceDiagnosticReport = {
 							items: []
 						};
 						for (const item of result.items) {
@@ -518,7 +518,7 @@ class DiagnosticRequestor implements Disposable {
 
 export interface DiagnosticFeatureProvider {
 	onDidChangeDiagnosticsEmitter: EventEmitter<void>;
-	provider: vscode.DiagnosticProvider;
+	diagnostics: vsdiag.DiagnosticProvider;
 }
 
 class BackgroundScheduler implements Disposable {
@@ -681,7 +681,8 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 			}
 		});
 
-		if (options.workspaceDiagnostics === true) {
+		// da348dc5-c30a-4515-9d98-31ff3be38d14 is the test UUID to test the middle ware. So don't auto trigger pulls.
+		if (options.workspaceDiagnostics === true && options.identifier !== 'da348dc5-c30a-4515-9d98-31ff3be38d14') {
 			this.diagnosticRequestor.pullWorkspace();
 		}
 
@@ -692,11 +693,9 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 		return this.diagnosticRequestor.onDidChangeDiagnosticsEmitter;
 	}
 
-	public get provider(): vscode.DiagnosticProvider {
+	public get diagnostics(): vsdiag.DiagnosticProvider {
 		return this.diagnosticRequestor.provider;
 	}
-
-
 }
 
 export class DiagnosticFeature extends TextDocumentFeature<Proposed.DiagnosticOptions, Proposed.DiagnosticRegistrationOptions, DiagnosticFeatureProvider> {

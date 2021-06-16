@@ -53,12 +53,11 @@ export abstract class CommonLanguageClient extends BaseLanguageClient {
 }
 
 // Exporting proposed protocol.
-
-import { DiagnosticFeature } from './proposed.diagnostic';
+import * as pd from './proposed.diagnostic';
 export namespace ProposedFeatures {
 	export function createAll(_client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
 		let result: (StaticFeature | DynamicFeature<any>)[] = [
-			new DiagnosticFeature(_client)
+			new pd.DiagnosticFeature(_client)
 		];
 		return result;
 	}

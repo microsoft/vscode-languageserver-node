@@ -8,7 +8,8 @@ import * as assert from 'assert';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as lsclient from 'vscode-languageclient/node';
-import { DidCreateFilesNotification, DidDeleteFilesNotification, DidRenameFilesNotification, WillCreateFilesRequest, WillDeleteFilesRequest, WillRenameFilesRequest } from 'vscode-languageserver-protocol/lib/common/protocol.fileOperations';
+
+import { vsdiag, DiagnosticProviderMiddleware } from 'vscode-languageclient/lib/common/proposed.diagnostic';
 
 suite('Client integration', () => {
 
@@ -38,10 +39,10 @@ suite('Client integration', () => {
 		assert.strictEqual(actual.toString(), expected.toString());
 	}
 
-	function isArray<T>(value: Array<T> | undefined | null, clazz: any, length: number = 1): asserts value is Array<T> {
+	function isArray<T>(value: Array<T> | undefined | null, clazz: any = undefined, length: number = 1): asserts value is Array<T> {
 		assert.ok(Array.isArray(value), `value is array`);
 		assert.strictEqual(value!.length, length, 'value has given length');
-		if (length > 0) {
+		if (clazz !== undefined && length > 0) {
 			assert.ok(value![0] instanceof clazz);
 		}
 	}
@@ -54,6 +55,10 @@ suite('Client integration', () => {
 
 	function isInstanceOf<T>(value: T, clazz: any): asserts value is Exclude<T, undefined | null> {
 		assert.ok(value instanceof clazz);
+	}
+
+	function isFullDocumentDiagnosticReport(value: vsdiag.DocumentDiagnosticReport): asserts value is vsdiag.FullDocumentDiagnosticReport {
+		assert.ok(value.kind === vsdiag.DocumentDiagnosticReportKind.full);
 	}
 
 	suiteSetup(async () => {
@@ -92,6 +97,7 @@ suite('Client integration', () => {
 		};
 
 		client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		client.registerProposedFeatures();
 		client.start();
 		await client.onReady();
 	});
@@ -164,7 +170,12 @@ suite('Client integration', () => {
 						willDelete: { filters: [ {scheme: 'file', pattern: { glob: '**/deleted-static/**{/,/*.txt}' } }] },
 					},
 				},
-				linkedEditingRangeProvider: true
+				linkedEditingRangeProvider: true,
+				diagnosticProvider: {
+					identifier: 'da348dc5-c30a-4515-9d98-31ff3be38d14',
+					interFileDependencies: true,
+					workspaceDiagnostics: true
+				}
 			},
 			customResults: {
 				'hello': 'world'
@@ -759,7 +770,7 @@ suite('Client integration', () => {
 		].map((p) => vscode.Uri.file(p));
 
 		test('Will Create Files', async () => {
-			const feature = client.getFeature(WillCreateFilesRequest.method);
+			const feature = client.getFeature(lsclient.WillCreateFilesRequest.method);
 			isDefined(feature);
 
 			const sendCreateRequest = () => new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
@@ -804,7 +815,7 @@ suite('Client integration', () => {
 		});
 
 		test('Did Create Files', async () => {
-			const feature = client.getFeature(DidCreateFilesNotification.method);
+			const feature = client.getFeature(lsclient.DidCreateFilesNotification.method);
 			isDefined(feature);
 
 			// Send the event and ensure the server reports the notification was sent.
@@ -843,7 +854,7 @@ suite('Client integration', () => {
 		});
 
 		test('Will Rename Files', async () => {
-			const feature = client.getFeature(WillRenameFilesRequest.method);
+			const feature = client.getFeature(lsclient.WillRenameFilesRequest.method);
 			isDefined(feature);
 
 			const sendRenameRequest = () => new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
@@ -888,7 +899,7 @@ suite('Client integration', () => {
 		});
 
 		test('Did Rename Files', async () => {
-			const feature = client.getFeature(DidRenameFilesNotification.method);
+			const feature = client.getFeature(lsclient.DidRenameFilesNotification.method);
 			isDefined(feature);
 
 			// Send the event and ensure the server reports the notification was sent.
@@ -927,7 +938,7 @@ suite('Client integration', () => {
 		});
 
 		test('Will Delete Files', async () => {
-			const feature = client.getFeature(WillDeleteFilesRequest.method);
+			const feature = client.getFeature(lsclient.WillDeleteFilesRequest.method);
 			isDefined(feature);
 
 			const sendDeleteRequest = () => new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
@@ -972,7 +983,7 @@ suite('Client integration', () => {
 		});
 
 		test('Did Delete Files', async () => {
-			const feature = client.getFeature(DidDeleteFilesNotification.method);
+			const feature = client.getFeature(lsclient.DidDeleteFilesNotification.method);
 			isDefined(feature);
 
 			// Send the event and ensure the server reports the notification was sent.
@@ -1066,6 +1077,46 @@ suite('Client integration', () => {
 		};
 		await provider.provideLinkedEditingRanges(document, position, tokenSource.token);
 		middleware.provideTypeDefinition = undefined;
+		assert.strictEqual(middlewareCalled, true);
+	});
+
+	test('Document diagnostic pull', async () => {
+		const provider = client.getFeature(lsclient.Proposed.DocumentDiagnosticRequest.method).getProvider(document);
+		isDefined(provider);
+		const result: vsdiag.DocumentDiagnosticReport | undefined | null = (await provider.diagnostics.provideDiagnostics(document, undefined, tokenSource.token));
+		isDefined(result);
+		isFullDocumentDiagnosticReport(result);
+		isArray(result.items, undefined, 1);
+		const diag = result.items[0];
+		rangeEqual(diag.range, 1, 1, 1, 1);
+		assert.strictEqual(diag.message, 'diagnostic');
+
+		let middlewareCalled: boolean = false;
+		(middleware as DiagnosticProviderMiddleware).provideDiagnostics = (document, previousResultId, token, next) => {
+			middlewareCalled = true;
+			return next(document, previousResultId, token);
+		};
+		await provider.diagnostics.provideDiagnostics(document, undefined, tokenSource.token);
+		(middleware as DiagnosticProviderMiddleware).provideDiagnostics = undefined;
+		assert.strictEqual(middlewareCalled, true);
+	});
+
+	test('Workspace diagnostic pull', async () => {
+		const provider = client.getFeature(lsclient.Proposed.DocumentDiagnosticRequest.method).getProvider(document);
+		isDefined(provider);
+		isDefined(provider.diagnostics.provideWorkspaceDiagnostics);
+		await provider.diagnostics.provideWorkspaceDiagnostics([], tokenSource.token, (result) => {
+			isDefined(result);
+			isArray(result.items, undefined, 1);
+		});
+
+		let middlewareCalled: boolean = false;
+		(middleware as DiagnosticProviderMiddleware).provideWorkspaceDiagnostics = (resultIds, token, reporter, next) => {
+			middlewareCalled = true;
+			return next(resultIds, token, reporter);
+		};
+		await provider.diagnostics.provideWorkspaceDiagnostics([], tokenSource.token, () => {});
+		(middleware as DiagnosticProviderMiddleware).provideWorkspaceDiagnostics = undefined;
 		assert.strictEqual(middlewareCalled, true);
 	});
 

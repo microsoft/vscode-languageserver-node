@@ -1,6 +1,7 @@
 {
-	"name": "text-extension",
-	"displayName": "text-extension",
+	"name": "test-extension",
+	"displayName": "test-extension",
+	"publisher": "ms-vscode",
 	"private": true,
 	"description": "",
 	"version": "0.0.1",
@@ -13,6 +14,7 @@
 	"activationEvents": [
 		"*"
 	],
+	"enableProposedApi": true,
 	"main": "./extension.js",
 	"contributes": {},
 	"scripts": {
@@ -37,6 +39,6 @@
 		"glob": "^7.1.4",
 		"sinon": "^10.0.0",
 		"uuid": "7.0.3",
-		"vscode-test": "^1.2.0"
+		"vscode-test": "^1.5.2"
 	}
 }

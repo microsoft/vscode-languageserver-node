@@ -52,6 +52,7 @@ async function go() {
 			launchArgs: [
 				'--user-data-dir', userDataDir,
 				'--extensions-dir', extensionDir,
+				'--enable-proposed-api', 'ms-vscode.test-extension',
 				workspaceFolder
 			]
 		});
