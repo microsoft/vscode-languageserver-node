@@ -17,7 +17,6 @@ import { generateUuid } from './utils/uuid';
 import {
 	TextDocumentFeature, BaseLanguageClient, Middleware, LSPCancellationError, DiagnosticPullMode
 } from './client';
-import { PreviousResultId, WorkspaceDocumentDiagnosticReport } from 'vscode-languageserver-protocol/src/common/proposed.diagnostic';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -430,7 +429,7 @@ class DiagnosticRequestor implements Disposable {
 		};
 		if (this.options.workspaceDiagnostics) {
 			result.provideWorkspaceDiagnostics = (resultIds, token, resultReporter): ProviderResult<vsdiag.WorkspaceDiagnosticReport> => {
-				const convertReport = (report: WorkspaceDocumentDiagnosticReport): vsdiag.WorkspaceDocumentDiagnosticReport => {
+				const convertReport = (report: Proposed.WorkspaceDocumentDiagnosticReport): vsdiag.WorkspaceDocumentDiagnosticReport => {
 					if (report.kind === Proposed.DocumentDiagnosticReportKind.full) {
 						return {
 							kind: vsdiag.DocumentDiagnosticReportKind.full,
@@ -448,8 +447,8 @@ class DiagnosticRequestor implements Disposable {
 						};
 					}
 				};
-				const convertPreviousResultIds = (resultIds: vsdiag.PreviousResultId[]): PreviousResultId[] => {
-					const converted: PreviousResultId[] = [];
+				const convertPreviousResultIds = (resultIds: vsdiag.PreviousResultId[]): Proposed.PreviousResultId[] => {
+					const converted: Proposed.PreviousResultId[] = [];
 					for (const item of resultIds) {
 						converted.push({ uri: this.client.code2ProtocolConverter.asUri(item.uri), value: item.value});
 					}
