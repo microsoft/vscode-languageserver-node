@@ -238,8 +238,10 @@ class DiagnosticRequestor implements Disposable {
 	private readonly diagnostics: DiagnosticCollection;
 	private readonly openRequests: Map<string, RequestState>;
 	private readonly documentStates: DocumentPullStateTracker;
+
 	private workspaceErrorCounter: number;
 	private workspaceCancellation: CancellationTokenSource | undefined;
+	private workspaceTimeout: Disposable | undefined;
 
 	public constructor(client: BaseLanguageClient, editorTracker: EditorTracker, options: Proposed.DiagnosticRegistrationOptions) {
 		this.client = client;
@@ -349,13 +351,16 @@ class DiagnosticRequestor implements Disposable {
 
 	public pullWorkspace(): void {
 		this.pullWorkspaceAsync().then(() => {
-			RAL().timer.setTimeout(() => {
+			this.workspaceTimeout = RAL().timer.setTimeout(() => {
 				this.pullWorkspace();
 			}, 2000);
 		}, (error) => {
-			this.client.error(`Workspace diagnostic pull failed.`, error, false);
-			if (++this.workspaceErrorCounter <= 5) {
-				RAL().timer.setTimeout(() => {
+			if (!(error instanceof LSPCancellationError) && !Proposed.DiagnosticServerCancellationData.is(error.data)) {
+				this.client.error(`Workspace diagnostic pull failed.`, error, false);
+				this.workspaceErrorCounter++;
+			}
+			if (this.workspaceErrorCounter <= 5) {
+				this.workspaceTimeout = RAL().timer.setTimeout(() => {
 					this.pullWorkspace();
 				}, 2000);
 			}
@@ -497,8 +502,11 @@ class DiagnosticRequestor implements Disposable {
 	public dispose(): void {
 		this.isDisposed = true;
 
-		// Cancel all request and mark open requests as outdated.
+		// Cancel and clear workspace pull if present.
 		this.workspaceCancellation?.cancel();
+		this.workspaceTimeout?.dispose();
+
+		// Cancel all request and mark open requests as outdated.
 		for (const [key, request] of this.openRequests) {
 			if (request.state === RequestStateKind.active) {
 				request.tokenSource.cancel();
@@ -703,6 +711,10 @@ export class DiagnosticFeature extends TextDocumentFeature<Proposed.DiagnosticOp
 	public fillClientCapabilities(capabilities: ClientCapabilities & Proposed.$DiagnosticClientCapabilities): void {
 		let capability = ensure(ensure(capabilities, 'textDocument')!, 'diagnostic')!;
 		capability.dynamicRegistration = true;
+		// We first need to decide how a UI will look with related documents.
+		// An easy implementation would be to only show related diagnostics for
+		// the active editor.
+		capability.relatedDocumentSupport = false;
 	}
 
 	public initialize(capabilities: ServerCapabilities & Proposed.$DiagnosticServerCapabilities, documentSelector: DocumentSelector): void {
