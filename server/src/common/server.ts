@@ -627,7 +627,7 @@ class BulkUnregistrationImpl implements BulkUnregistration {
 		let params: UnregistrationParams = {
 			unregisterations: unregistrations
 		};
-		this._connection!.sendRequest(UnregistrationRequest.type, params).then(undefined, (_error) => {
+		this._connection!.sendRequest(UnregistrationRequest.type, params).catch(() => {
 			this._connection!.console.info(`Bulk unregistration failed.`);
 		});
 	}
@@ -789,7 +789,7 @@ class RemoteClientImpl implements RemoteClient, Remote {
 		};
 		return this.connection.sendRequest(RegistrationRequest.type, params).then((_result) => {
 			return Disposable.create(() => {
-				this.unregisterSingle(id, method).then(undefined, () => { this.connection.console.info(`Un-registering capability with id ${id} failed.`); });
+				this.unregisterSingle(id, method).catch(() => { this.connection.console.info(`Un-registering capability with id ${id} failed.`); });
 			});
 		}, (_error) => {
 			this.connection.console.info(`Registering request handler for ${method} failed.`);
@@ -802,7 +802,7 @@ class RemoteClientImpl implements RemoteClient, Remote {
 			unregisterations: [{ id, method }]
 		};
 
-		return this.connection.sendRequest(UnregistrationRequest.type, params).then(undefined, (_error) => {
+		return this.connection.sendRequest(UnregistrationRequest.type, params).catch(() => {
 			this.connection.console.info(`Un-registering request handler for ${id} failed.`);
 		});
 	}

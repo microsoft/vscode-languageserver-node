@@ -3188,7 +3188,7 @@ export abstract class BaseLanguageClient {
 			connection.listen();
 			// Error is handled in the initialize call.
 			return this.initialize(connection);
-		}).then(undefined, (error) => {
+		}).catch((error) => {
 			this.state = ClientState.StartFailed;
 			this._onReadyCallbacks.reject(error);
 			this.error('Starting client failed', error);
@@ -3196,7 +3196,7 @@ export abstract class BaseLanguageClient {
 		});
 		return new Disposable(() => {
 			if (this.needsStop()) {
-				this.stop().then(undefined, (error) => {
+				this.stop().catch((error) => {
 					this.error(`Stopping server failed.`, error, false);
 				});
 			}
@@ -3501,7 +3501,7 @@ export abstract class BaseLanguageClient {
 		let action = this._clientOptions.errorHandler!.error(error, message, count);
 		if (action === ErrorAction.Shutdown) {
 			this.error('Connection to server is erroring. Shutting down server.');
-			this.stop().then(undefined, (error) => {
+			this.stop().catch((error) => {
 				this.error(`Stopping server failed`, error, false);
 			});
 		}
