@@ -3346,7 +3346,7 @@ export abstract class BaseLanguageClient {
 		// unhook listeners
 		return this._onStop = this.resolveConnection().then(connection => {
 			return connection.shutdown().then(() => {
-				connection.exit().then(() => {
+				return connection.exit().then(() => {
 					connection.end();
 					connection.dispose();
 					this.state = ClientState.Stopped;
