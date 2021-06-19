@@ -401,18 +401,18 @@ export interface MessageConnection {
 	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): Disposable;
 	onRequest(handler: StarRequestHandler): Disposable;
 
-	sendNotification(type: NotificationType0): void;
-	sendNotification<P>(type: NotificationType<P>, params?: P): void;
-	sendNotification<P1>(type: NotificationType1<P1>, p1: P1): void;
-	sendNotification<P1, P2>(type: NotificationType2<P1, P2>, p1: P1, p2: P2): void;
-	sendNotification<P1, P2, P3>(type: NotificationType3<P1, P2, P3>, p1: P1, p2: P2, p3: P3): void;
-	sendNotification<P1, P2, P3, P4>(type: NotificationType4<P1, P2, P3, P4>, p1: P1, p2: P2, p3: P3, p4: P4): void;
-	sendNotification<P1, P2, P3, P4, P5>(type: NotificationType5<P1, P2, P3, P4, P5>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5): void;
-	sendNotification<P1, P2, P3, P4, P5, P6>(type: NotificationType6<P1, P2, P3, P4, P5, P6>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6): void;
-	sendNotification<P1, P2, P3, P4, P5, P6, P7>(type: NotificationType7<P1, P2, P3, P4, P5, P6, P7>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7): void;
-	sendNotification<P1, P2, P3, P4, P5, P6, P7, P8>(type: NotificationType8<P1, P2, P3, P4, P5, P6, P7, P8>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8): void;
-	sendNotification<P1, P2, P3, P4, P5, P6, P7, P8, P9>(type: NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8, p9: P9): void;
-	sendNotification(method: string, r0?: ParameterStructures | any, ...rest: any[]): void;
+	sendNotification(type: NotificationType0): Promise<void>;
+	sendNotification<P>(type: NotificationType<P>, params?: P): Promise<void>;
+	sendNotification<P1>(type: NotificationType1<P1>, p1: P1): Promise<void>;
+	sendNotification<P1, P2>(type: NotificationType2<P1, P2>, p1: P1, p2: P2): Promise<void>;
+	sendNotification<P1, P2, P3>(type: NotificationType3<P1, P2, P3>, p1: P1, p2: P2, p3: P3): Promise<void>;
+	sendNotification<P1, P2, P3, P4>(type: NotificationType4<P1, P2, P3, P4>, p1: P1, p2: P2, p3: P3, p4: P4): Promise<void>;
+	sendNotification<P1, P2, P3, P4, P5>(type: NotificationType5<P1, P2, P3, P4, P5>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5): Promise<void>;
+	sendNotification<P1, P2, P3, P4, P5, P6>(type: NotificationType6<P1, P2, P3, P4, P5, P6>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6): Promise<void>;
+	sendNotification<P1, P2, P3, P4, P5, P6, P7>(type: NotificationType7<P1, P2, P3, P4, P5, P6, P7>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7): Promise<void>;
+	sendNotification<P1, P2, P3, P4, P5, P6, P7, P8>(type: NotificationType8<P1, P2, P3, P4, P5, P6, P7, P8>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8): Promise<void>;
+	sendNotification<P1, P2, P3, P4, P5, P6, P7, P8, P9>(type: NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8, p9: P9): Promise<void>;
+	sendNotification(method: string, r0?: ParameterStructures | any, ...rest: any[]): Promise<void>;
 
 	onNotification(type: NotificationType0, handler: NotificationHandler0): Disposable;
 	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): Disposable;
@@ -1108,7 +1108,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 	}
 
 	const connection: MessageConnection = {
-		sendNotification: (type: string | MessageSignature, ...args: any[]): void => {
+		sendNotification: (type: string | MessageSignature, ...args: any[]): Promise<void> => {
 			throwIfClosedOrDisposed();
 
 			let method: string;
@@ -1149,7 +1149,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				params: messageParams
 			};
 			traceSendingNotification(notificationMessage);
-			messageWriter.write(notificationMessage).catch(() => logger.error(`Sending notification failed.`));
+			return messageWriter.write(notificationMessage).catch(() => logger.error(`Sending notification failed.`));
 		},
 		onNotification: (type: string | MessageSignature | StarNotificationHandler, handler?: GenericNotificationHandler): Disposable => {
 			throwIfClosedOrDisposed();
