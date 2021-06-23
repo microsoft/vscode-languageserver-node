@@ -97,13 +97,13 @@ interface Connection {
 	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): Disposable;
 	onRequest<R, E>(method: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable;
 
-	sendNotification<RO>(type: ProtocolNotificationType0<RO>): void;
-	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): void;
-	sendNotification(type: NotificationType0): void;
-	sendNotification<P>(type: NotificationType<P>, params?: P): void;
-	sendNotification(method: string): void;
-	sendNotification(method: string, params: any): void;
-	sendNotification(method: string | MessageSignature, params?: any): void;
+	sendNotification<RO>(type: ProtocolNotificationType0<RO>): Promise<void>;
+	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): Promise<void>;
+	sendNotification(type: NotificationType0): Promise<void>;
+	sendNotification<P>(type: NotificationType<P>, params?: P): Promise<void>;
+	sendNotification(method: string): Promise<void>;
+	sendNotification(method: string, params: any): Promise<void>;
+	sendNotification(method: string | MessageSignature, params?: any): Promise<void>;
 
 	onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): Disposable;
 	onNotification<P, RO>(type: ProtocolNotificationType<P, RO>, handler: NotificationHandler<P>): Disposable;
@@ -120,7 +120,7 @@ interface Connection {
 
 	initialize(params: InitializeParams): Promise<InitializeResult>;
 	shutdown(): Promise<void>;
-	exit(): void;
+	exit(): Promise<void>;
 
 	onLogMessage(handle: NotificationHandler<LogMessageParams>): void;
 	onShowMessage(handler: NotificationHandler<ShowMessageParams>): void;
@@ -179,7 +179,7 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 		sendRequest: <R>(type: string | MessageSignature, ...params: any[]): Promise<R> => connection.sendRequest(Is.string(type) ? type : type.method, ...params),
 		onRequest: <R, E>(type: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable => connection.onRequest(Is.string(type) ? type : type.method, handler),
 
-		sendNotification: (type: string | MessageSignature, params?: any): void => connection.sendNotification(Is.string(type) ? type : type.method, params),
+		sendNotification: (type: string | MessageSignature, params?: any): Promise<void> => connection.sendNotification(Is.string(type) ? type : type.method, params),
 		onNotification: (type: string | MessageSignature, handler: GenericNotificationHandler): Disposable => connection.onNotification(Is.string(type) ? type : type.method, handler),
 
 		onProgress: connection.onProgress,
@@ -3346,14 +3346,15 @@ export abstract class BaseLanguageClient {
 		// unhook listeners
 		return this._onStop = this.resolveConnection().then(connection => {
 			return connection.shutdown().then(() => {
-				connection.exit();
-				connection.end();
-				connection.dispose();
-				this.state = ClientState.Stopped;
-				this.cleanUpChannel();
-				this._onStop = undefined;
-				this._connectionPromise = undefined;
-				this._resolvedConnection = undefined;
+				return connection.exit().then(() => {
+					connection.end();
+					connection.dispose();
+					this.state = ClientState.Stopped;
+					this.cleanUpChannel();
+					this._onStop = undefined;
+					this._connectionPromise = undefined;
+					this._resolvedConnection = undefined;
+				});
 			});
 		});
 	}
