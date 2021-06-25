@@ -328,14 +328,14 @@ export namespace CancellationReceiverStrategy {
 }
 
 export interface CancellationSenderStrategy {
-	sendCancellation(conn: MessageConnection, id: CancellationId): void;
+	sendCancellation(conn: MessageConnection, id: CancellationId): Promise<void>;
 	cleanup(id: CancellationId): void;
 	dispose?(): void;
 }
 export namespace CancellationSenderStrategy {
 	export const Message: CancellationSenderStrategy = Object.freeze({
-		sendCancellation(conn: MessageConnection, id: CancellationId): void {
-			conn.sendNotification(CancelNotification.type, { id });
+		sendCancellation(conn: MessageConnection, id: CancellationId): Promise<void> {
+			return conn.sendNotification(CancelNotification.type, { id });
 		},
 		cleanup(_: CancellationId): void { }
 	});
@@ -1186,8 +1186,8 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				}
 			};
 		},
-		sendProgress: <P>(_type: ProgressType<P>, token: string | number, value: P): void => {
-			connection.sendNotification(ProgressNotification.type, { token, value });
+		sendProgress: <P>(_type: ProgressType<P>, token: string | number, value: P): Promise<void> => {
+			return connection.sendNotification(ProgressNotification.type, { token, value });
 		},
 		onUnhandledProgress: unhandledProgressEmitter.event,
 		sendRequest: <R, E>(type: string | MessageSignature, ...args: any[]) => {
@@ -1239,7 +1239,15 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			let disposable: Disposable;
 			if (token) {
 				disposable = token.onCancellationRequested(() => {
-					cancellationStrategy.sender.sendCancellation(connection, id);
+					const p = cancellationStrategy.sender.sendCancellation(connection, id);
+					if (p === undefined) {
+						logger.log(`Received no promise from cancellation strategy when cancelling id ${id}`);
+						return Promise.resolve();
+					} else {
+						return p.catch(() => {
+							logger.log(`Sending cancellation messages for id ${id} failed`);
+						});
+					}
 				});
 			}
 			const result = new Promise<R | ResponseError<E>>((resolve, reject) => {
@@ -1330,7 +1338,9 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				tracer = _tracer;
 			}
 			if (_sendNotification && !isClosed() && !isDisposed()) {
-				connection.sendNotification(SetTraceNotification.type, { value: Trace.toString(_value) });
+				connection.sendNotification(SetTraceNotification.type, { value: Trace.toString(_value) }).catch(() => {
+					logger.error(`Sending trace notification failed`);
+				});
 			}
 		},
 		onError: errorEmitter.event,

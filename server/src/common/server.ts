@@ -24,7 +24,7 @@ import {
 	DocumentSymbolRequest, WorkspaceSymbolRequest, CodeActionRequest, CodeLensRequest, CodeLensResolveRequest, DocumentFormattingRequest, DocumentRangeFormattingRequest,
 	DocumentOnTypeFormattingRequest, RenameRequest, PrepareRenameRequest, DocumentLinkRequest, DocumentLinkResolveRequest, DocumentColorRequest, ColorPresentationRequest,
 	FoldingRangeRequest, SelectionRangeRequest, ExecuteCommandRequest, InitializeRequest, ResponseError, RegistrationType, RequestType0, RequestType,
-	NotificationType0, NotificationType, CodeActionResolveRequest
+	NotificationType0, NotificationType, CodeActionResolveRequest, RAL
 } from 'vscode-languageserver-protocol';
 
 import * as Is from './utils/is';
@@ -417,9 +417,11 @@ class RemoteConsoleImpl implements Logger, RemoteConsole, Remote {
 		this.send(MessageType.Log, message);
 	}
 
-	private send(type: MessageType, message: string) {
+	private send(type: MessageType, message: string): void {
 		if (this._rawConnection) {
-			this._rawConnection.sendNotification(LogMessageNotification.type, { type, message });
+			this._rawConnection.sendNotification(LogMessageNotification.type, { type, message }).catch(() => {
+				RAL().console.error(`Sending log message failed`);
+			});
 		}
 	}
 }
@@ -1623,12 +1625,12 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 		sendRequest: <R>(type: string | MessageSignature, ...params: any[]): Promise<R> => connection.sendRequest(Is.string(type) ? type : type.method, ...params),
 		onRequest: <R, E>(type: string | MessageSignature | StarRequestHandler, handler?: GenericRequestHandler<R, E>): void => (connection as any).onRequest(type, handler),
 
-		sendNotification: (type: string | MessageSignature, param?: any): void => {
+		sendNotification: (type: string | MessageSignature, param?: any): Promise<void> => {
 			const method = Is.string(type) ? type : type.method;
 			if (arguments.length === 1) {
-				connection.sendNotification(method);
+				return connection.sendNotification(method);
 			} else {
-				connection.sendNotification(method, param);
+				return connection.sendNotification(method, param);
 			}
 		},
 		onNotification: (type: string | MessageSignature | StarNotificationHandler, handler?: GenericNotificationHandler): void => (connection as any).onNotification(type, handler),

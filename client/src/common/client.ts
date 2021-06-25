@@ -845,7 +845,9 @@ abstract class DocumentNotifications<P, E> implements DynamicFeature<TextDocumen
 	private callback(data: E): void {
 		const doSend = (data: E): void => {
 			const params = this._createParams(data);
-			this._client.sendNotification(this._type, params);
+			this._client.sendNotification(this._type, params).catch((error) => {
+				this._client.error(`Sending document notification ${this._type.method} failed.`, error);
+			});
 			this.notificationSent(data, this._type, params);
 		};
 		if (!this._selectorFilter || this._selectorFilter(this._selectors.values(), data)) {
@@ -943,7 +945,9 @@ class DidOpenTextDocumentFeature extends DocumentNotifications<DidOpenTextDocume
 			if (Languages.match(documentSelector, textDocument)) {
 				let middleware = this._client.clientOptions.middleware!;
 				let didOpen = (textDocument: TextDocument) => {
-					this._client.sendNotification(this._type, this._createParams(textDocument));
+					this._client.sendNotification(this._type, this._createParams(textDocument)).catch((error) => {
+						this._client.error(`Sending document notification ${this._type.method} failed`, error);
+					});
 				};
 				if (middleware.didOpen) {
 					middleware.didOpen(textDocument, didOpen);
@@ -1005,7 +1009,9 @@ class DidCloseTextDocumentFeature extends DocumentNotifications<DidCloseTextDocu
 			if (Languages.match(selector, textDocument) && !this._selectorFilter!(selectors, textDocument)) {
 				let middleware = this._client.clientOptions.middleware!;
 				let didClose = (textDocument: TextDocument) => {
-					this._client.sendNotification(this._type, this._createParams(textDocument));
+					this._client.sendNotification(this._type, this._createParams(textDocument)).catch((error) => {
+						this._client.error(`Sending document notification ${this._type.method} failed`, error);
+					});
 				};
 				this._syncedDocuments.delete(textDocument.uri.toString());
 				if (middleware.didClose) {
@@ -1086,7 +1092,9 @@ class DidChangeTextDocumentFeature implements DidChangeTextDocumentFeatureShape 
 				if (changeData.syncKind === TextDocumentSyncKind.Incremental) {
 					const didChange = (event: TextDocumentChangeEvent): void => {
 						const params = this._client.code2ProtocolConverter.asChangeTextDocumentParams(event);
-						this._client.sendNotification(DidChangeTextDocumentNotification.type, params);
+						this._client.sendNotification(DidChangeTextDocumentNotification.type, params).catch((error) => {
+							this._client.error(`Sending document notification ${DidChangeTextDocumentNotification.type.method} failed`, error);
+						});
 						this.notificationSent(event, DidChangeTextDocumentNotification.type, params);
 					};
 					if (middleware.didChange) {
@@ -1098,7 +1106,9 @@ class DidChangeTextDocumentFeature implements DidChangeTextDocumentFeatureShape 
 					const didChange = (event: TextDocumentChangeEvent): void => {
 						const doSend = (event: TextDocumentChangeEvent): void => {
 							const params = this._client.code2ProtocolConverter.asChangeTextDocumentParams(event.document);
-							this._client.sendNotification(DidChangeTextDocumentNotification.type, params);
+							this._client.sendNotification(DidChangeTextDocumentNotification.type, params).catch((error) => {
+								this._client.error(`Sending document notification ${DidChangeTextDocumentNotification.type.method} failed`, error);
+							});
 							this.notificationSent(event, DidChangeTextDocumentNotification.type, params);
 						};
 						if (this._changeDelayer) {
@@ -2533,10 +2543,14 @@ class ConfigurationFeature implements DynamicFeature<DidChangeConfigurationRegis
 		}
 		let didChangeConfiguration = (sections: string[] | undefined): void => {
 			if (sections === undefined) {
-				this._client.sendNotification(DidChangeConfigurationNotification.type, { settings: null });
+				this._client.sendNotification(DidChangeConfigurationNotification.type, { settings: null }).catch((error) => {
+					this._client.error(`Sending notification ${DidChangeConfigurationNotification.type.method} failed`, error);
+				});
 				return;
 			}
-			this._client.sendNotification(DidChangeConfigurationNotification.type, { settings: this.extractSettingsInformation(sections) });
+			this._client.sendNotification(DidChangeConfigurationNotification.type, { settings: this.extractSettingsInformation(sections) }).catch((error) => {
+				this._client.error(`Sending notification ${DidChangeConfigurationNotification.type.method} failed`, error);
+			});
 		};
 		let middleware = this.getMiddleware();
 		middleware
@@ -2871,19 +2885,19 @@ export abstract class BaseLanguageClient {
 		}
 	}
 
-	public sendNotification<RO>(type: ProtocolNotificationType0<RO>): void;
-	public sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): void;
-	public sendNotification(type: NotificationType0): void;
-	public sendNotification<P>(type: NotificationType<P>, params?: P): void;
-	public sendNotification(method: string): void;
-	public sendNotification(method: string, params: any): void;
-	public sendNotification<P>(type: string | MessageSignature, params?: P): void {
+	public sendNotification<RO>(type: ProtocolNotificationType0<RO>): Promise<void>;
+	public sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): Promise<void>;
+	public sendNotification(type: NotificationType0): Promise<void>;
+	public sendNotification<P>(type: NotificationType<P>, params?: P): Promise<void>;
+	public sendNotification(method: string): Promise<void>;
+	public sendNotification(method: string, params: any): Promise<void>;
+	public sendNotification<P>(type: string | MessageSignature, params?: P): Promise<void> {
 		if (!this.isConnectionActive()) {
 			throw new Error(`Language client is not ready yet when handling ${Is.string(type) ? type : type.method}`);
 		}
 		this.forceDocumentSync();
 		try {
-			this._resolvedConnection!.sendNotification(type, params);
+			return this._resolvedConnection!.sendNotification(type, params);
 		} catch (error) {
 			this.error(`Sending notification ${Is.string(type) ? type : type.method} failed.`, error);
 			throw error;
@@ -3284,13 +3298,14 @@ export abstract class BaseLanguageClient {
 			connection.onRequest('client/unregisterFeature', params => this.handleUnregistrationRequest(params));
 			connection.onRequest(ApplyWorkspaceEditRequest.type, params => this.handleApplyWorkspaceEdit(params));
 
-			connection.sendNotification(InitializedNotification.type, {});
+			return connection.sendNotification(InitializedNotification.type, {}).then(() => {
+				this.hookFileEvents(connection);
+				this.hookConfigurationChanged(connection);
+				this.initializeFeatures(connection);
+				this._onReadyCallbacks.resolve();
+				return result;
+			});
 
-			this.hookFileEvents(connection);
-			this.hookConfigurationChanged(connection);
-			this.initializeFeatures(connection);
-			this._onReadyCallbacks.resolve();
-			return result;
 		}).then<InitializeResult>(undefined, (error: any) => {
 			if (this._clientOptions.initializationFailedHandler) {
 				if (this._clientOptions.initializationFailedHandler(error)) {

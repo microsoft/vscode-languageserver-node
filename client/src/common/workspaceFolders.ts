@@ -112,7 +112,9 @@ export class WorkspaceFoldersFeature implements DynamicFeature<void> {
 				removed: removedFolders.map(folder => this.asProtocol(folder))
 			}
 		};
-		this._client.sendNotification(DidChangeWorkspaceFoldersNotification.type, params);
+		this._client.sendNotification(DidChangeWorkspaceFoldersNotification.type, params).catch((error) => {
+			this._client.error(`Sending notification ${DidChangeWorkspaceFoldersNotification.type.method} failed`, error);
+		});
 	}
 
 	public register(data: RegistrationData<undefined>): void {

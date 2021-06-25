@@ -212,7 +212,7 @@ abstract class NotificationFileOperationFeature<I, E extends { readonly files: R
 		const filteredEvent = await this.filter(originalEvent, this._accessUri);
 		if (filteredEvent.files.length) {
 			const next = async (event: E): Promise<void> => {
-				this._client.sendNotification(this._notificationType, this._createParams(event));
+				return this._client.sendNotification(this._notificationType, this._createParams(event));
 			};
 			this.doSend(filteredEvent, next);
 		}
