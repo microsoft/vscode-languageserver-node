@@ -70,7 +70,10 @@ export namespace LSPErrorCodes {
 
 import * as diag from './proposed.diagnostic';
 import * as typeh from './proposed.typeHierarchy';
+import * as fs from './proposed.fileSystemProvider';
+
 export namespace Proposed {
+	// ------------------------------ Diagnostics ------------------------------
 	export type DiagnosticClientCapabilities = diag.DiagnosticClientCapabilities;
 	export type $DiagnosticClientCapabilities = diag.$DiagnosticClientCapabilities;
 	export type DiagnosticOptions = diag.DiagnosticOptions;
@@ -112,4 +115,47 @@ export namespace Proposed {
 	export const TypeHierarchySupertypesRequest: typeof typeh.TypeHierarchySupertypesRequest = typeh.TypeHierarchySupertypesRequest;
 	export const TypeHierarchySubtypesRequest: typeof typeh.TypeHierarchySubtypesRequest = typeh.TypeHierarchySubtypesRequest;
 
+	// ------------------------------ FileSystem ------------------------------
+
+	// -> Basic Structures
+	export type FileType = fs.FileType;
+	export type FileSystemErrorType = fs.FileSystemErrorType;
+
+	// -> Client & Server Capabilities
+	export type FileSystemProviderClientCapabilities = fs.FileSystemProviderClientCapabilities;
+	export type $FileSystemProviderClientCapabilities = fs.$FileSystemProviderClientCapabilities;
+	export type FileSystemProviderOptions  = fs.FileSystemProviderOptions;
+	export type FileSystemProviderRegistrationOptions  = fs.FileSystemProviderRegistrationOptions;
+	export type $FileSystemProviderServerCapabilities  = fs.$FileSystemProviderServerCapabilities;
+
+	// -> Requests & Notifications
+	export type DidChangeFileParams = fs.DidChangeFileParams;
+	export type FileChangeEvent = fs.FileChangeEvent;
+	export type FileChangeType = fs.FileChangeType;
+
+	export type WatchParams = fs.WatchParams;
+	export type WatchFileOptions = fs.WatchFileOptions;
+
+	export type StopWatchingParams = fs.StopWatchingParams;
+
+	export type FileStatParams = fs.FileStatParams;
+	export type FileStatResponse = fs.FileStatResponse;
+
+	export type ReadDirectoryParams = fs.ReadDirectoryParams;
+	export type ReadDirectoryResponse = fs.ReadDirectoryResponse;
+	export type DirectoryChild = fs.DirectoryChild;
+
+	export type CreateDirectoryParams = fs.CreateDirectoryParams;
+
+	export type ReadFileParams = fs.ReadFileParams;
+	export type ReadFileResponse = fs.ReadFileResponse;
+
+	export type WriteFileParams = fs.WriteFileParams;
+	export type WriteFileOptions = fs.WriteFileOptions;
+
+	export type DeleteFileParams = fs.DeleteFileParams;
+	export type DeleteFileOptions = fs.DeleteFileOptions;
+
+	export type RenameFileParams = fs.RenameFileParams;
+	export type RenameFileOptions = fs.RenameFileOptions;
 }
