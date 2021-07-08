@@ -32,7 +32,8 @@
 		"./protocol",
 		"./server",
 		"./client",
-		"./client-node-tests"
+		"./client-node-tests",
+		"./testbed"
 	],
 	"typescript.tsc.autoDetect": "off",
 	"spellright.language": [

@@ -14,7 +14,7 @@ export function activate(context: ExtensionContext) {
 	// We need to go one level up since an extension compile the js code into
 	// the output folder.
 	let module = path.join(__dirname, '..', '..', 'server', 'out', 'server.js');
-	let debugOptions = { execArgv: ["--nolazy", "--inspect=6012"] };
+	let debugOptions = { execArgv: ['--nolazy', '--inspect=6012'] };
 	let serverOptions: ServerOptions = {
 		run: { module, transport: TransportKind.ipc },
 		debug: { module, /* runtime: 'node.exe', */ transport: TransportKind.ipc, options: debugOptions}
@@ -46,20 +46,20 @@ export function activate(context: ExtensionContext) {
 				next(document);
 			}
 		}
-	}
+	};
 
 	client = new LanguageClient('testbed', 'Testbed', serverOptions, clientOptions);
 	client.registerProposedFeatures();
 	// let not: NotificationType<string[], void> = new NotificationType<string[], void>('testbed/notification');
 	client.onReady().then(() => {
-		client.sendNotification('testbed/notification', ['dirk', 'baeumer']);
+		void client.sendNotification('testbed/notification', ['dirk', 'baeumer']);
 	});
 	client.onTelemetry((data: any) => {
 		console.log(`Telemetry event received: ${JSON.stringify(data)}`);
 	});
 	client.start();
 	commands.registerCommand('testbed.myCommand.invoked', () => {
-		commands.executeCommand('testbed.myCommand').then(value => {
+		void commands.executeCommand('testbed.myCommand').then(value => {
 			console.log(value);
 		});
 	});
