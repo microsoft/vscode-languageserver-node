@@ -51,8 +51,8 @@ export function activate(context: ExtensionContext) {
 	client = new LanguageClient('testbed', 'Testbed', serverOptions, clientOptions);
 	client.registerProposedFeatures();
 	// let not: NotificationType<string[], void> = new NotificationType<string[], void>('testbed/notification');
-	client.onReady().then(() => {
-		void client.sendNotification('testbed/notification', ['dirk', 'baeumer']);
+	void client.onReady().then(() => {
+		return client.sendNotification('testbed/notification', ['dirk', 'baeumer']);
 	});
 	client.onTelemetry((data: any) => {
 		console.log(`Telemetry event received: ${JSON.stringify(data)}`);
