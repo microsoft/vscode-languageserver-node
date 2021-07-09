@@ -15,5 +15,5 @@ reader.listen((_message) => {
 		id: 1,
 		result: 42
 	};
-	writer.write(response);
+	void writer.write(response);
 });

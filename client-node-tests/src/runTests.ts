@@ -62,4 +62,5 @@ async function go() {
 		process.exitCode = 1;
 	}
 }
-go();
+
+go().catch(console.error);

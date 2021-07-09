@@ -38,7 +38,7 @@
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json && shx cp src/node/terminateProcess.sh lib/node/terminateProcess.sh",
 		"compile:clean": "git clean -xfd . && npm install && npm run clean && npm run compile",
 		"watch": "node ../build/bin/tsc -b ./tsconfig-watch.json -w",
-		"lint": "node ../node_modules/eslint/bin/eslint.js ./src/**/*.ts",
+		"lint": "node ../node_modules/eslint/bin/eslint.js --ext ts src",
 		"test": "cd ../client-node-tests && npm test && cd ../client",
 		"clean": "node ../node_modules/rimraf/bin.js lib",
 		"preversion": "npm test"

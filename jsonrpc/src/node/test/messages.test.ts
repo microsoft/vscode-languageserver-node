@@ -166,7 +166,7 @@ suite('Messages', () => {
 			id: 1,
 			method: 'example'
 		};
-		writer.write(request).then(() => {
+		void writer.write(request).then(() => {
 			writable.end();
 			assertDefined(writable.data);
 
