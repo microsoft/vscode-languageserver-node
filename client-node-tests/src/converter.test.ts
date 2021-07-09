@@ -1248,7 +1248,7 @@ suite('Code Converter', () => {
 	test('CodeActionContext', () => {
 		let item: vscode.CodeActionContext = {
 			diagnostics: [new vscode.Diagnostic(new vscode.Range(1, 2, 8, 9), 'message', vscode.DiagnosticSeverity.Warning)],
-			triggerKind: 1 //vscode.CodeActionTriggerKind.Invoke
+			triggerKind: vscode.CodeActionTriggerKind.Invoke
 		};
 
 		let result = c2p.asCodeActionContext(<any>item);
