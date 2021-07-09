@@ -1995,26 +1995,23 @@ export type InsertTextMode = 1 | 2;
  */
 export interface CompletionItemLabelDetails {
 	/**
-	 * The parameters without the return type.
+	 * An optional string which is rendered less prominently directly after {@link CompletionItemLabel.label label},
+	 * without any spacing. Should be used for function signatures or type annotations.
 	 */
-	parameters?: string;
+	detail?: string;
 
 	/**
-	 * The fully qualified name, like package name or file path.
+	 * An optional string which is rendered less prominently after {@link CompletionItemLabel.detail}. Should be used
+	 * for fully qualified names or file path.
 	 */
-	qualifier?: string;
-
-	/**
-	 * The return-type of a function or type of a property/variable.
-	 */
-	type?: string;
+	description?: string;
 }
 
 export namespace CompletionItemLabelDetails {
 	export function is(value: any): value is CompletionItemLabelDetails {
 		const candidate = value as CompletionItemLabelDetails;
-		return candidate && (Is.string(candidate.parameters) || candidate.parameters === undefined) &&
-			(Is.string(candidate.qualifier) || candidate.qualifier === undefined) && (Is.string(candidate.type) || candidate.type === undefined);
+		return candidate && (Is.string(candidate.detail) || candidate.detail === undefined) &&
+			(Is.string(candidate.description) || candidate.description === undefined);
 	}
 }
 

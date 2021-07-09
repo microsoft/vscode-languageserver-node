@@ -474,11 +474,8 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 
 	function asCompletionItem(item: ls.CompletionItem): ProtocolCompletionItem {
 		const tags: code.CompletionItemTag[] = asCompletionItemTags(item.tags);
-		const result = new ProtocolCompletionItem(item.label);
-		const label2 = asCompletionItemLabel(item);
-		if (label2 !== undefined) {
-			result.label2 = label2;
-		}
+		const label = asCompletionItemLabel(item);
+		const result = new ProtocolCompletionItem(label);
 
 		if (item.detail) { result.detail = item.detail; }
 		if (item.documentation) {
@@ -523,11 +520,15 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return result;
 	}
 
-	function asCompletionItemLabel(item: ls.CompletionItem): code.CompletionItemLabel | undefined {
+	function asCompletionItemLabel(item: ls.CompletionItem): code.CompletionItemLabel | string {
 		if (CompletionItemLabelDetails.is(item.labelDetails)) {
-			return { name: item.label, parameters: item.labelDetails.parameters, qualifier: item.labelDetails.qualifier, type: item.labelDetails.type };
+			return {
+				label: item.label,
+				detail: item.labelDetails.detail,
+				description: item.labelDetails.description
+			};
 		} else {
-			return undefined;
+			return item.label;
 		}
 	}
 

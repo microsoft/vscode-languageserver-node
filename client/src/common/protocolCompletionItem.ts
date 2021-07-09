@@ -15,7 +15,7 @@ export default class ProtocolCompletionItem extends code.CompletionItem {
 	public deprecated: boolean | undefined;
 	public insertTextMode: proto.InsertTextMode | undefined;
 
-	constructor(label: string) {
+	constructor(label: string | code.CompletionItemLabel) {
 		super(label);
 	}
 }

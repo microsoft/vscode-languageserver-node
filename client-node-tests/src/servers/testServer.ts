@@ -3,7 +3,6 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as fs from 'fs';
 import * as assert from 'assert';
 import {
 	createConnection, InitializeParams, ServerCapabilities, CompletionItemKind, ResourceOperationKind, FailureHandlingKind,
@@ -49,7 +48,6 @@ connection.onInitialize((params: InitializeParams): any => {
 	assert.equal(params.capabilities.workspace!.fileOperations!.willCreate, true);
 
 	const diagnosticClientCapabilities = (params.capabilities as $DiagnosticClientCapabilities).textDocument!.diagnostic;
-	fs.writeFileSync('/tmp/testrun/log.txt', JSON.stringify(diagnosticClientCapabilities, undefined, 4));
 	assert.equal(diagnosticClientCapabilities?.dynamicRegistration, true);
 	assert.equal(diagnosticClientCapabilities?.relatedDocumentSupport, false);
 

@@ -638,20 +638,19 @@ suite('Protocol Converter', () => {
 	test('Completion Item - Label Details', () => {
 		const completionItem: proto.CompletionItem = {
 			label: 'name',
-			labelDetails: { parameters: 'parameters', qualifier: 'qualifier', type: 'type' }
+			labelDetails: { detail: 'detail', description: 'description' }
 		};
 		const result = p2c.asCompletionItem(completionItem);
-		strictEqual(result.label, 'name');
-		strictEqual(result.label2?.name, 'name');
-		strictEqual(result.label2?.parameters, 'parameters');
-		strictEqual(result.label2?.qualifier, 'qualifier');
-		strictEqual(result.label2?.type, 'type');
+		ok(typeof result.label !== 'string');
+		const label: vscode.CompletionItemLabel = result.label as vscode.CompletionItemLabel;
+		strictEqual(label.label, 'name');
+		strictEqual(label.detail, 'detail');
+		strictEqual(label.description, 'description');
 
 		const back = c2p.asCompletionItem(result, true);
 		strictEqual(proto.CompletionItemLabelDetails.is(back.labelDetails), true);
-		strictEqual(back.labelDetails?.parameters, 'parameters');
-		strictEqual(back.labelDetails?.qualifier, 'qualifier');
-		strictEqual(back.labelDetails?.type, 'type');
+		strictEqual(back.labelDetails?.detail, 'detail');
+		strictEqual(back.labelDetails?.description, 'description');
 
 		const back2 = c2p.asCompletionItem(result, false);
 		strictEqual(back2.labelDetails, undefined);
@@ -1248,7 +1247,8 @@ suite('Code Converter', () => {
 
 	test('CodeActionContext', () => {
 		let item: vscode.CodeActionContext = {
-			diagnostics: [new vscode.Diagnostic(new vscode.Range(1, 2, 8, 9), 'message', vscode.DiagnosticSeverity.Warning)]
+			diagnostics: [new vscode.Diagnostic(new vscode.Range(1, 2, 8, 9), 'message', vscode.DiagnosticSeverity.Warning)],
+			triggerKind: 1 //vscode.CodeActionTriggerKind.Invoke
 		};
 
 		let result = c2p.asCodeActionContext(<any>item);

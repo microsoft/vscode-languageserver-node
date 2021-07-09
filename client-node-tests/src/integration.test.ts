@@ -346,7 +346,8 @@ suite('Client integration', () => {
 		const provider = client.getFeature(lsclient.CodeActionRequest.method).getProvider(document);
 		isDefined(provider);
 		const result = (await provider.provideCodeActions(document, range, {
-			diagnostics: []
+			diagnostics: [],
+			triggerKind: 1, // vscode.CodeActionTriggerKind.Invoke
 		}, tokenSource.token)) as vscode.CodeAction[];
 
 		isArray(result, vscode.CodeAction);
@@ -364,7 +365,7 @@ suite('Client integration', () => {
 			return n(d, r, c, t);
 		};
 
-		await provider.provideCodeActions(document, range, { diagnostics: [] }, tokenSource.token);
+		await provider.provideCodeActions(document, range, { diagnostics: [], triggerKind: 1 }, tokenSource.token);
 		middleware.provideCodeActions = undefined;
 		assert.ok(middlewareCalled);
 
@@ -398,7 +399,7 @@ suite('Client integration', () => {
 		for (let i = 0; i < 2; i++) {
 			await new Promise<unknown>((resolve) => {
 				currentProgressResolver = resolve;
-				client.sendRequest(
+				void client.sendRequest(
 					new lsclient.ProtocolRequestType<any, null, never, any, any>('testing/sendSampleProgress'),
 					{},
 					tokenSource.token,
@@ -774,7 +775,7 @@ suite('Client integration', () => {
 			isDefined(feature);
 
 			const sendCreateRequest = () => new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
-				feature.send({ files: createFiles, waitUntil: resolve });
+				await feature.send({ files: createFiles, waitUntil: resolve });
 				// If feature.send didn't call waitUntil synchronously then something went wrong.
 				reject(new Error('Feature unexpectedly did not call waitUntil synchronously'));
 			});
@@ -858,7 +859,7 @@ suite('Client integration', () => {
 			isDefined(feature);
 
 			const sendRenameRequest = () => new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
-				feature.send({ files: renameFiles, waitUntil: resolve });
+				await feature.send({ files: renameFiles, waitUntil: resolve });
 				// If feature.send didn't call waitUntil synchronously then something went wrong.
 				reject(new Error('Feature unexpectedly did not call waitUntil synchronously'));
 			});
@@ -942,7 +943,7 @@ suite('Client integration', () => {
 			isDefined(feature);
 
 			const sendDeleteRequest = () => new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
-				feature.send({ files: deleteFiles, waitUntil: resolve });
+				await feature.send({ files: deleteFiles, waitUntil: resolve });
 				// If feature.send didn't call waitUntil synchronously then something went wrong.
 				reject(new Error('Feature unexpectedly did not call waitUntil synchronously'));
 			});

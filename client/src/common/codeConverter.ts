@@ -562,15 +562,15 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asCompletionItem(item: code.CompletionItem, labelDetailsSupport: boolean = false): proto.CompletionItem {
-		let labelDetails: proto.CompletionItemLabelDetails | undefined;
 		let label: string;
-		if (item.label2 !== undefined) {
-			label = item.label2.name;
-			if (labelDetailsSupport) {
-				labelDetails = { parameters: item.label2.parameters, qualifier: item.label2.qualifier, type: item.label2.type };
-			}
-		} else {
+		let labelDetails: proto.CompletionItemLabelDetails | undefined;
+		if (Is.string(item.label)) {
 			label = item.label;
+		} else {
+			label = item.label.label;
+			if (labelDetailsSupport && (item.label.detail !== undefined || item.label.description !== undefined)) {
+				labelDetails = { detail: item.label.detail, description: item.label.description };
+			}
 		}
 		let result: proto.CompletionItem = { label: label };
 		if (labelDetails !== undefined) {
