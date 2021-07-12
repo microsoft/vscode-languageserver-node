@@ -3061,8 +3061,10 @@ export abstract class BaseLanguageClient {
 	}
 
 	private showNotificationMessage() {
-		void Window.showInformationMessage('A request has failed. See the output for more information.', 'Go to output').then(() => {
-			this.outputChannel.show(true);
+		void Window.showInformationMessage('A request has failed. See the output for more information.', 'Go to output').then((selection) => {
+			if (selection !== undefined) {
+				this.outputChannel.show(true);
+			}
 		});
 	}
 
