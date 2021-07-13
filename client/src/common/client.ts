@@ -176,7 +176,7 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 
 		listen: (): void => connection.listen(),
 
-		sendRequest: <R>(type: string | MessageSignature, ...params: any[]): Promise<R> => connection.sendRequest(type, ...params),
+		sendRequest: <R>(type: string | MessageSignature, ...params: any[]): Promise<R> => connection.sendRequest(type as string, ...params),
 		onRequest: <R, E>(type: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable => connection.onRequest(type, handler),
 
 		sendNotification: (type: string | MessageSignature, params?: any): Promise<void> => connection.sendNotification(type, params),

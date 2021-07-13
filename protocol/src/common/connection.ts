@@ -40,40 +40,21 @@ export interface ProtocolConnection {
 	/**
 	 * Sends a request and returns a promise resolving to the result of the request.
 	 *
-	 * @param method the message signature.
+	 * @param method the message signature or the method name.
 	 * @param token An optional cancellation token.
 	 * @returns A promise resolving to the request's result.
 	 */
-	sendRequest<R>(method: MessageSignature, token?: CancellationToken): Promise<R>;
+	sendRequest<R>(method: MessageSignature | string, token?: CancellationToken): Promise<R>;
 
 	/**
 	 * Sends a request and returns a promise resolving to the result of the request.
 	 *
-	 * @param method the request's method name.
-	 * @param token An optional cancellation token.
-	 * @returns A promise resolving to the request's result.
-	 */
-	sendRequest<R>(method: string, token?: CancellationToken): Promise<R>;
-
-	/**
-	 * Sends a request and returns a promise resolving to the result of the request.
-	 *
-	 * @param method the message signature.
+	 * @param method the message signature or the method name.
 	 * @param params The request's parameter.
 	 * @param token An optional cancellation token.
 	 * @returns A promise resolving to the request's result.
 	 */
-	sendRequest<R>(method: MessageSignature, param: any, token?: CancellationToken): Promise<R>;
-
-	/**
-	 * Sends a request and returns a promise resolving to the result of the request.
-	 *
-	 * @param method the request's method name.
-	 * @param params The request's parameter.
-	 * @param token An optional cancellation token.
-	 * @returns A promise resolving to the request's result.
-	 */
-	sendRequest<R>(method: string, param: any, token?: CancellationToken): Promise<R>;
+	sendRequest<R>(method: MessageSignature | string, param: any, token?: CancellationToken): Promise<R>;
 
 	/**
 	 * Installs a request handler.
@@ -96,18 +77,10 @@ export interface ProtocolConnection {
 	/**
 	 * Installs a request handler.
 	 *
-	 * @param methods the message signature to install a handler for.
+	 * @param methods the message signature or the method name to install a handler for.
 	 * @param handler The actual handler.
 	 */
-	onRequest<R, E>(method: MessageSignature, handler: GenericRequestHandler<R, E>): Disposable;
-
-	/**
-	 * Installs a request handler.
-	 *
-	 * @param methods The method name to install the handler for.
-	 * @param handler The actual handler.
-	 */
-	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): Disposable;
+	onRequest<R, E>(method: MessageSignature | string, handler: GenericRequestHandler<R, E>): Disposable;
 
 	/**
 	 * Sends a notification.
@@ -129,32 +102,17 @@ export interface ProtocolConnection {
 	/**
 	 * Sends a notification.
 	 *
-	 * @param method the notification's method signature.
+	 * @param method the notification's method signature or the method name.
 	 */
-	sendNotification(method: MessageSignature): Promise<void>;
+	sendNotification(method: MessageSignature | string): Promise<void>;
 
 	/**
 	 * Sends a notification.
 	 *
-	 * @param method the notification's method name.
-	 */
-	sendNotification(method: string): Promise<void>;
-
-	/**
-	 * Sends a notification.
-	 *
-	 * @param method the notification's method signature.
+	 * @param method the notification's method signature or the method name.
 	 * @param params the notification's parameters.
 	 */
-	sendNotification(method: MessageSignature, params: any): Promise<void>;
-
-	/**
-	 * Sends a notification.
-	 *
-	 * @param method the notification's method name.
-	 * @param params the notification's parameters.
-	 */
-	sendNotification(method: string, params: any): Promise<void>;
+	sendNotification(method: MessageSignature | string, params: any): Promise<void>;
 
 	/**
 	 * Installs a notification handler.
@@ -177,18 +135,10 @@ export interface ProtocolConnection {
 	/**
 	 * Installs a notification handler.
 	 *
-	 * @param methods The message signature to install the handler for.
+	 * @param methods The message signature or the method name to install the handler for.
 	 * @param handler The actual handler.
 	 */
-	onNotification(method: MessageSignature, handler: GenericNotificationHandler): Disposable;
-
-	/**
-	 * Installs a notification handler.
-	 *
-	 * @param methods The method name to install the handler for.
-	 * @param handler The actual handler.
-	 */
-	onNotification(method: string, handler: GenericNotificationHandler): Disposable;
+	onNotification(method: MessageSignature | string, handler: GenericNotificationHandler): Disposable;
 
 	/**
 	 * Installs a progress handler for a given token.
