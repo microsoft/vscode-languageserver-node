@@ -176,11 +176,11 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 
 		listen: (): void => connection.listen(),
 
-		sendRequest: <R>(type: string | MessageSignature, ...params: any[]): Promise<R> => connection.sendRequest(Is.string(type) ? type : type.method, ...params),
-		onRequest: <R, E>(type: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable => connection.onRequest(Is.string(type) ? type : type.method, handler),
+		sendRequest: <R>(type: string | MessageSignature, ...params: any[]): Promise<R> => connection.sendRequest(type, ...params),
+		onRequest: <R, E>(type: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable => connection.onRequest(type, handler),
 
-		sendNotification: (type: string | MessageSignature, params?: any): Promise<void> => connection.sendNotification(Is.string(type) ? type : type.method, params),
-		onNotification: (type: string | MessageSignature, handler: GenericNotificationHandler): Disposable => connection.onNotification(Is.string(type) ? type : type.method, handler),
+		sendNotification: (type: string | MessageSignature, params?: any): Promise<void> => connection.sendNotification(type, params),
+		onNotification: (type: string | MessageSignature, handler: GenericNotificationHandler): Disposable => connection.onNotification(type, handler),
 
 		onProgress: connection.onProgress,
 		sendProgress: connection.sendProgress,
