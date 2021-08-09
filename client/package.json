@@ -29,7 +29,7 @@
 	"dependencies": {
 		"minimatch": "^3.0.4",
 		"semver": "^7.3.4",
-		"vscode-languageserver-protocol": "3.17.0-next.7"
+		"vscode-languageserver-protocol": "3.17.0-next.8"
 	},
 	"scripts": {
 		"install:dev": "cd src/node && npm install",
