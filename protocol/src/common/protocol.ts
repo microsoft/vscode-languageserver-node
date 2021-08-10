@@ -3217,9 +3217,11 @@ export interface ApplyWorkspaceEditParams {
 }
 
 /**
- * A response returned from the apply workspace edit request.
+ * The result returned from the apply workspace edit request.
+ *
+ * @since 3.17 renamed from ApplyWorkspaceEditResponse
  */
-export interface ApplyWorkspaceEditResponse {
+export interface ApplyWorkspaceEditResult {
 	/**
 	 * Indicates whether the edit was applied or not.
 	 */
@@ -3241,10 +3243,15 @@ export interface ApplyWorkspaceEditResponse {
 }
 
 /**
+ * @deprecated Use ApplyWorkspaceEditResult instead.
+ */
+export type ApplyWorkspaceEditResponse = ApplyWorkspaceEditResult;
+
+/**
  * A request sent from the server to the client to modified certain resources.
  */
 export namespace ApplyWorkspaceEditRequest {
-	export const type = new ProtocolRequestType<ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse, never, void, void>('workspace/applyEdit');
+	export const type = new ProtocolRequestType<ApplyWorkspaceEditParams, ApplyWorkspaceEditResult, never, void, void>('workspace/applyEdit');
 }
 
 export {
