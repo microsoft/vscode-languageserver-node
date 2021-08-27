@@ -237,7 +237,7 @@ export interface DocumentDiagnosticReportPartialResult {
 	}
 }
 ```
-* error: code and message set in case an exception happens during the diagnostic request. A server is also allowed to return and error with code `ServerCancelled` indicating that the server can't compute the result right now. A server can return a `DiagnosticServerCancellationData` data to indicate whether the client should re-trigger the request. If no data is provided it defaults to `{ retriggerRequest: true }`:
+* error: code and message set in case an exception happens during the diagnostic request. A server is also allowed to return an error with code `ServerCancelled` indicating that the server can't compute the result right now. A server can return a `DiagnosticServerCancellationData` data to indicate whether the client should re-trigger the request. If no data is provided it defaults to `{ retriggerRequest: true }`:
 
 ```typescript
 /**
