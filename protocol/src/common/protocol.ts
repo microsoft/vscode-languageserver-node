@@ -51,7 +51,7 @@ import {
 } from './protocol.callHierarchy';
 
 import {
-	SemanticTokensPartialResult, SemanticTokensDeltaPartialResult, TokenFormat, SemanticTokensClientCapabilities,SemanticTokensOptions, SemanticTokensRegistrationOptions,
+	SemanticTokensPartialResult, SemanticTokensDeltaPartialResult, TokenFormat, SemanticTokensClientCapabilities, SemanticTokensOptions, SemanticTokensRegistrationOptions,
 	SemanticTokensParams, SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest,
 	SemanticTokensRefreshRequest, SemanticTokensWorkspaceClientCapabilities, SemanticTokensRegistrationType
 } from './protocol.semanticTokens';
@@ -74,6 +74,13 @@ import {
 import {
 	UniquenessLevel, MonikerKind, Moniker, MonikerClientCapabilities, MonikerOptions, MonikerRegistrationOptions, MonikerParams, MonikerRequest
 } from './protocol.moniker';
+
+import {
+	TypeHierarchyClientCapabilities, TypeHierarchyOptions, TypeHierarchyRegistrationOptions,
+	TypeHierarchyPrepareParams, TypeHierarchyPrepareRequest,
+	TypeHierarchySubtypesParams, TypeHierarchySubtypesRequest,
+	TypeHierarchySupertypesParams, TypeHierarchySupertypesRequest
+} from './proposed.typeHierarchy';
 
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
@@ -519,6 +526,13 @@ export interface TextDocumentClientCapabilities {
 	 * @since 3.16.0
 	 */
 	moniker?: MonikerClientCapabilities;
+
+	/**
+	 * Capabilities specific to the various type hierarchy requests.
+	 *
+	 * @since 3.17.0 - proposed state
+	 */
+	typeHierarchy?: TypeHierarchyClientCapabilities;
 }
 
 export interface WindowClientCapabilities {
@@ -605,7 +619,7 @@ export interface GeneralClientCapabilities {
 		 * will retry the request if it receives a
 		 * response with error code `ContentModified``
 		 */
-		 retryOnContentModified: string[];
+		retryOnContentModified: string[];
 	}
 
 	/**
@@ -638,8 +652,8 @@ export interface _ClientCapabilities {
 	textDocument?: TextDocumentClientCapabilities;
 
 	/**
-     * Window specific client capabilities.
-     */
+	 * Window specific client capabilities.
+	 */
 	window?: WindowClientCapabilities;
 
 	/**
@@ -896,6 +910,13 @@ export interface _ServerCapabilities<T = any> {
 	 * @since 3.16.0
 	 */
 	monikerProvider?: boolean | MonikerOptions | MonikerRegistrationOptions;
+
+	/**
+	 * The server provides type hierarchy support.
+	 *
+	 * @since 3.17.0 - proposed state
+	 */
+	typeHierarchyProvider?: boolean | TypeHierarchyOptions | TypeHierarchyRegistrationOptions;
 
 	/**
 	 * Experimental server capabilities.
@@ -2524,12 +2545,12 @@ export interface CodeActionClientCapabilities {
 	 *
 	 * @since 3.16.0
 	 */
-	 resolveSupport?: {
-		 /**
-		  * The properties that a client can resolve lazily.
-		  */
-		 properties: string[];
-	 };
+	resolveSupport?: {
+		/**
+		 * The properties that a client can resolve lazily.
+		 */
+		properties: string[];
+	};
 
 	/**
 	 * Whether th client honors the change annotations in
@@ -2995,7 +3016,7 @@ export namespace PrepareSupportDefaultBehavior {
 	 * The client's default behavior is to select the identifier
 	 * according the to language's syntax rule.
 	 */
-	 export const Identifier: 1 = 1;
+	export const Identifier: 1 = 1;
 }
 
 export type PrepareSupportDefaultBehavior = 1;
@@ -3283,8 +3304,12 @@ export {
 	DidRenameFilesNotification, RenameFilesParams, FileRename, WillRenameFilesRequest,
 	DidDeleteFilesNotification, DeleteFilesParams, FileDelete, WillDeleteFilesRequest,
 	// Monikers
-	UniquenessLevel, MonikerKind, Moniker, MonikerClientCapabilities, MonikerOptions, MonikerRegistrationOptions, MonikerParams, MonikerRequest
-
+	UniquenessLevel, MonikerKind, Moniker, MonikerClientCapabilities, MonikerOptions, MonikerRegistrationOptions, MonikerParams, MonikerRequest,
+	// Type Hierarchy
+	TypeHierarchyClientCapabilities, TypeHierarchyOptions, TypeHierarchyRegistrationOptions,
+	TypeHierarchyPrepareParams, TypeHierarchyPrepareRequest,
+	TypeHierarchySubtypesParams, TypeHierarchySubtypesRequest,
+	TypeHierarchySupertypesParams, TypeHierarchySupertypesRequest
 };
 
 // To be backwards compatible

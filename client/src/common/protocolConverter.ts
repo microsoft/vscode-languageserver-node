@@ -15,6 +15,7 @@ import ProtocolCodeAction from './protocolCodeAction';
 import { ProtocolDiagnostic, DiagnosticCode } from './protocolDiagnostic';
 import ProtocolCallHierarchyItem from './protocolCallHierarchyItem';
 import { AnnotatedTextEdit, ChangeAnnotation, CompletionItemLabelDetails, InsertTextMode } from 'vscode-languageserver-protocol';
+import ProtocolTypeHierarchyItem from './protocolTypeHierarchyItem';
 
 interface InsertReplaceRange {
 	inserting: code.Range;
@@ -225,6 +226,14 @@ export interface Converter {
 	asLinkedEditingRanges(value: null | undefined): undefined;
 	asLinkedEditingRanges(value: ls.LinkedEditingRanges): code.LinkedEditingRanges;
 	asLinkedEditingRanges(value: ls.LinkedEditingRanges | null | undefined): code.LinkedEditingRanges | undefined;
+
+	asTypeHierarchyItem(item: null): undefined;
+	asTypeHierarchyItem(item: ls.TypeHierarchyItem): code.TypeHierarchyItem;
+	asTypeHierarchyItem(item: ls.TypeHierarchyItem | null): code.TypeHierarchyItem | undefined;
+
+	asTypeHierarchyItems(items: null): undefined;
+	asTypeHierarchyItems(items: ls.TypeHierarchyItem[]): code.TypeHierarchyItem[];
+	asTypeHierarchyItems(items: ls.TypeHierarchyItem[] | null): code.TypeHierarchyItem[] | undefined;
 }
 
 export interface URIConverter {
@@ -1201,6 +1210,37 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return new RegExp(value);
 	}
 
+	//------ Type Hierarchy
+	function asTypeHierarchyItem(item: null): undefined;
+	function asTypeHierarchyItem(item: ls.TypeHierarchyItem): code.TypeHierarchyItem;
+	function asTypeHierarchyItem(item: ls.TypeHierarchyItem | null): code.TypeHierarchyItem | undefined;
+	function asTypeHierarchyItem(item: ls.TypeHierarchyItem | null): code.TypeHierarchyItem | undefined {
+		if (item === null) {
+			return undefined;
+		}
+		let result = new ProtocolTypeHierarchyItem(
+			asSymbolKind(item.kind),
+			item.name,
+			item.detail || '',
+			asUri(item.uri),
+			asRange(item.range),
+			asRange(item.selectionRange),
+			item.data
+		);
+		if (item.tags !== undefined) { result.tags = asSymbolTags(item.tags); }
+		return result;
+	}
+
+	function asTypeHierarchyItems(items: null): undefined;
+	function asTypeHierarchyItems(items: ls.TypeHierarchyItem[]): code.TypeHierarchyItem[];
+	function asTypeHierarchyItems(items: ls.TypeHierarchyItem[] | null): code.TypeHierarchyItem[] | undefined;
+	function asTypeHierarchyItems(items: ls.TypeHierarchyItem[] | null): code.TypeHierarchyItem[] | undefined {
+		if (items === null) {
+			return undefined;
+		}
+		return items.map(item => asTypeHierarchyItem(item));
+	}
+
 	return {
 		asUri,
 		asDiagnostics,
@@ -1264,6 +1304,8 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		asCallHierarchyIncomingCalls,
 		asCallHierarchyOutgoingCall,
 		asCallHierarchyOutgoingCalls,
-		asLinkedEditingRanges: asLinkedEditingRanges
+		asLinkedEditingRanges: asLinkedEditingRanges,
+		asTypeHierarchyItem,
+		asTypeHierarchyItems
 	};
 }

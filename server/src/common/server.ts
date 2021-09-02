@@ -38,6 +38,7 @@ import { ShowDocumentFeatureShape, ShowDocumentFeature } from './showDocument';
 import { FileOperationsFeature, FileOperationsFeatureShape } from './fileOperations';
 import { LinkedEditingRangeFeature, LinkedEditingRangeFeatureShape } from './linkedEditingRange';
 import { MonikerFeature, MonikerFeatureShape } from './moniker';
+import { TypeHierarchyFeature, TypeHierarchyFeatureShape } from './proposed.typeHierarchy';
 
 function null2Undefined<T>(value: T | null): T | undefined {
 	if (value === null) {
@@ -1018,8 +1019,8 @@ export class _LanguagesImpl implements Remote, _Languages {
 	}
 }
 
-export type Languages = _Languages & CallHierarchy & SemanticTokensFeatureShape & LinkedEditingRangeFeatureShape & MonikerFeatureShape;
-const LanguagesImpl: new () => Languages = MonikerFeature(LinkedEditingRangeFeature(SemanticTokensFeature(CallHierarchyFeature(_LanguagesImpl)))) as (new () => Languages);
+export type Languages = _Languages & CallHierarchy & SemanticTokensFeatureShape & LinkedEditingRangeFeatureShape & MonikerFeatureShape & TypeHierarchyFeatureShape;
+const LanguagesImpl: new () => Languages = TypeHierarchyFeature(MonikerFeature(LinkedEditingRangeFeature(SemanticTokensFeature(CallHierarchyFeature(_LanguagesImpl))))) as (new () => Languages);
 
 /**
  * An empty interface for new proposed API.
