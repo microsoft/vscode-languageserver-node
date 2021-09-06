@@ -2359,7 +2359,7 @@ class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameR
 					return client.sendRequest(RenameRequest.type, params, token).then(
 						client.protocol2CodeConverter.asWorkspaceEdit,
 						(error: ResponseError<void>) => {
-							return client.handleFailedRequest(RenameRequest.type, token, error, null);
+							return client.handleFailedRequest(RenameRequest.type, token, error, null, false);
 						}
 					);
 				};
@@ -3779,7 +3779,7 @@ export abstract class BaseLanguageClient {
 		SemanticTokensRangeRequest.method,
 		SemanticTokensDeltaRequest.method
 	]);
-	public handleFailedRequest<T>(type: MessageSignature, token: CancellationToken | undefined, error: any, defaultValue: T): T {
+	public handleFailedRequest<T>(type: MessageSignature, token: CancellationToken | undefined, error: any, defaultValue: T, showNotification: boolean = true): T {
 		// If we get a request cancel or a content modified don't log anything.
 		if (error instanceof ResponseError) {
 			if (error.code === LSPErrorCodes.RequestCancelled || error.code === LSPErrorCodes.ServerCancelled) {
@@ -3800,7 +3800,7 @@ export abstract class BaseLanguageClient {
 				}
 			}
 		}
-		this.error(`Request ${type.method} failed.`, error);
+		this.error(`Request ${type.method} failed.`, error, showNotification);
 		throw error;
 	}
 }
