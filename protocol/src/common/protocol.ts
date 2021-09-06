@@ -41,6 +41,10 @@ import {
 } from './protocol.selectionRange';
 
 import {
+	InlineValuesClientCapabilities, InlineValuesOptions, InlineValuesRequest, InlineValuesParams, InlineValuesRegistrationOptions
+} from './protocol.inlineValue';
+
+import {
 	WorkDoneProgressClientCapabilities, WorkDoneProgressBegin, WorkDoneProgressReport, WorkDoneProgressEnd, WorkDoneProgress, WorkDoneProgressCreateParams,
 	WorkDoneProgressCreateRequest, WorkDoneProgressCancelParams, WorkDoneProgressCancelNotification
 } from './protocol.progress';
@@ -488,6 +492,13 @@ export interface TextDocumentClientCapabilities {
 	selectionRange?: SelectionRangeClientCapabilities;
 
 	/**
+	 * Capabilities specific to the `textDocument/inlineValues` request.
+	 *
+	 * @since 3.17.0
+	 */
+	inlineValues?: InlineValuesClientCapabilities;
+
+	/**
 	 * Capabilities specific to `textDocument/publishDiagnostics` notification.
 	 */
 	publishDiagnostics?: PublishDiagnosticsClientCapabilities;
@@ -851,6 +862,11 @@ export interface _ServerCapabilities<T = any> {
 	 * The server provides selection range support.
 	 */
 	selectionRangeProvider?: boolean | SelectionRangeOptions | SelectionRangeRegistrationOptions;
+
+	/**
+	 * The server provides inline values.
+	 */
+	inlineValuesProvider?: InlineValuesOptions;
 
 	/**
 	 * The server provides execute command support.
@@ -3263,6 +3279,7 @@ export {
 	FoldingRangeClientCapabilities, FoldingRangeOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeRegistrationOptions,
 	DeclarationClientCapabilities, DeclarationRequest, DeclarationParams, DeclarationRegistrationOptions, DeclarationOptions,
 	SelectionRangeClientCapabilities, SelectionRangeOptions, SelectionRangeParams, SelectionRangeRequest, SelectionRangeRegistrationOptions,
+	InlineValuesClientCapabilities, InlineValuesOptions, InlineValuesParams, InlineValuesRequest, InlineValuesRegistrationOptions,
 	WorkDoneProgressBegin, WorkDoneProgressReport, WorkDoneProgressEnd, WorkDoneProgress, WorkDoneProgressCreateParams,
 	WorkDoneProgressCreateRequest, WorkDoneProgressCancelParams, WorkDoneProgressCancelNotification,
 	// Call Hierarchy

@@ -38,7 +38,10 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 
 Library specific changes are:
 
-- all `sendNotification` methods now return a promise. Returning a promise was necessary since the actual writing of the message to the underlying transport is async and a client for example could not determine if a notification was handed of to the transport. This is a breaking change in the sense that it might result in floating promise and might be flagged by a linter.
+- all `sendNotification` methods now return a promise. Returning a promise was necessary since the actual writing of the message to the underlying transport is async and a client for example could not determine if a notification was handed off to the transport. This is a breaking change in the sense that it might result in floating promise and might be flagged by a linter.
+- `InlineValuesRequest` protocol added:
+  - New APIs in Types: `InlineValues`
+  - New APIs in Protocol: `InlineValuesRequest`, `InlineValuesParams`, `InlineValuesClientCapabilities`, `InlineValuesProviderOptions`,
 
 ## 3.16.0 Protocol, 6.0.0 JSON-RPC, 7.0.0 Client and 7.0.0 Server.
 

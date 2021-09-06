@@ -24,7 +24,7 @@ import {
 	DocumentSymbolRequest, WorkspaceSymbolRequest, CodeActionRequest, CodeLensRequest, CodeLensResolveRequest, DocumentFormattingRequest, DocumentRangeFormattingRequest,
 	DocumentOnTypeFormattingRequest, RenameRequest, PrepareRenameRequest, DocumentLinkRequest, DocumentLinkResolveRequest, DocumentColorRequest, ColorPresentationRequest,
 	FoldingRangeRequest, SelectionRangeRequest, ExecuteCommandRequest, InitializeRequest, ResponseError, RegistrationType, RequestType0, RequestType,
-	NotificationType0, NotificationType, CodeActionResolveRequest, RAL
+	NotificationType0, NotificationType, CodeActionResolveRequest, RAL, InlineValuesParams, InlineValue, InlineValuesRequest
 } from 'vscode-languageserver-protocol';
 
 import * as Is from './utils/is';
@@ -1478,6 +1478,13 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	onSelectionRanges(handler: ServerRequestHandler<SelectionRangeParams, SelectionRange[] | undefined | null, SelectionRange[], void>): void;
 
 	/**
+	 * Installs a handler for the inline values request.
+	 *
+	 * @param handler The corresponding handler.
+	 */
+	onInlineValues(handler: ServerRequestHandler<InlineValuesParams, InlineValue[] | undefined | null, InlineValue[], void>): void;
+
+	/**
 	 * Installs a handler for the execute command request.
 	 *
 	 * @param handler The corresponding handler.
@@ -1742,6 +1749,9 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 		}),
 		onSelectionRanges: (handler) => connection.onRequest(SelectionRangeRequest.type, (params, cancel) => {
 			return handler(params, cancel, attachWorkDone(connection, params), attachPartialResult(connection, params));
+		}),
+		onInlineValues: (handler) => connection.onRequest(InlineValuesRequest.type, (params, cancel) => {
+			return handler(params, cancel, attachWorkDone(connection, params));
 		}),
 		onExecuteCommand: (handler) => connection.onRequest(ExecuteCommandRequest.type, (params, cancel) => {
 			return handler(params, cancel, attachWorkDone(connection, params), undefined);

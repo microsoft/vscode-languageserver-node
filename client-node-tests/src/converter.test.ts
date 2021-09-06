@@ -999,6 +999,26 @@ suite('Protocol Converter', () => {
 		strictEqual('file://localhost/folder/file.vscode', result.toString());
 	});
 
+	test('InlineValues', () => {
+		const items: vscode.InlineValue[] = [
+			new vscode.InlineValueText(new vscode.Range(1, 2, 8, 9), 'literalString'),
+			new vscode.InlineValueVariableLookup(new vscode.Range(1, 2, 8, 9), 'varName', false),
+			new vscode.InlineValueVariableLookup(new vscode.Range(1, 2, 8, 9), undefined, true),
+			new vscode.InlineValueEvaluatableExpression(new vscode.Range(1, 2, 8, 9), 'expression'),
+			new vscode.InlineValueEvaluatableExpression(new vscode.Range(1, 2, 8, 9), undefined),
+		];
+
+		let result = p2c.asInlineValues(<any>items);
+
+		ok(result.every(proto.Range.is));
+
+		ok(proto.InlineValueText.is(result[0]) && result[0].text === 'literalString');
+		ok(proto.InlineValueVariableLookup.is(result[1]) && result[1].variableName === 'varName' && result[1].caseSensitiveLookup === false);
+		ok(proto.InlineValueVariableLookup.is(result[2]) && result[2].variableName === undefined && result[2].caseSensitiveLookup === true);
+		ok(proto.InlineValueEvaluatableExpression.is(result[3]) && result[3].expression === 'expression');
+		ok(proto.InlineValueEvaluatableExpression.is(result[4]) && result[4].expression === undefined);
+	});
+
 	test('Bug #361', () => {
 		const item: proto.CompletionItem = {
 			'label': 'MyLabel',
@@ -1262,5 +1282,18 @@ suite('Code Converter', () => {
 
 		let result = converter.asUri(vscode.Uri.parse('file://localhost/folder/file'));
 		strictEqual('file://localhost/folder/file.vscode', result);
+	});
+
+	test('InlineValuesContext', () => {
+		const item: proto.InlineValuesContext = {
+			stoppedLocation: new vscode.Range(1, 2, 8, 9),
+		};
+
+		let result = c2p.asInlineValuesContext(<any>item);
+
+		strictEqual(result.stoppedLocation.start.line, 1);
+		strictEqual(result.stoppedLocation.start.character, 2);
+		strictEqual(result.stoppedLocation.end.line, 8);
+		strictEqual(result.stoppedLocation.end.character, 9);
 	});
 });
