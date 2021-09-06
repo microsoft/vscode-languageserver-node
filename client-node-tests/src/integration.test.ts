@@ -138,7 +138,7 @@ suite('Client integration', () => {
 				foldingRangeProvider: true,
 				implementationProvider: true,
 				selectionRangeProvider: true,
-				inlineValuesProvider: true,
+				inlineValuesProvider: {},
 				typeDefinitionProvider: true,
 				callHierarchyProvider: true,
 				semanticTokensProvider: {
@@ -653,7 +653,10 @@ suite('Client integration', () => {
 		const results = (await provider.provideInlineValues(document, range, { frameId: 1, stoppedLocation: range }, tokenSource.token));
 
 		isArray(results, undefined, 3);
-		assert.ok(results.every((r) => rangeEqual(r.range, 1, 2, 3, 4)));
+
+		for (const r of results) {
+			rangeEqual(r.range, 1, 2, 3, 4);
+		}
 
 		assert.ok(results[0] instanceof vscode.InlineValueText);
 		assert.strictEqual((results[0] as vscode.InlineValueText).text, 'text');
