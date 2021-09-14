@@ -15,7 +15,7 @@
 	"devDependencies": {
 		"@types/assert": "^1.5.2",
 		"@types/mocha": "^8.0.4",
-		"@types/node": "",
+		"@types/node": "12.12.12",
 		"@typescript-eslint/eslint-plugin": "^4.28.2",
 		"@typescript-eslint/parser": "^4.28.2",
 		"assert": "^2.0.0",
@@ -26,9 +26,9 @@
 		"rimraf": "^3.0.2",
 		"shelljs": "^0.8.4",
 		"shx": "^0.3.3",
-		"typescript": "^4.4.3",
-		"webpack": "^5.52.1",
-		"webpack-cli": "^4.8.0"
+		"typescript": "^4.3.2",
+		"webpack": "^5.38.1",
+		"webpack-cli": "^4.7.0"
 	},
 	"scripts": {
 		"postinstall": "node ./build/bin/all.js install && cd testbed && npm install && cd .. && npm run symlink:testbed",
