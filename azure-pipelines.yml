@@ -6,9 +6,9 @@ trigger:
   tags:
     include:
     - 'release/*/*'
-  pr:
-    include:
-    - main
+pr:
+  include:
+  - main
 
 jobs:
 - job: Windows
