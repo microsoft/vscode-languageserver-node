@@ -3,6 +3,12 @@ trigger:
   branches:
     include:
     - '*'
+  tags:
+    include:
+    - 'release/*/*'
+  pr:
+    include:
+    - main
 
 jobs:
 - job: Windows
