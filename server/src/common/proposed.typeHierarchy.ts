@@ -4,11 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import {
-	TypeHierarchyItem, TypeHierarchyPrepareParams, TypeHierarchyPrepareRequest,
-	TypeHierarchySubtypesParams, TypeHierarchySubtypesRequest, TypeHierarchySupertypesParams,
-	TypeHierarchySupertypesRequest
-} from 'vscode-languageserver-protocol';
+import { Proposed, TypeHierarchyItem } from 'vscode-languageserver-protocol';
 
 import type { Feature, _Languages, ServerRequestHandler } from './server';
 
@@ -19,9 +15,9 @@ import type { Feature, _Languages, ServerRequestHandler } from './server';
  */
 export interface TypeHierarchyFeatureShape {
 	typeHierarchy: {
-		onPrepare(handler: ServerRequestHandler<TypeHierarchyPrepareParams, TypeHierarchyItem[] | null, never, void>): void;
-		onSupertypes(handler: ServerRequestHandler<TypeHierarchySupertypesParams, TypeHierarchyItem[] | null, TypeHierarchyItem[], void>): void;
-		onSubtypes(handler: ServerRequestHandler<TypeHierarchySubtypesParams, TypeHierarchyItem[] | null, TypeHierarchyItem[], void>): void;
+		onPrepare(handler: ServerRequestHandler<Proposed.TypeHierarchyPrepareParams, TypeHierarchyItem[] | null, never, void>): void;
+		onSupertypes(handler: ServerRequestHandler<Proposed.TypeHierarchySupertypesParams, TypeHierarchyItem[] | null, TypeHierarchyItem[], void>): void;
+		onSubtypes(handler: ServerRequestHandler<Proposed.TypeHierarchySubtypesParams, TypeHierarchyItem[] | null, TypeHierarchyItem[], void>): void;
 	}
 }
 
@@ -29,19 +25,19 @@ export const TypeHierarchyFeature: Feature<_Languages, TypeHierarchyFeatureShape
 	return class extends Base {
 		public get typeHierarchy() {
 			return {
-				onPrepare: (handler: ServerRequestHandler<TypeHierarchyPrepareParams, TypeHierarchyItem[] | null, never, void>): void => {
-					this.connection.onRequest(TypeHierarchyPrepareRequest.type, (params, cancel) => {
+				onPrepare: (handler: ServerRequestHandler<Proposed.TypeHierarchyPrepareParams, TypeHierarchyItem[] | null, never, void>): void => {
+					this.connection.onRequest(Proposed.TypeHierarchyPrepareRequest.type, (params, cancel) => {
 						return handler(params, cancel, this.attachWorkDoneProgress(params), undefined);
 					});
 				},
-				onSupertypes: (handler: ServerRequestHandler<TypeHierarchySupertypesParams, TypeHierarchyItem[] | null, TypeHierarchyItem[], void>): void => {
-					const type = TypeHierarchySupertypesRequest.type;
+				onSupertypes: (handler: ServerRequestHandler<Proposed.TypeHierarchySupertypesParams, TypeHierarchyItem[] | null, TypeHierarchyItem[], void>): void => {
+					const type = Proposed.TypeHierarchySupertypesRequest.type;
 					this.connection.onRequest(type, (params, cancel) => {
 						return handler(params, cancel, this.attachWorkDoneProgress(params), this.attachPartialResultProgress(type, params));
 					});
 				},
-				onSubtypes: (handler: ServerRequestHandler<TypeHierarchySubtypesParams, TypeHierarchyItem[] | null, TypeHierarchyItem[], void>): void => {
-					const type = TypeHierarchySubtypesRequest.type;
+				onSubtypes: (handler: ServerRequestHandler<Proposed.TypeHierarchySubtypesParams, TypeHierarchyItem[] | null, TypeHierarchyItem[], void>): void => {
+					const type = Proposed.TypeHierarchySubtypesRequest.type;
 					this.connection.onRequest(type, (params, cancel) => {
 						return handler(params, cancel, this.attachWorkDoneProgress(params), this.attachPartialResultProgress(type, params));
 					});

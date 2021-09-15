@@ -77,9 +77,6 @@ import {
 
 import {
 	TypeHierarchyClientCapabilities, TypeHierarchyOptions, TypeHierarchyRegistrationOptions,
-	TypeHierarchyPrepareParams, TypeHierarchyPrepareRequest,
-	TypeHierarchySubtypesParams, TypeHierarchySubtypesRequest,
-	TypeHierarchySupertypesParams, TypeHierarchySupertypesRequest
 } from './proposed.typeHierarchy';
 
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
@@ -3305,11 +3302,6 @@ export {
 	DidDeleteFilesNotification, DeleteFilesParams, FileDelete, WillDeleteFilesRequest,
 	// Monikers
 	UniquenessLevel, MonikerKind, Moniker, MonikerClientCapabilities, MonikerOptions, MonikerRegistrationOptions, MonikerParams, MonikerRequest,
-	// Type Hierarchy
-	TypeHierarchyClientCapabilities, TypeHierarchyOptions, TypeHierarchyRegistrationOptions,
-	TypeHierarchyPrepareParams, TypeHierarchyPrepareRequest,
-	TypeHierarchySubtypesParams, TypeHierarchySubtypesRequest,
-	TypeHierarchySupertypesParams, TypeHierarchySupertypesRequest
 };
 
 // To be backwards compatible
