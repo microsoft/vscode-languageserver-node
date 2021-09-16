@@ -131,14 +131,32 @@ class EditorTracker  {
 
 	constructor() {
 		this.open = new Set();
-		const openEditorsHandler = () => {
+		const openTabsHandler = () => {
 			this.open.clear();
-			for (const info of Window.openEditors) {
-				this.open.add(info.resource.toString());
+			// New API
+			if (Window.tabs !== undefined) {
+				for (const tab of Window.tabs) {
+					if (tab.resource !== undefined) {
+						this.open.add(tab.resource.toString());
+					}
+				}
+			// Old pre 1.61 API
+			} else if (Window.openEditors !== undefined) {
+				for (const info of Window.openEditors) {
+					if (info.resource !== undefined) {
+						this.open.add(info.resource.toString());
+					}
+				}
 			}
 		};
-		openEditorsHandler();
-		this.disposable = Window.onDidChangeOpenEditors(openEditorsHandler);
+		openTabsHandler();
+		if (Window.onDidChangeTabs !== undefined) {
+			this.disposable = Window.onDidChangeTabs(openTabsHandler);
+		} else if (Window.onDidChangeOpenEditors !== undefined) {
+			this.disposable = Window.onDidChangeOpenEditors(openTabsHandler);
+		} else {
+			this.disposable = { dispose: () => {} };
+		}
 	}
 
 	public dispose(): void {

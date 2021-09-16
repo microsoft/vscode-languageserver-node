@@ -5,7 +5,7 @@
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"engines": {
-		"vscode": "^1.58.0"
+		"vscode": "^1.61.0"
 	},
 	"repository": {
 		"type": "git",
@@ -21,14 +21,14 @@
 	},
 	"typings": "./lib/common/api.d.ts",
 	"devDependencies": {
-		"@types/minimatch": "^3.0.3",
-		"@types/semver": "^7.3.4",
-		"@types/vscode": "1.58.0",
-		"shx": "^0.3.2"
+		"@types/minimatch": "^3.0.5",
+		"@types/semver": "^7.3.8",
+		"@types/vscode": "1.60.0",
+		"shx": "^0.3.3"
 	},
 	"dependencies": {
 		"minimatch": "^3.0.4",
-		"semver": "^7.3.4",
+		"semver": "^7.3.5",
 		"vscode-languageserver-protocol": "3.17.0-next.8"
 	},
 	"scripts": {
