@@ -160,7 +160,7 @@ export class LanguageClient extends CommonLanguageClient {
 		this._isInDebugMode = forceDebug;
 		try {
 			this.checkVersion();
-		} catch (error) {
+		} catch (error: any) {
 			if (Is.string(error.message)) {
 				this.outputChannel.appendLine(error.message);
 			}
