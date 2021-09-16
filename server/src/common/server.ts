@@ -80,7 +80,14 @@ export interface TextDocumentWillSaveEvent<T> {
 }
 
 /**
- * A manager for simple text documents
+ * A manager for simple text documents. The manager requires at a minimum that
+ * the server registered for the following text document sync events in the
+ * initialize handler or via dynamic registration:
+ *
+ * - open and close events.
+ * - change events.
+ *
+ * Registering for save and will save events is optional.
  */
 export class TextDocuments<T> {
 
