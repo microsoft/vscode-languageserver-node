@@ -54,10 +54,12 @@ export abstract class CommonLanguageClient extends BaseLanguageClient {
 
 // Exporting proposed protocol.
 import * as pd from './proposed.diagnostic';
+import * as pt from './proposed.typeHierarchy';
 export namespace ProposedFeatures {
 	export function createAll(_client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
 		let result: (StaticFeature | DynamicFeature<any>)[] = [
-			new pd.DiagnosticFeature(_client)
+			new pd.DiagnosticFeature(_client),
+			new pt.TypeHierarchyFeature(_client)
 		];
 		return result;
 	}

@@ -175,7 +175,8 @@ suite('Client integration', () => {
 					identifier: 'da348dc5-c30a-4515-9d98-31ff3be38d14',
 					interFileDependencies: true,
 					workspaceDiagnostics: true
-				}
+				},
+				typeHierarchyProvider: true
 			},
 			customResults: {
 				'hello': 'world'
@@ -1118,6 +1119,46 @@ suite('Client integration', () => {
 		};
 		await provider.diagnostics.provideWorkspaceDiagnostics([], tokenSource.token, () => {});
 		(middleware as DiagnosticProviderMiddleware).provideWorkspaceDiagnostics = undefined;
+		assert.strictEqual(middlewareCalled, true);
+	});
+
+	test('Type Hierarchy', async () => {
+		const provider = client.getFeature(lsclient.Proposed.TypeHierarchyPrepareRequest.method).getProvider(document);
+		isDefined(provider);
+		const result = (await provider.prepareTypeHierarchy(document, position, tokenSource.token)) as vscode.TypeHierarchyItem[];
+
+		isArray(result, vscode.TypeHierarchyItem, 1);
+		const item = result[0];
+
+		let middlewareCalled: boolean = false;
+		middleware.prepareTypeHierarchy = (d, p, t, n) => {
+			middlewareCalled = true;
+			return n(d, p, t);
+		};
+		await provider.prepareTypeHierarchy(document, position, tokenSource.token);
+		middleware.prepareTypeHierarchy = undefined;
+		assert.strictEqual(middlewareCalled, true);
+
+		const incoming = (await provider.provideTypeHierarchySupertypes(item, tokenSource.token)) as vscode.TypeHierarchyItem[];
+		isArray(incoming, vscode.TypeHierarchyItem, 1);
+		middlewareCalled = false;
+		middleware.provideTypeHierarchySupertypes = (i, t, n) => {
+			middlewareCalled = true;
+			return n(i, t);
+		};
+		await provider.provideTypeHierarchySupertypes(item, tokenSource.token);
+		middleware.provideTypeHierarchySupertypes = undefined;
+		assert.strictEqual(middlewareCalled, true);
+
+		const outgoing = (await provider.provideTypeHierarchySubtypes(item, tokenSource.token)) as vscode.TypeHierarchyItem[];
+		isArray(outgoing, vscode.TypeHierarchyItem, 1);
+		middlewareCalled = false;
+		middleware.provideTypeHierarchySubtypes = (i, t, n) => {
+			middlewareCalled = true;
+			return n(i, t);
+		};
+		await provider.provideTypeHierarchySubtypes(item, tokenSource.token);
+		middleware.provideTypeHierarchySubtypes = undefined;
 		assert.strictEqual(middlewareCalled, true);
 	});
 

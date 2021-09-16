@@ -10,7 +10,7 @@ import {
 	Location, Range, DocumentHighlight, DocumentHighlightKind, CodeAction, Command, TextEdit, Position, DocumentLink,
 	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, SymbolKind, ProtocolRequestType, WorkDoneProgress,
 	WorkDoneProgressCreateRequest, WillCreateFilesRequest, WillRenameFilesRequest, WillDeleteFilesRequest, DidDeleteFilesNotification,
-	DidRenameFilesNotification, DidCreateFilesNotification, Proposed, ProposedFeatures, Diagnostic, DiagnosticSeverity
+	DidRenameFilesNotification, DidCreateFilesNotification, Proposed, ProposedFeatures, Diagnostic, DiagnosticSeverity, TypeHierarchyItem
 } from '../../../server/node';
 
 import { URI } from 'vscode-uri';
@@ -428,6 +428,31 @@ connection.languages.diagnostics.onWorkspace(() => {
 			]
 		}]
 	};
+});
+
+let typeHierarchySample = {
+	superTypes: [] as TypeHierarchyItem[],
+	subTypes: [] as TypeHierarchyItem[]
+};
+connection.languages.typeHierarchy.onPrepare((params) => {
+	const currentItem = {
+		kind: SymbolKind.Class,
+		name: 'ClazzB',
+		range: Range.create(1, 1, 1, 1),
+		selectionRange: Range.create(2, 2, 2, 2),
+		uri: params.textDocument.uri
+	} as TypeHierarchyItem;
+	typeHierarchySample.superTypes = [ {...currentItem, name: 'classA', uri: 'uri-for-A'}];
+	typeHierarchySample.subTypes = [ {...currentItem, name: 'classC', uri: 'uri-for-C'}];
+	return [currentItem];
+});
+
+connection.languages.typeHierarchy.onSupertypes((_params) => {
+	return typeHierarchySample.superTypes;
+});
+
+connection.languages.typeHierarchy.onSubtypes((_params) => {
+	return typeHierarchySample.subTypes;
 });
 
 connection.onRequest(
