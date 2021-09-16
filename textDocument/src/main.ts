@@ -334,10 +334,11 @@ export namespace TextDocument {
 	}
 
 	/**
-	 * Updates a TextDocument by modifing its content.
+	 * Updates a TextDocument by modifying its content.
 	 *
 	 * @param document the document to update. Only documents created by TextDocument.create are valid inputs.
 	 * @param changes the changes to apply to the document.
+     * @param version the changes version for the document.
 	 * @returns The updated TextDocument. Note: That's the same document instance passed in as first parameter.
 	 *
 	 */
