@@ -1658,7 +1658,7 @@ export namespace VersionedTextDocumentIdentifier {
 	/**
 	 * Creates a new VersionedTextDocumentIdentifier literal.
 	 * @param uri The document's uri.
-	 * @param uri The document's text.
+	 * @param version The document's version.
 	 */
 	export function create(uri: DocumentUri, version: integer): VersionedTextDocumentIdentifier {
 		return { uri, version };
@@ -1695,7 +1695,7 @@ export namespace OptionalVersionedTextDocumentIdentifier {
 	/**
 	 * Creates a new OptionalVersionedTextDocumentIdentifier literal.
 	 * @param uri The document's uri.
-	 * @param uri The document's text.
+	 * @param version The document's version.
 	 */
 	export function create(uri: DocumentUri, version: integer | null): OptionalVersionedTextDocumentIdentifier {
 		return { uri, version };
@@ -1995,13 +1995,13 @@ export type InsertTextMode = 1 | 2;
  */
 export interface CompletionItemLabelDetails {
 	/**
-	 * An optional string which is rendered less prominently directly after {@link CompletionItemLabel.label label},
+	 * An optional string which is rendered less prominently directly after {@link CompletionItem.label label},
 	 * without any spacing. Should be used for function signatures or type annotations.
 	 */
 	detail?: string;
 
 	/**
-	 * An optional string which is rendered less prominently after {@link CompletionItemLabel.detail}. Should be used
+	 * An optional string which is rendered less prominently after {@link CompletionItem.detail}. Should be used
 	 * for fully qualified names or file path.
 	 */
 	description?: string;
@@ -2495,6 +2495,7 @@ export namespace DocumentHighlight {
 	/**
 	 * Create a DocumentHighlight object.
 	 * @param range The range the highlight applies to.
+	 * @param kind The highlight kind
 	 */
 	export function create(range: Range, kind?: DocumentHighlightKind): DocumentHighlight {
 		let result: DocumentHighlight = { range };
@@ -2970,7 +2971,7 @@ export namespace CodeAction {
 	 * Creates a new code action.
 	 *
 	 * @param title The title of the code action.
-	 * @param command The command to execute.
+	 * @param edit The edit to perform.
 	 * @param kind The kind of the code action.
 	 */
 	export function create(title: string, edit: WorkspaceEdit, kind?: CodeActionKind): CodeAction;
@@ -3508,7 +3509,8 @@ export namespace TextDocument {
 	/**
 	 * Creates a new ITextDocument literal from the given uri and content.
 	 * @param uri The document's uri.
-	 * @param languageId  The document's language Id.
+	 * @param languageId The document's language Id.
+	 * @param version The document's version.
 	 * @param content The document's content.
 	 */
 	export function create(uri: DocumentUri, languageId: string, version: integer, content: string): TextDocument {
