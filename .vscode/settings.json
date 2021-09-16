@@ -27,6 +27,7 @@
 		"typescript"
 	],
 	"eslint.workingDirectories": [
+		"./textDocument",
 		"./types",
 		"./jsonrpc",
 		"./protocol",
