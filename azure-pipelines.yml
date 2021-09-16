@@ -1,14 +1,12 @@
 trigger:
   batch: true
   branches:
-    include:
-    - '*'
+    include: [ '*' ]
   tags:
-    include:
-    - 'release/*/*'
+    include: [ 'release/*/*' ]
 pr:
-  include:
-  - main
+  branches:
+    include: [ 'main', 'release/*' ]
 
 jobs:
 - job: Windows
