@@ -244,7 +244,7 @@ export namespace LocationLink {
 	export function is(value: any): value is LocationLink {
 		let candidate = value as LocationLink;
 		return Is.defined(candidate) && Range.is(candidate.targetRange) && Is.string(candidate.targetUri)
-			&& (Range.is(candidate.targetSelectionRange) || Is.undefined(candidate.targetSelectionRange))
+			&& Range.is(candidate.targetSelectionRange)
 			&& (Range.is(candidate.originSelectionRange) || Is.undefined(candidate.originSelectionRange));
 	}
 }
