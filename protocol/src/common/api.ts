@@ -23,6 +23,16 @@ export namespace LSPErrorCodes {
 	export const lspReservedErrorRangeStart: integer = -32899;
 
 	/**
+	 * A request failed but it was syntactically correct, e.g the
+	 * method name was known and the parameters were valid. The error
+	 * message should contain human readable information about why
+	 * the request failed.
+	 *
+	 * @since 3.17.0
+	 */
+	export const RequestFailed: integer = -32803;
+
+	/**
 	 * The server cancelled the request. This error code should
 	 * only be used for requests that explicitly support being
 	 * server cancellable.
