@@ -749,7 +749,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 					delete requestTokens[tokenKey];
 					reply(handlerResult, requestMessage.method, startTime);
 				}
-			} catch (error) {
+			} catch (error: any) {
 				delete requestTokens[tokenKey];
 				if (error instanceof ResponseError) {
 					reply(<ResponseError<any>>error, requestMessage.method, startTime);
@@ -791,7 +791,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 					} else {
 						throw new Error('Should never happen.');
 					}
-				} catch (error) {
+				} catch (error: any) {
 					if (error.message) {
 						logger.error(`Response handler '${responsePromise.method}' failed with message: ${error.message}`);
 					} else {
@@ -852,7 +852,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				} else if (starNotificationHandler) {
 					starNotificationHandler(message.method, message.params);
 				}
-			} catch (error) {
+			} catch (error: any) {
 				if (error.message) {
 					logger.error(`Notification handler '${message.method}' failed with message: ${error.message}`);
 				} else {
@@ -1274,7 +1274,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				traceSendingRequest(requestMessage);
 				try {
 					messageWriter.write(requestMessage).catch(() => logger.error(`Sending request failed.`));
-				} catch (e) {
+				} catch (e: any) {
 					// Writing the message failed. So we need to reject the promise.
 					responsePromise.reject(new ResponseError<void>(ErrorCodes.MessageWriteError, e.message ? e.message : 'Unknown reason'));
 					responsePromise = null;
