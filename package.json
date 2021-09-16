@@ -26,7 +26,7 @@
 		"rimraf": "^3.0.2",
 		"shelljs": "^0.8.4",
 		"shx": "^0.3.3",
-		"typescript": "^4.4.3",
+		"typescript": "4.3.2",
 		"webpack": "^5.38.1",
 		"webpack-cli": "^4.7.0"
 	},
