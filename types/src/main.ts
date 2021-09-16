@@ -1174,7 +1174,7 @@ export interface WorkspaceEdit {
 	/**
 	 * Holds changes to existing resources.
 	 */
-	changes?: { [uri: string]: TextEdit[]; };
+	changes?: { [uri: DocumentUri]: TextEdit[]; };
 
 	/**
 	 * Depending on the client capability `workspace.workspaceEdit.resourceOperations` document changes
@@ -1200,7 +1200,7 @@ export interface WorkspaceEdit {
 	 * @since 3.16.0
 	 */
 	changeAnnotations?: {
-		[id: string /* ChangeAnnotationIdentifier */]: ChangeAnnotation;
+		[id: ChangeAnnotationIdentifier]: ChangeAnnotation;
 	}
 }
 
@@ -1375,7 +1375,7 @@ class TextEditChangeImpl implements TextEditChange {
  */
 class ChangeAnnotations {
 
-	private _annotations: { [id: string]: ChangeAnnotation };
+	private _annotations: { [id: ChangeAnnotationIdentifier]: ChangeAnnotation };
 	private _counter: number;
 	private _size: number;
 
@@ -1425,7 +1425,7 @@ class ChangeAnnotations {
  */
 export class WorkspaceChange {
 	private _workspaceEdit: WorkspaceEdit;
-	private _textEditChanges: { [uri: string]: TextEditChange };
+	private _textEditChanges: { [uri: DocumentUri]: TextEditChange };
 	private _changeAnnotations: ChangeAnnotations | undefined;
 
 	constructor(workspaceEdit?: WorkspaceEdit) {
