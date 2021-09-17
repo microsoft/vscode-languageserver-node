@@ -180,7 +180,7 @@ connection.onInitialized((params) => {
 	connection.workspace.onDidChangeWorkspaceFolders((event) => {
 		connection.console.log('Workspace folder changed received');
 	});
-	connection.workspace.getWorkspaceFolders().then(folders => {
+	void connection.workspace.getWorkspaceFolders().then(folders => {
 		for (let folder of folders) {
 			connection.console.log(`Get workspace folders: ${folder.name} ${folder.uri}`);
 		}
@@ -193,7 +193,7 @@ connection.onInitialized((params) => {
 			delta: true
 		}
 	};
-	connection.client.register(SemanticTokensRegistrationType.type, registrationOptions);
+	void connection.client.register(SemanticTokensRegistrationType.type, registrationOptions);
 });
 
 connection.onShutdown((handler) => {
@@ -225,7 +225,7 @@ connection.onDidChangeConfiguration((params) => {
 	documents.all().forEach(document => {
 		connection.sendDiagnostics({ uri: document.uri, diagnostics: validate(document) });
 	});
-	connection.workspace.getConfiguration('testbed').then((value) => {
+	void connection.workspace.getConfiguration('testbed').then((value) => {
 		connection.console.log('Configuration received');
 	});
 });
@@ -351,9 +351,9 @@ connection.languages.diagnostics.onWorkspace(async (params, token, _, resultProg
 				items: diagnostics
 			}
 		]});
-		setTimeout(() => { doValidate(++index); }, 500);
+		setTimeout(() => { void doValidate(++index); }, 500);
 	};
-	doValidate(0);
+	void doValidate(0);
 	return new Promise((resolve) => {
 		setTimeout(resolve, 120000);
 	});
