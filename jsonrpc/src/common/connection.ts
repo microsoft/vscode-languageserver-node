@@ -1063,19 +1063,19 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 	}
 
 	function computeSingleParam(parameterStructures: ParameterStructures, param: any): any | any[] {
-		switch(parameterStructures) {
-			case ParameterStructures.auto:
+		switch(parameterStructures.kind) {
+			case ParameterStructures.auto.kind:
 				if (isNamedParam(param)) {
 					return nullToUndefined(param);
 				} else {
 					return [undefinedToNull(param)];
 				}
-			case ParameterStructures.byName:
+			case ParameterStructures.byName.kind:
 				if (!isNamedParam(param)) {
 					throw new Error(`Received parameters by name but param is not an object literal.`);
 				}
 				return nullToUndefined(param);
-			case ParameterStructures.byPosition:
+			case ParameterStructures.byPosition.kind:
 				return [undefinedToNull(param)];
 			default:
 				throw new Error(`Unknown parameter structure ${parameterStructures.toString()}`);
