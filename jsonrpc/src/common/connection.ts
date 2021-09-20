@@ -431,7 +431,7 @@ export interface MessageConnection {
 	onUnhandledNotification: Event<NotificationMessage>;
 
 	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable;
-	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): void;
+	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): Promise<void>;
 
 	onUnhandledProgress: Event<ProgressParams<any>>;
 

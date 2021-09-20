@@ -154,7 +154,7 @@ export interface ProtocolConnection {
 	 * @param token the token to use
 	 * @param value the progress value
 	 */
-	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): void;
+	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): Promise<void>;
 
 	/**
 	 * Enables tracing mode for the connection.

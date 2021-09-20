@@ -26,7 +26,7 @@ export function arrayDiff<T>(left: ReadonlyArray<T>, right: ReadonlyArray<T>): T
 
 export interface WorkspaceFolderWorkspaceMiddleware {
 	workspaceFolders?: WorkspaceFoldersRequest.MiddlewareSignature;
-	didChangeWorkspaceFolders?: NextSignature<VWorkspaceFoldersChangeEvent, void>
+	didChangeWorkspaceFolders?: NextSignature<VWorkspaceFoldersChangeEvent, Promise<void>>
 }
 
 export class WorkspaceFoldersFeature implements DynamicFeature<void> {
@@ -92,42 +92,49 @@ export class WorkspaceFoldersFeature implements DynamicFeature<void> {
 	}
 
 	protected sendInitialEvent(currentWorkspaceFolders: ReadonlyArray<VWorkspaceFolder> | undefined) {
+		let promise: Promise<void> | undefined;
 		if (this._initialFolders && currentWorkspaceFolders) {
 			const removed: VWorkspaceFolder[] = arrayDiff(this._initialFolders, currentWorkspaceFolders);
 			const added: VWorkspaceFolder[] = arrayDiff(currentWorkspaceFolders, this._initialFolders);
 			if (added.length > 0 || removed.length > 0) {
-				this.doSendEvent(added, removed);
+				promise = this.doSendEvent(added, removed);
 			}
 		} else if (this._initialFolders) {
-			this.doSendEvent([], this._initialFolders);
+			promise = this.doSendEvent([], this._initialFolders);
 		} else if (currentWorkspaceFolders) {
-			this.doSendEvent(currentWorkspaceFolders, []);
+			promise = this.doSendEvent(currentWorkspaceFolders, []);
+		}
+		if (promise !== undefined) {
+			promise.catch((error) => {
+				this._client.error(`Sending notification ${DidChangeWorkspaceFoldersNotification.type.method} failed`, error);
+			});
 		}
 	}
 
-	private doSendEvent(addedFolders: ReadonlyArray<VWorkspaceFolder>, removedFolders: ReadonlyArray<VWorkspaceFolder>) {
+	private doSendEvent(addedFolders: ReadonlyArray<VWorkspaceFolder>, removedFolders: ReadonlyArray<VWorkspaceFolder>): Promise<void> {
 		let params: DidChangeWorkspaceFoldersParams = {
 			event: {
 				added: addedFolders.map(folder => this.asProtocol(folder)),
 				removed: removedFolders.map(folder => this.asProtocol(folder))
 			}
 		};
-		this._client.sendNotification(DidChangeWorkspaceFoldersNotification.type, params).catch((error) => {
-			this._client.error(`Sending notification ${DidChangeWorkspaceFoldersNotification.type.method} failed`, error);
-		});
+		return this._client.sendNotification(DidChangeWorkspaceFoldersNotification.type, params);
 	}
 
 	public register(data: RegistrationData<undefined>): void {
 		let id = data.id;
 		let client = this._client;
 		let disposable = workspace.onDidChangeWorkspaceFolders((event) => {
-			let didChangeWorkspaceFolders = (event: VWorkspaceFoldersChangeEvent) => {
-				this.doSendEvent(event.added, event.removed);
+			let didChangeWorkspaceFolders = (event: VWorkspaceFoldersChangeEvent): Promise<void> => {
+				return this.doSendEvent(event.added, event.removed);
 			};
 			let middleware = client.clientOptions.middleware!.workspace;
-			middleware && middleware.didChangeWorkspaceFolders
+			const promise = middleware && middleware.didChangeWorkspaceFolders
 				? middleware.didChangeWorkspaceFolders(event, didChangeWorkspaceFolders)
 				: didChangeWorkspaceFolders(event);
+			promise.catch((error) => {
+				this._client.error(`Sending notification ${DidChangeWorkspaceFoldersNotification.type.method} failed`, error);
+			});
 		});
 		this._listeners.set(id, disposable);
 		this.sendInitialEvent(workspace.workspaceFolders);

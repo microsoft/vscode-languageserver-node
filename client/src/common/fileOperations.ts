@@ -31,11 +31,11 @@ function assign<T, K extends keyof T>(target: T, key: K, value: T[K]): void {
  * @since 3.16.0
  */
 export interface FileOperationsMiddleware {
-	didCreateFiles?: NextSignature<code.FileCreateEvent, void>;
+	didCreateFiles?: NextSignature<code.FileCreateEvent, Promise<void>>;
 	willCreateFiles?: NextSignature<code.FileCreateEvent, Thenable<code.WorkspaceEdit | null | undefined>>;
-	didRenameFiles?: NextSignature<code.FileRenameEvent, void>;
+	didRenameFiles?: NextSignature<code.FileRenameEvent, Promise<void>>;
 	willRenameFiles?: NextSignature<code.FileRenameEvent, Thenable<code.WorkspaceEdit | null | undefined>>;
-	didDeleteFiles?: NextSignature<code.FileDeleteEvent, void>;
+	didDeleteFiles?: NextSignature<code.FileDeleteEvent, Promise<void>>;
 	willDeleteFiles?: NextSignature<code.FileDeleteEvent, Thenable<code.WorkspaceEdit | null | undefined>>;
 }
 
@@ -214,11 +214,11 @@ abstract class NotificationFileOperationFeature<I, E extends { readonly files: R
 			const next = async (event: E): Promise<void> => {
 				return this._client.sendNotification(this._notificationType, this._createParams(event));
 			};
-			this.doSend(filteredEvent, next);
+			return this.doSend(filteredEvent, next);
 		}
 	}
 
-	protected abstract doSend(event: E, next: (event: E) => void): void;
+	protected abstract doSend(event: E, next: (event: E) => Promise<void>): Promise<void>;
 }
 
 export class DidCreateFilesFeature extends NotificationFileOperationFeature<code.Uri, code.FileCreateEvent, proto.CreateFilesParams> {
@@ -231,7 +231,7 @@ export class DidCreateFilesFeature extends NotificationFileOperationFeature<code
 		);
 	}
 
-	protected doSend(event: code.FileCreateEvent, next: (event: code.FileCreateEvent) => void): void {
+	protected doSend(event: code.FileCreateEvent, next: (event: code.FileCreateEvent) => Promise<void>): Promise<void> {
 		const middleware = this._client.clientOptions.middleware?.workspace;
 		return middleware?.didCreateFiles
 			? middleware.didCreateFiles(event, next)
@@ -249,7 +249,7 @@ export class DidRenameFilesFeature extends NotificationFileOperationFeature<{ ol
 		);
 	}
 
-	protected doSend(event: code.FileRenameEvent, next: (event: code.FileRenameEvent) => void): void {
+	protected doSend(event: code.FileRenameEvent, next: (event: code.FileRenameEvent) => Promise<void>): Promise<void> {
 		const middleware = this._client.clientOptions.middleware?.workspace;
 		return middleware?.didRenameFiles
 			? middleware.didRenameFiles(event, next)
@@ -267,7 +267,7 @@ export class DidDeleteFilesFeature extends NotificationFileOperationFeature<code
 		);
 	}
 
-	protected doSend(event: code.FileCreateEvent, next: (event: code.FileCreateEvent) => void): void {
+	protected doSend(event: code.FileCreateEvent, next: (event: code.FileCreateEvent) => Promise<void>): Promise<void> {
 		const middleware = this._client.clientOptions.middleware?.workspace;
 		return middleware?.didDeleteFiles
 			? middleware.didDeleteFiles(event, next)
