@@ -182,7 +182,7 @@ export class ParameterStructures {
 	 */
 	public static readonly byName = new ParameterStructures('byName');
 
-	private constructor(private readonly kind: string) {
+	private constructor(readonly kind: string) {
 	}
 
 	public static is(value: any): value is ParameterStructures {
