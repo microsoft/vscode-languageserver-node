@@ -103,7 +103,7 @@ export namespace Proposed {
 	export const WorkspaceDiagnosticRequest: typeof diag.WorkspaceDiagnosticRequest = diag.WorkspaceDiagnosticRequest;
 	export const DiagnosticRefreshRequest: typeof diag.DiagnosticRefreshRequest = diag.DiagnosticRefreshRequest;
 
-	// type hierarchy
+	// ------------------------------ Type Hierarchy ------------------------------
 	export type TypeHierarchyClientCapabilities = typeh.TypeHierarchyClientCapabilities;
 	export type TypeHierarchyOptions = typeh.TypeHierarchyOptions;
 	export type TypeHierarchyRegistrationOptions = typeh.TypeHierarchyRegistrationOptions;

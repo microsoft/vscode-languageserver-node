@@ -4,6 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 
 import { NotificationHandler, RequestHandler } from 'vscode-jsonrpc/src/common/connection';
+import { uinteger } from 'vscode-languageserver-types';
+import { DocumentUri } from 'vscode-languageserver-types';
 import { ProtocolNotificationType, ProtocolRequestType } from './messages';
 import {
 	StaticRegistrationOptions, TextDocumentRegistrationOptions
@@ -20,23 +22,23 @@ import {
  */
 export enum FileType {
 	/**
-     * The file type is unknown.
-     */
+	 * The file type is unknown.
+	 */
 	Unknown = 0,
 
 	/**
-     * A regular file.
-     */
+	 * A regular file.
+	 */
 	File = 1,
 
 	/**
-     * A directory.
-     */
+	 * A directory.
+	 */
 	Directory = 2,
 
 	/**
-     * A symbolic link to a file or folder
-     */
+	 * A symbolic link to a file or folder
+	 */
 	Symbolic = 64,
 }
 
@@ -48,38 +50,38 @@ export enum FileType {
  */
 export enum FileSystemErrorType {
 	/**
-     * An error to signal that a file or folder wasn't found.
-     */
+	 * An error to signal that a file or folder wasn't found.
+	 */
 	FileNotFound = 0,
 
 	/**
-     * An error to signal that a file or folder already exists, e.g. when creating but not overwriting a file.
-     */
+	 * An error to signal that a file or folder already exists, e.g. when creating but not overwriting a file.
+	 */
 	FileExists = 1,
 
 	/**
-     * An error to signal that a file is not a folder.
-     */
+	 * An error to signal that a file is not a folder.
+	 */
 	FileNotADirectory = 2,
 
 	/**
-     * An error to signal that a file is a folder.
-     */
+	 * An error to signal that a file is a folder.
+	 */
 	FileIsADirectory = 3,
 
 	/**
-     * An error to signal that an operation lacks required permissions.
-     */
+	 * An error to signal that an operation lacks required permissions.
+	 */
 	NoPermissions = 4,
 
 	/**
-     * An error to signal that the file system is unavailable or too busy to complete a request.
-     */
+	 * An error to signal that the file system is unavailable or too busy to complete a request.
+	 */
 	Unavailable = 5,
 
 	/**
-     * A custom error.
-     */
+	 * A custom error.
+	 */
 	Other = 1000,
 }
 
@@ -110,18 +112,18 @@ export interface $FileSystemProviderClientCapabilities {
  */
 export interface FileSystemProviderOptions {
 	/**
-     * The uri-scheme the provider registers for
-     */
+	 * The uri-scheme the provider registers for
+	 */
 	scheme: string;
 
 	/**
-     * Whether or not the file system is case sensitive.
-     */
+	 * Whether or not the file system is case sensitive.
+	 */
 	isCaseSensitive?: boolean;
 
 	/**
-     * Whether or not the file system is readonly.
-     */
+	 * Whether or not the file system is readonly.
+	 */
 	isReadonly?: boolean
 }
 
@@ -169,25 +171,25 @@ export namespace DidChangeFileNotification {
  */
 export interface DidChangeFileParams {
 	/**
-     * The change events.'
-     */
+	 * The change events.'
+	 */
 	changes: FileChangeEvent[];
 }
 
 /**
- * The event filesystem providers must use to signal a file change.
+ * The event FileSystemProviders use to signal file changes.
  *
  * @since 3.17.0 - proposed state
  */
 export interface FileChangeEvent {
 	/**
-     * The type of change.
-     */
-	uri: string;
+	 * The type of change.
+	 */
+	uri: DocumentUri;
 
 	/**
-     * The uri of the file that has changed.
-     */
+	 * The uri of the file that has changed.
+	 */
 	type: FileChangeType
 }
 
@@ -198,18 +200,18 @@ export interface FileChangeEvent {
  */
 export enum FileChangeType {
 	/**
-     * The contents or metadata of a file have changed.
-     */
+	 * The contents or metadata of a file have changed.
+	 */
 	Changed = 1,
 
 	/**
-     * A file has been created.
-     */
+	 * A file has been created.
+	 */
 	Created = 2,
 
 	/**
-     * A file has been deleted.
-     */
+	 * A file has been deleted.
+	 */
 	Deleted = 3,
 }
 
@@ -234,18 +236,18 @@ export namespace WatchNotification {
  */
 export interface WatchParams {
 	/**
-     * The uri of the file or folder to be watched.
-     */
-	uri: string;
+	 * The uri of the file or folder to be watched.
+	 */
+	uri: DocumentUri;
 
 	/**
-     * The subscription ID to be used in order to stop watching the provided file or folder uri via the fileSystem/stopWatching notification.
-     */
+	 * The subscription ID to be used in order to stop watching the provided file or folder uri via the fileSystem/stopWatching notification.
+	 */
 	subscriptionId: string;
 
 	/**
-     * Configures the watch
-     */
+	 * Configures the watch
+	 */
 	options: WatchFileOptions
 }
 
@@ -256,13 +258,13 @@ export interface WatchParams {
  */
 export interface WatchFileOptions {
 	/**
-     * If a folder should be recursively subscribed to
-     */
+	 * If a folder should be recursively subscribed to
+	 */
 	recursive: boolean;
 
 	/**
-     * Folders or files to exclude from being watched.
-     */
+	 * Folders or files to exclude from being watched.
+	 */
 	excludes: string[];
 }
 
@@ -287,8 +289,8 @@ export namespace StopWatchingNotification {
  */
 export interface StopWatchingParams {
 	/**
-     * The subscription id.
-     */
+	 * The subscription id.
+	 */
 	subscriptionId: string;
 }
 
@@ -312,9 +314,9 @@ export namespace StatRequest {
  */
 export interface FileStatParams {
 	/**
-     * The uri to retrieve metadata about.
-     */
-	uri: string;
+	 * The uri to retrieve metadata about.
+	 */
+	uri: DocumentUri;
 }
 
 /**
@@ -324,35 +326,35 @@ export interface FileStatParams {
  */
 export interface FileStatResponse {
 	/**
-     * The type of the file, e.g. is a regular file, a directory, or symbolic link
-     * to a file/directory.
-     *
-     * *Note:* This value might be a bitmask, e.g. `FileType.File | FileType.SymbolicLink`.
-     */
+	 * The type of the file, e.g. is a regular file, a directory, or symbolic link
+	 * to a file/directory.
+	 *
+	 * *Note:* This value might be a bitmask, e.g. `FileType.File | FileType.SymbolicLink`.
+	 */
 	type: FileType;
 
 	/**
-     * The creation timestamp in milliseconds elapsed since January 1, 1970 00:00:00 UTC.
-     */
+	 * The creation timestamp in milliseconds elapsed since January 1, 1970 00:00:00 UTC.
+	 */
 	ctime: number;
 
 	/**
-     * The modification timestamp in milliseconds elapsed since January 1, 1970 00:00:00 UTC.
-     *
-     * *Note:* If the file changed, it is important to provide an updated `mtime` that advanced
-     * from the previous value. Otherwise there may be optimizations in place that will not show
-     * the updated file contents in an editor for example.
-     */
+	 * The modification timestamp in milliseconds elapsed since January 1, 1970 00:00:00 UTC.
+	 *
+	 * *Note:* If the file changed, it is important to provide an updated `mtime` that advanced
+	 * from the previous value. Otherwise there may be optimizations in place that will not show
+	 * the updated file contents in an editor for example.
+	 */
 	mtime: number;
 
 	/**
-     * The size in bytes.
-     *
-     * *Note:* If the file changed, it is important to provide an updated `size`. Otherwise there
-     * may be optimizations in place that will not show the updated file contents in an editor for
-     * example.
-     */
-	size: number;
+	 * The size in bytes.
+	 *
+	 * *Note:* If the file changed, it is important to provide an updated `size`. Otherwise there
+	 * may be optimizations in place that will not show the updated file contents in an editor for
+	 * example.
+	 */
+	size: uinteger;
 }
 
 // ReadDirectory Request (client->server) fileSystem/readDirectory
@@ -376,9 +378,9 @@ export namespace ReadDirectoryRequest {
  */
 export interface ReadDirectoryParams {
 	/**
-     * The uri of the folder.
-     */
-	uri: string;
+	 * The uri of the folder.
+	 */
+	uri: DocumentUri;
 }
 
 /**
@@ -388,8 +390,8 @@ export interface ReadDirectoryParams {
  */
 export interface ReadDirectoryResponse {
 	/**
-     * An array of nodes that represent the directories children.
-     */
+	 * An array of nodes that represent the directories children.
+	 */
 	children: DirectoryChild[]
 }
 
@@ -400,15 +402,15 @@ export interface ReadDirectoryResponse {
  */
 export interface DirectoryChild {
 	/**
-     * The name of the node, e.g. a filename or directory name.
-     */
+	 * The name of the node, e.g. a filename or directory name.
+	 */
 	name: string;
 
 	/**
-     * The type of the file, e.g. is a regular file, a directory, or symbolic link to a file/directory.
-     *
-     * *Note:* This value might be a bitmask, e.g. `FileType.File | FileType.SymbolicLink`.
-     */
+	 * The type of the file, e.g. is a regular file, a directory, or symbolic link to a file/directory.
+	 *
+	 * *Note:* This value might be a bitmask, e.g. `FileType.File | FileType.SymbolicLink`.
+	 */
 	type: FileType;
 }
 
@@ -433,9 +435,9 @@ export namespace CreateDirectoryRequest {
  */
 export interface CreateDirectoryParams {
 	/**
-     * The uri of the folder
-     */
-	uri: string;
+	 * The uri of the folder
+	 */
+	uri: DocumentUri;
 }
 
 // readFile Request (client->server) fileSystem/readFile
@@ -459,9 +461,9 @@ export namespace ReadFileRequest {
  */
 export interface ReadFileParams {
 	/**
-     * The uri of the folder
-     */
-	uri: string;
+	 * The uri of the folder
+	 */
+	uri: DocumentUri;
 }
 
 /**
@@ -471,8 +473,8 @@ export interface ReadFileParams {
  */
 export interface ReadFileResponse {
 	/**
-     * The entire contents of the file `base64` encoded.
-     */
+	 * The entire contents of the file `base64` encoded.
+	 */
 	content: string;
 }
 
@@ -497,18 +499,18 @@ export namespace WriteFileRequest {
  */
 export interface WriteFileParams {
 	/**
-     * The uri of the file to write
-     */
-	uri: string;
+	 * The uri of the file to write
+	 */
+	uri: DocumentUri;
 
 	/**
-     * The new content of the file `base64` encoded.
-     */
+	 * The new content of the file `base64` encoded.
+	 */
 	content: string;
 
 	/**
-     * Options to define if missing files should or must be created.
-     */
+	 * Options to define if missing files should or must be created.
+	 */
 	options: WriteFileOptions
 }
 
@@ -519,13 +521,13 @@ export interface WriteFileParams {
  */
 export interface WriteFileOptions {
 	/**
-     * If a new file should be created.
-     */
+	 * If a new file should be created.
+	 */
 	create: boolean;
 
 	/**
-     * If a pre-existing file should be overwritten.
-     */
+	 * If a pre-existing file should be overwritten.
+	 */
 	overwrite: boolean;
 }
 
@@ -550,13 +552,13 @@ export namespace DeleteRequest {
  */
 export interface DeleteFileParams {
 	/**
-     * The uri of the file or folder to delete
-     */
-	uri: string;
+	 * The uri of the file or folder to delete
+	 */
+	uri: DocumentUri;
 
 	/**
-     * Defines if deletion of folders is recursive.
-     */
+	 * Defines if deletion of folders is recursive.
+	 */
 	options: DeleteFileOptions
 }
 
@@ -567,8 +569,8 @@ export interface DeleteFileParams {
  */
 export interface DeleteFileOptions {
 	/**
-     * If a folder should be recursively deleted.
-     */
+	 * If a folder should be recursively deleted.
+	 */
 	recursive: boolean;
 }
 
@@ -593,18 +595,18 @@ export namespace RenameRequest {
  */
 export interface RenameFileParams {
 	/**
-     * The existing file or folder.
-     */
-	oldUri: string;
+	 * The existing file or folder.
+	 */
+	oldUri: DocumentUri;
 
 	/**
-     * The new location.
-     */
-	newUri: string;
+	 * The new location.
+	 */
+	newUri: DocumentUri;
 
 	/**
-     * Defines if existing files should be overwritten.
-     */
+	 * Defines if existing files should be overwritten.
+	 */
 	options: RenameFileOptions
 }
 
@@ -615,7 +617,7 @@ export interface RenameFileParams {
  */
 export interface RenameFileOptions {
 	/**
-     * If existing files should be overwritten.
-     */
+	 * If existing files should be overwritten.
+	 */
 	overwrite: boolean;
 }

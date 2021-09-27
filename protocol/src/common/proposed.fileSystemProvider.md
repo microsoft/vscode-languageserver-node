@@ -348,7 +348,7 @@ export interface FileStatResponse {
      * may be optimizations in place that will not show the updated file contents in an editor for
      * example.
      */
-    size: number;
+    size: uinteger;
 }
 ```
 
