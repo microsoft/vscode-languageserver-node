@@ -17,7 +17,12 @@ declare module 'vscode' {
 		readonly label: string;
 
 		/**
-		 * The position of the tab
+		 * The index of the tab within the column
+		 */
+		readonly index: number;
+
+		/**
+		 * The column which the tab belongs to
 		 */
 		readonly viewColumn: ViewColumn;
 
@@ -35,10 +40,32 @@ declare module 'vscode' {
 		readonly viewId?: string;
 
 		/**
+		 * All the resources and viewIds represented by a tab
+		 * {@link Tab.resource resource} and {@link Tab.viewId viewId} will
+		 * always be at index 0.
+		 */
+		additionalResourcesAndViewIds: { resource?: Uri, viewId?: string }[];
+
+		/**
 		 * Whether or not the tab is currently active
 		 * Dictated by being the selected tab in the active group
 		 */
 		readonly isActive: boolean;
+
+		/**
+		 * Moves a tab to the given index within the column.
+		 * If the index is out of range, the tab will be moved to the end of the column.
+		 * If the column is out of range, a new one will be created after the last existing column.
+		 * @param index The index to move the tab to
+		 * @param viewColumn The column to move the tab into
+		 */
+		move(index: number, viewColumn: ViewColumn): Thenable<void>;
+
+		/**
+		 * Closes the tab. This makes the tab object invalid and the tab
+		 * should no longer be used for further actions.
+		 */
+		close(): Thenable<void>;
 	}
 
 	export namespace window {
@@ -151,10 +178,10 @@ declare module 'vscode' {
 		 * @param document The document in which the command was invoked.
 		 * @param position The position at which the command was invoked.
 		 * @param token A cancellation token.
-		 * @returns A type hierarchy item or a thenable that resolves to such. The lack of a result can be
-		 * signaled by returning `undefined` or `null`.
+		 * @returns One or multiple type hierarchy items or a thenable that resolves to such. The lack of a result can be
+		 * signaled by returning `undefined`, `null`, or an empty array.
 		 */
-		prepareTypeHierarchy(document: TextDocument, position: Position, token: CancellationToken): ProviderResult<TypeHierarchyItem[]>;
+		prepareTypeHierarchy(document: TextDocument, position: Position, token: CancellationToken): ProviderResult<TypeHierarchyItem | TypeHierarchyItem[]>;
 
 		/**
 		 * Provide all supertypes for an item, e.g all types from which a type is derived/inherited. In graph terms this describes directed
@@ -163,7 +190,7 @@ declare module 'vscode' {
 		 *
 		 * @param item The hierarchy item for which super types should be computed.
 		 * @param token A cancellation token.
-		 * @returns A set of supertypes or a thenable that resolves to such. The lack of a result can be
+		 * @returns A set of direct supertypes or a thenable that resolves to such. The lack of a result can be
 		 * signaled by returning `undefined` or `null`.
 		 */
 		provideTypeHierarchySupertypes(item: TypeHierarchyItem, token: CancellationToken): ProviderResult<TypeHierarchyItem[]>;
@@ -175,7 +202,7 @@ declare module 'vscode' {
 		 *
 		 * @param item The hierarchy item for which subtypes should be computed.
 		 * @param token A cancellation token.
-		 * @returns A set of subtypes or a thenable that resolves to such. The lack of a result can be
+		 * @returns A set of direct subtypes or a thenable that resolves to such. The lack of a result can be
 		 * signaled by returning `undefined` or `null`.
 		 */
 		provideTypeHierarchySubtypes(item: TypeHierarchyItem, token: CancellationToken): ProviderResult<TypeHierarchyItem[]>;
@@ -187,7 +214,7 @@ declare module 'vscode' {
 		 *
 		 * @param selector A selector that defines the documents this provider is applicable to.
 		 * @param provider A type hierarchy provider.
-		 * @return A [disposable](#Disposable) that unregisters this provider when being disposed.
+		 * @return {@link Disposable Disposable} that unregisters this provider when being disposed.
 		 */
 		export function registerTypeHierarchyProvider(selector: DocumentSelector, provider: TypeHierarchyProvider): Disposable;
 	}
