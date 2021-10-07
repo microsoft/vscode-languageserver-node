@@ -43,7 +43,7 @@ export function activate(context: ExtensionContext) {
 		// },
 		middleware: {
 			didOpen: (document, next) => {
-				next(document);
+				return next(document);
 			}
 		}
 	};

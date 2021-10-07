@@ -310,6 +310,8 @@ function computeDiagnostics(content: string): Diagnostic[] {
 	return result;
 }
 
+let resultIdCounter: number = 1;
+let versionCounter: number = 1;
 connection.languages.diagnostics.on(async (param) => {
 	const uri = URI.parse(param.textDocument.uri);
 	const document = documents.get(param.textDocument.uri);
@@ -319,9 +321,9 @@ connection.languages.diagnostics.on(async (param) => {
 			? await fs.readFile(uri.fsPath, { encoding: 'utf8'} )
 			: undefined;
 	if (content === undefined) {
-		return { kind: Proposed.DocumentDiagnosticReportKind.full, items: [] };
+		return { kind: Proposed.DocumentDiagnosticReportKind.full, items: [], resultId: `${resultIdCounter++}` };
 	}
-	return { kind: Proposed.DocumentDiagnosticReportKind.full, items: computeDiagnostics(content) };
+	return { kind: Proposed.DocumentDiagnosticReportKind.full, items: computeDiagnostics(content), resultId: `${resultIdCounter++}` };
 });
 
 connection.languages.diagnostics.onWorkspace(async (params, token, _, resultProgress): Promise<Proposed.WorkspaceDiagnosticReport> => {
@@ -347,8 +349,9 @@ connection.languages.diagnostics.onWorkspace(async (params, token, _, resultProg
 			{
 				kind: Proposed.DocumentDiagnosticReportKind.full,
 				uri: URI.file(toValidate[index]).toString(),
-				version: null,
-				items: diagnostics
+				version: versionCounter++,
+				items: diagnostics,
+				resultId: `${resultIdCounter++}`
 			}
 		]});
 		setTimeout(() => { void doValidate(++index); }, 500);

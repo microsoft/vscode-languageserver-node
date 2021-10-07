@@ -193,13 +193,29 @@ class DocumentPullStateTracker {
 		this.workspacePullStates = new Map();
 	}
 
-	public track(kind: PullState, textDocument: TextDocument, resultId?: string): DocumentPullState;
-	public track(kind: PullState, uri: string, version?: number, resultId?: string): DocumentPullState;
-	public track(kind: PullState, document: TextDocument | string, arg1?: string | number, arg2?: string): DocumentPullState {
+	public track(kind: PullState, textDocument: TextDocument): DocumentPullState;
+	public track(kind: PullState, uri: string, version: number | undefined): DocumentPullState;
+	public track(kind: PullState, document: TextDocument | string, arg1?: number | undefined): DocumentPullState {
+		const states = kind === PullState.document ? this.documentPullStates : this.workspacePullStates;
+		const [key, uri, version] = typeof document === 'string'
+			? [document, Uri.parse(document), arg1 as number | undefined]
+			: [document.uri.toString(), document.uri, document.version];
+		let state = states.get(key);
+		if (state === undefined) {
+			state = { document: uri, pulledVersion: version, resultId: undefined };
+			states.set(key, state);
+		}
+		return state;
+	}
+
+
+	public update(kind: PullState, textDocument: TextDocument, resultId: string | undefined): void;
+	public update(kind: PullState, uri: string, version: number | undefined, resultId: string | undefined): void;
+	public update(kind: PullState, document: TextDocument | string, arg1: string | number | undefined, arg2?: string | undefined): void {
 		const states = kind === PullState.document ? this.documentPullStates : this.workspacePullStates;
 		const [key, uri, version, resultId] = typeof document === 'string'
-			? [document, Uri.parse(document), arg1 as number, arg2]
-			: [document.uri.toString(), document.uri, document.version, arg1 as string];
+			? [document, Uri.parse(document), arg1 as number | undefined, arg2]
+			: [document.uri.toString(), document.uri, document.version, arg1 as string | undefined];
 		let state = states.get(key);
 		if (state === undefined) {
 			state = { document: uri, pulledVersion: version, resultId };
@@ -208,7 +224,6 @@ class DocumentPullStateTracker {
 			state.pulledVersion = version;
 			state.resultId = resultId;
 		}
-		return state;
 	}
 
 	public unTrack(kind: PullState, textDocument: TextDocument): void {
@@ -291,15 +306,16 @@ class DiagnosticRequestor implements Disposable {
 
 	private async pullAsync(textDocument: TextDocument): Promise<void> {
 		const key = textDocument.uri.toString();
+		const version = textDocument.version;
 		const currentRequestState = this.openRequests.get(key);
 		const documentState = this.documentStates.track(PullState.document, textDocument);
 		if (currentRequestState === undefined) {
 			const tokenSource = new CancellationTokenSource();
-			this.openRequests.set(key, { state: RequestStateKind.active, version: textDocument.version, textDocument, tokenSource });
+			this.openRequests.set(key, { state: RequestStateKind.active, version: version, textDocument, tokenSource });
 			let report: vsdiag.DocumentDiagnosticReport | undefined;
 			let afterState: RequestState | undefined;
 			try {
-				report = await this.provider.provideDiagnostics(textDocument, this.documentStates.getResultId(PullState.document, textDocument), tokenSource.token) ?? { kind: vsdiag.DocumentDiagnosticReportKind.full, items: [] };
+				report = await this.provider.provideDiagnostics(textDocument, documentState.resultId, tokenSource.token) ?? { kind: vsdiag.DocumentDiagnosticReportKind.full, items: [] };
 			} catch (error) {
 				if (error instanceof LSPCancellationError && Proposed.DiagnosticServerCancellationData.is(error.data) && error.data.retriggerRequest === false) {
 					afterState = { state: RequestStateKind.outDated, textDocument };
@@ -330,6 +346,7 @@ class DiagnosticRequestor implements Disposable {
 				if (report.kind === vsdiag.DocumentDiagnosticReportKind.full) {
 					this.diagnostics.set(textDocument.uri, report.items);
 				}
+				documentState.pulledVersion = version;
 				documentState.resultId = report.resultId;
 			}
 			if (afterState.state === RequestStateKind.reschedule) {
@@ -411,7 +428,7 @@ class DiagnosticRequestor implements Disposable {
 						this.diagnostics.set(item.uri, item.items);
 					}
 				}
-				this.documentStates.track(PullState.workspace, item.uri.toString(), item.version ?? undefined, item.resultId);
+				this.documentStates.update(PullState.workspace, item.uri.toString(), item.version ?? undefined, item.resultId);
 			}
 		});
 	}
