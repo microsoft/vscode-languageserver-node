@@ -456,11 +456,11 @@ export interface NextSignature<P, R> {
 }
 
 export interface DidChangeConfigurationSignature {
-	(this: void, sections: string[] | undefined): void;
+	(this: void, sections: string[] | undefined): Promise<void>;
 }
 
 export interface DidChangeWatchedFileSignature {
-	(this: void, event: FileEvent): void;
+	(this: void, event: FileEvent): Promise<void>;
 }
 
 export interface _WorkspaceMiddleware {
