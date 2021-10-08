@@ -22,7 +22,7 @@ import { StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageW
 export * from 'vscode-languageserver-protocol/node';
 export * from '../common/api';
 
-const REQUIRED_VSCODE_VERSION = '^1.58.0'; // do not change format, updated by `updateVSCode` script
+const REQUIRED_VSCODE_VERSION = '^1.61.0'; // do not change format, updated by `updateVSCode` script
 
 export enum TransportKind {
 	stdio,
