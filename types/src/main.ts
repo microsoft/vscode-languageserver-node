@@ -620,6 +620,7 @@ export interface Diagnostic {
 
 	/**
 	 * An optional property to describe the error code.
+	 * Requires the code field (above) to be present/not null.
 	 *
 	 * @since 3.16.0
 	 */
