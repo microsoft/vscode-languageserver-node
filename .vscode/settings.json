@@ -26,6 +26,7 @@
 	"eslint.validate": [
 		"typescript"
 	],
+	"eslint.useESLintClass": true,
 	"eslint.workingDirectories": [
 		"./textDocument",
 		"./types",
