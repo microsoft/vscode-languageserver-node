@@ -297,7 +297,7 @@ export namespace Color {
 	 */
 	export function is(value: any): value is Color {
 		const candidate = value as Color;
-		return Is.numberRange(candidate.red, 0, 1)
+		return Is.objectLiteral(candidate) && Is.numberRange(candidate.red, 0, 1)
 			&& Is.numberRange(candidate.green, 0, 1)
 			&& Is.numberRange(candidate.blue, 0, 1)
 			&& Is.numberRange(candidate.alpha, 0, 1);
@@ -340,7 +340,7 @@ export namespace ColorInformation {
 	 */
 	export function is(value: any): value is ColorInformation {
 		const candidate = value as ColorInformation;
-		return Range.is(candidate.range) && Color.is(candidate.color);
+		return Is.objectLiteral(candidate) && Range.is(candidate.range) && Color.is(candidate.color);
 	}
 }
 
@@ -385,7 +385,7 @@ export namespace ColorPresentation {
 	 */
 	export function is(value: any): value is ColorPresentation {
 		const candidate = value as ColorPresentation;
-		return Is.string(candidate.label)
+		return Is.objectLiteral(candidate) && Is.string(candidate.label)
 			&& (Is.undefined(candidate.textEdit) || TextEdit.is(candidate))
 			&& (Is.undefined(candidate.additionalTextEdits) || Is.typedArray(candidate.additionalTextEdits, TextEdit.is));
 	}
@@ -475,7 +475,7 @@ export namespace FoldingRange {
 	 */
 	export function is(value: any): value is FoldingRange {
 		const candidate = value as FoldingRange;
-		return Is.uinteger(candidate.startLine) && Is.uinteger(candidate.startLine)
+		return Is.objectLiteral(candidate) && Is.uinteger(candidate.startLine) && Is.uinteger(candidate.startLine)
 			&& (Is.undefined(candidate.startCharacter) || Is.uinteger(candidate.startCharacter))
 			&& (Is.undefined(candidate.endCharacter) || Is.uinteger(candidate.endCharacter))
 			&& (Is.undefined(candidate.kind) || Is.string(candidate.kind));
@@ -591,9 +591,9 @@ export interface CodeDescription {
  * @since 3.16.0
  */
 export namespace CodeDescription {
-	export function is(value: CodeDescription | undefined | null): value is CodeDescription {
+	export function is(value: any): value is CodeDescription {
 		const candidate: CodeDescription = value as CodeDescription;
-		return candidate !== undefined && candidate !== null && Is.string(candidate.href);
+		return Is.objectLiteral(candidate) && Is.string(candidate.href);
 	}
 }
 
@@ -841,7 +841,7 @@ export namespace ChangeAnnotation {
 	}
 	export function is(value: any): value is ChangeAnnotation {
 		const candidate = value as ChangeAnnotation;
-		return candidate !== undefined && Is.objectLiteral(candidate) && Is.string(candidate.label) &&
+		return Is.objectLiteral(candidate) && Is.string(candidate.label) &&
 			(Is.boolean(candidate.needsConfirmation) || candidate.needsConfirmation === undefined) &&
 			(Is.string(candidate.description) || candidate.description === undefined);
 	}
@@ -850,7 +850,7 @@ export namespace ChangeAnnotation {
 export namespace ChangeAnnotationIdentifier {
 	export function is(value: any): value is ChangeAnnotationIdentifier {
 		const candidate = value as ChangeAnnotationIdentifier;
-		return typeof candidate === 'string';
+		return Is.string(candidate);
 	}
 }
 
@@ -3203,7 +3203,7 @@ export namespace SelectionRange {
 
 	export function is(value: any): value is SelectionRange {
 		let candidate = value as SelectionRange;
-		return candidate !== undefined && Range.is(candidate.range) && (candidate.parent === undefined || SelectionRange.is(candidate.parent));
+		return Is.objectLiteral(candidate) && Range.is(candidate.range) && (candidate.parent === undefined || SelectionRange.is(candidate.parent));
 	}
 }
 
@@ -3391,7 +3391,7 @@ export interface SemanticTokens {
 export namespace SemanticTokens {
 	export function is(value: any): value is SemanticTokens {
 		const candidate = value as SemanticTokens;
-		return candidate !== undefined && (candidate.resultId === undefined || typeof candidate.resultId === 'string') &&
+		return Is.objectLiteral(candidate) && (candidate.resultId === undefined || typeof candidate.resultId === 'string') &&
 			Array.isArray(candidate.data) && (candidate.data.length === 0 || typeof candidate.data[0] === 'number');
 	}
 }
