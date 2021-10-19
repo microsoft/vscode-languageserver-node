@@ -10,6 +10,10 @@ to implement language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
+### 1.0.2
+
+- JSDoc updates
+
 ### 1.0.0
 
 Initial version.
