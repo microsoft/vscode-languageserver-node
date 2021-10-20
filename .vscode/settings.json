@@ -51,11 +51,6 @@
 	},
 	"cSpell.words": [
 		"ASAR",
-		"LSIF",
-		"Struct",
-		"Undispatched",
-		"Unregistration",
-		"XCOPY",
 		"asColorInformations",
 		"asParameterInformations",
 		"asSignatureInformations",
@@ -64,6 +59,7 @@
 		"diagnostic's",
 		"hover's",
 		"lsclient",
+		"LSIF",
 		"lsptests",
 		"msgpack",
 		"plugable",
@@ -73,12 +69,17 @@
 		"refactorings",
 		"retriggerRequest",
 		"serializable",
+		"splitted",
+		"Struct",
 		"tsbuild",
 		"uinteger",
+		"Undispatched",
 		"unregisteration",
 		"unregisterations",
+		"Unregistration",
 		"unregistrations",
 		"vsdiag",
-		"whitespaces"
+		"whitespaces",
+		"XCOPY"
 	]
 }
