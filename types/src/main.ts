@@ -2655,7 +2655,7 @@ export interface DocumentSymbol {
 	kind: SymbolKind;
 
 	/**
-	 * Tags for this completion item.
+	 * Tags for this document symbol.
 	 *
 	 * @since 3.16.0
 	 */
@@ -3329,7 +3329,11 @@ export enum SemanticTokenTypes {
 	string = 'string',
 	number = 'number',
 	regexp = 'regexp',
-	operator = 'operator'
+	operator = 'operator',
+	/**
+	 * @since 3.17.0
+	 */
+	decorator = 'decorator'
 }
 
 /**
