@@ -186,8 +186,8 @@ export class LanguageClient extends CommonLanguageClient {
 		return this._isInDebugMode;
 	}
 
-	public stop(): Promise<void> {
-		return super.stop().then(() => {
+	public stop(timeout: number = 2000): Promise<void> {
+		return super.stop(timeout).finally(() => {
 			if (this._serverProcess) {
 				const toCheck = this._serverProcess;
 				this._serverProcess = undefined;

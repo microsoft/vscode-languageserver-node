@@ -127,7 +127,8 @@ connection.onInitialize((params: InitializeParams): any => {
 			identifier: 'da348dc5-c30a-4515-9d98-31ff3be38d14',
 			interFileDependencies: true,
 			workspaceDiagnostics: true
-		}
+		},
+		typeHierarchyProvider: true
 	};
 	return { capabilities, customResults: { hello: 'world' } };
 });

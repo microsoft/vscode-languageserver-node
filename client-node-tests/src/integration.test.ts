@@ -1183,4 +1183,19 @@ suite('Client integration', () => {
 		assert.strictEqual(client.needsStart(), true);
 		assert.strictEqual(client.needsStop(), false);
 	});
+
+	test('Stop fails if server shutdown request times out', async () => {
+		let serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/timeoutOnShutdownServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		let clientOptions: lsclient.LanguageClientOptions = {};
+		let client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		client.start();
+		await client.onReady();
+
+		await assert.rejects(async () => {
+			await client.stop(100);
+		}, /Stopping the server timed out/);
+	});
 });

@@ -3243,10 +3243,6 @@ export abstract class BaseLanguageClient {
 
 	private doInitialize(connection: Connection, initParams: InitializeParams): Promise<InitializeResult> {
 		return connection.initialize(initParams).then((result) => {
-
-			// Trick (yanzh): always enable type hierarchy
-			(result as InitializeResult).capabilities.typeHierarchyProvider=true;
-
 			this._resolvedConnection = connection;
 			this._initializeResult = result;
 			this.state = ClientState.Running;
@@ -3331,7 +3327,7 @@ export abstract class BaseLanguageClient {
 		return undefined;
 	}
 
-	public stop(): Promise<void> {
+	public stop(timeout: number = 2000): Promise<void> {
 		this._initializeResult = undefined;
 		if (!this._connectionPromise) {
 			this.state = ClientState.Stopped;
@@ -3342,19 +3338,34 @@ export abstract class BaseLanguageClient {
 		}
 		this.state = ClientState.Stopping;
 		this.cleanUp(false);
-		// unhook listeners
-		return this._onStop = this.resolveConnection().then(connection => {
+
+		const tp = new Promise<undefined>(c => { RAL().timer.setTimeout(c, timeout); });
+		const shutdown = this.resolveConnection().then(connection => {
 			return connection.shutdown().then(() => {
 				return connection.exit().then(() => {
-					connection.end();
-					connection.dispose();
-					this.state = ClientState.Stopped;
-					this.cleanUpChannel();
-					this._onStop = undefined;
-					this._connectionPromise = undefined;
-					this._resolvedConnection = undefined;
+					return connection;
 				});
 			});
+		});
+
+		return this._onStop = Promise.race([tp, shutdown]).then((connection) => {
+			// The connection won the race with the timeout.
+			if (connection !== undefined) {
+				connection.end();
+				connection.dispose();
+			} else {
+				this.error(`Stopping server timed out`, undefined, false);
+				throw new Error(`Stopping the server timed out`);
+			}
+		}, (error) => {
+			this.error(`Stopping server failed`, error, false);
+			throw error;
+		}).finally(() => {
+			this.state = ClientState.Stopped;
+			this.cleanUpChannel();
+			this._onStop = undefined;
+			this._connectionPromise = undefined;
+			this._resolvedConnection = undefined;
 		});
 	}
 
