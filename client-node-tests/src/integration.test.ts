@@ -1215,4 +1215,29 @@ suite('Server tests', () => {
 		await client.stop();
 	});
 
+	test('Test state change events', async() => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/nullServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		let state: lsclient.State | undefined;
+		client.onDidChangeState(event => {
+			state = event.newState;
+		});
+		client.start();
+		await client.onReady();
+		assert.strictEqual(state, lsclient.State.Running);
+
+		await client.stop();
+		assert.strictEqual(state, lsclient.State.Stopped);
+
+		client.start();
+		await client.onReady();
+		assert.strictEqual(state, lsclient.State.Running);
+
+		await client.stop();
+		assert.strictEqual(state, lsclient.State.Stopped);
+	});
 });

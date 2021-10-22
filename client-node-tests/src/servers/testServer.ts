@@ -16,7 +16,7 @@ import {
 import { URI } from 'vscode-uri';
 import { $DiagnosticClientCapabilities } from 'vscode-languageserver-protocol/src/common/proposed.diagnostic';
 
-let connection: ProposedFeatures.Connection = createConnection(ProposedFeatures.all);
+const connection: ProposedFeatures.Connection = createConnection(ProposedFeatures.all);
 
 console.log = connection.console.log.bind(connection.console);
 console.error = connection.console.error.bind(connection.console);
@@ -431,7 +431,7 @@ connection.languages.diagnostics.onWorkspace(() => {
 	};
 });
 
-let typeHierarchySample = {
+const typeHierarchySample = {
 	superTypes: [] as TypeHierarchyItem[],
 	subTypes: [] as TypeHierarchyItem[]
 };

@@ -7,9 +7,11 @@ import { createConnection, Connection, InitializeParams } from '../../../server/
 
 const connection: Connection = createConnection();
 connection.onInitialize((_params: InitializeParams): any => {
-	return { capabilities: {} };
+	return {
+		capabilities: {
+		}
+	};
 });
 connection.onShutdown(() => {
-	process.exit(100);
 });
 connection.listen();
