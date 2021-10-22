@@ -3206,11 +3206,13 @@ export abstract class BaseLanguageClient {
 
 	private initialize(connection: Connection): Promise<InitializeResult> {
 		this.refreshTrace(connection, false);
-		let initOption = this._clientOptions.initializationOptions;
-		let rootPath = this._clientOptions.workspaceFolder
-			? this._clientOptions.workspaceFolder.uri.fsPath
-			: this._clientGetRootPath();
-		let initParams: InitializeParams = {
+		const initOption = this._clientOptions.initializationOptions;
+		// If the client is locked to a workspace folder use it. In this case the workspace folder
+		// feature is not registered and we need to initialize the value here.
+		const [rootPath, workspaceFolders] = this._clientOptions.workspaceFolder !== undefined
+			? [this._clientOptions.workspaceFolder.uri.fsPath, [{ uri: this._c2p.asUri(this._clientOptions.workspaceFolder.uri), name: this._clientOptions.workspaceFolder.name }]]
+			: [this._clientGetRootPath(), null];
+		const initParams: InitializeParams = {
 			processId: null,
 			clientInfo: {
 				name: Env.appName,
@@ -3222,7 +3224,7 @@ export abstract class BaseLanguageClient {
 			capabilities: this.computeClientCapabilities(),
 			initializationOptions: Is.func(initOption) ? initOption() : initOption,
 			trace: Trace.toString(this._trace),
-			workspaceFolders: null
+			workspaceFolders: workspaceFolders
 		};
 		this.fillInitializeParams(initParams);
 		if (this._clientOptions.progressOnInitialization) {
