@@ -372,6 +372,7 @@ suite('Protocol Converter', () => {
 			data: 'data',
 			additionalTextEdits: [proto.TextEdit.insert({ line: 1, character: 2 }, 'insert')],
 			command: command,
+			commitCharacters: ['.'],
 			tags: [proto.CompletionItemTag.Deprecated]
 		};
 
@@ -389,6 +390,8 @@ suite('Protocol Converter', () => {
 		strictEqual(result.command!.command, command.command);
 		strictEqual(result.command!.arguments, command.arguments);
 		strictEqual(result.tags![0], CompletionItemTag.Deprecated);
+		strictEqual(result.commitCharacters!.length, 1);
+		strictEqual(result.commitCharacters![0], '.');
 		ok(result.additionalTextEdits![0] instanceof vscode.TextEdit);
 
 		let completionResult = p2c.asCompletionResult([completionItem]);
@@ -655,6 +658,20 @@ suite('Protocol Converter', () => {
 		const back2 = c2p.asCompletionItem(result, false);
 		strictEqual(back2.labelDetails, undefined);
 		strictEqual(back2.label, 'name');
+	});
+
+	test('Completion Item - default commit characters', () => {
+		const completionItem: proto.CompletionItem = {
+			label: 'name'
+		};
+		let result = p2c.asCompletionItem(completionItem, ['.']);
+		strictEqual(result.commitCharacters!.length, 1);
+		strictEqual(result.commitCharacters![0], '.');
+
+		completionItem.commitCharacters = [':'];
+		result = p2c.asCompletionItem(completionItem, ['.']);
+		strictEqual(result.commitCharacters!.length, 1);
+		strictEqual(result.commitCharacters![0], ':');
 	});
 
 	test('Completion Result', () => {

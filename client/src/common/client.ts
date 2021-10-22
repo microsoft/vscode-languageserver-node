@@ -1615,14 +1615,15 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 
 	protected registerLanguageProvider(options: CompletionRegistrationOptions, id: string): [Disposable, CompletionItemProvider] {
 		this.labelDetailsSupport.set(id, !!options.completionItem?.labelDetailsSupport);
-		const triggerCharacters = options.triggerCharacters || [];
+		const triggerCharacters = options.triggerCharacters ?? [];
+		const defaultCommitCharacters = options.allCommitCharacters;
 		const provider: CompletionItemProvider = {
 			provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken, context: VCompletionContext): ProviderResult<VCompletionList | VCompletionItem[]> => {
 				const client = this._client;
 				const middleware = this._client.clientOptions.middleware!;
 				const provideCompletionItems: ProvideCompletionItemsSignature = (document, position, context, token) => {
 					return client.sendRequest(CompletionRequest.type, client.code2ProtocolConverter.asCompletionParams(document, position, context), token).then(
-						client.protocol2CodeConverter.asCompletionResult,
+						(result) => client.protocol2CodeConverter.asCompletionResult(result, defaultCommitCharacters),
 						(error) => {
 							return client.handleFailedRequest(CompletionRequest.type, token, error, null);
 						}

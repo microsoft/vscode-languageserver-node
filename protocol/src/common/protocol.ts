@@ -1003,7 +1003,7 @@ export interface _InitializeParams extends WorkDoneProgressParams {
 	/**
 	 * The initial trace setting. If omitted trace is disabled ('off').
 	 */
-	trace?: 'off' | 'messages' | 'payloads' | 'verbose';
+	trace?: 'off' | 'messages' | 'compact' | 'verbose';
 }
 
 export type InitializeParams = _InitializeParams & WorkspaceFoldersInitializeParams;

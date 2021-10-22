@@ -123,6 +123,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 				textDocumentSync: TextDocumentSyncKind.Full,
 				hoverProvider: true,
 				completionProvider: {
+					allCommitCharacters: ['.', ','],
 					resolveProvider: false,
 				},
 				signatureHelpProvider: {
@@ -384,6 +385,7 @@ connection.onCompletion((params, token): CompletionItem[] => {
 	result.push(item);
 
 	item = CompletionItem.create('bar');
+	item.commitCharacters = [':'];
 	item.textEdit = InsertReplaceEdit.create('bar',
 		Range.create(params.position, params.position),
 		Range.create(params.position, Position.create(params.position.line, params.position.character +1))
