@@ -7,7 +7,7 @@ import * as assert from 'assert';
 import * as zlib from 'zlib';
 import * as msgpack from 'msgpack-lite';
 
-import { Message, RequestMessage, isRequestMessage } from '../../common/messages';
+import { Message, RequestMessage } from '../../common/messages';
 import { ContentEncoder, ContentDecoder, Encodings, FunctionContentTypeEncoder, FunctionContentTypeDecoder  } from '../../common/encoding';
 import { StreamMessageWriter, StreamMessageReader } from '../../node/main';
 import RIL from '../ril';
@@ -178,7 +178,7 @@ suite('Messages', () => {
 			});
 
 			reader.listen((message) => {
-				if (!isRequestMessage(message)) {
+				if (!Message.isRequest(message)) {
 					throw new Error(`No request message`);
 				}
 				assert.equal(message.id, 1);
@@ -197,7 +197,7 @@ suite('Messages', () => {
 			contentDecoder: gzipDecoder
 		});
 		reader.listen((message: Message) => {
-			if (!isRequestMessage(message)) {
+			if (!Message.isRequest(message)) {
 				throw new Error(`No request message`);
 			}
 			assert.strictEqual(message.id, 1);
@@ -254,7 +254,7 @@ suite('Messages', () => {
 		await new Promise<void>((resolve, reject) => {
 			try {
 				reader.listen((message) => {
-					if (!isRequestMessage(message)) {
+					if (!Message.isRequest(message)) {
 						throw reject(new Error(`No request message`));
 					}
 					assert.strictEqual(message.id, 1);
