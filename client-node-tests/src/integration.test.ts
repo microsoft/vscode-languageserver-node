@@ -1161,14 +1161,16 @@ suite('Client integration', () => {
 		middleware.provideTypeHierarchySubtypes = undefined;
 		assert.strictEqual(middlewareCalled, true);
 	});
+});
 
+suite('Server tests', () => {
 	test('Stop fails if server crashes after shutdown request', async () => {
-		let serverOptions: lsclient.ServerOptions = {
+		const serverOptions: lsclient.ServerOptions = {
 			module: path.join(__dirname, './servers/crashOnShutdownServer.js'),
 			transport: lsclient.TransportKind.ipc,
 		};
-		let clientOptions: lsclient.LanguageClientOptions = {};
-		let client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
 		client.start();
 		await client.onReady();
 
@@ -1185,12 +1187,12 @@ suite('Client integration', () => {
 	});
 
 	test('Stop fails if server shutdown request times out', async () => {
-		let serverOptions: lsclient.ServerOptions = {
+		const serverOptions: lsclient.ServerOptions = {
 			module: path.join(__dirname, './servers/timeoutOnShutdownServer.js'),
 			transport: lsclient.TransportKind.ipc,
 		};
-		let clientOptions: lsclient.LanguageClientOptions = {};
-		let client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
 		client.start();
 		await client.onReady();
 
@@ -1198,4 +1200,19 @@ suite('Client integration', () => {
 			await client.stop(100);
 		}, /Stopping the server timed out/);
 	});
+
+	test('Server can be stopped right after start', async() => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/startStopServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		client.start();
+		await client.stop();
+
+		client.start();
+		await client.stop();
+	});
+
 });

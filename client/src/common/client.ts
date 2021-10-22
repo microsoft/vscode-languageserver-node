@@ -3330,7 +3330,11 @@ export abstract class BaseLanguageClient {
 		return undefined;
 	}
 
-	public stop(timeout: number = 2000): Promise<void> {
+	public async stop(timeout: number = 2000): Promise<void> {
+		// to ensure proper shutdown we can on stop a if everything is
+		// ready. Otherwise we would fail on clean up
+		await this.onReady();
+
 		this._initializeResult = undefined;
 		if (!this._connectionPromise) {
 			this.state = ClientState.Stopped;
