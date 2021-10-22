@@ -1163,6 +1163,28 @@ suite('Client integration', () => {
 	});
 });
 
+namespace CrashNotification {
+	export const type = new lsclient.NotificationType0('test/crash');
+}
+
+class CrashClient extends lsclient.LanguageClient {
+
+	private resolve: (() => void) | undefined;
+	public onCrash: Promise<void>;
+
+	constructor(id: string, name: string, serverOptions: lsclient.ServerOptions, clientOptions: lsclient.LanguageClientOptions) {
+		super(id, name, serverOptions, clientOptions);
+		this.onCrash = new Promise((resolve) => {
+			this.resolve = resolve;
+		});
+	}
+
+	protected handleConnectionClosed(): void {
+		super.handleConnectionClosed();
+		this.resolve!();
+	}
+}
+
 suite('Server tests', () => {
 	test('Stop fails if server crashes after shutdown request', async () => {
 		const serverOptions: lsclient.ServerOptions = {
@@ -1239,5 +1261,38 @@ suite('Server tests', () => {
 
 		await client.stop();
 		assert.strictEqual(state, lsclient.State.Stopped);
+	});
+
+	test('Test state change events on crash', async() => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/crashServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new CrashClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		let states: lsclient.State[] = [];
+		client.onDidChangeState(event => {
+			states.push(event.newState);
+		});
+		client.start();
+		await client.onReady();
+		assert.strictEqual(states.length, 2, 'First start');
+		assert.strictEqual(states[0], lsclient.State.Starting);
+		assert.strictEqual(states[1], lsclient.State.Running);
+
+		states = [];
+		await client.sendNotification(CrashNotification.type);
+		await client.onCrash;
+
+		await client.onReady();
+		assert.strictEqual(states.length, 3, 'Restart after crash');
+		assert.strictEqual(states[0], lsclient.State.Stopped);
+		assert.strictEqual(states[1], lsclient.State.Starting);
+		assert.strictEqual(states[2], lsclient.State.Running);
+
+		states = [];
+		await client.stop();
+		assert.strictEqual(states.length, 1, 'After stop');
+		assert.strictEqual(states[0], lsclient.State.Stopped);
 	});
 });

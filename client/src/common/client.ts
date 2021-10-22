@@ -3476,7 +3476,7 @@ export abstract class BaseLanguageClient {
 		});
 	}
 
-	protected handleConnectionClosed() {
+	protected handleConnectionClosed(): void {
 		// Check whether this is a normal shutdown in progress or the client stopped normally.
 		if (this.state === ClientState.Stopped) {
 			return;
@@ -3515,8 +3515,8 @@ export abstract class BaseLanguageClient {
 		}
 	}
 
-	private handleConnectionError(error: Error, message: Message | undefined, count: number | undefined) {
-		let action = this._clientOptions.errorHandler!.error(error, message, count);
+	private handleConnectionError(error: Error, message: Message | undefined, count: number | undefined): void {
+		const action = this._clientOptions.errorHandler!.error(error, message, count);
 		if (action === ErrorAction.Shutdown) {
 			this.error('Connection to server is erroring. Shutting down server.');
 			this.stop().catch((error) => {
@@ -3532,7 +3532,7 @@ export abstract class BaseLanguageClient {
 	}
 
 	private refreshTrace(connection: Connection, sendNotification: boolean = false): void {
-		let config = Workspace.getConfiguration(this._id);
+		const config = Workspace.getConfiguration(this._id);
 		let trace: Trace = Trace.Off;
 		let traceFormat: TraceFormat = TraceFormat.Text;
 		if (config) {
