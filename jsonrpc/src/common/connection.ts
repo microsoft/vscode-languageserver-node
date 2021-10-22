@@ -7,9 +7,9 @@ import RAL from './ral';
 import * as Is from './is';
 
 import {
-	Message, MessageSignature, RequestMessage, RequestType, isRequestMessage, RequestType0, RequestType1, RequestType2, RequestType3,
-	RequestType4, RequestType5, RequestType6, RequestType7, RequestType8, RequestType9, ResponseMessage, isResponseMessage,
-	ResponseError, ErrorCodes, NotificationMessage, isNotificationMessage, NotificationType, NotificationType0, NotificationType1,
+	Message, MessageSignature, RequestMessage, RequestType, RequestType0, RequestType1, RequestType2, RequestType3,
+	RequestType4, RequestType5, RequestType6, RequestType7, RequestType8, RequestType9, ResponseMessage,
+	ResponseError, ErrorCodes, NotificationMessage, NotificationType, NotificationType0, NotificationType1,
 	NotificationType2, NotificationType3, NotificationType4, NotificationType5, NotificationType6, NotificationType7, NotificationType8,
 	NotificationType9, LSPMessageType, _EM, ParameterStructures
 } from './messages';
@@ -530,9 +530,9 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 	}
 
 	function addMessageToQueue(queue: MessageQueue, message: Message): void {
-		if (isRequestMessage(message)) {
+		if (Message.isRequest(message)) {
 			queue.set(createRequestQueueKey(message.id), message);
-		} else if (isResponseMessage(message)) {
+		} else if (Message.isResponse(message)) {
 			queue.set(createResponseQueueKey(message.id), message);
 		} else {
 			queue.set(createNotificationQueueKey(), message);
@@ -593,11 +593,11 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		}
 		const message = messageQueue.shift()!;
 		try {
-			if (isRequestMessage(message)) {
+			if (Message.isRequest(message)) {
 				handleRequest(message);
-			} else if (isNotificationMessage(message)) {
+			} else if (Message.isNotification(message)) {
 				handleNotification(message);
-			} else if (isResponseMessage(message)) {
+			} else if (Message.isResponse(message)) {
 				handleResponse(message);
 			} else {
 				handleInvalidMessage(message);
@@ -611,11 +611,11 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		try {
 			// We have received a cancellation message. Check if the message is still in the queue
 			// and cancel it if allowed to do so.
-			if (isNotificationMessage(message) && message.method === CancelNotification.type.method) {
+			if (Message.isNotification(message) && message.method === CancelNotification.type.method) {
 				const cancelId = (message.params as CancelParams).id;
 				const key = createRequestQueueKey(cancelId);
 				const toCancel = messageQueue.get(key);
-				if (isRequestMessage(toCancel)) {
+				if (Message.isRequest(toCancel)) {
 					const strategy = options?.connectionStrategy;
 					const response = (strategy && strategy.cancelUndispatched) ? strategy.cancelUndispatched(toCancel, cancelUndispatched) : cancelUndispatched(toCancel);
 					if (response && (response.error !== undefined || response.result !== undefined)) {
