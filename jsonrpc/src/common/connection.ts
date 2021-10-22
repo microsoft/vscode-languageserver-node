@@ -189,10 +189,10 @@ export const NullLogger: Logger = Object.freeze({
 });
 
 export enum Trace {
-	Off, Messages, Payloads, Verbose
+	Off, Messages, Compact, Verbose
 }
 
-export type TraceValues = 'off' | 'messages' | 'payloads' | 'verbose';
+export type TraceValues = 'off' | 'messages' | 'compact' | 'verbose';
 export namespace Trace {
 	export function fromString(value: string): Trace {
 		if (!Is.string(value)) {
@@ -204,8 +204,8 @@ export namespace Trace {
 				return Trace.Off;
 			case 'messages':
 				return Trace.Messages;
-			case 'payloads':
-				return Trace.Payloads;
+			case 'compact':
+				return Trace.Compact;
 			case 'verbose':
 				return Trace.Verbose;
 			default:
@@ -219,8 +219,8 @@ export namespace Trace {
 				return 'off';
 			case Trace.Messages:
 				return 'messages';
-			case Trace.Payloads:
-				return 'payloads';
+			case Trace.Compact:
+				return 'compact';
 			case Trace.Verbose:
 				return 'verbose';
 			default:
@@ -885,14 +885,19 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		}
 	}
 
-	function stringifyParams(params?: any): string | undefined {
-		switch (trace) {
-		case Trace.Verbose:
-				return JSON.stringify(params, null, 4);
-		case Trace.Payloads:
-				return JSON.stringify(params);
-		default:
+	function stringifyTrace(params: string | number | boolean | object | any[]): string;
+	function stringifyTrace(params: string | number | boolean | object | any[] | undefined | null): string | undefined;
+	function stringifyTrace(params: string | number | boolean | object | any[] | undefined | null): string | undefined {
+		if (params === undefined || params === null) {
 			return undefined;
+		}
+		switch (trace) {
+			case Trace.Verbose:
+				return JSON.stringify(params, null, 4);
+			case Trace.Compact:
+				return JSON.stringify(params);
+			default:
+				return undefined;
 		}
 	}
 
@@ -902,9 +907,9 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		}
 
 		if (traceFormat === TraceFormat.Text) {
-			let data: string | undefined = stringifyParams(message.params);
-			if ((trace === Trace.Verbose || trace === Trace.Payloads) && message.params) {
-				data = `Params: ${stringifyParams(message.params)}\n\n`;
+			let data: string | undefined = undefined;
+			if ((trace === Trace.Verbose || trace === Trace.Compact) && message.params) {
+				data = `Params: ${stringifyTrace(message.params)}\n\n`;
 			}
 			tracer.log(`Sending request '${message.method} - (${message.id})'.`, data);
 		} else {
@@ -919,9 +924,9 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 
 		if (traceFormat === TraceFormat.Text) {
 			let data: string | undefined = undefined;
-			if (trace === Trace.Verbose || trace === Trace.Payloads) {
+			if (trace === Trace.Verbose || trace === Trace.Compact) {
 				if (message.params) {
-					data = `Params: ${stringifyParams(message.params)}\n\n`;
+					data = `Params: ${stringifyTrace(message.params)}\n\n`;
 				} else {
 					data = 'No parameters provided.\n\n';
 				}
@@ -939,12 +944,12 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 
 		if (traceFormat === TraceFormat.Text) {
 			let data: string | undefined = undefined;
-			if (trace === Trace.Verbose || trace === Trace.Payloads) {
+			if (trace === Trace.Verbose || trace === Trace.Compact) {
 				if (message.error && message.error.data) {
-					data = `Error data: ${stringifyParams(message.error.data)}\n\n`;
+					data = `Error data: ${stringifyTrace(message.error.data)}\n\n`;
 				} else {
 					if (message.result) {
-						data = `Result: ${stringifyParams(message.result)}\n\n`;
+						data = `Result: ${stringifyTrace(message.result)}\n\n`;
 					} else if (message.error === undefined) {
 						data = 'No result returned.\n\n';
 					}
@@ -963,8 +968,8 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 
 		if (traceFormat === TraceFormat.Text) {
 			let data: string | undefined = undefined;
-			if ((trace === Trace.Verbose || trace === Trace.Payloads) && message.params) {
-				data = `Params: ${stringifyParams(message.params)}\n\n`;
+			if ((trace === Trace.Verbose || trace === Trace.Compact) && message.params) {
+				data = `Params: ${stringifyTrace(message.params)}\n\n`;
 			}
 			tracer.log(`Received request '${message.method} - (${message.id})'.`, data);
 		} else {
@@ -979,7 +984,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 
 		if (traceFormat === TraceFormat.Text) {
 			let data: string | undefined = undefined;
-			if (trace === Trace.Verbose || trace === Trace.Payloads) {
+			if (trace === Trace.Verbose || trace === Trace.Compact) {
 				if (message.params) {
 					data = `Params: ${Is.string(message.params)}\n\n`;
 				} else {
@@ -999,12 +1004,12 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 
 		if (traceFormat === TraceFormat.Text) {
 			let data: string | undefined = undefined;
-			if (trace === Trace.Verbose || trace === Trace.Payloads) {
+			if (trace === Trace.Verbose || trace === Trace.Compact) {
 				if (message.error && message.error.data) {
-					data = `Error data: ${stringifyParams(message.error.data)}\n\n`;
+					data = `Error data: ${stringifyTrace(message.error.data)}\n\n`;
 				} else {
 					if (message.result) {
-						data = `Result: ${stringifyParams(message.result)}\n\n`;
+						data = `Result: ${stringifyTrace(message.result)}\n\n`;
 					} else if (message.error === undefined) {
 						data = 'No result returned.\n\n';
 					}
@@ -1404,7 +1409,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		if (trace === Trace.Off || !tracer) {
 			return;
 		}
-		const verbose = trace === Trace.Verbose || trace === Trace.Payloads;
+		const verbose = trace === Trace.Verbose || trace === Trace.Compact;
 		tracer.log(params.message, verbose ? params.verbose : undefined);
 	});
 
