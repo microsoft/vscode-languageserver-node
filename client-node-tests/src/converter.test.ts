@@ -731,8 +731,8 @@ suite('Protocol Converter', () => {
 			signatures: [
 				{ label: 'label' }
 			],
-			activeSignature: null,
-			activeParameter: null
+			activeSignature: undefined,
+			activeParameter: undefined
 		};
 
 		let result = p2c.asSignatureHelp(signatureHelp);
