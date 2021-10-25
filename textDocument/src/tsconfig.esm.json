@@ -1,12 +1,12 @@
 {
 	"extends": "../../tsconfig.base.json",
 	"compilerOptions": {
-		"target": "es5",
-		"module": "es6",
+		"target": "es2020",
+		"module": "es2020",
 		"sourceMap": false,
 		"declaration": true,
 		"stripInternal": true,
-		"lib": [ "es2015" ],
+		"lib": [ "es2020" ],
 		"outDir": "../lib/esm",
 		"incremental": true,
 		"tsBuildInfoFile":"../lib/esm/compile.tsbuildInfo",

@@ -4,6 +4,12 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
+import * as path from 'path';
+import * as _fs from 'fs';
+const fs = _fs.promises;
+
+import { URI } from 'vscode-uri';
+
 import {
 	CodeAction, CodeActionKind, Command, CompletionItem, createConnection, CreateFile, DeclarationLink,
 	Definition, DefinitionLink, Diagnostic, DocumentHighlight, DocumentHighlightKind, Hover, InitializeError,
@@ -11,7 +17,9 @@ import {
 	SignatureHelp, SymbolInformation, SymbolKind, TextDocumentEdit, TextDocuments, TextDocumentSyncKind,
 	TextEdit, VersionedTextDocumentIdentifier, ProposedFeatures, DiagnosticTag, Proposed, InsertTextFormat,
 	SelectionRangeRequest, SelectionRange, InsertReplaceEdit, SemanticTokensClientCapabilities, SemanticTokensLegend,
-	SemanticTokensBuilder, SemanticTokensRegistrationType, SemanticTokensRegistrationOptions, ProtocolNotificationType, ChangeAnnotation, AnnotatedTextEdit, WorkspaceChange, CompletionItemKind
+	SemanticTokensBuilder, SemanticTokensRegistrationType, SemanticTokensRegistrationOptions, ProtocolNotificationType, ChangeAnnotation, AnnotatedTextEdit,
+	WorkspaceChange,
+	CompletionItemKind, DiagnosticSeverity
 } from 'vscode-languageserver/node';
 
 import {
@@ -61,8 +69,8 @@ enum TokenTypes {
 }
 
 enum TokenModifiers {
-    abstract = 0,
-    deprecated = 1,
+	abstract = 0,
+	deprecated = 1,
 	_ = 2,
 }
 
@@ -79,7 +87,7 @@ function computeLegend(capability: SemanticTokensClientCapabilities): SemanticTo
 			tokenTypes.push(str);
 		} else {
 			if (str === 'lambdaFunction') {
-				tokenTypes.push('function')
+				tokenTypes.push('function');
 			} else {
 				tokenTypes.push('type');
 			}
@@ -90,7 +98,7 @@ function computeLegend(capability: SemanticTokensClientCapabilities): SemanticTo
 	for (let i = 0; i < TokenModifiers._; i++) {
 		const str = TokenModifiers[i];
 		if (clientTokenModifiers.has(str)) {
-			tokenModifiers.push(str)
+			tokenModifiers.push(str);
 		}
 	}
 
@@ -110,11 +118,12 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 
 	semanticTokensLegend = computeLegend(params.capabilities.textDocument!.semanticTokens!);
 	return new Promise((resolve, reject) => {
-		let result: InitializeResult = {
+		let result: InitializeResult & { capabilities : Proposed.$DiagnosticServerCapabilities }= {
 			capabilities: {
 				textDocumentSync: TextDocumentSyncKind.Full,
 				hoverProvider: true,
 				completionProvider: {
+					allCommitCharacters: ['.', ','],
 					resolveProvider: false,
 				},
 				signatureHelpProvider: {
@@ -145,8 +154,8 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 					}
 				},
 				implementationProvider: {
-					id: "AStaticImplementationID",
-					documentSelector: ["bat"]
+					id: 'AStaticImplementationID',
+					documentSelector: ['bat']
 				},
 				typeDefinitionProvider: true,
 				declarationProvider: { workDoneProgress: true },
@@ -154,7 +163,12 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 					commands: ['testbed.helloWorld']
 				},
 				callHierarchyProvider: true,
-				selectionRangeProvider: { workDoneProgress: true }
+				selectionRangeProvider: { workDoneProgress: true },
+				diagnosticProvider: {
+					identifier: 'testbed',
+					interFileDependencies: true,
+					workspaceDiagnostics: true
+				}
 			}
 		};
 		setTimeout(() => {
@@ -167,7 +181,7 @@ connection.onInitialized((params) => {
 	connection.workspace.onDidChangeWorkspaceFolders((event) => {
 		connection.console.log('Workspace folder changed received');
 	});
-	connection.workspace.getWorkspaceFolders().then(folders => {
+	void connection.workspace.getWorkspaceFolders().then(folders => {
 		for (let folder of folders) {
 			connection.console.log(`Get workspace folders: ${folder.name} ${folder.uri}`);
 		}
@@ -175,16 +189,16 @@ connection.onInitialized((params) => {
 	const registrationOptions: SemanticTokensRegistrationOptions = {
 		documentSelector: ['bat'],
 		legend: semanticTokensLegend,
-		range: true,
+		range: false,
 		full: {
 			delta: true
 		}
-	}
-	connection.client.register(SemanticTokensRegistrationType.type, registrationOptions);
+	};
+	void connection.client.register(SemanticTokensRegistrationType.type, registrationOptions);
 });
 
 connection.onShutdown((handler) => {
-	connection.console.log("Shutdown received");
+	connection.console.log('Shutdown received');
 	return new Promise((resolve, reject) => {
 		setTimeout(() => {
 			resolve(undefined);
@@ -199,10 +213,10 @@ documents.onDidChangeContent((event) => {
 
 documents.onDidSave((event) => {
 	connection.console.info(`Document got saved: ${event.document.uri} ${event.document.version}`);
-})
+});
 
 connection.onDidChangeWatchedFiles((params) => {
-	connection.console.log("File change event received");
+	connection.console.log('File change event received');
 	documents.all().forEach(document => {
 		connection.sendDiagnostics({ uri: document.uri, diagnostics: validate(document) });
 	});
@@ -212,9 +226,9 @@ connection.onDidChangeConfiguration((params) => {
 	documents.all().forEach(document => {
 		connection.sendDiagnostics({ uri: document.uri, diagnostics: validate(document) });
 	});
-	connection.workspace.getConfiguration('testbed').then((value) => {
-		connection.console.log("Configuration received");
-	})
+	void connection.workspace.getConfiguration('testbed').then((value) => {
+		connection.console.log('Configuration received');
+	});
 });
 
 /**
@@ -238,10 +252,10 @@ function validate(document: TextDocument): Diagnostic[] {
 	// 		clearInterval(interval);
 	// 	});
 	// });
-	connection.console.log("Validating document " + document.uri);
+	connection.console.log('Validating document ' + document.uri);
 	return [ {
 		range: Range.create(0, 0, 0, 10),
-		message: "A error message",
+		message: 'A error message',
 		tags: [
 			DiagnosticTag.Unnecessary
 		],
@@ -272,6 +286,83 @@ connection.onHover((textPosition): Hover => {
 	};
 });
 
+
+const patterns = [
+	/\b[A-Z]{2,}\b/g,
+	/\b[A-Z]{3,}\b/g,
+	/\b[A-Z]{4,}\b/g,
+	/\b[A-Z]{5,}\b/g
+];
+
+function computeDiagnostics(content: string): Diagnostic[] {
+	const result: Diagnostic[] = [];
+	const lines: string[] = content.match(/^.*(\n|\r\n|\r|$)/gm);
+	let lineNumber: number = 0;
+	for (const line of lines) {
+		const pattern = patterns[Math.floor(Math.random() * 3)];
+		let match: RegExpExecArray | null;
+		while (match = pattern.exec(line)) {
+			result.push(
+				Diagnostic.create(Range.create(lineNumber, match.index, lineNumber, match.index + match[0].length), `${match[0]} is all uppercase.`, DiagnosticSeverity.Error)
+			);
+		}
+		lineNumber++;
+	}
+	return result;
+}
+
+let resultIdCounter: number = 1;
+let versionCounter: number = 1;
+connection.languages.diagnostics.on(async (param) => {
+	const uri = URI.parse(param.textDocument.uri);
+	const document = documents.get(param.textDocument.uri);
+	const content = document !== undefined
+		? document.getText()
+		: uri.scheme === 'file'
+			? await fs.readFile(uri.fsPath, { encoding: 'utf8'} )
+			: undefined;
+	if (content === undefined) {
+		return { kind: Proposed.DocumentDiagnosticReportKind.full, items: [], resultId: `${resultIdCounter++}` };
+	}
+	return { kind: Proposed.DocumentDiagnosticReportKind.full, items: computeDiagnostics(content), resultId: `${resultIdCounter++}` };
+});
+
+connection.languages.diagnostics.onWorkspace(async (params, token, _, resultProgress): Promise<Proposed.WorkspaceDiagnosticReport> => {
+	const fsPath = URI.parse(folder).fsPath;
+
+	const toValidate: string[] = [];
+	for (const child of await fs.readdir(fsPath)) {
+		if (path.extname(child) === '.bat') {
+			toValidate.push(path.join(fsPath, child));
+		}
+	}
+
+	if (toValidate.length === 0) {
+		return { items: [] };
+	}
+
+	const doValidate = async (index: number) => {
+		if (index >= toValidate.length) {
+			index = 0;
+		}
+		const diagnostics = computeDiagnostics(await fs.readFile(toValidate[index], { encoding: 'utf8'} ));
+		resultProgress.report({ items: [
+			{
+				kind: Proposed.DocumentDiagnosticReportKind.full,
+				uri: URI.file(toValidate[index]).toString(),
+				version: versionCounter++,
+				items: diagnostics,
+				resultId: `${resultIdCounter++}`
+			}
+		]});
+		setTimeout(() => { void doValidate(++index); }, 500);
+	};
+	void doValidate(0);
+	return new Promise((resolve) => {
+		setTimeout(resolve, 120000);
+	});
+});
+
 connection.onCompletion((params, token): CompletionItem[] => {
 	const result: CompletionItem[] = [];
 	let item = CompletionItem.create('foo');
@@ -294,6 +385,7 @@ connection.onCompletion((params, token): CompletionItem[] => {
 	result.push(item);
 
 	item = CompletionItem.create('bar');
+	item.commitCharacters = [':'];
 	item.textEdit = InsertReplaceEdit.create('bar',
 		Range.create(params.position, params.position),
 		Range.create(params.position, Position.create(params.position.line, params.position.character +1))
@@ -301,7 +393,7 @@ connection.onCompletion((params, token): CompletionItem[] => {
 	result.push(item);
 
 	item = CompletionItem.create('-record');
-	item.insertText = '-record(${1:name}, {${2:field} = ${3:Value} :: ${4:Type}()}).'
+	item.insertText = '-record(${1:name}, {${2:field} = ${3:Value} :: ${4:Type}()}).';
 	item.insertTextFormat = InsertTextFormat.Snippet;
 	item.kind = CompletionItemKind.Field;
 	result.push(item);
@@ -310,7 +402,7 @@ connection.onCompletion((params, token): CompletionItem[] => {
 });
 
 connection.onCompletionResolve((item): CompletionItem => {
-	item.detail = "This is a special hello world function";
+	item.detail = 'This is a special hello world function';
 	item.documentation =  {
 		kind: MarkupKind.Markdown,
 		value: [
@@ -323,7 +415,7 @@ connection.onCompletionResolve((item): CompletionItem => {
 });
 
 connection.onSignatureHelp((item): SignatureHelp => {
-	return { signatures: [{ label: "Hello World Signature" }], activeSignature: 0, activeParameter: 0 }
+	return { signatures: [{ label: 'Hello World Signature' }], activeSignature: 0, activeParameter: 0 };
 });
 
 connection.onDefinition((params): DefinitionLink[] => {
@@ -367,7 +459,7 @@ connection.onReferences((params): Location[] => {
 	return [
 		{ uri: params.textDocument.uri, range: { start: { line: 0, character: 0}, end: {line: 0, character: 10 }}},
 		{ uri: params.textDocument.uri, range: { start: { line: 2, character: 0}, end: {line: 2, character: 20 }}},
-	]
+	];
 });
 
 connection.onDocumentHighlight((textPosition) => {
@@ -382,11 +474,11 @@ connection.onDocumentHighlight((textPosition) => {
 
 connection.onDocumentSymbol((identifier) => {
 	return [
-		SymbolInformation.create("Item 1", SymbolKind.Function, {
+		SymbolInformation.create('Item 1', SymbolKind.Function, {
 			start: { line: 0, character: 0 },
 			end: { line: 0, character: 10 }
 		}),
-		SymbolInformation.create("Item 2", SymbolKind.Function, {
+		SymbolInformation.create('Item 2', SymbolKind.Function, {
 			start: { line: 1, character: 0 },
 			end: { line: 1, character: 10 }
 		})
@@ -395,12 +487,12 @@ connection.onDocumentSymbol((identifier) => {
 
 connection.onWorkspaceSymbol((params) => {
 	return [
-		SymbolInformation.create("Workspace Item 1", SymbolKind.Function, {
+		SymbolInformation.create('Workspace Item 1', SymbolKind.Function, {
 			start: { line: 0, character: 0 },
 			end: { line: 0, character: 10 }
 
 		}, `${folder}/test.bat`),
-		SymbolInformation.create("Workspace Item 2", SymbolKind.Function, {
+		SymbolInformation.create('Workspace Item 2', SymbolKind.Function, {
 			start: { line: 1, character: 0 },
 			end: { line: 1, character: 10 }
 		}, `${folder}/test.bat`)
@@ -408,26 +500,35 @@ connection.onWorkspaceSymbol((params) => {
 });
 
 connection.onCodeAction((params) => {
+	const document = documents.get(params.textDocument.uri);
+	const change: WorkspaceChange = new WorkspaceChange();
+	change.createFile(`${folder}/newFile.bat`, { overwrite: true });
+	const a = change.getTextEditChange(document);
+	a.insert({ line: 0, character: 0}, 'Code Action', ChangeAnnotation.create('Insert some text', true));
+	const b = change.getTextEditChange({ uri: `${folder}/newFile.bat`, version: null });
+	b.insert({ line: 0, character: 0 }, 'The initial content', ChangeAnnotation.create('Add additional content', true));
+
 	const codeAction: CodeAction = {
-		title: "Custom Code Action",
+		title: 'Custom Code Action',
 		kind: CodeActionKind.QuickFix,
 		data: params.textDocument.uri
-	}
+	};
+	codeAction.edit = change.edit;
 	return [
 		codeAction
 	];
 });
 
 connection.onCodeActionResolve((codeAction) => {
-	const document = documents.get(codeAction.data as string);
-	const change: WorkspaceChange = new WorkspaceChange();
-	change.createFile(`${folder}/newFile.bat`, { overwrite: true });
-	const a = change.getTextEditChange(document);
-	a.insert({ line: 0, character: 0}, "Code Action", ChangeAnnotation.create('Insert some text', true));
-	const b = change.getTextEditChange({ uri: `${folder}/newFile.bat`, version: null });
-	b.insert({ line: 0, character: 0 }, 'The initial content', ChangeAnnotation.create('Add additional content', true));
+	// const document = documents.get(codeAction.data as string);
+	// const change: WorkspaceChange = new WorkspaceChange();
+	// change.createFile(`${folder}/newFile.bat`, { overwrite: true });
+	// const a = change.getTextEditChange(document);
+	// a.insert({ line: 0, character: 0}, "Code Action", ChangeAnnotation.create('Insert some text', true));
+	// const b = change.getTextEditChange({ uri: `${folder}/newFile.bat`, version: null });
+	// b.insert({ line: 0, character: 0 }, 'The initial content', ChangeAnnotation.create('Add additional content', true));
 
-	codeAction.edit = change.edit;
+	// codeAction.edit = change.edit;
 	return codeAction;
 });
 
@@ -437,7 +538,7 @@ connection.onCodeLens((params) => {
 			range: Range.create(2,0,2,10),
 			data: '1',
 		}
-	]
+	];
 });
 
 connection.onCodeLensResolve((codeLens) => {
@@ -449,7 +550,7 @@ connection.onDocumentFormatting((params) => {
 	return [
 		TextEdit.insert(Position.create(1,0), 'A new line\n')
 	];
-})
+});
 
 connection.onDocumentRangeFormatting((params) => {
 	connection.console.log(`Document Range Formatting: ${JSON.stringify(params.range)} ${JSON.stringify(params.options)}`);
@@ -524,6 +625,9 @@ connection.languages.callHierarchy.onOutgoingCalls((params) => {
 });
 
 let tokenBuilders: Map<string, SemanticTokensBuilder> = new Map();
+documents.onDidClose((event) => {
+	tokenBuilders.delete(event.document.uri);
+});
 function getTokenBuilder(document: TextDocument): SemanticTokensBuilder {
 	let result = tokenBuilders.get(document.uri);
 	if (result !== undefined) {

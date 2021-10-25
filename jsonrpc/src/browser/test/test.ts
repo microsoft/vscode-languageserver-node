@@ -28,7 +28,7 @@ suite('Browser IPC Reader / Writer', () => {
 			id: 1,
 			method: 'example'
 		};
-		writer.write(request);
+		void writer.write(request);
 	});
 
 	test('MessageBuffer Simple', () => {

@@ -80,7 +80,8 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Semanti
     		SemanticTokenTypes.string,
     		SemanticTokenTypes.number,
     		SemanticTokenTypes.regexp,
-    		SemanticTokenTypes.operator
+    		SemanticTokenTypes.operator,
+			SemanticTokenTypes.decorator
 		];
 		capability.tokenModifiers = [
     		SemanticTokenModifiers.declaration,

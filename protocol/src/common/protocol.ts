@@ -3,8 +3,6 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import * as Is from './utils/is';
-
 import { ProgressToken } from 'vscode-jsonrpc';
 
 import { ProtocolRequestType, ProtocolRequestType0, ProtocolNotificationType, ProtocolNotificationType0 } from './messages';
@@ -17,6 +15,8 @@ import {
 	CodeAction, CodeActionKind, DocumentSymbol, CompletionItemTag, DiagnosticTag, SymbolTag, uinteger, integer,
 	InsertTextMode
 } from 'vscode-languageserver-types';
+
+import * as Is from './utils/is';
 
 import { ImplementationRequest, ImplementationClientCapabilities, ImplementationOptions, ImplementationRegistrationOptions, ImplementationParams } from './protocol.implementation';
 import { TypeDefinitionRequest, TypeDefinitionClientCapabilities, TypeDefinitionOptions, TypeDefinitionRegistrationOptions, TypeDefinitionParams } from './protocol.typeDefinition';
@@ -51,7 +51,7 @@ import {
 } from './protocol.callHierarchy';
 
 import {
-	SemanticTokensPartialResult, SemanticTokensDeltaPartialResult, TokenFormat, SemanticTokensClientCapabilities,SemanticTokensOptions, SemanticTokensRegistrationOptions,
+	SemanticTokensPartialResult, SemanticTokensDeltaPartialResult, TokenFormat, SemanticTokensClientCapabilities, SemanticTokensOptions, SemanticTokensRegistrationOptions,
 	SemanticTokensParams, SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest,
 	SemanticTokensRefreshRequest, SemanticTokensWorkspaceClientCapabilities, SemanticTokensRegistrationType
 } from './protocol.semanticTokens';
@@ -75,6 +75,14 @@ import {
 	UniquenessLevel, MonikerKind, Moniker, MonikerClientCapabilities, MonikerOptions, MonikerRegistrationOptions, MonikerParams, MonikerRequest
 } from './protocol.moniker';
 
+import {
+	TypeHierarchyClientCapabilities, TypeHierarchyOptions, TypeHierarchyRegistrationOptions,
+} from './proposed.typeHierarchy';
+
+import {
+	InlineValuesClientCapabilities, InlineValuesOptions, InlineValuesRegistrationOptions, InlineValuesWorkspaceClientCapabilities
+} from './proposed.inlineValue';
+
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
 
@@ -88,7 +96,7 @@ let __noDynamicImport: LocationLink | undefined;
  * - `*` to match one or more characters in a path segment
  * - `?` to match on one character in a path segment
  * - `**` to match any number of path segments, including none
- * - `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)
+ * - `{}` to group sub patterns into an OR expression. (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)
  * - `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
  * - `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)
  *
@@ -365,6 +373,14 @@ export interface WorkspaceClientCapabilities {
 	 * Since 3.16.0
 	 */
 	fileOperations?: FileOperationClientCapabilities
+
+	/**
+	 * Capabilities specific to the inline values requests scoped to the
+	 * workspace.
+	 *
+	 * @since 3.17.0.
+	 */
+	inlineValues?: InlineValuesWorkspaceClientCapabilities;
 }
 
 /**
@@ -519,6 +535,20 @@ export interface TextDocumentClientCapabilities {
 	 * @since 3.16.0
 	 */
 	moniker?: MonikerClientCapabilities;
+
+	/**
+	 * Capabilities specific to the various type hierarchy requests.
+	 *
+	 * @since 3.17.0 - proposed state
+	 */
+	typeHierarchy?: TypeHierarchyClientCapabilities;
+
+	/**
+	 * Capabilities specific to the `textDocument/inlineValues` request.
+	 *
+	 * @since 3.17.0 - proposed state
+	 */
+	inlineValues?: InlineValuesClientCapabilities;
 }
 
 export interface WindowClientCapabilities {
@@ -605,7 +635,7 @@ export interface GeneralClientCapabilities {
 		 * will retry the request if it receives a
 		 * response with error code `ContentModified``
 		 */
-		 retryOnContentModified: string[];
+		retryOnContentModified: string[];
 	}
 
 	/**
@@ -637,10 +667,10 @@ export interface _ClientCapabilities {
 	 */
 	textDocument?: TextDocumentClientCapabilities;
 
-    /**
-     * Window specific client capabilities.
-     */
-    window?: WindowClientCapabilities;
+	/**
+	 * Window specific client capabilities.
+	 */
+	window?: WindowClientCapabilities;
 
 	/**
 	 * General client capabilities.
@@ -895,7 +925,21 @@ export interface _ServerCapabilities<T = any> {
 	 *
 	 * @since 3.16.0
 	 */
-    monikerProvider?: boolean | MonikerOptions | MonikerRegistrationOptions;
+	monikerProvider?: boolean | MonikerOptions | MonikerRegistrationOptions;
+
+	/**
+	 * The server provides type hierarchy support.
+	 *
+	 * @since 3.17.0 - proposed state
+	 */
+	typeHierarchyProvider?: boolean | TypeHierarchyOptions | TypeHierarchyRegistrationOptions;
+
+	/**
+	 * The server provides inline values.
+	 *
+	 * @since 3.17.0 - proposed state
+	 */
+	inlineValuesProvider?: boolean | InlineValuesOptions | InlineValuesOptions | InlineValuesRegistrationOptions;
 
 	/**
 	 * Experimental server capabilities.
@@ -985,7 +1029,7 @@ export interface _InitializeParams extends WorkDoneProgressParams {
 	/**
 	 * The initial trace setting. If omitted trace is disabled ('off').
 	 */
-	trace?: 'off' | 'messages' | 'verbose';
+	trace?: 'off' | 'messages' | 'compact' | 'verbose';
 }
 
 export type InitializeParams = _InitializeParams & WorkspaceFoldersInitializeParams;
@@ -1859,12 +1903,12 @@ export interface CompletionClientCapabilities {
 		}
 
 		/**
-		 * The client has support for a detailed completion item
-		 * label (see also `CompletionItemLabel`).
+		 * The client has support for completion item label
+		 * details (see also `CompletionItemLabelDetails`).
 		 *
 		 * @since 3.17.0 - proposed state
 		 */
-		detailedLabelSupport?: boolean;
+		labelDetailsSupport?: boolean;
 	};
 
 	completionItemKind?: {
@@ -1886,7 +1930,7 @@ export interface CompletionClientCapabilities {
 	 * when accepting a completion item that uses multi line
 	 * text in either `insertText` or `textEdit`.
 	 *
-	 * @since 3.16.0
+	 * @since 3.17.0
 	 */
 	insertTextMode?: InsertTextMode;
 
@@ -1992,13 +2036,13 @@ export interface CompletionOptions extends WorkDoneProgressOptions {
 	 */
 	completionItem?: {
 		/**
-		 * The server has support for a detailed completion item
-		 * label (see also `CompletionItemLabel`) when receiving
-		 * a completion item in a resolve call.
+		 * The server has support for completion item label
+		 * details (see also `CompletionItemLabelDetails`) when
+		 * receiving a completion item in a resolve call.
 		 *
 		 * @since 3.17.0 - proposed state
 		 */
-		detailedLabelSupport?: boolean;
+		labelDetailsSupport?: boolean;
 	}
 }
 
@@ -2524,12 +2568,12 @@ export interface CodeActionClientCapabilities {
 	 *
 	 * @since 3.16.0
 	 */
-	 resolveSupport?: {
-		 /**
-		  * The properties that a client can resolve lazily.
-		  */
-		 properties: string[];
-	 };
+	resolveSupport?: {
+		/**
+		 * The properties that a client can resolve lazily.
+		 */
+		properties: string[];
+	};
 
 	/**
 	 * Whether th client honors the change annotations in
@@ -2995,7 +3039,7 @@ export namespace PrepareSupportDefaultBehavior {
 	 * The client's default behavior is to select the identifier
 	 * according the to language's syntax rule.
 	 */
-	 export const Identifier: 1 = 1;
+	export const Identifier: 1 = 1;
 }
 
 export type PrepareSupportDefaultBehavior = 1;
@@ -3217,9 +3261,11 @@ export interface ApplyWorkspaceEditParams {
 }
 
 /**
- * A response returned from the apply workspace edit request.
+ * The result returned from the apply workspace edit request.
+ *
+ * @since 3.17 renamed from ApplyWorkspaceEditResponse
  */
-export interface ApplyWorkspaceEditResponse {
+export interface ApplyWorkspaceEditResult {
 	/**
 	 * Indicates whether the edit was applied or not.
 	 */
@@ -3241,10 +3287,15 @@ export interface ApplyWorkspaceEditResponse {
 }
 
 /**
+ * @deprecated Use ApplyWorkspaceEditResult instead.
+ */
+export type ApplyWorkspaceEditResponse = ApplyWorkspaceEditResult;
+
+/**
  * A request sent from the server to the client to modified certain resources.
  */
 export namespace ApplyWorkspaceEditRequest {
-	export const type = new ProtocolRequestType<ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse, never, void, void>('workspace/applyEdit');
+	export const type = new ProtocolRequestType<ApplyWorkspaceEditParams, ApplyWorkspaceEditResult, never, void, void>('workspace/applyEdit');
 }
 
 export {
@@ -3276,8 +3327,7 @@ export {
 	DidRenameFilesNotification, RenameFilesParams, FileRename, WillRenameFilesRequest,
 	DidDeleteFilesNotification, DeleteFilesParams, FileDelete, WillDeleteFilesRequest,
 	// Monikers
-	UniquenessLevel, MonikerKind, Moniker, MonikerClientCapabilities, MonikerOptions, MonikerRegistrationOptions, MonikerParams, MonikerRequest
-
+	UniquenessLevel, MonikerKind, Moniker, MonikerClientCapabilities, MonikerOptions, MonikerRegistrationOptions, MonikerParams, MonikerRequest,
 };
 
 // To be backwards compatible

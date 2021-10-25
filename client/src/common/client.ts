@@ -20,7 +20,7 @@ import {
 	DocumentRangeFormattingEditProvider, OnTypeFormattingEditProvider, RenameProvider, DocumentLinkProvider, DocumentColorProvider, DeclarationProvider,
 	FoldingRangeProvider, ImplementationProvider, SelectionRangeProvider, TypeDefinitionProvider, WorkspaceSymbolProvider, CallHierarchyProvider,
 	DocumentSymbolProviderMetadata, EventEmitter, env as Env, TextDocumentShowOptions, FileWillCreateEvent, FileWillRenameEvent, FileWillDeleteEvent, FileCreateEvent, FileDeleteEvent, FileRenameEvent,
-	LinkedEditingRangeProvider
+	LinkedEditingRangeProvider, Event as VEvent, CancellationError, TypeHierarchyProvider as VTypeHierarchyProvider
 } from 'vscode';
 
 import {
@@ -52,13 +52,14 @@ import {
 	CancellationStrategy, SaveOptions, LSPErrorCodes, CodeActionResolveRequest, RegistrationType, SemanticTokensRegistrationType, InsertTextMode, ShowDocumentRequest,
 	FileOperationRegistrationOptions, WillCreateFilesRequest, WillRenameFilesRequest, WillDeleteFilesRequest, DidCreateFilesNotification, DidDeleteFilesNotification, DidRenameFilesNotification,
 	ShowDocumentParams, ShowDocumentResult, LinkedEditingRangeRequest, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressReport, PrepareSupportDefaultBehavior,
-	SemanticTokensRequest, SemanticTokensRangeRequest, SemanticTokensDeltaRequest
+	SemanticTokensRequest, SemanticTokensRangeRequest, SemanticTokensDeltaRequest, Proposed
 } from 'vscode-languageserver-protocol';
 
+import { toJSONObject } from './configuration';
+import type { ConfigurationWorkspaceMiddleware } from './configuration';
 import type { ColorProviderMiddleware } from './colorProvider';
 import type { ImplementationMiddleware } from './implementation';
 import type { TypeDefinitionMiddleware } from './typeDefinition';
-import { ConfigurationWorkspaceMiddleware, toJSONObject } from './configuration';
 import type { WorkspaceFolderWorkspaceMiddleware } from './workspaceFolders';
 import type { FoldingRangeProviderMiddleware } from './foldingRange';
 import type { DeclarationMiddleware } from './declaration';
@@ -66,7 +67,10 @@ import type { SelectionRangeProviderMiddleware } from './selectionRange';
 import type { CallHierarchyMiddleware } from './callHierarchy';
 import type { SemanticTokensMiddleware, SemanticTokensProviders } from './semanticTokens';
 import type { FileOperationsMiddleware } from './fileOperations';
-import { LinkedEditingRangeMiddleware } from './linkedEditingRange';
+import type { LinkedEditingRangeMiddleware } from './linkedEditingRange';
+import type { DiagnosticFeatureProvider } from './proposed.diagnostic';
+import type { InlineValuesProviderMiddleware, InlineValuesProviderData } from './proposed.inlineValues';
+import type { TypeHierarchyMiddleware } from './proposed.typeHierarchy';
 
 import * as c2p from './codeConverter';
 import * as p2c from './protocolConverter';
@@ -95,13 +99,13 @@ interface Connection {
 	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): Disposable;
 	onRequest<R, E>(method: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable;
 
-	sendNotification<RO>(type: ProtocolNotificationType0<RO>): void;
-	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): void;
-	sendNotification(type: NotificationType0): void;
-	sendNotification<P>(type: NotificationType<P>, params?: P): void;
-	sendNotification(method: string): void;
-	sendNotification(method: string, params: any): void;
-	sendNotification(method: string | MessageSignature, params?: any): void;
+	sendNotification<RO>(type: ProtocolNotificationType0<RO>): Promise<void>;
+	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): Promise<void>;
+	sendNotification(type: NotificationType0): Promise<void>;
+	sendNotification<P>(type: NotificationType<P>, params?: P): Promise<void>;
+	sendNotification(method: string): Promise<void>;
+	sendNotification(method: string, params: any): Promise<void>;
+	sendNotification(method: string | MessageSignature, params?: any): Promise<void>;
 
 	onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): Disposable;
 	onNotification<P, RO>(type: ProtocolNotificationType<P, RO>, handler: NotificationHandler<P>): Disposable;
@@ -111,26 +115,26 @@ interface Connection {
 	onNotification(method: string | MessageSignature, handler: GenericNotificationHandler): Disposable;
 
 	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable;
-	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): void;
+	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): Promise<void>;
 
 	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): void;
 	trace(value: Trace, tracer: Tracer, traceOptions?: TraceOptions): void;
 
 	initialize(params: InitializeParams): Promise<InitializeResult>;
 	shutdown(): Promise<void>;
-	exit(): void;
+	exit(): Promise<void>;
 
 	onLogMessage(handle: NotificationHandler<LogMessageParams>): void;
 	onShowMessage(handler: NotificationHandler<ShowMessageParams>): void;
 	onTelemetry(handler: NotificationHandler<any>): void;
 
-	didChangeConfiguration(params: DidChangeConfigurationParams): void;
-	didChangeWatchedFiles(params: DidChangeWatchedFilesParams): void;
+	didChangeConfiguration(params: DidChangeConfigurationParams): Promise<void>;
+	didChangeWatchedFiles(params: DidChangeWatchedFilesParams): Promise<void>;
 
-	didOpenTextDocument(params: DidOpenTextDocumentParams): void;
-	didChangeTextDocument(params: DidChangeTextDocumentParams): void;
-	didCloseTextDocument(params: DidCloseTextDocumentParams): void;
-	didSaveTextDocument(params: DidSaveTextDocumentParams): void;
+	didOpenTextDocument(params: DidOpenTextDocumentParams): Promise<void>;
+	didChangeTextDocument(params: DidChangeTextDocumentParams): Promise<void>;
+	didCloseTextDocument(params: DidCloseTextDocumentParams): Promise<void>;
+	didSaveTextDocument(params: DidSaveTextDocumentParams): Promise<void>;
 	onDiagnostics(handler: NotificationHandler<PublishDiagnosticsParams>): void;
 
 	end(): void;
@@ -161,8 +165,8 @@ interface ConnectionCloseHandler {
 }
 
 interface ConnectionOptions {
-    cancellationStrategy: CancellationStrategy
-    maxRestartCount?: number
+	cancellationStrategy: CancellationStrategy
+	maxRestartCount?: number
 }
 
 function createConnection(input: MessageReader, output: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): Connection {
@@ -174,11 +178,11 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 
 		listen: (): void => connection.listen(),
 
-		sendRequest: <R>(type: string | MessageSignature, ...params: any[]): Promise<R> => connection.sendRequest(Is.string(type) ? type : type.method, ...params),
-		onRequest: <R, E>(type: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable => connection.onRequest(Is.string(type) ? type : type.method, handler),
+		sendRequest: <R>(type: string | MessageSignature, ...params: any[]): Promise<R> => connection.sendRequest(type as string, ...params),
+		onRequest: <R, E>(type: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable => connection.onRequest(type, handler),
 
-		sendNotification: (type: string | MessageSignature, params?: any): void => connection.sendNotification(Is.string(type) ? type : type.method, params),
-		onNotification: (type: string | MessageSignature, handler: GenericNotificationHandler): Disposable => connection.onNotification(Is.string(type) ? type : type.method, handler),
+		sendNotification: (type: string | MessageSignature, params?: any): Promise<void> => connection.sendNotification(type, params),
+		onNotification: (type: string | MessageSignature, handler: GenericNotificationHandler): Disposable => connection.onNotification(type, handler),
 
 		onProgress: connection.onProgress,
 		sendProgress: connection.sendProgress,
@@ -294,7 +298,7 @@ class DefaultErrorHandler implements ErrorHandler {
 		} else {
 			let diff = this.restarts[this.restarts.length - 1] - this.restarts[0];
 			if (diff <= 3 * 60 * 1000) {
-				Window.showErrorMessage(`The ${this.name} server crashed ${this.maxRestartCount+1} times in the last 3 minutes. The server will not be restarted.`);
+				void Window.showErrorMessage(`The ${this.name} server crashed ${this.maxRestartCount+1} times in the last 3 minutes. The server will not be restarted.`);
 				return CloseAction.DoNotRestart;
 			} else {
 				this.restarts.shift();
@@ -336,6 +340,17 @@ export interface SynchronizeOptions {
 	 * files outside a workspace folder.
 	 */
 	fileEvents?: VFileSystemWatcher | VFileSystemWatcher[];
+}
+
+export enum DiagnosticPullMode {
+	onType = 'onType',
+	onSave = 'onSave'
+}
+
+export interface DiagnosticPullOptions {
+	onChange: boolean;
+	onSave: boolean;
+	filter?(document: TextDocument, mode: DiagnosticPullMode): boolean;
 }
 
 export enum RevealOutputChannelOn {
@@ -442,16 +457,16 @@ export interface NextSignature<P, R> {
 }
 
 export interface DidChangeConfigurationSignature {
-	(this: void, sections: string[] | undefined): void;
+	(this: void, sections: string[] | undefined): Promise<void>;
 }
 
 export interface DidChangeWatchedFileSignature {
-	(this: void, event: FileEvent): void;
+	(this: void, event: FileEvent): Promise<void>;
 }
 
 export interface _WorkspaceMiddleware {
-	didChangeConfiguration?: (this: void, sections: string[] | undefined, next: DidChangeConfigurationSignature) => void;
-	didChangeWatchedFile?: (this: void, event: FileEvent, next: DidChangeWatchedFileSignature) => void;
+	didChangeConfiguration?: (this: void, sections: string[] | undefined, next: DidChangeConfigurationSignature) => Promise<void>;
+	didChangeWatchedFile?: (this: void, event: FileEvent, next: DidChangeWatchedFileSignature) => Promise<void>;
 }
 
 export type WorkspaceMiddleware = _WorkspaceMiddleware & ConfigurationWorkspaceMiddleware & WorkspaceFolderWorkspaceMiddleware & FileOperationsMiddleware;
@@ -467,12 +482,12 @@ export type WindowMiddleware = _WindowMiddleware;
  * from the server
  */
 export interface _Middleware {
-	didOpen?: NextSignature<TextDocument, void>;
-	didChange?: NextSignature<TextDocumentChangeEvent, void>;
-	willSave?: NextSignature<TextDocumentWillSaveEvent, void>;
+	didOpen?: NextSignature<TextDocument, Promise<void>>;
+	didChange?: NextSignature<TextDocumentChangeEvent, Promise<void>>;
+	willSave?: NextSignature<TextDocumentWillSaveEvent, Promise<void>>;
 	willSaveWaitUntil?: NextSignature<TextDocumentWillSaveEvent, Thenable<VTextEdit[]>>;
-	didSave?: NextSignature<TextDocument, void>;
-	didClose?: NextSignature<TextDocument, void>;
+	didSave?: NextSignature<TextDocument, Promise<void>>;
+	didClose?: NextSignature<TextDocument, Promise<void>>;
 
 	handleDiagnostics?: (this: void, uri: Uri, diagnostics: VDiagnostic[], next: HandleDiagnosticsSignature) => void;
 	handleWorkDoneProgress?: (this: void, token: ProgressToken, params: WorkDoneProgressBegin | WorkDoneProgressReport | WorkDoneProgressEnd, next: HandleWorkDoneProgressSignature) => void;
@@ -502,8 +517,8 @@ export interface _Middleware {
 }
 
 export type Middleware = _Middleware & TypeDefinitionMiddleware & ImplementationMiddleware & ColorProviderMiddleware &
-	FoldingRangeProviderMiddleware & DeclarationMiddleware & SelectionRangeProviderMiddleware & CallHierarchyMiddleware & SemanticTokensMiddleware &
-	LinkedEditingRangeMiddleware;
+FoldingRangeProviderMiddleware & DeclarationMiddleware & SelectionRangeProviderMiddleware & CallHierarchyMiddleware & SemanticTokensMiddleware &
+LinkedEditingRangeMiddleware & TypeHierarchyMiddleware & InlineValuesProviderMiddleware;
 
 export interface LanguageClientOptions {
 	documentSelector?: DocumentSelector | string[];
@@ -531,7 +546,8 @@ export interface LanguageClientOptions {
 	connectionOptions?: ConnectionOptions;
 	markdown?: {
 		isTrusted?: boolean;
-	}
+	};
+	diagnosticPullOptions?: DiagnosticPullOptions;
 }
 
 interface ResolvedClientOptions {
@@ -554,7 +570,8 @@ interface ResolvedClientOptions {
 	connectionOptions?: ConnectionOptions;
 	markdown: {
 		isTrusted: boolean;
-	}
+	};
+	diagnosticPullOptions: DiagnosticPullOptions;
 }
 
 export enum State {
@@ -775,10 +792,22 @@ interface CreateParamsSignature<E, P> {
 	(data: E): P;
 }
 
-abstract class DocumentNotifications<P, E> implements DynamicFeature<TextDocumentRegistrationOptions>, NotificationFeature<(data: E) => void> {
+export interface NotificationSendEvent<E, P> {
+	original: E;
+	type: ProtocolNotificationType<P, TextDocumentRegistrationOptions>;
+	params: P;
+}
+
+export interface NotifyingFeature<E, P> {
+	onNotificationSent: VEvent<NotificationSendEvent<E, P>>;
+}
+
+abstract class DocumentNotifications<P, E> implements DynamicFeature<TextDocumentRegistrationOptions>, NotificationFeature<(data: E) => Promise<void>>, NotifyingFeature<E, P> {
 
 	private _listener: Disposable | undefined;
 	protected _selectors: Map<string, DocumentSelector> = new Map<string, DocumentSelector>();
+
+	private readonly _onNotificationSent: EventEmitter<NotificationSendEvent<E, P>>;
 
 	public static textDocumentFilter(selectors: IterableIterator<DocumentSelector>, textDocument: TextDocument): boolean {
 		for (const selector of selectors) {
@@ -792,9 +821,10 @@ abstract class DocumentNotifications<P, E> implements DynamicFeature<TextDocumen
 	constructor(
 		protected _client: BaseLanguageClient, private _event: Event<E>,
 		protected _type: ProtocolNotificationType<P, TextDocumentRegistrationOptions>,
-		protected _middleware: NextSignature<E, void> | undefined,
+		protected _middleware: NextSignature<E, Promise<void>> | undefined,
 		protected _createParams: CreateParamsSignature<E, P>,
 		protected _selectorFilter?: (selectors: IterableIterator<DocumentSelector>, data: E) => boolean) {
+		this._onNotificationSent = new EventEmitter<NotificationSendEvent<E, P>>();
 	}
 
 	public abstract registrationType: RegistrationType<TextDocumentRegistrationOptions>;
@@ -809,23 +839,32 @@ abstract class DocumentNotifications<P, E> implements DynamicFeature<TextDocumen
 			return;
 		}
 		if (!this._listener) {
-			this._listener = this._event(this.callback, this);
+			this._listener = this._event((data) => {
+				this.callback(data).catch((error) => {
+					this._client.error(`Sending document notification ${this._type.method} failed.`, error);
+				});
+			});
 		}
 		this._selectors.set(data.id, data.registerOptions.documentSelector);
 	}
 
-	private callback(data: E): void {
+	private async callback(data: E): Promise<void> {
+		const doSend = async (data: E): Promise<void> => {
+			const params = this._createParams(data);
+			await this._client.sendNotification(this._type, params).catch();
+			this.notificationSent(data, this._type, params);
+		};
 		if (!this._selectorFilter || this._selectorFilter(this._selectors.values(), data)) {
-			if (this._middleware) {
-				this._middleware(data, (data) => this._client.sendNotification(this._type, this._createParams(data)));
-			} else {
-				this._client.sendNotification(this._type, this._createParams(data));
-			}
-			this.notificationSent(data);
+			return this._middleware ? this._middleware(data, (data) => doSend(data)) : doSend(data);
 		}
 	}
 
-	protected notificationSent(_data: E): void {
+	public get onNotificationSent(): VEvent<NotificationSendEvent<E, P>> {
+		return this._onNotificationSent.event;
+	}
+
+	protected notificationSent(data: E, type: ProtocolNotificationType<P, TextDocumentRegistrationOptions>, params: P): void {
+		this._onNotificationSent.fire({ original: data, type, params });
 	}
 
 	public unregister(id: string): void {
@@ -838,18 +877,19 @@ abstract class DocumentNotifications<P, E> implements DynamicFeature<TextDocumen
 
 	public dispose(): void {
 		this._selectors.clear();
+		this._onNotificationSent.dispose();
 		if (this._listener) {
 			this._listener.dispose();
 			this._listener = undefined;
 		}
 	}
 
-	public getProvider(document: TextDocument):  { send: (data: E) => void } | undefined {
+	public getProvider(document: TextDocument):  { send: (data: E) => Promise<void> } | undefined {
 		for (const selector of this._selectors.values()) {
 			if (Languages.match(selector, document)) {
 				return {
 					send: (data: E) => {
-						this.callback(data);
+						return this.callback(data);
 					}
 				};
 			}
@@ -858,7 +898,11 @@ abstract class DocumentNotifications<P, E> implements DynamicFeature<TextDocumen
 	}
 }
 
-class DidOpenTextDocumentFeature extends DocumentNotifications<DidOpenTextDocumentParams, TextDocument> {
+export interface DidOpenTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, NotificationFeature<(textDocument: TextDocument) => Promise<void>>, NotifyingFeature<TextDocument, DidOpenTextDocumentParams> {
+	openDocuments: Iterable<TextDocument>;
+}
+
+class DidOpenTextDocumentFeature extends DocumentNotifications<DidOpenTextDocumentParams, TextDocument> implements DidOpenTextDocumentFeatureShape {
 	constructor(client: BaseLanguageClient, private _syncedDocuments: Map<string, TextDocument>) {
 		super(
 			client, Workspace.onDidOpenTextDocument, DidOpenTextDocumentNotification.type,
@@ -866,6 +910,10 @@ class DidOpenTextDocumentFeature extends DocumentNotifications<DidOpenTextDocume
 			(textDocument) => client.code2ProtocolConverter.asOpenTextDocumentParams(textDocument),
 			DocumentNotifications.textDocumentFilter
 		);
+	}
+
+	public get openDocuments(): IterableIterator<TextDocument> {
+		return this._syncedDocuments.values();
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
@@ -896,26 +944,27 @@ class DidOpenTextDocumentFeature extends DocumentNotifications<DidOpenTextDocume
 			}
 			if (Languages.match(documentSelector, textDocument)) {
 				let middleware = this._client.clientOptions.middleware!;
-				let didOpen = (textDocument: TextDocument) => {
-					this._client.sendNotification(this._type, this._createParams(textDocument));
+				let didOpen = (textDocument: TextDocument): Promise<void> => {
+					return this._client.sendNotification(this._type, this._createParams(textDocument));
 				};
-				if (middleware.didOpen) {
-					middleware.didOpen(textDocument, didOpen);
-				} else {
-					didOpen(textDocument);
-				}
+				(middleware.didOpen ? middleware.didOpen(textDocument, didOpen) : didOpen(textDocument)).catch((error) => {
+					this._client.error(`Sending document notification ${this._type.method} failed`, error);
+				});
 				this._syncedDocuments.set(uri, textDocument);
 			}
 		});
 	}
 
-	protected notificationSent(textDocument: TextDocument): void {
-		super.notificationSent(textDocument);
+	protected notificationSent(textDocument: TextDocument, type: ProtocolNotificationType<DidOpenTextDocumentParams, TextDocumentRegistrationOptions>, params: DidOpenTextDocumentParams): void {
+		super.notificationSent(textDocument, type, params);
 		this._syncedDocuments.set(textDocument.uri.toString(), textDocument);
 	}
 }
 
-class DidCloseTextDocumentFeature extends DocumentNotifications<DidCloseTextDocumentParams, TextDocument> {
+export interface DidCloseTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, NotificationFeature<(textDocument: TextDocument) => Promise<void>>, NotifyingFeature<TextDocument, DidCloseTextDocumentParams> {
+}
+
+class DidCloseTextDocumentFeature extends DocumentNotifications<DidCloseTextDocumentParams, TextDocument> implements DidCloseTextDocumentFeatureShape {
 
 	constructor(client: BaseLanguageClient, private _syncedDocuments: Map<string, TextDocument>) {
 		super(
@@ -941,8 +990,8 @@ class DidCloseTextDocumentFeature extends DocumentNotifications<DidCloseTextDocu
 		}
 	}
 
-	protected notificationSent(textDocument: TextDocument): void {
-		super.notificationSent(textDocument);
+	protected notificationSent(textDocument: TextDocument, type: ProtocolNotificationType<DidCloseTextDocumentParams, TextDocumentRegistrationOptions>, params: DidCloseTextDocumentParams): void {
+		super.notificationSent(textDocument, type, params);
 		this._syncedDocuments.delete(textDocument.uri.toString());
 	}
 
@@ -955,15 +1004,13 @@ class DidCloseTextDocumentFeature extends DocumentNotifications<DidCloseTextDocu
 		this._syncedDocuments.forEach((textDocument) => {
 			if (Languages.match(selector, textDocument) && !this._selectorFilter!(selectors, textDocument)) {
 				let middleware = this._client.clientOptions.middleware!;
-				let didClose = (textDocument: TextDocument) => {
-					this._client.sendNotification(this._type, this._createParams(textDocument));
+				let didClose = (textDocument: TextDocument): Promise<void> => {
+					return this._client.sendNotification(this._type, this._createParams(textDocument));
 				};
 				this._syncedDocuments.delete(textDocument.uri.toString());
-				if (middleware.didClose) {
-					middleware.didClose(textDocument, didClose);
-				} else {
-					didClose(textDocument);
-				}
+				(middleware.didClose ? middleware.didClose(textDocument, didClose) :didClose(textDocument)).catch((error) => {
+					this._client.error(`Sending document notification ${this._type.method} failed`, error);
+				});
 			}
 		});
 	}
@@ -974,14 +1021,20 @@ interface DidChangeTextDocumentData {
 	syncKind: 0 | 1 | 2;
 }
 
-class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeRegistrationOptions>, NotificationFeature<(event: TextDocumentChangeEvent) => void> {
+export interface DidChangeTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, NotificationFeature<(event: TextDocumentChangeEvent) => Promise<void>>, NotifyingFeature<TextDocumentChangeEvent, DidChangeTextDocumentParams> {
+}
+
+class DidChangeTextDocumentFeature implements DidChangeTextDocumentFeatureShape {
 
 	private _listener: Disposable | undefined;
 	private _changeData: Map<string, DidChangeTextDocumentData> = new Map<string, DidChangeTextDocumentData>();
 	private _forcingDelivery: boolean = false;
 	private _changeDelayer: { uri: string; delayer: Delayer<void> } | undefined;
 
+	private readonly _onNotificationSent: EventEmitter<NotificationSendEvent<TextDocumentChangeEvent, DidChangeTextDocumentParams>>;
+
 	constructor(private _client: BaseLanguageClient) {
+		this._onNotificationSent = new EventEmitter();
 	}
 
 	public get registrationType(): RegistrationType<TextDocumentChangeRegistrationOptions> {
@@ -1018,52 +1071,62 @@ class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeR
 		);
 	}
 
-	private callback(event: TextDocumentChangeEvent): void {
+	private async callback(event: TextDocumentChangeEvent): Promise<void> {
 		// Text document changes are send for dirty changes as well. We don't
 		// have dirty / un-dirty events in the LSP so we ignore content changes
 		// with length zero.
 		if (event.contentChanges.length === 0) {
 			return;
 		}
+		const promises: Promise<void>[] = [];
 		for (const changeData of this._changeData.values()) {
 			if (Languages.match(changeData.documentSelector, event.document)) {
-				let middleware = this._client.clientOptions.middleware!;
+				const middleware = this._client.clientOptions.middleware!;
 				if (changeData.syncKind === TextDocumentSyncKind.Incremental) {
-					let params = this._client.code2ProtocolConverter.asChangeTextDocumentParams(event);
-					if (middleware.didChange) {
-						middleware.didChange(event, () => this._client.sendNotification(DidChangeTextDocumentNotification.type, params));
-					} else {
-						this._client.sendNotification(DidChangeTextDocumentNotification.type, params);
-					}
+					const didChange = async (event: TextDocumentChangeEvent): Promise<void> => {
+						const params = this._client.code2ProtocolConverter.asChangeTextDocumentParams(event);
+						await this._client.sendNotification(DidChangeTextDocumentNotification.type, params);
+						this.notificationSent(event, DidChangeTextDocumentNotification.type, params);
+					};
+					promises.push(middleware.didChange ? middleware.didChange(event, event => didChange(event)) : didChange(event));
 				} else if (changeData.syncKind === TextDocumentSyncKind.Full) {
-					let didChange: (event: TextDocumentChangeEvent) => void = (event) => {
+					const didChange = async (event: TextDocumentChangeEvent): Promise<void> => {
+						const doSend = async (event: TextDocumentChangeEvent): Promise<void> => {
+							const params = this._client.code2ProtocolConverter.asChangeTextDocumentParams(event.document);
+							await this._client.sendNotification(DidChangeTextDocumentNotification.type, params);
+							this.notificationSent(event, DidChangeTextDocumentNotification.type, params);
+						};
 						if (this._changeDelayer) {
 							if (this._changeDelayer.uri !== event.document.uri.toString()) {
 								// Use this force delivery to track boolean state. Otherwise we might call two times.
 								this.forceDelivery();
 								this._changeDelayer.uri = event.document.uri.toString();
 							}
-							this._changeDelayer.delayer.trigger(() => {
-								this._client.sendNotification(DidChangeTextDocumentNotification.type, this._client.code2ProtocolConverter.asChangeTextDocumentParams(event.document));
-							});
+							return this._changeDelayer.delayer.trigger(() => doSend(event));
 						} else {
 							this._changeDelayer = {
 								uri: event.document.uri.toString(),
 								delayer: new Delayer<void>(200)
 							};
-							this._changeDelayer.delayer.trigger(() => {
-								this._client.sendNotification(DidChangeTextDocumentNotification.type, this._client.code2ProtocolConverter.asChangeTextDocumentParams(event.document));
-							}, -1);
+							return this._changeDelayer.delayer.trigger(() => doSend(event), -1);
 						}
 					};
-					if (middleware.didChange) {
-						middleware.didChange(event, didChange);
-					} else {
-						didChange(event);
-					}
+					promises.push(middleware.didChange ? middleware.didChange(event, event => didChange(event)) : didChange(event));
 				}
 			}
 		}
+		return Promise.all(promises).then(undefined, (error) => {
+			this._client.error(`Sending document notification ${DidChangeTextDocumentNotification.type.method} failed`, error);
+			throw error;
+		});
+	}
+
+	public get onNotificationSent(): Event<NotificationSendEvent<TextDocumentChangeEvent, DidChangeTextDocumentParams>> {
+		return this._onNotificationSent.event;
+	}
+
+	private notificationSent(changeEvent: TextDocumentChangeEvent, type: ProtocolNotificationType<DidChangeTextDocumentParams, TextDocumentRegistrationOptions>, params: DidChangeTextDocumentParams): void {
+		this._onNotificationSent.fire({ original: changeEvent, type, params });
 	}
 
 	public unregister(id: string): void {
@@ -1096,12 +1159,12 @@ class DidChangeTextDocumentFeature implements DynamicFeature<TextDocumentChangeR
 		}
 	}
 
-	public getProvider(document: TextDocument): { send: (event: TextDocumentChangeEvent) => void } | undefined {
+	public getProvider(document: TextDocument): { send: (event: TextDocumentChangeEvent) => Promise<void> } | undefined {
 		for (const changeData of this._changeData.values()) {
 			if (Languages.match(changeData.documentSelector, document)) {
 				return {
-					send: (event: TextDocumentChangeEvent): void => {
-						this.callback(event);
+					send: (event: TextDocumentChangeEvent): Promise<void> => {
+						return this.callback(event);
 					}
 				};
 			}
@@ -1214,7 +1277,10 @@ class WillSaveWaitUntilFeature implements DynamicFeature<TextDocumentRegistratio
 	}
 }
 
-class DidSaveTextDocumentFeature extends DocumentNotifications<DidSaveTextDocumentParams, TextDocument> {
+export interface DidSaveTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, NotificationFeature<(textDocument: TextDocument) => Promise<void>>, NotifyingFeature<TextDocument, DidSaveTextDocumentParams> {
+}
+
+class DidSaveTextDocumentFeature extends DocumentNotifications<DidSaveTextDocumentParams, TextDocument> implements DidSaveTextDocumentFeatureShape {
 
 	private _includeText: boolean;
 
@@ -1507,11 +1573,11 @@ export interface ProvideResolveFeature<T1 extends Function, T2 extends Function>
 
 class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, CompletionRegistrationOptions, CompletionItemProvider> {
 
-	private detailedLabelSupport: Map<string, boolean>;
+	private labelDetailsSupport: Map<string, boolean>;
 
 	constructor(client: BaseLanguageClient) {
 		super(client, CompletionRequest.type);
-		this.detailedLabelSupport = new Map();
+		this.labelDetailsSupport = new Map();
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
@@ -1530,8 +1596,9 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 				properties: ['documentation', 'detail', 'additionalTextEdits']
 			},
 			insertTextModeSupport: { valueSet: [InsertTextMode.asIs, InsertTextMode.adjustIndentation] },
-			detailedLabelSupport: true
+			labelDetailsSupport: true
 		};
+		completion.insertTextMode = InsertTextMode.adjustIndentation;
 		completion.completionItemKind = { valueSet: SupportedCompletionItemKinds };
 	}
 
@@ -1540,6 +1607,7 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 		if (!options) {
 			return;
 		}
+
 		this.register({
 			id: UUID.generateUuid(),
 			registerOptions: options
@@ -1547,15 +1615,16 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 	}
 
 	protected registerLanguageProvider(options: CompletionRegistrationOptions, id: string): [Disposable, CompletionItemProvider] {
-		this.detailedLabelSupport.set(id, !!options.completionItem?.detailedLabelSupport);
-		const triggerCharacters = options.triggerCharacters || [];
+		this.labelDetailsSupport.set(id, !!options.completionItem?.labelDetailsSupport);
+		const triggerCharacters = options.triggerCharacters ?? [];
+		const defaultCommitCharacters = options.allCommitCharacters;
 		const provider: CompletionItemProvider = {
 			provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken, context: VCompletionContext): ProviderResult<VCompletionList | VCompletionItem[]> => {
 				const client = this._client;
 				const middleware = this._client.clientOptions.middleware!;
 				const provideCompletionItems: ProvideCompletionItemsSignature = (document, position, context, token) => {
 					return client.sendRequest(CompletionRequest.type, client.code2ProtocolConverter.asCompletionParams(document, position, context), token).then(
-						client.protocol2CodeConverter.asCompletionResult,
+						(result) => client.protocol2CodeConverter.asCompletionResult(result, defaultCommitCharacters),
 						(error) => {
 							return client.handleFailedRequest(CompletionRequest.type, token, error, null);
 						}
@@ -1570,7 +1639,7 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 					const client = this._client;
 					const middleware = this._client.clientOptions.middleware!;
 					const resolveCompletionItem: ResolveCompletionItemSignature = (item, token) => {
-						return client.sendRequest(CompletionResolveRequest.type, client.code2ProtocolConverter.asCompletionItem(item, !!this.detailedLabelSupport.get(id)), token).then(
+						return client.sendRequest(CompletionResolveRequest.type, client.code2ProtocolConverter.asCompletionItem(item, !!this.labelDetailsSupport.get(id)), token).then(
 							client.protocol2CodeConverter.asCompletionItem,
 							(error) => {
 								return client.handleFailedRequest(CompletionResolveRequest.type, token, error, item);
@@ -1926,12 +1995,6 @@ class WorkspaceSymbolFeature extends WorkspaceFeature<WorkspaceSymbolRegistratio
 	}
 }
 
-declare module 'vscode' {
-	export interface CodeActionProvider<T extends CodeAction = CodeAction> {
-		resolveCodeAction?(codeAction: T, token: CancellationToken): ProviderResult<T>;
-	}
-}
-
 class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions, CodeActionRegistrationOptions, CodeActionProvider> {
 
 	constructor(client: BaseLanguageClient) {
@@ -2282,7 +2345,7 @@ class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameR
 					return client.sendRequest(RenameRequest.type, params, token).then(
 						client.protocol2CodeConverter.asWorkspaceEdit,
 						(error: ResponseError<void>) => {
-							return client.handleFailedRequest(RenameRequest.type, token, error, null);
+							return client.handleFailedRequest(RenameRequest.type, token, error, null, false);
 						}
 					);
 				};
@@ -2445,7 +2508,7 @@ class ConfigurationFeature implements DynamicFeature<DidChangeConfigurationRegis
 	}
 
 	public dispose(): void {
-		for (let disposable of this._listeners.values()) {
+		for (const disposable of this._listeners.values()) {
 			disposable.dispose();
 		}
 		this._listeners.clear();
@@ -2464,17 +2527,17 @@ class ConfigurationFeature implements DynamicFeature<DidChangeConfigurationRegis
 				return;
 			}
 		}
-		let didChangeConfiguration = (sections: string[] | undefined): void => {
+		const didChangeConfiguration = async (sections: string[] | undefined): Promise<void> => {
 			if (sections === undefined) {
-				this._client.sendNotification(DidChangeConfigurationNotification.type, { settings: null });
-				return;
+				return this._client.sendNotification(DidChangeConfigurationNotification.type, { settings: null });
+			} else {
+				return this._client.sendNotification(DidChangeConfigurationNotification.type, { settings: this.extractSettingsInformation(sections) });
 			}
-			this._client.sendNotification(DidChangeConfigurationNotification.type, { settings: this.extractSettingsInformation(sections) });
 		};
 		let middleware = this.getMiddleware();
-		middleware
-			? middleware(sections, didChangeConfiguration)
-			: didChangeConfiguration(sections);
+		(middleware ? middleware(sections, didChangeConfiguration) : didChangeConfiguration(sections)).catch((error) => {
+			this._client.error(`Sending notification ${DidChangeConfigurationNotification.type.method} failed`, error);
+		});
 	}
 
 	private extractSettingsInformation(keys: string[]): any {
@@ -2626,6 +2689,14 @@ class OnReady {
 	}
 }
 
+export class LSPCancellationError extends CancellationError {
+	public readonly data: object | Object;
+	constructor(data: object | Object) {
+		super();
+		this.data = data;
+	}
+}
+
 export abstract class BaseLanguageClient {
 
 	private _id: string;
@@ -2674,21 +2745,22 @@ export abstract class BaseLanguageClient {
 		}
 
 		this._clientOptions = {
-			documentSelector: clientOptions.documentSelector || [],
-			synchronize: clientOptions.synchronize || {},
+			documentSelector: clientOptions.documentSelector ?? [],
+			synchronize: clientOptions.synchronize ?? {},
 			diagnosticCollectionName: clientOptions.diagnosticCollectionName,
-			outputChannelName: clientOptions.outputChannelName || this._name,
-			revealOutputChannelOn: clientOptions.revealOutputChannelOn || RevealOutputChannelOn.Error,
-			stdioEncoding: clientOptions.stdioEncoding || 'utf8',
+			outputChannelName: clientOptions.outputChannelName ?? this._name,
+			revealOutputChannelOn: clientOptions.revealOutputChannelOn ?? RevealOutputChannelOn.Error,
+			stdioEncoding: clientOptions.stdioEncoding ?? 'utf8',
 			initializationOptions: clientOptions.initializationOptions,
 			initializationFailedHandler: clientOptions.initializationFailedHandler,
 			progressOnInitialization: !!clientOptions.progressOnInitialization,
-			errorHandler: clientOptions.errorHandler || this.createDefaultErrorHandler(clientOptions.connectionOptions?.maxRestartCount),
-			middleware: clientOptions.middleware || {},
+			errorHandler: clientOptions.errorHandler ?? this.createDefaultErrorHandler(clientOptions.connectionOptions?.maxRestartCount),
+			middleware: clientOptions.middleware ?? {},
 			uriConverters: clientOptions.uriConverters,
 			workspaceFolder: clientOptions.workspaceFolder,
 			connectionOptions: clientOptions.connectionOptions,
-			markdown
+			markdown,
+			diagnosticPullOptions: clientOptions.diagnosticPullOptions ?? { onChange: true, onSave: false }
 		};
 		this._clientOptions.synchronize = this._clientOptions.synchronize || {};
 
@@ -2767,7 +2839,7 @@ export abstract class BaseLanguageClient {
 	public sendRequest<R>(method: string, param: any, token?: CancellationToken): Promise<R>;
 	public sendRequest<R>(type: string | MessageSignature, ...params: any[]): Promise<R> {
 		if (!this.isConnectionActive()) {
-			throw new Error('Language client is not ready yet');
+			throw new Error(`Language client is not ready yet when handling ${Is.string(type) ? type : type.method}`);
 		}
 		this.forceDocumentSync();
 		try {
@@ -2785,7 +2857,7 @@ export abstract class BaseLanguageClient {
 	public onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): Disposable;
 	public onRequest<R, E>(type: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable {
 		if (!this.isConnectionActive()) {
-			throw new Error('Language client is not ready yet');
+			throw new Error(`Language client is not ready yet when handling ${Is.string(type) ? type : type.method}`);
 		}
 		try {
 			return this._resolvedConnection!.onRequest(type, handler);
@@ -2795,19 +2867,19 @@ export abstract class BaseLanguageClient {
 		}
 	}
 
-	public sendNotification<RO>(type: ProtocolNotificationType0<RO>): void;
-	public sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): void;
-	public sendNotification(type: NotificationType0): void;
-	public sendNotification<P>(type: NotificationType<P>, params?: P): void;
-	public sendNotification(method: string): void;
-	public sendNotification(method: string, params: any): void;
-	public sendNotification<P>(type: string | MessageSignature, params?: P): void {
+	public sendNotification<RO>(type: ProtocolNotificationType0<RO>): Promise<void>;
+	public sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): Promise<void>;
+	public sendNotification(type: NotificationType0): Promise<void>;
+	public sendNotification<P>(type: NotificationType<P>, params?: P): Promise<void>;
+	public sendNotification(method: string): Promise<void>;
+	public sendNotification(method: string, params: any): Promise<void>;
+	public sendNotification<P>(type: string | MessageSignature, params?: P): Promise<void> {
 		if (!this.isConnectionActive()) {
-			throw new Error('Language client is not ready yet');
+			throw new Error(`Language client is not ready yet when handling ${Is.string(type) ? type : type.method}`);
 		}
 		this.forceDocumentSync();
 		try {
-			this._resolvedConnection!.sendNotification(type, params);
+			return this._resolvedConnection!.sendNotification(type, params);
 		} catch (error) {
 			this.error(`Sending notification ${Is.string(type) ? type : type.method} failed.`, error);
 			throw error;
@@ -2821,7 +2893,7 @@ export abstract class BaseLanguageClient {
 	public onNotification(method: string, handler: GenericNotificationHandler): Disposable;
 	public onNotification(type: string | MessageSignature, handler: GenericNotificationHandler): Disposable {
 		if (!this.isConnectionActive()) {
-			throw new Error('Language client is not ready yet');
+			throw new Error(`Language client is not ready yet when handling ${Is.string(type) ? type : type.method}`);
 		}
 		try {
 			return this._resolvedConnection!.onNotification(type, handler);
@@ -2833,7 +2905,7 @@ export abstract class BaseLanguageClient {
 
 	public onProgress<P>(type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable {
 		if (!this.isConnectionActive()) {
-			throw new Error('Language client is not ready yet');
+			throw new Error('Language client is not ready yet when trying to send progress');
 		}
 		try {
 			if (WorkDoneProgress.is(type)) {
@@ -2852,17 +2924,15 @@ export abstract class BaseLanguageClient {
 		}
 	}
 
-	public sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): void {
+	public sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): Promise<void> {
 		if (!this.isConnectionActive()) {
-			throw new Error('Language client is not ready yet');
+			throw new Error('Language client is not ready yet when trying to send progress');
 		}
 		this.forceDocumentSync();
-		try {
-			this._resolvedConnection!.sendProgress(type, token, value);
-		} catch (error) {
+		return this._resolvedConnection!.sendProgress(type, token, value).then(undefined, (error) => {
 			this.error(`Sending progress for token ${token} failed.`, error);
 			throw error;
-		}
+		});
 	}
 
 	public get clientOptions(): LanguageClientOptions {
@@ -2918,12 +2988,12 @@ export abstract class BaseLanguageClient {
 					sendNotification: false,
 					traceFormat: this._traceFormat
 				});
-			});
+			}, () => this.info(`Setting trace value failed`, undefined, false));
 		}, () => {
 		});
 	}
 
-	private data2String(data: any): string {
+	private data2String(data: Object): string {
 		if (data instanceof ResponseError) {
 			const responseError = data as ResponseError<any>;
 			return `  Message: ${responseError.message}\n  Code: ${responseError.code} ${responseError.data ? '\n' + responseError.data.toString() : ''}`;
@@ -2942,7 +3012,7 @@ export abstract class BaseLanguageClient {
 
 	public info(message: string, data?: any, showNotification: boolean = true): void {
 		this.outputChannel.appendLine(`[Info  - ${(new Date().toLocaleTimeString())}] ${message}`);
-		if (data) {
+		if (data !== null && data !== undefined) {
 			this.outputChannel.appendLine(this.data2String(data));
 		}
 		if (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Info) {
@@ -2952,7 +3022,7 @@ export abstract class BaseLanguageClient {
 
 	public warn(message: string, data?: any, showNotification: boolean = true): void {
 		this.outputChannel.appendLine(`[Warn  - ${(new Date().toLocaleTimeString())}] ${message}`);
-		if (data) {
+		if (data !== null && data !== undefined) {
 			this.outputChannel.appendLine(this.data2String(data));
 		}
 		if (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Warn) {
@@ -2962,7 +3032,7 @@ export abstract class BaseLanguageClient {
 
 	public error(message: string, data?: any, showNotification: boolean = true): void {
 		this.outputChannel.appendLine(`[Error - ${(new Date().toLocaleTimeString())}] ${message}`);
-		if (data) {
+		if (data !== null && data !== undefined) {
 			this.outputChannel.appendLine(this.data2String(data));
 		}
 		if (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Error) {
@@ -2971,8 +3041,10 @@ export abstract class BaseLanguageClient {
 	}
 
 	private showNotificationMessage() {
-		Window.showInformationMessage('A request has failed. See the output for more information.', 'Go to output').then(() => {
-			this.outputChannel.show(true);
+		void Window.showInformationMessage('A request has failed. See the output for more information.', 'Go to output').then((selection) => {
+			if (selection !== undefined) {
+				this.outputChannel.show(true);
+			}
 		});
 	}
 
@@ -3045,16 +3117,16 @@ export abstract class BaseLanguageClient {
 			connection.onShowMessage((message) => {
 				switch (message.type) {
 					case MessageType.Error:
-						Window.showErrorMessage(message.message);
+						void Window.showErrorMessage(message.message);
 						break;
 					case MessageType.Warning:
-						Window.showWarningMessage(message.message);
+						void Window.showWarningMessage(message.message);
 						break;
 					case MessageType.Info:
-						Window.showInformationMessage(message.message);
+						void Window.showInformationMessage(message.message);
 						break;
 					default:
-						Window.showInformationMessage(message.message);
+						void Window.showInformationMessage(message.message);
 				}
 			});
 			connection.onRequest(ShowMessageRequest.type, (params) => {
@@ -3112,15 +3184,17 @@ export abstract class BaseLanguageClient {
 			connection.listen();
 			// Error is handled in the initialize call.
 			return this.initialize(connection);
-		}).then(undefined, (error) => {
+		}).catch((error) => {
 			this.state = ClientState.StartFailed;
 			this._onReadyCallbacks.reject(error);
 			this.error('Starting client failed', error);
-			Window.showErrorMessage(`Couldn't start client ${this._name}`);
+			void Window.showErrorMessage(`Couldn't start client ${this._name}`);
 		});
 		return new Disposable(() => {
 			if (this.needsStop()) {
-				this.stop();
+				this.stop().catch((error) => {
+					this.error(`Stopping server failed.`, error, false);
+				});
 			}
 		});
 	}
@@ -3134,11 +3208,13 @@ export abstract class BaseLanguageClient {
 
 	private initialize(connection: Connection): Promise<InitializeResult> {
 		this.refreshTrace(connection, false);
-		let initOption = this._clientOptions.initializationOptions;
-		let rootPath = this._clientOptions.workspaceFolder
-			? this._clientOptions.workspaceFolder.uri.fsPath
-			: this._clientGetRootPath();
-		let initParams: InitializeParams = {
+		const initOption = this._clientOptions.initializationOptions;
+		// If the client is locked to a workspace folder use it. In this case the workspace folder
+		// feature is not registered and we need to initialize the value here.
+		const [rootPath, workspaceFolders] = this._clientOptions.workspaceFolder !== undefined
+			? [this._clientOptions.workspaceFolder.uri.fsPath, [{ uri: this._c2p.asUri(this._clientOptions.workspaceFolder.uri), name: this._clientOptions.workspaceFolder.name }]]
+			: [this._clientGetRootPath(), null];
+		const initParams: InitializeParams = {
 			processId: null,
 			clientInfo: {
 				name: Env.appName,
@@ -3150,7 +3226,7 @@ export abstract class BaseLanguageClient {
 			capabilities: this.computeClientCapabilities(),
 			initializationOptions: Is.func(initOption) ? initOption() : initOption,
 			trace: Trace.toString(this._trace),
-			workspaceFolders: null
+			workspaceFolders: workspaceFolders
 		};
 		this.fillInitializeParams(initParams);
 		if (this._clientOptions.progressOnInitialization) {
@@ -3206,36 +3282,37 @@ export abstract class BaseLanguageClient {
 			connection.onRequest('client/unregisterFeature', params => this.handleUnregistrationRequest(params));
 			connection.onRequest(ApplyWorkspaceEditRequest.type, params => this.handleApplyWorkspaceEdit(params));
 
-			connection.sendNotification(InitializedNotification.type, {});
+			return connection.sendNotification(InitializedNotification.type, {}).then(() => {
+				this.hookFileEvents(connection);
+				this.hookConfigurationChanged(connection);
+				this.initializeFeatures(connection);
+				this._onReadyCallbacks.resolve();
+				return result;
+			});
 
-			this.hookFileEvents(connection);
-			this.hookConfigurationChanged(connection);
-			this.initializeFeatures(connection);
-			this._onReadyCallbacks.resolve();
-			return result;
 		}).then<InitializeResult>(undefined, (error: any) => {
 			if (this._clientOptions.initializationFailedHandler) {
 				if (this._clientOptions.initializationFailedHandler(error)) {
-					this.initialize(connection);
+					void this.initialize(connection);
 				} else {
-					this.stop();
+					void this.stop();
 					this._onReadyCallbacks.reject(error);
 				}
 			} else if (error instanceof ResponseError && error.data && error.data.retry) {
-				Window.showErrorMessage(error.message, { title: 'Retry', id: 'retry' }).then(item => {
+				void Window.showErrorMessage(error.message, { title: 'Retry', id: 'retry' }).then(item => {
 					if (item && item.id === 'retry') {
-						this.initialize(connection);
+						void this.initialize(connection);
 					} else {
-						this.stop();
+						void this.stop();
 						this._onReadyCallbacks.reject(error);
 					}
 				});
 			} else {
 				if (error && error.message) {
-					Window.showErrorMessage(error.message);
+					void Window.showErrorMessage(error.message);
 				}
 				this.error('Server initialization failed.', error);
-				this.stop();
+				void this.stop();
 				this._onReadyCallbacks.reject(error);
 			}
 			throw error;
@@ -3254,7 +3331,11 @@ export abstract class BaseLanguageClient {
 		return undefined;
 	}
 
-	public stop(): Promise<void> {
+	public async stop(timeout: number = 2000): Promise<void> {
+		// to ensure proper shutdown we can on stop a if everything is
+		// ready. Otherwise we would fail on clean up
+		await this.onReady();
+
 		this._initializeResult = undefined;
 		if (!this._connectionPromise) {
 			this.state = ClientState.Stopped;
@@ -3265,18 +3346,34 @@ export abstract class BaseLanguageClient {
 		}
 		this.state = ClientState.Stopping;
 		this.cleanUp(false);
-		// unhook listeners
-		return this._onStop = this.resolveConnection().then(connection => {
+
+		const tp = new Promise<undefined>(c => { RAL().timer.setTimeout(c, timeout); });
+		const shutdown = this.resolveConnection().then(connection => {
 			return connection.shutdown().then(() => {
-				connection.exit();
+				return connection.exit().then(() => {
+					return connection;
+				});
+			});
+		});
+
+		return this._onStop = Promise.race([tp, shutdown]).then((connection) => {
+			// The connection won the race with the timeout.
+			if (connection !== undefined) {
 				connection.end();
 				connection.dispose();
-				this.state = ClientState.Stopped;
-				this.cleanUpChannel();
-				this._onStop = undefined;
-				this._connectionPromise = undefined;
-				this._resolvedConnection = undefined;
-			});
+			} else {
+				this.error(`Stopping server timed out`, undefined, false);
+				throw new Error(`Stopping the server timed out`);
+			}
+		}, (error) => {
+			this.error(`Stopping server failed`, error, false);
+			throw error;
+		}).finally(() => {
+			this.state = ClientState.Stopped;
+			this.cleanUpChannel();
+			this._onStop = undefined;
+			this._connectionPromise = undefined;
+			this._resolvedConnection = undefined;
 		});
 	}
 
@@ -3313,24 +3410,24 @@ export abstract class BaseLanguageClient {
 
 	private notifyFileEvent(event: FileEvent): void {
 		const client = this;
-		function didChangeWatchedFile(this: void, event: FileEvent) {
+		async function didChangeWatchedFile(this: void, event: FileEvent): Promise<void> {
 			client._fileEvents.push(event);
-			client._fileEventDelayer.trigger(() => {
-				client.onReady().then(() => {
-					client.resolveConnection().then(connection => {
-						if (client.isConnectionActive()) {
-							client.forceDocumentSync();
-							connection.didChangeWatchedFiles({ changes: client._fileEvents });
-						}
-						client._fileEvents = [];
-					});
-				}, (error) => {
-					client.error(`Notify file events failed.`, error);
-				});
+			return client._fileEventDelayer.trigger(async (): Promise<void> => {
+				await client.onReady();
+				const connection = await client.resolveConnection();
+				let promise = Promise.resolve();
+				if (client.isConnectionActive()) {
+					client.forceDocumentSync();
+					promise = connection.didChangeWatchedFiles({ changes: client._fileEvents });
+				}
+				client._fileEvents = [];
+				return promise;
 			});
 		}
 		const workSpaceMiddleware = this.clientOptions.middleware?.workspace;
-		workSpaceMiddleware?.didChangeWatchedFile ? workSpaceMiddleware.didChangeWatchedFile(event, didChangeWatchedFile) : didChangeWatchedFile(event);
+		(workSpaceMiddleware?.didChangeWatchedFile ? workSpaceMiddleware.didChangeWatchedFile(event, didChangeWatchedFile) : didChangeWatchedFile(event)).catch((error) => {
+			client.error(`Notify file events failed.`, error);
+		});
 	}
 
 	private _didChangeTextDocumentFeature: DidChangeTextDocumentFeature | undefined;
@@ -3380,7 +3477,7 @@ export abstract class BaseLanguageClient {
 		});
 	}
 
-	protected handleConnectionClosed() {
+	protected handleConnectionClosed(): void {
 		// Check whether this is a normal shutdown in progress or the client stopped normally.
 		if (this.state === ClientState.Stopped) {
 			return;
@@ -3419,11 +3516,13 @@ export abstract class BaseLanguageClient {
 		}
 	}
 
-	private handleConnectionError(error: Error, message: Message | undefined, count: number | undefined) {
-		let action = this._clientOptions.errorHandler!.error(error, message, count);
+	private handleConnectionError(error: Error, message: Message | undefined, count: number | undefined): void {
+		const action = this._clientOptions.errorHandler!.error(error, message, count);
 		if (action === ErrorAction.Shutdown) {
 			this.error('Connection to server is erroring. Shutting down server.');
-			this.stop();
+			this.stop().catch((error) => {
+				this.error(`Stopping server failed`, error, false);
+			});
 		}
 	}
 
@@ -3434,7 +3533,7 @@ export abstract class BaseLanguageClient {
 	}
 
 	private refreshTrace(connection: Connection, sendNotification: boolean = false): void {
-		let config = Workspace.getConfiguration(this._id);
+		const config = Workspace.getConfiguration(this._id);
 		let trace: Trace = Trace.Off;
 		let traceFormat: TraceFormat = TraceFormat.Text;
 		if (config) {
@@ -3490,12 +3589,12 @@ export abstract class BaseLanguageClient {
 		}
 	}
 
-	public getFeature(request: typeof DidOpenTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & NotificationFeature<(textDocument: TextDocument) => void>;
-	public getFeature(request: typeof DidChangeTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & NotificationFeature<(textDocument: TextDocument) => void>;
-	public getFeature(request: typeof WillSaveTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & NotificationFeature<(textDocument: TextDocument) => void>;
+	public getFeature(request: typeof DidOpenTextDocumentNotification.method): DidOpenTextDocumentFeatureShape;
+	public getFeature(request: typeof DidChangeTextDocumentNotification.method): DidChangeTextDocumentFeatureShape;
+	public getFeature(request: typeof WillSaveTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & NotificationFeature<(textDocument: TextDocument) => Promise<void>>;
 	public getFeature(request: typeof WillSaveTextDocumentWaitUntilRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & NotificationFeature<(textDocument: TextDocument) => ProviderResult<VTextEdit[]>>;
-	public getFeature(request: typeof DidSaveTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & NotificationFeature<(textDocument: TextDocument) => void>;
-	public getFeature(request: typeof DidCloseTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & NotificationFeature<(textDocument: TextDocument) => void>;
+	public getFeature(request: typeof DidSaveTextDocumentNotification.method): DidSaveTextDocumentFeatureShape;
+	public getFeature(request: typeof DidCloseTextDocumentNotification.method): DidCloseTextDocumentFeatureShape;
 	public getFeature(request: typeof DidCreateFilesNotification.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileCreateEvent) => Promise<void> };
 	public getFeature(request: typeof DidRenameFilesNotification.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileRenameEvent) => Promise<void> };
 	public getFeature(request: typeof DidDeleteFilesNotification.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileDeleteEvent) => Promise<void> };
@@ -3509,6 +3608,7 @@ export abstract class BaseLanguageClient {
 	public getFeature(request: typeof ReferencesRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<ReferenceProvider>;
 	public getFeature(request: typeof DocumentHighlightRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DocumentHighlightProvider>;
 	public getFeature(request: typeof CodeActionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<CodeActionProvider>;
+	public getFeature(request: typeof CodeLensRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<CodeLensProviderData>;
 	public getFeature(request: typeof DocumentFormattingRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DocumentFormattingEditProvider>;
 	public getFeature(request: typeof DocumentRangeFormattingRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DocumentRangeFormattingEditProvider>;
 	public getFeature(request: typeof DocumentOnTypeFormattingRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<OnTypeFormattingEditProvider>;
@@ -3524,6 +3624,9 @@ export abstract class BaseLanguageClient {
 	public getFeature(request: typeof CallHierarchyPrepareRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<CallHierarchyProvider>;
 	public getFeature(request: typeof SemanticTokensRegistrationType.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<SemanticTokensProviders>;
 	public getFeature(request: typeof LinkedEditingRangeRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<LinkedEditingRangeProvider>;
+	public getFeature(request: typeof Proposed.DocumentDiagnosticRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DiagnosticFeatureProvider>;
+	public getFeature(request: typeof Proposed.TypeHierarchyPrepareRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<VTypeHierarchyProvider>;
+	public getFeature(request: typeof Proposed.InlineValuesRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<InlineValuesProviderData>;
 
 	public getFeature(request: typeof WorkspaceSymbolRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & WorkspaceProviderFeature<WorkspaceSymbolProvider>;
 	public getFeature(request: string): DynamicFeature<any> | undefined {
@@ -3680,31 +3783,28 @@ export abstract class BaseLanguageClient {
 		SemanticTokensRangeRequest.method,
 		SemanticTokensDeltaRequest.method
 	]);
-	public handleFailedRequest<T>(type: MessageSignature, token: CancellationToken | undefined, error: any, defaultValue: T): T {
+	public handleFailedRequest<T>(type: MessageSignature, token: CancellationToken | undefined, error: any, defaultValue: T, showNotification: boolean = true): T {
 		// If we get a request cancel or a content modified don't log anything.
 		if (error instanceof ResponseError) {
-			if (error.code === LSPErrorCodes.RequestCancelled) {
+			if (error.code === LSPErrorCodes.RequestCancelled || error.code === LSPErrorCodes.ServerCancelled) {
 				if (token !== undefined && token.isCancellationRequested) {
 					return defaultValue;
 				} else {
-					throw this.makeCancelError();
+					if (error.data !== undefined) {
+						throw new LSPCancellationError(error.data);
+					} else {
+						throw new CancellationError();
+					}
 				}
 			} else if (error.code === LSPErrorCodes.ContentModified) {
 				if (BaseLanguageClient.RequestsToCancelOnContentModified.has(type.method)) {
-					throw this.makeCancelError();
+					throw new CancellationError();
 				} else {
 					return defaultValue;
 				}
 			}
 		}
-		this.error(`Request ${type.method} failed.`, error);
+		this.error(`Request ${type.method} failed.`, error, showNotification);
 		throw error;
-	}
-
-	private static Canceled = 'Canceled';
-	private makeCancelError(): Error {
-		const result = new Error(BaseLanguageClient.Canceled);
-		result.name = BaseLanguageClient.Canceled;
-		return result;
 	}
 }

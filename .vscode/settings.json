@@ -20,18 +20,22 @@
 
 	"javascript.validate.enable": false,
 
+	"eslint.format.enable": true,
 	"tslint.enable": false,
 	"eslint.enable": true,
 	"eslint.validate": [
 		"typescript"
 	],
+	"eslint.useESLintClass": true,
 	"eslint.workingDirectories": [
+		"./textDocument",
 		"./types",
 		"./jsonrpc",
 		"./protocol",
 		"./server",
 		"./client",
-		"./client-node-tests"
+		"./client-node-tests",
+		"./testbed"
 	],
 	"typescript.tsc.autoDetect": "off",
 	"spellright.language": [
@@ -47,10 +51,6 @@
 	},
 	"cSpell.words": [
 		"ASAR",
-		"LSIF",
-		"Struct",
-		"Unregistration",
-		"XCOPY",
 		"asColorInformations",
 		"asParameterInformations",
 		"asSignatureInformations",
@@ -59,6 +59,7 @@
 		"diagnostic's",
 		"hover's",
 		"lsclient",
+		"LSIF",
 		"lsptests",
 		"msgpack",
 		"plugable",
@@ -66,12 +67,19 @@
 		"preversion",
 		"quickfix",
 		"refactorings",
+		"retriggerRequest",
 		"serializable",
+		"splitted",
+		"Struct",
 		"tsbuild",
 		"uinteger",
+		"Undispatched",
 		"unregisteration",
 		"unregisterations",
+		"Unregistration",
 		"unregistrations",
-		"whitespaces"
+		"vsdiag",
+		"whitespaces",
+		"XCOPY"
 	]
 }

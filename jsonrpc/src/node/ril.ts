@@ -158,17 +158,17 @@ const _ril: RIL = Object.freeze<RIL>({
 	}),
 	console: console,
 	timer: Object.freeze({
-		setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): RAL.TimeoutHandle {
-			return setTimeout(callback, ms, ...args) as unknown as RAL.TimeoutHandle;
+		setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): Disposable {
+			const handle = setTimeout(callback, ms, ...args);
+			return { dispose: () => clearTimeout(handle)};
 		},
-		clearTimeout(handle: RAL.TimeoutHandle): void {
-			clearTimeout(handle as unknown as NodeJS.Timeout);
+		setImmediate(callback: (...args: any[]) => void, ...args: any[]): Disposable {
+			const handle = setImmediate(callback, ...args);
+			return { dispose: () => clearImmediate(handle) };
 		},
-		setImmediate(callback: (...args: any[]) => void, ...args: any[]): RAL.ImmediateHandle {
-			return setImmediate(callback, ...args) as unknown as RAL.ImmediateHandle;
-		},
-		clearImmediate(handle: RAL.ImmediateHandle): void {
-			clearImmediate(handle as unknown as NodeJS.Immediate);
+		setInterval(callback: (...args: any[]) => void, ms: number, ...args: any[]): Disposable {
+			const handle = setInterval(callback, ms, ...args);
+			return { dispose: () => clearInterval(handle) };
 		}
 	})
 });

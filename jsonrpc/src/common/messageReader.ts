@@ -173,7 +173,7 @@ export class ReadableStreamMessageReader extends AbstractMessageReader {
 	private nextMessageLength: number;
 	private messageToken: number;
 	private buffer: RAL.MessageBuffer;
-	private partialMessageTimer: RAL.TimeoutHandle | undefined;
+	private partialMessageTimer: Disposable | undefined;
 	private _partialMessageTimeout: number;
 
 	public constructor(readable: RAL.ReadableStream, options?: RAL.MessageBufferEncoding | MessageReaderOptions) {
@@ -253,7 +253,7 @@ export class ReadableStreamMessageReader extends AbstractMessageReader {
 
 	private clearPartialMessageTimer(): void {
 		if (this.partialMessageTimer) {
-			RAL().timer.clearTimeout(this.partialMessageTimer);
+			this.partialMessageTimer.dispose();
 			this.partialMessageTimer = undefined;
 		}
 	}

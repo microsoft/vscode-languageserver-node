@@ -34,6 +34,15 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 
 ## History
 
+## 3.17.0-next.* Protocol, 7.0.0-next.* JSON-RPC, 8.0.0-next.* Client and 8.0.0-next.* Server.
+
+Library specific changes are:
+
+- all `sendNotification` methods now return a promise. Returning a promise was necessary since the actual writing of the message to the underlying transport is async and a client for example could not determine if a notification was handed off to the transport. This is a breaking change in the sense that it might result in floating promise and might be flagged by a linter.
+- `InlineValuesRequest` protocol added:
+  - New APIs in Types: `InlineValues`
+  - New APIs in Protocol: `InlineValuesRequest`, `InlineValuesParams`, `InlineValuesClientCapabilities`, `InlineValuesProviderOptions`,
+
 ## 3.16.0 Protocol, 6.0.0 JSON-RPC, 7.0.0 Client and 7.0.0 Server.
 
 For a detailed list of changes made in the 3.16.0 version of the protocol see the [change log](https://microsoft.github.io/language-server-protocol/specifications/specification-3-16/#version_3_16_0) of the 3.16 specification.

@@ -14,7 +14,8 @@ import ProtocolDocumentLink from './protocolDocumentLink';
 import ProtocolCodeAction from './protocolCodeAction';
 import { ProtocolDiagnostic, DiagnosticCode } from './protocolDiagnostic';
 import ProtocolCallHierarchyItem from './protocolCallHierarchyItem';
-import { AnnotatedTextEdit, ChangeAnnotation, InsertTextMode } from 'vscode-languageserver-protocol';
+import { AnnotatedTextEdit, ChangeAnnotation, CompletionItemLabelDetails, InsertTextMode } from 'vscode-languageserver-protocol';
+import ProtocolTypeHierarchyItem from './protocolTypeHierarchyItem';
 
 interface InsertReplaceRange {
 	inserting: code.Range;
@@ -46,12 +47,12 @@ export interface Converter {
 	asHover(hover: undefined | null): undefined;
 	asHover(hover: ls.Hover | undefined | null): code.Hover | undefined;
 
-	asCompletionResult(result: ls.CompletionList): code.CompletionList;
-	asCompletionResult(result: ls.CompletionItem[]): code.CompletionItem[];
-	asCompletionResult(result: undefined | null): undefined;
-	asCompletionResult(result: ls.CompletionItem[] | ls.CompletionList | undefined | null): code.CompletionItem[] | code.CompletionList | undefined;
+	asCompletionResult(result: ls.CompletionList, defaultCommitCharacters?: string[]): code.CompletionList;
+	asCompletionResult(result: ls.CompletionItem[], defaultCommitCharacters?: string[]): code.CompletionItem[];
+	asCompletionResult(result: undefined | null, defaultCommitCharacters?: string[]): undefined;
+	asCompletionResult(result: ls.CompletionItem[] | ls.CompletionList | undefined | null, defaultCommitCharacters?: string[]): code.CompletionItem[] | code.CompletionList | undefined;
 
-	asCompletionItem(item: ls.CompletionItem): ProtocolCompletionItem;
+	asCompletionItem(item: ls.CompletionItem, defaultCommitCharacters?: string[]): ProtocolCompletionItem;
 
 	asTextEdit(edit: undefined | null): undefined;
 	asTextEdit(edit: ls.TextEdit): code.TextEdit;
@@ -184,6 +185,12 @@ export interface Converter {
 	asSelectionRanges(selectionRanges: ls.SelectionRange[] | undefined | null): code.SelectionRange[] | undefined;
 	asSelectionRanges(selectionRanges: ls.SelectionRange[] | undefined | null): code.SelectionRange[] | undefined;
 
+	asInlineValue(value: ls.InlineValue): code.InlineValue;
+	asInlineValues(values: ls.InlineValue[]): code.InlineValue[];
+	asInlineValues(values: undefined | null): undefined;
+	asInlineValues(values: ls.InlineValue[] | undefined | null): code.InlineValue[] | undefined;
+	asInlineValues(values: ls.InlineValue[] | undefined | null): code.InlineValue[] | undefined;
+
 	asSemanticTokensLegend(value: ls.SemanticTokensLegend): code.SemanticTokensLegend;
 
 	asSemanticTokens(value: ls.SemanticTokens): code.SemanticTokens;
@@ -225,6 +232,14 @@ export interface Converter {
 	asLinkedEditingRanges(value: null | undefined): undefined;
 	asLinkedEditingRanges(value: ls.LinkedEditingRanges): code.LinkedEditingRanges;
 	asLinkedEditingRanges(value: ls.LinkedEditingRanges | null | undefined): code.LinkedEditingRanges | undefined;
+
+	asTypeHierarchyItem(item: null): undefined;
+	asTypeHierarchyItem(item: ls.TypeHierarchyItem): code.TypeHierarchyItem;
+	asTypeHierarchyItem(item: ls.TypeHierarchyItem | null): code.TypeHierarchyItem | undefined;
+
+	asTypeHierarchyItems(items: null): undefined;
+	asTypeHierarchyItems(items: ls.TypeHierarchyItem[]): code.TypeHierarchyItem[];
+	asTypeHierarchyItems(items: ls.TypeHierarchyItem[] | null): code.TypeHierarchyItem[] | undefined;
 }
 
 export interface URIConverter {
@@ -426,20 +441,20 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return new code.Hover(asHoverContent(hover.contents), asRange(hover.range));
 	}
 
-	function asCompletionResult(result: ls.CompletionList): code.CompletionList;
-	function asCompletionResult(result: ls.CompletionItem[]): code.CompletionItem[];
-	function asCompletionResult(result: undefined | null): undefined;
-	function asCompletionResult(result: ls.CompletionItem[] | ls.CompletionList | undefined | null): code.CompletionItem[] | code.CompletionList | undefined;
-	function asCompletionResult(result: ls.CompletionItem[] | ls.CompletionList | undefined | null): code.CompletionItem[] | code.CompletionList | undefined {
+	function asCompletionResult(result: ls.CompletionList, defaultCommitCharacters?: string[]): code.CompletionList;
+	function asCompletionResult(result: ls.CompletionItem[], defaultCommitCharacters?: string[]): code.CompletionItem[];
+	function asCompletionResult(result: undefined | null, defaultCommitCharacters?: string[]): undefined;
+	function asCompletionResult(result: ls.CompletionItem[] | ls.CompletionList | undefined | null, defaultCommitCharacters?: string[]): code.CompletionItem[] | code.CompletionList | undefined;
+	function asCompletionResult(result: ls.CompletionItem[] | ls.CompletionList | undefined | null, defaultCommitCharacters?: string[]): code.CompletionItem[] | code.CompletionList | undefined {
 		if (!result) {
 			return undefined;
 		}
 		if (Array.isArray(result)) {
 			let items = <ls.CompletionItem[]>result;
-			return items.map(asCompletionItem);
+			return items.map(item => asCompletionItem(item, defaultCommitCharacters));
 		}
 		let list = <ls.CompletionList>result;
-		return new code.CompletionList(list.items.map(asCompletionItem), list.isIncomplete);
+		return new code.CompletionList(list.items.map(item => asCompletionItem(item, defaultCommitCharacters)), list.isIncomplete);
 	}
 
 	function asCompletionItemKind(value: ls.CompletionItemKind): [code.CompletionItemKind, ls.CompletionItemKind | undefined] {
@@ -472,13 +487,11 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return result;
 	}
 
-	function asCompletionItem(item: ls.CompletionItem): ProtocolCompletionItem {
+	function asCompletionItem(item: ls.CompletionItem, defaultCommitCharacters?: string[]): ProtocolCompletionItem {
 		const tags: code.CompletionItemTag[] = asCompletionItemTags(item.tags);
 		const label = asCompletionItemLabel(item);
-		const result = new ProtocolCompletionItem(label[0]);
-		if (label[1] !== undefined) {
-			result.label2 = label[1];
-		}
+		const result = new ProtocolCompletionItem(label);
+
 		if (item.detail) { result.detail = item.detail; }
 		if (item.documentation) {
 			result.documentation = asDocumentation(item.documentation);
@@ -500,7 +513,10 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		}
 		if (item.sortText) { result.sortText = item.sortText; }
 		if (item.additionalTextEdits) { result.additionalTextEdits = asTextEdits(item.additionalTextEdits); }
-		if (Is.stringArray(item.commitCharacters)) { result.commitCharacters = item.commitCharacters.slice(); }
+		const commitCharacters = item.commitCharacters !== undefined
+			? Is.stringArray(item.commitCharacters) ? item.commitCharacters : undefined
+			: defaultCommitCharacters;
+		if (commitCharacters) { result.commitCharacters = commitCharacters.slice(); }
 		if (item.command) { result.command = asCommand(item.command); }
 		if (item.deprecated === true || item.deprecated === false) {
 			result.deprecated = item.deprecated;
@@ -522,11 +538,15 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return result;
 	}
 
-	function asCompletionItemLabel(item: ls.CompletionItem): [string, code.CompletionItemLabel | undefined] {
-		if (Is.string(item.label)) {
-			return [item.label, undefined];
+	function asCompletionItemLabel(item: ls.CompletionItem): code.CompletionItemLabel | string {
+		if (CompletionItemLabelDetails.is(item.labelDetails)) {
+			return {
+				label: item.label,
+				detail: item.labelDetails.detail,
+				description: item.labelDetails.description
+			};
 		} else {
-			return [item.label.name, item.label];
+			return item.label;
 		}
 	}
 
@@ -608,7 +628,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		if (item.documentation !== undefined) { result.documentation = asDocumentation(item.documentation); }
 		if (item.parameters !== undefined) { result.parameters = asParameterInformations(item.parameters); }
 		if (item.activeParameter !== undefined) { result.activeParameter = item.activeParameter; }
-		{return result;}
+		{ return result; }
 	}
 
 	function asParameterInformations(item: ls.ParameterInformation[]): code.ParameterInformation[] {
@@ -748,7 +768,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 	}
 
 	function asSymbolTag(value: ls.SymbolTag): code.SymbolTag | undefined {
-		switch(value) {
+		switch (value) {
 			case ls.SymbolTag.Deprecated:
 				return code.SymbolTag.Deprecated;
 			default:
@@ -1084,6 +1104,39 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return result;
 	}
 
+	function asInlineValue(inlineValue: ls.InlineValue): code.InlineValue {
+		if (ls.InlineValueText.is(inlineValue)) {
+			return new code.InlineValueText(
+				asRange(inlineValue.range),
+				inlineValue.text,
+			);
+		} else if (ls.InlineValueVariableLookup.is(inlineValue)) {
+			return new code.InlineValueVariableLookup(
+				asRange(inlineValue.range),
+				inlineValue.variableName,
+				inlineValue.caseSensitiveLookup,
+			);
+		} else {
+			return new code.InlineValueEvaluatableExpression(
+				asRange(inlineValue.range),
+				inlineValue.expression,
+			);
+		}
+	}
+	function asInlineValues(inlineValues: ls.InlineValue[]): code.SelectionRange[];
+	function asInlineValues(inlineValues: undefined | null): undefined;
+	function asInlineValues(inlineValues: ls.InlineValue[] | undefined | null): code.InlineValue[] | undefined;
+	function asInlineValues(inlineValues: ls.InlineValue[] | undefined | null): code.InlineValue[] | undefined {
+		if (!Array.isArray(inlineValues)) {
+			return [];
+		}
+		const result: code.InlineValue[] = [];
+		for (const inlineValue of inlineValues) {
+			result.push(asInlineValue(inlineValue));
+		}
+		return result;
+	}
+
 	//----- call hierarchy
 
 	function asCallHierarchyItem(item: null): undefined;
@@ -1093,7 +1146,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		if (item === null) {
 			return undefined;
 		}
-		let result = new ProtocolCallHierarchyItem(
+		const result = new ProtocolCallHierarchyItem(
 			asSymbolKind(item.kind),
 			item.name,
 			item.detail || '',
@@ -1199,6 +1252,37 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return new RegExp(value);
 	}
 
+	//------ Type Hierarchy
+	function asTypeHierarchyItem(item: null): undefined;
+	function asTypeHierarchyItem(item: ls.TypeHierarchyItem): code.TypeHierarchyItem;
+	function asTypeHierarchyItem(item: ls.TypeHierarchyItem | null): code.TypeHierarchyItem | undefined;
+	function asTypeHierarchyItem(item: ls.TypeHierarchyItem | null): code.TypeHierarchyItem | undefined {
+		if (item === null) {
+			return undefined;
+		}
+		let result = new ProtocolTypeHierarchyItem(
+			asSymbolKind(item.kind),
+			item.name,
+			item.detail || '',
+			asUri(item.uri),
+			asRange(item.range),
+			asRange(item.selectionRange),
+			item.data
+		);
+		if (item.tags !== undefined) { result.tags = asSymbolTags(item.tags); }
+		return result;
+	}
+
+	function asTypeHierarchyItems(items: null): undefined;
+	function asTypeHierarchyItems(items: ls.TypeHierarchyItem[]): code.TypeHierarchyItem[];
+	function asTypeHierarchyItems(items: ls.TypeHierarchyItem[] | null): code.TypeHierarchyItem[] | undefined;
+	function asTypeHierarchyItems(items: ls.TypeHierarchyItem[] | null): code.TypeHierarchyItem[] | undefined {
+		if (items === null) {
+			return undefined;
+		}
+		return items.map(item => asTypeHierarchyItem(item));
+	}
+
 	return {
 		asUri,
 		asDiagnostics,
@@ -1252,6 +1336,8 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		asColorPresentations,
 		asSelectionRange,
 		asSelectionRanges,
+		asInlineValue,
+		asInlineValues,
 		asSemanticTokensLegend,
 		asSemanticTokens,
 		asSemanticTokensEdit,
@@ -1262,6 +1348,8 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		asCallHierarchyIncomingCalls,
 		asCallHierarchyOutgoingCall,
 		asCallHierarchyOutgoingCalls,
-		asLinkedEditingRanges: asLinkedEditingRanges
+		asLinkedEditingRanges: asLinkedEditingRanges,
+		asTypeHierarchyItem,
+		asTypeHierarchyItems
 	};
 }

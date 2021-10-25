@@ -1,11 +1,12 @@
 {
-	"name": "text-extension",
-	"displayName": "text-extension",
+	"name": "test-extension",
+	"displayName": "test-extension",
+	"publisher": "ms-vscode",
 	"private": true,
 	"description": "",
 	"version": "0.0.1",
 	"engines": {
-		"vscode": "^1.52.0"
+		"vscode": "^1.61.0"
 	},
 	"categories": [
 		"Other"
@@ -13,29 +14,31 @@
 	"activationEvents": [
 		"*"
 	],
+	"enableProposedApi": true,
 	"main": "./extension.js",
 	"contributes": {},
 	"scripts": {
 		"clean": "node ../node_modules/rimraf/bin.js lib",
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json",
 		"watch": "node ../build/bin/tsc -b ./tsconfig-watch.json -w",
+		"lint": "node ../node_modules/eslint/bin/eslint.js --ext ts src",
 		"test": "node ../build/bin/symlink-tests.js && node lib/runTests.js"
 	},
 	"dependencies": {
 		"minimatch": "^3.0.4",
-		"vscode-uri": "2.1.1",
-		"vscode-languageclient": "7.0.0",
-		"vscode-languageserver": "7.0.0"
+		"vscode-languageclient": "7.1.0-next.1",
+		"vscode-languageserver": "7.1.0-next.1",
+		"vscode-uri": "2.1.1"
 	},
 	"devDependencies": {
-		"@types/glob": "^7.1.1",
-		"@types/minimatch": "^3.0.3",
-		"@types/sinon": "^7.0.13",
-		"@types/uuid": "^7.0.2",
-		"@types/vscode": "1.52.0",
-		"glob": "^7.1.4",
-		"sinon": "7.4.1",
-		"uuid": "7.0.3",
-		"vscode-test": "^1.2.0"
+		"@types/glob": "^7.1.4",
+		"@types/minimatch": "^3.0.5",
+		"@types/sinon": "^10.0.2",
+		"@types/uuid": "^8.3.1",
+		"@types/vscode": "1.61.0",
+		"glob": "^7.1.7",
+		"sinon": "^11.1.2",
+		"uuid": "^8.3.2",
+		"vscode-test": "^1.6.1"
 	}
 }

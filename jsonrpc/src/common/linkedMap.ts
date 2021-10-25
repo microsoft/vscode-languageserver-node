@@ -153,15 +153,14 @@ export class LinkedMap<K, V> implements Map<K, V> {
 	}
 
 	public keys(): IterableIterator<K> {
-		const map = this;
 		const state = this._state;
 		let current = this._head;
 		const iterator: IterableIterator<K> = {
-			[Symbol.iterator]() {
+			[Symbol.iterator]: () => {
 				return iterator;
 			},
-			next(): IteratorResult<K> {
-				if (map._state !== state) {
+			next: (): IteratorResult<K> => {
+				if (this._state !== state) {
 					throw new Error(`LinkedMap got modified during iteration.`);
 				}
 				if (current) {
@@ -177,15 +176,14 @@ export class LinkedMap<K, V> implements Map<K, V> {
 	}
 
 	public values(): IterableIterator<V> {
-		const map = this;
 		const state = this._state;
 		let current = this._head;
 		const iterator: IterableIterator<V> = {
-			[Symbol.iterator]() {
+			[Symbol.iterator]: () => {
 				return iterator;
 			},
-			next(): IteratorResult<V> {
-				if (map._state !== state) {
+			next: (): IteratorResult<V> => {
+				if (this._state !== state) {
 					throw new Error(`LinkedMap got modified during iteration.`);
 				}
 				if (current) {
@@ -201,15 +199,14 @@ export class LinkedMap<K, V> implements Map<K, V> {
 	}
 
 	public entries(): IterableIterator<[K, V]> {
-		const map = this;
 		const state = this._state;
 		let current = this._head;
 		const iterator: IterableIterator<[K, V]> = {
-			[Symbol.iterator]() {
+			[Symbol.iterator]: () => {
 				return iterator;
 			},
-			next(): IteratorResult<[K, V]> {
-				if (map._state !== state) {
+			next: (): IteratorResult<[K, V]> => {
+				if (this._state !== state) {
 					throw new Error(`LinkedMap got modified during iteration.`);
 				}
 				if (current) {
@@ -228,7 +225,7 @@ export class LinkedMap<K, V> implements Map<K, V> {
 		return this.entries();
 	}
 
-	protected trimOld(newSize: number) {
+	protected trimOld(newSize: number): void {
 		if (newSize >= this.size) {
 			return;
 		}
@@ -285,7 +282,7 @@ export class LinkedMap<K, V> implements Map<K, V> {
 			this._tail = undefined;
 		}
 		else if (item === this._head) {
-			// This can only happend if size === 1 which is handle
+			// This can only happened if size === 1 which is handle
 			// by the case above.
 			if (!item.next) {
 				throw new Error('Invalid list');
@@ -294,7 +291,7 @@ export class LinkedMap<K, V> implements Map<K, V> {
 			this._head = item.next;
 		}
 		else if (item === this._tail) {
-			// This can only happend if size === 1 which is handle
+			// This can only happened if size === 1 which is handle
 			// by the case above.
 			if (!item.previous) {
 				throw new Error('Invalid list');

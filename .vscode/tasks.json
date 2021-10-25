@@ -9,6 +9,9 @@
 				"kind": "build",
 				"isDefault": true
 			},
+			"runOptions": {
+				"runOn": "folderOpen"
+			},
 			"isBackground": true,
 			"presentation": {
 				"panel": "dedicated",

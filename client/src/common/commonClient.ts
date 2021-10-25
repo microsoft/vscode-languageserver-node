@@ -35,7 +35,11 @@ export abstract class CommonLanguageClient extends BaseLanguageClient {
 		this.registerFeature(new TypeDefinitionFeature(this));
 		this.registerFeature(new ImplementationFeature(this));
 		this.registerFeature(new ColorProviderFeature(this));
-		this.registerFeature(new WorkspaceFoldersFeature(this));
+		// We only register the workspace folder feature if the client is not locked
+		// to a specific workspace folder.
+		if (this.clientOptions.workspaceFolder === undefined) {
+			this.registerFeature(new WorkspaceFoldersFeature(this));
+		}
 		this.registerFeature(new FoldingRangeFeature(this));
 		this.registerFeature(new DeclarationFeature(this));
 		this.registerFeature(new SelectionRangeFeature(this));
@@ -53,10 +57,16 @@ export abstract class CommonLanguageClient extends BaseLanguageClient {
 }
 
 // Exporting proposed protocol.
+import * as pd from './proposed.diagnostic';
+import * as pt from './proposed.typeHierarchy';
+import * as iv from './proposed.inlineValues';
 
 export namespace ProposedFeatures {
 	export function createAll(_client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
 		let result: (StaticFeature | DynamicFeature<any>)[] = [
+			new pd.DiagnosticFeature(_client),
+			new pt.TypeHierarchyFeature(_client),
+			new iv.InlineValueFeature(_client)
 		];
 		return result;
 	}

@@ -84,7 +84,7 @@ suite('Connection Tests', () => {
 			},
 			workDoneToken: 'xx'
 		};
-		clientConnection.sendRequest(DeclarationRequest.type, params);
+		void clientConnection.sendRequest(DeclarationRequest.type, params);
 	});
 
 	test('Ensure result converted', (done) => {
@@ -101,7 +101,7 @@ suite('Connection Tests', () => {
 			},
 			partialResultToken: 'yy'
 		};
-		clientConnection.sendRequest(DeclarationRequest.type, params);
+		void clientConnection.sendRequest(DeclarationRequest.type, params);
 	});
 
 	test('Report progress test', (done) => {
@@ -135,7 +135,7 @@ suite('Connection Tests', () => {
 					break;
 			}
 		});
-		clientConnection.sendRequest(DeclarationRequest.type, params);
+		void clientConnection.sendRequest(DeclarationRequest.type, params);
 	});
 
 	test('Report result test', (done) => {
@@ -171,7 +171,7 @@ suite('Connection Tests', () => {
 		clientConnection.onProgress(DeclarationRequest.type, resultToken, (values) => {
 			result.push(...values);
 		});
-		clientConnection.sendRequest(DeclarationRequest.type, params).then((values) => {
+		void clientConnection.sendRequest(DeclarationRequest.type, params).then((values) => {
 			assert.ok((result as LocationLink[]).length === 30, 'All partial results received');
 			assert.ok((values as LocationLink[]).length === 0, 'No final values');
 			done();

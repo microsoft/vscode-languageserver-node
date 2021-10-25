@@ -10,6 +10,7 @@ import * as vscode from 'vscode';
 import * as lsclient from 'vscode-languageclient/node';
 import { DidCreateFilesNotification, DidDeleteFilesNotification, DidRenameFilesNotification, WillCreateFilesRequest, WillDeleteFilesRequest, WillRenameFilesRequest } from 'vscode-languageserver-protocol/lib/common/protocol.fileOperations';
 import { MemoryFileSystemProvider } from './memoryFileSystemProvider';
+import { vsdiag, DiagnosticProviderMiddleware } from 'vscode-languageclient/lib/common/proposed.diagnostic';
 
 suite('Client integration', () => {
 
@@ -41,10 +42,10 @@ suite('Client integration', () => {
 		assert.strictEqual(actual.toString(), expected.toString());
 	}
 
-	function isArray<T>(value: Array<T> | undefined | null, clazz: any, length: number = 1): asserts value is Array<T> {
+	function isArray<T>(value: Array<T> | undefined | null, clazz: any = undefined, length: number = 1): asserts value is Array<T> {
 		assert.ok(Array.isArray(value), `value is array`);
 		assert.strictEqual(value!.length, length, 'value has given length');
-		if (length > 0) {
+		if (clazz !== undefined && length > 0) {
 			assert.ok(value![0] instanceof clazz);
 		}
 	}
@@ -57,6 +58,10 @@ suite('Client integration', () => {
 
 	function isInstanceOf<T>(value: T, clazz: any): asserts value is Exclude<T, undefined | null> {
 		assert.ok(value instanceof clazz);
+	}
+
+	function isFullDocumentDiagnosticReport(value: vsdiag.DocumentDiagnosticReport): asserts value is vsdiag.FullDocumentDiagnosticReport {
+		assert.ok(value.kind === vsdiag.DocumentDiagnosticReportKind.full);
 	}
 
 	suiteSetup(async () => {
@@ -98,6 +103,7 @@ suite('Client integration', () => {
 		};
 
 		client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		client.registerProposedFeatures();
 		client.start();
 		await client.onReady();
 	});
@@ -139,6 +145,7 @@ suite('Client integration', () => {
 				foldingRangeProvider: true,
 				implementationProvider: true,
 				selectionRangeProvider: true,
+				inlineValuesProvider: {},
 				typeDefinitionProvider: true,
 				callHierarchyProvider: true,
 				semanticTokensProvider: {
@@ -182,7 +189,13 @@ suite('Client integration', () => {
 						willDelete: { filters: [{ scheme: fsProvider.scheme, pattern: { glob: '**/deleted-static/**{/,/*.txt}' } }] },
 					},
 				},
-				linkedEditingRangeProvider: true
+				linkedEditingRangeProvider: true,
+				diagnosticProvider: {
+					identifier: 'da348dc5-c30a-4515-9d98-31ff3be38d14',
+					interFileDependencies: true,
+					workspaceDiagnostics: true
+				},
+				typeHierarchyProvider: true
 			},
 			customResults: {
 				'hello': 'world'
@@ -353,7 +366,8 @@ suite('Client integration', () => {
 		const provider = client.getFeature(lsclient.CodeActionRequest.method).getProvider(document);
 		isDefined(provider);
 		const result = (await provider.provideCodeActions(document, range, {
-			diagnostics: []
+			diagnostics: [],
+			triggerKind: vscode.CodeActionTriggerKind.Invoke
 		}, tokenSource.token)) as vscode.CodeAction[];
 
 		isArray(result, vscode.CodeAction);
@@ -371,7 +385,7 @@ suite('Client integration', () => {
 			return n(d, r, c, t);
 		};
 
-		await provider.provideCodeActions(document, range, { diagnostics: [] }, tokenSource.token);
+		await provider.provideCodeActions(document, range, { diagnostics: [], triggerKind: vscode.CodeActionTriggerKind.Invoke }, tokenSource.token);
 		middleware.provideCodeActions = undefined;
 		assert.ok(middlewareCalled);
 
@@ -405,7 +419,7 @@ suite('Client integration', () => {
 		for (let i = 0; i < 2; i++) {
 			await new Promise<unknown>((resolve) => {
 				currentProgressResolver = resolve;
-				client.sendRequest(
+				void client.sendRequest(
 					new lsclient.ProtocolRequestType<any, null, never, any, any>('testing/sendSampleProgress'),
 					{},
 					tokenSource.token,
@@ -784,11 +798,11 @@ suite('Client integration', () => {
 		].map(toWorkspaceUri);
 
 		test('Will Create Files', async () => {
-			const feature = client.getFeature(WillCreateFilesRequest.method);
+			const feature = client.getFeature(lsclient.WillCreateFilesRequest.method);
 			isDefined(feature);
 
 			const sendCreateRequest = () => new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
-				feature.send({ files: createFiles, waitUntil: resolve });
+				await feature.send({ files: createFiles, waitUntil: resolve });
 				// If feature.send didn't call waitUntil synchronously then something went wrong.
 				reject(new Error('Feature unexpectedly did not call waitUntil synchronously'));
 			});
@@ -829,7 +843,7 @@ suite('Client integration', () => {
 		});
 
 		test('Did Create Files', async () => {
-			const feature = client.getFeature(DidCreateFilesNotification.method);
+			const feature = client.getFeature(lsclient.DidCreateFilesNotification.method);
 			isDefined(feature);
 
 			// Send the event and ensure the server reports the notification was sent.
@@ -868,11 +882,11 @@ suite('Client integration', () => {
 		});
 
 		test('Will Rename Files', async () => {
-			const feature = client.getFeature(WillRenameFilesRequest.method);
+			const feature = client.getFeature(lsclient.WillRenameFilesRequest.method);
 			isDefined(feature);
 
 			const sendRenameRequest = () => new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
-				feature.send({ files: renameFiles, waitUntil: resolve });
+				await feature.send({ files: renameFiles, waitUntil: resolve });
 				// If feature.send didn't call waitUntil synchronously then something went wrong.
 				reject(new Error('Feature unexpectedly did not call waitUntil synchronously'));
 			});
@@ -913,7 +927,7 @@ suite('Client integration', () => {
 		});
 
 		test('Did Rename Files', async () => {
-			const feature = client.getFeature(DidRenameFilesNotification.method);
+			const feature = client.getFeature(lsclient.DidRenameFilesNotification.method);
 			isDefined(feature);
 
 			// DidRename relies on WillRename firing first and the items existing on disk in their correct locations
@@ -966,11 +980,11 @@ suite('Client integration', () => {
 		});
 
 		test('Will Delete Files', async () => {
-			const feature = client.getFeature(WillDeleteFilesRequest.method);
+			const feature = client.getFeature(lsclient.WillDeleteFilesRequest.method);
 			isDefined(feature);
 
 			const sendDeleteRequest = () => new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
-				feature.send({ files: deleteFiles, waitUntil: resolve });
+				await feature.send({ files: deleteFiles, waitUntil: resolve });
 				// If feature.send didn't call waitUntil synchronously then something went wrong.
 				reject(new Error('Feature unexpectedly did not call waitUntil synchronously'));
 			});
@@ -1011,7 +1025,7 @@ suite('Client integration', () => {
 		});
 
 		test('Did Delete Files', async () => {
-			const feature = client.getFeature(DidDeleteFilesNotification.method);
+			const feature = client.getFeature(lsclient.DidDeleteFilesNotification.method);
 			isDefined(feature);
 
 			// DidDelete relies on WillDelete firing first and the items actually existing on disk
@@ -1135,13 +1149,148 @@ suite('Client integration', () => {
 		assert.strictEqual(middlewareCalled, true);
 	});
 
+	test('Document diagnostic pull', async () => {
+		const provider = client.getFeature(lsclient.Proposed.DocumentDiagnosticRequest.method).getProvider(document);
+		isDefined(provider);
+		const result: vsdiag.DocumentDiagnosticReport | undefined | null = (await provider.diagnostics.provideDiagnostics(document, undefined, tokenSource.token));
+		isDefined(result);
+		isFullDocumentDiagnosticReport(result);
+		isArray(result.items, undefined, 1);
+		const diag = result.items[0];
+		rangeEqual(diag.range, 1, 1, 1, 1);
+		assert.strictEqual(diag.message, 'diagnostic');
+
+		let middlewareCalled: boolean = false;
+		(middleware as DiagnosticProviderMiddleware).provideDiagnostics = (document, previousResultId, token, next) => {
+			middlewareCalled = true;
+			return next(document, previousResultId, token);
+		};
+		await provider.diagnostics.provideDiagnostics(document, undefined, tokenSource.token);
+		(middleware as DiagnosticProviderMiddleware).provideDiagnostics = undefined;
+		assert.strictEqual(middlewareCalled, true);
+	});
+
+	test('Workspace diagnostic pull', async () => {
+		const provider = client.getFeature(lsclient.Proposed.DocumentDiagnosticRequest.method).getProvider(document);
+		isDefined(provider);
+		isDefined(provider.diagnostics.provideWorkspaceDiagnostics);
+		await provider.diagnostics.provideWorkspaceDiagnostics([], tokenSource.token, (result) => {
+			isDefined(result);
+			isArray(result.items, undefined, 1);
+		});
+
+		let middlewareCalled: boolean = false;
+		(middleware as DiagnosticProviderMiddleware).provideWorkspaceDiagnostics = (resultIds, token, reporter, next) => {
+			middlewareCalled = true;
+			return next(resultIds, token, reporter);
+		};
+		await provider.diagnostics.provideWorkspaceDiagnostics([], tokenSource.token, () => {});
+		(middleware as DiagnosticProviderMiddleware).provideWorkspaceDiagnostics = undefined;
+		assert.strictEqual(middlewareCalled, true);
+	});
+
+	test('Type Hierarchy', async () => {
+		const provider = client.getFeature(lsclient.Proposed.TypeHierarchyPrepareRequest.method).getProvider(document);
+		isDefined(provider);
+		const result = (await provider.prepareTypeHierarchy(document, position, tokenSource.token)) as vscode.TypeHierarchyItem[];
+
+		isArray(result, vscode.TypeHierarchyItem, 1);
+		const item = result[0];
+
+		let middlewareCalled: boolean = false;
+		middleware.prepareTypeHierarchy = (d, p, t, n) => {
+			middlewareCalled = true;
+			return n(d, p, t);
+		};
+		await provider.prepareTypeHierarchy(document, position, tokenSource.token);
+		middleware.prepareTypeHierarchy = undefined;
+		assert.strictEqual(middlewareCalled, true);
+
+		const incoming = (await provider.provideTypeHierarchySupertypes(item, tokenSource.token)) as vscode.TypeHierarchyItem[];
+		isArray(incoming, vscode.TypeHierarchyItem, 1);
+		middlewareCalled = false;
+		middleware.provideTypeHierarchySupertypes = (i, t, n) => {
+			middlewareCalled = true;
+			return n(i, t);
+		};
+		await provider.provideTypeHierarchySupertypes(item, tokenSource.token);
+		middleware.provideTypeHierarchySupertypes = undefined;
+		assert.strictEqual(middlewareCalled, true);
+
+		const outgoing = (await provider.provideTypeHierarchySubtypes(item, tokenSource.token)) as vscode.TypeHierarchyItem[];
+		isArray(outgoing, vscode.TypeHierarchyItem, 1);
+		middlewareCalled = false;
+		middleware.provideTypeHierarchySubtypes = (i, t, n) => {
+			middlewareCalled = true;
+			return n(i, t);
+		};
+		await provider.provideTypeHierarchySubtypes(item, tokenSource.token);
+		middleware.provideTypeHierarchySubtypes = undefined;
+		assert.strictEqual(middlewareCalled, true);
+	});
+
+	test('Inline Values', async () => {
+		const providerData = client.getFeature(lsclient.Proposed.InlineValuesRequest.method).getProvider(document);
+		isDefined(providerData);
+		const provider = providerData.provider;
+		const results = (await provider.provideInlineValues(document, range, { frameId: 1, stoppedLocation: range }, tokenSource.token));
+
+		isArray(results, undefined, 3);
+
+		for (const r of results) {
+			rangeEqual(r.range, 1, 2, 3, 4);
+		}
+
+		assert.ok(results[0] instanceof vscode.InlineValueText);
+		assert.strictEqual((results[0] as vscode.InlineValueText).text, 'text');
+
+		assert.ok(results[1] instanceof vscode.InlineValueVariableLookup);
+		assert.strictEqual((results[1] as vscode.InlineValueVariableLookup).variableName, 'variableName');
+
+		assert.ok(results[2] instanceof vscode.InlineValueEvaluatableExpression);
+		assert.strictEqual((results[2] as vscode.InlineValueEvaluatableExpression).expression, 'expression');
+
+		let middlewareCalled: boolean = false;
+		middleware.provideInlineValues = (d, r, c, t, n) => {
+			middlewareCalled = true;
+			return n(d, r, c, t);
+		};
+		await provider.provideInlineValues(document, range, { frameId: 1, stoppedLocation: range }, tokenSource.token);
+		middleware.provideInlineValues = undefined;
+		assert.strictEqual(middlewareCalled, true);
+	});
+});
+
+namespace CrashNotification {
+	export const type = new lsclient.NotificationType0('test/crash');
+}
+
+class CrashClient extends lsclient.LanguageClient {
+
+	private resolve: (() => void) | undefined;
+	public onCrash: Promise<void>;
+
+	constructor(id: string, name: string, serverOptions: lsclient.ServerOptions, clientOptions: lsclient.LanguageClientOptions) {
+		super(id, name, serverOptions, clientOptions);
+		this.onCrash = new Promise((resolve) => {
+			this.resolve = resolve;
+		});
+	}
+
+	protected handleConnectionClosed(): void {
+		super.handleConnectionClosed();
+		this.resolve!();
+	}
+}
+
+suite('Server tests', () => {
 	test('Stop fails if server crashes after shutdown request', async () => {
-		let serverOptions: lsclient.ServerOptions = {
+		const serverOptions: lsclient.ServerOptions = {
 			module: path.join(__dirname, './servers/crashOnShutdownServer.js'),
 			transport: lsclient.TransportKind.ipc,
 		};
-		let clientOptions: lsclient.LanguageClientOptions = {};
-		let client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
 		client.start();
 		await client.onReady();
 
@@ -1155,5 +1304,93 @@ suite('Client integration', () => {
 		await client.stop();
 		assert.strictEqual(client.needsStart(), true);
 		assert.strictEqual(client.needsStop(), false);
+	});
+
+	test('Stop fails if server shutdown request times out', async () => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/timeoutOnShutdownServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		client.start();
+		await client.onReady();
+
+		await assert.rejects(async () => {
+			await client.stop(100);
+		}, /Stopping the server timed out/);
+	});
+
+	test('Server can be stopped right after start', async() => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/startStopServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		client.start();
+		await client.stop();
+
+		client.start();
+		await client.stop();
+	});
+
+	test('Test state change events', async() => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/nullServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		let state: lsclient.State | undefined;
+		client.onDidChangeState(event => {
+			state = event.newState;
+		});
+		client.start();
+		await client.onReady();
+		assert.strictEqual(state, lsclient.State.Running);
+
+		await client.stop();
+		assert.strictEqual(state, lsclient.State.Stopped);
+
+		client.start();
+		await client.onReady();
+		assert.strictEqual(state, lsclient.State.Running);
+
+		await client.stop();
+		assert.strictEqual(state, lsclient.State.Stopped);
+	});
+
+	test('Test state change events on crash', async() => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/crashServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new CrashClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		let states: lsclient.State[] = [];
+		client.onDidChangeState(event => {
+			states.push(event.newState);
+		});
+		client.start();
+		await client.onReady();
+		assert.strictEqual(states.length, 2, 'First start');
+		assert.strictEqual(states[0], lsclient.State.Starting);
+		assert.strictEqual(states[1], lsclient.State.Running);
+
+		states = [];
+		await client.sendNotification(CrashNotification.type);
+		await client.onCrash;
+
+		await client.onReady();
+		assert.strictEqual(states.length, 3, 'Restart after crash');
+		assert.strictEqual(states[0], lsclient.State.Stopped);
+		assert.strictEqual(states[1], lsclient.State.Starting);
+		assert.strictEqual(states[2], lsclient.State.Running);
+
+		states = [];
+		await client.stop();
+		assert.strictEqual(states.length, 1, 'After stop');
+		assert.strictEqual(states[0], lsclient.State.Stopped);
 	});
 });

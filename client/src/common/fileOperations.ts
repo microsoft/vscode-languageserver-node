@@ -31,11 +31,11 @@ function assign<T, K extends keyof T>(target: T, key: K, value: T[K]): void {
  * @since 3.16.0
  */
 export interface FileOperationsMiddleware {
-	didCreateFiles?: NextSignature<code.FileCreateEvent, void>;
+	didCreateFiles?: NextSignature<code.FileCreateEvent, Promise<void>>;
 	willCreateFiles?: NextSignature<code.FileCreateEvent, Thenable<code.WorkspaceEdit | null | undefined>>;
-	didRenameFiles?: NextSignature<code.FileRenameEvent, void>;
+	didRenameFiles?: NextSignature<code.FileRenameEvent, Promise<void>>;
 	willRenameFiles?: NextSignature<code.FileRenameEvent, Thenable<code.WorkspaceEdit | null | undefined>>;
-	didDeleteFiles?: NextSignature<code.FileDeleteEvent, void>;
+	didDeleteFiles?: NextSignature<code.FileDeleteEvent, Promise<void>>;
 	willDeleteFiles?: NextSignature<code.FileDeleteEvent, Thenable<code.WorkspaceEdit | null | undefined>>;
 }
 
@@ -216,13 +216,13 @@ abstract class NotificationFileOperationFeature<I, E extends { readonly files: R
 		const filteredEvent = await this.filter(originalEvent, this._accessUri);
 		if (filteredEvent.files.length) {
 			const next = async (event: E): Promise<void> => {
-				this._client.sendNotification(this._notificationType, this._createParams(event));
+				return this._client.sendNotification(this._notificationType, this._createParams(event));
 			};
-			this.doSend(filteredEvent, next);
+			return this.doSend(filteredEvent, next);
 		}
 	}
 
-	protected abstract doSend(event: E, next: (event: E) => void): void;
+	protected abstract doSend(event: E, next: (event: E) => Promise<void>): Promise<void>;
 }
 
 abstract class CachingNotificationFileOperationFeature<I, E extends { readonly files: ReadonlyArray<I>; }, P> extends NotificationFileOperationFeature<I, E, P> {
@@ -280,7 +280,7 @@ export class DidCreateFilesFeature extends NotificationFileOperationFeature<code
 		);
 	}
 
-	protected doSend(event: code.FileCreateEvent, next: (event: code.FileCreateEvent) => void): void {
+	protected doSend(event: code.FileCreateEvent, next: (event: code.FileCreateEvent) => Promise<void>): Promise<void> {
 		const middleware = this._client.clientOptions.middleware?.workspace;
 		return middleware?.didCreateFiles
 			? middleware.didCreateFiles(event, next)
@@ -309,7 +309,7 @@ export class DidRenameFilesFeature extends CachingNotificationFileOperationFeatu
 		e.waitUntil(this.cacheFileTypes(e, (i) => i.oldUri));
 	}
 
-	protected doSend(event: code.FileRenameEvent, next: (event: code.FileRenameEvent) => void): void {
+	protected doSend(event: code.FileRenameEvent, next: (event: code.FileRenameEvent) => Promise<void>): Promise<void> {
 		this.clearFileTypeCache();
 		const middleware = this._client.clientOptions.middleware?.workspace;
 		return middleware?.didRenameFiles
@@ -339,7 +339,7 @@ export class DidDeleteFilesFeature extends CachingNotificationFileOperationFeatu
 		e.waitUntil(this.cacheFileTypes(e, (i) => i));
 	}
 
-	protected doSend(event: code.FileCreateEvent, next: (event: code.FileCreateEvent) => void): void {
+	protected doSend(event: code.FileCreateEvent, next: (event: code.FileCreateEvent) => Promise<void>): Promise<void> {
 		this.clearFileTypeCache();
 		const middleware = this._client.clientOptions.middleware?.workspace;
 		return middleware?.didDeleteFiles

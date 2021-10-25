@@ -10,5 +10,5 @@
 		"tsBuildInfoFile":"./out/tsconfig.tsbuildInfo",
 	},
 	"include": ["src"],
-	"exclude": ["node_modules", ".vscode-test"]
+	"exclude": ["node_modules"]
 }

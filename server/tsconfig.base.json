@@ -6,9 +6,9 @@
 		"sourceMap": true,
 		"declaration": true,
 		"stripInternal": true,
-		"target": "es2017",
+		"target": "es2020",
 		"module": "commonjs",
 		"moduleResolution": "node",
-		"lib": [ "es2017" ]
+		"lib": [ "es2020" ]
 	}
 }

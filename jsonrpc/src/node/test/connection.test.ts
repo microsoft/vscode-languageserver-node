@@ -68,7 +68,7 @@ suite('Connection', () => {
 				done();
 			}
 		});
-		connection.sendRequest(type, 'foo');
+		void connection.sendRequest(type, 'foo');
 	});
 
 	test('Primitive param as positional', (done) => {
@@ -87,7 +87,7 @@ suite('Connection', () => {
 				done();
 			}
 		});
-		connection.sendRequest(type, true);
+		void connection.sendRequest(type, true);
 	});
 
 	test('Array param as positional', (done) => {
@@ -106,7 +106,7 @@ suite('Connection', () => {
 				done();
 			}
 		});
-		connection.sendRequest(type, [true]);
+		void connection.sendRequest(type, [true]);
 	});
 
 	test('Literal param as named', (done) => {
@@ -125,7 +125,7 @@ suite('Connection', () => {
 				done();
 			}
 		});
-		connection.sendRequest(type, { value: true });
+		void connection.sendRequest(type, { value: true });
 	});
 
 	test('Literal param as positional', (done) => {
@@ -144,7 +144,7 @@ suite('Connection', () => {
 				done();
 			}
 		});
-		connection.sendRequest(type, { value: true });
+		void connection.sendRequest(type, { value: true });
 	});
 
 	test('Handle Single Request', (done) => {
@@ -161,7 +161,7 @@ suite('Connection', () => {
 
 		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
-		client.sendRequest(type, 'foo').then((result) => {
+		void client.sendRequest(type, 'foo').then((result) => {
 			assert.strictEqual(result, 'foo');
 			done();
 		});
@@ -184,7 +184,7 @@ suite('Connection', () => {
 		promises.push(client.sendRequest(type, 'foo'));
 		promises.push(client.sendRequest(type, 'bar'));
 
-		Promise.all(promises).then((values) => {
+		void Promise.all(promises).then((values) => {
 			assert.strictEqual(values.length, 2);
 			assert.strictEqual(values[0], 'foo');
 			assert.strictEqual(values[1], 'bar');
@@ -224,7 +224,7 @@ suite('Connection', () => {
 
 		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
-		client.sendRequest(type, undefined).then((_result) => {
+		void client.sendRequest(type, undefined).then((_result) => {
 			done();
 		});
 	});
@@ -243,7 +243,7 @@ suite('Connection', () => {
 
 		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
-		client.sendRequest(type, null).then(result => {
+		void client.sendRequest(type, null).then(result => {
 			assert.deepEqual(result, null);
 			done();
 		});
@@ -263,7 +263,7 @@ suite('Connection', () => {
 
  		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
  		client.listen();
- 		client.sendRequest(type, 0).then(result => {
+ 		void client.sendRequest(type, 0).then(result => {
  			assert.deepEqual(result, 0);
  			done();
  		});
@@ -284,7 +284,7 @@ suite('Connection', () => {
 
 		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
-		client.sendNotification(testNotification, { value: true });
+		void client.sendNotification(testNotification, { value: true });
 	});
 
 	test('Unhandled notification event', (done) => {
@@ -300,7 +300,7 @@ suite('Connection', () => {
 
 		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
-		client.sendNotification(testNotification, { value: true });
+		void client.sendNotification(testNotification, { value: true });
 	});
 
 	test('Dispose connection', (done) => {
@@ -332,7 +332,7 @@ suite('Connection', () => {
 		client.listen();
 		client.dispose();
 		try {
-			client.sendNotification(testNotification);
+			void client.sendNotification(testNotification);
 			assert(false);
 		} catch (error) {
 			done();
@@ -380,7 +380,7 @@ suite('Connection', () => {
 
 		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
-		client.sendNotification(type, 10, 'vscode');
+		void client.sendNotification(type, 10, 'vscode');
 	});
 
 	test('N params in request / response', (done) => {
@@ -478,7 +478,7 @@ suite('Connection', () => {
 
 		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
-		client.sendNotification(type, [10, 20, 30]);
+		void client.sendNotification(type, [10, 20, 30]);
 	});
 
 	test('Untyped request / response', (done) => {
@@ -618,7 +618,7 @@ suite('Connection', () => {
 
 		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
-		client.sendRequest(type, source.token);
+		void client.sendRequest(type, source.token);
 
 		function delay(ms: number) {
 			return new Promise(resolve => setTimeout(resolve, ms));
@@ -649,6 +649,6 @@ suite('Connection', () => {
 
 		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger, options);
 		client.listen();
-		client.sendRequest(type, source.token);
+		void client.sendRequest(type, source.token);
 	});
 });

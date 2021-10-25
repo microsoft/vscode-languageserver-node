@@ -68,8 +68,3 @@ export class ProtocolNotificationType<P, RO> extends NotificationType<P> impleme
 		super(method, ParameterStructures.byName);
 	}
 }
-
-// let x: ProtocolNotificationType<number, { value: number}>;
-// let y: ProtocolNotificationType<string, { value: number}>;
-
-// x = y;

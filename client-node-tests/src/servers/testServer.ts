@@ -5,17 +5,19 @@
 
 import * as assert from 'assert';
 import {
-	createConnection, Connection, InitializeParams, ServerCapabilities, CompletionItemKind, ResourceOperationKind, FailureHandlingKind,
+	createConnection, InitializeParams, ServerCapabilities, CompletionItemKind, ResourceOperationKind, FailureHandlingKind,
 	DiagnosticTag, CompletionItemTag, TextDocumentSyncKind, MarkupKind, SignatureHelp, SignatureInformation, ParameterInformation,
 	Location, Range, DocumentHighlight, DocumentHighlightKind, CodeAction, Command, TextEdit, Position, DocumentLink,
 	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, SymbolKind, ProtocolRequestType, WorkDoneProgress,
+	InlineValueText, InlineValueVariableLookup, InlineValueEvaluatableExpression,
 	WorkDoneProgressCreateRequest, WillCreateFilesRequest, WillRenameFilesRequest, WillDeleteFilesRequest, DidDeleteFilesNotification,
-	DidRenameFilesNotification, DidCreateFilesNotification
+	DidRenameFilesNotification, DidCreateFilesNotification, Proposed, ProposedFeatures, Diagnostic, DiagnosticSeverity, TypeHierarchyItem
 } from '../../../server/node';
 
 import { URI } from 'vscode-uri';
+import { $DiagnosticClientCapabilities } from 'vscode-languageserver-protocol/src/common/proposed.diagnostic';
 
-let connection: Connection = createConnection();
+const connection: ProposedFeatures.Connection = createConnection(ProposedFeatures.all);
 
 console.log = connection.console.log.bind(connection.console);
 console.error = connection.console.error.bind(connection.console);
@@ -40,13 +42,17 @@ connection.onInitialize((params: InitializeParams): any => {
 	assert.equal(params.capabilities.textDocument!.publishDiagnostics!.tagSupport!.valueSet[0], DiagnosticTag.Unnecessary);
 	assert.equal(params.capabilities.textDocument!.publishDiagnostics!.tagSupport!.valueSet[1], DiagnosticTag.Deprecated);
 	assert.equal(params.capabilities.textDocument!.documentLink!.tooltipSupport, true);
-	let valueSet = params.capabilities.textDocument!.completion!.completionItemKind!.valueSet!;
+
+	const valueSet = params.capabilities.textDocument!.completion!.completionItemKind!.valueSet!;
 	assert.equal(valueSet[0], 1);
 	assert.equal(valueSet[valueSet.length - 1], CompletionItemKind.TypeParameter);
 	assert.equal(params.capabilities.workspace!.fileOperations!.willCreate, true);
-	console.log(params.capabilities);
 
-	let capabilities: ServerCapabilities = {
+	const diagnosticClientCapabilities = (params.capabilities as $DiagnosticClientCapabilities).textDocument!.diagnostic;
+	assert.equal(diagnosticClientCapabilities?.dynamicRegistration, true);
+	assert.equal(diagnosticClientCapabilities?.relatedDocumentSupport, false);
+
+	const capabilities: ServerCapabilities & Proposed.$DiagnosticServerCapabilities = {
 		textDocumentSync: TextDocumentSyncKind.Full,
 		definitionProvider: true,
 		hoverProvider: true,
@@ -76,6 +82,7 @@ connection.onInitialize((params: InitializeParams): any => {
 		foldingRangeProvider: true,
 		implementationProvider: true,
 		selectionRangeProvider: true,
+		inlineValuesProvider: {},
 		typeDefinitionProvider: true,
 		callHierarchyProvider: true,
 		semanticTokensProvider: {
@@ -125,35 +132,41 @@ connection.onInitialize((params: InitializeParams): any => {
 				},
 			},
 		},
-		linkedEditingRangeProvider: true
+		linkedEditingRangeProvider: true,
+		diagnosticProvider: {
+			identifier: 'da348dc5-c30a-4515-9d98-31ff3be38d14',
+			interFileDependencies: true,
+			workspaceDiagnostics: true
+		},
+		typeHierarchyProvider: true
 	};
 	return { capabilities, customResults: { hello: 'world' } };
 });
 
 connection.onInitialized(() => {
 	// Dynamic reg is folders + .js files with operation kind in the path
-	connection.client.register(DidCreateFilesNotification.type, {
+	void connection.client.register(DidCreateFilesNotification.type, {
 		filters: [{ scheme: 'file-test', pattern: { glob: '**/created-dynamic/**{/,/*.js}' } }]
 	});
-	connection.client.register(DidRenameFilesNotification.type, {
+	void connection.client.register(DidRenameFilesNotification.type, {
 		filters: [
 			{ scheme: 'file-test', pattern: { glob: '**/renamed-dynamic/**/', matches: 'folder' } },
 			{ scheme: 'file-test', pattern: { glob: '**/renamed-dynamic/**/*.js', matches: 'file' } }
 		]
 	});
-	connection.client.register(DidDeleteFilesNotification.type, {
+	void connection.client.register(DidDeleteFilesNotification.type, {
 		filters: [{ scheme: 'file-test', pattern: { glob: '**/deleted-dynamic/**{/,/*.js}' } }]
 	});
-	connection.client.register(WillCreateFilesRequest.type, {
+	void connection.client.register(WillCreateFilesRequest.type, {
 		filters: [{ scheme: 'file-test', pattern: { glob: '**/created-dynamic/**{/,/*.js}' } }]
 	});
-	connection.client.register(WillRenameFilesRequest.type, {
+	void connection.client.register(WillRenameFilesRequest.type, {
 		filters: [
 			{ scheme: 'file-test', pattern: { glob: '**/renamed-dynamic/**/', matches: 'folder' } },
 			{ scheme: 'file-test', pattern: { glob: '**/renamed-dynamic/**/*.js', matches: 'file' } }
 		]
 	});
-	connection.client.register(WillDeleteFilesRequest.type, {
+	void connection.client.register(WillDeleteFilesRequest.type, {
 		filters: [{ scheme: 'file-test', pattern: { glob: '**/deleted-dynamic/**{/,/*.js}' } }]
 	});
 });
@@ -404,6 +417,61 @@ connection.languages.onLinkedEditingRange(() => {
 		ranges: [ Range.create(1,1,1,1)],
 		wordPattern: '\\w'
 	};
+});
+
+connection.languages.diagnostics.on(() => {
+	return {
+		kind: Proposed.DocumentDiagnosticReportKind.full,
+		items: [
+			Diagnostic.create(Range.create(1, 1, 1, 1), 'diagnostic', DiagnosticSeverity.Error)
+		]
+	};
+});
+
+connection.languages.diagnostics.onWorkspace(() => {
+	return {
+		items: [ {
+			kind: Proposed.DocumentDiagnosticReportKind.full,
+			uri: 'uri',
+			version: 1,
+			items: [
+				Diagnostic.create(Range.create(1, 1, 1, 1), 'diagnostic', DiagnosticSeverity.Error)
+			]
+		}]
+	};
+});
+
+const typeHierarchySample = {
+	superTypes: [] as TypeHierarchyItem[],
+	subTypes: [] as TypeHierarchyItem[]
+};
+connection.languages.typeHierarchy.onPrepare((params) => {
+	const currentItem = {
+		kind: SymbolKind.Class,
+		name: 'ClazzB',
+		range: Range.create(1, 1, 1, 1),
+		selectionRange: Range.create(2, 2, 2, 2),
+		uri: params.textDocument.uri
+	} as TypeHierarchyItem;
+	typeHierarchySample.superTypes = [ {...currentItem, name: 'classA', uri: 'uri-for-A'}];
+	typeHierarchySample.subTypes = [ {...currentItem, name: 'classC', uri: 'uri-for-C'}];
+	return [currentItem];
+});
+
+connection.languages.typeHierarchy.onSupertypes((_params) => {
+	return typeHierarchySample.superTypes;
+});
+
+connection.languages.typeHierarchy.onSubtypes((_params) => {
+	return typeHierarchySample.subTypes;
+});
+
+connection.languages.inlineValues.on((_params) => {
+	return [
+		InlineValueText.create(Range.create(1, 2, 3, 4), 'text'),
+		InlineValueVariableLookup.create(Range.create(1, 2, 3, 4), 'variableName', false),
+		InlineValueEvaluatableExpression.create(Range.create(1, 2, 3, 4), 'expression'),
+	];
 });
 
 connection.onRequest(

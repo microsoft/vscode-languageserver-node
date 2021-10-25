@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageserver-textdocument",
 	"description": "A simple text document implementation for Node LSP servers",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"repository": {
@@ -22,6 +22,7 @@
 		"compile:esm": "node ../build/bin/tsc -b ./tsconfig.esm.json",
 		"clean": "node ../node_modules/rimraf/bin.js lib",
 		"watch": "node ../build/bin/tsc -b ./tsconfig-watch.json -w",
+		"lint": "node ../node_modules/eslint/bin/eslint.js --ext ts src",
 		"test": "node ../node_modules/mocha/bin/_mocha",
 		"preversion": "npm test"
 	}

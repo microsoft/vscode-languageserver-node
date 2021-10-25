@@ -60,6 +60,10 @@ export namespace ErrorCodes {
 	export const MessageWriteError: number = -32099;
 	export const MessageReadError: number = -32098;
 
+	/**
+	 * Error code indicating that a server received a notification or
+	 * request before the server has received the `initialize` request.
+	 */
 	export const ServerNotInitialized: number = -32002;
 	export const UnknownErrorCode: number = -32001;
 
@@ -74,14 +78,14 @@ export namespace ErrorCodes {
 	export const serverErrorEnd: number = jsonrpcReservedErrorRangeEnd;
 }
 
-export interface ResponseErrorLiteral<D> {
+export interface ResponseErrorLiteral<D = void> {
 	/**
-	 * A number indicating the error type that occured.
+	 * A number indicating the error type that occurred.
 	 */
 	code: number;
 
 	/**
-	 * A string providing a short decription of the error.
+	 * A string providing a short description of the error.
 	 */
 	message: string;
 
@@ -96,7 +100,7 @@ export interface ResponseErrorLiteral<D> {
  * An error object return in a response in case a request
  * has failed.
  */
-export class ResponseError<D> extends Error {
+export class ResponseError<D = void> extends Error {
 
 	public readonly code: number;
 	public readonly data: D | undefined;
@@ -109,11 +113,14 @@ export class ResponseError<D> extends Error {
 	}
 
 	public toJson(): ResponseErrorLiteral<D> {
-		return {
+		const result: ResponseErrorLiteral<D> = {
 			code: this.code,
-			message: this.message,
-			data: this.data,
+			message: this.message
 		};
+		if (this.data !== undefined) {
+			result.data = this.data;
+		}
+		return result;
 	}
 }
 
@@ -475,26 +482,28 @@ export class NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9> extends Abstr
 	}
 }
 
-/**
- * Tests if the given message is a request message
- */
-export function isRequestMessage(message: Message | undefined): message is RequestMessage {
-	const candidate = <RequestMessage>message;
-	return candidate && is.string(candidate.method) && (is.string(candidate.id) || is.number(candidate.id));
-}
+export namespace Message {
+	/**
+ 	 * Tests if the given message is a request message
+ 	 */
+	export function isRequest(message: Message | undefined): message is RequestMessage {
+		const candidate = <RequestMessage>message;
+		return candidate && is.string(candidate.method) && (is.string(candidate.id) || is.number(candidate.id));
+	}
 
-/**
- * Tests if the given message is a notification message
- */
-export function isNotificationMessage(message: Message | undefined): message is NotificationMessage {
-	const candidate = <NotificationMessage>message;
-	return candidate && is.string(candidate.method) && (<any>message).id === void 0;
-}
+	/**
+ 	 * Tests if the given message is a notification message
+ 	 */
+	export function isNotification(message: Message | undefined): message is NotificationMessage {
+		const candidate = <NotificationMessage>message;
+		return candidate && is.string(candidate.method) && (<any>message).id === void 0;
+	}
 
-/**
- * Tests if the given message is a response message
- */
-export function isResponseMessage(message: Message | undefined): message is ResponseMessage {
-	const candidate = <ResponseMessage>message;
-	return candidate && (candidate.result !== void 0 || !!candidate.error) && (is.string(candidate.id) || is.number(candidate.id) || candidate.id === null);
+	/**
+ 	 * Tests if the given message is a response message
+ 	 */
+	export function isResponse(message: Message | undefined): message is ResponseMessage {
+		const candidate = <ResponseMessage>message;
+		return candidate && (candidate.result !== void 0 || !!candidate.error) && (is.string(candidate.id) || is.number(candidate.id) || candidate.id === null);
+	}
 }

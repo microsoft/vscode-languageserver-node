@@ -11,8 +11,5 @@
 		"watch": "tsc -watch -b ./tsconfig.json",
 		"compile": "tsc -b ./tsconfig.json"
 	},
-	"dependencies": {
-	},
-	"devDependencies": {
-	}
+	"devDependencies": {}
 }

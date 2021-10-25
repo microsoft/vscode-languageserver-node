@@ -372,6 +372,7 @@ suite('Protocol Converter', () => {
 			data: 'data',
 			additionalTextEdits: [proto.TextEdit.insert({ line: 1, character: 2 }, 'insert')],
 			command: command,
+			commitCharacters: ['.'],
 			tags: [proto.CompletionItemTag.Deprecated]
 		};
 
@@ -389,6 +390,8 @@ suite('Protocol Converter', () => {
 		strictEqual(result.command!.command, command.command);
 		strictEqual(result.command!.arguments, command.arguments);
 		strictEqual(result.tags![0], CompletionItemTag.Deprecated);
+		strictEqual(result.commitCharacters!.length, 1);
+		strictEqual(result.commitCharacters![0], '.');
 		ok(result.additionalTextEdits![0] instanceof vscode.TextEdit);
 
 		let completionResult = p2c.asCompletionResult([completionItem]);
@@ -635,28 +638,40 @@ suite('Protocol Converter', () => {
 		strictEqual(back.insertTextMode, InsertTextMode.adjustIndentation);
 	});
 
-	test('Completion Item - Detailed Label', () => {
+	test('Completion Item - Label Details', () => {
 		const completionItem: proto.CompletionItem = {
-			label: { name: 'name', parameters: 'parameters', qualifier: 'qualifier', type: 'type' }
+			label: 'name',
+			labelDetails: { detail: 'detail', description: 'description' }
 		};
 		const result = p2c.asCompletionItem(completionItem);
-		strictEqual(result.label, 'name');
-		strictEqual(result.label2?.name, 'name');
-		strictEqual(result.label2?.parameters, 'parameters');
-		strictEqual(result.label2?.qualifier, 'qualifier');
-		strictEqual(result.label2?.type, 'type');
+		ok(typeof result.label !== 'string');
+		const label: vscode.CompletionItemLabel = result.label as vscode.CompletionItemLabel;
+		strictEqual(label.label, 'name');
+		strictEqual(label.detail, 'detail');
+		strictEqual(label.description, 'description');
 
 		const back = c2p.asCompletionItem(result, true);
-		strictEqual(proto.CompletionItemLabel.is(back.label), true);
-		const label: proto.CompletionItemLabel = back.label as proto.CompletionItemLabel;
-		strictEqual(label.name, 'name');
-		strictEqual(label.parameters, 'parameters');
-		strictEqual(label.qualifier, 'qualifier');
-		strictEqual(label.type, 'type');
+		strictEqual(proto.CompletionItemLabelDetails.is(back.labelDetails), true);
+		strictEqual(back.labelDetails?.detail, 'detail');
+		strictEqual(back.labelDetails?.description, 'description');
 
 		const back2 = c2p.asCompletionItem(result, false);
-		strictEqual(Is.string(back2.label), true);
+		strictEqual(back2.labelDetails, undefined);
 		strictEqual(back2.label, 'name');
+	});
+
+	test('Completion Item - default commit characters', () => {
+		const completionItem: proto.CompletionItem = {
+			label: 'name'
+		};
+		let result = p2c.asCompletionItem(completionItem, ['.']);
+		strictEqual(result.commitCharacters!.length, 1);
+		strictEqual(result.commitCharacters![0], '.');
+
+		completionItem.commitCharacters = [':'];
+		result = p2c.asCompletionItem(completionItem, ['.']);
+		strictEqual(result.commitCharacters!.length, 1);
+		strictEqual(result.commitCharacters![0], ':');
 	});
 
 	test('Completion Result', () => {
@@ -716,8 +731,8 @@ suite('Protocol Converter', () => {
 			signatures: [
 				{ label: 'label' }
 			],
-			activeSignature: null,
-			activeParameter: null
+			activeSignature: undefined,
+			activeParameter: undefined
 		};
 
 		let result = p2c.asSignatureHelp(signatureHelp);
@@ -1001,6 +1016,30 @@ suite('Protocol Converter', () => {
 		strictEqual('file://localhost/folder/file.vscode', result.toString());
 	});
 
+	test('InlineValues', () => {
+		const items: proto.InlineValue[] = [
+			proto.InlineValueText.create(proto.Range.create(1, 2, 8, 9), 'literalString'),
+			proto.InlineValueVariableLookup.create(proto.Range.create(1, 2, 8, 9), 'varName', false),
+			proto.InlineValueVariableLookup.create(proto.Range.create(1, 2, 8, 9), undefined, true),
+			proto.InlineValueEvaluatableExpression.create(proto.Range.create(1, 2, 8, 9), 'expression'),
+			proto.InlineValueEvaluatableExpression.create(proto.Range.create(1, 2, 8, 9), undefined),
+		];
+
+		let result = p2c.asInlineValues(<any>items);
+
+
+		ok(result.every((r) => r.range instanceof vscode.Range));
+		for (const r of result) {
+			rangeEqual(r.range, proto.Range.create(1, 2, 8, 9));
+		}
+
+		ok(result[0] instanceof vscode.InlineValueText && result[0].text === 'literalString');
+		ok(result[1] instanceof vscode.InlineValueVariableLookup && result[1].variableName === 'varName' && result[1].caseSensitiveLookup === false);
+		ok(result[2] instanceof vscode.InlineValueVariableLookup && result[2].variableName === undefined && result[2].caseSensitiveLookup === true);
+		ok(result[3] instanceof vscode.InlineValueEvaluatableExpression && result[3].expression === 'expression');
+		ok(result[4] instanceof vscode.InlineValueEvaluatableExpression && result[4].expression === undefined);
+	});
+
 	test('Bug #361', () => {
 		const item: proto.CompletionItem = {
 			'label': 'MyLabel',
@@ -1249,7 +1288,8 @@ suite('Code Converter', () => {
 
 	test('CodeActionContext', () => {
 		let item: vscode.CodeActionContext = {
-			diagnostics: [new vscode.Diagnostic(new vscode.Range(1, 2, 8, 9), 'message', vscode.DiagnosticSeverity.Warning)]
+			diagnostics: [new vscode.Diagnostic(new vscode.Range(1, 2, 8, 9), 'message', vscode.DiagnosticSeverity.Warning)],
+			triggerKind: vscode.CodeActionTriggerKind.Invoke
 		};
 
 		let result = c2p.asCodeActionContext(<any>item);
@@ -1263,5 +1303,18 @@ suite('Code Converter', () => {
 
 		let result = converter.asUri(vscode.Uri.parse('file://localhost/folder/file'));
 		strictEqual('file://localhost/folder/file.vscode', result);
+	});
+
+	test('InlineValuesContext', () => {
+		const item: proto.InlineValuesContext = {
+			stoppedLocation: new vscode.Range(1, 2, 8, 9),
+		};
+
+		let result = c2p.asInlineValuesContext(<any>item);
+
+		strictEqual(result.stoppedLocation.start.line, 1);
+		strictEqual(result.stoppedLocation.start.character, 2);
+		strictEqual(result.stoppedLocation.end.line, 8);
+		strictEqual(result.stoppedLocation.end.character, 9);
 	});
 });

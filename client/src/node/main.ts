@@ -22,7 +22,39 @@ import { StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageW
 export * from 'vscode-languageserver-protocol/node';
 export * from '../common/api';
 
-const REQUIRED_VSCODE_VERSION = '^1.52.0'; // do not change format, updated by `updateVSCode` script
+const REQUIRED_VSCODE_VERSION = '^1.61.0'; // do not change format, updated by `updateVSCode` script
+
+export enum TransportKind {
+	stdio,
+	ipc,
+	pipe,
+	socket
+}
+
+export interface SocketTransport {
+	kind: TransportKind.socket;
+	port: number;
+}
+
+/**
+ * To avoid any timing, pipe name or port number issues the pipe (TransportKind.pipe)
+ * and the sockets (TransportKind.socket and SocketTransport) are owned by the
+ * VS Code processes. The server process simply connects to the pipe / socket.
+ * In node term the VS Code process calls `createServer`, then starts the server
+ * process, waits until the server process has connected to the pipe / socket
+ * and then signals that the connection has been established and messages can
+ * be send back and forth. If the language server is implemented in a different
+ * program language the server simply needs to create a connection to the
+ * passed pipe name or port number.
+ */
+export type Transport = TransportKind | SocketTransport;
+
+namespace Transport {
+	export function isSocket(value: Transport | undefined): value is SocketTransport {
+		const candidate = value as SocketTransport;
+		return candidate && candidate.kind === TransportKind.socket && Is.number(candidate.port);
+	}
+}
 
 export interface ExecutableOptions {
 	cwd?: string;
@@ -33,6 +65,7 @@ export interface ExecutableOptions {
 
 export interface Executable {
 	command: string;
+	transport?: Transport;
 	args?: string[];
 	options?: ExecutableOptions;
 }
@@ -49,38 +82,6 @@ export interface ForkOptions {
 	encoding?: string;
 	execArgv?: string[];
 }
-
-export enum TransportKind {
-	stdio,
-	ipc,
-	pipe,
-	socket
-}
-
-export interface SocketTransport {
-	kind: TransportKind.socket;
-	port: number;
-}
-
-namespace Transport {
-	export function isSocket(value: Transport): value is SocketTransport {
-		let candidate = value as SocketTransport;
-		return candidate && candidate.kind === TransportKind.socket && Is.number(candidate.port);
-	}
-}
-
-/**
- * To avoid any timing, pipe name or port number issues the pipe (TransportKind.pipe)
- * and the sockets (TransportKind.socket and SocketTransport) are owned by the
- * VS Code processes. The server process simply connects to the pipe / socket.
- * In node term the VS Code process calls `createServer`, then starts the server
- * process, waits until the server process has connected to the pipe / socket
- * and then signals that the connection has been established and messages can
- * be send back and forth. If the language server is implemented in a different
- * program language the server simply needs to create a connection to the
- * passed pipe name or port number.
- */
-export type Transport = TransportKind | SocketTransport;
 
 export interface NodeModule {
 	module: string;
@@ -105,7 +106,7 @@ export interface StreamInfo {
 namespace StreamInfo {
 	export function is(value: any): value is StreamInfo {
 		let candidate = value as StreamInfo;
-		return candidate && candidate.writer !== void 0 && candidate.reader !== void 0;
+		return candidate && candidate.writer !== undefined && candidate.reader !== undefined;
 	}
 }
 
@@ -117,7 +118,7 @@ export interface ChildProcessInfo {
 namespace ChildProcessInfo {
 	export function is(value: any): value is ChildProcessInfo {
 		let candidate = value as ChildProcessInfo;
-		return candidate && candidate.process !== void 0 && typeof candidate.detached === 'boolean';
+		return candidate && candidate.process !== undefined && typeof candidate.detached === 'boolean';
 	}
 }
 
@@ -125,10 +126,11 @@ export type ServerOptions = Executable | { run: Executable; debug: Executable; }
 
 export class LanguageClient extends CommonLanguageClient {
 
-	private _serverOptions: ServerOptions;
-	private _forceDebug: boolean;
+	private readonly _serverOptions: ServerOptions;
+	private readonly _forceDebug: boolean;
 	private _serverProcess: ChildProcess | undefined;
 	private _isDetached: boolean | undefined;
+	private _isInDebugMode: boolean;
 
 	public constructor(name: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, forceDebug?: boolean);
 	public constructor(id: string, name: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions, forceDebug?: boolean);
@@ -151,13 +153,14 @@ export class LanguageClient extends CommonLanguageClient {
 			clientOptions = arg3 as LanguageClientOptions;
 			forceDebug = arg4 as boolean;
 		}
-		if (forceDebug === void 0) { forceDebug = false; }
+		if (forceDebug === undefined) { forceDebug = false; }
 		super(id, name, clientOptions);
 		this._serverOptions = serverOptions;
 		this._forceDebug = forceDebug;
+		this._isInDebugMode = forceDebug;
 		try {
 			this.checkVersion();
-		} catch (error) {
+		} catch (error: any) {
 			if (Is.string(error.message)) {
 				this.outputChannel.appendLine(error.message);
 			}
@@ -166,7 +169,7 @@ export class LanguageClient extends CommonLanguageClient {
 	}
 
 	private checkVersion() {
-		let codeVersion = SemVer.parse(VSCodeVersion);
+		const codeVersion = SemVer.parse(VSCodeVersion);
 		if (!codeVersion) {
 			throw new Error(`No valid VS Code version detected. Version string is: ${VSCodeVersion}`);
 		}
@@ -179,12 +182,16 @@ export class LanguageClient extends CommonLanguageClient {
 		}
 	}
 
-	public stop(): Promise<void> {
-		return super.stop().then(() => {
+	public get isInDebugMode(): boolean {
+		return this._isInDebugMode;
+	}
+
+	public stop(timeout: number = 2000): Promise<void> {
+		return super.stop(timeout).finally(() => {
 			if (this._serverProcess) {
-				let toCheck = this._serverProcess;
+				const toCheck = this._serverProcess;
 				this._serverProcess = undefined;
-				if (this._isDetached === void 0 || !this._isDetached) {
+				if (this._isDetached === undefined || !this._isDetached) {
 					this.checkProcessDied(toCheck);
 				}
 				this._isDetached = undefined;
@@ -225,7 +232,7 @@ export class LanguageClient extends CommonLanguageClient {
 			if (!env && !fork) {
 				return undefined;
 			}
-			let result: any = Object.create(null);
+			const result: any = Object.create(null);
 			Object.keys(process.env).forEach(key => result[key] = process.env[key]);
 			if (fork) {
 				result['ELECTRON_RUN_AS_NODE'] = '1';
@@ -256,7 +263,7 @@ export class LanguageClient extends CommonLanguageClient {
 			}
 		}
 
-		let server = this._serverOptions;
+		const server = this._serverOptions;
 		// We got a function.
 		if (Is.func(server)) {
 			return server().then((result) => {
@@ -285,8 +292,10 @@ export class LanguageClient extends CommonLanguageClient {
 		if (runDebug.run || runDebug.debug) {
 			if (this._forceDebug || startedInDebugMode()) {
 				json = runDebug.debug;
+				this._isInDebugMode = true;
 			} else {
 				json = runDebug.run;
+				this._isInDebugMode = false;
 			}
 		} else {
 			json = server as NodeModule | Executable;
@@ -296,8 +305,8 @@ export class LanguageClient extends CommonLanguageClient {
 				let node = json;
 				let transport = node.transport || TransportKind.stdio;
 				if (node.runtime) {
-					let args: string[] = [];
-					let options: ForkOptions = node.options || Object.create(null);
+					const args: string[] = [];
+					const options: ForkOptions = node.options ?? Object.create(null);
 					if (options.execArgv) {
 						options.execArgv.forEach(element => args.push(element));
 					}
@@ -324,7 +333,7 @@ export class LanguageClient extends CommonLanguageClient {
 					}
 					args.push(`--clientProcessId=${process.pid.toString()}`);
 					if (transport === TransportKind.ipc || transport === TransportKind.stdio) {
-						let serverProcess = cp.spawn(runtime, args, execOptions);
+						const serverProcess = cp.spawn(runtime, args, execOptions);
 						if (!serverProcess || !serverProcess.pid) {
 							return Promise.reject<MessageTransports>(`Launching server using runtime ${runtime} failed.`);
 						}
@@ -338,7 +347,7 @@ export class LanguageClient extends CommonLanguageClient {
 						}
 					} else if (transport === TransportKind.pipe) {
 						return createClientPipeTransport(pipeName!).then((transport) => {
-							let process = cp.spawn(runtime, args, execOptions);
+							const process = cp.spawn(runtime, args, execOptions);
 							if (!process || !process.pid) {
 								return Promise.reject<MessageTransports>(`Launching server using runtime ${runtime} failed.`);
 							}
@@ -351,7 +360,7 @@ export class LanguageClient extends CommonLanguageClient {
 						});
 					} else if (Transport.isSocket(transport)) {
 						return createClientSocketTransport(transport.port).then((transport) => {
-							let process = cp.spawn(runtime, args, execOptions);
+							const process = cp.spawn(runtime, args, execOptions);
 							if (!process || !process.pid) {
 								return Promise.reject<MessageTransports>(`Launching server using runtime ${runtime} failed.`);
 							}
@@ -365,8 +374,8 @@ export class LanguageClient extends CommonLanguageClient {
 					}
 				} else {
 					let pipeName: string | undefined = undefined;
-					return new Promise<MessageTransports>((resolve, _reject) => {
-						let args = node.args && node.args.slice() || [];
+					return new Promise<MessageTransports>((resolve, reject) => {
+						const args = (node.args && node.args.slice()) ?? [];
 						if (transport === TransportKind.ipc) {
 							args.push('--node-ipc');
 						} else if (transport === TransportKind.stdio) {
@@ -378,13 +387,13 @@ export class LanguageClient extends CommonLanguageClient {
 							args.push(`--socket=${transport.port}`);
 						}
 						args.push(`--clientProcessId=${process.pid.toString()}`);
-						let options: cp.ForkOptions = node.options || Object.create(null);
+						const options: cp.ForkOptions = node.options ?? Object.create(null);
 						options.env = getEnvironment(options.env, true);
 						options.execArgv = options.execArgv || [];
 						options.cwd = serverWorkingDir;
 						options.silent = true;
 						if (transport === TransportKind.ipc || transport === TransportKind.stdio) {
-							let sp = cp.fork(node.module, args || [], options);
+							const sp = cp.fork(node.module, args || [], options);
 							assertStdio(sp);
 							this._serverProcess = sp;
 							sp.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
@@ -396,42 +405,84 @@ export class LanguageClient extends CommonLanguageClient {
 							}
 						} else if (transport === TransportKind.pipe) {
 							createClientPipeTransport(pipeName!).then((transport) => {
-								let sp = cp.fork(node.module, args || [], options);
+								const sp = cp.fork(node.module, args || [], options);
 								assertStdio(sp);
 								this._serverProcess = sp;
 								sp.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 								sp.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 								transport.onConnected().then((protocol) => {
 									resolve({ reader: protocol[0], writer: protocol[1] });
-								});
-							});
+								}, reject);
+							}, reject);
 						} else if (Transport.isSocket(transport)) {
 							createClientSocketTransport(transport.port).then((transport) => {
-								let sp = cp.fork(node.module, args || [], options);
+								const sp = cp.fork(node.module, args || [], options);
 								assertStdio(sp);
 								this._serverProcess = sp;
 								sp.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 								sp.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 								transport.onConnected().then((protocol) => {
 									resolve({ reader: protocol[0], writer: protocol[1] });
-								});
-							});
+								}, reject);
+							}, reject);
 						}
 					});
 				}
 			} else if (Executable.is(json) && json.command) {
-				let command: Executable = <Executable>json;
-				let args = command.args || [];
-				let options = Object.assign({}, command.options);
-				options.cwd = options.cwd || serverWorkingDir;
-				let serverProcess = cp.spawn(command.command, args, options);
-				if (!serverProcess || !serverProcess.pid) {
-					return Promise.reject<MessageTransports>(`Launching server using command ${command.command} failed.`);
+				const command: Executable = <Executable>json;
+				const args: string[] = json.args !== undefined ? json.args.slice(0) : [];
+				let pipeName: string | undefined = undefined;
+				const transport = json.transport;
+				if (transport === TransportKind.stdio) {
+					args.push('--stdio');
+				} else if (transport === TransportKind.pipe) {
+					pipeName = generateRandomPipeName();
+					args.push(`--pipe=${pipeName}`);
+				} else if (Transport.isSocket(transport)) {
+					args.push(`--socket=${transport.port}`);
+				} else if (transport === TransportKind.ipc) {
+					throw new Error(`Transport kind ipc is not support for command executable`);
 				}
-				serverProcess.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
-				this._serverProcess = serverProcess;
-				this._isDetached = !!options.detached;
-				return Promise.resolve({ reader: new StreamMessageReader(serverProcess.stdout), writer: new StreamMessageWriter(serverProcess.stdin) });
+				const options = Object.assign({}, command.options);
+				options.cwd = options.cwd || serverWorkingDir;
+				if (transport === undefined || transport === TransportKind.stdio) {
+					const serverProcess = cp.spawn(command.command, args, options);
+					if (!serverProcess || !serverProcess.pid) {
+						return Promise.reject<MessageTransports>(`Launching server using command ${command.command} failed.`);
+					}
+					serverProcess.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+					this._serverProcess = serverProcess;
+					this._isDetached = !!options.detached;
+					return Promise.resolve({ reader: new StreamMessageReader(serverProcess.stdout), writer: new StreamMessageWriter(serverProcess.stdin) });
+				} else if (transport === TransportKind.pipe) {
+					return 	createClientPipeTransport(pipeName!).then((transport) => {
+						const serverProcess = cp.spawn(command.command, args, options);
+						if (!serverProcess || !serverProcess.pid) {
+							throw new Error(`Launching server using command ${command.command} failed.`);
+						}
+						this._serverProcess = serverProcess;
+						this._isDetached = !!options.detached;
+						serverProcess.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+						serverProcess.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+						return transport.onConnected().then((protocol) => {
+							return { reader: protocol[0], writer: protocol[1] };
+						});
+					});
+				} else if (Transport.isSocket(transport)) {
+					return createClientSocketTransport(transport.port).then((transport) => {
+						const serverProcess = cp.spawn(command.command, args, options);
+						if (!serverProcess || !serverProcess.pid) {
+							throw new Error(`Launching server using command ${command.command} failed.`);
+						}
+						this._serverProcess = serverProcess;
+						this._isDetached = !!options.detached;
+						serverProcess.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+						serverProcess.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+						return transport.onConnected().then((protocol) => {
+							return { reader: protocol[0], writer: protocol[1] };
+						});
+					});
+				}
 			}
 			return Promise.reject<MessageTransports>(new Error(`Unsupported server configuration ` + JSON.stringify(server, null, 4)));
 		});
@@ -521,7 +572,7 @@ export class SettingMonitor {
 		this.onDidChangeConfiguration();
 		return new Disposable(() => {
 			if (this._client.needsStop()) {
-				this._client.stop();
+				void this._client.stop();
 			}
 		});
 	}
@@ -534,7 +585,7 @@ export class SettingMonitor {
 		if (enabled && this._client.needsStart()) {
 			this._client.start();
 		} else if (!enabled && this._client.needsStop()) {
-			this._client.stop();
+			void this._client.stop();
 		}
 	}
 }

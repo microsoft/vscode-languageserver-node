@@ -244,7 +244,7 @@ export namespace LocationLink {
 	export function is(value: any): value is LocationLink {
 		let candidate = value as LocationLink;
 		return Is.defined(candidate) && Range.is(candidate.targetRange) && Is.string(candidate.targetUri)
-			&& (Range.is(candidate.targetSelectionRange) || Is.undefined(candidate.targetSelectionRange))
+			&& Range.is(candidate.targetSelectionRange)
 			&& (Range.is(candidate.originSelectionRange) || Is.undefined(candidate.originSelectionRange));
 	}
 }
@@ -297,7 +297,7 @@ export namespace Color {
 	 */
 	export function is(value: any): value is Color {
 		const candidate = value as Color;
-		return Is.numberRange(candidate.red, 0, 1)
+		return Is.objectLiteral(candidate) && Is.numberRange(candidate.red, 0, 1)
 			&& Is.numberRange(candidate.green, 0, 1)
 			&& Is.numberRange(candidate.blue, 0, 1)
 			&& Is.numberRange(candidate.alpha, 0, 1);
@@ -340,7 +340,7 @@ export namespace ColorInformation {
 	 */
 	export function is(value: any): value is ColorInformation {
 		const candidate = value as ColorInformation;
-		return Range.is(candidate.range) && Color.is(candidate.color);
+		return Is.objectLiteral(candidate) && Range.is(candidate.range) && Color.is(candidate.color);
 	}
 }
 
@@ -385,7 +385,7 @@ export namespace ColorPresentation {
 	 */
 	export function is(value: any): value is ColorPresentation {
 		const candidate = value as ColorPresentation;
-		return Is.string(candidate.label)
+		return Is.objectLiteral(candidate) && Is.string(candidate.label)
 			&& (Is.undefined(candidate.textEdit) || TextEdit.is(candidate))
 			&& (Is.undefined(candidate.additionalTextEdits) || Is.typedArray(candidate.additionalTextEdits, TextEdit.is));
 	}
@@ -475,7 +475,7 @@ export namespace FoldingRange {
 	 */
 	export function is(value: any): value is FoldingRange {
 		const candidate = value as FoldingRange;
-		return Is.uinteger(candidate.startLine) && Is.uinteger(candidate.startLine)
+		return Is.objectLiteral(candidate) && Is.uinteger(candidate.startLine) && Is.uinteger(candidate.startLine)
 			&& (Is.undefined(candidate.startCharacter) || Is.uinteger(candidate.startCharacter))
 			&& (Is.undefined(candidate.endCharacter) || Is.uinteger(candidate.endCharacter))
 			&& (Is.undefined(candidate.kind) || Is.string(candidate.kind));
@@ -591,9 +591,9 @@ export interface CodeDescription {
  * @since 3.16.0
  */
 export namespace CodeDescription {
-	export function is(value: CodeDescription | undefined | null): value is CodeDescription {
+	export function is(value: any): value is CodeDescription {
 		const candidate: CodeDescription = value as CodeDescription;
-		return candidate !== undefined && candidate !== null && Is.string(candidate.href);
+		return Is.objectLiteral(candidate) && Is.string(candidate.href);
 	}
 }
 
@@ -620,6 +620,7 @@ export interface Diagnostic {
 
 	/**
 	 * An optional property to describe the error code.
+	 * Requires the code field (above) to be present/not null.
 	 *
 	 * @since 3.16.0
 	 */
@@ -808,23 +809,23 @@ export namespace TextEdit {
  * @since 3.16.0
  */
 export interface ChangeAnnotation {
-        /**
-         * A human-readable string describing the actual change. The string
-		 * is rendered prominent in the user interface.
-         */
-        label: string;
+	/**
+     * A human-readable string describing the actual change. The string
+	 * is rendered prominent in the user interface.
+     */
+	label: string;
 
-        /**
-         * A flag which indicates that user confirmation is needed
-		 * before applying the change.
-         */
-        needsConfirmation?: boolean;
+	/**
+     * A flag which indicates that user confirmation is needed
+	 * before applying the change.
+     */
+	needsConfirmation?: boolean;
 
-        /**
-         * A human-readable string which is rendered less prominent in
-		 * the user interface.
-         */
-        description?: string;
+	/**
+	 * A human-readable string which is rendered less prominent in
+	 * the user interface.
+	 */
+	description?: string;
 }
 
 export namespace ChangeAnnotation {
@@ -840,7 +841,7 @@ export namespace ChangeAnnotation {
 	}
 	export function is(value: any): value is ChangeAnnotation {
 		const candidate = value as ChangeAnnotation;
-		return candidate !== undefined && Is.objectLiteral(candidate) && Is.string(candidate.label) &&
+		return Is.objectLiteral(candidate) && Is.string(candidate.label) &&
 			(Is.boolean(candidate.needsConfirmation) || candidate.needsConfirmation === undefined) &&
 			(Is.string(candidate.description) || candidate.description === undefined);
 	}
@@ -849,7 +850,7 @@ export namespace ChangeAnnotation {
 export namespace ChangeAnnotationIdentifier {
 	export function is(value: any): value is ChangeAnnotationIdentifier {
 		const candidate = value as ChangeAnnotationIdentifier;
-		return typeof candidate === 'string';
+		return Is.string(candidate);
 	}
 }
 
@@ -1160,12 +1161,21 @@ export namespace DeleteFile {
  * A workspace edit represents changes to many resources managed in the workspace. The edit
  * should either provide `changes` or `documentChanges`. If documentChanges are present
  * they are preferred over `changes` if the client can handle versioned document edits.
+ *
+ * Since version 3.13.0 a workspace edit can contain resource operations as well. If resource
+ * operations are present clients need to execute the operations in the order in which they
+ * are provided. So a workspace edit for example can consist of the following two changes:
+ * (1) a create file a.txt and (2) a text document edit which insert text into file a.txt.
+ *
+ * An invalid sequence (e.g. (1) delete file a.txt and (2) insert text into file a.txt) will
+ * cause failure of the operation. How the client recovers from the failure is described by
+ * the client capability: `workspace.workspaceEdit.failureHandling`
  */
 export interface WorkspaceEdit {
 	/**
 	 * Holds changes to existing resources.
 	 */
-	changes?: { [uri: string]: TextEdit[]; };
+	changes?: { [uri: DocumentUri]: TextEdit[]; };
 
 	/**
 	 * Depending on the client capability `workspace.workspaceEdit.resourceOperations` document changes
@@ -1191,7 +1201,7 @@ export interface WorkspaceEdit {
 	 * @since 3.16.0
 	 */
 	changeAnnotations?: {
-		[id: string /* ChangeAnnotationIdentifier */]: ChangeAnnotation;
+		[id: ChangeAnnotationIdentifier]: ChangeAnnotation;
 	}
 }
 
@@ -1366,7 +1376,7 @@ class TextEditChangeImpl implements TextEditChange {
  */
 class ChangeAnnotations {
 
-	private _annotations: { [id: string]: ChangeAnnotation };
+	private _annotations: { [id: ChangeAnnotationIdentifier]: ChangeAnnotation };
 	private _counter: number;
 	private _size: number;
 
@@ -1416,7 +1426,7 @@ class ChangeAnnotations {
  */
 export class WorkspaceChange {
 	private _workspaceEdit: WorkspaceEdit;
-	private _textEditChanges: { [uri: string]: TextEditChange };
+	private _textEditChanges: { [uri: DocumentUri]: TextEditChange };
 	private _changeAnnotations: ChangeAnnotations | undefined;
 
 	constructor(workspaceEdit?: WorkspaceEdit) {
@@ -1649,7 +1659,7 @@ export namespace VersionedTextDocumentIdentifier {
 	/**
 	 * Creates a new VersionedTextDocumentIdentifier literal.
 	 * @param uri The document's uri.
-	 * @param uri The document's text.
+	 * @param version The document's version.
 	 */
 	export function create(uri: DocumentUri, version: integer): VersionedTextDocumentIdentifier {
 		return { uri, version };
@@ -1686,7 +1696,7 @@ export namespace OptionalVersionedTextDocumentIdentifier {
 	/**
 	 * Creates a new OptionalVersionedTextDocumentIdentifier literal.
 	 * @param uri The document's uri.
-	 * @param uri The document's text.
+	 * @param version The document's version.
 	 */
 	export function create(uri: DocumentUri, version: integer | null): OptionalVersionedTextDocumentIdentifier {
 		return { uri, version };
@@ -1980,37 +1990,29 @@ export namespace InsertTextMode {
 export type InsertTextMode = 1 | 2;
 
 /**
- * A more detailed label for a completion item.
+ * Additional details for a completion item label.
  *
  * @since 3.17.0 - proposed state
  */
-export interface CompletionItemLabel {
+export interface CompletionItemLabelDetails {
 	/**
-	 * The name of a function or variable.
+	 * An optional string which is rendered less prominently directly after {@link CompletionItem.label label},
+	 * without any spacing. Should be used for function signatures or type annotations.
 	 */
-	name: string;
+	detail?: string;
 
 	/**
-	 * The parameters without the return type.
+	 * An optional string which is rendered less prominently after {@link CompletionItem.detail}. Should be used
+	 * for fully qualified names or file path.
 	 */
-	parameters?: string;
-
-	/**
-	 * The fully qualified name, like package name or file path.
-	 */
-	qualifier?: string;
-
-	/**
-	 * The return-type of a function or type of a property/variable.
-	 */
-	type?: string;
+	description?: string;
 }
 
-export namespace CompletionItemLabel {
-	export function is(value: any): value is CompletionItemLabel {
-		const candidate = value as CompletionItemLabel;
-		return candidate && Is.string(candidate.name) && (Is.string(candidate.parameters) || candidate.parameters === undefined) &&
-			(Is.string(candidate.qualifier) || candidate.qualifier === undefined) && (Is.string(candidate.type) || candidate.type === undefined);
+export namespace CompletionItemLabelDetails {
+	export function is(value: any): value is CompletionItemLabelDetails {
+		const candidate = value as CompletionItemLabelDetails;
+		return candidate && (Is.string(candidate.detail) || candidate.detail === undefined) &&
+			(Is.string(candidate.description) || candidate.description === undefined);
 	}
 }
 
@@ -2023,17 +2025,20 @@ export interface CompletionItem {
 	/**
 	 * The label of this completion item.
 	 *
-	 * If the label is of type `string` it is also by
-	 * default the text that is inserted when selecting
-	 * this completion.
+	 * The label property is also by default the text that
+	 * is inserted when selecting this completion.
 	 *
-	 * If the label is of type `ComnpletionItemLabel`
-	 * the `name` property is also by default the text
-	 * that is inserted when selecting this completion.
-	 *
-	 * @since 3.17.0 - proposed state -  support for CompletionItemLabel
+	 * If label details are provided the label itself should
+	 * be an unqualified name of the completion item.
 	 */
-	label: string | CompletionItemLabel;
+	label: string;
+
+	/**
+	 * Additional details for the label
+	 *
+	 * @since 3.17.0 - proposed state
+	 */
+	labelDetails?: CompletionItemLabelDetails;
 
 	/**
 	 * The kind of this completion item. Based of the kind
@@ -2164,11 +2169,10 @@ export interface CompletionItem {
 	command?: Command;
 
 	/**
-	 * A data entry field that is preserved on a completion item between
-	 * a [CompletionRequest](#CompletionRequest) and a [CompletionResolveRequest]
-	 * (#CompletionResolveRequest)
+	 * A data entry field that is preserved on a completion item between a
+	 * [CompletionRequest](#CompletionRequest) and a [CompletionResolveRequest](#CompletionResolveRequest).
 	 */
-	data?: any
+	data?: any;
 }
 
 /**
@@ -2388,16 +2392,28 @@ export interface SignatureHelp {
 	signatures: SignatureInformation[];
 
 	/**
-	 * The active signature. Set to `null` if no
-	 * signatures exist.
+	 * The active signature. If omitted or the value lies outside the
+	 * range of `signatures` the value defaults to zero or is ignored if
+	 * the `SignatureHelp` has no signatures.
+	 *
+	 * Whenever possible implementors should make an active decision about
+	 * the active signature and shouldn't rely on a default value.
+	 *
+	 * In future version of the protocol this property might become
+	 * mandatory to better express this.
 	 */
-	activeSignature: uinteger | null;
+	activeSignature?: uinteger;
 
 	/**
-	 * The active parameter of the active signature. Set to `null`
-	 * if the active signature has no parameters.
+	 * The active parameter of the active signature. If omitted or the value
+	 * lies outside the range of `signatures[activeSignature].parameters`
+	 * defaults to 0 if the active signature has parameters. If
+	 * the active signature has no parameters it is ignored.
+	 * In future version of the protocol this property might become
+	 * mandatory to better express the active parameter if the
+	 * active signature does have any.
 	 */
-	activeParameter: uinteger | null;
+	 activeParameter?: uinteger;
 }
 
 /**
@@ -2492,6 +2508,7 @@ export namespace DocumentHighlight {
 	/**
 	 * Create a DocumentHighlight object.
 	 * @param range The range the highlight applies to.
+	 * @param kind The highlight kind
 	 */
 	export function create(range: Range, kind?: DocumentHighlightKind): DocumentHighlight {
 		let result: DocumentHighlight = { range };
@@ -2650,7 +2667,7 @@ export interface DocumentSymbol {
 	kind: SymbolKind;
 
 	/**
-	 * Tags for this completion item.
+	 * Tags for this document symbol.
 	 *
 	 * @since 3.16.0
 	 */
@@ -2967,7 +2984,7 @@ export namespace CodeAction {
 	 * Creates a new code action.
 	 *
 	 * @param title The title of the code action.
-	 * @param command The command to execute.
+	 * @param edit The edit to perform.
 	 * @param kind The kind of the code action.
 	 */
 	export function create(title: string, edit: WorkspaceEdit, kind?: CodeActionKind): CodeAction;
@@ -3198,7 +3215,162 @@ export namespace SelectionRange {
 
 	export function is(value: any): value is SelectionRange {
 		let candidate = value as SelectionRange;
-		return candidate !== undefined && Range.is(candidate.range) && (candidate.parent === undefined || SelectionRange.is(candidate.parent));
+		return Is.objectLiteral(candidate) && Range.is(candidate.range) && (candidate.parent === undefined || SelectionRange.is(candidate.parent));
+	}
+}
+
+/**
+ * Inline value information can be provided by different means:
+ * - directly as a text value (class InlineValueText).
+ * - as a name to use for a variable lookup (class InlineValueVariableLookup)
+ * - as an evaluatable expression (class InlineValueEvaluatableExpression)
+ * The InlineValue types combines all inline value types into one type.
+ */
+export type InlineValue = InlineValueText | InlineValueVariableLookup | InlineValueEvaluatableExpression;
+
+/**
+ * Provide inline value as text.
+ */
+export interface InlineValueText {
+	/**
+	 * The document range for which the inline value applies.
+	 */
+	range: Range;
+
+	/**
+	 * The text of the inline value.
+	 */
+	text: string;
+}
+
+/**
+ * The InlineValueText namespace provides functions to deal with InlineValueTexts.
+ *
+ * @since 3.17.0
+ */
+export namespace InlineValueText {
+	/**
+	 * Creates a new InlineValueText literal.
+	 */
+	export function create(range: Range, text: string): InlineValueText {
+		return { range, text };
+	}
+
+	export function is(value: InlineValue | undefined | null): value is InlineValueText {
+		const candidate = value as InlineValueText;
+		return candidate !== undefined && candidate !== null && Range.is(candidate.range) && Is.string(candidate.text);
+	}
+}
+
+/**
+ * Provide inline value through a variable lookup.
+ * If only a range is specified, the variable name will be extracted from the underlying document.
+ * An optional variable name can be used to override the extracted name.
+ */
+export interface InlineValueVariableLookup {
+	/**
+	 * The document range for which the inline value applies.
+	 * The range is used to extract the variable name from the underlying document.
+	 */
+	range: Range;
+
+	/**
+	 * If specified the name of the variable to look up.
+	 */
+	variableName?: string;
+
+	/**
+	 * How to perform the lookup.
+	 */
+	caseSensitiveLookup: boolean;
+}
+
+
+/**
+ * The InlineValueVariableLookup namespace provides functions to deal with InlineValueVariableLookups.
+ *
+ * @since 3.17.0
+ */
+export namespace InlineValueVariableLookup {
+	/**
+	 * Creates a new InlineValueText literal.
+	 */
+	export function create(range: Range, variableName: string | undefined, caseSensitiveLookup: boolean): InlineValueVariableLookup {
+		return { range, variableName, caseSensitiveLookup };
+	}
+
+	export function is(value: InlineValue | undefined | null): value is InlineValueVariableLookup {
+		const candidate = value as InlineValueVariableLookup;
+		return candidate !== undefined && candidate !== null && Range.is(candidate.range) && Is.boolean(candidate.caseSensitiveLookup)
+			&& (Is.string(candidate.variableName) || candidate.variableName === undefined);
+	}
+}
+
+
+/**
+ * Provide an inline value through an expression evaluation.
+ * If only a range is specified, the expression will be extracted from the underlying document.
+ * An optional expression can be used to override the extracted expression.
+ */
+export interface InlineValueEvaluatableExpression {
+	/**
+	 * The document range for which the inline value applies.
+	 * The range is used to extract the evaluatable expression from the underlying document.
+	 */
+	range: Range;
+
+	/**
+	 * If specified the expression overrides the extracted expression.
+	 */
+	expression?: string;
+}
+
+/**
+ * The InlineValueEvaluatableExpression namespace provides functions to deal with InlineValueEvaluatableExpression.
+ *
+ * @since 3.17.0
+ */
+export namespace InlineValueEvaluatableExpression {
+	/**
+	 * Creates a new InlineValueEvaluatableExpression literal.
+	 */
+	export function create(range: Range, expression: string | undefined): InlineValueEvaluatableExpression {
+		return { range, expression };
+	}
+
+	export function is(value: InlineValue | undefined | null): value is InlineValueEvaluatableExpression {
+		const candidate = value as InlineValueEvaluatableExpression;
+		return candidate !== undefined && candidate !== null && Range.is(candidate.range)
+			&& (Is.string(candidate.expression) || candidate.expression === undefined);
+	}
+}
+
+export interface InlineValuesContext {
+	/**
+	 * The document range where execution has stopped.
+	 * Typically the end position of the range denotes the line where the inline values are shown.
+	 */
+	stoppedLocation: Range;
+}
+
+/**
+ * The InlineValuesContext namespace provides helper functions to work with
+ * [InlineValuesContext](#InlineValuesContext) literals.
+ */
+export namespace InlineValuesContext {
+	/**
+	 * Creates a new InlineValuesContext literal.
+	 */
+	export function create(stoppedLocation: Range): InlineValuesContext {
+		return { stoppedLocation };
+	}
+
+	/**
+	 * Checks whether the given literal conforms to the [InlineValuesContext](#InlineValuesContext) interface.
+	 */
+	export function is(value: any): value is InlineValuesContext {
+		const candidate = value as InlineValuesContext;
+		return Is.defined(candidate) && Range.is(value.stoppedLocation);
 	}
 }
 
@@ -3324,7 +3496,11 @@ export enum SemanticTokenTypes {
 	string = 'string',
 	number = 'number',
 	regexp = 'regexp',
-	operator = 'operator'
+	operator = 'operator',
+	/**
+	 * @since 3.17.0
+	 */
+	decorator = 'decorator'
 }
 
 /**
@@ -3386,7 +3562,7 @@ export interface SemanticTokens {
 export namespace SemanticTokens {
 	export function is(value: any): value is SemanticTokens {
 		const candidate = value as SemanticTokens;
-		return candidate !== undefined && (candidate.resultId === undefined || typeof candidate.resultId === 'string') &&
+		return Is.objectLiteral(candidate) && (candidate.resultId === undefined || typeof candidate.resultId === 'string') &&
 			Array.isArray(candidate.data) && (candidate.data.length === 0 || typeof candidate.data[0] === 'number');
 	}
 }
@@ -3420,6 +3596,50 @@ export interface SemanticTokensDelta {
 	 * The semantic token edits to transform a previous result into a new result.
 	 */
 	edits: SemanticTokensEdit[];
+}
+
+/**
+ * @since 3.17.0 - proposed state
+ */
+export interface TypeHierarchyItem {
+	/**
+	 * The name of this item.
+	 */
+	name: string;
+	/**
+	 * The kind of this item.
+	 */
+	kind: SymbolKind;
+	/**
+	 * Tags for this item.
+	 */
+	tags?: SymbolTag[];
+	/**
+	 * More detail for this item, e.g. the signature of a function.
+	 */
+	detail?: string;
+	/**
+	 * The resource identifier of this item.
+	 */
+	uri: DocumentUri;
+	/**
+	 * The range enclosing this symbol not including leading/trailing whitespace
+	 * but everything else, e.g. comments and code.
+	 */
+	range: Range;
+	/**
+	 * The range that should be selected and revealed when this symbol is being
+	 * picked, e.g. the name of a function. Must be contained by the
+	 * [`range`](#TypeHierarchyItem.range).
+	 */
+	selectionRange: Range;
+	/**
+	 * A data entry field that is preserved between a type hierarchy prepare and
+	 * supertypes or subtypes requests. It could also be used to identify the
+	 * type hierarchy in the server, helping improve the performance on
+	 * resolving supertypes and subtypes.
+	 */
+	data?: unknown;
 }
 
 export const EOL: string[] = ['\n', '\r\n', '\r'];
@@ -3505,7 +3725,8 @@ export namespace TextDocument {
 	/**
 	 * Creates a new ITextDocument literal from the given uri and content.
 	 * @param uri The document's uri.
-	 * @param languageId  The document's language Id.
+	 * @param languageId The document's language Id.
+	 * @param version The document's version.
 	 * @param content The document's content.
 	 */
 	export function create(uri: DocumentUri, languageId: string, version: integer, content: string): TextDocument {

@@ -5,7 +5,8 @@
 
 import {
 	SemanticTokens, SemanticTokensPartialResult, SemanticTokensDelta, SemanticTokensDeltaPartialResult, SemanticTokensParams,
-	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest
+	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest,
+	SemanticTokensRefreshRequest, SemanticTokensEdit
 } from 'vscode-languageserver-protocol';
 
 import type { Feature, _Languages, ServerRequestHandler } from './server';
@@ -17,6 +18,7 @@ import type { Feature, _Languages, ServerRequestHandler } from './server';
  */
 export interface SemanticTokensFeatureShape {
 	semanticTokens: {
+		refresh(): void;
 		on(handler: ServerRequestHandler<SemanticTokensParams, SemanticTokens, SemanticTokensPartialResult, void>): void;
 		onDelta(handler: ServerRequestHandler<SemanticTokensDeltaParams, SemanticTokensDelta | SemanticTokens, SemanticTokensDeltaPartialResult | SemanticTokensDeltaPartialResult, void>): void;
 		onRange(handler: ServerRequestHandler<SemanticTokensRangeParams, SemanticTokens, SemanticTokensPartialResult, void>): void;
@@ -27,6 +29,9 @@ export const SemanticTokensFeature: Feature<_Languages, SemanticTokensFeatureSha
 	return class extends Base {
 		public get semanticTokens() {
 			return {
+				refresh: (): Promise<void> => {
+					return this.connection.sendRequest(SemanticTokensRefreshRequest.type);
+				},
 				on: (handler: ServerRequestHandler<SemanticTokensParams, SemanticTokens, SemanticTokensPartialResult, void>): void => {
 					const type = SemanticTokensRequest.type;
 					this.connection.onRequest(type, (params, cancel) => {
@@ -49,6 +54,62 @@ export const SemanticTokensFeature: Feature<_Languages, SemanticTokensFeatureSha
 		}
 	};
 };
+
+export class SemanticTokensDiff {
+	private readonly originalSequence: number[];
+	private readonly modifiedSequence: number[];
+
+	constructor (originalSequence: number[], modifiedSequence: number[]) {
+		this.originalSequence = originalSequence;
+		this.modifiedSequence = modifiedSequence;
+	}
+
+	public computeDiff(): SemanticTokensEdit[] {
+		const originalLength = this.originalSequence.length;
+		const modifiedLength = this.modifiedSequence.length;
+		let startIndex = 0;
+		while(startIndex < modifiedLength && startIndex < originalLength && this.originalSequence[startIndex] === this.modifiedSequence[startIndex]) {
+			startIndex++;
+		}
+		if (startIndex < modifiedLength && startIndex < originalLength) {
+			let originalEndIndex = originalLength - 1;
+			let modifiedEndIndex = modifiedLength - 1;
+			while (originalEndIndex >= startIndex && modifiedEndIndex >= startIndex && this.originalSequence[originalEndIndex] === this.modifiedSequence[modifiedEndIndex]) {
+				originalEndIndex--;
+				modifiedEndIndex--;
+			}
+			// if one moved behind the start index move them forward again
+			if (originalEndIndex < startIndex || modifiedEndIndex < startIndex) {
+				originalEndIndex++;
+				modifiedEndIndex++;
+			}
+
+			const deleteCount = originalEndIndex - startIndex + 1;
+			const newData = this.modifiedSequence.slice(startIndex, modifiedEndIndex + 1);
+			// If we moved behind the start index we could have missed a simple delete.
+			if (newData.length === 1 && newData[0] === this.originalSequence[originalEndIndex]) {
+				return [
+					{ start: startIndex, deleteCount: deleteCount - 1 }
+				];
+			} else {
+				return [
+					{ start: startIndex, deleteCount, data: newData }
+				];
+			}
+		} else if (startIndex < modifiedLength) {
+			return [
+				{ start: startIndex, deleteCount: 0, data: this.modifiedSequence.slice(startIndex) }
+			];
+		} else if (startIndex < originalLength) {
+			return [
+				{ start: startIndex, deleteCount: originalLength - startIndex }
+			];
+		} else {
+			// The two arrays are the same.
+			return [];
+		}
+	}
+}
 
 export class SemanticTokensBuilder {
 
@@ -119,37 +180,10 @@ export class SemanticTokensBuilder {
 
 	public buildEdits(): SemanticTokens | SemanticTokensDelta {
 		if (this._prevData !== undefined) {
-			const prevDataLength = this._prevData.length;
-			const dataLength = this._data.length;
-			let startIndex = 0;
-			while(startIndex < dataLength && startIndex < prevDataLength && this._prevData[startIndex] === this._data[startIndex]) {
-				startIndex++;
-			}
-			if (startIndex < dataLength && startIndex < prevDataLength) {
-				// Find end index
-				let endIndex = 0;
-				while (endIndex < dataLength && endIndex < prevDataLength && this._prevData[prevDataLength - 1 - endIndex] === this._data[dataLength - 1 - endIndex]) {
-					endIndex++;
-				}
-				const newData = this._data.slice(startIndex, dataLength - endIndex);
-				const result: SemanticTokensDelta = {
-					resultId: this.id,
-					edits: [
-						{ start: startIndex, deleteCount: prevDataLength - endIndex - startIndex, data: newData }
-					]
-				};
-				return result;
-			} else if (startIndex < dataLength) {
-				return { resultId: this.id, edits: [
-					{ start: startIndex, deleteCount: 0, data: this._data.slice(startIndex) }
-				]};
-			} else if (startIndex < prevDataLength) {
-				return { resultId: this.id, edits: [
-					{ start: startIndex, deleteCount: prevDataLength - startIndex }
-				]};
-			} else {
-				return { resultId: this.id, edits: [] };
-			}
+			return {
+				resultId: this.id,
+				edits: (new SemanticTokensDiff(this._prevData, this._data)).computeDiff()
+			};
 		} else {
 			return this.build();
 		}

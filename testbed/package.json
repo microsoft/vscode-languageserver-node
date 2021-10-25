@@ -37,6 +37,7 @@
 		}
 	},
 	"scripts": {
+		"postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
 		"compile": "tsc -b",
 		"clean": "tsc -b --clean",
 		"watch": "tsc -b -w"

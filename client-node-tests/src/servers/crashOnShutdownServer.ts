@@ -5,7 +5,7 @@
 
 import { createConnection, Connection, InitializeParams } from '../../../server/node';
 
-let connection: Connection = createConnection();
+const connection: Connection = createConnection();
 connection.onInitialize((_params: InitializeParams): any => {
 	return { capabilities: {} };
 });

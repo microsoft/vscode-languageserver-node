@@ -7,7 +7,7 @@ import {
 	Message, NotificationMessage, CancellationToken, RequestHandler0, RequestHandler, GenericRequestHandler,
 	NotificationHandler0, NotificationHandler, GenericNotificationHandler, ProgressType, Trace, Tracer, TraceOptions,
 	Disposable, Event, MessageReader, MessageWriter, Logger, ConnectionStrategy, ConnectionOptions, createMessageConnection,
-	RequestType0, RequestType, NotificationType0, NotificationType
+	RequestType0, RequestType, NotificationType0, NotificationType, MessageSignature
 } from 'vscode-jsonrpc';
 
 import {
@@ -40,21 +40,21 @@ export interface ProtocolConnection {
 	/**
 	 * Sends a request and returns a promise resolving to the result of the request.
 	 *
-	 * @param method the request's method name.
+	 * @param method the message signature or the method name.
 	 * @param token An optional cancellation token.
 	 * @returns A promise resolving to the request's result.
 	 */
-	sendRequest<R>(method: string, token?: CancellationToken): Promise<R>;
+	sendRequest<R>(method: MessageSignature | string, token?: CancellationToken): Promise<R>;
 
 	/**
 	 * Sends a request and returns a promise resolving to the result of the request.
 	 *
-	 * @param method the request's method name.
+	 * @param method the message signature or the method name.
 	 * @param params The request's parameter.
 	 * @param token An optional cancellation token.
 	 * @returns A promise resolving to the request's result.
 	 */
-	sendRequest<R>(method: string, param: any, token?: CancellationToken): Promise<R>;
+	sendRequest<R>(method: MessageSignature | string, param: any, token?: CancellationToken): Promise<R>;
 
 	/**
 	 * Installs a request handler.
@@ -77,18 +77,18 @@ export interface ProtocolConnection {
 	/**
 	 * Installs a request handler.
 	 *
-	 * @param methods The method name to install the handler for.
+	 * @param methods the message signature or the method name to install a handler for.
 	 * @param handler The actual handler.
 	 */
-	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): Disposable;
+	onRequest<R, E>(method: MessageSignature | string, handler: GenericRequestHandler<R, E>): Disposable;
 
 	/**
 	 * Sends a notification.
 	 *
 	 * @param type the notification's type to send.
 	 */
-	sendNotification(type: NotificationType0): void;
-	sendNotification<RO>(type: ProtocolNotificationType0<RO>): void;
+	sendNotification(type: NotificationType0): Promise<void>;
+	sendNotification<RO>(type: ProtocolNotificationType0<RO>): Promise<void>;
 
 	/**
 	 * Sends a notification.
@@ -96,23 +96,23 @@ export interface ProtocolConnection {
 	 * @param type the notification's type to send.
 	 * @param params the notification's parameters.
 	 */
-	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): void;
-	sendNotification<P>(type: NotificationType<P>, params?: P): void;
+	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): Promise<void>;
+	sendNotification<P>(type: NotificationType<P>, params?: P): Promise<void>;
 
 	/**
 	 * Sends a notification.
 	 *
-	 * @param method the notification's method name.
+	 * @param method the notification's method signature or the method name.
 	 */
-	sendNotification(method: string): void;
+	sendNotification(method: MessageSignature | string): Promise<void>;
 
 	/**
 	 * Sends a notification.
 	 *
-	 * @param method the notification's method name.
+	 * @param method the notification's method signature or the method name.
 	 * @param params the notification's parameters.
 	 */
-	sendNotification(method: string, params: any): void;
+	sendNotification(method: MessageSignature | string, params: any): Promise<void>;
 
 	/**
 	 * Installs a notification handler.
@@ -135,10 +135,10 @@ export interface ProtocolConnection {
 	/**
 	 * Installs a notification handler.
 	 *
-	 * @param methods The method name to install the handler for.
+	 * @param methods The message signature or the method name to install the handler for.
 	 * @param handler The actual handler.
 	 */
-	onNotification(method: string, handler: GenericNotificationHandler): Disposable;
+	onNotification(method: MessageSignature | string, handler: GenericNotificationHandler): Disposable;
 
 	/**
 	 * Installs a progress handler for a given token.
@@ -154,7 +154,7 @@ export interface ProtocolConnection {
 	 * @param token the token to use
 	 * @param value the progress value
 	 */
-	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): void;
+	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): Promise<void>;
 
 	/**
 	 * Enables tracing mode for the connection.
@@ -173,7 +173,7 @@ export interface ProtocolConnection {
 	onClose: Event<void>;
 
 	/**
-	 * An event emiiter firing when the connection receives a notification that is not
+	 * An event emitter firing when the connection receives a notification that is not
 	 * handled.
 	 */
 	onUnhandledNotification: Event<NotificationMessage>;

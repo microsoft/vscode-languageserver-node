@@ -46,12 +46,13 @@ async function go() {
 		 * Basic usage
 		 */
 		await runTests({
-			version: '1.52.0',
+			version: '1.61.0',
 			extensionDevelopmentPath,
 			extensionTestsPath,
 			launchArgs: [
 				'--user-data-dir', userDataDir,
 				'--extensions-dir', extensionDir,
+				'--enable-proposed-api', 'ms-vscode.test-extension',
 				workspaceFolder
 			]
 		});
@@ -61,4 +62,5 @@ async function go() {
 		process.exitCode = 1;
 	}
 }
-go();
+
+go().catch(console.error);

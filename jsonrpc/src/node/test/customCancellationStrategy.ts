@@ -87,7 +87,7 @@ function getReceiverStrategy(folder: string): CancellationReceiverStrategy {
 
 function getSenderStrategy(folder: string): CancellationSenderStrategy {
 	return {
-		sendCancellation(_: MessageConnection, id: CancellationId): void {
+		sendCancellation(_: MessageConnection, id: CancellationId): Promise<void> {
 			const file = getCancellationFilename(folder, id);
 			try {
 				if (!fs.existsSync(file)) {
@@ -96,6 +96,7 @@ function getSenderStrategy(folder: string): CancellationSenderStrategy {
 			} catch (e) {
 				// noop
 			}
+			return Promise.resolve();
 		},
 		cleanup(id: CancellationId): void {
 			try {

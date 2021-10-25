@@ -37,8 +37,10 @@ class TestWorkspaceFoldersFeature extends WorkspaceFoldersFeature {
 function testEvent(initial: MaybeFolders, then: MaybeFolders, added: proto.WorkspaceFolder[], removed: proto.WorkspaceFolder[]) {
 	const client = new TestLanguageClient('foo', 'bar', {});
 
-	const send = sinon.spy();
-	sinon.replace(client, 'sendNotification', send);
+	const send = sinon.spy((_p1: any, _p2: any) => {
+		return Promise.resolve();
+	});
+	sinon.replace(client, 'sendNotification', send as any);
 
 	const feature = new TestWorkspaceFoldersFeature(client);
 
@@ -56,7 +58,9 @@ function testEvent(initial: MaybeFolders, then: MaybeFolders, added: proto.Works
 function testNoEvent(initial: MaybeFolders, then: MaybeFolders) {
 	const client = new TestLanguageClient('foo', 'bar', {});
 
-	const send = sinon.spy();
+	const send = sinon.spy(() => {
+		return Promise.resolve();
+	});
 	sinon.replace(client, 'sendNotification', send);
 
 	const feature = new TestWorkspaceFoldersFeature(client);

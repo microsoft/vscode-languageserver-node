@@ -14,8 +14,9 @@ import { MarkdownString } from 'vscode';
 import ProtocolCodeAction from './protocolCodeAction';
 import { ProtocolDiagnostic, DiagnosticCode } from './protocolDiagnostic';
 import ProtocolCallHierarchyItem from './protocolCallHierarchyItem';
-import { InsertTextMode } from 'vscode-languageserver-protocol';
+import { InsertTextMode, uinteger } from 'vscode-languageserver-protocol';
 import { CreateFilesParams, DeleteFilesParams, RenameFilesParams } from 'vscode-languageserver-protocol/lib/common/protocol.fileOperations';
+import ProtocolTypeHierarchyItem from './protocolTypeHierarchyItem';
 
 interface InsertReplaceRange {
 	inserting: code.Range;
@@ -91,7 +92,7 @@ export interface Converter {
 	asDiagnostic(item: code.Diagnostic): proto.Diagnostic;
 	asDiagnostics(items: code.Diagnostic[]): proto.Diagnostic[];
 
-	asCompletionItem(item: code.CompletionItem, supportsComplexLabel?: boolean): proto.CompletionItem;
+	asCompletionItem(item: code.CompletionItem, labelDetailsSupport?: boolean): proto.CompletionItem;
 
 	asSymbolKind(item: code.SymbolKind): proto.SymbolKind;
 
@@ -105,6 +106,8 @@ export interface Converter {
 	asCodeAction(item: code.CodeAction): proto.CodeAction;
 
 	asCodeActionContext(context: code.CodeActionContext): proto.CodeActionContext;
+
+	asInlineValuesContext(context: code.InlineValueContext): proto.InlineValuesContext;
 
 	asCommand(item: code.Command): proto.Command;
 
@@ -121,6 +124,8 @@ export interface Converter {
 	asDocumentLinkParams(textDocument: code.TextDocument): proto.DocumentLinkParams;
 
 	asCallHierarchyItem(value: code.CallHierarchyItem): proto.CallHierarchyItem;
+
+	asTypeHierarchyItem(value: code.TypeHierarchyItem): proto.TypeHierarchyItem;
 }
 
 export interface URIConverter {
@@ -394,7 +399,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (value === undefined || value === null) {
 			return value;
 		}
-		return { line: value.line, character: value.character };
+		return { line: value.line > uinteger.MAX_VALUE ? uinteger.MAX_VALUE : value.line, character: value.character > uinteger.MAX_VALUE ? uinteger.MAX_VALUE : value.character };
 	}
 
 	function asPositions(value: code.Position[]): proto.Position[] {
@@ -561,18 +566,21 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return value + 1 as proto.CompletionItemKind;
 	}
 
-	function asCompletionItem(item: code.CompletionItem, supportsLabelLiteral: boolean = false): proto.CompletionItem {
-		let label: string | proto.CompletionItemLabel;
-		if (item.label2 !== undefined) {
-			if (supportsLabelLiteral) {
-				label = Object.assign({}, item.label2);
-			} else {
-				label = item.label2.name;
-			}
-		} else {
+	function asCompletionItem(item: code.CompletionItem, labelDetailsSupport: boolean = false): proto.CompletionItem {
+		let label: string;
+		let labelDetails: proto.CompletionItemLabelDetails | undefined;
+		if (Is.string(item.label)) {
 			label = item.label;
+		} else {
+			label = item.label.label;
+			if (labelDetailsSupport && (item.label.detail !== undefined || item.label.description !== undefined)) {
+				labelDetails = { detail: item.label.detail, description: item.label.description };
+			}
 		}
 		let result: proto.CompletionItem = { label: label };
+		if (labelDetails !== undefined) {
+			result.labelDetails = labelDetails;
+		}
 		let protocolItem = item instanceof ProtocolCompletionItem ? item as ProtocolCompletionItem : undefined;
 		if (item.detail) { result.detail = item.detail; }
 		// We only send items back we created. So this can't be something else than
@@ -721,6 +729,12 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return item.value;
 	}
 
+	function asInlineValuesContext(context: code.InlineValueContext): proto.InlineValuesContext {
+		if (context === undefined || context === null) {
+			return context;
+		}
+		return proto.InlineValuesContext.create(context.stoppedLocation);
+	}
 
 	function asCommand(item: code.Command): proto.Command {
 		let result = proto.Command.create(item.title, item.command);
@@ -796,6 +810,22 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return result;
 	}
 
+	function asTypeHierarchyItem(value: code.TypeHierarchyItem): proto.TypeHierarchyItem {
+		const result: proto.TypeHierarchyItem = {
+			name: value.name,
+			kind: asSymbolKind(value.kind),
+			uri: asUri(value.uri),
+			range: asRange(value.range),
+			selectionRange: asRange(value.selectionRange),
+		};
+		if (value.detail !== undefined && value.detail.length > 0) { result.detail = value.detail; }
+		if (value.tags !== undefined) { result.tags = asSymbolTags(value.tags); }
+		if (value instanceof ProtocolTypeHierarchyItem && value.data !== undefined) {
+			result.data = value.data;
+		}
+		return result;
+	}
+
 	return {
 		asUri,
 		asTextDocumentIdentifier,
@@ -831,6 +861,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asReferenceParams,
 		asCodeAction,
 		asCodeActionContext,
+		asInlineValuesContext,
 		asCommand,
 		asCodeLens,
 		asFormattingOptions,
@@ -838,6 +869,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asCodeLensParams,
 		asDocumentLink,
 		asDocumentLinkParams,
-		asCallHierarchyItem
+		asCallHierarchyItem,
+		asTypeHierarchyItem
 	};
 }

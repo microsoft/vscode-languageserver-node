@@ -24,7 +24,7 @@ import {
 	DocumentSymbolRequest, WorkspaceSymbolRequest, CodeActionRequest, CodeLensRequest, CodeLensResolveRequest, DocumentFormattingRequest, DocumentRangeFormattingRequest,
 	DocumentOnTypeFormattingRequest, RenameRequest, PrepareRenameRequest, DocumentLinkRequest, DocumentLinkResolveRequest, DocumentColorRequest, ColorPresentationRequest,
 	FoldingRangeRequest, SelectionRangeRequest, ExecuteCommandRequest, InitializeRequest, ResponseError, RegistrationType, RequestType0, RequestType,
-	NotificationType0, NotificationType, CodeActionResolveRequest
+	NotificationType0, NotificationType, CodeActionResolveRequest, RAL
 } from 'vscode-languageserver-protocol';
 
 import * as Is from './utils/is';
@@ -59,7 +59,7 @@ export interface TextDocumentsConfiguration<T> {
  * Event to signal changes to a text document.
  */
 export interface TextDocumentChangeEvent<T> {
-    /**
+	/**
      * The document that has changed.
      */
 	document: T;
@@ -69,18 +69,25 @@ export interface TextDocumentChangeEvent<T> {
  * Event to signal that a document will be saved.
  */
 export interface TextDocumentWillSaveEvent<T> {
-    /**
+	/**
      * The document that will be saved
      */
 	document: T;
-    /**
+	/**
      * The reason why save was triggered.
      */
 	reason: TextDocumentSaveReason;
 }
 
 /**
- * A manager for simple text documents
+ * A manager for simple text documents. The manager requires at a minimum that
+ * the server registered for the following text document sync events in the
+ * initialize handler or via dynamic registration:
+ *
+ * - open and close events.
+ * - change events.
+ *
+ * Registering for save and will save events is optional.
  */
 export class TextDocuments<T> {
 
@@ -417,9 +424,11 @@ class RemoteConsoleImpl implements Logger, RemoteConsole, Remote {
 		this.send(MessageType.Log, message);
 	}
 
-	private send(type: MessageType, message: string) {
+	private send(type: MessageType, message: string): void {
 		if (this._rawConnection) {
-			this._rawConnection.sendNotification(LogMessageNotification.type, { type, message });
+			this._rawConnection.sendNotification(LogMessageNotification.type, { type, message }).catch(() => {
+				RAL().console.error(`Sending log message failed`);
+			});
 		}
 	}
 }
@@ -627,7 +636,7 @@ class BulkUnregistrationImpl implements BulkUnregistration {
 		let params: UnregistrationParams = {
 			unregisterations: unregistrations
 		};
-		this._connection!.sendRequest(UnregistrationRequest.type, params).then(undefined, (_error) => {
+		this._connection!.sendRequest(UnregistrationRequest.type, params).catch(() => {
 			this._connection!.console.info(`Bulk unregistration failed.`);
 		});
 	}
@@ -789,7 +798,7 @@ class RemoteClientImpl implements RemoteClient, Remote {
 		};
 		return this.connection.sendRequest(RegistrationRequest.type, params).then((_result) => {
 			return Disposable.create(() => {
-				this.unregisterSingle(id, method);
+				this.unregisterSingle(id, method).catch(() => { this.connection.console.info(`Un-registering capability with id ${id} failed.`); });
 			});
 		}, (_error) => {
 			this.connection.console.info(`Registering request handler for ${method} failed.`);
@@ -802,7 +811,7 @@ class RemoteClientImpl implements RemoteClient, Remote {
 			unregisterations: [{ id, method }]
 		};
 
-		return this.connection.sendRequest(UnregistrationRequest.type, params).then(undefined, (_error) => {
+		return this.connection.sendRequest(UnregistrationRequest.type, params).catch(() => {
 			this.connection.console.info(`Un-registering request handler for ${id} failed.`);
 		});
 	}
@@ -1623,12 +1632,12 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 		sendRequest: <R>(type: string | MessageSignature, ...params: any[]): Promise<R> => connection.sendRequest(Is.string(type) ? type : type.method, ...params),
 		onRequest: <R, E>(type: string | MessageSignature | StarRequestHandler, handler?: GenericRequestHandler<R, E>): void => (connection as any).onRequest(type, handler),
 
-		sendNotification: (type: string | MessageSignature, param?: any): void => {
+		sendNotification: (type: string | MessageSignature, param?: any): Promise<void> => {
 			const method = Is.string(type) ? type : type.method;
 			if (arguments.length === 1) {
-				connection.sendNotification(method);
+				return connection.sendNotification(method);
 			} else {
-				connection.sendNotification(method, param);
+				return connection.sendNotification(method, param);
 			}
 		},
 		onNotification: (type: string | MessageSignature | StarNotificationHandler, handler?: GenericNotificationHandler): void => (connection as any).onNotification(type, handler),
