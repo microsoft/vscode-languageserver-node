@@ -186,6 +186,20 @@ export class LanguageClient extends CommonLanguageClient {
 		return this._isInDebugMode;
 	}
 
+	public async restart(): Promise<void> {
+		await this.stop();
+		// We are in debug mode. Wait a little before we restart
+		// so that the debug port can be freed. We can safely ignore
+		// the disposable returned from start since it will call
+		// stop on the same client instance.
+		if (this.isInDebugMode) {
+			await new Promise((resolve) => setTimeout(resolve, 1000));
+			this.start();
+		} else {
+			this.start();
+		}
+	}
+
 	public stop(timeout: number = 2000): Promise<void> {
 		return super.stop(timeout).finally(() => {
 			if (this._serverProcess) {
