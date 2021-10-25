@@ -648,36 +648,6 @@ suite('Client integration', () => {
 		assert.strictEqual(middlewareCalled, true);
 	});
 
-	test('Inline Values', async () => {
-		const provider = client.getFeature(lsclient.InlineValuesRequest.method).getProvider(document);
-		isDefined(provider);
-		const results = (await provider.provideInlineValues(document, range, { frameId: 1, stoppedLocation: range }, tokenSource.token));
-
-		isArray(results, undefined, 3);
-
-		for (const r of results) {
-			rangeEqual(r.range, 1, 2, 3, 4);
-		}
-
-		assert.ok(results[0] instanceof vscode.InlineValueText);
-		assert.strictEqual((results[0] as vscode.InlineValueText).text, 'text');
-
-		assert.ok(results[1] instanceof vscode.InlineValueVariableLookup);
-		assert.strictEqual((results[1] as vscode.InlineValueVariableLookup).variableName, 'variableName');
-
-		assert.ok(results[2] instanceof vscode.InlineValueEvaluatableExpression);
-		assert.strictEqual((results[2] as vscode.InlineValueEvaluatableExpression).expression, 'expression');
-
-		let middlewareCalled: boolean = false;
-		middleware.provideInlineValues = (d, r, c, t, n) => {
-			middlewareCalled = true;
-			return n(d, r, c, t);
-		};
-		await provider.provideInlineValues(document, range, { frameId: 1, stoppedLocation: range }, tokenSource.token);
-		middleware.provideInlineValues = undefined;
-		assert.strictEqual(middlewareCalled, true);
-	});
-
 	test('Type Definition', async () => {
 		const provider = client.getFeature(lsclient.TypeDefinitionRequest.method).getProvider(document);
 		isDefined(provider);
@@ -1190,6 +1160,37 @@ suite('Client integration', () => {
 		};
 		await provider.provideTypeHierarchySubtypes(item, tokenSource.token);
 		middleware.provideTypeHierarchySubtypes = undefined;
+		assert.strictEqual(middlewareCalled, true);
+	});
+
+	test('Inline Values', async () => {
+		const providerData = client.getFeature(lsclient.Proposed.InlineValuesRequest.method).getProvider(document);
+		isDefined(providerData);
+		const provider = providerData.provider;
+		const results = (await provider.provideInlineValues(document, range, { frameId: 1, stoppedLocation: range }, tokenSource.token));
+
+		isArray(results, undefined, 3);
+
+		for (const r of results) {
+			rangeEqual(r.range, 1, 2, 3, 4);
+		}
+
+		assert.ok(results[0] instanceof vscode.InlineValueText);
+		assert.strictEqual((results[0] as vscode.InlineValueText).text, 'text');
+
+		assert.ok(results[1] instanceof vscode.InlineValueVariableLookup);
+		assert.strictEqual((results[1] as vscode.InlineValueVariableLookup).variableName, 'variableName');
+
+		assert.ok(results[2] instanceof vscode.InlineValueEvaluatableExpression);
+		assert.strictEqual((results[2] as vscode.InlineValueEvaluatableExpression).expression, 'expression');
+
+		let middlewareCalled: boolean = false;
+		middleware.provideInlineValues = (d, r, c, t, n) => {
+			middlewareCalled = true;
+			return n(d, r, c, t);
+		};
+		await provider.provideInlineValues(document, range, { frameId: 1, stoppedLocation: range }, tokenSource.token);
+		middleware.provideInlineValues = undefined;
 		assert.strictEqual(middlewareCalled, true);
 	});
 });

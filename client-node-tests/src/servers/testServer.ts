@@ -299,14 +299,6 @@ connection.onSelectionRanges((_params) => {
 	];
 });
 
-connection.onInlineValues((_params) => {
-	return [
-		InlineValueText.create(Range.create(1, 2, 3, 4), 'text'),
-		InlineValueVariableLookup.create(Range.create(1, 2, 3, 4), 'variableName', false),
-		InlineValueEvaluatableExpression.create(Range.create(1, 2, 3, 4), 'expression'),
-	];
-});
-
 let lastFileOperationRequest: unknown;
 connection.workspace.onDidCreateFiles((params) => { lastFileOperationRequest = { type: 'create', params }; });
 connection.workspace.onDidRenameFiles((params) => { lastFileOperationRequest = { type: 'rename', params }; });
@@ -464,6 +456,14 @@ connection.languages.typeHierarchy.onSupertypes((_params) => {
 
 connection.languages.typeHierarchy.onSubtypes((_params) => {
 	return typeHierarchySample.subTypes;
+});
+
+connection.languages.inlineValues.on((_params) => {
+	return [
+		InlineValueText.create(Range.create(1, 2, 3, 4), 'text'),
+		InlineValueVariableLookup.create(Range.create(1, 2, 3, 4), 'variableName', false),
+		InlineValueEvaluatableExpression.create(Range.create(1, 2, 3, 4), 'expression'),
+	];
 });
 
 connection.onRequest(

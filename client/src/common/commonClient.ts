@@ -13,7 +13,6 @@ import { WorkspaceFoldersFeature } from './workspaceFolders';
 import { FoldingRangeFeature } from './foldingRange';
 import { DeclarationFeature } from './declaration';
 import { SelectionRangeFeature } from './selectionRange';
-import { InlineValueFeature } from './inlineValues';
 import { ProgressFeature } from './progress';
 import { CallHierarchyFeature } from './callHierarchy';
 import { SemanticTokensFeature } from './semanticTokens';
@@ -44,7 +43,6 @@ export abstract class CommonLanguageClient extends BaseLanguageClient {
 		this.registerFeature(new FoldingRangeFeature(this));
 		this.registerFeature(new DeclarationFeature(this));
 		this.registerFeature(new SelectionRangeFeature(this));
-		this.registerFeature(new InlineValueFeature(this));
 		this.registerFeature(new ProgressFeature(this));
 		this.registerFeature(new CallHierarchyFeature(this));
 		this.registerFeature(new SemanticTokensFeature(this));
@@ -61,11 +59,14 @@ export abstract class CommonLanguageClient extends BaseLanguageClient {
 // Exporting proposed protocol.
 import * as pd from './proposed.diagnostic';
 import * as pt from './proposed.typeHierarchy';
+import * as iv from './proposed.inlineValues';
+
 export namespace ProposedFeatures {
 	export function createAll(_client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
 		let result: (StaticFeature | DynamicFeature<any>)[] = [
 			new pd.DiagnosticFeature(_client),
-			new pt.TypeHierarchyFeature(_client)
+			new pt.TypeHierarchyFeature(_client),
+			new iv.InlineValueFeature(_client)
 		];
 		return result;
 	}

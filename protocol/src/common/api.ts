@@ -70,6 +70,8 @@ export namespace LSPErrorCodes {
 
 import * as diag from './proposed.diagnostic';
 import * as typeh from './proposed.typeHierarchy';
+import * as iv from './proposed.inlineValue';
+
 export namespace Proposed {
 	export type DiagnosticClientCapabilities = diag.DiagnosticClientCapabilities;
 	export type $DiagnosticClientCapabilities = diag.$DiagnosticClientCapabilities;
@@ -112,4 +114,12 @@ export namespace Proposed {
 	export const TypeHierarchySupertypesRequest: typeof typeh.TypeHierarchySupertypesRequest = typeh.TypeHierarchySupertypesRequest;
 	export const TypeHierarchySubtypesRequest: typeof typeh.TypeHierarchySubtypesRequest = typeh.TypeHierarchySubtypesRequest;
 
+	// Inline value
+	export type InlineValuesClientCapabilities = iv.InlineValuesClientCapabilities;
+	export type InlineValuesOptions = iv.InlineValuesOptions;
+	export type InlineValuesRegistrationOptions = iv.InlineValuesRegistrationOptions;
+	export type InlineValuesParams = iv.InlineValuesParams;
+
+	export const InlineValuesRequest: typeof iv.InlineValuesRequest = iv.InlineValuesRequest;
+	export const InlineValuesRefreshRequest: typeof iv.InlineValuesRefreshRequest = iv.InlineValuesRefreshRequest;
 }

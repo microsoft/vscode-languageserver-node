@@ -41,10 +41,6 @@ import {
 } from './protocol.selectionRange';
 
 import {
-	InlineValuesClientCapabilities, InlineValuesOptions, InlineValuesRequest, InlineValuesParams, InlineValuesRegistrationOptions
-} from './protocol.inlineValue';
-
-import {
 	WorkDoneProgressClientCapabilities, WorkDoneProgressBegin, WorkDoneProgressReport, WorkDoneProgressEnd, WorkDoneProgress, WorkDoneProgressCreateParams,
 	WorkDoneProgressCreateRequest, WorkDoneProgressCancelParams, WorkDoneProgressCancelNotification
 } from './protocol.progress';
@@ -82,6 +78,10 @@ import {
 import {
 	TypeHierarchyClientCapabilities, TypeHierarchyOptions, TypeHierarchyRegistrationOptions,
 } from './proposed.typeHierarchy';
+
+import {
+	InlineValuesClientCapabilities, InlineValuesOptions, InlineValuesRegistrationOptions, InlineValuesWorkspaceClientCapabilities
+} from './proposed.inlineValue';
 
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
@@ -373,6 +373,14 @@ export interface WorkspaceClientCapabilities {
 	 * Since 3.16.0
 	 */
 	fileOperations?: FileOperationClientCapabilities
+
+	/**
+	 * Capabilities specific to the inline values requests scoped to the
+	 * workspace.
+	 *
+	 * @since 3.17.0.
+	 */
+	inlineValues?: InlineValuesWorkspaceClientCapabilities;
 }
 
 /**
@@ -496,13 +504,6 @@ export interface TextDocumentClientCapabilities {
 	selectionRange?: SelectionRangeClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/inlineValues` request.
-	 *
-	 * @since 3.17.0
-	 */
-	inlineValues?: InlineValuesClientCapabilities;
-
-	/**
 	 * Capabilities specific to `textDocument/publishDiagnostics` notification.
 	 */
 	publishDiagnostics?: PublishDiagnosticsClientCapabilities;
@@ -541,6 +542,13 @@ export interface TextDocumentClientCapabilities {
 	 * @since 3.17.0 - proposed state
 	 */
 	typeHierarchy?: TypeHierarchyClientCapabilities;
+
+	/**
+	 * Capabilities specific to the `textDocument/inlineValues` request.
+	 *
+	 * @since 3.17.0 - proposed state
+	 */
+	inlineValues?: InlineValuesClientCapabilities;
 }
 
 export interface WindowClientCapabilities {
@@ -875,11 +883,6 @@ export interface _ServerCapabilities<T = any> {
 	selectionRangeProvider?: boolean | SelectionRangeOptions | SelectionRangeRegistrationOptions;
 
 	/**
-	 * The server provides inline values.
-	 */
-	inlineValuesProvider?: InlineValuesOptions;
-
-	/**
 	 * The server provides execute command support.
 	 */
 	executeCommandProvider?: ExecuteCommandOptions;
@@ -930,6 +933,13 @@ export interface _ServerCapabilities<T = any> {
 	 * @since 3.17.0 - proposed state
 	 */
 	typeHierarchyProvider?: boolean | TypeHierarchyOptions | TypeHierarchyRegistrationOptions;
+
+	/**
+	 * The server provides inline values.
+	 *
+	 * @since 3.17.0 - proposed state
+	 */
+	inlineValuesProvider?: boolean | InlineValuesOptions | InlineValuesOptions | InlineValuesRegistrationOptions;
 
 	/**
 	 * Experimental server capabilities.
@@ -3297,7 +3307,6 @@ export {
 	FoldingRangeClientCapabilities, FoldingRangeOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeRegistrationOptions,
 	DeclarationClientCapabilities, DeclarationRequest, DeclarationParams, DeclarationRegistrationOptions, DeclarationOptions,
 	SelectionRangeClientCapabilities, SelectionRangeOptions, SelectionRangeParams, SelectionRangeRequest, SelectionRangeRegistrationOptions,
-	InlineValuesClientCapabilities, InlineValuesOptions, InlineValuesParams, InlineValuesRequest, InlineValuesRegistrationOptions,
 	WorkDoneProgressBegin, WorkDoneProgressReport, WorkDoneProgressEnd, WorkDoneProgress, WorkDoneProgressCreateParams,
 	WorkDoneProgressCreateRequest, WorkDoneProgressCancelParams, WorkDoneProgressCancelNotification,
 	// Call Hierarchy

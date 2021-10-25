@@ -24,7 +24,7 @@ import {
 	DocumentSymbolRequest, WorkspaceSymbolRequest, CodeActionRequest, CodeLensRequest, CodeLensResolveRequest, DocumentFormattingRequest, DocumentRangeFormattingRequest,
 	DocumentOnTypeFormattingRequest, RenameRequest, PrepareRenameRequest, DocumentLinkRequest, DocumentLinkResolveRequest, DocumentColorRequest, ColorPresentationRequest,
 	FoldingRangeRequest, SelectionRangeRequest, ExecuteCommandRequest, InitializeRequest, ResponseError, RegistrationType, RequestType0, RequestType,
-	NotificationType0, NotificationType, CodeActionResolveRequest, RAL, InlineValuesParams, InlineValue, InlineValuesRequest
+	NotificationType0, NotificationType, CodeActionResolveRequest, RAL
 } from 'vscode-languageserver-protocol';
 
 import * as Is from './utils/is';
@@ -38,7 +38,6 @@ import { ShowDocumentFeatureShape, ShowDocumentFeature } from './showDocument';
 import { FileOperationsFeature, FileOperationsFeatureShape } from './fileOperations';
 import { LinkedEditingRangeFeature, LinkedEditingRangeFeatureShape } from './linkedEditingRange';
 import { MonikerFeature, MonikerFeatureShape } from './moniker';
-import { TypeHierarchyFeature, TypeHierarchyFeatureShape } from './proposed.typeHierarchy';
 
 function null2Undefined<T>(value: T | null): T | undefined {
 	if (value === null) {
@@ -1026,8 +1025,8 @@ export class _LanguagesImpl implements Remote, _Languages {
 	}
 }
 
-export type Languages = _Languages & CallHierarchy & SemanticTokensFeatureShape & LinkedEditingRangeFeatureShape & MonikerFeatureShape & TypeHierarchyFeatureShape;
-const LanguagesImpl: new () => Languages = TypeHierarchyFeature(MonikerFeature(LinkedEditingRangeFeature(SemanticTokensFeature(CallHierarchyFeature(_LanguagesImpl))))) as (new () => Languages);
+export type Languages = _Languages & CallHierarchy & SemanticTokensFeatureShape & LinkedEditingRangeFeatureShape & MonikerFeatureShape;
+const LanguagesImpl: new () => Languages = MonikerFeature(LinkedEditingRangeFeature(SemanticTokensFeature(CallHierarchyFeature(_LanguagesImpl)))) as (new () => Languages);
 
 /**
  * An empty interface for new proposed API.
@@ -1486,13 +1485,6 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	onSelectionRanges(handler: ServerRequestHandler<SelectionRangeParams, SelectionRange[] | undefined | null, SelectionRange[], void>): void;
 
 	/**
-	 * Installs a handler for the inline values request.
-	 *
-	 * @param handler The corresponding handler.
-	 */
-	onInlineValues(handler: ServerRequestHandler<InlineValuesParams, InlineValue[] | undefined | null, InlineValue[], void>): void;
-
-	/**
 	 * Installs a handler for the execute command request.
 	 *
 	 * @param handler The corresponding handler.
@@ -1757,9 +1749,6 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 		}),
 		onSelectionRanges: (handler) => connection.onRequest(SelectionRangeRequest.type, (params, cancel) => {
 			return handler(params, cancel, attachWorkDone(connection, params), attachPartialResult(connection, params));
-		}),
-		onInlineValues: (handler) => connection.onRequest(InlineValuesRequest.type, (params, cancel) => {
-			return handler(params, cancel, attachWorkDone(connection, params));
 		}),
 		onExecuteCommand: (handler) => connection.onRequest(ExecuteCommandRequest.type, (params, cancel) => {
 			return handler(params, cancel, attachWorkDone(connection, params), undefined);

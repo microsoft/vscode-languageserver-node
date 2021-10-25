@@ -1125,13 +1125,13 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 	}
 	function asInlineValues(inlineValues: ls.InlineValue[]): code.SelectionRange[];
 	function asInlineValues(inlineValues: undefined | null): undefined;
-	function asInlineValues(inlineValues: ls.SelectionRange[] | undefined | null): code.SelectionRange[] | undefined;
-	function asInlineValues(inlineValues: ls.SelectionRange[] | undefined | null): code.SelectionRange[] | undefined {
+	function asInlineValues(inlineValues: ls.InlineValue[] | undefined | null): code.InlineValue[] | undefined;
+	function asInlineValues(inlineValues: ls.InlineValue[] | undefined | null): code.InlineValue[] | undefined {
 		if (!Array.isArray(inlineValues)) {
 			return [];
 		}
-		let result: code.InlineValue[] = [];
-		for (let inlineValue of inlineValues) {
+		const result: code.InlineValue[] = [];
+		for (const inlineValue of inlineValues) {
 			result.push(asInlineValue(inlineValue));
 		}
 		return result;
@@ -1146,7 +1146,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		if (item === null) {
 			return undefined;
 		}
-		let result = new ProtocolCallHierarchyItem(
+		const result = new ProtocolCallHierarchyItem(
 			asSymbolKind(item.kind),
 			item.name,
 			item.detail || '',
