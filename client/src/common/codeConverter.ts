@@ -107,6 +107,8 @@ export interface Converter {
 
 	asCodeActionContext(context: code.CodeActionContext): proto.CodeActionContext;
 
+	asInlineValuesContext(context: code.InlineValueContext): proto.InlineValuesContext;
+
 	asCommand(item: code.Command): proto.Command;
 
 	asCodeLens(item: code.CodeLens): proto.CodeLens;
@@ -727,6 +729,12 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return item.value;
 	}
 
+	function asInlineValuesContext(context: code.InlineValueContext): proto.InlineValuesContext {
+		if (context === undefined || context === null) {
+			return context;
+		}
+		return proto.InlineValuesContext.create(context.stoppedLocation);
+	}
 
 	function asCommand(item: code.Command): proto.Command {
 		let result = proto.Command.create(item.title, item.command);
@@ -853,6 +861,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asReferenceParams,
 		asCodeAction,
 		asCodeActionContext,
+		asInlineValuesContext,
 		asCommand,
 		asCodeLens,
 		asFormattingOptions,

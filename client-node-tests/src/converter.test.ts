@@ -1016,6 +1016,30 @@ suite('Protocol Converter', () => {
 		strictEqual('file://localhost/folder/file.vscode', result.toString());
 	});
 
+	test('InlineValues', () => {
+		const items: proto.InlineValue[] = [
+			proto.InlineValueText.create(proto.Range.create(1, 2, 8, 9), 'literalString'),
+			proto.InlineValueVariableLookup.create(proto.Range.create(1, 2, 8, 9), 'varName', false),
+			proto.InlineValueVariableLookup.create(proto.Range.create(1, 2, 8, 9), undefined, true),
+			proto.InlineValueEvaluatableExpression.create(proto.Range.create(1, 2, 8, 9), 'expression'),
+			proto.InlineValueEvaluatableExpression.create(proto.Range.create(1, 2, 8, 9), undefined),
+		];
+
+		let result = p2c.asInlineValues(<any>items);
+
+
+		ok(result.every((r) => r.range instanceof vscode.Range));
+		for (const r of result) {
+			rangeEqual(r.range, proto.Range.create(1, 2, 8, 9));
+		}
+
+		ok(result[0] instanceof vscode.InlineValueText && result[0].text === 'literalString');
+		ok(result[1] instanceof vscode.InlineValueVariableLookup && result[1].variableName === 'varName' && result[1].caseSensitiveLookup === false);
+		ok(result[2] instanceof vscode.InlineValueVariableLookup && result[2].variableName === undefined && result[2].caseSensitiveLookup === true);
+		ok(result[3] instanceof vscode.InlineValueEvaluatableExpression && result[3].expression === 'expression');
+		ok(result[4] instanceof vscode.InlineValueEvaluatableExpression && result[4].expression === undefined);
+	});
+
 	test('Bug #361', () => {
 		const item: proto.CompletionItem = {
 			'label': 'MyLabel',
@@ -1279,5 +1303,18 @@ suite('Code Converter', () => {
 
 		let result = converter.asUri(vscode.Uri.parse('file://localhost/folder/file'));
 		strictEqual('file://localhost/folder/file.vscode', result);
+	});
+
+	test('InlineValuesContext', () => {
+		const item: proto.InlineValuesContext = {
+			stoppedLocation: new vscode.Range(1, 2, 8, 9),
+		};
+
+		let result = c2p.asInlineValuesContext(<any>item);
+
+		strictEqual(result.stoppedLocation.start.line, 1);
+		strictEqual(result.stoppedLocation.start.character, 2);
+		strictEqual(result.stoppedLocation.end.line, 8);
+		strictEqual(result.stoppedLocation.end.character, 9);
 	});
 });

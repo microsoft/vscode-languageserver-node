@@ -185,6 +185,12 @@ export interface Converter {
 	asSelectionRanges(selectionRanges: ls.SelectionRange[] | undefined | null): code.SelectionRange[] | undefined;
 	asSelectionRanges(selectionRanges: ls.SelectionRange[] | undefined | null): code.SelectionRange[] | undefined;
 
+	asInlineValue(value: ls.InlineValue): code.InlineValue;
+	asInlineValues(values: ls.InlineValue[]): code.InlineValue[];
+	asInlineValues(values: undefined | null): undefined;
+	asInlineValues(values: ls.InlineValue[] | undefined | null): code.InlineValue[] | undefined;
+	asInlineValues(values: ls.InlineValue[] | undefined | null): code.InlineValue[] | undefined;
+
 	asSemanticTokensLegend(value: ls.SemanticTokensLegend): code.SemanticTokensLegend;
 
 	asSemanticTokens(value: ls.SemanticTokens): code.SemanticTokens;
@@ -622,7 +628,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		if (item.documentation !== undefined) { result.documentation = asDocumentation(item.documentation); }
 		if (item.parameters !== undefined) { result.parameters = asParameterInformations(item.parameters); }
 		if (item.activeParameter !== undefined) { result.activeParameter = item.activeParameter; }
-		{return result;}
+		{ return result; }
 	}
 
 	function asParameterInformations(item: ls.ParameterInformation[]): code.ParameterInformation[] {
@@ -762,7 +768,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 	}
 
 	function asSymbolTag(value: ls.SymbolTag): code.SymbolTag | undefined {
-		switch(value) {
+		switch (value) {
 			case ls.SymbolTag.Deprecated:
 				return code.SymbolTag.Deprecated;
 			default:
@@ -1098,6 +1104,39 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return result;
 	}
 
+	function asInlineValue(inlineValue: ls.InlineValue): code.InlineValue {
+		if (ls.InlineValueText.is(inlineValue)) {
+			return new code.InlineValueText(
+				asRange(inlineValue.range),
+				inlineValue.text,
+			);
+		} else if (ls.InlineValueVariableLookup.is(inlineValue)) {
+			return new code.InlineValueVariableLookup(
+				asRange(inlineValue.range),
+				inlineValue.variableName,
+				inlineValue.caseSensitiveLookup,
+			);
+		} else {
+			return new code.InlineValueEvaluatableExpression(
+				asRange(inlineValue.range),
+				inlineValue.expression,
+			);
+		}
+	}
+	function asInlineValues(inlineValues: ls.InlineValue[]): code.SelectionRange[];
+	function asInlineValues(inlineValues: undefined | null): undefined;
+	function asInlineValues(inlineValues: ls.SelectionRange[] | undefined | null): code.SelectionRange[] | undefined;
+	function asInlineValues(inlineValues: ls.SelectionRange[] | undefined | null): code.SelectionRange[] | undefined {
+		if (!Array.isArray(inlineValues)) {
+			return [];
+		}
+		let result: code.InlineValue[] = [];
+		for (let inlineValue of inlineValues) {
+			result.push(asInlineValue(inlineValue));
+		}
+		return result;
+	}
+
 	//----- call hierarchy
 
 	function asCallHierarchyItem(item: null): undefined;
@@ -1297,6 +1336,8 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		asColorPresentations,
 		asSelectionRange,
 		asSelectionRanges,
+		asInlineValue,
+		asInlineValues,
 		asSemanticTokensLegend,
 		asSemanticTokens,
 		asSemanticTokensEdit,

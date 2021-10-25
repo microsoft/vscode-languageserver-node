@@ -9,6 +9,7 @@ import {
 	DiagnosticTag, CompletionItemTag, TextDocumentSyncKind, MarkupKind, SignatureHelp, SignatureInformation, ParameterInformation,
 	Location, Range, DocumentHighlight, DocumentHighlightKind, CodeAction, Command, TextEdit, Position, DocumentLink,
 	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, SymbolKind, ProtocolRequestType, WorkDoneProgress,
+	InlineValueText, InlineValueVariableLookup, InlineValueEvaluatableExpression,
 	WorkDoneProgressCreateRequest, WillCreateFilesRequest, WillRenameFilesRequest, WillDeleteFilesRequest, DidDeleteFilesNotification,
 	DidRenameFilesNotification, DidCreateFilesNotification, Proposed, ProposedFeatures, Diagnostic, DiagnosticSeverity, TypeHierarchyItem
 } from '../../../server/node';
@@ -81,6 +82,7 @@ connection.onInitialize((params: InitializeParams): any => {
 		foldingRangeProvider: true,
 		implementationProvider: true,
 		selectionRangeProvider: true,
+		inlineValuesProvider: {},
 		typeDefinitionProvider: true,
 		callHierarchyProvider: true,
 		semanticTokensProvider: {
@@ -294,6 +296,14 @@ connection.onImplementation((params) => {
 connection.onSelectionRanges((_params) => {
 	return [
 		SelectionRange.create(Range.create(1,2,3,4))
+	];
+});
+
+connection.onInlineValues((_params) => {
+	return [
+		InlineValueText.create(Range.create(1, 2, 3, 4), 'text'),
+		InlineValueVariableLookup.create(Range.create(1, 2, 3, 4), 'variableName', false),
+		InlineValueEvaluatableExpression.create(Range.create(1, 2, 3, 4), 'expression'),
 	];
 });
 
