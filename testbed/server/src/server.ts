@@ -123,6 +123,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 				textDocumentSync: TextDocumentSyncKind.Full,
 				hoverProvider: true,
 				completionProvider: {
+					allCommitCharacters: ['.', ','],
 					resolveProvider: false,
 				},
 				signatureHelpProvider: {
@@ -180,7 +181,7 @@ connection.onInitialized((params) => {
 	connection.workspace.onDidChangeWorkspaceFolders((event) => {
 		connection.console.log('Workspace folder changed received');
 	});
-	connection.workspace.getWorkspaceFolders().then(folders => {
+	void connection.workspace.getWorkspaceFolders().then(folders => {
 		for (let folder of folders) {
 			connection.console.log(`Get workspace folders: ${folder.name} ${folder.uri}`);
 		}
@@ -193,7 +194,7 @@ connection.onInitialized((params) => {
 			delta: true
 		}
 	};
-	connection.client.register(SemanticTokensRegistrationType.type, registrationOptions);
+	void connection.client.register(SemanticTokensRegistrationType.type, registrationOptions);
 });
 
 connection.onShutdown((handler) => {
@@ -225,7 +226,7 @@ connection.onDidChangeConfiguration((params) => {
 	documents.all().forEach(document => {
 		connection.sendDiagnostics({ uri: document.uri, diagnostics: validate(document) });
 	});
-	connection.workspace.getConfiguration('testbed').then((value) => {
+	void connection.workspace.getConfiguration('testbed').then((value) => {
 		connection.console.log('Configuration received');
 	});
 });
@@ -310,6 +311,8 @@ function computeDiagnostics(content: string): Diagnostic[] {
 	return result;
 }
 
+let resultIdCounter: number = 1;
+let versionCounter: number = 1;
 connection.languages.diagnostics.on(async (param) => {
 	const uri = URI.parse(param.textDocument.uri);
 	const document = documents.get(param.textDocument.uri);
@@ -319,9 +322,9 @@ connection.languages.diagnostics.on(async (param) => {
 			? await fs.readFile(uri.fsPath, { encoding: 'utf8'} )
 			: undefined;
 	if (content === undefined) {
-		return { kind: Proposed.DocumentDiagnosticReportKind.full, items: [] };
+		return { kind: Proposed.DocumentDiagnosticReportKind.full, items: [], resultId: `${resultIdCounter++}` };
 	}
-	return { kind: Proposed.DocumentDiagnosticReportKind.full, items: computeDiagnostics(content) };
+	return { kind: Proposed.DocumentDiagnosticReportKind.full, items: computeDiagnostics(content), resultId: `${resultIdCounter++}` };
 });
 
 connection.languages.diagnostics.onWorkspace(async (params, token, _, resultProgress): Promise<Proposed.WorkspaceDiagnosticReport> => {
@@ -347,13 +350,14 @@ connection.languages.diagnostics.onWorkspace(async (params, token, _, resultProg
 			{
 				kind: Proposed.DocumentDiagnosticReportKind.full,
 				uri: URI.file(toValidate[index]).toString(),
-				version: null,
-				items: diagnostics
+				version: versionCounter++,
+				items: diagnostics,
+				resultId: `${resultIdCounter++}`
 			}
 		]});
-		setTimeout(() => { doValidate(++index); }, 500);
+		setTimeout(() => { void doValidate(++index); }, 500);
 	};
-	doValidate(0);
+	void doValidate(0);
 	return new Promise((resolve) => {
 		setTimeout(resolve, 120000);
 	});
@@ -381,6 +385,7 @@ connection.onCompletion((params, token): CompletionItem[] => {
 	result.push(item);
 
 	item = CompletionItem.create('bar');
+	item.commitCharacters = [':'];
 	item.textEdit = InsertReplaceEdit.create('bar',
 		Range.create(params.position, params.position),
 		Range.create(params.position, Position.create(params.position.line, params.position.character +1))

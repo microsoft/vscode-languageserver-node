@@ -16,6 +16,7 @@ import { ProtocolDiagnostic, DiagnosticCode } from './protocolDiagnostic';
 import ProtocolCallHierarchyItem from './protocolCallHierarchyItem';
 import { InsertTextMode, uinteger } from 'vscode-languageserver-protocol';
 import { CreateFilesParams, DeleteFilesParams, RenameFilesParams } from 'vscode-languageserver-protocol/lib/common/protocol.fileOperations';
+import ProtocolTypeHierarchyItem from './protocolTypeHierarchyItem';
 
 interface InsertReplaceRange {
 	inserting: code.Range;
@@ -123,6 +124,8 @@ export interface Converter {
 	asDocumentLinkParams(textDocument: code.TextDocument): proto.DocumentLinkParams;
 
 	asCallHierarchyItem(value: code.CallHierarchyItem): proto.CallHierarchyItem;
+
+	asTypeHierarchyItem(value: code.TypeHierarchyItem): proto.TypeHierarchyItem;
 }
 
 export interface URIConverter {
@@ -807,6 +810,22 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return result;
 	}
 
+	function asTypeHierarchyItem(value: code.TypeHierarchyItem): proto.TypeHierarchyItem {
+		const result: proto.TypeHierarchyItem = {
+			name: value.name,
+			kind: asSymbolKind(value.kind),
+			uri: asUri(value.uri),
+			range: asRange(value.range),
+			selectionRange: asRange(value.selectionRange),
+		};
+		if (value.detail !== undefined && value.detail.length > 0) { result.detail = value.detail; }
+		if (value.tags !== undefined) { result.tags = asSymbolTags(value.tags); }
+		if (value instanceof ProtocolTypeHierarchyItem && value.data !== undefined) {
+			result.data = value.data;
+		}
+		return result;
+	}
+
 	return {
 		asUri,
 		asTextDocumentIdentifier,
@@ -850,6 +869,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asCodeLensParams,
 		asDocumentLink,
 		asDocumentLinkParams,
-		asCallHierarchyItem
+		asCallHierarchyItem,
+		asTypeHierarchyItem
 	};
 }

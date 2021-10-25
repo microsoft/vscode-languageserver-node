@@ -1,11 +1,11 @@
 {
 	"name": "vscode-languageclient",
 	"description": "VSCode Language client implementation",
-	"version": "8.0.0-next.2",
+	"version": "8.0.0-next.4",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"engines": {
-		"vscode": "^1.58.0"
+		"vscode": "^1.61.0"
 	},
 	"repository": {
 		"type": "git",
@@ -21,18 +21,17 @@
 	},
 	"typings": "./lib/common/api.d.ts",
 	"devDependencies": {
-		"@types/minimatch": "^3.0.3",
-		"@types/semver": "^7.3.4",
-		"@types/vscode": "1.58.0",
-		"shx": "^0.3.2"
+		"@types/minimatch": "^3.0.5",
+		"@types/semver": "^7.3.8",
+		"@types/vscode": "1.61.0",
+		"shx": "^0.3.3"
 	},
 	"dependencies": {
 		"minimatch": "^3.0.4",
-		"semver": "^7.3.4",
-		"vscode-languageserver-protocol": "3.17.0-next.8"
+		"semver": "^7.3.5",
+		"vscode-languageserver-protocol": "3.17.0-next.9"
 	},
 	"scripts": {
-		"install:dev": "cd src/node && npm install",
 		"prepublishOnly": "git clean -xfd . && npm install && npm run clean && node ./bin/updateVSCode.js && npm run compile && npm test",
 		"postpublish": "node ../build/npm/post-publish.js",
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json && shx cp src/node/terminateProcess.sh lib/node/terminateProcess.sh",

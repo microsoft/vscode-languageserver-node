@@ -7,9 +7,9 @@ import RAL from './ral';
 import * as Is from './is';
 
 import {
-	Message, MessageSignature, RequestMessage, RequestType, isRequestMessage, RequestType0, RequestType1, RequestType2, RequestType3,
-	RequestType4, RequestType5, RequestType6, RequestType7, RequestType8, RequestType9, ResponseMessage, isResponseMessage,
-	ResponseError, ErrorCodes, NotificationMessage, isNotificationMessage, NotificationType, NotificationType0, NotificationType1,
+	Message, MessageSignature, RequestMessage, RequestType, RequestType0, RequestType1, RequestType2, RequestType3,
+	RequestType4, RequestType5, RequestType6, RequestType7, RequestType8, RequestType9, ResponseMessage,
+	ResponseError, ErrorCodes, NotificationMessage, NotificationType, NotificationType0, NotificationType1,
 	NotificationType2, NotificationType3, NotificationType4, NotificationType5, NotificationType6, NotificationType7, NotificationType8,
 	NotificationType9, LSPMessageType, _EM, ParameterStructures
 } from './messages';
@@ -189,10 +189,10 @@ export const NullLogger: Logger = Object.freeze({
 });
 
 export enum Trace {
-	Off, Messages, Verbose
+	Off, Messages, Compact, Verbose
 }
 
-export type TraceValues = 'off' | 'messages' | 'verbose';
+export type TraceValues = 'off' | 'messages' | 'compact' | 'verbose';
 export namespace Trace {
 	export function fromString(value: string): Trace {
 		if (!Is.string(value)) {
@@ -204,6 +204,8 @@ export namespace Trace {
 				return Trace.Off;
 			case 'messages':
 				return Trace.Messages;
+			case 'compact':
+				return Trace.Compact;
 			case 'verbose':
 				return Trace.Verbose;
 			default:
@@ -217,6 +219,8 @@ export namespace Trace {
 				return 'off';
 			case Trace.Messages:
 				return 'messages';
+			case Trace.Compact:
+				return 'compact';
 			case Trace.Verbose:
 				return 'verbose';
 			default:
@@ -431,7 +435,7 @@ export interface MessageConnection {
 	onUnhandledNotification: Event<NotificationMessage>;
 
 	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable;
-	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): void;
+	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): Promise<void>;
 
 	onUnhandledProgress: Event<ProgressParams<any>>;
 
@@ -526,9 +530,9 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 	}
 
 	function addMessageToQueue(queue: MessageQueue, message: Message): void {
-		if (isRequestMessage(message)) {
+		if (Message.isRequest(message)) {
 			queue.set(createRequestQueueKey(message.id), message);
-		} else if (isResponseMessage(message)) {
+		} else if (Message.isResponse(message)) {
 			queue.set(createResponseQueueKey(message.id), message);
 		} else {
 			queue.set(createNotificationQueueKey(), message);
@@ -589,11 +593,11 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		}
 		const message = messageQueue.shift()!;
 		try {
-			if (isRequestMessage(message)) {
+			if (Message.isRequest(message)) {
 				handleRequest(message);
-			} else if (isNotificationMessage(message)) {
+			} else if (Message.isNotification(message)) {
 				handleNotification(message);
-			} else if (isResponseMessage(message)) {
+			} else if (Message.isResponse(message)) {
 				handleResponse(message);
 			} else {
 				handleInvalidMessage(message);
@@ -607,11 +611,11 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		try {
 			// We have received a cancellation message. Check if the message is still in the queue
 			// and cancel it if allowed to do so.
-			if (isNotificationMessage(message) && message.method === CancelNotification.type.method) {
+			if (Message.isNotification(message) && message.method === CancelNotification.type.method) {
 				const cancelId = (message.params as CancelParams).id;
 				const key = createRequestQueueKey(cancelId);
 				const toCancel = messageQueue.get(key);
-				if (isRequestMessage(toCancel)) {
+				if (Message.isRequest(toCancel)) {
 					const strategy = options?.connectionStrategy;
 					const response = (strategy && strategy.cancelUndispatched) ? strategy.cancelUndispatched(toCancel, cancelUndispatched) : cancelUndispatched(toCancel);
 					if (response && (response.error !== undefined || response.result !== undefined)) {
@@ -749,7 +753,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 					delete requestTokens[tokenKey];
 					reply(handlerResult, requestMessage.method, startTime);
 				}
-			} catch (error) {
+			} catch (error: any) {
 				delete requestTokens[tokenKey];
 				if (error instanceof ResponseError) {
 					reply(<ResponseError<any>>error, requestMessage.method, startTime);
@@ -791,7 +795,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 					} else {
 						throw new Error('Should never happen.');
 					}
-				} catch (error) {
+				} catch (error: any) {
 					if (error.message) {
 						logger.error(`Response handler '${responsePromise.method}' failed with message: ${error.message}`);
 					} else {
@@ -852,7 +856,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				} else if (starNotificationHandler) {
 					starNotificationHandler(message.method, message.params);
 				}
-			} catch (error) {
+			} catch (error: any) {
 				if (error.message) {
 					logger.error(`Notification handler '${message.method}' failed with message: ${error.message}`);
 				} else {
@@ -881,6 +885,22 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		}
 	}
 
+	function stringifyTrace(params: string | number | boolean | object | any[]): string;
+	function stringifyTrace(params: string | number | boolean | object | any[] | undefined | null): string | undefined;
+	function stringifyTrace(params: string | number | boolean | object | any[] | undefined | null): string | undefined {
+		if (params === undefined || params === null) {
+			return undefined;
+		}
+		switch (trace) {
+			case Trace.Verbose:
+				return JSON.stringify(params, null, 4);
+			case Trace.Compact:
+				return JSON.stringify(params);
+			default:
+				return undefined;
+		}
+	}
+
 	function traceSendingRequest(message: RequestMessage): void {
 		if (trace === Trace.Off || !tracer) {
 			return;
@@ -888,8 +908,8 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 
 		if (traceFormat === TraceFormat.Text) {
 			let data: string | undefined = undefined;
-			if (trace === Trace.Verbose && message.params) {
-				data = `Params: ${JSON.stringify(message.params, null, 4)}\n\n`;
+			if ((trace === Trace.Verbose || trace === Trace.Compact) && message.params) {
+				data = `Params: ${stringifyTrace(message.params)}\n\n`;
 			}
 			tracer.log(`Sending request '${message.method} - (${message.id})'.`, data);
 		} else {
@@ -904,9 +924,9 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 
 		if (traceFormat === TraceFormat.Text) {
 			let data: string | undefined = undefined;
-			if (trace === Trace.Verbose) {
+			if (trace === Trace.Verbose || trace === Trace.Compact) {
 				if (message.params) {
-					data = `Params: ${JSON.stringify(message.params, null, 4)}\n\n`;
+					data = `Params: ${stringifyTrace(message.params)}\n\n`;
 				} else {
 					data = 'No parameters provided.\n\n';
 				}
@@ -924,12 +944,12 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 
 		if (traceFormat === TraceFormat.Text) {
 			let data: string | undefined = undefined;
-			if (trace === Trace.Verbose) {
+			if (trace === Trace.Verbose || trace === Trace.Compact) {
 				if (message.error && message.error.data) {
-					data = `Error data: ${JSON.stringify(message.error.data, null, 4)}\n\n`;
+					data = `Error data: ${stringifyTrace(message.error.data)}\n\n`;
 				} else {
 					if (message.result) {
-						data = `Result: ${JSON.stringify(message.result, null, 4)}\n\n`;
+						data = `Result: ${stringifyTrace(message.result)}\n\n`;
 					} else if (message.error === undefined) {
 						data = 'No result returned.\n\n';
 					}
@@ -948,8 +968,8 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 
 		if (traceFormat === TraceFormat.Text) {
 			let data: string | undefined = undefined;
-			if (trace === Trace.Verbose && message.params) {
-				data = `Params: ${JSON.stringify(message.params, null, 4)}\n\n`;
+			if ((trace === Trace.Verbose || trace === Trace.Compact) && message.params) {
+				data = `Params: ${stringifyTrace(message.params)}\n\n`;
 			}
 			tracer.log(`Received request '${message.method} - (${message.id})'.`, data);
 		} else {
@@ -964,9 +984,9 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 
 		if (traceFormat === TraceFormat.Text) {
 			let data: string | undefined = undefined;
-			if (trace === Trace.Verbose) {
+			if (trace === Trace.Verbose || trace === Trace.Compact) {
 				if (message.params) {
-					data = `Params: ${JSON.stringify(message.params, null, 4)}\n\n`;
+					data = `Params: ${Is.string(message.params)}\n\n`;
 				} else {
 					data = 'No parameters provided.\n\n';
 				}
@@ -984,12 +1004,12 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 
 		if (traceFormat === TraceFormat.Text) {
 			let data: string | undefined = undefined;
-			if (trace === Trace.Verbose) {
+			if (trace === Trace.Verbose || trace === Trace.Compact) {
 				if (message.error && message.error.data) {
-					data = `Error data: ${JSON.stringify(message.error.data, null, 4)}\n\n`;
+					data = `Error data: ${stringifyTrace(message.error.data)}\n\n`;
 				} else {
 					if (message.result) {
-						data = `Result: ${JSON.stringify(message.result, null, 4)}\n\n`;
+						data = `Result: ${stringifyTrace(message.result)}\n\n`;
 					} else if (message.error === undefined) {
 						data = 'No result returned.\n\n';
 					}
@@ -1274,7 +1294,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				traceSendingRequest(requestMessage);
 				try {
 					messageWriter.write(requestMessage).catch(() => logger.error(`Sending request failed.`));
-				} catch (e) {
+				} catch (e: any) {
 					// Writing the message failed. So we need to reject the promise.
 					responsePromise.reject(new ResponseError<void>(ErrorCodes.MessageWriteError, e.message ? e.message : 'Unknown reason'));
 					responsePromise = null;
@@ -1389,8 +1409,10 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		if (trace === Trace.Off || !tracer) {
 			return;
 		}
-		tracer.log(params.message, trace === Trace.Verbose ? params.verbose : undefined);
+		const verbose = trace === Trace.Verbose || trace === Trace.Compact;
+		tracer.log(params.message, verbose ? params.verbose : undefined);
 	});
+
 	connection.onNotification(ProgressNotification.type, (params) => {
 		const handler = progressHandlers.get(params.token);
 		if (handler) {

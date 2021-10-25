@@ -15,6 +15,7 @@ import ProtocolCodeAction from './protocolCodeAction';
 import { ProtocolDiagnostic, DiagnosticCode } from './protocolDiagnostic';
 import ProtocolCallHierarchyItem from './protocolCallHierarchyItem';
 import { AnnotatedTextEdit, ChangeAnnotation, CompletionItemLabelDetails, InsertTextMode } from 'vscode-languageserver-protocol';
+import ProtocolTypeHierarchyItem from './protocolTypeHierarchyItem';
 
 interface InsertReplaceRange {
 	inserting: code.Range;
@@ -46,12 +47,12 @@ export interface Converter {
 	asHover(hover: undefined | null): undefined;
 	asHover(hover: ls.Hover | undefined | null): code.Hover | undefined;
 
-	asCompletionResult(result: ls.CompletionList): code.CompletionList;
-	asCompletionResult(result: ls.CompletionItem[]): code.CompletionItem[];
-	asCompletionResult(result: undefined | null): undefined;
-	asCompletionResult(result: ls.CompletionItem[] | ls.CompletionList | undefined | null): code.CompletionItem[] | code.CompletionList | undefined;
+	asCompletionResult(result: ls.CompletionList, defaultCommitCharacters?: string[]): code.CompletionList;
+	asCompletionResult(result: ls.CompletionItem[], defaultCommitCharacters?: string[]): code.CompletionItem[];
+	asCompletionResult(result: undefined | null, defaultCommitCharacters?: string[]): undefined;
+	asCompletionResult(result: ls.CompletionItem[] | ls.CompletionList | undefined | null, defaultCommitCharacters?: string[]): code.CompletionItem[] | code.CompletionList | undefined;
 
-	asCompletionItem(item: ls.CompletionItem): ProtocolCompletionItem;
+	asCompletionItem(item: ls.CompletionItem, defaultCommitCharacters?: string[]): ProtocolCompletionItem;
 
 	asTextEdit(edit: undefined | null): undefined;
 	asTextEdit(edit: ls.TextEdit): code.TextEdit;
@@ -231,6 +232,14 @@ export interface Converter {
 	asLinkedEditingRanges(value: null | undefined): undefined;
 	asLinkedEditingRanges(value: ls.LinkedEditingRanges): code.LinkedEditingRanges;
 	asLinkedEditingRanges(value: ls.LinkedEditingRanges | null | undefined): code.LinkedEditingRanges | undefined;
+
+	asTypeHierarchyItem(item: null): undefined;
+	asTypeHierarchyItem(item: ls.TypeHierarchyItem): code.TypeHierarchyItem;
+	asTypeHierarchyItem(item: ls.TypeHierarchyItem | null): code.TypeHierarchyItem | undefined;
+
+	asTypeHierarchyItems(items: null): undefined;
+	asTypeHierarchyItems(items: ls.TypeHierarchyItem[]): code.TypeHierarchyItem[];
+	asTypeHierarchyItems(items: ls.TypeHierarchyItem[] | null): code.TypeHierarchyItem[] | undefined;
 }
 
 export interface URIConverter {
@@ -432,20 +441,20 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return new code.Hover(asHoverContent(hover.contents), asRange(hover.range));
 	}
 
-	function asCompletionResult(result: ls.CompletionList): code.CompletionList;
-	function asCompletionResult(result: ls.CompletionItem[]): code.CompletionItem[];
-	function asCompletionResult(result: undefined | null): undefined;
-	function asCompletionResult(result: ls.CompletionItem[] | ls.CompletionList | undefined | null): code.CompletionItem[] | code.CompletionList | undefined;
-	function asCompletionResult(result: ls.CompletionItem[] | ls.CompletionList | undefined | null): code.CompletionItem[] | code.CompletionList | undefined {
+	function asCompletionResult(result: ls.CompletionList, defaultCommitCharacters?: string[]): code.CompletionList;
+	function asCompletionResult(result: ls.CompletionItem[], defaultCommitCharacters?: string[]): code.CompletionItem[];
+	function asCompletionResult(result: undefined | null, defaultCommitCharacters?: string[]): undefined;
+	function asCompletionResult(result: ls.CompletionItem[] | ls.CompletionList | undefined | null, defaultCommitCharacters?: string[]): code.CompletionItem[] | code.CompletionList | undefined;
+	function asCompletionResult(result: ls.CompletionItem[] | ls.CompletionList | undefined | null, defaultCommitCharacters?: string[]): code.CompletionItem[] | code.CompletionList | undefined {
 		if (!result) {
 			return undefined;
 		}
 		if (Array.isArray(result)) {
 			let items = <ls.CompletionItem[]>result;
-			return items.map(asCompletionItem);
+			return items.map(item => asCompletionItem(item, defaultCommitCharacters));
 		}
 		let list = <ls.CompletionList>result;
-		return new code.CompletionList(list.items.map(asCompletionItem), list.isIncomplete);
+		return new code.CompletionList(list.items.map(item => asCompletionItem(item, defaultCommitCharacters)), list.isIncomplete);
 	}
 
 	function asCompletionItemKind(value: ls.CompletionItemKind): [code.CompletionItemKind, ls.CompletionItemKind | undefined] {
@@ -478,7 +487,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return result;
 	}
 
-	function asCompletionItem(item: ls.CompletionItem): ProtocolCompletionItem {
+	function asCompletionItem(item: ls.CompletionItem, defaultCommitCharacters?: string[]): ProtocolCompletionItem {
 		const tags: code.CompletionItemTag[] = asCompletionItemTags(item.tags);
 		const label = asCompletionItemLabel(item);
 		const result = new ProtocolCompletionItem(label);
@@ -504,7 +513,10 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		}
 		if (item.sortText) { result.sortText = item.sortText; }
 		if (item.additionalTextEdits) { result.additionalTextEdits = asTextEdits(item.additionalTextEdits); }
-		if (Is.stringArray(item.commitCharacters)) { result.commitCharacters = item.commitCharacters.slice(); }
+		const commitCharacters = item.commitCharacters !== undefined
+			? Is.stringArray(item.commitCharacters) ? item.commitCharacters : undefined
+			: defaultCommitCharacters;
+		if (commitCharacters) { result.commitCharacters = commitCharacters.slice(); }
 		if (item.command) { result.command = asCommand(item.command); }
 		if (item.deprecated === true || item.deprecated === false) {
 			result.deprecated = item.deprecated;
@@ -1240,6 +1252,37 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return new RegExp(value);
 	}
 
+	//------ Type Hierarchy
+	function asTypeHierarchyItem(item: null): undefined;
+	function asTypeHierarchyItem(item: ls.TypeHierarchyItem): code.TypeHierarchyItem;
+	function asTypeHierarchyItem(item: ls.TypeHierarchyItem | null): code.TypeHierarchyItem | undefined;
+	function asTypeHierarchyItem(item: ls.TypeHierarchyItem | null): code.TypeHierarchyItem | undefined {
+		if (item === null) {
+			return undefined;
+		}
+		let result = new ProtocolTypeHierarchyItem(
+			asSymbolKind(item.kind),
+			item.name,
+			item.detail || '',
+			asUri(item.uri),
+			asRange(item.range),
+			asRange(item.selectionRange),
+			item.data
+		);
+		if (item.tags !== undefined) { result.tags = asSymbolTags(item.tags); }
+		return result;
+	}
+
+	function asTypeHierarchyItems(items: null): undefined;
+	function asTypeHierarchyItems(items: ls.TypeHierarchyItem[]): code.TypeHierarchyItem[];
+	function asTypeHierarchyItems(items: ls.TypeHierarchyItem[] | null): code.TypeHierarchyItem[] | undefined;
+	function asTypeHierarchyItems(items: ls.TypeHierarchyItem[] | null): code.TypeHierarchyItem[] | undefined {
+		if (items === null) {
+			return undefined;
+		}
+		return items.map(item => asTypeHierarchyItem(item));
+	}
+
 	return {
 		asUri,
 		asDiagnostics,
@@ -1305,6 +1348,8 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		asCallHierarchyIncomingCalls,
 		asCallHierarchyOutgoingCall,
 		asCallHierarchyOutgoingCalls,
-		asLinkedEditingRanges: asLinkedEditingRanges
+		asLinkedEditingRanges: asLinkedEditingRanges,
+		asTypeHierarchyItem,
+		asTypeHierarchyItems
 	};
 }

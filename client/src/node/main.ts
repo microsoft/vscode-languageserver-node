@@ -22,7 +22,7 @@ import { StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageW
 export * from 'vscode-languageserver-protocol/node';
 export * from '../common/api';
 
-const REQUIRED_VSCODE_VERSION = '^1.58.0'; // do not change format, updated by `updateVSCode` script
+const REQUIRED_VSCODE_VERSION = '^1.61.0'; // do not change format, updated by `updateVSCode` script
 
 export enum TransportKind {
 	stdio,
@@ -160,7 +160,7 @@ export class LanguageClient extends CommonLanguageClient {
 		this._isInDebugMode = forceDebug;
 		try {
 			this.checkVersion();
-		} catch (error) {
+		} catch (error: any) {
 			if (Is.string(error.message)) {
 				this.outputChannel.appendLine(error.message);
 			}
@@ -186,8 +186,8 @@ export class LanguageClient extends CommonLanguageClient {
 		return this._isInDebugMode;
 	}
 
-	public stop(): Promise<void> {
-		return super.stop().then(() => {
+	public stop(timeout: number = 2000): Promise<void> {
+		return super.stop(timeout).finally(() => {
 			if (this._serverProcess) {
 				const toCheck = this._serverProcess;
 				this._serverProcess = undefined;

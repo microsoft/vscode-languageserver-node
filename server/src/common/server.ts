@@ -38,6 +38,7 @@ import { ShowDocumentFeatureShape, ShowDocumentFeature } from './showDocument';
 import { FileOperationsFeature, FileOperationsFeatureShape } from './fileOperations';
 import { LinkedEditingRangeFeature, LinkedEditingRangeFeatureShape } from './linkedEditingRange';
 import { MonikerFeature, MonikerFeatureShape } from './moniker';
+import { TypeHierarchyFeature, TypeHierarchyFeatureShape } from './proposed.typeHierarchy';
 
 function null2Undefined<T>(value: T | null): T | undefined {
 	if (value === null) {
@@ -80,7 +81,14 @@ export interface TextDocumentWillSaveEvent<T> {
 }
 
 /**
- * A manager for simple text documents
+ * A manager for simple text documents. The manager requires at a minimum that
+ * the server registered for the following text document sync events in the
+ * initialize handler or via dynamic registration:
+ *
+ * - open and close events.
+ * - change events.
+ *
+ * Registering for save and will save events is optional.
  */
 export class TextDocuments<T> {
 
@@ -1018,8 +1026,8 @@ export class _LanguagesImpl implements Remote, _Languages {
 	}
 }
 
-export type Languages = _Languages & CallHierarchy & SemanticTokensFeatureShape & LinkedEditingRangeFeatureShape & MonikerFeatureShape;
-const LanguagesImpl: new () => Languages = MonikerFeature(LinkedEditingRangeFeature(SemanticTokensFeature(CallHierarchyFeature(_LanguagesImpl)))) as (new () => Languages);
+export type Languages = _Languages & CallHierarchy & SemanticTokensFeatureShape & LinkedEditingRangeFeatureShape & MonikerFeatureShape & TypeHierarchyFeatureShape;
+const LanguagesImpl: new () => Languages = TypeHierarchyFeature(MonikerFeature(LinkedEditingRangeFeature(SemanticTokensFeature(CallHierarchyFeature(_LanguagesImpl))))) as (new () => Languages);
 
 /**
  * An empty interface for new proposed API.

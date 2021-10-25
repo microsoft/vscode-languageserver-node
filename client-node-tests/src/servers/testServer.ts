@@ -11,13 +11,13 @@ import {
 	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, SymbolKind, ProtocolRequestType, WorkDoneProgress,
 	InlineValueText, InlineValueVariableLookup, InlineValueEvaluatableExpression,
 	WorkDoneProgressCreateRequest, WillCreateFilesRequest, WillRenameFilesRequest, WillDeleteFilesRequest, DidDeleteFilesNotification,
-	DidRenameFilesNotification, DidCreateFilesNotification, Proposed, ProposedFeatures, Diagnostic, DiagnosticSeverity
+	DidRenameFilesNotification, DidCreateFilesNotification, Proposed, ProposedFeatures, Diagnostic, DiagnosticSeverity, TypeHierarchyItem
 } from '../../../server/node';
 
 import { URI } from 'vscode-uri';
 import { $DiagnosticClientCapabilities } from 'vscode-languageserver-protocol/src/common/proposed.diagnostic';
 
-let connection: ProposedFeatures.Connection = createConnection(ProposedFeatures.all);
+const connection: ProposedFeatures.Connection = createConnection(ProposedFeatures.all);
 
 console.log = connection.console.log.bind(connection.console);
 console.error = connection.console.error.bind(connection.console);
@@ -129,7 +129,8 @@ connection.onInitialize((params: InitializeParams): any => {
 			identifier: 'da348dc5-c30a-4515-9d98-31ff3be38d14',
 			interFileDependencies: true,
 			workspaceDiagnostics: true
-		}
+		},
+		typeHierarchyProvider: true
 	};
 	return { capabilities, customResults: { hello: 'world' } };
 });
@@ -438,6 +439,31 @@ connection.languages.diagnostics.onWorkspace(() => {
 			]
 		}]
 	};
+});
+
+const typeHierarchySample = {
+	superTypes: [] as TypeHierarchyItem[],
+	subTypes: [] as TypeHierarchyItem[]
+};
+connection.languages.typeHierarchy.onPrepare((params) => {
+	const currentItem = {
+		kind: SymbolKind.Class,
+		name: 'ClazzB',
+		range: Range.create(1, 1, 1, 1),
+		selectionRange: Range.create(2, 2, 2, 2),
+		uri: params.textDocument.uri
+	} as TypeHierarchyItem;
+	typeHierarchySample.superTypes = [ {...currentItem, name: 'classA', uri: 'uri-for-A'}];
+	typeHierarchySample.subTypes = [ {...currentItem, name: 'classC', uri: 'uri-for-C'}];
+	return [currentItem];
+});
+
+connection.languages.typeHierarchy.onSupertypes((_params) => {
+	return typeHierarchySample.superTypes;
+});
+
+connection.languages.typeHierarchy.onSubtypes((_params) => {
+	return typeHierarchySample.subTypes;
 });
 
 connection.onRequest(

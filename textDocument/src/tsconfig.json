@@ -1,12 +1,12 @@
 {
 	"extends": "../../tsconfig.base.json",
 	"compilerOptions": {
-		"target": "es5",
+		"target": "es2020",
 		"module": "umd",
 		"sourceMap": false,
 		"declaration": true,
 		"stripInternal": true,
-		"lib": [ "es2015" ],
+		"lib": [ "es2020" ],
 		"outDir": "../lib/umd",
 		"incremental": true,
 		"composite": true,

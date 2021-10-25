@@ -244,7 +244,7 @@ export namespace LocationLink {
 	export function is(value: any): value is LocationLink {
 		let candidate = value as LocationLink;
 		return Is.defined(candidate) && Range.is(candidate.targetRange) && Is.string(candidate.targetUri)
-			&& (Range.is(candidate.targetSelectionRange) || Is.undefined(candidate.targetSelectionRange))
+			&& Range.is(candidate.targetSelectionRange)
 			&& (Range.is(candidate.originSelectionRange) || Is.undefined(candidate.originSelectionRange));
 	}
 }
@@ -297,7 +297,7 @@ export namespace Color {
 	 */
 	export function is(value: any): value is Color {
 		const candidate = value as Color;
-		return Is.numberRange(candidate.red, 0, 1)
+		return Is.objectLiteral(candidate) && Is.numberRange(candidate.red, 0, 1)
 			&& Is.numberRange(candidate.green, 0, 1)
 			&& Is.numberRange(candidate.blue, 0, 1)
 			&& Is.numberRange(candidate.alpha, 0, 1);
@@ -340,7 +340,7 @@ export namespace ColorInformation {
 	 */
 	export function is(value: any): value is ColorInformation {
 		const candidate = value as ColorInformation;
-		return Range.is(candidate.range) && Color.is(candidate.color);
+		return Is.objectLiteral(candidate) && Range.is(candidate.range) && Color.is(candidate.color);
 	}
 }
 
@@ -385,7 +385,7 @@ export namespace ColorPresentation {
 	 */
 	export function is(value: any): value is ColorPresentation {
 		const candidate = value as ColorPresentation;
-		return Is.string(candidate.label)
+		return Is.objectLiteral(candidate) && Is.string(candidate.label)
 			&& (Is.undefined(candidate.textEdit) || TextEdit.is(candidate))
 			&& (Is.undefined(candidate.additionalTextEdits) || Is.typedArray(candidate.additionalTextEdits, TextEdit.is));
 	}
@@ -475,7 +475,7 @@ export namespace FoldingRange {
 	 */
 	export function is(value: any): value is FoldingRange {
 		const candidate = value as FoldingRange;
-		return Is.uinteger(candidate.startLine) && Is.uinteger(candidate.startLine)
+		return Is.objectLiteral(candidate) && Is.uinteger(candidate.startLine) && Is.uinteger(candidate.startLine)
 			&& (Is.undefined(candidate.startCharacter) || Is.uinteger(candidate.startCharacter))
 			&& (Is.undefined(candidate.endCharacter) || Is.uinteger(candidate.endCharacter))
 			&& (Is.undefined(candidate.kind) || Is.string(candidate.kind));
@@ -591,9 +591,9 @@ export interface CodeDescription {
  * @since 3.16.0
  */
 export namespace CodeDescription {
-	export function is(value: CodeDescription | undefined | null): value is CodeDescription {
+	export function is(value: any): value is CodeDescription {
 		const candidate: CodeDescription = value as CodeDescription;
-		return candidate !== undefined && candidate !== null && Is.string(candidate.href);
+		return Is.objectLiteral(candidate) && Is.string(candidate.href);
 	}
 }
 
@@ -620,6 +620,7 @@ export interface Diagnostic {
 
 	/**
 	 * An optional property to describe the error code.
+	 * Requires the code field (above) to be present/not null.
 	 *
 	 * @since 3.16.0
 	 */
@@ -840,7 +841,7 @@ export namespace ChangeAnnotation {
 	}
 	export function is(value: any): value is ChangeAnnotation {
 		const candidate = value as ChangeAnnotation;
-		return candidate !== undefined && Is.objectLiteral(candidate) && Is.string(candidate.label) &&
+		return Is.objectLiteral(candidate) && Is.string(candidate.label) &&
 			(Is.boolean(candidate.needsConfirmation) || candidate.needsConfirmation === undefined) &&
 			(Is.string(candidate.description) || candidate.description === undefined);
 	}
@@ -849,7 +850,7 @@ export namespace ChangeAnnotation {
 export namespace ChangeAnnotationIdentifier {
 	export function is(value: any): value is ChangeAnnotationIdentifier {
 		const candidate = value as ChangeAnnotationIdentifier;
-		return typeof candidate === 'string';
+		return Is.string(candidate);
 	}
 }
 
@@ -1658,7 +1659,7 @@ export namespace VersionedTextDocumentIdentifier {
 	/**
 	 * Creates a new VersionedTextDocumentIdentifier literal.
 	 * @param uri The document's uri.
-	 * @param uri The document's text.
+	 * @param version The document's version.
 	 */
 	export function create(uri: DocumentUri, version: integer): VersionedTextDocumentIdentifier {
 		return { uri, version };
@@ -1695,7 +1696,7 @@ export namespace OptionalVersionedTextDocumentIdentifier {
 	/**
 	 * Creates a new OptionalVersionedTextDocumentIdentifier literal.
 	 * @param uri The document's uri.
-	 * @param uri The document's text.
+	 * @param version The document's version.
 	 */
 	export function create(uri: DocumentUri, version: integer | null): OptionalVersionedTextDocumentIdentifier {
 		return { uri, version };
@@ -1995,13 +1996,13 @@ export type InsertTextMode = 1 | 2;
  */
 export interface CompletionItemLabelDetails {
 	/**
-	 * An optional string which is rendered less prominently directly after {@link CompletionItemLabel.label label},
+	 * An optional string which is rendered less prominently directly after {@link CompletionItem.label label},
 	 * without any spacing. Should be used for function signatures or type annotations.
 	 */
 	detail?: string;
 
 	/**
-	 * An optional string which is rendered less prominently after {@link CompletionItemLabel.detail}. Should be used
+	 * An optional string which is rendered less prominently after {@link CompletionItem.detail}. Should be used
 	 * for fully qualified names or file path.
 	 */
 	description?: string;
@@ -2391,16 +2392,28 @@ export interface SignatureHelp {
 	signatures: SignatureInformation[];
 
 	/**
-	 * The active signature. Set to `null` if no
-	 * signatures exist.
+	 * The active signature. If omitted or the value lies outside the
+	 * range of `signatures` the value defaults to zero or is ignored if
+	 * the `SignatureHelp` has no signatures.
+	 *
+	 * Whenever possible implementors should make an active decision about
+	 * the active signature and shouldn't rely on a default value.
+	 *
+	 * In future version of the protocol this property might become
+	 * mandatory to better express this.
 	 */
-	activeSignature: uinteger | null;
+	activeSignature?: uinteger;
 
 	/**
-	 * The active parameter of the active signature. Set to `null`
-	 * if the active signature has no parameters.
+	 * The active parameter of the active signature. If omitted or the value
+	 * lies outside the range of `signatures[activeSignature].parameters`
+	 * defaults to 0 if the active signature has parameters. If
+	 * the active signature has no parameters it is ignored.
+	 * In future version of the protocol this property might become
+	 * mandatory to better express the active parameter if the
+	 * active signature does have any.
 	 */
-	activeParameter: uinteger | null;
+	 activeParameter?: uinteger;
 }
 
 /**
@@ -2495,6 +2508,7 @@ export namespace DocumentHighlight {
 	/**
 	 * Create a DocumentHighlight object.
 	 * @param range The range the highlight applies to.
+	 * @param kind The highlight kind
 	 */
 	export function create(range: Range, kind?: DocumentHighlightKind): DocumentHighlight {
 		let result: DocumentHighlight = { range };
@@ -2653,7 +2667,7 @@ export interface DocumentSymbol {
 	kind: SymbolKind;
 
 	/**
-	 * Tags for this completion item.
+	 * Tags for this document symbol.
 	 *
 	 * @since 3.16.0
 	 */
@@ -2970,7 +2984,7 @@ export namespace CodeAction {
 	 * Creates a new code action.
 	 *
 	 * @param title The title of the code action.
-	 * @param command The command to execute.
+	 * @param edit The edit to perform.
 	 * @param kind The kind of the code action.
 	 */
 	export function create(title: string, edit: WorkspaceEdit, kind?: CodeActionKind): CodeAction;
@@ -3201,7 +3215,7 @@ export namespace SelectionRange {
 
 	export function is(value: any): value is SelectionRange {
 		let candidate = value as SelectionRange;
-		return candidate !== undefined && Range.is(candidate.range) && (candidate.parent === undefined || SelectionRange.is(candidate.parent));
+		return Is.objectLiteral(candidate) && Range.is(candidate.range) && (candidate.parent === undefined || SelectionRange.is(candidate.parent));
 	}
 }
 
@@ -3482,7 +3496,11 @@ export enum SemanticTokenTypes {
 	string = 'string',
 	number = 'number',
 	regexp = 'regexp',
-	operator = 'operator'
+	operator = 'operator',
+	/**
+	 * @since 3.17.0
+	 */
+	decorator = 'decorator'
 }
 
 /**
@@ -3544,7 +3562,7 @@ export interface SemanticTokens {
 export namespace SemanticTokens {
 	export function is(value: any): value is SemanticTokens {
 		const candidate = value as SemanticTokens;
-		return candidate !== undefined && (candidate.resultId === undefined || typeof candidate.resultId === 'string') &&
+		return Is.objectLiteral(candidate) && (candidate.resultId === undefined || typeof candidate.resultId === 'string') &&
 			Array.isArray(candidate.data) && (candidate.data.length === 0 || typeof candidate.data[0] === 'number');
 	}
 }
@@ -3578,6 +3596,50 @@ export interface SemanticTokensDelta {
 	 * The semantic token edits to transform a previous result into a new result.
 	 */
 	edits: SemanticTokensEdit[];
+}
+
+/**
+ * @since 3.17.0 - proposed state
+ */
+export interface TypeHierarchyItem {
+	/**
+	 * The name of this item.
+	 */
+	name: string;
+	/**
+	 * The kind of this item.
+	 */
+	kind: SymbolKind;
+	/**
+	 * Tags for this item.
+	 */
+	tags?: SymbolTag[];
+	/**
+	 * More detail for this item, e.g. the signature of a function.
+	 */
+	detail?: string;
+	/**
+	 * The resource identifier of this item.
+	 */
+	uri: DocumentUri;
+	/**
+	 * The range enclosing this symbol not including leading/trailing whitespace
+	 * but everything else, e.g. comments and code.
+	 */
+	range: Range;
+	/**
+	 * The range that should be selected and revealed when this symbol is being
+	 * picked, e.g. the name of a function. Must be contained by the
+	 * [`range`](#TypeHierarchyItem.range).
+	 */
+	selectionRange: Range;
+	/**
+	 * A data entry field that is preserved between a type hierarchy prepare and
+	 * supertypes or subtypes requests. It could also be used to identify the
+	 * type hierarchy in the server, helping improve the performance on
+	 * resolving supertypes and subtypes.
+	 */
+	data?: unknown;
 }
 
 export const EOL: string[] = ['\n', '\r\n', '\r'];
@@ -3663,7 +3725,8 @@ export namespace TextDocument {
 	/**
 	 * Creates a new ITextDocument literal from the given uri and content.
 	 * @param uri The document's uri.
-	 * @param languageId  The document's language Id.
+	 * @param languageId The document's language Id.
+	 * @param version The document's version.
 	 * @param content The document's content.
 	 */
 	export function create(uri: DocumentUri, languageId: string, version: integer, content: string): TextDocument {

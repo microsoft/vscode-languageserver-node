@@ -3,13 +3,20 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { createConnection, Connection, InitializeParams } from '../../../server/node';
+import { createConnection, Connection, InitializeParams, NotificationType0 } from '../../../server/node';
+
+namespace CrashNotification {
+	export const type = new NotificationType0('test/crash');
+}
 
 const connection: Connection = createConnection();
 connection.onInitialize((_params: InitializeParams): any => {
-	return { capabilities: {} };
+	return {
+		capabilities: {
+		}
+	};
 });
-connection.onShutdown(() => {
+connection.onNotification(CrashNotification.type, () => {
 	process.exit(100);
 });
 connection.listen();

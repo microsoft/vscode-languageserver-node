@@ -9,7 +9,9 @@ const connection: Connection = createConnection();
 connection.onInitialize((_params: InitializeParams): any => {
 	return { capabilities: {} };
 });
-connection.onShutdown(() => {
-	process.exit(100);
+connection.onShutdown(async () => {
+	return new Promise((resolve) => {
+		setTimeout(resolve, 200000);
+	});
 });
 connection.listen();

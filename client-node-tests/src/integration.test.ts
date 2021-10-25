@@ -176,7 +176,8 @@ suite('Client integration', () => {
 					identifier: 'da348dc5-c30a-4515-9d98-31ff3be38d14',
 					interFileDependencies: true,
 					workspaceDiagnostics: true
-				}
+				},
+				typeHierarchyProvider: true
 			},
 			customResults: {
 				'hello': 'world'
@@ -1152,13 +1153,77 @@ suite('Client integration', () => {
 		assert.strictEqual(middlewareCalled, true);
 	});
 
+	test('Type Hierarchy', async () => {
+		const provider = client.getFeature(lsclient.Proposed.TypeHierarchyPrepareRequest.method).getProvider(document);
+		isDefined(provider);
+		const result = (await provider.prepareTypeHierarchy(document, position, tokenSource.token)) as vscode.TypeHierarchyItem[];
+
+		isArray(result, vscode.TypeHierarchyItem, 1);
+		const item = result[0];
+
+		let middlewareCalled: boolean = false;
+		middleware.prepareTypeHierarchy = (d, p, t, n) => {
+			middlewareCalled = true;
+			return n(d, p, t);
+		};
+		await provider.prepareTypeHierarchy(document, position, tokenSource.token);
+		middleware.prepareTypeHierarchy = undefined;
+		assert.strictEqual(middlewareCalled, true);
+
+		const incoming = (await provider.provideTypeHierarchySupertypes(item, tokenSource.token)) as vscode.TypeHierarchyItem[];
+		isArray(incoming, vscode.TypeHierarchyItem, 1);
+		middlewareCalled = false;
+		middleware.provideTypeHierarchySupertypes = (i, t, n) => {
+			middlewareCalled = true;
+			return n(i, t);
+		};
+		await provider.provideTypeHierarchySupertypes(item, tokenSource.token);
+		middleware.provideTypeHierarchySupertypes = undefined;
+		assert.strictEqual(middlewareCalled, true);
+
+		const outgoing = (await provider.provideTypeHierarchySubtypes(item, tokenSource.token)) as vscode.TypeHierarchyItem[];
+		isArray(outgoing, vscode.TypeHierarchyItem, 1);
+		middlewareCalled = false;
+		middleware.provideTypeHierarchySubtypes = (i, t, n) => {
+			middlewareCalled = true;
+			return n(i, t);
+		};
+		await provider.provideTypeHierarchySubtypes(item, tokenSource.token);
+		middleware.provideTypeHierarchySubtypes = undefined;
+		assert.strictEqual(middlewareCalled, true);
+	});
+});
+
+namespace CrashNotification {
+	export const type = new lsclient.NotificationType0('test/crash');
+}
+
+class CrashClient extends lsclient.LanguageClient {
+
+	private resolve: (() => void) | undefined;
+	public onCrash: Promise<void>;
+
+	constructor(id: string, name: string, serverOptions: lsclient.ServerOptions, clientOptions: lsclient.LanguageClientOptions) {
+		super(id, name, serverOptions, clientOptions);
+		this.onCrash = new Promise((resolve) => {
+			this.resolve = resolve;
+		});
+	}
+
+	protected handleConnectionClosed(): void {
+		super.handleConnectionClosed();
+		this.resolve!();
+	}
+}
+
+suite('Server tests', () => {
 	test('Stop fails if server crashes after shutdown request', async () => {
-		let serverOptions: lsclient.ServerOptions = {
+		const serverOptions: lsclient.ServerOptions = {
 			module: path.join(__dirname, './servers/crashOnShutdownServer.js'),
 			transport: lsclient.TransportKind.ipc,
 		};
-		let clientOptions: lsclient.LanguageClientOptions = {};
-		let client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
 		client.start();
 		await client.onReady();
 
@@ -1172,5 +1237,93 @@ suite('Client integration', () => {
 		await client.stop();
 		assert.strictEqual(client.needsStart(), true);
 		assert.strictEqual(client.needsStop(), false);
+	});
+
+	test('Stop fails if server shutdown request times out', async () => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/timeoutOnShutdownServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		client.start();
+		await client.onReady();
+
+		await assert.rejects(async () => {
+			await client.stop(100);
+		}, /Stopping the server timed out/);
+	});
+
+	test('Server can be stopped right after start', async() => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/startStopServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		client.start();
+		await client.stop();
+
+		client.start();
+		await client.stop();
+	});
+
+	test('Test state change events', async() => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/nullServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		let state: lsclient.State | undefined;
+		client.onDidChangeState(event => {
+			state = event.newState;
+		});
+		client.start();
+		await client.onReady();
+		assert.strictEqual(state, lsclient.State.Running);
+
+		await client.stop();
+		assert.strictEqual(state, lsclient.State.Stopped);
+
+		client.start();
+		await client.onReady();
+		assert.strictEqual(state, lsclient.State.Running);
+
+		await client.stop();
+		assert.strictEqual(state, lsclient.State.Stopped);
+	});
+
+	test('Test state change events on crash', async() => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/crashServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new CrashClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		let states: lsclient.State[] = [];
+		client.onDidChangeState(event => {
+			states.push(event.newState);
+		});
+		client.start();
+		await client.onReady();
+		assert.strictEqual(states.length, 2, 'First start');
+		assert.strictEqual(states[0], lsclient.State.Starting);
+		assert.strictEqual(states[1], lsclient.State.Running);
+
+		states = [];
+		await client.sendNotification(CrashNotification.type);
+		await client.onCrash;
+
+		await client.onReady();
+		assert.strictEqual(states.length, 3, 'Restart after crash');
+		assert.strictEqual(states[0], lsclient.State.Stopped);
+		assert.strictEqual(states[1], lsclient.State.Starting);
+		assert.strictEqual(states[2], lsclient.State.Running);
+
+		states = [];
+		await client.stop();
+		assert.strictEqual(states.length, 1, 'After stop');
+		assert.strictEqual(states[0], lsclient.State.Stopped);
 	});
 });

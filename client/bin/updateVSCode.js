@@ -1,8 +1,8 @@
-let path = require('path');
-let fs = require('fs');
+const path = require('path');
+const fs = require('fs');
 
-let packageJSON = require('../package.json');
-let engineVersion = packageJSON.engines.vscode;
+const packageJSON = require('../package.json');
+const engineVersion = packageJSON.engines.vscode;
 
 if (!engineVersion) {
 	throw new Error(`'engines.vscode' not set in package.json`);
@@ -23,4 +23,3 @@ if (match[1] !== engineVersion) {
 } else {
 	console.log(`No change needed: REQUIRED_VSCODE_VERSION in main.ts is already ${engineVersion}`);
 }
-
