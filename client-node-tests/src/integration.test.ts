@@ -8,7 +8,6 @@ import * as assert from 'assert';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as lsclient from 'vscode-languageclient/node';
-import { DidCreateFilesNotification, DidDeleteFilesNotification, DidRenameFilesNotification, WillCreateFilesRequest, WillDeleteFilesRequest, WillRenameFilesRequest } from 'vscode-languageserver-protocol/lib/common/protocol.fileOperations';
 import { MemoryFileSystemProvider } from './memoryFileSystemProvider';
 import { vsdiag, DiagnosticProviderMiddleware } from 'vscode-languageclient/lib/common/proposed.diagnostic';
 
