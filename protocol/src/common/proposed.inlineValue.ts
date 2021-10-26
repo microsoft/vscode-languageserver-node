@@ -12,6 +12,8 @@ import { TextDocumentRegistrationOptions, WorkDoneProgressOptions, StaticRegistr
 // ---- capabilities
 
 /**
+ * Client capabilities specific to inline values.
+ *
  * @since 3.17.0 - proposed state
  */
 export interface InlineValuesClientCapabilities {
@@ -22,8 +24,10 @@ export interface InlineValuesClientCapabilities {
 }
 
 /**
-* @since 3.17.0 - proposed state
-  */
+ * Client workspace capabilities specific to inline values.
+ *
+ * @since 3.17.0 - proposed state
+ */
 export interface InlineValuesWorkspaceClientCapabilities {
 	/**
 	 * Whether the client implementation supports a refresh request sent from the
@@ -54,7 +58,7 @@ export interface InlineValuesRegistrationOptions extends InlineValuesOptions, Te
 }
 
 /**
- * A parameter literal used in selection range requests.
+ * A parameter literal used in inline values requests.
  *
  * @since 3.17.0 - proposed state
  */

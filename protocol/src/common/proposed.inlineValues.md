@@ -12,6 +12,8 @@ _Client Capability_:
 ```typescript
 /**
  * Client capabilities specific to inline values.
+ *
+ * @since 3.17.0 - proposed state
  */
 export interface InlineValuesClientCapabilities {
 	/**
@@ -28,6 +30,11 @@ _Server Capability_:
 <div class="anchorHolder"><a href="#inlineValuesOptions" name="inlineValuesOptions" class="linkableAnchor"></a></div>
 
 ```typescript
+/**
+ * Inline values options used during static registration.
+ *
+ * @since 3.17.0 - proposed state
+ */
 export interface InlineValuesOptions extends WorkDoneProgressOptions {
 }
 ```
@@ -37,6 +44,11 @@ _Registration Options_: `InlineValuesRegistrationOptions` defined as follows:
 <div class="anchorHolder"><a href="#inlineValuesRegistrationOptions" name="inlineValuesRegistrationOptions" class="linkableAnchor"></a></div>
 
 ```typescript
+/**
+ * Inline value options used during static or dynamic registration.
+ *
+ * @since 3.17.0 - proposed state
+ */
 export interface InlineValuesRegistrationOptions extends
 	TextDocumentRegistrationOptions, InlineValuesOptions {
 }
@@ -49,37 +61,121 @@ _Request_:
 <div class="anchorHolder"><a href="#inlineValuesParams" name="inlineValuesParams" class="linkableAnchor"></a></div>
 
 ```typescript
-interface InlineValuesParams extends WorkDoneProgressParams {
+/**
+ * A parameter literal used in inline values requests.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export interface InlineValuesParams extends WorkDoneProgressParams {
 	/**
 	 * The document to request inline values for.
 	 */
-	readonly textDocument: TextDocumentIdentifier;
+	textDocument: TextDocumentIdentifier;
+
 	/**
 	 * The visible document range for which inline values should be computed.
 	 */
-	readonly viewPort: Range;
+	viewPort: Range;
+
 	/**
 	 * Additional information about the context in which inline values were
 	 * requested.
 	 */
-	readonly context: InlineValuesContext;
+	context: InlineValuesContext;
 }
 ```
 
 <div class="anchorHolder"><a href="#inlineValuesContext" name="inlineValuesContext" class="linkableAnchor"></a></div>
 
 ```typescript
-interface InlineValuesContext {
+/**
+ * @since 3.17.0 - proposed state
+ */
+export interface InlineValuesContext {
 	/**
 	 * The document range where execution has stopped.
 	 * Typically the end position of the range denotes the line where the inline values are shown.
 	 */
-	readonly stoppedLocation: Range;
+	stoppedLocation: Range;
 }
 ```
 
 _Response_:
 * result: `InlineValue[]` \| `null` defined as follows:
+
+<div class="anchorHolder"><a href="#inlineValueText" name="inlineValueText" class="linkableAnchor"></a></div>
+
+```typescript
+/**
+ * Provide inline value as text.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export interface InlineValueText {
+	/**
+	 * The document range for which the inline value applies.
+	 */
+	range: Range;
+
+	/**
+	 * The text of the inline value.
+	 */
+	text: string;
+}
+```
+
+<div class="anchorHolder"><a href="#inlineValueVariableLookup" name="inlineValueVariableLookup" class="linkableAnchor"></a></div>
+
+```typescript
+/**
+ * Provide inline value through a variable lookup.
+ * If only a range is specified, the variable name will be extracted from the underlying document.
+ * An optional variable name can be used to override the extracted name.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export interface InlineValueVariableLookup {
+	/**
+	 * The document range for which the inline value applies.
+	 * The range is used to extract the variable name from the underlying document.
+	 */
+	range: Range;
+
+	/**
+	 * If specified the name of the variable to look up.
+	 */
+	variableName?: string;
+
+	/**
+	 * How to perform the lookup.
+	 */
+	caseSensitiveLookup: boolean;
+}
+```
+
+<div class="anchorHolder"><a href="#inlineValueEvaluatableExpression" name="inlineValueEvaluatableExpression" class="linkableAnchor"></a></div>
+
+```typescript
+/**
+ * Provide an inline value through an expression evaluation.
+ * If only a range is specified, the expression will be extracted from the underlying document.
+ * An optional expression can be used to override the extracted expression.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export interface InlineValueEvaluatableExpression {
+	/**
+	 * The document range for which the inline value applies.
+	 * The range is used to extract the evaluatable expression from the underlying document.
+	 */
+	range: Range;
+
+	/**
+	 * If specified the expression overrides the extracted expression.
+	 */
+	expression?: string;
+}
+```
 
 <div class="anchorHolder"><a href="#inlineValue" name="inlineValue" class="linkableAnchor"></a></div>
 
@@ -90,63 +186,10 @@ _Response_:
  * - as a name to use for a variable lookup (class InlineValueVariableLookup)
  * - as an evaluatable expression (class InlineValueEvaluatableExpression)
  * The InlineValue types combines all inline value types into one type.
+ *
+ * @since 3.17.0 - proposed state
  */
 export type InlineValue = InlineValueText | InlineValueVariableLookup | InlineValueEvaluatableExpression;
-
-/**
- * Provide inline value as text.
- */
-export class InlineValueText {
-	/**
-	 * The document range for which the inline value applies.
-	 */
-	readonly range: Range;
-	/**
-	 * The text of the inline value.
-	 */
-	readonly text: string;
-}
-
-/**
- * Provide inline value through a variable lookup.
- * If only a range is specified, the variable name will be extracted from the underlying document.
- * An optional variable name can be used to override the extracted name.
- */
-export class InlineValueVariableLookup {
-	/**
-	 * The document range for which the inline value applies.
-	 * The range is used to extract the variable name from the underlying document.
-	 */
-	readonly range: Range;
-
-	/**
-	 * If specified the name of the variable to look up.
-	 */
-	readonly variableName?: string;
-
-	/**
-	 * How to perform the lookup.
-	 */
-	readonly caseSensitiveLookup: boolean;
-}
-
-/**
- * Provide an inline value through an expression evaluation.
- * If only a range is specified, the expression will be extracted from the underlying document.
- * An optional expression can be used to override the extracted expression.
- */
-export class InlineValueEvaluatableExpression {
-	/**
-	 * The document range for which the inline value applies.
-	 * The range is used to extract the evaluatable expression from the underlying document.
-	 */
-	readonly range: Range;
-
-	/**
-	 * If specified the expression overrides the extracted expression.
-	 */
-	readonly expression?: string;
-}
 ```
 * error: code and message set in case an exception happens during the inline values request.
 
@@ -160,9 +203,15 @@ _Client Capability_:
 
 * property name (optional): `workspace.inlineValues`
 * property type: `InlineValuesWorkspaceClientCapabilities` defined as follows:
+
 <div class="anchorHolder"><a href="#inlineValuesWorkspaceClientCapabilities" name="inlineValuesWorkspaceClientCapabilities" class="linkableAnchor"></a></div>
 
 ```typescript
+/**
+ * Client workspace capabilities specific to inline values.
+ *
+ * @since 3.17.0 - proposed state
+ */
 export interface InlineValuesWorkspaceClientCapabilities {
 	/**
 	 * Whether the client implementation supports a refresh request sent from the
@@ -177,7 +226,6 @@ export interface InlineValuesWorkspaceClientCapabilities {
 }
 ```
 _Request_:
-<div class="anchorHolder"><a href="#inlineValues_refreshRequest" name="inlineValues_refreshRequest" class="linkableAnchor"></a></div>
 * method: `workspace/inlineValues/refresh`
 * params: none
 

@@ -3220,161 +3220,6 @@ export namespace SelectionRange {
 }
 
 /**
- * Inline value information can be provided by different means:
- * - directly as a text value (class InlineValueText).
- * - as a name to use for a variable lookup (class InlineValueVariableLookup)
- * - as an evaluatable expression (class InlineValueEvaluatableExpression)
- * The InlineValue types combines all inline value types into one type.
- */
-export type InlineValue = InlineValueText | InlineValueVariableLookup | InlineValueEvaluatableExpression;
-
-/**
- * Provide inline value as text.
- */
-export interface InlineValueText {
-	/**
-	 * The document range for which the inline value applies.
-	 */
-	range: Range;
-
-	/**
-	 * The text of the inline value.
-	 */
-	text: string;
-}
-
-/**
- * The InlineValueText namespace provides functions to deal with InlineValueTexts.
- *
- * @since 3.17.0
- */
-export namespace InlineValueText {
-	/**
-	 * Creates a new InlineValueText literal.
-	 */
-	export function create(range: Range, text: string): InlineValueText {
-		return { range, text };
-	}
-
-	export function is(value: InlineValue | undefined | null): value is InlineValueText {
-		const candidate = value as InlineValueText;
-		return candidate !== undefined && candidate !== null && Range.is(candidate.range) && Is.string(candidate.text);
-	}
-}
-
-/**
- * Provide inline value through a variable lookup.
- * If only a range is specified, the variable name will be extracted from the underlying document.
- * An optional variable name can be used to override the extracted name.
- */
-export interface InlineValueVariableLookup {
-	/**
-	 * The document range for which the inline value applies.
-	 * The range is used to extract the variable name from the underlying document.
-	 */
-	range: Range;
-
-	/**
-	 * If specified the name of the variable to look up.
-	 */
-	variableName?: string;
-
-	/**
-	 * How to perform the lookup.
-	 */
-	caseSensitiveLookup: boolean;
-}
-
-
-/**
- * The InlineValueVariableLookup namespace provides functions to deal with InlineValueVariableLookups.
- *
- * @since 3.17.0
- */
-export namespace InlineValueVariableLookup {
-	/**
-	 * Creates a new InlineValueText literal.
-	 */
-	export function create(range: Range, variableName: string | undefined, caseSensitiveLookup: boolean): InlineValueVariableLookup {
-		return { range, variableName, caseSensitiveLookup };
-	}
-
-	export function is(value: InlineValue | undefined | null): value is InlineValueVariableLookup {
-		const candidate = value as InlineValueVariableLookup;
-		return candidate !== undefined && candidate !== null && Range.is(candidate.range) && Is.boolean(candidate.caseSensitiveLookup)
-			&& (Is.string(candidate.variableName) || candidate.variableName === undefined);
-	}
-}
-
-
-/**
- * Provide an inline value through an expression evaluation.
- * If only a range is specified, the expression will be extracted from the underlying document.
- * An optional expression can be used to override the extracted expression.
- */
-export interface InlineValueEvaluatableExpression {
-	/**
-	 * The document range for which the inline value applies.
-	 * The range is used to extract the evaluatable expression from the underlying document.
-	 */
-	range: Range;
-
-	/**
-	 * If specified the expression overrides the extracted expression.
-	 */
-	expression?: string;
-}
-
-/**
- * The InlineValueEvaluatableExpression namespace provides functions to deal with InlineValueEvaluatableExpression.
- *
- * @since 3.17.0
- */
-export namespace InlineValueEvaluatableExpression {
-	/**
-	 * Creates a new InlineValueEvaluatableExpression literal.
-	 */
-	export function create(range: Range, expression: string | undefined): InlineValueEvaluatableExpression {
-		return { range, expression };
-	}
-
-	export function is(value: InlineValue | undefined | null): value is InlineValueEvaluatableExpression {
-		const candidate = value as InlineValueEvaluatableExpression;
-		return candidate !== undefined && candidate !== null && Range.is(candidate.range)
-			&& (Is.string(candidate.expression) || candidate.expression === undefined);
-	}
-}
-
-export interface InlineValuesContext {
-	/**
-	 * The document range where execution has stopped.
-	 * Typically the end position of the range denotes the line where the inline values are shown.
-	 */
-	stoppedLocation: Range;
-}
-
-/**
- * The InlineValuesContext namespace provides helper functions to work with
- * [InlineValuesContext](#InlineValuesContext) literals.
- */
-export namespace InlineValuesContext {
-	/**
-	 * Creates a new InlineValuesContext literal.
-	 */
-	export function create(stoppedLocation: Range): InlineValuesContext {
-		return { stoppedLocation };
-	}
-
-	/**
-	 * Checks whether the given literal conforms to the [InlineValuesContext](#InlineValuesContext) interface.
-	 */
-	export function is(value: any): value is InlineValuesContext {
-		const candidate = value as InlineValuesContext;
-		return Is.defined(candidate) && Range.is(value.stoppedLocation);
-	}
-}
-
-/**
  * Represents programming constructs like functions or constructors in the context
  * of call hierarchy.
  *
@@ -3640,6 +3485,172 @@ export interface TypeHierarchyItem {
 	 * resolving supertypes and subtypes.
 	 */
 	data?: unknown;
+}
+
+/**
+ * Provide inline value as text.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export interface InlineValueText {
+	/**
+	 * The document range for which the inline value applies.
+	 */
+	range: Range;
+
+	/**
+	 * The text of the inline value.
+	 */
+	text: string;
+}
+
+/**
+ * The InlineValueText namespace provides functions to deal with InlineValueTexts.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export namespace InlineValueText {
+	/**
+	 * Creates a new InlineValueText literal.
+	 */
+	export function create(range: Range, text: string): InlineValueText {
+		return { range, text };
+	}
+
+	export function is(value: InlineValue | undefined | null): value is InlineValueText {
+		const candidate = value as InlineValueText;
+		return candidate !== undefined && candidate !== null && Range.is(candidate.range) && Is.string(candidate.text);
+	}
+}
+
+/**
+ * Provide inline value through a variable lookup.
+ * If only a range is specified, the variable name will be extracted from the underlying document.
+ * An optional variable name can be used to override the extracted name.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export interface InlineValueVariableLookup {
+	/**
+	 * The document range for which the inline value applies.
+	 * The range is used to extract the variable name from the underlying document.
+	 */
+	range: Range;
+
+	/**
+	 * If specified the name of the variable to look up.
+	 */
+	variableName?: string;
+
+	/**
+	 * How to perform the lookup.
+	 */
+	caseSensitiveLookup: boolean;
+}
+
+/**
+ * The InlineValueVariableLookup namespace provides functions to deal with InlineValueVariableLookups.
+ *
+ * @since 3.17.0
+ */
+export namespace InlineValueVariableLookup {
+	/**
+	 * Creates a new InlineValueText literal.
+	 */
+	export function create(range: Range, variableName: string | undefined, caseSensitiveLookup: boolean): InlineValueVariableLookup {
+		return { range, variableName, caseSensitiveLookup };
+	}
+
+	export function is(value: InlineValue | undefined | null): value is InlineValueVariableLookup {
+		const candidate = value as InlineValueVariableLookup;
+		return candidate !== undefined && candidate !== null && Range.is(candidate.range) && Is.boolean(candidate.caseSensitiveLookup)
+			&& (Is.string(candidate.variableName) || candidate.variableName === undefined);
+	}
+}
+
+/**
+ * Provide an inline value through an expression evaluation.
+ * If only a range is specified, the expression will be extracted from the underlying document.
+ * An optional expression can be used to override the extracted expression.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export interface InlineValueEvaluatableExpression {
+	/**
+	 * The document range for which the inline value applies.
+	 * The range is used to extract the evaluatable expression from the underlying document.
+	 */
+	range: Range;
+
+	/**
+	 * If specified the expression overrides the extracted expression.
+	 */
+	expression?: string;
+}
+
+/**
+ * The InlineValueEvaluatableExpression namespace provides functions to deal with InlineValueEvaluatableExpression.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export namespace InlineValueEvaluatableExpression {
+	/**
+	 * Creates a new InlineValueEvaluatableExpression literal.
+	 */
+	export function create(range: Range, expression: string | undefined): InlineValueEvaluatableExpression {
+		return { range, expression };
+	}
+
+	export function is(value: InlineValue | undefined | null): value is InlineValueEvaluatableExpression {
+		const candidate = value as InlineValueEvaluatableExpression;
+		return candidate !== undefined && candidate !== null && Range.is(candidate.range)
+			&& (Is.string(candidate.expression) || candidate.expression === undefined);
+	}
+}
+
+/**
+ * Inline value information can be provided by different means:
+ * - directly as a text value (class InlineValueText).
+ * - as a name to use for a variable lookup (class InlineValueVariableLookup)
+ * - as an evaluatable expression (class InlineValueEvaluatableExpression)
+ * The InlineValue types combines all inline value types into one type.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export type InlineValue = InlineValueText | InlineValueVariableLookup | InlineValueEvaluatableExpression;
+
+/**
+ * @since 3.17.0 - proposed state
+ */
+export interface InlineValuesContext {
+	/**
+	 * The document range where execution has stopped.
+	 * Typically the end position of the range denotes the line where the inline values are shown.
+	 */
+	stoppedLocation: Range;
+}
+
+/**
+ * The InlineValuesContext namespace provides helper functions to work with
+ * [InlineValuesContext](#InlineValuesContext) literals.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export namespace InlineValuesContext {
+	/**
+	 * Creates a new InlineValuesContext literal.
+	 */
+	export function create(stoppedLocation: Range): InlineValuesContext {
+		return { stoppedLocation };
+	}
+
+	/**
+	 * Checks whether the given literal conforms to the [InlineValuesContext](#InlineValuesContext) interface.
+	 */
+	export function is(value: any): value is InlineValuesContext {
+		const candidate = value as InlineValuesContext;
+		return Is.defined(candidate) && Range.is(value.stoppedLocation);
+	}
 }
 
 export const EOL: string[] = ['\n', '\r\n', '\r'];
