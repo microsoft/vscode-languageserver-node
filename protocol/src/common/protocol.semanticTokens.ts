@@ -99,6 +99,16 @@ export interface SemanticTokensClientCapabilities {
 	 * Whether the client supports tokens that can span multiple lines.
 	 */
 	multilineTokenSupport?: boolean;
+
+	/**
+	 * Whether the client allows the server to actively cancel a
+	 * semantic token request, e.g. supports returning
+	 * LSPErrorCodes.ServerCancelled. If a server does the client
+	 * needs to retrigger the request.
+	 *
+	 * @since 3.17.0
+	 */
+	serverCancelSupport?: boolean;
 }
 
 /**

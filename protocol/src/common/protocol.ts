@@ -633,7 +633,7 @@ export interface GeneralClientCapabilities {
 		/**
 		 * The list of requests for which the client
 		 * will retry the request if it receives a
-		 * response with error code `ContentModified``
+		 * response with error code `ContentModified`
 		 */
 		retryOnContentModified: string[];
 	}
