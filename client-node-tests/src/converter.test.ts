@@ -675,11 +675,11 @@ suite('Protocol Converter', () => {
 	});
 
 	test('Completion Result', () => {
-		let completionResult: proto.CompletionList = {
+		const completionResult: proto.CompletionList = {
 			isIncomplete: true,
 			items: [{ label: 'item', data: 'data' }]
 		};
-		let result = p2c.asCompletionResult(completionResult);
+		const result = p2c.asCompletionResult(completionResult);
 		strictEqual(result.isIncomplete, completionResult.isIncomplete);
 		strictEqual(result.items.length, 1);
 		strictEqual(result.items[0].label, 'item');
@@ -687,6 +687,76 @@ suite('Protocol Converter', () => {
 		strictEqual(p2c.asCompletionResult(undefined), undefined);
 		strictEqual(p2c.asCompletionResult(null), undefined);
 		deepEqual(p2c.asCompletionResult([]), []);
+	});
+
+	test('Completion Result - edit range', () => {
+		const completionResult: proto.CompletionList = {
+			isIncomplete: true,
+			itemDefaults:  { editRange: proto.Range.create(1,2,3,4) },
+			items: [{ label: 'item', data: 'data' }]
+		};
+		const result = p2c.asCompletionResult(completionResult);
+		strictEqual(result.isIncomplete, completionResult.isIncomplete);
+		strictEqual(result.items.length, 1);
+		strictEqual(result.items[0].label, 'item');
+		rangeEqual(result.items[0].range as vscode.Range, completionResult.itemDefaults?.editRange as proto.Range);
+	});
+
+	test('Completion Result - insert / replace range', () => {
+		const completionResult: proto.CompletionList = {
+			isIncomplete: true,
+			itemDefaults: { editRange: { insert: proto.Range.create(1,1,1,1), replace: proto.Range.create(1,2,3,4) } },
+			items: [{ label: 'item', data: 'data' }]
+		};
+		const result = p2c.asCompletionResult(completionResult);
+		strictEqual(result.isIncomplete, completionResult.isIncomplete);
+		strictEqual(result.items.length, 1);
+		strictEqual(result.items[0].label, 'item');
+		const range = result.items[0].range;
+		rangeEqual((range as { inserting: vscode.Range }).inserting, (completionResult.itemDefaults?.editRange as { insert: proto.Range}).insert);
+		rangeEqual((range as { replacing: vscode.Range }).replacing, (completionResult.itemDefaults?.editRange as { replace: proto.Range}).replace);
+	});
+
+	test('Completion Result - commit characters', () => {
+		const completionResult: proto.CompletionList = {
+			isIncomplete: true,
+			itemDefaults: { commitCharacters: ['.', ',']},
+			items: [{ label: 'item', data: 'data' }]
+		};
+		const result = p2c.asCompletionResult(completionResult);
+		strictEqual(result.isIncomplete, completionResult.isIncomplete);
+		strictEqual(result.items.length, 1);
+		strictEqual(result.items[0].label, 'item');
+		const commitCharacters = result.items[0].commitCharacters!;
+		strictEqual(commitCharacters?.length, 2);
+		strictEqual(commitCharacters[0], '.');
+		strictEqual(commitCharacters[1], ',');
+	});
+
+	test('Completion Result - insert text mode', () => {
+		const completionResult: proto.CompletionList = {
+			isIncomplete: true,
+			itemDefaults: { insertTextMode: proto.InsertTextMode.asIs },
+			items: [{ label: 'item', data: 'data' }]
+		};
+		const result = p2c.asCompletionResult(completionResult);
+		strictEqual(result.isIncomplete, completionResult.isIncomplete);
+		strictEqual(result.items.length, 1);
+		strictEqual(result.items[0].label, 'item');
+		strictEqual(result.items[0].keepWhitespace, true);
+	});
+
+	test('Completion Result - insert text format', () => {
+		const completionResult: proto.CompletionList = {
+			isIncomplete: true,
+			itemDefaults: { insertTextFormat: proto.InsertTextFormat.Snippet },
+			items: [{ label: 'item', insertText: '${value}', data: 'data' }]
+		};
+		const result = p2c.asCompletionResult(completionResult);
+		strictEqual(result.isIncomplete, completionResult.isIncomplete);
+		strictEqual(result.items.length, 1);
+		strictEqual(result.items[0].label, 'item');
+		ok(result.items[0].insertText instanceof vscode.SnippetString);
 	});
 
 	test('Parameter Information', () => {

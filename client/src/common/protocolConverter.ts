@@ -440,20 +440,37 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return new code.Hover(asHoverContent(hover.contents), asRange(hover.range));
 	}
 
-	function asCompletionResult(result: ls.CompletionList, defaultCommitCharacters?: string[]): code.CompletionList;
-	function asCompletionResult(result: ls.CompletionItem[], defaultCommitCharacters?: string[]): code.CompletionItem[];
-	function asCompletionResult(result: undefined | null, defaultCommitCharacters?: string[]): undefined;
-	function asCompletionResult(result: ls.CompletionItem[] | ls.CompletionList | undefined | null, defaultCommitCharacters?: string[]): code.CompletionItem[] | code.CompletionList | undefined;
-	function asCompletionResult(result: ls.CompletionItem[] | ls.CompletionList | undefined | null, defaultCommitCharacters?: string[]): code.CompletionItem[] | code.CompletionList | undefined {
+	function asCompletionResult(result: ls.CompletionList, allCommitCharacters?: string[]): code.CompletionList;
+	function asCompletionResult(result: ls.CompletionItem[], allCommitCharacters?: string[]): code.CompletionItem[];
+	function asCompletionResult(result: undefined | null, allCommitCharacters?: string[]): undefined;
+	function asCompletionResult(result: ls.CompletionItem[] | ls.CompletionList | undefined | null, allCommitCharacters?: string[]): code.CompletionItem[] | code.CompletionList | undefined;
+	function asCompletionResult(result: ls.CompletionItem[] | ls.CompletionList | undefined | null, allCommitCharacters?: string[]): code.CompletionItem[] | code.CompletionList | undefined {
 		if (!result) {
 			return undefined;
 		}
 		if (Array.isArray(result)) {
 			let items = <ls.CompletionItem[]>result;
-			return items.map(item => asCompletionItem(item, defaultCommitCharacters));
+			return items.map(item => asCompletionItem(item, allCommitCharacters));
 		}
-		let list = <ls.CompletionList>result;
-		return new code.CompletionList(list.items.map(item => asCompletionItem(item, defaultCommitCharacters)), list.isIncomplete);
+		const list = <ls.CompletionList>result;
+		const rangeDefaults = list.itemDefaults?.editRange;
+		const [range, inserting, replacing] = ls.Range.is(rangeDefaults)
+			? [asRange(rangeDefaults), undefined, undefined]
+			: rangeDefaults !== undefined
+				? [undefined, asRange(rangeDefaults.insert), asRange(rangeDefaults.replace)]
+				: [undefined, undefined, undefined];
+		const commitCharacterDefaults = list.itemDefaults?.commitCharacters ?? allCommitCharacters;
+		return new code.CompletionList(list.items.map((item) => {
+			const result = asCompletionItem(item, commitCharacterDefaults, list.itemDefaults?.insertTextMode, list.itemDefaults?.insertTextFormat);
+			if (result.range === undefined) {
+				if (range !== undefined) {
+					result.range = range;
+				} else if (inserting !== undefined && replacing !== undefined) {
+					result.range = { inserting, replacing };
+				}
+			}
+			return result;
+		}), list.isIncomplete);
 	}
 
 	function asCompletionItemKind(value: ls.CompletionItemKind): [code.CompletionItemKind, ls.CompletionItemKind | undefined] {
@@ -486,7 +503,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return result;
 	}
 
-	function asCompletionItem(item: ls.CompletionItem, defaultCommitCharacters?: string[]): ProtocolCompletionItem {
+	function asCompletionItem(item: ls.CompletionItem, defaultCommitCharacters?: string[], defaultInsertTextMode?: ls.InsertTextMode, defaultInsertTextFormat?: ls.InsertTextFormat): ProtocolCompletionItem {
 		const tags: code.CompletionItemTag[] = asCompletionItemTags(item.tags);
 		const label = asCompletionItemLabel(item);
 		const result = new ProtocolCompletionItem(label);
@@ -497,7 +514,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 			result.documentationFormat = Is.string(item.documentation) ? '$string' : item.documentation.kind;
 		}
 		if (item.filterText) { result.filterText = item.filterText; }
-		const insertText = asCompletionInsertText(item);
+		const insertText = asCompletionInsertText(item, defaultInsertTextFormat);
 		if (insertText) {
 			result.insertText = insertText.text;
 			result.range = insertText.range;
@@ -528,9 +545,10 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		if (tags.length > 0) {
 			result.tags = tags;
 		}
-		if (item.insertTextMode !== undefined) {
-			result.insertTextMode = item.insertTextMode;
-			if (item.insertTextMode === InsertTextMode.asIs) {
+		const insertTextMode = item.insertTextMode ?? defaultInsertTextMode;
+		if (insertTextMode !== undefined) {
+			result.insertTextMode = insertTextMode;
+			if (insertTextMode === InsertTextMode.asIs) {
 				result.keepWhitespace = true;
 			}
 		}
@@ -549,15 +567,16 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		}
 	}
 
-	function asCompletionInsertText(item: ls.CompletionItem): { text: string | code.SnippetString, range?: code.Range | InsertReplaceRange, fromEdit: boolean } | undefined {
+	function asCompletionInsertText(item: ls.CompletionItem, defaultInsertTextFormat?: ls.InsertTextFormat): { text: string | code.SnippetString, range?: code.Range | InsertReplaceRange, fromEdit: boolean } | undefined {
+		const insertTextFormat = item.insertTextFormat ?? defaultInsertTextFormat;
 		if (item.textEdit) {
-			if (item.insertTextFormat === ls.InsertTextFormat.Snippet) {
+			if (insertTextFormat === ls.InsertTextFormat.Snippet) {
 				return { text: new code.SnippetString(item.textEdit.newText), range: asCompletionRange(item.textEdit), fromEdit: true };
 			} else {
 				return { text: item.textEdit.newText, range: asCompletionRange(item.textEdit), fromEdit: true };
 			}
 		} else if (item.insertText) {
-			if (item.insertTextFormat === ls.InsertTextFormat.Snippet) {
+			if (insertTextFormat === ls.InsertTextFormat.Snippet) {
 				return { text: new code.SnippetString(item.insertText), fromEdit: false };
 			} else {
 				return { text: item.insertText, fromEdit: false };

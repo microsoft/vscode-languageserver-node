@@ -1938,7 +1938,7 @@ export interface CompletionClientCapabilities {
 	 * when accepting a completion item that uses multi line
 	 * text in either `insertText` or `textEdit`.
 	 *
-	 * @since 3.17.0
+	 * @since 3.17.0 - proposed state
 	 */
 	insertTextMode?: InsertTextMode;
 
@@ -1947,6 +1947,26 @@ export interface CompletionClientCapabilities {
 	 * `textDocument/completion` request.
 	 */
 	contextSupport?: boolean;
+
+	/**
+	 * The client supports the following `CompletionList` specific
+	 * capabilities.
+	 *
+	 * @since 3.17.0 - proposed state
+	 */
+	completionList?: {
+		/**
+		 * The client supports the the following itemDefaults on
+		 * a completion list.
+		 *
+		 * The value lists the supported property names of the
+		 * `CompletionList.itemDefaults` object. If omitted
+		 * no properties are supported.
+		 *
+		 * @since 3.17.0 - proposed state
+		 */
+		itemDefaults?: string[];
+	}
 }
 
 /**

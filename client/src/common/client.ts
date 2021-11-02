@@ -1602,6 +1602,11 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 		};
 		completion.insertTextMode = InsertTextMode.adjustIndentation;
 		completion.completionItemKind = { valueSet: SupportedCompletionItemKinds };
+		completion.completionList = {
+			itemDefaults: [
+				'commitCharacters', 'editRange', 'insertTextFormat', 'insertTextMode'
+			]
+		};
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
