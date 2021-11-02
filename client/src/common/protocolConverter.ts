@@ -258,7 +258,7 @@ namespace CodeBlock {
 	}
 }
 
-export function createConverter(uriConverter: URIConverter | undefined, trustMarkdown: boolean | undefined): Converter {
+export function createConverter(uriConverter: URIConverter | undefined, trustMarkdown: boolean, supportHtml: boolean): Converter {
 
 	const nullConverter = (value: string) => code.Uri.parse(value);
 
@@ -425,9 +425,8 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 
 	function asMarkdownString(value?: string): code.MarkdownString {
 		const result = new code.MarkdownString(value);
-		if (trustMarkdown === true) {
-			result.isTrusted = trustMarkdown;
-		}
+		result.isTrusted = trustMarkdown;
+		result.supportHtml = supportHtml;
 		return result;
 	}
 

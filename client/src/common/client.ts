@@ -546,6 +546,7 @@ export interface LanguageClientOptions {
 	connectionOptions?: ConnectionOptions;
 	markdown?: {
 		isTrusted?: boolean;
+		supportHtml?: boolean;
 	};
 	diagnosticPullOptions?: DiagnosticPullOptions;
 }
@@ -570,6 +571,7 @@ interface ResolvedClientOptions {
 	connectionOptions?: ConnectionOptions;
 	markdown: {
 		isTrusted: boolean;
+		supportHtml: boolean;
 	};
 	diagnosticPullOptions: DiagnosticPullOptions;
 }
@@ -2739,9 +2741,10 @@ export abstract class BaseLanguageClient {
 
 		clientOptions = clientOptions || {};
 
-		const markdown = { isTrusted: false };
-		if (clientOptions.markdown !== undefined && clientOptions.markdown.isTrusted === true) {
-			markdown.isTrusted = true;
+		const markdown = { isTrusted: false, supportHtml: false };
+		if (clientOptions.markdown !== undefined) {
+			markdown.isTrusted = clientOptions.markdown.isTrusted === true;
+			markdown.supportHtml = clientOptions.markdown.supportHtml === true;
 		}
 
 		this._clientOptions = {
@@ -2799,7 +2802,10 @@ export abstract class BaseLanguageClient {
 			},
 		};
 		this._c2p = c2p.createConverter(clientOptions.uriConverters ? clientOptions.uriConverters.code2Protocol : undefined);
-		this._p2c = p2c.createConverter(clientOptions.uriConverters ? clientOptions.uriConverters.protocol2Code : undefined, this._clientOptions.markdown.isTrusted);
+		this._p2c = p2c.createConverter(
+			clientOptions.uriConverters ? clientOptions.uriConverters.protocol2Code : undefined,
+			this._clientOptions.markdown.isTrusted,
+			this._clientOptions.markdown.supportHtml);
 		this._syncedDocuments = new Map<string, TextDocument>();
 		this.registerBuiltinFeatures();
 	}
@@ -3700,7 +3706,13 @@ export abstract class BaseLanguageClient {
 			retryOnContentModified: Array.from(BaseLanguageClient.RequestsToCancelOnContentModified)
 		};
 		generalCapabilities.regularExpressions = { engine: 'ECMAScript', version: 'ES2020' };
-		generalCapabilities.markdown = { parser: 'marked', version: '1.1.0'};
+		generalCapabilities.markdown = {
+			parser: 'marked',
+			version: '1.1.0',
+		};
+		if (this._clientOptions.markdown.supportHtml) {
+			generalCapabilities.markdown.allowedTags = ['ul', 'li', 'p', 'code', 'blockquote', 'ol', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'em', 'pre', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'div', 'del', 'a', 'strong', 'br', 'img', 'span'];
+		}
 
 		for (let feature of this._features) {
 			feature.fillClientCapabilities(result);
