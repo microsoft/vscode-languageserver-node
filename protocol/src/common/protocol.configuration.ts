@@ -4,6 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import { RequestHandler, HandlerResult, CancellationToken } from 'vscode-jsonrpc';
+import { LSPAny } from 'vscode-languageserver-types';
 
 import { ProtocolRequestType } from './messages';
 import { PartialResultParams } from './protocol';
@@ -34,9 +35,9 @@ export interface ConfigurationClientCapabilities {
  * change event and empty the cache if such an event is received.
  */
 export namespace ConfigurationRequest {
-	export const type = new ProtocolRequestType<ConfigurationParams & PartialResultParams, any[], never, void, void>('workspace/configuration');
-	export type HandlerSignature = RequestHandler<ConfigurationParams, any[], void>;
-	export type MiddlewareSignature = (params: ConfigurationParams, token: CancellationToken, next: HandlerSignature) => HandlerResult<any[], void>;
+	export const type = new ProtocolRequestType<ConfigurationParams & PartialResultParams, LSPAny[], never, void, void>('workspace/configuration');
+	export type HandlerSignature = RequestHandler<ConfigurationParams, LSPAny[], void>;
+	export type MiddlewareSignature = (params: ConfigurationParams, token: CancellationToken, next: HandlerSignature) => HandlerResult<LSPAny[], void>;
 }
 
 

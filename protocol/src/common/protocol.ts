@@ -13,7 +13,7 @@ import {
 	Hover, SignatureHelp, Definition, DefinitionLink, ReferenceContext, DocumentHighlight, SymbolInformation,
 	CodeLens, CodeActionContext, FormattingOptions, DocumentLink, MarkupKind, SymbolKind, CompletionItemKind,
 	CodeAction, CodeActionKind, DocumentSymbol, CompletionItemTag, DiagnosticTag, SymbolTag, uinteger, integer,
-	InsertTextMode
+	InsertTextMode, LSPAny
 } from 'vscode-languageserver-types';
 
 import * as Is from './utils/is';
@@ -182,7 +182,7 @@ export interface Registration {
 	/**
 	 * Options necessary for the registration.
 	 */
-	registerOptions?: any;
+	registerOptions?: LSPAny;
 }
 
 export interface RegistrationParams {
@@ -1032,7 +1032,7 @@ export interface _InitializeParams extends WorkDoneProgressParams {
 	/**
 	 * User provided initialization options.
 	 */
-	initializationOptions?: any;
+	initializationOptions?: LSPAny;
 
 	/**
 	 * The initial trace setting. If omitted trace is disabled ('off').
@@ -1072,7 +1072,7 @@ export interface InitializeResult<T = any> {
 	/**
 	 * Custom initialization results.
 	 */
-	[custom: string]: any;
+	[custom: string]: LSPAny | ServerCapabilities<T> | undefined; /** undefined is needed since serverInfo is optional */
 }
 
 /**
@@ -1164,7 +1164,7 @@ export interface DidChangeConfigurationParams {
 	/**
 	 * The actual changed settings
 	 */
-	settings: any;
+	settings: LSPAny;
 }
 
 //---- Message show and log notifications ----
@@ -3173,7 +3173,7 @@ export interface ExecuteCommandParams extends WorkDoneProgressParams {
 	/**
 	 * Arguments that the command should be invoked with.
 	 */
-	arguments?: any[];
+	arguments?: LSPAny[];
 }
 
 /**
@@ -3197,7 +3197,7 @@ export interface ExecuteCommandRegistrationOptions extends ExecuteCommandOptions
  * a workspace edit which the client will apply to the workspace.
  */
 export namespace ExecuteCommandRequest {
-	export const type = new ProtocolRequestType<ExecuteCommandParams, any | null, never, void, ExecuteCommandRegistrationOptions>('workspace/executeCommand');
+	export const type = new ProtocolRequestType<ExecuteCommandParams, LSPAny | null, never, void, ExecuteCommandRegistrationOptions>('workspace/executeCommand');
 }
 
 //---- Apply Edit request ----------------------------------------

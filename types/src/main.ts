@@ -45,6 +45,28 @@ export namespace uinteger {
  */
 export type decimal = number;
 
+
+/**
+ * The LSP any type
+ *
+ * @since 3.17.0
+ */
+export type LSPAny = LSPObject | LSPArray | string | integer | uinteger | decimal | boolean | null;
+
+/**
+ * LSP object definition.
+ *
+ * @since 3.17.0
+ */
+export type LSPObject = { [key: string]: LSPAny };
+
+/**
+ * LSP arrays.
+ *
+ * @since 3.17.0
+ */
+export type LSPArray = LSPAny[];
+
 /**
  * Position in a text document expressed as zero-based line and character offset.
  * The offsets are based on a UTF-16 string representation. So a string of the form
@@ -657,7 +679,7 @@ export interface Diagnostic {
 	 *
 	 * @since 3.16.0
 	 */
-	data?: unknown;
+	data?: LSPAny;
 }
 
 /**
@@ -721,7 +743,7 @@ export interface Command {
 	 * Arguments that the command handler should be
 	 * invoked with.
 	 */
-	arguments?: any[];
+	arguments?: LSPAny[];
 }
 
 
@@ -2174,7 +2196,7 @@ export interface CompletionItem {
 	 * A data entry field that is preserved on a completion item between a
 	 * [CompletionRequest](#CompletionRequest) and a [CompletionResolveRequest](#CompletionResolveRequest).
 	 */
-	data?: any;
+	data?: LSPAny;
 }
 
 /**
@@ -2628,14 +2650,14 @@ export namespace SymbolInformation {
 	 * @param name The name of the symbol.
 	 * @param kind The kind of the symbol.
 	 * @param range The range of the location of the symbol.
-	 * @param uri The resource of the location of symbol, defaults to the current document.
+	 * @param uri The resource of the location of symbol.
 	 * @param containerName The name of the symbol containing the symbol.
 	 */
-	export function create(name: string, kind: SymbolKind, range: Range, uri?: string, containerName?: string): SymbolInformation {
+	export function create(name: string, kind: SymbolKind, range: Range, uri: DocumentUri, containerName?: string): SymbolInformation {
 		let result: SymbolInformation = {
 			name,
 			kind,
-			location: { uri: uri as any, range }
+			location: { uri, range }
 		};
 		if (containerName) {
 			result.containerName = containerName;
@@ -2961,7 +2983,7 @@ export interface CodeAction {
 	 *
 	 * @since 3.16.0
 	 */
-	data?: unknown;
+	data?: LSPAny;
 }
 
 export namespace CodeAction {
@@ -3042,7 +3064,7 @@ export interface CodeLens {
 	 * a [CodeLensRequest](#CodeLensRequest) and a [CodeLensResolveRequest]
 	 * (#CodeLensResolveRequest)
 	 */
-	data?: any
+	data?: LSPAny;
 }
 
 /**
@@ -3053,7 +3075,7 @@ export namespace CodeLens {
 	/**
 	 * Creates a new CodeLens literal.
 	 */
-	export function create(range: Range, data?: any): CodeLens {
+	export function create(range: Range, data?: LSPAny): CodeLens {
 		let result: CodeLens = { range };
 		if (Is.defined(data)) { result.data = data; }
 		return result;
@@ -3159,7 +3181,7 @@ export interface DocumentLink {
 	 * A data entry field that is preserved on a document link between a
 	 * DocumentLinkRequest and a DocumentLinkResolveRequest.
 	 */
-	data?: any
+	data?: LSPAny;
 }
 
 /**
@@ -3170,7 +3192,7 @@ export namespace DocumentLink {
 	/**
 	 * Creates a new DocumentLink literal.
 	 */
-	export function create(range: Range, target?: string, data?: any): DocumentLink {
+	export function create(range: Range, target?: string, data?: LSPAny): DocumentLink {
 		return { range, target, data };
 	}
 
@@ -3268,7 +3290,7 @@ export interface CallHierarchyItem {
 	 * A data entry field that is preserved between a call hierarchy prepare and
 	 * incoming calls or outgoing calls requests.
 	 */
-	data?: unknown;
+	data?: LSPAny;
 }
 
 /**
@@ -3453,40 +3475,47 @@ export interface TypeHierarchyItem {
 	 * The name of this item.
 	 */
 	name: string;
+
 	/**
 	 * The kind of this item.
 	 */
 	kind: SymbolKind;
+
 	/**
 	 * Tags for this item.
 	 */
 	tags?: SymbolTag[];
+
 	/**
 	 * More detail for this item, e.g. the signature of a function.
 	 */
 	detail?: string;
+
 	/**
 	 * The resource identifier of this item.
 	 */
 	uri: DocumentUri;
+
 	/**
 	 * The range enclosing this symbol not including leading/trailing whitespace
 	 * but everything else, e.g. comments and code.
 	 */
 	range: Range;
+
 	/**
 	 * The range that should be selected and revealed when this symbol is being
 	 * picked, e.g. the name of a function. Must be contained by the
 	 * [`range`](#TypeHierarchyItem.range).
 	 */
 	selectionRange: Range;
+
 	/**
 	 * A data entry field that is preserved between a type hierarchy prepare and
 	 * supertypes or subtypes requests. It could also be used to identify the
 	 * type hierarchy in the server, helping improve the performance on
 	 * resolving supertypes and subtypes.
 	 */
-	data?: unknown;
+	data?: LSPAny;
 }
 
 /**

@@ -3728,6 +3728,9 @@ export abstract class BaseLanguageClient {
 	}
 
 	private handleRegistrationRequest(params: RegistrationParams): Promise<void> {
+		interface WithDocumentSelector {
+			documentSelector: DocumentSelector | undefined;
+		}
 		return new Promise<void>((resolve, reject) => {
 			for (const registration of params.registrations) {
 				const feature = this._dynamicFeatures.get(registration.method);
@@ -3735,8 +3738,8 @@ export abstract class BaseLanguageClient {
 					reject(new Error(`No feature implementation for ${registration.method} found. Registration failed.`));
 					return;
 				}
-				const options = registration.registerOptions || {};
-				options.documentSelector = options.documentSelector || this._clientOptions.documentSelector;
+				const options = registration.registerOptions ?? {};
+				(options as unknown as WithDocumentSelector).documentSelector = (options as unknown as WithDocumentSelector).documentSelector ?? this._clientOptions.documentSelector;
 				const data: RegistrationData<any> = {
 					id: registration.id,
 					registerOptions: options
