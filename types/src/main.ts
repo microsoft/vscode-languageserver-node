@@ -2902,6 +2902,28 @@ export namespace CodeActionKind {
 	export const SourceFixAll: CodeActionKind = 'source.fixAll';
 }
 
+/**
+ * The reason why code actions were requested.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export namespace CodeActionTriggerKind {
+	/**
+	 * Code actions were explicitly requested by the user or by an extension.
+	 */
+	export const Invoked: 1 = 1;
+
+	/**
+	 * Code actions were requested automatically.
+	 *
+	 * This typically happens when current selection in a file changes, but can
+	 * also be triggered when file content changes.
+	 */
+	export const Automatic: 2 = 2;
+}
+
+export type CodeActionTriggerKind = 1 | 2;
+
 
 /**
  * Contains additional diagnostic information about the context in which
@@ -2924,6 +2946,13 @@ export interface CodeActionContext {
 	 * can omit computing them.
 	 */
 	only?: CodeActionKind[];
+
+	/**
+	 * The reason why code actions were requested.
+	 *
+	 * @since 3.17.0
+	 */
+	triggerKind?: CodeActionTriggerKind;
 }
 
 /**
@@ -2934,10 +2963,13 @@ export namespace CodeActionContext {
 	/**
 	 * Creates a new CodeActionContext literal.
 	 */
-	export function create(diagnostics: Diagnostic[], only?: CodeActionKind[]): CodeActionContext {
+	export function create(diagnostics: Diagnostic[], only?: CodeActionKind[], triggerKind?: CodeActionTriggerKind): CodeActionContext {
 		let result: CodeActionContext = { diagnostics };
 		if (only !== undefined && only !== null) {
 			result.only = only;
+		}
+		if (triggerKind !== undefined && triggerKind !== null) {
+			result.triggerKind = triggerKind;
 		}
 		return result;
 	}
@@ -2946,7 +2978,9 @@ export namespace CodeActionContext {
 	 */
 	export function is(value: any): value is CodeActionContext {
 		let candidate = value as CodeActionContext;
-		return Is.defined(candidate) && Is.typedArray<Diagnostic[]>(candidate.diagnostics, Diagnostic.is) && (candidate.only === undefined || Is.typedArray(candidate.only, Is.string));
+		return Is.defined(candidate) && Is.typedArray<Diagnostic[]>(candidate.diagnostics, Diagnostic.is)
+			&& (candidate.only === undefined || Is.typedArray(candidate.only, Is.string))
+			&& (candidate.triggerKind === undefined || candidate.triggerKind === CodeActionTriggerKind.Invoked || candidate.triggerKind === CodeActionTriggerKind.Automatic);
 	}
 }
 

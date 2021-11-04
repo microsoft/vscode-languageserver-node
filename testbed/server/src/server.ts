@@ -419,7 +419,7 @@ connection.onSignatureHelp((item): SignatureHelp => {
 });
 
 connection.onDefinition((params): DefinitionLink[] => {
-	// return { uri: params.textDocument.uri, range: { start: { line: 0, character: 0}, end: {line: 0, character: 10 }}};
+	throw new Error('No definition found');
 	return [{
 		targetUri: params.textDocument.uri,
 		targetRange: { start: { line: 0, character: 2}, end: {line: 5, character: 45 } },
@@ -477,11 +477,11 @@ connection.onDocumentSymbol((identifier) => {
 		SymbolInformation.create('Item 1', SymbolKind.Function, {
 			start: { line: 0, character: 0 },
 			end: { line: 0, character: 10 }
-		}),
+		}, identifier.textDocument.uri),
 		SymbolInformation.create('Item 2', SymbolKind.Function, {
 			start: { line: 1, character: 0 },
 			end: { line: 1, character: 10 }
-		})
+		}, identifier.textDocument.uri)
 	];
 });
 

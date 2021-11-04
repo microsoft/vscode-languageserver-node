@@ -1364,6 +1364,17 @@ suite('Code Converter', () => {
 
 		let result = c2p.asCodeActionContext(<any>item);
 		ok(result.diagnostics.every(elem => proto.Diagnostic.is(elem)));
+		strictEqual(result.triggerKind, proto.CodeActionTriggerKind.Invoked);
+	});
+
+	test('CodeActionContext - automatic', () => {
+		let item: vscode.CodeActionContext = {
+			diagnostics: [],
+			triggerKind: vscode.CodeActionTriggerKind.Automatic
+		};
+
+		let result = c2p.asCodeActionContext(<any>item);
+		strictEqual(result.triggerKind, proto.CodeActionTriggerKind.Automatic);
 	});
 
 	test('Uri Rewrite', () => {

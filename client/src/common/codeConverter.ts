@@ -716,10 +716,21 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			return context;
 		}
 		let only: proto.CodeActionKind[] | undefined;
-		if(context.only && Is.string(context.only.value)) {
+		if (context.only && Is.string(context.only.value)) {
 			only = [context.only.value];
 		}
-		return proto.CodeActionContext.create(asDiagnostics(context.diagnostics), only);
+		return proto.CodeActionContext.create(asDiagnostics(context.diagnostics), only, asCodeActionTriggerKind(context.triggerKind));
+	}
+
+	function asCodeActionTriggerKind(kind: code.CodeActionTriggerKind): proto.CodeActionTriggerKind | undefined {
+		switch (kind) {
+			case code.CodeActionTriggerKind.Invoke:
+				return proto.CodeActionTriggerKind.Invoked;
+			case code.CodeActionTriggerKind.Automatic:
+				return proto.CodeActionTriggerKind.Automatic;
+			default:
+				return undefined;
+		}
 	}
 
 	function asCodeActionKind(item: code.CodeActionKind | null | undefined): proto.CodeActionKind | undefined {
