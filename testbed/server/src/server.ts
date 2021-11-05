@@ -419,7 +419,6 @@ connection.onSignatureHelp((item): SignatureHelp => {
 });
 
 connection.onDefinition((params): DefinitionLink[] => {
-	throw new Error('No definition found');
 	return [{
 		targetUri: params.textDocument.uri,
 		targetRange: { start: { line: 0, character: 2}, end: {line: 5, character: 45 } },

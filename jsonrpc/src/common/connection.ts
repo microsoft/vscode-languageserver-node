@@ -848,16 +848,17 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 						const params = message.params;
 						if (message.method === ProgressNotification.type.method && params.length === 2 && ProgressToken.is(params[0])) {
 							notificationHandler({ token: params[0], value: params[1] } as ProgressParams<any>);
-						}
-						if (type !== undefined) {
-							if (type.parameterStructures === ParameterStructures.byName) {
-								logger.error(`Notification ${message.method} defines parameters by name but received parameters by position`);
+						} else {
+							if (type !== undefined) {
+								if (type.parameterStructures === ParameterStructures.byName) {
+									logger.error(`Notification ${message.method} defines parameters by name but received parameters by position`);
+								}
+								if (type.numberOfParams !== message.params.length) {
+									logger.error(`Notification ${message.method} defines ${type.numberOfParams} params but received ${params.length} arguments`);
+								}
 							}
-							if (type.numberOfParams !== message.params.length) {
-								logger.error(`Notification ${message.method} defines ${type.numberOfParams} params but received ${params.length} arguments`);
-							}
+							notificationHandler(...params);
 						}
-						notificationHandler(...params);
 					} else {
 						if (type !== undefined && type.parameterStructures === ParameterStructures.byPosition) {
 							logger.error(`Notification ${message.method} defines parameters by position but received parameters by name`);
@@ -997,7 +998,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			let data: string | undefined = undefined;
 			if (trace === Trace.Verbose || trace === Trace.Compact) {
 				if (message.params) {
-					data = `Params: ${Is.string(message.params)}\n\n`;
+					data = `Params: ${stringifyTrace(message.params)}\n\n`;
 				} else {
 					data = 'No parameters provided.\n\n';
 				}
