@@ -34,6 +34,11 @@ namespace CancelNotification {
 }
 
 export type ProgressToken = number | string;
+export namespace ProgressToken {
+	export function is(value: any): value is number | string {
+		return typeof value === 'string' || typeof value === 'number';
+	}
+}
 interface ProgressParams<T> {
 	/**
 	 * The progress token provided by the client or server.
@@ -838,15 +843,21 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 						}
 						notificationHandler();
 					} else if (Array.isArray(message.params)) {
+						// There are JSON-RPC libraries that send progress message as positional params although
+						// specified as named. So convert them if this is the case.
+						const params = message.params;
+						if (message.method === ProgressNotification.type.method && params.length === 2 && ProgressToken.is(params[0])) {
+							notificationHandler({ token: params[0], value: params[1] } as ProgressParams<any>);
+						}
 						if (type !== undefined) {
 							if (type.parameterStructures === ParameterStructures.byName) {
 								logger.error(`Notification ${message.method} defines parameters by name but received parameters by position`);
 							}
 							if (type.numberOfParams !== message.params.length) {
-								logger.error(`Notification ${message.method} defines ${type.numberOfParams} params but received ${message.params.length} arguments`);
+								logger.error(`Notification ${message.method} defines ${type.numberOfParams} params but received ${params.length} arguments`);
 							}
 						}
-						notificationHandler(...message.params);
+						notificationHandler(...params);
 					} else {
 						if (type !== undefined && type.parameterStructures === ParameterStructures.byPosition) {
 							logger.error(`Notification ${message.method} defines parameters by position but received parameters by name`);

@@ -361,7 +361,7 @@ export interface NotificationMessage extends Message {
 	/**
 	 * The notification's params.
 	 */
-	params?: [] | object
+	params?: any[] | object
 }
 
 export class NotificationType<P> extends AbstractMessageSignature {
