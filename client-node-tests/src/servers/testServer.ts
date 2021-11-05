@@ -99,28 +99,36 @@ connection.onInitialize((params: InitializeParams): any => {
 			fileOperations: {
 				// Static reg is folders + .txt files with operation kind in the path
 				didCreate: {
-					filters: [{ scheme: 'file', pattern: { glob: '**/created-static/**{/,/*.txt}' }}]
+					filters: [{ scheme: 'file-test', pattern: { glob: '**/created-static/**{/,/*.txt}' } }]
 				},
 				didRename: {
 					filters: [
-						{ scheme: 'file', pattern: { glob: '**/renamed-static/**/', matches: 'folder' } },
-						{ scheme: 'file', pattern: { glob: '**/renamed-static/**/*.txt', matches: 'file' } }
+						{ scheme: 'file-test', pattern: { glob: '**/renamed-static/**/', matches: 'folder' } },
+						{ scheme: 'file-test', pattern: { glob: '**/renamed-static/**/*.txt', matches: 'file' } },
+						// Additionally, to ensure we detect file types correctly, subscribe to only files in
+						// this folder.
+						{ scheme: 'file-test', pattern: { glob: '**/only-files/**/*', matches: 'file' } }
 					]
 				},
 				didDelete: {
-					filters: [{ scheme: 'file', pattern: { glob: '**/deleted-static/**{/,/*.txt}' } }]
+					filters: [
+						{ scheme: 'file-test', pattern: { glob: '**/deleted-static/**{/,/*.txt}' } },
+						// Additionally, to ensure we detect file types correctly, subscribe to only files in
+						// this folder.
+						{ scheme: 'file-test', pattern: { glob: '**/only-files/**/*', matches: 'file' } }
+					]
 				},
 				willCreate: {
-					filters: [{ scheme: 'file', pattern: { glob: '**/created-static/**{/,/*.txt}' } }]
+					filters: [{ scheme: 'file-test', pattern: { glob: '**/created-static/**{/,/*.txt}' } }]
 				},
 				willRename: {
 					filters: [
-						{ scheme: 'file', pattern: { glob: '**/renamed-static/**/', matches: 'folder' } },
-						{ scheme: 'file', pattern: { glob: '**/renamed-static/**/*.txt', matches: 'file' } }
+						{ scheme: 'file-test', pattern: { glob: '**/renamed-static/**/', matches: 'folder' } },
+						{ scheme: 'file-test', pattern: { glob: '**/renamed-static/**/*.txt', matches: 'file' } }
 					]
 				},
 				willDelete: {
-					filters: [{ scheme: 'file', pattern: { glob: '**/deleted-static/**{/,/*.txt}' } }]
+					filters: [{ scheme: 'file-test', pattern: { glob: '**/deleted-static/**{/,/*.txt}' } }]
 				},
 			},
 		},
@@ -138,28 +146,28 @@ connection.onInitialize((params: InitializeParams): any => {
 connection.onInitialized(() => {
 	// Dynamic reg is folders + .js files with operation kind in the path
 	void connection.client.register(DidCreateFilesNotification.type, {
-		filters: [{ scheme: 'file', pattern: { glob: '**/created-dynamic/**{/,/*.js}' } }]
+		filters: [{ scheme: 'file-test', pattern: { glob: '**/created-dynamic/**{/,/*.js}' } }]
 	});
 	void connection.client.register(DidRenameFilesNotification.type, {
 		filters: [
-			{ scheme: 'file', pattern: { glob: '**/renamed-dynamic/**/', matches: 'folder' } },
-			{ scheme: 'file', pattern: { glob: '**/renamed-dynamic/**/*.js', matches: 'file' } }
+			{ scheme: 'file-test', pattern: { glob: '**/renamed-dynamic/**/', matches: 'folder' } },
+			{ scheme: 'file-test', pattern: { glob: '**/renamed-dynamic/**/*.js', matches: 'file' } }
 		]
 	});
 	void connection.client.register(DidDeleteFilesNotification.type, {
-		filters: [ { scheme: 'file', pattern: { glob: '**/deleted-dynamic/**{/,/*.js}' } }]
+		filters: [{ scheme: 'file-test', pattern: { glob: '**/deleted-dynamic/**{/,/*.js}' } }]
 	});
 	void connection.client.register(WillCreateFilesRequest.type, {
-		filters: [{ scheme: 'file', pattern: { glob: '**/created-dynamic/**{/,/*.js}' } }]
+		filters: [{ scheme: 'file-test', pattern: { glob: '**/created-dynamic/**{/,/*.js}' } }]
 	});
 	void connection.client.register(WillRenameFilesRequest.type, {
 		filters: [
-			{ scheme: 'file', pattern: { glob: '**/renamed-dynamic/**/', matches: 'folder' } },
-			{ scheme: 'file', pattern: { glob: '**/renamed-dynamic/**/*.js', matches: 'file' } }
+			{ scheme: 'file-test', pattern: { glob: '**/renamed-dynamic/**/', matches: 'folder' } },
+			{ scheme: 'file-test', pattern: { glob: '**/renamed-dynamic/**/*.js', matches: 'file' } }
 		]
 	});
 	void connection.client.register(WillDeleteFilesRequest.type, {
-		filters: [{scheme: 'file', pattern: { glob: '**/deleted-dynamic/**{/,/*.js}' } }]
+		filters: [{ scheme: 'file-test', pattern: { glob: '**/deleted-dynamic/**{/,/*.js}' } }]
 	});
 });
 

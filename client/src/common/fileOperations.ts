@@ -51,7 +51,7 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 	private _clientCapability: keyof proto.FileOperationClientCapabilities;
 	private _serverCapability: keyof proto.FileOperationOptions;
 	private _listener: code.Disposable | undefined;
-	private _filters = new Map<string, Array<{ scheme?: string, matcher: minimatch.IMinimatch, kind?: proto.FileOperationPatternKind }>>();
+	protected _filters = new Map<string, Array<{ scheme?: string, matcher: minimatch.IMinimatch, kind?: proto.FileOperationPatternKind }>>();
 
 	constructor(client: BaseLanguageClient, event: code.Event<E>,
 		registrationType: proto.RegistrationType<proto.FileOperationRegistrationOptions>,
@@ -123,6 +123,10 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 		}
 	}
 
+	protected getFileType(uri: code.Uri): Promise<code.FileType | undefined> {
+		return FileOperationFeature.getFileType(uri);;
+	}
+
 	protected async filter(event: E, prop: (i: I) => code.Uri): Promise<E> {
 		// (Asynchronously) map each file onto a boolean of whether it matches
 		// any of the globs.
@@ -141,7 +145,7 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 						if (filter.kind === undefined) {
 							return true;
 						}
-						const fileType = await FileOperationFeature.getFileType(uri);
+						const fileType = await this.getFileType(uri);
 						// If we can't determine the file type than we treat it as a match.
 						// Dropping it would be another alternative.
 						if (fileType === undefined) {
@@ -168,7 +172,7 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 		return { ...event, files };
 	}
 
-	private static async getFileType(uri: code.Uri): Promise<code.FileType | undefined> {
+	protected static async getFileType(uri: code.Uri): Promise<code.FileType | undefined> {
 		try {
 			return (await code.workspace.fs.stat(uri)).type;
 		} catch (e) {
@@ -221,6 +225,51 @@ abstract class NotificationFileOperationFeature<I, E extends { readonly files: R
 	protected abstract doSend(event: E, next: (event: E) => Promise<void>): Promise<void>;
 }
 
+abstract class CachingNotificationFileOperationFeature<I, E extends { readonly files: ReadonlyArray<I>; }, P> extends NotificationFileOperationFeature<I, E, P> {
+	protected _willListener: code.Disposable | undefined;
+	private readonly _fsPathFileTypes = new Map<String, code.FileType>();
+
+	protected async getFileType(uri: code.Uri): Promise<code.FileType | undefined> {
+		const fsPath = uri.fsPath;
+		if (this._fsPathFileTypes.has(fsPath))
+			return this._fsPathFileTypes.get(fsPath);
+
+		const type = await FileOperationFeature.getFileType(uri);
+		if (type)
+			this._fsPathFileTypes.set(fsPath, type);
+		return type;
+	}
+
+	protected async cacheFileTypes(event: E, prop: (i: I) => code.Uri) {
+		// Calling filter will force the matching logic to run. For any item
+		// that requires a getFileType lookup, the overriden getFileType will
+		// be called that will cache the result so that when onDidRename fires,
+		// it can still be checked even though the item no longer exists on disk
+		// in its original location.
+		await this.filter(event, prop);
+	}
+
+	protected clearFileTypeCache() {
+		this._fsPathFileTypes.clear();
+	}
+
+	public unregister(id: string): void {
+		super.unregister(id);
+		if (this._filters.size === 0 && this._willListener) {
+			this._willListener.dispose();
+			this._willListener = undefined;
+		}
+	}
+
+	public dispose(): void {
+		super.dispose();
+		if (this._willListener) {
+			this._willListener.dispose();
+			this._willListener = undefined;
+		}
+	}
+}
+
 export class DidCreateFilesFeature extends NotificationFileOperationFeature<code.Uri, code.FileCreateEvent, proto.CreateFilesParams> {
 
 	constructor(client: BaseLanguageClient) {
@@ -239,7 +288,7 @@ export class DidCreateFilesFeature extends NotificationFileOperationFeature<code
 	}
 }
 
-export class DidRenameFilesFeature extends NotificationFileOperationFeature<{ oldUri: code.Uri, newUri: code.Uri }, code.FileRenameEvent, proto.RenameFilesParams> {
+export class DidRenameFilesFeature extends CachingNotificationFileOperationFeature<{ oldUri: code.Uri, newUri: code.Uri }, code.FileRenameEvent, proto.RenameFilesParams> {
 
 	constructor(client: BaseLanguageClient) {
 		super(
@@ -249,7 +298,19 @@ export class DidRenameFilesFeature extends NotificationFileOperationFeature<{ ol
 		);
 	}
 
+	public register(data: RegistrationData<proto.FileOperationRegistrationOptions>): void {
+		if (!this._willListener) {
+			this._willListener = code.workspace.onWillRenameFiles(this.willRename, this);
+		}
+		super.register(data);
+	}
+
+	private willRename(e: code.FileWillRenameEvent): void {
+		e.waitUntil(this.cacheFileTypes(e, (i) => i.oldUri));
+	}
+
 	protected doSend(event: code.FileRenameEvent, next: (event: code.FileRenameEvent) => Promise<void>): Promise<void> {
+		this.clearFileTypeCache();
 		const middleware = this._client.clientOptions.middleware?.workspace;
 		return middleware?.didRenameFiles
 			? middleware.didRenameFiles(event, next)
@@ -257,7 +318,7 @@ export class DidRenameFilesFeature extends NotificationFileOperationFeature<{ ol
 	}
 }
 
-export class DidDeleteFilesFeature extends NotificationFileOperationFeature<code.Uri, code.FileDeleteEvent, proto.DeleteFilesParams> {
+export class DidDeleteFilesFeature extends CachingNotificationFileOperationFeature<code.Uri, code.FileDeleteEvent, proto.DeleteFilesParams> {
 
 	constructor(client: BaseLanguageClient) {
 		super(
@@ -267,7 +328,19 @@ export class DidDeleteFilesFeature extends NotificationFileOperationFeature<code
 		);
 	}
 
+	public register(data: RegistrationData<proto.FileOperationRegistrationOptions>): void {
+		if (!this._willListener) {
+			this._willListener = code.workspace.onWillDeleteFiles(this.willDelete, this);
+		}
+		super.register(data);
+	}
+
+	private willDelete(e: code.FileWillDeleteEvent): void {
+		e.waitUntil(this.cacheFileTypes(e, (i) => i));
+	}
+
 	protected doSend(event: code.FileCreateEvent, next: (event: code.FileCreateEvent) => Promise<void>): Promise<void> {
+		this.clearFileTypeCache();
 		const middleware = this._client.clientOptions.middleware?.workspace;
 		return middleware?.didDeleteFiles
 			? middleware.didDeleteFiles(event, next)
