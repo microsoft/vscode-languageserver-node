@@ -815,8 +815,8 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		// Symbol kind is one based in the protocol and zero based in code.
 		let result = new code.SymbolInformation(
 			item.name, asSymbolKind(item.kind),
-			asRange(item.location.range),
-			item.location.uri ? _uriConverter(item.location.uri) : uri);
+			item.containerName!,
+			new code.Location(item.location.uri ? _uriConverter(item.location.uri) : uri!, asRange(item.location.range)));
 		fillTags(result, item);
 		if (item.containerName) { result.containerName = item.containerName; }
 		return result;
