@@ -107,11 +107,11 @@ export interface Converter {
 	asSymbolTags(items: ReadonlyArray<ls.SymbolTag>): code.SymbolTag[];
 	asSymbolTags(items: ReadonlyArray<ls.SymbolTag> | undefined | null): code.SymbolTag[] | undefined;
 
-	asSymbolInformation(item: ls.SymbolInformation, uri?: code.Uri): code.SymbolInformation;
+	asSymbolInformation(item: ls.SymbolInformation): code.SymbolInformation;
 
-	asSymbolInformations(values: ls.SymbolInformation[], uri?: code.Uri): code.SymbolInformation[];
-	asSymbolInformations(values: undefined | null, uri?: code.Uri): undefined;
-	asSymbolInformations(values: ls.SymbolInformation[] | undefined | null, uri?: code.Uri): code.SymbolInformation[] | undefined;
+	asSymbolInformations(values: ls.SymbolInformation[]): code.SymbolInformation[];
+	asSymbolInformations(values: undefined | null): undefined;
+	asSymbolInformations(values: ls.SymbolInformation[] | undefined | null): code.SymbolInformation[] | undefined;
 
 	asDocumentSymbol(value: ls.DocumentSymbol): code.DocumentSymbol;
 
@@ -767,14 +767,14 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return code.DocumentHighlightKind.Text;
 	}
 
-	function asSymbolInformations(values: ls.SymbolInformation[], uri?: code.Uri): code.SymbolInformation[];
-	function asSymbolInformations(values: undefined | null, uri?: code.Uri): undefined;
-	function asSymbolInformations(values: ls.SymbolInformation[] | undefined | null, uri?: code.Uri): code.SymbolInformation[] | undefined;
-	function asSymbolInformations(values: ls.SymbolInformation[] | undefined | null, uri?: code.Uri): code.SymbolInformation[] | undefined {
+	function asSymbolInformations(values: ls.SymbolInformation[]): code.SymbolInformation[];
+	function asSymbolInformations(values: undefined | null): undefined;
+	function asSymbolInformations(values: ls.SymbolInformation[] | undefined | null): code.SymbolInformation[] | undefined;
+	function asSymbolInformations(values: ls.SymbolInformation[] | undefined | null): code.SymbolInformation[] | undefined {
 		if (!values) {
 			return undefined;
 		}
-		return values.map(information => asSymbolInformation(information, uri));
+		return values.map(information => asSymbolInformation(information));
 	}
 
 	function asSymbolKind(item: ls.SymbolKind): code.SymbolKind {
@@ -811,12 +811,12 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return result.length === 0 ? undefined : result;
 	}
 
-	function asSymbolInformation(item: ls.SymbolInformation, uri?: code.Uri): code.SymbolInformation {
+	function asSymbolInformation(item: ls.SymbolInformation): code.SymbolInformation {
 		// Symbol kind is one based in the protocol and zero based in code.
 		let result = new code.SymbolInformation(
 			item.name, asSymbolKind(item.kind),
 			item.containerName!,
-			new code.Location(item.location.uri ? _uriConverter(item.location.uri) : uri!, asRange(item.location.range)));
+			new code.Location(_uriConverter(item.location.uri), asRange(item.location.range)));
 		fillTags(result, item);
 		if (item.containerName) { result.containerName = item.containerName; }
 		return result;
