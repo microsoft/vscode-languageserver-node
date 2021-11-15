@@ -235,6 +235,7 @@ export enum ErrorAction {
 	 * Continue running the server.
 	 */
 	Continue = 1,
+
 	/**
 	 * Shutdown the server.
 	 */
@@ -249,12 +250,36 @@ export enum CloseAction {
 	 * Don't restart the server. The connection stays closed.
 	 */
 	DoNotRestart = 1,
+
 	/**
 	 * Restart the server.
 	 */
 	Restart = 2,
 }
 
+export interface ErrorHandlerResult {
+	/**
+	 * The action to take.
+	 */
+	action: ErrorAction;
+
+	/**
+	 * An optional message to be presented to the user.
+	 */
+	message?: string;
+}
+
+export interface CloseHandlerResult {
+	/**
+	 * The action to take.
+	 */
+	action: CloseAction;
+
+	/**
+	 * An optional message to be presented to the user.
+	 */
+	message?: string;
+}
 
 /**
  * A plugable error handler that is invoked when the connection is either
@@ -269,40 +294,40 @@ export interface ErrorHandler {
 	 * @param count - a count indicating how often an error is received. Will
 	 *  be reset if a message got successfully send or received.
 	 */
-	error(error: Error, message: Message | undefined, count: number | undefined): ErrorAction;
+	error(error: Error, message: Message | undefined, count: number | undefined): ErrorHandlerResult;
 
 	/**
 	 * The connection to the server got closed.
 	 */
-	closed(): CloseAction
+	closed(): CloseHandlerResult
 }
 
 class DefaultErrorHandler implements ErrorHandler {
 
 	private readonly restarts: number[];
 
-	constructor(private name: string, private maxRestartCount: number) {
+	constructor(private client: BaseLanguageClient, private maxRestartCount: number) {
 		this.restarts = [];
 	}
 
-	public error(_error: Error, _message: Message, count: number): ErrorAction {
+	public error(_error: Error, _message: Message, count: number): ErrorHandlerResult {
 		if (count && count <= 3) {
-			return ErrorAction.Continue;
+			return { action: ErrorAction.Continue };
 		}
-		return ErrorAction.Shutdown;
+		return { action: ErrorAction.Shutdown };
 	}
-	public closed(): CloseAction {
+
+	public closed(): CloseHandlerResult {
 		this.restarts.push(Date.now());
 		if (this.restarts.length <= this.maxRestartCount) {
-			return CloseAction.Restart;
+			return { action: CloseAction.Restart };
 		} else {
 			let diff = this.restarts[this.restarts.length - 1] - this.restarts[0];
 			if (diff <= 3 * 60 * 1000) {
-				void Window.showErrorMessage(`The ${this.name} server crashed ${this.maxRestartCount+1} times in the last 3 minutes. The server will not be restarted.`);
-				return CloseAction.DoNotRestart;
+				return { action: CloseAction.DoNotRestart, message: `The ${this.client.name} server crashed ${this.maxRestartCount+1} times in the last 3 minutes. The server will not be restarted. The output for more information.` };
 			} else {
 				this.restarts.shift();
-				return CloseAction.Restart;
+				return { action: CloseAction.Restart };
 			}
 		}
 	}
@@ -2946,6 +2971,10 @@ export abstract class BaseLanguageClient {
 		});
 	}
 
+	public get name(): string {
+		return this._name;
+	}
+
 	public get clientOptions(): LanguageClientOptions {
 		return this._clientOptions;
 	}
@@ -2988,7 +3017,7 @@ export abstract class BaseLanguageClient {
 		if (maxRestartCount !== undefined && maxRestartCount < 0) {
 			throw new Error(`Invalid maxRestartCount: ${maxRestartCount}`);
 		}
-		return new DefaultErrorHandler(this._name, maxRestartCount ?? 4);
+		return new DefaultErrorHandler(this, maxRestartCount ?? 4);
 	}
 
 	public set trace(value: Trace) {
@@ -3027,7 +3056,7 @@ export abstract class BaseLanguageClient {
 			this.outputChannel.appendLine(this.data2String(data));
 		}
 		if (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Info) {
-			this.showNotificationMessage();
+			this.showNotificationMessage(MessageType.Info, message);
 		}
 	}
 
@@ -3037,22 +3066,28 @@ export abstract class BaseLanguageClient {
 			this.outputChannel.appendLine(this.data2String(data));
 		}
 		if (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Warn) {
-			this.showNotificationMessage();
+			this.showNotificationMessage(MessageType.Warning, message);
 		}
 	}
 
-	public error(message: string, data?: any, showNotification: boolean = true): void {
+	public error(message: string, data?: any, showNotification: boolean | 'force' = true): void {
 		this.outputChannel.appendLine(`[Error - ${(new Date().toLocaleTimeString())}] ${message}`);
 		if (data !== null && data !== undefined) {
 			this.outputChannel.appendLine(this.data2String(data));
 		}
-		if (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Error) {
-			this.showNotificationMessage();
+		if (showNotification === 'force' || (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Error)) {
+			this.showNotificationMessage(MessageType.Error, message);
 		}
 	}
 
-	private showNotificationMessage() {
-		void Window.showInformationMessage('A request has failed. See the output for more information.', 'Go to output').then((selection) => {
+	private showNotificationMessage(type: MessageType, message?: string) {
+		message = message ?? 'A request has failed. See the output for more information.';
+		const messageFunc = type === MessageType.Error
+			? Window.showErrorMessage
+			: type === MessageType.Warning
+				? Window.showWarningMessage
+				: Window.showInformationMessage;
+		void messageFunc(message, 'Go to output').then((selection) => {
 			if (selection !== undefined) {
 				this.outputChannel.show(true);
 			}
@@ -3198,8 +3233,7 @@ export abstract class BaseLanguageClient {
 		}).catch((error) => {
 			this.state = ClientState.StartFailed;
 			this._onReadyCallbacks.reject(error);
-			this.error('Starting client failed', error);
-			void Window.showErrorMessage(`Couldn't start client ${this._name}`);
+			this.error(`${this._name} client: couldn't create connection to server`, error, 'force');
 		});
 		return new Disposable(() => {
 			if (this.needsStop()) {
@@ -3500,18 +3534,18 @@ export abstract class BaseLanguageClient {
 		} catch (error) {
 			// Disposing a connection could fail if error cases.
 		}
-		let action = CloseAction.DoNotRestart;
+		let handlerResult: CloseHandlerResult = { action: CloseAction.DoNotRestart };
 		if (this.state !== ClientState.Stopping) {
 			try {
-				action = this._clientOptions.errorHandler!.closed();
+				handlerResult = this._clientOptions.errorHandler!.closed();
 			} catch (error) {
 				// Ignore errors coming from the error handler.
 			}
 		}
 		this._connectionPromise = undefined;
 		this._resolvedConnection = undefined;
-		if (action === CloseAction.DoNotRestart) {
-			this.error('Connection to server got closed. Server will not be restarted.');
+		if (handlerResult.action === CloseAction.DoNotRestart) {
+			this.error(handlerResult.message ?? 'Connection to server got closed. Server will not be restarted.', undefined, 'force');
 			if (this.state === ClientState.Starting) {
 				this._onReadyCallbacks.reject(new Error(`Connection to server got closed. Server will not be restarted.`));
 				this.state = ClientState.StartFailed;
@@ -3519,8 +3553,8 @@ export abstract class BaseLanguageClient {
 				this.state = ClientState.Stopped;
 			}
 			this.cleanUp(false, true);
-		} else if (action === CloseAction.Restart) {
-			this.info('Connection to server got closed. Server will restart.');
+		} else if (handlerResult.action === CloseAction.Restart) {
+			this.info(handlerResult.message ?? 'Connection to server got closed. Server will restart.');
 			this.cleanUp(false, false);
 			this.state = ClientState.Initial;
 			this.start();
@@ -3528,9 +3562,9 @@ export abstract class BaseLanguageClient {
 	}
 
 	private handleConnectionError(error: Error, message: Message | undefined, count: number | undefined): void {
-		const action = this._clientOptions.errorHandler!.error(error, message, count);
-		if (action === ErrorAction.Shutdown) {
-			this.error('Connection to server is erroring. Shutting down server.');
+		const handlerResult: ErrorHandlerResult = this._clientOptions.errorHandler!.error(error, message, count);
+		if (handlerResult.action === ErrorAction.Shutdown) {
+			this.error(handlerResult.message ?? `Client ${this._name}: connection to server is erroring. Shutting down server.`, undefined, 'force');
 			this.stop().catch((error) => {
 				this.error(`Stopping server failed`, error, false);
 			});
