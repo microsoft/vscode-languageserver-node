@@ -52,6 +52,7 @@
 			"script": "watch:testbed",
 			"group": "build",
 			"isBackground": true,
+			"dependsOn":[ "npm: symlink:testbed" ],
 			"presentation": {
 				"panel": "dedicated",
 				"reveal": "never"
@@ -60,5 +61,12 @@
 				"$tsc-watch"
 			]
 		},
+		{
+			"type": "npm",
+			"script": "symlink:testbed",
+			"problemMatcher": [],
+			"label": "npm: symlink:testbed",
+			"detail": "node ./build/bin/symlink-testbed.js"
+		}
 	]
 }
