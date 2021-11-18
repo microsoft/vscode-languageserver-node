@@ -13,12 +13,18 @@ import { ContentEncoder, ContentTypeEncoder } from './encoding';
 const ContentLength: string = 'Content-Length: ';
 const CRLF = '\r\n';
 
-/** Writes JSON-RPC messages to an underlying transport. */
+/**
+ * Writes JSON-RPC messages to an underlying transport.
+ */
 export interface MessageWriter {
-	/** Raised whenever an error occurs while writing a message. */
+	/**
+	 * Raised whenever an error occurs while writing a message.
+	 */
 	readonly onError: Event<[Error, Message | undefined, number | undefined]>;
 
-	/** An event raised when the underlying transport has closed and writing is no longer possible. */
+	/**
+	 * An event raised when the underlying transport has closed and writing is no longer possible.
+	 */
 	readonly onClose: Event<void>;
 
 	/**
@@ -28,6 +34,10 @@ export interface MessageWriter {
 	 */
 	write(msg: Message): Promise<void>;
 
+	/**
+	 * Call when the connection using this message writer ends
+	 * (e.g. MessageConnection.end() is called)
+	 */
 	end(): void;
 
 	/** Releases resources incurred from writing or raising events. Does NOT close the underlying transport, if any. */
