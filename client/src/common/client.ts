@@ -1993,6 +1993,7 @@ class WorkspaceSymbolFeature extends WorkspaceFeature<WorkspaceSymbolRegistratio
 		symbolCapabilities.tagSupport = {
 			valueSet: SupportedSymbolTags
 		};
+		symbolCapabilities.resolveSupport = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities): void {
@@ -2005,9 +2006,9 @@ class WorkspaceSymbolFeature extends WorkspaceFeature<WorkspaceSymbolRegistratio
 		});
 	}
 
-	protected registerLanguageProvider(_options: WorkspaceSymbolRegistrationOptions): [Disposable, WorkspaceSymbolProvider] {
+	protected registerLanguageProvider(options: WorkspaceSymbolRegistrationOptions): [Disposable, WorkspaceSymbolProvider] {
 		const provider: WorkspaceSymbolProvider = {
-			provideWorkspaceSymbols:  (query, token) => {
+			provideWorkspaceSymbols: (query, token) => {
 				const client = this._client;
 				const provideWorkspaceSymbols: ProvideWorkspaceSymbolsSignature = (query, token) => {
 					return client.sendRequest(WorkspaceSymbolRequest.type, { query }, token).then(
@@ -2021,7 +2022,12 @@ class WorkspaceSymbolFeature extends WorkspaceFeature<WorkspaceSymbolRegistratio
 				return middleware.provideWorkspaceSymbols
 					? middleware.provideWorkspaceSymbols(query, token, provideWorkspaceSymbols)
 					: provideWorkspaceSymbols(query, token);
-			}
+			},
+			resolveWorkspaceSymbol: options.resolveProvider === true
+				? (symbol) => {
+					const client = this._client;
+				}
+				: undefined
 		};
 		return [Languages.registerWorkspaceSymbolProvider(provider), provider];
 	}
