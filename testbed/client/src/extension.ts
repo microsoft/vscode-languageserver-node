@@ -16,10 +16,10 @@ export function activate(context: ExtensionContext) {
 	let module = path.join(__dirname, '..', '..', 'server', 'out', 'server.js');
 	let debugOptions = { execArgv: ['--nolazy', '--inspect=6012'] };
 	let serverOptions: ServerOptions = {
-		run: { command: 'run.exe' },
-		debug: { command: 'run.exe' }
-		// run: { module, transport: TransportKind.ipc },
-		// debug: { module, /* runtime: 'node.exe', */ transport: TransportKind.ipc, options: debugOptions}
+		// run: { command: 'run.exe' },
+		// debug: { command: 'run.exe' }
+		run: { module, transport: TransportKind.ipc },
+		debug: { module, /* runtime: 'node.exe', */ transport: TransportKind.ipc, options: debugOptions}
 	};
 
 	let clientOptions: LanguageClientOptions = {
