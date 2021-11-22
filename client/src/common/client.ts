@@ -52,7 +52,7 @@ import {
 	CancellationStrategy, SaveOptions, LSPErrorCodes, CodeActionResolveRequest, RegistrationType, SemanticTokensRegistrationType, InsertTextMode, ShowDocumentRequest,
 	FileOperationRegistrationOptions, WillCreateFilesRequest, WillRenameFilesRequest, WillDeleteFilesRequest, DidCreateFilesNotification, DidDeleteFilesNotification, DidRenameFilesNotification,
 	ShowDocumentParams, ShowDocumentResult, LinkedEditingRangeRequest, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressReport, PrepareSupportDefaultBehavior,
-	SemanticTokensRequest, SemanticTokensRangeRequest, SemanticTokensDeltaRequest, Proposed
+	SemanticTokensRequest, SemanticTokensRangeRequest, SemanticTokensDeltaRequest, Proposed, WorkspaceSymbolResolveRequest
 } from 'vscode-languageserver-protocol';
 
 import { toJSONObject } from './configuration';
@@ -429,6 +429,10 @@ export interface ProvideWorkspaceSymbolsSignature {
 	(this: void, query: string, token: CancellationToken): ProviderResult<VSymbolInformation[]>;
 }
 
+export interface ResolveWorkspaceSymbolSignature {
+	(this: void, item: VSymbolInformation, token: CancellationToken): ProviderResult<VSymbolInformation>;
+}
+
 export interface ProvideCodeActionsSignature {
 	(this: void, document: TextDocument, range: VRange, context: VCodeActionContext, token: CancellationToken): ProviderResult<(VCommand | VCodeAction)[]>;
 }
@@ -525,6 +529,7 @@ export interface _Middleware {
 	provideDocumentHighlights?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideDocumentHighlightsSignature) => ProviderResult<VDocumentHighlight[]>;
 	provideDocumentSymbols?: (this: void, document: TextDocument, token: CancellationToken, next: ProvideDocumentSymbolsSignature) => ProviderResult<VSymbolInformation[] | VDocumentSymbol[]>;
 	provideWorkspaceSymbols?: (this: void, query: string, token: CancellationToken, next: ProvideWorkspaceSymbolsSignature) => ProviderResult<VSymbolInformation[]>;
+	resolveWorkspaceSymbol?: (this: void, item: VSymbolInformation, token: CancellationToken, next: ResolveWorkspaceSymbolSignature) => ProviderResult<VSymbolInformation>;
 	provideCodeActions?: (this: void, document: TextDocument, range: VRange, context: VCodeActionContext, token: CancellationToken, next: ProvideCodeActionsSignature) => ProviderResult<(VCommand | VCodeAction)[]>;
 	resolveCodeAction?: (this: void, item:  VCodeAction, token: CancellationToken, next: ResolveCodeActionSignature) => ProviderResult<VCodeAction>;
 	provideCodeLenses?: (this: void, document: TextDocument, token: CancellationToken, next: ProvideCodeLensesSignature) => ProviderResult<VCodeLens[]>;
@@ -2024,8 +2029,20 @@ class WorkspaceSymbolFeature extends WorkspaceFeature<WorkspaceSymbolRegistratio
 					: provideWorkspaceSymbols(query, token);
 			},
 			resolveWorkspaceSymbol: options.resolveProvider === true
-				? (symbol) => {
+				? (item, token) => {
 					const client = this._client;
+					const resolveWorkspaceSymbol: ResolveWorkspaceSymbolSignature = (item, token) => {
+						return client.sendRequest(WorkspaceSymbolResolveRequest.type, client.code2ProtocolConverter.asWorkspaceSymbol(item), token).then(
+							client.protocol2CodeConverter.asSymbolInformation,
+							(error) => {
+								return client.handleFailedRequest(WorkspaceSymbolResolveRequest.type, token, error, null);
+							}
+						);
+					};
+					const middleware = client.clientOptions.middleware!;
+					return middleware.resolveWorkspaceSymbol
+						? middleware.resolveWorkspaceSymbol(item, token, resolveWorkspaceSymbol)
+						: resolveWorkspaceSymbol(item, token);
 				}
 				: undefined
 		};

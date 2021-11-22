@@ -14,8 +14,9 @@ import ProtocolDocumentLink from './protocolDocumentLink';
 import ProtocolCodeAction from './protocolCodeAction';
 import { ProtocolDiagnostic, DiagnosticCode } from './protocolDiagnostic';
 import ProtocolCallHierarchyItem from './protocolCallHierarchyItem';
-import { AnnotatedTextEdit, ChangeAnnotation, CompletionItemLabelDetails, InsertTextMode } from 'vscode-languageserver-protocol';
+import { AnnotatedTextEdit, ChangeAnnotation, CompletionItemLabelDetails, InsertTextMode, LSPAny } from 'vscode-languageserver-protocol';
 import ProtocolTypeHierarchyItem from './protocolTypeHierarchyItem';
+import WorkspaceSymbol from './protocolWorkspaceSymbol';
 
 interface InsertReplaceRange {
 	inserting: code.Range;
@@ -107,11 +108,11 @@ export interface Converter {
 	asSymbolTags(items: ReadonlyArray<ls.SymbolTag>): code.SymbolTag[];
 	asSymbolTags(items: ReadonlyArray<ls.SymbolTag> | undefined | null): code.SymbolTag[] | undefined;
 
-	asSymbolInformation(item: ls.SymbolInformation): code.SymbolInformation;
+	asSymbolInformation(item: ls.SymbolInformation | ls.WorkspaceSymbol): code.SymbolInformation;
 
-	asSymbolInformations(values: ls.SymbolInformation[]): code.SymbolInformation[];
+	asSymbolInformations(values: ls.SymbolInformation[] | ls.WorkspaceSymbol[]): code.SymbolInformation[];
 	asSymbolInformations(values: undefined | null): undefined;
-	asSymbolInformations(values: ls.SymbolInformation[] | undefined | null): code.SymbolInformation[] | undefined;
+	asSymbolInformations(values: ls.SymbolInformation[] |  ls.WorkspaceSymbol[] | undefined | null): code.SymbolInformation[] | undefined;
 
 	asDocumentSymbol(value: ls.DocumentSymbol): code.DocumentSymbol;
 
@@ -811,14 +812,17 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return result.length === 0 ? undefined : result;
 	}
 
-	function asSymbolInformation(item: ls.SymbolInformation): code.SymbolInformation {
-		// Symbol kind is one based in the protocol and zero based in code.
-		let result = new code.SymbolInformation(
-			item.name, asSymbolKind(item.kind),
-			item.containerName!,
-			new code.Location(_uriConverter(item.location.uri), asRange(item.location.range)));
+	function asSymbolInformation(item: ls.SymbolInformation | ls.WorkspaceSymbol): code.SymbolInformation {
+		const data: LSPAny | undefined = (item as ls.WorkspaceSymbol).data;
+		const location: Omit<ls.Location, 'range'> & { range?: ls.Range } = item.location;
+		const result: code.SymbolInformation = location.range === undefined || data !== undefined
+			? new WorkspaceSymbol(
+				item.name, asSymbolKind(item.kind), item.containerName ?? '',
+				location.range === undefined ? _uriConverter(location.uri) : new code.Location(_uriConverter(item.location.uri), asRange(location.range)), data)
+			: new code.SymbolInformation(
+				item.name, asSymbolKind(item.kind), item.containerName ?? '',
+				new code.Location(_uriConverter(item.location.uri), asRange(location.range)));
 		fillTags(result, item);
-		if (item.containerName) { result.containerName = item.containerName; }
 		return result;
 	}
 

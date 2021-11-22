@@ -2719,13 +2719,19 @@ export namespace SymbolInformation {
  *
  * @since 3.17.0 - proposed state
  */
-export interface WorkspaceSymbol extends Omit<SymbolInformation, 'location'> {
+export interface WorkspaceSymbol extends Omit<Omit<SymbolInformation, 'location'>, 'deprecated'> {
 	/**
 	 * The location of the symbol.
 	 *
 	 * See SymbolInformation#location for more details.
 	 */
-	location: Location | { uri: DocumentUri; }
+	location: Location | { uri: DocumentUri; };
+
+	/**
+	 * A data entry field that is preserved on a workspace symbol between a
+	 * workspace symbol request and a workspace symbol resolve request.
+	 */
+	data?: LSPAny;
 }
 
 export namespace WorkspaceSymbol {

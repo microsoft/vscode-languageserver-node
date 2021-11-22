@@ -138,7 +138,10 @@ connection.onInitialize((params: InitializeParams): any => {
 			interFileDependencies: true,
 			workspaceDiagnostics: true
 		},
-		typeHierarchyProvider: true
+		typeHierarchyProvider: true,
+		workspaceSymbolProvider: {
+			resolveProvider: true
+		}
 	};
 	return { capabilities, customResults: { hello: 'world' } };
 });
@@ -484,6 +487,17 @@ connection.onRequest(
 		connection.sendProgress(WorkDoneProgress.type, progressToken, { kind: 'end', message: 'Completed!' });
 	},
 );
+
+connection.onWorkspaceSymbol(() => {
+	return [
+		{ name: 'name', kind: SymbolKind.Array, location: { uri: 'file:///abc.txt' }}
+	];
+});
+
+connection.onWorkspaceSymbolResolve((symbol) => {
+	symbol.location = Location.create(symbol.location.uri, Range.create(1,2,3,4));
+	return symbol;
+});
 
 // Listen on the connection
 connection.listen();
