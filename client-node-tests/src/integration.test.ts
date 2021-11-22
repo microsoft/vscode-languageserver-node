@@ -194,7 +194,10 @@ suite('Client integration', () => {
 					interFileDependencies: true,
 					workspaceDiagnostics: true
 				},
-				typeHierarchyProvider: true
+				typeHierarchyProvider: true,
+				workspaceSymbolProvider: {
+					resolveProvider: true
+				}
 			},
 			customResults: {
 				'hello': 'world'
@@ -1257,6 +1260,22 @@ suite('Client integration', () => {
 		await provider.provideInlineValues(document, range, { frameId: 1, stoppedLocation: range }, tokenSource.token);
 		middleware.provideInlineValues = undefined;
 		assert.strictEqual(middlewareCalled, true);
+	});
+
+	test('Workspace symbols', async () => {
+		const providers = client.getFeature(lsclient.WorkspaceSymbolRequest.method).getProviders();
+		isDefined(providers);
+		assert.strictEqual(providers.length, 1);
+		const provider = providers[0];
+		const results = await provider.provideWorkspaceSymbols('', tokenSource.token);
+		isArray(results, undefined, 1);
+
+		assert.strictEqual(results.length, 1);
+		rangeEqual(results[0].location.range, 0, 0, 0, 0);
+
+		const symbol = await provider.resolveWorkspaceSymbol!(results[0], tokenSource.token);
+		isDefined(symbol);
+		rangeEqual(symbol.location.range, 1, 2, 3, 4);
 	});
 });
 

@@ -24,7 +24,7 @@ import {
 	DocumentSymbolRequest, WorkspaceSymbolRequest, CodeActionRequest, CodeLensRequest, CodeLensResolveRequest, DocumentFormattingRequest, DocumentRangeFormattingRequest,
 	DocumentOnTypeFormattingRequest, RenameRequest, PrepareRenameRequest, DocumentLinkRequest, DocumentLinkResolveRequest, DocumentColorRequest, ColorPresentationRequest,
 	FoldingRangeRequest, SelectionRangeRequest, ExecuteCommandRequest, InitializeRequest, ResponseError, RegistrationType, RequestType0, RequestType,
-	NotificationType0, NotificationType, CodeActionResolveRequest, RAL
+	NotificationType0, NotificationType, CodeActionResolveRequest, RAL, WorkspaceSymbol, WorkspaceSymbolResolveRequest
 } from 'vscode-languageserver-protocol';
 
 import * as Is from './utils/is';
@@ -1374,7 +1374,14 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onWorkspaceSymbol(handler: ServerRequestHandler<WorkspaceSymbolParams, SymbolInformation[] | undefined | null, SymbolInformation[], void>): void;
+	onWorkspaceSymbol(handler: ServerRequestHandler<WorkspaceSymbolParams, SymbolInformation[] | WorkspaceSymbol[] | undefined | null, SymbolInformation[], void>): void;
+
+	/**
+	 * Installs a handler for the `WorkspaceSymbol` request.
+	 *
+	 * @param handler The corresponding handler.
+	 */
+	onWorkspaceSymbolResolve(handler: ServerRequestHandler<WorkspaceSymbol, WorkspaceSymbol, never, void>): void;
 
 	/**
 	 * Installs a handler for the `CodeAction` request.
@@ -1705,6 +1712,7 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 		onWorkspaceSymbol: (handler) => connection.onRequest(WorkspaceSymbolRequest.type, (params, cancel) => {
 			return handler(params, cancel, attachWorkDone(connection, params), attachPartialResult(connection, params));
 		}),
+		onWorkspaceSymbolResolve: (handler) => connection.onRequest(WorkspaceSymbolResolveRequest.type, handler),
 		onCodeAction: (handler) => connection.onRequest(CodeActionRequest.type, (params, cancel) => {
 			return handler(params, cancel, attachWorkDone(connection, params), attachPartialResult(connection, params));
 		}),

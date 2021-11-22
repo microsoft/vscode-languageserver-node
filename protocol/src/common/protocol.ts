@@ -13,7 +13,7 @@ import {
 	Hover, SignatureHelp, Definition, DefinitionLink, ReferenceContext, DocumentHighlight, SymbolInformation,
 	CodeLens, CodeActionContext, FormattingOptions, DocumentLink, MarkupKind, SymbolKind, CompletionItemKind,
 	CodeAction, CodeActionKind, DocumentSymbol, CompletionItemTag, DiagnosticTag, SymbolTag, uinteger, integer,
-	InsertTextMode, LSPAny
+	InsertTextMode, LSPAny, WorkspaceSymbol
 } from 'vscode-languageserver-types';
 
 import * as Is from './utils/is';
@@ -2720,6 +2720,15 @@ export interface WorkspaceSymbolClientCapabilities {
 		 */
 		valueSet: SymbolTag[]
 	}
+
+	/**
+	 * The client support workspace symbols with locations without a range.
+	 * The client will send the request `workspaceSymbol/resolve` to the
+	 * server to resolve the range if necessary.
+	 *
+	 * @since 3.17.0 - proposedState
+	 */
+	resolveSupport?: boolean | {};
 }
 
 /**
@@ -2737,6 +2746,11 @@ export interface WorkspaceSymbolParams extends WorkDoneProgressParams, PartialRe
  * Server capabilities for a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest).
  */
 export interface WorkspaceSymbolOptions extends WorkDoneProgressOptions {
+	/**
+	 * The server provides support to resolve additional
+	 * information for a workspace symbol.
+	 */
+	resolveProvider?: boolean;
 }
 
 
@@ -2751,10 +2765,26 @@ export interface WorkspaceSymbolRegistrationOptions extends WorkspaceSymbolOptio
  * by the [WorkspaceSymbolParams](#WorkspaceSymbolParams). The response is
  * of type [SymbolInformation[]](#SymbolInformation) or a Thenable that
  * resolves to such.
+ *
+ * @since 3.17.0 - support for WorkspaceSymbol in the returned data. Clients
+ *  need to advertise support for WorkspaceSymbols via the client capability
+ *  `workspace.symbol.resolveSupport`.
+ *
  */
 export namespace WorkspaceSymbolRequest {
 	export const method: 'workspace/symbol' = 'workspace/symbol';
-	export const type = new ProtocolRequestType<WorkspaceSymbolParams, SymbolInformation[] | null, SymbolInformation[], void, WorkspaceSymbolRegistrationOptions>(method);
+	export const type = new ProtocolRequestType<WorkspaceSymbolParams, SymbolInformation[] | WorkspaceSymbol[] | null, SymbolInformation[] | WorkspaceSymbol[], void, WorkspaceSymbolRegistrationOptions>(method);
+}
+
+/**
+ * A request to resolve the range inside the workspace
+ * symbol's location.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export namespace WorkspaceSymbolResolveRequest {
+	export const method: 'workspaceSymbol/resolve' = 'workspaceSymbol/resolve';
+	export const type = new ProtocolRequestType<WorkspaceSymbol, WorkspaceSymbol, never, void, void>(method);
 }
 
 //---- Code Lens Provider -------------------------------------------

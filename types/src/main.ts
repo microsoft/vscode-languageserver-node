@@ -2715,6 +2715,44 @@ export namespace SymbolInformation {
 }
 
 /**
+ * A special workspace symbol that supports locations without a range
+ *
+ * @since 3.17.0 - proposed state
+ */
+export interface WorkspaceSymbol extends Omit<Omit<SymbolInformation, 'location'>, 'deprecated'> {
+	/**
+	 * The location of the symbol.
+	 *
+	 * See SymbolInformation#location for more details.
+	 */
+	location: Location | { uri: DocumentUri; };
+
+	/**
+	 * A data entry field that is preserved on a workspace symbol between a
+	 * workspace symbol request and a workspace symbol resolve request.
+	 */
+	data?: LSPAny;
+}
+
+export namespace WorkspaceSymbol {
+
+	/**
+	 * Create a new workspace symbol.
+	 *
+	 * @param name The name of the symbol.
+	 * @param kind The kind of the symbol.
+	 * @param uri The resource of the location of the symbol.
+	 * @param range An options range of the location.
+	 * @returns A WorkspaceSymbol.
+	 */
+	export function create(name: string, kind: SymbolKind, uri: DocumentUri, range?: Range): WorkspaceSymbol {
+		return range !== undefined
+			? { name, kind, location: { uri, range } }
+			: { name, kind, location: { uri } };
+	}
+}
+
+/**
  * Represents programming constructs like variables, classes, interfaces etc.
  * that appear in a document. Document symbols can be hierarchical and they
  * have two ranges: one that encloses its definition and one that points to
