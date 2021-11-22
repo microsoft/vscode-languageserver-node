@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageserver-textdocument",
 	"description": "A simple text document implementation for Node LSP servers",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"repository": {
