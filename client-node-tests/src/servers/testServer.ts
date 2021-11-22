@@ -27,6 +27,7 @@ connection.onInitialize((params: InitializeParams): any => {
 	assert.equal(params.capabilities.workspace!.workspaceEdit!.documentChanges, true);
 	assert.deepEqual(params.capabilities.workspace!.workspaceEdit!.resourceOperations, [ResourceOperationKind.Create, ResourceOperationKind.Rename, ResourceOperationKind.Delete]);
 	assert.equal(params.capabilities.workspace!.workspaceEdit!.failureHandling, FailureHandlingKind.TextOnlyTransactional);
+	assert.equal(params.capabilities.workspace!.symbol!.resolveSupport!.properties[0], 'location.range');
 	assert.equal(params.capabilities.textDocument!.completion!.completionItem!.deprecatedSupport, true);
 	assert.equal(params.capabilities.textDocument!.completion!.completionItem!.preselectSupport, true);
 	assert.equal(params.capabilities.textDocument!.completion!.completionItem!.tagSupport!.valueSet.length, 1);

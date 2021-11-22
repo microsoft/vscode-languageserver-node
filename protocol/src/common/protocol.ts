@@ -2722,13 +2722,19 @@ export interface WorkspaceSymbolClientCapabilities {
 	}
 
 	/**
-	 * The client support workspace symbols with locations without a range.
-	 * The client will send the request `workspaceSymbol/resolve` to the
-	 * server to resolve the range if necessary.
+	 * The client support partial workspace symbols. The client will send the
+	 * request `workspaceSymbol/resolve` to the server to resolve additional
+	 * properties.
 	 *
 	 * @since 3.17.0 - proposedState
 	 */
-	resolveSupport?: boolean | {};
+	resolveSupport?: {
+		/**
+		 * The properties that a client can resolve lazily. Usually
+		 * `location.range`
+		 */
+		properties: string[];
+	};
 }
 
 /**
@@ -2749,6 +2755,8 @@ export interface WorkspaceSymbolOptions extends WorkDoneProgressOptions {
 	/**
 	 * The server provides support to resolve additional
 	 * information for a workspace symbol.
+	 *
+	 * @since 3.17.0 - proposed state
 	 */
 	resolveProvider?: boolean;
 }

@@ -1998,7 +1998,7 @@ class WorkspaceSymbolFeature extends WorkspaceFeature<WorkspaceSymbolRegistratio
 		symbolCapabilities.tagSupport = {
 			valueSet: SupportedSymbolTags
 		};
-		symbolCapabilities.resolveSupport = true;
+		symbolCapabilities.resolveSupport = { properties: ['location.range'] };
 	}
 
 	public initialize(capabilities: ServerCapabilities): void {
