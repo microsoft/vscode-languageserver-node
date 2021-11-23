@@ -51,7 +51,9 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 	private _clientCapability: keyof proto.FileOperationClientCapabilities;
 	private _serverCapability: keyof proto.FileOperationOptions;
 	private _listener: code.Disposable | undefined;
-	protected _filters = new Map<string, Array<{ scheme?: string, matcher: minimatch.IMinimatch, kind?: proto.FileOperationPatternKind }>>();
+	// This property must stay private. Otherwise the type `minimatch.IMinimatch` becomes public and as a consequence we would need to
+	// ship the d.ts files for minimatch to make the compiler happy when compiling against the vscode-languageclient library
+	private _filters = new Map<string, Array<{ scheme?: string, matcher: minimatch.IMinimatch, kind?: proto.FileOperationPatternKind }>>();
 
 	constructor(client: BaseLanguageClient, event: code.Event<E>,
 		registrationType: proto.RegistrationType<proto.FileOperationRegistrationOptions>,
@@ -62,6 +64,10 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 		this._registrationType = registrationType;
 		this._clientCapability = clientCapability;
 		this._serverCapability = serverCapability;
+	}
+
+	protected filterSize(): number {
+		return this._filters.size;
 	}
 
 	public get registrationType(): proto.RegistrationType<proto.FileOperationRegistrationOptions> {
@@ -124,7 +130,7 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 	}
 
 	protected getFileType(uri: code.Uri): Promise<code.FileType | undefined> {
-		return FileOperationFeature.getFileType(uri);;
+		return FileOperationFeature.getFileType(uri);
 	}
 
 	protected async filter(event: E, prop: (i: I) => code.Uri): Promise<E> {
@@ -232,11 +238,11 @@ abstract class CachingNotificationFileOperationFeature<I, E extends { readonly f
 	protected async getFileType(uri: code.Uri): Promise<code.FileType | undefined> {
 		const fsPath = uri.fsPath;
 		if (this._fsPathFileTypes.has(fsPath))
-			return this._fsPathFileTypes.get(fsPath);
+		{return this._fsPathFileTypes.get(fsPath);}
 
 		const type = await FileOperationFeature.getFileType(uri);
 		if (type)
-			this._fsPathFileTypes.set(fsPath, type);
+		{this._fsPathFileTypes.set(fsPath, type);}
 		return type;
 	}
 
@@ -255,7 +261,7 @@ abstract class CachingNotificationFileOperationFeature<I, E extends { readonly f
 
 	public unregister(id: string): void {
 		super.unregister(id);
-		if (this._filters.size === 0 && this._willListener) {
+		if (this.filterSize() === 0 && this._willListener) {
 			this._willListener.dispose();
 			this._willListener = undefined;
 		}
