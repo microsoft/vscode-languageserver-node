@@ -3255,7 +3255,7 @@ export interface ExecuteCommandRegistrationOptions extends ExecuteCommandOptions
  * a workspace edit which the client will apply to the workspace.
  */
 export namespace ExecuteCommandRequest {
-	export const type = new ProtocolRequestType<ExecuteCommandParams, LSPAny | null, never, void, ExecuteCommandRegistrationOptions>('workspace/executeCommand');
+	export const type = new ProtocolRequestType<ExecuteCommandParams, LSPAny | void | null, never, void, ExecuteCommandRegistrationOptions>('workspace/executeCommand');
 }
 
 //---- Apply Edit request ----------------------------------------
