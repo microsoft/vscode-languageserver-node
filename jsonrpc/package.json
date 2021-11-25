@@ -13,7 +13,7 @@
 		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
 	},
 	"engines": {
-		"node": ">=8.0.0 || >=10.0.0"
+		"node": ">=14.0.0"
 	},
 	"main": "./lib/node/main.js",
 	"browser": {
