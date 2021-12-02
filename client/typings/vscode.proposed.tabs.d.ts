@@ -1,25 +1,11 @@
-/* --------------------------------------------------------------------------------------------
- * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the MIT License. See License.txt in the project root for license information.
- * ------------------------------------------------------------------------------------------ */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
 
 declare module 'vscode' {
 
-	export interface MarkdownString {
-		/**
-		 * Indicates that this markdown string can contain raw html tags. Default to false.
-		 *
-		 * When `supportHtml` is false, the markdown renderer will strip out any raw html tags
-		 * that appear in the markdown text. This means you can only use markdown syntax for rendering.
-		 *
-		 * When `supportHtml` is true, the markdown render will also allow a safe subset of html tags
-		 * and attributes to be rendered. See https://github.com/microsoft/vscode/blob/6d2920473c6f13759c978dd89104c4270a83422d/src/vs/base/browser/markdownRenderer.ts#L296
-		 * for a list of all supported tags and attributes.
-		 */
-		supportHtml?: boolean;
-	}
-
-	// New API since 1.61.0
+	// https://github.com/Microsoft/vscode/issues/15178
 
 	/**
 	 * Represents a tab within the window
@@ -41,24 +27,27 @@ declare module 'vscode' {
 		readonly viewColumn: ViewColumn;
 
 		/**
-		 * The resource represented by the tab if availble.
+		 * The resource represented by the tab if available.
 		 * Note: Not all tabs have a resource associated with them.
 		 */
-		readonly resource?: Uri;
+		readonly resource: Uri | undefined;
 
 		/**
 		 * The identifier of the view contained in the tab
 		 * This is equivalent to `viewType` for custom editors and `notebookType` for notebooks.
 		 * The built-in text editor has an id of 'default' for all configurations.
 		 */
-		readonly viewId?: string;
+		readonly viewId: string | undefined;
 
 		/**
 		 * All the resources and viewIds represented by a tab
 		 * {@link Tab.resource resource} and {@link Tab.viewId viewId} will
 		 * always be at index 0.
 		 */
-		additionalResourcesAndViewIds: { resource?: Uri, viewId?: string }[];
+		readonly additionalResourcesAndViewIds: readonly {
+			readonly resource: Uri | undefined,
+			readonly viewId: string | undefined
+		}[];
 
 		/**
 		 * Whether or not the tab is currently active
@@ -106,19 +95,6 @@ declare module 'vscode' {
 		 * has changed.
 		 */
 		export const onDidChangeActiveTab: Event<Tab | undefined>;
-	}
 
-	// Old API
-
-	export interface OpenEditorInfo {
-		name: string;
-		resource: Uri;
-	}
-
-	export namespace window {
-		export const openEditors: ReadonlyArray<OpenEditorInfo>;
-
-		// todo@API proper event type
-		export const onDidChangeOpenEditors: Event<void>;
 	}
 }

@@ -1379,7 +1379,8 @@ suite('Code Converter', () => {
 	test('CodeActionContext', () => {
 		const item: vscode.CodeActionContext = {
 			diagnostics: [new vscode.Diagnostic(new vscode.Range(1, 2, 8, 9), 'message', vscode.DiagnosticSeverity.Warning)],
-			triggerKind: vscode.CodeActionTriggerKind.Invoke
+			triggerKind: vscode.CodeActionTriggerKind.Invoke,
+			only: undefined
 		};
 
 		const result = c2p.asCodeActionContext(<any>item);
@@ -1390,7 +1391,8 @@ suite('Code Converter', () => {
 	test('CodeActionContext - automatic', () => {
 		const item: vscode.CodeActionContext = {
 			diagnostics: [],
-			triggerKind: vscode.CodeActionTriggerKind.Automatic
+			triggerKind: vscode.CodeActionTriggerKind.Automatic,
+			only: undefined
 		};
 
 		const result = c2p.asCodeActionContext(<any>item);

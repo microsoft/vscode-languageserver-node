@@ -11,7 +11,9 @@
 		"onLanguage:bat",
 		"onCommand:testbed.helloWorld"
 	],
-	"enableProposedApi": true,
+	"enabledApiProposals": [
+		"tabs"
+	],
 	"contributes": {
 		"commands": [
 			{

@@ -283,7 +283,8 @@ suite('Client integration', () => {
 			{
 				isRetrigger: false,
 				triggerKind: lsclient.SignatureHelpTriggerKind.Invoked,
-				triggerCharacter: ':'
+				triggerCharacter: ':',
+				activeSignatureHelp: undefined
 			}
 		);
 
@@ -310,7 +311,8 @@ suite('Client integration', () => {
 			{
 				isRetrigger: false,
 				triggerKind: lsclient.SignatureHelpTriggerKind.Invoked,
-				triggerCharacter: ':'
+				triggerCharacter: ':',
+				activeSignatureHelp: undefined
 			}
 		);
 		middleware.provideSignatureHelp = undefined;
@@ -369,7 +371,8 @@ suite('Client integration', () => {
 		isDefined(provider);
 		const result = (await provider.provideCodeActions(document, range, {
 			diagnostics: [],
-			triggerKind: vscode.CodeActionTriggerKind.Invoke
+			triggerKind: vscode.CodeActionTriggerKind.Invoke,
+			only: undefined
 		}, tokenSource.token)) as vscode.CodeAction[];
 
 		isArray(result, vscode.CodeAction);
@@ -387,7 +390,7 @@ suite('Client integration', () => {
 			return n(d, r, c, t);
 		};
 
-		await provider.provideCodeActions(document, range, { diagnostics: [], triggerKind: vscode.CodeActionTriggerKind.Invoke }, tokenSource.token);
+		await provider.provideCodeActions(document, range, { diagnostics: [], triggerKind: vscode.CodeActionTriggerKind.Invoke, only: undefined }, tokenSource.token);
 		middleware.provideCodeActions = undefined;
 		assert.ok(middlewareCalled);
 
