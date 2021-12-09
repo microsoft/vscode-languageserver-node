@@ -807,7 +807,7 @@ suite('Client integration', () => {
 			isDefined(feature);
 
 			const sendCreateRequest = () => new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
-				await feature.send({ files: createFiles, waitUntil: resolve });
+				await feature.send({ files: createFiles, waitUntil: resolve, token: tokenSource.token });
 				// If feature.send didn't call waitUntil synchronously then something went wrong.
 				reject(new Error('Feature unexpectedly did not call waitUntil synchronously'));
 			});
@@ -891,7 +891,7 @@ suite('Client integration', () => {
 			isDefined(feature);
 
 			const sendRenameRequest = () => new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
-				await feature.send({ files: renameFiles, waitUntil: resolve });
+				await feature.send({ files: renameFiles, waitUntil: resolve, token: tokenSource.token });
 				// If feature.send didn't call waitUntil synchronously then something went wrong.
 				reject(new Error('Feature unexpectedly did not call waitUntil synchronously'));
 			});
@@ -940,7 +940,7 @@ suite('Client integration', () => {
 			await createTestItems(renameFiles.map((f) => f.oldUri));
 			await new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
 				const featureWithWillRename = feature as any as { willRename(e: vscode.FileWillRenameEvent): void };
-				featureWithWillRename.willRename({ files: renameFiles, waitUntil: resolve });
+				featureWithWillRename.willRename({ files: renameFiles, waitUntil: resolve, token: tokenSource.token });
 				reject(new Error('Feature unexpectedly did not call waitUntil synchronously'));
 			});
 			// Ensure they don't exist on disk when DidRename fires. In reality they would be
@@ -989,7 +989,7 @@ suite('Client integration', () => {
 			isDefined(feature);
 
 			const sendDeleteRequest = () => new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
-				await feature.send({ files: deleteFiles, waitUntil: resolve });
+				await feature.send({ files: deleteFiles, waitUntil: resolve, token: tokenSource.token });
 				// If feature.send didn't call waitUntil synchronously then something went wrong.
 				reject(new Error('Feature unexpectedly did not call waitUntil synchronously'));
 			});
@@ -1038,7 +1038,7 @@ suite('Client integration', () => {
 			await createTestItems(deleteFiles);
 			await new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
 				const featureWithWillDelete = feature as any as { willDelete(e: vscode.FileWillDeleteEvent): void };
-				featureWithWillDelete.willDelete({ files: deleteFiles, waitUntil: resolve });
+				featureWithWillDelete.willDelete({ files: deleteFiles, waitUntil: resolve, token: tokenSource.token });
 				reject(new Error('Feature unexpectedly did not call waitUntil synchronously'));
 			});
 			await deleteTestItems(deleteFiles);

@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
+/// <reference path="../../typings/vscode.proposed.d.ts" />
 
 import * as code from 'vscode';
 import * as minimatch from 'minimatch';
@@ -32,11 +33,11 @@ function assign<T, K extends keyof T>(target: T, key: K, value: T[K]): void {
  */
 export interface FileOperationsMiddleware {
 	didCreateFiles?: NextSignature<code.FileCreateEvent, Promise<void>>;
-	willCreateFiles?: NextSignature<code.FileCreateEvent, Thenable<code.WorkspaceEdit | null | undefined>>;
+	willCreateFiles?: NextSignature<code.FileWillCreateEvent, Thenable<code.WorkspaceEdit | null | undefined>>;
 	didRenameFiles?: NextSignature<code.FileRenameEvent, Promise<void>>;
-	willRenameFiles?: NextSignature<code.FileRenameEvent, Thenable<code.WorkspaceEdit | null | undefined>>;
+	willRenameFiles?: NextSignature<code.FileWillRenameEvent, Thenable<code.WorkspaceEdit | null | undefined>>;
 	didDeleteFiles?: NextSignature<code.FileDeleteEvent, Promise<void>>;
-	willDeleteFiles?: NextSignature<code.FileDeleteEvent, Thenable<code.WorkspaceEdit | null | undefined>>;
+	willDeleteFiles?: NextSignature<code.FileWillDeleteEvent, Thenable<code.WorkspaceEdit | null | undefined>>;
 }
 
 interface Event<I> {
@@ -355,6 +356,7 @@ export class DidDeleteFilesFeature extends CachingNotificationFileOperationFeatu
 }
 
 interface RequestEvent<I> {
+	readonly token: code.CancellationToken;
 	readonly files: ReadonlyArray<I>;
 	waitUntil(thenable: Thenable<code.WorkspaceEdit>): void;
 	waitUntil(thenable: Thenable<any>): void;
@@ -390,8 +392,8 @@ abstract class RequestFileOperationFeature<I, E extends RequestEvent<I>, P> exte
 		const filteredEvent = await this.filter(originalEvent, this._accessUri);
 
 		if (filteredEvent.files.length) {
-			const next = (event: Event<I>): Promise<code.WorkspaceEdit | any> => {
-				return this._client.sendRequest(this._requestType, this._createParams(event))
+			const next = (event: RequestEvent<I>): Promise<code.WorkspaceEdit | any> => {
+				return this._client.sendRequest(this._requestType, this._createParams(event), event.token)
 					.then(this._client.protocol2CodeConverter.asWorkspaceEdit);
 			};
 			return this.doSend(filteredEvent, next);
@@ -400,7 +402,7 @@ abstract class RequestFileOperationFeature<I, E extends RequestEvent<I>, P> exte
 		}
 	}
 
-	protected abstract doSend(event: E, next: (event: Event<I>) => Thenable<code.WorkspaceEdit> | Thenable<any>): Thenable<code.WorkspaceEdit> | Thenable<any>;
+	protected abstract doSend(event: E, next: (event: RequestEvent<I>) => Thenable<code.WorkspaceEdit> | Thenable<any>): Thenable<code.WorkspaceEdit> | Thenable<any>;
 }
 
 export class WillCreateFilesFeature extends RequestFileOperationFeature<code.Uri, code.FileWillCreateEvent, proto.CreateFilesParams> {
@@ -412,7 +414,7 @@ export class WillCreateFilesFeature extends RequestFileOperationFeature<code.Uri
 		);
 	}
 
-	protected doSend(event: code.FileWillCreateEvent, next: (event: code.FileCreateEvent) => Thenable<code.WorkspaceEdit> | Thenable<any>): Thenable<code.WorkspaceEdit> | Thenable<any> {
+	protected doSend(event: code.FileWillCreateEvent, next: (event: code.FileWillCreateEvent) => Thenable<code.WorkspaceEdit> | Thenable<any>): Thenable<code.WorkspaceEdit> | Thenable<any> {
 		const middleware = this._client.clientOptions.middleware?.workspace;
 		return middleware?.willCreateFiles
 			? middleware.willCreateFiles(event, next)
@@ -429,7 +431,7 @@ export class WillRenameFilesFeature extends RequestFileOperationFeature<{ oldUri
 		);
 	}
 
-	protected doSend(event: code.FileWillRenameEvent, next: (event: code.FileRenameEvent) => Thenable<code.WorkspaceEdit> | Thenable<any>): Thenable<code.WorkspaceEdit> | Thenable<any> {
+	protected doSend(event: code.FileWillRenameEvent, next: (event: code.FileWillRenameEvent) => Thenable<code.WorkspaceEdit> | Thenable<any>): Thenable<code.WorkspaceEdit> | Thenable<any> {
 		const middleware = this._client.clientOptions.middleware?.workspace;
 		return middleware?.willRenameFiles
 			? middleware.willRenameFiles(event, next)
@@ -446,7 +448,7 @@ export class WillDeleteFilesFeature extends RequestFileOperationFeature<code.Uri
 		);
 	}
 
-	protected doSend(event: code.FileWillDeleteEvent, next: (event: code.FileDeleteEvent) => Thenable<code.WorkspaceEdit> | Thenable<any>): Thenable<code.WorkspaceEdit> | Thenable<any> {
+	protected doSend(event: code.FileWillDeleteEvent, next: (event: code.FileWillDeleteEvent) => Thenable<code.WorkspaceEdit> | Thenable<any>): Thenable<code.WorkspaceEdit> | Thenable<any> {
 		const middleware = this._client.clientOptions.middleware?.workspace;
 		return middleware?.willDeleteFiles
 			? middleware.willDeleteFiles(event, next)
