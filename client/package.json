@@ -16,8 +16,7 @@
 		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
 	},
 	"enabledApiProposals": [
-		"tabs",
-		""
+		"tabs"
 	],
 	"main": "./lib/node/main.js",
 	"browser": {
