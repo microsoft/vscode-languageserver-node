@@ -215,15 +215,20 @@ export class ReadableStreamMessageReader extends AbstractMessageReader {
 				if (!headers) {
 					return;
 				}
-				const contentLength = headers.get('Content-Length');
-				if (!contentLength) {
-					throw new Error('Header must provide a Content-Length property.');
+				try {
+					const contentLength = headers.get('Content-Length');
+					if (!contentLength) {
+						throw new Error('Header must provide a Content-Length property.');
+					}
+					const length = parseInt(contentLength);
+					if (isNaN(length)) {
+						throw new Error('Content-Length value must be a number.');
+					}
+					this.nextMessageLength = length;
+				} catch (err) {
+					this.fireError(err);
+					return;
 				}
-				const length = parseInt(contentLength);
-				if (isNaN(length)) {
-					throw new Error('Content-Length value must be a number.');
-				}
-				this.nextMessageLength = length;
 			}
 			const body = this.buffer.tryReadBody(this.nextMessageLength);
 			if (body === undefined) {

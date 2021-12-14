@@ -141,6 +141,34 @@ suite('Messages', () => {
 		readable.push(partOne);
 	});
 
+	test('Read without Content-Length', (done) => {
+		const readable = new Readable();
+		const reader = new StreamMessageReader(readable);
+		reader.listen((_msg: Message) => {
+			assert.fail('Should not parse a message without a Content-Length');
+		});
+		reader.onError((err) => {
+			assert.strictEqual(err.message, 'Header must provide a Content-Length property.');
+			done();
+		});
+		readable.push('Not-Content-Length: 43\r\n\r\n{"jsonrpc":"2.0","id":1,"method":"example"}');
+		readable.push(null);
+	});
+
+	test('Read with invalid Content-Length', (done) => {
+		const readable = new Readable();
+		const reader = new StreamMessageReader(readable);
+		reader.listen((_msg: Message) => {
+			assert.fail('Should not parse a message without a Content-Length');
+		});
+		reader.onError((err) => {
+			assert.strictEqual(err.message, 'Content-Length value must be a number.');
+			done();
+		});
+		readable.push('Content-Length: NaN\r\n\r\n{"jsonrpc":"2.0","id":1,"method":"example"}');
+		readable.push(null);
+	});
+
 	test('Basic Zip / Unzip', async () => {
 		// The zip / unzip value is different per platform. Only test under Linux.
 		if (process.platform !== 'linux') {
