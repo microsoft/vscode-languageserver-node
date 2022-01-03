@@ -134,6 +134,7 @@ export namespace Proposed {
 	export type NotebookDocument = nb.NotebookDocument;
 	export type NotebookDocumentIdentifier = nb.NotebookDocumentIdentifier;
 	export type NotebookDocumentFilter = nb.NotebookDocumentFilter;
+	export type NotebookDocumentOptions = nb.NotebookDocumentOptions;
 	export type NotebookDocumentRegistrationOptions = nb.NotebookDocumentRegistrationOptions;
 	export const NotebookDocumentSyncRegistrationType = nb.NotebookDocumentSyncRegistrationType;
 	export type DidOpenNotebookDocumentParams = nb.DidOpenNotebookDocumentParams;

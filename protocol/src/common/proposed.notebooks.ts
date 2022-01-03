@@ -5,7 +5,7 @@
 
 import { URI, integer, DocumentUri } from 'vscode-languageserver-types';
 import { ProtocolNotificationType, RegistrationType } from './messages';
-import { DocumentFilter } from './protocol';
+import { DocumentFilter, StaticRegistrationOptions } from './protocol';
 
 
 /**
@@ -30,7 +30,7 @@ export interface $NotebookDocumentClientCapabilities {
 }
 
 export interface $NotebookDocumentServerCapabilities {
-
+	notebookDocumentSync?: NotebookDocumentOptions | NotebookDocumentRegistrationOptions;
 }
 
 /**
@@ -125,11 +125,11 @@ export type NotebookDocumentFilter = {
 };
 
 /**
- * Registration options specific to a notebook.
+ * Options specific to a notebook.
  *
  * @since 3.17.0 - proposed state
  */
-export interface NotebookDocumentRegistrationOptions {
+export interface NotebookDocumentOptions {
 	/**
 	 * The notebook document is synced to the server
 	 * if it matches the notebook selector. If no
@@ -145,6 +145,14 @@ export interface NotebookDocumentRegistrationOptions {
 	 * if the notebookSelector is set to `onlyIfCellsMatch`
 	 */
 	cellSelector?: DocumentFilter[];
+}
+
+/**
+ * Registration options specific to a notebook.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export interface NotebookDocumentRegistrationOptions extends NotebookDocumentOptions, StaticRegistrationOptions {
 }
 
 export namespace NotebookDocumentSyncRegistrationType {

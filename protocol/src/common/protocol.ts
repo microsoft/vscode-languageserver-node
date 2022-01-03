@@ -947,7 +947,7 @@ export interface _ServerCapabilities<T = any> {
 	 *
 	 * @since 3.17.0 - proposed state
 	 */
-	inlineValuesProvider?: boolean | InlineValuesOptions | InlineValuesOptions | InlineValuesRegistrationOptions;
+	inlineValuesProvider?: boolean | InlineValuesOptions | InlineValuesRegistrationOptions;
 
 	/**
 	 * Experimental server capabilities.
