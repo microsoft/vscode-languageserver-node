@@ -131,7 +131,9 @@ export namespace Proposed {
 	export type NotebookCellKind = nb.NotebookCellKind;
 	export const NotebookCellKind = nb.NotebookCellKind;
 	export type NotebookCell = nb.NotebookCell;
+	export const NotebookCell = nb.NotebookCell;
 	export type NotebookDocument = nb.NotebookDocument;
+	export const NotebookDocument = nb.NotebookDocument;
 	export type NotebookDocumentIdentifier = nb.NotebookDocumentIdentifier;
 	export type NotebookDocumentFilter = nb.NotebookDocumentFilter;
 	export type NotebookDocumentOptions = nb.NotebookDocumentOptions;

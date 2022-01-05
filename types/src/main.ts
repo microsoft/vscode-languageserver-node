@@ -9,12 +9,24 @@
  */
 export type DocumentUri = string;
 
+export namespace DocumentUri {
+	export function is(value: any): value is DocumentUri {
+		return typeof value === 'string';
+	}
+}
+
 /**
  * A tagging type for string properties that are actually URIs
  *
  * @since 3.16.0
  */
 export type URI = string;
+
+export namespace URI {
+	export function is(value: any): value is URI {
+		return typeof value === 'string';
+	}
+}
 
 /**
  * Defines an integer in the range of -2^31 to 2^31 - 1.
@@ -24,6 +36,9 @@ export type integer = number;
 export namespace integer {
 	export const MIN_VALUE = -2147483648;
 	export const MAX_VALUE = 2147483647;
+	export function is(value: any): value is integer {
+		return typeof value === 'number' && MIN_VALUE <= value && value <= MAX_VALUE;
+	}
 }
 
 /**
@@ -34,6 +49,9 @@ export type uinteger = number;
 export namespace uinteger {
 	export const MIN_VALUE = 0;
 	export const MAX_VALUE = 2147483647;
+	export function is(value: any): value is uinteger {
+		return typeof value === 'number' && MIN_VALUE <= value && value <= MAX_VALUE;
+	}
 }
 
 /**
