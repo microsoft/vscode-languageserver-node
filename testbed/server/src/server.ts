@@ -26,7 +26,7 @@ import {
 	TextDocument
 } from 'vscode-languageserver-textdocument';
 
-let connection = createConnection(ProposedFeatures.all);
+let connection: ProposedFeatures.Connection = createConnection(ProposedFeatures.all);
 let documents = new TextDocuments(TextDocument);
 
 documents.listen(connection);
@@ -118,7 +118,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 
 	semanticTokensLegend = computeLegend(params.capabilities.textDocument!.semanticTokens!);
 	return new Promise((resolve, reject) => {
-		let result: InitializeResult & { capabilities : Proposed.$DiagnosticServerCapabilities }= {
+		let result: InitializeResult & { capabilities : Proposed.$DiagnosticServerCapabilities & Proposed.$NotebookDocumentServerCapabilities }= {
 			capabilities: {
 				textDocumentSync: TextDocumentSyncKind.Full,
 				hoverProvider: true,
@@ -168,6 +168,9 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 					identifier: 'testbed',
 					interFileDependencies: true,
 					workspaceDiagnostics: true
+				},
+				notebookDocumentSync: {
+					cellSelector: [{ language: 'javascript' }]
 				}
 			}
 		};
@@ -677,5 +680,19 @@ connection.languages.semanticTokens.onDelta((params) => {
 connection.languages.semanticTokens.onRange((params) => {
 	return { data: [] };
 });
+
+connection.notebooks.synchronization.onDidOpenNotebookDocument(params => {
+	console.log(`Notebook document opened: ${params.notebookDocument.uri}`);
+});
+
+connection.notebooks.synchronization.onDidChangeNotebookDocument(params => {
+	console.log(`Notebook changed opened: ${params.notebookDocument.uri}`);
+
+});
+
+connection.notebooks.synchronization.onDidCloseNotebookDocument(params => {
+	console.log(`Notebook document closed: ${params.notebookDocument.uri}`);
+});
+
 
 connection.listen();
