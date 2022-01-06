@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { URI, integer, DocumentUri } from 'vscode-languageserver-types';
+import { URI, integer, DocumentUri, uinteger } from 'vscode-languageserver-types';
 
 import * as Is from './utils/is';
 import { ProtocolNotificationType, RegistrationType } from './messages';
@@ -86,9 +86,38 @@ export namespace NotebookCell {
 		const candidate: NotebookCell = value;
 		return Is.objectLiteral(candidate) && NotebookCellKind.is(candidate.kind) && DocumentUri.is(candidate.document);
 	}
+
+	export function equal(one: NotebookCell, two: NotebookCell): boolean {
+		return one.kind === two.kind && one.document === two.document;
+	}
 }
 
 /**
+ * A change describing how to move a `NotebookCell`
+ * array from state S' to S''.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export interface NotebookCellChange {
+	/**
+	 * The start oftest of the cell that changed.
+	 */
+	start: uinteger;
+
+	/**
+	 * The deleted cells
+	 */
+	deleteCount: uinteger;
+
+	/**
+	 * The new cells, if any
+	 */
+	cells?: NotebookCell[];
+}
+
+/**
+ * A notebook document.
+ *
  * @since 3.17.0 - proposed state
  */
 export interface NotebookDocument {
@@ -127,8 +156,28 @@ export namespace NotebookDocument {
 
 /**
  * A literal to identify a notebook document in the client.
+ *
+ * @since 3.17.0 - proposed state
  */
 export interface NotebookDocumentIdentifier {
+	/**
+	 * The notebook document's uri.
+	 */
+	uri: URI;
+}
+
+/**
+ * A versioned notebook document identifier.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export interface VersionedNotebookDocumentIdentifier {
+
+	/**
+	 * The version number of this notebook document.
+	 */
+	version: integer;
+
 	/**
 	 * The notebook document's uri.
 	 */
@@ -248,7 +297,34 @@ export namespace DidOpenNotebookDocumentNotification {
 	export const type = new ProtocolNotificationType<DidOpenNotebookDocumentParams, void>(method);
 }
 
+export interface NotebookDocumentChangeEvent {
+	cells: NotebookCellChange;
+}
+
 export interface DidChangeNotebookDocumentParams {
+
+	/**
+	 * The notebook document that did change. The version number points
+	 * to the version after all provided changes have been applied.
+	 */
+	notebookDocument: VersionedNotebookDocumentIdentifier;
+
+	/**
+	 * The actual changes to the notebook document.
+	 *
+	 * The changes describe single state changes to the notebook document.
+	 * So if there are two changes c1 (at array index 0) and c2 (at array
+	 * index 1) for a notebook in state S then c1 moves the notebook from
+	 * S to S' and c2 from S' to S''. So c1 is computed on the state S and
+	 * c2 is computed on the state S'.
+	 *
+	 * To mirror the content of a notebook using change events use the following approach:
+	 * - start with the same initial content
+	 * - apply the 'notebookDocument/didChange' notifications in the order you receive them.
+	 * - apply the `NotebookChangeEvent`s in a single notification in the order
+	 *   you receive them.
+	 */
+	changes: NotebookDocumentChangeEvent[];
 }
 
 export namespace DidChangeNotebookDocumentNotification {

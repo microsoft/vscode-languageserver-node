@@ -27,7 +27,7 @@ namespace Converter {
 		export function asNotebookDocument(notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[], base: _c2p.Converter): proto.Proposed.NotebookDocument {
 			return proto.Proposed.NotebookDocument.create(base.asUri(notebookDocument.uri), notebookDocument.notebookType, notebookDocument.version, asNotebookCells(cells, base));
 		}
-		function asNotebookCells(cells: vscode.NotebookCell[], base: _c2p.Converter): proto.Proposed.NotebookCell[] {
+		export function asNotebookCells(cells: vscode.NotebookCell[], base: _c2p.Converter): proto.Proposed.NotebookCell[] {
 			return cells.map(cell => asNotebookCell(cell, base));
 		}
 		function asNotebookCell(cell: vscode.NotebookCell, base: _c2p.Converter): proto.Proposed.NotebookCell {
@@ -44,6 +44,46 @@ namespace Converter {
 	}
 }
 
+namespace NotebookCell {
+	export function computeDiff(originalCells: proto.Proposed.NotebookCell[], modifiedCells: proto.Proposed.NotebookCell[]): proto.Proposed.NotebookCellChange | undefined {
+		const originalLength = originalCells.length;
+		const modifiedLength = modifiedCells.length;
+		let startIndex = 0;
+		while(startIndex < modifiedLength && startIndex < originalLength && proto.Proposed.NotebookCell.equal(originalCells[startIndex], modifiedCells[startIndex])) {
+			startIndex++;
+		}
+		if (startIndex < modifiedLength && startIndex < originalLength) {
+			let originalEndIndex = originalLength - 1;
+			let modifiedEndIndex = modifiedLength - 1;
+			while (originalEndIndex >= startIndex && modifiedEndIndex >= startIndex && proto.Proposed.NotebookCell.equal(originalCells[originalEndIndex], modifiedCells[modifiedEndIndex])) {
+				originalEndIndex--;
+				modifiedEndIndex--;
+			}
+			// if one moved behind the start index move them forward again
+			if (originalEndIndex < startIndex || modifiedEndIndex < startIndex) {
+				originalEndIndex++;
+				modifiedEndIndex++;
+			}
+
+			const deleteCount = originalEndIndex - startIndex + 1;
+			const newCells = modifiedCells.slice(startIndex, modifiedEndIndex + 1);
+			// If we moved behind the start index we could have missed a simple delete.
+			if (newCells.length === 1 && newCells[0] === originalCells[originalEndIndex]) {
+				return { start: startIndex, deleteCount: deleteCount - 1 };
+			} else {
+				return { start: startIndex, deleteCount, cells: newCells };
+			}
+		} else if (startIndex < modifiedLength) {
+			return { start: startIndex, deleteCount: 0, cells: modifiedCells.slice(startIndex) } ;
+		} else if (startIndex < originalLength) {
+			return { start: startIndex, deleteCount: originalLength - startIndex };
+		} else {
+			// The two arrays are the same.
+			return undefined;
+		}
+	}
+}
+
 class NotebookDocumentSyncFeatureProvider {
 
 	private readonly client: BaseLanguageClient;
@@ -51,15 +91,23 @@ class NotebookDocumentSyncFeatureProvider {
 	private readonly synced: Map<string, proto.Proposed.NotebookDocument>;
 	private readonly disposables: vscode.Disposable[];
 
-
 	constructor(client: BaseLanguageClient, options: proto.Proposed.NotebookDocumentOptions) {
 		this.client = client;
 		this.options = options;
 		this.synced = new Map();
 		this.disposables = [];
 		vscode.workspace.onDidOpenNotebookDocument(this.didOpen, this, this.disposables);
+		for (const notebookDocument of vscode.workspace.notebookDocuments) {
+			this.didOpen(notebookDocument);
+		}
 		vscode.workspace.onDidCloseNotebookDocument(this.didClose, this, this.disposables);
 		vscode.notebooks.onDidChangeNotebookCells(this.cellsChanged, this, this.disposables);
+	}
+
+	public dispose(): void {
+		for (const disposable of this.disposables) {
+			disposable.dispose();
+		}
 	}
 
 	private didOpen(notebookDocument: vscode.NotebookDocument, optionalCells: vscode.NotebookCell[] | null = null): void {
@@ -93,8 +141,24 @@ class NotebookDocumentSyncFeatureProvider {
 			const cells = this.getMatchingCells(notebookDocument);
 			if (cells === undefined) {
 				this.didClose(notebookDocument);
+				return;
 			}
-			
+			const modifiedCells = Converter.c2p.asNotebookCells(cells, this.client.code2ProtocolConverter);
+			const diff = NotebookCell.computeDiff(syncedNotebookDocument.cells, modifiedCells);
+			if (diff === undefined) {
+				return;
+			}
+			this.client.sendNotification(proto.Proposed.DidChangeNotebookDocumentNotification.type, {
+				notebookDocument: {
+					version: notebookDocument.version,
+					uri: this.client.code2ProtocolConverter.asUri(notebookDocument.uri)
+				},
+				changes: [
+					{ cells: diff }
+				]
+			}).catch((error) => {
+				this.client.error('Sending DidChangeNotebookDocumentNotification failed', error);
+			});
 		}
 	}
 
@@ -154,19 +218,25 @@ class NotebookDocumentSyncFeatureProvider {
 }
 
 export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Proposed.NotebookDocumentRegistrationOptions> {
-	constructor() {
+
+	private readonly client: BaseLanguageClient;
+	private readonly registrations: Map<string, NotebookDocumentSyncFeatureProvider>;
+
+	constructor(client: BaseLanguageClient) {
+		this.client = client;
+		this.registrations = new Map();
 		this.registrationType = proto.Proposed.NotebookDocumentSyncRegistrationType.type;
 	}
 
-	readonly registrationType: proto.RegistrationType<NotebookDocumentRegistrationOptions>;
+	public readonly registrationType: proto.RegistrationType<proto.Proposed.NotebookDocumentRegistrationOptions>;
 
-	fillClientCapabilities(capabilities: proto.ClientCapabilities & proto.Proposed.$NotebookDocumentClientCapabilities): void {
+	public fillClientCapabilities(capabilities: proto.ClientCapabilities & proto.Proposed.$NotebookDocumentClientCapabilities): void {
 		const synchronization = ensure(ensure(capabilities, 'notebookDocument')!, 'synchronization')!;
 		synchronization.dynamicRegistration = true;
 
 	}
 
-	initialize(capabilities: proto.ServerCapabilities<any> & proto.Proposed.$NotebookDocumentServerCapabilities): void {
+	public initialize(capabilities: proto.ServerCapabilities<any> & proto.Proposed.$NotebookDocumentServerCapabilities): void {
 		const options = capabilities.notebookDocumentSync;
 		if (options === undefined) {
 			return;
@@ -175,15 +245,20 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 		this.register({ id, registerOptions: options});
 	}
 
-	register(data: RegistrationData<NotebookDocumentRegistrationOptions>): void {
-		throw new Error('Method not implemented.');
+	public register(data: RegistrationData<proto.Proposed.NotebookDocumentRegistrationOptions>): void {
+		const provider = new NotebookDocumentSyncFeatureProvider(this.client, data.registerOptions);
+		this.registrations.set(data.id, provider);
 	}
 
-	unregister(id: string): void {
-		throw new Error('Method not implemented.');
+	public unregister(id: string): void {
+		const provider = this.registrations.get(id);
+		provider && provider.dispose();
 	}
 
 	dispose(): void {
-		throw new Error('Method not implemented.');
+		for (const provider of this.registrations.values()) {
+			provider.dispose();
+		}
+		this.registrations.clear();
 	}
 }

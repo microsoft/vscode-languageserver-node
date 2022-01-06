@@ -60,13 +60,15 @@ export abstract class CommonLanguageClient extends BaseLanguageClient {
 import * as pd from './proposed.diagnostic';
 import * as pt from './proposed.typeHierarchy';
 import * as iv from './proposed.inlineValues';
+import * as nb from './proposed.notebooks';
 
 export namespace ProposedFeatures {
 	export function createAll(_client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
 		let result: (StaticFeature | DynamicFeature<any>)[] = [
 			new pd.DiagnosticFeature(_client),
 			new pt.TypeHierarchyFeature(_client),
-			new iv.InlineValueFeature(_client)
+			new iv.InlineValueFeature(_client),
+			new nb.NotebookDocumentSyncFeature(_client)
 		];
 		return result;
 	}
