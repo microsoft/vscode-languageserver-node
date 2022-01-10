@@ -1170,6 +1170,9 @@ class DidChangeTextDocumentFeature implements DidChangeTextDocumentFeatureShape 
 	}
 
 	public dispose(): void {
+		if (this._changeDelayer !== undefined) {
+			this._changeDelayer.delayer.cancel();
+		}
 		this._changeDelayer = undefined;
 		this._forcingDelivery = false;
 		this._changeData.clear();
@@ -3446,6 +3449,10 @@ export abstract class BaseLanguageClient {
 	}
 
 	private cleanUp(channel: boolean = true, diagnostics: boolean = true): void {
+		// purge outstanding file events.
+		this._fileEvents = [];
+		this._fileEventDelayer.cancel();
+
 		if (this._listeners) {
 			this._listeners.forEach(listener => listener.dispose());
 			this._listeners = undefined;
