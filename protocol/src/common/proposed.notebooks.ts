@@ -27,7 +27,7 @@ export interface NotebookDocumentSyncClientCapabilities {
 export interface $NotebookDocumentClientCapabilities {
 	notebookDocument?: {
 		synchronization: NotebookDocumentSyncClientCapabilities;
-	}
+	};
 }
 
 export interface $NotebookDocumentServerCapabilities {

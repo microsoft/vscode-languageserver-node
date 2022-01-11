@@ -139,7 +139,7 @@ export function createConnection(reader: MessageReader, writer: MessageWriter, o
 export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _, PNotebooks = _>(
 	factories: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages, PNotebooks>,
 	options?: ConnectionStrategy | ConnectionOptions
-): _Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages>;
+): _Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages, PNotebooks>;
 
 /**
  * Creates a new connection using a the given streams.
@@ -152,7 +152,7 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _, PNotebooks = _>(
 	factories: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages, PNotebooks>,
 	inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, options?: ConnectionStrategy | ConnectionOptions
-): _Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages>;
+): _Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages, PNotebooks>;
 
 /**
  * Creates a new connection.
@@ -164,7 +164,7 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _, PNotebooks = _>(
 	factories: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages, PNotebooks>,
 	reader: MessageReader, writer: MessageWriter, options?: ConnectionStrategy | ConnectionOptions
-): _Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages>;
+): _Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages, PNotebooks>;
 
 export function createConnection(arg1?: any, arg2?: any, arg3?: any, arg4?: any): Connection {
 	let factories: Features | undefined;
