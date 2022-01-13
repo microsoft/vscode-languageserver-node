@@ -102,8 +102,10 @@ let __noDynamicImport: LocationLink | undefined;
  *
  * @sample A language filter that applies to typescript files on disk: `{ language: 'typescript', scheme: 'file' }`
  * @sample A language filter that applies to all package.json paths: `{ language: 'json', pattern: '**package.json' }`
+ *
+ * @since 3.17.0 - proposed state.
  */
-export type DocumentFilter = {
+export type TextDocumentFilter = {
 	/** A language id, like `typescript`. */
 	language: string;
 	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */
@@ -127,15 +129,95 @@ export type DocumentFilter = {
 };
 
 /**
- * The DocumentFilter namespace provides helper functions to work with
- * [DocumentFilter](#DocumentFilter) literals.
+ * The TextDocumentFilter namespace provides helper functions to work with
+ * [TextDocumentFilter](#TextDocumentFilter) literals.
+ *
+ * @since 3.17.0 - proposed state.
  */
-export namespace DocumentFilter {
-	export function is(value: any): value is DocumentFilter {
-		const candidate: DocumentFilter = value;
+export namespace TextDocumentFilter {
+	export function is(value: any): value is TextDocumentFilter {
+		const candidate: TextDocumentFilter = value;
 		return Is.string(candidate.language) || Is.string(candidate.scheme) || Is.string(candidate.pattern);
 	}
 }
+
+/**
+ * A notebook document filter denotes a notebook document by
+ * different properties.
+ *
+ * @since 3.17.0 - proposed state.
+ */
+export type NotebookDocumentFilter = {
+	/**
+	 * The type of the enclosing notebook.
+	 */
+	notebookType?: string;
+
+	/**
+	 * A Uri [scheme](#Uri.scheme), like `file` or `untitled`.
+	 *
+	 * Will be matched against the URI of the notebook.
+	 */
+	scheme?: string;
+
+	/**
+	 * A glob pattern, like `*.{ts,js}`.
+     *
+	 * Will be matched against the path section of the URI of the
+	 * notebook.
+	 */
+	pattern?: string;
+};
+
+/**
+ * The NotebookDocumentFilter namespace provides helper functions to work with
+ * [NotebookDocumentFilter](#NotebookDocumentFilter) literals.
+ *
+ * @since 3.17.0 - proposed state.
+ */
+export namespace NotebookDocumentFilter {
+	export function is(value: any): value is NotebookDocumentFilter {
+		const candidate: NotebookDocumentFilter = value;
+		return Is.objectLiteral(candidate) && (Is.string(candidate.notebookType) || Is.string(candidate.scheme) || Is.string(candidate.pattern));
+	}
+}
+
+/**
+ * A notebook cell text document filter denotes a cell text
+ * document by different properties.
+ *
+ * @since 3.17.0 - proposed state.
+ */
+export type NotebookCellTextDocumentFilter = {
+	/**
+	 * A filter that matches against the notebook
+	 * containing the notebook cell.
+	 */
+	notebookDocument: NotebookDocumentFilter;
+
+	/**
+	 * A language id like `typescript`.
+	 *
+	 * Will be matched against the language id of the
+	 * notebook cell document.
+	 */
+	cellLanguage?: string;
+};
+
+/**
+ * The NotebookCellTextDocumentFilter namespace provides helper functions to work with
+ * [NotebookCellTextDocumentFilter](#NotebookCellTextDocumentFilter) literals.
+ *
+ * @since 3.17.0 - proposed state.
+ */
+export namespace NotebookCellTextDocumentFilter {
+	export function is(value: any): value is NotebookCellTextDocumentFilter {
+		const candidate: NotebookCellTextDocumentFilter = value;
+		return Is.objectLiteral(candidate) && NotebookDocumentFilter.is(candidate.notebookDocument) && (candidate.cellLanguage === undefined || Is.string(candidate.cellLanguage));
+	}
+}
+
+export type DocumentFilter = TextDocumentFilter | NotebookCellTextDocumentFilter;
 
 /**
  * A document selector is the combination of one or many document filters.
@@ -156,7 +238,7 @@ export namespace DocumentSelector {
 			return false;
 		}
 		for (let elem of value) {
-			if (!Is.string(elem) && !DocumentFilter.is(elem)) {
+			if (!Is.string(elem) && !TextDocumentFilter.is(elem) && !NotebookCellTextDocumentFilter.is(elem)) {
 				return false;
 			}
 		}

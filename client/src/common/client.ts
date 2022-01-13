@@ -52,7 +52,7 @@ import {
 	CancellationStrategy, SaveOptions, LSPErrorCodes, CodeActionResolveRequest, RegistrationType, SemanticTokensRegistrationType, InsertTextMode, ShowDocumentRequest,
 	FileOperationRegistrationOptions, WillCreateFilesRequest, WillRenameFilesRequest, WillDeleteFilesRequest, DidCreateFilesNotification, DidDeleteFilesNotification, DidRenameFilesNotification,
 	ShowDocumentParams, ShowDocumentResult, LinkedEditingRangeRequest, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressReport, PrepareSupportDefaultBehavior,
-	SemanticTokensRequest, SemanticTokensRangeRequest, SemanticTokensDeltaRequest, Proposed, WorkspaceSymbolResolveRequest
+	SemanticTokensRequest, SemanticTokensRangeRequest, SemanticTokensDeltaRequest, Proposed, WorkspaceSymbolResolveRequest, NotebookCellTextDocumentFilter, TextDocumentFilter
 } from 'vscode-languageserver-protocol';
 
 import { toJSONObject } from './configuration';
@@ -927,6 +927,16 @@ abstract class DocumentNotifications<P, E> implements DynamicFeature<TextDocumen
 			}
 		}
 		return undefined;
+	}
+
+	protected match(selector: DocumentSelector, textDocument: TextDocument): boolean {
+		const scheme = textDocument.uri.scheme;
+		for (const filter of selector) {
+			if (NotebookCellTextDocumentFilter.is(filter) && scheme === '') {
+
+			}
+		}
+		if (NotebookCellTextDocumentFilter)
 	}
 }
 
