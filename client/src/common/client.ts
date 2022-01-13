@@ -86,9 +86,9 @@ import { ProgressPart } from './progressPart';
 export namespace $DocumentSelector {
 
 	export function match(selector: DocumentSelector, textDocument: TextDocument): boolean {
-		const scheme = textDocument.uri.scheme;
+		const isCellDocument = textDocument.uri.scheme === 'vscode-notebook-cell'
 		for (const filter of selector) {
-			if (scheme === 'vscode-notebook-cell' && NotebookCellTextDocumentFilter.is(filter)) {
+			if (isCellDocument && NotebookCellTextDocumentFilter.is(filter)) {
 				if (filter.cellLanguage !== undefined && filter.cellLanguage !== textDocument.languageId) {
 					continue;
 				}
@@ -100,7 +100,7 @@ export namespace $DocumentSelector {
 					return true;
 				}
 
-			} else if (TextDocumentFilter.is(filter)) {
+			} else if (!isCellDocument && TextDocumentFilter.is(filter)) {
 				// We don't have a notebook cell document. So match against a regular
 				// document filter only
 				if (Languages.match(filter, textDocument) !== 0) {
@@ -152,11 +152,10 @@ export namespace $DocumentSelector {
 			if (!matcher.makeRe()) {
 				return false;
 			}
-			if (matcher.match(uri.fsPath)) {
-				return true;
-			}
+			return matcher.match(uri.fsPath);
+		} else {
+			return true;
 		}
-		return false;
 	}
 }
 

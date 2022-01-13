@@ -170,7 +170,9 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 				// 	workspaceDiagnostics: true
 				// },
 				notebookDocumentSync: {
-					cellSelector: [{ language: 'bat', syncCellTextDocument: true }]
+					notebookDocumentSelector: [{
+						cellLanguages: ['bat']
+					}]
 				}
 			}
 		};
@@ -258,7 +260,7 @@ function validate(document: TextDocument): Diagnostic[] {
 	connection.console.log('Validating document ' + document.uri);
 	return [ {
 		range: Range.create(0, 0, 0, 10),
-		message: 'A error message',
+		message: 'An error message',
 		tags: [
 			DiagnosticTag.Unnecessary
 		],
@@ -686,7 +688,7 @@ connection.notebooks.synchronization.onDidOpenNotebookDocument(params => {
 });
 
 connection.notebooks.synchronization.onDidChangeNotebookDocument(params => {
-	connection.console.log(`Notebook changed opened: ${params.notebookDocument.uri}`);
+	connection.console.log(`Notebook document changed: ${params.notebookDocument.uri}`);
 
 });
 

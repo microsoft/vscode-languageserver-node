@@ -24,7 +24,8 @@ export function activate(context: ExtensionContext) {
 
 	let clientOptions: LanguageClientOptions = {
 		documentSelector: [
-			'bat',
+			{ scheme: 'file', language: 'bat' },
+			{ notebookDocument: { scheme: 'file' }, cellLanguage: 'bat' },
 			{ pattern: '**/.vscode/test.txt', scheme: 'file' }
 		],
 		synchronize: {
