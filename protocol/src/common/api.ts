@@ -138,6 +138,7 @@ export namespace Proposed {
 	export type NotebookDocumentChangeEvent = nb.NotebookDocumentChangeEvent;
 	export type NotebookDocumentIdentifier = nb.NotebookDocumentIdentifier;
 	export type VersionedNotebookDocumentIdentifier = nb.VersionedNotebookDocumentIdentifier;
+	export type NotebookCellFilter = nb.NotebookCellFilter;
 	export type NotebookDocumentFilter = nb.NotebookDocumentFilter;
 	export type NotebookDocumentOptions = nb.NotebookDocumentOptions;
 	export type NotebookDocumentRegistrationOptions = nb.NotebookDocumentRegistrationOptions;

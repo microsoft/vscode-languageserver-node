@@ -164,13 +164,13 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 				},
 				callHierarchyProvider: true,
 				selectionRangeProvider: { workDoneProgress: true },
-				diagnosticProvider: {
-					identifier: 'testbed',
-					interFileDependencies: true,
-					workspaceDiagnostics: true
-				},
+				// diagnosticProvider: {
+				// 	identifier: 'testbed',
+				// 	interFileDependencies: true,
+				// 	workspaceDiagnostics: true
+				// },
 				notebookDocumentSync: {
-					cellSelector: [{ language: 'javascript' }]
+					cellSelector: [{ language: 'bat', syncCellTextDocument: true }]
 				}
 			}
 		};
@@ -682,16 +682,16 @@ connection.languages.semanticTokens.onRange((params) => {
 });
 
 connection.notebooks.synchronization.onDidOpenNotebookDocument(params => {
-	console.log(`Notebook document opened: ${params.notebookDocument.uri}`);
+	connection.console.log(`Notebook document opened: ${params.notebookDocument.uri}`);
 });
 
 connection.notebooks.synchronization.onDidChangeNotebookDocument(params => {
-	console.log(`Notebook changed opened: ${params.notebookDocument.uri}`);
+	connection.console.log(`Notebook changed opened: ${params.notebookDocument.uri}`);
 
 });
 
 connection.notebooks.synchronization.onDidCloseNotebookDocument(params => {
-	console.log(`Notebook document closed: ${params.notebookDocument.uri}`);
+	connection.console.log(`Notebook document closed: ${params.notebookDocument.uri}`);
 });
 
 

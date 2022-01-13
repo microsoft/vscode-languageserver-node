@@ -3457,7 +3457,8 @@ export abstract class BaseLanguageClient {
 		if (this._syncedDocuments) {
 			this._syncedDocuments.clear();
 		}
-		for (const feature of this._features.values()) {
+		// Dispose features in reverse order;
+		for (const feature of Array.from(this._features.entries()).map(entry => entry[1]).reverse()) {
 			feature.dispose();
 		}
 		if (channel) {

@@ -22,16 +22,22 @@ export interface NotebookDocumentSyncClientCapabilities {
 	 * return value for the corresponding server capability as well.
 	 */
 	dynamicRegistration?: boolean;
+
+	/**
+	 * Client capability to announce the scheme used for notebook cell
+	 * document uris.
+	 *
+	 * This is useful since clients might use a special scheme (which
+	 * is different from the actual notebook document uri scheme)
+	 * for their notebook cell document uris.
+	 */
+	notebookCellScheme?: string;
 }
 
 export interface $NotebookDocumentClientCapabilities {
 	notebookDocument?: {
 		synchronization: NotebookDocumentSyncClientCapabilities;
 	};
-}
-
-export interface $NotebookDocumentServerCapabilities {
-	notebookDocumentSync?: NotebookDocumentOptions | NotebookDocumentRegistrationOptions;
 }
 
 /**
@@ -223,6 +229,19 @@ export type NotebookDocumentFilter = {
 };
 
 /**
+ * A special document filter for notebook cells.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export type NotebookCellFilter = DocumentFilter & {
+	/**
+	 * Whether the underlying cell text document
+	 * should be synced to the server.
+	 */
+	syncCellTextDocument?: boolean;
+};
+
+/**
  * Options specific to a notebook.
  *
  * @since 3.17.0 - proposed state
@@ -242,7 +261,7 @@ export type NotebookDocumentOptions = {
 	 * then the notebook is not synced to the server
 	 * if the notebookSelector is set to `onlyIfCellsMatch`
 	 */
-	cellSelector?: DocumentFilter[];
+	cellSelector?: NotebookCellFilter[];
 } | {
 	/**
 	 * The notebook document is synced to the server
@@ -259,8 +278,12 @@ export type NotebookDocumentOptions = {
 	 * then the notebook is not synced to the server
 	 * if no notebookSelector is set.
 	 */
-	cellSelector: DocumentFilter[];
+	cellSelector: NotebookCellFilter[];
 };
+
+export interface $NotebookDocumentServerCapabilities {
+	notebookDocumentSync?: NotebookDocumentOptions | NotebookDocumentRegistrationOptions;
+}
 
 /**
  * Registration options specific to a notebook.

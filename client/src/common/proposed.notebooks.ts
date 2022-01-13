@@ -104,6 +104,7 @@ class NotebookDocumentSyncFeatureProvider {
 	private readonly options: proto.Proposed.NotebookDocumentOptions;
 	private readonly synced: Map<string, SyncInfo>;
 	private readonly disposables: vscode.Disposable[];
+	private readonly cellRegistrations: [string, string, string] | undefined;
 
 	constructor(client: BaseLanguageClient, options: proto.Proposed.NotebookDocumentOptions) {
 		this.client = client;
@@ -116,6 +117,24 @@ class NotebookDocumentSyncFeatureProvider {
 		}
 		vscode.workspace.onDidCloseNotebookDocument(this.didClose, this, this.disposables);
 		vscode.notebooks.onDidChangeNotebookCells(event => this.cellsChanged(event.document), undefined, this.disposables);
+
+		if (this.options.cellSelector !== undefined) {
+			const documentSelector: proto.DocumentSelector = [];
+			for (const filter of this.options.cellSelector) {
+				if (filter.syncCellTextDocument === true && (filter.scheme === undefined || filter.scheme === NotebookDocumentSyncFeature.CellScheme)) {
+					documentSelector.push(Object.assign({}, filter, { scheme: NotebookDocumentSyncFeature.CellScheme }));
+				}
+			}
+			if (documentSelector.length >= 0) {
+				const openId = UUID.generateUuid();
+				client.getFeature(proto.DidOpenTextDocumentNotification.method).register({ id: openId, registerOptions: { documentSelector } });
+				const changeId = UUID.generateUuid();
+				client.getFeature(proto.DidChangeTextDocumentNotification.method).register({ id: changeId, registerOptions: { documentSelector }});
+				const closeId = UUID.generateUuid();
+				client.getFeature(proto.DidCloseTextDocumentNotification.method).register({ id: closeId, registerOptions: { documentSelector }});
+				this.cellRegistrations = [openId, changeId, closeId];
+			}
+		}
 	}
 
 	public didOpenNotebookCellDocument(notebookDocument: vscode.NotebookDocument, cell: vscode.NotebookCell): void {
@@ -143,6 +162,12 @@ class NotebookDocumentSyncFeatureProvider {
 	}
 
 	public dispose(): void {
+		if (this.cellRegistrations !== undefined) {
+			const [openId, changeId, closeId] = this.cellRegistrations;
+			this.client.getFeature(proto.DidOpenTextDocumentNotification.method).unregister(openId);
+			this.client.getFeature(proto.DidChangeTextDocumentNotification.method).unregister(changeId);
+			this.client.getFeature(proto.DidCloseTextDocumentNotification.method).unregister(closeId);
+		}
 		for (const disposable of this.disposables) {
 			disposable.dispose();
 		}
@@ -257,6 +282,8 @@ class NotebookDocumentSyncFeatureProvider {
 
 export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Proposed.NotebookDocumentRegistrationOptions> {
 
+	public static readonly CellScheme: string = 'vscode-notebook-cell';
+
 	private readonly client: BaseLanguageClient;
 	private readonly registrations: Map<string, NotebookDocumentSyncFeatureProvider>;
 
@@ -267,7 +294,7 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 		// We don't receive an event for cells where the document changes its language mode
 		// Since we allow servers to filter on the language mode we fire such an event ourselves.
 		vscode.workspace.onDidOpenTextDocument((textDocument) => {
-			if (textDocument.uri.scheme !== 'vscode-notebook-cell') {
+			if (textDocument.uri.scheme !== NotebookDocumentSyncFeature.CellScheme) {
 				return;
 			}
 			const [notebookDocument, notebookCell] = this.getNotebookDocument(textDocument);
@@ -285,7 +312,7 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 	public fillClientCapabilities(capabilities: proto.ClientCapabilities & proto.Proposed.$NotebookDocumentClientCapabilities): void {
 		const synchronization = ensure(ensure(capabilities, 'notebookDocument')!, 'synchronization')!;
 		synchronization.dynamicRegistration = true;
-
+		synchronization.notebookCellScheme = NotebookDocumentSyncFeature.CellScheme;
 	}
 
 	public initialize(capabilities: proto.ServerCapabilities<any> & proto.Proposed.$NotebookDocumentServerCapabilities): void {
