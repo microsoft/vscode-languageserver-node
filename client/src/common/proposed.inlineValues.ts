@@ -12,7 +12,7 @@ import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, Proposed
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, BaseLanguageClient } from './client';
+import { TextDocumentFeature, BaseLanguageClient, $DocumentSelector } from './client';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -84,6 +84,7 @@ export class InlineValueFeature extends TextDocumentFeature<boolean | Proposed.I
 
 			}
 		};
-		return [Languages.registerInlineValuesProvider(options.documentSelector!, provider), { provider: provider, onDidChangeInlineValues: eventEmitter }];
+		const [textDocumentSelectors] = $DocumentSelector.split(options.documentSelector!);
+		return [Languages.registerInlineValuesProvider(textDocumentSelectors, provider), { provider: provider, onDidChangeInlineValues: eventEmitter }];
 	}
 }

@@ -7,7 +7,7 @@ import { URI, integer, DocumentUri, uinteger } from 'vscode-languageserver-types
 
 import * as Is from './utils/is';
 import { ProtocolNotificationType, RegistrationType } from './messages';
-import { DocumentFilter, StaticRegistrationOptions } from './protocol';
+import { StaticRegistrationOptions, NotebookDocumentFilter } from './protocol';
 
 /**
  * Notebook specific client capabilities.
@@ -191,94 +191,18 @@ export interface VersionedNotebookDocumentIdentifier {
 }
 
 /**
- * A notebook document filter denotes a notebook by different properties like
- * the [type](#NotebookDocument.notebookType), the [scheme](#Uri.scheme) of
- * its resource, or a glob-pattern that is applied to the [path](#notebookType.uri.path).
- *
- * Glob patterns can have the following syntax:
- * - `*` to match one or more characters in a path segment
- * - `?` to match on one character in a path segment
- * - `**` to match any number of path segments, including none
- * - `{}` to group sub patterns into an OR expression. (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)
- * - `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
- * - `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)
- *
- * @since 3.17.0 - proposed state
- */
-export type NotebookDocumentFilter = {
-	/** A notebook type. */
-	notebookType: string;
-	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */
-	scheme?: string;
-	/** A glob pattern, like `*.{ts,js}`. */
-	pattern?: string;
-} | {
-	/** A notebook type. */
-	notebookType?: string;
-	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */
-	scheme: string;
-	/** A glob pattern, like `*.{ts,js}`. */
-	pattern?: string;
-} | {
-	/** A notebook type. */
-	notebookType?: string;
-	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */
-	scheme?: string;
-	/** A glob pattern, like `*.{ts,js}`. */
-	pattern: string;
-};
-
-/**
- * A special document filter for notebook cells.
- *
- * @since 3.17.0 - proposed state
- */
-export type NotebookCellFilter = DocumentFilter & {
-	/**
-	 * Whether the underlying cell text document
-	 * should be synced to the server.
-	 */
-	syncCellTextDocument?: boolean;
-};
-
-/**
  * Options specific to a notebook.
  *
  * @since 3.17.0 - proposed state
  */
 export type NotebookDocumentOptions = {
-	/**
-	 * The notebook document is synced to the server
-	 * if it matches the notebook selector. If no
-	 * `cellSelector` is provided all notebook cells
-	 * are synced.
-	 */
-	notebookSelector: NotebookDocumentFilter[];
-
-	/**
-	 * Only the cells that match a document filter
-	 * are synced to the server. If no cell matches
-	 * then the notebook is not synced to the server
-	 * if the notebookSelector is set to `onlyIfCellsMatch`
-	 */
-	cellSelector?: NotebookCellFilter[];
-} | {
-	/**
-	 * The notebook document is synced to the server
-	 * if it matches the notebook selector. if no
-	 * `notebookSelector` is provided a `cellSelector` is
-	 * mandatory.  If no `cellSelector` is provided all
-	 * notebook cells are synced.
-	 */
-	notebookSelector?: NotebookDocumentFilter[];
-
-	/**
-	 * Only the cells that match a document filter
-	 * are synced to the server. If no cell matches
-	 * then the notebook is not synced to the server
-	 * if no notebookSelector is set.
-	 */
-	cellSelector: NotebookCellFilter[];
+	notebookDocumentSelector?: ({
+		notebookDocumentFilter: NotebookDocumentFilter;
+		cellLanguages?: string[];
+	} | {
+		notebookDocumentFilter?: NotebookDocumentFilter;
+		cellLanguages: string[];
+	})[];
 };
 
 export interface $NotebookDocumentServerCapabilities {

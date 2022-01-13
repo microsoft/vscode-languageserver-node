@@ -4,13 +4,13 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as vscode from 'vscode';
-import { Middleware, BaseLanguageClient, TextDocumentFeature } from './client';
 import { ClientCapabilities, ServerCapabilities, DocumentSelector, SemanticTokenTypes, SemanticTokenModifiers, SemanticTokens,
 	TokenFormat, SemanticTokensOptions, SemanticTokensRegistrationOptions, SemanticTokensParams,
 	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest, SemanticTokensRefreshRequest,
 	SemanticTokensRegistrationType
 } from 'vscode-languageserver-protocol';
 
+import { Middleware, BaseLanguageClient, TextDocumentFeature, $DocumentSelector } from './client';
 import * as Is from './utils/is';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
@@ -201,11 +201,12 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Semanti
 		const disposables: vscode.Disposable[] = [];
 		const client = this._client;
 		const legend: vscode.SemanticTokensLegend = client.protocol2CodeConverter.asSemanticTokensLegend(options.legend);
+		const [textDocumentSelectors] = $DocumentSelector.split(options.documentSelector!);
 		if (documentProvider !== undefined) {
-			disposables.push(vscode.languages.registerDocumentSemanticTokensProvider(options.documentSelector!, documentProvider, legend));
+			disposables.push(vscode.languages.registerDocumentSemanticTokensProvider(textDocumentSelectors, documentProvider, legend));
 		}
 		if (rangeProvider !== undefined) {
-			disposables.push(vscode.languages.registerDocumentRangeSemanticTokensProvider(options.documentSelector!, rangeProvider, legend));
+			disposables.push(vscode.languages.registerDocumentRangeSemanticTokensProvider(textDocumentSelectors, rangeProvider, legend));
 		}
 
 		return [new vscode.Disposable(() => disposables.forEach(item => item.dispose())), { range: rangeProvider, full: documentProvider, onDidChangeSemanticTokensEmitter: eventEmitter }];

@@ -9,7 +9,7 @@ import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, TypeDefinitionRequest, TypeDefinitionRegistrationOptions, TypeDefinitionOptions
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, BaseLanguageClient } from './client';
+import { TextDocumentFeature, BaseLanguageClient, $DocumentSelector } from './client';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -65,6 +65,7 @@ export class TypeDefinitionFeature extends TextDocumentFeature<boolean | TypeDef
 					: provideTypeDefinition(document, position, token);
 			}
 		};
-		return [Languages.registerTypeDefinitionProvider(options.documentSelector!, provider), provider];
+		const [textDocumentSelector] = $DocumentSelector.split(options.documentSelector!);
+		return [Languages.registerTypeDefinitionProvider(textDocumentSelector, provider), provider];
 	}
 }

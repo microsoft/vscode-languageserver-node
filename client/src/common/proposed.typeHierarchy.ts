@@ -10,7 +10,7 @@ import {
 
 import { ClientCapabilities, DocumentSelector, ServerCapabilities, Proposed } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, BaseLanguageClient, Middleware } from './client';
+import { TextDocumentFeature, BaseLanguageClient, Middleware, $DocumentSelector } from './client';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -134,6 +134,7 @@ export class TypeHierarchyFeature extends TextDocumentFeature<boolean | Proposed
 	protected registerLanguageProvider(options: Proposed.TypeHierarchyRegistrationOptions): [Disposable, TypeHierarchyProvider] {
 		const client = this._client;
 		const provider = new TypeHierarchyProvider(client);
-		return [Languages.registerTypeHierarchyProvider(options.documentSelector!, provider), provider];
+		const [textDocumentSelectors] = $DocumentSelector.split(options.documentSelector!);
+		return [Languages.registerTypeHierarchyProvider(textDocumentSelectors, provider), provider];
 	}
 }

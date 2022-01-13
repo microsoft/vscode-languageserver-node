@@ -17,7 +17,7 @@ import {
 
 import { generateUuid } from './utils/uuid';
 import {
-	TextDocumentFeature, BaseLanguageClient, Middleware, LSPCancellationError, DiagnosticPullMode
+	TextDocumentFeature, BaseLanguageClient, Middleware, LSPCancellationError, DiagnosticPullMode, $DocumentSelector
 } from './client';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
@@ -639,7 +639,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 		const disposables: Disposable[] = [];
 
 		const matches = (textDocument: TextDocument): boolean => {
-			return Languages.match(documentSelector, textDocument) > 0 && editorTracker.isVisible(textDocument);
+			return $DocumentSelector.match(documentSelector, textDocument) && editorTracker.isVisible(textDocument);
 		};
 
 		this.diagnosticRequestor = new DiagnosticRequestor(client, editorTracker, options);

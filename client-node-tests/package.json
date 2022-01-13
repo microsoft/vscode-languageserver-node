@@ -6,7 +6,7 @@
 	"description": "",
 	"version": "0.0.1",
 	"engines": {
-		"vscode": "^1.62.0"
+		"vscode": "^1.63.0"
 	},
 	"categories": [
 		"Other"
@@ -14,7 +14,10 @@
 	"activationEvents": [
 		"*"
 	],
-	"enableProposedApi": true,
+	"enabledApiProposals": [
+		"tabs",
+		"notebookEditor"
+	],
 	"main": "./extension.js",
 	"contributes": {},
 	"scripts": {
@@ -35,7 +38,7 @@
 		"@types/minimatch": "^3.0.5",
 		"@types/sinon": "^10.0.2",
 		"@types/uuid": "^8.3.1",
-		"@types/vscode": "1.62.0",
+		"@types/vscode": "1.63.0",
 		"glob": "^7.1.7",
 		"sinon": "^11.1.2",
 		"uuid": "^8.3.2",

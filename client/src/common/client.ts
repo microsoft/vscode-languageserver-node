@@ -83,7 +83,7 @@ import * as UUID from './utils/uuid';
 import { ProgressPart } from './progressPart';
 
 
-namespace $DocumentSelector {
+export namespace $DocumentSelector {
 
 	export function match(selector: DocumentSelector, textDocument: TextDocument): boolean {
 		const scheme = textDocument.uri.scheme;

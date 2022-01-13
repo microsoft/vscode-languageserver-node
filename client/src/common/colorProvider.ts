@@ -10,7 +10,7 @@ import {
 	DocumentColorRegistrationOptions, DocumentColorOptions
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, BaseLanguageClient } from './client';
+import { TextDocumentFeature, BaseLanguageClient, $DocumentSelector } from './client';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -91,7 +91,8 @@ export class ColorProviderFeature extends TextDocumentFeature<boolean | Document
 					: provideDocumentColors(document, token);
 			}
 		};
-		return [Languages.registerColorProvider(options.documentSelector!, provider), provider];
+		const [textDocumentSelector] = $DocumentSelector.split(options.documentSelector!);
+		return [Languages.registerColorProvider(textDocumentSelector, provider), provider];
 	}
 
 	private asColor(color: Color): VColor {

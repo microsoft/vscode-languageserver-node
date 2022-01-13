@@ -14,7 +14,7 @@ import { ClientCapabilities, ServerCapabilities, DocumentSelector, CallHierarchy
 	CallHierarchyPrepareRequest
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, BaseLanguageClient, Middleware } from './client';
+import { TextDocumentFeature, BaseLanguageClient, Middleware, $DocumentSelector } from './client';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -138,6 +138,7 @@ export class CallHierarchyFeature extends TextDocumentFeature<boolean | CallHier
 	protected registerLanguageProvider(options: CallHierarchyRegistrationOptions): [Disposable, CallHierarchyProvider] {
 		const client = this._client;
 		const provider = new CallHierarchyProvider(client);
-		return [Languages.registerCallHierarchyProvider(options.documentSelector!, provider), provider];
+		const [textDocumentSelector] = $DocumentSelector.split(options.documentSelector!);
+		return [Languages.registerCallHierarchyProvider(textDocumentSelector, provider), provider];
 	}
 }
