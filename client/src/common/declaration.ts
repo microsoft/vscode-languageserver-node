@@ -47,8 +47,12 @@ export class DeclarationFeature extends TextDocumentFeature<boolean | Declaratio
 	}
 
 	protected registerLanguageProvider(options: DeclarationRegistrationOptions): [Disposable, DeclarationProvider] {
+		const selector = options.documentSelector!;
 		const provider: DeclarationProvider = {
 			provideDeclaration: (document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDeclaration> => {
+				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
+					return undefined;
+				}
 				const client = this._client;
 				const provideDeclaration: ProvideDeclarationSignature = (document, position, token) => {
 					return client.sendRequest(DeclarationRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
@@ -64,7 +68,6 @@ export class DeclarationFeature extends TextDocumentFeature<boolean | Declaratio
 					: provideDeclaration(document, position, token);
 			}
 		};
-		const [text] = $DocumentSelector.split(options.documentSelector!);
-		return [Languages.registerDeclarationProvider(text, provider), provider];
+		return [Languages.registerDeclarationProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
 	}
 }

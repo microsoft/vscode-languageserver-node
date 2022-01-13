@@ -46,8 +46,12 @@ export class SelectionRangeFeature extends TextDocumentFeature<boolean | Selecti
 	}
 
 	protected registerLanguageProvider(options: SelectionRangeRegistrationOptions): [Disposable, SelectionRangeProvider] {
+		const selector = options.documentSelector!;
 		const provider: SelectionRangeProvider = {
 			provideSelectionRanges: (document, positions, token) => {
+				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
+					return undefined;
+				}
 				const client = this._client;
 				const provideSelectionRanges: ProvideSelectionRangeSignature = (document, positions, token) => {
 					const requestParams: SelectionRangeParams = {
@@ -68,7 +72,6 @@ export class SelectionRangeFeature extends TextDocumentFeature<boolean | Selecti
 
 			}
 		};
-		const [textDocumentSelectors] = $DocumentSelector.split(options.documentSelector!);
-		return [Languages.registerSelectionRangeProvider(textDocumentSelectors, provider), provider];
+		return [Languages.registerSelectionRangeProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
 	}
 }

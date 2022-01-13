@@ -48,8 +48,12 @@ export class LinkedEditingFeature extends TextDocumentFeature<boolean | proto.Li
 	}
 
 	protected registerLanguageProvider(options: proto.LinkedEditingRangeRegistrationOptions): [code.Disposable, code.LinkedEditingRangeProvider] {
+		const selector = options.documentSelector!;
 		const provider: code.LinkedEditingRangeProvider = {
 			provideLinkedEditingRanges: (document, position, token) => {
+				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
+					return undefined;
+				}
 				const client = this._client;
 				const provideLinkedEditing: ProvideLinkedEditingRangeSignature = (document, position, token) => {
 					return client.sendRequest(proto.LinkedEditingRangeRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
@@ -65,7 +69,6 @@ export class LinkedEditingFeature extends TextDocumentFeature<boolean | proto.Li
 					: provideLinkedEditing(document, position, token);
 			}
 		};
-		const [textDocumentSelectors] = $DocumentSelector.split(options.documentSelector!);
-		return [code.languages.registerLinkedEditingRangeProvider(textDocumentSelectors, provider), provider];
+		return [code.languages.registerLinkedEditingRangeProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
 	}
 }

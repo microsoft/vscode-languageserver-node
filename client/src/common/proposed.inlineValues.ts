@@ -59,10 +59,14 @@ export class InlineValueFeature extends TextDocumentFeature<boolean | Proposed.I
 	}
 
 	protected registerLanguageProvider(options: Proposed.InlineValuesRegistrationOptions): [Disposable, InlineValuesProviderData] {
+		const selector = options.documentSelector!;
 		const eventEmitter: EventEmitter<void> = new EventEmitter<void>();
 		const provider: InlineValuesProvider = {
 			onDidChangeInlineValues: eventEmitter.event,
 			provideInlineValues: (document, viewPort, context, token) => {
+				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
+					return undefined;
+				}
 				const client = this._client;
 				const provideInlineValues: ProvideInlineValuesSignature = (document, viewPort, context, token) => {
 					const requestParams: Proposed.InlineValuesParams = {
@@ -84,7 +88,6 @@ export class InlineValueFeature extends TextDocumentFeature<boolean | Proposed.I
 
 			}
 		};
-		const [textDocumentSelectors] = $DocumentSelector.split(options.documentSelector!);
-		return [Languages.registerInlineValuesProvider(textDocumentSelectors, provider), { provider: provider, onDidChangeInlineValues: eventEmitter }];
+		return [Languages.registerInlineValuesProvider($DocumentSelector.asTextDocumentFilters(selector), provider), { provider: provider, onDidChangeInlineValues: eventEmitter }];
 	}
 }

@@ -51,6 +51,7 @@ export class ColorProviderFeature extends TextDocumentFeature<boolean | Document
 	}
 
 	protected registerLanguageProvider(options: DocumentColorRegistrationOptions): [Disposable, DocumentColorProvider] {
+		const selector = options.documentSelector!;
 		const provider: DocumentColorProvider = {
 			provideColorPresentations: (color, context, token) => {
 				const client = this._client;
@@ -73,6 +74,9 @@ export class ColorProviderFeature extends TextDocumentFeature<boolean | Document
 					: provideColorPresentations(color, context, token);
 			},
 			provideDocumentColors: (document, token) => {
+				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
+					return undefined;
+				}
 				const client = this._client;
 				const provideDocumentColors: ProvideDocumentColorsSignature = (document, token) => {
 					const requestParams = {
@@ -91,8 +95,7 @@ export class ColorProviderFeature extends TextDocumentFeature<boolean | Document
 					: provideDocumentColors(document, token);
 			}
 		};
-		const [textDocumentSelector] = $DocumentSelector.split(options.documentSelector!);
-		return [Languages.registerColorProvider(textDocumentSelector, provider), provider];
+		return [Languages.registerColorProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
 	}
 
 	private asColor(color: Color): VColor {

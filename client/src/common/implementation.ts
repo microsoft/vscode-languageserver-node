@@ -47,8 +47,12 @@ export class ImplementationFeature extends TextDocumentFeature<boolean | Impleme
 	}
 
 	protected registerLanguageProvider(options: ImplementationRegistrationOptions): [Disposable, ImplementationProvider] {
+		const selector = options.documentSelector!;
 		const provider: ImplementationProvider = {
 			provideImplementation: (document, position, token) => {
+				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
+					return undefined;
+				}
 				const client = this._client;
 				const provideImplementation: ProvideImplementationSignature = (document, position, token) => {
 					return client.sendRequest(ImplementationRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
@@ -64,7 +68,6 @@ export class ImplementationFeature extends TextDocumentFeature<boolean | Impleme
 					: provideImplementation(document, position, token);
 			}
 		};
-		const [text] = $DocumentSelector.split(options.documentSelector!);
-		return [Languages.registerImplementationProvider(text, provider), provider];
+		return [Languages.registerImplementationProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
 	}
 }

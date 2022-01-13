@@ -164,11 +164,11 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 				},
 				callHierarchyProvider: true,
 				selectionRangeProvider: { workDoneProgress: true },
-				// diagnosticProvider: {
-				// 	identifier: 'testbed',
-				// 	interFileDependencies: true,
-				// 	workspaceDiagnostics: true
-				// },
+				diagnosticProvider: {
+					identifier: 'testbed',
+					interFileDependencies: true,
+					workspaceDiagnostics: true
+				},
 				notebookDocumentSync: {
 					notebookDocumentSelector: [{
 						cellLanguages: ['bat']

@@ -48,8 +48,12 @@ export class FoldingRangeFeature extends TextDocumentFeature<boolean | FoldingRa
 	}
 
 	protected registerLanguageProvider(options: FoldingRangeRegistrationOptions): [Disposable, FoldingRangeProvider] {
+		const selector = options.documentSelector!;
 		const provider: FoldingRangeProvider = {
 			provideFoldingRanges: (document, context, token) => {
+				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
+					return undefined;
+				}
 				const client = this._client;
 				const provideFoldingRanges: ProvideFoldingRangeSignature = (document, _, token) => {
 					const requestParams: FoldingRangeParams = {
@@ -68,8 +72,7 @@ export class FoldingRangeFeature extends TextDocumentFeature<boolean | FoldingRa
 					: provideFoldingRanges(document, context, token);
 			}
 		};
-		const [textDocumentSelectors] = $DocumentSelector.split(options.documentSelector!);
-		return [Languages.registerFoldingRangeProvider(textDocumentSelectors, provider), provider];
+		return [Languages.registerFoldingRangeProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
 	}
 
 	private static asFoldingRangeKind(kind: string | undefined): VFoldingRangeKind | undefined {

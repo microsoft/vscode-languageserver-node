@@ -48,8 +48,12 @@ export class TypeDefinitionFeature extends TextDocumentFeature<boolean | TypeDef
 	}
 
 	protected registerLanguageProvider(options: TypeDefinitionRegistrationOptions): [Disposable, TypeDefinitionProvider] {
+		const selector = options.documentSelector!;
 		const provider: TypeDefinitionProvider = {
 			provideTypeDefinition: (document, position, token) => {
+				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
+					return undefined;
+				}
 				const client = this._client;
 				const provideTypeDefinition: ProvideTypeDefinitionSignature = (document, position, token) => {
 					return client.sendRequest(TypeDefinitionRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
@@ -65,7 +69,6 @@ export class TypeDefinitionFeature extends TextDocumentFeature<boolean | TypeDef
 					: provideTypeDefinition(document, position, token);
 			}
 		};
-		const [textDocumentSelector] = $DocumentSelector.split(options.documentSelector!);
-		return [Languages.registerTypeDefinitionProvider(textDocumentSelector, provider), provider];
+		return [Languages.registerTypeDefinitionProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
 	}
 }

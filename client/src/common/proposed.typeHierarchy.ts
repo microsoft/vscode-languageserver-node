@@ -46,11 +46,14 @@ class TypeHierarchyProvider implements VTypeHierarchyProvider {
 
 	private middleware: Middleware & TypeHierarchyMiddleware;
 
-	constructor(private client: BaseLanguageClient) {
+	constructor(private client: BaseLanguageClient, private options: Proposed.TypeHierarchyRegistrationOptions) {
 		this.middleware = client.clientOptions.middleware!;
 	}
 
 	public prepareTypeHierarchy(document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VTypeHierarchyItem[]> {
+		if ($DocumentSelector.skipCellTextDocument(this.options.documentSelector!, document)) {
+			return undefined;
+		}
 		const client = this.client;
 		const middleware = this.middleware;
 		const prepareTypeHierarchy: PrepareTypeHierarchySignature = (document, position, token) => {
@@ -133,8 +136,7 @@ export class TypeHierarchyFeature extends TextDocumentFeature<boolean | Proposed
 
 	protected registerLanguageProvider(options: Proposed.TypeHierarchyRegistrationOptions): [Disposable, TypeHierarchyProvider] {
 		const client = this._client;
-		const provider = new TypeHierarchyProvider(client);
-		const [textDocumentSelectors] = $DocumentSelector.split(options.documentSelector!);
-		return [Languages.registerTypeHierarchyProvider(textDocumentSelectors, provider), provider];
+		const provider = new TypeHierarchyProvider(client, options);
+		return [Languages.registerTypeHierarchyProvider($DocumentSelector.asTextDocumentFilters(options.documentSelector!), provider), provider];
 	}
 }

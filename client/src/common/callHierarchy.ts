@@ -50,7 +50,7 @@ class CallHierarchyProvider implements VCallHierarchyProvider {
 
 	private middleware: Middleware & CallHierarchyMiddleware;
 
-	constructor(private client: BaseLanguageClient) {
+	constructor(private client: BaseLanguageClient, private options: CallHierarchyRegistrationOptions) {
 		this.middleware = client.clientOptions.middleware!;
 	}
 
@@ -58,6 +58,9 @@ class CallHierarchyProvider implements VCallHierarchyProvider {
 		const client = this.client;
 		const middleware = this.middleware;
 		const prepareCallHierarchy: PrepareCallHierarchySignature = (document, position, token) => {
+			if ($DocumentSelector.skipCellTextDocument(this.options.documentSelector!, document)) {
+				return undefined;
+			}
 			const params = client.code2ProtocolConverter.asTextDocumentPositionParams(document, position);
 			return client.sendRequest(CallHierarchyPrepareRequest.type, params, token).then(
 				(result) => {
@@ -137,8 +140,7 @@ export class CallHierarchyFeature extends TextDocumentFeature<boolean | CallHier
 
 	protected registerLanguageProvider(options: CallHierarchyRegistrationOptions): [Disposable, CallHierarchyProvider] {
 		const client = this._client;
-		const provider = new CallHierarchyProvider(client);
-		const [textDocumentSelector] = $DocumentSelector.split(options.documentSelector!);
-		return [Languages.registerCallHierarchyProvider(textDocumentSelector, provider), provider];
+		const provider = new CallHierarchyProvider(client, options);
+		return [Languages.registerCallHierarchyProvider($DocumentSelector.asTextDocumentFilters(options.documentSelector!), provider), provider];
 	}
 }
