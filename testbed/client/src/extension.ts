@@ -26,7 +26,7 @@ export function activate(context: ExtensionContext) {
 		documentSelector: [
 			{ scheme: 'file', language: 'bat' },
 			{ notebookDocument: { scheme: 'file' }, cellLanguage: 'bat' },
-			{ pattern: '**/.vscode/test.txt', scheme: 'file' }
+			{ scheme: 'file', pattern: '**/.vscode/test.txt' }
 		],
 		synchronize: {
 			configurationSection: 'testbed'

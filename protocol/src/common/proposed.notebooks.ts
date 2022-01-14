@@ -121,6 +121,21 @@ export interface NotebookCellChange {
 	cells?: NotebookCell[];
 }
 
+export namespace NotebookCellChange {
+	export function is(value: any): value is NotebookCellChange {
+		const candidate: NotebookCellChange = value;
+		return Is.objectLiteral(candidate) && uinteger.is(candidate.start) && uinteger.is(candidate.deleteCount) && (candidate.cells === undefined || Is.typedArray(candidate.cells, NotebookCell.is));
+	}
+
+	export function create(start: uinteger, deleteCount: uinteger, cells?: NotebookCell[]): NotebookCellChange {
+		const result: NotebookCellChange = { start, deleteCount };
+		if (cells !== undefined) {
+			result.cells = cells;
+		}
+		return result;
+	}
+}
+
 /**
  * A notebook document.
  *
@@ -129,7 +144,7 @@ export interface NotebookCellChange {
 export interface NotebookDocument {
 
 	/**
-	 * The text document's uri.
+	 * The notebook document's uri.
 	 */
 	uri: URI;
 
@@ -156,7 +171,7 @@ export namespace NotebookDocument {
 	}
 	export function is(value: any): value is NotebookDocument {
 		const candidate: NotebookDocument = value;
-		return Is.objectLiteral(candidate) && Is.string(candidate.uri) && Is.number(candidate.version) && Is.typedArray(candidate.cells, NotebookCell.is);
+		return Is.objectLiteral(candidate) && Is.string(candidate.uri) && integer.is(candidate.version) && Is.typedArray(candidate.cells, NotebookCell.is);
 	}
 }
 
@@ -191,7 +206,8 @@ export interface VersionedNotebookDocumentIdentifier {
 }
 
 /**
- * Options specific to a notebook.
+ * Options specific to a notebook plus its cells
+ * to be synced to the server.
  *
  * @since 3.17.0 - proposed state
  */

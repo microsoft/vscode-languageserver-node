@@ -148,25 +148,38 @@ export namespace TextDocumentFilter {
  * @since 3.17.0 - proposed state.
  */
 export type NotebookDocumentFilter = {
-	/**
-	 * The type of the enclosing notebook.
-	 */
-	notebookType?: string;
+	/** The type of the enclosing notebook. */
+	notebookType: string;
 
-	/**
-	 * A Uri [scheme](#Uri.scheme), like `file` or `untitled`.
-	 *
-	 * Will be matched against the URI of the notebook.
-	 */
+	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`.
+	 * Will be matched against the URI of the notebook. */
 	scheme?: string;
 
-	/**
-	 * A glob pattern, like `*.{ts,js}`.
-     *
-	 * Will be matched against the path section of the URI of the
-	 * notebook.
-	 */
+	/** A glob pattern, like `*.ipynb`.
+	 * Will be matched against the notebooks` URI path section.*/
 	pattern?: string;
+} | {
+	/** The type of the enclosing notebook. */
+	notebookType?: string;
+
+	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`.
+	 * Will be matched against the URI of the notebook. */
+	scheme: string;
+
+	/** A glob pattern, like `*.ipynb`.
+	 * Will be matched against the notebooks` URI path section.*/
+	pattern?: string;
+} | {
+	/** The type of the enclosing notebook. */
+	notebookType?: string;
+
+	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`.
+	 * Will be matched against the URI of the notebook. */
+	scheme?: string;
+
+	/** A glob pattern, like `*.ipynb`.
+	 * Will be matched against the notebooks` URI path section.*/
+	pattern: string;
 };
 
 /**
@@ -196,7 +209,7 @@ export type NotebookCellTextDocumentFilter = {
 	notebookDocument: NotebookDocumentFilter;
 
 	/**
-	 * A language id like `typescript`.
+	 * A language id like `python`.
 	 *
 	 * Will be matched against the language id of the
 	 * notebook cell document.
@@ -217,6 +230,12 @@ export namespace NotebookCellTextDocumentFilter {
 	}
 }
 
+/**
+ * A document filter describes a top level text document or
+ * a notebook cell document.
+ *
+ * @since 3.17.0 - proposed support for NotebookCellTextDocumentFilter.
+ */
 export type DocumentFilter = TextDocumentFilter | NotebookCellTextDocumentFilter;
 
 /**
