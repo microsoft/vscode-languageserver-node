@@ -9,7 +9,7 @@ import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, ImplementationRequest, ImplementationRegistrationOptions, ImplementationOptions
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, BaseLanguageClient } from './client';
+import { TextDocumentFeature, BaseLanguageClient, $DocumentSelector } from './client';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -47,8 +47,12 @@ export class ImplementationFeature extends TextDocumentFeature<boolean | Impleme
 	}
 
 	protected registerLanguageProvider(options: ImplementationRegistrationOptions): [Disposable, ImplementationProvider] {
+		const selector = options.documentSelector!;
 		const provider: ImplementationProvider = {
 			provideImplementation: (document, position, token) => {
+				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
+					return undefined;
+				}
 				const client = this._client;
 				const provideImplementation: ProvideImplementationSignature = (document, position, token) => {
 					return client.sendRequest(ImplementationRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
@@ -64,6 +68,6 @@ export class ImplementationFeature extends TextDocumentFeature<boolean | Impleme
 					: provideImplementation(document, position, token);
 			}
 		};
-		return [Languages.registerImplementationProvider(options.documentSelector!, provider), provider];
+		return [Languages.registerImplementationProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
 	}
 }

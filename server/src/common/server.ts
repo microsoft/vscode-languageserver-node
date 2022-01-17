@@ -1028,6 +1028,48 @@ export class _LanguagesImpl implements Remote, _Languages {
 export type Languages = _Languages & CallHierarchy & SemanticTokensFeatureShape & LinkedEditingRangeFeatureShape & MonikerFeatureShape;
 const LanguagesImpl: new () => Languages = MonikerFeature(LinkedEditingRangeFeature(SemanticTokensFeature(CallHierarchyFeature(_LanguagesImpl)))) as (new () => Languages);
 
+export interface _Notebooks extends FeatureBase {
+	connection: Connection;
+	attachWorkDoneProgress(params: WorkDoneProgressParams): WorkDoneProgressReporter;
+	attachPartialResultProgress<PR>(type: ProgressType<PR>, params: PartialResultParams): ResultProgressReporter<PR> | undefined;
+}
+
+export class _NotebooksImpl implements Remote, _Notebooks {
+
+	private _connection: Connection | undefined;
+
+	constructor() {
+	}
+
+	public attach(connection: Connection) {
+		this._connection = connection;
+	}
+
+	public get connection(): Connection {
+		if (!this._connection) {
+			throw new Error('Remote is not attached to a connection yet.');
+		}
+		return this._connection;
+	}
+
+	public initialize(_capabilities: ClientCapabilities): void {
+	}
+
+	public fillServerCapabilities(_capabilities: ServerCapabilities): void {
+	}
+
+	public attachWorkDoneProgress(params: WorkDoneProgressParams): WorkDoneProgressReporter {
+		return attachWorkDone(this.connection, params);
+	}
+
+	public attachPartialResultProgress<PR>(_type: ProgressType<PR>, params: PartialResultParams): ResultProgressReporter<PR> | undefined {
+		return attachPartialResult(this.connection, params);
+	}
+}
+
+export type Notebooks = _Notebooks;
+const NotebooksImpl: new () => Notebooks = _NotebooksImpl;
+
 /**
  * An empty interface for new proposed API.
  */
@@ -1041,7 +1083,7 @@ export interface ServerRequestHandler<P, R, PR, E> {
 /**
  * Interface to describe the shape of the server connection.
  */
-export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _> {
+export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _, PNotebooks = _> {
 
 	/**
 	 * Start listening on the input stream for messages to process.
@@ -1218,6 +1260,11 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 * A property to provide access to language specific features.
 	 */
 	languages: Languages & PLanguages;
+
+	/**
+	 * A property to provide access to notebook specific features.
+	 */
+	notebooks: Notebooks & PNotebooks;
 
 	/**
 	 * Installs a handler for the `DidChangeConfiguration` notification.
@@ -1556,8 +1603,14 @@ export function combineLanguagesFeatures<O, T>(one: LanguagesFeature<O>, two: La
 		return two(one(Base)) as any;
 	};
 }
+export type NotebooksFeature<P> = Feature<_Notebooks, P>;
+export function combineNotebooksFeatures<O, T>(one: NotebooksFeature<O>, two: NotebooksFeature<T>): NotebooksFeature<O & T> {
+	return function (Base: new () => _Notebooks): new () => _Notebooks & O & T {
+		return two(one(Base)) as any;
+	};
+}
 
-export interface Features<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _> {
+export interface Features<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _, PNotebooks = _> {
 	__brand: 'features';
 	console?: ConsoleFeature<PConsole>;
 	tracer?: TracerFeature<PTracer>;
@@ -1566,12 +1619,13 @@ export interface Features<PConsole = _, PTracer = _, PTelemetry = _, PClient = _
 	window?: WindowFeature<PWindow>;
 	workspace?: WorkspaceFeature<PWorkspace>;
 	languages?: LanguagesFeature<PLanguages>;
+	notebooks?: NotebooksFeature<PNotebooks>;
 }
 
-export function combineFeatures<OConsole, OTracer, OTelemetry, OClient, OWindow, OWorkspace, TConsole, TTracer, TTelemetry, TClient, TWindow, TWorkspace>(
-	one: Features<OConsole, OTracer, OTelemetry, OClient, OWindow, OWorkspace>,
-	two: Features<TConsole, TTracer, TTelemetry, TClient, TWindow, TWorkspace>
-): Features<OConsole & TConsole, OTracer & TTracer, OTelemetry & TTelemetry, OClient & TClient, OWindow & TWindow, OWorkspace & TWorkspace> {
+export function combineFeatures<OConsole, OTracer, OTelemetry, OClient, OWindow, OWorkspace, OLanguages, ONotebooks, TConsole, TTracer, TTelemetry, TClient, TWindow, TWorkspace, TLanguages, TNotebooks>(
+	one: Features<OConsole, OTracer, OTelemetry, OClient, OWindow, OWorkspace, OLanguages, ONotebooks>,
+	two: Features<TConsole, TTracer, TTelemetry, TClient, TWindow, TWorkspace, TLanguages, TNotebooks>
+): Features<OConsole & TConsole, OTracer & TTracer, OTelemetry & TTelemetry, OClient & TClient, OWindow & TWindow, OWorkspace & TWorkspace, OLanguages & TLanguages, ONotebooks & TNotebooks> {
 	function combine<O, T>(one: O | undefined, two: T | undefined, func: (one: O, two: T) => any): any {
 		if (one && two) {
 			return func(one, two);
@@ -1581,14 +1635,16 @@ export function combineFeatures<OConsole, OTracer, OTelemetry, OClient, OWindow,
 			return two;
 		}
 	}
-	let result: Features<OConsole & TConsole, OTracer & TTracer, OTelemetry & TTelemetry, OClient & TClient, OWindow & TWindow, OWorkspace & TWorkspace> = {
+	let result: Features<OConsole & TConsole, OTracer & TTracer, OTelemetry & TTelemetry, OClient & TClient, OWindow & TWindow, OWorkspace & TWorkspace, OLanguages & TLanguages, ONotebooks & TNotebooks> = {
 		__brand: 'features',
 		console: combine(one.console, two.console, combineConsoleFeatures),
 		tracer: combine(one.tracer, two.tracer, combineTracerFeatures),
 		telemetry: combine(one.telemetry, two.telemetry, combineTelemetryFeatures),
 		client: combine(one.client, two.client, combineClientFeatures),
 		window: combine(one.window, two.window, combineWindowFeatures),
-		workspace: combine(one.workspace, two.workspace, combineWorkspaceFeatures)
+		workspace: combine(one.workspace, two.workspace, combineWorkspaceFeatures),
+		languages: combine(one.languages, two.languages, combineLanguagesFeatures),
+		notebooks: combine(one.notebooks, two.notebooks, combineNotebooksFeatures)
 	};
 	return result;
 }
@@ -1599,10 +1655,10 @@ export interface WatchDog {
 	exit(code: number): void;
 }
 
-export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _>(
+export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _, PNotebooks = _>(
 	connectionFactory: (logger: Logger) => ProtocolConnection, watchDog: WatchDog,
-	factories?: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages>,
-): _Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages> {
+	factories?: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages, PNotebooks>,
+): _Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages, PNotebooks> {
 
 	const logger = (factories && factories.console ? new (factories.console(RemoteConsoleImpl))() : new RemoteConsoleImpl()) as RemoteConsoleImpl & PConsole;
 	const connection = connectionFactory(logger);
@@ -1613,7 +1669,8 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 	const remoteWindow = (factories && factories.window ? new (factories.window(RemoteWindowImpl))() : new RemoteWindowImpl()) as Remote & RemoteWindow & PWindow;
 	const workspace = (factories && factories.workspace ? new (factories.workspace(RemoteWorkspaceImpl))() : new RemoteWorkspaceImpl()) as Remote & RemoteWorkspace & PWorkspace;
 	const languages = (factories && factories.languages ? new (factories.languages(LanguagesImpl))() : new LanguagesImpl()) as Remote & Languages & PLanguages;
-	const allRemotes: Remote[] = [logger, tracer, telemetry, client, remoteWindow, workspace, languages];
+	const notebooks = (factories && factories.notebooks ? new (factories.notebooks(NotebooksImpl))(): new NotebooksImpl()) as Remote & Notebooks & PNotebooks;
+	const allRemotes: Remote[] = [logger, tracer, telemetry, client, remoteWindow, workspace, languages, notebooks];
 
 	function asPromise<T>(value: Promise<T>): Promise<T>;
 	function asPromise<T>(value: Thenable<T>): Promise<T>;
@@ -1633,7 +1690,7 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 	let shutdownHandler: RequestHandler0<void, void> | undefined = undefined;
 	let initializeHandler: ServerRequestHandler<InitializeParams, InitializeResult, never, InitializeError> | undefined = undefined;
 	let exitHandler: NotificationHandler0 | undefined = undefined;
-	let protocolConnection: _Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages> & ConnectionState = {
+	let protocolConnection: _Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages, PNotebooks> & ConnectionState = {
 		listen: (): void => connection.listen(),
 
 		sendRequest: <R>(type: string | MessageSignature, ...params: any[]): Promise<R> => connection.sendRequest(Is.string(type) ? type : type.method, ...params),
@@ -1664,6 +1721,7 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 		get window() { return remoteWindow; },
 		get workspace() { return workspace; },
 		get languages() { return languages; },
+		get notebooks() { return notebooks; },
 
 		onDidChangeConfiguration: (handler) => connection.onNotification(DidChangeConfigurationNotification.type, handler),
 		onDidChangeWatchedFiles: (handler) => connection.onNotification(DidChangeWatchedFilesNotification.type, handler),

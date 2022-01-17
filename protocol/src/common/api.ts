@@ -71,6 +71,7 @@ export namespace LSPErrorCodes {
 import * as diag from './proposed.diagnostic';
 import * as typeh from './proposed.typeHierarchy';
 import * as iv from './proposed.inlineValue';
+import * as nb from './proposed.notebooks';
 
 export namespace Proposed {
 	export type DiagnosticClientCapabilities = diag.DiagnosticClientCapabilities;
@@ -122,4 +123,28 @@ export namespace Proposed {
 
 	export const InlineValuesRequest: typeof iv.InlineValuesRequest = iv.InlineValuesRequest;
 	export const InlineValuesRefreshRequest: typeof iv.InlineValuesRefreshRequest = iv.InlineValuesRefreshRequest;
+
+	// Notebooks
+	export type $NotebookDocumentClientCapabilities = nb.$NotebookDocumentClientCapabilities;
+	export type NotebookDocumentSyncClientCapabilities = nb.NotebookDocumentSyncClientCapabilities;
+	export type $NotebookDocumentServerCapabilities = nb.$NotebookDocumentServerCapabilities;
+	export type NotebookCellKind = nb.NotebookCellKind;
+	export const NotebookCellKind = nb.NotebookCellKind;
+	export type NotebookCell = nb.NotebookCell;
+	export const NotebookCell = nb.NotebookCell;
+	export type NotebookCellChange = nb.NotebookCellChange;
+	export type NotebookDocument = nb.NotebookDocument;
+	export const NotebookDocument = nb.NotebookDocument;
+	export type NotebookDocumentChangeEvent = nb.NotebookDocumentChangeEvent;
+	export type NotebookDocumentIdentifier = nb.NotebookDocumentIdentifier;
+	export type VersionedNotebookDocumentIdentifier = nb.VersionedNotebookDocumentIdentifier;
+	export type NotebookDocumentOptions = nb.NotebookDocumentOptions;
+	export type NotebookDocumentRegistrationOptions = nb.NotebookDocumentRegistrationOptions;
+	export const NotebookDocumentSyncRegistrationType = nb.NotebookDocumentSyncRegistrationType;
+	export type DidOpenNotebookDocumentParams = nb.DidOpenNotebookDocumentParams;
+	export const DidOpenNotebookDocumentNotification = nb.DidOpenNotebookDocumentNotification;
+	export type DidChangeNotebookDocumentParams = nb.DidChangeNotebookDocumentParams;
+	export const DidChangeNotebookDocumentNotification = nb.DidChangeNotebookDocumentNotification;
+	export type DidCloseNotebookDocumentParams = nb.DidCloseNotebookDocumentParams;
+	export const DidCloseNotebookDocumentNotification = nb.DidCloseNotebookDocumentNotification;
 }

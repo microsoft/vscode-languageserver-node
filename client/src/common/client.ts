@@ -3,6 +3,8 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
+import * as minimatch from 'minimatch';
+
 import {
 	workspace as Workspace, window as Window, languages as Languages, commands as Commands, version as VSCodeVersion,
 	TextDocumentChangeEvent, TextDocument, Disposable, OutputChannel,
@@ -20,7 +22,7 @@ import {
 	DocumentRangeFormattingEditProvider, OnTypeFormattingEditProvider, RenameProvider, DocumentLinkProvider, DocumentColorProvider, DeclarationProvider,
 	FoldingRangeProvider, ImplementationProvider, SelectionRangeProvider, TypeDefinitionProvider, WorkspaceSymbolProvider, CallHierarchyProvider,
 	DocumentSymbolProviderMetadata, EventEmitter, env as Env, TextDocumentShowOptions, FileWillCreateEvent, FileWillRenameEvent, FileWillDeleteEvent, FileCreateEvent, FileDeleteEvent, FileRenameEvent,
-	LinkedEditingRangeProvider, Event as VEvent, CancellationError, TypeHierarchyProvider as VTypeHierarchyProvider
+	LinkedEditingRangeProvider, Event as VEvent, CancellationError, TypeHierarchyProvider as VTypeHierarchyProvider, NotebookDocument as VNotebookDocument
 } from 'vscode';
 
 import {
@@ -52,7 +54,7 @@ import {
 	CancellationStrategy, SaveOptions, LSPErrorCodes, CodeActionResolveRequest, RegistrationType, SemanticTokensRegistrationType, InsertTextMode, ShowDocumentRequest,
 	FileOperationRegistrationOptions, WillCreateFilesRequest, WillRenameFilesRequest, WillDeleteFilesRequest, DidCreateFilesNotification, DidDeleteFilesNotification, DidRenameFilesNotification,
 	ShowDocumentParams, ShowDocumentResult, LinkedEditingRangeRequest, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressReport, PrepareSupportDefaultBehavior,
-	SemanticTokensRequest, SemanticTokensRangeRequest, SemanticTokensDeltaRequest, Proposed, WorkspaceSymbolResolveRequest
+	SemanticTokensRequest, SemanticTokensRangeRequest, SemanticTokensDeltaRequest, Proposed, WorkspaceSymbolResolveRequest, NotebookCellTextDocumentFilter, TextDocumentFilter, NotebookDocumentFilter
 } from 'vscode-languageserver-protocol';
 
 import { toJSONObject } from './configuration';
@@ -79,6 +81,95 @@ import * as Is from './utils/is';
 import { Delayer } from './utils/async';
 import * as UUID from './utils/uuid';
 import { ProgressPart } from './progressPart';
+
+
+export namespace $DocumentSelector {
+
+	export function match(selector: DocumentSelector, textDocument: TextDocument): boolean {
+		const isCellDocument = textDocument.uri.scheme === 'vscode-notebook-cell';
+		for (const filter of selector) {
+			if (isCellDocument && NotebookCellTextDocumentFilter.is(filter)) {
+				if (filter.cellLanguage !== undefined && filter.cellLanguage !== textDocument.languageId) {
+					continue;
+				}
+				const notebookDocument = findNotebook(textDocument);
+				if (notebookDocument === undefined) {
+					continue;
+				}
+				if (matchNotebookDocument(filter.notebookDocument, notebookDocument)) {
+					return true;
+				}
+
+			} else if (!isCellDocument && TextDocumentFilter.is(filter)) {
+				// We don't have a notebook cell document. So match against a regular
+				// document filter only
+				if (Languages.match(filter, textDocument) !== 0) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	export function skipCellTextDocument(selector: DocumentSelector, textDocument: TextDocument): boolean {
+		if (textDocument.uri.scheme !== 'vscode-notebook-cell') {
+			return false;
+		}
+		return !match(selector, textDocument);
+	}
+
+	export function asTextDocumentFilters(selector: DocumentSelector): (string | TextDocumentFilter)[] {
+		const result: (string | TextDocumentFilter)[] = [];
+		const generated: Set<null | string> = new Set();
+		for (const filter of selector) {
+			if (typeof filter === 'string' || TextDocumentFilter.is(filter)) {
+				result.push(filter);
+			} else {
+				if (filter.cellLanguage !== undefined && !generated.has(filter.cellLanguage)) {
+					result.push({ scheme: 'vscode-notebook-cell', language: filter.cellLanguage });
+					generated.add(filter.cellLanguage);
+				} else if (!generated.has(null)){
+					result.push({ scheme: 'vscode-notebook-cell' });
+					generated.add(null);
+				}
+			}
+		}
+		return result;
+	}
+
+	function findNotebook(textDocument: TextDocument): VNotebookDocument | undefined {
+		if (textDocument.uri.scheme !== 'vscode-notebook-cell') {
+			return undefined;
+		}
+		for (const notebookDocument of Workspace.notebookDocuments) {
+			for (const cell of notebookDocument.getCells()) {
+				if (cell.document === textDocument) {
+					return notebookDocument;
+				}
+			}
+		}
+		return undefined;
+	}
+
+	function matchNotebookDocument(filter: NotebookDocumentFilter, notebookDocument: VNotebookDocument): boolean {
+		if (filter.notebookType !== undefined && notebookDocument.notebookType !== filter.notebookType) {
+			false;
+		}
+		const uri = notebookDocument.uri;
+		if (filter.scheme !== undefined && uri.scheme !== filter.scheme) {
+			false;
+		}
+		if (filter.pattern !== undefined) {
+			const matcher = new minimatch.Minimatch(filter.pattern, { noext: true });
+			if (!matcher.makeRe()) {
+				return false;
+			}
+			return matcher.match(uri.fsPath);
+		} else {
+			return true;
+		}
+	}
+}
 
 interface Connection {
 
@@ -165,8 +256,8 @@ interface ConnectionCloseHandler {
 }
 
 interface ConnectionOptions {
-	cancellationStrategy: CancellationStrategy
-	maxRestartCount?: number
+	cancellationStrategy: CancellationStrategy;
+	maxRestartCount?: number;
 }
 
 function createConnection(input: MessageReader, output: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): Connection {
@@ -299,7 +390,7 @@ export interface ErrorHandler {
 	/**
 	 * The connection to the server got closed.
 	 */
-	closed(): CloseHandlerResult
+	closed(): CloseHandlerResult;
 }
 
 class DefaultErrorHandler implements ErrorHandler {
@@ -466,7 +557,7 @@ export interface ProvideRenameEditsSignature {
 }
 
 export interface PrepareRenameSignature {
-	(this: void, document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VRange | { range: VRange, placeholder: string }>;
+	(this: void, document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VRange | { range: VRange; placeholder: string; }>;
 }
 
 export interface ProvideDocumentLinksSignature {
@@ -478,7 +569,7 @@ export interface ResolveDocumentLinkSignature {
 }
 
 export interface ExecuteCommandSignature {
-	(this: void, command: string, args: any[]): ProviderResult<any>
+	(this: void, command: string, args: any[]): ProviderResult<any>;
 }
 
 export interface NextSignature<P, R> {
@@ -538,7 +629,7 @@ export interface _Middleware {
 	provideDocumentRangeFormattingEdits?: (this: void, document: TextDocument, range: VRange, options: VFormattingOptions, token: CancellationToken, next: ProvideDocumentRangeFormattingEditsSignature) => ProviderResult<VTextEdit[]>;
 	provideOnTypeFormattingEdits?: (this: void, document: TextDocument, position: VPosition, ch: string, options: VFormattingOptions, token: CancellationToken, next: ProvideOnTypeFormattingEditsSignature) => ProviderResult<VTextEdit[]>;
 	provideRenameEdits?: (this: void, document: TextDocument, position: VPosition, newName: string, token: CancellationToken, next: ProvideRenameEditsSignature) => ProviderResult<VWorkspaceEdit>;
-	prepareRename?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: PrepareRenameSignature) => ProviderResult<VRange | { range: VRange, placeholder: string }>;
+	prepareRename?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: PrepareRenameSignature) => ProviderResult<VRange | { range: VRange; placeholder: string; }>;
 	provideDocumentLinks?: (this: void, document: TextDocument, token: CancellationToken, next: ProvideDocumentLinksSignature) => ProviderResult<VDocumentLink[]>;
 	resolveDocumentLink?: (this: void, link: VDocumentLink, token: CancellationToken, next: ResolveDocumentLinkSignature) => ProviderResult<VDocumentLink>;
 	executeCommand?: (this: void, command: string, args: any[], next: ExecuteCommandSignature) => ProviderResult<any>;
@@ -569,8 +660,8 @@ export interface LanguageClientOptions {
 	errorHandler?: ErrorHandler;
 	middleware?: Middleware;
 	uriConverters?: {
-		code2Protocol: c2p.URIConverter,
-		protocol2Code: p2c.URIConverter
+		code2Protocol: c2p.URIConverter;
+		protocol2Code: p2c.URIConverter;
 	};
 	workspaceFolder?: VWorkspaceFolder;
 	connectionOptions?: ConnectionOptions;
@@ -594,8 +685,8 @@ interface ResolvedClientOptions {
 	errorHandler: ErrorHandler;
 	middleware: Middleware;
 	uriConverters?: {
-		code2Protocol: c2p.URIConverter,
-		protocol2Code: p2c.URIConverter
+		code2Protocol: c2p.URIConverter;
+		protocol2Code: p2c.URIConverter;
 	};
 	workspaceFolder?: VWorkspaceFolder;
 	connectionOptions?: ConnectionOptions;
@@ -810,7 +901,7 @@ export interface NotificationFeature<T extends Function> {
 	/**
 	 * Triggers the corresponding RPC method.
 	 */
-	getProvider(document: TextDocument): { send: T } | undefined;
+	getProvider(document: TextDocument): { send: T; } | undefined;
 }
 
 namespace DynamicFeature {
@@ -843,7 +934,7 @@ abstract class DocumentNotifications<P, E> implements DynamicFeature<TextDocumen
 
 	public static textDocumentFilter(selectors: IterableIterator<DocumentSelector>, textDocument: TextDocument): boolean {
 		for (const selector of selectors) {
-			if (Languages.match(selector, textDocument)) {
+			if ($DocumentSelector.match(selector, textDocument)) {
 				return true;
 			}
 		}
@@ -916,9 +1007,9 @@ abstract class DocumentNotifications<P, E> implements DynamicFeature<TextDocumen
 		}
 	}
 
-	public getProvider(document: TextDocument):  { send: (data: E) => Promise<void> } | undefined {
+	public getProvider(document: TextDocument):  { send: (data: E) => Promise<void>; } | undefined {
 		for (const selector of this._selectors.values()) {
-			if (Languages.match(selector, document)) {
+			if ($DocumentSelector.match(selector, document)) {
 				return {
 					send: (data: E) => {
 						return this.callback(data);
@@ -974,7 +1065,7 @@ class DidOpenTextDocumentFeature extends DocumentNotifications<DidOpenTextDocume
 			if (this._syncedDocuments.has(uri)) {
 				return;
 			}
-			if (Languages.match(documentSelector, textDocument)) {
+			if ($DocumentSelector.match(documentSelector, textDocument)) {
 				let middleware = this._client.clientOptions.middleware!;
 				let didOpen = (textDocument: TextDocument): Promise<void> => {
 					return this._client.sendNotification(this._type, this._createParams(textDocument));
@@ -1034,7 +1125,7 @@ class DidCloseTextDocumentFeature extends DocumentNotifications<DidCloseTextDocu
 		super.unregister(id);
 		let selectors = this._selectors.values();
 		this._syncedDocuments.forEach((textDocument) => {
-			if (Languages.match(selector, textDocument) && !this._selectorFilter!(selectors, textDocument)) {
+			if ($DocumentSelector.match(selector, textDocument) && !this._selectorFilter!(selectors, textDocument)) {
 				let middleware = this._client.clientOptions.middleware!;
 				let didClose = (textDocument: TextDocument): Promise<void> => {
 					return this._client.sendNotification(this._type, this._createParams(textDocument));
@@ -1061,7 +1152,7 @@ class DidChangeTextDocumentFeature implements DidChangeTextDocumentFeatureShape 
 	private _listener: Disposable | undefined;
 	private _changeData: Map<string, DidChangeTextDocumentData> = new Map<string, DidChangeTextDocumentData>();
 	private _forcingDelivery: boolean = false;
-	private _changeDelayer: { uri: string; delayer: Delayer<void> } | undefined;
+	private _changeDelayer: { uri: string; delayer: Delayer<void>; } | undefined;
 
 	private readonly _onNotificationSent: EventEmitter<NotificationSendEvent<TextDocumentChangeEvent, DidChangeTextDocumentParams>>;
 
@@ -1112,7 +1203,7 @@ class DidChangeTextDocumentFeature implements DidChangeTextDocumentFeatureShape 
 		}
 		const promises: Promise<void>[] = [];
 		for (const changeData of this._changeData.values()) {
-			if (Languages.match(changeData.documentSelector, event.document)) {
+			if ($DocumentSelector.match(changeData.documentSelector, event.document)) {
 				const middleware = this._client.clientOptions.middleware!;
 				if (changeData.syncKind === TextDocumentSyncKind.Incremental) {
 					const didChange = async (event: TextDocumentChangeEvent): Promise<void> => {
@@ -1194,9 +1285,9 @@ class DidChangeTextDocumentFeature implements DidChangeTextDocumentFeatureShape 
 		}
 	}
 
-	public getProvider(document: TextDocument): { send: (event: TextDocumentChangeEvent) => Promise<void> } | undefined {
+	public getProvider(document: TextDocument): { send: (event: TextDocumentChangeEvent) => Promise<void>; } | undefined {
 		for (const changeData of this._changeData.values()) {
-			if (Languages.match(changeData.documentSelector, document)) {
+			if ($DocumentSelector.match(changeData.documentSelector, document)) {
 				return {
 					send: (event: TextDocumentChangeEvent): Promise<void> => {
 						return this.callback(event);
@@ -1502,7 +1593,7 @@ export abstract class TextDocumentFeature<PO, RO extends TextDocumentRegistratio
 		this._registrations.clear();
 	}
 
-	protected getRegistration(documentSelector: DocumentSelector | undefined, capability: undefined | PO | (RO & StaticRegistrationOptions)): [string | undefined, (RO & { documentSelector: DocumentSelector }) | undefined] {
+	protected getRegistration(documentSelector: DocumentSelector | undefined, capability: undefined | PO | (RO & StaticRegistrationOptions)): [string | undefined, (RO & { documentSelector: DocumentSelector; }) | undefined] {
 		if (!capability) {
 			return [undefined, undefined];
 		} else if (TextDocumentRegistrationOptions.is(capability)) {
@@ -1515,23 +1606,23 @@ export abstract class TextDocumentFeature<PO, RO extends TextDocumentRegistratio
 			if (!documentSelector) {
 				return [undefined, undefined];
 			}
-			let options: RO & { documentSelector: DocumentSelector } = (Is.boolean(capability) && capability === true ? { documentSelector } : Object.assign({}, capability, { documentSelector })) as any;
+			let options: RO & { documentSelector: DocumentSelector; } = (Is.boolean(capability) && capability === true ? { documentSelector } : Object.assign({}, capability, { documentSelector })) as any;
 			return [UUID.generateUuid(), options];
 		}
 		return [undefined, undefined];
 	}
 
-	protected getRegistrationOptions(documentSelector: DocumentSelector | undefined, capability: undefined | PO) : (RO & { documentSelector: DocumentSelector }) | undefined {
+	protected getRegistrationOptions(documentSelector: DocumentSelector | undefined, capability: undefined | PO) : (RO & { documentSelector: DocumentSelector; }) | undefined {
 		if (!documentSelector || !capability) {
 			return undefined;
 		}
-		return (Is.boolean(capability) && capability === true ? { documentSelector } : Object.assign({}, capability, { documentSelector })) as RO & { documentSelector: DocumentSelector };
+		return (Is.boolean(capability) && capability === true ? { documentSelector } : Object.assign({}, capability, { documentSelector })) as RO & { documentSelector: DocumentSelector; };
 	}
 
 	public getProvider(textDocument: TextDocument): PR | undefined {
 		for (const registration of this._registrations.values()) {
 			let selector = registration.data.registerOptions.documentSelector;
-			if (selector !== null && Languages.match(selector, textDocument)) {
+			if (selector !== null && $DocumentSelector.match(selector, textDocument)) {
 				return registration.provider;
 			}
 		}
@@ -1658,8 +1749,12 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 		this.labelDetailsSupport.set(id, !!options.completionItem?.labelDetailsSupport);
 		const triggerCharacters = options.triggerCharacters ?? [];
 		const defaultCommitCharacters = options.allCommitCharacters;
+		const selector = options.documentSelector!;
 		const provider: CompletionItemProvider = {
 			provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken, context: VCompletionContext): ProviderResult<VCompletionList | VCompletionItem[]> => {
+				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
+					return undefined;
+				}
 				const client = this._client;
 				const middleware = this._client.clientOptions.middleware!;
 				const provideCompletionItems: ProvideCompletionItemsSignature = (document, position, context, token) => {
@@ -1692,7 +1787,7 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 				}
 				: undefined
 		};
-		return [Languages.registerCompletionItemProvider(options.documentSelector!, provider, ...triggerCharacters), provider];
+		return [Languages.registerCompletionItemProvider($DocumentSelector.asTextDocumentFilters(selector), provider, ...triggerCharacters), provider];
 	}
 }
 
@@ -1720,8 +1815,12 @@ class HoverFeature extends TextDocumentFeature<boolean | HoverOptions, HoverRegi
 	}
 
 	protected registerLanguageProvider(options: HoverRegistrationOptions): [Disposable, HoverProvider] {
+		const selector = options.documentSelector!;
 		const provider: HoverProvider = {
 			provideHover: (document, position, token) => {
+				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
+					return undefined;
+				}
 				const client = this._client;
 				const provideHover: ProvideHoverSignature = (document, position, token) => {
 					return client.sendRequest(HoverRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
@@ -1737,7 +1836,7 @@ class HoverFeature extends TextDocumentFeature<boolean | HoverOptions, HoverRegi
 					: provideHover(document, position, token);
 			}
 		};
-		return [Languages.registerHoverProvider(options.documentSelector!, provider), provider];
+		return [Languages.registerHoverProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
 	}
 }
 
@@ -1768,8 +1867,12 @@ class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpOptions, Sig
 	}
 
 	protected registerLanguageProvider(options: SignatureHelpRegistrationOptions): [Disposable, VSignatureHelpProvider] {
+		const selector = options.documentSelector!;
 		const provider: VSignatureHelpProvider = {
 			provideSignatureHelp: (document, position, token, context) => {
+				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
+					return undefined;
+				}
 				const client = this._client;
 				const providerSignatureHelp: ProvideSignatureHelpSignature = (document, position, context, token) => {
 					return client.sendRequest(SignatureHelpRequest.type, client.code2ProtocolConverter.asSignatureHelpParams(document, position, context), token).then(
@@ -1786,15 +1889,16 @@ class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpOptions, Sig
 			}
 		};
 		let disposable: Disposable;
+		const textDocumentSelector = $DocumentSelector.asTextDocumentFilters(selector);
 		if (options.retriggerCharacters === undefined) {
 			const triggerCharacters = options.triggerCharacters || [];
-			disposable = Languages.registerSignatureHelpProvider(options.documentSelector!, provider, ...triggerCharacters);
+			disposable = Languages.registerSignatureHelpProvider(textDocumentSelector, provider, ...triggerCharacters);
 		} else {
 			const metaData: VSignatureHelpProviderMetadata = {
 				triggerCharacters: options.triggerCharacters || [],
 				retriggerCharacters: options.retriggerCharacters || []
 			};
-			disposable = Languages.registerSignatureHelpProvider(options.documentSelector!, provider, metaData);
+			disposable = Languages.registerSignatureHelpProvider(textDocumentSelector, provider, metaData);
 		}
 		return [disposable, provider];
 	}
@@ -1821,8 +1925,12 @@ class DefinitionFeature extends TextDocumentFeature<boolean | DefinitionOptions,
 	}
 
 	protected registerLanguageProvider(options: DefinitionRegistrationOptions): [Disposable, DefinitionProvider] {
+		const selector = options.documentSelector!;
 		const provider: DefinitionProvider = {
 			provideDefinition:  (document, position, token) => {
+				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
+					return undefined;
+				}
 				const client = this._client;
 				const provideDefinition: ProvideDefinitionSignature = (document, position, token) => {
 					return client.sendRequest(DefinitionRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
@@ -1838,7 +1946,7 @@ class DefinitionFeature extends TextDocumentFeature<boolean | DefinitionOptions,
 					: provideDefinition(document, position, token);
 			}
 		};
-		return [Languages.registerDefinitionProvider(options.documentSelector!, provider), provider];
+		return [Languages.registerDefinitionProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
 	}
 }
 
@@ -1861,8 +1969,12 @@ class ReferencesFeature extends TextDocumentFeature<boolean | ReferenceOptions, 
 	}
 
 	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): [Disposable, ReferenceProvider] {
+		const selector = options.documentSelector!;
 		const provider: ReferenceProvider = {
 			provideReferences: (document, position, options, token) => {
+				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
+					return undefined;
+				}
 				const client = this._client;
 				const _providerReferences: ProvideReferencesSignature = (document, position, options, token) => {
 					return client.sendRequest(ReferencesRequest.type, client.code2ProtocolConverter.asReferenceParams(document, position, options), token).then(
@@ -1878,7 +1990,7 @@ class ReferencesFeature extends TextDocumentFeature<boolean | ReferenceOptions, 
 					: _providerReferences(document, position, options, token);
 			}
 		};
-		return [Languages.registerReferenceProvider(options.documentSelector!, provider), provider];
+		return [Languages.registerReferenceProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
 	}
 }
 
@@ -1901,8 +2013,12 @@ class DocumentHighlightFeature extends TextDocumentFeature<boolean | DocumentHig
 	}
 
 	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): [Disposable, DocumentHighlightProvider] {
+		const selector = options.documentSelector!;
 		const provider: DocumentHighlightProvider = {
 			provideDocumentHighlights: (document, position, token) => {
+				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
+					return undefined;
+				}
 				const client = this._client;
 				const _provideDocumentHighlights: ProvideDocumentHighlightsSignature = (document, position, token) => {
 					return client.sendRequest(DocumentHighlightRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
@@ -1918,7 +2034,7 @@ class DocumentHighlightFeature extends TextDocumentFeature<boolean | DocumentHig
 					: _provideDocumentHighlights(document, position, token);
 			}
 		};
-		return [Languages.registerDocumentHighlightProvider(options.documentSelector!, provider), provider];
+		return [Languages.registerDocumentHighlightProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
 	}
 }
 
@@ -1950,8 +2066,12 @@ class DocumentSymbolFeature extends TextDocumentFeature<boolean | DocumentSymbol
 	}
 
 	protected registerLanguageProvider(options: DocumentSymbolRegistrationOptions): [Disposable, DocumentSymbolProvider] {
+		const selector = options.documentSelector!;
 		const provider: DocumentSymbolProvider = {
 			provideDocumentSymbols: (document, token) => {
+				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
+					return undefined;
+				}
 				const client = this._client;
 				const _provideDocumentSymbols: ProvideDocumentSymbolsSignature = (document, token) => {
 					return client.sendRequest(DocumentSymbolRequest.type, client.code2ProtocolConverter.asDocumentSymbolParams(document), token).then(
@@ -1982,7 +2102,7 @@ class DocumentSymbolFeature extends TextDocumentFeature<boolean | DocumentSymbol
 			}
 		};
 		const metaData: DocumentSymbolProviderMetadata | undefined = options.label !== undefined ? { label: options.label } : undefined;
-		return [Languages.registerDocumentSymbolProvider(options.documentSelector!, provider, metaData), provider];
+		return [Languages.registerDocumentSymbolProvider($DocumentSelector.asTextDocumentFilters(selector), provider, metaData), provider];
 	}
 }
 
@@ -2095,8 +2215,12 @@ class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions,
 	}
 
 	protected registerLanguageProvider(options: CodeActionRegistrationOptions): [Disposable, CodeActionProvider] {
+		const selector = options.documentSelector!;
 		const provider: CodeActionProvider = {
 			provideCodeActions: (document, range, context, token) => {
+				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
+					return undefined;
+				}
 				const client = this._client;
 				const _provideCodeActions: ProvideCodeActionsSignature = (document, range, context, token) => {
 					const params: CodeActionParams = {
@@ -2146,7 +2270,7 @@ class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions,
 				}
 				: undefined
 		};
-		return [Languages.registerCodeActionsProvider(options.documentSelector!, provider,
+		return [Languages.registerCodeActionsProvider($DocumentSelector.asTextDocumentFilters(selector), provider,
 			(options.codeActionKinds
 				? { providedCodeActionKinds: this._client.protocol2CodeConverter.asCodeActionKinds(options.codeActionKinds) }
 				: undefined)), provider];
@@ -2154,7 +2278,7 @@ class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions,
 }
 
 interface CodeLensProviderData {
-	provider?: CodeLensProvider
+	provider?: CodeLensProvider;
 	onDidChangeCodeLensEmitter: EventEmitter<void>;
 }
 
@@ -2184,10 +2308,14 @@ class CodeLensFeature extends TextDocumentFeature<CodeLensOptions, CodeLensRegis
 	}
 
 	protected registerLanguageProvider(options: CodeLensRegistrationOptions): [Disposable, CodeLensProviderData] {
+		const selector = options.documentSelector!;
 		const eventEmitter: EventEmitter<void> = new EventEmitter<void>();
 		const provider: CodeLensProvider = {
 			onDidChangeCodeLenses: eventEmitter.event,
 			provideCodeLenses: (document, token) => {
+				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
+					return undefined;
+				}
 				const client = this._client;
 				const provideCodeLenses: ProvideCodeLensesSignature = (document, token) => {
 					return client.sendRequest(CodeLensRequest.type, client.code2ProtocolConverter.asCodeLensParams(document), token).then(
@@ -2220,7 +2348,7 @@ class CodeLensFeature extends TextDocumentFeature<CodeLensOptions, CodeLensRegis
 				}
 				: undefined
 		};
-		return [Languages.registerCodeLensProvider(options.documentSelector!, provider), { provider, onDidChangeCodeLensEmitter: eventEmitter }];
+		return [Languages.registerCodeLensProvider($DocumentSelector.asTextDocumentFilters(selector), provider), { provider, onDidChangeCodeLensEmitter: eventEmitter }];
 	}
 }
 
@@ -2243,8 +2371,12 @@ class DocumentFormattingFeature extends TextDocumentFeature<boolean | DocumentFo
 	}
 
 	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): [Disposable, DocumentFormattingEditProvider] {
+		const selector = options.documentSelector!;
 		const provider: DocumentFormattingEditProvider = {
 			provideDocumentFormattingEdits: (document, options, token) => {
+				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
+					return undefined;
+				}
 				const client = this._client;
 				const provideDocumentFormattingEdits: ProvideDocumentFormattingEditsSignature = (document, options, token) => {
 					const params: DocumentFormattingParams = {
@@ -2264,7 +2396,7 @@ class DocumentFormattingFeature extends TextDocumentFeature<boolean | DocumentFo
 					: provideDocumentFormattingEdits(document, options, token);
 			}
 		};
-		return [Languages.registerDocumentFormattingEditProvider(options.documentSelector!, provider), provider];
+		return [Languages.registerDocumentFormattingEditProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
 	}
 }
 
@@ -2287,8 +2419,12 @@ class DocumentRangeFormattingFeature extends TextDocumentFeature<boolean | Docum
 	}
 
 	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): [Disposable, DocumentRangeFormattingEditProvider] {
+		const selector = options.documentSelector!;
 		const provider: DocumentRangeFormattingEditProvider = {
 			provideDocumentRangeFormattingEdits: (document, range, options, token) => {
+				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
+					return undefined;
+				}
 				const client = this._client;
 				const provideDocumentRangeFormattingEdits: ProvideDocumentRangeFormattingEditsSignature = (document, range, options, token) => {
 					const params: DocumentRangeFormattingParams = {
@@ -2309,7 +2445,7 @@ class DocumentRangeFormattingFeature extends TextDocumentFeature<boolean | Docum
 					: provideDocumentRangeFormattingEdits(document, range, options, token);
 			}
 		};
-		return [Languages.registerDocumentRangeFormattingEditProvider(options.documentSelector!, provider), provider];
+		return [Languages.registerDocumentRangeFormattingEditProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
 	}
 }
 
@@ -2332,8 +2468,12 @@ class DocumentOnTypeFormattingFeature extends TextDocumentFeature<DocumentOnType
 	}
 
 	protected registerLanguageProvider(options: DocumentOnTypeFormattingRegistrationOptions): [Disposable, OnTypeFormattingEditProvider] {
+		const selector = options.documentSelector!;
 		const provider: OnTypeFormattingEditProvider = {
 			provideOnTypeFormattingEdits: (document, position, ch, options, token) => {
+				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
+					return undefined;
+				}
 				const client = this._client;
 				const provideOnTypeFormattingEdits: ProvideOnTypeFormattingEditsSignature = (document, position, ch, options, token) => {
 					let params: DocumentOnTypeFormattingParams = {
@@ -2357,7 +2497,7 @@ class DocumentOnTypeFormattingFeature extends TextDocumentFeature<DocumentOnType
 		};
 
 		const moreTriggerCharacter = options.moreTriggerCharacter || [];
-		return [Languages.registerOnTypeFormattingEditProvider(options.documentSelector!, provider, options.firstTriggerCharacter, ...moreTriggerCharacter), provider];
+		return [Languages.registerOnTypeFormattingEditProvider($DocumentSelector.asTextDocumentFilters(selector), provider, options.firstTriggerCharacter, ...moreTriggerCharacter), provider];
 	}
 }
 
@@ -2391,8 +2531,12 @@ class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameR
 	}
 
 	protected registerLanguageProvider(options: RenameRegistrationOptions): [Disposable, RenameProvider] {
+		const selector = options.documentSelector!;
 		const provider: RenameProvider = {
 			provideRenameEdits: (document, position, newName, token) => {
+				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
+					return undefined;
+				}
 				const client = this._client;
 				const provideRenameEdits: ProvideRenameEditsSignature = (document, position, newName, token) => {
 					let params: RenameParams = {
@@ -2414,6 +2558,9 @@ class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameR
 			},
 			prepareRename: options.prepareProvider
 				? (document, position, token) => {
+					if ($DocumentSelector.skipCellTextDocument(selector, document)) {
+						return undefined;
+					}
 					const client = this._client;
 					const prepareRename: PrepareRenameSignature = (document, position, token) => {
 						let params: TextDocumentPositionParams = {
@@ -2452,7 +2599,7 @@ class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameR
 				}
 				: undefined
 		};
-		return [Languages.registerRenameProvider(options.documentSelector!, provider), provider];
+		return [Languages.registerRenameProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
 	}
 
 	private isDefaultBehavior(value: any): value is DefaultBehavior {
@@ -2482,8 +2629,12 @@ class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkOptions, Docum
 	}
 
 	protected registerLanguageProvider(options: DocumentLinkRegistrationOptions): [Disposable, DocumentLinkProvider] {
+		const selector = options.documentSelector!;
 		const provider: DocumentLinkProvider = {
 			provideDocumentLinks: (document: TextDocument, token: CancellationToken): ProviderResult<VDocumentLink[]> => {
+				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
+					return undefined;
+				}
 				const client = this._client;
 				const provideDocumentLinks: ProvideDocumentLinksSignature = (document, token) => {
 					return client.sendRequest(DocumentLinkRequest.type, client.code2ProtocolConverter.asDocumentLinkParams(document), token).then(
@@ -2516,7 +2667,7 @@ class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkOptions, Docum
 				}
 				: undefined
 		};
-		return [Languages.registerDocumentLinkProvider(options.documentSelector!, provider), provider];
+		return [Languages.registerDocumentLinkProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
 	}
 }
 
@@ -3464,7 +3615,8 @@ export abstract class BaseLanguageClient {
 		if (this._syncedDocuments) {
 			this._syncedDocuments.clear();
 		}
-		for (const feature of this._features.values()) {
+		// Dispose features in reverse order;
+		for (const feature of Array.from(this._features.entries()).map(entry => entry[1]).reverse()) {
 			feature.dispose();
 		}
 		if (channel) {
@@ -3670,12 +3822,12 @@ export abstract class BaseLanguageClient {
 	public getFeature(request: typeof WillSaveTextDocumentWaitUntilRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & NotificationFeature<(textDocument: TextDocument) => ProviderResult<VTextEdit[]>>;
 	public getFeature(request: typeof DidSaveTextDocumentNotification.method): DidSaveTextDocumentFeatureShape;
 	public getFeature(request: typeof DidCloseTextDocumentNotification.method): DidCloseTextDocumentFeatureShape;
-	public getFeature(request: typeof DidCreateFilesNotification.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileCreateEvent) => Promise<void> };
-	public getFeature(request: typeof DidRenameFilesNotification.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileRenameEvent) => Promise<void> };
-	public getFeature(request: typeof DidDeleteFilesNotification.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileDeleteEvent) => Promise<void> };
-	public getFeature(request: typeof WillCreateFilesRequest.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileWillCreateEvent) => Promise<void> };
-	public getFeature(request: typeof WillRenameFilesRequest.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileWillRenameEvent) => Promise<void> };
-	public getFeature(request: typeof WillDeleteFilesRequest.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileWillDeleteEvent) => Promise<void> };
+	public getFeature(request: typeof DidCreateFilesNotification.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileCreateEvent) => Promise<void>; };
+	public getFeature(request: typeof DidRenameFilesNotification.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileRenameEvent) => Promise<void>; };
+	public getFeature(request: typeof DidDeleteFilesNotification.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileDeleteEvent) => Promise<void>; };
+	public getFeature(request: typeof WillCreateFilesRequest.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileWillCreateEvent) => Promise<void>; };
+	public getFeature(request: typeof WillRenameFilesRequest.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileWillRenameEvent) => Promise<void>; };
+	public getFeature(request: typeof WillDeleteFilesRequest.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileWillDeleteEvent) => Promise<void>; };
 	public getFeature(request: typeof CompletionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<CompletionItemProvider>;
 	public getFeature(request: typeof HoverRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<HoverProvider>;
 	public getFeature(request: typeof SignatureHelpRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<SignatureHelpProvider>;

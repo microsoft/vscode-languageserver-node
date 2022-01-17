@@ -6,7 +6,7 @@
 import * as code from 'vscode';
 import * as proto from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, BaseLanguageClient } from './client';
+import { TextDocumentFeature, BaseLanguageClient, $DocumentSelector } from './client';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -48,8 +48,12 @@ export class LinkedEditingFeature extends TextDocumentFeature<boolean | proto.Li
 	}
 
 	protected registerLanguageProvider(options: proto.LinkedEditingRangeRegistrationOptions): [code.Disposable, code.LinkedEditingRangeProvider] {
+		const selector = options.documentSelector!;
 		const provider: code.LinkedEditingRangeProvider = {
 			provideLinkedEditingRanges: (document, position, token) => {
+				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
+					return undefined;
+				}
 				const client = this._client;
 				const provideLinkedEditing: ProvideLinkedEditingRangeSignature = (document, position, token) => {
 					return client.sendRequest(proto.LinkedEditingRangeRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
@@ -65,6 +69,6 @@ export class LinkedEditingFeature extends TextDocumentFeature<boolean | proto.Li
 					: provideLinkedEditing(document, position, token);
 			}
 		};
-		return [code.languages.registerLinkedEditingRangeProvider(options.documentSelector!, provider), provider];
+		return [code.languages.registerLinkedEditingRangeProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
 	}
 }

@@ -26,7 +26,7 @@ import {
 	TextDocument
 } from 'vscode-languageserver-textdocument';
 
-let connection = createConnection(ProposedFeatures.all);
+let connection: ProposedFeatures.Connection = createConnection(ProposedFeatures.all);
 let documents = new TextDocuments(TextDocument);
 
 documents.listen(connection);
@@ -118,7 +118,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 
 	semanticTokensLegend = computeLegend(params.capabilities.textDocument!.semanticTokens!);
 	return new Promise((resolve, reject) => {
-		let result: InitializeResult & { capabilities : Proposed.$DiagnosticServerCapabilities }= {
+		let result: InitializeResult & { capabilities : Proposed.$DiagnosticServerCapabilities & Proposed.$NotebookDocumentServerCapabilities }= {
 			capabilities: {
 				textDocumentSync: TextDocumentSyncKind.Full,
 				hoverProvider: true,
@@ -168,6 +168,11 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 					identifier: 'testbed',
 					interFileDependencies: true,
 					workspaceDiagnostics: true
+				},
+				notebookDocumentSync: {
+					notebookDocumentSelector: [{
+						cellSelector: [{ language: 'bat'}]
+					}]
 				}
 			}
 		};
@@ -255,7 +260,7 @@ function validate(document: TextDocument): Diagnostic[] {
 	connection.console.log('Validating document ' + document.uri);
 	return [ {
 		range: Range.create(0, 0, 0, 10),
-		message: 'A error message',
+		message: 'An error message',
 		tags: [
 			DiagnosticTag.Unnecessary
 		],
@@ -677,5 +682,19 @@ connection.languages.semanticTokens.onDelta((params) => {
 connection.languages.semanticTokens.onRange((params) => {
 	return { data: [] };
 });
+
+connection.notebooks.synchronization.onDidOpenNotebookDocument(params => {
+	connection.console.log(`Notebook document opened: ${params.notebookDocument.uri}`);
+});
+
+connection.notebooks.synchronization.onDidChangeNotebookDocument(params => {
+	connection.console.log(`Notebook document changed: ${params.notebookDocument.uri}`);
+
+});
+
+connection.notebooks.synchronization.onDidCloseNotebookDocument(params => {
+	connection.console.log(`Notebook document closed: ${params.notebookDocument.uri}`);
+});
+
 
 connection.listen();

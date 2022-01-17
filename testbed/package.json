@@ -12,7 +12,8 @@
 		"onCommand:testbed.helloWorld"
 	],
 	"enabledApiProposals": [
-		"tabs"
+		"tabs",
+		"notebookEditor"
 	],
 	"contributes": {
 		"commands": [

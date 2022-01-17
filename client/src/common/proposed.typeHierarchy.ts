@@ -10,7 +10,7 @@ import {
 
 import { ClientCapabilities, DocumentSelector, ServerCapabilities, Proposed } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, BaseLanguageClient, Middleware } from './client';
+import { TextDocumentFeature, BaseLanguageClient, Middleware, $DocumentSelector } from './client';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -46,11 +46,14 @@ class TypeHierarchyProvider implements VTypeHierarchyProvider {
 
 	private middleware: Middleware & TypeHierarchyMiddleware;
 
-	constructor(private client: BaseLanguageClient) {
+	constructor(private client: BaseLanguageClient, private options: Proposed.TypeHierarchyRegistrationOptions) {
 		this.middleware = client.clientOptions.middleware!;
 	}
 
 	public prepareTypeHierarchy(document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VTypeHierarchyItem[]> {
+		if ($DocumentSelector.skipCellTextDocument(this.options.documentSelector!, document)) {
+			return undefined;
+		}
 		const client = this.client;
 		const middleware = this.middleware;
 		const prepareTypeHierarchy: PrepareTypeHierarchySignature = (document, position, token) => {
@@ -133,7 +136,7 @@ export class TypeHierarchyFeature extends TextDocumentFeature<boolean | Proposed
 
 	protected registerLanguageProvider(options: Proposed.TypeHierarchyRegistrationOptions): [Disposable, TypeHierarchyProvider] {
 		const client = this._client;
-		const provider = new TypeHierarchyProvider(client);
-		return [Languages.registerTypeHierarchyProvider(options.documentSelector!, provider), provider];
+		const provider = new TypeHierarchyProvider(client, options);
+		return [Languages.registerTypeHierarchyProvider($DocumentSelector.asTextDocumentFilters(options.documentSelector!), provider), provider];
 	}
 }

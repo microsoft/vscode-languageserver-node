@@ -15,12 +15,14 @@ export * from './server';
 import { DiagnosticsFeatureShape, DiagnosticFeature } from './proposed.diagnostic';
 import { TypeHierarchyFeatureShape, TypeHierarchyFeature } from './proposed.typeHierarchy';
 import { InlineValuesFeatureShape, InlineValuesFeature } from './proposed.inlineValues';
+import { NotebooksFeatureShape, NotebooksFeature } from './proposed.notebooks';
 
 export namespace ProposedFeatures {
-	export const all: Features<_, _, _, _, _, _, DiagnosticsFeatureShape & TypeHierarchyFeatureShape & InlineValuesFeatureShape> = {
+	export const all: Features<_, _, _, _, _, _, DiagnosticsFeatureShape & TypeHierarchyFeatureShape & InlineValuesFeatureShape, NotebooksFeatureShape> = {
 		__brand: 'features',
-		languages: combineLanguagesFeatures(InlineValuesFeature, combineLanguagesFeatures(TypeHierarchyFeature, DiagnosticFeature))
+		languages: combineLanguagesFeatures(InlineValuesFeature, combineLanguagesFeatures(TypeHierarchyFeature, DiagnosticFeature)),
+		notebooks: NotebooksFeature
 	};
 
-	export type Connection = _Connection<_, _, _, _, _, _, DiagnosticsFeatureShape & TypeHierarchyFeatureShape & InlineValuesFeatureShape>;
+	export type Connection = _Connection<_, _, _, _, _, _, DiagnosticsFeatureShape & TypeHierarchyFeatureShape & InlineValuesFeatureShape, NotebooksFeatureShape>;
 }
