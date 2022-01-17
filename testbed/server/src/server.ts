@@ -171,7 +171,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 				},
 				notebookDocumentSync: {
 					notebookDocumentSelector: [{
-						cellLanguages: ['bat']
+						cellSelector: [{ language: 'bat'}]
 					}]
 				}
 			}
