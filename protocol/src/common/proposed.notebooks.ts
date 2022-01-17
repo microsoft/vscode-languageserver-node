@@ -17,21 +17,12 @@ import { StaticRegistrationOptions, NotebookDocumentFilter } from './protocol';
 export interface NotebookDocumentSyncClientCapabilities {
 
 	/**
-	 * Whether implementation supports dynamic registration. If this is set to `true`
-	 * the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
+	 * Whether implementation supports dynamic registration. If this is
+	 * set to `true` the client supports the new
+	 * `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
 	 * return value for the corresponding server capability as well.
 	 */
 	dynamicRegistration?: boolean;
-
-	/**
-	 * Client capability to announce the scheme used for notebook cell
-	 * document uris.
-	 *
-	 * This is useful since clients might use a special scheme (which
-	 * is different from the actual notebook document uri scheme)
-	 * for their notebook cell document uris.
-	 */
-	notebookCellScheme?: string;
 }
 
 export interface $NotebookDocumentClientCapabilities {
@@ -209,15 +200,28 @@ export interface VersionedNotebookDocumentIdentifier {
  * Options specific to a notebook plus its cells
  * to be synced to the server.
  *
+ * If a selector provider a notebook document
+ * filter but no cell selector all cells of a
+ * matching notebook document will be synced.
+ *
+ * If a selector provides no notebook document
+ * filter but only a cell selector all notebook
+ * document that contain at least one matching
+ * cell will be synced.
+ *
  * @since 3.17.0 - proposed state
  */
 export type NotebookDocumentOptions = {
 	notebookDocumentSelector?: ({
+		/** The notebook documents to be synced */
 		notebookDocumentFilter: NotebookDocumentFilter;
-		cellLanguages?: string[];
+		/** The cells of the matching notebook to be synced */
+		cellSelector?: { language: string }[];
 	} | {
+		/** The notebook documents to be synced */
 		notebookDocumentFilter?: NotebookDocumentFilter;
-		cellLanguages: string[];
+		/** The cells of the matching notebook to be synced */
+		cellSelector: { language: string }[];
 	})[];
 };
 

@@ -118,20 +118,6 @@ export namespace $DocumentSelector {
 		return !match(selector, textDocument);
 	}
 
-	export function split2(selector: DocumentSelector): [(string | TextDocumentFilter)[], NotebookCellTextDocumentFilter[]] {
-		const text: (string | TextDocumentFilter)[] = [];
-		const notebook: NotebookCellTextDocumentFilter[] = [];
-		for (const filter of selector) {
-			if (typeof filter === 'string' || TextDocumentFilter.is(filter)) {
-				text.push(filter);
-			} else {
-				notebook.push(filter);
-			}
-		}
-		return [text, notebook];
-
-	}
-
 	export function asTextDocumentFilters(selector: DocumentSelector): (string | TextDocumentFilter)[] {
 		const result: (string | TextDocumentFilter)[] = [];
 		const generated: Set<null | string> = new Set();

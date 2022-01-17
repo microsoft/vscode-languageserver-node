@@ -218,13 +218,13 @@ class NotebookDocumentSyncFeatureProvider {
 		}
 		for (const item of this.options.notebookDocumentSelector) {
 			if (item.notebookDocumentFilter === undefined) {
-				if (item.cellLanguages === undefined) {
+				if (item.cellSelector === undefined) {
 					return undefined;
 				}
-				const filtered = this.filterCells(cells, item.cellLanguages);
+				const filtered = this.filterCells(cells, item.cellSelector);
 				return filtered.length === 0 ? undefined : filtered;
 			} else if (this.matchNotebook(notebookDocument, item.notebookDocumentFilter)){
-				return item.cellLanguages === undefined ? cells : this.filterCells(cells, item.cellLanguages);
+				return item.cellSelector === undefined ? cells : this.filterCells(cells, item.cellSelector);
 			}
 		}
 		return undefined;
@@ -250,9 +250,10 @@ class NotebookDocumentSyncFeatureProvider {
 		return false;
 	}
 
-	private filterCells(cells: vscode.NotebookCell[], cellLanguages: string[]): vscode.NotebookCell[] {
+	private filterCells(cells: vscode.NotebookCell[], cellSelector: { language: string }[]): vscode.NotebookCell[] {
 		return cells.filter((cell) => {
-			return cellLanguages.indexOf(cell.document.languageId) !== -1;
+			const cellLanguage = cell.document.languageId;
+			return cellSelector.some((filter => cellLanguage === filter.language));
 		});
 	}
 }
@@ -289,7 +290,6 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 	public fillClientCapabilities(capabilities: proto.ClientCapabilities & proto.Proposed.$NotebookDocumentClientCapabilities): void {
 		const synchronization = ensure(ensure(capabilities, 'notebookDocument')!, 'synchronization')!;
 		synchronization.dynamicRegistration = true;
-		synchronization.notebookCellScheme = NotebookDocumentSyncFeature.CellScheme;
 	}
 
 	public initialize(capabilities: proto.ServerCapabilities<any> & proto.Proposed.$NotebookDocumentServerCapabilities): void {
