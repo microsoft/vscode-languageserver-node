@@ -200,7 +200,7 @@ export interface VersionedNotebookDocumentIdentifier {
  * Options specific to a notebook plus its cells
  * to be synced to the server.
  *
- * If a selector provider a notebook document
+ * If a selector provide a notebook document
  * filter but no cell selector all cells of a
  * matching notebook document will be synced.
  *
@@ -211,7 +211,10 @@ export interface VersionedNotebookDocumentIdentifier {
  *
  * @since 3.17.0 - proposed state
  */
-export type NotebookDocumentOptions = {
+export type NotebookDocumentSyncOptions = {
+	/**
+	 * The notebook document to be synced
+	 */
 	notebookDocumentSelector?: ({
 		/** The notebook documents to be synced */
 		notebookDocumentFilter: NotebookDocumentFilter;
@@ -223,22 +226,29 @@ export type NotebookDocumentOptions = {
 		/** The cells of the matching notebook to be synced */
 		cellSelector: { language: string }[];
 	})[];
-};
 
-export interface $NotebookDocumentServerCapabilities {
-	notebookDocumentSync?: NotebookDocumentOptions | NotebookDocumentRegistrationOptions;
-}
+	/**
+	 * Whether save notification should be forwarded to
+	 * the server.
+	 */
+	save?: boolean;
+};
 
 /**
  * Registration options specific to a notebook.
  *
  * @since 3.17.0 - proposed state
  */
-export type NotebookDocumentRegistrationOptions = NotebookDocumentOptions & StaticRegistrationOptions;
+export type NotebookDocumentSyncRegistrationOptions = NotebookDocumentSyncOptions & StaticRegistrationOptions;
+
+export interface $NotebookDocumentSyncServerCapabilities {
+	notebookDocumentSync?: NotebookDocumentSyncOptions | NotebookDocumentSyncRegistrationOptions;
+}
+
 
 export namespace NotebookDocumentSyncRegistrationType {
 	export const method: 'notebookDocument/sync' = 'notebookDocument/sync';
-	export const type = new RegistrationType<NotebookDocumentRegistrationOptions>(method);
+	export const type = new RegistrationType<NotebookDocumentSyncRegistrationOptions>(method);
 }
 
 /**

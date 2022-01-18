@@ -127,7 +127,7 @@ export namespace Proposed {
 	// Notebooks
 	export type $NotebookDocumentClientCapabilities = nb.$NotebookDocumentClientCapabilities;
 	export type NotebookDocumentSyncClientCapabilities = nb.NotebookDocumentSyncClientCapabilities;
-	export type $NotebookDocumentServerCapabilities = nb.$NotebookDocumentServerCapabilities;
+	export type $NotebookDocumentSyncServerCapabilities = nb.$NotebookDocumentSyncServerCapabilities;
 	export type NotebookCellKind = nb.NotebookCellKind;
 	export const NotebookCellKind = nb.NotebookCellKind;
 	export type NotebookCell = nb.NotebookCell;
@@ -138,8 +138,8 @@ export namespace Proposed {
 	export type NotebookDocumentChangeEvent = nb.NotebookDocumentChangeEvent;
 	export type NotebookDocumentIdentifier = nb.NotebookDocumentIdentifier;
 	export type VersionedNotebookDocumentIdentifier = nb.VersionedNotebookDocumentIdentifier;
-	export type NotebookDocumentOptions = nb.NotebookDocumentOptions;
-	export type NotebookDocumentRegistrationOptions = nb.NotebookDocumentRegistrationOptions;
+	export type NotebookDocumentSyncOptions = nb.NotebookDocumentSyncOptions;
+	export type NotebookDocumentSyncRegistrationOptions = nb.NotebookDocumentSyncRegistrationOptions;
 	export const NotebookDocumentSyncRegistrationType = nb.NotebookDocumentSyncRegistrationType;
 	export type DidOpenNotebookDocumentParams = nb.DidOpenNotebookDocumentParams;
 	export const DidOpenNotebookDocumentNotification = nb.DidOpenNotebookDocumentNotification;

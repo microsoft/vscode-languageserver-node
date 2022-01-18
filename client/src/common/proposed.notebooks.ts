@@ -101,12 +101,12 @@ namespace SyncInfo {
 class NotebookDocumentSyncFeatureProvider {
 
 	private readonly client: BaseLanguageClient;
-	private readonly options: proto.Proposed.NotebookDocumentOptions;
+	private readonly options: proto.Proposed.NotebookDocumentSyncOptions;
 	private readonly notebookSyncInfo: Map<string, SyncInfo>;
 	private readonly notebookDidOpen: Set<string>;
 	private readonly disposables: vscode.Disposable[];
 
-	constructor(client: BaseLanguageClient, options: proto.Proposed.NotebookDocumentOptions) {
+	constructor(client: BaseLanguageClient, options: proto.Proposed.NotebookDocumentSyncOptions) {
 		this.client = client;
 		this.options = options;
 		this.notebookSyncInfo = new Map();
@@ -299,7 +299,7 @@ class NotebookDocumentSyncFeatureProvider {
 	}
 }
 
-export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Proposed.NotebookDocumentRegistrationOptions> {
+export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Proposed.NotebookDocumentSyncRegistrationOptions> {
 
 	public static readonly CellScheme: string = 'vscode-notebook-cell';
 
@@ -326,14 +326,14 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 		});
 	}
 
-	public readonly registrationType: proto.RegistrationType<proto.Proposed.NotebookDocumentRegistrationOptions>;
+	public readonly registrationType: proto.RegistrationType<proto.Proposed.NotebookDocumentSyncRegistrationOptions>;
 
 	public fillClientCapabilities(capabilities: proto.ClientCapabilities & proto.Proposed.$NotebookDocumentClientCapabilities): void {
 		const synchronization = ensure(ensure(capabilities, 'notebookDocument')!, 'synchronization')!;
 		synchronization.dynamicRegistration = true;
 	}
 
-	public initialize(capabilities: proto.ServerCapabilities<any> & proto.Proposed.$NotebookDocumentServerCapabilities): void {
+	public initialize(capabilities: proto.ServerCapabilities<any> & proto.Proposed.$NotebookDocumentSyncServerCapabilities): void {
 		const options = capabilities.notebookDocumentSync;
 		if (options === undefined) {
 			return;
@@ -342,7 +342,7 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 		this.register({ id, registerOptions: options});
 	}
 
-	public register(data: RegistrationData<proto.Proposed.NotebookDocumentRegistrationOptions>): void {
+	public register(data: RegistrationData<proto.Proposed.NotebookDocumentSyncRegistrationOptions>): void {
 		const provider = new NotebookDocumentSyncFeatureProvider(this.client, data.registerOptions);
 		this.registrations.set(data.id, provider);
 	}
