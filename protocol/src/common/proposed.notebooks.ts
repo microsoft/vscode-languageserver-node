@@ -300,6 +300,28 @@ export namespace DidChangeNotebookDocumentNotification {
 }
 
 /**
+ * The params sent in a save notebook document notification.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export interface DidSaveNotebookDocumentParams {
+	/**
+	 * The notebook document that got saved.
+	 */
+	notebookDocument: NotebookDocumentIdentifier;
+}
+
+/**
+ * A notification sent when a notebook document is saved.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export namespace DidSaveNotebookDocumentNotification {
+	export const method: 'notebookDocument/didSave' = 'notebookDocument/didSave';
+	export const type = new ProtocolNotificationType<DidSaveNotebookDocumentParams, void>(method);
+}
+
+/**
  * The params sent in a close notebook document notification.
  *
  * @since 3.17.0 - proposed state
@@ -307,7 +329,7 @@ export namespace DidChangeNotebookDocumentNotification {
 export interface DidCloseNotebookDocumentParams {
 
 	/**
-	 * The notebook document that got opened.
+	 * The notebook document that got closed.
 	 */
 	notebookDocument: NotebookDocumentIdentifier;
 }

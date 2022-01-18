@@ -17,6 +17,7 @@ export interface NotebooksFeatureShape {
 	synchronization: {
 		onDidOpenNotebookDocument(handler: NotificationHandler1<Proposed.DidOpenNotebookDocumentParams>): void;
 		onDidChangeNotebookDocument(handler: NotificationHandler1<Proposed.DidChangeNotebookDocumentParams>): void;
+		onDidSaveNotebookDocument(handler: NotificationHandler1<Proposed.DidSaveNotebookDocumentParams>): void;
 		onDidCloseNotebookDocument(handler: NotificationHandler1<Proposed.DidCloseNotebookDocumentParams>): void;
 	};
 }
@@ -32,6 +33,11 @@ export const NotebooksFeature: Feature<_Notebooks, NotebooksFeatureShape> = (Bas
 				},
 				onDidChangeNotebookDocument: (handler: NotificationHandler1<Proposed.DidChangeNotebookDocumentParams>): void => {
 					this.connection.onNotification(Proposed.DidChangeNotebookDocumentNotification.type, (params) => {
+						handler(params);
+					});
+				},
+				onDidSaveNotebookDocument: (handler: NotificationHandler1<Proposed.DidSaveNotebookDocumentParams>) => {
+					this.connection.onNotification(Proposed.DidSaveNotebookDocumentNotification.type, (params) => {
 						handler(params);
 					});
 				},

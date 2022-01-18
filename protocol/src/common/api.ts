@@ -145,6 +145,8 @@ export namespace Proposed {
 	export const DidOpenNotebookDocumentNotification = nb.DidOpenNotebookDocumentNotification;
 	export type DidChangeNotebookDocumentParams = nb.DidChangeNotebookDocumentParams;
 	export const DidChangeNotebookDocumentNotification = nb.DidChangeNotebookDocumentNotification;
+	export type DidSaveNotebookDocumentParams = nb.DidSaveNotebookDocumentParams;
+	export const DidSaveNotebookDocumentNotification = nb.DidSaveNotebookDocumentNotification;
 	export type DidCloseNotebookDocumentParams = nb.DidCloseNotebookDocumentParams;
 	export const DidCloseNotebookDocumentNotification = nb.DidCloseNotebookDocumentNotification;
 }
