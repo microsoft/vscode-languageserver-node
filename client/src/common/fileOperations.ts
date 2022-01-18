@@ -54,7 +54,7 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 	private _listener: code.Disposable | undefined;
 	// This property must stay private. Otherwise the type `minimatch.IMinimatch` becomes public and as a consequence we would need to
 	// ship the d.ts files for minimatch to make the compiler happy when compiling against the vscode-languageclient library
-	private _filters = new Map<string, Array<{ scheme?: string, matcher: minimatch.IMinimatch, kind?: proto.FileOperationPatternKind }>>();
+	private _filters = new Map<string, Array<{ scheme?: string; matcher: minimatch.IMinimatch; kind?: proto.FileOperationPatternKind }>>();
 
 	constructor(client: BaseLanguageClient, event: code.Event<E>,
 		registrationType: proto.RegistrationType<proto.FileOperationRegistrationOptions>,
@@ -198,7 +198,7 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 	}
 }
 
-abstract class NotificationFileOperationFeature<I, E extends { readonly files: ReadonlyArray<I>; }, P> extends FileOperationFeature<I, E> {
+abstract class NotificationFileOperationFeature<I, E extends { readonly files: ReadonlyArray<I> }, P> extends FileOperationFeature<I, E> {
 
 	private _notificationType: proto.ProtocolNotificationType<P, proto.FileOperationRegistrationOptions>;
 	private _accessUri: (i: I) => code.Uri;
@@ -232,7 +232,7 @@ abstract class NotificationFileOperationFeature<I, E extends { readonly files: R
 	protected abstract doSend(event: E, next: (event: E) => Promise<void>): Promise<void>;
 }
 
-abstract class CachingNotificationFileOperationFeature<I, E extends { readonly files: ReadonlyArray<I>; }, P> extends NotificationFileOperationFeature<I, E, P> {
+abstract class CachingNotificationFileOperationFeature<I, E extends { readonly files: ReadonlyArray<I> }, P> extends NotificationFileOperationFeature<I, E, P> {
 	protected _willListener: code.Disposable | undefined;
 	private readonly _fsPathFileTypes = new Map<String, code.FileType>();
 
@@ -295,12 +295,12 @@ export class DidCreateFilesFeature extends NotificationFileOperationFeature<code
 	}
 }
 
-export class DidRenameFilesFeature extends CachingNotificationFileOperationFeature<{ oldUri: code.Uri, newUri: code.Uri }, code.FileRenameEvent, proto.RenameFilesParams> {
+export class DidRenameFilesFeature extends CachingNotificationFileOperationFeature<{ oldUri: code.Uri; newUri: code.Uri }, code.FileRenameEvent, proto.RenameFilesParams> {
 
 	constructor(client: BaseLanguageClient) {
 		super(
 			client, code.workspace.onDidRenameFiles, proto.DidRenameFilesNotification.type, 'didRename', 'didRename',
-			(i: { oldUri: code.Uri, newUri: code.Uri }) => i.oldUri,
+			(i: { oldUri: code.Uri; newUri: code.Uri }) => i.oldUri,
 			client.code2ProtocolConverter.asDidRenameFilesParams,
 		);
 	}
@@ -422,11 +422,11 @@ export class WillCreateFilesFeature extends RequestFileOperationFeature<code.Uri
 	}
 }
 
-export class WillRenameFilesFeature extends RequestFileOperationFeature<{ oldUri: code.Uri, newUri: code.Uri }, code.FileWillRenameEvent, proto.RenameFilesParams> {
+export class WillRenameFilesFeature extends RequestFileOperationFeature<{ oldUri: code.Uri; newUri: code.Uri }, code.FileWillRenameEvent, proto.RenameFilesParams> {
 	constructor(client: BaseLanguageClient) {
 		super(
 			client, code.workspace.onWillRenameFiles, proto.WillRenameFilesRequest.type, 'willRename', 'willRename',
-			(i: { oldUri: code.Uri, newUri: code.Uri }) => i.oldUri,
+			(i: { oldUri: code.Uri; newUri: code.Uri }) => i.oldUri,
 			client.code2ProtocolConverter.asWillRenameFilesParams,
 		);
 	}

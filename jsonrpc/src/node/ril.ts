@@ -119,7 +119,7 @@ interface RIL extends RAL {
 	readonly stream: {
 		readonly asReadableStream: (stream: NodeJS.ReadableStream) => RAL.ReadableStream;
 		readonly asWritableStream: (stream: NodeJS.WritableStream) => RAL.WritableStream;
-	}
+	};
 }
 
 const _ril: RIL = Object.freeze<RIL>({

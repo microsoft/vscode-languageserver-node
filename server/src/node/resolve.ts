@@ -7,7 +7,7 @@ interface Message {
 	command: string;
 	success?: boolean;
 	args?: any;
-	result?: any
+	result?: any;
 }
 
 process.on('message', (message: Message) => {

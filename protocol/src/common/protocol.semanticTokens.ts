@@ -20,7 +20,7 @@ export interface SemanticTokensPartialResult {
  * @since 3.16.0
  */
 export interface SemanticTokensDeltaPartialResult {
-	edits: SemanticTokensEdit[]
+	edits: SemanticTokensEdit[];
 }
 
 //------- 'textDocument/semanticTokens' -----
@@ -71,9 +71,9 @@ export interface SemanticTokensClientCapabilities {
 			 * The client will send the `textDocument/semanticTokens/full/delta` request if
 			 * the server provides a corresponding handler.
 			 */
-			delta?: boolean
-		}
-	}
+			delta?: boolean;
+		};
+	};
 
 	/**
 	 * The token types that the client supports.
@@ -149,7 +149,7 @@ export interface SemanticTokensOptions extends WorkDoneProgressOptions {
 		 * The server supports deltas for full documents.
 		 */
 		delta?: boolean;
-	}
+	};
 }
 
 /**

@@ -1215,7 +1215,7 @@ export interface WorkspaceEdit {
 	/**
 	 * Holds changes to existing resources.
 	 */
-	changes?: { [uri: DocumentUri]: TextEdit[]; };
+	changes?: { [uri: DocumentUri]: TextEdit[] };
 
 	/**
 	 * Depending on the client capability `workspace.workspaceEdit.resourceOperations` document changes
@@ -1242,7 +1242,7 @@ export interface WorkspaceEdit {
 	 */
 	changeAnnotations?: {
 		[id: ChangeAnnotationIdentifier]: ChangeAnnotation;
-	}
+	};
 }
 
 export namespace WorkspaceEdit {
@@ -2287,7 +2287,7 @@ export interface CompletionList {
 		 * @since 3.17.0 - proposed state
 		 */
 		insertTextMode?: InsertTextMode;
-	}
+	};
 
 	/**
 	 * The completion items.
@@ -2743,7 +2743,7 @@ export interface WorkspaceSymbol extends Omit<Omit<SymbolInformation, 'location'
 	 *
 	 * See SymbolInformation#location for more details.
 	 */
-	location: Location | { uri: DocumentUri; };
+	location: Location | { uri: DocumentUri };
 
 	/**
 	 * A data entry field that is preserved on a workspace symbol between a

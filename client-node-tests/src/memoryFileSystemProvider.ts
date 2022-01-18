@@ -11,7 +11,7 @@ export class MemoryFileSystemProvider implements vscode.FileSystemProvider {
 	public readonly root = new FakeDirectory('');
 	public readonly onDidChangeFile = new vscode.EventEmitter<vscode.FileChangeEvent[]>().event;
 
-	public watch(_: vscode.Uri, __: { recursive: boolean; excludes: string[]; }): vscode.Disposable {
+	public watch(_: vscode.Uri, __: { recursive: boolean; excludes: string[] }): vscode.Disposable {
 		return { dispose() { } };
 	}
 
@@ -53,20 +53,20 @@ export class MemoryFileSystemProvider implements vscode.FileSystemProvider {
 		}
 	}
 
-	public writeFile(uri: vscode.Uri, content: Uint8Array, options: { create: boolean; overwrite: boolean; }): void | Thenable<void> {
+	public writeFile(uri: vscode.Uri, content: Uint8Array, options: { create: boolean; overwrite: boolean }): void | Thenable<void> {
 		const [directoryUri, name] = this.splitUri(uri);
 		const directory = this.getDirectory(directoryUri, options);
 		const file = new FakeFile(name, directory, content);
 		directory.children.set(name, file);
 	}
 
-	public delete(uri: vscode.Uri, _: { recursive: boolean; }): void | Thenable<void> {
+	public delete(uri: vscode.Uri, _: { recursive: boolean }): void | Thenable<void> {
 		const [directoryUri, name] = this.splitUri(uri);
 		const directory = this.getDirectory(directoryUri);
 		directory.children.delete(name);
 	}
 
-	public rename(oldUri: vscode.Uri, newUri: vscode.Uri, options: { overwrite: boolean; }): void | Thenable<void> {
+	public rename(oldUri: vscode.Uri, newUri: vscode.Uri, options: { overwrite: boolean }): void | Thenable<void> {
 		const [oldDirectoryUri, oldName] = this.splitUri(oldUri);
 		const [newDirectoryUri, newName] = this.splitUri(newUri);
 		const oldDirectory = this.getDirectory(oldDirectoryUri);

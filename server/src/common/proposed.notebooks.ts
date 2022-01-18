@@ -18,7 +18,7 @@ export interface NotebooksFeatureShape {
 		onDidOpenNotebookDocument(handler: NotificationHandler1<Proposed.DidOpenNotebookDocumentParams>): void;
 		onDidChangeNotebookDocument(handler: NotificationHandler1<Proposed.DidChangeNotebookDocumentParams>): void;
 		onDidCloseNotebookDocument(handler: NotificationHandler1<Proposed.DidCloseNotebookDocumentParams>): void;
-	}
+	};
 }
 
 export const NotebooksFeature: Feature<_Notebooks, NotebooksFeatureShape> = (Base) => {

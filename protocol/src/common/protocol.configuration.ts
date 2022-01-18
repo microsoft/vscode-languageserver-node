@@ -22,7 +22,7 @@ export interface ConfigurationClientCapabilities {
 		 * @since 3.6.0
 		 */
 		configuration?: boolean;
-	}
+	};
 }
 
 /**

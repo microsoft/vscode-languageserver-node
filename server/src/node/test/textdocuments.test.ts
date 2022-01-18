@@ -32,12 +32,12 @@ class TestStream extends Duplex {
 const TEST_URI = 'file:///my/path/to/my-file.ts';
 const TEST_LANGUAGE_ID = 'typescript';
 
-function mockOpenDocNotif(config: { version: number, text: string }): DidOpenTextDocumentParams {
+function mockOpenDocNotif(config: { version: number; text: string }): DidOpenTextDocumentParams {
 	const { version, text } = config;
 	return { textDocument: { uri: TEST_URI, languageId: TEST_LANGUAGE_ID, version, text } };
 }
 
-function mockChangeDocNotif(config: { version: number, contentChanges: TextDocumentContentChangeEvent[] }): DidChangeTextDocumentParams {
+function mockChangeDocNotif(config: { version: number; contentChanges: TextDocumentContentChangeEvent[] }): DidChangeTextDocumentParams {
 	const { version, contentChanges } = config;
 	return { textDocument: { uri: TEST_URI, version }, contentChanges };
 }

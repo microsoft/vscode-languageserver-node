@@ -30,7 +30,7 @@ export interface RequestMessage extends Message {
 	/**
 	 * The method's params.
 	 */
-	params?: any[] | object
+	params?: any[] | object;
 }
 
 /**
@@ -361,7 +361,7 @@ export interface NotificationMessage extends Message {
 	/**
 	 * The notification's params.
 	 */
-	params?: any[] | object
+	params?: any[] | object;
 }
 
 export class NotificationType<P> extends AbstractMessageSignature {

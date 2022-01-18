@@ -82,11 +82,12 @@ import { Delayer } from './utils/async';
 import * as UUID from './utils/uuid';
 import { ProgressPart } from './progressPart';
 
-
 export namespace $DocumentSelector {
 
+	const CellScheme: string = 'vscode-notebook-cell';
+
 	export function match(selector: DocumentSelector, textDocument: TextDocument): boolean {
-		const isCellDocument = textDocument.uri.scheme === 'vscode-notebook-cell';
+		const isCellDocument = textDocument.uri.scheme === CellScheme;
 		for (const filter of selector) {
 			if (isCellDocument && NotebookCellTextDocumentFilter.is(filter)) {
 				if (filter.cellLanguage !== undefined && filter.cellLanguage !== textDocument.languageId) {
@@ -112,7 +113,7 @@ export namespace $DocumentSelector {
 	}
 
 	export function skipCellTextDocument(selector: DocumentSelector, textDocument: TextDocument): boolean {
-		if (textDocument.uri.scheme !== 'vscode-notebook-cell') {
+		if (textDocument.uri.scheme !== CellScheme) {
 			return false;
 		}
 		return !match(selector, textDocument);
@@ -126,10 +127,10 @@ export namespace $DocumentSelector {
 				result.push(filter);
 			} else {
 				if (filter.cellLanguage !== undefined && !generated.has(filter.cellLanguage)) {
-					result.push({ scheme: 'vscode-notebook-cell', language: filter.cellLanguage });
+					result.push({ scheme: CellScheme, language: filter.cellLanguage });
 					generated.add(filter.cellLanguage);
 				} else if (!generated.has(null)){
-					result.push({ scheme: 'vscode-notebook-cell' });
+					result.push({ scheme: CellScheme });
 					generated.add(null);
 				}
 			}
@@ -138,7 +139,7 @@ export namespace $DocumentSelector {
 	}
 
 	function findNotebook(textDocument: TextDocument): VNotebookDocument | undefined {
-		if (textDocument.uri.scheme !== 'vscode-notebook-cell') {
+		if (textDocument.uri.scheme !== CellScheme) {
 			return undefined;
 		}
 		for (const notebookDocument of Workspace.notebookDocuments) {
@@ -505,7 +506,7 @@ export interface ProvideDefinitionSignature {
 }
 
 export interface ProvideReferencesSignature {
-	(this: void, document: TextDocument, position: VPosition, options: { includeDeclaration: boolean; }, token: CancellationToken): ProviderResult<VLocation[]>;
+	(this: void, document: TextDocument, position: VPosition, options: { includeDeclaration: boolean }, token: CancellationToken): ProviderResult<VLocation[]>;
 }
 
 export interface ProvideDocumentHighlightsSignature {
@@ -557,7 +558,7 @@ export interface ProvideRenameEditsSignature {
 }
 
 export interface PrepareRenameSignature {
-	(this: void, document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VRange | { range: VRange; placeholder: string; }>;
+	(this: void, document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VRange | { range: VRange; placeholder: string }>;
 }
 
 export interface ProvideDocumentLinksSignature {
@@ -616,7 +617,7 @@ export interface _Middleware {
 	provideHover?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideHoverSignature) => ProviderResult<VHover>;
 	provideSignatureHelp?: (this: void, document: TextDocument, position: VPosition, context: VSignatureHelpContext, token: CancellationToken, next: ProvideSignatureHelpSignature) => ProviderResult<VSignatureHelp>;
 	provideDefinition?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideDefinitionSignature) => ProviderResult<VDefinition | VDefinitionLink[]>;
-	provideReferences?: (this: void, document: TextDocument, position: VPosition, options: { includeDeclaration: boolean; }, token: CancellationToken, next: ProvideReferencesSignature) => ProviderResult<VLocation[]>;
+	provideReferences?: (this: void, document: TextDocument, position: VPosition, options: { includeDeclaration: boolean }, token: CancellationToken, next: ProvideReferencesSignature) => ProviderResult<VLocation[]>;
 	provideDocumentHighlights?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideDocumentHighlightsSignature) => ProviderResult<VDocumentHighlight[]>;
 	provideDocumentSymbols?: (this: void, document: TextDocument, token: CancellationToken, next: ProvideDocumentSymbolsSignature) => ProviderResult<VSymbolInformation[] | VDocumentSymbol[]>;
 	provideWorkspaceSymbols?: (this: void, query: string, token: CancellationToken, next: ProvideWorkspaceSymbolsSignature) => ProviderResult<VSymbolInformation[]>;
@@ -629,7 +630,7 @@ export interface _Middleware {
 	provideDocumentRangeFormattingEdits?: (this: void, document: TextDocument, range: VRange, options: VFormattingOptions, token: CancellationToken, next: ProvideDocumentRangeFormattingEditsSignature) => ProviderResult<VTextEdit[]>;
 	provideOnTypeFormattingEdits?: (this: void, document: TextDocument, position: VPosition, ch: string, options: VFormattingOptions, token: CancellationToken, next: ProvideOnTypeFormattingEditsSignature) => ProviderResult<VTextEdit[]>;
 	provideRenameEdits?: (this: void, document: TextDocument, position: VPosition, newName: string, token: CancellationToken, next: ProvideRenameEditsSignature) => ProviderResult<VWorkspaceEdit>;
-	prepareRename?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: PrepareRenameSignature) => ProviderResult<VRange | { range: VRange; placeholder: string; }>;
+	prepareRename?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: PrepareRenameSignature) => ProviderResult<VRange | { range: VRange; placeholder: string }>;
 	provideDocumentLinks?: (this: void, document: TextDocument, token: CancellationToken, next: ProvideDocumentLinksSignature) => ProviderResult<VDocumentLink[]>;
 	resolveDocumentLink?: (this: void, link: VDocumentLink, token: CancellationToken, next: ResolveDocumentLinkSignature) => ProviderResult<VDocumentLink>;
 	executeCommand?: (this: void, command: string, args: any[], next: ExecuteCommandSignature) => ProviderResult<any>;
@@ -901,7 +902,7 @@ export interface NotificationFeature<T extends Function> {
 	/**
 	 * Triggers the corresponding RPC method.
 	 */
-	getProvider(document: TextDocument): { send: T; } | undefined;
+	getProvider(document: TextDocument): { send: T } | undefined;
 }
 
 namespace DynamicFeature {
@@ -1007,7 +1008,7 @@ abstract class DocumentNotifications<P, E> implements DynamicFeature<TextDocumen
 		}
 	}
 
-	public getProvider(document: TextDocument):  { send: (data: E) => Promise<void>; } | undefined {
+	public getProvider(document: TextDocument):  { send: (data: E) => Promise<void> } | undefined {
 		for (const selector of this._selectors.values()) {
 			if ($DocumentSelector.match(selector, document)) {
 				return {
@@ -1152,7 +1153,7 @@ class DidChangeTextDocumentFeature implements DidChangeTextDocumentFeatureShape 
 	private _listener: Disposable | undefined;
 	private _changeData: Map<string, DidChangeTextDocumentData> = new Map<string, DidChangeTextDocumentData>();
 	private _forcingDelivery: boolean = false;
-	private _changeDelayer: { uri: string; delayer: Delayer<void>; } | undefined;
+	private _changeDelayer: { uri: string; delayer: Delayer<void> } | undefined;
 
 	private readonly _onNotificationSent: EventEmitter<NotificationSendEvent<TextDocumentChangeEvent, DidChangeTextDocumentParams>>;
 
@@ -1285,7 +1286,7 @@ class DidChangeTextDocumentFeature implements DidChangeTextDocumentFeatureShape 
 		}
 	}
 
-	public getProvider(document: TextDocument): { send: (event: TextDocumentChangeEvent) => Promise<void>; } | undefined {
+	public getProvider(document: TextDocument): { send: (event: TextDocumentChangeEvent) => Promise<void> } | undefined {
 		for (const changeData of this._changeData.values()) {
 			if ($DocumentSelector.match(changeData.documentSelector, document)) {
 				return {
@@ -1593,7 +1594,7 @@ export abstract class TextDocumentFeature<PO, RO extends TextDocumentRegistratio
 		this._registrations.clear();
 	}
 
-	protected getRegistration(documentSelector: DocumentSelector | undefined, capability: undefined | PO | (RO & StaticRegistrationOptions)): [string | undefined, (RO & { documentSelector: DocumentSelector; }) | undefined] {
+	protected getRegistration(documentSelector: DocumentSelector | undefined, capability: undefined | PO | (RO & StaticRegistrationOptions)): [string | undefined, (RO & { documentSelector: DocumentSelector }) | undefined] {
 		if (!capability) {
 			return [undefined, undefined];
 		} else if (TextDocumentRegistrationOptions.is(capability)) {
@@ -1606,17 +1607,17 @@ export abstract class TextDocumentFeature<PO, RO extends TextDocumentRegistratio
 			if (!documentSelector) {
 				return [undefined, undefined];
 			}
-			let options: RO & { documentSelector: DocumentSelector; } = (Is.boolean(capability) && capability === true ? { documentSelector } : Object.assign({}, capability, { documentSelector })) as any;
+			let options: RO & { documentSelector: DocumentSelector } = (Is.boolean(capability) && capability === true ? { documentSelector } : Object.assign({}, capability, { documentSelector })) as any;
 			return [UUID.generateUuid(), options];
 		}
 		return [undefined, undefined];
 	}
 
-	protected getRegistrationOptions(documentSelector: DocumentSelector | undefined, capability: undefined | PO) : (RO & { documentSelector: DocumentSelector; }) | undefined {
+	protected getRegistrationOptions(documentSelector: DocumentSelector | undefined, capability: undefined | PO) : (RO & { documentSelector: DocumentSelector }) | undefined {
 		if (!documentSelector || !capability) {
 			return undefined;
 		}
-		return (Is.boolean(capability) && capability === true ? { documentSelector } : Object.assign({}, capability, { documentSelector })) as RO & { documentSelector: DocumentSelector; };
+		return (Is.boolean(capability) && capability === true ? { documentSelector } : Object.assign({}, capability, { documentSelector })) as RO & { documentSelector: DocumentSelector };
 	}
 
 	public getProvider(textDocument: TextDocument): PR | undefined {
@@ -3822,12 +3823,12 @@ export abstract class BaseLanguageClient {
 	public getFeature(request: typeof WillSaveTextDocumentWaitUntilRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & NotificationFeature<(textDocument: TextDocument) => ProviderResult<VTextEdit[]>>;
 	public getFeature(request: typeof DidSaveTextDocumentNotification.method): DidSaveTextDocumentFeatureShape;
 	public getFeature(request: typeof DidCloseTextDocumentNotification.method): DidCloseTextDocumentFeatureShape;
-	public getFeature(request: typeof DidCreateFilesNotification.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileCreateEvent) => Promise<void>; };
-	public getFeature(request: typeof DidRenameFilesNotification.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileRenameEvent) => Promise<void>; };
-	public getFeature(request: typeof DidDeleteFilesNotification.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileDeleteEvent) => Promise<void>; };
-	public getFeature(request: typeof WillCreateFilesRequest.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileWillCreateEvent) => Promise<void>; };
-	public getFeature(request: typeof WillRenameFilesRequest.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileWillRenameEvent) => Promise<void>; };
-	public getFeature(request: typeof WillDeleteFilesRequest.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileWillDeleteEvent) => Promise<void>; };
+	public getFeature(request: typeof DidCreateFilesNotification.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileCreateEvent) => Promise<void> };
+	public getFeature(request: typeof DidRenameFilesNotification.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileRenameEvent) => Promise<void> };
+	public getFeature(request: typeof DidDeleteFilesNotification.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileDeleteEvent) => Promise<void> };
+	public getFeature(request: typeof WillCreateFilesRequest.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileWillCreateEvent) => Promise<void> };
+	public getFeature(request: typeof WillRenameFilesRequest.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileWillRenameEvent) => Promise<void> };
+	public getFeature(request: typeof WillDeleteFilesRequest.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileWillDeleteEvent) => Promise<void> };
 	public getFeature(request: typeof CompletionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<CompletionItemProvider>;
 	public getFeature(request: typeof HoverRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<HoverProvider>;
 	public getFeature(request: typeof SignatureHelpRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<SignatureHelpProvider>;

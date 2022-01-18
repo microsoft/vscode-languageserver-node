@@ -65,7 +65,7 @@ export interface Converter {
 
 	asTextDocumentPositionParams(textDocument: code.TextDocument, position: code.Position): proto.TextDocumentPositionParams;
 
-	asCompletionParams(textDocument: code.TextDocument, position: code.Position, context: code.CompletionContext): proto.CompletionParams
+	asCompletionParams(textDocument: code.TextDocument, position: code.Position, context: code.CompletionContext): proto.CompletionParams;
 
 	asSignatureHelpParams(textDocument: code.TextDocument, position: code.Position, context: code.SignatureHelpContext): proto.SignatureHelpParams;
 
@@ -103,7 +103,7 @@ export interface Converter {
 
 	asTextEdit(edit: code.TextEdit): proto.TextEdit;
 
-	asReferenceParams(textDocument: code.TextDocument, position: code.Position, options: { includeDeclaration: boolean; }): proto.ReferenceParams;
+	asReferenceParams(textDocument: code.TextDocument, position: code.Position, options: { includeDeclaration: boolean }): proto.ReferenceParams;
 
 	asCodeAction(item: code.CodeAction): proto.CodeAction;
 
@@ -487,7 +487,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return items.map(asRelatedInformation);
 	}
 
-	function asDiagnosticCode(value: number | string | { value: string | number; target: code.Uri; } | undefined | null): number | string | DiagnosticCode | undefined {
+	function asDiagnosticCode(value: number | string | { value: string | number; target: code.Uri } | undefined | null): number | string | DiagnosticCode | undefined {
 		if (value === undefined || value === null) {
 			return undefined;
 		}
@@ -693,7 +693,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return items.map(asSymbolTag);
 	}
 
-	function asReferenceParams(textDocument: code.TextDocument, position: code.Position, options: { includeDeclaration: boolean; }): proto.ReferenceParams {
+	function asReferenceParams(textDocument: code.TextDocument, position: code.Position, options: { includeDeclaration: boolean }): proto.ReferenceParams {
 		return {
 			textDocument: asTextDocumentIdentifier(textDocument),
 			position: asWorkerPosition(position),

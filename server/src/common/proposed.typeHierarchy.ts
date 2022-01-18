@@ -18,7 +18,7 @@ export interface TypeHierarchyFeatureShape {
 		onPrepare(handler: ServerRequestHandler<Proposed.TypeHierarchyPrepareParams, TypeHierarchyItem[] | null, never, void>): void;
 		onSupertypes(handler: ServerRequestHandler<Proposed.TypeHierarchySupertypesParams, TypeHierarchyItem[] | null, TypeHierarchyItem[], void>): void;
 		onSubtypes(handler: ServerRequestHandler<Proposed.TypeHierarchySubtypesParams, TypeHierarchyItem[] | null, TypeHierarchyItem[], void>): void;
-	}
+	};
 }
 
 export const TypeHierarchyFeature: Feature<_Languages, TypeHierarchyFeatureShape> = (Base) => {

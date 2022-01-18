@@ -306,15 +306,15 @@ class FullTextDocument implements TextDocument {
 		return this.getLineOffsets().length;
 	}
 
-	private static isIncremental(event: TextDocumentContentChangeEvent): event is { range: Range; rangeLength?: number; text: string; } {
-		let candidate: { range: Range; rangeLength?: number; text: string; } = event as any;
+	private static isIncremental(event: TextDocumentContentChangeEvent): event is { range: Range; rangeLength?: number; text: string } {
+		let candidate: { range: Range; rangeLength?: number; text: string } = event as any;
 		return candidate !== undefined && candidate !== null &&
 			typeof candidate.text === 'string' && candidate.range !== undefined &&
 			(candidate.rangeLength === undefined || typeof candidate.rangeLength === 'number');
 	}
 
-	private static isFull(event: TextDocumentContentChangeEvent): event is { text: string; } {
-		let candidate: { range?: Range; rangeLength?: number; text: string; } = event as any;
+	private static isFull(event: TextDocumentContentChangeEvent): event is { text: string } {
+		let candidate: { range?: Range; rangeLength?: number; text: string } = event as any;
 		return candidate !== undefined && candidate !== null &&
 			typeof candidate.text === 'string' && candidate.range === undefined && candidate.rangeLength === undefined;
 	}

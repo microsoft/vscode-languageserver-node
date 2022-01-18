@@ -26,7 +26,7 @@ export function arrayDiff<T>(left: ReadonlyArray<T>, right: ReadonlyArray<T>): T
 
 export interface WorkspaceFolderWorkspaceMiddleware {
 	workspaceFolders?: WorkspaceFoldersRequest.MiddlewareSignature;
-	didChangeWorkspaceFolders?: NextSignature<VWorkspaceFoldersChangeEvent, Promise<void>>
+	didChangeWorkspaceFolders?: NextSignature<VWorkspaceFoldersChangeEvent, Promise<void>>;
 }
 
 export class WorkspaceFoldersFeature implements DynamicFeature<void> {

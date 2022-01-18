@@ -42,7 +42,7 @@ export namespace vsdiag {
 	export interface RelatedFullDocumentDiagnosticReport extends FullDocumentDiagnosticReport {
 		relatedDocuments?: {
 			[uri: string /** DocumentUri */]: FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport;
-		}
+		};
 	}
 
 	export interface UnchangedDocumentDiagnosticReport {
@@ -53,7 +53,7 @@ export namespace vsdiag {
 	export interface RelatedUnchangedDocumentDiagnosticReport extends UnchangedDocumentDiagnosticReport {
 		relatedDocuments?: {
 			[uri: string /** DocumentUri */]: FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport;
-		}
+		};
 	}
 	export type DocumentDiagnosticReport = RelatedFullDocumentDiagnosticReport | RelatedUnchangedDocumentDiagnosticReport;
 

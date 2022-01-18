@@ -22,7 +22,7 @@ export interface SemanticTokensFeatureShape {
 		on(handler: ServerRequestHandler<SemanticTokensParams, SemanticTokens, SemanticTokensPartialResult, void>): void;
 		onDelta(handler: ServerRequestHandler<SemanticTokensDeltaParams, SemanticTokensDelta | SemanticTokens, SemanticTokensDeltaPartialResult | SemanticTokensDeltaPartialResult, void>): void;
 		onRange(handler: ServerRequestHandler<SemanticTokensRangeParams, SemanticTokens, SemanticTokensPartialResult, void>): void;
-	}
+	};
 }
 
 export const SemanticTokensFeature: Feature<_Languages, SemanticTokensFeatureShape> = (Base) => {

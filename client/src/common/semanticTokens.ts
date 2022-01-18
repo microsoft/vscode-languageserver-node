@@ -21,11 +21,11 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 }
 
 export interface DocumentSemanticsTokensSignature {
-	(this: void, document: vscode.TextDocument, token: vscode.CancellationToken): vscode.ProviderResult<vscode.SemanticTokens>
+	(this: void, document: vscode.TextDocument, token: vscode.CancellationToken): vscode.ProviderResult<vscode.SemanticTokens>;
 }
 
 export interface DocumentSemanticsTokensEditsSignature {
-	(this: void, document: vscode.TextDocument, previousResultId: string, token: vscode.CancellationToken): vscode.ProviderResult<vscode.SemanticTokensEdits | vscode.SemanticTokens>
+	(this: void, document: vscode.TextDocument, previousResultId: string, token: vscode.CancellationToken): vscode.ProviderResult<vscode.SemanticTokensEdits | vscode.SemanticTokens>;
 }
 
 export interface DocumentRangeSemanticTokensSignature {

@@ -16,7 +16,7 @@ import type { Feature, _Languages, ServerRequestHandler } from './server';
 export interface MonikerFeatureShape {
 	moniker: {
 		on(handler: ServerRequestHandler<MonikerParams, Moniker[] | null, Moniker[], void>): void;
-	}
+	};
 }
 
 export const MonikerFeature : Feature<_Languages, MonikerFeatureShape> = (Base) => {

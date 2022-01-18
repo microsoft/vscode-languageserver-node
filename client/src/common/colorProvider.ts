@@ -24,12 +24,12 @@ export interface ProvideDocumentColorsSignature {
 }
 
 export interface ProvideColorPresentationSignature {
-	(color: VColor, context: { document: TextDocument, range: VRange }, token: CancellationToken): ProviderResult<VColorPresentation[]>;
+	(color: VColor, context: { document: TextDocument; range: VRange }, token: CancellationToken): ProviderResult<VColorPresentation[]>;
 }
 
 export interface ColorProviderMiddleware {
 	provideDocumentColors?: (this: void, document: TextDocument, token: CancellationToken, next: ProvideDocumentColorsSignature) => ProviderResult<VColorInformation[]>;
-	provideColorPresentations?: (this: void, color: VColor, context: { document: TextDocument, range: VRange }, token: CancellationToken, next: ProvideColorPresentationSignature) => ProviderResult<VColorPresentation[]>;
+	provideColorPresentations?: (this: void, color: VColor, context: { document: TextDocument; range: VRange }, token: CancellationToken, next: ProvideColorPresentationSignature) => ProviderResult<VColorPresentation[]>;
 }
 
 export class ColorProviderFeature extends TextDocumentFeature<boolean | DocumentColorOptions, DocumentColorRegistrationOptions, DocumentColorProvider> {

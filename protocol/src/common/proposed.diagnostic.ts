@@ -33,7 +33,7 @@ export interface DiagnosticClientCapabilities {
 export interface $DiagnosticClientCapabilities {
 	textDocument?: TextDocumentClientCapabilities & {
 		diagnostic?: DiagnosticClientCapabilities;
-	}
+	};
 }
 
 /**
@@ -175,7 +175,7 @@ export interface RelatedFullDocumentDiagnosticReport extends FullDocumentDiagnos
 	 */
 	relatedDocuments?: {
 		[uri: string /** DocumentUri */]: FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport;
-	}
+	};
 }
 
 /**
@@ -217,7 +217,7 @@ export interface RelatedUnchangedDocumentDiagnosticReport extends UnchangedDocum
 	 */
 	relatedDocuments?: {
 		[uri: string /** DocumentUri */]: FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport;
-	}
+	};
 }
 
 /**
@@ -239,7 +239,7 @@ export type DocumentDiagnosticReport = RelatedFullDocumentDiagnosticReport | Rel
 export interface DocumentDiagnosticReportPartialResult {
 	relatedDocuments: {
 		[uri: string /** DocumentUri */]: FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport;
-	}
+	};
 }
 
 /**

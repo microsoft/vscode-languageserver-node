@@ -473,7 +473,7 @@ export interface WorkspaceClientCapabilities {
 	 *
 	 * Since 3.16.0
 	 */
-	fileOperations?: FileOperationClientCapabilities
+	fileOperations?: FileOperationClientCapabilities;
 
 	/**
 	 * Capabilities specific to the inline values requests scoped to the
@@ -745,7 +745,7 @@ export interface GeneralClientCapabilities {
 		 * response with error code `ContentModified`
 		 */
 		retryOnContentModified: string[];
-	}
+	};
 
 	/**
 	 * Client capabilities specific to regular expressions.
@@ -1027,7 +1027,7 @@ export interface _ServerCapabilities<T = any> {
 		* @since 3.16.0
 		*/
 		fileOperations?: FileOperationOptions;
-	}
+	};
 
 	/**
 	 * The server provides moniker support.
@@ -1255,7 +1255,7 @@ export namespace DidChangeConfigurationNotification {
 }
 
 export interface DidChangeConfigurationRegistrationOptions {
-	section?: string | string[]
+	section?: string | string[];
 }
 
 /**
@@ -1331,7 +1331,7 @@ export interface ShowMessageRequestClientCapabilities {
 		 * request's response.
 		 */
 		additionalPropertiesSupport?: boolean;
-	}
+	};
 }
 
 export interface MessageActionItem {
@@ -1544,8 +1544,8 @@ export namespace TextDocumentContentChangeEvent {
 	/**
 	 * Checks whether the information describes a delta event.
 	 */
-	export function isIncremental(event: TextDocumentContentChangeEvent): event is { range: Range; rangeLength?: uinteger; text: string; } {
-		let candidate: { range: Range; rangeLength?: uinteger; text: string; } = event as any;
+	export function isIncremental(event: TextDocumentContentChangeEvent): event is { range: Range; rangeLength?: uinteger; text: string } {
+		let candidate: { range: Range; rangeLength?: uinteger; text: string } = event as any;
 		return candidate !== undefined && candidate !== null &&
 			typeof candidate.text === 'string' && candidate.range !== undefined &&
 			(candidate.rangeLength === undefined || typeof candidate.rangeLength === 'number');
@@ -1554,8 +1554,8 @@ export namespace TextDocumentContentChangeEvent {
 	/**
 	 * Checks whether the information describes a full replacement event.
 	 */
-	export function isFull(event: TextDocumentContentChangeEvent): event is { text: string; } {
-		let candidate: { range?: Range; rangeLength?: uinteger; text: string; } = event as any;
+	export function isFull(event: TextDocumentContentChangeEvent): event is { text: string } {
+		let candidate: { range?: Range; rangeLength?: uinteger; text: string } = event as any;
 		return candidate !== undefined && candidate !== null &&
 			typeof candidate.text === 'string' && candidate.range === undefined && candidate.rangeLength === undefined;
 	}
@@ -1941,7 +1941,7 @@ export interface CompletionClientCapabilities {
 		/**
 		 * Client supports commit characters on a completion item.
 		 */
-		commitCharactersSupport?: boolean
+		commitCharactersSupport?: boolean;
 
 		/**
 		 * Client supports the follow content formats for the documentation
@@ -1975,8 +1975,8 @@ export interface CompletionClientCapabilities {
 			/**
 			 * The tags supported by the client.
 			 */
-			valueSet: CompletionItemTag[]
-		}
+			valueSet: CompletionItemTag[];
+		};
 
 		/**
 		 * Client support insert replace edit to control different behavior if a
@@ -2009,7 +2009,7 @@ export interface CompletionClientCapabilities {
 		 */
 		insertTextModeSupport?: {
 			valueSet: InsertTextMode[];
-		}
+		};
 
 		/**
 		 * The client has support for completion item label
@@ -2067,7 +2067,7 @@ export interface CompletionClientCapabilities {
 		 * @since 3.17.0 - proposed state
 		 */
 		itemDefaults?: string[];
-	}
+	};
 }
 
 /**
@@ -2172,7 +2172,7 @@ export interface CompletionOptions extends WorkDoneProgressOptions {
 		 * @since 3.17.0 - proposed state
 		 */
 		labelDetailsSupport?: boolean;
-	}
+	};
 }
 
 /**
@@ -2470,7 +2470,7 @@ export interface ReferenceClientCapabilities {
  * Parameters for a [ReferencesRequest](#ReferencesRequest).
  */
 export interface ReferenceParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {
-	context: ReferenceContext
+	context: ReferenceContext;
 }
 
 /**
@@ -2581,8 +2581,8 @@ export interface DocumentSymbolClientCapabilities {
 		/**
 		 * The tags supported by the client.
 		 */
-		valueSet: SymbolTag[]
-	}
+		valueSet: SymbolTag[];
+	};
 
 	/**
 	 * The client supports an additional label presented in the UI when
@@ -2807,7 +2807,7 @@ export interface WorkspaceSymbolClientCapabilities {
 		 * the initial version of the protocol.
 		 */
 		valueSet?: SymbolKind[];
-	}
+	};
 
 	/**
 	 * The client supports tags on `SymbolInformation`.
@@ -2819,8 +2819,8 @@ export interface WorkspaceSymbolClientCapabilities {
 		/**
 		 * The tags supported by the client.
 		 */
-		valueSet: SymbolTag[]
-	}
+		valueSet: SymbolTag[];
+	};
 
 	/**
 	 * The client support partial workspace symbols. The client will send the
@@ -3305,7 +3305,7 @@ export interface PrepareRenameParams extends TextDocumentPositionParams, WorkDon
  */
 export namespace PrepareRenameRequest {
 	export const method: 'textDocument/prepareRename' = 'textDocument/prepareRename';
-	export const type = new ProtocolRequestType<PrepareRenameParams, Range | { range: Range, placeholder: string } | { defaultBehavior: boolean } | null, never, void, void>(method);
+	export const type = new ProtocolRequestType<PrepareRenameParams, Range | { range: Range; placeholder: string } | { defaultBehavior: boolean } | null, never, void, void>(method);
 }
 
 //---- Command Execution -------------------------------------------
@@ -3342,7 +3342,7 @@ export interface ExecuteCommandOptions extends WorkDoneProgressOptions {
 	/**
 	 * The commands to be executed on the server
 	 */
-	commands: string[]
+	commands: string[];
 }
 
 /**

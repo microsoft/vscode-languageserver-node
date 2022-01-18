@@ -21,7 +21,7 @@ export interface InlineValuesFeatureShape {
 		 * @param handler The corresponding handler.
 		 */
 		on(handler: ServerRequestHandler<Proposed.InlineValuesParams, InlineValue[] | undefined | null, InlineValue[], void>): void;
-	}
+	};
 }
 
 export const InlineValuesFeature: Feature<_Languages, InlineValuesFeatureShape> = (Base) => {

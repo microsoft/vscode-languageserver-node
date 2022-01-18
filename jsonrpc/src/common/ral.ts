@@ -63,20 +63,20 @@ interface RAL {
 
 	readonly messageBuffer: {
 		create(encoding: RAL.MessageBufferEncoding): RAL.MessageBuffer;
-	}
+	};
 
 	readonly console: {
 	    info(message?: any, ...optionalParams: any[]): void;
 	    log(message?: any, ...optionalParams: any[]): void;
 	    warn(message?: any, ...optionalParams: any[]): void;
 	    error(message?: any, ...optionalParams: any[]): void;
-	}
+	};
 
 	readonly timer: {
 		setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): Disposable;
 		setImmediate(callback: (...args: any[]) => void, ...args: any[]): Disposable;
 		setInterval(callback: (...args: any[]) => void, ms: number, ...args: any[]): Disposable;
-	}
+	};
 }
 
 let _ral: RAL | undefined;

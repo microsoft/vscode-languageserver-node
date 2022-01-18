@@ -1494,7 +1494,7 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onPrepareRename(handler: RequestHandler<PrepareRenameParams, Range | { range: Range, placeholder: string } | undefined | null, void>): void;
+	onPrepareRename(handler: RequestHandler<PrepareRenameParams, Range | { range: Range; placeholder: string } | undefined | null, void>): void;
 
 	/**
 	 * Installs a handler for the document links request.

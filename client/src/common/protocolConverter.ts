@@ -41,7 +41,7 @@ export interface Converter {
 	asRanges(values: ls.Range[]): code.Range[];
 
 	asDiagnosticSeverity(value: number | undefined | null): code.DiagnosticSeverity;
-	asDiagnosticTag(tag: ls.DiagnosticTag): code.DiagnosticTag | undefined
+	asDiagnosticTag(tag: ls.DiagnosticTag): code.DiagnosticTag | undefined;
 
 	asHover(hover: ls.Hover): code.Hover;
 	asHover(hover: undefined | null): undefined;
@@ -122,7 +122,7 @@ export interface Converter {
 	asCommand(item: ls.Command): code.Command;
 
 	asCommands(items: ls.Command[]): code.Command[];
-	asCommands(items: undefined | null): undefined
+	asCommands(items: undefined | null): undefined;
 	asCommands(items: ls.Command[] | undefined | null): code.Command[] | undefined;
 
 	asCodeAction(item: ls.CodeAction): code.CodeAction;
@@ -567,7 +567,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		}
 	}
 
-	function asCompletionInsertText(item: ls.CompletionItem, defaultInsertTextFormat?: ls.InsertTextFormat): { text: string | code.SnippetString, range?: code.Range | InsertReplaceRange, fromEdit: boolean } | undefined {
+	function asCompletionInsertText(item: ls.CompletionItem, defaultInsertTextFormat?: ls.InsertTextFormat): { text: string | code.SnippetString; range?: code.Range | InsertReplaceRange; fromEdit: boolean } | undefined {
 		const insertTextFormat = item.insertTextFormat ?? defaultInsertTextFormat;
 		if (item.textEdit) {
 			if (insertTextFormat === ls.InsertTextFormat.Snippet) {
@@ -853,7 +853,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return result;
 	}
 
-	function fillTags(result: { tags?: ReadonlyArray<code.SymbolTag>; }, value: { tags?: ls.SymbolTag[]; deprecated?: boolean; }): void {
+	function fillTags(result: { tags?: ReadonlyArray<code.SymbolTag> }, value: { tags?: ls.SymbolTag[]; deprecated?: boolean }): void {
 		result.tags = asSymbolTags(value.tags);
 		if (value.deprecated) {
 			if (!result.tags) {

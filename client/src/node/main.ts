@@ -122,7 +122,7 @@ namespace ChildProcessInfo {
 	}
 }
 
-export type ServerOptions = Executable | { run: Executable; debug: Executable; } | { run: NodeModule; debug: NodeModule } | NodeModule | (() => Promise<ChildProcess | StreamInfo | MessageTransports | ChildProcessInfo>);
+export type ServerOptions = Executable | { run: Executable; debug: Executable } | { run: NodeModule; debug: NodeModule } | NodeModule | (() => Promise<ChildProcess | StreamInfo | MessageTransports | ChildProcessInfo>);
 
 export class LanguageClient extends CommonLanguageClient {
 
@@ -302,7 +302,7 @@ export class LanguageClient extends CommonLanguageClient {
 			});
 		}
 		let json: NodeModule | Executable;
-		let runDebug = <{ run: any; debug: any; }>server;
+		let runDebug = <{ run: any; debug: any }>server;
 		if (runDebug.run || runDebug.debug) {
 			if (this._forceDebug || startedInDebugMode()) {
 				json = runDebug.debug;

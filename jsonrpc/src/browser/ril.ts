@@ -129,7 +129,7 @@ interface RIL extends RAL {
 	readonly stream: {
 		readonly asReadableStream: (stream: WebSocket) => RAL.ReadableStream;
 		readonly asWritableStream: (stream: WebSocket) => RAL.WritableStream;
-	}
+	};
 }
 
 const _textEncoder = new TextEncoder();

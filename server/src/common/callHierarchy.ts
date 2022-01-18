@@ -21,7 +21,7 @@ export interface CallHierarchy {
 		onPrepare(handler: ServerRequestHandler<CallHierarchyPrepareParams, CallHierarchyItem[] | null, never, void>): void;
 		onIncomingCalls(handler: ServerRequestHandler<CallHierarchyIncomingCallsParams, CallHierarchyIncomingCall[] | null, CallHierarchyIncomingCall[], void>): void;
 		onOutgoingCalls(handler: ServerRequestHandler<CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCall[] | null, CallHierarchyOutgoingCall[], void>): void;
-	}
+	};
 }
 
 export const CallHierarchyFeature: Feature<_Languages, CallHierarchy> = (Base) => {

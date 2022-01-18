@@ -33,7 +33,7 @@ export interface DiagnosticsFeatureShape {
 		 * @param handler The corresponding handler.
 		 */
 		 onWorkspace(handler: ServerRequestHandler<Proposed.WorkspaceDiagnosticParams, Proposed.WorkspaceDiagnosticReport, Proposed.WorkspaceDiagnosticReportPartialResult, Proposed.DiagnosticServerCancellationData>): void;
-	}
+	};
 }
 
 export const DiagnosticFeature: Feature<_Languages, DiagnosticsFeatureShape> = (Base) => {

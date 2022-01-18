@@ -25,7 +25,7 @@ export interface WorkspaceFoldersClientCapabilities {
 		 * @since 3.6.0
 		 */
 		workspaceFolders?: boolean;
-	}
+	};
 }
 
 export interface WorkspaceFoldersServerCapabilities {
@@ -51,8 +51,8 @@ export interface WorkspaceFoldersServerCapabilities {
 			 * using the `client/unregisterCapability` request.
 			 */
 			changeNotifications?: string | boolean;
-		}
-	}
+		};
+	};
 }
 
 export interface WorkspaceFolder {

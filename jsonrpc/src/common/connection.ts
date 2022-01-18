@@ -372,8 +372,8 @@ export namespace CancellationStrategy {
 }
 
 export interface ConnectionOptions {
-	cancellationStrategy?: CancellationStrategy
-	connectionStrategy?: ConnectionStrategy
+	cancellationStrategy?: CancellationStrategy;
+	connectionStrategy?: ConnectionStrategy;
 }
 export namespace ConnectionOptions {
 	export function is(value: any): value is ConnectionOptions {
@@ -463,7 +463,7 @@ interface ResponsePromise {
 	method: string;
 	timerStart: number;
 	resolve: (response: any) => void;
-	reject: (error: any) => void
+	reject: (error: any) => void;
 }
 
 enum ConnectionState {

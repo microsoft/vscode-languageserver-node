@@ -62,7 +62,7 @@ export interface ColorPresentationParams extends WorkDoneProgressParams, Partial
 	/**
 	 * The color to request presentations for.
 	 */
-	color: Color
+	color: Color;
 
 	/**
 	 * The range where the color would be inserted. Serves as a context.

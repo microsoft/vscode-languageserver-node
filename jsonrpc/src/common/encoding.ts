@@ -53,7 +53,7 @@ export interface ContentTypeDecoderOptions {
 
 export interface FunctionContentTypeDecoder {
 	name: string;
-	decode(buffer: Uint8Array, options: ContentTypeDecoderOptions): Promise<Message>
+	decode(buffer: Uint8Array, options: ContentTypeDecoderOptions): Promise<Message>;
 }
 
 export interface StreamContentTypeDecoder {

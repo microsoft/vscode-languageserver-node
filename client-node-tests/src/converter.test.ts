@@ -36,7 +36,7 @@ function assertDefined<T>(value: T | undefined | null): asserts value is T {
 
 interface ComplexCode {
 	value: string | number;
-	target: vscode.Uri
+	target: vscode.Uri;
 }
 
 function assertComplexCode(value: undefined | number | string | ComplexCode ): asserts value is ComplexCode {

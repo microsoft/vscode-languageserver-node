@@ -27,7 +27,7 @@ export class ProgressPart {
 	private _lspProgressDisposable: Disposable | undefined;
 
 	// VS Code progress state. Set in Window.withProgress callback.
-	private _progress: Progress<{ message?: string, increment?: number}> | undefined;
+	private _progress: Progress<{ message?: string; increment?: number}> | undefined;
 	private _cancellationToken: CancellationToken | undefined;
 	private _tokenDisposable: Disposable | undefined;
 	private _resolve: (() => void) | undefined;

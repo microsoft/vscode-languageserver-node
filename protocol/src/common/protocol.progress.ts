@@ -20,7 +20,7 @@ export interface WorkDoneProgressClientCapabilities {
 		 * Since 3.15.0
 		 */
 		workDoneProgress?: boolean;
-	}
+	};
 }
 
 export interface WorkDoneProgressBegin {
