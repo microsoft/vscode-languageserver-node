@@ -274,10 +274,20 @@ export namespace DidOpenNotebookDocumentNotification {
 	export const type = new ProtocolNotificationType<DidOpenNotebookDocumentParams, void>(method);
 }
 
+/**
+ * A change event for a notebook document.
+ *
+ * @since 3.17.0 - proposed state
+ */
 export interface NotebookDocumentChangeEvent {
 	cells: NotebookCellChange;
 }
 
+/**
+ * The params sent in a change notebook document notification.
+ *
+ * @since 3.17.0 - proposed state
+ */
 export interface DidChangeNotebookDocumentParams {
 
 	/**

@@ -231,7 +231,7 @@ The following server capabilities are defined for notebook documents:
 * property name (optional): `notebookDocumentSync`
 * property type: `NotebookDocumentOptions | NotebookDocumentRegistrationOptions` where `NotebookDocumentOptions` is defined as follows:
 
-<div class="anchorHolder"><a href="#notebookDocumentOptions" name="notebookDocumentOptions" class="linkableAnchor"></a></div>
+<div class="anchorHolder"><a href="#notebookDocumentSyncOptions" name="notebookDocumentSyncOptions" class="linkableAnchor"></a></div>
 
 ```typescript
 /**
@@ -249,7 +249,10 @@ The following server capabilities are defined for notebook documents:
  *
  * @since 3.17.0 - proposed state
  */
-export type NotebookDocumentOptions = {
+export type NotebookDocumentSyncOptions = {
+	/**
+	 * The notebook document to be synced
+	 */
 	notebookDocumentSelector?: ({
 		/** The notebook documents to be synced */
 		notebookDocumentFilter: NotebookDocumentFilter;
@@ -261,12 +264,18 @@ export type NotebookDocumentOptions = {
 		/** The cells of the matching notebook to be synced */
 		cellSelector: { language: string }[];
 	})[];
+
+	/**
+	 * Whether save notification should be forwarded to
+	 * the server.
+	 */
+	save?: boolean;
 };
 ```
 
 _Registration Options_: `NotebookDocumentRegistrationOptions` defined as follows:
 
-<div class="anchorHolder"><a href="#notebookDocumentRegistrationOptions" name="notebookDocumentRegistrationOptions" class="linkableAnchor"></a></div>
+<div class="anchorHolder"><a href="#notebookDocumentSyncRegistrationOptions" name="notebookDocumentSyncRegistrationOptions" class="linkableAnchor"></a></div>
 
 ```typescript
 /**
@@ -274,7 +283,7 @@ _Registration Options_: `NotebookDocumentRegistrationOptions` defined as follows
  *
  * @since 3.17.0 - proposed state
  */
-export type NotebookDocumentRegistrationOptions = NotebookDocumentOptions & StaticRegistrationOptions;
+export type NotebookDocumentSyncRegistrationOptions = NotebookDocumentSyncOptions & StaticRegistrationOptions;
 ```
 
 **Open notification for notebook documents**
@@ -315,6 +324,11 @@ _Notification_:
 <div class="anchorHolder"><a href="#didChangeNotebookDocumentParams" name="didChangeNotebookDocumentParams" class="linkableAnchor"></a></div>
 
 ```typescript
+/**
+ * The params sent in a change notebook document notification.
+ *
+ * @since 3.17.0 - proposed state
+ */
 export interface DidChangeNotebookDocumentParams {
 
 	/**
@@ -345,6 +359,11 @@ export interface DidChangeNotebookDocumentParams {
 <div class="anchorHolder"><a href="#notebookDocumentChangeEvent" name="notebookDocumentChangeEvent" class="linkableAnchor"></a></div>
 
 ```typescript
+/**
+ * A change event for a notebook document.
+ *
+ * @since 3.17.0 - proposed state
+ */
 export interface NotebookDocumentChangeEvent {
 	cells: NotebookCellChange;
 }
@@ -374,6 +393,31 @@ export interface NotebookCellChange {
 	 * The new cells, if any
 	 */
 	cells?: NotebookCell[];
+}
+```
+
+**Save notification for notebook documents**
+
+_Notification_:
+
+<div class="anchorHolder"><a href="#notebookDocument_didSave" name="notebookDocument_didSave" class="linkableAnchor"></a></div>
+
+* method: `notebookDocument/didSave`
+* params: `DidSaveNotebookDocumentParams` defined as follows:
+
+<div class="anchorHolder"><a href="#didSaveNotebookDocumentParams" name="didSaveNotebookDocumentParams" class="linkableAnchor"></a></div>
+
+```typescript
+/**
+ * The params sent in a save notebook document notification.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export interface DidSaveNotebookDocumentParams {
+	/**
+	 * The notebook document that got saved.
+	 */
+	notebookDocument: NotebookDocumentIdentifier;
 }
 ```
 
@@ -434,10 +478,10 @@ export interface NotebookDocumentIdentifier {
     link: '#notebookDocumentFilter'
   - type: 'NotebookDocumentSyncClientCapabilities'
     link: '#notebookDocumentSyncClientCapabilities'
-  - type: 'NotebookDocumentOptions'
-    link: '#notebookDocumentOptions'
-  - type: 'NotebookDocumentRegistrationOptions'
-    link: '#notebookDocumentRegistrationOptions'
+  - type: 'NotebookDocumentSyncOptions'
+    link: '#notebookDocumentSyncOptions'
+  - type: 'NotebookDocumentSyncRegistrationOptions'
+    link: '#notebookDocumentSyncRegistrationOptions'
   - type: 'notebookDocument/didOpen'
     link: '#notebookDocument_didOpen'
   - type: 'DidOpenNotebookDocumentParams'
@@ -450,6 +494,10 @@ export interface NotebookDocumentIdentifier {
     link: '#notebookDocumentChangeEvent'
   - type: 'NotebookCellChange'
     link: '#notebookCellChange'
+  - type: 'notebookDocument/didSave'
+    link: '#notebookDocument_didSave'
+  - type: 'DidSaveNotebookDocumentParams'
+    link: '#didSaveNotebookDocumentParams'
   - type: 'notebookDocument/didClose'
     link: '#notebookDocument_didClose'
   - type: 'DidCloseNotebookDocumentParams'
