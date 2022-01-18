@@ -127,7 +127,9 @@ class NotebookDocumentSyncFeatureProvider {
 		vscode.notebooks.onDidChangeNotebookCells(event => this.cellsChanged(event.document), undefined, this.disposables);
 
 		//save
-		vscode.notebooks.onDidSaveNotebookDocument(notebookDocument => this.didSave(notebookDocument), undefined, this.disposables);
+		if (this.options.save === true) {
+			vscode.notebooks.onDidSaveNotebookDocument(notebookDocument => this.didSave(notebookDocument), undefined, this.disposables);
+		}
 
 		// close
 		vscode.workspace.onDidCloseNotebookDocument((notebookDocument) => {
