@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { URI, integer, DocumentUri, uinteger } from 'vscode-languageserver-types';
+import { URI, integer, DocumentUri, uinteger, LSPAny, LSPObject } from 'vscode-languageserver-types';
 
 import * as Is from './utils/is';
 import { ProtocolNotificationType, RegistrationType } from './messages';
@@ -72,6 +72,11 @@ export interface NotebookCell {
 	 * existing text document sync notifications.
 	 */
 	document: DocumentUri;
+
+	/**
+	 * Additional metadata stored with the cell.
+	 */
+	metadata?: LSPObject;
 }
 
 export namespace NotebookCell {
@@ -81,11 +86,67 @@ export namespace NotebookCell {
 
 	export function is(value: any): value is NotebookCell {
 		const candidate: NotebookCell = value;
-		return Is.objectLiteral(candidate) && NotebookCellKind.is(candidate.kind) && DocumentUri.is(candidate.document);
+		return Is.objectLiteral(candidate) && NotebookCellKind.is(candidate.kind) && DocumentUri.is(candidate.document) &&
+			(candidate.metadata === undefined || Is.objectLiteral(candidate.metadata));
 	}
 
-	export function equal(one: NotebookCell, two: NotebookCell): boolean {
-		return one.kind === two.kind && one.document === two.document;
+	export function equals(one: NotebookCell, other: NotebookCell): boolean {
+		if (one.kind !== other.kind || one.document !== other.document) {
+			return false;
+		}
+		return equalsMetadata(one.metadata, other.metadata);
+	}
+
+	function equalsMetadata(one: LSPAny | undefined, other: LSPAny | undefined): boolean {
+		if (one === other) {
+			return true;
+		}
+		if (one === null || one === undefined || other === null || other === undefined) {
+			return false;
+		}
+		if (typeof one !== typeof other) {
+			return false;
+		}
+		if (typeof one !== 'object') {
+			return false;
+		}
+		const oneArray = Array.isArray(one);
+		const otherArray = Array.isArray(other);
+		if (oneArray !== otherArray) {
+			return false;
+		}
+
+		if (oneArray && otherArray) {
+			if (one.length !== other.length) {
+				return false;
+			}
+			for (let i = 0; i < one.length; i++) {
+				if (!equalsMetadata(one[i], other[i])) {
+					return false;
+				}
+			}
+		}
+		if (Is.objectLiteral(one) && Is.objectLiteral(other)) {
+			const oneKeys = Object.keys(one);
+			const otherKeys = Object.keys(other);
+
+			if (oneKeys.length !== otherKeys.length) {
+				return false;
+			}
+
+			oneKeys.sort();
+			otherKeys.sort();
+			if (!equalsMetadata(oneKeys, otherKeys)) {
+				return false;
+			}
+			for (let i = 0; i < oneKeys.length; i++) {
+				const prop = oneKeys[i];
+				if (!equalsMetadata((one as LSPObject)[prop], (other as LSPObject)[prop])) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 }
 
@@ -154,6 +215,12 @@ export interface NotebookDocument {
 	 * The cells of a notebook.
 	 */
 	cells: NotebookCell[];
+
+	/**
+	 * Additional metadata stored with the notebook
+	 * document.
+	 */
+	metadata?: LSPObject;
 }
 
 export namespace NotebookDocument {
@@ -280,7 +347,15 @@ export namespace DidOpenNotebookDocumentNotification {
  * @since 3.17.0 - proposed state
  */
 export interface NotebookDocumentChangeEvent {
-	cells: NotebookCellChange;
+	/**
+	 * The changed meta data if any.
+	 */
+	metadata?: LSPObject;
+
+	/**
+	 * The changed cells if any.
+	 */
+	cells?: NotebookCellChange;
 }
 
 /**
