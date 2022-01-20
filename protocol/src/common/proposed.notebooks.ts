@@ -90,11 +90,11 @@ export namespace NotebookCell {
 			(candidate.metadata === undefined || Is.objectLiteral(candidate.metadata));
 	}
 
-	export function equals(one: NotebookCell, other: NotebookCell): boolean {
+	export function equals(one: NotebookCell, other: NotebookCell, compareMetaData: boolean = false): boolean {
 		if (one.kind !== other.kind || one.document !== other.document) {
 			return false;
 		}
-		return equalsMetadata(one.metadata, other.metadata);
+		return !compareMetaData || (compareMetaData && equalsMetadata(one.metadata, other.metadata));
 	}
 
 	function equalsMetadata(one: LSPAny | undefined, other: LSPAny | undefined): boolean {
