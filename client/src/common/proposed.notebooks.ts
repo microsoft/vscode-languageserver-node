@@ -8,7 +8,7 @@ import * as vscode from 'vscode';
 import * as minimatch from 'minimatch';
 
 import * as proto from 'vscode-languageserver-protocol';
-import { StaticRegistrationOptions, NotebookDocumentFilter } from 'vscode-languageserver-protocol';
+import { StaticRegistrationOptions, NotebookDocumentFilter, LSPObject, LSPArray } from 'vscode-languageserver-protocol';
 
 import { DynamicFeature, BaseLanguageClient, RegistrationData,  } from './client';
 import * as UUID from './utils/uuid';
@@ -24,14 +24,32 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 
 namespace Converter {
 	export namespace c2p {
+		export function asVersionedNotebookDocumentIdentifier(notebookDocument: vscode.NotebookDocument, base: _c2p.Converter): proto.Proposed.VersionedNotebookDocumentIdentifier {
+			return {
+				version: notebookDocument.version,
+				uri: base.asUri(notebookDocument.uri)
+			};
+		}
 		export function asNotebookDocument(notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[], base: _c2p.Converter): proto.Proposed.NotebookDocument {
-			return proto.Proposed.NotebookDocument.create(base.asUri(notebookDocument.uri), notebookDocument.notebookType, notebookDocument.version, asNotebookCells(cells, base));
+			const result = proto.Proposed.NotebookDocument.create(base.asUri(notebookDocument.uri), notebookDocument.notebookType, notebookDocument.version, asNotebookCells(cells, base));
+			if (Object.keys(notebookDocument.metadata).length > 0) {
+				result.metadata = asMetadata(notebookDocument.metadata);
+			}
+			return result;
 		}
 		export function asNotebookCells(cells: vscode.NotebookCell[], base: _c2p.Converter): proto.Proposed.NotebookCell[] {
 			return cells.map(cell => asNotebookCell(cell, base));
 		}
-		function asNotebookCell(cell: vscode.NotebookCell, base: _c2p.Converter): proto.Proposed.NotebookCell {
-			return proto.Proposed.NotebookCell.create(asNotebookCellKind(cell.kind), base.asUri(cell.document.uri));
+		export function asMetadata(metadata: { [key: string]: any}): LSPObject {
+			const seen: Set<any> = new Set();
+			return deepCopy(seen, metadata);
+		}
+		export function asNotebookCell(cell: vscode.NotebookCell, base: _c2p.Converter): proto.Proposed.NotebookCell {
+			const result = proto.Proposed.NotebookCell.create(asNotebookCellKind(cell.kind), base.asUri(cell.document.uri));
+			if (Object.keys(cell.metadata).length > 0) {
+				result.metadata = asMetadata(cell.metadata);
+			}
+			return result;
 		}
 		function asNotebookCellKind(kind: vscode.NotebookCellKind): proto.Proposed.NotebookCellKind {
 			switch (kind) {
@@ -41,38 +59,64 @@ namespace Converter {
 					return proto.Proposed.NotebookCellKind.Code;
 			}
 		}
+		function deepCopy(seen: Set<any>, value: {[key: string]: any}): LSPObject;
+		function deepCopy(seen: Set<any>, value: any[]): LSPArray;
+		function deepCopy(seen: Set<any>, value: {[key: string]: any} | any[]): LSPArray | LSPObject {
+			if (seen.has(value)) {
+				throw new Error(`Can't deep copy cyclic structures.`);
+			}
+			if (Array.isArray(value)) {
+				const result: LSPArray = [];
+				for (const elem of value) {
+					if (elem !== null && typeof elem === 'object' || Array.isArray(elem)) {
+						result.push(deepCopy(seen, elem));
+					} else {
+						if (elem instanceof RegExp) {
+							throw new Error(`Can't transfer regular expressions to the server`);
+						}
+						result.push(elem);
+					}
+				}
+				return result;
+			} else {
+				const props = Object.keys(value);
+				const result: LSPObject = Object.create(null);
+				for (const prop of props) {
+					const elem = value[prop];
+					if (elem !== null && typeof elem === 'object' || Array.isArray(elem)) {
+						result[prop] = deepCopy(seen, elem);
+					} else {
+						if (elem instanceof RegExp) {
+							throw new Error(`Can't transfer regular expressions to the server`);
+						}
+						result[prop] = elem;
+					}
+				}
+				return result;
+			}
+		}
 	}
 }
 
 namespace NotebookCell {
-	export function computeDiff(originalCells: proto.Proposed.NotebookCell[], modifiedCells: proto.Proposed.NotebookCell[]): proto.Proposed.NotebookCellChange | undefined {
+	export function computeDiff(originalCells: proto.Proposed.NotebookCell[], modifiedCells: proto.Proposed.NotebookCell[], compareMetadata: boolean = false): proto.Proposed.NotebookCellChange | undefined {
 		const originalLength = originalCells.length;
 		const modifiedLength = modifiedCells.length;
 		let startIndex = 0;
-		while(startIndex < modifiedLength && startIndex < originalLength && proto.Proposed.NotebookCell.equal(originalCells[startIndex], modifiedCells[startIndex])) {
+		while(startIndex < modifiedLength && startIndex < originalLength && proto.Proposed.NotebookCell.equals(originalCells[startIndex], modifiedCells[startIndex], compareMetadata)) {
 			startIndex++;
 		}
 		if (startIndex < modifiedLength && startIndex < originalLength) {
 			let originalEndIndex = originalLength - 1;
 			let modifiedEndIndex = modifiedLength - 1;
-			while (originalEndIndex >= startIndex && modifiedEndIndex >= startIndex && proto.Proposed.NotebookCell.equal(originalCells[originalEndIndex], modifiedCells[modifiedEndIndex])) {
+			while (originalEndIndex >= 0 && modifiedEndIndex >= 0 && proto.Proposed.NotebookCell.equals(originalCells[originalEndIndex], modifiedCells[modifiedEndIndex], compareMetadata)) {
 				originalEndIndex--;
 				modifiedEndIndex--;
 			}
-			// if one moved behind the start index move them forward again
-			if (originalEndIndex < startIndex || modifiedEndIndex < startIndex) {
-				originalEndIndex++;
-				modifiedEndIndex++;
-			}
 
-			const deleteCount = originalEndIndex - startIndex + 1;
-			const newCells = modifiedCells.slice(startIndex, modifiedEndIndex + 1);
-			// If we moved behind the start index we could have missed a simple delete.
-			if (newCells.length === 1 && newCells[0] === originalCells[originalEndIndex]) {
-				return { start: startIndex, deleteCount: deleteCount - 1 };
-			} else {
-				return { start: startIndex, deleteCount, cells: newCells };
-			}
+			const deleteCount = (originalEndIndex + 1) - startIndex;
+			const newCells = startIndex === modifiedEndIndex + 1 ? undefined : modifiedCells.slice(startIndex, modifiedEndIndex + 1);
+			return newCells !== undefined ? { start: startIndex, deleteCount, cells: newCells } : { start: startIndex, deleteCount };
 		} else if (startIndex < modifiedLength) {
 			return { start: startIndex, deleteCount: 0, cells: modifiedCells.slice(startIndex) } ;
 		} else if (startIndex < originalLength) {
@@ -123,8 +167,14 @@ class NotebookDocumentSyncFeatureProvider {
 			this.didOpen(notebookDocument);
 		}
 
-		// change
-		vscode.notebooks.onDidChangeNotebookCells(event => this.cellsChanged(event.document), undefined, this.disposables);
+		// notebook document meta data changed
+		vscode.notebooks.onDidChangeNotebookDocumentMetadata(event => this.notebookDocumentMetadataChanged(event.document), undefined, this.disposables);
+
+		// cell add, remove, reorder
+		vscode.notebooks.onDidChangeNotebookCells(event => this.cellStructureChanged(event.document), undefined, this.disposables);
+
+		// The metadata of the cell has changed.
+		vscode.notebooks.onDidChangeCellMetadata(event => this.cellMetaDataChanged(event.cell.notebook, event.cell), undefined, this.disposables);
 
 		//save
 		if (this.options.save === true) {
@@ -157,14 +207,14 @@ class NotebookDocumentSyncFeatureProvider {
 				// Cell matches and is syned.
 				return;
 			}
-			this.cellsChanged(notebookDocument, syncInfo);
+			this.cellStructureChanged(notebookDocument, syncInfo);
 		} else {
 			// No sync info
 			if (!cellMatches) {
 				// Cell doesn't match. Everything OK
 				return;
 			}
-			this.cellsChanged(notebookDocument, syncInfo);
+			this.cellStructureChanged(notebookDocument, syncInfo);
 		}
 	}
 
@@ -177,7 +227,7 @@ class NotebookDocumentSyncFeatureProvider {
 	private didOpen(notebookDocument: vscode.NotebookDocument, optionalCells: vscode.NotebookCell[] | null = null, syncInfo: SyncInfo | undefined = this.notebookSyncInfo.get(notebookDocument.uri.toString())): void {
 		if (syncInfo !== undefined) {
 			// The notebook document got synced because a cell document got opened.
-			this.cellsChanged(notebookDocument, syncInfo);
+			this.cellStructureChanged(notebookDocument, syncInfo);
 		} else {
 			// Check if we need to sync the notebook document.
 			const cells = optionalCells ?? this.getMatchingCells(notebookDocument);
@@ -186,7 +236,7 @@ class NotebookDocumentSyncFeatureProvider {
 			}
 			const nb = Converter.c2p.asNotebookDocument(notebookDocument, cells, this.client.code2ProtocolConverter);
 			this.client.sendNotification(proto.Proposed.DidOpenNotebookDocumentNotification.type, {
-				notebookDocument:nb
+				notebookDocument: nb
 			}).catch((error) => {
 				this.client.error('Sending DidOpenNotebookDocumentNotification failed', error);
 			});
@@ -194,7 +244,22 @@ class NotebookDocumentSyncFeatureProvider {
 		}
 	}
 
-	private cellsChanged(notebookDocument: vscode.NotebookDocument, syncInfo: SyncInfo | undefined = this.notebookSyncInfo.get(notebookDocument.uri.toString())): void {
+	private notebookDocumentMetadataChanged(notebookDocument: vscode.NotebookDocument): void {
+		const syncInfo = this.notebookSyncInfo.get(notebookDocument.uri.toString());
+		if (syncInfo === undefined) {
+			return;
+		}
+		this.client.sendNotification(proto.Proposed.DidChangeNotebookDocumentNotification.type, {
+			notebookDocument: Converter.c2p.asVersionedNotebookDocumentIdentifier(notebookDocument, this.client.code2ProtocolConverter),
+			changes: [
+				{ metadata: Converter.c2p.asMetadata(notebookDocument.metadata) }
+			]
+		}).catch((error) => {
+			this.client.error('Sending DidChangeNotebookDocumentNotification failed', error);
+		});
+	}
+
+	private cellStructureChanged(notebookDocument: vscode.NotebookDocument, syncInfo: SyncInfo | undefined = this.notebookSyncInfo.get(notebookDocument.uri.toString())): void {
 		if (syncInfo === undefined) {
 			// The notebook has not been synced. Could be it never matched or some
 			// cells didn't match. So check if it would match now.
@@ -212,15 +277,14 @@ class NotebookDocumentSyncFeatureProvider {
 				return;
 			}
 			const modifiedCells = Converter.c2p.asNotebookCells(cells, this.client.code2ProtocolConverter);
-			const diff = NotebookCell.computeDiff(syncInfo.cells, modifiedCells);
+			// meta data changes are reported using a different event. So we can ignore coparing the meta data which
+			// has a positive impact on performance.
+			const diff = NotebookCell.computeDiff(syncInfo.cells, modifiedCells, false);
 			if (diff === undefined) {
 				return;
 			}
 			this.client.sendNotification(proto.Proposed.DidChangeNotebookDocumentNotification.type, {
-				notebookDocument: {
-					version: notebookDocument.version,
-					uri: this.client.code2ProtocolConverter.asUri(notebookDocument.uri)
-				},
+				notebookDocument: Converter.c2p.asVersionedNotebookDocumentIdentifier(notebookDocument, this.client.code2ProtocolConverter),
 				changes: [
 					{ cells: diff }
 				]
@@ -229,6 +293,38 @@ class NotebookDocumentSyncFeatureProvider {
 			});
 			this.notebookSyncInfo.set(notebookDocument.uri.toString(), SyncInfo.create(modifiedCells, cells));
 		}
+	}
+
+	private cellMetaDataChanged(notebookDocument: vscode.NotebookDocument, cell: vscode.NotebookCell): void {
+		const syncInfo = this.notebookSyncInfo.get(notebookDocument.uri.toString());
+		if (syncInfo === undefined) {
+			// No sync info. Since the cells meta data change it can have no impact on the
+			// sync in general (not filter on metadata). So nothing to do
+			return;
+		}
+		if (!syncInfo.uris.has(cell.document.uri.toString())) {
+			// The cell is not sync. So ignore as well.
+			return;
+		}
+		const pc = Converter.c2p.asNotebookCell(cell, this.client.code2ProtocolConverter);
+		let index = 0;
+		for (const item of syncInfo.cells) {
+			if (item.document === pc.document) {
+				break;
+			}
+			index++;
+		}
+		if (index >= syncInfo.cells.length) {
+			return;
+		}
+		this.client.sendNotification(proto.Proposed.DidChangeNotebookDocumentNotification.type, {
+			notebookDocument: Converter.c2p.asVersionedNotebookDocumentIdentifier(notebookDocument, this.client.code2ProtocolConverter),
+			changes: [
+				{ cells: { start: index, deleteCount: 1, cells: [pc] } }
+			]
+		}).catch((error) => {
+			this.client.error('Sending DidChangeNotebookDocumentNotification failed', error);
+		});
 	}
 
 	private didSave(notebookDocument: vscode.NotebookDocument): void {

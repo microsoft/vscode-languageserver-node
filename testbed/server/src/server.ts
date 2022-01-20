@@ -18,8 +18,7 @@ import {
 	TextEdit, VersionedTextDocumentIdentifier, ProposedFeatures, DiagnosticTag, Proposed, InsertTextFormat,
 	SelectionRangeRequest, SelectionRange, InsertReplaceEdit, SemanticTokensClientCapabilities, SemanticTokensLegend,
 	SemanticTokensBuilder, SemanticTokensRegistrationType, SemanticTokensRegistrationOptions, ProtocolNotificationType, ChangeAnnotation, AnnotatedTextEdit,
-	WorkspaceChange,
-	CompletionItemKind, DiagnosticSeverity
+	WorkspaceChange, CompletionItemKind, DiagnosticSeverity
 } from 'vscode-languageserver/node';
 
 import {
@@ -118,7 +117,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 
 	semanticTokensLegend = computeLegend(params.capabilities.textDocument!.semanticTokens!);
 	return new Promise((resolve, reject) => {
-		let result: InitializeResult & { capabilities : Proposed.$DiagnosticServerCapabilities & Proposed.$NotebookDocumentServerCapabilities }= {
+		let result: InitializeResult & { capabilities : Proposed.$DiagnosticServerCapabilities & Proposed.$NotebookDocumentSyncServerCapabilities } = {
 			capabilities: {
 				textDocumentSync: TextDocumentSyncKind.Full,
 				hoverProvider: true,
@@ -683,18 +682,16 @@ connection.languages.semanticTokens.onRange((params) => {
 	return { data: [] };
 });
 
-connection.notebooks.synchronization.onDidOpenNotebookDocument(params => {
-	connection.console.log(`Notebook document opened: ${params.notebookDocument.uri}`);
+const notebooks = new ProposedFeatures.Notebooks();
+notebooks.onDidOpen(() => {
+	connection.console.log(`Notebook opened`);
 });
-
-connection.notebooks.synchronization.onDidChangeNotebookDocument(params => {
-	connection.console.log(`Notebook document changed: ${params.notebookDocument.uri}`);
-
+notebooks.onDidChange(() => {
+	connection.console.log(`Notebook changed`);
 });
-
-connection.notebooks.synchronization.onDidCloseNotebookDocument(params => {
-	connection.console.log(`Notebook document closed: ${params.notebookDocument.uri}`);
+notebooks.onDidClose(() => {
+	connection.console.log(`Notebook closed`);
 });
-
+notebooks.listen(connection);
 
 connection.listen();
