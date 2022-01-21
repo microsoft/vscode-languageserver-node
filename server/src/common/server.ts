@@ -953,6 +953,9 @@ class TracerImpl implements RemoteTracer, Remote {
 		this.connection.sendNotification(LogTraceNotification.type, {
 			message: message,
 			verbose: this._trace === Trace.Verbose ? verbose : undefined
+		}).catch(() => {
+			// Very hard to decide what to do. We tried to send a log
+			// message which failed so we can't simply send another :-(.
 		});
 	}
 }
@@ -982,7 +985,9 @@ class TelemetryImpl implements Telemetry, Remote {
 	}
 
 	public logEvent(data: any): void {
-		this.connection.sendNotification(TelemetryEventNotification.type, data);
+		this.connection.sendNotification(TelemetryEventNotification.type, data).catch(() => {
+			this.connection.console.log(`Sending TelemetryEventNotification failed`);
+		});
 	}
 }
 
@@ -1168,10 +1173,10 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 * @param type The [NotificationType](#NotificationType) describing the notification.
 	 * @param params The notification's parameters.
 	 */
-	sendNotification<RO>(type: ProtocolNotificationType0<RO>): void;
-	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params: P): void;
-	sendNotification(type: NotificationType0): void;
-	sendNotification<P>(type: NotificationType<P>, params: P): void;
+	sendNotification<RO>(type: ProtocolNotificationType0<RO>): Promise<void>;
+	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params: P): Promise<void>;
+	sendNotification(type: NotificationType0): Promise<void>;
+	sendNotification<P>(type: NotificationType<P>, params: P): Promise<void>;
 
 	/**
 	 * Send a notification to the client.
@@ -1179,7 +1184,7 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 * @param method The method to invoke on the client.
 	 * @param params The notification's parameters.
 	 */
-	sendNotification(method: string, params?: any): void;
+	sendNotification(method: string, params?: any): Promise<void>;
 
 	/**
 	 * Installs a progress handler for a given token.
@@ -1195,7 +1200,7 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 * @param token the token to use
 	 * @param value the progress value
 	 */
-	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): void;
+	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): Promise<void>;
 
 	/**
 	 * Installs a handler for the initialize request.
@@ -1337,7 +1342,7 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 *
 	 * @param params The diagnostic parameters.
 	 */
-	sendDiagnostics(params: PublishDiagnosticsParams): void;
+	sendDiagnostics(params: PublishDiagnosticsParams): Promise<void>;
 
 	/**
 	 * Installs a handler for the `Hover` request.
