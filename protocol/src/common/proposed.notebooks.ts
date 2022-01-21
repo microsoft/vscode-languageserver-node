@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { URI, integer, DocumentUri, uinteger, LSPAny, LSPObject } from 'vscode-languageserver-types';
+import { URI, integer, DocumentUri, uinteger, LSPAny, LSPObject, TextDocumentItem, TextDocumentIdentifier } from 'vscode-languageserver-types';
 
 import * as Is from './utils/is';
 import { ProtocolNotificationType, RegistrationType } from './messages';
@@ -329,6 +329,12 @@ export interface DidOpenNotebookDocumentParams {
 	 * The notebook document that got opened.
 	 */
 	notebookDocument: NotebookDocument;
+
+	/**
+	 * The text documents that represent the content
+	 * of a notebook cell.
+	 */
+	notebookCellTextDocuments: TextDocumentItem[];
 }
 
 /**
@@ -427,6 +433,12 @@ export interface DidCloseNotebookDocumentParams {
 	 * The notebook document that got closed.
 	 */
 	notebookDocument: NotebookDocumentIdentifier;
+
+	/**
+	 * The text documents that represent the content
+	 * of a notebook cell that got closed.
+	 */
+	notebookCellTextDocuments: TextDocumentIdentifier[];
 }
 
 /**

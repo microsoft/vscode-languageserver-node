@@ -42,6 +42,8 @@ export interface Converter {
 
 	asUri(uri: code.Uri): string;
 
+	asTextDocumentItem(textDocument: code.TextDocument): proto.TextDocumentItem;
+
 	asTextDocumentIdentifier(textDocument: code.TextDocument): proto.TextDocumentIdentifier;
 
 	asVersionedTextDocumentIdentifier(textDocument: code.TextDocument): proto.VersionedTextDocumentIdentifier;
@@ -152,6 +154,15 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		};
 	}
 
+	function asTextDocumentItem(textDocument: code.TextDocument): proto.TextDocumentItem {
+		return {
+			uri: _uriConverter(textDocument.uri),
+			languageId: textDocument.languageId,
+			version: textDocument.version,
+			text: textDocument.getText()
+		};
+	}
+
 	function asVersionedTextDocumentIdentifier(textDocument: code.TextDocument): proto.VersionedTextDocumentIdentifier {
 		return {
 			uri: _uriConverter(textDocument.uri),
@@ -161,12 +172,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 
 	function asOpenTextDocumentParams(textDocument: code.TextDocument): proto.DidOpenTextDocumentParams {
 		return {
-			textDocument: {
-				uri: _uriConverter(textDocument.uri),
-				languageId: textDocument.languageId,
-				version: textDocument.version,
-				text: textDocument.getText()
-			}
+			textDocument: asTextDocumentItem(textDocument)
 		};
 	}
 
@@ -853,6 +859,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	return {
 		asUri,
 		asTextDocumentIdentifier,
+		asTextDocumentItem,
 		asVersionedTextDocumentIdentifier,
 		asOpenTextDocumentParams,
 		asChangeTextDocumentParams,

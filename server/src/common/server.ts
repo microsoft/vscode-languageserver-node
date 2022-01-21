@@ -24,7 +24,7 @@ import {
 	DocumentSymbolRequest, WorkspaceSymbolRequest, CodeActionRequest, CodeLensRequest, CodeLensResolveRequest, DocumentFormattingRequest, DocumentRangeFormattingRequest,
 	DocumentOnTypeFormattingRequest, RenameRequest, PrepareRenameRequest, DocumentLinkRequest, DocumentLinkResolveRequest, DocumentColorRequest, ColorPresentationRequest,
 	FoldingRangeRequest, SelectionRangeRequest, ExecuteCommandRequest, InitializeRequest, ResponseError, RegistrationType, RequestType0, RequestType,
-	NotificationType0, NotificationType, CodeActionResolveRequest, RAL, WorkspaceSymbol, WorkspaceSymbolResolveRequest
+	NotificationType0, NotificationType, CodeActionResolveRequest, RAL, WorkspaceSymbol, WorkspaceSymbolResolveRequest, TextDocumentItem, DocumentUri
 } from 'vscode-languageserver-protocol';
 
 import * as Is from './utils/is';
@@ -50,8 +50,8 @@ interface ConnectionState {
 	__textDocumentSync: TextDocumentSyncKind | undefined;
 }
 
-export interface TextDocumentsConfiguration<T> {
-	create(uri: string, languageId: string, version: number, content: string): T;
+export interface TextDocumentsConfiguration<T extends { uri: DocumentUri }> {
+	create(uri: DocumentUri, languageId: string, version: number, content: string): T;
 	update(document: T, changes: TextDocumentContentChangeEvent[], version: number): T;
 }
 
@@ -89,39 +89,43 @@ export interface TextDocumentWillSaveEvent<T> {
  *
  * Registering for save and will save events is optional.
  */
-export class TextDocuments<T> {
+export class TextDocuments<T extends { uri: DocumentUri }> {
 
-	private _configuration: TextDocumentsConfiguration<T>;
+	private readonly _configuration: TextDocumentsConfiguration<T>;
 
-	private _documents: { [uri: string]: T };
+	private readonly _syncedDocuments: Map<string, T>;
+	private readonly _managedDocuments: Map<string, T>;
 
-	private _onDidChangeContent: Emitter<TextDocumentChangeEvent<T>>;
-	private _onDidOpen: Emitter<TextDocumentChangeEvent<T>>;
-	private _onDidClose: Emitter<TextDocumentChangeEvent<T>>;
-	private _onDidSave: Emitter<TextDocumentChangeEvent<T>>;
-	private _onWillSave: Emitter<TextDocumentWillSaveEvent<T>>;
+	private readonly _onDidChangeContent: Emitter<TextDocumentChangeEvent<T>>;
+	private readonly _onDidOpen: Emitter<TextDocumentChangeEvent<T>>;
+	private readonly _onDidClose: Emitter<TextDocumentChangeEvent<T>>;
+	private readonly _onDidSave: Emitter<TextDocumentChangeEvent<T>>;
+	private readonly _onWillSave: Emitter<TextDocumentWillSaveEvent<T>>;
 	private _willSaveWaitUntil: RequestHandler<TextDocumentWillSaveEvent<T>, TextEdit[], void> | undefined;
+
+	private readonly _managedEmitters: {
+		readonly onDidChangeContent: Emitter<TextDocumentChangeEvent<T>>
+	};
+
+	private readonly _managedEvents: {
+		readonly onDidChangeContent: Event<TextDocumentChangeEvent<T>>
+	};
 
 	/**
 	 * Create a new text document manager.
 	 */
 	public constructor(configuration: TextDocumentsConfiguration<T>) {
-		this._documents = Object.create(null);
 		this._configuration = configuration;
+		this._syncedDocuments = new Map();
+		this._managedDocuments = new Map();
 
 		this._onDidChangeContent = new Emitter<TextDocumentChangeEvent<T>>();
 		this._onDidOpen = new Emitter<TextDocumentChangeEvent<T>>();
 		this._onDidClose = new Emitter<TextDocumentChangeEvent<T>>();
 		this._onDidSave = new Emitter<TextDocumentChangeEvent<T>>();
 		this._onWillSave = new Emitter<TextDocumentWillSaveEvent<T>>();
-	}
-
-	/**
-	 * An event that fires when a text document managed by this manager
-	 * has been opened or the content changes.
-	 */
-	public get onDidChangeContent(): Event<TextDocumentChangeEvent<T>> {
-		return this._onDidChangeContent.event;
+		this._managedEmitters = { onDidChangeContent: new Emitter<TextDocumentChangeEvent<T>>() };
+		this._managedEvents = { onDidChangeContent: this._managedEmitters.onDidChangeContent.event };
 	}
 
 	/**
@@ -130,6 +134,14 @@ export class TextDocuments<T> {
 	 */
 	public get onDidOpen(): Event<TextDocumentChangeEvent<T>> {
 		return this._onDidOpen.event;
+	}
+
+	/**
+	 * An event that fires when a text document managed by this manager
+	 * has been opened or the content changes.
+	 */
+	public get onDidChangeContent(): Event<TextDocumentChangeEvent<T>> {
+		return this._onDidChangeContent.event;
 	}
 
 	/**
@@ -164,6 +176,10 @@ export class TextDocuments<T> {
 		return this._onDidClose.event;
 	}
 
+	public get managed(): { readonly onDidChangeContent: Event<TextDocumentChangeEvent<T>> } {
+		return this._managedEvents;
+	}
+
 	/**
 	 * Returns the document for the given URI. Returns undefined if
 	 * the document is not managed by this instance.
@@ -172,7 +188,7 @@ export class TextDocuments<T> {
 	 * @return the text document or `undefined`.
 	 */
 	public get(uri: string): T | undefined {
-		return this._documents[uri];
+		return this._syncedDocuments.get(uri);
 	}
 
 	/**
@@ -181,7 +197,7 @@ export class TextDocuments<T> {
 	 * @return all text documents.
 	 */
 	public all(): T[] {
-		return Object.keys(this._documents).map(key => this._documents[key]);
+		return Array.from(this._syncedDocuments.values());
 	}
 
 	/**
@@ -190,7 +206,27 @@ export class TextDocuments<T> {
 	 * @return the URI's of all text documents.
 	 */
 	public keys(): string[] {
-		return Object.keys(this._documents);
+		return Array.from(this._syncedDocuments.keys());
+	}
+
+	/**
+	 * Opens a document and manages it. Only change events will
+	 * fire for managed documents.
+	 */
+	public openDocument(textDocument: TextDocumentItem): T {
+		const document = this._configuration.create(textDocument.uri, textDocument.languageId, textDocument.version, textDocument.text);
+		this._managedDocuments.set(textDocument.uri, document);
+		return document;
+	}
+
+	/**
+	 *  Closes a document that got added using
+	 * openDocument.
+	 *
+	 * @param textDocument the text document to close.
+	 */
+	public closeDocument(textDocument: T): void {
+		this._managedDocuments.delete(textDocument.uri);
 	}
 
 	/**
@@ -210,59 +246,67 @@ export class TextDocuments<T> {
 
 		(<ConnectionState><any>connection).__textDocumentSync = TextDocumentSyncKind.Full;
 		connection.onDidOpenTextDocument((event: DidOpenTextDocumentParams) => {
-			let td = event.textDocument;
+			const td = event.textDocument;
 
-			let document = this._configuration.create(td.uri, td.languageId, td.version, td.text);
+			const document = this._configuration.create(td.uri, td.languageId, td.version, td.text);
 
-			this._documents[td.uri] = document;
-			let toFire = Object.freeze({ document });
+			this._syncedDocuments.set(td.uri, document);
+			const toFire = Object.freeze({ document });
 			this._onDidOpen.fire(toFire);
 			this._onDidChangeContent.fire(toFire);
 		});
 		connection.onDidChangeTextDocument((event: DidChangeTextDocumentParams) => {
-			let td = event.textDocument;
-			let changes = event.contentChanges;
+			const td = event.textDocument;
+			const changes = event.contentChanges;
 			if (changes.length === 0) {
 				return;
 			}
-
-			let document = this._documents[td.uri];
 
 			const { version } = td;
 			if (version === null || version === undefined) {
 				throw new Error(`Received document change event for ${td.uri} without valid version identifier`);
 			}
 
-			document = this._configuration.update(document, changes, version);
+			let syncedDocument = this._syncedDocuments.get(td.uri);
+			if (syncedDocument !== undefined) {
+				syncedDocument = this._configuration.update(syncedDocument, changes, version);
+				this._syncedDocuments.set(td.uri, syncedDocument);
+				this._onDidChangeContent.fire(Object.freeze({ document: syncedDocument }));
+			} else {
+				let managedDocument = this._managedDocuments.get(td.uri);
+				if (managedDocument !== undefined) {
+					managedDocument = this._configuration.update(managedDocument, changes, version);
+					this._managedDocuments.set(td.uri, managedDocument);
+					this.
+				}
+			}
 
-			this._documents[td.uri] = document;
-			this._onDidChangeContent.fire(Object.freeze({ document }));
 		});
 		connection.onDidCloseTextDocument((event: DidCloseTextDocumentParams) => {
-			let document = this._documents[event.textDocument.uri];
-			if (document) {
-				delete this._documents[event.textDocument.uri];
-				this._onDidClose.fire(Object.freeze({ document }));
+			let syncedDocument = this._syncedDocuments.get(event.textDocument.uri);
+			if (syncedDocument !== undefined) {
+				this._syncedDocuments.delete(event.textDocument.uri);
+				this._onDidClose.fire(Object.freeze({ document: syncedDocument }));
 			}
 		});
 		connection.onWillSaveTextDocument((event: WillSaveTextDocumentParams) => {
-			let document = this._documents[event.textDocument.uri];
-			if (document) {
-				this._onWillSave.fire(Object.freeze({ document, reason: event.reason }));
+			let syncedDocument = this._syncedDocuments.get(event.textDocument.uri);
+			if (syncedDocument !== undefined) {
+				this._onWillSave.fire(Object.freeze({ document: syncedDocument, reason: event.reason }));
 			}
 		});
 		connection.onWillSaveTextDocumentWaitUntil((event: WillSaveTextDocumentParams, token: CancellationToken) => {
-			let document = this._documents[event.textDocument.uri];
-			if (document && this._willSaveWaitUntil) {
-				return this._willSaveWaitUntil(Object.freeze({ document, reason: event.reason }), token);
+			let syncedDocument = this._syncedDocuments.get(event.textDocument.uri);
+			if (syncedDocument !== undefined && this._willSaveWaitUntil) {
+				return this._willSaveWaitUntil(Object.freeze({ document: syncedDocument, reason: event.reason }), token);
 			} else {
 				return [];
 			}
 		});
 		connection.onDidSaveTextDocument((event: DidSaveTextDocumentParams) => {
-			let document = this._documents[event.textDocument.uri];
-			if (document) {
-				this._onDidSave.fire(Object.freeze({ document }));
+			let syncedDocument = this._syncedDocuments.get(event.textDocument.uri);
+			if (syncedDocument !== undefined) {
+				this._onDidSave.fire(Object.freeze({ document: syncedDocument }));
 			}
 		});
 	}

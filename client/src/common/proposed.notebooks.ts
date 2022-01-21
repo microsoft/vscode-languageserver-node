@@ -8,7 +8,7 @@ import * as vscode from 'vscode';
 import * as minimatch from 'minimatch';
 
 import * as proto from 'vscode-languageserver-protocol';
-import { StaticRegistrationOptions, NotebookDocumentFilter, LSPObject, LSPArray } from 'vscode-languageserver-protocol';
+import { StaticRegistrationOptions, NotebookDocumentFilter, LSPObject, LSPArray, TextDocumentItem, TextDocumentIdentifier } from 'vscode-languageserver-protocol';
 
 import { DynamicFeature, BaseLanguageClient, RegistrationData,  } from './client';
 import * as UUID from './utils/uuid';
@@ -129,7 +129,15 @@ namespace NotebookCell {
 }
 
 type SyncInfo = {
+	/**
+	 * The synced LSP notebook cells.
+	 */
 	cells: proto.Proposed.NotebookCell[];
+
+	/**
+	 * A set of VS Code URI of the synced
+	 * VS Code notebook cells.
+	 */
 	uris: Set<string>;
 };
 
@@ -235,8 +243,12 @@ class NotebookDocumentSyncFeatureProvider {
 				return;
 			}
 			const nb = Converter.c2p.asNotebookDocument(notebookDocument, cells, this.client.code2ProtocolConverter);
+			const cellDocuments: TextDocumentItem[] = cells.map((cell) => {
+				return this.client.code2ProtocolConverter.asTextDocumentItem(cell.document);
+			});
 			this.client.sendNotification(proto.Proposed.DidOpenNotebookDocumentNotification.type, {
-				notebookDocument: nb
+				notebookDocument: nb,
+				notebookCellTextDocuments: cellDocuments
 			}).catch((error) => {
 				this.client.error('Sending DidOpenNotebookDocumentNotification failed', error);
 			});
@@ -343,8 +355,10 @@ class NotebookDocumentSyncFeatureProvider {
 		if (syncInfo === undefined) {
 			return;
 		}
+		const cellDocuments: TextDocumentIdentifier[] = syncInfo.cells.map((cell) => { return { uri: cell.document }; } );
 		this.client.sendNotification(proto.Proposed.DidCloseNotebookDocumentNotification.type,  {
-			notebookDocument: { uri: this.client.code2ProtocolConverter.asUri(notebookDocument.uri) }
+			notebookDocument: { uri: this.client.code2ProtocolConverter.asUri(notebookDocument.uri) },
+			notebookCellTextDocuments: cellDocuments
 		}).catch((error) => {
 			this.client.error('Sending DidCloseNotebookDocumentNotification failed', error);
 		});
