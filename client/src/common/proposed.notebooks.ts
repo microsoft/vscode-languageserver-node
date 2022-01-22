@@ -8,7 +8,10 @@ import * as vscode from 'vscode';
 import * as minimatch from 'minimatch';
 
 import * as proto from 'vscode-languageserver-protocol';
-import { StaticRegistrationOptions, NotebookDocumentFilter, LSPObject, LSPArray, TextDocumentItem, TextDocumentIdentifier, DidOpenTextDocumentNotification, DidChangeTextDocumentNotification, DidCloseTextDocumentNotification, DocumentSelector, NotebookCellTextDocumentFilter } from 'vscode-languageserver-protocol';
+import {
+	StaticRegistrationOptions, NotebookDocumentFilter, LSPObject, LSPArray, TextDocumentItem, TextDocumentIdentifier, DidOpenTextDocumentNotification,
+	DidChangeTextDocumentNotification, DidCloseTextDocumentNotification, NotebookCellTextDocumentFilter
+} from 'vscode-languageserver-protocol';
 
 import { DynamicFeature, BaseLanguageClient, RegistrationData,  } from './client';
 import * as UUID from './utils/uuid';
@@ -212,7 +215,7 @@ class NotebookDocumentSyncFeatureProvider {
 			const cellIsSynced = syncInfo.uris.has(cell.document.uri.toString());
 			// The notebook document is synced
 			if (cellMatches && cellIsSynced) {
-				// Cell matches and is syned.
+				// Cell matches and is synced.
 				return;
 			}
 			this.cellStructureChanged(notebookDocument, syncInfo);
@@ -289,7 +292,7 @@ class NotebookDocumentSyncFeatureProvider {
 				return;
 			}
 			const modifiedCells = Converter.c2p.asNotebookCells(cells, this.client.code2ProtocolConverter);
-			// meta data changes are reported using a different event. So we can ignore coparing the meta data which
+			// meta data changes are reported using a different event. So we can ignore comparing the meta data which
 			// has a positive impact on performance.
 			const diff = NotebookCell.computeDiff(syncInfo.cells, modifiedCells, false);
 			if (diff === undefined) {
@@ -411,6 +414,8 @@ class NotebookDocumentSyncFeatureProvider {
 	}
 }
 
+export type $NotebookCellTextDocumentFilter = NotebookCellTextDocumentFilter & { sync: true };
+
 class NotebookCellTextDocumentSyncFeatureProvider {
 
 	private readonly client: BaseLanguageClient;
@@ -421,16 +426,16 @@ class NotebookCellTextDocumentSyncFeatureProvider {
 		this.client = client;
 		this.options = options;
 
-		const documentSelector: DocumentSelector = [];
+		const documentSelector: $NotebookCellTextDocumentFilter[] = [];
 		for (const item of this.options.notebookDocumentSelector) {
-			let nf: NotebookCellTextDocumentFilter | undefined;
+			let nf: $NotebookCellTextDocumentFilter | undefined;
 			if (item.notebookDocumentFilter !== undefined) {
-				nf = { notebookDocument: Object.assign({}, item.notebookDocumentFilter)};
+				nf = { notebookDocument: Object.assign({}, item.notebookDocumentFilter), sync: true };
 			}
 			if (item.cellSelector !== undefined) {
 				for (const cell of item.cellSelector) {
 					if (nf === undefined) {
-						documentSelector.push({ cellLanguage: cell.language });
+						documentSelector.push({ cellLanguage: cell.language, sync: true });
 					} else {
 						documentSelector.push(Object.assign({}, nf, { cellLanguage: cell.language }));
 					}
