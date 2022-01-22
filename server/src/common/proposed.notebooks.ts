@@ -125,60 +125,37 @@ export class Notebooks {
 			notebookDocument.version = params.notebookDocument.version;
 			const oldMetadata = notebookDocument.metadata;
 			let metadataChanged: boolean = false;
-			const oldCells = new Map(notebookDocument.cells.map(cell => [cell.document, cell]));
-			const deletedCells: Map<string, Proposed.NotebookCell> = new Map();
 			let cellsChanged = false;
-			let allReplaced = true;
 			for (const change of params.changes) {
 				if (change.metadata !== undefined) {
 					metadataChanged = true;
 					notebookDocument.metadata = change.metadata;
 				}
-				if (change.cells !== undefined) {
+				if (change.cellStructure !== undefined) {
 					cellsChanged = true;
-					const deleted = notebookDocument.cells.splice(change.cells.start, change.cells.deleteCount, ...(change.cells.cells !== undefined ? change.cells.cells : []));
-					for (const cell of deleted) {
-						deletedCells.set(cell.document, cell);
-					}
-					if (allReplaced && change.cells.cells !== undefined) {
-						if (deleted.length === change.cells.cells.length) {
-							for (let i = 0; i < deleted.length; i++) {
-								allReplaced = allReplaced && deleted[i].document === change.cells.cells[i].document;
-								if (!allReplaced) {
-									break;
-								}
+					const array = change.cellStructure.array;
+					notebookDocument.cells.splice(array.start, array.deleteCount, ...(array.cells !== undefined ? array.cells : []));
+				}
+				if (change.cellData !== undefined) {
+					const changed: Map<string, Proposed.NotebookCell> = new Map(change.cellData.map(cell => [cell.document, cell]));
+					for (let i = 0; i <= notebookDocument.cells.length; i++) {
+						const change = changed.get(notebookDocument.cells[i].document);
+						if (change !== undefined) {
+							notebookDocument.cells.splice(i, 1, change);
+							changed.delete(change.document);
+							if (changed.size === 0) {
+								break;
 							}
 						}
 					}
 				}
+				
 			}
 			let change: NotebookDocumentChangeEvent = { notebookDocument };
 			if (metadataChanged) {
 				change.metadata = { old: oldMetadata, new: notebookDocument.metadata };
 			}
 			if (cellsChanged) {
-				const newCells: Map<string, Proposed.NotebookCell> = new Map(notebookDocument.cells.map(cell => [cell.document, cell]));
-				const changed: Required<NotebookDocumentChangeEvent>['cells']['changed'] = [];
-				for (const entry of deletedCells.entries()) {
-					const oldCell = oldCells.get(entry[0]);
-					const newCell = newCells.get(entry[0]);
-					if (oldCell !== undefined && newCell !== undefined && (allReplaced || !Proposed.NotebookCell.equals(oldCell, newCell, true))) {
-						changed.push({ old: oldCell, new: newCell });
-					}
-				}
-				const removed: Proposed.NotebookCell[] = [];
-				for (const key of oldCells.keys()) {
-					if (newCells.has(key)) {
-						newCells.delete(key);
-					} else {
-						removed.push(oldCells.get(key)!);
-					}
-				}
-				change.cells = {
-					added: Array.from(newCells.values()),
-					removed,
-					changed: changed
-				};
 			}
 			if (change.metadata !== undefined || change.cells !== undefined) {
 				this._onDidChange.fire(change);

@@ -151,44 +151,6 @@ export namespace NotebookCell {
 }
 
 /**
- * A change describing how to move a `NotebookCell`
- * array from state S' to S''.
- *
- * @since 3.17.0 - proposed state
- */
-export interface NotebookCellChange {
-	/**
-	 * The start oftest of the cell that changed.
-	 */
-	start: uinteger;
-
-	/**
-	 * The deleted cells
-	 */
-	deleteCount: uinteger;
-
-	/**
-	 * The new cells, if any
-	 */
-	cells?: NotebookCell[];
-}
-
-export namespace NotebookCellChange {
-	export function is(value: any): value is NotebookCellChange {
-		const candidate: NotebookCellChange = value;
-		return Is.objectLiteral(candidate) && uinteger.is(candidate.start) && uinteger.is(candidate.deleteCount) && (candidate.cells === undefined || Is.typedArray(candidate.cells, NotebookCell.is));
-	}
-
-	export function create(start: uinteger, deleteCount: uinteger, cells?: NotebookCell[]): NotebookCellChange {
-		const result: NotebookCellChange = { start, deleteCount };
-		if (cells !== undefined) {
-			result.cells = cells;
-		}
-		return result;
-	}
-}
-
-/**
  * A notebook document.
  *
  * @since 3.17.0 - proposed state
@@ -361,6 +323,44 @@ export namespace DidOpenNotebookDocumentNotification {
 }
 
 /**
+ * A change describing how to move a `NotebookCell`
+ * array from state S' to S''.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export interface NotebookCellArrayChange {
+	/**
+	 * The start oftest of the cell that changed.
+	 */
+	start: uinteger;
+
+	/**
+	 * The deleted cells
+	 */
+	deleteCount: uinteger;
+
+	/**
+	 * The new cells, if any
+	 */
+	cells?: NotebookCell[];
+}
+
+export namespace NotebookCellArrayChange {
+	export function is(value: any): value is NotebookCellArrayChange {
+		const candidate: NotebookCellArrayChange = value;
+		return Is.objectLiteral(candidate) && uinteger.is(candidate.start) && uinteger.is(candidate.deleteCount) && (candidate.cells === undefined || Is.typedArray(candidate.cells, NotebookCell.is));
+	}
+
+	export function create(start: uinteger, deleteCount: uinteger, cells?: NotebookCell[]): NotebookCellArrayChange {
+		const result: NotebookCellArrayChange = { start, deleteCount };
+		if (cells !== undefined) {
+			result.cells = cells;
+		}
+		return result;
+	}
+}
+
+/**
  * A change event for a notebook document.
  *
  * @since 3.17.0 - proposed state
@@ -372,9 +372,28 @@ export interface NotebookDocumentChangeEvent {
 	metadata?: LSPObject;
 
 	/**
-	 * The changed cells if any.
+	 * Cells got added, remove or reordered.
 	 */
-	cells?: NotebookCellChange;
+	cellStructure?: {
+		/**
+		 * The change to the cell array.
+		 */
+		array: NotebookCellArrayChange;
+		/**
+		 * Additional opened cell text documents.
+		 */
+		didOpen?: TextDocumentItem[];
+		/**
+		 * Additional closed cell text documents.
+		 */
+		didClose?: TextDocumentIdentifier[];
+	};
+
+	/**
+	 * Cell properties like meta data
+	 * or kind.
+	 */
+	cellData?: NotebookCell[];
 
 	/**
      * The changed cell text documents
@@ -384,7 +403,6 @@ export interface NotebookDocumentChangeEvent {
 		uri: VersionedTextDocumentIdentifier;
 		changes: TextDocumentContentChangeEvent[];
 	}[];
-
 }
 
 /**

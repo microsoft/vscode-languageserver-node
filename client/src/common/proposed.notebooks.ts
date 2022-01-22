@@ -102,7 +102,7 @@ namespace Converter {
 }
 
 namespace NotebookCell {
-	export function computeDiff(originalCells: proto.Proposed.NotebookCell[], modifiedCells: proto.Proposed.NotebookCell[], compareMetadata: boolean = false): proto.Proposed.NotebookCellChange | undefined {
+	export function computeDiff(originalCells: proto.Proposed.NotebookCell[], modifiedCells: proto.Proposed.NotebookCell[], compareMetadata: boolean = false): proto.Proposed.NotebookCellArrayChange | undefined {
 		const originalLength = originalCells.length;
 		const modifiedLength = modifiedCells.length;
 		let startIndex = 0;
@@ -291,22 +291,58 @@ class NotebookDocumentSyncFeatureProvider {
 				this.didClose(notebookDocument, syncInfo);
 				return;
 			}
-			const modifiedCells = Converter.c2p.asNotebookCells(cells, this.client.code2ProtocolConverter);
+			const oldCells = syncInfo.cells;
+			const newCells = Converter.c2p.asNotebookCells(cells, this.client.code2ProtocolConverter);
 			// meta data changes are reported using a different event. So we can ignore comparing the meta data which
 			// has a positive impact on performance.
-			const diff = NotebookCell.computeDiff(syncInfo.cells, modifiedCells, false);
+			const diff = NotebookCell.computeDiff(syncInfo.cells, newCells, false);
 			if (diff === undefined) {
 				return;
 			}
+
+			const deletedCells: Set<string> = diff.deleteCount === 0
+				? new Set()
+				: new Set(oldCells.slice(diff.start, diff.start + diff.deleteCount).map(cell => cell.document));
+			const insertedCells: Set<string> = diff.cells === undefined
+				? new Set()
+				: new Set(diff.cells.map(cell => cell.document));
+
+			// Remove the onces that got deleted and inserted again.
+			for (const key of Array.from(deletedCells.values())) {
+				if (insertedCells.has(key)) {
+					deletedCells.delete(key);
+					insertedCells.delete(key);
+				}
+			}
+
+			const didOpen: Required<proto.Proposed.NotebookDocumentChangeEvent>['cellStructure']['didOpen'] = [];
+			const didClose: Required<proto.Proposed.NotebookDocumentChangeEvent>['cellStructure']['didClose'] = [];
+			if (deletedCells.size > 0 || insertedCells.size > 0) {
+				const codeCells: Map<string, vscode.NotebookCell> = new Map(cells.map(cell => [this.client.code2ProtocolConverter.asUri(cell.document.uri), cell]));
+				for (const document of insertedCells.values()) {
+					const cell = codeCells.get(document);
+					if (cell !== undefined) {
+						didOpen.push(this.client.code2ProtocolConverter.asTextDocumentItem(cell.document));
+					}
+				}
+				for (const document of deletedCells.values()) {
+					didClose.push({ uri: document });
+				}
+			}
+
 			this.client.sendNotification(proto.Proposed.DidChangeNotebookDocumentNotification.type, {
 				notebookDocument: Converter.c2p.asVersionedNotebookDocumentIdentifier(notebookDocument, this.client.code2ProtocolConverter),
-				changes: [
-					{ cells: diff }
-				]
+				changes: [{
+					cellStructure: {
+						array: diff,
+						didClose: didClose.length > 0 ? didClose : undefined,
+						didOpen: didOpen.length > 0 ? didOpen : undefined
+					}
+				}]
 			}).catch((error) => {
 				this.client.error('Sending DidChangeNotebookDocumentNotification failed', error);
 			});
-			this.notebookSyncInfo.set(notebookDocument.uri.toString(), SyncInfo.create(modifiedCells, cells));
+			this.notebookSyncInfo.set(notebookDocument.uri.toString(), SyncInfo.create(newCells, cells));
 		}
 	}
 
@@ -322,20 +358,10 @@ class NotebookDocumentSyncFeatureProvider {
 			return;
 		}
 		const pc = Converter.c2p.asNotebookCell(cell, this.client.code2ProtocolConverter);
-		let index = 0;
-		for (const item of syncInfo.cells) {
-			if (item.document === pc.document) {
-				break;
-			}
-			index++;
-		}
-		if (index >= syncInfo.cells.length) {
-			return;
-		}
 		this.client.sendNotification(proto.Proposed.DidChangeNotebookDocumentNotification.type, {
 			notebookDocument: Converter.c2p.asVersionedNotebookDocumentIdentifier(notebookDocument, this.client.code2ProtocolConverter),
 			changes: [
-				{ cells: { start: index, deleteCount: 1, cells: [pc] } }
+				{ cellData: [pc] }
 			]
 		}).catch((error) => {
 			this.client.error('Sending DidChangeNotebookDocumentNotification failed', error);
