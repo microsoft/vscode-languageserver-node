@@ -3,11 +3,11 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { URI, integer, DocumentUri, uinteger, LSPAny, LSPObject, TextDocumentItem, TextDocumentIdentifier } from 'vscode-languageserver-types';
+import { URI, integer, DocumentUri, uinteger, LSPAny, LSPObject, TextDocumentItem, TextDocumentIdentifier, VersionedTextDocumentIdentifier } from 'vscode-languageserver-types';
 
 import * as Is from './utils/is';
 import { ProtocolNotificationType, RegistrationType } from './messages';
-import { StaticRegistrationOptions, NotebookDocumentFilter } from './protocol';
+import { StaticRegistrationOptions, NotebookDocumentFilter, TextDocumentContentChangeEvent } from './protocol';
 
 /**
  * Notebook specific client capabilities.
@@ -282,7 +282,7 @@ export type NotebookDocumentSyncOptions = {
 	/**
 	 * The notebook document to be synced
 	 */
-	notebookDocumentSelector?: ({
+	notebookDocumentSelector: ({
 		/** The notebook documents to be synced */
 		notebookDocumentFilter: NotebookDocumentFilter;
 		/** The cells of the matching notebook to be synced */
@@ -295,8 +295,21 @@ export type NotebookDocumentSyncOptions = {
 	})[];
 
 	/**
+	 * Determines how the notebook is synchronized.
+	 *
+	 * If set to 'notebook' the notebook document,
+	 * its meta data, cell structure and the cell's
+	 * text documents are synchronized.
+	 *
+	 * If set to 'cellContent' only the cell content
+	 * is synchronized using the available
+	 * `textDocument/did*` notifications.
+	 */
+	mode: 'notebook' | 'cellContent';
+
+	/**
 	 * Whether save notification should be forwarded to
-	 * the server.
+	 * the server. Will only be honored if mode === `notebook`.
 	 */
 	save?: boolean;
 };
@@ -334,7 +347,7 @@ export interface DidOpenNotebookDocumentParams {
 	 * The text documents that represent the content
 	 * of a notebook cell.
 	 */
-	notebookCellTextDocuments: TextDocumentItem[];
+	cellTextDocuments: TextDocumentItem[];
 }
 
 /**
@@ -362,6 +375,16 @@ export interface NotebookDocumentChangeEvent {
 	 * The changed cells if any.
 	 */
 	cells?: NotebookCellChange;
+
+	/**
+     * The changed cell text documents
+     * if any.
+     */
+	cellTextDocuments?: {
+		uri: VersionedTextDocumentIdentifier;
+		changes: TextDocumentContentChangeEvent[];
+	}[];
+
 }
 
 /**
@@ -438,7 +461,7 @@ export interface DidCloseNotebookDocumentParams {
 	 * The text documents that represent the content
 	 * of a notebook cell that got closed.
 	 */
-	notebookCellTextDocuments: TextDocumentIdentifier[];
+	cellTextDocuments: TextDocumentIdentifier[];
 }
 
 /**

@@ -97,10 +97,9 @@ export namespace $DocumentSelector {
 				if (notebookDocument === undefined) {
 					continue;
 				}
-				if (matchNotebookDocument(filter.notebookDocument, notebookDocument)) {
+				if (filter.notebookDocument === undefined || matchNotebookDocument(filter.notebookDocument, notebookDocument)) {
 					return true;
 				}
-
 			} else if (!isCellDocument && TextDocumentFilter.is(filter)) {
 				// We don't have a notebook cell document. So match against a regular
 				// document filter only

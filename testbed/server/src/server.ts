@@ -173,7 +173,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 						cellSelector: [{ language: 'bat'}]
 
 					}],
-					mode: 'full'
+					mode: 'notebook'
 				}
 			}
 		};

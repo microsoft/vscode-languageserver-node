@@ -104,11 +104,11 @@ export class TextDocuments<T extends { uri: DocumentUri }> {
 	private _willSaveWaitUntil: RequestHandler<TextDocumentWillSaveEvent<T>, TextEdit[], void> | undefined;
 
 	private readonly _managedEmitters: {
-		readonly onDidChangeContent: Emitter<TextDocumentChangeEvent<T>>
+		readonly onDidChangeContent: Emitter<TextDocumentChangeEvent<T>>;
 	};
 
 	private readonly _managedEvents: {
-		readonly onDidChangeContent: Event<TextDocumentChangeEvent<T>>
+		readonly onDidChangeContent: Event<TextDocumentChangeEvent<T>>;
 	};
 
 	/**
@@ -277,7 +277,6 @@ export class TextDocuments<T extends { uri: DocumentUri }> {
 				if (managedDocument !== undefined) {
 					managedDocument = this._configuration.update(managedDocument, changes, version);
 					this._managedDocuments.set(td.uri, managedDocument);
-					this.
 				}
 			}
 

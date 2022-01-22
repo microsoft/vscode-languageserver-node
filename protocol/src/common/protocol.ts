@@ -215,6 +215,20 @@ export type NotebookCellTextDocumentFilter = {
 	 * notebook cell document.
 	 */
 	cellLanguage?: string;
+} | {
+	/**
+	 * A filter that matches against the notebook
+	 * containing the notebook cell.
+	 */
+	notebookDocument?: NotebookDocumentFilter;
+
+	/**
+	 * A language id like `python`.
+	 *
+	 * Will be matched against the language id of the
+	 * notebook cell document.
+	 */
+	cellLanguage: string;
 };
 
 /**
@@ -226,7 +240,7 @@ export type NotebookCellTextDocumentFilter = {
 export namespace NotebookCellTextDocumentFilter {
 	export function is(value: any): value is NotebookCellTextDocumentFilter {
 		const candidate: NotebookCellTextDocumentFilter = value;
-		return Is.objectLiteral(candidate) && NotebookDocumentFilter.is(candidate.notebookDocument) && (candidate.cellLanguage === undefined || Is.string(candidate.cellLanguage));
+		return Is.objectLiteral(candidate) && (NotebookDocumentFilter.is(candidate.notebookDocument) || Is.string(candidate.cellLanguage));
 	}
 }
 
