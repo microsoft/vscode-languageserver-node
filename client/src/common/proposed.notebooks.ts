@@ -266,9 +266,7 @@ class NotebookDocumentSyncFeatureProvider {
 		}
 		this.client.sendNotification(proto.Proposed.DidChangeNotebookDocumentNotification.type, {
 			notebookDocument: Converter.c2p.asVersionedNotebookDocumentIdentifier(notebookDocument, this.client.code2ProtocolConverter),
-			changes: [
-				{ metadata: Converter.c2p.asMetadata(notebookDocument.metadata) }
-			]
+			change: { metadata: Converter.c2p.asMetadata(notebookDocument.metadata) }
 		}).catch((error) => {
 			this.client.error('Sending DidChangeNotebookDocumentNotification failed', error);
 		});
@@ -332,13 +330,13 @@ class NotebookDocumentSyncFeatureProvider {
 
 			this.client.sendNotification(proto.Proposed.DidChangeNotebookDocumentNotification.type, {
 				notebookDocument: Converter.c2p.asVersionedNotebookDocumentIdentifier(notebookDocument, this.client.code2ProtocolConverter),
-				changes: [{
+				change: {
 					cellStructure: {
 						array: diff,
 						didClose: didClose.length > 0 ? didClose : undefined,
 						didOpen: didOpen.length > 0 ? didOpen : undefined
 					}
-				}]
+				}
 			}).catch((error) => {
 				this.client.error('Sending DidChangeNotebookDocumentNotification failed', error);
 			});
@@ -360,9 +358,7 @@ class NotebookDocumentSyncFeatureProvider {
 		const pc = Converter.c2p.asNotebookCell(cell, this.client.code2ProtocolConverter);
 		this.client.sendNotification(proto.Proposed.DidChangeNotebookDocumentNotification.type, {
 			notebookDocument: Converter.c2p.asVersionedNotebookDocumentIdentifier(notebookDocument, this.client.code2ProtocolConverter),
-			changes: [
-				{ cellData: [pc] }
-			]
+			change: { cellData: [pc] }
 		}).catch((error) => {
 			this.client.error('Sending DidChangeNotebookDocumentNotification failed', error);
 		});

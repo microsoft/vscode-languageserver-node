@@ -400,8 +400,8 @@ export interface NotebookDocumentChangeEvent {
      * if any.
      */
 	cellTextDocuments?: {
-		uri: VersionedTextDocumentIdentifier;
-		changes: TextDocumentContentChangeEvent[];
+		textDocument: VersionedTextDocumentIdentifier;
+		contentChanges: TextDocumentContentChangeEvent[];
 	}[];
 }
 
@@ -414,7 +414,9 @@ export interface DidChangeNotebookDocumentParams {
 
 	/**
 	 * The notebook document that did change. The version number points
-	 * to the version after all provided changes have been applied.
+	 * to the version after all provided changes have been applied. If
+	 * only the text document content of a cell changes the notebook version
+	 * doesn't necessarily have to change.
 	 */
 	notebookDocument: VersionedNotebookDocumentIdentifier;
 
@@ -433,7 +435,7 @@ export interface DidChangeNotebookDocumentParams {
 	 * - apply the `NotebookChangeEvent`s in a single notification in the order
 	 *   you receive them.
 	 */
-	changes: NotebookDocumentChangeEvent[];
+	change: NotebookDocumentChangeEvent;
 }
 
 export namespace DidChangeNotebookDocumentNotification {

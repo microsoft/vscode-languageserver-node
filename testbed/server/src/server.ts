@@ -684,7 +684,7 @@ connection.languages.semanticTokens.onRange((params) => {
 	return { data: [] };
 });
 
-const notebooks = new ProposedFeatures.Notebooks();
+const notebooks = new ProposedFeatures.Notebooks(TextDocument);
 notebooks.onDidOpen(() => {
 	connection.console.log(`Notebook opened`);
 });
