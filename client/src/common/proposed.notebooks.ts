@@ -13,7 +13,7 @@ import {
 	DidChangeTextDocumentNotification, DidCloseTextDocumentNotification, NotebookCellTextDocumentFilter
 } from 'vscode-languageserver-protocol';
 
-import { DynamicFeature, BaseLanguageClient, RegistrationData,  } from './client';
+import { DynamicFeature, BaseLanguageClient, RegistrationData, $DocumentSelector,  } from './client';
 import * as UUID from './utils/uuid';
 import * as _c2p from './codeConverter';
 import * as _p2c from './protocolConverter';
@@ -156,12 +156,12 @@ namespace SyncInfo {
 class NotebookDocumentSyncFeatureProvider {
 
 	private readonly client: BaseLanguageClient;
-	private readonly options: proto.Proposed.NotebookDocumentSyncOptions;
+	private readonly options: proto.Proposed.NotebookDocumentSyncOptions & { cellDocumentSelector: NotebookCellTextDocumentFilter[] };
 	private readonly notebookSyncInfo: Map<string, SyncInfo>;
 	private readonly notebookDidOpen: Set<string>;
 	private readonly disposables: vscode.Disposable[];
 
-	constructor(client: BaseLanguageClient, options: proto.Proposed.NotebookDocumentSyncOptions) {
+	constructor(client: BaseLanguageClient, options: proto.Proposed.NotebookDocumentSyncOptions & { cellDocumentSelector: NotebookCellTextDocumentFilter[] }) {
 		this.client = client;
 		this.options = options;
 		this.notebookSyncInfo = new Map();
@@ -227,6 +227,19 @@ class NotebookDocumentSyncFeatureProvider {
 			}
 			this.cellStructureChanged(notebookDocument, syncInfo);
 		}
+	}
+
+	public didChangeCellTextDocument(notebookDocument: vscode.NotebookDocument, event: vscode.TextDocumentChangeEvent): void {
+		if (!$DocumentSelector.matchForProvider(this.options.cellDocumentSelector, event.document)) {
+			return;
+		}
+		this.client.sendNotification(proto.Proposed.DidChangeNotebookDocumentNotification.type, {
+			notebookDocument: Converter.c2p.asVersionedNotebookDocumentIdentifier(notebookDocument, this.client.code2ProtocolConverter),
+			change: { cellTextDocuments:[this.client.code2ProtocolConverter.asChangeTextDocumentParams(event)] }
+		}).catch((error) => {
+			this.client.error('Sending DidChangeNotebookDocumentNotification failed', error);
+		});
+
 	}
 
 	public dispose(): void {
@@ -441,39 +454,18 @@ export type $NotebookCellTextDocumentFilter = NotebookCellTextDocumentFilter & {
 class NotebookCellTextDocumentSyncFeatureProvider {
 
 	private readonly client: BaseLanguageClient;
-	private readonly options: proto.Proposed.NotebookDocumentSyncOptions;
 	private readonly registrations: { open: string; change: string; close: string } | undefined;
 
-	constructor(client: BaseLanguageClient, options: proto.Proposed.NotebookDocumentSyncOptions) {
+	constructor(client: BaseLanguageClient, options: proto.Proposed.NotebookDocumentSyncOptions & { cellDocumentSelector: $NotebookCellTextDocumentFilter[] }) {
 		this.client = client;
-		this.options = options;
 
-		const documentSelector: $NotebookCellTextDocumentFilter[] = [];
-		for (const item of this.options.notebookDocumentSelector) {
-			let nf: $NotebookCellTextDocumentFilter | undefined;
-			if (item.notebookDocumentFilter !== undefined) {
-				nf = { notebookDocument: Object.assign({}, item.notebookDocumentFilter), sync: true };
-			}
-			if (item.cellSelector !== undefined) {
-				for (const cell of item.cellSelector) {
-					if (nf === undefined) {
-						documentSelector.push({ cellLanguage: cell.language, sync: true });
-					} else {
-						documentSelector.push(Object.assign({}, nf, { cellLanguage: cell.language }));
-					}
-				}
-				nf = undefined;
-			} else if (nf !== undefined) {
-				documentSelector.push(nf);
-			}
-		}
-		if (documentSelector.length > 0) {
+		if (options.cellDocumentSelector.length > 0) {
 			const openId = UUID.generateUuid();
-			this.client.getFeature(DidOpenTextDocumentNotification.method).register({ id: openId, registerOptions: { documentSelector }});
+			this.client.getFeature(DidOpenTextDocumentNotification.method).register({ id: openId, registerOptions: { documentSelector: options.cellDocumentSelector }});
 			const changeId = UUID.generateUuid();
-			this.client.getFeature(DidChangeTextDocumentNotification.method).register({ id: changeId, registerOptions: { documentSelector }});
+			this.client.getFeature(DidChangeTextDocumentNotification.method).register({ id: changeId, registerOptions: { documentSelector: options.cellDocumentSelector }});
 			const closeId = UUID.generateUuid();
-			this.client.getFeature(DidCloseTextDocumentNotification.method).register({id: closeId, registerOptions: { documentSelector }});
+			this.client.getFeature(DidCloseTextDocumentNotification.method).register({id: closeId, registerOptions: { documentSelector: options.cellDocumentSelector }});
 			this.registrations = {open: openId, change: changeId, close: closeId};
 		}
 	}
@@ -514,6 +506,24 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 				}
 			}
 		});
+		vscode.workspace.onDidChangeTextDocument((event) => {
+			if (event.contentChanges.length === 0) {
+				return;
+			}
+			const textDocument = event.document;
+			if (textDocument.uri.scheme !== NotebookDocumentSyncFeature.CellScheme) {
+				return;
+			}
+			const [notebookDocument, ] = this.getNotebookDocument(textDocument);
+			if (notebookDocument === undefined) {
+				return;
+			}
+			for (const provider of this.registrations.values()) {
+				if (provider instanceof NotebookDocumentSyncFeatureProvider) {
+					provider.didChangeCellTextDocument(notebookDocument, event);
+				}
+			}
+		});
 	}
 
 	public readonly registrationType: proto.RegistrationType<proto.Proposed.NotebookDocumentSyncRegistrationOptions>;
@@ -534,10 +544,18 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 
 	public register(data: RegistrationData<proto.Proposed.NotebookDocumentSyncRegistrationOptions>): void {
 		if (data.registerOptions.mode === 'cellContent') {
-			const provider = new NotebookCellTextDocumentSyncFeatureProvider(this.client, data.registerOptions);
+			const options = Object.assign({},
+				data.registerOptions,
+				{ cellDocumentSelector: this.getNotebookCellTextDocumentFilter(data.registerOptions, true) }
+			);
+			const provider = new NotebookCellTextDocumentSyncFeatureProvider(this.client, options);
 			this.registrations.set(data.id, provider);
 		} else {
-			const provider = new NotebookDocumentSyncFeatureProvider(this.client, data.registerOptions);
+			const options = Object.assign({},
+				data.registerOptions,
+				{ cellDocumentSelector: this.getNotebookCellTextDocumentFilter(data.registerOptions) }
+			);
+			const provider = new NotebookDocumentSyncFeatureProvider(this.client, options);
 			this.registrations.set(data.id, provider);
 		}
 	}
@@ -564,5 +582,30 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 			}
 		}
 		return [undefined, undefined];
+	}
+
+	private getNotebookCellTextDocumentFilter(options: proto.Proposed.NotebookDocumentSyncRegistrationOptions): NotebookCellTextDocumentFilter[];
+	private getNotebookCellTextDocumentFilter(options: proto.Proposed.NotebookDocumentSyncRegistrationOptions, sync: true): $NotebookCellTextDocumentFilter[];
+	private getNotebookCellTextDocumentFilter(options: proto.Proposed.NotebookDocumentSyncRegistrationOptions, sync?: true ): NotebookCellTextDocumentFilter[] {
+		const documentSelector: NotebookCellTextDocumentFilter[] = [];
+		for (const item of options.notebookDocumentSelector) {
+			let nf: $NotebookCellTextDocumentFilter | NotebookCellTextDocumentFilter | undefined;
+			if (item.notebookDocumentFilter !== undefined) {
+				nf = sync === true ? { notebookDocument: Object.assign({}, item.notebookDocumentFilter, { sync: true }) } : { notebookDocument: Object.assign({}, item.notebookDocumentFilter) } ;
+			}
+			if (item.cellSelector !== undefined) {
+				for (const cell of item.cellSelector) {
+					if (nf === undefined) {
+						documentSelector.push((sync === true ? { cellLanguage: cell.language, sync: true } : { cellLanguage: cell.language }) as NotebookCellTextDocumentFilter);
+					} else {
+						documentSelector.push(Object.assign({}, nf, { cellLanguage: cell.language }));
+					}
+				}
+				nf = undefined;
+			} else if (nf !== undefined) {
+				documentSelector.push(nf);
+			}
+		}
+		return documentSelector;
 	}
 }
