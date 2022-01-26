@@ -132,7 +132,7 @@ export namespace Proposed {
 	export const NotebookCellKind = nb.NotebookCellKind;
 	export type NotebookCell = nb.NotebookCell;
 	export const NotebookCell = nb.NotebookCell;
-	export type NotebookCellChange = nb.NotebookCellChange;
+	export type NotebookCellArrayChange = nb.NotebookCellArrayChange;
 	export type NotebookDocument = nb.NotebookDocument;
 	export const NotebookDocument = nb.NotebookDocument;
 	export type NotebookDocumentChangeEvent = nb.NotebookDocumentChangeEvent;

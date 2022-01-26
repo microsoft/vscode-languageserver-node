@@ -639,7 +639,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 		const disposables: Disposable[] = [];
 
 		const matches = (textDocument: TextDocument): boolean => {
-			return $DocumentSelector.match(documentSelector, textDocument) && editorTracker.isVisible(textDocument);
+			return $DocumentSelector.matchForProvider(documentSelector, textDocument) && editorTracker.isVisible(textDocument);
 		};
 
 		this.diagnosticRequestor = new DiagnosticRequestor(client, editorTracker, options);

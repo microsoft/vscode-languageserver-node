@@ -73,6 +73,7 @@ import type { LinkedEditingRangeMiddleware } from './linkedEditingRange';
 import type { DiagnosticFeatureProvider } from './proposed.diagnostic';
 import type { InlineValuesProviderMiddleware, InlineValuesProviderData } from './proposed.inlineValues';
 import type { TypeHierarchyMiddleware } from './proposed.typeHierarchy';
+import type { $NotebookCellTextDocumentFilter } from './proposed.notebooks';
 
 import * as c2p from './codeConverter';
 import * as p2c from './protocolConverter';
@@ -86,10 +87,25 @@ export namespace $DocumentSelector {
 
 	const CellScheme: string = 'vscode-notebook-cell';
 
-	export function match(selector: DocumentSelector, textDocument: TextDocument): boolean {
+	namespace $NotebookCellTextDocumentFilter {
+		export function is(value: any): value is $NotebookCellTextDocumentFilter {
+			const candidate: $NotebookCellTextDocumentFilter = value;
+			return NotebookCellTextDocumentFilter.is(value) && candidate.sync === true;
+		}
+	}
+
+	export function matchForDocumentSync(selector: DocumentSelector, textDocument: TextDocument): boolean {
+		return match(selector, textDocument, $NotebookCellTextDocumentFilter.is);
+	}
+
+	export function matchForProvider(selector: DocumentSelector, textDocument: TextDocument): boolean {
+		return match(selector, textDocument, NotebookCellTextDocumentFilter.is);
+	}
+
+	function match(selector: DocumentSelector, textDocument: TextDocument, isNotebookCellTextDocumentFilter: (value: any) => value is NotebookCellTextDocumentFilter): boolean {
 		const isCellDocument = textDocument.uri.scheme === CellScheme;
 		for (const filter of selector) {
-			if (isCellDocument && NotebookCellTextDocumentFilter.is(filter)) {
+			if (isCellDocument && isNotebookCellTextDocumentFilter(filter)) {
 				if (filter.cellLanguage !== undefined && filter.cellLanguage !== textDocument.languageId) {
 					continue;
 				}
@@ -97,10 +113,9 @@ export namespace $DocumentSelector {
 				if (notebookDocument === undefined) {
 					continue;
 				}
-				if (matchNotebookDocument(filter.notebookDocument, notebookDocument)) {
+				if (filter.notebookDocument === undefined || matchNotebookDocument(filter.notebookDocument, notebookDocument)) {
 					return true;
 				}
-
 			} else if (!isCellDocument && TextDocumentFilter.is(filter)) {
 				// We don't have a notebook cell document. So match against a regular
 				// document filter only
@@ -116,7 +131,7 @@ export namespace $DocumentSelector {
 		if (textDocument.uri.scheme !== CellScheme) {
 			return false;
 		}
-		return !match(selector, textDocument);
+		return !matchForProvider(selector, textDocument);
 	}
 
 	export function asTextDocumentFilters(selector: DocumentSelector): (string | TextDocumentFilter)[] {
@@ -935,7 +950,7 @@ abstract class DocumentNotifications<P, E> implements DynamicFeature<TextDocumen
 
 	public static textDocumentFilter(selectors: IterableIterator<DocumentSelector>, textDocument: TextDocument): boolean {
 		for (const selector of selectors) {
-			if ($DocumentSelector.match(selector, textDocument)) {
+			if ($DocumentSelector.matchForDocumentSync(selector, textDocument)) {
 				return true;
 			}
 		}
@@ -1010,7 +1025,7 @@ abstract class DocumentNotifications<P, E> implements DynamicFeature<TextDocumen
 
 	public getProvider(document: TextDocument):  { send: (data: E) => Promise<void> } | undefined {
 		for (const selector of this._selectors.values()) {
-			if ($DocumentSelector.match(selector, document)) {
+			if ($DocumentSelector.matchForDocumentSync(selector, document)) {
 				return {
 					send: (data: E) => {
 						return this.callback(data);
@@ -1066,7 +1081,7 @@ class DidOpenTextDocumentFeature extends DocumentNotifications<DidOpenTextDocume
 			if (this._syncedDocuments.has(uri)) {
 				return;
 			}
-			if ($DocumentSelector.match(documentSelector, textDocument)) {
+			if ($DocumentSelector.matchForDocumentSync(documentSelector, textDocument)) {
 				let middleware = this._client.clientOptions.middleware!;
 				let didOpen = (textDocument: TextDocument): Promise<void> => {
 					return this._client.sendNotification(this._type, this._createParams(textDocument));
@@ -1126,7 +1141,7 @@ class DidCloseTextDocumentFeature extends DocumentNotifications<DidCloseTextDocu
 		super.unregister(id);
 		let selectors = this._selectors.values();
 		this._syncedDocuments.forEach((textDocument) => {
-			if ($DocumentSelector.match(selector, textDocument) && !this._selectorFilter!(selectors, textDocument)) {
+			if ($DocumentSelector.matchForDocumentSync(selector, textDocument) && !this._selectorFilter!(selectors, textDocument)) {
 				let middleware = this._client.clientOptions.middleware!;
 				let didClose = (textDocument: TextDocument): Promise<void> => {
 					return this._client.sendNotification(this._type, this._createParams(textDocument));
@@ -1204,7 +1219,7 @@ class DidChangeTextDocumentFeature implements DidChangeTextDocumentFeatureShape 
 		}
 		const promises: Promise<void>[] = [];
 		for (const changeData of this._changeData.values()) {
-			if ($DocumentSelector.match(changeData.documentSelector, event.document)) {
+			if ($DocumentSelector.matchForDocumentSync(changeData.documentSelector, event.document)) {
 				const middleware = this._client.clientOptions.middleware!;
 				if (changeData.syncKind === TextDocumentSyncKind.Incremental) {
 					const didChange = async (event: TextDocumentChangeEvent): Promise<void> => {
@@ -1288,7 +1303,7 @@ class DidChangeTextDocumentFeature implements DidChangeTextDocumentFeatureShape 
 
 	public getProvider(document: TextDocument): { send: (event: TextDocumentChangeEvent) => Promise<void> } | undefined {
 		for (const changeData of this._changeData.values()) {
-			if ($DocumentSelector.match(changeData.documentSelector, document)) {
+			if ($DocumentSelector.matchForDocumentSync(changeData.documentSelector, document)) {
 				return {
 					send: (event: TextDocumentChangeEvent): Promise<void> => {
 						return this.callback(event);
@@ -1623,7 +1638,7 @@ export abstract class TextDocumentFeature<PO, RO extends TextDocumentRegistratio
 	public getProvider(textDocument: TextDocument): PR | undefined {
 		for (const registration of this._registrations.values()) {
 			let selector = registration.data.registerOptions.documentSelector;
-			if (selector !== null && $DocumentSelector.match(selector, textDocument)) {
+			if (selector !== null && $DocumentSelector.matchForProvider(selector, textDocument)) {
 				return registration.provider;
 			}
 		}

@@ -10,6 +10,8 @@ import type { WorkDoneProgressReporter, WorkDoneProgressServerReporter, ResultPr
 export * from 'vscode-languageserver-protocol/';
 export { WorkDoneProgressReporter, WorkDoneProgressServerReporter, ResultProgressReporter };
 export { SemanticTokensBuilder };
+import { TextDocuments, TextDocumentsConfiguration, TextDocumentChangeEvent, TextDocumentWillSaveEvent } from './textDocuments';
+export { TextDocuments, TextDocumentsConfiguration, TextDocumentChangeEvent, TextDocumentWillSaveEvent };
 export * from './server';
 
 import { DiagnosticsFeatureShape, DiagnosticFeature } from './proposed.diagnostic';

@@ -3,11 +3,11 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { URI, integer, DocumentUri, uinteger, LSPAny, LSPObject } from 'vscode-languageserver-types';
+import { URI, integer, DocumentUri, uinteger, LSPAny, LSPObject, TextDocumentItem, TextDocumentIdentifier, VersionedTextDocumentIdentifier } from 'vscode-languageserver-types';
 
 import * as Is from './utils/is';
 import { ProtocolNotificationType, RegistrationType } from './messages';
-import { StaticRegistrationOptions, NotebookDocumentFilter } from './protocol';
+import { StaticRegistrationOptions, NotebookDocumentFilter, TextDocumentContentChangeEvent } from './protocol';
 
 /**
  * Notebook specific client capabilities.
@@ -151,44 +151,6 @@ export namespace NotebookCell {
 }
 
 /**
- * A change describing how to move a `NotebookCell`
- * array from state S' to S''.
- *
- * @since 3.17.0 - proposed state
- */
-export interface NotebookCellChange {
-	/**
-	 * The start oftest of the cell that changed.
-	 */
-	start: uinteger;
-
-	/**
-	 * The deleted cells
-	 */
-	deleteCount: uinteger;
-
-	/**
-	 * The new cells, if any
-	 */
-	cells?: NotebookCell[];
-}
-
-export namespace NotebookCellChange {
-	export function is(value: any): value is NotebookCellChange {
-		const candidate: NotebookCellChange = value;
-		return Is.objectLiteral(candidate) && uinteger.is(candidate.start) && uinteger.is(candidate.deleteCount) && (candidate.cells === undefined || Is.typedArray(candidate.cells, NotebookCell.is));
-	}
-
-	export function create(start: uinteger, deleteCount: uinteger, cells?: NotebookCell[]): NotebookCellChange {
-		const result: NotebookCellChange = { start, deleteCount };
-		if (cells !== undefined) {
-			result.cells = cells;
-		}
-		return result;
-	}
-}
-
-/**
  * A notebook document.
  *
  * @since 3.17.0 - proposed state
@@ -282,7 +244,7 @@ export type NotebookDocumentSyncOptions = {
 	/**
 	 * The notebook document to be synced
 	 */
-	notebookDocumentSelector?: ({
+	notebookDocumentSelector: ({
 		/** The notebook documents to be synced */
 		notebookDocumentFilter: NotebookDocumentFilter;
 		/** The cells of the matching notebook to be synced */
@@ -295,8 +257,21 @@ export type NotebookDocumentSyncOptions = {
 	})[];
 
 	/**
+	 * Determines how the notebook is synchronized.
+	 *
+	 * If set to 'notebook' the notebook document,
+	 * its meta data, cell structure and the cell's
+	 * text documents are synchronized.
+	 *
+	 * If set to 'cellContent' only the cell content
+	 * is synchronized using the available
+	 * `textDocument/did*` notifications.
+	 */
+	mode: 'notebook' | 'cellContent';
+
+	/**
 	 * Whether save notification should be forwarded to
-	 * the server.
+	 * the server. Will only be honored if mode === `notebook`.
 	 */
 	save?: boolean;
 };
@@ -329,6 +304,12 @@ export interface DidOpenNotebookDocumentParams {
 	 * The notebook document that got opened.
 	 */
 	notebookDocument: NotebookDocument;
+
+	/**
+	 * The text documents that represent the content
+	 * of a notebook cell.
+	 */
+	cellTextDocuments: TextDocumentItem[];
 }
 
 /**
@@ -339,6 +320,44 @@ export interface DidOpenNotebookDocumentParams {
 export namespace DidOpenNotebookDocumentNotification {
 	export const method: 'notebookDocument/didOpen' = 'notebookDocument/didOpen';
 	export const type = new ProtocolNotificationType<DidOpenNotebookDocumentParams, void>(method);
+}
+
+/**
+ * A change describing how to move a `NotebookCell`
+ * array from state S' to S''.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export interface NotebookCellArrayChange {
+	/**
+	 * The start oftest of the cell that changed.
+	 */
+	start: uinteger;
+
+	/**
+	 * The deleted cells
+	 */
+	deleteCount: uinteger;
+
+	/**
+	 * The new cells, if any
+	 */
+	cells?: NotebookCell[];
+}
+
+export namespace NotebookCellArrayChange {
+	export function is(value: any): value is NotebookCellArrayChange {
+		const candidate: NotebookCellArrayChange = value;
+		return Is.objectLiteral(candidate) && uinteger.is(candidate.start) && uinteger.is(candidate.deleteCount) && (candidate.cells === undefined || Is.typedArray(candidate.cells, NotebookCell.is));
+	}
+
+	export function create(start: uinteger, deleteCount: uinteger, cells?: NotebookCell[]): NotebookCellArrayChange {
+		const result: NotebookCellArrayChange = { start, deleteCount };
+		if (cells !== undefined) {
+			result.cells = cells;
+		}
+		return result;
+	}
 }
 
 /**
@@ -353,9 +372,37 @@ export interface NotebookDocumentChangeEvent {
 	metadata?: LSPObject;
 
 	/**
-	 * The changed cells if any.
+	 * Cells got added, remove or reordered.
 	 */
-	cells?: NotebookCellChange;
+	cellStructure?: {
+		/**
+		 * The change to the cell array.
+		 */
+		array: NotebookCellArrayChange;
+		/**
+		 * Additional opened cell text documents.
+		 */
+		didOpen?: TextDocumentItem[];
+		/**
+		 * Additional closed cell text documents.
+		 */
+		didClose?: TextDocumentIdentifier[];
+	};
+
+	/**
+	 * Cell properties like meta data
+	 * or kind.
+	 */
+	cellData?: NotebookCell[];
+
+	/**
+     * The changed cell text documents
+     * if any.
+     */
+	cellTextDocuments?: {
+		textDocument: VersionedTextDocumentIdentifier;
+		contentChanges: TextDocumentContentChangeEvent[];
+	}[];
 }
 
 /**
@@ -367,7 +414,9 @@ export interface DidChangeNotebookDocumentParams {
 
 	/**
 	 * The notebook document that did change. The version number points
-	 * to the version after all provided changes have been applied.
+	 * to the version after all provided changes have been applied. If
+	 * only the text document content of a cell changes the notebook version
+	 * doesn't necessarily have to change.
 	 */
 	notebookDocument: VersionedNotebookDocumentIdentifier;
 
@@ -386,7 +435,7 @@ export interface DidChangeNotebookDocumentParams {
 	 * - apply the `NotebookChangeEvent`s in a single notification in the order
 	 *   you receive them.
 	 */
-	changes: NotebookDocumentChangeEvent[];
+	change: NotebookDocumentChangeEvent;
 }
 
 export namespace DidChangeNotebookDocumentNotification {
@@ -427,6 +476,12 @@ export interface DidCloseNotebookDocumentParams {
 	 * The notebook document that got closed.
 	 */
 	notebookDocument: NotebookDocumentIdentifier;
+
+	/**
+	 * The text documents that represent the content
+	 * of a notebook cell that got closed.
+	 */
+	cellTextDocuments: TextDocumentIdentifier[];
 }
 
 /**
