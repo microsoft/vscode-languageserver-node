@@ -13,11 +13,9 @@ let client: LanguageClient;
 export function activate(context: ExtensionContext) {
 	// We need to go one level up since an extension compile the js code into
 	// the output folder.
-	let module = path.join(__dirname, '..', '..', 'server', 'out', 'server.js');
+	let module = path.join(__dirname, '..', '..', 'server', 'out', 'fullNotebookServer.js');
 	let debugOptions = { execArgv: ['--nolazy', '--inspect=6012'] };
 	let serverOptions: ServerOptions = {
-		// run: { command: 'run.exe' },
-		// debug: { command: 'run.exe' }
 		run: { module, transport: TransportKind.ipc },
 		debug: { module, /* runtime: 'node.exe', */ transport: TransportKind.ipc, options: debugOptions}
 	};
