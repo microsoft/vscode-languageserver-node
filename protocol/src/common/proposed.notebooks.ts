@@ -57,6 +57,10 @@ export type NotebookCellKind = 1 | 2;
 /**
  * A notebook cell.
  *
+ * A cell's document URI must be unique across ALL notebook
+ * cells and can therefore be used to uniquely identify a
+ * notebook cell or the cell's text document.
+ *
  * @since 3.17.0 - proposed state
  */
 export interface NotebookCell {
@@ -67,9 +71,8 @@ export interface NotebookCell {
 	kind: NotebookCellKind;
 
 	/**
-	 * The cell's text represented as a text document.
-	 * The document's content is synced using the
-	 * existing text document sync notifications.
+	 * The URI of the cell's text document
+	 * content.
 	 */
 	document: DocumentUri;
 
@@ -174,15 +177,15 @@ export interface NotebookDocument {
 	version: integer;
 
 	/**
-	 * The cells of a notebook.
-	 */
-	cells: NotebookCell[];
-
-	/**
 	 * Additional metadata stored with the notebook
 	 * document.
 	 */
 	metadata?: LSPObject;
+
+	/**
+	 * The cells of a notebook.
+	 */
+	cells: NotebookCell[];
 }
 
 export namespace NotebookDocument {
@@ -324,7 +327,7 @@ export namespace DidOpenNotebookDocumentNotification {
 
 /**
  * A change describing how to move a `NotebookCell`
- * array from state S' to S''.
+ * array from state S to S'.
  *
  * @since 3.17.0 - proposed state
  */
@@ -372,7 +375,8 @@ export interface NotebookDocumentChangeEvent {
 	metadata?: LSPObject;
 
 	/**
-	 * Cells got added, remove or reordered.
+	 * Changes to the cell structure to add or
+	 * remove cells.
 	 */
 	cellStructure?: {
 		/**
@@ -390,14 +394,13 @@ export interface NotebookDocumentChangeEvent {
 	};
 
 	/**
-	 * Cell properties like meta data
-	 * or kind.
+	 * Changes to notebook cells properties like its
+	 * kind or metadata.
 	 */
 	cellData?: NotebookCell[];
 
 	/**
-     * The changed cell text documents
-     * if any.
+     * Changes to the text content of notebook cells.
      */
 	cellTextDocuments?: {
 		textDocument: VersionedTextDocumentIdentifier;
