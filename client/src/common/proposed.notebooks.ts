@@ -10,7 +10,7 @@ import * as minimatch from 'minimatch';
 import * as proto from 'vscode-languageserver-protocol';
 import {
 	StaticRegistrationOptions, NotebookDocumentFilter, LSPObject, LSPArray, TextDocumentItem, TextDocumentIdentifier, DidOpenTextDocumentNotification,
-	DidChangeTextDocumentNotification, DidCloseTextDocumentNotification, NotebookCellTextDocumentFilter
+	DidChangeTextDocumentNotification, DidCloseTextDocumentNotification, NotebookCellTextDocumentFilter, TextDocumentSyncKind
 } from 'vscode-languageserver-protocol';
 
 import { DynamicFeature, BaseLanguageClient, RegistrationData, $DocumentSelector,  } from './client';
@@ -461,11 +461,17 @@ class NotebookCellTextDocumentSyncFeatureProvider {
 
 		if (options.cellDocumentSelector.length > 0) {
 			const openId = UUID.generateUuid();
-			this.client.getFeature(DidOpenTextDocumentNotification.method).register({ id: openId, registerOptions: { documentSelector: options.cellDocumentSelector }});
+			this.client.getFeature(DidOpenTextDocumentNotification.method).register({
+				id: openId, registerOptions: { documentSelector: options.cellDocumentSelector }
+			});
 			const changeId = UUID.generateUuid();
-			this.client.getFeature(DidChangeTextDocumentNotification.method).register({ id: changeId, registerOptions: { documentSelector: options.cellDocumentSelector }});
+			this.client.getFeature(DidChangeTextDocumentNotification.method).register({
+				id: changeId, registerOptions: { documentSelector: options.cellDocumentSelector , syncKind: TextDocumentSyncKind.Incremental }
+			});
 			const closeId = UUID.generateUuid();
-			this.client.getFeature(DidCloseTextDocumentNotification.method).register({id: closeId, registerOptions: { documentSelector: options.cellDocumentSelector }});
+			this.client.getFeature(DidCloseTextDocumentNotification.method).register({
+				id: closeId, registerOptions: { documentSelector: options.cellDocumentSelector }
+			});
 			this.registrations = {open: openId, change: changeId, close: closeId};
 		}
 	}

@@ -1160,7 +1160,7 @@ interface DidChangeTextDocumentData {
 	syncKind: 0 | 1 | 2;
 }
 
-export interface DidChangeTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, NotificationFeature<(event: TextDocumentChangeEvent) => Promise<void>>, NotifyingFeature<TextDocumentChangeEvent, DidChangeTextDocumentParams> {
+export interface DidChangeTextDocumentFeatureShape extends DynamicFeature<TextDocumentChangeRegistrationOptions>, NotificationFeature<(event: TextDocumentChangeEvent) => Promise<void>>, NotifyingFeature<TextDocumentChangeEvent, DidChangeTextDocumentParams> {
 }
 
 class DidChangeTextDocumentFeature implements DidChangeTextDocumentFeatureShape {
