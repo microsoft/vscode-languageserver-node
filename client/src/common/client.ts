@@ -73,7 +73,7 @@ import type { LinkedEditingRangeMiddleware } from './linkedEditingRange';
 import type { DiagnosticFeatureProvider } from './proposed.diagnostic';
 import type { InlineValuesProviderMiddleware, InlineValuesProviderData } from './proposed.inlineValues';
 import type { TypeHierarchyMiddleware } from './proposed.typeHierarchy';
-import type { $NotebookCellTextDocumentFilter, NotebookDocumentProviderFeature } from './proposed.notebooks';
+import type { $NotebookCellTextDocumentFilter, NotebookDocumentProviderFeature, NotebookDocumentMiddleware } from './proposed.notebooks';
 
 import * as c2p from './codeConverter';
 import * as p2c from './protocolConverter';
@@ -655,7 +655,7 @@ export interface _Middleware {
 
 export type Middleware = _Middleware & TypeDefinitionMiddleware & ImplementationMiddleware & ColorProviderMiddleware &
 FoldingRangeProviderMiddleware & DeclarationMiddleware & SelectionRangeProviderMiddleware & CallHierarchyMiddleware & SemanticTokensMiddleware &
-LinkedEditingRangeMiddleware & TypeHierarchyMiddleware & InlineValuesProviderMiddleware;
+LinkedEditingRangeMiddleware & TypeHierarchyMiddleware & InlineValuesProviderMiddleware & NotebookDocumentMiddleware;
 
 export interface LanguageClientOptions {
 	documentSelector?: DocumentSelector | string[];
