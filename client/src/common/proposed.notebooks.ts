@@ -9,11 +9,11 @@ import * as minimatch from 'minimatch';
 
 import * as proto from 'vscode-languageserver-protocol';
 import {
-	StaticRegistrationOptions, NotebookDocumentFilter, LSPObject, LSPArray, TextDocumentItem, TextDocumentIdentifier, DidOpenTextDocumentNotification,
+	StaticRegistrationOptions, NotebookDocumentFilter, LSPObject, LSPArray, TextDocumentItem, DidOpenTextDocumentNotification,
 	DidChangeTextDocumentNotification, DidCloseTextDocumentNotification, NotebookCellTextDocumentFilter, TextDocumentSyncKind
 } from 'vscode-languageserver-protocol';
 
-import { DynamicFeature, BaseLanguageClient, RegistrationData, $DocumentSelector, Middleware } from './client';
+import { DynamicFeature, BaseLanguageClient, RegistrationData, $DocumentSelector } from './client';
 import * as UUID from './utils/uuid';
 import * as _c2p from './codeConverter';
 import * as _p2c from './protocolConverter';
