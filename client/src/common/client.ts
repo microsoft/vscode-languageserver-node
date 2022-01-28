@@ -73,7 +73,7 @@ import type { LinkedEditingRangeMiddleware } from './linkedEditingRange';
 import type { DiagnosticFeatureProvider } from './proposed.diagnostic';
 import type { InlineValuesProviderMiddleware, InlineValuesProviderData } from './proposed.inlineValues';
 import type { TypeHierarchyMiddleware } from './proposed.typeHierarchy';
-import type { $NotebookCellTextDocumentFilter } from './proposed.notebooks';
+import type { $NotebookCellTextDocumentFilter, NotebookDocumentProviderFeature } from './proposed.notebooks';
 
 import * as c2p from './codeConverter';
 import * as p2c from './protocolConverter';
@@ -3870,6 +3870,7 @@ export abstract class BaseLanguageClient {
 	public getFeature(request: typeof Proposed.DocumentDiagnosticRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DiagnosticFeatureProvider>;
 	public getFeature(request: typeof Proposed.TypeHierarchyPrepareRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<VTypeHierarchyProvider>;
 	public getFeature(request: typeof Proposed.InlineValuesRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<InlineValuesProviderData>;
+	public getFeature(request: typeof Proposed.NotebookDocumentSyncRegistrationType.method): DynamicFeature<Proposed.NotebookDocumentSyncRegistrationOptions> & NotebookDocumentProviderFeature;
 
 	public getFeature(request: typeof WorkspaceSymbolRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & WorkspaceProviderFeature<WorkspaceSymbolProvider>;
 	public getFeature(request: string): DynamicFeature<any> | undefined {
