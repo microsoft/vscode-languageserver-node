@@ -53,7 +53,10 @@ connection.onInitialize((params: InitializeParams): any => {
 	assert.equal(diagnosticClientCapabilities?.dynamicRegistration, true);
 	assert.equal(diagnosticClientCapabilities?.relatedDocumentSupport, false);
 
-	const capabilities: ServerCapabilities & Proposed.$DiagnosticServerCapabilities = {
+	const notebookCapabilities = (params.capabilities as Proposed.$NotebookDocumentClientCapabilities).notebookDocument!;
+	assert.equal(notebookCapabilities.synchronization.dynamicRegistration, true);
+
+	const capabilities: ServerCapabilities & Proposed.$DiagnosticServerCapabilities & Proposed.$NotebookDocumentSyncServerCapabilities = {
 		textDocumentSync: TextDocumentSyncKind.Full,
 		definitionProvider: true,
 		hoverProvider: true,
@@ -142,6 +145,13 @@ connection.onInitialize((params: InitializeParams): any => {
 		typeHierarchyProvider: true,
 		workspaceSymbolProvider: {
 			resolveProvider: true
+		},
+		notebookDocumentSync: {
+			notebookDocumentSelector: [{
+				notebookDocumentFilter: { notebookType: 'jupyter-notebook' },
+				cellSelector: [{language: 'bat'}]
+			}],
+			mode: 'notebook'
 		}
 	};
 	return { capabilities, customResults: { hello: 'world' } };
@@ -483,9 +493,9 @@ connection.onRequest(
 	async (_, __) => {
 		const progressToken = 'TEST-PROGRESS-TOKEN';
 		await connection.sendRequest(WorkDoneProgressCreateRequest.type, { token: progressToken });
-		connection.sendProgress(WorkDoneProgress.type, progressToken, { kind: 'begin', title: 'Test Progress' });
-		connection.sendProgress(WorkDoneProgress.type, progressToken, { kind: 'report', percentage: 50, message: 'Halfway!' });
-		connection.sendProgress(WorkDoneProgress.type, progressToken, { kind: 'end', message: 'Completed!' });
+		void connection.sendProgress(WorkDoneProgress.type, progressToken, { kind: 'begin', title: 'Test Progress' });
+		void connection.sendProgress(WorkDoneProgress.type, progressToken, { kind: 'report', percentage: 50, message: 'Halfway!' });
+		void connection.sendProgress(WorkDoneProgress.type, progressToken, { kind: 'end', message: 'Completed!' });
 	},
 );
 

@@ -16,7 +16,8 @@
 	],
 	"enabledApiProposals": [
 		"tabs",
-		"notebookEditor"
+		"notebookEditor",
+		"notebookContentProvider"
 	],
 	"main": "./extension.js",
 	"contributes": {},

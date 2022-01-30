@@ -154,8 +154,11 @@ namespace $NotebookDocumentFilter {
 }
 
 namespace $NotebookDocumentSyncOptions {
-	export function match(options: proto.Proposed.NotebookDocumentSyncOptions & { cellDocumentSelector: (NotebookCellTextDocumentFilter[] | $NotebookCellTextDocumentFilter[]) }, cell: vscode.NotebookCell): boolean {
-		if (!$DocumentSelector.matchForDocumentSync(options.cellDocumentSelector, cell.document)) {
+	export function match(options: proto.Proposed.NotebookDocumentSyncOptions & { cellDocumentSelector: (NotebookCellTextDocumentFilter[] | $NotebookCellTextDocumentFilter[]) }, cell: vscode.NotebookCell, mode: 'cellContent' | 'notebook'): boolean {
+		if (mode === 'cellContent' && !$DocumentSelector.matchForDocumentSync(options.cellDocumentSelector, cell.document)) {
+			return false;
+		}
+		if (mode === 'notebook' && !$DocumentSelector.matchForProvider(options.cellDocumentSelector, cell.document)) {
 			return false;
 		}
 		const notebook = cell.notebook;
@@ -230,10 +233,10 @@ export interface NotebookDocumentChangeData {
 
 export interface NotebookDocumentMiddleware {
 	notebooks?: {
-		didOpen: (this: void, notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[], next: (this: void, notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[]) => Promise<void>) => Promise<void>;
-		didSave: (this: void, notebookDocument: vscode.NotebookDocument, next: (this: void, notebookDocument: vscode.NotebookDocument) => Promise<void>) => Promise<void>;
-		didChange: (this: void, notebookDocument: vscode.NotebookDocument, event: proto.Proposed.NotebookDocumentChangeEvent, next: (this: void, notebookDocument: vscode.NotebookDocument, event: proto.Proposed.NotebookDocumentChangeEvent) => Promise<void>) => Promise<void>;
-		didClose: (this: void, notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[], next: (this: void, notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[]) => Promise<void>) => Promise<void>;
+		didOpen?: (this: void, notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[], next: (this: void, notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[]) => Promise<void>) => Promise<void>;
+		didSave?: (this: void, notebookDocument: vscode.NotebookDocument, next: (this: void, notebookDocument: vscode.NotebookDocument) => Promise<void>) => Promise<void>;
+		didChange?: (this: void, notebookDocument: vscode.NotebookDocument, event: proto.Proposed.NotebookDocumentChangeEvent, next: (this: void, notebookDocument: vscode.NotebookDocument, event: proto.Proposed.NotebookDocumentChangeEvent) => Promise<void>) => Promise<void>;
+		didClose?: (this: void, notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[], next: (this: void, notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[]) => Promise<void>) => Promise<void>;
 	};
 }
 
@@ -296,7 +299,7 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 	}
 
 	public handles(notebookCell: vscode.NotebookCell): boolean {
-		return $NotebookDocumentSyncOptions.match(this.options, notebookCell);
+		return $NotebookDocumentSyncOptions.match(this.options, notebookCell, this.mode);
 	}
 
 	public didOpenNotebookCellDocument(notebookDocument: vscode.NotebookDocument, cell: vscode.NotebookCell): void {
@@ -642,7 +645,7 @@ class NotebookCellTextDocumentSyncFeatureProvider implements NotebookCellTextDoc
 	}
 
 	public handles(notebookCell: vscode.NotebookCell): boolean {
-		return $NotebookDocumentSyncOptions.match(this.options, notebookCell);
+		return $NotebookDocumentSyncOptions.match(this.options, notebookCell, this.mode);
 	}
 
 	public dispose(): void {

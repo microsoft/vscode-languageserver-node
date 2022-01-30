@@ -2,6 +2,8 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
+/// <reference path="../typings/vscode.proposed.notebookContentProvider.d.ts" />
+
 'use strict';
 
 import * as assert from 'assert';
@@ -10,6 +12,7 @@ import * as vscode from 'vscode';
 import * as lsclient from 'vscode-languageclient/node';
 import { MemoryFileSystemProvider } from './memoryFileSystemProvider';
 import { vsdiag, DiagnosticProviderMiddleware } from 'vscode-languageclient/lib/common/proposed.diagnostic';
+import { Proposed } from 'vscode-languageclient';
 
 suite('Client integration', () => {
 
@@ -197,6 +200,13 @@ suite('Client integration', () => {
 				typeHierarchyProvider: true,
 				workspaceSymbolProvider: {
 					resolveProvider: true
+				},
+				notebookDocumentSync: {
+					notebookDocumentSelector: [{
+						notebookDocumentFilter: { notebookType: 'jupyter-notebook' },
+						cellSelector: [{language: 'bat'}]
+					}],
+					mode: 'notebook'
 				}
 			},
 			customResults: {
@@ -1279,6 +1289,65 @@ suite('Client integration', () => {
 		const symbol = await provider.resolveWorkspaceSymbol!(results[0], tokenSource.token);
 		isDefined(symbol);
 		rangeEqual(symbol.location.range, 1, 2, 3, 4);
+	});
+
+	test('Notebook document: open', async (): Promise<void> => {
+		let middlewareCalled: boolean = false;
+		middleware.notebooks = {
+			didOpen: (nd, nc, n) => {
+				middlewareCalled = true;
+				return n(nd, nc);
+			}
+		};
+		const notebookData = new vscode.NotebookData(
+			[
+				new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'REM @ECHO OFF', 'bat'),
+				new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'FOR %%f IN (*.doc *.txt) DO XCOPY c:\source\"%%f" c:\text /m /y', 'bat')
+			],
+		);
+		await vscode.workspace.openNotebookDocument('jupyter-notebook', notebookData);
+		assert.strictEqual(middlewareCalled, true);
+		middleware.notebooks = undefined;
+	});
+
+	test('Notebook document: change', async (): Promise<void> => {
+		let middlewareCalled: boolean = false;
+		middleware.notebooks = {
+			didChange: (nd, ne, n) => {
+				middlewareCalled = true;
+				return n(nd, ne);
+			}
+		};
+		const notebookData = new vscode.NotebookData(
+			[
+				new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'REM @ECHO OFF', 'bat'),
+				new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'FOR %%f IN (*.doc *.txt) DO XCOPY c:\source\"%%f" c:\text /m /y', 'bat')
+			],
+		);
+		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', notebookData);
+		const textDocument = notebookDocument.getCells()[0].document;
+		const edit = new vscode.WorkspaceEdit;
+		edit.insert(textDocument.uri, new vscode.Position(0,0), 'REM a comment\n');
+		await vscode.workspace.applyEdit(edit);
+		assert.strictEqual(middlewareCalled, true);
+		middleware.notebooks = undefined;
+	});
+
+	test('Notebook document: getProvider', async (): Promise<void> => {
+		const notebookData = new vscode.NotebookData(
+			[
+				new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'REM @ECHO OFF', 'bat'),
+				new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'FOR %%f IN (*.doc *.txt) DO XCOPY c:\source\"%%f" c:\text /m /y', 'bat')
+			],
+		);
+		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', notebookData);
+		const feature = client.getFeature(Proposed.NotebookDocumentSyncRegistrationType.method);
+		const provider = feature.getProvider(notebookDocument.getCells()[0]);
+		isDefined(provider);
+		assert.strictEqual(provider.mode, 'notebook');
+		if (provider.mode === 'notebook') {
+			await provider.sendClose(notebookDocument);
+		}
 	});
 });
 
