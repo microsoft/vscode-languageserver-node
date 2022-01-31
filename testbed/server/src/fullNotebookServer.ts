@@ -47,8 +47,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 			completionProvider: true,
 			notebookDocumentSync: {
 				notebookDocumentSelector: [{
-					cellSelector: [{ language: 'bat'}]
-
+					notebookDocumentFilter: { pattern: '**/*.github-issues'}
 				}],
 				mode: 'notebook'
 			}

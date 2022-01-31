@@ -72,10 +72,29 @@ export type NotebookDocumentChangeEvent = {
 	 * The cell changes if any.
 	 */
 	cells?: {
+		/**
+		 * The cells that got added.
+		 */
 		added: Proposed.NotebookCell[];
+
+		/**
+		 * The cells that got removed.
+		 */
 		removed: Proposed.NotebookCell[];
-		changed: { old: Proposed.NotebookCell; new: Proposed.NotebookCell }[];
-		contentChanged: Proposed.NotebookCell[];
+
+		/**
+		 * The cell data has changed, excluding its
+		 * text content which is reported via
+		 * `textContentChanged`.
+		 */
+		dataChanged: { old: Proposed.NotebookCell; new: Proposed.NotebookCell }[];
+
+		/**
+		 * The text content of a cell has changed.
+		 * The actual text is available via the `Notebooks`
+		 * text document manager.
+		 */
+		textContentChanged: Proposed.NotebookCell[];
 	};
 };
 
@@ -236,7 +255,7 @@ export class Notebooks<T extends {  uri: DocumentUri }> {
 					}
 				}
 			}
-			const changed: Required<NotebookDocumentChangeEvent>['cells']['changed'] = [];
+			const changed: Required<NotebookDocumentChangeEvent>['cells']['dataChanged'] = [];
 			if (change.cellData !== undefined) {
 				const cellUpdates: Map<string, Proposed.NotebookCell> = new Map(change.cellData.map(cell => [cell.document, cell]));
 				for (let i = 0; i <= notebookDocument.cells.length; i++) {
@@ -280,7 +299,7 @@ export class Notebooks<T extends {  uri: DocumentUri }> {
 				contentChanged.push(this.getNotebookCell(change)!);
 			}
 			if (added.length > 0 || removed.length > 0 || changed.length > 0 || contentChanged.length > 0) {
-				changeEvent.cells = { added, removed, changed, contentChanged };
+				changeEvent.cells = { added, removed, dataChanged: changed, textContentChanged: contentChanged };
 			}
 			if (changeEvent.metadata !== undefined || changeEvent.cells !== undefined) {
 				this._onDidChange.fire(changeEvent);
