@@ -15,13 +15,13 @@ const args = process.argv.slice(2);
 
 /** @type { { folder: string; scripts: string[] }[] } */
 const folders = [
-	{ folder: 'textDocument', scripts: ['install', 'clean', 'lint', 'test'] },
-	{ folder: 'types', scripts: ['install', 'clean', 'lint', 'test'] },
-	{ folder: 'jsonrpc', scripts: ['install', 'clean', 'lint', 'test'] },
-	{ folder: 'protocol', scripts: ['install', 'clean', 'lint', 'test'] },
-	{ folder: 'server', scripts: ['install', 'clean', 'lint', 'test'] },
-	{ folder: 'client', scripts: ['install', 'clean', 'lint'] },
-	{ folder: 'client-node-tests', scripts: ['install', 'clean', 'lint', 'test'] }
+	{ folder: 'textDocument', scripts: ['install', 'clean', 'lint', 'test', 'audit'] },
+	{ folder: 'types', scripts: ['install', 'clean', 'lint', 'test', 'audit'] },
+	{ folder: 'jsonrpc', scripts: ['install', 'clean', 'lint', 'test', 'audit'] },
+	{ folder: 'protocol', scripts: ['install', 'clean', 'lint', 'test', 'audit'] },
+	{ folder: 'server', scripts: ['install', 'clean', 'lint', 'test', 'audit'] },
+	{ folder: 'client', scripts: ['install', 'clean', 'lint', 'audit'] },
+	{ folder: 'client-node-tests', scripts: ['install', 'clean', 'lint', 'test', 'audit'] }
 ];
 
 const script = args[0] === 'run' ? args[1] : args[0];
