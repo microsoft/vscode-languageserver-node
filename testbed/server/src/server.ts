@@ -25,8 +25,8 @@ import {
 	TextDocument
 } from 'vscode-languageserver-textdocument';
 
-let connection: ProposedFeatures.Connection = createConnection(ProposedFeatures.all);
-let documents = new TextDocuments(TextDocument);
+const connection: ProposedFeatures.Connection = createConnection(ProposedFeatures.all);
+const documents = new TextDocuments(TextDocument);
 
 documents.listen(connection);
 

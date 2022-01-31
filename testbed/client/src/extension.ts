@@ -6,7 +6,7 @@
 
 import * as path from 'path';
 import { commands, ExtensionContext, Uri } from 'vscode';
-import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from 'vscode-languageclient/node';
+import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, ProposedFeatures } from 'vscode-languageclient/node';
 
 let client: LanguageClient;
 
@@ -50,7 +50,8 @@ export function activate(context: ExtensionContext) {
 	};
 
 	client = new LanguageClient('testbed', 'Testbed', serverOptions, clientOptions);
-	client.registerProposedFeatures();
+	client.registerFeature(ProposedFeatures.createNotebookDocumentSyncFeature(client));
+	// client.registerProposedFeatures();
 	// let not: NotificationType<string[], void> = new NotificationType<string[], void>('testbed/notification');
 	void client.onReady().then(() => {
 		return client.sendNotification('testbed/notification', ['dirk', 'baeumer']);
