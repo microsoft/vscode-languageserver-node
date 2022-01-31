@@ -34,7 +34,7 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 
 ## History
 
-## 3.17.0-next.* Protocol, 7.0.0-next.* JSON-RPC, 8.0.0-next.* Client and 8.0.0-next.* Server.
+## 3.17.0-next.* Protocol, 8.0.0-next.* JSON-RPC, 8.0.0-next.* Client and 8.0.0-next.* Server.
 
 Library specific changes are:
 
@@ -42,7 +42,8 @@ Library specific changes are:
 - the return type of ErrorHandler#error and ErrorHandler#closed changed in a breaking manner. It now supports return an optional message which will be displayed to the user.
 - `InlineValuesRequest` protocol added:
   - New APIs in Types: `InlineValues`
-  - New APIs in Protocol: `InlineValuesRequest`, `InlineValuesParams`, `InlineValuesClientCapabilities`, `InlineValuesProviderOptions`,
+  - New APIs in Protocol: `InlineValuesRequest`, `InlineValuesParams`, `InlineValuesClientCapabilities`, `InlineValuesProviderOptions`
+- Added support for notebook documents
 
 ## 3.16.0 Protocol, 6.0.0 JSON-RPC, 7.0.0 Client and 7.0.0 Server.
 
