@@ -3,6 +3,8 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
+import { Proposed } from 'vscode-languageserver-protocol';
+
 import { BaseLanguageClient, LanguageClientOptions, StaticFeature, DynamicFeature } from './client';
 
 import { ColorProviderFeature } from './colorProvider';
@@ -63,13 +65,29 @@ import * as iv from './proposed.inlineValues';
 import * as nb from './proposed.notebooks';
 
 export namespace ProposedFeatures {
-	export function createAll(_client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
+	export function createAll(client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
 		let result: (StaticFeature | DynamicFeature<any>)[] = [
-			new pd.DiagnosticFeature(_client),
-			new pt.TypeHierarchyFeature(_client),
-			new iv.InlineValueFeature(_client),
-			new nb.NotebookDocumentSyncFeature(_client)
+			new pd.DiagnosticFeature(client),
+			new pt.TypeHierarchyFeature(client),
+			new iv.InlineValueFeature(client),
+			new nb.NotebookDocumentSyncFeature(client)
 		];
 		return result;
+	}
+
+	export function createDiagnosticFeature(client: BaseLanguageClient): DynamicFeature<Proposed.DiagnosticOptions> {
+		return new pd.DiagnosticFeature(client);
+	}
+
+	export function createTypeHierarchyFeature(client: BaseLanguageClient): DynamicFeature<boolean | Proposed.TypeHierarchyOptions> {
+		return new pt.TypeHierarchyFeature(client);
+	}
+
+	export function createInlineValueFeature(client: BaseLanguageClient): DynamicFeature<boolean | Proposed.InlineValuesOptions> {
+		return new iv.InlineValueFeature(client);
+	}
+
+	export function createNotebookDocumentSyncFeature(client: BaseLanguageClient): DynamicFeature<Proposed.NotebookDocumentSyncRegistrationOptions> {
+		return new nb.NotebookDocumentSyncFeature(client);
 	}
 }
