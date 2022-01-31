@@ -10,6 +10,10 @@ to implement language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History
 
+### 1.04
+
+- Introduced ESLint rule for member delimiter style.
+
 ### 1.03
 
 - Moved to ES2020 target and lib
