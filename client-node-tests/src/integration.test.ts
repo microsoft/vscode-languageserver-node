@@ -1355,7 +1355,7 @@ suite('Client integration', () => {
 		isDefined(provider);
 		assert.strictEqual(provider.mode, 'notebook');
 		if (provider.mode === 'notebook') {
-			await provider.sendClose(notebookDocument);
+			await provider.sendDidCloseNotebookDocument(notebookDocument);
 			const notified = await client.sendRequest(GotNotifiedRequest.type, Proposed.DidCloseNotebookDocumentNotification.method);
 			assert.strictEqual(notified, true);
 
@@ -1382,7 +1382,7 @@ suite('Client integration', () => {
 		isDefined(provider);
 		assert.strictEqual(provider.mode, 'notebook');
 		if (provider.mode === 'notebook') {
-			await provider.sendSelectNotebookController(notebookDocument, Proposed.NotebookController.create('id', { python: '3.8.10' }), true);
+			await provider.sendDidSelectNotebookController(notebookDocument, Proposed.NotebookController.create('id', { python: '3.8.10' }), true);
 			assert.strictEqual(middlewareCalled, true);
 			middleware.notebooks = undefined;
 			const notified = await client.sendRequest(GotNotifiedRequest.type, Proposed.DidSelectNotebookControllerNotification.method);

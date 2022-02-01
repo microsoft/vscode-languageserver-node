@@ -261,11 +261,11 @@ export interface NotebookDocumentMiddleware {
 
 export interface NotebookDocumentSyncFeatureShape {
 	mode: 'notebook';
-	sendOpen(notebookDocument: vscode.NotebookDocument): Promise<void>;
-	sendSave(notebookDocument: vscode.NotebookDocument): Promise<void>;
-	sendChange(notebookDocument: vscode.NotebookDocument, changeData: NotebookDocumentChangeData): Promise<void>;
-	sendSelectNotebookController(notebookDocument: vscode.NotebookDocument, controller: proto.Proposed.NotebookController, selected: boolean): Promise<void>;
-	sendClose(notebookDocument: vscode.NotebookDocument): Promise<void>;
+	sendDidOpenNotebookDocument(notebookDocument: vscode.NotebookDocument): Promise<void>;
+	sendDidSaveNotebookDocument(notebookDocument: vscode.NotebookDocument): Promise<void>;
+	sendDidChangeNotebookDocument(notebookDocument: vscode.NotebookDocument, changeData: NotebookDocumentChangeData): Promise<void>;
+	sendDidSelectNotebookController(notebookDocument: vscode.NotebookDocument, controller: proto.Proposed.NotebookController, selected: boolean): Promise<void>;
+	sendDidCloseNotebookDocument(notebookDocument: vscode.NotebookDocument): Promise<void>;
 }
 
 class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeatureShape {
@@ -551,7 +551,7 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 		});
 	}
 
-	public async sendOpen(notebookDocument: vscode.NotebookDocument): Promise<void> {
+	public async sendDidOpenNotebookDocument(notebookDocument: vscode.NotebookDocument): Promise<void> {
 		const cells = this.getMatchingCells(notebookDocument);
 		if (cells === undefined) {
 			return;
@@ -577,7 +577,7 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 		return middleware?.didOpen !== undefined ? middleware.didOpen(notebookDocument, cells, send) : send(notebookDocument, cells);
 	}
 
-	public async sendChange(notebookDocument: vscode.NotebookDocument, changeData: NotebookDocumentChangeData): Promise<void> {
+	public async sendDidChangeNotebookDocument(notebookDocument: vscode.NotebookDocument, changeData: NotebookDocumentChangeData): Promise<void> {
 		const changeEvent: proto.Proposed.NotebookDocumentChangeEvent = Object.create(null);
 		if (changeData.metadata) {
 			changeEvent.metadata = Converter.c2p.asMetadata(notebookDocument.metadata);
@@ -628,7 +628,7 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 		return middleware?.didChange !== undefined ? middleware?.didChange(notebookDocument, change, send) : send(notebookDocument, change);
 	}
 
-	public async sendSave(notebookDocument: vscode.NotebookDocument): Promise<void> {
+	public async sendDidSaveNotebookDocument(notebookDocument: vscode.NotebookDocument): Promise<void> {
 		return this.doSendSave(notebookDocument);
 	}
 
@@ -645,7 +645,7 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 		return middleware?.didSave !== undefined ? middleware.didSave(notebookDocument, send) : send(notebookDocument);
 	}
 
-	public async sendSelectNotebookController(notebookDocument: vscode.NotebookDocument, controller: proto.Proposed.NotebookController, selected: boolean): Promise<void> {
+	public async sendDidSelectNotebookController(notebookDocument: vscode.NotebookDocument, controller: proto.Proposed.NotebookController, selected: boolean): Promise<void> {
 		const send = (notebookDocument: vscode.NotebookDocument, controller: proto.Proposed.NotebookController, selected: boolean): Promise<void> => {
 			return this.client.sendNotification(proto.Proposed.DidSelectNotebookControllerNotification.type, {
 				notebookDocument: { uri: this.client.code2ProtocolConverter.asUri(notebookDocument.uri) },
@@ -660,7 +660,7 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 		return middleware?.didSelectNotebookController !== undefined ? middleware.didSelectNotebookController(notebookDocument, controller, selected, send) : send(notebookDocument, controller, selected);
 	}
 
-	public async sendClose(notebookDocument: vscode.NotebookDocument): Promise<void> {
+	public async sendDidCloseNotebookDocument(notebookDocument: vscode.NotebookDocument): Promise<void> {
 		return this.doSendClose(notebookDocument, this.getMatchingCells(notebookDocument) ?? []);
 	}
 
