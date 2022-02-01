@@ -19,7 +19,6 @@ import * as UUID from './utils/uuid';
 import * as Is from './utils/is';
 import * as _c2p from './codeConverter';
 import * as _p2c from './protocolConverter';
-import { NotebookController } from 'vscode-languageserver-protocol/src/common/proposed.notebooks';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -646,8 +645,8 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 		return middleware?.didSave !== undefined ? middleware.didSave(notebookDocument, send) : send(notebookDocument);
 	}
 
-	public async sendSelectNotebookController(notebookDocument: vscode.NotebookDocument, controller: NotebookController, selected: boolean): Promise<void> {
-		const send = (notebookDocument: vscode.NotebookDocument, controller: NotebookController, selected: boolean): Promise<void> => {
+	public async sendSelectNotebookController(notebookDocument: vscode.NotebookDocument, controller: proto.Proposed.NotebookController, selected: boolean): Promise<void> {
+		const send = (notebookDocument: vscode.NotebookDocument, controller: proto.Proposed.NotebookController, selected: boolean): Promise<void> => {
 			return this.client.sendNotification(proto.Proposed.DidSelectNotebookControllerNotification.type, {
 				notebookDocument: { uri: this.client.code2ProtocolConverter.asUri(notebookDocument.uri) },
 				controller: controller,
