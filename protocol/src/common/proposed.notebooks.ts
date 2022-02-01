@@ -3,7 +3,10 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { URI, integer, DocumentUri, uinteger, LSPAny, LSPObject, TextDocumentItem, TextDocumentIdentifier, VersionedTextDocumentIdentifier } from 'vscode-languageserver-types';
+import {
+	URI, integer, DocumentUri, uinteger, LSPAny, LSPObject, TextDocumentItem, TextDocumentIdentifier,
+	VersionedTextDocumentIdentifier
+} from 'vscode-languageserver-types';
 
 import * as Is from './utils/is';
 import { ProtocolNotificationType, RegistrationType } from './messages';
@@ -23,6 +26,11 @@ export interface NotebookDocumentSyncClientCapabilities {
 	 * return value for the corresponding server capability as well.
 	 */
 	dynamicRegistration?: boolean;
+
+	/**
+	 * The client supports sending execution summary data per cell.
+	 */
+	executionSummarySupport?: boolean;
 }
 
 export interface $NotebookDocumentClientCapabilities {
@@ -54,6 +62,46 @@ export namespace NotebookCellKind {
 }
 export type NotebookCellKind = 1 | 2;
 
+export type ExecutionSummary = {
+	/**
+	 * A strict monotonically increasing value
+	 * indicating the execution order of a cell
+	 * inside a notebook.
+	 */
+	executionOrder: uinteger;
+
+	/**
+	 * Whether the execution was successful or
+	 * not if known by the client.
+	 */
+	success?: boolean;
+};
+
+export namespace ExecutionSummary {
+	export function create(executionOrder: number, success?: boolean): ExecutionSummary {
+		const result: ExecutionSummary = { executionOrder };
+		if (success === true || success === false) {
+			result.success = success;
+		}
+		return result;
+	}
+
+	export function is(value: any): value is ExecutionSummary {
+		const candidate: ExecutionSummary = value;
+		return Is.objectLiteral(candidate) && uinteger.is(candidate.executionOrder) && (candidate.success === undefined || Is.boolean(candidate.success));
+	}
+
+	export function equals(one: ExecutionSummary | undefined, other: ExecutionSummary | undefined): boolean {
+		if (one === other) {
+			return true;
+		}
+		if (one === null || one === undefined || other === null || other === undefined) {
+			return false;
+		}
+		return one.executionOrder === other.executionOrder && one.success === other.success;
+	}
+}
+
 /**
  * A notebook cell.
  *
@@ -80,6 +128,12 @@ export interface NotebookCell {
 	 * Additional metadata stored with the cell.
 	 */
 	metadata?: LSPObject;
+
+	/**
+	 * Additional execution summary information
+	 * if supported by the client.
+	 */
+	executionSummary?: ExecutionSummary;
 }
 
 export namespace NotebookCell {
@@ -93,7 +147,7 @@ export namespace NotebookCell {
 			(candidate.metadata === undefined || Is.objectLiteral(candidate.metadata));
 	}
 
-	export function equals(one: NotebookCell, other: NotebookCell, compareMetaData: boolean = false): boolean {
+	export function equals(one: NotebookCell, other: NotebookCell, compareMetaData: boolean = true): boolean {
 		if (one.kind !== other.kind || one.document !== other.document) {
 			return false;
 		}
@@ -150,6 +204,26 @@ export namespace NotebookCell {
 			}
 		}
 		return true;
+	}
+
+	export function diff(one: NotebookCell, two: NotebookCell): Set<keyof NotebookCell> {
+		const result: Set<keyof NotebookCell> = new Set();
+		if (one.document !== two.document) {
+			result.add('document');
+		}
+		if (one.kind !== two.kind) {
+			result.add('kind');
+		}
+		if (one.executionSummary !== two.executionSummary) {
+			result.add('executionSummary');
+		}
+		if ((one.metadata !== undefined || two.metadata !== undefined) && !equalsMetadata(one.metadata, two.metadata)) {
+			result.add('metadata');
+		}
+		if ((one.executionSummary !== undefined || two.executionSummary !== undefined) && !ExecutionSummary.equals(one.executionSummary, two.executionSummary)) {
+			result.add('executionSummary');
+		}
+		return result;
 	}
 }
 
@@ -375,37 +449,44 @@ export interface NotebookDocumentChangeEvent {
 	metadata?: LSPObject;
 
 	/**
-	 * Changes to the cell structure to add or
-	 * remove cells.
+	 * Changes to cells
 	 */
-	cellStructure?: {
+	cells?: {
 		/**
-		 * The change to the cell array.
+		 * Changes to the cell structure to add or
+		 * remove cells.
 		 */
-		array: NotebookCellArrayChange;
+		structure?: {
+			/**
+			 * The change to the cell array.
+			 */
+			array: NotebookCellArrayChange;
+
+			/**
+			 * Additional opened cell text documents.
+			 */
+			didOpen?: TextDocumentItem[];
+
+			/**
+			 * Additional closed cell text documents.
+			 */
+			didClose?: TextDocumentIdentifier[];
+		};
+
 		/**
-		 * Additional opened cell text documents.
+		 * Changes to notebook cells properties like its
+		 * kind, execution summary or metadata.
 		 */
-		didOpen?: TextDocumentItem[];
+		data?: NotebookCell[];
+
 		/**
-		 * Additional closed cell text documents.
-		 */
-		didClose?: TextDocumentIdentifier[];
+    	 * Changes to the text content of notebook cells.
+     	 */
+		textContent?: {
+			document: VersionedTextDocumentIdentifier;
+			changes: TextDocumentContentChangeEvent[];
+		}[];
 	};
-
-	/**
-	 * Changes to notebook cells properties like its
-	 * kind or metadata.
-	 */
-	cellData?: NotebookCell[];
-
-	/**
-     * Changes to the text content of notebook cells.
-     */
-	cellTextDocuments?: {
-		textDocument: VersionedTextDocumentIdentifier;
-		contentChanges: TextDocumentContentChangeEvent[];
-	}[];
 }
 
 /**
@@ -495,4 +576,69 @@ export interface DidCloseNotebookDocumentParams {
 export namespace DidCloseNotebookDocumentNotification {
 	export const method: 'notebookDocument/didClose' = 'notebookDocument/didClose';
 	export const type = new ProtocolNotificationType<DidCloseNotebookDocumentParams, void>(method);
+}
+
+/**
+ * A notebook controller represents an entity that can execute
+ * notebook cells. This is often referred to as a kernel.
+ *
+ * There can be multiple controllers and the editor will let
+ * users choose which controller to use for a certain notebook.
+ */
+export interface NotebookController {
+	/**
+     * The identifier of this notebook controller.
+     *
+     * _Note_ that controllers are usually remembered
+	 * by their identifier and that clients should use
+     * stable identifiers.
+     */
+	id: string;
+
+	/**
+	 * Additional metadata associated with
+	 * this controller.
+	 */
+	metadata?: LSPObject;
+}
+export namespace NotebookController {
+	export function create(id: string, metadata?: LSPObject): NotebookController {
+		const result: NotebookController = { id };
+		if (metadata !== undefined) {
+			result.metadata = metadata;
+		}
+		return result;
+	}
+
+	export function is(value: any): value is NotebookController {
+		const candidate: NotebookController = value;
+		return Is.objectLiteral(candidate) && Is.string(candidate.id) && (candidate.metadata === undefined || Is.objectLiteral(candidate.metadata));
+	}
+}
+
+export interface DidSelectNotebookControllerParams {
+	/**
+	 * The notebook document
+	 */
+	notebookDocument: NotebookDocumentIdentifier;
+
+	/**
+	 * The selected controller
+	 */
+	controller: NotebookController;
+
+	/**
+	 * Whether the controller has been selected
+	 * or unselected.
+	 */
+	selected: boolean;
+}
+
+/**
+ * A notification send when a controller got selected
+ * for a specific notebook.
+ */
+export namespace DidSelectNotebookControllerNotification {
+	export const method: 'notebookDocument/didSelectNotebookController' = 'notebookDocument/didSelectNotebookController';
+	export const type = new ProtocolNotificationType<DidSelectNotebookControllerParams, void>(method);
 }

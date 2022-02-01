@@ -13,7 +13,8 @@
 	],
 	"enabledApiProposals": [
 		"tabs",
-		"notebookEditor"
+		"notebookEditor",
+		"notebookCellExecutionState"
 	],
 	"contributes": {
 		"commands": [

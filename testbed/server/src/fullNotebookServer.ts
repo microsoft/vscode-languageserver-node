@@ -47,8 +47,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 			completionProvider: true,
 			notebookDocumentSync: {
 				notebookDocumentSelector: [{
-					cellSelector: [{ language: 'bat'}]
-
+					notebookDocumentFilter: { pattern: '**/*.ipynb'}
 				}],
 				mode: 'notebook'
 			}
@@ -73,7 +72,7 @@ connection.onCompletion((params, token): CompletionItem[] => {
 	return result;
 });
 
-const notebooks = new ProposedFeatures.Notebooks(TextDocument);
+const notebooks = new ProposedFeatures.NotebookDocuments(TextDocument);
 
 function validate(cell: Proposed.NotebookCell): void {
 	void connection.sendDiagnostics({ uri: cell.document, diagnostics: computeDiagnostics(notebooks.getCellTextDocument(cell).getText())});
@@ -90,7 +89,7 @@ notebooks.onDidOpen((notebookDocument) => {
 notebooks.onDidChange((event) => {
 	if (event.cells !== undefined) {
 		event.cells.added.forEach(validate);
-		event.cells.contentChanged.forEach(validate);
+		event.cells.changed.textContent.forEach(validate);
 		event.cells.removed.forEach(clear);
 	}
 });
