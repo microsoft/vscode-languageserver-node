@@ -803,6 +803,8 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 	public fillClientCapabilities(capabilities: proto.ClientCapabilities & proto.Proposed.$NotebookDocumentClientCapabilities): void {
 		const synchronization = ensure(ensure(capabilities, 'notebookDocument')!, 'synchronization')!;
 		synchronization.dynamicRegistration = true;
+		synchronization.executionSummarySupport = true;
+		synchronization.notebookControllerSupport = true;
 	}
 
 	public initialize(capabilities: proto.ServerCapabilities<any> & proto.Proposed.$NotebookDocumentSyncServerCapabilities): void {

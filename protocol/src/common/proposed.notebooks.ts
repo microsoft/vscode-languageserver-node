@@ -31,6 +31,12 @@ export interface NotebookDocumentSyncClientCapabilities {
 	 * The client supports sending execution summary data per cell.
 	 */
 	executionSummarySupport?: boolean;
+
+	/**
+	 * The client has support for notebook controllers and might
+	 * send `DidSelectNotebookController` notifications.
+	 */
+	notebookControllerSupport?: boolean;
 }
 
 export interface $NotebookDocumentClientCapabilities {
