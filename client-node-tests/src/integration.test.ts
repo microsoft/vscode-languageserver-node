@@ -12,7 +12,12 @@ import * as vscode from 'vscode';
 import * as lsclient from 'vscode-languageclient/node';
 import { MemoryFileSystemProvider } from './memoryFileSystemProvider';
 import { vsdiag, DiagnosticProviderMiddleware } from 'vscode-languageclient/lib/common/proposed.diagnostic';
-import { Proposed } from 'vscode-languageclient';
+import { Proposed, RequestType } from 'vscode-languageclient';
+
+namespace GotNotifiedRequest {
+	export const method: 'testing/gotNotified' = 'testing/gotNotified';
+	export const type = new RequestType<string, boolean, void>(method);
+}
 
 suite('Client integration', () => {
 
@@ -1308,6 +1313,8 @@ suite('Client integration', () => {
 		await vscode.workspace.openNotebookDocument('jupyter-notebook', notebookData);
 		assert.strictEqual(middlewareCalled, true);
 		middleware.notebooks = undefined;
+		const notified = await client.sendRequest(GotNotifiedRequest.type, Proposed.DidOpenNotebookDocumentNotification.method);
+		assert.strictEqual(notified, true);
 	});
 
 	test('Notebook document: change', async (): Promise<void> => {
@@ -1331,6 +1338,8 @@ suite('Client integration', () => {
 		await vscode.workspace.applyEdit(edit);
 		assert.strictEqual(middlewareCalled, true);
 		middleware.notebooks = undefined;
+		const notified = await client.sendRequest(GotNotifiedRequest.type, Proposed.DidChangeNotebookDocumentNotification.method);
+		assert.strictEqual(notified, true);
 	});
 
 	test('Notebook document: getProvider', async (): Promise<void> => {
@@ -1347,6 +1356,37 @@ suite('Client integration', () => {
 		assert.strictEqual(provider.mode, 'notebook');
 		if (provider.mode === 'notebook') {
 			await provider.sendClose(notebookDocument);
+			const notified = await client.sendRequest(GotNotifiedRequest.type, Proposed.DidCloseNotebookDocumentNotification.method);
+			assert.strictEqual(notified, true);
+
+		}
+	});
+
+	test('Notebook document: controller changed', async (): Promise<void> => {
+		let middlewareCalled: boolean = false;
+		middleware.notebooks = {
+			didSelectNotebookController: (nb, nc, s, n) => {
+				middlewareCalled = true;
+				return n(nb, nc, s);
+			}
+		};
+		const notebookData = new vscode.NotebookData(
+			[
+				new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'REM @ECHO OFF', 'bat'),
+				new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'FOR %%f IN (*.doc *.txt) DO XCOPY c:\source\"%%f" c:\text /m /y', 'bat')
+			],
+		);
+		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', notebookData);
+		const feature = client.getFeature(Proposed.NotebookDocumentSyncRegistrationType.method);
+		const provider = feature.getProvider(notebookDocument.getCells()[0]);
+		isDefined(provider);
+		assert.strictEqual(provider.mode, 'notebook');
+		if (provider.mode === 'notebook') {
+			await provider.sendSelectNotebookController(notebookDocument, Proposed.NotebookController.create('id', { python: '3.8.10' }), true);
+			assert.strictEqual(middlewareCalled, true);
+			middleware.notebooks = undefined;
+			const notified = await client.sendRequest(GotNotifiedRequest.type, Proposed.DidSelectNotebookControllerNotification.method);
+			assert.strictEqual(notified, true);
 		}
 	});
 });
