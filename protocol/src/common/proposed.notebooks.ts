@@ -3,7 +3,10 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { URI, integer, DocumentUri, uinteger, LSPAny, LSPObject, TextDocumentItem, TextDocumentIdentifier, VersionedTextDocumentIdentifier } from 'vscode-languageserver-types';
+import {
+	URI, integer, DocumentUri, uinteger, LSPAny, LSPObject, TextDocumentItem, TextDocumentIdentifier,
+	VersionedTextDocumentIdentifier
+} from 'vscode-languageserver-types';
 
 import * as Is from './utils/is';
 import { ProtocolNotificationType, RegistrationType } from './messages';
@@ -573,4 +576,69 @@ export interface DidCloseNotebookDocumentParams {
 export namespace DidCloseNotebookDocumentNotification {
 	export const method: 'notebookDocument/didClose' = 'notebookDocument/didClose';
 	export const type = new ProtocolNotificationType<DidCloseNotebookDocumentParams, void>(method);
+}
+
+/**
+ * A notebook controller represents an entity that can execute
+ * notebook cells. This is often referred to as a kernel.
+ *
+ * There can be multiple controllers and the editor will let
+ * users choose which controller to use for a certain notebook.
+ */
+export interface NotebookController {
+	/**
+     * The identifier of this notebook controller.
+     *
+     * _Note_ that controllers are usually remembered
+	 * by their identifier and that clients should use
+     * stable identifiers.
+     */
+	id: string;
+
+	/**
+	 * Additional metadata associated with
+	 * this controller.
+	 */
+	metadata?: LSPObject;
+}
+export namespace NotebookController {
+	export function create(id: string, metadata?: LSPObject): NotebookController {
+		const result: NotebookController = { id };
+		if (metadata !== undefined) {
+			result.metadata = metadata;
+		}
+		return result;
+	}
+
+	export function is(value: any): value is NotebookController {
+		const candidate: NotebookController = value;
+		return Is.objectLiteral(candidate) && Is.string(candidate.id) && (candidate.metadata === undefined || Is.objectLiteral(candidate.metadata));
+	}
+}
+
+export interface DidSelectNotebookControllerParams {
+	/**
+	 * The notebook document
+	 */
+	notebookDocument: NotebookDocumentIdentifier;
+
+	/**
+	 * The selected controller
+	 */
+	controller: NotebookController;
+
+	/**
+	 * Whether the controller has been selected
+	 * or unselected.
+	 */
+	selected: boolean;
+}
+
+/**
+ * A notification send when a controller got selected
+ * for a specific notebook.
+ */
+export namespace DidSelectNotebookControllerNotification {
+	export const method: 'notebookDocument/didSelectNotebookController' = 'notebookDocument/didSelectNotebookController';
+	export const type = new ProtocolNotificationType<DidSelectNotebookControllerParams, void>(method);
 }

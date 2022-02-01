@@ -6,8 +6,7 @@
 
 import {
 	Proposed, NotificationHandler1, Emitter, Event, LSPObject, DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
-	NotificationHandler,
-	DocumentUri
+	NotificationHandler, DocumentUri, URI
 } from 'vscode-languageserver-protocol';
 
 import type { Feature, _Notebooks, _Connection, _, } from './server';
@@ -25,6 +24,7 @@ export interface NotebooksFeatureShape {
 		onDidChangeNotebookDocument(handler: NotificationHandler1<Proposed.DidChangeNotebookDocumentParams>): void;
 		onDidSaveNotebookDocument(handler: NotificationHandler1<Proposed.DidSaveNotebookDocumentParams>): void;
 		onDidCloseNotebookDocument(handler: NotificationHandler1<Proposed.DidCloseNotebookDocumentParams>): void;
+		onDidSelectNotebookController(handler: NotificationHandler1<Proposed.DidSelectNotebookControllerParams>): void;
 	};
 }
 
@@ -49,6 +49,11 @@ export const NotebooksFeature: Feature<_Notebooks, NotebooksFeatureShape> = (Bas
 				},
 				onDidCloseNotebookDocument: (handler: NotificationHandler1<Proposed.DidCloseNotebookDocumentParams>): void => {
 					this.connection.onNotification(Proposed.DidCloseNotebookDocumentNotification.type, (params) => {
+						handler(params);
+					});
+				},
+				onDidSelectNotebookController: (handler: NotificationHandler1<Proposed.DidSelectNotebookControllerParams>): void => {
+					this.connection.onNotification(Proposed.DidSelectNotebookControllerNotification.type, (params) => {
 						handler(params);
 					});
 				}
@@ -143,15 +148,17 @@ class Connection implements TextDocumentConnection {
 	}
 }
 
-export class Notebooks<T extends {  uri: DocumentUri }> {
+export class NotebookDocuments<T extends {  uri: DocumentUri }> {
 
-	private readonly notebookDocuments: Map<string, Proposed.NotebookDocument>;
-	private readonly notebookCellMap: Map<string, [Proposed.NotebookCell, Proposed.NotebookDocument]>;
+	private readonly notebookDocuments: Map<URI, Proposed.NotebookDocument>;
+	private readonly notebookCellMap: Map<DocumentUri, [Proposed.NotebookCell, Proposed.NotebookDocument]>;
+	private readonly notebookControllers: Map<URI, Proposed.NotebookController>;
 
 	private readonly _onDidOpen: Emitter<Proposed.NotebookDocument>;
 	private readonly _onDidSave: Emitter<Proposed.NotebookDocument>;
 	private readonly _onDidChange: Emitter<NotebookDocumentChangeEvent>;
 	private readonly _onDidClose: Emitter<Proposed.NotebookDocument>;
+	private readonly _onDidSelectNotebookController: Emitter<{ notebookDocument: Proposed.NotebookDocument; controller: Proposed.NotebookController; selected: boolean }>;
 
 	private _cellTextDocuments: TextDocuments<T>;
 
@@ -159,10 +166,12 @@ export class Notebooks<T extends {  uri: DocumentUri }> {
 		this._cellTextDocuments = new TextDocuments<T>(configuration);
 		this.notebookDocuments= new Map();
 		this.notebookCellMap = new Map();
+		this.notebookControllers = new Map();
 		this._onDidOpen = new Emitter();
 		this._onDidChange = new Emitter();
 		this._onDidSave = new Emitter();
 		this._onDidClose = new Emitter();
+		this._onDidSelectNotebookController = new Emitter();
 	}
 
 	public get cellTextDocuments(): TextDocuments<T> {
@@ -173,7 +182,7 @@ export class Notebooks<T extends {  uri: DocumentUri }> {
 		return this._cellTextDocuments.get(cell.document);
 	}
 
-	public getNotebookDocument(uri: DocumentUri): Proposed.NotebookDocument | undefined {
+	public getNotebookDocument(uri: URI): Proposed.NotebookDocument | undefined {
 		return this.notebookDocuments.get(uri);
 	}
 
@@ -186,6 +195,11 @@ export class Notebooks<T extends {  uri: DocumentUri }> {
 		const key = typeof cell === 'string' ? cell : cell.document;
 		const value = this.notebookCellMap.get(key);
 		return value && value[1];
+	}
+
+	public getNotebookController(notebookDocument: URI | Proposed.NotebookDocument): Proposed.NotebookController | undefined {
+		const key = typeof notebookDocument === 'string' ? notebookDocument : notebookDocument.uri;
+		return this.notebookControllers.get(key);
 	}
 
 	public get onDidOpen(): Event<Proposed.NotebookDocument> {
@@ -202,6 +216,10 @@ export class Notebooks<T extends {  uri: DocumentUri }> {
 
 	public get onDidClose(): Event<Proposed.NotebookDocument> {
 		return this._onDidClose.event;
+	}
+
+	public get onDidSelectNotebookController(): Event<{ notebookDocument: Proposed.NotebookDocument; controller: Proposed.NotebookController; selected: boolean}> {
+		return this._onDidSelectNotebookController.event;
 	}
 
 	/**
@@ -334,6 +352,22 @@ export class Notebooks<T extends {  uri: DocumentUri }> {
 			for (const cell of notebookDocument.cells) {
 				this.notebookCellMap.delete(cell.document);
 			}
+		});
+		connection.notebooks.synchronization.onDidSelectNotebookController((params) => {
+			const key = params.notebookDocument.uri;
+			if (params.selected) {
+				this.notebookControllers.set(key, params.controller);
+			} else {
+				const controller = this.notebookControllers.get(key);
+				if (controller !== undefined && controller.id === params.controller.id) {
+					this.notebookControllers.delete(key);
+				}
+			}
+			const notebookDocument = this.notebookDocuments.get(key);
+			if (notebookDocument === undefined) {
+				return;
+			}
+			this._onDidSelectNotebookController.fire({ notebookDocument, controller: params.controller, selected: params.selected });
 		});
 	}
 

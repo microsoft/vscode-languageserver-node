@@ -19,6 +19,7 @@ import * as UUID from './utils/uuid';
 import * as Is from './utils/is';
 import * as _c2p from './codeConverter';
 import * as _p2c from './protocolConverter';
+import { NotebookController } from 'vscode-languageserver-protocol/src/common/proposed.notebooks';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -255,6 +256,7 @@ export interface NotebookDocumentMiddleware {
 		didSave?: (this: void, notebookDocument: vscode.NotebookDocument, next: (this: void, notebookDocument: vscode.NotebookDocument) => Promise<void>) => Promise<void>;
 		didChange?: (this: void, notebookDocument: vscode.NotebookDocument, event: proto.Proposed.NotebookDocumentChangeEvent, next: (this: void, notebookDocument: vscode.NotebookDocument, event: proto.Proposed.NotebookDocumentChangeEvent) => Promise<void>) => Promise<void>;
 		didClose?: (this: void, notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[], next: (this: void, notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[]) => Promise<void>) => Promise<void>;
+		didSelectNotebookController? :(this: void, notebookDocument: vscode.NotebookDocument, controller: proto.Proposed.NotebookController, selected: boolean, next: (this: void, notebookDocument: vscode.NotebookDocument, controller: proto.Proposed.NotebookController, selected: boolean) => Promise<void>) => Promise<void>;
 	};
 }
 
@@ -263,6 +265,7 @@ export interface NotebookDocumentSyncFeatureShape {
 	sendOpen(notebookDocument: vscode.NotebookDocument): Promise<void>;
 	sendSave(notebookDocument: vscode.NotebookDocument): Promise<void>;
 	sendChange(notebookDocument: vscode.NotebookDocument, changeData: NotebookDocumentChangeData): Promise<void>;
+	sendSelectNotebookController(notebookDocument: vscode.NotebookDocument, controller: proto.Proposed.NotebookController, selected: boolean): Promise<void>;
 	sendClose(notebookDocument: vscode.NotebookDocument): Promise<void>;
 }
 
@@ -494,9 +497,9 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 		}
 
 		// The cell is currently executing
-		{if (event.state === vscode.NotebookCellExecutionState.Executing) {
+		if (event.state === vscode.NotebookCellExecutionState.Executing) {
 			this.cellExecutionState.set(event.cell.document.uri.toString(), event.state);
-		}}
+		}
 		// The cell is idle again
 		if (event.state === vscode.NotebookCellExecutionState.Idle) {
 			if (this.cellExecutionState.has(cellUri)) {
@@ -641,6 +644,21 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 		};
 		const middleware = this.client.clientOptions.middleware?.notebooks;
 		return middleware?.didSave !== undefined ? middleware.didSave(notebookDocument, send) : send(notebookDocument);
+	}
+
+	public async sendSelectNotebookController(notebookDocument: vscode.NotebookDocument, controller: NotebookController, selected: boolean): Promise<void> {
+		const send = (notebookDocument: vscode.NotebookDocument, controller: NotebookController, selected: boolean): Promise<void> => {
+			return this.client.sendNotification(proto.Proposed.DidSelectNotebookControllerNotification.type, {
+				notebookDocument: { uri: this.client.code2ProtocolConverter.asUri(notebookDocument.uri) },
+				controller: controller,
+				selected
+			}).catch((error) => {
+				this.client.error('Sending DidSelectNotebookControllerNotification failed', error);
+				throw error;
+			});
+		};
+		const middleware = this.client.clientOptions.middleware?.notebooks;
+		return middleware?.didSelectNotebookController !== undefined ? middleware.didSelectNotebookController(notebookDocument, controller, selected, send) : send(notebookDocument, controller, selected);
 	}
 
 	public async sendClose(notebookDocument: vscode.NotebookDocument): Promise<void> {

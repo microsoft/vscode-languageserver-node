@@ -149,4 +149,8 @@ export namespace Proposed {
 	export const DidSaveNotebookDocumentNotification = nb.DidSaveNotebookDocumentNotification;
 	export type DidCloseNotebookDocumentParams = nb.DidCloseNotebookDocumentParams;
 	export const DidCloseNotebookDocumentNotification = nb.DidCloseNotebookDocumentNotification;
+	export type NotebookController = nb.NotebookController;
+	export type DidSelectNotebookControllerParams = nb.DidSelectNotebookControllerParams;
+	export const DidSelectNotebookControllerNotification = nb.DidSelectNotebookControllerNotification;
+
 }

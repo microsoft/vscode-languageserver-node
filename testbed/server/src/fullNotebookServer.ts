@@ -47,7 +47,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 			completionProvider: true,
 			notebookDocumentSync: {
 				notebookDocumentSelector: [{
-					notebookDocumentFilter: { pattern: '**/*.github-issues'}
+					notebookDocumentFilter: { pattern: '**/*.ipynb'}
 				}],
 				mode: 'notebook'
 			}
@@ -72,7 +72,7 @@ connection.onCompletion((params, token): CompletionItem[] => {
 	return result;
 });
 
-const notebooks = new ProposedFeatures.Notebooks(TextDocument);
+const notebooks = new ProposedFeatures.NotebookDocuments(TextDocument);
 
 function validate(cell: Proposed.NotebookCell): void {
 	void connection.sendDiagnostics({ uri: cell.document, diagnostics: computeDiagnostics(notebooks.getCellTextDocument(cell).getText())});

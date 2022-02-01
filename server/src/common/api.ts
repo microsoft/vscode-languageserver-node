@@ -17,7 +17,7 @@ export * from './server';
 import { DiagnosticsFeatureShape, DiagnosticFeature } from './proposed.diagnostic';
 import { TypeHierarchyFeatureShape, TypeHierarchyFeature } from './proposed.typeHierarchy';
 import { InlineValuesFeatureShape, InlineValuesFeature } from './proposed.inlineValues';
-import { NotebooksFeatureShape, NotebooksFeature, Notebooks as _Notebooks } from './proposed.notebooks';
+import { NotebooksFeatureShape, NotebooksFeature, NotebookDocuments as _NotebookDocuments } from './proposed.notebooks';
 
 export namespace ProposedFeatures {
 	export const all: Features<_, _, _, _, _, _, DiagnosticsFeatureShape & TypeHierarchyFeatureShape & InlineValuesFeatureShape, NotebooksFeatureShape> = {
@@ -28,5 +28,5 @@ export namespace ProposedFeatures {
 
 	export type Connection = _Connection<_, _, _, _, _, _, DiagnosticsFeatureShape & TypeHierarchyFeatureShape & InlineValuesFeatureShape, NotebooksFeatureShape>;
 
-	export const Notebooks = _Notebooks;
+	export const NotebookDocuments = _NotebookDocuments;
 }
