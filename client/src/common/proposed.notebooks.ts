@@ -683,9 +683,9 @@ export type $NotebookCellTextDocumentFilter = NotebookCellTextDocumentFilter & {
 
 export interface NotebookCellTextDocumentSyncFeatureShape {
 	mode: 'cellContent';
-	sendOpen(textDocument: vscode.TextDocument): Promise<void>;
-	sendChange(event: vscode.TextDocumentChangeEvent): Promise<void>;
-	sendClose(textDocument: vscode.TextDocument): Promise<void>;
+	sendDidOpenTextDocument(textDocument: vscode.TextDocument): Promise<void>;
+	sendDidChangeTextDocument(event: vscode.TextDocumentChangeEvent): Promise<void>;
+	sendDidCloseTextDocument(textDocument: vscode.TextDocument): Promise<void>;
 }
 
 class NotebookCellTextDocumentSyncFeatureProvider implements NotebookCellTextDocumentSyncFeatureShape {
@@ -731,17 +731,17 @@ class NotebookCellTextDocumentSyncFeatureProvider implements NotebookCellTextDoc
 		}
 	}
 
-	public async sendOpen(textDocument: vscode.TextDocument): Promise<void> {
+	public async sendDidOpenTextDocument(textDocument: vscode.TextDocument): Promise<void> {
 		const provider = this.client.getFeature(DidOpenTextDocumentNotification.method).getProvider(textDocument);
 		return provider !== undefined ? provider.send(textDocument) : Promise.reject(new Error(`No open provider found for notebook cell document ${textDocument.uri.toString()}`));
 	}
 
-	public async sendChange(event: vscode.TextDocumentChangeEvent): Promise<void> {
+	public async sendDidChangeTextDocument(event: vscode.TextDocumentChangeEvent): Promise<void> {
 		const provider = this.client.getFeature(DidChangeTextDocumentNotification.method).getProvider(event.document);
 		return provider !== undefined ? provider.send(event) : Promise.reject(new Error(`No change provider found for notebook cell document ${event.document.uri.toString()}`));
 	}
 
-	public async sendClose(textDocument: vscode.TextDocument): Promise<void> {
+	public async sendDidCloseTextDocument(textDocument: vscode.TextDocument): Promise<void> {
 		const provider = this.client.getFeature(DidCloseTextDocumentNotification.method).getProvider(textDocument);
 		return provider !== undefined ? provider.send(textDocument) : Promise.reject(new Error(`No close provider found for notebook cell document ${textDocument.uri.toString()}`));
 	}
