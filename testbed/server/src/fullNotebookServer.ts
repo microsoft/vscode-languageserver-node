@@ -89,7 +89,7 @@ notebooks.onDidOpen((notebookDocument) => {
 notebooks.onDidChange((event) => {
 	if (event.cells !== undefined) {
 		event.cells.added.forEach(validate);
-		event.cells.contentChanged.forEach(validate);
+		event.cells.changed.textContent.forEach(validate);
 		event.cells.removed.forEach(clear);
 	}
 });

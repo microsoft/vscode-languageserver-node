@@ -83,18 +83,23 @@ export type NotebookDocumentChangeEvent = {
 		removed: Proposed.NotebookCell[];
 
 		/**
-		 * The cell data has changed, excluding its
-		 * text content which is reported via
-		 * `textContentChanged`.
+		 * The cells that changed.
 		 */
-		dataChanged: { old: Proposed.NotebookCell; new: Proposed.NotebookCell }[];
+		changed: {
+			/**
+			 * The cell data has changed, excluding its
+			 * text content which is reported via
+			 * `textContentChanged`.
+			 */
+			data: { old: Proposed.NotebookCell; new: Proposed.NotebookCell }[];
 
-		/**
-		 * The text content of a cell has changed.
-		 * The actual text is available via the `Notebooks`
-		 * text document manager.
-		 */
-		textContentChanged: Proposed.NotebookCell[];
+			/**
+			 * The text content of a cell has changed.
+			 * The actual text is available via the `Notebooks`
+			 * text document manager.
+			 */
+			textContent: Proposed.NotebookCell[];
+		};
 	};
 };
 
@@ -235,46 +240,50 @@ export class Notebooks<T extends {  uri: DocumentUri }> {
 				metadataChanged = true;
 				notebookDocument.metadata = change.metadata;
 			}
+
 			const opened: DocumentUri[] = [];
 			const closed: DocumentUri[] = [];
-			if (change.cellStructure !== undefined) {
-				const array = change.cellStructure.array;
-				notebookDocument.cells.splice(array.start, array.deleteCount, ...(array.cells !== undefined ? array.cells : []));
-				// Additional open cell text documents.
-				if (change.cellStructure.didOpen !== undefined) {
-					for (const open of change.cellStructure.didOpen) {
-						cellTextDocumentConnection.openTextDocument({ textDocument: open });
-						opened.push(open.uri);
+			const data: Required<Required<Required<NotebookDocumentChangeEvent>['cells']>['changed']>['data'] = [];
+			const text: DocumentUri[] = [];
+			if (change.cells !== undefined) {
+				const changedCells = change.cells;
+				if (changedCells.structure !== undefined) {
+					const array = changedCells.structure.array;
+					notebookDocument.cells.splice(array.start, array.deleteCount, ...(array.cells !== undefined ? array.cells : []));
+					// Additional open cell text documents.
+					if (changedCells.structure.didOpen !== undefined) {
+						for (const open of changedCells.structure.didOpen) {
+							cellTextDocumentConnection.openTextDocument({ textDocument: open });
+							opened.push(open.uri);
+						}
 					}
-				}
-				// Additional closed cell test documents.
-				if (change.cellStructure.didClose) {
-					for (const close of change.cellStructure.didClose) {
-						cellTextDocumentConnection.closeTextDocument({ textDocument: close });
-						closed.push(close.uri);
-					}
-				}
-			}
-			const changed: Required<NotebookDocumentChangeEvent>['cells']['dataChanged'] = [];
-			if (change.cellData !== undefined) {
-				const cellUpdates: Map<string, Proposed.NotebookCell> = new Map(change.cellData.map(cell => [cell.document, cell]));
-				for (let i = 0; i <= notebookDocument.cells.length; i++) {
-					const change = cellUpdates.get(notebookDocument.cells[i].document);
-					if (change !== undefined) {
-						const old = notebookDocument.cells.splice(i, 1, change);
-						changed.push({ old: old[0], new: change });
-						cellUpdates.delete(change.document);
-						if (cellUpdates.size === 0) {
-							break;
+					// Additional closed cell test documents.
+					if (changedCells.structure.didClose) {
+						for (const close of changedCells.structure.didClose) {
+							cellTextDocumentConnection.closeTextDocument({ textDocument: close });
+							closed.push(close.uri);
 						}
 					}
 				}
-			}
-			const changedTextDocuments: DocumentUri[] = [];
-			if (change.cellTextDocuments !== undefined) {
-				for (const cellTextDocument of change.cellTextDocuments) {
-					cellTextDocumentConnection.changeTextDocument({ textDocument: cellTextDocument.textDocument, contentChanges: cellTextDocument.contentChanges });
-					changedTextDocuments.push(cellTextDocument.textDocument.uri);
+				if (changedCells.data !== undefined) {
+					const cellUpdates: Map<string, Proposed.NotebookCell> = new Map(changedCells.data.map(cell => [cell.document, cell]));
+					for (let i = 0; i <= notebookDocument.cells.length; i++) {
+						const change = cellUpdates.get(notebookDocument.cells[i].document);
+						if (change !== undefined) {
+							const old = notebookDocument.cells.splice(i, 1, change);
+							data.push({ old: old[0], new: change });
+							cellUpdates.delete(change.document);
+							if (cellUpdates.size === 0) {
+								break;
+							}
+						}
+					}
+				}
+				if (changedCells.textContent !== undefined) {
+					for (const cellTextDocument of changedCells.textContent) {
+						cellTextDocumentConnection.changeTextDocument({ textDocument: cellTextDocument.document, contentChanges: cellTextDocument.changes });
+						text.push(cellTextDocument.document.uri);
+					}
 				}
 			}
 
@@ -294,12 +303,12 @@ export class Notebooks<T extends {  uri: DocumentUri }> {
 			for (const close of closed) {
 				removed.push(this.getNotebookCell(close)!);
 			}
-			const contentChanged: Proposed.NotebookCell[] = [];
-			for (const change of changedTextDocuments) {
-				contentChanged.push(this.getNotebookCell(change)!);
+			const textContent: Proposed.NotebookCell[] = [];
+			for (const change of text) {
+				textContent.push(this.getNotebookCell(change)!);
 			}
-			if (added.length > 0 || removed.length > 0 || changed.length > 0 || contentChanged.length > 0) {
-				changeEvent.cells = { added, removed, dataChanged: changed, textContentChanged: contentChanged };
+			if (added.length > 0 || removed.length > 0 || data.length > 0 || textContent.length > 0) {
+				changeEvent.cells = { added, removed, changed: { data, textContent } };
 			}
 			if (changeEvent.metadata !== undefined || changeEvent.cells !== undefined) {
 				this._onDidChange.fire(changeEvent);

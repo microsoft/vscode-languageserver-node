@@ -580,8 +580,8 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 		if (changeData.metadata) {
 			changeEvent.metadata = Converter.c2p.asMetadata(notebookDocument.metadata);
 		}
-		const cells: Required<proto.Proposed.NotebookDocumentChangeEvent>['cells'] =  Object.create(null);
 		if (changeData.cells !== undefined) {
+			const cells: Required<proto.Proposed.NotebookDocumentChangeEvent>['cells'] =  Object.create(null);
 			const changedCells = changeData.cells;
 			if (changedCells.structure) {
 				cells.structure = {
@@ -601,8 +601,11 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 			if (changedCells.data !== undefined) {
 				cells.data = changedCells.data.map(cell => Converter.c2p.asNotebookCell(cell, this.client.code2ProtocolConverter));
 			}
-			if (changeData.cellTextContent !== undefined) {
-				changeEvent.cellTextDocuments = changeData.cellTextContent.map(event => this.client.code2ProtocolConverter.asChangeTextDocumentParams(event));
+			if (changedCells.textContent !== undefined) {
+				cells.textContent = changedCells.textContent.map(event => Converter.c2p.asTextContentChange(event, this.client.code2ProtocolConverter));
+			}
+			if (Object.keys(cells).length > 0) {
+				changeEvent.cells = cells;
 			}
 		}
 		if (Object.keys(changeEvent).length > 0) {
