@@ -269,13 +269,19 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 	}
 
 	function asDiagnostics(diagnostics: ls.Diagnostic[]): code.Diagnostic[] {
-		return diagnostics.map(asDiagnostic);
+		const result: code.Diagnostic[] = new Array(diagnostics.length);
+		for (let i = 0; i < diagnostics.length; i++) {
+			result[i] = asDiagnostic(diagnostics[i]);
+		}
+		return result;
 	}
 
 	function asDiagnostic(diagnostic: ls.Diagnostic): code.Diagnostic {
 		let result = new ProtocolDiagnostic(asRange(diagnostic.range), diagnostic.message, asDiagnosticSeverity(diagnostic.severity), diagnostic.data);
 		if (diagnostic.code !== undefined) {
-			if (ls.CodeDescription.is(diagnostic.codeDescription)) {
+			if (typeof diagnostic.code === 'string') {
+				result.code = diagnostic.code;
+			} else if (ls.CodeDescription.is(diagnostic.codeDescription)) {
 				result.code = {
 					value: diagnostic.code,
 					target: asUri(diagnostic.codeDescription.href)
@@ -286,8 +292,6 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 					value: diagnostic.code.value,
 					target: asUri(diagnostic.code.target)
 				};
-			} else {
-				result.code = diagnostic.code;
 			}
 		}
 		if (diagnostic.source) { result.source = diagnostic.source; }
@@ -297,11 +301,12 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 	}
 
 	function asRelatedInformation(relatedInformation: ls.DiagnosticRelatedInformation[]): code.DiagnosticRelatedInformation[] {
-		return relatedInformation.map(asDiagnosticRelatedInformation);
-	}
-
-	function asDiagnosticRelatedInformation(information: ls.DiagnosticRelatedInformation): code.DiagnosticRelatedInformation {
-		return new code.DiagnosticRelatedInformation(asLocation(information.location), information.message);
+		const result: code.DiagnosticRelatedInformation[] = new Array(relatedInformation.length);
+		for (let i = 0; i < relatedInformation.length; i++) {
+			const info = relatedInformation[i];
+			result[i] = new code.DiagnosticRelatedInformation(asLocation(info.location), info.message);
+		}
+		return result;
 	}
 
 	function asDiagnosticTags(tags: undefined | null): undefined;
@@ -336,20 +341,14 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 	function asPosition(value: ls.Position): code.Position;
 	function asPosition(value: ls.Position | undefined | null): code.Position | undefined;
 	function asPosition(value: ls.Position | undefined | null): code.Position | undefined {
-		if (!value) {
-			return undefined;
-		}
-		return new code.Position(value.line, value.character);
+		return value ? new code.Position(value.line, value.character) : undefined;
 	}
 
 	function asRange(value: undefined | null): undefined;
 	function asRange(value: ls.Range): code.Range;
 	function asRange(value: ls.Range | undefined | null): code.Range | undefined;
 	function asRange(value: ls.Range | undefined | null): code.Range | undefined {
-		if (!value) {
-			return undefined;
-		}
-		return new code.Range(asPosition(value.start), asPosition(value.end));
+		return value ? new code.Range(value.start.line, value.start.character, value.end.line, value.end.character) : undefined;
 	}
 
 	function asRanges(value: ReadonlyArray<ls.Range>): code.Range[] {
@@ -664,10 +663,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 	function asLocation(item: undefined | null): undefined;
 	function asLocation(item: ls.Location | undefined | null): code.Location | undefined;
 	function asLocation(item: ls.Location | undefined | null): code.Location | undefined {
-		if (!item) {
-			return undefined;
-		}
-		return new code.Location(_uriConverter(item.uri), asRange(item.range));
+		return item ? new code.Location(_uriConverter(item.uri), asRange(item.range)) : undefined;
 	}
 
 	function asDeclarationResult(item: ls.Declaration): code.Location | code.Location[];
