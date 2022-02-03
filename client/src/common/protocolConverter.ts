@@ -29,6 +29,7 @@ export interface Converter {
 	asDiagnostic(diagnostic: ls.Diagnostic): code.Diagnostic;
 
 	asDiagnostics(diagnostics: ls.Diagnostic[]): code.Diagnostic[];
+	asDiagnosticsAsync(diagnostics: ls.Diagnostic[], token: code.CancellationToken): Promise<code.Diagnostic[]>;
 
 	asPosition(value: undefined | null): undefined;
 	asPosition(value: ls.Position): code.Position;
@@ -264,8 +265,38 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 
 	const _uriConverter: URIConverter = uriConverter || nullConverter;
 
+	const yieldEveryMilliseconds: number = 15;
+
 	function asUri(value: string): code.Uri {
 		return _uriConverter(value);
+	}
+
+	async function asDiagnosticsAsync(diagnostics: ls.Diagnostic[], token: code.CancellationToken): Promise<code.Diagnostic[]> {
+		const result: code.Diagnostic[] = new Array(diagnostics.length);
+		function convertBatch(start: number): Promise<number> {
+			return new Promise((resolve) => {
+				ls.RAL().timer.setImmediate(() => {
+					const startTime = Date.now();
+					for (let i = start; i < diagnostics.length; i++) {
+						result[i] = asDiagnostic(diagnostics[i]);
+						if (Date.now() - startTime > yieldEveryMilliseconds)  {
+							resolve(i + 1);
+							return;
+						}
+					}
+					resolve(-1);
+
+				});
+			});
+		}
+		let index = 0;
+		while (index !== -1) {
+			if (token.isCancellationRequested) {
+				break;
+			}
+			index = await convertBatch(index);
+		}
+		return result;
 	}
 
 	function asDiagnostics(diagnostics: ls.Diagnostic[]): code.Diagnostic[] {
@@ -279,18 +310,23 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 	function asDiagnostic(diagnostic: ls.Diagnostic): code.Diagnostic {
 		let result = new ProtocolDiagnostic(asRange(diagnostic.range), diagnostic.message, asDiagnosticSeverity(diagnostic.severity), diagnostic.data);
 		if (diagnostic.code !== undefined) {
-			if (typeof diagnostic.code === 'string') {
-				result.code = diagnostic.code;
-			} else if (ls.CodeDescription.is(diagnostic.codeDescription)) {
-				result.code = {
-					value: diagnostic.code,
-					target: asUri(diagnostic.codeDescription.href)
-				};
+			if (typeof diagnostic.code === 'string' || typeof diagnostic.code === 'number') {
+				if (ls.CodeDescription.is(diagnostic.codeDescription)) {
+					result.code = {
+						value: diagnostic.code,
+						target: asUri(diagnostic.codeDescription.href)
+					};
+				} else {
+					result.code = diagnostic.code;
+				}
 			} else if (DiagnosticCode.is(diagnostic.code)) {
+				// This is for backwards compatibility of a proposed API.
+				// We should remove this at some point.
 				result.hasDiagnosticCode = true;
+				const diagnosticCode = diagnostic.code as DiagnosticCode;
 				result.code = {
-					value: diagnostic.code.value,
-					target: asUri(diagnostic.code.target)
+					value: diagnosticCode.value,
+					target: asUri(diagnosticCode.target)
 				};
 			}
 		}
@@ -1303,6 +1339,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 	return {
 		asUri,
 		asDiagnostics,
+		asDiagnosticsAsync,
 		asDiagnostic,
 		asRange,
 		asRanges,

@@ -22,7 +22,7 @@ import {
 	DocumentRangeFormattingEditProvider, OnTypeFormattingEditProvider, RenameProvider, DocumentLinkProvider, DocumentColorProvider, DeclarationProvider,
 	FoldingRangeProvider, ImplementationProvider, SelectionRangeProvider, TypeDefinitionProvider, WorkspaceSymbolProvider, CallHierarchyProvider,
 	DocumentSymbolProviderMetadata, EventEmitter, env as Env, TextDocumentShowOptions, FileWillCreateEvent, FileWillRenameEvent, FileWillDeleteEvent, FileCreateEvent, FileDeleteEvent, FileRenameEvent,
-	LinkedEditingRangeProvider, Event as VEvent, CancellationError, TypeHierarchyProvider as VTypeHierarchyProvider, NotebookDocument as VNotebookDocument
+	LinkedEditingRangeProvider, Event as VEvent, CancellationError, TypeHierarchyProvider as VTypeHierarchyProvider, NotebookDocument as VNotebookDocument, CancellationTokenSource
 } from 'vscode';
 
 import {
@@ -52,9 +52,10 @@ import {
 	DocumentRangeFormattingOptions, DocumentOnTypeFormattingOptions, RenameOptions, DocumentLinkOptions, CompletionItemTag, DiagnosticTag, DocumentColorRequest,
 	DeclarationRequest, FoldingRangeRequest, ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, SymbolTag, CallHierarchyPrepareRequest,
 	CancellationStrategy, SaveOptions, LSPErrorCodes, CodeActionResolveRequest, RegistrationType, SemanticTokensRegistrationType, InsertTextMode, ShowDocumentRequest,
-	FileOperationRegistrationOptions, WillCreateFilesRequest, WillRenameFilesRequest, WillDeleteFilesRequest, DidCreateFilesNotification, DidDeleteFilesNotification, DidRenameFilesNotification,
-	ShowDocumentParams, ShowDocumentResult, LinkedEditingRangeRequest, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressReport, PrepareSupportDefaultBehavior,
-	SemanticTokensRequest, SemanticTokensRangeRequest, SemanticTokensDeltaRequest, Proposed, WorkspaceSymbolResolveRequest, NotebookCellTextDocumentFilter, TextDocumentFilter, NotebookDocumentFilter
+	FileOperationRegistrationOptions, WillCreateFilesRequest, WillRenameFilesRequest, WillDeleteFilesRequest, DidCreateFilesNotification, DidDeleteFilesNotification,
+	DidRenameFilesNotification, ShowDocumentParams, ShowDocumentResult, LinkedEditingRangeRequest, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressEnd,
+	WorkDoneProgressReport, PrepareSupportDefaultBehavior, SemanticTokensRequest, SemanticTokensRangeRequest, SemanticTokensDeltaRequest, Proposed, WorkspaceSymbolResolveRequest,
+	NotebookCellTextDocumentFilter, TextDocumentFilter, NotebookDocumentFilter, Diagnostic
 } from 'vscode-languageserver-protocol';
 
 import { toJSONObject } from './configuration';
@@ -3681,18 +3682,54 @@ export abstract class BaseLanguageClient {
 		this._didChangeTextDocumentFeature.forceDelivery();
 	}
 
+	private _diagnosticQueue: Map<string, Diagnostic[]> = new Map();
+	private _diagnosticQueueState: { state: 'idle' } | { state: 'busy'; document: string; tokenSource: CancellationTokenSource } = { state: 'idle' };
 	private handleDiagnostics(params: PublishDiagnosticsParams) {
 		if (!this._diagnostics) {
 			return;
 		}
-		let uri = this._p2c.asUri(params.uri);
-		let diagnostics = this._p2c.asDiagnostics(params.diagnostics);
-		let middleware = this.clientOptions.middleware!;
-		if (middleware.handleDiagnostics) {
-			middleware.handleDiagnostics(uri, diagnostics, (uri, diagnostics) => this.setDiagnostics(uri, diagnostics));
-		} else {
-			this.setDiagnostics(uri, diagnostics);
+		const key = params.uri;
+		if (this._diagnosticQueueState.state === 'busy' && this._diagnosticQueueState.document === key)  {
+			// Cancel the active run;
+			this._diagnosticQueueState.tokenSource.cancel();
 		}
+		this._diagnosticQueue.set(params.uri, params.diagnostics);
+		this.triggerDiagnosticQueue();
+	}
+
+	private triggerDiagnosticQueue(): void {
+		RAL().timer.setImmediate(() => { this.workDiagnosticQueue(); });
+	}
+
+	private workDiagnosticQueue(): void {
+		if (this._diagnosticQueueState.state === 'busy') {
+			return;
+		}
+		const next = this._diagnosticQueue.entries().next();
+		if (next.done === true) {
+			// Nothing in the queue
+			return;
+		}
+		const [document, diagnostics] = next.value;
+		this._diagnosticQueue.delete(document);
+		const tokenSource = new CancellationTokenSource();
+		this._diagnosticQueueState = { state: 'busy', document: document, tokenSource };
+		this._p2c.asDiagnosticsAsync(diagnostics, tokenSource.token).then((converted) => {
+			if (!tokenSource.token.isCancellationRequested) {
+				const uri = this._p2c.asUri(document);
+				let middleware = this.clientOptions.middleware!;
+				if (middleware.handleDiagnostics) {
+					middleware.handleDiagnostics(uri, converted, (uri, diagnostics) => this.setDiagnostics(uri, diagnostics));
+				} else {
+					this.setDiagnostics(uri, converted);
+				}
+			}
+		}).finally(() => {
+			// The conversion resulted in an error.
+			// Drop the result but make the queue idle again
+			this._diagnosticQueueState = { state: 'idle' };
+			this.triggerDiagnosticQueue();
+		});
 	}
 
 	private setDiagnostics(uri: Uri, diagnostics: VDiagnostic[] | undefined) {

@@ -17,7 +17,7 @@ export interface DiagnosticCode {
 }
 
 export namespace DiagnosticCode {
-	export function is(value: string | number | DiagnosticCode | undefined | null): value is DiagnosticCode {
+	export function is(value: any): value is DiagnosticCode {
 		const candidate: DiagnosticCode = value as DiagnosticCode;
 		return candidate !== undefined && candidate !== null && (Is.number(candidate.value) || Is.string(candidate.value)) && Is.string(candidate.target);
 	}

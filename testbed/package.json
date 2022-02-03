@@ -6,7 +6,7 @@
 	"engines": {
 		"vscode": "^1.33.0"
 	},
-	"main": "./client/out/extension",
+	"main": "./client/out/extension.js",
 	"activationEvents": [
 		"onLanguage:bat",
 		"onCommand:testbed.helloWorld"
