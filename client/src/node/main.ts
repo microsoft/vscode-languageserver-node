@@ -610,7 +610,7 @@ function handleChildProcessStartError(process: ChildProcess, message: string) {
 	}
 
 	return new Promise<MessageTransports>((_, reject) => {
-		process.on("error", (err) => {
+		process.on('error', (err) => {
 			reject(`${message} ${err}`);
 		});
 		// the error event should always be run immediately,
