@@ -491,16 +491,16 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 	const version: string = '2.0';
 
 	let starRequestHandler: StarRequestHandler | undefined = undefined;
-	const requestHandlers: { [name: string]: RequestHandlerElement | undefined } = Object.create(null);
+	const requestHandlers: Map<string, RequestHandlerElement> = new Map();
 	let starNotificationHandler: StarNotificationHandler | undefined = undefined;
-	const notificationHandlers: { [name: string]: NotificationHandlerElement | undefined } = Object.create(null);
+	const notificationHandlers: Map<string, NotificationHandlerElement> = new Map();
 	const progressHandlers: Map<number | string, NotificationHandler1<any>> = new Map();
 
 	let timer: Disposable | undefined;
 	let messageQueue: MessageQueue = new LinkedMap<string, Message>();
-	let responsePromises: { [name: string]: ResponsePromise } = Object.create(null);
+	let responsePromises: Map<string | number, ResponsePromise> = new Map();
 	let knownCanceledRequests: Set<string | number> = new Set();
-	let requestTokens: { [id: string]: AbstractCancellationTokenSource } = Object.create(null);
+	let requestTokens: Map<string | number, AbstractCancellationTokenSource> = new Map();
 
 	let trace: Trace = Trace.Off;
 	let traceFormat: TraceFormat = TraceFormat.Text;
@@ -625,14 +625,14 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 					const response = (strategy && strategy.cancelUndispatched) ? strategy.cancelUndispatched(toCancel, cancelUndispatched) : cancelUndispatched(toCancel);
 					if (response && (response.error !== undefined || response.result !== undefined)) {
 						messageQueue.delete(key);
+						requestTokens.delete(cancelId);
 						response.id = toCancel.id;
 						traceSendingResponse(response, message.method, Date.now());
 						messageWriter.write(response).catch(() => logger.error(`Sending response for canceled message failed.`));
 						return;
 					}
 				}
-				const tokenKey = String(cancelId);
-				const cancellationToken = requestTokens[tokenKey];
+				const cancellationToken = requestTokens.get(cancelId);
 				// The request is already running. Cancel the token
 				if (cancellationToken !== undefined) {
 					cancellationToken.cancel();
@@ -695,7 +695,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		}
 		traceReceivedRequest(requestMessage);
 
-		const element = requestHandlers[requestMessage.method];
+		const element = requestHandlers.get(requestMessage.method);
 		let type: MessageSignature | undefined;
 		let requestHandler: GenericRequestHandler<any, any> | undefined;
 		if (element) {
@@ -704,12 +704,14 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		}
 		const startTime = Date.now();
 		if (requestHandler || starRequestHandler) {
-			const tokenKey = String(requestMessage.id);
+			const tokenKey = requestMessage.id ?? String(Date.now()); //
 			const cancellationSource = cancellationStrategy.receiver.createCancellationTokenSource(tokenKey);
 			if (requestMessage.id !== null && knownCanceledRequests.has(requestMessage.id)) {
 				cancellationSource.cancel();
 			}
-			requestTokens[tokenKey] = cancellationSource;
+			if (requestMessage.id !== null) {
+				requestTokens.set(tokenKey, cancellationSource);
+			}
 			try {
 				let handlerResult: any;
 				if (requestHandler) {
@@ -738,14 +740,14 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 
 				const promise = handlerResult as Thenable<any | ResponseError<any>>;
 				if (!handlerResult) {
-					delete requestTokens[tokenKey];
+					requestTokens.delete(tokenKey);
 					replySuccess(handlerResult, requestMessage.method, startTime);
 				} else if (promise.then) {
 					promise.then((resultOrError): any | ResponseError<any> => {
-						delete requestTokens[tokenKey];
+						requestTokens.delete(tokenKey);
 						reply(resultOrError, requestMessage.method, startTime);
 					}, error => {
-						delete requestTokens[tokenKey];
+						requestTokens.delete(tokenKey);
 						if (error instanceof ResponseError) {
 							replyError(<ResponseError<any>>error, requestMessage.method, startTime);
 						} else if (error && Is.string(error.message)) {
@@ -755,11 +757,11 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 						}
 					});
 				} else {
-					delete requestTokens[tokenKey];
+					requestTokens.delete(tokenKey);
 					reply(handlerResult, requestMessage.method, startTime);
 				}
 			} catch (error: any) {
-				delete requestTokens[tokenKey];
+				requestTokens.delete(tokenKey);
 				if (error instanceof ResponseError) {
 					reply(<ResponseError<any>>error, requestMessage.method, startTime);
 				} else if (error && Is.string(error.message)) {
@@ -786,11 +788,11 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				logger.error(`Received response message without id. No further error information provided.`);
 			}
 		} else {
-			const key = String(responseMessage.id);
-			const responsePromise = responsePromises[key];
+			const key = responseMessage.id;
+			const responsePromise = responsePromises.get(key);
 			traceReceivedResponse(responseMessage, responsePromise);
-			if (responsePromise) {
-				delete responsePromises[key];
+			if (responsePromise !== undefined) {
+				responsePromises.delete(key);
 				try {
 					if (responseMessage.error) {
 						const error = responseMessage.error;
@@ -825,7 +827,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			traceReceivedNotification(message);
 			return;
 		} else {
-			const element = notificationHandlers[message.method];
+			const element = notificationHandlers.get(message.method);
 			if (element) {
 				notificationHandler = element.handler;
 				type = element.type;
@@ -889,8 +891,8 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		// Test whether we find an id to reject the promise
 		const responseMessage: ResponseMessage = message as ResponseMessage;
 		if (Is.string(responseMessage.id) || Is.number(responseMessage.id)) {
-			const key = String(responseMessage.id);
-			const responseHandler = responsePromises[key];
+			const key = responseMessage.id;
+			const responseHandler = responsePromises.get(key);
 			if (responseHandler) {
 				responseHandler.reject(new Error('The received response has neither a result nor an error property.'));
 			}
@@ -1009,7 +1011,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		}
 	}
 
-	function traceReceivedResponse(message: ResponseMessage, responsePromise: ResponsePromise): void {
+	function traceReceivedResponse(message: ResponseMessage, responsePromise: ResponsePromise | undefined): void {
 		if (trace === Trace.Off || !tracer) {
 			return;
 		}
@@ -1191,16 +1193,16 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			} else if (handler) {
 				if (Is.string(type)) {
 					method = type;
-					notificationHandlers[type] = { type: undefined, handler };
+					notificationHandlers.set(type, { type: undefined, handler });
 				} else {
 					method = type.method;
-					notificationHandlers[type.method] = { type, handler };
+					notificationHandlers.set(type.method, { type, handler });
 				}
 			}
 			return {
 				dispose: () => {
 					if (method !== undefined) {
-						delete notificationHandlers[method];
+						notificationHandlers.delete(method);
 					} else {
 						starNotificationHandler = undefined;
 					}
@@ -1312,7 +1314,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 					responsePromise = null;
 				}
 				if (responsePromise) {
-					responsePromises[String(id)] = responsePromise;
+					responsePromises.set(id, responsePromise);
 				}
 			});
 			return result;
@@ -1328,12 +1330,12 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				method = null;
 				if (handler !== undefined) {
 					method = type;
-					requestHandlers[type] = { handler: handler, type: undefined };
+					requestHandlers.set(type, { handler: handler, type: undefined });
 				}
 			} else {
 				if (handler !== undefined) {
 					method = type.method;
-					requestHandlers[type.method] = { type, handler };
+					requestHandlers.set(type.method, { type, handler });
 				}
 			}
 			return {
@@ -1342,7 +1344,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 						return;
 					}
 					if (method !== undefined) {
-						delete requestHandlers[method];
+						requestHandlers.delete(method);
 					} else {
 						starRequestHandler = undefined;
 					}
@@ -1389,11 +1391,11 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			state = ConnectionState.Disposed;
 			disposeEmitter.fire(undefined);
 			const error = new Error('Connection got disposed.');
-			Object.keys(responsePromises).forEach((key) => {
-				responsePromises[key].reject(error);
-			});
-			responsePromises = Object.create(null);
-			requestTokens = Object.create(null);
+			for (const promise of responsePromises.values()) {
+				promise.reject(error);
+			}
+			responsePromises = new Map();
+			requestTokens = new Map();
 			knownCanceledRequests = new Set();
 			messageQueue = new LinkedMap<string, Message>();
 			// Test for backwards compatibility
