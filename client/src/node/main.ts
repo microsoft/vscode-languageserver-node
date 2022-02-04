@@ -349,7 +349,7 @@ export class LanguageClient extends CommonLanguageClient {
 					if (transport === TransportKind.ipc || transport === TransportKind.stdio) {
 						const serverProcess = cp.spawn(runtime, args, execOptions);
 						if (!serverProcess || !serverProcess.pid) {
-							return Promise.reject<MessageTransports>(`Launching server using runtime ${runtime} failed.`);
+							return handleChildProcessStartError(serverProcess, `Launching server using runtime ${runtime} failed.`);
 						}
 						this._serverProcess = serverProcess;
 						serverProcess.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
@@ -363,7 +363,7 @@ export class LanguageClient extends CommonLanguageClient {
 						return createClientPipeTransport(pipeName!).then((transport) => {
 							const process = cp.spawn(runtime, args, execOptions);
 							if (!process || !process.pid) {
-								return Promise.reject<MessageTransports>(`Launching server using runtime ${runtime} failed.`);
+								return handleChildProcessStartError(process, `Launching server using runtime ${runtime} failed.`);
 							}
 							this._serverProcess = process;
 							process.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
@@ -376,7 +376,7 @@ export class LanguageClient extends CommonLanguageClient {
 						return createClientSocketTransport(transport.port).then((transport) => {
 							const process = cp.spawn(runtime, args, execOptions);
 							if (!process || !process.pid) {
-								return Promise.reject<MessageTransports>(`Launching server using runtime ${runtime} failed.`);
+								return handleChildProcessStartError(process, `Launching server using runtime ${runtime} failed.`);
 							}
 							this._serverProcess = process;
 							process.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
@@ -462,17 +462,17 @@ export class LanguageClient extends CommonLanguageClient {
 				if (transport === undefined || transport === TransportKind.stdio) {
 					const serverProcess = cp.spawn(command.command, args, options);
 					if (!serverProcess || !serverProcess.pid) {
-						return Promise.reject<MessageTransports>(`Launching server using command ${command.command} failed.`);
+						return handleChildProcessStartError(serverProcess, `Launching server using command ${command.command} failed.`);
 					}
 					serverProcess.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 					this._serverProcess = serverProcess;
 					this._isDetached = !!options.detached;
 					return Promise.resolve({ reader: new StreamMessageReader(serverProcess.stdout), writer: new StreamMessageWriter(serverProcess.stdin) });
 				} else if (transport === TransportKind.pipe) {
-					return 	createClientPipeTransport(pipeName!).then((transport) => {
+					return createClientPipeTransport(pipeName!).then((transport) => {
 						const serverProcess = cp.spawn(command.command, args, options);
 						if (!serverProcess || !serverProcess.pid) {
-							throw new Error(`Launching server using command ${command.command} failed.`);
+							return handleChildProcessStartError(serverProcess, `Launching server using command ${command.command} failed.`);
 						}
 						this._serverProcess = serverProcess;
 						this._isDetached = !!options.detached;
@@ -486,7 +486,7 @@ export class LanguageClient extends CommonLanguageClient {
 					return createClientSocketTransport(transport.port).then((transport) => {
 						const serverProcess = cp.spawn(command.command, args, options);
 						if (!serverProcess || !serverProcess.pid) {
-							throw new Error(`Launching server using command ${command.command} failed.`);
+							return handleChildProcessStartError(serverProcess, `Launching server using command ${command.command} failed.`);
 						}
 						this._serverProcess = serverProcess;
 						this._isDetached = !!options.detached;
@@ -602,4 +602,19 @@ export class SettingMonitor {
 			void this._client.stop();
 		}
 	}
+}
+
+function handleChildProcessStartError(process: ChildProcess, message: string) {
+	if (process == null) {
+		return Promise.reject<MessageTransports>(message);
+	}
+
+	return new Promise<MessageTransports>((_, reject) => {
+		process.on('error', (err) => {
+			reject(`${message} ${err}`);
+		});
+		// the error event should always be run immediately,
+		// but race on it just in case
+		setImmediate(() => reject(message));
+	});
 }
