@@ -39,6 +39,9 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 Library specific changes are:
 
 - all `sendNotification` methods now return a promise. Returning a promise was necessary since the actual writing of the message to the underlying transport is async and a client for example could not determine if a notification was handed off to the transport. This is a breaking change in the sense that it might result in floating promise and might be flagged by a linter.
+- the behavior of `handleFailedRequest` has change. Instead of returning a default value when a exception is received from the server the method now rethrows the error. This ensures that VS Code's default behavior on errors i used. The method also handles the `RequestCancelled` and `ServerCancelled` in the following way:
+  - if it receives `ServerCancelled` and the client didn't cancel the request as well throw CancellationError to ask the client to rerun the request.
+  - if it receives `RequestCancelled` then normally the client should have cancelled the request and the code will return the default value (according to the best interpretation of the 3.16 spec). If the client has not canceled interpret the `RequestCancelled` as `ServerCancelled`.
 - the return type of ErrorHandler#error and ErrorHandler#closed changed in a breaking manner. It now supports return an optional message which will be displayed to the user.
 - `InlineValuesRequest` protocol added:
   - New APIs in Types: `InlineValues`
