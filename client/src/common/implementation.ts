@@ -55,12 +55,14 @@ export class ImplementationFeature extends TextDocumentFeature<boolean | Impleme
 				}
 				const client = this._client;
 				const provideImplementation: ProvideImplementationSignature = (document, position, token) => {
-					return client.sendRequest(ImplementationRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
-						client.protocol2CodeConverter.asDefinitionResult,
-						(error) => {
-							return client.handleFailedRequest(ImplementationRequest.type, token, error, null);
+					return client.sendRequest(ImplementationRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then((result) => {
+						if (token.isCancellationRequested) {
+							return null;
 						}
-					);
+						return client.protocol2CodeConverter.asDefinitionResult(result);
+					}, (error) => {
+						return client.handleFailedRequest(ImplementationRequest.type, token, error, null);
+					});
 				};
 				const middleware = client.clientOptions.middleware!;
 				return middleware.provideImplementation

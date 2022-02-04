@@ -58,14 +58,14 @@ class TypeHierarchyProvider implements VTypeHierarchyProvider {
 		const middleware = this.middleware;
 		const prepareTypeHierarchy: PrepareTypeHierarchySignature = (document, position, token) => {
 			const params = client.code2ProtocolConverter.asTextDocumentPositionParams(document, position);
-			return client.sendRequest(Proposed.TypeHierarchyPrepareRequest.type, params, token).then(
-				(result) => {
-					return client.protocol2CodeConverter.asTypeHierarchyItems(result);
-				},
-				(error) => {
-					return client.handleFailedRequest(Proposed.TypeHierarchyPrepareRequest.type, token, error, null);
+			return client.sendRequest(Proposed.TypeHierarchyPrepareRequest.type, params, token).then((result) => {
+				if (token.isCancellationRequested) {
+					return null;
 				}
-			);
+				return client.protocol2CodeConverter.asTypeHierarchyItems(result);
+			}, (error) => {
+				return client.handleFailedRequest(Proposed.TypeHierarchyPrepareRequest.type, token, error, null);
+			});
 		};
 		return middleware.prepareTypeHierarchy
 			? middleware.prepareTypeHierarchy(document, position, token, prepareTypeHierarchy)
@@ -79,14 +79,14 @@ class TypeHierarchyProvider implements VTypeHierarchyProvider {
 			const params: Proposed.TypeHierarchySupertypesParams = {
 				item:  client.code2ProtocolConverter.asTypeHierarchyItem(item)
 			};
-			return client.sendRequest(Proposed.TypeHierarchySupertypesRequest.type, params, token).then(
-				(result) => {
-					return client.protocol2CodeConverter.asTypeHierarchyItems(result);
-				},
-				(error) => {
-					return client.handleFailedRequest(Proposed.TypeHierarchySupertypesRequest.type, token, error, null);
+			return client.sendRequest(Proposed.TypeHierarchySupertypesRequest.type, params, token).then((result) => {
+				if (token.isCancellationRequested) {
+					return null;
 				}
-			);
+				return client.protocol2CodeConverter.asTypeHierarchyItems(result);
+			}, (error) => {
+				return client.handleFailedRequest(Proposed.TypeHierarchySupertypesRequest.type, token, error, null);
+			});
 		};
 		return middleware.provideTypeHierarchySupertypes
 			? middleware.provideTypeHierarchySupertypes(item, token, provideTypeHierarchySupertypes)
@@ -100,14 +100,14 @@ class TypeHierarchyProvider implements VTypeHierarchyProvider {
 			const params: Proposed.TypeHierarchySubtypesParams = {
 				item:  client.code2ProtocolConverter.asTypeHierarchyItem(item)
 			};
-			return client.sendRequest(Proposed.TypeHierarchySubtypesRequest.type, params, token).then(
-				(result) => {
-					return client.protocol2CodeConverter.asTypeHierarchyItems(result);
-				},
-				(error) => {
-					return client.handleFailedRequest(Proposed.TypeHierarchySubtypesRequest.type, token, error, null);
+			return client.sendRequest(Proposed.TypeHierarchySubtypesRequest.type, params, token).then((result) => {
+				if (token.isCancellationRequested) {
+					return null;
 				}
-			);
+				return client.protocol2CodeConverter.asTypeHierarchyItems(result);
+			}, (error) => {
+				return client.handleFailedRequest(Proposed.TypeHierarchySubtypesRequest.type, token, error, null);
+			});
 		};
 		return middleware.provideTypeHierarchySubtypes
 			? middleware.provideTypeHierarchySubtypes(item, token, provideTypeHierarchySubtypes)

@@ -61,12 +61,14 @@ export class ColorProviderFeature extends TextDocumentFeature<boolean | Document
 						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(context.document),
 						range: client.code2ProtocolConverter.asRange(context.range)
 					};
-					return client.sendRequest(ColorPresentationRequest.type, requestParams, token).then(
-						this.asColorPresentations.bind(this),
-						(error: any) => {
-							return client.handleFailedRequest(ColorPresentationRequest.type, token, error, null);
+					return client.sendRequest(ColorPresentationRequest.type, requestParams, token).then((result) => {
+						if (token.isCancellationRequested) {
+							return null;
 						}
-					);
+						return this.asColorPresentations(result);
+					}, (error: any) => {
+						return client.handleFailedRequest(ColorPresentationRequest.type, token, error, null);
+					});
 				};
 				const middleware = client.clientOptions.middleware!;
 				return middleware.provideColorPresentations
@@ -82,12 +84,14 @@ export class ColorProviderFeature extends TextDocumentFeature<boolean | Document
 					const requestParams = {
 						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document)
 					};
-					return client.sendRequest(DocumentColorRequest.type, requestParams, token).then(
-						this.asColorInformations.bind(this),
-						(error: any) => {
-							return client.handleFailedRequest(ColorPresentationRequest.type, token, error, null);
+					return client.sendRequest(DocumentColorRequest.type, requestParams, token).then((result) => {
+						if (token.isCancellationRequested) {
+							return null;
 						}
-					);
+						return this.asColorInformations(result);
+					}, (error: any) => {
+						return client.handleFailedRequest(ColorPresentationRequest.type, token, error, null);
+					});
 				};
 				const middleware = client.clientOptions.middleware!;
 				return middleware.provideDocumentColors

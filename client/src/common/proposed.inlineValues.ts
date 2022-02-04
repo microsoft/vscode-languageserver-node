@@ -74,12 +74,14 @@ export class InlineValueFeature extends TextDocumentFeature<boolean | Proposed.I
 						viewPort: client.code2ProtocolConverter.asRange(viewPort),
 						context: client.code2ProtocolConverter.asInlineValuesContext(context)
 					};
-					return client.sendRequest(Proposed.InlineValuesRequest.type, requestParams, token).then(
-						(values) => client.protocol2CodeConverter.asInlineValues(values),
-						(error: any) => {
-							return client.handleFailedRequest(Proposed.InlineValuesRequest.type, token, error, null);
+					return client.sendRequest(Proposed.InlineValuesRequest.type, requestParams, token).then((values) => {
+						if (token.isCancellationRequested) {
+							return null;
 						}
-					);
+						return client.protocol2CodeConverter.asInlineValues(values);
+					}, (error: any) => {
+						return client.handleFailedRequest(Proposed.InlineValuesRequest.type, token, error, null);
+					});
 				};
 				const middleware = client.clientOptions.middleware!;
 				return middleware.provideInlineValues

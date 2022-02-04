@@ -56,12 +56,14 @@ export class LinkedEditingFeature extends TextDocumentFeature<boolean | proto.Li
 				}
 				const client = this._client;
 				const provideLinkedEditing: ProvideLinkedEditingRangeSignature = (document, position, token) => {
-					return client.sendRequest(proto.LinkedEditingRangeRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
-						client.protocol2CodeConverter.asLinkedEditingRanges,
-						(error) => {
-							return client.handleFailedRequest(proto.LinkedEditingRangeRequest.type, token, error, null);
+					return client.sendRequest(proto.LinkedEditingRangeRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then((result) => {
+						if (token.isCancellationRequested) {
+							return null;
 						}
-					);
+						return client.protocol2CodeConverter.asLinkedEditingRanges(result);
+					}, (error) => {
+						return client.handleFailedRequest(proto.LinkedEditingRangeRequest.type, token, error, null);
+					});
 				};
 				const middleware = client.clientOptions.middleware!;
 				return middleware.provideLinkedEditingRange

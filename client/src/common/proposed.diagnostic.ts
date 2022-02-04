@@ -446,7 +446,7 @@ class DiagnosticRequestor implements Disposable {
 						previousResultId: previousResultId
 					};
 					return this.client.sendRequest(Proposed.DocumentDiagnosticRequest.type, params, token).then((result) => {
-						if (result === undefined || result === null || this.isDisposed) {
+						if (result === undefined || result === null || this.isDisposed || token.isCancellationRequested) {
 							return { kind: vsdiag.DocumentDiagnosticReportKind.full, items: [] };
 						}
 						if (result.kind === Proposed.DocumentDiagnosticReportKind.full) {
@@ -512,6 +512,9 @@ class DiagnosticRequestor implements Disposable {
 						partialResultToken: partialResultToken
 					};
 					return this.client.sendRequest(Proposed.WorkspaceDiagnosticRequest.type, params, token).then((result): vsdiag.WorkspaceDiagnosticReport => {
+						if (token.isCancellationRequested) {
+							return { items: [] };
+						}
 						const converted: vsdiag.WorkspaceDiagnosticReport = {
 							items: []
 						};

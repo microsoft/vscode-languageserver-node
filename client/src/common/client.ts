@@ -1775,12 +1775,14 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 				const client = this._client;
 				const middleware = this._client.clientOptions.middleware!;
 				const provideCompletionItems: ProvideCompletionItemsSignature = (document, position, context, token) => {
-					return client.sendRequest(CompletionRequest.type, client.code2ProtocolConverter.asCompletionParams(document, position, context), token).then(
-						(result) => client.protocol2CodeConverter.asCompletionResult(result, defaultCommitCharacters),
-						(error) => {
-							return client.handleFailedRequest(CompletionRequest.type, token, error, null);
+					return client.sendRequest(CompletionRequest.type, client.code2ProtocolConverter.asCompletionParams(document, position, context), token).then((result) => {
+						if (token.isCancellationRequested) {
+							return null;
 						}
-					);
+						return client.protocol2CodeConverter.asCompletionResult(result, defaultCommitCharacters);
+					}, (error) => {
+						return client.handleFailedRequest(CompletionRequest.type, token, error, null);
+					});
 				};
 				return middleware.provideCompletionItem
 					? middleware.provideCompletionItem(document, position, context, token, provideCompletionItems)
@@ -1791,12 +1793,14 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 					const client = this._client;
 					const middleware = this._client.clientOptions.middleware!;
 					const resolveCompletionItem: ResolveCompletionItemSignature = (item, token) => {
-						return client.sendRequest(CompletionResolveRequest.type, client.code2ProtocolConverter.asCompletionItem(item, !!this.labelDetailsSupport.get(id)), token).then(
-							client.protocol2CodeConverter.asCompletionItem,
-							(error) => {
-								return client.handleFailedRequest(CompletionResolveRequest.type, token, error, item);
+						return client.sendRequest(CompletionResolveRequest.type, client.code2ProtocolConverter.asCompletionItem(item, !!this.labelDetailsSupport.get(id)), token).then((result) => {
+							if (token.isCancellationRequested) {
+								return null;
 							}
-						);
+							return client.protocol2CodeConverter.asCompletionItem(result);
+						}, (error) => {
+							return client.handleFailedRequest(CompletionResolveRequest.type, token, error, item);
+						});
 					};
 					return middleware.resolveCompletionItem
 						? middleware.resolveCompletionItem(item, token, resolveCompletionItem)
@@ -1840,12 +1844,14 @@ class HoverFeature extends TextDocumentFeature<boolean | HoverOptions, HoverRegi
 				}
 				const client = this._client;
 				const provideHover: ProvideHoverSignature = (document, position, token) => {
-					return client.sendRequest(HoverRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
-						client.protocol2CodeConverter.asHover,
-						(error) => {
-							return client.handleFailedRequest(HoverRequest.type, token, error, null);
+					return client.sendRequest(HoverRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then((result) => {
+						if (token.isCancellationRequested) {
+							return null;
 						}
-					);
+						return client.protocol2CodeConverter.asHover(result);
+					}, (error) => {
+						return client.handleFailedRequest(HoverRequest.type, token, error, null);
+					});
 				};
 				const middleware = client.clientOptions.middleware!;
 				return middleware.provideHover
@@ -1892,12 +1898,14 @@ class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpOptions, Sig
 				}
 				const client = this._client;
 				const providerSignatureHelp: ProvideSignatureHelpSignature = (document, position, context, token) => {
-					return client.sendRequest(SignatureHelpRequest.type, client.code2ProtocolConverter.asSignatureHelpParams(document, position, context), token).then(
-						client.protocol2CodeConverter.asSignatureHelp,
-						(error) => {
-							return client.handleFailedRequest(SignatureHelpRequest.type, token, error, null);
+					return client.sendRequest(SignatureHelpRequest.type, client.code2ProtocolConverter.asSignatureHelpParams(document, position, context), token).then((result) => {
+						if (token.isCancellationRequested) {
+							return null;
 						}
-					);
+						return client.protocol2CodeConverter.asSignatureHelp(result);
+					}, (error) => {
+						return client.handleFailedRequest(SignatureHelpRequest.type, token, error, null);
+					});
 				};
 				const middleware = client.clientOptions.middleware!;
 				return middleware.provideSignatureHelp
@@ -1950,12 +1958,14 @@ class DefinitionFeature extends TextDocumentFeature<boolean | DefinitionOptions,
 				}
 				const client = this._client;
 				const provideDefinition: ProvideDefinitionSignature = (document, position, token) => {
-					return client.sendRequest(DefinitionRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
-						client.protocol2CodeConverter.asDefinitionResult,
-						(error) => {
-							return client.handleFailedRequest(DefinitionRequest.type, token, error, null);
+					return client.sendRequest(DefinitionRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then((result) => {
+						if (token.isCancellationRequested) {
+							return null;
 						}
-					);
+						return client.protocol2CodeConverter.asDefinitionResult(result);
+					}, (error) => {
+						return client.handleFailedRequest(DefinitionRequest.type, token, error, null);
+					});
 				};
 				const middleware = client.clientOptions.middleware!;
 				return middleware.provideDefinition
@@ -1994,12 +2004,14 @@ class ReferencesFeature extends TextDocumentFeature<boolean | ReferenceOptions, 
 				}
 				const client = this._client;
 				const _providerReferences: ProvideReferencesSignature = (document, position, options, token) => {
-					return client.sendRequest(ReferencesRequest.type, client.code2ProtocolConverter.asReferenceParams(document, position, options), token).then(
-						client.protocol2CodeConverter.asReferences,
-						(error) => {
-							return client.handleFailedRequest(ReferencesRequest.type, token, error, null);
+					return client.sendRequest(ReferencesRequest.type, client.code2ProtocolConverter.asReferenceParams(document, position, options), token).then((result) => {
+						if (token.isCancellationRequested) {
+							return null;
 						}
-					);
+						return client.protocol2CodeConverter.asReferences(result);
+					}, (error) => {
+						return client.handleFailedRequest(ReferencesRequest.type, token, error, null);
+					});
 				};
 				const middleware = client.clientOptions.middleware!;
 				return middleware.provideReferences
@@ -2038,12 +2050,14 @@ class DocumentHighlightFeature extends TextDocumentFeature<boolean | DocumentHig
 				}
 				const client = this._client;
 				const _provideDocumentHighlights: ProvideDocumentHighlightsSignature = (document, position, token) => {
-					return client.sendRequest(DocumentHighlightRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
-						client.protocol2CodeConverter.asDocumentHighlights,
-						(error) => {
-							return client.handleFailedRequest(DocumentHighlightRequest.type, token, error, null);
+					return client.sendRequest(DocumentHighlightRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then((result) => {
+						if (token.isCancellationRequested) {
+							return null;
 						}
-					);
+						return client.protocol2CodeConverter.asDocumentHighlights(result);
+					}, (error) => {
+						return client.handleFailedRequest(DocumentHighlightRequest.type, token, error, null);
+					});
 				};
 				const middleware = client.clientOptions.middleware!;
 				return middleware.provideDocumentHighlights
@@ -2091,26 +2105,23 @@ class DocumentSymbolFeature extends TextDocumentFeature<boolean | DocumentSymbol
 				}
 				const client = this._client;
 				const _provideDocumentSymbols: ProvideDocumentSymbolsSignature = (document, token) => {
-					return client.sendRequest(DocumentSymbolRequest.type, client.code2ProtocolConverter.asDocumentSymbolParams(document), token).then(
-						(data) => {
-							if (data === null) {
-								return undefined;
-							}
-							if (data.length === 0) {
-								return [];
-							} else {
-								let element = data[0];
-								if (DocumentSymbol.is(element)) {
-									return client.protocol2CodeConverter.asDocumentSymbols(data as DocumentSymbol[]);
-								} else {
-									return client.protocol2CodeConverter.asSymbolInformations(data as SymbolInformation[]);
-								}
-							}
-						},
-						(error) => {
-							return client.handleFailedRequest(DocumentSymbolRequest.type, token, error, null);
+					return client.sendRequest(DocumentSymbolRequest.type, client.code2ProtocolConverter.asDocumentSymbolParams(document), token).then((data) => {
+						if (token.isCancellationRequested || data === undefined || data === null) {
+							return null;
 						}
-					);
+						if (data.length === 0) {
+							return [];
+						} else {
+							let element = data[0];
+							if (DocumentSymbol.is(element)) {
+								return client.protocol2CodeConverter.asDocumentSymbols(data as DocumentSymbol[]);
+							} else {
+								return client.protocol2CodeConverter.asSymbolInformations(data as SymbolInformation[]);
+							}
+						}
+					}, (error) => {
+						return client.handleFailedRequest(DocumentSymbolRequest.type, token, error, null);
+					});
 				};
 				const middleware = client.clientOptions.middleware!;
 				return middleware.provideDocumentSymbols
@@ -2156,12 +2167,14 @@ class WorkspaceSymbolFeature extends WorkspaceFeature<WorkspaceSymbolRegistratio
 			provideWorkspaceSymbols: (query, token) => {
 				const client = this._client;
 				const provideWorkspaceSymbols: ProvideWorkspaceSymbolsSignature = (query, token) => {
-					return client.sendRequest(WorkspaceSymbolRequest.type, { query }, token).then(
-						client.protocol2CodeConverter.asSymbolInformations,
-						(error) => {
-							return client.handleFailedRequest(WorkspaceSymbolRequest.type, token, error, null);
+					return client.sendRequest(WorkspaceSymbolRequest.type, { query }, token).then((result) => {
+						if (token.isCancellationRequested) {
+							return null;
 						}
-					);
+						return client.protocol2CodeConverter.asSymbolInformations(result);
+					}, (error) => {
+						return client.handleFailedRequest(WorkspaceSymbolRequest.type, token, error, null);
+					});
 				};
 				const middleware = client.clientOptions.middleware!;
 				return middleware.provideWorkspaceSymbols
@@ -2172,12 +2185,14 @@ class WorkspaceSymbolFeature extends WorkspaceFeature<WorkspaceSymbolRegistratio
 				? (item, token) => {
 					const client = this._client;
 					const resolveWorkspaceSymbol: ResolveWorkspaceSymbolSignature = (item, token) => {
-						return client.sendRequest(WorkspaceSymbolResolveRequest.type, client.code2ProtocolConverter.asWorkspaceSymbol(item), token).then(
-							client.protocol2CodeConverter.asSymbolInformation,
-							(error) => {
-								return client.handleFailedRequest(WorkspaceSymbolResolveRequest.type, token, error, null);
+						return client.sendRequest(WorkspaceSymbolResolveRequest.type, client.code2ProtocolConverter.asWorkspaceSymbol(item), token).then((result) => {
+							if (token.isCancellationRequested) {
+								return null;
 							}
-						);
+							return client.protocol2CodeConverter.asSymbolInformation(result);
+						}, (error) => {
+							return client.handleFailedRequest(WorkspaceSymbolResolveRequest.type, token, error, null);
+						});
 					};
 					const middleware = client.clientOptions.middleware!;
 					return middleware.resolveWorkspaceSymbol
@@ -2246,8 +2261,8 @@ class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions,
 						context: client.code2ProtocolConverter.asCodeActionContext(context)
 					};
 					return client.sendRequest(CodeActionRequest.type, params, token).then((values) => {
-						if (values === null) {
-							return undefined;
+						if (token.isCancellationRequested || values === null || values === undefined) {
+							return null;
 						}
 						const result: (VCommand | VCodeAction)[] = [];
 						for (let item of values) {
@@ -2258,11 +2273,9 @@ class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions,
 							}
 						}
 						return result;
-					},
-					(error) => {
+					}, (error) => {
 						return client.handleFailedRequest(CodeActionRequest.type, token, error, null);
-					}
-					);
+					});
 				};
 				const middleware = client.clientOptions.middleware!;
 				return middleware.provideCodeActions
@@ -2274,12 +2287,14 @@ class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions,
 					const client = this._client;
 					const middleware = this._client.clientOptions.middleware!;
 					const resolveCodeAction: ResolveCodeActionSignature = (item, token) => {
-						return client.sendRequest(CodeActionResolveRequest.type, client.code2ProtocolConverter.asCodeAction(item), token).then(
-							client.protocol2CodeConverter.asCodeAction,
-							(error) => {
-								return client.handleFailedRequest(CodeActionResolveRequest.type, token, error, item);
+						return client.sendRequest(CodeActionResolveRequest.type, client.code2ProtocolConverter.asCodeAction(item), token).then((result) => {
+							if (token.isCancellationRequested) {
+								return item;
 							}
-						);
+							return client.protocol2CodeConverter.asCodeAction(result);
+						}, (error) => {
+							return client.handleFailedRequest(CodeActionResolveRequest.type, token, error, item);
+						});
 					};
 					return middleware.resolveCodeAction
 						? middleware.resolveCodeAction(item, token, resolveCodeAction)
@@ -2335,12 +2350,14 @@ class CodeLensFeature extends TextDocumentFeature<CodeLensOptions, CodeLensRegis
 				}
 				const client = this._client;
 				const provideCodeLenses: ProvideCodeLensesSignature = (document, token) => {
-					return client.sendRequest(CodeLensRequest.type, client.code2ProtocolConverter.asCodeLensParams(document), token).then(
-						client.protocol2CodeConverter.asCodeLenses,
-						(error) => {
-							return client.handleFailedRequest(CodeLensRequest.type, token, error, null);
+					return client.sendRequest(CodeLensRequest.type, client.code2ProtocolConverter.asCodeLensParams(document), token).then((result) => {
+						if (token.isCancellationRequested) {
+							return null;
 						}
-					);
+						return client.protocol2CodeConverter.asCodeLenses(result);
+					}, (error) => {
+						return client.handleFailedRequest(CodeLensRequest.type, token, error, null);
+					});
 				};
 				const middleware = client.clientOptions.middleware!;
 				return middleware.provideCodeLenses
@@ -2351,12 +2368,14 @@ class CodeLensFeature extends TextDocumentFeature<CodeLensOptions, CodeLensRegis
 				? (codeLens: VCodeLens, token: CancellationToken): ProviderResult<VCodeLens> => {
 					const client = this._client;
 					const resolveCodeLens: ResolveCodeLensSignature = (codeLens, token) => {
-						return client.sendRequest(CodeLensResolveRequest.type, client.code2ProtocolConverter.asCodeLens(codeLens), token).then(
-							client.protocol2CodeConverter.asCodeLens,
-							(error) => {
-								return client.handleFailedRequest(CodeLensResolveRequest.type, token, error, codeLens);
+						return client.sendRequest(CodeLensResolveRequest.type, client.code2ProtocolConverter.asCodeLens(codeLens), token).then((result) => {
+							if (token.isCancellationRequested) {
+								return codeLens;
 							}
-						);
+							return client.protocol2CodeConverter.asCodeLens(result);
+						}, (error) => {
+							return client.handleFailedRequest(CodeLensResolveRequest.type, token, error, codeLens);
+						});
 					};
 					const middleware = client.clientOptions.middleware!;
 					return middleware.resolveCodeLens
@@ -2400,12 +2419,14 @@ class DocumentFormattingFeature extends TextDocumentFeature<boolean | DocumentFo
 						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
 						options: client.code2ProtocolConverter.asFormattingOptions(options, FileFormattingOptions.fromConfiguration(document))
 					};
-					return client.sendRequest(DocumentFormattingRequest.type, params, token).then(
-						client.protocol2CodeConverter.asTextEdits,
-						(error) => {
-							return client.handleFailedRequest(DocumentFormattingRequest.type, token, error, null);
+					return client.sendRequest(DocumentFormattingRequest.type, params, token).then((result) => {
+						if (token.isCancellationRequested) {
+							return null;
 						}
-					);
+						return client.protocol2CodeConverter.asTextEdits(result);
+					}, (error) => {
+						return client.handleFailedRequest(DocumentFormattingRequest.type, token, error, null);
+					});
 				};
 				const middleware = client.clientOptions.middleware!;
 				return middleware.provideDocumentFormattingEdits
@@ -2449,12 +2470,14 @@ class DocumentRangeFormattingFeature extends TextDocumentFeature<boolean | Docum
 						range: client.code2ProtocolConverter.asRange(range),
 						options: client.code2ProtocolConverter.asFormattingOptions(options, FileFormattingOptions.fromConfiguration(document))
 					};
-					return client.sendRequest(DocumentRangeFormattingRequest.type, params, token).then(
-						client.protocol2CodeConverter.asTextEdits,
-						(error) => {
-							return client.handleFailedRequest(DocumentRangeFormattingRequest.type, token, error, null);
+					return client.sendRequest(DocumentRangeFormattingRequest.type, params, token).then((result) => {
+						if (token.isCancellationRequested) {
+							return null;
 						}
-					);
+						return client.protocol2CodeConverter.asTextEdits(result);
+					}, (error) => {
+						return client.handleFailedRequest(DocumentRangeFormattingRequest.type, token, error, null);
+					});
 				};
 				const middleware = client.clientOptions.middleware!;
 				return middleware.provideDocumentRangeFormattingEdits
@@ -2499,12 +2522,14 @@ class DocumentOnTypeFormattingFeature extends TextDocumentFeature<DocumentOnType
 						ch: ch,
 						options: client.code2ProtocolConverter.asFormattingOptions(options, FileFormattingOptions.fromConfiguration(document))
 					};
-					return client.sendRequest(DocumentOnTypeFormattingRequest.type, params, token).then(
-						client.protocol2CodeConverter.asTextEdits,
-						(error) => {
-							return client.handleFailedRequest(DocumentOnTypeFormattingRequest.type, token, error, null);
+					return client.sendRequest(DocumentOnTypeFormattingRequest.type, params, token).then((result) => {
+						if (token.isCancellationRequested) {
+							return null;
 						}
-					);
+						return client.protocol2CodeConverter.asTextEdits(result);
+					}, (error) => {
+						return client.handleFailedRequest(DocumentOnTypeFormattingRequest.type, token, error, null);
+					});
 				};
 				const middleware = client.clientOptions.middleware!;
 				return middleware.provideOnTypeFormattingEdits
@@ -2561,12 +2586,14 @@ class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameR
 						position: client.code2ProtocolConverter.asPosition(position),
 						newName: newName
 					};
-					return client.sendRequest(RenameRequest.type, params, token).then(
-						client.protocol2CodeConverter.asWorkspaceEdit,
-						(error: ResponseError<void>) => {
-							return client.handleFailedRequest(RenameRequest.type, token, error, null, false);
+					return client.sendRequest(RenameRequest.type, params, token).then((result) => {
+						if (token.isCancellationRequested) {
+							return null;
 						}
-					);
+						return client.protocol2CodeConverter.asWorkspaceEdit(result);
+					}, (error: ResponseError<void>) => {
+						return client.handleFailedRequest(RenameRequest.type, token, error, null, false);
+					});
 				};
 				const middleware = client.clientOptions.middleware!;
 				return middleware.provideRenameEdits
@@ -2585,6 +2612,9 @@ class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameR
 							position: client.code2ProtocolConverter.asPosition(position),
 						};
 						return client.sendRequest(PrepareRenameRequest.type, params, token).then((result) => {
+							if (token.isCancellationRequested) {
+								return null;
+							}
 							if (Range.is(result)) {
 								return client.protocol2CodeConverter.asRange(result);
 							} else if (this.isDefaultBehavior(result)) {
@@ -2599,15 +2629,13 @@ class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameR
 							}
 							// To cancel the rename vscode API expects a rejected promise.
 							return Promise.reject(new Error(`The element can't be renamed.`));
-						},
-						(error: ResponseError<void>) => {
+						}, (error: ResponseError<void>) => {
 							if (typeof error.message === 'string') {
 								throw new Error(error.message);
 							} else {
 								throw new Error(`The element can't be renamed.`);
 							}
-						}
-						);
+						});
 					};
 					const middleware = client.clientOptions.middleware!;
 					return middleware.prepareRename
@@ -2654,12 +2682,14 @@ class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkOptions, Docum
 				}
 				const client = this._client;
 				const provideDocumentLinks: ProvideDocumentLinksSignature = (document, token) => {
-					return client.sendRequest(DocumentLinkRequest.type, client.code2ProtocolConverter.asDocumentLinkParams(document), token).then(
-						client.protocol2CodeConverter.asDocumentLinks,
-						(error: ResponseError<void>) => {
-							return client.handleFailedRequest(DocumentLinkRequest.type, token, error, null);
+					return client.sendRequest(DocumentLinkRequest.type, client.code2ProtocolConverter.asDocumentLinkParams(document), token).then((result) => {
+						if (token.isCancellationRequested) {
+							return null;
 						}
-					);
+						return client.protocol2CodeConverter.asDocumentLinks(result);
+					}, (error: ResponseError<void>) => {
+						return client.handleFailedRequest(DocumentLinkRequest.type, token, error, null);
+					});
 				};
 				const middleware = client.clientOptions.middleware!;
 				return middleware.provideDocumentLinks
@@ -2670,12 +2700,14 @@ class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkOptions, Docum
 				? (link, token) => {
 					const client = this._client;
 					let resolveDocumentLink: ResolveDocumentLinkSignature = (link, token) => {
-						return client.sendRequest(DocumentLinkResolveRequest.type, client.code2ProtocolConverter.asDocumentLink(link), token).then(
-							client.protocol2CodeConverter.asDocumentLink,
-							(error: ResponseError<void>) => {
-								return client.handleFailedRequest(DocumentLinkResolveRequest.type, token, error, link);
+						return client.sendRequest(DocumentLinkResolveRequest.type, client.code2ProtocolConverter.asDocumentLink(link), token).then((result) => {
+							if (token.isCancellationRequested) {
+								return link;
 							}
-						);
+							return client.protocol2CodeConverter.asDocumentLink(result);
+						}, (error: ResponseError<void>) => {
+							return client.handleFailedRequest(DocumentLinkResolveRequest.type, token, error, link);
+						});
 					};
 					const middleware = client.clientOptions.middleware!;
 					return middleware.resolveDocumentLink

@@ -59,12 +59,14 @@ export class FoldingRangeFeature extends TextDocumentFeature<boolean | FoldingRa
 					const requestParams: FoldingRangeParams = {
 						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document)
 					};
-					return client.sendRequest(FoldingRangeRequest.type, requestParams, token).then(
-						FoldingRangeFeature.asFoldingRanges,
-						(error: any) => {
-							return client.handleFailedRequest(FoldingRangeRequest.type, token, error, null);
+					return client.sendRequest(FoldingRangeRequest.type, requestParams, token).then((result) => {
+						if (token.isCancellationRequested) {
+							return null;
 						}
-					);
+						return FoldingRangeFeature.asFoldingRanges(result);
+					}, (error: any) => {
+						return client.handleFailedRequest(FoldingRangeRequest.type, token, error, null);
+					});
 				};
 				const middleware = client.clientOptions.middleware!;
 				return middleware.provideFoldingRanges

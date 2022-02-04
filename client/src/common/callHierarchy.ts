@@ -62,14 +62,14 @@ class CallHierarchyProvider implements VCallHierarchyProvider {
 				return undefined;
 			}
 			const params = client.code2ProtocolConverter.asTextDocumentPositionParams(document, position);
-			return client.sendRequest(CallHierarchyPrepareRequest.type, params, token).then(
-				(result) => {
-					return client.protocol2CodeConverter.asCallHierarchyItems(result);
-				},
-				(error) => {
-					return client.handleFailedRequest(CallHierarchyPrepareRequest.type, token, error, null);
+			return client.sendRequest(CallHierarchyPrepareRequest.type, params, token).then((result) => {
+				if (token.isCancellationRequested) {
+					return null;
 				}
-			);
+				return client.protocol2CodeConverter.asCallHierarchyItems(result);
+			}, (error) => {
+				return client.handleFailedRequest(CallHierarchyPrepareRequest.type, token, error, null);
+			});
 		};
 		return middleware.prepareCallHierarchy
 			? middleware.prepareCallHierarchy(document, position, token, prepareCallHierarchy)
@@ -83,14 +83,14 @@ class CallHierarchyProvider implements VCallHierarchyProvider {
 			const params: CallHierarchyIncomingCallsParams = {
 				item:  client.code2ProtocolConverter.asCallHierarchyItem(item)
 			};
-			return client.sendRequest(CallHierarchyIncomingCallsRequest.type, params, token).then(
-				(result) => {
-					return client.protocol2CodeConverter.asCallHierarchyIncomingCalls(result);
-				},
-				(error) => {
-					return client.handleFailedRequest(CallHierarchyIncomingCallsRequest.type, token, error, null);
+			return client.sendRequest(CallHierarchyIncomingCallsRequest.type, params, token).then((result) => {
+				if (token.isCancellationRequested) {
+					return null;
 				}
-			);
+				return client.protocol2CodeConverter.asCallHierarchyIncomingCalls(result);
+			}, (error) => {
+				return client.handleFailedRequest(CallHierarchyIncomingCallsRequest.type, token, error, null);
+			});
 		};
 		return middleware.provideCallHierarchyIncomingCalls
 			? middleware.provideCallHierarchyIncomingCalls(item, token, provideCallHierarchyIncomingCalls)
@@ -104,14 +104,14 @@ class CallHierarchyProvider implements VCallHierarchyProvider {
 			const params: CallHierarchyOutgoingCallsParams = {
 				item: client.code2ProtocolConverter.asCallHierarchyItem(item)
 			};
-			return client.sendRequest(CallHierarchyOutgoingCallsRequest.type, params, token).then(
-				(result) => {
-					return client.protocol2CodeConverter.asCallHierarchyOutgoingCalls(result);
-				},
-				(error) => {
-					return client.handleFailedRequest(CallHierarchyOutgoingCallsRequest.type, token, error, null);
+			return client.sendRequest(CallHierarchyOutgoingCallsRequest.type, params, token).then((result) => {
+				if (token.isCancellationRequested){
+					return null;
 				}
-			);
+				return client.protocol2CodeConverter.asCallHierarchyOutgoingCalls(result);
+			}, (error) => {
+				return client.handleFailedRequest(CallHierarchyOutgoingCallsRequest.type, token, error, null);
+			});
 		};
 		return middleware.provideCallHierarchyOutgoingCalls
 			? middleware.provideCallHierarchyOutgoingCalls(item, token, provideCallHierarchyOutgoingCalls)

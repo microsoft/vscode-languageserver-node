@@ -58,12 +58,14 @@ export class SelectionRangeFeature extends TextDocumentFeature<boolean | Selecti
 						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
 						positions: client.code2ProtocolConverter.asPositions(positions)
 					};
-					return client.sendRequest(SelectionRangeRequest.type, requestParams, token).then(
-						(ranges) => client.protocol2CodeConverter.asSelectionRanges(ranges),
-						(error: any) => {
-							return client.handleFailedRequest(SelectionRangeRequest.type, token, error, null);
+					return client.sendRequest(SelectionRangeRequest.type, requestParams, token).then((ranges) => {
+						if (token.isCancellationRequested) {
+							return null;
 						}
-					);
+						return client.protocol2CodeConverter.asSelectionRanges(ranges);
+					}, (error: any) => {
+						return client.handleFailedRequest(SelectionRangeRequest.type, token, error, null);
+					});
 				};
 				const middleware = client.clientOptions.middleware!;
 				return middleware.provideSelectionRanges

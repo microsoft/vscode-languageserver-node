@@ -811,7 +811,6 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				}
 			}
 		}
-
 	}
 
 	function handleNotification(message: NotificationMessage) {

@@ -55,12 +55,14 @@ export class DeclarationFeature extends TextDocumentFeature<boolean | Declaratio
 				}
 				const client = this._client;
 				const provideDeclaration: ProvideDeclarationSignature = (document, position, token) => {
-					return client.sendRequest(DeclarationRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
-						client.protocol2CodeConverter.asDeclarationResult,
-						(error) => {
-							return client.handleFailedRequest(DeclarationRequest.type, token, error, null);
+					return client.sendRequest(DeclarationRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then((result) => {
+						if (token.isCancellationRequested) {
+							return null;
 						}
-					);
+						return client.protocol2CodeConverter.asDeclarationResult(result);
+					}, (error) => {
+						return client.handleFailedRequest(DeclarationRequest.type, token, error, null);
+					});
 				};
 				const middleware = client.clientOptions.middleware!;
 				return middleware.provideDeclaration
