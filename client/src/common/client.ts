@@ -1779,7 +1779,7 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asCompletionResult(result, defaultCommitCharacters);
+						return client.protocol2CodeConverter.asCompletionResult(result, defaultCommitCharacters, token);
 					}, (error) => {
 						return client.handleFailedRequest(CompletionRequest.type, token, error, null);
 					});
@@ -3746,7 +3746,7 @@ export abstract class BaseLanguageClient {
 		this._diagnosticQueue.delete(document);
 		const tokenSource = new CancellationTokenSource();
 		this._diagnosticQueueState = { state: 'busy', document: document, tokenSource };
-		this._p2c.asDiagnosticsAsync(diagnostics, tokenSource.token).then((converted) => {
+		this._p2c.asDiagnostics(diagnostics, tokenSource.token).then((converted) => {
 			if (!tokenSource.token.isCancellationRequested) {
 				const uri = this._p2c.asUri(document);
 				let middleware = this.clientOptions.middleware!;

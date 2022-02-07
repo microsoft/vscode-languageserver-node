@@ -133,7 +133,7 @@ suite('Protocol Converter', () => {
 		strictEqual(p2c.asDiagnosticTag(proto.DiagnosticTag.Deprecated), vscode.DiagnosticTag.Deprecated);
 	});
 
-	test('Diagnostic', () => {
+	test('Diagnostic', async () => {
 		const start: proto.Position = { line: 1, character: 2 };
 		const end: proto.Position = { line: 8, character: 9 };
 		const location: proto.Location = proto.Location.create('file://localhost/folder/file', proto.Range.create(0, 1, 2, 3));
@@ -167,7 +167,7 @@ suite('Protocol Converter', () => {
 		strictEqual(result.relatedInformation![0].location.uri.toString(), 'file://localhost/folder/file');
 		strictEqual(result.relatedInformation![0].location.range.end.character, 3);
 
-		ok(p2c.asDiagnostics([diagnostic]).every(value => value instanceof vscode.Diagnostic));
+		ok((await p2c.asDiagnostics([diagnostic])).every(value => value instanceof vscode.Diagnostic));
 	});
 
 	test('Diagnostic - Complex Code', () => {
@@ -356,7 +356,7 @@ suite('Protocol Converter', () => {
 		strictEqual(result.tags![0], CompletionItemTag.Deprecated);
 	});
 
-	test('Completion Item - Full', () => {
+	test('Completion Item - Full', async () => {
 		const command = proto.Command.create('title', 'commandId');
 		command.arguments = ['args'];
 
@@ -394,7 +394,7 @@ suite('Protocol Converter', () => {
 		strictEqual(result.commitCharacters![0], '.');
 		ok(result.additionalTextEdits![0] instanceof vscode.TextEdit);
 
-		const completionResult = p2c.asCompletionResult([completionItem]);
+		const completionResult = await p2c.asCompletionResult([completionItem]);
 		ok(completionResult.every(value => value instanceof vscode.CompletionItem));
 	});
 
@@ -674,41 +674,41 @@ suite('Protocol Converter', () => {
 		strictEqual(result.commitCharacters![0], ':');
 	});
 
-	test('Completion Result', () => {
+	test('Completion Result', async () => {
 		const completionResult: proto.CompletionList = {
 			isIncomplete: true,
 			items: [{ label: 'item', data: 'data' }]
 		};
-		const result = p2c.asCompletionResult(completionResult);
+		const result = await p2c.asCompletionResult(completionResult);
 		strictEqual(result.isIncomplete, completionResult.isIncomplete);
 		strictEqual(result.items.length, 1);
 		strictEqual(result.items[0].label, 'item');
 
-		strictEqual(p2c.asCompletionResult(undefined), undefined);
-		strictEqual(p2c.asCompletionResult(null), undefined);
-		deepEqual(p2c.asCompletionResult([]), []);
+		strictEqual(await p2c.asCompletionResult(undefined), undefined);
+		strictEqual(await p2c.asCompletionResult(null), undefined);
+		deepEqual(await p2c.asCompletionResult([]), []);
 	});
 
-	test('Completion Result - edit range', () => {
+	test('Completion Result - edit range', async () => {
 		const completionResult: proto.CompletionList = {
 			isIncomplete: true,
 			itemDefaults:  { editRange: proto.Range.create(1,2,3,4) },
 			items: [{ label: 'item', data: 'data' }]
 		};
-		const result = p2c.asCompletionResult(completionResult);
+		const result = await p2c.asCompletionResult(completionResult);
 		strictEqual(result.isIncomplete, completionResult.isIncomplete);
 		strictEqual(result.items.length, 1);
 		strictEqual(result.items[0].label, 'item');
 		rangeEqual(result.items[0].range as vscode.Range, completionResult.itemDefaults?.editRange as proto.Range);
 	});
 
-	test('Completion Result - insert / replace range', () => {
+	test('Completion Result - insert / replace range', async () => {
 		const completionResult: proto.CompletionList = {
 			isIncomplete: true,
 			itemDefaults: { editRange: { insert: proto.Range.create(1,1,1,1), replace: proto.Range.create(1,2,3,4) } },
 			items: [{ label: 'item', data: 'data' }]
 		};
-		const result = p2c.asCompletionResult(completionResult);
+		const result = await p2c.asCompletionResult(completionResult);
 		strictEqual(result.isIncomplete, completionResult.isIncomplete);
 		strictEqual(result.items.length, 1);
 		strictEqual(result.items[0].label, 'item');
@@ -717,13 +717,13 @@ suite('Protocol Converter', () => {
 		rangeEqual((range as { replacing: vscode.Range }).replacing, (completionResult.itemDefaults?.editRange as { replace: proto.Range}).replace);
 	});
 
-	test('Completion Result - commit characters', () => {
+	test('Completion Result - commit characters', async () => {
 		const completionResult: proto.CompletionList = {
 			isIncomplete: true,
 			itemDefaults: { commitCharacters: ['.', ',']},
 			items: [{ label: 'item', data: 'data' }]
 		};
-		const result = p2c.asCompletionResult(completionResult);
+		const result = await p2c.asCompletionResult(completionResult);
 		strictEqual(result.isIncomplete, completionResult.isIncomplete);
 		strictEqual(result.items.length, 1);
 		strictEqual(result.items[0].label, 'item');
@@ -733,26 +733,26 @@ suite('Protocol Converter', () => {
 		strictEqual(commitCharacters[1], ',');
 	});
 
-	test('Completion Result - insert text mode', () => {
+	test('Completion Result - insert text mode', async () => {
 		const completionResult: proto.CompletionList = {
 			isIncomplete: true,
 			itemDefaults: { insertTextMode: proto.InsertTextMode.asIs },
 			items: [{ label: 'item', data: 'data' }]
 		};
-		const result = p2c.asCompletionResult(completionResult);
+		const result = await p2c.asCompletionResult(completionResult);
 		strictEqual(result.isIncomplete, completionResult.isIncomplete);
 		strictEqual(result.items.length, 1);
 		strictEqual(result.items[0].label, 'item');
 		strictEqual(result.items[0].keepWhitespace, true);
 	});
 
-	test('Completion Result - insert text format', () => {
+	test('Completion Result - insert text format', async () => {
 		const completionResult: proto.CompletionList = {
 			isIncomplete: true,
 			itemDefaults: { insertTextFormat: proto.InsertTextFormat.Snippet },
 			items: [{ label: 'item', insertText: '${value}', data: 'data' }]
 		};
-		const result = p2c.asCompletionResult(completionResult);
+		const result = await p2c.asCompletionResult(completionResult);
 		strictEqual(result.isIncomplete, completionResult.isIncomplete);
 		strictEqual(result.items.length, 1);
 		strictEqual(result.items[0].label, 'item');

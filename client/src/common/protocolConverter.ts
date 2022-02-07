@@ -26,11 +26,6 @@ export interface Converter {
 
 	asUri(value: string): code.Uri;
 
-	asDiagnostic(diagnostic: ls.Diagnostic): code.Diagnostic;
-
-	asDiagnostics(diagnostics: ls.Diagnostic[]): code.Diagnostic[];
-	asDiagnosticsAsync(diagnostics: ls.Diagnostic[], token: code.CancellationToken): Promise<code.Diagnostic[]>;
-
 	asPosition(value: undefined | null): undefined;
 	asPosition(value: ls.Position): code.Position;
 	asPosition(value: ls.Position | undefined | null): code.Position | undefined;
@@ -39,19 +34,23 @@ export interface Converter {
 	asRange(value: ls.Range): code.Range;
 	asRange(value: ls.Range | undefined | null): code.Range | undefined;
 
-	asRanges(values: ls.Range[]): code.Range[];
+	asRanges(items: ReadonlyArray<ls.Range>, token?: code.CancellationToken): Promise<code.Range[]>;
+
+	asDiagnostic(diagnostic: ls.Diagnostic): code.Diagnostic;
+
+	asDiagnostics(diagnostics: ls.Diagnostic[], token?: code.CancellationToken): Promise<code.Diagnostic[]>;
 
 	asDiagnosticSeverity(value: number | undefined | null): code.DiagnosticSeverity;
 	asDiagnosticTag(tag: ls.DiagnosticTag): code.DiagnosticTag | undefined;
 
-	asHover(hover: ls.Hover): code.Hover;
 	asHover(hover: undefined | null): undefined;
+	asHover(hover: ls.Hover): code.Hover;
 	asHover(hover: ls.Hover | undefined | null): code.Hover | undefined;
 
-	asCompletionResult(result: ls.CompletionList, defaultCommitCharacters?: string[]): code.CompletionList;
-	asCompletionResult(result: ls.CompletionItem[], defaultCommitCharacters?: string[]): code.CompletionItem[];
-	asCompletionResult(result: undefined | null, defaultCommitCharacters?: string[]): undefined;
-	asCompletionResult(result: ls.CompletionItem[] | ls.CompletionList | undefined | null, defaultCommitCharacters?: string[]): code.CompletionItem[] | code.CompletionList | undefined;
+	asCompletionResult(value: undefined | null, allCommitCharacters?: string[], token?: code.CancellationToken): Promise<undefined>;
+	asCompletionResult(value: ls.CompletionList, allCommitCharacters?: string[], token?: code.CancellationToken): Promise<code.CompletionList>;
+	asCompletionResult(value: ls.CompletionItem[], allCommitCharacters?: string[], token?: code.CancellationToken): Promise<code.CompletionItem[]>;
+	asCompletionResult(value: ls.CompletionItem[] | ls.CompletionList | undefined | null, allCommitCharacters?: string[], token?: code.CancellationToken): Promise<code.CompletionItem[] | code.CompletionList | undefined>;
 
 	asCompletionItem(item: ls.CompletionItem, defaultCommitCharacters?: string[]): ProtocolCompletionItem;
 
@@ -271,27 +270,26 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return _uriConverter(value);
 	}
 
-	async function asDiagnosticsAsync(diagnostics: ls.Diagnostic[], token: code.CancellationToken): Promise<code.Diagnostic[]> {
-		const result: code.Diagnostic[] = new Array(diagnostics.length);
+	async function asItemsAsync<P, C>(items: ReadonlyArray<P>, func: (item: P) => C, token?: code.CancellationToken): Promise<C[]> {
+		const result: C[] = new Array(items.length);
 		function convertBatch(start: number): Promise<number> {
 			return new Promise((resolve) => {
 				ls.RAL().timer.setImmediate(() => {
 					const startTime = Date.now();
-					for (let i = start; i < diagnostics.length; i++) {
-						result[i] = asDiagnostic(diagnostics[i]);
+					for (let i = start; i < items.length; i++) {
+						result[i] = func(items[i]);
 						if (Date.now() - startTime > yieldEveryMilliseconds)  {
 							resolve(i + 1);
 							return;
 						}
 					}
 					resolve(-1);
-
 				});
 			});
 		}
 		let index = 0;
 		while (index !== -1) {
-			if (token.isCancellationRequested) {
+			if (token !== undefined && token.isCancellationRequested) {
 				break;
 			}
 			index = await convertBatch(index);
@@ -299,7 +297,11 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return result;
 	}
 
-	function asDiagnostics(diagnostics: ls.Diagnostic[]): code.Diagnostic[] {
+	async function asDiagnostics(diagnostics: ReadonlyArray<ls.Diagnostic>, token?: code.CancellationToken): Promise<code.Diagnostic[]> {
+		return asItemsAsync(diagnostics, asDiagnostic, token);
+	}
+
+	function asDiagnosticsSync(diagnostics: ls.Diagnostic[]): code.Diagnostic[] {
 		const result: code.Diagnostic[] = new Array(diagnostics.length);
 		for (let i = 0; i < diagnostics.length; i++) {
 			result[i] = asDiagnostic(diagnostics[i]);
@@ -387,8 +389,18 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return value ? new code.Range(value.start.line, value.start.character, value.end.line, value.end.character) : undefined;
 	}
 
-	function asRanges(value: ReadonlyArray<ls.Range>): code.Range[] {
-		return value.map(value => asRange(value));
+	async function asRanges(items: ReadonlyArray<ls.Range>, token?: code.CancellationToken): Promise<code.Range[]> {
+		return asItemsAsync(items, (range: ls.Range) => {
+			return new code.Range(range.start.line, range.start.character, range.end.line, range.end.character);
+		}, token);
+	}
+
+	function asRangesSync(items: ReadonlyArray<ls.Range>): code.Range[] {
+		const result: code.Range[] = new Array(items.length);
+		for (let i = 0; i < items.length; i++) {
+			result[i] = asRange(items[i]);
+		}
+		return result;
 	}
 
 	function asDiagnosticSeverity(value: number | undefined | null): code.DiagnosticSeverity {
@@ -475,28 +487,21 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return new code.Hover(asHoverContent(hover.contents), asRange(hover.range));
 	}
 
-	function asCompletionResult(result: ls.CompletionList, allCommitCharacters?: string[]): code.CompletionList;
-	function asCompletionResult(result: ls.CompletionItem[], allCommitCharacters?: string[]): code.CompletionItem[];
-	function asCompletionResult(result: undefined | null, allCommitCharacters?: string[]): undefined;
-	function asCompletionResult(result: ls.CompletionItem[] | ls.CompletionList | undefined | null, allCommitCharacters?: string[]): code.CompletionItem[] | code.CompletionList | undefined;
-	function asCompletionResult(result: ls.CompletionItem[] | ls.CompletionList | undefined | null, allCommitCharacters?: string[]): code.CompletionItem[] | code.CompletionList | undefined {
-		if (!result) {
+	function asCompletionResult(value: ls.CompletionList, allCommitCharacters: string[] | undefined, token?: code.CancellationToken): Promise<code.CompletionList>;
+	function asCompletionResult(value: ls.CompletionItem[], allCommitCharacters: string[] | undefined, token?: code.CancellationToken): Promise<code.CompletionItem[]>;
+	function asCompletionResult(value: undefined | null, allCommitCharacters: string[] | undefined, token?: code.CancellationToken): Promise<undefined>;
+	function asCompletionResult(value: ls.CompletionItem[] | ls.CompletionList | undefined | null, allCommitCharacters: string[] | undefined, token?: code.CancellationToken): Promise<code.CompletionItem[] | code.CompletionList | undefined>;
+	async function asCompletionResult(value: ls.CompletionItem[] | ls.CompletionList | undefined | null, allCommitCharacters: string[] | undefined, token?: code.CancellationToken): Promise<code.CompletionItem[]| code.CompletionList | undefined> {
+		if (!value) {
 			return undefined;
 		}
-		if (Array.isArray(result)) {
-			let items = <ls.CompletionItem[]>result;
-			return items.map(item => asCompletionItem(item, allCommitCharacters));
+		if (Array.isArray(value)) {
+			return asItemsAsync(value, (item) => asCompletionItem(item, allCommitCharacters), token);
 		}
-		const list = <ls.CompletionList>result;
-		const rangeDefaults = list.itemDefaults?.editRange;
-		const [range, inserting, replacing] = ls.Range.is(rangeDefaults)
-			? [asRange(rangeDefaults), undefined, undefined]
-			: rangeDefaults !== undefined
-				? [undefined, asRange(rangeDefaults.insert), asRange(rangeDefaults.replace)]
-				: [undefined, undefined, undefined];
-		const commitCharacterDefaults = list.itemDefaults?.commitCharacters ?? allCommitCharacters;
-		return new code.CompletionList(list.items.map((item) => {
-			const result = asCompletionItem(item, commitCharacterDefaults, list.itemDefaults?.insertTextMode, list.itemDefaults?.insertTextFormat);
+		const list = <ls.CompletionList>value;
+		const { range, inserting, replacing, commitCharacters } = getCompletionItemDefaults(list, allCommitCharacters);
+		const converted = await asItemsAsync(list.items, (item) => {
+			const result = asCompletionItem(item, commitCharacters, list.itemDefaults?.insertTextMode, list.itemDefaults?.insertTextFormat);
 			if (result.range === undefined) {
 				if (range !== undefined) {
 					result.range = range;
@@ -505,8 +510,20 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 				}
 			}
 			return result;
-		}), list.isIncomplete);
+		}, token);
+		return new code.CompletionList(converted, list.isIncomplete);
 	}
+
+	function getCompletionItemDefaults(list: ls.CompletionList, allCommitCharacters?: string[]): { range: code.Range | undefined; inserting: code.Range | undefined; replacing: code.Range | undefined; commitCharacters: string[] | undefined} {
+		const rangeDefaults = list.itemDefaults?.editRange;
+		const commitCharacters = list.itemDefaults?.commitCharacters ?? allCommitCharacters;
+		return ls.Range.is(rangeDefaults)
+			? {range: asRange(rangeDefaults), inserting: undefined, replacing: undefined, commitCharacters }
+			: rangeDefaults !== undefined
+				? { range: undefined, inserting: asRange(rangeDefaults.insert), replacing: asRange(rangeDefaults.replace), commitCharacters}
+				: { range: undefined, inserting: undefined, replacing: undefined, commitCharacters };
+	}
+
 
 	function asCompletionItemKind(value: ls.CompletionItemKind): [code.CompletionItemKind, ls.CompletionItemKind | undefined] {
 		// Protocol item kind is 1 based, codes item kind is zero based.
@@ -768,7 +785,11 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		if (!values) {
 			return undefined;
 		}
-		return values.map(location => asLocation(location));
+		const result: code.Location[] = new Array(values.length);
+		for (let i = 0; i < values.length; i++) {
+			result[i] = asLocation(values[i]);
+		}
+		return result;
 	}
 
 	function asDocumentHighlights(values: ls.DocumentHighlight[]): code.DocumentHighlight[];
@@ -962,7 +983,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		}
 		let result = new ProtocolCodeAction(item.title, item.data);
 		if (item.kind !== undefined) { result.kind = asCodeActionKind(item.kind); }
-		if (item.diagnostics !== undefined) { result.diagnostics = asDiagnostics(item.diagnostics); }
+		if (item.diagnostics !== undefined) { result.diagnostics = asDiagnosticsSync(item.diagnostics); }
 		if (item.edit !== undefined) { result.edit = asWorkspaceEdit(item.edit); }
 		if (item.command !== undefined) { result.command = asCommand(item.command); }
 		if (item.isPreferred !== undefined) { result.isPreferred = item.isPreferred; }
@@ -1225,7 +1246,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 	function asCallHierarchyIncomingCall(item: ls.CallHierarchyIncomingCall): code.CallHierarchyIncomingCall {
 		return new code.CallHierarchyIncomingCall(
 			asCallHierarchyItem(item.from),
-			asRanges(item.fromRanges)
+			asRangesSync(item.fromRanges)
 		);
 	}
 	function asCallHierarchyIncomingCalls(items: null): undefined;
@@ -1241,7 +1262,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 	function asCallHierarchyOutgoingCall(item: ls.CallHierarchyOutgoingCall): code.CallHierarchyOutgoingCall {
 		return new code.CallHierarchyOutgoingCall(
 			asCallHierarchyItem(item.to),
-			asRanges(item.fromRanges)
+			asRangesSync(item.fromRanges)
 		);
 	}
 
@@ -1292,7 +1313,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		if (value === null || value === undefined) {
 			return undefined;
 		}
-		return new code.LinkedEditingRanges(asRanges(value.ranges), asRegularExpression(value.wordPattern));
+		return new code.LinkedEditingRanges(asRangesSync(value.ranges), asRegularExpression(value.wordPattern));
 	}
 
 	function asRegularExpression(value: null | undefined): undefined;
@@ -1339,7 +1360,6 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 	return {
 		asUri,
 		asDiagnostics,
-		asDiagnosticsAsync,
 		asDiagnostic,
 		asRange,
 		asRanges,

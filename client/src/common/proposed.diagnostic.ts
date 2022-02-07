@@ -445,12 +445,12 @@ class DiagnosticRequestor implements Disposable {
 						textDocument: { uri: this.client.code2ProtocolConverter.asUri(textDocument.uri) },
 						previousResultId: previousResultId
 					};
-					return this.client.sendRequest(Proposed.DocumentDiagnosticRequest.type, params, token).then((result) => {
+					return this.client.sendRequest(Proposed.DocumentDiagnosticRequest.type, params, token).then(async (result) => {
 						if (result === undefined || result === null || this.isDisposed || token.isCancellationRequested) {
 							return { kind: vsdiag.DocumentDiagnosticReportKind.full, items: [] };
 						}
 						if (result.kind === Proposed.DocumentDiagnosticReportKind.full) {
-							return { kind: vsdiag.DocumentDiagnosticReportKind.full, resultId: result.resultId, items: this.client.protocol2CodeConverter.asDiagnostics(result.items) };
+							return { kind: vsdiag.DocumentDiagnosticReportKind.full, resultId: result.resultId, items: await this.client.protocol2CodeConverter.asDiagnostics(result.items, token) };
 						} else {
 							return { kind: vsdiag.DocumentDiagnosticReportKind.unChanged, resultId: result.resultId };
 						}
@@ -466,14 +466,14 @@ class DiagnosticRequestor implements Disposable {
 		};
 		if (this.options.workspaceDiagnostics) {
 			result.provideWorkspaceDiagnostics = (resultIds, token, resultReporter): ProviderResult<vsdiag.WorkspaceDiagnosticReport> => {
-				const convertReport = (report: Proposed.WorkspaceDocumentDiagnosticReport): vsdiag.WorkspaceDocumentDiagnosticReport => {
+				const convertReport = async (report: Proposed.WorkspaceDocumentDiagnosticReport): Promise<vsdiag.WorkspaceDocumentDiagnosticReport> => {
 					if (report.kind === Proposed.DocumentDiagnosticReportKind.full) {
 						return {
 							kind: vsdiag.DocumentDiagnosticReportKind.full,
 							uri: this.client.protocol2CodeConverter.asUri(report.uri),
 							resultId: report.resultId,
 							version: report.version,
-							items: this.client.protocol2CodeConverter.asDiagnostics(report.items)
+							items: await this.client.protocol2CodeConverter.asDiagnostics(report.items, token)
 						};
 					} else {
 						return {
@@ -493,7 +493,7 @@ class DiagnosticRequestor implements Disposable {
 				};
 				const provideDiagnostics: ProvideWorkspaceDiagnosticSignature = (resultIds, token): ProviderResult<vsdiag.WorkspaceDiagnosticReport> => {
 					const partialResultToken: string = generateUuid();
-					const disposable = this.client.onProgress(Proposed.WorkspaceDiagnosticRequest.partialResult, partialResultToken, (partialResult) => {
+					const disposable = this.client.onProgress(Proposed.WorkspaceDiagnosticRequest.partialResult, partialResultToken, async (partialResult) => {
 						if (partialResult === undefined || partialResult === null) {
 							resultReporter(null);
 							return;
@@ -502,7 +502,11 @@ class DiagnosticRequestor implements Disposable {
 							items: []
 						};
 						for (const item of partialResult.items) {
-							converted.items.push(convertReport(item));
+							try {
+								converted.items.push(await convertReport(item));
+							} catch (error) {
+								this.client.error(`Converting workspace diagnostics failed.`, error);
+							}
 						}
 						resultReporter(converted);
 					});
@@ -511,7 +515,7 @@ class DiagnosticRequestor implements Disposable {
 						previousResultIds: convertPreviousResultIds(resultIds),
 						partialResultToken: partialResultToken
 					};
-					return this.client.sendRequest(Proposed.WorkspaceDiagnosticRequest.type, params, token).then((result): vsdiag.WorkspaceDiagnosticReport => {
+					return this.client.sendRequest(Proposed.WorkspaceDiagnosticRequest.type, params, token).then(async (result): Promise<vsdiag.WorkspaceDiagnosticReport> => {
 						if (token.isCancellationRequested) {
 							return { items: [] };
 						}
@@ -519,7 +523,7 @@ class DiagnosticRequestor implements Disposable {
 							items: []
 						};
 						for (const item of result.items) {
-							converted.items.push(convertReport(item));
+							converted.items.push(await convertReport(item));
 						}
 						disposable.dispose();
 						resultReporter(converted);
