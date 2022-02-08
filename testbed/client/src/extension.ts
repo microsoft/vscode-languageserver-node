@@ -50,8 +50,8 @@ export function activate(context: ExtensionContext) {
 	};
 
 	client = new LanguageClient('testbed', 'Testbed', serverOptions, clientOptions);
-	client.registerFeature(ProposedFeatures.createNotebookDocumentSyncFeature(client));
-	// client.registerProposedFeatures();
+	// client.registerFeature(ProposedFeatures.createNotebookDocumentSyncFeature(client));
+	client.registerProposedFeatures();
 	// let not: NotificationType<string[], void> = new NotificationType<string[], void>('testbed/notification');
 	void client.onReady().then(() => {
 		return client.sendNotification('testbed/notification', ['dirk', 'baeumer']);
