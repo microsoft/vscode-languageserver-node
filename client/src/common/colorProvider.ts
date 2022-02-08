@@ -65,7 +65,7 @@ export class ColorProviderFeature extends TextDocumentFeature<boolean | Document
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return this._client.protocol2CodeConverter.asColorPresentations(result);
+						return this._client.protocol2CodeConverter.asColorPresentations(result, token);
 					}, (error: any) => {
 						return client.handleFailedRequest(ColorPresentationRequest.type, token, error, null);
 					});
@@ -88,7 +88,7 @@ export class ColorProviderFeature extends TextDocumentFeature<boolean | Document
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return this._client.protocol2CodeConverter.asColorInformations(result);
+						return this._client.protocol2CodeConverter.asColorInformations(result, token);
 					}, (error: any) => {
 						return client.handleFailedRequest(ColorPresentationRequest.type, token, error, null);
 					});

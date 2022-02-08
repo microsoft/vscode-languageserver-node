@@ -44,7 +44,7 @@ import {
 	DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams, DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams,
 	DocumentOnTypeFormattingRegistrationOptions, RenameRequest, RenameParams, RenameRegistrationOptions, PrepareRenameRequest, TextDocumentPositionParams,
 	DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkRegistrationOptions, ExecuteCommandRequest, ExecuteCommandParams, ExecuteCommandRegistrationOptions,
-	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse, MarkupKind, SymbolKind, CompletionItemKind, CodeActionKind,
+	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, MarkupKind, SymbolKind, CompletionItemKind, CodeActionKind,
 	DocumentSymbol, SymbolInformation, Range, CodeActionRegistrationOptions, TextDocumentEdit, ResourceOperationKind, FailureHandlingKind, ProgressType, ProgressToken,
 	WorkDoneProgressOptions, StaticRegistrationOptions, CompletionOptions, HoverRegistrationOptions, HoverOptions, SignatureHelpOptions, DefinitionRegistrationOptions,
 	DefinitionOptions, ReferenceRegistrationOptions, ReferenceOptions, DocumentHighlightRegistrationOptions, DocumentHighlightOptions, DocumentSymbolRegistrationOptions,
@@ -55,7 +55,7 @@ import {
 	FileOperationRegistrationOptions, WillCreateFilesRequest, WillRenameFilesRequest, WillDeleteFilesRequest, DidCreateFilesNotification, DidDeleteFilesNotification,
 	DidRenameFilesNotification, ShowDocumentParams, ShowDocumentResult, LinkedEditingRangeRequest, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressEnd,
 	WorkDoneProgressReport, PrepareSupportDefaultBehavior, SemanticTokensRequest, SemanticTokensRangeRequest, SemanticTokensDeltaRequest, Proposed, WorkspaceSymbolResolveRequest,
-	NotebookCellTextDocumentFilter, TextDocumentFilter, NotebookDocumentFilter, Diagnostic
+	NotebookCellTextDocumentFilter, TextDocumentFilter, NotebookDocumentFilter, Diagnostic, ApplyWorkspaceEditResult
 } from 'vscode-languageserver-protocol';
 
 import { toJSONObject } from './configuration';
@@ -1902,7 +1902,7 @@ class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpOptions, Sig
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asSignatureHelp(result);
+						return client.protocol2CodeConverter.asSignatureHelp(result, token);
 					}, (error) => {
 						return client.handleFailedRequest(SignatureHelpRequest.type, token, error, null);
 					});
@@ -1962,7 +1962,7 @@ class DefinitionFeature extends TextDocumentFeature<boolean | DefinitionOptions,
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asDefinitionResult(result);
+						return client.protocol2CodeConverter.asDefinitionResult(result, token);
 					}, (error) => {
 						return client.handleFailedRequest(DefinitionRequest.type, token, error, null);
 					});
@@ -2008,7 +2008,7 @@ class ReferencesFeature extends TextDocumentFeature<boolean | ReferenceOptions, 
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asReferences(result);
+						return client.protocol2CodeConverter.asReferences(result, token);
 					}, (error) => {
 						return client.handleFailedRequest(ReferencesRequest.type, token, error, null);
 					});
@@ -2054,7 +2054,7 @@ class DocumentHighlightFeature extends TextDocumentFeature<boolean | DocumentHig
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asDocumentHighlights(result);
+						return client.protocol2CodeConverter.asDocumentHighlights(result, token);
 					}, (error) => {
 						return client.handleFailedRequest(DocumentHighlightRequest.type, token, error, null);
 					});
@@ -2171,7 +2171,7 @@ class WorkspaceSymbolFeature extends WorkspaceFeature<WorkspaceSymbolRegistratio
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asSymbolInformations(result);
+						return client.protocol2CodeConverter.asSymbolInformations(result, token);
 					}, (error) => {
 						return client.handleFailedRequest(WorkspaceSymbolRequest.type, token, error, null);
 					});
@@ -2283,7 +2283,7 @@ class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions,
 							if (token.isCancellationRequested) {
 								return item;
 							}
-							return client.protocol2CodeConverter.asCodeAction(result);
+							return client.protocol2CodeConverter.asCodeAction(result, token);
 						}, (error) => {
 							return client.handleFailedRequest(CodeActionResolveRequest.type, token, error, item);
 						});
@@ -2346,7 +2346,7 @@ class CodeLensFeature extends TextDocumentFeature<CodeLensOptions, CodeLensRegis
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asCodeLenses(result);
+						return client.protocol2CodeConverter.asCodeLenses(result, token);
 					}, (error) => {
 						return client.handleFailedRequest(CodeLensRequest.type, token, error, null);
 					});
@@ -2415,7 +2415,7 @@ class DocumentFormattingFeature extends TextDocumentFeature<boolean | DocumentFo
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asTextEdits(result);
+						return client.protocol2CodeConverter.asTextEdits(result, token);
 					}, (error) => {
 						return client.handleFailedRequest(DocumentFormattingRequest.type, token, error, null);
 					});
@@ -2466,7 +2466,7 @@ class DocumentRangeFormattingFeature extends TextDocumentFeature<boolean | Docum
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asTextEdits(result);
+						return client.protocol2CodeConverter.asTextEdits(result, token);
 					}, (error) => {
 						return client.handleFailedRequest(DocumentRangeFormattingRequest.type, token, error, null);
 					});
@@ -2518,7 +2518,7 @@ class DocumentOnTypeFormattingFeature extends TextDocumentFeature<DocumentOnType
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asTextEdits(result);
+						return client.protocol2CodeConverter.asTextEdits(result, token);
 					}, (error) => {
 						return client.handleFailedRequest(DocumentOnTypeFormattingRequest.type, token, error, null);
 					});
@@ -2582,7 +2582,7 @@ class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameR
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asWorkspaceEdit(result);
+						return client.protocol2CodeConverter.asWorkspaceEdit(result, token);
 					}, (error: ResponseError<void>) => {
 						return client.handleFailedRequest(RenameRequest.type, token, error, null, false);
 					});
@@ -2678,7 +2678,7 @@ class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkOptions, Docum
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asDocumentLinks(result);
+						return client.protocol2CodeConverter.asDocumentLinks(result, token);
 					}, (error: ResponseError<void>) => {
 						return client.handleFailedRequest(DocumentLinkRequest.type, token, error, null);
 					});
@@ -4068,7 +4068,7 @@ export abstract class BaseLanguageClient {
 		});
 	}
 
-	private handleApplyWorkspaceEdit(params: ApplyWorkspaceEditParams): Promise<ApplyWorkspaceEditResponse> {
+	private async handleApplyWorkspaceEdit(params: ApplyWorkspaceEditParams): Promise<ApplyWorkspaceEditResult> {
 		// This is some sort of workaround since the version check should be done by VS Code in the Workspace.applyEdit.
 		// However doing it here adds some safety since the server can lag more behind then an extension.
 		let workspaceEdit: WorkspaceEdit = params.edit;
@@ -4089,7 +4089,7 @@ export abstract class BaseLanguageClient {
 		if (versionMismatch) {
 			return Promise.resolve({ applied: false });
 		}
-		return Is.asPromise(Workspace.applyEdit(this._p2c.asWorkspaceEdit(params.edit)).then((value) => { return { applied: value }; }));
+		return Is.asPromise(Workspace.applyEdit(await this._p2c.asWorkspaceEdit(params.edit)).then((value) => { return { applied: value }; }));
 	}
 
 	private static RequestsToCancelOnContentModified: Set<string> = new Set([

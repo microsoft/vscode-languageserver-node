@@ -839,7 +839,7 @@ suite('Protocol Converter', () => {
 		ok((await p2c.asReferences([location])).every(value => value instanceof vscode.Location));
 	});
 
-	test('Definition', () => {
+	test('Definition', async () => {
 		const start: proto.Position = { line: 1, character: 2 };
 		const end: proto.Position = { line: 8, character: 9 };
 		const location: proto.Location = {
@@ -847,16 +847,16 @@ suite('Protocol Converter', () => {
 			range: { start, end }
 		};
 
-		const single = <vscode.Location>p2c.asDefinitionResult(location);
+		const single = <vscode.Location> await p2c.asDefinitionResult(location);
 		ok(single.uri instanceof vscode.Uri);
 		ok(single.range instanceof vscode.Range);
 
-		const array = <vscode.Location[]>p2c.asDefinitionResult([location]);
+		const array = <vscode.Location[]> await p2c.asDefinitionResult([location]);
 		ok(array.every(value => value instanceof vscode.Location));
 
-		strictEqual(p2c.asDefinitionResult(undefined), undefined);
-		strictEqual(p2c.asDefinitionResult(null), undefined);
-		deepEqual(p2c.asDefinitionResult([]), []);
+		strictEqual(await p2c.asDefinitionResult(undefined), undefined);
+		strictEqual(await p2c.asDefinitionResult(null), undefined);
+		deepEqual(await p2c.asDefinitionResult([]), []);
 	});
 
 	test('Document Highlight Kind', () => {
@@ -887,7 +887,7 @@ suite('Protocol Converter', () => {
 		deepEqual(await p2c.asDocumentHighlights([]), []);
 	});
 
-	test('Document Links', () => {
+	test('Document Links', async () => {
 		const location = 'file:///foo/bar';
 		const tooltip = 'tooltip';
 		const start: proto.Position = { line: 1, character: 2 };
@@ -902,10 +902,10 @@ suite('Protocol Converter', () => {
 		strictEqual(result.target!.toString(), location);
 		strictEqual(result.tooltip, tooltip);
 
-		ok(p2c.asDocumentLinks([documentLink]).every(value => value instanceof vscode.DocumentLink));
-		strictEqual(p2c.asDocumentLinks(undefined), undefined);
-		strictEqual(p2c.asDocumentLinks(null), undefined);
-		deepEqual(p2c.asDocumentLinks([]), []);
+		ok((await p2c.asDocumentLinks([documentLink])).every(value => value instanceof vscode.DocumentLink));
+		strictEqual(await p2c.asDocumentLinks(undefined), undefined);
+		strictEqual(await p2c.asDocumentLinks(null), undefined);
+		deepEqual(await p2c.asDocumentLinks([]), []);
 	});
 
 	test('SymbolInformation', async () => {
@@ -1050,7 +1050,7 @@ suite('Protocol Converter', () => {
 		deepEqual(await p2c.asCommands([]), []);
 	});
 
-	test('Code Lens', () => {
+	test('Code Lens', async () => {
 		const codeLens: proto.CodeLens = proto.CodeLens.create(proto.Range.create(1, 2, 8, 9), 'data');
 
 		let result = p2c.asCodeLens(codeLens);
@@ -1061,10 +1061,10 @@ suite('Protocol Converter', () => {
 		strictEqual(result.command!.title, codeLens.command.title);
 		strictEqual(result.command!.command, codeLens.command.command);
 
-		ok(p2c.asCodeLenses([codeLens]).every(elem => elem instanceof vscode.CodeLens));
-		strictEqual(p2c.asCodeLenses(undefined), undefined);
-		strictEqual(p2c.asCodeLenses(null), undefined);
-		deepEqual(p2c.asCodeLenses([]), []);
+		ok((await p2c.asCodeLenses([codeLens])).every(elem => elem instanceof vscode.CodeLens));
+		strictEqual(await p2c.asCodeLenses(undefined), undefined);
+		strictEqual(await p2c.asCodeLenses(null), undefined);
+		deepEqual(await p2c.asCodeLenses([]), []);
 	});
 
 	test('Code Lens Preserve Data', () => {
@@ -1073,7 +1073,7 @@ suite('Protocol Converter', () => {
 		strictEqual(result.data, codeLens.data);
 	});
 
-	test('WorkspaceEdit', () => {
+	test('WorkspaceEdit', async () => {
 		const workspaceChange = new proto.WorkspaceChange();
 		const uri1 = 'file:///abc.txt';
 		const change1 = workspaceChange.getTextEditChange({ uri: uri1, version: 1 });
@@ -1082,7 +1082,7 @@ suite('Protocol Converter', () => {
 		const change2 = workspaceChange.getTextEditChange({ uri: uri2, version: 99 });
 		change2.replace(proto.Range.create(0, 1, 2, 3), 'replace');
 
-		const result = p2c.asWorkspaceEdit(workspaceChange.edit);
+		const result = await p2c.asWorkspaceEdit(workspaceChange.edit);
 		let edits = result.get(vscode.Uri.parse(uri1));
 		strictEqual(edits.length, 1);
 		rangeEqual(edits[0].range, proto.Range.create(0, 1, 0, 1));
@@ -1093,8 +1093,8 @@ suite('Protocol Converter', () => {
 		rangeEqual(edits[0].range, proto.Range.create(0, 1, 2, 3));
 		strictEqual(edits[0].newText, 'replace');
 
-		strictEqual(p2c.asWorkspaceEdit(undefined), undefined);
-		strictEqual(p2c.asWorkspaceEdit(null), undefined);
+		strictEqual(await p2c.asWorkspaceEdit(undefined), undefined);
+		strictEqual(await p2c.asWorkspaceEdit(null), undefined);
 	});
 
 	test('Uri Rewrite', () => {
@@ -1106,7 +1106,7 @@ suite('Protocol Converter', () => {
 		strictEqual('file://localhost/folder/file.vscode', result.toString());
 	});
 
-	test('InlineValues', () => {
+	test('InlineValues', async () => {
 		const items: proto.InlineValue[] = [
 			proto.InlineValueText.create(proto.Range.create(1, 2, 8, 9), 'literalString'),
 			proto.InlineValueVariableLookup.create(proto.Range.create(1, 2, 8, 9), 'varName', false),
@@ -1115,9 +1115,7 @@ suite('Protocol Converter', () => {
 			proto.InlineValueEvaluatableExpression.create(proto.Range.create(1, 2, 8, 9), undefined),
 		];
 
-		const result = p2c.asInlineValues(<any>items);
-
-
+		const result = await p2c.asInlineValues(items);
 		ok(result.every((r) => r.range instanceof vscode.Range));
 		for (const r of result) {
 			rangeEqual(r.range, proto.Range.create(1, 2, 8, 9));

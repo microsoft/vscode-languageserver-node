@@ -7,6 +7,8 @@ import * as code from 'vscode';
 import * as ls from 'vscode-languageserver-protocol';
 
 import * as Is from './utils/is';
+import * as async from './utils/async';
+
 import ProtocolCompletionItem from './protocolCompletionItem';
 import ProtocolCodeLens from './protocolCodeLens';
 import ProtocolDocumentLink from './protocolDocumentLink';
@@ -77,15 +79,15 @@ export interface Converter {
 	asLocation(item: undefined | null): undefined;
 	asLocation(item: ls.Location | undefined | null): code.Location | undefined;
 
-	asDeclarationResult(item: undefined | null): undefined;
-	asDeclarationResult(item: ls.Declaration): code.Location | code.Location[];
-	asDeclarationResult(item: ls.DeclarationLink[]): code.LocationLink[];
-	asDeclarationResult(item: ls.Declaration | ls.DeclarationLink[] | undefined | null): code.Declaration | undefined;
+	asDeclarationResult(item: undefined | null, token?: code.CancellationToken): Promise<undefined>;
+	asDeclarationResult(item: ls.Declaration, token?: code.CancellationToken): Promise<code.Location | code.Location[]>;
+	asDeclarationResult(item: ls.DeclarationLink[], token?: code.CancellationToken): Promise<code.LocationLink[]>;
+	asDeclarationResult(item: ls.Declaration | ls.DeclarationLink[] | undefined | null, token?: code.CancellationToken): Promise<code.Declaration | undefined>;
 
-	asDefinitionResult(item: undefined | null): undefined;
-	asDefinitionResult(item: ls.Definition): code.Definition;
-	asDefinitionResult(item: ls.DefinitionLink[]): code.DefinitionLink[];
-	asDefinitionResult(item: ls.Definition | ls.DefinitionLink[] | undefined | null): code.Definition | code.DefinitionLink[] | undefined;
+	asDefinitionResult(item: undefined | null, token?: code.CancellationToken): Promise<undefined>;
+	asDefinitionResult(item: ls.Definition, token?: code.CancellationToken): Promise<code.Definition>;
+	asDefinitionResult(item: ls.DefinitionLink[], token?: code.CancellationToken): Promise<code.DefinitionLink[]>;
+	asDefinitionResult(item: ls.Definition | ls.DefinitionLink[] | undefined | null, token?: code.CancellationToken): Promise<code.Definition | code.DefinitionLink[] | undefined>;
 
 	asReferences(values: undefined | null, token?: code.CancellationToken): Promise<undefined>;
 	asReferences(values: ls.Location[], token?: code.CancellationToken): Promise<code.Location[]>;
@@ -124,9 +126,9 @@ export interface Converter {
 	asCommands(items: ls.Command[], token?: code.CancellationToken): Promise<code.Command[]>;
 	asCommands(items: ls.Command[] | undefined | null, token?: code.CancellationToken): Promise<code.Command[] | undefined>;
 
-	asCodeAction(item: undefined | null): undefined;
-	asCodeAction(item: ls.CodeAction): code.CodeAction;
-	asCodeAction(item: ls.CodeAction | undefined | null): code.CodeAction | undefined;
+	asCodeAction(item: undefined | null, token?: code.CancellationToken): Promise<undefined>;
+	asCodeAction(item: ls.CodeAction, token?: code.CancellationToken): Promise<code.CodeAction>;
+	asCodeAction(item: ls.CodeAction | undefined | null, token?: code.CancellationToken): Promise<code.CodeAction | undefined>;
 
 	asCodeActionKind(item: null | undefined): undefined;
 	asCodeActionKind(item: ls.CodeActionKind): code.CodeActionKind;
@@ -142,105 +144,97 @@ export interface Converter {
 	asCodeLens(item: undefined | null): undefined;
 	asCodeLens(item: ls.CodeLens | undefined | null): code.CodeLens | undefined;
 
-	asCodeLenses(items: ls.CodeLens[]): code.CodeLens[];
-	asCodeLenses(items: undefined | null): undefined;
-	asCodeLenses(items: ls.CodeLens[] | undefined | null): code.CodeLens[] | undefined;
+	asCodeLenses(items: undefined | null, token?: code.CancellationToken): Promise<undefined>;
+	asCodeLenses(items: ls.CodeLens[], token?: code.CancellationToken): Promise<code.CodeLens[]>;
+	asCodeLenses(items: ls.CodeLens[] | undefined | null, token?: code.CancellationToken): Promise<code.CodeLens[] | undefined>;
 
-	asWorkspaceEdit(item: ls.WorkspaceEdit): code.WorkspaceEdit;
-	asWorkspaceEdit(item: undefined | null): undefined;
-	asWorkspaceEdit(item: ls.WorkspaceEdit | undefined | null): code.WorkspaceEdit | undefined;
+	asWorkspaceEdit(item: undefined | null, token?: code.CancellationToken): Promise<undefined>;
+	asWorkspaceEdit(item: ls.WorkspaceEdit, token?: code.CancellationToken): Promise<code.WorkspaceEdit>;
+	asWorkspaceEdit(item: ls.WorkspaceEdit | undefined | null, token?: code.CancellationToken): Promise<code.WorkspaceEdit | undefined>;
 
 	asDocumentLink(item: ls.DocumentLink): code.DocumentLink;
 
-	asDocumentLinks(items: ls.DocumentLink[]): code.DocumentLink[];
-	asDocumentLinks(items: undefined | null): undefined;
-	asDocumentLinks(items: ls.DocumentLink[] | undefined | null): code.DocumentLink[] | undefined;
+	asDocumentLinks(items: undefined | null, token?: code.CancellationToken): Promise<undefined>;
+	asDocumentLinks(items: ls.DocumentLink[], token?: code.CancellationToken): Promise<code.DocumentLink[]>;
+	asDocumentLinks(items: ls.DocumentLink[] | undefined | null, token?: code.CancellationToken): Promise<code.DocumentLink[] | undefined>;
 
 	asColor(color: ls.Color): code.Color;
 
 	asColorInformation(ci: ls.ColorInformation): code.ColorInformation;
 
-	asColorInformations(colorPresentations: ls.ColorInformation[]): code.ColorInformation[];
-	asColorInformations(colorPresentations: undefined | null): undefined;
-	asColorInformations(colorInformation: ls.ColorInformation[] | undefined | null): code.ColorInformation[];
+	asColorInformations(colorPresentations: undefined | null, token?: code.CancellationToken): Promise<undefined>;
+	asColorInformations(colorPresentations: ls.ColorInformation[], token?: code.CancellationToken): Promise<code.ColorInformation[]>;
+	asColorInformations(colorInformation: ls.ColorInformation[] | undefined | null, token?: code.CancellationToken): Promise<code.ColorInformation[]>;
 
 	asColorPresentation(cp: ls.ColorPresentation): code.ColorPresentation;
 
-	asColorPresentations(colorPresentations: ls.ColorPresentation[]): code.ColorPresentation[];
-	asColorPresentations(colorPresentations: undefined | null): undefined;
-	asColorPresentations(colorPresentations: ls.ColorPresentation[] | undefined | null): undefined;
+	asColorPresentations(colorPresentations: undefined | null, token?: code.CancellationToken): Promise<undefined>;
+	asColorPresentations(colorPresentations: ls.ColorPresentation[], token?: code.CancellationToken): Promise<code.ColorPresentation[]>;
+	asColorPresentations(colorPresentations: ls.ColorPresentation[] | undefined | null, token?: code.CancellationToken): Promise<code.ColorPresentation[] | undefined>;
 
 	asFoldingRangeKind(kind: string | undefined): code.FoldingRangeKind | undefined;
 
 	asFoldingRange(r: ls.FoldingRange): code.FoldingRange;
 
-	asFoldingRanges(foldingRanges: ls.FoldingRange[]): code.FoldingRange[];
-	asFoldingRanges(foldingRanges: undefined | null): undefined;
-	asFoldingRanges(foldingRanges: ls.FoldingRange[] | undefined | null): code.FoldingRange[] | undefined;
-	asFoldingRanges(foldingRanges: ls.FoldingRange[] | undefined | null): code.FoldingRange[] | undefined;
+	asFoldingRanges(foldingRanges: undefined | null, token?: code.CancellationToken): Promise<undefined>;
+	asFoldingRanges(foldingRanges: ls.FoldingRange[], token?: code.CancellationToken): Promise<code.FoldingRange[]>;
+	asFoldingRanges(foldingRanges: ls.FoldingRange[] | undefined | null, token?: code.CancellationToken): Promise<code.FoldingRange[] | undefined>;
 
 	asSelectionRange(selectionRange: ls.SelectionRange): code.SelectionRange;
 
-	asSelectionRanges(selectionRanges: ls.SelectionRange[]): code.SelectionRange[];
-	asSelectionRanges(selectionRanges: undefined | null): undefined;
-	asSelectionRanges(selectionRanges: ls.SelectionRange[] | undefined | null): code.SelectionRange[] | undefined;
-	asSelectionRanges(selectionRanges: ls.SelectionRange[] | undefined | null): code.SelectionRange[] | undefined;
+	asSelectionRanges(selectionRanges: undefined | null, token?: code.CancellationToken): Promise<undefined>;
+	asSelectionRanges(selectionRanges: ls.SelectionRange[], token?: code.CancellationToken): Promise<code.SelectionRange[]>;
+	asSelectionRanges(selectionRanges: ls.SelectionRange[] | undefined | null, token?: code.CancellationToken): Promise<code.SelectionRange[] | undefined>;
 
 	asInlineValue(value: ls.InlineValue): code.InlineValue;
-	asInlineValues(values: ls.InlineValue[]): code.InlineValue[];
-	asInlineValues(values: undefined | null): undefined;
-	asInlineValues(values: ls.InlineValue[] | undefined | null): code.InlineValue[] | undefined;
-	asInlineValues(values: ls.InlineValue[] | undefined | null): code.InlineValue[] | undefined;
+
+	asInlineValues(values: undefined | null, token?: code.CancellationToken): Promise<undefined>;
+	asInlineValues(values: ls.InlineValue[], token?: code.CancellationToken): Promise<code.InlineValue[]>;
+	asInlineValues(values: ls.InlineValue[] | undefined | null, token?: code.CancellationToken): Promise<code.InlineValue[] | undefined>;
 
 	asSemanticTokensLegend(value: ls.SemanticTokensLegend): code.SemanticTokensLegend;
 
-	asSemanticTokens(value: ls.SemanticTokens): code.SemanticTokens;
-	asSemanticTokens(value: undefined | null): undefined;
-	asSemanticTokens(value: ls.SemanticTokens | undefined | null): code.SemanticTokens | undefined;
-	asSemanticTokens(value: ls.SemanticTokens | undefined | null): code.SemanticTokens | undefined;
+	asSemanticTokens(value: undefined | null, token?: code.CancellationToken): Promise<undefined>;
+	asSemanticTokens(value: ls.SemanticTokens, token?: code.CancellationToken): Promise<code.SemanticTokens>;
+	asSemanticTokens(value: ls.SemanticTokens | undefined | null, token?: code.CancellationToken): Promise<code.SemanticTokens | undefined>;
 
 	asSemanticTokensEdit(value: ls.SemanticTokensEdit): code.SemanticTokensEdit;
 
-	asSemanticTokensEdits(value: ls.SemanticTokensDelta): code.SemanticTokensEdits;
-	asSemanticTokensEdits(value: undefined | null): undefined;
-	asSemanticTokensEdits(value: ls.SemanticTokensDelta | undefined | null): code.SemanticTokensEdits | undefined;
-	asSemanticTokensEdits(value: ls.SemanticTokensDelta | undefined | null): code.SemanticTokensEdits | undefined;
+	asSemanticTokensEdits(value: undefined | null, token?: code.CancellationToken): Promise<undefined>;
+	asSemanticTokensEdits(value: ls.SemanticTokensDelta, token?: code.CancellationToken): Promise<code.SemanticTokensEdits>;
+	asSemanticTokensEdits(value: ls.SemanticTokensDelta | undefined | null, token?: code.CancellationToken): Promise<code.SemanticTokensEdits | undefined>;
 
 	asCallHierarchyItem(item: null): undefined;
 	asCallHierarchyItem(item: ls.CallHierarchyItem): code.CallHierarchyItem;
 	asCallHierarchyItem(item: ls.CallHierarchyItem | null): code.CallHierarchyItem | undefined;
-	asCallHierarchyItem(item: ls.CallHierarchyItem | null): code.CallHierarchyItem | undefined;
 
-	asCallHierarchyItems(items: null): undefined;
-	asCallHierarchyItems(items: ls.CallHierarchyItem[]): code.CallHierarchyItem[];
-	asCallHierarchyItems(items: ls.CallHierarchyItem[] | null): code.CallHierarchyItem[] | undefined;
-	asCallHierarchyItems(items: ls.CallHierarchyItem[] | null): code.CallHierarchyItem[] | undefined;
+	asCallHierarchyItems(items: null, token?: code.CancellationToken): Promise<undefined>;
+	asCallHierarchyItems(items: ls.CallHierarchyItem[], token?: code.CancellationToken): Promise<code.CallHierarchyItem[]>;
+	asCallHierarchyItems(items: ls.CallHierarchyItem[] | null, token?: code.CancellationToken): Promise<code.CallHierarchyItem[] | undefined>;
 
-	asCallHierarchyIncomingCall(item: ls.CallHierarchyIncomingCall): code.CallHierarchyIncomingCall;
+	asCallHierarchyIncomingCall(item: ls.CallHierarchyIncomingCall, token?: code.CancellationToken): Promise<code.CallHierarchyIncomingCall>;
 
-	asCallHierarchyIncomingCalls(items: null): undefined;
-	asCallHierarchyIncomingCalls(items: ReadonlyArray<ls.CallHierarchyIncomingCall>): code.CallHierarchyIncomingCall[];
-	asCallHierarchyIncomingCalls(items: ReadonlyArray<ls.CallHierarchyIncomingCall> | null): code.CallHierarchyIncomingCall[] | undefined;
-	asCallHierarchyIncomingCalls(items: ReadonlyArray<ls.CallHierarchyIncomingCall> | null): code.CallHierarchyIncomingCall[] | undefined;
+	asCallHierarchyIncomingCalls(items: null, token?: code.CancellationToken): Promise<undefined>;
+	asCallHierarchyIncomingCalls(items: ReadonlyArray<ls.CallHierarchyIncomingCall>, token?: code.CancellationToken): Promise<code.CallHierarchyIncomingCall[]>;
+	asCallHierarchyIncomingCalls(items: ReadonlyArray<ls.CallHierarchyIncomingCall> | null, token?: code.CancellationToken): Promise<code.CallHierarchyIncomingCall[] | undefined>;
 
-	asCallHierarchyOutgoingCall(item: ls.CallHierarchyOutgoingCall): code.CallHierarchyOutgoingCall;
+	asCallHierarchyOutgoingCall(item: ls.CallHierarchyOutgoingCall, token?: code.CancellationToken): Promise<code.CallHierarchyOutgoingCall>;
 
-	asCallHierarchyOutgoingCalls(items: null): undefined;
-	asCallHierarchyOutgoingCalls(items: ReadonlyArray<ls.CallHierarchyOutgoingCall>): code.CallHierarchyOutgoingCall[];
-	asCallHierarchyOutgoingCalls(items: ReadonlyArray<ls.CallHierarchyOutgoingCall> | null): code.CallHierarchyOutgoingCall[] | undefined;
-	asCallHierarchyOutgoingCalls(items: ReadonlyArray<ls.CallHierarchyOutgoingCall> | null): code.CallHierarchyOutgoingCall[] | undefined;
+	asCallHierarchyOutgoingCalls(items: null, token?: code.CancellationToken): Promise<undefined>;
+	asCallHierarchyOutgoingCalls(items: ReadonlyArray<ls.CallHierarchyOutgoingCall>, token?: code.CancellationToken): Promise<code.CallHierarchyOutgoingCall[]>;
+	asCallHierarchyOutgoingCalls(items: ReadonlyArray<ls.CallHierarchyOutgoingCall> | null, token?: code.CancellationToken): Promise<code.CallHierarchyOutgoingCall[] | undefined>;
 
-	asLinkedEditingRanges(value: null | undefined): undefined;
-	asLinkedEditingRanges(value: ls.LinkedEditingRanges): code.LinkedEditingRanges;
-	asLinkedEditingRanges(value: ls.LinkedEditingRanges | null | undefined): code.LinkedEditingRanges | undefined;
+	asLinkedEditingRanges(value: null | undefined, token?: code.CancellationToken): Promise<undefined>;
+	asLinkedEditingRanges(value: ls.LinkedEditingRanges, token?: code.CancellationToken): Promise<code.LinkedEditingRanges>;
+	asLinkedEditingRanges(value: ls.LinkedEditingRanges | null | undefined, token?: code.CancellationToken): Promise<code.LinkedEditingRanges | undefined>;
 
 	asTypeHierarchyItem(item: null): undefined;
 	asTypeHierarchyItem(item: ls.TypeHierarchyItem): code.TypeHierarchyItem;
 	asTypeHierarchyItem(item: ls.TypeHierarchyItem | null): code.TypeHierarchyItem | undefined;
 
-	asTypeHierarchyItems(items: null): undefined;
-	asTypeHierarchyItems(items: ls.TypeHierarchyItem[]): code.TypeHierarchyItem[];
-	asTypeHierarchyItems(items: ls.TypeHierarchyItem[] | null): code.TypeHierarchyItem[] | undefined;
+	asTypeHierarchyItems(items: null, token?: code.CancellationToken): Promise<undefined>;
+	asTypeHierarchyItems(items: ls.TypeHierarchyItem[], token?: code.CancellationToken): Promise<code.TypeHierarchyItem[]>;
+	asTypeHierarchyItems(items: ls.TypeHierarchyItem[] | null, token?: code.CancellationToken): Promise<code.TypeHierarchyItem[] | undefined>;
 }
 
 export interface URIConverter {
@@ -265,74 +259,12 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 
 	const _uriConverter: URIConverter = uriConverter || nullConverter;
 
-	const yieldEveryMilliseconds: number = 15;
-
 	function asUri(value: string): code.Uri {
 		return _uriConverter(value);
 	}
 
-	async function asItemsAsync<P, C>(items: ReadonlyArray<P>, func: (item: P) => C, token?: code.CancellationToken): Promise<C[]> {
-		if (items.length === 0) {
-			return [];
-		}
-		const result: C[] = new Array(items.length);
-		function convertBatch(start: number): number {
-			const startTime = Date.now();
-			for (let i = start; i < items.length; i++) {
-				result[i] = func(items[i]);
-				if (Date.now() - startTime > yieldEveryMilliseconds)  {
-					return i + 1;
-				}
-			}
-			return -1;
-		}
-		// Convert the first batch sync on the same frame.
-		let index = convertBatch(0);
-		while (index !== -1) {
-			if (token !== undefined && token.isCancellationRequested) {
-				break;
-			}
-			index = await new Promise((resolve) => {
-				ls.RAL().timer.setImmediate(() => {
-					resolve(convertBatch(index));
-				});
-			});
-		}
-		return result;
-	}
-
-	async function asItemsAsyncAsync<P, C>(items: ReadonlyArray<P>, func: (item: P, token?: code.CancellationToken) => Promise<C>, token?: code.CancellationToken): Promise<C[]> {
-		if (items.length === 0) {
-			return [];
-		}
-		const result: C[] = new Array(items.length);
-		async function convertBatch(start: number): Promise<number> {
-			const startTime = Date.now();
-			for (let i = start; i < items.length; i++) {
-				result[i] = await func(items[i], token);
-				if (Date.now() - startTime > yieldEveryMilliseconds)  {
-					return i + 1;
-				}
-			}
-			return -1;
-		}
-		// Convert the first batch sync on the same frame.
-		let index = await convertBatch(0);
-		while (index !== -1) {
-			if (token !== undefined && token.isCancellationRequested) {
-				break;
-			}
-			index = await new Promise((resolve) => {
-				ls.RAL().timer.setImmediate(() => {
-					resolve(convertBatch(index));
-				});
-			});
-		}
-		return result;
-	}
-
 	async function asDiagnostics(diagnostics: ReadonlyArray<ls.Diagnostic>, token?: code.CancellationToken): Promise<code.Diagnostic[]> {
-		return asItemsAsync(diagnostics, asDiagnostic, token);
+		return async.map(diagnostics, asDiagnostic, token);
 	}
 
 	function asDiagnosticsSync(diagnostics: ls.Diagnostic[]): code.Diagnostic[] {
@@ -424,17 +356,9 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 	}
 
 	async function asRanges(items: ReadonlyArray<ls.Range>, token?: code.CancellationToken): Promise<code.Range[]> {
-		return asItemsAsync(items, (range: ls.Range) => {
+		return async.map(items, (range: ls.Range) => {
 			return new code.Range(range.start.line, range.start.character, range.end.line, range.end.character);
 		}, token);
-	}
-
-	function asRangesSync(items: ReadonlyArray<ls.Range>): code.Range[] {
-		const result: code.Range[] = new Array(items.length);
-		for (let i = 0; i < items.length; i++) {
-			result[i] = asRange(items[i]);
-		}
-		return result;
 	}
 
 	function asDiagnosticSeverity(value: number | undefined | null): code.DiagnosticSeverity {
@@ -530,11 +454,11 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 			return undefined;
 		}
 		if (Array.isArray(value)) {
-			return asItemsAsync(value, (item) => asCompletionItem(item, allCommitCharacters), token);
+			return async.map(value, (item) => asCompletionItem(item, allCommitCharacters), token);
 		}
 		const list = <ls.CompletionList>value;
 		const { range, inserting, replacing, commitCharacters } = getCompletionItemDefaults(list, allCommitCharacters);
-		const converted = await asItemsAsync(list.items, (item) => {
+		const converted = await async.map(list.items, (item) => {
 			const result = asCompletionItem(item, commitCharacters, list.itemDefaults?.insertTextMode, list.itemDefaults?.insertTextFormat);
 			if (result.range === undefined) {
 				if (range !== undefined) {
@@ -696,7 +620,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		if (!items) {
 			return undefined;
 		}
-		return asItemsAsync(items, asTextEdit, token);
+		return async.map(items, asTextEdit, token);
 	}
 
 	function asTextEditsSync(items: undefined | null): undefined;
@@ -738,7 +662,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 	}
 
 	async function asSignatureInformations(items: ls.SignatureInformation[], token?: code.CancellationToken): Promise<code.SignatureInformation[]> {
-		return asItemsAsyncAsync(items, asSignatureInformation, token);
+		return async.mapAsync(items, asSignatureInformation, token);
 	}
 
 	async function asSignatureInformation(item: ls.SignatureInformation, token?: code.CancellationToken): Promise<code.SignatureInformation> {
@@ -750,7 +674,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 	}
 
 	function asParameterInformations(items: ls.ParameterInformation[], token?: code.CancellationToken): Promise<code.ParameterInformation[]> {
-		return asItemsAsync(items, asParameterInformation, token);
+		return async.map(items, asParameterInformation, token);
 	}
 
 	function asParameterInformation(item: ls.ParameterInformation): code.ParameterInformation {
@@ -767,24 +691,24 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return item ? new code.Location(_uriConverter(item.uri), asRange(item.range)) : undefined;
 	}
 
-	function asDeclarationResult(item: ls.Declaration): code.Location | code.Location[];
-	function asDeclarationResult(item: ls.DeclarationLink[]): code.LocationLink[];
-	function asDeclarationResult(item: undefined | null): undefined;
-	function asDeclarationResult(item: ls.Declaration | ls.DeclarationLink[] | undefined | null): code.Declaration | undefined {
+	function asDeclarationResult(item: undefined | null, token?: code.CancellationToken): Promise<undefined>;
+	function asDeclarationResult(item: ls.Declaration, token?: code.CancellationToken): Promise<code.Location | code.Location[]>;
+	function asDeclarationResult(item: ls.DeclarationLink[], token?: code.CancellationToken): Promise<code.LocationLink[]>;
+	async function asDeclarationResult(item: ls.Declaration | ls.DeclarationLink[] | undefined | null, token?: code.CancellationToken): Promise<code.Declaration | undefined> {
 		if (!item) {
 			return undefined;
 		}
-		return asLocationResult(item);
+		return asLocationResult(item, token);
 	}
 
-	function asDefinitionResult(item: ls.Definition): code.Definition;
-	function asDefinitionResult(item: ls.DefinitionLink[]): code.DefinitionLink[];
-	function asDefinitionResult(item: undefined | null): undefined;
-	function asDefinitionResult(item: ls.Definition | ls.DefinitionLink[] | undefined | null): code.Definition | code.DefinitionLink[] | undefined {
+	function asDefinitionResult(item: undefined | null, token?: code.CancellationToken): Promise<undefined>;
+	function asDefinitionResult(item: ls.Definition, token?: code.CancellationToken): Promise<code.Definition>;
+	function asDefinitionResult(item: ls.DefinitionLink[], token?: code.CancellationToken): Promise<code.DefinitionLink[]>;
+	async function asDefinitionResult(item: ls.Definition | ls.DefinitionLink[] | undefined | null, token?: code.CancellationToken): Promise<code.Definition | code.DefinitionLink[] | undefined> {
 		if (!item) {
 			return undefined;
 		}
-		return asLocationResult(item);
+		return asLocationResult(item, token);
 	}
 
 	function asLocationLink(item: undefined | null): undefined;
@@ -805,7 +729,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return result;
 	}
 
-	function asLocationResult(item: ls.Location | ls.Location[] | ls.LocationLink[] | undefined | null): code.Location | code.Location[] | code.LocationLink[] | undefined {
+	async function asLocationResult(item: ls.Location | ls.Location[] | ls.LocationLink[] | undefined | null, token?: code.CancellationToken): Promise<code.Location | code.Location[] | code.LocationLink[] | undefined> {
 		if (!item) {
 			return undefined;
 		}
@@ -813,11 +737,11 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 			if (item.length === 0) {
 				return [];
 			} else if (ls.LocationLink.is(item[0])) {
-				let links = item as ls.LocationLink[];
-				return links.map((link) => asLocationLink(link));
+				const links = item as ls.LocationLink[];
+				return async.map(links, asLocationLink, token);
 			} else {
-				let locations = item as ls.Location[];
-				return locations.map((location) => asLocation(location));
+				const locations = item as ls.Location[];
+				return async.map(locations, (asLocation as (item: ls.Location) => code.Location), token);
 			}
 		} else if (ls.LocationLink.is(item)) {
 			return [asLocationLink(item)];
@@ -833,7 +757,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		if (!values) {
 			return undefined;
 		}
-		return asItemsAsync(values, (asLocation as (item: ls.Location) => code.Location), token);
+		return async.map(values, (asLocation as (item: ls.Location) => code.Location), token);
 	}
 
 	function asDocumentHighlights(values: undefined | null, token?: code.CancellationToken): Promise<undefined>;
@@ -843,7 +767,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		if (!values) {
 			return undefined;
 		}
-		return asItemsAsync(values, asDocumentHighlight, token);
+		return async.map(values, asDocumentHighlight, token);
 	}
 
 	function asDocumentHighlight(item: ls.DocumentHighlight): code.DocumentHighlight {
@@ -871,7 +795,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		if (!values) {
 			return undefined;
 		}
-		return asItemsAsync(values, asSymbolInformation, token);
+		return async.map(values, asSymbolInformation, token);
 	}
 
 	function asSymbolKind(item: ls.SymbolKind): code.SymbolKind {
@@ -928,7 +852,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		if (values === undefined || values === null) {
 			return undefined;
 		}
-		return asItemsAsync(values, asDocumentSymbol, token);
+		return async.map(values, asDocumentSymbol, token);
 	}
 
 	function asDocumentSymbol(value: ls.DocumentSymbol): code.DocumentSymbol {
@@ -976,7 +900,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		if (!items) {
 			return undefined;
 		}
-		return asItemsAsync(items, asCommand, token);
+		return async.map(items, asCommand, token);
 	}
 
 	const kindMapping: Map<ls.CodeActionKind, code.CodeActionKind> = new Map();
@@ -1018,17 +942,17 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return items.map(kind => asCodeActionKind(kind));
 	}
 
-	function asCodeAction(item: ls.CodeAction): code.CodeAction;
-	function asCodeAction(item: undefined | null): undefined;
-	function asCodeAction(item: ls.CodeAction | undefined | null): code.CodeAction | undefined;
-	function asCodeAction(item: ls.CodeAction | undefined | null): code.CodeAction | undefined {
+	function asCodeAction(item: undefined | null, token?: code.CancellationToken): Promise<undefined>;
+	function asCodeAction(item: ls.CodeAction, token?: code.CancellationToken): Promise<code.CodeAction>;
+	function asCodeAction(item: ls.CodeAction | undefined | null, token?: code.CancellationToken): Promise<code.CodeAction | undefined>;
+	async function asCodeAction(item: ls.CodeAction | undefined | null, token?: code.CancellationToken): Promise<code.CodeAction | undefined> {
 		if (item === undefined || item === null) {
 			return undefined;
 		}
 		let result = new ProtocolCodeAction(item.title, item.data);
 		if (item.kind !== undefined) { result.kind = asCodeActionKind(item.kind); }
 		if (item.diagnostics !== undefined) { result.diagnostics = asDiagnosticsSync(item.diagnostics); }
-		if (item.edit !== undefined) { result.edit = asWorkspaceEdit(item.edit); }
+		if (item.edit !== undefined) { result.edit = await asWorkspaceEdit(item.edit, token); }
 		if (item.command !== undefined) { result.command = asCommand(item.command); }
 		if (item.isPreferred !== undefined) { result.isPreferred = item.isPreferred; }
 		if (item.disabled !== undefined) { result.disabled = { reason: item.disabled.reason }; }
@@ -1036,17 +960,17 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 	}
 
 	function asCodeActionResult(items: (ls.Command | ls.CodeAction)[], token?: code.CancellationToken): Promise<(code.Command | code.CodeAction)[]> {
-		return asItemsAsync(items, (item) => {
+		return async.mapAsync(items, async (item) => {
 			if (ls.Command.is(item)) {
 				return asCommand(item);
 			} else {
-				return asCodeAction(item);
+				return asCodeAction(item, token);
 			}
 		}, token);
 	}
 
-	function asCodeLens(item: ls.CodeLens): code.CodeLens;
 	function asCodeLens(item: undefined | null): undefined;
+	function asCodeLens(item: ls.CodeLens): code.CodeLens;
 	function asCodeLens(item: ls.CodeLens | undefined | null): code.CodeLens | undefined;
 	function asCodeLens(item: ls.CodeLens | undefined | null): code.CodeLens | undefined {
 		if (!item) {
@@ -1058,29 +982,31 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return result;
 	}
 
-	function asCodeLenses(items: ls.CodeLens[]): code.CodeLens[];
-	function asCodeLenses(items: undefined | null): undefined;
-	function asCodeLenses(items: ls.CodeLens[] | undefined | null): code.CodeLens[] | undefined;
-	function asCodeLenses(items: ls.CodeLens[] | undefined | null): code.CodeLens[] | undefined {
+	function asCodeLenses(items: undefined | null, token?: code.CancellationToken): Promise<undefined>;
+	function asCodeLenses(items: ls.CodeLens[], token?: code.CancellationToken): Promise<code.CodeLens[]>;
+	function asCodeLenses(items: ls.CodeLens[] | undefined | null, token?: code.CancellationToken): Promise<code.CodeLens[] | undefined>;
+	async function asCodeLenses(items: ls.CodeLens[] | undefined | null, token?: code.CancellationToken): Promise<code.CodeLens[] | undefined> {
 		if (!items) {
 			return undefined;
 		}
-		return items.map((codeLens) => asCodeLens(codeLens));
+		return async.map(items, (asCodeLens as (item: ls.CodeLens) => code.CodeLens), token);
 	}
 
-	function asWorkspaceEdit(item: ls.WorkspaceEdit): code.WorkspaceEdit;
-	function asWorkspaceEdit(item: undefined | null): undefined;
-	function asWorkspaceEdit(item: ls.WorkspaceEdit | undefined | null): code.WorkspaceEdit | undefined;
-	function asWorkspaceEdit(item: ls.WorkspaceEdit | undefined | null): code.WorkspaceEdit | undefined {
+	function asWorkspaceEdit(item: undefined | null, token?: code.CancellationToken): Promise<undefined>;
+	function asWorkspaceEdit(item: ls.WorkspaceEdit, token?: code.CancellationToken): Promise<code.WorkspaceEdit>;
+	function asWorkspaceEdit(item: ls.WorkspaceEdit | undefined | null, token?: code.CancellationToken): Promise<code.WorkspaceEdit | undefined>;
+	async function asWorkspaceEdit(item: ls.WorkspaceEdit | undefined | null, token?: code.CancellationToken): Promise<code.WorkspaceEdit | undefined> {
 		if (!item) {
 			return undefined;
 		}
 		const sharedMetadata: Map<string, code.WorkspaceEditEntryMetadata> = new Map();
 		if (item.changeAnnotations !== undefined) {
-			for (const key of Object.keys(item.changeAnnotations)) {
-				const metaData = asWorkspaceEditEntryMetadata(item.changeAnnotations[key]);
+			const changeAnnotations = item.changeAnnotations;
+			await async.forEach(Object.keys(changeAnnotations), (key) => {
+				const metaData = asWorkspaceEditEntryMetadata(changeAnnotations[key]);
 				sharedMetadata.set(key, metaData);
-			}
+
+			}, token);
 		}
 		const asMetadata = (annotation: ls.ChangeAnnotationIdentifier | undefined): code.WorkspaceEditEntryMetadata | undefined => {
 			if (annotation === undefined) {
@@ -1091,7 +1017,8 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		};
 		const result = new code.WorkspaceEdit();
 		if (item.documentChanges) {
-			for (const change of item.documentChanges) {
+			const documentChanges = item.documentChanges;
+			await async.forEach(documentChanges, (change) => {
 				if (ls.CreateFile.is(change)) {
 					result.createFile(_uriConverter(change.uri), change.options, asMetadata(change.annotationId));
 				} else if (ls.RenameFile.is(change)) {
@@ -1110,11 +1037,12 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 				} else {
 					throw new Error(`Unknown workspace edit change received:\n${JSON.stringify(change, undefined, 4)}`);
 				}
-			}
+			}, token);
 		} else if (item.changes) {
-			Object.keys(item.changes).forEach(key => {
-				result.set(_uriConverter(key), asTextEditsSync(item.changes![key]));
-			});
+			const changes = item.changes;
+			await async.forEach(Object.keys(changes), (key) => {
+				result.set(_uriConverter(key), asTextEditsSync(changes[key]));
+			}, token);
 		}
 		return result;
 	}
@@ -1139,14 +1067,14 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return link;
 	}
 
-	function asDocumentLinks(items: ls.DocumentLink[]): code.DocumentLink[];
-	function asDocumentLinks(items: undefined | null): undefined;
-	function asDocumentLinks(items: ls.DocumentLink[] | undefined | null): code.DocumentLink[] | undefined;
-	function asDocumentLinks(items: ls.DocumentLink[] | undefined | null): code.DocumentLink[] | undefined {
+	function asDocumentLinks(items: undefined | null, token?: code.CancellationToken): Promise<undefined>;
+	function asDocumentLinks(items: ls.DocumentLink[], token?: code.CancellationToken): Promise<code.DocumentLink[]>;
+	function asDocumentLinks(items: ls.DocumentLink[] | undefined | null, token?: code.CancellationToken): Promise<code.DocumentLink[] | undefined>;
+	async function asDocumentLinks(items: ls.DocumentLink[] | undefined | null, token?: code.CancellationToken): Promise<code.DocumentLink[] | undefined> {
 		if (!items) {
 			return undefined;
 		}
-		return items.map(asDocumentLink);
+		return async.map(items, asDocumentLink, token);
 	}
 
 	function asColor(color: ls.Color): code.Color {
@@ -1157,13 +1085,13 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return new code.ColorInformation(asRange(ci.range), asColor(ci.color));
 	}
 
-	function asColorInformations(colorPresentations: ls.ColorInformation[]): code.ColorInformation[];
-	function asColorInformations(colorPresentations: undefined | null): undefined;
-	function asColorInformations(colorInformation: ls.ColorInformation[] | undefined | null): code.ColorInformation[] | undefined {
-		if (Array.isArray(colorInformation)) {
-			return colorInformation.map(asColorInformation);
+	function asColorInformations(colorInformation: undefined | null, token?: code.CancellationToken): Promise<undefined>;
+	function asColorInformations(colorInformation: ls.ColorInformation[], token?: code.CancellationToken): Promise<code.ColorInformation[]>;
+	async function asColorInformations(colorInformation: ls.ColorInformation[] | undefined | null, token?: code.CancellationToken): Promise<code.ColorInformation[] | undefined> {
+		if (!colorInformation) {
+			return undefined;
 		}
-		return undefined;
+		return async.map(colorInformation, asColorInformation, token);
 	}
 
 	function asColorPresentation(cp: ls.ColorPresentation): code.ColorPresentation {
@@ -1175,15 +1103,14 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return presentation;
 	}
 
-	function asColorPresentations(colorPresentations: ls.ColorPresentation[]): code.ColorPresentation[];
-	function asColorPresentations(colorPresentations: undefined | null): undefined;
-	function asColorPresentations(colorPresentations: ls.ColorPresentation[] | undefined | null): code.ColorPresentation[] | undefined {
-		if (Array.isArray(colorPresentations)) {
-			return colorPresentations.map(asColorPresentation);
+	function asColorPresentations(colorPresentations: undefined | null, token?: code.CancellationToken): Promise<undefined>;
+	function asColorPresentations(colorPresentations: ls.ColorPresentation[], token?: code.CancellationToken): Promise<code.ColorPresentation[]>;
+	async function asColorPresentations(colorPresentations: ls.ColorPresentation[] | undefined | null, token?: code.CancellationToken): Promise<code.ColorPresentation[] | undefined> {
+		if (!colorPresentations) {
+			return undefined;
 		}
-		return undefined;
+		return async.map(colorPresentations, asColorPresentation, token);
 	}
-
 
 	function asFoldingRangeKind(kind: string | undefined): code.FoldingRangeKind | undefined {
 		if (kind) {
@@ -1203,14 +1130,14 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return new code.FoldingRange(r.startLine, r.endLine, asFoldingRangeKind(r.kind));
 	}
 
-	function asFoldingRanges(foldingRanges: ls.FoldingRange[]): code.FoldingRange[];
-	function asFoldingRanges(foldingRanges: undefined | null): undefined;
-	function asFoldingRanges(foldingRanges: ls.FoldingRange[] | undefined | null): code.FoldingRange[] | undefined;
-	function asFoldingRanges(foldingRanges: ls.FoldingRange[] | undefined | null): code.FoldingRange[] | undefined {
-		if (Array.isArray(foldingRanges)) {
-			return foldingRanges.map(asFoldingRange);
+	function asFoldingRanges(foldingRanges: undefined | null, token?: code.CancellationToken): Promise<undefined>;
+	function asFoldingRanges(foldingRanges: ls.FoldingRange[], token?: code.CancellationToken): Promise<code.FoldingRange[]>;
+	function asFoldingRanges(foldingRanges: ls.FoldingRange[] | undefined | null, token?: code.CancellationToken): Promise<code.FoldingRange[] | undefined>;
+	async function asFoldingRanges(foldingRanges: ls.FoldingRange[] | undefined | null, token?: code.CancellationToken): Promise<code.FoldingRange[] | undefined> {
+		if (!foldingRanges) {
+			return undefined;
 		}
-		return undefined;
+		return async.map(foldingRanges, asFoldingRange, token);
 	}
 
 	function asSelectionRange(selectionRange: ls.SelectionRange): code.SelectionRange {
@@ -1218,18 +1145,15 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 			selectionRange.parent ? asSelectionRange(selectionRange.parent) : undefined
 		);
 	}
-	function asSelectionRanges(selectionRanges: ls.SelectionRange[]): code.SelectionRange[];
-	function asSelectionRanges(selectionRanges: undefined | null): undefined;
-	function asSelectionRanges(selectionRanges: ls.SelectionRange[] | undefined | null): code.SelectionRange[] | undefined;
-	function asSelectionRanges(selectionRanges: ls.SelectionRange[] | undefined | null): code.SelectionRange[] | undefined {
+
+	function asSelectionRanges(selectionRanges: undefined | null, token?: code.CancellationToken): Promise<undefined>;
+	function asSelectionRanges(selectionRanges: ls.SelectionRange[], token?: code.CancellationToken): Promise<code.SelectionRange[]>;
+	function asSelectionRanges(selectionRanges: ls.SelectionRange[] | undefined | null, token?: code.CancellationToken): Promise<code.SelectionRange[] | undefined>;
+	async function asSelectionRanges(selectionRanges: ls.SelectionRange[] | undefined | null, token?: code.CancellationToken): Promise<code.SelectionRange[] | undefined> {
 		if (!Array.isArray(selectionRanges)) {
 			return [];
 		}
-		let result: code.SelectionRange[] = [];
-		for (let range of selectionRanges) {
-			result.push(asSelectionRange(range));
-		}
-		return result;
+		return async.map(selectionRanges, asSelectionRange, token);
 	}
 
 	function asInlineValue(inlineValue: ls.InlineValue): code.InlineValue {
@@ -1251,18 +1175,15 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 			);
 		}
 	}
-	function asInlineValues(inlineValues: ls.InlineValue[]): code.SelectionRange[];
-	function asInlineValues(inlineValues: undefined | null): undefined;
-	function asInlineValues(inlineValues: ls.InlineValue[] | undefined | null): code.InlineValue[] | undefined;
-	function asInlineValues(inlineValues: ls.InlineValue[] | undefined | null): code.InlineValue[] | undefined {
+
+	function asInlineValues(inlineValues: undefined | null, token?: code.CancellationToken): Promise<undefined>;
+	function asInlineValues(inlineValues: ls.InlineValue[], token?: code.CancellationToken): Promise<code.SelectionRange[]>;
+	function asInlineValues(inlineValues: ls.InlineValue[] | undefined | null, token?: code.CancellationToken): Promise<code.InlineValue[] | undefined>;
+	async function asInlineValues(inlineValues: ls.InlineValue[] | undefined | null, token?: code.CancellationToken): Promise<code.InlineValue[] | undefined> {
 		if (!Array.isArray(inlineValues)) {
 			return [];
 		}
-		const result: code.InlineValue[] = [];
-		for (const inlineValue of inlineValues) {
-			result.push(asInlineValue(inlineValue));
-		}
-		return result;
+		return async.map(inlineValues, asInlineValue, token);
 	}
 
 	//----- call hierarchy
@@ -1287,55 +1208,55 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return result;
 	}
 
-	function asCallHierarchyItems(items: null): undefined;
-	function asCallHierarchyItems(items: ls.CallHierarchyItem[]): code.CallHierarchyItem[];
-	function asCallHierarchyItems(items: ls.CallHierarchyItem[] | null): code.CallHierarchyItem[] | undefined;
-	function asCallHierarchyItems(items: ls.CallHierarchyItem[] | null): code.CallHierarchyItem[] | undefined {
+	function asCallHierarchyItems(items: null, token?: code.CancellationToken): Promise<undefined>;
+	function asCallHierarchyItems(items: ls.CallHierarchyItem[], token?: code.CancellationToken): Promise<code.CallHierarchyItem[]>;
+	function asCallHierarchyItems(items: ls.CallHierarchyItem[] | null, token?: code.CancellationToken): Promise<code.CallHierarchyItem[] | undefined>;
+	async function asCallHierarchyItems(items: ls.CallHierarchyItem[] | null, token?: code.CancellationToken): Promise<code.CallHierarchyItem[] | undefined> {
 		if (items === null) {
 			return undefined;
 		}
-		return items.map(item => asCallHierarchyItem(item));
+		return async.map(items, (asCallHierarchyItem as (item: ls.CallHierarchyItem) => code.CallHierarchyItem) , token);
 	}
 
-	function asCallHierarchyIncomingCall(item: ls.CallHierarchyIncomingCall): code.CallHierarchyIncomingCall {
+	async function asCallHierarchyIncomingCall(item: ls.CallHierarchyIncomingCall, token?: code.CancellationToken): Promise<code.CallHierarchyIncomingCall> {
 		return new code.CallHierarchyIncomingCall(
 			asCallHierarchyItem(item.from),
-			asRangesSync(item.fromRanges)
+			await asRanges(item.fromRanges, token)
 		);
 	}
-	function asCallHierarchyIncomingCalls(items: null): undefined;
-	function asCallHierarchyIncomingCalls(items: ReadonlyArray<ls.CallHierarchyIncomingCall>): code.CallHierarchyIncomingCall[];
-	function asCallHierarchyIncomingCalls(items: ReadonlyArray<ls.CallHierarchyIncomingCall> | null): code.CallHierarchyIncomingCall[] | undefined;
-	function asCallHierarchyIncomingCalls(items: ReadonlyArray<ls.CallHierarchyIncomingCall> | null): code.CallHierarchyIncomingCall[] | undefined {
+	function asCallHierarchyIncomingCalls(items: null, token?: code.CancellationToken): Promise<undefined>;
+	function asCallHierarchyIncomingCalls(items: ReadonlyArray<ls.CallHierarchyIncomingCall>, token?: code.CancellationToken): Promise<code.CallHierarchyIncomingCall[]>;
+	function asCallHierarchyIncomingCalls(items: ReadonlyArray<ls.CallHierarchyIncomingCall> | null, token?: code.CancellationToken): Promise<code.CallHierarchyIncomingCall[] | undefined>;
+	async function asCallHierarchyIncomingCalls(items: ReadonlyArray<ls.CallHierarchyIncomingCall> | null, token?: code.CancellationToken): Promise<code.CallHierarchyIncomingCall[] | undefined> {
 		if (items === null) {
 			return undefined;
 		}
-		return items.map(item => asCallHierarchyIncomingCall(item));
+		return async.mapAsync(items, asCallHierarchyIncomingCall, token);
 	}
 
-	function asCallHierarchyOutgoingCall(item: ls.CallHierarchyOutgoingCall): code.CallHierarchyOutgoingCall {
+	async function asCallHierarchyOutgoingCall(item: ls.CallHierarchyOutgoingCall, token?: code.CancellationToken): Promise<code.CallHierarchyOutgoingCall> {
 		return new code.CallHierarchyOutgoingCall(
 			asCallHierarchyItem(item.to),
-			asRangesSync(item.fromRanges)
+			await asRanges(item.fromRanges, token)
 		);
 	}
 
-	function asCallHierarchyOutgoingCalls(items: null): undefined;
-	function asCallHierarchyOutgoingCalls(items: ReadonlyArray<ls.CallHierarchyOutgoingCall>): code.CallHierarchyOutgoingCall[];
-	function asCallHierarchyOutgoingCalls(items: ReadonlyArray<ls.CallHierarchyOutgoingCall> | null): code.CallHierarchyOutgoingCall[] | undefined;
-	function asCallHierarchyOutgoingCalls(items: ReadonlyArray<ls.CallHierarchyOutgoingCall> | null): code.CallHierarchyOutgoingCall[] | undefined {
+	function asCallHierarchyOutgoingCalls(items: null, token?: code.CancellationToken): Promise<undefined>;
+	function asCallHierarchyOutgoingCalls(items: ReadonlyArray<ls.CallHierarchyOutgoingCall>, token?: code.CancellationToken): Promise<code.CallHierarchyOutgoingCall[]>;
+	function asCallHierarchyOutgoingCalls(items: ReadonlyArray<ls.CallHierarchyOutgoingCall> | null, token?: code.CancellationToken): Promise<code.CallHierarchyOutgoingCall[] | undefined>;
+	async function asCallHierarchyOutgoingCalls(items: ReadonlyArray<ls.CallHierarchyOutgoingCall> | null, token?: code.CancellationToken): Promise<code.CallHierarchyOutgoingCall[] | undefined> {
 		if (items === null) {
 			return undefined;
 		}
-		return items.map(item => asCallHierarchyOutgoingCall(item));
+		return async.mapAsync(items, asCallHierarchyOutgoingCall, token);
 	}
 
 	//----- semantic tokens
 
-	function asSemanticTokens(value: ls.SemanticTokens): code.SemanticTokens;
-	function asSemanticTokens(value: undefined | null): undefined;
-	function asSemanticTokens(value: ls.SemanticTokens | undefined | null): code.SemanticTokens | undefined;
-	function asSemanticTokens(value: ls.SemanticTokens | undefined | null): code.SemanticTokens | undefined {
+	function asSemanticTokens(value: undefined | null, token?: code.CancellationToken): Promise<undefined>;
+	function asSemanticTokens(value: ls.SemanticTokens, token?: code.CancellationToken): Promise<code.SemanticTokens>;
+	function asSemanticTokens(value: ls.SemanticTokens | undefined | null, token?: code.CancellationToken): Promise<code.SemanticTokens | undefined>;
+	async function asSemanticTokens(value: ls.SemanticTokens | undefined | null, _token?: code.CancellationToken): Promise<code.SemanticTokens | undefined> {
 		if (value === undefined || value === null) {
 			return undefined;
 		}
@@ -1346,10 +1267,10 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return new code.SemanticTokensEdit(value.start, value.deleteCount, value.data !== undefined ? new Uint32Array(value.data) : undefined);
 	}
 
-	function asSemanticTokensEdits(value: ls.SemanticTokensDelta): code.SemanticTokensEdits;
-	function asSemanticTokensEdits(value: undefined | null): undefined;
-	function asSemanticTokensEdits(value: ls.SemanticTokensDelta | undefined | null): code.SemanticTokensEdits | undefined;
-	function asSemanticTokensEdits(value: ls.SemanticTokensDelta | undefined | null): code.SemanticTokensEdits | undefined {
+	function asSemanticTokensEdits(value: undefined | null, token?: code.CancellationToken): Promise<undefined>;
+	function asSemanticTokensEdits(value: ls.SemanticTokensDelta, token?: code.CancellationToken): Promise<code.SemanticTokensEdits>;
+	function asSemanticTokensEdits(value: ls.SemanticTokensDelta | undefined | null, token?: code.CancellationToken): Promise<code.SemanticTokensEdits | undefined>;
+	async function asSemanticTokensEdits(value: ls.SemanticTokensDelta | undefined | null, _token?: code.CancellationToken): Promise<code.SemanticTokensEdits | undefined> {
 		if (value === undefined || value === null) {
 			return undefined;
 		}
@@ -1360,14 +1281,14 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return value;
 	}
 
-	function asLinkedEditingRanges(value: null | undefined): undefined;
-	function asLinkedEditingRanges(value: ls.LinkedEditingRanges): code.LinkedEditingRanges;
-	function asLinkedEditingRanges(value: ls.LinkedEditingRanges | null | undefined): code.LinkedEditingRanges | undefined;
-	function asLinkedEditingRanges(value: ls.LinkedEditingRanges | null | undefined): code.LinkedEditingRanges | undefined {
+	function asLinkedEditingRanges(value: null | undefined, token?: code.CancellationToken): Promise<undefined>;
+	function asLinkedEditingRanges(value: ls.LinkedEditingRanges, token?: code.CancellationToken): Promise<code.LinkedEditingRanges>;
+	function asLinkedEditingRanges(value: ls.LinkedEditingRanges | null | undefined, token?: code.CancellationToken): Promise<code.LinkedEditingRanges | undefined>;
+	async function asLinkedEditingRanges(value: ls.LinkedEditingRanges | null | undefined, token?: code.CancellationToken): Promise<code.LinkedEditingRanges | undefined> {
 		if (value === null || value === undefined) {
 			return undefined;
 		}
-		return new code.LinkedEditingRanges(asRangesSync(value.ranges), asRegularExpression(value.wordPattern));
+		return new code.LinkedEditingRanges(await asRanges(value.ranges, token), asRegularExpression(value.wordPattern));
 	}
 
 	function asRegularExpression(value: null | undefined): undefined;
@@ -1401,14 +1322,14 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return result;
 	}
 
-	function asTypeHierarchyItems(items: null): undefined;
-	function asTypeHierarchyItems(items: ls.TypeHierarchyItem[]): code.TypeHierarchyItem[];
-	function asTypeHierarchyItems(items: ls.TypeHierarchyItem[] | null): code.TypeHierarchyItem[] | undefined;
-	function asTypeHierarchyItems(items: ls.TypeHierarchyItem[] | null): code.TypeHierarchyItem[] | undefined {
+	function asTypeHierarchyItems(items: null, token?: code.CancellationToken): Promise<undefined>;
+	function asTypeHierarchyItems(items: ls.TypeHierarchyItem[], token?: code.CancellationToken): Promise<code.TypeHierarchyItem[]>;
+	function asTypeHierarchyItems(items: ls.TypeHierarchyItem[] | null, token?: code.CancellationToken): Promise<code.TypeHierarchyItem[] | undefined>;
+	async function asTypeHierarchyItems(items: ls.TypeHierarchyItem[] | null, token?: code.CancellationToken): Promise<code.TypeHierarchyItem[] | undefined> {
 		if (items === null) {
 			return undefined;
 		}
-		return items.map(item => asTypeHierarchyItem(item));
+		return async.map(items, (asTypeHierarchyItem as (item: ls.TypeHierarchyItem) => code.TypeHierarchyItem), token);
 	}
 
 	return {

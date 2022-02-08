@@ -62,7 +62,7 @@ class TypeHierarchyProvider implements VTypeHierarchyProvider {
 				if (token.isCancellationRequested) {
 					return null;
 				}
-				return client.protocol2CodeConverter.asTypeHierarchyItems(result);
+				return client.protocol2CodeConverter.asTypeHierarchyItems(result, token);
 			}, (error) => {
 				return client.handleFailedRequest(Proposed.TypeHierarchyPrepareRequest.type, token, error, null);
 			});
@@ -83,7 +83,7 @@ class TypeHierarchyProvider implements VTypeHierarchyProvider {
 				if (token.isCancellationRequested) {
 					return null;
 				}
-				return client.protocol2CodeConverter.asTypeHierarchyItems(result);
+				return client.protocol2CodeConverter.asTypeHierarchyItems(result, token);
 			}, (error) => {
 				return client.handleFailedRequest(Proposed.TypeHierarchySupertypesRequest.type, token, error, null);
 			});
@@ -104,7 +104,7 @@ class TypeHierarchyProvider implements VTypeHierarchyProvider {
 				if (token.isCancellationRequested) {
 					return null;
 				}
-				return client.protocol2CodeConverter.asTypeHierarchyItems(result);
+				return client.protocol2CodeConverter.asTypeHierarchyItems(result, token);
 			}, (error) => {
 				return client.handleFailedRequest(Proposed.TypeHierarchySubtypesRequest.type, token, error, null);
 			});

@@ -60,7 +60,7 @@ export class LinkedEditingFeature extends TextDocumentFeature<boolean | proto.Li
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asLinkedEditingRanges(result);
+						return client.protocol2CodeConverter.asLinkedEditingRanges(result, token);
 					}, (error) => {
 						return client.handleFailedRequest(proto.LinkedEditingRangeRequest.type, token, error, null);
 					});

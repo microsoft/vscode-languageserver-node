@@ -3,6 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
+import { CancellationToken } from 'vscode';
 import { RAL, Disposable } from 'vscode-languageserver-protocol';
 
 export interface ITask<T> {
@@ -79,5 +80,94 @@ export class Delayer<T> {
 			this.timeout.dispose();
 			this.timeout = undefined;
 		}
+	}
+}
+
+const defaultYieldTimeout: number = 15;
+
+export async function map<P, C>(items: ReadonlyArray<P>, func: (item: P) => C, token?: CancellationToken, yieldEveryMilliseconds: number = defaultYieldTimeout): Promise<C[]> {
+	if (items.length === 0) {
+		return [];
+	}
+	const result: C[] = new Array(items.length);
+	function convertBatch(start: number): number {
+		const startTime = Date.now();
+		for (let i = start; i < items.length; i++) {
+			result[i] = func(items[i]);
+			if (Date.now() - startTime > yieldEveryMilliseconds)  {
+				return i + 1;
+			}
+		}
+		return -1;
+	}
+	// Convert the first batch sync on the same frame.
+	let index = convertBatch(0);
+	while (index !== -1) {
+		if (token !== undefined && token.isCancellationRequested) {
+			break;
+		}
+		index = await new Promise((resolve) => {
+			RAL().timer.setImmediate(() => {
+				resolve(convertBatch(index));
+			});
+		});
+	}
+	return result;
+}
+
+export async function mapAsync<P, C>(items: ReadonlyArray<P>, func: (item: P, token?: CancellationToken) => Promise<C>, token?: CancellationToken, yieldEveryMilliseconds: number = defaultYieldTimeout): Promise<C[]> {
+	if (items.length === 0) {
+		return [];
+	}
+	const result: C[] = new Array(items.length);
+	async function convertBatch(start: number): Promise<number> {
+		const startTime = Date.now();
+		for (let i = start; i < items.length; i++) {
+			result[i] = await func(items[i], token);
+			if (Date.now() - startTime > yieldEveryMilliseconds)  {
+				return i + 1;
+			}
+		}
+		return -1;
+	}
+	let index = await convertBatch(0);
+	while (index !== -1) {
+		if (token !== undefined && token.isCancellationRequested) {
+			break;
+		}
+		index = await new Promise((resolve) => {
+			RAL().timer.setImmediate(() => {
+				resolve(convertBatch(index));
+			});
+		});
+	}
+	return result;
+}
+
+export async function forEach<P>(items: ReadonlyArray<P>, func: (item: P) => void, token?: CancellationToken, yieldEveryMilliseconds: number = defaultYieldTimeout): Promise<void> {
+	if (items.length === 0) {
+		return;
+	}
+	function runBatch(start: number): number {
+		const startTime = Date.now();
+		for (let i = start; i < items.length; i++) {
+			func(items[i]);
+			if (Date.now() - startTime > yieldEveryMilliseconds)  {
+				return i + 1;
+			}
+		}
+		return -1;
+	}
+	// Convert the first batch sync on the same frame.
+	let index = runBatch(0);
+	while (index !== -1) {
+		if (token !== undefined && token.isCancellationRequested) {
+			break;
+		}
+		index = await new Promise((resolve) => {
+			RAL().timer.setImmediate(() => {
+				resolve(runBatch(index));
+			});
+		});
 	}
 }
