@@ -11,6 +11,7 @@ import * as protocolConverter from 'vscode-languageclient/lib/common/protocolCon
 import ProtocolCompletionItem from 'vscode-languageclient/lib/common/protocolCompletionItem';
 import { DiagnosticCode, ProtocolDiagnostic } from 'vscode-languageclient/lib/common/protocolDiagnostic';
 import * as Is from 'vscode-languageclient/lib/common/utils/is';
+import * as async from 'vscode-languageclient/lib/common/utils/async';
 
 import * as vscode from 'vscode';
 import { CompletionItemTag, InsertTextMode, SymbolTag } from 'vscode-languageserver-protocol';
@@ -74,6 +75,50 @@ function assertDiagnosticCode(value: string | number | DiagnosticCode | undefine
 		throw new Error(`Expected complex diagnostic code.`);
 	}
 }
+
+suite('Async Array', () => {
+	test('map', async() => {
+		const ranges: proto.Range[] = new Array(7500);
+		for (let i = 0; i < ranges.length; i++) {
+			ranges[i] = proto.Range.create(i, i, i, i);
+		}
+		const converted = await async.map(ranges, p2c.asRange, undefined, 5);
+		strictEqual(converted.length, ranges.length);
+		for (let i = 0; i < converted.length; i++) {
+			ok(converted[i] instanceof vscode.Range);
+			strictEqual(converted[i]?.start.line, i);
+		}
+	});
+
+	test('map async', async() => {
+		const ranges: proto.Range[] = new Array(5000);
+		for (let i = 0; i < ranges.length; i++) {
+			ranges[i] = proto.Range.create(i, i, i, i);
+		}
+		const converted = await async.mapAsync(ranges, (item): Promise<vscode.Range> => {
+			return new Promise((resolve) => {
+				proto.RAL().timer.setImmediate(() => {
+					resolve(p2c.asRange(item));
+				});
+			});
+		}, undefined, 5);
+		strictEqual(converted.length, ranges.length);
+		for (let i = 0; i < converted.length; i++) {
+			ok(converted[i] instanceof vscode.Range);
+			strictEqual(converted[i]?.start.line, i);
+		}
+	});
+
+	test('forEach', async() => {
+		const ranges: proto.Range[] = new Array(100000);
+		for (let i = 0; i < ranges.length; i++) {
+			ranges[i] = proto.Range.create(i + 1, 0, 0, 0);
+		}
+		let sum: number = 0;
+		await async.forEach(ranges, (item) => sum += item.start.line, undefined, 5);
+		strictEqual(sum, 5000050000);
+	});
+});
 
 suite('Protocol Converter', () => {
 
@@ -1327,7 +1372,7 @@ suite('Code Converter', () => {
 		strictEqual(c2p.asDiagnosticTag(<any>vscode.DiagnosticTag.Deprecated), proto.DiagnosticTag.Deprecated);
 	});
 
-	test('Diagnostic', () => {
+	test('Diagnostic', async () => {
 		const item: vscode.Diagnostic = new vscode.Diagnostic(new vscode.Range(1, 2, 8, 9), 'message', vscode.DiagnosticSeverity.Warning);
 		item.code = 99;
 		item.source = 'source';
@@ -1336,7 +1381,7 @@ suite('Code Converter', () => {
 			new vscode.DiagnosticRelatedInformation(new vscode.Location(vscode.Uri.parse('file://localhost/folder/file'), new vscode.Range(0, 1, 2, 3)), 'related')
 		];
 
-		const result = c2p.asDiagnostic(<any>item);
+		const result = c2p.asDiagnostic(item);
 		rangeEqual(result.range, item.range);
 		strictEqual(result.message, item.message);
 		strictEqual(result.severity, proto.DiagnosticSeverity.Warning);
@@ -1349,7 +1394,7 @@ suite('Code Converter', () => {
 		strictEqual(result.relatedInformation![0].message, 'related');
 		strictEqual(result.relatedInformation![0].location.uri, 'file://localhost/folder/file');
 		strictEqual(result.relatedInformation![0].location.range.end.character, 3);
-		ok(c2p.asDiagnostics(<any>[item]).every(elem => proto.Diagnostic.is(elem)));
+		ok((await c2p.asDiagnostics([item])).every(elem => proto.Diagnostic.is(elem)));
 	});
 
 	test('Diagnostic - Complex Code', () => {
@@ -1374,26 +1419,26 @@ suite('Code Converter', () => {
 		strictEqual(result.code.target, 'https://code.visualstudio.com/');
 	});
 
-	test('CodeActionContext', () => {
+	test('CodeActionContext', async () => {
 		const item: vscode.CodeActionContext = {
 			diagnostics: [new vscode.Diagnostic(new vscode.Range(1, 2, 8, 9), 'message', vscode.DiagnosticSeverity.Warning)],
 			triggerKind: vscode.CodeActionTriggerKind.Invoke,
 			only: undefined
 		};
 
-		const result = c2p.asCodeActionContext(<any>item);
+		const result = await c2p.asCodeActionContext(item);
 		ok(result.diagnostics.every(elem => proto.Diagnostic.is(elem)));
 		strictEqual(result.triggerKind, proto.CodeActionTriggerKind.Invoked);
 	});
 
-	test('CodeActionContext - automatic', () => {
+	test('CodeActionContext - automatic', async () => {
 		const item: vscode.CodeActionContext = {
 			diagnostics: [],
 			triggerKind: vscode.CodeActionTriggerKind.Automatic,
 			only: undefined
 		};
 
-		const result = c2p.asCodeActionContext(<any>item);
+		const result = await c2p.asCodeActionContext(item);
 		strictEqual(result.triggerKind, proto.CodeActionTriggerKind.Automatic);
 	});
 

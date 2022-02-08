@@ -2254,11 +2254,11 @@ class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions,
 					return undefined;
 				}
 				const client = this._client;
-				const _provideCodeActions: ProvideCodeActionsSignature = (document, range, context, token) => {
+				const _provideCodeActions: ProvideCodeActionsSignature = async (document, range, context, token) => {
 					const params: CodeActionParams = {
 						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
 						range: client.code2ProtocolConverter.asRange(range),
-						context: client.code2ProtocolConverter.asCodeActionContext(context)
+						context: await client.code2ProtocolConverter.asCodeActionContext(context, token)
 					};
 					return client.sendRequest(CodeActionRequest.type, params, token).then((values) => {
 						if (token.isCancellationRequested || values === null || values === undefined) {
@@ -2278,8 +2278,8 @@ class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions,
 				? (item: VCodeAction, token: CancellationToken) => {
 					const client = this._client;
 					const middleware = this._client.clientOptions.middleware!;
-					const resolveCodeAction: ResolveCodeActionSignature = (item, token) => {
-						return client.sendRequest(CodeActionResolveRequest.type, client.code2ProtocolConverter.asCodeAction(item), token).then((result) => {
+					const resolveCodeAction: ResolveCodeActionSignature = async (item, token) => {
+						return client.sendRequest(CodeActionResolveRequest.type, await client.code2ProtocolConverter.asCodeAction(item, token), token).then((result) => {
 							if (token.isCancellationRequested) {
 								return item;
 							}

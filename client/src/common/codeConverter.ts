@@ -7,6 +7,8 @@ import * as code from 'vscode';
 import * as proto from 'vscode-languageserver-protocol';
 
 import * as Is from './utils/is';
+import * as async from './utils/async';
+
 import ProtocolCompletionItem from './protocolCompletionItem';
 import ProtocolCodeLens from './protocolCodeLens';
 import ProtocolDocumentLink from './protocolDocumentLink';
@@ -14,8 +16,6 @@ import { MarkdownString } from 'vscode';
 import ProtocolCodeAction from './protocolCodeAction';
 import { ProtocolDiagnostic, DiagnosticCode } from './protocolDiagnostic';
 import ProtocolCallHierarchyItem from './protocolCallHierarchyItem';
-import { InsertTextMode, uinteger } from 'vscode-languageserver-protocol';
-import { CreateFilesParams, DeleteFilesParams, RenameFilesParams } from 'vscode-languageserver-protocol/lib/common/protocol.fileOperations';
 import ProtocolTypeHierarchyItem from './protocolTypeHierarchyItem';
 import WorkspaceSymbol from './protocolWorkspaceSymbol';
 
@@ -58,12 +58,12 @@ export interface Converter {
 	asSaveTextDocumentParams(textDocument: code.TextDocument, includeContent?: boolean): proto.DidSaveTextDocumentParams;
 	asWillSaveTextDocumentParams(event: code.TextDocumentWillSaveEvent): proto.WillSaveTextDocumentParams;
 
-	asDidCreateFilesParams(event: code.FileCreateEvent): CreateFilesParams;
-	asDidRenameFilesParams(event: code.FileRenameEvent): RenameFilesParams;
-	asDidDeleteFilesParams(event: code.FileDeleteEvent): DeleteFilesParams;
-	asWillCreateFilesParams(event: code.FileCreateEvent): CreateFilesParams;
-	asWillRenameFilesParams(event: code.FileRenameEvent): RenameFilesParams;
-	asWillDeleteFilesParams(event: code.FileDeleteEvent): DeleteFilesParams;
+	asDidCreateFilesParams(event: code.FileCreateEvent): proto.CreateFilesParams;
+	asDidRenameFilesParams(event: code.FileRenameEvent): proto.RenameFilesParams;
+	asDidDeleteFilesParams(event: code.FileDeleteEvent): proto.DeleteFilesParams;
+	asWillCreateFilesParams(event: code.FileCreateEvent): proto.CreateFilesParams;
+	asWillRenameFilesParams(event: code.FileRenameEvent): proto.RenameFilesParams;
+	asWillDeleteFilesParams(event: code.FileDeleteEvent): proto.DeleteFilesParams;
 
 	asTextDocumentPositionParams(textDocument: code.TextDocument, position: code.Position): proto.TextDocumentPositionParams;
 
@@ -73,28 +73,29 @@ export interface Converter {
 
 	asWorkerPosition(position: code.Position): proto.Position;
 
-	asPosition(value: code.Position): proto.Position;
-	asPosition(value: undefined): undefined;
 	asPosition(value: null): null;
+	asPosition(value: undefined): undefined;
+	asPosition(value: code.Position): proto.Position;
 	asPosition(value: code.Position | undefined | null): proto.Position | undefined | null;
 
-	asPositions(value: code.Position[]): proto.Position[];
+	asPositions(value: code.Position[], token?: code.CancellationToken): Promise<proto.Position[]>;
 
-	asRange(value: code.Range): proto.Range;
-	asRange(value: undefined): undefined;
 	asRange(value: null): null;
+	asRange(value: undefined): undefined;
+	asRange(value: code.Range): proto.Range;
 	asRange(value: code.Range | undefined | null): proto.Range | undefined | null;
 
-	asLocation(value: code.Location): proto.Location;
-	asLocation(value: undefined): undefined;
 	asLocation(value: null): null;
+	asLocation(value: undefined): undefined;
+	asLocation(value: code.Location): proto.Location;
 	asLocation(value: code.Location | undefined | null): proto.Location | undefined | null;
 
 	asDiagnosticSeverity(value: code.DiagnosticSeverity): number;
 	asDiagnosticTag(value: code.DiagnosticTag): number | undefined;
 
 	asDiagnostic(item: code.Diagnostic): proto.Diagnostic;
-	asDiagnostics(items: code.Diagnostic[]): proto.Diagnostic[];
+
+	asDiagnostics(items: code.Diagnostic[], token?: code.CancellationToken): Promise<proto.Diagnostic[]>;
 
 	asCompletionItem(item: code.CompletionItem, labelDetailsSupport?: boolean): proto.CompletionItem;
 
@@ -107,9 +108,9 @@ export interface Converter {
 
 	asReferenceParams(textDocument: code.TextDocument, position: code.Position, options: { includeDeclaration: boolean }): proto.ReferenceParams;
 
-	asCodeAction(item: code.CodeAction): proto.CodeAction;
+	asCodeAction(item: code.CodeAction, token?: code.CancellationToken): Promise<proto.CodeAction>;
 
-	asCodeActionContext(context: code.CodeActionContext): proto.CodeActionContext;
+	asCodeActionContext(context: code.CodeActionContext, token?: code.CancellationToken): Promise<proto.CodeActionContext>;
 
 	asInlineValuesContext(context: code.InlineValueContext): proto.InlineValuesContext;
 
@@ -258,7 +259,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		};
 	}
 
-	function asDidCreateFilesParams(event: code.FileCreateEvent): CreateFilesParams {
+	function asDidCreateFilesParams(event: code.FileCreateEvent): proto.CreateFilesParams {
 		return {
 			files: event.files.map((fileUri) => ({
 				uri: _uriConverter(fileUri),
@@ -266,7 +267,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		};
 	}
 
-	function asDidRenameFilesParams(event: code.FileRenameEvent): RenameFilesParams {
+	function asDidRenameFilesParams(event: code.FileRenameEvent): proto.RenameFilesParams {
 		return {
 			files: event.files.map((file) => ({
 				oldUri: _uriConverter(file.oldUri),
@@ -275,7 +276,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		};
 	}
 
-	function asDidDeleteFilesParams(event: code.FileDeleteEvent): DeleteFilesParams {
+	function asDidDeleteFilesParams(event: code.FileDeleteEvent): proto.DeleteFilesParams {
 		return {
 			files: event.files.map((fileUri) => ({
 				uri: _uriConverter(fileUri),
@@ -283,7 +284,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		};
 	}
 
-	function asWillCreateFilesParams(event: code.FileWillCreateEvent): CreateFilesParams {
+	function asWillCreateFilesParams(event: code.FileWillCreateEvent): proto.CreateFilesParams {
 		return {
 			files: event.files.map((fileUri) => ({
 				uri: _uriConverter(fileUri),
@@ -291,7 +292,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		};
 	}
 
-	function asWillRenameFilesParams(event: code.FileWillRenameEvent): RenameFilesParams {
+	function asWillRenameFilesParams(event: code.FileWillRenameEvent): proto.RenameFilesParams {
 		return {
 			files: event.files.map((file) => ({
 				oldUri: _uriConverter(file.oldUri),
@@ -300,7 +301,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		};
 	}
 
-	function asWillDeleteFilesParams(event: code.FileWillDeleteEvent): DeleteFilesParams {
+	function asWillDeleteFilesParams(event: code.FileWillDeleteEvent): proto.DeleteFilesParams {
 		return {
 			files: event.files.map((fileUri) => ({
 				uri: _uriConverter(fileUri),
@@ -401,23 +402,19 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return { line: position.line, character: position.character };
 	}
 
-	function asPosition(value: code.Position): proto.Position;
-	function asPosition(value: undefined): undefined;
 	function asPosition(value: null): null;
+	function asPosition(value: undefined): undefined;
+	function asPosition(value: code.Position): proto.Position;
 	function asPosition(value: code.Position | undefined | null): proto.Position | undefined | null;
 	function asPosition(value: code.Position | undefined | null): proto.Position | undefined | null {
 		if (value === undefined || value === null) {
 			return value;
 		}
-		return { line: value.line > uinteger.MAX_VALUE ? uinteger.MAX_VALUE : value.line, character: value.character > uinteger.MAX_VALUE ? uinteger.MAX_VALUE : value.character };
+		return { line: value.line > proto.uinteger.MAX_VALUE ? proto.uinteger.MAX_VALUE : value.line, character: value.character > proto.uinteger.MAX_VALUE ? proto.uinteger.MAX_VALUE : value.character };
 	}
 
-	function asPositions(value: code.Position[]): proto.Position[] {
-		let result: proto.Position[] = [];
-		for (let elem of value) {
-			result.push(asPosition(elem));
-		}
-		return result;
+	function asPositions(value: code.Position[], token?: code.CancellationToken): Promise<proto.Position[]> {
+		return async.map(value, (asPosition as (item: code.Position) => proto.Position), token);
 	}
 
 	function asRange(value: code.Range): proto.Range;
@@ -527,11 +524,11 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return result;
 	}
 
-	function asDiagnostics(items: ReadonlyArray<code.Diagnostic>): proto.Diagnostic[] {
+	function asDiagnostics(items: ReadonlyArray<code.Diagnostic>, token?: code.CancellationToken): Promise<proto.Diagnostic[]> {
 		if (items === undefined || items === null) {
 			return items;
 		}
-		return items.map(asDiagnostic);
+		return async.map(items, asDiagnostic, token);
 	}
 
 	function asDocumentation(format: string, documentation: string | MarkdownString): string | proto.MarkupContent {
@@ -634,7 +631,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			result.tags = tags;
 		}
 		if (result.insertTextMode === undefined && item.keepWhitespace === true) {
-			result.insertTextMode = InsertTextMode.adjustIndentation;
+			result.insertTextMode = proto.InsertTextMode.adjustIndentation;
 		}
 		return result;
 	}
@@ -707,13 +704,13 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		};
 	}
 
-	function asCodeAction(item: code.CodeAction): proto.CodeAction {
+	async function asCodeAction(item: code.CodeAction, token?: code.CancellationToken): Promise<proto.CodeAction> {
 		let result = proto.CodeAction.create(item.title);
 		if (item instanceof ProtocolCodeAction && item.data !== undefined) {
 			result.data = item.data;
 		}
 		if (item.kind !== undefined) { result.kind = asCodeActionKind(item.kind); }
-		if (item.diagnostics !== undefined) { result.diagnostics = asDiagnostics(item.diagnostics); }
+		if (item.diagnostics !== undefined) { result.diagnostics = await asDiagnostics(item.diagnostics, token); }
 		if (item.edit !== undefined) { throw new Error (`VS Code code actions can only be converted to a protocol code action without an edit.`); }
 		if (item.command !== undefined) { result.command = asCommand(item.command); }
 		if (item.isPreferred !== undefined) { result.isPreferred = item.isPreferred; }
@@ -721,7 +718,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return result;
 	}
 
-	function asCodeActionContext(context: code.CodeActionContext): proto.CodeActionContext {
+	async function asCodeActionContext(context: code.CodeActionContext, token?: code.CancellationToken): Promise<proto.CodeActionContext> {
 		if (context === undefined || context === null) {
 			return context;
 		}
@@ -729,7 +726,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (context.only && Is.string(context.only.value)) {
 			only = [context.only.value];
 		}
-		return proto.CodeActionContext.create(asDiagnostics(context.diagnostics), only, asCodeActionTriggerKind(context.triggerKind));
+		return proto.CodeActionContext.create(await asDiagnostics(context.diagnostics, token), only, asCodeActionTriggerKind(context.triggerKind));
 	}
 
 	function asCodeActionTriggerKind(kind: code.CodeActionTriggerKind): proto.CodeActionTriggerKind | undefined {
