@@ -59,7 +59,7 @@ export class DeclarationFeature extends TextDocumentFeature<boolean | Declaratio
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asDeclarationResult(result);
+						return client.protocol2CodeConverter.asDeclarationResult(result, token);
 					}, (error) => {
 						return client.handleFailedRequest(DeclarationRequest.type, token, error, null);
 					});

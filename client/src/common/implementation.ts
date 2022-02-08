@@ -59,7 +59,7 @@ export class ImplementationFeature extends TextDocumentFeature<boolean | Impleme
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asDefinitionResult(result);
+						return client.protocol2CodeConverter.asDefinitionResult(result, token);
 					}, (error) => {
 						return client.handleFailedRequest(ImplementationRequest.type, token, error, null);
 					});

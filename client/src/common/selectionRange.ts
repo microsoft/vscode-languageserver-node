@@ -53,16 +53,16 @@ export class SelectionRangeFeature extends TextDocumentFeature<boolean | Selecti
 					return undefined;
 				}
 				const client = this._client;
-				const provideSelectionRanges: ProvideSelectionRangeSignature = (document, positions, token) => {
+				const provideSelectionRanges: ProvideSelectionRangeSignature = async (document, positions, token) => {
 					const requestParams: SelectionRangeParams = {
 						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
-						positions: client.code2ProtocolConverter.asPositions(positions)
+						positions: await client.code2ProtocolConverter.asPositions(positions, token)
 					};
 					return client.sendRequest(SelectionRangeRequest.type, requestParams, token).then((ranges) => {
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asSelectionRanges(ranges);
+						return client.protocol2CodeConverter.asSelectionRanges(ranges, token);
 					}, (error: any) => {
 						return client.handleFailedRequest(SelectionRangeRequest.type, token, error, null);
 					});

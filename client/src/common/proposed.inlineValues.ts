@@ -78,7 +78,7 @@ export class InlineValueFeature extends TextDocumentFeature<boolean | Proposed.I
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asInlineValues(values);
+						return client.protocol2CodeConverter.asInlineValues(values, token);
 					}, (error: any) => {
 						return client.handleFailedRequest(Proposed.InlineValuesRequest.type, token, error, null);
 					});

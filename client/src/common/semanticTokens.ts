@@ -145,7 +145,7 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Semanti
 							if (token.isCancellationRequested) {
 								return null;
 							}
-							return client.protocol2CodeConverter.asSemanticTokens(result);
+							return client.protocol2CodeConverter.asSemanticTokens(result, token);
 						}, (error: any) => {
 							return client.handleFailedRequest(SemanticTokensRequest.type, token, error, null);
 						});
@@ -166,14 +166,14 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Semanti
 								textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
 								previousResultId
 							};
-							return client.sendRequest(SemanticTokensDeltaRequest.type, params, token).then((result) => {
+							return client.sendRequest(SemanticTokensDeltaRequest.type, params, token).then(async (result) => {
 								if (token.isCancellationRequested) {
 									return null;
 								}
 								if (SemanticTokens.is(result)) {
-									return client.protocol2CodeConverter.asSemanticTokens(result);
+									return await client.protocol2CodeConverter.asSemanticTokens(result, token);
 								} else {
-									return client.protocol2CodeConverter.asSemanticTokensEdits(result);
+									return await client.protocol2CodeConverter.asSemanticTokensEdits(result, token);
 								}
 							}, (error: any) => {
 								return client.handleFailedRequest(SemanticTokensDeltaRequest.type, token, error, null);
@@ -202,7 +202,7 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Semanti
 							if (token.isCancellationRequested) {
 								return null;
 							}
-							return client.protocol2CodeConverter.asSemanticTokens(result);
+							return client.protocol2CodeConverter.asSemanticTokens(result, token);
 						}, (error: any) => {
 							return client.handleFailedRequest(SemanticTokensRangeRequest.type, token, error, null);
 						});

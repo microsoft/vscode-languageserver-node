@@ -44,7 +44,7 @@ import {
 	DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams, DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams,
 	DocumentOnTypeFormattingRegistrationOptions, RenameRequest, RenameParams, RenameRegistrationOptions, PrepareRenameRequest, TextDocumentPositionParams,
 	DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkRegistrationOptions, ExecuteCommandRequest, ExecuteCommandParams, ExecuteCommandRegistrationOptions,
-	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse, MarkupKind, SymbolKind, CompletionItemKind, Command, CodeActionKind,
+	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, MarkupKind, SymbolKind, CompletionItemKind, CodeActionKind,
 	DocumentSymbol, SymbolInformation, Range, CodeActionRegistrationOptions, TextDocumentEdit, ResourceOperationKind, FailureHandlingKind, ProgressType, ProgressToken,
 	WorkDoneProgressOptions, StaticRegistrationOptions, CompletionOptions, HoverRegistrationOptions, HoverOptions, SignatureHelpOptions, DefinitionRegistrationOptions,
 	DefinitionOptions, ReferenceRegistrationOptions, ReferenceOptions, DocumentHighlightRegistrationOptions, DocumentHighlightOptions, DocumentSymbolRegistrationOptions,
@@ -55,7 +55,7 @@ import {
 	FileOperationRegistrationOptions, WillCreateFilesRequest, WillRenameFilesRequest, WillDeleteFilesRequest, DidCreateFilesNotification, DidDeleteFilesNotification,
 	DidRenameFilesNotification, ShowDocumentParams, ShowDocumentResult, LinkedEditingRangeRequest, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressEnd,
 	WorkDoneProgressReport, PrepareSupportDefaultBehavior, SemanticTokensRequest, SemanticTokensRangeRequest, SemanticTokensDeltaRequest, Proposed, WorkspaceSymbolResolveRequest,
-	NotebookCellTextDocumentFilter, TextDocumentFilter, NotebookDocumentFilter, Diagnostic
+	NotebookCellTextDocumentFilter, TextDocumentFilter, NotebookDocumentFilter, Diagnostic, ApplyWorkspaceEditResult
 } from 'vscode-languageserver-protocol';
 
 import { toJSONObject } from './configuration';
@@ -1390,8 +1390,8 @@ class WillSaveWaitUntilFeature implements DynamicFeature<TextDocumentRegistratio
 			let middleware = this._client.clientOptions.middleware!;
 			let willSaveWaitUntil = (event: TextDocumentWillSaveEvent): Thenable<VTextEdit[]> => {
 				return this._client.sendRequest(WillSaveTextDocumentWaitUntilRequest.type,
-					this._client.code2ProtocolConverter.asWillSaveTextDocumentParams(event)).then((edits) => {
-					let vEdits = this._client.protocol2CodeConverter.asTextEdits(edits);
+					this._client.code2ProtocolConverter.asWillSaveTextDocumentParams(event)).then(async (edits) => {
+					let vEdits = await this._client.protocol2CodeConverter.asTextEdits(edits);
 					return vEdits === undefined ? [] : vEdits;
 				});
 			};
@@ -1779,7 +1779,7 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asCompletionResult(result, defaultCommitCharacters);
+						return client.protocol2CodeConverter.asCompletionResult(result, defaultCommitCharacters, token);
 					}, (error) => {
 						return client.handleFailedRequest(CompletionRequest.type, token, error, null);
 					});
@@ -1902,7 +1902,7 @@ class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpOptions, Sig
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asSignatureHelp(result);
+						return client.protocol2CodeConverter.asSignatureHelp(result, token);
 					}, (error) => {
 						return client.handleFailedRequest(SignatureHelpRequest.type, token, error, null);
 					});
@@ -1962,7 +1962,7 @@ class DefinitionFeature extends TextDocumentFeature<boolean | DefinitionOptions,
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asDefinitionResult(result);
+						return client.protocol2CodeConverter.asDefinitionResult(result, token);
 					}, (error) => {
 						return client.handleFailedRequest(DefinitionRequest.type, token, error, null);
 					});
@@ -2008,7 +2008,7 @@ class ReferencesFeature extends TextDocumentFeature<boolean | ReferenceOptions, 
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asReferences(result);
+						return client.protocol2CodeConverter.asReferences(result, token);
 					}, (error) => {
 						return client.handleFailedRequest(ReferencesRequest.type, token, error, null);
 					});
@@ -2054,7 +2054,7 @@ class DocumentHighlightFeature extends TextDocumentFeature<boolean | DocumentHig
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asDocumentHighlights(result);
+						return client.protocol2CodeConverter.asDocumentHighlights(result, token);
 					}, (error) => {
 						return client.handleFailedRequest(DocumentHighlightRequest.type, token, error, null);
 					});
@@ -2105,18 +2105,18 @@ class DocumentSymbolFeature extends TextDocumentFeature<boolean | DocumentSymbol
 				}
 				const client = this._client;
 				const _provideDocumentSymbols: ProvideDocumentSymbolsSignature = (document, token) => {
-					return client.sendRequest(DocumentSymbolRequest.type, client.code2ProtocolConverter.asDocumentSymbolParams(document), token).then((data) => {
+					return client.sendRequest(DocumentSymbolRequest.type, client.code2ProtocolConverter.asDocumentSymbolParams(document), token).then(async (data) => {
 						if (token.isCancellationRequested || data === undefined || data === null) {
 							return null;
 						}
 						if (data.length === 0) {
 							return [];
 						} else {
-							let element = data[0];
-							if (DocumentSymbol.is(element)) {
-								return client.protocol2CodeConverter.asDocumentSymbols(data as DocumentSymbol[]);
+							const first = data[0];
+							if (DocumentSymbol.is(first)) {
+								return await client.protocol2CodeConverter.asDocumentSymbols(data as DocumentSymbol[], token);
 							} else {
-								return client.protocol2CodeConverter.asSymbolInformations(data as SymbolInformation[]);
+								return await client.protocol2CodeConverter.asSymbolInformations(data as SymbolInformation[], token);
 							}
 						}
 					}, (error) => {
@@ -2171,7 +2171,7 @@ class WorkspaceSymbolFeature extends WorkspaceFeature<WorkspaceSymbolRegistratio
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asSymbolInformations(result);
+						return client.protocol2CodeConverter.asSymbolInformations(result, token);
 					}, (error) => {
 						return client.handleFailedRequest(WorkspaceSymbolRequest.type, token, error, null);
 					});
@@ -2254,25 +2254,17 @@ class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions,
 					return undefined;
 				}
 				const client = this._client;
-				const _provideCodeActions: ProvideCodeActionsSignature = (document, range, context, token) => {
+				const _provideCodeActions: ProvideCodeActionsSignature = async (document, range, context, token) => {
 					const params: CodeActionParams = {
 						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
 						range: client.code2ProtocolConverter.asRange(range),
-						context: client.code2ProtocolConverter.asCodeActionContext(context)
+						context: await client.code2ProtocolConverter.asCodeActionContext(context, token)
 					};
 					return client.sendRequest(CodeActionRequest.type, params, token).then((values) => {
 						if (token.isCancellationRequested || values === null || values === undefined) {
 							return null;
 						}
-						const result: (VCommand | VCodeAction)[] = [];
-						for (let item of values) {
-							if (Command.is(item)) {
-								result.push(client.protocol2CodeConverter.asCommand(item));
-							} else {
-								result.push(client.protocol2CodeConverter.asCodeAction(item));
-							}
-						}
-						return result;
+						return client.protocol2CodeConverter.asCodeActionResult(values, token);
 					}, (error) => {
 						return client.handleFailedRequest(CodeActionRequest.type, token, error, null);
 					});
@@ -2286,12 +2278,12 @@ class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions,
 				? (item: VCodeAction, token: CancellationToken) => {
 					const client = this._client;
 					const middleware = this._client.clientOptions.middleware!;
-					const resolveCodeAction: ResolveCodeActionSignature = (item, token) => {
-						return client.sendRequest(CodeActionResolveRequest.type, client.code2ProtocolConverter.asCodeAction(item), token).then((result) => {
+					const resolveCodeAction: ResolveCodeActionSignature = async (item, token) => {
+						return client.sendRequest(CodeActionResolveRequest.type, await client.code2ProtocolConverter.asCodeAction(item, token), token).then((result) => {
 							if (token.isCancellationRequested) {
 								return item;
 							}
-							return client.protocol2CodeConverter.asCodeAction(result);
+							return client.protocol2CodeConverter.asCodeAction(result, token);
 						}, (error) => {
 							return client.handleFailedRequest(CodeActionResolveRequest.type, token, error, item);
 						});
@@ -2354,7 +2346,7 @@ class CodeLensFeature extends TextDocumentFeature<CodeLensOptions, CodeLensRegis
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asCodeLenses(result);
+						return client.protocol2CodeConverter.asCodeLenses(result, token);
 					}, (error) => {
 						return client.handleFailedRequest(CodeLensRequest.type, token, error, null);
 					});
@@ -2423,7 +2415,7 @@ class DocumentFormattingFeature extends TextDocumentFeature<boolean | DocumentFo
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asTextEdits(result);
+						return client.protocol2CodeConverter.asTextEdits(result, token);
 					}, (error) => {
 						return client.handleFailedRequest(DocumentFormattingRequest.type, token, error, null);
 					});
@@ -2474,7 +2466,7 @@ class DocumentRangeFormattingFeature extends TextDocumentFeature<boolean | Docum
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asTextEdits(result);
+						return client.protocol2CodeConverter.asTextEdits(result, token);
 					}, (error) => {
 						return client.handleFailedRequest(DocumentRangeFormattingRequest.type, token, error, null);
 					});
@@ -2526,7 +2518,7 @@ class DocumentOnTypeFormattingFeature extends TextDocumentFeature<DocumentOnType
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asTextEdits(result);
+						return client.protocol2CodeConverter.asTextEdits(result, token);
 					}, (error) => {
 						return client.handleFailedRequest(DocumentOnTypeFormattingRequest.type, token, error, null);
 					});
@@ -2590,7 +2582,7 @@ class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameR
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asWorkspaceEdit(result);
+						return client.protocol2CodeConverter.asWorkspaceEdit(result, token);
 					}, (error: ResponseError<void>) => {
 						return client.handleFailedRequest(RenameRequest.type, token, error, null, false);
 					});
@@ -2686,7 +2678,7 @@ class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkOptions, Docum
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asDocumentLinks(result);
+						return client.protocol2CodeConverter.asDocumentLinks(result, token);
 					}, (error: ResponseError<void>) => {
 						return client.handleFailedRequest(DocumentLinkRequest.type, token, error, null);
 					});
@@ -3746,7 +3738,7 @@ export abstract class BaseLanguageClient {
 		this._diagnosticQueue.delete(document);
 		const tokenSource = new CancellationTokenSource();
 		this._diagnosticQueueState = { state: 'busy', document: document, tokenSource };
-		this._p2c.asDiagnosticsAsync(diagnostics, tokenSource.token).then((converted) => {
+		this._p2c.asDiagnostics(diagnostics, tokenSource.token).then((converted) => {
 			if (!tokenSource.token.isCancellationRequested) {
 				const uri = this._p2c.asUri(document);
 				let middleware = this.clientOptions.middleware!;
@@ -4076,7 +4068,7 @@ export abstract class BaseLanguageClient {
 		});
 	}
 
-	private handleApplyWorkspaceEdit(params: ApplyWorkspaceEditParams): Promise<ApplyWorkspaceEditResponse> {
+	private async handleApplyWorkspaceEdit(params: ApplyWorkspaceEditParams): Promise<ApplyWorkspaceEditResult> {
 		// This is some sort of workaround since the version check should be done by VS Code in the Workspace.applyEdit.
 		// However doing it here adds some safety since the server can lag more behind then an extension.
 		let workspaceEdit: WorkspaceEdit = params.edit;
@@ -4097,7 +4089,7 @@ export abstract class BaseLanguageClient {
 		if (versionMismatch) {
 			return Promise.resolve({ applied: false });
 		}
-		return Is.asPromise(Workspace.applyEdit(this._p2c.asWorkspaceEdit(params.edit)).then((value) => { return { applied: value }; }));
+		return Is.asPromise(Workspace.applyEdit(await this._p2c.asWorkspaceEdit(params.edit)).then((value) => { return { applied: value }; }));
 	}
 
 	private static RequestsToCancelOnContentModified: Set<string> = new Set([

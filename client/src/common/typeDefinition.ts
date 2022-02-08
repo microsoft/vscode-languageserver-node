@@ -60,7 +60,7 @@ export class TypeDefinitionFeature extends TextDocumentFeature<boolean | TypeDef
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asDefinitionResult(result);
+						return client.protocol2CodeConverter.asDefinitionResult(result, token);
 					}, (error) => {
 						return client.handleFailedRequest(TypeDefinitionRequest.type, token, error, null);
 					});

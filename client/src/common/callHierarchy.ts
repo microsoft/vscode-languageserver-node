@@ -66,7 +66,7 @@ class CallHierarchyProvider implements VCallHierarchyProvider {
 				if (token.isCancellationRequested) {
 					return null;
 				}
-				return client.protocol2CodeConverter.asCallHierarchyItems(result);
+				return client.protocol2CodeConverter.asCallHierarchyItems(result, token);
 			}, (error) => {
 				return client.handleFailedRequest(CallHierarchyPrepareRequest.type, token, error, null);
 			});
@@ -87,7 +87,7 @@ class CallHierarchyProvider implements VCallHierarchyProvider {
 				if (token.isCancellationRequested) {
 					return null;
 				}
-				return client.protocol2CodeConverter.asCallHierarchyIncomingCalls(result);
+				return client.protocol2CodeConverter.asCallHierarchyIncomingCalls(result, token);
 			}, (error) => {
 				return client.handleFailedRequest(CallHierarchyIncomingCallsRequest.type, token, error, null);
 			});
@@ -108,7 +108,7 @@ class CallHierarchyProvider implements VCallHierarchyProvider {
 				if (token.isCancellationRequested){
 					return null;
 				}
-				return client.protocol2CodeConverter.asCallHierarchyOutgoingCalls(result);
+				return client.protocol2CodeConverter.asCallHierarchyOutgoingCalls(result, token);
 			}, (error) => {
 				return client.handleFailedRequest(CallHierarchyOutgoingCallsRequest.type, token, error, null);
 			});

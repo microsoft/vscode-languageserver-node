@@ -3,10 +3,13 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { languages as Languages, Disposable, TextDocument, ProviderResult, FoldingRangeKind as VFoldingRangeKind, FoldingRange as VFoldingRange, FoldingContext, FoldingRangeProvider } from 'vscode';
+import {
+	languages as Languages, Disposable, TextDocument, ProviderResult, FoldingRange as VFoldingRange, FoldingContext, FoldingRangeProvider
+} from 'vscode';
 
 import {
-	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, FoldingRange, FoldingRangeKind, FoldingRangeRequest, FoldingRangeParams, FoldingRangeRegistrationOptions, FoldingRangeOptions
+	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, FoldingRangeRequest, FoldingRangeParams,
+	FoldingRangeRegistrationOptions, FoldingRangeOptions
 } from 'vscode-languageserver-protocol';
 
 import { TextDocumentFeature, BaseLanguageClient, $DocumentSelector } from './client';
@@ -63,7 +66,7 @@ export class FoldingRangeFeature extends TextDocumentFeature<boolean | FoldingRa
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return FoldingRangeFeature.asFoldingRanges(result);
+						return client.protocol2CodeConverter.asFoldingRanges(result, token);
 					}, (error: any) => {
 						return client.handleFailedRequest(FoldingRangeRequest.type, token, error, null);
 					});
@@ -75,28 +78,5 @@ export class FoldingRangeFeature extends TextDocumentFeature<boolean | FoldingRa
 			}
 		};
 		return [Languages.registerFoldingRangeProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
-	}
-
-	private static asFoldingRangeKind(kind: string | undefined): VFoldingRangeKind | undefined {
-		if (kind) {
-			switch (kind) {
-				case FoldingRangeKind.Comment:
-					return VFoldingRangeKind.Comment;
-				case FoldingRangeKind.Imports:
-					return VFoldingRangeKind.Imports;
-				case FoldingRangeKind.Region:
-					return VFoldingRangeKind.Region;
-			}
-		}
-		return void 0;
-	}
-
-	private static asFoldingRanges(foldingRanges: FoldingRange[] | null | undefined): VFoldingRange[] {
-		if (Array.isArray(foldingRanges)) {
-			return foldingRanges.map(r => {
-				return new VFoldingRange(r.startLine, r.endLine, FoldingRangeFeature.asFoldingRangeKind(r.kind));
-			});
-		}
-		return [];
 	}
 }
