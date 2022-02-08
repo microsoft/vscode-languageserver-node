@@ -44,7 +44,7 @@ import {
 	DocumentFormattingParams, DocumentRangeFormattingRequest, DocumentRangeFormattingParams, DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams,
 	DocumentOnTypeFormattingRegistrationOptions, RenameRequest, RenameParams, RenameRegistrationOptions, PrepareRenameRequest, TextDocumentPositionParams,
 	DocumentLinkRequest, DocumentLinkResolveRequest, DocumentLinkRegistrationOptions, ExecuteCommandRequest, ExecuteCommandParams, ExecuteCommandRegistrationOptions,
-	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse, MarkupKind, SymbolKind, CompletionItemKind, Command, CodeActionKind,
+	ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse, MarkupKind, SymbolKind, CompletionItemKind, CodeActionKind,
 	DocumentSymbol, SymbolInformation, Range, CodeActionRegistrationOptions, TextDocumentEdit, ResourceOperationKind, FailureHandlingKind, ProgressType, ProgressToken,
 	WorkDoneProgressOptions, StaticRegistrationOptions, CompletionOptions, HoverRegistrationOptions, HoverOptions, SignatureHelpOptions, DefinitionRegistrationOptions,
 	DefinitionOptions, ReferenceRegistrationOptions, ReferenceOptions, DocumentHighlightRegistrationOptions, DocumentHighlightOptions, DocumentSymbolRegistrationOptions,
@@ -1390,8 +1390,8 @@ class WillSaveWaitUntilFeature implements DynamicFeature<TextDocumentRegistratio
 			let middleware = this._client.clientOptions.middleware!;
 			let willSaveWaitUntil = (event: TextDocumentWillSaveEvent): Thenable<VTextEdit[]> => {
 				return this._client.sendRequest(WillSaveTextDocumentWaitUntilRequest.type,
-					this._client.code2ProtocolConverter.asWillSaveTextDocumentParams(event)).then((edits) => {
-					let vEdits = this._client.protocol2CodeConverter.asTextEdits(edits);
+					this._client.code2ProtocolConverter.asWillSaveTextDocumentParams(event)).then(async (edits) => {
+					let vEdits = await this._client.protocol2CodeConverter.asTextEdits(edits);
 					return vEdits === undefined ? [] : vEdits;
 				});
 			};
@@ -2105,18 +2105,18 @@ class DocumentSymbolFeature extends TextDocumentFeature<boolean | DocumentSymbol
 				}
 				const client = this._client;
 				const _provideDocumentSymbols: ProvideDocumentSymbolsSignature = (document, token) => {
-					return client.sendRequest(DocumentSymbolRequest.type, client.code2ProtocolConverter.asDocumentSymbolParams(document), token).then((data) => {
+					return client.sendRequest(DocumentSymbolRequest.type, client.code2ProtocolConverter.asDocumentSymbolParams(document), token).then(async (data) => {
 						if (token.isCancellationRequested || data === undefined || data === null) {
 							return null;
 						}
 						if (data.length === 0) {
 							return [];
 						} else {
-							let element = data[0];
-							if (DocumentSymbol.is(element)) {
-								return client.protocol2CodeConverter.asDocumentSymbols(data as DocumentSymbol[]);
+							const first = data[0];
+							if (DocumentSymbol.is(first)) {
+								return await client.protocol2CodeConverter.asDocumentSymbols(data as DocumentSymbol[], token);
 							} else {
-								return client.protocol2CodeConverter.asSymbolInformations(data as SymbolInformation[]);
+								return await client.protocol2CodeConverter.asSymbolInformations(data as SymbolInformation[], token);
 							}
 						}
 					}, (error) => {
@@ -2264,15 +2264,7 @@ class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions,
 						if (token.isCancellationRequested || values === null || values === undefined) {
 							return null;
 						}
-						const result: (VCommand | VCodeAction)[] = [];
-						for (let item of values) {
-							if (Command.is(item)) {
-								result.push(client.protocol2CodeConverter.asCommand(item));
-							} else {
-								result.push(client.protocol2CodeConverter.asCodeAction(item));
-							}
-						}
-						return result;
+						return client.protocol2CodeConverter.asCodeActionResult(values, token);
 					}, (error) => {
 						return client.handleFailedRequest(CodeActionRequest.type, token, error, null);
 					});

@@ -303,17 +303,17 @@ suite('Protocol Converter', () => {
 		strictEqual(result.newText, edit.newText);
 	});
 
-	test('Text Edits', () => {
+	test('Text Edits', async () => {
 		const edit: proto.TextEdit = proto.TextEdit.del(
 			{
 				start: { line: 1, character: 2 },
 				end: { line: 8, character: 9 }
 			});
-		ok(p2c.asTextEdits([edit]).every(elem => elem instanceof vscode.TextEdit));
+		ok((await p2c.asTextEdits([edit])).every(elem => elem instanceof vscode.TextEdit));
 
-		strictEqual(p2c.asTextEdits(undefined), undefined);
-		strictEqual(p2c.asTextEdits(null), undefined);
-		deepEqual(p2c.asTextEdits([]), []);
+		strictEqual(await p2c.asTextEdits(undefined), undefined);
+		strictEqual(await p2c.asTextEdits(null), undefined);
+		deepEqual(await p2c.asTextEdits([]), []);
 	});
 
 	test('Completion Item', () => {
@@ -759,7 +759,7 @@ suite('Protocol Converter', () => {
 		ok(result.items[0].insertText instanceof vscode.SnippetString);
 	});
 
-	test('Parameter Information', () => {
+	test('Parameter Information', async () => {
 		const parameterInfo: proto.ParameterInformation = {
 			label: 'label'
 		};
@@ -773,30 +773,30 @@ suite('Protocol Converter', () => {
 		strictEqual(result.label, parameterInfo.label);
 		strictEqual(result.documentation, parameterInfo.documentation);
 
-		ok(p2c.asParameterInformations([parameterInfo]).every(value => value instanceof vscode.ParameterInformation));
+		ok((await p2c.asParameterInformations([parameterInfo])).every(value => value instanceof vscode.ParameterInformation));
 	});
 
-	test('Signature Information', () => {
+	test('Signature Information', async () => {
 		const signatureInfo: proto.SignatureInformation = {
 			label: 'label'
 		};
 
-		let result = p2c.asSignatureInformation(signatureInfo);
+		let result = await p2c.asSignatureInformation(signatureInfo);
 		strictEqual(result.label, signatureInfo.label);
 		strictEqual(result.documentation, undefined);
 		deepEqual(result.parameters, []);
 
 		signatureInfo.documentation = 'documentation';
 		signatureInfo.parameters = [{ label: 'label' }];
-		result = p2c.asSignatureInformation(signatureInfo);
+		result = await p2c.asSignatureInformation(signatureInfo);
 		strictEqual(result.label, signatureInfo.label);
 		strictEqual(result.documentation, signatureInfo.documentation);
 		ok(result.parameters.every(value => value instanceof vscode.ParameterInformation));
 
-		ok(p2c.asSignatureInformations([signatureInfo]).every(value => value instanceof vscode.SignatureInformation));
+		ok((await p2c.asSignatureInformations([signatureInfo])).every(value => value instanceof vscode.SignatureInformation));
 	});
 
-	test('Signature Help', () => {
+	test('Signature Help', async () => {
 		const signatureHelp: proto.SignatureHelp = {
 			signatures: [
 				{ label: 'label' }
@@ -805,23 +805,23 @@ suite('Protocol Converter', () => {
 			activeParameter: undefined
 		};
 
-		let result = p2c.asSignatureHelp(signatureHelp);
+		let result = await p2c.asSignatureHelp(signatureHelp);
 		ok(result.signatures.every(value => value instanceof vscode.SignatureInformation));
 		strictEqual(result.activeSignature, 0);
 		strictEqual(result.activeParameter, 0);
 
 		signatureHelp.activeSignature = 1;
 		signatureHelp.activeParameter = 2;
-		result = p2c.asSignatureHelp(signatureHelp);
+		result = await p2c.asSignatureHelp(signatureHelp);
 		ok(result.signatures.every(value => value instanceof vscode.SignatureInformation));
 		strictEqual(result.activeSignature, 1);
 		strictEqual(result.activeParameter, 2);
 
-		strictEqual(p2c.asSignatureHelp(undefined), undefined);
-		strictEqual(p2c.asSignatureHelp(null), undefined);
+		strictEqual(await p2c.asSignatureHelp(undefined), undefined);
+		strictEqual(await p2c.asSignatureHelp(null), undefined);
 	});
 
-	test('Location', () => {
+	test('Location', async () => {
 		strictEqual(p2c.asLocation(undefined), undefined);
 		strictEqual(p2c.asLocation(null), undefined);
 
@@ -836,7 +836,7 @@ suite('Protocol Converter', () => {
 		ok(result.uri instanceof vscode.Uri);
 		ok(result.range instanceof vscode.Range);
 
-		ok(p2c.asReferences([location]).every(value => value instanceof vscode.Location));
+		ok((await p2c.asReferences([location])).every(value => value instanceof vscode.Location));
 	});
 
 	test('Definition', () => {
@@ -865,7 +865,7 @@ suite('Protocol Converter', () => {
 		strictEqual(p2c.asDocumentHighlightKind(<any>proto.DocumentHighlightKind.Write), vscode.DocumentHighlightKind.Write);
 	});
 
-	test('Document Highlight', () => {
+	test('Document Highlight', async () => {
 		const start: proto.Position = { line: 1, character: 2 };
 		const end: proto.Position = { line: 8, character: 9 };
 		const documentHighlight = proto.DocumentHighlight.create(
@@ -881,10 +881,10 @@ suite('Protocol Converter', () => {
 		ok(result.range instanceof vscode.Range);
 		strictEqual(result.kind, vscode.DocumentHighlightKind.Write);
 
-		ok(p2c.asDocumentHighlights([documentHighlight]).every(value => value instanceof vscode.DocumentHighlight));
-		strictEqual(p2c.asDocumentHighlights(undefined), undefined);
-		strictEqual(p2c.asDocumentHighlights(null), undefined);
-		deepEqual(p2c.asDocumentHighlights([]), []);
+		ok((await p2c.asDocumentHighlights([documentHighlight])).every(value => value instanceof vscode.DocumentHighlight));
+		strictEqual(await p2c.asDocumentHighlights(undefined), undefined);
+		strictEqual(await p2c.asDocumentHighlights(null), undefined);
+		deepEqual(await p2c.asDocumentHighlights([]), []);
 	});
 
 	test('Document Links', () => {
@@ -908,7 +908,7 @@ suite('Protocol Converter', () => {
 		deepEqual(p2c.asDocumentLinks([]), []);
 	});
 
-	test('SymbolInformation', () => {
+	test('SymbolInformation', async () => {
 		const start: proto.Position = { line: 1, character: 2 };
 		const end: proto.Position = { line: 8, character: 9 };
 		const location: proto.Location = {
@@ -935,10 +935,10 @@ suite('Protocol Converter', () => {
 		result = p2c.asSymbolInformation(symbolInformation);
 		strictEqual(result.containerName, symbolInformation.containerName);
 
-		ok(p2c.asSymbolInformations([symbolInformation]).every(value => value instanceof vscode.SymbolInformation));
-		strictEqual(p2c.asSymbolInformations(undefined), undefined);
-		strictEqual(p2c.asSymbolInformations(null), undefined);
-		deepEqual(p2c.asSymbolInformations([]), []);
+		ok((await p2c.asSymbolInformations([symbolInformation])).every(value => value instanceof vscode.SymbolInformation));
+		strictEqual(await p2c.asSymbolInformations(undefined), undefined);
+		strictEqual(await p2c.asSymbolInformations(null), undefined);
+		deepEqual(await p2c.asSymbolInformations([]), []);
 	});
 
 	test('WorkspaceSymbol', () => {
@@ -1035,7 +1035,7 @@ suite('Protocol Converter', () => {
 		rangeEqual(result.selectionRange, documentSymbol.selectionRange);
 	});
 
-	test('Command', () => {
+	test('Command', async () => {
 		const command = proto.Command.create('title', 'commandId');
 		command.arguments = ['args'];
 
@@ -1044,10 +1044,10 @@ suite('Protocol Converter', () => {
 		strictEqual(result.command, command.command);
 		strictEqual(result.arguments, command.arguments);
 
-		ok(p2c.asCommands([command]).every(elem => !!elem.title && !!elem.command));
-		strictEqual(p2c.asCommands(undefined), undefined);
-		strictEqual(p2c.asCommands(null), undefined);
-		deepEqual(p2c.asCommands([]), []);
+		ok((await p2c.asCommands([command])).every(elem => !!elem.title && !!elem.command));
+		strictEqual(await p2c.asCommands(undefined), undefined);
+		strictEqual(await p2c.asCommands(null), undefined);
+		deepEqual(await p2c.asCommands([]), []);
 	});
 
 	test('Code Lens', () => {

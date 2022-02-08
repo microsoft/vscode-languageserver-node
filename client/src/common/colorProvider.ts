@@ -6,7 +6,7 @@
 import { languages as Languages, Disposable, TextDocument, ProviderResult, Range as VRange, Color as VColor, ColorPresentation as VColorPresentation, ColorInformation as VColorInformation, DocumentColorProvider} from 'vscode';
 
 import {
-	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, DocumentColorRequest, ColorPresentationRequest, Color, ColorInformation, ColorPresentation,
+	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, DocumentColorRequest, ColorPresentationRequest,
 	DocumentColorRegistrationOptions, DocumentColorOptions
 } from 'vscode-languageserver-protocol';
 
@@ -65,7 +65,7 @@ export class ColorProviderFeature extends TextDocumentFeature<boolean | Document
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return this.asColorPresentations(result);
+						return this._client.protocol2CodeConverter.asColorPresentations(result);
 					}, (error: any) => {
 						return client.handleFailedRequest(ColorPresentationRequest.type, token, error, null);
 					});
@@ -88,7 +88,7 @@ export class ColorProviderFeature extends TextDocumentFeature<boolean | Document
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return this.asColorInformations(result);
+						return this._client.protocol2CodeConverter.asColorInformations(result);
 					}, (error: any) => {
 						return client.handleFailedRequest(ColorPresentationRequest.type, token, error, null);
 					});
@@ -100,30 +100,5 @@ export class ColorProviderFeature extends TextDocumentFeature<boolean | Document
 			}
 		};
 		return [Languages.registerColorProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
-	}
-
-	private asColor(color: Color): VColor {
-		return new VColor(color.red, color.green, color.blue, color.alpha);
-	}
-
-	private asColorInformations(colorInformation: ColorInformation[]): VColorInformation[] {
-		if (Array.isArray(colorInformation)) {
-			return colorInformation.map(ci => {
-				return new VColorInformation(this._client.protocol2CodeConverter.asRange(ci.range), this.asColor(ci.color));
-			});
-		}
-		return [];
-	}
-
-	private asColorPresentations(colorPresentations: ColorPresentation[]): VColorPresentation[] {
-		if (Array.isArray(colorPresentations)) {
-			return colorPresentations.map(cp => {
-				let presentation = new VColorPresentation(cp.label);
-				presentation.additionalTextEdits = this._client.protocol2CodeConverter.asTextEdits(cp.additionalTextEdits);
-				presentation.textEdit = this._client.protocol2CodeConverter.asTextEdit(cp.textEdit);
-				return presentation;
-			});
-		}
-		return [];
 	}
 }

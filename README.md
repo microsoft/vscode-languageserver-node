@@ -43,6 +43,7 @@ Library specific changes are:
   - if it receives `ServerCancelled` and the client didn't cancel the request as well throw CancellationError to ask the client to rerun the request.
   - if it receives `RequestCancelled` then normally the client should have cancelled the request and the code will return the default value (according to the best interpretation of the 3.16 spec). If the client has not canceled interpret the `RequestCancelled` as `ServerCancelled`.
 - the next handler of a client middleware now drops server results if the request got already canceled on the client side by returning VS Code's default value for the corresponding provider (mostly `null`). This is a breaking change since in former releases of the library the middleware would see the result also not used by VS Code. The change was made to save CPU and memory by not converting unused response results.
+- all converter functions which take an array are now async, yield and take a cancellation token. This is a breaking change and got introduced to avoid monopolizing the extension host during type conversions.
 - the return type of ErrorHandler#error and ErrorHandler#closed changed in a breaking manner. It now supports return an optional message which will be displayed to the user.
 - `InlineValuesRequest` protocol added:
   - New APIs in Types: `InlineValues`
