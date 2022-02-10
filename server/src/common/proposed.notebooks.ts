@@ -170,8 +170,12 @@ export class NotebookDocuments<T extends {  uri: DocumentUri }> {
 
 	private _cellTextDocuments: TextDocuments<T>;
 
-	constructor(configuration: TextDocumentsConfiguration<T>) {
-		this._cellTextDocuments = new TextDocuments<T>(configuration);
+	constructor(configurationOrTextDocuments: TextDocumentsConfiguration<T> | TextDocuments<T>) {
+		if (configurationOrTextDocuments instanceof TextDocuments) {
+			this._cellTextDocuments = configurationOrTextDocuments;
+		} else {
+			this._cellTextDocuments = new TextDocuments<T>(configurationOrTextDocuments);
+		}
 		this.notebookDocuments= new Map();
 		this.notebookCellMap = new Map();
 		this.notebookControllers = new Map();
@@ -241,19 +245,20 @@ export class NotebookDocuments<T extends {  uri: DocumentUri }> {
 	 *
 	 * @param connection The connection to listen on.
 	 */
-	public listen(connection: _Connection<_, _, _, _, _, _, _, NotebooksFeatureShape>): void {
+	public listen(connection: _Connection<_, _, _, _, _, _, _, NotebooksFeatureShape>): Disposable {
 		const cellTextDocumentConnection = new Connection();
-		this.cellTextDocuments.listen(cellTextDocumentConnection);
+		const disposables: Disposable[] = [];
 
-		connection.notebooks.synchronization.onDidOpenNotebookDocument((params) => {
+		disposables.push(this.cellTextDocuments.listen(cellTextDocumentConnection));
+		disposables.push(connection.notebooks.synchronization.onDidOpenNotebookDocument((params) => {
 			this.notebookDocuments.set(params.notebookDocument.uri, params.notebookDocument);
 			for (const cellTextDocument of params.cellTextDocuments) {
 				cellTextDocumentConnection.openTextDocument({ textDocument: cellTextDocument });
 			}
 			this.updateCellMap(params.notebookDocument);
 			this._onDidOpen.fire(params.notebookDocument);
-		});
-		connection.notebooks.synchronization.onDidChangeNotebookDocument((params) => {
+		}));
+		disposables.push(connection.notebooks.synchronization.onDidChangeNotebookDocument((params) => {
 			const notebookDocument = this.notebookDocuments.get(params.notebookDocument.uri);
 			if (notebookDocument === undefined) {
 				return;
@@ -339,15 +344,15 @@ export class NotebookDocuments<T extends {  uri: DocumentUri }> {
 			if (changeEvent.metadata !== undefined || changeEvent.cells !== undefined) {
 				this._onDidChange.fire(changeEvent);
 			}
-		});
-		connection.notebooks.synchronization.onDidSaveNotebookDocument((params) => {
+		}));
+		disposables.push(connection.notebooks.synchronization.onDidSaveNotebookDocument((params) => {
 			const notebookDocument = this.notebookDocuments.get(params.notebookDocument.uri);
 			if (notebookDocument === undefined) {
 				return;
 			}
 			this._onDidSave.fire(notebookDocument);
-		});
-		connection.notebooks.synchronization.onDidCloseNotebookDocument((params) => {
+		}));
+		disposables.push(connection.notebooks.synchronization.onDidCloseNotebookDocument((params) => {
 			const notebookDocument = this.notebookDocuments.get(params.notebookDocument.uri);
 			if (notebookDocument === undefined) {
 				return;
@@ -360,8 +365,8 @@ export class NotebookDocuments<T extends {  uri: DocumentUri }> {
 			for (const cell of notebookDocument.cells) {
 				this.notebookCellMap.delete(cell.document);
 			}
-		});
-		connection.notebooks.synchronization.onDidSelectNotebookController((params) => {
+		}));
+		disposables.push(connection.notebooks.synchronization.onDidSelectNotebookController((params) => {
 			const key = params.notebookDocument.uri;
 			if (params.selected) {
 				this.notebookControllers.set(key, params.controller);
@@ -376,7 +381,8 @@ export class NotebookDocuments<T extends {  uri: DocumentUri }> {
 				return;
 			}
 			this._onDidSelectNotebookController.fire({ notebookDocument, controller: params.controller, selected: params.selected });
-		});
+		}));
+		return Disposable.create(() => { disposables.forEach(disposable => disposable.dispose()); });
 	}
 
 	private updateCellMap(notebookDocument: Proposed.NotebookDocument): void {
