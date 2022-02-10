@@ -111,21 +111,58 @@ namespace Converter {
 			const params = base.asChangeTextDocumentParams(event);
 			return { document: params.textDocument, changes: params.contentChanges };
 		}
+
+		export function asNotebookDocumentChangeEvent(event: NotebookDocumentChangeEvent, base: _c2p.Converter): proto.Proposed.NotebookDocumentChangeEvent {
+			const result: proto.Proposed.NotebookDocumentChangeEvent = Object.create(null);
+			if (event.metadata) {
+				result.metadata = Converter.c2p.asMetadata(event.metadata);
+			}
+			if (event.cells !== undefined) {
+				const cells: Required<proto.Proposed.NotebookDocumentChangeEvent>['cells'] =  Object.create(null);
+				const changedCells = event.cells;
+				if (changedCells.structure) {
+					cells.structure = {
+						array: {
+							start: changedCells.structure.array.start,
+							deleteCount: changedCells.structure.array.deleteCount,
+							cells: changedCells.structure.array.cells !== undefined ? changedCells.structure.array.cells.map(cell => Converter.c2p.asNotebookCell(cell, base)) : undefined
+						},
+						didOpen: changedCells.structure.didOpen !== undefined
+							? changedCells.structure.didOpen.map(cell => base.asOpenTextDocumentParams(cell.document).textDocument)
+							: undefined,
+						didClose: changedCells.structure.didClose !== undefined
+							? changedCells.structure.didClose.map(cell => base.asCloseTextDocumentParams(cell.document).textDocument)
+							: undefined
+					};
+				}
+				if (changedCells.data !== undefined) {
+					cells.data = changedCells.data.map(cell => Converter.c2p.asNotebookCell(cell, base));
+				}
+				if (changedCells.textContent !== undefined) {
+					cells.textContent = changedCells.textContent.map(event => Converter.c2p.asTextContentChange(event, base));
+				}
+				if (Object.keys(cells).length > 0) {
+					result.cells = cells;
+				}
+			}
+			return result;
+		}
 	}
 }
 
-namespace NotebookCell {
-	export function computeDiff(originalCells: proto.Proposed.NotebookCell[], modifiedCells: proto.Proposed.NotebookCell[], compareMetadata: boolean): proto.Proposed.NotebookCellArrayChange | undefined {
+namespace $NotebookCell {
+	type ComputeDiffReturnType = Required<Required<Required<NotebookDocumentChangeEvent>['cells']>['structure']>['array'];
+	export function computeDiff(originalCells: vscode.NotebookCell[], modifiedCells: vscode.NotebookCell[], compareMetadata: boolean): ComputeDiffReturnType | undefined {
 		const originalLength = originalCells.length;
 		const modifiedLength = modifiedCells.length;
 		let startIndex = 0;
-		while(startIndex < modifiedLength && startIndex < originalLength && proto.Proposed.NotebookCell.equals(originalCells[startIndex], modifiedCells[startIndex], compareMetadata)) {
+		while(startIndex < modifiedLength && startIndex < originalLength && equals(originalCells[startIndex], modifiedCells[startIndex], compareMetadata)) {
 			startIndex++;
 		}
 		if (startIndex < modifiedLength && startIndex < originalLength) {
 			let originalEndIndex = originalLength - 1;
 			let modifiedEndIndex = modifiedLength - 1;
-			while (originalEndIndex >= 0 && modifiedEndIndex >= 0 && proto.Proposed.NotebookCell.equals(originalCells[originalEndIndex], modifiedCells[modifiedEndIndex], compareMetadata)) {
+			while (originalEndIndex >= 0 && modifiedEndIndex >= 0 && equals(originalCells[originalEndIndex], modifiedCells[modifiedEndIndex], compareMetadata)) {
 				originalEndIndex--;
 				modifiedEndIndex--;
 			}
@@ -141,6 +178,70 @@ namespace NotebookCell {
 			// The two arrays are the same.
 			return undefined;
 		}
+	}
+
+	function equals(one: vscode.NotebookCell, other: vscode.NotebookCell, compareMetaData: boolean = true): boolean {
+		if (one.kind !== other.kind || one.document.uri.toString() !== other.document.uri.toString()) {
+			return false;
+		}
+		return !compareMetaData || (compareMetaData && equalsMetadata(one.metadata, other.metadata));
+	}
+
+	function equalsMetadata(one: any, other: any | undefined): boolean {
+		if (one === other) {
+			return true;
+		}
+		if (one === null || one === undefined || other === null || other === undefined) {
+			return false;
+		}
+		if (typeof one !== typeof other) {
+			return false;
+		}
+		if (typeof one !== 'object') {
+			return false;
+		}
+		const oneArray = Array.isArray(one);
+		const otherArray = Array.isArray(other);
+		if (oneArray !== otherArray) {
+			return false;
+		}
+
+		if (oneArray && otherArray) {
+			if (one.length !== other.length) {
+				return false;
+			}
+			for (let i = 0; i < one.length; i++) {
+				if (!equalsMetadata(one[i], other[i])) {
+					return false;
+				}
+			}
+		}
+		if (isObjectLiteral(one) && isObjectLiteral(other)) {
+			const oneKeys = Object.keys(one);
+			const otherKeys = Object.keys(other);
+
+			if (oneKeys.length !== otherKeys.length) {
+				return false;
+			}
+
+			oneKeys.sort();
+			otherKeys.sort();
+			if (!equalsMetadata(oneKeys, otherKeys)) {
+				return false;
+			}
+			for (let i = 0; i < oneKeys.length; i++) {
+				const prop = oneKeys[i];
+				if (!equalsMetadata((one as LSPObject)[prop], (other as LSPObject)[prop])) {
+					return false;
+				}
+			}
+			return true;
+		}
+		return false;
+	}
+
+	export function isObjectLiteral(value: any): value is object {
+		return value !== null && typeof value === 'object';
 	}
 }
 
@@ -186,9 +287,9 @@ namespace $NotebookDocumentSyncOptions {
 
 type SyncInfo = {
 	/**
-	 * The synced LSP notebook cells.
+	 * The synced VS Code notebook cells.
 	 */
-	cells: proto.Proposed.NotebookCell[];
+	cells: vscode.NotebookCell[];
 
 	/**
 	 * A set of VS Code URI of the synced
@@ -198,16 +299,16 @@ type SyncInfo = {
 };
 
 namespace SyncInfo {
-	export function create(proto: proto.Proposed.NotebookCell[], code: vscode.NotebookCell[]): SyncInfo {
+	export function create(cells: vscode.NotebookCell[]): SyncInfo {
 		return {
-			cells: proto,
-			uris: new Set(code.map(cell => cell.document.uri.toString()))
+			cells,
+			uris: new Set(cells.map(cell => cell.document.uri.toString()))
 		};
 	}
 }
 
 
-export interface NotebookDocumentChangeData {
+export interface NotebookDocumentChangeEvent {
 	/**
 	 * The changed meta data if any.
 	 */
@@ -253,7 +354,7 @@ export interface NotebookDocumentMiddleware {
 	notebooks?: {
 		didOpen?: (this: void, notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[], next: (this: void, notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[]) => Promise<void>) => Promise<void>;
 		didSave?: (this: void, notebookDocument: vscode.NotebookDocument, next: (this: void, notebookDocument: vscode.NotebookDocument) => Promise<void>) => Promise<void>;
-		didChange?: (this: void, notebookDocument: vscode.NotebookDocument, event: proto.Proposed.NotebookDocumentChangeEvent, next: (this: void, notebookDocument: vscode.NotebookDocument, event: proto.Proposed.NotebookDocumentChangeEvent) => Promise<void>) => Promise<void>;
+		didChange?: (this: void, notebookDocument: vscode.NotebookDocument, event: NotebookDocumentChangeEvent, next: (this: void, notebookDocument: vscode.NotebookDocument, event: NotebookDocumentChangeEvent) => Promise<void>) => Promise<void>;
 		didClose?: (this: void, notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[], next: (this: void, notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[]) => Promise<void>) => Promise<void>;
 		didSelectNotebookController? :(this: void, notebookDocument: vscode.NotebookDocument, controller: proto.Proposed.NotebookController, selected: boolean, next: (this: void, notebookDocument: vscode.NotebookDocument, controller: proto.Proposed.NotebookController, selected: boolean) => Promise<void>) => Promise<void>;
 	};
@@ -263,7 +364,7 @@ export interface NotebookDocumentSyncFeatureShape {
 	mode: 'notebook';
 	sendDidOpenNotebookDocument(notebookDocument: vscode.NotebookDocument): Promise<void>;
 	sendDidSaveNotebookDocument(notebookDocument: vscode.NotebookDocument): Promise<void>;
-	sendDidChangeNotebookDocument(notebookDocument: vscode.NotebookDocument, changeData: NotebookDocumentChangeData): Promise<void>;
+	sendDidChangeNotebookDocument(notebookDocument: vscode.NotebookDocument, event: NotebookDocumentChangeEvent): Promise<void>;
 	sendDidSelectNotebookController(notebookDocument: vscode.NotebookDocument, controller: proto.Proposed.NotebookController, selected: boolean): Promise<void>;
 	sendDidCloseNotebookDocument(notebookDocument: vscode.NotebookDocument): Promise<void>;
 }
@@ -362,7 +463,7 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 			return;
 		}
 		this.doSendChange(notebookDocument, {
-			cells: { textContent: [Converter.c2p.asTextContentChange(event, this.client.code2ProtocolConverter)] }
+			cells: { textContent: [event] }
 		}).catch(() => { /* error handled in doSendChange */ });
 	}
 
@@ -383,9 +484,8 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 				return;
 			}
 
-			this.doSendOpen(notebookDocument, cells, (nb) => {
-				this.notebookSyncInfo.set(notebookDocument.uri.toString(), SyncInfo.create(nb.cells, cells) );
-			}).catch(() => { /** Failure is handled in doSend */});
+			this.doSendOpen(notebookDocument, cells).catch(() => { /* error handled in doSendOpen */ });
+			this.notebookSyncInfo.set(notebookDocument.uri.toString(), SyncInfo.create(cells));
 		}
 	}
 
@@ -417,42 +517,38 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 				return;
 			}
 			const oldCells = syncInfo.cells;
-			const newCells = Converter.c2p.asNotebookCells(cells, this.client.code2ProtocolConverter);
+			const newCells = cells;
 			// meta data changes are reported using a different event. So we can ignore comparing the meta data which
 			// has a positive impact on performance.
-			const diff = NotebookCell.computeDiff(syncInfo.cells, newCells, false);
+			const diff = $NotebookCell.computeDiff(syncInfo.cells, newCells, false);
 			if (diff === undefined) {
 				return;
 			}
 
-			const deletedCells: Set<string> = diff.deleteCount === 0
-				? new Set()
-				: new Set(oldCells.slice(diff.start, diff.start + diff.deleteCount).map(cell => cell.document));
-			const insertedCells: Set<string> = diff.cells === undefined
-				? new Set()
-				: new Set(diff.cells.map(cell => cell.document));
+			const deletedCells: Map<string, vscode.NotebookCell> = diff.deleteCount === 0
+				? new Map()
+				: new Map(oldCells.slice(diff.start, diff.start + diff.deleteCount).map(cell => [cell.document.uri.toString(), cell]));
+			const insertedCells: Map<string, vscode.NotebookCell> = diff.cells === undefined
+				? new Map()
+				: new Map(diff.cells.map(cell => [cell.document.uri.toString(), cell]));
 
 			// Remove the onces that got deleted and inserted again.
-			for (const key of Array.from(deletedCells.values())) {
+			for (const key of Array.from(deletedCells.keys())) {
 				if (insertedCells.has(key)) {
 					deletedCells.delete(key);
 					insertedCells.delete(key);
 				}
 			}
 
-			type structure = Required<Required<Required<proto.Proposed.NotebookDocumentChangeEvent>['cells']>['structure']>;
+			type structure = Required<Required<Required<NotebookDocumentChangeEvent>['cells']>['structure']>;
 			const didOpen: structure['didOpen'] = [];
 			const didClose: structure['didClose'] = [];
 			if (deletedCells.size > 0 || insertedCells.size > 0) {
-				const codeCells: Map<string, vscode.NotebookCell> = new Map(cells.map(cell => [this.client.code2ProtocolConverter.asUri(cell.document.uri), cell]));
-				for (const document of insertedCells.values()) {
-					const cell = codeCells.get(document);
-					if (cell !== undefined) {
-						didOpen.push(this.client.code2ProtocolConverter.asTextDocumentItem(cell.document));
-					}
+				for (const cell of insertedCells.values()) {
+					didOpen.push(cell);
 				}
-				for (const document of deletedCells.values()) {
-					didClose.push({ uri: document });
+				for (const cell of deletedCells.values()) {
+					didClose.push(cell);
 				}
 			}
 			this.doSendChange(notebookDocument, { cells: { structure: {
@@ -460,7 +556,7 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 				didClose: didClose.length > 0 ? didClose : undefined,
 				didOpen: didOpen.length > 0 ? didOpen : undefined
 			} } }).catch(() => { /* error handled in doSendChange */ });
-			this.notebookSyncInfo.set(notebookDocument.uri.toString(), SyncInfo.create(newCells, cells));
+			this.notebookSyncInfo.set(notebookDocument.uri.toString(), SyncInfo.create(newCells));
 		}
 	}
 
@@ -475,8 +571,7 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 			// The cell is not sync. So ignore as well.
 			return;
 		}
-		const pc = Converter.c2p.asNotebookCell(cell, this.client.code2ProtocolConverter);
-		this.doSendChange(notebookDocument, { cells: { data: [pc] } }).catch(() => { /* error handled in doSendChange */ });
+		this.doSendChange(notebookDocument, { cells: { data: [cell] } }).catch(() => { /* error handled in doSendChange */ });
 	}
 
 	private cellExecutionStateChanged(event: vscode.NotebookCellExecutionStateChangeEvent): void {
@@ -503,7 +598,7 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 		if (event.state === vscode.NotebookCellExecutionState.Idle) {
 			if (this.cellExecutionState.has(cellUri)) {
 				this.cellExecutionState.delete(cellUri);
-				this.doSendChange(notebookDocument, { cells: { data: [Converter.c2p.asNotebookCell(event.cell, this.client.code2ProtocolConverter)] } }).catch(() => { /* error handled in doSendChange */});
+				this.doSendChange(notebookDocument, { cells: { data: [event.cell] } }).catch(() => { /* error handled in doSendChange */});
 			}
 		}
 	}
@@ -559,73 +654,37 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 		return this.doSendOpen(notebookDocument, cells);
 	}
 
-	private async doSendOpen(notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[], cb?: (notebook: proto.Proposed.NotebookDocument) => void ): Promise<void> {
+	private async doSendOpen(notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[]): Promise<void> {
 		const send = (notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[]): Promise<void> => {
 			const nb = Converter.c2p.asNotebookDocument(notebookDocument, cells, this.client.code2ProtocolConverter);
 			const cellDocuments: TextDocumentItem[] = cells.map(cell => this.client.code2ProtocolConverter.asTextDocumentItem(cell.document));
-			const result = this.client.sendNotification(proto.Proposed.DidOpenNotebookDocumentNotification.type, {
+			return this.client.sendNotification(proto.Proposed.DidOpenNotebookDocumentNotification.type, {
 				notebookDocument: nb,
 				cellTextDocuments: cellDocuments
 			}).catch((error) => {
 				this.client.error('Sending DidOpenNotebookDocumentNotification failed', error);
 				throw error;
 			});
-			cb && cb(nb);
-			return result;
 		};
 		const middleware = this.client.clientOptions.middleware?.notebooks;
 		return middleware?.didOpen !== undefined ? middleware.didOpen(notebookDocument, cells, send) : send(notebookDocument, cells);
 	}
 
-	public async sendDidChangeNotebookDocument(notebookDocument: vscode.NotebookDocument, changeData: NotebookDocumentChangeData): Promise<void> {
-		const changeEvent: proto.Proposed.NotebookDocumentChangeEvent = Object.create(null);
-		if (changeData.metadata) {
-			changeEvent.metadata = Converter.c2p.asMetadata(notebookDocument.metadata);
-		}
-		if (changeData.cells !== undefined) {
-			const cells: Required<proto.Proposed.NotebookDocumentChangeEvent>['cells'] =  Object.create(null);
-			const changedCells = changeData.cells;
-			if (changedCells.structure) {
-				cells.structure = {
-					array: {
-						start: changedCells.structure.array.start,
-						deleteCount: changedCells.structure.array.deleteCount,
-						cells: changedCells.structure.array.cells !== undefined ? changedCells.structure.array.cells.map(cell => Converter.c2p.asNotebookCell(cell, this.client.code2ProtocolConverter)) : undefined
-					},
-					didOpen: changedCells.structure.didOpen !== undefined
-						? changedCells.structure.didOpen.map(cell => this.client.code2ProtocolConverter.asOpenTextDocumentParams(cell.document).textDocument)
-						: undefined,
-					didClose: changedCells.structure.didClose !== undefined
-						? changedCells.structure.didClose.map(cell => this.client.code2ProtocolConverter.asCloseTextDocumentParams(cell.document).textDocument)
-						: undefined
-				};
-			}
-			if (changedCells.data !== undefined) {
-				cells.data = changedCells.data.map(cell => Converter.c2p.asNotebookCell(cell, this.client.code2ProtocolConverter));
-			}
-			if (changedCells.textContent !== undefined) {
-				cells.textContent = changedCells.textContent.map(event => Converter.c2p.asTextContentChange(event, this.client.code2ProtocolConverter));
-			}
-			if (Object.keys(cells).length > 0) {
-				changeEvent.cells = cells;
-			}
-		}
-		if (Object.keys(changeEvent).length > 0) {
-			return this.doSendChange(notebookDocument, changeEvent);
-		}
+	public async sendDidChangeNotebookDocument(notebookDocument: vscode.NotebookDocument, event: NotebookDocumentChangeEvent): Promise<void> {
+		return this.doSendChange(notebookDocument, event);
 	}
 
-	private async doSendChange(notebookDocument: vscode.NotebookDocument, change: proto.Proposed.NotebookDocumentChangeEvent): Promise<void> {
-		const send = (notebookDocument: vscode.NotebookDocument, change: proto.Proposed.NotebookDocumentChangeEvent): Promise<void> => {
+	private async doSendChange(notebookDocument: vscode.NotebookDocument, event: NotebookDocumentChangeEvent): Promise<void> {
+		const send = (notebookDocument: vscode.NotebookDocument, event: NotebookDocumentChangeEvent): Promise<void> => {
 			return this.client.sendNotification(proto.Proposed.DidChangeNotebookDocumentNotification.type, {
 				notebookDocument: Converter.c2p.asVersionedNotebookDocumentIdentifier(notebookDocument, this.client.code2ProtocolConverter),
-				change: change
+				change: Converter.c2p.asNotebookDocumentChangeEvent(event, this.client.code2ProtocolConverter)
 			}).catch((error) => {
 				this.client.error('Sending DidChangeNotebookDocumentNotification failed', error);
 			});
 		};
 		const middleware = this.client.clientOptions.middleware?.notebooks;
-		return middleware?.didChange !== undefined ? middleware?.didChange(notebookDocument, change, send) : send(notebookDocument, change);
+		return middleware?.didChange !== undefined ? middleware?.didChange(notebookDocument, event, send) : send(notebookDocument, event);
 	}
 
 	public async sendDidSaveNotebookDocument(notebookDocument: vscode.NotebookDocument): Promise<void> {
