@@ -6,7 +6,7 @@
 
 import {
 	Proposed, NotificationHandler1, Emitter, Event, LSPObject, DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
-	NotificationHandler, DocumentUri, URI
+	NotificationHandler, DocumentUri, URI, Disposable
 } from 'vscode-languageserver-protocol';
 
 import type { Feature, _Notebooks, _Connection, _, } from './server';
@@ -20,11 +20,11 @@ import { TextDocuments, TextDocumentConnection, TextDocumentsConfiguration } fro
  */
 export interface NotebooksFeatureShape {
 	synchronization: {
-		onDidOpenNotebookDocument(handler: NotificationHandler1<Proposed.DidOpenNotebookDocumentParams>): void;
-		onDidChangeNotebookDocument(handler: NotificationHandler1<Proposed.DidChangeNotebookDocumentParams>): void;
-		onDidSaveNotebookDocument(handler: NotificationHandler1<Proposed.DidSaveNotebookDocumentParams>): void;
-		onDidCloseNotebookDocument(handler: NotificationHandler1<Proposed.DidCloseNotebookDocumentParams>): void;
-		onDidSelectNotebookController(handler: NotificationHandler1<Proposed.DidSelectNotebookControllerParams>): void;
+		onDidOpenNotebookDocument(handler: NotificationHandler1<Proposed.DidOpenNotebookDocumentParams>): Disposable;
+		onDidChangeNotebookDocument(handler: NotificationHandler1<Proposed.DidChangeNotebookDocumentParams>): Disposable;
+		onDidSaveNotebookDocument(handler: NotificationHandler1<Proposed.DidSaveNotebookDocumentParams>): Disposable;
+		onDidCloseNotebookDocument(handler: NotificationHandler1<Proposed.DidCloseNotebookDocumentParams>): Disposable;
+		onDidSelectNotebookController(handler: NotificationHandler1<Proposed.DidSelectNotebookControllerParams>): Disposable;
 	};
 }
 
@@ -32,28 +32,28 @@ export const NotebooksFeature: Feature<_Notebooks, NotebooksFeatureShape> = (Bas
 	return class extends Base {
 		public get synchronization() {
 			return {
-				onDidOpenNotebookDocument: (handler: NotificationHandler1<Proposed.DidOpenNotebookDocumentParams>): void => {
-					this.connection.onNotification(Proposed.DidOpenNotebookDocumentNotification.type, (params) => {
+				onDidOpenNotebookDocument: (handler: NotificationHandler1<Proposed.DidOpenNotebookDocumentParams>): Disposable => {
+					return this.connection.onNotification(Proposed.DidOpenNotebookDocumentNotification.type, (params) => {
 						handler(params);
 					});
 				},
-				onDidChangeNotebookDocument: (handler: NotificationHandler1<Proposed.DidChangeNotebookDocumentParams>): void => {
-					this.connection.onNotification(Proposed.DidChangeNotebookDocumentNotification.type, (params) => {
+				onDidChangeNotebookDocument: (handler: NotificationHandler1<Proposed.DidChangeNotebookDocumentParams>): Disposable => {
+					return this.connection.onNotification(Proposed.DidChangeNotebookDocumentNotification.type, (params) => {
 						handler(params);
 					});
 				},
-				onDidSaveNotebookDocument: (handler: NotificationHandler1<Proposed.DidSaveNotebookDocumentParams>) => {
-					this.connection.onNotification(Proposed.DidSaveNotebookDocumentNotification.type, (params) => {
+				onDidSaveNotebookDocument: (handler: NotificationHandler1<Proposed.DidSaveNotebookDocumentParams>): Disposable => {
+					return this.connection.onNotification(Proposed.DidSaveNotebookDocumentNotification.type, (params) => {
 						handler(params);
 					});
 				},
-				onDidCloseNotebookDocument: (handler: NotificationHandler1<Proposed.DidCloseNotebookDocumentParams>): void => {
-					this.connection.onNotification(Proposed.DidCloseNotebookDocumentNotification.type, (params) => {
+				onDidCloseNotebookDocument: (handler: NotificationHandler1<Proposed.DidCloseNotebookDocumentParams>): Disposable => {
+					return this.connection.onNotification(Proposed.DidCloseNotebookDocumentNotification.type, (params) => {
 						handler(params);
 					});
 				},
-				onDidSelectNotebookController: (handler: NotificationHandler1<Proposed.DidSelectNotebookControllerParams>): void => {
-					this.connection.onNotification(Proposed.DidSelectNotebookControllerNotification.type, (params) => {
+				onDidSelectNotebookController: (handler: NotificationHandler1<Proposed.DidSelectNotebookControllerParams>): Disposable => {
+					return this.connection.onNotification(Proposed.DidSelectNotebookControllerNotification.type, (params) => {
 						handler(params);
 					});
 				}
@@ -110,41 +110,49 @@ export type NotebookDocumentChangeEvent = {
 
 class Connection implements TextDocumentConnection {
 
+	private static readonly NULL_DISPOSE = Object.freeze({ dispose: () => { }});
+
 	private openHandler: NotificationHandler<DidOpenTextDocumentParams> | undefined;
 	private changeHandler: NotificationHandler<DidChangeTextDocumentParams> | undefined;
 	private closeHandler: NotificationHandler<DidCloseTextDocumentParams> | undefined;
 
-	public onDidOpenTextDocument(handler: NotificationHandler<DidOpenTextDocumentParams>): void {
+	public onDidOpenTextDocument(handler: NotificationHandler<DidOpenTextDocumentParams>): Disposable {
 		this.openHandler = handler;
+		return Disposable.create(() => { this.openHandler = undefined; });
 	}
 
 	public openTextDocument(params: DidOpenTextDocumentParams): void {
 		this.openHandler && this.openHandler(params);
 	}
 
-	public onDidChangeTextDocument(handler: NotificationHandler<DidChangeTextDocumentParams>): void {
+	public onDidChangeTextDocument(handler: NotificationHandler<DidChangeTextDocumentParams>): Disposable {
 		this.changeHandler = handler;
+		return Disposable.create(() => { this.changeHandler = handler; });
 	}
 
 	public changeTextDocument(params: DidChangeTextDocumentParams): void {
 		this.changeHandler && this.changeHandler(params);
 	}
 
-	public onDidCloseTextDocument(handler: NotificationHandler<DidCloseTextDocumentParams>): void {
+	public onDidCloseTextDocument(handler: NotificationHandler<DidCloseTextDocumentParams>): Disposable {
 		this.closeHandler = handler;
+		return Disposable.create(() => { this.closeHandler = undefined; });
 	}
 
 	public closeTextDocument(params: DidCloseTextDocumentParams): void {
 		this.closeHandler && this.closeHandler(params);
 	}
 
-	public onWillSaveTextDocument(): void {
+	public onWillSaveTextDocument(): Disposable {
+		return Connection.NULL_DISPOSE;
 	}
 
-	public onWillSaveTextDocumentWaitUntil(): void {
+	public onWillSaveTextDocumentWaitUntil(): Disposable {
+		return Connection.NULL_DISPOSE;
 	}
 
-	public onDidSaveTextDocument(): void {
+	public onDidSaveTextDocument(): Disposable {
+		return Connection.NULL_DISPOSE;
 	}
 }
 

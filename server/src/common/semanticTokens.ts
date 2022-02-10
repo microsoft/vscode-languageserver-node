@@ -6,7 +6,7 @@
 import {
 	SemanticTokens, SemanticTokensPartialResult, SemanticTokensDelta, SemanticTokensDeltaPartialResult, SemanticTokensParams,
 	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest,
-	SemanticTokensRefreshRequest, SemanticTokensEdit
+	SemanticTokensRefreshRequest, SemanticTokensEdit, Disposable
 } from 'vscode-languageserver-protocol';
 
 import type { Feature, _Languages, ServerRequestHandler } from './server';
@@ -19,9 +19,9 @@ import type { Feature, _Languages, ServerRequestHandler } from './server';
 export interface SemanticTokensFeatureShape {
 	semanticTokens: {
 		refresh(): void;
-		on(handler: ServerRequestHandler<SemanticTokensParams, SemanticTokens, SemanticTokensPartialResult, void>): void;
-		onDelta(handler: ServerRequestHandler<SemanticTokensDeltaParams, SemanticTokensDelta | SemanticTokens, SemanticTokensDeltaPartialResult | SemanticTokensDeltaPartialResult, void>): void;
-		onRange(handler: ServerRequestHandler<SemanticTokensRangeParams, SemanticTokens, SemanticTokensPartialResult, void>): void;
+		on(handler: ServerRequestHandler<SemanticTokensParams, SemanticTokens, SemanticTokensPartialResult, void>): Disposable;
+		onDelta(handler: ServerRequestHandler<SemanticTokensDeltaParams, SemanticTokensDelta | SemanticTokens, SemanticTokensDeltaPartialResult | SemanticTokensDeltaPartialResult, void>): Disposable;
+		onRange(handler: ServerRequestHandler<SemanticTokensRangeParams, SemanticTokens, SemanticTokensPartialResult, void>): Disposable;
 	};
 }
 
@@ -32,21 +32,21 @@ export const SemanticTokensFeature: Feature<_Languages, SemanticTokensFeatureSha
 				refresh: (): Promise<void> => {
 					return this.connection.sendRequest(SemanticTokensRefreshRequest.type);
 				},
-				on: (handler: ServerRequestHandler<SemanticTokensParams, SemanticTokens, SemanticTokensPartialResult, void>): void => {
+				on: (handler: ServerRequestHandler<SemanticTokensParams, SemanticTokens, SemanticTokensPartialResult, void>): Disposable => {
 					const type = SemanticTokensRequest.type;
-					this.connection.onRequest(type, (params, cancel) => {
+					return this.connection.onRequest(type, (params, cancel) => {
 						return handler(params, cancel, this.attachWorkDoneProgress(params), this.attachPartialResultProgress(type, params));
 					});
 				},
-				onDelta: (handler: ServerRequestHandler<SemanticTokensDeltaParams, SemanticTokensDelta | SemanticTokens, SemanticTokensDeltaPartialResult | SemanticTokensDeltaPartialResult, void>): void => {
+				onDelta: (handler: ServerRequestHandler<SemanticTokensDeltaParams, SemanticTokensDelta | SemanticTokens, SemanticTokensDeltaPartialResult | SemanticTokensDeltaPartialResult, void>): Disposable => {
 					const type = SemanticTokensDeltaRequest.type;
-					this.connection.onRequest(type, (params, cancel) => {
+					return this.connection.onRequest(type, (params, cancel) => {
 						return handler(params, cancel, this.attachWorkDoneProgress(params), this.attachPartialResultProgress(type, params));
 					});
 				},
-				onRange: (handler: ServerRequestHandler<SemanticTokensRangeParams, SemanticTokens, SemanticTokensPartialResult, void>): void => {
+				onRange: (handler: ServerRequestHandler<SemanticTokensRangeParams, SemanticTokens, SemanticTokensPartialResult, void>): Disposable => {
 					const type = SemanticTokensRangeRequest.type;
-					this.connection.onRequest(type, (params, cancel) => {
+					return this.connection.onRequest(type, (params, cancel) => {
 						return handler(params, cancel, this.attachWorkDoneProgress(params), this.attachPartialResultProgress(type, params));
 					});
 				}

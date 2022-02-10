@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { Proposed } from 'vscode-languageserver-protocol';
+import { Proposed, Disposable } from 'vscode-languageserver-protocol';
 
 import type { Feature, _Languages, ServerRequestHandler } from './server';
 
@@ -25,14 +25,14 @@ export interface DiagnosticsFeatureShape {
 		*
 		* @param handler The corresponding handler.
 		*/
-		on(handler: ServerRequestHandler<Proposed.DocumentDiagnosticParams, Proposed.DocumentDiagnosticReport, Proposed.DocumentDiagnosticReportPartialResult, Proposed.DiagnosticServerCancellationData>): void;
+		on(handler: ServerRequestHandler<Proposed.DocumentDiagnosticParams, Proposed.DocumentDiagnosticReport, Proposed.DocumentDiagnosticReportPartialResult, Proposed.DiagnosticServerCancellationData>): Disposable;
 
 		/**
 		 * Installs a handler for the workspace diagnostic request.
 		 *
 		 * @param handler The corresponding handler.
 		 */
-		 onWorkspace(handler: ServerRequestHandler<Proposed.WorkspaceDiagnosticParams, Proposed.WorkspaceDiagnosticReport, Proposed.WorkspaceDiagnosticReportPartialResult, Proposed.DiagnosticServerCancellationData>): void;
+		 onWorkspace(handler: ServerRequestHandler<Proposed.WorkspaceDiagnosticParams, Proposed.WorkspaceDiagnosticReport, Proposed.WorkspaceDiagnosticReportPartialResult, Proposed.DiagnosticServerCancellationData>): Disposable;
 	};
 }
 
@@ -43,13 +43,13 @@ export const DiagnosticFeature: Feature<_Languages, DiagnosticsFeatureShape> = (
 				refresh: (): Promise<void> => {
 					return this.connection.sendRequest(Proposed.DiagnosticRefreshRequest.type);
 				},
-				on: (handler: ServerRequestHandler<Proposed.DocumentDiagnosticParams, Proposed.DocumentDiagnosticReport, Proposed.DocumentDiagnosticReportPartialResult, Proposed.DiagnosticServerCancellationData>): void => {
-					this.connection.onRequest(Proposed.DocumentDiagnosticRequest.type, (params, cancel) => {
+				on: (handler: ServerRequestHandler<Proposed.DocumentDiagnosticParams, Proposed.DocumentDiagnosticReport, Proposed.DocumentDiagnosticReportPartialResult, Proposed.DiagnosticServerCancellationData>): Disposable => {
+					return this.connection.onRequest(Proposed.DocumentDiagnosticRequest.type, (params, cancel) => {
 						return handler(params, cancel, this.attachWorkDoneProgress(params), this.attachPartialResultProgress(Proposed.DocumentDiagnosticRequest.partialResult, params));
 					});
 				},
-				onWorkspace: (handler: ServerRequestHandler<Proposed.WorkspaceDiagnosticParams, Proposed.WorkspaceDiagnosticReport, Proposed.WorkspaceDiagnosticReportPartialResult, Proposed.DiagnosticServerCancellationData>): void => {
-					this.connection.onRequest(Proposed.WorkspaceDiagnosticRequest.type, (params, cancel) => {
+				onWorkspace: (handler: ServerRequestHandler<Proposed.WorkspaceDiagnosticParams, Proposed.WorkspaceDiagnosticReport, Proposed.WorkspaceDiagnosticReportPartialResult, Proposed.DiagnosticServerCancellationData>): Disposable => {
+					return this.connection.onRequest(Proposed.WorkspaceDiagnosticRequest.type, (params, cancel) => {
 						return handler(params, cancel, this.attachWorkDoneProgress(params), this.attachPartialResultProgress(Proposed.WorkspaceDiagnosticRequest.partialResult, params));
 					});
 				}

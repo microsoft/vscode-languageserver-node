@@ -880,10 +880,10 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 * @param type The [RequestType](#RequestType) describing the request.
 	 * @param handler The handler to install
 	 */
-	onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: RequestHandler0<R, E>): void;
-	onRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, handler: RequestHandler<P, R, E>): void;
-	onRequest<R, PR, E, RO>(type: RequestType0<R, E>, handler: RequestHandler0<R, E>): void;
-	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): void;
+	onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: RequestHandler0<R, E>): Disposable;
+	onRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, handler: RequestHandler<P, R, E>): Disposable;
+	onRequest<R, PR, E, RO>(type: RequestType0<R, E>, handler: RequestHandler0<R, E>): Disposable;
+	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): Disposable;
 
 	/**
 	 * Installs a request handler for the given method.
@@ -891,14 +891,14 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 * @param method The method to register a request handler for.
 	 * @param handler The handler to install.
 	 */
-	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): void;
+	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): Disposable;
 
 	/**
 	 * Installs a request handler that is invoked if no specific request handler can be found.
 	 *
 	 * @param handler a handler that handles all requests.
 	 */
-	onRequest(handler: StarRequestHandler): void;
+	onRequest(handler: StarRequestHandler): Disposable;
 
 	/**
 	 * Send a request to the client.
@@ -926,10 +926,10 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 * @param type The [NotificationType](#NotificationType) describing the notification.
 	 * @param handler The handler to install.
 	 */
-	onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): void;
-	onNotification<P, RO>(type: ProtocolNotificationType<P, RO>, handler: NotificationHandler<P>): void;
-	onNotification(type: NotificationType0, handler: NotificationHandler0): void;
-	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): void;
+	onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): Disposable;
+	onNotification<P, RO>(type: ProtocolNotificationType<P, RO>, handler: NotificationHandler<P>): Disposable;
+	onNotification(type: NotificationType0, handler: NotificationHandler0): Disposable;
+	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): Disposable;
 
 	/**
 	 * Installs a notification handler for the given method.
@@ -937,14 +937,14 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 * @param method The method to register a request handler for.
 	 * @param handler The handler to install.
 	 */
-	onNotification(method: string, handler: GenericNotificationHandler): void;
+	onNotification(method: string, handler: GenericNotificationHandler): Disposable;
 
 	/**
 	 * Installs a notification handler that is invoked if no specific notification handler can be found.
 	 *
 	 * @param handler a handler that handles all notifications.
 	 */
-	onNotification(handler: StarNotificationHandler): void;
+	onNotification(handler: StarNotificationHandler): Disposable;
 
 	/**
 	 * Send a notification to the client.
@@ -986,28 +986,28 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 *
 	 * @param handler The initialize handler.
 	 */
-	onInitialize(handler: ServerRequestHandler<InitializeParams, InitializeResult, never, InitializeError>): void;
+	onInitialize(handler: ServerRequestHandler<InitializeParams, InitializeResult, never, InitializeError>): Disposable;
 
 	/**
 	 * Installs a handler for the initialized notification.
 	 *
 	 * @param handler The initialized handler.
 	 */
-	onInitialized(handler: NotificationHandler<InitializedParams>): void;
+	onInitialized(handler: NotificationHandler<InitializedParams>): Disposable;
 
 	/**
 	 * Installs a handler for the shutdown request.
 	 *
 	 * @param handler The initialize handler.
 	 */
-	onShutdown(handler: RequestHandler0<void, void>): void;
+	onShutdown(handler: RequestHandler0<void, void>): Disposable;
 
 	/**
 	 * Installs a handler for the exit notification.
 	 *
 	 * @param handler The exit handler.
 	 */
-	onExit(handler: NotificationHandler0): void;
+	onExit(handler: NotificationHandler0): Disposable;
 
 	/**
 	 * A property to provide access to console specific features.
@@ -1055,35 +1055,35 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDidChangeConfiguration(handler: NotificationHandler<DidChangeConfigurationParams>): void;
+	onDidChangeConfiguration(handler: NotificationHandler<DidChangeConfigurationParams>): Disposable;
 
 	/**
 	 * Installs a handler for the `DidChangeWatchedFiles` notification.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDidChangeWatchedFiles(handler: NotificationHandler<DidChangeWatchedFilesParams>): void;
+	onDidChangeWatchedFiles(handler: NotificationHandler<DidChangeWatchedFilesParams>): Disposable;
 
 	/**
 	 * Installs a handler for the `DidOpenTextDocument` notification.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDidOpenTextDocument(handler: NotificationHandler<DidOpenTextDocumentParams>): void;
+	onDidOpenTextDocument(handler: NotificationHandler<DidOpenTextDocumentParams>): Disposable;
 
 	/**
 	 * Installs a handler for the `DidChangeTextDocument` notification.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDidChangeTextDocument(handler: NotificationHandler<DidChangeTextDocumentParams>): void;
+	onDidChangeTextDocument(handler: NotificationHandler<DidChangeTextDocumentParams>): Disposable;
 
 	/**
 	 * Installs a handler for the `DidCloseTextDocument` notification.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDidCloseTextDocument(handler: NotificationHandler<DidCloseTextDocumentParams>): void;
+	onDidCloseTextDocument(handler: NotificationHandler<DidCloseTextDocumentParams>): Disposable;
 
 	/**
 	 * Installs a handler for the `WillSaveTextDocument` notification.
@@ -1094,7 +1094,7 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onWillSaveTextDocument(handler: NotificationHandler<WillSaveTextDocumentParams>): void;
+	onWillSaveTextDocument(handler: NotificationHandler<WillSaveTextDocumentParams>): Disposable;
 
 	/**
 	 * Installs a handler for the `WillSaveTextDocumentWaitUntil` request.
@@ -1106,14 +1106,14 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onWillSaveTextDocumentWaitUntil(handler: RequestHandler<WillSaveTextDocumentParams, TextEdit[] | undefined | null, void>): void;
+	onWillSaveTextDocumentWaitUntil(handler: RequestHandler<WillSaveTextDocumentParams, TextEdit[] | undefined | null, void>): Disposable;
 
 	/**
 	 * Installs a handler for the `DidSaveTextDocument` notification.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDidSaveTextDocument(handler: NotificationHandler<DidSaveTextDocumentParams>): void;
+	onDidSaveTextDocument(handler: NotificationHandler<DidSaveTextDocumentParams>): Disposable;
 
 	/**
 	 * Sends diagnostics computed for a given document to VSCode to render them in the
@@ -1128,105 +1128,105 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onHover(handler: ServerRequestHandler<HoverParams, Hover | undefined | null, never, void>): void;
+	onHover(handler: ServerRequestHandler<HoverParams, Hover | undefined | null, never, void>): Disposable;
 
 	/**
 	 * Installs a handler for the `Completion` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCompletion(handler: ServerRequestHandler<CompletionParams, CompletionItem[] | CompletionList | undefined | null, CompletionItem[], void>): void;
+	onCompletion(handler: ServerRequestHandler<CompletionParams, CompletionItem[] | CompletionList | undefined | null, CompletionItem[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the `CompletionResolve` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCompletionResolve(handler: RequestHandler<CompletionItem, CompletionItem, void>): void;
+	onCompletionResolve(handler: RequestHandler<CompletionItem, CompletionItem, void>): Disposable;
 
 	/**
 	 * Installs a handler for the `SignatureHelp` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onSignatureHelp(handler: ServerRequestHandler<SignatureHelpParams, SignatureHelp | undefined | null, never, void>): void;
+	onSignatureHelp(handler: ServerRequestHandler<SignatureHelpParams, SignatureHelp | undefined | null, never, void>): Disposable;
 
 	/**
 	 * Installs a handler for the `Declaration` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDeclaration(handler: ServerRequestHandler<DeclarationParams, Declaration | DeclarationLink[] | undefined | null, Location[] | DeclarationLink[], void>): void;
+	onDeclaration(handler: ServerRequestHandler<DeclarationParams, Declaration | DeclarationLink[] | undefined | null, Location[] | DeclarationLink[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the `Definition` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDefinition(handler: ServerRequestHandler<DefinitionParams, Definition | DefinitionLink[] | undefined | null, Location[] | DefinitionLink[], void>): void;
+	onDefinition(handler: ServerRequestHandler<DefinitionParams, Definition | DefinitionLink[] | undefined | null, Location[] | DefinitionLink[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the `Type Definition` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onTypeDefinition(handler: ServerRequestHandler<TypeDefinitionParams, Definition | DefinitionLink[] | undefined | null, Location[] | DefinitionLink[], void>): void;
+	onTypeDefinition(handler: ServerRequestHandler<TypeDefinitionParams, Definition | DefinitionLink[] | undefined | null, Location[] | DefinitionLink[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the `Implementation` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onImplementation(handler: ServerRequestHandler<ImplementationParams, Definition | DefinitionLink[] | undefined | null, Location[] | DefinitionLink[], void>): void;
+	onImplementation(handler: ServerRequestHandler<ImplementationParams, Definition | DefinitionLink[] | undefined | null, Location[] | DefinitionLink[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the `References` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onReferences(handler: ServerRequestHandler<ReferenceParams, Location[] | undefined | null, Location[], void>): void;
+	onReferences(handler: ServerRequestHandler<ReferenceParams, Location[] | undefined | null, Location[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the `DocumentHighlight` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentHighlight(handler: ServerRequestHandler<DocumentHighlightParams, DocumentHighlight[] | undefined | null, DocumentHighlight[], void>): void;
+	onDocumentHighlight(handler: ServerRequestHandler<DocumentHighlightParams, DocumentHighlight[] | undefined | null, DocumentHighlight[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the `DocumentSymbol` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentSymbol(handler: ServerRequestHandler<DocumentSymbolParams, SymbolInformation[] | DocumentSymbol[] | undefined | null, SymbolInformation[] | DocumentSymbol[], void>): void;
+	onDocumentSymbol(handler: ServerRequestHandler<DocumentSymbolParams, SymbolInformation[] | DocumentSymbol[] | undefined | null, SymbolInformation[] | DocumentSymbol[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the `WorkspaceSymbol` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onWorkspaceSymbol(handler: ServerRequestHandler<WorkspaceSymbolParams, SymbolInformation[] | WorkspaceSymbol[] | undefined | null, SymbolInformation[], void>): void;
+	onWorkspaceSymbol(handler: ServerRequestHandler<WorkspaceSymbolParams, SymbolInformation[] | WorkspaceSymbol[] | undefined | null, SymbolInformation[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the `WorkspaceSymbol` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onWorkspaceSymbolResolve(handler: ServerRequestHandler<WorkspaceSymbol, WorkspaceSymbol, never, void>): void;
+	onWorkspaceSymbolResolve(handler: ServerRequestHandler<WorkspaceSymbol, WorkspaceSymbol, never, void>): Disposable;
 
 	/**
 	 * Installs a handler for the `CodeAction` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCodeAction(handler: ServerRequestHandler<CodeActionParams, (Command | CodeAction)[] | undefined | null, (Command | CodeAction)[], void>): void;
+	onCodeAction(handler: ServerRequestHandler<CodeActionParams, (Command | CodeAction)[] | undefined | null, (Command | CodeAction)[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the `CodeAction` resolve request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCodeActionResolve(handler: RequestHandler<CodeAction, CodeAction, void>): void;
+	onCodeActionResolve(handler: RequestHandler<CodeAction, CodeAction, void>): Disposable;
 
 	/**
 	 * Compute a list of [lenses](#CodeLens). This call should return as fast as possible and if
@@ -1235,7 +1235,7 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCodeLens(handler: ServerRequestHandler<CodeLensParams, CodeLens[] | undefined | null, CodeLens[], void>): void;
+	onCodeLens(handler: ServerRequestHandler<CodeLensParams, CodeLens[] | undefined | null, CodeLens[], void>): Disposable;
 
 	/**
 	 * This function will be called for each visible code lens, usually when scrolling and after
@@ -1243,91 +1243,91 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCodeLensResolve(handler: RequestHandler<CodeLens, CodeLens, void>): void;
+	onCodeLensResolve(handler: RequestHandler<CodeLens, CodeLens, void>): Disposable;
 
 	/**
 	 * Installs a handler for the document formatting request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentFormatting(handler: ServerRequestHandler<DocumentFormattingParams, TextEdit[] | undefined | null, never, void>): void;
+	onDocumentFormatting(handler: ServerRequestHandler<DocumentFormattingParams, TextEdit[] | undefined | null, never, void>): Disposable;
 
 	/**
 	 * Installs a handler for the document range formatting request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentRangeFormatting(handler: ServerRequestHandler<DocumentRangeFormattingParams, TextEdit[] | undefined | null, never, void>): void;
+	onDocumentRangeFormatting(handler: ServerRequestHandler<DocumentRangeFormattingParams, TextEdit[] | undefined | null, never, void>): Disposable;
 
 	/**
 	 * Installs a handler for the document on type formatting request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentOnTypeFormatting(handler: RequestHandler<DocumentOnTypeFormattingParams, TextEdit[] | undefined | null, void>): void;
+	onDocumentOnTypeFormatting(handler: RequestHandler<DocumentOnTypeFormattingParams, TextEdit[] | undefined | null, void>): Disposable;
 
 	/**
 	 * Installs a handler for the rename request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onRenameRequest(handler: ServerRequestHandler<RenameParams, WorkspaceEdit | undefined | null, never, void>): void;
+	onRenameRequest(handler: ServerRequestHandler<RenameParams, WorkspaceEdit | undefined | null, never, void>): Disposable;
 
 	/**
 	 * Installs a handler for the prepare rename request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onPrepareRename(handler: RequestHandler<PrepareRenameParams, Range | { range: Range; placeholder: string } | undefined | null, void>): void;
+	onPrepareRename(handler: RequestHandler<PrepareRenameParams, Range | { range: Range; placeholder: string } | undefined | null, void>): Disposable;
 
 	/**
 	 * Installs a handler for the document links request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentLinks(handler: ServerRequestHandler<DocumentLinkParams, DocumentLink[] | undefined | null, DocumentLink[], void>): void;
+	onDocumentLinks(handler: ServerRequestHandler<DocumentLinkParams, DocumentLink[] | undefined | null, DocumentLink[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the document links resolve request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentLinkResolve(handler: RequestHandler<DocumentLink, DocumentLink | undefined | null, void>): void;
+	onDocumentLinkResolve(handler: RequestHandler<DocumentLink, DocumentLink | undefined | null, void>): Disposable;
 
 	/**
 	 * Installs a handler for the document color request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentColor(handler: ServerRequestHandler<DocumentColorParams, ColorInformation[] | undefined | null, ColorInformation[], void>): void;
+	onDocumentColor(handler: ServerRequestHandler<DocumentColorParams, ColorInformation[] | undefined | null, ColorInformation[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the document color request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onColorPresentation(handler: ServerRequestHandler<ColorPresentationParams, ColorPresentation[] | undefined | null, ColorPresentation[], void>): void;
+	onColorPresentation(handler: ServerRequestHandler<ColorPresentationParams, ColorPresentation[] | undefined | null, ColorPresentation[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the folding ranges request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onFoldingRanges(handler: ServerRequestHandler<FoldingRangeParams, FoldingRange[] | undefined | null, FoldingRange[], void>): void;
+	onFoldingRanges(handler: ServerRequestHandler<FoldingRangeParams, FoldingRange[] | undefined | null, FoldingRange[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the selection ranges request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onSelectionRanges(handler: ServerRequestHandler<SelectionRangeParams, SelectionRange[] | undefined | null, SelectionRange[], void>): void;
+	onSelectionRanges(handler: ServerRequestHandler<SelectionRangeParams, SelectionRange[] | undefined | null, SelectionRange[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the execute command request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onExecuteCommand(handler: ServerRequestHandler<ExecuteCommandParams, any | undefined | null, never, void>): void;
+	onExecuteCommand(handler: ServerRequestHandler<ExecuteCommandParams, any | undefined | null, never, void>): Disposable;
 
 	/**
 	 * Disposes the connection
@@ -1478,7 +1478,7 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 		listen: (): void => connection.listen(),
 
 		sendRequest: <R>(type: string | MessageSignature, ...params: any[]): Promise<R> => connection.sendRequest(Is.string(type) ? type : type.method, ...params),
-		onRequest: <R, E>(type: string | MessageSignature | StarRequestHandler, handler?: GenericRequestHandler<R, E>): void => (connection as any).onRequest(type, handler),
+		onRequest: <R, E>(type: string | MessageSignature | StarRequestHandler, handler?: GenericRequestHandler<R, E>): Disposable => (connection as any).onRequest(type, handler),
 
 		sendNotification: (type: string | MessageSignature, param?: any): Promise<void> => {
 			const method = Is.string(type) ? type : type.method;
@@ -1488,15 +1488,36 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 				return connection.sendNotification(method, param);
 			}
 		},
-		onNotification: (type: string | MessageSignature | StarNotificationHandler, handler?: GenericNotificationHandler): void => (connection as any).onNotification(type, handler),
+		onNotification: (type: string | MessageSignature | StarNotificationHandler, handler?: GenericNotificationHandler): Disposable => (connection as any).onNotification(type, handler),
 
 		onProgress: connection.onProgress,
 		sendProgress: connection.sendProgress,
 
-		onInitialize: (handler) => initializeHandler = handler,
+		onInitialize: (handler) =>  {
+			initializeHandler = handler;
+			return {
+				dispose: () => {
+					initializeHandler = undefined;
+				}
+			};
+		},
 		onInitialized: (handler) => connection.onNotification(InitializedNotification.type, handler),
-		onShutdown: (handler) => shutdownHandler = handler,
-		onExit: (handler) => exitHandler = handler,
+		onShutdown: (handler) => {
+			shutdownHandler = handler;
+			return {
+				dispose: () => {
+					shutdownHandler = undefined;
+				}
+			};
+		},
+		onExit: (handler) => {
+			exitHandler = handler;
+			return {
+				dispose: () => {
+					exitHandler = undefined;
+				}
+			};
+		},
 
 		get console() { return logger; },
 		get telemetry() { return telemetry; },

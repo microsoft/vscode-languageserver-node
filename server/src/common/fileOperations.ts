@@ -7,7 +7,7 @@ import {
 	RequestHandler, NotificationHandler, WorkspaceEdit,
 	CreateFilesParams, DidCreateFilesNotification, WillCreateFilesRequest,
 	RenameFilesParams, DidRenameFilesNotification, WillRenameFilesRequest,
-	DeleteFilesParams, DidDeleteFilesNotification, WillDeleteFilesRequest,
+	DeleteFilesParams, DidDeleteFilesNotification, WillDeleteFilesRequest, Disposable,
 } from 'vscode-languageserver-protocol';
 
 import type { Feature, _RemoteWorkspace } from './server';
@@ -18,42 +18,42 @@ import type { Feature, _RemoteWorkspace } from './server';
  * @since 3.16.0
  */
 export interface FileOperationsFeatureShape {
-	onDidCreateFiles(handler: NotificationHandler<CreateFilesParams>): void;
-	onDidRenameFiles(handler: NotificationHandler<RenameFilesParams>): void;
-	onDidDeleteFiles(handler: NotificationHandler<DeleteFilesParams>): void;
-	onWillCreateFiles(handler: RequestHandler<CreateFilesParams, WorkspaceEdit | null, never>): void;
-	onWillRenameFiles(handler: RequestHandler<RenameFilesParams, WorkspaceEdit | null, never>): void;
-	onWillDeleteFiles(handler: RequestHandler<DeleteFilesParams, WorkspaceEdit | null, never>): void;
+	onDidCreateFiles(handler: NotificationHandler<CreateFilesParams>): Disposable;
+	onDidRenameFiles(handler: NotificationHandler<RenameFilesParams>): Disposable;
+	onDidDeleteFiles(handler: NotificationHandler<DeleteFilesParams>): Disposable;
+	onWillCreateFiles(handler: RequestHandler<CreateFilesParams, WorkspaceEdit | null, never>): Disposable;
+	onWillRenameFiles(handler: RequestHandler<RenameFilesParams, WorkspaceEdit | null, never>): Disposable;
+	onWillDeleteFiles(handler: RequestHandler<DeleteFilesParams, WorkspaceEdit | null, never>): Disposable;
 }
 
 export const FileOperationsFeature: Feature<_RemoteWorkspace, FileOperationsFeatureShape> = (Base) => {
 	return class extends Base {
-		public onDidCreateFiles(handler: NotificationHandler<CreateFilesParams>): void {
-			this.connection.onNotification(DidCreateFilesNotification.type, (params) => {
+		public onDidCreateFiles(handler: NotificationHandler<CreateFilesParams>): Disposable {
+			return this.connection.onNotification(DidCreateFilesNotification.type, (params) => {
 				handler(params);
 			});
 		}
-		public onDidRenameFiles(handler: NotificationHandler<RenameFilesParams>): void {
-			this.connection.onNotification(DidRenameFilesNotification.type, (params) => {
+		public onDidRenameFiles(handler: NotificationHandler<RenameFilesParams>): Disposable {
+			return this.connection.onNotification(DidRenameFilesNotification.type, (params) => {
 				handler(params);
 			});
 		}
-		public onDidDeleteFiles(handler: NotificationHandler<DeleteFilesParams>): void {
-			this.connection.onNotification(DidDeleteFilesNotification.type, (params) => {
+		public onDidDeleteFiles(handler: NotificationHandler<DeleteFilesParams>): Disposable {
+			return this.connection.onNotification(DidDeleteFilesNotification.type, (params) => {
 				handler(params);
 			});
 		}
-		public onWillCreateFiles(handler: RequestHandler<CreateFilesParams, WorkspaceEdit | null, never>): void {
+		public onWillCreateFiles(handler: RequestHandler<CreateFilesParams, WorkspaceEdit | null, never>): Disposable {
 			return this.connection.onRequest(WillCreateFilesRequest.type, (params, cancel) => {
 				return handler(params, cancel);
 			});
 		}
-		public onWillRenameFiles(handler: RequestHandler<RenameFilesParams, WorkspaceEdit | null, never>): void {
+		public onWillRenameFiles(handler: RequestHandler<RenameFilesParams, WorkspaceEdit | null, never>): Disposable {
 			return this.connection.onRequest(WillRenameFilesRequest.type, (params, cancel) => {
 				return handler(params, cancel);
 			});
 		}
-		public onWillDeleteFiles(handler: RequestHandler<DeleteFilesParams, WorkspaceEdit | null, never>): void {
+		public onWillDeleteFiles(handler: RequestHandler<DeleteFilesParams, WorkspaceEdit | null, never>): Disposable {
 			return this.connection.onRequest(WillDeleteFilesRequest.type, (params, cancel) => {
 				return handler(params, cancel);
 			});

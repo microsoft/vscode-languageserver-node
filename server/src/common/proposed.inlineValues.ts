@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Proposed, InlineValue } from 'vscode-languageserver-protocol';
+import { Proposed, InlineValue, Disposable } from 'vscode-languageserver-protocol';
 
 import type { Feature, _Languages, ServerRequestHandler } from './server';
 
@@ -20,7 +20,7 @@ export interface InlineValuesFeatureShape {
 		 *
 		 * @param handler The corresponding handler.
 		 */
-		on(handler: ServerRequestHandler<Proposed.InlineValuesParams, InlineValue[] | undefined | null, InlineValue[], void>): void;
+		on(handler: ServerRequestHandler<Proposed.InlineValuesParams, InlineValue[] | undefined | null, InlineValue[], void>): Disposable;
 	};
 }
 
@@ -28,8 +28,8 @@ export const InlineValuesFeature: Feature<_Languages, InlineValuesFeatureShape> 
 	return class extends Base {
 		public get inlineValues() {
 			return {
-				on: (handler: ServerRequestHandler<Proposed.InlineValuesParams, InlineValue[] | undefined | null, InlineValue[], void>): void => {
-					this.connection.onRequest(Proposed.InlineValuesRequest.type, (params, cancel) => {
+				on: (handler: ServerRequestHandler<Proposed.InlineValuesParams, InlineValue[] | undefined | null, InlineValue[], void>): Disposable => {
+					return this.connection.onRequest(Proposed.InlineValuesRequest.type, (params, cancel) => {
 						return handler(params, cancel, this.attachWorkDoneProgress(params));
 					});
 				}
