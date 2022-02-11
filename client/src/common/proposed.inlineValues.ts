@@ -21,18 +21,18 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	return target[key];
 }
 
-export interface ProvideInlineValuesSignature {
+export type ProvideInlineValuesSignature = {
 	(this: void, document: TextDocument, viewPort: VRange, context: VInlineValueContext, token: CancellationToken): ProviderResult<VInlineValue[]>;
-}
+};
 
-export interface InlineValuesProviderMiddleware {
+export type InlineValuesProviderMiddleware = {
 	provideInlineValues?: (this: void, document: TextDocument, viewPort: VRange, context: VInlineValueContext, token: CancellationToken, next: ProvideInlineValuesSignature) => ProviderResult<VInlineValue[]>;
-}
+};
 
-export interface InlineValuesProviderData {
+export type InlineValuesProviderData = {
 	provider: InlineValuesProvider;
 	onDidChangeInlineValues: EventEmitter<void>;
-}
+};
 
 export class InlineValueFeature extends TextDocumentFeature<boolean | Proposed.InlineValuesOptions, Proposed.InlineValuesRegistrationOptions, InlineValuesProviderData> {
 	constructor(client: BaseLanguageClient) {

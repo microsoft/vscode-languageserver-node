@@ -12,7 +12,7 @@ _Client Capability_:
 /**
  * @since 3.17.0 - proposed state
  */
-export interface DiagnosticClientCapabilities {
+export type DiagnosticClientCapabilities = {
 	/**
 	 * Whether implementation supports dynamic registration. If this is set to `true`
 	 * the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
@@ -24,7 +24,7 @@ export interface DiagnosticClientCapabilities {
 	 * Whether the clients supports related documents for document diagnostic pulls.
 	 */
 	relatedDocumentSupport?: boolean;
-}
+};
 ```
 
 _Server Capability_:
@@ -37,7 +37,7 @@ _Server Capability_:
  *
  * @since 3.17.0 - proposed state
  */
-export interface DiagnosticOptions extends WorkDoneProgressOptions {
+export type DiagnosticOptions = WorkDoneProgressOptions & {
 	/**
 	 * An optional identifier under which the diagnostics are
 	 * managed by the client.
@@ -56,7 +56,7 @@ export interface DiagnosticOptions extends WorkDoneProgressOptions {
 	 * The server provides support for workspace diagnostics as well.
 	 */
 	workspaceDiagnostics: boolean;
-}
+};
 ```
 
 _Registration Options_: `DiagnosticRegistrationOptions` options defined as follows:
@@ -66,9 +66,7 @@ _Registration Options_: `DiagnosticRegistrationOptions` options defined as follo
  *
  * @since 3.17.0 - proposed state
  */
-export interface DiagnosticRegistrationOptions extends TextDocumentRegistrationOptions,
-	DiagnosticOptions, StaticRegistrationOptions {
-}
+export type DiagnosticRegistrationOptions = TextDocumentRegistrationOptions & DiagnosticOptions & StaticRegistrationOptions;
 ```
 
 ##### <a href="#textDocument_diagnostic" name="textDocument_diagnostic" class="anchor">Document Diagnostics(:leftwards_arrow_with_hook:)</a>
@@ -85,7 +83,7 @@ _Request_:
  *
  * @since 3.17.0 - proposed state
  */
-export interface DocumentDiagnosticParams extends WorkDoneProgressParams, PartialResultParams {
+export type DocumentDiagnosticParams =  WorkDoneProgressParams & PartialResultParams & {
 	/**
 	 * The text document.
 	 */
@@ -100,7 +98,7 @@ export interface DocumentDiagnosticParams extends WorkDoneProgressParams, Partia
 	 * The result id of a previous response if provided.
 	 */
 	previousResultId?: string;
-}
+};
 ```
 
 _Response_:
@@ -142,7 +140,7 @@ export enum DocumentDiagnosticReportKind {
  *
  * @since 3.17.0 - proposed state
  */
-export interface FullDocumentDiagnosticReport {
+export type FullDocumentDiagnosticReport = {
 	/**
 	 * A full document diagnostic report.
 	 */
@@ -159,7 +157,7 @@ export interface FullDocumentDiagnosticReport {
 	 * The actual items.
 	 */
 	items: Diagnostic[];
-}
+};
 
 /**
  * A diagnostic report indicating that the last returned
@@ -167,7 +165,7 @@ export interface FullDocumentDiagnosticReport {
  *
  * @since 3.17.0 - proposed state
  */
-export interface UnchangedDocumentDiagnosticReport {
+export type UnchangedDocumentDiagnosticReport = {
 	/**
 	 * A document diagnostic report indicating
 	 * no changes to the last result. A server can
@@ -181,47 +179,47 @@ export interface UnchangedDocumentDiagnosticReport {
 	 * diagnostic request for the same document.
 	 */
 	resultId: string;
-}
+};
 
 /**
  * A full diagnostic report with a set of related documents.
  *
  * @since 3.17.0 - proposed state
  */
-export interface RelatedFullDocumentDiagnosticReport extends FullDocumentDiagnosticReport {
+export type RelatedFullDocumentDiagnosticReport = FullDocumentDiagnosticReport & {
 	/**
 	 * Diagnostics of related documents. This information is useful
 	 * in programming languages where code in a file A can generate
 	 * diagnostics in a file B which A depends on. An example of
-	 * such a language is C/C++ where macro definitions in a file
-	 * b.hpp can result in errors in a source file a.cpp.
+	 * such a language is C/C++ where marco definitions in a file
+	 * a.cpp and result in errors in a header file b.hpp.
 	 *
 	 * @since 3.17.0 - proposed state
 	 */
 	relatedDocuments?: {
 		[uri: string /** DocumentUri */]: FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport;
-	}
-}
+	};
+};
 
 /**
  * An unchanged diagnostic report with a set of related documents.
  *
  * @since 3.17.0 - proposed state
  */
-export interface RelatedUnchangedDocumentDiagnosticReport extends UnchangedDocumentDiagnosticReport {
+export type RelatedUnchangedDocumentDiagnosticReport = UnchangedDocumentDiagnosticReport & {
 	/**
 	 * Diagnostics of related documents. This information is useful
 	 * in programming languages where code in a file A can generate
 	 * diagnostics in a file B which A depends on. An example of
-	 * such a language is C/C++ where macro definitions in a file
-	 * b.hpp can result in errors in a source file a.cpp.
+	 * such a language is C/C++ where marco definitions in a file
+	 * a.cpp and result in errors in a header file b.hpp.
 	 *
 	 * @since 3.17.0 - proposed state
 	 */
 	relatedDocuments?: {
 		[uri: string /** DocumentUri */]: FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport;
-	}
-}
+	};
+};
 ```
 * partial result: The first literal send need to be a `DocumentDiagnosticReport` followed by n `DocumentDiagnosticReportPartialResult` literals defined as follows:
 
@@ -231,11 +229,11 @@ export interface RelatedUnchangedDocumentDiagnosticReport extends UnchangedDocum
  *
  * @since 3.17.0 - proposed state
  */
-export interface DocumentDiagnosticReportPartialResult {
+export type DocumentDiagnosticReportPartialResult = {
 	relatedDocuments: {
 		[uri: string /** DocumentUri */]: FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport;
-	}
-}
+	};
+};
 ```
 * error: code and message set in case an exception happens during the diagnostic request. A server is also allowed to return an error with code `ServerCancelled` indicating that the server can't compute the result right now. A server can return a `DiagnosticServerCancellationData` data to indicate whether the client should re-trigger the request. If no data is provided it defaults to `{ retriggerRequest: true }`:
 
@@ -245,9 +243,9 @@ export interface DocumentDiagnosticReportPartialResult {
  *
  * @since 3.17.0 - proposed state
  */
-export interface DiagnosticServerCancellationData {
+export type DiagnosticServerCancellationData = {
 	retriggerRequest: boolean;
-}
+};
 ```
 
 ##### <a href="#workspace_diagnostic" name="workspace_diagnostic" class="anchor">Workspace Diagnostics(:leftwards_arrow_with_hook:)</a>
@@ -269,7 +267,7 @@ _Request_:
  *
  * @since 3.17.0 - proposed state
  */
-export interface WorkspaceDiagnosticParams extends WorkDoneProgressParams, PartialResultParams {
+export type WorkspaceDiagnosticParams = WorkDoneProgressParams & PartialResultParams & {
 	/**
 	 * The additional identifier provided during registration.
 	 */
@@ -280,7 +278,7 @@ export interface WorkspaceDiagnosticParams extends WorkDoneProgressParams, Parti
 	 * previous result ids.
 	 */
 	previousResultIds: PreviousResultId[];
-}
+};
 
 /**
  * A previous result id in a workspace pull request.
@@ -310,16 +308,16 @@ _Response_:
  *
  * @since 3.17.0 - proposed state
  */
-export interface WorkspaceDiagnosticReport {
+export type WorkspaceDiagnosticReport = {
 	items: WorkspaceDocumentDiagnosticReport[];
-}
+};
 
 /**
  * A full document diagnostic report for a workspace diagnostic result.
  *
  * @since 3.17.0 - proposed state
  */
-export interface WorkspaceFullDocumentDiagnosticReport extends FullDocumentDiagnosticReport {
+export type WorkspaceFullDocumentDiagnosticReport = FullDocumentDiagnosticReport & {
 
 	/**
 	 * The URI for which diagnostic information is reported.
@@ -331,14 +329,14 @@ export interface WorkspaceFullDocumentDiagnosticReport extends FullDocumentDiagn
 	 * If the document is not marked as open `null` can be provided.
 	 */
 	version: integer | null;
-}
+};
 
 /**
  * An unchanged document diagnostic report for a workspace diagnostic result.
  *
  * @since 3.17.0 - proposed state
  */
-export interface WorkspaceUnchangedDocumentDiagnosticReport extends UnchangedDocumentDiagnosticReport {
+export type WorkspaceUnchangedDocumentDiagnosticReport = UnchangedDocumentDiagnosticReport & {
 
 	/**
 	 * The URI for which diagnostic information is reported.
@@ -350,7 +348,7 @@ export interface WorkspaceUnchangedDocumentDiagnosticReport extends UnchangedDoc
 	 * If the document is not marked as open `null` can be provided.
 	 */
 	version: integer | null;
-}
+};
 
 /**
  * A workspace diagnostic document report.
@@ -368,9 +366,9 @@ export type WorkspaceDocumentDiagnosticReport = WorkspaceFullDocumentDiagnosticR
  *
  * @since 3.17.0 - proposed state
  */
-export interface WorkspaceDiagnosticReportPartialResult {
+export type WorkspaceDiagnosticReportPartialResult = {
 	items: WorkspaceDocumentDiagnosticReport[];
-}
+};
 ```
 
 * error: code and message set in case an exception happens during the diagnostic request. A server is also allowed to return and error with code `ServerCancelled` indicating that the server can't compute the result right now. A server can return a `DiagnosticServerCancellationData` data to indicate whether the client should re-trigger the request. If no data is provided it defaults to `{ retriggerRequest: true }`:

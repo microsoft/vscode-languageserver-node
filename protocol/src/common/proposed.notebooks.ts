@@ -17,7 +17,7 @@ import { StaticRegistrationOptions, NotebookDocumentFilter, TextDocumentContentC
  *
  * @since 3.17.0 - proposed state
  */
-export interface NotebookDocumentSyncClientCapabilities {
+export type NotebookDocumentSyncClientCapabilities = {
 
 	/**
 	 * Whether implementation supports dynamic registration. If this is
@@ -37,13 +37,13 @@ export interface NotebookDocumentSyncClientCapabilities {
 	 * send `DidSelectNotebookController` notifications.
 	 */
 	notebookControllerSupport?: boolean;
-}
+};
 
-export interface $NotebookDocumentClientCapabilities {
+export type $NotebookDocumentClientCapabilities = {
 	notebookDocument?: {
 		synchronization: NotebookDocumentSyncClientCapabilities;
 	};
-}
+};
 
 /**
  * A notebook cell kind.
@@ -117,7 +117,7 @@ export namespace ExecutionSummary {
  *
  * @since 3.17.0 - proposed state
  */
-export interface NotebookCell {
+export type NotebookCell = {
 
 	/**
 	 * The cell's kind
@@ -140,7 +140,7 @@ export interface NotebookCell {
 	 * if supported by the client.
 	 */
 	executionSummary?: ExecutionSummary;
-}
+};
 
 export namespace NotebookCell {
 	export function create(kind: NotebookCellKind, document: DocumentUri): NotebookCell {
@@ -153,11 +153,24 @@ export namespace NotebookCell {
 			(candidate.metadata === undefined || Is.objectLiteral(candidate.metadata));
 	}
 
-	export function equals(one: NotebookCell, other: NotebookCell, compareMetaData: boolean = true): boolean {
-		if (one.kind !== other.kind || one.document !== other.document) {
-			return false;
+	export function diff(one: NotebookCell, two: NotebookCell): Set<keyof NotebookCell> {
+		const result: Set<keyof NotebookCell> = new Set();
+		if (one.document !== two.document) {
+			result.add('document');
 		}
-		return !compareMetaData || (compareMetaData && equalsMetadata(one.metadata, other.metadata));
+		if (one.kind !== two.kind) {
+			result.add('kind');
+		}
+		if (one.executionSummary !== two.executionSummary) {
+			result.add('executionSummary');
+		}
+		if ((one.metadata !== undefined || two.metadata !== undefined) && !equalsMetadata(one.metadata, two.metadata)) {
+			result.add('metadata');
+		}
+		if ((one.executionSummary !== undefined || two.executionSummary !== undefined) && !ExecutionSummary.equals(one.executionSummary, two.executionSummary)) {
+			result.add('executionSummary');
+		}
+		return result;
 	}
 
 	function equalsMetadata(one: LSPAny | undefined, other: LSPAny | undefined): boolean {
@@ -211,26 +224,6 @@ export namespace NotebookCell {
 		}
 		return true;
 	}
-
-	export function diff(one: NotebookCell, two: NotebookCell): Set<keyof NotebookCell> {
-		const result: Set<keyof NotebookCell> = new Set();
-		if (one.document !== two.document) {
-			result.add('document');
-		}
-		if (one.kind !== two.kind) {
-			result.add('kind');
-		}
-		if (one.executionSummary !== two.executionSummary) {
-			result.add('executionSummary');
-		}
-		if ((one.metadata !== undefined || two.metadata !== undefined) && !equalsMetadata(one.metadata, two.metadata)) {
-			result.add('metadata');
-		}
-		if ((one.executionSummary !== undefined || two.executionSummary !== undefined) && !ExecutionSummary.equals(one.executionSummary, two.executionSummary)) {
-			result.add('executionSummary');
-		}
-		return result;
-	}
 }
 
 /**
@@ -238,7 +231,7 @@ export namespace NotebookCell {
  *
  * @since 3.17.0 - proposed state
  */
-export interface NotebookDocument {
+export type NotebookDocument = {
 
 	/**
 	 * The notebook document's uri.
@@ -266,7 +259,7 @@ export interface NotebookDocument {
 	 * The cells of a notebook.
 	 */
 	cells: NotebookCell[];
-}
+};
 
 export namespace NotebookDocument {
 	export function create(uri: URI, notebookType: string, version: integer, cells: NotebookCell[]): NotebookDocument {
@@ -283,19 +276,19 @@ export namespace NotebookDocument {
  *
  * @since 3.17.0 - proposed state
  */
-export interface NotebookDocumentIdentifier {
+export type NotebookDocumentIdentifier = {
 	/**
 	 * The notebook document's uri.
 	 */
 	uri: URI;
-}
+};
 
 /**
  * A versioned notebook document identifier.
  *
  * @since 3.17.0 - proposed state
  */
-export interface VersionedNotebookDocumentIdentifier {
+export type VersionedNotebookDocumentIdentifier = {
 
 	/**
 	 * The version number of this notebook document.
@@ -306,7 +299,7 @@ export interface VersionedNotebookDocumentIdentifier {
 	 * The notebook document's uri.
 	 */
 	uri: URI;
-}
+};
 
 /**
  * Options specific to a notebook plus its cells
@@ -381,7 +374,7 @@ export namespace NotebookDocumentSyncRegistrationType {
  *
  * @since 3.17.0 - proposed state
  */
-export interface DidOpenNotebookDocumentParams {
+export type DidOpenNotebookDocumentParams = {
 
 	/**
 	 * The notebook document that got opened.
@@ -393,7 +386,7 @@ export interface DidOpenNotebookDocumentParams {
 	 * of a notebook cell.
 	 */
 	cellTextDocuments: TextDocumentItem[];
-}
+};
 
 /**
  * A notification sent when a notebook opens.
@@ -411,7 +404,7 @@ export namespace DidOpenNotebookDocumentNotification {
  *
  * @since 3.17.0 - proposed state
  */
-export interface NotebookCellArrayChange {
+export type NotebookCellArrayChange = {
 	/**
 	 * The start oftest of the cell that changed.
 	 */
@@ -426,7 +419,7 @@ export interface NotebookCellArrayChange {
 	 * The new cells, if any
 	 */
 	cells?: NotebookCell[];
-}
+};
 
 export namespace NotebookCellArrayChange {
 	export function is(value: any): value is NotebookCellArrayChange {
@@ -448,7 +441,7 @@ export namespace NotebookCellArrayChange {
  *
  * @since 3.17.0 - proposed state
  */
-export interface NotebookDocumentChangeEvent {
+export type NotebookDocumentChangeEvent = {
 	/**
 	 * The changed meta data if any.
 	 */
@@ -493,14 +486,14 @@ export interface NotebookDocumentChangeEvent {
 			changes: TextDocumentContentChangeEvent[];
 		}[];
 	};
-}
+};
 
 /**
  * The params sent in a change notebook document notification.
  *
  * @since 3.17.0 - proposed state
  */
-export interface DidChangeNotebookDocumentParams {
+export type DidChangeNotebookDocumentParams = {
 
 	/**
 	 * The notebook document that did change. The version number points
@@ -526,7 +519,7 @@ export interface DidChangeNotebookDocumentParams {
 	 *   you receive them.
 	 */
 	change: NotebookDocumentChangeEvent;
-}
+};
 
 export namespace DidChangeNotebookDocumentNotification {
 	export const method: 'notebookDocument/didChange' = 'notebookDocument/didChange';
@@ -538,12 +531,12 @@ export namespace DidChangeNotebookDocumentNotification {
  *
  * @since 3.17.0 - proposed state
  */
-export interface DidSaveNotebookDocumentParams {
+export type DidSaveNotebookDocumentParams = {
 	/**
 	 * The notebook document that got saved.
 	 */
 	notebookDocument: NotebookDocumentIdentifier;
-}
+};
 
 /**
  * A notification sent when a notebook document is saved.
@@ -560,7 +553,7 @@ export namespace DidSaveNotebookDocumentNotification {
  *
  * @since 3.17.0 - proposed state
  */
-export interface DidCloseNotebookDocumentParams {
+export type DidCloseNotebookDocumentParams = {
 
 	/**
 	 * The notebook document that got closed.
@@ -572,7 +565,7 @@ export interface DidCloseNotebookDocumentParams {
 	 * of a notebook cell that got closed.
 	 */
 	cellTextDocuments: TextDocumentIdentifier[];
-}
+};
 
 /**
  * A notification sent when a notebook closes.

@@ -15,38 +15,35 @@ import {
 /**
  * @since 3.17.0 - proposed state
  */
-export interface TypeHierarchyClientCapabilities {
+export type TypeHierarchyClientCapabilities = {
 	/**
 	 * Whether implementation supports dynamic registration. If this is set to `true`
 	 * the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
 	 * return value for the corresponding server capability as well.
 	 */
 	dynamicRegistration?: boolean;
-}
+};
 
 /**
  * Type hierarchy options used during static registration.
  *
  * @since 3.17.0 - proposed state
  */
-export interface TypeHierarchyOptions extends WorkDoneProgressOptions {
-}
+export type TypeHierarchyOptions = WorkDoneProgressOptions;
 
 /**
  * Type hierarchy options used during static or dynamic registration.
  *
  * @since 3.17.0 - proposed state
  */
-export interface TypeHierarchyRegistrationOptions extends TextDocumentRegistrationOptions, TypeHierarchyOptions, StaticRegistrationOptions {
-}
+export type TypeHierarchyRegistrationOptions = TextDocumentRegistrationOptions & TypeHierarchyOptions & StaticRegistrationOptions;
 
 /**
  * The parameter of a `textDocument/prepareTypeHierarchy` request.
  *
  * @since 3.17.0 - proposed state
  */
-export interface TypeHierarchyPrepareParams extends TextDocumentPositionParams, WorkDoneProgressParams {
-}
+export type TypeHierarchyPrepareParams = TextDocumentPositionParams & WorkDoneProgressParams;
 
 /**
  * A request to result a `TypeHierarchyItem` in a document at a given position.
@@ -65,9 +62,9 @@ export namespace TypeHierarchyPrepareRequest {
  *
  * @since 3.17.0 - proposed state
  */
-export interface TypeHierarchySupertypesParams extends WorkDoneProgressParams, PartialResultParams {
+export type TypeHierarchySupertypesParams = WorkDoneProgressParams & PartialResultParams & {
 	item: TypeHierarchyItem;
-}
+};
 
 /**
  * A request to resolve the supertypes for a given `TypeHierarchyItem`.
@@ -85,9 +82,9 @@ export namespace TypeHierarchySupertypesRequest {
  *
  * @since 3.17.0 - proposed state
  */
-export interface TypeHierarchySubtypesParams extends WorkDoneProgressParams, PartialResultParams {
+export type TypeHierarchySubtypesParams = WorkDoneProgressParams & PartialResultParams & {
 	item: TypeHierarchyItem;
-}
+};
 
 /**
  * A request to resolve the subtypes for a given `TypeHierarchyItem`.

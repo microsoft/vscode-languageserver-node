@@ -15,12 +15,12 @@ _Client Capability_:
  *
  * @since 3.17.0 - proposed state
  */
-export interface InlineValuesClientCapabilities {
+export type InlineValuesClientCapabilities = {
 	/**
-	 * Whether inline values supports dynamic registration.
+	 * Whether implementation supports dynamic registration for inline value providers.
 	 */
 	dynamicRegistration?: boolean;
-}
+};
 ```
 
 _Server Capability_:
@@ -35,8 +35,7 @@ _Server Capability_:
  *
  * @since 3.17.0 - proposed state
  */
-export interface InlineValuesOptions extends WorkDoneProgressOptions {
-}
+export type InlineValuesOptions = WorkDoneProgressOptions;
 ```
 
 _Registration Options_: `InlineValuesRegistrationOptions` defined as follows:
@@ -49,9 +48,7 @@ _Registration Options_: `InlineValuesRegistrationOptions` defined as follows:
  *
  * @since 3.17.0 - proposed state
  */
-export interface InlineValuesRegistrationOptions extends
-	TextDocumentRegistrationOptions, InlineValuesOptions {
-}
+export type InlineValuesRegistrationOptions = InlineValuesOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions;
 ```
 
 _Request_:
@@ -66,9 +63,9 @@ _Request_:
  *
  * @since 3.17.0 - proposed state
  */
-export interface InlineValuesParams extends WorkDoneProgressParams {
+export type InlineValuesParams = WorkDoneProgressParams & {
 	/**
-	 * The document to request inline values for.
+	 * The text document.
 	 */
 	textDocument: TextDocumentIdentifier;
 
@@ -82,7 +79,7 @@ export interface InlineValuesParams extends WorkDoneProgressParams {
 	 * requested.
 	 */
 	context: InlineValuesContext;
-}
+};
 ```
 
 <div class="anchorHolder"><a href="#inlineValuesContext" name="inlineValuesContext" class="linkableAnchor"></a></div>
@@ -91,13 +88,13 @@ export interface InlineValuesParams extends WorkDoneProgressParams {
 /**
  * @since 3.17.0 - proposed state
  */
-export interface InlineValuesContext {
+export type InlineValuesContext = {
 	/**
 	 * The document range where execution has stopped.
 	 * Typically the end position of the range denotes the line where the inline values are shown.
 	 */
 	stoppedLocation: Range;
-}
+};
 ```
 
 _Response_:
@@ -111,7 +108,7 @@ _Response_:
  *
  * @since 3.17.0 - proposed state
  */
-export interface InlineValueText {
+export type InlineValueText = {
 	/**
 	 * The document range for which the inline value applies.
 	 */
@@ -121,7 +118,7 @@ export interface InlineValueText {
 	 * The text of the inline value.
 	 */
 	text: string;
-}
+};
 ```
 
 <div class="anchorHolder"><a href="#inlineValueVariableLookup" name="inlineValueVariableLookup" class="linkableAnchor"></a></div>
@@ -134,7 +131,7 @@ export interface InlineValueText {
  *
  * @since 3.17.0 - proposed state
  */
-export interface InlineValueVariableLookup {
+export type InlineValueVariableLookup = {
 	/**
 	 * The document range for which the inline value applies.
 	 * The range is used to extract the variable name from the underlying document.
@@ -150,7 +147,7 @@ export interface InlineValueVariableLookup {
 	 * How to perform the lookup.
 	 */
 	caseSensitiveLookup: boolean;
-}
+};
 ```
 
 <div class="anchorHolder"><a href="#inlineValueEvaluatableExpression" name="inlineValueEvaluatableExpression" class="linkableAnchor"></a></div>
@@ -163,7 +160,7 @@ export interface InlineValueVariableLookup {
  *
  * @since 3.17.0 - proposed state
  */
-export interface InlineValueEvaluatableExpression {
+export type InlineValueEvaluatableExpression = {
 	/**
 	 * The document range for which the inline value applies.
 	 * The range is used to extract the evaluatable expression from the underlying document.
@@ -174,7 +171,7 @@ export interface InlineValueEvaluatableExpression {
 	 * If specified the expression overrides the extracted expression.
 	 */
 	expression?: string;
-}
+};
 ```
 
 <div class="anchorHolder"><a href="#inlineValue" name="inlineValue" class="linkableAnchor"></a></div>
@@ -212,7 +209,7 @@ _Client Capability_:
  *
  * @since 3.17.0 - proposed state
  */
-export interface InlineValuesWorkspaceClientCapabilities {
+export type InlineValuesWorkspaceClientCapabilities = {
 	/**
 	 * Whether the client implementation supports a refresh request sent from the
 	 * server to the client.
@@ -223,7 +220,7 @@ export interface InlineValuesWorkspaceClientCapabilities {
 	 * change that requires such a calculation.
 	 */
 	refreshSupport?: boolean;
-}
+};
 ```
 _Request_:
 * method: `workspace/inlineValues/refresh`

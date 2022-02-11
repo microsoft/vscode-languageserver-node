@@ -180,11 +180,34 @@ namespace $NotebookCell {
 		}
 	}
 
+	/**
+	 * We only sync kind, document, execution and metadata to the server. So we only need to compare those.
+	 */
 	function equals(one: vscode.NotebookCell, other: vscode.NotebookCell, compareMetaData: boolean = true): boolean {
-		if (one.kind !== other.kind || one.document.uri.toString() !== other.document.uri.toString()) {
+		if (one.kind !== other.kind || one.document.uri.toString() !== other.document.uri.toString() || !equalsExecution(one.executionSummary, other.executionSummary)) {
 			return false;
 		}
 		return !compareMetaData || (compareMetaData && equalsMetadata(one.metadata, other.metadata));
+	}
+
+	function equalsExecution(one: vscode.NotebookCellExecutionSummary | undefined, other: vscode.NotebookCellExecutionSummary | undefined): boolean {
+		if (one === other) {
+			return true;
+		}
+		if (one === undefined || other === undefined) {
+			return false;
+		}
+		return one.executionOrder === other.executionOrder && one.success === other.success && equalsTiming(one.timing, other.timing);
+	}
+
+	function equalsTiming(one: { startTime: number; endTime: number } | undefined, other: { startTime: number; endTime: number } | undefined): boolean {
+		if (one === other) {
+			return true;
+		}
+		if (one === undefined || other === undefined) {
+			return false;
+		}
+		return one.startTime === other.startTime && one.endTime === other.endTime;
 	}
 
 	function equalsMetadata(one: any, other: any | undefined): boolean {
@@ -308,7 +331,7 @@ namespace SyncInfo {
 }
 
 
-export interface NotebookDocumentChangeEvent {
+export type NotebookDocumentChangeEvent = {
 	/**
 	 * The changed meta data if any.
 	 */
@@ -348,16 +371,16 @@ export interface NotebookDocumentChangeEvent {
 		 */
 		textContent?: vscode.TextDocumentChangeEvent[];
 	};
-}
+};
 
-export interface NotebookDocumentMiddleware {
+export type NotebookDocumentMiddleware = {
 	notebooks?: {
 		didOpen?: (this: void, notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[], next: (this: void, notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[]) => Promise<void>) => Promise<void>;
 		didSave?: (this: void, notebookDocument: vscode.NotebookDocument, next: (this: void, notebookDocument: vscode.NotebookDocument) => Promise<void>) => Promise<void>;
 		didChange?: (this: void, notebookDocument: vscode.NotebookDocument, event: NotebookDocumentChangeEvent, next: (this: void, notebookDocument: vscode.NotebookDocument, event: NotebookDocumentChangeEvent) => Promise<void>) => Promise<void>;
 		didClose?: (this: void, notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[], next: (this: void, notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[]) => Promise<void>) => Promise<void>;
 	};
-}
+};
 
 export interface NotebookDocumentSyncFeatureShape {
 	mode: 'notebook';

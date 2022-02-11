@@ -3608,7 +3608,7 @@ export interface SemanticTokensDelta {
 /**
  * @since 3.17.0 - proposed state
  */
-export interface TypeHierarchyItem {
+export type TypeHierarchyItem = {
 	/**
 	 * The name of this item.
 	 */
@@ -3654,14 +3654,14 @@ export interface TypeHierarchyItem {
 	 * resolving supertypes and subtypes.
 	 */
 	data?: LSPAny;
-}
+};
 
 /**
  * Provide inline value as text.
  *
  * @since 3.17.0 - proposed state
  */
-export interface InlineValueText {
+export type InlineValueText = {
 	/**
 	 * The document range for which the inline value applies.
 	 */
@@ -3671,7 +3671,7 @@ export interface InlineValueText {
 	 * The text of the inline value.
 	 */
 	text: string;
-}
+};
 
 /**
  * The InlineValueText namespace provides functions to deal with InlineValueTexts.
@@ -3699,7 +3699,7 @@ export namespace InlineValueText {
  *
  * @since 3.17.0 - proposed state
  */
-export interface InlineValueVariableLookup {
+export type InlineValueVariableLookup = {
 	/**
 	 * The document range for which the inline value applies.
 	 * The range is used to extract the variable name from the underlying document.
@@ -3715,7 +3715,7 @@ export interface InlineValueVariableLookup {
 	 * How to perform the lookup.
 	 */
 	caseSensitiveLookup: boolean;
-}
+};
 
 /**
  * The InlineValueVariableLookup namespace provides functions to deal with InlineValueVariableLookups.
@@ -3744,7 +3744,7 @@ export namespace InlineValueVariableLookup {
  *
  * @since 3.17.0 - proposed state
  */
-export interface InlineValueEvaluatableExpression {
+export type InlineValueEvaluatableExpression = {
 	/**
 	 * The document range for which the inline value applies.
 	 * The range is used to extract the evaluatable expression from the underlying document.
@@ -3755,7 +3755,7 @@ export interface InlineValueEvaluatableExpression {
 	 * If specified the expression overrides the extracted expression.
 	 */
 	expression?: string;
-}
+};
 
 /**
  * The InlineValueEvaluatableExpression namespace provides functions to deal with InlineValueEvaluatableExpression.
@@ -3791,13 +3791,13 @@ export type InlineValue = InlineValueText | InlineValueVariableLookup | InlineVa
 /**
  * @since 3.17.0 - proposed state
  */
-export interface InlineValuesContext {
+export type InlineValuesContext = {
 	/**
 	 * The document range where execution has stopped.
 	 * Typically the end position of the range denotes the line where the inline values are shown.
 	 */
 	stoppedLocation: Range;
-}
+};
 
 /**
  * The InlineValuesContext namespace provides helper functions to work with

@@ -16,19 +16,19 @@ import { TextDocumentRegistrationOptions, WorkDoneProgressOptions, StaticRegistr
  *
  * @since 3.17.0 - proposed state
  */
-export interface InlineValuesClientCapabilities {
+export type InlineValuesClientCapabilities = {
 	/**
 	 * Whether implementation supports dynamic registration for inline value providers.
 	 */
 	dynamicRegistration?: boolean;
-}
+};
 
 /**
  * Client workspace capabilities specific to inline values.
  *
  * @since 3.17.0 - proposed state
  */
-export interface InlineValuesWorkspaceClientCapabilities {
+export type InlineValuesWorkspaceClientCapabilities = {
 	/**
 	 * Whether the client implementation supports a refresh request sent from the
 	 * server to the client.
@@ -39,30 +39,28 @@ export interface InlineValuesWorkspaceClientCapabilities {
 	 * change that requires such a calculation.
 	 */
 	refreshSupport?: boolean;
-}
+};
 
 /**
  * Inline values options used during static registration.
  *
  * @since 3.17.0 - proposed state
  */
-export interface InlineValuesOptions extends WorkDoneProgressOptions {
-}
+export type InlineValuesOptions = WorkDoneProgressOptions;
 
 /**
  * Inline value options used during static or dynamic registration.
  *
  * @since 3.17.0 - proposed state
  */
-export interface InlineValuesRegistrationOptions extends InlineValuesOptions, TextDocumentRegistrationOptions, StaticRegistrationOptions {
-}
+export type InlineValuesRegistrationOptions = InlineValuesOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions;
 
 /**
  * A parameter literal used in inline values requests.
  *
  * @since 3.17.0 - proposed state
  */
-export interface InlineValuesParams extends WorkDoneProgressParams {
+export type InlineValuesParams = WorkDoneProgressParams & {
 	/**
 	 * The text document.
 	 */
@@ -78,7 +76,7 @@ export interface InlineValuesParams extends WorkDoneProgressParams {
 	 * requested.
 	 */
 	context: InlineValuesContext;
-}
+};
 
 /**
  * A request to provide inline values in a document. The request's parameter is of

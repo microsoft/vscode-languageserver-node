@@ -14,7 +14,7 @@ _Client Capability_:
 * property type: `TypeHierarchyClientCapabilities` defined as follows:
 
 ```typescript
-interface TypeHierarchyClientCapabilities {
+type TypeHierarchyClientCapabilities = {
 	/**
 	 * Whether implementation supports dynamic registration. If this is set to
 	 * `true` the client supports the new `(TextDocumentRegistrationOptions &
@@ -22,7 +22,7 @@ interface TypeHierarchyClientCapabilities {
 	 * capability as well.
 	 */
 	dynamicRegistration?: boolean;
-}
+};
 ```
 
 _Server Capability_:
@@ -31,17 +31,15 @@ _Server Capability_:
 * property type: `boolean | TypeHierarchyOptions | TypeHierarchyRegistrationOptions` where `TypeHierarchyOptions` is defined as follows:
 
 ```typescript
-export interface TypeHierarchyOptions extends WorkDoneProgressOptions {
-}
+export type TypeHierarchyOptions = WorkDoneProgressOptions;
 ```
 
 _Registration Options_: `TypeHierarchyRegistrationOptions` defined as follows:
 
 ```typescript
-export interface TypeHierarchyRegistrationOptions extends
-	TextDocumentRegistrationOptions, TypeHierarchyOptions,
-	StaticRegistrationOptions {
-}
+export type TypeHierarchyRegistrationOptions =
+	TextDocumentRegistrationOptions & TypeHierarchyOptions &
+	StaticRegistrationOptions;
 ```
 
 _Request_:
@@ -50,9 +48,8 @@ _Request_:
 * params: `TypeHierarchyPrepareParams` defined as follows:
 
 ```typescript
-export interface TypeHierarchyPrepareParams extends TextDocumentPositionParams,
-	WorkDoneProgressParams {
-}
+export type TypeHierarchyPrepareParams = TextDocumentPositionParams &
+	WorkDoneProgressParams;
 ```
 
 _Response_:
@@ -60,7 +57,7 @@ _Response_:
 * result: `TypeHierarchyItem[] | null` defined as follows:
 
 ```typescript
-export interface TypeHierarchyItem {
+export type TypeHierarchyItem = {
 	/**
 	 * The name of this item.
 	 */
@@ -106,7 +103,7 @@ export interface TypeHierarchyItem {
 	 * resolving supertypes and subtypes.
 	 */
 	data?: unknown;
-}
+};
 ```
 
 * error: code and message set in case an exception happens during the 'textDocument/prepareTypeHierarchy' request
@@ -123,10 +120,10 @@ _Request_:
 * params: `TypeHierarchySupertypesParams` defined as follows:
 
 ```typescript
-export interface TypeHierarchySupertypesParams extends
-	WorkDoneProgressParams, PartialResultParams {
+export type TypeHierarchySupertypesParams =
+	WorkDoneProgressParams & PartialResultParams & {
 	item: TypeHierarchyItem;
-}
+};
 ```
 _Response_:
 
@@ -146,10 +143,10 @@ _Request_:
 * params: `TypeHierarchySubtypesParams` defined as follows:
 
 ```typescript
-export interface TypeHierarchySubtypesParams extends
-	WorkDoneProgressParams, PartialResultParams {
+export type TypeHierarchySubtypesParams =
+	WorkDoneProgressParams & PartialResultParams & {
 	item: TypeHierarchyItem;
-}
+};
 ```
 _Response_:
 
