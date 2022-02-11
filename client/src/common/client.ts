@@ -22,7 +22,7 @@ import {
 	DocumentRangeFormattingEditProvider, OnTypeFormattingEditProvider, RenameProvider, DocumentLinkProvider, DocumentColorProvider, DeclarationProvider,
 	FoldingRangeProvider, ImplementationProvider, SelectionRangeProvider, TypeDefinitionProvider, WorkspaceSymbolProvider, CallHierarchyProvider,
 	DocumentSymbolProviderMetadata, EventEmitter, env as Env, TextDocumentShowOptions, FileWillCreateEvent, FileWillRenameEvent, FileWillDeleteEvent, FileCreateEvent, FileDeleteEvent, FileRenameEvent,
-	LinkedEditingRangeProvider, Event as VEvent, CancellationError, TypeHierarchyProvider as VTypeHierarchyProvider, NotebookDocument as VNotebookDocument, CancellationTokenSource
+	LinkedEditingRangeProvider, Event as VEvent, CancellationError, TypeHierarchyProvider as VTypeHierarchyProvider, NotebookDocument as VNotebookDocument, CancellationTokenSource, NotebookDocument, NotebookCell
 } from 'vscode';
 
 import {
@@ -480,11 +480,15 @@ export enum DiagnosticPullMode {
 	onSave = 'onSave'
 }
 
-export interface DiagnosticPullOptions {
+export type DiagnosticPullOptions = {
 	onChange: boolean;
 	onSave: boolean;
 	filter?(document: TextDocument, mode: DiagnosticPullMode): boolean;
-}
+};
+
+export type NotebookDocumentOptions = {
+	filterCells?(notebookDocument: NotebookDocument, cells: NotebookCell[]): NotebookCell[];
+};
 
 export enum RevealOutputChannelOn {
 	Info = 1,
@@ -687,6 +691,7 @@ export interface LanguageClientOptions {
 		supportHtml?: boolean;
 	};
 	diagnosticPullOptions?: DiagnosticPullOptions;
+	notebookDocumentOptions?: NotebookDocumentOptions;
 }
 
 interface ResolvedClientOptions {

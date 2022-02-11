@@ -650,21 +650,24 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 				if (item.cellSelector === undefined) {
 					return undefined;
 				}
-				const filtered = this.filterCells(cells, item.cellSelector);
+				const filtered = this.filterCells(notebookDocument, cells, item.cellSelector);
 				return filtered.length === 0 ? undefined : filtered;
 			} else if ($NotebookDocumentFilter.matchNotebook(item.notebookDocumentFilter, notebookDocument)){
-				return item.cellSelector === undefined ? cells : this.filterCells(cells, item.cellSelector);
+				return item.cellSelector === undefined ? cells : this.filterCells(notebookDocument, cells, item.cellSelector);
 			}
 		}
 		return undefined;
 	}
 
-
-	private filterCells(cells: vscode.NotebookCell[], cellSelector: { language: string }[]): vscode.NotebookCell[] {
-		return cells.filter((cell) => {
+	private filterCells(notebookDocument: vscode.NotebookDocument,  cells: vscode.NotebookCell[], cellSelector: { language: string }[]): vscode.NotebookCell[] {
+		const result = cells.filter((cell) => {
 			const cellLanguage = cell.document.languageId;
 			return cellSelector.some((filter => cellLanguage === filter.language));
 		});
+		return typeof this.client.clientOptions.notebookDocumentOptions?.filterCells === 'function'
+			? this.client.clientOptions.notebookDocumentOptions.filterCells(notebookDocument, cells)
+			: result;
+
 	}
 
 	public async sendDidOpenNotebookDocument(notebookDocument: vscode.NotebookDocument): Promise<void> {
