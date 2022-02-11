@@ -24,7 +24,6 @@ export interface NotebooksFeatureShape {
 		onDidChangeNotebookDocument(handler: NotificationHandler1<Proposed.DidChangeNotebookDocumentParams>): Disposable;
 		onDidSaveNotebookDocument(handler: NotificationHandler1<Proposed.DidSaveNotebookDocumentParams>): Disposable;
 		onDidCloseNotebookDocument(handler: NotificationHandler1<Proposed.DidCloseNotebookDocumentParams>): Disposable;
-		onDidSelectNotebookController(handler: NotificationHandler1<Proposed.DidSelectNotebookControllerParams>): Disposable;
 	};
 }
 
@@ -49,11 +48,6 @@ export const NotebooksFeature: Feature<_Notebooks, NotebooksFeatureShape> = (Bas
 				},
 				onDidCloseNotebookDocument: (handler: NotificationHandler1<Proposed.DidCloseNotebookDocumentParams>): Disposable => {
 					return this.connection.onNotification(Proposed.DidCloseNotebookDocumentNotification.type, (params) => {
-						handler(params);
-					});
-				},
-				onDidSelectNotebookController: (handler: NotificationHandler1<Proposed.DidSelectNotebookControllerParams>): Disposable => {
-					return this.connection.onNotification(Proposed.DidSelectNotebookControllerNotification.type, (params) => {
 						handler(params);
 					});
 				}
@@ -160,13 +154,11 @@ export class NotebookDocuments<T extends {  uri: DocumentUri }> {
 
 	private readonly notebookDocuments: Map<URI, Proposed.NotebookDocument>;
 	private readonly notebookCellMap: Map<DocumentUri, [Proposed.NotebookCell, Proposed.NotebookDocument]>;
-	private readonly notebookControllers: Map<URI, Proposed.NotebookController>;
 
 	private readonly _onDidOpen: Emitter<Proposed.NotebookDocument>;
 	private readonly _onDidSave: Emitter<Proposed.NotebookDocument>;
 	private readonly _onDidChange: Emitter<NotebookDocumentChangeEvent>;
 	private readonly _onDidClose: Emitter<Proposed.NotebookDocument>;
-	private readonly _onDidSelectNotebookController: Emitter<{ notebookDocument: Proposed.NotebookDocument; controller: Proposed.NotebookController; selected: boolean }>;
 
 	private _cellTextDocuments: TextDocuments<T>;
 
@@ -178,12 +170,10 @@ export class NotebookDocuments<T extends {  uri: DocumentUri }> {
 		}
 		this.notebookDocuments= new Map();
 		this.notebookCellMap = new Map();
-		this.notebookControllers = new Map();
 		this._onDidOpen = new Emitter();
 		this._onDidChange = new Emitter();
 		this._onDidSave = new Emitter();
 		this._onDidClose = new Emitter();
-		this._onDidSelectNotebookController = new Emitter();
 	}
 
 	public get cellTextDocuments(): TextDocuments<T> {
@@ -209,11 +199,6 @@ export class NotebookDocuments<T extends {  uri: DocumentUri }> {
 		return value && value[1];
 	}
 
-	public getNotebookController(notebookDocument: URI | Proposed.NotebookDocument): Proposed.NotebookController | undefined {
-		const key = typeof notebookDocument === 'string' ? notebookDocument : notebookDocument.uri;
-		return this.notebookControllers.get(key);
-	}
-
 	public get onDidOpen(): Event<Proposed.NotebookDocument> {
 		return this._onDidOpen.event;
 	}
@@ -228,10 +213,6 @@ export class NotebookDocuments<T extends {  uri: DocumentUri }> {
 
 	public get onDidClose(): Event<Proposed.NotebookDocument> {
 		return this._onDidClose.event;
-	}
-
-	public get onDidSelectNotebookController(): Event<{ notebookDocument: Proposed.NotebookDocument; controller: Proposed.NotebookController; selected: boolean}> {
-		return this._onDidSelectNotebookController.event;
 	}
 
 	/**
@@ -365,22 +346,6 @@ export class NotebookDocuments<T extends {  uri: DocumentUri }> {
 			for (const cell of notebookDocument.cells) {
 				this.notebookCellMap.delete(cell.document);
 			}
-		}));
-		disposables.push(connection.notebooks.synchronization.onDidSelectNotebookController((params) => {
-			const key = params.notebookDocument.uri;
-			if (params.selected) {
-				this.notebookControllers.set(key, params.controller);
-			} else {
-				const controller = this.notebookControllers.get(key);
-				if (controller !== undefined && controller.id === params.controller.id) {
-					this.notebookControllers.delete(key);
-				}
-			}
-			const notebookDocument = this.notebookDocuments.get(key);
-			if (notebookDocument === undefined) {
-				return;
-			}
-			this._onDidSelectNotebookController.fire({ notebookDocument, controller: params.controller, selected: params.selected });
 		}));
 		return Disposable.create(() => { disposables.forEach(disposable => disposable.dispose()); });
 	}

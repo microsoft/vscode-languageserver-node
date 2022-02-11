@@ -429,37 +429,44 @@ export interface NotebookDocumentChangeEvent {
 	metadata?: LSPObject;
 
 	/**
-	 * Changes to the cell structure to add or
-	 * remove cells.
+	 * Changes to cells
 	 */
-	cellStructure?: {
+	cells?: {
 		/**
-		 * The change to the cell array.
+		 * Changes to the cell structure to add or
+		 * remove cells.
 		 */
-		array: NotebookCellArrayChange;
+		structure?: {
+			/**
+			 * The change to the cell array.
+			 */
+			array: NotebookCellArrayChange;
+
+			/**
+			 * Additional opened cell text documents.
+			 */
+			didOpen?: TextDocumentItem[];
+
+			/**
+			 * Additional closed cell text documents.
+			 */
+			didClose?: TextDocumentIdentifier[];
+		};
+
 		/**
-		 * Additional opened cell text documents.
+		 * Changes to notebook cells properties like its
+		 * kind, execution summary or metadata.
 		 */
-		didOpen?: TextDocumentItem[];
+		data?: NotebookCell[];
+
 		/**
-		 * Additional closed cell text documents.
-		 */
-		didClose?: TextDocumentIdentifier[];
+    	 * Changes to the text content of notebook cells.
+     	 */
+		textContent?: {
+			document: VersionedTextDocumentIdentifier;
+			changes: TextDocumentContentChangeEvent[];
+		}[];
 	};
-
-	/**
-	 * Changes to notebook cells properties like its
-	 * kind or metadata.
-	 */
-	cellData?: NotebookCell[];
-
-	/**
-     * Changes to the text content of notebook cells.
-     */
-	cellTextDocuments?: {
-		textDocument: VersionedTextDocumentIdentifier;
-		contentChanges: TextDocumentContentChangeEvent[];
-	}[];
 }
 ```
 

@@ -356,7 +356,6 @@ export interface NotebookDocumentMiddleware {
 		didSave?: (this: void, notebookDocument: vscode.NotebookDocument, next: (this: void, notebookDocument: vscode.NotebookDocument) => Promise<void>) => Promise<void>;
 		didChange?: (this: void, notebookDocument: vscode.NotebookDocument, event: NotebookDocumentChangeEvent, next: (this: void, notebookDocument: vscode.NotebookDocument, event: NotebookDocumentChangeEvent) => Promise<void>) => Promise<void>;
 		didClose?: (this: void, notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[], next: (this: void, notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[]) => Promise<void>) => Promise<void>;
-		didSelectNotebookController? :(this: void, notebookDocument: vscode.NotebookDocument, controller: proto.Proposed.NotebookController, selected: boolean, next: (this: void, notebookDocument: vscode.NotebookDocument, controller: proto.Proposed.NotebookController, selected: boolean) => Promise<void>) => Promise<void>;
 	};
 }
 
@@ -365,7 +364,6 @@ export interface NotebookDocumentSyncFeatureShape {
 	sendDidOpenNotebookDocument(notebookDocument: vscode.NotebookDocument): Promise<void>;
 	sendDidSaveNotebookDocument(notebookDocument: vscode.NotebookDocument): Promise<void>;
 	sendDidChangeNotebookDocument(notebookDocument: vscode.NotebookDocument, event: NotebookDocumentChangeEvent): Promise<void>;
-	sendDidSelectNotebookController(notebookDocument: vscode.NotebookDocument, controller: proto.Proposed.NotebookController, selected: boolean): Promise<void>;
 	sendDidCloseNotebookDocument(notebookDocument: vscode.NotebookDocument): Promise<void>;
 }
 
@@ -702,21 +700,6 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 		};
 		const middleware = this.client.clientOptions.middleware?.notebooks;
 		return middleware?.didSave !== undefined ? middleware.didSave(notebookDocument, send) : send(notebookDocument);
-	}
-
-	public async sendDidSelectNotebookController(notebookDocument: vscode.NotebookDocument, controller: proto.Proposed.NotebookController, selected: boolean): Promise<void> {
-		const send = (notebookDocument: vscode.NotebookDocument, controller: proto.Proposed.NotebookController, selected: boolean): Promise<void> => {
-			return this.client.sendNotification(proto.Proposed.DidSelectNotebookControllerNotification.type, {
-				notebookDocument: { uri: this.client.code2ProtocolConverter.asUri(notebookDocument.uri) },
-				controller: controller,
-				selected
-			}).catch((error) => {
-				this.client.error('Sending DidSelectNotebookControllerNotification failed', error);
-				throw error;
-			});
-		};
-		const middleware = this.client.clientOptions.middleware?.notebooks;
-		return middleware?.didSelectNotebookController !== undefined ? middleware.didSelectNotebookController(notebookDocument, controller, selected, send) : send(notebookDocument, controller, selected);
 	}
 
 	public async sendDidCloseNotebookDocument(notebookDocument: vscode.NotebookDocument): Promise<void> {
