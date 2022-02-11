@@ -528,9 +528,6 @@ connection.notebooks.synchronization.onDidSaveNotebookDocument(() => {
 connection.notebooks.synchronization.onDidCloseNotebookDocument(() => {
 	receivedNotifications.add(Proposed.DidCloseNotebookDocumentNotification.method);
 });
-connection.notebooks.synchronization.onDidSelectNotebookController(() => {
-	receivedNotifications.add(Proposed.DidSelectNotebookControllerNotification.method);
-});
 
 connection.onRequest(GotNotifiedRequest.type, (method: string) => {
 	const result = receivedNotifications.has(method);

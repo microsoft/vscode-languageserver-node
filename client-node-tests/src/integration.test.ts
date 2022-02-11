@@ -1361,34 +1361,6 @@ suite('Client integration', () => {
 
 		}
 	});
-
-	test('Notebook document: controller changed', async (): Promise<void> => {
-		let middlewareCalled: boolean = false;
-		middleware.notebooks = {
-			didSelectNotebookController: (nb, nc, s, n) => {
-				middlewareCalled = true;
-				return n(nb, nc, s);
-			}
-		};
-		const notebookData = new vscode.NotebookData(
-			[
-				new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'REM @ECHO OFF', 'bat'),
-				new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'FOR %%f IN (*.doc *.txt) DO XCOPY c:\source\"%%f" c:\text /m /y', 'bat')
-			],
-		);
-		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', notebookData);
-		const feature = client.getFeature(Proposed.NotebookDocumentSyncRegistrationType.method);
-		const provider = feature.getProvider(notebookDocument.getCells()[0]);
-		isDefined(provider);
-		assert.strictEqual(provider.mode, 'notebook');
-		if (provider.mode === 'notebook') {
-			await provider.sendDidSelectNotebookController(notebookDocument, Proposed.NotebookController.create('id', { python: '3.8.10' }), true);
-			assert.strictEqual(middlewareCalled, true);
-			middleware.notebooks = undefined;
-			const notified = await client.sendRequest(GotNotifiedRequest.type, Proposed.DidSelectNotebookControllerNotification.method);
-			assert.strictEqual(notified, true);
-		}
-	});
 });
 
 namespace CrashNotification {
