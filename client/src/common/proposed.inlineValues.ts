@@ -21,9 +21,7 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	return target[key];
 }
 
-export type ProvideInlineValuesSignature = {
-	(this: void, document: TextDocument, viewPort: VRange, context: VInlineValueContext, token: CancellationToken): ProviderResult<VInlineValue[]>;
-};
+export type ProvideInlineValuesSignature = (this: void, document: TextDocument, viewPort: VRange, context: VInlineValueContext, token: CancellationToken) => ProviderResult<VInlineValue[]>;
 
 export type InlineValuesProviderMiddleware = {
 	provideInlineValues?: (this: void, document: TextDocument, viewPort: VRange, context: VInlineValueContext, token: CancellationToken, next: ProvideInlineValuesSignature) => ProviderResult<VInlineValue[]>;

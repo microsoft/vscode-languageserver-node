@@ -19,17 +19,11 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	return target[key];
 }
 
-export interface PrepareTypeHierarchySignature {
-	(this: void, document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VTypeHierarchyItem[]>;
-}
+export type PrepareTypeHierarchySignature = (this: void, document: TextDocument, position: VPosition, token: CancellationToken) => ProviderResult<VTypeHierarchyItem[]>;
 
-export interface TypeHierarchySupertypesSignature {
-	(this: void, item: VTypeHierarchyItem, token: CancellationToken): ProviderResult<VTypeHierarchyItem[]>;
-}
+export type TypeHierarchySupertypesSignature = (this: void, item: VTypeHierarchyItem, token: CancellationToken) => ProviderResult<VTypeHierarchyItem[]>;
 
-export interface TypeHierarchySubtypesSignature {
-	(this: void, item: VTypeHierarchyItem, token: CancellationToken): ProviderResult<VTypeHierarchyItem[]>;
-}
+export type TypeHierarchySubtypesSignature = (this: void, item: VTypeHierarchyItem, token: CancellationToken) => ProviderResult<VTypeHierarchyItem[]>;
 
 /**
  * Type hierarchy middleware

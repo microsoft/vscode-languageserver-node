@@ -94,18 +94,14 @@ export namespace vsdiag {
 	}
 }
 
-export interface ProvideDiagnosticSignature {
-	(this: void, textDocument: TextDocument, previousResultId: string | undefined, token: CancellationToken): ProviderResult<vsdiag.DocumentDiagnosticReport>;
-}
+export type ProvideDiagnosticSignature =(this: void, textDocument: TextDocument, previousResultId: string | undefined, token: CancellationToken) => ProviderResult<vsdiag.DocumentDiagnosticReport>;
 
-export interface ProvideWorkspaceDiagnosticSignature {
-	(this: void, resultIds: vsdiag.PreviousResultId[], token: CancellationToken, resultReporter: vsdiag.ResultReporter): ProviderResult<vsdiag.WorkspaceDiagnosticReport>;
-}
+export type ProvideWorkspaceDiagnosticSignature = (this: void, resultIds: vsdiag.PreviousResultId[], token: CancellationToken, resultReporter: vsdiag.ResultReporter) => ProviderResult<vsdiag.WorkspaceDiagnosticReport>;
 
-export interface DiagnosticProviderMiddleware {
+export type DiagnosticProviderMiddleware = {
 	provideDiagnostics?: (this: void, document: TextDocument, previousResultId: string | undefined, token: CancellationToken, next: ProvideDiagnosticSignature) => ProviderResult<vsdiag.DocumentDiagnosticReport>;
 	provideWorkspaceDiagnostics?: (this: void, resultIds: vsdiag.PreviousResultId[], token: CancellationToken, resultReporter: vsdiag.ResultReporter, next: ProvideWorkspaceDiagnosticSignature) => ProviderResult<vsdiag.WorkspaceDiagnosticReport>;
-}
+};
 
 enum RequestStateKind {
 	active = 'open',
