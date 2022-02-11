@@ -30,11 +30,11 @@ export type TypeHierarchySubtypesSignature = (this: void, item: VTypeHierarchyIt
  *
  * @since 3.17.0 - proposed state
  */
-export interface TypeHierarchyMiddleware {
+export type TypeHierarchyMiddleware = {
 	prepareTypeHierarchy?: (this: void, document: TextDocument, positions: VPosition, token: CancellationToken, next: PrepareTypeHierarchySignature) => ProviderResult<VTypeHierarchyItem[]>;
 	provideTypeHierarchySupertypes?: (this: void, item: VTypeHierarchyItem, token: CancellationToken, next: TypeHierarchySupertypesSignature) => ProviderResult<VTypeHierarchyItem[]>;
 	provideTypeHierarchySubtypes?: (this: void, item: VTypeHierarchyItem, token: CancellationToken, next: TypeHierarchySubtypesSignature) => ProviderResult<VTypeHierarchyItem[]>;
-}
+};
 
 class TypeHierarchyProvider implements VTypeHierarchyProvider {
 

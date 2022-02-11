@@ -170,11 +170,11 @@ class EditorTracker  {
 	}
 }
 
-interface DocumentPullState {
+type DocumentPullState = {
 	document: Uri;
 	pulledVersion: number | undefined;
 	resultId: string | undefined;
-}
+};
 
 enum PullState {
 	document = 1,
