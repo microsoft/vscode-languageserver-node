@@ -1,7 +1,6 @@
 .vscode/
 dist/
 lib/**/test/
-lib/**/*.map
 lib/**/*.tsbuildInfo
 src/
 test/
