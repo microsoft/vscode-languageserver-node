@@ -717,6 +717,7 @@ interface ResolvedClientOptions {
 		supportHtml: boolean;
 	};
 	diagnosticPullOptions: DiagnosticPullOptions;
+	notebookDocumentOptions: NotebookDocumentOptions;
 }
 
 export enum State {
@@ -3016,7 +3017,8 @@ export abstract class BaseLanguageClient {
 			workspaceFolder: clientOptions.workspaceFolder,
 			connectionOptions: clientOptions.connectionOptions,
 			markdown,
-			diagnosticPullOptions: clientOptions.diagnosticPullOptions ?? { onChange: true, onSave: false }
+			diagnosticPullOptions: clientOptions.diagnosticPullOptions ?? { onChange: true, onSave: false },
+			notebookDocumentOptions: clientOptions.notebookDocumentOptions ?? { }
 		};
 		this._clientOptions.synchronize = this._clientOptions.synchronize || {};
 
