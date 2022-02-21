@@ -21,7 +21,7 @@
 		"assert": "^2.0.0",
 		"eslint": "^7.30.0",
 		"http-server": "^14.1.0",
-		"mocha": "^9.2.0",
+		"mocha": "^9.2.1",
 		"playwright": "^1.17.2",
 		"rimraf": "^3.0.2",
 		"shelljs": "^0.8.5",
