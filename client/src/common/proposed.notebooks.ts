@@ -317,8 +317,8 @@ type SyncInfo = {
 	cells: vscode.NotebookCell[];
 
 	/**
-	 * A set of VS Code URI of the synced
-	 * VS Code notebook cells.
+	 * A set of VS Code URIs of the synced
+	 * VS Code notebook cell text documents.
 	 */
 	uris: Set<string>;
 };
@@ -465,9 +465,12 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 		const cellMatches = cells !== undefined && cells[0] === cell;
 		if (syncInfo !== undefined) {
 			const cellIsSynced = syncInfo.uris.has(cell.document.uri.toString());
-			// The notebook document is synced
-			if (cellMatches && cellIsSynced) {
-				// Cell matches and is synced.
+			if ((cellMatches && cellIsSynced) || (!cellMatches && !cellIsSynced)) {
+				// The cell doesn't match and was not synced or it matches and is synced.
+				// In both cases nothing to do.
+				//
+				// Note that if the language mode of a document changes we remove the
+				// cell and add it back to update the language mode on the server side.
 				return;
 			}
 			this.cellStructureChanged(notebookDocument, syncInfo);
@@ -500,7 +503,8 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 		const cellUri = cell.document.uri;
 		const index = syncInfo.cells.findIndex((item) => item.document.uri.toString() === cellUri.toString());
 		if (index === -1) {
-			// The cell never got synced.
+			// The cell never got synced or it got deleted and we now received the document
+			// close event.
 			return;
 		}
 		if (index === 0 && syncInfo.cells.length === 1) {
@@ -869,7 +873,7 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 			if (textDocument.uri.scheme !== NotebookDocumentSyncFeature.CellScheme) {
 				return;
 			}
-			const [notebookDocument, notebookCell] = this.getNotebookDocument(textDocument);
+			const [notebookDocument, notebookCell] = this.findNotebookDocumentAndCell(textDocument);
 			if (notebookDocument === undefined || notebookCell === undefined) {
 				return;
 			}
@@ -887,7 +891,7 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 			if (textDocument.uri.scheme !== NotebookDocumentSyncFeature.CellScheme) {
 				return;
 			}
-			const [notebookDocument, ] = this.getNotebookDocument(textDocument);
+			const [notebookDocument, ] = this.findNotebookDocumentAndCell(textDocument);
 			if (notebookDocument === undefined) {
 				return;
 			}
@@ -901,7 +905,11 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 			if (textDocument.uri.scheme !== NotebookDocumentSyncFeature.CellScheme) {
 				return;
 			}
-			const [notebookDocument, notebookCell] = this.getNotebookDocument(textDocument);
+			// There are two cases when we receive a close for a text document
+			// 1: the cell got removed. This is handled in `onDidChangeNotebookCells`
+			// 2: the language mode of a cell changed. This keeps the URI stable so
+			//    we will still find the cell and the notebook document.
+			const [notebookDocument, notebookCell] = this.findNotebookDocumentAndCell(textDocument);
 			if (notebookDocument === undefined || notebookCell === undefined) {
 				return;
 			}
@@ -971,7 +979,7 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 		return undefined;
 	}
 
-	private getNotebookDocument(textDocument: vscode.TextDocument): [vscode.NotebookDocument | undefined, vscode.NotebookCell | undefined] {
+	private findNotebookDocumentAndCell(textDocument: vscode.TextDocument): [vscode.NotebookDocument | undefined, vscode.NotebookCell | undefined] {
 		const uri = textDocument.uri.toString();
 		for (const notebookDocument of vscode.workspace.notebookDocuments) {
 			for (const cell of notebookDocument.getCells()) {
