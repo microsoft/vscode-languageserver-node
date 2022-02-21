@@ -80,7 +80,7 @@ import * as c2p from './codeConverter';
 import * as p2c from './protocolConverter';
 
 import * as Is from './utils/is';
-import { Delayer } from './utils/async';
+import { Delayer, Semaphore } from './utils/async';
 import * as UUID from './utils/uuid';
 import { ProgressPart } from './progressPart';
 
@@ -3746,7 +3746,7 @@ export abstract class BaseLanguageClient {
 		this._p2c.asDiagnostics(diagnostics, tokenSource.token).then((converted) => {
 			if (!tokenSource.token.isCancellationRequested) {
 				const uri = this._p2c.asUri(document);
-				let middleware = this.clientOptions.middleware!;
+				const middleware = this.clientOptions.middleware!;
 				if (middleware.handleDiagnostics) {
 					middleware.handleDiagnostics(uri, converted, (uri, diagnostics) => this.setDiagnostics(uri, diagnostics));
 				} else {
@@ -4073,17 +4073,25 @@ export abstract class BaseLanguageClient {
 		});
 	}
 
+	private workspaceEditLock: Semaphore<VWorkspaceEdit> = new Semaphore(1);
 	private async handleApplyWorkspaceEdit(params: ApplyWorkspaceEditParams): Promise<ApplyWorkspaceEditResult> {
+		const workspaceEdit: WorkspaceEdit = params.edit;
+		// Make sure we convert workspace edits one after the other. Otherwise
+		// we might execute a workspace edit received first after we received another
+		// one since the conversion might race.
+		const converted = await this.workspaceEditLock.lock(() => {
+			return this._p2c.asWorkspaceEdit(workspaceEdit);
+		});
+
 		// This is some sort of workaround since the version check should be done by VS Code in the Workspace.applyEdit.
 		// However doing it here adds some safety since the server can lag more behind then an extension.
-		let workspaceEdit: WorkspaceEdit = params.edit;
-		let openTextDocuments: Map<string, TextDocument> = new Map<string, TextDocument>();
+		const openTextDocuments: Map<string, TextDocument> = new Map<string, TextDocument>();
 		Workspace.textDocuments.forEach((document) => openTextDocuments.set(document.uri.toString(), document));
 		let versionMismatch = false;
 		if (workspaceEdit.documentChanges) {
 			for (const change of workspaceEdit.documentChanges) {
 				if (TextDocumentEdit.is(change) && change.textDocument.version && change.textDocument.version >= 0) {
-					let textDocument = openTextDocuments.get(change.textDocument.uri);
+					const textDocument = openTextDocuments.get(change.textDocument.uri);
 					if (textDocument && textDocument.version !== change.textDocument.version) {
 						versionMismatch = true;
 						break;
@@ -4094,7 +4102,7 @@ export abstract class BaseLanguageClient {
 		if (versionMismatch) {
 			return Promise.resolve({ applied: false });
 		}
-		return Is.asPromise(Workspace.applyEdit(await this._p2c.asWorkspaceEdit(params.edit)).then((value) => { return { applied: value }; }));
+		return Is.asPromise(Workspace.applyEdit(converted).then((value) => { return { applied: value }; }));
 	}
 
 	private static RequestsToCancelOnContentModified: Set<string> = new Set([
