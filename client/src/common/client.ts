@@ -3756,8 +3756,6 @@ export abstract class BaseLanguageClient {
 				}
 			}
 		}).finally(() => {
-			// The conversion resulted in an error.
-			// Drop the result but make the queue idle again
 			this._diagnosticQueueState = { state: 'idle' };
 			this.triggerDiagnosticQueue();
 		});
