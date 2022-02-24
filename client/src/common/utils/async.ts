@@ -272,7 +272,6 @@ export async function forEach<P>(items: ReadonlyArray<P>, func: (item: P) => voi
 	const timer = new Timer(yieldEveryMilliseconds);
 	function runBatch(start: number): number {
 		timer.start();
-		const startTime = Date.now();
 		for (let i = start; i < items.length; i++) {
 			func(items[i]);
 			if (timer.shouldYield())  {
