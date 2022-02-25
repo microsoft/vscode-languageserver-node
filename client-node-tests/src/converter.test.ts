@@ -78,11 +78,13 @@ function assertDiagnosticCode(value: string | number | DiagnosticCode | undefine
 
 suite('Async Array', () => {
 	test('map', async() => {
-		const ranges: proto.Range[] = new Array(7500);
+		const ranges: proto.Range[] = new Array(10000);
 		for (let i = 0; i < ranges.length; i++) {
 			ranges[i] = proto.Range.create(i, i, i, i);
 		}
-		const converted = await async.map(ranges, p2c.asRange, undefined, 5);
+		let yielded = 0;
+		const converted = await async.map(ranges, p2c.asRange, undefined, { yieldCallback: () => { yielded++; }});
+		ok(yielded > 0);
 		strictEqual(converted.length, ranges.length);
 		for (let i = 0; i < converted.length; i++) {
 			ok(converted[i] instanceof vscode.Range);
@@ -95,13 +97,15 @@ suite('Async Array', () => {
 		for (let i = 0; i < ranges.length; i++) {
 			ranges[i] = proto.Range.create(i, i, i, i);
 		}
+		let yielded = 0;
 		const converted = await async.mapAsync(ranges, (item): Promise<vscode.Range> => {
 			return new Promise((resolve) => {
 				proto.RAL().timer.setImmediate(() => {
 					resolve(p2c.asRange(item));
 				});
 			});
-		}, undefined, 5);
+		}, undefined, { yieldCallback: () => { yielded++; }});
+		ok(yielded > 0);
 		strictEqual(converted.length, ranges.length);
 		for (let i = 0; i < converted.length; i++) {
 			ok(converted[i] instanceof vscode.Range);
@@ -110,13 +114,18 @@ suite('Async Array', () => {
 	});
 
 	test('forEach', async() => {
-		const ranges: proto.Range[] = new Array(100000);
+		const ranges: proto.Range[] = new Array(7500);
 		for (let i = 0; i < ranges.length; i++) {
-			ranges[i] = proto.Range.create(i + 1, 0, 0, 0);
+			ranges[i] = proto.Range.create(i + 1, 0, i + 2, 1);
 		}
 		let sum: number = 0;
-		await async.forEach(ranges, (item) => sum += item.start.line, undefined, 5);
-		strictEqual(sum, 5000050000);
+		let yielded = 0;
+		await async.forEach(ranges, (item) => {
+			const codeRange = p2c.asRange(item);
+			sum += codeRange.start.line;
+		}, undefined, { yieldCallback: () => { yielded++; }});
+		ok(yielded > 0);
+		strictEqual(sum, 28128750);
 	});
 });
 

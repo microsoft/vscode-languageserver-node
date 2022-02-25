@@ -159,17 +159,20 @@ export class Semaphore<T = void> {
 const defaultYieldTimeout: number = 15 /*ms*/;
 
 class Timer {
+
 	private readonly yieldAfter: number;
 	private startTime: number;
 	private counter: number;
 	private total: number;
 	private counterInterval: number;
+
 	constructor(yieldAfter: number = defaultYieldTimeout) {
 		this.yieldAfter = Math.max(yieldAfter, defaultYieldTimeout);
 		this.startTime = Date.now();
 		this.counter = 0;
 		this.total = 0;
-		this.counterInterval = 100;
+		// start with a counter interval of 1.
+		this.counterInterval = 1;
 	}
 	public start() {
 		this.startTime = Date.now();
@@ -177,25 +180,29 @@ class Timer {
 	public shouldYield(): boolean {
 		if (++this.counter >= this.counterInterval) {
 			const timeTaken = Date.now() - this.startTime;
-			const timeLeft = this.yieldAfter - timeTaken;
+			const timeLeft = Math.max(0, this.yieldAfter - timeTaken);
 			this.total += this.counter;
 			this.counter = 0;
 			if (timeTaken >= this.yieldAfter || timeLeft <= 1) {
-				// Yield also if time left <= 1 since it is hard to calculate a
-				// new counter interval.
+				// Yield also if time left <= 1 since we compute the counter
+				// for max < 2 ms.
 
-				// For the next round take 80% of the managed loops
-				this.counterInterval = Math.round(this.total * 0.8);
+				// Start with interval 1 again. We could do some calculation
+				// with using 80% of the last counter however other things (GC)
+				// affect the timing heavily since we have small timings (1 - 15ms).
+				this.counterInterval = 1;
 				this.total = 0;
 				return true;
 			} else {
-				if (timeTaken <= 5) {
-					// The minimal yield time is 15ms. So under 5 it seems
-					// fair to double. This ensures that we don't operate with
-					// very small numbers
-					this.counterInterval *= 2;
-				} else {
-					this.counterInterval = Math.min(1, Math.round(this.total / timeTaken * timeLeft));
+				// Only increase the counter until we have spent <= 2 ms. Increasing
+				// the counter further is very fragile since timing is influenced
+				// by other things and can increase the counter too much. This will result
+				// that we yield in average after [14 - 16]ms.
+				switch (timeTaken) {
+					case 0:
+					case 1:
+						this.counterInterval = this.total * 2;
+						break;
 				}
 			}
 		}
@@ -203,18 +210,31 @@ class Timer {
 	}
 }
 
-export async function map<P, C>(items: ReadonlyArray<P>, func: (item: P) => C, token?: CancellationToken, yieldEveryMilliseconds: number = defaultYieldTimeout, yieldCallback?: () => void): Promise<C[]> {
+export type YieldOptions = {
+	/**
+	 * The time in ms after which the function should yield.
+	 * The minimum yield time is 15ms
+	 */
+	yieldAfter?: number /* ms */;
+
+	/**
+	 * An optional callback that is invoke when the code yields.
+	 */
+	yieldCallback?: () => void;
+};
+
+export async function map<P, C>(items: ReadonlyArray<P>, func: (item: P) => C, token?: CancellationToken, options?: YieldOptions): Promise<C[]> {
 	if (items.length === 0) {
 		return [];
 	}
 	const result: C[] = new Array(items.length);
-	const timer = new Timer(yieldEveryMilliseconds);
+	const timer = new Timer(options?.yieldAfter);
 	function convertBatch(start: number): number {
 		timer.start();
 		for (let i = start; i < items.length; i++) {
 			result[i] = func(items[i]);
 			if (timer.shouldYield())  {
-				yieldCallback && yieldCallback();
+				options?.yieldCallback && options.yieldCallback();
 				return i + 1;
 			}
 		}
@@ -235,17 +255,18 @@ export async function map<P, C>(items: ReadonlyArray<P>, func: (item: P) => C, t
 	return result;
 }
 
-export async function mapAsync<P, C>(items: ReadonlyArray<P>, func: (item: P, token?: CancellationToken) => Promise<C>, token?: CancellationToken, yieldEveryMilliseconds: number = defaultYieldTimeout, yieldCallback?: () => void): Promise<C[]> {
+export async function mapAsync<P, C>(items: ReadonlyArray<P>, func: (item: P, token?: CancellationToken) => Promise<C>, token?: CancellationToken, options?: YieldOptions): Promise<C[]> {
 	if (items.length === 0) {
 		return [];
 	}
 	const result: C[] = new Array(items.length);
-	const timer = new Timer(yieldEveryMilliseconds);
+	const timer = new Timer(options?.yieldAfter);
 	async function convertBatch(start: number): Promise<number> {
 		timer.start();
 		for (let i = start; i < items.length; i++) {
 			result[i] = await func(items[i], token);
 			if (timer.shouldYield())  {
+				options?.yieldCallback && options.yieldCallback();
 				return i + 1;
 			}
 		}
@@ -265,16 +286,17 @@ export async function mapAsync<P, C>(items: ReadonlyArray<P>, func: (item: P, to
 	return result;
 }
 
-export async function forEach<P>(items: ReadonlyArray<P>, func: (item: P) => void, token?: CancellationToken, yieldEveryMilliseconds: number = defaultYieldTimeout): Promise<void> {
+export async function forEach<P>(items: ReadonlyArray<P>, func: (item: P) => void, token?: CancellationToken, options?: YieldOptions): Promise<void> {
 	if (items.length === 0) {
 		return;
 	}
-	const timer = new Timer(yieldEveryMilliseconds);
+	const timer = new Timer(options?.yieldAfter);
 	function runBatch(start: number): number {
 		timer.start();
 		for (let i = start; i < items.length; i++) {
 			func(items[i]);
 			if (timer.shouldYield())  {
+				options?.yieldCallback && options.yieldCallback();
 				return i + 1;
 			}
 		}
