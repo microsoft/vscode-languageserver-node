@@ -3,6 +3,7 @@
 	"compilerOptions": {
 		"incremental": true,
 		"composite": true,
+		"sourceMap": true,
 		"declaration": true,
 		"stripInternal": true,
 		"target": "es2020",

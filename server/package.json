@@ -26,7 +26,7 @@
 	"scripts": {
 		"prepublishOnly": "git clean -xfd . && npm install && npm run clean && npm run compile && npm test",
 		"postpublish": "node ../build/npm/post-publish.js",
-		"compile": "node ../build/bin/tsc -b ./tsconfig.json",
+		"compile": "node ../build/bin/tsc -b ./tsconfig.production.json",
 		"watch": "node ../build/bin/tsc -b ./tsconfig-watch.json -w",
 		"clean": "node ../node_modules/rimraf/bin.js lib",
 		"lint": "node ../node_modules/eslint/bin/eslint.js --ext ts src",
