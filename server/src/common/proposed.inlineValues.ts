@@ -16,6 +16,11 @@ import type { Feature, _Languages, ServerRequestHandler } from './server';
 export interface InlineValuesFeatureShape {
 	inlineValues: {
 		/**
+		 * Ask the client to refresh all inline values.
+		 */
+		refresh(): Promise<void>;
+
+		/**
 		 * Installs a handler for the inline values request.
 		 *
 		 * @param handler The corresponding handler.
@@ -25,9 +30,12 @@ export interface InlineValuesFeatureShape {
 }
 
 export const InlineValuesFeature: Feature<_Languages, InlineValuesFeatureShape> = (Base) => {
-	return class extends Base {
+	return class extends Base implements InlineValuesFeatureShape {
 		public get inlineValues() {
 			return {
+				refresh: (): Promise<void> => {
+					return this.connection.sendRequest(Proposed.InlineValuesRefreshRequest.type);
+				},
 				on: (handler: ServerRequestHandler<Proposed.InlineValuesParams, InlineValue[] | undefined | null, InlineValue[], void>): Disposable => {
 					return this.connection.onRequest(Proposed.InlineValuesRequest.type, (params, cancel) => {
 						return handler(params, cancel, this.attachWorkDoneProgress(params));
