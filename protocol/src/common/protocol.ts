@@ -1974,10 +1974,6 @@ export interface CompletionClientCapabilities {
 		preselectSupport?: boolean;
 
 		/**
-		 * Client supports to kee
-		 */
-
-		/**
 		 * Client supports the tag property on a completion item. Clients supporting
 		 * tags have to handle unknown tags gracefully. Clients especially need to
 		 * preserve unknown tags when sending a completion item back to the server in
