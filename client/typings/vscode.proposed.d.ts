@@ -6,149 +6,170 @@
 declare module 'vscode' {
 
 	/**
-	 * An event that is fired when files are going to be created.
+	 * Inlay hint kinds.
 	 *
-	 * To make modifications to the workspace before the files are created,
-	 * call the {@linkcode FileWillCreateEvent.waitUntil waitUntil}-function with a
-	 * thenable that resolves to a {@link WorkspaceEdit workspace edit}.
+	 * The kind of an inline hint defines its appearance, e.g the corresponding foreground and background colors are being
+	 * used.
 	 */
-	export interface FileWillCreateEvent {
-
+	export enum InlayHintKind {
 		/**
-		 * A cancellation token.
+		 * An inlay hint that for a type annotation.
 		 */
-		readonly token: CancellationToken;
-
+		Type = 1,
 		/**
-		 * The files that are going to be created.
+		 * An inlay hint that is for a parameter.
 		 */
-		readonly files: readonly Uri[];
-
-		/**
-		 * Allows to pause the event and to apply a {@link WorkspaceEdit workspace edit}.
-		 *
-		 * *Note:* This function can only be called during event dispatch and not
-		 * in an asynchronous manner:
-		 *
-		 * ```ts
-		 * workspace.onWillCreateFiles(event => {
-		 * 	// async, will *throw* an error
-		 * 	setTimeout(() => event.waitUntil(promise));
-		 *
-		 * 	// sync, OK
-		 * 	event.waitUntil(promise);
-		 * })
-		 * ```
-		 *
-		 * @param thenable A thenable that delays saving.
-		 */
-		waitUntil(thenable: Thenable<WorkspaceEdit>): void;
-
-		/**
-		 * Allows to pause the event until the provided thenable resolves.
-		 *
-		 * *Note:* This function can only be called during event dispatch.
-		 *
-		 * @param thenable A thenable that delays saving.
-		 */
-		waitUntil(thenable: Thenable<any>): void;
+		Parameter = 2,
 	}
 
 	/**
-	 * An event that is fired when files are going to be deleted.
-	 *
-	 * To make modifications to the workspace before the files are deleted,
-	 * call the {@link FileWillCreateEvent.waitUntil `waitUntil}-function with a
-	 * thenable that resolves to a {@link WorkspaceEdit workspace edit}.
+	 * An inlay hint label part allows for interactive and composite labels of inlay hints.
 	 */
-	export interface FileWillDeleteEvent {
+	export class InlayHintLabelPart {
 
 		/**
-		 * A cancellation token.
+		 * The value of this label part.
 		 */
-		readonly token: CancellationToken;
+		value: string;
 
 		/**
-		 * The files that are going to be deleted.
+		 * The tooltip text when you hover over this label part.
+		 *
+		 * *Note* that this property can be set late during
+		 * {@link InlayHintsProvider.resolveInlayHint resolving} of inlay hints.
 		 */
-		readonly files: readonly Uri[];
+		tooltip?: string | MarkdownString | undefined;
 
 		/**
-		 * Allows to pause the event and to apply a {@link WorkspaceEdit workspace edit}.
+		 * An optional {@link Location source code location} that represents this label
+		 * part.
 		 *
-		 * *Note:* This function can only be called during event dispatch and not
-		 * in an asynchronous manner:
+		 * The editor will use this location for the hover and for code navigation features: This
+		 * part will become a clickable link that resolves to the definition of the symbol at the
+		 * given location (not necessarily the location itself), it shows the hover that shows at
+		 * the given location, and it shows a context menu with further code navigation commands.
 		 *
-		 * ```ts
-		 * workspace.onWillCreateFiles(event => {
-		 * 	// async, will *throw* an error
-		 * 	setTimeout(() => event.waitUntil(promise));
-		 *
-		 * 	// sync, OK
-		 * 	event.waitUntil(promise);
-		 * })
-		 * ```
-		 *
-		 * @param thenable A thenable that delays saving.
+		 * *Note* that this property can be set late during
+		 * {@link InlayHintsProvider.resolveInlayHint resolving} of inlay hints.
 		 */
-		waitUntil(thenable: Thenable<WorkspaceEdit>): void;
+		location?: Location | undefined;
 
 		/**
-		 * Allows to pause the event until the provided thenable resolves.
+		 * An optional command for this label part.
 		 *
-		 * *Note:* This function can only be called during event dispatch.
+		 * The editor renders parts with commands as clickable links. The command is added to the context menu
+		 * when a label part defines {@link InlayHintLabelPart.location location} and {@link InlayHintLabelPart.command command} .
 		 *
-		 * @param thenable A thenable that delays saving.
+		 * *Note* that this property can be set late during
+		 * {@link InlayHintsProvider.resolveInlayHint resolving} of inlay hints.
 		 */
-		waitUntil(thenable: Thenable<any>): void;
+		command?: Command | undefined;
+
+		/**
+		 * Creates a new inlay hint label part.
+		 *
+		 * @param value The value of the part.
+		 */
+		constructor(value: string);
 	}
 
 	/**
-	 * An event that is fired when files are going to be renamed.
-	 *
-	 * To make modifications to the workspace before the files are renamed,
-	 * call the {@link FileWillCreateEvent.waitUntil `waitUntil}-function with a
-	 * thenable that resolves to a {@link WorkspaceEdit workspace edit}.
+	 * Inlay hint information.
 	 */
-	export interface FileWillRenameEvent {
+	export class InlayHint {
 
 		/**
-		 * A cancellation token.
+		 * The position of this hint.
 		 */
-		readonly token: CancellationToken;
+		position: Position;
 
 		/**
-		 * The files that are going to be renamed.
+		 * The label of this hint. A human readable string or an array of {@link InlayHintLabelPart label parts}.
+		 *
+		 * *Note* that neither the string nor the label part can be empty.
 		 */
-		readonly files: ReadonlyArray<{ readonly oldUri: Uri, readonly newUri: Uri }>;
+		label: string | InlayHintLabelPart[];
 
 		/**
-		 * Allows to pause the event and to apply a {@link WorkspaceEdit workspace edit}.
-		 *
-		 * *Note:* This function can only be called during event dispatch and not
-		 * in an asynchronous manner:
-		 *
-		 * ```ts
-		 * workspace.onWillCreateFiles(event => {
-		 * 	// async, will *throw* an error
-		 * 	setTimeout(() => event.waitUntil(promise));
-		 *
-		 * 	// sync, OK
-		 * 	event.waitUntil(promise);
-		 * })
-		 * ```
-		 *
-		 * @param thenable A thenable that delays saving.
+		 * The tooltip text when you hover over this item.
 		 */
-		waitUntil(thenable: Thenable<WorkspaceEdit>): void;
+		tooltip?: string | MarkdownString | undefined;
 
 		/**
-		 * Allows to pause the event until the provided thenable resolves.
-		 *
-		 * *Note:* This function can only be called during event dispatch.
-		 *
-		 * @param thenable A thenable that delays saving.
+		 * The kind of this hint. The inlay hint kind defines the appearance of this inlay hint.
 		 */
-		waitUntil(thenable: Thenable<any>): void;
+		kind?: InlayHintKind;
+
+		/**
+		 * Optional {@link TextEdit text edits} that are performed when accepting this inlay hint. The default
+		 * gesture for accepting an inlay hint is the double click.
+		 *
+		 * *Note* that edits are expected to change the document so that the inlay hint (or its nearest variant) is
+		 * now part of the document and the inlay hint itself is now obsolete.
+		 */
+		textEdits?: TextEdit[];
+
+		/**
+		 * Render padding before the hint. Padding will use the editor's background color,
+		 * not the background color of the hint itself. That means padding can be used to visually
+		 * align/separate an inlay hint.
+		 */
+		paddingLeft?: boolean;
+
+		/**
+		 * Render padding after the hint. Padding will use the editor's background color,
+		 * not the background color of the hint itself. That means padding can be used to visually
+		 * align/separate an inlay hint.
+		 */
+		paddingRight?: boolean;
+
+		/**
+		 * Creates a new inlay hint.
+		 *
+		 * @param position The position of the hint.
+		 * @param label The label of the hint.
+		 * @param kind The {@link InlayHintKind kind} of the hint.
+		 */
+		constructor(position: Position, label: string | InlayHintLabelPart[], kind?: InlayHintKind);
+	}
+
+	/**
+	 * The inlay hints provider interface defines the contract between extensions and
+	 * the inlay hints feature.
+	 */
+	export interface InlayHintsProvider<T extends InlayHint = InlayHint> {
+
+		/**
+		 * An optional event to signal that inlay hints from this provider have changed.
+		 */
+		onDidChangeInlayHints?: Event<void>;
+
+		/**
+		 * Provide inlay hints for the given range and document.
+		 *
+		 * *Note* that inlay hints that are not {@link Range.contains contained} by the given range are ignored.
+		 *
+		 * @param document The document in which the command was invoked.
+		 * @param range The range for which inlay hints should be computed.
+		 * @param token A cancellation token.
+		 * @return An array of inlay hints or a thenable that resolves to such.
+		 */
+		provideInlayHints(document: TextDocument, range: Range, token: CancellationToken): ProviderResult<T[]>;
+
+		/**
+		 * Given an inlay hint fill in {@link InlayHint.tooltip tooltip}, {@link InlayHint.command command}, or complete
+		 * label {@link InlayHintLabelPart parts}.
+		 *
+		 * *Note* that the editor will resolve an inlay hint at most once.
+		 *
+		 * @param hint An inlay hint.
+		 * @param token A cancellation token.
+		 * @return The resolved inlay hint or a thenable that resolves to such. It is OK to return the given `item`. When no result is returned, the given `item` will be used.
+		 */
+		resolveInlayHint?(hint: T, token: CancellationToken): ProviderResult<T>;
+	}
+
+	export namespace languages {
+		export function registerInlayHintsProvider(selector: DocumentSelector, provider: InlayHintsProvider): Disposable;
 	}
 }
