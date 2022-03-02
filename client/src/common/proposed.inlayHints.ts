@@ -22,17 +22,19 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 }
 
 export type ProvideInlayHintsSignature = (this: void, document: TextDocument, viewPort: VRange, token: CancellationToken) => ProviderResult<VInlayHint[]>;
+export type ResolveInlayHintSignature = (this: void, item: VInlayHint, token: CancellationToken) => ProviderResult<VInlayHint>;
 
-export type InlineValuesProviderMiddleware = {
+export type InlayHintsMiddleware = {
 	provideInlayHints?: (this: void, document: TextDocument, viewPort: VRange, token: CancellationToken, next: ProvideInlayHintsSignature) => ProviderResult<VInlayHint[]>;
+	resolveInlayHint?: (this: void, item: VInlayHint, token: CancellationToken, next: ResolveInlayHintSignature) => ProviderResult<VInlayHint>;
 };
 
-export type InlayHintsProviderData = {
+export type InlayHintsProviderShape = {
 	provider: InlayHintsProvider;
 	onDidChangeInlineValues: EventEmitter<void>;
 };
 
-export class InlayHintsFeature extends TextDocumentFeature<boolean | Proposed.InlayHintsOptions, Proposed.InlayHintsRegistrationOptions, InlayHintsProviderData> {
+export class InlayHintsFeature extends TextDocumentFeature<boolean | Proposed.InlayHintsOptions, Proposed.InlayHintsRegistrationOptions, InlayHintsProviderShape> {
 	constructor(client: BaseLanguageClient) {
 		super(client, Proposed.InlineValuesRequest.type);
 	}
@@ -56,38 +58,60 @@ export class InlayHintsFeature extends TextDocumentFeature<boolean | Proposed.In
 		this.register({ id: id, registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: Proposed.InlineValuesRegistrationOptions): [Disposable, InlineValuesProviderData] {
+	protected registerLanguageProvider(options: Proposed.InlayHintsRegistrationOptions): [Disposable, InlayHintsProviderShape] {
 		const selector = options.documentSelector!;
 		const eventEmitter: EventEmitter<void> = new EventEmitter<void>();
 		const provider: InlayHintsProvider = {
 			onDidChangeInlayHints: eventEmitter.event,
-			provideInlineValues: (document, viewPort, context, token) => {
+			provideInlayHints: (document, viewPort, token) => {
 				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
 					return undefined;
 				}
 				const client = this._client;
-				const provideInlineValues: ProvideInlineValuesSignature = (document, viewPort, context, token) => {
-					const requestParams: Proposed.InlineValuesParams = {
+				const provideInlayHints: ProvideInlayHintsSignature = async (document, viewPort, token) => {
+					const requestParams: Proposed.InlayHintsParams = {
 						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
-						viewPort: client.code2ProtocolConverter.asRange(viewPort),
-						context: client.code2ProtocolConverter.asInlineValuesContext(context)
+						viewPort: client.code2ProtocolConverter.asRange(viewPort)
 					};
-					return client.sendRequest(Proposed.InlineValuesRequest.type, requestParams, token).then((values) => {
+					try {
+						const values = await client.sendRequest(Proposed.InlayHintsRequest.type, requestParams, token);
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return client.protocol2CodeConverter.asInlineValues(values, token);
-					}, (error: any) => {
-						return client.handleFailedRequest(Proposed.InlineValuesRequest.type, token, error, null);
-					});
+						return client.protocol2CodeConverter.asInlayHints(values, token);
+					} catch (error) {
+						return client.handleFailedRequest(Proposed.InlayHintsRequest.type, token, error, null);
+					}
 				};
 				const middleware = client.clientOptions.middleware!;
-				return middleware.provideInlineValues
-					? middleware.provideInlineValues(document, viewPort, context, token, provideInlineValues)
-					: provideInlineValues(document, viewPort, context, token);
+				return middleware.provideInlayHints
+					? middleware.provideInlayHints(document, viewPort, token, provideInlayHints)
+					: provideInlayHints(document, viewPort, token);
 
 			}
 		};
-		return [Languages.registerInlineValuesProvider($DocumentSelector.asTextDocumentFilters(selector), provider), { provider: provider, onDidChangeInlineValues: eventEmitter }];
+		provider.resolveInlayHint = options.resolveProvider === true
+			? (hint, token) => {
+				const client = this._client;
+				const resolveInlayHint: ResolveInlayHintSignature = async (item, token) => {
+					try {
+						const value = await client.sendRequest(Proposed.InlayHintResolveRequest.type, client.code2ProtocolConverter.asInlayHint(item), token);
+						if (token.isCancellationRequested) {
+							return null;
+						}
+						const result = client.protocol2CodeConverter.asInlayHint(value, token);
+						return token.isCancellationRequested ? null : result;
+					} catch (error) {
+						return client.handleFailedRequest(Proposed.InlayHintResolveRequest.type, token, error, null);
+					}
+				};
+				const middleware = client.clientOptions.middleware!;
+				return middleware.resolveInlayHint
+					? middleware.resolveInlayHint(hint, token, resolveInlayHint)
+					: resolveInlayHint(hint, token);
+
+			}
+			: undefined;
+		return [Languages.registerInlayHintsProvider($DocumentSelector.asTextDocumentFilters(selector), provider), { provider: provider, onDidChangeInlineValues: eventEmitter }];
 	}
 }

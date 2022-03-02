@@ -231,7 +231,13 @@ export namespace InlayHint {
  *
  * @since 3.17.0 - proposed state
  */
-export type InlayHintsOptions = WorkDoneProgressOptions;
+export type InlayHintsOptions = WorkDoneProgressOptions & {
+	/**
+	 * The server provides support to resolve additional
+	 * information for an inlay hint item.
+	 */
+	resolveProvider?: boolean;
+};
 
 /**
  * Inlay hints options used during static or dynamic registration.

@@ -82,6 +82,7 @@ import {
 import {
 	InlineValuesClientCapabilities, InlineValuesOptions, InlineValuesRegistrationOptions, InlineValuesWorkspaceClientCapabilities
 } from './proposed.inlineValue';
+import { InlayHintsOptions, InlayHintsRegistrationOptions } from './proposed.InlayHints';
 
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
@@ -1063,6 +1064,13 @@ export interface _ServerCapabilities<T = any> {
 	 * @since 3.17.0 - proposed state
 	 */
 	inlineValuesProvider?: boolean | InlineValuesOptions | InlineValuesRegistrationOptions;
+
+	/**
+	 * The server provides inlay hints.
+	 *
+	 * @since 3.17.0 - proposed state
+	 */
+	inlayHintsProvider?: boolean | InlayHintsOptions | InlayHintsRegistrationOptions;
 
 	/**
 	 * Experimental server capabilities.
