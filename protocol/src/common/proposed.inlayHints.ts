@@ -23,22 +23,15 @@ export type InlayHintClientCapabilities = {
 	dynamicRegistration?: boolean;
 
 	/**
-	 * The client supports the following `InlayHint` specific
-	 * capabilities.
+	 * Indicates which properties a client can resolve lazily on a inlay
+	 * hint.
 	 */
-	inlayHint?: {
+	resolveSupport?: {
 
 		/**
-		 * Indicates which properties a client can resolve lazily on a inlay
-		 * hint.
+		 * The properties that a client can resolve lazily.
 		 */
-		resolveSupport?: {
-
-			/**
-			 * The properties that a client can resolve lazily.
-			 */
-			properties: string[];
-		};
+		properties: string[];
 	};
 };
 
@@ -259,7 +252,7 @@ export type InlayHintParams = WorkDoneProgressParams & {
  * @since 3.17.0 - proposed state
  */
 export namespace InlayHintRequest {
-	export const method: 'textDocument/inlayHints' = 'textDocument/inlayHints';
+	export const method: 'textDocument/inlayHint' = 'textDocument/inlayHint';
 	export const type = new ProtocolRequestType<InlayHintParams, InlayHint[] | null, InlayHint[], any, InlayHintRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<InlayHintParams, InlayHint[] | null, void>;
 }
@@ -281,7 +274,7 @@ export namespace InlayHintResolveRequest {
  * @since 3.17.0 - proposed state
  */
 export namespace InlayHintRefreshRequest {
-	export const method: `workspace/inlayHints/refresh` = `workspace/inlayHints/refresh`;
+	export const method: `workspace/inlayHint/refresh` = `workspace/inlayHint/refresh`;
 	export const type = new ProtocolRequestType0<void, void, void, void>(method);
 	export type HandlerSignature = RequestHandler0<void, void>;
 }

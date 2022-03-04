@@ -1,20 +1,15 @@
-#### <a href="#textDocument_inlayHints" name="textDocument_inlayHints" class="anchor">Inlay Hints Request (:leftwards_arrow_with_hook:)</a>
+#### <a href="#textDocument_inlayHint" name="textDocument_inlayHint" class="anchor">Inlay Hint Request (:leftwards_arrow_with_hook:)</a>
 
 > *Since version 3.17.0*
 The inlay hints request is sent from the client to the server to compute inlay hints for a given [text document, range] tuple that may be rendered in the editor in place with other text.
 
 _Client Capability_:
-* property name (optional): `textDocument.inlayHints`
+* property name (optional): `textDocument.inlayHint`
 * property type: `InlayHintClientCapabilities` defined as follows:
 
 <div class="anchorHolder"><a href="#inlayHintClientCapabilities" name="inlayHintClientCapabilities" class="linkableAnchor"></a></div>
 
 ```typescript
-/**
- * Inlay hint client capabilities
- *
- * @since 3.17.0 - proposed state
- */
 export type InlayHintClientCapabilities = {
 
 	/**
@@ -23,39 +18,32 @@ export type InlayHintClientCapabilities = {
 	dynamicRegistration?: boolean;
 
 	/**
-	 * The client supports the following `InlayHint` specific
-	 * capabilities.
+	 * Indicates which properties a client can resolve lazily on a inlay
+	 * hint.
 	 */
-	inlayHint?: {
+	resolveSupport?: {
 
 		/**
-		 * Indicates which properties a client can resolve lazily on a inlay
-		 * hint.
+		 * The properties that a client can resolve lazily.
 		 */
-		resolveSupport?: {
-
-			/**
-			 * The properties that a client can resolve lazily.
-			 */
-			properties: string[];
-		};
+		properties: string[];
 	};
 };
 ```
 
 _Server Capability_:
-* property name (optional): `inlayHintsProvider`
-* property type: `InlayHintsOptions` defined as follows:
+* property name (optional): `inlayHintProvider`
+* property type: `InlayHintOptions` defined as follows:
 
-<div class="anchorHolder"><a href="#inlayHintsOptions" name="inlayHintsOptions" class="linkableAnchor"></a></div>
+<div class="anchorHolder"><a href="#inlayHintOptions" name="inlayHintOptions" class="linkableAnchor"></a></div>
 
 ```typescript
 /**
- * Inlay hints options used during static registration.
+ * Inlay hint options used during static registration.
  *
  * @since 3.17.0 - proposed state
  */
-export type InlayHintsOptions = WorkDoneProgressOptions & {
+export type InlayHintOptions = WorkDoneProgressOptions & {
 	/**
 	 * The server provides support to resolve additional
 	 * information for an inlay hint item.
@@ -64,33 +52,33 @@ export type InlayHintsOptions = WorkDoneProgressOptions & {
 };
 ```
 
-_Registration Options_: `InlayHintsRegistrationOptions` defined as follows:
+_Registration Options_: `InlayHintRegistrationOptions` defined as follows:
 
-<div class="anchorHolder"><a href="#inlayHintsRegistrationOptions" name="inlayHintsRegistrationOptions" class="linkableAnchor"></a></div>
+<div class="anchorHolder"><a href="#inlayHintRegistrationOptions" name="inlayHintRegistrationOptions" class="linkableAnchor"></a></div>
 
 ```typescript
 /**
- * Inlay hints options used during static or dynamic registration.
+ * Inlay hint options used during static or dynamic registration.
  *
  * @since 3.17.0 - proposed state
  */
-export type InlayHintsRegistrationOptions = InlayHintsOptions
+export type InlayHintRegistrationOptions = InlayHintsOptions
 	& TextDocumentRegistrationOptions & StaticRegistrationOptions;
 ```
 
 _Request_:
-* method: `textDocument/inlayHints`
-* params: `InlayHintsParams` defined as follows:
+* method: `textDocument/inlayHint`
+* params: `InlayHintParams` defined as follows:
 
-<div class="anchorHolder"><a href="#inlayHintsParams" name="inlayHintsParams" class="linkableAnchor"></a></div>
+<div class="anchorHolder"><a href="#inlayHintParams" name="inlayHintParams" class="linkableAnchor"></a></div>
 
 ```typescript
 /**
- * A parameter literal used in inlay hints requests.
+ * A parameter literal used in inlay hint requests.
  *
  * @since 3.17.0 - proposed state
  */
-export type InlayHintsParams = WorkDoneProgressParams & {
+export type InlayHintParams = WorkDoneProgressParams & {
 	/**
 	 * The text document.
 	 */
@@ -230,42 +218,45 @@ export namespace InlayHintKind {
 };
 ```
 
-* error: code and message set in case an exception happens during the inlay hints request.
+* error: code and message set in case an exception happens during the inlay hint request.
 
 #### <a href="#inlayHint_resolve" name="inlayHint_resolve" class="anchor">Inlay Hint Resolve Request (:leftwards_arrow_with_hook:)</a>
 
 The request is sent from the client to the server to resolve additional information for a given inlay hint. This is usually used to compute
-the `tooltip`, `location` or `command` properties of a inlay hint's label part to avoid its unnecessary computation during the `textDocument/inlayHints` request.
+the `tooltip`, `location` or `command` properties of a inlay hint's label part to avoid its unnecessary computation during the `textDocument/inlayHint` request.
 
 Consider the clients announces the `label.location` property as a property that can be resolved lazy using the client capability
 
 ```typescript
-textDocument.inlayHint.resolveSupport = { properties: ['edit'] };
+textDocument.inlayHint.resolveSupport = { properties: ['label.location'] };
 ```
 
-then a code action
+then an inlay hint with a label part without a location needs to be resolved using the `inlayHint/resolve` request before it can be used.
 
-```typescript
-{
-    "title": "Do Foo"
-}
-```
+_Client Capability_:
+* property name (optional): `textDocument.inlayHint.resolveSupport`
+* property type: `{ properties: string[]; }`
 
-needs to be resolved using the `codeAction/resolve` request before it can be applied.
+_Request_:
+* method: `inlayHint/resolve`
+* params: `InlayHint`
 
+_Response_:
+* result: `InlayHint`
+* error: code and message set in case an exception happens during the completion resolve request.
 
-#### <a href="#textDocument_inlayHints_refresh" name="textDocument_inlayHints_refresh" class="anchor">Inlay Hints Refresh Request  (:arrow_right_hook:)</a>
+#### <a href="#textDocument_inlayHint_refresh" name="textDocument_inlayHint_refresh" class="anchor">Inlay Hint Refresh Request  (:arrow_right_hook:)</a>
 
 > *Since version 3.17.0*
 
-The `workspace/inlayHints/refresh` request is sent from the server to the client. Servers can use it to ask clients to refresh the inlay hints currently shown in editors. As a result the client should ask the server to recompute the inlay hints for these editors. This is useful if a server detects a configuration change which requires a re-calculation of all inlay hints. Note that the client still has the freedom to delay the re-calculation of the inlay hints if for example an editor is currently not visible.
+The `workspace/inlayHint/refresh` request is sent from the server to the client. Servers can use it to ask clients to refresh the inlay hints currently shown in editors. As a result the client should ask the server to recompute the inlay hints for these editors. This is useful if a server detects a configuration change which requires a re-calculation of all inlay hints. Note that the client still has the freedom to delay the re-calculation of the inlay hints if for example an editor is currently not visible.
 
 _Client Capability_:
 
-* property name (optional): `workspace.inlayHints`
-* property type: `InlayHintsWorkspaceClientCapabilities` defined as follows:
+* property name (optional): `workspace.inlayHint`
+* property type: `InlayHintWorkspaceClientCapabilities` defined as follows:
 
-<div class="anchorHolder"><a href="#inlayHintsWorkspaceClientCapabilities" name="inlayHintsWorkspaceClientCapabilities" class="linkableAnchor"></a></div>
+<div class="anchorHolder"><a href="#inlayHintWorkspaceClientCapabilities" name="inlayHintWorkspaceClientCapabilities" class="linkableAnchor"></a></div>
 
 ```typescript
 /**
@@ -273,7 +264,7 @@ _Client Capability_:
  *
  * @since 3.17.0 - proposed state
  */
-export type InlayHintsWorkspaceClientCapabilities = {
+export type InlayHintWorkspaceClientCapabilities = {
 	/**
 	 * Whether the client implementation supports a refresh request sent from
 	 * the server to the client.
@@ -288,36 +279,32 @@ export type InlayHintsWorkspaceClientCapabilities = {
 ```
 
 _Request_:
-* method: `workspace/inlayHints/refresh`
+* method: `workspace/inlayHint/refresh`
 * params: none
 
 _Response_:
 
 * result: void
-* error: code and message set in case an exception happens during the 'workspace/inlayHints/refresh' request
+* error: code and message set in case an exception happens during the 'workspace/inlayHint/refresh' request
 
 
 <!--- linable types addition
 
   - type: 'InlayHintClientCapabilities'
     link: '#inlayHintClientCapabilities'
-  - type: 'InlayHintsOptions'
-    link: '#inlayHintsOptions'
-  - type: 'InlayHintsRegistrationOptions'
-    link: '#inlayHintsRegistrationOptions'
-  - type: 'InlayHintsParams'
-    link: '#inlayHintsParams'
+  - type: 'InlayHintOptions'
+    link: '#inlayHintOptions'
+  - type: 'InlayHintRegistrationOptions'
+    link: '#inlayHintRegistrationOptions'
+  - type: 'InlayHintParams'
+    link: '#inlayHintParams'
   - type: 'InlayHint'
     link: '#inlayHint'
   - type: 'InlayHintLabelPart'
     link: '#inlayHintLabelPart'
   - type: 'InlayHintKind'
     link: '#inlayHintKind'
-  - type: 'InlayHintsWorkspaceClientCapabilities'
-    link: '#inlayHintsWorkspaceClientCapabilities'
-  - type: 'InlineValue'
-    link: '#inlineValue'
-  - type: 'InlineValuesWorkspaceClientCapabilities'
-    link: '#inlineValuesWorkspaceClientCapabilities'
+  - type: 'InlayHintWorkspaceClientCapabilities'
+    link: '#inlayHintWorkspaceClientCapabilities'
 
 --->

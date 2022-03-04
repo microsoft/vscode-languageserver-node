@@ -32,7 +32,7 @@ _Server Capability_:
 
 ```typescript
 /**
- * Inline values options used during static registration.
+ * Inline value options used during static registration.
  *
  * @since 3.17.0 - proposed state
  */
@@ -61,7 +61,7 @@ _Request_:
 
 ```typescript
 /**
- * A parameter literal used in inline values requests.
+ * A parameter literal used in inline value requests.
  *
  * @since 3.17.0 - proposed state
  */
@@ -201,7 +201,7 @@ export type InlineValue = InlineValueText | InlineValueVariableLookup | InlineVa
 ```
 * error: code and message set in case an exception happens during the inline values request.
 
-#### <a href="#textDocument_inlineValue_refresh" name="textDocument_inlineValue_refresh" class="anchor">Inline Values Refresh Request  (:arrow_right_hook:)</a>
+#### <a href="#textDocument_inlineValue_refresh" name="textDocument_inlineValue_refresh" class="anchor">Inline Value Refresh Request  (:arrow_right_hook:)</a>
 
 > *Since version 3.17.0*
 

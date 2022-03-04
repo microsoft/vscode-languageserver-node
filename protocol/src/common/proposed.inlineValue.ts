@@ -42,7 +42,7 @@ export type InlineValueWorkspaceClientCapabilities = {
 };
 
 /**
- * Inline values options used during static registration.
+ * Inline value options used during static registration.
  *
  * @since 3.17.0 - proposed state
  */

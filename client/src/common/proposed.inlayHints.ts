@@ -40,12 +40,10 @@ export class InlayHintsFeature extends TextDocumentFeature<boolean | Proposed.In
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
-		const inlayHints = ensure(ensure(capabilities, 'textDocument')!, 'inlayHint')!;
-		inlayHints.dynamicRegistration = true;
-		inlayHints.inlayHint = {
-			resolveSupport: {
-				properties: ['label.tooltip', 'label.location', 'label.command']
-			}
+		const inlayHint = ensure(ensure(capabilities, 'textDocument')!, 'inlayHint')!;
+		inlayHint.dynamicRegistration = true;
+		inlayHint.resolveSupport = {
+			properties: ['label.tooltip', 'label.location', 'label.command']
 		};
 		ensure(ensure(capabilities, 'workspace')!, 'inlayHint')!.refreshSupport = true;
 	}

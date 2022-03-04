@@ -52,7 +52,7 @@ connection.onInitialize((params: InitializeParams): any => {
 	assert.equal(params.capabilities.textDocument!.documentLink!.tooltipSupport, true);
 	assert.equal(params.capabilities.textDocument!.inlineValue!.dynamicRegistration, true);
 	assert.equal(params.capabilities.textDocument!.inlayHint!.dynamicRegistration, true);
-	assert.equal(params.capabilities.textDocument!.inlayHint!.inlayHint!.resolveSupport!.properties[0], 'label.tooltip');
+	assert.equal(params.capabilities.textDocument!.inlayHint!.resolveSupport!.properties[0], 'label.tooltip');
 
 	const valueSet = params.capabilities.textDocument!.completion!.completionItemKind!.valueSet!;
 	assert.equal(valueSet[0], 1);
