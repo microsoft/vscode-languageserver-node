@@ -39,7 +39,7 @@ export class InlineValueFeature extends TextDocumentFeature<boolean | Proposed.I
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
 		ensure(ensure(capabilities, 'textDocument')!, 'inlineValues')!.dynamicRegistration = true;
-		ensure(ensure(capabilities, 'workspace')!, 'codeLens')!.refreshSupport = true;
+		ensure(ensure(capabilities, 'workspace')!, 'inlineValues')!.refreshSupport = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {

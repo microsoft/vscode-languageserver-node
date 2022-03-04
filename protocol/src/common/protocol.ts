@@ -82,7 +82,9 @@ import {
 import {
 	InlineValuesClientCapabilities, InlineValuesOptions, InlineValuesRegistrationOptions, InlineValuesWorkspaceClientCapabilities
 } from './proposed.inlineValue';
-import { InlayHintsOptions, InlayHintsRegistrationOptions } from './proposed.InlayHints';
+import {
+	InlayHintClientCapabilities, InlayHintsOptions, InlayHintsRegistrationOptions, InlayHintsWorkspaceClientCapabilities
+} from './proposed.InlayHints';
 
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
@@ -497,6 +499,14 @@ export interface WorkspaceClientCapabilities {
 	 * @since 3.17.0.
 	 */
 	inlineValues?: InlineValuesWorkspaceClientCapabilities;
+
+	/**
+	 * Capabilities specific to the inlay hints requests scoped to the
+	 * workspace.
+	 *
+	 * @since 3.17.0.
+	 */
+	inlayHints?: InlayHintsWorkspaceClientCapabilities;
 }
 
 /**
@@ -665,6 +675,13 @@ export interface TextDocumentClientCapabilities {
 	 * @since 3.17.0 - proposed state
 	 */
 	inlineValues?: InlineValuesClientCapabilities;
+
+	/**
+	 * Capabilities specific to the `textDocument/inlayHints` request.
+	 *
+	 * @since 3.17.0 - proposed state
+	 */
+	inlayHints?: InlayHintClientCapabilities;
 }
 
 export interface WindowClientCapabilities {

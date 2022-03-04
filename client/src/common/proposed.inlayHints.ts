@@ -31,27 +31,33 @@ export type InlayHintsMiddleware = {
 
 export type InlayHintsProviderShape = {
 	provider: InlayHintsProvider;
-	onDidChangeInlineValues: EventEmitter<void>;
+	onDidChangeInlayHints: EventEmitter<void>;
 };
 
 export class InlayHintsFeature extends TextDocumentFeature<boolean | Proposed.InlayHintsOptions, Proposed.InlayHintsRegistrationOptions, InlayHintsProviderShape> {
 	constructor(client: BaseLanguageClient) {
-		super(client, Proposed.InlineValuesRequest.type);
+		super(client, Proposed.InlayHintsRequest.type);
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
-		ensure(ensure(capabilities, 'textDocument')!, 'inlineValues')!.dynamicRegistration = true;
-		ensure(ensure(capabilities, 'workspace')!, 'codeLens')!.refreshSupport = true;
+		const inlayHints = ensure(ensure(capabilities, 'textDocument')!, 'inlayHints')!;
+		inlayHints.dynamicRegistration = true;
+		inlayHints.inlayHint = {
+			resolveSupport: {
+				properties: ['label.tooltip', 'label.location', 'label.command']
+			}
+		};
+		ensure(ensure(capabilities, 'workspace')!, 'inlayHints')!.refreshSupport = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		this._client.onRequest(Proposed.InlineValuesRefreshRequest.type, async () => {
+		this._client.onRequest(Proposed.InlayHintRefreshRequest.type, async () => {
 			for (const provider of this.getAllProviders()) {
-				provider.onDidChangeInlineValues.fire();
+				provider.onDidChangeInlayHints.fire();
 			}
 		});
 
-		const [id, options] = this.getRegistration(documentSelector, capabilities.inlineValuesProvider);
+		const [id, options] = this.getRegistration(documentSelector, capabilities.inlayHintsProvider);
 		if (!id || !options) {
 			return;
 		}
@@ -112,6 +118,6 @@ export class InlayHintsFeature extends TextDocumentFeature<boolean | Proposed.In
 
 			}
 			: undefined;
-		return [Languages.registerInlayHintsProvider($DocumentSelector.asTextDocumentFilters(selector), provider), { provider: provider, onDidChangeInlineValues: eventEmitter }];
+		return [Languages.registerInlayHintsProvider($DocumentSelector.asTextDocumentFilters(selector), provider), { provider: provider, onDidChangeInlayHints: eventEmitter }];
 	}
 }

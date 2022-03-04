@@ -16,6 +16,7 @@ import {
 
 import { URI } from 'vscode-uri';
 import { $DiagnosticClientCapabilities } from 'vscode-languageserver-protocol/src/common/proposed.diagnostic';
+import { InlayHintLabelPart } from 'vscode';
 
 const connection: ProposedFeatures.Connection = createConnection(ProposedFeatures.all);
 
@@ -49,6 +50,9 @@ connection.onInitialize((params: InitializeParams): any => {
 	assert.equal(params.capabilities.textDocument!.publishDiagnostics!.tagSupport!.valueSet[0], DiagnosticTag.Unnecessary);
 	assert.equal(params.capabilities.textDocument!.publishDiagnostics!.tagSupport!.valueSet[1], DiagnosticTag.Deprecated);
 	assert.equal(params.capabilities.textDocument!.documentLink!.tooltipSupport, true);
+	assert.equal(params.capabilities.textDocument!.inlineValues!.dynamicRegistration, true);
+	assert.equal(params.capabilities.textDocument!.inlayHints!.dynamicRegistration, true);
+	assert.equal(params.capabilities.textDocument!.inlayHints!.inlayHint!.resolveSupport!.properties[0], 'label.tooltip');
 
 	const valueSet = params.capabilities.textDocument!.completion!.completionItemKind!.valueSet!;
 	assert.equal(valueSet[0], 1);
@@ -93,6 +97,9 @@ connection.onInitialize((params: InitializeParams): any => {
 		implementationProvider: true,
 		selectionRangeProvider: true,
 		inlineValuesProvider: {},
+		inlayHintsProvider: {
+			resolveProvider: true
+		},
 		typeDefinitionProvider: true,
 		callHierarchyProvider: true,
 		semanticTokensProvider: {
@@ -492,6 +499,18 @@ connection.languages.inlineValues.on((_params) => {
 		InlineValueVariableLookup.create(Range.create(1, 2, 3, 4), 'variableName', false),
 		InlineValueEvaluatableExpression.create(Range.create(1, 2, 3, 4), 'expression'),
 	];
+});
+
+connection.languages.inlayHints.on(() => {
+	return [
+		Proposed.InlayHint.create(Position.create(1,1), [Proposed.InlayHintLabelPart.create('type')], Proposed.InlayHintKind.Type),
+		Proposed.InlayHint.create(Position.create(2,2), [Proposed.InlayHintLabelPart.create('parameter')], Proposed.InlayHintKind.Parameter)
+	];
+});
+
+connection.languages.inlayHints.resolve((hint) => {
+	(hint.label as InlayHintLabelPart[])[0].tooltip = 'tooltip';
+	return hint;
 });
 
 connection.onRequest(
