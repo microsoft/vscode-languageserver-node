@@ -13,6 +13,8 @@ _Client Capability_:
 * property name (optional): `textDocument.typeHierarchy`
 * property type: `TypeHierarchyClientCapabilities` defined as follows:
 
+<div class="anchorHolder"><a href="#typeHierarchyClientCapabilities" name="typeHierarchyClientCapabilities" class="linkableAnchor"></a></div>
+
 ```typescript
 type TypeHierarchyClientCapabilities = {
 	/**
@@ -30,11 +32,15 @@ _Server Capability_:
 * property name (optional): `typeHierarchyProvider`
 * property type: `boolean | TypeHierarchyOptions | TypeHierarchyRegistrationOptions` where `TypeHierarchyOptions` is defined as follows:
 
+<div class="anchorHolder"><a href="#typeHierarchyOptions" name="typeHierarchyOptions" class="linkableAnchor"></a></div>
+
 ```typescript
 export type TypeHierarchyOptions = WorkDoneProgressOptions;
 ```
 
 _Registration Options_: `TypeHierarchyRegistrationOptions` defined as follows:
+
+<div class="anchorHolder"><a href="#typeHierarchyRegistrationOptions" name="typeHierarchyRegistrationOptions" class="linkableAnchor"></a></div>
 
 ```typescript
 export type TypeHierarchyRegistrationOptions =
@@ -47,6 +53,8 @@ _Request_:
 * method: 'textDocument/prepareTypeHierarchy'
 * params: `TypeHierarchyPrepareParams` defined as follows:
 
+<div class="anchorHolder"><a href="#typeHierarchyPrepareParams" name="typeHierarchyPrepareParams" class="linkableAnchor"></a></div>
+
 ```typescript
 export type TypeHierarchyPrepareParams = TextDocumentPositionParams &
 	WorkDoneProgressParams;
@@ -55,6 +63,8 @@ export type TypeHierarchyPrepareParams = TextDocumentPositionParams &
 _Response_:
 
 * result: `TypeHierarchyItem[] | null` defined as follows:
+
+<div class="anchorHolder"><a href="#typeHierarchyItem" name="typeHierarchyItem" class="linkableAnchor"></a></div>
 
 ```typescript
 export type TypeHierarchyItem = {
@@ -119,6 +129,8 @@ _Request_:
 * method: 'typeHierarchy/supertypes'
 * params: `TypeHierarchySupertypesParams` defined as follows:
 
+<div class="anchorHolder"><a href="#typeHierarchySupertypesParams" name="typeHierarchySupertypesParams" class="linkableAnchor"></a></div>
+
 ```typescript
 export type TypeHierarchySupertypesParams =
 	WorkDoneProgressParams & PartialResultParams & {
@@ -142,6 +154,8 @@ _Request_:
 * method: 'typeHierarchy/subtypes'
 * params: `TypeHierarchySubtypesParams` defined as follows:
 
+<div class="anchorHolder"><a href="#typeHierarchySubtypesParams" name="typeHierarchySubtypesParams" class="linkableAnchor"></a></div>
+
 ```typescript
 export type TypeHierarchySubtypesParams =
 	WorkDoneProgressParams & PartialResultParams & {
@@ -153,3 +167,23 @@ _Response_:
 * result: `TypeHierarchyItem[] | null`
 * partial result: `TypeHierarchyItem[]`
 * error: code and message set in case an exception happens during the 'typeHierarchy/subtypes' request
+
+
+<!--- linable types addition
+
+  - type: 'TypeHierarchyClientCapabilities'
+    link: '#typeHierarchyClientCapabilities'
+  - type: 'TypeHierarchyOptions'
+    link: '#typeHierarchyOptions'
+  - type: 'TypeHierarchyRegistrationOptions'
+    link: '#typeHierarchyRegistrationOptions'
+  - type: 'TypeHierarchyPrepareParams'
+    link: '#typeHierarchyPrepareParams'
+  - type: 'TypeHierarchyItem'
+    link: '#typeHierarchyItem'
+  - type: 'TypeHierarchySupertypesParams'
+    link: '#typeHierarchySupertypesParams'
+  - type: 'TypeHierarchySubtypesParams'
+    link: '#typeHierarchySubtypesParams'
+
+--->
