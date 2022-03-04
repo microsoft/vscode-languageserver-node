@@ -82,6 +82,9 @@ import {
 import {
 	InlineValuesClientCapabilities, InlineValuesOptions, InlineValuesRegistrationOptions, InlineValuesWorkspaceClientCapabilities
 } from './proposed.inlineValue';
+import {
+	InlayHintClientCapabilities, InlayHintsOptions, InlayHintsRegistrationOptions, InlayHintsWorkspaceClientCapabilities
+} from './proposed.InlayHints';
 
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
@@ -496,6 +499,14 @@ export interface WorkspaceClientCapabilities {
 	 * @since 3.17.0.
 	 */
 	inlineValues?: InlineValuesWorkspaceClientCapabilities;
+
+	/**
+	 * Capabilities specific to the inlay hints requests scoped to the
+	 * workspace.
+	 *
+	 * @since 3.17.0.
+	 */
+	inlayHints?: InlayHintsWorkspaceClientCapabilities;
 }
 
 /**
@@ -664,6 +675,13 @@ export interface TextDocumentClientCapabilities {
 	 * @since 3.17.0 - proposed state
 	 */
 	inlineValues?: InlineValuesClientCapabilities;
+
+	/**
+	 * Capabilities specific to the `textDocument/inlayHints` request.
+	 *
+	 * @since 3.17.0 - proposed state
+	 */
+	inlayHints?: InlayHintClientCapabilities;
 }
 
 export interface WindowClientCapabilities {
@@ -1063,6 +1081,13 @@ export interface _ServerCapabilities<T = any> {
 	 * @since 3.17.0 - proposed state
 	 */
 	inlineValuesProvider?: boolean | InlineValuesOptions | InlineValuesRegistrationOptions;
+
+	/**
+	 * The server provides inlay hints.
+	 *
+	 * @since 3.17.0 - proposed state
+	 */
+	inlayHintsProvider?: boolean | InlayHintsOptions | InlayHintsRegistrationOptions;
 
 	/**
 	 * Experimental server capabilities.
@@ -1972,10 +1997,6 @@ export interface CompletionClientCapabilities {
 		 * Client supports the preselect property on a completion item.
 		 */
 		preselectSupport?: boolean;
-
-		/**
-		 * Client supports to kee
-		 */
 
 		/**
 		 * Client supports the tag property on a completion item. Clients supporting

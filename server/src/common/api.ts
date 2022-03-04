@@ -17,16 +17,17 @@ export * from './server';
 import { DiagnosticsFeatureShape, DiagnosticFeature } from './proposed.diagnostic';
 import { TypeHierarchyFeatureShape, TypeHierarchyFeature } from './proposed.typeHierarchy';
 import { InlineValuesFeatureShape, InlineValuesFeature } from './proposed.inlineValues';
+import { InlayHintsFeatureShape, InlayHintsFeature } from './proposed.inlayHints';
 import { NotebooksFeatureShape, NotebooksFeature, NotebookDocuments as _NotebookDocuments } from './proposed.notebooks';
 
 export namespace ProposedFeatures {
-	export const all: Features<_, _, _, _, _, _, DiagnosticsFeatureShape & TypeHierarchyFeatureShape & InlineValuesFeatureShape, NotebooksFeatureShape> = {
+	export const all: Features<_, _, _, _, _, _, DiagnosticsFeatureShape & TypeHierarchyFeatureShape & InlineValuesFeatureShape & InlayHintsFeatureShape, NotebooksFeatureShape> = {
 		__brand: 'features',
-		languages: combineLanguagesFeatures(InlineValuesFeature, combineLanguagesFeatures(TypeHierarchyFeature, DiagnosticFeature)),
+		languages: combineLanguagesFeatures(InlayHintsFeature, combineLanguagesFeatures(InlineValuesFeature, combineLanguagesFeatures(TypeHierarchyFeature, DiagnosticFeature))),
 		notebooks: NotebooksFeature
 	};
 
-	export type Connection = _Connection<_, _, _, _, _, _, DiagnosticsFeatureShape & TypeHierarchyFeatureShape & InlineValuesFeatureShape, NotebooksFeatureShape>;
+	export type Connection = _Connection<_, _, _, _, _, _, DiagnosticsFeatureShape & TypeHierarchyFeatureShape & InlineValuesFeatureShape & InlayHintsFeatureShape, NotebooksFeatureShape>;
 
 	export const NotebookDocuments = _NotebookDocuments;
 }

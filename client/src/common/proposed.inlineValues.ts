@@ -23,23 +23,23 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 
 export type ProvideInlineValuesSignature = (this: void, document: TextDocument, viewPort: VRange, context: VInlineValueContext, token: CancellationToken) => ProviderResult<VInlineValue[]>;
 
-export type InlineValuesProviderMiddleware = {
+export type InlineValuesMiddleware = {
 	provideInlineValues?: (this: void, document: TextDocument, viewPort: VRange, context: VInlineValueContext, token: CancellationToken, next: ProvideInlineValuesSignature) => ProviderResult<VInlineValue[]>;
 };
 
-export type InlineValuesProviderData = {
+export type InlineValuesProviderShape = {
 	provider: InlineValuesProvider;
 	onDidChangeInlineValues: EventEmitter<void>;
 };
 
-export class InlineValueFeature extends TextDocumentFeature<boolean | Proposed.InlineValuesOptions, Proposed.InlineValuesRegistrationOptions, InlineValuesProviderData> {
+export class InlineValueFeature extends TextDocumentFeature<boolean | Proposed.InlineValuesOptions, Proposed.InlineValuesRegistrationOptions, InlineValuesProviderShape> {
 	constructor(client: BaseLanguageClient) {
 		super(client, Proposed.InlineValuesRequest.type);
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
 		ensure(ensure(capabilities, 'textDocument')!, 'inlineValues')!.dynamicRegistration = true;
-		ensure(ensure(capabilities, 'workspace')!, 'codeLens')!.refreshSupport = true;
+		ensure(ensure(capabilities, 'workspace')!, 'inlineValues')!.refreshSupport = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
@@ -56,7 +56,7 @@ export class InlineValueFeature extends TextDocumentFeature<boolean | Proposed.I
 		this.register({ id: id, registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: Proposed.InlineValuesRegistrationOptions): [Disposable, InlineValuesProviderData] {
+	protected registerLanguageProvider(options: Proposed.InlineValuesRegistrationOptions): [Disposable, InlineValuesProviderShape] {
 		const selector = options.documentSelector!;
 		const eventEmitter: EventEmitter<void> = new EventEmitter<void>();
 		const provider: InlineValuesProvider = {

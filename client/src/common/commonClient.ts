@@ -62,6 +62,7 @@ export abstract class CommonLanguageClient extends BaseLanguageClient {
 import * as pd from './proposed.diagnostic';
 import * as pt from './proposed.typeHierarchy';
 import * as iv from './proposed.inlineValues';
+import * as ih from './proposed.inlayHints';
 import * as nb from './proposed.notebooks';
 
 export namespace ProposedFeatures {
@@ -70,6 +71,7 @@ export namespace ProposedFeatures {
 			new pd.DiagnosticFeature(client),
 			new pt.TypeHierarchyFeature(client),
 			new iv.InlineValueFeature(client),
+			new ih.InlayHintsFeature(client),
 			new nb.NotebookDocumentSyncFeature(client)
 		];
 		return result;
@@ -85,6 +87,10 @@ export namespace ProposedFeatures {
 
 	export function createInlineValueFeature(client: BaseLanguageClient): DynamicFeature<boolean | Proposed.InlineValuesOptions> {
 		return new iv.InlineValueFeature(client);
+	}
+
+	export function createInlayHintFeature(client: BaseLanguageClient): DynamicFeature<boolean | Proposed.InlayHintsOptions> {
+		return new ih.InlayHintsFeature(client);
 	}
 
 	export function createNotebookDocumentSyncFeature(client: BaseLanguageClient): DynamicFeature<Proposed.NotebookDocumentSyncRegistrationOptions> {

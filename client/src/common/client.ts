@@ -72,7 +72,8 @@ import type { SemanticTokensMiddleware, SemanticTokensProviders } from './semant
 import type { FileOperationsMiddleware } from './fileOperations';
 import type { LinkedEditingRangeMiddleware } from './linkedEditingRange';
 import type { DiagnosticFeatureProvider } from './proposed.diagnostic';
-import type { InlineValuesProviderMiddleware, InlineValuesProviderData } from './proposed.inlineValues';
+import type { InlineValuesMiddleware, InlineValuesProviderShape } from './proposed.inlineValues';
+import type { InlayHintsMiddleware, InlayHintsProviderShape } from './proposed.inlayHints';
 import type { TypeHierarchyMiddleware } from './proposed.typeHierarchy';
 import type { $NotebookCellTextDocumentFilter, NotebookDocumentProviderFeature, NotebookDocumentMiddleware } from './proposed.notebooks';
 
@@ -660,7 +661,7 @@ export interface _Middleware {
 
 export type Middleware = _Middleware & TypeDefinitionMiddleware & ImplementationMiddleware & ColorProviderMiddleware &
 FoldingRangeProviderMiddleware & DeclarationMiddleware & SelectionRangeProviderMiddleware & CallHierarchyMiddleware & SemanticTokensMiddleware &
-LinkedEditingRangeMiddleware & TypeHierarchyMiddleware & InlineValuesProviderMiddleware & NotebookDocumentMiddleware;
+LinkedEditingRangeMiddleware & TypeHierarchyMiddleware & InlineValuesMiddleware & InlayHintsMiddleware & NotebookDocumentMiddleware;
 
 export interface LanguageClientOptions {
 	documentSelector?: DocumentSelector | string[];
@@ -3935,7 +3936,8 @@ export abstract class BaseLanguageClient {
 	public getFeature(request: typeof LinkedEditingRangeRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<LinkedEditingRangeProvider>;
 	public getFeature(request: typeof Proposed.DocumentDiagnosticRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DiagnosticFeatureProvider>;
 	public getFeature(request: typeof Proposed.TypeHierarchyPrepareRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<VTypeHierarchyProvider>;
-	public getFeature(request: typeof Proposed.InlineValuesRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<InlineValuesProviderData>;
+	public getFeature(request: typeof Proposed.InlineValuesRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<InlineValuesProviderShape>;
+	public getFeature(request: typeof Proposed.InlayHintsRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<InlayHintsProviderShape>;
 	public getFeature(request: typeof Proposed.NotebookDocumentSyncRegistrationType.method): DynamicFeature<Proposed.NotebookDocumentSyncRegistrationOptions> & NotebookDocumentProviderFeature;
 
 	public getFeature(request: typeof WorkspaceSymbolRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & WorkspaceProviderFeature<WorkspaceSymbolProvider>;
