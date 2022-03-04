@@ -72,7 +72,7 @@ import * as diag from './proposed.diagnostic';
 import * as typeh from './proposed.typeHierarchy';
 import * as iv from './proposed.inlineValue';
 import * as nb from './proposed.notebooks';
-import * as ih from './proposed.InlayHints';
+import * as ih from './proposed.inlayHints';
 
 export namespace Proposed {
 	export type DiagnosticClientCapabilities = diag.DiagnosticClientCapabilities;

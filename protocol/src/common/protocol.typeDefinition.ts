@@ -7,7 +7,7 @@ import { RequestHandler } from 'vscode-jsonrpc';
 import { Definition, DefinitionLink, LocationLink, Location } from 'vscode-languageserver-types';
 
 import { ProtocolRequestType } from './messages';
-import {
+import type {
 	TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams, PartialResultParams, WorkDoneProgressParams,
 	WorkDoneProgressOptions
 } from './protocol';

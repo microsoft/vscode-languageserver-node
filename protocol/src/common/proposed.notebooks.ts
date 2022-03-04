@@ -10,7 +10,7 @@ import {
 
 import * as Is from './utils/is';
 import { ProtocolNotificationType, RegistrationType } from './messages';
-import { StaticRegistrationOptions, NotebookDocumentFilter, TextDocumentContentChangeEvent } from './protocol';
+import type { StaticRegistrationOptions, NotebookDocumentFilter, TextDocumentContentChangeEvent } from './protocol';
 
 /**
  * Notebook specific client capabilities.

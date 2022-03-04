@@ -18,20 +18,34 @@ import {
 
 import * as Is from './utils/is';
 
-import { ImplementationRequest, ImplementationClientCapabilities, ImplementationOptions, ImplementationRegistrationOptions, ImplementationParams } from './protocol.implementation';
-import { TypeDefinitionRequest, TypeDefinitionClientCapabilities, TypeDefinitionOptions, TypeDefinitionRegistrationOptions, TypeDefinitionParams } from './protocol.typeDefinition';
+import {
+	ImplementationRequest, ImplementationClientCapabilities, ImplementationOptions, ImplementationRegistrationOptions,
+	ImplementationParams
+} from './protocol.implementation';
+
+import {
+	TypeDefinitionRequest, TypeDefinitionClientCapabilities, TypeDefinitionOptions, TypeDefinitionRegistrationOptions,
+	TypeDefinitionParams
+} from './protocol.typeDefinition';
+
 import {
 	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, WorkspaceFolder,
 	WorkspaceFoldersChangeEvent, WorkspaceFoldersInitializeParams, WorkspaceFoldersClientCapabilities, WorkspaceFoldersServerCapabilities
 } from './protocol.workspaceFolders';
-import { ConfigurationRequest, ConfigurationParams, ConfigurationItem, ConfigurationClientCapabilities } from './protocol.configuration';
+
+import {
+	ConfigurationRequest, ConfigurationParams, ConfigurationItem, ConfigurationClientCapabilities
+} from './protocol.configuration';
+
 import {
 	DocumentColorRequest, ColorPresentationRequest, DocumentColorOptions, DocumentColorParams, ColorPresentationParams,
 	DocumentColorClientCapabilities, DocumentColorRegistrationOptions,
 } from './protocol.colorProvider';
+
 import {
 	FoldingRangeClientCapabilities, FoldingRangeOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeRegistrationOptions
 } from './protocol.foldingRange';
+
 import {
 	DeclarationClientCapabilities, DeclarationRequest, DeclarationOptions, DeclarationRegistrationOptions, DeclarationParams
 } from './protocol.declaration';
@@ -82,9 +96,10 @@ import {
 import {
 	InlineValuesClientCapabilities, InlineValuesOptions, InlineValuesRegistrationOptions, InlineValuesWorkspaceClientCapabilities
 } from './proposed.inlineValue';
+
 import {
 	InlayHintClientCapabilities, InlayHintsOptions, InlayHintsRegistrationOptions, InlayHintsWorkspaceClientCapabilities
-} from './proposed.InlayHints';
+} from './proposed.inlayHints';
 
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
