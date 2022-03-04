@@ -73,7 +73,7 @@ import type { FileOperationsMiddleware } from './fileOperations';
 import type { LinkedEditingRangeMiddleware } from './linkedEditingRange';
 import type { DiagnosticFeatureProvider } from './proposed.diagnostic';
 import type { InlineValuesMiddleware, InlineValuesProviderShape } from './proposed.inlineValues';
-import type { InlayHintsMiddleware } from './proposed.inlayHints';
+import type { InlayHintsMiddleware, InlayHintsProviderShape } from './proposed.inlayHints';
 import type { TypeHierarchyMiddleware } from './proposed.typeHierarchy';
 import type { $NotebookCellTextDocumentFilter, NotebookDocumentProviderFeature, NotebookDocumentMiddleware } from './proposed.notebooks';
 
@@ -3937,6 +3937,7 @@ export abstract class BaseLanguageClient {
 	public getFeature(request: typeof Proposed.DocumentDiagnosticRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DiagnosticFeatureProvider>;
 	public getFeature(request: typeof Proposed.TypeHierarchyPrepareRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<VTypeHierarchyProvider>;
 	public getFeature(request: typeof Proposed.InlineValuesRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<InlineValuesProviderShape>;
+	public getFeature(request: typeof Proposed.InlayHintsRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<InlayHintsProviderShape>;
 	public getFeature(request: typeof Proposed.NotebookDocumentSyncRegistrationType.method): DynamicFeature<Proposed.NotebookDocumentSyncRegistrationOptions> & NotebookDocumentProviderFeature;
 
 	public getFeature(request: typeof WorkspaceSymbolRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & WorkspaceProviderFeature<WorkspaceSymbolProvider>;

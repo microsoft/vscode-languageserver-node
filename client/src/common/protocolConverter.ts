@@ -1203,7 +1203,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 			: await async.map(value.label, asInlayHintLabelPart, token);
 		const result = new code.InlayHint(asPosition(value.position), label);
 		if (value.kind !== undefined) { result.kind = value.kind; }
-		if (value.tooltip !== undefined) { result.tooltip = asMarkdownString(value.tooltip); }
+		if (value.tooltip !== undefined) { result.tooltip = asTooltip(value.tooltip); }
 		if (value.paddingLeft !== undefined) { result.paddingLeft = value.paddingLeft; }
 		if (value.paddingRight !== undefined) { result.paddingRight = value.paddingRight; }
 		return result;
@@ -1212,9 +1212,16 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 	function asInlayHintLabelPart(part: ls.Proposed.InlayHintLabelPart): code.InlayHintLabelPart {
 		const result = new code.InlayHintLabelPart(part.value);
 		if (part.location !== undefined) { result.location = asLocation(part.location); }
-		if (part.tooltip !== undefined) { result.tooltip = asMarkdownString(part.tooltip); }
+		if (part.tooltip !== undefined) { result.tooltip = asTooltip(part.tooltip); }
 		if (part.command !== undefined) { result.command = asCommand(part.command); }
 		return result;
+	}
+
+	function asTooltip(value: string | ls.MarkupContent): string | code.MarkdownString {
+		if (typeof value === 'string') {
+			return value;
+		}
+		return asMarkdownString(value);
 	}
 
 	function asInlayHints(values: undefined | null,  token?: code.CancellationToken): Promise<undefined>;

@@ -31,6 +31,12 @@ suite('Client integration', () => {
 	const fsProvider = new MemoryFileSystemProvider();
 	let fsProviderDisposable!: vscode.Disposable;
 
+	function positionEqual(pos: vscode.Position, l: number, c: number): void {
+		assert.strictEqual(pos.line, l);
+		assert.strictEqual(pos.character, c);
+	}
+
+
 	function rangeEqual(range: vscode.Range, sl: number, sc: number, el: number, ec: number): void {
 		assert.strictEqual(range.start.line, sl);
 		assert.strictEqual(range.start.character, sc);
@@ -1283,35 +1289,33 @@ suite('Client integration', () => {
 		assert.strictEqual(middlewareCalled, true);
 	});
 
-	test('Inline Values', async () => {
-		const providerData = client.getFeature(lsclient.Proposed.InlineValuesRequest.method).getProvider(document);
+	test('Inlay Hints', async () => {
+		const providerData = client.getFeature(lsclient.Proposed.InlayHintsRequest.method).getProvider(document);
 		isDefined(providerData);
 		const provider = providerData.provider;
-		const results = (await provider.provideInlineValues(document, range, { frameId: 1, stoppedLocation: range }, tokenSource.token));
+		const results = (await provider.provideInlayHints(document, range, tokenSource.token));
 
-		isArray(results, undefined, 3);
+		isArray(results, undefined, 2);
 
-		for (const r of results) {
-			rangeEqual(r.range, 1, 2, 3, 4);
-		}
-
-		assert.ok(results[0] instanceof vscode.InlineValueText);
-		assert.strictEqual((results[0] as vscode.InlineValueText).text, 'text');
-
-		assert.ok(results[1] instanceof vscode.InlineValueVariableLookup);
-		assert.strictEqual((results[1] as vscode.InlineValueVariableLookup).variableName, 'variableName');
-
-		assert.ok(results[2] instanceof vscode.InlineValueEvaluatableExpression);
-		assert.strictEqual((results[2] as vscode.InlineValueEvaluatableExpression).expression, 'expression');
+		const hint = results[0];
+		positionEqual(hint.position, 1, 1);
+		assert.strictEqual(hint.kind, vscode.InlayHintKind.Type);
+		const label = hint.label;
+		isArray(label as [], vscode.InlayHintLabelPart, 1);
+		assert.strictEqual((label as vscode.InlayHintLabelPart[])[0].value, 'type');
 
 		let middlewareCalled: boolean = false;
-		middleware.provideInlineValues = (d, r, c, t, n) => {
+		middleware.provideInlayHints = (d, r, t, n) => {
 			middlewareCalled = true;
-			return n(d, r, c, t);
+			return n(d, r, t);
 		};
-		await provider.provideInlineValues(document, range, { frameId: 1, stoppedLocation: range }, tokenSource.token);
-		middleware.provideInlineValues = undefined;
+		await provider.provideInlayHints(document, range, tokenSource.token);
+		middleware.provideInlayHints = undefined;
 		assert.strictEqual(middlewareCalled, true);
+		assert.ok(typeof provider.resolveInlayHint === 'function');
+
+		const resolvedHint = await provider.resolveInlayHint!(hint, tokenSource.token);
+		assert.strictEqual((resolvedHint?.label as vscode.InlayHintLabelPart[])[0].tooltip, 'tooltip');
 	});
 
 	test('Workspace symbols', async () => {
