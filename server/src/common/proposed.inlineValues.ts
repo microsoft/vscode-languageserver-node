@@ -25,7 +25,7 @@ export interface InlineValuesFeatureShape {
 		 *
 		 * @param handler The corresponding handler.
 		 */
-		on(handler: ServerRequestHandler<Proposed.InlineValuesParams, InlineValue[] | undefined | null, InlineValue[], void>): Disposable;
+		on(handler: ServerRequestHandler<Proposed.InlineValueParams, InlineValue[] | undefined | null, InlineValue[], void>): Disposable;
 	};
 }
 
@@ -34,10 +34,10 @@ export const InlineValuesFeature: Feature<_Languages, InlineValuesFeatureShape> 
 		public get inlineValues() {
 			return {
 				refresh: (): Promise<void> => {
-					return this.connection.sendRequest(Proposed.InlineValuesRefreshRequest.type);
+					return this.connection.sendRequest(Proposed.InlineValueRefreshRequest.type);
 				},
-				on: (handler: ServerRequestHandler<Proposed.InlineValuesParams, InlineValue[] | undefined | null, InlineValue[], void>): Disposable => {
-					return this.connection.onRequest(Proposed.InlineValuesRequest.type, (params, cancel) => {
+				on: (handler: ServerRequestHandler<Proposed.InlineValueParams, InlineValue[] | undefined | null, InlineValue[], void>): Disposable => {
+					return this.connection.onRequest(Proposed.InlineValueRequest.type, (params, cancel) => {
 						return handler(params, cancel, this.attachWorkDoneProgress(params));
 					});
 				}

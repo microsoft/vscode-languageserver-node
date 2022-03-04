@@ -16,7 +16,7 @@ import type { TextDocumentRegistrationOptions, WorkDoneProgressOptions, StaticRe
  *
  * @since 3.17.0 - proposed state
  */
-export type InlineValuesClientCapabilities = {
+export type InlineValueClientCapabilities = {
 	/**
 	 * Whether implementation supports dynamic registration for inline value providers.
 	 */
@@ -28,7 +28,7 @@ export type InlineValuesClientCapabilities = {
  *
  * @since 3.17.0 - proposed state
  */
-export type InlineValuesWorkspaceClientCapabilities = {
+export type InlineValueWorkspaceClientCapabilities = {
 	/**
 	 * Whether the client implementation supports a refresh request sent from the
 	 * server to the client.
@@ -46,21 +46,21 @@ export type InlineValuesWorkspaceClientCapabilities = {
  *
  * @since 3.17.0 - proposed state
  */
-export type InlineValuesOptions = WorkDoneProgressOptions;
+export type InlineValueOptions = WorkDoneProgressOptions;
 
 /**
  * Inline value options used during static or dynamic registration.
  *
  * @since 3.17.0 - proposed state
  */
-export type InlineValuesRegistrationOptions = InlineValuesOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions;
+export type InlineValueRegistrationOptions = InlineValueOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions;
 
 /**
- * A parameter literal used in inline values requests.
+ * A parameter literal used in inline value requests.
  *
  * @since 3.17.0 - proposed state
  */
-export type InlineValuesParams = WorkDoneProgressParams & {
+export type InlineValueParams = WorkDoneProgressParams & {
 	/**
 	 * The text document.
 	 */
@@ -80,22 +80,22 @@ export type InlineValuesParams = WorkDoneProgressParams & {
 
 /**
  * A request to provide inline values in a document. The request's parameter is of
- * type [InlineValuesParams](#InlineValuesParams), the response is of type
+ * type [InlineValueParams](#InlineValueParams), the response is of type
  * [InlineValue[]](#InlineValue[]) or a Thenable that resolves to such.
  *
  * @since 3.17.0 - proposed state
  */
 export namespace InlineValuesRequest {
-	export const method: 'textDocument/inlineValues' = 'textDocument/inlineValues';
-	export const type = new ProtocolRequestType<InlineValuesParams, InlineValue[] | null, InlineValue[], any, InlineValuesRegistrationOptions>(method);
-	export type HandlerSignature = RequestHandler<InlineValuesParams, InlineValue[] | null, void>;
+	export const method: 'textDocument/inlineValue' = 'textDocument/inlineValue';
+	export const type = new ProtocolRequestType<InlineValueParams, InlineValue[] | null, InlineValue[], any, InlineValueRegistrationOptions>(method);
+	export type HandlerSignature = RequestHandler<InlineValueParams, InlineValue[] | null, void>;
 }
 
 /**
  * @since 3.17.0 - proposed state
  */
-export namespace InlineValuesRefreshRequest {
-	export const method: `workspace/inlineValues/refresh` = `workspace/inlineValues/refresh`;
+export namespace InlineValueRefreshRequest {
+	export const method: `workspace/inlineValue/refresh` = `workspace/inlineValue/refresh`;
 	export const type = new ProtocolRequestType0<void, void, void, void>(method);
 	export type HandlerSignature = RequestHandler0<void, void>;
 }

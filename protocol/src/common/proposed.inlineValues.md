@@ -1,10 +1,10 @@
-#### <a href="#textDocument_inlineValues" name="textDocument_inlineValues" class="anchor">Inline Values Request (:leftwards_arrow_with_hook:)</a>
+#### <a href="#textDocument_inlineValue" name="textDocument_inlineValue" class="anchor">Inline Value Request (:leftwards_arrow_with_hook:)</a>
 
 > *Since version 3.17.0*
-The inline values request is sent from the client to the server to compute inline values for a given text document that may be rendered in the editor at the end of lines.
+The inline value request is sent from the client to the server to compute inline values for a given text document that may be rendered in the editor at the end of lines.
 
 _Client Capability_:
-* property name (optional): `textDocument.inlineValues`
+* property name (optional): `textDocument.inlineValue`
 * property type: `InlineValuesClientCapabilities` defined as follows:
 
 <div class="anchorHolder"><a href="#inlineValuesClientCapabilities" name="inlineValuesClientCapabilities" class="linkableAnchor"></a></div>

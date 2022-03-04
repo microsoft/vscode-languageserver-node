@@ -12,7 +12,7 @@ import type {
 	WorkDoneProgressOptions
 } from './protocol';
 
-// @ts-ignore: to avoid inlining LocatioLink as dynamic import
+// @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | Declaration | DeclarationLink | Location | undefined;
 
 /**
@@ -43,7 +43,7 @@ export interface DeclarationParams extends TextDocumentPositionParams, WorkDoneP
 
 /**
  * A request to resolve the type definition locations of a symbol at a given text
- * document position. The request's parameter is of type [TextDocumentPositioParams]
+ * document position. The request's parameter is of type [TextDocumentPositionParams]
  * (#TextDocumentPositionParams) the response is of type [Declaration](#Declaration)
  * or a typed array of [DeclarationLink](#DeclarationLink) or a Thenable that resolves
  * to such.

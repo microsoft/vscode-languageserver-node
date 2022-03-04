@@ -1259,7 +1259,7 @@ suite('Client integration', () => {
 	});
 
 	test('Inline Values', async () => {
-		const providerData = client.getFeature(lsclient.Proposed.InlineValuesRequest.method).getProvider(document);
+		const providerData = client.getFeature(lsclient.Proposed.InlineValueRequest.method).getProvider(document);
 		isDefined(providerData);
 		const provider = providerData.provider;
 		const results = (await provider.provideInlineValues(document, range, { frameId: 1, stoppedLocation: range }, tokenSource.token));
@@ -1290,7 +1290,7 @@ suite('Client integration', () => {
 	});
 
 	test('Inlay Hints', async () => {
-		const providerData = client.getFeature(lsclient.Proposed.InlayHintsRequest.method).getProvider(document);
+		const providerData = client.getFeature(lsclient.Proposed.InlayHintRequest.method).getProvider(document);
 		isDefined(providerData);
 		const provider = providerData.provider;
 		const results = (await provider.provideInlayHints(document, range, tokenSource.token));

@@ -18,7 +18,7 @@ import * as Is from './utils/is';
 export type InlayHintClientCapabilities = {
 
 	/**
-	 * Whether inlay hints dynamic registration.
+	 * Whether inlay hints support dynamic registration.
 	 */
 	dynamicRegistration?: boolean;
 
@@ -42,18 +42,12 @@ export type InlayHintClientCapabilities = {
 	};
 };
 
-export type $InlayHintClientCapabilities = {
-	textDocument?: {
-		inlayHints?: InlayHintClientCapabilities;
-	};
-};
-
 /**
  * Client workspace capabilities specific to inlay hints.
  *
  * @since 3.17.0 - proposed state
  */
-export type InlayHintsWorkspaceClientCapabilities = {
+export type InlayHintWorkspaceClientCapabilities = {
 	/**
 	 * Whether the client implementation supports a refresh request sent from
 	 * the server to the client.
@@ -64,12 +58,6 @@ export type InlayHintsWorkspaceClientCapabilities = {
 	 * change that requires such a calculation.
 	 */
 	refreshSupport?: boolean;
-};
-
-export type $InlayHintWorkspaceClientCapabilities = {
-	workspace?: {
-		inlayHints?: InlayHintsWorkspaceClientCapabilities;
-	};
 };
 
 /**
@@ -227,11 +215,11 @@ export namespace InlayHint {
 }
 
 /**
- * Inlay hints options used during static registration.
+ * Inlay hint options used during static registration.
  *
  * @since 3.17.0 - proposed state
  */
-export type InlayHintsOptions = WorkDoneProgressOptions & {
+export type InlayHintOptions = WorkDoneProgressOptions & {
 	/**
 	 * The server provides support to resolve additional
 	 * information for an inlay hint item.
@@ -240,20 +228,25 @@ export type InlayHintsOptions = WorkDoneProgressOptions & {
 };
 
 /**
- * Inlay hints options used during static or dynamic registration.
+ * Inlay hint options used during static or dynamic registration.
  *
  * @since 3.17.0 - proposed state
  */
-export type InlayHintsRegistrationOptions = InlayHintsOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions;
+export type InlayHintRegistrationOptions = InlayHintOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions;
 
-export type InlayHintsParams = WorkDoneProgressParams & {
+/**
+ * A parameter literal used in inlay hints requests.
+ *
+ * @since 3.17.0 - proposed state
+ */
+export type InlayHintParams = WorkDoneProgressParams & {
 	/**
 	 * The text document.
 	 */
 	textDocument: TextDocumentIdentifier;
 
 	/**
-	 * The visible document range for which inline values should be computed.
+	 * The visible document range for which inlay hints should be computed.
 	 */
 	viewPort: Range;
 };
@@ -265,10 +258,10 @@ export type InlayHintsParams = WorkDoneProgressParams & {
  *
  * @since 3.17.0 - proposed state
  */
-export namespace InlayHintsRequest {
+export namespace InlayHintRequest {
 	export const method: 'textDocument/inlayHints' = 'textDocument/inlayHints';
-	export const type = new ProtocolRequestType<InlayHintsParams, InlayHint[] | null, InlayHint[], any, InlayHintsRegistrationOptions>(method);
-	export type HandlerSignature = RequestHandler<InlayHintsParams, InlayHint[] | null, void>;
+	export const type = new ProtocolRequestType<InlayHintParams, InlayHint[] | null, InlayHint[], any, InlayHintRegistrationOptions>(method);
+	export type HandlerSignature = RequestHandler<InlayHintParams, InlayHint[] | null, void>;
 }
 
 /**

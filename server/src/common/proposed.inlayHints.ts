@@ -25,7 +25,7 @@ export interface InlayHintsFeatureShape {
 		 *
 		 * @param handler The corresponding handler.
 		 */
-		on(handler: ServerRequestHandler<Proposed.InlayHintsParams, Proposed.InlayHint[] | undefined | null, Proposed.InlayHint[], void>): Disposable;
+		on(handler: ServerRequestHandler<Proposed.InlayHintParams, Proposed.InlayHint[] | undefined | null, Proposed.InlayHint[], void>): Disposable;
 
 		/**
 		 * Installs a handler for the inlay hint resolve request.
@@ -43,8 +43,8 @@ export const InlayHintsFeature: Feature<_Languages, InlayHintsFeatureShape> = (B
 				refresh: (): Promise<void> => {
 					return this.connection.sendRequest(Proposed.InlayHintRefreshRequest.type);
 				},
-				on: (handler: ServerRequestHandler<Proposed.InlayHintsParams, Proposed.InlayHint[] | undefined | null, Proposed.InlayHint[], void>): Disposable => {
-					return this.connection.onRequest(Proposed.InlayHintsRequest.type, (params, cancel) => {
+				on: (handler: ServerRequestHandler<Proposed.InlayHintParams, Proposed.InlayHint[] | undefined | null, Proposed.InlayHint[], void>): Disposable => {
+					return this.connection.onRequest(Proposed.InlayHintRequest.type, (params, cancel) => {
 						return handler(params, cancel, this.attachWorkDoneProgress(params));
 					});
 				},

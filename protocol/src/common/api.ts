@@ -118,31 +118,29 @@ export namespace Proposed {
 
 	// Inlay hints
 	export type InlayHintClientCapabilities = ih.InlayHintClientCapabilities;
-	export type $InlayHintClientCapabilities = ih.$InlayHintClientCapabilities;
-	export type InlayHintsWorkspaceClientCapabilities = ih.InlayHintsWorkspaceClientCapabilities;
-	export type $InlayHintWorkspaceClientCapabilities = ih.$InlayHintWorkspaceClientCapabilities;
+	export type InlayHintWorkspaceClientCapabilities = ih.InlayHintWorkspaceClientCapabilities;
 	export type InlayHintKind = ih.InlayHintKind;
 	export const InlayHintKind = ih.InlayHintKind;
 	export type InlayHintLabelPart = ih.InlayHintLabelPart;
 	export const InlayHintLabelPart = ih.InlayHintLabelPart;
 	export type InlayHint = ih.InlayHint;
 	export const InlayHint = ih.InlayHint;
-	export type InlayHintsOptions = ih.InlayHintsOptions;
-	export type InlayHintsRegistrationOptions = ih.InlayHintsRegistrationOptions;
-	export type InlayHintsParams = ih.InlayHintsParams;
+	export type InlayHintOptions = ih.InlayHintOptions;
+	export type InlayHintRegistrationOptions = ih.InlayHintRegistrationOptions;
+	export type InlayHintParams = ih.InlayHintParams;
 
-	export const InlayHintsRequest: typeof ih.InlayHintsRequest = ih.InlayHintsRequest;
+	export const InlayHintRequest: typeof ih.InlayHintRequest = ih.InlayHintRequest;
 	export const InlayHintResolveRequest: typeof ih.InlayHintResolveRequest = ih.InlayHintResolveRequest;
 	export const InlayHintRefreshRequest: typeof ih.InlayHintRefreshRequest = ih.InlayHintRefreshRequest;
 
 	// Inline value
-	export type InlineValuesClientCapabilities = iv.InlineValuesClientCapabilities;
-	export type InlineValuesOptions = iv.InlineValuesOptions;
-	export type InlineValuesRegistrationOptions = iv.InlineValuesRegistrationOptions;
-	export type InlineValuesParams = iv.InlineValuesParams;
+	export type InlineValueClientCapabilities = iv.InlineValueClientCapabilities;
+	export type InlineValueOptions = iv.InlineValueOptions;
+	export type InlineValueRegistrationOptions = iv.InlineValueRegistrationOptions;
+	export type InlineValueParams = iv.InlineValueParams;
 
-	export const InlineValuesRequest: typeof iv.InlineValuesRequest = iv.InlineValuesRequest;
-	export const InlineValuesRefreshRequest: typeof iv.InlineValuesRefreshRequest = iv.InlineValuesRefreshRequest;
+	export const InlineValueRequest: typeof iv.InlineValuesRequest = iv.InlineValuesRequest;
+	export const InlineValueRefreshRequest: typeof iv.InlineValueRefreshRequest = iv.InlineValueRefreshRequest;
 
 	// Notebooks
 	export type $NotebookDocumentClientCapabilities = nb.$NotebookDocumentClientCapabilities;

@@ -85,11 +85,11 @@ export namespace ProposedFeatures {
 		return new pt.TypeHierarchyFeature(client);
 	}
 
-	export function createInlineValueFeature(client: BaseLanguageClient): DynamicFeature<boolean | Proposed.InlineValuesOptions> {
+	export function createInlineValueFeature(client: BaseLanguageClient): DynamicFeature<boolean | Proposed.InlineValueOptions> {
 		return new iv.InlineValueFeature(client);
 	}
 
-	export function createInlayHintFeature(client: BaseLanguageClient): DynamicFeature<boolean | Proposed.InlayHintsOptions> {
+	export function createInlayHintFeature(client: BaseLanguageClient): DynamicFeature<boolean | Proposed.InlayHintOptions> {
 		return new ih.InlayHintsFeature(client);
 	}
 

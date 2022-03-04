@@ -94,11 +94,11 @@ import {
 } from './proposed.typeHierarchy';
 
 import {
-	InlineValuesClientCapabilities, InlineValuesOptions, InlineValuesRegistrationOptions, InlineValuesWorkspaceClientCapabilities
+	InlineValueClientCapabilities, InlineValueOptions, InlineValueRegistrationOptions, InlineValueWorkspaceClientCapabilities
 } from './proposed.inlineValue';
 
 import {
-	InlayHintClientCapabilities, InlayHintsOptions, InlayHintsRegistrationOptions, InlayHintsWorkspaceClientCapabilities
+	InlayHintClientCapabilities, InlayHintOptions, InlayHintRegistrationOptions, InlayHintWorkspaceClientCapabilities
 } from './proposed.inlayHints';
 
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
@@ -513,7 +513,7 @@ export interface WorkspaceClientCapabilities {
 	 *
 	 * @since 3.17.0.
 	 */
-	inlineValues?: InlineValuesWorkspaceClientCapabilities;
+	inlineValue?: InlineValueWorkspaceClientCapabilities;
 
 	/**
 	 * Capabilities specific to the inlay hints requests scoped to the
@@ -521,7 +521,7 @@ export interface WorkspaceClientCapabilities {
 	 *
 	 * @since 3.17.0.
 	 */
-	inlayHints?: InlayHintsWorkspaceClientCapabilities;
+	inlayHint?: InlayHintWorkspaceClientCapabilities;
 }
 
 /**
@@ -685,18 +685,18 @@ export interface TextDocumentClientCapabilities {
 	typeHierarchy?: TypeHierarchyClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/inlineValues` request.
+	 * Capabilities specific to the `textDocument/inlineValue` request.
 	 *
 	 * @since 3.17.0 - proposed state
 	 */
-	inlineValues?: InlineValuesClientCapabilities;
+	inlineValue?: InlineValueClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/inlayHints` request.
+	 * Capabilities specific to the `textDocument/inlayHint` request.
 	 *
 	 * @since 3.17.0 - proposed state
 	 */
-	inlayHints?: InlayHintClientCapabilities;
+	inlayHint?: InlayHintClientCapabilities;
 }
 
 export interface WindowClientCapabilities {
@@ -1095,14 +1095,14 @@ export interface _ServerCapabilities<T = any> {
 	 *
 	 * @since 3.17.0 - proposed state
 	 */
-	inlineValuesProvider?: boolean | InlineValuesOptions | InlineValuesRegistrationOptions;
+	inlineValuesProvider?: boolean | InlineValueOptions | InlineValueRegistrationOptions;
 
 	/**
 	 * The server provides inlay hints.
 	 *
 	 * @since 3.17.0 - proposed state
 	 */
-	inlayHintsProvider?: boolean | InlayHintsOptions | InlayHintsRegistrationOptions;
+	inlayHintsProvider?: boolean | InlayHintOptions | InlayHintRegistrationOptions;
 
 	/**
 	 * Experimental server capabilities.
