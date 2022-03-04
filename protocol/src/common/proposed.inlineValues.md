@@ -5,9 +5,9 @@ The inline value request is sent from the client to the server to compute inline
 
 _Client Capability_:
 * property name (optional): `textDocument.inlineValue`
-* property type: `InlineValuesClientCapabilities` defined as follows:
+* property type: `InlineValueClientCapabilities` defined as follows:
 
-<div class="anchorHolder"><a href="#inlineValuesClientCapabilities" name="inlineValuesClientCapabilities" class="linkableAnchor"></a></div>
+<div class="anchorHolder"><a href="#inlineValueClientCapabilities" name="inlineValueClientCapabilities" class="linkableAnchor"></a></div>
 
 ```typescript
 /**
@@ -15,7 +15,7 @@ _Client Capability_:
  *
  * @since 3.17.0 - proposed state
  */
-export type InlineValuesClientCapabilities = {
+export type InlineValueClientCapabilities = {
 	/**
 	 * Whether implementation supports dynamic registration for inline
 	 * value providers.
@@ -25,10 +25,10 @@ export type InlineValuesClientCapabilities = {
 ```
 
 _Server Capability_:
-* property name (optional): `inlineValuesProvider`
-* property type: `InlineValuesOptions` defined as follows:
+* property name (optional): `inlineValueProvider`
+* property type: `InlineValueOptions` defined as follows:
 
-<div class="anchorHolder"><a href="#inlineValuesOptions" name="inlineValuesOptions" class="linkableAnchor"></a></div>
+<div class="anchorHolder"><a href="#inlineValueOptions" name="inlineValueOptions" class="linkableAnchor"></a></div>
 
 ```typescript
 /**
@@ -36,12 +36,12 @@ _Server Capability_:
  *
  * @since 3.17.0 - proposed state
  */
-export type InlineValuesOptions = WorkDoneProgressOptions;
+export type InlineValueOptions = WorkDoneProgressOptions;
 ```
 
-_Registration Options_: `InlineValuesRegistrationOptions` defined as follows:
+_Registration Options_: `InlineValueRegistrationOptions` defined as follows:
 
-<div class="anchorHolder"><a href="#inlineValuesRegistrationOptions" name="inlineValuesRegistrationOptions" class="linkableAnchor"></a></div>
+<div class="anchorHolder"><a href="#inlineValueRegistrationOptions" name="inlineValueRegistrationOptions" class="linkableAnchor"></a></div>
 
 ```typescript
 /**
@@ -49,15 +49,15 @@ _Registration Options_: `InlineValuesRegistrationOptions` defined as follows:
  *
  * @since 3.17.0 - proposed state
  */
-export type InlineValuesRegistrationOptions = InlineValuesOptions
+export type InlineValueRegistrationOptions = InlineValueOptions
 	& TextDocumentRegistrationOptions & StaticRegistrationOptions;
 ```
 
 _Request_:
-* method: `textDocument/inlineValues`
-* params: `InlineValuesParams` defined as follows:
+* method: `textDocument/inlineValue`
+* params: `InlineValueParams` defined as follows:
 
-<div class="anchorHolder"><a href="#inlineValuesParams" name="inlineValuesParams" class="linkableAnchor"></a></div>
+<div class="anchorHolder"><a href="#inlineValueParams" name="inlineValueParams" class="linkableAnchor"></a></div>
 
 ```typescript
 /**
@@ -65,7 +65,7 @@ _Request_:
  *
  * @since 3.17.0 - proposed state
  */
-export type InlineValuesParams = WorkDoneProgressParams & {
+export type InlineValueParams = WorkDoneProgressParams & {
 	/**
 	 * The text document.
 	 */
@@ -80,17 +80,17 @@ export type InlineValuesParams = WorkDoneProgressParams & {
 	 * Additional information about the context in which inline values were
 	 * requested.
 	 */
-	context: InlineValuesContext;
+	context: InlineValueContext;
 };
 ```
 
-<div class="anchorHolder"><a href="#inlineValuesContext" name="inlineValuesContext" class="linkableAnchor"></a></div>
+<div class="anchorHolder"><a href="#inlineValueContext" name="inlineValueContext" class="linkableAnchor"></a></div>
 
 ```typescript
 /**
  * @since 3.17.0 - proposed state
  */
-export type InlineValuesContext = {
+export type InlineValueContext = {
 	/**
 	 * The document range where execution has stopped.
 	 * Typically the end position of the range denotes the line where the
@@ -201,18 +201,18 @@ export type InlineValue = InlineValueText | InlineValueVariableLookup | InlineVa
 ```
 * error: code and message set in case an exception happens during the inline values request.
 
-#### <a href="#textDocument_inlineValues_refresh" name="textDocument_inlineValues_refresh" class="anchor">Inline Values Refresh Request  (:arrow_right_hook:)</a>
+#### <a href="#textDocument_inlineValue_refresh" name="textDocument_inlineValue_refresh" class="anchor">Inline Values Refresh Request  (:arrow_right_hook:)</a>
 
 > *Since version 3.17.0*
 
-The `workspace/inlineValues/refresh` request is sent from the server to the client. Servers can use it to ask clients to refresh the inline values currently shown in editors. As a result the client should ask the server to recompute the inline values for these editors. This is useful if a server detects a configuration change which requires a re-calculation of all inline values. Note that the client still has the freedom to delay the re-calculation of the inline values if for example an editor is currently not visible.
+The `workspace/inlineValue/refresh` request is sent from the server to the client. Servers can use it to ask clients to refresh the inline values currently shown in editors. As a result the client should ask the server to recompute the inline values for these editors. This is useful if a server detects a configuration change which requires a re-calculation of all inline values. Note that the client still has the freedom to delay the re-calculation of the inline values if for example an editor is currently not visible.
 
 _Client Capability_:
 
-* property name (optional): `workspace.inlineValues`
-* property type: `InlineValuesWorkspaceClientCapabilities` defined as follows:
+* property name (optional): `workspace.inlineValue`
+* property type: `InlineValueWorkspaceClientCapabilities` defined as follows:
 
-<div class="anchorHolder"><a href="#inlineValuesWorkspaceClientCapabilities" name="inlineValuesWorkspaceClientCapabilities" class="linkableAnchor"></a></div>
+<div class="anchorHolder"><a href="#inlineValueWorkspaceClientCapabilities" name="inlineValueWorkspaceClientCapabilities" class="linkableAnchor"></a></div>
 
 ```typescript
 /**
@@ -220,7 +220,7 @@ _Client Capability_:
  *
  * @since 3.17.0 - proposed state
  */
-export type InlineValuesWorkspaceClientCapabilities = {
+export type InlineValueWorkspaceClientCapabilities = {
 	/**
 	 * Whether the client implementation supports a refresh request sent from
 	 * the server to the client.
@@ -234,27 +234,27 @@ export type InlineValuesWorkspaceClientCapabilities = {
 };
 ```
 _Request_:
-* method: `workspace/inlineValues/refresh`
+* method: `workspace/inlineValue/refresh`
 * params: none
 
 _Response_:
 
 * result: void
-* error: code and message set in case an exception happens during the 'workspace/inlineValues/refresh' request
+* error: code and message set in case an exception happens during the 'workspace/inlineValue/refresh' request
 
 
 <!--- linable types addition
 
-  - type: 'InlineValuesClientCapabilities'
-    link: '#inlineValuesClientCapabilities'
-  - type: 'InlineValuesOptions'
-    link: '#inlineValuesOptions'
-  - type: 'InlineValuesRegistrationOptions'
-    link: '#inlineValuesRegistrationOptions'
-  - type: 'InlineValuesParams'
-    link: '#inlineValuesParams'
-  - type: 'InlineValuesContext'
-    link: '#inlineValuesContext'
+  - type: 'InlineValueClientCapabilities'
+    link: '#inlineValueClientCapabilities'
+  - type: 'InlineValueOptions'
+    link: '#inlineValueOptions'
+  - type: 'InlineValueRegistrationOptions'
+    link: '#inlineValueRegistrationOptions'
+  - type: 'InlineValueParams'
+    link: '#inlineValueParams'
+  - type: 'InlineValueContext'
+    link: '#inlineValueContext'
   - type: 'InlineValueText'
     link: '#inlineValueText'
   - type: 'InlineValueVariableLookup'
@@ -263,7 +263,7 @@ _Response_:
     link: '#inlineValueEvaluatableExpression'
   - type: 'InlineValue'
     link: '#inlineValue'
-  - type: 'InlineValuesWorkspaceClientCapabilities'
-    link: '#inlineValuesWorkspaceClientCapabilities'
+  - type: 'InlineValueWorkspaceClientCapabilities'
+    link: '#inlineValueWorkspaceClientCapabilities'
 
 --->

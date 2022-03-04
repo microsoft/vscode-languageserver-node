@@ -158,8 +158,8 @@ suite('Client integration', () => {
 				foldingRangeProvider: true,
 				implementationProvider: true,
 				selectionRangeProvider: true,
-				inlineValuesProvider: {},
-				inlayHintsProvider: {
+				inlineValueProvider: {},
+				inlayHintProvider: {
 					resolveProvider: true
 				},
 				typeDefinitionProvider: true,

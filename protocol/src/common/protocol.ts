@@ -1095,14 +1095,14 @@ export interface _ServerCapabilities<T = any> {
 	 *
 	 * @since 3.17.0 - proposed state
 	 */
-	inlineValuesProvider?: boolean | InlineValueOptions | InlineValueRegistrationOptions;
+	inlineValueProvider?: boolean | InlineValueOptions | InlineValueRegistrationOptions;
 
 	/**
 	 * The server provides inlay hints.
 	 *
 	 * @since 3.17.0 - proposed state
 	 */
-	inlayHintsProvider?: boolean | InlayHintOptions | InlayHintRegistrationOptions;
+	inlayHintProvider?: boolean | InlayHintOptions | InlayHintRegistrationOptions;
 
 	/**
 	 * Experimental server capabilities.

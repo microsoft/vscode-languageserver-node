@@ -57,7 +57,7 @@ export class InlayHintsFeature extends TextDocumentFeature<boolean | Proposed.In
 			}
 		});
 
-		const [id, options] = this.getRegistration(documentSelector, capabilities.inlayHintsProvider);
+		const [id, options] = this.getRegistration(documentSelector, capabilities.inlayHintProvider);
 		if (!id || !options) {
 			return;
 		}

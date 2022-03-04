@@ -1460,12 +1460,12 @@ suite('Code Converter', () => {
 		strictEqual('file://localhost/folder/file.vscode', result);
 	});
 
-	test('InlineValuesContext', () => {
-		const item: proto.InlineValuesContext = {
+	test('InlineValueContext', () => {
+		const item: proto.InlineValueContext = {
 			stoppedLocation: new vscode.Range(1, 2, 8, 9),
 		};
 
-		const result = c2p.asInlineValuesContext(<any>item);
+		const result = c2p.asInlineValueContext(<any>item);
 
 		strictEqual(result.stoppedLocation.start.line, 1);
 		strictEqual(result.stoppedLocation.start.character, 2);

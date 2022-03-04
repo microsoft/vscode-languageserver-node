@@ -49,7 +49,7 @@ export class InlineValueFeature extends TextDocumentFeature<boolean | Proposed.I
 			}
 		});
 
-		const [id, options] = this.getRegistration(documentSelector, capabilities.inlineValuesProvider);
+		const [id, options] = this.getRegistration(documentSelector, capabilities.inlineValueProvider);
 		if (!id || !options) {
 			return;
 		}
@@ -70,7 +70,7 @@ export class InlineValueFeature extends TextDocumentFeature<boolean | Proposed.I
 					const requestParams: Proposed.InlineValueParams = {
 						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
 						viewPort: client.code2ProtocolConverter.asRange(viewPort),
-						context: client.code2ProtocolConverter.asInlineValuesContext(context)
+						context: client.code2ProtocolConverter.asInlineValueContext(context)
 					};
 					return client.sendRequest(Proposed.InlineValueRequest.type, requestParams, token).then((values) => {
 						if (token.isCancellationRequested) {

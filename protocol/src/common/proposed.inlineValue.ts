@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { TextDocumentIdentifier, Range, InlineValue, InlineValuesContext } from 'vscode-languageserver-types';
+import { TextDocumentIdentifier, Range, InlineValue, InlineValueContext } from 'vscode-languageserver-types';
 import { RequestHandler, RequestHandler0 } from 'vscode-jsonrpc';
 
 import { ProtocolRequestType, ProtocolRequestType0 } from './messages';
@@ -75,7 +75,7 @@ export type InlineValueParams = WorkDoneProgressParams & {
 	 * Additional information about the context in which inline values were
 	 * requested.
 	 */
-	context: InlineValuesContext;
+	context: InlineValueContext;
 };
 
 /**

@@ -96,8 +96,8 @@ connection.onInitialize((params: InitializeParams): any => {
 		foldingRangeProvider: true,
 		implementationProvider: true,
 		selectionRangeProvider: true,
-		inlineValuesProvider: {},
-		inlayHintsProvider: {
+		inlineValueProvider: {},
+		inlayHintProvider: {
 			resolveProvider: true
 		},
 		typeDefinitionProvider: true,

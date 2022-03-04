@@ -111,7 +111,7 @@ export interface Converter {
 
 	asCodeActionContext(context: code.CodeActionContext, token?: code.CancellationToken): Promise<proto.CodeActionContext>;
 
-	asInlineValuesContext(context: code.InlineValueContext): proto.InlineValuesContext;
+	asInlineValueContext(context: code.InlineValueContext): proto.InlineValueContext;
 
 	asCommand(item: code.Command): proto.Command;
 
@@ -748,11 +748,11 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return item.value;
 	}
 
-	function asInlineValuesContext(context: code.InlineValueContext): proto.InlineValuesContext {
+	function asInlineValueContext(context: code.InlineValueContext): proto.InlineValueContext {
 		if (context === undefined || context === null) {
 			return context;
 		}
-		return proto.InlineValuesContext.create(context.stoppedLocation);
+		return proto.InlineValueContext.create(context.stoppedLocation);
 	}
 
 	function asCommand(item: code.Command): proto.Command {
@@ -921,7 +921,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asReferenceParams,
 		asCodeAction,
 		asCodeActionContext,
-		asInlineValuesContext,
+		asInlineValueContext,
 		asCommand,
 		asCodeLens,
 		asFormattingOptions,

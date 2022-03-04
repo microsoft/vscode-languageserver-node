@@ -3791,7 +3791,7 @@ export type InlineValue = InlineValueText | InlineValueVariableLookup | InlineVa
 /**
  * @since 3.17.0 - proposed state
  */
-export type InlineValuesContext = {
+export type InlineValueContext = {
 	/**
 	 * The document range where execution has stopped.
 	 * Typically the end position of the range denotes the line where the inline values are shown.
@@ -3800,24 +3800,24 @@ export type InlineValuesContext = {
 };
 
 /**
- * The InlineValuesContext namespace provides helper functions to work with
- * [InlineValuesContext](#InlineValuesContext) literals.
+ * The InlineValueContext namespace provides helper functions to work with
+ * [InlineValueContext](#InlineValueContext) literals.
  *
  * @since 3.17.0 - proposed state
  */
-export namespace InlineValuesContext {
+export namespace InlineValueContext {
 	/**
-	 * Creates a new InlineValuesContext literal.
+	 * Creates a new InlineValueContext literal.
 	 */
-	export function create(stoppedLocation: Range): InlineValuesContext {
+	export function create(stoppedLocation: Range): InlineValueContext {
 		return { stoppedLocation };
 	}
 
 	/**
-	 * Checks whether the given literal conforms to the [InlineValuesContext](#InlineValuesContext) interface.
+	 * Checks whether the given literal conforms to the [InlineValueContext](#InlineValueContext) interface.
 	 */
-	export function is(value: any): value is InlineValuesContext {
-		const candidate = value as InlineValuesContext;
+	export function is(value: any): value is InlineValueContext {
+		const candidate = value as InlineValueContext;
 		return Is.defined(candidate) && Range.is(value.stoppedLocation);
 	}
 }
