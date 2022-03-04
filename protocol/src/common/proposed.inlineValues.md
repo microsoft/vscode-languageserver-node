@@ -17,7 +17,8 @@ _Client Capability_:
  */
 export type InlineValuesClientCapabilities = {
 	/**
-	 * Whether implementation supports dynamic registration for inline value providers.
+	 * Whether implementation supports dynamic registration for inline
+	 * value providers.
 	 */
 	dynamicRegistration?: boolean;
 };
@@ -48,7 +49,8 @@ _Registration Options_: `InlineValuesRegistrationOptions` defined as follows:
  *
  * @since 3.17.0 - proposed state
  */
-export type InlineValuesRegistrationOptions = InlineValuesOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions;
+export type InlineValuesRegistrationOptions = InlineValuesOptions
+	& TextDocumentRegistrationOptions & StaticRegistrationOptions;
 ```
 
 _Request_:
@@ -91,7 +93,8 @@ export type InlineValuesParams = WorkDoneProgressParams & {
 export type InlineValuesContext = {
 	/**
 	 * The document range where execution has stopped.
-	 * Typically the end position of the range denotes the line where the inline values are shown.
+	 * Typically the end position of the range denotes the line where the
+	 * inline values are shown.
 	 */
 	stoppedLocation: Range;
 };
@@ -126,7 +129,10 @@ export type InlineValueText = {
 ```typescript
 /**
  * Provide inline value through a variable lookup.
- * If only a range is specified, the variable name will be extracted from the underlying document.
+ *
+ * If only a range is specified, the variable name will be extracted from
+ * the underlying document.
+ *
  * An optional variable name can be used to override the extracted name.
  *
  * @since 3.17.0 - proposed state
@@ -134,7 +140,8 @@ export type InlineValueText = {
 export type InlineValueVariableLookup = {
 	/**
 	 * The document range for which the inline value applies.
-	 * The range is used to extract the variable name from the underlying document.
+	 * The range is used to extract the variable name from the underlying
+	 * document.
 	 */
 	range: Range;
 
@@ -155,7 +162,10 @@ export type InlineValueVariableLookup = {
 ```typescript
 /**
  * Provide an inline value through an expression evaluation.
- * If only a range is specified, the expression will be extracted from the underlying document.
+ *
+ * If only a range is specified, the expression will be extracted from the
+ * underlying document.
+ *
  * An optional expression can be used to override the extracted expression.
  *
  * @since 3.17.0 - proposed state
@@ -163,7 +173,8 @@ export type InlineValueVariableLookup = {
 export type InlineValueEvaluatableExpression = {
 	/**
 	 * The document range for which the inline value applies.
-	 * The range is used to extract the evaluatable expression from the underlying document.
+	 * The range is used to extract the evaluatable expression from the
+	 * underlying document.
 	 */
 	range: Range;
 
@@ -211,12 +222,12 @@ _Client Capability_:
  */
 export type InlineValuesWorkspaceClientCapabilities = {
 	/**
-	 * Whether the client implementation supports a refresh request sent from the
-	 * server to the client.
+	 * Whether the client implementation supports a refresh request sent from
+	 * the server to the client.
 	 *
 	 * Note that this event is global and will force the client to refresh all
-	 * inline values currently shown. It should be used with absolute care and is
-	 * useful for situation where a server for example detect a project wide
+	 * inline values currently shown. It should be used with absolute care and
+	 * is useful for situation where a server for example detect a project wide
 	 * change that requires such a calculation.
 	 */
 	refreshSupport?: boolean;
