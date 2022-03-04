@@ -230,3 +230,29 @@ _Response_:
 
 * result: void
 * error: code and message set in case an exception happens during the 'workspace/inlineValues/refresh' request
+
+
+<!--- linable types addition
+
+  - type: 'InlineValuesClientCapabilities'
+    link: '#inlineValuesClientCapabilities'
+  - type: 'InlineValuesOptions'
+    link: '#inlineValuesOptions'
+  - type: 'InlineValuesRegistrationOptions'
+    link: '#inlineValuesRegistrationOptions'
+  - type: 'InlineValuesParams'
+    link: '#inlineValuesParams'
+  - type: 'InlineValuesContext'
+    link: '#inlineValuesContext'
+  - type: 'InlineValueText'
+    link: '#inlineValueText'
+  - type: 'InlineValueVariableLookup'
+    link: '#inlineValueVariableLookup'
+  - type: 'InlineValueEvaluatableExpression'
+    link: '#inlineValueEvaluatableExpression'
+  - type: 'InlineValue'
+    link: '#inlineValue'
+  - type: 'InlineValuesWorkspaceClientCapabilities'
+    link: '#inlineValuesWorkspaceClientCapabilities'
+
+--->
