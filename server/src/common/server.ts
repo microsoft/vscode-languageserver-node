@@ -31,7 +31,7 @@ import * as Is from './utils/is';
 import * as UUID from './utils/uuid';
 import { WorkDoneProgressReporter, ResultProgressReporter, WindowProgress, ProgressFeature, attachWorkDone, attachPartialResult} from './progress';
 import { Configuration, ConfigurationFeature } from './configuration';
-import { WorkspaceFolders, WorkspaceFoldersFeature } from './workspaceFolders';
+import { WorkspaceFolders, WorkspaceFoldersFeature } from './workspaceFolder';
 import { CallHierarchy, CallHierarchyFeature } from './callHierarchy';
 import { SemanticTokensFeatureShape, SemanticTokensFeature } from './semanticTokens';
 import { ShowDocumentFeatureShape, ShowDocumentFeature } from './showDocument';

@@ -4,7 +4,7 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as sinon from 'sinon';
 
-import { WorkspaceFoldersFeature } from 'vscode-languageclient/lib/common/workspaceFolders';
+import { WorkspaceFoldersFeature } from 'vscode-languageclient/lib/common/workspaceFolder';
 import { BaseLanguageClient, MessageTransports, DidChangeWorkspaceFoldersParams, Disposable } from 'vscode-languageclient';
 import * as proto from 'vscode-languageserver-protocol';
 

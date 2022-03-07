@@ -63,7 +63,7 @@ import type { ConfigurationWorkspaceMiddleware } from './configuration';
 import type { ColorProviderMiddleware } from './colorProvider';
 import type { ImplementationMiddleware } from './implementation';
 import type { TypeDefinitionMiddleware } from './typeDefinition';
-import type { WorkspaceFolderWorkspaceMiddleware } from './workspaceFolders';
+import type { WorkspaceFolderWorkspaceMiddleware } from './workspaceFolder';
 import type { FoldingRangeProviderMiddleware } from './foldingRange';
 import type { DeclarationMiddleware } from './declaration';
 import type { SelectionRangeProviderMiddleware } from './selectionRange';
@@ -72,10 +72,10 @@ import type { SemanticTokensMiddleware, SemanticTokensProviders } from './semant
 import type { FileOperationsMiddleware } from './fileOperations';
 import type { LinkedEditingRangeMiddleware } from './linkedEditingRange';
 import type { DiagnosticFeatureProvider } from './proposed.diagnostic';
-import type { InlineValueMiddleware, InlineValueProviderShape } from './proposed.inlineValues';
-import type { InlayHintsMiddleware, InlayHintsProviderShape } from './proposed.inlayHints';
+import type { InlineValueMiddleware, InlineValueProviderShape } from './proposed.inlineValue';
+import type { InlayHintsMiddleware, InlayHintsProviderShape } from './proposed.inlayHint';
 import type { TypeHierarchyMiddleware } from './proposed.typeHierarchy';
-import type { $NotebookCellTextDocumentFilter, NotebookDocumentProviderFeature, NotebookDocumentMiddleware } from './proposed.notebooks';
+import type { $NotebookCellTextDocumentFilter, NotebookDocumentProviderFeature, NotebookDocumentMiddleware } from './proposed.notebook';
 
 import * as c2p from './codeConverter';
 import * as p2c from './protocolConverter';

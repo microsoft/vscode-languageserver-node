@@ -16,9 +16,9 @@ export * from './server';
 
 import { DiagnosticsFeatureShape, DiagnosticFeature } from './proposed.diagnostic';
 import { TypeHierarchyFeatureShape, TypeHierarchyFeature } from './proposed.typeHierarchy';
-import { InlineValuesFeatureShape, InlineValuesFeature } from './proposed.inlineValues';
-import { InlayHintsFeatureShape, InlayHintsFeature } from './proposed.inlayHints';
-import { NotebooksFeatureShape, NotebooksFeature, NotebookDocuments as _NotebookDocuments } from './proposed.notebooks';
+import { InlineValuesFeatureShape, InlineValuesFeature } from './proposed.inlineValue';
+import { InlayHintsFeatureShape, InlayHintsFeature } from './proposed.inlayHint';
+import { NotebooksFeatureShape, NotebooksFeature, NotebookDocuments as _NotebookDocuments } from './proposed.notebook';
 
 export namespace ProposedFeatures {
 	export const all: Features<_, _, _, _, _, _, DiagnosticsFeatureShape & TypeHierarchyFeatureShape & InlineValuesFeatureShape & InlayHintsFeatureShape, NotebooksFeatureShape> = {

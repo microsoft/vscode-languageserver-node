@@ -71,8 +71,8 @@ export namespace LSPErrorCodes {
 import * as diag from './proposed.diagnostic';
 import * as typeh from './proposed.typeHierarchy';
 import * as iv from './proposed.inlineValue';
-import * as nb from './proposed.notebooks';
-import * as ih from './proposed.inlayHints';
+import * as nb from './proposed.notebook';
+import * as ih from './proposed.inlayHint';
 
 export namespace Proposed {
 	export type DiagnosticClientCapabilities = diag.DiagnosticClientCapabilities;

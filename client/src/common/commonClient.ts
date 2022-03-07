@@ -11,7 +11,7 @@ import { ColorProviderFeature } from './colorProvider';
 import { ConfigurationFeature as PullConfigurationFeature } from './configuration';
 import { ImplementationFeature } from './implementation';
 import { TypeDefinitionFeature } from './typeDefinition';
-import { WorkspaceFoldersFeature } from './workspaceFolders';
+import { WorkspaceFoldersFeature } from './workspaceFolder';
 import { FoldingRangeFeature } from './foldingRange';
 import { DeclarationFeature } from './declaration';
 import { SelectionRangeFeature } from './selectionRange';
@@ -61,9 +61,9 @@ export abstract class CommonLanguageClient extends BaseLanguageClient {
 // Exporting proposed protocol.
 import * as pd from './proposed.diagnostic';
 import * as pt from './proposed.typeHierarchy';
-import * as iv from './proposed.inlineValues';
-import * as ih from './proposed.inlayHints';
-import * as nb from './proposed.notebooks';
+import * as iv from './proposed.inlineValue';
+import * as ih from './proposed.inlayHint';
+import * as nb from './proposed.notebook';
 
 export namespace ProposedFeatures {
 	export function createAll(client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {

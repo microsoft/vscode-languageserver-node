@@ -31,7 +31,7 @@ import {
 import {
 	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, WorkspaceFolder,
 	WorkspaceFoldersChangeEvent, WorkspaceFoldersInitializeParams, WorkspaceFoldersClientCapabilities, WorkspaceFoldersServerCapabilities
-} from './protocol.workspaceFolders';
+} from './protocol.workspaceFolder';
 
 import {
 	ConfigurationRequest, ConfigurationParams, ConfigurationItem, ConfigurationClientCapabilities
@@ -99,7 +99,7 @@ import {
 
 import {
 	InlayHintClientCapabilities, InlayHintOptions, InlayHintRegistrationOptions, InlayHintWorkspaceClientCapabilities
-} from './proposed.inlayHints';
+} from './proposed.inlayHint';
 
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
