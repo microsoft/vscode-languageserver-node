@@ -1203,6 +1203,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 			: await async.map(value.label, asInlayHintLabelPart, token);
 		const result = new code.InlayHint(asPosition(value.position), label);
 		if (value.kind !== undefined) { result.kind = value.kind; }
+		if (value.textEdits !== undefined) { result.textEdits = await asTextEdits(value.textEdits, token); }
 		if (value.tooltip !== undefined) { result.tooltip = asTooltip(value.tooltip); }
 		if (value.paddingLeft !== undefined) { result.paddingLeft = value.paddingLeft; }
 		if (value.paddingRight !== undefined) { result.paddingRight = value.paddingRight; }

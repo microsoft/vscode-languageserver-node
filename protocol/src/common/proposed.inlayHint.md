@@ -124,6 +124,15 @@ export type InlayHint = {
 	kind?: InlayHintKind;
 
 	/**
+	 * Optional text edits that are performed when accepting this inlay hint.
+	 *
+	 * *Note* that edits are expected to change the document so that the inlay
+	 * hint (or its nearest variant) is now part of the document and the inlay
+	 * hint itself is now obsolete.
+	 */
+	textEdits?: TextEdit[];
+
+	/**
 	 * The tooltip text when you hover over this item.
 	 */
 	tooltip?: string | MarkupContent;

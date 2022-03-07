@@ -860,6 +860,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			: item.label.map(asInlayHintLabelPart);
 		const result = proto.Proposed.InlayHint.create(asPosition(item.position), label);
 		if (item.kind !== undefined) { result.kind = item.kind; }
+		if (item.textEdits !== undefined) { result.textEdits = asTextEdits(item.textEdits); }
 		if (item.tooltip !== undefined) { result.tooltip = asTooltip(item.tooltip); }
 		if (item.paddingLeft !== undefined) { result.paddingLeft = item.paddingLeft; }
 		if (item.paddingRight !== undefined) { result.paddingRight = item.paddingRight; }

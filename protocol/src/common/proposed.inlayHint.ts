@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { RequestHandler, RequestHandler0 } from 'vscode-jsonrpc';
-import { Command, Location, MarkupContent, Position, Range, TextDocumentIdentifier } from 'vscode-languageserver-types';
+import { Command, Location, MarkupContent, Position, Range, TextDocumentIdentifier, TextEdit } from 'vscode-languageserver-types';
 import { ProtocolRequestType, ProtocolRequestType0 } from './messages';
 
 import type { StaticRegistrationOptions, TextDocumentRegistrationOptions, WorkDoneProgressOptions, WorkDoneProgressParams } from './protocol';
@@ -163,6 +163,15 @@ export type InlayHint = {
 	kind?: InlayHintKind;
 
 	/**
+	 * Optional text edits that are performed when accepting this inlay hint.
+	 *
+	 * *Note* that edits are expected to change the document so that the inlay
+	 * hint (or its nearest variant) is now part of the document and the inlay
+	 * hint itself is now obsolete.
+	 */
+	textEdits?: TextEdit[];
+
+	/**
 	 * The tooltip text when you hover over this item.
 	 */
 	tooltip?: string | MarkupContent;
@@ -201,6 +210,7 @@ export namespace InlayHint {
 		return Is.objectLiteral(candidate) && Position.is(candidate.position)
 			&& (Is.string(candidate.label) || Is.typedArray(candidate.label, InlayHintLabelPart.is))
 			&& (candidate.kind === undefined || InlayHintKind.is(candidate.kind))
+			&& (candidate.textEdits === undefined) || Is.typedArray(candidate.textEdits, TextEdit.is)
 			&& (candidate.tooltip === undefined || Is.string(candidate.tooltip) || MarkupContent.is(candidate.tooltip))
 			&& (candidate.paddingLeft === undefined || Is.boolean(candidate.paddingLeft))
 			&& (candidate.paddingRight === undefined || Is.boolean(candidate.paddingRight));
