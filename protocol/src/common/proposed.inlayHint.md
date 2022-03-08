@@ -87,7 +87,7 @@ export type InlayHintParams = WorkDoneProgressParams & {
 	/**
 	 * The visible document range for which inlay hints should be computed.
 	 */
-	viewPort: Range;
+	range: Range;
 };
 ```
 

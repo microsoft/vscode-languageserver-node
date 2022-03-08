@@ -75,7 +75,7 @@ export class InlayHintsFeature extends TextDocumentFeature<boolean | Proposed.In
 				const provideInlayHints: ProvideInlayHintsSignature = async (document, viewPort, token) => {
 					const requestParams: Proposed.InlayHintParams = {
 						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
-						viewPort: client.code2ProtocolConverter.asRange(viewPort)
+						range: client.code2ProtocolConverter.asRange(viewPort)
 					};
 					try {
 						const values = await client.sendRequest(Proposed.InlayHintRequest.type, requestParams, token);

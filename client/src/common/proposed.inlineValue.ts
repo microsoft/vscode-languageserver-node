@@ -69,7 +69,7 @@ export class InlineValueFeature extends TextDocumentFeature<boolean | Proposed.I
 				const provideInlineValues: ProvideInlineValuesSignature = (document, viewPort, context, token) => {
 					const requestParams: Proposed.InlineValueParams = {
 						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
-						viewPort: client.code2ProtocolConverter.asRange(viewPort),
+						range: client.code2ProtocolConverter.asRange(viewPort),
 						context: client.code2ProtocolConverter.asInlineValueContext(context)
 					};
 					return client.sendRequest(Proposed.InlineValueRequest.type, requestParams, token).then((values) => {

@@ -31,6 +31,10 @@ suite('Client integration', () => {
 	const fsProvider = new MemoryFileSystemProvider();
 	let fsProviderDisposable!: vscode.Disposable;
 
+	async function revertAllDirty(): Promise<void> {
+		return vscode.commands.executeCommand('_workbench.revertAllDirty');
+	}
+
 	function positionEqual(pos: vscode.Position, l: number, c: number): void {
 		assert.strictEqual(pos.line, l);
 		assert.strictEqual(pos.character, c);
@@ -1353,6 +1357,7 @@ suite('Client integration', () => {
 		middleware.notebooks = undefined;
 		const notified = await client.sendRequest(GotNotifiedRequest.type, Proposed.DidOpenNotebookDocumentNotification.method);
 		assert.strictEqual(notified, true);
+		await revertAllDirty();
 	});
 
 	test('Notebook document: change', async (): Promise<void> => {
@@ -1378,6 +1383,7 @@ suite('Client integration', () => {
 		middleware.notebooks = undefined;
 		const notified = await client.sendRequest(GotNotifiedRequest.type, Proposed.DidChangeNotebookDocumentNotification.method);
 		assert.strictEqual(notified, true);
+		await revertAllDirty();
 	});
 
 	test('Notebook document: getProvider', async (): Promise<void> => {
@@ -1396,8 +1402,8 @@ suite('Client integration', () => {
 			await provider.sendDidCloseNotebookDocument(notebookDocument);
 			const notified = await client.sendRequest(GotNotifiedRequest.type, Proposed.DidCloseNotebookDocumentNotification.method);
 			assert.strictEqual(notified, true);
-
 		}
+		await revertAllDirty();
 	});
 });
 

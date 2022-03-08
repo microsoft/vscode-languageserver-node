@@ -72,9 +72,9 @@ export type InlineValueParams = WorkDoneProgressParams & {
 	textDocument: TextDocumentIdentifier;
 
 	/**
-	 * The visible document range for which inline values should be computed.
+	 * The document range for which inline values should be computed.
 	 */
-	viewPort: Range;
+	range: Range;
 
 	/**
 	 * Additional information about the context in which inline values were

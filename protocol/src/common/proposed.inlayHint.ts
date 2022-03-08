@@ -249,9 +249,9 @@ export type InlayHintParams = WorkDoneProgressParams & {
 	textDocument: TextDocumentIdentifier;
 
 	/**
-	 * The visible document range for which inlay hints should be computed.
+	 * The document range for which inlay hints should be computed.
 	 */
-	viewPort: Range;
+	range: Range;
 };
 
 /**
