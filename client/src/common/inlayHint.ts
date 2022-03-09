@@ -44,7 +44,7 @@ export class InlayHintsFeature extends TextDocumentFeature<boolean | InlayHintOp
 		const inlayHint = ensure(ensure(capabilities, 'textDocument')!, 'inlayHint')!;
 		inlayHint.dynamicRegistration = true;
 		inlayHint.resolveSupport = {
-			properties: ['label.tooltip', 'label.location', 'label.command']
+			properties: ['tooltip', 'textEdits', 'label.tooltip', 'label.location', 'label.command']
 		};
 		ensure(ensure(capabilities, 'workspace')!, 'inlayHint')!.refreshSupport = true;
 	}
