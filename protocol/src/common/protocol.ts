@@ -30,7 +30,7 @@ import {
 
 import {
 	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, WorkspaceFolder,
-	WorkspaceFoldersChangeEvent, WorkspaceFoldersInitializeParams, WorkspaceFoldersClientCapabilities, WorkspaceFoldersServerCapabilities
+	WorkspaceFoldersChangeEvent, WorkspaceFoldersInitializeParams, WorkspaceFoldersServerCapabilities
 } from './protocol.workspaceFolder';
 
 import {
@@ -487,6 +487,13 @@ export interface WorkspaceClientCapabilities {
 	executeCommand?: ExecuteCommandClientCapabilities;
 
 	/**
+	 * The client has support for workspace folders
+	 *
+	 * @since 3.6.0
+	 */
+	workspaceFolders?: boolean;
+
+	/**
 	 * Capabilities specific to the semantic token requests scoped to the
 	 * workspace.
 	 *
@@ -843,7 +850,7 @@ export interface _ClientCapabilities {
 	experimental?: object;
 }
 
-export type ClientCapabilities = _ClientCapabilities & WorkspaceFoldersClientCapabilities & ConfigurationClientCapabilities & WorkDoneProgressClientCapabilities;
+export type ClientCapabilities = _ClientCapabilities & ConfigurationClientCapabilities & WorkDoneProgressClientCapabilities;
 
 /**
  * Static registration options to be returned in the initialize
@@ -1067,18 +1074,6 @@ export interface _ServerCapabilities<T = any> {
 	semanticTokensProvider?: SemanticTokensOptions | SemanticTokensRegistrationOptions;
 
 	/**
-	 * Window specific server capabilities.
-	 */
-	workspace?: {
-		/**
-		* The server is interested in notifications/requests for operations on files.
-		*
-		* @since 3.16.0
-		*/
-		fileOperations?: FileOperationOptions;
-	};
-
-	/**
 	 * The server provides moniker support.
 	 *
 	 * @since 3.16.0
@@ -1107,12 +1102,31 @@ export interface _ServerCapabilities<T = any> {
 	inlayHintProvider?: boolean | InlayHintOptions | InlayHintRegistrationOptions;
 
 	/**
+	 * Workspace specific server capabilities.
+	 */
+	workspace?: {
+		/**
+		 * The server supports workspace folder.
+		 *
+		 * @since 3.6.0
+		 */
+		workspaceFolders?: WorkspaceFoldersServerCapabilities;
+
+		/**
+		* The server is interested in notifications/requests for operations on files.
+		*
+		* @since 3.16.0
+		*/
+		fileOperations?: FileOperationOptions;
+	};
+
+	/**
 	 * Experimental server capabilities.
 	 */
 	experimental?: T;
 }
 
-export type ServerCapabilities<T = any> = _ServerCapabilities<T> & WorkspaceFoldersServerCapabilities;
+export type ServerCapabilities<T = any> = _ServerCapabilities<T>;
 
 /**
  * The initialize request is sent from the client to the server.
