@@ -90,8 +90,9 @@ import {
 } from './protocol.moniker';
 
 import {
-	TypeHierarchyClientCapabilities, TypeHierarchyOptions, TypeHierarchyRegistrationOptions,
-} from './proposed.typeHierarchy';
+	TypeHierarchyClientCapabilities, TypeHierarchyOptions, TypeHierarchyRegistrationOptions, TypeHierarchyPrepareParams, TypeHierarchyPrepareRequest,
+	TypeHierarchySubtypesParams, TypeHierarchySubtypesRequest, TypeHierarchySupertypesParams, TypeHierarchySupertypesRequest
+} from './protocol.typeHierarchy';
 
 import {
 	InlineValueClientCapabilities, InlineValueOptions, InlineValueRegistrationOptions, InlineValueWorkspaceClientCapabilities, InlineValueParams,
@@ -3566,14 +3567,17 @@ export {
 	DidCreateFilesNotification, CreateFilesParams, FileCreate, WillCreateFilesRequest,
 	DidRenameFilesNotification, RenameFilesParams, FileRename, WillRenameFilesRequest,
 	DidDeleteFilesNotification, DeleteFilesParams, FileDelete, WillDeleteFilesRequest,
+	// Monikers
+	UniquenessLevel, MonikerKind, Moniker, MonikerClientCapabilities, MonikerOptions, MonikerRegistrationOptions, MonikerParams, MonikerRequest,
+	// Type hierarchy
+	TypeHierarchyClientCapabilities, TypeHierarchyOptions, TypeHierarchyRegistrationOptions, TypeHierarchyPrepareParams, TypeHierarchyPrepareRequest,
+	TypeHierarchySubtypesParams, TypeHierarchySubtypesRequest, TypeHierarchySupertypesParams, TypeHierarchySupertypesRequest,
 	// Inline Values
 	InlineValueClientCapabilities, InlineValueOptions, InlineValueRegistrationOptions, InlineValueWorkspaceClientCapabilities, InlineValueParams,
 	InlineValueRequest, InlineValueRefreshRequest,
 	// Inlay Hints
 	InlayHintClientCapabilities, InlayHintOptions, InlayHintRegistrationOptions, InlayHintWorkspaceClientCapabilities, InlayHintParams,
 	InlayHintRequest, InlayHintResolveRequest, InlayHintRefreshRequest,
-	// Monikers
-	UniquenessLevel, MonikerKind, Moniker, MonikerClientCapabilities, MonikerOptions, MonikerRegistrationOptions, MonikerParams, MonikerRequest,
 };
 
 // To be backwards compatible

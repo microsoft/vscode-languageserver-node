@@ -37,6 +37,7 @@ import { SemanticTokensFeatureShape, SemanticTokensFeature } from './semanticTok
 import { ShowDocumentFeatureShape, ShowDocumentFeature } from './showDocument';
 import { FileOperationsFeature, FileOperationsFeatureShape } from './fileOperations';
 import { LinkedEditingRangeFeature, LinkedEditingRangeFeatureShape } from './linkedEditingRange';
+import { TypeHierarchyFeatureShape, TypeHierarchyFeature } from './typeHierarchy';
 import { InlineValueFeatureShape, InlineValueFeature } from './inlineValue';
 import { InlayHintFeatureShape, InlayHintFeature } from './inlayHint';
 import { MonikerFeature, MonikerFeatureShape } from './moniker';
@@ -811,8 +812,8 @@ export class _LanguagesImpl implements Remote, _Languages {
 	}
 }
 
-export type Languages = _Languages & CallHierarchy & SemanticTokensFeatureShape & LinkedEditingRangeFeatureShape & InlineValueFeatureShape & InlayHintFeatureShape & MonikerFeatureShape;
-const LanguagesImpl: new () => Languages = MonikerFeature(InlayHintFeature(InlineValueFeature(LinkedEditingRangeFeature(SemanticTokensFeature(CallHierarchyFeature(_LanguagesImpl)))))) as (new () => Languages);
+export type Languages = _Languages & CallHierarchy & SemanticTokensFeatureShape & LinkedEditingRangeFeatureShape & TypeHierarchyFeatureShape & InlineValueFeatureShape & InlayHintFeatureShape & MonikerFeatureShape;
+const LanguagesImpl: new () => Languages = MonikerFeature(InlayHintFeature(InlineValueFeature(TypeHierarchyFeature(LinkedEditingRangeFeature(SemanticTokensFeature(CallHierarchyFeature(_LanguagesImpl))))))) as (new () => Languages);
 
 export interface _Notebooks extends FeatureBase {
 	connection: Connection;

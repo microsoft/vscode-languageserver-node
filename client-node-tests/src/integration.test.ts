@@ -1223,7 +1223,7 @@ suite('Client integration', () => {
 	});
 
 	test('Type Hierarchy', async () => {
-		const provider = client.getFeature(lsclient.Proposed.TypeHierarchyPrepareRequest.method).getProvider(document);
+		const provider = client.getFeature(lsclient.TypeHierarchyPrepareRequest.method).getProvider(document);
 		isDefined(provider);
 		const result = (await provider.prepareTypeHierarchy(document, position, tokenSource.token)) as vscode.TypeHierarchyItem[];
 

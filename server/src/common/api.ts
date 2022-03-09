@@ -15,17 +15,16 @@ export { TextDocuments, TextDocumentsConfiguration, TextDocumentChangeEvent, Tex
 export * from './server';
 
 import { DiagnosticsFeatureShape, DiagnosticFeature } from './proposed.diagnostic';
-import { TypeHierarchyFeatureShape, TypeHierarchyFeature } from './proposed.typeHierarchy';
 import { NotebooksFeatureShape, NotebooksFeature, NotebookDocuments as _NotebookDocuments } from './proposed.notebook';
 
 export namespace ProposedFeatures {
-	export const all: Features<_, _, _, _, _, _, DiagnosticsFeatureShape & TypeHierarchyFeatureShape, NotebooksFeatureShape> = {
+	export const all: Features<_, _, _, _, _, _, DiagnosticsFeatureShape, NotebooksFeatureShape> = {
 		__brand: 'features',
-		languages: combineLanguagesFeatures(TypeHierarchyFeature, DiagnosticFeature),
+		languages: DiagnosticFeature,
 		notebooks: NotebooksFeature
 	};
 
-	export type Connection = _Connection<_, _, _, _, _, _, DiagnosticsFeatureShape & TypeHierarchyFeatureShape, NotebooksFeatureShape>;
+	export type Connection = _Connection<_, _, _, _, _, _, DiagnosticsFeatureShape, NotebooksFeatureShape>;
 
 	export const NotebookDocuments = _NotebookDocuments;
 }

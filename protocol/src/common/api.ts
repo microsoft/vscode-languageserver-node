@@ -69,7 +69,6 @@ export namespace LSPErrorCodes {
 }
 
 import * as diag from './proposed.diagnostic';
-import * as typeh from './proposed.typeHierarchy';
 import * as nb from './proposed.notebook';
 
 export namespace Proposed {
@@ -101,18 +100,6 @@ export namespace Proposed {
 	export type WorkspaceDiagnosticReportPartialResult = diag.WorkspaceDiagnosticReportPartialResult;
 	export const WorkspaceDiagnosticRequest: typeof diag.WorkspaceDiagnosticRequest = diag.WorkspaceDiagnosticRequest;
 	export const DiagnosticRefreshRequest: typeof diag.DiagnosticRefreshRequest = diag.DiagnosticRefreshRequest;
-
-	// type hierarchy
-	export type TypeHierarchyClientCapabilities = typeh.TypeHierarchyClientCapabilities;
-	export type TypeHierarchyOptions = typeh.TypeHierarchyOptions;
-	export type TypeHierarchyRegistrationOptions = typeh.TypeHierarchyRegistrationOptions;
-	export type TypeHierarchyPrepareParams = typeh.TypeHierarchyPrepareParams;
-	export type TypeHierarchySupertypesParams = typeh.TypeHierarchySupertypesParams;
-	export type TypeHierarchySubtypesParams = typeh.TypeHierarchySubtypesParams;
-
-	export const TypeHierarchyPrepareRequest: typeof typeh.TypeHierarchyPrepareRequest = typeh.TypeHierarchyPrepareRequest;
-	export const TypeHierarchySupertypesRequest: typeof typeh.TypeHierarchySupertypesRequest = typeh.TypeHierarchySupertypesRequest;
-	export const TypeHierarchySubtypesRequest: typeof typeh.TypeHierarchySubtypesRequest = typeh.TypeHierarchySubtypesRequest;
 
 	// Notebooks
 	export type $NotebookDocumentClientCapabilities = nb.$NotebookDocumentClientCapabilities;
