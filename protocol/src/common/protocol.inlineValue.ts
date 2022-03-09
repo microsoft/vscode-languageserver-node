@@ -85,7 +85,7 @@ export type InlineValueParams = WorkDoneProgressParams & {
  *
  * @since 3.17.0 - proposed state
  */
-export namespace InlineValuesRequest {
+export namespace InlineValueRequest {
 	export const method: 'textDocument/inlineValue' = 'textDocument/inlineValue';
 	export const type = new ProtocolRequestType<InlineValueParams, InlineValue[] | null, InlineValue[], any, InlineValueRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<InlineValueParams, InlineValue[] | null, void>;

@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Proposed, InlineValue, Disposable } from 'vscode-languageserver-protocol';
+import { InlineValue, Disposable, InlineValueParams, InlineValueRefreshRequest, InlineValueRequest } from 'vscode-languageserver-protocol';
 
 import type { Feature, _Languages, ServerRequestHandler } from './server';
 
@@ -13,8 +13,8 @@ import type { Feature, _Languages, ServerRequestHandler } from './server';
  *
  * @since 3.17.0 - proposed state
  */
-export interface InlineValuesFeatureShape {
-	inlineValues: {
+export interface InlineValueFeatureShape {
+	inlineValue: {
 		/**
 		 * Ask the client to refresh all inline values.
 		 */
@@ -25,19 +25,19 @@ export interface InlineValuesFeatureShape {
 		 *
 		 * @param handler The corresponding handler.
 		 */
-		on(handler: ServerRequestHandler<Proposed.InlineValueParams, InlineValue[] | undefined | null, InlineValue[], void>): Disposable;
+		on(handler: ServerRequestHandler<InlineValueParams, InlineValue[] | undefined | null, InlineValue[], void>): Disposable;
 	};
 }
 
-export const InlineValuesFeature: Feature<_Languages, InlineValuesFeatureShape> = (Base) => {
-	return class extends Base implements InlineValuesFeatureShape {
-		public get inlineValues() {
+export const InlineValueFeature: Feature<_Languages, InlineValueFeatureShape> = (Base) => {
+	return class extends Base implements InlineValueFeatureShape {
+		public get inlineValue() {
 			return {
 				refresh: (): Promise<void> => {
-					return this.connection.sendRequest(Proposed.InlineValueRefreshRequest.type);
+					return this.connection.sendRequest(InlineValueRefreshRequest.type);
 				},
-				on: (handler: ServerRequestHandler<Proposed.InlineValueParams, InlineValue[] | undefined | null, InlineValue[], void>): Disposable => {
-					return this.connection.onRequest(Proposed.InlineValueRequest.type, (params, cancel) => {
+				on: (handler: ServerRequestHandler<InlineValueParams, InlineValue[] | undefined | null, InlineValue[], void>): Disposable => {
+					return this.connection.onRequest(InlineValueRequest.type, (params, cancel) => {
 						return handler(params, cancel, this.attachWorkDoneProgress(params));
 					});
 				}

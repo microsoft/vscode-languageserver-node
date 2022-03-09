@@ -70,7 +70,6 @@ export namespace LSPErrorCodes {
 
 import * as diag from './proposed.diagnostic';
 import * as typeh from './proposed.typeHierarchy';
-import * as iv from './proposed.inlineValue';
 import * as nb from './proposed.notebook';
 
 export namespace Proposed {
@@ -114,15 +113,6 @@ export namespace Proposed {
 	export const TypeHierarchyPrepareRequest: typeof typeh.TypeHierarchyPrepareRequest = typeh.TypeHierarchyPrepareRequest;
 	export const TypeHierarchySupertypesRequest: typeof typeh.TypeHierarchySupertypesRequest = typeh.TypeHierarchySupertypesRequest;
 	export const TypeHierarchySubtypesRequest: typeof typeh.TypeHierarchySubtypesRequest = typeh.TypeHierarchySubtypesRequest;
-
-	// Inline value
-	export type InlineValueClientCapabilities = iv.InlineValueClientCapabilities;
-	export type InlineValueOptions = iv.InlineValueOptions;
-	export type InlineValueRegistrationOptions = iv.InlineValueRegistrationOptions;
-	export type InlineValueParams = iv.InlineValueParams;
-
-	export const InlineValueRequest: typeof iv.InlineValuesRequest = iv.InlineValuesRequest;
-	export const InlineValueRefreshRequest: typeof iv.InlineValueRefreshRequest = iv.InlineValueRefreshRequest;
 
 	// Notebooks
 	export type $NotebookDocumentClientCapabilities = nb.$NotebookDocumentClientCapabilities;

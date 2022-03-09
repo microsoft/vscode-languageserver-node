@@ -57,21 +57,21 @@ export abstract class CommonLanguageClient extends BaseLanguageClient {
 		this.registerFeature(new WillRenameFilesFeature(this));
 		this.registerFeature(new WillDeleteFilesFeature(this));
 		this.registerFeature(new InlayHintsFeature(this));
+		this.registerFeature(new InlineValueFeature(this));
 	}
 }
 
 // Exporting proposed protocol.
 import * as pd from './proposed.diagnostic';
 import * as pt from './proposed.typeHierarchy';
-import * as iv from './proposed.inlineValue';
 import * as nb from './proposed.notebook';
+import { InlineValueFeature } from './inlineValue';
 
 export namespace ProposedFeatures {
 	export function createAll(client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
 		let result: (StaticFeature | DynamicFeature<any>)[] = [
 			new pd.DiagnosticFeature(client),
 			new pt.TypeHierarchyFeature(client),
-			new iv.InlineValueFeature(client),
 			new nb.NotebookDocumentSyncFeature(client)
 		];
 		return result;
@@ -83,10 +83,6 @@ export namespace ProposedFeatures {
 
 	export function createTypeHierarchyFeature(client: BaseLanguageClient): DynamicFeature<boolean | Proposed.TypeHierarchyOptions> {
 		return new pt.TypeHierarchyFeature(client);
-	}
-
-	export function createInlineValueFeature(client: BaseLanguageClient): DynamicFeature<boolean | Proposed.InlineValueOptions> {
-		return new iv.InlineValueFeature(client);
 	}
 
 	export function createNotebookDocumentSyncFeature(client: BaseLanguageClient): DynamicFeature<Proposed.NotebookDocumentSyncRegistrationOptions> {

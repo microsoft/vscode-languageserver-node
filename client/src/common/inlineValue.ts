@@ -9,7 +9,8 @@ import {
 } from 'vscode';
 
 import {
-	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, Proposed
+	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, InlineValueOptions, InlineValueRegistrationOptions,
+	InlineValueRefreshRequest, InlineValueParams, InlineValueRequest,
 } from 'vscode-languageserver-protocol';
 
 import { TextDocumentFeature, BaseLanguageClient, $DocumentSelector } from './client';
@@ -32,9 +33,9 @@ export type InlineValueProviderShape = {
 	onDidChangeInlineValues: EventEmitter<void>;
 };
 
-export class InlineValueFeature extends TextDocumentFeature<boolean | Proposed.InlineValueOptions, Proposed.InlineValueRegistrationOptions, InlineValueProviderShape> {
+export class InlineValueFeature extends TextDocumentFeature<boolean | InlineValueOptions, InlineValueRegistrationOptions, InlineValueProviderShape> {
 	constructor(client: BaseLanguageClient) {
-		super(client, Proposed.InlineValueRequest.type);
+		super(client, InlineValueRequest.type);
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
@@ -43,7 +44,7 @@ export class InlineValueFeature extends TextDocumentFeature<boolean | Proposed.I
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		this._client.onRequest(Proposed.InlineValueRefreshRequest.type, async () => {
+		this._client.onRequest(InlineValueRefreshRequest.type, async () => {
 			for (const provider of this.getAllProviders()) {
 				provider.onDidChangeInlineValues.fire();
 			}
@@ -56,7 +57,7 @@ export class InlineValueFeature extends TextDocumentFeature<boolean | Proposed.I
 		this.register({ id: id, registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: Proposed.InlineValueRegistrationOptions): [Disposable, InlineValueProviderShape] {
+	protected registerLanguageProvider(options: InlineValueRegistrationOptions): [Disposable, InlineValueProviderShape] {
 		const selector = options.documentSelector!;
 		const eventEmitter: EventEmitter<void> = new EventEmitter<void>();
 		const provider: InlineValuesProvider = {
@@ -67,18 +68,18 @@ export class InlineValueFeature extends TextDocumentFeature<boolean | Proposed.I
 				}
 				const client = this._client;
 				const provideInlineValues: ProvideInlineValuesSignature = (document, viewPort, context, token) => {
-					const requestParams: Proposed.InlineValueParams = {
+					const requestParams: InlineValueParams = {
 						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
 						range: client.code2ProtocolConverter.asRange(viewPort),
 						context: client.code2ProtocolConverter.asInlineValueContext(context)
 					};
-					return client.sendRequest(Proposed.InlineValueRequest.type, requestParams, token).then((values) => {
+					return client.sendRequest(InlineValueRequest.type, requestParams, token).then((values) => {
 						if (token.isCancellationRequested) {
 							return null;
 						}
 						return client.protocol2CodeConverter.asInlineValues(values, token);
 					}, (error: any) => {
-						return client.handleFailedRequest(Proposed.InlineValueRequest.type, token, error, null);
+						return client.handleFailedRequest(InlineValueRequest.type, token, error, null);
 					});
 				};
 				const middleware = client.clientOptions.middleware!;

@@ -52,7 +52,7 @@ connection.onInitialize((params: InitializeParams): any => {
 	assert.equal(params.capabilities.textDocument!.documentLink!.tooltipSupport, true);
 	assert.equal(params.capabilities.textDocument!.inlineValue!.dynamicRegistration, true);
 	assert.equal(params.capabilities.textDocument!.inlayHint!.dynamicRegistration, true);
-	assert.equal(params.capabilities.textDocument!.inlayHint!.resolveSupport!.properties[0], 'label.tooltip');
+	assert.equal(params.capabilities.textDocument!.inlayHint!.resolveSupport!.properties[0], 'tooltip');
 
 	const valueSet = params.capabilities.textDocument!.completion!.completionItemKind!.valueSet!;
 	assert.equal(valueSet[0], 1);
@@ -493,7 +493,7 @@ connection.languages.typeHierarchy.onSubtypes((_params) => {
 	return typeHierarchySample.subTypes;
 });
 
-connection.languages.inlineValues.on((_params) => {
+connection.languages.inlineValue.on((_params) => {
 	return [
 		InlineValueText.create(Range.create(1, 2, 3, 4), 'text'),
 		InlineValueVariableLookup.create(Range.create(1, 2, 3, 4), 'variableName', false),
@@ -501,7 +501,7 @@ connection.languages.inlineValues.on((_params) => {
 	];
 });
 
-connection.languages.inlayHints.on(() => {
+connection.languages.inlayHint.on(() => {
 	const one = InlayHint.create(Position.create(1,1), [InlayHintLabelPart.create('type')], InlayHintKind.Type);
 	one.data = '1';
 	const two = InlayHint.create(Position.create(2,2), [InlayHintLabelPart.create('parameter')], InlayHintKind.Parameter);
@@ -509,7 +509,7 @@ connection.languages.inlayHints.on(() => {
 	return [one, two];
 });
 
-connection.languages.inlayHints.resolve((hint) => {
+connection.languages.inlayHint.resolve((hint) => {
 	(hint.label as InlayHintLabelPart[])[0].tooltip = 'tooltip';
 	return hint;
 });

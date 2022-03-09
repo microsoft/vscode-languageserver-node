@@ -13,8 +13,8 @@ import type { Feature, _Languages, ServerRequestHandler } from './server';
  *
  * @since 3.17.0 - proposed state
  */
-export interface InlayHintsFeatureShape {
-	inlayHints: {
+export interface InlayHintFeatureShape {
+	inlayHint: {
 		/**
 		 * Ask the client to refresh all inlay hints.
 		 */
@@ -36,9 +36,9 @@ export interface InlayHintsFeatureShape {
 	};
 }
 
-export const InlayHintsFeature: Feature<_Languages, InlayHintsFeatureShape> = (Base) => {
-	return class extends Base implements InlayHintsFeatureShape {
-		public get inlayHints() {
+export const InlayHintFeature: Feature<_Languages, InlayHintFeatureShape> = (Base) => {
+	return class extends Base implements InlayHintFeatureShape {
+		public get inlayHint() {
 			return {
 				refresh: (): Promise<void> => {
 					return this.connection.sendRequest(InlayHintRefreshRequest.type);

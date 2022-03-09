@@ -16,17 +16,16 @@ export * from './server';
 
 import { DiagnosticsFeatureShape, DiagnosticFeature } from './proposed.diagnostic';
 import { TypeHierarchyFeatureShape, TypeHierarchyFeature } from './proposed.typeHierarchy';
-import { InlineValuesFeatureShape, InlineValuesFeature } from './proposed.inlineValue';
 import { NotebooksFeatureShape, NotebooksFeature, NotebookDocuments as _NotebookDocuments } from './proposed.notebook';
 
 export namespace ProposedFeatures {
-	export const all: Features<_, _, _, _, _, _, DiagnosticsFeatureShape & TypeHierarchyFeatureShape & InlineValuesFeatureShape, NotebooksFeatureShape> = {
+	export const all: Features<_, _, _, _, _, _, DiagnosticsFeatureShape & TypeHierarchyFeatureShape, NotebooksFeatureShape> = {
 		__brand: 'features',
-		languages: combineLanguagesFeatures(InlineValuesFeature, combineLanguagesFeatures(TypeHierarchyFeature, DiagnosticFeature)),
+		languages: combineLanguagesFeatures(TypeHierarchyFeature, DiagnosticFeature),
 		notebooks: NotebooksFeature
 	};
 
-	export type Connection = _Connection<_, _, _, _, _, _, DiagnosticsFeatureShape & TypeHierarchyFeatureShape & InlineValuesFeatureShape, NotebooksFeatureShape>;
+	export type Connection = _Connection<_, _, _, _, _, _, DiagnosticsFeatureShape & TypeHierarchyFeatureShape, NotebooksFeatureShape>;
 
 	export const NotebookDocuments = _NotebookDocuments;
 }

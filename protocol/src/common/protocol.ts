@@ -94,13 +94,14 @@ import {
 } from './proposed.typeHierarchy';
 
 import {
-	InlineValueClientCapabilities, InlineValueOptions, InlineValueRegistrationOptions, InlineValueWorkspaceClientCapabilities
-} from './proposed.inlineValue';
+	InlineValueClientCapabilities, InlineValueOptions, InlineValueRegistrationOptions, InlineValueWorkspaceClientCapabilities, InlineValueParams,
+	InlineValueRequest, InlineValueRefreshRequest
+} from './protocol.inlineValue';
 
 import {
 	InlayHintClientCapabilities, InlayHintOptions, InlayHintRegistrationOptions, InlayHintWorkspaceClientCapabilities, InlayHintParams,
 	InlayHintRequest, InlayHintResolveRequest, InlayHintRefreshRequest
-} from './inlayHint';
+} from './protocol.inlayHint';
 
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
@@ -3544,6 +3545,9 @@ export {
 	DidCreateFilesNotification, CreateFilesParams, FileCreate, WillCreateFilesRequest,
 	DidRenameFilesNotification, RenameFilesParams, FileRename, WillRenameFilesRequest,
 	DidDeleteFilesNotification, DeleteFilesParams, FileDelete, WillDeleteFilesRequest,
+	// Inline Values
+	InlineValueClientCapabilities, InlineValueOptions, InlineValueRegistrationOptions, InlineValueWorkspaceClientCapabilities, InlineValueParams,
+	InlineValueRequest, InlineValueRefreshRequest,
 	// Inlay Hints
 	InlayHintClientCapabilities, InlayHintOptions, InlayHintRegistrationOptions, InlayHintWorkspaceClientCapabilities, InlayHintParams,
 	InlayHintRequest, InlayHintResolveRequest, InlayHintRefreshRequest,
