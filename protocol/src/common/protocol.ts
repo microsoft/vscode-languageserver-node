@@ -34,7 +34,7 @@ import {
 } from './protocol.workspaceFolder';
 
 import {
-	ConfigurationRequest, ConfigurationParams, ConfigurationItem, ConfigurationClientCapabilities
+	ConfigurationRequest, ConfigurationParams, ConfigurationItem,
 } from './protocol.configuration';
 
 import {
@@ -494,6 +494,13 @@ export interface WorkspaceClientCapabilities {
 	workspaceFolders?: boolean;
 
 	/**
+	 * The client supports `workspace/configuration` requests.
+	 *
+	 * @since 3.6.0
+	 */
+	configuration?: boolean;
+
+	/**
 	 * Capabilities specific to the semantic token requests scoped to the
 	 * workspace.
 	 *
@@ -850,7 +857,7 @@ export interface _ClientCapabilities {
 	experimental?: object;
 }
 
-export type ClientCapabilities = _ClientCapabilities & ConfigurationClientCapabilities & WorkDoneProgressClientCapabilities;
+export type ClientCapabilities = _ClientCapabilities & WorkDoneProgressClientCapabilities;
 
 /**
  * Static registration options to be returned in the initialize
