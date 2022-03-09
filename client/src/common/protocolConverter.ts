@@ -17,6 +17,7 @@ import { ProtocolDiagnostic, DiagnosticCode } from './protocolDiagnostic';
 import ProtocolCallHierarchyItem from './protocolCallHierarchyItem';
 import ProtocolTypeHierarchyItem from './protocolTypeHierarchyItem';
 import WorkspaceSymbol from './protocolWorkspaceSymbol';
+import ProtocolInlayHint from './protocolInlayHint';
 
 interface InsertReplaceRange {
 	inserting: code.Range;
@@ -192,11 +193,11 @@ export interface Converter {
 	asInlineValues(values: ls.InlineValue[], token?: code.CancellationToken): Promise<code.InlineValue[]>;
 	asInlineValues(values: ls.InlineValue[] | undefined | null, token?: code.CancellationToken): Promise<code.InlineValue[] | undefined>;
 
-	asInlayHint(value: ls.Proposed.InlayHint, token?: code.CancellationToken): Promise<code.InlayHint>;
+	asInlayHint(value: ls.InlayHint, token?: code.CancellationToken): Promise<code.InlayHint>;
 
 	asInlayHints(values: undefined | null, token?: code.CancellationToken): Promise<undefined>;
-	asInlayHints(values: ls.Proposed.InlayHint[], token?: code.CancellationToken): Promise<code.InlayHint[]>;
-	asInlayHints(values: ls.Proposed.InlayHint[] | undefined | null, token?: code.CancellationToken): Promise<code.InlayHint[] | undefined>;
+	asInlayHints(values: ls.InlayHint[], token?: code.CancellationToken): Promise<code.InlayHint[]>;
+	asInlayHints(values: ls.InlayHint[] | undefined | null, token?: code.CancellationToken): Promise<code.InlayHint[] | undefined>;
 
 	asSemanticTokensLegend(value: ls.SemanticTokensLegend): code.SemanticTokensLegend;
 
@@ -1197,20 +1198,21 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return async.map(inlineValues, asInlineValue, token);
 	}
 
-	async function asInlayHint(value: ls.Proposed.InlayHint, token?: code.CancellationToken): Promise<code.InlayHint> {
+	async function asInlayHint(value: ls.InlayHint, token?: code.CancellationToken): Promise<code.InlayHint> {
 		const label = typeof value.label === 'string'
 			? value.label
 			: await async.map(value.label, asInlayHintLabelPart, token);
-		const result = new code.InlayHint(asPosition(value.position), label);
+		const result = new ProtocolInlayHint(asPosition(value.position), label);
 		if (value.kind !== undefined) { result.kind = value.kind; }
 		if (value.textEdits !== undefined) { result.textEdits = await asTextEdits(value.textEdits, token); }
 		if (value.tooltip !== undefined) { result.tooltip = asTooltip(value.tooltip); }
 		if (value.paddingLeft !== undefined) { result.paddingLeft = value.paddingLeft; }
 		if (value.paddingRight !== undefined) { result.paddingRight = value.paddingRight; }
+		if (value.data !== undefined) { result.data = value.data; }
 		return result;
 	}
 
-	function asInlayHintLabelPart(part: ls.Proposed.InlayHintLabelPart): code.InlayHintLabelPart {
+	function asInlayHintLabelPart(part: ls.InlayHintLabelPart): code.InlayHintLabelPart {
 		const result = new code.InlayHintLabelPart(part.value);
 		if (part.location !== undefined) { result.location = asLocation(part.location); }
 		if (part.tooltip !== undefined) { result.tooltip = asTooltip(part.tooltip); }
@@ -1226,9 +1228,9 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 	}
 
 	function asInlayHints(values: undefined | null,  token?: code.CancellationToken): Promise<undefined>;
-	function asInlayHints(values: ls.Proposed.InlayHint[], token?: code.CancellationToken): Promise<code.InlayHint[]>;
-	function asInlayHints(values: ls.Proposed.InlayHint[] | undefined | null, token?: code.CancellationToken): Promise<code.InlayHint[] | undefined>;
-	async function asInlayHints(values: ls.Proposed.InlayHint[] | undefined | null, token?: code.CancellationToken): Promise<code.InlayHint[] | undefined> {
+	function asInlayHints(values: ls.InlayHint[], token?: code.CancellationToken): Promise<code.InlayHint[]>;
+	function asInlayHints(values: ls.InlayHint[] | undefined | null, token?: code.CancellationToken): Promise<code.InlayHint[] | undefined>;
+	async function asInlayHints(values: ls.InlayHint[] | undefined | null, token?: code.CancellationToken): Promise<code.InlayHint[] | undefined> {
 		if (!Array.isArray(values)) {
 			return undefined;
 		}

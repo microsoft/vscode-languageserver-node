@@ -17,6 +17,7 @@ import { ProtocolDiagnostic, DiagnosticCode } from './protocolDiagnostic';
 import ProtocolCallHierarchyItem from './protocolCallHierarchyItem';
 import ProtocolTypeHierarchyItem from './protocolTypeHierarchyItem';
 import WorkspaceSymbol from './protocolWorkspaceSymbol';
+import ProtocolInlayHint from './protocolInlayHint';
 
 
 interface InsertReplaceRange {
@@ -133,7 +134,7 @@ export interface Converter {
 
 	asWorkspaceSymbol(item: code.SymbolInformation): proto.WorkspaceSymbol;
 
-	asInlayHint(value: code.InlayHint): proto.Proposed.InlayHint;
+	asInlayHint(value: code.InlayHint): proto.InlayHint;
 }
 
 export interface URIConverter {
@@ -752,7 +753,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (context === undefined || context === null) {
 			return context;
 		}
-		return proto.InlineValueContext.create(context.stoppedLocation);
+		return proto.InlineValueContext.create(context.frameId, context.stoppedLocation);
 	}
 
 	function asCommand(item: code.Command): proto.Command {
@@ -854,21 +855,24 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return result;
 	}
 
-	function asInlayHint(item: code.InlayHint): proto.Proposed.InlayHint {
+	function asInlayHint(item: code.InlayHint): proto.InlayHint {
 		const label = typeof item.label === 'string'
 			? item.label
 			: item.label.map(asInlayHintLabelPart);
-		const result = proto.Proposed.InlayHint.create(asPosition(item.position), label);
+		const result = proto.InlayHint.create(asPosition(item.position), label);
 		if (item.kind !== undefined) { result.kind = item.kind; }
 		if (item.textEdits !== undefined) { result.textEdits = asTextEdits(item.textEdits); }
 		if (item.tooltip !== undefined) { result.tooltip = asTooltip(item.tooltip); }
 		if (item.paddingLeft !== undefined) { result.paddingLeft = item.paddingLeft; }
 		if (item.paddingRight !== undefined) { result.paddingRight = item.paddingRight; }
+		if (item instanceof ProtocolInlayHint && item.data !== undefined) {
+			result.data = item.data;
+		}
 		return result;
 	}
 
-	function asInlayHintLabelPart(item: code.InlayHintLabelPart): proto.Proposed.InlayHintLabelPart {
-		const result = proto.Proposed.InlayHintLabelPart.create(item.value);
+	function asInlayHintLabelPart(item: code.InlayHintLabelPart): proto.InlayHintLabelPart {
+		const result = proto.InlayHintLabelPart.create(item.value);
 		if (item.location !== undefined) { result.location = asLocation(item.location); }
 		if (item.command !== undefined) { result.command = asCommand(item.command); }
 		if (item.tooltip !== undefined) { result.tooltip = asTooltip(item.tooltip); }

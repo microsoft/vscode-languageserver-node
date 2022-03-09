@@ -11,12 +11,12 @@ import {
 	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, SymbolKind, ProtocolRequestType, WorkDoneProgress,
 	InlineValueText, InlineValueVariableLookup, InlineValueEvaluatableExpression, RequestType,
 	WorkDoneProgressCreateRequest, WillCreateFilesRequest, WillRenameFilesRequest, WillDeleteFilesRequest, DidDeleteFilesNotification,
-	DidRenameFilesNotification, DidCreateFilesNotification, Proposed, ProposedFeatures, Diagnostic, DiagnosticSeverity, TypeHierarchyItem
+	DidRenameFilesNotification, DidCreateFilesNotification, Proposed, ProposedFeatures, Diagnostic, DiagnosticSeverity, TypeHierarchyItem,
+	InlayHint, InlayHintLabelPart, InlayHintKind
 } from '../../../server/node';
 
 import { URI } from 'vscode-uri';
 import { $DiagnosticClientCapabilities } from 'vscode-languageserver-protocol/src/common/proposed.diagnostic';
-import { InlayHintLabelPart } from 'vscode';
 
 const connection: ProposedFeatures.Connection = createConnection(ProposedFeatures.all);
 
@@ -502,10 +502,11 @@ connection.languages.inlineValues.on((_params) => {
 });
 
 connection.languages.inlayHints.on(() => {
-	return [
-		Proposed.InlayHint.create(Position.create(1,1), [Proposed.InlayHintLabelPart.create('type')], Proposed.InlayHintKind.Type),
-		Proposed.InlayHint.create(Position.create(2,2), [Proposed.InlayHintLabelPart.create('parameter')], Proposed.InlayHintKind.Parameter)
-	];
+	const one = InlayHint.create(Position.create(1,1), [InlayHintLabelPart.create('type')], InlayHintKind.Type);
+	one.data = '1';
+	const two = InlayHint.create(Position.create(2,2), [InlayHintLabelPart.create('parameter')], InlayHintKind.Parameter);
+	two.data = '2';
+	return [one, two];
 });
 
 connection.languages.inlayHints.resolve((hint) => {

@@ -129,11 +129,17 @@ export type InlayHint = {
 	 * *Note* that edits are expected to change the document so that the inlay
 	 * hint (or its nearest variant) is now part of the document and the inlay
 	 * hint itself is now obsolete.
+	 *
+	 * Depending on the client capability `inlayHint.resolveSupport` clients
+	 * might resolve this property late using the resolve request.
 	 */
 	textEdits?: TextEdit[];
 
 	/**
 	 * The tooltip text when you hover over this item.
+	 *
+	 * Depending on the client capability `inlayHint.resolveSupport` clients
+	 * might resolve this property late using the resolve request.
 	 */
 	tooltip?: string | MarkupContent;
 
@@ -154,6 +160,13 @@ export type InlayHint = {
 	 * to visually align/separate an inlay hint.
 	 */
 	paddingRight?: boolean;
+
+
+	/**
+	 * A data entry field that is preserved on a inlay hint between
+	 * a `textDocument/inlayHint` and a `inlayHint/resolve` request.
+	 */
+	data?: LSPAny;
 };
 ```
 

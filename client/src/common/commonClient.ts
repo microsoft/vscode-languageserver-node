@@ -20,6 +20,7 @@ import { CallHierarchyFeature } from './callHierarchy';
 import { SemanticTokensFeature } from './semanticTokens';
 import { DidCreateFilesFeature, DidDeleteFilesFeature, DidRenameFilesFeature, WillCreateFilesFeature, WillDeleteFilesFeature, WillRenameFilesFeature } from './fileOperations';
 import { LinkedEditingFeature } from './linkedEditingRange';
+import { InlayHintsFeature } from './inlayHint';
 
 export abstract class CommonLanguageClient extends BaseLanguageClient {
 
@@ -55,6 +56,7 @@ export abstract class CommonLanguageClient extends BaseLanguageClient {
 		this.registerFeature(new WillCreateFilesFeature(this));
 		this.registerFeature(new WillRenameFilesFeature(this));
 		this.registerFeature(new WillDeleteFilesFeature(this));
+		this.registerFeature(new InlayHintsFeature(this));
 	}
 }
 
@@ -62,7 +64,6 @@ export abstract class CommonLanguageClient extends BaseLanguageClient {
 import * as pd from './proposed.diagnostic';
 import * as pt from './proposed.typeHierarchy';
 import * as iv from './proposed.inlineValue';
-import * as ih from './proposed.inlayHint';
 import * as nb from './proposed.notebook';
 
 export namespace ProposedFeatures {
@@ -71,7 +72,6 @@ export namespace ProposedFeatures {
 			new pd.DiagnosticFeature(client),
 			new pt.TypeHierarchyFeature(client),
 			new iv.InlineValueFeature(client),
-			new ih.InlayHintsFeature(client),
 			new nb.NotebookDocumentSyncFeature(client)
 		];
 		return result;
@@ -87,10 +87,6 @@ export namespace ProposedFeatures {
 
 	export function createInlineValueFeature(client: BaseLanguageClient): DynamicFeature<boolean | Proposed.InlineValueOptions> {
 		return new iv.InlineValueFeature(client);
-	}
-
-	export function createInlayHintFeature(client: BaseLanguageClient): DynamicFeature<boolean | Proposed.InlayHintOptions> {
-		return new ih.InlayHintsFeature(client);
 	}
 
 	export function createNotebookDocumentSyncFeature(client: BaseLanguageClient): DynamicFeature<Proposed.NotebookDocumentSyncRegistrationOptions> {

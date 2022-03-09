@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { Proposed, Disposable, RequestHandler } from 'vscode-languageserver-protocol';
+import { InlayHint, InlayHintParams,Disposable, RequestHandler, InlayHintRefreshRequest, InlayHintRequest, InlayHintResolveRequest } from 'vscode-languageserver-protocol';
 
 import type { Feature, _Languages, ServerRequestHandler } from './server';
 
@@ -25,14 +25,14 @@ export interface InlayHintsFeatureShape {
 		 *
 		 * @param handler The corresponding handler.
 		 */
-		on(handler: ServerRequestHandler<Proposed.InlayHintParams, Proposed.InlayHint[] | undefined | null, Proposed.InlayHint[], void>): Disposable;
+		on(handler: ServerRequestHandler<InlayHintParams, InlayHint[] | undefined | null, InlayHint[], void>): Disposable;
 
 		/**
 		 * Installs a handler for the inlay hint resolve request.
 		 *
 		 * @param handler The corresponding handler.
 		 */
-		resolve(handler: RequestHandler<Proposed.InlayHint, Proposed.InlayHint, void>): Disposable;
+		resolve(handler: RequestHandler<InlayHint, InlayHint, void>): Disposable;
 	};
 }
 
@@ -41,15 +41,15 @@ export const InlayHintsFeature: Feature<_Languages, InlayHintsFeatureShape> = (B
 		public get inlayHints() {
 			return {
 				refresh: (): Promise<void> => {
-					return this.connection.sendRequest(Proposed.InlayHintRefreshRequest.type);
+					return this.connection.sendRequest(InlayHintRefreshRequest.type);
 				},
-				on: (handler: ServerRequestHandler<Proposed.InlayHintParams, Proposed.InlayHint[] | undefined | null, Proposed.InlayHint[], void>): Disposable => {
-					return this.connection.onRequest(Proposed.InlayHintRequest.type, (params, cancel) => {
+				on: (handler: ServerRequestHandler<InlayHintParams, InlayHint[] | undefined | null, InlayHint[], void>): Disposable => {
+					return this.connection.onRequest(InlayHintRequest.type, (params, cancel) => {
 						return handler(params, cancel, this.attachWorkDoneProgress(params));
 					});
 				},
-				resolve: (handler: RequestHandler<Proposed.InlayHint, Proposed.InlayHint, void>) => {
-					return this.connection.onRequest(Proposed.InlayHintResolveRequest.type, (params, cancel) => {
+				resolve: (handler: RequestHandler<InlayHint, InlayHint, void>) => {
+					return this.connection.onRequest(InlayHintResolveRequest.type, (params, cancel) => {
 						return handler(params, cancel);
 					});
 				}

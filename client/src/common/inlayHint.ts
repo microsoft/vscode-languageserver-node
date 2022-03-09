@@ -9,7 +9,8 @@ import {
 } from 'vscode';
 
 import {
-	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, Proposed
+	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, InlayHintRequest, InlayHintOptions, InlayHintRegistrationOptions,
+	InlayHintRefreshRequest, InlayHintParams, InlayHintResolveRequest
 } from 'vscode-languageserver-protocol';
 
 import { TextDocumentFeature, BaseLanguageClient, $DocumentSelector } from './client';
@@ -34,9 +35,9 @@ export type InlayHintsProviderShape = {
 	onDidChangeInlayHints: EventEmitter<void>;
 };
 
-export class InlayHintsFeature extends TextDocumentFeature<boolean | Proposed.InlayHintOptions, Proposed.InlayHintRegistrationOptions, InlayHintsProviderShape> {
+export class InlayHintsFeature extends TextDocumentFeature<boolean | InlayHintOptions, InlayHintRegistrationOptions, InlayHintsProviderShape> {
 	constructor(client: BaseLanguageClient) {
-		super(client, Proposed.InlayHintRequest.type);
+		super(client, InlayHintRequest.type);
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
@@ -49,7 +50,7 @@ export class InlayHintsFeature extends TextDocumentFeature<boolean | Proposed.In
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		this._client.onRequest(Proposed.InlayHintRefreshRequest.type, async () => {
+		this._client.onRequest(InlayHintRefreshRequest.type, async () => {
 			for (const provider of this.getAllProviders()) {
 				provider.onDidChangeInlayHints.fire();
 			}
@@ -62,7 +63,7 @@ export class InlayHintsFeature extends TextDocumentFeature<boolean | Proposed.In
 		this.register({ id: id, registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: Proposed.InlayHintRegistrationOptions): [Disposable, InlayHintsProviderShape] {
+	protected registerLanguageProvider(options: InlayHintRegistrationOptions): [Disposable, InlayHintsProviderShape] {
 		const selector = options.documentSelector!;
 		const eventEmitter: EventEmitter<void> = new EventEmitter<void>();
 		const provider: InlayHintsProvider = {
@@ -73,18 +74,18 @@ export class InlayHintsFeature extends TextDocumentFeature<boolean | Proposed.In
 				}
 				const client = this._client;
 				const provideInlayHints: ProvideInlayHintsSignature = async (document, viewPort, token) => {
-					const requestParams: Proposed.InlayHintParams = {
+					const requestParams: InlayHintParams = {
 						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
 						range: client.code2ProtocolConverter.asRange(viewPort)
 					};
 					try {
-						const values = await client.sendRequest(Proposed.InlayHintRequest.type, requestParams, token);
+						const values = await client.sendRequest(InlayHintRequest.type, requestParams, token);
 						if (token.isCancellationRequested) {
 							return null;
 						}
 						return client.protocol2CodeConverter.asInlayHints(values, token);
 					} catch (error) {
-						return client.handleFailedRequest(Proposed.InlayHintRequest.type, token, error, null);
+						return client.handleFailedRequest(InlayHintRequest.type, token, error, null);
 					}
 				};
 				const middleware = client.clientOptions.middleware!;
@@ -99,14 +100,14 @@ export class InlayHintsFeature extends TextDocumentFeature<boolean | Proposed.In
 				const client = this._client;
 				const resolveInlayHint: ResolveInlayHintSignature = async (item, token) => {
 					try {
-						const value = await client.sendRequest(Proposed.InlayHintResolveRequest.type, client.code2ProtocolConverter.asInlayHint(item), token);
+						const value = await client.sendRequest(InlayHintResolveRequest.type, client.code2ProtocolConverter.asInlayHint(item), token);
 						if (token.isCancellationRequested) {
 							return null;
 						}
 						const result = client.protocol2CodeConverter.asInlayHint(value, token);
 						return token.isCancellationRequested ? null : result;
 					} catch (error) {
-						return client.handleFailedRequest(Proposed.InlayHintResolveRequest.type, token, error, null);
+						return client.handleFailedRequest(InlayHintResolveRequest.type, token, error, null);
 					}
 				};
 				const middleware = client.clientOptions.middleware!;

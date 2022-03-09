@@ -98,8 +98,9 @@ import {
 } from './proposed.inlineValue';
 
 import {
-	InlayHintClientCapabilities, InlayHintOptions, InlayHintRegistrationOptions, InlayHintWorkspaceClientCapabilities
-} from './proposed.inlayHint';
+	InlayHintClientCapabilities, InlayHintOptions, InlayHintRegistrationOptions, InlayHintWorkspaceClientCapabilities, InlayHintParams,
+	InlayHintRequest, InlayHintResolveRequest, InlayHintRefreshRequest
+} from './inlayHint';
 
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
@@ -3543,6 +3544,9 @@ export {
 	DidCreateFilesNotification, CreateFilesParams, FileCreate, WillCreateFilesRequest,
 	DidRenameFilesNotification, RenameFilesParams, FileRename, WillRenameFilesRequest,
 	DidDeleteFilesNotification, DeleteFilesParams, FileDelete, WillDeleteFilesRequest,
+	// Inlay Hints
+	InlayHintClientCapabilities, InlayHintOptions, InlayHintRegistrationOptions, InlayHintWorkspaceClientCapabilities, InlayHintParams,
+	InlayHintRequest, InlayHintResolveRequest, InlayHintRefreshRequest,
 	// Monikers
 	UniquenessLevel, MonikerKind, Moniker, MonikerClientCapabilities, MonikerOptions, MonikerRegistrationOptions, MonikerParams, MonikerRequest,
 };

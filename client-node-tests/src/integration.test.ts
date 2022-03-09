@@ -1294,7 +1294,7 @@ suite('Client integration', () => {
 	});
 
 	test('Inlay Hints', async () => {
-		const providerData = client.getFeature(lsclient.Proposed.InlayHintRequest.method).getProvider(document);
+		const providerData = client.getFeature(lsclient.InlayHintRequest.method).getProvider(document);
 		isDefined(providerData);
 		const provider = providerData.provider;
 		const results = (await provider.provideInlayHints(document, range, tokenSource.token));

@@ -72,7 +72,6 @@ import * as diag from './proposed.diagnostic';
 import * as typeh from './proposed.typeHierarchy';
 import * as iv from './proposed.inlineValue';
 import * as nb from './proposed.notebook';
-import * as ih from './proposed.inlayHint';
 
 export namespace Proposed {
 	export type DiagnosticClientCapabilities = diag.DiagnosticClientCapabilities;
@@ -115,23 +114,6 @@ export namespace Proposed {
 	export const TypeHierarchyPrepareRequest: typeof typeh.TypeHierarchyPrepareRequest = typeh.TypeHierarchyPrepareRequest;
 	export const TypeHierarchySupertypesRequest: typeof typeh.TypeHierarchySupertypesRequest = typeh.TypeHierarchySupertypesRequest;
 	export const TypeHierarchySubtypesRequest: typeof typeh.TypeHierarchySubtypesRequest = typeh.TypeHierarchySubtypesRequest;
-
-	// Inlay hints
-	export type InlayHintClientCapabilities = ih.InlayHintClientCapabilities;
-	export type InlayHintWorkspaceClientCapabilities = ih.InlayHintWorkspaceClientCapabilities;
-	export type InlayHintKind = ih.InlayHintKind;
-	export const InlayHintKind = ih.InlayHintKind;
-	export type InlayHintLabelPart = ih.InlayHintLabelPart;
-	export const InlayHintLabelPart = ih.InlayHintLabelPart;
-	export type InlayHint = ih.InlayHint;
-	export const InlayHint = ih.InlayHint;
-	export type InlayHintOptions = ih.InlayHintOptions;
-	export type InlayHintRegistrationOptions = ih.InlayHintRegistrationOptions;
-	export type InlayHintParams = ih.InlayHintParams;
-
-	export const InlayHintRequest: typeof ih.InlayHintRequest = ih.InlayHintRequest;
-	export const InlayHintResolveRequest: typeof ih.InlayHintResolveRequest = ih.InlayHintResolveRequest;
-	export const InlayHintRefreshRequest: typeof ih.InlayHintRefreshRequest = ih.InlayHintRefreshRequest;
 
 	// Inline value
 	export type InlineValueClientCapabilities = iv.InlineValueClientCapabilities;
