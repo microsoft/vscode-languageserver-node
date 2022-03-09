@@ -55,7 +55,7 @@ import {
 } from './protocol.selectionRange';
 
 import {
-	WorkDoneProgressClientCapabilities, WorkDoneProgressBegin, WorkDoneProgressReport, WorkDoneProgressEnd, WorkDoneProgress, WorkDoneProgressCreateParams,
+	WorkDoneProgressBegin, WorkDoneProgressReport, WorkDoneProgressEnd, WorkDoneProgress, WorkDoneProgressCreateParams,
 	WorkDoneProgressCreateRequest, WorkDoneProgressCancelParams, WorkDoneProgressCancelNotification
 } from './protocol.progress';
 
@@ -717,9 +717,13 @@ export interface TextDocumentClientCapabilities {
 
 export interface WindowClientCapabilities {
 	/**
-	 * Whether client supports handling progress notifications. If set
-	 * servers are allowed to report in `workDoneProgress` property in the
-	 * request specific server capabilities.
+	 * It indicates whether the client supports server initiated
+	 * progress using the `window/workDoneProgress/create` request.
+	 *
+	 * The capability also controls Whether client supports handling
+	 * of progress notifications. If set servers are allowed to report a
+	 * `workDoneProgress` property in the request specific server
+	 * capabilities.
 	 *
 	 * @since 3.15.0
 	 */
@@ -828,7 +832,7 @@ export interface GeneralClientCapabilities {
 /**
  * Defines the capabilities provided by the client.
  */
-export interface _ClientCapabilities {
+export interface ClientCapabilities {
 	/**
 	 * Workspace specific client capabilities.
 	 */
@@ -856,8 +860,6 @@ export interface _ClientCapabilities {
 	 */
 	experimental?: object;
 }
-
-export type ClientCapabilities = _ClientCapabilities & WorkDoneProgressClientCapabilities;
 
 /**
  * Static registration options to be returned in the initialize
@@ -937,7 +939,7 @@ export namespace WorkDoneProgressOptions {
  * Defines the capabilities provided by a language
  * server.
  */
-export interface _ServerCapabilities<T = any> {
+export interface ServerCapabilities<T = any> {
 
 	/**
 	 * Defines how text documents are synced. Is either a detailed structure defining each notification or
@@ -1132,8 +1134,6 @@ export interface _ServerCapabilities<T = any> {
 	 */
 	experimental?: T;
 }
-
-export type ServerCapabilities<T = any> = _ServerCapabilities<T>;
 
 /**
  * The initialize request is sent from the client to the server.
