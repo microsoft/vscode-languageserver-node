@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { _, Features, _Connection, _LanguagesImpl, combineLanguagesFeatures } from './server';
+import { _, Features, _Connection, _LanguagesImpl } from './server';
 import { SemanticTokensBuilder } from './semanticTokens';
 import type { WorkDoneProgressReporter, WorkDoneProgressServerReporter, ResultProgressReporter } from './progress';
 

@@ -8,7 +8,7 @@ import {
 	TypeHierarchyProvider as VTypeHierarchyProvider, TypeHierarchyItem as VTypeHierarchyItem
 } from 'vscode';
 
-import { ClientCapabilities, DocumentSelector, ServerCapabilities, Proposed, TypeHierarchyRegistrationOptions, TypeHierarchyPrepareRequest, TypeHierarchySupertypesParams, TypeHierarchySupertypesRequest, TypeHierarchySubtypesParams, TypeHierarchySubtypesRequest, TypeHierarchyOptions } from 'vscode-languageserver-protocol';
+import { ClientCapabilities, DocumentSelector, ServerCapabilities, TypeHierarchyRegistrationOptions, TypeHierarchyPrepareRequest, TypeHierarchySupertypesParams, TypeHierarchySupertypesRequest, TypeHierarchySubtypesParams, TypeHierarchySubtypesRequest, TypeHierarchyOptions } from 'vscode-languageserver-protocol';
 
 import { TextDocumentFeature, BaseLanguageClient, Middleware, $DocumentSelector } from './client';
 
