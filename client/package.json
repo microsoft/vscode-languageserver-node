@@ -17,8 +17,7 @@
 	},
 	"enabledApiProposals": [
 		"tabs",
-		"notebookEditor",
-		"notebookCellExecutionState"
+		"notebookDocumentEvents"
 	],
 	"main": "./lib/node/main.js",
 	"browser": {
