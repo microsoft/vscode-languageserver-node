@@ -1363,9 +1363,9 @@ suite('Client integration', () => {
 	test('Notebook document: change', async (): Promise<void> => {
 		let middlewareCalled: boolean = false;
 		middleware.notebooks = {
-			didChange: (nd, ne, n) => {
+			didChange: (ne, n) => {
 				middlewareCalled = true;
-				return n(nd, ne);
+				return n(ne);
 			}
 		};
 		const notebookData = new vscode.NotebookData(
