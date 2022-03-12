@@ -161,8 +161,8 @@ connection.onInitialize((params: InitializeParams): any => {
 		},
 		notebookDocumentSync: {
 			notebookDocumentSelector: [{
-				notebookDocumentFilter: { notebookType: 'jupyter-notebook' },
-				cellSelector: [{language: 'bat'}]
+				notebook: { notebookType: 'jupyter-notebook' },
+				cells: [{language: 'bat'}]
 			}],
 			mode: 'notebook'
 		}

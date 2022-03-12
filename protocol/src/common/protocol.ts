@@ -164,7 +164,8 @@ export namespace TextDocumentFilter {
 
 /**
  * A notebook document filter denotes a notebook document by
- * different properties.
+ * different properties. The properties will be match
+ * against the notebook's URI (same as with documents)
  *
  * @since 3.17.0 - proposed state.
  */
@@ -172,34 +173,28 @@ export type NotebookDocumentFilter = {
 	/** The type of the enclosing notebook. */
 	notebookType: string;
 
-	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`.
-	 * Will be matched against the URI of the notebook. */
+	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */
 	scheme?: string;
 
-	/** A glob pattern, like `*.ipynb`.
-	 * Will be matched against the notebooks` URI path section.*/
+	/** A glob pattern. */
 	pattern?: string;
 } | {
 	/** The type of the enclosing notebook. */
 	notebookType?: string;
 
-	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`.
-	 * Will be matched against the URI of the notebook. */
+	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`.*/
 	scheme: string;
 
-	/** A glob pattern, like `*.ipynb`.
-	 * Will be matched against the notebooks` URI path section.*/
+	/** A glob pattern. */
 	pattern?: string;
 } | {
 	/** The type of the enclosing notebook. */
 	notebookType?: string;
 
-	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`.
-	 * Will be matched against the URI of the notebook. */
+	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */
 	scheme?: string;
 
-	/** A glob pattern, like `*.ipynb`.
-	 * Will be matched against the notebooks` URI path section.*/
+	/** A glob pattern. */
 	pattern: string;
 };
 
@@ -225,31 +220,19 @@ export namespace NotebookDocumentFilter {
 export type NotebookCellTextDocumentFilter = {
 	/**
 	 * A filter that matches against the notebook
-	 * containing the notebook cell.
+	 * containing the notebook cell. If a string
+	 * value is provided it matches against the
+	 * notebook type. '*' matches every notebook.
 	 */
-	notebookDocument: NotebookDocumentFilter;
+	notebook: string | NotebookDocumentFilter;
 
 	/**
 	 * A language id like `python`.
 	 *
 	 * Will be matched against the language id of the
-	 * notebook cell document.
+	 * notebook cell document. '*' matches every language.
 	 */
-	cellLanguage?: string;
-} | {
-	/**
-	 * A filter that matches against the notebook
-	 * containing the notebook cell.
-	 */
-	notebookDocument?: NotebookDocumentFilter;
-
-	/**
-	 * A language id like `python`.
-	 *
-	 * Will be matched against the language id of the
-	 * notebook cell document.
-	 */
-	cellLanguage: string;
+	language?: string;
 };
 
 /**
@@ -261,7 +244,9 @@ export type NotebookCellTextDocumentFilter = {
 export namespace NotebookCellTextDocumentFilter {
 	export function is(value: any): value is NotebookCellTextDocumentFilter {
 		const candidate: NotebookCellTextDocumentFilter = value;
-		return Is.objectLiteral(candidate) && (NotebookDocumentFilter.is(candidate.notebookDocument) || Is.string(candidate.cellLanguage));
+		return Is.objectLiteral(candidate)
+			&& (Is.string(candidate.notebook) || NotebookDocumentFilter.is(candidate.notebook))
+			&& (candidate.language === undefined || Is.string(candidate.language));
 	}
 }
 

@@ -270,7 +270,7 @@ namespace $NotebookCell {
 
 namespace $NotebookDocumentFilter {
 	export function matchNotebook(filter: NotebookDocumentFilter, notebookDocument: vscode.NotebookDocument): boolean {
-		if (filter.notebookType !== undefined && notebookDocument.notebookType !== filter.notebookType) {
+		if (filter.notebookType !== undefined && filter.notebookType !== '*' && notebookDocument.notebookType !== filter.notebookType) {
 			return false;
 		}
 		const uri = notebookDocument.uri;
@@ -300,7 +300,7 @@ namespace $NotebookDocumentSyncOptions {
 		}
 		const notebook = cell.notebook;
 		for (const filter of options.notebookDocumentSelector) {
-			if (filter.notebookDocumentFilter !== undefined && $NotebookDocumentFilter.matchNotebook(filter.notebookDocumentFilter, notebook)) {
+			if (filter.notebook !== undefined && $NotebookDocumentFilter.matchNotebook(filter.notebook, notebook)) {
 				return true;
 			}
 		}
@@ -781,14 +781,14 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 			return undefined;
 		}
 		for (const item of this.options.notebookDocumentSelector) {
-			if (item.notebookDocumentFilter === undefined) {
-				if (item.cellSelector === undefined) {
+			if (item.notebook === undefined) {
+				if (item.cells === undefined) {
 					return undefined;
 				}
-				const filtered = this.filterCells(notebookDocument, cells, item.cellSelector);
+				const filtered = this.filterCells(notebookDocument, cells, item.cells);
 				return filtered.length === 0 ? undefined : filtered;
-			} else if ($NotebookDocumentFilter.matchNotebook(item.notebookDocumentFilter, notebookDocument)){
-				return item.cellSelector === undefined ? cells : this.filterCells(notebookDocument, cells, item.cellSelector);
+			} else if ($NotebookDocumentFilter.matchNotebook(item.notebook, notebookDocument)){
+				return item.cells === undefined ? cells : this.filterCells(notebookDocument, cells, item.cells);
 			}
 		}
 		return undefined;
@@ -955,7 +955,6 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 		const synchronization = ensure(ensure(capabilities, 'notebookDocument')!, 'synchronization')!;
 		synchronization.dynamicRegistration = true;
 		synchronization.executionSummarySupport = true;
-		synchronization.notebookControllerSupport = true;
 	}
 
 	public initialize(capabilities: proto.ServerCapabilities<any> & proto.Proposed.$NotebookDocumentSyncServerCapabilities): void {
@@ -1024,13 +1023,13 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 		const documentSelector: NotebookCellTextDocumentFilter[] = [];
 		for (const item of options.notebookDocumentSelector) {
 			let nf: $NotebookCellTextDocumentFilter | NotebookCellTextDocumentFilter | undefined;
-			if (item.notebookDocumentFilter !== undefined) {
-				nf = sync === true ? { notebookDocument: Object.assign({}, item.notebookDocumentFilter, { sync: true }) } : { notebookDocument: Object.assign({}, item.notebookDocumentFilter) } ;
+			if (item.notebook !== undefined) {
+				nf = sync === true ? { notebook: Object.assign({}, item.notebook, { sync: true }) } : { notebook: Object.assign({}, item.notebook) } ;
 			}
-			if (item.cellSelector !== undefined) {
-				for (const cell of item.cellSelector) {
+			if (item.cells !== undefined) {
+				for (const cell of item.cells) {
 					if (nf === undefined) {
-						documentSelector.push((sync === true ? { cellLanguage: cell.language, sync: true } : { cellLanguage: cell.language }) as NotebookCellTextDocumentFilter);
+						documentSelector.push((sync === true ? { language: cell.language, sync: true } : { language: cell.language }) as NotebookCellTextDocumentFilter);
 					} else {
 						documentSelector.push(Object.assign({}, nf, { cellLanguage: cell.language }));
 					}

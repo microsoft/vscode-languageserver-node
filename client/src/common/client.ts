@@ -108,14 +108,14 @@ export namespace $DocumentSelector {
 		const isCellDocument = textDocument.uri.scheme === CellScheme;
 		for (const filter of selector) {
 			if (isCellDocument && isNotebookCellTextDocumentFilter(filter)) {
-				if (filter.cellLanguage !== undefined && filter.cellLanguage !== textDocument.languageId) {
+				if (filter.language !== undefined && filter.language !== '*' && filter.language !== textDocument.languageId) {
 					continue;
 				}
 				const notebookDocument = findNotebook(textDocument);
 				if (notebookDocument === undefined) {
 					continue;
 				}
-				if (filter.notebookDocument === undefined || matchNotebookDocument(filter.notebookDocument, notebookDocument)) {
+				if (filter.notebook === undefined || matchNotebookDocument(filter.notebook, notebookDocument)) {
 					return true;
 				}
 			} else if (!isCellDocument && TextDocumentFilter.is(filter)) {
@@ -143,9 +143,9 @@ export namespace $DocumentSelector {
 			if (typeof filter === 'string' || TextDocumentFilter.is(filter)) {
 				result.push(filter);
 			} else {
-				if (filter.cellLanguage !== undefined && !generated.has(filter.cellLanguage)) {
-					result.push({ scheme: CellScheme, language: filter.cellLanguage });
-					generated.add(filter.cellLanguage);
+				if (filter.language !== undefined && !generated.has(filter.language)) {
+					result.push({ scheme: CellScheme, language: filter.language });
+					generated.add(filter.language);
 				} else if (!generated.has(null)){
 					result.push({ scheme: CellScheme });
 					generated.add(null);
@@ -169,7 +169,10 @@ export namespace $DocumentSelector {
 		return undefined;
 	}
 
-	function matchNotebookDocument(filter: NotebookDocumentFilter, notebookDocument: VNotebookDocument): boolean {
+	function matchNotebookDocument(filter: string | NotebookDocumentFilter, notebookDocument: VNotebookDocument): boolean {
+		if (Is.string(filter)) {
+			return filter === '*' || filter === notebookDocument.notebookType;
+		}
 		if (filter.notebookType !== undefined && notebookDocument.notebookType !== filter.notebookType) {
 			false;
 		}
