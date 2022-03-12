@@ -169,9 +169,8 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 					workspaceDiagnostics: true
 				},
 				notebookDocumentSync: {
-					notebookDocumentSelector: [{
-						cellSelector: [{ language: 'bat'}]
-
+					notebookSelector: [{
+						cells: [{ language: 'bat'}]
 					}],
 					mode: 'notebook'
 				}

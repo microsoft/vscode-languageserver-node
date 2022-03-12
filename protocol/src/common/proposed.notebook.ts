@@ -312,16 +312,16 @@ export type VersionedNotebookDocumentIdentifier = {
  */
 export type NotebookDocumentSyncOptions = {
 	/**
-	 * The notebook document to be synced
+	 * The notebooks to be synced
 	 */
-	notebookDocumentSelector: ({
-		/** The notebook documents to be synced */
+	notebookSelector: ({
+		/** The notebook to be synced */
 		notebook: NotebookDocumentFilter;
-		
+
 		/** The cells of the matching notebook to be synced */
 		cells?: { language: string }[];
 	} | {
-		/** The notebook documents to be synced */
+		/** The notebook to be synced */
 		notebook?: NotebookDocumentFilter;
 
 		/** The cells of the matching notebook to be synced */

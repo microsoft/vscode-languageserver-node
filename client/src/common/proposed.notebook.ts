@@ -299,7 +299,7 @@ namespace $NotebookDocumentSyncOptions {
 			return false;
 		}
 		const notebook = cell.notebook;
-		for (const filter of options.notebookDocumentSelector) {
+		for (const filter of options.notebookSelector) {
 			if (filter.notebook !== undefined && $NotebookDocumentFilter.matchNotebook(filter.notebook, notebook)) {
 				return true;
 			}
@@ -777,10 +777,10 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 	}
 
 	private getMatchingCells(notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[] = notebookDocument.getCells()): vscode.NotebookCell[] | undefined {
-		if (this.options.notebookDocumentSelector === undefined) {
+		if (this.options.notebookSelector === undefined) {
 			return undefined;
 		}
-		for (const item of this.options.notebookDocumentSelector) {
+		for (const item of this.options.notebookSelector) {
 			if (item.notebook === undefined) {
 				if (item.cells === undefined) {
 					return undefined;
@@ -1021,7 +1021,7 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 	private getNotebookCellTextDocumentFilter(options: proto.Proposed.NotebookDocumentSyncRegistrationOptions, sync: true): $NotebookCellTextDocumentFilter[];
 	private getNotebookCellTextDocumentFilter(options: proto.Proposed.NotebookDocumentSyncRegistrationOptions, sync?: true ): NotebookCellTextDocumentFilter[] {
 		const documentSelector: NotebookCellTextDocumentFilter[] = [];
-		for (const item of options.notebookDocumentSelector) {
+		for (const item of options.notebookSelector) {
 			let nf: $NotebookCellTextDocumentFilter | NotebookCellTextDocumentFilter | undefined;
 			if (item.notebook !== undefined) {
 				nf = sync === true ? { notebook: Object.assign({}, item.notebook, { sync: true }) } : { notebook: Object.assign({}, item.notebook) } ;

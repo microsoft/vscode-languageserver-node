@@ -160,7 +160,7 @@ connection.onInitialize((params: InitializeParams): any => {
 			resolveProvider: true
 		},
 		notebookDocumentSync: {
-			notebookDocumentSelector: [{
+			notebookSelector: [{
 				notebook: { notebookType: 'jupyter-notebook' },
 				cells: [{language: 'bat'}]
 			}],

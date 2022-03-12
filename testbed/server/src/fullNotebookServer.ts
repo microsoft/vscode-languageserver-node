@@ -44,11 +44,12 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 		capabilities: {
 			textDocumentSync: TextDocumentSyncKind.Incremental,
 			hoverProvider: true,
-			completionProvider: true,
+			completionProvider: {
+			},
 			notebookDocumentSync: {
-				notebookDocumentSelector: [{
-					notebookDocumentFilter: { pattern: '**/*.ipynb'},
-					cellSelector: [{ language: 'bat' }, { language: 'c' }]
+				notebookSelector: [{
+					notebook: { pattern: '**/*.ipynb'},
+					cells: [{ language: 'bat' }, { language: 'c' }]
 				}],
 				mode: 'notebook'
 			}

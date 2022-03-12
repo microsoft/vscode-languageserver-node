@@ -45,11 +45,10 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 		capabilities: {
 			textDocumentSync: TextDocumentSyncKind.Incremental,
 			hoverProvider: true,
-			completionProvider: true,
+			completionProvider: {},
 			notebookDocumentSync: {
-				notebookDocumentSelector: [{
-					cellSelector: [{ language: 'bat'}]
-
+				notebookSelector: [{
+					cells: [{ language: 'bat'}]
 				}],
 				mode: 'cellContent'
 			}
