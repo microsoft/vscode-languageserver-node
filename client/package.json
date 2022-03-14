@@ -37,10 +37,10 @@
 		"vscode-languageserver-protocol": "3.17.0-next.14"
 	},
 	"scripts": {
-		"prepublishOnly": "git clean -xfd . && npm install && npm run clean && node ./bin/updateVSCode.js && npm run compile:prod && npm test",
+		"prepublishOnly": "git clean -xfd . && npm install && npm run clean && node ./bin/updateVSCode.js && npm run compile:publish && npm test",
 		"postpublish": "node ../build/npm/post-publish.js",
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json && shx cp src/node/terminateProcess.sh lib/node/terminateProcess.sh",
-		"compile:prod": "node ../build/bin/tsc -b ./tsconfig.prod.json && shx cp src/node/terminateProcess.sh lib/node/terminateProcess.sh",
+		"compile:publish": "node ../build/bin/tsc -b ./tsconfig.publish.json && shx cp src/node/terminateProcess.sh lib/node/terminateProcess.sh",
 		"compile:clean": "git clean -xfd . && npm install && npm run clean && npm run compile",
 		"watch": "node ../build/bin/tsc -b ./tsconfig-watch.json -w",
 		"lint": "node ../node_modules/eslint/bin/eslint.js --ext ts src",
