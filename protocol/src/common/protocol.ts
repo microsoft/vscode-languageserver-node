@@ -1144,7 +1144,7 @@ export interface ServerCapabilities<T = any> {
  * resolves to such.
  */
 export namespace InitializeRequest {
-	export const type = new ProtocolRequestType<InitializeParams & WorkDoneProgressParams, InitializeResult, never, InitializeError, void>('initialize');
+	export const type = new ProtocolRequestType<InitializeParams, InitializeResult, never, InitializeError, void>('initialize');
 }
 
 /**

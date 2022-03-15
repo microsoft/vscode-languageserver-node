@@ -53,5 +53,8 @@
 		"rebuildAll": "npm run clean && npm run symlink && npm run compile && npm run test",
 		"audit:all": "node ./build/bin/all.js audit",
 		"audit:all:fix": "node ./build/bin/all.js audit fix"
+	},
+	"dependencies": {
+		"ts-json-schema-generator": "^0.98.0"
 	}
 }

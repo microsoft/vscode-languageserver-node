@@ -1,0 +1,38 @@
+{
+	"structures": {
+		"Position": {
+			"documentation": "",
+			"properties": {
+				"character": {
+					"documentation": "",
+					"type": "decimal",
+					"range": "[0,1]"
+				}
+			}
+		},
+		"TextEdit": {
+		},
+		"AnnotatedTextEdit": {
+			"extends": ["TextEdit"],
+			"mixin": [""],
+			"properties": {
+				"edits": {
+					"optional": true,
+					"nullable": true,
+					"type": "array",
+					"items": {
+						"type": {
+							"or": [ { "and": [] }]
+						}
+					}
+				}
+			}
+		}
+	},
+	"notifications": {
+
+	},
+	"requests": {
+
+	}
+}
