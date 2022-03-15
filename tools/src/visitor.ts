@@ -97,15 +97,15 @@ export default class Visitor {
 		if (type === undefined) {
 			return;
 		}
-		const requestTypes = this.getRequestTypes(type);
-		if (requestTypes === undefined) {
-			return;
-		}
 		const methodName = this.getMethodName(symbol, type);
 		if (methodName === undefined) {
 			return;
 		}
 		console.log(methodName);
+		const requestTypes = this.getRequestTypes(type);
+		if (requestTypes === undefined) {
+			return;
+		}
 		const param = requestTypes.param !== undefined ? this.getJsonType(requestTypes.param) : undefined;
 		const result = this.getJsonType(requestTypes.result);
 		const partialResult = this.getJsonType(requestTypes.partialResult);
@@ -184,12 +184,19 @@ export default class Visitor {
 		if (!ts.isVariableDeclaration(declaration)) {
 			return;
 		}
+		const initializer = declaration.initializer;
+		if (initializer === undefined || !ts.isNewExpression(initializer)) {
+			return undefined;
+		}
+		if (initializer.typeArguments === undefined) {
+			return undefined;
+		}
 		const type = this.typeChecker.getTypeOfSymbolAtLocation(symbol, declaration.name);
 		if (!tss.Type.isObjectType(type)) {
 			return undefined;
 		}
 		if (!tss.Type.isTypeReference(type)) {
-			return;
+			return undefined;
 		}
 		const typeArguments = this.typeChecker.getTypeArguments(type);
 		if (typeArguments.length === 4) {
