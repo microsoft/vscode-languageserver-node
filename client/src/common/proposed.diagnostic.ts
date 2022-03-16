@@ -17,7 +17,7 @@ import {
 
 import { generateUuid } from './utils/uuid';
 import {
-	TextDocumentFeature, BaseLanguageClient, Middleware, LSPCancellationError, DiagnosticPullMode, $DocumentSelector
+	TextDocumentFeature, BaseLanguageClient, Middleware, LSPCancellationError, DiagnosticPullMode
 } from './client';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
@@ -638,11 +638,11 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 
 	constructor(client: BaseLanguageClient, editorTracker: EditorTracker, options: Proposed.DiagnosticRegistrationOptions) {
 		const diagnosticPullOptions = client.clientOptions.diagnosticPullOptions ?? { onChange: true, onSave: false };
-		const documentSelector = options.documentSelector!;
+		const documentSelector = client.protocol2CodeConverter.asDocumentSelector(options.documentSelector!);
 		const disposables: Disposable[] = [];
 
 		const matches = (textDocument: TextDocument): boolean => {
-			return $DocumentSelector.matchForProvider(documentSelector, textDocument) && editorTracker.isVisible(textDocument);
+			return Languages.match(documentSelector, textDocument) > 0 && editorTracker.isVisible(textDocument);
 		};
 
 		this.diagnosticRequestor = new DiagnosticRequestor(client, editorTracker, options);

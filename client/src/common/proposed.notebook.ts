@@ -13,7 +13,7 @@ import {
 	DidChangeTextDocumentNotification, DidCloseTextDocumentNotification, NotebookCellTextDocumentFilter, TextDocumentSyncKind
 } from 'vscode-languageserver-protocol';
 
-import { DynamicFeature, BaseLanguageClient, RegistrationData, $DocumentSelector } from './client';
+import { DynamicFeature, BaseLanguageClient, RegistrationData } from './client';
 import * as UUID from './utils/uuid';
 import * as Is from './utils/is';
 import * as _c2p from './codeConverter';
@@ -269,7 +269,10 @@ namespace $NotebookCell {
 }
 
 namespace $NotebookDocumentFilter {
-	export function matchNotebook(filter: NotebookDocumentFilter, notebookDocument: vscode.NotebookDocument): boolean {
+	export function matchNotebook(filter: string | NotebookDocumentFilter, notebookDocument: vscode.NotebookDocument): boolean {
+		if (typeof filter === 'string') {
+			return filter === '*' || notebookDocument.notebookType === filter;
+		}
 		if (filter.notebookType !== undefined && filter.notebookType !== '*' && notebookDocument.notebookType !== filter.notebookType) {
 			return false;
 		}
@@ -291,20 +294,28 @@ namespace $NotebookDocumentFilter {
 }
 
 namespace $NotebookDocumentSyncOptions {
-	export function match(options: proto.Proposed.NotebookDocumentSyncOptions & { cellDocumentSelector: (NotebookCellTextDocumentFilter[] | $NotebookCellTextDocumentFilter[]) }, cell: vscode.NotebookCell, mode: 'cellContent' | 'notebook'): boolean {
-		if (mode === 'cellContent' && !$DocumentSelector.matchForDocumentSync(options.cellDocumentSelector, cell.document)) {
-			return false;
-		}
-		if (mode === 'notebook' && !$DocumentSelector.matchForProvider(options.cellDocumentSelector, cell.document)) {
-			return false;
-		}
-		const notebook = cell.notebook;
-		for (const filter of options.notebookSelector) {
-			if (filter.notebook !== undefined && $NotebookDocumentFilter.matchNotebook(filter.notebook, notebook)) {
-				return true;
+	export function asDocumentSelector(options: proto.Proposed.NotebookDocumentSyncOptions): proto.DocumentSelector {
+		const selector = options.notebookSelector;
+		const result: proto.DocumentSelector = [];
+		for (const element of selector) {
+			const notebookType = (typeof element.notebookDocument === 'string' ? element.notebookDocument : element.notebookDocument?.notebookType) ?? '*';
+			const scheme = (typeof element.notebookDocument === 'string') ? undefined : element.notebookDocument?.scheme;
+			const pattern = (typeof element.notebookDocument === 'string') ? undefined : element.notebookDocument?.pattern;
+			if (element.cells !== undefined) {
+				for (const cell of element.cells) {
+					result.push(asDocumentFilter(notebookType, scheme, pattern, cell.language));
+				}
+			} else {
+				result.push(asDocumentFilter(notebookType, scheme, pattern, undefined));
 			}
 		}
-		return false;
+		return result;
+	}
+
+	function asDocumentFilter(notebookType: string, scheme: string | undefined, pattern: string | undefined, language: string | undefined): proto.NotebookCellTextDocumentFilter {
+		return scheme === undefined && pattern === undefined
+			? { notebookDocument: notebookType, language }
+			: { notebookDocument: { notebookType, scheme, pattern }, language };
 	}
 }
 
@@ -401,17 +412,19 @@ export interface NotebookDocumentSyncFeatureShape {
 class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeatureShape {
 
 	private readonly client: BaseLanguageClient;
-	private readonly options: proto.Proposed.NotebookDocumentSyncOptions & { cellDocumentSelector: NotebookCellTextDocumentFilter[] };
+	private readonly options: proto.Proposed.NotebookDocumentSyncOptions;
 	private readonly notebookSyncInfo: Map<string, SyncInfo>;
 	private readonly notebookDidOpen: Set<string>;
 	private readonly disposables: vscode.Disposable[];
+	private readonly selector: vscode.DocumentSelector;
 
-	constructor(client: BaseLanguageClient, options: proto.Proposed.NotebookDocumentSyncOptions & { cellDocumentSelector: NotebookCellTextDocumentFilter[] }) {
+	constructor(client: BaseLanguageClient, options: proto.Proposed.NotebookDocumentSyncOptions) {
 		this.client = client;
 		this.options = options;
 		this.notebookSyncInfo = new Map();
 		this.notebookDidOpen = new Set();
 		this.disposables = [];
+		this.selector = client.protocol2CodeConverter.asDocumentSelector($NotebookDocumentSyncOptions.asDocumentSelector(options));
 
 		// open
 		vscode.workspace.onDidOpenNotebookDocument((notebookDocument) => {
@@ -443,10 +456,13 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 	}
 
 	public handles(notebookCell: vscode.NotebookCell): boolean {
-		return $NotebookDocumentSyncOptions.match(this.options, notebookCell, this.mode);
+		return vscode.languages.match(this.selector, notebookCell.document) > 0;
 	}
 
 	public didOpenNotebookCellTextDocument(notebookDocument: vscode.NotebookDocument, cell: vscode.NotebookCell): void {
+		if (vscode.languages.match(this.selector, cell.document) === 0) {
+			return;
+		}
 		if (!this.notebookDidOpen.has(notebookDocument.uri.toString())) {
 			// We have never received an open notification for the notebook document.
 			// VS Code guarantees that we first get cell document open and then
@@ -489,7 +505,8 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 	}
 
 	public didChangeNotebookCellTextDocument(notebookDocument: vscode.NotebookDocument, event: vscode.TextDocumentChangeEvent): void {
-		if (!$DocumentSelector.matchForProvider(this.options.cellDocumentSelector, event.document)) {
+		// No match with the selector
+		if (vscode.languages.match(this.selector, event.document) === 0) {
 			return;
 		}
 		this.doSendChange({
@@ -781,13 +798,13 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 			return undefined;
 		}
 		for (const item of this.options.notebookSelector) {
-			if (item.notebook === undefined) {
+			if (item.notebookDocument === undefined) {
 				if (item.cells === undefined) {
 					return undefined;
 				}
 				const filtered = this.filterCells(notebookDocument, cells, item.cells);
 				return filtered.length === 0 ? undefined : filtered;
-			} else if ($NotebookDocumentFilter.matchNotebook(item.notebook, notebookDocument)){
+			} else if ($NotebookDocumentFilter.matchNotebook(item.notebookDocument, notebookDocument)){
 				return item.cells === undefined ? cells : this.filterCells(notebookDocument, cells, item.cells);
 			}
 		}
@@ -802,7 +819,7 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 	private filterCells(notebookDocument: vscode.NotebookDocument,  cells: vscode.NotebookCell[], cellSelector: { language: string }[]): vscode.NotebookCell[] {
 		const result = cells.filter((cell) => {
 			const cellLanguage = cell.document.languageId;
-			return cellSelector.some((filter => cellLanguage === filter.language));
+			return cellSelector.some((filter => (filter.language === '*' || cellLanguage === filter.language)));
 		});
 		return typeof this.client.clientOptions.notebookDocumentOptions?.filterCells === 'function'
 			? this.client.clientOptions.notebookDocumentOptions.filterCells(notebookDocument, cells)
@@ -823,28 +840,27 @@ export interface NotebookCellTextDocumentSyncFeatureShape {
 class NotebookCellTextDocumentSyncFeatureProvider implements NotebookCellTextDocumentSyncFeatureShape {
 
 	private readonly client: BaseLanguageClient;
-	private readonly options: proto.Proposed.NotebookDocumentSyncOptions & { cellDocumentSelector: $NotebookCellTextDocumentFilter[] };
 	private readonly registrations: { open: string; change: string; close: string } | undefined;
+	private readonly documentSelector: proto.DocumentSelector;
 
-	constructor(client: BaseLanguageClient, options: proto.Proposed.NotebookDocumentSyncOptions & { cellDocumentSelector: $NotebookCellTextDocumentFilter[] }) {
+	constructor(client: BaseLanguageClient, options: proto.Proposed.NotebookDocumentSyncOptions) {
 		this.client = client;
-		this.options = options;
 
-		if (options.cellDocumentSelector.length > 0) {
-			const openId = UUID.generateUuid();
-			this.client.getFeature(DidOpenTextDocumentNotification.method).register({
-				id: openId, registerOptions: { documentSelector: options.cellDocumentSelector }
-			});
-			const changeId = UUID.generateUuid();
-			this.client.getFeature(DidChangeTextDocumentNotification.method).register({
-				id: changeId, registerOptions: { documentSelector: options.cellDocumentSelector , syncKind: TextDocumentSyncKind.Incremental }
-			});
-			const closeId = UUID.generateUuid();
-			this.client.getFeature(DidCloseTextDocumentNotification.method).register({
-				id: closeId, registerOptions: { documentSelector: options.cellDocumentSelector }
-			});
-			this.registrations = {open: openId, change: changeId, close: closeId};
-		}
+		this.documentSelector = $NotebookDocumentSyncOptions.asDocumentSelector(options);
+
+		const openId = UUID.generateUuid();
+		this.client.getFeature(DidOpenTextDocumentNotification.method).register({
+			id: openId, registerOptions: { documentSelector: this.documentSelector }
+		});
+		const changeId = UUID.generateUuid();
+		this.client.getFeature(DidChangeTextDocumentNotification.method).register({
+			id: changeId, registerOptions: { documentSelector: this.documentSelector, syncKind: TextDocumentSyncKind.Incremental }
+		});
+		const closeId = UUID.generateUuid();
+		this.client.getFeature(DidCloseTextDocumentNotification.method).register({
+			id: closeId, registerOptions: { documentSelector: this.documentSelector }
+		});
+		this.registrations = {open: openId, change: changeId, close: closeId};
 	}
 
 	public get mode(): 'cellContent' {
@@ -852,7 +868,7 @@ class NotebookCellTextDocumentSyncFeatureProvider implements NotebookCellTextDoc
 	}
 
 	public handles(notebookCell: vscode.NotebookCell): boolean {
-		return $NotebookDocumentSyncOptions.match(this.options, notebookCell, this.mode);
+		return vscode.languages.match(this.client.protocol2CodeConverter.asDocumentSelector(this.documentSelector), notebookCell.document) > 0;
 	}
 
 	public dispose(): void {
@@ -968,18 +984,10 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 
 	public register(data: RegistrationData<proto.Proposed.NotebookDocumentSyncRegistrationOptions>): void {
 		if (data.registerOptions.mode === 'cellContent') {
-			const options = Object.assign({},
-				data.registerOptions,
-				{ cellDocumentSelector: this.getNotebookCellTextDocumentFilter(data.registerOptions, true) }
-			);
-			const provider = new NotebookCellTextDocumentSyncFeatureProvider(this.client, options);
+			const provider = new NotebookCellTextDocumentSyncFeatureProvider(this.client, data.registerOptions);
 			this.registrations.set(data.id, provider);
 		} else {
-			const options = Object.assign({},
-				data.registerOptions,
-				{ cellDocumentSelector: this.getNotebookCellTextDocumentFilter(data.registerOptions) }
-			);
-			const provider = new NotebookDocumentSyncFeatureProvider(this.client, options);
+			const provider = new NotebookDocumentSyncFeatureProvider(this.client, data.registerOptions);
 			this.registrations.set(data.id, provider);
 		}
 	}
@@ -1015,30 +1023,5 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 			}
 		}
 		return [undefined, undefined];
-	}
-
-	private getNotebookCellTextDocumentFilter(options: proto.Proposed.NotebookDocumentSyncRegistrationOptions): NotebookCellTextDocumentFilter[];
-	private getNotebookCellTextDocumentFilter(options: proto.Proposed.NotebookDocumentSyncRegistrationOptions, sync: true): $NotebookCellTextDocumentFilter[];
-	private getNotebookCellTextDocumentFilter(options: proto.Proposed.NotebookDocumentSyncRegistrationOptions, sync?: true ): NotebookCellTextDocumentFilter[] {
-		const documentSelector: NotebookCellTextDocumentFilter[] = [];
-		for (const item of options.notebookSelector) {
-			let nf: $NotebookCellTextDocumentFilter | NotebookCellTextDocumentFilter | undefined;
-			if (item.notebook !== undefined) {
-				nf = sync === true ? { notebook: Object.assign({}, item.notebook, { sync: true }) } : { notebook: Object.assign({}, item.notebook) } ;
-			}
-			if (item.cells !== undefined) {
-				for (const cell of item.cells) {
-					if (nf === undefined) {
-						documentSelector.push((sync === true ? { language: cell.language, sync: true } : { language: cell.language }) as NotebookCellTextDocumentFilter);
-					} else {
-						documentSelector.push(Object.assign({}, nf, { cellLanguage: cell.language }));
-					}
-				}
-				nf = undefined;
-			} else if (nf !== undefined) {
-				documentSelector.push(nf);
-			}
-		}
-		return documentSelector;
 	}
 }

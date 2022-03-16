@@ -315,16 +315,28 @@ export type NotebookDocumentSyncOptions = {
 	 * The notebooks to be synced
 	 */
 	notebookSelector: ({
-		/** The notebook to be synced */
-		notebook: NotebookDocumentFilter;
+		/**
+		 * The notebook to be synced If a string
+	 	 * value is provided it matches against the
+	     * notebook type. '*' matches every notebook.
+		 */
+		notebookDocument: string | NotebookDocumentFilter;
 
-		/** The cells of the matching notebook to be synced */
+		/**
+		 * The cells of the matching notebook to be synced.
+		 */
 		cells?: { language: string }[];
 	} | {
-		/** The notebook to be synced */
-		notebook?: NotebookDocumentFilter;
+		/**
+		 * The notebook to be synced If a string
+	 	 * value is provided it matches against the
+	     * notebook type. '*' matches every notebook.
+		 */
+		notebookDocument?: string | NotebookDocumentFilter;
 
-		/** The cells of the matching notebook to be synced */
+		/**
+		 * The cells of the matching notebook to be synced.
+		 */
 		cells: { language: string }[];
 	})[];
 

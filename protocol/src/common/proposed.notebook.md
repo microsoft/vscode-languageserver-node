@@ -142,17 +142,19 @@ Syncing the text content of a cell is relatively easy since clients should model
 export type NotebookCellTextDocumentFilter = {
 	/**
 	 * A filter that matches against the notebook
-	 * containing the notebook cell.
+	 * containing the notebook cell. If a string
+	 * value is provided it matches against the
+	 * notebook type. '*' matches every notebook.
 	 */
-	notebookDocument: NotebookDocumentFilter;
+	notebookDocument: string | NotebookDocumentFilter;
 
 	/**
 	 * A language id like `python`.
 	 *
 	 * Will be matched against the language id of the
-	 * notebook cell document.
+	 * notebook cell document. '*' matches every language.
 	 */
-	cellLanguage?: string;
+	language?: string;
 };
 ```
 
@@ -169,34 +171,28 @@ export type NotebookDocumentFilter = {
 	/** The type of the enclosing notebook. */
 	notebookType: string;
 
-	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`.
-	 * Will be matched against the URI of the notebook. */
+	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */
 	scheme?: string;
 
-	/** A glob pattern, like `*.ipynb`.
-	 * Will be matched against the notebooks` URI path section.*/
+	/** A glob pattern. */
 	pattern?: string;
 } | {
 	/** The type of the enclosing notebook. */
 	notebookType?: string;
 
-	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`.
-	 * Will be matched against the URI of the notebook. */
+	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`.*/
 	scheme: string;
 
-	/** A glob pattern, like `*.ipynb`.
-	 * Will be matched against the notebooks` URI path section.*/
+	/** A glob pattern. */
 	pattern?: string;
 } | {
 	/** The type of the enclosing notebook. */
 	notebookType?: string;
 
-	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`.
-	 * Will be matched against the URI of the notebook. */
+	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */
 	scheme?: string;
 
-	/** A glob pattern, like `*.ipynb`.
-	 * Will be matched against the notebooks` URI path section.*/
+	/** A glob pattern. */
 	pattern: string;
 };
 ```
@@ -204,7 +200,7 @@ export type NotebookDocumentFilter = {
 Given these structures a Python cell document in a Jupyter notebook stored on disk in a folder having `books1` in its path can be identified as follows;
 
 ```typescript
-{ notebookDocument: { scheme: 'file', pattern '**/books1/**', notebookType: 'jupyter' }, cellLanguage: 'python' }
+{ notebook: { scheme: 'file', pattern '**/books1/**', notebookType: 'jupyter' }, language: 'python' }
 ```
 
 A `NotebookCellTextDocumentFilter` can be used to register providers for certain requests like code complete or hover. If such a provider is registered the client will send the corresponding `textDocument/*` requests to the server using the cell text document's URI as the document URI.
@@ -238,9 +234,9 @@ Synchronize cell text content only for Python cells in notebook documents having
 ```typescript
 {
 	notebookDocumentSync: {
-		notebookDocumentSelector: {
-			notebookDocumentFilter: { scheme: 'file', pattern '**/books1/**', notebookType: 'jupyter' },
-			cellSelector: [{ language: 'python' }]
+		notebookSelector: {
+			notebookDocument: { scheme: 'file', pattern '**/books1/**', notebookType: 'jupyter' },
+			cells: [{ language: 'python' }]
 		}
 		mode: 'cellContent'
 	}
@@ -252,9 +248,9 @@ Synchronize the whole notebook document data for the same kind of notebook docum
 ```typescript
 {
 	notebookDocumentSync: {
-		notebookDocumentSelector: {
-			notebookDocumentFilter: { scheme: 'file', pattern '**/books1/**', notebookType: 'jupyter' },
-			cellSelector: [{ language: 'python' }]
+		notebookSelector: {
+			notebookDocument: { scheme: 'file', pattern '**/books1/**', notebookType: 'jupyter' },
+			cells: [{ language: 'python' }]
 		}
 		mode: 'notebook'
 	}
@@ -315,18 +311,32 @@ The following server capabilities are defined for notebook documents:
  */
 export type NotebookDocumentSyncOptions = {
 	/**
-	 * The notebook document to be synced
+	 * The notebooks to be synced
 	 */
-	notebookDocumentSelector?: ({
-		/** The notebook documents to be synced */
-		notebookDocumentFilter: NotebookDocumentFilter;
-		/** The cells of the matching notebook to be synced */
-		cellSelector?: { language: string }[];
+	notebookSelector: ({
+		/**
+		 * The notebook to be synced If a string
+	 	 * value is provided it matches against the
+	     * notebook type. '*' matches every notebook.
+		 */
+		notebookDocument: string | NotebookDocumentFilter;
+
+		/**
+		 * The cells of the matching notebook to be synced.
+		 */
+		cells?: { language: string }[];
 	} | {
-		/** The notebook documents to be synced */
-		notebookDocumentFilter?: NotebookDocumentFilter;
-		/** The cells of the matching notebook to be synced */
-		cellSelector: { language: string }[];
+		/**
+		 * The notebook to be synced If a string
+	 	 * value is provided it matches against the
+	     * notebook type. '*' matches every notebook.
+		 */
+		notebookDocument?: string | NotebookDocumentFilter;
+
+		/**
+		 * The cells of the matching notebook to be synced.
+		 */
+		cells: { language: string }[];
 	})[];
 
 	/**
@@ -344,7 +354,7 @@ export type NotebookDocumentSyncOptions = {
 
 	/**
 	 * Whether save notification should be forwarded to
-	 * the server.
+	 * the server. Will only be honored if mode === `notebook`.
 	 */
 	save?: boolean;
 };

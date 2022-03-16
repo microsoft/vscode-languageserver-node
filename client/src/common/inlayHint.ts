@@ -13,7 +13,7 @@ import {
 	InlayHintRefreshRequest, InlayHintParams, InlayHintResolveRequest
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, BaseLanguageClient, $DocumentSelector } from './client';
+import { TextDocumentFeature, BaseLanguageClient } from './client';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -69,9 +69,6 @@ export class InlayHintsFeature extends TextDocumentFeature<boolean | InlayHintOp
 		const provider: InlayHintsProvider = {
 			onDidChangeInlayHints: eventEmitter.event,
 			provideInlayHints: (document, viewPort, token) => {
-				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
-					return undefined;
-				}
 				const client = this._client;
 				const provideInlayHints: ProvideInlayHintsSignature = async (document, viewPort, token) => {
 					const requestParams: InlayHintParams = {
@@ -117,6 +114,6 @@ export class InlayHintsFeature extends TextDocumentFeature<boolean | InlayHintOp
 
 			}
 			: undefined;
-		return [Languages.registerInlayHintsProvider($DocumentSelector.asTextDocumentFilters(selector), provider), { provider: provider, onDidChangeInlayHints: eventEmitter }];
+		return [Languages.registerInlayHintsProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider), { provider: provider, onDidChangeInlayHints: eventEmitter }];
 	}
 }

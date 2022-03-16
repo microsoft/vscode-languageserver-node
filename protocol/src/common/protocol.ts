@@ -224,7 +224,7 @@ export type NotebookCellTextDocumentFilter = {
 	 * value is provided it matches against the
 	 * notebook type. '*' matches every notebook.
 	 */
-	notebook: string | NotebookDocumentFilter;
+	notebookDocument: string | NotebookDocumentFilter;
 
 	/**
 	 * A language id like `python`.
@@ -245,7 +245,7 @@ export namespace NotebookCellTextDocumentFilter {
 	export function is(value: any): value is NotebookCellTextDocumentFilter {
 		const candidate: NotebookCellTextDocumentFilter = value;
 		return Is.objectLiteral(candidate)
-			&& (Is.string(candidate.notebook) || NotebookDocumentFilter.is(candidate.notebook))
+			&& (Is.string(candidate.notebookDocument) || NotebookDocumentFilter.is(candidate.notebookDocument))
 			&& (candidate.language === undefined || Is.string(candidate.language));
 	}
 }

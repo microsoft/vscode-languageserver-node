@@ -10,7 +10,7 @@ import {
 	DocumentColorRegistrationOptions, DocumentColorOptions
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, BaseLanguageClient, $DocumentSelector } from './client';
+import { TextDocumentFeature, BaseLanguageClient } from './client';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -76,9 +76,6 @@ export class ColorProviderFeature extends TextDocumentFeature<boolean | Document
 					: provideColorPresentations(color, context, token);
 			},
 			provideDocumentColors: (document, token) => {
-				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
-					return undefined;
-				}
 				const client = this._client;
 				const provideDocumentColors: ProvideDocumentColorsSignature = (document, token) => {
 					const requestParams = {
@@ -99,6 +96,6 @@ export class ColorProviderFeature extends TextDocumentFeature<boolean | Document
 					: provideDocumentColors(document, token);
 			}
 		};
-		return [Languages.registerColorProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
+		return [Languages.registerColorProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider), provider];
 	}
 }
