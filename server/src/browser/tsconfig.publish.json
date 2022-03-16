@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.publish.json",
+  "compilerOptions": {
+    "sourceMap": false
+  },
+  "include": ["."],
+  "references": [
+    { "path": "../common/tsconfig.publish.json" },
+    { "path": "../../../protocol/src/browser/tsconfig.publish.json" }
+  ]
+}

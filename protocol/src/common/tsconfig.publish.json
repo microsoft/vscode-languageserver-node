@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.json",
+  "references": [
+    { "path": "../../../types/tsconfig.json" },
+    { "path": "../../../jsonrpc/src/common/tsconfig.publish.json" }
+  ]
+}
