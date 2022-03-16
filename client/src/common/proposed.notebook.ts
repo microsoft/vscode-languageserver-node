@@ -298,9 +298,9 @@ namespace $NotebookDocumentSyncOptions {
 		const selector = options.notebookSelector;
 		const result: proto.DocumentSelector = [];
 		for (const element of selector) {
-			const notebookType = (typeof element.notebookDocument === 'string' ? element.notebookDocument : element.notebookDocument?.notebookType) ?? '*';
-			const scheme = (typeof element.notebookDocument === 'string') ? undefined : element.notebookDocument?.scheme;
-			const pattern = (typeof element.notebookDocument === 'string') ? undefined : element.notebookDocument?.pattern;
+			const notebookType = (typeof element.notebook === 'string' ? element.notebook : element.notebook?.notebookType) ?? '*';
+			const scheme = (typeof element.notebook === 'string') ? undefined : element.notebook?.scheme;
+			const pattern = (typeof element.notebook === 'string') ? undefined : element.notebook?.pattern;
 			if (element.cells !== undefined) {
 				for (const cell of element.cells) {
 					result.push(asDocumentFilter(notebookType, scheme, pattern, cell.language));
@@ -314,8 +314,8 @@ namespace $NotebookDocumentSyncOptions {
 
 	function asDocumentFilter(notebookType: string, scheme: string | undefined, pattern: string | undefined, language: string | undefined): proto.NotebookCellTextDocumentFilter {
 		return scheme === undefined && pattern === undefined
-			? { notebookDocument: notebookType, language }
-			: { notebookDocument: { notebookType, scheme, pattern }, language };
+			? { notebook: notebookType, language }
+			: { notebook: { notebookType, scheme, pattern }, language };
 	}
 }
 
@@ -798,13 +798,13 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 			return undefined;
 		}
 		for (const item of this.options.notebookSelector) {
-			if (item.notebookDocument === undefined) {
+			if (item.notebook === undefined) {
 				if (item.cells === undefined) {
 					return undefined;
 				}
 				const filtered = this.filterCells(notebookDocument, cells, item.cells);
 				return filtered.length === 0 ? undefined : filtered;
-			} else if ($NotebookDocumentFilter.matchNotebook(item.notebookDocument, notebookDocument)){
+			} else if ($NotebookDocumentFilter.matchNotebook(item.notebook, notebookDocument)){
 				return item.cells === undefined ? cells : this.filterCells(notebookDocument, cells, item.cells);
 			}
 		}

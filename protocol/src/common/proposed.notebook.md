@@ -146,7 +146,7 @@ export type NotebookCellTextDocumentFilter = {
 	 * value is provided it matches against the
 	 * notebook type. '*' matches every notebook.
 	 */
-	notebookDocument: string | NotebookDocumentFilter;
+	notebook: string | NotebookDocumentFilter;
 
 	/**
 	 * A language id like `python`.
@@ -235,7 +235,7 @@ Synchronize cell text content only for Python cells in notebook documents having
 {
 	notebookDocumentSync: {
 		notebookSelector: {
-			notebookDocument: { scheme: 'file', pattern '**/books1/**', notebookType: 'jupyter' },
+			notebook: { scheme: 'file', pattern '**/books1/**', notebookType: 'jupyter' },
 			cells: [{ language: 'python' }]
 		}
 		mode: 'cellContent'
@@ -249,7 +249,7 @@ Synchronize the whole notebook document data for the same kind of notebook docum
 {
 	notebookDocumentSync: {
 		notebookSelector: {
-			notebookDocument: { scheme: 'file', pattern '**/books1/**', notebookType: 'jupyter' },
+			notebook: { scheme: 'file', pattern '**/books1/**', notebookType: 'jupyter' },
 			cells: [{ language: 'python' }]
 		}
 		mode: 'notebook'

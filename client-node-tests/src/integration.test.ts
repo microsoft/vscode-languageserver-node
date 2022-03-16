@@ -221,7 +221,7 @@ suite('Client integration', () => {
 				},
 				notebookDocumentSync: {
 					notebookSelector: [{
-						notebookDocument: { notebookType: 'jupyter-notebook' },
+						notebook: { notebookType: 'jupyter-notebook' },
 						cells: [{language: 'bat'}]
 					}],
 					mode: 'notebook'

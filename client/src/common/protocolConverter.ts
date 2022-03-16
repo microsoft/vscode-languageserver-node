@@ -281,11 +281,11 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 			} else if (TextDocumentFilter.is(filter)) {
 				result.push({ language: filter.language, scheme: filter.scheme, pattern: filter.pattern });
 			} else if (NotebookCellTextDocumentFilter.is(filter)) {
-				if (typeof filter.notebookDocument === 'string') {
-					result.push({notebookType: filter.notebookDocument, language: filter.language});
+				if (typeof filter.notebook === 'string') {
+					result.push({notebookType: filter.notebook, language: filter.language});
 				} else {
-					const notebookType = filter.notebookDocument.notebookType ?? '*';
-					result.push({ notebookType: notebookType, scheme: filter.notebookDocument.scheme, pattern: filter.notebookDocument.pattern, language: filter.language });
+					const notebookType = filter.notebook.notebookType ?? '*';
+					result.push({ notebookType: notebookType, scheme: filter.notebook.scheme, pattern: filter.notebook.pattern, language: filter.language });
 				}
 			}
 		}
