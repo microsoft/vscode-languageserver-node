@@ -1,8 +1,8 @@
 {
-  "extends": "./tsconfig.json",
-  "references": [
-    { "path": "./src/common/tsconfig.publish.json" },
-    { "path": "./src/node/tsconfig.publish.json" },
-    { "path": "./src/browser/tsconfig.publish.json" }
-  ]
+    "extends": "./tsconfig.json",
+    "references": [
+        { "path": "./src/common/tsconfig.publish.json" },
+        { "path": "./src/node/tsconfig.publish.json" },
+        { "path": "./src/browser/tsconfig.publish.json" }
+    ]
 }

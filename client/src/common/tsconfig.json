@@ -1,10 +1,10 @@
 {
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "tsBuildInfoFile": "../../lib/common/compile.tsbuildInfo",
-    "rootDir": ".",
-    "outDir": "../../lib/common"
-  },
-  "include": ["."],
-  "references": [{ "path": "../../../protocol/src/common/tsconfig.json" }]
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        "tsBuildInfoFile": "../../lib/common/compile.tsbuildInfo",
+        "rootDir": ".",
+        "outDir": "../../lib/common"
+    },
+    "include": ["."],
+    "references": [{ "path": "../../../protocol/src/common/tsconfig.json" }]
 }
