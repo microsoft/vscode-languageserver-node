@@ -31,12 +31,6 @@ export type NotebookDocumentSyncClientCapabilities = {
 	 * The client supports sending execution summary data per cell.
 	 */
 	executionSummarySupport?: boolean;
-
-	/**
-	 * The client has support for notebook controllers and might
-	 * send `DidSelectNotebookController` notifications.
-	 */
-	notebookControllerSupport?: boolean;
 };
 
 export type $NotebookDocumentClientCapabilities = {
@@ -318,18 +312,32 @@ export type VersionedNotebookDocumentIdentifier = {
  */
 export type NotebookDocumentSyncOptions = {
 	/**
-	 * The notebook document to be synced
+	 * The notebooks to be synced
 	 */
-	notebookDocumentSelector: ({
-		/** The notebook documents to be synced */
-		notebookDocumentFilter: NotebookDocumentFilter;
-		/** The cells of the matching notebook to be synced */
-		cellSelector?: { language: string }[];
+	notebookSelector: ({
+		/**
+		 * The notebook to be synced If a string
+	 	 * value is provided it matches against the
+	     * notebook type. '*' matches every notebook.
+		 */
+		notebook: string | NotebookDocumentFilter;
+
+		/**
+		 * The cells of the matching notebook to be synced.
+		 */
+		cells?: { language: string }[];
 	} | {
-		/** The notebook documents to be synced */
-		notebookDocumentFilter?: NotebookDocumentFilter;
-		/** The cells of the matching notebook to be synced */
-		cellSelector: { language: string }[];
+		/**
+		 * The notebook to be synced If a string
+	 	 * value is provided it matches against the
+	     * notebook type. '*' matches every notebook.
+		 */
+		notebook?: string | NotebookDocumentFilter;
+
+		/**
+		 * The cells of the matching notebook to be synced.
+		 */
+		cells: { language: string }[];
 	})[];
 
 	/**

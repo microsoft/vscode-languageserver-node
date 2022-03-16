@@ -10,7 +10,7 @@ import {
 	SelectionRangeParams, SelectionRangeRequest, SelectionRangeOptions, SelectionRangeRegistrationOptions
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, BaseLanguageClient, $DocumentSelector } from './client';
+import { TextDocumentFeature, BaseLanguageClient } from './client';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -49,9 +49,6 @@ export class SelectionRangeFeature extends TextDocumentFeature<boolean | Selecti
 		const selector = options.documentSelector!;
 		const provider: SelectionRangeProvider = {
 			provideSelectionRanges: (document, positions, token) => {
-				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
-					return undefined;
-				}
 				const client = this._client;
 				const provideSelectionRanges: ProvideSelectionRangeSignature = async (document, positions, token) => {
 					const requestParams: SelectionRangeParams = {
@@ -74,6 +71,6 @@ export class SelectionRangeFeature extends TextDocumentFeature<boolean | Selecti
 
 			}
 		};
-		return [Languages.registerSelectionRangeProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
+		return [Languages.registerSelectionRangeProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider), provider];
 	}
 }

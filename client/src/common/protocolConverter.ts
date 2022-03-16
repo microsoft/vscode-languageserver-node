@@ -18,6 +18,7 @@ import ProtocolCallHierarchyItem from './protocolCallHierarchyItem';
 import ProtocolTypeHierarchyItem from './protocolTypeHierarchyItem';
 import WorkspaceSymbol from './protocolWorkspaceSymbol';
 import ProtocolInlayHint from './protocolInlayHint';
+import { NotebookCellTextDocumentFilter, TextDocumentFilter } from 'vscode-languageserver-protocol';
 
 interface InsertReplaceRange {
 	inserting: code.Range;
@@ -27,6 +28,8 @@ interface InsertReplaceRange {
 export interface Converter {
 
 	asUri(value: string): code.Uri;
+
+	asDocumentSelector(value: ls.DocumentSelector): code.DocumentSelector;
 
 	asPosition(value: undefined | null): undefined;
 	asPosition(value: ls.Position): code.Position;
@@ -268,6 +271,25 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 
 	function asUri(value: string): code.Uri {
 		return _uriConverter(value);
+	}
+
+	function asDocumentSelector(selector: ls.DocumentSelector): code.DocumentSelector {
+		const result: code.DocumentFilter | string | Array<code.DocumentFilter | string> = [];
+		for (const filter of selector) {
+			if (typeof filter === 'string') {
+				result.push(filter);
+			} else if (TextDocumentFilter.is(filter)) {
+				result.push({ language: filter.language, scheme: filter.scheme, pattern: filter.pattern });
+			} else if (NotebookCellTextDocumentFilter.is(filter)) {
+				if (typeof filter.notebook === 'string') {
+					result.push({notebookType: filter.notebook, language: filter.language});
+				} else {
+					const notebookType = filter.notebook.notebookType ?? '*';
+					result.push({ notebookType: notebookType, scheme: filter.notebook.scheme, pattern: filter.notebook.pattern, language: filter.language });
+				}
+			}
+		}
+		return result;
 	}
 
 	async function asDiagnostics(diagnostics: ReadonlyArray<ls.Diagnostic>, token?: code.CancellationToken): Promise<code.Diagnostic[]> {
@@ -1385,6 +1407,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 
 	return {
 		asUri,
+		asDocumentSelector,
 		asDiagnostics,
 		asDiagnostic,
 		asRange,

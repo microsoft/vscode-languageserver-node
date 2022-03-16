@@ -10,7 +10,7 @@ import { ClientCapabilities, ServerCapabilities, DocumentSelector, SemanticToken
 	SemanticTokensRegistrationType
 } from 'vscode-languageserver-protocol';
 
-import { Middleware, BaseLanguageClient, TextDocumentFeature, $DocumentSelector } from './client';
+import { Middleware, BaseLanguageClient, TextDocumentFeature } from './client';
 import * as Is from './utils/is';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
@@ -132,9 +132,6 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Semanti
 			? {
 				onDidChangeSemanticTokens: eventEmitter.event,
 				provideDocumentSemanticTokens: (document, token) => {
-					if ($DocumentSelector.skipCellTextDocument(selector, document)) {
-						return undefined;
-					}
 					const client = this._client;
 					const middleware = client.clientOptions.middleware! as Middleware & SemanticTokensMiddleware;
 					const provideDocumentSemanticTokens: DocumentSemanticsTokensSignature = (document, token) => {
@@ -156,9 +153,6 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Semanti
 				},
 				provideDocumentSemanticTokensEdits: hasEditProvider
 					? (document, previousResultId, token) => {
-						if ($DocumentSelector.skipCellTextDocument(selector, document)) {
-							return undefined;
-						}
 						const client = this._client;
 						const middleware = client.clientOptions.middleware! as Middleware & SemanticTokensMiddleware;
 						const provideDocumentSemanticTokensEdits: DocumentSemanticsTokensEditsSignature = (document, previousResultId, token) => {
@@ -217,12 +211,12 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Semanti
 		const disposables: vscode.Disposable[] = [];
 		const client = this._client;
 		const legend: vscode.SemanticTokensLegend = client.protocol2CodeConverter.asSemanticTokensLegend(options.legend);
-		const textDocumentSelectors = $DocumentSelector.asTextDocumentFilters(selector);
+		const documentSelector = client.protocol2CodeConverter.asDocumentSelector(selector);
 		if (documentProvider !== undefined) {
-			disposables.push(vscode.languages.registerDocumentSemanticTokensProvider(textDocumentSelectors, documentProvider, legend));
+			disposables.push(vscode.languages.registerDocumentSemanticTokensProvider(documentSelector, documentProvider, legend));
 		}
 		if (rangeProvider !== undefined) {
-			disposables.push(vscode.languages.registerDocumentRangeSemanticTokensProvider(textDocumentSelectors, rangeProvider, legend));
+			disposables.push(vscode.languages.registerDocumentRangeSemanticTokensProvider(documentSelector, rangeProvider, legend));
 		}
 
 		return [new vscode.Disposable(() => disposables.forEach(item => item.dispose())), { range: rangeProvider, full: documentProvider, onDidChangeSemanticTokensEmitter: eventEmitter }];

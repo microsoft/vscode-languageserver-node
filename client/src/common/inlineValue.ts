@@ -13,7 +13,7 @@ import {
 	InlineValueRefreshRequest, InlineValueParams, InlineValueRequest,
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, BaseLanguageClient, $DocumentSelector } from './client';
+import { TextDocumentFeature, BaseLanguageClient } from './client';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -63,9 +63,6 @@ export class InlineValueFeature extends TextDocumentFeature<boolean | InlineValu
 		const provider: InlineValuesProvider = {
 			onDidChangeInlineValues: eventEmitter.event,
 			provideInlineValues: (document, viewPort, context, token) => {
-				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
-					return undefined;
-				}
 				const client = this._client;
 				const provideInlineValues: ProvideInlineValuesSignature = (document, viewPort, context, token) => {
 					const requestParams: InlineValueParams = {
@@ -89,6 +86,6 @@ export class InlineValueFeature extends TextDocumentFeature<boolean | InlineValu
 
 			}
 		};
-		return [Languages.registerInlineValuesProvider($DocumentSelector.asTextDocumentFilters(selector), provider), { provider: provider, onDidChangeInlineValues: eventEmitter }];
+		return [Languages.registerInlineValuesProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider), { provider: provider, onDidChangeInlineValues: eventEmitter }];
 	}
 }

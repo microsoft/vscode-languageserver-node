@@ -10,7 +10,7 @@ import {
 
 import { ClientCapabilities, DocumentSelector, ServerCapabilities, TypeHierarchyRegistrationOptions, TypeHierarchyPrepareRequest, TypeHierarchySupertypesParams, TypeHierarchySupertypesRequest, TypeHierarchySubtypesParams, TypeHierarchySubtypesRequest, TypeHierarchyOptions } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, BaseLanguageClient, Middleware, $DocumentSelector } from './client';
+import { TextDocumentFeature, BaseLanguageClient, Middleware } from './client';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -40,14 +40,11 @@ class TypeHierarchyProvider implements VTypeHierarchyProvider {
 
 	private middleware: Middleware & TypeHierarchyMiddleware;
 
-	constructor(private client: BaseLanguageClient, private options: TypeHierarchyRegistrationOptions) {
+	constructor(private client: BaseLanguageClient) {
 		this.middleware = client.clientOptions.middleware!;
 	}
 
 	public prepareTypeHierarchy(document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VTypeHierarchyItem[]> {
-		if ($DocumentSelector.skipCellTextDocument(this.options.documentSelector!, document)) {
-			return undefined;
-		}
 		const client = this.client;
 		const middleware = this.middleware;
 		const prepareTypeHierarchy: PrepareTypeHierarchySignature = (document, position, token) => {
@@ -129,7 +126,7 @@ export class TypeHierarchyFeature extends TextDocumentFeature<boolean | TypeHier
 
 	protected registerLanguageProvider(options: TypeHierarchyRegistrationOptions): [Disposable, TypeHierarchyProvider] {
 		const client = this._client;
-		const provider = new TypeHierarchyProvider(client, options);
-		return [Languages.registerTypeHierarchyProvider($DocumentSelector.asTextDocumentFilters(options.documentSelector!), provider), provider];
+		const provider = new TypeHierarchyProvider(client);
+		return [Languages.registerTypeHierarchyProvider(client.protocol2CodeConverter.asDocumentSelector(options.documentSelector!), provider), provider];
 	}
 }
