@@ -1,7 +1,7 @@
 {
-    "extends": "./tsconfig.json",
-    "compilerOptions": {
-        "sourceMap": false
-    },
-    "references": [{ "path": "../common/tsconfig.publish.json" }]
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"sourceMap": false
+	},
+	"references": [{ "path": "../common/tsconfig.publish.json" }]
 }

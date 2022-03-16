@@ -1,9 +1,9 @@
 {
-    "extends": "./tsconfig.json",
-    "compilerOptions": {
-        "sourceMap": false
-    },
-    "references": [
-        { "path": "../../../protocol/src/common/tsconfig.publish.json" }
-    ]
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"sourceMap": false
+	},
+	"references": [
+		{ "path": "../../../protocol/src/common/tsconfig.publish.json" }
+	]
 }

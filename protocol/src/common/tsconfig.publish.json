@@ -1,10 +1,10 @@
 {
-    "extends": "./tsconfig.json",
-    "compilerOptions": {
-        "sourceMap": false
-    },
-    "references": [
-        { "path": "../../../types/tsconfig.json" },
-        { "path": "../../../jsonrpc/src/common/tsconfig.publish.json" }
-    ]
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"sourceMap": false
+	},
+	"references": [
+		{ "path": "../../../types/tsconfig.json" },
+		{ "path": "../../../jsonrpc/src/common/tsconfig.publish.json" }
+	]
 }
