@@ -1,5 +1,8 @@
 {
 	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"sourceMap": false
+	},
 	"references": [
 		{ "path": "../jsonrpc/tsconfig.publish.json" },
 		{ "path": "../types/tsconfig.json" },
