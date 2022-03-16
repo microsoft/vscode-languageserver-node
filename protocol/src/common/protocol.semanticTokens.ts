@@ -7,7 +7,9 @@ import { TextDocumentIdentifier, Range, uinteger, SemanticTokensEdit, SemanticTo
 import { RequestHandler0, RequestHandler } from 'vscode-jsonrpc';
 
 import { ProtocolRequestType, ProtocolRequestType0, RegistrationType } from './messages';
-import { PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions, TextDocumentRegistrationOptions, StaticRegistrationOptions } from './protocol';
+import type {
+	PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions, TextDocumentRegistrationOptions, StaticRegistrationOptions
+} from './protocol';
 
 /**
  * @since 3.16.0

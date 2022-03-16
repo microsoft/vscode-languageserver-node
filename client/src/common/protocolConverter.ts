@@ -17,6 +17,8 @@ import { ProtocolDiagnostic, DiagnosticCode } from './protocolDiagnostic';
 import ProtocolCallHierarchyItem from './protocolCallHierarchyItem';
 import ProtocolTypeHierarchyItem from './protocolTypeHierarchyItem';
 import WorkspaceSymbol from './protocolWorkspaceSymbol';
+import ProtocolInlayHint from './protocolInlayHint';
+import { NotebookCellTextDocumentFilter, TextDocumentFilter } from 'vscode-languageserver-protocol';
 
 interface InsertReplaceRange {
 	inserting: code.Range;
@@ -26,6 +28,8 @@ interface InsertReplaceRange {
 export interface Converter {
 
 	asUri(value: string): code.Uri;
+
+	asDocumentSelector(value: ls.DocumentSelector): code.DocumentSelector;
 
 	asPosition(value: undefined | null): undefined;
 	asPosition(value: ls.Position): code.Position;
@@ -192,6 +196,12 @@ export interface Converter {
 	asInlineValues(values: ls.InlineValue[], token?: code.CancellationToken): Promise<code.InlineValue[]>;
 	asInlineValues(values: ls.InlineValue[] | undefined | null, token?: code.CancellationToken): Promise<code.InlineValue[] | undefined>;
 
+	asInlayHint(value: ls.InlayHint, token?: code.CancellationToken): Promise<code.InlayHint>;
+
+	asInlayHints(values: undefined | null, token?: code.CancellationToken): Promise<undefined>;
+	asInlayHints(values: ls.InlayHint[], token?: code.CancellationToken): Promise<code.InlayHint[]>;
+	asInlayHints(values: ls.InlayHint[] | undefined | null, token?: code.CancellationToken): Promise<code.InlayHint[] | undefined>;
+
 	asSemanticTokensLegend(value: ls.SemanticTokensLegend): code.SemanticTokensLegend;
 
 	asSemanticTokens(value: undefined | null, token?: code.CancellationToken): Promise<undefined>;
@@ -261,6 +271,25 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 
 	function asUri(value: string): code.Uri {
 		return _uriConverter(value);
+	}
+
+	function asDocumentSelector(selector: ls.DocumentSelector): code.DocumentSelector {
+		const result: code.DocumentFilter | string | Array<code.DocumentFilter | string> = [];
+		for (const filter of selector) {
+			if (typeof filter === 'string') {
+				result.push(filter);
+			} else if (TextDocumentFilter.is(filter)) {
+				result.push({ language: filter.language, scheme: filter.scheme, pattern: filter.pattern });
+			} else if (NotebookCellTextDocumentFilter.is(filter)) {
+				if (typeof filter.notebook === 'string') {
+					result.push({notebookType: filter.notebook, language: filter.language});
+				} else {
+					const notebookType = filter.notebook.notebookType ?? '*';
+					result.push({ notebookType: notebookType, scheme: filter.notebook.scheme, pattern: filter.notebook.pattern, language: filter.language });
+				}
+			}
+		}
+		return result;
 	}
 
 	async function asDiagnostics(diagnostics: ReadonlyArray<ls.Diagnostic>, token?: code.CancellationToken): Promise<code.Diagnostic[]> {
@@ -397,19 +426,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 			}
 			return result;
 		} else {
-			let result: code.MarkdownString;
-			switch (value.kind) {
-				case ls.MarkupKind.Markdown:
-					return asMarkdownString(value.value);
-				case ls.MarkupKind.PlainText:
-					result = asMarkdownString();
-					result.appendText(value.value);
-					return result;
-				default:
-					result = asMarkdownString();
-					result.appendText(`Unsupported Markup content received. Kind is: ${value.kind}`);
-					return result;
-			}
+			return asMarkdownString(value);
 		}
 	}
 
@@ -428,8 +445,25 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		}
 	}
 
-	function asMarkdownString(value?: string): code.MarkdownString {
-		const result = new code.MarkdownString(value);
+	function asMarkdownString(value?: string | ls.MarkupContent): code.MarkdownString {
+		let result: code.MarkdownString;
+		if (value === undefined || typeof value === 'string') {
+			result = new code.MarkdownString(value);
+		} else {
+			switch (value.kind) {
+				case ls.MarkupKind.Markdown:
+					result = new code.MarkdownString(value.value);
+					break;
+				case ls.MarkupKind.PlainText:
+					result = new code.MarkdownString();
+					result.appendText(value.value);
+					break;
+				default:
+					result = new code.MarkdownString();
+					result.appendText(`Unsupported Markup content received. Kind is: ${value.kind}`);
+					break;
+			}
+		}
 		result.isTrusted = trustMarkdown;
 		result.supportHtml = supportHtml;
 		return result;
@@ -1186,6 +1220,45 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return async.map(inlineValues, asInlineValue, token);
 	}
 
+	async function asInlayHint(value: ls.InlayHint, token?: code.CancellationToken): Promise<code.InlayHint> {
+		const label = typeof value.label === 'string'
+			? value.label
+			: await async.map(value.label, asInlayHintLabelPart, token);
+		const result = new ProtocolInlayHint(asPosition(value.position), label);
+		if (value.kind !== undefined) { result.kind = value.kind; }
+		if (value.textEdits !== undefined) { result.textEdits = await asTextEdits(value.textEdits, token); }
+		if (value.tooltip !== undefined) { result.tooltip = asTooltip(value.tooltip); }
+		if (value.paddingLeft !== undefined) { result.paddingLeft = value.paddingLeft; }
+		if (value.paddingRight !== undefined) { result.paddingRight = value.paddingRight; }
+		if (value.data !== undefined) { result.data = value.data; }
+		return result;
+	}
+
+	function asInlayHintLabelPart(part: ls.InlayHintLabelPart): code.InlayHintLabelPart {
+		const result = new code.InlayHintLabelPart(part.value);
+		if (part.location !== undefined) { result.location = asLocation(part.location); }
+		if (part.tooltip !== undefined) { result.tooltip = asTooltip(part.tooltip); }
+		if (part.command !== undefined) { result.command = asCommand(part.command); }
+		return result;
+	}
+
+	function asTooltip(value: string | ls.MarkupContent): string | code.MarkdownString {
+		if (typeof value === 'string') {
+			return value;
+		}
+		return asMarkdownString(value);
+	}
+
+	function asInlayHints(values: undefined | null,  token?: code.CancellationToken): Promise<undefined>;
+	function asInlayHints(values: ls.InlayHint[], token?: code.CancellationToken): Promise<code.InlayHint[]>;
+	function asInlayHints(values: ls.InlayHint[] | undefined | null, token?: code.CancellationToken): Promise<code.InlayHint[] | undefined>;
+	async function asInlayHints(values: ls.InlayHint[] | undefined | null, token?: code.CancellationToken): Promise<code.InlayHint[] | undefined> {
+		if (!Array.isArray(values)) {
+			return undefined;
+		}
+		return async.mapAsync(values, asInlayHint, token);
+	}
+
 	//----- call hierarchy
 
 	function asCallHierarchyItem(item: null): undefined;
@@ -1334,6 +1407,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 
 	return {
 		asUri,
+		asDocumentSelector,
 		asDiagnostics,
 		asDiagnostic,
 		asRange,
@@ -1388,6 +1462,8 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		asSelectionRanges,
 		asInlineValue,
 		asInlineValues,
+		asInlayHint,
+		asInlayHints,
 		asSemanticTokensLegend,
 		asSemanticTokens,
 		asSemanticTokensEdit,

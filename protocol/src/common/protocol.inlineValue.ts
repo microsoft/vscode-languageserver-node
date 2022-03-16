@@ -3,11 +3,11 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { TextDocumentIdentifier, Range, InlineValue, InlineValuesContext } from 'vscode-languageserver-types';
+import { TextDocumentIdentifier, Range, InlineValue, InlineValueContext } from 'vscode-languageserver-types';
 import { RequestHandler, RequestHandler0 } from 'vscode-jsonrpc';
 
 import { ProtocolRequestType, ProtocolRequestType0 } from './messages';
-import { TextDocumentRegistrationOptions, WorkDoneProgressOptions, StaticRegistrationOptions, WorkDoneProgressParams } from './protocol';
+import type { TextDocumentRegistrationOptions, WorkDoneProgressOptions, StaticRegistrationOptions, WorkDoneProgressParams } from './protocol';
 
 // ---- capabilities
 
@@ -16,7 +16,7 @@ import { TextDocumentRegistrationOptions, WorkDoneProgressOptions, StaticRegistr
  *
  * @since 3.17.0 - proposed state
  */
-export type InlineValuesClientCapabilities = {
+export type InlineValueClientCapabilities = {
 	/**
 	 * Whether implementation supports dynamic registration for inline value providers.
 	 */
@@ -28,74 +28,74 @@ export type InlineValuesClientCapabilities = {
  *
  * @since 3.17.0 - proposed state
  */
-export type InlineValuesWorkspaceClientCapabilities = {
+export type InlineValueWorkspaceClientCapabilities = {
 	/**
 	 * Whether the client implementation supports a refresh request sent from the
 	 * server to the client.
 	 *
 	 * Note that this event is global and will force the client to refresh all
 	 * inline values currently shown. It should be used with absolute care and is
-	 * useful for situation where a server for example detect a project wide
+	 * useful for situation where a server for example detects a project wide
 	 * change that requires such a calculation.
 	 */
 	refreshSupport?: boolean;
 };
 
 /**
- * Inline values options used during static registration.
+ * Inline value options used during static registration.
  *
  * @since 3.17.0 - proposed state
  */
-export type InlineValuesOptions = WorkDoneProgressOptions;
+export type InlineValueOptions = WorkDoneProgressOptions;
 
 /**
  * Inline value options used during static or dynamic registration.
  *
  * @since 3.17.0 - proposed state
  */
-export type InlineValuesRegistrationOptions = InlineValuesOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions;
+export type InlineValueRegistrationOptions = InlineValueOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions;
 
 /**
- * A parameter literal used in inline values requests.
+ * A parameter literal used in inline value requests.
  *
  * @since 3.17.0 - proposed state
  */
-export type InlineValuesParams = WorkDoneProgressParams & {
+export type InlineValueParams = WorkDoneProgressParams & {
 	/**
 	 * The text document.
 	 */
 	textDocument: TextDocumentIdentifier;
 
 	/**
-	 * The visible document range for which inline values should be computed.
+	 * The document range for which inline values should be computed.
 	 */
-	viewPort: Range;
+	range: Range;
 
 	/**
 	 * Additional information about the context in which inline values were
 	 * requested.
 	 */
-	context: InlineValuesContext;
+	context: InlineValueContext;
 };
 
 /**
  * A request to provide inline values in a document. The request's parameter is of
- * type [InlineValuesParams](#InlineValuesParams), the response is of type
+ * type [InlineValueParams](#InlineValueParams), the response is of type
  * [InlineValue[]](#InlineValue[]) or a Thenable that resolves to such.
  *
  * @since 3.17.0 - proposed state
  */
-export namespace InlineValuesRequest {
-	export const method: 'textDocument/inlineValues' = 'textDocument/inlineValues';
-	export const type = new ProtocolRequestType<InlineValuesParams, InlineValue[] | null, InlineValue[], any, InlineValuesRegistrationOptions>(method);
-	export type HandlerSignature = RequestHandler<InlineValuesParams, InlineValue[] | null, void>;
+export namespace InlineValueRequest {
+	export const method: 'textDocument/inlineValue' = 'textDocument/inlineValue';
+	export const type = new ProtocolRequestType<InlineValueParams, InlineValue[] | null, InlineValue[], any, InlineValueRegistrationOptions>(method);
+	export type HandlerSignature = RequestHandler<InlineValueParams, InlineValue[] | null, void>;
 }
 
 /**
  * @since 3.17.0 - proposed state
  */
-export namespace InlineValuesRefreshRequest {
-	export const method: `workspace/inlineValues/refresh` = `workspace/inlineValues/refresh`;
+export namespace InlineValueRefreshRequest {
+	export const method: `workspace/inlineValue/refresh` = `workspace/inlineValue/refresh`;
 	export const type = new ProtocolRequestType0<void, void, void, void>(method);
 	export type HandlerSignature = RequestHandler0<void, void>;
 }

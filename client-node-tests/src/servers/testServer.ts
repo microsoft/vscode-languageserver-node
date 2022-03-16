@@ -11,7 +11,8 @@ import {
 	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, SymbolKind, ProtocolRequestType, WorkDoneProgress,
 	InlineValueText, InlineValueVariableLookup, InlineValueEvaluatableExpression, RequestType,
 	WorkDoneProgressCreateRequest, WillCreateFilesRequest, WillRenameFilesRequest, WillDeleteFilesRequest, DidDeleteFilesNotification,
-	DidRenameFilesNotification, DidCreateFilesNotification, Proposed, ProposedFeatures, Diagnostic, DiagnosticSeverity, TypeHierarchyItem
+	DidRenameFilesNotification, DidCreateFilesNotification, Proposed, ProposedFeatures, Diagnostic, DiagnosticSeverity, TypeHierarchyItem,
+	InlayHint, InlayHintLabelPart, InlayHintKind
 } from '../../../server/node';
 
 import { URI } from 'vscode-uri';
@@ -49,6 +50,9 @@ connection.onInitialize((params: InitializeParams): any => {
 	assert.equal(params.capabilities.textDocument!.publishDiagnostics!.tagSupport!.valueSet[0], DiagnosticTag.Unnecessary);
 	assert.equal(params.capabilities.textDocument!.publishDiagnostics!.tagSupport!.valueSet[1], DiagnosticTag.Deprecated);
 	assert.equal(params.capabilities.textDocument!.documentLink!.tooltipSupport, true);
+	assert.equal(params.capabilities.textDocument!.inlineValue!.dynamicRegistration, true);
+	assert.equal(params.capabilities.textDocument!.inlayHint!.dynamicRegistration, true);
+	assert.equal(params.capabilities.textDocument!.inlayHint!.resolveSupport!.properties[0], 'tooltip');
 
 	const valueSet = params.capabilities.textDocument!.completion!.completionItemKind!.valueSet!;
 	assert.equal(valueSet[0], 1);
@@ -92,7 +96,10 @@ connection.onInitialize((params: InitializeParams): any => {
 		foldingRangeProvider: true,
 		implementationProvider: true,
 		selectionRangeProvider: true,
-		inlineValuesProvider: {},
+		inlineValueProvider: {},
+		inlayHintProvider: {
+			resolveProvider: true
+		},
 		typeDefinitionProvider: true,
 		callHierarchyProvider: true,
 		semanticTokensProvider: {
@@ -153,9 +160,9 @@ connection.onInitialize((params: InitializeParams): any => {
 			resolveProvider: true
 		},
 		notebookDocumentSync: {
-			notebookDocumentSelector: [{
-				notebookDocumentFilter: { notebookType: 'jupyter-notebook' },
-				cellSelector: [{language: 'bat'}]
+			notebookSelector: [{
+				notebook: { notebookType: 'jupyter-notebook' },
+				cells: [{language: 'bat'}]
 			}],
 			mode: 'notebook'
 		}
@@ -486,12 +493,25 @@ connection.languages.typeHierarchy.onSubtypes((_params) => {
 	return typeHierarchySample.subTypes;
 });
 
-connection.languages.inlineValues.on((_params) => {
+connection.languages.inlineValue.on((_params) => {
 	return [
 		InlineValueText.create(Range.create(1, 2, 3, 4), 'text'),
 		InlineValueVariableLookup.create(Range.create(1, 2, 3, 4), 'variableName', false),
 		InlineValueEvaluatableExpression.create(Range.create(1, 2, 3, 4), 'expression'),
 	];
+});
+
+connection.languages.inlayHint.on(() => {
+	const one = InlayHint.create(Position.create(1,1), [InlayHintLabelPart.create('type')], InlayHintKind.Type);
+	one.data = '1';
+	const two = InlayHint.create(Position.create(2,2), [InlayHintLabelPart.create('parameter')], InlayHintKind.Parameter);
+	two.data = '2';
+	return [one, two];
+});
+
+connection.languages.inlayHint.resolve((hint) => {
+	(hint.label as InlayHintLabelPart[])[0].tooltip = 'tooltip';
+	return hint;
 });
 
 connection.onRequest(

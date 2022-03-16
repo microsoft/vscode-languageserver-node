@@ -7,7 +7,7 @@ import { RequestHandler } from 'vscode-jsonrpc';
 import { CallHierarchyItem, CallHierarchyIncomingCall, CallHierarchyOutgoingCall } from 'vscode-languageserver-types';
 
 import { ProtocolRequestType } from './messages';
-import {
+import type {
 	TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams, PartialResultParams,
 	WorkDoneProgressParams, WorkDoneProgressOptions
 } from './protocol';

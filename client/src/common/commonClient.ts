@@ -11,7 +11,7 @@ import { ColorProviderFeature } from './colorProvider';
 import { ConfigurationFeature as PullConfigurationFeature } from './configuration';
 import { ImplementationFeature } from './implementation';
 import { TypeDefinitionFeature } from './typeDefinition';
-import { WorkspaceFoldersFeature } from './workspaceFolders';
+import { WorkspaceFoldersFeature } from './workspaceFolder';
 import { FoldingRangeFeature } from './foldingRange';
 import { DeclarationFeature } from './declaration';
 import { SelectionRangeFeature } from './selectionRange';
@@ -20,6 +20,9 @@ import { CallHierarchyFeature } from './callHierarchy';
 import { SemanticTokensFeature } from './semanticTokens';
 import { DidCreateFilesFeature, DidDeleteFilesFeature, DidRenameFilesFeature, WillCreateFilesFeature, WillDeleteFilesFeature, WillRenameFilesFeature } from './fileOperations';
 import { LinkedEditingFeature } from './linkedEditingRange';
+import { TypeHierarchyFeature } from './typeHierarchy';
+import { InlineValueFeature } from './inlineValue';
+import { InlayHintsFeature } from './inlayHint';
 
 export abstract class CommonLanguageClient extends BaseLanguageClient {
 
@@ -55,21 +58,20 @@ export abstract class CommonLanguageClient extends BaseLanguageClient {
 		this.registerFeature(new WillCreateFilesFeature(this));
 		this.registerFeature(new WillRenameFilesFeature(this));
 		this.registerFeature(new WillDeleteFilesFeature(this));
+		this.registerFeature(new TypeHierarchyFeature(this));
+		this.registerFeature(new InlineValueFeature(this));
+		this.registerFeature(new InlayHintsFeature(this));
 	}
 }
 
 // Exporting proposed protocol.
 import * as pd from './proposed.diagnostic';
-import * as pt from './proposed.typeHierarchy';
-import * as iv from './proposed.inlineValues';
-import * as nb from './proposed.notebooks';
+import * as nb from './proposed.notebook';
 
 export namespace ProposedFeatures {
 	export function createAll(client: BaseLanguageClient): (StaticFeature | DynamicFeature<any>)[] {
 		let result: (StaticFeature | DynamicFeature<any>)[] = [
 			new pd.DiagnosticFeature(client),
-			new pt.TypeHierarchyFeature(client),
-			new iv.InlineValueFeature(client),
 			new nb.NotebookDocumentSyncFeature(client)
 		];
 		return result;
@@ -77,14 +79,6 @@ export namespace ProposedFeatures {
 
 	export function createDiagnosticFeature(client: BaseLanguageClient): DynamicFeature<Proposed.DiagnosticOptions> {
 		return new pd.DiagnosticFeature(client);
-	}
-
-	export function createTypeHierarchyFeature(client: BaseLanguageClient): DynamicFeature<boolean | Proposed.TypeHierarchyOptions> {
-		return new pt.TypeHierarchyFeature(client);
-	}
-
-	export function createInlineValueFeature(client: BaseLanguageClient): DynamicFeature<boolean | Proposed.InlineValuesOptions> {
-		return new iv.InlineValueFeature(client);
 	}
 
 	export function createNotebookDocumentSyncFeature(client: BaseLanguageClient): DynamicFeature<Proposed.NotebookDocumentSyncRegistrationOptions> {

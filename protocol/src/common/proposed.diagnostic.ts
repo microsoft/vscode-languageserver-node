@@ -8,8 +8,9 @@ import { TextDocumentIdentifier, Diagnostic, DocumentUri, integer } from 'vscode
 
 import * as Is from './utils/is';
 import { ProtocolRequestType0, ProtocolRequestType } from './messages';
-import {
-	PartialResultParams, StaticRegistrationOptions, WorkDoneProgressParams, TextDocumentRegistrationOptions, WorkDoneProgressOptions, TextDocumentClientCapabilities
+import type {
+	PartialResultParams, StaticRegistrationOptions, WorkDoneProgressParams, TextDocumentRegistrationOptions, WorkDoneProgressOptions,
+	TextDocumentClientCapabilities
 } from './protocol';
 
 

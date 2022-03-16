@@ -31,12 +31,15 @@ import * as Is from './utils/is';
 import * as UUID from './utils/uuid';
 import { WorkDoneProgressReporter, ResultProgressReporter, WindowProgress, ProgressFeature, attachWorkDone, attachPartialResult} from './progress';
 import { Configuration, ConfigurationFeature } from './configuration';
-import { WorkspaceFolders, WorkspaceFoldersFeature } from './workspaceFolders';
+import { WorkspaceFolders, WorkspaceFoldersFeature } from './workspaceFolder';
 import { CallHierarchy, CallHierarchyFeature } from './callHierarchy';
 import { SemanticTokensFeatureShape, SemanticTokensFeature } from './semanticTokens';
 import { ShowDocumentFeatureShape, ShowDocumentFeature } from './showDocument';
 import { FileOperationsFeature, FileOperationsFeatureShape } from './fileOperations';
 import { LinkedEditingRangeFeature, LinkedEditingRangeFeatureShape } from './linkedEditingRange';
+import { TypeHierarchyFeatureShape, TypeHierarchyFeature } from './typeHierarchy';
+import { InlineValueFeatureShape, InlineValueFeature } from './inlineValue';
+import { InlayHintFeatureShape, InlayHintFeature } from './inlayHint';
 import { MonikerFeature, MonikerFeatureShape } from './moniker';
 import type { ConnectionState } from './textDocuments';
 
@@ -809,8 +812,8 @@ export class _LanguagesImpl implements Remote, _Languages {
 	}
 }
 
-export type Languages = _Languages & CallHierarchy & SemanticTokensFeatureShape & LinkedEditingRangeFeatureShape & MonikerFeatureShape;
-const LanguagesImpl: new () => Languages = MonikerFeature(LinkedEditingRangeFeature(SemanticTokensFeature(CallHierarchyFeature(_LanguagesImpl)))) as (new () => Languages);
+export type Languages = _Languages & CallHierarchy & SemanticTokensFeatureShape & LinkedEditingRangeFeatureShape & TypeHierarchyFeatureShape & InlineValueFeatureShape & InlayHintFeatureShape & MonikerFeatureShape;
+const LanguagesImpl: new () => Languages = MonikerFeature(InlayHintFeature(InlineValueFeature(TypeHierarchyFeature(LinkedEditingRangeFeature(SemanticTokensFeature(CallHierarchyFeature(_LanguagesImpl))))))) as (new () => Languages);
 
 export interface _Notebooks extends FeatureBase {
 	connection: Connection;

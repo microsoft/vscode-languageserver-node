@@ -4,151 +4,33 @@
  *--------------------------------------------------------------------------------------------*/
 
 declare module 'vscode' {
-
 	/**
-	 * An event that is fired when files are going to be created.
-	 *
-	 * To make modifications to the workspace before the files are created,
-	 * call the {@linkcode FileWillCreateEvent.waitUntil waitUntil}-function with a
-	 * thenable that resolves to a {@link WorkspaceEdit workspace edit}.
-	 */
-	export interface FileWillCreateEvent {
-
+     * Inlay hint information.
+     */
+	export interface InlayHint {
 		/**
-		 * A cancellation token.
+		 * Optional {@link TextEdit text edits} that are performed when accepting this inlay hint. The default
+		 * gesture for accepting an inlay hint is the double click.
+		 *
+		 * *Note* that edits are expected to change the document so that the inlay hint (or its nearest variant) is
+		 * now part of the document and the inlay hint itself is now obsolete.
 		 */
-		readonly token: CancellationToken;
-
-		/**
-		 * The files that are going to be created.
-		 */
-		readonly files: readonly Uri[];
-
-		/**
-		 * Allows to pause the event and to apply a {@link WorkspaceEdit workspace edit}.
-		 *
-		 * *Note:* This function can only be called during event dispatch and not
-		 * in an asynchronous manner:
-		 *
-		 * ```ts
-		 * workspace.onWillCreateFiles(event => {
-		 * 	// async, will *throw* an error
-		 * 	setTimeout(() => event.waitUntil(promise));
-		 *
-		 * 	// sync, OK
-		 * 	event.waitUntil(promise);
-		 * })
-		 * ```
-		 *
-		 * @param thenable A thenable that delays saving.
-		 */
-		waitUntil(thenable: Thenable<WorkspaceEdit>): void;
-
-		/**
-		 * Allows to pause the event until the provided thenable resolves.
-		 *
-		 * *Note:* This function can only be called during event dispatch.
-		 *
-		 * @param thenable A thenable that delays saving.
-		 */
-		waitUntil(thenable: Thenable<any>): void;
+		textEdits?: TextEdit[];
 	}
 
-	/**
-	 * An event that is fired when files are going to be deleted.
-	 *
-	 * To make modifications to the workspace before the files are deleted,
-	 * call the {@link FileWillCreateEvent.waitUntil `waitUntil}-function with a
-	 * thenable that resolves to a {@link WorkspaceEdit workspace edit}.
-	 */
-	export interface FileWillDeleteEvent {
+	export interface DocumentFilter {
 
 		/**
-		 * A cancellation token.
+		 * The {@link NotebookDocument.notebookType type} of a notebook, like `jupyter-notebook`. This allows
+		 * to narrow down on the type of a notebook that a {@link NotebookCell.document cell document} belongs to.
+		 *
+		 * *Note* that setting the `notebookType`-property changes how `scheme` and `pattern` are interpreted. When set
+		 * they are evaluated against the {@link NotebookDocument.uri notebook uri}, not the document uri.
+		 *
+		 * @example <caption>Match python document inside jupyter notebook that aren't stored yet</caption>
+		 * { language: 'python', notebookType: 'jupyter-notebook', scheme: 'untitled' }
 		 */
-		readonly token: CancellationToken;
+		readonly notebookType?: string;
 
-		/**
-		 * The files that are going to be deleted.
-		 */
-		readonly files: readonly Uri[];
-
-		/**
-		 * Allows to pause the event and to apply a {@link WorkspaceEdit workspace edit}.
-		 *
-		 * *Note:* This function can only be called during event dispatch and not
-		 * in an asynchronous manner:
-		 *
-		 * ```ts
-		 * workspace.onWillCreateFiles(event => {
-		 * 	// async, will *throw* an error
-		 * 	setTimeout(() => event.waitUntil(promise));
-		 *
-		 * 	// sync, OK
-		 * 	event.waitUntil(promise);
-		 * })
-		 * ```
-		 *
-		 * @param thenable A thenable that delays saving.
-		 */
-		waitUntil(thenable: Thenable<WorkspaceEdit>): void;
-
-		/**
-		 * Allows to pause the event until the provided thenable resolves.
-		 *
-		 * *Note:* This function can only be called during event dispatch.
-		 *
-		 * @param thenable A thenable that delays saving.
-		 */
-		waitUntil(thenable: Thenable<any>): void;
-	}
-
-	/**
-	 * An event that is fired when files are going to be renamed.
-	 *
-	 * To make modifications to the workspace before the files are renamed,
-	 * call the {@link FileWillCreateEvent.waitUntil `waitUntil}-function with a
-	 * thenable that resolves to a {@link WorkspaceEdit workspace edit}.
-	 */
-	export interface FileWillRenameEvent {
-
-		/**
-		 * A cancellation token.
-		 */
-		readonly token: CancellationToken;
-
-		/**
-		 * The files that are going to be renamed.
-		 */
-		readonly files: ReadonlyArray<{ readonly oldUri: Uri, readonly newUri: Uri }>;
-
-		/**
-		 * Allows to pause the event and to apply a {@link WorkspaceEdit workspace edit}.
-		 *
-		 * *Note:* This function can only be called during event dispatch and not
-		 * in an asynchronous manner:
-		 *
-		 * ```ts
-		 * workspace.onWillCreateFiles(event => {
-		 * 	// async, will *throw* an error
-		 * 	setTimeout(() => event.waitUntil(promise));
-		 *
-		 * 	// sync, OK
-		 * 	event.waitUntil(promise);
-		 * })
-		 * ```
-		 *
-		 * @param thenable A thenable that delays saving.
-		 */
-		waitUntil(thenable: Thenable<WorkspaceEdit>): void;
-
-		/**
-		 * Allows to pause the event until the provided thenable resolves.
-		 *
-		 * *Note:* This function can only be called during event dispatch.
-		 *
-		 * @param thenable A thenable that delays saving.
-		 */
-		waitUntil(thenable: Thenable<any>): void;
 	}
 }

@@ -3,11 +3,9 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import * as minimatch from 'minimatch';
-
 import {
 	workspace as Workspace, window as Window, languages as Languages, commands as Commands, version as VSCodeVersion,
-	TextDocumentChangeEvent, TextDocument, Disposable, OutputChannel,
+	TextDocumentChangeEvent, TextDocument, Disposable, OutputChannel, DocumentSelector as VDocumentSelector,
 	FileSystemWatcher as VFileSystemWatcher, DiagnosticCollection, Diagnostic as VDiagnostic, Uri, ProviderResult,
 	CancellationToken, Position as VPosition, Location as VLocation, Range as VRange,
 	CompletionItem as VCompletionItem, CompletionList as VCompletionList, SignatureHelp as VSignatureHelp, SignatureHelpContext as VSignatureHelpContext,
@@ -22,7 +20,7 @@ import {
 	DocumentRangeFormattingEditProvider, OnTypeFormattingEditProvider, RenameProvider, DocumentLinkProvider, DocumentColorProvider, DeclarationProvider,
 	FoldingRangeProvider, ImplementationProvider, SelectionRangeProvider, TypeDefinitionProvider, WorkspaceSymbolProvider, CallHierarchyProvider,
 	DocumentSymbolProviderMetadata, EventEmitter, env as Env, TextDocumentShowOptions, FileWillCreateEvent, FileWillRenameEvent, FileWillDeleteEvent, FileCreateEvent, FileDeleteEvent, FileRenameEvent,
-	LinkedEditingRangeProvider, Event as VEvent, CancellationError, TypeHierarchyProvider as VTypeHierarchyProvider, NotebookDocument as VNotebookDocument, CancellationTokenSource, NotebookDocument, NotebookCell
+	LinkedEditingRangeProvider, Event as VEvent, CancellationError, TypeHierarchyProvider as VTypeHierarchyProvider, CancellationTokenSource, NotebookDocument, NotebookCell,
 } from 'vscode';
 
 import {
@@ -55,7 +53,7 @@ import {
 	FileOperationRegistrationOptions, WillCreateFilesRequest, WillRenameFilesRequest, WillDeleteFilesRequest, DidCreateFilesNotification, DidDeleteFilesNotification,
 	DidRenameFilesNotification, ShowDocumentParams, ShowDocumentResult, LinkedEditingRangeRequest, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressEnd,
 	WorkDoneProgressReport, PrepareSupportDefaultBehavior, SemanticTokensRequest, SemanticTokensRangeRequest, SemanticTokensDeltaRequest, Proposed, WorkspaceSymbolResolveRequest,
-	NotebookCellTextDocumentFilter, TextDocumentFilter, NotebookDocumentFilter, Diagnostic, ApplyWorkspaceEditResult
+	Diagnostic, ApplyWorkspaceEditResult, InlayHintRequest, InlineValueRequest, TypeHierarchyPrepareRequest
 } from 'vscode-languageserver-protocol';
 
 import { toJSONObject } from './configuration';
@@ -63,7 +61,7 @@ import type { ConfigurationWorkspaceMiddleware } from './configuration';
 import type { ColorProviderMiddleware } from './colorProvider';
 import type { ImplementationMiddleware } from './implementation';
 import type { TypeDefinitionMiddleware } from './typeDefinition';
-import type { WorkspaceFolderWorkspaceMiddleware } from './workspaceFolders';
+import type { WorkspaceFolderWorkspaceMiddleware } from './workspaceFolder';
 import type { FoldingRangeProviderMiddleware } from './foldingRange';
 import type { DeclarationMiddleware } from './declaration';
 import type { SelectionRangeProviderMiddleware } from './selectionRange';
@@ -72,121 +70,18 @@ import type { SemanticTokensMiddleware, SemanticTokensProviders } from './semant
 import type { FileOperationsMiddleware } from './fileOperations';
 import type { LinkedEditingRangeMiddleware } from './linkedEditingRange';
 import type { DiagnosticFeatureProvider } from './proposed.diagnostic';
-import type { InlineValuesProviderMiddleware, InlineValuesProviderData } from './proposed.inlineValues';
-import type { TypeHierarchyMiddleware } from './proposed.typeHierarchy';
-import type { $NotebookCellTextDocumentFilter, NotebookDocumentProviderFeature, NotebookDocumentMiddleware } from './proposed.notebooks';
+import type { InlineValueMiddleware, InlineValueProviderShape } from './inlineValue';
+import type { InlayHintsMiddleware, InlayHintsProviderShape } from './inlayHint';
+import type { TypeHierarchyMiddleware } from './typeHierarchy';
+import type { NotebookDocumentProviderFeature, NotebookDocumentMiddleware } from './proposed.notebook';
 
 import * as c2p from './codeConverter';
 import * as p2c from './protocolConverter';
 
 import * as Is from './utils/is';
-import { Delayer } from './utils/async';
+import { Delayer, Semaphore } from './utils/async';
 import * as UUID from './utils/uuid';
 import { ProgressPart } from './progressPart';
-
-export namespace $DocumentSelector {
-
-	const CellScheme: string = 'vscode-notebook-cell';
-
-	namespace $NotebookCellTextDocumentFilter {
-		export function is(value: any): value is $NotebookCellTextDocumentFilter {
-			const candidate: $NotebookCellTextDocumentFilter = value;
-			return NotebookCellTextDocumentFilter.is(value) && candidate.sync === true;
-		}
-	}
-
-	export function matchForDocumentSync(selector: DocumentSelector, textDocument: TextDocument): boolean {
-		return match(selector, textDocument, $NotebookCellTextDocumentFilter.is);
-	}
-
-	export function matchForProvider(selector: DocumentSelector, textDocument: TextDocument): boolean {
-		return match(selector, textDocument, NotebookCellTextDocumentFilter.is);
-	}
-
-	function match(selector: DocumentSelector, textDocument: TextDocument, isNotebookCellTextDocumentFilter: (value: any) => value is NotebookCellTextDocumentFilter): boolean {
-		const isCellDocument = textDocument.uri.scheme === CellScheme;
-		for (const filter of selector) {
-			if (isCellDocument && isNotebookCellTextDocumentFilter(filter)) {
-				if (filter.cellLanguage !== undefined && filter.cellLanguage !== textDocument.languageId) {
-					continue;
-				}
-				const notebookDocument = findNotebook(textDocument);
-				if (notebookDocument === undefined) {
-					continue;
-				}
-				if (filter.notebookDocument === undefined || matchNotebookDocument(filter.notebookDocument, notebookDocument)) {
-					return true;
-				}
-			} else if (!isCellDocument && TextDocumentFilter.is(filter)) {
-				// We don't have a notebook cell document. So match against a regular
-				// document filter only
-				if (Languages.match(filter, textDocument) !== 0) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	export function skipCellTextDocument(selector: DocumentSelector, textDocument: TextDocument): boolean {
-		if (textDocument.uri.scheme !== CellScheme) {
-			return false;
-		}
-		return !matchForProvider(selector, textDocument);
-	}
-
-	export function asTextDocumentFilters(selector: DocumentSelector): (string | TextDocumentFilter)[] {
-		const result: (string | TextDocumentFilter)[] = [];
-		const generated: Set<null | string> = new Set();
-		for (const filter of selector) {
-			if (typeof filter === 'string' || TextDocumentFilter.is(filter)) {
-				result.push(filter);
-			} else {
-				if (filter.cellLanguage !== undefined && !generated.has(filter.cellLanguage)) {
-					result.push({ scheme: CellScheme, language: filter.cellLanguage });
-					generated.add(filter.cellLanguage);
-				} else if (!generated.has(null)){
-					result.push({ scheme: CellScheme });
-					generated.add(null);
-				}
-			}
-		}
-		return result;
-	}
-
-	function findNotebook(textDocument: TextDocument): VNotebookDocument | undefined {
-		if (textDocument.uri.scheme !== CellScheme) {
-			return undefined;
-		}
-		for (const notebookDocument of Workspace.notebookDocuments) {
-			for (const cell of notebookDocument.getCells()) {
-				if (cell.document === textDocument) {
-					return notebookDocument;
-				}
-			}
-		}
-		return undefined;
-	}
-
-	function matchNotebookDocument(filter: NotebookDocumentFilter, notebookDocument: VNotebookDocument): boolean {
-		if (filter.notebookType !== undefined && notebookDocument.notebookType !== filter.notebookType) {
-			false;
-		}
-		const uri = notebookDocument.uri;
-		if (filter.scheme !== undefined && uri.scheme !== filter.scheme) {
-			false;
-		}
-		if (filter.pattern !== undefined) {
-			const matcher = new minimatch.Minimatch(filter.pattern, { noext: true });
-			if (!matcher.makeRe()) {
-				return false;
-			}
-			return matcher.match(uri.fsPath);
-		} else {
-			return true;
-		}
-	}
-}
 
 interface Connection {
 
@@ -660,7 +555,7 @@ export interface _Middleware {
 
 export type Middleware = _Middleware & TypeDefinitionMiddleware & ImplementationMiddleware & ColorProviderMiddleware &
 FoldingRangeProviderMiddleware & DeclarationMiddleware & SelectionRangeProviderMiddleware & CallHierarchyMiddleware & SemanticTokensMiddleware &
-LinkedEditingRangeMiddleware & TypeHierarchyMiddleware & InlineValuesProviderMiddleware & NotebookDocumentMiddleware;
+LinkedEditingRangeMiddleware & TypeHierarchyMiddleware & InlineValueMiddleware & InlayHintsMiddleware & NotebookDocumentMiddleware;
 
 export interface LanguageClientOptions {
 	documentSelector?: DocumentSelector | string[];
@@ -717,6 +612,7 @@ interface ResolvedClientOptions {
 		supportHtml: boolean;
 	};
 	diagnosticPullOptions: DiagnosticPullOptions;
+	notebookDocumentOptions: NotebookDocumentOptions;
 }
 
 export enum State {
@@ -950,13 +846,13 @@ export interface NotifyingFeature<E, P> {
 abstract class DocumentNotifications<P, E> implements DynamicFeature<TextDocumentRegistrationOptions>, NotificationFeature<(data: E) => Promise<void>>, NotifyingFeature<E, P> {
 
 	private _listener: Disposable | undefined;
-	protected _selectors: Map<string, DocumentSelector> = new Map<string, DocumentSelector>();
+	protected _selectors: Map<string, VDocumentSelector> = new Map<string, VDocumentSelector>();
 
 	private readonly _onNotificationSent: EventEmitter<NotificationSendEvent<E, P>>;
 
-	public static textDocumentFilter(selectors: IterableIterator<DocumentSelector>, textDocument: TextDocument): boolean {
+	public static textDocumentFilter(selectors: IterableIterator<VDocumentSelector>, textDocument: TextDocument): boolean {
 		for (const selector of selectors) {
-			if ($DocumentSelector.matchForDocumentSync(selector, textDocument)) {
+			if (Languages.match(selector, textDocument)) {
 				return true;
 			}
 		}
@@ -968,7 +864,7 @@ abstract class DocumentNotifications<P, E> implements DynamicFeature<TextDocumen
 		protected _type: ProtocolNotificationType<P, TextDocumentRegistrationOptions>,
 		protected _middleware: NextSignature<E, Promise<void>> | undefined,
 		protected _createParams: CreateParamsSignature<E, P>,
-		protected _selectorFilter?: (selectors: IterableIterator<DocumentSelector>, data: E) => boolean) {
+		protected _selectorFilter?: (selectors: IterableIterator<VDocumentSelector>, data: E) => boolean) {
 		this._onNotificationSent = new EventEmitter<NotificationSendEvent<E, P>>();
 	}
 
@@ -990,7 +886,7 @@ abstract class DocumentNotifications<P, E> implements DynamicFeature<TextDocumen
 				});
 			});
 		}
-		this._selectors.set(data.id, data.registerOptions.documentSelector);
+		this._selectors.set(data.id, this._client.protocol2CodeConverter.asDocumentSelector(data.registerOptions.documentSelector));
 	}
 
 	private async callback(data: E): Promise<void> {
@@ -1031,7 +927,7 @@ abstract class DocumentNotifications<P, E> implements DynamicFeature<TextDocumen
 
 	public getProvider(document: TextDocument):  { send: (data: E) => Promise<void> } | undefined {
 		for (const selector of this._selectors.values()) {
-			if ($DocumentSelector.matchForDocumentSync(selector, document)) {
+			if (Languages.match(selector, document)) {
 				return {
 					send: (data: E) => {
 						return this.callback(data);
@@ -1081,13 +977,13 @@ class DidOpenTextDocumentFeature extends DocumentNotifications<DidOpenTextDocume
 		if (!data.registerOptions.documentSelector) {
 			return;
 		}
-		let documentSelector = data.registerOptions.documentSelector;
+		const documentSelector = this._client.protocol2CodeConverter.asDocumentSelector(data.registerOptions.documentSelector);
 		Workspace.textDocuments.forEach((textDocument) => {
 			let uri: string = textDocument.uri.toString();
 			if (this._syncedDocuments.has(uri)) {
 				return;
 			}
-			if ($DocumentSelector.matchForDocumentSync(documentSelector, textDocument)) {
+			if (Languages.match(documentSelector, textDocument)) {
 				let middleware = this._client.clientOptions.middleware!;
 				let didOpen = (textDocument: TextDocument): Promise<void> => {
 					return this._client.sendNotification(this._type, this._createParams(textDocument));
@@ -1141,13 +1037,13 @@ class DidCloseTextDocumentFeature extends DocumentNotifications<DidCloseTextDocu
 	}
 
 	public unregister(id: string): void {
-		let selector = this._selectors.get(id)!;
+		const selector = this._selectors.get(id)!;
 		// The super call removed the selector from the map
 		// of selectors.
 		super.unregister(id);
-		let selectors = this._selectors.values();
+		const selectors = this._selectors.values();
 		this._syncedDocuments.forEach((textDocument) => {
-			if ($DocumentSelector.matchForDocumentSync(selector, textDocument) && !this._selectorFilter!(selectors, textDocument)) {
+			if (Languages.match(selector, textDocument) && !this._selectorFilter!(selectors, textDocument)) {
 				let middleware = this._client.clientOptions.middleware!;
 				let didClose = (textDocument: TextDocument): Promise<void> => {
 					return this._client.sendNotification(this._type, this._createParams(textDocument));
@@ -1162,8 +1058,8 @@ class DidCloseTextDocumentFeature extends DocumentNotifications<DidCloseTextDocu
 }
 
 interface DidChangeTextDocumentData {
-	documentSelector: DocumentSelector;
 	syncKind: 0 | 1 | 2;
+	documentSelector: VDocumentSelector;
 }
 
 export interface DidChangeTextDocumentFeatureShape extends DynamicFeature<TextDocumentChangeRegistrationOptions>, NotificationFeature<(event: TextDocumentChangeEvent) => Promise<void>>, NotifyingFeature<TextDocumentChangeEvent, DidChangeTextDocumentParams> {
@@ -1210,8 +1106,8 @@ class DidChangeTextDocumentFeature implements DidChangeTextDocumentFeatureShape 
 		this._changeData.set(
 			data.id,
 			{
-				documentSelector: data.registerOptions.documentSelector,
-				syncKind: data.registerOptions.syncKind
+				syncKind: data.registerOptions.syncKind,
+				documentSelector: this._client.protocol2CodeConverter.asDocumentSelector(data.registerOptions.documentSelector),
 			}
 		);
 	}
@@ -1225,7 +1121,7 @@ class DidChangeTextDocumentFeature implements DidChangeTextDocumentFeatureShape 
 		}
 		const promises: Promise<void>[] = [];
 		for (const changeData of this._changeData.values()) {
-			if ($DocumentSelector.matchForDocumentSync(changeData.documentSelector, event.document)) {
+			if (Languages.match(changeData.documentSelector, event.document)) {
 				const middleware = this._client.clientOptions.middleware!;
 				if (changeData.syncKind === TextDocumentSyncKind.Incremental) {
 					const didChange = async (event: TextDocumentChangeEvent): Promise<void> => {
@@ -1309,7 +1205,7 @@ class DidChangeTextDocumentFeature implements DidChangeTextDocumentFeatureShape 
 
 	public getProvider(document: TextDocument): { send: (event: TextDocumentChangeEvent) => Promise<void> } | undefined {
 		for (const changeData of this._changeData.values()) {
-			if ($DocumentSelector.matchForDocumentSync(changeData.documentSelector, document)) {
+			if (Languages.match(changeData.documentSelector, document)) {
 				return {
 					send: (event: TextDocumentChangeEvent): Promise<void> => {
 						return this.callback(event);
@@ -1356,7 +1252,7 @@ class WillSaveFeature extends DocumentNotifications<WillSaveTextDocumentParams, 
 class WillSaveWaitUntilFeature implements DynamicFeature<TextDocumentRegistrationOptions> {
 
 	private _listener: Disposable | undefined;
-	private _selectors: Map<string, DocumentSelector> = new Map<string, DocumentSelector>();
+	private _selectors: Map<string, VDocumentSelector> = new Map<string, VDocumentSelector>();
 
 	constructor(private _client: BaseLanguageClient) {
 	}
@@ -1387,7 +1283,7 @@ class WillSaveWaitUntilFeature implements DynamicFeature<TextDocumentRegistratio
 		if (!this._listener) {
 			this._listener = Workspace.onWillSaveTextDocument(this.callback, this);
 		}
-		this._selectors.set(data.id, data.registerOptions.documentSelector);
+		this._selectors.set(data.id, this._client.protocol2CodeConverter.asDocumentSelector(data.registerOptions.documentSelector));
 	}
 
 	private callback(event: TextDocumentWillSaveEvent): void {
@@ -1644,7 +1540,7 @@ export abstract class TextDocumentFeature<PO, RO extends TextDocumentRegistratio
 	public getProvider(textDocument: TextDocument): PR | undefined {
 		for (const registration of this._registrations.values()) {
 			let selector = registration.data.registerOptions.documentSelector;
-			if (selector !== null && $DocumentSelector.matchForProvider(selector, textDocument)) {
+			if (selector !== null && Languages.match(this._client.protocol2CodeConverter.asDocumentSelector(selector), textDocument)) {
 				return registration.provider;
 			}
 		}
@@ -1774,9 +1670,6 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 		const selector = options.documentSelector!;
 		const provider: CompletionItemProvider = {
 			provideCompletionItems: (document: TextDocument, position: VPosition, token: CancellationToken, context: VCompletionContext): ProviderResult<VCompletionList | VCompletionItem[]> => {
-				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
-					return undefined;
-				}
 				const client = this._client;
 				const middleware = this._client.clientOptions.middleware!;
 				const provideCompletionItems: ProvideCompletionItemsSignature = (document, position, context, token) => {
@@ -1813,7 +1706,7 @@ class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, Compl
 				}
 				: undefined
 		};
-		return [Languages.registerCompletionItemProvider($DocumentSelector.asTextDocumentFilters(selector), provider, ...triggerCharacters), provider];
+		return [Languages.registerCompletionItemProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider, ...triggerCharacters), provider];
 	}
 }
 
@@ -1844,9 +1737,6 @@ class HoverFeature extends TextDocumentFeature<boolean | HoverOptions, HoverRegi
 		const selector = options.documentSelector!;
 		const provider: HoverProvider = {
 			provideHover: (document, position, token) => {
-				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
-					return undefined;
-				}
 				const client = this._client;
 				const provideHover: ProvideHoverSignature = (document, position, token) => {
 					return client.sendRequest(HoverRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then((result) => {
@@ -1864,7 +1754,7 @@ class HoverFeature extends TextDocumentFeature<boolean | HoverOptions, HoverRegi
 					: provideHover(document, position, token);
 			}
 		};
-		return [Languages.registerHoverProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
+		return [Languages.registerHoverProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider), provider];
 	}
 }
 
@@ -1898,9 +1788,6 @@ class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpOptions, Sig
 		const selector = options.documentSelector!;
 		const provider: VSignatureHelpProvider = {
 			provideSignatureHelp: (document, position, token, context) => {
-				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
-					return undefined;
-				}
 				const client = this._client;
 				const providerSignatureHelp: ProvideSignatureHelpSignature = (document, position, context, token) => {
 					return client.sendRequest(SignatureHelpRequest.type, client.code2ProtocolConverter.asSignatureHelpParams(document, position, context), token).then((result) => {
@@ -1919,16 +1806,16 @@ class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpOptions, Sig
 			}
 		};
 		let disposable: Disposable;
-		const textDocumentSelector = $DocumentSelector.asTextDocumentFilters(selector);
+		const documentSelector = this._client.protocol2CodeConverter.asDocumentSelector(selector);
 		if (options.retriggerCharacters === undefined) {
 			const triggerCharacters = options.triggerCharacters || [];
-			disposable = Languages.registerSignatureHelpProvider(textDocumentSelector, provider, ...triggerCharacters);
+			disposable = Languages.registerSignatureHelpProvider(documentSelector, provider, ...triggerCharacters);
 		} else {
 			const metaData: VSignatureHelpProviderMetadata = {
 				triggerCharacters: options.triggerCharacters || [],
 				retriggerCharacters: options.retriggerCharacters || []
 			};
-			disposable = Languages.registerSignatureHelpProvider(textDocumentSelector, provider, metaData);
+			disposable = Languages.registerSignatureHelpProvider(documentSelector, provider, metaData);
 		}
 		return [disposable, provider];
 	}
@@ -1958,9 +1845,6 @@ class DefinitionFeature extends TextDocumentFeature<boolean | DefinitionOptions,
 		const selector = options.documentSelector!;
 		const provider: DefinitionProvider = {
 			provideDefinition:  (document, position, token) => {
-				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
-					return undefined;
-				}
 				const client = this._client;
 				const provideDefinition: ProvideDefinitionSignature = (document, position, token) => {
 					return client.sendRequest(DefinitionRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then((result) => {
@@ -1978,7 +1862,7 @@ class DefinitionFeature extends TextDocumentFeature<boolean | DefinitionOptions,
 					: provideDefinition(document, position, token);
 			}
 		};
-		return [Languages.registerDefinitionProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
+		return [Languages.registerDefinitionProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider), provider];
 	}
 }
 
@@ -2004,9 +1888,6 @@ class ReferencesFeature extends TextDocumentFeature<boolean | ReferenceOptions, 
 		const selector = options.documentSelector!;
 		const provider: ReferenceProvider = {
 			provideReferences: (document, position, options, token) => {
-				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
-					return undefined;
-				}
 				const client = this._client;
 				const _providerReferences: ProvideReferencesSignature = (document, position, options, token) => {
 					return client.sendRequest(ReferencesRequest.type, client.code2ProtocolConverter.asReferenceParams(document, position, options), token).then((result) => {
@@ -2024,7 +1905,7 @@ class ReferencesFeature extends TextDocumentFeature<boolean | ReferenceOptions, 
 					: _providerReferences(document, position, options, token);
 			}
 		};
-		return [Languages.registerReferenceProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
+		return [Languages.registerReferenceProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider), provider];
 	}
 }
 
@@ -2050,9 +1931,6 @@ class DocumentHighlightFeature extends TextDocumentFeature<boolean | DocumentHig
 		const selector = options.documentSelector!;
 		const provider: DocumentHighlightProvider = {
 			provideDocumentHighlights: (document, position, token) => {
-				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
-					return undefined;
-				}
 				const client = this._client;
 				const _provideDocumentHighlights: ProvideDocumentHighlightsSignature = (document, position, token) => {
 					return client.sendRequest(DocumentHighlightRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then((result) => {
@@ -2070,7 +1948,7 @@ class DocumentHighlightFeature extends TextDocumentFeature<boolean | DocumentHig
 					: _provideDocumentHighlights(document, position, token);
 			}
 		};
-		return [Languages.registerDocumentHighlightProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
+		return [Languages.registerDocumentHighlightProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider), provider];
 	}
 }
 
@@ -2105,9 +1983,6 @@ class DocumentSymbolFeature extends TextDocumentFeature<boolean | DocumentSymbol
 		const selector = options.documentSelector!;
 		const provider: DocumentSymbolProvider = {
 			provideDocumentSymbols: (document, token) => {
-				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
-					return undefined;
-				}
 				const client = this._client;
 				const _provideDocumentSymbols: ProvideDocumentSymbolsSignature = (document, token) => {
 					return client.sendRequest(DocumentSymbolRequest.type, client.code2ProtocolConverter.asDocumentSymbolParams(document), token).then(async (data) => {
@@ -2135,7 +2010,7 @@ class DocumentSymbolFeature extends TextDocumentFeature<boolean | DocumentSymbol
 			}
 		};
 		const metaData: DocumentSymbolProviderMetadata | undefined = options.label !== undefined ? { label: options.label } : undefined;
-		return [Languages.registerDocumentSymbolProvider($DocumentSelector.asTextDocumentFilters(selector), provider, metaData), provider];
+		return [Languages.registerDocumentSymbolProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider, metaData), provider];
 	}
 }
 
@@ -2255,9 +2130,6 @@ class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions,
 		const selector = options.documentSelector!;
 		const provider: CodeActionProvider = {
 			provideCodeActions: (document, range, context, token) => {
-				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
-					return undefined;
-				}
 				const client = this._client;
 				const _provideCodeActions: ProvideCodeActionsSignature = async (document, range, context, token) => {
 					const params: CodeActionParams = {
@@ -2299,7 +2171,7 @@ class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions,
 				}
 				: undefined
 		};
-		return [Languages.registerCodeActionsProvider($DocumentSelector.asTextDocumentFilters(selector), provider,
+		return [Languages.registerCodeActionsProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider,
 			(options.codeActionKinds
 				? { providedCodeActionKinds: this._client.protocol2CodeConverter.asCodeActionKinds(options.codeActionKinds) }
 				: undefined)), provider];
@@ -2342,9 +2214,6 @@ class CodeLensFeature extends TextDocumentFeature<CodeLensOptions, CodeLensRegis
 		const provider: CodeLensProvider = {
 			onDidChangeCodeLenses: eventEmitter.event,
 			provideCodeLenses: (document, token) => {
-				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
-					return undefined;
-				}
 				const client = this._client;
 				const provideCodeLenses: ProvideCodeLensesSignature = (document, token) => {
 					return client.sendRequest(CodeLensRequest.type, client.code2ProtocolConverter.asCodeLensParams(document), token).then((result) => {
@@ -2381,7 +2250,7 @@ class CodeLensFeature extends TextDocumentFeature<CodeLensOptions, CodeLensRegis
 				}
 				: undefined
 		};
-		return [Languages.registerCodeLensProvider($DocumentSelector.asTextDocumentFilters(selector), provider), { provider, onDidChangeCodeLensEmitter: eventEmitter }];
+		return [Languages.registerCodeLensProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider), { provider, onDidChangeCodeLensEmitter: eventEmitter }];
 	}
 }
 
@@ -2407,9 +2276,6 @@ class DocumentFormattingFeature extends TextDocumentFeature<boolean | DocumentFo
 		const selector = options.documentSelector!;
 		const provider: DocumentFormattingEditProvider = {
 			provideDocumentFormattingEdits: (document, options, token) => {
-				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
-					return undefined;
-				}
 				const client = this._client;
 				const provideDocumentFormattingEdits: ProvideDocumentFormattingEditsSignature = (document, options, token) => {
 					const params: DocumentFormattingParams = {
@@ -2431,7 +2297,7 @@ class DocumentFormattingFeature extends TextDocumentFeature<boolean | DocumentFo
 					: provideDocumentFormattingEdits(document, options, token);
 			}
 		};
-		return [Languages.registerDocumentFormattingEditProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
+		return [Languages.registerDocumentFormattingEditProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider), provider];
 	}
 }
 
@@ -2457,9 +2323,6 @@ class DocumentRangeFormattingFeature extends TextDocumentFeature<boolean | Docum
 		const selector = options.documentSelector!;
 		const provider: DocumentRangeFormattingEditProvider = {
 			provideDocumentRangeFormattingEdits: (document, range, options, token) => {
-				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
-					return undefined;
-				}
 				const client = this._client;
 				const provideDocumentRangeFormattingEdits: ProvideDocumentRangeFormattingEditsSignature = (document, range, options, token) => {
 					const params: DocumentRangeFormattingParams = {
@@ -2482,7 +2345,7 @@ class DocumentRangeFormattingFeature extends TextDocumentFeature<boolean | Docum
 					: provideDocumentRangeFormattingEdits(document, range, options, token);
 			}
 		};
-		return [Languages.registerDocumentRangeFormattingEditProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
+		return [Languages.registerDocumentRangeFormattingEditProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider), provider];
 	}
 }
 
@@ -2508,9 +2371,6 @@ class DocumentOnTypeFormattingFeature extends TextDocumentFeature<DocumentOnType
 		const selector = options.documentSelector!;
 		const provider: OnTypeFormattingEditProvider = {
 			provideOnTypeFormattingEdits: (document, position, ch, options, token) => {
-				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
-					return undefined;
-				}
 				const client = this._client;
 				const provideOnTypeFormattingEdits: ProvideOnTypeFormattingEditsSignature = (document, position, ch, options, token) => {
 					let params: DocumentOnTypeFormattingParams = {
@@ -2536,7 +2396,7 @@ class DocumentOnTypeFormattingFeature extends TextDocumentFeature<DocumentOnType
 		};
 
 		const moreTriggerCharacter = options.moreTriggerCharacter || [];
-		return [Languages.registerOnTypeFormattingEditProvider($DocumentSelector.asTextDocumentFilters(selector), provider, options.firstTriggerCharacter, ...moreTriggerCharacter), provider];
+		return [Languages.registerOnTypeFormattingEditProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider, options.firstTriggerCharacter, ...moreTriggerCharacter), provider];
 	}
 }
 
@@ -2573,9 +2433,6 @@ class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameR
 		const selector = options.documentSelector!;
 		const provider: RenameProvider = {
 			provideRenameEdits: (document, position, newName, token) => {
-				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
-					return undefined;
-				}
 				const client = this._client;
 				const provideRenameEdits: ProvideRenameEditsSignature = (document, position, newName, token) => {
 					let params: RenameParams = {
@@ -2599,9 +2456,6 @@ class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameR
 			},
 			prepareRename: options.prepareProvider
 				? (document, position, token) => {
-					if ($DocumentSelector.skipCellTextDocument(selector, document)) {
-						return undefined;
-					}
 					const client = this._client;
 					const prepareRename: PrepareRenameSignature = (document, position, token) => {
 						let params: TextDocumentPositionParams = {
@@ -2641,7 +2495,7 @@ class RenameFeature extends TextDocumentFeature<boolean | RenameOptions, RenameR
 				}
 				: undefined
 		};
-		return [Languages.registerRenameProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
+		return [Languages.registerRenameProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider), provider];
 	}
 
 	private isDefaultBehavior(value: any): value is DefaultBehavior {
@@ -2674,9 +2528,6 @@ class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkOptions, Docum
 		const selector = options.documentSelector!;
 		const provider: DocumentLinkProvider = {
 			provideDocumentLinks: (document: TextDocument, token: CancellationToken): ProviderResult<VDocumentLink[]> => {
-				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
-					return undefined;
-				}
 				const client = this._client;
 				const provideDocumentLinks: ProvideDocumentLinksSignature = (document, token) => {
 					return client.sendRequest(DocumentLinkRequest.type, client.code2ProtocolConverter.asDocumentLinkParams(document), token).then((result) => {
@@ -2713,7 +2564,7 @@ class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkOptions, Docum
 				}
 				: undefined
 		};
-		return [Languages.registerDocumentLinkProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
+		return [Languages.registerDocumentLinkProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider), provider];
 	}
 }
 
@@ -3016,7 +2867,8 @@ export abstract class BaseLanguageClient {
 			workspaceFolder: clientOptions.workspaceFolder,
 			connectionOptions: clientOptions.connectionOptions,
 			markdown,
-			diagnosticPullOptions: clientOptions.diagnosticPullOptions ?? { onChange: true, onSave: false }
+			diagnosticPullOptions: clientOptions.diagnosticPullOptions ?? { onChange: true, onSave: false },
+			notebookDocumentOptions: clientOptions.notebookDocumentOptions ?? { }
 		};
 		this._clientOptions.synchronize = this._clientOptions.synchronize || {};
 
@@ -3746,7 +3598,7 @@ export abstract class BaseLanguageClient {
 		this._p2c.asDiagnostics(diagnostics, tokenSource.token).then((converted) => {
 			if (!tokenSource.token.isCancellationRequested) {
 				const uri = this._p2c.asUri(document);
-				let middleware = this.clientOptions.middleware!;
+				const middleware = this.clientOptions.middleware!;
 				if (middleware.handleDiagnostics) {
 					middleware.handleDiagnostics(uri, converted, (uri, diagnostics) => this.setDiagnostics(uri, diagnostics));
 				} else {
@@ -3754,8 +3606,6 @@ export abstract class BaseLanguageClient {
 				}
 			}
 		}).finally(() => {
-			// The conversion resulted in an error.
-			// Drop the result but make the queue idle again
 			this._diagnosticQueueState = { state: 'idle' };
 			this.triggerDiagnosticQueue();
 		});
@@ -3934,8 +3784,9 @@ export abstract class BaseLanguageClient {
 	public getFeature(request: typeof SemanticTokensRegistrationType.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<SemanticTokensProviders>;
 	public getFeature(request: typeof LinkedEditingRangeRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<LinkedEditingRangeProvider>;
 	public getFeature(request: typeof Proposed.DocumentDiagnosticRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DiagnosticFeatureProvider>;
-	public getFeature(request: typeof Proposed.TypeHierarchyPrepareRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<VTypeHierarchyProvider>;
-	public getFeature(request: typeof Proposed.InlineValuesRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<InlineValuesProviderData>;
+	public getFeature(request: typeof TypeHierarchyPrepareRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<VTypeHierarchyProvider>;
+	public getFeature(request: typeof InlineValueRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<InlineValueProviderShape>;
+	public getFeature(request: typeof InlayHintRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<InlayHintsProviderShape>;
 	public getFeature(request: typeof Proposed.NotebookDocumentSyncRegistrationType.method): DynamicFeature<Proposed.NotebookDocumentSyncRegistrationOptions> & NotebookDocumentProviderFeature;
 
 	public getFeature(request: typeof WorkspaceSymbolRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & WorkspaceProviderFeature<WorkspaceSymbolProvider>;
@@ -4073,17 +3924,25 @@ export abstract class BaseLanguageClient {
 		});
 	}
 
+	private workspaceEditLock: Semaphore<VWorkspaceEdit> = new Semaphore(1);
 	private async handleApplyWorkspaceEdit(params: ApplyWorkspaceEditParams): Promise<ApplyWorkspaceEditResult> {
+		const workspaceEdit: WorkspaceEdit = params.edit;
+		// Make sure we convert workspace edits one after the other. Otherwise
+		// we might execute a workspace edit received first after we received another
+		// one since the conversion might race.
+		const converted = await this.workspaceEditLock.lock(() => {
+			return this._p2c.asWorkspaceEdit(workspaceEdit);
+		});
+
 		// This is some sort of workaround since the version check should be done by VS Code in the Workspace.applyEdit.
 		// However doing it here adds some safety since the server can lag more behind then an extension.
-		let workspaceEdit: WorkspaceEdit = params.edit;
-		let openTextDocuments: Map<string, TextDocument> = new Map<string, TextDocument>();
+		const openTextDocuments: Map<string, TextDocument> = new Map<string, TextDocument>();
 		Workspace.textDocuments.forEach((document) => openTextDocuments.set(document.uri.toString(), document));
 		let versionMismatch = false;
 		if (workspaceEdit.documentChanges) {
 			for (const change of workspaceEdit.documentChanges) {
 				if (TextDocumentEdit.is(change) && change.textDocument.version && change.textDocument.version >= 0) {
-					let textDocument = openTextDocuments.get(change.textDocument.uri);
+					const textDocument = openTextDocuments.get(change.textDocument.uri);
 					if (textDocument && textDocument.version !== change.textDocument.version) {
 						versionMismatch = true;
 						break;
@@ -4094,7 +3953,7 @@ export abstract class BaseLanguageClient {
 		if (versionMismatch) {
 			return Promise.resolve({ applied: false });
 		}
-		return Is.asPromise(Workspace.applyEdit(await this._p2c.asWorkspaceEdit(params.edit)).then((value) => { return { applied: value }; }));
+		return Is.asPromise(Workspace.applyEdit(converted).then((value) => { return { applied: value }; }));
 	}
 
 	private static RequestsToCancelOnContentModified: Set<string> = new Set([

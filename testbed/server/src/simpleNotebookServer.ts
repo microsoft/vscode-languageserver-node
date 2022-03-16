@@ -45,11 +45,11 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 		capabilities: {
 			textDocumentSync: TextDocumentSyncKind.Incremental,
 			hoverProvider: true,
-			completionProvider: true,
+			declarationProvider: true,
+			completionProvider: {},
 			notebookDocumentSync: {
-				notebookDocumentSelector: [{
-					cellSelector: [{ language: 'bat'}]
-
+				notebookSelector: [{
+					cells: [{ language: 'bat'}]
 				}],
 				mode: 'cellContent'
 			}
@@ -74,6 +74,10 @@ connection.onHover((textPosition): Hover => {
 			value: 'foo\nbar'
 		}
 	};
+});
+
+connection.onDeclaration((params, token) => {
+	return { uri: params.textDocument.uri, range: Range.create(0,0,0,0) };
 });
 
 connection.onCompletion((params, token): CompletionItem[] => {

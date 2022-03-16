@@ -14,7 +14,7 @@ import { ClientCapabilities, ServerCapabilities, DocumentSelector, CallHierarchy
 	CallHierarchyPrepareRequest
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, BaseLanguageClient, Middleware, $DocumentSelector } from './client';
+import { TextDocumentFeature, BaseLanguageClient, Middleware } from './client';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -50,7 +50,7 @@ class CallHierarchyProvider implements VCallHierarchyProvider {
 
 	private middleware: Middleware & CallHierarchyMiddleware;
 
-	constructor(private client: BaseLanguageClient, private options: CallHierarchyRegistrationOptions) {
+	constructor(private client: BaseLanguageClient) {
 		this.middleware = client.clientOptions.middleware!;
 	}
 
@@ -58,9 +58,6 @@ class CallHierarchyProvider implements VCallHierarchyProvider {
 		const client = this.client;
 		const middleware = this.middleware;
 		const prepareCallHierarchy: PrepareCallHierarchySignature = (document, position, token) => {
-			if ($DocumentSelector.skipCellTextDocument(this.options.documentSelector!, document)) {
-				return undefined;
-			}
 			const params = client.code2ProtocolConverter.asTextDocumentPositionParams(document, position);
 			return client.sendRequest(CallHierarchyPrepareRequest.type, params, token).then((result) => {
 				if (token.isCancellationRequested) {
@@ -140,7 +137,7 @@ export class CallHierarchyFeature extends TextDocumentFeature<boolean | CallHier
 
 	protected registerLanguageProvider(options: CallHierarchyRegistrationOptions): [Disposable, CallHierarchyProvider] {
 		const client = this._client;
-		const provider = new CallHierarchyProvider(client, options);
-		return [Languages.registerCallHierarchyProvider($DocumentSelector.asTextDocumentFilters(options.documentSelector!), provider), provider];
+		const provider = new CallHierarchyProvider(client);
+		return [Languages.registerCallHierarchyProvider(this._client.protocol2CodeConverter.asDocumentSelector(options.documentSelector!), provider), provider];
 	}
 }

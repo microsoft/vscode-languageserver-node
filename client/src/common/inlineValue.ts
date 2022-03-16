@@ -9,10 +9,11 @@ import {
 } from 'vscode';
 
 import {
-	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, Proposed
+	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, InlineValueOptions, InlineValueRegistrationOptions,
+	InlineValueRefreshRequest, InlineValueParams, InlineValueRequest,
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, BaseLanguageClient, $DocumentSelector } from './client';
+import { TextDocumentFeature, BaseLanguageClient } from './client';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -23,62 +24,59 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 
 export type ProvideInlineValuesSignature = (this: void, document: TextDocument, viewPort: VRange, context: VInlineValueContext, token: CancellationToken) => ProviderResult<VInlineValue[]>;
 
-export type InlineValuesProviderMiddleware = {
+export type InlineValueMiddleware = {
 	provideInlineValues?: (this: void, document: TextDocument, viewPort: VRange, context: VInlineValueContext, token: CancellationToken, next: ProvideInlineValuesSignature) => ProviderResult<VInlineValue[]>;
 };
 
-export type InlineValuesProviderData = {
+export type InlineValueProviderShape = {
 	provider: InlineValuesProvider;
 	onDidChangeInlineValues: EventEmitter<void>;
 };
 
-export class InlineValueFeature extends TextDocumentFeature<boolean | Proposed.InlineValuesOptions, Proposed.InlineValuesRegistrationOptions, InlineValuesProviderData> {
+export class InlineValueFeature extends TextDocumentFeature<boolean | InlineValueOptions, InlineValueRegistrationOptions, InlineValueProviderShape> {
 	constructor(client: BaseLanguageClient) {
-		super(client, Proposed.InlineValuesRequest.type);
+		super(client, InlineValueRequest.type);
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
-		ensure(ensure(capabilities, 'textDocument')!, 'inlineValues')!.dynamicRegistration = true;
-		ensure(ensure(capabilities, 'workspace')!, 'codeLens')!.refreshSupport = true;
+		ensure(ensure(capabilities, 'textDocument')!, 'inlineValue')!.dynamicRegistration = true;
+		ensure(ensure(capabilities, 'workspace')!, 'inlineValue')!.refreshSupport = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		this._client.onRequest(Proposed.InlineValuesRefreshRequest.type, async () => {
+		this._client.onRequest(InlineValueRefreshRequest.type, async () => {
 			for (const provider of this.getAllProviders()) {
 				provider.onDidChangeInlineValues.fire();
 			}
 		});
 
-		const [id, options] = this.getRegistration(documentSelector, capabilities.inlineValuesProvider);
+		const [id, options] = this.getRegistration(documentSelector, capabilities.inlineValueProvider);
 		if (!id || !options) {
 			return;
 		}
 		this.register({ id: id, registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: Proposed.InlineValuesRegistrationOptions): [Disposable, InlineValuesProviderData] {
+	protected registerLanguageProvider(options: InlineValueRegistrationOptions): [Disposable, InlineValueProviderShape] {
 		const selector = options.documentSelector!;
 		const eventEmitter: EventEmitter<void> = new EventEmitter<void>();
 		const provider: InlineValuesProvider = {
 			onDidChangeInlineValues: eventEmitter.event,
 			provideInlineValues: (document, viewPort, context, token) => {
-				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
-					return undefined;
-				}
 				const client = this._client;
 				const provideInlineValues: ProvideInlineValuesSignature = (document, viewPort, context, token) => {
-					const requestParams: Proposed.InlineValuesParams = {
+					const requestParams: InlineValueParams = {
 						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
-						viewPort: client.code2ProtocolConverter.asRange(viewPort),
-						context: client.code2ProtocolConverter.asInlineValuesContext(context)
+						range: client.code2ProtocolConverter.asRange(viewPort),
+						context: client.code2ProtocolConverter.asInlineValueContext(context)
 					};
-					return client.sendRequest(Proposed.InlineValuesRequest.type, requestParams, token).then((values) => {
+					return client.sendRequest(InlineValueRequest.type, requestParams, token).then((values) => {
 						if (token.isCancellationRequested) {
 							return null;
 						}
 						return client.protocol2CodeConverter.asInlineValues(values, token);
 					}, (error: any) => {
-						return client.handleFailedRequest(Proposed.InlineValuesRequest.type, token, error, null);
+						return client.handleFailedRequest(InlineValueRequest.type, token, error, null);
 					});
 				};
 				const middleware = client.clientOptions.middleware!;
@@ -88,6 +86,6 @@ export class InlineValueFeature extends TextDocumentFeature<boolean | Proposed.I
 
 			}
 		};
-		return [Languages.registerInlineValuesProvider($DocumentSelector.asTextDocumentFilters(selector), provider), { provider: provider, onDidChangeInlineValues: eventEmitter }];
+		return [Languages.registerInlineValuesProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider), { provider: provider, onDidChangeInlineValues: eventEmitter }];
 	}
 }

@@ -8,13 +8,11 @@
 	},
 	"main": "./client/out/extension.js",
 	"activationEvents": [
-		"onLanguage:bat",
-		"onCommand:testbed.helloWorld"
+		"*"
 	],
 	"enabledApiProposals": [
 		"tabs",
-		"notebookEditor",
-		"notebookCellExecutionState"
+		"notebookDocumentEvents"
 	],
 	"contributes": {
 		"commands": [

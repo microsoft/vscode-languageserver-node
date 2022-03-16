@@ -9,6 +9,7 @@ import * as proto from 'vscode-languageserver-protocol';
 import * as codeConverter from 'vscode-languageclient/lib/common/codeConverter';
 import * as protocolConverter from 'vscode-languageclient/lib/common/protocolConverter';
 import ProtocolCompletionItem from 'vscode-languageclient/lib/common/protocolCompletionItem';
+import ProtocolInlayHint from 'vscode-languageclient/lib/common/protocolInlayHint';
 import { DiagnosticCode, ProtocolDiagnostic } from 'vscode-languageclient/lib/common/protocolDiagnostic';
 import * as Is from 'vscode-languageclient/lib/common/utils/is';
 import * as async from 'vscode-languageclient/lib/common/utils/async';
@@ -78,11 +79,13 @@ function assertDiagnosticCode(value: string | number | DiagnosticCode | undefine
 
 suite('Async Array', () => {
 	test('map', async() => {
-		const ranges: proto.Range[] = new Array(7500);
+		const ranges: proto.Range[] = new Array(10000);
 		for (let i = 0; i < ranges.length; i++) {
 			ranges[i] = proto.Range.create(i, i, i, i);
 		}
-		const converted = await async.map(ranges, p2c.asRange, undefined, 5);
+		let yielded = 0;
+		const converted = await async.map(ranges, p2c.asRange, undefined, { yieldCallback: () => { yielded++; }});
+		ok(yielded > 0);
 		strictEqual(converted.length, ranges.length);
 		for (let i = 0; i < converted.length; i++) {
 			ok(converted[i] instanceof vscode.Range);
@@ -95,13 +98,15 @@ suite('Async Array', () => {
 		for (let i = 0; i < ranges.length; i++) {
 			ranges[i] = proto.Range.create(i, i, i, i);
 		}
+		let yielded = 0;
 		const converted = await async.mapAsync(ranges, (item): Promise<vscode.Range> => {
 			return new Promise((resolve) => {
 				proto.RAL().timer.setImmediate(() => {
 					resolve(p2c.asRange(item));
 				});
 			});
-		}, undefined, 5);
+		}, undefined, { yieldCallback: () => { yielded++; }});
+		ok(yielded > 0);
 		strictEqual(converted.length, ranges.length);
 		for (let i = 0; i < converted.length; i++) {
 			ok(converted[i] instanceof vscode.Range);
@@ -110,13 +115,18 @@ suite('Async Array', () => {
 	});
 
 	test('forEach', async() => {
-		const ranges: proto.Range[] = new Array(100000);
+		const ranges: proto.Range[] = new Array(7500);
 		for (let i = 0; i < ranges.length; i++) {
-			ranges[i] = proto.Range.create(i + 1, 0, 0, 0);
+			ranges[i] = proto.Range.create(i + 1, 0, i + 2, 1);
 		}
 		let sum: number = 0;
-		await async.forEach(ranges, (item) => sum += item.start.line, undefined, 5);
-		strictEqual(sum, 5000050000);
+		let yielded = 0;
+		await async.forEach(ranges, (item) => {
+			const codeRange = p2c.asRange(item);
+			sum += codeRange.start.line;
+		}, undefined, { yieldCallback: () => { yielded++; }});
+		ok(yielded > 0);
+		strictEqual(sum, 28128750);
 	});
 });
 
@@ -129,6 +139,13 @@ suite('Protocol Converter', () => {
 		strictEqual(actual.start.character, expected.start.character);
 		strictEqual(actual.end.line, expected.end.line);
 		strictEqual(actual.end.character, expected.end.character);
+	}
+
+	function positionEqual(actual: vscode.Position, expected: proto.Position): void;
+	function positionEqual(actual: proto.Position, expected: vscode.Position): void;
+	function positionEqual(actual: vscode.Position | proto.Position, expected: vscode.Position | proto.Position): void {
+		strictEqual(actual.line, expected.line);
+		strictEqual(actual.character, expected.character);
 	}
 
 	function completionEditEqual(text: string, range: vscode.Range | InsertReplaceRange, expected: proto.TextEdit | proto.InsertReplaceEdit): void {
@@ -1173,6 +1190,22 @@ suite('Protocol Converter', () => {
 		ok(result[4] instanceof vscode.InlineValueEvaluatableExpression && result[4].expression === undefined);
 	});
 
+	test('InlayHint', async () => {
+		const one: proto.InlayHint = proto.InlayHint.create(proto.Position.create(1,1), 'one', proto.InlayHintKind.Parameter);
+		one.data = '1';
+		const two: proto.InlayHint = proto.InlayHint.create(proto.Position.create(2,2), 'two', proto.InlayHintKind.Type);
+		two.data = '2';
+		const items = [one, two];
+
+		const result = await p2c.asInlayHints(items);
+		ok(result.every(hint => hint instanceof ProtocolInlayHint));
+		for (var i = 0; i < result.length; i++) {
+			positionEqual(result[i].position, items[i].position);
+		}
+		strictEqual((result[0] as ProtocolInlayHint).data, '1');
+		strictEqual((result[1] as ProtocolInlayHint).data, '2');
+	});
+
 	test('Bug #361', () => {
 		const item: proto.CompletionItem = {
 			'label': 'MyLabel',
@@ -1451,16 +1484,30 @@ suite('Code Converter', () => {
 		strictEqual('file://localhost/folder/file.vscode', result);
 	});
 
-	test('InlineValuesContext', () => {
-		const item: proto.InlineValuesContext = {
+	test('InlineValueContext', () => {
+		const item: vscode.InlineValueContext = {
+			frameId: 101,
 			stoppedLocation: new vscode.Range(1, 2, 8, 9),
 		};
 
-		const result = c2p.asInlineValuesContext(<any>item);
+		const result = c2p.asInlineValueContext(<any>item);
 
+		strictEqual(result.frameId, 101);
 		strictEqual(result.stoppedLocation.start.line, 1);
 		strictEqual(result.stoppedLocation.start.character, 2);
 		strictEqual(result.stoppedLocation.end.line, 8);
 		strictEqual(result.stoppedLocation.end.character, 9);
+	});
+
+	test('InlayHint', () => {
+		const item: ProtocolInlayHint = new ProtocolInlayHint(new vscode.Position(1, 1), 'label', vscode.InlayHintKind.Type);
+		item.data = '1';
+
+		const result = c2p.asInlayHint(item);
+
+		positionEqual(result.position, item.position);
+		strictEqual(result.label, 'label');
+		strictEqual(result.kind, proto.InlayHintKind.Type);
+		strictEqual(result.data, '1');
 	});
 });

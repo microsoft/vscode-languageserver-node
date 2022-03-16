@@ -605,7 +605,7 @@ export class SettingMonitor {
 }
 
 function handleChildProcessStartError(process: ChildProcess, message: string) {
-	if (process == null) {
+	if (process === null) {
 		return Promise.reject<MessageTransports>(message);
 	}
 

@@ -36,7 +36,7 @@ suite('Connection Tests', () => {
 		clientConnection.listen();
 	});
 
-	test('Ensure request parameter passing', async() => {
+	test('Ensure request parameter passing', async () => {
 		let paramsCorrect: boolean = false;
 		serverConnection.onRequest(InitializeRequest.type, (params) => {
 			paramsCorrect = !Array.isArray(params) && params.workDoneToken === 'token';
@@ -67,7 +67,7 @@ suite('Connection Tests', () => {
 		const param: DidChangeConfigurationParams = {
 			settings: {}
 		};
-		clientConnection.sendNotification(DidChangeConfigurationNotification.type, param);
+		void clientConnection.sendNotification(DidChangeConfigurationNotification.type, param);
 	});
 
 	test('Ensure work done converted', (done) => {

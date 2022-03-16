@@ -8,21 +8,6 @@ import { uinteger } from 'vscode-languageserver-types';
 
 import { ProtocolRequestType, ProtocolNotificationType } from './messages';
 
-export interface WorkDoneProgressClientCapabilities {
-	/**
-	 * Window specific client capabilities.
-	 */
-	window?: {
-		/**
-		 * Whether client supports server initiated progress using the
-		 * `window/workDoneProgress/create` request.
-		 *
-		 * Since 3.15.0
-		 */
-		workDoneProgress?: boolean;
-	};
-}
-
 export interface WorkDoneProgressBegin {
 
 	kind: 'begin';

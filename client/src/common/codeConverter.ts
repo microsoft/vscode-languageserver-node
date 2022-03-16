@@ -12,12 +12,12 @@ import * as async from './utils/async';
 import ProtocolCompletionItem from './protocolCompletionItem';
 import ProtocolCodeLens from './protocolCodeLens';
 import ProtocolDocumentLink from './protocolDocumentLink';
-import { MarkdownString } from 'vscode';
 import ProtocolCodeAction from './protocolCodeAction';
 import { ProtocolDiagnostic, DiagnosticCode } from './protocolDiagnostic';
 import ProtocolCallHierarchyItem from './protocolCallHierarchyItem';
 import ProtocolTypeHierarchyItem from './protocolTypeHierarchyItem';
 import WorkspaceSymbol from './protocolWorkspaceSymbol';
+import ProtocolInlayHint from './protocolInlayHint';
 
 
 interface InsertReplaceRange {
@@ -112,7 +112,7 @@ export interface Converter {
 
 	asCodeActionContext(context: code.CodeActionContext, token?: code.CancellationToken): Promise<proto.CodeActionContext>;
 
-	asInlineValuesContext(context: code.InlineValueContext): proto.InlineValuesContext;
+	asInlineValueContext(context: code.InlineValueContext): proto.InlineValueContext;
 
 	asCommand(item: code.Command): proto.Command;
 
@@ -133,6 +133,8 @@ export interface Converter {
 	asTypeHierarchyItem(value: code.TypeHierarchyItem): proto.TypeHierarchyItem;
 
 	asWorkspaceSymbol(item: code.SymbolInformation): proto.WorkspaceSymbol;
+
+	asInlayHint(value: code.InlayHint): proto.InlayHint;
 }
 
 export interface URIConverter {
@@ -531,14 +533,14 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return async.map(items, asDiagnostic, token);
 	}
 
-	function asDocumentation(format: string, documentation: string | MarkdownString): string | proto.MarkupContent {
+	function asDocumentation(format: string, documentation: string | code.MarkdownString): string | proto.MarkupContent {
 		switch (format) {
 			case '$string':
 				return documentation as string;
 			case proto.MarkupKind.PlainText:
 				return { kind: format, value: documentation as string };
 			case proto.MarkupKind.Markdown:
-				return { kind: format, value: (documentation as MarkdownString).value };
+				return { kind: format, value: (documentation as code.MarkdownString).value };
 			default:
 				return `Unsupported Markup content received. Kind is: ${format}`;
 		}
@@ -747,11 +749,11 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return item.value;
 	}
 
-	function asInlineValuesContext(context: code.InlineValueContext): proto.InlineValuesContext {
+	function asInlineValueContext(context: code.InlineValueContext): proto.InlineValueContext {
 		if (context === undefined || context === null) {
 			return context;
 		}
-		return proto.InlineValuesContext.create(context.stoppedLocation);
+		return proto.InlineValueContext.create(context.frameId, context.stoppedLocation);
 	}
 
 	function asCommand(item: code.Command): proto.Command {
@@ -853,6 +855,41 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return result;
 	}
 
+	function asInlayHint(item: code.InlayHint): proto.InlayHint {
+		const label = typeof item.label === 'string'
+			? item.label
+			: item.label.map(asInlayHintLabelPart);
+		const result = proto.InlayHint.create(asPosition(item.position), label);
+		if (item.kind !== undefined) { result.kind = item.kind; }
+		if (item.textEdits !== undefined) { result.textEdits = asTextEdits(item.textEdits); }
+		if (item.tooltip !== undefined) { result.tooltip = asTooltip(item.tooltip); }
+		if (item.paddingLeft !== undefined) { result.paddingLeft = item.paddingLeft; }
+		if (item.paddingRight !== undefined) { result.paddingRight = item.paddingRight; }
+		if (item instanceof ProtocolInlayHint && item.data !== undefined) {
+			result.data = item.data;
+		}
+		return result;
+	}
+
+	function asInlayHintLabelPart(item: code.InlayHintLabelPart): proto.InlayHintLabelPart {
+		const result = proto.InlayHintLabelPart.create(item.value);
+		if (item.location !== undefined) { result.location = asLocation(item.location); }
+		if (item.command !== undefined) { result.command = asCommand(item.command); }
+		if (item.tooltip !== undefined) { result.tooltip = asTooltip(item.tooltip); }
+		return result;
+	}
+
+	function asTooltip(value: string | code.MarkdownString): string | proto.MarkupContent {
+		if (typeof value === 'string') {
+			return value;
+		}
+		const result: proto.MarkupContent = {
+			kind: proto.MarkupKind.Markdown,
+			value: value.value
+		};
+		return result;
+	}
+
 	return {
 		asUri,
 		asTextDocumentIdentifier,
@@ -889,7 +926,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asReferenceParams,
 		asCodeAction,
 		asCodeActionContext,
-		asInlineValuesContext,
+		asInlineValueContext,
 		asCommand,
 		asCodeLens,
 		asFormattingOptions,
@@ -899,6 +936,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asDocumentLinkParams,
 		asCallHierarchyItem,
 		asTypeHierarchyItem,
+		asInlayHint,
 		asWorkspaceSymbol
 	};
 }

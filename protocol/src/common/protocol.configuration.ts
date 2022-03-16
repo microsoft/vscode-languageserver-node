@@ -7,23 +7,9 @@ import { RequestHandler, HandlerResult, CancellationToken } from 'vscode-jsonrpc
 import { LSPAny } from 'vscode-languageserver-types';
 
 import { ProtocolRequestType } from './messages';
-import { PartialResultParams } from './protocol';
+import type { PartialResultParams } from './protocol';
 
 //---- Get Configuration request ----
-
-export interface ConfigurationClientCapabilities {
-	/**
-	 * The workspace client capabilities
-	 */
-	workspace?: {
-		/**
-		 * The client supports `workspace/configuration` requests.
-		 *
-		 * @since 3.6.0
-		 */
-		configuration?: boolean;
-	};
-}
 
 /**
  * The 'workspace/configuration' request is sent from the server to the client to fetch a certain

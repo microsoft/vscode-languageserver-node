@@ -44,10 +44,13 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 		capabilities: {
 			textDocumentSync: TextDocumentSyncKind.Incremental,
 			hoverProvider: true,
-			completionProvider: true,
+			declarationProvider: true,
+			completionProvider: {
+			},
 			notebookDocumentSync: {
-				notebookDocumentSelector: [{
-					notebookDocumentFilter: { pattern: '**/*.ipynb'}
+				notebookSelector: [{
+					notebook: { pattern: '**/*.ipynb'},
+					cells: [{ language: 'bat' }, { language: 'c' }]
 				}],
 				mode: 'notebook'
 			}
@@ -64,6 +67,11 @@ connection.onHover((textPosition): Hover => {
 		}
 	};
 });
+
+connection.onDeclaration((params, token) => {
+	return { uri: params.textDocument.uri, range: Range.create(0,0,0,0) };
+});
+
 
 connection.onCompletion((params, token): CompletionItem[] => {
 	const result: CompletionItem[] = [];

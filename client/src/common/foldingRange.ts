@@ -12,7 +12,7 @@ import {
 	FoldingRangeRegistrationOptions, FoldingRangeOptions
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, BaseLanguageClient, $DocumentSelector } from './client';
+import { TextDocumentFeature, BaseLanguageClient } from './client';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -54,9 +54,6 @@ export class FoldingRangeFeature extends TextDocumentFeature<boolean | FoldingRa
 		const selector = options.documentSelector!;
 		const provider: FoldingRangeProvider = {
 			provideFoldingRanges: (document, context, token) => {
-				if ($DocumentSelector.skipCellTextDocument(selector, document)) {
-					return undefined;
-				}
 				const client = this._client;
 				const provideFoldingRanges: ProvideFoldingRangeSignature = (document, _, token) => {
 					const requestParams: FoldingRangeParams = {
@@ -77,6 +74,6 @@ export class FoldingRangeFeature extends TextDocumentFeature<boolean | FoldingRa
 					: provideFoldingRanges(document, context, token);
 			}
 		};
-		return [Languages.registerFoldingRangeProvider($DocumentSelector.asTextDocumentFilters(selector), provider), provider];
+		return [Languages.registerFoldingRangeProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider), provider];
 	}
 }

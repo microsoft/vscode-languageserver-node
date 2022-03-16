@@ -7,7 +7,10 @@ import { RequestHandler } from 'vscode-jsonrpc';
 import { Range } from 'vscode-languageserver-types';
 
 import { ProtocolRequestType } from './messages';
-import { StaticRegistrationOptions, TextDocumentPositionParams, TextDocumentRegistrationOptions, WorkDoneProgressOptions, WorkDoneProgressParams } from './protocol';
+import type {
+	StaticRegistrationOptions, TextDocumentPositionParams, TextDocumentRegistrationOptions, WorkDoneProgressOptions,
+	WorkDoneProgressParams
+} from './protocol';
 
 /**
  * Client capabilities for the linked editing range request.

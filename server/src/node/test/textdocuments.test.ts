@@ -57,7 +57,7 @@ suite('Legacy standard text documents', () => {
 		client.listen();
 	});
 
-	test('Change full file content', done => {
+	test('Change full file content', (done) => {
 		const textDocs = new TextDocuments(TextDocument);
 		textDocs.listen(server);
 		textDocs.onDidChangeContent(event => {
@@ -68,12 +68,12 @@ suite('Legacy standard text documents', () => {
 		});
 
 		const openDocNotif = mockOpenDocNotif({ text: 'abc123', version: 1 });
-		client.sendNotification(DidOpenTextDocumentNotification.type, openDocNotif);
+		void client.sendNotification(DidOpenTextDocumentNotification.type, openDocNotif);
 		const changeDocNotif = mockChangeDocNotif({ contentChanges: [{ text: 'efg456' }], version: 2 });
-		client.sendNotification(DidChangeTextDocumentNotification.type, changeDocNotif);
+		void client.sendNotification(DidChangeTextDocumentNotification.type, changeDocNotif);
 	});
 
-	test('Several full content updates', done => {
+	test('Several full content updates', (done) => {
 		const textDocs = new TextDocuments(TextDocument);
 		textDocs.listen(server);
 		textDocs.onDidChangeContent(event => {
@@ -84,9 +84,9 @@ suite('Legacy standard text documents', () => {
 		});
 
 		const openDocNotif = mockOpenDocNotif({ text: 'abc123', version: 1 });
-		client.sendNotification(DidOpenTextDocumentNotification.type, openDocNotif);
+		void client.sendNotification(DidOpenTextDocumentNotification.type, openDocNotif);
 		const changeDocNotif = mockChangeDocNotif({ contentChanges: [{ text: 'hello' }, { text: 'world' }], version: 2 });
-		client.sendNotification(DidChangeTextDocumentNotification.type, changeDocNotif);
+		void client.sendNotification(DidChangeTextDocumentNotification.type, changeDocNotif);
 	});
 });
 
@@ -105,7 +105,7 @@ suite('New custom text Documents', () => {
 		client.listen();
 	});
 
-	test('Incrementally removing content', done => {
+	test('Incrementally removing content', (done) => {
 		const textDocs = new TextDocuments(TextDocument);
 		textDocs.listen(server);
 		textDocs.onDidChangeContent(event => {
@@ -116,12 +116,12 @@ suite('New custom text Documents', () => {
 		});
 
 		const openDocNotif = mockOpenDocNotif({ version: 1, text: 'function abc() {\n  console.log("hello, world!");\n}' });
-		client.sendNotification(DidOpenTextDocumentNotification.type, openDocNotif);
+		void client.sendNotification(DidOpenTextDocumentNotification.type, openDocNotif);
 		const changeDocNotif = mockChangeDocNotif({ version: 2, contentChanges: [{ text: 'hello', range: Range.create(1, 15, 1, 28) }] });
-		client.sendNotification(DidChangeTextDocumentNotification.type, changeDocNotif);
+		void client.sendNotification(DidChangeTextDocumentNotification.type, changeDocNotif);
 	});
 
-	test('Incrementally adding content', done => {
+	test('Incrementally adding content', (done) => {
 		const textDocs = new TextDocuments(TextDocument);
 		textDocs.listen(server);
 		textDocs.onDidChangeContent(event => {
@@ -132,12 +132,12 @@ suite('New custom text Documents', () => {
 		});
 
 		const openDocNotif = mockOpenDocNotif({ version: 1, text: 'function abc() {\n  console.log("hello");\n}' });
-		client.sendNotification(DidOpenTextDocumentNotification.type, openDocNotif);
+		void client.sendNotification(DidOpenTextDocumentNotification.type, openDocNotif);
 		const changeDocNotif = mockChangeDocNotif({ version: 2, contentChanges: [{ text: ', world!', range: Range.create(1, 20, 1, 20) }] });
-		client.sendNotification(DidChangeTextDocumentNotification.type, changeDocNotif);
+		void client.sendNotification(DidChangeTextDocumentNotification.type, changeDocNotif);
 	});
 
-	test('Incrementally replacing content', done => {
+	test('Incrementally replacing content', (done) => {
 		const textDocs = new TextDocuments(TextDocument);
 		textDocs.listen(server);
 		textDocs.onDidChangeContent(event => {
@@ -148,12 +148,12 @@ suite('New custom text Documents', () => {
 		});
 
 		const openDocNotif = mockOpenDocNotif({ version: 1, text: 'function abc() {\n  console.log("hello, world!");\n}' });
-		client.sendNotification(DidOpenTextDocumentNotification.type, openDocNotif);
+		void client.sendNotification(DidOpenTextDocumentNotification.type, openDocNotif);
 		const changeDocNotif = mockChangeDocNotif({ version: 2, contentChanges: [{ text: 'hello, test case!!!', range: Range.create(1, 15, 1, 28) }] });
-		client.sendNotification(DidChangeTextDocumentNotification.type, changeDocNotif);
+		void client.sendNotification(DidChangeTextDocumentNotification.type, changeDocNotif);
 	});
 
-	test('Several incremental content changes', done => {
+	test('Several incremental content changes', (done) => {
 		const textDocs = new TextDocuments(TextDocument);
 		textDocs.listen(server);
 		textDocs.onDidChangeContent(event => {
@@ -164,7 +164,7 @@ suite('New custom text Documents', () => {
 		});
 
 		const openDocNotif = mockOpenDocNotif({ version: 1, text: 'function abc() {\n  console.log("hello, world!");\n}' });
-		client.sendNotification(DidOpenTextDocumentNotification.type, openDocNotif);
+		void client.sendNotification(DidOpenTextDocumentNotification.type, openDocNotif);
 		const changeDocNotif = mockChangeDocNotif({
 			version: 2,
 			contentChanges: [
@@ -173,6 +173,6 @@ suite('New custom text Documents', () => {
 				{ text: 'hij', range: Range.create(0, 16, 0, 16) },
 			]
 		});
-		client.sendNotification(DidChangeTextDocumentNotification.type, changeDocNotif);
+		void client.sendNotification(DidChangeTextDocumentNotification.type, changeDocNotif);
 	});
 });

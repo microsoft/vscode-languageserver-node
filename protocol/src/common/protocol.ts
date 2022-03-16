@@ -18,20 +18,34 @@ import {
 
 import * as Is from './utils/is';
 
-import { ImplementationRequest, ImplementationClientCapabilities, ImplementationOptions, ImplementationRegistrationOptions, ImplementationParams } from './protocol.implementation';
-import { TypeDefinitionRequest, TypeDefinitionClientCapabilities, TypeDefinitionOptions, TypeDefinitionRegistrationOptions, TypeDefinitionParams } from './protocol.typeDefinition';
+import {
+	ImplementationRequest, ImplementationClientCapabilities, ImplementationOptions, ImplementationRegistrationOptions,
+	ImplementationParams
+} from './protocol.implementation';
+
+import {
+	TypeDefinitionRequest, TypeDefinitionClientCapabilities, TypeDefinitionOptions, TypeDefinitionRegistrationOptions,
+	TypeDefinitionParams
+} from './protocol.typeDefinition';
+
 import {
 	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, WorkspaceFolder,
-	WorkspaceFoldersChangeEvent, WorkspaceFoldersInitializeParams, WorkspaceFoldersClientCapabilities, WorkspaceFoldersServerCapabilities
-} from './protocol.workspaceFolders';
-import { ConfigurationRequest, ConfigurationParams, ConfigurationItem, ConfigurationClientCapabilities } from './protocol.configuration';
+	WorkspaceFoldersChangeEvent, WorkspaceFoldersInitializeParams, WorkspaceFoldersServerCapabilities
+} from './protocol.workspaceFolder';
+
+import {
+	ConfigurationRequest, ConfigurationParams, ConfigurationItem,
+} from './protocol.configuration';
+
 import {
 	DocumentColorRequest, ColorPresentationRequest, DocumentColorOptions, DocumentColorParams, ColorPresentationParams,
 	DocumentColorClientCapabilities, DocumentColorRegistrationOptions,
 } from './protocol.colorProvider';
+
 import {
 	FoldingRangeClientCapabilities, FoldingRangeOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeRegistrationOptions
 } from './protocol.foldingRange';
+
 import {
 	DeclarationClientCapabilities, DeclarationRequest, DeclarationOptions, DeclarationRegistrationOptions, DeclarationParams
 } from './protocol.declaration';
@@ -41,7 +55,7 @@ import {
 } from './protocol.selectionRange';
 
 import {
-	WorkDoneProgressClientCapabilities, WorkDoneProgressBegin, WorkDoneProgressReport, WorkDoneProgressEnd, WorkDoneProgress, WorkDoneProgressCreateParams,
+	WorkDoneProgressBegin, WorkDoneProgressReport, WorkDoneProgressEnd, WorkDoneProgress, WorkDoneProgressCreateParams,
 	WorkDoneProgressCreateRequest, WorkDoneProgressCancelParams, WorkDoneProgressCancelNotification
 } from './protocol.progress';
 
@@ -76,12 +90,19 @@ import {
 } from './protocol.moniker';
 
 import {
-	TypeHierarchyClientCapabilities, TypeHierarchyOptions, TypeHierarchyRegistrationOptions,
-} from './proposed.typeHierarchy';
+	TypeHierarchyClientCapabilities, TypeHierarchyOptions, TypeHierarchyRegistrationOptions, TypeHierarchyPrepareParams, TypeHierarchyPrepareRequest,
+	TypeHierarchySubtypesParams, TypeHierarchySubtypesRequest, TypeHierarchySupertypesParams, TypeHierarchySupertypesRequest
+} from './protocol.typeHierarchy';
 
 import {
-	InlineValuesClientCapabilities, InlineValuesOptions, InlineValuesRegistrationOptions, InlineValuesWorkspaceClientCapabilities
-} from './proposed.inlineValue';
+	InlineValueClientCapabilities, InlineValueOptions, InlineValueRegistrationOptions, InlineValueWorkspaceClientCapabilities, InlineValueParams,
+	InlineValueRequest, InlineValueRefreshRequest
+} from './protocol.inlineValue';
+
+import {
+	InlayHintClientCapabilities, InlayHintOptions, InlayHintRegistrationOptions, InlayHintWorkspaceClientCapabilities, InlayHintParams,
+	InlayHintRequest, InlayHintResolveRequest, InlayHintRefreshRequest
+} from './protocol.inlayHint';
 
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
@@ -143,7 +164,8 @@ export namespace TextDocumentFilter {
 
 /**
  * A notebook document filter denotes a notebook document by
- * different properties.
+ * different properties. The properties will be match
+ * against the notebook's URI (same as with documents)
  *
  * @since 3.17.0 - proposed state.
  */
@@ -151,34 +173,28 @@ export type NotebookDocumentFilter = {
 	/** The type of the enclosing notebook. */
 	notebookType: string;
 
-	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`.
-	 * Will be matched against the URI of the notebook. */
+	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */
 	scheme?: string;
 
-	/** A glob pattern, like `*.ipynb`.
-	 * Will be matched against the notebooks` URI path section.*/
+	/** A glob pattern. */
 	pattern?: string;
 } | {
 	/** The type of the enclosing notebook. */
 	notebookType?: string;
 
-	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`.
-	 * Will be matched against the URI of the notebook. */
+	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`.*/
 	scheme: string;
 
-	/** A glob pattern, like `*.ipynb`.
-	 * Will be matched against the notebooks` URI path section.*/
+	/** A glob pattern. */
 	pattern?: string;
 } | {
 	/** The type of the enclosing notebook. */
 	notebookType?: string;
 
-	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`.
-	 * Will be matched against the URI of the notebook. */
+	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */
 	scheme?: string;
 
-	/** A glob pattern, like `*.ipynb`.
-	 * Will be matched against the notebooks` URI path section.*/
+	/** A glob pattern. */
 	pattern: string;
 };
 
@@ -204,31 +220,19 @@ export namespace NotebookDocumentFilter {
 export type NotebookCellTextDocumentFilter = {
 	/**
 	 * A filter that matches against the notebook
-	 * containing the notebook cell.
+	 * containing the notebook cell. If a string
+	 * value is provided it matches against the
+	 * notebook type. '*' matches every notebook.
 	 */
-	notebookDocument: NotebookDocumentFilter;
+	notebook: string | NotebookDocumentFilter;
 
 	/**
 	 * A language id like `python`.
 	 *
 	 * Will be matched against the language id of the
-	 * notebook cell document.
+	 * notebook cell document. '*' matches every language.
 	 */
-	cellLanguage?: string;
-} | {
-	/**
-	 * A filter that matches against the notebook
-	 * containing the notebook cell.
-	 */
-	notebookDocument?: NotebookDocumentFilter;
-
-	/**
-	 * A language id like `python`.
-	 *
-	 * Will be matched against the language id of the
-	 * notebook cell document.
-	 */
-	cellLanguage: string;
+	language?: string;
 };
 
 /**
@@ -240,7 +244,9 @@ export type NotebookCellTextDocumentFilter = {
 export namespace NotebookCellTextDocumentFilter {
 	export function is(value: any): value is NotebookCellTextDocumentFilter {
 		const candidate: NotebookCellTextDocumentFilter = value;
-		return Is.objectLiteral(candidate) && (NotebookDocumentFilter.is(candidate.notebookDocument) || Is.string(candidate.cellLanguage));
+		return Is.objectLiteral(candidate)
+			&& (Is.string(candidate.notebook) || NotebookDocumentFilter.is(candidate.notebook))
+			&& (candidate.language === undefined || Is.string(candidate.language));
 	}
 }
 
@@ -467,6 +473,20 @@ export interface WorkspaceClientCapabilities {
 	executeCommand?: ExecuteCommandClientCapabilities;
 
 	/**
+	 * The client has support for workspace folders
+	 *
+	 * @since 3.6.0
+	 */
+	workspaceFolders?: boolean;
+
+	/**
+	 * The client supports `workspace/configuration` requests.
+	 *
+	 * @since 3.6.0
+	 */
+	configuration?: boolean;
+
+	/**
 	 * Capabilities specific to the semantic token requests scoped to the
 	 * workspace.
 	 *
@@ -495,7 +515,15 @@ export interface WorkspaceClientCapabilities {
 	 *
 	 * @since 3.17.0.
 	 */
-	inlineValues?: InlineValuesWorkspaceClientCapabilities;
+	inlineValue?: InlineValueWorkspaceClientCapabilities;
+
+	/**
+	 * Capabilities specific to the inlay hints requests scoped to the
+	 * workspace.
+	 *
+	 * @since 3.17.0.
+	 */
+	inlayHint?: InlayHintWorkspaceClientCapabilities;
 }
 
 /**
@@ -659,18 +687,29 @@ export interface TextDocumentClientCapabilities {
 	typeHierarchy?: TypeHierarchyClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/inlineValues` request.
+	 * Capabilities specific to the `textDocument/inlineValue` request.
 	 *
 	 * @since 3.17.0 - proposed state
 	 */
-	inlineValues?: InlineValuesClientCapabilities;
+	inlineValue?: InlineValueClientCapabilities;
+
+	/**
+	 * Capabilities specific to the `textDocument/inlayHint` request.
+	 *
+	 * @since 3.17.0 - proposed state
+	 */
+	inlayHint?: InlayHintClientCapabilities;
 }
 
 export interface WindowClientCapabilities {
 	/**
-	 * Whether client supports handling progress notifications. If set
-	 * servers are allowed to report in `workDoneProgress` property in the
-	 * request specific server capabilities.
+	 * It indicates whether the client supports server initiated
+	 * progress using the `window/workDoneProgress/create` request.
+	 *
+	 * The capability also controls Whether client supports handling
+	 * of progress notifications. If set servers are allowed to report a
+	 * `workDoneProgress` property in the request specific server
+	 * capabilities.
 	 *
 	 * @since 3.15.0
 	 */
@@ -779,7 +818,7 @@ export interface GeneralClientCapabilities {
 /**
  * Defines the capabilities provided by the client.
  */
-export interface _ClientCapabilities {
+export interface ClientCapabilities {
 	/**
 	 * Workspace specific client capabilities.
 	 */
@@ -807,8 +846,6 @@ export interface _ClientCapabilities {
 	 */
 	experimental?: object;
 }
-
-export type ClientCapabilities = _ClientCapabilities & WorkspaceFoldersClientCapabilities & ConfigurationClientCapabilities & WorkDoneProgressClientCapabilities;
 
 /**
  * Static registration options to be returned in the initialize
@@ -888,7 +925,7 @@ export namespace WorkDoneProgressOptions {
  * Defines the capabilities provided by a language
  * server.
  */
-export interface _ServerCapabilities<T = any> {
+export interface ServerCapabilities<T = any> {
 
 	/**
 	 * Defines how text documents are synced. Is either a detailed structure defining each notification or
@@ -1032,18 +1069,6 @@ export interface _ServerCapabilities<T = any> {
 	semanticTokensProvider?: SemanticTokensOptions | SemanticTokensRegistrationOptions;
 
 	/**
-	 * Window specific server capabilities.
-	 */
-	workspace?: {
-		/**
-		* The server is interested in notifications/requests for operations on files.
-		*
-		* @since 3.16.0
-		*/
-		fileOperations?: FileOperationOptions;
-	};
-
-	/**
 	 * The server provides moniker support.
 	 *
 	 * @since 3.16.0
@@ -1062,15 +1087,39 @@ export interface _ServerCapabilities<T = any> {
 	 *
 	 * @since 3.17.0 - proposed state
 	 */
-	inlineValuesProvider?: boolean | InlineValuesOptions | InlineValuesRegistrationOptions;
+	inlineValueProvider?: boolean | InlineValueOptions | InlineValueRegistrationOptions;
+
+	/**
+	 * The server provides inlay hints.
+	 *
+	 * @since 3.17.0 - proposed state
+	 */
+	inlayHintProvider?: boolean | InlayHintOptions | InlayHintRegistrationOptions;
+
+	/**
+	 * Workspace specific server capabilities.
+	 */
+	workspace?: {
+		/**
+		 * The server supports workspace folder.
+		 *
+		 * @since 3.6.0
+		 */
+		workspaceFolders?: WorkspaceFoldersServerCapabilities;
+
+		/**
+		* The server is interested in notifications/requests for operations on files.
+		*
+		* @since 3.16.0
+		*/
+		fileOperations?: FileOperationOptions;
+	};
 
 	/**
 	 * Experimental server capabilities.
 	 */
 	experimental?: T;
 }
-
-export type ServerCapabilities<T = any> = _ServerCapabilities<T> & WorkspaceFoldersServerCapabilities;
 
 /**
  * The initialize request is sent from the client to the server.
@@ -1972,10 +2021,6 @@ export interface CompletionClientCapabilities {
 		 * Client supports the preselect property on a completion item.
 		 */
 		preselectSupport?: boolean;
-
-		/**
-		 * Client supports to kee
-		 */
 
 		/**
 		 * Client supports the tag property on a completion item. Clients supporting
@@ -3509,6 +3554,15 @@ export {
 	DidDeleteFilesNotification, DeleteFilesParams, FileDelete, WillDeleteFilesRequest,
 	// Monikers
 	UniquenessLevel, MonikerKind, Moniker, MonikerClientCapabilities, MonikerOptions, MonikerRegistrationOptions, MonikerParams, MonikerRequest,
+	// Type hierarchy
+	TypeHierarchyClientCapabilities, TypeHierarchyOptions, TypeHierarchyRegistrationOptions, TypeHierarchyPrepareParams, TypeHierarchyPrepareRequest,
+	TypeHierarchySubtypesParams, TypeHierarchySubtypesRequest, TypeHierarchySupertypesParams, TypeHierarchySupertypesRequest,
+	// Inline Values
+	InlineValueClientCapabilities, InlineValueOptions, InlineValueRegistrationOptions, InlineValueWorkspaceClientCapabilities, InlineValueParams,
+	InlineValueRequest, InlineValueRefreshRequest,
+	// Inlay Hints
+	InlayHintClientCapabilities, InlayHintOptions, InlayHintRegistrationOptions, InlayHintWorkspaceClientCapabilities, InlayHintParams,
+	InlayHintRequest, InlayHintResolveRequest, InlayHintRefreshRequest,
 };
 
 // To be backwards compatible

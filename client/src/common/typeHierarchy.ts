@@ -8,9 +8,9 @@ import {
 	TypeHierarchyProvider as VTypeHierarchyProvider, TypeHierarchyItem as VTypeHierarchyItem
 } from 'vscode';
 
-import { ClientCapabilities, DocumentSelector, ServerCapabilities, Proposed } from 'vscode-languageserver-protocol';
+import { ClientCapabilities, DocumentSelector, ServerCapabilities, TypeHierarchyRegistrationOptions, TypeHierarchyPrepareRequest, TypeHierarchySupertypesParams, TypeHierarchySupertypesRequest, TypeHierarchySubtypesParams, TypeHierarchySubtypesRequest, TypeHierarchyOptions } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, BaseLanguageClient, Middleware, $DocumentSelector } from './client';
+import { TextDocumentFeature, BaseLanguageClient, Middleware } from './client';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -40,25 +40,22 @@ class TypeHierarchyProvider implements VTypeHierarchyProvider {
 
 	private middleware: Middleware & TypeHierarchyMiddleware;
 
-	constructor(private client: BaseLanguageClient, private options: Proposed.TypeHierarchyRegistrationOptions) {
+	constructor(private client: BaseLanguageClient) {
 		this.middleware = client.clientOptions.middleware!;
 	}
 
 	public prepareTypeHierarchy(document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VTypeHierarchyItem[]> {
-		if ($DocumentSelector.skipCellTextDocument(this.options.documentSelector!, document)) {
-			return undefined;
-		}
 		const client = this.client;
 		const middleware = this.middleware;
 		const prepareTypeHierarchy: PrepareTypeHierarchySignature = (document, position, token) => {
 			const params = client.code2ProtocolConverter.asTextDocumentPositionParams(document, position);
-			return client.sendRequest(Proposed.TypeHierarchyPrepareRequest.type, params, token).then((result) => {
+			return client.sendRequest(TypeHierarchyPrepareRequest.type, params, token).then((result) => {
 				if (token.isCancellationRequested) {
 					return null;
 				}
 				return client.protocol2CodeConverter.asTypeHierarchyItems(result, token);
 			}, (error) => {
-				return client.handleFailedRequest(Proposed.TypeHierarchyPrepareRequest.type, token, error, null);
+				return client.handleFailedRequest(TypeHierarchyPrepareRequest.type, token, error, null);
 			});
 		};
 		return middleware.prepareTypeHierarchy
@@ -70,16 +67,16 @@ class TypeHierarchyProvider implements VTypeHierarchyProvider {
 		const client = this.client;
 		const middleware = this.middleware;
 		const provideTypeHierarchySupertypes: TypeHierarchySupertypesSignature = (item, token) => {
-			const params: Proposed.TypeHierarchySupertypesParams = {
+			const params: TypeHierarchySupertypesParams = {
 				item:  client.code2ProtocolConverter.asTypeHierarchyItem(item)
 			};
-			return client.sendRequest(Proposed.TypeHierarchySupertypesRequest.type, params, token).then((result) => {
+			return client.sendRequest(TypeHierarchySupertypesRequest.type, params, token).then((result) => {
 				if (token.isCancellationRequested) {
 					return null;
 				}
 				return client.protocol2CodeConverter.asTypeHierarchyItems(result, token);
 			}, (error) => {
-				return client.handleFailedRequest(Proposed.TypeHierarchySupertypesRequest.type, token, error, null);
+				return client.handleFailedRequest(TypeHierarchySupertypesRequest.type, token, error, null);
 			});
 		};
 		return middleware.provideTypeHierarchySupertypes
@@ -91,16 +88,16 @@ class TypeHierarchyProvider implements VTypeHierarchyProvider {
 		const client = this.client;
 		const middleware = this.middleware;
 		const provideTypeHierarchySubtypes: TypeHierarchySubtypesSignature = (item, token) => {
-			const params: Proposed.TypeHierarchySubtypesParams = {
+			const params: TypeHierarchySubtypesParams = {
 				item:  client.code2ProtocolConverter.asTypeHierarchyItem(item)
 			};
-			return client.sendRequest(Proposed.TypeHierarchySubtypesRequest.type, params, token).then((result) => {
+			return client.sendRequest(TypeHierarchySubtypesRequest.type, params, token).then((result) => {
 				if (token.isCancellationRequested) {
 					return null;
 				}
 				return client.protocol2CodeConverter.asTypeHierarchyItems(result, token);
 			}, (error) => {
-				return client.handleFailedRequest(Proposed.TypeHierarchySubtypesRequest.type, token, error, null);
+				return client.handleFailedRequest(TypeHierarchySubtypesRequest.type, token, error, null);
 			});
 		};
 		return middleware.provideTypeHierarchySubtypes
@@ -109,13 +106,12 @@ class TypeHierarchyProvider implements VTypeHierarchyProvider {
 	}
 }
 
-export class TypeHierarchyFeature extends TextDocumentFeature<boolean | Proposed.TypeHierarchyOptions, Proposed.TypeHierarchyRegistrationOptions, TypeHierarchyProvider> {
+export class TypeHierarchyFeature extends TextDocumentFeature<boolean | TypeHierarchyOptions, TypeHierarchyRegistrationOptions, TypeHierarchyProvider> {
 	constructor(client: BaseLanguageClient) {
-		super(client, Proposed.TypeHierarchyPrepareRequest.type);
+		super(client, TypeHierarchyPrepareRequest.type);
 	}
 
-	public fillClientCapabilities(cap: ClientCapabilities): void {
-		const capabilities: ClientCapabilities & Proposed.TypeHierarchyClientCapabilities = cap as ClientCapabilities & Proposed.TypeHierarchyClientCapabilities;
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
 		const capability = ensure(ensure(capabilities, 'textDocument')!, 'typeHierarchy')!;
 		capability.dynamicRegistration = true;
 	}
@@ -128,9 +124,9 @@ export class TypeHierarchyFeature extends TextDocumentFeature<boolean | Proposed
 		this.register({ id: id, registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: Proposed.TypeHierarchyRegistrationOptions): [Disposable, TypeHierarchyProvider] {
+	protected registerLanguageProvider(options: TypeHierarchyRegistrationOptions): [Disposable, TypeHierarchyProvider] {
 		const client = this._client;
-		const provider = new TypeHierarchyProvider(client, options);
-		return [Languages.registerTypeHierarchyProvider($DocumentSelector.asTextDocumentFilters(options.documentSelector!), provider), provider];
+		const provider = new TypeHierarchyProvider(client);
+		return [Languages.registerTypeHierarchyProvider(client.protocol2CodeConverter.asDocumentSelector(options.documentSelector!), provider), provider];
 	}
 }

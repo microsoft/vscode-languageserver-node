@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { _, Features, _Connection, _LanguagesImpl, combineLanguagesFeatures } from './server';
+import { _, Features, _Connection, _LanguagesImpl } from './server';
 import { SemanticTokensBuilder } from './semanticTokens';
 import type { WorkDoneProgressReporter, WorkDoneProgressServerReporter, ResultProgressReporter } from './progress';
 
@@ -15,18 +15,16 @@ export { TextDocuments, TextDocumentsConfiguration, TextDocumentChangeEvent, Tex
 export * from './server';
 
 import { DiagnosticsFeatureShape, DiagnosticFeature } from './proposed.diagnostic';
-import { TypeHierarchyFeatureShape, TypeHierarchyFeature } from './proposed.typeHierarchy';
-import { InlineValuesFeatureShape, InlineValuesFeature } from './proposed.inlineValues';
-import { NotebooksFeatureShape, NotebooksFeature, NotebookDocuments as _NotebookDocuments } from './proposed.notebooks';
+import { NotebooksFeatureShape, NotebooksFeature, NotebookDocuments as _NotebookDocuments } from './proposed.notebook';
 
 export namespace ProposedFeatures {
-	export const all: Features<_, _, _, _, _, _, DiagnosticsFeatureShape & TypeHierarchyFeatureShape & InlineValuesFeatureShape, NotebooksFeatureShape> = {
+	export const all: Features<_, _, _, _, _, _, DiagnosticsFeatureShape, NotebooksFeatureShape> = {
 		__brand: 'features',
-		languages: combineLanguagesFeatures(InlineValuesFeature, combineLanguagesFeatures(TypeHierarchyFeature, DiagnosticFeature)),
+		languages: DiagnosticFeature,
 		notebooks: NotebooksFeature
 	};
 
-	export type Connection = _Connection<_, _, _, _, _, _, DiagnosticsFeatureShape & TypeHierarchyFeatureShape & InlineValuesFeatureShape, NotebooksFeatureShape>;
+	export type Connection = _Connection<_, _, _, _, _, _, DiagnosticsFeatureShape, NotebooksFeatureShape>;
 
 	export const NotebookDocuments = _NotebookDocuments;
 }

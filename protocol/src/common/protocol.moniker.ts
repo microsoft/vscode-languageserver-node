@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import { ProtocolRequestType } from './messages';
-import {
+import type {
 	WorkDoneProgressOptions, WorkDoneProgressParams, PartialResultParams, TextDocumentRegistrationOptions, TextDocumentPositionParams
 } from './protocol';
 
