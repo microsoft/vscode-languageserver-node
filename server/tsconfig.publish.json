@@ -4,7 +4,6 @@
     { "path": "../protocol/tsconfig.publish.json" },
     { "path": "./src/common/tsconfig.publish.json" },
     { "path": "./src/node/tsconfig.publish.json" },
-    { "path": "./src/node/test/tsconfig.publish.json" },
     { "path": "./src/browser/tsconfig.publish.json" }
   ]
 }

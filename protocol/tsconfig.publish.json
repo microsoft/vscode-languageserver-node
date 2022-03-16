@@ -1,5 +1,5 @@
 {
-  "exsrc/common/proposed.notebooks.tsnds": "./tsconfig.json",
+  "extends": "./tsconfig.json",
   "references": [
     { "path": "../jsonrpc/tsconfig.publish.json" },
     { "path": "../types/tsconfig.json" },
