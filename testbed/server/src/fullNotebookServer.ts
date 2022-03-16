@@ -44,6 +44,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 		capabilities: {
 			textDocumentSync: TextDocumentSyncKind.Incremental,
 			hoverProvider: true,
+			declarationProvider: true,
 			completionProvider: {
 			},
 			notebookDocumentSync: {
@@ -66,6 +67,11 @@ connection.onHover((textPosition): Hover => {
 		}
 	};
 });
+
+connection.onDeclaration((params, token) => {
+	return { uri: params.textDocument.uri, range: Range.create(0,0,0,0) };
+});
+
 
 connection.onCompletion((params, token): CompletionItem[] => {
 	const result: CompletionItem[] = [];

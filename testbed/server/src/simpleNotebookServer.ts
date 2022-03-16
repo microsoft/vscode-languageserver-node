@@ -45,6 +45,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 		capabilities: {
 			textDocumentSync: TextDocumentSyncKind.Incremental,
 			hoverProvider: true,
+			declarationProvider: true,
 			completionProvider: {},
 			notebookDocumentSync: {
 				notebookSelector: [{
@@ -73,6 +74,10 @@ connection.onHover((textPosition): Hover => {
 			value: 'foo\nbar'
 		}
 	};
+});
+
+connection.onDeclaration((params, token) => {
+	return { uri: params.textDocument.uri, range: Range.create(0,0,0,0) };
 });
 
 connection.onCompletion((params, token): CompletionItem[] => {
