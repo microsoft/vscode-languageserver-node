@@ -7,14 +7,37 @@ import * as ts from 'typescript';
 
 import * as tss from './typescripts';
 
-import { Type as JsonType, Request as JsonRequest, Notification as JsonNotification } from './metamodel';
+import { Type as JsonType, Request as JsonRequest, Notification as JsonNotification, Type } from './metamodel';
+
+type TypeInfoKind = 'single' | 'array' | 'union' | 'intersection' | 'void' | 'never' | 'unknown' | 'null' | 'undefined';
+
+type TypeInfo =
+{
+	kind: TypeInfoKind;
+} &
+({
+	kind: 'single';
+	name: string;
+	symbol: ts.Symbol;
+} | {
+	kind: 'array';
+	elementType: TypeInfo;
+} | {
+	kind: 'union';
+	items: TypeInfo[];
+} | {
+	kind: 'intersection';
+	items: TypeInfo[];
+} | {
+	kind: 'void' | 'never' | 'unknown' | 'null' | 'undefined';
+});
 
 type RequestTypes = {
-	param?: ts.Type;
-	result: ts.Type;
-	partialResult: ts.Type;
-	errorData: ts.Type;
-	registrationOptions: ts.Type;
+	param?: TypeInfo;
+	result: TypeInfo;
+	partialResult: TypeInfo;
+	errorData: TypeInfo;
+	registrationOptions: TypeInfo;
 };
 
 export default class Visitor {
@@ -106,23 +129,6 @@ export default class Visitor {
 		if (requestTypes === undefined) {
 			return;
 		}
-		const param = requestTypes.param !== undefined ? this.getJsonType(requestTypes.param) : undefined;
-		const result = this.getJsonType(requestTypes.result);
-		const partialResult = this.getJsonType(requestTypes.partialResult);
-		const errorData = this.getJsonType(requestTypes.errorData);
-		const registrationOptions = this.getJsonType(requestTypes.registrationOptions);
-		if (result === undefined) {
-			return;
-		}
-		const request: JsonRequest = {
-			method: methodName,
-			params: param,
-			result: result,
-			partialResult: partialResult,
-			errorData: errorData,
-			registrationOptions: registrationOptions
-		};
-		this.requests.push(request);
 	}
 
 	private endVisitModuleDeclaration(node: ts.ModuleDeclaration): void {
@@ -191,21 +197,53 @@ export default class Visitor {
 		if (initializer.typeArguments === undefined) {
 			return undefined;
 		}
-		const type = this.typeChecker.getTypeOfSymbolAtLocation(symbol, declaration.name);
-		if (!tss.Type.isObjectType(type)) {
-			return undefined;
+		const typeInfos: TypeInfo[] = [];
+		for (const typeNode of initializer.typeArguments) {
+			const info = this.getTypeInfo(typeNode);
+			if (info === undefined) {
+				return undefined;
+			}
+			typeInfos.push(info);
 		}
-		if (!tss.Type.isTypeReference(type)) {
-			return undefined;
+		return undefined;
+	}
+
+	private getTypeInfo(typeNode: ts.TypeNode): TypeInfo | undefined {
+		if (ts.isTypeReferenceNode(typeNode)) {
+			const symbol = this.typeChecker.getSymbolAtLocation(typeNode.typeName);
+			if (symbol === undefined) {
+				return undefined;
+			}
+			const typeName = ts.isIdentifier(typeNode.typeName) ? typeNode.typeName.text : typeNode.typeName.right.text;
+			return { kind: 'single', name: typeName, symbol };
+		} else if (ts.isArrayTypeNode(typeNode)) {
+			const elementType = this.getTypeInfo(typeNode.elementType);
+			if (elementType === undefined) {
+				return undefined;
+			}
+			return { kind: 'array', elementType: elementType };
+		} else if (ts.isUnionTypeNode(typeNode)) {
+			const items: TypeInfo[] = [];
+			for (const item of typeNode.types) {
+				const typeInfo = this.getTypeInfo(item);
+				if (typeInfo === undefined) {
+					return undefined;
+				}
+				items.push(typeInfo);
+			}
+			return { kind: 'union', items };
+		} else if (ts.isIntersectionTypeNode(typeNode)) {
+			const items: TypeInfo[] = [];
+			for (const item of typeNode.types) {
+				const typeInfo = this.getTypeInfo(item);
+				if (typeInfo === undefined) {
+					return undefined;
+				}
+				items.push(typeInfo);
+			}
+			return { kind: 'intersection', items };
 		}
-		const typeArguments = this.typeChecker.getTypeArguments(type);
-		if (typeArguments.length === 4) {
-			return { result: typeArguments[0], partialResult: typeArguments[1], errorData: typeArguments[2], registrationOptions: typeArguments[3] };
-		} else if (typeArguments.length === 5) {
-			return { param: typeArguments[0], result: typeArguments[1], partialResult: typeArguments[2], errorData: typeArguments[3], registrationOptions: typeArguments[4] };
-		} else {
-			return undefined;
-		}
+		return undefined;
 	}
 
 	private getDeclaration(symbol: ts.Symbol): ts.Node | undefined {
