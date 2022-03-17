@@ -1,0 +1,2211 @@
+{
+	"requests": [
+		{
+			"method": "textDocument/implementation",
+			"result": {
+				"or": [
+					"Definition",
+					{
+						"array": "DefinitionLink"
+					},
+					"null"
+				]
+			},
+			"params": "ImplementationParams",
+			"partialResult": {
+				"or": [
+					{
+						"array": "Location"
+					},
+					{
+						"array": "DefinitionLink"
+					}
+				]
+			},
+			"registrationOptions": "ImplementationRegistrationOptions"
+		},
+		{
+			"method": "textDocument/typeDefinition",
+			"result": {
+				"or": [
+					"Definition",
+					{
+						"array": "DefinitionLink"
+					},
+					"null"
+				]
+			},
+			"params": "TypeDefinitionParams",
+			"partialResult": {
+				"or": [
+					{
+						"array": "Location"
+					},
+					{
+						"array": "DefinitionLink"
+					}
+				]
+			},
+			"registrationOptions": "TypeDefinitionRegistrationOptions"
+		},
+		{
+			"method": "workspace/workspaceFolders",
+			"result": {
+				"or": [
+					{
+						"array": "WorkspaceFolder"
+					},
+					"null"
+				]
+			}
+		},
+		{
+			"method": "workspace/configuration",
+			"result": {
+				"array": "LSPAny"
+			},
+			"params": {
+				"and": [
+					"ConfigurationParams",
+					"PartialResultParams"
+				]
+			}
+		},
+		{
+			"method": "textDocument/documentColor",
+			"result": {
+				"array": "ColorInformation"
+			},
+			"params": "DocumentColorParams",
+			"partialResult": {
+				"array": "ColorInformation"
+			},
+			"registrationOptions": "DocumentColorRegistrationOptions"
+		},
+		{
+			"method": "textDocument/colorPresentation",
+			"result": {
+				"array": "ColorPresentation"
+			},
+			"params": "ColorPresentationParams",
+			"partialResult": {
+				"array": "ColorPresentation"
+			},
+			"registrationOptions": {
+				"and": [
+					"WorkDoneProgressOptions",
+					"TextDocumentRegistrationOptions"
+				]
+			}
+		},
+		{
+			"method": "textDocument/foldingRange",
+			"result": {
+				"or": [
+					{
+						"array": "FoldingRange"
+					},
+					"null"
+				]
+			},
+			"params": "FoldingRangeParams",
+			"partialResult": {
+				"array": "FoldingRange"
+			},
+			"registrationOptions": "FoldingRangeRegistrationOptions"
+		},
+		{
+			"method": "textDocument/declaration",
+			"result": {
+				"or": [
+					"Declaration",
+					{
+						"array": "DeclarationLink"
+					},
+					"null"
+				]
+			},
+			"params": "DeclarationParams",
+			"partialResult": {
+				"or": [
+					{
+						"array": "Location"
+					},
+					{
+						"array": "DeclarationLink"
+					}
+				]
+			},
+			"registrationOptions": "DeclarationRegistrationOptions"
+		},
+		{
+			"method": "textDocument/selectionRange",
+			"result": {
+				"or": [
+					{
+						"array": "SelectionRange"
+					},
+					"null"
+				]
+			},
+			"params": "SelectionRangeParams",
+			"partialResult": {
+				"array": "SelectionRange"
+			},
+			"registrationOptions": "SelectionRangeRegistrationOptions"
+		},
+		{
+			"method": "window/workDoneProgress/create",
+			"result": "null",
+			"params": "WorkDoneProgressCreateParams"
+		},
+		{
+			"method": "textDocument/prepareCallHierarchy",
+			"result": {
+				"or": [
+					{
+						"array": "CallHierarchyItem"
+					},
+					"null"
+				]
+			},
+			"params": "CallHierarchyPrepareParams",
+			"registrationOptions": "CallHierarchyRegistrationOptions"
+		},
+		{
+			"method": "callHierarchy/incomingCalls",
+			"result": {
+				"or": [
+					{
+						"array": "CallHierarchyIncomingCall"
+					},
+					"null"
+				]
+			},
+			"params": "CallHierarchyIncomingCallsParams",
+			"partialResult": {
+				"array": "CallHierarchyIncomingCall"
+			}
+		},
+		{
+			"method": "callHierarchy/outgoingCalls",
+			"result": {
+				"or": [
+					{
+						"array": "CallHierarchyOutgoingCall"
+					},
+					"null"
+				]
+			},
+			"params": "CallHierarchyOutgoingCallsParams",
+			"partialResult": {
+				"array": "CallHierarchyOutgoingCall"
+			}
+		},
+		{
+			"method": "textDocument/semanticTokens/full",
+			"result": {
+				"or": [
+					"SemanticTokens",
+					"null"
+				]
+			},
+			"params": "SemanticTokensParams",
+			"partialResult": "SemanticTokensPartialResult",
+			"registrationOptions": "SemanticTokensRegistrationOptions"
+		},
+		{
+			"method": "textDocument/semanticTokens/full/delta",
+			"result": {
+				"or": [
+					"SemanticTokens",
+					"SemanticTokensDelta",
+					"null"
+				]
+			},
+			"params": "SemanticTokensDeltaParams",
+			"partialResult": {
+				"or": [
+					"SemanticTokensPartialResult",
+					"SemanticTokensDeltaPartialResult"
+				]
+			},
+			"registrationOptions": "SemanticTokensRegistrationOptions"
+		},
+		{
+			"method": "textDocument/semanticTokens/range",
+			"result": {
+				"or": [
+					"SemanticTokens",
+					"null"
+				]
+			},
+			"params": "SemanticTokensRangeParams",
+			"partialResult": "SemanticTokensPartialResult"
+		},
+		{
+			"method": "workspace/semanticTokens/refresh",
+			"result": "null"
+		},
+		{
+			"method": "window/showDocument",
+			"result": "ShowDocumentResult",
+			"params": "ShowDocumentParams"
+		},
+		{
+			"method": "textDocument/linkedEditingRange",
+			"result": {
+				"or": [
+					"LinkedEditingRanges",
+					"null"
+				]
+			},
+			"params": "LinkedEditingRangeParams",
+			"registrationOptions": "LinkedEditingRangeRegistrationOptions"
+		},
+		{
+			"method": "workspace/willCreateFiles",
+			"result": {
+				"or": [
+					"WorkspaceEdit",
+					"null"
+				]
+			},
+			"params": "CreateFilesParams",
+			"registrationOptions": "FileOperationRegistrationOptions"
+		},
+		{
+			"method": "workspace/willRenameFiles",
+			"result": {
+				"or": [
+					"WorkspaceEdit",
+					"null"
+				]
+			},
+			"params": "RenameFilesParams",
+			"registrationOptions": "FileOperationRegistrationOptions"
+		},
+		{
+			"method": "workspace/willDeleteFiles",
+			"result": {
+				"or": [
+					"WorkspaceEdit",
+					"null"
+				]
+			},
+			"params": "DeleteFilesParams",
+			"registrationOptions": "FileOperationRegistrationOptions"
+		},
+		{
+			"method": "textDocument/moniker",
+			"result": {
+				"or": [
+					{
+						"array": "Moniker"
+					},
+					"null"
+				]
+			},
+			"params": "MonikerParams",
+			"partialResult": {
+				"array": "Moniker"
+			},
+			"registrationOptions": "MonikerRegistrationOptions"
+		},
+		{
+			"method": "textDocument/prepareTypeHierarchy",
+			"result": {
+				"or": [
+					{
+						"array": "TypeHierarchyItem"
+					},
+					"null"
+				]
+			},
+			"params": "TypeHierarchyPrepareParams",
+			"registrationOptions": "TypeHierarchyRegistrationOptions"
+		},
+		{
+			"method": "typeHierarchy/supertypes",
+			"result": {
+				"or": [
+					{
+						"array": "TypeHierarchyItem"
+					},
+					"null"
+				]
+			},
+			"params": "TypeHierarchySupertypesParams",
+			"partialResult": {
+				"array": "TypeHierarchyItem"
+			}
+		},
+		{
+			"method": "typeHierarchy/subtypes",
+			"result": {
+				"or": [
+					{
+						"array": "TypeHierarchyItem"
+					},
+					"null"
+				]
+			},
+			"params": "TypeHierarchySubtypesParams",
+			"partialResult": {
+				"array": "TypeHierarchyItem"
+			}
+		},
+		{
+			"method": "textDocument/inlineValue",
+			"result": {
+				"or": [
+					{
+						"array": "InlineValue"
+					},
+					"null"
+				]
+			},
+			"params": "InlineValueParams",
+			"partialResult": {
+				"array": "InlineValue"
+			},
+			"registrationOptions": "InlineValueRegistrationOptions"
+		},
+		{
+			"method": "workspace/inlineValue/refresh",
+			"result": "null"
+		},
+		{
+			"method": "textDocument/inlayHint",
+			"result": {
+				"or": [
+					{
+						"array": "InlayHint"
+					},
+					"null"
+				]
+			},
+			"params": "InlayHintParams",
+			"partialResult": {
+				"array": "InlayHint"
+			},
+			"registrationOptions": "InlayHintRegistrationOptions"
+		},
+		{
+			"method": "inlayHint/resolve",
+			"result": "InlayHint",
+			"params": "InlayHint"
+		},
+		{
+			"method": "workspace/inlayHint/refresh",
+			"result": "null"
+		},
+		{
+			"method": "client/registerCapability",
+			"result": "null",
+			"params": "RegistrationParams"
+		},
+		{
+			"method": "client/unregisterCapability",
+			"result": "null",
+			"params": "UnregistrationParams"
+		},
+		{
+			"method": "initialize",
+			"result": "InitializeResult",
+			"params": "InitializeParams",
+			"errorData": "InitializeError"
+		},
+		{
+			"method": "shutdown",
+			"result": "null"
+		},
+		{
+			"method": "window/showMessageRequest",
+			"result": {
+				"or": [
+					"MessageActionItem",
+					"null"
+				]
+			},
+			"params": "ShowMessageRequestParams"
+		},
+		{
+			"method": "textDocument/willSaveWaitUntil",
+			"result": {
+				"or": [
+					{
+						"array": "TextEdit"
+					},
+					"null"
+				]
+			},
+			"params": "WillSaveTextDocumentParams",
+			"registrationOptions": "TextDocumentRegistrationOptions"
+		},
+		{
+			"method": "textDocument/completion",
+			"result": {
+				"or": [
+					{
+						"array": "CompletionItem"
+					},
+					"CompletionList",
+					"null"
+				]
+			},
+			"params": "CompletionParams",
+			"partialResult": {
+				"array": "CompletionItem"
+			},
+			"registrationOptions": "CompletionRegistrationOptions"
+		},
+		{
+			"method": "completionItem/resolve",
+			"result": "CompletionItem",
+			"params": "CompletionItem"
+		},
+		{
+			"method": "textDocument/hover",
+			"result": {
+				"or": [
+					"Hover",
+					"null"
+				]
+			},
+			"params": "HoverParams",
+			"registrationOptions": "HoverRegistrationOptions"
+		},
+		{
+			"method": "textDocument/signatureHelp",
+			"result": {
+				"or": [
+					"SignatureHelp",
+					"null"
+				]
+			},
+			"params": "SignatureHelpParams",
+			"registrationOptions": "SignatureHelpRegistrationOptions"
+		},
+		{
+			"method": "textDocument/definition",
+			"result": {
+				"or": [
+					"Definition",
+					{
+						"array": "DefinitionLink"
+					},
+					"null"
+				]
+			},
+			"params": "DefinitionParams",
+			"partialResult": {
+				"or": [
+					{
+						"array": "Location"
+					},
+					{
+						"array": "DefinitionLink"
+					}
+				]
+			},
+			"registrationOptions": "DefinitionRegistrationOptions"
+		},
+		{
+			"method": "textDocument/references",
+			"result": {
+				"or": [
+					{
+						"array": "Location"
+					},
+					"null"
+				]
+			},
+			"params": "ReferenceParams",
+			"partialResult": {
+				"array": "Location"
+			},
+			"registrationOptions": "ReferenceRegistrationOptions"
+		},
+		{
+			"method": "textDocument/documentHighlight",
+			"result": {
+				"or": [
+					{
+						"array": "DocumentHighlight"
+					},
+					"null"
+				]
+			},
+			"params": "DocumentHighlightParams",
+			"partialResult": {
+				"array": "DocumentHighlight"
+			},
+			"registrationOptions": "DocumentHighlightRegistrationOptions"
+		},
+		{
+			"method": "textDocument/documentSymbol",
+			"result": {
+				"or": [
+					{
+						"array": "SymbolInformation"
+					},
+					{
+						"array": "DocumentSymbol"
+					},
+					"null"
+				]
+			},
+			"params": "DocumentSymbolParams",
+			"partialResult": {
+				"or": [
+					{
+						"array": "SymbolInformation"
+					},
+					{
+						"array": "DocumentSymbol"
+					}
+				]
+			},
+			"registrationOptions": "DocumentSymbolRegistrationOptions"
+		},
+		{
+			"method": "textDocument/codeAction",
+			"result": {
+				"or": [
+					{
+						"array": {
+							"or": [
+								"Command",
+								"CodeAction"
+							]
+						}
+					},
+					"null"
+				]
+			},
+			"params": "CodeActionParams",
+			"partialResult": {
+				"array": {
+					"or": [
+						"Command",
+						"CodeAction"
+					]
+				}
+			},
+			"registrationOptions": "CodeActionRegistrationOptions"
+		},
+		{
+			"method": "codeAction/resolve",
+			"result": "CodeAction",
+			"params": "CodeAction"
+		},
+		{
+			"method": "workspace/symbol",
+			"result": {
+				"or": [
+					{
+						"array": "SymbolInformation"
+					},
+					{
+						"array": "WorkspaceSymbol"
+					},
+					"null"
+				]
+			},
+			"params": "WorkspaceSymbolParams",
+			"partialResult": {
+				"or": [
+					{
+						"array": "SymbolInformation"
+					},
+					{
+						"array": "WorkspaceSymbol"
+					}
+				]
+			},
+			"registrationOptions": "WorkspaceSymbolRegistrationOptions"
+		},
+		{
+			"method": "workspaceSymbol/resolve",
+			"result": "WorkspaceSymbol",
+			"params": "WorkspaceSymbol"
+		},
+		{
+			"method": "textDocument/codeLens",
+			"result": {
+				"or": [
+					{
+						"array": "CodeLens"
+					},
+					"null"
+				]
+			},
+			"params": "CodeLensParams",
+			"partialResult": {
+				"array": "CodeLens"
+			},
+			"registrationOptions": "CodeLensRegistrationOptions"
+		},
+		{
+			"method": "codeLens/resolve",
+			"result": "CodeLens",
+			"params": "CodeLens"
+		},
+		{
+			"method": "workspace/codeLens/refresh",
+			"result": "null"
+		},
+		{
+			"method": "textDocument/documentLink",
+			"result": {
+				"or": [
+					{
+						"array": "DocumentLink"
+					},
+					"null"
+				]
+			},
+			"params": "DocumentLinkParams",
+			"partialResult": {
+				"array": "DocumentLink"
+			},
+			"registrationOptions": "DocumentLinkRegistrationOptions"
+		},
+		{
+			"method": "documentLink/resolve",
+			"result": "DocumentLink",
+			"params": "DocumentLink"
+		},
+		{
+			"method": "textDocument/formatting",
+			"result": {
+				"or": [
+					{
+						"array": "TextEdit"
+					},
+					"null"
+				]
+			},
+			"params": "DocumentFormattingParams",
+			"registrationOptions": "DocumentFormattingRegistrationOptions"
+		},
+		{
+			"method": "textDocument/rangeFormatting",
+			"result": {
+				"or": [
+					{
+						"array": "TextEdit"
+					},
+					"null"
+				]
+			},
+			"params": "DocumentRangeFormattingParams",
+			"registrationOptions": "DocumentRangeFormattingRegistrationOptions"
+		},
+		{
+			"method": "textDocument/onTypeFormatting",
+			"result": {
+				"or": [
+					{
+						"array": "TextEdit"
+					},
+					"null"
+				]
+			},
+			"params": "DocumentOnTypeFormattingParams",
+			"registrationOptions": "DocumentOnTypeFormattingRegistrationOptions"
+		},
+		{
+			"method": "textDocument/rename",
+			"result": {
+				"or": [
+					"WorkspaceEdit",
+					"null"
+				]
+			},
+			"params": "RenameParams",
+			"registrationOptions": "RenameRegistrationOptions"
+		},
+		{
+			"method": "textDocument/prepareRename",
+			"result": {
+				"or": [
+					"PrepareRenameResult",
+					"null"
+				]
+			},
+			"params": "PrepareRenameParams"
+		},
+		{
+			"method": "workspace/executeCommand",
+			"result": {
+				"or": [
+					"LSPAny",
+					"null"
+				]
+			},
+			"params": "ExecuteCommandParams",
+			"registrationOptions": "ExecuteCommandRegistrationOptions"
+		},
+		{
+			"method": "workspace/applyEdit",
+			"result": "ApplyWorkspaceEditResult",
+			"params": "ApplyWorkspaceEditParams"
+		},
+		{
+			"method": "textDocument/diagnostic",
+			"result": "DocumentDiagnosticReport",
+			"params": "DocumentDiagnosticParams",
+			"partialResult": "DocumentDiagnosticReportPartialResult",
+			"errorData": "DiagnosticServerCancellationData",
+			"registrationOptions": "DiagnosticRegistrationOptions"
+		},
+		{
+			"method": "workspace/diagnostic",
+			"result": "WorkspaceDiagnosticReport",
+			"params": "WorkspaceDiagnosticParams",
+			"partialResult": "WorkspaceDiagnosticReportPartialResult",
+			"errorData": "DiagnosticServerCancellationData"
+		},
+		{
+			"method": "workspace/diagnostic/refresh",
+			"result": "null"
+		}
+	],
+	"notifications": [
+		{
+			"method": "workspace/didChangeWorkspaceFolders",
+			"params": "DidChangeWorkspaceFoldersParams"
+		},
+		{
+			"method": "window/workDoneProgress/cancel",
+			"params": "WorkDoneProgressCancelParams"
+		},
+		{
+			"method": "workspace/didCreateFiles",
+			"params": "CreateFilesParams",
+			"registrationOptions": "FileOperationRegistrationOptions"
+		},
+		{
+			"method": "workspace/didRenameFiles",
+			"params": "RenameFilesParams",
+			"registrationOptions": "FileOperationRegistrationOptions"
+		},
+		{
+			"method": "workspace/didDeleteFiles",
+			"params": "DeleteFilesParams",
+			"registrationOptions": "FileOperationRegistrationOptions"
+		},
+		{
+			"method": "initialized",
+			"params": "InitializedParams"
+		},
+		{
+			"method": "exit"
+		},
+		{
+			"method": "workspace/didChangeConfiguration",
+			"params": "DidChangeConfigurationParams",
+			"registrationOptions": "DidChangeConfigurationRegistrationOptions"
+		},
+		{
+			"method": "window/showMessage",
+			"params": "ShowMessageParams"
+		},
+		{
+			"method": "window/logMessage",
+			"params": "LogMessageParams"
+		},
+		{
+			"method": "telemetry/event",
+			"params": "LSPAny"
+		},
+		{
+			"method": "textDocument/didOpen",
+			"params": "DidOpenTextDocumentParams",
+			"registrationOptions": "TextDocumentRegistrationOptions"
+		},
+		{
+			"method": "textDocument/didChange",
+			"params": "DidChangeTextDocumentParams",
+			"registrationOptions": "TextDocumentChangeRegistrationOptions"
+		},
+		{
+			"method": "textDocument/didClose",
+			"params": "DidCloseTextDocumentParams",
+			"registrationOptions": "TextDocumentRegistrationOptions"
+		},
+		{
+			"method": "textDocument/didSave",
+			"params": "DidSaveTextDocumentParams",
+			"registrationOptions": "TextDocumentSaveRegistrationOptions"
+		},
+		{
+			"method": "textDocument/willSave",
+			"params": "WillSaveTextDocumentParams",
+			"registrationOptions": "TextDocumentRegistrationOptions"
+		},
+		{
+			"method": "workspace/didChangeWatchedFiles",
+			"params": "DidChangeWatchedFilesParams",
+			"registrationOptions": "DidChangeWatchedFilesRegistrationOptions"
+		},
+		{
+			"method": "textDocument/publishDiagnostics",
+			"params": "PublishDiagnosticsParams"
+		},
+		{
+			"method": "notebookDocument/didOpen",
+			"params": "DidOpenNotebookDocumentParams"
+		},
+		{
+			"method": "notebookDocument/didChange",
+			"params": "DidChangeNotebookDocumentParams"
+		},
+		{
+			"method": "notebookDocument/didSave",
+			"params": "DidSaveNotebookDocumentParams"
+		},
+		{
+			"method": "notebookDocument/didClose",
+			"params": "DidCloseNotebookDocumentParams"
+		}
+	],
+	"structures": [
+		{
+			"name": "ImplementationParams",
+			"properties": [],
+			"extends": [
+				"TextDocumentPositionParams"
+			],
+			"mixins": [
+				"WorkDoneProgressParams",
+				"PartialResultParams"
+			]
+		},
+		{
+			"name": "Definition",
+			"properties": []
+		},
+		{
+			"name": "DefinitionLink",
+			"properties": []
+		},
+		{
+			"name": "Location",
+			"properties": []
+		},
+		{
+			"name": "ImplementationRegistrationOptions",
+			"properties": [],
+			"mixins": [
+				"TextDocumentRegistrationOptions",
+				"ImplementationOptions",
+				"StaticRegistrationOptions"
+			]
+		},
+		{
+			"name": "TypeDefinitionParams",
+			"properties": [],
+			"extends": [
+				"TextDocumentPositionParams"
+			],
+			"mixins": [
+				"WorkDoneProgressParams",
+				"PartialResultParams"
+			]
+		},
+		{
+			"name": "TypeDefinitionRegistrationOptions",
+			"properties": [],
+			"mixins": [
+				"TextDocumentRegistrationOptions",
+				"TypeDefinitionOptions",
+				"StaticRegistrationOptions"
+			]
+		},
+		{
+			"name": "WorkspaceFolder",
+			"properties": [
+				{
+					"name": "uri",
+					"type": "string"
+				},
+				{
+					"name": "name",
+					"type": "string"
+				}
+			]
+		},
+		{
+			"name": "DidChangeWorkspaceFoldersParams",
+			"properties": [
+				{
+					"name": "event",
+					"type": "WorkspaceFoldersChangeEvent"
+				}
+			]
+		},
+		{
+			"name": "ConfigurationParams",
+			"properties": [
+				{
+					"name": "items",
+					"type": "ConfigurationItem[]"
+				}
+			]
+		},
+		{
+			"name": "PartialResultParams",
+			"properties": []
+		},
+		{
+			"name": "LSPAny",
+			"properties": []
+		},
+		{
+			"name": "DocumentColorParams",
+			"properties": [
+				{
+					"name": "textDocument",
+					"type": "TextDocumentIdentifier"
+				}
+			],
+			"mixins": [
+				"WorkDoneProgressParams",
+				"PartialResultParams"
+			]
+		},
+		{
+			"name": "ColorInformation",
+			"properties": []
+		},
+		{
+			"name": "DocumentColorRegistrationOptions",
+			"properties": [],
+			"mixins": [
+				"TextDocumentRegistrationOptions",
+				"StaticRegistrationOptions",
+				"DocumentColorOptions"
+			]
+		},
+		{
+			"name": "ColorPresentationParams",
+			"properties": [
+				{
+					"name": "textDocument",
+					"type": "TextDocumentIdentifier"
+				},
+				{
+					"name": "color",
+					"type": "Color"
+				},
+				{
+					"name": "range",
+					"type": "Range"
+				}
+			],
+			"mixins": [
+				"WorkDoneProgressParams",
+				"PartialResultParams"
+			]
+		},
+		{
+			"name": "ColorPresentation",
+			"properties": []
+		},
+		{
+			"name": "WorkDoneProgressOptions",
+			"properties": []
+		},
+		{
+			"name": "TextDocumentRegistrationOptions",
+			"properties": []
+		},
+		{
+			"name": "FoldingRangeParams",
+			"properties": [
+				{
+					"name": "textDocument",
+					"type": "TextDocumentIdentifier"
+				}
+			],
+			"mixins": [
+				"WorkDoneProgressParams",
+				"PartialResultParams"
+			]
+		},
+		{
+			"name": "FoldingRange",
+			"properties": []
+		},
+		{
+			"name": "FoldingRangeRegistrationOptions",
+			"properties": [],
+			"mixins": [
+				"TextDocumentRegistrationOptions",
+				"FoldingRangeOptions",
+				"StaticRegistrationOptions"
+			]
+		},
+		{
+			"name": "DeclarationParams",
+			"properties": [],
+			"extends": [
+				"TextDocumentPositionParams"
+			],
+			"mixins": [
+				"WorkDoneProgressParams",
+				"PartialResultParams"
+			]
+		},
+		{
+			"name": "Declaration",
+			"properties": []
+		},
+		{
+			"name": "DeclarationLink",
+			"properties": []
+		},
+		{
+			"name": "DeclarationRegistrationOptions",
+			"properties": [],
+			"mixins": [
+				"DeclarationOptions",
+				"TextDocumentRegistrationOptions",
+				"StaticRegistrationOptions"
+			]
+		},
+		{
+			"name": "SelectionRangeParams",
+			"properties": [
+				{
+					"name": "textDocument",
+					"type": "TextDocumentIdentifier"
+				},
+				{
+					"name": "positions",
+					"type": "Position[]"
+				}
+			],
+			"mixins": [
+				"WorkDoneProgressParams",
+				"PartialResultParams"
+			]
+		},
+		{
+			"name": "SelectionRange",
+			"properties": []
+		},
+		{
+			"name": "SelectionRangeRegistrationOptions",
+			"properties": [],
+			"mixins": [
+				"SelectionRangeOptions",
+				"TextDocumentRegistrationOptions",
+				"StaticRegistrationOptions"
+			]
+		},
+		{
+			"name": "WorkDoneProgressCreateParams",
+			"properties": [
+				{
+					"name": "token",
+					"type": "ProgressToken"
+				}
+			]
+		},
+		{
+			"name": "WorkDoneProgressCancelParams",
+			"properties": [
+				{
+					"name": "token",
+					"type": "ProgressToken"
+				}
+			]
+		},
+		{
+			"name": "CallHierarchyPrepareParams",
+			"properties": [],
+			"extends": [
+				"TextDocumentPositionParams"
+			],
+			"mixins": [
+				"WorkDoneProgressParams"
+			]
+		},
+		{
+			"name": "CallHierarchyItem",
+			"properties": []
+		},
+		{
+			"name": "CallHierarchyRegistrationOptions",
+			"properties": [],
+			"mixins": [
+				"TextDocumentRegistrationOptions",
+				"CallHierarchyOptions",
+				"StaticRegistrationOptions"
+			]
+		},
+		{
+			"name": "CallHierarchyIncomingCallsParams",
+			"properties": [
+				{
+					"name": "item",
+					"type": "CallHierarchyItem"
+				}
+			],
+			"mixins": [
+				"WorkDoneProgressParams",
+				"PartialResultParams"
+			]
+		},
+		{
+			"name": "CallHierarchyIncomingCall",
+			"properties": []
+		},
+		{
+			"name": "CallHierarchyOutgoingCallsParams",
+			"properties": [
+				{
+					"name": "item",
+					"type": "CallHierarchyItem"
+				}
+			],
+			"mixins": [
+				"WorkDoneProgressParams",
+				"PartialResultParams"
+			]
+		},
+		{
+			"name": "CallHierarchyOutgoingCall",
+			"properties": []
+		},
+		{
+			"name": "SemanticTokensParams",
+			"properties": [
+				{
+					"name": "textDocument",
+					"type": "TextDocumentIdentifier"
+				}
+			],
+			"mixins": [
+				"WorkDoneProgressParams",
+				"PartialResultParams"
+			]
+		},
+		{
+			"name": "SemanticTokens",
+			"properties": []
+		},
+		{
+			"name": "SemanticTokensPartialResult",
+			"properties": [
+				{
+					"name": "data",
+					"type": "number[]"
+				}
+			]
+		},
+		{
+			"name": "SemanticTokensRegistrationOptions",
+			"properties": [],
+			"mixins": [
+				"TextDocumentRegistrationOptions",
+				"SemanticTokensOptions",
+				"StaticRegistrationOptions"
+			]
+		},
+		{
+			"name": "SemanticTokensDeltaParams",
+			"properties": [
+				{
+					"name": "textDocument",
+					"type": "TextDocumentIdentifier"
+				},
+				{
+					"name": "previousResultId",
+					"type": "string"
+				}
+			],
+			"mixins": [
+				"WorkDoneProgressParams",
+				"PartialResultParams"
+			]
+		},
+		{
+			"name": "SemanticTokensDelta",
+			"properties": []
+		},
+		{
+			"name": "SemanticTokensDeltaPartialResult",
+			"properties": [
+				{
+					"name": "edits",
+					"type": "SemanticTokensEdit[]"
+				}
+			]
+		},
+		{
+			"name": "SemanticTokensRangeParams",
+			"properties": [
+				{
+					"name": "textDocument",
+					"type": "TextDocumentIdentifier"
+				},
+				{
+					"name": "range",
+					"type": "Range"
+				}
+			],
+			"mixins": [
+				"WorkDoneProgressParams",
+				"PartialResultParams"
+			]
+		},
+		{
+			"name": "ShowDocumentParams",
+			"properties": [
+				{
+					"name": "uri",
+					"type": "string"
+				},
+				{
+					"name": "external",
+					"type": "boolean | undefined"
+				},
+				{
+					"name": "takeFocus",
+					"type": "boolean | undefined"
+				},
+				{
+					"name": "selection",
+					"type": "Range | undefined"
+				}
+			]
+		},
+		{
+			"name": "ShowDocumentResult",
+			"properties": [
+				{
+					"name": "success",
+					"type": "boolean"
+				}
+			]
+		},
+		{
+			"name": "LinkedEditingRangeParams",
+			"properties": [],
+			"extends": [
+				"TextDocumentPositionParams"
+			],
+			"mixins": [
+				"WorkDoneProgressParams"
+			]
+		},
+		{
+			"name": "LinkedEditingRanges",
+			"properties": [
+				{
+					"name": "ranges",
+					"type": "Range[]"
+				},
+				{
+					"name": "wordPattern",
+					"type": "string | undefined"
+				}
+			]
+		},
+		{
+			"name": "LinkedEditingRangeRegistrationOptions",
+			"properties": [],
+			"mixins": [
+				"TextDocumentRegistrationOptions",
+				"LinkedEditingRangeOptions",
+				"StaticRegistrationOptions"
+			]
+		},
+		{
+			"name": "CreateFilesParams",
+			"properties": [
+				{
+					"name": "files",
+					"type": "FileCreate[]"
+				}
+			]
+		},
+		{
+			"name": "WorkspaceEdit",
+			"properties": []
+		},
+		{
+			"name": "FileOperationRegistrationOptions",
+			"properties": [
+				{
+					"name": "filters",
+					"type": "FileOperationFilter[]"
+				}
+			]
+		},
+		{
+			"name": "RenameFilesParams",
+			"properties": [
+				{
+					"name": "files",
+					"type": "FileRename[]"
+				}
+			]
+		},
+		{
+			"name": "DeleteFilesParams",
+			"properties": [
+				{
+					"name": "files",
+					"type": "FileDelete[]"
+				}
+			]
+		},
+		{
+			"name": "MonikerParams",
+			"properties": [],
+			"extends": [
+				"TextDocumentPositionParams"
+			],
+			"mixins": [
+				"WorkDoneProgressParams",
+				"PartialResultParams"
+			]
+		},
+		{
+			"name": "Moniker",
+			"properties": [
+				{
+					"name": "scheme",
+					"type": "string"
+				},
+				{
+					"name": "identifier",
+					"type": "string"
+				},
+				{
+					"name": "unique",
+					"type": "UniquenessLevel"
+				},
+				{
+					"name": "kind",
+					"type": "MonikerKind | undefined"
+				}
+			]
+		},
+		{
+			"name": "MonikerRegistrationOptions",
+			"properties": [],
+			"mixins": [
+				"TextDocumentRegistrationOptions",
+				"MonikerOptions"
+			]
+		},
+		{
+			"name": "TypeHierarchyPrepareParams",
+			"properties": []
+		},
+		{
+			"name": "TypeHierarchyItem",
+			"properties": []
+		},
+		{
+			"name": "TypeHierarchyRegistrationOptions",
+			"properties": []
+		},
+		{
+			"name": "TypeHierarchySupertypesParams",
+			"properties": []
+		},
+		{
+			"name": "TypeHierarchySubtypesParams",
+			"properties": []
+		},
+		{
+			"name": "InlineValueParams",
+			"properties": []
+		},
+		{
+			"name": "InlineValue",
+			"properties": []
+		},
+		{
+			"name": "InlineValueRegistrationOptions",
+			"properties": []
+		},
+		{
+			"name": "InlayHintParams",
+			"properties": []
+		},
+		{
+			"name": "InlayHint",
+			"properties": []
+		},
+		{
+			"name": "InlayHintRegistrationOptions",
+			"properties": []
+		},
+		{
+			"name": "RegistrationParams",
+			"properties": [
+				{
+					"name": "registrations",
+					"type": "Registration[]"
+				}
+			]
+		},
+		{
+			"name": "UnregistrationParams",
+			"properties": [
+				{
+					"name": "unregisterations",
+					"type": "Unregistration[]"
+				}
+			]
+		},
+		{
+			"name": "InitializeParams",
+			"properties": []
+		},
+		{
+			"name": "InitializeResult",
+			"properties": [
+				{
+					"name": "T",
+					"type": "any"
+				},
+				{
+					"name": "capabilities",
+					"type": "ServerCapabilities<T>"
+				},
+				{
+					"name": "serverInfo",
+					"type": "{ name: string; version?: string | undefined; } | undefined"
+				},
+				{
+					"name": "__index",
+					"type": "any"
+				}
+			]
+		},
+		{
+			"name": "InitializeError",
+			"properties": [
+				{
+					"name": "retry",
+					"type": "boolean"
+				}
+			]
+		},
+		{
+			"name": "InitializedParams",
+			"properties": []
+		},
+		{
+			"name": "DidChangeConfigurationParams",
+			"properties": [
+				{
+					"name": "settings",
+					"type": "LSPAny"
+				}
+			]
+		},
+		{
+			"name": "DidChangeConfigurationRegistrationOptions",
+			"properties": [
+				{
+					"name": "section",
+					"type": "string | string[] | undefined"
+				}
+			]
+		},
+		{
+			"name": "ShowMessageParams",
+			"properties": [
+				{
+					"name": "type",
+					"type": "MessageType"
+				},
+				{
+					"name": "message",
+					"type": "string"
+				}
+			]
+		},
+		{
+			"name": "ShowMessageRequestParams",
+			"properties": [
+				{
+					"name": "type",
+					"type": "MessageType"
+				},
+				{
+					"name": "message",
+					"type": "string"
+				},
+				{
+					"name": "actions",
+					"type": "MessageActionItem[] | undefined"
+				}
+			]
+		},
+		{
+			"name": "MessageActionItem",
+			"properties": [
+				{
+					"name": "title",
+					"type": "string"
+				},
+				{
+					"name": "__index",
+					"type": "any"
+				}
+			]
+		},
+		{
+			"name": "LogMessageParams",
+			"properties": [
+				{
+					"name": "type",
+					"type": "MessageType"
+				},
+				{
+					"name": "message",
+					"type": "string"
+				}
+			]
+		},
+		{
+			"name": "DidOpenTextDocumentParams",
+			"properties": [
+				{
+					"name": "textDocument",
+					"type": "TextDocumentItem"
+				}
+			]
+		},
+		{
+			"name": "DidChangeTextDocumentParams",
+			"properties": [
+				{
+					"name": "textDocument",
+					"type": "VersionedTextDocumentIdentifier"
+				},
+				{
+					"name": "contentChanges",
+					"type": "TextDocumentContentChangeEvent[]"
+				}
+			]
+		},
+		{
+			"name": "TextDocumentChangeRegistrationOptions",
+			"properties": [
+				{
+					"name": "syncKind",
+					"type": "TextDocumentSyncKind"
+				}
+			],
+			"mixins": [
+				"TextDocumentRegistrationOptions"
+			]
+		},
+		{
+			"name": "DidCloseTextDocumentParams",
+			"properties": [
+				{
+					"name": "textDocument",
+					"type": "TextDocumentIdentifier"
+				}
+			]
+		},
+		{
+			"name": "DidSaveTextDocumentParams",
+			"properties": [
+				{
+					"name": "textDocument",
+					"type": "TextDocumentIdentifier"
+				},
+				{
+					"name": "text",
+					"type": "string | undefined"
+				}
+			]
+		},
+		{
+			"name": "TextDocumentSaveRegistrationOptions",
+			"properties": [],
+			"mixins": [
+				"TextDocumentRegistrationOptions",
+				"SaveOptions"
+			]
+		},
+		{
+			"name": "WillSaveTextDocumentParams",
+			"properties": [
+				{
+					"name": "textDocument",
+					"type": "TextDocumentIdentifier"
+				},
+				{
+					"name": "reason",
+					"type": "TextDocumentSaveReason"
+				}
+			]
+		},
+		{
+			"name": "TextEdit",
+			"properties": []
+		},
+		{
+			"name": "DidChangeWatchedFilesParams",
+			"properties": [
+				{
+					"name": "changes",
+					"type": "FileEvent[]"
+				}
+			]
+		},
+		{
+			"name": "DidChangeWatchedFilesRegistrationOptions",
+			"properties": [
+				{
+					"name": "watchers",
+					"type": "FileSystemWatcher[]"
+				}
+			]
+		},
+		{
+			"name": "PublishDiagnosticsParams",
+			"properties": [
+				{
+					"name": "uri",
+					"type": "string"
+				},
+				{
+					"name": "version",
+					"type": "number | undefined"
+				},
+				{
+					"name": "diagnostics",
+					"type": "Diagnostic[]"
+				}
+			]
+		},
+		{
+			"name": "CompletionParams",
+			"properties": [
+				{
+					"name": "context",
+					"type": "CompletionContext | undefined"
+				}
+			],
+			"extends": [
+				"TextDocumentPositionParams"
+			],
+			"mixins": [
+				"WorkDoneProgressParams",
+				"PartialResultParams"
+			]
+		},
+		{
+			"name": "CompletionItem",
+			"properties": []
+		},
+		{
+			"name": "CompletionList",
+			"properties": []
+		},
+		{
+			"name": "CompletionRegistrationOptions",
+			"properties": [],
+			"mixins": [
+				"TextDocumentRegistrationOptions",
+				"CompletionOptions"
+			]
+		},
+		{
+			"name": "HoverParams",
+			"properties": [],
+			"extends": [
+				"TextDocumentPositionParams"
+			],
+			"mixins": [
+				"WorkDoneProgressParams"
+			]
+		},
+		{
+			"name": "Hover",
+			"properties": []
+		},
+		{
+			"name": "HoverRegistrationOptions",
+			"properties": [],
+			"mixins": [
+				"TextDocumentRegistrationOptions",
+				"HoverOptions"
+			]
+		},
+		{
+			"name": "SignatureHelpParams",
+			"properties": [
+				{
+					"name": "context",
+					"type": "SignatureHelpContext | undefined"
+				}
+			],
+			"extends": [
+				"TextDocumentPositionParams"
+			],
+			"mixins": [
+				"WorkDoneProgressParams"
+			]
+		},
+		{
+			"name": "SignatureHelp",
+			"properties": []
+		},
+		{
+			"name": "SignatureHelpRegistrationOptions",
+			"properties": [],
+			"mixins": [
+				"TextDocumentRegistrationOptions",
+				"SignatureHelpOptions"
+			]
+		},
+		{
+			"name": "DefinitionParams",
+			"properties": [],
+			"extends": [
+				"TextDocumentPositionParams"
+			],
+			"mixins": [
+				"WorkDoneProgressParams",
+				"PartialResultParams"
+			]
+		},
+		{
+			"name": "DefinitionRegistrationOptions",
+			"properties": [],
+			"mixins": [
+				"TextDocumentRegistrationOptions",
+				"DefinitionOptions"
+			]
+		},
+		{
+			"name": "ReferenceParams",
+			"properties": [
+				{
+					"name": "context",
+					"type": "ReferenceContext"
+				}
+			],
+			"extends": [
+				"TextDocumentPositionParams"
+			],
+			"mixins": [
+				"WorkDoneProgressParams",
+				"PartialResultParams"
+			]
+		},
+		{
+			"name": "ReferenceRegistrationOptions",
+			"properties": [],
+			"mixins": [
+				"TextDocumentRegistrationOptions",
+				"ReferenceOptions"
+			]
+		},
+		{
+			"name": "DocumentHighlightParams",
+			"properties": [],
+			"extends": [
+				"TextDocumentPositionParams"
+			],
+			"mixins": [
+				"WorkDoneProgressParams",
+				"PartialResultParams"
+			]
+		},
+		{
+			"name": "DocumentHighlight",
+			"properties": []
+		},
+		{
+			"name": "DocumentHighlightRegistrationOptions",
+			"properties": [],
+			"mixins": [
+				"TextDocumentRegistrationOptions",
+				"DocumentHighlightOptions"
+			]
+		},
+		{
+			"name": "DocumentSymbolParams",
+			"properties": [
+				{
+					"name": "textDocument",
+					"type": "TextDocumentIdentifier"
+				}
+			],
+			"mixins": [
+				"WorkDoneProgressParams",
+				"PartialResultParams"
+			]
+		},
+		{
+			"name": "SymbolInformation",
+			"properties": []
+		},
+		{
+			"name": "DocumentSymbol",
+			"properties": []
+		},
+		{
+			"name": "DocumentSymbolRegistrationOptions",
+			"properties": [],
+			"mixins": [
+				"TextDocumentRegistrationOptions",
+				"DocumentSymbolOptions"
+			]
+		},
+		{
+			"name": "CodeActionParams",
+			"properties": [
+				{
+					"name": "textDocument",
+					"type": "TextDocumentIdentifier"
+				},
+				{
+					"name": "range",
+					"type": "Range"
+				},
+				{
+					"name": "context",
+					"type": "CodeActionContext"
+				}
+			],
+			"mixins": [
+				"WorkDoneProgressParams",
+				"PartialResultParams"
+			]
+		},
+		{
+			"name": "Command",
+			"properties": []
+		},
+		{
+			"name": "CodeAction",
+			"properties": []
+		},
+		{
+			"name": "CodeActionRegistrationOptions",
+			"properties": [],
+			"mixins": [
+				"TextDocumentRegistrationOptions",
+				"CodeActionOptions"
+			]
+		},
+		{
+			"name": "WorkspaceSymbolParams",
+			"properties": [
+				{
+					"name": "query",
+					"type": "string"
+				}
+			],
+			"mixins": [
+				"WorkDoneProgressParams",
+				"PartialResultParams"
+			]
+		},
+		{
+			"name": "WorkspaceSymbol",
+			"properties": []
+		},
+		{
+			"name": "WorkspaceSymbolRegistrationOptions",
+			"properties": [],
+			"mixins": [
+				"WorkspaceSymbolOptions"
+			]
+		},
+		{
+			"name": "CodeLensParams",
+			"properties": [
+				{
+					"name": "textDocument",
+					"type": "TextDocumentIdentifier"
+				}
+			],
+			"mixins": [
+				"WorkDoneProgressParams",
+				"PartialResultParams"
+			]
+		},
+		{
+			"name": "CodeLens",
+			"properties": []
+		},
+		{
+			"name": "CodeLensRegistrationOptions",
+			"properties": [],
+			"mixins": [
+				"TextDocumentRegistrationOptions",
+				"CodeLensOptions"
+			]
+		},
+		{
+			"name": "DocumentLinkParams",
+			"properties": [
+				{
+					"name": "textDocument",
+					"type": "TextDocumentIdentifier"
+				}
+			],
+			"mixins": [
+				"WorkDoneProgressParams",
+				"PartialResultParams"
+			]
+		},
+		{
+			"name": "DocumentLink",
+			"properties": []
+		},
+		{
+			"name": "DocumentLinkRegistrationOptions",
+			"properties": [],
+			"mixins": [
+				"TextDocumentRegistrationOptions",
+				"DocumentLinkOptions"
+			]
+		},
+		{
+			"name": "DocumentFormattingParams",
+			"properties": [
+				{
+					"name": "textDocument",
+					"type": "TextDocumentIdentifier"
+				},
+				{
+					"name": "options",
+					"type": "FormattingOptions"
+				}
+			],
+			"mixins": [
+				"WorkDoneProgressParams"
+			]
+		},
+		{
+			"name": "DocumentFormattingRegistrationOptions",
+			"properties": [],
+			"mixins": [
+				"TextDocumentRegistrationOptions",
+				"DocumentFormattingOptions"
+			]
+		},
+		{
+			"name": "DocumentRangeFormattingParams",
+			"properties": [
+				{
+					"name": "textDocument",
+					"type": "TextDocumentIdentifier"
+				},
+				{
+					"name": "range",
+					"type": "Range"
+				},
+				{
+					"name": "options",
+					"type": "FormattingOptions"
+				}
+			],
+			"mixins": [
+				"WorkDoneProgressParams"
+			]
+		},
+		{
+			"name": "DocumentRangeFormattingRegistrationOptions",
+			"properties": [],
+			"mixins": [
+				"TextDocumentRegistrationOptions",
+				"DocumentRangeFormattingOptions"
+			]
+		},
+		{
+			"name": "DocumentOnTypeFormattingParams",
+			"properties": [
+				{
+					"name": "textDocument",
+					"type": "TextDocumentIdentifier"
+				},
+				{
+					"name": "position",
+					"type": "Position"
+				},
+				{
+					"name": "ch",
+					"type": "string"
+				},
+				{
+					"name": "options",
+					"type": "FormattingOptions"
+				}
+			]
+		},
+		{
+			"name": "DocumentOnTypeFormattingRegistrationOptions",
+			"properties": [],
+			"mixins": [
+				"TextDocumentRegistrationOptions",
+				"DocumentOnTypeFormattingOptions"
+			]
+		},
+		{
+			"name": "RenameParams",
+			"properties": [
+				{
+					"name": "textDocument",
+					"type": "TextDocumentIdentifier"
+				},
+				{
+					"name": "position",
+					"type": "Position"
+				},
+				{
+					"name": "newName",
+					"type": "string"
+				}
+			],
+			"mixins": [
+				"WorkDoneProgressParams"
+			]
+		},
+		{
+			"name": "RenameRegistrationOptions",
+			"properties": [],
+			"mixins": [
+				"TextDocumentRegistrationOptions",
+				"RenameOptions"
+			]
+		},
+		{
+			"name": "PrepareRenameParams",
+			"properties": [],
+			"extends": [
+				"TextDocumentPositionParams"
+			],
+			"mixins": [
+				"WorkDoneProgressParams"
+			]
+		},
+		{
+			"name": "PrepareRenameResult",
+			"properties": []
+		},
+		{
+			"name": "ExecuteCommandParams",
+			"properties": [
+				{
+					"name": "command",
+					"type": "string"
+				},
+				{
+					"name": "arguments",
+					"type": "LSPAny[] | undefined"
+				}
+			],
+			"mixins": [
+				"WorkDoneProgressParams"
+			]
+		},
+		{
+			"name": "ExecuteCommandRegistrationOptions",
+			"properties": [],
+			"mixins": [
+				"ExecuteCommandOptions"
+			]
+		},
+		{
+			"name": "ApplyWorkspaceEditParams",
+			"properties": [
+				{
+					"name": "label",
+					"type": "string | undefined"
+				},
+				{
+					"name": "edit",
+					"type": "WorkspaceEdit"
+				}
+			]
+		},
+		{
+			"name": "ApplyWorkspaceEditResult",
+			"properties": [
+				{
+					"name": "applied",
+					"type": "boolean"
+				},
+				{
+					"name": "failureReason",
+					"type": "string | undefined"
+				},
+				{
+					"name": "failedChange",
+					"type": "number | undefined"
+				}
+			]
+		},
+		{
+			"name": "DocumentDiagnosticParams",
+			"properties": []
+		},
+		{
+			"name": "DocumentDiagnosticReport",
+			"properties": []
+		},
+		{
+			"name": "DocumentDiagnosticReportPartialResult",
+			"properties": []
+		},
+		{
+			"name": "DiagnosticServerCancellationData",
+			"properties": []
+		},
+		{
+			"name": "DiagnosticRegistrationOptions",
+			"properties": []
+		},
+		{
+			"name": "WorkspaceDiagnosticParams",
+			"properties": []
+		},
+		{
+			"name": "WorkspaceDiagnosticReport",
+			"properties": []
+		},
+		{
+			"name": "WorkspaceDiagnosticReportPartialResult",
+			"properties": []
+		},
+		{
+			"name": "DidOpenNotebookDocumentParams",
+			"properties": []
+		},
+		{
+			"name": "DidChangeNotebookDocumentParams",
+			"properties": []
+		},
+		{
+			"name": "DidSaveNotebookDocumentParams",
+			"properties": []
+		},
+		{
+			"name": "DidCloseNotebookDocumentParams",
+			"properties": []
+		}
+	]
+}

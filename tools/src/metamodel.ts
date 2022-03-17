@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-export type BaseTypes = 'Uri' | 'DocumentUri' | 'integer' | 'uinteger' | 'decimal' | 'RegExp' | 'null';
+export type BaseTypes = 'Uri' | 'DocumentUri' | 'integer' | 'uinteger' | 'decimal' | 'RegExp' | 'null' | 'void';
 
 export type Type = BaseTypes | string | {
 	array: Type;
@@ -30,7 +30,8 @@ export type Request = {
 	result: Type;
 
 	/**
-	 * Partial result type if any;
+	 * Optional partial result type if the request
+	 * support partial result reporting.
 	 */
 	partialResult?: Type;
 
@@ -56,6 +57,12 @@ export type Notification = {
 	 * The parameter type(s) if any.
 	 */
 	params?: Type | Type[];
+
+	/**
+	 * Optional registration options if the notification
+	 * support dynamic registration.
+	 */
+	registrationOptions?: Type;
 };
 
 export type Property = {
@@ -87,6 +94,17 @@ export type Structure = {
 	documentation?: string;
 
 	/**
+	 * Structures extended from
+	 */
+	extends?: string[];
+
+	/**
+	 * Structures to mix in.
+	 */
+	mixins?: string[];
+
+	/**
+	 * The Properties
 	 */
 	properties: Property[];
 };

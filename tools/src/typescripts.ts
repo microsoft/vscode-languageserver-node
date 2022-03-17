@@ -90,31 +90,56 @@ export namespace Type {
 	}
 }
 
-interface InternalSymbol extends ts.Symbol {
-	parent?: ts.Symbol;
-	containingType?: ts.UnionOrIntersectionType;
-	__symbol__data__key__: string | undefined;
-}
+export class Symbols {
 
-export namespace Symbol {
+	private readonly typeChecker: ts.TypeChecker;
 
-	const Unknown = 'unknown';
-	const Undefined = 'undefined';
-	const None = 'none';
+	constructor(typeChecker: ts.TypeChecker) {
+		this.typeChecker = typeChecker;
+	}
 
-	export function createKey(typeChecker: ts.TypeChecker, symbol: ts.Symbol): string {
+	public static readonly Unknown = 'unknown';
+	public static readonly Undefined = 'undefined';
+	public static readonly None = 'none';
+
+	public static isClass(symbol: ts.Symbol): boolean {
+		return symbol !== undefined && (symbol.getFlags() & ts.SymbolFlags.Class) !== 0;
+	}
+
+	public static isInterface(symbol: ts.Symbol): boolean {
+		return symbol !== undefined && (symbol.getFlags() & ts.SymbolFlags.Interface) !== 0;
+	}
+
+	public static isTypeLiteral(symbol: ts.Symbol): boolean {
+		return symbol !== undefined && (symbol.getFlags() & ts.SymbolFlags.TypeLiteral) !== 0;
+	}
+
+	public static isAliasSymbol(symbol: ts.Symbol): boolean  {
+		return symbol !== undefined && (symbol.getFlags() & ts.SymbolFlags.Alias) !== 0;
+	}
+
+	public static isTypeAlias(symbol: ts.Symbol): boolean {
+		return symbol !== undefined && (symbol.getFlags() & ts.SymbolFlags.TypeAlias) !== 0;
+	}
+
+	public createKey(symbol: ts.Symbol): string {
+		interface InternalSymbol extends ts.Symbol {
+			parent?: ts.Symbol;
+			containingType?: ts.UnionOrIntersectionType;
+			__symbol__data__key__: string | undefined;
+		}
 		let result: string | undefined = (symbol as InternalSymbol).__symbol__data__key__;
 		if (result !== undefined) {
 			return result;
 		}
 		let declarations = symbol.getDeclarations();
 		if (declarations === undefined) {
-			if (typeChecker.isUnknownSymbol(symbol)) {
-				return Unknown;
-			} else if (typeChecker.isUndefinedSymbol(symbol)) {
-				return Undefined;
+			if (this.typeChecker.isUnknownSymbol(symbol)) {
+				return Symbols.Unknown;
+			} else if (this.typeChecker.isUndefinedSymbol(symbol)) {
+				return Symbols.Undefined;
 			} else {
-				return None;
+				return Symbols.None;
 			}
 		}
 		let fragments: { f: string; s: number; e: number; k: number }[] = [];
@@ -151,5 +176,57 @@ export namespace Symbol {
 		result = hash.digest('base64');
 		(symbol as InternalSymbol).__symbol__data__key__ = result;
 		return result;
+	}
+
+	public computeBaseSymbolsForClass(symbol: ts.Symbol): ts.Symbol[] | undefined {
+		const result: ts.Symbol[] = [];
+		const declarations = symbol.getDeclarations();
+		if (declarations === undefined) {
+			return undefined;
+		}
+		const typeChecker = this.typeChecker;
+		for (const declaration of declarations) {
+			if (ts.isClassDeclaration(declaration)) {
+				const heritageClauses = declaration.heritageClauses;
+				if (heritageClauses) {
+					for (const heritageClause of heritageClauses) {
+						for (const type of heritageClause.types) {
+							const tsType = typeChecker.getTypeAtLocation(type.expression);
+							if (tsType !== undefined) {
+								const baseSymbol = tsType.getSymbol();
+								if (baseSymbol !== undefined && baseSymbol !== symbol) {
+									result.push(baseSymbol);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		return result.length === 0 ? undefined : result;
+	}
+
+	public computeBaseSymbolsForInterface(symbol: ts.Symbol): ts.Symbol[] | undefined {
+		const result: ts.Symbol[] = [];
+		const tsType = this.typeChecker.getDeclaredTypeOfSymbol(symbol);
+		if (tsType === undefined) {
+			return undefined;
+		}
+		const baseTypes = tsType.getBaseTypes();
+		if (baseTypes !== undefined) {
+			for (let base of baseTypes) {
+				let symbol = base.getSymbol();
+				if (symbol) {
+					result.push(symbol);
+				}
+			}
+		}
+		return result.length === 0 ? undefined : result;
+	}
+
+	public getgetTypeOfSymbol(symbol: ts.Symbol): ts.Type {
+		if (Symbols.isTypeAlias(symbol) || Symbols.isInterface(symbol)) {
+			return this.typeChecker.getDeclaredTypeOfSymbol(symbol);
+		}
 	}
 }
