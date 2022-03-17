@@ -46,10 +46,10 @@ Library specific changes are:
 - the next handler of a client middleware now drops server results if the request got already canceled on the client side by returning VS Code's default value for the corresponding provider (mostly `null`). This is a breaking change since in former releases of the library the middleware would see the result also not used by VS Code. The change was made to save CPU and memory by not converting unused response results.
 - all converter functions which take an array are now async, yield and take a cancellation token. This is a breaking change and got introduced to avoid monopolizing the extension host during type conversions.
 - the return type of ErrorHandler#error and ErrorHandler#closed changed in a breaking manner. It now supports return an optional message which will be displayed to the user.
-- `InlineValuesRequest` protocol added:
-  - New APIs in Types: `InlineValues`
-  - New APIs in Protocol: `InlineValuesRequest`, `InlineValuesParams`, `InlineValuesClientCapabilities`, `InlineValuesProviderOptions`
-- Added support for notebook documents
+- Added support for inline values.
+- Added support for inlay hints.
+- Added support for type hierarchies.
+- Added support for notebook documents.
 
 ## 3.16.0 Protocol, 6.0.0 JSON-RPC, 7.0.0 Client and 7.0.0 Server.
 
