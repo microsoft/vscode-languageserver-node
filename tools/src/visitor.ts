@@ -8,6 +8,7 @@ import * as ts from 'typescript';
 import { Symbols } from './typescripts';
 
 import { Type as JsonType, Request as JsonRequest, Notification as JsonNotification, Structure, Property, StructureLiteral, BaseTypes, TypeAlias, MetaModel } from './metaModel';
+import path = require('path');
 
 const LSPBaseTypes = new Set(['Uri', 'DocumentUri', 'integer', 'uinteger', 'decimal']);
 type BaseTypeInfoKind = 'string' | 'boolean' | 'Uri' | 'DocumentUri' | 'integer' | 'uinteger' | 'decimal' | 'void' | 'never' | 'unknown' | 'null' | 'undefined' | 'any' | 'object';
@@ -208,14 +209,14 @@ export default class Visitor {
 		if (identifier.endsWith('Request')) {
 			const request = this.visitRequest(node);
 			if (request === undefined) {
-				console.error(`Creating meta data for request ${identifier} failed.`);
+				throw new Error(`Creating meta data for request ${identifier} failed.`);
 			} else {
 				this.requests.push(request);
 			}
 		} else if (identifier.endsWith('Notification')) {
 			const notification = this.visitNotification(node);
 			if (notification === undefined) {
-				console.error(`Creating meta data for notification ${identifier} failed.`);
+				throw new Error(`Creating meta data for notification ${identifier} failed.`);
 			} else {
 				this.notifications.push(notification);
 			}
@@ -256,6 +257,7 @@ export default class Visitor {
 		result.partialResult = asJsonType(requestTypes.partialResult);
 		result.errorData = asJsonType(requestTypes.errorData);
 		result.registrationOptions = asJsonType(requestTypes.registrationOptions);
+		result.proposed = this.isProposed(node);
 		return result;
 	}
 
@@ -287,6 +289,7 @@ export default class Visitor {
 		const result: JsonNotification = { method: methodName };
 		result.params = notificationTypes.param !== undefined ? asJsonType(notificationTypes.param) : undefined;
 		result.registrationOptions = asJsonType(notificationTypes.registrationOptions);
+		result.proposed = this.isProposed(node);
 		return result;
 	}
 
@@ -548,6 +551,11 @@ export default class Visitor {
 				items.push(typeInfo);
 			}
 			return { kind: 'tuple', items };
+		} else if (ts.isTypeQueryNode(typeNode) && ts.isQualifiedName(typeNode.exprName)) {
+			// Currently we only us the typeof operator to get to the type of a enum
+			// value expressed by an or type (e.g. kind: typeof DocumentDiagnosticReportKind.full)
+			// So we assume a qualifed name and turn it into a string literal type
+			return { kind: 'stringLiteral', value: typeNode.exprName.right.getText() };
 		} else if (ts.isParenthesizedTypeNode(typeNode)) {
 			return this.getTypeInfo(typeNode.type);
 		} else if (ts.isLiteralTypeNode(typeNode)) {
@@ -617,6 +625,9 @@ export default class Visitor {
 					result.mixins = mixins;
 				}
 			}
+			if (declaration !== undefined) {
+				result.proposed = this.isProposed(declaration);
+			}
 			this.fillProperties(result, symbol);
 			return result;
 		} else if (Symbols.isTypeAlias(symbol)) {
@@ -628,6 +639,7 @@ export default class Visitor {
 				// We have a single type literal node. So treat it as a structure
 				const result: Structure = { name: name, properties: [] };
 				this.fillProperties(result, this.typeChecker.getTypeAtLocation(declaration.type).symbol);
+				result.proposed = this.isProposed(declaration);
 				return result;
 			} else if (ts.isIntersectionTypeNode(declaration.type)) {
 				const split = this.splitIntersectionType(declaration.type);
@@ -656,6 +668,7 @@ export default class Visitor {
 					if (split.literal !== undefined) {
 						this.fillProperties(result, this.typeChecker.getTypeAtLocation(split.literal).symbol);
 					}
+					result.proposed = this.isProposed(declaration);
 					return result;
 				}
 			}
@@ -664,10 +677,12 @@ export default class Visitor {
 				throw new Error(`Can't resolve target type for type alias ${symbol.getName()}`);
 			}
 			this.queueTypeInfo(target);
-			return { name: name, type: TypeInfo.asJsonType(target) };
+			return { name: name, type: TypeInfo.asJsonType(target), proposed: this.isProposed(declaration) };
 		} else {
 			const result: Structure = { name: name, properties: [] };
 			this.fillProperties(result, symbol);
+			const declaration = this.getFirstDeclaration(symbol);
+			result.proposed = declaration !== undefined ? this.isProposed(declaration) : undefined;
 			return result;
 		}
 	}
@@ -740,5 +755,11 @@ export default class Visitor {
 
 	private removeQuotes(text: string): string {
 		return text.substring(1, text.length - 1);
+	}
+
+	private isProposed(node: ts.Node): boolean | undefined {
+		const filePath = node.getSourceFile().fileName;
+		const fileName = path.basename(filePath);
+		return fileName.startsWith('proposed.') ? true : undefined;
 	}
 }

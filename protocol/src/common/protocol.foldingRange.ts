@@ -39,24 +39,6 @@ export interface FoldingRangeRegistrationOptions extends TextDocumentRegistratio
 }
 
 /**
- * Enum of known range kinds
- */
-export enum FoldingRangeKind {
-	/**
-	 * Folding range for a comment
-	 */
-	Comment = 'comment',
-	/**
-	 * Folding range for a imports or includes
-	 */
-	Imports = 'imports',
-	/**
-	 * Folding range for a region (e.g. `#region`)
-	 */
-	Region = 'region'
-}
-
-/**
  * Parameters for a [FoldingRangeRequest](#FoldingRangeRequest).
  */
 export interface FoldingRangeParams extends WorkDoneProgressParams, PartialResultParams {

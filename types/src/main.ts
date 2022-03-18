@@ -434,20 +434,24 @@ export namespace ColorPresentation {
 /**
  * Enum of known range kinds
  */
-export enum FoldingRangeKind {
+export namespace FoldingRangeKind {
 	/**
 	 * Folding range for a comment
 	 */
-	Comment = 'comment',
+	export const Comment = 'comment';
+
 	/**
 	 * Folding range for a imports or includes
 	 */
-	Imports = 'imports',
+	export const Imports = 'imports';
+
 	/**
 	 * Folding range for a region (e.g. `#region`)
 	 */
-	Region = 'region'
+	export const Region = 'region';
 }
+
+export type FoldingRangeKind = 'comment' | 'imports' | 'region';
 
 /**
  * Represents a folding range. To be valid, start and end line must be bigger than zero and smaller
@@ -482,7 +486,7 @@ export interface FoldingRange {
 	 * is used to categorize folding ranges and used by commands like 'Fold all comments'. See
 	 * [FoldingRangeKind](#FoldingRangeKind) for an enumeration of standardized kinds.
 	 */
-	kind?: string;
+	kind?: FoldingRangeKind;
 }
 
 /**
@@ -493,7 +497,7 @@ export namespace FoldingRange {
 	/**
 	 * Creates a new FoldingRange literal.
 	 */
-	export function create(startLine: uinteger, endLine: uinteger, startCharacter?: uinteger, endCharacter?: uinteger, kind?: string): FoldingRange {
+	export function create(startLine: uinteger, endLine: uinteger, startCharacter?: uinteger, endCharacter?: uinteger, kind?: FoldingRangeKind): FoldingRange {
 		const result: FoldingRange = {
 			startLine,
 			endLine

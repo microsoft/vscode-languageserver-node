@@ -13,55 +13,59 @@ import type {
  *
  * @since 3.16.0
  */
-export enum UniquenessLevel {
+export namespace UniquenessLevel {
 	/**
 	 * The moniker is only unique inside a document
 	 */
-	document = 'document',
+	export const document = 'document';
 
 	/**
 	 * The moniker is unique inside a project for which a dump got created
 	 */
-	project = 'project',
+	export const project = 'project';
 
 	/**
 	 * The moniker is unique inside the group to which a project belongs
 	 */
-	group = 'group',
+	export const group = 'group';
 
 	/**
 	 * The moniker is unique inside the moniker scheme.
 	 */
-	scheme = 'scheme',
+	export const scheme = 'scheme';
 
 	/**
 	 * The moniker is globally unique
 	 */
-	global = 'global'
+	export const global = 'global';
 }
+
+export type UniquenessLevel = 'document' | 'project' | 'group' | 'scheme' | 'global';
 
 /**
  * The moniker kind.
  *
  * @since 3.16.0
  */
-export enum MonikerKind {
+export namespace MonikerKind {
 	/**
 	 * The moniker represent a symbol that is imported into a project
 	 */
-	import = 'import',
+	export const $import = 'import';
 
 	/**
 	 * The moniker represents a symbol that is exported from a project
 	 */
-	export = 'export',
+	export const $export = 'export';
 
 	/**
 	 * The moniker represents a symbol that is local to a project (e.g. a local
 	 * variable of a function, a class not visible outside the project, ...)
 	 */
-	local = 'local'
+	export const local = 'local';
 }
+
+export type MonikerKind = 'import' | 'export' | 'local';
 
 /**
  * Moniker definition to match LSIF 0.5 moniker definition.

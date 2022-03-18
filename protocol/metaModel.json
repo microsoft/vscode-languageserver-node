@@ -1602,7 +1602,8 @@
 			"registrationOptions": {
 				"kind": "reference",
 				"name": "DiagnosticRegistrationOptions"
-			}
+			},
+			"proposed": true
 		},
 		{
 			"method": "workspace/diagnostic",
@@ -1621,14 +1622,16 @@
 			"errorData": {
 				"kind": "reference",
 				"name": "DiagnosticServerCancellationData"
-			}
+			},
+			"proposed": true
 		},
 		{
 			"method": "workspace/diagnostic/refresh",
 			"result": {
 				"kind": "base",
 				"name": "null"
-			}
+			},
+			"proposed": true
 		}
 	],
 	"notifications": [
@@ -1799,28 +1802,32 @@
 			"params": {
 				"kind": "reference",
 				"name": "DidOpenNotebookDocumentParams"
-			}
+			},
+			"proposed": true
 		},
 		{
 			"method": "notebookDocument/didChange",
 			"params": {
 				"kind": "reference",
 				"name": "DidChangeNotebookDocumentParams"
-			}
+			},
+			"proposed": true
 		},
 		{
 			"method": "notebookDocument/didSave",
 			"params": {
 				"kind": "reference",
 				"name": "DidSaveNotebookDocumentParams"
-			}
+			},
+			"proposed": true
 		},
 		{
 			"method": "notebookDocument/didClose",
 			"params": {
 				"kind": "reference",
 				"name": "DidCloseNotebookDocumentParams"
-			}
+			},
+			"proposed": true
 		}
 	],
 	"structures": [
@@ -2202,8 +2209,8 @@
 				{
 					"name": "kind",
 					"type": {
-						"kind": "base",
-						"name": "string"
+						"kind": "reference",
+						"name": "FoldingRangeKind"
 					},
 					"optional": true
 				}
@@ -5181,7 +5188,8 @@
 					"kind": "reference",
 					"name": "PartialResultParams"
 				}
-			]
+			],
+			"proposed": true
 		},
 		{
 			"name": "DocumentDiagnosticReportPartialResult",
@@ -5192,7 +5200,7 @@
 						"kind": "map",
 						"key": {
 							"kind": "base",
-							"name": "string"
+							"name": "DocumentUri"
 						},
 						"value": {
 							"kind": "or",
@@ -5209,7 +5217,8 @@
 						}
 					}
 				}
-			]
+			],
+			"proposed": true
 		},
 		{
 			"name": "DiagnosticServerCancellationData",
@@ -5221,7 +5230,8 @@
 						"name": "boolean"
 					}
 				}
-			]
+			],
+			"proposed": true
 		},
 		{
 			"name": "DiagnosticRegistrationOptions",
@@ -5241,7 +5251,8 @@
 					"kind": "reference",
 					"name": "StaticRegistrationOptions"
 				}
-			]
+			],
+			"proposed": true
 		},
 		{
 			"name": "WorkspaceDiagnosticParams",
@@ -5274,7 +5285,8 @@
 					"kind": "reference",
 					"name": "PartialResultParams"
 				}
-			]
+			],
+			"proposed": true
 		},
 		{
 			"name": "WorkspaceDiagnosticReport",
@@ -5289,7 +5301,8 @@
 						}
 					}
 				}
-			]
+			],
+			"proposed": true
 		},
 		{
 			"name": "WorkspaceDiagnosticReportPartialResult",
@@ -5304,7 +5317,8 @@
 						}
 					}
 				}
-			]
+			],
+			"proposed": true
 		},
 		{
 			"name": "DidOpenNotebookDocumentParams",
@@ -5326,7 +5340,8 @@
 						}
 					}
 				}
-			]
+			],
+			"proposed": true
 		},
 		{
 			"name": "DidChangeNotebookDocumentParams",
@@ -5345,7 +5360,8 @@
 						"name": "NotebookDocumentChangeEvent"
 					}
 				}
-			]
+			],
+			"proposed": true
 		},
 		{
 			"name": "DidSaveNotebookDocumentParams",
@@ -5357,7 +5373,8 @@
 						"name": "NotebookDocumentIdentifier"
 					}
 				}
-			]
+			],
+			"proposed": true
 		},
 		{
 			"name": "DidCloseNotebookDocumentParams",
@@ -5379,7 +5396,8 @@
 						}
 					}
 				}
-			]
+			],
+			"proposed": true
 		},
 		{
 			"name": "TextDocumentPositionParams",
@@ -5995,14 +6013,6 @@
 					}
 				}
 			]
-		},
-		{
-			"name": "UniquenessLevel",
-			"properties": []
-		},
-		{
-			"name": "MonikerKind",
-			"properties": []
 		},
 		{
 			"name": "MonikerOptions",
@@ -7731,7 +7741,7 @@
 						"kind": "map",
 						"key": {
 							"kind": "base",
-							"name": "string"
+							"name": "DocumentUri"
 						},
 						"value": {
 							"kind": "or",
@@ -7755,7 +7765,8 @@
 					"kind": "reference",
 					"name": "FullDocumentDiagnosticReport"
 				}
-			]
+			],
+			"proposed": true
 		},
 		{
 			"name": "RelatedUnchangedDocumentDiagnosticReport",
@@ -7766,7 +7777,7 @@
 						"kind": "map",
 						"key": {
 							"kind": "base",
-							"name": "string"
+							"name": "DocumentUri"
 						},
 						"value": {
 							"kind": "or",
@@ -7790,7 +7801,8 @@
 					"kind": "reference",
 					"name": "UnchangedDocumentDiagnosticReport"
 				}
-			]
+			],
+			"proposed": true
 		},
 		{
 			"name": "FullDocumentDiagnosticReport",
@@ -7798,8 +7810,8 @@
 				{
 					"name": "kind",
 					"type": {
-						"kind": "reference",
-						"name": "full"
+						"kind": "stringLiteral",
+						"value": "full"
 					}
 				},
 				{
@@ -7820,7 +7832,8 @@
 						}
 					}
 				}
-			]
+			],
+			"proposed": true
 		},
 		{
 			"name": "UnchangedDocumentDiagnosticReport",
@@ -7828,8 +7841,8 @@
 				{
 					"name": "kind",
 					"type": {
-						"kind": "reference",
-						"name": "unChanged"
+						"kind": "stringLiteral",
+						"value": "unChanged"
 					}
 				},
 				{
@@ -7839,7 +7852,8 @@
 						"name": "string"
 					}
 				}
-			]
+			],
+			"proposed": true
 		},
 		{
 			"name": "DiagnosticOptions",
@@ -7872,7 +7886,8 @@
 					"kind": "reference",
 					"name": "WorkDoneProgressOptions"
 				}
-			]
+			],
+			"proposed": true
 		},
 		{
 			"name": "PreviousResultId",
@@ -7891,7 +7906,8 @@
 						"name": "string"
 					}
 				}
-			]
+			],
+			"proposed": true
 		},
 		{
 			"name": "NotebookDocument",
@@ -7935,7 +7951,8 @@
 						}
 					}
 				}
-			]
+			],
+			"proposed": true
 		},
 		{
 			"name": "VersionedNotebookDocumentIdentifier",
@@ -7954,7 +7971,8 @@
 						"name": "URI"
 					}
 				}
-			]
+			],
+			"proposed": true
 		},
 		{
 			"name": "NotebookDocumentChangeEvent",
@@ -8060,7 +8078,8 @@
 					},
 					"optional": true
 				}
-			]
+			],
+			"proposed": true
 		},
 		{
 			"name": "NotebookDocumentIdentifier",
@@ -8072,7 +8091,8 @@
 						"name": "URI"
 					}
 				}
-			]
+			],
+			"proposed": true
 		},
 		{
 			"name": "SemanticTokensLegend",
@@ -8520,14 +8540,6 @@
 			]
 		},
 		{
-			"name": "full",
-			"properties": []
-		},
-		{
-			"name": "unChanged",
-			"properties": []
-		},
-		{
 			"name": "WorkspaceFullDocumentDiagnosticReport",
 			"properties": [
 				{
@@ -8559,7 +8571,8 @@
 					"kind": "reference",
 					"name": "FullDocumentDiagnosticReport"
 				}
-			]
+			],
+			"proposed": true
 		},
 		{
 			"name": "WorkspaceUnchangedDocumentDiagnosticReport",
@@ -8593,7 +8606,8 @@
 					"kind": "reference",
 					"name": "UnchangedDocumentDiagnosticReport"
 				}
-			]
+			],
+			"proposed": true
 		},
 		{
 			"name": "NotebookCell",
@@ -8628,7 +8642,8 @@
 					},
 					"optional": true
 				}
-			]
+			],
+			"proposed": true
 		},
 		{
 			"name": "NotebookCellArrayChange",
@@ -8658,7 +8673,8 @@
 					},
 					"optional": true
 				}
-			]
+			],
+			"proposed": true
 		},
 		{
 			"name": "NotebookCellTextDocumentFilter",
@@ -9144,7 +9160,8 @@
 					},
 					"optional": true
 				}
-			]
+			],
+			"proposed": true
 		},
 		{
 			"name": "WorkspaceEditClientCapabilities",
@@ -10766,7 +10783,8 @@
 						"name": "RelatedUnchangedDocumentDiagnosticReport"
 					}
 				]
-			}
+			},
+			"proposed": true
 		},
 		{
 			"name": "ProgressToken",
@@ -10811,6 +10829,26 @@
 						}
 					]
 				}
+			}
+		},
+		{
+			"name": "FoldingRangeKind",
+			"type": {
+				"kind": "or",
+				"items": [
+					{
+						"kind": "stringLiteral",
+						"value": "comment"
+					},
+					{
+						"kind": "stringLiteral",
+						"value": "imports"
+					},
+					{
+						"kind": "stringLiteral",
+						"value": "region"
+					}
+				]
 			}
 		},
 		{
@@ -10944,6 +10982,54 @@
 			"type": {
 				"kind": "base",
 				"name": "string"
+			}
+		},
+		{
+			"name": "UniquenessLevel",
+			"type": {
+				"kind": "or",
+				"items": [
+					{
+						"kind": "stringLiteral",
+						"value": "document"
+					},
+					{
+						"kind": "stringLiteral",
+						"value": "project"
+					},
+					{
+						"kind": "stringLiteral",
+						"value": "group"
+					},
+					{
+						"kind": "stringLiteral",
+						"value": "scheme"
+					},
+					{
+						"kind": "stringLiteral",
+						"value": "global"
+					}
+				]
+			}
+		},
+		{
+			"name": "MonikerKind",
+			"type": {
+				"kind": "or",
+				"items": [
+					{
+						"kind": "stringLiteral",
+						"value": "import"
+					},
+					{
+						"kind": "stringLiteral",
+						"value": "export"
+					},
+					{
+						"kind": "stringLiteral",
+						"value": "local"
+					}
+				]
 			}
 		},
 		{
@@ -11312,7 +11398,8 @@
 						"name": "WorkspaceUnchangedDocumentDiagnosticReport"
 					}
 				]
-			}
+			},
+			"proposed": true
 		},
 		{
 			"name": "DocumentFilter",
@@ -11590,7 +11677,8 @@
 						"value": 2
 					}
 				]
-			}
+			},
+			"proposed": true
 		},
 		{
 			"name": "NotebookDocumentFilter",

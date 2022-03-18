@@ -120,19 +120,21 @@ export type DocumentDiagnosticParams =  WorkDoneProgressParams & PartialResultPa
  *
  * @since 3.17.0 - proposed state
  */
-export enum DocumentDiagnosticReportKind {
+export namespace DocumentDiagnosticReportKind {
 	/**
 	 * A diagnostic report with a full
 	 * set of problems.
 	 */
-	full = 'full',
+	export const full = 'full';
 
 	/**
 	 * A report indicating that the last
 	 * returned report is still accurate.
 	 */
-	unChanged = 'unChanged'
+	export const unChanged = 'unChanged';
 }
+
+export type DocumentDiagnosticReportKind = 'full' | 'unChanged';
 
 /**
  * A diagnostic report with a full set of problems.
@@ -143,7 +145,7 @@ export type FullDocumentDiagnosticReport = {
 	/**
 	 * A full document diagnostic report.
 	 */
-	kind: DocumentDiagnosticReportKind.full;
+	kind: typeof DocumentDiagnosticReportKind.full;
 
 	/**
 	 * An optional result id. If provided it will
@@ -174,7 +176,7 @@ export type RelatedFullDocumentDiagnosticReport = FullDocumentDiagnosticReport &
 	 * @since 3.17.0 - proposed state
 	 */
 	relatedDocuments?: {
-		[uri: string /** DocumentUri */]: FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport;
+		[uri: DocumentUri]: FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport;
 	};
 };
 
@@ -191,7 +193,7 @@ export type UnchangedDocumentDiagnosticReport = {
 	 * only return `unchanged` if result ids are
 	 * provided.
 	 */
-	kind: DocumentDiagnosticReportKind.unChanged;
+	kind: typeof DocumentDiagnosticReportKind.unChanged;
 
 	/**
 	 * A result id which will be sent on the next
@@ -216,7 +218,7 @@ export type RelatedUnchangedDocumentDiagnosticReport = UnchangedDocumentDiagnost
 	 * @since 3.17.0 - proposed state
 	 */
 	relatedDocuments?: {
-		[uri: string /** DocumentUri */]: FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport;
+		[uri: DocumentUri ]: FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport;
 	};
 };
 
@@ -238,7 +240,7 @@ export type DocumentDiagnosticReport = RelatedFullDocumentDiagnosticReport | Rel
  */
 export type DocumentDiagnosticReportPartialResult = {
 	relatedDocuments: {
-		[uri: string /** DocumentUri */]: FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport;
+		[uri: DocumentUri]: FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport;
 	};
 };
 

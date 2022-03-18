@@ -109,6 +109,12 @@ export type Request = {
 	 * support dynamic registration.
 	 */
 	registrationOptions?: Type;
+
+	/**
+	 * Wether this is a proposed feature. If omitted
+	 * the feature is final.
+	 */
+	proposed?: boolean;
 };
 
 /**
@@ -130,6 +136,12 @@ export type Notification = {
 	 * support dynamic registration.
 	 */
 	registrationOptions?: Type;
+
+	/**
+	 * Wether this is a proposed feature. If omitted
+	 * the feature is final.
+	 */
+	proposed?: boolean;
 };
 
 /**
@@ -173,6 +185,12 @@ export type Structure = {
 	documentation?: string;
 
 	/**
+	 * Wether this is a proposed feature. If omitted
+	 * the feature is final.
+	 */
+	proposed?: boolean;
+
+	/**
 	 * Structures extended from
 	 */
 	extends?: Type[];
@@ -199,6 +217,12 @@ export type StructureLiteral = {
 	documentation?: string;
 
 	/**
+	 * Wether this is a proposed feature. If omitted
+	 * the feature is final.
+	 */
+	proposed?: boolean;
+
+	/**
 	 * The Properties
 	 */
 	properties: Property[];
@@ -218,6 +242,12 @@ export type TypeAlias = {
 	 * The aliased type
 	 */
 	type: Type;
+
+	/**
+	 * Wether this is a proposed feature. If omitted
+	 * the feature is final.
+	 */
+	proposed?: boolean;
 };
 
 /**
