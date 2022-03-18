@@ -102,6 +102,7 @@ async function main(): Promise<number> {
 	await visitor.visitProgram();
 	await visitor.endVisitProgram();
 
+	console.log(JSON.stringify(visitor.getMetaModel(), undefined, '\t'));
 	return 0;
 }
 

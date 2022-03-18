@@ -225,14 +225,9 @@ export type TypeAlias = {
  */
 export type MetaModel = {
 	/**
-	 * The type aliases
+	 * The requests.
 	 */
-	typeAliases: TypeAlias[];
-
-	/**
-	 * The structures
-	 */
-	structures: Structure[];
+	requests: Request[];
 
 	/**
 	 * The notifications.
@@ -240,7 +235,12 @@ export type MetaModel = {
 	notifications: Notification[];
 
 	/**
-	 * The requests.
+	 * The structures
 	 */
-	requests: Request[];
+	structures: Structure[];
+
+	/**
+	 * The type aliases
+	 */
+	typeAliases: TypeAlias[];
 };

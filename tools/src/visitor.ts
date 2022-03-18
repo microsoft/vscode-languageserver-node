@@ -7,10 +7,10 @@ import * as ts from 'typescript';
 
 import { Symbols } from './typescripts';
 
-import { Type as JsonType, Request as JsonRequest, Notification as JsonNotification, Structure, Property, StructureLiteral, BaseTypes } from './metamodel';
+import { Type as JsonType, Request as JsonRequest, Notification as JsonNotification, Structure, Property, StructureLiteral, BaseTypes, TypeAlias, MetaModel } from './metamodel';
 
 const LSPBaseTypes = new Set(['Uri', 'DocumentUri', 'integer', 'uinteger', 'decimal']);
-type BaseTypeInfoKind = 'string' | 'boolean' | 'Uri' | 'DocumentUri' | 'integer' | 'uinteger' | 'decimal' | 'void' | 'never' | 'unknown' | 'null' | 'undefined' | 'any';
+type BaseTypeInfoKind = 'string' | 'boolean' | 'Uri' | 'DocumentUri' | 'integer' | 'uinteger' | 'decimal' | 'void' | 'never' | 'unknown' | 'null' | 'undefined' | 'any' | 'object';
 
 export type TypeInfoKind = 'base' | 'reference' | 'array' | 'map' | 'intersection' | 'union' | 'tuple' | 'literal' | 'stringLiteral' | 'numberLiteral' | 'booleanLiteral';
 
@@ -73,6 +73,9 @@ namespace TypeInfo {
 				if (baseSet.has(info.name)) {
 					return { kind: 'base', name: info.name as BaseTypes };
 				}
+				if (info.name === 'object') {
+					return { kind: 'reference', name: 'LSPAny' };
+				}
 				break;
 			case 'reference':
 				return { kind: 'reference', name: info.name };
@@ -130,7 +133,8 @@ export default class Visitor {
 	private readonly requests: JsonRequest[];
 	private readonly notifications: JsonNotification[];
 	private readonly structures: Structure[];
-	private readonly structureQueue: Map<string, ts.Symbol>;
+	private readonly typeAliases: TypeAlias[];
+	private readonly symbolQueue: Map<string, ts.Symbol>;
 	private readonly processedStructures: Map<string, ts.Symbol>;
 
 	constructor(program: ts.Program) {
@@ -140,7 +144,8 @@ export default class Visitor {
 		this.requests = [];
 		this.notifications = [];
 		this.structures = [];
-		this.structureQueue = new Map();
+		this.typeAliases = [];
+		this.symbolQueue = new Map();
 		this.processedStructures = new Map();
 	}
 
@@ -151,24 +156,25 @@ export default class Visitor {
 	}
 
 	public async endVisitProgram(): Promise<void> {
-		while (this.structureQueue.size > 0) {
-			const toProcess = new Map(this.structureQueue);
+		while (this.symbolQueue.size > 0) {
+			const toProcess = new Map(this.symbolQueue);
 			for (const entry of toProcess) {
-				const structure = this.createStructure(entry[0], entry[1]);
-				if (structure === undefined) {
-					console.error(`Can't create structure for type ${entry[0]}`);
+				const element = this.processSymbol(entry[0], entry[1]);
+				if (element === undefined) {
+					throw new Error(`Can't create structure for type ${entry[0]}`);
+				} else if ((element as TypeAlias).type !== undefined) {
+					this.typeAliases.push(element as TypeAlias);
 				} else {
-					this.structures.push(structure);
+					this.structures.push(element as Structure);
 				}
-				this.structureQueue.delete(entry[0]);
+				this.symbolQueue.delete(entry[0]);
 				this.processedStructures.set(entry[0], entry[1]);
 			}
 		}
-		console.log(JSON.stringify({
-			requests: this.requests,
-			notifications: this.notifications,
-			structures: this.structures
-		}, undefined, '\t'));
+	}
+
+	public getMetaModel(): MetaModel {
+		return { requests: this.requests, notifications: this.notifications, structures: this.structures, typeAliases: this.typeAliases };
 	}
 
 	protected visit(node: ts.Node): void {
@@ -303,13 +309,13 @@ export default class Visitor {
 		if (name !== symbol.getName()) {
 			throw new Error(`Different symbol names [${name}, ${symbol.getName()}]`);
 		}
-		const existing = this.structureQueue.get(name) ?? this.processedStructures.get(name);
+		const existing = this.symbolQueue.get(name) ?? this.processedStructures.get(name);
 		if (existing === undefined) {
 			const aliased = Symbols.isAliasSymbol(symbol) ? this.typeChecker.getAliasedSymbol(symbol) : undefined;
 			if (aliased !== undefined && aliased.getName() !== symbol.getName()) {
 				throw new Error(`The symbol ${symbol.getName()} has a different name than the aliased symbol ${aliased.getName()}`);
 			}
-			this.structureQueue.set(name, aliased ?? symbol);
+			this.symbolQueue.set(name, aliased ?? symbol);
 		} else {
 			const left = Symbols.isAliasSymbol(symbol) ? this.typeChecker.getAliasedSymbol(symbol) : symbol;
 			const right = Symbols.isAliasSymbol(existing) ? this.typeChecker.getAliasedSymbol(existing) : existing;
@@ -337,7 +343,7 @@ export default class Visitor {
 		const method = namespace.exports?.get('method' as ts.__String);
 		let text: string;
 		if (method !== undefined) {
-			const declaration = this.getDeclaration(method);
+			const declaration = this.getFirstDeclaration(method);
 			if (declaration === undefined) {
 				return undefined;
 			}
@@ -350,7 +356,7 @@ export default class Visitor {
 			}
 			text = initializer.getText();
 		} else {
-			const declaration = this.getDeclaration(type);
+			const declaration = this.getFirstDeclaration(type);
 			if (declaration === undefined) {
 				return undefined;
 			}
@@ -371,7 +377,7 @@ export default class Visitor {
 	}
 
 	private getRequestTypes(symbol: ts.Symbol): RequestTypes | undefined {
-		const declaration = this.getDeclaration(symbol);
+		const declaration = this.getFirstDeclaration(symbol);
 		if (declaration === undefined) {
 			return undefined;
 		}
@@ -406,7 +412,7 @@ export default class Visitor {
 	}
 
 	private getNotificationTypes(symbol: ts.Symbol): NotificationTypes | undefined {
-		const declaration = this.getDeclaration(symbol);
+		const declaration = this.getFirstDeclaration(symbol);
 		if (declaration === undefined) {
 			return undefined;
 		}
@@ -510,7 +516,7 @@ export default class Visitor {
 					if (!Symbols.isProperty(member)) {
 						return;
 					}
-					const declaration = this.getDeclaration(member);
+					const declaration = this.getDeclaration(member, ts.SyntaxKind.PropertySignature);
 					if (declaration === undefined || !ts.isPropertySignature(declaration) || declaration.type === undefined) {
 						throw new Error(`Can't parse property ${member.getName()} of structure ${symbol.getName()}`);
 					}
@@ -556,24 +562,23 @@ export default class Visitor {
 				return { kind: 'base', name: 'any' };
 			case ts.SyntaxKind.StringKeyword:
 				return  { kind: 'base', name: 'string' };
+			case ts.SyntaxKind.NumberKeyword:
+				return { kind: 'base', name: 'integer' };
 			case ts.SyntaxKind.BooleanKeyword:
 				return { kind: 'base', name: 'boolean' };
 			case ts.SyntaxKind.StringLiteral:
 				return { kind: 'stringLiteral', value: this.removeQuotes(node.getText()) };
 			case ts.SyntaxKind.NumericLiteral:
 				return { kind: 'numberLiteral', value: Number.parseInt(node.getText()) };
+			case ts.SyntaxKind.ObjectKeyword:
+				return { kind: 'base', name: 'object' };
 		}
 		return undefined;
 	}
 
-	private getDeclaration(symbol: ts.Symbol): ts.Node | undefined {
-		const declarations = symbol.getDeclarations();
-		return declarations === undefined || declarations.length !== 1 ? undefined : declarations[0];
-	}
-
-	private createStructure(name: string, symbol: ts.Symbol): Structure | undefined {
-		const result: Structure = { name: name, properties: [] };
+	private processSymbol(name: string, symbol: ts.Symbol): Structure | TypeAlias | undefined {
 		if (Symbols.isInterface(symbol)) {
+			const result: Structure = { name: name, properties: [] };
 			const baseTypes = this.symbols.computeBaseSymbolsForInterface(symbol);
 			if (baseTypes !== undefined) {
 				const extend: string[] = [];
@@ -593,21 +598,46 @@ export default class Visitor {
 					result.mixins = mixin;
 				}
 			}
+			this.fillProperties(result, symbol);
+			return result;
+		} else if (Symbols.isTypeAlias(symbol)) {
+			const declaration = this.getDeclaration(symbol, ts.SyntaxKind.TypeAliasDeclaration);
+			if (declaration === undefined ||!ts.isTypeAliasDeclaration(declaration)) {
+				throw new Error (`No declaration found for type alias ${symbol.getName() }`);
+			}
+			if (ts.isTypeLiteralNode(declaration.type)) {
+				// We have a single type literal node. So treat it as a structure
+				const result: Structure = { name: name, properties: [] };
+				const type = this.typeChecker.getTypeAtLocation(declaration.type);
+				this.fillProperties(result, type.symbol);
+				return result;
+			} else {
+				const target = this.getTypeInfo(declaration.type);
+				if (target === undefined) {
+					throw new Error(`Can't resolve target type for type alias ${symbol.getName()}`);
+				}
+				this.queueTypeInfo(target);
+				return { name: name, type: TypeInfo.asJsonType(target) };
+			}
+		} else {
+			const result: Structure = { name: name, properties: [] };
+			this.fillProperties(result, symbol);
+			return result;
 		}
-		if (Symbols.isTypeAlias(symbol)) {
-			this.typeChecker.
-		}
+	}
+
+	private fillProperties(result: Structure, symbol: ts.Symbol) {
 		// Using the type here to navigate the properties will result in folding
 		// all properties since the type contains all inherited properties. So we go
 		// over the symbol to make things work.
 		if (symbol.members === undefined) {
-			return result;
+			return;
 		}
 		symbol.members.forEach((member) => {
 			if (!Symbols.isProperty(member)) {
 				return;
 			}
-			const declaration = this.getDeclaration(member);
+			const declaration = this.getDeclaration(member, ts.SyntaxKind.PropertySignature);
 			if (declaration === undefined || !ts.isPropertySignature(declaration) || declaration.type === undefined) {
 				throw new Error(`Can't parse property ${member.getName()} of structure ${symbol.getName()}`);
 			}
@@ -622,7 +652,24 @@ export default class Visitor {
 			result.properties.push(property);
 			this.queueTypeInfo(typeInfo);
 		});
-		return result;
+	}
+
+	private getFirstDeclaration(symbol: ts.Symbol): ts.Node | undefined {
+		const declarations = symbol.getDeclarations();
+		return declarations !== undefined && declarations.length > 0 ? declarations[0] : undefined;
+	}
+
+	private getDeclaration(symbol: ts.Symbol, kind: ts.SyntaxKind): ts.Node | undefined {
+		const declarations = symbol.getDeclarations();
+		if (declarations === undefined) {
+			return undefined;
+		}
+		for (const declaration of declarations) {
+			if (declaration.kind === kind) {
+				return declaration;
+			}
+		}
+		return undefined;
 	}
 
 	private removeQuotes(text: string): string {
