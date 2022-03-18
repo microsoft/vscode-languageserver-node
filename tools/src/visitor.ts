@@ -7,7 +7,7 @@ import * as ts from 'typescript';
 
 import { Symbols } from './typescripts';
 
-import { Type as JsonType, Request as JsonRequest, Notification as JsonNotification, Structure, Property, StructureLiteral, BaseTypes, TypeAlias, MetaModel } from './metamodel';
+import { Type as JsonType, Request as JsonRequest, Notification as JsonNotification, Structure, Property, StructureLiteral, BaseTypes, TypeAlias, MetaModel } from './metaModel';
 
 const LSPBaseTypes = new Set(['Uri', 'DocumentUri', 'integer', 'uinteger', 'decimal']);
 type BaseTypeInfoKind = 'string' | 'boolean' | 'Uri' | 'DocumentUri' | 'integer' | 'uinteger' | 'decimal' | 'void' | 'never' | 'unknown' | 'null' | 'undefined' | 'any' | 'object';
@@ -446,8 +446,18 @@ export default class Visitor {
 		return undefined;
 	}
 
-	private getTypeInfo(typeNode: ts.TypeNode): TypeInfo | undefined {
-		if (ts.isTypeReferenceNode(typeNode)) {
+	private getTypeInfo(typeNode: ts.TypeNode | ts.Identifier): TypeInfo | undefined {
+		if (ts.isIdentifier(typeNode)) {
+			const typeName = typeNode.text;
+			if (LSPBaseTypes.has(typeName)) {
+				return { kind: 'base', name: typeName as BaseTypeInfoKind };
+			}
+			const symbol = this.typeChecker.getSymbolAtLocation(typeNode);
+			if (symbol === undefined) {
+				return undefined;
+			}
+			return { kind: 'reference', name: typeName, symbol };
+		} else if (ts.isTypeReferenceNode(typeNode)) {
 			const typeName = ts.isIdentifier(typeNode.typeName) ? typeNode.typeName.text : typeNode.typeName.right.text;
 			if (LSPBaseTypes.has(typeName)) {
 				return { kind: 'base', name: typeName as BaseTypeInfoKind };
@@ -576,26 +586,35 @@ export default class Visitor {
 		return undefined;
 	}
 
+	private static readonly Mixins: Set<string> = new Set(['WorkDoneProgressParams', 'PartialResultParams', 'StaticRegistrationOptions', 'WorkDoneProgressOptions']);
 	private processSymbol(name: string, symbol: ts.Symbol): Structure | TypeAlias | undefined {
 		if (Symbols.isInterface(symbol)) {
 			const result: Structure = { name: name, properties: [] };
-			const baseTypes = this.symbols.computeBaseSymbolsForInterface(symbol);
-			if (baseTypes !== undefined) {
-				const extend: string[] = [];
-				const mixin: string[] = [];
-				for (const base of baseTypes) {
-					const name = base.getName();
-					if (base.getName() === 'TextDocumentPositionParams') {
-						extend.push(name);
-					} else {
-						mixin.push(name);
+			const declaration = this.getDeclaration(symbol, ts.SyntaxKind.InterfaceDeclaration);
+			if (declaration !== undefined && ts.isInterfaceDeclaration(declaration) && declaration.heritageClauses !== undefined) {
+				const mixins: JsonType[] = [];
+				const extend: JsonType[] = [];
+				for (const clause of declaration.heritageClauses) {
+					for (const type of clause.types) {
+						if (ts.isIdentifier(type.expression)) {
+							const typeInfo = this.getTypeInfo(type.expression);
+							if (typeInfo === undefined || typeInfo.kind !== 'reference') {
+								throw new Error(`Can't create type info for extends clause ${type.expression.getText()}`);
+							}
+							if (Visitor.Mixins.has(typeInfo.name)) {
+								mixins.push(TypeInfo.asJsonType(typeInfo));
+							} else {
+								extend.push(TypeInfo.asJsonType(typeInfo));
+							}
+							this.queueTypeInfo(typeInfo);
+						}
 					}
 				}
 				if (extend.length > 0) {
 					result.extends = extend;
 				}
-				if (mixin.length > 0) {
-					result.mixins = mixin;
+				if (mixins.length > 0) {
+					result.mixins = mixins;
 				}
 			}
 			this.fillProperties(result, symbol);
@@ -608,17 +627,44 @@ export default class Visitor {
 			if (ts.isTypeLiteralNode(declaration.type)) {
 				// We have a single type literal node. So treat it as a structure
 				const result: Structure = { name: name, properties: [] };
-				const type = this.typeChecker.getTypeAtLocation(declaration.type);
-				this.fillProperties(result, type.symbol);
+				this.fillProperties(result, this.typeChecker.getTypeAtLocation(declaration.type).symbol);
 				return result;
-			} else {
-				const target = this.getTypeInfo(declaration.type);
-				if (target === undefined) {
-					throw new Error(`Can't resolve target type for type alias ${symbol.getName()}`);
+			} else if (ts.isIntersectionTypeNode(declaration.type)) {
+				const split = this.splitIntersectionType(declaration.type);
+				if (split.rest.length === 0) {
+					const result: Structure = { name: name, properties: [] };
+					const mixins: JsonType[] = [];
+					const extend: JsonType[] = [];
+					for (const reference of split.references) {
+						const typeInfo = this.getTypeInfo(reference);
+						if (typeInfo === undefined || typeInfo.kind !== 'reference') {
+							throw new Error(`Can't create type info for type reference ${reference.getText()}`);
+						}
+						if (Visitor.Mixins.has(typeInfo.name)) {
+							mixins.push(TypeInfo.asJsonType(typeInfo));
+						} else {
+							extend.push(TypeInfo.asJsonType(typeInfo));
+						}
+						this.queueTypeInfo(typeInfo);
+					}
+					if (extend.length > 0) {
+						result.extends = extend;
+					}
+					if (mixins.length > 0) {
+						result.mixins = mixins;
+					}
+					if (split.literal !== undefined) {
+						this.fillProperties(result, this.typeChecker.getTypeAtLocation(split.literal).symbol);
+					}
+					return result;
 				}
-				this.queueTypeInfo(target);
-				return { name: name, type: TypeInfo.asJsonType(target) };
 			}
+			const target = this.getTypeInfo(declaration.type);
+			if (target === undefined) {
+				throw new Error(`Can't resolve target type for type alias ${symbol.getName()}`);
+			}
+			this.queueTypeInfo(target);
+			return { name: name, type: TypeInfo.asJsonType(target) };
 		} else {
 			const result: Structure = { name: name, properties: [] };
 			this.fillProperties(result, symbol);
@@ -652,6 +698,26 @@ export default class Visitor {
 			result.properties.push(property);
 			this.queueTypeInfo(typeInfo);
 		});
+	}
+
+	private splitIntersectionType(node: ts.IntersectionTypeNode): { literal: ts.TypeLiteralNode | undefined; references: ts.TypeReferenceNode[]; rest: ts.TypeNode[] } {
+		let literal: ts.TypeLiteralNode | undefined;
+		const rest: ts.TypeNode[] = [];
+		const references: ts.TypeReferenceNode[] = [];
+		for (const element of node.types) {
+			if (ts.isTypeLiteralNode(element)) {
+				if (literal === undefined) {
+					literal = element;
+				} else {
+					rest.push(element);
+				}
+			} else if (ts.isTypeReferenceNode(element)) {
+				references.push(element);
+			} else {
+				rest.push(element);
+			}
+		}
+		return { literal, references, rest };
 	}
 
 	private getFirstDeclaration(symbol: ts.Symbol): ts.Node | undefined {

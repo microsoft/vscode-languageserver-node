@@ -175,12 +175,12 @@ export type Structure = {
 	/**
 	 * Structures extended from
 	 */
-	extends?: string[];
+	extends?: Type[];
 
 	/**
 	 * Structures to mix in.
 	 */
-	mixins?: string[];
+	mixins?: Type[];
 
 	/**
 	 * The Properties
