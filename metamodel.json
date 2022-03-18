@@ -3,873 +3,1824 @@
 		{
 			"method": "textDocument/implementation",
 			"result": {
-				"or": [
-					"Definition",
+				"kind": "or",
+				"items": [
 					{
-						"array": "DefinitionLink"
-					},
-					"null"
-				]
-			},
-			"params": "ImplementationParams",
-			"partialResult": {
-				"or": [
-					{
-						"array": "Location"
+						"kind": "reference",
+						"name": "Definition"
 					},
 					{
-						"array": "DefinitionLink"
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "DefinitionLink"
+						}
+					},
+					{
+						"kind": "base",
+						"name": "null"
 					}
 				]
 			},
-			"registrationOptions": "ImplementationRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "ImplementationParams"
+			},
+			"partialResult": {
+				"kind": "or",
+				"items": [
+					{
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "Location"
+						}
+					},
+					{
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "DefinitionLink"
+						}
+					}
+				]
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "ImplementationRegistrationOptions"
+			}
 		},
 		{
 			"method": "textDocument/typeDefinition",
 			"result": {
-				"or": [
-					"Definition",
+				"kind": "or",
+				"items": [
 					{
-						"array": "DefinitionLink"
-					},
-					"null"
-				]
-			},
-			"params": "TypeDefinitionParams",
-			"partialResult": {
-				"or": [
-					{
-						"array": "Location"
+						"kind": "reference",
+						"name": "Definition"
 					},
 					{
-						"array": "DefinitionLink"
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "DefinitionLink"
+						}
+					},
+					{
+						"kind": "base",
+						"name": "null"
 					}
 				]
 			},
-			"registrationOptions": "TypeDefinitionRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "TypeDefinitionParams"
+			},
+			"partialResult": {
+				"kind": "or",
+				"items": [
+					{
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "Location"
+						}
+					},
+					{
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "DefinitionLink"
+						}
+					}
+				]
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "TypeDefinitionRegistrationOptions"
+			}
 		},
 		{
 			"method": "workspace/workspaceFolders",
 			"result": {
-				"or": [
+				"kind": "or",
+				"items": [
 					{
-						"array": "WorkspaceFolder"
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "WorkspaceFolder"
+						}
 					},
-					"null"
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			}
 		},
 		{
 			"method": "workspace/configuration",
 			"result": {
-				"array": "LSPAny"
+				"kind": "array",
+				"element": {
+					"kind": "reference",
+					"name": "LSPAny"
+				}
 			},
 			"params": {
-				"and": [
-					"ConfigurationParams",
-					"PartialResultParams"
+				"kind": "and",
+				"items": [
+					{
+						"kind": "reference",
+						"name": "ConfigurationParams"
+					},
+					{
+						"kind": "reference",
+						"name": "PartialResultParams"
+					}
 				]
 			}
 		},
 		{
 			"method": "textDocument/documentColor",
 			"result": {
-				"array": "ColorInformation"
+				"kind": "array",
+				"element": {
+					"kind": "reference",
+					"name": "ColorInformation"
+				}
 			},
-			"params": "DocumentColorParams",
+			"params": {
+				"kind": "reference",
+				"name": "DocumentColorParams"
+			},
 			"partialResult": {
-				"array": "ColorInformation"
+				"kind": "array",
+				"element": {
+					"kind": "reference",
+					"name": "ColorInformation"
+				}
 			},
-			"registrationOptions": "DocumentColorRegistrationOptions"
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "DocumentColorRegistrationOptions"
+			}
 		},
 		{
 			"method": "textDocument/colorPresentation",
 			"result": {
-				"array": "ColorPresentation"
+				"kind": "array",
+				"element": {
+					"kind": "reference",
+					"name": "ColorPresentation"
+				}
 			},
-			"params": "ColorPresentationParams",
+			"params": {
+				"kind": "reference",
+				"name": "ColorPresentationParams"
+			},
 			"partialResult": {
-				"array": "ColorPresentation"
+				"kind": "array",
+				"element": {
+					"kind": "reference",
+					"name": "ColorPresentation"
+				}
 			},
 			"registrationOptions": {
-				"and": [
-					"WorkDoneProgressOptions",
-					"TextDocumentRegistrationOptions"
+				"kind": "and",
+				"items": [
+					{
+						"kind": "reference",
+						"name": "WorkDoneProgressOptions"
+					},
+					{
+						"kind": "reference",
+						"name": "TextDocumentRegistrationOptions"
+					}
 				]
 			}
 		},
 		{
 			"method": "textDocument/foldingRange",
 			"result": {
-				"or": [
+				"kind": "or",
+				"items": [
 					{
-						"array": "FoldingRange"
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "FoldingRange"
+						}
 					},
-					"null"
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "FoldingRangeParams",
-			"partialResult": {
-				"array": "FoldingRange"
+			"params": {
+				"kind": "reference",
+				"name": "FoldingRangeParams"
 			},
-			"registrationOptions": "FoldingRangeRegistrationOptions"
+			"partialResult": {
+				"kind": "array",
+				"element": {
+					"kind": "reference",
+					"name": "FoldingRange"
+				}
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "FoldingRangeRegistrationOptions"
+			}
 		},
 		{
 			"method": "textDocument/declaration",
 			"result": {
-				"or": [
-					"Declaration",
+				"kind": "or",
+				"items": [
 					{
-						"array": "DeclarationLink"
-					},
-					"null"
-				]
-			},
-			"params": "DeclarationParams",
-			"partialResult": {
-				"or": [
-					{
-						"array": "Location"
+						"kind": "reference",
+						"name": "Declaration"
 					},
 					{
-						"array": "DeclarationLink"
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "DeclarationLink"
+						}
+					},
+					{
+						"kind": "base",
+						"name": "null"
 					}
 				]
 			},
-			"registrationOptions": "DeclarationRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "DeclarationParams"
+			},
+			"partialResult": {
+				"kind": "or",
+				"items": [
+					{
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "Location"
+						}
+					},
+					{
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "DeclarationLink"
+						}
+					}
+				]
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "DeclarationRegistrationOptions"
+			}
 		},
 		{
 			"method": "textDocument/selectionRange",
 			"result": {
-				"or": [
+				"kind": "or",
+				"items": [
 					{
-						"array": "SelectionRange"
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "SelectionRange"
+						}
 					},
-					"null"
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "SelectionRangeParams",
-			"partialResult": {
-				"array": "SelectionRange"
+			"params": {
+				"kind": "reference",
+				"name": "SelectionRangeParams"
 			},
-			"registrationOptions": "SelectionRangeRegistrationOptions"
+			"partialResult": {
+				"kind": "array",
+				"element": {
+					"kind": "reference",
+					"name": "SelectionRange"
+				}
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "SelectionRangeRegistrationOptions"
+			}
 		},
 		{
 			"method": "window/workDoneProgress/create",
-			"result": "null",
-			"params": "WorkDoneProgressCreateParams"
+			"result": {
+				"kind": "base",
+				"name": "null"
+			},
+			"params": {
+				"kind": "reference",
+				"name": "WorkDoneProgressCreateParams"
+			}
 		},
 		{
 			"method": "textDocument/prepareCallHierarchy",
 			"result": {
-				"or": [
+				"kind": "or",
+				"items": [
 					{
-						"array": "CallHierarchyItem"
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "CallHierarchyItem"
+						}
 					},
-					"null"
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "CallHierarchyPrepareParams",
-			"registrationOptions": "CallHierarchyRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "CallHierarchyPrepareParams"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "CallHierarchyRegistrationOptions"
+			}
 		},
 		{
 			"method": "callHierarchy/incomingCalls",
 			"result": {
-				"or": [
+				"kind": "or",
+				"items": [
 					{
-						"array": "CallHierarchyIncomingCall"
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "CallHierarchyIncomingCall"
+						}
 					},
-					"null"
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "CallHierarchyIncomingCallsParams",
+			"params": {
+				"kind": "reference",
+				"name": "CallHierarchyIncomingCallsParams"
+			},
 			"partialResult": {
-				"array": "CallHierarchyIncomingCall"
+				"kind": "array",
+				"element": {
+					"kind": "reference",
+					"name": "CallHierarchyIncomingCall"
+				}
 			}
 		},
 		{
 			"method": "callHierarchy/outgoingCalls",
 			"result": {
-				"or": [
+				"kind": "or",
+				"items": [
 					{
-						"array": "CallHierarchyOutgoingCall"
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "CallHierarchyOutgoingCall"
+						}
 					},
-					"null"
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "CallHierarchyOutgoingCallsParams",
+			"params": {
+				"kind": "reference",
+				"name": "CallHierarchyOutgoingCallsParams"
+			},
 			"partialResult": {
-				"array": "CallHierarchyOutgoingCall"
+				"kind": "array",
+				"element": {
+					"kind": "reference",
+					"name": "CallHierarchyOutgoingCall"
+				}
 			}
 		},
 		{
 			"method": "textDocument/semanticTokens/full",
 			"result": {
-				"or": [
-					"SemanticTokens",
-					"null"
+				"kind": "or",
+				"items": [
+					{
+						"kind": "reference",
+						"name": "SemanticTokens"
+					},
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "SemanticTokensParams",
-			"partialResult": "SemanticTokensPartialResult",
-			"registrationOptions": "SemanticTokensRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "SemanticTokensParams"
+			},
+			"partialResult": {
+				"kind": "reference",
+				"name": "SemanticTokensPartialResult"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "SemanticTokensRegistrationOptions"
+			}
 		},
 		{
 			"method": "textDocument/semanticTokens/full/delta",
 			"result": {
-				"or": [
-					"SemanticTokens",
-					"SemanticTokensDelta",
-					"null"
+				"kind": "or",
+				"items": [
+					{
+						"kind": "reference",
+						"name": "SemanticTokens"
+					},
+					{
+						"kind": "reference",
+						"name": "SemanticTokensDelta"
+					},
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "SemanticTokensDeltaParams",
+			"params": {
+				"kind": "reference",
+				"name": "SemanticTokensDeltaParams"
+			},
 			"partialResult": {
-				"or": [
-					"SemanticTokensPartialResult",
-					"SemanticTokensDeltaPartialResult"
+				"kind": "or",
+				"items": [
+					{
+						"kind": "reference",
+						"name": "SemanticTokensPartialResult"
+					},
+					{
+						"kind": "reference",
+						"name": "SemanticTokensDeltaPartialResult"
+					}
 				]
 			},
-			"registrationOptions": "SemanticTokensRegistrationOptions"
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "SemanticTokensRegistrationOptions"
+			}
 		},
 		{
 			"method": "textDocument/semanticTokens/range",
 			"result": {
-				"or": [
-					"SemanticTokens",
-					"null"
+				"kind": "or",
+				"items": [
+					{
+						"kind": "reference",
+						"name": "SemanticTokens"
+					},
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "SemanticTokensRangeParams",
-			"partialResult": "SemanticTokensPartialResult"
+			"params": {
+				"kind": "reference",
+				"name": "SemanticTokensRangeParams"
+			},
+			"partialResult": {
+				"kind": "reference",
+				"name": "SemanticTokensPartialResult"
+			}
 		},
 		{
 			"method": "workspace/semanticTokens/refresh",
-			"result": "null"
+			"result": {
+				"kind": "base",
+				"name": "null"
+			}
 		},
 		{
 			"method": "window/showDocument",
-			"result": "ShowDocumentResult",
-			"params": "ShowDocumentParams"
+			"result": {
+				"kind": "reference",
+				"name": "ShowDocumentResult"
+			},
+			"params": {
+				"kind": "reference",
+				"name": "ShowDocumentParams"
+			}
 		},
 		{
 			"method": "textDocument/linkedEditingRange",
 			"result": {
-				"or": [
-					"LinkedEditingRanges",
-					"null"
+				"kind": "or",
+				"items": [
+					{
+						"kind": "reference",
+						"name": "LinkedEditingRanges"
+					},
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "LinkedEditingRangeParams",
-			"registrationOptions": "LinkedEditingRangeRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "LinkedEditingRangeParams"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "LinkedEditingRangeRegistrationOptions"
+			}
 		},
 		{
 			"method": "workspace/willCreateFiles",
 			"result": {
-				"or": [
-					"WorkspaceEdit",
-					"null"
+				"kind": "or",
+				"items": [
+					{
+						"kind": "reference",
+						"name": "WorkspaceEdit"
+					},
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "CreateFilesParams",
-			"registrationOptions": "FileOperationRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "CreateFilesParams"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "FileOperationRegistrationOptions"
+			}
 		},
 		{
 			"method": "workspace/willRenameFiles",
 			"result": {
-				"or": [
-					"WorkspaceEdit",
-					"null"
+				"kind": "or",
+				"items": [
+					{
+						"kind": "reference",
+						"name": "WorkspaceEdit"
+					},
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "RenameFilesParams",
-			"registrationOptions": "FileOperationRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "RenameFilesParams"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "FileOperationRegistrationOptions"
+			}
 		},
 		{
 			"method": "workspace/willDeleteFiles",
 			"result": {
-				"or": [
-					"WorkspaceEdit",
-					"null"
+				"kind": "or",
+				"items": [
+					{
+						"kind": "reference",
+						"name": "WorkspaceEdit"
+					},
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "DeleteFilesParams",
-			"registrationOptions": "FileOperationRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "DeleteFilesParams"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "FileOperationRegistrationOptions"
+			}
 		},
 		{
 			"method": "textDocument/moniker",
 			"result": {
-				"or": [
+				"kind": "or",
+				"items": [
 					{
-						"array": "Moniker"
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "Moniker"
+						}
 					},
-					"null"
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "MonikerParams",
-			"partialResult": {
-				"array": "Moniker"
+			"params": {
+				"kind": "reference",
+				"name": "MonikerParams"
 			},
-			"registrationOptions": "MonikerRegistrationOptions"
+			"partialResult": {
+				"kind": "array",
+				"element": {
+					"kind": "reference",
+					"name": "Moniker"
+				}
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "MonikerRegistrationOptions"
+			}
 		},
 		{
 			"method": "textDocument/prepareTypeHierarchy",
 			"result": {
-				"or": [
+				"kind": "or",
+				"items": [
 					{
-						"array": "TypeHierarchyItem"
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "TypeHierarchyItem"
+						}
 					},
-					"null"
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "TypeHierarchyPrepareParams",
-			"registrationOptions": "TypeHierarchyRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "TypeHierarchyPrepareParams"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "TypeHierarchyRegistrationOptions"
+			}
 		},
 		{
 			"method": "typeHierarchy/supertypes",
 			"result": {
-				"or": [
+				"kind": "or",
+				"items": [
 					{
-						"array": "TypeHierarchyItem"
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "TypeHierarchyItem"
+						}
 					},
-					"null"
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "TypeHierarchySupertypesParams",
+			"params": {
+				"kind": "reference",
+				"name": "TypeHierarchySupertypesParams"
+			},
 			"partialResult": {
-				"array": "TypeHierarchyItem"
+				"kind": "array",
+				"element": {
+					"kind": "reference",
+					"name": "TypeHierarchyItem"
+				}
 			}
 		},
 		{
 			"method": "typeHierarchy/subtypes",
 			"result": {
-				"or": [
+				"kind": "or",
+				"items": [
 					{
-						"array": "TypeHierarchyItem"
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "TypeHierarchyItem"
+						}
 					},
-					"null"
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "TypeHierarchySubtypesParams",
+			"params": {
+				"kind": "reference",
+				"name": "TypeHierarchySubtypesParams"
+			},
 			"partialResult": {
-				"array": "TypeHierarchyItem"
+				"kind": "array",
+				"element": {
+					"kind": "reference",
+					"name": "TypeHierarchyItem"
+				}
 			}
 		},
 		{
 			"method": "textDocument/inlineValue",
 			"result": {
-				"or": [
+				"kind": "or",
+				"items": [
 					{
-						"array": "InlineValue"
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "InlineValue"
+						}
 					},
-					"null"
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "InlineValueParams",
-			"partialResult": {
-				"array": "InlineValue"
+			"params": {
+				"kind": "reference",
+				"name": "InlineValueParams"
 			},
-			"registrationOptions": "InlineValueRegistrationOptions"
+			"partialResult": {
+				"kind": "array",
+				"element": {
+					"kind": "reference",
+					"name": "InlineValue"
+				}
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "InlineValueRegistrationOptions"
+			}
 		},
 		{
 			"method": "workspace/inlineValue/refresh",
-			"result": "null"
+			"result": {
+				"kind": "base",
+				"name": "null"
+			}
 		},
 		{
 			"method": "textDocument/inlayHint",
 			"result": {
-				"or": [
+				"kind": "or",
+				"items": [
 					{
-						"array": "InlayHint"
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "InlayHint"
+						}
 					},
-					"null"
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "InlayHintParams",
-			"partialResult": {
-				"array": "InlayHint"
+			"params": {
+				"kind": "reference",
+				"name": "InlayHintParams"
 			},
-			"registrationOptions": "InlayHintRegistrationOptions"
+			"partialResult": {
+				"kind": "array",
+				"element": {
+					"kind": "reference",
+					"name": "InlayHint"
+				}
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "InlayHintRegistrationOptions"
+			}
 		},
 		{
 			"method": "inlayHint/resolve",
-			"result": "InlayHint",
-			"params": "InlayHint"
+			"result": {
+				"kind": "reference",
+				"name": "InlayHint"
+			},
+			"params": {
+				"kind": "reference",
+				"name": "InlayHint"
+			}
 		},
 		{
 			"method": "workspace/inlayHint/refresh",
-			"result": "null"
+			"result": {
+				"kind": "base",
+				"name": "null"
+			}
 		},
 		{
 			"method": "client/registerCapability",
-			"result": "null",
-			"params": "RegistrationParams"
+			"result": {
+				"kind": "base",
+				"name": "null"
+			},
+			"params": {
+				"kind": "reference",
+				"name": "RegistrationParams"
+			}
 		},
 		{
 			"method": "client/unregisterCapability",
-			"result": "null",
-			"params": "UnregistrationParams"
+			"result": {
+				"kind": "base",
+				"name": "null"
+			},
+			"params": {
+				"kind": "reference",
+				"name": "UnregistrationParams"
+			}
 		},
 		{
 			"method": "initialize",
-			"result": "InitializeResult",
-			"params": "InitializeParams",
-			"errorData": "InitializeError"
+			"result": {
+				"kind": "reference",
+				"name": "InitializeResult"
+			},
+			"params": {
+				"kind": "reference",
+				"name": "InitializeParams"
+			},
+			"errorData": {
+				"kind": "reference",
+				"name": "InitializeError"
+			}
 		},
 		{
 			"method": "shutdown",
-			"result": "null"
+			"result": {
+				"kind": "base",
+				"name": "null"
+			}
 		},
 		{
 			"method": "window/showMessageRequest",
 			"result": {
-				"or": [
-					"MessageActionItem",
-					"null"
+				"kind": "or",
+				"items": [
+					{
+						"kind": "reference",
+						"name": "MessageActionItem"
+					},
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "ShowMessageRequestParams"
+			"params": {
+				"kind": "reference",
+				"name": "ShowMessageRequestParams"
+			}
 		},
 		{
 			"method": "textDocument/willSaveWaitUntil",
 			"result": {
-				"or": [
+				"kind": "or",
+				"items": [
 					{
-						"array": "TextEdit"
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "TextEdit"
+						}
 					},
-					"null"
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "WillSaveTextDocumentParams",
-			"registrationOptions": "TextDocumentRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "WillSaveTextDocumentParams"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "TextDocumentRegistrationOptions"
+			}
 		},
 		{
 			"method": "textDocument/completion",
 			"result": {
-				"or": [
+				"kind": "or",
+				"items": [
 					{
-						"array": "CompletionItem"
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "CompletionItem"
+						}
 					},
-					"CompletionList",
-					"null"
+					{
+						"kind": "reference",
+						"name": "CompletionList"
+					},
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "CompletionParams",
-			"partialResult": {
-				"array": "CompletionItem"
+			"params": {
+				"kind": "reference",
+				"name": "CompletionParams"
 			},
-			"registrationOptions": "CompletionRegistrationOptions"
+			"partialResult": {
+				"kind": "array",
+				"element": {
+					"kind": "reference",
+					"name": "CompletionItem"
+				}
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "CompletionRegistrationOptions"
+			}
 		},
 		{
 			"method": "completionItem/resolve",
-			"result": "CompletionItem",
-			"params": "CompletionItem"
+			"result": {
+				"kind": "reference",
+				"name": "CompletionItem"
+			},
+			"params": {
+				"kind": "reference",
+				"name": "CompletionItem"
+			}
 		},
 		{
 			"method": "textDocument/hover",
 			"result": {
-				"or": [
-					"Hover",
-					"null"
+				"kind": "or",
+				"items": [
+					{
+						"kind": "reference",
+						"name": "Hover"
+					},
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "HoverParams",
-			"registrationOptions": "HoverRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "HoverParams"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "HoverRegistrationOptions"
+			}
 		},
 		{
 			"method": "textDocument/signatureHelp",
 			"result": {
-				"or": [
-					"SignatureHelp",
-					"null"
+				"kind": "or",
+				"items": [
+					{
+						"kind": "reference",
+						"name": "SignatureHelp"
+					},
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "SignatureHelpParams",
-			"registrationOptions": "SignatureHelpRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "SignatureHelpParams"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "SignatureHelpRegistrationOptions"
+			}
 		},
 		{
 			"method": "textDocument/definition",
 			"result": {
-				"or": [
-					"Definition",
+				"kind": "or",
+				"items": [
 					{
-						"array": "DefinitionLink"
-					},
-					"null"
-				]
-			},
-			"params": "DefinitionParams",
-			"partialResult": {
-				"or": [
-					{
-						"array": "Location"
+						"kind": "reference",
+						"name": "Definition"
 					},
 					{
-						"array": "DefinitionLink"
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "DefinitionLink"
+						}
+					},
+					{
+						"kind": "base",
+						"name": "null"
 					}
 				]
 			},
-			"registrationOptions": "DefinitionRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "DefinitionParams"
+			},
+			"partialResult": {
+				"kind": "or",
+				"items": [
+					{
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "Location"
+						}
+					},
+					{
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "DefinitionLink"
+						}
+					}
+				]
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "DefinitionRegistrationOptions"
+			}
 		},
 		{
 			"method": "textDocument/references",
 			"result": {
-				"or": [
+				"kind": "or",
+				"items": [
 					{
-						"array": "Location"
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "Location"
+						}
 					},
-					"null"
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "ReferenceParams",
-			"partialResult": {
-				"array": "Location"
+			"params": {
+				"kind": "reference",
+				"name": "ReferenceParams"
 			},
-			"registrationOptions": "ReferenceRegistrationOptions"
+			"partialResult": {
+				"kind": "array",
+				"element": {
+					"kind": "reference",
+					"name": "Location"
+				}
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "ReferenceRegistrationOptions"
+			}
 		},
 		{
 			"method": "textDocument/documentHighlight",
 			"result": {
-				"or": [
+				"kind": "or",
+				"items": [
 					{
-						"array": "DocumentHighlight"
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "DocumentHighlight"
+						}
 					},
-					"null"
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "DocumentHighlightParams",
-			"partialResult": {
-				"array": "DocumentHighlight"
+			"params": {
+				"kind": "reference",
+				"name": "DocumentHighlightParams"
 			},
-			"registrationOptions": "DocumentHighlightRegistrationOptions"
+			"partialResult": {
+				"kind": "array",
+				"element": {
+					"kind": "reference",
+					"name": "DocumentHighlight"
+				}
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "DocumentHighlightRegistrationOptions"
+			}
 		},
 		{
 			"method": "textDocument/documentSymbol",
 			"result": {
-				"or": [
+				"kind": "or",
+				"items": [
 					{
-						"array": "SymbolInformation"
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "SymbolInformation"
+						}
 					},
 					{
-						"array": "DocumentSymbol"
-					},
-					"null"
-				]
-			},
-			"params": "DocumentSymbolParams",
-			"partialResult": {
-				"or": [
-					{
-						"array": "SymbolInformation"
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "DocumentSymbol"
+						}
 					},
 					{
-						"array": "DocumentSymbol"
+						"kind": "base",
+						"name": "null"
 					}
 				]
 			},
-			"registrationOptions": "DocumentSymbolRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "DocumentSymbolParams"
+			},
+			"partialResult": {
+				"kind": "or",
+				"items": [
+					{
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "SymbolInformation"
+						}
+					},
+					{
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "DocumentSymbol"
+						}
+					}
+				]
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "DocumentSymbolRegistrationOptions"
+			}
 		},
 		{
 			"method": "textDocument/codeAction",
 			"result": {
-				"or": [
+				"kind": "or",
+				"items": [
 					{
-						"array": {
-							"or": [
-								"Command",
-								"CodeAction"
+						"kind": "array",
+						"element": {
+							"kind": "or",
+							"items": [
+								{
+									"kind": "reference",
+									"name": "Command"
+								},
+								{
+									"kind": "reference",
+									"name": "CodeAction"
+								}
 							]
 						}
 					},
-					"null"
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "CodeActionParams",
+			"params": {
+				"kind": "reference",
+				"name": "CodeActionParams"
+			},
 			"partialResult": {
-				"array": {
-					"or": [
-						"Command",
-						"CodeAction"
+				"kind": "array",
+				"element": {
+					"kind": "or",
+					"items": [
+						{
+							"kind": "reference",
+							"name": "Command"
+						},
+						{
+							"kind": "reference",
+							"name": "CodeAction"
+						}
 					]
 				}
 			},
-			"registrationOptions": "CodeActionRegistrationOptions"
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "CodeActionRegistrationOptions"
+			}
 		},
 		{
 			"method": "codeAction/resolve",
-			"result": "CodeAction",
-			"params": "CodeAction"
+			"result": {
+				"kind": "reference",
+				"name": "CodeAction"
+			},
+			"params": {
+				"kind": "reference",
+				"name": "CodeAction"
+			}
 		},
 		{
 			"method": "workspace/symbol",
 			"result": {
-				"or": [
+				"kind": "or",
+				"items": [
 					{
-						"array": "SymbolInformation"
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "SymbolInformation"
+						}
 					},
 					{
-						"array": "WorkspaceSymbol"
-					},
-					"null"
-				]
-			},
-			"params": "WorkspaceSymbolParams",
-			"partialResult": {
-				"or": [
-					{
-						"array": "SymbolInformation"
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "WorkspaceSymbol"
+						}
 					},
 					{
-						"array": "WorkspaceSymbol"
+						"kind": "base",
+						"name": "null"
 					}
 				]
 			},
-			"registrationOptions": "WorkspaceSymbolRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "WorkspaceSymbolParams"
+			},
+			"partialResult": {
+				"kind": "or",
+				"items": [
+					{
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "SymbolInformation"
+						}
+					},
+					{
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "WorkspaceSymbol"
+						}
+					}
+				]
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "WorkspaceSymbolRegistrationOptions"
+			}
 		},
 		{
 			"method": "workspaceSymbol/resolve",
-			"result": "WorkspaceSymbol",
-			"params": "WorkspaceSymbol"
+			"result": {
+				"kind": "reference",
+				"name": "WorkspaceSymbol"
+			},
+			"params": {
+				"kind": "reference",
+				"name": "WorkspaceSymbol"
+			}
 		},
 		{
 			"method": "textDocument/codeLens",
 			"result": {
-				"or": [
+				"kind": "or",
+				"items": [
 					{
-						"array": "CodeLens"
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "CodeLens"
+						}
 					},
-					"null"
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "CodeLensParams",
-			"partialResult": {
-				"array": "CodeLens"
+			"params": {
+				"kind": "reference",
+				"name": "CodeLensParams"
 			},
-			"registrationOptions": "CodeLensRegistrationOptions"
+			"partialResult": {
+				"kind": "array",
+				"element": {
+					"kind": "reference",
+					"name": "CodeLens"
+				}
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "CodeLensRegistrationOptions"
+			}
 		},
 		{
 			"method": "codeLens/resolve",
-			"result": "CodeLens",
-			"params": "CodeLens"
+			"result": {
+				"kind": "reference",
+				"name": "CodeLens"
+			},
+			"params": {
+				"kind": "reference",
+				"name": "CodeLens"
+			}
 		},
 		{
 			"method": "workspace/codeLens/refresh",
-			"result": "null"
+			"result": {
+				"kind": "base",
+				"name": "null"
+			}
 		},
 		{
 			"method": "textDocument/documentLink",
 			"result": {
-				"or": [
+				"kind": "or",
+				"items": [
 					{
-						"array": "DocumentLink"
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "DocumentLink"
+						}
 					},
-					"null"
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "DocumentLinkParams",
-			"partialResult": {
-				"array": "DocumentLink"
+			"params": {
+				"kind": "reference",
+				"name": "DocumentLinkParams"
 			},
-			"registrationOptions": "DocumentLinkRegistrationOptions"
+			"partialResult": {
+				"kind": "array",
+				"element": {
+					"kind": "reference",
+					"name": "DocumentLink"
+				}
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "DocumentLinkRegistrationOptions"
+			}
 		},
 		{
 			"method": "documentLink/resolve",
-			"result": "DocumentLink",
-			"params": "DocumentLink"
+			"result": {
+				"kind": "reference",
+				"name": "DocumentLink"
+			},
+			"params": {
+				"kind": "reference",
+				"name": "DocumentLink"
+			}
 		},
 		{
 			"method": "textDocument/formatting",
 			"result": {
-				"or": [
+				"kind": "or",
+				"items": [
 					{
-						"array": "TextEdit"
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "TextEdit"
+						}
 					},
-					"null"
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "DocumentFormattingParams",
-			"registrationOptions": "DocumentFormattingRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "DocumentFormattingParams"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "DocumentFormattingRegistrationOptions"
+			}
 		},
 		{
 			"method": "textDocument/rangeFormatting",
 			"result": {
-				"or": [
+				"kind": "or",
+				"items": [
 					{
-						"array": "TextEdit"
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "TextEdit"
+						}
 					},
-					"null"
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "DocumentRangeFormattingParams",
-			"registrationOptions": "DocumentRangeFormattingRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "DocumentRangeFormattingParams"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "DocumentRangeFormattingRegistrationOptions"
+			}
 		},
 		{
 			"method": "textDocument/onTypeFormatting",
 			"result": {
-				"or": [
+				"kind": "or",
+				"items": [
 					{
-						"array": "TextEdit"
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "TextEdit"
+						}
 					},
-					"null"
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "DocumentOnTypeFormattingParams",
-			"registrationOptions": "DocumentOnTypeFormattingRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "DocumentOnTypeFormattingParams"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "DocumentOnTypeFormattingRegistrationOptions"
+			}
 		},
 		{
 			"method": "textDocument/rename",
 			"result": {
-				"or": [
-					"WorkspaceEdit",
-					"null"
+				"kind": "or",
+				"items": [
+					{
+						"kind": "reference",
+						"name": "WorkspaceEdit"
+					},
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "RenameParams",
-			"registrationOptions": "RenameRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "RenameParams"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "RenameRegistrationOptions"
+			}
 		},
 		{
 			"method": "textDocument/prepareRename",
 			"result": {
-				"or": [
-					"PrepareRenameResult",
-					"null"
+				"kind": "or",
+				"items": [
+					{
+						"kind": "reference",
+						"name": "PrepareRenameResult"
+					},
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "PrepareRenameParams"
+			"params": {
+				"kind": "reference",
+				"name": "PrepareRenameParams"
+			}
 		},
 		{
 			"method": "workspace/executeCommand",
 			"result": {
-				"or": [
-					"LSPAny",
-					"null"
+				"kind": "or",
+				"items": [
+					{
+						"kind": "reference",
+						"name": "LSPAny"
+					},
+					{
+						"kind": "base",
+						"name": "null"
+					}
 				]
 			},
-			"params": "ExecuteCommandParams",
-			"registrationOptions": "ExecuteCommandRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "ExecuteCommandParams"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "ExecuteCommandRegistrationOptions"
+			}
 		},
 		{
 			"method": "workspace/applyEdit",
-			"result": "ApplyWorkspaceEditResult",
-			"params": "ApplyWorkspaceEditParams"
+			"result": {
+				"kind": "reference",
+				"name": "ApplyWorkspaceEditResult"
+			},
+			"params": {
+				"kind": "reference",
+				"name": "ApplyWorkspaceEditParams"
+			}
 		},
 		{
 			"method": "textDocument/diagnostic",
-			"result": "DocumentDiagnosticReport",
-			"params": "DocumentDiagnosticParams",
-			"partialResult": "DocumentDiagnosticReportPartialResult",
-			"errorData": "DiagnosticServerCancellationData",
-			"registrationOptions": "DiagnosticRegistrationOptions"
+			"result": {
+				"kind": "reference",
+				"name": "DocumentDiagnosticReport"
+			},
+			"params": {
+				"kind": "reference",
+				"name": "DocumentDiagnosticParams"
+			},
+			"partialResult": {
+				"kind": "reference",
+				"name": "DocumentDiagnosticReportPartialResult"
+			},
+			"errorData": {
+				"kind": "reference",
+				"name": "DiagnosticServerCancellationData"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "DiagnosticRegistrationOptions"
+			}
 		},
 		{
 			"method": "workspace/diagnostic",
-			"result": "WorkspaceDiagnosticReport",
-			"params": "WorkspaceDiagnosticParams",
-			"partialResult": "WorkspaceDiagnosticReportPartialResult",
-			"errorData": "DiagnosticServerCancellationData"
+			"result": {
+				"kind": "reference",
+				"name": "WorkspaceDiagnosticReport"
+			},
+			"params": {
+				"kind": "reference",
+				"name": "WorkspaceDiagnosticParams"
+			},
+			"partialResult": {
+				"kind": "reference",
+				"name": "WorkspaceDiagnosticReportPartialResult"
+			},
+			"errorData": {
+				"kind": "reference",
+				"name": "DiagnosticServerCancellationData"
+			}
 		},
 		{
 			"method": "workspace/diagnostic/refresh",
-			"result": "null"
+			"result": {
+				"kind": "base",
+				"name": "null"
+			}
 		}
 	],
 	"notifications": [
 		{
 			"method": "workspace/didChangeWorkspaceFolders",
-			"params": "DidChangeWorkspaceFoldersParams"
+			"params": {
+				"kind": "reference",
+				"name": "DidChangeWorkspaceFoldersParams"
+			}
 		},
 		{
 			"method": "window/workDoneProgress/cancel",
-			"params": "WorkDoneProgressCancelParams"
+			"params": {
+				"kind": "reference",
+				"name": "WorkDoneProgressCancelParams"
+			}
 		},
 		{
 			"method": "workspace/didCreateFiles",
-			"params": "CreateFilesParams",
-			"registrationOptions": "FileOperationRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "CreateFilesParams"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "FileOperationRegistrationOptions"
+			}
 		},
 		{
 			"method": "workspace/didRenameFiles",
-			"params": "RenameFilesParams",
-			"registrationOptions": "FileOperationRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "RenameFilesParams"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "FileOperationRegistrationOptions"
+			}
 		},
 		{
 			"method": "workspace/didDeleteFiles",
-			"params": "DeleteFilesParams",
-			"registrationOptions": "FileOperationRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "DeleteFilesParams"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "FileOperationRegistrationOptions"
+			}
 		},
 		{
 			"method": "initialized",
-			"params": "InitializedParams"
+			"params": {
+				"kind": "reference",
+				"name": "InitializedParams"
+			}
 		},
 		{
 			"method": "exit"
 		},
 		{
 			"method": "workspace/didChangeConfiguration",
-			"params": "DidChangeConfigurationParams",
-			"registrationOptions": "DidChangeConfigurationRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "DidChangeConfigurationParams"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "DidChangeConfigurationRegistrationOptions"
+			}
 		},
 		{
 			"method": "window/showMessage",
-			"params": "ShowMessageParams"
+			"params": {
+				"kind": "reference",
+				"name": "ShowMessageParams"
+			}
 		},
 		{
 			"method": "window/logMessage",
-			"params": "LogMessageParams"
+			"params": {
+				"kind": "reference",
+				"name": "LogMessageParams"
+			}
 		},
 		{
 			"method": "telemetry/event",
-			"params": "LSPAny"
+			"params": {
+				"kind": "reference",
+				"name": "LSPAny"
+			}
 		},
 		{
 			"method": "textDocument/didOpen",
-			"params": "DidOpenTextDocumentParams",
-			"registrationOptions": "TextDocumentRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "DidOpenTextDocumentParams"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "TextDocumentRegistrationOptions"
+			}
 		},
 		{
 			"method": "textDocument/didChange",
-			"params": "DidChangeTextDocumentParams",
-			"registrationOptions": "TextDocumentChangeRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "DidChangeTextDocumentParams"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "TextDocumentChangeRegistrationOptions"
+			}
 		},
 		{
 			"method": "textDocument/didClose",
-			"params": "DidCloseTextDocumentParams",
-			"registrationOptions": "TextDocumentRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "DidCloseTextDocumentParams"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "TextDocumentRegistrationOptions"
+			}
 		},
 		{
 			"method": "textDocument/didSave",
-			"params": "DidSaveTextDocumentParams",
-			"registrationOptions": "TextDocumentSaveRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "DidSaveTextDocumentParams"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "TextDocumentSaveRegistrationOptions"
+			}
 		},
 		{
 			"method": "textDocument/willSave",
-			"params": "WillSaveTextDocumentParams",
-			"registrationOptions": "TextDocumentRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "WillSaveTextDocumentParams"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "TextDocumentRegistrationOptions"
+			}
 		},
 		{
 			"method": "workspace/didChangeWatchedFiles",
-			"params": "DidChangeWatchedFilesParams",
-			"registrationOptions": "DidChangeWatchedFilesRegistrationOptions"
+			"params": {
+				"kind": "reference",
+				"name": "DidChangeWatchedFilesParams"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "DidChangeWatchedFilesRegistrationOptions"
+			}
 		},
 		{
 			"method": "textDocument/publishDiagnostics",
-			"params": "PublishDiagnosticsParams"
+			"params": {
+				"kind": "reference",
+				"name": "PublishDiagnosticsParams"
+			}
 		},
 		{
 			"method": "notebookDocument/didOpen",
-			"params": "DidOpenNotebookDocumentParams"
+			"params": {
+				"kind": "reference",
+				"name": "DidOpenNotebookDocumentParams"
+			}
 		},
 		{
 			"method": "notebookDocument/didChange",
-			"params": "DidChangeNotebookDocumentParams"
+			"params": {
+				"kind": "reference",
+				"name": "DidChangeNotebookDocumentParams"
+			}
 		},
 		{
 			"method": "notebookDocument/didSave",
-			"params": "DidSaveNotebookDocumentParams"
+			"params": {
+				"kind": "reference",
+				"name": "DidSaveNotebookDocumentParams"
+			}
 		},
 		{
 			"method": "notebookDocument/didClose",
-			"params": "DidCloseNotebookDocumentParams"
+			"params": {
+				"kind": "reference",
+				"name": "DidCloseNotebookDocumentParams"
+			}
 		}
 	],
 	"structures": [
@@ -894,7 +1845,22 @@
 		},
 		{
 			"name": "Location",
-			"properties": []
+			"properties": [
+				{
+					"name": "uri",
+					"type": {
+						"kind": "base",
+						"name": "DocumentUri"
+					}
+				},
+				{
+					"name": "range",
+					"type": {
+						"kind": "reference",
+						"name": "Range"
+					}
+				}
+			]
 		},
 		{
 			"name": "ImplementationRegistrationOptions",
@@ -930,11 +1896,17 @@
 			"properties": [
 				{
 					"name": "uri",
-					"type": "string"
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
 				},
 				{
 					"name": "name",
-					"type": "string"
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
 				}
 			]
 		},
@@ -943,7 +1915,10 @@
 			"properties": [
 				{
 					"name": "event",
-					"type": "WorkspaceFoldersChangeEvent"
+					"type": {
+						"kind": "reference",
+						"name": "WorkspaceFoldersChangeEvent"
+					}
 				}
 			]
 		},
@@ -952,13 +1927,28 @@
 			"properties": [
 				{
 					"name": "items",
-					"type": "ConfigurationItem[]"
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "ConfigurationItem"
+						}
+					}
 				}
 			]
 		},
 		{
 			"name": "PartialResultParams",
-			"properties": []
+			"properties": [
+				{
+					"name": "partialResultToken",
+					"type": {
+						"kind": "reference",
+						"name": "ProgressToken"
+					},
+					"optional": true
+				}
+			]
 		},
 		{
 			"name": "LSPAny",
@@ -969,7 +1959,10 @@
 			"properties": [
 				{
 					"name": "textDocument",
-					"type": "TextDocumentIdentifier"
+					"type": {
+						"kind": "reference",
+						"name": "TextDocumentIdentifier"
+					}
 				}
 			],
 			"mixins": [
@@ -979,7 +1972,22 @@
 		},
 		{
 			"name": "ColorInformation",
-			"properties": []
+			"properties": [
+				{
+					"name": "range",
+					"type": {
+						"kind": "reference",
+						"name": "Range"
+					}
+				},
+				{
+					"name": "color",
+					"type": {
+						"kind": "reference",
+						"name": "Color"
+					}
+				}
+			]
 		},
 		{
 			"name": "DocumentColorRegistrationOptions",
@@ -995,15 +2003,24 @@
 			"properties": [
 				{
 					"name": "textDocument",
-					"type": "TextDocumentIdentifier"
+					"type": {
+						"kind": "reference",
+						"name": "TextDocumentIdentifier"
+					}
 				},
 				{
 					"name": "color",
-					"type": "Color"
+					"type": {
+						"kind": "reference",
+						"name": "Color"
+					}
 				},
 				{
 					"name": "range",
-					"type": "Range"
+					"type": {
+						"kind": "reference",
+						"name": "Range"
+					}
 				}
 			],
 			"mixins": [
@@ -1013,22 +2030,78 @@
 		},
 		{
 			"name": "ColorPresentation",
-			"properties": []
+			"properties": [
+				{
+					"name": "label",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				},
+				{
+					"name": "textEdit",
+					"type": {
+						"kind": "reference",
+						"name": "TextEdit"
+					},
+					"optional": true
+				},
+				{
+					"name": "additionalTextEdits",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "TextEdit"
+						}
+					},
+					"optional": true
+				}
+			]
 		},
 		{
 			"name": "WorkDoneProgressOptions",
-			"properties": []
+			"properties": [
+				{
+					"name": "workDoneProgress",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
+				}
+			]
 		},
 		{
 			"name": "TextDocumentRegistrationOptions",
-			"properties": []
+			"properties": [
+				{
+					"name": "documentSelector",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "reference",
+								"name": "DocumentSelector"
+							},
+							{
+								"kind": "base",
+								"name": "null"
+							}
+						]
+					}
+				}
+			]
 		},
 		{
 			"name": "FoldingRangeParams",
 			"properties": [
 				{
 					"name": "textDocument",
-					"type": "TextDocumentIdentifier"
+					"type": {
+						"kind": "reference",
+						"name": "TextDocumentIdentifier"
+					}
 				}
 			],
 			"mixins": [
@@ -1038,7 +2111,46 @@
 		},
 		{
 			"name": "FoldingRange",
-			"properties": []
+			"properties": [
+				{
+					"name": "startLine",
+					"type": {
+						"kind": "base",
+						"name": "uinteger"
+					}
+				},
+				{
+					"name": "startCharacter",
+					"type": {
+						"kind": "base",
+						"name": "uinteger"
+					},
+					"optional": true
+				},
+				{
+					"name": "endLine",
+					"type": {
+						"kind": "base",
+						"name": "uinteger"
+					}
+				},
+				{
+					"name": "endCharacter",
+					"type": {
+						"kind": "base",
+						"name": "uinteger"
+					},
+					"optional": true
+				},
+				{
+					"name": "kind",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true
+				}
+			]
 		},
 		{
 			"name": "FoldingRangeRegistrationOptions",
@@ -1082,11 +2194,20 @@
 			"properties": [
 				{
 					"name": "textDocument",
-					"type": "TextDocumentIdentifier"
+					"type": {
+						"kind": "reference",
+						"name": "TextDocumentIdentifier"
+					}
 				},
 				{
 					"name": "positions",
-					"type": "Position[]"
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "Position"
+						}
+					}
 				}
 			],
 			"mixins": [
@@ -1096,7 +2217,23 @@
 		},
 		{
 			"name": "SelectionRange",
-			"properties": []
+			"properties": [
+				{
+					"name": "range",
+					"type": {
+						"kind": "reference",
+						"name": "Range"
+					}
+				},
+				{
+					"name": "parent",
+					"type": {
+						"kind": "reference",
+						"name": "SelectionRange"
+					},
+					"optional": true
+				}
+			]
 		},
 		{
 			"name": "SelectionRangeRegistrationOptions",
@@ -1112,7 +2249,10 @@
 			"properties": [
 				{
 					"name": "token",
-					"type": "ProgressToken"
+					"type": {
+						"kind": "reference",
+						"name": "ProgressToken"
+					}
 				}
 			]
 		},
@@ -1121,7 +2261,10 @@
 			"properties": [
 				{
 					"name": "token",
-					"type": "ProgressToken"
+					"type": {
+						"kind": "reference",
+						"name": "ProgressToken"
+					}
 				}
 			]
 		},
@@ -1137,7 +2280,70 @@
 		},
 		{
 			"name": "CallHierarchyItem",
-			"properties": []
+			"properties": [
+				{
+					"name": "name",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				},
+				{
+					"name": "kind",
+					"type": {
+						"kind": "reference",
+						"name": "SymbolKind"
+					}
+				},
+				{
+					"name": "tags",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "SymbolTag"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "detail",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "uri",
+					"type": {
+						"kind": "base",
+						"name": "DocumentUri"
+					}
+				},
+				{
+					"name": "range",
+					"type": {
+						"kind": "reference",
+						"name": "Range"
+					}
+				},
+				{
+					"name": "selectionRange",
+					"type": {
+						"kind": "reference",
+						"name": "Range"
+					}
+				},
+				{
+					"name": "data",
+					"type": {
+						"kind": "reference",
+						"name": "LSPAny"
+					},
+					"optional": true
+				}
+			]
 		},
 		{
 			"name": "CallHierarchyRegistrationOptions",
@@ -1153,7 +2359,10 @@
 			"properties": [
 				{
 					"name": "item",
-					"type": "CallHierarchyItem"
+					"type": {
+						"kind": "reference",
+						"name": "CallHierarchyItem"
+					}
 				}
 			],
 			"mixins": [
@@ -1163,14 +2372,35 @@
 		},
 		{
 			"name": "CallHierarchyIncomingCall",
-			"properties": []
+			"properties": [
+				{
+					"name": "from",
+					"type": {
+						"kind": "reference",
+						"name": "CallHierarchyItem"
+					}
+				},
+				{
+					"name": "fromRanges",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "Range"
+						}
+					}
+				}
+			]
 		},
 		{
 			"name": "CallHierarchyOutgoingCallsParams",
 			"properties": [
 				{
 					"name": "item",
-					"type": "CallHierarchyItem"
+					"type": {
+						"kind": "reference",
+						"name": "CallHierarchyItem"
+					}
 				}
 			],
 			"mixins": [
@@ -1180,14 +2410,35 @@
 		},
 		{
 			"name": "CallHierarchyOutgoingCall",
-			"properties": []
+			"properties": [
+				{
+					"name": "to",
+					"type": {
+						"kind": "reference",
+						"name": "CallHierarchyItem"
+					}
+				},
+				{
+					"name": "fromRanges",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "Range"
+						}
+					}
+				}
+			]
 		},
 		{
 			"name": "SemanticTokensParams",
 			"properties": [
 				{
 					"name": "textDocument",
-					"type": "TextDocumentIdentifier"
+					"type": {
+						"kind": "reference",
+						"name": "TextDocumentIdentifier"
+					}
 				}
 			],
 			"mixins": [
@@ -1197,14 +2448,39 @@
 		},
 		{
 			"name": "SemanticTokens",
-			"properties": []
+			"properties": [
+				{
+					"name": "resultId",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "data",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "base",
+							"name": "uinteger"
+						}
+					}
+				}
+			]
 		},
 		{
 			"name": "SemanticTokensPartialResult",
 			"properties": [
 				{
 					"name": "data",
-					"type": "number[]"
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "base",
+							"name": "uinteger"
+						}
+					}
 				}
 			]
 		},
@@ -1222,11 +2498,17 @@
 			"properties": [
 				{
 					"name": "textDocument",
-					"type": "TextDocumentIdentifier"
+					"type": {
+						"kind": "reference",
+						"name": "TextDocumentIdentifier"
+					}
 				},
 				{
 					"name": "previousResultId",
-					"type": "string"
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
 				}
 			],
 			"mixins": [
@@ -1236,14 +2518,39 @@
 		},
 		{
 			"name": "SemanticTokensDelta",
-			"properties": []
+			"properties": [
+				{
+					"name": "resultId",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "edits",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "SemanticTokensEdit"
+						}
+					}
+				}
+			]
 		},
 		{
 			"name": "SemanticTokensDeltaPartialResult",
 			"properties": [
 				{
 					"name": "edits",
-					"type": "SemanticTokensEdit[]"
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "SemanticTokensEdit"
+						}
+					}
 				}
 			]
 		},
@@ -1252,11 +2559,17 @@
 			"properties": [
 				{
 					"name": "textDocument",
-					"type": "TextDocumentIdentifier"
+					"type": {
+						"kind": "reference",
+						"name": "TextDocumentIdentifier"
+					}
 				},
 				{
 					"name": "range",
-					"type": "Range"
+					"type": {
+						"kind": "reference",
+						"name": "Range"
+					}
 				}
 			],
 			"mixins": [
@@ -1269,19 +2582,34 @@
 			"properties": [
 				{
 					"name": "uri",
-					"type": "string"
+					"type": {
+						"kind": "reference",
+						"name": "URI"
+					}
 				},
 				{
 					"name": "external",
-					"type": "boolean | undefined"
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
 				},
 				{
 					"name": "takeFocus",
-					"type": "boolean | undefined"
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
 				},
 				{
 					"name": "selection",
-					"type": "Range | undefined"
+					"type": {
+						"kind": "reference",
+						"name": "Range"
+					},
+					"optional": true
 				}
 			]
 		},
@@ -1290,7 +2618,10 @@
 			"properties": [
 				{
 					"name": "success",
-					"type": "boolean"
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					}
 				}
 			]
 		},
@@ -1309,11 +2640,21 @@
 			"properties": [
 				{
 					"name": "ranges",
-					"type": "Range[]"
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "Range"
+						}
+					}
 				},
 				{
 					"name": "wordPattern",
-					"type": "string | undefined"
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true
 				}
 			]
 		},
@@ -1331,20 +2672,94 @@
 			"properties": [
 				{
 					"name": "files",
-					"type": "FileCreate[]"
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "FileCreate"
+						}
+					}
 				}
 			]
 		},
 		{
 			"name": "WorkspaceEdit",
-			"properties": []
+			"properties": [
+				{
+					"name": "changes",
+					"type": {
+						"kind": "map",
+						"key": {
+							"kind": "base",
+							"name": "DocumentUri"
+						},
+						"value": {
+							"kind": "array",
+							"element": {
+								"kind": "reference",
+								"name": "TextEdit"
+							}
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "documentChanges",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "or",
+							"items": [
+								{
+									"kind": "reference",
+									"name": "TextDocumentEdit"
+								},
+								{
+									"kind": "reference",
+									"name": "CreateFile"
+								},
+								{
+									"kind": "reference",
+									"name": "RenameFile"
+								},
+								{
+									"kind": "reference",
+									"name": "DeleteFile"
+								}
+							]
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "changeAnnotations",
+					"type": {
+						"kind": "map",
+						"key": {
+							"kind": "reference",
+							"name": "ChangeAnnotationIdentifier"
+						},
+						"value": {
+							"kind": "reference",
+							"name": "ChangeAnnotation"
+						}
+					},
+					"optional": true
+				}
+			]
 		},
 		{
 			"name": "FileOperationRegistrationOptions",
 			"properties": [
 				{
 					"name": "filters",
-					"type": "FileOperationFilter[]"
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "FileOperationFilter"
+						}
+					}
 				}
 			]
 		},
@@ -1353,7 +2768,13 @@
 			"properties": [
 				{
 					"name": "files",
-					"type": "FileRename[]"
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "FileRename"
+						}
+					}
 				}
 			]
 		},
@@ -1362,7 +2783,13 @@
 			"properties": [
 				{
 					"name": "files",
-					"type": "FileDelete[]"
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "FileDelete"
+						}
+					}
 				}
 			]
 		},
@@ -1382,19 +2809,32 @@
 			"properties": [
 				{
 					"name": "scheme",
-					"type": "string"
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
 				},
 				{
 					"name": "identifier",
-					"type": "string"
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
 				},
 				{
 					"name": "unique",
-					"type": "UniquenessLevel"
+					"type": {
+						"kind": "reference",
+						"name": "UniquenessLevel"
+					}
 				},
 				{
 					"name": "kind",
-					"type": "MonikerKind | undefined"
+					"type": {
+						"kind": "reference",
+						"name": "MonikerKind"
+					},
+					"optional": true
 				}
 			]
 		},
@@ -1455,7 +2895,13 @@
 			"properties": [
 				{
 					"name": "registrations",
-					"type": "Registration[]"
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "Registration"
+						}
+					}
 				}
 			]
 		},
@@ -1464,7 +2910,13 @@
 			"properties": [
 				{
 					"name": "unregisterations",
-					"type": "Unregistration[]"
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "Unregistration"
+						}
+					}
 				}
 			]
 		},
@@ -1476,20 +2928,37 @@
 			"name": "InitializeResult",
 			"properties": [
 				{
-					"name": "T",
-					"type": "any"
-				},
-				{
 					"name": "capabilities",
-					"type": "ServerCapabilities<T>"
+					"type": {
+						"kind": "reference",
+						"name": "ServerCapabilities"
+					}
 				},
 				{
 					"name": "serverInfo",
-					"type": "{ name: string; version?: string | undefined; } | undefined"
-				},
-				{
-					"name": "__index",
-					"type": "any"
+					"type": {
+						"kind": "literal",
+						"value": {
+							"properties": [
+								{
+									"name": "name",
+									"type": {
+										"kind": "base",
+										"name": "string"
+									}
+								},
+								{
+									"name": "version",
+									"type": {
+										"kind": "base",
+										"name": "string"
+									},
+									"optional": true
+								}
+							]
+						}
+					},
+					"optional": true
 				}
 			]
 		},
@@ -1498,7 +2967,10 @@
 			"properties": [
 				{
 					"name": "retry",
-					"type": "boolean"
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					}
 				}
 			]
 		},
@@ -1511,7 +2983,10 @@
 			"properties": [
 				{
 					"name": "settings",
-					"type": "LSPAny"
+					"type": {
+						"kind": "reference",
+						"name": "LSPAny"
+					}
 				}
 			]
 		},
@@ -1520,7 +2995,23 @@
 			"properties": [
 				{
 					"name": "section",
-					"type": "string | string[] | undefined"
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "string"
+							},
+							{
+								"kind": "array",
+								"element": {
+									"kind": "base",
+									"name": "string"
+								}
+							}
+						]
+					},
+					"optional": true
 				}
 			]
 		},
@@ -1529,11 +3020,17 @@
 			"properties": [
 				{
 					"name": "type",
-					"type": "MessageType"
+					"type": {
+						"kind": "reference",
+						"name": "MessageType"
+					}
 				},
 				{
 					"name": "message",
-					"type": "string"
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
 				}
 			]
 		},
@@ -1542,15 +3039,28 @@
 			"properties": [
 				{
 					"name": "type",
-					"type": "MessageType"
+					"type": {
+						"kind": "reference",
+						"name": "MessageType"
+					}
 				},
 				{
 					"name": "message",
-					"type": "string"
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
 				},
 				{
 					"name": "actions",
-					"type": "MessageActionItem[] | undefined"
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "MessageActionItem"
+						}
+					},
+					"optional": true
 				}
 			]
 		},
@@ -1559,11 +3069,10 @@
 			"properties": [
 				{
 					"name": "title",
-					"type": "string"
-				},
-				{
-					"name": "__index",
-					"type": "any"
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
 				}
 			]
 		},
@@ -1572,11 +3081,17 @@
 			"properties": [
 				{
 					"name": "type",
-					"type": "MessageType"
+					"type": {
+						"kind": "reference",
+						"name": "MessageType"
+					}
 				},
 				{
 					"name": "message",
-					"type": "string"
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
 				}
 			]
 		},
@@ -1585,7 +3100,10 @@
 			"properties": [
 				{
 					"name": "textDocument",
-					"type": "TextDocumentItem"
+					"type": {
+						"kind": "reference",
+						"name": "TextDocumentItem"
+					}
 				}
 			]
 		},
@@ -1594,11 +3112,20 @@
 			"properties": [
 				{
 					"name": "textDocument",
-					"type": "VersionedTextDocumentIdentifier"
+					"type": {
+						"kind": "reference",
+						"name": "VersionedTextDocumentIdentifier"
+					}
 				},
 				{
 					"name": "contentChanges",
-					"type": "TextDocumentContentChangeEvent[]"
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "TextDocumentContentChangeEvent"
+						}
+					}
 				}
 			]
 		},
@@ -1607,7 +3134,10 @@
 			"properties": [
 				{
 					"name": "syncKind",
-					"type": "TextDocumentSyncKind"
+					"type": {
+						"kind": "reference",
+						"name": "TextDocumentSyncKind"
+					}
 				}
 			],
 			"mixins": [
@@ -1619,7 +3149,10 @@
 			"properties": [
 				{
 					"name": "textDocument",
-					"type": "TextDocumentIdentifier"
+					"type": {
+						"kind": "reference",
+						"name": "TextDocumentIdentifier"
+					}
 				}
 			]
 		},
@@ -1628,11 +3161,18 @@
 			"properties": [
 				{
 					"name": "textDocument",
-					"type": "TextDocumentIdentifier"
+					"type": {
+						"kind": "reference",
+						"name": "TextDocumentIdentifier"
+					}
 				},
 				{
 					"name": "text",
-					"type": "string | undefined"
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true
 				}
 			]
 		},
@@ -1649,24 +3189,51 @@
 			"properties": [
 				{
 					"name": "textDocument",
-					"type": "TextDocumentIdentifier"
+					"type": {
+						"kind": "reference",
+						"name": "TextDocumentIdentifier"
+					}
 				},
 				{
 					"name": "reason",
-					"type": "TextDocumentSaveReason"
+					"type": {
+						"kind": "reference",
+						"name": "TextDocumentSaveReason"
+					}
 				}
 			]
 		},
 		{
 			"name": "TextEdit",
-			"properties": []
+			"properties": [
+				{
+					"name": "range",
+					"type": {
+						"kind": "reference",
+						"name": "Range"
+					}
+				},
+				{
+					"name": "newText",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				}
+			]
 		},
 		{
 			"name": "DidChangeWatchedFilesParams",
 			"properties": [
 				{
 					"name": "changes",
-					"type": "FileEvent[]"
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "FileEvent"
+						}
+					}
 				}
 			]
 		},
@@ -1675,7 +3242,13 @@
 			"properties": [
 				{
 					"name": "watchers",
-					"type": "FileSystemWatcher[]"
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "FileSystemWatcher"
+						}
+					}
 				}
 			]
 		},
@@ -1684,15 +3257,28 @@
 			"properties": [
 				{
 					"name": "uri",
-					"type": "string"
+					"type": {
+						"kind": "base",
+						"name": "DocumentUri"
+					}
 				},
 				{
 					"name": "version",
-					"type": "number | undefined"
+					"type": {
+						"kind": "base",
+						"name": "integer"
+					},
+					"optional": true
 				},
 				{
 					"name": "diagnostics",
-					"type": "Diagnostic[]"
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "Diagnostic"
+						}
+					}
 				}
 			]
 		},
@@ -1701,7 +3287,11 @@
 			"properties": [
 				{
 					"name": "context",
-					"type": "CompletionContext | undefined"
+					"type": {
+						"kind": "reference",
+						"name": "CompletionContext"
+					},
+					"optional": true
 				}
 			],
 			"extends": [
@@ -1714,11 +3304,272 @@
 		},
 		{
 			"name": "CompletionItem",
-			"properties": []
+			"properties": [
+				{
+					"name": "label",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				},
+				{
+					"name": "labelDetails",
+					"type": {
+						"kind": "reference",
+						"name": "CompletionItemLabelDetails"
+					},
+					"optional": true
+				},
+				{
+					"name": "kind",
+					"type": {
+						"kind": "reference",
+						"name": "CompletionItemKind"
+					},
+					"optional": true
+				},
+				{
+					"name": "tags",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "CompletionItemTag"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "detail",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "documentation",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "string"
+							},
+							{
+								"kind": "reference",
+								"name": "MarkupContent"
+							}
+						]
+					},
+					"optional": true
+				},
+				{
+					"name": "deprecated",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
+				},
+				{
+					"name": "preselect",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
+				},
+				{
+					"name": "sortText",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "filterText",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "insertText",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "insertTextFormat",
+					"type": {
+						"kind": "reference",
+						"name": "InsertTextFormat"
+					},
+					"optional": true
+				},
+				{
+					"name": "insertTextMode",
+					"type": {
+						"kind": "reference",
+						"name": "InsertTextMode"
+					},
+					"optional": true
+				},
+				{
+					"name": "textEdit",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "reference",
+								"name": "TextEdit"
+							},
+							{
+								"kind": "reference",
+								"name": "InsertReplaceEdit"
+							}
+						]
+					},
+					"optional": true
+				},
+				{
+					"name": "additionalTextEdits",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "TextEdit"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "commitCharacters",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "base",
+							"name": "string"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "command",
+					"type": {
+						"kind": "reference",
+						"name": "Command"
+					},
+					"optional": true
+				},
+				{
+					"name": "data",
+					"type": {
+						"kind": "reference",
+						"name": "LSPAny"
+					},
+					"optional": true
+				}
+			]
 		},
 		{
 			"name": "CompletionList",
-			"properties": []
+			"properties": [
+				{
+					"name": "isIncomplete",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					}
+				},
+				{
+					"name": "itemDefaults",
+					"type": {
+						"kind": "literal",
+						"value": {
+							"properties": [
+								{
+									"name": "commitCharacters",
+									"type": {
+										"kind": "array",
+										"element": {
+											"kind": "base",
+											"name": "string"
+										}
+									},
+									"optional": true
+								},
+								{
+									"name": "editRange",
+									"type": {
+										"kind": "or",
+										"items": [
+											{
+												"kind": "reference",
+												"name": "Range"
+											},
+											{
+												"kind": "literal",
+												"value": {
+													"properties": [
+														{
+															"name": "insert",
+															"type": {
+																"kind": "reference",
+																"name": "Range"
+															}
+														},
+														{
+															"name": "replace",
+															"type": {
+																"kind": "reference",
+																"name": "Range"
+															}
+														}
+													]
+												}
+											}
+										]
+									},
+									"optional": true
+								},
+								{
+									"name": "insertTextFormat",
+									"type": {
+										"kind": "reference",
+										"name": "InsertTextFormat"
+									},
+									"optional": true
+								},
+								{
+									"name": "insertTextMode",
+									"type": {
+										"kind": "reference",
+										"name": "InsertTextMode"
+									},
+									"optional": true
+								}
+							]
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "items",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "CompletionItem"
+						}
+					}
+				}
+			]
 		},
 		{
 			"name": "CompletionRegistrationOptions",
@@ -1740,7 +3591,39 @@
 		},
 		{
 			"name": "Hover",
-			"properties": []
+			"properties": [
+				{
+					"name": "contents",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "reference",
+								"name": "MarkupContent"
+							},
+							{
+								"kind": "reference",
+								"name": "MarkedString"
+							},
+							{
+								"kind": "array",
+								"element": {
+									"kind": "reference",
+									"name": "MarkedString"
+								}
+							}
+						]
+					}
+				},
+				{
+					"name": "range",
+					"type": {
+						"kind": "reference",
+						"name": "Range"
+					},
+					"optional": true
+				}
+			]
 		},
 		{
 			"name": "HoverRegistrationOptions",
@@ -1755,7 +3638,11 @@
 			"properties": [
 				{
 					"name": "context",
-					"type": "SignatureHelpContext | undefined"
+					"type": {
+						"kind": "reference",
+						"name": "SignatureHelpContext"
+					},
+					"optional": true
 				}
 			],
 			"extends": [
@@ -1767,7 +3654,34 @@
 		},
 		{
 			"name": "SignatureHelp",
-			"properties": []
+			"properties": [
+				{
+					"name": "signatures",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "SignatureInformation"
+						}
+					}
+				},
+				{
+					"name": "activeSignature",
+					"type": {
+						"kind": "base",
+						"name": "uinteger"
+					},
+					"optional": true
+				},
+				{
+					"name": "activeParameter",
+					"type": {
+						"kind": "base",
+						"name": "uinteger"
+					},
+					"optional": true
+				}
+			]
 		},
 		{
 			"name": "SignatureHelpRegistrationOptions",
@@ -1801,7 +3715,10 @@
 			"properties": [
 				{
 					"name": "context",
-					"type": "ReferenceContext"
+					"type": {
+						"kind": "reference",
+						"name": "ReferenceContext"
+					}
 				}
 			],
 			"extends": [
@@ -1833,7 +3750,23 @@
 		},
 		{
 			"name": "DocumentHighlight",
-			"properties": []
+			"properties": [
+				{
+					"name": "range",
+					"type": {
+						"kind": "reference",
+						"name": "Range"
+					}
+				},
+				{
+					"name": "kind",
+					"type": {
+						"kind": "reference",
+						"name": "DocumentHighlightKind"
+					},
+					"optional": true
+				}
+			]
 		},
 		{
 			"name": "DocumentHighlightRegistrationOptions",
@@ -1848,7 +3781,10 @@
 			"properties": [
 				{
 					"name": "textDocument",
-					"type": "TextDocumentIdentifier"
+					"type": {
+						"kind": "reference",
+						"name": "TextDocumentIdentifier"
+					}
 				}
 			],
 			"mixins": [
@@ -1858,11 +3794,127 @@
 		},
 		{
 			"name": "SymbolInformation",
-			"properties": []
+			"properties": [
+				{
+					"name": "name",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				},
+				{
+					"name": "kind",
+					"type": {
+						"kind": "reference",
+						"name": "SymbolKind"
+					}
+				},
+				{
+					"name": "tags",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "SymbolTag"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "deprecated",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
+				},
+				{
+					"name": "location",
+					"type": {
+						"kind": "reference",
+						"name": "Location"
+					}
+				},
+				{
+					"name": "containerName",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true
+				}
+			]
 		},
 		{
 			"name": "DocumentSymbol",
-			"properties": []
+			"properties": [
+				{
+					"name": "name",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				},
+				{
+					"name": "detail",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "kind",
+					"type": {
+						"kind": "reference",
+						"name": "SymbolKind"
+					}
+				},
+				{
+					"name": "tags",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "SymbolTag"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "deprecated",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
+				},
+				{
+					"name": "range",
+					"type": {
+						"kind": "reference",
+						"name": "Range"
+					}
+				},
+				{
+					"name": "selectionRange",
+					"type": {
+						"kind": "reference",
+						"name": "Range"
+					}
+				},
+				{
+					"name": "children",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "DocumentSymbol"
+						}
+					},
+					"optional": true
+				}
+			]
 		},
 		{
 			"name": "DocumentSymbolRegistrationOptions",
@@ -1877,15 +3929,24 @@
 			"properties": [
 				{
 					"name": "textDocument",
-					"type": "TextDocumentIdentifier"
+					"type": {
+						"kind": "reference",
+						"name": "TextDocumentIdentifier"
+					}
 				},
 				{
 					"name": "range",
-					"type": "Range"
+					"type": {
+						"kind": "reference",
+						"name": "Range"
+					}
 				},
 				{
 					"name": "context",
-					"type": "CodeActionContext"
+					"type": {
+						"kind": "reference",
+						"name": "CodeActionContext"
+					}
 				}
 			],
 			"mixins": [
@@ -1895,11 +3956,114 @@
 		},
 		{
 			"name": "Command",
-			"properties": []
+			"properties": [
+				{
+					"name": "title",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				},
+				{
+					"name": "command",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				},
+				{
+					"name": "arguments",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "LSPAny"
+						}
+					},
+					"optional": true
+				}
+			]
 		},
 		{
 			"name": "CodeAction",
-			"properties": []
+			"properties": [
+				{
+					"name": "title",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				},
+				{
+					"name": "kind",
+					"type": {
+						"kind": "reference",
+						"name": "CodeActionKind"
+					},
+					"optional": true
+				},
+				{
+					"name": "diagnostics",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "Diagnostic"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "isPreferred",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
+				},
+				{
+					"name": "disabled",
+					"type": {
+						"kind": "literal",
+						"value": {
+							"properties": [
+								{
+									"name": "reason",
+									"type": {
+										"kind": "base",
+										"name": "string"
+									}
+								}
+							]
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "edit",
+					"type": {
+						"kind": "reference",
+						"name": "WorkspaceEdit"
+					},
+					"optional": true
+				},
+				{
+					"name": "command",
+					"type": {
+						"kind": "reference",
+						"name": "Command"
+					},
+					"optional": true
+				},
+				{
+					"name": "data",
+					"type": {
+						"kind": "reference",
+						"name": "LSPAny"
+					},
+					"optional": true
+				}
+			]
 		},
 		{
 			"name": "CodeActionRegistrationOptions",
@@ -1914,7 +4078,10 @@
 			"properties": [
 				{
 					"name": "query",
-					"type": "string"
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
 				}
 			],
 			"mixins": [
@@ -1924,7 +4091,45 @@
 		},
 		{
 			"name": "WorkspaceSymbol",
-			"properties": []
+			"properties": [
+				{
+					"name": "location",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "reference",
+								"name": "Location"
+							},
+							{
+								"kind": "literal",
+								"value": {
+									"properties": [
+										{
+											"name": "uri",
+											"type": {
+												"kind": "base",
+												"name": "DocumentUri"
+											}
+										}
+									]
+								}
+							}
+						]
+					}
+				},
+				{
+					"name": "data",
+					"type": {
+						"kind": "reference",
+						"name": "LSPAny"
+					},
+					"optional": true
+				}
+			],
+			"mixins": [
+				"__type"
+			]
 		},
 		{
 			"name": "WorkspaceSymbolRegistrationOptions",
@@ -1938,7 +4143,10 @@
 			"properties": [
 				{
 					"name": "textDocument",
-					"type": "TextDocumentIdentifier"
+					"type": {
+						"kind": "reference",
+						"name": "TextDocumentIdentifier"
+					}
 				}
 			],
 			"mixins": [
@@ -1948,7 +4156,31 @@
 		},
 		{
 			"name": "CodeLens",
-			"properties": []
+			"properties": [
+				{
+					"name": "range",
+					"type": {
+						"kind": "reference",
+						"name": "Range"
+					}
+				},
+				{
+					"name": "command",
+					"type": {
+						"kind": "reference",
+						"name": "Command"
+					},
+					"optional": true
+				},
+				{
+					"name": "data",
+					"type": {
+						"kind": "reference",
+						"name": "LSPAny"
+					},
+					"optional": true
+				}
+			]
 		},
 		{
 			"name": "CodeLensRegistrationOptions",
@@ -1963,7 +4195,10 @@
 			"properties": [
 				{
 					"name": "textDocument",
-					"type": "TextDocumentIdentifier"
+					"type": {
+						"kind": "reference",
+						"name": "TextDocumentIdentifier"
+					}
 				}
 			],
 			"mixins": [
@@ -1973,7 +4208,39 @@
 		},
 		{
 			"name": "DocumentLink",
-			"properties": []
+			"properties": [
+				{
+					"name": "range",
+					"type": {
+						"kind": "reference",
+						"name": "Range"
+					}
+				},
+				{
+					"name": "target",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "tooltip",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "data",
+					"type": {
+						"kind": "reference",
+						"name": "LSPAny"
+					},
+					"optional": true
+				}
+			]
 		},
 		{
 			"name": "DocumentLinkRegistrationOptions",
@@ -1988,11 +4255,17 @@
 			"properties": [
 				{
 					"name": "textDocument",
-					"type": "TextDocumentIdentifier"
+					"type": {
+						"kind": "reference",
+						"name": "TextDocumentIdentifier"
+					}
 				},
 				{
 					"name": "options",
-					"type": "FormattingOptions"
+					"type": {
+						"kind": "reference",
+						"name": "FormattingOptions"
+					}
 				}
 			],
 			"mixins": [
@@ -2012,15 +4285,24 @@
 			"properties": [
 				{
 					"name": "textDocument",
-					"type": "TextDocumentIdentifier"
+					"type": {
+						"kind": "reference",
+						"name": "TextDocumentIdentifier"
+					}
 				},
 				{
 					"name": "range",
-					"type": "Range"
+					"type": {
+						"kind": "reference",
+						"name": "Range"
+					}
 				},
 				{
 					"name": "options",
-					"type": "FormattingOptions"
+					"type": {
+						"kind": "reference",
+						"name": "FormattingOptions"
+					}
 				}
 			],
 			"mixins": [
@@ -2040,19 +4322,31 @@
 			"properties": [
 				{
 					"name": "textDocument",
-					"type": "TextDocumentIdentifier"
+					"type": {
+						"kind": "reference",
+						"name": "TextDocumentIdentifier"
+					}
 				},
 				{
 					"name": "position",
-					"type": "Position"
+					"type": {
+						"kind": "reference",
+						"name": "Position"
+					}
 				},
 				{
 					"name": "ch",
-					"type": "string"
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
 				},
 				{
 					"name": "options",
-					"type": "FormattingOptions"
+					"type": {
+						"kind": "reference",
+						"name": "FormattingOptions"
+					}
 				}
 			]
 		},
@@ -2069,15 +4363,24 @@
 			"properties": [
 				{
 					"name": "textDocument",
-					"type": "TextDocumentIdentifier"
+					"type": {
+						"kind": "reference",
+						"name": "TextDocumentIdentifier"
+					}
 				},
 				{
 					"name": "position",
-					"type": "Position"
+					"type": {
+						"kind": "reference",
+						"name": "Position"
+					}
 				},
 				{
 					"name": "newName",
-					"type": "string"
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
 				}
 			],
 			"mixins": [
@@ -2111,11 +4414,21 @@
 			"properties": [
 				{
 					"name": "command",
-					"type": "string"
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
 				},
 				{
 					"name": "arguments",
-					"type": "LSPAny[] | undefined"
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "LSPAny"
+						}
+					},
+					"optional": true
 				}
 			],
 			"mixins": [
@@ -2134,11 +4447,18 @@
 			"properties": [
 				{
 					"name": "label",
-					"type": "string | undefined"
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true
 				},
 				{
 					"name": "edit",
-					"type": "WorkspaceEdit"
+					"type": {
+						"kind": "reference",
+						"name": "WorkspaceEdit"
+					}
 				}
 			]
 		},
@@ -2147,15 +4467,26 @@
 			"properties": [
 				{
 					"name": "applied",
-					"type": "boolean"
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					}
 				},
 				{
 					"name": "failureReason",
-					"type": "string | undefined"
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true
 				},
 				{
 					"name": "failedChange",
-					"type": "number | undefined"
+					"type": {
+						"kind": "base",
+						"name": "uinteger"
+					},
+					"optional": true
 				}
 			]
 		},
@@ -2206,6 +4537,2331 @@
 		{
 			"name": "DidCloseNotebookDocumentParams",
 			"properties": []
+		},
+		{
+			"name": "Range",
+			"properties": [
+				{
+					"name": "start",
+					"type": {
+						"kind": "reference",
+						"name": "Position"
+					}
+				},
+				{
+					"name": "end",
+					"type": {
+						"kind": "reference",
+						"name": "Position"
+					}
+				}
+			]
+		},
+		{
+			"name": "WorkspaceFoldersChangeEvent",
+			"properties": [
+				{
+					"name": "added",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "WorkspaceFolder"
+						}
+					}
+				},
+				{
+					"name": "removed",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "WorkspaceFolder"
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "ConfigurationItem",
+			"properties": [
+				{
+					"name": "scopeUri",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "section",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true
+				}
+			]
+		},
+		{
+			"name": "ProgressToken",
+			"properties": []
+		},
+		{
+			"name": "TextDocumentIdentifier",
+			"properties": [
+				{
+					"name": "uri",
+					"type": {
+						"kind": "base",
+						"name": "DocumentUri"
+					}
+				}
+			]
+		},
+		{
+			"name": "Color",
+			"properties": [
+				{
+					"name": "red",
+					"type": {
+						"kind": "base",
+						"name": "decimal"
+					}
+				},
+				{
+					"name": "green",
+					"type": {
+						"kind": "base",
+						"name": "decimal"
+					}
+				},
+				{
+					"name": "blue",
+					"type": {
+						"kind": "base",
+						"name": "decimal"
+					}
+				},
+				{
+					"name": "alpha",
+					"type": {
+						"kind": "base",
+						"name": "decimal"
+					}
+				}
+			]
+		},
+		{
+			"name": "DocumentSelector",
+			"properties": []
+		},
+		{
+			"name": "Position",
+			"properties": [
+				{
+					"name": "line",
+					"type": {
+						"kind": "base",
+						"name": "uinteger"
+					}
+				},
+				{
+					"name": "character",
+					"type": {
+						"kind": "base",
+						"name": "uinteger"
+					}
+				}
+			]
+		},
+		{
+			"name": "SymbolKind",
+			"properties": []
+		},
+		{
+			"name": "SymbolTag",
+			"properties": []
+		},
+		{
+			"name": "SemanticTokensEdit",
+			"properties": [
+				{
+					"name": "start",
+					"type": {
+						"kind": "base",
+						"name": "uinteger"
+					}
+				},
+				{
+					"name": "deleteCount",
+					"type": {
+						"kind": "base",
+						"name": "uinteger"
+					}
+				},
+				{
+					"name": "data",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "base",
+							"name": "uinteger"
+						}
+					},
+					"optional": true
+				}
+			]
+		},
+		{
+			"name": "URI",
+			"properties": []
+		},
+		{
+			"name": "FileCreate",
+			"properties": [
+				{
+					"name": "uri",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				}
+			]
+		},
+		{
+			"name": "TextDocumentEdit",
+			"properties": [
+				{
+					"name": "textDocument",
+					"type": {
+						"kind": "reference",
+						"name": "OptionalVersionedTextDocumentIdentifier"
+					}
+				},
+				{
+					"name": "edits",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "or",
+							"items": [
+								{
+									"kind": "reference",
+									"name": "TextEdit"
+								},
+								{
+									"kind": "reference",
+									"name": "AnnotatedTextEdit"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "CreateFile",
+			"properties": [
+				{
+					"name": "kind",
+					"type": {
+						"kind": "stringLiteral",
+						"value": "create"
+					}
+				},
+				{
+					"name": "uri",
+					"type": {
+						"kind": "base",
+						"name": "DocumentUri"
+					}
+				},
+				{
+					"name": "options",
+					"type": {
+						"kind": "reference",
+						"name": "CreateFileOptions"
+					},
+					"optional": true
+				}
+			],
+			"mixins": [
+				"ResourceOperation"
+			]
+		},
+		{
+			"name": "RenameFile",
+			"properties": [
+				{
+					"name": "kind",
+					"type": {
+						"kind": "stringLiteral",
+						"value": "rename"
+					}
+				},
+				{
+					"name": "oldUri",
+					"type": {
+						"kind": "base",
+						"name": "DocumentUri"
+					}
+				},
+				{
+					"name": "newUri",
+					"type": {
+						"kind": "base",
+						"name": "DocumentUri"
+					}
+				},
+				{
+					"name": "options",
+					"type": {
+						"kind": "reference",
+						"name": "RenameFileOptions"
+					},
+					"optional": true
+				}
+			],
+			"mixins": [
+				"ResourceOperation"
+			]
+		},
+		{
+			"name": "DeleteFile",
+			"properties": [
+				{
+					"name": "kind",
+					"type": {
+						"kind": "stringLiteral",
+						"value": "delete"
+					}
+				},
+				{
+					"name": "uri",
+					"type": {
+						"kind": "base",
+						"name": "DocumentUri"
+					}
+				},
+				{
+					"name": "options",
+					"type": {
+						"kind": "reference",
+						"name": "DeleteFileOptions"
+					},
+					"optional": true
+				}
+			],
+			"mixins": [
+				"ResourceOperation"
+			]
+		},
+		{
+			"name": "ChangeAnnotationIdentifier",
+			"properties": []
+		},
+		{
+			"name": "ChangeAnnotation",
+			"properties": [
+				{
+					"name": "label",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				},
+				{
+					"name": "needsConfirmation",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
+				},
+				{
+					"name": "description",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true
+				}
+			]
+		},
+		{
+			"name": "FileOperationFilter",
+			"properties": [
+				{
+					"name": "scheme",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "pattern",
+					"type": {
+						"kind": "reference",
+						"name": "FileOperationPattern"
+					}
+				}
+			]
+		},
+		{
+			"name": "FileRename",
+			"properties": [
+				{
+					"name": "oldUri",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				},
+				{
+					"name": "newUri",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				}
+			]
+		},
+		{
+			"name": "FileDelete",
+			"properties": [
+				{
+					"name": "uri",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				}
+			]
+		},
+		{
+			"name": "UniquenessLevel",
+			"properties": []
+		},
+		{
+			"name": "MonikerKind",
+			"properties": []
+		},
+		{
+			"name": "Registration",
+			"properties": [
+				{
+					"name": "id",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				},
+				{
+					"name": "method",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				},
+				{
+					"name": "registerOptions",
+					"type": {
+						"kind": "reference",
+						"name": "LSPAny"
+					},
+					"optional": true
+				}
+			]
+		},
+		{
+			"name": "Unregistration",
+			"properties": [
+				{
+					"name": "id",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				},
+				{
+					"name": "method",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				}
+			]
+		},
+		{
+			"name": "ServerCapabilities",
+			"properties": [
+				{
+					"name": "textDocumentSync",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "reference",
+								"name": "TextDocumentSyncOptions"
+							},
+							{
+								"kind": "reference",
+								"name": "TextDocumentSyncKind"
+							}
+						]
+					},
+					"optional": true
+				},
+				{
+					"name": "completionProvider",
+					"type": {
+						"kind": "reference",
+						"name": "CompletionOptions"
+					},
+					"optional": true
+				},
+				{
+					"name": "hoverProvider",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "boolean"
+							},
+							{
+								"kind": "reference",
+								"name": "HoverOptions"
+							}
+						]
+					},
+					"optional": true
+				},
+				{
+					"name": "signatureHelpProvider",
+					"type": {
+						"kind": "reference",
+						"name": "SignatureHelpOptions"
+					},
+					"optional": true
+				},
+				{
+					"name": "declarationProvider",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "boolean"
+							},
+							{
+								"kind": "reference",
+								"name": "DeclarationOptions"
+							},
+							{
+								"kind": "reference",
+								"name": "DeclarationRegistrationOptions"
+							}
+						]
+					},
+					"optional": true
+				},
+				{
+					"name": "definitionProvider",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "boolean"
+							},
+							{
+								"kind": "reference",
+								"name": "DefinitionOptions"
+							}
+						]
+					},
+					"optional": true
+				},
+				{
+					"name": "typeDefinitionProvider",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "boolean"
+							},
+							{
+								"kind": "reference",
+								"name": "TypeDefinitionOptions"
+							},
+							{
+								"kind": "reference",
+								"name": "TypeDefinitionRegistrationOptions"
+							}
+						]
+					},
+					"optional": true
+				},
+				{
+					"name": "implementationProvider",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "boolean"
+							},
+							{
+								"kind": "reference",
+								"name": "ImplementationOptions"
+							},
+							{
+								"kind": "reference",
+								"name": "ImplementationRegistrationOptions"
+							}
+						]
+					},
+					"optional": true
+				},
+				{
+					"name": "referencesProvider",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "boolean"
+							},
+							{
+								"kind": "reference",
+								"name": "ReferenceOptions"
+							}
+						]
+					},
+					"optional": true
+				},
+				{
+					"name": "documentHighlightProvider",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "boolean"
+							},
+							{
+								"kind": "reference",
+								"name": "DocumentHighlightOptions"
+							}
+						]
+					},
+					"optional": true
+				},
+				{
+					"name": "documentSymbolProvider",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "boolean"
+							},
+							{
+								"kind": "reference",
+								"name": "DocumentSymbolOptions"
+							}
+						]
+					},
+					"optional": true
+				},
+				{
+					"name": "codeActionProvider",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "boolean"
+							},
+							{
+								"kind": "reference",
+								"name": "CodeActionOptions"
+							}
+						]
+					},
+					"optional": true
+				},
+				{
+					"name": "codeLensProvider",
+					"type": {
+						"kind": "reference",
+						"name": "CodeLensOptions"
+					},
+					"optional": true
+				},
+				{
+					"name": "documentLinkProvider",
+					"type": {
+						"kind": "reference",
+						"name": "DocumentLinkOptions"
+					},
+					"optional": true
+				},
+				{
+					"name": "colorProvider",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "boolean"
+							},
+							{
+								"kind": "reference",
+								"name": "DocumentColorOptions"
+							},
+							{
+								"kind": "reference",
+								"name": "DocumentColorRegistrationOptions"
+							}
+						]
+					},
+					"optional": true
+				},
+				{
+					"name": "workspaceSymbolProvider",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "boolean"
+							},
+							{
+								"kind": "reference",
+								"name": "WorkspaceSymbolOptions"
+							}
+						]
+					},
+					"optional": true
+				},
+				{
+					"name": "documentFormattingProvider",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "boolean"
+							},
+							{
+								"kind": "reference",
+								"name": "DocumentFormattingOptions"
+							}
+						]
+					},
+					"optional": true
+				},
+				{
+					"name": "documentRangeFormattingProvider",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "boolean"
+							},
+							{
+								"kind": "reference",
+								"name": "DocumentRangeFormattingOptions"
+							}
+						]
+					},
+					"optional": true
+				},
+				{
+					"name": "documentOnTypeFormattingProvider",
+					"type": {
+						"kind": "reference",
+						"name": "DocumentOnTypeFormattingOptions"
+					},
+					"optional": true
+				},
+				{
+					"name": "renameProvider",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "boolean"
+							},
+							{
+								"kind": "reference",
+								"name": "RenameOptions"
+							}
+						]
+					},
+					"optional": true
+				},
+				{
+					"name": "foldingRangeProvider",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "boolean"
+							},
+							{
+								"kind": "reference",
+								"name": "FoldingRangeOptions"
+							},
+							{
+								"kind": "reference",
+								"name": "FoldingRangeRegistrationOptions"
+							}
+						]
+					},
+					"optional": true
+				},
+				{
+					"name": "selectionRangeProvider",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "boolean"
+							},
+							{
+								"kind": "reference",
+								"name": "SelectionRangeOptions"
+							},
+							{
+								"kind": "reference",
+								"name": "SelectionRangeRegistrationOptions"
+							}
+						]
+					},
+					"optional": true
+				},
+				{
+					"name": "executeCommandProvider",
+					"type": {
+						"kind": "reference",
+						"name": "ExecuteCommandOptions"
+					},
+					"optional": true
+				},
+				{
+					"name": "callHierarchyProvider",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "boolean"
+							},
+							{
+								"kind": "reference",
+								"name": "CallHierarchyOptions"
+							},
+							{
+								"kind": "reference",
+								"name": "CallHierarchyRegistrationOptions"
+							}
+						]
+					},
+					"optional": true
+				},
+				{
+					"name": "linkedEditingRangeProvider",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "boolean"
+							},
+							{
+								"kind": "reference",
+								"name": "LinkedEditingRangeOptions"
+							},
+							{
+								"kind": "reference",
+								"name": "LinkedEditingRangeRegistrationOptions"
+							}
+						]
+					},
+					"optional": true
+				},
+				{
+					"name": "semanticTokensProvider",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "reference",
+								"name": "SemanticTokensOptions"
+							},
+							{
+								"kind": "reference",
+								"name": "SemanticTokensRegistrationOptions"
+							}
+						]
+					},
+					"optional": true
+				},
+				{
+					"name": "monikerProvider",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "boolean"
+							},
+							{
+								"kind": "reference",
+								"name": "MonikerOptions"
+							},
+							{
+								"kind": "reference",
+								"name": "MonikerRegistrationOptions"
+							}
+						]
+					},
+					"optional": true
+				},
+				{
+					"name": "typeHierarchyProvider",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "boolean"
+							},
+							{
+								"kind": "reference",
+								"name": "TypeHierarchyOptions"
+							},
+							{
+								"kind": "reference",
+								"name": "TypeHierarchyRegistrationOptions"
+							}
+						]
+					},
+					"optional": true
+				},
+				{
+					"name": "inlineValueProvider",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "boolean"
+							},
+							{
+								"kind": "reference",
+								"name": "InlineValueOptions"
+							},
+							{
+								"kind": "reference",
+								"name": "InlineValueRegistrationOptions"
+							}
+						]
+					},
+					"optional": true
+				},
+				{
+					"name": "inlayHintProvider",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "boolean"
+							},
+							{
+								"kind": "reference",
+								"name": "InlayHintOptions"
+							},
+							{
+								"kind": "reference",
+								"name": "InlayHintRegistrationOptions"
+							}
+						]
+					},
+					"optional": true
+				},
+				{
+					"name": "workspace",
+					"type": {
+						"kind": "literal",
+						"value": {
+							"properties": [
+								{
+									"name": "workspaceFolders",
+									"type": {
+										"kind": "reference",
+										"name": "WorkspaceFoldersServerCapabilities"
+									},
+									"optional": true
+								},
+								{
+									"name": "fileOperations",
+									"type": {
+										"kind": "reference",
+										"name": "FileOperationOptions"
+									},
+									"optional": true
+								}
+							]
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "experimental",
+					"type": {
+						"kind": "reference",
+						"name": "T"
+					},
+					"optional": true
+				}
+			]
+		},
+		{
+			"name": "MessageType",
+			"properties": []
+		},
+		{
+			"name": "TextDocumentItem",
+			"properties": [
+				{
+					"name": "uri",
+					"type": {
+						"kind": "base",
+						"name": "DocumentUri"
+					}
+				},
+				{
+					"name": "languageId",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				},
+				{
+					"name": "version",
+					"type": {
+						"kind": "base",
+						"name": "integer"
+					}
+				},
+				{
+					"name": "text",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				}
+			]
+		},
+		{
+			"name": "VersionedTextDocumentIdentifier",
+			"properties": [
+				{
+					"name": "version",
+					"type": {
+						"kind": "base",
+						"name": "integer"
+					}
+				}
+			],
+			"mixins": [
+				"TextDocumentIdentifier"
+			]
+		},
+		{
+			"name": "TextDocumentContentChangeEvent",
+			"properties": []
+		},
+		{
+			"name": "TextDocumentSyncKind",
+			"properties": []
+		},
+		{
+			"name": "TextDocumentSaveReason",
+			"properties": []
+		},
+		{
+			"name": "FileEvent",
+			"properties": [
+				{
+					"name": "uri",
+					"type": {
+						"kind": "base",
+						"name": "DocumentUri"
+					}
+				},
+				{
+					"name": "type",
+					"type": {
+						"kind": "reference",
+						"name": "FileChangeType"
+					}
+				}
+			]
+		},
+		{
+			"name": "FileSystemWatcher",
+			"properties": [
+				{
+					"name": "globPattern",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				},
+				{
+					"name": "kind",
+					"type": {
+						"kind": "base",
+						"name": "uinteger"
+					},
+					"optional": true
+				}
+			]
+		},
+		{
+			"name": "Diagnostic",
+			"properties": [
+				{
+					"name": "range",
+					"type": {
+						"kind": "reference",
+						"name": "Range"
+					}
+				},
+				{
+					"name": "severity",
+					"type": {
+						"kind": "reference",
+						"name": "DiagnosticSeverity"
+					},
+					"optional": true
+				},
+				{
+					"name": "code",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "integer"
+							},
+							{
+								"kind": "base",
+								"name": "string"
+							}
+						]
+					},
+					"optional": true
+				},
+				{
+					"name": "codeDescription",
+					"type": {
+						"kind": "reference",
+						"name": "CodeDescription"
+					},
+					"optional": true
+				},
+				{
+					"name": "source",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "message",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				},
+				{
+					"name": "tags",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "DiagnosticTag"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "relatedInformation",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "DiagnosticRelatedInformation"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "data",
+					"type": {
+						"kind": "reference",
+						"name": "LSPAny"
+					},
+					"optional": true
+				}
+			]
+		},
+		{
+			"name": "CompletionContext",
+			"properties": [
+				{
+					"name": "triggerKind",
+					"type": {
+						"kind": "reference",
+						"name": "CompletionTriggerKind"
+					}
+				},
+				{
+					"name": "triggerCharacter",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true
+				}
+			]
+		},
+		{
+			"name": "CompletionItemLabelDetails",
+			"properties": [
+				{
+					"name": "detail",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "description",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true
+				}
+			]
+		},
+		{
+			"name": "CompletionItemKind",
+			"properties": []
+		},
+		{
+			"name": "CompletionItemTag",
+			"properties": []
+		},
+		{
+			"name": "MarkupContent",
+			"properties": [
+				{
+					"name": "kind",
+					"type": {
+						"kind": "reference",
+						"name": "MarkupKind"
+					}
+				},
+				{
+					"name": "value",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				}
+			]
+		},
+		{
+			"name": "InsertTextFormat",
+			"properties": []
+		},
+		{
+			"name": "InsertTextMode",
+			"properties": []
+		},
+		{
+			"name": "InsertReplaceEdit",
+			"properties": [
+				{
+					"name": "newText",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				},
+				{
+					"name": "insert",
+					"type": {
+						"kind": "reference",
+						"name": "Range"
+					}
+				},
+				{
+					"name": "replace",
+					"type": {
+						"kind": "reference",
+						"name": "Range"
+					}
+				}
+			]
+		},
+		{
+			"name": "MarkedString",
+			"properties": []
+		},
+		{
+			"name": "SignatureHelpContext",
+			"properties": [
+				{
+					"name": "triggerKind",
+					"type": {
+						"kind": "reference",
+						"name": "SignatureHelpTriggerKind"
+					}
+				},
+				{
+					"name": "triggerCharacter",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "isRetrigger",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					}
+				},
+				{
+					"name": "activeSignatureHelp",
+					"type": {
+						"kind": "reference",
+						"name": "SignatureHelp"
+					},
+					"optional": true
+				}
+			]
+		},
+		{
+			"name": "SignatureInformation",
+			"properties": [
+				{
+					"name": "label",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				},
+				{
+					"name": "documentation",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "string"
+							},
+							{
+								"kind": "reference",
+								"name": "MarkupContent"
+							}
+						]
+					},
+					"optional": true
+				},
+				{
+					"name": "parameters",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "ParameterInformation"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "activeParameter",
+					"type": {
+						"kind": "base",
+						"name": "uinteger"
+					},
+					"optional": true
+				}
+			]
+		},
+		{
+			"name": "ReferenceContext",
+			"properties": [
+				{
+					"name": "includeDeclaration",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					}
+				}
+			]
+		},
+		{
+			"name": "DocumentHighlightKind",
+			"properties": []
+		},
+		{
+			"name": "CodeActionContext",
+			"properties": [
+				{
+					"name": "diagnostics",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "Diagnostic"
+						}
+					}
+				},
+				{
+					"name": "only",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "CodeActionKind"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "triggerKind",
+					"type": {
+						"kind": "reference",
+						"name": "CodeActionTriggerKind"
+					},
+					"optional": true
+				}
+			]
+		},
+		{
+			"name": "CodeActionKind",
+			"properties": []
+		},
+		{
+			"name": "FormattingOptions",
+			"properties": [
+				{
+					"name": "tabSize",
+					"type": {
+						"kind": "base",
+						"name": "uinteger"
+					}
+				},
+				{
+					"name": "insertSpaces",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					}
+				},
+				{
+					"name": "trimTrailingWhitespace",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
+				},
+				{
+					"name": "insertFinalNewline",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
+				},
+				{
+					"name": "trimFinalNewlines",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
+				}
+			]
+		},
+		{
+			"name": "OptionalVersionedTextDocumentIdentifier",
+			"properties": [
+				{
+					"name": "version",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "integer"
+							},
+							{
+								"kind": "base",
+								"name": "null"
+							}
+						]
+					}
+				}
+			],
+			"mixins": [
+				"TextDocumentIdentifier"
+			]
+		},
+		{
+			"name": "AnnotatedTextEdit",
+			"properties": [
+				{
+					"name": "annotationId",
+					"type": {
+						"kind": "reference",
+						"name": "ChangeAnnotationIdentifier"
+					}
+				}
+			],
+			"mixins": [
+				"TextEdit"
+			]
+		},
+		{
+			"name": "CreateFileOptions",
+			"properties": [
+				{
+					"name": "overwrite",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
+				},
+				{
+					"name": "ignoreIfExists",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
+				}
+			]
+		},
+		{
+			"name": "RenameFileOptions",
+			"properties": [
+				{
+					"name": "overwrite",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
+				},
+				{
+					"name": "ignoreIfExists",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
+				}
+			]
+		},
+		{
+			"name": "DeleteFileOptions",
+			"properties": [
+				{
+					"name": "recursive",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
+				},
+				{
+					"name": "ignoreIfNotExists",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
+				}
+			]
+		},
+		{
+			"name": "FileOperationPattern",
+			"properties": [
+				{
+					"name": "glob",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				},
+				{
+					"name": "matches",
+					"type": {
+						"kind": "reference",
+						"name": "FileOperationPatternKind"
+					},
+					"optional": true
+				},
+				{
+					"name": "options",
+					"type": {
+						"kind": "reference",
+						"name": "FileOperationPatternOptions"
+					},
+					"optional": true
+				}
+			]
+		},
+		{
+			"name": "TextDocumentSyncOptions",
+			"properties": [
+				{
+					"name": "openClose",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
+				},
+				{
+					"name": "change",
+					"type": {
+						"kind": "reference",
+						"name": "TextDocumentSyncKind"
+					},
+					"optional": true
+				},
+				{
+					"name": "willSave",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
+				},
+				{
+					"name": "willSaveWaitUntil",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
+				},
+				{
+					"name": "save",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "boolean"
+							},
+							{
+								"kind": "reference",
+								"name": "SaveOptions"
+							}
+						]
+					},
+					"optional": true
+				}
+			]
+		},
+		{
+			"name": "CompletionOptions",
+			"properties": [
+				{
+					"name": "triggerCharacters",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "base",
+							"name": "string"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "allCommitCharacters",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "base",
+							"name": "string"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "resolveProvider",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
+				},
+				{
+					"name": "completionItem",
+					"type": {
+						"kind": "literal",
+						"value": {
+							"properties": [
+								{
+									"name": "labelDetailsSupport",
+									"type": {
+										"kind": "base",
+										"name": "boolean"
+									},
+									"optional": true
+								}
+							]
+						}
+					},
+					"optional": true
+				}
+			],
+			"mixins": [
+				"WorkDoneProgressOptions"
+			]
+		},
+		{
+			"name": "HoverOptions",
+			"properties": [],
+			"mixins": [
+				"WorkDoneProgressOptions"
+			]
+		},
+		{
+			"name": "SignatureHelpOptions",
+			"properties": [
+				{
+					"name": "triggerCharacters",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "base",
+							"name": "string"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "retriggerCharacters",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "base",
+							"name": "string"
+						}
+					},
+					"optional": true
+				}
+			],
+			"mixins": [
+				"WorkDoneProgressOptions"
+			]
+		},
+		{
+			"name": "DeclarationOptions",
+			"properties": [],
+			"mixins": [
+				"WorkDoneProgressOptions"
+			]
+		},
+		{
+			"name": "DefinitionOptions",
+			"properties": [],
+			"mixins": [
+				"WorkDoneProgressOptions"
+			]
+		},
+		{
+			"name": "TypeDefinitionOptions",
+			"properties": [],
+			"mixins": [
+				"WorkDoneProgressOptions"
+			]
+		},
+		{
+			"name": "ImplementationOptions",
+			"properties": [],
+			"mixins": [
+				"WorkDoneProgressOptions"
+			]
+		},
+		{
+			"name": "ReferenceOptions",
+			"properties": [],
+			"mixins": [
+				"WorkDoneProgressOptions"
+			]
+		},
+		{
+			"name": "DocumentHighlightOptions",
+			"properties": [],
+			"mixins": [
+				"WorkDoneProgressOptions"
+			]
+		},
+		{
+			"name": "DocumentSymbolOptions",
+			"properties": [
+				{
+					"name": "label",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true
+				}
+			],
+			"mixins": [
+				"WorkDoneProgressOptions"
+			]
+		},
+		{
+			"name": "CodeActionOptions",
+			"properties": [
+				{
+					"name": "codeActionKinds",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "CodeActionKind"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "resolveProvider",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
+				}
+			],
+			"mixins": [
+				"WorkDoneProgressOptions"
+			]
+		},
+		{
+			"name": "CodeLensOptions",
+			"properties": [
+				{
+					"name": "resolveProvider",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
+				}
+			],
+			"mixins": [
+				"WorkDoneProgressOptions"
+			]
+		},
+		{
+			"name": "DocumentLinkOptions",
+			"properties": [
+				{
+					"name": "resolveProvider",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
+				}
+			],
+			"mixins": [
+				"WorkDoneProgressOptions"
+			]
+		},
+		{
+			"name": "DocumentColorOptions",
+			"properties": [],
+			"mixins": [
+				"WorkDoneProgressOptions"
+			]
+		},
+		{
+			"name": "WorkspaceSymbolOptions",
+			"properties": [
+				{
+					"name": "resolveProvider",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
+				}
+			],
+			"mixins": [
+				"WorkDoneProgressOptions"
+			]
+		},
+		{
+			"name": "DocumentFormattingOptions",
+			"properties": [],
+			"mixins": [
+				"WorkDoneProgressOptions"
+			]
+		},
+		{
+			"name": "DocumentRangeFormattingOptions",
+			"properties": [],
+			"mixins": [
+				"WorkDoneProgressOptions"
+			]
+		},
+		{
+			"name": "DocumentOnTypeFormattingOptions",
+			"properties": [
+				{
+					"name": "firstTriggerCharacter",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				},
+				{
+					"name": "moreTriggerCharacter",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "base",
+							"name": "string"
+						}
+					},
+					"optional": true
+				}
+			]
+		},
+		{
+			"name": "RenameOptions",
+			"properties": [
+				{
+					"name": "prepareProvider",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
+				}
+			],
+			"mixins": [
+				"WorkDoneProgressOptions"
+			]
+		},
+		{
+			"name": "FoldingRangeOptions",
+			"properties": [],
+			"mixins": [
+				"WorkDoneProgressOptions"
+			]
+		},
+		{
+			"name": "SelectionRangeOptions",
+			"properties": [],
+			"mixins": [
+				"WorkDoneProgressOptions"
+			]
+		},
+		{
+			"name": "ExecuteCommandOptions",
+			"properties": [
+				{
+					"name": "commands",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "base",
+							"name": "string"
+						}
+					}
+				}
+			],
+			"mixins": [
+				"WorkDoneProgressOptions"
+			]
+		},
+		{
+			"name": "CallHierarchyOptions",
+			"properties": [],
+			"mixins": [
+				"WorkDoneProgressOptions"
+			]
+		},
+		{
+			"name": "LinkedEditingRangeOptions",
+			"properties": [],
+			"mixins": [
+				"WorkDoneProgressOptions"
+			]
+		},
+		{
+			"name": "SemanticTokensOptions",
+			"properties": [
+				{
+					"name": "legend",
+					"type": {
+						"kind": "reference",
+						"name": "SemanticTokensLegend"
+					}
+				},
+				{
+					"name": "range",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "boolean"
+							},
+							{
+								"kind": "literal",
+								"value": {
+									"properties": []
+								}
+							}
+						]
+					},
+					"optional": true
+				},
+				{
+					"name": "full",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "boolean"
+							},
+							{
+								"kind": "literal",
+								"value": {
+									"properties": [
+										{
+											"name": "delta",
+											"type": {
+												"kind": "base",
+												"name": "boolean"
+											},
+											"optional": true
+										}
+									]
+								}
+							}
+						]
+					},
+					"optional": true
+				}
+			],
+			"mixins": [
+				"WorkDoneProgressOptions"
+			]
+		},
+		{
+			"name": "MonikerOptions",
+			"properties": [],
+			"mixins": [
+				"WorkDoneProgressOptions"
+			]
+		},
+		{
+			"name": "TypeHierarchyOptions",
+			"properties": []
+		},
+		{
+			"name": "InlineValueOptions",
+			"properties": []
+		},
+		{
+			"name": "InlayHintOptions",
+			"properties": []
+		},
+		{
+			"name": "WorkspaceFoldersServerCapabilities",
+			"properties": [
+				{
+					"name": "supported",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
+				},
+				{
+					"name": "changeNotifications",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "string"
+							},
+							{
+								"kind": "base",
+								"name": "boolean"
+							}
+						]
+					},
+					"optional": true
+				}
+			]
+		},
+		{
+			"name": "FileOperationOptions",
+			"properties": [
+				{
+					"name": "didCreate",
+					"type": {
+						"kind": "reference",
+						"name": "FileOperationRegistrationOptions"
+					},
+					"optional": true
+				},
+				{
+					"name": "willCreate",
+					"type": {
+						"kind": "reference",
+						"name": "FileOperationRegistrationOptions"
+					},
+					"optional": true
+				},
+				{
+					"name": "didRename",
+					"type": {
+						"kind": "reference",
+						"name": "FileOperationRegistrationOptions"
+					},
+					"optional": true
+				},
+				{
+					"name": "willRename",
+					"type": {
+						"kind": "reference",
+						"name": "FileOperationRegistrationOptions"
+					},
+					"optional": true
+				},
+				{
+					"name": "didDelete",
+					"type": {
+						"kind": "reference",
+						"name": "FileOperationRegistrationOptions"
+					},
+					"optional": true
+				},
+				{
+					"name": "willDelete",
+					"type": {
+						"kind": "reference",
+						"name": "FileOperationRegistrationOptions"
+					},
+					"optional": true
+				}
+			]
+		},
+		{
+			"name": "T",
+			"properties": []
+		},
+		{
+			"name": "FileChangeType",
+			"properties": []
+		},
+		{
+			"name": "DiagnosticSeverity",
+			"properties": []
+		},
+		{
+			"name": "CodeDescription",
+			"properties": [
+				{
+					"name": "href",
+					"type": {
+						"kind": "reference",
+						"name": "URI"
+					}
+				}
+			]
+		},
+		{
+			"name": "DiagnosticTag",
+			"properties": []
+		},
+		{
+			"name": "DiagnosticRelatedInformation",
+			"properties": [
+				{
+					"name": "location",
+					"type": {
+						"kind": "reference",
+						"name": "Location"
+					}
+				},
+				{
+					"name": "message",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				}
+			]
+		},
+		{
+			"name": "CompletionTriggerKind",
+			"properties": []
+		},
+		{
+			"name": "MarkupKind",
+			"properties": []
+		},
+		{
+			"name": "SignatureHelpTriggerKind",
+			"properties": []
+		},
+		{
+			"name": "ParameterInformation",
+			"properties": [
+				{
+					"name": "label",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "string"
+							},
+							{
+								"kind": "tuple",
+								"items": [
+									{
+										"kind": "base",
+										"name": "uinteger"
+									},
+									{
+										"kind": "base",
+										"name": "uinteger"
+									}
+								]
+							}
+						]
+					}
+				},
+				{
+					"name": "documentation",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "string"
+							},
+							{
+								"kind": "reference",
+								"name": "MarkupContent"
+							}
+						]
+					},
+					"optional": true
+				}
+			]
+		},
+		{
+			"name": "CodeActionTriggerKind",
+			"properties": []
+		},
+		{
+			"name": "FileOperationPatternKind",
+			"properties": []
+		},
+		{
+			"name": "FileOperationPatternOptions",
+			"properties": [
+				{
+					"name": "ignoreCase",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
+				}
+			]
+		},
+		{
+			"name": "SaveOptions",
+			"properties": [
+				{
+					"name": "includeText",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
+				}
+			]
+		},
+		{
+			"name": "SemanticTokensLegend",
+			"properties": [
+				{
+					"name": "tokenTypes",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "base",
+							"name": "string"
+						}
+					}
+				},
+				{
+					"name": "tokenModifiers",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "base",
+							"name": "string"
+						}
+					}
+				}
+			]
 		}
 	]
 }

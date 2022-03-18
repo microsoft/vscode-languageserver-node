@@ -3,16 +3,80 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-export type BaseTypes = 'Uri' | 'DocumentUri' | 'integer' | 'uinteger' | 'decimal' | 'RegExp' | 'null' | 'void';
+export type BaseTypes = 'Uri' | 'DocumentUri' | 'integer' | 'uinteger' | 'decimal' | 'RegExp' | 'string' | 'boolean' | 'null';
 
-export type Type = BaseTypes | string | {
-	array: Type;
-} | {
-	and: Type[];
-} | {
-	or: Type[];
-};
+export type TypeKind = 'base' | 'reference' | 'array' | 'map' | 'and' | 'or' | 'tuple' | 'literal' | 'stringLiteral' | 'numberLiteral' | 'booleanLiteral';
 
+export type Type = {
+	kind: TypeKind;
+} & ({
+	/**
+	 * Represents a base type like `string` or `DocumentUri`
+	 */
+	kind: 'base';
+	name: BaseTypes;
+} | {
+	/**
+	 * Represents a reference to another type (e.g. `TextDocument`)
+	 */
+	kind: 'reference';
+	name: string;
+} | {
+	/**
+	 * Represents an array type (e.g. `TextDocument[]`)
+	 */
+	kind: 'array';
+	element: Type;
+} | {
+	/**
+	 * Represents a JSON object map.
+	 * (e.g. `interface Map<K extends string | number, V> { [key: K] => V; }`)
+	 */
+	kind: 'map';
+	key: Type;
+	value: Type;
+} | {
+	/**
+	 * Represents an `and`, `or` or `tuple` type
+	 * - and: `TextDocumentParams & WorkDoneProgressParams`
+	 * - or: `Location | LocationLink`
+	 * - tuple: `[integer, integer]`
+	 */
+	kind: 'and' | 'or' | 'tuple';
+	items: Type[];
+} | {
+	/**
+	 * Represents a literal structure
+	 * (e.g. `property: { start: uinteger; end: uinteger; })`
+	 */
+	kind: 'literal';
+	value: StructureLiteral;
+} | {
+	/**
+	 * Represents a string literal type
+	 * (e.g. `kind: 'rename'`)
+	 */
+	kind: 'stringLiteral';
+	value: string;
+} | {
+	/**
+	 * Represents a number literal type
+	 * (e.g. `kind: 1`)
+	 */
+	kind: 'numberLiteral';
+	value: number;
+} | {
+	/**
+	 * Represents a boolean literal type
+	 * (e.g. `kind: true`)
+	 */
+	kind: 'booleanLiteral';
+	value: boolean;
+});
+
+/**
+ * Represents a LSP request
+ */
 export type Request = {
 	/**
 	 * The request's method name.
@@ -47,6 +111,9 @@ export type Request = {
 	registrationOptions?: Type;
 };
 
+/**
+ * Represents a LSP notification
+ */
 export type Notification = {
 	/**
 	 * The request's method name.
@@ -65,6 +132,9 @@ export type Notification = {
 	registrationOptions?: Type;
 };
 
+/**
+ * Represents an object property.
+ */
 export type Property = {
 	/**
 	 * The property name;
@@ -80,8 +150,17 @@ export type Property = {
 	 * The type of the property
 	 */
 	type: Type;
+
+	/**
+	 * Whether the property is optional. If
+	 * omitted the property is mandatory.
+	 */
+	optional?: boolean;
 };
 
+/**
+ * Defines the structure of an object literal.
+ */
 export type Structure = {
 	/**
 	 * The name of the structure
@@ -107,4 +186,61 @@ export type Structure = {
 	 * The Properties
 	 */
 	properties: Property[];
+};
+
+/**
+ * Defines a unnamed structure of an object literal.
+ */
+export type StructureLiteral = {
+
+	/**
+	 * An optional documentation;
+	 */
+	documentation?: string;
+
+	/**
+	 * The Properties
+	 */
+	properties: Property[];
+};
+
+/**
+ * Defines a type alias.
+ * (e.g. `type Definition = Location | LocationLink`)
+ */
+export type TypeAlias = {
+	/**
+	 * The name of the type alias
+	 */
+	name: string;
+
+	/**
+	 * The aliased type
+	 */
+	type: Type;
+};
+
+/**
+ * The actual meta model.
+ */
+export type MetaModel = {
+	/**
+	 * The type aliases
+	 */
+	typeAliases: TypeAlias[];
+
+	/**
+	 * The structures
+	 */
+	structures: Structure[];
+
+	/**
+	 * The notifications.
+	 */
+	notifications: Notification[];
+
+	/**
+	 * The requests.
+	 */
+	requests: Request[];
 };

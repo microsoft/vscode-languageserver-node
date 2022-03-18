@@ -5,23 +5,34 @@
 
 import * as ts from 'typescript';
 
-import { Symbols, Type } from './typescripts';
+import { Symbols } from './typescripts';
 
-import { Type as JsonType, Request as JsonRequest, Notification as JsonNotification, Structure, Property } from './metamodel';
+import { Type as JsonType, Request as JsonRequest, Notification as JsonNotification, Structure, Property, StructureLiteral, BaseTypes } from './metamodel';
 
-type TypeInfoKind = 'single' | 'array' | 'union' | 'intersection' | 'void' | 'never' | 'unknown' | 'null' | 'undefined' | 'any';
+const LSPBaseTypes = new Set(['Uri', 'DocumentUri', 'integer', 'uinteger', 'decimal']);
+type BaseTypeInfoKind = 'string' | 'boolean' | 'Uri' | 'DocumentUri' | 'integer' | 'uinteger' | 'decimal' | 'void' | 'never' | 'unknown' | 'null' | 'undefined' | 'any';
+
+export type TypeInfoKind = 'base' | 'reference' | 'array' | 'map' | 'intersection' | 'union' | 'tuple' | 'literal' | 'stringLiteral' | 'numberLiteral' | 'booleanLiteral';
+
 
 type TypeInfo =
 {
 	kind: TypeInfoKind;
 } &
 ({
-	kind: 'single';
+	kind: 'base';
+	name: BaseTypeInfoKind;
+} | {
+	kind: 'reference';
 	name: string;
 	symbol: ts.Symbol;
 } | {
 	kind: 'array';
 	elementType: TypeInfo;
+} | {
+	kind: 'map';
+	key: TypeInfo;
+	value: TypeInfo;
 } | {
 	kind: 'union';
 	items: TypeInfo[];
@@ -29,24 +40,68 @@ type TypeInfo =
 	kind: 'intersection';
 	items: TypeInfo[];
 } | {
-	kind: 'void' | 'never' | 'unknown' | 'null' | 'undefined' | 'any';
+	kind: 'tuple';
+	items: TypeInfo[];
+} | {
+	kind: 'literal';
+	items: Map<string, { type: TypeInfo; optional: boolean }>;
+} | {
+	kind: 'stringLiteral';
+	value: string;
+} | {
+	kind: 'numberLiteral';
+	value: number;
+} | {
+	kind: 'booleanLiteral';
+	value: boolean;
 });
 
 namespace TypeInfo {
+
+	export function isNonLSPType(info: TypeInfo): boolean {
+		return info.kind === 'base' && (info.name === 'void' || info.name === 'undefined' || info.name === 'never' || info.name === 'unknown');
+	}
+
+	export function isVoid(info: TypeInfo): info is { kind: 'base'; name: 'void' } {
+		return info.kind === 'base' && info.name === 'void';
+	}
+
+	const baseSet = new Set(['null', 'void', 'string', 'boolean', 'Uri', 'DocumentUri', 'integer', 'uinteger', 'decimal']);
 	export function asJsonType(info: TypeInfo): JsonType {
 		switch (info.kind) {
-			case 'single':
-				return info.name;
+			case 'base':
+				if (baseSet.has(info.name)) {
+					return { kind: 'base', name: info.name as BaseTypes };
+				}
+				break;
+			case 'reference':
+				return { kind: 'reference', name: info.name };
 			case 'array':
-				return { array: asJsonType(info.elementType) };
+				return { kind: 'array', element: asJsonType(info.elementType) };
+			case 'map':
+				return { kind: 'map', key: asJsonType(info.key), value: asJsonType(info.value) };
 			case 'union':
-				return { or: info.items.map(info => asJsonType(info)) };
+				return { kind: 'or', items: info.items.map(info => asJsonType(info)) };
 			case 'intersection':
-				return { and: info.items.map(info => asJsonType(info)) };
-			case 'null':
-				return 'null';
-			case 'void':
-				return 'void';
+				return { kind: 'and', items: info.items.map(info => asJsonType(info)) };
+			case 'tuple':
+				return { kind: 'tuple', items: info.items.map(info => asJsonType(info)) };
+			case 'literal':
+				const literal: StructureLiteral = { properties: [] };
+				for (const entry of info.items) {
+					const property: Property = { name: entry[0], type: asJsonType(entry[1].type) };
+					if (entry[1].optional) {
+						property.optional = true;
+					}
+					literal.properties.push(property);
+				}
+				return { kind: 'literal', value: literal };
+			case 'stringLiteral':
+				return { kind: 'stringLiteral', value: info.value };
+			case 'numberLiteral':
+				return { kind: 'numberLiteral', value: info.value };
+			case 'booleanLiteral':
+				return { kind: 'booleanLiteral', value: info.value };
 		}
 		throw new Error(`Can't convert type info ${JSON.stringify(info, undefined, 0)}`);
 	}
@@ -185,12 +240,12 @@ export default class Visitor {
 		this.queueTypeInfo(requestTypes.errorData);
 		this.queueTypeInfo(requestTypes.registrationOptions);
 		const asJsonType = (info: TypeInfo) => {
-			if (info.kind === 'void' || info.kind === 'undefined' || info.kind === 'never' || info.kind === 'unknown') {
+			if (TypeInfo.isNonLSPType(info)) {
 				return undefined;
 			}
 			return TypeInfo.asJsonType(info);
 		};
-		const result: JsonRequest = { method: methodName, result: requestTypes.result.kind === 'void' ? 'null' : TypeInfo.asJsonType(requestTypes.result) };
+		const result: JsonRequest = { method: methodName, result: TypeInfo.isVoid(requestTypes.result) ? TypeInfo.asJsonType({ kind: 'base', name: 'null' }) : TypeInfo.asJsonType(requestTypes.result) };
 		result.params = requestTypes.param !== undefined ? asJsonType(requestTypes.param) : undefined;
 		result.partialResult = asJsonType(requestTypes.partialResult);
 		result.errorData = asJsonType(requestTypes.errorData);
@@ -218,7 +273,7 @@ export default class Visitor {
 		notificationTypes.param && this.queueTypeInfo(notificationTypes.param);
 		this.queueTypeInfo(notificationTypes.registrationOptions);
 		const asJsonType = (info: TypeInfo) => {
-			if (info.kind === 'void' || info.kind === 'undefined' || info.kind === 'never' || info.kind === 'unknown') {
+			if (TypeInfo.isNonLSPType(info)) {
 				return undefined;
 			}
 			return TypeInfo.asJsonType(info);
@@ -230,18 +285,23 @@ export default class Visitor {
 	}
 
 	private queueTypeInfo(typeInfo: TypeInfo): void {
-		if (typeInfo.kind === 'single') {
+		if (typeInfo.kind === 'reference') {
 			this.queueSymbol(typeInfo.name, typeInfo.symbol);
 		} else if (typeInfo.kind === 'array') {
 			this.queueTypeInfo(typeInfo.elementType);
-		} else if (typeInfo.kind === 'union' || typeInfo.kind === 'intersection') {
+		} else if (typeInfo.kind === 'union' || typeInfo.kind === 'intersection' || typeInfo.kind === 'tuple') {
 			typeInfo.items.forEach(item => this.queueTypeInfo(item));
+		} else if (typeInfo.kind === 'map') {
+			this.queueTypeInfo(typeInfo.key);
+			this.queueTypeInfo(typeInfo.value);
+		} else if (typeInfo.kind === 'literal') {
+			typeInfo.items.forEach(item => this.queueTypeInfo(item.type));
 		}
 	}
 
 	private queueSymbol(name: string, symbol: ts.Symbol): void {
 		if (name !== symbol.getName()) {
-			throw new Error(`Diferent symbol names [${name}, ${symbol.getName()}]`);
+			throw new Error(`Different symbol names [${name}, ${symbol.getName()}]`);
 		}
 		const existing = this.structureQueue.get(name) ?? this.processedStructures.get(name);
 		if (existing === undefined) {
@@ -307,7 +367,7 @@ export default class Visitor {
 			}
 			text = args[0].getText();
 		}
-		return text.substring(1, text.length - 1);
+		return this.removeQuotes(text);
 	}
 
 	private getRequestTypes(symbol: ts.Symbol): RequestTypes | undefined {
@@ -382,12 +442,15 @@ export default class Visitor {
 
 	private getTypeInfo(typeNode: ts.TypeNode): TypeInfo | undefined {
 		if (ts.isTypeReferenceNode(typeNode)) {
+			const typeName = ts.isIdentifier(typeNode.typeName) ? typeNode.typeName.text : typeNode.typeName.right.text;
+			if (LSPBaseTypes.has(typeName)) {
+				return { kind: 'base', name: typeName as BaseTypeInfoKind };
+			}
 			const symbol = this.typeChecker.getSymbolAtLocation(typeNode.typeName);
 			if (symbol === undefined) {
 				return undefined;
 			}
-			const typeName = ts.isIdentifier(typeNode.typeName) ? typeNode.typeName.text : typeNode.typeName.right.text;
-			return { kind: 'single', name: typeName, symbol };
+			return { kind: 'reference', name: typeName, symbol };
 		} else if (ts.isArrayTypeNode(typeNode)) {
 			const elementType = this.getTypeInfo(typeNode.elementType);
 			if (elementType === undefined) {
@@ -414,28 +477,91 @@ export default class Visitor {
 				items.push(typeInfo);
 			}
 			return { kind: 'intersection', items };
+		} else if (ts.isTypeLiteralNode(typeNode)) {
+			const type = this.typeChecker.getTypeAtLocation(typeNode);
+			const info = this.typeChecker.getIndexInfoOfType(type, ts.IndexKind.String);
+			if (info !== undefined) {
+				const declaration = info.declaration;
+				if (declaration === undefined || declaration.parameters.length < 1) {
+					return undefined;
+				}
+				const keyTypeNode = declaration.parameters[0].type;
+				if (keyTypeNode === undefined) {
+					return undefined;
+				}
+				const key = this.getTypeInfo(keyTypeNode);
+				const value = this.getTypeInfo(declaration.type);
+				if (key === undefined || value === undefined) {
+					return undefined;
+				}
+				return { kind: 'map', key: key, value: value};
+			} else {
+				// We can't directly ask for the symbol since the literal has no name.
+				const type = this.typeChecker.getTypeAtLocation(typeNode);
+				const symbol = type.symbol;
+				if (symbol === undefined) {
+					return undefined;
+				}
+				if (symbol.members === undefined) {
+					return { kind: 'literal', items: new Map() };
+				}
+				const items = new Map<string, { type: TypeInfo; optional: boolean }>();
+				symbol.members.forEach((member) => {
+					if (!Symbols.isProperty(member)) {
+						return;
+					}
+					const declaration = this.getDeclaration(member);
+					if (declaration === undefined || !ts.isPropertySignature(declaration) || declaration.type === undefined) {
+						throw new Error(`Can't parse property ${member.getName()} of structure ${symbol.getName()}`);
+					}
+					const propertyType = this.getTypeInfo(declaration.type);
+					if (propertyType === undefined) {
+						throw new Error(`Can't parse property ${member.getName()} of structure ${symbol.getName()}`);
+					}
+					items.set(member.getName(), { type: propertyType, optional: Symbols.isOptional(member) });
+				});
+				return { kind: 'literal', items };
+			}
+		} else if (ts.isTupleTypeNode(typeNode)) {
+			const items: TypeInfo[] = [];
+			for (const item of typeNode.elements) {
+				const typeInfo = this.getTypeInfo(item);
+				if (typeInfo === undefined) {
+					return undefined;
+				}
+				items.push(typeInfo);
+			}
+			return { kind: 'tuple', items };
 		} else if (ts.isParenthesizedTypeNode(typeNode)) {
 			return this.getTypeInfo(typeNode.type);
 		} else if (ts.isLiteralTypeNode(typeNode)) {
-			return this.getLiteralType(typeNode.literal);
+			return this.getBaseTypeInfo(typeNode.literal);
 		}
-		return this.getLiteralType(typeNode);
+		return this.getBaseTypeInfo(typeNode);
 	}
 
-	private getLiteralType(node: ts.Node): { kind: 'void' | 'never' | 'unknown' | 'null' | 'undefined' | 'any' } | undefined {
+	private getBaseTypeInfo(node: ts.Node): TypeInfo | undefined {
 		switch (node.kind){
 			case ts.SyntaxKind.NullKeyword:
-				return { kind: 'null' };
+				return { kind: 'base', name: 'null' };
 			case ts.SyntaxKind.UnknownKeyword:
-				return { kind: 'unknown' };
+				return { kind: 'base', name: 'unknown' };
 			case ts.SyntaxKind.NeverKeyword:
-				return { kind: 'never' };
+				return { kind: 'base', name: 'never' };
 			case ts.SyntaxKind.VoidKeyword:
-				return { kind: 'void' };
+				return { kind: 'base', name: 'void' };
 			case ts.SyntaxKind.UndefinedKeyword:
-				return { kind: 'undefined' };
+				return { kind: 'base', name: 'undefined' };
 			case ts.SyntaxKind.AnyKeyword:
-				return { kind: 'any' };
+				return { kind: 'base', name: 'any' };
+			case ts.SyntaxKind.StringKeyword:
+				return  { kind: 'base', name: 'string' };
+			case ts.SyntaxKind.BooleanKeyword:
+				return { kind: 'base', name: 'boolean' };
+			case ts.SyntaxKind.StringLiteral:
+				return { kind: 'stringLiteral', value: this.removeQuotes(node.getText()) };
+			case ts.SyntaxKind.NumericLiteral:
+				return { kind: 'numberLiteral', value: Number.parseInt(node.getText()) };
 		}
 		return undefined;
 	}
@@ -468,25 +594,38 @@ export default class Visitor {
 				}
 			}
 		}
-		const declaration = this.getDeclaration(symbol);
-		if (declaration !== undefined) {
-			const type = this.typeChecker.getTypeOfSymbolAtLocation(symbol, declaration);
-			const members = this.typeChecker.getPropertiesOfType(type);
-			for (const member of members) {
-				const declaration = this.getDeclaration(member);
-				if (declaration !== undefined) {
-					const type = this.typeChecker.getTypeOfSymbolAtLocation(member, declaration);
-					result.properties.push({
-						name: member.getName(),
-						type: this.typeChecker.typeToString(type)
-					});
-					const typeSymbol = type.symbol;
-					if (typeSymbol !== undefined) {
-						this.queueSymbol(typeSymbol.getName(), typeSymbol);
-					}
-				}
-			}
+		if (Symbols.isTypeAlias(symbol)) {
+			this.typeChecker.
 		}
+		// Using the type here to navigate the properties will result in folding
+		// all properties since the type contains all inherited properties. So we go
+		// over the symbol to make things work.
+		if (symbol.members === undefined) {
+			return result;
+		}
+		symbol.members.forEach((member) => {
+			if (!Symbols.isProperty(member)) {
+				return;
+			}
+			const declaration = this.getDeclaration(member);
+			if (declaration === undefined || !ts.isPropertySignature(declaration) || declaration.type === undefined) {
+				throw new Error(`Can't parse property ${member.getName()} of structure ${symbol.getName()}`);
+			}
+			const typeInfo = this.getTypeInfo(declaration.type);
+			if (typeInfo === undefined) {
+				throw new Error(`Can't parse property ${member.getName()} of structure ${symbol.getName()}`);
+			}
+			const property: Property = { name: member.getName(), type: TypeInfo.asJsonType(typeInfo) };
+			if (Symbols.isOptional(member)) {
+				property.optional = true;
+			}
+			result.properties.push(property);
+			this.queueTypeInfo(typeInfo);
+		});
 		return result;
+	}
+
+	private removeQuotes(text: string): string {
+		return text.substring(1, text.length - 1);
 	}
 }

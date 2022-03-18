@@ -90,6 +90,12 @@ export namespace Type {
 	}
 }
 
+interface InternalSymbol extends ts.Symbol {
+	parent?: ts.Symbol;
+	containingType?: ts.UnionOrIntersectionType;
+	__symbol__data__key__: string | undefined;
+}
+
 export class Symbols {
 
 	private readonly typeChecker: ts.TypeChecker;
@@ -122,12 +128,23 @@ export class Symbols {
 		return symbol !== undefined && (symbol.getFlags() & ts.SymbolFlags.TypeAlias) !== 0;
 	}
 
+	public static isPrototype(symbol: ts.Symbol): boolean {
+		return symbol !== undefined && (symbol.getFlags() & ts.SymbolFlags.Prototype) !== 0;
+	}
+
+	public static isProperty(symbol: ts.Symbol): boolean {
+		return symbol !== undefined && (symbol.getFlags() & ts.SymbolFlags.Property) !== 0;
+	}
+
+	public static isOptional(symbol: ts.Symbol): boolean {
+		return symbol !== undefined && (symbol.getFlags() & ts.SymbolFlags.Optional) !== 0;
+	}
+
+	public static getParent(symbol: ts.Symbol): ts.Symbol | undefined {
+		return (symbol as InternalSymbol).parent;
+	}
+
 	public createKey(symbol: ts.Symbol): string {
-		interface InternalSymbol extends ts.Symbol {
-			parent?: ts.Symbol;
-			containingType?: ts.UnionOrIntersectionType;
-			__symbol__data__key__: string | undefined;
-		}
 		let result: string | undefined = (symbol as InternalSymbol).__symbol__data__key__;
 		if (result !== undefined) {
 			return result;
@@ -224,9 +241,29 @@ export class Symbols {
 		return result.length === 0 ? undefined : result;
 	}
 
-	public getgetTypeOfSymbol(symbol: ts.Symbol): ts.Type {
+	public getTypeOfSymbol(symbol: ts.Symbol): ts.Type {
 		if (Symbols.isTypeAlias(symbol) || Symbols.isInterface(symbol)) {
 			return this.typeChecker.getDeclaredTypeOfSymbol(symbol);
 		}
+		const location = this.inferLocationNode(symbol);
+		if (location !== undefined) {
+			return this.typeChecker.getTypeOfSymbolAtLocation(symbol, location);
+		} else {
+			return this.typeChecker.getDeclaredTypeOfSymbol(symbol);
+		}
+	}
+
+	private inferLocationNode(symbol: ts.Symbol): ts.Node | undefined {
+		const declarations = symbol.declarations;
+		if (declarations !== undefined && declarations.length > 0) {
+			return declarations[0];
+		}
+		if (Symbols.isPrototype(symbol)) {
+			const parent = Symbols.getParent(symbol);
+			if (parent !== undefined) {
+				return this.inferLocationNode(parent);
+			}
+		}
+		return undefined;
 	}
 }
