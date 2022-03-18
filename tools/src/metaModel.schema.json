@@ -1,0 +1,457 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "BaseTypes": {
+      "enum": [
+        "Uri",
+        "DocumentUri",
+        "integer",
+        "uinteger",
+        "decimal",
+        "RegExp",
+        "string",
+        "boolean",
+        "null"
+      ],
+      "type": "string"
+    },
+    "MetaModel": {
+      "additionalProperties": false,
+      "description": "The actual meta model.",
+      "properties": {
+        "notifications": {
+          "description": "The notifications.",
+          "items": {
+            "$ref": "#/definitions/Notification"
+          },
+          "type": "array"
+        },
+        "requests": {
+          "description": "The requests.",
+          "items": {
+            "$ref": "#/definitions/Request"
+          },
+          "type": "array"
+        },
+        "structures": {
+          "description": "The structures",
+          "items": {
+            "$ref": "#/definitions/Structure"
+          },
+          "type": "array"
+        },
+        "typeAliases": {
+          "description": "The type aliases",
+          "items": {
+            "$ref": "#/definitions/TypeAlias"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "requests",
+        "notifications",
+        "structures",
+        "typeAliases"
+      ],
+      "type": "object"
+    },
+    "Notification": {
+      "additionalProperties": false,
+      "description": "Represents a LSP notification",
+      "properties": {
+        "method": {
+          "description": "The request's method name.",
+          "type": "string"
+        },
+        "params": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Type"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/Type"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "The parameter type(s) if any."
+        },
+        "proposed": {
+          "description": "Wether this is a proposed feature. If omitted the feature is final.",
+          "type": "boolean"
+        },
+        "registrationOptions": {
+          "$ref": "#/definitions/Type",
+          "description": "Optional registration options if the notification support dynamic registration."
+        }
+      },
+      "required": [
+        "method"
+      ],
+      "type": "object"
+    },
+    "Property": {
+      "additionalProperties": false,
+      "description": "Represents an object property.",
+      "properties": {
+        "documentation": {
+          "description": "An optional documentation;",
+          "type": "string"
+        },
+        "name": {
+          "description": "The property name;",
+          "type": "string"
+        },
+        "optional": {
+          "description": "Whether the property is optional. If omitted the property is mandatory.",
+          "type": "boolean"
+        },
+        "type": {
+          "$ref": "#/definitions/Type",
+          "description": "The type of the property"
+        }
+      },
+      "required": [
+        "name",
+        "type"
+      ],
+      "type": "object"
+    },
+    "Request": {
+      "additionalProperties": false,
+      "description": "Represents a LSP request",
+      "properties": {
+        "errorData": {
+          "$ref": "#/definitions/Type",
+          "description": "An optional error data type;"
+        },
+        "method": {
+          "description": "The request's method name.",
+          "type": "string"
+        },
+        "params": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Type"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/Type"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "The parameter type(s) if any."
+        },
+        "partialResult": {
+          "$ref": "#/definitions/Type",
+          "description": "Optional partial result type if the request support partial result reporting."
+        },
+        "proposed": {
+          "description": "Wether this is a proposed feature. If omitted the feature is final.",
+          "type": "boolean"
+        },
+        "registrationOptions": {
+          "$ref": "#/definitions/Type",
+          "description": "Optional registration options if the request support dynamic registration."
+        },
+        "result": {
+          "$ref": "#/definitions/Type",
+          "description": "The result type."
+        }
+      },
+      "required": [
+        "method",
+        "result"
+      ],
+      "type": "object"
+    },
+    "Structure": {
+      "additionalProperties": false,
+      "description": "Defines the structure of an object literal.",
+      "properties": {
+        "documentation": {
+          "description": "An optional documentation;",
+          "type": "string"
+        },
+        "extends": {
+          "description": "Structures extended from",
+          "items": {
+            "$ref": "#/definitions/Type"
+          },
+          "type": "array"
+        },
+        "mixins": {
+          "description": "Structures to mix in.",
+          "items": {
+            "$ref": "#/definitions/Type"
+          },
+          "type": "array"
+        },
+        "name": {
+          "description": "The name of the structure",
+          "type": "string"
+        },
+        "properties": {
+          "description": "The Properties",
+          "items": {
+            "$ref": "#/definitions/Property"
+          },
+          "type": "array"
+        },
+        "proposed": {
+          "description": "Wether this is a proposed feature. If omitted the feature is final.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "properties"
+      ],
+      "type": "object"
+    },
+    "StructureLiteral": {
+      "additionalProperties": false,
+      "description": "Defines a unnamed structure of an object literal.",
+      "properties": {
+        "documentation": {
+          "description": "An optional documentation;",
+          "type": "string"
+        },
+        "properties": {
+          "description": "The Properties",
+          "items": {
+            "$ref": "#/definitions/Property"
+          },
+          "type": "array"
+        },
+        "proposed": {
+          "description": "Wether this is a proposed feature. If omitted the feature is final.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "properties"
+      ],
+      "type": "object"
+    },
+    "Type": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "base",
+              "description": "Represents a base type like `string` or `DocumentUri`",
+              "type": "string"
+            },
+            "name": {
+              "$ref": "#/definitions/BaseTypes"
+            }
+          },
+          "required": [
+            "kind",
+            "name"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "reference",
+              "description": "Represents a reference to another type (e.g. `TextDocument`)",
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "name"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "element": {
+              "$ref": "#/definitions/Type"
+            },
+            "kind": {
+              "const": "array",
+              "description": "Represents an array type (e.g. `TextDocument[]`)",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "element"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "key": {
+              "$ref": "#/definitions/Type"
+            },
+            "kind": {
+              "const": "map",
+              "description": "Represents a JSON object map. (e.g. `interface Map<K extends string | number, V> { [key: K] => V; }`)",
+              "type": "string"
+            },
+            "value": {
+              "$ref": "#/definitions/Type"
+            }
+          },
+          "required": [
+            "kind",
+            "key",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "items": {
+              "items": {
+                "$ref": "#/definitions/Type"
+              },
+              "type": "array"
+            },
+            "kind": {
+              "description": "Represents an `and`, `or` or `tuple` type\n- and: `TextDocumentParams & WorkDoneProgressParams`\n- or: `Location | LocationLink`\n- tuple: `[integer, integer]`",
+              "enum": [
+                "and",
+                "or",
+                "tuple"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "items"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "literal",
+              "description": "Represents a literal structure (e.g. `property: { start: uinteger; end: uinteger; })`",
+              "type": "string"
+            },
+            "value": {
+              "$ref": "#/definitions/StructureLiteral"
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "stringLiteral",
+              "description": "Represents a string literal type (e.g. `kind: 'rename'`)",
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "numberLiteral",
+              "description": "Represents a number literal type (e.g. `kind: 1`)",
+              "type": "string"
+            },
+            "value": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "booleanLiteral",
+              "description": "Represents a boolean literal type (e.g. `kind: true`)",
+              "type": "string"
+            },
+            "value": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "TypeAlias": {
+      "additionalProperties": false,
+      "description": "Defines a type alias. (e.g. `type Definition = Location | LocationLink`)",
+      "properties": {
+        "name": {
+          "description": "The name of the type alias",
+          "type": "string"
+        },
+        "proposed": {
+          "description": "Wether this is a proposed feature. If omitted the feature is final.",
+          "type": "boolean"
+        },
+        "type": {
+          "$ref": "#/definitions/Type",
+          "description": "The aliased type"
+        }
+      },
+      "required": [
+        "name",
+        "type"
+      ],
+      "type": "object"
+    },
+    "TypeKind": {
+      "enum": [
+        "base",
+        "reference",
+        "array",
+        "map",
+        "and",
+        "or",
+        "tuple",
+        "literal",
+        "stringLiteral",
+        "numberLiteral",
+        "booleanLiteral"
+      ],
+      "type": "string"
+    }
+  }
+}
