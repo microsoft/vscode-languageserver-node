@@ -12,3 +12,4 @@ test/
 gulpfile.js
 tsd.json
 tsconfig*.json
+metaModel.json

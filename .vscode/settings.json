@@ -39,7 +39,8 @@
 		"./server",
 		"./client",
 		"./client-node-tests",
-		"./testbed"
+		"./testbed",
+		"./tools"
 	],
 	"typescript.tsc.autoDetect": "off",
 	"spellright.language": [

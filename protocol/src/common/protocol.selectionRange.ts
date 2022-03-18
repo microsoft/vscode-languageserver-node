@@ -51,6 +51,6 @@ export interface SelectionRangeParams extends WorkDoneProgressParams, PartialRes
  */
 export namespace SelectionRangeRequest {
 	export const method: 'textDocument/selectionRange' = 'textDocument/selectionRange';
-	export const type = new ProtocolRequestType<SelectionRangeParams, SelectionRange[] | null, SelectionRange[], any, SelectionRangeRegistrationOptions>(method);
+	export const type = new ProtocolRequestType<SelectionRangeParams, SelectionRange[] | null, SelectionRange[], void, SelectionRangeRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<SelectionRangeParams, SelectionRange[] | null, void>;
 }

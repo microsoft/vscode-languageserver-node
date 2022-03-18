@@ -2659,10 +2659,9 @@ export type SymbolTag = 1;
 
 
 /**
- * Represents information about programming constructs like variables, classes,
- * interfaces etc.
+ * A base for all symbol information.
  */
-export interface SymbolInformation {
+export interface BaseSymbolInformation {
 	/**
 	 * The name of this symbol.
 	 */
@@ -2680,6 +2679,20 @@ export interface SymbolInformation {
 	 */
 	tags?: SymbolTag[];
 
+	/**
+	 * The name of the symbol containing this symbol. This information is for
+	 * user interface purposes (e.g. to render a qualifier in the user interface
+	 * if necessary). It can't be used to re-infer a hierarchy for the document
+	 * symbols.
+	 */
+	containerName?: string;
+}
+
+/**
+ * Represents information about programming constructs like variables, classes,
+ * interfaces etc.
+ */
+export interface SymbolInformation extends BaseSymbolInformation {
 	/**
 	 * Indicates if this symbol is deprecated.
 	 *
@@ -2699,14 +2712,6 @@ export interface SymbolInformation {
 	 * the symbols.
 	 */
 	location: Location;
-
-	/**
-	 * The name of the symbol containing this symbol. This information is for
-	 * user interface purposes (e.g. to render a qualifier in the user interface
-	 * if necessary). It can't be used to re-infer a hierarchy for the document
-	 * symbols.
-	 */
-	containerName?: string;
 }
 
 export namespace SymbolInformation {
@@ -2733,11 +2738,13 @@ export namespace SymbolInformation {
 }
 
 /**
- * A special workspace symbol that supports locations without a range
+ * A special workspace symbol that supports locations without a range.
+ *
+ * See also SymbolInformation.
  *
  * @since 3.17.0 - proposed state
  */
-export interface WorkspaceSymbol extends Omit<Omit<SymbolInformation, 'location'>, 'deprecated'> {
+export interface WorkspaceSymbol extends BaseSymbolInformation {
 	/**
 	 * The location of the symbol.
 	 *

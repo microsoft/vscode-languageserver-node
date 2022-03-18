@@ -1129,7 +1129,7 @@ export interface ServerCapabilities<T = any> {
  * resolves to such.
  */
 export namespace InitializeRequest {
-	export const type = new ProtocolRequestType<InitializeParams & WorkDoneProgressParams, InitializeResult, never, InitializeError, void>('initialize');
+	export const type = new ProtocolRequestType<InitializeParams, InitializeResult, never, InitializeError, void>('initialize');
 }
 
 /**
@@ -1466,7 +1466,7 @@ export interface LogMessageParams {
  * the client to log telemetry data.
  */
 export namespace TelemetryEventNotification {
-	export const type = new ProtocolNotificationType<any, void>('telemetry/event');
+	export const type = new ProtocolNotificationType<LSPAny, void>('telemetry/event');
 }
 
 //---- Text document notifications ----
@@ -3357,6 +3357,8 @@ export namespace RenameRequest {
 export interface PrepareRenameParams extends TextDocumentPositionParams, WorkDoneProgressParams {
 }
 
+export type PrepareRenameResult = Range | { range: Range; placeholder: string } | { defaultBehavior: boolean };
+
 /**
  * A request to test and perform the setup necessary for a rename.
  *
@@ -3364,7 +3366,7 @@ export interface PrepareRenameParams extends TextDocumentPositionParams, WorkDon
  */
 export namespace PrepareRenameRequest {
 	export const method: 'textDocument/prepareRename' = 'textDocument/prepareRename';
-	export const type = new ProtocolRequestType<PrepareRenameParams, Range | { range: Range; placeholder: string } | { defaultBehavior: boolean } | null, never, void, void>(method);
+	export const type = new ProtocolRequestType<PrepareRenameParams, PrepareRenameResult | null, never, void, void>(method);
 }
 
 //---- Command Execution -------------------------------------------
@@ -3415,7 +3417,7 @@ export interface ExecuteCommandRegistrationOptions extends ExecuteCommandOptions
  * a workspace edit which the client will apply to the workspace.
  */
 export namespace ExecuteCommandRequest {
-	export const type = new ProtocolRequestType<ExecuteCommandParams, LSPAny | void | null, never, void, ExecuteCommandRegistrationOptions>('workspace/executeCommand');
+	export const type = new ProtocolRequestType<ExecuteCommandParams, LSPAny | null, never, void, ExecuteCommandRegistrationOptions>('workspace/executeCommand');
 }
 
 //---- Apply Edit request ----------------------------------------

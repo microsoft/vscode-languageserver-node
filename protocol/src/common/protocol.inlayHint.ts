@@ -99,7 +99,7 @@ export type InlayHintParams = WorkDoneProgressParams & {
  */
 export namespace InlayHintRequest {
 	export const method: 'textDocument/inlayHint' = 'textDocument/inlayHint';
-	export const type = new ProtocolRequestType<InlayHintParams, InlayHint[] | null, InlayHint[], any, InlayHintRegistrationOptions>(method);
+	export const type = new ProtocolRequestType<InlayHintParams, InlayHint[] | null, InlayHint[], void, InlayHintRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<InlayHintParams, InlayHint[] | null, void>;
 }
 
