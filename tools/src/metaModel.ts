@@ -250,6 +250,18 @@ export type TypeAlias = {
 	proposed?: boolean;
 };
 
+export type Enum = {
+	/**
+	 * The name of the enumeration;
+	 */
+	name: string;
+
+	/**
+	 * The type of the elements.
+	 */
+	type: Type;
+};
+
 /**
  * The actual meta model.
  */

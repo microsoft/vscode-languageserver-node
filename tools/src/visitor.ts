@@ -676,6 +676,47 @@ export default class Visitor {
 			if (target === undefined) {
 				throw new Error(`Can't resolve target type for type alias ${symbol.getName()}`);
 			}
+			const namespace = this.getDeclaration(symbol, ts.SyntaxKind.ModuleDeclaration);
+			if (namespace !== undefined && symbol.declarations !== undefined && symbol.declarations.length === 2 && target.kind === 'union') {
+				// Check if we have a enum declaration.
+				const body = namespace.getChildren().find(node => node.kind === ts.SyntaxKind.ModuleBlock);
+				const enumValues = this.getEnumValues(target);
+				if (enumValues !== undefined && enumValues.length > 0 && body !== undefined && ts.isModuleBlock(body) && body.statements.length === target.items.length && body.statements.every(child => ts.isVariableStatement(child)) && enumValues.length === body.statements.length) {
+					// Same length and all variable statement.
+					const enumValuesSet: Set<number | string> = new Set<any>(enumValues as any);
+					let isEnum = true;
+					const enumeration: { name: string; value: string | number }[] = [];
+					for (const variable of body.statements) {
+						if (!ts.isVariableStatement(variable) || variable.declarationList.declarations.length !== 1) {
+							isEnum = false;
+							break;
+						}
+						const declaration = variable.declarationList.declarations[0];
+						if (!ts.isVariableDeclaration(declaration) || declaration.initializer === undefined) {
+							isEnum = false;
+							break;
+						}
+						let value: number | string | undefined;
+						if (ts.isNumericLiteral(declaration.initializer)) {
+							value = Number.parseInt(declaration.initializer.getText());
+						} else if (ts.isStringLiteral(declaration.initializer)) {
+							value = declaration.initializer.getText();
+						}
+						if (value === undefined) {
+							isEnum = false;
+							break;
+						}
+						if (!enumValuesSet.has(value)) {
+							isEnum = false;
+							break;
+						}
+						enumeration.push({ name: declaration.name.getText(), value: value });
+					}
+					if (isEnum) {
+
+					}
+				}
+			}
 			this.queueTypeInfo(target);
 			return { name: name, type: TypeInfo.asJsonType(target), proposed: this.isProposed(declaration) };
 		} else {
@@ -753,7 +794,36 @@ export default class Visitor {
 		return undefined;
 	}
 
+	getEnumValues(typeInfo: TypeInfo): string[] | number[] | undefined {
+		if (typeInfo.kind !== 'union' || typeInfo.items.length === 0) {
+			return undefined;
+		}
+		const first = typeInfo.items[0];
+		const item: [string, string] | [string, number] | undefined = first.kind === 'stringLiteral' ? [first.kind, first.value] : (first.kind === 'numberLiteral' ? [first.kind, first.value] : undefined);
+		if (item === undefined) {
+			return undefined;
+		}
+		const kind = item[0];
+		const result: (string | number)[] = [];
+		result.push(item[1]);
+		for (let i = 1; i < typeInfo.items.length; i++) {
+			const info = typeInfo.items[i];
+			if (info.kind !== kind) {
+				return undefined;
+			}
+			if (info.kind !== 'numberLiteral' && info.kind !== 'stringLiteral') {
+				return undefined;
+			}
+			result.push(info.value);
+		}
+		return (result as string[] | number[]);
+	}
+
 	private removeQuotes(text: string): string {
+		const first = text[0];
+		if ((first !== '\'' && first !== '"' && first !== '`') || first !== text[text.length - 1]) {
+			return text;
+		}
 		return text.substring(1, text.length - 1);
 	}
 
