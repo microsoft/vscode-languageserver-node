@@ -10609,6 +10609,616 @@
 			]
 		}
 	],
+	"enumerations": [
+		{
+			"name": "FoldingRangeKind",
+			"type": "string",
+			"values": [
+				{
+					"name": "Comment",
+					"value": "comment"
+				},
+				{
+					"name": "Imports",
+					"value": "imports"
+				},
+				{
+					"name": "Region",
+					"value": "region"
+				}
+			]
+		},
+		{
+			"name": "SymbolKind",
+			"type": "number",
+			"values": [
+				{
+					"name": "File",
+					"value": 1
+				},
+				{
+					"name": "Module",
+					"value": 2
+				},
+				{
+					"name": "Namespace",
+					"value": 3
+				},
+				{
+					"name": "Package",
+					"value": 4
+				},
+				{
+					"name": "Class",
+					"value": 5
+				},
+				{
+					"name": "Method",
+					"value": 6
+				},
+				{
+					"name": "Property",
+					"value": 7
+				},
+				{
+					"name": "Field",
+					"value": 8
+				},
+				{
+					"name": "Constructor",
+					"value": 9
+				},
+				{
+					"name": "Enum",
+					"value": 10
+				},
+				{
+					"name": "Interface",
+					"value": 11
+				},
+				{
+					"name": "Function",
+					"value": 12
+				},
+				{
+					"name": "Variable",
+					"value": 13
+				},
+				{
+					"name": "Constant",
+					"value": 14
+				},
+				{
+					"name": "String",
+					"value": 15
+				},
+				{
+					"name": "Number",
+					"value": 16
+				},
+				{
+					"name": "Boolean",
+					"value": 17
+				},
+				{
+					"name": "Array",
+					"value": 18
+				},
+				{
+					"name": "Object",
+					"value": 19
+				},
+				{
+					"name": "Key",
+					"value": 20
+				},
+				{
+					"name": "Null",
+					"value": 21
+				},
+				{
+					"name": "EnumMember",
+					"value": 22
+				},
+				{
+					"name": "Struct",
+					"value": 23
+				},
+				{
+					"name": "Event",
+					"value": 24
+				},
+				{
+					"name": "Operator",
+					"value": 25
+				},
+				{
+					"name": "TypeParameter",
+					"value": 26
+				}
+			]
+		},
+		{
+			"name": "SymbolTag",
+			"type": "number",
+			"values": [
+				{
+					"name": "Deprecated",
+					"value": 1
+				}
+			]
+		},
+		{
+			"name": "UniquenessLevel",
+			"type": "string",
+			"values": [
+				{
+					"name": "document",
+					"value": "document"
+				},
+				{
+					"name": "project",
+					"value": "project"
+				},
+				{
+					"name": "group",
+					"value": "group"
+				},
+				{
+					"name": "scheme",
+					"value": "scheme"
+				},
+				{
+					"name": "global",
+					"value": "global"
+				}
+			]
+		},
+		{
+			"name": "MonikerKind",
+			"type": "string",
+			"values": [
+				{
+					"name": "$import",
+					"value": "import"
+				},
+				{
+					"name": "$export",
+					"value": "export"
+				},
+				{
+					"name": "local",
+					"value": "local"
+				}
+			]
+		},
+		{
+			"name": "InlayHintKind",
+			"type": "number",
+			"values": [
+				{
+					"name": "Type",
+					"value": 1
+				},
+				{
+					"name": "Parameter",
+					"value": 2
+				}
+			]
+		},
+		{
+			"name": "MessageType",
+			"type": "number",
+			"values": [
+				{
+					"name": "Error",
+					"value": 1
+				},
+				{
+					"name": "Warning",
+					"value": 2
+				},
+				{
+					"name": "Info",
+					"value": 3
+				},
+				{
+					"name": "Log",
+					"value": 4
+				}
+			]
+		},
+		{
+			"name": "TextDocumentSyncKind",
+			"type": "number",
+			"values": [
+				{
+					"name": "None",
+					"value": 0
+				},
+				{
+					"name": "Full",
+					"value": 1
+				},
+				{
+					"name": "Incremental",
+					"value": 2
+				}
+			]
+		},
+		{
+			"name": "TextDocumentSaveReason",
+			"type": "number",
+			"values": [
+				{
+					"name": "Manual",
+					"value": 1
+				},
+				{
+					"name": "AfterDelay",
+					"value": 2
+				},
+				{
+					"name": "FocusOut",
+					"value": 3
+				}
+			]
+		},
+		{
+			"name": "CompletionItemKind",
+			"type": "number",
+			"values": [
+				{
+					"name": "Text",
+					"value": 1
+				},
+				{
+					"name": "Method",
+					"value": 2
+				},
+				{
+					"name": "Function",
+					"value": 3
+				},
+				{
+					"name": "Constructor",
+					"value": 4
+				},
+				{
+					"name": "Field",
+					"value": 5
+				},
+				{
+					"name": "Variable",
+					"value": 6
+				},
+				{
+					"name": "Class",
+					"value": 7
+				},
+				{
+					"name": "Interface",
+					"value": 8
+				},
+				{
+					"name": "Module",
+					"value": 9
+				},
+				{
+					"name": "Property",
+					"value": 10
+				},
+				{
+					"name": "Unit",
+					"value": 11
+				},
+				{
+					"name": "Value",
+					"value": 12
+				},
+				{
+					"name": "Enum",
+					"value": 13
+				},
+				{
+					"name": "Keyword",
+					"value": 14
+				},
+				{
+					"name": "Snippet",
+					"value": 15
+				},
+				{
+					"name": "Color",
+					"value": 16
+				},
+				{
+					"name": "File",
+					"value": 17
+				},
+				{
+					"name": "Reference",
+					"value": 18
+				},
+				{
+					"name": "Folder",
+					"value": 19
+				},
+				{
+					"name": "EnumMember",
+					"value": 20
+				},
+				{
+					"name": "Constant",
+					"value": 21
+				},
+				{
+					"name": "Struct",
+					"value": 22
+				},
+				{
+					"name": "Event",
+					"value": 23
+				},
+				{
+					"name": "Operator",
+					"value": 24
+				},
+				{
+					"name": "TypeParameter",
+					"value": 25
+				}
+			]
+		},
+		{
+			"name": "CompletionItemTag",
+			"type": "number",
+			"values": [
+				{
+					"name": "Deprecated",
+					"value": 1
+				}
+			]
+		},
+		{
+			"name": "InsertTextFormat",
+			"type": "number",
+			"values": [
+				{
+					"name": "PlainText",
+					"value": 1
+				},
+				{
+					"name": "Snippet",
+					"value": 2
+				}
+			]
+		},
+		{
+			"name": "InsertTextMode",
+			"type": "number",
+			"values": [
+				{
+					"name": "asIs",
+					"value": 1
+				},
+				{
+					"name": "adjustIndentation",
+					"value": 2
+				}
+			]
+		},
+		{
+			"name": "DocumentHighlightKind",
+			"type": "number",
+			"values": [
+				{
+					"name": "Text",
+					"value": 1
+				},
+				{
+					"name": "Read",
+					"value": 2
+				},
+				{
+					"name": "Write",
+					"value": 3
+				}
+			]
+		},
+		{
+			"name": "FileChangeType",
+			"type": "number",
+			"values": [
+				{
+					"name": "Created",
+					"value": 1
+				},
+				{
+					"name": "Changed",
+					"value": 2
+				},
+				{
+					"name": "Deleted",
+					"value": 3
+				}
+			]
+		},
+		{
+			"name": "DiagnosticSeverity",
+			"type": "number",
+			"values": [
+				{
+					"name": "Error",
+					"value": 1
+				},
+				{
+					"name": "Warning",
+					"value": 2
+				},
+				{
+					"name": "Information",
+					"value": 3
+				},
+				{
+					"name": "Hint",
+					"value": 4
+				}
+			]
+		},
+		{
+			"name": "DiagnosticTag",
+			"type": "number",
+			"values": [
+				{
+					"name": "Unnecessary",
+					"value": 1
+				},
+				{
+					"name": "Deprecated",
+					"value": 2
+				}
+			]
+		},
+		{
+			"name": "CompletionTriggerKind",
+			"type": "number",
+			"values": [
+				{
+					"name": "Invoked",
+					"value": 1
+				},
+				{
+					"name": "TriggerCharacter",
+					"value": 2
+				},
+				{
+					"name": "TriggerForIncompleteCompletions",
+					"value": 3
+				}
+			]
+		},
+		{
+			"name": "SignatureHelpTriggerKind",
+			"type": "number",
+			"values": [
+				{
+					"name": "Invoked",
+					"value": 1
+				},
+				{
+					"name": "TriggerCharacter",
+					"value": 2
+				},
+				{
+					"name": "ContentChange",
+					"value": 3
+				}
+			]
+		},
+		{
+			"name": "CodeActionTriggerKind",
+			"type": "number",
+			"values": [
+				{
+					"name": "Invoked",
+					"value": 1
+				},
+				{
+					"name": "Automatic",
+					"value": 2
+				}
+			]
+		},
+		{
+			"name": "FileOperationPatternKind",
+			"type": "string",
+			"values": [
+				{
+					"name": "file",
+					"value": "file"
+				},
+				{
+					"name": "folder",
+					"value": "folder"
+				}
+			]
+		},
+		{
+			"name": "NotebookCellKind",
+			"type": "number",
+			"values": [
+				{
+					"name": "Markup",
+					"value": 1
+				},
+				{
+					"name": "Code",
+					"value": 2
+				}
+			]
+		},
+		{
+			"name": "ResourceOperationKind",
+			"type": "string",
+			"values": [
+				{
+					"name": "Create",
+					"value": "create"
+				},
+				{
+					"name": "Rename",
+					"value": "rename"
+				},
+				{
+					"name": "Delete",
+					"value": "delete"
+				}
+			]
+		},
+		{
+			"name": "FailureHandlingKind",
+			"type": "string",
+			"values": [
+				{
+					"name": "Abort",
+					"value": "abort"
+				},
+				{
+					"name": "Transactional",
+					"value": "transactional"
+				},
+				{
+					"name": "TextOnlyTransactional",
+					"value": "textOnlyTransactional"
+				},
+				{
+					"name": "Undo",
+					"value": "undo"
+				}
+			]
+		},
+		{
+			"name": "PrepareSupportDefaultBehavior",
+			"type": "number",
+			"values": [
+				{
+					"name": "Identifier",
+					"value": 1
+				}
+			]
+		},
+		{
+			"name": "TokenFormat",
+			"type": "string",
+			"values": [
+				{
+					"name": "Relative",
+					"value": "relative"
+				}
+			]
+		}
+	],
 	"typeAliases": [
 		{
 			"name": "Definition",
@@ -10832,145 +11442,6 @@
 			}
 		},
 		{
-			"name": "FoldingRangeKind",
-			"type": {
-				"kind": "or",
-				"items": [
-					{
-						"kind": "stringLiteral",
-						"value": "comment"
-					},
-					{
-						"kind": "stringLiteral",
-						"value": "imports"
-					},
-					{
-						"kind": "stringLiteral",
-						"value": "region"
-					}
-				]
-			}
-		},
-		{
-			"name": "SymbolKind",
-			"type": {
-				"kind": "or",
-				"items": [
-					{
-						"kind": "numberLiteral",
-						"value": 1
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 2
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 3
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 4
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 5
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 6
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 7
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 8
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 9
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 10
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 11
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 12
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 13
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 14
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 15
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 16
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 17
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 18
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 19
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 20
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 21
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 22
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 23
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 24
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 25
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 26
-					}
-				]
-			}
-		},
-		{
-			"name": "SymbolTag",
-			"type": {
-				"kind": "numberLiteral",
-				"value": 1
-			}
-		},
-		{
 			"name": "URI",
 			"type": {
 				"kind": "base",
@@ -10985,54 +11456,6 @@
 			}
 		},
 		{
-			"name": "UniquenessLevel",
-			"type": {
-				"kind": "or",
-				"items": [
-					{
-						"kind": "stringLiteral",
-						"value": "document"
-					},
-					{
-						"kind": "stringLiteral",
-						"value": "project"
-					},
-					{
-						"kind": "stringLiteral",
-						"value": "group"
-					},
-					{
-						"kind": "stringLiteral",
-						"value": "scheme"
-					},
-					{
-						"kind": "stringLiteral",
-						"value": "global"
-					}
-				]
-			}
-		},
-		{
-			"name": "MonikerKind",
-			"type": {
-				"kind": "or",
-				"items": [
-					{
-						"kind": "stringLiteral",
-						"value": "import"
-					},
-					{
-						"kind": "stringLiteral",
-						"value": "export"
-					},
-					{
-						"kind": "stringLiteral",
-						"value": "local"
-					}
-				]
-			}
-		},
-		{
 			"name": "TypeHierarchyOptions",
 			"type": {
 				"kind": "reference",
@@ -11044,46 +11467,6 @@
 			"type": {
 				"kind": "reference",
 				"name": "WorkDoneProgressOptions"
-			}
-		},
-		{
-			"name": "InlayHintKind",
-			"type": {
-				"kind": "or",
-				"items": [
-					{
-						"kind": "numberLiteral",
-						"value": 1
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 2
-					}
-				]
-			}
-		},
-		{
-			"name": "MessageType",
-			"type": {
-				"kind": "or",
-				"items": [
-					{
-						"kind": "numberLiteral",
-						"value": 1
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 2
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 3
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 4
-					}
-				]
 			}
 		},
 		{
@@ -11138,193 +11521,6 @@
 			}
 		},
 		{
-			"name": "TextDocumentSyncKind",
-			"type": {
-				"kind": "or",
-				"items": [
-					{
-						"kind": "numberLiteral",
-						"value": 0
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 1
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 2
-					}
-				]
-			}
-		},
-		{
-			"name": "TextDocumentSaveReason",
-			"type": {
-				"kind": "or",
-				"items": [
-					{
-						"kind": "numberLiteral",
-						"value": 1
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 2
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 3
-					}
-				]
-			}
-		},
-		{
-			"name": "CompletionItemKind",
-			"type": {
-				"kind": "or",
-				"items": [
-					{
-						"kind": "numberLiteral",
-						"value": 1
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 2
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 3
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 4
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 5
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 6
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 7
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 8
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 9
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 10
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 11
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 12
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 13
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 14
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 15
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 16
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 17
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 18
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 19
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 20
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 21
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 22
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 23
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 24
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 25
-					}
-				]
-			}
-		},
-		{
-			"name": "CompletionItemTag",
-			"type": {
-				"kind": "numberLiteral",
-				"value": 1
-			}
-		},
-		{
-			"name": "InsertTextFormat",
-			"type": {
-				"kind": "or",
-				"items": [
-					{
-						"kind": "numberLiteral",
-						"value": 1
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 2
-					}
-				]
-			}
-		},
-		{
-			"name": "InsertTextMode",
-			"type": {
-				"kind": "or",
-				"items": [
-					{
-						"kind": "numberLiteral",
-						"value": 1
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 2
-					}
-				]
-			}
-		},
-		{
 			"name": "MarkedString",
 			"type": {
 				"kind": "or",
@@ -11353,26 +11549,6 @@
 								}
 							]
 						}
-					}
-				]
-			}
-		},
-		{
-			"name": "DocumentHighlightKind",
-			"type": {
-				"kind": "or",
-				"items": [
-					{
-						"kind": "numberLiteral",
-						"value": 1
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 2
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 3
 					}
 				]
 			}
@@ -11429,122 +11605,6 @@
 					{
 						"kind": "stringLiteral",
 						"value": "markdown"
-					}
-				]
-			}
-		},
-		{
-			"name": "FileChangeType",
-			"type": {
-				"kind": "or",
-				"items": [
-					{
-						"kind": "numberLiteral",
-						"value": 1
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 2
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 3
-					}
-				]
-			}
-		},
-		{
-			"name": "DiagnosticSeverity",
-			"type": {
-				"kind": "or",
-				"items": [
-					{
-						"kind": "numberLiteral",
-						"value": 1
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 2
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 3
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 4
-					}
-				]
-			}
-		},
-		{
-			"name": "DiagnosticTag",
-			"type": {
-				"kind": "or",
-				"items": [
-					{
-						"kind": "numberLiteral",
-						"value": 1
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 2
-					}
-				]
-			}
-		},
-		{
-			"name": "CompletionTriggerKind",
-			"type": {
-				"kind": "or",
-				"items": [
-					{
-						"kind": "numberLiteral",
-						"value": 1
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 2
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 3
-					}
-				]
-			}
-		},
-		{
-			"name": "SignatureHelpTriggerKind",
-			"type": {
-				"kind": "or",
-				"items": [
-					{
-						"kind": "numberLiteral",
-						"value": 1
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 2
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 3
-					}
-				]
-			}
-		},
-		{
-			"name": "CodeActionTriggerKind",
-			"type": {
-				"kind": "or",
-				"items": [
-					{
-						"kind": "numberLiteral",
-						"value": 1
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 2
 					}
 				]
 			}
@@ -11648,39 +11708,6 @@
 			}
 		},
 		{
-			"name": "FileOperationPatternKind",
-			"type": {
-				"kind": "or",
-				"items": [
-					{
-						"kind": "stringLiteral",
-						"value": "file"
-					},
-					{
-						"kind": "stringLiteral",
-						"value": "folder"
-					}
-				]
-			}
-		},
-		{
-			"name": "NotebookCellKind",
-			"type": {
-				"kind": "or",
-				"items": [
-					{
-						"kind": "numberLiteral",
-						"value": 1
-					},
-					{
-						"kind": "numberLiteral",
-						"value": 2
-					}
-				]
-			},
-			"proposed": true
-		},
-		{
 			"name": "NotebookDocumentFilter",
 			"type": {
 				"kind": "or",
@@ -11776,64 +11803,6 @@
 						}
 					}
 				]
-			}
-		},
-		{
-			"name": "ResourceOperationKind",
-			"type": {
-				"kind": "or",
-				"items": [
-					{
-						"kind": "stringLiteral",
-						"value": "create"
-					},
-					{
-						"kind": "stringLiteral",
-						"value": "rename"
-					},
-					{
-						"kind": "stringLiteral",
-						"value": "delete"
-					}
-				]
-			}
-		},
-		{
-			"name": "FailureHandlingKind",
-			"type": {
-				"kind": "or",
-				"items": [
-					{
-						"kind": "stringLiteral",
-						"value": "abort"
-					},
-					{
-						"kind": "stringLiteral",
-						"value": "transactional"
-					},
-					{
-						"kind": "stringLiteral",
-						"value": "undo"
-					},
-					{
-						"kind": "stringLiteral",
-						"value": "textOnlyTransactional"
-					}
-				]
-			}
-		},
-		{
-			"name": "PrepareSupportDefaultBehavior",
-			"type": {
-				"kind": "numberLiteral",
-				"value": 1
-			}
-		},
-		{
-			"name": "TokenFormat",
-			"type": {
-				"kind": "stringLiteral",
-				"value": "relative"
 			}
 		}
 	]
