@@ -7,7 +7,7 @@ import * as ts from 'typescript';
 
 import { Symbols } from './typescripts';
 
-import { Type as JsonType, Request as JsonRequest, Notification as JsonNotification, Structure, Property, StructureLiteral, BaseTypes, TypeAlias, MetaModel } from './metaModel';
+import { Type as JsonType, Request as JsonRequest, Notification as JsonNotification, Structure, Property, StructureLiteral, BaseTypes, TypeAlias, MetaModel, Enumeration, EnumerationEntry } from './metaModel';
 import path = require('path');
 
 const LSPBaseTypes = new Set(['Uri', 'DocumentUri', 'integer', 'uinteger', 'decimal']);
@@ -134,6 +134,7 @@ export default class Visitor {
 	private readonly requests: JsonRequest[];
 	private readonly notifications: JsonNotification[];
 	private readonly structures: Structure[];
+	private readonly enumerations: Enumeration[];
 	private readonly typeAliases: TypeAlias[];
 	private readonly symbolQueue: Map<string, ts.Symbol>;
 	private readonly processedStructures: Map<string, ts.Symbol>;
@@ -145,6 +146,7 @@ export default class Visitor {
 		this.requests = [];
 		this.notifications = [];
 		this.structures = [];
+		this.enumerations = [];
 		this.typeAliases = [];
 		this.symbolQueue = new Map();
 		this.processedStructures = new Map();
@@ -163,10 +165,12 @@ export default class Visitor {
 				const element = this.processSymbol(entry[0], entry[1]);
 				if (element === undefined) {
 					throw new Error(`Can't create structure for type ${entry[0]}`);
-				} else if ((element as TypeAlias).type !== undefined) {
-					this.typeAliases.push(element as TypeAlias);
-				} else {
+				} else if (Array.isArray((element as Structure).properties)) {
 					this.structures.push(element as Structure);
+				} else if (Array.isArray((element as Enumeration).values)) {
+					this.enumerations.push(element as Enumeration);
+				} else {
+					this.typeAliases.push(element as TypeAlias);
 				}
 				this.symbolQueue.delete(entry[0]);
 				this.processedStructures.set(entry[0], entry[1]);
@@ -175,7 +179,7 @@ export default class Visitor {
 	}
 
 	public getMetaModel(): MetaModel {
-		return { requests: this.requests, notifications: this.notifications, structures: this.structures, typeAliases: this.typeAliases };
+		return { requests: this.requests, notifications: this.notifications, structures: this.structures, enumerations: this.enumerations, typeAliases: this.typeAliases };
 	}
 
 	protected visit(node: ts.Node): void {
@@ -595,7 +599,7 @@ export default class Visitor {
 	}
 
 	private static readonly Mixins: Set<string> = new Set(['WorkDoneProgressParams', 'PartialResultParams', 'StaticRegistrationOptions', 'WorkDoneProgressOptions']);
-	private processSymbol(name: string, symbol: ts.Symbol): Structure | TypeAlias | undefined {
+	private processSymbol(name: string, symbol: ts.Symbol): Structure | Enumeration | TypeAlias | undefined {
 		if (Symbols.isInterface(symbol)) {
 			const result: Structure = { name: name, properties: [] };
 			const declaration = this.getDeclaration(symbol, ts.SyntaxKind.InterfaceDeclaration);
@@ -680,40 +684,44 @@ export default class Visitor {
 			if (namespace !== undefined && symbol.declarations !== undefined && symbol.declarations.length === 2 && target.kind === 'union') {
 				// Check if we have a enum declaration.
 				const body = namespace.getChildren().find(node => node.kind === ts.SyntaxKind.ModuleBlock);
-				const enumValues = this.getEnumValues(target);
-				if (enumValues !== undefined && enumValues.length > 0 && body !== undefined && ts.isModuleBlock(body) && body.statements.length === target.items.length && body.statements.every(child => ts.isVariableStatement(child)) && enumValues.length === body.statements.length) {
-					// Same length and all variable statement.
-					const enumValuesSet: Set<number | string> = new Set<any>(enumValues as any);
-					let isEnum = true;
-					const enumeration: { name: string; value: string | number }[] = [];
-					for (const variable of body.statements) {
-						if (!ts.isVariableStatement(variable) || variable.declarationList.declarations.length !== 1) {
-							isEnum = false;
-							break;
+				if (body !== undefined && ts.isModuleBlock(body)) {
+					const enumValues = this.getEnumValues(target);
+					const variableStatements = body.statements.filter((statement => ts.isVariableStatement(statement)));
+					if (enumValues !== undefined && enumValues.length > 0 && variableStatements.length === target.items.length && enumValues.length === variableStatements.length) {
+						// Same length and all variable statement.
+						const enumValuesSet: Set<number | string> = new Set<any>(enumValues as any);
+						let isEnum = true;
+						const enumerations: EnumerationEntry[] = [];
+						for (const variable of variableStatements) {
+							if (!ts.isVariableStatement(variable) || variable.declarationList.declarations.length !== 1) {
+								isEnum = false;
+								break;
+							}
+							const declaration = variable.declarationList.declarations[0];
+							if (!ts.isVariableDeclaration(declaration) || declaration.initializer === undefined) {
+								isEnum = false;
+								break;
+							}
+							let value: number | string | undefined;
+							if (ts.isNumericLiteral(declaration.initializer)) {
+								value = Number.parseInt(declaration.initializer.getText());
+							} else if (ts.isStringLiteral(declaration.initializer)) {
+								value = declaration.initializer.getText();
+							}
+							if (value === undefined) {
+								isEnum = false;
+								break;
+							}
+							if (!enumValuesSet.has(value)) {
+								isEnum = false;
+								break;
+							}
+							enumerations.push({ name: declaration.name.getText(), value: value });
 						}
-						const declaration = variable.declarationList.declarations[0];
-						if (!ts.isVariableDeclaration(declaration) || declaration.initializer === undefined) {
-							isEnum = false;
-							break;
+						if (isEnum) {
+							const type = (typeof enumValues[0] === 'string') ? 'string' : 'number';
+							return { name: name, type: type, values: enumerations};
 						}
-						let value: number | string | undefined;
-						if (ts.isNumericLiteral(declaration.initializer)) {
-							value = Number.parseInt(declaration.initializer.getText());
-						} else if (ts.isStringLiteral(declaration.initializer)) {
-							value = declaration.initializer.getText();
-						}
-						if (value === undefined) {
-							isEnum = false;
-							break;
-						}
-						if (!enumValuesSet.has(value)) {
-							isEnum = false;
-							break;
-						}
-						enumeration.push({ name: declaration.name.getText(), value: value });
-					}
-					if (isEnum) {
-
 					}
 				}
 			}

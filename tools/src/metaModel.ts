@@ -250,7 +250,25 @@ export type TypeAlias = {
 	proposed?: boolean;
 };
 
-export type Enum = {
+/**
+ * Defines a enumeration entry.
+ */
+export type EnumerationEntry = {
+	/**
+	 * The name of the enum item
+	 */
+	name: string;
+
+	/**
+	 * The value
+	 */
+	value: string | number;
+};
+
+/**
+ * Defines a enumeration.
+ */
+export type Enumeration = {
 	/**
 	 * The name of the enumeration;
 	 */
@@ -259,7 +277,18 @@ export type Enum = {
 	/**
 	 * The type of the elements.
 	 */
-	type: Type;
+	type: 'string' | 'number';
+
+	/**
+	 * The enum values
+	 */
+	values: EnumerationEntry[];
+
+	/**
+	 * Wether this is a proposed feature. If omitted
+	 * the feature is final.
+	 */
+	proposed?: boolean;
 };
 
 /**
@@ -280,6 +309,11 @@ export type MetaModel = {
 	 * The structures
 	 */
 	structures: Structure[];
+
+	/**
+	 * The enumerations
+	 */
+	enumerations: Enumeration[];
 
 	/**
 	 * The type aliases
