@@ -681,13 +681,13 @@ export default class Visitor {
 				throw new Error(`Can't resolve target type for type alias ${symbol.getName()}`);
 			}
 			const namespace = this.getDeclaration(symbol, ts.SyntaxKind.ModuleDeclaration);
-			if (namespace !== undefined && symbol.declarations !== undefined && symbol.declarations.length === 2 && target.kind === 'union') {
+			if (namespace !== undefined && symbol.declarations !== undefined && symbol.declarations.length === 2 && (target.kind === 'union' || target.kind === 'stringLiteral' || target.kind === 'numberLiteral')) {
 				// Check if we have a enum declaration.
 				const body = namespace.getChildren().find(node => node.kind === ts.SyntaxKind.ModuleBlock);
 				if (body !== undefined && ts.isModuleBlock(body)) {
 					const enumValues = this.getEnumValues(target);
 					const variableStatements = body.statements.filter((statement => ts.isVariableStatement(statement)));
-					if (enumValues !== undefined && enumValues.length > 0 && variableStatements.length === target.items.length && enumValues.length === variableStatements.length) {
+					if (enumValues !== undefined && enumValues.length > 0 && variableStatements.length === enumValues.length) {
 						// Same length and all variable statement.
 						const enumValuesSet: Set<number | string> = new Set<any>(enumValues as any);
 						let isEnum = true;
@@ -706,7 +706,7 @@ export default class Visitor {
 							if (ts.isNumericLiteral(declaration.initializer)) {
 								value = Number.parseInt(declaration.initializer.getText());
 							} else if (ts.isStringLiteral(declaration.initializer)) {
-								value = declaration.initializer.getText();
+								value = this.removeQuotes(declaration.initializer.getText());
 							}
 							if (value === undefined) {
 								isEnum = false;
@@ -803,6 +803,12 @@ export default class Visitor {
 	}
 
 	getEnumValues(typeInfo: TypeInfo): string[] | number[] | undefined {
+		if (typeInfo.kind === 'stringLiteral') {
+			return [typeInfo.value];
+		}
+		if (typeInfo.kind === 'numberLiteral') {
+			return [typeInfo.value];
+		}
 		if (typeInfo.kind !== 'union' || typeInfo.items.length === 0) {
 			return undefined;
 		}
