@@ -11,26 +11,26 @@ export type Type = {
 	kind: TypeKind;
 } & ({
 	/**
-	 * Represents a base type like `string` or `DocumentUri`
+	 * Represents a base type like `string` or `DocumentUri`.
 	 */
 	kind: 'base';
 	name: BaseTypes;
 } | {
 	/**
-	 * Represents a reference to another type (e.g. `TextDocument`)
+	 * Represents a reference to another type (e.g. `TextDocument`).
 	 */
 	kind: 'reference';
 	name: string;
 } | {
 	/**
-	 * Represents an array type (e.g. `TextDocument[]`)
+	 * Represents an array type (e.g. `TextDocument[]`).
 	 */
 	kind: 'array';
 	element: Type;
 } | {
 	/**
-	 * Represents a JSON object map.
-	 * (e.g. `interface Map<K extends string | number, V> { [key: K] => V; }`)
+	 * Represents a JSON object map
+	 * (e.g. `interface Map<K extends string | number, V> { [key: K] => V; }`).
 	 */
 	kind: 'map';
 	key: Type;
@@ -47,28 +47,28 @@ export type Type = {
 } | {
 	/**
 	 * Represents a literal structure
-	 * (e.g. `property: { start: uinteger; end: uinteger; })`
+	 * (e.g. `property: { start: uinteger; end: uinteger; }`).
 	 */
 	kind: 'literal';
 	value: StructureLiteral;
 } | {
 	/**
 	 * Represents a string literal type
-	 * (e.g. `kind: 'rename'`)
+	 * (e.g. `kind: 'rename'`).
 	 */
 	kind: 'stringLiteral';
 	value: string;
 } | {
 	/**
 	 * Represents a number literal type
-	 * (e.g. `kind: 1`)
+	 * (e.g. `kind: 1`).
 	 */
 	kind: 'numberLiteral';
 	value: number;
 } | {
 	/**
 	 * Represents a boolean literal type
-	 * (e.g. `kind: true`)
+	 * (e.g. `kind: true`).
 	 */
 	kind: 'booleanLiteral';
 	value: boolean;
@@ -198,7 +198,7 @@ export type Property = {
 	since?: string;
 
 	/**
-	 * Whether this is a proposed property. If omitted
+	 * Whether this is a proposed property. If omitted,
 	 * the structure is final.
 	 */
 	proposed?: boolean;
@@ -209,7 +209,7 @@ export type Property = {
  */
 export type Structure = {
 	/**
-	 * The name of the structure
+	 * The name of the structure.
 	 */
 	name: string;
 
@@ -240,7 +240,7 @@ export type Structure = {
 	since?: string;
 
 	/**
-	 * Whether this is a proposed structure. If omitted
+	 * Whether this is a proposed structure. If omitted,
 	 * the structure is final.
 	 */
 	proposed?: boolean;
@@ -252,12 +252,12 @@ export type Structure = {
 export type StructureLiteral = {
 
 	/**
-	 * The Properties
+	 * The properties.
 	 */
 	properties: Property[];
 
 	/**
-	 * An optional documentation;
+	 * An optional documentation.
 	 */
 	documentation?: string;
 
@@ -268,7 +268,7 @@ export type StructureLiteral = {
 	since?: string;
 
 	/**
-	 * Whether this is a proposed structure. If omitted
+	 * Whether this is a proposed structure. If omitted,
 	 * the structure is final.
 	 */
 	proposed?: boolean;
@@ -290,7 +290,7 @@ export type TypeAlias = {
 	type: Type;
 
 	/**
-	 * An optional documentation;
+	 * An optional documentation.
 	 */
 	 documentation?: string;
 
@@ -301,14 +301,14 @@ export type TypeAlias = {
 	since?: string;
 
 	 /**
-	 * Whether this is a proposed type alias. If omitted
+	 * Whether this is a proposed type alias. If omitted,
 	 * the type alias is final.
 	 */
 	proposed?: boolean;
 };
 
 /**
- * Defines a enumeration entry.
+ * Defines an enumeration entry.
  */
 export type EnumerationEntry = {
 	/**
@@ -322,7 +322,7 @@ export type EnumerationEntry = {
 	value: string | number;
 
 	/**
-	 * An optional documentation;
+	 * An optional documentation.
 	 */
 	 documentation?: string;
 
@@ -333,14 +333,14 @@ export type EnumerationEntry = {
 	since?: string;
 
 	 /**
-	 * Whether this is a proposed enumeration entry. If omitted
+	 * Whether this is a proposed enumeration entry. If omitted,
 	 * the enumeration entry is final.
 	 */
 	proposed?: boolean;
 };
 
 /**
- * Defines a enumeration.
+ * Defines an enumeration.
  */
 export type Enumeration = {
 	/**
@@ -359,7 +359,7 @@ export type Enumeration = {
 	values: EnumerationEntry[];
 
 	/**
-	 * An optional documentation;
+	 * An optional documentation.
 	 */
 	 documentation?: string;
 
@@ -370,7 +370,7 @@ export type Enumeration = {
 	since?: string;
 
 	 /**
-	 * Whether this is a proposed enumeration. If omitted
+	 * Whether this is a proposed enumeration. If omitted,
 	 * the enumeration is final.
 	 */
 	proposed?: boolean;

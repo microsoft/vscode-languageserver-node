@@ -21,7 +21,7 @@
       "description": "Defines an enumeration.",
       "properties": {
         "documentation": {
-          "description": "An optional documentation;",
+          "description": "An optional documentation.",
           "type": "string"
         },
         "name": {
@@ -29,7 +29,7 @@
           "type": "string"
         },
         "proposed": {
-          "description": "Whether this is a proposed enumeration. If omitted the enumeration is final.",
+          "description": "Whether this is a proposed enumeration. If omitted, the enumeration is final.",
           "type": "boolean"
         },
         "since": {
@@ -61,10 +61,10 @@
     },
     "EnumerationEntry": {
       "additionalProperties": false,
-      "description": "Defines a enumeration entry.",
+      "description": "Defines an enumeration entry.",
       "properties": {
         "documentation": {
-          "description": "An optional documentation;",
+          "description": "An optional documentation.",
           "type": "string"
         },
         "name": {
@@ -72,7 +72,7 @@
           "type": "string"
         },
         "proposed": {
-          "description": "Whether this is a proposed enumeration entry. If omitted the enumeration entry is final.",
+          "description": "Whether this is a proposed enumeration entry. If omitted, the enumeration entry is final.",
           "type": "boolean"
         },
         "since": {
@@ -144,7 +144,7 @@
     },
     "Notification": {
       "additionalProperties": false,
-      "description": "Represents a LSP notification.",
+      "description": "Represents a LSP notification",
       "properties": {
         "documentation": {
           "description": "An optional documentation;",
@@ -174,7 +174,7 @@
         },
         "registrationOptions": {
           "$ref": "#/definitions/Type",
-          "description": "Optional registration options if the notification support dynamic registration."
+          "description": "Optional registration options if the notification supports dynamic registration."
         },
         "since": {
           "description": "Since when (release number) this notification is available. Is undefined if not known.",
@@ -195,7 +195,7 @@
           "type": "string"
         },
         "name": {
-          "description": "The property name.",
+          "description": "The property name;",
           "type": "string"
         },
         "optional": {
@@ -203,7 +203,7 @@
           "type": "boolean"
         },
         "proposed": {
-          "description": "Whether this is a proposed property. If omitted the structure is final.",
+          "description": "Whether this is a proposed property. If omitted, the structure is final.",
           "type": "boolean"
         },
         "since": {
@@ -212,7 +212,7 @@
         },
         "type": {
           "$ref": "#/definitions/Type",
-          "description": "The type of the property."
+          "description": "The type of the property"
         }
       },
       "required": [
@@ -223,7 +223,7 @@
     },
     "Request": {
       "additionalProperties": false,
-      "description": "Represents a LSP request.",
+      "description": "Represents a LSP request",
       "properties": {
         "documentation": {
           "description": "An optional documentation;",
@@ -283,7 +283,7 @@
       "description": "Defines the structure of an object literal.",
       "properties": {
         "documentation": {
-          "description": "An optional documentation.",
+          "description": "An optional documentation;",
           "type": "string"
         },
         "extends": {
@@ -312,7 +312,7 @@
           "type": "array"
         },
         "proposed": {
-          "description": "Whether this is a proposed structure. If omitted the structure is final.",
+          "description": "Whether this is a proposed structure. If omitted, the structure is final.",
           "type": "boolean"
         },
         "since": {
@@ -342,7 +342,7 @@
           "type": "array"
         },
         "proposed": {
-          "description": "Whether this is a proposed structure. If omitted the structure is final.",
+          "description": "Whether this is a proposed structure. If omitted, the structure is final.",
           "type": "boolean"
         },
         "since": {
@@ -463,7 +463,7 @@
           "properties": {
             "kind": {
               "const": "literal",
-              "description": "Represents a literal structure (e.g. `property: { start: uinteger; end: uinteger; })`.",
+              "description": "Represents a literal structure (e.g. `property: { start: uinteger; end: uinteger; }`).",
               "type": "string"
             },
             "value": {
@@ -534,10 +534,10 @@
     },
     "TypeAlias": {
       "additionalProperties": false,
-      "description": "Defines a type alias. (e.g. `type Definition = Location | LocationLink`).",
+      "description": "Defines a type alias. (e.g. `type Definition = Location | LocationLink`)",
       "properties": {
         "documentation": {
-          "description": "An optional documentation;",
+          "description": "An optional documentation.",
           "type": "string"
         },
         "name": {
@@ -545,7 +545,7 @@
           "type": "string"
         },
         "proposed": {
-          "description": "Whether this is a proposed type alias. If omitted the type alias is final.",
+          "description": "Whether this is a proposed type alias. If omitted, the type alias is final.",
           "type": "boolean"
         },
         "since": {
