@@ -124,7 +124,8 @@ let __noDynamicImport: LocationLink | undefined;
  * @sample A language filter that applies to typescript files on disk: `{ language: 'typescript', scheme: 'file' }`
  * @sample A language filter that applies to all package.json paths: `{ language: 'json', pattern: '**package.json' }`
  *
- * @since 3.17.0 - proposed state.
+ * @since 3.17.0
+ * @proposed
  */
 export type TextDocumentFilter = {
 	/** A language id, like `typescript`. */
@@ -153,7 +154,8 @@ export type TextDocumentFilter = {
  * The TextDocumentFilter namespace provides helper functions to work with
  * [TextDocumentFilter](#TextDocumentFilter) literals.
  *
- * @since 3.17.0 - proposed state.
+ * @since 3.17.0
+ * @proposed
  */
 export namespace TextDocumentFilter {
 	export function is(value: any): value is TextDocumentFilter {
@@ -167,7 +169,8 @@ export namespace TextDocumentFilter {
  * different properties. The properties will be match
  * against the notebook's URI (same as with documents)
  *
- * @since 3.17.0 - proposed state.
+ * @since 3.17.0
+ * @proposed
  */
 export type NotebookDocumentFilter = {
 	/** The type of the enclosing notebook. */
@@ -202,7 +205,8 @@ export type NotebookDocumentFilter = {
  * The NotebookDocumentFilter namespace provides helper functions to work with
  * [NotebookDocumentFilter](#NotebookDocumentFilter) literals.
  *
- * @since 3.17.0 - proposed state.
+ * @since 3.17.0
+ * @proposed
  */
 export namespace NotebookDocumentFilter {
 	export function is(value: any): value is NotebookDocumentFilter {
@@ -215,7 +219,8 @@ export namespace NotebookDocumentFilter {
  * A notebook cell text document filter denotes a cell text
  * document by different properties.
  *
- * @since 3.17.0 - proposed state.
+ * @since 3.17.0
+ * @proposed
  */
 export type NotebookCellTextDocumentFilter = {
 	/**
@@ -239,7 +244,8 @@ export type NotebookCellTextDocumentFilter = {
  * The NotebookCellTextDocumentFilter namespace provides helper functions to work with
  * [NotebookCellTextDocumentFilter](#NotebookCellTextDocumentFilter) literals.
  *
- * @since 3.17.0 - proposed state.
+ * @since 3.17.0
+ * @proposed
  */
 export namespace NotebookCellTextDocumentFilter {
 	export function is(value: any): value is NotebookCellTextDocumentFilter {
@@ -682,21 +688,24 @@ export interface TextDocumentClientCapabilities {
 	/**
 	 * Capabilities specific to the various type hierarchy requests.
 	 *
-	 * @since 3.17.0 - proposed state
+	 * @since 3.17.0
+	 * @proposed
 	 */
 	typeHierarchy?: TypeHierarchyClientCapabilities;
 
 	/**
 	 * Capabilities specific to the `textDocument/inlineValue` request.
 	 *
-	 * @since 3.17.0 - proposed state
+	 * @since 3.17.0
+	 * @proposed
 	 */
 	inlineValue?: InlineValueClientCapabilities;
 
 	/**
 	 * Capabilities specific to the `textDocument/inlayHint` request.
 	 *
-	 * @since 3.17.0 - proposed state
+	 * @since 3.17.0
+	 * @proposed
 	 */
 	inlayHint?: InlayHintClientCapabilities;
 }
@@ -1078,21 +1087,24 @@ export interface ServerCapabilities<T = any> {
 	/**
 	 * The server provides type hierarchy support.
 	 *
-	 * @since 3.17.0 - proposed state
+	 * @since 3.17.0
+	 * @proposed
 	 */
 	typeHierarchyProvider?: boolean | TypeHierarchyOptions | TypeHierarchyRegistrationOptions;
 
 	/**
 	 * The server provides inline values.
 	 *
-	 * @since 3.17.0 - proposed state
+	 * @since 3.17.0
+	 * @proposed
 	 */
 	inlineValueProvider?: boolean | InlineValueOptions | InlineValueRegistrationOptions;
 
 	/**
 	 * The server provides inlay hints.
 	 *
-	 * @since 3.17.0 - proposed state
+	 * @since 3.17.0
+	 * @proposed
 	 */
 	inlayHintProvider?: boolean | InlayHintOptions | InlayHintRegistrationOptions;
 
@@ -2074,7 +2086,8 @@ export interface CompletionClientCapabilities {
 		 * The client has support for completion item label
 		 * details (see also `CompletionItemLabelDetails`).
 		 *
-		 * @since 3.17.0 - proposed state
+		 * @since 3.17.0
+		 * @proposed
 		 */
 		labelDetailsSupport?: boolean;
 	};
@@ -2098,7 +2111,8 @@ export interface CompletionClientCapabilities {
 	 * when accepting a completion item that uses multi line
 	 * text in either `insertText` or `textEdit`.
 	 *
-	 * @since 3.17.0 - proposed state
+	 * @since 3.17.0
+	 * @proposed
 	 */
 	insertTextMode?: InsertTextMode;
 
@@ -2112,7 +2126,8 @@ export interface CompletionClientCapabilities {
 	 * The client supports the following `CompletionList` specific
 	 * capabilities.
 	 *
-	 * @since 3.17.0 - proposed state
+	 * @since 3.17.0
+	 * @proposed
 	 */
 	completionList?: {
 		/**
@@ -2123,7 +2138,8 @@ export interface CompletionClientCapabilities {
 		 * `CompletionList.itemDefaults` object. If omitted
 		 * no properties are supported.
 		 *
-		 * @since 3.17.0 - proposed state
+		 * @since 3.17.0
+		 * @proposed
 		 */
 		itemDefaults?: string[];
 	};
@@ -2220,7 +2236,8 @@ export interface CompletionOptions extends WorkDoneProgressOptions {
 	 * The server supports the following `CompletionItem` specific
 	 * capabilities.
 	 *
-	 * @since 3.17.0 - proposed state
+	 * @since 3.17.0
+	 * @proposed
 	 */
 	completionItem?: {
 		/**
@@ -2228,7 +2245,8 @@ export interface CompletionOptions extends WorkDoneProgressOptions {
 		 * details (see also `CompletionItemLabelDetails`) when
 		 * receiving a completion item in a resolve call.
 		 *
-		 * @since 3.17.0 - proposed state
+		 * @since 3.17.0
+		 * @proposed
 		 */
 		labelDetailsSupport?: boolean;
 	};
@@ -2916,7 +2934,8 @@ export interface WorkspaceSymbolOptions extends WorkDoneProgressOptions {
 	 * The server provides support to resolve additional
 	 * information for a workspace symbol.
 	 *
-	 * @since 3.17.0 - proposed state
+	 * @since 3.17.0
+	 * @proposed
 	 */
 	resolveProvider?: boolean;
 }
@@ -2948,7 +2967,8 @@ export namespace WorkspaceSymbolRequest {
  * A request to resolve the range inside the workspace
  * symbol's location.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export namespace WorkspaceSymbolResolveRequest {
 	export const method: 'workspaceSymbol/resolve' = 'workspaceSymbol/resolve';

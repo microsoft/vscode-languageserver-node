@@ -20,13 +20,21 @@
       "additionalProperties": false,
       "description": "Defines an enumeration.",
       "properties": {
+        "documentation": {
+          "description": "An optional documentation;",
+          "type": "string"
+        },
         "name": {
           "description": "The name of the enumeration.",
           "type": "string"
         },
         "proposed": {
-          "description": "Whether this is a proposed feature. If omitted, the feature is final.",
+          "description": "Whether this is a proposed enumeration. If omitted the enumeration is final.",
           "type": "boolean"
+        },
+        "since": {
+          "description": "Since when (release number) this enumeration is available. Is undefined if not known.",
+          "type": "string"
         },
         "type": {
           "description": "The type of the elements.",
@@ -55,8 +63,20 @@
       "additionalProperties": false,
       "description": "Defines a enumeration entry.",
       "properties": {
+        "documentation": {
+          "description": "An optional documentation;",
+          "type": "string"
+        },
         "name": {
           "description": "The name of the enum item.",
+          "type": "string"
+        },
+        "proposed": {
+          "description": "Whether this is a proposed enumeration entry. If omitted the enumeration entry is final.",
+          "type": "boolean"
+        },
+        "since": {
+          "description": "Since when (release number) this enumeration entry is available. Is undefined if not known.",
           "type": "string"
         },
         "value": {
@@ -126,6 +146,10 @@
       "additionalProperties": false,
       "description": "Represents a LSP notification.",
       "properties": {
+        "documentation": {
+          "description": "An optional documentation;",
+          "type": "string"
+        },
         "method": {
           "description": "The request's method name.",
           "type": "string"
@@ -145,12 +169,16 @@
           "description": "The parameter type(s) if any."
         },
         "proposed": {
-          "description": "Whether this is a proposed feature. If omitted, the feature is final.",
+          "description": "Whether this is a proposed notification. If omitted the notification is final.",
           "type": "boolean"
         },
         "registrationOptions": {
           "$ref": "#/definitions/Type",
-          "description": "Optional registration options if the notification supports dynamic registration."
+          "description": "Optional registration options if the notification support dynamic registration."
+        },
+        "since": {
+          "description": "Since when (release number) this notification is available. Is undefined if not known.",
+          "type": "string"
         }
       },
       "required": [
@@ -174,6 +202,14 @@
           "description": "Whether the property is optional. If omitted, the property is mandatory.",
           "type": "boolean"
         },
+        "proposed": {
+          "description": "Whether this is a proposed property. If omitted the structure is final.",
+          "type": "boolean"
+        },
+        "since": {
+          "description": "Since when (release number) this property is available. Is undefined if not known.",
+          "type": "string"
+        },
         "type": {
           "$ref": "#/definitions/Type",
           "description": "The type of the property."
@@ -189,6 +225,10 @@
       "additionalProperties": false,
       "description": "Represents a LSP request.",
       "properties": {
+        "documentation": {
+          "description": "An optional documentation;",
+          "type": "string"
+        },
         "errorData": {
           "$ref": "#/definitions/Type",
           "description": "An optional error data type."
@@ -216,7 +256,7 @@
           "description": "Optional partial result type if the request supports partial result reporting."
         },
         "proposed": {
-          "description": "Whether this is a proposed feature. If omitted, the feature is final.",
+          "description": "Whether this is a proposed feature. If omitted the feature is final.",
           "type": "boolean"
         },
         "registrationOptions": {
@@ -226,6 +266,10 @@
         "result": {
           "$ref": "#/definitions/Type",
           "description": "The result type."
+        },
+        "since": {
+          "description": "Since when (release number) this request is available. Is undefined if not known.",
+          "type": "string"
         }
       },
       "required": [
@@ -268,8 +312,12 @@
           "type": "array"
         },
         "proposed": {
-          "description": "Whether this is a proposed feature. If omitted, the feature is final.",
+          "description": "Whether this is a proposed structure. If omitted the structure is final.",
           "type": "boolean"
+        },
+        "since": {
+          "description": "Since when (release number) this structure is available. Is undefined if not known.",
+          "type": "string"
         }
       },
       "required": [
@@ -294,8 +342,12 @@
           "type": "array"
         },
         "proposed": {
-          "description": "Whether this is a proposed feature. If omitted, the feature is final.",
+          "description": "Whether this is a proposed structure. If omitted the structure is final.",
           "type": "boolean"
+        },
+        "since": {
+          "description": "Since when (release number) this structure is available. Is undefined if not known.",
+          "type": "string"
         }
       },
       "required": [
@@ -484,13 +536,21 @@
       "additionalProperties": false,
       "description": "Defines a type alias. (e.g. `type Definition = Location | LocationLink`).",
       "properties": {
+        "documentation": {
+          "description": "An optional documentation;",
+          "type": "string"
+        },
         "name": {
           "description": "The name of the type alias.",
           "type": "string"
         },
         "proposed": {
-          "description": "Whether this is a proposed feature. If omitted, the feature is final.",
+          "description": "Whether this is a proposed type alias. If omitted the type alias is final.",
           "type": "boolean"
+        },
+        "since": {
+          "description": "Since when (release number) this structure is available. Is undefined if not known.",
+          "type": "string"
         },
         "type": {
           "$ref": "#/definitions/Type",

@@ -14,7 +14,8 @@ import type { TextDocumentRegistrationOptions, WorkDoneProgressOptions, StaticRe
 /**
  * Client capabilities specific to inline values.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export type InlineValueClientCapabilities = {
 	/**
@@ -26,7 +27,8 @@ export type InlineValueClientCapabilities = {
 /**
  * Client workspace capabilities specific to inline values.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export type InlineValueWorkspaceClientCapabilities = {
 	/**
@@ -44,21 +46,24 @@ export type InlineValueWorkspaceClientCapabilities = {
 /**
  * Inline value options used during static registration.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export type InlineValueOptions = WorkDoneProgressOptions;
 
 /**
  * Inline value options used during static or dynamic registration.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export type InlineValueRegistrationOptions = InlineValueOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions;
 
 /**
  * A parameter literal used in inline value requests.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export type InlineValueParams = WorkDoneProgressParams & {
 	/**
@@ -83,7 +88,8 @@ export type InlineValueParams = WorkDoneProgressParams & {
  * type [InlineValueParams](#InlineValueParams), the response is of type
  * [InlineValue[]](#InlineValue[]) or a Thenable that resolves to such.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export namespace InlineValueRequest {
 	export const method: 'textDocument/inlineValue' = 'textDocument/inlineValue';
@@ -92,7 +98,8 @@ export namespace InlineValueRequest {
 }
 
 /**
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export namespace InlineValueRefreshRequest {
 	export const method: `workspace/inlineValue/refresh` = `workspace/inlineValue/refresh`;

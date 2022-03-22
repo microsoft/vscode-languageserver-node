@@ -2036,7 +2036,8 @@ export type InsertTextMode = 1 | 2;
 /**
  * Additional details for a completion item label.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export interface CompletionItemLabelDetails {
 	/**
@@ -2080,7 +2081,8 @@ export interface CompletionItem {
 	/**
 	 * Additional details for the label
 	 *
-	 * @since 3.17.0 - proposed state
+	 * @since 3.17.0
+	 * @proposed
 	 */
 	labelDetails?: CompletionItemLabelDetails;
 
@@ -2258,20 +2260,23 @@ export interface CompletionList {
 	 * signals support for this via the `completionList.itemDefaults`
 	 * capability.
 	 *
-	 * @since 3.17.0 - proposed state
+	 * @since 3.17.0
+	 * @proposed
 	 */
 	itemDefaults?: {
 		/**
 		 * A default commit character set.
 		 *
-		 * @since 3.17.0 - proposed state
+		 * @since 3.17.0
+		 * @proposed
 		 */
 		commitCharacters?: string[];
 
 		/**
 		 * A default edit range
 		 *
-		 * @since 3.17.0 - proposed state
+		 * @since 3.17.0
+		 * @proposed
 		 */
 		editRange?: Range | {
 			insert: Range;
@@ -2281,14 +2286,16 @@ export interface CompletionList {
 		/**
 		 * A default insert text format
 		 *
-		 * @since 3.17.0 - proposed state
+		 * @since 3.17.0
+		 * @proposed
 		 */
 		insertTextFormat?: InsertTextFormat;
 
 		/**
 		 * A default insert text mode
 		 *
-		 * @since 3.17.0 - proposed state
+		 * @since 3.17.0
+		 * @proposed
 		 */
 		insertTextMode?: InsertTextMode;
 	};
@@ -2746,7 +2753,8 @@ export namespace SymbolInformation {
  *
  * See also SymbolInformation.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export interface WorkspaceSymbol extends BaseSymbolInformation {
 	/**
@@ -2972,7 +2980,8 @@ export namespace CodeActionKind {
 /**
  * The reason why code actions were requested.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export namespace CodeActionTriggerKind {
 	/**
@@ -3617,7 +3626,8 @@ export interface SemanticTokensDelta {
 }
 
 /**
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export type TypeHierarchyItem = {
 	/**
@@ -3670,7 +3680,8 @@ export type TypeHierarchyItem = {
 /**
  * Provide inline value as text.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export type InlineValueText = {
 	/**
@@ -3687,7 +3698,8 @@ export type InlineValueText = {
 /**
  * The InlineValueText namespace provides functions to deal with InlineValueTexts.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export namespace InlineValueText {
 	/**
@@ -3708,7 +3720,8 @@ export namespace InlineValueText {
  * If only a range is specified, the variable name will be extracted from the underlying document.
  * An optional variable name can be used to override the extracted name.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export type InlineValueVariableLookup = {
 	/**
@@ -3753,7 +3766,8 @@ export namespace InlineValueVariableLookup {
  * If only a range is specified, the expression will be extracted from the underlying document.
  * An optional expression can be used to override the extracted expression.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export type InlineValueEvaluatableExpression = {
 	/**
@@ -3771,7 +3785,8 @@ export type InlineValueEvaluatableExpression = {
 /**
  * The InlineValueEvaluatableExpression namespace provides functions to deal with InlineValueEvaluatableExpression.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export namespace InlineValueEvaluatableExpression {
 	/**
@@ -3795,12 +3810,14 @@ export namespace InlineValueEvaluatableExpression {
  * - as an evaluatable expression (class InlineValueEvaluatableExpression)
  * The InlineValue types combines all inline value types into one type.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export type InlineValue = InlineValueText | InlineValueVariableLookup | InlineValueEvaluatableExpression;
 
 /**
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export type InlineValueContext = {
 
@@ -3820,7 +3837,8 @@ export type InlineValueContext = {
  * The InlineValueContext namespace provides helper functions to work with
  * [InlineValueContext](#InlineValueContext) literals.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export namespace InlineValueContext {
 	/**
@@ -3842,7 +3860,8 @@ export namespace InlineValueContext {
 /**
  * Inlay hint kinds.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export namespace InlayHintKind {
 
@@ -3867,7 +3886,8 @@ export type InlayHintKind = 1 | 2;
  * An inlay hint label part allows for interactive and composite labels
  * of inlay hints.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export type InlayHintLabelPart = {
 
@@ -3925,7 +3945,8 @@ export namespace InlayHintLabelPart {
 /**
  * Inlay hint information.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export type InlayHint = {
 

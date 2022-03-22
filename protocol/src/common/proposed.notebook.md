@@ -57,7 +57,8 @@ export type NotebookDocument = {
  * cells and can therefore be used to uniquely identify a
  * notebook cell or the cell's text document.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export type NotebookCell = {
 
@@ -91,7 +92,8 @@ export type NotebookCell = {
 /**
  * A notebook cell kind.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export namespace NotebookCellKind {
 
@@ -137,7 +139,8 @@ Syncing the text content of a cell is relatively easy since clients should model
  * A notebook cell text document filter denotes a cell text
  * document by different properties.
  *
- * @since 3.17.0 - proposed state.
+ * @since 3.17.0
+ * @proposed.
  */
 export type NotebookCellTextDocumentFilter = {
 	/**
@@ -165,7 +168,8 @@ export type NotebookCellTextDocumentFilter = {
  * A notebook document filter denotes a notebook document by
  * different properties.
  *
- * @since 3.17.0 - proposed state.
+ * @since 3.17.0
+ * @proposed.
  */
 export type NotebookDocumentFilter = {
 	/** The type of the enclosing notebook. */
@@ -270,7 +274,8 @@ The following client capabilities are defined for notebook documents:
 /**
  * Notebook specific client capabilities.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export type NotebookDocumentSyncClientCapabilities = {
 
@@ -307,7 +312,8 @@ The following server capabilities are defined for notebook documents:
  * document that contain at least one matching
  * cell will be synced.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export type NotebookDocumentSyncOptions = {
 	/**
@@ -368,7 +374,8 @@ _Registration Options_: `NotebookDocumentRegistrationOptions` defined as follows
 /**
  * Registration options specific to a notebook.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export type NotebookDocumentSyncRegistrationOptions = NotebookDocumentSyncOptions & StaticRegistrationOptions;
 ```
@@ -390,7 +397,8 @@ _Notification_:
 /**
  * The params sent in a open notebook document notification.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export type DidOpenNotebookDocumentParams = {
 
@@ -424,7 +432,8 @@ _Notification_:
 /**
  * The params sent in a change notebook document notification.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export type DidChangeNotebookDocumentParams = {
 
@@ -455,7 +464,8 @@ export type DidChangeNotebookDocumentParams = {
 /**
  * A change event for a notebook document.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export type NotebookDocumentChangeEvent = {
 	/**
@@ -512,7 +522,8 @@ export type NotebookDocumentChangeEvent = {
  * A change describing how to move a `NotebookCell`
  * array from state S to S'.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export type NotebookCellArrayChange = {
 	/**
@@ -549,7 +560,8 @@ _Notification_:
 /**
  * The params sent in a save notebook document notification.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export type DidSaveNotebookDocumentParams = {
 	/**
@@ -576,7 +588,8 @@ _Notification_:
 /**
  * The params sent in a close notebook document notification.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export type DidCloseNotebookDocumentParams = {
 
@@ -599,7 +612,8 @@ export type DidCloseNotebookDocumentParams = {
 /**
  * A literal to identify a notebook document in the client.
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export type NotebookDocumentIdentifier = {
 	/**

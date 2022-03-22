@@ -11,7 +11,8 @@ import type { Feature, _Languages, ServerRequestHandler } from './server';
 /**
  * Shape of the inline values feature
  *
- * @since 3.17.0 - proposed state
+ * @since 3.17.0
+ * @proposed
  */
 export interface InlineValueFeatureShape {
 	inlineValue: {

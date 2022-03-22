@@ -111,7 +111,18 @@ export type Request = {
 	registrationOptions?: Type;
 
 	/**
-	 * Whether this is a proposed feature. If omitted,
+	 * An optional documentation;
+	 */
+	 documentation?: string;
+
+	/**
+	 * Since when (release number) this request is
+	 * available. Is undefined if not known.
+	 */
+	since?: string;
+
+	/**
+	 * Whether this is a proposed feature. If omitted
 	 * the feature is final.
 	 */
 	proposed?: boolean;
@@ -138,8 +149,19 @@ export type Notification = {
 	registrationOptions?: Type;
 
 	/**
-	 * Whether this is a proposed feature. If omitted,
-	 * the feature is final.
+	 * An optional documentation;
+	 */
+	 documentation?: string;
+
+	/**
+	 * Since when (release number) this notification is
+	 * available. Is undefined if not known.
+	 */
+	since?: string;
+
+	 /**
+	 * Whether this is a proposed notification. If omitted
+	 * the notification is final.
 	 */
 	proposed?: boolean;
 };
@@ -154,12 +176,7 @@ export type Property = {
 	name: string;
 
 	/**
-	 * An optional documentation.
-	 */
-	documentation?: string;
-
-	/**
-	 * The type of the property.
+	 * The type of the property
 	 */
 	type: Type;
 
@@ -168,16 +185,6 @@ export type Property = {
 	 * omitted, the property is mandatory.
 	 */
 	optional?: boolean;
-};
-
-/**
- * Defines the structure of an object literal.
- */
-export type Structure = {
-	/**
-	 * The name of the structure.
-	 */
-	name: string;
 
 	/**
 	 * An optional documentation.
@@ -185,10 +192,26 @@ export type Structure = {
 	documentation?: string;
 
 	/**
-	 * Whether this is a proposed feature. If omitted,
-	 * the feature is final.
+	 * Since when (release number) this property is
+	 * available. Is undefined if not known.
+	 */
+	since?: string;
+
+	/**
+	 * Whether this is a proposed property. If omitted
+	 * the structure is final.
 	 */
 	proposed?: boolean;
+};
+
+/**
+ * Defines the structure of an object literal.
+ */
+export type Structure = {
+	/**
+	 * The name of the structure
+	 */
+	name: string;
 
 	/**
 	 * Structures extended from.
@@ -204,6 +227,23 @@ export type Structure = {
 	 * The properties.
 	 */
 	properties: Property[];
+
+	/**
+	 * An optional documentation;
+	 */
+	documentation?: string;
+
+	/**
+	 * Since when (release number) this structure is
+	 * available. Is undefined if not known.
+	 */
+	since?: string;
+
+	/**
+	 * Whether this is a proposed structure. If omitted
+	 * the structure is final.
+	 */
+	proposed?: boolean;
 };
 
 /**
@@ -212,20 +252,26 @@ export type Structure = {
 export type StructureLiteral = {
 
 	/**
-	 * An optional documentation.
+	 * The Properties
+	 */
+	properties: Property[];
+
+	/**
+	 * An optional documentation;
 	 */
 	documentation?: string;
 
 	/**
-	 * Whether this is a proposed feature. If omitted,
-	 * the feature is final.
+	 * Since when (release number) this structure is
+	 * available. Is undefined if not known.
 	 */
-	proposed?: boolean;
+	since?: string;
 
 	/**
-	 * The properties.
+	 * Whether this is a proposed structure. If omitted
+	 * the structure is final.
 	 */
-	properties: Property[];
+	proposed?: boolean;
 };
 
 /**
@@ -244,8 +290,19 @@ export type TypeAlias = {
 	type: Type;
 
 	/**
-	 * Whether this is a proposed feature. If omitted,
-	 * the feature is final.
+	 * An optional documentation;
+	 */
+	 documentation?: string;
+
+	/**
+	 * Since when (release number) this structure is
+	 * available. Is undefined if not known.
+	 */
+	since?: string;
+
+	 /**
+	 * Whether this is a proposed type alias. If omitted
+	 * the type alias is final.
 	 */
 	proposed?: boolean;
 };
@@ -263,6 +320,23 @@ export type EnumerationEntry = {
 	 * The value.
 	 */
 	value: string | number;
+
+	/**
+	 * An optional documentation;
+	 */
+	 documentation?: string;
+
+	/**
+	 * Since when (release number) this enumeration entry is
+	 * available. Is undefined if not known.
+	 */
+	since?: string;
+
+	 /**
+	 * Whether this is a proposed enumeration entry. If omitted
+	 * the enumeration entry is final.
+	 */
+	proposed?: boolean;
 };
 
 /**
@@ -285,8 +359,19 @@ export type Enumeration = {
 	values: EnumerationEntry[];
 
 	/**
-	 * Whether this is a proposed feature. If omitted,
-	 * the feature is final.
+	 * An optional documentation;
+	 */
+	 documentation?: string;
+
+	/**
+	 * Since when (release number) this enumeration is
+	 * available. Is undefined if not known.
+	 */
+	since?: string;
+
+	 /**
+	 * Whether this is a proposed enumeration. If omitted
+	 * the enumeration is final.
 	 */
 	proposed?: boolean;
 };

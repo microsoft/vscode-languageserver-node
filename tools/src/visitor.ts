@@ -131,6 +131,8 @@ export default class Visitor {
 	private readonly typeChecker: ts.TypeChecker;
 	private readonly symbols: Symbols;
 
+	#currentSourceFile: ts.SourceFile | undefined;
+
 	private readonly requests: JsonRequest[];
 	private readonly notifications: JsonNotification[];
 	private readonly structures: Structure[];
@@ -150,6 +152,13 @@ export default class Visitor {
 		this.typeAliases = [];
 		this.symbolQueue = new Map();
 		this.processedStructures = new Map();
+	}
+
+	protected get currentSourceFile(): ts.SourceFile {
+		if (this.#currentSourceFile === undefined) {
+			throw new Error(`Current source file not known`);
+		}
+		return this.#currentSourceFile;
 	}
 
 	public async visitProgram(): Promise<void> {
@@ -184,6 +193,9 @@ export default class Visitor {
 
 	protected visit(node: ts.Node): void {
 		switch (node.kind) {
+			case ts.SyntaxKind.SourceFile:
+				this.doVisit(this.visitSourceFile, this.endVisitSourceFile, node as ts.SourceFile);
+				break;
 			case ts.SyntaxKind.ModuleDeclaration:
 				this.doVisit(this.visitModuleDeclaration, this.endVisitModuleDeclaration, node as ts.ModuleDeclaration);
 				break;
@@ -200,11 +212,20 @@ export default class Visitor {
 		endVisit.call(this, node);
 	}
 
-	private visitGeneric(_node: ts.Node): boolean {
+	private visitGeneric(): boolean {
 		return true;
 	}
 
-	private endVisitGeneric(_node: ts.Node): void {
+	private endVisitGeneric(): void {
+	}
+
+	private visitSourceFile(node: ts.SourceFile): boolean {
+		this.#currentSourceFile = node;
+		return true;
+	}
+
+	private endVisitSourceFile(): void {
+		this.#currentSourceFile = undefined;
 	}
 
 	private visitModuleDeclaration(node: ts.ModuleDeclaration): boolean {
@@ -261,7 +282,7 @@ export default class Visitor {
 		result.partialResult = asJsonType(requestTypes.partialResult);
 		result.errorData = asJsonType(requestTypes.errorData);
 		result.registrationOptions = asJsonType(requestTypes.registrationOptions);
-		result.proposed = this.isProposed(node);
+		this.fillDocProperties(node, result);
 		return result;
 	}
 
@@ -293,7 +314,7 @@ export default class Visitor {
 		const result: JsonNotification = { method: methodName };
 		result.params = notificationTypes.param !== undefined ? asJsonType(notificationTypes.param) : undefined;
 		result.registrationOptions = asJsonType(notificationTypes.registrationOptions);
-		result.proposed = this.isProposed(node);
+		this.fillDocProperties(node, result);
 		return result;
 	}
 
@@ -630,7 +651,7 @@ export default class Visitor {
 				}
 			}
 			if (declaration !== undefined) {
-				result.proposed = this.isProposed(declaration);
+				this.fillDocProperties(declaration, result);
 			}
 			this.fillProperties(result, symbol);
 			return result;
@@ -643,7 +664,7 @@ export default class Visitor {
 				// We have a single type literal node. So treat it as a structure
 				const result: Structure = { name: name, properties: [] };
 				this.fillProperties(result, this.typeChecker.getTypeAtLocation(declaration.type).symbol);
-				result.proposed = this.isProposed(declaration);
+				this.fillDocProperties(declaration, result);
 				return result;
 			} else if (ts.isIntersectionTypeNode(declaration.type)) {
 				const split = this.splitIntersectionType(declaration.type);
@@ -672,7 +693,7 @@ export default class Visitor {
 					if (split.literal !== undefined) {
 						this.fillProperties(result, this.typeChecker.getTypeAtLocation(split.literal).symbol);
 					}
-					result.proposed = this.isProposed(declaration);
+					this.fillDocProperties(declaration, result);
 					return result;
 				}
 			}
@@ -716,22 +737,28 @@ export default class Visitor {
 								isEnum = false;
 								break;
 							}
-							enumerations.push({ name: declaration.name.getText(), value: value });
+							const entry: EnumerationEntry = { name: declaration.name.getText(), value: value };
+							this.fillDocProperties(declaration, entry);
+							enumerations.push(entry);
 						}
 						if (isEnum) {
 							const type = (typeof enumValues[0] === 'string') ? 'string' : 'number';
-							return { name: name, type: type, values: enumerations};
+							const enumeration: Enumeration = { name: name, type: type, values: enumerations};
+							this.fillDocProperties(declaration, enumeration);
+							return enumeration;
 						}
 					}
 				}
 			}
 			this.queueTypeInfo(target);
-			return { name: name, type: TypeInfo.asJsonType(target), proposed: this.isProposed(declaration) };
+			const result: TypeAlias = { name: name, type: TypeInfo.asJsonType(target) };
+			this.fillDocProperties(declaration, result);
+			return result;
 		} else {
 			const result: Structure = { name: name, properties: [] };
 			this.fillProperties(result, symbol);
 			const declaration = this.getFirstDeclaration(symbol);
-			result.proposed = declaration !== undefined ? this.isProposed(declaration) : undefined;
+			declaration !== undefined && this.fillDocProperties(declaration, result);
 			return result;
 		}
 	}
@@ -759,6 +786,7 @@ export default class Visitor {
 			if (Symbols.isOptional(member)) {
 				property.optional = true;
 			}
+			this.fillDocProperties(declaration, property);
 			result.properties.push(property);
 			this.queueTypeInfo(typeInfo);
 		});
@@ -841,9 +869,38 @@ export default class Visitor {
 		return text.substring(1, text.length - 1);
 	}
 
-	private isProposed(node: ts.Node): boolean | undefined {
+	private fillDocProperties(node: ts.Node, value: JsonRequest | JsonNotification | Property | Structure | StructureLiteral | EnumerationEntry | Enumeration | TypeAlias): void {
 		const filePath = node.getSourceFile().fileName;
 		const fileName = path.basename(filePath);
-		return fileName.startsWith('proposed.') ? true : undefined;
+		const tags = ts.getJSDocTags(node);
+		const since = this.getSince(tags);
+		const proposed = (fileName.startsWith('proposed.') || tags.some((tag) => { return ts.isJSDocUnknownTag(tag) && tag.tagName.text === 'proposed';})) ? true : undefined;
+		value.documentation = this.getDocumentation(node);
+		value.since = since;
+		value.proposed = proposed;
+	}
+
+	private getDocumentation(node: ts.Node): string | undefined {
+		const fullText = node.getFullText();
+		const ranges = ts.getLeadingCommentRanges(fullText, 0);
+		if (ranges !== undefined && ranges.length > 0) {
+			const start = ranges[ranges.length - 1].pos;
+			const end = ranges[ranges.length -1 ].end;
+			const text = fullText.substring(start, end).trim();
+			if (text.startsWith('/**')) {
+				return text.replace(/^(\s*\/\*\*)|^(\s*\*\/)|^(\s*\*\s)/gm, '').trim();
+
+			}
+		}
+		return undefined;
+	}
+
+	private getSince(tags: ReadonlyArray<ts.JSDocTag>): string | undefined {
+		for (const tag of tags) {
+			if (tag.tagName.text === 'since' && typeof tag.comment === 'string') {
+				return tag.comment;
+			}
+		}
+		return undefined;
 	}
 }
