@@ -95,23 +95,23 @@ export type Request = {
 
 	/**
 	 * Optional partial result type if the request
-	 * support partial result reporting.
+	 * supports partial result reporting.
 	 */
 	partialResult?: Type;
 
 	/**
-	 * An optional error data type;
+	 * An optional error data type.
 	 */
 	errorData?: Type;
 
 	/**
 	 * Optional registration options if the request
-	 * support dynamic registration.
+	 * supports dynamic registration.
 	 */
 	registrationOptions?: Type;
 
 	/**
-	 * Wether this is a proposed feature. If omitted
+	 * Whether this is a proposed feature. If omitted,
 	 * the feature is final.
 	 */
 	proposed?: boolean;
@@ -133,12 +133,12 @@ export type Notification = {
 
 	/**
 	 * Optional registration options if the notification
-	 * support dynamic registration.
+	 * supports dynamic registration.
 	 */
 	registrationOptions?: Type;
 
 	/**
-	 * Wether this is a proposed feature. If omitted
+	 * Whether this is a proposed feature. If omitted,
 	 * the feature is final.
 	 */
 	proposed?: boolean;
@@ -154,18 +154,18 @@ export type Property = {
 	name: string;
 
 	/**
-	 * An optional documentation;
+	 * An optional documentation.
 	 */
 	documentation?: string;
 
 	/**
-	 * The type of the property
+	 * The type of the property.
 	 */
 	type: Type;
 
 	/**
 	 * Whether the property is optional. If
-	 * omitted the property is mandatory.
+	 * omitted, the property is mandatory.
 	 */
 	optional?: boolean;
 };
@@ -175,23 +175,23 @@ export type Property = {
  */
 export type Structure = {
 	/**
-	 * The name of the structure
+	 * The name of the structure.
 	 */
 	name: string;
 
 	/**
-	 * An optional documentation;
+	 * An optional documentation.
 	 */
 	documentation?: string;
 
 	/**
-	 * Wether this is a proposed feature. If omitted
+	 * Whether this is a proposed feature. If omitted,
 	 * the feature is final.
 	 */
 	proposed?: boolean;
 
 	/**
-	 * Structures extended from
+	 * Structures extended from.
 	 */
 	extends?: Type[];
 
@@ -201,7 +201,7 @@ export type Structure = {
 	mixins?: Type[];
 
 	/**
-	 * The Properties
+	 * The properties.
 	 */
 	properties: Property[];
 };
@@ -212,18 +212,18 @@ export type Structure = {
 export type StructureLiteral = {
 
 	/**
-	 * An optional documentation;
+	 * An optional documentation.
 	 */
 	documentation?: string;
 
 	/**
-	 * Wether this is a proposed feature. If omitted
+	 * Whether this is a proposed feature. If omitted,
 	 * the feature is final.
 	 */
 	proposed?: boolean;
 
 	/**
-	 * The Properties
+	 * The properties.
 	 */
 	properties: Property[];
 };
@@ -234,17 +234,17 @@ export type StructureLiteral = {
  */
 export type TypeAlias = {
 	/**
-	 * The name of the type alias
+	 * The name of the type alias.
 	 */
 	name: string;
 
 	/**
-	 * The aliased type
+	 * The aliased type.
 	 */
 	type: Type;
 
 	/**
-	 * Wether this is a proposed feature. If omitted
+	 * Whether this is a proposed feature. If omitted,
 	 * the feature is final.
 	 */
 	proposed?: boolean;
@@ -255,12 +255,12 @@ export type TypeAlias = {
  */
 export type EnumerationEntry = {
 	/**
-	 * The name of the enum item
+	 * The name of the enum item.
 	 */
 	name: string;
 
 	/**
-	 * The value
+	 * The value.
 	 */
 	value: string | number;
 };
@@ -270,7 +270,7 @@ export type EnumerationEntry = {
  */
 export type Enumeration = {
 	/**
-	 * The name of the enumeration;
+	 * The name of the enumeration.
 	 */
 	name: string;
 
@@ -280,12 +280,12 @@ export type Enumeration = {
 	type: 'string' | 'number';
 
 	/**
-	 * The enum values
+	 * The enum values.
 	 */
 	values: EnumerationEntry[];
 
 	/**
-	 * Wether this is a proposed feature. If omitted
+	 * Whether this is a proposed feature. If omitted,
 	 * the feature is final.
 	 */
 	proposed?: boolean;
@@ -306,17 +306,17 @@ export type MetaModel = {
 	notifications: Notification[];
 
 	/**
-	 * The structures
+	 * The structures.
 	 */
 	structures: Structure[];
 
 	/**
-	 * The enumerations
+	 * The enumerations.
 	 */
 	enumerations: Enumeration[];
 
 	/**
-	 * The type aliases
+	 * The type aliases.
 	 */
 	typeAliases: TypeAlias[];
 };
