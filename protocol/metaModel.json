@@ -6648,6 +6648,19 @@
 			]
 		},
 		{
+			"name": "TypeHierarchyOptions",
+			"mixins": [
+				{
+					"kind": "reference",
+					"name": "WorkDoneProgressOptions"
+				}
+			],
+			"properties": [],
+			"documentation": "Type hierarchy options used during static registration.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
 			"name": "InlineValueContext",
 			"properties": [
 				{
@@ -6750,6 +6763,19 @@
 				}
 			],
 			"documentation": "Provide an inline value through an expression evaluation.\nIf only a range is specified, the expression will be extracted from the underlying document.\nAn optional expression can be used to override the extracted expression.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"name": "InlineValueOptions",
+			"mixins": [
+				{
+					"kind": "reference",
+					"name": "WorkDoneProgressOptions"
+				}
+			],
+			"properties": [],
+			"documentation": "Inline value options used during static registration.\n@since 3.17.0\n@proposed",
 			"since": "3.17.0",
 			"proposed": true
 		},
@@ -11882,7 +11908,10 @@
 	"enumerations": [
 		{
 			"name": "FoldingRangeKind",
-			"type": "string",
+			"type": {
+				"kind": "base",
+				"name": "string"
+			},
 			"values": [
 				{
 					"name": "Comment",
@@ -11900,7 +11929,10 @@
 		},
 		{
 			"name": "SymbolKind",
-			"type": "number",
+			"type": {
+				"kind": "base",
+				"name": "integer"
+			},
 			"values": [
 				{
 					"name": "File",
@@ -12010,7 +12042,10 @@
 		},
 		{
 			"name": "SymbolTag",
-			"type": "number",
+			"type": {
+				"kind": "base",
+				"name": "integer"
+			},
 			"values": [
 				{
 					"name": "Deprecated",
@@ -12020,7 +12055,10 @@
 		},
 		{
 			"name": "UniquenessLevel",
-			"type": "string",
+			"type": {
+				"kind": "base",
+				"name": "string"
+			},
 			"values": [
 				{
 					"name": "document",
@@ -12046,7 +12084,10 @@
 		},
 		{
 			"name": "MonikerKind",
-			"type": "string",
+			"type": {
+				"kind": "base",
+				"name": "string"
+			},
 			"values": [
 				{
 					"name": "$import",
@@ -12064,7 +12105,10 @@
 		},
 		{
 			"name": "InlayHintKind",
-			"type": "number",
+			"type": {
+				"kind": "base",
+				"name": "integer"
+			},
 			"values": [
 				{
 					"name": "Type",
@@ -12078,7 +12122,10 @@
 		},
 		{
 			"name": "MessageType",
-			"type": "number",
+			"type": {
+				"kind": "base",
+				"name": "integer"
+			},
 			"values": [
 				{
 					"name": "Error",
@@ -12100,7 +12147,10 @@
 		},
 		{
 			"name": "TextDocumentSyncKind",
-			"type": "number",
+			"type": {
+				"kind": "base",
+				"name": "integer"
+			},
 			"values": [
 				{
 					"name": "None",
@@ -12118,7 +12168,10 @@
 		},
 		{
 			"name": "TextDocumentSaveReason",
-			"type": "number",
+			"type": {
+				"kind": "base",
+				"name": "integer"
+			},
 			"values": [
 				{
 					"name": "Manual",
@@ -12136,7 +12189,10 @@
 		},
 		{
 			"name": "CompletionItemKind",
-			"type": "number",
+			"type": {
+				"kind": "base",
+				"name": "integer"
+			},
 			"values": [
 				{
 					"name": "Text",
@@ -12242,7 +12298,10 @@
 		},
 		{
 			"name": "CompletionItemTag",
-			"type": "number",
+			"type": {
+				"kind": "base",
+				"name": "integer"
+			},
 			"values": [
 				{
 					"name": "Deprecated",
@@ -12252,7 +12311,10 @@
 		},
 		{
 			"name": "InsertTextFormat",
-			"type": "number",
+			"type": {
+				"kind": "base",
+				"name": "integer"
+			},
 			"values": [
 				{
 					"name": "PlainText",
@@ -12266,7 +12328,10 @@
 		},
 		{
 			"name": "InsertTextMode",
-			"type": "number",
+			"type": {
+				"kind": "base",
+				"name": "integer"
+			},
 			"values": [
 				{
 					"name": "asIs",
@@ -12280,7 +12345,10 @@
 		},
 		{
 			"name": "DocumentHighlightKind",
-			"type": "number",
+			"type": {
+				"kind": "base",
+				"name": "integer"
+			},
 			"values": [
 				{
 					"name": "Text",
@@ -12297,8 +12365,28 @@
 			]
 		},
 		{
+			"name": "MarkupKind",
+			"type": {
+				"kind": "base",
+				"name": "string"
+			},
+			"values": [
+				{
+					"name": "PlainText",
+					"value": "plaintext"
+				},
+				{
+					"name": "Markdown",
+					"value": "markdown"
+				}
+			]
+		},
+		{
 			"name": "FileChangeType",
-			"type": "number",
+			"type": {
+				"kind": "base",
+				"name": "integer"
+			},
 			"values": [
 				{
 					"name": "Created",
@@ -12316,7 +12404,10 @@
 		},
 		{
 			"name": "DiagnosticSeverity",
-			"type": "number",
+			"type": {
+				"kind": "base",
+				"name": "integer"
+			},
 			"values": [
 				{
 					"name": "Error",
@@ -12338,7 +12429,10 @@
 		},
 		{
 			"name": "DiagnosticTag",
-			"type": "number",
+			"type": {
+				"kind": "base",
+				"name": "integer"
+			},
 			"values": [
 				{
 					"name": "Unnecessary",
@@ -12352,7 +12446,10 @@
 		},
 		{
 			"name": "CompletionTriggerKind",
-			"type": "number",
+			"type": {
+				"kind": "base",
+				"name": "integer"
+			},
 			"values": [
 				{
 					"name": "Invoked",
@@ -12370,7 +12467,10 @@
 		},
 		{
 			"name": "SignatureHelpTriggerKind",
-			"type": "number",
+			"type": {
+				"kind": "base",
+				"name": "integer"
+			},
 			"values": [
 				{
 					"name": "Invoked",
@@ -12388,7 +12488,10 @@
 		},
 		{
 			"name": "CodeActionTriggerKind",
-			"type": "number",
+			"type": {
+				"kind": "base",
+				"name": "integer"
+			},
 			"values": [
 				{
 					"name": "Invoked",
@@ -12402,7 +12505,10 @@
 		},
 		{
 			"name": "FileOperationPatternKind",
-			"type": "string",
+			"type": {
+				"kind": "base",
+				"name": "string"
+			},
 			"values": [
 				{
 					"name": "file",
@@ -12416,7 +12522,10 @@
 		},
 		{
 			"name": "NotebookCellKind",
-			"type": "number",
+			"type": {
+				"kind": "base",
+				"name": "integer"
+			},
 			"values": [
 				{
 					"name": "Markup",
@@ -12433,7 +12542,10 @@
 		},
 		{
 			"name": "ResourceOperationKind",
-			"type": "string",
+			"type": {
+				"kind": "base",
+				"name": "string"
+			},
 			"values": [
 				{
 					"name": "Create",
@@ -12452,7 +12564,10 @@
 		},
 		{
 			"name": "FailureHandlingKind",
-			"type": "string",
+			"type": {
+				"kind": "base",
+				"name": "string"
+			},
 			"values": [
 				{
 					"name": "Abort",
@@ -12474,7 +12589,10 @@
 		},
 		{
 			"name": "PrepareSupportDefaultBehavior",
-			"type": "number",
+			"type": {
+				"kind": "base",
+				"name": "integer"
+			},
 			"values": [
 				{
 					"name": "Identifier",
@@ -12484,7 +12602,10 @@
 		},
 		{
 			"name": "TokenFormat",
-			"type": "string",
+			"type": {
+				"kind": "base",
+				"name": "string"
+			},
 			"values": [
 				{
 					"name": "Relative",
@@ -12748,26 +12869,6 @@
 			"documentation": "An identifier to refer to a change annotation stored with a workspace edit."
 		},
 		{
-			"name": "TypeHierarchyOptions",
-			"type": {
-				"kind": "reference",
-				"name": "WorkDoneProgressOptions"
-			},
-			"documentation": "Type hierarchy options used during static registration.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
-			"name": "InlineValueOptions",
-			"type": {
-				"kind": "reference",
-				"name": "WorkDoneProgressOptions"
-			},
-			"documentation": "Inline value options used during static registration.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
 			"name": "TextDocumentContentChangeEvent",
 			"type": {
 				"kind": "or",
@@ -12897,22 +12998,6 @@
 			},
 			"documentation": "A document filter describes a top level text document or\na notebook cell document.\n@since 3.17.0 - proposed support for NotebookCellTextDocumentFilter.",
 			"since": "3.17.0 - proposed support for NotebookCellTextDocumentFilter."
-		},
-		{
-			"name": "MarkupKind",
-			"type": {
-				"kind": "or",
-				"items": [
-					{
-						"kind": "stringLiteral",
-						"value": "plaintext"
-					},
-					{
-						"kind": "stringLiteral",
-						"value": "markdown"
-					}
-				]
-			}
 		},
 		{
 			"name": "TextDocumentFilter",

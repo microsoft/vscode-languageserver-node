@@ -7,14 +7,20 @@ import * as ts from 'typescript';
 
 import { Symbols } from './typescripts';
 
-import { Type as JsonType, Request as JsonRequest, Notification as JsonNotification, Structure, Property, StructureLiteral, BaseTypes, TypeAlias, MetaModel, Enumeration, EnumerationEntry } from './metaModel';
+import { Type as JsonType, Request as JsonRequest, Notification as JsonNotification, Structure, Property, StructureLiteral, BaseTypes, TypeAlias, MetaModel, Enumeration, EnumerationEntry, EnumerationType } from './metaModel';
 import path = require('path');
 
 const LSPBaseTypes = new Set(['Uri', 'DocumentUri', 'integer', 'uinteger', 'decimal']);
 type BaseTypeInfoKind = 'string' | 'boolean' | 'Uri' | 'DocumentUri' | 'integer' | 'uinteger' | 'decimal' | 'void' | 'never' | 'unknown' | 'null' | 'undefined' | 'any' | 'object';
 
-export type TypeInfoKind = 'base' | 'reference' | 'array' | 'map' | 'intersection' | 'union' | 'tuple' | 'literal' | 'stringLiteral' | 'numberLiteral' | 'booleanLiteral';
+export type TypeInfoKind = 'base' | 'reference' | 'array' | 'map' | 'intersection' | 'union' | 'tuple' | 'literal' | 'stringLiteral' | 'integerLiteral' | 'booleanLiteral';
 
+type MapKeyType = { kind: 'base'; name: 'Uri' | 'DocumentUri' | 'string' | 'integer' } | { kind: 'reference'; name: string; symbol: ts.Symbol };
+namespace MapKeyType {
+	export function is(value: TypeInfo): value is MapKeyType {
+		return value.kind === 'reference' || (value.kind === 'base' && (value.name === 'string' || value.name === 'integer' || value.name === 'DocumentUri' || value.name === 'Uri'));
+	}
+}
 
 type TypeInfo =
 {
@@ -32,7 +38,7 @@ type TypeInfo =
 	elementType: TypeInfo;
 } | {
 	kind: 'map';
-	key: TypeInfo;
+	key: MapKeyType;
 	value: TypeInfo;
 } | {
 	kind: 'union';
@@ -50,7 +56,7 @@ type TypeInfo =
 	kind: 'stringLiteral';
 	value: string;
 } | {
-	kind: 'numberLiteral';
+	kind: 'integerLiteral';
 	value: number;
 } | {
 	kind: 'booleanLiteral';
@@ -83,7 +89,7 @@ namespace TypeInfo {
 			case 'array':
 				return { kind: 'array', element: asJsonType(info.elementType) };
 			case 'map':
-				return { kind: 'map', key: asJsonType(info.key), value: asJsonType(info.value) };
+				return { kind: 'map', key: asJsonType(info.key) as MapKeyType, value: asJsonType(info.value) };
 			case 'union':
 				return { kind: 'or', items: info.items.map(info => asJsonType(info)) };
 			case 'intersection':
@@ -102,8 +108,8 @@ namespace TypeInfo {
 				return { kind: 'literal', value: literal };
 			case 'stringLiteral':
 				return { kind: 'stringLiteral', value: info.value };
-			case 'numberLiteral':
-				return { kind: 'numberLiteral', value: info.value };
+			case 'integerLiteral':
+				return { kind: 'integerLiteral', value: info.value };
 			case 'booleanLiteral':
 				return { kind: 'booleanLiteral', value: info.value };
 		}
@@ -538,7 +544,10 @@ export default class Visitor {
 				if (key === undefined || value === undefined) {
 					return undefined;
 				}
-				return { kind: 'map', key: key, value: value};
+				if (!MapKeyType.is(key)) {
+					return undefined;
+				}
+				return { kind: 'map', key: key, value: value };
 			} else {
 				// We can't directly ask for the symbol since the literal has no name.
 				const type = this.typeChecker.getTypeAtLocation(typeNode);
@@ -612,7 +621,7 @@ export default class Visitor {
 			case ts.SyntaxKind.StringLiteral:
 				return { kind: 'stringLiteral', value: this.removeQuotes(node.getText()) };
 			case ts.SyntaxKind.NumericLiteral:
-				return { kind: 'numberLiteral', value: Number.parseInt(node.getText()) };
+				return { kind: 'integerLiteral', value: Number.parseInt(node.getText()) };
 			case ts.SyntaxKind.ObjectKeyword:
 				return { kind: 'base', name: 'object' };
 		}
@@ -702,7 +711,7 @@ export default class Visitor {
 				throw new Error(`Can't resolve target type for type alias ${symbol.getName()}`);
 			}
 			const namespace = this.getDeclaration(symbol, ts.SyntaxKind.ModuleDeclaration);
-			if (namespace !== undefined && symbol.declarations !== undefined && symbol.declarations.length === 2 && (target.kind === 'union' || target.kind === 'stringLiteral' || target.kind === 'numberLiteral')) {
+			if (namespace !== undefined && symbol.declarations !== undefined && symbol.declarations.length === 2 && (target.kind === 'union' || target.kind === 'stringLiteral' || target.kind === 'integerLiteral')) {
 				// Check if we have a enum declaration.
 				const body = namespace.getChildren().find(node => node.kind === ts.SyntaxKind.ModuleBlock);
 				if (body !== undefined && ts.isModuleBlock(body)) {
@@ -742,7 +751,7 @@ export default class Visitor {
 							enumerations.push(entry);
 						}
 						if (isEnum) {
-							const type = (typeof enumValues[0] === 'string') ? 'string' : 'number';
+							const type: EnumerationType= (typeof enumValues[0] === 'string') ? { kind: 'base', name: 'string'} : { kind: 'base', name: 'integer' };
 							const enumeration: Enumeration = { name: name, type: type, values: enumerations};
 							this.fillDocProperties(declaration, enumeration);
 							return enumeration;
@@ -750,10 +759,19 @@ export default class Visitor {
 					}
 				}
 			}
-			this.queueTypeInfo(target);
-			const result: TypeAlias = { name: name, type: TypeInfo.asJsonType(target) };
-			this.fillDocProperties(declaration, result);
-			return result;
+			// We have a single reference to another type. Treat is as an extend of
+			// that structure
+			if (target.kind === 'reference' && Visitor.Mixins.has(target.name)) {
+				this.queueTypeInfo(target);
+				const result: Structure = { name: name, mixins: [TypeInfo.asJsonType(target)], properties: [] };
+				this.fillDocProperties(declaration, result);
+				return result;
+			} else {
+				this.queueTypeInfo(target);
+				const result: TypeAlias = { name: name, type: TypeInfo.asJsonType(target) };
+				this.fillDocProperties(declaration, result);
+				return result;
+			}
 		} else {
 			const result: Structure = { name: name, properties: [] };
 			this.fillProperties(result, symbol);
@@ -834,14 +852,14 @@ export default class Visitor {
 		if (typeInfo.kind === 'stringLiteral') {
 			return [typeInfo.value];
 		}
-		if (typeInfo.kind === 'numberLiteral') {
+		if (typeInfo.kind === 'integerLiteral') {
 			return [typeInfo.value];
 		}
 		if (typeInfo.kind !== 'union' || typeInfo.items.length === 0) {
 			return undefined;
 		}
 		const first = typeInfo.items[0];
-		const item: [string, string] | [string, number] | undefined = first.kind === 'stringLiteral' ? [first.kind, first.value] : (first.kind === 'numberLiteral' ? [first.kind, first.value] : undefined);
+		const item: [string, string] | [string, number] | undefined = first.kind === 'stringLiteral' ? [first.kind, first.value] : (first.kind === 'integerLiteral' ? [first.kind, first.value] : undefined);
 		if (item === undefined) {
 			return undefined;
 		}
@@ -853,7 +871,7 @@ export default class Visitor {
 			if (info.kind !== kind) {
 				return undefined;
 			}
-			if (info.kind !== 'numberLiteral' && info.kind !== 'stringLiteral') {
+			if (info.kind !== 'integerLiteral' && info.kind !== 'stringLiteral') {
 				return undefined;
 			}
 			result.push(info.value);

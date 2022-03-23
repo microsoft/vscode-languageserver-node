@@ -1,7 +1,63 @@
 {
-  "$ref": "#/definitions/MetaModel",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
+    "AndType": {
+      "additionalProperties": false,
+      "description": "Represents an `and`type (e.g. TextDocumentParams & WorkDoneProgressParams`).",
+      "properties": {
+        "items": {
+          "items": {
+            "$ref": "#/definitions/Type"
+          },
+          "type": "array"
+        },
+        "kind": {
+          "const": "and",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "items"
+      ],
+      "type": "object"
+    },
+    "ArrayType": {
+      "additionalProperties": false,
+      "description": "Represents an array type (e.g. `TextDocument[]`).",
+      "properties": {
+        "element": {
+          "$ref": "#/definitions/Type"
+        },
+        "kind": {
+          "const": "array",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "element"
+      ],
+      "type": "object"
+    },
+    "BaseType": {
+      "additionalProperties": false,
+      "description": "Represents a base type like `string` or `DocumentUri`.",
+      "properties": {
+        "kind": {
+          "const": "base",
+          "type": "string"
+        },
+        "name": {
+          "$ref": "#/definitions/BaseTypes"
+        }
+      },
+      "required": [
+        "kind",
+        "name"
+      ],
+      "type": "object"
+    },
     "BaseTypes": {
       "enum": [
         "Uri",
@@ -15,6 +71,24 @@
         "null"
       ],
       "type": "string"
+    },
+    "BooleanLiteralType": {
+      "additionalProperties": false,
+      "description": "Represents a boolean literal type (e.g. `kind: true`).",
+      "properties": {
+        "kind": {
+          "const": "booleanLiteral",
+          "type": "string"
+        },
+        "value": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "kind",
+        "value"
+      ],
+      "type": "object"
     },
     "Enumeration": {
       "additionalProperties": false,
@@ -37,12 +111,8 @@
           "type": "string"
         },
         "type": {
-          "description": "The type of the elements.",
-          "enum": [
-            "string",
-            "number"
-          ],
-          "type": "string"
+          "$ref": "#/definitions/EnumerationType",
+          "description": "The type of the elements."
         },
         "values": {
           "description": "The enum values.",
@@ -89,6 +159,98 @@
       },
       "required": [
         "name",
+        "value"
+      ],
+      "type": "object"
+    },
+    "EnumerationType": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "base",
+          "type": "string"
+        },
+        "name": {
+          "enum": [
+            "string",
+            "integer"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "name"
+      ],
+      "type": "object"
+    },
+    "IntegerLiteralType": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "integerLiteral",
+          "description": "Represents an integer literal type (e.g. `kind: 1`).",
+          "type": "string"
+        },
+        "value": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "kind",
+        "value"
+      ],
+      "type": "object"
+    },
+    "MapKeyType": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "base",
+              "type": "string"
+            },
+            "name": {
+              "enum": [
+                "Uri",
+                "DocumentUri",
+                "string",
+                "integer"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "name"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/definitions/ReferenceType"
+        }
+      ],
+      "description": "Represents a type that can be used as a key in a map type. If a reference type is used then the type must either resolve to a `string` or `integer` type. (e.g. `type ChangeAnnotationIdentifier === string`)."
+    },
+    "MapType": {
+      "additionalProperties": false,
+      "description": "Represents a JSON object map (e.g. `interface Map<K extends string | integer, V> { [key: K] => V; }`).",
+      "properties": {
+        "key": {
+          "$ref": "#/definitions/MapKeyType"
+        },
+        "kind": {
+          "const": "map",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/definitions/Type"
+        }
+      },
+      "required": [
+        "kind",
+        "key",
         "value"
       ],
       "type": "object"
@@ -186,6 +348,27 @@
       ],
       "type": "object"
     },
+    "OrType": {
+      "additionalProperties": false,
+      "description": "Represents an `or` type (e.g. `Location | LocationLink`).",
+      "properties": {
+        "items": {
+          "items": {
+            "$ref": "#/definitions/Type"
+          },
+          "type": "array"
+        },
+        "kind": {
+          "const": "or",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "items"
+      ],
+      "type": "object"
+    },
     "Property": {
       "additionalProperties": false,
       "description": "Represents an object property.",
@@ -218,6 +401,24 @@
       "required": [
         "name",
         "type"
+      ],
+      "type": "object"
+    },
+    "ReferenceType": {
+      "additionalProperties": false,
+      "description": "Represents a reference to another type (e.g. `TextDocument`). This is either a `Structure`, a `Enumeration` or a `TypeAlias` in the same meta model.",
+      "properties": {
+        "kind": {
+          "const": "reference",
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "name"
       ],
       "type": "object"
     },
@@ -278,6 +479,24 @@
       ],
       "type": "object"
     },
+    "StringLiteralType": {
+      "additionalProperties": false,
+      "description": "Represents a string literal type (e.g. `kind: 'rename'`).",
+      "properties": {
+        "kind": {
+          "const": "stringLiteral",
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "value"
+      ],
+      "type": "object"
+    },
     "Structure": {
       "additionalProperties": false,
       "description": "Defines the structure of an object literal.",
@@ -287,14 +506,14 @@
           "type": "string"
         },
         "extends": {
-          "description": "Structures extended from.",
+          "description": "Structures extended from. This structures form a polymorphic type hierarchy.",
           "items": {
             "$ref": "#/definitions/Type"
           },
           "type": "array"
         },
         "mixins": {
-          "description": "Structures to mix in.",
+          "description": "Structures to mix in. The properties of these structures are `copied` into this structure. Mixins don't form a polymorphic type hierarchy in LSP.",
           "items": {
             "$ref": "#/definitions/Type"
           },
@@ -355,180 +574,83 @@
       ],
       "type": "object"
     },
+    "StructureLiteralType": {
+      "additionalProperties": false,
+      "description": "Represents a literal structure (e.g. `property: { start: uinteger; end: uinteger; }`).",
+      "properties": {
+        "kind": {
+          "const": "literal",
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/definitions/StructureLiteral"
+        }
+      },
+      "required": [
+        "kind",
+        "value"
+      ],
+      "type": "object"
+    },
+    "TupleType": {
+      "additionalProperties": false,
+      "description": "Represents a `tuple` type (e.g. `[integer, integer]`).",
+      "properties": {
+        "items": {
+          "items": {
+            "$ref": "#/definitions/Type"
+          },
+          "type": "array"
+        },
+        "kind": {
+          "enum": [
+            "and",
+            "or",
+            "tuple"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "items"
+      ],
+      "type": "object"
+    },
     "Type": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "properties": {
-            "kind": {
-              "const": "base",
-              "description": "Represents a base type like `string` or `DocumentUri`.",
-              "type": "string"
-            },
-            "name": {
-              "$ref": "#/definitions/BaseTypes"
-            }
-          },
-          "required": [
-            "kind",
-            "name"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/BaseType"
         },
         {
-          "additionalProperties": false,
-          "properties": {
-            "kind": {
-              "const": "reference",
-              "description": "Represents a reference to another type (e.g. `TextDocument`).",
-              "type": "string"
-            },
-            "name": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "kind",
-            "name"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/ReferenceType"
         },
         {
-          "additionalProperties": false,
-          "properties": {
-            "element": {
-              "$ref": "#/definitions/Type"
-            },
-            "kind": {
-              "const": "array",
-              "description": "Represents an array type (e.g. `TextDocument[]`).",
-              "type": "string"
-            }
-          },
-          "required": [
-            "kind",
-            "element"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/ArrayType"
         },
         {
-          "additionalProperties": false,
-          "properties": {
-            "key": {
-              "$ref": "#/definitions/Type"
-            },
-            "kind": {
-              "const": "map",
-              "description": "Represents a JSON object map (e.g. `interface Map<K extends string | number, V> { [key: K] => V; }`).",
-              "type": "string"
-            },
-            "value": {
-              "$ref": "#/definitions/Type"
-            }
-          },
-          "required": [
-            "kind",
-            "key",
-            "value"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/MapType"
         },
         {
-          "additionalProperties": false,
-          "properties": {
-            "items": {
-              "items": {
-                "$ref": "#/definitions/Type"
-              },
-              "type": "array"
-            },
-            "kind": {
-              "description": "Represents an `and`, `or` or `tuple` type\n- and: `TextDocumentParams & WorkDoneProgressParams`\n- or: `Location | LocationLink`\n- tuple: `[integer, integer]`",
-              "enum": [
-                "and",
-                "or",
-                "tuple"
-              ],
-              "type": "string"
-            }
-          },
-          "required": [
-            "kind",
-            "items"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/AndType"
         },
         {
-          "additionalProperties": false,
-          "properties": {
-            "kind": {
-              "const": "literal",
-              "description": "Represents a literal structure (e.g. `property: { start: uinteger; end: uinteger; }`).",
-              "type": "string"
-            },
-            "value": {
-              "$ref": "#/definitions/StructureLiteral"
-            }
-          },
-          "required": [
-            "kind",
-            "value"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/OrType"
         },
         {
-          "additionalProperties": false,
-          "properties": {
-            "kind": {
-              "const": "stringLiteral",
-              "description": "Represents a string literal type (e.g. `kind: 'rename'`).",
-              "type": "string"
-            },
-            "value": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "kind",
-            "value"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/TupleType"
         },
         {
-          "additionalProperties": false,
-          "properties": {
-            "kind": {
-              "const": "numberLiteral",
-              "description": "Represents a number literal type (e.g. `kind: 1`).",
-              "type": "string"
-            },
-            "value": {
-              "type": "number"
-            }
-          },
-          "required": [
-            "kind",
-            "value"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/StructureLiteralType"
         },
         {
-          "additionalProperties": false,
-          "properties": {
-            "kind": {
-              "const": "booleanLiteral",
-              "description": "Represents a boolean literal type (e.g. `kind: true`).",
-              "type": "string"
-            },
-            "value": {
-              "type": "boolean"
-            }
-          },
-          "required": [
-            "kind",
-            "value"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/StringLiteralType"
+        },
+        {
+          "$ref": "#/definitions/IntegerLiteralType"
+        },
+        {
+          "$ref": "#/definitions/BooleanLiteralType"
         }
       ]
     },
@@ -562,6 +684,22 @@
         "type"
       ],
       "type": "object"
+    },
+    "TypeKind": {
+      "enum": [
+        "base",
+        "reference",
+        "array",
+        "map",
+        "and",
+        "or",
+        "tuple",
+        "literal",
+        "stringLiteral",
+        "integerLiteral",
+        "booleanLiteral"
+      ],
+      "type": "string"
     }
   }
 }

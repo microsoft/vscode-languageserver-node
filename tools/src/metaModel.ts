@@ -5,74 +5,116 @@
 
 export type BaseTypes = 'Uri' | 'DocumentUri' | 'integer' | 'uinteger' | 'decimal' | 'RegExp' | 'string' | 'boolean' | 'null';
 
-export type TypeKind = 'base' | 'reference' | 'array' | 'map' | 'and' | 'or' | 'tuple' | 'literal' | 'stringLiteral' | 'numberLiteral' | 'booleanLiteral';
+export type TypeKind = 'base' | 'reference' | 'array' | 'map' | 'and' | 'or' | 'tuple' | 'literal' | 'stringLiteral' | 'integerLiteral' | 'booleanLiteral';
 
-export type Type = {
-	kind: TypeKind;
-} & ({
-	/**
-	 * Represents a base type like `string` or `DocumentUri`.
-	 */
+/**
+ * Represents a base type like `string` or `DocumentUri`.
+ */
+export type BaseType = {
 	kind: 'base';
 	name: BaseTypes;
-} | {
-	/**
-	 * Represents a reference to another type (e.g. `TextDocument`).
-	 */
+};
+
+/**
+ * Represents a reference to another type (e.g. `TextDocument`).
+ * This is either a `Structure`, a `Enumeration` or a `TypeAlias`
+ * in the same meta model.
+ */
+export type ReferenceType = {
 	kind: 'reference';
 	name: string;
-} | {
-	/**
-	 * Represents an array type (e.g. `TextDocument[]`).
-	 */
+};
+
+/**
+ * Represents an array type (e.g. `TextDocument[]`).
+ */
+export type ArrayType = {
 	kind: 'array';
 	element: Type;
-} | {
-	/**
-	 * Represents a JSON object map
-	 * (e.g. `interface Map<K extends string | number, V> { [key: K] => V; }`).
-	 */
+};
+
+/**
+ * Represents a type that can be used as a key in a
+ * map type. If a reference type is used then the
+ * type must either resolve to a `string` or `integer`
+ * type. (e.g. `type ChangeAnnotationIdentifier === string`).
+ */
+export type MapKeyType = { kind: 'base'; name: 'Uri' | 'DocumentUri' | 'string' | 'integer' } | ReferenceType;
+
+/**
+ * Represents a JSON object map
+ * (e.g. `interface Map<K extends string | integer, V> { [key: K] => V; }`).
+ */
+export type MapType = {
 	kind: 'map';
-	key: Type;
+	key: MapKeyType;
 	value: Type;
-} | {
-	/**
-	 * Represents an `and`, `or` or `tuple` type
-	 * - and: `TextDocumentParams & WorkDoneProgressParams`
-	 * - or: `Location | LocationLink`
-	 * - tuple: `[integer, integer]`
-	 */
+};
+
+/**
+ * Represents an `and`type
+ * (e.g. TextDocumentParams & WorkDoneProgressParams`).
+ */
+export type AndType = {
+	kind: 'and';
+	items: Type[];
+};
+
+/**
+ * Represents an `or` type
+ * (e.g. `Location | LocationLink`).
+ */
+export type OrType = {
+	kind: 'or';
+	items: Type[];
+};
+
+/**
+ * Represents a `tuple` type
+ * (e.g. `[integer, integer]`).
+ */
+export type TupleType = {
 	kind: 'and' | 'or' | 'tuple';
 	items: Type[];
-} | {
-	/**
-	 * Represents a literal structure
-	 * (e.g. `property: { start: uinteger; end: uinteger; }`).
-	 */
+};
+
+/**
+ * Represents a literal structure
+ * (e.g. `property: { start: uinteger; end: uinteger; }`).
+ */
+export type StructureLiteralType =  {
 	kind: 'literal';
 	value: StructureLiteral;
-} | {
-	/**
-	 * Represents a string literal type
-	 * (e.g. `kind: 'rename'`).
-	 */
+};
+
+/**
+ * Represents a string literal type
+ * (e.g. `kind: 'rename'`).
+ */
+export type StringLiteralType = {
 	kind: 'stringLiteral';
 	value: string;
-} | {
+};
+
+export type IntegerLiteralType = {
 	/**
-	 * Represents a number literal type
+	 * Represents an integer literal type
 	 * (e.g. `kind: 1`).
 	 */
-	kind: 'numberLiteral';
+	kind: 'integerLiteral';
 	value: number;
-} | {
-	/**
-	 * Represents a boolean literal type
-	 * (e.g. `kind: true`).
-	 */
+};
+
+/**
+ * Represents a boolean literal type
+ * (e.g. `kind: true`).
+ */
+export type BooleanLiteralType = {
 	kind: 'booleanLiteral';
 	value: boolean;
-});
+};
+
+export type Type = BaseType | ReferenceType | ArrayType | MapType | AndType | OrType | TupleType | StructureLiteralType | StringLiteralType | IntegerLiteralType | BooleanLiteralType;
 
 /**
  * Represents a LSP request
@@ -214,12 +256,16 @@ export type Structure = {
 	name: string;
 
 	/**
-	 * Structures extended from.
+	 * Structures extended from. This structures form
+	 * a polymorphic type hierarchy.
 	 */
 	extends?: Type[];
 
 	/**
-	 * Structures to mix in.
+	 * Structures to mix in. The properties of these
+	 * structures are `copied` into this structure.
+	 * Mixins don't form a polymorphic type hierarchy in
+	 * LSP.
 	 */
 	mixins?: Type[];
 
@@ -339,6 +385,8 @@ export type EnumerationEntry = {
 	proposed?: boolean;
 };
 
+export type EnumerationType = { kind: 'base'; name: 'string' | 'integer' };
+
 /**
  * Defines an enumeration.
  */
@@ -351,7 +399,7 @@ export type Enumeration = {
 	/**
 	 * The type of the elements.
 	 */
-	type: 'string' | 'number';
+	type: EnumerationType;
 
 	/**
 	 * The enum values.

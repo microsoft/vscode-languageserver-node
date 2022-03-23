@@ -1824,10 +1824,7 @@ export namespace MarkupKind {
 	 * Markdown is supported as a content format
 	 */
 	export const Markdown: 'markdown' = 'markdown';
-}
-export type MarkupKind = 'plaintext' | 'markdown';
 
-export namespace MarkupKind {
 	/**
 	 * Checks whether the given value is a value of the [MarkupKind](#MarkupKind) type.
 	 */
@@ -1836,6 +1833,7 @@ export namespace MarkupKind {
 		return candidate === MarkupKind.PlainText || candidate === MarkupKind.Markdown;
 	}
 }
+export type MarkupKind = 'plaintext' | 'markdown';
 
 /**
  * A `MarkupContent` literal represents a string value which content is interpreted base on its
