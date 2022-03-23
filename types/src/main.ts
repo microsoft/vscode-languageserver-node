@@ -2756,7 +2756,9 @@ export namespace SymbolInformation {
  */
 export interface WorkspaceSymbol extends BaseSymbolInformation {
 	/**
-	 * The location of the symbol.
+	 * The location of the symbol. Whether a server is allowed to
+	 * return a location without a range depends on the client
+	 * capability `workspace.symbol.resolveSupport`.
 	 *
 	 * See SymbolInformation#location for more details.
 	 */
