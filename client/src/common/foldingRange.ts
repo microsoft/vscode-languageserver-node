@@ -40,6 +40,7 @@ export class FoldingRangeFeature extends TextDocumentFeature<boolean | FoldingRa
 		capability.dynamicRegistration = true;
 		capability.rangeLimit = 5000;
 		capability.lineFoldingOnly = true;
+		capability.collapsedText = false;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {

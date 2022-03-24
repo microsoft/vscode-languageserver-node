@@ -487,6 +487,13 @@ export interface FoldingRange {
 	 * [FoldingRangeKind](#FoldingRangeKind) for an enumeration of standardized kinds.
 	 */
 	kind?: FoldingRangeKind;
+
+	/**
+	 * The text to be shown instead of the folded area.
+	 * If the client only supports folding complete lines, the text will be shown at the end of the start line.
+	 * To replace the full line `startCharacter` property must be set to 0.
+	 */
+	collapsedText?: string;
 }
 
 /**
@@ -497,7 +504,7 @@ export namespace FoldingRange {
 	/**
 	 * Creates a new FoldingRange literal.
 	 */
-	export function create(startLine: uinteger, endLine: uinteger, startCharacter?: uinteger, endCharacter?: uinteger, kind?: FoldingRangeKind): FoldingRange {
+	export function create(startLine: uinteger, endLine: uinteger, startCharacter?: uinteger, endCharacter?: uinteger, kind?: FoldingRangeKind, collapsedText?: string): FoldingRange {
 		const result: FoldingRange = {
 			startLine,
 			endLine
@@ -510,6 +517,9 @@ export namespace FoldingRange {
 		}
 		if (Is.defined(kind)) {
 			result.kind = kind;
+		}
+		if (Is.defined(collapsedText)) {
+			result.collapsedText = collapsedText;
 		}
 		return result;
 	}
