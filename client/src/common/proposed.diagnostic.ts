@@ -3,11 +3,10 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 /// <reference path="../../typings/vscode.proposed.tabs.d.ts" />
-/// <reference path="../../typings/vscode.proposed.openEditors.d.ts" />
 
 import {
 	Disposable, languages as Languages, window as Window, workspace as Workspace, CancellationToken, ProviderResult,
-	Diagnostic as VDiagnostic, CancellationTokenSource, TextDocument, CancellationError, Event as VEvent, EventEmitter, DiagnosticCollection, Uri
+	Diagnostic as VDiagnostic, CancellationTokenSource, TextDocument, CancellationError, Event as VEvent, EventEmitter, DiagnosticCollection, Uri, TabKindText, TabKindTextDiff
 } from 'vscode';
 
 import {
@@ -131,27 +130,21 @@ class EditorTracker  {
 		this.open = new Set();
 		const openTabsHandler = () => {
 			this.open.clear();
-			// New API
-			if (Window.tabs !== undefined) {
-				for (const tab of Window.tabs) {
-					if (tab.resource !== undefined) {
-						this.open.add(tab.resource.toString());
-					}
-				}
-			// Old pre 1.61 API
-			} else if (Window.openEditors !== undefined) {
-				for (const info of Window.openEditors) {
-					if (info.resource !== undefined) {
-						this.open.add(info.resource.toString());
+			for (const group of Window.tabGroups.groups) {
+				for (const tab of group.tabs) {
+					const kind = tab.kind;
+					if (kind instanceof TabKindText) {
+						this.open.add(kind.uri.toString());
+					} else if (kind instanceof TabKindTextDiff) {
+						this.open.add(kind.modified.toString());
 					}
 				}
 			}
 		};
 		openTabsHandler();
-		if (Window.onDidChangeTabs !== undefined) {
-			this.disposable = Window.onDidChangeTabs(openTabsHandler);
-		} else if (Window.onDidChangeOpenEditors !== undefined) {
-			this.disposable = Window.onDidChangeOpenEditors(openTabsHandler);
+
+		if (Window.tabGroups.onDidChangeTabGroup !== undefined) {
+			this.disposable = Window.tabGroups.onDidChangeTabGroup(openTabsHandler);
 		} else {
 			this.disposable = { dispose: () => {} };
 		}

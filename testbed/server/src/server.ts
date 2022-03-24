@@ -166,7 +166,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 				diagnosticProvider: {
 					identifier: 'testbed',
 					interFileDependencies: true,
-					workspaceDiagnostics: true
+					workspaceDiagnostics: false
 				},
 				notebookDocumentSync: {
 					notebookSelector: [{
