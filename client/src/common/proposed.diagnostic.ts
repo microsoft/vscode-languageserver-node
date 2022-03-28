@@ -88,17 +88,17 @@ export namespace vsdiag {
 
 	export interface DiagnosticProvider {
 		onDidChangeDiagnostics: VEvent<void>;
-		provideDiagnostics(textDocument: TextDocument, previousResultId: string | undefined, token: CancellationToken): ProviderResult<DocumentDiagnosticReport>;
+		provideDiagnostics(document: TextDocument | Uri, previousResultId: string | undefined, token: CancellationToken): ProviderResult<DocumentDiagnosticReport>;
 		provideWorkspaceDiagnostics?(resultIds: PreviousResultId[], token: CancellationToken, resultReporter: ResultReporter): ProviderResult<WorkspaceDiagnosticReport>;
 	}
 }
 
-export type ProvideDiagnosticSignature =(this: void, textDocument: TextDocument, previousResultId: string | undefined, token: CancellationToken) => ProviderResult<vsdiag.DocumentDiagnosticReport>;
+export type ProvideDiagnosticSignature =(this: void, document: TextDocument | Uri, previousResultId: string | undefined, token: CancellationToken) => ProviderResult<vsdiag.DocumentDiagnosticReport>;
 
 export type ProvideWorkspaceDiagnosticSignature = (this: void, resultIds: vsdiag.PreviousResultId[], token: CancellationToken, resultReporter: vsdiag.ResultReporter) => ProviderResult<vsdiag.WorkspaceDiagnosticReport>;
 
 export type DiagnosticProviderMiddleware = {
-	provideDiagnostics?: (this: void, document: TextDocument, previousResultId: string | undefined, token: CancellationToken, next: ProvideDiagnosticSignature) => ProviderResult<vsdiag.DocumentDiagnosticReport>;
+	provideDiagnostics?: (this: void, document: TextDocument | Uri, previousResultId: string | undefined, token: CancellationToken, next: ProvideDiagnosticSignature) => ProviderResult<vsdiag.DocumentDiagnosticReport>;
 	provideWorkspaceDiagnostics?: (this: void, resultIds: vsdiag.PreviousResultId[], token: CancellationToken, resultReporter: vsdiag.ResultReporter, next: ProvideWorkspaceDiagnosticSignature) => ProviderResult<vsdiag.WorkspaceDiagnosticReport>;
 };
 
@@ -154,12 +154,30 @@ class EditorTracker  {
 		this.disposable.dispose();
 	}
 
-	public isActive(textDocument: TextDocument): boolean {
-		return Window.activeTextEditor?.document === textDocument;
+	public isActive(document: TextDocument | Uri): boolean {
+		return document instanceof Uri
+			? Window.activeTextEditor?.document.uri === document
+			: Window.activeTextEditor?.document === document;
 	}
 
-	public isVisible(textDocument: TextDocument): boolean {
-		return this.open.has(textDocument.uri.toString());
+	public isVisible(document: TextDocument | Uri): boolean {
+		const uri = document instanceof Uri ? document : document.uri;
+		return this.open.has(uri.toString());
+	}
+
+	public getTabResources(): Uri[] {
+		const result: Uri[] = [];
+		for (const group of Window.tabGroups.groups) {
+			for (const tab of group.tabs) {
+				const kind = tab.kind;
+				if (kind instanceof TabKindText) {
+					result.push(kind.uri);
+				} else if (kind instanceof TabKindTextDiff) {
+					result.push(kind.modified);
+				}
+			}
+		}
+		return result;
 	}
 }
 
@@ -217,8 +235,6 @@ class DocumentPullStateTracker {
 		}
 	}
 
-	public unTrack(kind: PullState, document: TextDocument): void;
-	public unTrack(kind: PullState, document: Uri): void;
 	public unTrack(kind: PullState, document: TextDocument | Uri): void {
 		const key = document instanceof Uri ? document.toString() : document.uri.toString();
 		const states = kind === PullState.document ? this.documentPullStates : this.workspacePullStates;
@@ -292,17 +308,16 @@ class DiagnosticRequestor implements Disposable {
 	}
 
 	public pull(document: TextDocument | Uri, cb?: () => void): void {
+		const uri = document instanceof Uri ? document : document.uri;
 		this.pullAsync(document).then(() => {
 			if (cb) {
 				cb();
 			}
 		}, (error) => {
-			this.client.error(`Document pull failed for text document ${textDocument.uri.toString()}`, error, false);
+			this.client.error(`Document pull failed for text document ${uri.toString()}`, error, false);
 		});
 	}
 
-	private async pullAsync(textDocument: TextDocument): Promise<void>;
-	private async pullAsync(uri: Uri, version?: number): Promise<void>;
 	private async pullAsync(document: TextDocument | Uri, version?: number | undefined): Promise<void> {
 		const isUri = document instanceof Uri;
 		const uri = isUri ? document : document.uri;
@@ -318,7 +333,7 @@ class DiagnosticRequestor implements Disposable {
 			let report: vsdiag.DocumentDiagnosticReport | undefined;
 			let afterState: RequestState | undefined;
 			try {
-				report = await this.provider.provideDiagnostics(textDocument, documentState.resultId, tokenSource.token) ?? { kind: vsdiag.DocumentDiagnosticReportKind.full, items: [] };
+				report = await this.provider.provideDiagnostics(document, documentState.resultId, tokenSource.token) ?? { kind: vsdiag.DocumentDiagnosticReportKind.full, items: [] };
 			} catch (error) {
 				if (error instanceof LSPCancellationError && Proposed.DiagnosticServerCancellationData.is(error.data) && error.data.retriggerRequest === false) {
 					afterState = { state: RequestStateKind.outDated, document };
@@ -333,12 +348,12 @@ class DiagnosticRequestor implements Disposable {
 			if (afterState === undefined) {
 				// This shouldn't happen. Log it
 				this.client.error(`Lost request state in diagnostic pull model. Clearing diagnostics for ${key}`);
-				this.diagnostics.delete(textDocument.uri);
+				this.diagnostics.delete(uri);
 				return;
 			}
 			this.openRequests.delete(key);
-			if (!this.editorTracker.isVisible(textDocument)) {
-				this.documentStates.unTrack(PullState.document, textDocument);
+			if (!this.editorTracker.isVisible(document)) {
+				this.documentStates.unTrack(PullState.document, document);
 				return;
 			}
 			if (afterState.state === RequestStateKind.outDated) {
@@ -347,13 +362,13 @@ class DiagnosticRequestor implements Disposable {
 			// report is only undefined if the request has thrown.
 			if (report !== undefined) {
 				if (report.kind === vsdiag.DocumentDiagnosticReportKind.full) {
-					this.diagnostics.set(textDocument.uri, report.items);
+					this.diagnostics.set(uri, report.items);
 				}
 				documentState.pulledVersion = version;
 				documentState.resultId = report.resultId;
 			}
 			if (afterState.state === RequestStateKind.reschedule) {
-				this.pull(textDocument);
+				this.pull(document);
 			}
 		} else {
 			if (currentRequestState.state === RequestStateKind.active) {
@@ -440,11 +455,11 @@ class DiagnosticRequestor implements Disposable {
 	private createProvider(): vsdiag.DiagnosticProvider {
 		const result: vsdiag.DiagnosticProvider = {
 			onDidChangeDiagnostics: this.onDidChangeDiagnosticsEmitter.event,
-			provideDiagnostics: (textDocument, previousResultId, token) => {
-				const provideDiagnostics: ProvideDiagnosticSignature = (textDocument, previousResultId, token) => {
+			provideDiagnostics: (document, previousResultId, token) => {
+				const provideDiagnostics: ProvideDiagnosticSignature = (document, previousResultId, token) => {
 					const params: Proposed.DocumentDiagnosticParams = {
 						identifier: this.options.identifier,
-						textDocument: { uri: this.client.code2ProtocolConverter.asUri(textDocument.uri) },
+						textDocument: { uri: this.client.code2ProtocolConverter.asUri(document instanceof Uri ? document : document.uri) },
 						previousResultId: previousResultId
 					};
 					return this.client.sendRequest(Proposed.DocumentDiagnosticRequest.type, params, token).then(async (result) => {
@@ -462,8 +477,8 @@ class DiagnosticRequestor implements Disposable {
 				};
 				const middleware: Middleware & DiagnosticProviderMiddleware = this.client.clientOptions.middleware!;
 				return middleware.provideDiagnostics
-					? middleware.provideDiagnostics(textDocument, previousResultId, token, provideDiagnostics)
-					: provideDiagnostics(textDocument, previousResultId, token);
+					? middleware.provideDiagnostics(document, previousResultId, token, provideDiagnostics)
+					: provideDiagnostics(document, previousResultId, token);
 			}
 		};
 		if (this.options.workspaceDiagnostics) {
@@ -569,8 +584,8 @@ export interface DiagnosticFeatureProvider {
 class BackgroundScheduler implements Disposable {
 
 	private readonly diagnosticRequestor: DiagnosticRequestor;
-	private endDocument: TextDocument | undefined;
-	private readonly documents: LinkedMap<string, TextDocument>;
+	private endDocument: TextDocument | Uri | undefined;
+	private readonly documents: LinkedMap<string, TextDocument | Uri>;
 	private intervalHandle: Disposable | undefined;
 
 	public constructor(diagnosticRequestor: DiagnosticRequestor) {
@@ -578,26 +593,26 @@ class BackgroundScheduler implements Disposable {
 		this.documents = new LinkedMap();
 	}
 
-	public add(textDocument: TextDocument): void {
-		const key = textDocument.uri.toString();
+	public add(document: TextDocument | Uri): void {
+		const key = document instanceof Uri ? document.toString() : document.uri.toString();
 		if (this.documents.has(key)) {
 			return;
 		}
-		this.documents.set(textDocument.uri.toString(), textDocument, Touch.Last);
+		this.documents.set(key, document, Touch.Last);
 		this.trigger();
 	}
 
-	public remove(textDocument: TextDocument): void {
-		const key = textDocument.uri.toString();
+	public remove(document: TextDocument | Uri): void {
+		const key = document instanceof Uri ? document.toString() : document.uri.toString();
 		if (this.documents.has(key)) {
 			this.documents.delete(key);
 			// Do a last pull
-			this.diagnosticRequestor.pull(textDocument);
+			this.diagnosticRequestor.pull(document);
 		}
 		// No more documents. Stop background activity.
 		if (this.documents.size === 0) {
 			this.stop();
-		} else if (textDocument === this.endDocument) {
+		} else if (document === this.endDocument) {
 			// Make sure we have a correct last document. It could have
 			this.endDocument = this.documents.last;
 		}
@@ -614,8 +629,9 @@ class BackgroundScheduler implements Disposable {
 		this.intervalHandle = RAL().timer.setInterval(() => {
 			const document = this.documents.first;
 			if (document !== undefined) {
+				const key = document instanceof Uri ? document.toString() : document.uri.toString();
 				this.diagnosticRequestor.pull(document);
-				this.documents.set(document.uri.toString(), document, Touch.Last);
+				this.documents.set(key, document, Touch.Last);
 				if (document === this.endDocument) {
 					this.stop();
 				}
@@ -647,18 +663,26 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 		const documentSelector = client.protocol2CodeConverter.asDocumentSelector(options.documentSelector!);
 		const disposables: Disposable[] = [];
 
-		const matches = (textDocument: TextDocument): boolean => {
-			return Languages.match(documentSelector, textDocument) > 0 && editorTracker.isVisible(textDocument);
+		const matches = (document: TextDocument | Uri): boolean => {
+			return document instanceof Uri
+				? true
+				: Languages.match(documentSelector, document) > 0 && editorTracker.isVisible(document);
+		};
+
+		const isActiveDocument = (document: TextDocument | Uri): boolean => {
+			return document instanceof Uri
+				? this.activeTextDocument?.uri.toString() === document.toString()
+				: this.activeTextDocument === document;
 		};
 
 		this.diagnosticRequestor = new DiagnosticRequestor(client, editorTracker, options);
 		this.backgroundScheduler = new BackgroundScheduler(this.diagnosticRequestor);
 
-		const addToBackgroundIfNeeded = (textDocument: TextDocument): void => {
-			if (!matches(textDocument) || !options.interFileDependencies || this.activeTextDocument === textDocument) {
+		const addToBackgroundIfNeeded = (document: TextDocument | Uri): void => {
+			if (!matches(document) || !options.interFileDependencies || isActiveDocument(document)) {
 				return;
 			}
-			this.backgroundScheduler.add(textDocument);
+			this.backgroundScheduler.add(document);
 		};
 
 		this.activeTextDocument = Window.activeTextEditor?.document;
@@ -683,9 +707,18 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 		}));
 
 		// Pull all diagnostics for documents that are already open
+		const pullTextDocuments: Set<string> = new Set();
 		for (const textDocument of Workspace.textDocuments) {
 			if (matches(textDocument)) {
 				this.diagnosticRequestor.pull(textDocument, () => { addToBackgroundIfNeeded(textDocument); });
+				pullTextDocuments.add(textDocument.uri.toString());
+			}
+		}
+
+		// Pull all tabs if not already pull as text document
+		for (const resource of editorTracker.getTabResources()) {
+			if (!pullTextDocuments.has(resource.toString()) && matches(resource)) {
+				this.diagnosticRequestor.pull(resource, () => { addToBackgroundIfNeeded(resource); });
 			}
 		}
 
