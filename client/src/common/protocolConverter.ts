@@ -493,7 +493,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		const list = <ls.CompletionList>value;
 		const { range, inserting, replacing, commitCharacters } = getCompletionItemDefaults(list, allCommitCharacters);
 		const converted = await async.map(list.items, (item) => {
-			const result = asCompletionItem(item, commitCharacters, list.itemDefaults?.insertTextMode, list.itemDefaults?.insertTextFormat);
+			const result = asCompletionItem(item, commitCharacters, list.itemDefaults?.insertTextMode, list.itemDefaults?.insertTextFormat, list.itemDefaults?.data);
 			if (result.range === undefined) {
 				if (range !== undefined) {
 					result.range = range;
@@ -547,7 +547,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return result;
 	}
 
-	function asCompletionItem(item: ls.CompletionItem, defaultCommitCharacters?: string[], defaultInsertTextMode?: ls.InsertTextMode, defaultInsertTextFormat?: ls.InsertTextFormat): ProtocolCompletionItem {
+	function asCompletionItem(item: ls.CompletionItem, defaultCommitCharacters?: string[], defaultInsertTextMode?: ls.InsertTextMode, defaultInsertTextFormat?: ls.InsertTextFormat, defaultData?: ls.LSPAny): ProtocolCompletionItem {
 		const tags: code.CompletionItemTag[] = asCompletionItemTags(item.tags);
 		const label = asCompletionItemLabel(item);
 		const result = new ProtocolCompletionItem(label);
@@ -585,7 +585,8 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 			}
 		}
 		if (item.preselect === true || item.preselect === false) { result.preselect = item.preselect; }
-		if (item.data !== undefined) { result.data = item.data; }
+		const data = item.data ?? defaultData;
+		if (data !== undefined) { result.data = data; }
 		if (tags.length > 0) {
 			result.tags = tags;
 		}

@@ -2271,7 +2271,7 @@ export interface CompletionList {
 		commitCharacters?: string[];
 
 		/**
-		 * A default edit range
+		 * A default edit range.
 		 *
 		 * @since 3.17.0
 		 * @proposed
@@ -2282,7 +2282,7 @@ export interface CompletionList {
 		};
 
 		/**
-		 * A default insert text format
+		 * A default insert text format.
 		 *
 		 * @since 3.17.0
 		 * @proposed
@@ -2290,12 +2290,20 @@ export interface CompletionList {
 		insertTextFormat?: InsertTextFormat;
 
 		/**
-		 * A default insert text mode
+		 * A default insert text mode.
 		 *
 		 * @since 3.17.0
 		 * @proposed
 		 */
 		insertTextMode?: InsertTextMode;
+
+		/**
+		 * A default data value.
+		 *
+		 * @since 3.17.0
+		 * @proposed
+		 */
+		data?: LSPAny;
 	};
 
 	/**
