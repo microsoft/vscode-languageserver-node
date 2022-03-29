@@ -277,7 +277,7 @@ namespace $NotebookDocumentFilter {
 			return false;
 		}
 		const uri = notebookDocument.uri;
-		if (filter.scheme !== undefined && uri.scheme !== filter.scheme) {
+		if (filter.scheme !== undefined && filter.scheme !== '*' && uri.scheme !== filter.scheme) {
 			return false;
 		}
 		if (filter.pattern !== undefined) {

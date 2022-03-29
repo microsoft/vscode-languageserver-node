@@ -46,6 +46,13 @@ export function activate(context: ExtensionContext) {
 			didOpen: (document, next) => {
 				return next(document);
 			}
+		},
+		diagnosticPullOptions: {
+			onTabs: true,
+			match: (selector, resource) => {
+				const fsPath = resource.fsPath;
+				return path.extname(fsPath) === '.bat';
+			}
 		}
 	};
 

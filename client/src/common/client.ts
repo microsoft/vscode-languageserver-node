@@ -376,9 +376,42 @@ export enum DiagnosticPullMode {
 }
 
 export type DiagnosticPullOptions = {
-	onChange: boolean;
-	onSave: boolean;
+	/**
+	 * Whether to pull for diagnostics on document change.
+	 */
+	onChange?: boolean;
+
+	/**
+	 * Whether to pull for diagnostics on document save.
+	 */
+	onSave?: boolean;
+
+	/**
+	 * An optional filter method that is consulted when triggering a
+	 * diagnostic pull during document change or document save.
+	 *
+	 * @param document the document that changes or got save
+	 * @param mode the mode
+	 */
 	filter?(document: TextDocument, mode: DiagnosticPullMode): boolean;
+
+	/**
+	 * Whether to pull for diagnostics on resources of non instantiated
+	 * tabs. If it is set to true it is highly recommended to provide
+	 * a match method as well. Otherwise the client will not pull for
+	 * tabs if the used document selector specifies a language property
+	 * since the language value is not known for resources.
+	 */
+	onTabs?: boolean;
+
+	/**
+	 * A optional match method that is consulted when pull for diagnostics
+	 * when only a URI is known (e.g. for not instantiated tabs)
+	 *
+	 * @param documentSelector the document selector
+	 * @param resource the resource.
+	 */
+	match?(documentSelector: DocumentSelector, resource: Uri): boolean;
 };
 
 export type NotebookDocumentOptions = {
