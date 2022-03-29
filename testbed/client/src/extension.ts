@@ -46,6 +46,10 @@ export function activate(context: ExtensionContext) {
 			didOpen: (document, next) => {
 				return next(document);
 			}
+		},
+		diagnosticPullOptions: {
+			onTabs: true,
+			match: (selector, resource) => { return true; }
 		}
 	};
 

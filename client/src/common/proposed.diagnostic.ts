@@ -4,6 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 /// <reference path="../../typings/vscode.proposed.tabs.d.ts" />
 
+import * as minimatch from 'minimatch';
+
 import {
 	Disposable, languages as Languages, window as Window, workspace as Workspace, CancellationToken, ProviderResult,
 	Diagnostic as VDiagnostic, CancellationTokenSource, TextDocument, CancellationError, Event as VEvent, EventEmitter, DiagnosticCollection, Uri, TabKindText, TabKindTextDiff
@@ -11,7 +13,7 @@ import {
 
 import {
 	Proposed, ClientCapabilities, ServerCapabilities, DocumentSelector, DidOpenTextDocumentNotification, DidChangeTextDocumentNotification,
-	DidSaveTextDocumentNotification, DidCloseTextDocumentNotification, LinkedMap, Touch, RAL
+	DidSaveTextDocumentNotification, DidCloseTextDocumentNotification, LinkedMap, Touch, RAL, TextDocumentFilter
 } from 'vscode-languageserver-protocol';
 
 import { generateUuid } from './utils/uuid';
@@ -121,7 +123,7 @@ type RequestState = {
 	document: TextDocument | Uri;
 };
 
-class EditorTracker  {
+class Tabs {
 
 	private readonly open: Set<string>;
 	private readonly disposable: Disposable;
@@ -275,7 +277,7 @@ class DiagnosticRequestor implements Disposable {
 
 	private isDisposed: boolean;
 	private readonly client: BaseLanguageClient;
-	private readonly editorTracker: EditorTracker;
+	private readonly tabs: Tabs;
 	private readonly options: Proposed.DiagnosticRegistrationOptions;
 
 	public readonly onDidChangeDiagnosticsEmitter: EventEmitter<void>;
@@ -288,9 +290,9 @@ class DiagnosticRequestor implements Disposable {
 	private workspaceCancellation: CancellationTokenSource | undefined;
 	private workspaceTimeout: Disposable | undefined;
 
-	public constructor(client: BaseLanguageClient, editorTracker: EditorTracker, options: Proposed.DiagnosticRegistrationOptions) {
+	public constructor(client: BaseLanguageClient, tabs: Tabs, options: Proposed.DiagnosticRegistrationOptions) {
 		this.client = client;
-		this.editorTracker = editorTracker;
+		this.tabs = tabs;
 		this.options = options;
 
 		this.isDisposed = false;
@@ -352,7 +354,7 @@ class DiagnosticRequestor implements Disposable {
 				return;
 			}
 			this.openRequests.delete(key);
-			if (!this.editorTracker.isVisible(document)) {
+			if (!this.tabs.isVisible(document)) {
 				this.documentStates.unTrack(PullState.document, document);
 				return;
 			}
@@ -658,15 +660,48 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 	private activeTextDocument: TextDocument | undefined;
 	private readonly backgroundScheduler: BackgroundScheduler;
 
-	constructor(client: BaseLanguageClient, editorTracker: EditorTracker, options: Proposed.DiagnosticRegistrationOptions) {
+	constructor(client: BaseLanguageClient, tabs: Tabs, options: Proposed.DiagnosticRegistrationOptions) {
 		const diagnosticPullOptions = client.clientOptions.diagnosticPullOptions ?? { onChange: true, onSave: false };
 		const documentSelector = client.protocol2CodeConverter.asDocumentSelector(options.documentSelector!);
 		const disposables: Disposable[] = [];
 
+		const matchResource = (resource: Uri) => {
+			const selector = options.documentSelector!;
+			if (diagnosticPullOptions.match !== undefined) {
+				return diagnosticPullOptions.match(selector!, resource);
+			}
+			for (const filter of selector) {
+				if (!TextDocumentFilter.is(filter)) {
+					continue;
+				}
+				// The filter is a language id. We can't determine if it matches
+				// so we return false.
+				if (typeof filter === 'string') {
+					return false;
+				}
+				if (filter.language !== undefined && filter.language !== '*') {
+					return false;
+				}
+				if (filter.scheme !== undefined && filter.scheme !== '*' && filter.scheme !== resource.scheme) {
+					return false;
+				}
+				if (filter.pattern !== undefined) {
+					const matcher = new minimatch.Minimatch(filter.pattern, { noext: true });
+					if (!matcher.makeRe()) {
+						return false;
+					}
+					if (!matcher.match(resource.fsPath)) {
+						return false;
+					}
+				}
+			}
+			return true;
+		};
+
 		const matches = (document: TextDocument | Uri): boolean => {
 			return document instanceof Uri
-				? true
-				: Languages.match(documentSelector, document) > 0 && editorTracker.isVisible(document);
+				? matchResource(document)
+				: Languages.match(documentSelector, document) > 0 && tabs.isVisible(document);
 		};
 
 		const isActiveDocument = (document: TextDocument | Uri): boolean => {
@@ -675,7 +710,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 				: this.activeTextDocument === document;
 		};
 
-		this.diagnosticRequestor = new DiagnosticRequestor(client, editorTracker, options);
+		this.diagnosticRequestor = new DiagnosticRequestor(client, tabs, options);
 		this.backgroundScheduler = new BackgroundScheduler(this.diagnosticRequestor);
 
 		const addToBackgroundIfNeeded = (document: TextDocument | Uri): void => {
@@ -716,13 +751,15 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 		}
 
 		// Pull all tabs if not already pull as text document
-		for (const resource of editorTracker.getTabResources()) {
-			if (!pullTextDocuments.has(resource.toString()) && matches(resource)) {
-				this.diagnosticRequestor.pull(resource, () => { addToBackgroundIfNeeded(resource); });
+		if (diagnosticPullOptions.onTabs === true) {
+			for (const resource of tabs.getTabResources()) {
+				if (!pullTextDocuments.has(resource.toString()) && matches(resource)) {
+					this.diagnosticRequestor.pull(resource, () => { addToBackgroundIfNeeded(resource); });
+				}
 			}
 		}
 
-		if (diagnosticPullOptions.onChange) {
+		if (diagnosticPullOptions.onChange === true) {
 			const changeFeature = client.getFeature(DidChangeTextDocumentNotification.method);
 			disposables.push(changeFeature.onNotificationSent(async (event) => {
 				const textDocument = event.original.document;
@@ -732,7 +769,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 			}));
 		}
 
-		if (diagnosticPullOptions.onSave) {
+		if (diagnosticPullOptions.onSave === true) {
 			const saveFeature = client.getFeature(DidSaveTextDocumentNotification.method);
 			disposables.push(saveFeature.onNotificationSent((event) => {
 				const textDocument = event.original;
@@ -778,11 +815,11 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 
 export class DiagnosticFeature extends TextDocumentFeature<Proposed.DiagnosticOptions, Proposed.DiagnosticRegistrationOptions, DiagnosticFeatureProvider> {
 
-	private readonly editorTracker: EditorTracker;
+	private readonly tabs: Tabs;
 
 	constructor(client: BaseLanguageClient) {
 		super(client, Proposed.DocumentDiagnosticRequest.type);
-		this.editorTracker = new EditorTracker();
+		this.tabs = new Tabs();
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities & Proposed.$DiagnosticClientCapabilities): void {
@@ -809,12 +846,12 @@ export class DiagnosticFeature extends TextDocumentFeature<Proposed.DiagnosticOp
 	}
 
 	public dispose(): void {
-		this.editorTracker.dispose();
+		this.tabs.dispose();
 		super.dispose();
 	}
 
 	protected registerLanguageProvider(options: Proposed.DiagnosticRegistrationOptions): [Disposable, DiagnosticFeatureProvider] {
-		const provider = new DiagnosticFeatureProviderImpl(this._client, this.editorTracker, options);
+		const provider = new DiagnosticFeatureProviderImpl(this._client, this.tabs, options);
 		return [provider.disposable, provider];
 	}
 }
