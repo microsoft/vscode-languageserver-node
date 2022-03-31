@@ -1871,9 +1871,14 @@ export interface DidChangeWatchedFilesRegistrationOptions {
 	watchers: FileSystemWatcher[];
 }
 
-export interface FileSystemWatcher {
+export interface GlobPattern {
 	/**
-	 * The  glob pattern to watch. Glob patterns can have the following syntax:
+	 * A base file path to which this pattern will be matched against relatively.
+	 */
+	baseUri: DocumentUri;
+
+	/**
+	 * The glob pattern to watch relative to the base path. Glob patterns can have the following syntax:
 	 * - `*` to match one or more characters in a path segment
 	 * - `?` to match on one character in a path segment
 	 * - `**` to match any number of path segments, including none
@@ -1881,7 +1886,27 @@ export interface FileSystemWatcher {
 	 * - `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
 	 * - `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)
 	 */
-	globPattern: string;
+	 pattern: string;
+}
+
+export namespace GlobPattern {
+	export function is(value: any): value is GlobPattern {
+		const candidate: GlobPattern = value;
+		return DocumentUri.is(candidate.baseUri) && Is.string(candidate.pattern);
+	}
+}
+
+export interface FileSystemWatcher {
+	/**
+	 * The glob pattern to watch. Glob patterns can have the following syntax:
+	 * - `*` to match one or more characters in a path segment
+	 * - `?` to match on one character in a path segment
+	 * - `**` to match any number of path segments, including none
+	 * - `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)
+	 * - `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
+	 * - `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)
+	 */
+	globPattern: string | GlobPattern;
 
 	/**
 	 * The kind of events of interest. If omitted it defaults

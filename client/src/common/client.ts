@@ -20,7 +20,7 @@ import {
 	DocumentRangeFormattingEditProvider, OnTypeFormattingEditProvider, RenameProvider, DocumentLinkProvider, DocumentColorProvider, DeclarationProvider,
 	FoldingRangeProvider, ImplementationProvider, SelectionRangeProvider, TypeDefinitionProvider, WorkspaceSymbolProvider, CallHierarchyProvider,
 	DocumentSymbolProviderMetadata, EventEmitter, env as Env, TextDocumentShowOptions, FileWillCreateEvent, FileWillRenameEvent, FileWillDeleteEvent, FileCreateEvent, FileDeleteEvent, FileRenameEvent,
-	LinkedEditingRangeProvider, Event as VEvent, CancellationError, TypeHierarchyProvider as VTypeHierarchyProvider, CancellationTokenSource, NotebookDocument, NotebookCell,
+	LinkedEditingRangeProvider, Event as VEvent, CancellationError, TypeHierarchyProvider as VTypeHierarchyProvider, CancellationTokenSource, NotebookDocument, NotebookCell, RelativePattern,
 } from 'vscode';
 
 import {
@@ -53,7 +53,7 @@ import {
 	FileOperationRegistrationOptions, WillCreateFilesRequest, WillRenameFilesRequest, WillDeleteFilesRequest, DidCreateFilesNotification, DidDeleteFilesNotification,
 	DidRenameFilesNotification, ShowDocumentParams, ShowDocumentResult, LinkedEditingRangeRequest, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressEnd,
 	WorkDoneProgressReport, PrepareSupportDefaultBehavior, SemanticTokensRequest, SemanticTokensRangeRequest, SemanticTokensDeltaRequest, Proposed, WorkspaceSymbolResolveRequest,
-	Diagnostic, ApplyWorkspaceEditResult, InlayHintRequest, InlineValueRequest, TypeHierarchyPrepareRequest
+	Diagnostic, ApplyWorkspaceEditResult, InlayHintRequest, InlineValueRequest, TypeHierarchyPrepareRequest, GlobPattern
 } from 'vscode-languageserver-protocol';
 
 import { toJSONObject } from './configuration';
@@ -1422,7 +1422,7 @@ class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatchedFilesRe
 		}
 		let disposables: Disposable[] = [];
 		for (let watcher of data.registerOptions.watchers) {
-			if (!Is.string(watcher.globPattern)) {
+			if (!Is.string(watcher.globPattern) && !GlobPattern.is(watcher.globPattern)) {
 				continue;
 			}
 			let watchCreate: boolean = true, watchChange: boolean = true, watchDelete: boolean = true;
@@ -1431,7 +1431,10 @@ class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatchedFilesRe
 				watchChange = (watcher.kind & WatchKind.Change) !== 0;
 				watchDelete = (watcher.kind & WatchKind.Delete) !== 0;
 			}
-			let fileSystemWatcher: VFileSystemWatcher = Workspace.createFileSystemWatcher(watcher.globPattern, !watchCreate, !watchChange, !watchDelete);
+			const globPattern =
+				Is.string(watcher.globPattern) ? watcher.globPattern :
+					new RelativePattern(watcher.globPattern.baseUri, watcher.globPattern.pattern);
+			let fileSystemWatcher: VFileSystemWatcher = Workspace.createFileSystemWatcher(globPattern, !watchCreate, !watchChange, !watchDelete);
 			this.hookListeners(fileSystemWatcher, watchCreate, watchChange, watchDelete);
 			disposables.push(fileSystemWatcher);
 		}
