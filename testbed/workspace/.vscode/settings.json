@@ -1,3 +1,4 @@
 {
-	"testbed.trace.server": "off"
+	"testbed.trace.server": "off",
+	"editor.formatOnType": true
 }

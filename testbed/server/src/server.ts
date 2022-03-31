@@ -143,7 +143,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 				documentRangeFormattingProvider: true,
 				documentOnTypeFormattingProvider: {
 					firstTriggerCharacter: ';',
-					moreTriggerCharacter: ['}', '\n']
+					moreTriggerCharacter: ['{', '\n']
 				},
 				renameProvider: true,
 				workspace: {
