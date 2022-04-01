@@ -938,7 +938,7 @@ export abstract class DynamicDocumentFeature<RO> implements DynamicFeature<RO> {
 				}
 			}
 		}
-		return count === 0 ? { kind: 'document', registrations: false } : { kind: 'document', registrations: true, active: true };
+		return count === 0 ? { kind: 'document', registrations: false } : { kind: 'document', registrations: true, active: false };
 
 	}
 
@@ -3265,13 +3265,16 @@ export abstract class BaseLanguageClient {
 
 	public set trace(value: Trace) {
 		this._trace = value;
-		this.onReady().then(() => {
-			this.resolveConnection().then((connection) => {
+		this.onReady().then(async () => {
+			try {
+				const connection = await this.resolveConnection();
 				connection.trace(this._trace, this._tracer, {
 					sendNotification: false,
 					traceFormat: this._traceFormat
 				});
-			}, () => this.info(`Setting trace value failed`, undefined, false));
+			} catch {
+				this.info(`Setting trace value failed`, undefined, false);
+			}
 		}, () => {
 		});
 	}
@@ -3494,7 +3497,7 @@ export abstract class BaseLanguageClient {
 		return this._connectionPromise;
 	}
 
-	private initialize(connection: Connection): Promise<InitializeResult> {
+	private async initialize(connection: Connection): Promise<InitializeResult> {
 		this.refreshTrace(connection, false);
 		const initOption = this._clientOptions.initializationOptions;
 		// If the client is locked to a workspace folder use it. In this case the workspace folder
@@ -3521,23 +3524,26 @@ export abstract class BaseLanguageClient {
 			const token: ProgressToken = UUID.generateUuid();
 			const part: ProgressPart = new ProgressPart(connection, token);
 			initParams.workDoneToken = token;
-			return this.doInitialize(connection, initParams).then((result) => {
+			try {
+				const result = await this.doInitialize(connection, initParams);
 				part.done();
 				return result;
-			}, (error) => {
+			} catch (error) {
 				part.cancel();
 				throw error;
-			});
+			}
 		} else {
 			return this.doInitialize(connection, initParams);
 		}
 	}
 
-	private doInitialize(connection: Connection, initParams: InitializeParams): Promise<InitializeResult> {
-		return connection.initialize(initParams).then((result) => {
+	private async doInitialize(connection: Connection, initParams: InitializeParams): Promise<InitializeResult> {
+		try {
+			const result = await connection.initialize(initParams);
 			if (result.capabilities.positionEncoding !== undefined && result.capabilities.positionEncoding !== 'utf-16') {
 				throw new Error(`Unsupported position encoding (${result.capabilities.positionEncoding}) received from server ${this.name}`);
 			}
+
 			this._resolvedConnection = connection;
 			this._initializeResult = result;
 			this.state = ClientState.Running;
@@ -3573,15 +3579,17 @@ export abstract class BaseLanguageClient {
 			connection.onRequest('client/unregisterFeature', params => this.handleUnregistrationRequest(params));
 			connection.onRequest(ApplyWorkspaceEditRequest.type, params => this.handleApplyWorkspaceEdit(params));
 
-			return connection.sendNotification(InitializedNotification.type, {}).then(() => {
-				this.hookFileEvents(connection);
-				this.hookConfigurationChanged(connection);
-				this.initializeFeatures(connection);
-				this._onReadyCallbacks.resolve();
-				return result;
-			});
+			RAL().timer.setInterval(() => this.checkSuspend(), 1000);
 
-		}).then<InitializeResult>(undefined, (error: any) => {
+			await connection.sendNotification(InitializedNotification.type, {});
+
+			this.hookFileEvents(connection);
+			this.hookConfigurationChanged(connection);
+			this.initializeFeatures(connection);
+			this._onReadyCallbacks.resolve();
+
+			return result;
+		} catch (error: any) {
 			if (this._clientOptions.initializationFailedHandler) {
 				if (this._clientOptions.initializationFailedHandler(error)) {
 					void this.initialize(connection);
@@ -3607,7 +3615,7 @@ export abstract class BaseLanguageClient {
 				this._onReadyCallbacks.reject(error);
 			}
 			throw error;
-		});
+		}
 	}
 
 	private _clientGetRootPath(): string | undefined {
@@ -3630,7 +3638,7 @@ export abstract class BaseLanguageClient {
 		this._initializeResult = undefined;
 		if (!this._connectionPromise) {
 			this.state = ClientState.Stopped;
-			return Promise.resolve();
+			return;
 		}
 		if (this.state === ClientState.Stopping && this._onStop) {
 			return this._onStop;
@@ -3639,12 +3647,10 @@ export abstract class BaseLanguageClient {
 		this.cleanUp(false);
 
 		const tp = new Promise<undefined>(c => { RAL().timer.setTimeout(c, timeout); });
-		const shutdown = this.resolveConnection().then(connection => {
-			return connection.shutdown().then(() => {
-				return connection.exit().then(() => {
-					return connection;
-				});
-			});
+		const shutdown = this.resolveConnection().then(async (connection) => {
+			await connection.shutdown();
+			await connection.exit();
+			return connection;
 		});
 
 		return this._onStop = Promise.race([tp, shutdown]).then((connection) => {
@@ -3793,7 +3799,7 @@ export abstract class BaseLanguageClient {
 
 	protected abstract createMessageTransports(encoding: string): Promise<MessageTransports>;
 
-	private createConnection(): Promise<Connection> {
+	private async createConnection(): Promise<Connection> {
 		let errorHandler = (error: Error, message: Message | undefined, count: number | undefined) => {
 			this.handleConnectionError(error, message, count);
 		};
@@ -3802,9 +3808,8 @@ export abstract class BaseLanguageClient {
 			this.handleConnectionClosed();
 		};
 
-		return this.createMessageTransports(this._clientOptions.stdioEncoding || 'utf8').then((transports) => {
-			return createConnection(transports.reader, transports.writer, errorHandler, closeHandler, this._clientOptions.connectionOptions);
-		});
+		const transports = await this.createMessageTransports(this._clientOptions.stdioEncoding || 'utf8');
+		return createConnection(transports.reader, transports.writer, errorHandler, closeHandler, this._clientOptions.connectionOptions);
 	}
 
 	protected handleConnectionClosed(): void {
@@ -4055,46 +4060,37 @@ export abstract class BaseLanguageClient {
 		}
 	}
 
-	private handleRegistrationRequest(params: RegistrationParams): Promise<void> {
+	private async handleRegistrationRequest(params: RegistrationParams): Promise<void> {
 		interface WithDocumentSelector {
 			documentSelector: DocumentSelector | undefined;
 		}
-		return new Promise<void>((resolve, reject) => {
-			for (const registration of params.registrations) {
-				const feature = this._dynamicFeatures.get(registration.method);
-				if (feature === undefined) {
-					reject(new Error(`No feature implementation for ${registration.method} found. Registration failed.`));
-					return;
-				}
-				const options = registration.registerOptions ?? {};
-				(options as unknown as WithDocumentSelector).documentSelector = (options as unknown as WithDocumentSelector).documentSelector ?? this._clientOptions.documentSelector;
-				const data: RegistrationData<any> = {
-					id: registration.id,
-					registerOptions: options
-				};
-				try {
-					feature.register(data);
-				} catch (err) {
-					reject(err);
-					return;
-				}
+		for (const registration of params.registrations) {
+			const feature = this._dynamicFeatures.get(registration.method);
+			if (feature === undefined) {
+				return Promise.reject(new Error(`No feature implementation for ${registration.method} found. Registration failed.`));
 			}
-			resolve();
-		});
+			const options = registration.registerOptions ?? {};
+			(options as unknown as WithDocumentSelector).documentSelector = (options as unknown as WithDocumentSelector).documentSelector ?? this._clientOptions.documentSelector;
+			const data: RegistrationData<any> = {
+				id: registration.id,
+				registerOptions: options
+			};
+			try {
+				feature.register(data);
+			} catch (err) {
+				return Promise.reject(err);
+			}
+		}
 	}
 
-	private handleUnregistrationRequest(params: UnregistrationParams): Promise<void> {
-		return new Promise<void>((resolve, reject) => {
-			for (let unregistration of params.unregisterations) {
-				const feature = this._dynamicFeatures.get(unregistration.method);
-				if (!feature) {
-					reject(new Error(`No feature implementation for ${unregistration.method} found. Unregistration failed.`));
-					return;
-				}
-				feature.unregister(unregistration.id);
+	private async handleUnregistrationRequest(params: UnregistrationParams): Promise<void> {
+		for (let unregistration of params.unregisterations) {
+			const feature = this._dynamicFeatures.get(unregistration.method);
+			if (!feature) {
+				return Promise.reject(new Error(`No feature implementation for ${unregistration.method} found. Unregistration failed.`));
 			}
-			resolve();
-		});
+			feature.unregister(unregistration.id);
+		}
 	}
 
 	private workspaceEditLock: Semaphore<VWorkspaceEdit> = new Semaphore(1);
@@ -4157,5 +4153,25 @@ export abstract class BaseLanguageClient {
 		}
 		this.error(`Request ${type.method} failed.`, error, showNotification);
 		throw error;
+	}
+
+	private checkSuspend(): void {
+		if (this.state !== ClientState.Running) {
+			return;
+		}
+		if (this.canSuspend()) {
+			this.outputChannel.appendLine(`Language Server can be suspended`);
+		} else {
+			this.outputChannel.appendLine(`Language Server can't be suspended`);
+		}
+	}
+	private canSuspend(): boolean {
+		for (const feature of this._features) {
+			const state = feature.getState();
+			if (state.kind === 'document' && state.registrations === true && state.active) {
+				return false;
+			}
+		}
+		return true;
 	}
 }
