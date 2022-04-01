@@ -3400,6 +3400,9 @@ export abstract class BaseLanguageClient {
 
 	private doInitialize(connection: Connection, initParams: InitializeParams): Promise<InitializeResult> {
 		return connection.initialize(initParams).then((result) => {
+			if (result.capabilities.positionEncoding !== undefined && result.capabilities.positionEncoding !== 'utf-16') {
+				throw new Error(`Unsupported position encoding (${result.capabilities.positionEncoding}) received from server ${this.name}`);
+			}
 			this._resolvedConnection = connection;
 			this._initializeResult = result;
 			this.state = ClientState.Running;
@@ -3898,6 +3901,8 @@ export abstract class BaseLanguageClient {
 			parser: 'marked',
 			version: '1.1.0',
 		};
+		generalCapabilities.positionEncodings = ['utf-16'];
+
 		if (this._clientOptions.markdown.supportHtml) {
 			generalCapabilities.markdown.allowedTags = ['ul', 'li', 'p', 'code', 'blockquote', 'ol', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'em', 'pre', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'div', 'del', 'a', 'strong', 'br', 'img', 'span'];
 		}

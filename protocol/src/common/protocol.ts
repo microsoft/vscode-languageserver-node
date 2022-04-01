@@ -794,6 +794,7 @@ export interface GeneralClientCapabilities {
 	 * anymore since the information is outdated).
 	 *
 	 * @since 3.17.0
+	 * @proposed
 	 */
 	staleRequestSupport?: {
 		/**
@@ -822,6 +823,35 @@ export interface GeneralClientCapabilities {
 	 * @since 3.16.0
 	 */
 	markdown?: MarkdownClientCapabilities;
+
+	/**
+	 * The position encodings supported by the client. Client and server
+	 * have to agree on the same position encoding to ensure that offsets
+	 * (e.g. character position in a line) are interpreted the same on both
+	 * side.
+	 *
+	 * To keep the protocol backwards compatible the following applies: if
+	 * the value 'utf-16' is missing from the array of position encodings
+	 * server can assume that the client supports UTF-16. UTF-16 is
+	 * therefore a mandatory encoding.
+	 *
+	 * If omitted it defaults to ['utf-16'].
+	 *
+	 * For the following standard Unicode encodings these string values are
+	 * defined:
+	 *
+	 * UTF-8: 'utf-8'
+	 * UTF-16: 'utf-16'
+	 *
+	 * Implementation considerations: since the conversion from one encoding
+	 * into another requires the content of the file / line the conversion
+	 * is best done where the file is read which is usually on the server
+	 * side.
+	 *
+	 * @since 3.17.0
+	 * @proposed
+	 */
+	positionEncodings?: ('utf-16' | 'utf-8' | string)[];
 }
 
 /**
@@ -935,6 +965,22 @@ export namespace WorkDoneProgressOptions {
  * server.
  */
 export interface ServerCapabilities<T = any> {
+
+	/**
+	 * The position encoding the server picked from the encodings offered
+	 * by the client via the client capability `general.positionEncodings`.
+	 *
+	 * If the client didn't provide any position encodings the only valid
+	 * value that a server can return is `'utf-16'`.
+	 *
+	 * If omitted it defaults to `'utf-16'`.
+	 *
+	 * If for some reason
+	 *
+	 * @since 3.17.0
+	 * @proposed
+	 */
+	positionEncoding?: 'utf-16' | string;
 
 	/**
 	 * Defines how text documents are synced. Is either a detailed structure defining each notification or
@@ -1252,16 +1298,19 @@ export interface InitializeResult<T = any> {
 }
 
 /**
- * Known error codes for an `InitializeError`;
+ * Known error codes for an `InitializeErrorCodes`;
  */
-export namespace InitializeError {
+export namespace InitializeErrorCodes {
 	/**
 	 * If the protocol version provided by the client can't be handled by the server.
+	 *
 	 * @deprecated This initialize error got replaced by client capabilities. There is
 	 * no version handshake in version 3.0x
 	 */
 	export const unknownProtocolVersion: 1 = 1;
 }
+
+export type InitializeErrorCodes = 1;
 
 /**
  * The data type of the ResponseError if the
