@@ -8,7 +8,7 @@ import * as code from 'vscode';
 import * as minimatch from 'minimatch';
 import * as proto from 'vscode-languageserver-protocol';
 
-import { DynamicFeature, BaseLanguageClient, RegistrationData, NextSignature } from './client';
+import { DynamicFeature, BaseLanguageClient, RegistrationData, NextSignature, FeatureState } from './client';
 import * as UUID from './utils/uuid';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
@@ -46,15 +46,15 @@ interface Event<I> {
 
 abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFeature<proto.FileOperationRegistrationOptions> {
 
-	protected _client: BaseLanguageClient;
-	private _event: code.Event<E>;
-	private _registrationType: proto.RegistrationType<proto.FileOperationRegistrationOptions>;
-	private _clientCapability: keyof proto.FileOperationClientCapabilities;
-	private _serverCapability: keyof proto.FileOperationOptions;
+	protected readonly _client: BaseLanguageClient;
+	private readonly _event: code.Event<E>;
+	private readonly _registrationType: proto.RegistrationType<proto.FileOperationRegistrationOptions>;
+	private readonly _clientCapability: keyof proto.FileOperationClientCapabilities;
+	private readonly _serverCapability: keyof proto.FileOperationOptions;
 	private _listener: code.Disposable | undefined;
 	// This property must stay private. Otherwise the type `minimatch.IMinimatch` becomes public and as a consequence we would need to
 	// ship the d.ts files for minimatch to make the compiler happy when compiling against the vscode-languageclient library
-	private _filters = new Map<string, Array<{ scheme?: string; matcher: minimatch.IMinimatch; kind?: proto.FileOperationPatternKind }>>();
+	private readonly _filters: Map<string, Array<{ scheme?: string; matcher: minimatch.IMinimatch; kind?: proto.FileOperationPatternKind }>>;
 
 	constructor(client: BaseLanguageClient, event: code.Event<E>,
 		registrationType: proto.RegistrationType<proto.FileOperationRegistrationOptions>,
@@ -65,6 +65,11 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 		this._registrationType = registrationType;
 		this._clientCapability = clientCapability;
 		this._serverCapability = serverCapability;
+		this._filters = new Map();
+	}
+
+	getState(): FeatureState {
+		return { kind: 'workspace', registrations: this._filters.size > 0 };
 	}
 
 	protected filterSize(): number {

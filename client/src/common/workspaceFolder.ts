@@ -7,7 +7,7 @@ import * as UUID from './utils/uuid';
 
 import { workspace, Disposable, WorkspaceFolder as VWorkspaceFolder, WorkspaceFoldersChangeEvent as VWorkspaceFoldersChangeEvent } from 'vscode';
 
-import { DynamicFeature, RegistrationData, BaseLanguageClient, NextSignature } from './client';
+import { DynamicFeature, RegistrationData, BaseLanguageClient, NextSignature, FeatureState } from './client';
 import {
 	ClientCapabilities, InitializeParams, CancellationToken, ServerCapabilities, WorkspaceFoldersRequest, WorkspaceFolder,
 	DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, RegistrationType
@@ -31,10 +31,17 @@ export interface WorkspaceFolderWorkspaceMiddleware {
 
 export class WorkspaceFoldersFeature implements DynamicFeature<void> {
 
-	private _listeners: Map<string, Disposable> = new Map<string, Disposable>();
+	private readonly _client: BaseLanguageClient;
+	private readonly _listeners: Map<string, Disposable>;
 	private _initialFolders: ReadonlyArray<VWorkspaceFolder> | undefined;
 
-	constructor(private _client: BaseLanguageClient) {
+	constructor(client: BaseLanguageClient) {
+		this._client = client;
+		this._listeners = new Map();
+	}
+
+	getState(): FeatureState {
+		return { kind: 'workspace', registrations: this._listeners.size > 0 };
 	}
 
 	public get registrationType(): RegistrationType<void> {

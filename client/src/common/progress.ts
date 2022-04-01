@@ -5,7 +5,7 @@
 
 import { ClientCapabilities, WorkDoneProgressCreateParams, WorkDoneProgressCreateRequest } from 'vscode-languageserver-protocol';
 
-import { BaseLanguageClient, StaticFeature } from './client';
+import { BaseLanguageClient, FeatureState, StaticFeature } from './client';
 import { ProgressPart } from './progressPart';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
@@ -17,10 +17,14 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 
 export class ProgressFeature implements StaticFeature {
 
-	private activeParts: Set<ProgressPart>;
+	private readonly activeParts: Set<ProgressPart>;
 
 	constructor(private _client: BaseLanguageClient) {
 		this.activeParts = new Set();
+	}
+
+	getState(): FeatureState {
+		return { kind: 'window', registrations: this.activeParts.size > 0 };
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {

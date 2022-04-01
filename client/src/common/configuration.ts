@@ -5,7 +5,7 @@
 
 import { workspace, Uri } from 'vscode';
 
-import { StaticFeature, BaseLanguageClient } from './client';
+import { StaticFeature, BaseLanguageClient, FeatureState } from './client';
 import {
 	ClientCapabilities, ConfigurationRequest
 } from 'vscode-languageserver-protocol';
@@ -16,7 +16,14 @@ export interface ConfigurationWorkspaceMiddleware {
 
 export class ConfigurationFeature implements StaticFeature {
 
-	constructor(private _client: BaseLanguageClient) {
+	private readonly _client: BaseLanguageClient;
+
+	constructor(client: BaseLanguageClient) {
+		this._client = client;
+	}
+
+	getState(): FeatureState {
+		return { kind: 'static' };
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {

@@ -756,8 +756,27 @@ export interface RegistrationData<T> {
 	registerOptions: T;
 }
 
+export type FeatureStateKind = 'document' | 'workspace' | 'static' | 'window';
+
+export type FeatureState = {
+	kind: 'document';
+	registrations: false;
+} | {
+	kind: 'document';
+	registrations: true;
+	active: boolean;
+} | {
+	kind: 'workspace';
+	registrations: boolean;
+} | {
+	kind: 'window';
+	registrations: boolean;
+} | {
+	kind: 'static';
+};
+
 /**
- * A static feature. A static feature can't be dynamically activate via the
+ * A static feature. A static feature can't be dynamically activated via the
  * server. It is wired during the initialize sequence.
  */
 export interface StaticFeature {
@@ -788,12 +807,20 @@ export interface StaticFeature {
 	initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector | undefined): void;
 
 	/**
+	 * Returns the state the feature is in.
+	 */
+	getState(): FeatureState;
+
+	/**
 	 * Called when the client is stopped to dispose this feature. Usually a feature
 	 * un-registers listeners registered hooked up with the VS Code extension host.
 	 */
 	dispose(): void;
 }
 
+/**
+ * A dynamic feature can be activated via the server.
+ */
 export interface DynamicFeature<RO> {
 
 	/**
@@ -823,6 +850,11 @@ export interface DynamicFeature<RO> {
 	initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector | undefined): void;
 
 	/**
+	 * Returns the state the feature is in.
+	 */
+	getState(): FeatureState;
+
+	/**
 	 * The signature (e.g. method) for which this features support dynamic activation / registration.
 	 */
 	registrationType: RegistrationType<RO>;
@@ -850,7 +882,7 @@ export interface DynamicFeature<RO> {
 
 export interface NotificationFeature<T extends Function> {
 	/**
-	 * Triggers the corresponding RPC method.
+	 * Returns a provider for the given text document.
 	 */
 	getProvider(document: TextDocument): { send: T } | undefined;
 }
@@ -876,11 +908,53 @@ export interface NotifyingFeature<E, P> {
 	onNotificationSent: VEvent<NotificationSendEvent<E, P>>;
 }
 
-abstract class DocumentNotifications<P, E> implements DynamicFeature<TextDocumentRegistrationOptions>, NotificationFeature<(data: E) => Promise<void>>, NotifyingFeature<E, P> {
+export abstract class DynamicDocumentFeature<RO> implements DynamicFeature<RO> {
+
+	protected readonly _client: BaseLanguageClient;
+
+	constructor(client: BaseLanguageClient) {
+		this._client = client;
+	}
+
+	// Repeat from interface.
+	public abstract fillClientCapabilities(capabilities: ClientCapabilities): void;
+	public abstract initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector | undefined): void;
+	public abstract registrationType: RegistrationType<RO>;
+	public abstract register(data: RegistrationData<RO>): void;
+	public abstract unregister(id: string): void;
+	public abstract dispose(): void;
+
+	/**
+	 * Returns the state the feature is in.
+	 */
+	public getState(): FeatureState {
+		const selectors = this.getDocumentSelectors();
+		let count: number = 0;
+		for (const selector of selectors) {
+			count++;
+			for (const document of Workspace.textDocuments) {
+				if (Languages.match(selector, document) > 0) {
+					return { kind: 'document', registrations: true, active: true };
+				}
+			}
+		}
+		return count === 0 ? { kind: 'document', registrations: false } : { kind: 'document', registrations: true, active: true };
+
+	}
+
+	protected abstract getDocumentSelectors(): IterableIterator<VDocumentSelector>;
+}
+
+abstract class DocumentNotifications<P, E> extends DynamicDocumentFeature<TextDocumentRegistrationOptions> implements NotificationFeature<(data: E) => Promise<void>>, NotifyingFeature<E, P> {
+
+	private readonly _event: Event<E>;
+	protected readonly _type: ProtocolNotificationType<P, TextDocumentRegistrationOptions>;
+	protected readonly _middleware: NextSignature<E, Promise<void>> | undefined;
+	protected readonly _createParams: CreateParamsSignature<E, P>;
+	protected readonly _selectorFilter?: (selectors: IterableIterator<VDocumentSelector>, data: E) => boolean;
 
 	private _listener: Disposable | undefined;
-	protected _selectors: Map<string, VDocumentSelector> = new Map<string, VDocumentSelector>();
-
+	protected readonly _selectors: Map<string, VDocumentSelector>;
 	private readonly _onNotificationSent: EventEmitter<NotificationSendEvent<E, P>>;
 
 	public static textDocumentFilter(selectors: IterableIterator<VDocumentSelector>, textDocument: TextDocument): boolean {
@@ -892,20 +966,24 @@ abstract class DocumentNotifications<P, E> implements DynamicFeature<TextDocumen
 		return false;
 	}
 
-	constructor(
-		protected _client: BaseLanguageClient, private _event: Event<E>,
-		protected _type: ProtocolNotificationType<P, TextDocumentRegistrationOptions>,
-		protected _middleware: NextSignature<E, Promise<void>> | undefined,
-		protected _createParams: CreateParamsSignature<E, P>,
-		protected _selectorFilter?: (selectors: IterableIterator<VDocumentSelector>, data: E) => boolean) {
+	constructor(client: BaseLanguageClient, event: Event<E>, type: ProtocolNotificationType<P, TextDocumentRegistrationOptions>,
+		middleware: NextSignature<E, Promise<void>> | undefined, createParams: CreateParamsSignature<E, P>,
+		selectorFilter?: (selectors: IterableIterator<VDocumentSelector>, data: E) => boolean
+	) {
+		super(client);
+		this._event = event;
+		this._type = type;
+		this._middleware = middleware;
+		this._createParams = createParams;
+		this._selectorFilter = selectorFilter;
+
+		this._selectors = new Map<string, VDocumentSelector>();
 		this._onNotificationSent = new EventEmitter<NotificationSendEvent<E, P>>();
 	}
 
-	public abstract registrationType: RegistrationType<TextDocumentRegistrationOptions>;
-
-	public abstract fillClientCapabilities(capabilities: ClientCapabilities): void;
-
-	public abstract initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector | undefined): void;
+	protected getDocumentSelectors(): IterableIterator<VDocumentSelector> {
+		return this._selectors.values();
+	}
 
 	public register(data: RegistrationData<TextDocumentRegistrationOptions>): void {
 
@@ -1098,16 +1176,17 @@ interface DidChangeTextDocumentData {
 export interface DidChangeTextDocumentFeatureShape extends DynamicFeature<TextDocumentChangeRegistrationOptions>, NotificationFeature<(event: TextDocumentChangeEvent) => Promise<void>>, NotifyingFeature<TextDocumentChangeEvent, DidChangeTextDocumentParams> {
 }
 
-class DidChangeTextDocumentFeature implements DidChangeTextDocumentFeatureShape {
+class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDocumentChangeRegistrationOptions> implements DidChangeTextDocumentFeatureShape {
 
 	private _listener: Disposable | undefined;
-	private _changeData: Map<string, DidChangeTextDocumentData> = new Map<string, DidChangeTextDocumentData>();
+	private readonly _changeData: Map<string, DidChangeTextDocumentData>;
 	private _forcingDelivery: boolean = false;
 	private _changeDelayer: { uri: string; delayer: Delayer<void> } | undefined;
-
 	private readonly _onNotificationSent: EventEmitter<NotificationSendEvent<TextDocumentChangeEvent, DidChangeTextDocumentParams>>;
 
-	constructor(private _client: BaseLanguageClient) {
+	constructor(client: BaseLanguageClient) {
+		super(client);
+		this._changeData = new Map<string, DidChangeTextDocumentData>();
 		this._onNotificationSent = new EventEmitter();
 	}
 
@@ -1143,6 +1222,12 @@ class DidChangeTextDocumentFeature implements DidChangeTextDocumentFeatureShape 
 				documentSelector: this._client.protocol2CodeConverter.asDocumentSelector(data.registerOptions.documentSelector),
 			}
 		);
+	}
+
+	protected *getDocumentSelectors(): IterableIterator<VDocumentSelector> {
+		for (const data of this._changeData.values()) {
+			yield data.documentSelector;
+		}
 	}
 
 	private async callback(event: TextDocumentChangeEvent): Promise<void> {
@@ -1282,12 +1367,18 @@ class WillSaveFeature extends DocumentNotifications<WillSaveTextDocumentParams, 
 	}
 }
 
-class WillSaveWaitUntilFeature implements DynamicFeature<TextDocumentRegistrationOptions> {
+class WillSaveWaitUntilFeature extends DynamicDocumentFeature<TextDocumentRegistrationOptions> {
 
 	private _listener: Disposable | undefined;
-	private _selectors: Map<string, VDocumentSelector> = new Map<string, VDocumentSelector>();
+	private readonly _selectors: Map<string, VDocumentSelector>;
 
-	constructor(private _client: BaseLanguageClient) {
+	constructor(client: BaseLanguageClient) {
+		super(client);
+		this._selectors = new Map<string, VDocumentSelector>();
+	}
+
+	protected getDocumentSelectors(): IterableIterator<VDocumentSelector> {
+		return this._selectors.values();
 	}
 
 	public get registrationType(): RegistrationType<TextDocumentRegistrationOptions> {
@@ -1400,9 +1491,18 @@ class DidSaveTextDocumentFeature extends DocumentNotifications<DidSaveTextDocume
 
 class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatchedFilesRegistrationOptions> {
 
-	private _watchers: Map<string, Disposable[]> = new Map<string, Disposable[]>();
+	private readonly _client: BaseLanguageClient;
+	private readonly _notifyFileEvent: (event: FileEvent) => void;
+	private readonly _watchers: Map<string, Disposable[]>;
 
-	constructor(private _client: BaseLanguageClient, private _notifyFileEvent: (event: FileEvent) => void) {
+	constructor(client: BaseLanguageClient, notifyFileEvent: (event: FileEvent) => void) {
+		this._client = client;
+		this._notifyFileEvent = notifyFileEvent;
+		this._watchers = new Map<string, Disposable[]>();
+	}
+
+	getState(): FeatureState {
+		return { kind: 'workspace', registrations: this._watchers.size > 0 };
 	}
 
 	public get registrationType(): RegistrationType<DidChangeWatchedFilesRegistrationOptions> {
@@ -1505,11 +1605,25 @@ export interface TextDocumentProviderFeature<T> {
 	getProvider(textDocument: TextDocument): T | undefined;
 }
 
-export abstract class TextDocumentFeature<PO, RO extends TextDocumentRegistrationOptions & PO, PR> implements DynamicFeature<RO> {
+export abstract class TextDocumentFeature<PO, RO extends TextDocumentRegistrationOptions & PO, PR> extends DynamicDocumentFeature<RO> {
 
-	private _registrations: Map<string, TextDocumentFeatureRegistration<RO, PR>> = new Map();
+	private readonly _registrationType: RegistrationType<RO>;
+	private readonly _registrations: Map<string, TextDocumentFeatureRegistration<RO, PR>>;
 
-	constructor(protected _client: BaseLanguageClient, private _registrationType: RegistrationType<RO>) {
+	constructor(client: BaseLanguageClient, registrationType: RegistrationType<RO>) {
+		super(client);
+		this._registrationType = registrationType;
+		this._registrations =  new Map();
+	}
+
+	protected *getDocumentSelectors(): IterableIterator<VDocumentSelector> {
+		for (const registration of this._registrations.values()) {
+			const selector = registration.data.registerOptions.documentSelector;
+			if (selector === null) {
+				continue;
+			}
+			yield this._client.protocol2CodeConverter.asDocumentSelector(selector);
+		}
 	}
 
 	public get registrationType():  RegistrationType<RO> {
@@ -1600,9 +1714,18 @@ interface WorkspaceFeatureRegistration<PR> {
 
 abstract class WorkspaceFeature<RO, PR> implements DynamicFeature<RO> {
 
-	protected _registrations: Map<string, WorkspaceFeatureRegistration<PR>> = new Map();
+	protected readonly _client: BaseLanguageClient;
+	private readonly _registrationType: RegistrationType<RO>;
+	protected readonly _registrations: Map<string, WorkspaceFeatureRegistration<PR>>;
 
-	constructor(protected _client: BaseLanguageClient, private _registrationType: RegistrationType<RO>) {
+	constructor(client: BaseLanguageClient, registrationType: RegistrationType<RO>) {
+		this._client = client;
+		this._registrationType = registrationType;
+		this._registrations = new Map();
+	}
+
+	public getState(): FeatureState {
+		return { kind: 'workspace', registrations: this._registrations.size > 0 };
 	}
 
 	public get registrationType(): RegistrationType<RO> {
@@ -2603,9 +2726,14 @@ class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkOptions, Docum
 
 class ConfigurationFeature implements DynamicFeature<DidChangeConfigurationRegistrationOptions> {
 
-	private _listeners: Map<string, Disposable> = new Map<string, Disposable>();
+	private readonly _listeners: Map<string, Disposable>;
 
 	constructor(private _client: BaseLanguageClient) {
+		this._listeners = new Map();
+	}
+
+	public getState(): FeatureState {
+		return { kind: 'workspace', registrations: this._listeners.size > 0 };
 	}
 
 	public get registrationType(): RegistrationType<DidChangeConfigurationRegistrationOptions> {
@@ -2725,9 +2853,16 @@ class ConfigurationFeature implements DynamicFeature<DidChangeConfigurationRegis
 
 class ExecuteCommandFeature implements DynamicFeature<ExecuteCommandRegistrationOptions> {
 
-	private _commands: Map<string, Disposable[]> = new Map<string, Disposable[]>();
+	private readonly _client: BaseLanguageClient;
+	private readonly _commands: Map<string, Disposable[]>;
 
-	constructor(private _client: BaseLanguageClient) {
+	constructor(client: BaseLanguageClient) {
+		this._client = client;
+		this._commands = new Map();
+	}
+
+	public getState(): FeatureState {
+		return { kind: 'workspace', registrations: this._commands.size > 0 };
 	}
 
 	public get registrationType(): RegistrationType<ExecuteCommandRegistrationOptions> {

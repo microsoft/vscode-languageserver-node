@@ -13,7 +13,7 @@ import {
 	DidChangeTextDocumentNotification, DidCloseTextDocumentNotification, NotebookCellTextDocumentFilter, TextDocumentSyncKind
 } from 'vscode-languageserver-protocol';
 
-import { DynamicFeature, BaseLanguageClient, RegistrationData } from './client';
+import { DynamicFeature, BaseLanguageClient, RegistrationData, FeatureState } from './client';
 import * as UUID from './utils/uuid';
 import * as Is from './utils/is';
 import * as _c2p from './codeConverter';
@@ -451,6 +451,16 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 		}, undefined, this.disposables);
 	}
 
+	public getState(): FeatureState {
+		for (const notebook of vscode.workspace.notebookDocuments) {
+			const matchingCells = this.getMatchingCells(notebook);
+			if (matchingCells !== undefined) {
+				return { kind: 'document', registrations: true, active: true };
+			}
+		}
+		return { kind: 'document', registrations: true, active: false };
+	}
+
 	public get mode(): 'notebook' {
 		return 'notebook';
 	}
@@ -841,26 +851,36 @@ class NotebookCellTextDocumentSyncFeatureProvider implements NotebookCellTextDoc
 
 	private readonly client: BaseLanguageClient;
 	private readonly registrations: { open: string; change: string; close: string } | undefined;
-	private readonly documentSelector: proto.DocumentSelector;
+	private readonly documentSelector: vscode.DocumentSelector;
 
 	constructor(client: BaseLanguageClient, options: proto.Proposed.NotebookDocumentSyncOptions) {
 		this.client = client;
 
-		this.documentSelector = $NotebookDocumentSyncOptions.asDocumentSelector(options);
+		const documentSelector = $NotebookDocumentSyncOptions.asDocumentSelector(options);
 
 		const openId = UUID.generateUuid();
 		this.client.getFeature(DidOpenTextDocumentNotification.method).register({
-			id: openId, registerOptions: { documentSelector: this.documentSelector }
+			id: openId, registerOptions: { documentSelector: documentSelector }
 		});
 		const changeId = UUID.generateUuid();
 		this.client.getFeature(DidChangeTextDocumentNotification.method).register({
-			id: changeId, registerOptions: { documentSelector: this.documentSelector, syncKind: TextDocumentSyncKind.Incremental }
+			id: changeId, registerOptions: { documentSelector: documentSelector, syncKind: TextDocumentSyncKind.Incremental }
 		});
 		const closeId = UUID.generateUuid();
 		this.client.getFeature(DidCloseTextDocumentNotification.method).register({
-			id: closeId, registerOptions: { documentSelector: this.documentSelector }
+			id: closeId, registerOptions: { documentSelector: documentSelector }
 		});
 		this.registrations = {open: openId, change: changeId, close: closeId};
+		this.documentSelector = this.client.protocol2CodeConverter.asDocumentSelector(documentSelector);
+	}
+
+	public getState(): FeatureState {
+		for (const document of vscode.workspace.textDocuments) {
+			if (vscode.languages.match(this.documentSelector, document) > 0) {
+				return { kind: 'document', registrations: true, active: true };
+			}
+		}
+		return { kind: 'document', registrations: true, active: false };
 	}
 
 	public get mode(): 'cellContent' {
@@ -868,7 +888,7 @@ class NotebookCellTextDocumentSyncFeatureProvider implements NotebookCellTextDoc
 	}
 
 	public handles(notebookCell: vscode.NotebookCell): boolean {
-		return vscode.languages.match(this.client.protocol2CodeConverter.asDocumentSelector(this.documentSelector), notebookCell.document) > 0;
+		return vscode.languages.match(this.documentSelector, notebookCell.document) > 0;
 	}
 
 	public dispose(): void {
@@ -963,6 +983,19 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 			}
 
 		});
+	}
+
+	getState(): FeatureState {
+		if (this.registrations.size === 0) {
+			return { kind: 'document', registrations: false };
+		}
+		for (const provider of this.registrations.values()) {
+			const state = provider.getState();
+			if (state.kind === 'document' && state.registrations === true && state.active === true) {
+				return state;
+			}
+		}
+		return { kind: 'document', registrations: true, active: false };
 	}
 
 	public readonly registrationType: proto.RegistrationType<proto.Proposed.NotebookDocumentSyncRegistrationOptions>;
