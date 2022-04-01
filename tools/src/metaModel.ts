@@ -74,7 +74,7 @@ export type OrType = {
  * (e.g. `[integer, integer]`).
  */
 export type TupleType = {
-	kind: 'and' | 'or' | 'tuple';
+	kind: 'tuple';
 	items: Type[];
 };
 

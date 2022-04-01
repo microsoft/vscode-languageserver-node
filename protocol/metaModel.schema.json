@@ -1,4 +1,5 @@
 {
+  "$ref": "#/definitions/MetaModel",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
     "AndType": {
@@ -603,11 +604,7 @@
           "type": "array"
         },
         "kind": {
-          "enum": [
-            "and",
-            "or",
-            "tuple"
-          ],
+          "const": "tuple",
           "type": "string"
         }
       },
@@ -684,22 +681,6 @@
         "type"
       ],
       "type": "object"
-    },
-    "TypeKind": {
-      "enum": [
-        "base",
-        "reference",
-        "array",
-        "map",
-        "and",
-        "or",
-        "tuple",
-        "literal",
-        "stringLiteral",
-        "integerLiteral",
-        "booleanLiteral"
-      ],
-      "type": "string"
     }
   }
 }
