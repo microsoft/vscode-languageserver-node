@@ -7788,9 +7788,9 @@
 					"name": "globPattern",
 					"type": {
 						"kind": "base",
-						"name": "string"
+						"name": "GlobPattern"
 					},
-					"documentation": "The  glob pattern to watch. Glob patterns can have the following syntax:\n- `*` to match one or more characters in a path segment\n- `?` to match on one character in a path segment\n- `**` to match any number of path segments, including none\n- `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)\n- `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)\n- `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)"
+					"documentation": "The glob pattern to watch. See {@link GlobPattern glob pattern} for more detail."
 				},
 				{
 					"name": "kind",
@@ -7800,6 +7800,44 @@
 					},
 					"optional": true,
 					"documentation": "The kind of events of interest. If omitted it defaults\nto WatchKind.Create | WatchKind.Change | WatchKind.Delete\nwhich is 7."
+				}
+			]
+		},
+		{
+			"name": "GlobPattern",
+			"type": {
+				"kind": "or",
+				"items": [
+					{
+						"kind": "reference",
+						"name": "string"
+					},
+					{
+						"kind": "reference",
+						"name": "RelativePattern"
+					}
+				]
+			},
+			"documentation": "The glob pattern to match file paths against. This can either be a glob pattern string\n(like `**​/*.{ts,js}` or `*.{ts,js}`) or a {@link RelativePattern relative pattern}.\n\nGlob patterns can have the following syntax:\n - `*` to match one or more characters in a path segment\n - `?` to match on one character in a path segment\n - `**` to match any number of path segments, including none\n - `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)\n - `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)\n - `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)"
+		},
+		{
+			"name": "RelativePattern",
+			"properties": [
+				{
+					"name": "baseUri",
+					"type": {
+						"kind": "base",
+						"name": "DocumentUri"
+					},
+					"documentation": "A base file path to which this pattern will be matched against relatively."
+				},
+				{
+					"name": "pattern",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"documentation": "The  glob pattern to watch. Glob patterns can have the following syntax:\n- `*` to match one or more characters in a path segment\n- `?` to match on one character in a path segment\n- `**` to match any number of path segments, including none\n- `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)\n- `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)\n- `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)"
 				}
 			]
 		},
@@ -10362,6 +10400,15 @@
 					},
 					"optional": true,
 					"documentation": "Did change watched files notification supports dynamic registration. Please note\nthat the current protocol doesn't support static configuration for file changes\nfrom the server side."
+				},
+				{
+					"name": "relativePatternSupport",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Did change watched files notification supports relative pattern."
 				}
 			]
 		},

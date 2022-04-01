@@ -1807,6 +1807,12 @@ export interface DidChangeWatchedFilesClientCapabilities {
 	 * from the server side.
 	 */
 	dynamicRegistration?: boolean;
+	/**
+	 * A relative pattern is a helper to construct glob patterns that are matched
+	 * relatively to a base file path. The base path can either be an absolute file
+	 * path as string or uri.
+	 */
+	relativePatternSupport?: boolean;
 }
 
 /**
@@ -1871,7 +1877,12 @@ export interface DidChangeWatchedFilesRegistrationOptions {
 	watchers: FileSystemWatcher[];
 }
 
-export interface GlobPattern {
+/**
+ * A relative pattern is a helper to construct glob patterns that are matched
+ * relatively to a base file path. The base path can either be an absolute file
+ * path as string or uri.
+ */
+export interface RelativePattern {
 	/**
 	 * A base file path to which this pattern will be matched against relatively.
 	 */
@@ -1889,24 +1900,32 @@ export interface GlobPattern {
 	 pattern: string;
 }
 
-export namespace GlobPattern {
-	export function is(value: any): value is GlobPattern {
-		const candidate: GlobPattern = value;
+export namespace RelativePattern {
+	export function is(value: any): value is RelativePattern {
+		const candidate: RelativePattern = value;
 		return DocumentUri.is(candidate.baseUri) && Is.string(candidate.pattern);
 	}
 }
 
+/**
+ * The glob pattern to match file paths against. This can either be a glob pattern string
+ * (like `**​/*.{ts,js}` or `*.{ts,js}`) or a {@link RelativePattern relative pattern}.
+ *
+ * Glob patterns can have the following syntax:
+ * - `*` to match one or more characters in a path segment
+ * - `?` to match on one character in a path segment
+ * - `**` to match any number of path segments, including none
+ * - `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)
+ * - `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
+ * - `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)
+ */
+export type GlobPattern = string | RelativePattern;
+
 export interface FileSystemWatcher {
 	/**
-	 * The glob pattern to watch. Glob patterns can have the following syntax:
-	 * - `*` to match one or more characters in a path segment
-	 * - `?` to match on one character in a path segment
-	 * - `**` to match any number of path segments, including none
-	 * - `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)
-	 * - `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
-	 * - `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)
+	 * The glob pattern to watch. See {@link GlobPattern glob pattern} for more detail.
 	 */
-	globPattern: string | GlobPattern;
+	globPattern: GlobPattern;
 
 	/**
 	 * The kind of events of interest. If omitted it defaults
