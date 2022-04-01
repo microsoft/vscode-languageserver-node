@@ -1411,6 +1411,7 @@ class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatchedFilesRe
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
 		ensure(ensure(capabilities, 'workspace')!, 'didChangeWatchedFiles')!.dynamicRegistration = true;
+		ensure(ensure(capabilities, 'workspace')!, 'didChangeWatchedFiles')!.relativePatternSupport = true;
 	}
 
 	public initialize(_capabilities: ServerCapabilities, _documentSelector: DocumentSelector): void {
