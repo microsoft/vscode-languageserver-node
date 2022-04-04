@@ -832,7 +832,7 @@ export interface GeneralClientCapabilities {
 	 *
 	 * To keep the protocol backwards compatible the following applies: if
 	 * the value 'utf-16' is missing from the array of position encodings
-	 * server can assume that the client supports UTF-16. UTF-16 is
+	 * servers can assume that the client supports UTF-16. UTF-16 is
 	 * therefore a mandatory encoding.
 	 *
 	 * If omitted it defaults to ['utf-16'].
@@ -842,6 +842,7 @@ export interface GeneralClientCapabilities {
 	 *
 	 * UTF-8: 'utf-8'
 	 * UTF-16: 'utf-16'
+	 * UTF-32: 'utf-32'
 	 *
 	 * Implementation considerations: since the conversion from one encoding
 	 * into another requires the content of the file / line the conversion
@@ -851,7 +852,7 @@ export interface GeneralClientCapabilities {
 	 * @since 3.17.0
 	 * @proposed
 	 */
-	positionEncodings?: ('utf-16' | 'utf-8' | string)[];
+	positionEncodings?: ('utf-16' | 'utf-8' | 'utf-32' | string)[];
 }
 
 /**
@@ -971,16 +972,16 @@ export interface ServerCapabilities<T = any> {
 	 * by the client via the client capability `general.positionEncodings`.
 	 *
 	 * If the client didn't provide any position encodings the only valid
-	 * value that a server can return is `'utf-16'`.
+	 * value that a server can return is 'utf-16'.
 	 *
-	 * If omitted it defaults to `'utf-16'`.
+	 * If omitted it defaults to 'utf-16'.
 	 *
 	 * If for some reason
 	 *
 	 * @since 3.17.0
 	 * @proposed
 	 */
-	positionEncoding?: 'utf-16' | string;
+	positionEncoding?: 'utf-16' | 'utf-8' | 'utf-32' | string;
 
 	/**
 	 * Defines how text documents are synced. Is either a detailed structure defining each notification or
