@@ -30,7 +30,7 @@ connection.sendNotification(notification, 'Hello World');
 The server side looks very symmetrical:
 
 ```ts
-import * as rpc from 'vscode-jsonrpc';
+import * as rpc from 'vscode-jsonrpc/node';
 
 
 let connection = rpc.createMessageConnection(
