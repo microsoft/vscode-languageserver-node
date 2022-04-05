@@ -485,14 +485,14 @@ class DefaultErrorHandler implements ErrorHandler {
 }
 
 enum ClientState {
-	Initial,
-	Starting,
-	StartFailed,
-	Running,
-	Suspending,
-	Suspended,
-	Stopping,
-	Stopped
+	Initial = 'initial',
+	Starting = 'starting',
+	StartFailed = 'startFailed',
+	Running = 'running',
+	Suspending = 'suspending',
+	Suspended = 'suspended',
+	Stopping = 'stopping',
+	Stopped = 'stopped'
 }
 
 export interface ProvideResolveFeature<T1 extends Function, T2 extends Function> {
@@ -1050,14 +1050,15 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			if (this._connectionPromise === undefined) {
 				this._connectionPromise = this.createConnection();
 			}
+			return this._connectionPromise;
 		}
 		if (this.state === ClientState.StartFailed) {
 			throw new Error(`Previous start failed. Can't restart server.`);
 		}
-		if (this.state === ClientState.Running && this._connectionPromise !== undefined) {
+		if ((this.state === ClientState.Running || this.state === ClientState.Stopping) && this._connectionPromise !== undefined) {
 			return this._connectionPromise;
 		}
-		throw new Error(`Unhandled client state ${this.state}`);
+		throw new Error(`Unhandled client state ${this.state}. Connection is available: ${this._connectionPromise !== undefined}`);
 	}
 
 	private activeConnection(): Connection | undefined {

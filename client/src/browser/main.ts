@@ -11,8 +11,11 @@ export * from 'vscode-languageserver-protocol/browser';
 export * from '../common/api';
 
 export class LanguageClient extends BaseLanguageClient {
-	constructor(id: string, name: string, clientOptions: LanguageClientOptions, private worker: Worker) {
+	private readonly worker: Worker;
+
+	constructor(id: string, name: string, clientOptions: LanguageClientOptions, worker: Worker) {
 		super(id, name, clientOptions);
+		this.worker = worker;
 	}
 
 	protected createMessageTransports(_encoding: string): Promise<MessageTransports> {
