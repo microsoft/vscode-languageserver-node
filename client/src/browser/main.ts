@@ -3,14 +3,14 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { CommonLanguageClient, LanguageClientOptions, MessageTransports } from '../common/api';
+import { BaseLanguageClient, LanguageClientOptions, MessageTransports } from '../common/api';
 
 import { BrowserMessageReader, BrowserMessageWriter } from 'vscode-languageserver-protocol/browser';
 
 export * from 'vscode-languageserver-protocol/browser';
 export * from '../common/api';
 
-export class LanguageClient extends CommonLanguageClient {
+export class LanguageClient extends BaseLanguageClient {
 	constructor(id: string, name: string, clientOptions: LanguageClientOptions, private worker: Worker) {
 		super(id, name, clientOptions);
 	}

@@ -13,8 +13,7 @@ import * as SemVer from 'semver';
 import { workspace as Workspace, Disposable, version as VSCodeVersion } from 'vscode';
 
 import * as Is from '../common/utils/is';
-import { CommonLanguageClient } from '../common/commonClient';
-import { LanguageClientOptions, MessageTransports } from '../common/client';
+import { BaseLanguageClient, LanguageClientOptions, MessageTransports } from '../common/client';
 
 import { terminate } from './processes';
 import { StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageWriter, createClientPipeTransport, generateRandomPipeName, createClientSocketTransport, InitializeParams} from 'vscode-languageserver-protocol/node';
@@ -124,7 +123,7 @@ namespace ChildProcessInfo {
 
 export type ServerOptions = Executable | { run: Executable; debug: Executable } | { run: NodeModule; debug: NodeModule } | NodeModule | (() => Promise<ChildProcess | StreamInfo | MessageTransports | ChildProcessInfo>);
 
-export class LanguageClient extends CommonLanguageClient {
+export class LanguageClient extends BaseLanguageClient {
 
 	private readonly _serverOptions: ServerOptions;
 	private readonly _forceDebug: boolean;
