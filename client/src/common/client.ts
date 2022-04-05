@@ -30,12 +30,12 @@ import {
 	MessageReader, MessageWriter, Trace, Tracer, TraceFormat, TraceOptions, Event, Emitter, createProtocolConnection,
 	ClientCapabilities, WorkspaceEdit, RegistrationRequest, RegistrationParams, UnregistrationRequest, UnregistrationParams, TextDocumentRegistrationOptions,
 	InitializeRequest, InitializeParams, InitializeResult, InitializeError, ServerCapabilities, TextDocumentSyncKind, TextDocumentSyncOptions,
-	InitializedNotification, ShutdownRequest, ExitNotification, LogMessageNotification, LogMessageParams, MessageType, ShowMessageNotification,
-	ShowMessageParams, ShowMessageRequest, TelemetryEventNotification, DidChangeConfigurationNotification, DidChangeConfigurationParams,
+	InitializedNotification, ShutdownRequest, ExitNotification, LogMessageNotification, MessageType, ShowMessageNotification,
+	ShowMessageRequest, TelemetryEventNotification, DidChangeConfigurationNotification,
 	DidChangeConfigurationRegistrationOptions, DocumentSelector, DidOpenTextDocumentNotification, DidOpenTextDocumentParams, DidChangeTextDocumentNotification,
 	DidChangeTextDocumentParams, TextDocumentChangeRegistrationOptions, DidCloseTextDocumentNotification, DidCloseTextDocumentParams, DidSaveTextDocumentNotification,
 	DidSaveTextDocumentParams, TextDocumentSaveRegistrationOptions, WillSaveTextDocumentNotification, WillSaveTextDocumentWaitUntilRequest, WillSaveTextDocumentParams,
-	DidChangeWatchedFilesNotification, DidChangeWatchedFilesParams, FileEvent, FileChangeType, DidChangeWatchedFilesRegistrationOptions, WatchKind,
+	DidChangeWatchedFilesNotification, FileEvent, FileChangeType, DidChangeWatchedFilesRegistrationOptions, WatchKind,
 	PublishDiagnosticsNotification, PublishDiagnosticsParams, CompletionRequest, CompletionResolveRequest, CompletionRegistrationOptions, HoverRequest,
 	SignatureHelpRequest, SignatureHelpRegistrationOptions, DefinitionRequest, ReferencesRequest, DocumentHighlightRequest, DocumentSymbolRequest, WorkspaceSymbolRequest,
 	CodeActionRequest, CodeActionParams, CodeLensRequest, CodeLensResolveRequest, CodeLensRegistrationOptions, CodeLensRefreshRequest, DocumentFormattingRequest,
@@ -85,6 +85,14 @@ import { ProgressPart } from './progressPart';
 
 interface Connection {
 
+	/**
+	 * A timestamp indicating when the connection was last used (.e.g a request
+	 * or notification has been sent)
+	 */
+	lastUsed: number;
+
+	resetLastUsed(): void;
+
 	listen(): void;
 
 	sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): Promise<R>;
@@ -127,19 +135,6 @@ interface Connection {
 	shutdown(): Promise<void>;
 	exit(): Promise<void>;
 
-	onLogMessage(handle: NotificationHandler<LogMessageParams>): void;
-	onShowMessage(handler: NotificationHandler<ShowMessageParams>): void;
-	onTelemetry(handler: NotificationHandler<any>): void;
-
-	didChangeConfiguration(params: DidChangeConfigurationParams): Promise<void>;
-	didChangeWatchedFiles(params: DidChangeWatchedFilesParams): Promise<void>;
-
-	didOpenTextDocument(params: DidOpenTextDocumentParams): Promise<void>;
-	didChangeTextDocument(params: DidChangeTextDocumentParams): Promise<void>;
-	didCloseTextDocument(params: DidCloseTextDocumentParams): Promise<void>;
-	didSaveTextDocument(params: DidSaveTextDocumentParams): Promise<void>;
-	onDiagnostics(handler: NotificationHandler<PublishDiagnosticsParams>): void;
-
 	end(): void;
 	dispose(): void;
 }
@@ -173,18 +168,33 @@ interface ConnectionOptions {
 }
 
 function createConnection(input: MessageReader, output: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): Connection {
-	let logger = new ConsoleLogger();
-	let connection = createProtocolConnection(input, output, logger, options);
+	let _lastUsed: number = -1;
+	const logger = new ConsoleLogger();
+	const connection = createProtocolConnection(input, output, logger, options);
 	connection.onError((data) => { errorHandler(data[0], data[1], data[2]); });
 	connection.onClose(closeHandler);
-	let result: Connection = {
+	const result: Connection = {
+
+		get lastUsed(): number {
+			return _lastUsed;
+		},
+
+		resetLastUsed: (): void => {
+			_lastUsed = -1;
+		},
 
 		listen: (): void => connection.listen(),
 
-		sendRequest: <R>(type: string | MessageSignature, ...params: any[]): Promise<R> => connection.sendRequest(type as string, ...params),
+		sendRequest: <R>(type: string | MessageSignature, ...params: any[]): Promise<R> => {
+			_lastUsed = Date.now();
+			return connection.sendRequest(type as string, ...params);
+		},
 		onRequest: <R, E>(type: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable => connection.onRequest(type, handler),
 
-		sendNotification: (type: string | MessageSignature, params?: any): Promise<void> => connection.sendNotification(type, params),
+		sendNotification: (type: string | MessageSignature, params?: any): Promise<void> => {
+			_lastUsed = Date.now();
+			return connection.sendNotification(type, params);
+		},
 		onNotification: (type: string | MessageSignature, handler: GenericNotificationHandler): Disposable => connection.onNotification(type, handler),
 
 		onProgress: connection.onProgress,
@@ -205,23 +215,18 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 			}
 		},
 
-		initialize: (params: InitializeParams) => connection.sendRequest(InitializeRequest.type, params),
-		shutdown: () => connection.sendRequest(ShutdownRequest.type, undefined),
-		exit: () => connection.sendNotification(ExitNotification.type),
-
-		onLogMessage: (handler: NotificationHandler<LogMessageParams>) => connection.onNotification(LogMessageNotification.type, handler),
-		onShowMessage: (handler: NotificationHandler<ShowMessageParams>) => connection.onNotification(ShowMessageNotification.type, handler),
-		onTelemetry: (handler: NotificationHandler<any>) => connection.onNotification(TelemetryEventNotification.type, handler),
-
-		didChangeConfiguration: (params: DidChangeConfigurationParams) => connection.sendNotification(DidChangeConfigurationNotification.type, params),
-		didChangeWatchedFiles: (params: DidChangeWatchedFilesParams) => connection.sendNotification(DidChangeWatchedFilesNotification.type, params),
-
-		didOpenTextDocument: (params: DidOpenTextDocumentParams) => connection.sendNotification(DidOpenTextDocumentNotification.type, params),
-		didChangeTextDocument: (params: DidChangeTextDocumentParams) => connection.sendNotification(DidChangeTextDocumentNotification.type, params),
-		didCloseTextDocument: (params: DidCloseTextDocumentParams) => connection.sendNotification(DidCloseTextDocumentNotification.type, params),
-		didSaveTextDocument: (params: DidSaveTextDocumentParams) => connection.sendNotification(DidSaveTextDocumentNotification.type, params),
-
-		onDiagnostics: (handler: NotificationHandler<PublishDiagnosticsParams>) => connection.onNotification(PublishDiagnosticsNotification.type, handler),
+		initialize: (params: InitializeParams) => {
+			_lastUsed = Date.now();
+			return connection.sendRequest(InitializeRequest.type, params);
+		},
+		shutdown: () => {
+			_lastUsed = Date.now();
+			return connection.sendRequest(ShutdownRequest.type, undefined);
+		},
+		exit: () => {
+			_lastUsed = Date.now();
+			return connection.sendNotification(ExitNotification.type);
+		},
 
 		end: () => connection.end(),
 		dispose: () => connection.dispose()
@@ -664,6 +669,8 @@ enum ClientState {
 	Starting,
 	StartFailed,
 	Running,
+	Suspending,
+	Suspended,
 	Stopping,
 	Stopped
 }
@@ -2982,7 +2989,9 @@ export abstract class BaseLanguageClient {
 	private _onReadyCallbacks!: OnReady;
 	private _onStop: Promise<void> | undefined;
 	private _connectionPromise: Promise<Connection> | undefined;
-	private _resolvedConnection: Connection | undefined;
+	private _idleInterval: Disposable | undefined;
+	private _suspendPromise: Promise<void> | undefined;
+
 	private _initializeResult: InitializeResult | undefined;
 	private _outputChannel: OutputChannel | undefined;
 	private _disposeOutputChannel: boolean;
@@ -3006,6 +3015,8 @@ export abstract class BaseLanguageClient {
 
 	private _c2p: c2p.Converter;
 	private _p2c: p2c.Converter;
+
+	private static readonly idleCheckInterval: number = 1000;
 
 	public constructor(id: string, name: string, clientOptions: LanguageClientOptions) {
 		this._id = id;
@@ -3042,7 +3053,6 @@ export abstract class BaseLanguageClient {
 
 		this._state = ClientState.Initial;
 		this._connectionPromise = undefined;
-		this._resolvedConnection = undefined;
 		this._initializeResult = undefined;
 		if (clientOptions.outputChannel) {
 			this._outputChannel = clientOptions.outputChannel;
@@ -3116,13 +3126,12 @@ export abstract class BaseLanguageClient {
 	public sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): Promise<R>;
 	public sendRequest<R>(method: string, token?: CancellationToken): Promise<R>;
 	public sendRequest<R>(method: string, param: any, token?: CancellationToken): Promise<R>;
-	public sendRequest<R>(type: string | MessageSignature, ...params: any[]): Promise<R> {
-		if (!this.isConnectionActive()) {
-			throw new Error(`Language client is not ready yet when handling ${Is.string(type) ? type : type.method}`);
-		}
-		this.forceDocumentSync();
+	public async sendRequest<R>(type: string | MessageSignature, ...params: any[]): Promise<R> {
 		try {
-			return this._resolvedConnection!.sendRequest<R>(type, ...params);
+			// Ensure we have a connection before we force the document sync.
+			const connection = await this.resolveConnection();
+			this.forceDocumentSync();
+			return connection.sendRequest<R>(type, ...params);
 		} catch (error) {
 			this.error(`Sending request ${Is.string(type) ? type : type.method} failed.`, error);
 			throw error;
@@ -3370,8 +3379,28 @@ export abstract class BaseLanguageClient {
 		return this._onReady;
 	}
 
-	private isConnectionActive(): boolean {
-		return this.state === ClientState.Running && !!this._resolvedConnection;
+	private async resolveConnection(): Promise<Connection> {
+		if (this.state === ClientState.Initial) {
+			throw new Error(`Client never got started. Call start first before sending messages.`);
+		}
+		if (this.state === ClientState.Suspending) {
+			await this._suspendPromise;
+		}
+		if (this.state === ClientState.Suspended) {
+
+		}
+		if (this.state === ClientState.Starting) {
+			if (this._connectionPromise === undefined) {
+				this._connectionPromise = this.createConnection();
+			}
+		}
+		if (this.state === ClientState.StartFailed) {
+			throw new Error(`Previous start failed. Can't restart server`);
+		}
+		if (this.state === ClientState.Running && this._connectionPromise !== undefined) {
+			return this._connectionPromise;
+		}
+		throw new Error(`Unhandled client state ${this.state}`);
 	}
 
 	public start(): Disposable {
@@ -3391,7 +3420,7 @@ export abstract class BaseLanguageClient {
 
 		this.state = ClientState.Starting;
 		this.resolveConnection().then((connection) => {
-			connection.onLogMessage((message) => {
+			connection.onNotification(LogMessageNotification.type, (message) => {
 				switch (message.type) {
 					case MessageType.Error:
 						this.error(message.message, undefined, false);
@@ -3406,7 +3435,7 @@ export abstract class BaseLanguageClient {
 						this.outputChannel.appendLine(message.message);
 				}
 			});
-			connection.onShowMessage((message) => {
+			connection.onNotification(ShowMessageNotification.type, (message) => {
 				switch (message.type) {
 					case MessageType.Error:
 						void Window.showErrorMessage(message.message);
@@ -3439,7 +3468,7 @@ export abstract class BaseLanguageClient {
 				let actions = params.actions || [];
 				return messageFunc(params.message, ...actions);
 			});
-			connection.onTelemetry((data) => {
+			connection.onNotification(TelemetryEventNotification.type, (data) => {
 				this._telemetryEmitter.fire(data);
 			});
 			connection.onRequest(ShowDocumentRequest.type, async (params): Promise<ShowDocumentResult> => {
@@ -3488,13 +3517,6 @@ export abstract class BaseLanguageClient {
 				});
 			}
 		});
-	}
-
-	private resolveConnection(): Promise<Connection> {
-		if (!this._connectionPromise) {
-			this._connectionPromise = this.createConnection();
-		}
-		return this._connectionPromise;
 	}
 
 	private async initialize(connection: Connection): Promise<InitializeResult> {
@@ -3570,7 +3592,7 @@ export abstract class BaseLanguageClient {
 			}
 			this._capabilities = Object.assign({}, result.capabilities, { resolvedTextDocumentSync: textDocumentSyncOptions });
 
-			connection.onDiagnostics(params => this.handleDiagnostics(params));
+			connection.onNotification(PublishDiagnosticsNotification.type, params => this.handleDiagnostics(params));
 			connection.onRequest(RegistrationRequest.type, params => this.handleRegistrationRequest(params));
 			// See https://github.com/Microsoft/vscode-languageserver-node/issues/199
 			connection.onRequest('client/registerFeature', params => this.handleRegistrationRequest(params));
@@ -3579,7 +3601,7 @@ export abstract class BaseLanguageClient {
 			connection.onRequest('client/unregisterFeature', params => this.handleUnregistrationRequest(params));
 			connection.onRequest(ApplyWorkspaceEditRequest.type, params => this.handleApplyWorkspaceEdit(params));
 
-			RAL().timer.setInterval(() => this.checkSuspend(), 1000);
+			this._idleInterval = RAL().timer.setInterval(() => this.checkSuspend(), BaseLanguageClient.idleCheckInterval);
 
 			await connection.sendNotification(InitializedNotification.type, {});
 
@@ -3720,7 +3742,7 @@ export abstract class BaseLanguageClient {
 				let promise = Promise.resolve();
 				if (client.isConnectionActive()) {
 					client.forceDocumentSync();
-					promise = connection.didChangeWatchedFiles({ changes: client._fileEvents });
+					promise = connection.sendNotification(DidChangeWatchedFilesNotification.type, { changes: client._fileEvents });
 				}
 				client._fileEvents = [];
 				return promise;
@@ -4159,13 +4181,12 @@ export abstract class BaseLanguageClient {
 		if (this.state !== ClientState.Running) {
 			return;
 		}
-		if (this.canSuspend()) {
-			this.outputChannel.appendLine(`Language Server can be suspended`);
-		} else {
-			this.outputChannel.appendLine(`Language Server can't be suspended`);
+		if (this.isIdle()) {
+			this.initiateSuspend();
 		}
 	}
-	private canSuspend(): boolean {
+
+	private isIdle(): boolean {
 		for (const feature of this._features) {
 			const state = feature.getState();
 			if (state.kind === 'document' && state.registrations === true && state.active) {
@@ -4173,5 +4194,28 @@ export abstract class BaseLanguageClient {
 			}
 		}
 		return true;
+	}
+
+	private initiateSuspend(): void {
+		this._suspendPromise = new Promise(async (resolve, reject) => {
+			try {
+				this.outputChannel.appendLine(`Suspending server`);
+				this.state = ClientState.Suspending;
+				await this.stop();
+				this.state = ClientState.Suspended;
+				this.outputChannel.appendLine(`Server got suspended`);
+				resolve();
+			} catch(error: unknown) {
+				this.outputChannel.appendLine(`Suspending server failed.`);
+				if (error instanceof Error) {
+					this.outputChannel.appendLine(error.message);
+					const stack = error.stack;
+					if (stack !== undefined) {
+						this.outputChannel.appendLine(stack);
+					}
+				}
+				reject(error);
+			}
+		});
 	}
 }
