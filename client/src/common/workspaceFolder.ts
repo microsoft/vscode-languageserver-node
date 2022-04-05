@@ -7,7 +7,7 @@ import * as UUID from './utils/uuid';
 
 import { workspace, Disposable, WorkspaceFolder as VWorkspaceFolder, WorkspaceFoldersChangeEvent as VWorkspaceFoldersChangeEvent } from 'vscode';
 
-import { DynamicFeature, RegistrationData, BaseLanguageClient, NextSignature, FeatureState } from './client';
+import { DynamicFeature, RegistrationData, FeatureClient, NextSignature, FeatureState } from './features';
 import {
 	ClientCapabilities, InitializeParams, CancellationToken, ServerCapabilities, WorkspaceFoldersRequest, WorkspaceFolder,
 	DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, RegistrationType
@@ -24,18 +24,22 @@ export function arrayDiff<T>(left: ReadonlyArray<T>, right: ReadonlyArray<T>): T
 	return left.filter(element => right.indexOf(element) < 0);
 }
 
-export interface WorkspaceFolderWorkspaceMiddleware {
+export type WorkspaceFolderMiddleware = {
 	workspaceFolders?: WorkspaceFoldersRequest.MiddlewareSignature;
 	didChangeWorkspaceFolders?: NextSignature<VWorkspaceFoldersChangeEvent, Promise<void>>;
-}
+};
+
+type WorkspaceFolderWorkspaceMiddleware = {
+	workspace?: WorkspaceFolderMiddleware;
+};
 
 export class WorkspaceFoldersFeature implements DynamicFeature<void> {
 
-	private readonly _client: BaseLanguageClient;
+	private readonly _client: FeatureClient<WorkspaceFolderWorkspaceMiddleware>;
 	private readonly _listeners: Map<string, Disposable>;
 	private _initialFolders: ReadonlyArray<VWorkspaceFolder> | undefined;
 
-	constructor(client: BaseLanguageClient) {
+	constructor(client: FeatureClient<WorkspaceFolderWorkspaceMiddleware>) {
 		this._client = client;
 		this._listeners = new Map();
 	}
@@ -81,7 +85,7 @@ export class WorkspaceFoldersFeature implements DynamicFeature<void> {
 				});
 				return result;
 			};
-			const middleware = client.clientOptions.middleware!.workspace;
+			const middleware = client.middleware.workspace;
 			return middleware && middleware.workspaceFolders
 				? middleware.workspaceFolders(token, workspaceFolders)
 				: workspaceFolders(token);
@@ -135,7 +139,7 @@ export class WorkspaceFoldersFeature implements DynamicFeature<void> {
 			let didChangeWorkspaceFolders = (event: VWorkspaceFoldersChangeEvent): Promise<void> => {
 				return this.doSendEvent(event.added, event.removed);
 			};
-			let middleware = client.clientOptions.middleware!.workspace;
+			let middleware = client.middleware.workspace;
 			const promise = middleware && middleware.didChangeWorkspaceFolders
 				? middleware.didChangeWorkspaceFolders(event, didChangeWorkspaceFolders)
 				: didChangeWorkspaceFolders(event);

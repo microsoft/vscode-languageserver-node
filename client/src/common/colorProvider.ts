@@ -10,14 +10,7 @@ import {
 	DocumentColorRegistrationOptions, DocumentColorOptions
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, BaseLanguageClient } from './client';
-
-function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
-	if (target[key] === void 0) {
-		target[key] = {} as any;
-	}
-	return target[key];
-}
+import { TextDocumentFeature, FeatureClient, ensure } from './features';
 
 export interface ProvideDocumentColorsSignature {
 	(document: TextDocument, token: CancellationToken): ProviderResult<VColorInformation[]>;
@@ -32,9 +25,9 @@ export interface ColorProviderMiddleware {
 	provideColorPresentations?: (this: void, color: VColor, context: { document: TextDocument; range: VRange }, token: CancellationToken, next: ProvideColorPresentationSignature) => ProviderResult<VColorPresentation[]>;
 }
 
-export class ColorProviderFeature extends TextDocumentFeature<boolean | DocumentColorOptions, DocumentColorRegistrationOptions, DocumentColorProvider> {
+export class ColorProviderFeature extends TextDocumentFeature<boolean | DocumentColorOptions, DocumentColorRegistrationOptions, DocumentColorProvider, ColorProviderMiddleware> {
 
-	constructor(client: BaseLanguageClient) {
+	constructor(client: FeatureClient<ColorProviderMiddleware>) {
 		super(client, DocumentColorRequest.type);
 	}
 
@@ -70,7 +63,7 @@ export class ColorProviderFeature extends TextDocumentFeature<boolean | Document
 						return client.handleFailedRequest(ColorPresentationRequest.type, token, error, null);
 					});
 				};
-				const middleware = client.clientOptions.middleware!;
+				const middleware = client.middleware;
 				return middleware.provideColorPresentations
 					? middleware.provideColorPresentations(color, context, token, provideColorPresentations)
 					: provideColorPresentations(color, context, token);
@@ -90,7 +83,7 @@ export class ColorProviderFeature extends TextDocumentFeature<boolean | Document
 						return client.handleFailedRequest(ColorPresentationRequest.type, token, error, null);
 					});
 				};
-				const middleware = client.clientOptions.middleware!;
+				const middleware = client.middleware;
 				return middleware.provideDocumentColors
 					? middleware.provideDocumentColors(document, token, provideDocumentColors)
 					: provideDocumentColors(document, token);

@@ -14,14 +14,7 @@ import { ClientCapabilities, ServerCapabilities, DocumentSelector, CallHierarchy
 	CallHierarchyPrepareRequest
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, BaseLanguageClient, Middleware } from './client';
-
-function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
-	if (target[key] === void 0) {
-		target[key] = {} as any;
-	}
-	return target[key];
-}
+import { TextDocumentFeature, FeatureClient, ensure } from './features';
 
 export interface PrepareCallHierarchySignature {
 	(this: void, document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VCallHierarchyItem | VCallHierarchyItem[]>;
@@ -48,10 +41,10 @@ export interface CallHierarchyMiddleware {
 
 class CallHierarchyProvider implements VCallHierarchyProvider {
 
-	private middleware: Middleware & CallHierarchyMiddleware;
+	private middleware: CallHierarchyMiddleware;
 
-	constructor(private client: BaseLanguageClient) {
-		this.middleware = client.clientOptions.middleware!;
+	constructor(private client: FeatureClient<CallHierarchyMiddleware>) {
+		this.middleware = client.middleware;
 	}
 
 	public prepareCallHierarchy(document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VCallHierarchyItem | VCallHierarchyItem[]> {
@@ -116,8 +109,8 @@ class CallHierarchyProvider implements VCallHierarchyProvider {
 	}
 }
 
-export class CallHierarchyFeature extends TextDocumentFeature<boolean | CallHierarchyOptions, CallHierarchyRegistrationOptions, CallHierarchyProvider> {
-	constructor(client: BaseLanguageClient) {
+export class CallHierarchyFeature extends TextDocumentFeature<boolean | CallHierarchyOptions, CallHierarchyRegistrationOptions, CallHierarchyProvider, CallHierarchyMiddleware> {
+	constructor(client: FeatureClient<CallHierarchyMiddleware>) {
 		super(client, CallHierarchyPrepareRequest.type);
 	}
 

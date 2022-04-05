@@ -13,14 +13,7 @@ import {
 	InlayHintRefreshRequest, InlayHintParams, InlayHintResolveRequest
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, BaseLanguageClient } from './client';
-
-function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
-	if (target[key] === void 0) {
-		target[key] = Object.create(null) as any;
-	}
-	return target[key];
-}
+import { TextDocumentFeature, FeatureClient, ensure } from './features';
 
 export type ProvideInlayHintsSignature = (this: void, document: TextDocument, viewPort: VRange, token: CancellationToken) => ProviderResult<VInlayHint[]>;
 export type ResolveInlayHintSignature = (this: void, item: VInlayHint, token: CancellationToken) => ProviderResult<VInlayHint>;
@@ -35,8 +28,8 @@ export type InlayHintsProviderShape = {
 	onDidChangeInlayHints: EventEmitter<void>;
 };
 
-export class InlayHintsFeature extends TextDocumentFeature<boolean | InlayHintOptions, InlayHintRegistrationOptions, InlayHintsProviderShape> {
-	constructor(client: BaseLanguageClient) {
+export class InlayHintsFeature extends TextDocumentFeature<boolean | InlayHintOptions, InlayHintRegistrationOptions, InlayHintsProviderShape, InlayHintsMiddleware> {
+	constructor(client: FeatureClient<InlayHintsMiddleware>) {
 		super(client, InlayHintRequest.type);
 	}
 
@@ -85,7 +78,7 @@ export class InlayHintsFeature extends TextDocumentFeature<boolean | InlayHintOp
 						return client.handleFailedRequest(InlayHintRequest.type, token, error, null);
 					}
 				};
-				const middleware = client.clientOptions.middleware!;
+				const middleware = client.middleware;
 				return middleware.provideInlayHints
 					? middleware.provideInlayHints(document, viewPort, token, provideInlayHints)
 					: provideInlayHints(document, viewPort, token);
@@ -107,7 +100,7 @@ export class InlayHintsFeature extends TextDocumentFeature<boolean | InlayHintOp
 						return client.handleFailedRequest(InlayHintResolveRequest.type, token, error, null);
 					}
 				};
-				const middleware = client.clientOptions.middleware!;
+				const middleware = client.middleware;
 				return middleware.resolveInlayHint
 					? middleware.resolveInlayHint(hint, token, resolveInlayHint)
 					: resolveInlayHint(hint, token);

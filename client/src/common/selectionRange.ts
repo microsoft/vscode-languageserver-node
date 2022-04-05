@@ -10,14 +10,7 @@ import {
 	SelectionRangeParams, SelectionRangeRequest, SelectionRangeOptions, SelectionRangeRegistrationOptions
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, BaseLanguageClient } from './client';
-
-function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
-	if (target[key] === void 0) {
-		target[key] = Object.create(null) as any;
-	}
-	return target[key];
-}
+import { TextDocumentFeature, FeatureClient, ensure } from './features';
 
 export interface ProvideSelectionRangeSignature {
 	(this: void, document: TextDocument, positions: VPosition[], token: CancellationToken): ProviderResult<VSelectionRange[]>;
@@ -27,8 +20,8 @@ export interface SelectionRangeProviderMiddleware {
 	provideSelectionRanges?: (this: void, document: TextDocument, positions: VPosition[], token: CancellationToken, next: ProvideSelectionRangeSignature) => ProviderResult<VSelectionRange[]>;
 }
 
-export class SelectionRangeFeature extends TextDocumentFeature<boolean | SelectionRangeOptions, SelectionRangeRegistrationOptions, SelectionRangeProvider> {
-	constructor(client: BaseLanguageClient) {
+export class SelectionRangeFeature extends TextDocumentFeature<boolean | SelectionRangeOptions, SelectionRangeRegistrationOptions, SelectionRangeProvider, SelectionRangeProviderMiddleware> {
+	constructor(client: FeatureClient<SelectionRangeProviderMiddleware>) {
 		super(client, SelectionRangeRequest.type);
 	}
 
@@ -64,7 +57,7 @@ export class SelectionRangeFeature extends TextDocumentFeature<boolean | Selecti
 						return client.handleFailedRequest(SelectionRangeRequest.type, token, error, null);
 					});
 				};
-				const middleware = client.clientOptions.middleware!;
+				const middleware = client.middleware;
 				return middleware.provideSelectionRanges
 					? middleware.provideSelectionRanges(document, positions, token, provideSelectionRanges)
 					: provideSelectionRanges(document, positions, token);

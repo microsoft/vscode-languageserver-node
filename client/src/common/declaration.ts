@@ -9,14 +9,7 @@ import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, DeclarationRequest, DeclarationRegistrationOptions, DeclarationOptions
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, BaseLanguageClient } from './client';
-
-function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
-	if (target[key] === void 0) {
-		target[key] = {} as any;
-	}
-	return target[key];
-}
+import { TextDocumentFeature, FeatureClient, ensure } from './features';
 
 export interface ProvideDeclarationSignature {
 	(this: void, document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDeclaration>;
@@ -26,9 +19,9 @@ export interface DeclarationMiddleware {
 	provideDeclaration?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideDeclarationSignature) => ProviderResult<VDeclaration>;
 }
 
-export class DeclarationFeature extends TextDocumentFeature<boolean | DeclarationOptions, DeclarationRegistrationOptions, DeclarationProvider> {
+export class DeclarationFeature extends TextDocumentFeature<boolean | DeclarationOptions, DeclarationRegistrationOptions, DeclarationProvider,DeclarationMiddleware> {
 
-	constructor(client: BaseLanguageClient) {
+	constructor(client: FeatureClient<DeclarationMiddleware>) {
 		super(client, DeclarationRequest.type);
 	}
 
@@ -61,7 +54,7 @@ export class DeclarationFeature extends TextDocumentFeature<boolean | Declaratio
 						return client.handleFailedRequest(DeclarationRequest.type, token, error, null);
 					});
 				};
-				const middleware = client.clientOptions.middleware!;
+				const middleware = client.middleware;
 				return middleware.provideDeclaration
 					? middleware.provideDeclaration(document, position, token, provideDeclaration)
 					: provideDeclaration(document, position, token);
