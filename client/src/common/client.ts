@@ -932,6 +932,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	private resume(): Promise<void> {
+		// When resuming we simple take all cached handlers and
+		// make them pending so that they get added when the
+		// connection gets reestablished.
 		for (const [method, handler] of this._notificationHandlers) {
 			this._pendingNotificationHandlers.set(method, handler);
 		}
