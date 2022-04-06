@@ -444,8 +444,8 @@ export interface MessageConnection {
 
 	onUnhandledProgress: Event<ProgressParams<any>>;
 
-	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): void;
-	trace(value: Trace, tracer: Tracer, traceOptions?: TraceOptions): void;
+	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): Promise<void>;
+	trace(value: Trace, tracer: Tracer, traceOptions?: TraceOptions): Promise<void>;
 
 	onError: Event<[Error, Message | undefined, number | undefined]>;
 	onClose: Event<void>;
@@ -1350,7 +1350,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				}
 			};
 		},
-		trace: (_value: Trace, _tracer: Tracer, sendNotificationOrTraceOptions?: boolean | TraceOptions) => {
+		trace: async (_value: Trace, _tracer: Tracer, sendNotificationOrTraceOptions?: boolean | TraceOptions): Promise<void> => {
 			let _sendNotification: boolean = false;
 			let _traceFormat: TraceFormat = TraceFormat.Text;
 
@@ -1371,9 +1371,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				tracer = _tracer;
 			}
 			if (_sendNotification && !isClosed() && !isDisposed()) {
-				connection.sendNotification(SetTraceNotification.type, { value: Trace.toString(_value) }).catch(() => {
-					logger.error(`Sending trace notification failed`);
-				});
+				await connection.sendNotification(SetTraceNotification.type, { value: Trace.toString(_value) });
 			}
 		},
 		onError: errorEmitter.event,

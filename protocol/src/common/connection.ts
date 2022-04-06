@@ -159,8 +159,8 @@ export interface ProtocolConnection {
 	/**
 	 * Enables tracing mode for the connection.
 	 */
-	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): void;
-	trace(value: Trace, tracer: Tracer, traceOptions?: TraceOptions): void;
+	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): Promise<void>;
+	trace(value: Trace, tracer: Tracer, traceOptions?: TraceOptions): Promise<void>;
 
 	/**
 	 * An event emitter firing when an error occurs on the connection.
