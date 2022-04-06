@@ -1120,6 +1120,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			connection.onRequest('client/unregisterFeature', params => this.handleUnregistrationRequest(params));
 			connection.onRequest(ApplyWorkspaceEditRequest.type, params => this.handleApplyWorkspaceEdit(params));
 
+			// Add pending notification, request and progress handlers.
 			for (const [method, handler] of this._pendingNotificationHandlers) {
 				this._notificationDisposables.set(method, connection.onNotification(method, handler));
 			}
