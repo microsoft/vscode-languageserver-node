@@ -49,6 +49,7 @@ export function activate(context: ExtensionContext) {
 		},
 		diagnosticPullOptions: {
 			onTabs: true,
+			onChange: true,
 			match: (selector, resource) => {
 				const fsPath = resource.fsPath;
 				return path.extname(fsPath) === '.bat';
@@ -57,16 +58,14 @@ export function activate(context: ExtensionContext) {
 	};
 
 	client = new LanguageClient('testbed', 'Testbed', serverOptions, clientOptions);
-	// client.registerFeature(ProposedFeatures.createNotebookDocumentSyncFeature(client));
 	client.registerProposedFeatures();
-	// let not: NotificationType<string[], void> = new NotificationType<string[], void>('testbed/notification');
-	void client.onReady().then(() => {
-		return client.sendNotification('testbed/notification', ['dirk', 'baeumer']);
-	});
 	client.onTelemetry((data: any) => {
 		console.log(`Telemetry event received: ${JSON.stringify(data)}`);
 	});
-	client.start();
+	// let not: NotificationType<string[], void> = new NotificationType<string[], void>('testbed/notification');
+	client.start().then(() => {
+		void client.sendNotification('testbed/notification', ['dirk', 'baeumer']);
+	}).catch((error)=> { client.error(`Start failed`, error, 'force');});
 	commands.registerCommand('testbed.myCommand.invoked', () => {
 		void commands.executeCommand('testbed.myCommand').then(value => {
 			console.log(value);

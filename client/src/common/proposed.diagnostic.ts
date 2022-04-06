@@ -179,7 +179,7 @@ class Tabs {
 		this.open = new Set();
 		const openTabsHandler = () => {
 			this.open.clear();
-			for (const group of Window.tabGroups.groups) {
+			for (const group of Window.tabGroups.all) {
 				for (const tab of group.tabs) {
 					const kind = tab.kind;
 					if (kind instanceof TabKindText) {
@@ -192,8 +192,8 @@ class Tabs {
 		};
 		openTabsHandler();
 
-		if (Window.tabGroups.onDidChangeTabGroup !== undefined) {
-			this.disposable = Window.tabGroups.onDidChangeTabGroup(openTabsHandler);
+		if (Window.tabGroups.onDidChangeTabGroups !== undefined) {
+			this.disposable = Window.tabGroups.onDidChangeTabGroups(openTabsHandler);
 		} else {
 			this.disposable = { dispose: () => {} };
 		}
@@ -216,7 +216,7 @@ class Tabs {
 
 	public getTabResources(): Uri[] {
 		const result: Uri[] = [];
-		for (const group of Window.tabGroups.groups) {
+		for (const group of Window.tabGroups.all) {
 			for (const tab of group.tabs) {
 				const kind = tab.kind;
 				if (kind instanceof TabKindText) {

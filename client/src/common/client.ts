@@ -100,153 +100,10 @@ import { InlineValueFeature } from './inlineValue';
 import { InlayHintsFeature } from './inlayHint';
 
 
-interface Connection {
 
-	/**
-	 * A timestamp indicating when the connection was last used (.e.g a request
-	 * or notification has been sent)
-	 */
-	lastUsed: number;
-
-	resetLastUsed(): void;
-
-	listen(): void;
-
-	sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): Promise<R>;
-	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: P, token?: CancellationToken): Promise<R>;
-	sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): Promise<R>;
-	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): Promise<R>;
-	sendRequest<R>(method: string, token?: CancellationToken): Promise<R>;
-	sendRequest<R>(method: string, param: any, token?: CancellationToken): Promise<R>;
-	sendRequest<R>(type: string | MessageSignature, ...params: any[]): Promise<R>;
-
-	onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: RequestHandler0<R, E>): Disposable;
-	onRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, handler: RequestHandler<P, R, E>): Disposable;
-	onRequest<R, E>(type: RequestType0<R, E>, handler: RequestHandler0<R, E>): Disposable;
-	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): Disposable;
-	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): Disposable;
-	onRequest<R, E>(method: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable;
-
-	sendNotification<RO>(type: ProtocolNotificationType0<RO>): Promise<void>;
-	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): Promise<void>;
-	sendNotification(type: NotificationType0): Promise<void>;
-	sendNotification<P>(type: NotificationType<P>, params?: P): Promise<void>;
-	sendNotification(method: string): Promise<void>;
-	sendNotification(method: string, params: any): Promise<void>;
-	sendNotification(method: string | MessageSignature, params?: any): Promise<void>;
-
-	onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): Disposable;
-	onNotification<P, RO>(type: ProtocolNotificationType<P, RO>, handler: NotificationHandler<P>): Disposable;
-	onNotification(type: NotificationType0, handler: NotificationHandler0): Disposable;
-	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): Disposable;
-	onNotification(method: string, handler: GenericNotificationHandler): Disposable;
-	onNotification(method: string | MessageSignature, handler: GenericNotificationHandler): Disposable;
-
-	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable;
-	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): Promise<void>;
-
-	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): void;
-	trace(value: Trace, tracer: Tracer, traceOptions?: TraceOptions): void;
-
-	initialize(params: InitializeParams): Promise<InitializeResult>;
-	shutdown(): Promise<void>;
-	exit(): Promise<void>;
-
-	end(): void;
-	dispose(): void;
-}
-
-class ConsoleLogger implements Logger {
-	public error(message: string): void {
-		RAL().console.error(message);
-	}
-	public warn(message: string): void {
-		RAL().console.warn(message);
-	}
-	public info(message: string): void {
-		RAL().console.info(message);
-	}
-	public log(message: string): void {
-		RAL().console.log(message);
-	}
-}
-
-interface ConnectionErrorHandler {
-	(error: Error, message: Message | undefined, count: number | undefined): void;
-}
-
-interface ConnectionCloseHandler {
-	(): void;
-}
-
-function createConnection(input: MessageReader, output: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): Connection {
-	let _lastUsed: number = -1;
-	const logger = new ConsoleLogger();
-	const connection = createProtocolConnection(input, output, logger, options);
-	connection.onError((data) => { errorHandler(data[0], data[1], data[2]); });
-	connection.onClose(closeHandler);
-	const result: Connection = {
-
-		get lastUsed(): number {
-			return _lastUsed;
-		},
-
-		resetLastUsed: (): void => {
-			_lastUsed = -1;
-		},
-
-		listen: (): void => connection.listen(),
-
-		sendRequest: <R>(type: string | MessageSignature, ...params: any[]): Promise<R> => {
-			_lastUsed = Date.now();
-			return connection.sendRequest(type as string, ...params);
-		},
-		onRequest: <R, E>(type: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable => connection.onRequest(type, handler),
-
-		sendNotification: (type: string | MessageSignature, params?: any): Promise<void> => {
-			_lastUsed = Date.now();
-			return connection.sendNotification(type, params);
-		},
-		onNotification: (type: string | MessageSignature, handler: GenericNotificationHandler): Disposable => connection.onNotification(type, handler),
-
-		onProgress: connection.onProgress,
-		sendProgress: connection.sendProgress,
-
-		trace: (value: Trace, tracer: Tracer, sendNotificationOrTraceOptions?: boolean | TraceOptions): void => {
-			const defaultTraceOptions: TraceOptions = {
-				sendNotification: false,
-				traceFormat: TraceFormat.Text
-			};
-
-			if (sendNotificationOrTraceOptions === undefined) {
-				connection.trace(value, tracer, defaultTraceOptions);
-			} else if (Is.boolean(sendNotificationOrTraceOptions)) {
-				connection.trace(value, tracer, sendNotificationOrTraceOptions);
-			} else {
-				connection.trace(value, tracer, sendNotificationOrTraceOptions);
-			}
-		},
-
-		initialize: (params: InitializeParams) => {
-			_lastUsed = Date.now();
-			return connection.sendRequest(InitializeRequest.type, params);
-		},
-		shutdown: () => {
-			_lastUsed = Date.now();
-			return connection.sendRequest(ShutdownRequest.type, undefined);
-		},
-		exit: () => {
-			_lastUsed = Date.now();
-			return connection.sendNotification(ExitNotification.type);
-		},
-
-		end: () => connection.end(),
-		dispose: () => connection.dispose()
-	};
-
-	return result;
-}
-
+/**
+ * Controls when the output channel is revealed.
+ */
 export enum RevealOutputChannelOn {
 	Info = 1,
 	Warn = 2,
@@ -343,12 +200,39 @@ export interface ErrorHandler {
 	closed(): CloseHandlerResult;
 }
 
+/**
+ * Signals in which state the language client is in.
+ */
 export enum State {
+	/**
+	 * The client is stopped or got never started.
+	 */
 	Stopped = 1,
+	/**
+	 * The client is starting but not ready yet.
+	 */
 	Starting = 3,
-	Running = 2
+	/**
+	 * The client is running and ready.
+	 */
+	Running = 2,
+	/**
+	 * The client goes to suspend mode.
+	 */
+	Suspending = 4,
+	/**
+	 * The client is suspended.
+	 */
+	Suspended = 5,
+	/**
+	 * The client gets resumed
+	 */
+	Resuming = 6
 }
 
+/**
+ * An event signaling a state change.
+ */
 export interface StateChangeEvent {
 	oldState: State;
 	newState: State;
@@ -491,13 +375,14 @@ enum ClientState {
 	Running = 'running',
 	Suspending = 'suspending',
 	Suspended = 'suspended',
+	Resuming = 'resuming',
 	Stopping = 'stopping',
 	Stopped = 'stopped'
 }
 
-export interface ProvideResolveFeature<T1 extends Function, T2 extends Function> {
-	provide: T1;
-	resolve: T2;
+enum ActivateMode {
+	Start = 'start',
+	Resume = 'resume'
 }
 
 export interface MessageTransports {
@@ -513,29 +398,6 @@ export namespace MessageTransports {
 	}
 }
 
-class OnReady {
-
-	private _used: boolean;
-
-	constructor(private _resolve: () => void, private _reject: (error: any) => void) {
-		this._used = false;
-	}
-
-	public get isUsed(): boolean {
-		return this._used;
-	}
-
-	public resolve(): void {
-		this._used = true;
-		this._resolve();
-	}
-
-	public reject(error: any): void {
-		this._used = true;
-		this._reject(error);
-	}
-}
-
 export abstract class BaseLanguageClient implements FeatureClient<Middleware, LanguageClientOptions> {
 
 	private _id: string;
@@ -545,16 +407,14 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private _state: ClientState;
 	private readonly _notificationHandlers: Map<string, GenericNotificationHandler>;
 	private readonly _notificationDisposables: Map<string, Disposable>;
-	private readonly _bufferedNotificationHandlers: Map<string, GenericNotificationHandler>;
+	private readonly _pendingNotificationHandlers: Map<string, GenericNotificationHandler>;
 	private readonly _requestHandlers: Map<string, GenericRequestHandler<unknown, unknown>>;
 	private readonly _requestDisposables: Map<string, Disposable>;
-	private readonly _bufferedRequestHandlers: Map<string, GenericRequestHandler<unknown, unknown>>;
-	private readonly _onProgressHandlers: Map<string | number,  NotificationHandler<any>>;
-	private readonly _bufferedOnProgressHandlers: Map<string | number,  NotificationHandler<any>>;
-	private readonly _onProgressDisposables: Map<string | number,  Disposable>;
+	private readonly _pendingRequestHandlers: Map<string, GenericRequestHandler<unknown, unknown>>;
+	private readonly _progressHandlers: Map<string | number,  { type: ProgressType<any>; handler: NotificationHandler<any> }>;
+	private readonly _pendingProgressHandlers: Map<string | number,  { type: ProgressType<any>; handler: NotificationHandler<any> }>;
+	private readonly _progressDisposables: Map<string | number,  Disposable>;
 
-	private _onReady: Promise<void>;
-	private _onReadyCallbacks!: OnReady;
 	private _onStop: Promise<void> | undefined;
 	private _connectionPromise: Promise<Connection> | undefined;
 	private _connection: Connection | undefined;
@@ -567,8 +427,6 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private _traceOutputChannel: OutputChannel | undefined;
 	private _capabilities!: ServerCapabilities & ResolvedTextDocumentSyncCapabilities;
 
-	private _listeners: Disposable[] | undefined;
-	private _providers: Disposable[] | undefined;
 	private _diagnostics: DiagnosticCollection | undefined;
 	private _syncedDocuments: Map<string, TextDocument>;
 
@@ -622,14 +480,14 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 		this._state = ClientState.Initial;
 		this._notificationHandlers = new Map();
-		this._bufferedNotificationHandlers = new Map();
+		this._pendingNotificationHandlers = new Map();
 		this._notificationDisposables = new Map();
 		this._requestHandlers = new Map();
-		this._bufferedRequestHandlers = new Map();
+		this._pendingRequestHandlers = new Map();
 		this._requestDisposables = new Map();
-		this._onProgressHandlers = new Map();
-		this._bufferedOnProgressHandlers = new Map();
-		this._onProgressDisposables = new Map();
+		this._progressHandlers = new Map();
+		this._pendingProgressHandlers = new Map();
+		this._progressDisposables = new Map();
 
 		this._connectionPromise = undefined;
 		this._initializeResult = undefined;
@@ -641,15 +499,10 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			this._disposeOutputChannel = true;
 		}
 		this._traceOutputChannel = clientOptions.traceOutputChannel;
-		this._listeners = undefined;
-		this._providers = undefined;
 		this._diagnostics = undefined;
 
 		this._fileEvents = [];
 		this._fileEventDelayer = new Delayer<void>(250);
-		this._onReady = new Promise<void>((resolve, reject) => {
-			this._onReadyCallbacks = new OnReady(resolve, reject);
-		});
 		this._onStop = undefined;
 		this._telemetryEmitter = new Emitter<any>();
 		this._stateChangeEmitter = new Emitter<StateChangeEvent>();
@@ -694,12 +547,19 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	private getPublicState(): State {
-		if (this.state === ClientState.Running) {
-			return State.Running;
-		} else if (this.state === ClientState.Starting) {
-			return State.Starting;
-		} else {
-			return State.Stopped;
+		switch (this.state) {
+			case ClientState.Running:
+				return State.Running;
+			case ClientState.Starting:
+				return State.Running;
+			case ClientState.Suspending:
+				return State.Suspending;
+			case ClientState.Suspended:
+				return State.Suspended;
+			case ClientState.Resuming:
+				return State.Resuming;
+			default:
+				return State.Stopped;
 		}
 	}
 
@@ -747,10 +607,10 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 				}
 			};
 		} else {
-			this._bufferedRequestHandlers.set(method, handler);
+			this._pendingRequestHandlers.set(method, handler);
 			disposable = {
 				dispose: () => {
-					this._bufferedRequestHandlers.delete(method);
+					this._pendingRequestHandlers.delete(method);
 					const disposable = this._requestDisposables.get(method);
 					if (disposable !== undefined) {
 						disposable.dispose();
@@ -807,10 +667,10 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 				}
 			};
 		} else {
-			this._bufferedNotificationHandlers.set(method, handler);
+			this._pendingNotificationHandlers.set(method, handler);
 			disposable = {
 				dispose: () => {
-					this._bufferedNotificationHandlers.delete(method);
+					this._pendingNotificationHandlers.delete(method);
 					const disposable = this._notificationDisposables.get(method);
 					if (disposable !== undefined) {
 						disposable.dispose();
@@ -839,7 +699,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	public onProgress<P>(type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable {
-		this._onProgressHandlers.set(token, handler);
+		this._progressHandlers.set(token, { type, handler });
 		const connection = this.activeConnection();
 		let disposable: Disposable;
 		const handleWorkDoneProgress = this._clientOptions.middleware?.handleWorkDoneProgress;
@@ -849,32 +709,32 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			}
 			: handler;
 		if (connection !== undefined) {
-			this._onProgressDisposables.set(token, connection.onProgress(type, token, realHandler));
+			this._progressDisposables.set(token, connection.onProgress(type, token, realHandler));
 			disposable = {
 				dispose: () => {
-					const disposable = this._onProgressDisposables.get(token);
+					const disposable = this._progressDisposables.get(token);
 					if (disposable !== undefined) {
 						disposable.dispose();
-						this._onProgressDisposables.delete(token);
+						this._progressDisposables.delete(token);
 					}
 				}
 			};
 		} else {
-			this._bufferedOnProgressHandlers.set(token, handler);
+			this._pendingProgressHandlers.set(token, { type, handler });
 			disposable = {
 				dispose: () => {
-					this._bufferedOnProgressHandlers.delete(token);
-					const disposable = this._onProgressDisposables.get(token);
+					this._pendingProgressHandlers.delete(token);
+					const disposable = this._progressDisposables.get(token);
 					if (disposable !== undefined) {
 						disposable.dispose();
-						this._onProgressDisposables.delete(token);
+						this._progressDisposables.delete(token);
 					}
 				}
 			};
 		}
 		return {
 			dispose: (): void => {
-				this._onProgressHandlers.delete(token);
+				this._progressHandlers.delete(token);
 				disposable.dispose();
 			}
 		};
@@ -929,20 +789,15 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		return new DefaultErrorHandler(this, maxRestartCount ?? 4);
 	}
 
-	public set trace(value: Trace) {
+	public async setTrace(value: Trace): Promise<void> {
 		this._trace = value;
-		this.onReady().then(async () => {
-			try {
-				const connection = await this.resolveConnection();
-				connection.trace(this._trace, this._tracer, {
-					sendNotification: false,
-					traceFormat: this._traceFormat
-				});
-			} catch {
-				this.info(`Setting trace value failed`, undefined, false);
-			}
-		}, () => {
-		});
+		const connection = this.activeConnection();
+		if (connection !== undefined) {
+			await connection.trace(this._trace, this._tracer, {
+				sendNotification: false,
+				traceFormat: this._traceFormat
+			});
+		}
 	}
 
 	private data2String(data: Object): string {
@@ -1029,11 +884,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	public needsStop(): boolean {
-		return this.state === ClientState.Starting || this.state === ClientState.Running;
-	}
-
-	public onReady(): Promise<void> {
-		return this._onReady;
+		return this.state === ClientState.Starting || this.state === ClientState.Running || this.state === ClientState.Suspending ||
+			this.state === ClientState.Suspended || this.state === ClientState.Resuming;
 	}
 
 	private async resolveConnection(): Promise<Connection> {
@@ -1044,7 +896,11 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			await this._suspendPromise;
 		}
 		if (this.state === ClientState.Suspended) {
-
+			if (this._connectionPromise !== undefined) {
+				throw new Error(`Client is in suspend mode but still has an active connection`);
+			}
+			this._connectionPromise = this.createConnection();
+			await this.resume();
 		}
 		if (this.state === ClientState.Starting) {
 			if (this._connectionPromise === undefined) {
@@ -1065,23 +921,32 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		return this.state === ClientState.Running && this._connection !== undefined ? this._connection : undefined;
 	}
 
-	public start(): Disposable {
-		if (this._onReadyCallbacks.isUsed) {
-			this._onReady = new Promise((resolve, reject) => {
-				this._onReadyCallbacks = new OnReady(resolve, reject);
-			});
-		}
-		this._listeners = [];
-		this._providers = [];
+	public start(): Promise<void> {
 		// If we restart then the diagnostics collection is reused.
-		if (!this._diagnostics) {
+		if (this._diagnostics === undefined) {
 			this._diagnostics = this._clientOptions.diagnosticCollectionName
 				? Languages.createDiagnosticCollection(this._clientOptions.diagnosticCollectionName)
 				: Languages.createDiagnosticCollection();
 		}
+		return this.activate(ActivateMode.Start);
+	}
 
-		this.state = ClientState.Starting;
-		this.resolveConnection().then((connection) => {
+	private resume(): Promise<void> {
+		for (const [method, handler] of this._notificationHandlers) {
+			this._pendingNotificationHandlers.set(method, handler);
+		}
+		for (const [method, handler] of this._requestHandlers) {
+			this._pendingRequestHandlers.set(method, handler);
+		}
+		for (const [token, data] of this._progressHandlers) {
+			this._pendingProgressHandlers.set(token, data);
+		}
+		return this.activate(ActivateMode.Resume);
+	}
+
+	private async activate(mode: ActivateMode): Promise<void> {
+		this.state = mode === ActivateMode.Start ? ClientState.Starting : ClientState.Resuming;
+		await this.resolveConnection().then((connection) => {
 			connection.onNotification(LogMessageNotification.type, (message) => {
 				switch (message.type) {
 					case MessageType.Error:
@@ -1169,15 +1034,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			return this.initialize(connection);
 		}).catch((error) => {
 			this.state = ClientState.StartFailed;
-			this._onReadyCallbacks.reject(error);
-			this.error(`${this._name} client: couldn't create connection to server`, error, 'force');
-		});
-		return new Disposable(() => {
-			if (this.needsStop()) {
-				this.stop().catch((error) => {
-					this.error(`Stopping server failed.`, error, false);
-				});
-			}
+			this.error(`${this._name} client: couldn't create connection to server. Mode was ${mode}`, error, 'force');
+			throw error;
 		});
 	}
 
@@ -1228,7 +1086,6 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 				throw new Error(`Unsupported position encoding (${result.capabilities.positionEncoding}) received from server ${this.name}`);
 			}
 
-			this._connection = connection;
 			this._initializeResult = result;
 			this.state = ClientState.Running;
 
@@ -1263,6 +1120,19 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			connection.onRequest('client/unregisterFeature', params => this.handleUnregistrationRequest(params));
 			connection.onRequest(ApplyWorkspaceEditRequest.type, params => this.handleApplyWorkspaceEdit(params));
 
+			for (const [method, handler] of this._pendingNotificationHandlers) {
+				this._notificationDisposables.set(method, connection.onNotification(method, handler));
+			}
+			this._pendingNotificationHandlers.clear();
+			for (const [method, handler] of this._pendingRequestHandlers) {
+				this._requestDisposables.set(method, connection.onRequest(method, handler));
+			}
+			this._pendingRequestHandlers.clear();
+			for (const [token, data] of this._pendingProgressHandlers) {
+				this._progressDisposables.set(token, connection.onProgress(data.type, token, data.handler));
+			}
+			this._pendingProgressHandlers.clear();
+
 			this._idleInterval = RAL().timer.setInterval(() => this.checkSuspend(), BaseLanguageClient.idleCheckInterval);
 
 			await connection.sendNotification(InitializedNotification.type, {});
@@ -1270,7 +1140,6 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			this.hookFileEvents(connection);
 			this.hookConfigurationChanged(connection);
 			this.initializeFeatures(connection);
-			this._onReadyCallbacks.resolve();
 
 			return result;
 		} catch (error: any) {
@@ -1279,7 +1148,6 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 					void this.initialize(connection);
 				} else {
 					void this.stop();
-					this._onReadyCallbacks.reject(error);
 				}
 			} else if (error instanceof ResponseError && error.data && error.data.retry) {
 				void Window.showErrorMessage(error.message, { title: 'Retry', id: 'retry' }).then(item => {
@@ -1287,7 +1155,6 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 						void this.initialize(connection);
 					} else {
 						void this.stop();
-						this._onReadyCallbacks.reject(error);
 					}
 				});
 			} else {
@@ -1296,7 +1163,6 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 				}
 				this.error('Server initialization failed.', error);
 				void this.stop();
-				this._onReadyCallbacks.reject(error);
 			}
 			throw error;
 		}
@@ -1317,7 +1183,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	public async stop(timeout: number = 2000): Promise<void> {
 		// to ensure proper shutdown we can on stop a if everything is
 		// ready. Otherwise we would fail on clean up
-		await this.onReady();
+		await this.resolveConnection();
 
 		this._initializeResult = undefined;
 		if (!this._connectionPromise) {
@@ -1363,14 +1229,6 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this._fileEvents = [];
 		this._fileEventDelayer.cancel();
 
-		if (this._listeners) {
-			this._listeners.forEach(listener => listener.dispose());
-			this._listeners = undefined;
-		}
-		if (this._providers) {
-			this._providers.forEach(provider => provider.dispose());
-			this._providers = undefined;
-		}
 		if (this._syncedDocuments) {
 			this._syncedDocuments.clear();
 		}
@@ -1399,7 +1257,6 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		async function didChangeWatchedFile(this: void, event: FileEvent): Promise<void> {
 			client._fileEvents.push(event);
 			return client._fileEventDelayer.trigger(async (): Promise<void> => {
-				await client.onReady();
 				const connection = await client.resolveConnection();
 				client.forceDocumentSync();
 				const result = connection.sendNotification(DidChangeWatchedFilesNotification.type, { changes: client._fileEvents });
@@ -1490,7 +1347,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		};
 
 		const transports = await this.createMessageTransports(this._clientOptions.stdioEncoding || 'utf8');
-		return this._connection = createConnection(transports.reader, transports.writer, errorHandler, closeHandler, this._clientOptions.connectionOptions);
+		this._connection = createConnection(transports.reader, transports.writer, errorHandler, closeHandler, this._clientOptions.connectionOptions);
+		return this._connection;
 	}
 
 	protected handleConnectionClosed(): void {
@@ -1518,7 +1376,6 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (handlerResult.action === CloseAction.DoNotRestart) {
 			this.error(handlerResult.message ?? 'Connection to server got closed. Server will not be restarted.', undefined, 'force');
 			if (this.state === ClientState.Starting) {
-				this._onReadyCallbacks.reject(new Error(`Connection to server got closed. Server will not be restarted.`));
 				this.state = ClientState.StartFailed;
 			} else {
 				this.state = ClientState.Stopped;
@@ -1528,7 +1385,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			this.info(handlerResult.message ?? 'Connection to server got closed. Server will restart.');
 			this.cleanUp(false, false);
 			this.state = ClientState.Initial;
-			this.start();
+			this.start().catch((error) => this.error(`Restarting server failed`, error, 'force'));
 		}
 	}
 
@@ -1567,7 +1424,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		connection.trace(this._trace, this._tracer, {
 			sendNotification,
 			traceFormat: this._traceFormat
-		});
+		}).catch((error) => { this.error(`Updating trace failed with error`, error, false);});
 	}
 
 
@@ -1869,7 +1726,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			return;
 		}
 		if (this.isIdle()) {
-			this.initiateSuspend();
+			this.info(`Can suspend connection`);
+			// this.initiateSuspend();
 		}
 	}
 
@@ -1905,6 +1763,153 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			}
 		});
 	}
+}
+
+interface Connection {
+
+	/**
+	 * A timestamp indicating when the connection was last used (.e.g a request
+	 * or notification has been sent)
+	 */
+	lastUsed: number;
+
+	resetLastUsed(): void;
+
+	listen(): void;
+
+	sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: P, token?: CancellationToken): Promise<R>;
+	sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): Promise<R>;
+	sendRequest<R>(method: string, token?: CancellationToken): Promise<R>;
+	sendRequest<R>(method: string, param: any, token?: CancellationToken): Promise<R>;
+	sendRequest<R>(type: string | MessageSignature, ...params: any[]): Promise<R>;
+
+	onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: RequestHandler0<R, E>): Disposable;
+	onRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, handler: RequestHandler<P, R, E>): Disposable;
+	onRequest<R, E>(type: RequestType0<R, E>, handler: RequestHandler0<R, E>): Disposable;
+	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): Disposable;
+	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): Disposable;
+	onRequest<R, E>(method: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable;
+
+	sendNotification<RO>(type: ProtocolNotificationType0<RO>): Promise<void>;
+	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): Promise<void>;
+	sendNotification(type: NotificationType0): Promise<void>;
+	sendNotification<P>(type: NotificationType<P>, params?: P): Promise<void>;
+	sendNotification(method: string): Promise<void>;
+	sendNotification(method: string, params: any): Promise<void>;
+	sendNotification(method: string | MessageSignature, params?: any): Promise<void>;
+
+	onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): Disposable;
+	onNotification<P, RO>(type: ProtocolNotificationType<P, RO>, handler: NotificationHandler<P>): Disposable;
+	onNotification(type: NotificationType0, handler: NotificationHandler0): Disposable;
+	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): Disposable;
+	onNotification(method: string, handler: GenericNotificationHandler): Disposable;
+	onNotification(method: string | MessageSignature, handler: GenericNotificationHandler): Disposable;
+
+	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable;
+	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): Promise<void>;
+
+	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): Promise<void>;
+	trace(value: Trace, tracer: Tracer, traceOptions?: TraceOptions): Promise<void>;
+
+	initialize(params: InitializeParams): Promise<InitializeResult>;
+	shutdown(): Promise<void>;
+	exit(): Promise<void>;
+
+	end(): void;
+	dispose(): void;
+}
+
+class ConsoleLogger implements Logger {
+	public error(message: string): void {
+		RAL().console.error(message);
+	}
+	public warn(message: string): void {
+		RAL().console.warn(message);
+	}
+	public info(message: string): void {
+		RAL().console.info(message);
+	}
+	public log(message: string): void {
+		RAL().console.log(message);
+	}
+}
+
+interface ConnectionErrorHandler {
+	(error: Error, message: Message | undefined, count: number | undefined): void;
+}
+
+interface ConnectionCloseHandler {
+	(): void;
+}
+
+function createConnection(input: MessageReader, output: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): Connection {
+	let _lastUsed: number = -1;
+	const logger = new ConsoleLogger();
+	const connection = createProtocolConnection(input, output, logger, options);
+	connection.onError((data) => { errorHandler(data[0], data[1], data[2]); });
+	connection.onClose(closeHandler);
+	const result: Connection = {
+
+		get lastUsed(): number {
+			return _lastUsed;
+		},
+
+		resetLastUsed: (): void => {
+			_lastUsed = -1;
+		},
+
+		listen: (): void => connection.listen(),
+
+		sendRequest: <R>(type: string | MessageSignature, ...params: any[]): Promise<R> => {
+			_lastUsed = Date.now();
+			return connection.sendRequest(type as string, ...params);
+		},
+		onRequest: <R, E>(type: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable => connection.onRequest(type, handler),
+
+		sendNotification: (type: string | MessageSignature, params?: any): Promise<void> => {
+			_lastUsed = Date.now();
+			return connection.sendNotification(type, params);
+		},
+		onNotification: (type: string | MessageSignature, handler: GenericNotificationHandler): Disposable => connection.onNotification(type, handler),
+
+		onProgress: connection.onProgress,
+		sendProgress: connection.sendProgress,
+
+		trace: (value: Trace, tracer: Tracer, sendNotificationOrTraceOptions?: boolean | TraceOptions): Promise<void> => {
+			const defaultTraceOptions: TraceOptions = {
+				sendNotification: false,
+				traceFormat: TraceFormat.Text
+			};
+
+			if (sendNotificationOrTraceOptions === undefined) {
+				return connection.trace(value, tracer, defaultTraceOptions);
+			} else if (Is.boolean(sendNotificationOrTraceOptions)) {
+				return connection.trace(value, tracer, sendNotificationOrTraceOptions);
+			} else {
+				return connection.trace(value, tracer, sendNotificationOrTraceOptions);
+			}
+		},
+
+		initialize: (params: InitializeParams) => {
+			_lastUsed = Date.now();
+			return connection.sendRequest(InitializeRequest.type, params);
+		},
+		shutdown: () => {
+			_lastUsed = Date.now();
+			return connection.sendRequest(ShutdownRequest.type, undefined);
+		},
+		exit: () => {
+			_lastUsed = Date.now();
+			return connection.sendNotification(ExitNotification.type);
+		},
+
+		end: () => connection.end(),
+		dispose: () => connection.dispose()
+	};
+
+	return result;
 }
 
 // Exporting proposed protocol.
