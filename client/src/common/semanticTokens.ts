@@ -10,7 +10,7 @@ import { ClientCapabilities, ServerCapabilities, DocumentSelector, SemanticToken
 	SemanticTokensRegistrationType
 } from 'vscode-languageserver-protocol';
 
-import { FeatureClient, TextDocumentFeature, ensure } from './features';
+import { FeatureClient, TextDocumentLanguageFeature, ensure } from './features';
 import * as Is from './utils/is';
 
 export interface DocumentSemanticsTokensSignature {
@@ -42,7 +42,7 @@ export interface SemanticTokensProviders {
 	onDidChangeSemanticTokensEmitter: vscode.EventEmitter<void>;
 }
 
-export class SemanticTokensFeature extends TextDocumentFeature<boolean | SemanticTokensOptions, SemanticTokensRegistrationOptions, SemanticTokensProviders, SemanticTokensMiddleware> {
+export class SemanticTokensFeature extends TextDocumentLanguageFeature<boolean | SemanticTokensOptions, SemanticTokensRegistrationOptions, SemanticTokensProviders, SemanticTokensMiddleware> {
 
 	constructor(client: FeatureClient<SemanticTokensMiddleware>) {
 		super(client, SemanticTokensRegistrationType.type);

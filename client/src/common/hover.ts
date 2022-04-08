@@ -12,7 +12,7 @@ import {
 } from 'vscode-languageserver-protocol';
 
 import {
-	FeatureClient, ensure, TextDocumentFeature
+	FeatureClient, ensure, TextDocumentLanguageFeature, DocumentSelectorOptions
 } from './features';
 
 import * as UUID from './utils/uuid';
@@ -25,7 +25,7 @@ export interface HoverMiddleware {
 	provideHover?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideHoverSignature) => ProviderResult<VHover>;
 }
 
-export class HoverFeature extends TextDocumentFeature<boolean | HoverOptions, HoverRegistrationOptions, HoverProvider, HoverMiddleware> {
+export class HoverFeature extends TextDocumentLanguageFeature<boolean | HoverOptions, HoverRegistrationOptions, HoverProvider, HoverMiddleware> {
 
 	constructor(client: FeatureClient<HoverMiddleware>) {
 		super(client, HoverRequest.type);
@@ -69,6 +69,21 @@ export class HoverFeature extends TextDocumentFeature<boolean | HoverOptions, Ho
 					: provideHover(document, position, token);
 			}
 		};
-		return [Languages.registerHoverProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider), provider];
+		return [this.registerProvider(selector, provider), provider];
 	}
+
+	public registerActivation(options: DocumentSelectorOptions & HoverOptions): void {
+		this.doRegisterActivation(() => {
+			return this.registerProvider(options.documentSelector, {
+				provideHover: async (document, position, token) => {
+					return this.handleActivation(document, (provider) => provider.provideHover(document, position, token));
+				}
+			});
+		});
+	}
+
+	private registerProvider(selector: DocumentSelector, provider: HoverProvider): Disposable {
+		return Languages.registerHoverProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider);
+	}
+
 }

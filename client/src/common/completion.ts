@@ -14,7 +14,7 @@ import {
 } from 'vscode-languageserver-protocol';
 
 import {
-	FeatureClient, ensure, TextDocumentFeature
+	FeatureClient, ensure, TextDocumentLanguageFeature
 } from './features';
 
 import * as UUID from './utils/uuid';
@@ -60,7 +60,7 @@ export interface CompletionMiddleware {
 	resolveCompletionItem?: (this: void, item: VCompletionItem, token: CancellationToken, next: ResolveCompletionItemSignature) => ProviderResult<VCompletionItem>;
 }
 
-export class CompletionItemFeature extends TextDocumentFeature<CompletionOptions, CompletionRegistrationOptions, CompletionItemProvider, CompletionMiddleware> {
+export class CompletionItemFeature extends TextDocumentLanguageFeature<CompletionOptions, CompletionRegistrationOptions, CompletionItemProvider, CompletionMiddleware> {
 
 	private labelDetailsSupport: Map<string, boolean>;
 

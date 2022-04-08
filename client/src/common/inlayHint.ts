@@ -13,7 +13,7 @@ import {
 	InlayHintRefreshRequest, InlayHintParams, InlayHintResolveRequest
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, FeatureClient, ensure } from './features';
+import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
 
 export type ProvideInlayHintsSignature = (this: void, document: TextDocument, viewPort: VRange, token: CancellationToken) => ProviderResult<VInlayHint[]>;
 export type ResolveInlayHintSignature = (this: void, item: VInlayHint, token: CancellationToken) => ProviderResult<VInlayHint>;
@@ -28,7 +28,7 @@ export type InlayHintsProviderShape = {
 	onDidChangeInlayHints: EventEmitter<void>;
 };
 
-export class InlayHintsFeature extends TextDocumentFeature<boolean | InlayHintOptions, InlayHintRegistrationOptions, InlayHintsProviderShape, InlayHintsMiddleware> {
+export class InlayHintsFeature extends TextDocumentLanguageFeature<boolean | InlayHintOptions, InlayHintRegistrationOptions, InlayHintsProviderShape, InlayHintsMiddleware> {
 	constructor(client: FeatureClient<InlayHintsMiddleware>) {
 		super(client, InlayHintRequest.type);
 	}
@@ -107,6 +107,10 @@ export class InlayHintsFeature extends TextDocumentFeature<boolean | InlayHintOp
 
 			}
 			: undefined;
-		return [Languages.registerInlayHintsProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider), { provider: provider, onDidChangeInlayHints: eventEmitter }];
+		return [this.registerProvider(selector, provider), { provider: provider, onDidChangeInlayHints: eventEmitter }];
+	}
+
+	private registerProvider(selector: DocumentSelector, provider: InlayHintsProvider): Disposable {
+		return Languages.registerInlayHintsProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider);
 	}
 }

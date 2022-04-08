@@ -14,7 +14,7 @@ import { ClientCapabilities, ServerCapabilities, DocumentSelector, CallHierarchy
 	CallHierarchyPrepareRequest
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, FeatureClient, ensure } from './features';
+import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
 
 export interface PrepareCallHierarchySignature {
 	(this: void, document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VCallHierarchyItem | VCallHierarchyItem[]>;
@@ -109,7 +109,7 @@ class CallHierarchyProvider implements VCallHierarchyProvider {
 	}
 }
 
-export class CallHierarchyFeature extends TextDocumentFeature<boolean | CallHierarchyOptions, CallHierarchyRegistrationOptions, CallHierarchyProvider, CallHierarchyMiddleware> {
+export class CallHierarchyFeature extends TextDocumentLanguageFeature<boolean | CallHierarchyOptions, CallHierarchyRegistrationOptions, CallHierarchyProvider, CallHierarchyMiddleware> {
 	constructor(client: FeatureClient<CallHierarchyMiddleware>) {
 		super(client, CallHierarchyPrepareRequest.type);
 	}

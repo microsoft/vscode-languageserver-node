@@ -13,7 +13,7 @@ import {
 } from 'vscode-languageserver-protocol';
 
 import {
-	FeatureClient, ensure, TextDocumentFeature
+	FeatureClient, ensure, TextDocumentLanguageFeature, DocumentSelectorOptions
 } from './features';
 
 import * as UUID from './utils/uuid';
@@ -26,7 +26,7 @@ export interface SignatureHelpMiddleware {
 	provideSignatureHelp?: (this: void, document: TextDocument, position: VPosition, context: VSignatureHelpContext, token: CancellationToken, next: ProvideSignatureHelpSignature) => ProviderResult<VSignatureHelp>;
 }
 
-export class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpOptions, SignatureHelpRegistrationOptions, SignatureHelpProvider, SignatureHelpMiddleware> {
+export class SignatureHelpFeature extends TextDocumentLanguageFeature<SignatureHelpOptions, SignatureHelpRegistrationOptions, SignatureHelpProvider, SignatureHelpMiddleware> {
 
 	constructor(client: FeatureClient<SignatureHelpMiddleware>) {
 		super(client, SignatureHelpRequest.type);
@@ -52,8 +52,7 @@ export class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpOptio
 		});
 	}
 
-	protected registerLanguageProvider(options: SignatureHelpRegistrationOptions): [Disposable, SignatureHelpProvider] {
-		const selector = options.documentSelector!;
+	protected registerLanguageProvider(options: SignatureHelpRegistrationOptions & DocumentSelectorOptions): [Disposable, SignatureHelpProvider] {
 		const provider: SignatureHelpProvider = {
 			provideSignatureHelp: (document, position, token, context) => {
 				const client = this._client;
@@ -73,18 +72,30 @@ export class SignatureHelpFeature extends TextDocumentFeature<SignatureHelpOptio
 					: providerSignatureHelp(document, position, context, token);
 			}
 		};
-		let disposable: Disposable;
-		const documentSelector = this._client.protocol2CodeConverter.asDocumentSelector(selector);
+		return [this.registerProvider(options, provider), provider];
+	}
+
+	public registerActivation(options: DocumentSelectorOptions & SignatureHelpOptions): void {
+		this.doRegisterActivation(() => {
+			return this.registerProvider(options, {
+				provideSignatureHelp: async (document, position, token, context) => {
+					return this.handleActivation(document, (provider) => provider.provideSignatureHelp(document, position, token, context));
+				}
+			});
+		});
+	}
+
+	private registerProvider(options: DocumentSelectorOptions & SignatureHelpOptions, provider: SignatureHelpProvider): Disposable {
+		const selector = this._client.protocol2CodeConverter.asDocumentSelector(options.documentSelector);
 		if (options.retriggerCharacters === undefined) {
 			const triggerCharacters = options.triggerCharacters || [];
-			disposable = Languages.registerSignatureHelpProvider(documentSelector, provider, ...triggerCharacters);
+			return Languages.registerSignatureHelpProvider(selector, provider, ...triggerCharacters);
 		} else {
 			const metaData: VSignatureHelpProviderMetadata = {
 				triggerCharacters: options.triggerCharacters || [],
 				retriggerCharacters: options.retriggerCharacters || []
 			};
-			disposable = Languages.registerSignatureHelpProvider(documentSelector, provider, metaData);
+			return Languages.registerSignatureHelpProvider(selector, provider, metaData);
 		}
-		return [disposable, provider];
 	}
 }

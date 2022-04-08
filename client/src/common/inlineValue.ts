@@ -13,7 +13,7 @@ import {
 	InlineValueRefreshRequest, InlineValueParams, InlineValueRequest,
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, FeatureClient, ensure } from './features';
+import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
 
 export type ProvideInlineValuesSignature = (this: void, document: TextDocument, viewPort: VRange, context: VInlineValueContext, token: CancellationToken) => ProviderResult<VInlineValue[]>;
 
@@ -26,7 +26,7 @@ export type InlineValueProviderShape = {
 	onDidChangeInlineValues: EventEmitter<void>;
 };
 
-export class InlineValueFeature extends TextDocumentFeature<boolean | InlineValueOptions, InlineValueRegistrationOptions, InlineValueProviderShape, InlineValueMiddleware> {
+export class InlineValueFeature extends TextDocumentLanguageFeature<boolean | InlineValueOptions, InlineValueRegistrationOptions, InlineValueProviderShape, InlineValueMiddleware> {
 	constructor(client: FeatureClient<InlineValueMiddleware>) {
 		super(client, InlineValueRequest.type);
 	}
@@ -79,6 +79,10 @@ export class InlineValueFeature extends TextDocumentFeature<boolean | InlineValu
 
 			}
 		};
-		return [Languages.registerInlineValuesProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider), { provider: provider, onDidChangeInlineValues: eventEmitter }];
+		return [this.registerProvider(selector, provider), { provider: provider, onDidChangeInlineValues: eventEmitter }];
+	}
+
+	private registerProvider(selector: DocumentSelector, provider: InlineValuesProvider): Disposable {
+		return Languages.registerInlineValuesProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider);
 	}
 }

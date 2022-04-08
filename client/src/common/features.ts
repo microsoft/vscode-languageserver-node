@@ -118,6 +118,15 @@ export interface StaticFeature {
 	dispose(): void;
 }
 
+export namespace StaticFeature {
+	export function is (value: any): value is StaticFeature {
+		const candidate: StaticFeature = value;
+		return candidate !== undefined && candidate !== null &&
+			Is.func(candidate.fillClientCapabilities) && Is.func(candidate.initialize) && Is.func(candidate.getState) && Is.func(candidate.dispose) &&
+			(candidate.fillInitializeParams === undefined || Is.func(candidate.fillInitializeParams));
+	}
+}
+
 /**
  * A dynamic feature can be activated via the server.
  */
@@ -180,17 +189,13 @@ export interface DynamicFeature<RO> {
 	dispose(): void;
 }
 
-export interface NotificationFeature<T extends Function> {
-	/**
-	 * Returns a provider for the given text document.
-	 */
-	getProvider(document: TextDocument): { send: T } | undefined;
-}
-
 export namespace DynamicFeature {
 	export function is<T>(value: any): value is DynamicFeature<T> {
-		let candidate: DynamicFeature<T> = value;
-		return candidate && Is.func(candidate.register) && Is.func(candidate.unregister) && Is.func(candidate.dispose) && candidate.registrationType !== undefined;
+		const candidate: DynamicFeature<T> = value;
+		return candidate !== undefined && candidate !== null &&
+			Is.func(candidate.fillClientCapabilities) && Is.func(candidate.initialize) && Is.func(candidate.getState) && Is.func(candidate.dispose) &&
+			(candidate.fillInitializeParams === undefined || Is.func(candidate.fillInitializeParams)) && Is.func(candidate.register) &&
+			Is.func(candidate.unregister) && candidate.registrationType !== undefined;
 	}
 }
 
@@ -208,11 +213,15 @@ export interface NotifyingFeature<E, P> {
 	onNotificationSent: VEvent<NotificationSendEvent<E, P>>;
 }
 
-export abstract class DynamicDocumentFeature<RO,M, CO = object> implements DynamicFeature<RO> {
+/**
+ * An abstract dynamic feature implementation that operates on documents (e.g. text
+ * documents or notebooks).
+ */
+export abstract class DynamicDocumentFeature<RO, MW, CO = object> implements DynamicFeature<RO> {
 
-	protected readonly _client: FeatureClient<M, CO>;
+	protected readonly _client: FeatureClient<MW, CO>;
 
-	constructor(client: FeatureClient<M, CO>) {
+	constructor(client: FeatureClient<MW, CO>) {
 		this._client = client;
 	}
 
@@ -245,7 +254,23 @@ export abstract class DynamicDocumentFeature<RO,M, CO = object> implements Dynam
 	protected abstract getDocumentSelectors(): IterableIterator<VDocumentSelector>;
 }
 
-export abstract class DocumentNotifications<P, E, M> extends DynamicDocumentFeature<TextDocumentRegistrationOptions, M> implements NotificationFeature<(data: E) => Promise<void>>, NotifyingFeature<E, P> {
+/**
+ * A mixin type that allows to send notification or requests using a registered
+ * provider.
+ */
+export interface TextDocumentSendFeature<T extends Function> {
+	/**
+	 * Returns a provider for the given text document.
+	 */
+	getProvider(document: TextDocument): { send: T } | undefined;
+}
+
+
+/**
+ * An abstract base class to implement features that react to events
+ * emitted from text documents.
+ */
+export abstract class TextDocumentEventFeature<P, E, M> extends DynamicDocumentFeature<TextDocumentRegistrationOptions, M> implements TextDocumentSendFeature<(data: E) => Promise<void>>, NotifyingFeature<E, P> {
 
 	private readonly _event: Event<E>;
 	protected readonly _type: ProtocolNotificationType<P, TextDocumentRegistrationOptions>;
@@ -356,6 +381,10 @@ type TextDocumentFeatureRegistration<RO, PR> = {
 	provider: PR;
 };
 
+/**
+ * A mixin type to access a provider that is registered for a
+ * given text document / document selector.
+ */
 export interface TextDocumentProviderFeature<T> {
 	/**
 	 * Triggers the corresponding RPC method.
@@ -363,12 +392,21 @@ export interface TextDocumentProviderFeature<T> {
 	getProvider(textDocument: TextDocument): T | undefined;
 }
 
-export abstract class TextDocumentFeature<PO, RO extends TextDocumentRegistrationOptions & PO, PR, M, CO = object> extends DynamicDocumentFeature<RO, M, CO> {
+export type DocumentSelectorOptions = {
+	documentSelector: DocumentSelector;
+};
+
+/**
+ * A abstract feature implementation that registers language providers
+ * for text documents using a given document selector.
+ */
+export abstract class TextDocumentLanguageFeature<PO, RO extends TextDocumentRegistrationOptions & PO, PR, MW, CO = object> extends DynamicDocumentFeature<RO, MW, CO> {
 
 	private readonly _registrationType: RegistrationType<RO>;
 	private readonly _registrations: Map<string, TextDocumentFeatureRegistration<RO, PR>>;
+	private _activation: Disposable | undefined;
 
-	constructor(client: FeatureClient<M, CO>, registrationType: RegistrationType<RO>) {
+	constructor(client: FeatureClient<MW, CO>, registrationType: RegistrationType<RO>) {
 		super(client);
 		this._registrationType = registrationType;
 		this._registrations =  new Map();
@@ -409,11 +447,40 @@ export abstract class TextDocumentFeature<PO, RO extends TextDocumentRegistratio
 		}
 	}
 
-	public dispose(): void {
+	protected doRegisterActivation(registerProvider: () => Disposable): void {
+		if (this._activation !== undefined) {
+			this._activation.dispose();
+		}
+		this._activation = registerProvider();
+	}
+
+	protected handleActivation<R>(document: TextDocument, send: (provider: PR) => ProviderResult<R>): ProviderResult<R> {
+		if (this._client.isRunning()) {
+			return undefined;
+		}
+		return this._client.start().then(() => {
+			const provider = this.getProvider(document);
+			if (provider === undefined) {
+				return undefined;
+			}
+			return send(provider);
+		});
+	}
+
+	public suspend(): void {
 		this._registrations.forEach((value) => {
 			value.disposable.dispose();
 		});
 		this._registrations.clear();
+	}
+
+	public dispose(): void {
+		this.suspend();
+		if (this._activation !== undefined) {
+			this._activation.dispose();
+			this._activation = undefined;
+		}
+
 	}
 
 	protected getRegistration(documentSelector: DocumentSelector | undefined, capability: undefined | PO | (RO & StaticRegistrationOptions)): [string | undefined, (RO & { documentSelector: DocumentSelector }) | undefined] {
@@ -543,6 +610,9 @@ export interface FeatureClient<M, CO = object> {
 	options: CO;
 	middleware: M;
 
+	isRunning(): boolean;
+	start(): Promise<void>;
+
 	sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): Promise<R>;
 	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: P, token?: CancellationToken): Promise<R>;
 	sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): Promise<R>;
@@ -579,8 +649,8 @@ export interface FeatureClient<M, CO = object> {
 
 	getFeature(request: typeof DidOpenTextDocumentNotification.method): DidOpenTextDocumentFeatureShape;
 	getFeature(request: typeof DidChangeTextDocumentNotification.method): DidChangeTextDocumentFeatureShape;
-	getFeature(request: typeof WillSaveTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & NotificationFeature<(textDocument: TextDocument) => Promise<void>>;
-	getFeature(request: typeof WillSaveTextDocumentWaitUntilRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & NotificationFeature<(textDocument: TextDocument) => ProviderResult<VTextEdit[]>>;
+	getFeature(request: typeof WillSaveTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentSendFeature<(textDocument: TextDocument) => Promise<void>>;
+	getFeature(request: typeof WillSaveTextDocumentWaitUntilRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentSendFeature<(textDocument: TextDocument) => ProviderResult<VTextEdit[]>>;
 	getFeature(request: typeof DidSaveTextDocumentNotification.method): DidSaveTextDocumentFeatureShape;
 	getFeature(request: typeof DidCloseTextDocumentNotification.method): DidCloseTextDocumentFeatureShape;
 	getFeature(request: typeof DidCreateFilesNotification.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileCreateEvent) => Promise<void> };

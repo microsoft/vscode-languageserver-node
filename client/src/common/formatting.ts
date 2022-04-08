@@ -14,7 +14,7 @@ import {
 import * as UUID from './utils/uuid';
 
 import type * as c2p from './codeConverter';
-import { TextDocumentFeature, FeatureClient, ensure } from './features';
+import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
 
 
 namespace FileFormattingOptions {
@@ -48,7 +48,7 @@ export interface FormattingMiddleware {
 }
 
 
-export class DocumentFormattingFeature extends TextDocumentFeature<boolean | DocumentFormattingOptions, DocumentHighlightRegistrationOptions, DocumentFormattingEditProvider, FormattingMiddleware> {
+export class DocumentFormattingFeature extends TextDocumentLanguageFeature<boolean | DocumentFormattingOptions, DocumentHighlightRegistrationOptions, DocumentFormattingEditProvider, FormattingMiddleware> {
 
 	constructor(client: FeatureClient<FormattingMiddleware>) {
 		super(client, DocumentFormattingRequest.type);
@@ -95,7 +95,7 @@ export class DocumentFormattingFeature extends TextDocumentFeature<boolean | Doc
 	}
 }
 
-export class DocumentRangeFormattingFeature extends TextDocumentFeature<boolean | DocumentRangeFormattingOptions, DocumentRangeFormattingRegistrationOptions, DocumentRangeFormattingEditProvider, FormattingMiddleware> {
+export class DocumentRangeFormattingFeature extends TextDocumentLanguageFeature<boolean | DocumentRangeFormattingOptions, DocumentRangeFormattingRegistrationOptions, DocumentRangeFormattingEditProvider, FormattingMiddleware> {
 
 	constructor(client: FeatureClient<FormattingMiddleware>) {
 		super(client, DocumentRangeFormattingRequest.type);
@@ -143,7 +143,7 @@ export class DocumentRangeFormattingFeature extends TextDocumentFeature<boolean 
 	}
 }
 
-export class DocumentOnTypeFormattingFeature extends TextDocumentFeature<DocumentOnTypeFormattingOptions, DocumentOnTypeFormattingRegistrationOptions, OnTypeFormattingEditProvider, FormattingMiddleware> {
+export class DocumentOnTypeFormattingFeature extends TextDocumentLanguageFeature<DocumentOnTypeFormattingOptions, DocumentOnTypeFormattingRegistrationOptions, OnTypeFormattingEditProvider, FormattingMiddleware> {
 
 	constructor(client: FeatureClient<FormattingMiddleware>) {
 		super(client, DocumentOnTypeFormattingRequest.type);

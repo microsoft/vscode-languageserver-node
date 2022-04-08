@@ -10,7 +10,7 @@ import {
 	DocumentColorRegistrationOptions, DocumentColorOptions
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, FeatureClient, ensure } from './features';
+import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
 
 export interface ProvideDocumentColorsSignature {
 	(document: TextDocument, token: CancellationToken): ProviderResult<VColorInformation[]>;
@@ -25,7 +25,7 @@ export interface ColorProviderMiddleware {
 	provideColorPresentations?: (this: void, color: VColor, context: { document: TextDocument; range: VRange }, token: CancellationToken, next: ProvideColorPresentationSignature) => ProviderResult<VColorPresentation[]>;
 }
 
-export class ColorProviderFeature extends TextDocumentFeature<boolean | DocumentColorOptions, DocumentColorRegistrationOptions, DocumentColorProvider, ColorProviderMiddleware> {
+export class ColorProviderFeature extends TextDocumentLanguageFeature<boolean | DocumentColorOptions, DocumentColorRegistrationOptions, DocumentColorProvider, ColorProviderMiddleware> {
 
 	constructor(client: FeatureClient<ColorProviderMiddleware>) {
 		super(client, DocumentColorRequest.type);

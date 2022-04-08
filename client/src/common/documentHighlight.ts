@@ -12,7 +12,7 @@ import {
 } from 'vscode-languageserver-protocol';
 
 import {
-	FeatureClient, ensure, TextDocumentFeature
+	FeatureClient, ensure, TextDocumentLanguageFeature
 } from './features';
 
 import * as UUID from './utils/uuid';
@@ -25,7 +25,7 @@ export interface DocumentHighlightMiddleware {
 	provideDocumentHighlights?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideDocumentHighlightsSignature) => ProviderResult<VDocumentHighlight[]>;
 }
 
-export class DocumentHighlightFeature extends TextDocumentFeature<boolean | DocumentHighlightOptions, DocumentHighlightRegistrationOptions, DocumentHighlightProvider, DocumentHighlightMiddleware> {
+export class DocumentHighlightFeature extends TextDocumentLanguageFeature<boolean | DocumentHighlightOptions, DocumentHighlightRegistrationOptions, DocumentHighlightProvider, DocumentHighlightMiddleware> {
 
 	constructor(client: FeatureClient<DocumentHighlightMiddleware>) {
 		super(client, DocumentHighlightRequest.type);

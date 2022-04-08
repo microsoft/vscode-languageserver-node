@@ -11,7 +11,7 @@ import {
 	ClientCapabilities, DocumentLinkOptions, DocumentLinkRegistrationOptions, DocumentLinkRequest, DocumentLinkResolveRequest, DocumentSelector, ResponseError, ServerCapabilities} from 'vscode-languageserver-protocol';
 
 import {
-	FeatureClient, ensure, TextDocumentFeature
+	FeatureClient, ensure, TextDocumentLanguageFeature
 } from './features';
 
 import * as UUID from './utils/uuid';
@@ -29,7 +29,7 @@ export interface DocumentLinkMiddleware {
 	resolveDocumentLink?: (this: void, link: VDocumentLink, token: CancellationToken, next: ResolveDocumentLinkSignature) => ProviderResult<VDocumentLink>;
 }
 
-export class DocumentLinkFeature extends TextDocumentFeature<DocumentLinkOptions, DocumentLinkRegistrationOptions, DocumentLinkProvider, DocumentLinkMiddleware> {
+export class DocumentLinkFeature extends TextDocumentLanguageFeature<DocumentLinkOptions, DocumentLinkRegistrationOptions, DocumentLinkProvider, DocumentLinkMiddleware> {
 
 	constructor(client: FeatureClient<DocumentLinkMiddleware>) {
 		super(client, DocumentLinkRequest.type);

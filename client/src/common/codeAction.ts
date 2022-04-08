@@ -14,7 +14,7 @@ import {
 
 import * as UUID from './utils/uuid';
 
-import { TextDocumentFeature, FeatureClient, ensure } from './features';
+import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
 
 export interface ProvideCodeActionsSignature {
 	(this: void, document: TextDocument, range: VRange, context: VCodeActionContext, token: CancellationToken): ProviderResult<(VCommand | VCodeAction)[]>;
@@ -29,7 +29,7 @@ export interface CodeActionMiddleware {
 	resolveCodeAction?: (this: void, item:  VCodeAction, token: CancellationToken, next: ResolveCodeActionSignature) => ProviderResult<VCodeAction>;
 }
 
-export class CodeActionFeature extends TextDocumentFeature<boolean | CodeActionOptions, CodeActionRegistrationOptions, CodeActionProvider, CodeActionMiddleware> {
+export class CodeActionFeature extends TextDocumentLanguageFeature<boolean | CodeActionOptions, CodeActionRegistrationOptions, CodeActionProvider, CodeActionMiddleware> {
 
 	constructor(client: FeatureClient<CodeActionMiddleware>) {
 		super(client, CodeActionRequest.type);

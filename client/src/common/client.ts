@@ -43,7 +43,7 @@ import * as Is from './utils/is';
 import { Delayer, Semaphore } from './utils/async';
 import * as UUID from './utils/uuid';
 import { ProgressPart } from './progressPart';
-import { DynamicFeature, ensure, FeatureClient, LSPCancellationError, NotificationFeature, RegistrationData, StaticFeature, TextDocumentProviderFeature, WorkspaceProviderFeature } from './features';
+import { DynamicFeature, ensure, FeatureClient, LSPCancellationError, TextDocumentSendFeature, RegistrationData, StaticFeature, TextDocumentProviderFeature, WorkspaceProviderFeature } from './features';
 
 import { DiagnosticProviderShape, DiagnosticPullOptions } from './proposed.diagnostic';
 import { NotebookDocumentMiddleware, NotebookDocumentOptions, NotebookDocumentProviderShape } from './proposed.notebook';
@@ -921,6 +921,10 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		return this.state === ClientState.Running && this._connection !== undefined ? this._connection : undefined;
 	}
 
+	public isRunning(): boolean {
+		return this.state === ClientState.Running;
+	}
+
 	public start(): Promise<void> {
 		// If we restart then the diagnostics collection is reused.
 		if (this._diagnostics === undefined) {
@@ -1468,8 +1472,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 	getFeature(request: typeof DidOpenTextDocumentNotification.method): DidOpenTextDocumentFeatureShape;
 	getFeature(request: typeof DidChangeTextDocumentNotification.method): DidChangeTextDocumentFeatureShape;
-	getFeature(request: typeof WillSaveTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & NotificationFeature<(textDocument: TextDocument) => Promise<void>>;
-	getFeature(request: typeof WillSaveTextDocumentWaitUntilRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & NotificationFeature<(textDocument: TextDocument) => ProviderResult<VTextEdit[]>>;
+	getFeature(request: typeof WillSaveTextDocumentNotification.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentSendFeature<(textDocument: TextDocument) => Promise<void>>;
+	getFeature(request: typeof WillSaveTextDocumentWaitUntilRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentSendFeature<(textDocument: TextDocument) => ProviderResult<VTextEdit[]>>;
 	getFeature(request: typeof DidSaveTextDocumentNotification.method): DidSaveTextDocumentFeatureShape;
 	getFeature(request: typeof DidCloseTextDocumentNotification.method): DidCloseTextDocumentFeatureShape;
 	getFeature(request: typeof DidCreateFilesNotification.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileCreateEvent) => Promise<void> };

@@ -13,7 +13,7 @@ import {
 
 import * as UUID from './utils/uuid';
 
-import { TextDocumentFeature, FeatureClient, ensure } from './features';
+import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
 
 export interface ProvideCodeLensesSignature {
 	(this: void, document: TextDocument, token: CancellationToken): ProviderResult<VCodeLens[]>;
@@ -33,7 +33,7 @@ export type CodeLensProviderShape = {
 	onDidChangeCodeLensEmitter: EventEmitter<void>;
 };
 
-export class CodeLensFeature extends TextDocumentFeature<CodeLensOptions, CodeLensRegistrationOptions, CodeLensProviderShape, CodeLensMiddleware> {
+export class CodeLensFeature extends TextDocumentLanguageFeature<CodeLensOptions, CodeLensRegistrationOptions, CodeLensProviderShape, CodeLensMiddleware> {
 
 	constructor(client: FeatureClient<CodeLensMiddleware>) {
 		super(client, CodeLensRequest.type);

@@ -16,7 +16,7 @@ import {
 } from 'vscode-languageserver-protocol';
 
 import {
-	FeatureClient, DocumentNotifications, DynamicFeature, NextSignature, NotificationFeature, NotifyingFeature, ensure, RegistrationData, DynamicDocumentFeature,
+	FeatureClient, TextDocumentEventFeature, DynamicFeature, NextSignature, TextDocumentSendFeature, NotifyingFeature, ensure, RegistrationData, DynamicDocumentFeature,
 	NotificationSendEvent
 } from './features';
 
@@ -32,7 +32,7 @@ export interface TextDocumentSynchronizationMiddleware {
 	didClose?: NextSignature<TextDocument, Promise<void>>;
 }
 
-export interface DidOpenTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, NotificationFeature<(textDocument: TextDocument) => Promise<void>>, NotifyingFeature<TextDocument, DidOpenTextDocumentParams> {
+export interface DidOpenTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, TextDocumentSendFeature<(textDocument: TextDocument) => Promise<void>>, NotifyingFeature<TextDocument, DidOpenTextDocumentParams> {
 	openDocuments: Iterable<TextDocument>;
 }
 
@@ -40,13 +40,13 @@ export type ResolvedTextDocumentSyncCapabilities = {
 	resolvedTextDocumentSync?: TextDocumentSyncOptions;
 };
 
-export class DidOpenTextDocumentFeature extends DocumentNotifications<DidOpenTextDocumentParams, TextDocument, TextDocumentSynchronizationMiddleware> implements DidOpenTextDocumentFeatureShape {
+export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpenTextDocumentParams, TextDocument, TextDocumentSynchronizationMiddleware> implements DidOpenTextDocumentFeatureShape {
 	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>, private _syncedDocuments: Map<string, TextDocument>) {
 		super(
 			client, Workspace.onDidOpenTextDocument, DidOpenTextDocumentNotification.type,
 			client.middleware.didOpen,
 			(textDocument) => client.code2ProtocolConverter.asOpenTextDocumentParams(textDocument),
-			DocumentNotifications.textDocumentFilter
+			TextDocumentEventFeature.textDocumentFilter
 		);
 	}
 
@@ -99,17 +99,17 @@ export class DidOpenTextDocumentFeature extends DocumentNotifications<DidOpenTex
 	}
 }
 
-export interface DidCloseTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, NotificationFeature<(textDocument: TextDocument) => Promise<void>>, NotifyingFeature<TextDocument, DidCloseTextDocumentParams> {
+export interface DidCloseTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, TextDocumentSendFeature<(textDocument: TextDocument) => Promise<void>>, NotifyingFeature<TextDocument, DidCloseTextDocumentParams> {
 }
 
-export class DidCloseTextDocumentFeature extends DocumentNotifications<DidCloseTextDocumentParams, TextDocument, TextDocumentSynchronizationMiddleware> implements DidCloseTextDocumentFeatureShape {
+export class DidCloseTextDocumentFeature extends TextDocumentEventFeature<DidCloseTextDocumentParams, TextDocument, TextDocumentSynchronizationMiddleware> implements DidCloseTextDocumentFeatureShape {
 
 	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>, private _syncedDocuments: Map<string, TextDocument>) {
 		super(
 			client, Workspace.onDidCloseTextDocument, DidCloseTextDocumentNotification.type,
 			client.middleware.didClose,
 			(textDocument) => client.code2ProtocolConverter.asCloseTextDocumentParams(textDocument),
-			DocumentNotifications.textDocumentFilter
+			TextDocumentEventFeature.textDocumentFilter
 		);
 	}
 
@@ -159,7 +159,7 @@ interface DidChangeTextDocumentData {
 	documentSelector: VDocumentSelector;
 }
 
-export interface DidChangeTextDocumentFeatureShape extends DynamicFeature<TextDocumentChangeRegistrationOptions>, NotificationFeature<(event: TextDocumentChangeEvent) => Promise<void>>, NotifyingFeature<TextDocumentChangeEvent, DidChangeTextDocumentParams> {
+export interface DidChangeTextDocumentFeatureShape extends DynamicFeature<TextDocumentChangeRegistrationOptions>, TextDocumentSendFeature<(event: TextDocumentChangeEvent) => Promise<void>>, NotifyingFeature<TextDocumentChangeEvent, DidChangeTextDocumentParams> {
 }
 
 export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDocumentChangeRegistrationOptions, TextDocumentSynchronizationMiddleware> implements DidChangeTextDocumentFeatureShape {
@@ -321,14 +321,14 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 	}
 }
 
-export class WillSaveFeature extends DocumentNotifications<WillSaveTextDocumentParams, TextDocumentWillSaveEvent, TextDocumentSynchronizationMiddleware> {
+export class WillSaveFeature extends TextDocumentEventFeature<WillSaveTextDocumentParams, TextDocumentWillSaveEvent, TextDocumentSynchronizationMiddleware> {
 
 	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>) {
 		super(
 			client, Workspace.onWillSaveTextDocument, WillSaveTextDocumentNotification.type,
 			client.middleware.willSave,
 			(willSaveEvent) => client.code2ProtocolConverter.asWillSaveTextDocumentParams(willSaveEvent),
-			(selectors, willSaveEvent) => DocumentNotifications.textDocumentFilter(selectors, willSaveEvent.document)
+			(selectors, willSaveEvent) => TextDocumentEventFeature.textDocumentFilter(selectors, willSaveEvent.document)
 		);
 	}
 
@@ -396,7 +396,7 @@ export class WillSaveWaitUntilFeature extends DynamicDocumentFeature<TextDocumen
 	}
 
 	private callback(event: TextDocumentWillSaveEvent): void {
-		if (DocumentNotifications.textDocumentFilter(this._selectors.values(), event.document)) {
+		if (TextDocumentEventFeature.textDocumentFilter(this._selectors.values(), event.document)) {
 			let middleware = this._client.middleware;
 			let willSaveWaitUntil = (event: TextDocumentWillSaveEvent): Thenable<VTextEdit[]> => {
 				return this._client.sendRequest(WillSaveTextDocumentWaitUntilRequest.type,
@@ -430,10 +430,10 @@ export class WillSaveWaitUntilFeature extends DynamicDocumentFeature<TextDocumen
 	}
 }
 
-export interface DidSaveTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, NotificationFeature<(textDocument: TextDocument) => Promise<void>>, NotifyingFeature<TextDocument, DidSaveTextDocumentParams> {
+export interface DidSaveTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, TextDocumentSendFeature<(textDocument: TextDocument) => Promise<void>>, NotifyingFeature<TextDocument, DidSaveTextDocumentParams> {
 }
 
-export class DidSaveTextDocumentFeature extends DocumentNotifications<DidSaveTextDocumentParams, TextDocument, TextDocumentSynchronizationMiddleware> implements DidSaveTextDocumentFeatureShape {
+export class DidSaveTextDocumentFeature extends TextDocumentEventFeature<DidSaveTextDocumentParams, TextDocument, TextDocumentSynchronizationMiddleware> implements DidSaveTextDocumentFeatureShape {
 
 	private _includeText: boolean;
 
@@ -442,7 +442,7 @@ export class DidSaveTextDocumentFeature extends DocumentNotifications<DidSaveTex
 			client, Workspace.onDidSaveTextDocument, DidSaveTextDocumentNotification.type,
 			client.middleware.didSave,
 			(textDocument) => client.code2ProtocolConverter.asSaveTextDocumentParams(textDocument, this._includeText),
-			DocumentNotifications.textDocumentFilter
+			TextDocumentEventFeature.textDocumentFilter
 		);
 		this._includeText = false;
 	}

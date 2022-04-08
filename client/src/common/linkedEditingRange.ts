@@ -6,7 +6,7 @@
 import * as code from 'vscode';
 import * as proto from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, FeatureClient, ensure } from './features';
+import { TextDocumentLanguageFeature, FeatureClient, ensure, DocumentSelectorOptions } from './features';
 
 export interface ProvideLinkedEditingRangeSignature {
 	(this: void, document: code.TextDocument, position: code.Position, token: code.CancellationToken): code.ProviderResult<code.LinkedEditingRanges>;
@@ -21,7 +21,7 @@ export interface LinkedEditingRangeMiddleware {
 	provideLinkedEditingRange?: (this: void, document: code.TextDocument, position: code.Position, token: code.CancellationToken, next: ProvideLinkedEditingRangeSignature) => code.ProviderResult<code.LinkedEditingRanges>;
 }
 
-export class LinkedEditingFeature extends TextDocumentFeature<boolean | proto.LinkedEditingRangeOptions, proto.LinkedEditingRangeRegistrationOptions, code.LinkedEditingRangeProvider, LinkedEditingRangeMiddleware> {
+export class LinkedEditingFeature extends TextDocumentLanguageFeature<boolean | proto.LinkedEditingRangeOptions, proto.LinkedEditingRangeRegistrationOptions, code.LinkedEditingRangeProvider, LinkedEditingRangeMiddleware> {
 
 	constructor(client: FeatureClient<LinkedEditingRangeMiddleware>) {
 		super(client, proto.LinkedEditingRangeRequest.type);
@@ -62,5 +62,19 @@ export class LinkedEditingFeature extends TextDocumentFeature<boolean | proto.Li
 			}
 		};
 		return [code.languages.registerLinkedEditingRangeProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider), provider];
+	}
+
+	public registerActivation(options: DocumentSelectorOptions & proto.LinkedEditingRangeOptions): void {
+		this.doRegisterActivation(() => {
+			return this.registerProvider(options.documentSelector, {
+				provideLinkedEditingRanges: async (document, position, token) => {
+					return this.handleActivation(document, (provider) => provider.provideLinkedEditingRanges(document, position, token));
+				}
+			});
+		});
+	}
+
+	private registerProvider(selector: proto.DocumentSelector, provider: code.LinkedEditingRangeProvider): code.Disposable {
+		return code.languages.registerLinkedEditingRangeProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider);
 	}
 }

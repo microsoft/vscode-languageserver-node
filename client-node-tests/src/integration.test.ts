@@ -121,8 +121,7 @@ suite('Client integration', () => {
 
 		client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
 		client.registerProposedFeatures();
-		client.start();
-		await client.onReady();
+		await client.start();
 	});
 
 	suiteTeardown(async () => {
@@ -1437,8 +1436,7 @@ suite('Server tests', () => {
 		};
 		const clientOptions: lsclient.LanguageClientOptions = {};
 		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
-		client.start();
-		await client.onReady();
+		await client.start();
 
 		await assert.rejects(async () => {
 			await client.stop();
@@ -1459,8 +1457,7 @@ suite('Server tests', () => {
 		};
 		const clientOptions: lsclient.LanguageClientOptions = {};
 		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
-		client.start();
-		await client.onReady();
+		await client.start();
 
 		await assert.rejects(async () => {
 			await client.stop(100);
@@ -1474,10 +1471,10 @@ suite('Server tests', () => {
 		};
 		const clientOptions: lsclient.LanguageClientOptions = {};
 		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
-		client.start();
+		void client.start();
 		await client.stop();
 
-		client.start();
+		void client.start();
 		await client.stop();
 	});
 
@@ -1492,15 +1489,13 @@ suite('Server tests', () => {
 		client.onDidChangeState(event => {
 			state = event.newState;
 		});
-		client.start();
-		await client.onReady();
+		await client.start();
 		assert.strictEqual(state, lsclient.State.Running);
 
 		await client.stop();
 		assert.strictEqual(state, lsclient.State.Stopped);
 
-		client.start();
-		await client.onReady();
+		await client.start();
 		assert.strictEqual(state, lsclient.State.Running);
 
 		await client.stop();
@@ -1518,8 +1513,7 @@ suite('Server tests', () => {
 		client.onDidChangeState(event => {
 			states.push(event.newState);
 		});
-		client.start();
-		await client.onReady();
+		await client.start();
 		assert.strictEqual(states.length, 2, 'First start');
 		assert.strictEqual(states[0], lsclient.State.Starting);
 		assert.strictEqual(states[1], lsclient.State.Running);
@@ -1528,7 +1522,7 @@ suite('Server tests', () => {
 		await client.sendNotification(CrashNotification.type);
 		await client.onCrash;
 
-		await client.onReady();
+		await client.start();
 		assert.strictEqual(states.length, 3, 'Restart after crash');
 		assert.strictEqual(states[0], lsclient.State.Stopped);
 		assert.strictEqual(states[1], lsclient.State.Starting);

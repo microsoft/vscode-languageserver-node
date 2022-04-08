@@ -12,7 +12,7 @@ import {
 	ClientCapabilities, DefinitionOptions, DefinitionRegistrationOptions, DefinitionRequest, DocumentSelector, ServerCapabilities} from 'vscode-languageserver-protocol';
 
 import {
-	FeatureClient, ensure, TextDocumentFeature
+	FeatureClient, ensure, TextDocumentLanguageFeature, DocumentSelectorOptions
 } from './features';
 
 import * as UUID from './utils/uuid';
@@ -25,7 +25,7 @@ export interface DefinitionMiddleware {
 	provideDefinition?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideDefinitionSignature) => ProviderResult<VDefinition | VDefinitionLink[]>;
 }
 
-export class DefinitionFeature extends TextDocumentFeature<boolean | DefinitionOptions, DefinitionRegistrationOptions, DefinitionProvider, DefinitionMiddleware> {
+export class DefinitionFeature extends TextDocumentLanguageFeature<boolean | DefinitionOptions, DefinitionRegistrationOptions, DefinitionProvider, DefinitionMiddleware> {
 
 	constructor(client: FeatureClient<DefinitionMiddleware>) {
 		super(client, DefinitionRequest.type);
@@ -66,6 +66,20 @@ export class DefinitionFeature extends TextDocumentFeature<boolean | DefinitionO
 					: provideDefinition(document, position, token);
 			}
 		};
-		return [Languages.registerDefinitionProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider), provider];
+		return [this.registerProvider(selector, provider), provider];
+	}
+
+	public registerActivation(options: DocumentSelectorOptions & DefinitionOptions): void {
+		this.doRegisterActivation(() => {
+			return this.registerProvider(options.documentSelector, {
+				provideDefinition: (document, position, token) => {
+					return this.handleActivation(document, (provider) => provider.provideDefinition(document, position, token));
+				}
+			});
+		});
+	}
+
+	private registerProvider(selector: DocumentSelector, provider: DefinitionProvider): Disposable {
+		return Languages.registerDefinitionProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider);
 	}
 }

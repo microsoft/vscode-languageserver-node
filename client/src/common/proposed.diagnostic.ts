@@ -18,7 +18,7 @@ import {
 
 import { generateUuid } from './utils/uuid';
 import {
-	TextDocumentFeature, FeatureClient, LSPCancellationError
+	TextDocumentLanguageFeature, FeatureClient, LSPCancellationError
 } from './features';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
@@ -860,7 +860,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 	}
 }
 
-export class DiagnosticFeature extends TextDocumentFeature<Proposed.DiagnosticOptions, Proposed.DiagnosticRegistrationOptions, DiagnosticProviderShape, DiagnosticProviderMiddleware, DiagnosticPullOptions> {
+export class DiagnosticFeature extends TextDocumentLanguageFeature<Proposed.DiagnosticOptions, Proposed.DiagnosticRegistrationOptions, DiagnosticProviderShape, DiagnosticProviderMiddleware, DiagnosticPullOptions> {
 
 	private readonly tabs: Tabs;
 

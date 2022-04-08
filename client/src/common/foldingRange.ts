@@ -12,7 +12,7 @@ import {
 	FoldingRangeRegistrationOptions, FoldingRangeOptions
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, FeatureClient, ensure } from './features';
+import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
 
 export interface ProvideFoldingRangeSignature {
 	(this: void, document: TextDocument, context: FoldingContext, token: CancellationToken): ProviderResult<VFoldingRange[]>;
@@ -22,7 +22,7 @@ export interface FoldingRangeProviderMiddleware {
 	provideFoldingRanges?: (this: void, document: TextDocument, context: FoldingContext, token: CancellationToken, next: ProvideFoldingRangeSignature) => ProviderResult<VFoldingRange[]>;
 }
 
-export class FoldingRangeFeature extends TextDocumentFeature<boolean | FoldingRangeOptions, FoldingRangeRegistrationOptions, FoldingRangeProvider, FoldingRangeProviderMiddleware> {
+export class FoldingRangeFeature extends TextDocumentLanguageFeature<boolean | FoldingRangeOptions, FoldingRangeRegistrationOptions, FoldingRangeProvider, FoldingRangeProviderMiddleware> {
 
 	constructor(client: FeatureClient<FoldingRangeProviderMiddleware>) {
 		super(client, FoldingRangeRequest.type);

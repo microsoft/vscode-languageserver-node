@@ -15,7 +15,7 @@ import {
 } from 'vscode-languageserver-protocol';
 
 import {
-	FeatureClient, ensure, TextDocumentFeature
+	FeatureClient, ensure, TextDocumentLanguageFeature
 } from './features';
 
 import * as UUID from './utils/uuid';
@@ -61,7 +61,7 @@ export interface DocumentSymbolMiddleware {
 	provideDocumentSymbols?: (this: void, document: TextDocument, token: CancellationToken, next: ProvideDocumentSymbolsSignature) => ProviderResult<VSymbolInformation[] | VDocumentSymbol[]>;
 }
 
-export class DocumentSymbolFeature extends TextDocumentFeature<boolean | DocumentSymbolOptions, DocumentSymbolRegistrationOptions, DocumentSymbolProvider, DocumentSymbolMiddleware> {
+export class DocumentSymbolFeature extends TextDocumentLanguageFeature<boolean | DocumentSymbolOptions, DocumentSymbolRegistrationOptions, DocumentSymbolProvider, DocumentSymbolMiddleware> {
 
 	constructor(client: FeatureClient<DocumentSymbolMiddleware>) {
 		super(client, DocumentSymbolRequest.type);
