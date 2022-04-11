@@ -6,7 +6,7 @@
 
 import * as path from 'path';
 import { commands, ExtensionContext, Uri } from 'vscode';
-import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, ProposedFeatures } from 'vscode-languageclient/node';
+import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, NotificationType } from 'vscode-languageclient/node';
 
 let client: LanguageClient;
 
@@ -62,10 +62,9 @@ export function activate(context: ExtensionContext) {
 	client.onTelemetry((data: any) => {
 		console.log(`Telemetry event received: ${JSON.stringify(data)}`);
 	});
-	// let not: NotificationType<string[], void> = new NotificationType<string[], void>('testbed/notification');
-	client.start().then(() => {
-		void client.sendNotification('testbed/notification', ['dirk', 'baeumer']);
-	}).catch((error)=> { client.error(`Start failed`, error, 'force');});
+	const not: NotificationType<string[]> = new NotificationType<string[]>('testbed/notification');
+	client.start().catch((error)=> client.error(`Start failed`, error, 'force'));
+	client.sendNotification(not, ['dirk', 'baeumer']).catch((error) => client.error(`Sending test notification failed`, error, 'force'));
 	commands.registerCommand('testbed.myCommand.invoked', () => {
 		void commands.executeCommand('testbed.myCommand').then(value => {
 			console.log(value);

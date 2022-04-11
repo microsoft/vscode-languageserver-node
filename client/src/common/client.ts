@@ -415,8 +415,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private readonly _pendingProgressHandlers: Map<string | number,  { type: ProgressType<any>; handler: NotificationHandler<any> }>;
 	private readonly _progressDisposables: Map<string | number,  Disposable>;
 
+	private _onStart: Promise<void> | undefined;
 	private _onStop: Promise<void> | undefined;
-	private _connectionPromise: Promise<Connection> | undefined;
 	private _connection: Connection | undefined;
 	private _idleInterval: Disposable | undefined;
 	private _suspendPromise: Promise<void> | undefined;
@@ -489,7 +489,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this._pendingProgressHandlers = new Map();
 		this._progressDisposables = new Map();
 
-		this._connectionPromise = undefined;
+		this._connection = undefined;
 		this._initializeResult = undefined;
 		if (clientOptions.outputChannel) {
 			this._outputChannel = clientOptions.outputChannel;
@@ -576,7 +576,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	public async sendRequest<R>(type: string | MessageSignature, ...params: any[]): Promise<R> {
 		try {
 			// Ensure we have a connection before we force the document sync.
-			const connection = await this.resolveConnection();
+			const connection = await this.$start();
 			this.forceDocumentSync();
 			return connection.sendRequest<R>(type, ...params);
 		} catch (error) {
@@ -636,7 +636,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	public async sendNotification<P>(type: string | MessageSignature, params?: P): Promise<void> {
 		try {
 			// Ensure we have a connection before we force the document sync.
-			const connection = await this.resolveConnection();
+			const connection = await this.$start();
 			this.forceDocumentSync();
 			return connection.sendNotification(type, params);
 		} catch (error) {
@@ -690,7 +690,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	public async sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): Promise<void> {
 		try {
 			// Ensure we have a connection before we force the document sync.
-			const connection = await this.resolveConnection();
+			const connection = await this.$start();
 			return connection.sendProgress(type, token, value);
 		} catch (error) {
 			this.error(`Sending progress for token ${token} failed.`, error);
@@ -888,35 +888,6 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			this.state === ClientState.Suspended || this.state === ClientState.Resuming;
 	}
 
-	private async resolveConnection(): Promise<Connection> {
-		if (this.state === ClientState.Initial) {
-			throw new Error(`Client never got started. Call start first before sending messages.`);
-		}
-		if (this.state === ClientState.Suspending) {
-			await this._suspendPromise;
-		}
-		if (this.state === ClientState.Suspended) {
-			if (this._connectionPromise !== undefined) {
-				throw new Error(`Client is in suspend mode but still has an active connection`);
-			}
-			this._connectionPromise = this.createConnection();
-			await this.resume();
-		}
-		if (this.state === ClientState.Starting) {
-			if (this._connectionPromise === undefined) {
-				this._connectionPromise = this.createConnection();
-			}
-			return this._connectionPromise;
-		}
-		if (this.state === ClientState.StartFailed) {
-			throw new Error(`Previous start failed. Can't restart server.`);
-		}
-		if ((this.state === ClientState.Running || this.state === ClientState.Stopping) && this._connectionPromise !== undefined) {
-			return this._connectionPromise;
-		}
-		throw new Error(`Unhandled client state ${this.state}. Connection is available: ${this._connectionPromise !== undefined}`);
-	}
-
 	private activeConnection(): Connection | undefined {
 		return this.state === ClientState.Running && this._connection !== undefined ? this._connection : undefined;
 	}
@@ -925,35 +896,41 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		return this.state === ClientState.Running;
 	}
 
-	public start(): Promise<void> {
+	public async start(): Promise<void> {
+		if (this._onStart !== undefined) {
+			return this._onStart;
+		}
+		this._onStop = undefined;
+		const [promise, resolve, reject] = this.createOnStartPromise();
+		this._onStart = promise;
 		// If we restart then the diagnostics collection is reused.
 		if (this._diagnostics === undefined) {
 			this._diagnostics = this._clientOptions.diagnosticCollectionName
 				? Languages.createDiagnosticCollection(this._clientOptions.diagnosticCollectionName)
 				: Languages.createDiagnosticCollection();
 		}
-		return this.activate(ActivateMode.Start);
-	}
 
-	private resume(): Promise<void> {
-		// When resuming we simple take all cached handlers and
-		// make them pending so that they get added when the
-		// connection gets reestablished.
+		// When we start make all buffer handlers pending so that they
+		// get added.
 		for (const [method, handler] of this._notificationHandlers) {
-			this._pendingNotificationHandlers.set(method, handler);
+			if (!this._pendingNotificationHandlers.has(method)) {
+				this._pendingNotificationHandlers.set(method, handler);
+			}
 		}
 		for (const [method, handler] of this._requestHandlers) {
-			this._pendingRequestHandlers.set(method, handler);
+			if (!this._pendingRequestHandlers.has(method)) {
+				this._pendingRequestHandlers.set(method, handler);
+			}
 		}
 		for (const [token, data] of this._progressHandlers) {
-			this._pendingProgressHandlers.set(token, data);
+			if (!this._pendingProgressHandlers.has(token)) {
+				this._pendingProgressHandlers.set(token, data);
+			}
 		}
-		return this.activate(ActivateMode.Resume);
-	}
 
-	private async activate(mode: ActivateMode): Promise<void> {
-		this.state = mode === ActivateMode.Start ? ClientState.Starting : ClientState.Resuming;
-		await this.resolveConnection().then((connection) => {
+		this.state = ClientState.Starting;
+		try {
+			const connection = await this.createConnection();
 			connection.onNotification(LogMessageNotification.type, (message) => {
 				switch (message.type) {
 					case MessageType.Error:
@@ -1037,13 +1014,24 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 				}
 			});
 			connection.listen();
-			// Error is handled in the initialize call.
-			return this.initialize(connection);
-		}).catch((error) => {
+			await this.initialize(connection);
+			resolve();
+		} catch (error) {
 			this.state = ClientState.StartFailed;
-			this.error(`${this._name} client: couldn't create connection to server. Mode was ${mode}`, error, 'force');
-			throw error;
+			this.error(`${this._name} client: couldn't create connection to server.`, error, 'force');
+			reject(error);
+		}
+		return this._onStart;
+	}
+
+	private createOnStartPromise(): [ Promise<void>, () => void, (error:any) => void] {
+		let resolve!: () => void;
+		let reject!: (error: any) => void;
+		const promise: Promise<void> = new Promise((_resolve, _reject) => {
+			resolve = _resolve;
+			reject = _reject;
 		});
+		return [promise, resolve, reject];
 	}
 
 	private async initialize(connection: Connection): Promise<InitializeResult> {
@@ -1189,27 +1177,23 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	public async stop(timeout: number = 2000): Promise<void> {
-		// to ensure proper shutdown we can on stop a if everything is
-		// ready. Otherwise we would fail on clean up
-		await this.resolveConnection();
-
-		this._initializeResult = undefined;
-		if (!this._connectionPromise) {
-			this.state = ClientState.Stopped;
-			return;
-		}
 		if (this.state === ClientState.Stopping && this._onStop) {
 			return this._onStop;
 		}
+		// To ensure proper shutdown we can on stop a if everything is
+		// ready. Otherwise we would fail on clean up
+		const connection = await this.$start();
+
+		this._initializeResult = undefined;
 		this.state = ClientState.Stopping;
 		this.cleanUp(false);
 
 		const tp = new Promise<undefined>(c => { RAL().timer.setTimeout(c, timeout); });
-		const shutdown = this.resolveConnection().then(async (connection) => {
+		const shutdown = (async (connection) => {
 			await connection.shutdown();
 			await connection.exit();
 			return connection;
-		});
+		})(connection);
 
 		return this._onStop = Promise.race([tp, shutdown]).then((connection) => {
 			// The connection won the race with the timeout.
@@ -1227,7 +1211,6 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			this.state = ClientState.Stopped;
 			this.cleanUpChannel();
 			this._onStop = undefined;
-			this._connectionPromise = undefined;
 			this._connection = undefined;
 		});
 	}
@@ -1265,7 +1248,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		async function didChangeWatchedFile(this: void, event: FileEvent): Promise<void> {
 			client._fileEvents.push(event);
 			return client._fileEventDelayer.trigger(async (): Promise<void> => {
-				const connection = await client.resolveConnection();
+				const connection = await client.$start();
 				client.forceDocumentSync();
 				const result = connection.sendNotification(DidChangeWatchedFilesNotification.type, { changes: client._fileEvents });
 				client._fileEvents = [];
@@ -1345,6 +1328,17 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 	protected abstract createMessageTransports(encoding: string): Promise<MessageTransports>;
 
+	private async $start(): Promise<Connection> {
+		if (this.state === ClientState.StartFailed) {
+			throw new Error(`Previous start failed. Can't restart server.`);
+		}
+		await this.start();
+		if (this._connection === undefined) {
+			throw new Error(`Starting server failed`);
+		}
+		return this._connection;
+	}
+
 	private async createConnection(): Promise<Connection> {
 		let errorHandler = (error: Error, message: Message | undefined, count: number | undefined) => {
 			this.handleConnectionError(error, message, count);
@@ -1379,7 +1373,6 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 				// Ignore errors coming from the error handler.
 			}
 		}
-		this._connectionPromise = undefined;
 		this._connection = undefined;
 		if (handlerResult.action === CloseAction.DoNotRestart) {
 			this.error(handlerResult.message ?? 'Connection to server got closed. Server will not be restarted.', undefined, 'force');
