@@ -224,10 +224,6 @@ export enum State {
 	 * The client is suspended.
 	 */
 	Suspended = 5,
-	/**
-	 * The client gets resumed
-	 */
-	Resuming = 6
 }
 
 /**
@@ -375,14 +371,8 @@ enum ClientState {
 	Running = 'running',
 	Suspending = 'suspending',
 	Suspended = 'suspended',
-	Resuming = 'resuming',
 	Stopping = 'stopping',
 	Stopped = 'stopped'
-}
-
-enum ActivateMode {
-	Start = 'start',
-	Resume = 'resume'
 }
 
 export interface MessageTransports {
@@ -548,16 +538,14 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 	private getPublicState(): State {
 		switch (this.state) {
-			case ClientState.Running:
-				return State.Running;
 			case ClientState.Starting:
+				return State.Starting;
+			case ClientState.Running:
 				return State.Running;
 			case ClientState.Suspending:
 				return State.Suspending;
 			case ClientState.Suspended:
 				return State.Suspended;
-			case ClientState.Resuming:
-				return State.Resuming;
 			default:
 				return State.Stopped;
 		}
@@ -880,12 +868,11 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	public needsStart(): boolean {
-		return this.state === ClientState.Initial || this.state === ClientState.Stopping || this.state === ClientState.Stopped;
+		return this.state === ClientState.Initial || this.state === ClientState.Stopping || this.state === ClientState.Stopped || this.state === ClientState.Suspending || this.state === ClientState.Suspended;
 	}
 
 	public needsStop(): boolean {
-		return this.state === ClientState.Starting || this.state === ClientState.Running || this.state === ClientState.Suspending ||
-			this.state === ClientState.Suspended || this.state === ClientState.Resuming;
+		return this.state === ClientState.Starting || this.state === ClientState.Running;
 	}
 
 	private activeConnection(): Connection | undefined {
@@ -900,7 +887,10 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (this._onStart !== undefined) {
 			return this._onStart;
 		}
-		this._onStop = undefined;
+		if (this._onStop !== undefined) {
+			await this._onStop;
+			this._onStop = undefined;
+		}
 		const [promise, resolve, reject] = this.createOnStartPromise();
 		this._onStart = promise;
 		// If we restart then the diagnostics collection is reused.
@@ -1177,11 +1167,17 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	public async stop(timeout: number = 2000): Promise<void> {
+		// If the client is in stopped state simple return.
+		// It could also be that the client failed to stop
+		// which puts it into the stopped state as well.
+		if (this.state === ClientState.Stopped) {
+			return;
+		}
 		if (this.state === ClientState.Stopping && this._onStop) {
 			return this._onStop;
 		}
-		// To ensure proper shutdown we can on stop a if everything is
-		// ready. Otherwise we would fail on clean up
+
+		// To ensure proper shutdown we need a proper created connection.
 		const connection = await this.$start();
 
 		this._initializeResult = undefined;
@@ -1210,6 +1206,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		}).finally(() => {
 			this.state = ClientState.Stopped;
 			this.cleanUpChannel();
+			this._onStart = undefined;
 			this._onStop = undefined;
 			this._connection = undefined;
 		});
@@ -1376,16 +1373,20 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this._connection = undefined;
 		if (handlerResult.action === CloseAction.DoNotRestart) {
 			this.error(handlerResult.message ?? 'Connection to server got closed. Server will not be restarted.', undefined, 'force');
+			this.cleanUp(false, true);
 			if (this.state === ClientState.Starting) {
 				this.state = ClientState.StartFailed;
 			} else {
 				this.state = ClientState.Stopped;
 			}
-			this.cleanUp(false, true);
+			this._onStop = Promise.resolve();
+			this._onStart = undefined;
 		} else if (handlerResult.action === CloseAction.Restart) {
 			this.info(handlerResult.message ?? 'Connection to server got closed. Server will restart.');
 			this.cleanUp(false, false);
 			this.state = ClientState.Initial;
+			this._onStop = Promise.resolve();
+			this._onStart = undefined;
 			this.start().catch((error) => this.error(`Restarting server failed`, error, 'force'));
 		}
 	}

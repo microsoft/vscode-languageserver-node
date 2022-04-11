@@ -1490,16 +1490,16 @@ suite('Server tests', () => {
 			state = event.newState;
 		});
 		await client.start();
-		assert.strictEqual(state, lsclient.State.Running);
+		assert.strictEqual(state, lsclient.State.Running, 'First start');
 
 		await client.stop();
-		assert.strictEqual(state, lsclient.State.Stopped);
+		assert.strictEqual(state, lsclient.State.Stopped, 'First stop');
 
 		await client.start();
-		assert.strictEqual(state, lsclient.State.Running);
+		assert.strictEqual(state, lsclient.State.Running, 'Second start');
 
 		await client.stop();
-		assert.strictEqual(state, lsclient.State.Stopped);
+		assert.strictEqual(state, lsclient.State.Stopped, 'Second stop');
 	});
 
 	test('Test state change events on crash', async() => {
