@@ -12,7 +12,7 @@ import {
 import * as Is from './utils/is';
 import * as UUID from './utils/uuid';
 
-import { StaticFeature, FeatureClient, FeatureState, DynamicFeature, ensure, RegistrationData } from './features';
+import { StaticFeature, FeatureClient, FeatureState, DynamicFeature, ensure, RegistrationData, UseMode } from './features';
 
 export interface ConfigurationMiddleware {
 	configuration?: ConfigurationRequest.MiddlewareSignature;
@@ -156,7 +156,8 @@ export class SyncConfigurationFeature implements DynamicFeature<DidChangeConfigu
 	}
 
 	public getState(): FeatureState {
-		return { kind: 'workspace', registrations: this._listeners.size > 0 };
+		const registrations = this._listeners.size > 0;
+		return { kind: 'workspace', registrations, inUse: UseMode.from(registrations) };
 	}
 
 	public get registrationType(): RegistrationType<DidChangeConfigurationRegistrationOptions> {

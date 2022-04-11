@@ -5,7 +5,7 @@
 
 import { ClientCapabilities, WorkDoneProgressCreateParams, WorkDoneProgressCreateRequest } from 'vscode-languageserver-protocol';
 
-import { FeatureClient, FeatureState, StaticFeature } from './features';
+import { FeatureClient, FeatureState, StaticFeature, UseMode } from './features';
 import { ProgressPart } from './progressPart';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
@@ -24,7 +24,8 @@ export class ProgressFeature implements StaticFeature {
 	}
 
 	getState(): FeatureState {
-		return { kind: 'window', registrations: this.activeParts.size > 0 };
+		const registrations = this.activeParts.size > 0;
+		return { kind: 'window', registrations, inUse: UseMode.from(registrations) };
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {

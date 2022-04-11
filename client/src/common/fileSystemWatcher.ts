@@ -13,7 +13,7 @@ import {
 } from 'vscode-languageserver-protocol';
 
 import {
-	FeatureClient, DynamicFeature, ensure, RegistrationData, FeatureState
+	FeatureClient, DynamicFeature, ensure, RegistrationData, FeatureState, UseMode
 } from './features';
 
 import * as Is from './utils/is';
@@ -31,7 +31,8 @@ export class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatched
 	}
 
 	getState(): FeatureState {
-		return { kind: 'workspace', registrations: this._watchers.size > 0 };
+		const registrations = this._watchers.size > 0;
+		return { kind: 'workspace', registrations, inUse: UseMode.from(registrations) };
 	}
 
 	public get registrationType(): RegistrationType<DidChangeWatchedFilesRegistrationOptions> {

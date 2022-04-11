@@ -18,7 +18,7 @@ import * as Is from './utils/is';
 
 import * as _c2p from './codeConverter';
 import * as _p2c from './protocolConverter';
-import { DynamicFeature, FeatureClient, RegistrationData, FeatureState } from './features';
+import { DynamicFeature, FeatureClient, RegistrationData, FeatureState, UseMode } from './features';
 
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
@@ -463,10 +463,10 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 		for (const notebook of vscode.workspace.notebookDocuments) {
 			const matchingCells = this.getMatchingCells(notebook);
 			if (matchingCells !== undefined) {
-				return { kind: 'document', registrations: true, active: true };
+				return { kind: 'document', registrations: true, inUse: UseMode.yes };
 			}
 		}
-		return { kind: 'document', registrations: true, active: false };
+		return { kind: 'document', registrations: true, inUse: UseMode.no };
 	}
 
 	public get mode(): 'notebook' {
@@ -885,10 +885,10 @@ class NotebookCellTextDocumentSyncFeatureProvider implements NotebookCellTextDoc
 	public getState(): FeatureState {
 		for (const document of vscode.workspace.textDocuments) {
 			if (vscode.languages.match(this.documentSelector, document) > 0) {
-				return { kind: 'document', registrations: true, active: true };
+				return { kind: 'document', registrations: true, inUse: UseMode.yes };
 			}
 		}
-		return { kind: 'document', registrations: true, active: false };
+		return { kind: 'document', registrations: true, inUse: UseMode.no };
 	}
 
 	public get mode(): 'cellContent' {
@@ -995,15 +995,15 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 
 	getState(): FeatureState {
 		if (this.registrations.size === 0) {
-			return { kind: 'document', registrations: false };
+			return { kind: 'document', registrations: false, inUse: UseMode.no };
 		}
 		for (const provider of this.registrations.values()) {
 			const state = provider.getState();
-			if (state.kind === 'document' && state.registrations === true && state.active === true) {
+			if (state.kind === 'document' && state.registrations === true && state.inUse !== UseMode.no) {
 				return state;
 			}
 		}
-		return { kind: 'document', registrations: true, active: false };
+		return { kind: 'document', registrations: true, inUse: UseMode.no };
 	}
 
 	public readonly registrationType: proto.RegistrationType<proto.Proposed.NotebookDocumentSyncRegistrationOptions>;

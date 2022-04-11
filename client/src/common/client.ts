@@ -99,8 +99,6 @@ import { TypeHierarchyFeature } from './typeHierarchy';
 import { InlineValueFeature } from './inlineValue';
 import { InlayHintsFeature } from './inlayHint';
 
-
-
 /**
  * Controls when the output channel is revealed.
  */
@@ -234,6 +232,43 @@ export interface StateChangeEvent {
 	newState: State;
 }
 
+export enum SuspendMode {
+	/**
+	 * Don't allow suspend mode.
+	 */
+	off = 'off',
+
+	/**
+	 * Support suspend mode even if not all
+	 * registered providers have a corresponding
+	 * activation listener.
+	 */
+	on = 'on',
+
+	/**
+	 * Only support suspend mode if for all
+	 * registered providers a corresponding
+	 * activation listener exists.
+	 */
+	activationOnly = 'activationOnly'
+}
+
+export type SuspendOptions = {
+	/**
+	 * Whether suspend mode is supported. If suspend mode is allowed
+	 * the client will stop a running server when going into suspend mode.
+	 * If omitted defaults to SuspendMode.off;
+	 */
+	mode?: SuspendMode;
+	/**
+	 * A callback that is invoked before actually suspending
+	 * the server. If `false` is returned the client will not continue
+	 * suspending the server.
+	 */
+	callback?: () => Promise<boolean>;
+};
+
+
 export interface DidChangeWatchedFileSignature {
 	(this: void, event: FileEvent): Promise<void>;
 }
@@ -274,6 +309,7 @@ ColorProviderMiddleware & CodeActionMiddleware & CodeLensMiddleware & Formatting
 FoldingRangeProviderMiddleware & DeclarationMiddleware & SelectionRangeProviderMiddleware & CallHierarchyMiddleware & SemanticTokensMiddleware &
 LinkedEditingRangeMiddleware & TypeHierarchyMiddleware & InlineValueMiddleware & InlayHintsMiddleware & NotebookDocumentMiddleware & pd.DiagnosticProviderMiddleware;
 
+
 export type LanguageClientOptions = {
 	documentSelector?: DocumentSelector | string[];
 	diagnosticCollectionName?: string;
@@ -300,6 +336,7 @@ export type LanguageClientOptions = {
 		cancellationStrategy: CancellationStrategy;
 		maxRestartCount?: number;
 	};
+	suspend?: SuspendOptions;
 	markdown?: {
 		isTrusted?: boolean;
 		supportHtml?: boolean;
@@ -327,6 +364,7 @@ type ResolvedClientOptions = {
 		cancellationStrategy: CancellationStrategy;
 		maxRestartCount?: number;
 	};
+	suspend: Required<SuspendOptions>;
 	markdown: {
 		isTrusted: boolean;
 		supportHtml: boolean;
@@ -463,6 +501,10 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			workspaceFolder: clientOptions.workspaceFolder,
 			connectionOptions: clientOptions.connectionOptions,
 			markdown,
+			suspend: {
+				mode: clientOptions.suspend?.mode ?? SuspendMode.off,
+				callback: clientOptions.suspend?.callback ?? (() => Promise.resolve(false))
+			},
 			diagnosticPullOptions: clientOptions.diagnosticPullOptions ?? { onChange: true, onSave: false },
 			notebookDocumentOptions: clientOptions.notebookDocumentOptions ?? { }
 		};
@@ -1123,7 +1165,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			}
 			this._pendingProgressHandlers.clear();
 
-			this._idleInterval = RAL().timer.setInterval(() => this.checkSuspend(), BaseLanguageClient.idleCheckInterval);
+			if (this._clientOptions.suspend.mode !== SuspendMode.off) {
+				this._idleInterval =  RAL().timer.setInterval(() => this.checkSuspend(), BaseLanguageClient.idleCheckInterval);
+			}
 
 			await connection.sendNotification(InitializedNotification.type, {});
 
@@ -1745,7 +1789,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private isIdle(): boolean {
 		for (const feature of this._features) {
 			const state = feature.getState();
-			if (state.kind === 'document' && state.registrations === true && state.active) {
+			if (state.kind === 'document' && state.registrations === true && state.inUse) {
 				return false;
 			}
 		}

@@ -58,19 +58,30 @@ export interface RegistrationData<T> {
 
 export type FeatureStateKind = 'document' | 'workspace' | 'static' | 'window';
 
+export enum UseMode {
+	no =  'no',
+	onDemand = 'onDemand',
+	yes = 'yes'
+}
+
+export namespace UseMode {
+	export function from(value: boolean): UseMode {
+		return value ? UseMode.yes : UseMode.no;
+	}
+}
+
 export type FeatureState = {
 	kind: 'document';
-	registrations: false;
-} | {
-	kind: 'document';
-	registrations: true;
-	active: boolean;
+	registrations: boolean;
+	inUse: UseMode;
 } | {
 	kind: 'workspace';
 	registrations: boolean;
+	inUse: UseMode;
 } | {
 	kind: 'window';
 	registrations: boolean;
+	inUse: UseMode;
 } | {
 	kind: 'static';
 };
@@ -237,21 +248,23 @@ export abstract class DynamicDocumentFeature<RO, MW, CO = object> implements Dyn
 	 * Returns the state the feature is in.
 	 */
 	public getState(): FeatureState {
-		const selectors = this.getDocumentSelectors();
+		const [selectors, hasActivation] = this.getSuspendInfo();
 		let count: number = 0;
 		for (const selector of selectors) {
 			count++;
 			for (const document of Workspace.textDocuments) {
 				if (Languages.match(selector, document) > 0) {
-					return { kind: 'document', registrations: true, active: true };
+					return { kind: 'document', registrations: true, inUse: UseMode.yes };
 				}
 			}
 		}
-		return count === 0 ? { kind: 'document', registrations: false } : { kind: 'document', registrations: true, active: false };
+		const registrations = count > 0;
+		const inUse = hasActivation ? UseMode.onDemand : UseMode.no;
+		return { kind: 'document', registrations, inUse };
 
 	}
 
-	protected abstract getDocumentSelectors(): IterableIterator<VDocumentSelector>;
+	protected abstract getSuspendInfo(): [IterableIterator<VDocumentSelector>, boolean];
 }
 
 /**
@@ -306,6 +319,9 @@ export abstract class TextDocumentEventFeature<P, E, M> extends DynamicDocumentF
 		this._onNotificationSent = new EventEmitter<NotificationSendEvent<E, P>>();
 	}
 
+	protected getSuspendInfo(): [IterableIterator<VDocumentSelector>, boolean] {
+		return [this._selectors.values(), false];
+	}
 	protected getDocumentSelectors(): IterableIterator<VDocumentSelector> {
 		return this._selectors.values();
 	}
@@ -412,7 +428,11 @@ export abstract class TextDocumentLanguageFeature<PO, RO extends TextDocumentReg
 		this._registrations =  new Map();
 	}
 
-	protected *getDocumentSelectors(): IterableIterator<VDocumentSelector> {
+	protected getSuspendInfo(): [IterableIterator<VDocumentSelector>, boolean] {
+		return [this.getDocumentSelectors(), this._activation !== undefined];
+	}
+
+	private *getDocumentSelectors(): IterableIterator<VDocumentSelector> {
 		for (const registration of this._registrations.values()) {
 			const selector = registration.data.registerOptions.documentSelector;
 			if (selector === null) {
@@ -550,7 +570,8 @@ export abstract class WorkspaceFeature<RO, PR, M> implements DynamicFeature<RO> 
 	}
 
 	public getState(): FeatureState {
-		return { kind: 'workspace', registrations: this._registrations.size > 0 };
+		const registrations = this._registrations.size > 0;
+		return { kind: 'workspace', registrations, inUse: UseMode.from(registrations) };
 	}
 
 	public get registrationType(): RegistrationType<RO> {
