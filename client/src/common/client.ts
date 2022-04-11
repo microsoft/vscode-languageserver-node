@@ -523,6 +523,10 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		return this._clientOptions;
 	}
 
+	public getState(): State {
+		return this.getPublicState();
+	}
+
 	private get state(): ClientState {
 		return this._state;
 	}

@@ -1502,7 +1502,7 @@ suite('Server tests', () => {
 		assert.strictEqual(state, lsclient.State.Stopped, 'Second stop');
 	});
 
-	test('Test state change events on crash', async() => {
+	test('Test state change events on crash', async () => {
 		const serverOptions: lsclient.ServerOptions = {
 			module: path.join(__dirname, './servers/crashServer.js'),
 			transport: lsclient.TransportKind.ipc,
@@ -1532,5 +1532,58 @@ suite('Server tests', () => {
 		await client.stop();
 		assert.strictEqual(states.length, 1, 'After stop');
 		assert.strictEqual(states[0], lsclient.State.Stopped);
+	});
+
+	test('Start server on request', async () => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/customServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new CrashClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		const result: number = await client.sendRequest('request', { value: 10 });
+		assert.strictEqual(client.getState(), lsclient.State.Running);
+		assert.strictEqual(result, 11);
+	});
+
+	test('Start server on notification', async () => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/customServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new CrashClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		await client.sendNotification('notification');
+		assert.strictEqual(client.getState(), lsclient.State.Running);
+	});
+
+	test('Add pending request handler', async () => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/customServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new CrashClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		let requestReceived: boolean = false;
+		client.onRequest('request', () => {
+			requestReceived = true;
+		});
+		await client.sendRequest('triggerRequest');
+		assert.strictEqual(requestReceived, true);
+	});
+
+	test('Add pending notification handler', async () => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/customServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new CrashClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		let notificationReceived: boolean = false;
+		client.onNotification('notification', () => {
+			notificationReceived = true;
+		});
+		await client.sendRequest('triggerNotification');
+		assert.strictEqual(notificationReceived, true);
 	});
 });
