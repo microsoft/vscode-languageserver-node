@@ -58,30 +58,47 @@ export interface RegistrationData<T> {
 
 export type FeatureStateKind = 'document' | 'workspace' | 'static' | 'window';
 
-export enum UseMode {
-	no =  'no',
-	onDemand = 'onDemand',
-	yes = 'yes'
-}
-
-export namespace UseMode {
-	export function from(value: boolean): UseMode {
-		return value ? UseMode.yes : UseMode.no;
-	}
-}
-
 export type FeatureState = {
 	kind: 'document';
+
+	/**
+	 * Has active registrations.
+	 */
 	registrations: boolean;
-	inUse: UseMode;
+
+	/**
+	 * A registration matches an open document.
+	 */
+	matches: boolean;
+
+	/**
+	 * Has an activation listener / provider.
+	 */
+	activation: boolean;
 } | {
 	kind: 'workspace';
+
+	/**
+	 * Has active registrations.
+	 */
 	registrations: boolean;
-	inUse: UseMode;
+
+	/**
+	 * Has an activation listener / provider.
+	 */
+	activation: boolean;
 } | {
 	kind: 'window';
+
+	/**
+	 * Has active registrations.
+	 */
 	registrations: boolean;
-	inUse: UseMode;
+
+	/**
+	 * Has an activation listener / provider.
+	 */
+	activation: boolean;
 } | {
 	kind: 'static';
 };
@@ -254,13 +271,12 @@ export abstract class DynamicDocumentFeature<RO, MW, CO = object> implements Dyn
 			count++;
 			for (const document of Workspace.textDocuments) {
 				if (Languages.match(selector, document) > 0) {
-					return { kind: 'document', registrations: true, inUse: UseMode.yes };
+					return { kind: 'document', registrations: true, matches: true, activation: hasActivation };
 				}
 			}
 		}
 		const registrations = count > 0;
-		const inUse = hasActivation ? UseMode.onDemand : UseMode.no;
-		return { kind: 'document', registrations, inUse };
+		return { kind: 'document', registrations, matches: false, activation: hasActivation };
 
 	}
 
@@ -571,7 +587,7 @@ export abstract class WorkspaceFeature<RO, PR, M> implements DynamicFeature<RO> 
 
 	public getState(): FeatureState {
 		const registrations = this._registrations.size > 0;
-		return { kind: 'workspace', registrations, inUse: UseMode.from(registrations) };
+		return { kind: 'workspace', registrations, activation: false };
 	}
 
 	public get registrationType(): RegistrationType<RO> {

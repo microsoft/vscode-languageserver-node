@@ -43,7 +43,10 @@ import * as Is from './utils/is';
 import { Delayer, Semaphore } from './utils/async';
 import * as UUID from './utils/uuid';
 import { ProgressPart } from './progressPart';
-import { DynamicFeature, ensure, FeatureClient, LSPCancellationError, TextDocumentSendFeature, RegistrationData, StaticFeature, TextDocumentProviderFeature, WorkspaceProviderFeature } from './features';
+import {
+	DynamicFeature, ensure, FeatureClient, LSPCancellationError, TextDocumentSendFeature, RegistrationData, StaticFeature,
+	TextDocumentProviderFeature, WorkspaceProviderFeature
+} from './features';
 
 import { DiagnosticProviderShape, DiagnosticPullOptions } from './proposed.diagnostic';
 import { NotebookDocumentMiddleware, NotebookDocumentOptions, NotebookDocumentProviderShape } from './proposed.notebook';
@@ -1787,9 +1790,28 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	private isIdle(): boolean {
+		const suspendMode = this._clientOptions.suspend.mode;
+		if (suspendMode === SuspendMode.off) {
+			return false;
+		}
 		for (const feature of this._features) {
 			const state = feature.getState();
-			if (state.kind === 'document' && state.registrations === true && state.inUse) {
+			// 'static' feature don't depend on registrations. So they
+			// can't block suspend
+			if (state.kind === 'static') {
+				continue;
+			}
+			// The feature has no registrations. So no blocking of the
+			// suspend.
+			if (!state.registrations) {
+				continue;
+			}
+
+			if (state.kind === 'document' && state.matches === true) {
+				return false;
+			}
+
+			if (suspendMode === SuspendMode.activationOnly && state.activation === false) {
 				return false;
 			}
 		}

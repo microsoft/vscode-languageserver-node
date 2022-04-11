@@ -8,7 +8,7 @@ import * as code from 'vscode';
 import * as minimatch from 'minimatch';
 import * as proto from 'vscode-languageserver-protocol';
 
-import { DynamicFeature, RegistrationData, NextSignature, FeatureState, FeatureClient, UseMode } from './features';
+import { DynamicFeature, RegistrationData, NextSignature, FeatureState, FeatureClient } from './features';
 import * as UUID from './utils/uuid';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
@@ -75,7 +75,7 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 
 	getState(): FeatureState {
 		const registrations = this._filters.size > 0;
-		return { kind: 'workspace', registrations, inUse: UseMode.from(registrations) };
+		return { kind: 'workspace', registrations, activation: false };
 	}
 
 	protected filterSize(): number {

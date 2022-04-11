@@ -193,9 +193,9 @@ export class LanguageClient extends BaseLanguageClient {
 		// stop on the same client instance.
 		if (this.isInDebugMode) {
 			await new Promise((resolve) => setTimeout(resolve, 1000));
-			this.start();
+			await this.start();
 		} else {
-			this.start();
+			await this.start();
 		}
 	}
 
@@ -596,9 +596,9 @@ export class SettingMonitor {
 		let rest = index >= 0 ? this._setting.substr(index + 1) : undefined;
 		let enabled = rest ? Workspace.getConfiguration(primary).get(rest, false) : Workspace.getConfiguration(primary);
 		if (enabled && this._client.needsStart()) {
-			this._client.start();
+			this._client.start().catch((error) => this._client.error('Start failed after configuration change', error, 'force'));
 		} else if (!enabled && this._client.needsStop()) {
-			void this._client.stop();
+			void this._client.stop().catch((error) => this._client.error('Stop failed after configuration change', error, 'force'));
 		}
 	}
 }

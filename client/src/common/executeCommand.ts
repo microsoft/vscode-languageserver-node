@@ -13,7 +13,7 @@ import {
 
 import * as UUID from './utils/uuid';
 
-import { FeatureClient, ensure, DynamicFeature, FeatureState, RegistrationData, UseMode } from './features';
+import { FeatureClient, ensure, DynamicFeature, FeatureState, RegistrationData } from './features';
 
 
 export interface ExecuteCommandSignature {
@@ -36,7 +36,7 @@ export class ExecuteCommandFeature implements DynamicFeature<ExecuteCommandRegis
 
 	public getState(): FeatureState {
 		const registrations = this._commands.size > 0;
-		return { kind: 'workspace', registrations, inUse: UseMode.from(registrations) };
+		return { kind: 'workspace', registrations, activation: false };
 	}
 
 	public get registrationType(): RegistrationType<ExecuteCommandRegistrationOptions> {

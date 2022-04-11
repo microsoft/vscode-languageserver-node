@@ -6,7 +6,7 @@
 
 import * as path from 'path';
 import { commands, ExtensionContext, Uri } from 'vscode';
-import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, NotificationType } from 'vscode-languageclient/node';
+import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, NotificationType, SuspendMode } from 'vscode-languageclient/node';
 
 let client: LanguageClient;
 
@@ -54,6 +54,9 @@ export function activate(context: ExtensionContext) {
 				const fsPath = resource.fsPath;
 				return path.extname(fsPath) === '.bat';
 			}
+		},
+		suspend: {
+			mode: SuspendMode.on
 		}
 	};
 

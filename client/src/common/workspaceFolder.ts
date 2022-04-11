@@ -45,7 +45,8 @@ export class WorkspaceFoldersFeature implements DynamicFeature<void> {
 	}
 
 	getState(): FeatureState {
-		return { kind: 'workspace', registrations: this._listeners.size > 0 };
+		const registrations = this._listeners.size > 0;
+		return { kind: 'workspace', registrations, activation: false };
 	}
 
 	public get registrationType(): RegistrationType<void> {
