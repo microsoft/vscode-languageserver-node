@@ -1278,7 +1278,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (channel) {
 			this.cleanUpChannel();
 		}
-		if (diagnostics && this._diagnostics) {
+		if (diagnostics && this._diagnostics !== undefined) {
 			this._diagnostics.dispose();
 			this._diagnostics = undefined;
 		}
@@ -1290,7 +1290,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	private cleanUpChannel(): void {
-		if (this._outputChannel && this._disposeOutputChannel) {
+		if (this._outputChannel !== undefined && this._disposeOutputChannel) {
 			this._outputChannel.dispose();
 			this._outputChannel = undefined;
 		}
