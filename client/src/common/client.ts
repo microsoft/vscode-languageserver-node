@@ -409,7 +409,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private _onStop: Promise<void> | undefined;
 	private _connection: Connection | undefined;
 	private _idleInterval: Disposable | undefined;
-	private _suspendPromise: Promise<void> | undefined;
+	// private _suspendPromise: Promise<void> | undefined;
 
 	private _initializeResult: InitializeResult | undefined;
 	private _outputChannel: OutputChannel | undefined;
@@ -1231,6 +1231,11 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			this._diagnostics.dispose();
 			this._diagnostics = undefined;
 		}
+
+		if (this._idleInterval !== undefined) {
+			this._idleInterval.dispose();
+			this._idleInterval = undefined;
+		}
 	}
 
 	private cleanUpChannel(): void {
@@ -1743,28 +1748,28 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		return true;
 	}
 
-	private initiateSuspend(): void {
-		this._suspendPromise = new Promise(async (resolve, reject) => {
-			try {
-				this.outputChannel.appendLine(`Suspending server`);
-				this.state = ClientState.Suspending;
-				await this.stop();
-				this.state = ClientState.Suspended;
-				this.outputChannel.appendLine(`Server got suspended`);
-				resolve();
-			} catch(error: unknown) {
-				this.outputChannel.appendLine(`Suspending server failed.`);
-				if (error instanceof Error) {
-					this.outputChannel.appendLine(error.message);
-					const stack = error.stack;
-					if (stack !== undefined) {
-						this.outputChannel.appendLine(stack);
-					}
-				}
-				reject(error);
-			}
-		});
-	}
+	// private initiateSuspend(): void {
+	// 	this._suspendPromise = new Promise(async (resolve, reject) => {
+	// 		try {
+	// 			this.outputChannel.appendLine(`Suspending server`);
+	// 			this.state = ClientState.Suspending;
+	// 			await this.stop();
+	// 			this.state = ClientState.Suspended;
+	// 			this.outputChannel.appendLine(`Server got suspended`);
+	// 			resolve();
+	// 		} catch(error: unknown) {
+	// 			this.outputChannel.appendLine(`Suspending server failed.`);
+	// 			if (error instanceof Error) {
+	// 				this.outputChannel.appendLine(error.message);
+	// 				const stack = error.stack;
+	// 				if (stack !== undefined) {
+	// 					this.outputChannel.appendLine(stack);
+	// 				}
+	// 			}
+	// 			reject(error);
+	// 		}
+	// 	});
+	// }
 }
 
 interface Connection {
