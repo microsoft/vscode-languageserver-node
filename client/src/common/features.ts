@@ -334,6 +334,8 @@ export abstract class TextDocumentEventFeature<P, E, M> extends DynamicDocumentF
 	protected readonly _selectors: Map<string, VDocumentSelector>;
 	private readonly _onNotificationSent: EventEmitter<NotificationSendEvent<E, P>>;
 
+	private _activation: Disposable | undefined;
+
 	public static textDocumentFilter(selectors: IterableIterator<VDocumentSelector>, textDocument: TextDocument): boolean {
 		for (const selector of selectors) {
 			if (Languages.match(selector, textDocument)) {
@@ -407,12 +409,34 @@ export abstract class TextDocumentEventFeature<P, E, M> extends DynamicDocumentF
 		}
 	}
 
-	public dispose(): void {
+	protected doRegisterActivation(registerProvider: () => Disposable): void {
+		if (this._activation !== undefined) {
+			this._activation.dispose();
+		}
+		this._activation = registerProvider();
+	}
+
+	protected handleActivation(): void {
+		if (this._client.isRunning()) {
+			return;
+		}
+		this._client.start().catch((error) => this._client.error(`Activating server failed.`, error, 'force'));
+	}
+
+	public suspend(): void {
 		this._selectors.clear();
 		this._onNotificationSent.dispose();
 		if (this._listener) {
 			this._listener.dispose();
 			this._listener = undefined;
+		}
+	}
+
+	public dispose(): void {
+		this.suspend();
+		if (this._activation !== undefined) {
+			this._activation.dispose();
+			this._activation = undefined;
 		}
 	}
 

@@ -17,7 +17,7 @@ import {
 
 import {
 	FeatureClient, TextDocumentEventFeature, DynamicFeature, NextSignature, TextDocumentSendFeature, NotifyingFeature, ensure, RegistrationData, DynamicDocumentFeature,
-	NotificationSendEvent
+	NotificationSendEvent, SuspensibleLanguageFeature, DocumentSelectorOptions
 } from './features';
 
 import { Delayer } from './utils/async';
@@ -32,7 +32,7 @@ export interface TextDocumentSynchronizationMiddleware {
 	didClose?: NextSignature<TextDocument, Promise<void>>;
 }
 
-export interface DidOpenTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, TextDocumentSendFeature<(textDocument: TextDocument) => Promise<void>>, NotifyingFeature<TextDocument, DidOpenTextDocumentParams> {
+export interface DidOpenTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, TextDocumentSendFeature<(textDocument: TextDocument) => Promise<void>>, NotifyingFeature<TextDocument, DidOpenTextDocumentParams>, SuspensibleLanguageFeature<DocumentSelectorOptions>{
 	openDocuments: Iterable<TextDocument>;
 }
 
@@ -90,6 +90,17 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 				});
 				this._syncedDocuments.set(uri, textDocument);
 			}
+		});
+	}
+
+	public registerActivation(options: DocumentSelectorOptions): void {
+		const selector = this._client.protocol2CodeConverter.asDocumentSelector(options.documentSelector);
+		this.doRegisterActivation(() => {
+			return Workspace.onDidOpenTextDocument((document) => {
+				if (Languages.match(selector, document) > 0) {
+					this.handleActivation();
+				}
+			});
 		});
 	}
 
