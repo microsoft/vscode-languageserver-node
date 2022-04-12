@@ -14,14 +14,14 @@ import {
 } from 'vscode';
 
 import {
-	CallHierarchyPrepareRequest, ClientCapabilities, CodeActionRequest, CodeLensRequest, CompletionRequest, DeclarationRequest, DefinitionRequest,
+	CallHierarchyPrepareRequest, ClientCapabilities, CodeActionRequest, CodeLensRequest, CompletionRequest, DeclarationOptions, DeclarationRequest, DefinitionOptions, DefinitionRequest,
 	DidChangeTextDocumentNotification, DidCloseTextDocumentNotification, DidCreateFilesNotification, DidDeleteFilesNotification, DidOpenTextDocumentNotification,
 	DidRenameFilesNotification, DidSaveTextDocumentNotification, DocumentColorRequest, DocumentFormattingRequest, DocumentHighlightRequest, DocumentLinkRequest,
 	DocumentOnTypeFormattingRequest, DocumentRangeFormattingRequest, DocumentSelector, DocumentSymbolRequest, FileOperationRegistrationOptions, FoldingRangeRequest,
-	GenericNotificationHandler, GenericRequestHandler, HoverRequest, ImplementationRequest, InitializeParams, InlayHintRequest, InlineValueRequest, LinkedEditingRangeRequest,
+	GenericNotificationHandler, GenericRequestHandler, HoverOptions, HoverRequest, ImplementationOptions, ImplementationRequest, InitializeParams, InlayHintRequest, InlineValueRequest, LinkedEditingRangeOptions, LinkedEditingRangeRequest,
 	MessageSignature, NotificationHandler, NotificationHandler0, NotificationType, NotificationType0, ProgressType, Proposed, ProtocolNotificationType, ProtocolNotificationType0,
-	ProtocolRequestType, ProtocolRequestType0, ReferencesRequest, RegistrationType, RenameRequest, RequestHandler, RequestHandler0, RequestType, RequestType0, SelectionRangeRequest,
-	SemanticTokensRegistrationType, ServerCapabilities, SignatureHelpRequest, StaticRegistrationOptions, TextDocumentRegistrationOptions, TypeDefinitionRequest,
+	ProtocolRequestType, ProtocolRequestType0, ReferenceOptions, ReferencesRequest, RegistrationType, RenameOptions, RenameRequest, RequestHandler, RequestHandler0, RequestType, RequestType0, SelectionRangeOptions, SelectionRangeRequest,
+	SemanticTokensRegistrationType, ServerCapabilities, SignatureHelpOptions, SignatureHelpRequest, StaticRegistrationOptions, TextDocumentRegistrationOptions, TypeDefinitionOptions, TypeDefinitionRequest,
 	TypeHierarchyPrepareRequest, WillCreateFilesRequest, WillDeleteFilesRequest, WillRenameFilesRequest, WillSaveTextDocumentNotification, WillSaveTextDocumentWaitUntilRequest,
 	WorkDoneProgressOptions, WorkspaceSymbolRequest,
 } from 'vscode-languageserver-protocol';
@@ -265,7 +265,7 @@ export abstract class DynamicDocumentFeature<RO, MW, CO = object> implements Dyn
 	 * Returns the state the feature is in.
 	 */
 	public getState(): FeatureState {
-		const [selectors, hasActivation] = this.getSuspendInfo();
+		const [selectors, hasActivation] = this.getStateInfo();
 		let count: number = 0;
 		for (const selector of selectors) {
 			count++;
@@ -280,7 +280,7 @@ export abstract class DynamicDocumentFeature<RO, MW, CO = object> implements Dyn
 
 	}
 
-	protected abstract getSuspendInfo(): [IterableIterator<VDocumentSelector>, boolean];
+	protected abstract getStateInfo(): [IterableIterator<VDocumentSelector>, boolean];
 }
 
 /**
@@ -294,6 +294,29 @@ export interface TextDocumentSendFeature<T extends Function> {
 	getProvider(document: TextDocument): { send: T } | undefined;
 }
 
+
+export interface SuspensibleLanguageFeature<PO> {
+
+	/**
+	 * Registers an activation provider / listener.
+	 *
+	 * @param options the registration options.
+	 */
+	registerActivation(options: DocumentSelectorOptions & PO): void;
+
+	/**
+	 * Suspend the feature. Usually a feature un-registers listeners hooked
+	 * up with the VS Code extension host but keeps activation listeners.
+	 */
+	suspend(): void;
+}
+
+export namespace SuspensibleLanguageFeature {
+	export function is<PO>(value: unknown): value is SuspensibleLanguageFeature<PO> {
+		const candidate: SuspensibleLanguageFeature<any> = value as any;
+		return candidate !== undefined && candidate !== null && Is.func(candidate.registerActivation) && Is.func(candidate.suspend);
+	}
+}
 
 /**
  * An abstract base class to implement features that react to events
@@ -335,7 +358,7 @@ export abstract class TextDocumentEventFeature<P, E, M> extends DynamicDocumentF
 		this._onNotificationSent = new EventEmitter<NotificationSendEvent<E, P>>();
 	}
 
-	protected getSuspendInfo(): [IterableIterator<VDocumentSelector>, boolean] {
+	protected getStateInfo(): [IterableIterator<VDocumentSelector>, boolean] {
 		return [this._selectors.values(), false];
 	}
 	protected getDocumentSelectors(): IterableIterator<VDocumentSelector> {
@@ -444,7 +467,7 @@ export abstract class TextDocumentLanguageFeature<PO, RO extends TextDocumentReg
 		this._registrations =  new Map();
 	}
 
-	protected getSuspendInfo(): [IterableIterator<VDocumentSelector>, boolean] {
+	protected getStateInfo(): [IterableIterator<VDocumentSelector>, boolean] {
 		return [this.getDocumentSelectors(), this._activation !== undefined];
 	}
 
@@ -697,28 +720,28 @@ export interface FeatureClient<M, CO = object> {
 	getFeature(request: typeof WillRenameFilesRequest.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileWillRenameEvent) => Promise<void> };
 	getFeature(request: typeof WillDeleteFilesRequest.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileWillDeleteEvent) => Promise<void> };
 	getFeature(request: typeof CompletionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<CompletionItemProvider>;
-	getFeature(request: typeof HoverRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<HoverProvider>;
-	getFeature(request: typeof SignatureHelpRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<SignatureHelpProvider>;
-	getFeature(request: typeof DefinitionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DefinitionProvider>;
-	getFeature(request: typeof ReferencesRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<ReferenceProvider>;
+	getFeature(request: typeof HoverRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<HoverProvider> & SuspensibleLanguageFeature<HoverOptions>;
+	getFeature(request: typeof SignatureHelpRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<SignatureHelpProvider> & SuspensibleLanguageFeature<SignatureHelpOptions>;
+	getFeature(request: typeof DefinitionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DefinitionProvider> & SuspensibleLanguageFeature<DefinitionOptions>;
+	getFeature(request: typeof ReferencesRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<ReferenceProvider> & SuspensibleLanguageFeature<ReferenceOptions>;
 	getFeature(request: typeof DocumentHighlightRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DocumentHighlightProvider>;
 	getFeature(request: typeof CodeActionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<CodeActionProvider>;
 	getFeature(request: typeof CodeLensRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<CodeLensProviderShape>;
 	getFeature(request: typeof DocumentFormattingRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DocumentFormattingEditProvider>;
 	getFeature(request: typeof DocumentRangeFormattingRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DocumentRangeFormattingEditProvider>;
 	getFeature(request: typeof DocumentOnTypeFormattingRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<OnTypeFormattingEditProvider>;
-	getFeature(request: typeof RenameRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<RenameProvider>;
+	getFeature(request: typeof RenameRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<RenameProvider> & SuspensibleLanguageFeature<RenameOptions>;
 	getFeature(request: typeof DocumentSymbolRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DocumentSymbolProvider>;
 	getFeature(request: typeof DocumentLinkRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DocumentLinkProvider>;
 	getFeature(request: typeof DocumentColorRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DocumentColorProvider>;
-	getFeature(request: typeof DeclarationRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DeclarationProvider>;
+	getFeature(request: typeof DeclarationRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DeclarationProvider> & SuspensibleLanguageFeature<DeclarationOptions>;
 	getFeature(request: typeof FoldingRangeRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<FoldingRangeProvider>;
-	getFeature(request: typeof ImplementationRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<ImplementationProvider>;
-	getFeature(request: typeof SelectionRangeRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<SelectionRangeProvider>;
-	getFeature(request: typeof TypeDefinitionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<TypeDefinitionProvider>;
+	getFeature(request: typeof ImplementationRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<ImplementationProvider> & SuspensibleLanguageFeature<ImplementationOptions>;
+	getFeature(request: typeof SelectionRangeRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<SelectionRangeProvider> & SuspensibleLanguageFeature<SelectionRangeOptions>;
+	getFeature(request: typeof TypeDefinitionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<TypeDefinitionProvider> & SuspensibleLanguageFeature<TypeDefinitionOptions>;
 	getFeature(request: typeof CallHierarchyPrepareRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<CallHierarchyProvider>;
 	getFeature(request: typeof SemanticTokensRegistrationType.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<SemanticTokensProviders>;
-	getFeature(request: typeof LinkedEditingRangeRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<LinkedEditingRangeProvider>;
+	getFeature(request: typeof LinkedEditingRangeRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<LinkedEditingRangeProvider> & SuspensibleLanguageFeature<LinkedEditingRangeOptions>;
 	getFeature(request: typeof Proposed.DocumentDiagnosticRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DiagnosticProviderShape>;
 	getFeature(request: typeof TypeHierarchyPrepareRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<TypeHierarchyProvider>;
 	getFeature(request: typeof InlineValueRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<InlineValueProviderShape>;

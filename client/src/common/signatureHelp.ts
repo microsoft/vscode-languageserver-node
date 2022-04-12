@@ -13,7 +13,7 @@ import {
 } from 'vscode-languageserver-protocol';
 
 import {
-	FeatureClient, ensure, TextDocumentLanguageFeature, DocumentSelectorOptions
+	FeatureClient, ensure, TextDocumentLanguageFeature, DocumentSelectorOptions, SuspensibleLanguageFeature
 } from './features';
 
 import * as UUID from './utils/uuid';
@@ -26,7 +26,8 @@ export interface SignatureHelpMiddleware {
 	provideSignatureHelp?: (this: void, document: TextDocument, position: VPosition, context: VSignatureHelpContext, token: CancellationToken, next: ProvideSignatureHelpSignature) => ProviderResult<VSignatureHelp>;
 }
 
-export class SignatureHelpFeature extends TextDocumentLanguageFeature<SignatureHelpOptions, SignatureHelpRegistrationOptions, SignatureHelpProvider, SignatureHelpMiddleware> {
+export class SignatureHelpFeature extends TextDocumentLanguageFeature<SignatureHelpOptions, SignatureHelpRegistrationOptions, SignatureHelpProvider, SignatureHelpMiddleware>
+	implements SuspensibleLanguageFeature<SignatureHelpOptions> {
 
 	constructor(client: FeatureClient<SignatureHelpMiddleware>) {
 		super(client, SignatureHelpRequest.type);

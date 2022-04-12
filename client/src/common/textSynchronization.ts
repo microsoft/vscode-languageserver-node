@@ -210,7 +210,7 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 		);
 	}
 
-	protected getSuspendInfo(): [IterableIterator<VDocumentSelector>, boolean] {
+	protected getStateInfo(): [IterableIterator<VDocumentSelector>, boolean] {
 		return [this.getDocumentSelectors(), false];
 	}
 
@@ -366,7 +366,7 @@ export class WillSaveWaitUntilFeature extends DynamicDocumentFeature<TextDocumen
 		this._selectors = new Map<string, VDocumentSelector>();
 	}
 
-	protected getSuspendInfo(): [IterableIterator<VDocumentSelector>, boolean] {
+	protected getStateInfo(): [IterableIterator<VDocumentSelector>, boolean] {
 		return [this.getDocumentSelectors(), false];
 	}
 

@@ -13,7 +13,7 @@ import {
 import * as UUID from './utils/uuid';
 import * as Is from './utils/is';
 
-import { TextDocumentLanguageFeature, FeatureClient, ensure, DocumentSelectorOptions } from './features';
+import { TextDocumentLanguageFeature, FeatureClient, ensure, DocumentSelectorOptions, SuspensibleLanguageFeature } from './features';
 
 export interface ProvideRenameEditsSignature {
 	(this: void, document: TextDocument, position: VPosition, newName: string, token: CancellationToken): ProviderResult<VWorkspaceEdit>;
@@ -32,7 +32,8 @@ type DefaultBehavior = {
 	defaultBehavior: boolean;
 };
 
-export class RenameFeature extends TextDocumentLanguageFeature<boolean | RenameOptions, RenameRegistrationOptions, RenameProvider, RenameMiddleware> {
+export class RenameFeature extends TextDocumentLanguageFeature<boolean | RenameOptions, RenameRegistrationOptions, RenameProvider, RenameMiddleware>
+	implements SuspensibleLanguageFeature<RenameOptions> {
 
 	constructor(client: FeatureClient<RenameMiddleware>) {
 		super(client, RenameRequest.type);

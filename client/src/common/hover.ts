@@ -12,7 +12,7 @@ import {
 } from 'vscode-languageserver-protocol';
 
 import {
-	FeatureClient, ensure, TextDocumentLanguageFeature, DocumentSelectorOptions
+	FeatureClient, ensure, TextDocumentLanguageFeature, DocumentSelectorOptions, SuspensibleLanguageFeature
 } from './features';
 
 import * as UUID from './utils/uuid';
@@ -25,7 +25,8 @@ export interface HoverMiddleware {
 	provideHover?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideHoverSignature) => ProviderResult<VHover>;
 }
 
-export class HoverFeature extends TextDocumentLanguageFeature<boolean | HoverOptions, HoverRegistrationOptions, HoverProvider, HoverMiddleware> {
+export class HoverFeature extends TextDocumentLanguageFeature<boolean | HoverOptions, HoverRegistrationOptions, HoverProvider, HoverMiddleware>
+	implements SuspensibleLanguageFeature<HoverOptions> {
 
 	constructor(client: FeatureClient<HoverMiddleware>) {
 		super(client, HoverRequest.type);

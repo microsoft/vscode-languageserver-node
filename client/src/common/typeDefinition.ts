@@ -11,7 +11,7 @@ import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, TypeDefinitionRequest, TypeDefinitionRegistrationOptions, TypeDefinitionOptions
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentLanguageFeature, FeatureClient, ensure, DocumentSelectorOptions } from './features';
+import { TextDocumentLanguageFeature, FeatureClient, ensure, DocumentSelectorOptions, SuspensibleLanguageFeature } from './features';
 
 export interface ProvideTypeDefinitionSignature {
 	(this: void, document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDefinition | VDefinitionLink[]>;
@@ -21,7 +21,8 @@ export interface TypeDefinitionMiddleware {
 	provideTypeDefinition?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideTypeDefinitionSignature) => ProviderResult<VDefinition | VDefinitionLink[]>;
 }
 
-export class TypeDefinitionFeature extends TextDocumentLanguageFeature<boolean | TypeDefinitionOptions, TypeDefinitionRegistrationOptions, TypeDefinitionProvider, TypeDefinitionMiddleware> {
+export class TypeDefinitionFeature extends TextDocumentLanguageFeature<boolean | TypeDefinitionOptions, TypeDefinitionRegistrationOptions, TypeDefinitionProvider, TypeDefinitionMiddleware>
+	implements SuspensibleLanguageFeature<TypeDefinitionOptions> {
 
 	constructor(client: FeatureClient<TypeDefinitionMiddleware>) {
 		super(client, TypeDefinitionRequest.type);

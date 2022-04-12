@@ -12,7 +12,7 @@ import {
 	ClientCapabilities, DefinitionOptions, DefinitionRegistrationOptions, DefinitionRequest, DocumentSelector, ServerCapabilities} from 'vscode-languageserver-protocol';
 
 import {
-	FeatureClient, ensure, TextDocumentLanguageFeature, DocumentSelectorOptions
+	FeatureClient, ensure, TextDocumentLanguageFeature, DocumentSelectorOptions, SuspensibleLanguageFeature
 } from './features';
 
 import * as UUID from './utils/uuid';
@@ -25,7 +25,8 @@ export interface DefinitionMiddleware {
 	provideDefinition?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideDefinitionSignature) => ProviderResult<VDefinition | VDefinitionLink[]>;
 }
 
-export class DefinitionFeature extends TextDocumentLanguageFeature<boolean | DefinitionOptions, DefinitionRegistrationOptions, DefinitionProvider, DefinitionMiddleware> {
+export class DefinitionFeature extends TextDocumentLanguageFeature<boolean | DefinitionOptions, DefinitionRegistrationOptions, DefinitionProvider, DefinitionMiddleware>
+	implements SuspensibleLanguageFeature<DefinitionOptions> {
 
 	constructor(client: FeatureClient<DefinitionMiddleware>) {
 		super(client, DefinitionRequest.type);

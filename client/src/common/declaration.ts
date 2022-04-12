@@ -9,7 +9,7 @@ import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, DeclarationRequest, DeclarationRegistrationOptions, DeclarationOptions
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentLanguageFeature, FeatureClient, ensure, DocumentSelectorOptions } from './features';
+import { TextDocumentLanguageFeature, FeatureClient, ensure, DocumentSelectorOptions, SuspensibleLanguageFeature } from './features';
 
 export interface ProvideDeclarationSignature {
 	(this: void, document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDeclaration>;
@@ -19,7 +19,8 @@ export interface DeclarationMiddleware {
 	provideDeclaration?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideDeclarationSignature) => ProviderResult<VDeclaration>;
 }
 
-export class DeclarationFeature extends TextDocumentLanguageFeature<boolean | DeclarationOptions, DeclarationRegistrationOptions, DeclarationProvider, DeclarationMiddleware> {
+export class DeclarationFeature extends TextDocumentLanguageFeature<boolean | DeclarationOptions, DeclarationRegistrationOptions, DeclarationProvider, DeclarationMiddleware>
+	implements SuspensibleLanguageFeature<DeclarationOptions> {
 
 	constructor(client: FeatureClient<DeclarationMiddleware>) {
 		super(client, DeclarationRequest.type);

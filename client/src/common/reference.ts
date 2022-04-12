@@ -12,7 +12,7 @@ import {
 } from 'vscode-languageserver-protocol';
 
 import {
-	FeatureClient, ensure, TextDocumentLanguageFeature, DocumentSelectorOptions
+	FeatureClient, ensure, TextDocumentLanguageFeature, DocumentSelectorOptions, SuspensibleLanguageFeature
 } from './features';
 
 import * as UUID from './utils/uuid';
@@ -25,7 +25,8 @@ export interface ReferencesMiddleware {
 	provideReferences?: (this: void, document: TextDocument, position: VPosition, options: { includeDeclaration: boolean }, token: CancellationToken, next: ProvideReferencesSignature) => ProviderResult<VLocation[]>;
 }
 
-export class ReferencesFeature extends TextDocumentLanguageFeature<boolean | ReferenceOptions, ReferenceRegistrationOptions, ReferenceProvider, ReferencesMiddleware> {
+export class ReferencesFeature extends TextDocumentLanguageFeature<boolean | ReferenceOptions, ReferenceRegistrationOptions, ReferenceProvider, ReferencesMiddleware>
+	implements SuspensibleLanguageFeature<ReferenceOptions> {
 
 	constructor(client: FeatureClient<ReferencesMiddleware>) {
 		super(client, ReferencesRequest.type);
