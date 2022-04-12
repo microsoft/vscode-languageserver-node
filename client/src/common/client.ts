@@ -263,12 +263,22 @@ export type SuspendOptions = {
 	 * If omitted defaults to SuspendMode.off;
 	 */
 	mode?: SuspendMode;
+
 	/**
 	 * A callback that is invoked before actually suspending
 	 * the server. If `false` is returned the client will not continue
 	 * suspending the server.
 	 */
 	callback?: () => Promise<boolean>;
+
+	/**
+	 * The interval in milliseconds used to check if the server
+	 * can be suspended. If the check passes three times in a row
+	 * (e.g. the server can be suspended for 3 * interval ms) the
+	 * server is suspended. Defaults to 60000ms, which is also the
+	 * minimum allowed value.
+	 */
+	interval?: number;
 };
 
 
@@ -345,6 +355,10 @@ export type LanguageClientOptions = {
 		supportHtml?: boolean;
 	};
 } & NotebookDocumentOptions & DiagnosticPullOptions & ConfigurationOptions;
+
+type TestMode = {
+	$testMode?: boolean;
+};
 
 type ResolvedClientOptions = {
 	documentSelector?: DocumentSelector;
@@ -450,7 +464,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private _onStop: Promise<void> | undefined;
 	private _connection: Connection | undefined;
 	private _idleInterval: Disposable | undefined;
-	// private _suspendPromise: Promise<void> | undefined;
+	private _idleStart: number | undefined;
 
 	private _initializeResult: InitializeResult | undefined;
 	private _outputChannel: OutputChannel | undefined;
@@ -474,8 +488,6 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private readonly _c2p: c2p.Converter;
 	private readonly _p2c: p2c.Converter;
 
-	private static readonly idleCheckInterval: number = 1000;
-
 	public constructor(id: string, name: string, clientOptions: LanguageClientOptions) {
 		this._id = id;
 		this._name = name;
@@ -487,6 +499,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			markdown.isTrusted = clientOptions.markdown.isTrusted === true;
 			markdown.supportHtml = clientOptions.markdown.supportHtml === true;
 		}
+
+		const defaultInterval = (clientOptions as TestMode).$testMode ? 200 : 60000;
 
 		this._clientOptions = {
 			documentSelector: clientOptions.documentSelector ?? [],
@@ -506,7 +520,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			markdown,
 			suspend: {
 				mode: clientOptions.suspend?.mode ?? SuspendMode.off,
-				callback: clientOptions.suspend?.callback ?? (() => Promise.resolve(false))
+				callback: clientOptions.suspend?.callback ?? (() => Promise.resolve(true)),
+				interval: clientOptions.suspend?.interval ? Math.max(clientOptions.suspend.interval, defaultInterval) : defaultInterval
 			},
 			diagnosticPullOptions: clientOptions.diagnosticPullOptions ?? { onChange: true, onSave: false },
 			notebookDocumentOptions: clientOptions.notebookDocumentOptions ?? { }
@@ -525,6 +540,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this._progressDisposables = new Map();
 
 		this._connection = undefined;
+		this._idleStart = undefined;
 		this._initializeResult = undefined;
 		if (clientOptions.outputChannel) {
 			this._outputChannel = clientOptions.outputChannel;
@@ -1169,7 +1185,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			this._pendingProgressHandlers.clear();
 
 			if (this._clientOptions.suspend.mode !== SuspendMode.off) {
-				this._idleInterval =  RAL().timer.setInterval(() => this.checkSuspend(), BaseLanguageClient.idleCheckInterval);
+				this._idleInterval =  RAL().timer.setInterval(() => this.checkSuspend(), this._clientOptions.suspend.interval);
 			}
 
 			await connection.sendNotification(InitializedNotification.type, {});
@@ -1218,18 +1234,20 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	public async stop(timeout: number = 2000): Promise<void> {
+		// Wait 2 seconds on stop
 		return this.shutdown('stop', timeout);
 	}
 
 	public async suspend(): Promise<void> {
-		return this.shutdown('suspend', 2000);
+		// Wait 5 seconds on suspend.
+		return this.shutdown('suspend', 5000);
 	}
 
 	private async shutdown(mode: 'suspend' | 'stop', timeout: number): Promise<void> {
 		// If the client is in stopped state simple return.
 		// It could also be that the client failed to stop
 		// which puts it into the stopped state as well.
-		if (this.state === ClientState.Stopped) {
+		if (this.state === ClientState.Stopped || this.state === ClientState.Initial) {
 			return;
 		}
 		if (this.state === ClientState.Stopping && this._onStop) {
@@ -1264,7 +1282,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			throw error;
 		}).finally(() => {
 			this.state = ClientState.Stopped;
-			this.cleanUpChannel();
+			mode === 'stop' && this.cleanUpChannel();
 			this._onStart = undefined;
 			this._onStop = undefined;
 			this._connection = undefined;
@@ -1292,6 +1310,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			this._idleInterval.dispose();
 			this._idleInterval = undefined;
 		}
+		this._idleStart = undefined;
 	}
 
 	private cleanUpChannel(): void {
@@ -1788,9 +1807,43 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (this.state !== ClientState.Running) {
 			return;
 		}
+		// Since the last idle start we sent a request. Cancel the idle counting.
+		if (this._idleStart !== undefined && this._connection !== undefined && this._connection.lastUsed > this._idleStart) {
+			this._idleStart = undefined;
+			return;
+		}
 		if (this.isIdle()) {
-			this.info(`Can suspend connection`);
-			// this.initiateSuspend();
+			if (this._idleStart === undefined) {
+				this._idleStart = Date.now();
+				return;
+			}
+
+			const interval = this._clientOptions.suspend.interval;
+			const diff = Date.now() - this._idleStart;
+			if (diff < interval * 3) {
+				return;
+			}
+			if (diff > interval * 5) {
+				// Avoid that we shutdown the server when a computer resumes from sleep.
+				this._idleStart = undefined;
+				return;
+			}
+
+			this._idleStart = undefined;
+			this.info(`Suspending server`);
+			this._clientOptions.suspend.callback().then((approved) => {
+				if (!approved) {
+					this._idleStart = undefined;
+					return;
+				}
+				return this.suspend().then(() => {
+					this.info(`Server got suspended`);
+				});
+			}, (error) => {
+				this.error(`Suspending server failed`, error, 'force');
+			});
+		} else {
+			this._idleStart = undefined;
 		}
 	}
 
@@ -1822,29 +1875,6 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		}
 		return true;
 	}
-
-	// private initiateSuspend(): void {
-	// 	this._suspendPromise = new Promise(async (resolve, reject) => {
-	// 		try {
-	// 			this.outputChannel.appendLine(`Suspending server`);
-	// 			this.state = ClientState.Suspending;
-	// 			await this.stop();
-	// 			this.state = ClientState.Suspended;
-	// 			this.outputChannel.appendLine(`Server got suspended`);
-	// 			resolve();
-	// 		} catch(error: unknown) {
-	// 			this.outputChannel.appendLine(`Suspending server failed.`);
-	// 			if (error instanceof Error) {
-	// 				this.outputChannel.appendLine(error.message);
-	// 				const stack = error.stack;
-	// 				if (stack !== undefined) {
-	// 					this.outputChannel.appendLine(stack);
-	// 				}
-	// 			}
-	// 			reject(error);
-	// 		}
-	// 	});
-	// }
 }
 
 interface Connection {

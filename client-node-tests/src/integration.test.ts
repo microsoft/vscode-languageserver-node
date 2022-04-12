@@ -12,7 +12,7 @@ import * as vscode from 'vscode';
 import * as lsclient from 'vscode-languageclient/node';
 import { MemoryFileSystemProvider } from './memoryFileSystemProvider';
 import { vsdiag, DiagnosticProviderMiddleware } from 'vscode-languageclient/lib/common/proposed.diagnostic';
-import { Proposed, RequestType } from 'vscode-languageclient';
+import { DidOpenTextDocumentNotification, LanguageClient, Proposed, RequestType, State, SuspendMode } from 'vscode-languageclient';
 
 namespace GotNotifiedRequest {
 	export const method: 'testing/gotNotified' = 'testing/gotNotified';
@@ -29,6 +29,7 @@ suite('Client integration', () => {
 	const position: vscode.Position = new vscode.Position(1, 1);
 	const range: vscode.Range = new vscode.Range(1, 1, 1, 2);
 	const fsProvider = new MemoryFileSystemProvider();
+	let contentProviderDisposable!: vscode.Disposable;
 	let fsProviderDisposable!: vscode.Disposable;
 
 	async function revertAllDirty(): Promise<void> {
@@ -84,7 +85,7 @@ suite('Client integration', () => {
 	suiteSetup(async () => {
 		fsProviderDisposable = vscode.workspace.registerFileSystemProvider(fsProvider.scheme, fsProvider);
 
-		vscode.workspace.registerTextDocumentContentProvider('lsptests', {
+		contentProviderDisposable = vscode.workspace.registerTextDocumentContentProvider('lsptests', {
 			provideTextDocumentContent: (_uri: vscode.Uri) => {
 				return [
 					'REM @ECHO OFF',
@@ -126,6 +127,7 @@ suite('Client integration', () => {
 
 	suiteTeardown(async () => {
 		fsProviderDisposable.dispose();
+		contentProviderDisposable.dispose();
 		await client.stop();
 	});
 
@@ -1533,37 +1535,70 @@ suite('Server tests', () => {
 		assert.strictEqual(states.length, 1, 'After stop');
 		assert.strictEqual(states[0], lsclient.State.Stopped);
 	});
+});
+
+suite('Server activation', () => {
+
+	const uri: vscode.Uri = vscode.Uri.parse('lsptests://localhost/test.bat');
+	const documentSelector: lsclient.DocumentSelector = [{ scheme: 'lsptests', language: 'bat' }];
+	const tokenSource: vscode.CancellationTokenSource = new vscode.CancellationTokenSource();
+	const middleware: lsclient.Middleware = {};
+	let contentProviderDisposable!: vscode.Disposable;
+	let client!: LanguageClient;
+
+	suiteSetup(async () => {
+		contentProviderDisposable = vscode.workspace.registerTextDocumentContentProvider('lsptests', {
+			provideTextDocumentContent: (_uri: vscode.Uri) => {
+				return [
+					'REM @ECHO OFF'
+				].join('\n');
+			}
+		});
+
+	});
+
+	suiteTeardown(async () => {
+		contentProviderDisposable.dispose();
+	});
+
+	setup(async () => {
+		const serverModule = path.join(__dirname, './servers/customServer.js');
+		const serverOptions: lsclient.ServerOptions = {
+			run: { module: serverModule, transport: lsclient.TransportKind.ipc },
+			debug: { module: serverModule, transport: lsclient.TransportKind.ipc, options: { execArgv: ['--nolazy', '--inspect=6014'] } }
+		};
+
+		const clientOptions: lsclient.LanguageClientOptions = {
+			documentSelector,
+			synchronize: {},
+			initializationOptions: {},
+			middleware,
+			suspend: {
+				mode: SuspendMode.off,
+			}
+		};
+		(clientOptions as ({ $testMode?: boolean })).$testMode = true;
+
+		client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		client.registerProposedFeatures();
+	});
+
+	teardown(async () => {
+		await client.stop();
+	});
 
 	test('Start server on request', async () => {
-		const serverOptions: lsclient.ServerOptions = {
-			module: path.join(__dirname, './servers/customServer.js'),
-			transport: lsclient.TransportKind.ipc,
-		};
-		const clientOptions: lsclient.LanguageClientOptions = {};
-		const client = new CrashClient('test svr', 'Test Language Server', serverOptions, clientOptions);
 		const result: number = await client.sendRequest('request', { value: 10 });
 		assert.strictEqual(client.getState(), lsclient.State.Running);
 		assert.strictEqual(result, 11);
 	});
 
 	test('Start server on notification', async () => {
-		const serverOptions: lsclient.ServerOptions = {
-			module: path.join(__dirname, './servers/customServer.js'),
-			transport: lsclient.TransportKind.ipc,
-		};
-		const clientOptions: lsclient.LanguageClientOptions = {};
-		const client = new CrashClient('test svr', 'Test Language Server', serverOptions, clientOptions);
 		await client.sendNotification('notification');
 		assert.strictEqual(client.getState(), lsclient.State.Running);
 	});
 
 	test('Add pending request handler', async () => {
-		const serverOptions: lsclient.ServerOptions = {
-			module: path.join(__dirname, './servers/customServer.js'),
-			transport: lsclient.TransportKind.ipc,
-		};
-		const clientOptions: lsclient.LanguageClientOptions = {};
-		const client = new CrashClient('test svr', 'Test Language Server', serverOptions, clientOptions);
 		let requestReceived: boolean = false;
 		client.onRequest('request', () => {
 			requestReceived = true;
@@ -1573,17 +1608,47 @@ suite('Server tests', () => {
 	});
 
 	test('Add pending notification handler', async () => {
-		const serverOptions: lsclient.ServerOptions = {
-			module: path.join(__dirname, './servers/customServer.js'),
-			transport: lsclient.TransportKind.ipc,
-		};
-		const clientOptions: lsclient.LanguageClientOptions = {};
-		const client = new CrashClient('test svr', 'Test Language Server', serverOptions, clientOptions);
 		let notificationReceived: boolean = false;
 		client.onNotification('notification', () => {
 			notificationReceived = true;
 		});
 		await client.sendRequest('triggerNotification');
 		assert.strictEqual(notificationReceived, true);
+	});
+
+	test('Start server on document open', async () => {
+		const uri: vscode.Uri = vscode.Uri.parse('lsptests://localhost/documentOpenTest.bat');
+		const openFeature = client.getFeature(DidOpenTextDocumentNotification.method);
+		openFeature.registerActivation({ documentSelector: [{ language: 'bat', scheme: 'lsptests', pattern: uri.fsPath }]});
+		return new Promise((resolve, reject) => {
+			const timeout = setTimeout(() => {
+				reject(new Error(`Server didn't start in 1000 ms.`));
+			}, 1000);
+			client.onDidChangeState((event) => {
+				if (event.newState === State.Running) {
+					clearTimeout(timeout);
+					resolve();
+				}
+			});
+			void vscode.workspace.openTextDocument(uri);
+		});
+	});
+
+	test('Start server on document already open', async () => {
+		const uri: vscode.Uri = vscode.Uri.parse('lsptests://localhost/documentAlreadyOpenTest.bat');
+		await vscode.workspace.openTextDocument(uri);
+		return new Promise((resolve, reject) => {
+			const timeout = setTimeout(() => {
+				reject(new Error(`Server didn't start in 1000 ms.`));
+			}, 1000);
+			client.onDidChangeState((event) => {
+				if (event.newState === State.Running) {
+					clearTimeout(timeout);
+					resolve();
+				}
+			});
+			const openFeature = client.getFeature(DidOpenTextDocumentNotification.method);
+			openFeature.registerActivation({ documentSelector: [{ language: 'bat', scheme: 'lsptests', pattern: uri.fsPath }]});
+		});
 	});
 });

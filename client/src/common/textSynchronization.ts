@@ -102,6 +102,13 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 				}
 			});
 		});
+		// Also activate if a document of that kind is already open.
+		for (const textDocument of Workspace.textDocuments) {
+			if (Languages.match(selector, textDocument)) {
+				this.handleActivation();
+				break;
+			}
+		}
 	}
 
 	protected notificationSent(textDocument: TextDocument, type: ProtocolNotificationType<DidOpenTextDocumentParams, TextDocumentRegistrationOptions>, params: DidOpenTextDocumentParams): void {

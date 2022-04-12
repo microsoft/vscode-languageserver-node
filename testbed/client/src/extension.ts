@@ -6,7 +6,7 @@
 
 import * as path from 'path';
 import { commands, ExtensionContext, Uri } from 'vscode';
-import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, NotificationType, SuspendMode } from 'vscode-languageclient/node';
+import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, NotificationType, SuspendMode, DidOpenTextDocumentNotification } from 'vscode-languageclient/node';
 
 let client: LanguageClient;
 
@@ -65,14 +65,16 @@ export function activate(context: ExtensionContext) {
 	client.onTelemetry((data: any) => {
 		console.log(`Telemetry event received: ${JSON.stringify(data)}`);
 	});
-	const not: NotificationType<string[]> = new NotificationType<string[]>('testbed/notification');
-	client.start().catch((error)=> client.error(`Start failed`, error, 'force'));
-	client.sendNotification(not, ['dirk', 'baeumer']).catch((error) => client.error(`Sending test notification failed`, error, 'force'));
-	commands.registerCommand('testbed.myCommand.invoked', () => {
-		void commands.executeCommand('testbed.myCommand').then(value => {
-			console.log(value);
-		});
-	});
+	const feature = client.getFeature(DidOpenTextDocumentNotification.method);
+	feature.registerActivation({ documentSelector: ['bat']});
+	// const not: NotificationType<string[]> = new NotificationType<string[]>('testbed/notification');
+	// client.start().catch((error)=> client.error(`Start failed`, error, 'force'));
+	// client.sendNotification(not, ['dirk', 'baeumer']).catch((error) => client.error(`Sending test notification failed`, error, 'force'));
+	// commands.registerCommand('testbed.myCommand.invoked', () => {
+	// 	void commands.executeCommand('testbed.myCommand').then(value => {
+	// 		console.log(value);
+	// 	});
+	// });
 }
 
 export function deactivate() {
