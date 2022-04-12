@@ -839,8 +839,8 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 			const cellLanguage = cell.document.languageId;
 			return cellSelector.some((filter => (filter.language === '*' || cellLanguage === filter.language)));
 		});
-		return typeof this.client.options.notebookDocumentOptions?.filterCells === 'function'
-			? this.client.options.notebookDocumentOptions.filterCells(notebookDocument, cells)
+		return typeof this.client.clientOptions.notebookDocumentOptions?.filterCells === 'function'
+			? this.client.clientOptions.notebookDocumentOptions.filterCells(notebookDocument, cells)
 			: result;
 
 	}

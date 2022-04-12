@@ -169,7 +169,7 @@ export class SyncConfigurationFeature implements DynamicFeature<DidChangeConfigu
 	}
 
 	public initialize(): void {
-		let section = this._client.options.synchronize?.configurationSection;
+		let section = this._client.clientOptions.synchronize?.configurationSection;
 		if (section !== undefined) {
 			this.register({
 				id: UUID.generateUuid(),
@@ -244,8 +244,8 @@ export class SyncConfigurationFeature implements DynamicFeature<DidChangeConfigu
 			}
 			return current;
 		}
-		let resource: Uri | undefined = this._client.options.workspaceFolder
-			? this._client.options.workspaceFolder.uri
+		let resource: Uri | undefined = this._client.clientOptions.workspaceFolder
+			? this._client.clientOptions.workspaceFolder.uri
 			: undefined;
 		let result = Object.create(null);
 		for (let i = 0; i < keys.length; i++) {

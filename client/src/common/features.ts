@@ -691,11 +691,12 @@ export interface FeatureClient<M, CO = object> {
 	protocol2CodeConverter: p2c.Converter;
 	code2ProtocolConverter: c2p.Converter;
 
-	options: CO;
+	clientOptions: CO;
 	middleware: M;
 
-	isRunning(): boolean;
 	start(): Promise<void>;
+	isRunning(): boolean;
+	stop(): Promise<void>;
 
 	sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): Promise<R>;
 	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: P, token?: CancellationToken): Promise<R>;

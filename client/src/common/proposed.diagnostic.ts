@@ -708,7 +708,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 	private readonly backgroundScheduler: BackgroundScheduler;
 
 	constructor(client: FeatureClient<DiagnosticProviderMiddleware, DiagnosticPullOptions>, tabs: Tabs, options: Proposed.DiagnosticRegistrationOptions) {
-		const diagnosticPullOptions = client.options.diagnosticPullOptions ?? { onChange: true, onSave: false };
+		const diagnosticPullOptions = client.clientOptions.diagnosticPullOptions ?? { onChange: true, onSave: false };
 		const documentSelector = client.protocol2CodeConverter.asDocumentSelector(options.documentSelector!);
 		const disposables: Disposable[] = [];
 

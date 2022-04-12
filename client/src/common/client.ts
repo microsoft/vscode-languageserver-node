@@ -356,7 +356,7 @@ export type LanguageClientOptions = {
 	};
 } & NotebookDocumentOptions & DiagnosticPullOptions & ConfigurationOptions;
 
-type TestMode = {
+type TestOptions = {
 	$testMode?: boolean;
 };
 
@@ -500,7 +500,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			markdown.supportHtml = clientOptions.markdown.supportHtml === true;
 		}
 
-		const defaultInterval = (clientOptions as TestMode).$testMode ? 200 : 60000;
+		const defaultInterval = (clientOptions as TestOptions).$testMode ? 50 : 60000;
 
 		this._clientOptions = {
 			documentSelector: clientOptions.documentSelector ?? [],
@@ -576,23 +576,61 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this.registerBuiltinFeatures();
 	}
 
+	public get name(): string {
+		return this._name;
+	}
+
 	public get middleware(): Middleware {
 		return this._clientOptions.middleware ?? Object.create(null);
 	}
 
-	public get options(): LanguageClientOptions {
+	public get clientOptions(): LanguageClientOptions {
 		return this._clientOptions;
 	}
 
-	public getState(): State {
+	public get protocol2CodeConverter(): p2c.Converter {
+		return this._p2c;
+	}
+
+	public get code2ProtocolConverter(): c2p.Converter {
+		return this._c2p;
+	}
+
+	public get onTelemetry(): Event<any> {
+		return this._telemetryEmitter.event;
+	}
+
+	public get onDidChangeState(): Event<StateChangeEvent> {
+		return this._stateChangeEmitter.event;
+	}
+
+	public get outputChannel(): OutputChannel {
+		if (!this._outputChannel) {
+			this._outputChannel = Window.createOutputChannel(this._clientOptions.outputChannelName ? this._clientOptions.outputChannelName : this._name);
+		}
+		return this._outputChannel;
+	}
+
+	public get traceOutputChannel(): OutputChannel {
+		if (this._traceOutputChannel) {
+			return this._traceOutputChannel;
+		}
+		return this.outputChannel;
+	}
+
+	public get diagnostics(): DiagnosticCollection | undefined {
+		return this._diagnostics;
+	}
+
+	public get state(): State {
 		return this.getPublicState();
 	}
 
-	private get state(): ClientState {
+	private get $state(): ClientState {
 		return this._state;
 	}
 
-	private set state(value: ClientState) {
+	private set $state(value: ClientState) {
 		let oldState = this.getPublicState();
 		this._state = value;
 		let newState = this.getPublicState();
@@ -602,7 +640,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	private getPublicState(): State {
-		switch (this.state) {
+		switch (this.$state) {
 			case ClientState.Starting:
 				return State.Starting;
 			case ClientState.Running:
@@ -793,48 +831,6 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		};
 	}
 
-	public get name(): string {
-		return this._name;
-	}
-
-	public get clientOptions(): LanguageClientOptions {
-		return this._clientOptions;
-	}
-
-	public get protocol2CodeConverter(): p2c.Converter {
-		return this._p2c;
-	}
-
-	public get code2ProtocolConverter(): c2p.Converter {
-		return this._c2p;
-	}
-
-	public get onTelemetry(): Event<any> {
-		return this._telemetryEmitter.event;
-	}
-
-	public get onDidChangeState(): Event<StateChangeEvent> {
-		return this._stateChangeEmitter.event;
-	}
-
-	public get outputChannel(): OutputChannel {
-		if (!this._outputChannel) {
-			this._outputChannel = Window.createOutputChannel(this._clientOptions.outputChannelName ? this._clientOptions.outputChannelName : this._name);
-		}
-		return this._outputChannel;
-	}
-
-	public get traceOutputChannel(): OutputChannel {
-		if (this._traceOutputChannel) {
-			return this._traceOutputChannel;
-		}
-		return this.outputChannel;
-	}
-
-	public get diagnostics(): DiagnosticCollection | undefined {
-		return this._diagnostics;
-	}
-
 	public createDefaultErrorHandler(maxRestartCount?: number): ErrorHandler {
 		if (maxRestartCount !== undefined && maxRestartCount < 0) {
 			throw new Error(`Invalid maxRestartCount: ${maxRestartCount}`);
@@ -933,19 +929,19 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	public needsStart(): boolean {
-		return this.state === ClientState.Initial || this.state === ClientState.Stopping || this.state === ClientState.Stopped || this.state === ClientState.Suspending || this.state === ClientState.Suspended;
+		return this.$state === ClientState.Initial || this.$state === ClientState.Stopping || this.$state === ClientState.Stopped || this.$state === ClientState.Suspending || this.$state === ClientState.Suspended;
 	}
 
 	public needsStop(): boolean {
-		return this.state === ClientState.Starting || this.state === ClientState.Running;
+		return this.$state === ClientState.Starting || this.$state === ClientState.Running;
 	}
 
 	private activeConnection(): Connection | undefined {
-		return this.state === ClientState.Running && this._connection !== undefined ? this._connection : undefined;
+		return this.$state === ClientState.Running && this._connection !== undefined ? this._connection : undefined;
 	}
 
 	public isRunning(): boolean {
-		return this.state === ClientState.Running;
+		return this.$state === ClientState.Running;
 	}
 
 	public async start(): Promise<void> {
@@ -983,7 +979,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			}
 		}
 
-		this.state = ClientState.Starting;
+		this.$state = ClientState.Starting;
 		try {
 			const connection = await this.createConnection();
 			connection.onNotification(LogMessageNotification.type, (message) => {
@@ -1072,7 +1068,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			await this.initialize(connection);
 			resolve();
 		} catch (error) {
-			this.state = ClientState.StartFailed;
+			this.$state = ClientState.StartFailed;
 			this.error(`${this._name} client: couldn't create connection to server.`, error, 'force');
 			reject(error);
 		}
@@ -1137,7 +1133,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			}
 
 			this._initializeResult = result;
-			this.state = ClientState.Running;
+			this.$state = ClientState.Running;
 
 			let textDocumentSyncOptions: TextDocumentSyncOptions | undefined = undefined;
 			if (Is.number(result.capabilities.textDocumentSync)) {
@@ -1247,10 +1243,10 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		// If the client is in stopped state simple return.
 		// It could also be that the client failed to stop
 		// which puts it into the stopped state as well.
-		if (this.state === ClientState.Stopped || this.state === ClientState.Initial) {
+		if (this.$state === ClientState.Stopped || this.$state === ClientState.Initial) {
 			return;
 		}
-		if (this.state === ClientState.Stopping && this._onStop) {
+		if (this.$state === ClientState.Stopping && this._onStop) {
 			return this._onStop;
 		}
 
@@ -1258,7 +1254,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		const connection = await this.$start();
 
 		this._initializeResult = undefined;
-		this.state = ClientState.Stopping;
+		this.$state = ClientState.Stopping;
 		this.cleanUp(mode);
 
 		const tp = new Promise<undefined>(c => { RAL().timer.setTimeout(c, timeout); });
@@ -1281,7 +1277,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			this.error(`Stopping server failed`, error, false);
 			throw error;
 		}).finally(() => {
-			this.state = ClientState.Stopped;
+			this.$state = ClientState.Stopped;
 			mode === 'stop' && this.cleanUpChannel();
 			this._onStart = undefined;
 			this._onStop = undefined;
@@ -1406,7 +1402,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	protected abstract createMessageTransports(encoding: string): Promise<MessageTransports>;
 
 	private async $start(): Promise<Connection> {
-		if (this.state === ClientState.StartFailed) {
+		if (this.$state === ClientState.StartFailed) {
 			throw new Error(`Previous start failed. Can't restart server.`);
 		}
 		await this.start();
@@ -1432,7 +1428,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 	protected handleConnectionClosed(): void {
 		// Check whether this is a normal shutdown in progress or the client stopped normally.
-		if (this.state === ClientState.Stopped) {
+		if (this.$state === ClientState.Stopped) {
 			return;
 		}
 		try {
@@ -1443,7 +1439,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			// Disposing a connection could fail if error cases.
 		}
 		let handlerResult: CloseHandlerResult = { action: CloseAction.DoNotRestart };
-		if (this.state !== ClientState.Stopping) {
+		if (this.$state !== ClientState.Stopping) {
 			try {
 				handlerResult = this._clientOptions.errorHandler!.closed();
 			} catch (error) {
@@ -1454,17 +1450,17 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (handlerResult.action === CloseAction.DoNotRestart) {
 			this.error(handlerResult.message ?? 'Connection to server got closed. Server will not be restarted.', undefined, 'force');
 			this.cleanUp('stop');
-			if (this.state === ClientState.Starting) {
-				this.state = ClientState.StartFailed;
+			if (this.$state === ClientState.Starting) {
+				this.$state = ClientState.StartFailed;
 			} else {
-				this.state = ClientState.Stopped;
+				this.$state = ClientState.Stopped;
 			}
 			this._onStop = Promise.resolve();
 			this._onStart = undefined;
 		} else if (handlerResult.action === CloseAction.Restart) {
 			this.info(handlerResult.message ?? 'Connection to server got closed. Server will restart.');
 			this.cleanUp('restart');
-			this.state = ClientState.Initial;
+			this.$state = ClientState.Initial;
 			this._onStop = Promise.resolve();
 			this._onStart = undefined;
 			this.start().catch((error) => this.error(`Restarting server failed`, error, 'force'));
@@ -1804,7 +1800,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	private checkSuspend(): void {
-		if (this.state !== ClientState.Running) {
+		if (this.$state !== ClientState.Running) {
 			return;
 		}
 		// Since the last idle start we sent a request. Cancel the idle counting.
@@ -1813,20 +1809,25 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			return;
 		}
 		if (this.isIdle()) {
-			if (this._idleStart === undefined) {
-				this._idleStart = Date.now();
-				return;
-			}
+			const production = (this.clientOptions as TestOptions).$testMode !== true;
+			// Only do this in production since in test cases we only have
+			// 2000 ms to suspend.
+			if (production) {
+				if (this._idleStart === undefined) {
+					this._idleStart = Date.now();
+					return;
+				}
 
-			const interval = this._clientOptions.suspend.interval;
-			const diff = Date.now() - this._idleStart;
-			if (diff < interval * 3) {
-				return;
-			}
-			if (diff > interval * 5) {
-				// Avoid that we shutdown the server when a computer resumes from sleep.
-				this._idleStart = undefined;
-				return;
+				const interval = this._clientOptions.suspend.interval;
+				const diff = Date.now() - this._idleStart;
+				if (diff < interval * 3) {
+					return;
+				}
+				if (diff > interval * 5) {
+					// Avoid that we shutdown the server when a computer resumes from sleep.
+					this._idleStart = undefined;
+					return;
+				}
 			}
 
 			this._idleStart = undefined;
