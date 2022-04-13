@@ -38,7 +38,7 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 
 Library specific changes are:
 
-- cleanup of client start and stop methods. Both methods now return a promise since these methods are async. This is a breaking change since start returned a disposable before. Extensions should now implement a deactivate function in their extension main file and correctly return the stop promise from the deactivate call. As a consequence the `onReady()` got removed since extensions can await the `start()` call.
+- cleanup of client `start` and `stop` methods. Both methods now return a promise since these methods are async. This is a breaking change since start returned a disposable before. Extensions should now implement a deactivate function in their extension main file and correctly return the `stop` promise from the deactivate call. As a consequence the `onReady()` got removed since extensions can await the `start()` call.
 - notification and request handler registration can now happen before the client is started. This ensures that no messages from the server are missed.
 - if an extension sends a notification or request before the client got started the client will auto start.
 - all `sendNotification` methods now return a promise. Returning a promise was necessary since the actual writing of the message to the underlying transport is async and a client for example could not determine if a notification was handed off to the transport. This is a breaking change in the sense that it might result in floating promise and might be flagged by a linter.
