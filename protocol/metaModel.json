@@ -2063,8 +2063,8 @@
 				{
 					"name": "uri",
 					"type": {
-						"kind": "base",
-						"name": "string"
+						"kind": "reference",
+						"name": "URI"
 					},
 					"documentation": "The associated URI for this workspace folder."
 				},
@@ -2076,7 +2076,8 @@
 					},
 					"documentation": "The name of the workspace folder. Used to refer to this\nworkspace folder in the user interface."
 				}
-			]
+			],
+			"documentation": "A workspace folder inside a client."
 		},
 		{
 			"name": "DidChangeWorkspaceFoldersParams",
@@ -4439,6 +4440,14 @@
 										"name": "InsertTextMode"
 									},
 									"optional": true
+								},
+								{
+									"name": "data",
+									"type": {
+										"kind": "reference",
+										"name": "LSPAny"
+									},
+									"optional": true
 								}
 							]
 						}
@@ -5148,7 +5157,7 @@
 							}
 						]
 					},
-					"documentation": "The location of the symbol.\nSee SymbolInformation#location for more details."
+					"documentation": "The location of the symbol. Whether a server is allowed to\nreturn a location without a range depends on the client\ncapability `workspace.symbol.resolveSupport`.\nSee SymbolInformation#location for more details."
 				},
 				{
 					"name": "data",
@@ -5444,7 +5453,7 @@
 						"kind": "reference",
 						"name": "Position"
 					},
-					"documentation": "The position at which this request was send."
+					"documentation": "The position around which the on type formatting should happen.\nThis is not necessarily the exact position where the character denoted\nby the property `ch` got typed."
 				},
 				{
 					"name": "ch",
@@ -5452,7 +5461,7 @@
 						"kind": "base",
 						"name": "string"
 					},
-					"documentation": "The character that has been typed."
+					"documentation": "The character that has been typed that triggered the formatting\non type request. That is not necessarily the last character that\ngot inserted into the document since the client could auto insert\ncharacters as well (e.g. like automatic brace completion)."
 				},
 				{
 					"name": "options",
@@ -6234,7 +6243,8 @@
 					"documentation": "Character offset on a line in a document (zero-based). Assuming that the line is\nrepresented as a string, the `character` value represents the gap between the\n`character` and `character + 1`.\nIf the character value is greater than the line length it defaults back to the\nline length."
 				}
 			],
-			"documentation": "Position in a text document expressed as zero-based line and character offset.\nThe offsets are based on a UTF-16 string representation. So a string of the form\n`a𐐀b` the character offset of the character `a` is 0, the character offset of `𐐀`\nis 1 and the character offset of b is 3 since `𐐀` is represented using two code\nunits in UTF-16.\nPositions are line end character agnostic. So you can not specify a position that\ndenotes `\\r|\\n` or `\\n|` where `|` represents the character offset."
+			"documentation": "Position in a text document expressed as zero-based line and character\noffset. Prior to 3.17 the offsets were always based on a UTF-16 string\nrepresentation. So a string of the form `a𐐀b` the character offset of the\ncharacter `a` is 0, the character offset of `𐐀` is 1 and the character\noffset of b is 3 since `𐐀` is represented using two code units in UTF-16.\nSince 3.17 clients and servers can agree on a different string encoding\nrepresentation (e.g. UTF-8). The client announces it's supported encoding\nvia the client capability [`general.positionEncodings`](#clientCapabilities).\nThe value is an array of position encodings the client supports, with\ndecreasing preference (e.g. the encoding at index `0` is the most preferred\none). To stay backwards compatible the only mandatory encoding is UTF-16\nrepresented via the string `utf-16`. The server can pick one of the\nencodings offered by the client and signals that encoding back to the\nclient via the initialize result's property\n[`capabilities.positionEncoding`](#serverCapabilities). If the string value\n`utf-16` is missing from the client's capability `general.positionEncodings`\nservers can safely assume that the client supports UTF-16. If the server\nomits the position encoding in its initialize result the encoding defaults\nto the string value `utf-16`. Implementation considerations: since the\nconversion from one encoding into another requires the content of the\nfile / line the conversion is best done where the file is read which is\nusually on the server side.\nPositions are line end character agnostic. So you can not specify a position\nthat denotes `\\r|\\n` or `\\n|` where `|` represents the character offset.\n@since 3.17.0 - support for negotiated position encoding.",
+			"since": "3.17.0 - support for negotiated position encoding."
 		},
 		{
 			"name": "SelectionRangeOptions",
@@ -7103,6 +7113,17 @@
 			"name": "ServerCapabilities",
 			"properties": [
 				{
+					"name": "positionEncoding",
+					"type": {
+						"kind": "reference",
+						"name": "PositionEncodingKind"
+					},
+					"optional": true,
+					"documentation": "The position encoding the server picked from the encodings offered\nby the client via the client capability `general.positionEncodings`.\nIf the client didn't provide any position encodings the only valid\nvalue that a server can return is 'utf-16'.\nIf omitted it defaults to 'utf-16'.\nIf for some reason\n@since 3.17.0\n@proposed",
+					"since": "3.17.0",
+					"proposed": true
+				},
+				{
 					"name": "textDocumentSync",
 					"type": {
 						"kind": "or",
@@ -7787,10 +7808,11 @@
 				{
 					"name": "globPattern",
 					"type": {
-						"kind": "base",
-						"name": "string"
+						"kind": "reference",
+						"name": "GlobPattern"
 					},
-					"documentation": "The  glob pattern to watch. Glob patterns can have the following syntax:\n- `*` to match one or more characters in a path segment\n- `?` to match on one character in a path segment\n- `**` to match any number of path segments, including none\n- `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)\n- `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)\n- `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)"
+					"documentation": "The glob pattern to watch. See {@link GlobPattern glob pattern} for more detail.\n@since 3.17.0 support for relative patterns.",
+					"since": "3.17.0 support for relative patterns."
 				},
 				{
 					"name": "kind",
@@ -8531,7 +8553,7 @@
 						"kind": "base",
 						"name": "string"
 					},
-					"documentation": "A character on which formatting should be triggered, like `}`."
+					"documentation": "A character on which formatting should be triggered, like `{}`."
 				},
 				{
 					"name": "moreTriggerCharacter",
@@ -10217,8 +10239,9 @@
 						}
 					},
 					"optional": true,
-					"documentation": "Client capability that signals how the client\nhandles stale requests (e.g. a request\nfor which the client will not process the response\nanymore since the information is outdated).\n@since 3.17.0",
-					"since": "3.17.0"
+					"documentation": "Client capability that signals how the client\nhandles stale requests (e.g. a request\nfor which the client will not process the response\nanymore since the information is outdated).\n@since 3.17.0\n@proposed",
+					"since": "3.17.0",
+					"proposed": true
 				},
 				{
 					"name": "regularExpressions",
@@ -10239,10 +10262,56 @@
 					"optional": true,
 					"documentation": "Client capabilities specific to the client's markdown parser.\n@since 3.16.0",
 					"since": "3.16.0"
+				},
+				{
+					"name": "positionEncodings",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "PositionEncodingKind"
+						}
+					},
+					"optional": true,
+					"documentation": "The position encodings supported by the client. Client and server\nhave to agree on the same position encoding to ensure that offsets\n(e.g. character position in a line) are interpreted the same on both\nside.\nTo keep the protocol backwards compatible the following applies: if\nthe value 'utf-16' is missing from the array of position encodings\nservers can assume that the client supports UTF-16. UTF-16 is\ntherefore a mandatory encoding.\nIf omitted it defaults to ['utf-16'].\nImplementation considerations: since the conversion from one encoding\ninto another requires the content of the file / line the conversion\nis best done where the file is read which is usually on the server\nside.\n@since 3.17.0\n@proposed",
+					"since": "3.17.0",
+					"proposed": true
 				}
 			],
 			"documentation": "General client capabilities.\n@since 3.16.0",
 			"since": "3.16.0"
+		},
+		{
+			"name": "RelativePattern",
+			"properties": [
+				{
+					"name": "baseUri",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "reference",
+								"name": "WorkspaceFolder"
+							},
+							{
+								"kind": "reference",
+								"name": "URI"
+							}
+						]
+					},
+					"documentation": "A workspace folder or a base URI to which this pattern will be matched\nagainst relatively."
+				},
+				{
+					"name": "pattern",
+					"type": {
+						"kind": "reference",
+						"name": "Pattern"
+					},
+					"documentation": "The actual glob pattern;"
+				}
+			],
+			"documentation": "A relative pattern is a helper to construct glob patterns that are matched\nrelatively to a base URI. The common value for a `baseUri` is a workspace\nfolder root, but it can be another absolute URI as well.\n@since 3.17.0",
+			"since": "3.17.0"
 		},
 		{
 			"name": "ExecutionSummary",
@@ -10362,6 +10431,16 @@
 					},
 					"optional": true,
 					"documentation": "Did change watched files notification supports dynamic registration. Please note\nthat the current protocol doesn't support static configuration for file changes\nfrom the server side."
+				},
+				{
+					"name": "relativePatternSupport",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Whether the client has support for {@link  RelativePattern relative pattern}\nor not.\n@since 3.17.0",
+					"since": "3.17.0"
 				}
 			]
 		},
@@ -12803,6 +12882,15 @@
 			"proposed": true
 		},
 		{
+			"name": "URI",
+			"type": {
+				"kind": "base",
+				"name": "string"
+			},
+			"documentation": "A tagging type for string properties that are actually URIs\n@since 3.16.0",
+			"since": "3.16.0"
+		},
+		{
 			"name": "ProgressToken",
 			"type": {
 				"kind": "or",
@@ -12850,15 +12938,6 @@
 			},
 			"documentation": "A document selector is the combination of one or many document filters.\n@sample `let sel:DocumentSelector = [{ language: 'typescript' }, { language: 'json', pattern: '**∕tsconfig.json' }]`;\nThe use of a string as a document filter is deprecated @since 3.16.0.",
 			"since": "3.16.0."
-		},
-		{
-			"name": "URI",
-			"type": {
-				"kind": "base",
-				"name": "string"
-			},
-			"documentation": "A tagging type for string properties that are actually URIs\n@since 3.16.0",
-			"since": "3.16.0"
 		},
 		{
 			"name": "ChangeAnnotationIdentifier",
@@ -13000,6 +13079,34 @@
 			"since": "3.17.0 - proposed support for NotebookCellTextDocumentFilter."
 		},
 		{
+			"name": "PositionEncodingKind",
+			"type": {
+				"kind": "base",
+				"name": "string"
+			},
+			"documentation": "A type indicating how positions are encoded,\nspecifically what column offsets mean.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"name": "GlobPattern",
+			"type": {
+				"kind": "or",
+				"items": [
+					{
+						"kind": "reference",
+						"name": "Pattern"
+					},
+					{
+						"kind": "reference",
+						"name": "RelativePattern"
+					}
+				]
+			},
+			"documentation": "The glob pattern. Either a string pattern or a relative pattern.\n@since 3.17.0",
+			"since": "3.17.0"
+		},
+		{
 			"name": "TextDocumentFilter",
 			"type": {
 				"kind": "or",
@@ -13099,6 +13206,15 @@
 			"documentation": "A document filter denotes a document by different properties like\nthe [language](#TextDocument.languageId), the [scheme](#Uri.scheme) of\nits resource, or a glob-pattern that is applied to the [path](#TextDocument.fileName).\nGlob patterns can have the following syntax:\n- `*` to match one or more characters in a path segment\n- `?` to match on one character in a path segment\n- `**` to match any number of path segments, including none\n- `{}` to group sub patterns into an OR expression. (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)\n- `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)\n- `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)\n@sample A language filter that applies to typescript files on disk: `{ language: 'typescript', scheme: 'file' }`\n@sample A language filter that applies to all package.json paths: `{ language: 'json', pattern: '**package.json' }`\n@since 3.17.0\n@proposed",
 			"since": "3.17.0",
 			"proposed": true
+		},
+		{
+			"name": "Pattern",
+			"type": {
+				"kind": "base",
+				"name": "string"
+			},
+			"documentation": "The glob pattern to watch relative to the base path. Glob patterns can have the following syntax:\n- `*` to match one or more characters in a path segment\n- `?` to match on one character in a path segment\n- `**` to match any number of path segments, including none\n- `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)\n- `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)\n- `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)\n@since 3.17.0",
+			"since": "3.17.0"
 		},
 		{
 			"name": "NotebookDocumentFilter",

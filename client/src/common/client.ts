@@ -34,7 +34,8 @@ import {
 	DocumentOnTypeFormattingRequest, RenameRequest, DocumentSymbolRequest, DocumentLinkRequest, DocumentColorRequest, DeclarationRequest, FoldingRangeRequest,
 	ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, CallHierarchyPrepareRequest, SemanticTokensRegistrationType, LinkedEditingRangeRequest,
 	Proposed, TypeHierarchyPrepareRequest, InlineValueRequest, InlayHintRequest, WorkspaceSymbolRequest, TextDocumentRegistrationOptions, FileOperationRegistrationOptions,
-	ConnectionOptions
+	ConnectionOptions,
+	PositionEncodingKind
 } from 'vscode-languageserver-protocol';
 
 import * as c2p from './codeConverter';
@@ -1106,7 +1107,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private async doInitialize(connection: Connection, initParams: InitializeParams): Promise<InitializeResult> {
 		try {
 			const result = await connection.initialize(initParams);
-			if (result.capabilities.positionEncoding !== undefined && result.capabilities.positionEncoding !== 'utf-16') {
+			if (result.capabilities.positionEncoding !== undefined && result.capabilities.positionEncoding !== PositionEncodingKind.UTF16) {
 				throw new Error(`Unsupported position encoding (${result.capabilities.positionEncoding}) received from server ${this.name}`);
 			}
 

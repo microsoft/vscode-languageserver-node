@@ -782,6 +782,47 @@ export interface MarkdownClientCapabilities {
 }
 
 /**
+ * A set of predefined position encoding kinds.
+ *
+ * @since 3.17.0
+ * @proposed
+ */
+export namespace PositionEncodingKind {
+
+	/**
+	 * Character offsets count UTF-8 code units.
+	 */
+	export const UTF8: PositionEncodingKind = 'utf-8';
+
+	/**
+	 * Character offsets count UTF-16 code units.
+	 *
+	 * This is the default and must always be supported
+	 * by servers
+	 */
+	export const UTF16: PositionEncodingKind = 'utf-16';
+
+	/**
+	 * Character offsets count UTF-32 code units.
+	 *
+	 * Implementation note: these are the same as Unicode code points,
+	 * so this `PositionEncodingKind` may also be used for an
+	 * encoding-agnostic representation of character offsets.
+	 */
+	export const UTF32: PositionEncodingKind = 'utf-32';
+}
+
+/**
+ * A type indicating how positions are encoded,
+ * specifically what column offsets mean.
+ *
+ * @since 3.17.0
+ * @proposed
+ */
+export type PositionEncodingKind = string;
+
+
+/**
  * General client capabilities.
  *
  * @since 3.16.0
@@ -837,13 +878,6 @@ export interface GeneralClientCapabilities {
 	 *
 	 * If omitted it defaults to ['utf-16'].
 	 *
-	 * For the following standard Unicode encodings these string values are
-	 * defined:
-	 *
-	 * UTF-8: 'utf-8'
-	 * UTF-16: 'utf-16'
-	 * UTF-32: 'utf-32'
-	 *
 	 * Implementation considerations: since the conversion from one encoding
 	 * into another requires the content of the file / line the conversion
 	 * is best done where the file is read which is usually on the server
@@ -852,7 +886,7 @@ export interface GeneralClientCapabilities {
 	 * @since 3.17.0
 	 * @proposed
 	 */
-	positionEncodings?: ('utf-16' | 'utf-8' | 'utf-32' | string)[];
+	positionEncodings?: PositionEncodingKind[];
 }
 
 /**
@@ -981,7 +1015,7 @@ export interface ServerCapabilities<T = any> {
 	 * @since 3.17.0
 	 * @proposed
 	 */
-	positionEncoding?: 'utf-16' | 'utf-8' | 'utf-32' | string;
+	positionEncoding?: PositionEncodingKind;
 
 	/**
 	 * Defines how text documents are synced. Is either a detailed structure defining each notification or
