@@ -12,11 +12,11 @@ import * as vscode from 'vscode';
 import * as lsclient from 'vscode-languageclient/node';
 import { MemoryFileSystemProvider } from './memoryFileSystemProvider';
 import { vsdiag, DiagnosticProviderMiddleware } from 'vscode-languageclient/lib/common/proposed.diagnostic';
-import { Proposed, RequestType } from 'vscode-languageclient';
+import { LanguageClient } from 'vscode-languageclient';
 
 namespace GotNotifiedRequest {
 	export const method: 'testing/gotNotified' = 'testing/gotNotified';
-	export const type = new RequestType<string, boolean, void>(method);
+	export const type = new lsclient.RequestType<string, boolean, void>(method);
 }
 
 suite('Client integration', () => {
@@ -29,6 +29,7 @@ suite('Client integration', () => {
 	const position: vscode.Position = new vscode.Position(1, 1);
 	const range: vscode.Range = new vscode.Range(1, 1, 1, 2);
 	const fsProvider = new MemoryFileSystemProvider();
+	let contentProviderDisposable!: vscode.Disposable;
 	let fsProviderDisposable!: vscode.Disposable;
 
 	async function revertAllDirty(): Promise<void> {
@@ -84,7 +85,7 @@ suite('Client integration', () => {
 	suiteSetup(async () => {
 		fsProviderDisposable = vscode.workspace.registerFileSystemProvider(fsProvider.scheme, fsProvider);
 
-		vscode.workspace.registerTextDocumentContentProvider('lsptests', {
+		contentProviderDisposable = vscode.workspace.registerTextDocumentContentProvider('lsptests', {
 			provideTextDocumentContent: (_uri: vscode.Uri) => {
 				return [
 					'REM @ECHO OFF',
@@ -121,12 +122,12 @@ suite('Client integration', () => {
 
 		client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
 		client.registerProposedFeatures();
-		client.start();
-		await client.onReady();
+		await client.start();
 	});
 
 	suiteTeardown(async () => {
 		fsProviderDisposable.dispose();
+		contentProviderDisposable.dispose();
 		await client.stop();
 	});
 
@@ -1355,7 +1356,7 @@ suite('Client integration', () => {
 		await vscode.workspace.openNotebookDocument('jupyter-notebook', notebookData);
 		assert.strictEqual(middlewareCalled, true);
 		middleware.notebooks = undefined;
-		const notified = await client.sendRequest(GotNotifiedRequest.type, Proposed.DidOpenNotebookDocumentNotification.method);
+		const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.Proposed.DidOpenNotebookDocumentNotification.method);
 		assert.strictEqual(notified, true);
 		await revertAllDirty();
 	});
@@ -1381,7 +1382,7 @@ suite('Client integration', () => {
 		await vscode.workspace.applyEdit(edit);
 		assert.strictEqual(middlewareCalled, true);
 		middleware.notebooks = undefined;
-		const notified = await client.sendRequest(GotNotifiedRequest.type, Proposed.DidChangeNotebookDocumentNotification.method);
+		const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.Proposed.DidChangeNotebookDocumentNotification.method);
 		assert.strictEqual(notified, true);
 		await revertAllDirty();
 	});
@@ -1394,13 +1395,13 @@ suite('Client integration', () => {
 			],
 		);
 		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', notebookData);
-		const feature = client.getFeature(Proposed.NotebookDocumentSyncRegistrationType.method);
+		const feature = client.getFeature(lsclient.Proposed.NotebookDocumentSyncRegistrationType.method);
 		const provider = feature.getProvider(notebookDocument.getCells()[0]);
 		isDefined(provider);
 		assert.strictEqual(provider.mode, 'notebook');
 		if (provider.mode === 'notebook') {
 			await provider.sendDidCloseNotebookDocument(notebookDocument);
-			const notified = await client.sendRequest(GotNotifiedRequest.type, Proposed.DidCloseNotebookDocumentNotification.method);
+			const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.Proposed.DidCloseNotebookDocumentNotification.method);
 			assert.strictEqual(notified, true);
 		}
 		await revertAllDirty();
@@ -1437,8 +1438,7 @@ suite('Server tests', () => {
 		};
 		const clientOptions: lsclient.LanguageClientOptions = {};
 		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
-		client.start();
-		await client.onReady();
+		await client.start();
 
 		await assert.rejects(async () => {
 			await client.stop();
@@ -1459,8 +1459,7 @@ suite('Server tests', () => {
 		};
 		const clientOptions: lsclient.LanguageClientOptions = {};
 		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
-		client.start();
-		await client.onReady();
+		await client.start();
 
 		await assert.rejects(async () => {
 			await client.stop(100);
@@ -1474,10 +1473,10 @@ suite('Server tests', () => {
 		};
 		const clientOptions: lsclient.LanguageClientOptions = {};
 		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
-		client.start();
+		void client.start();
 		await client.stop();
 
-		client.start();
+		void client.start();
 		await client.stop();
 	});
 
@@ -1492,22 +1491,20 @@ suite('Server tests', () => {
 		client.onDidChangeState(event => {
 			state = event.newState;
 		});
-		client.start();
-		await client.onReady();
-		assert.strictEqual(state, lsclient.State.Running);
+		await client.start();
+		assert.strictEqual(state, lsclient.State.Running, 'First start');
 
 		await client.stop();
-		assert.strictEqual(state, lsclient.State.Stopped);
+		assert.strictEqual(state, lsclient.State.Stopped, 'First stop');
 
-		client.start();
-		await client.onReady();
-		assert.strictEqual(state, lsclient.State.Running);
+		await client.start();
+		assert.strictEqual(state, lsclient.State.Running, 'Second start');
 
 		await client.stop();
-		assert.strictEqual(state, lsclient.State.Stopped);
+		assert.strictEqual(state, lsclient.State.Stopped, 'Second stop');
 	});
 
-	test('Test state change events on crash', async() => {
+	test('Test state change events on crash', async () => {
 		const serverOptions: lsclient.ServerOptions = {
 			module: path.join(__dirname, './servers/crashServer.js'),
 			transport: lsclient.TransportKind.ipc,
@@ -1518,8 +1515,7 @@ suite('Server tests', () => {
 		client.onDidChangeState(event => {
 			states.push(event.newState);
 		});
-		client.start();
-		await client.onReady();
+		await client.start();
 		assert.strictEqual(states.length, 2, 'First start');
 		assert.strictEqual(states[0], lsclient.State.Starting);
 		assert.strictEqual(states[1], lsclient.State.Running);
@@ -1528,7 +1524,7 @@ suite('Server tests', () => {
 		await client.sendNotification(CrashNotification.type);
 		await client.onCrash;
 
-		await client.onReady();
+		await client.start();
 		assert.strictEqual(states.length, 3, 'Restart after crash');
 		assert.strictEqual(states[0], lsclient.State.Stopped);
 		assert.strictEqual(states[1], lsclient.State.Starting);
@@ -1538,5 +1534,132 @@ suite('Server tests', () => {
 		await client.stop();
 		assert.strictEqual(states.length, 1, 'After stop');
 		assert.strictEqual(states[0], lsclient.State.Stopped);
+	});
+});
+
+suite('Server activation', () => {
+
+	const uri: vscode.Uri = vscode.Uri.parse('lsptests://localhost/test.bat');
+	const documentSelector: lsclient.DocumentSelector = [{ scheme: 'lsptests', language: 'bat' }];
+	const position: vscode.Position = new vscode.Position(1, 1);
+	let contentProviderDisposable!: vscode.Disposable;
+
+	suiteSetup(async () => {
+		contentProviderDisposable = vscode.workspace.registerTextDocumentContentProvider('lsptests', {
+			provideTextDocumentContent: (_uri: vscode.Uri) => {
+				return [
+					'REM @ECHO OFF'
+				].join('\n');
+			}
+		});
+
+	});
+
+	suiteTeardown(async () => {
+		contentProviderDisposable.dispose();
+	});
+
+	function createClient() {
+		const serverModule = path.join(__dirname, './servers/customServer.js');
+		const serverOptions: lsclient.ServerOptions = {
+			run: { module: serverModule, transport: lsclient.TransportKind.ipc },
+			debug: { module: serverModule, transport: lsclient.TransportKind.ipc, options: { execArgv: ['--nolazy', '--inspect=6014'] } }
+		};
+
+		const clientOptions: lsclient.LanguageClientOptions = {
+			documentSelector,
+			synchronize: {},
+			initializationOptions: {},
+			middleware: {},
+		};
+		(clientOptions as ({ $testMode?: boolean })).$testMode = true;
+
+		const result = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		result.registerProposedFeatures();
+		return result;
+	}
+
+	test('Start server on request', async () => {
+		const client = createClient();
+		assert.strictEqual(client.state, lsclient.State.Stopped);
+		const result: number = await client.sendRequest('request', { value: 10 });
+		assert.strictEqual(client.state, lsclient.State.Running);
+		assert.strictEqual(result, 11);
+		await client.stop();
+	});
+
+	test('Start server on notification', async () => {
+		const client = createClient();
+		assert.strictEqual(client.state, lsclient.State.Stopped);
+		await client.sendNotification('notification');
+		assert.strictEqual(client.state, lsclient.State.Running);
+		await client.stop();
+	});
+
+	test('Add pending request handler', async () => {
+		const client = createClient();
+		assert.strictEqual(client.state, lsclient.State.Stopped);
+		let requestReceived: boolean = false;
+		client.onRequest('request', () => {
+			requestReceived = true;
+		});
+		await client.sendRequest('triggerRequest');
+		assert.strictEqual(requestReceived, true);
+		await client.stop();
+	});
+
+	test('Add pending notification handler', async () => {
+		const client = createClient();
+		assert.strictEqual(client.state, lsclient.State.Stopped);
+		let notificationReceived: boolean = false;
+		client.onNotification('notification', () => {
+			notificationReceived = true;
+		});
+		await client.sendRequest('triggerNotification');
+		assert.strictEqual(notificationReceived, true);
+		await client.stop();
+	});
+
+	async function checkServerStart(client: LanguageClient, disposable: vscode.Disposable): Promise<void> {
+		return new Promise((resolve, reject) => {
+			const timeout = setTimeout(() => {
+				reject(new Error(`Server didn't start in 1000 ms.`));
+			}, 1000);
+			client.onDidChangeState((event) => {
+				if (event.newState === lsclient.State.Running) {
+					clearTimeout(timeout);
+					disposable.dispose();
+					resolve();
+				}
+			});
+		});
+	}
+
+	test('Start server on document open', async () => {
+		const client = createClient();
+		assert.strictEqual(client.state, lsclient.State.Stopped);
+		const uri: vscode.Uri = vscode.Uri.parse('lsptests://localhost/documentOpenTest.bat');
+		const started = checkServerStart(client, vscode.workspace.onDidOpenTextDocument((document) => {
+			if (vscode.languages.match([{ language: 'bat', scheme: 'lsptests', pattern: uri.fsPath }], document)) {
+				void client.start();
+			}
+		}));
+		await vscode.workspace.openTextDocument(uri);
+		await started;
+		await client.stop();
+	});
+
+	test('Start server on language feature', async () => {
+		const client = createClient();
+		assert.strictEqual(client.state, lsclient.State.Stopped);
+		const started = checkServerStart(client, vscode.languages.registerDeclarationProvider(documentSelector, {
+			provideDeclaration: async () => {
+				await client.start();
+				return undefined;
+			}
+		}));
+		await vscode.commands.executeCommand('vscode.executeDeclarationProvider', uri, position);
+		await started;
+		await client.stop();
 	});
 });

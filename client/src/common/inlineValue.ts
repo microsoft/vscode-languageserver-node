@@ -13,14 +13,7 @@ import {
 	InlineValueRefreshRequest, InlineValueParams, InlineValueRequest,
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, BaseLanguageClient } from './client';
-
-function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
-	if (target[key] === void 0) {
-		target[key] = Object.create(null) as any;
-	}
-	return target[key];
-}
+import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
 
 export type ProvideInlineValuesSignature = (this: void, document: TextDocument, viewPort: VRange, context: VInlineValueContext, token: CancellationToken) => ProviderResult<VInlineValue[]>;
 
@@ -33,8 +26,8 @@ export type InlineValueProviderShape = {
 	onDidChangeInlineValues: EventEmitter<void>;
 };
 
-export class InlineValueFeature extends TextDocumentFeature<boolean | InlineValueOptions, InlineValueRegistrationOptions, InlineValueProviderShape> {
-	constructor(client: BaseLanguageClient) {
+export class InlineValueFeature extends TextDocumentLanguageFeature<boolean | InlineValueOptions, InlineValueRegistrationOptions, InlineValueProviderShape, InlineValueMiddleware> {
+	constructor(client: FeatureClient<InlineValueMiddleware>) {
 		super(client, InlineValueRequest.type);
 	}
 
@@ -79,13 +72,17 @@ export class InlineValueFeature extends TextDocumentFeature<boolean | InlineValu
 						return client.handleFailedRequest(InlineValueRequest.type, token, error, null);
 					});
 				};
-				const middleware = client.clientOptions.middleware!;
+				const middleware = client.middleware;
 				return middleware.provideInlineValues
 					? middleware.provideInlineValues(document, viewPort, context, token, provideInlineValues)
 					: provideInlineValues(document, viewPort, context, token);
 
 			}
 		};
-		return [Languages.registerInlineValuesProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider), { provider: provider, onDidChangeInlineValues: eventEmitter }];
+		return [this.registerProvider(selector, provider), { provider: provider, onDidChangeInlineValues: eventEmitter }];
+	}
+
+	private registerProvider(selector: DocumentSelector, provider: InlineValuesProvider): Disposable {
+		return Languages.registerInlineValuesProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider);
 	}
 }

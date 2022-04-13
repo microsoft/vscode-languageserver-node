@@ -6,7 +6,7 @@
 
 import * as path from 'path';
 import { commands, ExtensionContext, Uri } from 'vscode';
-import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, ProposedFeatures } from 'vscode-languageclient/node';
+import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, NotificationType, SuspendMode, DidOpenTextDocumentNotification } from 'vscode-languageclient/node';
 
 let client: LanguageClient;
 
@@ -49,29 +49,32 @@ export function activate(context: ExtensionContext) {
 		},
 		diagnosticPullOptions: {
 			onTabs: true,
+			onChange: true,
 			match: (selector, resource) => {
 				const fsPath = resource.fsPath;
 				return path.extname(fsPath) === '.bat';
 			}
+		},
+		suspend: {
+			mode: SuspendMode.on
 		}
 	};
 
 	client = new LanguageClient('testbed', 'Testbed', serverOptions, clientOptions);
-	// client.registerFeature(ProposedFeatures.createNotebookDocumentSyncFeature(client));
 	client.registerProposedFeatures();
-	// let not: NotificationType<string[], void> = new NotificationType<string[], void>('testbed/notification');
-	void client.onReady().then(() => {
-		return client.sendNotification('testbed/notification', ['dirk', 'baeumer']);
-	});
 	client.onTelemetry((data: any) => {
 		console.log(`Telemetry event received: ${JSON.stringify(data)}`);
 	});
-	client.start();
-	commands.registerCommand('testbed.myCommand.invoked', () => {
-		void commands.executeCommand('testbed.myCommand').then(value => {
-			console.log(value);
-		});
-	});
+	const feature = client.getFeature(DidOpenTextDocumentNotification.method);
+	feature.registerActivation({ documentSelector: ['bat']});
+	// const not: NotificationType<string[]> = new NotificationType<string[]>('testbed/notification');
+	// client.start().catch((error)=> client.error(`Start failed`, error, 'force'));
+	// client.sendNotification(not, ['dirk', 'baeumer']).catch((error) => client.error(`Sending test notification failed`, error, 'force'));
+	// commands.registerCommand('testbed.myCommand.invoked', () => {
+	// 	void commands.executeCommand('testbed.myCommand').then(value => {
+	// 		console.log(value);
+	// 	});
+	// });
 }
 
 export function deactivate() {

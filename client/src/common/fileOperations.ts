@@ -8,7 +8,7 @@ import * as code from 'vscode';
 import * as minimatch from 'minimatch';
 import * as proto from 'vscode-languageserver-protocol';
 
-import { DynamicFeature, BaseLanguageClient, RegistrationData, NextSignature } from './client';
+import { DynamicFeature, RegistrationData, NextSignature, FeatureState, FeatureClient } from './features';
 import * as UUID from './utils/uuid';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
@@ -40,23 +40,28 @@ export interface FileOperationsMiddleware {
 	willDeleteFiles?: NextSignature<code.FileWillDeleteEvent, Thenable<code.WorkspaceEdit | null | undefined>>;
 }
 
+interface FileOperationsWorkspaceMiddleware {
+	workspace? : FileOperationsMiddleware;
+}
+
+
 interface Event<I> {
 	readonly files: ReadonlyArray<I>;
 }
 
 abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFeature<proto.FileOperationRegistrationOptions> {
 
-	protected _client: BaseLanguageClient;
-	private _event: code.Event<E>;
-	private _registrationType: proto.RegistrationType<proto.FileOperationRegistrationOptions>;
-	private _clientCapability: keyof proto.FileOperationClientCapabilities;
-	private _serverCapability: keyof proto.FileOperationOptions;
+	protected readonly _client: FeatureClient<FileOperationsWorkspaceMiddleware>;
+	private readonly _event: code.Event<E>;
+	private readonly _registrationType: proto.RegistrationType<proto.FileOperationRegistrationOptions>;
+	private readonly _clientCapability: keyof proto.FileOperationClientCapabilities;
+	private readonly _serverCapability: keyof proto.FileOperationOptions;
 	private _listener: code.Disposable | undefined;
 	// This property must stay private. Otherwise the type `minimatch.IMinimatch` becomes public and as a consequence we would need to
 	// ship the d.ts files for minimatch to make the compiler happy when compiling against the vscode-languageclient library
-	private _filters = new Map<string, Array<{ scheme?: string; matcher: minimatch.IMinimatch; kind?: proto.FileOperationPatternKind }>>();
+	private readonly _filters: Map<string, Array<{ scheme?: string; matcher: minimatch.IMinimatch; kind?: proto.FileOperationPatternKind }>>;
 
-	constructor(client: BaseLanguageClient, event: code.Event<E>,
+	constructor(client: FeatureClient<FileOperationsWorkspaceMiddleware>, event: code.Event<E>,
 		registrationType: proto.RegistrationType<proto.FileOperationRegistrationOptions>,
 		clientCapability: keyof proto.FileOperationClientCapabilities,
 		serverCapability: keyof proto.FileOperationOptions) {
@@ -65,6 +70,11 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 		this._registrationType = registrationType;
 		this._clientCapability = clientCapability;
 		this._serverCapability = serverCapability;
+		this._filters = new Map();
+	}
+
+	getState(): FeatureState {
+		return { kind: 'workspace', id: this._registrationType.method, registrations: this._filters.size > 0 };
 	}
 
 	protected filterSize(): number {
@@ -204,7 +214,7 @@ abstract class NotificationFileOperationFeature<I, E extends { readonly files: R
 	private _accessUri: (i: I) => code.Uri;
 	private _createParams: (e: E) => P;
 
-	constructor(client: BaseLanguageClient, event: code.Event<E>,
+	constructor(client: FeatureClient<FileOperationsWorkspaceMiddleware>, event: code.Event<E>,
 		notificationType: proto.ProtocolNotificationType<P, proto.FileOperationRegistrationOptions>,
 		clientCapability: keyof proto.FileOperationClientCapabilities,
 		serverCapability: keyof proto.FileOperationOptions,
@@ -279,7 +289,7 @@ abstract class CachingNotificationFileOperationFeature<I, E extends { readonly f
 
 export class DidCreateFilesFeature extends NotificationFileOperationFeature<code.Uri, code.FileCreateEvent, proto.CreateFilesParams> {
 
-	constructor(client: BaseLanguageClient) {
+	constructor(client: FeatureClient<FileOperationsWorkspaceMiddleware>) {
 		super(
 			client, code.workspace.onDidCreateFiles, proto.DidCreateFilesNotification.type, 'didCreate', 'didCreate',
 			(i: code.Uri) => i,
@@ -288,7 +298,7 @@ export class DidCreateFilesFeature extends NotificationFileOperationFeature<code
 	}
 
 	protected doSend(event: code.FileCreateEvent, next: (event: code.FileCreateEvent) => Promise<void>): Promise<void> {
-		const middleware = this._client.clientOptions.middleware?.workspace;
+		const middleware = this._client.middleware.workspace;
 		return middleware?.didCreateFiles
 			? middleware.didCreateFiles(event, next)
 			: next(event);
@@ -297,7 +307,7 @@ export class DidCreateFilesFeature extends NotificationFileOperationFeature<code
 
 export class DidRenameFilesFeature extends CachingNotificationFileOperationFeature<{ oldUri: code.Uri; newUri: code.Uri }, code.FileRenameEvent, proto.RenameFilesParams> {
 
-	constructor(client: BaseLanguageClient) {
+	constructor(client: FeatureClient<FileOperationsWorkspaceMiddleware>) {
 		super(
 			client, code.workspace.onDidRenameFiles, proto.DidRenameFilesNotification.type, 'didRename', 'didRename',
 			(i: { oldUri: code.Uri; newUri: code.Uri }) => i.oldUri,
@@ -318,7 +328,7 @@ export class DidRenameFilesFeature extends CachingNotificationFileOperationFeatu
 
 	protected doSend(event: code.FileRenameEvent, next: (event: code.FileRenameEvent) => Promise<void>): Promise<void> {
 		this.clearFileTypeCache();
-		const middleware = this._client.clientOptions.middleware?.workspace;
+		const middleware = this._client.middleware.workspace;
 		return middleware?.didRenameFiles
 			? middleware.didRenameFiles(event, next)
 			: next(event);
@@ -327,7 +337,7 @@ export class DidRenameFilesFeature extends CachingNotificationFileOperationFeatu
 
 export class DidDeleteFilesFeature extends CachingNotificationFileOperationFeature<code.Uri, code.FileDeleteEvent, proto.DeleteFilesParams> {
 
-	constructor(client: BaseLanguageClient) {
+	constructor(client: FeatureClient<FileOperationsWorkspaceMiddleware>) {
 		super(
 			client, code.workspace.onDidDeleteFiles, proto.DidDeleteFilesNotification.type, 'didDelete', 'didDelete',
 			(i: code.Uri) => i,
@@ -348,7 +358,7 @@ export class DidDeleteFilesFeature extends CachingNotificationFileOperationFeatu
 
 	protected doSend(event: code.FileCreateEvent, next: (event: code.FileCreateEvent) => Promise<void>): Promise<void> {
 		this.clearFileTypeCache();
-		const middleware = this._client.clientOptions.middleware?.workspace;
+		const middleware = this._client.middleware.workspace;
 		return middleware?.didDeleteFiles
 			? middleware.didDeleteFiles(event, next)
 			: next(event);
@@ -368,7 +378,7 @@ abstract class RequestFileOperationFeature<I, E extends RequestEvent<I>, P> exte
 	private _accessUri: (i: I) => code.Uri;
 	private _createParams: (e: Event<I>) => P;
 
-	constructor(client: BaseLanguageClient, event: code.Event<E>,
+	constructor(client: FeatureClient<FileOperationsWorkspaceMiddleware>, event: code.Event<E>,
 		requestType: proto.ProtocolRequestType<P, proto.WorkspaceEdit | null, never, void, proto.FileOperationRegistrationOptions>,
 		clientCapability: keyof proto.FileOperationClientCapabilities,
 		serverCapability: keyof proto.FileOperationOptions,
@@ -406,7 +416,7 @@ abstract class RequestFileOperationFeature<I, E extends RequestEvent<I>, P> exte
 }
 
 export class WillCreateFilesFeature extends RequestFileOperationFeature<code.Uri, code.FileWillCreateEvent, proto.CreateFilesParams> {
-	constructor(client: BaseLanguageClient) {
+	constructor(client: FeatureClient<FileOperationsWorkspaceMiddleware>) {
 		super(
 			client, code.workspace.onWillCreateFiles, proto.WillCreateFilesRequest.type, 'willCreate', 'willCreate',
 			(i: code.Uri) => i,
@@ -415,7 +425,7 @@ export class WillCreateFilesFeature extends RequestFileOperationFeature<code.Uri
 	}
 
 	protected doSend(event: code.FileWillCreateEvent, next: (event: code.FileWillCreateEvent) => Thenable<code.WorkspaceEdit> | Thenable<any>): Thenable<code.WorkspaceEdit> | Thenable<any> {
-		const middleware = this._client.clientOptions.middleware?.workspace;
+		const middleware = this._client.middleware.workspace;
 		return middleware?.willCreateFiles
 			? middleware.willCreateFiles(event, next)
 			: next(event);
@@ -423,7 +433,7 @@ export class WillCreateFilesFeature extends RequestFileOperationFeature<code.Uri
 }
 
 export class WillRenameFilesFeature extends RequestFileOperationFeature<{ oldUri: code.Uri; newUri: code.Uri }, code.FileWillRenameEvent, proto.RenameFilesParams> {
-	constructor(client: BaseLanguageClient) {
+	constructor(client: FeatureClient<FileOperationsWorkspaceMiddleware>) {
 		super(
 			client, code.workspace.onWillRenameFiles, proto.WillRenameFilesRequest.type, 'willRename', 'willRename',
 			(i: { oldUri: code.Uri; newUri: code.Uri }) => i.oldUri,
@@ -432,7 +442,7 @@ export class WillRenameFilesFeature extends RequestFileOperationFeature<{ oldUri
 	}
 
 	protected doSend(event: code.FileWillRenameEvent, next: (event: code.FileWillRenameEvent) => Thenable<code.WorkspaceEdit> | Thenable<any>): Thenable<code.WorkspaceEdit> | Thenable<any> {
-		const middleware = this._client.clientOptions.middleware?.workspace;
+		const middleware = this._client.middleware.workspace;
 		return middleware?.willRenameFiles
 			? middleware.willRenameFiles(event, next)
 			: next(event);
@@ -440,7 +450,7 @@ export class WillRenameFilesFeature extends RequestFileOperationFeature<{ oldUri
 }
 
 export class WillDeleteFilesFeature extends RequestFileOperationFeature<code.Uri, code.FileWillDeleteEvent, proto.DeleteFilesParams> {
-	constructor(client: BaseLanguageClient) {
+	constructor(client: FeatureClient<FileOperationsWorkspaceMiddleware>) {
 		super(
 			client, code.workspace.onWillDeleteFiles, proto.WillDeleteFilesRequest.type, 'willDelete', 'willDelete',
 			(i: code.Uri) => i,
@@ -449,7 +459,7 @@ export class WillDeleteFilesFeature extends RequestFileOperationFeature<code.Uri
 	}
 
 	protected doSend(event: code.FileWillDeleteEvent, next: (event: code.FileWillDeleteEvent) => Thenable<code.WorkspaceEdit> | Thenable<any>): Thenable<code.WorkspaceEdit> | Thenable<any> {
-		const middleware = this._client.clientOptions.middleware?.workspace;
+		const middleware = this._client.middleware.workspace;
 		return middleware?.willDeleteFiles
 			? middleware.willDeleteFiles(event, next)
 			: next(event);

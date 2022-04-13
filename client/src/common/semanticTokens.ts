@@ -10,15 +10,8 @@ import { ClientCapabilities, ServerCapabilities, DocumentSelector, SemanticToken
 	SemanticTokensRegistrationType
 } from 'vscode-languageserver-protocol';
 
-import { Middleware, BaseLanguageClient, TextDocumentFeature } from './client';
+import { FeatureClient, TextDocumentLanguageFeature, ensure } from './features';
 import * as Is from './utils/is';
-
-function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
-	if (target[key] === void 0) {
-		target[key] = {} as any;
-	}
-	return target[key];
-}
 
 export interface DocumentSemanticsTokensSignature {
 	(this: void, document: vscode.TextDocument, token: vscode.CancellationToken): vscode.ProviderResult<vscode.SemanticTokens>;
@@ -49,9 +42,9 @@ export interface SemanticTokensProviders {
 	onDidChangeSemanticTokensEmitter: vscode.EventEmitter<void>;
 }
 
-export class SemanticTokensFeature extends TextDocumentFeature<boolean | SemanticTokensOptions, SemanticTokensRegistrationOptions, SemanticTokensProviders> {
+export class SemanticTokensFeature extends TextDocumentLanguageFeature<boolean | SemanticTokensOptions, SemanticTokensRegistrationOptions, SemanticTokensProviders, SemanticTokensMiddleware> {
 
-	constructor(client: BaseLanguageClient) {
+	constructor(client: FeatureClient<SemanticTokensMiddleware>) {
 		super(client, SemanticTokensRegistrationType.type);
 	}
 
@@ -133,7 +126,7 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Semanti
 				onDidChangeSemanticTokens: eventEmitter.event,
 				provideDocumentSemanticTokens: (document, token) => {
 					const client = this._client;
-					const middleware = client.clientOptions.middleware! as Middleware & SemanticTokensMiddleware;
+					const middleware = client.middleware;
 					const provideDocumentSemanticTokens: DocumentSemanticsTokensSignature = (document, token) => {
 						const params: SemanticTokensParams =  {
 							textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document)
@@ -154,7 +147,7 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Semanti
 				provideDocumentSemanticTokensEdits: hasEditProvider
 					? (document, previousResultId, token) => {
 						const client = this._client;
-						const middleware = client.clientOptions.middleware! as Middleware & SemanticTokensMiddleware;
+						const middleware = client.middleware;
 						const provideDocumentSemanticTokensEdits: DocumentSemanticsTokensEditsSignature = (document, previousResultId, token) => {
 							const params: SemanticTokensDeltaParams =  {
 								textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
@@ -186,7 +179,7 @@ export class SemanticTokensFeature extends TextDocumentFeature<boolean | Semanti
 			? {
 				provideDocumentRangeSemanticTokens: (document: vscode.TextDocument, range: vscode.Range, token: vscode.CancellationToken) => {
 					const client = this._client;
-					const middleware = client.clientOptions.middleware! as Middleware & SemanticTokensMiddleware;
+					const middleware = client.middleware;
 					const provideDocumentRangeSemanticTokens: DocumentRangeSemanticTokensSignature = (document, range, token) => {
 						const params: SemanticTokensRangeParams = {
 							textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),

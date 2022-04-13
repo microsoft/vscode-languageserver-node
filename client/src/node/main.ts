@@ -13,8 +13,7 @@ import * as SemVer from 'semver';
 import { workspace as Workspace, Disposable, version as VSCodeVersion } from 'vscode';
 
 import * as Is from '../common/utils/is';
-import { CommonLanguageClient } from '../common/commonClient';
-import { LanguageClientOptions, MessageTransports } from '../common/client';
+import { BaseLanguageClient, LanguageClientOptions, MessageTransports } from '../common/client';
 
 import { terminate } from './processes';
 import { StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageWriter, createClientPipeTransport, generateRandomPipeName, createClientSocketTransport, InitializeParams} from 'vscode-languageserver-protocol/node';
@@ -124,7 +123,7 @@ namespace ChildProcessInfo {
 
 export type ServerOptions = Executable | { run: Executable; debug: Executable } | { run: NodeModule; debug: NodeModule } | NodeModule | (() => Promise<ChildProcess | StreamInfo | MessageTransports | ChildProcessInfo>);
 
-export class LanguageClient extends CommonLanguageClient {
+export class LanguageClient extends BaseLanguageClient {
 
 	private readonly _serverOptions: ServerOptions;
 	private readonly _forceDebug: boolean;
@@ -194,9 +193,9 @@ export class LanguageClient extends CommonLanguageClient {
 		// stop on the same client instance.
 		if (this.isInDebugMode) {
 			await new Promise((resolve) => setTimeout(resolve, 1000));
-			this.start();
+			await this.start();
 		} else {
-			this.start();
+			await this.start();
 		}
 	}
 
@@ -597,9 +596,9 @@ export class SettingMonitor {
 		let rest = index >= 0 ? this._setting.substr(index + 1) : undefined;
 		let enabled = rest ? Workspace.getConfiguration(primary).get(rest, false) : Workspace.getConfiguration(primary);
 		if (enabled && this._client.needsStart()) {
-			this._client.start();
+			this._client.start().catch((error) => this._client.error('Start failed after configuration change', error, 'force'));
 		} else if (!enabled && this._client.needsStop()) {
-			void this._client.stop();
+			void this._client.stop().catch((error) => this._client.error('Stop failed after configuration change', error, 'force'));
 		}
 	}
 }

@@ -202,13 +202,13 @@ connection.onInitialized((params) => {
 	void connection.client.register(SemanticTokensRegistrationType.type, registrationOptions);
 });
 
-connection.onShutdown((handler) => {
-	connection.console.log('Shutdown received');
-	return new Promise((resolve, reject) => {
-		setTimeout(() => {
-			resolve(undefined);
-		}, 3000);
-	});
+connection.onShutdown((_handler) => {
+	// connection.console.log('Shutdown received');
+	// return new Promise((resolve, reject) => {
+	// 	setTimeout(() => {
+	// 		resolve(undefined);
+	// 	}, 3000);
+	// });
 });
 
 documents.onDidChangeContent((event) => {

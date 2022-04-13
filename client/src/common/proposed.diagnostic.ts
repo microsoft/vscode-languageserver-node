@@ -18,8 +18,8 @@ import {
 
 import { generateUuid } from './utils/uuid';
 import {
-	TextDocumentFeature, BaseLanguageClient, Middleware, LSPCancellationError, DiagnosticPullMode
-} from './client';
+	TextDocumentLanguageFeature, FeatureClient, LSPCancellationError
+} from './features';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -95,7 +95,7 @@ export namespace vsdiag {
 	}
 }
 
-export type ProvideDiagnosticSignature =(this: void, document: TextDocument | Uri, previousResultId: string | undefined, token: CancellationToken) => ProviderResult<vsdiag.DocumentDiagnosticReport>;
+export type ProvideDiagnosticSignature = (this: void, document: TextDocument | Uri, previousResultId: string | undefined, token: CancellationToken) => ProviderResult<vsdiag.DocumentDiagnosticReport>;
 
 export type ProvideWorkspaceDiagnosticSignature = (this: void, resultIds: vsdiag.PreviousResultId[], token: CancellationToken, resultReporter: vsdiag.ResultReporter) => ProviderResult<vsdiag.WorkspaceDiagnosticReport>;
 
@@ -103,6 +103,53 @@ export type DiagnosticProviderMiddleware = {
 	provideDiagnostics?: (this: void, document: TextDocument | Uri, previousResultId: string | undefined, token: CancellationToken, next: ProvideDiagnosticSignature) => ProviderResult<vsdiag.DocumentDiagnosticReport>;
 	provideWorkspaceDiagnostics?: (this: void, resultIds: vsdiag.PreviousResultId[], token: CancellationToken, resultReporter: vsdiag.ResultReporter, next: ProvideWorkspaceDiagnosticSignature) => ProviderResult<vsdiag.WorkspaceDiagnosticReport>;
 };
+
+export enum DiagnosticPullMode {
+	onType = 'onType',
+	onSave = 'onSave'
+}
+
+export type DiagnosticPullOptions = {
+	diagnosticPullOptions?: {
+		/**
+		* Whether to pull for diagnostics on document change.
+		*/
+		onChange?: boolean;
+
+		/**
+		* Whether to pull for diagnostics on document save.
+		*/
+		onSave?: boolean;
+
+		/**
+		* An optional filter method that is consulted when triggering a
+		* diagnostic pull during document change or document save.
+		*
+		* @param document the document that changes or got save
+		* @param mode the mode
+		*/
+		filter?(document: TextDocument, mode: DiagnosticPullMode): boolean;
+
+		/**
+		* Whether to pull for diagnostics on resources of non instantiated
+		* tabs. If it is set to true it is highly recommended to provide
+		* a match method as well. Otherwise the client will not pull for
+		* tabs if the used document selector specifies a language property
+		* since the language value is not known for resources.
+		*/
+		onTabs?: boolean;
+
+		/**
+		* A optional match method that is consulted when pull for diagnostics
+		* when only a URI is known (e.g. for not instantiated tabs)
+		*
+		* @param documentSelector the document selector
+		* @param resource the resource.
+		*/
+		match?(documentSelector: DocumentSelector, resource: Uri): boolean;
+	};
+};
+
 
 enum RequestStateKind {
 	active = 'open',
@@ -132,7 +179,7 @@ class Tabs {
 		this.open = new Set();
 		const openTabsHandler = () => {
 			this.open.clear();
-			for (const group of Window.tabGroups.groups) {
+			for (const group of Window.tabGroups.all) {
 				for (const tab of group.tabs) {
 					const kind = tab.kind;
 					if (kind instanceof TabKindText) {
@@ -145,8 +192,8 @@ class Tabs {
 		};
 		openTabsHandler();
 
-		if (Window.tabGroups.onDidChangeTabGroup !== undefined) {
-			this.disposable = Window.tabGroups.onDidChangeTabGroup(openTabsHandler);
+		if (Window.tabGroups.onDidChangeTabGroups !== undefined) {
+			this.disposable = Window.tabGroups.onDidChangeTabGroups(openTabsHandler);
 		} else {
 			this.disposable = { dispose: () => {} };
 		}
@@ -169,7 +216,7 @@ class Tabs {
 
 	public getTabResources(): Uri[] {
 		const result: Uri[] = [];
-		for (const group of Window.tabGroups.groups) {
+		for (const group of Window.tabGroups.all) {
 			for (const tab of group.tabs) {
 				const kind = tab.kind;
 				if (kind instanceof TabKindText) {
@@ -276,7 +323,7 @@ class DocumentPullStateTracker {
 class DiagnosticRequestor implements Disposable {
 
 	private isDisposed: boolean;
-	private readonly client: BaseLanguageClient;
+	private readonly client: FeatureClient<DiagnosticProviderMiddleware, DiagnosticPullOptions>;
 	private readonly tabs: Tabs;
 	private readonly options: Proposed.DiagnosticRegistrationOptions;
 
@@ -290,7 +337,7 @@ class DiagnosticRequestor implements Disposable {
 	private workspaceCancellation: CancellationTokenSource | undefined;
 	private workspaceTimeout: Disposable | undefined;
 
-	public constructor(client: BaseLanguageClient, tabs: Tabs, options: Proposed.DiagnosticRegistrationOptions) {
+	public constructor(client: FeatureClient<DiagnosticProviderMiddleware, DiagnosticPullOptions>, tabs: Tabs, options: Proposed.DiagnosticRegistrationOptions) {
 		this.client = client;
 		this.tabs = tabs;
 		this.options = options;
@@ -477,7 +524,7 @@ class DiagnosticRequestor implements Disposable {
 						return this.client.handleFailedRequest(Proposed.DocumentDiagnosticRequest.type, token, error, { kind: vsdiag.DocumentDiagnosticReportKind.full, items: [] });
 					});
 				};
-				const middleware: Middleware & DiagnosticProviderMiddleware = this.client.clientOptions.middleware!;
+				const middleware: DiagnosticProviderMiddleware = this.client.middleware;
 				return middleware.provideDiagnostics
 					? middleware.provideDiagnostics(document, previousResultId, token, provideDiagnostics)
 					: provideDiagnostics(document, previousResultId, token);
@@ -552,7 +599,7 @@ class DiagnosticRequestor implements Disposable {
 						return this.client.handleFailedRequest(Proposed.DocumentDiagnosticRequest.type, token, error, { items: [] });
 					});
 				};
-				const middleware: Middleware & DiagnosticProviderMiddleware = this.client.clientOptions.middleware!;
+				const middleware: DiagnosticProviderMiddleware = this.client.middleware;
 				return middleware.provideWorkspaceDiagnostics
 					? middleware.provideWorkspaceDiagnostics(resultIds, token, resultReporter, provideDiagnostics)
 					: provideDiagnostics(resultIds, token, resultReporter);
@@ -578,10 +625,10 @@ class DiagnosticRequestor implements Disposable {
 	}
 }
 
-export interface DiagnosticFeatureProvider {
+export type DiagnosticProviderShape = {
 	onDidChangeDiagnosticsEmitter: EventEmitter<void>;
 	diagnostics: vsdiag.DiagnosticProvider;
-}
+};
 
 class BackgroundScheduler implements Disposable {
 
@@ -653,14 +700,14 @@ class BackgroundScheduler implements Disposable {
 	}
 }
 
-class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
+class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 
 	public readonly disposable: Disposable;
 	private readonly diagnosticRequestor: DiagnosticRequestor;
 	private activeTextDocument: TextDocument | undefined;
 	private readonly backgroundScheduler: BackgroundScheduler;
 
-	constructor(client: BaseLanguageClient, tabs: Tabs, options: Proposed.DiagnosticRegistrationOptions) {
+	constructor(client: FeatureClient<DiagnosticProviderMiddleware, DiagnosticPullOptions>, tabs: Tabs, options: Proposed.DiagnosticRegistrationOptions) {
 		const diagnosticPullOptions = client.clientOptions.diagnosticPullOptions ?? { onChange: true, onSave: false };
 		const documentSelector = client.protocol2CodeConverter.asDocumentSelector(options.documentSelector!);
 		const disposables: Disposable[] = [];
@@ -813,11 +860,11 @@ class DiagnosticFeatureProviderImpl implements DiagnosticFeatureProvider {
 	}
 }
 
-export class DiagnosticFeature extends TextDocumentFeature<Proposed.DiagnosticOptions, Proposed.DiagnosticRegistrationOptions, DiagnosticFeatureProvider> {
+export class DiagnosticFeature extends TextDocumentLanguageFeature<Proposed.DiagnosticOptions, Proposed.DiagnosticRegistrationOptions, DiagnosticProviderShape, DiagnosticProviderMiddleware, DiagnosticPullOptions> {
 
 	private readonly tabs: Tabs;
 
-	constructor(client: BaseLanguageClient) {
+	constructor(client: FeatureClient<DiagnosticProviderMiddleware, DiagnosticPullOptions>) {
 		super(client, Proposed.DocumentDiagnosticRequest.type);
 		this.tabs = new Tabs();
 	}
@@ -850,7 +897,7 @@ export class DiagnosticFeature extends TextDocumentFeature<Proposed.DiagnosticOp
 		super.dispose();
 	}
 
-	protected registerLanguageProvider(options: Proposed.DiagnosticRegistrationOptions): [Disposable, DiagnosticFeatureProvider] {
+	protected registerLanguageProvider(options: Proposed.DiagnosticRegistrationOptions): [Disposable, DiagnosticProviderShape] {
 		const provider = new DiagnosticFeatureProviderImpl(this._client, this.tabs, options);
 		return [provider.disposable, provider];
 	}

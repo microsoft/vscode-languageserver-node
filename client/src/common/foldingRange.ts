@@ -12,14 +12,7 @@ import {
 	FoldingRangeRegistrationOptions, FoldingRangeOptions
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, BaseLanguageClient } from './client';
-
-function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
-	if (target[key] === void 0) {
-		target[key] = {} as any;
-	}
-	return target[key];
-}
+import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
 
 export interface ProvideFoldingRangeSignature {
 	(this: void, document: TextDocument, context: FoldingContext, token: CancellationToken): ProviderResult<VFoldingRange[]>;
@@ -29,9 +22,9 @@ export interface FoldingRangeProviderMiddleware {
 	provideFoldingRanges?: (this: void, document: TextDocument, context: FoldingContext, token: CancellationToken, next: ProvideFoldingRangeSignature) => ProviderResult<VFoldingRange[]>;
 }
 
-export class FoldingRangeFeature extends TextDocumentFeature<boolean | FoldingRangeOptions, FoldingRangeRegistrationOptions, FoldingRangeProvider> {
+export class FoldingRangeFeature extends TextDocumentLanguageFeature<boolean | FoldingRangeOptions, FoldingRangeRegistrationOptions, FoldingRangeProvider, FoldingRangeProviderMiddleware> {
 
-	constructor(client: BaseLanguageClient) {
+	constructor(client: FeatureClient<FoldingRangeProviderMiddleware>) {
 		super(client, FoldingRangeRequest.type);
 	}
 
@@ -68,7 +61,7 @@ export class FoldingRangeFeature extends TextDocumentFeature<boolean | FoldingRa
 						return client.handleFailedRequest(FoldingRangeRequest.type, token, error, null);
 					});
 				};
-				const middleware = client.clientOptions.middleware!;
+				const middleware = client.middleware;
 				return middleware.provideFoldingRanges
 					? middleware.provideFoldingRanges(document, context, token, provideFoldingRanges)
 					: provideFoldingRanges(document, context, token);

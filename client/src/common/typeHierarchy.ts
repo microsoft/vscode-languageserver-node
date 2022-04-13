@@ -10,14 +10,7 @@ import {
 
 import { ClientCapabilities, DocumentSelector, ServerCapabilities, TypeHierarchyRegistrationOptions, TypeHierarchyPrepareRequest, TypeHierarchySupertypesParams, TypeHierarchySupertypesRequest, TypeHierarchySubtypesParams, TypeHierarchySubtypesRequest, TypeHierarchyOptions } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, BaseLanguageClient, Middleware } from './client';
-
-function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
-	if (target[key] === void 0) {
-		target[key] = {} as any;
-	}
-	return target[key];
-}
+import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
 
 export type PrepareTypeHierarchySignature = (this: void, document: TextDocument, position: VPosition, token: CancellationToken) => ProviderResult<VTypeHierarchyItem[]>;
 
@@ -39,10 +32,10 @@ export type TypeHierarchyMiddleware = {
 
 class TypeHierarchyProvider implements VTypeHierarchyProvider {
 
-	private middleware: Middleware & TypeHierarchyMiddleware;
+	private middleware: TypeHierarchyMiddleware;
 
-	constructor(private client: BaseLanguageClient) {
-		this.middleware = client.clientOptions.middleware!;
+	constructor(private client: FeatureClient<TypeHierarchyMiddleware>) {
+		this.middleware = client.middleware;
 	}
 
 	public prepareTypeHierarchy(document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VTypeHierarchyItem[]> {
@@ -107,8 +100,8 @@ class TypeHierarchyProvider implements VTypeHierarchyProvider {
 	}
 }
 
-export class TypeHierarchyFeature extends TextDocumentFeature<boolean | TypeHierarchyOptions, TypeHierarchyRegistrationOptions, TypeHierarchyProvider> {
-	constructor(client: BaseLanguageClient) {
+export class TypeHierarchyFeature extends TextDocumentLanguageFeature<boolean | TypeHierarchyOptions, TypeHierarchyRegistrationOptions, TypeHierarchyProvider, TypeHierarchyMiddleware> {
+	constructor(client: FeatureClient<TypeHierarchyMiddleware>) {
 		super(client, TypeHierarchyPrepareRequest.type);
 	}
 

@@ -61,6 +61,7 @@ export interface ProtocolConnection {
 	 *
 	 * @param type The request type to install the handler for.
 	 * @param handler The actual handler.
+	 * @returns A disposable to remove the handler.
 	 */
 	onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: RequestHandler0<R, E>): Disposable;
 	onRequest<R, E>(type: RequestType0<R, E>, handler: RequestHandler0<R, E>): Disposable;
@@ -70,6 +71,7 @@ export interface ProtocolConnection {
 	 *
 	 * @param type The request type to install the handler for.
 	 * @param handler The actual handler.
+	 * @returns A disposable to remove the handler.
 	 */
 	onRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, handler: RequestHandler<P, R, E>): Disposable;
 	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): Disposable;
@@ -79,13 +81,22 @@ export interface ProtocolConnection {
 	 *
 	 * @param methods the message signature or the method name to install a handler for.
 	 * @param handler The actual handler.
+	 * @returns A disposable to remove the handler.
 	 */
 	onRequest<R, E>(method: MessageSignature | string, handler: GenericRequestHandler<R, E>): Disposable;
+
+	/**
+	 * Returns true if the connection has a pending response.
+	 * Otherwise false is returned.
+	 */
+	hasPendingResponse(): boolean;
 
 	/**
 	 * Sends a notification.
 	 *
 	 * @param type the notification's type to send.
+	 * @returns A promise that resolves when the notification is written to the
+	 * network layer.
 	 */
 	sendNotification(type: NotificationType0): Promise<void>;
 	sendNotification<RO>(type: ProtocolNotificationType0<RO>): Promise<void>;
@@ -95,6 +106,8 @@ export interface ProtocolConnection {
 	 *
 	 * @param type the notification's type to send.
 	 * @param params the notification's parameters.
+	 * @returns A promise that resolves when the notification is written to the
+	 * network layer.
 	 */
 	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): Promise<void>;
 	sendNotification<P>(type: NotificationType<P>, params?: P): Promise<void>;
@@ -103,6 +116,8 @@ export interface ProtocolConnection {
 	 * Sends a notification.
 	 *
 	 * @param method the notification's method signature or the method name.
+	 * @returns A promise that resolves when the notification is written to the
+	 * network layer.
 	 */
 	sendNotification(method: MessageSignature | string): Promise<void>;
 
@@ -111,6 +126,8 @@ export interface ProtocolConnection {
 	 *
 	 * @param method the notification's method signature or the method name.
 	 * @param params the notification's parameters.
+	 * @returns A promise that resolves when the notification is written to the
+	 * network layer.
 	 */
 	sendNotification(method: MessageSignature | string, params: any): Promise<void>;
 
@@ -119,6 +136,7 @@ export interface ProtocolConnection {
 	 *
 	 * @param type The notification type to install the handler for.
 	 * @param handler The actual handler.
+	 * @returns A disposable to remove the handler.
 	 */
 	onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): Disposable;
 	onNotification(type: NotificationType0, handler: NotificationHandler0): Disposable;
@@ -128,6 +146,7 @@ export interface ProtocolConnection {
 	 *
 	 * @param type The notification type to install the handler for.
 	 * @param handler The actual handler.
+	 * @returns A disposable to remove the handler.
 	 */
 	onNotification<P, RO>(type: ProtocolNotificationType<P, RO>, handler: NotificationHandler<P>): Disposable;
 	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): Disposable;
@@ -137,6 +156,7 @@ export interface ProtocolConnection {
 	 *
 	 * @param methods The message signature or the method name to install the handler for.
 	 * @param handler The actual handler.
+	 * @returns A disposable to remove the handler.
 	 */
 	onNotification(method: MessageSignature | string, handler: GenericNotificationHandler): Disposable;
 
@@ -145,6 +165,7 @@ export interface ProtocolConnection {
 	 * @param type the progress type
 	 * @param token the token
 	 * @param handler the handler
+	 * @returns A disposable to remove the handler.
 	 */
 	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable;
 
@@ -153,14 +174,18 @@ export interface ProtocolConnection {
 	 * @param type the progress type
 	 * @param token the token to use
 	 * @param value the progress value
+	 * @returns A promise that resolves when the progress is written to the
+	 * network layer.
 	 */
 	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): Promise<void>;
 
 	/**
 	 * Enables tracing mode for the connection.
+	 * @returns A promise that resolves when the trace value is written to the
+	 * network layer.
 	 */
-	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): void;
-	trace(value: Trace, tracer: Tracer, traceOptions?: TraceOptions): void;
+	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): Promise<void>;
+	trace(value: Trace, tracer: Tracer, traceOptions?: TraceOptions): Promise<void>;
 
 	/**
 	 * An event emitter firing when an error occurs on the connection.
