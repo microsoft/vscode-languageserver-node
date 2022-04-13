@@ -33,7 +33,8 @@ import {
 	ReferencesRequest, DocumentHighlightRequest, CodeActionRequest, CodeLensRequest, DocumentFormattingRequest, DocumentRangeFormattingRequest,
 	DocumentOnTypeFormattingRequest, RenameRequest, DocumentSymbolRequest, DocumentLinkRequest, DocumentColorRequest, DeclarationRequest, FoldingRangeRequest,
 	ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, CallHierarchyPrepareRequest, SemanticTokensRegistrationType, LinkedEditingRangeRequest,
-	Proposed, TypeHierarchyPrepareRequest, InlineValueRequest, InlayHintRequest, WorkspaceSymbolRequest, TextDocumentRegistrationOptions, FileOperationRegistrationOptions, ConnectionOptions, HoverOptions, SignatureHelpOptions, DefinitionOptions, ReferenceOptions, RenameOptions, DeclarationOptions, ImplementationOptions, SelectionRangeOptions, TypeDefinitionOptions, LinkedEditingRangeOptions
+	Proposed, TypeHierarchyPrepareRequest, InlineValueRequest, InlayHintRequest, WorkspaceSymbolRequest, TextDocumentRegistrationOptions, FileOperationRegistrationOptions,
+	ConnectionOptions
 } from 'vscode-languageserver-protocol';
 
 import * as c2p from './codeConverter';
@@ -45,7 +46,7 @@ import * as UUID from './utils/uuid';
 import { ProgressPart } from './progressPart';
 import {
 	DynamicFeature, ensure, FeatureClient, LSPCancellationError, TextDocumentSendFeature, RegistrationData, StaticFeature,
-	TextDocumentProviderFeature, WorkspaceProviderFeature, SuspensibleLanguageFeature
+	TextDocumentProviderFeature, WorkspaceProviderFeature
 } from './features';
 
 import { DiagnosticProviderShape, DiagnosticPullOptions } from './proposed.diagnostic';
@@ -217,14 +218,6 @@ export enum State {
 	 * The client is running and ready.
 	 */
 	Running = 2,
-	/**
-	 * The client goes to suspend mode.
-	 */
-	Suspending = 4,
-	/**
-	 * The client is suspended.
-	 */
-	Suspended = 5,
 }
 
 /**
@@ -247,13 +240,6 @@ export enum SuspendMode {
 	 * activation listener.
 	 */
 	on = 'on',
-
-	/**
-	 * Only support suspend mode if for all
-	 * registered providers a corresponding
-	 * activation listener exists.
-	 */
-	activationOnly = 'activationOnly'
 }
 
 export type SuspendOptions = {
@@ -349,16 +335,15 @@ export type LanguageClientOptions = {
 		cancellationStrategy: CancellationStrategy;
 		maxRestartCount?: number;
 	};
-	suspend?: SuspendOptions;
 	markdown?: {
 		isTrusted?: boolean;
 		supportHtml?: boolean;
 	};
 } & NotebookDocumentOptions & DiagnosticPullOptions & ConfigurationOptions;
 
-type TestOptions = {
-	$testMode?: boolean;
-};
+// type TestOptions = {
+// 	$testMode?: boolean;
+// };
 
 type ResolvedClientOptions = {
 	documentSelector?: DocumentSelector;
@@ -381,7 +366,6 @@ type ResolvedClientOptions = {
 		cancellationStrategy: CancellationStrategy;
 		maxRestartCount?: number;
 	};
-	suspend: Required<SuspendOptions>;
 	markdown: {
 		isTrusted: boolean;
 		supportHtml: boolean;
@@ -424,8 +408,6 @@ enum ClientState {
 	Starting = 'starting',
 	StartFailed = 'startFailed',
 	Running = 'running',
-	Suspending = 'suspending',
-	Suspended = 'suspended',
 	Stopping = 'stopping',
 	Stopped = 'stopped'
 }
@@ -464,7 +446,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private _onStop: Promise<void> | undefined;
 	private _connection: Connection | undefined;
 	private _idleInterval: Disposable | undefined;
-	private _idleStart: number | undefined;
+	// private _idleStart: number | undefined;
 
 	private _initializeResult: InitializeResult | undefined;
 	private _outputChannel: OutputChannel | undefined;
@@ -500,7 +482,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			markdown.supportHtml = clientOptions.markdown.supportHtml === true;
 		}
 
-		const defaultInterval = (clientOptions as TestOptions).$testMode ? 50 : 60000;
+		// const defaultInterval = (clientOptions as TestOptions).$testMode ? 50 : 60000;
 
 		this._clientOptions = {
 			documentSelector: clientOptions.documentSelector ?? [],
@@ -518,11 +500,11 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			workspaceFolder: clientOptions.workspaceFolder,
 			connectionOptions: clientOptions.connectionOptions,
 			markdown,
-			suspend: {
-				mode: clientOptions.suspend?.mode ?? SuspendMode.off,
-				callback: clientOptions.suspend?.callback ?? (() => Promise.resolve(true)),
-				interval: clientOptions.suspend?.interval ? Math.max(clientOptions.suspend.interval, defaultInterval) : defaultInterval
-			},
+			// suspend: {
+			// 	mode: clientOptions.suspend?.mode ?? SuspendMode.off,
+			// 	callback: clientOptions.suspend?.callback ?? (() => Promise.resolve(true)),
+			// 	interval: clientOptions.suspend?.interval ? Math.max(clientOptions.suspend.interval, defaultInterval) : defaultInterval
+			// },
 			diagnosticPullOptions: clientOptions.diagnosticPullOptions ?? { onChange: true, onSave: false },
 			notebookDocumentOptions: clientOptions.notebookDocumentOptions ?? { }
 		};
@@ -540,7 +522,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this._progressDisposables = new Map();
 
 		this._connection = undefined;
-		this._idleStart = undefined;
+		// this._idleStart = undefined;
 		this._initializeResult = undefined;
 		if (clientOptions.outputChannel) {
 			this._outputChannel = clientOptions.outputChannel;
@@ -645,10 +627,6 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 				return State.Starting;
 			case ClientState.Running:
 				return State.Running;
-			case ClientState.Suspending:
-				return State.Suspending;
-			case ClientState.Suspended:
-				return State.Suspended;
 			default:
 				return State.Stopped;
 		}
@@ -929,7 +907,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	public needsStart(): boolean {
-		return this.$state === ClientState.Initial || this.$state === ClientState.Stopping || this.$state === ClientState.Stopped || this.$state === ClientState.Suspending || this.$state === ClientState.Suspended;
+		return this.$state === ClientState.Initial || this.$state === ClientState.Stopping || this.$state === ClientState.Stopped;
 	}
 
 	public needsStop(): boolean {
@@ -1180,9 +1158,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			}
 			this._pendingProgressHandlers.clear();
 
-			if (this._clientOptions.suspend.mode !== SuspendMode.off) {
-				this._idleInterval =  RAL().timer.setInterval(() => this.checkSuspend(), this._clientOptions.suspend.interval);
-			}
+			// if (this._clientOptions.suspend.mode !== SuspendMode.off) {
+			// 	this._idleInterval =  RAL().timer.setInterval(() => this.checkSuspend(), this._clientOptions.suspend.interval);
+			// }
 
 			await connection.sendNotification(InitializedNotification.type, {});
 
@@ -1295,7 +1273,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		}
 		// Dispose features in reverse order;
 		for (const feature of Array.from(this._features.entries()).map(entry => entry[1]).reverse()) {
-			mode === 'suspend' && SuspensibleLanguageFeature.is(feature) ? feature.suspend() : feature.dispose();
+			feature.dispose();
 		}
 		if (mode === 'stop' && this._diagnostics !== undefined) {
 			this._diagnostics.dispose();
@@ -1306,7 +1284,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			this._idleInterval.dispose();
 			this._idleInterval = undefined;
 		}
-		this._idleStart = undefined;
+		// this._idleStart = undefined;
 	}
 
 	private cleanUpChannel(): void {
@@ -1406,10 +1384,11 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			throw new Error(`Previous start failed. Can't restart server.`);
 		}
 		await this.start();
-		if (this._connection === undefined) {
+		const connection = this.activeConnection();
+		if (connection === undefined) {
 			throw new Error(`Starting server failed`);
 		}
-		return this._connection;
+		return connection;
 	}
 
 	private async createConnection(): Promise<Connection> {
@@ -1553,28 +1532,28 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	getFeature(request: typeof WillRenameFilesRequest.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileWillRenameEvent) => Promise<void> };
 	getFeature(request: typeof WillDeleteFilesRequest.method): DynamicFeature<FileOperationRegistrationOptions> & { send: (event: FileWillDeleteEvent) => Promise<void> };
 	getFeature(request: typeof CompletionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<CompletionItemProvider>;
-	getFeature(request: typeof HoverRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<HoverProvider> & SuspensibleLanguageFeature<HoverOptions>;
-	getFeature(request: typeof SignatureHelpRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<SignatureHelpProvider> & SuspensibleLanguageFeature<SignatureHelpOptions>;
-	getFeature(request: typeof DefinitionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DefinitionProvider> & SuspensibleLanguageFeature<DefinitionOptions>;
-	getFeature(request: typeof ReferencesRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<ReferenceProvider> & SuspensibleLanguageFeature<ReferenceOptions>;
+	getFeature(request: typeof HoverRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<HoverProvider>;
+	getFeature(request: typeof SignatureHelpRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<SignatureHelpProvider>;
+	getFeature(request: typeof DefinitionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DefinitionProvider>;
+	getFeature(request: typeof ReferencesRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<ReferenceProvider>;
 	getFeature(request: typeof DocumentHighlightRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DocumentHighlightProvider>;
 	getFeature(request: typeof CodeActionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<CodeActionProvider>;
 	getFeature(request: typeof CodeLensRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<CodeLensProviderShape>;
 	getFeature(request: typeof DocumentFormattingRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DocumentFormattingEditProvider>;
 	getFeature(request: typeof DocumentRangeFormattingRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DocumentRangeFormattingEditProvider>;
 	getFeature(request: typeof DocumentOnTypeFormattingRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<OnTypeFormattingEditProvider>;
-	getFeature(request: typeof RenameRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<RenameProvider> & SuspensibleLanguageFeature<RenameOptions>;
+	getFeature(request: typeof RenameRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<RenameProvider>;
 	getFeature(request: typeof DocumentSymbolRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DocumentSymbolProvider>;
 	getFeature(request: typeof DocumentLinkRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DocumentLinkProvider>;
 	getFeature(request: typeof DocumentColorRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DocumentColorProvider>;
-	getFeature(request: typeof DeclarationRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DeclarationProvider> & SuspensibleLanguageFeature<DeclarationOptions>;
+	getFeature(request: typeof DeclarationRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DeclarationProvider>;
 	getFeature(request: typeof FoldingRangeRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<FoldingRangeProvider>;
-	getFeature(request: typeof ImplementationRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<ImplementationProvider> & SuspensibleLanguageFeature<ImplementationOptions>;
-	getFeature(request: typeof SelectionRangeRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<SelectionRangeProvider> & SuspensibleLanguageFeature<SelectionRangeOptions>;
-	getFeature(request: typeof TypeDefinitionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<TypeDefinitionProvider> & SuspensibleLanguageFeature<TypeDefinitionOptions>;
+	getFeature(request: typeof ImplementationRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<ImplementationProvider>;
+	getFeature(request: typeof SelectionRangeRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<SelectionRangeProvider>;
+	getFeature(request: typeof TypeDefinitionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<TypeDefinitionProvider>;
 	getFeature(request: typeof CallHierarchyPrepareRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<CallHierarchyProvider>;
 	getFeature(request: typeof SemanticTokensRegistrationType.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<SemanticTokensProviders>;
-	getFeature(request: typeof LinkedEditingRangeRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<LinkedEditingRangeProvider> & SuspensibleLanguageFeature<LinkedEditingRangeOptions>;
+	getFeature(request: typeof LinkedEditingRangeRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<LinkedEditingRangeProvider>;
 	getFeature(request: typeof Proposed.DocumentDiagnosticRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DiagnosticProviderShape>;
 	getFeature(request: typeof TypeHierarchyPrepareRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<TypeHierarchyProvider>;
 	getFeature(request: typeof InlineValueRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<InlineValueProviderShape>;
@@ -1799,83 +1778,85 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		throw error;
 	}
 
-	private checkSuspend(): void {
-		if (this.$state !== ClientState.Running) {
-			return;
-		}
-		// Since the last idle start we sent a request. Cancel the idle counting.
-		if (this._idleStart !== undefined && this._connection !== undefined && this._connection.lastUsed > this._idleStart) {
-			this._idleStart = undefined;
-			return;
-		}
-		if (this.isIdle()) {
-			const production = (this.clientOptions as TestOptions).$testMode !== true;
-			// Only do this in production since in test cases we only have
-			// 2000 ms to suspend.
-			if (production) {
-				if (this._idleStart === undefined) {
-					this._idleStart = Date.now();
-					return;
-				}
+	// private checkSuspend(): void {
+	// 	if (this.$state !== ClientState.Running) {
+	// 		return;
+	// 	}
+	// 	const connection = this.activeConnection();
+	// 	if (connection === undefined) {
+	// 		this._idleStart = undefined;
+	// 		return;
+	// 	}
+	// 	// Since the last idle start we sent a request. Cancel the idle counting.
+	// 	if (connection.hasPendingResponse() || (this._idleStart !== undefined && connection.lastUsed > this._idleStart)) {
+	// 		this._idleStart = undefined;
+	// 		return;
+	// 	}
+	// 	if (this.isIdle()) {
+	// 		const production = (this.clientOptions as TestOptions).$testMode !== true;
+	// 		// Only do this in production since in test cases we only have
+	// 		// 2000 ms to suspend.
+	// 		if (production) {
+	// 			if (this._idleStart === undefined) {
+	// 				this._idleStart = Date.now();
+	// 				return;
+	// 			}
 
-				const interval = this._clientOptions.suspend.interval;
-				const diff = Date.now() - this._idleStart;
-				if (diff < interval * 3) {
-					return;
-				}
-				if (diff > interval * 5) {
-					// Avoid that we shutdown the server when a computer resumes from sleep.
-					this._idleStart = undefined;
-					return;
-				}
-			}
+	// 			const interval = this._clientOptions.suspend.interval;
+	// 			const diff = Date.now() - this._idleStart;
+	// 			if (diff < interval * 3) {
+	// 				return;
+	// 			}
+	// 			if (diff > interval * 5) {
+	// 				// Avoid that we shutdown the server when a computer resumes from sleep.
+	// 				this._idleStart = undefined;
+	// 				return;
+	// 			}
+	// 		}
 
-			this._idleStart = undefined;
-			this.info(`Suspending server`);
-			this._clientOptions.suspend.callback().then((approved) => {
-				if (!approved) {
-					this._idleStart = undefined;
-					return;
-				}
-				return this.suspend().then(() => {
-					this.info(`Server got suspended`);
-				});
-			}, (error) => {
-				this.error(`Suspending server failed`, error, 'force');
-			});
-		} else {
-			this._idleStart = undefined;
-		}
-	}
+	// 		this._idleStart = undefined;
+	// 		this.info(`Suspending server`);
+	// 		this._clientOptions.suspend.callback().then((approved) => {
+	// 			if (!approved) {
+	// 				this._idleStart = undefined;
+	// 				return;
+	// 			}
+	// 			return this.suspend().then(() => {
+	// 				this.info(`Server got suspended`);
+	// 			});
+	// 		}, (error) => {
+	// 			this.error(`Suspending server failed`, error, 'force');
+	// 		});
+	// 	} else {
+	// 		this._idleStart = undefined;
+	// 	}
+	// }
 
-	private isIdle(): boolean {
-		const suspendMode = this._clientOptions.suspend.mode;
-		if (suspendMode === SuspendMode.off) {
-			return false;
-		}
-		for (const feature of this._features) {
-			const state = feature.getState();
-			// 'static' feature don't depend on registrations. So they
-			// can't block suspend
-			if (state.kind === 'static') {
-				continue;
-			}
-			// The feature has no registrations. So no blocking of the
-			// suspend.
-			if (!state.registrations) {
-				continue;
-			}
+	// private isIdle(): boolean {
+	// 	const suspendMode = this._clientOptions.suspend.mode;
+	// 	if (suspendMode === SuspendMode.off) {
+	// 		return false;
+	// 	}
 
-			if (state.kind === 'document' && state.matches === true) {
-				return false;
-			}
+	// 	for (const feature of this._features) {
+	// 		const state = feature.getState();
+	// 		// 'static' feature don't depend on registrations. So they
+	// 		// can't block suspend
+	// 		if (state.kind === 'static') {
+	// 			continue;
+	// 		}
+	// 		// The feature has no registrations. So no blocking of the
+	// 		// suspend.
+	// 		if (!state.registrations) {
+	// 			continue;
+	// 		}
 
-			if (suspendMode === SuspendMode.activationOnly && state.activation === false) {
-				return false;
-			}
-		}
-		return true;
-	}
+	// 		if (state.kind === 'document' && state.matches === true) {
+	// 			return false;
+	// 		}
+	// 	}
+	// 	return true;
+	// }
 }
 
 interface Connection {
@@ -1904,6 +1885,8 @@ interface Connection {
 	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): Disposable;
 	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): Disposable;
 	onRequest<R, E>(method: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable;
+
+	hasPendingResponse(): boolean;
 
 	sendNotification<RO>(type: ProtocolNotificationType0<RO>): Promise<void>;
 	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): Promise<void>;
@@ -1980,6 +1963,8 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 			return connection.sendRequest(type as string, ...params);
 		},
 		onRequest: <R, E>(type: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable => connection.onRequest(type, handler),
+
+		hasPendingResponse: (): boolean => connection.hasPendingResponse(),
 
 		sendNotification: (type: string | MessageSignature, params?: any): Promise<void> => {
 			_lastUsed = Date.now();

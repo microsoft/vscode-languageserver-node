@@ -30,8 +30,7 @@ export class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatched
 	}
 
 	getState(): FeatureState {
-		const registrations = this._watchers.size > 0;
-		return { kind: 'workspace', registrations, activation: false };
+		return { kind: 'workspace', id: this.registrationType.method, registrations: this._watchers.size > 0 };
 	}
 
 	public get registrationType(): RegistrationType<DidChangeWatchedFilesRegistrationOptions> {

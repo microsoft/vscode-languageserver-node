@@ -17,7 +17,7 @@ import {
 
 import {
 	FeatureClient, TextDocumentEventFeature, DynamicFeature, NextSignature, TextDocumentSendFeature, NotifyingFeature, ensure, RegistrationData, DynamicDocumentFeature,
-	NotificationSendEvent, SuspensibleLanguageFeature, DocumentSelectorOptions
+	NotificationSendEvent, DocumentSelectorOptions
 } from './features';
 
 import { Delayer } from './utils/async';
@@ -32,7 +32,7 @@ export interface TextDocumentSynchronizationMiddleware {
 	didClose?: NextSignature<TextDocument, Promise<void>>;
 }
 
-export interface DidOpenTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, TextDocumentSendFeature<(textDocument: TextDocument) => Promise<void>>, NotifyingFeature<TextDocument, DidOpenTextDocumentParams>, SuspensibleLanguageFeature<DocumentSelectorOptions>{
+export interface DidOpenTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, TextDocumentSendFeature<(textDocument: TextDocument) => Promise<void>>, NotifyingFeature<TextDocument, DidOpenTextDocumentParams> {
 	openDocuments: Iterable<TextDocument>;
 }
 
@@ -228,11 +228,7 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 		);
 	}
 
-	protected getStateInfo(): [IterableIterator<VDocumentSelector>, boolean] {
-		return [this.getDocumentSelectors(), false];
-	}
-
-	private *getDocumentSelectors(): IterableIterator<VDocumentSelector> {
+	public *getDocumentSelectors(): IterableIterator<VDocumentSelector> {
 		for (const data of this._changeData.values()) {
 			yield data.documentSelector;
 		}
@@ -384,11 +380,7 @@ export class WillSaveWaitUntilFeature extends DynamicDocumentFeature<TextDocumen
 		this._selectors = new Map<string, VDocumentSelector>();
 	}
 
-	protected getStateInfo(): [IterableIterator<VDocumentSelector>, boolean] {
-		return [this.getDocumentSelectors(), false];
-	}
-
-	private getDocumentSelectors(): IterableIterator<VDocumentSelector> {
+	protected getDocumentSelectors(): IterableIterator<VDocumentSelector> {
 		return this._selectors.values();
 	}
 

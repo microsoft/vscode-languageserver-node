@@ -13,7 +13,7 @@ import {
 } from 'vscode-languageserver-protocol';
 
 import {
-	FeatureClient, ensure, TextDocumentLanguageFeature, DocumentSelectorOptions, SuspensibleLanguageFeature
+	FeatureClient, ensure, TextDocumentLanguageFeature, DocumentSelectorOptions
 } from './features';
 
 import * as UUID from './utils/uuid';
@@ -26,8 +26,7 @@ export interface SignatureHelpMiddleware {
 	provideSignatureHelp?: (this: void, document: TextDocument, position: VPosition, context: VSignatureHelpContext, token: CancellationToken, next: ProvideSignatureHelpSignature) => ProviderResult<VSignatureHelp>;
 }
 
-export class SignatureHelpFeature extends TextDocumentLanguageFeature<SignatureHelpOptions, SignatureHelpRegistrationOptions, SignatureHelpProvider, SignatureHelpMiddleware>
-	implements SuspensibleLanguageFeature<SignatureHelpOptions> {
+export class SignatureHelpFeature extends TextDocumentLanguageFeature<SignatureHelpOptions, SignatureHelpRegistrationOptions, SignatureHelpProvider, SignatureHelpMiddleware> {
 
 	constructor(client: FeatureClient<SignatureHelpMiddleware>) {
 		super(client, SignatureHelpRequest.type);
@@ -74,16 +73,6 @@ export class SignatureHelpFeature extends TextDocumentLanguageFeature<SignatureH
 			}
 		};
 		return [this.registerProvider(options, provider), provider];
-	}
-
-	public registerActivation(options: DocumentSelectorOptions & SignatureHelpOptions): void {
-		this.doRegisterActivation(() => {
-			return this.registerProvider(options, {
-				provideSignatureHelp: async (document, position, token, context) => {
-					return this.handleActivation(document, (provider) => provider.provideSignatureHelp(document, position, token, context));
-				}
-			});
-		});
 	}
 
 	private registerProvider(options: DocumentSelectorOptions & SignatureHelpOptions, provider: SignatureHelpProvider): Disposable {

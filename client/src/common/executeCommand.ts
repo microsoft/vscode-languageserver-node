@@ -35,8 +35,7 @@ export class ExecuteCommandFeature implements DynamicFeature<ExecuteCommandRegis
 	}
 
 	public getState(): FeatureState {
-		const registrations = this._commands.size > 0;
-		return { kind: 'workspace', registrations, activation: false };
+		return { kind: 'workspace', id: this.registrationType.method, registrations: this._commands.size > 0 };
 	}
 
 	public get registrationType(): RegistrationType<ExecuteCommandRegistrationOptions> {

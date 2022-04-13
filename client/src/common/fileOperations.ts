@@ -74,8 +74,7 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 	}
 
 	getState(): FeatureState {
-		const registrations = this._filters.size > 0;
-		return { kind: 'workspace', registrations, activation: false };
+		return { kind: 'workspace', id: this._registrationType.method, registrations: this._filters.size > 0 };
 	}
 
 	protected filterSize(): number {

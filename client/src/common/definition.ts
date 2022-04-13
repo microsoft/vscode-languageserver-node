@@ -12,7 +12,7 @@ import {
 	ClientCapabilities, DefinitionOptions, DefinitionRegistrationOptions, DefinitionRequest, DocumentSelector, ServerCapabilities} from 'vscode-languageserver-protocol';
 
 import {
-	FeatureClient, ensure, TextDocumentLanguageFeature, DocumentSelectorOptions, SuspensibleLanguageFeature
+	FeatureClient, ensure, TextDocumentLanguageFeature
 } from './features';
 
 import * as UUID from './utils/uuid';
@@ -25,8 +25,7 @@ export interface DefinitionMiddleware {
 	provideDefinition?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideDefinitionSignature) => ProviderResult<VDefinition | VDefinitionLink[]>;
 }
 
-export class DefinitionFeature extends TextDocumentLanguageFeature<boolean | DefinitionOptions, DefinitionRegistrationOptions, DefinitionProvider, DefinitionMiddleware>
-	implements SuspensibleLanguageFeature<DefinitionOptions> {
+export class DefinitionFeature extends TextDocumentLanguageFeature<boolean | DefinitionOptions, DefinitionRegistrationOptions, DefinitionProvider, DefinitionMiddleware> {
 
 	constructor(client: FeatureClient<DefinitionMiddleware>) {
 		super(client, DefinitionRequest.type);
@@ -68,16 +67,6 @@ export class DefinitionFeature extends TextDocumentLanguageFeature<boolean | Def
 			}
 		};
 		return [this.registerProvider(selector, provider), provider];
-	}
-
-	public registerActivation(options: DocumentSelectorOptions & DefinitionOptions): void {
-		this.doRegisterActivation(() => {
-			return this.registerProvider(options.documentSelector, {
-				provideDefinition: (document, position, token) => {
-					return this.handleActivation(document, (provider) => provider.provideDefinition(document, position, token));
-				}
-			});
-		});
 	}
 
 	private registerProvider(selector: DocumentSelector, provider: DefinitionProvider): Disposable {

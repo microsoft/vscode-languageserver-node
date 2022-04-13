@@ -12,7 +12,7 @@ import {
 } from 'vscode-languageserver-protocol';
 
 import {
-	FeatureClient, ensure, TextDocumentLanguageFeature, DocumentSelectorOptions, SuspensibleLanguageFeature
+	FeatureClient, ensure, TextDocumentLanguageFeature
 } from './features';
 
 import * as UUID from './utils/uuid';
@@ -25,8 +25,7 @@ export interface ReferencesMiddleware {
 	provideReferences?: (this: void, document: TextDocument, position: VPosition, options: { includeDeclaration: boolean }, token: CancellationToken, next: ProvideReferencesSignature) => ProviderResult<VLocation[]>;
 }
 
-export class ReferencesFeature extends TextDocumentLanguageFeature<boolean | ReferenceOptions, ReferenceRegistrationOptions, ReferenceProvider, ReferencesMiddleware>
-	implements SuspensibleLanguageFeature<ReferenceOptions> {
+export class ReferencesFeature extends TextDocumentLanguageFeature<boolean | ReferenceOptions, ReferenceRegistrationOptions, ReferenceProvider, ReferencesMiddleware> {
 
 	constructor(client: FeatureClient<ReferencesMiddleware>) {
 		super(client, ReferencesRequest.type);
@@ -66,16 +65,6 @@ export class ReferencesFeature extends TextDocumentLanguageFeature<boolean | Ref
 			}
 		};
 		return [this.registerProvider(selector, provider), provider];
-	}
-
-	public registerActivation(options: DocumentSelectorOptions & ReferenceOptions): void {
-		this.doRegisterActivation(() => {
-			return this.registerProvider(options.documentSelector, {
-				provideReferences: async (document, position, options, token) => {
-					return this.handleActivation(document, (provider) => provider.provideReferences(document, position, options, token));
-				}
-			});
-		});
 	}
 
 	private registerProvider(selector: DocumentSelector, provider: ReferenceProvider): Disposable {

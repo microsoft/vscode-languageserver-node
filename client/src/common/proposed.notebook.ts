@@ -463,10 +463,10 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 		for (const notebook of vscode.workspace.notebookDocuments) {
 			const matchingCells = this.getMatchingCells(notebook);
 			if (matchingCells !== undefined) {
-				return { kind: 'document', registrations: true, matches: true,  activation: false };
+				return { kind: 'document', id: '$internal', registrations: true, matches: true };
 			}
 		}
-		return { kind: 'document', registrations: true, matches: false, activation: false };
+		return { kind: 'document', id: '$internal', registrations: true, matches: false };
 	}
 
 	public get mode(): 'notebook' {
@@ -885,10 +885,10 @@ class NotebookCellTextDocumentSyncFeatureProvider implements NotebookCellTextDoc
 	public getState(): FeatureState {
 		for (const document of vscode.workspace.textDocuments) {
 			if (vscode.languages.match(this.documentSelector, document) > 0) {
-				return { kind: 'document', registrations: true, matches: true, activation: false };
+				return { kind: 'document', id: '$internal', registrations: true, matches: true };
 			}
 		}
-		return { kind: 'document', registrations: true, matches: false, activation: false };
+		return { kind: 'document', id: '$internal', registrations: true, matches: false };
 	}
 
 	public get mode(): 'cellContent' {
@@ -995,17 +995,15 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 
 	getState(): FeatureState {
 		if (this.registrations.size === 0) {
-			return { kind: 'document', registrations: false, matches: false, activation: false };
+			return { kind: 'document', id: this.registrationType.method, registrations: false, matches: false };
 		}
-		let withActivation: FeatureState | undefined;
 		for (const provider of this.registrations.values()) {
 			const state = provider.getState();
-			if (state.kind === 'document' && state.registrations === true && state.matches !== true) {
-				if (state.activation === false) { return state; }
-				withActivation = withActivation ?? state;
+			if (state.kind === 'document' && state.registrations === true && state.matches === true) {
+				return { kind: 'document', id: this.registrationType.method, registrations: true, matches: true };
 			}
 		}
-		return withActivation ?? { kind: 'document', registrations: true, matches: false, activation: false };
+		return { kind: 'document', id: this.registrationType.method, registrations: true, matches: false };
 	}
 
 	public readonly registrationType: proto.RegistrationType<proto.Proposed.NotebookDocumentSyncRegistrationOptions>;

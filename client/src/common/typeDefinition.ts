@@ -11,7 +11,7 @@ import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, TypeDefinitionRequest, TypeDefinitionRegistrationOptions, TypeDefinitionOptions
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentLanguageFeature, FeatureClient, ensure, DocumentSelectorOptions, SuspensibleLanguageFeature } from './features';
+import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
 
 export interface ProvideTypeDefinitionSignature {
 	(this: void, document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDefinition | VDefinitionLink[]>;
@@ -21,8 +21,7 @@ export interface TypeDefinitionMiddleware {
 	provideTypeDefinition?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideTypeDefinitionSignature) => ProviderResult<VDefinition | VDefinitionLink[]>;
 }
 
-export class TypeDefinitionFeature extends TextDocumentLanguageFeature<boolean | TypeDefinitionOptions, TypeDefinitionRegistrationOptions, TypeDefinitionProvider, TypeDefinitionMiddleware>
-	implements SuspensibleLanguageFeature<TypeDefinitionOptions> {
+export class TypeDefinitionFeature extends TextDocumentLanguageFeature<boolean | TypeDefinitionOptions, TypeDefinitionRegistrationOptions, TypeDefinitionProvider, TypeDefinitionMiddleware> {
 
 	constructor(client: FeatureClient<TypeDefinitionMiddleware>) {
 		super(client, TypeDefinitionRequest.type);
@@ -65,16 +64,6 @@ export class TypeDefinitionFeature extends TextDocumentLanguageFeature<boolean |
 			}
 		};
 		return [this.registerProvider(selector, provider), provider];
-	}
-
-	public registerActivation(options: DocumentSelectorOptions & TypeDefinitionOptions): void {
-		this.doRegisterActivation(() => {
-			return this.registerProvider(options.documentSelector, {
-				provideTypeDefinition: (document, position, token) => {
-					return this.handleActivation(document, (provider) => provider.provideTypeDefinition(document, position, token));
-				}
-			});
-		});
 	}
 
 	private registerProvider(selector: DocumentSelector, provider: TypeDefinitionProvider): Disposable {

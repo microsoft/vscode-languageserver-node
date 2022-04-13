@@ -13,7 +13,7 @@ import {
 import * as UUID from './utils/uuid';
 import * as Is from './utils/is';
 
-import { TextDocumentLanguageFeature, FeatureClient, ensure, DocumentSelectorOptions, SuspensibleLanguageFeature } from './features';
+import { TextDocumentLanguageFeature, FeatureClient, ensure, DocumentSelectorOptions } from './features';
 
 export interface ProvideRenameEditsSignature {
 	(this: void, document: TextDocument, position: VPosition, newName: string, token: CancellationToken): ProviderResult<VWorkspaceEdit>;
@@ -32,8 +32,7 @@ type DefaultBehavior = {
 	defaultBehavior: boolean;
 };
 
-export class RenameFeature extends TextDocumentLanguageFeature<boolean | RenameOptions, RenameRegistrationOptions, RenameProvider, RenameMiddleware>
-	implements SuspensibleLanguageFeature<RenameOptions> {
+export class RenameFeature extends TextDocumentLanguageFeature<boolean | RenameOptions, RenameRegistrationOptions, RenameProvider, RenameMiddleware> {
 
 	constructor(client: FeatureClient<RenameMiddleware>) {
 		super(client, RenameRequest.type);
@@ -125,21 +124,6 @@ export class RenameFeature extends TextDocumentLanguageFeature<boolean | RenameO
 				: undefined
 		};
 		return [this.registerProvider(selector, provider), provider];
-	}
-
-	public registerActivation(options: DocumentSelectorOptions & RenameOptions): void {
-		this.doRegisterActivation(() => {
-			return this.registerProvider(options.documentSelector, {
-				provideRenameEdits: async (document, position, newName, token) => {
-					return this.handleActivation(document, (provider) => provider.provideRenameEdits(document, position, newName, token));
-				},
-				prepareRename: options.prepareProvider === true
-					? async (document, position, token) => {
-						return this.handleActivation(document, (provider) => provider.prepareRename !== undefined ? provider.prepareRename(document, position, token) : undefined);
-					}
-					: undefined
-			});
-		});
 	}
 
 	private registerProvider(selector: RenameOptions & DocumentSelector, provider: RenameProvider): Disposable {

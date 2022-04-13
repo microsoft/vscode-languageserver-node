@@ -9,7 +9,7 @@ import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, DeclarationRequest, DeclarationRegistrationOptions, DeclarationOptions
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentLanguageFeature, FeatureClient, ensure, DocumentSelectorOptions, SuspensibleLanguageFeature } from './features';
+import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
 
 export interface ProvideDeclarationSignature {
 	(this: void, document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDeclaration>;
@@ -19,8 +19,7 @@ export interface DeclarationMiddleware {
 	provideDeclaration?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideDeclarationSignature) => ProviderResult<VDeclaration>;
 }
 
-export class DeclarationFeature extends TextDocumentLanguageFeature<boolean | DeclarationOptions, DeclarationRegistrationOptions, DeclarationProvider, DeclarationMiddleware>
-	implements SuspensibleLanguageFeature<DeclarationOptions> {
+export class DeclarationFeature extends TextDocumentLanguageFeature<boolean | DeclarationOptions, DeclarationRegistrationOptions, DeclarationProvider, DeclarationMiddleware> {
 
 	constructor(client: FeatureClient<DeclarationMiddleware>) {
 		super(client, DeclarationRequest.type);
@@ -62,16 +61,6 @@ export class DeclarationFeature extends TextDocumentLanguageFeature<boolean | De
 			}
 		};
 		return [this.registerProvider(selector, provider), provider];
-	}
-
-	public registerActivation(options: DocumentSelectorOptions & DeclarationOptions): void {
-		this.doRegisterActivation(() => {
-			return this.registerProvider(options.documentSelector, {
-				provideDeclaration: (document, position, token) => {
-					return this.handleActivation(document, (provider) => provider.provideDeclaration(document, position, token));
-				}
-			});
-		});
 	}
 
 	private registerProvider(selector: DocumentSelector, provider: DeclarationProvider): Disposable {

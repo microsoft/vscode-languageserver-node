@@ -110,7 +110,8 @@ export interface WorkDoneProgressCreateParams  {
  * reporting from the server.
  */
 export namespace WorkDoneProgressCreateRequest {
-	export const type = new ProtocolRequestType<WorkDoneProgressCreateParams, void, never, void, void>('window/workDoneProgress/create');
+	export const method: 'window/workDoneProgress/create' = 'window/workDoneProgress/create';
+	export const type = new ProtocolRequestType<WorkDoneProgressCreateParams, void, never, void, void>(method);
 	export type HandlerSignature = RequestHandler<WorkDoneProgressCreateParams, void, void>;
 }
 
@@ -126,6 +127,7 @@ export interface WorkDoneProgressCancelParams {
  * initiated on the server side.
  */
 export namespace WorkDoneProgressCancelNotification {
-	export const type = new ProtocolNotificationType<WorkDoneProgressCancelParams, void>('window/workDoneProgress/cancel');
+	export const method: 'window/workDoneProgress/cancel' = 'window/workDoneProgress/cancel';
+	export const type = new ProtocolNotificationType<WorkDoneProgressCancelParams, void>(method);
 	export type HandlerSignature = NotificationHandler<WorkDoneProgressCancelParams>;
 }

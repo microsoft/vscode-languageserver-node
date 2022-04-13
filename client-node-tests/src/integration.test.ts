@@ -12,6 +12,7 @@ import * as vscode from 'vscode';
 import * as lsclient from 'vscode-languageclient/node';
 import { MemoryFileSystemProvider } from './memoryFileSystemProvider';
 import { vsdiag, DiagnosticProviderMiddleware } from 'vscode-languageclient/lib/common/proposed.diagnostic';
+import { LanguageClient } from 'vscode-languageclient';
 
 namespace GotNotifiedRequest {
 	export const method: 'testing/gotNotified' = 'testing/gotNotified';
@@ -1558,7 +1559,7 @@ suite('Server activation', () => {
 		contentProviderDisposable.dispose();
 	});
 
-	function createClient(suspend: lsclient.SuspendOptions = { mode: lsclient.SuspendMode.off }) {
+	function createClient() {
 		const serverModule = path.join(__dirname, './servers/customServer.js');
 		const serverOptions: lsclient.ServerOptions = {
 			run: { module: serverModule, transport: lsclient.TransportKind.ipc },
@@ -1570,7 +1571,6 @@ suite('Server activation', () => {
 			synchronize: {},
 			initializationOptions: {},
 			middleware: {},
-			suspend: suspend
 		};
 		(clientOptions as ({ $testMode?: boolean })).$testMode = true;
 
@@ -1620,188 +1620,46 @@ suite('Server activation', () => {
 		await client.stop();
 	});
 
+	async function checkServerStart(client: LanguageClient, disposable: vscode.Disposable): Promise<void> {
+		return new Promise((resolve, reject) => {
+			const timeout = setTimeout(() => {
+				reject(new Error(`Server didn't start in 1000 ms.`));
+			}, 1000);
+			client.onDidChangeState((event) => {
+				if (event.newState === lsclient.State.Running) {
+					clearTimeout(timeout);
+					disposable.dispose();
+					resolve();
+				}
+			});
+		});
+	}
+
 	test('Start server on document open', async () => {
 		const client = createClient();
 		assert.strictEqual(client.state, lsclient.State.Stopped);
 		const uri: vscode.Uri = vscode.Uri.parse('lsptests://localhost/documentOpenTest.bat');
-		const openFeature = client.getFeature(lsclient.DidOpenTextDocumentNotification.method);
-		openFeature.registerActivation({ documentSelector: [{ language: 'bat', scheme: 'lsptests', pattern: uri.fsPath }]});
-		return new Promise((resolve, reject) => {
-			const timeout = setTimeout(() => {
-				reject(new Error(`Server didn't start in 1000 ms.`));
-			}, 1000);
-			client.onDidChangeState((event) => {
-				if (event.newState === lsclient.State.Running) {
-					clearTimeout(timeout);
-					resolve();
-				}
-			});
-			void vscode.workspace.openTextDocument(uri);
-		});
-		await client.stop();
-	});
-
-	test('Start server on document already open', async () => {
-		const client = createClient();
-		assert.strictEqual(client.state, lsclient.State.Stopped);
-		const uri: vscode.Uri = vscode.Uri.parse('lsptests://localhost/documentAlreadyOpenTest.bat');
+		const started = checkServerStart(client, vscode.workspace.onDidOpenTextDocument((document) => {
+			if (vscode.languages.match([{ language: 'bat', scheme: 'lsptests', pattern: uri.fsPath }], document)) {
+				void client.start();
+			}
+		}));
 		await vscode.workspace.openTextDocument(uri);
-		return new Promise((resolve, reject) => {
-			const timeout = setTimeout(() => {
-				reject(new Error(`Server didn't start in 1000 ms.`));
-			}, 1000);
-			client.onDidChangeState((event) => {
-				if (event.newState === lsclient.State.Running) {
-					clearTimeout(timeout);
-					client.stop().then(resolve, reject);
-				}
-			});
-			const openFeature = client.getFeature(lsclient.DidOpenTextDocumentNotification.method);
-			openFeature.registerActivation({ documentSelector: [{ language: 'bat', scheme: 'lsptests', pattern: uri.fsPath }]});
-		});
+		await started;
+		await client.stop();
 	});
 
-	test('Start server on declaration', async () => {
+	test('Start server on language feature', async () => {
 		const client = createClient();
 		assert.strictEqual(client.state, lsclient.State.Stopped);
-		const feature = client.getFeature(lsclient.DeclarationRequest.method);
-		feature.registerActivation({ documentSelector: [{ language: 'bat', scheme: 'lsptests' }] });
-		let running: boolean = false;
-		client.onDidChangeState((event) => {
-			running = event.newState === lsclient.State.Running;
-		});
+		const started = checkServerStart(client, vscode.languages.registerDeclarationProvider(documentSelector, {
+			provideDeclaration: async () => {
+				await client.start();
+				return undefined;
+			}
+		}));
 		await vscode.commands.executeCommand('vscode.executeDeclarationProvider', uri, position);
-		assert.strictEqual(running, true);
+		await started;
 		await client.stop();
-	});
-
-	test('Start server on definition', async () => {
-		const client = createClient();
-		assert.strictEqual(client.state, lsclient.State.Stopped);
-		const feature = client.getFeature(lsclient.DefinitionRequest.method);
-		feature.registerActivation({ documentSelector: [{ language: 'bat', scheme: 'lsptests' }] });
-		let running: boolean = false;
-		client.onDidChangeState((event) => {
-			running = event.newState === lsclient.State.Running;
-		});
-		await vscode.commands.executeCommand('vscode.executeDefinitionProvider', uri, position);
-		assert.strictEqual(running, true);
-		await client.stop();
-	});
-
-	test('Start server on hover', async () => {
-		const client = createClient();
-		assert.strictEqual(client.state, lsclient.State.Stopped);
-		const feature = client.getFeature(lsclient.HoverRequest.method);
-		feature.registerActivation({ documentSelector: [{ language: 'bat', scheme: 'lsptests' }] });
-		let running: boolean = false;
-		client.onDidChangeState((event) => {
-			running = event.newState === lsclient.State.Running;
-		});
-		await vscode.commands.executeCommand('vscode.executeHoverProvider', uri, position);
-		assert.strictEqual(running, true);
-		await client.stop();
-	});
-
-	test('Start server on implementation', async () => {
-		const client = createClient();
-		assert.strictEqual(client.state, lsclient.State.Stopped);
-		const feature = client.getFeature(lsclient.ImplementationRequest.method);
-		feature.registerActivation({ documentSelector: [{ language: 'bat', scheme: 'lsptests' }] });
-		let running: boolean = false;
-		client.onDidChangeState((event) => {
-			running = event.newState === lsclient.State.Running;
-		});
-		await vscode.commands.executeCommand('vscode.executeImplementationProvider', uri, position);
-		assert.strictEqual(running, true);
-		await client.stop();
-	});
-
-	test('Start server on references', async () => {
-		const client = createClient();
-		assert.strictEqual(client.state, lsclient.State.Stopped);
-		const feature = client.getFeature(lsclient.ReferencesRequest.method);
-		feature.registerActivation({ documentSelector: [{ language: 'bat', scheme: 'lsptests' }] });
-		let running: boolean = false;
-		client.onDidChangeState((event) => {
-			running = event.newState === lsclient.State.Running;
-		});
-		await vscode.commands.executeCommand('vscode.executeReferenceProvider', uri, position);
-		assert.strictEqual(running, true);
-		await client.stop();
-	});
-
-	test('Start server on rename', async () => {
-		const client = createClient();
-		assert.strictEqual(client.state, lsclient.State.Stopped);
-		const feature = client.getFeature(lsclient.RenameRequest.method);
-		feature.registerActivation({ documentSelector: [{ language: 'bat', scheme: 'lsptests' }], prepareProvider: true});
-		let running: boolean = false;
-		client.onDidChangeState((event) => {
-			running = event.newState === lsclient.State.Running;
-		});
-		await vscode.commands.executeCommand('vscode.prepareRename', uri, position);
-		assert.strictEqual(running, true);
-		await client.stop();
-	});
-
-	test('Start server on selection range', async () => {
-		const client = createClient();
-		assert.strictEqual(client.state, lsclient.State.Stopped);
-		const feature = client.getFeature(lsclient.SelectionRangeRequest.method);
-		feature.registerActivation({ documentSelector: [{ language: 'bat', scheme: 'lsptests' }] });
-		let running: boolean = false;
-		client.onDidChangeState((event) => {
-			running = event.newState === lsclient.State.Running;
-		});
-		await vscode.commands.executeCommand('vscode.executeSelectionRangeProvider', uri, [position]);
-		assert.strictEqual(running, true);
-		await client.stop();
-	});
-
-	test('Start server on signature help', async () => {
-		const client = createClient();
-		assert.strictEqual(client.state, lsclient.State.Stopped);
-		const feature = client.getFeature(lsclient.SignatureHelpRequest.method);
-		feature.registerActivation({ documentSelector: [{ language: 'bat', scheme: 'lsptests' }] });
-		let running: boolean = false;
-		client.onDidChangeState((event) => {
-			running = event.newState === lsclient.State.Running;
-		});
-		await vscode.commands.executeCommand('vscode.executeSignatureHelpProvider', uri, position);
-		assert.strictEqual(running, true);
-		await client.stop();
-	});
-
-	test('Start server on type definition', async () => {
-		const client = createClient();
-		assert.strictEqual(client.state, lsclient.State.Stopped);
-		const feature = client.getFeature(lsclient.TypeDefinitionRequest.method);
-		feature.registerActivation({ documentSelector: [{ language: 'bat', scheme: 'lsptests' }] });
-		let running: boolean = false;
-		client.onDidChangeState((event) => {
-			running = event.newState === lsclient.State.Running;
-		});
-		await vscode.commands.executeCommand('vscode.executeTypeDefinitionProvider', uri, position);
-		assert.strictEqual(running, true);
-		await client.stop();
-	});
-
-	test('Server suspend', async () => {
-		const client = createClient({ mode: lsclient.SuspendMode.on });
-		assert.strictEqual(client.state, lsclient.State.Stopped);
-		const result = new Promise<void>((resolve, reject) => {
-			const timeout = setTimeout(() => {
-				reject(new Error(`Server didn't suspend in 1000 ms.`));
-			}, 1000);
-			client.onDidChangeState((event) => {
-				if (event.newState === lsclient.State.Stopped) {
-					clearTimeout(timeout);
-					resolve();
-				}
-			});
-		});
-		await client.start();
-		return result;
 	});
 });

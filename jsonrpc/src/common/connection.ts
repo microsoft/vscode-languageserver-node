@@ -410,6 +410,8 @@ export interface MessageConnection {
 	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): Disposable;
 	onRequest(handler: StarRequestHandler): Disposable;
 
+	hasPendingResponse(): boolean;
+
 	sendNotification(type: NotificationType0): Promise<void>;
 	sendNotification<P>(type: NotificationType<P>, params?: P): Promise<void>;
 	sendNotification<P1>(type: NotificationType1<P1>, p1: P1): Promise<void>;
@@ -1349,6 +1351,9 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 					}
 				}
 			};
+		},
+		hasPendingResponse: (): boolean => {
+			return responsePromises.size > 0;
 		},
 		trace: async (_value: Trace, _tracer: Tracer, sendNotificationOrTraceOptions?: boolean | TraceOptions): Promise<void> => {
 			let _sendNotification: boolean = false;

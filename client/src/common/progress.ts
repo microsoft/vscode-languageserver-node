@@ -24,8 +24,7 @@ export class ProgressFeature implements StaticFeature {
 	}
 
 	getState(): FeatureState {
-		const registrations = this.activeParts.size > 0;
-		return { kind: 'window', registrations, activation: false };
+		return { kind: 'window', id: WorkDoneProgressCreateRequest.method, registrations: this.activeParts.size > 0 };
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
