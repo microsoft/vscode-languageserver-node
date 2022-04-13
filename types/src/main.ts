@@ -4038,6 +4038,29 @@ export namespace InlayHint {
 	}
 }
 
+/**
+ * A workspace folder inside a client.
+ */
+export interface WorkspaceFolder {
+	/**
+	 * The associated URI for this workspace folder.
+	 */
+	uri: URI;
+
+	/**
+	 * The name of the workspace folder. Used to refer to this
+	 * workspace folder in the user interface.
+	 */
+	name: string;
+}
+
+export namespace WorkspaceFolder {
+	export function is(value: any): value is WorkspaceFolder {
+		const candidate: WorkspaceFolder = value;
+		return Is.objectLiteral(candidate) && URI.is(candidate.uri) && Is.string(candidate.name);
+	}
+}
+
 export const EOL: string[] = ['\n', '\r\n', '\r'];
 
 /**

@@ -13,7 +13,7 @@ import {
 	Hover, SignatureHelp, Definition, DefinitionLink, ReferenceContext, DocumentHighlight, SymbolInformation,
 	CodeLens, CodeActionContext, FormattingOptions, DocumentLink, MarkupKind, SymbolKind, CompletionItemKind,
 	CodeAction, CodeActionKind, DocumentSymbol, CompletionItemTag, DiagnosticTag, SymbolTag, uinteger, integer,
-	InsertTextMode, LSPAny, WorkspaceSymbol
+	InsertTextMode, LSPAny, WorkspaceSymbol, URI, WorkspaceFolder
 } from 'vscode-languageserver-types';
 
 import * as Is from './utils/is';
@@ -29,7 +29,7 @@ import {
 } from './protocol.typeDefinition';
 
 import {
-	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, WorkspaceFolder,
+	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams,
 	WorkspaceFoldersChangeEvent, WorkspaceFoldersInitializeParams, WorkspaceFoldersServerCapabilities
 } from './protocol.workspaceFolder';
 
@@ -1857,6 +1857,14 @@ export interface DidChangeWatchedFilesClientCapabilities {
 	 * from the server side.
 	 */
 	dynamicRegistration?: boolean;
+
+	/**
+	 * Whether the client has support for {@link  RelativePattern relative pattern}
+	 * or not.
+	 *
+	 * @since 3.17.0
+	 */
+	relativePatternSupport?: boolean;
 }
 
 /**
@@ -1921,17 +1929,60 @@ export interface DidChangeWatchedFilesRegistrationOptions {
 	watchers: FileSystemWatcher[];
 }
 
+/**
+ * The glob pattern to watch relative to the base path. Glob patterns can have the following syntax:
+ * - `*` to match one or more characters in a path segment
+ * - `?` to match on one character in a path segment
+ * - `**` to match any number of path segments, including none
+ * - `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)
+ * - `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
+ * - `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)
+ *
+ * @since 3.17.0
+ */
+export type Pattern = string;
+
+/**
+ * A relative pattern is a helper to construct glob patterns that are matched
+ * relatively to a base URI. The common value for a `baseUri` is a workspace
+ * folder root, but it can be another absolute URI as well.
+ *
+ * @since 3.17.0
+ */
+export interface RelativePattern {
+	/**
+	 * A workspace folder or a base URI to which this pattern will be matched
+	 * against relatively.
+	 */
+	baseUri: WorkspaceFolder | URI;
+
+	/**
+	 * The actual glob pattern;
+	 */
+	pattern: Pattern;
+}
+
+export namespace RelativePattern {
+	export function is(value: any): value is RelativePattern {
+		const candidate: RelativePattern = value;
+		return Is.objectLiteral(candidate) && (URI.is(candidate.baseUri) || WorkspaceFolder.is(candidate.baseUri)) && Is.string(candidate.pattern);
+	}
+}
+
+/**
+ * The glob pattern. Either a string pattern or a relative pattern.
+ *
+ * @since 3.17.0
+ */
+export type GlobPattern = Pattern | RelativePattern;
+
 export interface FileSystemWatcher {
 	/**
-	 * The  glob pattern to watch. Glob patterns can have the following syntax:
-	 * - `*` to match one or more characters in a path segment
-	 * - `?` to match on one character in a path segment
-	 * - `**` to match any number of path segments, including none
-	 * - `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)
-	 * - `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
-	 * - `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)
+	 * The glob pattern to watch. See {@link GlobPattern glob pattern} for more detail.
+	 *
+ 	 * @since 3.17.0 support for relative patterns.
 	 */
-	globPattern: string;
+	globPattern: GlobPattern;
 
 	/**
 	 * The kind of events of interest. If omitted it defaults
@@ -3605,7 +3656,7 @@ export namespace ApplyWorkspaceEditRequest {
 export {
 	ImplementationRequest, ImplementationParams, ImplementationRegistrationOptions, ImplementationOptions,
 	TypeDefinitionRequest, TypeDefinitionParams, TypeDefinitionRegistrationOptions, TypeDefinitionOptions,
-	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, WorkspaceFolder, WorkspaceFoldersChangeEvent,
+	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, WorkspaceFoldersChangeEvent,
 	ConfigurationRequest, ConfigurationParams, ConfigurationItem,
 	DocumentColorRequest, ColorPresentationRequest, DocumentColorOptions, DocumentColorParams, ColorPresentationParams, DocumentColorRegistrationOptions,
 	FoldingRangeClientCapabilities, FoldingRangeOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeRegistrationOptions,

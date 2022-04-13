@@ -245,6 +245,8 @@ export interface Converter {
 	asTypeHierarchyItems(items: null, token?: code.CancellationToken): Promise<undefined>;
 	asTypeHierarchyItems(items: ls.TypeHierarchyItem[], token?: code.CancellationToken): Promise<code.TypeHierarchyItem[]>;
 	asTypeHierarchyItems(items: ls.TypeHierarchyItem[] | null, token?: code.CancellationToken): Promise<code.TypeHierarchyItem[] | undefined>;
+
+	asGlobPattern(pattern: ls.GlobPattern): code.GlobPattern | undefined;
 }
 
 export interface URIConverter {
@@ -1406,6 +1408,22 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return async.map(items, (asTypeHierarchyItem as (item: ls.TypeHierarchyItem) => code.TypeHierarchyItem), token);
 	}
 
+	function asGlobPattern(pattern: ls.GlobPattern): code.GlobPattern | undefined {
+		if (Is.string(pattern)) {
+			return pattern;
+		}
+		if (ls.RelativePattern.is(pattern)) {
+			if (ls.URI.is(pattern.baseUri)) {
+				return new code.RelativePattern(asUri(pattern.baseUri), pattern.pattern);
+			} else if (ls.WorkspaceFolder.is(pattern.baseUri)) {
+				const workspaceFolder = code.workspace.getWorkspaceFolder(asUri(pattern.baseUri.uri));
+				return workspaceFolder !== undefined ? new code.RelativePattern(workspaceFolder, pattern.pattern) : undefined;
+			}
+		}
+		return undefined;
+	}
+
+
 	return {
 		asUri,
 		asDocumentSelector,
@@ -1477,6 +1495,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		asCallHierarchyOutgoingCalls,
 		asLinkedEditingRanges: asLinkedEditingRanges,
 		asTypeHierarchyItem,
-		asTypeHierarchyItems
+		asTypeHierarchyItems,
+		asGlobPattern
 	};
 }

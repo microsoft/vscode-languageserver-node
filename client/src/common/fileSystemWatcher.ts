@@ -13,9 +13,9 @@ import {
 } from 'vscode-languageserver-protocol';
 
 import {
-	FeatureClient, DynamicFeature, ensure, RegistrationData, FeatureState } from './features';
+	FeatureClient, DynamicFeature, ensure, RegistrationData, FeatureState
+} from './features';
 
-import * as Is from './utils/is';
 
 export class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatchedFilesRegistrationOptions> {
 
@@ -39,6 +39,7 @@ export class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatched
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
 		ensure(ensure(capabilities, 'workspace')!, 'didChangeWatchedFiles')!.dynamicRegistration = true;
+		ensure(ensure(capabilities, 'workspace')!, 'didChangeWatchedFiles')!.relativePatternSupport = true;
 	}
 
 	public initialize(_capabilities: ServerCapabilities, _documentSelector: DocumentSelector): void {
@@ -48,9 +49,10 @@ export class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatched
 		if (!Array.isArray(data.registerOptions.watchers)) {
 			return;
 		}
-		let disposables: Disposable[] = [];
-		for (let watcher of data.registerOptions.watchers) {
-			if (!Is.string(watcher.globPattern)) {
+		const disposables: Disposable[] = [];
+		for (const watcher of data.registerOptions.watchers) {
+			const globPattern = this._client.protocol2CodeConverter.asGlobPattern(watcher.globPattern);
+			if (globPattern === undefined) {
 				continue;
 			}
 			let watchCreate: boolean = true, watchChange: boolean = true, watchDelete: boolean = true;
@@ -59,7 +61,7 @@ export class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatched
 				watchChange = (watcher.kind & WatchKind.Change) !== 0;
 				watchDelete = (watcher.kind & WatchKind.Delete) !== 0;
 			}
-			let fileSystemWatcher: VFileSystemWatcher = Workspace.createFileSystemWatcher(watcher.globPattern, !watchCreate, !watchChange, !watchDelete);
+			const fileSystemWatcher: VFileSystemWatcher = Workspace.createFileSystemWatcher(globPattern, !watchCreate, !watchChange, !watchDelete);
 			this.hookListeners(fileSystemWatcher, watchCreate, watchChange, watchDelete);
 			disposables.push(fileSystemWatcher);
 		}

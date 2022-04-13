@@ -3,6 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
+import { WorkspaceFolder } from 'vscode-languageserver-types';
 import { RequestHandler0, NotificationHandler, HandlerResult, CancellationToken } from 'vscode-jsonrpc';
 
 import { ProtocolRequestType0, ProtocolNotificationType } from './messages';
@@ -31,19 +32,6 @@ export interface WorkspaceFoldersServerCapabilities {
 	 * using the `client/unregisterCapability` request.
 	 */
 	changeNotifications?: string | boolean;
-}
-
-export interface WorkspaceFolder {
-	/**
-	 * The associated URI for this workspace folder.
-	 */
-	uri: string;
-
-	/**
-	 * The name of the workspace folder. Used to refer to this
-	 * workspace folder in the user interface.
-	 */
-	name: string;
 }
 
 /**
