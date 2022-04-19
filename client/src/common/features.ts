@@ -391,20 +391,6 @@ export abstract class TextDocumentEventFeature<P, E, M> extends DynamicDocumentF
 		}
 	}
 
-	protected doRegisterActivation(registerProvider: () => Disposable): void {
-		if (this._activation !== undefined) {
-			this._activation.dispose();
-		}
-		this._activation = registerProvider();
-	}
-
-	protected handleActivation(): void {
-		if (this._client.isRunning()) {
-			return;
-		}
-		this._client.start().catch((error) => this._client.error(`Activating server failed.`, error, 'force'));
-	}
-
 	public suspend(): void {
 		this._selectors.clear();
 		this._onNotificationSent.dispose();

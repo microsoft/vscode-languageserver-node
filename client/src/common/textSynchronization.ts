@@ -93,24 +93,6 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 		});
 	}
 
-	public registerActivation(options: DocumentSelectorOptions): void {
-		const selector = this._client.protocol2CodeConverter.asDocumentSelector(options.documentSelector);
-		this.doRegisterActivation(() => {
-			return Workspace.onDidOpenTextDocument((document) => {
-				if (Languages.match(selector, document) > 0) {
-					this.handleActivation();
-				}
-			});
-		});
-		// Also activate if a document of that kind is already open.
-		for (const textDocument of Workspace.textDocuments) {
-			if (Languages.match(selector, textDocument)) {
-				this.handleActivation();
-				break;
-			}
-		}
-	}
-
 	protected notificationSent(textDocument: TextDocument, type: ProtocolNotificationType<DidOpenTextDocumentParams, TextDocumentRegistrationOptions>, params: DidOpenTextDocumentParams): void {
 		super.notificationSent(textDocument, type, params);
 		this._syncedDocuments.set(textDocument.uri.toString(), textDocument);
