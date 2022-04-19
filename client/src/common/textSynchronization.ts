@@ -17,7 +17,7 @@ import {
 
 import {
 	FeatureClient, TextDocumentEventFeature, DynamicFeature, NextSignature, TextDocumentSendFeature, NotifyingFeature, ensure, RegistrationData, DynamicDocumentFeature,
-	NotificationSendEvent, DocumentSelectorOptions
+	NotificationSendEvent
 } from './features';
 
 import { Delayer } from './utils/async';
