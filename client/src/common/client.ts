@@ -1565,6 +1565,14 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		return this._dynamicFeatures.get(request);
 	}
 
+	hasDedicatedTextSynchronizationFeature(textDocument: TextDocument): boolean {
+		const feature = this.getFeature(Proposed.NotebookDocumentSyncRegistrationType.method);
+		if (feature === undefined || !(feature instanceof nb.NotebookDocumentSyncFeature)) {
+			return false;
+		}
+		return feature.handles(textDocument);
+	}
+
 	protected registerBuiltinFeatures() {
 		this.registerFeature(new ConfigurationFeature(this));
 		this.registerFeature(new DidOpenTextDocumentFeature(this, this._syncedDocuments));
@@ -1678,8 +1686,13 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	private initializeFeatures(_connection: Connection): void {
-		let documentSelector = this._clientOptions.documentSelector;
-		for (let feature of this._features) {
+		const documentSelector = this._clientOptions.documentSelector;
+		for (const feature of this._features) {
+			if (Is.func(feature.preInitialize)) {
+				feature.preInitialize(this._capabilities, documentSelector);
+			}
+		}
+		for (const feature of this._features) {
 			feature.initialize(this._capabilities, documentSelector);
 		}
 	}

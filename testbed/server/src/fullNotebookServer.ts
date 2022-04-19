@@ -37,6 +37,7 @@ function computeDiagnostics(content: string): Diagnostic[] {
 	return result;
 }
 
+const documents = new TextDocuments(TextDocument);
 const connection: ProposedFeatures.Connection = createConnection(ProposedFeatures.all);
 
 connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> | ResponseError<InitializeError> | InitializeResult => {
@@ -57,6 +58,10 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 		}
 	};
 	return result;
+});
+
+documents.onDidChangeContent((event) => {
+	console.log(event);
 });
 
 connection.onHover((textPosition): Hover => {
@@ -106,5 +111,6 @@ notebooks.onDidClose((notebookDocument) => {
 	notebookDocument.cells.forEach(clear);
 });
 
+documents.listen(connection);
 notebooks.listen(connection);
 connection.listen();

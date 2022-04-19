@@ -473,8 +473,8 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 		return 'notebook';
 	}
 
-	public handles(notebookCell: vscode.NotebookCell): boolean {
-		return vscode.languages.match(this.selector, notebookCell.document) > 0;
+	public handles(textDocument: vscode.TextDocument): boolean {
+		return vscode.languages.match(this.selector, textDocument) > 0;
 	}
 
 	public didOpenNotebookCellTextDocument(notebookDocument: vscode.NotebookDocument, cell: vscode.NotebookCell): void {
@@ -895,8 +895,8 @@ class NotebookCellTextDocumentSyncFeatureProvider implements NotebookCellTextDoc
 		return 'cellContent';
 	}
 
-	public handles(notebookCell: vscode.NotebookCell): boolean {
-		return vscode.languages.match(this.documentSelector, notebookCell.document) > 0;
+	public handles(textDocument: vscode.TextDocument): boolean {
+		return vscode.languages.match(this.documentSelector, textDocument) > 0;
 	}
 
 	public dispose(): void {
@@ -933,6 +933,7 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 
 	private readonly client: FeatureClient<NotebookDocumentMiddleware, NotebookDocumentOptions>;
 	private readonly registrations: Map<string, NotebookCellTextDocumentSyncFeatureProvider | NotebookDocumentSyncFeatureProvider>;
+	private dedicatedChannel: vscode.DocumentSelector | undefined;
 
 	constructor(client: FeatureClient<NotebookDocumentMiddleware, NotebookDocumentOptions>) {
 		this.client = client;
@@ -1014,13 +1015,21 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 		synchronization.executionSummarySupport = true;
 	}
 
+	public preInitialize(capabilities: proto.ServerCapabilities<any> & proto.Proposed.$NotebookDocumentSyncServerCapabilities): void {
+		const options = capabilities.notebookDocumentSync;
+		if (options === undefined || options.mode !== 'notebook') {
+			return;
+		}
+		this.dedicatedChannel = this.client.protocol2CodeConverter.asDocumentSelector($NotebookDocumentSyncOptions.asDocumentSelector(options));
+	}
+
 	public initialize(capabilities: proto.ServerCapabilities<any> & proto.Proposed.$NotebookDocumentSyncServerCapabilities): void {
 		const options = capabilities.notebookDocumentSync;
 		if (options === undefined) {
 			return;
 		}
 		const id = (options as StaticRegistrationOptions).id ?? UUID.generateUuid();
-		this.register({ id, registerOptions: options});
+		this.register({ id, registerOptions: options });
 	}
 
 	public register(data: RegistrationData<proto.Proposed.NotebookDocumentSyncRegistrationOptions>): void {
@@ -1045,9 +1054,24 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 		this.registrations.clear();
 	}
 
+	public handles(textDocument: vscode.TextDocument): boolean {
+		if (textDocument.uri.scheme !== NotebookDocumentSyncFeature.CellScheme) {
+			return false;
+		}
+		if (this.dedicatedChannel !== undefined && vscode.languages.match(this.dedicatedChannel, textDocument)) {
+			return true;
+		}
+		for (const provider of this.registrations.values()) {
+			if (provider.handles(textDocument)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public getProvider(notebookCell: vscode.NotebookCell): NotebookCellTextDocumentSyncFeatureShape | NotebookDocumentSyncFeatureShape | undefined {
 		for (const provider of this.registrations.values()) {
-			if (provider.handles(notebookCell)) {
+			if (provider.handles(notebookCell.document)) {
 				return provider;
 			}
 		}

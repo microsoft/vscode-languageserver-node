@@ -13,7 +13,7 @@ let client: LanguageClient;
 export function activate(context: ExtensionContext) {
 	// We need to go one level up since an extension compile the js code into
 	// the output folder.
-	let module = path.join(__dirname, '..', '..', 'server', 'out', 'server.js');
+	let module = path.join(__dirname, '..', '..', 'server', 'out', 'fullNotebookServer.js');
 	let debugOptions = { execArgv: ['--nolazy', '--inspect=6012'] };
 	let serverOptions: ServerOptions = {
 		run: { module, transport: TransportKind.ipc },
@@ -54,9 +54,6 @@ export function activate(context: ExtensionContext) {
 				const fsPath = resource.fsPath;
 				return path.extname(fsPath) === '.bat';
 			}
-		},
-		suspend: {
-			mode: SuspendMode.on
 		}
 	};
 
@@ -65,16 +62,14 @@ export function activate(context: ExtensionContext) {
 	client.onTelemetry((data: any) => {
 		console.log(`Telemetry event received: ${JSON.stringify(data)}`);
 	});
-	const feature = client.getFeature(DidOpenTextDocumentNotification.method);
-	feature.registerActivation({ documentSelector: ['bat']});
-	// const not: NotificationType<string[]> = new NotificationType<string[]>('testbed/notification');
-	// client.start().catch((error)=> client.error(`Start failed`, error, 'force'));
-	// client.sendNotification(not, ['dirk', 'baeumer']).catch((error) => client.error(`Sending test notification failed`, error, 'force'));
-	// commands.registerCommand('testbed.myCommand.invoked', () => {
-	// 	void commands.executeCommand('testbed.myCommand').then(value => {
-	// 		console.log(value);
-	// 	});
-	// });
+	const not: NotificationType<string[]> = new NotificationType<string[]>('testbed/notification');
+	client.start().catch((error)=> client.error(`Start failed`, error, 'force'));
+	client.sendNotification(not, ['dirk', 'baeumer']).catch((error) => client.error(`Sending test notification failed`, error, 'force'));
+	commands.registerCommand('testbed.myCommand.invoked', () => {
+		void commands.executeCommand('testbed.myCommand').then(value => {
+			console.log(value);
+		});
+	});
 }
 
 export function deactivate() {

@@ -231,10 +231,14 @@ The protocol will therefore support two modes when it comes to synchronizing cel
 * _cellContent_: in this mode only the cell text content is synchronized to the server using the standard `textDocument/did*` notification. No notebook document and no cell structure is synchronized. This mode allows for easy adoption of notebooks since servers can reuse most of it implementation logic.
 * _notebook_: in this mode the notebook document, the notebook cells and the notebook cell text content is synchronized to the server. To allow servers to create a consistent picture of a notebook document the cell text content is NOT synchronized using the standard `textDocument/did*` notifications. It is instead synchronized using special `notebook/did*` notifications. This ensures that the cell and its text content arrives on the server using one open, change or close event.
 
-Servers can request notebook synchronization using the new server capability `notebookDocumentSync` (see below of the corresponding specification part). Here are some example of possible synchronization values:
+Servers can request notebook synchronization using the following mechanisms:
 
-Synchronize cell text content only for Python cells in notebook documents having a `file` scheme `books1` in its path and a `jupyter` notebook type.
+- a generic document selector for the text document synchronization like `{ language: 'python' }`. This will synchronize all Python text documents to the server including the notebook cell text documents with a language id `python`.
+- Using the new server capability `notebookDocumentSync` (see below of the corresponding specification part). This allows for a more fine grained control of the notebook documents and the notebook cell text documents that are synchronized.
 
+Here are some example of possible synchronization values when using the new `notebookDocumentSync` server capability:
+
+- synchronize cell text content only for Python cells in notebook documents having a `file` scheme `books1` in its path and a `jupyter` notebook type.
 ```typescript
 {
 	notebookDocumentSync: {
@@ -247,7 +251,7 @@ Synchronize cell text content only for Python cells in notebook documents having
 }
 ```
 
-Synchronize the whole notebook document data for the same kind of notebook documents.
+- synchronize the whole notebook document data for the same kind of notebook documents.
 
 ```typescript
 {

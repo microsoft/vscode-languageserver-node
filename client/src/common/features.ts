@@ -127,6 +127,17 @@ export interface StaticFeature {
 	fillClientCapabilities(capabilities: ClientCapabilities): void;
 
 	/**
+	 * A preflight where the server capabilities are shown to all features
+	 * before a feature is actually initialized. This allows feature to
+	 * capture some state if they are a pre-requisite for other features.
+	 *
+	 * @param capabilities the server capabilities
+	 * @param documentSelector the document selector pass to the client's constructor.
+	 *  May be `undefined` if the client was created without a selector.
+	 */
+	preInitialize?: (capabilities: ServerCapabilities, documentSelector: DocumentSelector | undefined) => void;
+
+	/**
 	 * Initialize the feature. This method is called on a feature instance
 	 * when the client has successfully received the initialize request from
 	 * the server and before the client sends the initialized notification
@@ -177,6 +188,17 @@ export interface DynamicFeature<RO> {
 	 * @param capabilities The client capabilities to fill.
 	 */
 	fillClientCapabilities(capabilities: ClientCapabilities): void;
+
+	/**
+	 * A preflight where the server capabilities are shown to all features
+	 * before a feature is actually initialized. This allows feature to
+	 * capture some state if they are a pre-requisite for other features.
+	 *
+	 * @param capabilities the server capabilities
+	 * @param documentSelector the document selector pass to the client's constructor.
+	 *  May be `undefined` if the client was created without a selector.
+	 */
+	preInitialize?: (capabilities: ServerCapabilities, documentSelector: DocumentSelector | undefined) => void;
 
 	/**
 	 * Initialize the feature. This method is called on a feature instance
@@ -310,13 +332,12 @@ export abstract class TextDocumentEventFeature<P, E, M> extends DynamicDocumentF
 	protected readonly _type: ProtocolNotificationType<P, TextDocumentRegistrationOptions>;
 	protected readonly _middleware: NextSignature<E, Promise<void>> | undefined;
 	protected readonly _createParams: CreateParamsSignature<E, P>;
+	protected readonly _textDocument: (data: E) => TextDocument;
 	protected readonly _selectorFilter?: (selectors: IterableIterator<VDocumentSelector>, data: E) => boolean;
 
 	private _listener: Disposable | undefined;
 	protected readonly _selectors: Map<string, VDocumentSelector>;
 	private readonly _onNotificationSent: EventEmitter<NotificationSendEvent<E, P>>;
-
-	private _activation: Disposable | undefined;
 
 	public static textDocumentFilter(selectors: IterableIterator<VDocumentSelector>, textDocument: TextDocument): boolean {
 		for (const selector of selectors) {
@@ -329,6 +350,7 @@ export abstract class TextDocumentEventFeature<P, E, M> extends DynamicDocumentF
 
 	constructor(client: FeatureClient<M>, event: Event<E>, type: ProtocolNotificationType<P, TextDocumentRegistrationOptions>,
 		middleware: NextSignature<E, Promise<void>> | undefined, createParams: CreateParamsSignature<E, P>,
+		textDocument: (data: E) => TextDocument,
 		selectorFilter?: (selectors: IterableIterator<VDocumentSelector>, data: E) => boolean
 	) {
 		super(client);
@@ -336,6 +358,7 @@ export abstract class TextDocumentEventFeature<P, E, M> extends DynamicDocumentF
 		this._type = type;
 		this._middleware = middleware;
 		this._createParams = createParams;
+		this._textDocument = textDocument;
 		this._selectorFilter = selectorFilter;
 
 		this._selectors = new Map<string, VDocumentSelector>();
@@ -370,9 +393,16 @@ export abstract class TextDocumentEventFeature<P, E, M> extends DynamicDocumentF
 			await this._client.sendNotification(this._type, params).catch();
 			this.notificationSent(data, this._type, params);
 		};
-		if (!this._selectorFilter || this._selectorFilter(this._selectors.values(), data)) {
+		if (this.matches(data)) {
 			return this._middleware ? this._middleware(data, (data) => doSend(data)) : doSend(data);
 		}
+	}
+
+	private matches(data: E): boolean {
+		if (this._client.hasDedicatedTextSynchronizationFeature(this._textDocument(data))) {
+			return false;
+		}
+		return !this._selectorFilter || this._selectorFilter(this._selectors.values(), data);
 	}
 
 	public get onNotificationSent(): VEvent<NotificationSendEvent<E, P>> {
@@ -402,10 +432,6 @@ export abstract class TextDocumentEventFeature<P, E, M> extends DynamicDocumentF
 
 	public dispose(): void {
 		this.suspend();
-		if (this._activation !== undefined) {
-			this._activation.dispose();
-			this._activation = undefined;
-		}
 	}
 
 	public getProvider(document: TextDocument):  { send: (data: E) => Promise<void> } | undefined {
@@ -609,6 +635,10 @@ export abstract class WorkspaceFeature<RO, PR, M> implements DynamicFeature<RO> 
 	}
 }
 
+export interface DedicatedTextSynchronizationFeature {
+	handles(textDocument: TextDocument): boolean;
+}
+
 // Features can refer to other feature when implementing themselves.
 // Hence the feature client needs to provide access to them. To
 // avoid cyclic dependencies these import MUST ALL be type imports.
@@ -665,6 +695,8 @@ export interface FeatureClient<M, CO = object> {
 	error(message: string, data?: any, showNotification?: boolean | 'force'): void;
 
 	handleFailedRequest<T>(type: MessageSignature, token: CancellationToken | undefined, error: any, defaultValue: T, showNotification?: boolean): T;
+
+	hasDedicatedTextSynchronizationFeature(textDocument: TextDocument): boolean;
 
 	getFeature(request: typeof DidOpenTextDocumentNotification.method): DidOpenTextDocumentFeatureShape;
 	getFeature(request: typeof DidChangeTextDocumentNotification.method): DidChangeTextDocumentFeatureShape;
