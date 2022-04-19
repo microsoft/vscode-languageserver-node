@@ -1184,7 +1184,7 @@ suite('Client integration', () => {
 	});
 
 	test('Document diagnostic pull', async () => {
-		const provider = client.getFeature(lsclient.Proposed.DocumentDiagnosticRequest.method).getProvider(document);
+		const provider = client.getFeature(lsclient.Proposed.DocumentDiagnosticRequest.method)?.getProvider(document);
 		isDefined(provider);
 		const result: vsdiag.DocumentDiagnosticReport | undefined | null = (await provider.diagnostics.provideDiagnostics(document, undefined, tokenSource.token));
 		isDefined(result);
@@ -1205,7 +1205,7 @@ suite('Client integration', () => {
 	});
 
 	test('Workspace diagnostic pull', async () => {
-		const provider = client.getFeature(lsclient.Proposed.DocumentDiagnosticRequest.method).getProvider(document);
+		const provider = client.getFeature(lsclient.Proposed.DocumentDiagnosticRequest.method)?.getProvider(document);
 		isDefined(provider);
 		isDefined(provider.diagnostics.provideWorkspaceDiagnostics);
 		await provider.diagnostics.provideWorkspaceDiagnostics([], tokenSource.token, (result) => {
@@ -1396,7 +1396,7 @@ suite('Client integration', () => {
 		);
 		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', notebookData);
 		const feature = client.getFeature(lsclient.Proposed.NotebookDocumentSyncRegistrationType.method);
-		const provider = feature.getProvider(notebookDocument.getCells()[0]);
+		const provider = feature?.getProvider(notebookDocument.getCells()[0]);
 		isDefined(provider);
 		assert.strictEqual(provider.mode, 'notebook');
 		if (provider.mode === 'notebook') {
