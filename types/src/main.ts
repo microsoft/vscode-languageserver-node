@@ -65,11 +65,16 @@ export type decimal = number;
 
 
 /**
- * The LSP any type
+ * The LSP any type.
+ *
+ * Please note that strictly speaking a property with the value `undefined`
+ * can't be converted into JSON preserving the property name. However for
+ * convenience it is allowed and assumed that all these properties are
+ * optional as well.
  *
  * @since 3.17.0
  */
-export type LSPAny = LSPObject | LSPArray | string | integer | uinteger | decimal | boolean | null;
+export type LSPAny = LSPObject | LSPArray | string | integer | uinteger | decimal | boolean | null | undefined;
 
 /**
  * LSP object definition.
