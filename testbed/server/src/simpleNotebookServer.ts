@@ -46,13 +46,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 			textDocumentSync: TextDocumentSyncKind.Incremental,
 			hoverProvider: true,
 			declarationProvider: true,
-			completionProvider: {},
-			notebookDocumentSync: {
-				notebookSelector: [{
-					cells: [{ language: 'bat'}]
-				}],
-				mode: 'cellContent'
-			}
+			completionProvider: {}
 		}
 	};
 	return result;

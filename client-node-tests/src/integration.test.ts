@@ -1513,12 +1513,12 @@ suite('Simple notebook tests', () => {
 			],
 		);
 		await vscode.workspace.openNotebookDocument('jupyter-notebook', notebookData);
-		assert.strictEqual(textDocumentMiddlewareCalled, true);
+		assert.strictEqual(textDocumentMiddlewareCalled, true, 'text document middleware called');
 		client.middleware.didOpen = undefined;
-		assert.strictEqual(notebookMiddlewareCalled, false);
+		assert.strictEqual(notebookMiddlewareCalled, false, 'notebook middleware called');
 		client.middleware.notebooks = undefined;
 		const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.DidOpenTextDocumentNotification.method);
-		assert.strictEqual(notified, true);
+		assert.strictEqual(notified, true, 'notification arrived on server');
 		await revertAllDirty();
 	});
 
@@ -1551,7 +1551,7 @@ suite('Simple notebook tests', () => {
 		assert.strictEqual(notebookMiddlewareCalled, false, 'notebook middleware called');
 		client.middleware.notebooks = undefined;
 		const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.DidChangeTextDocumentNotification.method);
-		assert.strictEqual(notified, true);
+		assert.strictEqual(notified, true, 'notification arrived on server');
 		await revertAllDirty();
 	});
 });

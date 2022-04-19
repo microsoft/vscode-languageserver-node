@@ -21,14 +21,7 @@ namespace GotNotifiedRequest {
 
 connection.onInitialize((_params: InitializeParams): any => {
 	const capabilities: ServerCapabilities & Proposed.$DiagnosticServerCapabilities & Proposed.$NotebookDocumentSyncServerCapabilities = {
-		textDocumentSync: TextDocumentSyncKind.Full,
-		notebookDocumentSync: {
-			notebookSelector: [{
-				notebook: { notebookType: 'jupyter-notebook' },
-				cells: [{language: 'bat'}]
-			}],
-			mode: 'cellContent'
-		}
+		textDocumentSync: TextDocumentSyncKind.Incremental
 	};
 	return { capabilities };
 });

@@ -421,17 +421,13 @@ export abstract class TextDocumentEventFeature<P, E, M> extends DynamicDocumentF
 		}
 	}
 
-	public suspend(): void {
+	public dispose(): void {
 		this._selectors.clear();
 		this._onNotificationSent.dispose();
 		if (this._listener) {
 			this._listener.dispose();
 			this._listener = undefined;
 		}
-	}
-
-	public dispose(): void {
-		this.suspend();
 	}
 
 	public getProvider(document: TextDocument):  { send: (data: E) => Promise<void> } | undefined {
