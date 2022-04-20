@@ -280,15 +280,17 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		for (const filter of selector) {
 			if (typeof filter === 'string') {
 				result.push(filter);
-			} else if (TextDocumentFilter.is(filter)) {
-				result.push({ language: filter.language, scheme: filter.scheme, pattern: filter.pattern });
 			} else if (NotebookCellTextDocumentFilter.is(filter)) {
+				// We first need to check for the notebook cell filter since a TextDocumentFilter would
+				// match both (e.g. the notebook is optional).
 				if (typeof filter.notebook === 'string') {
 					result.push({notebookType: filter.notebook, language: filter.language});
 				} else {
 					const notebookType = filter.notebook.notebookType ?? '*';
 					result.push({ notebookType: notebookType, scheme: filter.notebook.scheme, pattern: filter.notebook.pattern, language: filter.language });
 				}
+			} else if (TextDocumentFilter.is(filter)) {
+				result.push({ language: filter.language, scheme: filter.scheme, pattern: filter.pattern });
 			}
 		}
 		return result;

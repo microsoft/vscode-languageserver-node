@@ -341,7 +341,7 @@ export abstract class TextDocumentEventFeature<P, E, M> extends DynamicDocumentF
 
 	public static textDocumentFilter(selectors: IterableIterator<VDocumentSelector>, textDocument: TextDocument): boolean {
 		for (const selector of selectors) {
-			if (Languages.match(selector, textDocument)) {
+			if (Languages.match(selector, textDocument) > 0) {
 				return true;
 			}
 		}
