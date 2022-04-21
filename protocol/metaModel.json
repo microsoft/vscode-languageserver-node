@@ -12761,7 +12761,7 @@
 					}
 				]
 			},
-			"documentation": "The LSP any type\n@since 3.17.0",
+			"documentation": "The LSP any type.\nPlease note that strictly speaking a property with the value `undefined`\ncan't be converted into JSON preserving the property name. However for\nconvenience it is allowed and assumed that all these properties are\noptional as well.\n@since 3.17.0",
 			"since": "3.17.0"
 		},
 		{

@@ -480,7 +480,7 @@ export default class Visitor {
 		return undefined;
 	}
 
-	private getTypeInfo(typeNode: ts.TypeNode | ts.Identifier): TypeInfo | undefined {
+	private getTypeInfo(typeNode: ts.TypeNode | ts.Identifier, isLSPAny = false): TypeInfo | undefined {
 		if (ts.isIdentifier(typeNode)) {
 			const typeName = typeNode.text;
 			if (LSPBaseTypes.has(typeName)) {
@@ -513,6 +513,11 @@ export default class Visitor {
 				const typeInfo = this.getTypeInfo(item);
 				if (typeInfo === undefined) {
 					return undefined;
+				}
+				// We need to remove undefined from LSP Any since
+				// it is not a valid type on the wire
+				if (isLSPAny && typeInfo.kind === 'base' && typeInfo.name === 'undefined') {
+					continue;
 				}
 				items.push(typeInfo);
 			}
@@ -706,7 +711,7 @@ export default class Visitor {
 					return result;
 				}
 			}
-			const target = this.getTypeInfo(declaration.type);
+			const target = this.getTypeInfo(declaration.type, name === 'LSPAny');
 			if (target === undefined) {
 				throw new Error(`Can't resolve target type for type alias ${symbol.getName()}`);
 			}
