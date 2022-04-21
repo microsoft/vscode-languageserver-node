@@ -9,8 +9,7 @@ import * as minimatch from 'minimatch';
 
 import * as proto from 'vscode-languageserver-protocol';
 import {
-	StaticRegistrationOptions, NotebookDocumentFilter, LSPObject, LSPArray, TextDocumentItem, DidOpenTextDocumentNotification,
-	DidChangeTextDocumentNotification, DidCloseTextDocumentNotification, NotebookCellTextDocumentFilter, TextDocumentSyncKind
+	StaticRegistrationOptions, NotebookDocumentFilter, LSPObject, LSPArray, TextDocumentItem, NotebookCellTextDocumentFilter
 } from 'vscode-languageserver-protocol';
 
 import * as UUID from './utils/uuid';
@@ -410,7 +409,6 @@ export type NotebookDocumentMiddleware = {
 };
 
 export interface NotebookDocumentSyncFeatureShape {
-	mode: 'notebook';
 	sendDidOpenNotebookDocument(notebookDocument: vscode.NotebookDocument): Promise<void>;
 	sendDidSaveNotebookDocument(notebookDocument: vscode.NotebookDocument): Promise<void>;
 	sendDidChangeNotebookDocument(event: NotebookDocumentChangeEvent): Promise<void>;
@@ -473,8 +471,8 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 		return 'notebook';
 	}
 
-	public handles(notebookCell: vscode.NotebookCell): boolean {
-		return vscode.languages.match(this.selector, notebookCell.document) > 0;
+	public handles(textDocument: vscode.TextDocument): boolean {
+		return vscode.languages.match(this.selector, textDocument) > 0;
 	}
 
 	public didOpenNotebookCellTextDocument(notebookDocument: vscode.NotebookDocument, cell: vscode.NotebookCell): void {
@@ -848,83 +846,8 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 
 export type $NotebookCellTextDocumentFilter = NotebookCellTextDocumentFilter & { sync: true };
 
-export interface NotebookCellTextDocumentSyncFeatureShape {
-	mode: 'cellContent';
-	sendDidOpenTextDocument(textDocument: vscode.TextDocument): Promise<void>;
-	sendDidChangeTextDocument(event: vscode.TextDocumentChangeEvent): Promise<void>;
-	sendDidCloseTextDocument(textDocument: vscode.TextDocument): Promise<void>;
-}
-
-class NotebookCellTextDocumentSyncFeatureProvider implements NotebookCellTextDocumentSyncFeatureShape {
-
-	private readonly client: FeatureClient<NotebookDocumentMiddleware, NotebookDocumentOptions>;
-	private readonly registrations: { open: string; change: string; close: string } | undefined;
-	private readonly documentSelector: vscode.DocumentSelector;
-
-	constructor(client: FeatureClient<NotebookDocumentMiddleware, NotebookDocumentOptions>, options: proto.Proposed.NotebookDocumentSyncOptions) {
-		this.client = client;
-
-		const documentSelector = $NotebookDocumentSyncOptions.asDocumentSelector(options);
-
-		const openId = UUID.generateUuid();
-		this.client.getFeature(DidOpenTextDocumentNotification.method).register({
-			id: openId, registerOptions: { documentSelector: documentSelector }
-		});
-		const changeId = UUID.generateUuid();
-		this.client.getFeature(DidChangeTextDocumentNotification.method).register({
-			id: changeId, registerOptions: { documentSelector: documentSelector, syncKind: TextDocumentSyncKind.Incremental }
-		});
-		const closeId = UUID.generateUuid();
-		this.client.getFeature(DidCloseTextDocumentNotification.method).register({
-			id: closeId, registerOptions: { documentSelector: documentSelector }
-		});
-		this.registrations = {open: openId, change: changeId, close: closeId};
-		this.documentSelector = this.client.protocol2CodeConverter.asDocumentSelector(documentSelector);
-	}
-
-	public getState(): FeatureState {
-		for (const document of vscode.workspace.textDocuments) {
-			if (vscode.languages.match(this.documentSelector, document) > 0) {
-				return { kind: 'document', id: '$internal', registrations: true, matches: true };
-			}
-		}
-		return { kind: 'document', id: '$internal', registrations: true, matches: false };
-	}
-
-	public get mode(): 'cellContent' {
-		return 'cellContent';
-	}
-
-	public handles(notebookCell: vscode.NotebookCell): boolean {
-		return vscode.languages.match(this.documentSelector, notebookCell.document) > 0;
-	}
-
-	public dispose(): void {
-		if (this.registrations !== undefined) {
-			this.client.getFeature(DidOpenTextDocumentNotification.method).unregister(this.registrations.open);
-			this.client.getFeature(DidChangeTextDocumentNotification.method).unregister(this.registrations.change);
-			this.client.getFeature(DidCloseTextDocumentNotification.method).unregister(this.registrations.close);
-		}
-	}
-
-	public async sendDidOpenTextDocument(textDocument: vscode.TextDocument): Promise<void> {
-		const provider = this.client.getFeature(DidOpenTextDocumentNotification.method).getProvider(textDocument);
-		return provider !== undefined ? provider.send(textDocument) : Promise.reject(new Error(`No open provider found for notebook cell document ${textDocument.uri.toString()}`));
-	}
-
-	public async sendDidChangeTextDocument(event: vscode.TextDocumentChangeEvent): Promise<void> {
-		const provider = this.client.getFeature(DidChangeTextDocumentNotification.method).getProvider(event.document);
-		return provider !== undefined ? provider.send(event) : Promise.reject(new Error(`No change provider found for notebook cell document ${event.document.uri.toString()}`));
-	}
-
-	public async sendDidCloseTextDocument(textDocument: vscode.TextDocument): Promise<void> {
-		const provider = this.client.getFeature(DidCloseTextDocumentNotification.method).getProvider(textDocument);
-		return provider !== undefined ? provider.send(textDocument) : Promise.reject(new Error(`No close provider found for notebook cell document ${textDocument.uri.toString()}`));
-	}
-}
-
 export type NotebookDocumentProviderShape = {
-	getProvider(notebookCell: vscode.NotebookCell): NotebookCellTextDocumentSyncFeatureShape | NotebookDocumentSyncFeatureShape |undefined;
+	getProvider(notebookCell: vscode.NotebookCell): NotebookDocumentSyncFeatureShape |undefined;
 };
 
 export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Proposed.NotebookDocumentSyncRegistrationOptions>, NotebookDocumentProviderShape {
@@ -932,7 +855,8 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 	public static readonly CellScheme: string = 'vscode-notebook-cell';
 
 	private readonly client: FeatureClient<NotebookDocumentMiddleware, NotebookDocumentOptions>;
-	private readonly registrations: Map<string, NotebookCellTextDocumentSyncFeatureProvider | NotebookDocumentSyncFeatureProvider>;
+	private readonly registrations: Map<string, NotebookDocumentSyncFeatureProvider>;
+	private dedicatedChannel: vscode.DocumentSelector | undefined;
 
 	constructor(client: FeatureClient<NotebookDocumentMiddleware, NotebookDocumentOptions>) {
 		this.client = client;
@@ -1014,23 +938,26 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 		synchronization.executionSummarySupport = true;
 	}
 
+	public preInitialize(capabilities: proto.ServerCapabilities<any> & proto.Proposed.$NotebookDocumentSyncServerCapabilities): void {
+		const options = capabilities.notebookDocumentSync;
+		if (options === undefined) {
+			return;
+		}
+		this.dedicatedChannel = this.client.protocol2CodeConverter.asDocumentSelector($NotebookDocumentSyncOptions.asDocumentSelector(options));
+	}
+
 	public initialize(capabilities: proto.ServerCapabilities<any> & proto.Proposed.$NotebookDocumentSyncServerCapabilities): void {
 		const options = capabilities.notebookDocumentSync;
 		if (options === undefined) {
 			return;
 		}
 		const id = (options as StaticRegistrationOptions).id ?? UUID.generateUuid();
-		this.register({ id, registerOptions: options});
+		this.register({ id, registerOptions: options });
 	}
 
 	public register(data: RegistrationData<proto.Proposed.NotebookDocumentSyncRegistrationOptions>): void {
-		if (data.registerOptions.mode === 'cellContent') {
-			const provider = new NotebookCellTextDocumentSyncFeatureProvider(this.client, data.registerOptions);
-			this.registrations.set(data.id, provider);
-		} else {
-			const provider = new NotebookDocumentSyncFeatureProvider(this.client, data.registerOptions);
-			this.registrations.set(data.id, provider);
-		}
+		const provider = new NotebookDocumentSyncFeatureProvider(this.client, data.registerOptions);
+		this.registrations.set(data.id, provider);
 	}
 
 	public unregister(id: string): void {
@@ -1045,9 +972,24 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 		this.registrations.clear();
 	}
 
-	public getProvider(notebookCell: vscode.NotebookCell): NotebookCellTextDocumentSyncFeatureShape | NotebookDocumentSyncFeatureShape | undefined {
+	public handles(textDocument: vscode.TextDocument): boolean {
+		if (textDocument.uri.scheme !== NotebookDocumentSyncFeature.CellScheme) {
+			return false;
+		}
+		if (this.dedicatedChannel !== undefined && vscode.languages.match(this.dedicatedChannel, textDocument) > 0) {
+			return true;
+		}
 		for (const provider of this.registrations.values()) {
-			if (provider.handles(notebookCell)) {
+			if (provider.handles(textDocument)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public getProvider(notebookCell: vscode.NotebookCell): NotebookDocumentSyncFeatureShape | undefined {
+		for (const provider of this.registrations.values()) {
+			if (provider.handles(notebookCell.document)) {
 				return provider;
 			}
 		}

@@ -19,6 +19,56 @@ namespace GotNotifiedRequest {
 	export const type = new lsclient.RequestType<string, boolean, void>(method);
 }
 
+async function revertAllDirty(): Promise<void> {
+	return vscode.commands.executeCommand('_workbench.revertAllDirty');
+}
+
+function positionEqual(pos: vscode.Position, l: number, c: number): void {
+	assert.strictEqual(pos.line, l);
+	assert.strictEqual(pos.character, c);
+}
+
+
+function rangeEqual(range: vscode.Range, sl: number, sc: number, el: number, ec: number): void {
+	assert.strictEqual(range.start.line, sl);
+	assert.strictEqual(range.start.character, sc);
+	assert.strictEqual(range.end.line, el);
+	assert.strictEqual(range.end.character, ec);
+}
+
+function colorEqual(color: vscode.Color, red: number, green: number, blue: number, alpha: number): void {
+	assert.strictEqual(color.red, red);
+	assert.strictEqual(color.green, green);
+	assert.strictEqual(color.blue, blue);
+	assert.strictEqual(color.alpha, alpha);
+}
+
+function uriEqual(actual: vscode.Uri, expected: vscode.Uri): void {
+	assert.strictEqual(actual.toString(), expected.toString());
+}
+
+function isArray<T>(value: Array<T> | undefined | null, clazz: any = undefined, length: number = 1): asserts value is Array<T> {
+	assert.ok(Array.isArray(value), `value is array`);
+	assert.strictEqual(value!.length, length, 'value has given length');
+	if (clazz !== undefined && length > 0) {
+		assert.ok(value![0] instanceof clazz);
+	}
+}
+
+function isDefined<T>(value: T | undefined | null): asserts value is Exclude<T, undefined | null> {
+	if (value === undefined || value === null) {
+		throw new Error(`Value is null or undefined`);
+	}
+}
+
+function isInstanceOf<T>(value: T, clazz: any): asserts value is Exclude<T, undefined | null> {
+	assert.ok(value instanceof clazz);
+}
+
+function isFullDocumentDiagnosticReport(value: vsdiag.DocumentDiagnosticReport): asserts value is vsdiag.FullDocumentDiagnosticReport {
+	assert.ok(value.kind === vsdiag.DocumentDiagnosticReportKind.full);
+}
+
 suite('Client integration', () => {
 
 	let client!: lsclient.LanguageClient;
@@ -31,56 +81,6 @@ suite('Client integration', () => {
 	const fsProvider = new MemoryFileSystemProvider();
 	let contentProviderDisposable!: vscode.Disposable;
 	let fsProviderDisposable!: vscode.Disposable;
-
-	async function revertAllDirty(): Promise<void> {
-		return vscode.commands.executeCommand('_workbench.revertAllDirty');
-	}
-
-	function positionEqual(pos: vscode.Position, l: number, c: number): void {
-		assert.strictEqual(pos.line, l);
-		assert.strictEqual(pos.character, c);
-	}
-
-
-	function rangeEqual(range: vscode.Range, sl: number, sc: number, el: number, ec: number): void {
-		assert.strictEqual(range.start.line, sl);
-		assert.strictEqual(range.start.character, sc);
-		assert.strictEqual(range.end.line, el);
-		assert.strictEqual(range.end.character, ec);
-	}
-
-	function colorEqual(color: vscode.Color, red: number, green: number, blue: number, alpha: number): void {
-		assert.strictEqual(color.red, red);
-		assert.strictEqual(color.green, green);
-		assert.strictEqual(color.blue, blue);
-		assert.strictEqual(color.alpha, alpha);
-	}
-
-	function uriEqual(actual: vscode.Uri, expected: vscode.Uri): void {
-		assert.strictEqual(actual.toString(), expected.toString());
-	}
-
-	function isArray<T>(value: Array<T> | undefined | null, clazz: any = undefined, length: number = 1): asserts value is Array<T> {
-		assert.ok(Array.isArray(value), `value is array`);
-		assert.strictEqual(value!.length, length, 'value has given length');
-		if (clazz !== undefined && length > 0) {
-			assert.ok(value![0] instanceof clazz);
-		}
-	}
-
-	function isDefined<T>(value: T | undefined | null): asserts value is Exclude<T, undefined | null> {
-		if (value === undefined || value === null) {
-			throw new Error(`Value is null or undefined`);
-		}
-	}
-
-	function isInstanceOf<T>(value: T, clazz: any): asserts value is Exclude<T, undefined | null> {
-		assert.ok(value instanceof clazz);
-	}
-
-	function isFullDocumentDiagnosticReport(value: vsdiag.DocumentDiagnosticReport): asserts value is vsdiag.FullDocumentDiagnosticReport {
-		assert.ok(value.kind === vsdiag.DocumentDiagnosticReportKind.full);
-	}
 
 	suiteSetup(async () => {
 		fsProviderDisposable = vscode.workspace.registerFileSystemProvider(fsProvider.scheme, fsProvider);
@@ -223,9 +223,8 @@ suite('Client integration', () => {
 				notebookDocumentSync: {
 					notebookSelector: [{
 						notebook: { notebookType: 'jupyter-notebook' },
-						cells: [{language: 'bat'}]
-					}],
-					mode: 'notebook'
+						cells: [{ language: 'python' }]
+					}]
 				}
 			},
 			customResults: {
@@ -1338,72 +1337,197 @@ suite('Client integration', () => {
 		isDefined(symbol);
 		rangeEqual(symbol.location.range, 1, 2, 3, 4);
 	});
+});
+
+function createNotebookData(): vscode.NotebookData {
+	return new vscode.NotebookData(
+		[
+			new vscode.NotebookCellData(vscode.NotebookCellKind.Code, '# This program prints Hello, world!' , 'python'),
+			new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'print(\'Hello, world!\')', 'python')
+		],
+	);
+}
+
+suite('Full notebook tests', () => {
+
+	const documentSelector: lsclient.DocumentSelector = [{ language: 'python' }];
+
+	function createClient(): lsclient.LanguageClient {
+		const serverModule = path.join(__dirname, './servers/fullNotebookServer.js');
+		const serverOptions: lsclient.ServerOptions = {
+			run: { module: serverModule, transport: lsclient.TransportKind.ipc },
+			debug: { module: serverModule, transport: lsclient.TransportKind.ipc, options: { execArgv: ['--nolazy', '--inspect=6014'] } }
+		};
+
+		const clientOptions: lsclient.LanguageClientOptions = {
+			documentSelector,
+			synchronize: {},
+			initializationOptions: {},
+			middleware: {},
+		};
+		(clientOptions as ({ $testMode?: boolean })).$testMode = true;
+
+		const result = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		result.registerProposedFeatures();
+		return result;
+	}
+
+	let client: lsclient.LanguageClient;
+
+	suiteSetup(async () => {
+		client = createClient();
+		await client.start();
+	});
+
+	suiteTeardown(async () => {
+		await client.stop();
+	});
 
 	test('Notebook document: open', async (): Promise<void> => {
+		let textDocumentMiddlewareCalled: boolean = false;
+		client.middleware.didOpen = (e, n) => {
+			textDocumentMiddlewareCalled = true;
+			return n(e);
+		};
 		let middlewareCalled: boolean = false;
-		middleware.notebooks = {
+		client.middleware.notebooks = {
 			didOpen: (nd, nc, n) => {
 				middlewareCalled = true;
 				return n(nd, nc);
 			}
 		};
-		const notebookData = new vscode.NotebookData(
-			[
-				new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'REM @ECHO OFF', 'bat'),
-				new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'FOR %%f IN (*.doc *.txt) DO XCOPY c:\source\"%%f" c:\text /m /y', 'bat')
-			],
-		);
-		await vscode.workspace.openNotebookDocument('jupyter-notebook', notebookData);
+		await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
+		assert.strictEqual(textDocumentMiddlewareCalled, false);
+		client.middleware.didOpen = undefined;
 		assert.strictEqual(middlewareCalled, true);
-		middleware.notebooks = undefined;
+		client.middleware.notebooks = undefined;
 		const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.Proposed.DidOpenNotebookDocumentNotification.method);
 		assert.strictEqual(notified, true);
 		await revertAllDirty();
 	});
 
 	test('Notebook document: change', async (): Promise<void> => {
+		let textDocumentMiddlewareCalled: boolean = false;
+		client.middleware.didChange = (e, n) => {
+			textDocumentMiddlewareCalled = true;
+			return n(e);
+		};
 		let middlewareCalled: boolean = false;
-		middleware.notebooks = {
+		client.middleware.notebooks = {
 			didChange: (ne, n) => {
 				middlewareCalled = true;
 				return n(ne);
 			}
 		};
-		const notebookData = new vscode.NotebookData(
-			[
-				new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'REM @ECHO OFF', 'bat'),
-				new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'FOR %%f IN (*.doc *.txt) DO XCOPY c:\source\"%%f" c:\text /m /y', 'bat')
-			],
-		);
-		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', notebookData);
+		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
 		const textDocument = notebookDocument.getCells()[0].document;
 		const edit = new vscode.WorkspaceEdit;
 		edit.insert(textDocument.uri, new vscode.Position(0,0), 'REM a comment\n');
 		await vscode.workspace.applyEdit(edit);
-		assert.strictEqual(middlewareCalled, true);
-		middleware.notebooks = undefined;
+		assert.strictEqual(textDocumentMiddlewareCalled, false, 'text document middleware called');
+		client.middleware.didChange = undefined;
+		assert.strictEqual(middlewareCalled, true, 'notebook middleware called');
+		client.middleware.notebooks = undefined;
 		const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.Proposed.DidChangeNotebookDocumentNotification.method);
 		assert.strictEqual(notified, true);
 		await revertAllDirty();
 	});
 
 	test('Notebook document: getProvider', async (): Promise<void> => {
-		const notebookData = new vscode.NotebookData(
-			[
-				new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'REM @ECHO OFF', 'bat'),
-				new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'FOR %%f IN (*.doc *.txt) DO XCOPY c:\source\"%%f" c:\text /m /y', 'bat')
-			],
-		);
-		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', notebookData);
+		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
 		const feature = client.getFeature(lsclient.Proposed.NotebookDocumentSyncRegistrationType.method);
 		const provider = feature?.getProvider(notebookDocument.getCells()[0]);
 		isDefined(provider);
-		assert.strictEqual(provider.mode, 'notebook');
-		if (provider.mode === 'notebook') {
-			await provider.sendDidCloseNotebookDocument(notebookDocument);
-			const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.Proposed.DidCloseNotebookDocumentNotification.method);
-			assert.strictEqual(notified, true);
-		}
+		await provider.sendDidCloseNotebookDocument(notebookDocument);
+		const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.Proposed.DidCloseNotebookDocumentNotification.method);
+		assert.strictEqual(notified, true);
+		await revertAllDirty();
+	});
+});
+
+suite('Simple notebook tests', () => {
+
+	const documentSelector: lsclient.DocumentSelector = [{ language: 'python', notebook: '*' }];
+
+	function createClient(): lsclient.LanguageClient {
+		const serverModule = path.join(__dirname, './servers/simpleNotebookServer.js');
+		const serverOptions: lsclient.ServerOptions = {
+			run: { module: serverModule, transport: lsclient.TransportKind.ipc },
+			debug: { module: serverModule, transport: lsclient.TransportKind.ipc, options: { execArgv: ['--nolazy', '--inspect=6014'] } }
+		};
+
+		const clientOptions: lsclient.LanguageClientOptions = {
+			documentSelector,
+			synchronize: {},
+			initializationOptions: {},
+			middleware: {},
+		};
+		(clientOptions as ({ $testMode?: boolean })).$testMode = true;
+
+		const result = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		result.registerProposedFeatures();
+		return result;
+	}
+
+	let client: lsclient.LanguageClient;
+
+	suiteSetup(async () => {
+		client = createClient();
+		await client.start();
+	});
+
+	suiteTeardown(async () => {
+		await client.stop();
+	});
+
+	test('Notebook document: open', async (): Promise<void> => {
+		let textDocumentMiddlewareCalled: boolean = false;
+		client.middleware.didOpen = (e, n) => {
+			textDocumentMiddlewareCalled = true;
+			return n(e);
+		};
+		let notebookMiddlewareCalled: boolean = false;
+		client.middleware.notebooks = {
+			didOpen: (nd, nc, n) => {
+				notebookMiddlewareCalled = true;
+				return n(nd, nc);
+			}
+		};
+		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
+		assert.ok(notebookDocument !== undefined && notebookDocument.cellCount === 2, 'Notebook document created successful');
+		assert.strictEqual(textDocumentMiddlewareCalled, true, 'text document middleware called');
+		client.middleware.didOpen = undefined;
+		assert.strictEqual(notebookMiddlewareCalled, false, 'notebook middleware called');
+		client.middleware.notebooks = undefined;
+		const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.DidOpenTextDocumentNotification.method);
+		assert.strictEqual(notified, true, 'notification arrived on server');
+		await revertAllDirty();
+	});
+
+	test('Notebook document: change', async (): Promise<void> => {
+		let textDocumentMiddlewareCalled: boolean = false;
+		client.middleware.didChange = (e, n) => {
+			textDocumentMiddlewareCalled = true;
+			return n(e);
+		};
+		let notebookMiddlewareCalled: boolean = false;
+		client.middleware.notebooks = {
+			didChange: (ne, n) => {
+				notebookMiddlewareCalled = true;
+				return n(ne);
+			}
+		};
+		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
+		const textDocument = notebookDocument.getCells()[0].document;
+		const edit = new vscode.WorkspaceEdit;
+		edit.insert(textDocument.uri, new vscode.Position(0,0), '# Another comment\n');
+		await vscode.workspace.applyEdit(edit);
+		assert.strictEqual(textDocumentMiddlewareCalled, true, 'text document middleware called');
+		client.middleware.didChange = undefined;
+		assert.strictEqual(notebookMiddlewareCalled, false, 'notebook middleware called');
+		client.middleware.notebooks = undefined;
+		const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.DidChangeTextDocumentNotification.method);
+		assert.strictEqual(notified, true, 'notification arrived on server');
 		await revertAllDirty();
 	});
 });
@@ -1559,7 +1683,7 @@ suite('Server activation', () => {
 		contentProviderDisposable.dispose();
 	});
 
-	function createClient() {
+	function createClient(): lsclient.LanguageClient {
 		const serverModule = path.join(__dirname, './servers/customServer.js');
 		const serverOptions: lsclient.ServerOptions = {
 			run: { module: serverModule, transport: lsclient.TransportKind.ipc },

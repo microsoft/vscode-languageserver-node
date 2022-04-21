@@ -52,7 +52,7 @@ import {
 
 import { DiagnosticProviderShape, DiagnosticPullOptions } from './proposed.diagnostic';
 import { NotebookDocumentMiddleware, NotebookDocumentOptions, NotebookDocumentProviderShape } from './proposed.notebook';
-import { ConfigurationFeature, ConfigurationMiddleware, ConfigurationOptions, DidChangeConfigurationMiddleware, SynchronizeOptions } from './configuration';
+import { ConfigurationFeature, ConfigurationMiddleware, ConfigurationOptions, DidChangeConfigurationMiddleware, SyncConfigurationFeature, SynchronizeOptions } from './configuration';
 import {
 	DidChangeTextDocumentFeature, DidChangeTextDocumentFeatureShape, DidCloseTextDocumentFeature, DidCloseTextDocumentFeatureShape, DidOpenTextDocumentFeature,
 	DidOpenTextDocumentFeatureShape, DidSaveTextDocumentFeature, DidSaveTextDocumentFeatureShape, ResolvedTextDocumentSyncCapabilities, TextDocumentSynchronizationMiddleware, WillSaveFeature,
@@ -1565,6 +1565,14 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		return this._dynamicFeatures.get(request);
 	}
 
+	hasDedicatedTextSynchronizationFeature(textDocument: TextDocument): boolean {
+		const feature = this.getFeature(Proposed.NotebookDocumentSyncRegistrationType.method);
+		if (feature === undefined || !(feature instanceof nb.NotebookDocumentSyncFeature)) {
+			return false;
+		}
+		return feature.handles(textDocument);
+	}
+
 	protected registerBuiltinFeatures() {
 		this.registerFeature(new ConfigurationFeature(this));
 		this.registerFeature(new DidOpenTextDocumentFeature(this, this._syncedDocuments));
@@ -1590,6 +1598,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this.registerFeature(new RenameFeature(this));
 		this.registerFeature(new DocumentLinkFeature(this));
 		this.registerFeature(new ExecuteCommandFeature(this));
+		this.registerFeature(new SyncConfigurationFeature(this));
 		this.registerFeature(new PullConfigurationFeature(this));
 		this.registerFeature(new TypeDefinitionFeature(this));
 		this.registerFeature(new ImplementationFeature(this));
@@ -1678,8 +1687,13 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	private initializeFeatures(_connection: Connection): void {
-		let documentSelector = this._clientOptions.documentSelector;
-		for (let feature of this._features) {
+		const documentSelector = this._clientOptions.documentSelector;
+		for (const feature of this._features) {
+			if (Is.func(feature.preInitialize)) {
+				feature.preInitialize(this._capabilities, documentSelector);
+			}
+		}
+		for (const feature of this._features) {
 			feature.initialize(this._capabilities, documentSelector);
 		}
 	}

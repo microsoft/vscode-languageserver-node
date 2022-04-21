@@ -9,10 +9,9 @@ import {
 	DiagnosticTag, CompletionItemTag, TextDocumentSyncKind, MarkupKind, SignatureHelp, SignatureInformation, ParameterInformation,
 	Location, Range, DocumentHighlight, DocumentHighlightKind, CodeAction, Command, TextEdit, Position, DocumentLink,
 	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, SymbolKind, ProtocolRequestType, WorkDoneProgress,
-	InlineValueText, InlineValueVariableLookup, InlineValueEvaluatableExpression, RequestType,
-	WorkDoneProgressCreateRequest, WillCreateFilesRequest, WillRenameFilesRequest, WillDeleteFilesRequest, DidDeleteFilesNotification,
-	DidRenameFilesNotification, DidCreateFilesNotification, Proposed, ProposedFeatures, Diagnostic, DiagnosticSeverity, TypeHierarchyItem,
-	InlayHint, InlayHintLabelPart, InlayHintKind
+	InlineValueText, InlineValueVariableLookup, InlineValueEvaluatableExpression, WorkDoneProgressCreateRequest, WillCreateFilesRequest,
+	WillRenameFilesRequest, WillDeleteFilesRequest, DidDeleteFilesNotification, DidRenameFilesNotification, DidCreateFilesNotification,
+	Proposed, ProposedFeatures, Diagnostic, DiagnosticSeverity, TypeHierarchyItem, InlayHint, InlayHintLabelPart, InlayHintKind
 } from '../../../server/node';
 
 import { URI } from 'vscode-uri';
@@ -22,12 +21,6 @@ const connection: ProposedFeatures.Connection = createConnection(ProposedFeature
 
 console.log = connection.console.log.bind(connection.console);
 console.error = connection.console.error.bind(connection.console);
-
-const receivedNotifications: Set<string> = new Set();
-namespace GotNotifiedRequest {
-	export const method: 'testing/gotNotified' = 'testing/gotNotified';
-	export const type = new RequestType<string, boolean, void>(method);
-}
 
 connection.onInitialize((params: InitializeParams): any => {
 	assert.equal((params.capabilities.workspace as any).applyEdit, true);
@@ -162,9 +155,8 @@ connection.onInitialize((params: InitializeParams): any => {
 		notebookDocumentSync: {
 			notebookSelector: [{
 				notebook: { notebookType: 'jupyter-notebook' },
-				cells: [{language: 'bat'}]
-			}],
-			mode: 'notebook'
+				cells: [{ language: 'python' }]
+			}]
 		}
 	};
 	return { capabilities, customResults: { hello: 'world' } };
@@ -536,25 +528,5 @@ connection.onWorkspaceSymbolResolve((symbol) => {
 	return symbol;
 });
 
-connection.notebooks.synchronization.onDidOpenNotebookDocument(() => {
-	receivedNotifications.add(Proposed.DidOpenNotebookDocumentNotification.method);
-});
-connection.notebooks.synchronization.onDidChangeNotebookDocument(() => {
-	receivedNotifications.add(Proposed.DidChangeNotebookDocumentNotification.method);
-});
-connection.notebooks.synchronization.onDidSaveNotebookDocument(() => {
-	receivedNotifications.add(Proposed.DidSaveNotebookDocumentNotification.method);
-});
-connection.notebooks.synchronization.onDidCloseNotebookDocument(() => {
-	receivedNotifications.add(Proposed.DidCloseNotebookDocumentNotification.method);
-});
-
-connection.onRequest(GotNotifiedRequest.type, (method: string) => {
-	const result = receivedNotifications.has(method);
-	if (result) {
-		receivedNotifications.delete(method);
-	}
-	return result;
-});
 // Listen on the connection
 connection.listen();

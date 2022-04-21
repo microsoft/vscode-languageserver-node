@@ -348,19 +348,6 @@ export type NotebookDocumentSyncOptions = {
 	})[];
 
 	/**
-	 * Determines how the notebook is synchronized.
-	 *
-	 * If set to 'notebook' the notebook document,
-	 * its meta data, cell structure and the cell's
-	 * text documents are synchronized.
-	 *
-	 * If set to 'cellContent' only the cell content
-	 * is synchronized using the available
-	 * `textDocument/did*` notifications.
-	 */
-	mode: 'notebook' | 'cellContent';
-
-	/**
 	 * Whether save notification should be forwarded to
 	 * the server. Will only be honored if mode === `notebook`.
 	 */

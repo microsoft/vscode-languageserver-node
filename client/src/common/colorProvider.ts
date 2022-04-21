@@ -80,7 +80,7 @@ export class ColorProviderFeature extends TextDocumentLanguageFeature<boolean | 
 						}
 						return this._client.protocol2CodeConverter.asColorInformations(result, token);
 					}, (error: any) => {
-						return client.handleFailedRequest(ColorPresentationRequest.type, token, error, null);
+						return client.handleFailedRequest(DocumentColorRequest.type, token, error, null);
 					});
 				};
 				const middleware = client.middleware;
