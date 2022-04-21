@@ -155,9 +155,8 @@ connection.onInitialize((params: InitializeParams): any => {
 		notebookDocumentSync: {
 			notebookSelector: [{
 				notebook: { notebookType: 'jupyter-notebook' },
-				cells: [{language: 'bat'}]
-			}],
-			mode: 'notebook'
+				cells: [{ language: 'python' }]
+			}]
 		}
 	};
 	return { capabilities, customResults: { hello: 'world' } };

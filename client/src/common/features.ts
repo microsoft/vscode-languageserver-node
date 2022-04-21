@@ -330,7 +330,7 @@ export abstract class TextDocumentEventFeature<P, E, M> extends DynamicDocumentF
 
 	private readonly _event: Event<E>;
 	protected readonly _type: ProtocolNotificationType<P, TextDocumentRegistrationOptions>;
-	protected readonly _middleware: NextSignature<E, Promise<void>> | undefined;
+	protected readonly _middleware: () => NextSignature<E, Promise<void>> | undefined;
 	protected readonly _createParams: CreateParamsSignature<E, P>;
 	protected readonly _textDocument: (data: E) => TextDocument;
 	protected readonly _selectorFilter?: (selectors: IterableIterator<VDocumentSelector>, data: E) => boolean;
@@ -349,7 +349,7 @@ export abstract class TextDocumentEventFeature<P, E, M> extends DynamicDocumentF
 	}
 
 	constructor(client: FeatureClient<M>, event: Event<E>, type: ProtocolNotificationType<P, TextDocumentRegistrationOptions>,
-		middleware: NextSignature<E, Promise<void>> | undefined, createParams: CreateParamsSignature<E, P>,
+		middleware: () => NextSignature<E, Promise<void>> | undefined, createParams: CreateParamsSignature<E, P>,
 		textDocument: (data: E) => TextDocument,
 		selectorFilter?: (selectors: IterableIterator<VDocumentSelector>, data: E) => boolean
 	) {
@@ -394,7 +394,8 @@ export abstract class TextDocumentEventFeature<P, E, M> extends DynamicDocumentF
 			this.notificationSent(data, this._type, params);
 		};
 		if (this.matches(data)) {
-			return this._middleware ? this._middleware(data, (data) => doSend(data)) : doSend(data);
+			const middleware = this._middleware();
+			return middleware ? middleware(data, (data) => doSend(data)) : doSend(data);
 		}
 	}
 
@@ -432,7 +433,7 @@ export abstract class TextDocumentEventFeature<P, E, M> extends DynamicDocumentF
 
 	public getProvider(document: TextDocument):  { send: (data: E) => Promise<void> } | undefined {
 		for (const selector of this._selectors.values()) {
-			if (Languages.match(selector, document)) {
+			if (Languages.match(selector, document) > 0) {
 				return {
 					send: (data: E) => {
 						return this.callback(data);
@@ -551,7 +552,7 @@ export abstract class TextDocumentLanguageFeature<PO, RO extends TextDocumentReg
 	public getProvider(textDocument: TextDocument): PR | undefined {
 		for (const registration of this._registrations.values()) {
 			let selector = registration.data.registerOptions.documentSelector;
-			if (selector !== null && Languages.match(this._client.protocol2CodeConverter.asDocumentSelector(selector), textDocument)) {
+			if (selector !== null && Languages.match(this._client.protocol2CodeConverter.asDocumentSelector(selector), textDocument) > 0) {
 				return registration.provider;
 			}
 		}

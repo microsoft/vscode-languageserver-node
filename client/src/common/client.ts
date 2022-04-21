@@ -52,7 +52,7 @@ import {
 
 import { DiagnosticProviderShape, DiagnosticPullOptions } from './proposed.diagnostic';
 import { NotebookDocumentMiddleware, NotebookDocumentOptions, NotebookDocumentProviderShape } from './proposed.notebook';
-import { ConfigurationFeature, ConfigurationMiddleware, ConfigurationOptions, DidChangeConfigurationMiddleware, SynchronizeOptions } from './configuration';
+import { ConfigurationFeature, ConfigurationMiddleware, ConfigurationOptions, DidChangeConfigurationMiddleware, SyncConfigurationFeature, SynchronizeOptions } from './configuration';
 import {
 	DidChangeTextDocumentFeature, DidChangeTextDocumentFeatureShape, DidCloseTextDocumentFeature, DidCloseTextDocumentFeatureShape, DidOpenTextDocumentFeature,
 	DidOpenTextDocumentFeatureShape, DidSaveTextDocumentFeature, DidSaveTextDocumentFeatureShape, ResolvedTextDocumentSyncCapabilities, TextDocumentSynchronizationMiddleware, WillSaveFeature,
@@ -1598,6 +1598,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this.registerFeature(new RenameFeature(this));
 		this.registerFeature(new DocumentLinkFeature(this));
 		this.registerFeature(new ExecuteCommandFeature(this));
+		this.registerFeature(new SyncConfigurationFeature(this));
 		this.registerFeature(new PullConfigurationFeature(this));
 		this.registerFeature(new TypeDefinitionFeature(this));
 		this.registerFeature(new ImplementationFeature(this));

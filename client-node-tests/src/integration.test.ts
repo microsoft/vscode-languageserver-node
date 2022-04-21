@@ -223,9 +223,8 @@ suite('Client integration', () => {
 				notebookDocumentSync: {
 					notebookSelector: [{
 						notebook: { notebookType: 'jupyter-notebook' },
-						cells: [{language: 'bat'}]
-					}],
-					mode: 'notebook'
+						cells: [{ language: 'python' }]
+					}]
 				}
 			},
 			customResults: {
@@ -1340,9 +1339,18 @@ suite('Client integration', () => {
 	});
 });
 
+function createNotebookData(): vscode.NotebookData {
+	return new vscode.NotebookData(
+		[
+			new vscode.NotebookCellData(vscode.NotebookCellKind.Code, '# This program prints Hello, world!' , 'python'),
+			new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'print(\'Hello, world!\')', 'python')
+		],
+	);
+}
+
 suite('Full notebook tests', () => {
 
-	const documentSelector: lsclient.DocumentSelector = [{ language: 'bat' }];
+	const documentSelector: lsclient.DocumentSelector = [{ language: 'python' }];
 
 	function createClient(): lsclient.LanguageClient {
 		const serverModule = path.join(__dirname, './servers/fullNotebookServer.js');
@@ -1388,13 +1396,7 @@ suite('Full notebook tests', () => {
 				return n(nd, nc);
 			}
 		};
-		const notebookData = new vscode.NotebookData(
-			[
-				new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'REM @ECHO OFF', 'bat'),
-				new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'FOR %%f IN (*.doc *.txt) DO XCOPY c:\source\"%%f" c:\text /m /y', 'bat')
-			],
-		);
-		await vscode.workspace.openNotebookDocument('jupyter-notebook', notebookData);
+		await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
 		assert.strictEqual(textDocumentMiddlewareCalled, false);
 		client.middleware.didOpen = undefined;
 		assert.strictEqual(middlewareCalled, true);
@@ -1417,13 +1419,7 @@ suite('Full notebook tests', () => {
 				return n(ne);
 			}
 		};
-		const notebookData = new vscode.NotebookData(
-			[
-				new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'REM @ECHO OFF', 'bat'),
-				new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'FOR %%f IN (*.doc *.txt) DO XCOPY c:\source\"%%f" c:\text /m /y', 'bat')
-			],
-		);
-		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', notebookData);
+		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
 		const textDocument = notebookDocument.getCells()[0].document;
 		const edit = new vscode.WorkspaceEdit;
 		edit.insert(textDocument.uri, new vscode.Position(0,0), 'REM a comment\n');
@@ -1438,29 +1434,20 @@ suite('Full notebook tests', () => {
 	});
 
 	test('Notebook document: getProvider', async (): Promise<void> => {
-		const notebookData = new vscode.NotebookData(
-			[
-				new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'REM @ECHO OFF', 'bat'),
-				new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'FOR %%f IN (*.doc *.txt) DO XCOPY c:\source\"%%f" c:\text /m /y', 'bat')
-			],
-		);
-		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', notebookData);
+		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
 		const feature = client.getFeature(lsclient.Proposed.NotebookDocumentSyncRegistrationType.method);
 		const provider = feature?.getProvider(notebookDocument.getCells()[0]);
 		isDefined(provider);
-		assert.strictEqual(provider.mode, 'notebook');
-		if (provider.mode === 'notebook') {
-			await provider.sendDidCloseNotebookDocument(notebookDocument);
-			const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.Proposed.DidCloseNotebookDocumentNotification.method);
-			assert.strictEqual(notified, true);
-		}
+		await provider.sendDidCloseNotebookDocument(notebookDocument);
+		const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.Proposed.DidCloseNotebookDocumentNotification.method);
+		assert.strictEqual(notified, true);
 		await revertAllDirty();
 	});
 });
 
 suite('Simple notebook tests', () => {
 
-	const documentSelector: lsclient.DocumentSelector = [{ language: 'bat' }];
+	const documentSelector: lsclient.DocumentSelector = [{ language: 'python', notebook: '*' }];
 
 	function createClient(): lsclient.LanguageClient {
 		const serverModule = path.join(__dirname, './servers/simpleNotebookServer.js');
@@ -1506,13 +1493,8 @@ suite('Simple notebook tests', () => {
 				return n(nd, nc);
 			}
 		};
-		const notebookData = new vscode.NotebookData(
-			[
-				new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'REM @ECHO OFF', 'bat'),
-				new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'FOR %%f IN (*.doc *.txt) DO XCOPY c:\source\"%%f" c:\text /m /y', 'bat')
-			],
-		);
-		await vscode.workspace.openNotebookDocument('jupyter-notebook', notebookData);
+		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
+		assert.ok(notebookDocument !== undefined && notebookDocument.cellCount === 2, 'Notebook document created successful');
 		assert.strictEqual(textDocumentMiddlewareCalled, true, 'text document middleware called');
 		client.middleware.didOpen = undefined;
 		assert.strictEqual(notebookMiddlewareCalled, false, 'notebook middleware called');
@@ -1535,16 +1517,10 @@ suite('Simple notebook tests', () => {
 				return n(ne);
 			}
 		};
-		const notebookData = new vscode.NotebookData(
-			[
-				new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'REM @ECHO OFF', 'bat'),
-				new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'FOR %%f IN (*.doc *.txt) DO XCOPY c:\source\"%%f" c:\text /m /y', 'bat')
-			],
-		);
-		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', notebookData);
+		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
 		const textDocument = notebookDocument.getCells()[0].document;
 		const edit = new vscode.WorkspaceEdit;
-		edit.insert(textDocument.uri, new vscode.Position(0,0), 'REM a comment\n');
+		edit.insert(textDocument.uri, new vscode.Position(0,0), '# Another comment\n');
 		await vscode.workspace.applyEdit(edit);
 		assert.strictEqual(textDocumentMiddlewareCalled, true, 'text document middleware called');
 		client.middleware.didChange = undefined;

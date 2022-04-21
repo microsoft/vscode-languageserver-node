@@ -47,7 +47,7 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>, syncedDocuments: Map<string, TextDocument>) {
 		super(
 			client, Workspace.onDidOpenTextDocument, DidOpenTextDocumentNotification.type,
-			client.middleware.didOpen,
+			() => client.middleware.didOpen,
 			(textDocument) => client.code2ProtocolConverter.asOpenTextDocumentParams(textDocument),
 			(data) => data,
 			TextDocumentEventFeature.textDocumentFilter
@@ -114,7 +114,7 @@ export class DidCloseTextDocumentFeature extends TextDocumentEventFeature<DidClo
 	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>, syncedDocuments: Map<string, TextDocument>) {
 		super(
 			client, Workspace.onDidCloseTextDocument, DidCloseTextDocumentNotification.type,
-			client.middleware.didClose,
+			() => client.middleware.didClose,
 			(textDocument) => client.code2ProtocolConverter.asCloseTextDocumentParams(textDocument),
 			(data) => data,
 			TextDocumentEventFeature.textDocumentFilter
@@ -149,7 +149,7 @@ export class DidCloseTextDocumentFeature extends TextDocumentEventFeature<DidClo
 		super.unregister(id);
 		const selectors = this._selectors.values();
 		this._syncedDocuments.forEach((textDocument) => {
-			if (Languages.match(selector, textDocument) && !this._selectorFilter!(selectors, textDocument) && !this._client.hasDedicatedTextSynchronizationFeature(textDocument)) {
+			if (Languages.match(selector, textDocument) > 0 && !this._selectorFilter!(selectors, textDocument) && !this._client.hasDedicatedTextSynchronizationFeature(textDocument)) {
 				let middleware = this._client.middleware;
 				let didClose = (textDocument: TextDocument): Promise<void> => {
 					return this._client.sendNotification(this._type, this._createParams(textDocument));
@@ -234,7 +234,7 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 		}
 		const promises: Promise<void>[] = [];
 		for (const changeData of this._changeData.values()) {
-			if (Languages.match(changeData.documentSelector, event.document) && !this._client.hasDedicatedTextSynchronizationFeature(event.document)) {
+			if (Languages.match(changeData.documentSelector, event.document) > 0 && !this._client.hasDedicatedTextSynchronizationFeature(event.document)) {
 				const middleware = this._client.middleware;
 				if (changeData.syncKind === TextDocumentSyncKind.Incremental) {
 					const didChange = async (event: TextDocumentChangeEvent): Promise<void> => {
@@ -318,7 +318,7 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 
 	public getProvider(document: TextDocument): { send: (event: TextDocumentChangeEvent) => Promise<void> } | undefined {
 		for (const changeData of this._changeData.values()) {
-			if (Languages.match(changeData.documentSelector, document)) {
+			if (Languages.match(changeData.documentSelector, document) > 0) {
 				return {
 					send: (event: TextDocumentChangeEvent): Promise<void> => {
 						return this.callback(event);
@@ -335,7 +335,7 @@ export class WillSaveFeature extends TextDocumentEventFeature<WillSaveTextDocume
 	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>) {
 		super(
 			client, Workspace.onWillSaveTextDocument, WillSaveTextDocumentNotification.type,
-			client.middleware.willSave,
+			() => client.middleware.willSave,
 			(willSaveEvent) => client.code2ProtocolConverter.asWillSaveTextDocumentParams(willSaveEvent),
 			(event) => event.document,
 			(selectors, willSaveEvent) => TextDocumentEventFeature.textDocumentFilter(selectors, willSaveEvent.document)
@@ -450,7 +450,7 @@ export class DidSaveTextDocumentFeature extends TextDocumentEventFeature<DidSave
 	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>) {
 		super(
 			client, Workspace.onDidSaveTextDocument, DidSaveTextDocumentNotification.type,
-			client.middleware.didSave,
+			() => client.middleware.didSave,
 			(textDocument) => client.code2ProtocolConverter.asSaveTextDocumentParams(textDocument, this._includeText),
 			(data) => data,
 			TextDocumentEventFeature.textDocumentFilter

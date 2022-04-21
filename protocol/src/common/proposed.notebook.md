@@ -204,7 +204,7 @@ export type NotebookDocumentFilter = {
 Given these structures a Python cell document in a Jupyter notebook stored on disk in a folder having `books1` in its path can be identified as follows;
 
 ```typescript
-{ notebook: { scheme: 'file', pattern '**/books1/**', notebookType: 'jupyter' }, language: 'python' }
+{ notebook: { scheme: 'file', pattern '**/books1/**', notebookType: 'jupyter-notebook' }, language: 'python' }
 ```
 
 A `NotebookCellTextDocumentFilter` can be used to register providers for certain requests like code complete or hover. If such a provider is registered the client will send the corresponding `textDocument/*` requests to the server using the cell text document's URI as the document URI.
@@ -231,39 +231,21 @@ The protocol will therefore support two modes when it comes to synchronizing cel
 * _cellContent_: in this mode only the cell text content is synchronized to the server using the standard `textDocument/did*` notification. No notebook document and no cell structure is synchronized. This mode allows for easy adoption of notebooks since servers can reuse most of it implementation logic.
 * _notebook_: in this mode the notebook document, the notebook cells and the notebook cell text content is synchronized to the server. To allow servers to create a consistent picture of a notebook document the cell text content is NOT synchronized using the standard `textDocument/did*` notifications. It is instead synchronized using special `notebook/did*` notifications. This ensures that the cell and its text content arrives on the server using one open, change or close event.
 
-Servers can request notebook synchronization using the following mechanisms:
+To request the cell content only a normal document selector can be used. For example the selector `[{ language: 'python' }]` will synchronize Python notebook document cells to the server. However since this might synchronize unwanted documents as well a document filter can also be a `NotebookCellTextDocumentFilter`. So `{ notebook: { scheme: 'file', notebookType: 'jupyter-notebook' }, language: 'python' }` synchronizes all Python cells in a Jupyter notebook stored on disk.
 
-- a generic document selector for the text document synchronization like `{ language: 'python' }`. This will synchronize all Python text documents to the server including the notebook cell text documents with a language id `python`.
-- Using the new server capability `notebookDocumentSync` (see below of the corresponding specification part). This allows for a more fine grained control of the notebook documents and the notebook cell text documents that are synchronized.
-
-Here are some example of possible synchronization values when using the new `notebookDocumentSync` server capability:
-
-- synchronize cell text content only for Python cells in notebook documents having a `file` scheme `books1` in its path and a `jupyter` notebook type.
-```typescript
-{
-	notebookDocumentSync: {
-		notebookSelector: {
-			notebook: { scheme: 'file', pattern '**/books1/**', notebookType: 'jupyter' },
-			cells: [{ language: 'python' }]
-		}
-		mode: 'cellContent'
-	}
-}
-```
-
-- synchronize the whole notebook document data for the same kind of notebook documents.
+To synchronize the whole notebook document a server provider a `notebookDocumentSync` in its server capabilities. For example
 
 ```typescript
 {
 	notebookDocumentSync: {
 		notebookSelector: {
-			notebook: { scheme: 'file', pattern '**/books1/**', notebookType: 'jupyter' },
+			notebook: { scheme: 'file', notebookType: 'jupyter-notebook' },
 			cells: [{ language: 'python' }]
 		}
-		mode: 'notebook'
 	}
 }
 ```
+Synchronizes the notebook including all Python cells to the server if the notebook is stored on disk.
 
 _Client Capability_:
 
