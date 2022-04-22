@@ -898,6 +898,64 @@
 			"proposed": true
 		},
 		{
+			"method": "textDocument/diagnostic",
+			"result": {
+				"kind": "reference",
+				"name": "DocumentDiagnosticReport"
+			},
+			"params": {
+				"kind": "reference",
+				"name": "DocumentDiagnosticParams"
+			},
+			"partialResult": {
+				"kind": "reference",
+				"name": "DocumentDiagnosticReportPartialResult"
+			},
+			"errorData": {
+				"kind": "reference",
+				"name": "DiagnosticServerCancellationData"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "DiagnosticRegistrationOptions"
+			},
+			"documentation": "The document diagnostic request definition.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"method": "workspace/diagnostic",
+			"result": {
+				"kind": "reference",
+				"name": "WorkspaceDiagnosticReport"
+			},
+			"params": {
+				"kind": "reference",
+				"name": "WorkspaceDiagnosticParams"
+			},
+			"partialResult": {
+				"kind": "reference",
+				"name": "WorkspaceDiagnosticReportPartialResult"
+			},
+			"errorData": {
+				"kind": "reference",
+				"name": "DiagnosticServerCancellationData"
+			},
+			"documentation": "The workspace diagnostic request definition.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"method": "workspace/diagnostic/refresh",
+			"result": {
+				"kind": "base",
+				"name": "null"
+			},
+			"documentation": "The diagnostic refresh request definition.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
 			"method": "client/registerCapability",
 			"result": {
 				"kind": "base",
@@ -1673,64 +1731,6 @@
 				"name": "ApplyWorkspaceEditParams"
 			},
 			"documentation": "A request sent from the server to the client to modified certain resources."
-		},
-		{
-			"method": "textDocument/diagnostic",
-			"result": {
-				"kind": "reference",
-				"name": "DocumentDiagnosticReport"
-			},
-			"params": {
-				"kind": "reference",
-				"name": "DocumentDiagnosticParams"
-			},
-			"partialResult": {
-				"kind": "reference",
-				"name": "DocumentDiagnosticReportPartialResult"
-			},
-			"errorData": {
-				"kind": "reference",
-				"name": "DiagnosticServerCancellationData"
-			},
-			"registrationOptions": {
-				"kind": "reference",
-				"name": "DiagnosticRegistrationOptions"
-			},
-			"documentation": "The document diagnostic request definition.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
-			"method": "workspace/diagnostic",
-			"result": {
-				"kind": "reference",
-				"name": "WorkspaceDiagnosticReport"
-			},
-			"params": {
-				"kind": "reference",
-				"name": "WorkspaceDiagnosticParams"
-			},
-			"partialResult": {
-				"kind": "reference",
-				"name": "WorkspaceDiagnosticReportPartialResult"
-			},
-			"errorData": {
-				"kind": "reference",
-				"name": "DiagnosticServerCancellationData"
-			},
-			"documentation": "The workspace diagnostic request definition.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
-			"method": "workspace/diagnostic/refresh",
-			"result": {
-				"kind": "base",
-				"name": "null"
-			},
-			"documentation": "The diagnostic refresh request definition.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
 		}
 	],
 	"notifications": [
@@ -1788,6 +1788,43 @@
 			},
 			"documentation": "The will delete files request is sent from the client to the server before files are actually\ndeleted as long as the deletion is triggered from within the client.\n@since 3.16.0",
 			"since": "3.16.0"
+		},
+		{
+			"method": "notebookDocument/didOpen",
+			"params": {
+				"kind": "reference",
+				"name": "DidOpenNotebookDocumentParams"
+			},
+			"documentation": "A notification sent when a notebook opens.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"method": "notebookDocument/didChange",
+			"params": {
+				"kind": "reference",
+				"name": "DidChangeNotebookDocumentParams"
+			}
+		},
+		{
+			"method": "notebookDocument/didSave",
+			"params": {
+				"kind": "reference",
+				"name": "DidSaveNotebookDocumentParams"
+			},
+			"documentation": "A notification sent when a notebook document is saved.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"method": "notebookDocument/didClose",
+			"params": {
+				"kind": "reference",
+				"name": "DidCloseNotebookDocumentParams"
+			},
+			"documentation": "A notification sent when a notebook closes.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
 		},
 		{
 			"method": "initialized",
@@ -1916,44 +1953,6 @@
 				"name": "PublishDiagnosticsParams"
 			},
 			"documentation": "Diagnostics notification are sent from the server to the client to signal\nresults of validation runs."
-		},
-		{
-			"method": "notebookDocument/didOpen",
-			"params": {
-				"kind": "reference",
-				"name": "DidOpenNotebookDocumentParams"
-			},
-			"documentation": "A notification sent when a notebook opens.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
-			"method": "notebookDocument/didChange",
-			"params": {
-				"kind": "reference",
-				"name": "DidChangeNotebookDocumentParams"
-			},
-			"proposed": true
-		},
-		{
-			"method": "notebookDocument/didSave",
-			"params": {
-				"kind": "reference",
-				"name": "DidSaveNotebookDocumentParams"
-			},
-			"documentation": "A notification sent when a notebook document is saved.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
-			"method": "notebookDocument/didClose",
-			"params": {
-				"kind": "reference",
-				"name": "DidCloseNotebookDocumentParams"
-			},
-			"documentation": "A notification sent when a notebook closes.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
 		}
 	],
 	"structures": [
@@ -2368,6 +2367,17 @@
 					},
 					"optional": true,
 					"documentation": "Describes the kind of the folding range such as `comment' or 'region'. The kind\nis used to categorize folding ranges and used by commands like 'Fold all comments'. See\n[FoldingRangeKind](#FoldingRangeKind) for an enumeration of standardized kinds."
+				},
+				{
+					"name": "collapsedText",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "The text that the client should show when the specified range is\ncollapsed. If not defined or not supported by the client, a default\nwill be chosen by the client.\n@since 3.17.0\n@proposed",
+					"since": "3.17.0",
+					"proposed": true
 				}
 			],
 			"documentation": "Represents a folding range. To be valid, start and end line must be bigger than zero and smaller\nthan the number of lines in the document. Clients are free to ignore invalid ranges."
@@ -3673,6 +3683,287 @@
 				}
 			],
 			"documentation": "Inlay hint options used during static or dynamic registration.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"name": "DocumentDiagnosticParams",
+			"properties": [
+				{
+					"name": "textDocument",
+					"type": {
+						"kind": "reference",
+						"name": "TextDocumentIdentifier"
+					},
+					"documentation": "The text document."
+				},
+				{
+					"name": "identifier",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "The additional identifier  provided during registration."
+				},
+				{
+					"name": "previousResultId",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "The result id of a previous response if provided."
+				}
+			],
+			"mixins": [
+				{
+					"kind": "reference",
+					"name": "WorkDoneProgressParams"
+				},
+				{
+					"kind": "reference",
+					"name": "PartialResultParams"
+				}
+			],
+			"documentation": "Parameters of the document diagnostic request.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"name": "DocumentDiagnosticReportPartialResult",
+			"properties": [
+				{
+					"name": "relatedDocuments",
+					"type": {
+						"kind": "map",
+						"key": {
+							"kind": "base",
+							"name": "DocumentUri"
+						},
+						"value": {
+							"kind": "or",
+							"items": [
+								{
+									"kind": "reference",
+									"name": "FullDocumentDiagnosticReport"
+								},
+								{
+									"kind": "reference",
+									"name": "UnchangedDocumentDiagnosticReport"
+								}
+							]
+						}
+					}
+				}
+			],
+			"documentation": "A partial result for a document diagnostic report.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"name": "DiagnosticServerCancellationData",
+			"properties": [
+				{
+					"name": "retriggerRequest",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					}
+				}
+			],
+			"documentation": "Cancellation data returned from a diagnostic request.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"name": "DiagnosticRegistrationOptions",
+			"properties": [],
+			"extends": [
+				{
+					"kind": "reference",
+					"name": "TextDocumentRegistrationOptions"
+				},
+				{
+					"kind": "reference",
+					"name": "DiagnosticOptions"
+				}
+			],
+			"mixins": [
+				{
+					"kind": "reference",
+					"name": "StaticRegistrationOptions"
+				}
+			],
+			"documentation": "Diagnostic registration options.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"name": "WorkspaceDiagnosticParams",
+			"properties": [
+				{
+					"name": "identifier",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "The additional identifier provided during registration."
+				},
+				{
+					"name": "previousResultIds",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "PreviousResultId"
+						}
+					},
+					"documentation": "The currently known diagnostic reports with their\nprevious result ids."
+				}
+			],
+			"mixins": [
+				{
+					"kind": "reference",
+					"name": "WorkDoneProgressParams"
+				},
+				{
+					"kind": "reference",
+					"name": "PartialResultParams"
+				}
+			],
+			"documentation": "Parameters of the workspace diagnostic request.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"name": "WorkspaceDiagnosticReport",
+			"properties": [
+				{
+					"name": "items",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "WorkspaceDocumentDiagnosticReport"
+						}
+					}
+				}
+			],
+			"documentation": "A workspace diagnostic report.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"name": "WorkspaceDiagnosticReportPartialResult",
+			"properties": [
+				{
+					"name": "items",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "WorkspaceDocumentDiagnosticReport"
+						}
+					}
+				}
+			],
+			"documentation": "A partial result for a workspace diagnostic report.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"name": "DidOpenNotebookDocumentParams",
+			"properties": [
+				{
+					"name": "notebookDocument",
+					"type": {
+						"kind": "reference",
+						"name": "NotebookDocument"
+					},
+					"documentation": "The notebook document that got opened."
+				},
+				{
+					"name": "cellTextDocuments",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "TextDocumentItem"
+						}
+					},
+					"documentation": "The text documents that represent the content\nof a notebook cell."
+				}
+			],
+			"documentation": "The params sent in a open notebook document notification.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"name": "DidChangeNotebookDocumentParams",
+			"properties": [
+				{
+					"name": "notebookDocument",
+					"type": {
+						"kind": "reference",
+						"name": "VersionedNotebookDocumentIdentifier"
+					},
+					"documentation": "The notebook document that did change. The version number points\nto the version after all provided changes have been applied. If\nonly the text document content of a cell changes the notebook version\ndoesn't necessarily have to change."
+				},
+				{
+					"name": "change",
+					"type": {
+						"kind": "reference",
+						"name": "NotebookDocumentChangeEvent"
+					},
+					"documentation": "The actual changes to the notebook document.\nThe changes describe single state changes to the notebook document.\nSo if there are two changes c1 (at array index 0) and c2 (at array\nindex 1) for a notebook in state S then c1 moves the notebook from\nS to S' and c2 from S' to S''. So c1 is computed on the state S and\nc2 is computed on the state S'.\nTo mirror the content of a notebook using change events use the following approach:\n- start with the same initial content\n- apply the 'notebookDocument/didChange' notifications in the order you receive them.\n- apply the `NotebookChangeEvent`s in a single notification in the order\n  you receive them."
+				}
+			],
+			"documentation": "The params sent in a change notebook document notification.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"name": "DidSaveNotebookDocumentParams",
+			"properties": [
+				{
+					"name": "notebookDocument",
+					"type": {
+						"kind": "reference",
+						"name": "NotebookDocumentIdentifier"
+					},
+					"documentation": "The notebook document that got saved."
+				}
+			],
+			"documentation": "The params sent in a save notebook document notification.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"name": "DidCloseNotebookDocumentParams",
+			"properties": [
+				{
+					"name": "notebookDocument",
+					"type": {
+						"kind": "reference",
+						"name": "NotebookDocumentIdentifier"
+					},
+					"documentation": "The notebook document that got closed."
+				},
+				{
+					"name": "cellTextDocuments",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "TextDocumentIdentifier"
+						}
+					},
+					"documentation": "The text documents that represent the content\nof a notebook cell that got closed."
+				}
+			],
+			"documentation": "The params sent in a close notebook document notification.\n@since 3.17.0\n@proposed",
 			"since": "3.17.0",
 			"proposed": true
 		},
@@ -5656,303 +5947,6 @@
 			"since": "3.17 renamed from ApplyWorkspaceEditResponse"
 		},
 		{
-			"name": "DocumentDiagnosticParams",
-			"properties": [
-				{
-					"name": "textDocument",
-					"type": {
-						"kind": "reference",
-						"name": "TextDocumentIdentifier"
-					},
-					"documentation": "The text document.",
-					"proposed": true
-				},
-				{
-					"name": "identifier",
-					"type": {
-						"kind": "base",
-						"name": "string"
-					},
-					"optional": true,
-					"documentation": "The additional identifier  provided during registration.",
-					"proposed": true
-				},
-				{
-					"name": "previousResultId",
-					"type": {
-						"kind": "base",
-						"name": "string"
-					},
-					"optional": true,
-					"documentation": "The result id of a previous response if provided.",
-					"proposed": true
-				}
-			],
-			"mixins": [
-				{
-					"kind": "reference",
-					"name": "WorkDoneProgressParams"
-				},
-				{
-					"kind": "reference",
-					"name": "PartialResultParams"
-				}
-			],
-			"documentation": "Parameters of the document diagnostic request.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
-			"name": "DocumentDiagnosticReportPartialResult",
-			"properties": [
-				{
-					"name": "relatedDocuments",
-					"type": {
-						"kind": "map",
-						"key": {
-							"kind": "base",
-							"name": "DocumentUri"
-						},
-						"value": {
-							"kind": "or",
-							"items": [
-								{
-									"kind": "reference",
-									"name": "FullDocumentDiagnosticReport"
-								},
-								{
-									"kind": "reference",
-									"name": "UnchangedDocumentDiagnosticReport"
-								}
-							]
-						}
-					},
-					"proposed": true
-				}
-			],
-			"documentation": "A partial result for a document diagnostic report.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
-			"name": "DiagnosticServerCancellationData",
-			"properties": [
-				{
-					"name": "retriggerRequest",
-					"type": {
-						"kind": "base",
-						"name": "boolean"
-					},
-					"proposed": true
-				}
-			],
-			"documentation": "Cancellation data returned from a diagnostic request.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
-			"name": "DiagnosticRegistrationOptions",
-			"properties": [],
-			"extends": [
-				{
-					"kind": "reference",
-					"name": "TextDocumentRegistrationOptions"
-				},
-				{
-					"kind": "reference",
-					"name": "DiagnosticOptions"
-				}
-			],
-			"mixins": [
-				{
-					"kind": "reference",
-					"name": "StaticRegistrationOptions"
-				}
-			],
-			"documentation": "Diagnostic registration options.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
-			"name": "WorkspaceDiagnosticParams",
-			"properties": [
-				{
-					"name": "identifier",
-					"type": {
-						"kind": "base",
-						"name": "string"
-					},
-					"optional": true,
-					"documentation": "The additional identifier provided during registration.",
-					"proposed": true
-				},
-				{
-					"name": "previousResultIds",
-					"type": {
-						"kind": "array",
-						"element": {
-							"kind": "reference",
-							"name": "PreviousResultId"
-						}
-					},
-					"documentation": "The currently known diagnostic reports with their\nprevious result ids.",
-					"proposed": true
-				}
-			],
-			"mixins": [
-				{
-					"kind": "reference",
-					"name": "WorkDoneProgressParams"
-				},
-				{
-					"kind": "reference",
-					"name": "PartialResultParams"
-				}
-			],
-			"documentation": "Parameters of the workspace diagnostic request.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
-			"name": "WorkspaceDiagnosticReport",
-			"properties": [
-				{
-					"name": "items",
-					"type": {
-						"kind": "array",
-						"element": {
-							"kind": "reference",
-							"name": "WorkspaceDocumentDiagnosticReport"
-						}
-					},
-					"proposed": true
-				}
-			],
-			"documentation": "A workspace diagnostic report.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
-			"name": "WorkspaceDiagnosticReportPartialResult",
-			"properties": [
-				{
-					"name": "items",
-					"type": {
-						"kind": "array",
-						"element": {
-							"kind": "reference",
-							"name": "WorkspaceDocumentDiagnosticReport"
-						}
-					},
-					"proposed": true
-				}
-			],
-			"documentation": "A partial result for a workspace diagnostic report.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
-			"name": "DidOpenNotebookDocumentParams",
-			"properties": [
-				{
-					"name": "notebookDocument",
-					"type": {
-						"kind": "reference",
-						"name": "NotebookDocument"
-					},
-					"documentation": "The notebook document that got opened.",
-					"proposed": true
-				},
-				{
-					"name": "cellTextDocuments",
-					"type": {
-						"kind": "array",
-						"element": {
-							"kind": "reference",
-							"name": "TextDocumentItem"
-						}
-					},
-					"documentation": "The text documents that represent the content\nof a notebook cell.",
-					"proposed": true
-				}
-			],
-			"documentation": "The params sent in a open notebook document notification.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
-			"name": "DidChangeNotebookDocumentParams",
-			"properties": [
-				{
-					"name": "notebookDocument",
-					"type": {
-						"kind": "reference",
-						"name": "VersionedNotebookDocumentIdentifier"
-					},
-					"documentation": "The notebook document that did change. The version number points\nto the version after all provided changes have been applied. If\nonly the text document content of a cell changes the notebook version\ndoesn't necessarily have to change.",
-					"proposed": true
-				},
-				{
-					"name": "change",
-					"type": {
-						"kind": "reference",
-						"name": "NotebookDocumentChangeEvent"
-					},
-					"documentation": "The actual changes to the notebook document.\nThe changes describe single state changes to the notebook document.\nSo if there are two changes c1 (at array index 0) and c2 (at array\nindex 1) for a notebook in state S then c1 moves the notebook from\nS to S' and c2 from S' to S''. So c1 is computed on the state S and\nc2 is computed on the state S'.\nTo mirror the content of a notebook using change events use the following approach:\n- start with the same initial content\n- apply the 'notebookDocument/didChange' notifications in the order you receive them.\n- apply the `NotebookChangeEvent`s in a single notification in the order\n  you receive them.",
-					"proposed": true
-				}
-			],
-			"documentation": "The params sent in a change notebook document notification.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
-			"name": "DidSaveNotebookDocumentParams",
-			"properties": [
-				{
-					"name": "notebookDocument",
-					"type": {
-						"kind": "reference",
-						"name": "NotebookDocumentIdentifier"
-					},
-					"documentation": "The notebook document that got saved.",
-					"proposed": true
-				}
-			],
-			"documentation": "The params sent in a save notebook document notification.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
-			"name": "DidCloseNotebookDocumentParams",
-			"properties": [
-				{
-					"name": "notebookDocument",
-					"type": {
-						"kind": "reference",
-						"name": "NotebookDocumentIdentifier"
-					},
-					"documentation": "The notebook document that got closed.",
-					"proposed": true
-				},
-				{
-					"name": "cellTextDocuments",
-					"type": {
-						"kind": "array",
-						"element": {
-							"kind": "reference",
-							"name": "TextDocumentIdentifier"
-						}
-					},
-					"documentation": "The text documents that represent the content\nof a notebook cell that got closed.",
-					"proposed": true
-				}
-			],
-			"documentation": "The params sent in a close notebook document notification.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
 			"name": "TextDocumentPositionParams",
 			"properties": [
 				{
@@ -6887,6 +6881,452 @@
 			"proposed": true
 		},
 		{
+			"name": "RelatedFullDocumentDiagnosticReport",
+			"properties": [
+				{
+					"name": "relatedDocuments",
+					"type": {
+						"kind": "map",
+						"key": {
+							"kind": "base",
+							"name": "DocumentUri"
+						},
+						"value": {
+							"kind": "or",
+							"items": [
+								{
+									"kind": "reference",
+									"name": "FullDocumentDiagnosticReport"
+								},
+								{
+									"kind": "reference",
+									"name": "UnchangedDocumentDiagnosticReport"
+								}
+							]
+						}
+					},
+					"optional": true,
+					"documentation": "Diagnostics of related documents. This information is useful\nin programming languages where code in a file A can generate\ndiagnostics in a file B which A depends on. An example of\nsuch a language is C/C++ where marco definitions in a file\na.cpp and result in errors in a header file b.hpp.\n@since 3.17.0\n@proposed",
+					"since": "3.17.0",
+					"proposed": true
+				}
+			],
+			"extends": [
+				{
+					"kind": "reference",
+					"name": "FullDocumentDiagnosticReport"
+				}
+			],
+			"documentation": "A full diagnostic report with a set of related documents.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"name": "RelatedUnchangedDocumentDiagnosticReport",
+			"properties": [
+				{
+					"name": "relatedDocuments",
+					"type": {
+						"kind": "map",
+						"key": {
+							"kind": "base",
+							"name": "DocumentUri"
+						},
+						"value": {
+							"kind": "or",
+							"items": [
+								{
+									"kind": "reference",
+									"name": "FullDocumentDiagnosticReport"
+								},
+								{
+									"kind": "reference",
+									"name": "UnchangedDocumentDiagnosticReport"
+								}
+							]
+						}
+					},
+					"optional": true,
+					"documentation": "Diagnostics of related documents. This information is useful\nin programming languages where code in a file A can generate\ndiagnostics in a file B which A depends on. An example of\nsuch a language is C/C++ where marco definitions in a file\na.cpp and result in errors in a header file b.hpp.\n@since 3.17.0\n@proposed",
+					"since": "3.17.0",
+					"proposed": true
+				}
+			],
+			"extends": [
+				{
+					"kind": "reference",
+					"name": "UnchangedDocumentDiagnosticReport"
+				}
+			],
+			"documentation": "An unchanged diagnostic report with a set of related documents.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"name": "FullDocumentDiagnosticReport",
+			"properties": [
+				{
+					"name": "kind",
+					"type": {
+						"kind": "stringLiteral",
+						"value": "full"
+					},
+					"documentation": "A full document diagnostic report."
+				},
+				{
+					"name": "resultId",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "An optional result id. If provided it will\nbe sent on the next diagnostic request for the\nsame document."
+				},
+				{
+					"name": "items",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "Diagnostic"
+						}
+					},
+					"documentation": "The actual items."
+				}
+			],
+			"documentation": "A diagnostic report with a full set of problems.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"name": "UnchangedDocumentDiagnosticReport",
+			"properties": [
+				{
+					"name": "kind",
+					"type": {
+						"kind": "stringLiteral",
+						"value": "unChanged"
+					},
+					"documentation": "A document diagnostic report indicating\nno changes to the last result. A server can\nonly return `unchanged` if result ids are\nprovided."
+				},
+				{
+					"name": "resultId",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"documentation": "A result id which will be sent on the next\ndiagnostic request for the same document."
+				}
+			],
+			"documentation": "A diagnostic report indicating that the last returned\nreport is still accurate.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"name": "DiagnosticOptions",
+			"properties": [
+				{
+					"name": "identifier",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "An optional identifier under which the diagnostics are\nmanaged by the client."
+				},
+				{
+					"name": "interFileDependencies",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"documentation": "Whether the language has inter file dependencies meaning that\nediting code in one file can result in a different diagnostic\nset in another file. Inter file dependencies are common for\nmost programming languages and typically uncommon for linters."
+				},
+				{
+					"name": "workspaceDiagnostics",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"documentation": "The server provides support for workspace diagnostics as well."
+				}
+			],
+			"mixins": [
+				{
+					"kind": "reference",
+					"name": "WorkDoneProgressOptions"
+				}
+			],
+			"documentation": "Diagnostic options.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"name": "PreviousResultId",
+			"properties": [
+				{
+					"name": "uri",
+					"type": {
+						"kind": "base",
+						"name": "DocumentUri"
+					},
+					"documentation": "The URI for which the client knowns a\nresult id."
+				},
+				{
+					"name": "value",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"documentation": "The value of the previous result id."
+				}
+			],
+			"documentation": "A previous result id in a workspace pull request.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"name": "NotebookDocument",
+			"properties": [
+				{
+					"name": "uri",
+					"type": {
+						"kind": "reference",
+						"name": "URI"
+					},
+					"documentation": "The notebook document's uri."
+				},
+				{
+					"name": "notebookType",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"documentation": "The type of the notebook."
+				},
+				{
+					"name": "version",
+					"type": {
+						"kind": "base",
+						"name": "integer"
+					},
+					"documentation": "The version number of this document (it will increase after each\nchange, including undo/redo)."
+				},
+				{
+					"name": "metadata",
+					"type": {
+						"kind": "reference",
+						"name": "LSPObject"
+					},
+					"optional": true,
+					"documentation": "Additional metadata stored with the notebook\ndocument."
+				},
+				{
+					"name": "cells",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "NotebookCell"
+						}
+					},
+					"documentation": "The cells of a notebook."
+				}
+			],
+			"documentation": "A notebook document.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"name": "TextDocumentItem",
+			"properties": [
+				{
+					"name": "uri",
+					"type": {
+						"kind": "base",
+						"name": "DocumentUri"
+					},
+					"documentation": "The text document's uri."
+				},
+				{
+					"name": "languageId",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"documentation": "The text document's language identifier"
+				},
+				{
+					"name": "version",
+					"type": {
+						"kind": "base",
+						"name": "integer"
+					},
+					"documentation": "The version number of this document (it will increase after each\nchange, including undo/redo)."
+				},
+				{
+					"name": "text",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"documentation": "The content of the opened text document."
+				}
+			],
+			"documentation": "An item to transfer a text document from the client to the\nserver."
+		},
+		{
+			"name": "VersionedNotebookDocumentIdentifier",
+			"properties": [
+				{
+					"name": "version",
+					"type": {
+						"kind": "base",
+						"name": "integer"
+					},
+					"documentation": "The version number of this notebook document."
+				},
+				{
+					"name": "uri",
+					"type": {
+						"kind": "reference",
+						"name": "URI"
+					},
+					"documentation": "The notebook document's uri."
+				}
+			],
+			"documentation": "A versioned notebook document identifier.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"name": "NotebookDocumentChangeEvent",
+			"properties": [
+				{
+					"name": "metadata",
+					"type": {
+						"kind": "reference",
+						"name": "LSPObject"
+					},
+					"optional": true,
+					"documentation": "The changed meta data if any."
+				},
+				{
+					"name": "cells",
+					"type": {
+						"kind": "literal",
+						"value": {
+							"properties": [
+								{
+									"name": "structure",
+									"type": {
+										"kind": "literal",
+										"value": {
+											"properties": [
+												{
+													"name": "array",
+													"type": {
+														"kind": "reference",
+														"name": "NotebookCellArrayChange"
+													}
+												},
+												{
+													"name": "didOpen",
+													"type": {
+														"kind": "array",
+														"element": {
+															"kind": "reference",
+															"name": "TextDocumentItem"
+														}
+													},
+													"optional": true
+												},
+												{
+													"name": "didClose",
+													"type": {
+														"kind": "array",
+														"element": {
+															"kind": "reference",
+															"name": "TextDocumentIdentifier"
+														}
+													},
+													"optional": true
+												}
+											]
+										}
+									},
+									"optional": true
+								},
+								{
+									"name": "data",
+									"type": {
+										"kind": "array",
+										"element": {
+											"kind": "reference",
+											"name": "NotebookCell"
+										}
+									},
+									"optional": true
+								},
+								{
+									"name": "textContent",
+									"type": {
+										"kind": "array",
+										"element": {
+											"kind": "literal",
+											"value": {
+												"properties": [
+													{
+														"name": "document",
+														"type": {
+															"kind": "reference",
+															"name": "VersionedTextDocumentIdentifier"
+														}
+													},
+													{
+														"name": "changes",
+														"type": {
+															"kind": "array",
+															"element": {
+																"kind": "reference",
+																"name": "TextDocumentContentChangeEvent"
+															}
+														}
+													}
+												]
+											}
+										}
+									},
+									"optional": true
+								}
+							]
+						}
+					},
+					"optional": true,
+					"documentation": "Changes to cells"
+				}
+			],
+			"documentation": "A change event for a notebook document.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"name": "NotebookDocumentIdentifier",
+			"properties": [
+				{
+					"name": "uri",
+					"type": {
+						"kind": "reference",
+						"name": "URI"
+					},
+					"documentation": "The notebook document's uri."
+				}
+			],
+			"documentation": "A literal to identify a notebook document in the client.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
 			"name": "Registration",
 			"properties": [
 				{
@@ -7139,7 +7579,27 @@
 						]
 					},
 					"optional": true,
-					"documentation": "Defines how text documents are synced. Is either a detailed structure defining each notification or\nfor backwards compatibility the TextDocumentSyncKind number."
+					"documentation": "Defines how text documents are synced. Is either a detailed structure\ndefining each notification or for backwards compatibility the\nTextDocumentSyncKind number."
+				},
+				{
+					"name": "notebookDocumentSync",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "reference",
+								"name": "NotebookDocumentSyncOptions"
+							},
+							{
+								"kind": "reference",
+								"name": "NotebookDocumentSyncRegistrationOptions"
+							}
+						]
+					},
+					"optional": true,
+					"documentation": "Defines how notebook documents are synced.\n@since 3.17.0\n@proposed",
+					"since": "3.17.0",
+					"proposed": true
 				},
 				{
 					"name": "completionProvider",
@@ -7668,6 +8128,26 @@
 					"proposed": true
 				},
 				{
+					"name": "diagnosticProvider",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "reference",
+								"name": "DiagnosticOptions"
+							},
+							{
+								"kind": "reference",
+								"name": "DiagnosticRegistrationOptions"
+							}
+						]
+					},
+					"optional": true,
+					"documentation": "The server has support for pull model diagnostics.\n@since 3.17.0\n@proposed",
+					"since": "3.17.0",
+					"proposed": true
+				},
+				{
 					"name": "workspace",
 					"type": {
 						"kind": "literal",
@@ -7706,44 +8186,6 @@
 				}
 			],
 			"documentation": "Defines the capabilities provided by a language\nserver."
-		},
-		{
-			"name": "TextDocumentItem",
-			"properties": [
-				{
-					"name": "uri",
-					"type": {
-						"kind": "base",
-						"name": "DocumentUri"
-					},
-					"documentation": "The text document's uri."
-				},
-				{
-					"name": "languageId",
-					"type": {
-						"kind": "base",
-						"name": "string"
-					},
-					"documentation": "The text document's language identifier"
-				},
-				{
-					"name": "version",
-					"type": {
-						"kind": "base",
-						"name": "integer"
-					},
-					"documentation": "The version number of this document (it will increase after each\nchange, including undo/redo)."
-				},
-				{
-					"name": "text",
-					"type": {
-						"kind": "base",
-						"name": "string"
-					},
-					"documentation": "The content of the opened text document."
-				}
-			],
-			"documentation": "An item to transfer a text document from the client to the\nserver."
 		},
 		{
 			"name": "VersionedTextDocumentIdentifier",
@@ -8616,434 +9058,6 @@
 			"documentation": "The server capabilities of a [ExecuteCommandRequest](#ExecuteCommandRequest)."
 		},
 		{
-			"name": "RelatedFullDocumentDiagnosticReport",
-			"properties": [
-				{
-					"name": "relatedDocuments",
-					"type": {
-						"kind": "map",
-						"key": {
-							"kind": "base",
-							"name": "DocumentUri"
-						},
-						"value": {
-							"kind": "or",
-							"items": [
-								{
-									"kind": "reference",
-									"name": "FullDocumentDiagnosticReport"
-								},
-								{
-									"kind": "reference",
-									"name": "UnchangedDocumentDiagnosticReport"
-								}
-							]
-						}
-					},
-					"optional": true,
-					"documentation": "Diagnostics of related documents. This information is useful\nin programming languages where code in a file A can generate\ndiagnostics in a file B which A depends on. An example of\nsuch a language is C/C++ where marco definitions in a file\na.cpp and result in errors in a header file b.hpp.\n@since 3.17.0\n@proposed",
-					"since": "3.17.0",
-					"proposed": true
-				}
-			],
-			"extends": [
-				{
-					"kind": "reference",
-					"name": "FullDocumentDiagnosticReport"
-				}
-			],
-			"documentation": "A full diagnostic report with a set of related documents.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
-			"name": "RelatedUnchangedDocumentDiagnosticReport",
-			"properties": [
-				{
-					"name": "relatedDocuments",
-					"type": {
-						"kind": "map",
-						"key": {
-							"kind": "base",
-							"name": "DocumentUri"
-						},
-						"value": {
-							"kind": "or",
-							"items": [
-								{
-									"kind": "reference",
-									"name": "FullDocumentDiagnosticReport"
-								},
-								{
-									"kind": "reference",
-									"name": "UnchangedDocumentDiagnosticReport"
-								}
-							]
-						}
-					},
-					"optional": true,
-					"documentation": "Diagnostics of related documents. This information is useful\nin programming languages where code in a file A can generate\ndiagnostics in a file B which A depends on. An example of\nsuch a language is C/C++ where marco definitions in a file\na.cpp and result in errors in a header file b.hpp.\n@since 3.17.0\n@proposed",
-					"since": "3.17.0",
-					"proposed": true
-				}
-			],
-			"extends": [
-				{
-					"kind": "reference",
-					"name": "UnchangedDocumentDiagnosticReport"
-				}
-			],
-			"documentation": "An unchanged diagnostic report with a set of related documents.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
-			"name": "FullDocumentDiagnosticReport",
-			"properties": [
-				{
-					"name": "kind",
-					"type": {
-						"kind": "stringLiteral",
-						"value": "full"
-					},
-					"documentation": "A full document diagnostic report.",
-					"proposed": true
-				},
-				{
-					"name": "resultId",
-					"type": {
-						"kind": "base",
-						"name": "string"
-					},
-					"optional": true,
-					"documentation": "An optional result id. If provided it will\nbe sent on the next diagnostic request for the\nsame document.",
-					"proposed": true
-				},
-				{
-					"name": "items",
-					"type": {
-						"kind": "array",
-						"element": {
-							"kind": "reference",
-							"name": "Diagnostic"
-						}
-					},
-					"documentation": "The actual items.",
-					"proposed": true
-				}
-			],
-			"documentation": "A diagnostic report with a full set of problems.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
-			"name": "UnchangedDocumentDiagnosticReport",
-			"properties": [
-				{
-					"name": "kind",
-					"type": {
-						"kind": "stringLiteral",
-						"value": "unChanged"
-					},
-					"documentation": "A document diagnostic report indicating\nno changes to the last result. A server can\nonly return `unchanged` if result ids are\nprovided.",
-					"proposed": true
-				},
-				{
-					"name": "resultId",
-					"type": {
-						"kind": "base",
-						"name": "string"
-					},
-					"documentation": "A result id which will be sent on the next\ndiagnostic request for the same document.",
-					"proposed": true
-				}
-			],
-			"documentation": "A diagnostic report indicating that the last returned\nreport is still accurate.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
-			"name": "DiagnosticOptions",
-			"properties": [
-				{
-					"name": "identifier",
-					"type": {
-						"kind": "base",
-						"name": "string"
-					},
-					"optional": true,
-					"documentation": "An optional identifier under which the diagnostics are\nmanaged by the client.",
-					"proposed": true
-				},
-				{
-					"name": "interFileDependencies",
-					"type": {
-						"kind": "base",
-						"name": "boolean"
-					},
-					"documentation": "Whether the language has inter file dependencies meaning that\nediting code in one file can result in a different diagnostic\nset in another file. Inter file dependencies are common for\nmost programming languages and typically uncommon for linters.",
-					"proposed": true
-				},
-				{
-					"name": "workspaceDiagnostics",
-					"type": {
-						"kind": "base",
-						"name": "boolean"
-					},
-					"documentation": "The server provides support for workspace diagnostics as well.",
-					"proposed": true
-				}
-			],
-			"mixins": [
-				{
-					"kind": "reference",
-					"name": "WorkDoneProgressOptions"
-				}
-			],
-			"documentation": "Diagnostic options.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
-			"name": "PreviousResultId",
-			"properties": [
-				{
-					"name": "uri",
-					"type": {
-						"kind": "base",
-						"name": "DocumentUri"
-					},
-					"documentation": "The URI for which the client knowns a\nresult id.",
-					"proposed": true
-				},
-				{
-					"name": "value",
-					"type": {
-						"kind": "base",
-						"name": "string"
-					},
-					"documentation": "The value of the previous result id.",
-					"proposed": true
-				}
-			],
-			"documentation": "A previous result id in a workspace pull request.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
-			"name": "NotebookDocument",
-			"properties": [
-				{
-					"name": "uri",
-					"type": {
-						"kind": "reference",
-						"name": "URI"
-					},
-					"documentation": "The notebook document's uri.",
-					"proposed": true
-				},
-				{
-					"name": "notebookType",
-					"type": {
-						"kind": "base",
-						"name": "string"
-					},
-					"documentation": "The type of the notebook.",
-					"proposed": true
-				},
-				{
-					"name": "version",
-					"type": {
-						"kind": "base",
-						"name": "integer"
-					},
-					"documentation": "The version number of this document (it will increase after each\nchange, including undo/redo).",
-					"proposed": true
-				},
-				{
-					"name": "metadata",
-					"type": {
-						"kind": "reference",
-						"name": "LSPObject"
-					},
-					"optional": true,
-					"documentation": "Additional metadata stored with the notebook\ndocument.",
-					"proposed": true
-				},
-				{
-					"name": "cells",
-					"type": {
-						"kind": "array",
-						"element": {
-							"kind": "reference",
-							"name": "NotebookCell"
-						}
-					},
-					"documentation": "The cells of a notebook.",
-					"proposed": true
-				}
-			],
-			"documentation": "A notebook document.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
-			"name": "VersionedNotebookDocumentIdentifier",
-			"properties": [
-				{
-					"name": "version",
-					"type": {
-						"kind": "base",
-						"name": "integer"
-					},
-					"documentation": "The version number of this notebook document.",
-					"proposed": true
-				},
-				{
-					"name": "uri",
-					"type": {
-						"kind": "reference",
-						"name": "URI"
-					},
-					"documentation": "The notebook document's uri.",
-					"proposed": true
-				}
-			],
-			"documentation": "A versioned notebook document identifier.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
-			"name": "NotebookDocumentChangeEvent",
-			"properties": [
-				{
-					"name": "metadata",
-					"type": {
-						"kind": "reference",
-						"name": "LSPObject"
-					},
-					"optional": true,
-					"documentation": "The changed meta data if any.",
-					"proposed": true
-				},
-				{
-					"name": "cells",
-					"type": {
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "structure",
-									"type": {
-										"kind": "literal",
-										"value": {
-											"properties": [
-												{
-													"name": "array",
-													"type": {
-														"kind": "reference",
-														"name": "NotebookCellArrayChange"
-													}
-												},
-												{
-													"name": "didOpen",
-													"type": {
-														"kind": "array",
-														"element": {
-															"kind": "reference",
-															"name": "TextDocumentItem"
-														}
-													},
-													"optional": true
-												},
-												{
-													"name": "didClose",
-													"type": {
-														"kind": "array",
-														"element": {
-															"kind": "reference",
-															"name": "TextDocumentIdentifier"
-														}
-													},
-													"optional": true
-												}
-											]
-										}
-									},
-									"optional": true
-								},
-								{
-									"name": "data",
-									"type": {
-										"kind": "array",
-										"element": {
-											"kind": "reference",
-											"name": "NotebookCell"
-										}
-									},
-									"optional": true
-								},
-								{
-									"name": "textContent",
-									"type": {
-										"kind": "array",
-										"element": {
-											"kind": "literal",
-											"value": {
-												"properties": [
-													{
-														"name": "document",
-														"type": {
-															"kind": "reference",
-															"name": "VersionedTextDocumentIdentifier"
-														}
-													},
-													{
-														"name": "changes",
-														"type": {
-															"kind": "array",
-															"element": {
-																"kind": "reference",
-																"name": "TextDocumentContentChangeEvent"
-															}
-														}
-													}
-												]
-											}
-										}
-									},
-									"optional": true
-								}
-							]
-						}
-					},
-					"optional": true,
-					"documentation": "Changes to cells",
-					"proposed": true
-				}
-			],
-			"documentation": "A change event for a notebook document.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
-			"name": "NotebookDocumentIdentifier",
-			"properties": [
-				{
-					"name": "uri",
-					"type": {
-						"kind": "reference",
-						"name": "URI"
-					},
-					"documentation": "The notebook document's uri.",
-					"proposed": true
-				}
-			],
-			"documentation": "A literal to identify a notebook document in the client.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
 			"name": "SemanticTokensLegend",
 			"properties": [
 				{
@@ -9252,6 +9266,162 @@
 			"since": "3.16.0"
 		},
 		{
+			"name": "WorkspaceFullDocumentDiagnosticReport",
+			"properties": [
+				{
+					"name": "uri",
+					"type": {
+						"kind": "base",
+						"name": "DocumentUri"
+					},
+					"documentation": "The URI for which diagnostic information is reported."
+				},
+				{
+					"name": "version",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "integer"
+							},
+							{
+								"kind": "base",
+								"name": "null"
+							}
+						]
+					},
+					"documentation": "The version number for which the diagnostics are reported.\nIf the document is not marked as open `null` can be provided."
+				}
+			],
+			"extends": [
+				{
+					"kind": "reference",
+					"name": "FullDocumentDiagnosticReport"
+				}
+			],
+			"documentation": "A full document diagnostic report for a workspace diagnostic result.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"name": "WorkspaceUnchangedDocumentDiagnosticReport",
+			"properties": [
+				{
+					"name": "uri",
+					"type": {
+						"kind": "base",
+						"name": "DocumentUri"
+					},
+					"documentation": "The URI for which diagnostic information is reported."
+				},
+				{
+					"name": "version",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "integer"
+							},
+							{
+								"kind": "base",
+								"name": "null"
+							}
+						]
+					},
+					"documentation": "The version number for which the diagnostics are reported.\nIf the document is not marked as open `null` can be provided."
+				}
+			],
+			"extends": [
+				{
+					"kind": "reference",
+					"name": "UnchangedDocumentDiagnosticReport"
+				}
+			],
+			"documentation": "An unchanged document diagnostic report for a workspace diagnostic result.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"name": "NotebookCell",
+			"properties": [
+				{
+					"name": "kind",
+					"type": {
+						"kind": "reference",
+						"name": "NotebookCellKind"
+					},
+					"documentation": "The cell's kind"
+				},
+				{
+					"name": "document",
+					"type": {
+						"kind": "base",
+						"name": "DocumentUri"
+					},
+					"documentation": "The URI of the cell's text document\ncontent."
+				},
+				{
+					"name": "metadata",
+					"type": {
+						"kind": "reference",
+						"name": "LSPObject"
+					},
+					"optional": true,
+					"documentation": "Additional metadata stored with the cell."
+				},
+				{
+					"name": "executionSummary",
+					"type": {
+						"kind": "reference",
+						"name": "ExecutionSummary"
+					},
+					"optional": true,
+					"documentation": "Additional execution summary information\nif supported by the client."
+				}
+			],
+			"documentation": "A notebook cell.\nA cell's document URI must be unique across ALL notebook\ncells and can therefore be used to uniquely identify a\nnotebook cell or the cell's text document.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"name": "NotebookCellArrayChange",
+			"properties": [
+				{
+					"name": "start",
+					"type": {
+						"kind": "base",
+						"name": "uinteger"
+					},
+					"documentation": "The start oftest of the cell that changed."
+				},
+				{
+					"name": "deleteCount",
+					"type": {
+						"kind": "base",
+						"name": "uinteger"
+					},
+					"documentation": "The deleted cells"
+				},
+				{
+					"name": "cells",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "NotebookCell"
+						}
+					},
+					"optional": true,
+					"documentation": "The new cells, if any"
+				}
+			],
+			"documentation": "A change describing how to move a `NotebookCell`\narray from state S to S'.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
 			"name": "ClientCapabilities",
 			"properties": [
 				{
@@ -9271,6 +9441,17 @@
 					},
 					"optional": true,
 					"documentation": "Text document specific client capabilities."
+				},
+				{
+					"name": "notebookDocument",
+					"type": {
+						"kind": "reference",
+						"name": "NotebookDocumentClientCapabilities"
+					},
+					"optional": true,
+					"documentation": "Capabilities specific to the notebook document support.\n@since 3.17.0\n@proposed",
+					"since": "3.17.0",
+					"proposed": true
 				},
 				{
 					"name": "window",
@@ -9361,6 +9542,142 @@
 					"documentation": "If present save notifications are sent to the server. If omitted the notification should not be\nsent."
 				}
 			]
+		},
+		{
+			"name": "NotebookDocumentSyncOptions",
+			"properties": [
+				{
+					"name": "notebookSelector",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "or",
+							"items": [
+								{
+									"kind": "literal",
+									"value": {
+										"properties": [
+											{
+												"name": "notebook",
+												"type": {
+													"kind": "or",
+													"items": [
+														{
+															"kind": "base",
+															"name": "string"
+														},
+														{
+															"kind": "reference",
+															"name": "NotebookDocumentFilter"
+														}
+													]
+												}
+											},
+											{
+												"name": "cells",
+												"type": {
+													"kind": "array",
+													"element": {
+														"kind": "literal",
+														"value": {
+															"properties": [
+																{
+																	"name": "language",
+																	"type": {
+																		"kind": "base",
+																		"name": "string"
+																	}
+																}
+															]
+														}
+													}
+												},
+												"optional": true
+											}
+										]
+									}
+								},
+								{
+									"kind": "literal",
+									"value": {
+										"properties": [
+											{
+												"name": "notebook",
+												"type": {
+													"kind": "or",
+													"items": [
+														{
+															"kind": "base",
+															"name": "string"
+														},
+														{
+															"kind": "reference",
+															"name": "NotebookDocumentFilter"
+														}
+													]
+												},
+												"optional": true
+											},
+											{
+												"name": "cells",
+												"type": {
+													"kind": "array",
+													"element": {
+														"kind": "literal",
+														"value": {
+															"properties": [
+																{
+																	"name": "language",
+																	"type": {
+																		"kind": "base",
+																		"name": "string"
+																	}
+																}
+															]
+														}
+													}
+												}
+											}
+										]
+									}
+								}
+							]
+						}
+					},
+					"documentation": "The notebooks to be synced"
+				},
+				{
+					"name": "save",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Whether save notification should be forwarded to\nthe server. Will only be honored if mode === `notebook`."
+				}
+			],
+			"documentation": "Options specific to a notebook plus its cells\nto be synced to the server.\nIf a selector provide a notebook document\nfilter but no cell selector all cells of a\nmatching notebook document will be synced.\nIf a selector provides no notebook document\nfilter but only a cell selector all notebook\ndocument that contain at least one matching\ncell will be synced.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"name": "NotebookDocumentSyncRegistrationOptions",
+			"properties": [],
+			"extends": [
+				{
+					"kind": "reference",
+					"name": "NotebookDocumentSyncOptions"
+				}
+			],
+			"mixins": [
+				{
+					"kind": "reference",
+					"name": "StaticRegistrationOptions"
+				}
+			],
+			"documentation": "Registration options specific to a notebook.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
 		},
 		{
 			"name": "WorkspaceFoldersServerCapabilities",
@@ -9547,173 +9864,6 @@
 			"documentation": "Represents a parameter of a callable-signature. A parameter can\nhave a label and a doc-comment."
 		},
 		{
-			"name": "WorkspaceFullDocumentDiagnosticReport",
-			"properties": [
-				{
-					"name": "uri",
-					"type": {
-						"kind": "base",
-						"name": "DocumentUri"
-					},
-					"documentation": "The URI for which diagnostic information is reported.",
-					"proposed": true
-				},
-				{
-					"name": "version",
-					"type": {
-						"kind": "or",
-						"items": [
-							{
-								"kind": "base",
-								"name": "integer"
-							},
-							{
-								"kind": "base",
-								"name": "null"
-							}
-						]
-					},
-					"documentation": "The version number for which the diagnostics are reported.\nIf the document is not marked as open `null` can be provided.",
-					"proposed": true
-				}
-			],
-			"extends": [
-				{
-					"kind": "reference",
-					"name": "FullDocumentDiagnosticReport"
-				}
-			],
-			"documentation": "A full document diagnostic report for a workspace diagnostic result.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
-			"name": "WorkspaceUnchangedDocumentDiagnosticReport",
-			"properties": [
-				{
-					"name": "uri",
-					"type": {
-						"kind": "base",
-						"name": "DocumentUri"
-					},
-					"documentation": "The URI for which diagnostic information is reported.",
-					"proposed": true
-				},
-				{
-					"name": "version",
-					"type": {
-						"kind": "or",
-						"items": [
-							{
-								"kind": "base",
-								"name": "integer"
-							},
-							{
-								"kind": "base",
-								"name": "null"
-							}
-						]
-					},
-					"documentation": "The version number for which the diagnostics are reported.\nIf the document is not marked as open `null` can be provided.",
-					"proposed": true
-				}
-			],
-			"extends": [
-				{
-					"kind": "reference",
-					"name": "UnchangedDocumentDiagnosticReport"
-				}
-			],
-			"documentation": "An unchanged document diagnostic report for a workspace diagnostic result.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
-			"name": "NotebookCell",
-			"properties": [
-				{
-					"name": "kind",
-					"type": {
-						"kind": "reference",
-						"name": "NotebookCellKind"
-					},
-					"documentation": "The cell's kind",
-					"proposed": true
-				},
-				{
-					"name": "document",
-					"type": {
-						"kind": "base",
-						"name": "DocumentUri"
-					},
-					"documentation": "The URI of the cell's text document\ncontent.",
-					"proposed": true
-				},
-				{
-					"name": "metadata",
-					"type": {
-						"kind": "reference",
-						"name": "LSPObject"
-					},
-					"optional": true,
-					"documentation": "Additional metadata stored with the cell.",
-					"proposed": true
-				},
-				{
-					"name": "executionSummary",
-					"type": {
-						"kind": "reference",
-						"name": "ExecutionSummary"
-					},
-					"optional": true,
-					"documentation": "Additional execution summary information\nif supported by the client.",
-					"proposed": true
-				}
-			],
-			"documentation": "A notebook cell.\nA cell's document URI must be unique across ALL notebook\ncells and can therefore be used to uniquely identify a\nnotebook cell or the cell's text document.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
-			"name": "NotebookCellArrayChange",
-			"properties": [
-				{
-					"name": "start",
-					"type": {
-						"kind": "base",
-						"name": "uinteger"
-					},
-					"documentation": "The start oftest of the cell that changed.",
-					"proposed": true
-				},
-				{
-					"name": "deleteCount",
-					"type": {
-						"kind": "base",
-						"name": "uinteger"
-					},
-					"documentation": "The deleted cells",
-					"proposed": true
-				},
-				{
-					"name": "cells",
-					"type": {
-						"kind": "array",
-						"element": {
-							"kind": "reference",
-							"name": "NotebookCell"
-						}
-					},
-					"optional": true,
-					"documentation": "The new cells, if any",
-					"proposed": true
-				}
-			],
-			"documentation": "A change describing how to move a `NotebookCell`\narray from state S to S'.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
-		},
-		{
 			"name": "NotebookCellTextDocumentFilter",
 			"properties": [
 				{
@@ -9762,6 +9912,28 @@
 			],
 			"documentation": "Matching options for the file operation pattern.\n@since 3.16.0",
 			"since": "3.16.0"
+		},
+		{
+			"name": "ExecutionSummary",
+			"properties": [
+				{
+					"name": "executionOrder",
+					"type": {
+						"kind": "base",
+						"name": "uinteger"
+					},
+					"documentation": "A strict monotonically increasing value\nindicating the execution order of a cell\ninside a notebook."
+				},
+				{
+					"name": "success",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Whether the execution was successful or\nnot if known by the client."
+				}
+			]
 		},
 		{
 			"name": "WorkspaceClientCapabilities",
@@ -10170,9 +10342,38 @@
 					"documentation": "Capabilities specific to the `textDocument/inlayHint` request.\n@since 3.17.0\n@proposed",
 					"since": "3.17.0",
 					"proposed": true
+				},
+				{
+					"name": "diagnostic",
+					"type": {
+						"kind": "reference",
+						"name": "DiagnosticClientCapabilities"
+					},
+					"optional": true,
+					"documentation": "Capabilities specific to the diagnostic pull model.\n@since 3.17.0\n@proposed",
+					"since": "3.17.0",
+					"proposed": true
 				}
 			],
 			"documentation": "Text document specific client capabilities."
+		},
+		{
+			"name": "NotebookDocumentClientCapabilities",
+			"properties": [
+				{
+					"name": "synchronization",
+					"type": {
+						"kind": "reference",
+						"name": "NotebookDocumentSyncClientCapabilities"
+					},
+					"documentation": "Capabilities specific to notebook document synchronization\n@since 3.17.0\n@proposed",
+					"since": "3.17.0",
+					"proposed": true
+				}
+			],
+			"documentation": "Capabilities specific to the notebook document support.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
 		},
 		{
 			"name": "WindowClientCapabilities",
@@ -10312,31 +10513,6 @@
 			],
 			"documentation": "A relative pattern is a helper to construct glob patterns that are matched\nrelatively to a base URI. The common value for a `baseUri` is a workspace\nfolder root, but it can be another absolute URI as well.\n@since 3.17.0",
 			"since": "3.17.0"
-		},
-		{
-			"name": "ExecutionSummary",
-			"properties": [
-				{
-					"name": "executionOrder",
-					"type": {
-						"kind": "base",
-						"name": "uinteger"
-					},
-					"documentation": "A strict monotonically increasing value\nindicating the execution order of a cell\ninside a notebook.",
-					"proposed": true
-				},
-				{
-					"name": "success",
-					"type": {
-						"kind": "base",
-						"name": "boolean"
-					},
-					"optional": true,
-					"documentation": "Whether the execution was successful or\nnot if known by the client.",
-					"proposed": true
-				}
-			],
-			"proposed": true
 		},
 		{
 			"name": "WorkspaceEditClientCapabilities",
@@ -10522,8 +10698,9 @@
 						}
 					},
 					"optional": true,
-					"documentation": "The client support partial workspace symbols. The client will send the\nrequest `workspaceSymbol/resolve` to the server to resolve additional\nproperties.\n@since 3.17.0 - proposedState",
-					"since": "3.17.0 - proposedState"
+					"documentation": "The client support partial workspace symbols. The client will send the\nrequest `workspaceSymbol/resolve` to the server to resolve additional\nproperties.\n@since 3.17.0\n@proposed",
+					"since": "3.17.0",
+					"proposed": true
 				}
 			],
 			"documentation": "Client capabilities for a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest)."
@@ -11511,7 +11688,7 @@
 						"name": "boolean"
 					},
 					"optional": true,
-					"documentation": "Whether implementation supports dynamic registration for folding range providers. If this is set to `true`\nthe client supports the new `FoldingRangeRegistrationOptions` return value for the corresponding server\ncapability as well."
+					"documentation": "Whether implementation supports dynamic registration for folding range\nproviders. If this is set to `true` the client supports the new\n`FoldingRangeRegistrationOptions` return value for the corresponding\nserver capability as well."
 				},
 				{
 					"name": "rangeLimit",
@@ -11520,7 +11697,7 @@
 						"name": "uinteger"
 					},
 					"optional": true,
-					"documentation": "The maximum number of folding ranges that the client prefers to receive per document. The value serves as a\nhint, servers are free to follow the limit."
+					"documentation": "The maximum number of folding ranges that the client prefers to receive\nper document. The value serves as a hint, servers are free to follow the\nlimit."
 				},
 				{
 					"name": "lineFoldingOnly",
@@ -11529,7 +11706,18 @@
 						"name": "boolean"
 					},
 					"optional": true,
-					"documentation": "If set, the client signals that it only supports folding complete lines. If set, client will\nignore specified `startCharacter` and `endCharacter` properties in a FoldingRange."
+					"documentation": "If set, the client signals that it only supports folding complete lines.\nIf set, client will ignore specified `startCharacter` and `endCharacter`\nproperties in a FoldingRange."
+				},
+				{
+					"name": "collapsedText",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "If set, the client signals that it supports setting collapsedText on\nfolding ranges to display instead of the default text.\n@since 3.17.0\n@proposed",
+					"since": "3.17.0",
+					"proposed": true
 				}
 			]
 		},
@@ -11878,6 +12066,58 @@
 				}
 			],
 			"documentation": "Inlay hint client capabilities\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"name": "DiagnosticClientCapabilities",
+			"properties": [
+				{
+					"name": "dynamicRegistration",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Whether implementation supports dynamic registration. If this is set to `true`\nthe client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`\nreturn value for the corresponding server capability as well."
+				},
+				{
+					"name": "relatedDocumentSupport",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Whether the clients supports related documents for document diagnostic pulls."
+				}
+			],
+			"documentation": "@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"name": "NotebookDocumentSyncClientCapabilities",
+			"properties": [
+				{
+					"name": "dynamicRegistration",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Whether implementation supports dynamic registration. If this is\nset to `true` the client supports the new\n`(TextDocumentRegistrationOptions & StaticRegistrationOptions)`\nreturn value for the corresponding server capability as well."
+				},
+				{
+					"name": "executionSummarySupport",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "The client supports sending execution summary data per cell."
+				}
+			],
+			"documentation": "Notebook specific client capabilities.\n@since 3.17.0\n@proposed",
 			"since": "3.17.0",
 			"proposed": true
 		},
@@ -12608,16 +12848,13 @@
 			"values": [
 				{
 					"name": "Markup",
-					"value": 1,
-					"proposed": true
+					"value": 1
 				},
 				{
 					"name": "Code",
-					"value": 2,
-					"proposed": true
+					"value": 2
 				}
-			],
-			"proposed": true
+			]
 		},
 		{
 			"name": "ResourceOperationKind",
@@ -12816,6 +13053,25 @@
 			"proposed": true
 		},
 		{
+			"name": "DocumentDiagnosticReport",
+			"type": {
+				"kind": "or",
+				"items": [
+					{
+						"kind": "reference",
+						"name": "RelatedFullDocumentDiagnosticReport"
+					},
+					{
+						"kind": "reference",
+						"name": "RelatedUnchangedDocumentDiagnosticReport"
+					}
+				]
+			},
+			"documentation": "The result of a document diagnostic pull request. A report can\neither be a full report containing all diagnostics for the\nrequested document or a unchanged report indicating that nothing\nhas changed in terms of diagnostics in comparison to the last\npull request.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
 			"name": "PrepareRenameResult",
 			"type": {
 				"kind": "or",
@@ -12861,25 +13117,6 @@
 					}
 				]
 			}
-		},
-		{
-			"name": "DocumentDiagnosticReport",
-			"type": {
-				"kind": "or",
-				"items": [
-					{
-						"kind": "reference",
-						"name": "RelatedFullDocumentDiagnosticReport"
-					},
-					{
-						"kind": "reference",
-						"name": "RelatedUnchangedDocumentDiagnosticReport"
-					}
-				]
-			},
-			"documentation": "The result of a document diagnostic pull request. A report can\neither be a full report containing all diagnostics for the\nrequested document or a unchanged report indicating that nothing\nhas changed in terms of diagnostics in comparison to the last\npull request.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
 		},
 		{
 			"name": "URI",
@@ -12946,6 +13183,25 @@
 				"name": "string"
 			},
 			"documentation": "An identifier to refer to a change annotation stored with a workspace edit."
+		},
+		{
+			"name": "WorkspaceDocumentDiagnosticReport",
+			"type": {
+				"kind": "or",
+				"items": [
+					{
+						"kind": "reference",
+						"name": "WorkspaceFullDocumentDiagnosticReport"
+					},
+					{
+						"kind": "reference",
+						"name": "WorkspaceUnchangedDocumentDiagnosticReport"
+					}
+				]
+			},
+			"documentation": "A workspace diagnostic document report.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
 		},
 		{
 			"name": "TextDocumentContentChangeEvent",
@@ -13040,25 +13296,6 @@
 				"name": "string"
 			},
 			"documentation": "The kind of a code action.\nKinds are a hierarchical list of identifiers separated by `.`, e.g. `\"refactor.extract.function\"`.\nThe set of kinds is open and client needs to announce the kinds it supports to the server during\ninitialization."
-		},
-		{
-			"name": "WorkspaceDocumentDiagnosticReport",
-			"type": {
-				"kind": "or",
-				"items": [
-					{
-						"kind": "reference",
-						"name": "WorkspaceFullDocumentDiagnosticReport"
-					},
-					{
-						"kind": "reference",
-						"name": "WorkspaceUnchangedDocumentDiagnosticReport"
-					}
-				]
-			},
-			"documentation": "A workspace diagnostic document report.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
 		},
 		{
 			"name": "DocumentFilter",
@@ -13208,15 +13445,6 @@
 			"proposed": true
 		},
 		{
-			"name": "Pattern",
-			"type": {
-				"kind": "base",
-				"name": "string"
-			},
-			"documentation": "The glob pattern to watch relative to the base path. Glob patterns can have the following syntax:\n- `*` to match one or more characters in a path segment\n- `?` to match on one character in a path segment\n- `**` to match any number of path segments, including none\n- `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)\n- `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)\n- `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)\n@since 3.17.0",
-			"since": "3.17.0"
-		},
-		{
 			"name": "NotebookDocumentFilter",
 			"type": {
 				"kind": "or",
@@ -13316,6 +13544,15 @@
 			"documentation": "A notebook document filter denotes a notebook document by\ndifferent properties. The properties will be match\nagainst the notebook's URI (same as with documents)\n@since 3.17.0\n@proposed",
 			"since": "3.17.0",
 			"proposed": true
+		},
+		{
+			"name": "Pattern",
+			"type": {
+				"kind": "base",
+				"name": "string"
+			},
+			"documentation": "The glob pattern to watch relative to the base path. Glob patterns can have the following syntax:\n- `*` to match one or more characters in a path segment\n- `?` to match on one character in a path segment\n- `**` to match any number of path segments, including none\n- `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)\n- `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)\n- `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)\n@since 3.17.0",
+			"since": "3.17.0"
 		}
 	]
 }
