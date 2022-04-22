@@ -8,6 +8,8 @@ _Client Capability_:
 * property name (optional): `textDocument.diagnostic`
 * property type: `DiagnosticClientCapabilities` defined as follows:
 
+<div class="anchorHolder"><a href="#diagnosticClientCapabilities" name="diagnosticClientCapabilities" class="linkableAnchor"></a></div>
+
 ```typescript
 /**
  * @since 3.17.0
@@ -31,6 +33,8 @@ export type DiagnosticClientCapabilities = {
 _Server Capability_:
 * property name (optional): `diagnosticProvider`
 * property type: `DiagnosticOptions` defined as follows:
+
+<div class="anchorHolder"><a href="#diagnosticOptions" name="diagnosticOptions" class="linkableAnchor"></a></div>
 
 ```typescript
 /**
@@ -62,6 +66,9 @@ export type DiagnosticOptions = WorkDoneProgressOptions & {
 ```
 
 _Registration Options_: `DiagnosticRegistrationOptions` options defined as follows:
+
+<div class="anchorHolder"><a href="#diagnosticRegistrationOptions" name="diagnosticRegistrationOptions" class="linkableAnchor"></a></div>
+
 ```typescript
 /**
  * Diagnostic registration options.
@@ -69,7 +76,8 @@ _Registration Options_: `DiagnosticRegistrationOptions` options defined as follo
  * @since 3.17.0
  * @proposed
  */
-export type DiagnosticRegistrationOptions = TextDocumentRegistrationOptions & DiagnosticOptions & StaticRegistrationOptions;
+export type DiagnosticRegistrationOptions = TextDocumentRegistrationOptions
+	& DiagnosticOptions & StaticRegistrationOptions;
 ```
 
 ##### <a href="#textDocument_diagnostic" name="textDocument_diagnostic" class="anchor">Document Diagnostics(:leftwards_arrow_with_hook:)</a>
@@ -80,6 +88,8 @@ _Request_:
 * method: 'textDocument/diagnostic'.
 * params: `DocumentDiagnosticParams` defined as follows:
 
+<div class="anchorHolder"><a href="#documentDiagnosticParams" name="documentDiagnosticParams" class="linkableAnchor"></a></div>
+
 ```typescript
 /**
  * Parameters of the document diagnostic request.
@@ -87,7 +97,8 @@ _Request_:
  * @since 3.17.0
  * @proposed
  */
-export type DocumentDiagnosticParams =  WorkDoneProgressParams & PartialResultParams & {
+export type DocumentDiagnosticParams =  WorkDoneProgressParams &
+	PartialResultParams & {
 	/**
 	 * The text document.
 	 */
@@ -108,6 +119,8 @@ export type DocumentDiagnosticParams =  WorkDoneProgressParams & PartialResultPa
 _Response_:
 * result: `DocumentDiagnosticReport` defined as follows:
 
+<div class="anchorHolder"><a href="#documentDiagnosticReport" name="documentDiagnosticReport" class="linkableAnchor"></a></div>
+
 ```typescript
 /**
  * The result of a document diagnostic pull request. A report can
@@ -119,8 +132,13 @@ _Response_:
  * @since 3.17.0
  * @proposed
  */
-export type DocumentDiagnosticReport = RelatedFullDocumentDiagnosticReport | RelatedUnchangedDocumentDiagnosticReport;
+export type DocumentDiagnosticReport = RelatedFullDocumentDiagnosticReport
+	| RelatedUnchangedDocumentDiagnosticReport;
+```
 
+<div class="anchorHolder"><a href="#documentDiagnosticReportKind" name="documentDiagnosticReportKind" class="linkableAnchor"></a></div>
+
+```typescript
 /**
  * The document diagnostic report kinds.
  *
@@ -140,7 +158,11 @@ export enum DocumentDiagnosticReportKind {
 	 */
 	unChanged = 'unChanged'
 }
+```
 
+<div class="anchorHolder"><a href="#fullDocumentDiagnosticReport" name="fullDocumentDiagnosticReport" class="linkableAnchor"></a></div>
+
+```typescript
 /**
  * A diagnostic report with a full set of problems.
  *
@@ -165,7 +187,11 @@ export type FullDocumentDiagnosticReport = {
 	 */
 	items: Diagnostic[];
 };
+```
 
+<div class="anchorHolder"><a href="#unchangedDocumentDiagnosticReport" name="unchangedDocumentDiagnosticReport" class="linkableAnchor"></a></div>
+
+```typescript
 /**
  * A diagnostic report indicating that the last returned
  * report is still accurate.
@@ -188,7 +214,11 @@ export type UnchangedDocumentDiagnosticReport = {
 	 */
 	resultId: string;
 };
+```
 
+<div class="anchorHolder"><a href="#relatedFullDocumentDiagnosticReport" name="relatedFullDocumentDiagnosticReport" class="linkableAnchor"></a></div>
+
+```typescript
 /**
  * A full diagnostic report with a set of related documents.
  *
@@ -210,7 +240,11 @@ export type RelatedFullDocumentDiagnosticReport = FullDocumentDiagnosticReport &
 		[uri: string /** DocumentUri */]: FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport;
 	};
 };
+```
 
+<div class="anchorHolder"><a href="#relatedUnchangedDocumentDiagnosticReport" name="relatedUnchangedDocumentDiagnosticReport" class="linkableAnchor"></a></div>
+
+```typescript
 /**
  * An unchanged diagnostic report with a set of related documents.
  *
@@ -235,6 +269,8 @@ export type RelatedUnchangedDocumentDiagnosticReport = UnchangedDocumentDiagnost
 ```
 * partial result: The first literal send need to be a `DocumentDiagnosticReport` followed by n `DocumentDiagnosticReportPartialResult` literals defined as follows:
 
+<div class="anchorHolder"><a href="#documentDiagnosticReportPartialResult" name="documentDiagnosticReportPartialResult" class="linkableAnchor"></a></div>
+
 ```typescript
 /**
  * A partial result for a document diagnostic report.
@@ -249,6 +285,8 @@ export type DocumentDiagnosticReportPartialResult = {
 };
 ```
 * error: code and message set in case an exception happens during the diagnostic request. A server is also allowed to return an error with code `ServerCancelled` indicating that the server can't compute the result right now. A server can return a `DiagnosticServerCancellationData` data to indicate whether the client should re-trigger the request. If no data is provided it defaults to `{ retriggerRequest: true }`:
+
+<div class="anchorHolder"><a href="#diagnosticServerCancellationData" name="diagnosticServerCancellationData" class="linkableAnchor"></a></div>
 
 ```typescript
 /**
@@ -275,6 +313,8 @@ _Request_:
 * method: 'workspace/diagnostic'.
 * params: `WorkspaceDiagnosticParams` defined as follows:
 
+<div class="anchorHolder"><a href="#workspaceDiagnosticParams" name="workspaceDiagnosticParams" class="linkableAnchor"></a></div>
+
 ```typescript
 /**
  * Parameters of the workspace diagnostic request.
@@ -282,7 +322,8 @@ _Request_:
  * @since 3.17.0
  * @proposed
  */
-export type WorkspaceDiagnosticParams = WorkDoneProgressParams & PartialResultParams & {
+export type WorkspaceDiagnosticParams = WorkDoneProgressParams &
+	PartialResultParams & {
 	/**
 	 * The additional identifier provided during registration.
 	 */
@@ -294,7 +335,11 @@ export type WorkspaceDiagnosticParams = WorkDoneProgressParams & PartialResultPa
 	 */
 	previousResultIds: PreviousResultId[];
 };
+```
 
+<div class="anchorHolder"><a href="#previousResultId" name="previousResultId" class="linkableAnchor"></a></div>
+
+```typescript
 /**
  * A previous result id in a workspace pull request.
  *
@@ -318,6 +363,8 @@ export type PreviousResultId = {
 _Response_:
 * result: `WorkspaceDiagnosticReport` defined as follows:
 
+<div class="anchorHolder"><a href="#workspaceDiagnosticReport" name="workspaceDiagnosticReport" class="linkableAnchor"></a></div>
+
 ```typescript
 /**
  * A workspace diagnostic report.
@@ -328,14 +375,19 @@ _Response_:
 export type WorkspaceDiagnosticReport = {
 	items: WorkspaceDocumentDiagnosticReport[];
 };
+```
 
+<div class="anchorHolder"><a href="#workspaceFullDocumentDiagnosticReport" name="workspaceFullDocumentDiagnosticReport" class="linkableAnchor"></a></div>
+
+```typescript
 /**
  * A full document diagnostic report for a workspace diagnostic result.
  *
  * @since 3.17.0
  * @proposed
  */
-export type WorkspaceFullDocumentDiagnosticReport = FullDocumentDiagnosticReport & {
+export type WorkspaceFullDocumentDiagnosticReport =
+	FullDocumentDiagnosticReport & {
 
 	/**
 	 * The URI for which diagnostic information is reported.
@@ -348,14 +400,19 @@ export type WorkspaceFullDocumentDiagnosticReport = FullDocumentDiagnosticReport
 	 */
 	version: integer | null;
 };
+```
 
+<div class="anchorHolder"><a href="#workspaceUnchangedDocumentDiagnosticReport" name="workspaceUnchangedDocumentDiagnosticReport" class="linkableAnchor"></a></div>
+
+```typescript
 /**
  * An unchanged document diagnostic report for a workspace diagnostic result.
  *
  * @since 3.17.0
  * @proposed
  */
-export type WorkspaceUnchangedDocumentDiagnosticReport = UnchangedDocumentDiagnosticReport & {
+export type WorkspaceUnchangedDocumentDiagnosticReport =
+	UnchangedDocumentDiagnosticReport & {
 
 	/**
 	 * The URI for which diagnostic information is reported.
@@ -368,17 +425,25 @@ export type WorkspaceUnchangedDocumentDiagnosticReport = UnchangedDocumentDiagno
 	 */
 	version: integer | null;
 };
+```
 
+<div class="anchorHolder"><a href="#workspaceDocumentDiagnosticReport" name="workspaceDocumentDiagnosticReport" class="linkableAnchor"></a></div>
+
+```typescript
 /**
  * A workspace diagnostic document report.
  *
  * @since 3.17.0
  * @proposed
  */
-export type WorkspaceDocumentDiagnosticReport = WorkspaceFullDocumentDiagnosticReport | WorkspaceUnchangedDocumentDiagnosticReport;
+export type WorkspaceDocumentDiagnosticReport =
+	WorkspaceFullDocumentDiagnosticReport
+	| WorkspaceUnchangedDocumentDiagnosticReport;
 ```
 
 * partial result: The first literal send need to be a `WorkspaceDiagnosticReport` followed by n `DocumentDiagnosticReportPartialResult` literals defined as follows:
+
+<div class="anchorHolder"><a href="#workspaceDiagnosticReportPartialResult" name="workspaceDiagnosticReportPartialResult" class="linkableAnchor"></a></div>
 
 ```typescript
 /**
