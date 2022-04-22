@@ -30,6 +30,12 @@ export interface FoldingRangeClientCapabilities {
 	 * ignore specified `startCharacter` and `endCharacter` properties in a FoldingRange.
 	 */
 	lineFoldingOnly?: boolean;
+	/**
+	 * If set, the client signals that it can show a custom text instead of folded area.
+	 * If the client only supports folding complete lines, the text must be shown at the end of the start line.
+	 * If `startCharacter` property in a FoldingRange is set to 0, the client must replace the whole line.
+	 */
+	collapsedText?: boolean;
 }
 
 export interface FoldingRangeOptions extends WorkDoneProgressOptions {
