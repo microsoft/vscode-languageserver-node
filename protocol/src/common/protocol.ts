@@ -3039,7 +3039,8 @@ export interface WorkspaceSymbolClientCapabilities {
 	 * request `workspaceSymbol/resolve` to the server to resolve additional
 	 * properties.
 	 *
-	 * @since 3.17.0 - proposedState
+	 * @since 3.17.0
+	 * @proposed
 	 */
 	resolveSupport?: {
 		/**
