@@ -513,9 +513,11 @@ export interface FoldingRange {
 	kind?: FoldingRangeKind;
 
 	/**
-	 * The text to be shown instead of the folded area.
-	 * If the client only supports folding complete lines, the text will be shown at the end of the start line.
-	 * To replace the full line `startCharacter` property must be set to 0.
+	 * The text that the client should show when the specified range is
+	 * collapsed. If not defined or not supported by the client, a default
+	 * will be chosen by the client.
+	 *
+	 * @since 3.17.0 - proposed
 	 */
 	collapsedText?: string;
 }

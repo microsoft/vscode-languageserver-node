@@ -15,25 +15,29 @@ import type {
 
 export interface FoldingRangeClientCapabilities {
 	/**
-	 * Whether implementation supports dynamic registration for folding range providers. If this is set to `true`
-	 * the client supports the new `FoldingRangeRegistrationOptions` return value for the corresponding server
-	 * capability as well.
+	 * Whether implementation supports dynamic registration for folding range
+	 * providers. If this is set to `true` the client supports the new
+	 * `FoldingRangeRegistrationOptions` return value for the corresponding
+	 * server capability as well.
 	 */
 	dynamicRegistration?: boolean;
 	/**
-	 * The maximum number of folding ranges that the client prefers to receive per document. The value serves as a
-	 * hint, servers are free to follow the limit.
+	 * The maximum number of folding ranges that the client prefers to receive
+	 * per document. The value serves as a hint, servers are free to follow the
+	 * limit.
 	 */
 	rangeLimit?: uinteger;
 	/**
-	 * If set, the client signals that it only supports folding complete lines. If set, client will
-	 * ignore specified `startCharacter` and `endCharacter` properties in a FoldingRange.
+	 * If set, the client signals that it only supports folding complete lines.
+	 * If set, client will ignore specified `startCharacter` and `endCharacter`
+	 * properties in a FoldingRange.
 	 */
 	lineFoldingOnly?: boolean;
 	/**
-	 * If set, the client signals that it can show a custom text instead of folded area.
-	 * If the client only supports folding complete lines, the text must be shown at the end of the start line.
-	 * If `startCharacter` property in a FoldingRange is set to 0, the client must replace the whole line.
+	 * If set, the client signals that it supports setting collapsedText on
+	 * folding ranges to display instead of the default text.
+	 *
+	 * @since 3.17.0 - proposed
 	 */
 	collapsedText?: boolean;
 }
