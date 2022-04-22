@@ -11,13 +11,12 @@ import {
 	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, SymbolKind, ProtocolRequestType, WorkDoneProgress,
 	InlineValueText, InlineValueVariableLookup, InlineValueEvaluatableExpression, WorkDoneProgressCreateRequest, WillCreateFilesRequest,
 	WillRenameFilesRequest, WillDeleteFilesRequest, DidDeleteFilesNotification, DidRenameFilesNotification, DidCreateFilesNotification,
-	Proposed, ProposedFeatures, Diagnostic, DiagnosticSeverity, TypeHierarchyItem, InlayHint, InlayHintLabelPart, InlayHintKind
+	ProposedFeatures, Diagnostic, DiagnosticSeverity, TypeHierarchyItem, InlayHint, InlayHintLabelPart, InlayHintKind, DocumentDiagnosticReportKind
 } from '../../../server/node';
 
 import { URI } from 'vscode-uri';
-import { $DiagnosticClientCapabilities } from 'vscode-languageserver-protocol/src/common/proposed.diagnostic';
 
-const connection: ProposedFeatures.Connection = createConnection(ProposedFeatures.all);
+const connection: ProposedFeatures.Connection = createConnection();
 
 console.log = connection.console.log.bind(connection.console);
 console.error = connection.console.error.bind(connection.console);
@@ -52,14 +51,14 @@ connection.onInitialize((params: InitializeParams): any => {
 	assert.equal(valueSet[valueSet.length - 1], CompletionItemKind.TypeParameter);
 	assert.equal(params.capabilities.workspace!.fileOperations!.willCreate, true);
 
-	const diagnosticClientCapabilities = (params.capabilities as $DiagnosticClientCapabilities).textDocument!.diagnostic;
+	const diagnosticClientCapabilities = params.capabilities.textDocument!.diagnostic;
 	assert.equal(diagnosticClientCapabilities?.dynamicRegistration, true);
 	assert.equal(diagnosticClientCapabilities?.relatedDocumentSupport, false);
 
-	const notebookCapabilities = (params.capabilities as Proposed.$NotebookDocumentClientCapabilities).notebookDocument!;
+	const notebookCapabilities = params.capabilities.notebookDocument!;
 	assert.equal(notebookCapabilities.synchronization.dynamicRegistration, true);
 
-	const capabilities: ServerCapabilities & Proposed.$DiagnosticServerCapabilities & Proposed.$NotebookDocumentSyncServerCapabilities = {
+	const capabilities: ServerCapabilities = {
 		textDocumentSync: TextDocumentSyncKind.Full,
 		definitionProvider: true,
 		hoverProvider: true,
@@ -440,7 +439,7 @@ connection.languages.onLinkedEditingRange(() => {
 
 connection.languages.diagnostics.on(() => {
 	return {
-		kind: Proposed.DocumentDiagnosticReportKind.full,
+		kind: DocumentDiagnosticReportKind.full,
 		items: [
 			Diagnostic.create(Range.create(1, 1, 1, 1), 'diagnostic', DiagnosticSeverity.Error)
 		]
@@ -450,7 +449,7 @@ connection.languages.diagnostics.on(() => {
 connection.languages.diagnostics.onWorkspace(() => {
 	return {
 		items: [ {
-			kind: Proposed.DocumentDiagnosticReportKind.full,
+			kind: DocumentDiagnosticReportKind.full,
 			uri: 'uri',
 			version: 1,
 			items: [

@@ -5,10 +5,11 @@
 
 import {
 	createConnection, InitializeParams, ServerCapabilities, TextDocumentSyncKind, RequestType,
-	Proposed, ProposedFeatures, DidOpenTextDocumentNotification, DidChangeTextDocumentNotification, DidCloseTextDocumentNotification
+	DidOpenTextDocumentNotification, DidChangeTextDocumentNotification,
+	DidCloseTextDocumentNotification
 } from '../../../server/node';
 
-const connection: ProposedFeatures.Connection = createConnection(ProposedFeatures.all);
+const connection = createConnection();
 
 console.log = connection.console.log.bind(connection.console);
 console.error = connection.console.error.bind(connection.console);
@@ -20,7 +21,7 @@ namespace GotNotifiedRequest {
 }
 
 connection.onInitialize((_params: InitializeParams): any => {
-	const capabilities: ServerCapabilities & Proposed.$DiagnosticServerCapabilities & Proposed.$NotebookDocumentSyncServerCapabilities = {
+	const capabilities: ServerCapabilities = {
 		textDocumentSync: TextDocumentSyncKind.Incremental
 	};
 	return { capabilities };

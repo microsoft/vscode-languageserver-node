@@ -16,14 +16,14 @@ import {
 import {
 	CallHierarchyPrepareRequest, ClientCapabilities, CodeActionRequest, CodeLensRequest, CompletionRequest, DeclarationRequest, DefinitionRequest,
 	DidChangeTextDocumentNotification, DidCloseTextDocumentNotification, DidCreateFilesNotification, DidDeleteFilesNotification, DidOpenTextDocumentNotification,
-	DidRenameFilesNotification, DidSaveTextDocumentNotification, DocumentColorRequest, DocumentFormattingRequest, DocumentHighlightRequest, DocumentLinkRequest,
-	DocumentOnTypeFormattingRequest, DocumentRangeFormattingRequest, DocumentSelector, DocumentSymbolRequest, FileOperationRegistrationOptions, FoldingRangeRequest,
-	GenericNotificationHandler, GenericRequestHandler, HoverRequest, ImplementationRequest, InitializeParams, InlayHintRequest, InlineValueRequest, LinkedEditingRangeRequest,
-	MessageSignature, NotificationHandler, NotificationHandler0, NotificationType, NotificationType0, ProgressType, Proposed, ProtocolNotificationType, ProtocolNotificationType0,
-	ProtocolRequestType, ProtocolRequestType0, ReferencesRequest, RegistrationType, RenameRequest, RequestHandler, RequestHandler0, RequestType, RequestType0, SelectionRangeRequest,
-	SemanticTokensRegistrationType, ServerCapabilities, SignatureHelpRequest, StaticRegistrationOptions, TextDocumentRegistrationOptions, TypeDefinitionRequest,
-	TypeHierarchyPrepareRequest, WillCreateFilesRequest, WillDeleteFilesRequest, WillRenameFilesRequest, WillSaveTextDocumentNotification, WillSaveTextDocumentWaitUntilRequest,
-	WorkDoneProgressOptions, WorkspaceSymbolRequest,
+	DidRenameFilesNotification, DidSaveTextDocumentNotification, DocumentColorRequest, DocumentDiagnosticRequest, DocumentFormattingRequest, DocumentHighlightRequest,
+	DocumentLinkRequest, DocumentOnTypeFormattingRequest, DocumentRangeFormattingRequest, DocumentSelector, DocumentSymbolRequest, FileOperationRegistrationOptions,
+	FoldingRangeRequest, GenericNotificationHandler, GenericRequestHandler, HoverRequest, ImplementationRequest, InitializeParams, InlayHintRequest, InlineValueRequest,
+	LinkedEditingRangeRequest, MessageSignature, NotebookDocumentSyncRegistrationOptions, NotebookDocumentSyncRegistrationType, NotificationHandler, NotificationHandler0,
+	NotificationType, NotificationType0, ProgressType,  ProtocolNotificationType, ProtocolNotificationType0, ProtocolRequestType, ProtocolRequestType0, ReferencesRequest,
+	RegistrationType, RenameRequest, RequestHandler, RequestHandler0, RequestType, RequestType0, SelectionRangeRequest, SemanticTokensRegistrationType, ServerCapabilities,
+	SignatureHelpRequest, StaticRegistrationOptions, TextDocumentRegistrationOptions, TypeDefinitionRequest, TypeHierarchyPrepareRequest, WillCreateFilesRequest,
+	WillDeleteFilesRequest, WillRenameFilesRequest, WillSaveTextDocumentNotification, WillSaveTextDocumentWaitUntilRequest, WorkDoneProgressOptions, WorkspaceSymbolRequest
 } from 'vscode-languageserver-protocol';
 
 import * as Is from './utils/is';
@@ -644,8 +644,8 @@ import type { DidChangeTextDocumentFeatureShape, DidCloseTextDocumentFeatureShap
 import type { CodeLensProviderShape } from './codeLens';
 import type { InlineValueProviderShape } from './inlineValue';
 import type { InlayHintsProviderShape } from './inlayHint';
-import type { DiagnosticProviderShape } from './proposed.diagnostic';
-import type { NotebookDocumentProviderShape } from './proposed.notebook';
+import type { DiagnosticProviderShape } from './diagnostic';
+import type { NotebookDocumentProviderShape } from './notebook';
 
 export interface FeatureClient<M, CO = object> {
 
@@ -734,6 +734,6 @@ export interface FeatureClient<M, CO = object> {
 	getFeature(request: typeof InlineValueRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<InlineValueProviderShape>;
 	getFeature(request: typeof InlayHintRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<InlayHintsProviderShape>;
 	getFeature(request: typeof WorkspaceSymbolRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & WorkspaceProviderFeature<WorkspaceSymbolProvider>;
-	getFeature(request: typeof Proposed.DocumentDiagnosticRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DiagnosticProviderShape> | undefined;
-	getFeature(request: typeof Proposed.NotebookDocumentSyncRegistrationType.method): DynamicFeature<Proposed.NotebookDocumentSyncRegistrationOptions> & NotebookDocumentProviderShape | undefined;
+	getFeature(request: typeof DocumentDiagnosticRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DiagnosticProviderShape> | undefined;
+	getFeature(request: typeof NotebookDocumentSyncRegistrationType.method): DynamicFeature<NotebookDocumentSyncRegistrationOptions> & NotebookDocumentProviderShape | undefined;
 }

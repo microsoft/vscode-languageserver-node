@@ -29,28 +29,28 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 
 namespace Converter {
 	export namespace c2p {
-		export function asVersionedNotebookDocumentIdentifier(notebookDocument: vscode.NotebookDocument, base: _c2p.Converter): proto.Proposed.VersionedNotebookDocumentIdentifier {
+		export function asVersionedNotebookDocumentIdentifier(notebookDocument: vscode.NotebookDocument, base: _c2p.Converter): proto.VersionedNotebookDocumentIdentifier {
 			return {
 				version: notebookDocument.version,
 				uri: base.asUri(notebookDocument.uri)
 			};
 		}
-		export function asNotebookDocument(notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[], base: _c2p.Converter): proto.Proposed.NotebookDocument {
-			const result = proto.Proposed.NotebookDocument.create(base.asUri(notebookDocument.uri), notebookDocument.notebookType, notebookDocument.version, asNotebookCells(cells, base));
+		export function asNotebookDocument(notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[], base: _c2p.Converter): proto.NotebookDocument {
+			const result = proto.NotebookDocument.create(base.asUri(notebookDocument.uri), notebookDocument.notebookType, notebookDocument.version, asNotebookCells(cells, base));
 			if (Object.keys(notebookDocument.metadata).length > 0) {
 				result.metadata = asMetadata(notebookDocument.metadata);
 			}
 			return result;
 		}
-		export function asNotebookCells(cells: vscode.NotebookCell[], base: _c2p.Converter): proto.Proposed.NotebookCell[] {
+		export function asNotebookCells(cells: vscode.NotebookCell[], base: _c2p.Converter): proto.NotebookCell[] {
 			return cells.map(cell => asNotebookCell(cell, base));
 		}
 		export function asMetadata(metadata: { [key: string]: any}): LSPObject {
 			const seen: Set<any> = new Set();
 			return deepCopy(seen, metadata);
 		}
-		export function asNotebookCell(cell: vscode.NotebookCell, base: _c2p.Converter): proto.Proposed.NotebookCell {
-			const result = proto.Proposed.NotebookCell.create(asNotebookCellKind(cell.kind), base.asUri(cell.document.uri));
+		export function asNotebookCell(cell: vscode.NotebookCell, base: _c2p.Converter): proto.NotebookCell {
+			const result = proto.NotebookCell.create(asNotebookCellKind(cell.kind), base.asUri(cell.document.uri));
 			if (Object.keys(cell.metadata).length > 0) {
 				result.metadata = asMetadata(cell.metadata);
 			}
@@ -62,12 +62,12 @@ namespace Converter {
 			}
 			return result;
 		}
-		function asNotebookCellKind(kind: vscode.NotebookCellKind): proto.Proposed.NotebookCellKind {
+		function asNotebookCellKind(kind: vscode.NotebookCellKind): proto.NotebookCellKind {
 			switch (kind) {
 				case vscode.NotebookCellKind.Markup:
-					return proto.Proposed.NotebookCellKind.Markup;
+					return proto.NotebookCellKind.Markup;
 				case vscode.NotebookCellKind.Code:
-					return proto.Proposed.NotebookCellKind.Code;
+					return proto.NotebookCellKind.Code;
 			}
 		}
 		function deepCopy(seen: Set<any>, value: {[key: string]: any}): LSPObject;
@@ -106,18 +106,18 @@ namespace Converter {
 				return result;
 			}
 		}
-		type TextContent = Required<Required<Required<proto.Proposed.NotebookDocumentChangeEvent>['cells']>['textContent']>[0];
+		type TextContent = Required<Required<Required<proto.NotebookDocumentChangeEvent>['cells']>['textContent']>[0];
 		export function asTextContentChange(event: vscode.TextDocumentChangeEvent, base: _c2p.Converter): TextContent {
 			const params = base.asChangeTextDocumentParams(event);
 			return { document: params.textDocument, changes: params.contentChanges };
 		}
-		export function asNotebookDocumentChangeEvent(event: NotebookDocumentChangeEvent, base: _c2p.Converter): proto.Proposed.NotebookDocumentChangeEvent {
-			const result: proto.Proposed.NotebookDocumentChangeEvent = Object.create(null);
+		export function asNotebookDocumentChangeEvent(event: NotebookDocumentChangeEvent, base: _c2p.Converter): proto.NotebookDocumentChangeEvent {
+			const result: proto.NotebookDocumentChangeEvent = Object.create(null);
 			if (event.metadata) {
 				result.metadata = Converter.c2p.asMetadata(event.metadata);
 			}
 			if (event.cells !== undefined) {
-				const cells: Required<proto.Proposed.NotebookDocumentChangeEvent>['cells'] =  Object.create(null);
+				const cells: Required<proto.NotebookDocumentChangeEvent>['cells'] =  Object.create(null);
 				const changedCells = event.cells;
 				if (changedCells.structure) {
 					cells.structure = {
@@ -295,7 +295,7 @@ namespace $NotebookDocumentFilter {
 }
 
 namespace $NotebookDocumentSyncOptions {
-	export function asDocumentSelector(options: proto.Proposed.NotebookDocumentSyncOptions): proto.DocumentSelector {
+	export function asDocumentSelector(options: proto.NotebookDocumentSyncOptions): proto.DocumentSelector {
 		const selector = options.notebookSelector;
 		const result: proto.DocumentSelector = [];
 		for (const element of selector) {
@@ -418,13 +418,13 @@ export interface NotebookDocumentSyncFeatureShape {
 class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeatureShape {
 
 	private readonly client: FeatureClient<NotebookDocumentMiddleware, NotebookDocumentOptions>;
-	private readonly options: proto.Proposed.NotebookDocumentSyncOptions;
+	private readonly options: proto.NotebookDocumentSyncOptions;
 	private readonly notebookSyncInfo: Map<string, SyncInfo>;
 	private readonly notebookDidOpen: Set<string>;
 	private readonly disposables: vscode.Disposable[];
 	private readonly selector: vscode.DocumentSelector;
 
-	constructor(client: FeatureClient<NotebookDocumentMiddleware, NotebookDocumentOptions>, options: proto.Proposed.NotebookDocumentSyncOptions) {
+	constructor(client: FeatureClient<NotebookDocumentMiddleware, NotebookDocumentOptions>, options: proto.NotebookDocumentSyncOptions) {
 		this.client = client;
 		this.options = options;
 		this.notebookSyncInfo = new Map();
@@ -655,7 +655,7 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 			const nb = Converter.c2p.asNotebookDocument(notebookDocument, cells, this.client.code2ProtocolConverter);
 			const cellDocuments: TextDocumentItem[] = cells.map(cell => this.client.code2ProtocolConverter.asTextDocumentItem(cell.document));
 			try {
-				await this.client.sendNotification(proto.Proposed.DidOpenNotebookDocumentNotification.type, {
+				await this.client.sendNotification(proto.DidOpenNotebookDocumentNotification.type, {
 					notebookDocument: nb,
 					cellTextDocuments: cellDocuments
 				});
@@ -676,7 +676,7 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 	private async doSendChange(event: NotebookDocumentChangeEvent, cells: vscode.NotebookCell[] | undefined = this.getMatchingCells(event.notebook)): Promise<void> {
 		const send = async (event: NotebookDocumentChangeEvent): Promise<void> => {
 			try {
-				await this.client.sendNotification(proto.Proposed.DidChangeNotebookDocumentNotification.type, {
+				await this.client.sendNotification(proto.DidChangeNotebookDocumentNotification.type, {
 					notebookDocument: Converter.c2p.asVersionedNotebookDocumentIdentifier(event.notebook, this.client.code2ProtocolConverter),
 					change: Converter.c2p.asNotebookDocumentChangeEvent(event, this.client.code2ProtocolConverter)
 				});
@@ -699,7 +699,7 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 	private async doSendSave(notebookDocument: vscode.NotebookDocument): Promise<void> {
 		const send = async (notebookDocument: vscode.NotebookDocument): Promise<void> => {
 			try {
-				await this.client.sendNotification(proto.Proposed.DidSaveNotebookDocumentNotification.type, {
+				await this.client.sendNotification(proto.DidSaveNotebookDocumentNotification.type, {
 					notebookDocument: { uri: this.client.code2ProtocolConverter.asUri(notebookDocument.uri) }
 				});
 			} catch (error) {
@@ -718,7 +718,7 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 	private async doSendClose(notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[]): Promise<void> {
 		const send = async (notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[]): Promise<void> => {
 			try {
-				await this.client.sendNotification(proto.Proposed.DidCloseNotebookDocumentNotification.type,  {
+				await this.client.sendNotification(proto.DidCloseNotebookDocumentNotification.type,  {
 					notebookDocument: { uri: this.client.code2ProtocolConverter.asUri(notebookDocument.uri) },
 					cellTextDocuments: cells.map(cell => this.client.code2ProtocolConverter.asTextDocumentIdentifier(cell.document))
 				});
@@ -850,7 +850,7 @@ export type NotebookDocumentProviderShape = {
 	getProvider(notebookCell: vscode.NotebookCell): NotebookDocumentSyncFeatureShape |undefined;
 };
 
-export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Proposed.NotebookDocumentSyncRegistrationOptions>, NotebookDocumentProviderShape {
+export class NotebookDocumentSyncFeature implements DynamicFeature<proto.NotebookDocumentSyncRegistrationOptions>, NotebookDocumentProviderShape {
 
 	public static readonly CellScheme: string = 'vscode-notebook-cell';
 
@@ -861,7 +861,7 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 	constructor(client: FeatureClient<NotebookDocumentMiddleware, NotebookDocumentOptions>) {
 		this.client = client;
 		this.registrations = new Map();
-		this.registrationType = proto.Proposed.NotebookDocumentSyncRegistrationType.type;
+		this.registrationType = proto.NotebookDocumentSyncRegistrationType.type;
 		// We don't receive an event for cells where the document changes its language mode
 		// Since we allow servers to filter on the language mode we fire such an event ourselves.
 		vscode.workspace.onDidOpenTextDocument((textDocument) => {
@@ -930,15 +930,15 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 		return { kind: 'document', id: this.registrationType.method, registrations: true, matches: false };
 	}
 
-	public readonly registrationType: proto.RegistrationType<proto.Proposed.NotebookDocumentSyncRegistrationOptions>;
+	public readonly registrationType: proto.RegistrationType<proto.NotebookDocumentSyncRegistrationOptions>;
 
-	public fillClientCapabilities(capabilities: proto.ClientCapabilities & proto.Proposed.$NotebookDocumentClientCapabilities): void {
+	public fillClientCapabilities(capabilities: proto.ClientCapabilities): void {
 		const synchronization = ensure(ensure(capabilities, 'notebookDocument')!, 'synchronization')!;
 		synchronization.dynamicRegistration = true;
 		synchronization.executionSummarySupport = true;
 	}
 
-	public preInitialize(capabilities: proto.ServerCapabilities<any> & proto.Proposed.$NotebookDocumentSyncServerCapabilities): void {
+	public preInitialize(capabilities: proto.ServerCapabilities<any>): void {
 		const options = capabilities.notebookDocumentSync;
 		if (options === undefined) {
 			return;
@@ -946,7 +946,7 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 		this.dedicatedChannel = this.client.protocol2CodeConverter.asDocumentSelector($NotebookDocumentSyncOptions.asDocumentSelector(options));
 	}
 
-	public initialize(capabilities: proto.ServerCapabilities<any> & proto.Proposed.$NotebookDocumentSyncServerCapabilities): void {
+	public initialize(capabilities: proto.ServerCapabilities<any>): void {
 		const options = capabilities.notebookDocumentSync;
 		if (options === undefined) {
 			return;
@@ -955,7 +955,7 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Propose
 		this.register({ id, registerOptions: options });
 	}
 
-	public register(data: RegistrationData<proto.Proposed.NotebookDocumentSyncRegistrationOptions>): void {
+	public register(data: RegistrationData<proto.NotebookDocumentSyncRegistrationOptions>): void {
 		const provider = new NotebookDocumentSyncFeatureProvider(this.client, data.registerOptions);
 		this.registrations.set(data.id, provider);
 	}

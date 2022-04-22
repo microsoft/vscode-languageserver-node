@@ -12,19 +12,14 @@ export { WorkDoneProgressReporter, WorkDoneProgressServerReporter, ResultProgres
 export { SemanticTokensBuilder };
 import { TextDocuments, TextDocumentsConfiguration, TextDocumentChangeEvent, TextDocumentWillSaveEvent } from './textDocuments';
 export { TextDocuments, TextDocumentsConfiguration, TextDocumentChangeEvent, TextDocumentWillSaveEvent };
+import { NotebookDocuments } from './notebook';
+export { NotebookDocuments };
 export * from './server';
 
-import { DiagnosticsFeatureShape, DiagnosticFeature } from './proposed.diagnostic';
-import { NotebooksFeatureShape, NotebooksFeature, NotebookDocuments as _NotebookDocuments } from './proposed.notebook';
-
 export namespace ProposedFeatures {
-	export const all: Features<_, _, _, _, _, _, DiagnosticsFeatureShape, NotebooksFeatureShape> = {
+	export const all: Features<_, _, _, _, _, _, _, _> = {
 		__brand: 'features',
-		languages: DiagnosticFeature,
-		notebooks: NotebooksFeature
 	};
 
-	export type Connection = _Connection<_, _, _, _, _, _, DiagnosticsFeatureShape, NotebooksFeatureShape>;
-
-	export const NotebookDocuments = _NotebookDocuments;
+	export type Connection = _Connection<_, _, _, _, _, _, _, _>;
 }

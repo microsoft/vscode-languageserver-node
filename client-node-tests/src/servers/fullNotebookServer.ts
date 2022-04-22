@@ -5,10 +5,11 @@
 
 import {
 	createConnection, InitializeParams, ServerCapabilities, TextDocumentSyncKind, RequestType,
-	Proposed, ProposedFeatures
+	DidOpenNotebookDocumentNotification, DidChangeNotebookDocumentNotification, DidSaveNotebookDocumentNotification,
+	DidCloseNotebookDocumentNotification
 } from '../../../server/node';
 
-const connection: ProposedFeatures.Connection = createConnection(ProposedFeatures.all);
+const connection = createConnection();
 
 console.log = connection.console.log.bind(connection.console);
 console.error = connection.console.error.bind(connection.console);
@@ -20,7 +21,7 @@ namespace GotNotifiedRequest {
 }
 
 connection.onInitialize((_params: InitializeParams): any => {
-	const capabilities: ServerCapabilities & Proposed.$DiagnosticServerCapabilities & Proposed.$NotebookDocumentSyncServerCapabilities = {
+	const capabilities: ServerCapabilities = {
 		textDocumentSync: TextDocumentSyncKind.Full,
 		notebookDocumentSync: {
 			notebookSelector: [{
@@ -33,16 +34,16 @@ connection.onInitialize((_params: InitializeParams): any => {
 });
 
 connection.notebooks.synchronization.onDidOpenNotebookDocument(() => {
-	receivedNotifications.add(Proposed.DidOpenNotebookDocumentNotification.method);
+	receivedNotifications.add(DidOpenNotebookDocumentNotification.method);
 });
 connection.notebooks.synchronization.onDidChangeNotebookDocument(() => {
-	receivedNotifications.add(Proposed.DidChangeNotebookDocumentNotification.method);
+	receivedNotifications.add(DidChangeNotebookDocumentNotification.method);
 });
 connection.notebooks.synchronization.onDidSaveNotebookDocument(() => {
-	receivedNotifications.add(Proposed.DidSaveNotebookDocumentNotification.method);
+	receivedNotifications.add(DidSaveNotebookDocumentNotification.method);
 });
 connection.notebooks.synchronization.onDidCloseNotebookDocument(() => {
-	receivedNotifications.add(Proposed.DidCloseNotebookDocumentNotification.method);
+	receivedNotifications.add(DidCloseNotebookDocumentNotification.method);
 });
 
 connection.onRequest(GotNotifiedRequest.type, (method: string) => {

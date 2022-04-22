@@ -5,8 +5,10 @@
 'use strict';
 
 import {
-	Proposed, NotificationHandler1, Emitter, Event, LSPObject, DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
-	NotificationHandler, DocumentUri, URI, Disposable
+	NotificationHandler1, Emitter, Event, LSPObject, DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
+	NotificationHandler, DocumentUri, URI, Disposable, DidOpenNotebookDocumentParams, DidChangeNotebookDocumentParams, DidSaveNotebookDocumentParams,
+	DidCloseNotebookDocumentParams, DidOpenNotebookDocumentNotification, DidChangeNotebookDocumentNotification, DidSaveNotebookDocumentNotification,
+	DidCloseNotebookDocumentNotification, NotebookDocument, NotebookCell
 } from 'vscode-languageserver-protocol';
 
 import type { Feature, _Notebooks, _Connection, _, } from './server';
@@ -19,36 +21,36 @@ import { TextDocuments, TextDocumentConnection, TextDocumentsConfiguration } fro
  * @since 3.17.0
  * @proposed
  */
-export interface NotebooksFeatureShape {
+export interface NotebookSyncFeatureShape {
 	synchronization: {
-		onDidOpenNotebookDocument(handler: NotificationHandler1<Proposed.DidOpenNotebookDocumentParams>): Disposable;
-		onDidChangeNotebookDocument(handler: NotificationHandler1<Proposed.DidChangeNotebookDocumentParams>): Disposable;
-		onDidSaveNotebookDocument(handler: NotificationHandler1<Proposed.DidSaveNotebookDocumentParams>): Disposable;
-		onDidCloseNotebookDocument(handler: NotificationHandler1<Proposed.DidCloseNotebookDocumentParams>): Disposable;
+		onDidOpenNotebookDocument(handler: NotificationHandler1<DidOpenNotebookDocumentParams>): Disposable;
+		onDidChangeNotebookDocument(handler: NotificationHandler1<DidChangeNotebookDocumentParams>): Disposable;
+		onDidSaveNotebookDocument(handler: NotificationHandler1<DidSaveNotebookDocumentParams>): Disposable;
+		onDidCloseNotebookDocument(handler: NotificationHandler1<DidCloseNotebookDocumentParams>): Disposable;
 	};
 }
 
-export const NotebooksFeature: Feature<_Notebooks, NotebooksFeatureShape> = (Base) => {
+export const NotebookSyncFeature: Feature<_Notebooks, NotebookSyncFeatureShape> = (Base) => {
 	return class extends Base {
 		public get synchronization() {
 			return {
-				onDidOpenNotebookDocument: (handler: NotificationHandler1<Proposed.DidOpenNotebookDocumentParams>): Disposable => {
-					return this.connection.onNotification(Proposed.DidOpenNotebookDocumentNotification.type, (params) => {
+				onDidOpenNotebookDocument: (handler: NotificationHandler1<DidOpenNotebookDocumentParams>): Disposable => {
+					return this.connection.onNotification(DidOpenNotebookDocumentNotification.type, (params) => {
 						handler(params);
 					});
 				},
-				onDidChangeNotebookDocument: (handler: NotificationHandler1<Proposed.DidChangeNotebookDocumentParams>): Disposable => {
-					return this.connection.onNotification(Proposed.DidChangeNotebookDocumentNotification.type, (params) => {
+				onDidChangeNotebookDocument: (handler: NotificationHandler1<DidChangeNotebookDocumentParams>): Disposable => {
+					return this.connection.onNotification(DidChangeNotebookDocumentNotification.type, (params) => {
 						handler(params);
 					});
 				},
-				onDidSaveNotebookDocument: (handler: NotificationHandler1<Proposed.DidSaveNotebookDocumentParams>): Disposable => {
-					return this.connection.onNotification(Proposed.DidSaveNotebookDocumentNotification.type, (params) => {
+				onDidSaveNotebookDocument: (handler: NotificationHandler1<DidSaveNotebookDocumentParams>): Disposable => {
+					return this.connection.onNotification(DidSaveNotebookDocumentNotification.type, (params) => {
 						handler(params);
 					});
 				},
-				onDidCloseNotebookDocument: (handler: NotificationHandler1<Proposed.DidCloseNotebookDocumentParams>): Disposable => {
-					return this.connection.onNotification(Proposed.DidCloseNotebookDocumentNotification.type, (params) => {
+				onDidCloseNotebookDocument: (handler: NotificationHandler1<DidCloseNotebookDocumentParams>): Disposable => {
+					return this.connection.onNotification(DidCloseNotebookDocumentNotification.type, (params) => {
 						handler(params);
 					});
 				}
@@ -61,7 +63,7 @@ export type NotebookDocumentChangeEvent = {
 	/**
 	 * The notebook document that changed.
 	 */
-	notebookDocument: Proposed.NotebookDocument;
+	notebookDocument: NotebookDocument;
 
 	/**
 	 * The meta data change if any.
@@ -75,12 +77,12 @@ export type NotebookDocumentChangeEvent = {
 		/**
 		 * The cells that got added.
 		 */
-		added: Proposed.NotebookCell[];
+		added: NotebookCell[];
 
 		/**
 		 * The cells that got removed.
 		 */
-		removed: Proposed.NotebookCell[];
+		removed: NotebookCell[];
 
 		/**
 		 * The cells that changed.
@@ -91,14 +93,14 @@ export type NotebookDocumentChangeEvent = {
 			 * text content which is reported via
 			 * `textContentChanged`.
 			 */
-			data: { old: Proposed.NotebookCell; new: Proposed.NotebookCell }[];
+			data: { old: NotebookCell; new: NotebookCell }[];
 
 			/**
 			 * The text content of a cell has changed.
 			 * The actual text is available via the `Notebooks`
 			 * text document manager.
 			 */
-			textContent: Proposed.NotebookCell[];
+			textContent: NotebookCell[];
 		};
 	};
 };
@@ -153,13 +155,13 @@ class Connection implements TextDocumentConnection {
 
 export class NotebookDocuments<T extends {  uri: DocumentUri }> {
 
-	private readonly notebookDocuments: Map<URI, Proposed.NotebookDocument>;
-	private readonly notebookCellMap: Map<DocumentUri, [Proposed.NotebookCell, Proposed.NotebookDocument]>;
+	private readonly notebookDocuments: Map<URI, NotebookDocument>;
+	private readonly notebookCellMap: Map<DocumentUri, [NotebookCell, NotebookDocument]>;
 
-	private readonly _onDidOpen: Emitter<Proposed.NotebookDocument>;
-	private readonly _onDidSave: Emitter<Proposed.NotebookDocument>;
+	private readonly _onDidOpen: Emitter<NotebookDocument>;
+	private readonly _onDidSave: Emitter<NotebookDocument>;
 	private readonly _onDidChange: Emitter<NotebookDocumentChangeEvent>;
-	private readonly _onDidClose: Emitter<Proposed.NotebookDocument>;
+	private readonly _onDidClose: Emitter<NotebookDocument>;
 
 	private _cellTextDocuments: TextDocuments<T>;
 
@@ -181,30 +183,30 @@ export class NotebookDocuments<T extends {  uri: DocumentUri }> {
 		return this._cellTextDocuments;
 	}
 
-	public getCellTextDocument(cell: Proposed.NotebookCell): T | undefined {
+	public getCellTextDocument(cell: NotebookCell): T | undefined {
 		return this._cellTextDocuments.get(cell.document);
 	}
 
-	public getNotebookDocument(uri: URI): Proposed.NotebookDocument | undefined {
+	public getNotebookDocument(uri: URI): NotebookDocument | undefined {
 		return this.notebookDocuments.get(uri);
 	}
 
-	public getNotebookCell(uri: DocumentUri): Proposed.NotebookCell | undefined {
+	public getNotebookCell(uri: DocumentUri): NotebookCell | undefined {
 		const value = this.notebookCellMap.get(uri);
 		return value && value[0];
 	}
 
-	public findNotebookDocumentForCell(cell: DocumentUri | Proposed.NotebookCell): Proposed.NotebookDocument | undefined {
+	public findNotebookDocumentForCell(cell: DocumentUri | NotebookCell): NotebookDocument | undefined {
 		const key = typeof cell === 'string' ? cell : cell.document;
 		const value = this.notebookCellMap.get(key);
 		return value && value[1];
 	}
 
-	public get onDidOpen(): Event<Proposed.NotebookDocument> {
+	public get onDidOpen(): Event<NotebookDocument> {
 		return this._onDidOpen.event;
 	}
 
-	public get onDidSave(): Event<Proposed.NotebookDocument> {
+	public get onDidSave(): Event<NotebookDocument> {
 		return this._onDidSave.event;
 	}
 
@@ -212,7 +214,7 @@ export class NotebookDocuments<T extends {  uri: DocumentUri }> {
 		return this._onDidChange.event;
 	}
 
-	public get onDidClose(): Event<Proposed.NotebookDocument> {
+	public get onDidClose(): Event<NotebookDocument> {
 		return this._onDidClose.event;
 	}
 
@@ -227,7 +229,7 @@ export class NotebookDocuments<T extends {  uri: DocumentUri }> {
 	 *
 	 * @param connection The connection to listen on.
 	 */
-	public listen(connection: _Connection<_, _, _, _, _, _, _, NotebooksFeatureShape>): Disposable {
+	public listen(connection: _Connection<_, _, _, _, _, _, _, NotebookSyncFeatureShape>): Disposable {
 		const cellTextDocumentConnection = new Connection();
 		const disposables: Disposable[] = [];
 
@@ -279,7 +281,7 @@ export class NotebookDocuments<T extends {  uri: DocumentUri }> {
 					}
 				}
 				if (changedCells.data !== undefined) {
-					const cellUpdates: Map<string, Proposed.NotebookCell> = new Map(changedCells.data.map(cell => [cell.document, cell]));
+					const cellUpdates: Map<string, NotebookCell> = new Map(changedCells.data.map(cell => [cell.document, cell]));
 					for (let i = 0; i <= notebookDocument.cells.length; i++) {
 						const change = cellUpdates.get(notebookDocument.cells[i].document);
 						if (change !== undefined) {
@@ -308,15 +310,15 @@ export class NotebookDocuments<T extends {  uri: DocumentUri }> {
 				changeEvent.metadata = { old: oldMetadata, new: notebookDocument.metadata };
 			}
 
-			const added: Proposed.NotebookCell[] = [];
+			const added: NotebookCell[] = [];
 			for (const open of opened) {
 				added.push(this.getNotebookCell(open)!);
 			}
-			const removed: Proposed.NotebookCell[] = [];
+			const removed: NotebookCell[] = [];
 			for (const close of closed) {
 				removed.push(this.getNotebookCell(close)!);
 			}
-			const textContent: Proposed.NotebookCell[] = [];
+			const textContent: NotebookCell[] = [];
 			for (const change of text) {
 				textContent.push(this.getNotebookCell(change)!);
 			}
@@ -351,7 +353,7 @@ export class NotebookDocuments<T extends {  uri: DocumentUri }> {
 		return Disposable.create(() => { disposables.forEach(disposable => disposable.dispose()); });
 	}
 
-	private updateCellMap(notebookDocument: Proposed.NotebookDocument): void {
+	private updateCellMap(notebookDocument: NotebookDocument): void {
 		for (const cell of notebookDocument.cells) {
 			this.notebookCellMap.set(cell.document, [cell, notebookDocument]);
 		}

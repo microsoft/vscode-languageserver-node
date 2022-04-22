@@ -11,7 +11,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as lsclient from 'vscode-languageclient/node';
 import { MemoryFileSystemProvider } from './memoryFileSystemProvider';
-import { vsdiag, DiagnosticProviderMiddleware } from 'vscode-languageclient/lib/common/proposed.diagnostic';
+import { vsdiag, DiagnosticProviderMiddleware } from 'vscode-languageclient/lib/common/diagnostic';
 import { LanguageClient } from 'vscode-languageclient';
 
 namespace GotNotifiedRequest {
@@ -1183,7 +1183,7 @@ suite('Client integration', () => {
 	});
 
 	test('Document diagnostic pull', async () => {
-		const provider = client.getFeature(lsclient.Proposed.DocumentDiagnosticRequest.method)?.getProvider(document);
+		const provider = client.getFeature(lsclient.DocumentDiagnosticRequest.method)?.getProvider(document);
 		isDefined(provider);
 		const result: vsdiag.DocumentDiagnosticReport | undefined | null = (await provider.diagnostics.provideDiagnostics(document, undefined, tokenSource.token));
 		isDefined(result);
@@ -1204,7 +1204,7 @@ suite('Client integration', () => {
 	});
 
 	test('Workspace diagnostic pull', async () => {
-		const provider = client.getFeature(lsclient.Proposed.DocumentDiagnosticRequest.method)?.getProvider(document);
+		const provider = client.getFeature(lsclient.DocumentDiagnosticRequest.method)?.getProvider(document);
 		isDefined(provider);
 		isDefined(provider.diagnostics.provideWorkspaceDiagnostics);
 		await provider.diagnostics.provideWorkspaceDiagnostics([], tokenSource.token, (result) => {
@@ -1401,7 +1401,7 @@ suite('Full notebook tests', () => {
 		client.middleware.didOpen = undefined;
 		assert.strictEqual(middlewareCalled, true);
 		client.middleware.notebooks = undefined;
-		const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.Proposed.DidOpenNotebookDocumentNotification.method);
+		const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.DidOpenNotebookDocumentNotification.method);
 		assert.strictEqual(notified, true);
 		await revertAllDirty();
 	});
@@ -1428,18 +1428,18 @@ suite('Full notebook tests', () => {
 		client.middleware.didChange = undefined;
 		assert.strictEqual(middlewareCalled, true, 'notebook middleware called');
 		client.middleware.notebooks = undefined;
-		const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.Proposed.DidChangeNotebookDocumentNotification.method);
+		const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.DidChangeNotebookDocumentNotification.method);
 		assert.strictEqual(notified, true);
 		await revertAllDirty();
 	});
 
 	test('Notebook document: getProvider', async (): Promise<void> => {
 		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
-		const feature = client.getFeature(lsclient.Proposed.NotebookDocumentSyncRegistrationType.method);
+		const feature = client.getFeature(lsclient.NotebookDocumentSyncRegistrationType.method);
 		const provider = feature?.getProvider(notebookDocument.getCells()[0]);
 		isDefined(provider);
 		await provider.sendDidCloseNotebookDocument(notebookDocument);
-		const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.Proposed.DidCloseNotebookDocumentNotification.method);
+		const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.DidCloseNotebookDocumentNotification.method);
 		assert.strictEqual(notified, true);
 		await revertAllDirty();
 	});

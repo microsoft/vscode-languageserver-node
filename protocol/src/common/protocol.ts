@@ -104,6 +104,23 @@ import {
 	InlayHintRequest, InlayHintResolveRequest, InlayHintRefreshRequest
 } from './protocol.inlayHint';
 
+import {
+	DiagnosticClientCapabilities, DiagnosticOptions, DiagnosticRegistrationOptions, DiagnosticServerCancellationData, DocumentDiagnosticParams,
+	DocumentDiagnosticReportKind, FullDocumentDiagnosticReport, RelatedFullDocumentDiagnosticReport, UnchangedDocumentDiagnosticReport,
+	RelatedUnchangedDocumentDiagnosticReport, DocumentDiagnosticReport, DocumentDiagnosticReportPartialResult, DocumentDiagnosticRequest,
+	PreviousResultId, WorkspaceDiagnosticParams, WorkspaceFullDocumentDiagnosticReport, WorkspaceUnchangedDocumentDiagnosticReport,
+	WorkspaceDocumentDiagnosticReport, WorkspaceDiagnosticReport, WorkspaceDiagnosticReportPartialResult, WorkspaceDiagnosticRequest,
+	DiagnosticRefreshRequest
+} from './protocol.diagnostic';
+
+import {
+	NotebookDocumentSyncClientCapabilities, NotebookCellKind, ExecutionSummary, NotebookCell, NotebookDocument, NotebookDocumentIdentifier,
+	VersionedNotebookDocumentIdentifier, NotebookDocumentSyncOptions, NotebookDocumentSyncRegistrationOptions, NotebookDocumentSyncRegistrationType,
+	DidOpenNotebookDocumentParams, DidOpenNotebookDocumentNotification, NotebookCellArrayChange, NotebookDocumentChangeEvent, DidChangeNotebookDocumentParams,
+	DidChangeNotebookDocumentNotification, DidSaveNotebookDocumentParams, DidSaveNotebookDocumentNotification, DidCloseNotebookDocumentParams,
+	DidCloseNotebookDocumentNotification
+} from './protocol.notebook';
+
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
 
@@ -708,6 +725,14 @@ export interface TextDocumentClientCapabilities {
 	 * @proposed
 	 */
 	inlayHint?: InlayHintClientCapabilities;
+
+	/**
+	 * Capabilities specific to the diagnostic pull model.
+	 *
+	 * @since 3.17.0
+	 * @proposed
+	 */
+	diagnostic?: DiagnosticClientCapabilities;
 }
 
 export interface WindowClientCapabilities {
@@ -890,6 +915,22 @@ export interface GeneralClientCapabilities {
 }
 
 /**
+ * Capabilities specific to the notebook document support.
+ *
+ * @since 3.17.0
+ * @proposed
+ */
+export interface NotebookDocumentClientCapabilities {
+	/**
+	 * Capabilities specific to notebook document synchronization
+	 *
+	 * @since 3.17.0
+	 * @proposed
+	 */
+	synchronization: NotebookDocumentSyncClientCapabilities;
+}
+
+/**
  * Defines the capabilities provided by the client.
  */
 export interface ClientCapabilities {
@@ -902,6 +943,14 @@ export interface ClientCapabilities {
 	 * Text document specific client capabilities.
 	 */
 	textDocument?: TextDocumentClientCapabilities;
+
+	/**
+	 * Capabilities specific to the notebook document support.
+	 *
+	 * @since 3.17.0
+	 * @proposed
+	 */
+	notebookDocument?: NotebookDocumentClientCapabilities;
 
 	/**
 	 * Window specific client capabilities.
@@ -1018,10 +1067,19 @@ export interface ServerCapabilities<T = any> {
 	positionEncoding?: PositionEncodingKind;
 
 	/**
-	 * Defines how text documents are synced. Is either a detailed structure defining each notification or
-	 * for backwards compatibility the TextDocumentSyncKind number.
+	 * Defines how text documents are synced. Is either a detailed structure
+	 * defining each notification or for backwards compatibility the
+	 * TextDocumentSyncKind number.
 	 */
 	textDocumentSync?: TextDocumentSyncOptions | TextDocumentSyncKind;
+
+	/**
+	 * Defines how notebook documents are synced.
+	 *
+	 * @since 3.17.0
+	 * @proposed
+	 */
+	notebookDocumentSync?: NotebookDocumentSyncOptions | NotebookDocumentSyncRegistrationOptions;
 
 	/**
 	 * The server provides completion support.
@@ -1188,6 +1246,14 @@ export interface ServerCapabilities<T = any> {
 	 * @proposed
 	 */
 	inlayHintProvider?: boolean | InlayHintOptions | InlayHintRegistrationOptions;
+
+	/**
+	 * The server has support for pull model diagnostics.
+	 *
+	 * @since 3.17.0
+	 * @proposed
+	 */
+	diagnosticProvider?: DiagnosticOptions | DiagnosticRegistrationOptions;
 
 	/**
 	 * Workspace specific server capabilities.
@@ -3727,6 +3793,19 @@ export {
 	// Inlay Hints
 	InlayHintClientCapabilities, InlayHintOptions, InlayHintRegistrationOptions, InlayHintWorkspaceClientCapabilities, InlayHintParams,
 	InlayHintRequest, InlayHintResolveRequest, InlayHintRefreshRequest,
+	// Diagnostics Pull Model
+	DiagnosticClientCapabilities, DiagnosticOptions, DiagnosticRegistrationOptions, DiagnosticServerCancellationData, DocumentDiagnosticParams,
+	DocumentDiagnosticReportKind, FullDocumentDiagnosticReport, RelatedFullDocumentDiagnosticReport, UnchangedDocumentDiagnosticReport,
+	RelatedUnchangedDocumentDiagnosticReport, DocumentDiagnosticReport, DocumentDiagnosticReportPartialResult, DocumentDiagnosticRequest,
+	PreviousResultId, WorkspaceDiagnosticParams, WorkspaceFullDocumentDiagnosticReport, WorkspaceUnchangedDocumentDiagnosticReport,
+	WorkspaceDocumentDiagnosticReport, WorkspaceDiagnosticReport, WorkspaceDiagnosticReportPartialResult, WorkspaceDiagnosticRequest,
+	DiagnosticRefreshRequest,
+	// Notebooks
+	NotebookDocumentSyncClientCapabilities, NotebookCellKind, ExecutionSummary, NotebookCell, NotebookDocument, NotebookDocumentIdentifier,
+	VersionedNotebookDocumentIdentifier, NotebookDocumentSyncOptions, NotebookDocumentSyncRegistrationOptions, NotebookDocumentSyncRegistrationType,
+	DidOpenNotebookDocumentParams, DidOpenNotebookDocumentNotification, NotebookCellArrayChange, NotebookDocumentChangeEvent, DidChangeNotebookDocumentParams,
+	DidChangeNotebookDocumentNotification, DidSaveNotebookDocumentParams, DidSaveNotebookDocumentNotification, DidCloseNotebookDocumentParams,
+	DidCloseNotebookDocumentNotification
 };
 
 // To be backwards compatible

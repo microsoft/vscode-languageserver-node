@@ -33,9 +33,8 @@ import {
 	ReferencesRequest, DocumentHighlightRequest, CodeActionRequest, CodeLensRequest, DocumentFormattingRequest, DocumentRangeFormattingRequest,
 	DocumentOnTypeFormattingRequest, RenameRequest, DocumentSymbolRequest, DocumentLinkRequest, DocumentColorRequest, DeclarationRequest, FoldingRangeRequest,
 	ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, CallHierarchyPrepareRequest, SemanticTokensRegistrationType, LinkedEditingRangeRequest,
-	Proposed, TypeHierarchyPrepareRequest, InlineValueRequest, InlayHintRequest, WorkspaceSymbolRequest, TextDocumentRegistrationOptions, FileOperationRegistrationOptions,
-	ConnectionOptions,
-	PositionEncodingKind
+	TypeHierarchyPrepareRequest, InlineValueRequest, InlayHintRequest, WorkspaceSymbolRequest, TextDocumentRegistrationOptions, FileOperationRegistrationOptions,
+	ConnectionOptions, PositionEncodingKind, DocumentDiagnosticRequest, NotebookDocumentSyncRegistrationType, NotebookDocumentSyncRegistrationOptions
 } from 'vscode-languageserver-protocol';
 
 import * as c2p from './codeConverter';
@@ -50,8 +49,8 @@ import {
 	TextDocumentProviderFeature, WorkspaceProviderFeature
 } from './features';
 
-import { DiagnosticProviderShape, DiagnosticPullOptions } from './proposed.diagnostic';
-import { NotebookDocumentMiddleware, NotebookDocumentOptions, NotebookDocumentProviderShape } from './proposed.notebook';
+import { DiagnosticFeature, DiagnosticProviderMiddleware, DiagnosticProviderShape, DiagnosticPullOptions } from './diagnostic';
+import { NotebookDocumentMiddleware, NotebookDocumentOptions, NotebookDocumentProviderShape, NotebookDocumentSyncFeature } from './notebook';
 import { ConfigurationFeature, ConfigurationMiddleware, ConfigurationOptions, DidChangeConfigurationMiddleware, SyncConfigurationFeature, SynchronizeOptions } from './configuration';
 import {
 	DidChangeTextDocumentFeature, DidChangeTextDocumentFeatureShape, DidCloseTextDocumentFeature, DidCloseTextDocumentFeatureShape, DidOpenTextDocumentFeature,
@@ -307,8 +306,7 @@ export type Middleware = _Middleware & TextDocumentSynchronizationMiddleware & C
 DocumentHighlightMiddleware & DocumentSymbolMiddleware & WorkspaceSymbolMiddleware & ReferencesMiddleware & TypeDefinitionMiddleware & ImplementationMiddleware &
 ColorProviderMiddleware & CodeActionMiddleware & CodeLensMiddleware & FormattingMiddleware & RenameMiddleware & DocumentLinkMiddleware & ExecuteCommandMiddleware &
 FoldingRangeProviderMiddleware & DeclarationMiddleware & SelectionRangeProviderMiddleware & CallHierarchyMiddleware & SemanticTokensMiddleware &
-LinkedEditingRangeMiddleware & TypeHierarchyMiddleware & InlineValueMiddleware & InlayHintsMiddleware & NotebookDocumentMiddleware & pd.DiagnosticProviderMiddleware;
-
+LinkedEditingRangeMiddleware & TypeHierarchyMiddleware & InlineValueMiddleware & InlayHintsMiddleware & NotebookDocumentMiddleware & DiagnosticProviderMiddleware;
 
 export type LanguageClientOptions = {
 	documentSelector?: DocumentSelector | string[];
@@ -1559,15 +1557,15 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	getFeature(request: typeof InlineValueRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<InlineValueProviderShape>;
 	getFeature(request: typeof InlayHintRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<InlayHintsProviderShape>;
 	getFeature(request: typeof WorkspaceSymbolRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & WorkspaceProviderFeature<WorkspaceSymbolProvider>;
-	getFeature(request: typeof Proposed.DocumentDiagnosticRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DiagnosticProviderShape> | undefined;
-	getFeature(request: typeof Proposed.NotebookDocumentSyncRegistrationType.method): DynamicFeature<Proposed.NotebookDocumentSyncRegistrationOptions> & NotebookDocumentProviderShape | undefined;
+	getFeature(request: typeof DocumentDiagnosticRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DiagnosticProviderShape> | undefined;
+	getFeature(request: typeof NotebookDocumentSyncRegistrationType.method): DynamicFeature<NotebookDocumentSyncRegistrationOptions> & NotebookDocumentProviderShape | undefined;
 	public getFeature(request: string): DynamicFeature<any> | undefined {
 		return this._dynamicFeatures.get(request);
 	}
 
 	hasDedicatedTextSynchronizationFeature(textDocument: TextDocument): boolean {
-		const feature = this.getFeature(Proposed.NotebookDocumentSyncRegistrationType.method);
-		if (feature === undefined || !(feature instanceof nb.NotebookDocumentSyncFeature)) {
+		const feature = this.getFeature(NotebookDocumentSyncRegistrationType.method);
+		if (feature === undefined || !(feature instanceof NotebookDocumentSyncFeature)) {
 			return false;
 		}
 		return feature.handles(textDocument);
@@ -1624,6 +1622,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this.registerFeature(new TypeHierarchyFeature(this));
 		this.registerFeature(new InlineValueFeature(this));
 		this.registerFeature(new InlayHintsFeature(this));
+		this.registerFeature(new DiagnosticFeature(this));
+		this.registerFeature(new NotebookDocumentSyncFeature(this));
 	}
 
 	public registerProposedFeatures() {
@@ -2026,23 +2026,11 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 }
 
 // Exporting proposed protocol.
-import * as pd from './proposed.diagnostic';
-import * as nb from './proposed.notebook';
 
 export namespace ProposedFeatures {
-	export function createAll(client: FeatureClient<Middleware, LanguageClientOptions>): (StaticFeature | DynamicFeature<any>)[] {
+	export function createAll(_client: FeatureClient<Middleware, LanguageClientOptions>): (StaticFeature | DynamicFeature<any>)[] {
 		let result: (StaticFeature | DynamicFeature<any>)[] = [
-			new pd.DiagnosticFeature(client),
-			new nb.NotebookDocumentSyncFeature(client)
 		];
 		return result;
-	}
-
-	export function createDiagnosticFeature(client: FeatureClient<Middleware, LanguageClientOptions>): DynamicFeature<Proposed.DiagnosticOptions> {
-		return new pd.DiagnosticFeature(client);
-	}
-
-	export function createNotebookDocumentSyncFeature(client: FeatureClient<Middleware, LanguageClientOptions>): DynamicFeature<Proposed.NotebookDocumentSyncRegistrationOptions> {
-		return new nb.NotebookDocumentSyncFeature(client);
 	}
 }

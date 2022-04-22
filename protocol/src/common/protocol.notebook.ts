@@ -34,12 +34,6 @@ export type NotebookDocumentSyncClientCapabilities = {
 	executionSummarySupport?: boolean;
 };
 
-export type $NotebookDocumentClientCapabilities = {
-	notebookDocument?: {
-		synchronization: NotebookDocumentSyncClientCapabilities;
-	};
-};
-
 /**
  * A notebook cell kind.
  *
@@ -361,11 +355,6 @@ export type NotebookDocumentSyncOptions = {
  * @proposed
  */
 export type NotebookDocumentSyncRegistrationOptions = NotebookDocumentSyncOptions & StaticRegistrationOptions;
-
-export interface $NotebookDocumentSyncServerCapabilities {
-	notebookDocumentSync?: NotebookDocumentSyncOptions | NotebookDocumentSyncRegistrationOptions;
-}
-
 
 export namespace NotebookDocumentSyncRegistrationType {
 	export const method: 'notebookDocument/sync' = 'notebookDocument/sync';

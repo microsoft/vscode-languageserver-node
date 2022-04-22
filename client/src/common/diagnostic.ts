@@ -7,13 +7,15 @@
 import * as minimatch from 'minimatch';
 
 import {
-	Disposable, languages as Languages, window as Window, workspace as Workspace, CancellationToken, ProviderResult,
-	Diagnostic as VDiagnostic, CancellationTokenSource, TextDocument, CancellationError, Event as VEvent, EventEmitter, DiagnosticCollection, Uri, TabInputText, TabInputTextDiff
+	Disposable, languages as Languages, window as Window, workspace as Workspace, CancellationToken, ProviderResult, Diagnostic as VDiagnostic,
+	CancellationTokenSource, TextDocument, CancellationError, Event as VEvent, EventEmitter, DiagnosticCollection, Uri, TabInputText, TabInputTextDiff
 } from 'vscode';
 
 import {
-	Proposed, ClientCapabilities, ServerCapabilities, DocumentSelector, DidOpenTextDocumentNotification, DidChangeTextDocumentNotification,
-	DidSaveTextDocumentNotification, DidCloseTextDocumentNotification, LinkedMap, Touch, RAL, TextDocumentFilter
+	ClientCapabilities, ServerCapabilities, DocumentSelector, DidOpenTextDocumentNotification, DidChangeTextDocumentNotification,
+	DidSaveTextDocumentNotification, DidCloseTextDocumentNotification, LinkedMap, Touch, RAL, TextDocumentFilter, PreviousResultId,
+	DiagnosticRegistrationOptions, DiagnosticServerCancellationData, DocumentDiagnosticParams, DocumentDiagnosticRequest, DocumentDiagnosticReportKind,
+	WorkspaceDocumentDiagnosticReport, WorkspaceDiagnosticRequest, WorkspaceDiagnosticParams, DiagnosticOptions, DiagnosticRefreshRequest
 } from 'vscode-languageserver-protocol';
 
 import { generateUuid } from './utils/uuid';
@@ -306,8 +308,8 @@ class DocumentPullStateTracker {
 		return states.get(key)?.resultId;
 	}
 
-	public getAllResultIds(): Proposed.PreviousResultId[] {
-		const result: Proposed.PreviousResultId[] = [];
+	public getAllResultIds(): PreviousResultId[] {
+		const result: PreviousResultId[] = [];
 		for (let [uri, value] of this.workspacePullStates) {
 			if (this.documentPullStates.has(uri)) {
 				value = this.documentPullStates.get(uri)!;
@@ -325,7 +327,7 @@ class DiagnosticRequestor implements Disposable {
 	private isDisposed: boolean;
 	private readonly client: FeatureClient<DiagnosticProviderMiddleware, DiagnosticPullOptions>;
 	private readonly tabs: Tabs;
-	private readonly options: Proposed.DiagnosticRegistrationOptions;
+	private readonly options: DiagnosticRegistrationOptions;
 
 	public readonly onDidChangeDiagnosticsEmitter: EventEmitter<void>;
 	public readonly provider: vsdiag.DiagnosticProvider;
@@ -337,7 +339,7 @@ class DiagnosticRequestor implements Disposable {
 	private workspaceCancellation: CancellationTokenSource | undefined;
 	private workspaceTimeout: Disposable | undefined;
 
-	public constructor(client: FeatureClient<DiagnosticProviderMiddleware, DiagnosticPullOptions>, tabs: Tabs, options: Proposed.DiagnosticRegistrationOptions) {
+	public constructor(client: FeatureClient<DiagnosticProviderMiddleware, DiagnosticPullOptions>, tabs: Tabs, options: DiagnosticRegistrationOptions) {
 		this.client = client;
 		this.tabs = tabs;
 		this.options = options;
@@ -384,7 +386,7 @@ class DiagnosticRequestor implements Disposable {
 			try {
 				report = await this.provider.provideDiagnostics(document, documentState.resultId, tokenSource.token) ?? { kind: vsdiag.DocumentDiagnosticReportKind.full, items: [] };
 			} catch (error) {
-				if (error instanceof LSPCancellationError && Proposed.DiagnosticServerCancellationData.is(error.data) && error.data.retriggerRequest === false) {
+				if (error instanceof LSPCancellationError && DiagnosticServerCancellationData.is(error.data) && error.data.retriggerRequest === false) {
 					afterState = { state: RequestStateKind.outDated, document };
 				}
 				if (afterState === undefined && error instanceof CancellationError) {
@@ -457,7 +459,7 @@ class DiagnosticRequestor implements Disposable {
 				this.pullWorkspace();
 			}, 2000);
 		}, (error) => {
-			if (!(error instanceof LSPCancellationError) && !Proposed.DiagnosticServerCancellationData.is(error.data)) {
+			if (!(error instanceof LSPCancellationError) && !DiagnosticServerCancellationData.is(error.data)) {
 				this.client.error(`Workspace diagnostic pull failed.`, error, false);
 				this.workspaceErrorCounter++;
 			}
@@ -506,22 +508,22 @@ class DiagnosticRequestor implements Disposable {
 			onDidChangeDiagnostics: this.onDidChangeDiagnosticsEmitter.event,
 			provideDiagnostics: (document, previousResultId, token) => {
 				const provideDiagnostics: ProvideDiagnosticSignature = (document, previousResultId, token) => {
-					const params: Proposed.DocumentDiagnosticParams = {
+					const params: DocumentDiagnosticParams = {
 						identifier: this.options.identifier,
 						textDocument: { uri: this.client.code2ProtocolConverter.asUri(document instanceof Uri ? document : document.uri) },
 						previousResultId: previousResultId
 					};
-					return this.client.sendRequest(Proposed.DocumentDiagnosticRequest.type, params, token).then(async (result) => {
+					return this.client.sendRequest(DocumentDiagnosticRequest.type, params, token).then(async (result) => {
 						if (result === undefined || result === null || this.isDisposed || token.isCancellationRequested) {
 							return { kind: vsdiag.DocumentDiagnosticReportKind.full, items: [] };
 						}
-						if (result.kind === Proposed.DocumentDiagnosticReportKind.full) {
+						if (result.kind === DocumentDiagnosticReportKind.full) {
 							return { kind: vsdiag.DocumentDiagnosticReportKind.full, resultId: result.resultId, items: await this.client.protocol2CodeConverter.asDiagnostics(result.items, token) };
 						} else {
 							return { kind: vsdiag.DocumentDiagnosticReportKind.unChanged, resultId: result.resultId };
 						}
 					}, (error) => {
-						return this.client.handleFailedRequest(Proposed.DocumentDiagnosticRequest.type, token, error, { kind: vsdiag.DocumentDiagnosticReportKind.full, items: [] });
+						return this.client.handleFailedRequest(DocumentDiagnosticRequest.type, token, error, { kind: vsdiag.DocumentDiagnosticReportKind.full, items: [] });
 					});
 				};
 				const middleware: DiagnosticProviderMiddleware = this.client.middleware;
@@ -532,8 +534,8 @@ class DiagnosticRequestor implements Disposable {
 		};
 		if (this.options.workspaceDiagnostics) {
 			result.provideWorkspaceDiagnostics = (resultIds, token, resultReporter): ProviderResult<vsdiag.WorkspaceDiagnosticReport> => {
-				const convertReport = async (report: Proposed.WorkspaceDocumentDiagnosticReport): Promise<vsdiag.WorkspaceDocumentDiagnosticReport> => {
-					if (report.kind === Proposed.DocumentDiagnosticReportKind.full) {
+				const convertReport = async (report: WorkspaceDocumentDiagnosticReport): Promise<vsdiag.WorkspaceDocumentDiagnosticReport> => {
+					if (report.kind === DocumentDiagnosticReportKind.full) {
 						return {
 							kind: vsdiag.DocumentDiagnosticReportKind.full,
 							uri: this.client.protocol2CodeConverter.asUri(report.uri),
@@ -550,8 +552,8 @@ class DiagnosticRequestor implements Disposable {
 						};
 					}
 				};
-				const convertPreviousResultIds = (resultIds: vsdiag.PreviousResultId[]): Proposed.PreviousResultId[] => {
-					const converted: Proposed.PreviousResultId[] = [];
+				const convertPreviousResultIds = (resultIds: vsdiag.PreviousResultId[]): PreviousResultId[] => {
+					const converted: PreviousResultId[] = [];
 					for (const item of resultIds) {
 						converted.push({ uri: this.client.code2ProtocolConverter.asUri(item.uri), value: item.value});
 					}
@@ -559,7 +561,7 @@ class DiagnosticRequestor implements Disposable {
 				};
 				const provideDiagnostics: ProvideWorkspaceDiagnosticSignature = (resultIds, token): ProviderResult<vsdiag.WorkspaceDiagnosticReport> => {
 					const partialResultToken: string = generateUuid();
-					const disposable = this.client.onProgress(Proposed.WorkspaceDiagnosticRequest.partialResult, partialResultToken, async (partialResult) => {
+					const disposable = this.client.onProgress(WorkspaceDiagnosticRequest.partialResult, partialResultToken, async (partialResult) => {
 						if (partialResult === undefined || partialResult === null) {
 							resultReporter(null);
 							return;
@@ -576,12 +578,12 @@ class DiagnosticRequestor implements Disposable {
 						}
 						resultReporter(converted);
 					});
-					const params: Proposed.WorkspaceDiagnosticParams = {
+					const params: WorkspaceDiagnosticParams = {
 						identifier: this.options.identifier,
 						previousResultIds: convertPreviousResultIds(resultIds),
 						partialResultToken: partialResultToken
 					};
-					return this.client.sendRequest(Proposed.WorkspaceDiagnosticRequest.type, params, token).then(async (result): Promise<vsdiag.WorkspaceDiagnosticReport> => {
+					return this.client.sendRequest(WorkspaceDiagnosticRequest.type, params, token).then(async (result): Promise<vsdiag.WorkspaceDiagnosticReport> => {
 						if (token.isCancellationRequested) {
 							return { items: [] };
 						}
@@ -596,7 +598,7 @@ class DiagnosticRequestor implements Disposable {
 						return { items: [] };
 					}, (error) => {
 						disposable.dispose();
-						return this.client.handleFailedRequest(Proposed.DocumentDiagnosticRequest.type, token, error, { items: [] });
+						return this.client.handleFailedRequest(DocumentDiagnosticRequest.type, token, error, { items: [] });
 					});
 				};
 				const middleware: DiagnosticProviderMiddleware = this.client.middleware;
@@ -707,7 +709,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 	private activeTextDocument: TextDocument | undefined;
 	private readonly backgroundScheduler: BackgroundScheduler;
 
-	constructor(client: FeatureClient<DiagnosticProviderMiddleware, DiagnosticPullOptions>, tabs: Tabs, options: Proposed.DiagnosticRegistrationOptions) {
+	constructor(client: FeatureClient<DiagnosticProviderMiddleware, DiagnosticPullOptions>, tabs: Tabs, options: DiagnosticRegistrationOptions) {
 		const diagnosticPullOptions = client.clientOptions.diagnosticPullOptions ?? { onChange: true, onSave: false };
 		const documentSelector = client.protocol2CodeConverter.asDocumentSelector(options.documentSelector!);
 		const disposables: Disposable[] = [];
@@ -860,16 +862,16 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 	}
 }
 
-export class DiagnosticFeature extends TextDocumentLanguageFeature<Proposed.DiagnosticOptions, Proposed.DiagnosticRegistrationOptions, DiagnosticProviderShape, DiagnosticProviderMiddleware, DiagnosticPullOptions> {
+export class DiagnosticFeature extends TextDocumentLanguageFeature<DiagnosticOptions, DiagnosticRegistrationOptions, DiagnosticProviderShape, DiagnosticProviderMiddleware, DiagnosticPullOptions> {
 
 	private readonly tabs: Tabs;
 
 	constructor(client: FeatureClient<DiagnosticProviderMiddleware, DiagnosticPullOptions>) {
-		super(client, Proposed.DocumentDiagnosticRequest.type);
+		super(client, DocumentDiagnosticRequest.type);
 		this.tabs = new Tabs();
 	}
 
-	public fillClientCapabilities(capabilities: ClientCapabilities & Proposed.$DiagnosticClientCapabilities): void {
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
 		let capability = ensure(ensure(capabilities, 'textDocument')!, 'diagnostic')!;
 		capability.dynamicRegistration = true;
 		// We first need to decide how a UI will look with related documents.
@@ -878,9 +880,9 @@ export class DiagnosticFeature extends TextDocumentLanguageFeature<Proposed.Diag
 		capability.relatedDocumentSupport = false;
 	}
 
-	public initialize(capabilities: ServerCapabilities & Proposed.$DiagnosticServerCapabilities, documentSelector: DocumentSelector): void {
+	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		const client = this._client;
-		client.onRequest(Proposed.DiagnosticRefreshRequest.type, async () => {
+		client.onRequest(DiagnosticRefreshRequest.type, async () => {
 			for (const provider of this.getAllProviders()) {
 				provider.onDidChangeDiagnosticsEmitter.fire();
 			}
@@ -897,7 +899,7 @@ export class DiagnosticFeature extends TextDocumentLanguageFeature<Proposed.Diag
 		super.dispose();
 	}
 
-	protected registerLanguageProvider(options: Proposed.DiagnosticRegistrationOptions): [Disposable, DiagnosticProviderShape] {
+	protected registerLanguageProvider(options: DiagnosticRegistrationOptions): [Disposable, DiagnosticProviderShape] {
 		const provider = new DiagnosticFeatureProviderImpl(this._client, this.tabs, options);
 		return [provider.disposable, provider];
 	}

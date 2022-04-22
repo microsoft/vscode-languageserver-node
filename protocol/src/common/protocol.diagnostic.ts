@@ -9,8 +9,7 @@ import { TextDocumentIdentifier, Diagnostic, DocumentUri, integer } from 'vscode
 import * as Is from './utils/is';
 import { ProtocolRequestType0, ProtocolRequestType } from './messages';
 import type {
-	PartialResultParams, StaticRegistrationOptions, WorkDoneProgressParams, TextDocumentRegistrationOptions, WorkDoneProgressOptions,
-	TextDocumentClientCapabilities
+	PartialResultParams, StaticRegistrationOptions, WorkDoneProgressParams, TextDocumentRegistrationOptions, WorkDoneProgressOptions
 } from './protocol';
 
 
@@ -30,12 +29,6 @@ export type DiagnosticClientCapabilities = {
 	 * Whether the clients supports related documents for document diagnostic pulls.
 	 */
 	relatedDocumentSupport?: boolean;
-};
-
-export type $DiagnosticClientCapabilities = {
-	textDocument?: TextDocumentClientCapabilities & {
-		diagnostic?: DiagnosticClientCapabilities;
-	};
 };
 
 /**
