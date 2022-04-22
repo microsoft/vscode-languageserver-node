@@ -8,7 +8,7 @@ import * as minimatch from 'minimatch';
 
 import {
 	Disposable, languages as Languages, window as Window, workspace as Workspace, CancellationToken, ProviderResult,
-	Diagnostic as VDiagnostic, CancellationTokenSource, TextDocument, CancellationError, Event as VEvent, EventEmitter, DiagnosticCollection, Uri, TabKindText, TabKindTextDiff
+	Diagnostic as VDiagnostic, CancellationTokenSource, TextDocument, CancellationError, Event as VEvent, EventEmitter, DiagnosticCollection, Uri, TabInputText, TabInputTextDiff
 } from 'vscode';
 
 import {
@@ -140,7 +140,7 @@ export type DiagnosticPullOptions = {
 		onTabs?: boolean;
 
 		/**
-		* A optional match method that is consulted when pull for diagnostics
+		* A optional match method that is consulted when pulling for diagnostics
 		* when only a URI is known (e.g. for not instantiated tabs)
 		*
 		* @param documentSelector the document selector
@@ -181,11 +181,11 @@ class Tabs {
 			this.open.clear();
 			for (const group of Window.tabGroups.all) {
 				for (const tab of group.tabs) {
-					const kind = tab.kind;
-					if (kind instanceof TabKindText) {
-						this.open.add(kind.uri.toString());
-					} else if (kind instanceof TabKindTextDiff) {
-						this.open.add(kind.modified.toString());
+					const input = tab.input;
+					if (input instanceof TabInputText) {
+						this.open.add(input.uri.toString());
+					} else if (input instanceof TabInputTextDiff) {
+						this.open.add(input.modified.toString());
 					}
 				}
 			}
@@ -218,11 +218,11 @@ class Tabs {
 		const result: Uri[] = [];
 		for (const group of Window.tabGroups.all) {
 			for (const tab of group.tabs) {
-				const kind = tab.kind;
-				if (kind instanceof TabKindText) {
-					result.push(kind.uri);
-				} else if (kind instanceof TabKindTextDiff) {
-					result.push(kind.modified);
+				const input = tab.input;
+				if (input instanceof TabInputText) {
+					result.push(input.uri);
+				} else if (input instanceof TabInputTextDiff) {
+					result.push(input.modified);
 				}
 			}
 		}

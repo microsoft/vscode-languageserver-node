@@ -5,19 +5,18 @@
 
 declare module 'vscode' {
 
-	// https://github.com/Microsoft/vscode/issues/15178
-
-	// TODO@API name alternatives for TabKind: TabInput, TabOptions,
-
-
 	/**
 	 * The tab represents a single text based resource
 	 */
-	export class TabKindText {
+	export class TabInputText {
 		/**
 		 * The uri represented by the tab.
 		 */
 		readonly uri: Uri;
+		/**
+		 * Constructs a text tab input with the given URI.
+		 * @param uri The URI of the tab.
+		 */
 		constructor(uri: Uri);
 	}
 
@@ -25,7 +24,7 @@ declare module 'vscode' {
 	 * The tab represents two text based resources
 	 * being rendered as a diff.
 	 */
-	export class TabKindTextDiff {
+	export class TabInputTextDiff {
 		/**
 		 * The uri of the original text resource.
 		 */
@@ -34,13 +33,18 @@ declare module 'vscode' {
 		 * The uri of the modified text resource.
 		 */
 		readonly modified: Uri;
+		/**
+		 * Constructs a new text diff tab input with the given URIs.
+		 * @param original The uri of the original text resource.
+		 * @param modified The uri of the modified text resource.
+		 */
 		constructor(original: Uri, modified: Uri);
 	}
 
 	/**
 	 * The tab represents a custom editor.
 	 */
-	export class TabKindCustom {
+	export class TabInputCustom {
 		/**
 		 * The uri which the tab is representing.
 		 */
@@ -49,24 +53,33 @@ declare module 'vscode' {
 		 * The type of custom editor.
 		 */
 		readonly viewType: string;
+		/**
+		 * Constructs a custom editor tab input
+		 * @param uri The uri of the tab
+		 * @param viewType The viewtpye of the custom editor
+		 */
 		constructor(uri: Uri, viewType: string);
 	}
 
 	/**
 	 * The tab represents a webview.
 	 */
-	export class TabKindWebview {
+	export class TabInputWebview {
 		/**
 		 * The type of webview. Maps to {@linkcode WebviewPanel.viewType WebviewPanel's viewType}
 		 */
 		readonly viewType: string;
+		/**
+		 * Constructs a webview tab input with the given view type.
+		 * @param viewType The type of webview. Maps to {@linkcode WebviewPanel.viewType WebviewPanel's viewType}
+		 */
 		constructor(viewType: string);
 	}
 
 	/**
 	 * The tab represents a notebook.
 	 */
-	export class TabKindNotebook {
+	export class TabInputNotebook {
 		/**
 		 * The uri which the tab is representing.
 		 */
@@ -75,13 +88,18 @@ declare module 'vscode' {
 		 * The type of notebook. Maps to {@linkcode NotebookDocument.notebookType NotebookDocuments's notebookType}
 		 */
 		readonly notebookType: string;
+		/**
+		 * Constructs a new tab input for a notebook.
+		 * @param uri The uri of the notebook.
+		 * @param notebookType The type of notebook. Maps to {@linkcode NotebookDocument.notebookType NotebookDocuments's notebookType}
+		 */
 		constructor(uri: Uri, notebookType: string);
 	}
 
 	/**
 	 * The tabs represents two notebooks in a diff configuration.
 	 */
-	export class TabKindNotebookDiff {
+	export class TabInputNotebookDiff {
 		/**
 		 * The uri of the original notebook.
 		 */
@@ -90,14 +108,26 @@ declare module 'vscode' {
 		 * The uri of the modified notebook.
 		 */
 		readonly modified: Uri;
+		/**
+		 * The type of notebook. Maps to {@linkcode NotebookDocument.notebookType NotebookDocuments's notebookType}
+		 */
 		readonly notebookType: string;
+		/**
+		 * Constructs a notebook diff tab input.
+		 * @param original The uri of the original unmodified notebook.
+		 * @param modified The uri of the modified notebook.
+		 * @param notebookType The type of notebook. Maps to {@linkcode NotebookDocument.notebookType NotebookDocuments's notebookType}
+		 */
 		constructor(original: Uri, modified: Uri, notebookType: string);
 	}
 
 	/**
 	 * The tab represents a terminal in the editor area.
 	 */
-	export class TabKindTerminal {
+	export class TabInputTerminal {
+		/**
+		 * Constructs a terminal tab input.
+		 */
 		constructor();
 	}
 
@@ -122,7 +152,7 @@ declare module 'vscode' {
 		 * Defines the structure of the tab i.e. text, notebook, custom, etc.
 		 * Resource and other useful properties are defined on the tab kind.
 		 */
-		readonly kind: TabKindText | TabKindTextDiff | TabKindCustom | TabKindWebview | TabKindNotebook | TabKindNotebookDiff | TabKindTerminal | unknown;
+		readonly input: TabInputText | TabInputTextDiff | TabInputCustom | TabInputWebview | TabInputNotebook | TabInputNotebookDiff | TabInputTerminal | unknown;
 
 		/**
 		 * Whether or not the tab is currently active.
@@ -146,23 +176,46 @@ declare module 'vscode' {
 		readonly isPreview: boolean;
 	}
 
-	export namespace window {
-		/**
-		 * Represents the grid widget within the main editor area
-		 */
-		export const tabGroups: TabGroups;
-	}
-
+	/**
+	 * An event describing change to tabs.
+	 */
 	export interface TabChangeEvent {
-		// TODO@API consider: opened
-		readonly added: readonly Tab[];
-		// TODO@API consider: closed (aligns with TabGroups.close(...))
-		readonly removed: readonly Tab[];
+		/**
+		 * The tabs that have been opened
+		 */
+		readonly opened: readonly Tab[];
+		/**
+		 * The tabs that have been closed
+		 */
+		readonly closed: readonly Tab[];
+		/**
+		 * Tabs that have changed, e.g have changed
+		 * their {@link Tab.isActive active} state.
+		 */
 		readonly changed: readonly Tab[];
 	}
 
 	/**
-	 * Represents a group of tabs. A tab group itself consists of multiple tab
+	 * An event describing changes to tab groups.
+	 */
+	export interface TabGroupChangeEvent {
+		/**
+		 * Tab groups that have been opened.
+		 */
+		readonly opened: readonly TabGroup[];
+		/**
+		 * Tab groups that have been closed.
+		 */
+		readonly closed: readonly TabGroup[];
+		/**
+		 * Tab groups that have changed, e.g have changed
+		 * their {@link TabGroup.isActive active} state.
+		 */
+		readonly changed: readonly TabGroup[];
+	}
+
+	/**
+	 * Represents a group of tabs. A tab group itself consists of multiple tabs.
 	 */
 	export interface TabGroup {
 		/**
@@ -195,6 +248,9 @@ declare module 'vscode' {
 		readonly tabs: readonly Tab[];
 	}
 
+	/**
+	 * Represents the main editor area which consists of multiple groups which contain tabs.
+	 */
 	export interface TabGroups {
 		/**
 		 * All the groups within the group container
@@ -209,8 +265,7 @@ declare module 'vscode' {
 		/**
 		 * An {@link Event event} which fires when {@link TabGroup tab groups} have changed.
 		 */
-		// TODO@API consider `TabGroupChangeEvent` similar to `TabChangeEvent`
-		readonly onDidChangeTabGroups: Event<readonly TabGroup[]>;
+		readonly onDidChangeTabGroups: Event<TabGroupChangeEvent>;
 
 		/**
 		 * An {@link Event event} which fires when {@link Tab tabs} have changed.
@@ -236,17 +291,12 @@ declare module 'vscode' {
 		 * @returns A promise that resolves to `true` when all tab groups have been closed
 		 */
 		close(tabGroup: TabGroup | readonly TabGroup[], preserveFocus?: boolean): Thenable<boolean>;
+	}
 
+	export namespace window {
 		/**
-		 * Moves a tab to the given index within the column.
-		 * If the index is out of range, the tab will be moved to the end of the column.
-		 * If the column is out of range, a new one will be created after the last existing column.
-		 *
-		 * @package tab The tab to move.
-		 * @param viewColumn The column to move the tab into
-		 * @param index The index to move the tab to
+		 * Represents the grid widget within the main editor area
 		 */
-		// TODO@API remove for now
-		move(tab: Tab, viewColumn: ViewColumn, index: number, preserveFocus?: boolean): Thenable<void>;
+		export const tabGroups: TabGroups;
 	}
 }
