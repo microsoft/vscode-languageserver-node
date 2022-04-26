@@ -131,10 +131,10 @@ export namespace DocumentDiagnosticReportKind {
 	 * A report indicating that the last
 	 * returned report is still accurate.
 	 */
-	export const unChanged = 'unChanged';
+	export const unchanged = 'unchanged';
 }
 
-export type DocumentDiagnosticReportKind = 'full' | 'unChanged';
+export type DocumentDiagnosticReportKind = 'full' | 'unchanged';
 
 /**
  * A diagnostic report with a full set of problems.
@@ -197,7 +197,7 @@ export type UnchangedDocumentDiagnosticReport = {
 	 * only return `unchanged` if result ids are
 	 * provided.
 	 */
-	kind: typeof DocumentDiagnosticReportKind.unChanged;
+	kind: typeof DocumentDiagnosticReportKind.unchanged;
 
 	/**
 	 * A result id which will be sent on the next
