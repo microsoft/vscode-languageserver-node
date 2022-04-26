@@ -14,6 +14,8 @@ import type {
 
 
 /**
+ * Client capabilities specific to diagnostic pull requests.
+ *
  * @since 3.17.0
  * @proposed
  */
@@ -29,6 +31,25 @@ export type DiagnosticClientCapabilities = {
 	 * Whether the clients supports related documents for document diagnostic pulls.
 	 */
 	relatedDocumentSupport?: boolean;
+};
+
+/**
+ * Workspace client capabilities specific to diagnostic pull requests.
+ *
+ * @since 3.17.0
+ * @proposed
+ */
+export type DiagnosticWorkspaceClientCapabilities = {
+	/**
+	 * Whether the client implementation supports a refresh request sent from
+	 * the server to the client.
+	 *
+	 * Note that this event is global and will force the client to refresh all
+	 * inlay hints currently shown. It should be used with absolute care and
+	 * is useful for situation where a server for example detects a project wide
+	 * change that requires such a calculation.
+	 */
+	refreshSupport?: boolean;
 };
 
 /**

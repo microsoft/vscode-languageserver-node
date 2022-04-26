@@ -110,7 +110,7 @@ import {
 	RelatedUnchangedDocumentDiagnosticReport, DocumentDiagnosticReport, DocumentDiagnosticReportPartialResult, DocumentDiagnosticRequest,
 	PreviousResultId, WorkspaceDiagnosticParams, WorkspaceFullDocumentDiagnosticReport, WorkspaceUnchangedDocumentDiagnosticReport,
 	WorkspaceDocumentDiagnosticReport, WorkspaceDiagnosticReport, WorkspaceDiagnosticReportPartialResult, WorkspaceDiagnosticRequest,
-	DiagnosticRefreshRequest
+	DiagnosticRefreshRequest, DiagnosticWorkspaceClientCapabilities
 } from './protocol.diagnostic';
 
 import {
@@ -537,6 +537,7 @@ export interface WorkspaceClientCapabilities {
 	 * workspace.
 	 *
 	 * @since 3.17.0.
+	 * @proposed
 	 */
 	inlineValue?: InlineValueWorkspaceClientCapabilities;
 
@@ -545,8 +546,18 @@ export interface WorkspaceClientCapabilities {
 	 * workspace.
 	 *
 	 * @since 3.17.0.
+	 * @proposed
 	 */
 	inlayHint?: InlayHintWorkspaceClientCapabilities;
+
+	/**
+	 * Capabilities specific to the diagnostic requests scoped to the
+	 * workspace.
+	 *
+	 * @since 3.17.0.
+	 * @proposed
+	 */
+	diagnostics?: DiagnosticWorkspaceClientCapabilities;
 }
 
 /**

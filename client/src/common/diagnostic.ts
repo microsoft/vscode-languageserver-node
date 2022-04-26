@@ -878,6 +878,8 @@ export class DiagnosticFeature extends TextDocumentLanguageFeature<DiagnosticOpt
 		// An easy implementation would be to only show related diagnostics for
 		// the active editor.
 		capability.relatedDocumentSupport = false;
+
+		ensure(ensure(capabilities, 'workspace')!, 'diagnostics')!.refreshSupport = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
