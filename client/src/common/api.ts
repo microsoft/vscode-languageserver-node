@@ -32,7 +32,7 @@ export { ProvideImplementationSignature, ImplementationMiddleware } from './impl
 export { ProvideInlayHintsSignature, ResolveInlayHintSignature, InlayHintsMiddleware, InlayHintsProviderShape } from './inlayHint';
 export { ProvideInlineValuesSignature, InlineValueMiddleware, InlineValueProviderShape } from './inlineValue';
 export { ProvideLinkedEditingRangeSignature, LinkedEditingRangeMiddleware } from './linkedEditingRange';
-export { NotebookDocumentOptions, NotebookDocumentMiddleware, NotebookDocumentSyncFeatureShape, NotebookDocumentChangeEvent } from './notebook';
+export { NotebookDocumentOptions, NotebookDocumentMiddleware, NotebookDocumentSyncFeatureShape, VNotebookDocumentChangeEvent } from './notebook';
 export { ProvideReferencesSignature, ReferencesMiddleware } from './reference';
 export { ProvideRenameEditsSignature, PrepareRenameSignature, RenameMiddleware } from './rename';
 export { ProvideSelectionRangeSignature, SelectionRangeProviderMiddleware } from './selectionRange';
