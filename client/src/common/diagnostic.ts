@@ -112,44 +112,47 @@ export enum DiagnosticPullMode {
 }
 
 export type DiagnosticPullOptions = {
-	diagnosticPullOptions?: {
-		/**
-		* Whether to pull for diagnostics on document change.
-		*/
-		onChange?: boolean;
 
-		/**
-		* Whether to pull for diagnostics on document save.
-		*/
-		onSave?: boolean;
+	/**
+	 * Whether to pull for diagnostics on document change.
+	 */
+	onChange?: boolean;
 
-		/**
-		* An optional filter method that is consulted when triggering a
-		* diagnostic pull during document change or document save.
-		*
-		* @param document the document that changes or got save
-		* @param mode the mode
-		*/
-		filter?(document: TextDocument, mode: DiagnosticPullMode): boolean;
+	/**
+	 * Whether to pull for diagnostics on document save.
+	 */
+	onSave?: boolean;
 
-		/**
-		* Whether to pull for diagnostics on resources of non instantiated
-		* tabs. If it is set to true it is highly recommended to provide
-		* a match method as well. Otherwise the client will not pull for
-		* tabs if the used document selector specifies a language property
-		* since the language value is not known for resources.
-		*/
-		onTabs?: boolean;
+	/**
+	 * An optional filter method that is consulted when triggering a
+	 * diagnostic pull during document change or document save.
+	 *
+	 * @param document the document that changes or got save
+	 * @param mode the mode
+	 */
+	filter?(document: TextDocument, mode: DiagnosticPullMode): boolean;
 
-		/**
-		* A optional match method that is consulted when pulling for diagnostics
-		* when only a URI is known (e.g. for not instantiated tabs)
-		*
-		* @param documentSelector the document selector
-		* @param resource the resource.
-		*/
-		match?(documentSelector: DocumentSelector, resource: Uri): boolean;
-	};
+	/**
+	 * Whether to pull for diagnostics on resources of non instantiated
+	 * tabs. If it is set to true it is highly recommended to provide
+	 * a match method as well. Otherwise the client will not pull for
+	 * tabs if the used document selector specifies a language property
+	 * since the language value is not known for resources.
+	 */
+	onTabs?: boolean;
+
+	/**
+	 * A optional match method that is consulted when pulling for diagnostics
+	 * when only a URI is known (e.g. for not instantiated tabs)
+	 *
+	 * @param documentSelector the document selector
+	 * @param resource the resource.
+	 */
+	match?(documentSelector: DocumentSelector, resource: Uri): boolean;
+};
+
+export type $DiagnosticPullOptions = {
+	diagnosticPullOptions?: DiagnosticPullOptions;
 };
 
 
@@ -325,7 +328,7 @@ class DocumentPullStateTracker {
 class DiagnosticRequestor implements Disposable {
 
 	private isDisposed: boolean;
-	private readonly client: FeatureClient<DiagnosticProviderMiddleware, DiagnosticPullOptions>;
+	private readonly client: FeatureClient<DiagnosticProviderMiddleware, $DiagnosticPullOptions>;
 	private readonly tabs: Tabs;
 	private readonly options: DiagnosticRegistrationOptions;
 
@@ -339,7 +342,7 @@ class DiagnosticRequestor implements Disposable {
 	private workspaceCancellation: CancellationTokenSource | undefined;
 	private workspaceTimeout: Disposable | undefined;
 
-	public constructor(client: FeatureClient<DiagnosticProviderMiddleware, DiagnosticPullOptions>, tabs: Tabs, options: DiagnosticRegistrationOptions) {
+	public constructor(client: FeatureClient<DiagnosticProviderMiddleware, $DiagnosticPullOptions>, tabs: Tabs, options: DiagnosticRegistrationOptions) {
 		this.client = client;
 		this.tabs = tabs;
 		this.options = options;
@@ -709,7 +712,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 	private activeTextDocument: TextDocument | undefined;
 	private readonly backgroundScheduler: BackgroundScheduler;
 
-	constructor(client: FeatureClient<DiagnosticProviderMiddleware, DiagnosticPullOptions>, tabs: Tabs, options: DiagnosticRegistrationOptions) {
+	constructor(client: FeatureClient<DiagnosticProviderMiddleware, $DiagnosticPullOptions>, tabs: Tabs, options: DiagnosticRegistrationOptions) {
 		const diagnosticPullOptions = client.clientOptions.diagnosticPullOptions ?? { onChange: true, onSave: false };
 		const documentSelector = client.protocol2CodeConverter.asDocumentSelector(options.documentSelector!);
 		const disposables: Disposable[] = [];
@@ -862,11 +865,11 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 	}
 }
 
-export class DiagnosticFeature extends TextDocumentLanguageFeature<DiagnosticOptions, DiagnosticRegistrationOptions, DiagnosticProviderShape, DiagnosticProviderMiddleware, DiagnosticPullOptions> {
+export class DiagnosticFeature extends TextDocumentLanguageFeature<DiagnosticOptions, DiagnosticRegistrationOptions, DiagnosticProviderShape, DiagnosticProviderMiddleware, $DiagnosticPullOptions> {
 
 	private readonly tabs: Tabs;
 
-	constructor(client: FeatureClient<DiagnosticProviderMiddleware, DiagnosticPullOptions>) {
+	constructor(client: FeatureClient<DiagnosticProviderMiddleware, $DiagnosticPullOptions>) {
 		super(client, DocumentDiagnosticRequest.type);
 		this.tabs = new Tabs();
 	}

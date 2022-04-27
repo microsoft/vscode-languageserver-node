@@ -142,7 +142,7 @@ export type SynchronizeOptions = {
 };
 
 
-export type ConfigurationOptions = {
+export type $ConfigurationOptions = {
 	synchronize?: SynchronizeOptions;
 	workspaceFolder?: VWorkspaceFolder;
 };
@@ -151,7 +151,7 @@ export class SyncConfigurationFeature implements DynamicFeature<DidChangeConfigu
 
 	private readonly _listeners: Map<string, Disposable>;
 
-	constructor(private _client: FeatureClient<DidChangeConfigurationWorkspaceMiddleware, ConfigurationOptions>) {
+	constructor(private _client: FeatureClient<DidChangeConfigurationWorkspaceMiddleware, $ConfigurationOptions>) {
 		this._listeners = new Map();
 	}
 

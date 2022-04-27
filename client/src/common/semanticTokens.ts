@@ -36,13 +36,13 @@ export interface SemanticTokensMiddleware {
 	provideDocumentRangeSemanticTokens?: (this: void, document: vscode.TextDocument, range: vscode.Range, token: vscode.CancellationToken, next: DocumentRangeSemanticTokensSignature) => vscode.ProviderResult<vscode.SemanticTokens>;
 }
 
-export interface SemanticTokensProviders {
+export interface SemanticTokensProviderShape {
 	range?: vscode.DocumentRangeSemanticTokensProvider;
 	full?: vscode.DocumentSemanticTokensProvider;
 	onDidChangeSemanticTokensEmitter: vscode.EventEmitter<void>;
 }
 
-export class SemanticTokensFeature extends TextDocumentLanguageFeature<boolean | SemanticTokensOptions, SemanticTokensRegistrationOptions, SemanticTokensProviders, SemanticTokensMiddleware> {
+export class SemanticTokensFeature extends TextDocumentLanguageFeature<boolean | SemanticTokensOptions, SemanticTokensRegistrationOptions, SemanticTokensProviderShape, SemanticTokensMiddleware> {
 
 	constructor(client: FeatureClient<SemanticTokensMiddleware>) {
 		super(client, SemanticTokensRegistrationType.type);
@@ -116,7 +116,7 @@ export class SemanticTokensFeature extends TextDocumentLanguageFeature<boolean |
 		this.register({ id: id, registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: SemanticTokensRegistrationOptions): [vscode.Disposable, SemanticTokensProviders] {
+	protected registerLanguageProvider(options: SemanticTokensRegistrationOptions): [vscode.Disposable, SemanticTokensProviderShape] {
 		const selector = options.documentSelector!;
 		const fullProvider = Is.boolean(options.full) ? options.full : options.full !== undefined;
 		const hasEditProvider = options.full !== undefined && typeof options.full !== 'boolean' && options.full.delta === true;

@@ -394,9 +394,11 @@ export type NotebookDocumentChangeEvent = {
 };
 
 export type NotebookDocumentOptions = {
-	notebookDocumentOptions?: {
-		filterCells?(notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[]): vscode.NotebookCell[];
-	};
+	filterCells?(notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[]): vscode.NotebookCell[];
+};
+
+export type $NotebookDocumentOptions = {
+	notebookDocumentOptions?: NotebookDocumentOptions;
 };
 
 export type NotebookDocumentMiddleware = {
@@ -417,14 +419,14 @@ export interface NotebookDocumentSyncFeatureShape {
 
 class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeatureShape {
 
-	private readonly client: FeatureClient<NotebookDocumentMiddleware, NotebookDocumentOptions>;
+	private readonly client: FeatureClient<NotebookDocumentMiddleware, $NotebookDocumentOptions>;
 	private readonly options: proto.NotebookDocumentSyncOptions;
 	private readonly notebookSyncInfo: Map<string, SyncInfo>;
 	private readonly notebookDidOpen: Set<string>;
 	private readonly disposables: vscode.Disposable[];
 	private readonly selector: vscode.DocumentSelector;
 
-	constructor(client: FeatureClient<NotebookDocumentMiddleware, NotebookDocumentOptions>, options: proto.NotebookDocumentSyncOptions) {
+	constructor(client: FeatureClient<NotebookDocumentMiddleware, $NotebookDocumentOptions>, options: proto.NotebookDocumentSyncOptions) {
 		this.client = client;
 		this.options = options;
 		this.notebookSyncInfo = new Map();
@@ -854,11 +856,11 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Noteboo
 
 	public static readonly CellScheme: string = 'vscode-notebook-cell';
 
-	private readonly client: FeatureClient<NotebookDocumentMiddleware, NotebookDocumentOptions>;
+	private readonly client: FeatureClient<NotebookDocumentMiddleware, $NotebookDocumentOptions>;
 	private readonly registrations: Map<string, NotebookDocumentSyncFeatureProvider>;
 	private dedicatedChannel: vscode.DocumentSelector | undefined;
 
-	constructor(client: FeatureClient<NotebookDocumentMiddleware, NotebookDocumentOptions>) {
+	constructor(client: FeatureClient<NotebookDocumentMiddleware, $NotebookDocumentOptions>) {
 		this.client = client;
 		this.registrations = new Map();
 		this.registrationType = proto.NotebookDocumentSyncRegistrationType.type;

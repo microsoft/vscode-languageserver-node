@@ -49,9 +49,9 @@ import {
 	TextDocumentProviderFeature, WorkspaceProviderFeature
 } from './features';
 
-import { DiagnosticFeature, DiagnosticProviderMiddleware, DiagnosticProviderShape, DiagnosticPullOptions } from './diagnostic';
-import { NotebookDocumentMiddleware, NotebookDocumentOptions, NotebookDocumentProviderShape, NotebookDocumentSyncFeature } from './notebook';
-import { ConfigurationFeature, ConfigurationMiddleware, ConfigurationOptions, DidChangeConfigurationMiddleware, SyncConfigurationFeature, SynchronizeOptions } from './configuration';
+import { DiagnosticFeature, DiagnosticProviderMiddleware, DiagnosticProviderShape, $DiagnosticPullOptions } from './diagnostic';
+import { NotebookDocumentMiddleware, $NotebookDocumentOptions, NotebookDocumentProviderShape, NotebookDocumentSyncFeature } from './notebook';
+import { ConfigurationFeature, ConfigurationMiddleware, $ConfigurationOptions, DidChangeConfigurationMiddleware, SyncConfigurationFeature, SynchronizeOptions } from './configuration';
 import {
 	DidChangeTextDocumentFeature, DidChangeTextDocumentFeatureShape, DidCloseTextDocumentFeature, DidCloseTextDocumentFeatureShape, DidOpenTextDocumentFeature,
 	DidOpenTextDocumentFeatureShape, DidSaveTextDocumentFeature, DidSaveTextDocumentFeatureShape, ResolvedTextDocumentSyncCapabilities, TextDocumentSynchronizationMiddleware, WillSaveFeature,
@@ -78,7 +78,7 @@ import { FoldingRangeProviderMiddleware } from './foldingRange';
 import { DeclarationMiddleware } from './declaration';
 import { SelectionRangeProviderMiddleware } from './selectionRange';
 import { CallHierarchyMiddleware } from './callHierarchy';
-import { SemanticTokensMiddleware, SemanticTokensProviders } from './semanticTokens';
+import { SemanticTokensMiddleware, SemanticTokensProviderShape } from './semanticTokens';
 import { LinkedEditingRangeMiddleware } from './linkedEditingRange';
 import { TypeHierarchyMiddleware } from './typeHierarchy';
 import { InlineValueMiddleware, InlineValueProviderShape } from './inlineValue';
@@ -338,7 +338,7 @@ export type LanguageClientOptions = {
 		isTrusted?: boolean;
 		supportHtml?: boolean;
 	};
-} & NotebookDocumentOptions & DiagnosticPullOptions & ConfigurationOptions;
+} & $NotebookDocumentOptions & $DiagnosticPullOptions & $ConfigurationOptions;
 
 // type TestOptions = {
 // 	$testMode?: boolean;
@@ -369,7 +369,7 @@ type ResolvedClientOptions = {
 		isTrusted: boolean;
 		supportHtml: boolean;
 	};
-} & Required<NotebookDocumentOptions> & Required<DiagnosticPullOptions>;
+} & Required<$NotebookDocumentOptions> & Required<$DiagnosticPullOptions>;
 
 class DefaultErrorHandler implements ErrorHandler {
 
@@ -1551,7 +1551,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	getFeature(request: typeof SelectionRangeRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<SelectionRangeProvider>;
 	getFeature(request: typeof TypeDefinitionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<TypeDefinitionProvider>;
 	getFeature(request: typeof CallHierarchyPrepareRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<CallHierarchyProvider>;
-	getFeature(request: typeof SemanticTokensRegistrationType.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<SemanticTokensProviders>;
+	getFeature(request: typeof SemanticTokensRegistrationType.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<SemanticTokensProviderShape>;
 	getFeature(request: typeof LinkedEditingRangeRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<LinkedEditingRangeProvider>;
 	getFeature(request: typeof TypeHierarchyPrepareRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<TypeHierarchyProvider>;
 	getFeature(request: typeof InlineValueRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<InlineValueProviderShape>;
