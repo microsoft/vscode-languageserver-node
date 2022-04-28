@@ -13294,7 +13294,7 @@
 					}
 				]
 			},
-			"documentation": "An event describing a change to a text document. If range and rangeLength are omitted\nthe new text is considered to be the full content of the document."
+			"documentation": "An event describing a change to a text document. If only a text is provided\nit is considered to be the full content of the document."
 		},
 		{
 			"name": "MarkedString",

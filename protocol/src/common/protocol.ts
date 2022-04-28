@@ -1748,8 +1748,8 @@ export namespace DidOpenTextDocumentNotification {
 }
 
 /**
- * An event describing a change to a text document. If range and rangeLength are omitted
- * the new text is considered to be the full content of the document.
+ * An event describing a change to a text document. If only a text is provided
+ * it is considered to be the full content of the document.
  */
 export type TextDocumentContentChangeEvent = {
 	/**
