@@ -6980,7 +6980,7 @@
 					"name": "kind",
 					"type": {
 						"kind": "stringLiteral",
-						"value": "full"
+						"value": "Full"
 					},
 					"documentation": "A full document diagnostic report."
 				},
@@ -7016,7 +7016,7 @@
 					"name": "kind",
 					"type": {
 						"kind": "stringLiteral",
-						"value": "unchanged"
+						"value": "Unchanged"
 					},
 					"documentation": "A document diagnostic report indicating\nno changes to the last result. A server can\nonly return `unchanged` if result ids are\nprovided."
 				},

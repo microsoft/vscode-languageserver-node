@@ -146,13 +146,13 @@ export namespace DocumentDiagnosticReportKind {
 	 * A diagnostic report with a full
 	 * set of problems.
 	 */
-	export const full = 'full';
+	export const Full = 'full';
 
 	/**
 	 * A report indicating that the last
 	 * returned report is still accurate.
 	 */
-	export const unchanged = 'unchanged';
+	export const Unchanged = 'unchanged';
 }
 
 export type DocumentDiagnosticReportKind = 'full' | 'unchanged';
@@ -167,7 +167,7 @@ export type FullDocumentDiagnosticReport = {
 	/**
 	 * A full document diagnostic report.
 	 */
-	kind: typeof DocumentDiagnosticReportKind.full;
+	kind: typeof DocumentDiagnosticReportKind.Full;
 
 	/**
 	 * An optional result id. If provided it will
@@ -218,7 +218,7 @@ export type UnchangedDocumentDiagnosticReport = {
 	 * only return `unchanged` if result ids are
 	 * provided.
 	 */
-	kind: typeof DocumentDiagnosticReportKind.unchanged;
+	kind: typeof DocumentDiagnosticReportKind.Unchanged;
 
 	/**
 	 * A result id which will be sent on the next

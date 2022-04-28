@@ -439,7 +439,7 @@ connection.languages.onLinkedEditingRange(() => {
 
 connection.languages.diagnostics.on(() => {
 	return {
-		kind: DocumentDiagnosticReportKind.full,
+		kind: DocumentDiagnosticReportKind.Full,
 		items: [
 			Diagnostic.create(Range.create(1, 1, 1, 1), 'diagnostic', DiagnosticSeverity.Error)
 		]
@@ -449,7 +449,7 @@ connection.languages.diagnostics.on(() => {
 connection.languages.diagnostics.onWorkspace(() => {
 	return {
 		items: [ {
-			kind: DocumentDiagnosticReportKind.full,
+			kind: DocumentDiagnosticReportKind.Full,
 			uri: 'uri',
 			version: 1,
 			items: [

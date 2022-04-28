@@ -520,7 +520,7 @@ class DiagnosticRequestor implements Disposable {
 						if (result === undefined || result === null || this.isDisposed || token.isCancellationRequested) {
 							return { kind: vsdiag.DocumentDiagnosticReportKind.full, items: [] };
 						}
-						if (result.kind === DocumentDiagnosticReportKind.full) {
+						if (result.kind === DocumentDiagnosticReportKind.Full) {
 							return { kind: vsdiag.DocumentDiagnosticReportKind.full, resultId: result.resultId, items: await this.client.protocol2CodeConverter.asDiagnostics(result.items, token) };
 						} else {
 							return { kind: vsdiag.DocumentDiagnosticReportKind.unChanged, resultId: result.resultId };
@@ -538,7 +538,7 @@ class DiagnosticRequestor implements Disposable {
 		if (this.options.workspaceDiagnostics) {
 			result.provideWorkspaceDiagnostics = (resultIds, token, resultReporter): ProviderResult<vsdiag.WorkspaceDiagnosticReport> => {
 				const convertReport = async (report: WorkspaceDocumentDiagnosticReport): Promise<vsdiag.WorkspaceDocumentDiagnosticReport> => {
-					if (report.kind === DocumentDiagnosticReportKind.full) {
+					if (report.kind === DocumentDiagnosticReportKind.Full) {
 						return {
 							kind: vsdiag.DocumentDiagnosticReportKind.full,
 							uri: this.client.protocol2CodeConverter.asUri(report.uri),
