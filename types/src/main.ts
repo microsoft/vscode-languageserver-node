@@ -2239,6 +2239,9 @@ export interface CompletionItem {
 	 * Clients will only honor this property if they opt into completion list
 	 * item defaults using the capability `completionList.itemDefaults`.
 	 *
+	 * If not provided and a list's default range is provided the label
+	 * property is used as a text.
+	 *
 	 * @since 3.17.0
 	 * @proposed
 	 */

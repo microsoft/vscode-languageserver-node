@@ -4569,7 +4569,7 @@
 						"name": "string"
 					},
 					"optional": true,
-					"documentation": "A string that should be inserted into a document when selecting\nthis completion. When `falsy` the [label](#CompletionItem.label)\nis used.\nThe `insertText` is subject to interpretation by the client side.\nSome tools might not take the string literally. For example\nVS Code when code complete is requested in this example `con<cursor position>`\nand a completion item with an `insertText` of `console` is provided it\nwill only insert `sole`. Therefore it is recommended to use `textEdit` instead\nsince it avoids additional client side interpretation."
+					"documentation": "A string that should be inserted into a document when selecting\nthis completion. When `falsy` the [label](#CompletionItem.label)\nis used.\nThe `insertText` is subject to interpretation by the client side.\nSome tools might not take the string literally. For example\nVS Code when code complete is requested in this example\n`con<cursor position>` and a completion item with an `insertText` of\n`console` is provided it will only insert `sole`. Therefore it is\nrecommended to use `textEdit` instead since it avoids additional client\nside interpretation."
 				},
 				{
 					"name": "insertTextFormat",
@@ -4578,7 +4578,7 @@
 						"name": "InsertTextFormat"
 					},
 					"optional": true,
-					"documentation": "The format of the insert text. The format applies to both the `insertText` property\nand the `newText` property of a provided `textEdit`. If omitted defaults to\n`InsertTextFormat.PlainText`.\nPlease note that the insertTextFormat doesn't apply to `additionalTextEdits`."
+					"documentation": "The format of the insert text. The format applies to both the\n`insertText` property and the `newText` property of a provided\n`textEdit`. If omitted defaults to `InsertTextFormat.PlainText`.\nPlease note that the insertTextFormat doesn't apply to\n`additionalTextEdits`."
 				},
 				{
 					"name": "insertTextMode",
@@ -4606,8 +4606,19 @@
 						]
 					},
 					"optional": true,
-					"documentation": "An [edit](#TextEdit) which is applied to a document when selecting\nthis completion. When an edit is provided the value of\n[insertText](#CompletionItem.insertText) is ignored.\nMost editors support two different operation when accepting a completion item. One is to insert a\ncompletion text and the other is to replace an existing text with a completion text. Since this can\nusually not predetermined by a server it can report both ranges. Clients need to signal support for\n`InsertReplaceEdits` via the `textDocument.completion.insertReplaceSupport` client capability\nproperty.\n*Note 1:* The text edit's range as well as both ranges from a insert replace edit must be a\n[single line] and they must contain the position at which completion has been requested.\n*Note 2:* If an `InsertReplaceEdit` is returned the edit's insert range must be a prefix of\nthe edit's replace range, that means it must be contained and starting at the same position.\n@since 3.16.0 additional type `InsertReplaceEdit`",
+					"documentation": "An [edit](#TextEdit) which is applied to a document when selecting\nthis completion. When an edit is provided the value of\n[insertText](#CompletionItem.insertText) is ignored.\nMost editors support two different operation when accepting a completion\nitem. One is to insert a completion text and the other is to replace an\nexisting text with a completion text. Since this can usually not\npredetermined by a server it can report both ranges. Clients need to\nsignal support for `InsertReplaceEdits` via the\n`textDocument.completion.insertReplaceSupport` client capability\nproperty.\n*Note 1:* The text edit's range as well as both ranges from a insert\nreplace edit must be a [single line] and they must contain the position\nat which completion has been requested.\n*Note 2:* If an `InsertReplaceEdit` is returned the edit's insert range\nmust be a prefix of the edit's replace range, that means it must be\ncontained and starting at the same position.\n@since 3.16.0 additional type `InsertReplaceEdit`",
 					"since": "3.16.0 additional type `InsertReplaceEdit`"
+				},
+				{
+					"name": "textEditText",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "The edit text used if the completion item is part of a CompletionList and\nCompletionList defines an item default for the text edit range.\nClients will only honor this property if they opt into completion list\nitem defaults using the capability `completionList.itemDefaults`.\nIf not provided and a list's default range is provided the label\nproperty is used as a text.\n@since 3.17.0\n@proposed",
+					"since": "3.17.0",
+					"proposed": true
 				},
 				{
 					"name": "additionalTextEdits",
@@ -7005,7 +7016,7 @@
 					"name": "kind",
 					"type": {
 						"kind": "stringLiteral",
-						"value": "unChanged"
+						"value": "unchanged"
 					},
 					"documentation": "A document diagnostic report indicating\nno changes to the last result. A server can\nonly return `unchanged` if result ids are\nprovided."
 				},
@@ -10048,8 +10059,9 @@
 						"name": "InlineValueWorkspaceClientCapabilities"
 					},
 					"optional": true,
-					"documentation": "Capabilities specific to the inline values requests scoped to the\nworkspace.\n@since 3.17.0.",
-					"since": "3.17.0."
+					"documentation": "Capabilities specific to the inline values requests scoped to the\nworkspace.\n@since 3.17.0.\n@proposed",
+					"since": "3.17.0.",
+					"proposed": true
 				},
 				{
 					"name": "inlayHint",
@@ -10058,8 +10070,20 @@
 						"name": "InlayHintWorkspaceClientCapabilities"
 					},
 					"optional": true,
-					"documentation": "Capabilities specific to the inlay hints requests scoped to the\nworkspace.\n@since 3.17.0.",
-					"since": "3.17.0."
+					"documentation": "Capabilities specific to the inlay hints requests scoped to the\nworkspace.\n@since 3.17.0.\n@proposed",
+					"since": "3.17.0.",
+					"proposed": true
+				},
+				{
+					"name": "diagnostics",
+					"type": {
+						"kind": "reference",
+						"name": "DiagnosticWorkspaceClientCapabilities"
+					},
+					"optional": true,
+					"documentation": "Capabilities specific to the diagnostic requests scoped to the\nworkspace.\n@since 3.17.0.\n@proposed",
+					"since": "3.17.0.",
+					"proposed": true
 				}
 			],
 			"documentation": "Workspace specific client capabilities."
@@ -10853,6 +10877,23 @@
 				}
 			],
 			"documentation": "Client workspace capabilities specific to inlay hints.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
+		},
+		{
+			"name": "DiagnosticWorkspaceClientCapabilities",
+			"properties": [
+				{
+					"name": "refreshSupport",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Whether the client implementation supports a refresh request sent from\nthe server to the client.\nNote that this event is global and will force the client to refresh all\npulled diagnostics currently shown. It should be used with absolute care and\nis useful for situation where a server for example detects a project wide\nchange that requires such a calculation."
+				}
+			],
+			"documentation": "Workspace client capabilities specific to diagnostic pull requests.\n@since 3.17.0\n@proposed",
 			"since": "3.17.0",
 			"proposed": true
 		},
@@ -12091,7 +12132,7 @@
 					"documentation": "Whether the clients supports related documents for document diagnostic pulls."
 				}
 			],
-			"documentation": "@since 3.17.0\n@proposed",
+			"documentation": "Client capabilities specific to diagnostic pull requests.\n@since 3.17.0\n@proposed",
 			"since": "3.17.0",
 			"proposed": true
 		},
