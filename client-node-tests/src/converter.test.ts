@@ -764,6 +764,20 @@ suite('Protocol Converter', () => {
 		rangeEqual(result.items[0].range as vscode.Range, completionResult.itemDefaults?.editRange as proto.Range);
 	});
 
+	test('Completion Result - edit range with textEditText', async () => {
+		const completionResult: proto.CompletionList = {
+			isIncomplete: true,
+			itemDefaults:  { editRange: proto.Range.create(1,2,3,4) },
+			items: [{ label: 'item', textEditText: 'text', data: 'data' }]
+		};
+		const result = await p2c.asCompletionResult(completionResult);
+		strictEqual(result.isIncomplete, completionResult.isIncomplete);
+		strictEqual(result.items.length, 1);
+		strictEqual(result.items[0].label, 'item');
+		strictEqual(result.items[0].insertText, 'text');
+		rangeEqual(result.items[0].range as vscode.Range, completionResult.itemDefaults?.editRange as proto.Range);
+	});
+
 	test('Completion Result - insert / replace range', async () => {
 		const completionResult: proto.CompletionList = {
 			isIncomplete: true,
@@ -774,6 +788,22 @@ suite('Protocol Converter', () => {
 		strictEqual(result.isIncomplete, completionResult.isIncomplete);
 		strictEqual(result.items.length, 1);
 		strictEqual(result.items[0].label, 'item');
+		const range = result.items[0].range;
+		rangeEqual((range as { inserting: vscode.Range }).inserting, (completionResult.itemDefaults?.editRange as { insert: proto.Range}).insert);
+		rangeEqual((range as { replacing: vscode.Range }).replacing, (completionResult.itemDefaults?.editRange as { replace: proto.Range}).replace);
+	});
+
+	test('Completion Result - insert / replace range with textEditText', async () => {
+		const completionResult: proto.CompletionList = {
+			isIncomplete: true,
+			itemDefaults: { editRange: { insert: proto.Range.create(1,1,1,1), replace: proto.Range.create(1,2,3,4) } },
+			items: [{ label: 'item', textEditText: 'text', data: 'data' }]
+		};
+		const result = await p2c.asCompletionResult(completionResult);
+		strictEqual(result.isIncomplete, completionResult.isIncomplete);
+		strictEqual(result.items.length, 1);
+		strictEqual(result.items[0].label, 'item');
+		strictEqual(result.items[0].insertText, 'text');
 		const range = result.items[0].range;
 		rangeEqual((range as { inserting: vscode.Range }).inserting, (completionResult.itemDefaults?.editRange as { insert: proto.Range}).insert);
 		rangeEqual((range as { replacing: vscode.Range }).replacing, (completionResult.itemDefaults?.editRange as { replace: proto.Range}).replace);

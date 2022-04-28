@@ -15,8 +15,6 @@
 		"*"
 	],
 	"enabledApiProposals": [
-		"tabs",
-		"notebookDocumentEvents",
 		"notebookContentProvider"
 	],
 	"main": "./extension.js",

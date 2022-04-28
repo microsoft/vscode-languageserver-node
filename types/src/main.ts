@@ -2181,19 +2181,21 @@ export interface CompletionItem {
 	 *
 	 * The `insertText` is subject to interpretation by the client side.
 	 * Some tools might not take the string literally. For example
-	 * VS Code when code complete is requested in this example `con<cursor position>`
-	 * and a completion item with an `insertText` of `console` is provided it
-	 * will only insert `sole`. Therefore it is recommended to use `textEdit` instead
-	 * since it avoids additional client side interpretation.
+	 * VS Code when code complete is requested in this example
+	 * `con<cursor position>` and a completion item with an `insertText` of
+	 * `console` is provided it will only insert `sole`. Therefore it is
+	 * recommended to use `textEdit` instead since it avoids additional client
+	 * side interpretation.
 	 */
 	insertText?: string;
 
 	/**
-	 * The format of the insert text. The format applies to both the `insertText` property
-	 * and the `newText` property of a provided `textEdit`. If omitted defaults to
-	 * `InsertTextFormat.PlainText`.
+	 * The format of the insert text. The format applies to both the
+	 * `insertText` property and the `newText` property of a provided
+	 * `textEdit`. If omitted defaults to `InsertTextFormat.PlainText`.
 	 *
-	 * Please note that the insertTextFormat doesn't apply to `additionalTextEdits`.
+	 * Please note that the insertTextFormat doesn't apply to
+	 * `additionalTextEdits`.
 	 */
 	insertTextFormat?: InsertTextFormat;
 
@@ -2211,20 +2213,36 @@ export interface CompletionItem {
 	 * this completion. When an edit is provided the value of
 	 * [insertText](#CompletionItem.insertText) is ignored.
 	 *
-	 * Most editors support two different operation when accepting a completion item. One is to insert a
-	 * completion text and the other is to replace an existing text with a completion text. Since this can
-	 * usually not predetermined by a server it can report both ranges. Clients need to signal support for
-	 * `InsertReplaceEdits` via the `textDocument.completion.insertReplaceSupport` client capability
+	 * Most editors support two different operation when accepting a completion
+	 * item. One is to insert a completion text and the other is to replace an
+	 * existing text with a completion text. Since this can usually not
+	 * predetermined by a server it can report both ranges. Clients need to
+	 * signal support for `InsertReplaceEdits` via the
+	 * `textDocument.completion.insertReplaceSupport` client capability
 	 * property.
 	 *
-	 * *Note 1:* The text edit's range as well as both ranges from a insert replace edit must be a
-	 * [single line] and they must contain the position at which completion has been requested.
-	 * *Note 2:* If an `InsertReplaceEdit` is returned the edit's insert range must be a prefix of
-	 * the edit's replace range, that means it must be contained and starting at the same position.
+	 * *Note 1:* The text edit's range as well as both ranges from a insert
+	 * replace edit must be a [single line] and they must contain the position
+	 * at which completion has been requested.
+	 * *Note 2:* If an `InsertReplaceEdit` is returned the edit's insert range
+	 * must be a prefix of the edit's replace range, that means it must be
+	 * contained and starting at the same position.
 	 *
 	 * @since 3.16.0 additional type `InsertReplaceEdit`
 	 */
 	textEdit?: TextEdit | InsertReplaceEdit;
+
+	/**
+	 * The edit text used if the completion item is part of a CompletionList and
+	 * CompletionList defines an item default for the text edit range.
+	 *
+	 * Clients will only honor this property if they opt into completion list
+	 * item defaults using the capability `completionList.itemDefaults`.
+	 *
+	 * @since 3.17.0
+	 * @proposed
+	 */
+	textEditText?: string;
 
 	/**
 	 * An optional array of additional [text edits](#TextEdit) that are applied when

@@ -495,29 +495,21 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 			return async.map(value, (item) => asCompletionItem(item, allCommitCharacters), token);
 		}
 		const list = <ls.CompletionList>value;
-		const { range, inserting, replacing, commitCharacters } = getCompletionItemDefaults(list, allCommitCharacters);
+		const { defaultRange, commitCharacters } = getCompletionItemDefaults(list, allCommitCharacters);
 		const converted = await async.map(list.items, (item) => {
-			const result = asCompletionItem(item, commitCharacters, list.itemDefaults?.insertTextMode, list.itemDefaults?.insertTextFormat, list.itemDefaults?.data);
-			if (result.range === undefined) {
-				if (range !== undefined) {
-					result.range = range;
-				} else if (inserting !== undefined && replacing !== undefined) {
-					result.range = { inserting, replacing };
-				}
-			}
-			return result;
+			return asCompletionItem(item, commitCharacters, defaultRange, list.itemDefaults?.insertTextMode, list.itemDefaults?.insertTextFormat, list.itemDefaults?.data);
 		}, token);
 		return new code.CompletionList(converted, list.isIncomplete);
 	}
 
-	function getCompletionItemDefaults(list: ls.CompletionList, allCommitCharacters?: string[]): { range: code.Range | undefined; inserting: code.Range | undefined; replacing: code.Range | undefined; commitCharacters: string[] | undefined} {
+	function getCompletionItemDefaults(list: ls.CompletionList, allCommitCharacters?: string[]): { defaultRange: code.Range | InsertReplaceRange | undefined; commitCharacters: string[] | undefined } {
 		const rangeDefaults = list.itemDefaults?.editRange;
 		const commitCharacters = list.itemDefaults?.commitCharacters ?? allCommitCharacters;
 		return ls.Range.is(rangeDefaults)
-			? {range: asRange(rangeDefaults), inserting: undefined, replacing: undefined, commitCharacters }
+			? { defaultRange: asRange(rangeDefaults), commitCharacters }
 			: rangeDefaults !== undefined
-				? { range: undefined, inserting: asRange(rangeDefaults.insert), replacing: asRange(rangeDefaults.replace), commitCharacters}
-				: { range: undefined, inserting: undefined, replacing: undefined, commitCharacters };
+				? { defaultRange: { inserting: asRange(rangeDefaults.insert), replacing: asRange(rangeDefaults.replace) }, commitCharacters}
+				: { defaultRange: undefined, commitCharacters };
 	}
 
 
@@ -551,7 +543,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return result;
 	}
 
-	function asCompletionItem(item: ls.CompletionItem, defaultCommitCharacters?: string[], defaultInsertTextMode?: ls.InsertTextMode, defaultInsertTextFormat?: ls.InsertTextFormat, defaultData?: ls.LSPAny): ProtocolCompletionItem {
+	function asCompletionItem(item: ls.CompletionItem, defaultCommitCharacters?: string[], defaultRange?: code.Range | InsertReplaceRange,  defaultInsertTextMode?: ls.InsertTextMode, defaultInsertTextFormat?: ls.InsertTextFormat, defaultData?: ls.LSPAny): ProtocolCompletionItem {
 		const tags: code.CompletionItemTag[] = asCompletionItemTags(item.tags);
 		const label = asCompletionItemLabel(item);
 		const result = new ProtocolCompletionItem(label);
@@ -562,7 +554,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 			result.documentationFormat = Is.string(item.documentation) ? '$string' : item.documentation.kind;
 		}
 		if (item.filterText) { result.filterText = item.filterText; }
-		const insertText = asCompletionInsertText(item, defaultInsertTextFormat);
+		const insertText = asCompletionInsertText(item, defaultRange, defaultInsertTextFormat);
 		if (insertText) {
 			result.insertText = insertText.text;
 			result.range = insertText.range;
@@ -616,13 +608,16 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		}
 	}
 
-	function asCompletionInsertText(item: ls.CompletionItem, defaultInsertTextFormat?: ls.InsertTextFormat): { text: string | code.SnippetString; range?: code.Range | InsertReplaceRange; fromEdit: boolean } | undefined {
+	function asCompletionInsertText(item: ls.CompletionItem, defaultRange?: code.Range | InsertReplaceRange, defaultInsertTextFormat?: ls.InsertTextFormat): { text: string | code.SnippetString; range?: code.Range | InsertReplaceRange; fromEdit: boolean } | undefined {
 		const insertTextFormat = item.insertTextFormat ?? defaultInsertTextFormat;
-		if (item.textEdit) {
+		if (item.textEdit !== undefined || defaultRange !== undefined) {
+			const [range, newText] = item.textEdit !== undefined
+				? getCompletionRangeAndText(item.textEdit)
+				: [defaultRange, item.textEditText ?? item.label];
 			if (insertTextFormat === ls.InsertTextFormat.Snippet) {
-				return { text: new code.SnippetString(item.textEdit.newText), range: asCompletionRange(item.textEdit), fromEdit: true };
+				return { text: new code.SnippetString(newText), range: range, fromEdit: true };
 			} else {
-				return { text: item.textEdit.newText, range: asCompletionRange(item.textEdit), fromEdit: true };
+				return { text: newText, range: range, fromEdit: true };
 			}
 		} else if (item.insertText) {
 			if (insertTextFormat === ls.InsertTextFormat.Snippet) {
@@ -635,11 +630,11 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		}
 	}
 
-	function asCompletionRange(value: ls.TextEdit | ls.InsertReplaceEdit): code.Range | InsertReplaceRange {
+	function getCompletionRangeAndText(value: ls.TextEdit | ls.InsertReplaceEdit): [code.Range | InsertReplaceRange, string] {
 		if (ls.InsertReplaceEdit.is(value)) {
-			return { inserting: asRange(value.insert), replacing: asRange(value.replace) };
+			return [{ inserting: asRange(value.insert), replacing: asRange(value.replace) }, value.newText];
 		} else {
-			return asRange(value.range);
+			return [asRange(value.range), value.newText];
 		}
 	}
 
