@@ -1953,6 +1953,20 @@
 				"name": "PublishDiagnosticsParams"
 			},
 			"documentation": "Diagnostics notification are sent from the server to the client to signal\nresults of validation runs."
+		},
+		{
+			"method": "$/setTrace",
+			"params": {
+				"kind": "reference",
+				"name": "SetTraceParams"
+			}
+		},
+		{
+			"method": "$/logTrace",
+			"params": {
+				"kind": "reference",
+				"name": "LogTraceParams"
+			}
 		}
 	],
 	"structures": [
@@ -5956,6 +5970,38 @@
 			],
 			"documentation": "The result returned from the apply workspace edit request.\n@since 3.17 renamed from ApplyWorkspaceEditResponse",
 			"since": "3.17 renamed from ApplyWorkspaceEditResponse"
+		},
+		{
+			"name": "SetTraceParams",
+			"properties": [
+				{
+					"name": "value",
+					"type": {
+						"kind": "reference",
+						"name": "TraceValues"
+					}
+				}
+			]
+		},
+		{
+			"name": "LogTraceParams",
+			"properties": [
+				{
+					"name": "message",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				},
+				{
+					"name": "verbose",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true
+				}
+			]
 		},
 		{
 			"name": "TextDocumentPositionParams",
@@ -13337,6 +13383,30 @@
 				"name": "string"
 			},
 			"documentation": "The kind of a code action.\nKinds are a hierarchical list of identifiers separated by `.`, e.g. `\"refactor.extract.function\"`.\nThe set of kinds is open and client needs to announce the kinds it supports to the server during\ninitialization."
+		},
+		{
+			"name": "TraceValues",
+			"type": {
+				"kind": "or",
+				"items": [
+					{
+						"kind": "stringLiteral",
+						"value": "off"
+					},
+					{
+						"kind": "stringLiteral",
+						"value": "messages"
+					},
+					{
+						"kind": "stringLiteral",
+						"value": "compact"
+					},
+					{
+						"kind": "stringLiteral",
+						"value": "verbose"
+					}
+				]
+			}
 		},
 		{
 			"name": "DocumentFilter",
