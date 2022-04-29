@@ -68,7 +68,6 @@ export interface FoldingRangeClientCapabilities {
 		*/
 		collapsedText?: boolean;
 	};
-
 }
 
 export interface FoldingRangeOptions extends WorkDoneProgressOptions {

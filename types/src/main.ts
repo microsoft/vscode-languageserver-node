@@ -475,6 +475,9 @@ export namespace FoldingRangeKind {
 	export const Region = 'region';
 }
 
+/**
+ * The type is a string since the value set is extensible
+ */
 export type FoldingRangeKind = string;
 
 /**
