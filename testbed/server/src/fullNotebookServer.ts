@@ -10,7 +10,7 @@ import {
 
 import {
 	CompletionItem, createConnection, Diagnostic, Hover, InitializeError, InitializeResult, MarkupKind, Range, ResponseError,
-	TextDocuments, TextDocumentSyncKind, ProposedFeatures, Proposed, DiagnosticSeverity
+	TextDocuments, TextDocumentSyncKind, ProposedFeatures, Proposed, DiagnosticSeverity, NotebookCell, NotebookDocuments
 } from 'vscode-languageserver/node';
 
 const patterns = [
@@ -41,7 +41,7 @@ const documents = new TextDocuments(TextDocument);
 const connection: ProposedFeatures.Connection = createConnection(ProposedFeatures.all);
 
 connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> | ResponseError<InitializeError> | InitializeResult => {
-	const result: InitializeResult & { capabilities : Proposed.$DiagnosticServerCapabilities & Proposed.$NotebookDocumentSyncServerCapabilities } = {
+	const result: InitializeResult = {
 		capabilities: {
 			textDocumentSync: TextDocumentSyncKind.Incremental,
 			hoverProvider: true,
@@ -52,8 +52,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 				notebookSelector: [{
 					notebook: { pattern: '**/*.ipynb'},
 					cells: [{ language: 'bat' }, { language: 'c' }]
-				}],
-				mode: 'notebook'
+				}]
 			}
 		}
 	};
@@ -85,13 +84,13 @@ connection.onCompletion((params, token): CompletionItem[] => {
 	return result;
 });
 
-const notebooks = new ProposedFeatures.NotebookDocuments(TextDocument);
+const notebooks = new NotebookDocuments(TextDocument);
 
-function validate(cell: Proposed.NotebookCell): void {
+function validate(cell: NotebookCell): void {
 	void connection.sendDiagnostics({ uri: cell.document, diagnostics: computeDiagnostics(notebooks.getCellTextDocument(cell).getText())});
 }
 
-function clear(cell: Proposed.NotebookCell): void {
+function clear(cell: NotebookCell): void {
 	void connection.sendDiagnostics({ uri: cell.document, diagnostics: []});
 }
 

@@ -11,7 +11,7 @@ import {
 	DidCloseNotebookDocumentNotification, NotebookDocument, NotebookCell
 } from 'vscode-languageserver-protocol';
 
-import type { Feature, _Notebooks, _Connection, _, } from './server';
+import type { Feature, _Notebooks, Connection, } from './server';
 import { TextDocuments, TextDocumentConnection, TextDocumentsConfiguration } from './textDocuments';
 
 
@@ -105,7 +105,7 @@ export type NotebookDocumentChangeEvent = {
 	};
 };
 
-class Connection implements TextDocumentConnection {
+class CellTextDocumentConnection implements TextDocumentConnection {
 
 	private static readonly NULL_DISPOSE = Object.freeze({ dispose: () => { }});
 
@@ -141,15 +141,15 @@ class Connection implements TextDocumentConnection {
 	}
 
 	public onWillSaveTextDocument(): Disposable {
-		return Connection.NULL_DISPOSE;
+		return CellTextDocumentConnection.NULL_DISPOSE;
 	}
 
 	public onWillSaveTextDocumentWaitUntil(): Disposable {
-		return Connection.NULL_DISPOSE;
+		return CellTextDocumentConnection.NULL_DISPOSE;
 	}
 
 	public onDidSaveTextDocument(): Disposable {
-		return Connection.NULL_DISPOSE;
+		return CellTextDocumentConnection.NULL_DISPOSE;
 	}
 }
 
@@ -229,8 +229,8 @@ export class NotebookDocuments<T extends {  uri: DocumentUri }> {
 	 *
 	 * @param connection The connection to listen on.
 	 */
-	public listen(connection: _Connection<_, _, _, _, _, _, _, NotebookSyncFeatureShape>): Disposable {
-		const cellTextDocumentConnection = new Connection();
+	public listen(connection: Connection): Disposable {
+		const cellTextDocumentConnection = new CellTextDocumentConnection();
 		const disposables: Disposable[] = [];
 
 		disposables.push(this.cellTextDocuments.listen(cellTextDocumentConnection));

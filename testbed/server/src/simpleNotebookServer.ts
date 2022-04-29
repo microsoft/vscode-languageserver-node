@@ -41,7 +41,7 @@ const connection: ProposedFeatures.Connection = createConnection(ProposedFeature
 const documents = new TextDocuments(TextDocument);
 
 connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> | ResponseError<InitializeError> | InitializeResult => {
-	const result: InitializeResult & { capabilities : Proposed.$DiagnosticServerCapabilities & Proposed.$NotebookDocumentSyncServerCapabilities } = {
+	const result: InitializeResult = {
 		capabilities: {
 			textDocumentSync: TextDocumentSyncKind.Incremental,
 			hoverProvider: true,

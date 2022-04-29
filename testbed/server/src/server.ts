@@ -11,14 +11,13 @@ const fs = _fs.promises;
 import { URI } from 'vscode-uri';
 
 import {
-	CodeAction, CodeActionKind, Command, CompletionItem, createConnection, CreateFile, DeclarationLink,
-	Definition, DefinitionLink, Diagnostic, DocumentHighlight, DocumentHighlightKind, Hover, InitializeError,
-	InitializeResult, Location, MarkupKind, MessageActionItem, NotificationType, Position, Range, ResponseError,
-	SignatureHelp, SymbolInformation, SymbolKind, TextDocumentEdit, TextDocuments, TextDocumentSyncKind,
-	TextEdit, VersionedTextDocumentIdentifier, ProposedFeatures, DiagnosticTag, Proposed, InsertTextFormat,
-	SelectionRangeRequest, SelectionRange, InsertReplaceEdit, SemanticTokensClientCapabilities, SemanticTokensLegend,
-	SemanticTokensBuilder, SemanticTokensRegistrationType, SemanticTokensRegistrationOptions, ProtocolNotificationType, ChangeAnnotation, AnnotatedTextEdit,
-	WorkspaceChange, CompletionItemKind, DiagnosticSeverity
+	CodeAction, CodeActionKind, Command, CompletionItem, createConnection, DeclarationLink, Definition, DefinitionLink, Diagnostic,
+	DocumentHighlight, DocumentHighlightKind, Hover, InitializeError, InitializeResult, Location, MarkupKind, MessageActionItem,
+	Position, Range, ResponseError, SignatureHelp, SymbolInformation, SymbolKind, TextDocuments, TextDocumentSyncKind,
+	TextEdit, ProposedFeatures, DiagnosticTag, InsertTextFormat, SelectionRangeRequest, SelectionRange, InsertReplaceEdit,
+	SemanticTokensClientCapabilities, SemanticTokensLegend, SemanticTokensBuilder, SemanticTokensRegistrationType,
+	SemanticTokensRegistrationOptions, ProtocolNotificationType, ChangeAnnotation, WorkspaceChange, CompletionItemKind, DiagnosticSeverity,
+	DocumentDiagnosticReportKind, WorkspaceDiagnosticReport, NotebookDocuments
 } from 'vscode-languageserver/node';
 
 import {
@@ -117,7 +116,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 
 	semanticTokensLegend = computeLegend(params.capabilities.textDocument!.semanticTokens!);
 	return new Promise((resolve, reject) => {
-		let result: InitializeResult & { capabilities : Proposed.$DiagnosticServerCapabilities & Proposed.$NotebookDocumentSyncServerCapabilities } = {
+		let result: InitializeResult = {
 			capabilities: {
 				textDocumentSync: TextDocumentSyncKind.Full,
 				hoverProvider: true,
@@ -171,8 +170,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 				notebookDocumentSync: {
 					notebookSelector: [{
 						cells: [{ language: 'bat'}]
-					}],
-					mode: 'notebook'
+					}]
 				}
 			}
 		};
@@ -327,12 +325,12 @@ connection.languages.diagnostics.on(async (param) => {
 			? await fs.readFile(uri.fsPath, { encoding: 'utf8'} )
 			: undefined;
 	if (content === undefined) {
-		return { kind: Proposed.DocumentDiagnosticReportKind.full, items: [], resultId: `${resultIdCounter++}` };
+		return { kind: DocumentDiagnosticReportKind.Full, items: [], resultId: `${resultIdCounter++}` };
 	}
-	return { kind: Proposed.DocumentDiagnosticReportKind.full, items: computeDiagnostics(content), resultId: `${resultIdCounter++}` };
+	return { kind: DocumentDiagnosticReportKind.Full, items: computeDiagnostics(content), resultId: `${resultIdCounter++}` };
 });
 
-connection.languages.diagnostics.onWorkspace(async (params, token, _, resultProgress): Promise<Proposed.WorkspaceDiagnosticReport> => {
+connection.languages.diagnostics.onWorkspace(async (params, token, _, resultProgress): Promise<WorkspaceDiagnosticReport> => {
 	const fsPath = URI.parse(folder).fsPath;
 
 	const toValidate: string[] = [];
@@ -353,7 +351,7 @@ connection.languages.diagnostics.onWorkspace(async (params, token, _, resultProg
 		const diagnostics = computeDiagnostics(await fs.readFile(toValidate[index], { encoding: 'utf8'} ));
 		resultProgress.report({ items: [
 			{
-				kind: Proposed.DocumentDiagnosticReportKind.full,
+				kind: DocumentDiagnosticReportKind.Full,
 				uri: URI.file(toValidate[index]).toString(),
 				version: versionCounter++,
 				items: diagnostics,
@@ -683,7 +681,7 @@ connection.languages.semanticTokens.onRange((params) => {
 	return { data: [] };
 });
 
-const notebooks = new ProposedFeatures.NotebookDocuments(TextDocument);
+const notebooks = new NotebookDocuments(TextDocument);
 notebooks.onDidOpen(() => {
 	connection.console.log(`Notebook opened`);
 });
