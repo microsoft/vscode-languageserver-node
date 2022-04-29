@@ -9,7 +9,7 @@ import {
 
 import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, FoldingRangeRequest, FoldingRangeParams,
-	FoldingRangeRegistrationOptions, FoldingRangeOptions
+	FoldingRangeRegistrationOptions, FoldingRangeOptions, FoldingRangeKind
 } from 'vscode-languageserver-protocol';
 
 import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
@@ -33,7 +33,8 @@ export class FoldingRangeFeature extends TextDocumentLanguageFeature<boolean | F
 		capability.dynamicRegistration = true;
 		capability.rangeLimit = 5000;
 		capability.lineFoldingOnly = true;
-		capability.collapsedText = false;
+		capability.foldingRangeKind = { valueSet: [ FoldingRangeKind.Comment, FoldingRangeKind.Imports, FoldingRangeKind.Region ] };
+		capability.foldingRange = { collapsedText: false };
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {

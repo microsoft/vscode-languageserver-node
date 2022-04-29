@@ -1,5 +1,4 @@
 {
-  "$ref": "#/definitions/MetaModel",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
     "AndType": {
@@ -110,6 +109,10 @@
         "since": {
           "description": "Since when (release number) this enumeration is available. Is undefined if not known.",
           "type": "string"
+        },
+        "supportsCustomValues": {
+          "description": "Whether the enumeration supports custom values (e.g. values which are not part of the set defined in `values`). If omitted no custom values are supported.",
+          "type": "boolean"
         },
         "type": {
           "$ref": "#/definitions/EnumerationType",
@@ -681,6 +684,22 @@
         "type"
       ],
       "type": "object"
+    },
+    "TypeKind": {
+      "enum": [
+        "base",
+        "reference",
+        "array",
+        "map",
+        "and",
+        "or",
+        "tuple",
+        "literal",
+        "stringLiteral",
+        "integerLiteral",
+        "booleanLiteral"
+      ],
+      "type": "string"
     }
   }
 }

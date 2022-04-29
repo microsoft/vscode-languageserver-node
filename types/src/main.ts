@@ -456,7 +456,7 @@ export namespace ColorPresentation {
 }
 
 /**
- * Enum of known range kinds
+ * A set of predefined range kinds.
  */
 export namespace FoldingRangeKind {
 	/**
@@ -475,7 +475,7 @@ export namespace FoldingRangeKind {
 	export const Region = 'region';
 }
 
-export type FoldingRangeKind = 'comment' | 'imports' | 'region';
+export type FoldingRangeKind = string;
 
 /**
  * Represents a folding range. To be valid, start and end line must be bigger than zero and smaller
@@ -507,8 +507,8 @@ export interface FoldingRange {
 
 	/**
 	 * Describes the kind of the folding range such as `comment' or 'region'. The kind
-	 * is used to categorize folding ranges and used by commands like 'Fold all comments'. See
-	 * [FoldingRangeKind](#FoldingRangeKind) for an enumeration of standardized kinds.
+	 * is used to categorize folding ranges. See [FoldingRangeKind](#FoldingRangeKind)
+	 * for an enumeration of standardized kinds.
 	 */
 	kind?: FoldingRangeKind;
 

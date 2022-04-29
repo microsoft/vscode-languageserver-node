@@ -716,50 +716,61 @@ export default class Visitor {
 				throw new Error(`Can't resolve target type for type alias ${symbol.getName()}`);
 			}
 			const namespace = this.getDeclaration(symbol, ts.SyntaxKind.ModuleDeclaration);
-			if (namespace !== undefined && symbol.declarations !== undefined && symbol.declarations.length === 2 && (target.kind === 'union' || target.kind === 'stringLiteral' || target.kind === 'integerLiteral')) {
-				// Check if we have a enum declaration.
-				const body = namespace.getChildren().find(node => node.kind === ts.SyntaxKind.ModuleBlock);
-				if (body !== undefined && ts.isModuleBlock(body)) {
-					const enumValues = this.getEnumValues(target);
-					const variableStatements = body.statements.filter((statement => ts.isVariableStatement(statement)));
-					if (enumValues !== undefined && enumValues.length > 0 && variableStatements.length === enumValues.length) {
-						// Same length and all variable statement.
-						const enumValuesSet: Set<number | string> = new Set<any>(enumValues as any);
-						let isEnum = true;
-						const enumerations: EnumerationEntry[] = [];
-						for (const variable of variableStatements) {
-							if (!ts.isVariableStatement(variable) || variable.declarationList.declarations.length !== 1) {
-								isEnum = false;
-								break;
+			if (namespace !== undefined && symbol.declarations !== undefined && symbol.declarations.length === 2) {
+				const fixedSet = (target.kind === 'union' || target.kind === 'stringLiteral' || target.kind === 'integerLiteral');
+				const openSet = (target.kind === 'base' && (target.name === 'string' || target.name === 'integer'));
+				if (openSet || fixedSet) {
+					// Check if we have a enum declaration.
+					const body = namespace.getChildren().find(node => node.kind === ts.SyntaxKind.ModuleBlock);
+					if (body !== undefined && ts.isModuleBlock(body)) {
+						const enumValues = this.getEnumValues(target);
+						const variableStatements = body.statements.filter((statement => ts.isVariableStatement(statement)));
+						if ((fixedSet && enumValues !== undefined && enumValues.length > 0 && variableStatements.length === enumValues.length) || (openSet && variableStatements.length > 0)) {
+							// Same length and all variable statement.
+							const enumValuesSet: Set<number | string> | undefined = enumValues ? new Set<any>(enumValues as any) : undefined;
+							let isEnum = true;
+							const enumerations: EnumerationEntry[] = [];
+							for (const variable of variableStatements) {
+								if (!ts.isVariableStatement(variable) || variable.declarationList.declarations.length !== 1) {
+									isEnum = false;
+									break;
+								}
+								const declaration = variable.declarationList.declarations[0];
+								if (!ts.isVariableDeclaration(declaration) || declaration.initializer === undefined) {
+									isEnum = false;
+									break;
+								}
+								let value: number | string | undefined;
+								if (ts.isNumericLiteral(declaration.initializer)) {
+									value = Number.parseInt(declaration.initializer.getText());
+								} else if (ts.isStringLiteral(declaration.initializer)) {
+									value = this.removeQuotes(declaration.initializer.getText());
+								}
+								if (value === undefined) {
+									isEnum = false;
+									break;
+								}
+								if (enumValuesSet && !enumValuesSet.has(value)) {
+									isEnum = false;
+									break;
+								}
+								const entry: EnumerationEntry = { name: declaration.name.getText(), value: value };
+								this.fillDocProperties(declaration, entry);
+								enumerations.push(entry);
 							}
-							const declaration = variable.declarationList.declarations[0];
-							if (!ts.isVariableDeclaration(declaration) || declaration.initializer === undefined) {
-								isEnum = false;
-								break;
+							if (isEnum) {
+								const type: EnumerationType | undefined = enumValues
+									? (typeof enumValues[0] === 'string') ? { kind: 'base', name: 'string'} : { kind: 'base', name: 'integer' }
+									: openSet ? target as EnumerationType : undefined;
+								if (type !== undefined) {
+									const enumeration: Enumeration = { name: name, type: type, values: enumerations };
+									if (openSet && !fixedSet) {
+										enumeration.supportsCustomValues = true;
+									}
+									this.fillDocProperties(declaration, enumeration);
+									return enumeration;
+								}
 							}
-							let value: number | string | undefined;
-							if (ts.isNumericLiteral(declaration.initializer)) {
-								value = Number.parseInt(declaration.initializer.getText());
-							} else if (ts.isStringLiteral(declaration.initializer)) {
-								value = this.removeQuotes(declaration.initializer.getText());
-							}
-							if (value === undefined) {
-								isEnum = false;
-								break;
-							}
-							if (!enumValuesSet.has(value)) {
-								isEnum = false;
-								break;
-							}
-							const entry: EnumerationEntry = { name: declaration.name.getText(), value: value };
-							this.fillDocProperties(declaration, entry);
-							enumerations.push(entry);
-						}
-						if (isEnum) {
-							const type: EnumerationType= (typeof enumValues[0] === 'string') ? { kind: 'base', name: 'string'} : { kind: 'base', name: 'integer' };
-							const enumeration: Enumeration = { name: name, type: type, values: enumerations};
-							this.fillDocProperties(declaration, enumeration);
-							return enumeration;
 						}
 					}
 				}

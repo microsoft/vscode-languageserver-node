@@ -407,6 +407,13 @@ export type Enumeration = {
 	values: EnumerationEntry[];
 
 	/**
+	 * Whether the enumeration supports custom values (e.g. values which are not
+	 * part of the set defined in `values`). If omitted no custom values are
+	 * supported.
+	 */
+	supportsCustomValues?: boolean;
+
+	/**
 	 * An optional documentation.
 	 */
 	 documentation?: string;

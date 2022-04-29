@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { RequestHandler } from 'vscode-jsonrpc';
-import { TextDocumentIdentifier, uinteger, FoldingRange } from 'vscode-languageserver-types';
+import { TextDocumentIdentifier, uinteger, FoldingRange, FoldingRangeKind } from 'vscode-languageserver-types';
 
 import { ProtocolRequestType } from './messages';
 import type {
@@ -14,6 +14,7 @@ import type {
 // ---- capabilities
 
 export interface FoldingRangeClientCapabilities {
+
 	/**
 	 * Whether implementation supports dynamic registration for folding range
 	 * providers. If this is set to `true` the client supports the new
@@ -21,26 +22,53 @@ export interface FoldingRangeClientCapabilities {
 	 * server capability as well.
 	 */
 	dynamicRegistration?: boolean;
+
 	/**
 	 * The maximum number of folding ranges that the client prefers to receive
 	 * per document. The value serves as a hint, servers are free to follow the
 	 * limit.
 	 */
 	rangeLimit?: uinteger;
+
 	/**
 	 * If set, the client signals that it only supports folding complete lines.
 	 * If set, client will ignore specified `startCharacter` and `endCharacter`
 	 * properties in a FoldingRange.
 	 */
 	lineFoldingOnly?: boolean;
+
 	/**
-	 * If set, the client signals that it supports setting collapsedText on
-	 * folding ranges to display instead of the default text.
+	 * Specific options for the folding range kind.
 	 *
 	 * @since 3.17.0
 	 * @proposed
 	 */
-	collapsedText?: boolean;
+	foldingRangeKind? : {
+		/**
+		 * The folding range kind values the client supports. When this
+		 * property exists the client also guarantees that it will
+		 * handle values outside its set gracefully and falls back
+		 * to a default value when unknown.
+		 */
+		valueSet?: FoldingRangeKind[];
+	};
+
+	/**
+	 * Specific options for the folding range.
+	 * @since 3.17.0
+	 * @proposed
+	 */
+	foldingRange?: {
+		/**
+		* If set, the client signals that it supports setting collapsedText on
+		* folding ranges to display custom labels instead of the default text.
+		*
+		* @since 3.17.0
+		* @proposed
+		*/
+		collapsedText?: boolean;
+	};
+
 }
 
 export interface FoldingRangeOptions extends WorkDoneProgressOptions {

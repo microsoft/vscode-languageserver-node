@@ -2380,7 +2380,7 @@
 						"name": "FoldingRangeKind"
 					},
 					"optional": true,
-					"documentation": "Describes the kind of the folding range such as `comment' or 'region'. The kind\nis used to categorize folding ranges and used by commands like 'Fold all comments'. See\n[FoldingRangeKind](#FoldingRangeKind) for an enumeration of standardized kinds."
+					"documentation": "Describes the kind of the folding range such as `comment' or 'region'. The kind\nis used to categorize folding ranges. See [FoldingRangeKind](#FoldingRangeKind)\nfor an enumeration of standardized kinds."
 				},
 				{
 					"name": "collapsedText",
@@ -11796,13 +11796,49 @@
 					"documentation": "If set, the client signals that it only supports folding complete lines.\nIf set, client will ignore specified `startCharacter` and `endCharacter`\nproperties in a FoldingRange."
 				},
 				{
-					"name": "collapsedText",
+					"name": "foldingRangeKind",
 					"type": {
-						"kind": "base",
-						"name": "boolean"
+						"kind": "literal",
+						"value": {
+							"properties": [
+								{
+									"name": "valueSet",
+									"type": {
+										"kind": "array",
+										"element": {
+											"kind": "reference",
+											"name": "FoldingRangeKind"
+										}
+									},
+									"optional": true
+								}
+							]
+						}
 					},
 					"optional": true,
-					"documentation": "If set, the client signals that it supports setting collapsedText on\nfolding ranges to display instead of the default text.\n@since 3.17.0\n@proposed",
+					"documentation": "Specific options for the folding range kind.\n@since 3.17.0\n@proposed",
+					"since": "3.17.0",
+					"proposed": true
+				},
+				{
+					"name": "foldingRange",
+					"type": {
+						"kind": "literal",
+						"value": {
+							"properties": [
+								{
+									"name": "collapsedText",
+									"type": {
+										"kind": "base",
+										"name": "boolean"
+									},
+									"optional": true
+								}
+							]
+						}
+					},
+					"optional": true,
+					"documentation": "Specific options for the folding range.\n@since 3.17.0\n@proposed",
 					"since": "3.17.0",
 					"proposed": true
 				}
@@ -12331,7 +12367,8 @@
 					"name": "Region",
 					"value": "region"
 				}
-			]
+			],
+			"supportsCustomValues": true
 		},
 		{
 			"name": "SymbolKind",
@@ -12771,6 +12808,54 @@
 			]
 		},
 		{
+			"name": "CodeActionKind",
+			"type": {
+				"kind": "base",
+				"name": "string"
+			},
+			"values": [
+				{
+					"name": "Empty",
+					"value": ""
+				},
+				{
+					"name": "QuickFix",
+					"value": "quickfix"
+				},
+				{
+					"name": "Refactor",
+					"value": "refactor"
+				},
+				{
+					"name": "RefactorExtract",
+					"value": "refactor.extract"
+				},
+				{
+					"name": "RefactorInline",
+					"value": "refactor.inline"
+				},
+				{
+					"name": "RefactorRewrite",
+					"value": "refactor.rewrite"
+				},
+				{
+					"name": "Source",
+					"value": "source"
+				},
+				{
+					"name": "SourceOrganizeImports",
+					"value": "source.organizeImports"
+				},
+				{
+					"name": "SourceFixAll",
+					"value": "source.fixAll",
+					"since": "3.15.0"
+				}
+			],
+			"supportsCustomValues": true,
+			"documentation": "The kind of a code action.\nKinds are a hierarchical list of identifiers separated by `.`, e.g. `\"refactor.extract.function\"`.\nThe set of kinds is open and client needs to announce the kinds it supports to the server during\ninitialization."
+		},
+		{
 			"name": "MarkupKind",
 			"type": {
 				"kind": "base",
@@ -12786,6 +12871,31 @@
 					"value": "markdown"
 				}
 			]
+		},
+		{
+			"name": "PositionEncodingKind",
+			"type": {
+				"kind": "base",
+				"name": "string"
+			},
+			"values": [
+				{
+					"name": "UTF8",
+					"value": "utf-8"
+				},
+				{
+					"name": "UTF16",
+					"value": "utf-16"
+				},
+				{
+					"name": "UTF32",
+					"value": "utf-32"
+				}
+			],
+			"supportsCustomValues": true,
+			"documentation": "A type indicating how positions are encoded,\nspecifically what column offsets mean.\n@since 3.17.0\n@proposed",
+			"since": "3.17.0",
+			"proposed": true
 		},
 		{
 			"name": "FileChangeType",
@@ -13377,14 +13487,6 @@
 			"documentation": "MarkedString can be used to render human readable text. It is either a markdown string\nor a code-block that provides a language and a code snippet. The language identifier\nis semantically equal to the optional language identifier in fenced code blocks in GitHub\nissues. See https://help.github.com/articles/creating-and-highlighting-code-blocks/#syntax-highlighting\nThe pair of a language and a value is an equivalent to markdown:\n```${language}\n${value}\n```\nNote that markdown strings will be sanitized - that means html will be escaped.\n@deprecated use MarkupContent instead."
 		},
 		{
-			"name": "CodeActionKind",
-			"type": {
-				"kind": "base",
-				"name": "string"
-			},
-			"documentation": "The kind of a code action.\nKinds are a hierarchical list of identifiers separated by `.`, e.g. `\"refactor.extract.function\"`.\nThe set of kinds is open and client needs to announce the kinds it supports to the server during\ninitialization."
-		},
-		{
 			"name": "TraceValues",
 			"type": {
 				"kind": "or",
@@ -13425,16 +13527,6 @@
 			},
 			"documentation": "A document filter describes a top level text document or\na notebook cell document.\n@since 3.17.0 - proposed support for NotebookCellTextDocumentFilter.",
 			"since": "3.17.0 - proposed support for NotebookCellTextDocumentFilter."
-		},
-		{
-			"name": "PositionEncodingKind",
-			"type": {
-				"kind": "base",
-				"name": "string"
-			},
-			"documentation": "A type indicating how positions are encoded,\nspecifically what column offsets mean.\n@since 3.17.0\n@proposed",
-			"since": "3.17.0",
-			"proposed": true
 		},
 		{
 			"name": "GlobPattern",
