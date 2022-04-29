@@ -11,8 +11,6 @@
 		"*"
 	],
 	"enabledApiProposals": [
-		"tabs",
-		"notebookDocumentEvents"
 	],
 	"contributes": {
 		"commands": [
