@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import {
-	URI, integer, DocumentUri, uinteger, LSPAny, LSPObject, TextDocumentItem, TextDocumentIdentifier,
+	URI, integer, DocumentUri, uinteger, LSPAny, TextDocumentItem, TextDocumentIdentifier,
 	VersionedTextDocumentIdentifier
 } from 'vscode-languageserver-types';
 
@@ -123,8 +123,10 @@ export type NotebookCell = {
 
 	/**
 	 * Additional metadata stored with the cell.
+	 *
+	 * Note: should always be an object literal (e.g. LSPObject)
 	 */
-	metadata?: LSPObject;
+	metadata?: LSPAny;
 
 	/**
 	 * Additional execution summary information
@@ -165,6 +167,7 @@ export namespace NotebookCell {
 	}
 
 	function equalsMetadata(one: LSPAny | undefined, other: LSPAny | undefined): boolean {
+		type LSPObject = { [key: string]: LSPAny };
 		if (one === other) {
 			return true;
 		}
@@ -244,8 +247,10 @@ export type NotebookDocument = {
 	/**
 	 * Additional metadata stored with the notebook
 	 * document.
+	 *
+	 * Note: should always be an object literal (e.g. LSPObject)
 	 */
-	metadata?: LSPObject;
+	metadata?: LSPAny;
 
 	/**
 	 * The cells of a notebook.
@@ -440,8 +445,10 @@ export namespace NotebookCellArrayChange {
 export type NotebookDocumentChangeEvent = {
 	/**
 	 * The changed meta data if any.
+	 *
+	 * Note: should always be an object literal (e.g. LSPObject)
 	 */
-	metadata?: LSPObject;
+	metadata?: LSPAny;
 
 	/**
 	 * Changes to cells

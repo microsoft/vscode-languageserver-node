@@ -9,7 +9,7 @@ import * as minimatch from 'minimatch';
 
 import * as proto from 'vscode-languageserver-protocol';
 import {
-	StaticRegistrationOptions, NotebookDocumentFilter, LSPObject, LSPArray, TextDocumentItem, NotebookCellTextDocumentFilter
+	StaticRegistrationOptions, NotebookDocumentFilter, TextDocumentItem, NotebookCellTextDocumentFilter, LSPAny
 } from 'vscode-languageserver-protocol';
 
 import * as UUID from './utils/uuid';
@@ -26,6 +26,9 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	}
 	return target[key];
 }
+
+type LSPObject = { [key: string]: LSPAny };
+type LSPArray = LSPAny[];
 
 namespace Converter {
 	export namespace c2p {
