@@ -62,7 +62,7 @@ export class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatched
 				watchDelete = (watcher.kind & WatchKind.Delete) !== 0;
 			}
 			const fileSystemWatcher: VFileSystemWatcher = Workspace.createFileSystemWatcher(globPattern, !watchCreate, !watchChange, !watchDelete);
-			this.hookListeners(fileSystemWatcher, watchCreate, watchChange, watchDelete);
+			this.hookListeners(fileSystemWatcher, watchCreate, watchChange, watchDelete, disposables);
 			disposables.push(fileSystemWatcher);
 		}
 		this._watchers.set(data.id, disposables);
