@@ -767,7 +767,7 @@ export default class Visitor {
 			const namespace = this.getDeclaration(symbol, ts.SyntaxKind.ModuleDeclaration);
 			if (namespace !== undefined && symbol.declarations !== undefined && symbol.declarations.length === 2) {
 				const fixedSet = (target.kind === 'union' || target.kind === 'stringLiteral' || target.kind === 'integerLiteral');
-				const openSet = (target.kind === 'base' && (target.name === 'string' || target.name === 'integer'));
+				const openSet = (target.kind === 'base' && (target.name === 'string' || target.name === 'integer' || target.name === 'uinteger'));
 				if (openSet || fixedSet) {
 					// Check if we have a enum declaration.
 					const body = namespace.getChildren().find(node => node.kind === ts.SyntaxKind.ModuleBlock);

@@ -1967,6 +1967,20 @@
 				"kind": "reference",
 				"name": "LogTraceParams"
 			}
+		},
+		{
+			"method": "$/cancelRequest",
+			"params": {
+				"kind": "reference",
+				"name": "CancelParams"
+			}
+		},
+		{
+			"method": "$/progress",
+			"params": {
+				"kind": "reference",
+				"name": "ProgressParams"
+			}
 		}
 	],
 	"structures": [
@@ -6004,6 +6018,49 @@
 			]
 		},
 		{
+			"name": "CancelParams",
+			"properties": [
+				{
+					"name": "id",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "integer"
+							},
+							{
+								"kind": "base",
+								"name": "string"
+							}
+						]
+					},
+					"documentation": "The request id to cancel."
+				}
+			]
+		},
+		{
+			"name": "ProgressParams",
+			"properties": [
+				{
+					"name": "token",
+					"type": {
+						"kind": "reference",
+						"name": "ProgressToken"
+					},
+					"documentation": "The progress token provided by the client or server."
+				},
+				{
+					"name": "value",
+					"type": {
+						"kind": "reference",
+						"name": "LSPAny"
+					},
+					"documentation": "The progress data."
+				}
+			]
+		},
+		{
 			"name": "TextDocumentPositionParams",
 			"properties": [
 				{
@@ -8310,8 +8367,8 @@
 				{
 					"name": "kind",
 					"type": {
-						"kind": "base",
-						"name": "uinteger"
+						"kind": "reference",
+						"name": "WatchKind"
 					},
 					"optional": true,
 					"documentation": "The kind of events of interest. If omitted it defaults\nto WatchKind.Create | WatchKind.Change | WatchKind.Delete\nwhich is 7."
@@ -13113,6 +13170,28 @@
 					"value": 3
 				}
 			]
+		},
+		{
+			"name": "WatchKind",
+			"type": {
+				"kind": "base",
+				"name": "uinteger"
+			},
+			"values": [
+				{
+					"name": "Create",
+					"value": 1
+				},
+				{
+					"name": "Change",
+					"value": 2
+				},
+				{
+					"name": "Delete",
+					"value": 4
+				}
+			],
+			"supportsCustomValues": true
 		},
 		{
 			"name": "DiagnosticSeverity",

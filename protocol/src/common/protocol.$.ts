@@ -3,8 +3,8 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { LogTraceParams, SetTraceParams } from 'vscode-jsonrpc';
-import { SemanticTokenTypes, SemanticTokenModifiers } from 'vscode-languageserver-types';
+import { LogTraceParams, SetTraceParams, ProgressToken } from 'vscode-jsonrpc';
+import { SemanticTokenTypes, SemanticTokenModifiers, LSPAny } from 'vscode-languageserver-types';
 
 import { ProtocolNotificationType } from './messages';
 import { LSPErrorCodes } from './api';
@@ -30,3 +30,32 @@ type $SemanticTokenModifiers = SemanticTokenModifiers;
 
 // @ts-ignore 6196
 const $LSPErrorCodes = LSPErrorCodes;
+
+interface CancelParams {
+	/**
+	 * The request id to cancel.
+	 */
+	id: number | string;
+}
+
+// @ts-ignore 6196
+namespace CancelNotification {
+	export const type = new ProtocolNotificationType<CancelParams, void>('$/cancelRequest');
+}
+
+interface ProgressParams {
+	/**
+	 * The progress token provided by the client or server.
+	 */
+	token: ProgressToken;
+
+	/**
+	 * The progress data.
+	 */
+	value: LSPAny;
+}
+
+// @ts-ignore 6196
+namespace ProgressNotification {
+	export const type = new ProtocolNotificationType<ProgressParams, void>('$/progress');
+}
