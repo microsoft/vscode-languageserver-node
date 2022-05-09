@@ -6187,12 +6187,6 @@
 			]
 		},
 		{
-			"name": "LSPObject",
-			"properties": [],
-			"documentation": "LSP object definition.\n@since 3.17.0",
-			"since": "3.17.0"
-		},
-		{
 			"name": "TextDocumentIdentifier",
 			"properties": [
 				{
@@ -6912,7 +6906,7 @@
 					"documentation": "The content itself"
 				}
 			],
-			"documentation": "A `MarkupContent` literal represents a string value which content is interpreted base on its\nkind flag. Currently the protocol supports `plaintext` and `markdown` as markup kinds.\nIf the kind is `markdown` then the value can contain fenced code blocks like in GitHub issues.\nSee https://help.github.com/articles/creating-and-highlighting-code-blocks/#syntax-highlighting\nHere is an example how such a string can be constructed using JavaScript / TypeScript:\n```ts\nlet markdown: MarkdownContent = {\n kind: MarkupKind.Markdown,\nvalue: [\n\t'# Header',\n\t'Some text',\n\t'```typescript',\n\t'someCode();',\n\t'```'\n].join('\\n')\n};\n```\n*Please Note* that clients might sanitize the return markdown. A client could decide to\nremove HTML from the markdown to avoid script execution."
+			"documentation": "A `MarkupContent` literal represents a string value which content is interpreted base on its\nkind flag. Currently the protocol supports `plaintext` and `markdown` as markup kinds.\nIf the kind is `markdown` then the value can contain fenced code blocks like in GitHub issues.\nSee https://help.github.com/articles/creating-and-highlighting-code-blocks/#syntax-highlighting\nHere is an example how such a string can be constructed using JavaScript / TypeScript:\n```ts\nlet markdown: MarkdownContent = {\n kind: MarkupKind.Markdown,\n value: [\n   '# Header',\n   'Some text',\n   '```typescript',\n   'someCode();',\n   '```'\n ].join('\\n')\n};\n```\n*Please Note* that clients might sanitize the return markdown. A client could decide to\nremove HTML from the markdown to avoid script execution."
 		},
 		{
 			"name": "InlayHintOptions",
@@ -7176,7 +7170,7 @@
 						"name": "LSPObject"
 					},
 					"optional": true,
-					"documentation": "Additional metadata stored with the notebook\ndocument."
+					"documentation": "Additional metadata stored with the notebook\ndocument.\nNote: should always be an object literal (e.g. LSPObject)"
 				},
 				{
 					"name": "cells",
@@ -7266,7 +7260,7 @@
 						"name": "LSPObject"
 					},
 					"optional": true,
-					"documentation": "The changed meta data if any."
+					"documentation": "The changed meta data if any.\nNote: should always be an object literal (e.g. LSPObject)"
 				},
 				{
 					"name": "cells",
@@ -9401,6 +9395,12 @@
 			"proposed": true
 		},
 		{
+			"name": "LSPObject",
+			"properties": [],
+			"documentation": "LSP object definition.\n@since 3.17.0",
+			"since": "3.17.0"
+		},
+		{
 			"name": "NotebookCell",
 			"properties": [
 				{
@@ -9426,7 +9426,7 @@
 						"name": "LSPObject"
 					},
 					"optional": true,
-					"documentation": "Additional metadata stored with the cell."
+					"documentation": "Additional metadata stored with the cell.\nNote: should always be an object literal (e.g. LSPObject)"
 				},
 				{
 					"name": "executionSummary",
@@ -12368,7 +12368,8 @@
 					"value": "region"
 				}
 			],
-			"supportsCustomValues": true
+			"supportsCustomValues": true,
+			"documentation": "The type is a string since the value set is extensible"
 		},
 		{
 			"name": "SymbolKind",
@@ -13157,6 +13158,18 @@
 			"documentation": "Information about where a symbol is defined.\nProvides additional metadata over normal [location](#Location) definitions, including the range of\nthe defining symbol"
 		},
 		{
+			"name": "LSPArray",
+			"type": {
+				"kind": "array",
+				"element": {
+					"kind": "reference",
+					"name": "LSPAny"
+				}
+			},
+			"documentation": "LSP arrays.\n@since 3.17.0",
+			"since": "3.17.0"
+		},
+		{
 			"name": "LSPAny",
 			"type": {
 				"kind": "or",
@@ -13339,18 +13352,6 @@
 					}
 				]
 			}
-		},
-		{
-			"name": "LSPArray",
-			"type": {
-				"kind": "array",
-				"element": {
-					"kind": "reference",
-					"name": "LSPAny"
-				}
-			},
-			"documentation": "LSP arrays.\n@since 3.17.0",
-			"since": "3.17.0"
 		},
 		{
 			"name": "DocumentSelector",
