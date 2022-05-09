@@ -12349,6 +12349,201 @@
 	],
 	"enumerations": [
 		{
+			"name": "SemanticTokenTypes",
+			"type": {
+				"kind": "base",
+				"name": "string"
+			},
+			"values": [
+				{
+					"name": "namespace",
+					"value": "namespace"
+				},
+				{
+					"name": "type",
+					"value": "type",
+					"documentation": "Represents a generic type. Acts as a fallback for types which can't be mapped to\na specific type like class or enum."
+				},
+				{
+					"name": "class",
+					"value": "class"
+				},
+				{
+					"name": "enum",
+					"value": "enum"
+				},
+				{
+					"name": "interface",
+					"value": "interface"
+				},
+				{
+					"name": "struct",
+					"value": "struct"
+				},
+				{
+					"name": "typeParameter",
+					"value": "typeParameter"
+				},
+				{
+					"name": "parameter",
+					"value": "parameter"
+				},
+				{
+					"name": "variable",
+					"value": "variable"
+				},
+				{
+					"name": "property",
+					"value": "property"
+				},
+				{
+					"name": "enumMember",
+					"value": "enumMember"
+				},
+				{
+					"name": "event",
+					"value": "event"
+				},
+				{
+					"name": "function",
+					"value": "function"
+				},
+				{
+					"name": "method",
+					"value": "method"
+				},
+				{
+					"name": "macro",
+					"value": "macro"
+				},
+				{
+					"name": "keyword",
+					"value": "keyword"
+				},
+				{
+					"name": "modifier",
+					"value": "modifier"
+				},
+				{
+					"name": "comment",
+					"value": "comment"
+				},
+				{
+					"name": "string",
+					"value": "string"
+				},
+				{
+					"name": "number",
+					"value": "number"
+				},
+				{
+					"name": "regexp",
+					"value": "regexp"
+				},
+				{
+					"name": "operator",
+					"value": "operator"
+				},
+				{
+					"name": "decorator",
+					"value": "decorator",
+					"documentation": "@since 3.17.0",
+					"since": "3.17.0"
+				}
+			],
+			"documentation": "A set of predefined token types. This set is not fixed\nan clients can specify additional token types via the\ncorresponding client capabilities.\n@since 3.16.0",
+			"since": "3.16.0"
+		},
+		{
+			"name": "SemanticTokenModifiers",
+			"type": {
+				"kind": "base",
+				"name": "string"
+			},
+			"values": [
+				{
+					"name": "declaration",
+					"value": "declaration"
+				},
+				{
+					"name": "definition",
+					"value": "definition"
+				},
+				{
+					"name": "readonly",
+					"value": "readonly"
+				},
+				{
+					"name": "static",
+					"value": "static"
+				},
+				{
+					"name": "deprecated",
+					"value": "deprecated"
+				},
+				{
+					"name": "abstract",
+					"value": "abstract"
+				},
+				{
+					"name": "async",
+					"value": "async"
+				},
+				{
+					"name": "modification",
+					"value": "modification"
+				},
+				{
+					"name": "documentation",
+					"value": "documentation"
+				},
+				{
+					"name": "defaultLibrary",
+					"value": "defaultLibrary"
+				}
+			],
+			"documentation": "A set of predefined token modifiers. This set is not fixed\nan clients can specify additional token types via the\ncorresponding client capabilities.\n@since 3.16.0",
+			"since": "3.16.0"
+		},
+		{
+			"name": "LSPErrorCodes",
+			"type": {
+				"kind": "base",
+				"name": "integer"
+			},
+			"values": [
+				{
+					"name": "lspReservedErrorRangeStart",
+					"value": -32899,
+					"since": "3.16.0"
+				},
+				{
+					"name": "RequestFailed",
+					"value": -32803,
+					"since": "3.17.0"
+				},
+				{
+					"name": "ServerCancelled",
+					"value": -32802,
+					"since": "3.17.0"
+				},
+				{
+					"name": "ContentModified",
+					"value": -32801
+				},
+				{
+					"name": "RequestCancelled",
+					"value": -32800
+				},
+				{
+					"name": "lspReservedErrorRangeEnd",
+					"value": -32800,
+					"since": "3.16.0"
+				}
+			],
+			"supportsCustomValues": true
+		},
+		{
 			"name": "FoldingRangeKind",
 			"type": {
 				"kind": "base",

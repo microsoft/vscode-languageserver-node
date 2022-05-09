@@ -227,6 +227,29 @@ export default class Visitor {
 
 	private visitSourceFile(node: ts.SourceFile): boolean {
 		this.#currentSourceFile = node;
+		// The file `protocol.$.ts` contains all definitions for things
+		// that are not reference through the protocol module but part of
+		// the LSP specification. So treat the definitions as such. They all need
+		// to start with a $ to make this clear.
+		if (path.basename(node.fileName) === 'protocol.$.ts') {
+			for (const statement of node.statements) {
+				if (ts.isTypeAliasDeclaration(statement) && statement.name.getText()[0] === '$') {
+					this.visitTypeReference(statement);
+				}
+				if (ts.isVariableStatement(statement)) {
+					for (const declaration of statement.declarationList.declarations) {
+						if (declaration.name.getText()[0] !== '$' || declaration.initializer === undefined) {
+							continue;
+						}
+						const symbol = this.typeChecker.getSymbolAtLocation(declaration.initializer);
+						if (symbol === undefined) {
+							continue;
+						}
+						this.queueSymbol(symbol.getName(), symbol);
+					}
+				}
+			}
+		}
 		return true;
 	}
 
@@ -322,6 +345,18 @@ export default class Visitor {
 		result.registrationOptions = asJsonType(notificationTypes.registrationOptions);
 		this.fillDocProperties(node, result);
 		return result;
+	}
+
+	private visitTypeReference(node: ts.TypeAliasDeclaration): void {
+		const type = node.type;
+		if (!ts.isTypeReferenceNode(type)) {
+			return;
+		}
+		const symbol = this.typeChecker.getSymbolAtLocation(type.typeName);
+		if (symbol === undefined) {
+			return;
+		}
+		this.queueSymbol(type.typeName.getText(), symbol);
 	}
 
 	private queueTypeInfo(typeInfo: TypeInfo): void {
@@ -797,6 +832,36 @@ export default class Visitor {
 				this.fillDocProperties(declaration, result);
 				return result;
 			}
+		} else if (Symbols.isRegularEnum(symbol)) {
+			const entries: EnumerationEntry[] = [];
+			const exports = this.typeChecker.getExportsOfModule(symbol);
+			for (const item of exports) {
+				const declaration = this.getDeclaration(item, ts.SyntaxKind.EnumMember);
+				if (declaration === undefined || !ts.isEnumMember(declaration) || declaration.initializer === undefined) {
+					continue;
+				}
+				let value: string | number | undefined;
+				if (ts.isNumericLiteral(declaration.initializer)) {
+					value = Number.parseInt(declaration.initializer.getText());
+				} else if (ts.isStringLiteral(declaration.initializer)) {
+					value = this.removeQuotes(declaration.initializer.getText());
+				}
+				if (value === undefined) {
+					continue;
+				}
+				const entry: EnumerationEntry = { name: item.getName(), value: value };
+				this.fillDocProperties(declaration, entry);
+				entries.push(entry);
+			}
+			const type: EnumerationType = (entries.length === 0 || typeof entries[0].value === 'number')
+				? { kind: 'base', name: 'integer' }
+				: { kind: 'base', name: 'string' };
+			const result: Enumeration = { name: name, type: type, values: entries };
+			const declaration = this.getDeclaration(symbol, ts.SyntaxKind.EnumDeclaration);
+			if (declaration !== undefined) {
+				this.fillDocProperties(declaration, result);
+			}
+			return result;
 		} else {
 			const result: Structure = { name: name, properties: [] };
 			this.fillProperties(result, symbol);
@@ -908,13 +973,13 @@ export default class Visitor {
 		let enumValueNode: ts.Node | undefined;
 		if (declaration.initializer !== undefined) {
 			enumValueNode = declaration.initializer;
-		} if (declaration.type !== undefined && ts.isLiteralTypeNode(declaration.type)) {
+		} else if (declaration.type !== undefined && ts.isLiteralTypeNode(declaration.type)) {
 			enumValueNode = declaration.type.literal;
 		}
 		if (enumValueNode === undefined) {
 			return undefined;
 		}
-		if (ts.isNumericLiteral(enumValueNode)) {
+		if (ts.isNumericLiteral(enumValueNode) || (ts.isPrefixUnaryExpression(enumValueNode) && ts.isNumericLiteral(enumValueNode.operand))) {
 			return Number.parseInt(enumValueNode.getText());
 		} else if (ts.isStringLiteral(enumValueNode)) {
 			return this.removeQuotes(enumValueNode.getText());

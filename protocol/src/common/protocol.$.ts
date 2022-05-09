@@ -4,16 +4,29 @@
  * ------------------------------------------------------------------------------------------ */
 
 import { LogTraceParams, SetTraceParams } from 'vscode-jsonrpc';
+import { SemanticTokenTypes, SemanticTokenModifiers } from 'vscode-languageserver-types';
 
 import { ProtocolNotificationType } from './messages';
+import { LSPErrorCodes } from './api';
 
 // This file is used to define the $ notification partly specified in JSON-RPC
 // so that we generate proper data for them in the meta model.
 
-export namespace SetTraceNotification {
+// @ts-ignore 6196
+namespace SetTraceNotification {
 	export const type = new ProtocolNotificationType<SetTraceParams, void>('$/setTrace');
 }
 
-export namespace LogTraceNotification {
+// @ts-ignore 6196
+namespace LogTraceNotification {
 	export const type = new ProtocolNotificationType<LogTraceParams, void>('$/logTrace');
 }
+
+// @ts-ignore 6196
+type $SemanticTokenTypes = SemanticTokenTypes;
+
+// @ts-ignore 6196
+type $SemanticTokenModifiers = SemanticTokenModifiers;
+
+// @ts-ignore 6196
+const $LSPErrorCodes = LSPErrorCodes;
