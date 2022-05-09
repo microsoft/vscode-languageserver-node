@@ -2100,25 +2100,26 @@ export interface FileSystemWatcher {
 	 * to WatchKind.Create | WatchKind.Change | WatchKind.Delete
 	 * which is 7.
 	 */
-	kind?: uinteger;
+	kind?: WatchKind;
 }
 
 export namespace WatchKind {
 	/**
 	 * Interested in create events.
 	 */
-	export const Create = 1;
+	export const Create: 1 = 1;
 
 	/**
 	 * Interested in change events
 	 */
-	export const Change = 2;
+	export const Change: 2 = 2;
 
 	/**
 	 * Interested in delete events
 	 */
-	export const Delete = 4;
+	export const Delete: 4 = 4;
 }
+export type WatchKind = uinteger;
 
 //---- Diagnostic notification ----
 

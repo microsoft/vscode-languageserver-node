@@ -27,8 +27,8 @@ function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	return target[key];
 }
 
-type LSPObject = { [key: string]: LSPAny };
-type LSPArray = LSPAny[];
+type $LSPObject = { [key: string]: LSPAny };
+type $LSPArray = LSPAny[];
 
 namespace Converter {
 	export namespace c2p {
@@ -48,7 +48,7 @@ namespace Converter {
 		export function asNotebookCells(cells: vscode.NotebookCell[], base: _c2p.Converter): proto.NotebookCell[] {
 			return cells.map(cell => asNotebookCell(cell, base));
 		}
-		export function asMetadata(metadata: { [key: string]: any}): LSPObject {
+		export function asMetadata(metadata: { [key: string]: any}): $LSPObject {
 			const seen: Set<any> = new Set();
 			return deepCopy(seen, metadata);
 		}
@@ -73,14 +73,14 @@ namespace Converter {
 					return proto.NotebookCellKind.Code;
 			}
 		}
-		function deepCopy(seen: Set<any>, value: {[key: string]: any}): LSPObject;
-		function deepCopy(seen: Set<any>, value: any[]): LSPArray;
-		function deepCopy(seen: Set<any>, value: {[key: string]: any} | any[]): LSPArray | LSPObject {
+		function deepCopy(seen: Set<any>, value: {[key: string]: any}): $LSPObject;
+		function deepCopy(seen: Set<any>, value: any[]): $LSPArray;
+		function deepCopy(seen: Set<any>, value: {[key: string]: any} | any[]): $LSPArray | $LSPObject {
 			if (seen.has(value)) {
 				throw new Error(`Can't deep copy cyclic structures.`);
 			}
 			if (Array.isArray(value)) {
-				const result: LSPArray = [];
+				const result: $LSPArray = [];
 				for (const elem of value) {
 					if (elem !== null && typeof elem === 'object' || Array.isArray(elem)) {
 						result.push(deepCopy(seen, elem));
@@ -94,7 +94,7 @@ namespace Converter {
 				return result;
 			} else {
 				const props = Object.keys(value);
-				const result: LSPObject = Object.create(null);
+				const result: $LSPObject = Object.create(null);
 				for (const prop of props) {
 					const elem = value[prop];
 					if (elem !== null && typeof elem === 'object' || Array.isArray(elem)) {
@@ -258,7 +258,7 @@ namespace $NotebookCell {
 			}
 			for (let i = 0; i < oneKeys.length; i++) {
 				const prop = oneKeys[i];
-				if (!equalsMetadata((one as LSPObject)[prop], (other as LSPObject)[prop])) {
+				if (!equalsMetadata((one as $LSPObject)[prop], (other as $LSPObject)[prop])) {
 					return false;
 				}
 			}

@@ -132,6 +132,10 @@ export class Symbols {
 		return symbol !== undefined && (symbol.getFlags() & ts.SymbolFlags.Prototype) !== 0;
 	}
 
+	public static isRegularEnum(symbol: ts.Symbol): boolean {
+		return symbol !== undefined && (symbol.getFlags() & ts.SymbolFlags.RegularEnum) !== 0;
+	}
+
 	public static isProperty(symbol: ts.Symbol): boolean {
 		return symbol !== undefined && (symbol.getFlags() & ts.SymbolFlags.Property) !== 0;
 	}

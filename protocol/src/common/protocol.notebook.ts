@@ -5,7 +5,7 @@
 
 import {
 	URI, integer, DocumentUri, uinteger, LSPAny, TextDocumentItem, TextDocumentIdentifier,
-	VersionedTextDocumentIdentifier
+	VersionedTextDocumentIdentifier, LSPObject
 } from 'vscode-languageserver-types';
 
 import * as Is from './utils/is';
@@ -126,7 +126,7 @@ export type NotebookCell = {
 	 *
 	 * Note: should always be an object literal (e.g. LSPObject)
 	 */
-	metadata?: LSPAny;
+	metadata?: LSPObject;
 
 	/**
 	 * Additional execution summary information
@@ -250,7 +250,7 @@ export type NotebookDocument = {
 	 *
 	 * Note: should always be an object literal (e.g. LSPObject)
 	 */
-	metadata?: LSPAny;
+	metadata?: LSPObject;
 
 	/**
 	 * The cells of a notebook.
@@ -448,7 +448,7 @@ export type NotebookDocumentChangeEvent = {
 	 *
 	 * Note: should always be an object literal (e.g. LSPObject)
 	 */
-	metadata?: LSPAny;
+	metadata?: LSPObject;
 
 	/**
 	 * Changes to cells

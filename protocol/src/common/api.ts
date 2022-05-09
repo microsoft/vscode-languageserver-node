@@ -67,6 +67,7 @@ export namespace LSPErrorCodes {
 	*/
 	export const lspReservedErrorRangeEnd: integer = -32800;
 }
+export type LSPErrorCodes = integer;
 
 export namespace Proposed {
 }

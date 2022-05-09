@@ -88,6 +88,8 @@ export type decimal = number;
  * @since 3.17.0
  */
 export type LSPAny = any;
+export type LSPObject = object;
+export type LSPArray = any[];
 
 /**
  * Position in a text document expressed as zero-based line and character
@@ -2971,17 +2973,17 @@ export namespace CodeActionKind {
 	/**
 	 * Empty kind.
 	 */
-	export const Empty: CodeActionKind = '';
+	export const Empty: '' = '';
 
 	/**
 	 * Base kind for quickfix actions: 'quickfix'
 	 */
-	export const QuickFix: CodeActionKind = 'quickfix';
+	export const QuickFix: 'quickfix' = 'quickfix';
 
 	/**
 	 * Base kind for refactoring actions: 'refactor'
 	 */
-	export const Refactor: CodeActionKind = 'refactor';
+	export const Refactor: 'refactor' = 'refactor';
 
 	/**
 	 * Base kind for refactoring extraction actions: 'refactor.extract'
@@ -2994,7 +2996,7 @@ export namespace CodeActionKind {
 	 * - Extract interface from class
 	 * - ...
 	 */
-	export const RefactorExtract: CodeActionKind = 'refactor.extract';
+	export const RefactorExtract: 'refactor.extract' = 'refactor.extract';
 
 	/**
 	 * Base kind for refactoring inline actions: 'refactor.inline'
@@ -3006,7 +3008,7 @@ export namespace CodeActionKind {
 	 * - Inline constant
 	 * - ...
 	 */
-	export const RefactorInline: CodeActionKind = 'refactor.inline';
+	export const RefactorInline: 'refactor.inline' = 'refactor.inline';
 
 	/**
 	 * Base kind for refactoring rewrite actions: 'refactor.rewrite'
@@ -3020,19 +3022,19 @@ export namespace CodeActionKind {
 	 * - Move method to base class
 	 * - ...
 	 */
-	export const RefactorRewrite: CodeActionKind = 'refactor.rewrite';
+	export const RefactorRewrite: 'refactor.rewrite' = 'refactor.rewrite';
 
 	/**
 	 * Base kind for source actions: `source`
 	 *
 	 * Source code actions apply to the entire file.
 	 */
-	export const Source: CodeActionKind = 'source';
+	export const Source: 'source' = 'source';
 
 	/**
 	 * Base kind for an organize imports source action: `source.organizeImports`
 	 */
-	export const SourceOrganizeImports: CodeActionKind = 'source.organizeImports';
+	export const SourceOrganizeImports: 'source.organizeImports' = 'source.organizeImports';
 
 	/**
 	 * Base kind for auto-fix source actions: `source.fixAll`.
@@ -3042,7 +3044,7 @@ export namespace CodeActionKind {
 	 *
 	 * @since 3.15.0
 	 */
-	export const SourceFixAll: CodeActionKind = 'source.fixAll';
+	export const SourceFixAll: 'source.fixAll' = 'source.fixAll';
 }
 
 /**

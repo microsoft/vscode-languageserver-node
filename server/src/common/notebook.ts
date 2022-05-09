@@ -8,7 +8,7 @@ import {
 	NotificationHandler1, Emitter, Event, DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
 	NotificationHandler, DocumentUri, URI, Disposable, DidOpenNotebookDocumentParams, DidChangeNotebookDocumentParams, DidSaveNotebookDocumentParams,
 	DidCloseNotebookDocumentParams, DidOpenNotebookDocumentNotification, DidChangeNotebookDocumentNotification, DidSaveNotebookDocumentNotification,
-	DidCloseNotebookDocumentNotification, NotebookDocument, NotebookCell, LSPAny
+	DidCloseNotebookDocumentNotification, NotebookDocument, NotebookCell, LSPObject
 } from 'vscode-languageserver-protocol';
 
 import type { Feature, _Notebooks, Connection, } from './server';
@@ -70,7 +70,7 @@ export type NotebookDocumentChangeEvent = {
 	 *
 	 * Note: old and new should always be an object literal (e.g. LSPObject)
 	 */
-	metadata?: { old: LSPAny | undefined; new: LSPAny | undefined };
+	metadata?: { old: LSPObject | undefined; new: LSPObject | undefined };
 
 	/**
 	 * The cell changes if any.

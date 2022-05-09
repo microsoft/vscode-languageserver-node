@@ -227,6 +227,29 @@ export default class Visitor {
 
 	private visitSourceFile(node: ts.SourceFile): boolean {
 		this.#currentSourceFile = node;
+		// The file `protocol.$.ts` contains all definitions for things
+		// that are not reference through the protocol module but part of
+		// the LSP specification. So treat the definitions as such. They all need
+		// to start with a $ to make this clear.
+		if (path.basename(node.fileName) === 'protocol.$.ts') {
+			for (const statement of node.statements) {
+				if (ts.isTypeAliasDeclaration(statement) && statement.name.getText()[0] === '$') {
+					this.visitTypeReference(statement);
+				}
+				if (ts.isVariableStatement(statement)) {
+					for (const declaration of statement.declarationList.declarations) {
+						if (declaration.name.getText()[0] !== '$' || declaration.initializer === undefined) {
+							continue;
+						}
+						const symbol = this.typeChecker.getSymbolAtLocation(declaration.initializer);
+						if (symbol === undefined) {
+							continue;
+						}
+						this.queueSymbol(symbol.getName(), symbol);
+					}
+				}
+			}
+		}
 		return true;
 	}
 
@@ -322,6 +345,18 @@ export default class Visitor {
 		result.registrationOptions = asJsonType(notificationTypes.registrationOptions);
 		this.fillDocProperties(node, result);
 		return result;
+	}
+
+	private visitTypeReference(node: ts.TypeAliasDeclaration): void {
+		const type = node.type;
+		if (!ts.isTypeReferenceNode(type)) {
+			return;
+		}
+		const symbol = this.typeChecker.getSymbolAtLocation(type.typeName);
+		if (symbol === undefined) {
+			return;
+		}
+		this.queueSymbol(type.typeName.getText(), symbol);
 	}
 
 	private queueTypeInfo(typeInfo: TypeInfo): void {
@@ -635,6 +670,20 @@ export default class Visitor {
 
 	private static readonly Mixins: Set<string> = new Set(['WorkDoneProgressParams', 'PartialResultParams', 'StaticRegistrationOptions', 'WorkDoneProgressOptions']);
 	private processSymbol(name: string, symbol: ts.Symbol): Structure | Enumeration | TypeAlias | undefined {
+		// We can't define LSPAny in the protocol right now due to TS issues.
+		// So we predefine it and emit it.
+		if (name === 'LSPAny') {
+			this.typeAliases.push(PreDefined.LSPArray);
+			return PreDefined.LSPAny;
+		}
+		if (name === 'LSPArray') {
+			// LSP Array is never reference via a indirect reference from
+			// a request or notification.
+			return undefined;
+		}
+		if (name === 'LSPObject') {
+			return PreDefined.LSPObject;
+		}
 		if (Symbols.isInterface(symbol)) {
 			const result: Structure = { name: name, properties: [] };
 			const declaration = this.getDeclaration(symbol, ts.SyntaxKind.InterfaceDeclaration);
@@ -718,7 +767,7 @@ export default class Visitor {
 			const namespace = this.getDeclaration(symbol, ts.SyntaxKind.ModuleDeclaration);
 			if (namespace !== undefined && symbol.declarations !== undefined && symbol.declarations.length === 2) {
 				const fixedSet = (target.kind === 'union' || target.kind === 'stringLiteral' || target.kind === 'integerLiteral');
-				const openSet = (target.kind === 'base' && (target.name === 'string' || target.name === 'integer'));
+				const openSet = (target.kind === 'base' && (target.name === 'string' || target.name === 'integer' || target.name === 'uinteger'));
 				if (openSet || fixedSet) {
 					// Check if we have a enum declaration.
 					const body = namespace.getChildren().find(node => node.kind === ts.SyntaxKind.ModuleBlock);
@@ -736,16 +785,11 @@ export default class Visitor {
 									break;
 								}
 								const declaration = variable.declarationList.declarations[0];
-								if (!ts.isVariableDeclaration(declaration) || declaration.initializer === undefined) {
+								if (!ts.isVariableDeclaration(declaration)) {
 									isEnum = false;
 									break;
 								}
-								let value: number | string | undefined;
-								if (ts.isNumericLiteral(declaration.initializer)) {
-									value = Number.parseInt(declaration.initializer.getText());
-								} else if (ts.isStringLiteral(declaration.initializer)) {
-									value = this.removeQuotes(declaration.initializer.getText());
-								}
+								const value: number | string | undefined = this.getEnumValue(declaration);
 								if (value === undefined) {
 									isEnum = false;
 									break;
@@ -788,6 +832,36 @@ export default class Visitor {
 				this.fillDocProperties(declaration, result);
 				return result;
 			}
+		} else if (Symbols.isRegularEnum(symbol)) {
+			const entries: EnumerationEntry[] = [];
+			const exports = this.typeChecker.getExportsOfModule(symbol);
+			for (const item of exports) {
+				const declaration = this.getDeclaration(item, ts.SyntaxKind.EnumMember);
+				if (declaration === undefined || !ts.isEnumMember(declaration) || declaration.initializer === undefined) {
+					continue;
+				}
+				let value: string | number | undefined;
+				if (ts.isNumericLiteral(declaration.initializer)) {
+					value = Number.parseInt(declaration.initializer.getText());
+				} else if (ts.isStringLiteral(declaration.initializer)) {
+					value = this.removeQuotes(declaration.initializer.getText());
+				}
+				if (value === undefined) {
+					continue;
+				}
+				const entry: EnumerationEntry = { name: item.getName(), value: value };
+				this.fillDocProperties(declaration, entry);
+				entries.push(entry);
+			}
+			const type: EnumerationType = (entries.length === 0 || typeof entries[0].value === 'number')
+				? { kind: 'base', name: 'integer' }
+				: { kind: 'base', name: 'string' };
+			const result: Enumeration = { name: name, type: type, values: entries };
+			const declaration = this.getDeclaration(symbol, ts.SyntaxKind.EnumDeclaration);
+			if (declaration !== undefined) {
+				this.fillDocProperties(declaration, result);
+			}
+			return result;
 		} else {
 			const result: Structure = { name: name, properties: [] };
 			this.fillProperties(result, symbol);
@@ -864,7 +938,7 @@ export default class Visitor {
 		return undefined;
 	}
 
-	getEnumValues(typeInfo: TypeInfo): string[] | number[] | undefined {
+	private getEnumValues(typeInfo: TypeInfo): string[] | number[] | undefined {
 		if (typeInfo.kind === 'stringLiteral') {
 			return [typeInfo.value];
 		}
@@ -893,6 +967,24 @@ export default class Visitor {
 			result.push(info.value);
 		}
 		return (result as string[] | number[]);
+	}
+
+	private getEnumValue(declaration: ts.VariableDeclaration): number | string | undefined {
+		let enumValueNode: ts.Node | undefined;
+		if (declaration.initializer !== undefined) {
+			enumValueNode = declaration.initializer;
+		} else if (declaration.type !== undefined && ts.isLiteralTypeNode(declaration.type)) {
+			enumValueNode = declaration.type.literal;
+		}
+		if (enumValueNode === undefined) {
+			return undefined;
+		}
+		if (ts.isNumericLiteral(enumValueNode) || (ts.isPrefixUnaryExpression(enumValueNode) && ts.isNumericLiteral(enumValueNode.operand))) {
+			return Number.parseInt(enumValueNode.getText());
+		} else if (ts.isStringLiteral(enumValueNode)) {
+			return this.removeQuotes(enumValueNode.getText());
+		}
+		return undefined;
 	}
 
 	private removeQuotes(text: string): string {
@@ -937,4 +1029,69 @@ export default class Visitor {
 		}
 		return undefined;
 	}
+}
+
+namespace PreDefined {
+	export const LSPAny: TypeAlias = {
+		'name': 'LSPAny',
+		'type': {
+			'kind': 'or',
+			'items': [
+				{
+					'kind': 'reference',
+					'name': 'LSPObject'
+				},
+				{
+					'kind': 'reference',
+					'name': 'LSPArray'
+				},
+				{
+					'kind': 'base',
+					'name': 'string'
+				},
+				{
+					'kind': 'base',
+					'name': 'integer'
+				},
+				{
+					'kind': 'base',
+					'name': 'uinteger'
+				},
+				{
+					'kind': 'base',
+					'name': 'decimal'
+				},
+				{
+					'kind': 'base',
+					'name': 'boolean'
+				},
+				{
+					'kind': 'base',
+					'name': 'null'
+				}
+			]
+		},
+		'documentation': 'The LSP any type.\nPlease note that strictly speaking a property with the value `undefined`\ncan\'t be converted into JSON preserving the property name. However for\nconvenience it is allowed and assumed that all these properties are\noptional as well.\n@since 3.17.0',
+		'since': '3.17.0'
+	};
+
+	export const LSPObject: Structure = {
+		'name': 'LSPObject',
+		'properties': [],
+		'documentation': 'LSP object definition.\n@since 3.17.0',
+		'since': '3.17.0'
+	};
+
+	export const LSPArray: TypeAlias = {
+		'name': 'LSPArray',
+		'type': {
+			'kind': 'array',
+			'element': {
+				'kind': 'reference',
+				'name': 'LSPAny'
+			}
+		},
+		'documentation': 'LSP arrays.\n@since 3.17.0',
+		'since': '3.17.0'
+	};
 }
