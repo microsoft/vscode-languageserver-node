@@ -12563,6 +12563,70 @@
 			"since": "3.16.0"
 		},
 		{
+			"name": "ErrorCodes",
+			"type": {
+				"kind": "base",
+				"name": "integer"
+			},
+			"values": [
+				{
+					"name": "ParseError",
+					"value": -32700
+				},
+				{
+					"name": "InvalidRequest",
+					"value": -32600
+				},
+				{
+					"name": "MethodNotFound",
+					"value": -32601
+				},
+				{
+					"name": "InvalidParams",
+					"value": -32602
+				},
+				{
+					"name": "InternalError",
+					"value": -32603
+				},
+				{
+					"name": "jsonrpcReservedErrorRangeStart",
+					"value": -32099,
+					"since": "3.16.0"
+				},
+				{
+					"name": "serverErrorStart",
+					"value": -32099
+				},
+				{
+					"name": "MessageWriteError",
+					"value": -32099
+				},
+				{
+					"name": "MessageReadError",
+					"value": -32098
+				},
+				{
+					"name": "ServerNotInitialized",
+					"value": -32002
+				},
+				{
+					"name": "UnknownErrorCode",
+					"value": -32001
+				},
+				{
+					"name": "jsonrpcReservedErrorRangeEnd",
+					"value": -32000,
+					"since": "3.16.0"
+				},
+				{
+					"name": "serverErrorEnd",
+					"value": -32000
+				}
+			],
+			"supportsCustomValues": true
+		},
+		{
 			"name": "LSPErrorCodes",
 			"type": {
 				"kind": "base",

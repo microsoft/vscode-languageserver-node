@@ -38,11 +38,11 @@ export interface RequestMessage extends Message {
  */
 export namespace ErrorCodes {
 	// Defined by JSON RPC
-	export const ParseError: number = -32700;
-	export const InvalidRequest: number = -32600;
-	export const MethodNotFound: number = -32601;
-	export const InvalidParams: number = -32602;
-	export const InternalError: number = -32603;
+	export const ParseError: -32700 = -32700;
+	export const InvalidRequest: -32600 = -32600;
+	export const MethodNotFound: -32601 = -32601;
+	export const InvalidParams: -32602 = -32602;
+	export const InternalError: -32603 = -32603;
 
 	/**
 	 * This is the start range of JSON RPC reserved error codes.
@@ -53,19 +53,19 @@ export namespace ErrorCodes {
 	 *
 	 * @since 3.16.0
 	*/
-	export const jsonrpcReservedErrorRangeStart: number = -32099;
+	export const jsonrpcReservedErrorRangeStart: -32099 = -32099;
 	/** @deprecated use  jsonrpcReservedErrorRangeStart */
-	export const serverErrorStart: number = jsonrpcReservedErrorRangeStart;
+	export const serverErrorStart: -32099 = /* jsonrpcReservedErrorRangeStart */ -32099;
 
-	export const MessageWriteError: number = -32099;
-	export const MessageReadError: number = -32098;
+	export const MessageWriteError: -32099 = -32099;
+	export const MessageReadError: -32098 = -32098;
 
 	/**
 	 * Error code indicating that a server received a notification or
 	 * request before the server has received the `initialize` request.
 	 */
-	export const ServerNotInitialized: number = -32002;
-	export const UnknownErrorCode: number = -32001;
+	export const ServerNotInitialized: -32002 = -32002;
+	export const UnknownErrorCode: -32001 = -32001;
 
 	/**
 	 * This is the end range of JSON RPC reserved error codes.
@@ -73,10 +73,12 @@ export namespace ErrorCodes {
 	 *
 	 * @since 3.16.0
 	*/
-	export const jsonrpcReservedErrorRangeEnd = -32000;
+	export const jsonrpcReservedErrorRangeEnd: -32000 = -32000;
 	/** @deprecated use  jsonrpcReservedErrorRangeEnd */
-	export const serverErrorEnd: number = jsonrpcReservedErrorRangeEnd;
+	export const serverErrorEnd: -32000 = /* jsonrpcReservedErrorRangeEnd */ -32000;
 }
+type integer = number;
+export type ErrorCodes= integer;
 
 export interface ResponseErrorLiteral<D = void> {
 	/**

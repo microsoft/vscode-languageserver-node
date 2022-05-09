@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { LogTraceParams, SetTraceParams, ProgressToken } from 'vscode-jsonrpc';
+import { LogTraceParams, SetTraceParams, ProgressToken, ErrorCodes } from 'vscode-jsonrpc';
 import { SemanticTokenTypes, SemanticTokenModifiers, LSPAny } from 'vscode-languageserver-types';
 
 import { ProtocolNotificationType } from './messages';
@@ -27,6 +27,9 @@ type $SemanticTokenTypes = SemanticTokenTypes;
 
 // @ts-ignore 6196
 type $SemanticTokenModifiers = SemanticTokenModifiers;
+
+// @ts-ignore 6196
+const $ErrorCodes = ErrorCodes;
 
 // @ts-ignore 6196
 const $LSPErrorCodes = LSPErrorCodes;
