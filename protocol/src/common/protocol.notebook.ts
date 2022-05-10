@@ -16,7 +16,6 @@ import type { StaticRegistrationOptions, NotebookDocumentFilter, TextDocumentCon
  * Notebook specific client capabilities.
  *
  * @since 3.17.0
- * @proposed
  */
 export type NotebookDocumentSyncClientCapabilities = {
 
@@ -38,7 +37,6 @@ export type NotebookDocumentSyncClientCapabilities = {
  * A notebook cell kind.
  *
  * @since 3.17.0
- * @proposed
  */
 export namespace NotebookCellKind {
 
@@ -106,7 +104,6 @@ export namespace ExecutionSummary {
  * notebook cell or the cell's text document.
  *
  * @since 3.17.0
- * @proposed
  */
 export type NotebookCell = {
 
@@ -224,7 +221,6 @@ export namespace NotebookCell {
  * A notebook document.
  *
  * @since 3.17.0
- * @proposed
  */
 export type NotebookDocument = {
 
@@ -272,7 +268,6 @@ export namespace NotebookDocument {
  * A literal to identify a notebook document in the client.
  *
  * @since 3.17.0
- * @proposed
  */
 export type NotebookDocumentIdentifier = {
 	/**
@@ -285,7 +280,6 @@ export type NotebookDocumentIdentifier = {
  * A versioned notebook document identifier.
  *
  * @since 3.17.0
- * @proposed
  */
 export type VersionedNotebookDocumentIdentifier = {
 
@@ -314,7 +308,6 @@ export type VersionedNotebookDocumentIdentifier = {
  * cell will be synced.
  *
  * @since 3.17.0
- * @proposed
  */
 export type NotebookDocumentSyncOptions = {
 	/**
@@ -357,7 +350,6 @@ export type NotebookDocumentSyncOptions = {
  * Registration options specific to a notebook.
  *
  * @since 3.17.0
- * @proposed
  */
 export type NotebookDocumentSyncRegistrationOptions = NotebookDocumentSyncOptions & StaticRegistrationOptions;
 
@@ -370,7 +362,6 @@ export namespace NotebookDocumentSyncRegistrationType {
  * The params sent in a open notebook document notification.
  *
  * @since 3.17.0
- * @proposed
  */
 export type DidOpenNotebookDocumentParams = {
 
@@ -390,7 +381,6 @@ export type DidOpenNotebookDocumentParams = {
  * A notification sent when a notebook opens.
  *
  * @since 3.17.0
- * @proposed
  */
 export namespace DidOpenNotebookDocumentNotification {
 	export const method: 'notebookDocument/didOpen' = 'notebookDocument/didOpen';
@@ -402,7 +392,6 @@ export namespace DidOpenNotebookDocumentNotification {
  * array from state S to S'.
  *
  * @since 3.17.0
- * @proposed
  */
 export type NotebookCellArrayChange = {
 	/**
@@ -440,7 +429,6 @@ export namespace NotebookCellArrayChange {
  * A change event for a notebook document.
  *
  * @since 3.17.0
- * @proposed
  */
 export type NotebookDocumentChangeEvent = {
 	/**
@@ -495,7 +483,6 @@ export type NotebookDocumentChangeEvent = {
  * The params sent in a change notebook document notification.
  *
  * @since 3.17.0
- * @proposed
  */
 export type DidChangeNotebookDocumentParams = {
 
@@ -534,7 +521,6 @@ export namespace DidChangeNotebookDocumentNotification {
  * The params sent in a save notebook document notification.
  *
  * @since 3.17.0
- * @proposed
  */
 export type DidSaveNotebookDocumentParams = {
 	/**
@@ -547,7 +533,6 @@ export type DidSaveNotebookDocumentParams = {
  * A notification sent when a notebook document is saved.
  *
  * @since 3.17.0
- * @proposed
  */
 export namespace DidSaveNotebookDocumentNotification {
 	export const method: 'notebookDocument/didSave' = 'notebookDocument/didSave';
@@ -558,7 +543,6 @@ export namespace DidSaveNotebookDocumentNotification {
  * The params sent in a close notebook document notification.
  *
  * @since 3.17.0
- * @proposed
  */
 export type DidCloseNotebookDocumentParams = {
 
@@ -578,7 +562,6 @@ export type DidCloseNotebookDocumentParams = {
  * A notification sent when a notebook closes.
  *
  * @since 3.17.0
- * @proposed
  */
 export namespace DidCloseNotebookDocumentNotification {
 	export const method: 'notebookDocument/didClose' = 'notebookDocument/didClose';

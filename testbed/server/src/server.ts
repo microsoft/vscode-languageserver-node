@@ -361,9 +361,10 @@ connection.languages.diagnostics.onWorkspace(async (params, token, _, resultProg
 		setTimeout(() => { void doValidate(++index); }, 500);
 	};
 	void doValidate(0);
-	return new Promise((resolve) => {
+	await new Promise((resolve) => {
 		setTimeout(resolve, 120000);
 	});
+	return { items: [] };
 });
 
 connection.onCompletion((params, token): CompletionItem[] => {

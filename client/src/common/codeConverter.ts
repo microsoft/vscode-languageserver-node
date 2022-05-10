@@ -78,7 +78,7 @@ export interface Converter {
 	asPosition(value: code.Position): proto.Position;
 	asPosition(value: code.Position | undefined | null): proto.Position | undefined | null;
 
-	asPositions(value: code.Position[], token?: code.CancellationToken): Promise<proto.Position[]>;
+	asPositions(value: readonly code.Position[], token?: code.CancellationToken): Promise<proto.Position[]>;
 
 	asRange(value: null): null;
 	asRange(value: undefined): undefined;
@@ -415,7 +415,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return { line: value.line > proto.uinteger.MAX_VALUE ? proto.uinteger.MAX_VALUE : value.line, character: value.character > proto.uinteger.MAX_VALUE ? proto.uinteger.MAX_VALUE : value.character };
 	}
 
-	function asPositions(value: code.Position[], token?: code.CancellationToken): Promise<proto.Position[]> {
+	function asPositions(value: readonly code.Position[], token?: code.CancellationToken): Promise<proto.Position[]> {
 		return async.map(value, (asPosition as (item: code.Position) => proto.Position), token);
 	}
 

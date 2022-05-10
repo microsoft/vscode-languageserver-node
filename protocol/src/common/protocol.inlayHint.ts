@@ -13,7 +13,6 @@ import type { StaticRegistrationOptions, TextDocumentRegistrationOptions, WorkDo
  * Inlay hint client capabilities
  *
  * @since 3.17.0
- * @proposed
  */
 export type InlayHintClientCapabilities = {
 
@@ -39,7 +38,6 @@ export type InlayHintClientCapabilities = {
  * Client workspace capabilities specific to inlay hints.
  *
  * @since 3.17.0
- * @proposed
  */
 export type InlayHintWorkspaceClientCapabilities = {
 	/**
@@ -59,7 +57,6 @@ export type InlayHintWorkspaceClientCapabilities = {
  * Inlay hint options used during static registration.
  *
  * @since 3.17.0
- * @proposed
  */
 export type InlayHintOptions = WorkDoneProgressOptions & {
 	/**
@@ -73,7 +70,6 @@ export type InlayHintOptions = WorkDoneProgressOptions & {
  * Inlay hint options used during static or dynamic registration.
  *
  * @since 3.17.0
- * @proposed
  */
 export type InlayHintRegistrationOptions = InlayHintOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions;
 
@@ -81,7 +77,6 @@ export type InlayHintRegistrationOptions = InlayHintOptions & TextDocumentRegist
  * A parameter literal used in inlay hints requests.
  *
  * @since 3.17.0
- * @proposed
  */
 export type InlayHintParams = WorkDoneProgressParams & {
 	/**
@@ -101,7 +96,6 @@ export type InlayHintParams = WorkDoneProgressParams & {
  * [InlayHint[]](#InlayHint[]) or a Thenable that resolves to such.
  *
  * @since 3.17.0
- * @proposed
  */
 export namespace InlayHintRequest {
 	export const method: 'textDocument/inlayHint' = 'textDocument/inlayHint';
@@ -115,7 +109,6 @@ export namespace InlayHintRequest {
  * of type [InlayHint](#InlayHint) or a Thenable that resolves to such.
  *
  * @since 3.17.0
- * @proposed
  */
 export namespace InlayHintResolveRequest {
 	export const method: 'inlayHint/resolve' = 'inlayHint/resolve';
@@ -125,7 +118,6 @@ export namespace InlayHintResolveRequest {
 
 /**
  * @since 3.17.0
- * @proposed
  */
 export namespace InlayHintRefreshRequest {
 	export const method: `workspace/inlayHint/refresh` = `workspace/inlayHint/refresh`;

@@ -22,7 +22,6 @@ export type TypeHierarchySubtypesSignature = (this: void, item: VTypeHierarchyIt
  * Type hierarchy middleware
  *
  * @since 3.17.0
- * @proposed
  */
 export type TypeHierarchyMiddleware = {
 	prepareTypeHierarchy?: (this: void, document: TextDocument, positions: VPosition, token: CancellationToken, next: PrepareTypeHierarchySignature) => ProviderResult<VTypeHierarchyItem[]>;

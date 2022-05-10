@@ -19,7 +19,6 @@ import { TextDocuments, TextDocumentConnection, TextDocumentsConfiguration } fro
  * Shape of the notebooks feature
  *
  * @since 3.17.0
- * @proposed
  */
 export interface NotebookSyncFeatureShape {
 	synchronization: {

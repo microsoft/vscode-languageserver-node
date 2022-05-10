@@ -12,7 +12,6 @@ import type { Feature, _Languages, ServerRequestHandler } from './server';
  * Shape of the type hierarchy feature
  *
  * @since 3.17.0
- * @proposed
  */
 export interface TypeHierarchyFeatureShape {
 	typeHierarchy: {

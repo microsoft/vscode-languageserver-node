@@ -142,7 +142,6 @@ let __noDynamicImport: LocationLink | undefined;
  * @sample A language filter that applies to all package.json paths: `{ language: 'json', pattern: '**package.json' }`
  *
  * @since 3.17.0
- * @proposed
  */
 export type TextDocumentFilter = {
 	/** A language id, like `typescript`. */
@@ -172,7 +171,6 @@ export type TextDocumentFilter = {
  * [TextDocumentFilter](#TextDocumentFilter) literals.
  *
  * @since 3.17.0
- * @proposed
  */
 export namespace TextDocumentFilter {
 	export function is(value: any): value is TextDocumentFilter {
@@ -187,7 +185,6 @@ export namespace TextDocumentFilter {
  * against the notebook's URI (same as with documents)
  *
  * @since 3.17.0
- * @proposed
  */
 export type NotebookDocumentFilter = {
 	/** The type of the enclosing notebook. */
@@ -223,7 +220,6 @@ export type NotebookDocumentFilter = {
  * [NotebookDocumentFilter](#NotebookDocumentFilter) literals.
  *
  * @since 3.17.0
- * @proposed
  */
 export namespace NotebookDocumentFilter {
 	export function is(value: any): value is NotebookDocumentFilter {
@@ -237,7 +233,6 @@ export namespace NotebookDocumentFilter {
  * document by different properties.
  *
  * @since 3.17.0
- * @proposed
  */
 export type NotebookCellTextDocumentFilter = {
 	/**
@@ -262,7 +257,6 @@ export type NotebookCellTextDocumentFilter = {
  * [NotebookCellTextDocumentFilter](#NotebookCellTextDocumentFilter) literals.
  *
  * @since 3.17.0
- * @proposed
  */
 export namespace NotebookCellTextDocumentFilter {
 	export function is(value: any): value is NotebookCellTextDocumentFilter {
@@ -537,7 +531,6 @@ export interface WorkspaceClientCapabilities {
 	 * workspace.
 	 *
 	 * @since 3.17.0.
-	 * @proposed
 	 */
 	inlineValue?: InlineValueWorkspaceClientCapabilities;
 
@@ -546,7 +539,6 @@ export interface WorkspaceClientCapabilities {
 	 * workspace.
 	 *
 	 * @since 3.17.0.
-	 * @proposed
 	 */
 	inlayHint?: InlayHintWorkspaceClientCapabilities;
 
@@ -555,7 +547,6 @@ export interface WorkspaceClientCapabilities {
 	 * workspace.
 	 *
 	 * @since 3.17.0.
-	 * @proposed
 	 */
 	diagnostics?: DiagnosticWorkspaceClientCapabilities;
 }
@@ -717,7 +708,6 @@ export interface TextDocumentClientCapabilities {
 	 * Capabilities specific to the various type hierarchy requests.
 	 *
 	 * @since 3.17.0
-	 * @proposed
 	 */
 	typeHierarchy?: TypeHierarchyClientCapabilities;
 
@@ -725,7 +715,6 @@ export interface TextDocumentClientCapabilities {
 	 * Capabilities specific to the `textDocument/inlineValue` request.
 	 *
 	 * @since 3.17.0
-	 * @proposed
 	 */
 	inlineValue?: InlineValueClientCapabilities;
 
@@ -733,7 +722,6 @@ export interface TextDocumentClientCapabilities {
 	 * Capabilities specific to the `textDocument/inlayHint` request.
 	 *
 	 * @since 3.17.0
-	 * @proposed
 	 */
 	inlayHint?: InlayHintClientCapabilities;
 
@@ -741,7 +729,6 @@ export interface TextDocumentClientCapabilities {
 	 * Capabilities specific to the diagnostic pull model.
 	 *
 	 * @since 3.17.0
-	 * @proposed
 	 */
 	diagnostic?: DiagnosticClientCapabilities;
 }
@@ -821,7 +808,6 @@ export interface MarkdownClientCapabilities {
  * A set of predefined position encoding kinds.
  *
  * @since 3.17.0
- * @proposed
  */
 export namespace PositionEncodingKind {
 
@@ -853,7 +839,6 @@ export namespace PositionEncodingKind {
  * specifically what column offsets mean.
  *
  * @since 3.17.0
- * @proposed
  */
 export type PositionEncodingKind = string;
 
@@ -871,7 +856,6 @@ export interface GeneralClientCapabilities {
 	 * anymore since the information is outdated).
 	 *
 	 * @since 3.17.0
-	 * @proposed
 	 */
 	staleRequestSupport?: {
 		/**
@@ -920,7 +904,6 @@ export interface GeneralClientCapabilities {
 	 * side.
 	 *
 	 * @since 3.17.0
-	 * @proposed
 	 */
 	positionEncodings?: PositionEncodingKind[];
 }
@@ -929,14 +912,12 @@ export interface GeneralClientCapabilities {
  * Capabilities specific to the notebook document support.
  *
  * @since 3.17.0
- * @proposed
  */
 export interface NotebookDocumentClientCapabilities {
 	/**
 	 * Capabilities specific to notebook document synchronization
 	 *
 	 * @since 3.17.0
-	 * @proposed
 	 */
 	synchronization: NotebookDocumentSyncClientCapabilities;
 }
@@ -959,7 +940,6 @@ export interface ClientCapabilities {
 	 * Capabilities specific to the notebook document support.
 	 *
 	 * @since 3.17.0
-	 * @proposed
 	 */
 	notebookDocument?: NotebookDocumentClientCapabilities;
 
@@ -1073,7 +1053,6 @@ export interface ServerCapabilities<T = any> {
 	 * If for some reason
 	 *
 	 * @since 3.17.0
-	 * @proposed
 	 */
 	positionEncoding?: PositionEncodingKind;
 
@@ -1088,7 +1067,6 @@ export interface ServerCapabilities<T = any> {
 	 * Defines how notebook documents are synced.
 	 *
 	 * @since 3.17.0
-	 * @proposed
 	 */
 	notebookDocumentSync?: NotebookDocumentSyncOptions | NotebookDocumentSyncRegistrationOptions;
 
@@ -1238,7 +1216,6 @@ export interface ServerCapabilities<T = any> {
 	 * The server provides type hierarchy support.
 	 *
 	 * @since 3.17.0
-	 * @proposed
 	 */
 	typeHierarchyProvider?: boolean | TypeHierarchyOptions | TypeHierarchyRegistrationOptions;
 
@@ -1246,7 +1223,6 @@ export interface ServerCapabilities<T = any> {
 	 * The server provides inline values.
 	 *
 	 * @since 3.17.0
-	 * @proposed
 	 */
 	inlineValueProvider?: boolean | InlineValueOptions | InlineValueRegistrationOptions;
 
@@ -1254,7 +1230,6 @@ export interface ServerCapabilities<T = any> {
 	 * The server provides inlay hints.
 	 *
 	 * @since 3.17.0
-	 * @proposed
 	 */
 	inlayHintProvider?: boolean | InlayHintOptions | InlayHintRegistrationOptions;
 
@@ -1262,7 +1237,6 @@ export interface ServerCapabilities<T = any> {
 	 * The server has support for pull model diagnostics.
 	 *
 	 * @since 3.17.0
-	 * @proposed
 	 */
 	diagnosticProvider?: DiagnosticOptions | DiagnosticRegistrationOptions;
 
@@ -2300,7 +2274,6 @@ export interface CompletionClientCapabilities {
 		 * details (see also `CompletionItemLabelDetails`).
 		 *
 		 * @since 3.17.0
-		 * @proposed
 		 */
 		labelDetailsSupport?: boolean;
 	};
@@ -2325,7 +2298,6 @@ export interface CompletionClientCapabilities {
 	 * text in either `insertText` or `textEdit`.
 	 *
 	 * @since 3.17.0
-	 * @proposed
 	 */
 	insertTextMode?: InsertTextMode;
 
@@ -2340,7 +2312,6 @@ export interface CompletionClientCapabilities {
 	 * capabilities.
 	 *
 	 * @since 3.17.0
-	 * @proposed
 	 */
 	completionList?: {
 		/**
@@ -2352,7 +2323,6 @@ export interface CompletionClientCapabilities {
 		 * no properties are supported.
 		 *
 		 * @since 3.17.0
-		 * @proposed
 		 */
 		itemDefaults?: string[];
 	};
@@ -2450,7 +2420,6 @@ export interface CompletionOptions extends WorkDoneProgressOptions {
 	 * capabilities.
 	 *
 	 * @since 3.17.0
-	 * @proposed
 	 */
 	completionItem?: {
 		/**
@@ -2459,7 +2428,6 @@ export interface CompletionOptions extends WorkDoneProgressOptions {
 		 * receiving a completion item in a resolve call.
 		 *
 		 * @since 3.17.0
-		 * @proposed
 		 */
 		labelDetailsSupport?: boolean;
 	};
@@ -3118,7 +3086,6 @@ export interface WorkspaceSymbolClientCapabilities {
 	 * properties.
 	 *
 	 * @since 3.17.0
-	 * @proposed
 	 */
 	resolveSupport?: {
 		/**
@@ -3149,7 +3116,6 @@ export interface WorkspaceSymbolOptions extends WorkDoneProgressOptions {
 	 * information for a workspace symbol.
 	 *
 	 * @since 3.17.0
-	 * @proposed
 	 */
 	resolveProvider?: boolean;
 }
@@ -3182,7 +3148,6 @@ export namespace WorkspaceSymbolRequest {
  * symbol's location.
  *
  * @since 3.17.0
- * @proposed
  */
 export namespace WorkspaceSymbolResolveRequest {
 	export const method: 'workspaceSymbol/resolve' = 'workspaceSymbol/resolve';

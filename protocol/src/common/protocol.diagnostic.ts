@@ -17,7 +17,6 @@ import type {
  * Client capabilities specific to diagnostic pull requests.
  *
  * @since 3.17.0
- * @proposed
  */
 export type DiagnosticClientCapabilities = {
 	/**
@@ -37,7 +36,6 @@ export type DiagnosticClientCapabilities = {
  * Workspace client capabilities specific to diagnostic pull requests.
  *
  * @since 3.17.0
- * @proposed
  */
 export type DiagnosticWorkspaceClientCapabilities = {
 	/**
@@ -56,7 +54,6 @@ export type DiagnosticWorkspaceClientCapabilities = {
  * Diagnostic options.
  *
  * @since 3.17.0
- * @proposed
  */
 export type DiagnosticOptions = WorkDoneProgressOptions & {
 	/**
@@ -83,7 +80,6 @@ export type DiagnosticOptions = WorkDoneProgressOptions & {
  * Diagnostic registration options.
  *
  * @since 3.17.0
- * @proposed
  */
 export type DiagnosticRegistrationOptions = TextDocumentRegistrationOptions & DiagnosticOptions & StaticRegistrationOptions;
 
@@ -95,7 +91,6 @@ export type $DiagnosticServerCapabilities = {
  * Cancellation data returned from a diagnostic request.
  *
  * @since 3.17.0
- * @proposed
  */
 export type DiagnosticServerCancellationData = {
 	retriggerRequest: boolean;
@@ -103,7 +98,6 @@ export type DiagnosticServerCancellationData = {
 
 /**
  * @since 3.17.0
- * @proposed
  */
 export namespace DiagnosticServerCancellationData {
 	export function is(value: any): value is DiagnosticServerCancellationData {
@@ -116,7 +110,6 @@ export namespace DiagnosticServerCancellationData {
  * Parameters of the document diagnostic request.
  *
  * @since 3.17.0
- * @proposed
  */
 export type DocumentDiagnosticParams =  WorkDoneProgressParams & PartialResultParams & {
 	/**
@@ -139,7 +132,6 @@ export type DocumentDiagnosticParams =  WorkDoneProgressParams & PartialResultPa
  * The document diagnostic report kinds.
  *
  * @since 3.17.0
- * @proposed
  */
 export namespace DocumentDiagnosticReportKind {
 	/**
@@ -161,7 +153,6 @@ export type DocumentDiagnosticReportKind = 'full' | 'unchanged';
  * A diagnostic report with a full set of problems.
  *
  * @since 3.17.0
- * @proposed
  */
 export type FullDocumentDiagnosticReport = {
 	/**
@@ -186,7 +177,6 @@ export type FullDocumentDiagnosticReport = {
  * A full diagnostic report with a set of related documents.
  *
  * @since 3.17.0
- * @proposed
  */
 export type RelatedFullDocumentDiagnosticReport = FullDocumentDiagnosticReport & {
 	/**
@@ -197,7 +187,6 @@ export type RelatedFullDocumentDiagnosticReport = FullDocumentDiagnosticReport &
 	 * a.cpp and result in errors in a header file b.hpp.
 	 *
 	 * @since 3.17.0
-	 * @proposed
 	 */
 	relatedDocuments?: {
 		[uri: DocumentUri]: FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport;
@@ -209,7 +198,6 @@ export type RelatedFullDocumentDiagnosticReport = FullDocumentDiagnosticReport &
  * report is still accurate.
  *
  * @since 3.17.0
- * @proposed
  */
 export type UnchangedDocumentDiagnosticReport = {
 	/**
@@ -231,7 +219,6 @@ export type UnchangedDocumentDiagnosticReport = {
  * An unchanged diagnostic report with a set of related documents.
  *
  * @since 3.17.0
- * @proposed
  */
 export type RelatedUnchangedDocumentDiagnosticReport = UnchangedDocumentDiagnosticReport & {
 	/**
@@ -242,7 +229,6 @@ export type RelatedUnchangedDocumentDiagnosticReport = UnchangedDocumentDiagnost
 	 * a.cpp and result in errors in a header file b.hpp.
 	 *
 	 * @since 3.17.0
-	 * @proposed
 	 */
 	relatedDocuments?: {
 		[uri: DocumentUri ]: FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport;
@@ -257,7 +243,6 @@ export type RelatedUnchangedDocumentDiagnosticReport = UnchangedDocumentDiagnost
  * pull request.
  *
  * @since 3.17.0
- * @proposed
  */
 export type DocumentDiagnosticReport = RelatedFullDocumentDiagnosticReport | RelatedUnchangedDocumentDiagnosticReport;
 
@@ -265,7 +250,6 @@ export type DocumentDiagnosticReport = RelatedFullDocumentDiagnosticReport | Rel
  * A partial result for a document diagnostic report.
  *
  * @since 3.17.0
- * @proposed
  */
 export type DocumentDiagnosticReportPartialResult = {
 	relatedDocuments: {
@@ -277,7 +261,6 @@ export type DocumentDiagnosticReportPartialResult = {
  * The document diagnostic request definition.
  *
  * @since 3.17.0
- * @proposed
  */
 export namespace DocumentDiagnosticRequest {
 	export const method: 'textDocument/diagnostic' = 'textDocument/diagnostic';
@@ -290,7 +273,6 @@ export namespace DocumentDiagnosticRequest {
  * A previous result id in a workspace pull request.
  *
  * @since 3.17.0
- * @proposed
  */
 export type PreviousResultId = {
 	/**
@@ -309,7 +291,6 @@ export type PreviousResultId = {
  * Parameters of the workspace diagnostic request.
  *
  * @since 3.17.0
- * @proposed
  */
 export type WorkspaceDiagnosticParams = WorkDoneProgressParams & PartialResultParams & {
 	/**
@@ -328,7 +309,6 @@ export type WorkspaceDiagnosticParams = WorkDoneProgressParams & PartialResultPa
  * A full document diagnostic report for a workspace diagnostic result.
  *
  * @since 3.17.0
- * @proposed
  */
 export type WorkspaceFullDocumentDiagnosticReport = FullDocumentDiagnosticReport & {
 
@@ -348,7 +328,6 @@ export type WorkspaceFullDocumentDiagnosticReport = FullDocumentDiagnosticReport
  * An unchanged document diagnostic report for a workspace diagnostic result.
  *
  * @since 3.17.0
- * @proposed
  */
 export type WorkspaceUnchangedDocumentDiagnosticReport = UnchangedDocumentDiagnosticReport & {
 
@@ -368,7 +347,6 @@ export type WorkspaceUnchangedDocumentDiagnosticReport = UnchangedDocumentDiagno
  * A workspace diagnostic document report.
  *
  * @since 3.17.0
- * @proposed
  */
 export type WorkspaceDocumentDiagnosticReport = WorkspaceFullDocumentDiagnosticReport | WorkspaceUnchangedDocumentDiagnosticReport;
 
@@ -377,7 +355,6 @@ export type WorkspaceDocumentDiagnosticReport = WorkspaceFullDocumentDiagnosticR
  * A workspace diagnostic report.
  *
  * @since 3.17.0
- * @proposed
  */
 export type WorkspaceDiagnosticReport = {
 	items: WorkspaceDocumentDiagnosticReport[];
@@ -387,7 +364,6 @@ export type WorkspaceDiagnosticReport = {
  * A partial result for a workspace diagnostic report.
  *
  * @since 3.17.0
- * @proposed
  */
 export type WorkspaceDiagnosticReportPartialResult = {
 	items: WorkspaceDocumentDiagnosticReport[];
@@ -397,7 +373,6 @@ export type WorkspaceDiagnosticReportPartialResult = {
  * The workspace diagnostic request definition.
  *
  * @since 3.17.0
- * @proposed
  */
 export namespace WorkspaceDiagnosticRequest {
 	export const method: 'workspace/diagnostic' = 'workspace/diagnostic';
@@ -410,7 +385,6 @@ export namespace WorkspaceDiagnosticRequest {
  * The diagnostic refresh request definition.
  *
  * @since 3.17.0
- * @proposed
  */
 export namespace DiagnosticRefreshRequest {
 	export const method: `workspace/diagnostic/refresh` = `workspace/diagnostic/refresh`;
