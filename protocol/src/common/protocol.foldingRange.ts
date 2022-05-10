@@ -41,7 +41,6 @@ export interface FoldingRangeClientCapabilities {
 	 * Specific options for the folding range kind.
 	 *
 	 * @since 3.17.0
-	 * @proposed
 	 */
 	foldingRangeKind? : {
 		/**
@@ -56,7 +55,6 @@ export interface FoldingRangeClientCapabilities {
 	/**
 	 * Specific options for the folding range.
 	 * @since 3.17.0
-	 * @proposed
 	 */
 	foldingRange?: {
 		/**
@@ -64,7 +62,6 @@ export interface FoldingRangeClientCapabilities {
 		* folding ranges to display custom labels instead of the default text.
 		*
 		* @since 3.17.0
-		* @proposed
 		*/
 		collapsedText?: boolean;
 	};

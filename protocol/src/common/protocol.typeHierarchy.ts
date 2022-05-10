@@ -14,7 +14,6 @@ import type {
 
 /**
  * @since 3.17.0
- * @proposed
  */
 export type TypeHierarchyClientCapabilities = {
 	/**
@@ -29,7 +28,6 @@ export type TypeHierarchyClientCapabilities = {
  * Type hierarchy options used during static registration.
  *
  * @since 3.17.0
- * @proposed
  */
 export type TypeHierarchyOptions = WorkDoneProgressOptions;
 
@@ -37,7 +35,6 @@ export type TypeHierarchyOptions = WorkDoneProgressOptions;
  * Type hierarchy options used during static or dynamic registration.
  *
  * @since 3.17.0
- * @proposed
  */
 export type TypeHierarchyRegistrationOptions = TextDocumentRegistrationOptions & TypeHierarchyOptions & StaticRegistrationOptions;
 
@@ -45,7 +42,6 @@ export type TypeHierarchyRegistrationOptions = TextDocumentRegistrationOptions &
  * The parameter of a `textDocument/prepareTypeHierarchy` request.
  *
  * @since 3.17.0
- * @proposed
  */
 export type TypeHierarchyPrepareParams = TextDocumentPositionParams & WorkDoneProgressParams;
 
@@ -54,7 +50,6 @@ export type TypeHierarchyPrepareParams = TextDocumentPositionParams & WorkDonePr
  * Can be used as an input to a subtypes or supertypes type hierarchy.
  *
  * @since 3.17.0
- * @proposed
  */
 export namespace TypeHierarchyPrepareRequest {
 	export const method: 'textDocument/prepareTypeHierarchy' = 'textDocument/prepareTypeHierarchy';
@@ -66,7 +61,6 @@ export namespace TypeHierarchyPrepareRequest {
  * The parameter of a `typeHierarchy/supertypes` request.
  *
  * @since 3.17.0
- * @proposed
  */
 export type TypeHierarchySupertypesParams = WorkDoneProgressParams & PartialResultParams & {
 	item: TypeHierarchyItem;
@@ -76,7 +70,6 @@ export type TypeHierarchySupertypesParams = WorkDoneProgressParams & PartialResu
  * A request to resolve the supertypes for a given `TypeHierarchyItem`.
  *
  * @since 3.17.0
- * @proposed
  */
 export namespace TypeHierarchySupertypesRequest {
 	export const method: 'typeHierarchy/supertypes' = 'typeHierarchy/supertypes';
@@ -88,7 +81,6 @@ export namespace TypeHierarchySupertypesRequest {
  * The parameter of a `typeHierarchy/subtypes` request.
  *
  * @since 3.17.0
- * @proposed
  */
 export type TypeHierarchySubtypesParams = WorkDoneProgressParams & PartialResultParams & {
 	item: TypeHierarchyItem;
@@ -98,7 +90,6 @@ export type TypeHierarchySubtypesParams = WorkDoneProgressParams & PartialResult
  * A request to resolve the subtypes for a given `TypeHierarchyItem`.
  *
  * @since 3.17.0
- * @proposed
  */
 export namespace TypeHierarchySubtypesRequest {
 	export const method: 'typeHierarchy/subtypes' = 'typeHierarchy/subtypes';

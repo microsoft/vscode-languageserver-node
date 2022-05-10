@@ -213,14 +213,16 @@ export class LanguageClient extends BaseLanguageClient {
 	}
 
 	private checkProcessDied(childProcess: ChildProcess | undefined): void {
-		if (!childProcess) {
+		if (!childProcess || childProcess.pid === undefined) {
 			return;
 		}
 		setTimeout(() => {
 			// Test if the process is still alive. Throws an exception if not
 			try {
-				process.kill(childProcess.pid, <any>0);
-				terminate(childProcess);
+				if (childProcess.pid !== undefined) {
+					process.kill(childProcess.pid, <any>0);
+					terminate(childProcess as (ChildProcess & { pid: number }));
+				}
 			} catch (error) {
 				// All is fine.
 			}

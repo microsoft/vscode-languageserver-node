@@ -13,11 +13,11 @@ import {
 import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
 
 export interface ProvideSelectionRangeSignature {
-	(this: void, document: TextDocument, positions: VPosition[], token: CancellationToken): ProviderResult<VSelectionRange[]>;
+	(this: void, document: TextDocument, positions: readonly VPosition[], token: CancellationToken): ProviderResult<VSelectionRange[]>;
 }
 
 export interface SelectionRangeProviderMiddleware {
-	provideSelectionRanges?: (this: void, document: TextDocument, positions: VPosition[], token: CancellationToken, next: ProvideSelectionRangeSignature) => ProviderResult<VSelectionRange[]>;
+	provideSelectionRanges?: (this: void, document: TextDocument, positions: readonly VPosition[], token: CancellationToken, next: ProvideSelectionRangeSignature) => ProviderResult<VSelectionRange[]>;
 }
 
 export class SelectionRangeFeature extends TextDocumentLanguageFeature<boolean | SelectionRangeOptions, SelectionRangeRegistrationOptions, SelectionRangeProvider, SelectionRangeProviderMiddleware> {

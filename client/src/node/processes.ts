@@ -11,7 +11,7 @@ import { join } from 'path';
 const isWindows = (process.platform === 'win32');
 const isMacintosh = (process.platform === 'darwin');
 const isLinux = (process.platform === 'linux');
-export function terminate(process: ChildProcess, cwd?: string): boolean {
+export function terminate(process: ChildProcess & { pid: number }, cwd?: string): boolean {
 	if (isWindows) {
 		try {
 			// This we run in Atom execFileSync is available.
