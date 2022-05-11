@@ -91,7 +91,6 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 		assign(value, this._clientCapability, true);
 	}
 
-
 	public initialize(capabilities: proto.ServerCapabilities): void {
 		const options = capabilities.workspace?.fileOperations;
 		const capability = options !== undefined ? access(options, this._serverCapability) : undefined;

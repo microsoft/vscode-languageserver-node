@@ -431,6 +431,13 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private _clientOptions: ResolvedClientOptions;
 
 	private _state: ClientState;
+	private _onStart: Promise<void> | undefined;
+	private _onStop: Promise<void> | undefined;
+	private _connection: Connection | undefined;
+	private _idleInterval: Disposable | undefined;
+	private readonly _ignoredRegistrations: Set<string>;
+	// private _idleStart: number | undefined;
+
 	private readonly _notificationHandlers: Map<string, GenericNotificationHandler>;
 	private readonly _notificationDisposables: Map<string, Disposable>;
 	private readonly _pendingNotificationHandlers: Map<string, GenericNotificationHandler>;
@@ -440,12 +447,6 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private readonly _progressHandlers: Map<string | number,  { type: ProgressType<any>; handler: NotificationHandler<any> }>;
 	private readonly _pendingProgressHandlers: Map<string | number,  { type: ProgressType<any>; handler: NotificationHandler<any> }>;
 	private readonly _progressDisposables: Map<string | number,  Disposable>;
-
-	private _onStart: Promise<void> | undefined;
-	private _onStop: Promise<void> | undefined;
-	private _connection: Connection | undefined;
-	private _idleInterval: Disposable | undefined;
-	// private _idleStart: number | undefined;
 
 	private _initializeResult: InitializeResult | undefined;
 	private _outputChannel: OutputChannel | undefined;
@@ -510,6 +511,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this._clientOptions.synchronize = this._clientOptions.synchronize || {};
 
 		this._state = ClientState.Initial;
+		this._ignoredRegistrations = new Set();
+
 		this._notificationHandlers = new Map();
 		this._pendingNotificationHandlers = new Map();
 		this._notificationDisposables = new Map();
@@ -925,12 +928,15 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (this._onStart !== undefined) {
 			return this._onStart;
 		}
+		const [promise, resolve, reject] = this.createOnStartPromise();
+		this._onStart = promise;
+
+		// We are currently stopping the language client. Await the stop
+		// before continuing.
 		if (this._onStop !== undefined) {
 			await this._onStop;
 			this._onStop = undefined;
 		}
-		const [promise, resolve, reject] = this.createOnStartPromise();
-		this._onStart = promise;
 		// If we restart then the diagnostics collection is reused.
 		if (this._diagnostics === undefined) {
 			this._diagnostics = this._clientOptions.diagnosticCollectionName
@@ -1206,12 +1212,12 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		return undefined;
 	}
 
-	public async stop(timeout: number = 2000): Promise<void> {
+	public stop(timeout: number = 2000): Promise<void> {
 		// Wait 2 seconds on stop
 		return this.shutdown('stop', timeout);
 	}
 
-	public async suspend(): Promise<void> {
+	public suspend(): Promise<void> {
 		// Wait 5 seconds on suspend.
 		return this.shutdown('suspend', 5000);
 	}
@@ -1259,6 +1265,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			this._onStart = undefined;
 			this._onStop = undefined;
 			this._connection = undefined;
+			this._ignoredRegistrations.clear();
 		});
 	}
 
@@ -1699,6 +1706,15 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	private async handleRegistrationRequest(params: RegistrationParams): Promise<void> {
+		// We will not receive a registration call before a client is running
+		// from a server. However if we stop or shutdown we might which might
+		// try to restart the server. So ignore registrations if we are not running
+		if (!this.isRunning()) {
+			for (const registration of params.registrations) {
+				this._ignoredRegistrations.add(registration.id);
+			}
+			return;
+		}
 		interface WithDocumentSelector {
 			documentSelector: DocumentSelector | undefined;
 		}
@@ -1723,6 +1739,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 	private async handleUnregistrationRequest(params: UnregistrationParams): Promise<void> {
 		for (let unregistration of params.unregisterations) {
+			if (this._ignoredRegistrations.has(unregistration.id)) {
+				continue;
+			}
 			const feature = this._dynamicFeatures.get(unregistration.method);
 			if (!feature) {
 				return Promise.reject(new Error(`No feature implementation for ${unregistration.method} found. Unregistration failed.`));
