@@ -34,7 +34,7 @@ import {
 	DocumentOnTypeFormattingRequest, RenameRequest, DocumentSymbolRequest, DocumentLinkRequest, DocumentColorRequest, DeclarationRequest, FoldingRangeRequest,
 	ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, CallHierarchyPrepareRequest, SemanticTokensRegistrationType, LinkedEditingRangeRequest,
 	TypeHierarchyPrepareRequest, InlineValueRequest, InlayHintRequest, WorkspaceSymbolRequest, TextDocumentRegistrationOptions, FileOperationRegistrationOptions,
-	ConnectionOptions, PositionEncodingKind, DocumentDiagnosticRequest, NotebookDocumentSyncRegistrationType, NotebookDocumentSyncRegistrationOptions
+	ConnectionOptions, PositionEncodingKind, DocumentDiagnosticRequest, NotebookDocumentSyncRegistrationType, NotebookDocumentSyncRegistrationOptions, ErrorCodes
 } from 'vscode-languageserver-protocol';
 
 import * as c2p from './codeConverter';
@@ -1790,6 +1790,11 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	public handleFailedRequest<T>(type: MessageSignature, token: CancellationToken | undefined, error: any, defaultValue: T, showNotification: boolean = true): T {
 		// If we get a request cancel or a content modified don't log anything.
 		if (error instanceof ResponseError) {
+			// The connection got disposed while we were waiting for a response.
+			// Simply return the default value. Is the best we can do.
+			if (error.code === ErrorCodes.PendingResponseRejected) {
+				return defaultValue;
+			}
 			if (error.code === LSPErrorCodes.RequestCancelled || error.code === LSPErrorCodes.ServerCancelled) {
 				if (token !== undefined && token.isCancellationRequested) {
 					return defaultValue;

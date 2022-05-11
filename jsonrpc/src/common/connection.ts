@@ -1392,7 +1392,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			}
 			state = ConnectionState.Disposed;
 			disposeEmitter.fire(undefined);
-			const error = new Error('Connection got disposed.');
+			const error = new ResponseError(ErrorCodes.PendingResponseRejected, 'Pending response rejected since connection got disposed');
 			for (const promise of responsePromises.values()) {
 				promise.reject(error);
 			}

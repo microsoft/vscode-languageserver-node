@@ -59,6 +59,7 @@ export namespace ErrorCodes {
 
 	export const MessageWriteError: -32099 = -32099;
 	export const MessageReadError: -32098 = -32098;
+	export const PendingResponseRejected: -32097 = -32097;
 
 	/**
 	 * Error code indicating that a server received a notification or
