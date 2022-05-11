@@ -1566,7 +1566,7 @@ suite('Server tests', () => {
 
 		await assert.rejects(async () => {
 			await client.stop();
-		}, /Connection got disposed/);
+		}, /Pending response rejected since connection got disposed/);
 		assert.strictEqual(client.needsStart(), true);
 		assert.strictEqual(client.needsStop(), false);
 
