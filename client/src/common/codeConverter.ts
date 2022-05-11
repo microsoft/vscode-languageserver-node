@@ -753,7 +753,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (context === undefined || context === null) {
 			return context;
 		}
-		return proto.InlineValueContext.create(context.frameId, context.stoppedLocation);
+		return proto.InlineValueContext.create(context.frameId, asRange(context.stoppedLocation));
 	}
 
 	function asCommand(item: code.Command): proto.Command {
