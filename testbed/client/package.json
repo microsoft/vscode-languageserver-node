@@ -5,11 +5,13 @@
 	"private": true,
 	"publisher": "vscode",
 	"engines": {
-		"vscode": "^1.40.0"
+		"vscode": "^1.67.0"
 	},
 	"scripts": {
 		"watch": "tsc -watch -b ./tsconfig.json",
 		"compile": "tsc -b ./tsconfig.json"
 	},
-	"devDependencies": {}
+	"devDependencies": {
+		"@types/vscode": "1.67.0"
+	}
 }

@@ -17,7 +17,7 @@ import {
 	TextEdit, ProposedFeatures, DiagnosticTag, InsertTextFormat, SelectionRangeRequest, SelectionRange, InsertReplaceEdit,
 	SemanticTokensClientCapabilities, SemanticTokensLegend, SemanticTokensBuilder, SemanticTokensRegistrationType,
 	SemanticTokensRegistrationOptions, ProtocolNotificationType, ChangeAnnotation, WorkspaceChange, CompletionItemKind, DiagnosticSeverity,
-	DocumentDiagnosticReportKind, WorkspaceDiagnosticReport, NotebookDocuments
+	DocumentDiagnosticReportKind, WorkspaceDiagnosticReport, NotebookDocuments, FileSystemWatcher, WatchKind, DidChangeWatchedFilesNotification, Disposable
 } from 'vscode-languageserver/node';
 
 import {
@@ -180,6 +180,9 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 	});
 });
 
+const disposable: Disposable[] = [];
+const registrations: Promise<void>[] = [];
+
 connection.onInitialized((params) => {
 	connection.workspace.onDidChangeWorkspaceFolders((event) => {
 		connection.console.log('Workspace folder changed received');
@@ -197,16 +200,36 @@ connection.onInitialized((params) => {
 			delta: true
 		}
 	};
+	// registrations.push(connection.client.register(SemanticTokensRegistrationType.type, registrationOptions).then(d =>
+	// {
+	// 	disposable.push(d);
+	// }));
+
 	void connection.client.register(SemanticTokensRegistrationType.type, registrationOptions);
+	const watchers: FileSystemWatcher[] = [
+		{
+			globPattern: '**',
+			kind: WatchKind.Create | WatchKind.Change | WatchKind.Delete,
+		},
+	];
+	// registrations.push(connection.client.register(DidChangeWatchedFilesNotification.type, { watchers }).then(d => {
+	// 	disposable.push(d);
+	// }));
+
+	void connection.client.register(DidChangeWatchedFilesNotification.type, { watchers });
 });
 
-connection.onShutdown((_handler) => {
+connection.onShutdown(async (_handler) => {
 	// connection.console.log('Shutdown received');
 	// return new Promise((resolve, reject) => {
 	// 	setTimeout(() => {
 	// 		resolve(undefined);
 	// 	}, 3000);
 	// });
+
+	// connection.console.log('disposing');
+	// await Promise.all(registrations);
+	// disposable.forEach(d => d.dispose());
 });
 
 documents.onDidChangeContent((event) => {

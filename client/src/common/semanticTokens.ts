@@ -117,6 +117,8 @@ export class SemanticTokensFeature extends TextDocumentLanguageFeature<boolean |
 	}
 
 	protected registerLanguageProvider(options: SemanticTokensRegistrationOptions): [vscode.Disposable, SemanticTokensProviderShape] {
+		this._client.info('***** semantic registered');
+
 		const selector = options.documentSelector!;
 		const fullProvider = Is.boolean(options.full) ? options.full : options.full !== undefined;
 		const hasEditProvider = options.full !== undefined && typeof options.full !== 'boolean' && options.full.delta === true;
@@ -212,6 +214,9 @@ export class SemanticTokensFeature extends TextDocumentLanguageFeature<boolean |
 			disposables.push(vscode.languages.registerDocumentRangeSemanticTokensProvider(documentSelector, rangeProvider, legend));
 		}
 
-		return [new vscode.Disposable(() => disposables.forEach(item => item.dispose())), { range: rangeProvider, full: documentProvider, onDidChangeSemanticTokensEmitter: eventEmitter }];
+		return [new vscode.Disposable(() => {
+			this._client.info('***** disposed');
+			disposables.forEach(item => item.dispose());
+		}), { range: rangeProvider, full: documentProvider, onDidChangeSemanticTokensEmitter: eventEmitter }];
 	}
 }

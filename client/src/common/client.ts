@@ -922,6 +922,10 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	public async start(): Promise<void> {
+		return this.startInternal(true);
+	}
+
+	private async startInternal(allowRestart = false): Promise<void> {
 		if (this._onStart !== undefined) {
 			return this._onStart;
 		}
@@ -929,6 +933,15 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			await this._onStop;
 			this._onStop = undefined;
 		}
+
+		if (!allowRestart) {
+			this.outputChannel.appendLine(`***** already stopped. client ${this.name}`);
+
+			throw new LSPCancellationError({ retriggerRequest: false });
+		}
+
+		this.outputChannel.appendLine(`***** starting ${this.name}`);
+
 		const [promise, resolve, reject] = this.createOnStartPromise();
 		this._onStart = promise;
 		// If we restart then the diagnostics collection is reused.
@@ -957,6 +970,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		}
 
 		this.$state = ClientState.Starting;
+		this.outputChannel.appendLine(`***** state: ${this.name} ${this.$state}`);
+
 		try {
 			const connection = await this.createConnection();
 			connection.onNotification(LogMessageNotification.type, (message) => {
@@ -1111,6 +1126,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 			this._initializeResult = result;
 			this.$state = ClientState.Running;
+			this.outputChannel.appendLine(`***** state: ${this.name} ${this.$state}`);
 
 			let textDocumentSyncOptions: TextDocumentSyncOptions | undefined = undefined;
 			if (Is.number(result.capabilities.textDocumentSync)) {
@@ -1207,6 +1223,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	public async stop(timeout: number = 2000): Promise<void> {
+		this.outputChannel.appendLine(`***** stop called ${this.name} ${this.$state}`);
 		// Wait 2 seconds on stop
 		return this.shutdown('stop', timeout);
 	}
@@ -1232,6 +1249,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 		this._initializeResult = undefined;
 		this.$state = ClientState.Stopping;
+		this.outputChannel.appendLine(`***** state: ${this.name} ${this.$state}`);
+
 		this.cleanUp(mode);
 
 		const tp = new Promise<undefined>(c => { RAL().timer.setTimeout(c, timeout); });
@@ -1244,6 +1263,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		return this._onStop = Promise.race([tp, shutdown]).then((connection) => {
 			// The connection won the race with the timeout.
 			if (connection !== undefined) {
+				this.outputChannel.appendLine(`***** shutdown: ${this.name} ${this.$state}`);
 				connection.end();
 				connection.dispose();
 			} else {
@@ -1255,6 +1275,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			throw error;
 		}).finally(() => {
 			this.$state = ClientState.Stopped;
+			this.outputChannel.appendLine(`***** state: ${this.name} ${this.$state}`);
+
 			mode === 'stop' && this.cleanUpChannel();
 			this._onStart = undefined;
 			this._onStop = undefined;
@@ -1382,7 +1404,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (this.$state === ClientState.StartFailed) {
 			throw new Error(`Previous start failed. Can't restart server.`);
 		}
-		await this.start();
+		await this.startInternal();
 		const connection = this.activeConnection();
 		if (connection === undefined) {
 			throw new Error(`Starting server failed`);
@@ -1405,6 +1427,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	protected handleConnectionClosed(): void {
+		this.outputChannel.appendLine(`***** handleConnectionClosed ${this.name} ${this.$state}`);
 		// Check whether this is a normal shutdown in progress or the client stopped normally.
 		if (this.$state === ClientState.Stopped) {
 			return;
@@ -1433,12 +1456,15 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			} else {
 				this.$state = ClientState.Stopped;
 			}
+			this.outputChannel.appendLine(`***** state: ${this.name} ${this.$state}`);
+
 			this._onStop = Promise.resolve();
 			this._onStart = undefined;
 		} else if (handlerResult.action === CloseAction.Restart) {
 			this.info(handlerResult.message ?? 'Connection to server got closed. Server will restart.');
 			this.cleanUp('restart');
 			this.$state = ClientState.Initial;
+			this.outputChannel.appendLine(`***** state: ${this.name} ${this.$state}`);
 			this._onStop = Promise.resolve();
 			this._onStart = undefined;
 			this.start().catch((error) => this.error(`Restarting server failed`, error, 'force'));
