@@ -1014,7 +1014,10 @@ export default class Visitor {
 			const end = ranges[ranges.length -1 ].end;
 			const text = fullText.substring(start, end).trim();
 			if (text.startsWith('/**')) {
-				return text.replace(/^(\s*\/\*\*)|^(\s*\*\/)|^(\s*\*\s)/gm, '').trim();
+				let result = text.replace(/^(\s*\/\*\*)|^(\s*\*\/)|^(\s*\*\s)/gm, '').trim();
+				result = result.replace(/\r/g, '');
+				result = result.replace(/\n/g, ' ');
+				return result;
 
 			}
 		}

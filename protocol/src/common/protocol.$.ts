@@ -8,6 +8,7 @@ import { SemanticTokenTypes, SemanticTokenModifiers, LSPAny } from 'vscode-langu
 
 import { ProtocolNotificationType } from './messages';
 import { LSPErrorCodes } from './api';
+import { WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressReport } from './protocol.progress';
 
 // This file is used to define the $ notification partly specified in JSON-RPC
 // so that we generate proper data for them in the meta model.
@@ -62,3 +63,12 @@ interface ProgressParams {
 namespace ProgressNotification {
 	export const type = new ProtocolNotificationType<ProgressParams, void>('$/progress');
 }
+
+// @ts-ignore 6196
+type $WorkDoneProgressBegin = WorkDoneProgressBegin;
+
+// @ts-ignore 6196
+type $WorkDoneProgressReport = WorkDoneProgressReport;
+
+// @ts-ignore 6196
+type $WorkDoneProgressEnd = WorkDoneProgressEnd;
