@@ -361,6 +361,9 @@ class DiagnosticRequestor implements Disposable {
 	}
 
 	public pull(document: TextDocument | Uri, cb?: () => void): void {
+		if (this.isDisposed) {
+			return;
+		}
 		const uri = document instanceof Uri ? document : document.uri;
 		this.pullAsync(document).then(() => {
 			if (cb) {
@@ -372,6 +375,9 @@ class DiagnosticRequestor implements Disposable {
 	}
 
 	private async pullAsync(document: TextDocument | Uri, version?: number | undefined): Promise<void> {
+		if (this.isDisposed) {
+			return;
+		}
 		const isUri = document instanceof Uri;
 		const uri = isUri ? document : document.uri;
 		const key = uri.toString();
@@ -456,6 +462,9 @@ class DiagnosticRequestor implements Disposable {
 	}
 
 	public pullWorkspace(): void {
+		if (this.isDisposed) {
+			return;
+		}
 		this.pullWorkspaceAsync().then(() => {
 			this.workspaceTimeout = RAL().timer.setTimeout(() => {
 				this.pullWorkspace();
@@ -474,7 +483,7 @@ class DiagnosticRequestor implements Disposable {
 	}
 
 	private async pullWorkspaceAsync(): Promise<void> {
-		if (!this.provider.provideWorkspaceDiagnostics) {
+		if (!this.provider.provideWorkspaceDiagnostics || this.isDisposed) {
 			return;
 		}
 		if (this.workspaceCancellation !== undefined) {
@@ -515,6 +524,9 @@ class DiagnosticRequestor implements Disposable {
 						textDocument: { uri: this.client.code2ProtocolConverter.asUri(document instanceof Uri ? document : document.uri) },
 						previousResultId: previousResultId
 					};
+					if (this.isDisposed === true || !this.client.isRunning()) {
+						return { kind: vsdiag.DocumentDiagnosticReportKind.full, items: [] };
+					}
 					return this.client.sendRequest(DocumentDiagnosticRequest.type, params, token).then(async (result) => {
 						if (result === undefined || result === null || this.isDisposed || token.isCancellationRequested) {
 							return { kind: vsdiag.DocumentDiagnosticReportKind.full, items: [] };
@@ -585,6 +597,9 @@ class DiagnosticRequestor implements Disposable {
 						previousResultIds: convertPreviousResultIds(resultIds),
 						partialResultToken: partialResultToken
 					};
+					if (this.isDisposed === true || !this.client.isRunning()) {
+						return { items: [] };
+					}
 					return this.client.sendRequest(WorkspaceDiagnosticRequest.type, params, token).then(async (result): Promise<vsdiag.WorkspaceDiagnosticReport> => {
 						if (token.isCancellationRequested) {
 							return { items: [] };
@@ -640,13 +655,22 @@ class BackgroundScheduler implements Disposable {
 	private endDocument: TextDocument | Uri | undefined;
 	private readonly documents: LinkedMap<string, TextDocument | Uri>;
 	private intervalHandle: Disposable | undefined;
+	// The problem is that there could be outstanding diagnostic requests
+	// when we shutdown which when we receive the result will trigger a
+	// reschedule. So we remember if the background scheduler got disposed
+	// and ignore those re-schedules
+	private isDisposed: boolean;
 
 	public constructor(diagnosticRequestor: DiagnosticRequestor) {
 		this.diagnosticRequestor = diagnosticRequestor;
 		this.documents = new LinkedMap();
+		this.isDisposed = false;
 	}
 
 	public add(document: TextDocument | Uri): void {
+		if (this.isDisposed === true) {
+			return;
+		}
 		const key = document instanceof Uri ? document.toString() : document.uri.toString();
 		if (this.documents.has(key)) {
 			return;
@@ -672,6 +696,9 @@ class BackgroundScheduler implements Disposable {
 	}
 
 	public trigger(): void {
+		if (this.isDisposed === true) {
+			return;
+		}
 		// We have a round running. So simply make sure we run up to the
 		// last document
 		if (this.intervalHandle !== undefined) {
@@ -693,6 +720,7 @@ class BackgroundScheduler implements Disposable {
 	}
 
 	public dispose(): void {
+		this.isDisposed = true;
 		this.stop();
 		this.documents.clear();
 	}
@@ -866,11 +894,10 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 
 export class DiagnosticFeature extends TextDocumentLanguageFeature<DiagnosticOptions, DiagnosticRegistrationOptions, DiagnosticProviderShape, DiagnosticProviderMiddleware, $DiagnosticPullOptions> {
 
-	private readonly tabs: Tabs;
+	private tabs: Tabs | undefined;
 
 	constructor(client: FeatureClient<DiagnosticProviderMiddleware, $DiagnosticPullOptions>) {
 		super(client, DocumentDiagnosticRequest.type);
-		this.tabs = new Tabs();
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
@@ -899,11 +926,17 @@ export class DiagnosticFeature extends TextDocumentLanguageFeature<DiagnosticOpt
 	}
 
 	public dispose(): void {
-		this.tabs.dispose();
+		if (this.tabs !== undefined) {
+			this.tabs.dispose();
+			this.tabs = undefined;
+		}
 		super.dispose();
 	}
 
 	protected registerLanguageProvider(options: DiagnosticRegistrationOptions): [Disposable, DiagnosticProviderShape] {
+		if (this.tabs === undefined) {
+			this.tabs = new Tabs();
+		}
 		const provider = new DiagnosticFeatureProviderImpl(this._client, this.tabs, options);
 		return [provider.disposable, provider];
 	}
