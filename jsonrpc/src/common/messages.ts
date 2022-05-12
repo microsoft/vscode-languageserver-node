@@ -57,9 +57,26 @@ export namespace ErrorCodes {
 	/** @deprecated use  jsonrpcReservedErrorRangeStart */
 	export const serverErrorStart: -32099 = /* jsonrpcReservedErrorRangeStart */ -32099;
 
+	/**
+	 * An error occurred when write a message to the transport layer.
+	 */
 	export const MessageWriteError: -32099 = -32099;
+
+	/**
+	 * An error occurred when reading a message from the transport layer.
+	 */
 	export const MessageReadError: -32098 = -32098;
+
+	/**
+	 * The connection got disposed or lost and all pending responses got
+	 * rejected.
+	 */
 	export const PendingResponseRejected: -32097 = -32097;
+
+	/**
+	 * The connection is inactive and a use of it failed.
+	 */
+	export const ConnectionInactive: -32096 = -32096;
 
 	/**
 	 * Error code indicating that a server received a notification or

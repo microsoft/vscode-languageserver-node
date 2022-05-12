@@ -645,6 +645,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	public sendRequest<R>(method: string, token?: CancellationToken): Promise<R>;
 	public sendRequest<R>(method: string, param: any, token?: CancellationToken): Promise<R>;
 	public async sendRequest<R>(type: string | MessageSignature, ...params: any[]): Promise<R> {
+		if (this.$state === ClientState.StartFailed || this.$state === ClientState.Stopping || this.$state === ClientState.Stopped) {
+			return Promise.reject(new ResponseError(ErrorCodes.ConnectionInactive, `Client is not running`));
+		}
 		try {
 			// Ensure we have a connection before we force the document sync.
 			const connection = await this.$start();
@@ -705,6 +708,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	public sendNotification(method: string): Promise<void>;
 	public sendNotification(method: string, params: any): Promise<void>;
 	public async sendNotification<P>(type: string | MessageSignature, params?: P): Promise<void> {
+		if (this.$state === ClientState.StartFailed || this.$state === ClientState.Stopping || this.$state === ClientState.Stopped) {
+			return Promise.reject(new ResponseError(ErrorCodes.ConnectionInactive, `Client is not running`));
+		}
 		try {
 			// Ensure we have a connection before we force the document sync.
 			const connection = await this.$start();
@@ -1792,7 +1798,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (error instanceof ResponseError) {
 			// The connection got disposed while we were waiting for a response.
 			// Simply return the default value. Is the best we can do.
-			if (error.code === ErrorCodes.PendingResponseRejected) {
+			if (error.code === ErrorCodes.PendingResponseRejected || error.code === ErrorCodes.ConnectionInactive) {
 				return defaultValue;
 			}
 			if (error.code === LSPErrorCodes.RequestCancelled || error.code === LSPErrorCodes.ServerCancelled) {
