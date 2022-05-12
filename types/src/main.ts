@@ -3872,8 +3872,8 @@ export type InlineValue = InlineValueText | InlineValueVariableLookup | InlineVa
 export type InlineValueContext = {
 
 	/**
-     * The stack frame (as a DAP Id) where the execution has stopped.
-     */
+	 * The stack frame (as a DAP Id) where the execution has stopped.
+	 */
 	frameId: number;
 
 	/**
