@@ -197,7 +197,29 @@ export enum Trace {
 	Off, Messages, Compact, Verbose
 }
 
+export namespace TraceValues {
+	/**
+	 * Turn tracing off.
+	 */
+	export const Off: 'off' = 'off';
+
+	/**
+	 * Trace messages only.
+	 */
+	export const Messages: 'messages' = 'messages';
+
+	/**
+	 * Compact message tracing.
+	 */
+	export const Compact: 'compact' = 'compact';
+
+	/**
+	 * Verbose message tracing.
+	 */
+	export const Verbose: 'verbose' = 'verbose';
+}
 export type TraceValues = 'off' | 'messages' | 'compact' | 'verbose';
+
 export namespace Trace {
 	export function fromString(value: string): Trace {
 		if (!Is.string(value)) {
