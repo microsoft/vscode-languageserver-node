@@ -629,6 +629,19 @@ export default class Visitor {
 			// Currently we only us the typeof operator to get to the type of a enum
 			// value expressed by an or type (e.g. kind: typeof DocumentDiagnosticReportKind.full)
 			// So we assume a qualifed name and turn it into a string literal type
+			const typeNodeSymbol = this.typeChecker.getSymbolAtLocation(typeNode.exprName);
+			if (typeNodeSymbol === undefined) {
+				throw new Error(`Can't resolve symbol for right hand side of enum declaration`);
+			}
+			const declaration = this.getDeclaration(typeNodeSymbol, ts.SyntaxKind.VariableDeclaration);
+			if (declaration === undefined || !ts.isVariableDeclaration(declaration) || declaration.initializer === undefined) {
+				throw new Error(`Can't resolve variable declaration for right hand side of enum declaration`);
+			}
+			if (ts.isNumericLiteral(declaration.initializer)) {
+				return { kind: 'integerLiteral', value: Number.parseInt(declaration.initializer.getText()) };
+			} else if (ts.isStringLiteral(declaration.initializer)) {
+				return { kind: 'stringLiteral', value: this.removeQuotes(declaration.initializer.getText()) };
+			}
 			return { kind: 'stringLiteral', value: typeNode.exprName.right.getText() };
 		} else if (ts.isParenthesizedTypeNode(typeNode)) {
 			return this.getTypeInfo(typeNode.type);
