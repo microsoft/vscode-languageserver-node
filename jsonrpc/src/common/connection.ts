@@ -644,7 +644,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		const message = messageQueue.shift()!;
 		try {
 			const messageStrategy = options?.messageStrategy;
-			if (messageStrategy && messageStrategy.handleMessage) {
+			if (messageStrategy && MessageStrategy.is(messageStrategy)) {
 				messageStrategy.handleMessage(message, handleMessage);
 			} else {
 				handleMessage(message);
