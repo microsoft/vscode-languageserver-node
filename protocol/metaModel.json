@@ -12596,38 +12596,31 @@
 				},
 				{
 					"name": "jsonrpcReservedErrorRangeStart",
-					"value": -32099,
-					"documentation": "This is the start range of JSON RPC reserved error codes.\nIt doesn't denote a real error code. No application error codes should\nbe defined between the start and end range. For backwards\ncompatibility the `ServerNotInitialized` and the `UnknownErrorCode`\nare left in the range.\n\n@since 3.16.0"
+					"value": -32099
 				},
 				{
 					"name": "serverErrorStart",
-					"value": -32099,
-					"documentation": "@deprecated use  jsonrpcReservedErrorRangeStart */"
+					"value": -32099
 				},
 				{
 					"name": "MessageWriteError",
-					"value": -32099,
-					"documentation": "An error occurred when write a message to the transport layer."
+					"value": -32099
 				},
 				{
 					"name": "MessageReadError",
-					"value": -32098,
-					"documentation": "An error occurred when reading a message from the transport layer."
+					"value": -32098
 				},
 				{
 					"name": "PendingResponseRejected",
-					"value": -32097,
-					"documentation": "The connection got disposed or lost and all pending responses got\nrejected."
+					"value": -32097
 				},
 				{
 					"name": "ConnectionInactive",
-					"value": -32096,
-					"documentation": "The connection is inactive and a use of it failed."
+					"value": -32096
 				},
 				{
 					"name": "ServerNotInitialized",
-					"value": -32002,
-					"documentation": "Error code indicating that a server received a notification or\nrequest before the server has received the `initialize` request."
+					"value": -32002
 				},
 				{
 					"name": "UnknownErrorCode",
@@ -12635,13 +12628,11 @@
 				},
 				{
 					"name": "jsonrpcReservedErrorRangeEnd",
-					"value": -32000,
-					"documentation": "This is the end range of JSON RPC reserved error codes.\nIt doesn't denote a real error code.\n\n@since 3.16.0"
+					"value": -32000
 				},
 				{
 					"name": "serverErrorEnd",
-					"value": -32000,
-					"documentation": "@deprecated use  jsonrpcReservedErrorRangeEnd */"
+					"value": -32000
 				}
 			],
 			"supportsCustomValues": true
@@ -12689,18 +12680,15 @@
 			"values": [
 				{
 					"name": "Comment",
-					"value": "comment",
-					"documentation": "Folding range for a comment"
+					"value": "comment"
 				},
 				{
 					"name": "Imports",
-					"value": "imports",
-					"documentation": "Folding range for a imports or includes"
+					"value": "imports"
 				},
 				{
 					"name": "Region",
-					"value": "region",
-					"documentation": "Folding range for a region (e.g. `#region`)"
+					"value": "region"
 				}
 			],
 			"supportsCustomValues": true,
@@ -12828,8 +12816,7 @@
 			"values": [
 				{
 					"name": "Deprecated",
-					"value": 1,
-					"documentation": "Render a symbol as obsolete, usually using a strike-out."
+					"value": 1
 				}
 			]
 		},
@@ -12892,13 +12879,11 @@
 			"values": [
 				{
 					"name": "Type",
-					"value": 1,
-					"documentation": "An inlay hint that for a type annotation."
+					"value": 1
 				},
 				{
 					"name": "Parameter",
-					"value": 2,
-					"documentation": "An inlay hint that is for a parameter."
+					"value": 2
 				}
 			]
 		},
@@ -13087,8 +13072,7 @@
 			"values": [
 				{
 					"name": "Deprecated",
-					"value": 1,
-					"documentation": "Render a completion as obsolete, usually using a strike-out."
+					"value": 1
 				}
 			]
 		},
@@ -13101,13 +13085,11 @@
 			"values": [
 				{
 					"name": "PlainText",
-					"value": 1,
-					"documentation": "The primary text to be inserted is treated as a plain string."
+					"value": 1
 				},
 				{
 					"name": "Snippet",
-					"value": 2,
-					"documentation": "The primary text to be inserted is treated as a snippet.\n\nA snippet can define tab stops and placeholders with `$1`, `$2`\nand `${3:foo}`. `$0` defines the final tab stop, it defaults to\nthe end of the snippet. Placeholders with equal identifiers are linked,\nthat is typing in one will update others too.\n\nSee also: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#snippet_syntax"
+					"value": 2
 				}
 			]
 		},
@@ -13120,13 +13102,11 @@
 			"values": [
 				{
 					"name": "asIs",
-					"value": 1,
-					"documentation": "The insertion or replace strings is taken as it is. If the\nvalue is multi line the lines below the cursor will be\ninserted using the indentation defined in the string value.\nThe client will not apply any kind of adjustments to the\nstring."
+					"value": 1
 				},
 				{
 					"name": "adjustIndentation",
-					"value": 2,
-					"documentation": "The editor adjusts leading whitespace of new lines so that\nthey match the indentation up to the cursor of the line for\nwhich the item is accepted.\n\nConsider a line like this: <2tabs><cursor><3tabs>foo. Accepting a\nmulti line completion item is indented using 2 tabs and all\nfollowing lines inserted will be indented using 2 tabs as well."
+					"value": 2
 				}
 			]
 		},
@@ -13139,18 +13119,15 @@
 			"values": [
 				{
 					"name": "Text",
-					"value": 1,
-					"documentation": "A textual occurrence."
+					"value": 1
 				},
 				{
 					"name": "Read",
-					"value": 2,
-					"documentation": "Read-access of a symbol, like reading a variable."
+					"value": 2
 				},
 				{
 					"name": "Write",
-					"value": 3,
-					"documentation": "Write-access of a symbol, like writing to a variable."
+					"value": 3
 				}
 			]
 		},
@@ -13163,52 +13140,68 @@
 			"values": [
 				{
 					"name": "Empty",
-					"value": "",
-					"documentation": "Empty kind."
+					"value": ""
 				},
 				{
 					"name": "QuickFix",
-					"value": "quickfix",
-					"documentation": "Base kind for quickfix actions: 'quickfix'"
+					"value": "quickfix"
 				},
 				{
 					"name": "Refactor",
-					"value": "refactor",
-					"documentation": "Base kind for refactoring actions: 'refactor'"
+					"value": "refactor"
 				},
 				{
 					"name": "RefactorExtract",
-					"value": "refactor.extract",
-					"documentation": "Base kind for refactoring extraction actions: 'refactor.extract'\n\nExample extract actions:\n\n- Extract method\n- Extract function\n- Extract variable\n- Extract interface from class\n- ..."
+					"value": "refactor.extract"
 				},
 				{
 					"name": "RefactorInline",
-					"value": "refactor.inline",
-					"documentation": "Base kind for refactoring inline actions: 'refactor.inline'\n\nExample inline actions:\n\n- Inline function\n- Inline variable\n- Inline constant\n- ..."
+					"value": "refactor.inline"
 				},
 				{
 					"name": "RefactorRewrite",
-					"value": "refactor.rewrite",
-					"documentation": "Base kind for refactoring rewrite actions: 'refactor.rewrite'\n\nExample rewrite actions:\n\n- Convert JavaScript function to class\n- Add or remove parameter\n- Encapsulate field\n- Make method static\n- Move method to base class\n- ..."
+					"value": "refactor.rewrite"
 				},
 				{
 					"name": "Source",
-					"value": "source",
-					"documentation": "Base kind for source actions: `source`\n\nSource code actions apply to the entire file."
+					"value": "source"
 				},
 				{
 					"name": "SourceOrganizeImports",
-					"value": "source.organizeImports",
-					"documentation": "Base kind for an organize imports source action: `source.organizeImports`"
+					"value": "source.organizeImports"
 				},
 				{
 					"name": "SourceFixAll",
-					"value": "source.fixAll",
-					"documentation": "Base kind for auto-fix source actions: `source.fixAll`.\n\nFix all actions automatically fix errors that have a clear fix that do not require user input.\nThey should not suppress errors or perform unsafe fixes such as generating new types or classes.\n\n@since 3.15.0"
+					"value": "source.fixAll"
 				}
 			],
 			"supportsCustomValues": true,
 			"documentation": "The kind of a code action.\n\nKinds are a hierarchical list of identifiers separated by `.`, e.g. `\"refactor.extract.function\"`.\n\nThe set of kinds is open and client needs to announce the kinds it supports to the server during\ninitialization."
+		},
+		{
+			"name": "TraceValues",
+			"type": {
+				"kind": "base",
+				"name": "string"
+			},
+			"values": [
+				{
+					"name": "Off",
+					"value": "off"
+				},
+				{
+					"name": "Messages",
+					"value": "messages"
+				},
+				{
+					"name": "Compact",
+					"value": "compact"
+				},
+				{
+					"name": "Verbose",
+					"value": "verbose"
+				}
+			]
 		},
 		{
 			"name": "MarkupKind",
@@ -13219,13 +13212,11 @@
 			"values": [
 				{
 					"name": "PlainText",
-					"value": "plaintext",
-					"documentation": "Plain text is supported as a content format"
+					"value": "plaintext"
 				},
 				{
 					"name": "Markdown",
-					"value": "markdown",
-					"documentation": "Markdown is supported as a content format"
+					"value": "markdown"
 				}
 			]
 		},
@@ -13305,23 +13296,19 @@
 			"values": [
 				{
 					"name": "Error",
-					"value": 1,
-					"documentation": "Reports an error."
+					"value": 1
 				},
 				{
 					"name": "Warning",
-					"value": 2,
-					"documentation": "Reports a warning."
+					"value": 2
 				},
 				{
 					"name": "Information",
-					"value": 3,
-					"documentation": "Reports an information."
+					"value": 3
 				},
 				{
 					"name": "Hint",
-					"value": 4,
-					"documentation": "Reports a hint."
+					"value": 4
 				}
 			]
 		},
@@ -13334,13 +13321,11 @@
 			"values": [
 				{
 					"name": "Unnecessary",
-					"value": 1,
-					"documentation": "Unused or unnecessary code.\n\nClients are allowed to render diagnostics with this tag faded out instead of having\nan error squiggle."
+					"value": 1
 				},
 				{
 					"name": "Deprecated",
-					"value": 2,
-					"documentation": "Deprecated or obsolete code.\n\nClients are allowed to rendered diagnostics with this tag strike through."
+					"value": 2
 				}
 			]
 		},
@@ -13395,13 +13380,11 @@
 			"values": [
 				{
 					"name": "Invoked",
-					"value": 1,
-					"documentation": "Code actions were explicitly requested by the user or by an extension."
+					"value": 1
 				},
 				{
 					"name": "Automatic",
-					"value": 2,
-					"documentation": "Code actions were requested automatically.\n\nThis typically happens when current selection in a file changes, but can\nalso be triggered when file content changes."
+					"value": 2
 				}
 			]
 		},
@@ -13868,30 +13851,6 @@
 				]
 			},
 			"documentation": "MarkedString can be used to render human readable text. It is either a markdown string\nor a code-block that provides a language and a code snippet. The language identifier\nis semantically equal to the optional language identifier in fenced code blocks in GitHub\nissues. See https://help.github.com/articles/creating-and-highlighting-code-blocks/#syntax-highlighting\n\nThe pair of a language and a value is an equivalent to markdown:\n```${language}\n${value}\n```\n\nNote that markdown strings will be sanitized - that means html will be escaped.\n@deprecated use MarkupContent instead."
-		},
-		{
-			"name": "TraceValues",
-			"type": {
-				"kind": "or",
-				"items": [
-					{
-						"kind": "stringLiteral",
-						"value": "off"
-					},
-					{
-						"kind": "stringLiteral",
-						"value": "messages"
-					},
-					{
-						"kind": "stringLiteral",
-						"value": "compact"
-					},
-					{
-						"kind": "stringLiteral",
-						"value": "verbose"
-					}
-				]
-			}
 		},
 		{
 			"name": "DocumentFilter",
