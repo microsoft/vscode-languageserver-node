@@ -799,7 +799,8 @@ export default class Visitor {
 									break;
 								}
 								const entry: EnumerationEntry = { name: declaration.name.getText(), value: value };
-								this.fillDocProperties(declaration, entry);
+								// Use the declaration statement since enum declaration only have one declaration.
+								this.fillDocProperties(variable.declarationList, entry);
 								enumerations.push(entry);
 							}
 							if (isEnum) {
@@ -1014,7 +1015,23 @@ export default class Visitor {
 			const end = ranges[ranges.length -1 ].end;
 			const text = fullText.substring(start, end).trim();
 			if (text.startsWith('/**')) {
-				return text.replace(/^(\s*\/\*\*)|^(\s*\*\/)|^(\s*\*\s)/gm, '').trim();
+				const buffer: string[] = [];
+				const lines = text.split(/\r?\n/);
+				for (let i= 0; i < lines.length; i++) {
+					let noComment = lines[i].replace(/^(\s*\/\*\*)|^(\s*\*\/)|^(\s*\*)/, '');
+					// First line
+					if (i === 0 || i === lines.length - 1) {
+						noComment = noComment.trim();
+						if (noComment.length === 0) {
+							continue;
+						}
+					}
+					if (noComment.length > 0 && noComment[0] === ' ') {
+						noComment = noComment.substring(1);
+					}
+					buffer.push(noComment);
+				}
+				return buffer.join('\n');
 			}
 		}
 		return undefined;
