@@ -3874,7 +3874,7 @@ export type InlineValueContext = {
 	/**
 	 * The stack frame (as a DAP Id) where the execution has stopped.
 	 */
-	frameId: number;
+	frameId: integer;
 
 	/**
 	 * The document range where execution has stopped.
