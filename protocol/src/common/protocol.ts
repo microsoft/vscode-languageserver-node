@@ -313,7 +313,7 @@ export interface Registration {
 	id: string;
 
 	/**
-	 * The method to register for.
+	 * The method / capability to register for.
 	 */
 	method: string;
 
@@ -465,7 +465,7 @@ export interface WorkspaceClientCapabilities {
 	applyEdit?: boolean;
 
 	/**
-	 * Capabilities specific to `WorkspaceEdit`s
+	 * Capabilities specific to `WorkspaceEdit`s.
 	 */
 	workspaceEdit?: WorkspaceEditClientCapabilities;
 
@@ -490,7 +490,7 @@ export interface WorkspaceClientCapabilities {
 	executeCommand?: ExecuteCommandClientCapabilities;
 
 	/**
-	 * The client has support for workspace folders
+	 * The client has support for workspace folders.
 	 *
 	 * @since 3.6.0
 	 */
@@ -535,7 +535,7 @@ export interface WorkspaceClientCapabilities {
 	inlineValue?: InlineValueWorkspaceClientCapabilities;
 
 	/**
-	 * Capabilities specific to the inlay hints requests scoped to the
+	 * Capabilities specific to the inlay hint requests scoped to the
 	 * workspace.
 	 *
 	 * @since 3.17.0.
@@ -562,122 +562,125 @@ export interface TextDocumentClientCapabilities {
 	synchronization?: TextDocumentSyncClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/completion`
+	 * Capabilities specific to the `textDocument/completion` request.
 	 */
 	completion?: CompletionClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/hover`
+	 * Capabilities specific to the `textDocument/hover` request.
 	 */
 	hover?: HoverClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/signatureHelp`
+	 * Capabilities specific to the `textDocument/signatureHelp` request.
 	 */
 	signatureHelp?: SignatureHelpClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/declaration`
+	 * Capabilities specific to the `textDocument/declaration` request.
 	 *
 	 * @since 3.14.0
 	 */
 	declaration?: DeclarationClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/definition`
+	 * Capabilities specific to the `textDocument/definition` request.
 	 */
 	definition?: DefinitionClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/typeDefinition`
+	 * Capabilities specific to the `textDocument/typeDefinition` request.
 	 *
 	 * @since 3.6.0
 	 */
 	typeDefinition?: TypeDefinitionClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/implementation`
+	 * Capabilities specific to the `textDocument/implementation` request.
 	 *
 	 * @since 3.6.0
 	 */
 	implementation?: ImplementationClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/references`
+	 * Capabilities specific to the `textDocument/references` request.
 	 */
 	references?: ReferenceClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/documentHighlight`
+	 * Capabilities specific to the `textDocument/documentHighlight` request.
 	 */
 	documentHighlight?: DocumentHighlightClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/documentSymbol`
+	 * Capabilities specific to the `textDocument/documentSymbol` request.
 	 */
 	documentSymbol?: DocumentSymbolClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/codeAction`
+	 * Capabilities specific to the `textDocument/codeAction` request.
 	 */
 	codeAction?: CodeActionClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/codeLens`
+	 * Capabilities specific to the `textDocument/codeLens` request.
 	 */
 	codeLens?: CodeLensClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/documentLink`
+	 * Capabilities specific to the `textDocument/documentLink` request.
 	 */
 	documentLink?: DocumentLinkClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/documentColor`
+	 * Capabilities specific to the `textDocument/documentColor` and the
+	 * `textDocument/colorPresentation` request.
+	 *
+	 * @since 3.6.0
 	 */
 	colorProvider?: DocumentColorClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/formatting`
+	 * Capabilities specific to the `textDocument/formatting` request.
 	 */
 	formatting?: DocumentFormattingClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/rangeFormatting`
+	 * Capabilities specific to the `textDocument/rangeFormatting` request.
 	 */
 	rangeFormatting?: DocumentRangeFormattingClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/onTypeFormatting`
+	 * Capabilities specific to the `textDocument/onTypeFormatting` request.
 	 */
 	onTypeFormatting?: DocumentOnTypeFormattingClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/rename`
+	 * Capabilities specific to the `textDocument/rename` request.
 	 */
 	rename?: RenameClientCapabilities;
 
 	/**
-	 * Capabilities specific to `textDocument/foldingRange` request.
+	 * Capabilities specific to the `textDocument/foldingRange` request.
 	 *
 	 * @since 3.10.0
 	 */
 	foldingRange?: FoldingRangeClientCapabilities;
 
 	/**
-	 * Capabilities specific to `textDocument/selectionRange` request.
+	 * Capabilities specific to the `textDocument/selectionRange` request.
 	 *
 	 * @since 3.15.0
 	 */
 	selectionRange?: SelectionRangeClientCapabilities;
 
 	/**
-	 * Capabilities specific to `textDocument/publishDiagnostics` notification.
+	 * Capabilities specific to the `textDocument/publishDiagnostics` notification.
 	 */
 	publishDiagnostics?: PublishDiagnosticsClientCapabilities;
 
 	/**
-	 * Capabilities specific to the various call hierarchy request.
+	 * Capabilities specific to the various call hierarchy requests.
 	 *
 	 * @since 3.16.0
 	 */
@@ -691,14 +694,14 @@ export interface TextDocumentClientCapabilities {
 	semanticTokens?: SemanticTokensClientCapabilities;
 
 	/**
-	 * Capabilities specific to the linked editing range request.
+	 * Capabilities specific to the `textDocument/linkedEditingRange` request.
 	 *
 	 * @since 3.16.0
 	 */
 	linkedEditingRange?: LinkedEditingRangeClientCapabilities;
 
 	/**
-	 * Client capabilities specific to the moniker request.
+	 * Client capabilities specific to the `textDocument/moniker` request.
 	 *
 	 * @since 3.16.0
 	 */
@@ -889,7 +892,7 @@ export interface GeneralClientCapabilities {
 	 * The position encodings supported by the client. Client and server
 	 * have to agree on the same position encoding to ensure that offsets
 	 * (e.g. character position in a line) are interpreted the same on both
-	 * side.
+	 * sides.
 	 *
 	 * To keep the protocol backwards compatible the following applies: if
 	 * the value 'utf-16' is missing from the array of position encodings
@@ -1049,8 +1052,6 @@ export interface ServerCapabilities<T = any> {
 	 * value that a server can return is 'utf-16'.
 	 *
 	 * If omitted it defaults to 'utf-16'.
-	 *
-	 * If for some reason
 	 *
 	 * @since 3.17.0
 	 */
@@ -1283,6 +1284,9 @@ export interface _InitializeParams extends WorkDoneProgressParams {
 	/**
 	 * The process Id of the parent process that started
 	 * the server.
+	 *
+	 * Is `null` if the process has not been started by another process.
+	 * If the parent process is not alive then the server should exit.
 	 */
 	processId: integer | null;
 
@@ -1514,7 +1518,7 @@ export interface ShowMessageParams {
 	type: MessageType;
 
 	/**
-	 * The actual message
+	 * The actual message.
 	 */
 	message: string;
 }
@@ -1565,7 +1569,7 @@ export interface ShowMessageRequestParams {
 	type: MessageType;
 
 	/**
-	 * The actual message
+	 * The actual message.
 	 */
 	message: string;
 
@@ -1601,7 +1605,7 @@ export interface LogMessageParams {
 	type: MessageType;
 
 	/**
-	 * The actual message
+	 * The actual message.
 	 */
 	message: string;
 }
@@ -1697,7 +1701,7 @@ export interface TextDocumentSyncOptions {
 }
 
 /**
- * The parameters send in a open text document notification
+ * The parameters sent in an open text document notification
  */
 export interface DidOpenTextDocumentParams {
 	/**
@@ -1818,7 +1822,7 @@ export namespace DidChangeTextDocumentNotification {
 }
 
 /**
- * The parameters send in a close text document notification
+ * The parameters sent in a close text document notification
  */
 export interface DidCloseTextDocumentParams {
 	/**
@@ -1842,11 +1846,11 @@ export namespace DidCloseTextDocumentNotification {
 }
 
 /**
- * The parameters send in a save text document notification
+ * The parameters sent in a save text document notification
  */
 export interface DidSaveTextDocumentParams {
 	/**
-	 * The document that was closed.
+	 * The document that was saved.
 	 */
 	textDocument: TextDocumentIdentifier;
 
@@ -1897,7 +1901,7 @@ export namespace TextDocumentSaveReason {
 export type TextDocumentSaveReason = 1 | 2 | 3;
 
 /**
- * The parameters send in a will save text document notification.
+ * The parameters sent in a will save text document notification.
  */
 export interface WillSaveTextDocumentParams {
 	/**
@@ -2065,7 +2069,7 @@ export interface FileSystemWatcher {
 	/**
 	 * The glob pattern to watch. See {@link GlobPattern glob pattern} for more detail.
 	 *
- 	 * @since 3.17.0 support for relative patterns.
+	 * @since 3.17.0 support for relative patterns.
 	 */
 	globPattern: GlobPattern;
 
@@ -2121,7 +2125,7 @@ export interface PublishDiagnosticsClientCapabilities {
 
 	/**
 	 * Whether the client interprets the version property of the
-	 * `textDocument/publishDiagnostics` notification`s parameter.
+	 * `textDocument/publishDiagnostics` notification's parameter.
 	 *
 	 * @since 3.15.0
 	 */
@@ -2206,7 +2210,7 @@ export interface CompletionClientCapabilities {
 		commitCharactersSupport?: boolean;
 
 		/**
-		 * Client supports the follow content formats for the documentation
+		 * Client supports the following content formats for the documentation
 		 * property. The order describes the preferred format of the client.
 		 */
 		documentationFormat?: MarkupKind[];
@@ -2315,7 +2319,7 @@ export interface CompletionClientCapabilities {
 	 */
 	completionList?: {
 		/**
-		 * The client supports the the following itemDefaults on
+		 * The client supports the following itemDefaults on
 		 * a completion list.
 		 *
 		 * The value lists the supported property names of the
@@ -2474,7 +2478,7 @@ export interface HoverClientCapabilities {
 	dynamicRegistration?: boolean;
 
 	/**
-	 * Client supports the follow content formats for the content
+	 * Client supports the following content formats for the content
 	 * property. The order describes the preferred format of the client.
 	 */
 	contentFormat?: MarkupKind[];
@@ -2525,7 +2529,7 @@ export interface SignatureHelpClientCapabilities {
 	 */
 	signatureInformation?: {
 		/**
-		 * Client supports the follow content formats for the documentation
+		 * Client supports the following content formats for the documentation
 		 * property. The order describes the preferred format of the client.
 		 */
 		documentationFormat?: MarkupKind[];
@@ -2544,7 +2548,7 @@ export interface SignatureHelpClientCapabilities {
 		};
 
 		/**
-		 * The client support the `activeParameter` property on `SignatureInformation`
+		 * The client supports the `activeParameter` property on `SignatureInformation`
 		 * literal.
 		 *
 		 * @since 3.16.0
@@ -2568,7 +2572,7 @@ export interface SignatureHelpClientCapabilities {
  */
 export interface SignatureHelpOptions extends WorkDoneProgressOptions {
 	/**
-	 * List of characters that trigger signature help.
+	 * List of characters that trigger signature help automatically.
 	 */
 	triggerCharacters?: string[];
 
@@ -2625,7 +2629,7 @@ export interface SignatureHelpContext {
 	/**
 	 * `true` if signature help was already showing when it was triggered.
 	 *
-	 * Retrigger occurs when the signature help is already active and can be caused by actions such as
+	 * Retriggers occurs when the signature help is already active and can be caused by actions such as
 	 * typing a trigger character, a cursor move, or document content changes.
 	 */
 	isRetrigger: boolean;
@@ -2807,7 +2811,8 @@ export interface DocumentSymbolClientCapabilities {
 	dynamicRegistration?: boolean;
 
 	/**
-	 * Specific capabilities for the `SymbolKind`.
+	 * Specific capabilities for the `SymbolKind` in the
+	 * `textDocument/documentSymbol` request.
 	 */
 	symbolKind?: {
 		/**
@@ -2824,7 +2829,7 @@ export interface DocumentSymbolClientCapabilities {
 	};
 
 	/**
-	 * The client support hierarchical document symbols.
+	 * The client supports hierarchical document symbols.
 	 */
 	hierarchicalDocumentSymbolSupport?: boolean;
 
@@ -2950,7 +2955,7 @@ export interface CodeActionClientCapabilities {
 	dataSupport?: boolean;
 
 	/**
-	 * Whether the client support resolving additional code action
+	 * Whether the client supports resolving additional code action
 	 * properties via a separate `codeAction/resolve` request.
 	 *
 	 * @since 3.16.0
@@ -2963,7 +2968,7 @@ export interface CodeActionClientCapabilities {
 	};
 
 	/**
-	 * Whether th client honors the change annotations in
+	 * Whether the client honors the change annotations in
 	 * text edits and resource operations returned via the
 	 * `CodeAction#edit` property by for example presenting
 	 * the workspace edit in the user interface and asking
@@ -3245,7 +3250,7 @@ export interface DocumentLinkClientCapabilities {
 	dynamicRegistration?: boolean;
 
 	/**
-	 * Whether the client support the `tooltip` property on `DocumentLink`.
+	 * Whether the client supports the `tooltip` property on `DocumentLink`.
 	 *
 	 * @since 3.15.0
 	 */
@@ -3318,7 +3323,7 @@ export interface DocumentFormattingParams extends WorkDoneProgressParams {
 	textDocument: TextDocumentIdentifier;
 
 	/**
-	 * The format options
+	 * The format options.
 	 */
 	options: FormattingOptions;
 }
@@ -3429,7 +3434,7 @@ export interface DocumentOnTypeFormattingParams {
 	ch: string;
 
 	/**
-	 * The format options.
+	 * The formatting options.
 	 */
 	options: FormattingOptions;
 }
@@ -3439,7 +3444,7 @@ export interface DocumentOnTypeFormattingParams {
  */
 export interface DocumentOnTypeFormattingOptions {
 	/**
-	 * A character on which formatting should be triggered, like `{}`.
+	 * A character on which formatting should be triggered, like `{`.
 	 */
 	firstTriggerCharacter: string;
 
@@ -3500,7 +3505,7 @@ export interface RenameClientCapabilities {
 	prepareSupportDefaultBehavior?: PrepareSupportDefaultBehavior;
 
 	/**
-	 * Whether th client honors the change annotations in
+	 * Whether the client honors the change annotations in
 	 * text edits and resource operations returned via the
 	 * rename request's workspace edit by for example presenting
 	 * the workspace edit in the user interface and asking
@@ -3653,7 +3658,7 @@ export interface WorkspaceEditClientCapabilities {
 	 * Whether the client normalizes line endings to the client specific
 	 * setting.
 	 * If set to `true` the client will normalize line ending characters
-	 * in a workspace edit containing to the client specific new line
+	 * in a workspace edit to the client-specified new line
 	 * character.
 	 *
 	 * @since 3.16.0
