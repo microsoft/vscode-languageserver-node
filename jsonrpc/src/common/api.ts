@@ -24,7 +24,7 @@ import {
 	RequestHandler9, StarNotificationHandler, GenericNotificationHandler, NotificationHandler0, NotificationHandler, NotificationHandler1, NotificationHandler2, NotificationHandler3,
 	NotificationHandler4, NotificationHandler5, NotificationHandler6, NotificationHandler7, NotificationHandler8, NotificationHandler9, Trace, TraceValues, TraceFormat,
 	TraceOptions, SetTraceParams, SetTraceNotification, LogTraceParams, LogTraceNotification, Tracer, ConnectionErrors, ConnectionError, CancellationId,
-	CancellationReceiverStrategy, CancellationSenderStrategy, CancellationStrategy
+	CancellationReceiverStrategy, CancellationSenderStrategy, CancellationStrategy, MessageStrategy
 } from './connection';
 
 import RAL from './ral';
@@ -55,5 +55,5 @@ export {
 	RequestHandler9, StarNotificationHandler, GenericNotificationHandler, NotificationHandler0, NotificationHandler, NotificationHandler1, NotificationHandler2, NotificationHandler3,
 	NotificationHandler4, NotificationHandler5, NotificationHandler6, NotificationHandler7, NotificationHandler8, NotificationHandler9, Trace, TraceValues, TraceFormat,
 	TraceOptions, SetTraceParams, SetTraceNotification, LogTraceParams, LogTraceNotification, Tracer, ConnectionErrors, ConnectionError, CancellationId,
-	CancellationReceiverStrategy, CancellationSenderStrategy, CancellationStrategy,
+	CancellationReceiverStrategy, CancellationSenderStrategy, CancellationStrategy, MessageStrategy
 };
