@@ -24,8 +24,12 @@
 
 	"javascript.validate.enable": false,
 
+	"git.branchProtection": [
+		"main"
+	],
+	"git.branchProtectionPrompt": "alwaysCommitToNewBranch",
+
 	"eslint.format.enable": true,
-	"tslint.enable": false,
 	"eslint.enable": true,
 	"eslint.validate": [
 		"typescript"
@@ -43,14 +47,6 @@
 		"./tools"
 	],
 	"typescript.tsc.autoDetect": "off",
-	"spellright.language": [
-		"en"
-	],
-	"spellright.documentTypes": [
-		"markdown",
-		"latex",
-		"plaintext"
-	],
 	"editor.codeActionsOnSave": {
 		"source.fixAll.eslint": true
 	},
