@@ -18,7 +18,7 @@ export interface WorkspaceFoldersInitializeParams {
 	 *
 	 * @since 3.6.0
 	 */
-	workspaceFolders: WorkspaceFolder[] | null;
+	workspaceFolders?: WorkspaceFolder[] | null;
 }
 
 export interface WorkspaceFoldersServerCapabilities {
