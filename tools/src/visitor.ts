@@ -812,8 +812,7 @@ export default class Visitor {
 									break;
 								}
 								const entry: EnumerationEntry = { name: declaration.name.getText(), value: value };
-								// Use the declaration statement since enum declaration only have one declaration.
-								this.fillDocProperties(variable.declarationList.parent, entry);
+								this.fillDocProperties(variable, entry);
 								enumerations.push(entry);
 							}
 							if (isEnum) {
