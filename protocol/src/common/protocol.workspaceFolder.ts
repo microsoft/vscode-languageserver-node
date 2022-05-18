@@ -12,7 +12,7 @@ export interface WorkspaceFoldersInitializeParams {
 	/**
 	 * The actual configured workspace folders.
 	 */
-	workspaceFolders: WorkspaceFolder[] | null;
+	workspaceFolders?: WorkspaceFolder[] | null;
 }
 
 export interface WorkspaceFoldersServerCapabilities {

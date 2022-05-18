@@ -7699,6 +7699,7 @@
 							}
 						]
 					},
+					"optional": true,
 					"documentation": "The actual configured workspace folders."
 				}
 			]
