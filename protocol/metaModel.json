@@ -12952,12 +12952,12 @@
 			},
 			"values": [
 				{
-					"name": "$import",
+					"name": "import",
 					"value": "import",
 					"documentation": "The moniker represent a symbol that is imported into a project"
 				},
 				{
-					"name": "$export",
+					"name": "export",
 					"value": "export",
 					"documentation": "The moniker represents a symbol that is exported from a project"
 				},

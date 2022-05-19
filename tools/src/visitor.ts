@@ -699,6 +699,12 @@ export default class Visitor {
 		['TraceValues', new Set(['Compact'])],
 		['ErrorCodes', new Set(['MessageWriteError', 'MessageReadError', 'PendingResponseRejected', 'ConnectionInactive'])]
 	]);
+	private static readonly PropertyRenames: Map<string, Map<string, string>> = new Map([
+		['MonikerKind', new Map([
+			['$export', 'export'],
+			['$import', 'import']
+		])]
+	]);
 	private processSymbol(name: string, symbol: ts.Symbol): Structure | Enumeration | TypeAlias | undefined {
 		// We can't define LSPAny in the protocol right now due to TS issues.
 		// So we predefine it and emit it.
@@ -828,10 +834,14 @@ export default class Visitor {
 									isEnum = false;
 									break;
 								}
-								const entry: EnumerationEntry = { name: declaration.name.getText(), value: value };
-								if (Visitor.PropertyFilters.has(name) && Visitor.PropertyFilters.get(name)?.has(entry.name)) {
+								let propertyName = declaration.name.getText();
+								if (Visitor.PropertyRenames.has(name) && Visitor.PropertyRenames.get(name)?.has(propertyName)) {
+									propertyName = Visitor.PropertyRenames.get(name)!.get(propertyName)!;
+								}
+								if (Visitor.PropertyFilters.has(name) && Visitor.PropertyFilters.get(name)?.has(propertyName)) {
 									continue;
 								}
+								const entry: EnumerationEntry = { name: propertyName, value: value };
 								this.fillDocProperties(variable, entry);
 								enumerations.push(entry);
 							}
