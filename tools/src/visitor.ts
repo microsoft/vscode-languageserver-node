@@ -21,6 +21,7 @@ namespace MapKeyType {
 		return value.kind === 'reference' || (value.kind === 'base' && (value.name === 'string' || value.name === 'integer' || value.name === 'DocumentUri' || value.name === 'Uri'));
 	}
 }
+type LiteralInfo = { type: TypeInfo; optional: boolean; documentation?: string; since?: string; proposed?: boolean };
 
 type TypeInfo =
 {
@@ -51,7 +52,7 @@ type TypeInfo =
 	items: TypeInfo[];
 } | {
 	kind: 'literal';
-	items: Map<string, { type: TypeInfo; optional: boolean }>;
+	items: Map<string, LiteralInfo>;
 } | {
 	kind: 'stringLiteral';
 	value: string;
@@ -100,8 +101,18 @@ namespace TypeInfo {
 				const literal: StructureLiteral = { properties: [] };
 				for (const entry of info.items) {
 					const property: Property = { name: entry[0], type: asJsonType(entry[1].type) };
-					if (entry[1].optional) {
+					const value = entry[1];
+					if (value.optional === true) {
 						property.optional = true;
+					}
+					if (value.documentation !== undefined) {
+						property.documentation = value.documentation;
+					}
+					if (value.since !== undefined) {
+						property.since = value.since;
+					}
+					if (value.proposed === true) {
+						property.proposed = true;
 					}
 					literal.properties.push(property);
 				}
@@ -611,7 +622,9 @@ export default class Visitor {
 					if (propertyType === undefined) {
 						throw new Error(`Can't parse property ${member.getName()} of structure ${symbol.getName()}`);
 					}
-					items.set(member.getName(), { type: propertyType, optional: Symbols.isOptional(member) });
+					const literalInfo: LiteralInfo = { type: propertyType, optional: Symbols.isOptional(member) };
+					this.fillDocProperties(declaration, literalInfo);
+					items.set(member.getName(), literalInfo);
 				});
 				return { kind: 'literal', items };
 			}
@@ -682,6 +695,16 @@ export default class Visitor {
 	}
 
 	private static readonly Mixins: Set<string> = new Set(['WorkDoneProgressParams', 'PartialResultParams', 'StaticRegistrationOptions', 'WorkDoneProgressOptions']);
+	private static readonly PropertyFilters: Map<string, Set<string>> = new Map([
+		['TraceValues', new Set(['Compact'])],
+		['ErrorCodes', new Set(['MessageWriteError', 'MessageReadError', 'PendingResponseRejected', 'ConnectionInactive'])]
+	]);
+	private static readonly PropertyRenames: Map<string, Map<string, string>> = new Map([
+		['MonikerKind', new Map([
+			['$export', 'export'],
+			['$import', 'import']
+		])]
+	]);
 	private processSymbol(name: string, symbol: ts.Symbol): Structure | Enumeration | TypeAlias | undefined {
 		// We can't define LSPAny in the protocol right now due to TS issues.
 		// So we predefine it and emit it.
@@ -811,7 +834,14 @@ export default class Visitor {
 									isEnum = false;
 									break;
 								}
-								const entry: EnumerationEntry = { name: declaration.name.getText(), value: value };
+								let propertyName = declaration.name.getText();
+								if (Visitor.PropertyRenames.has(name) && Visitor.PropertyRenames.get(name)?.has(propertyName)) {
+									propertyName = Visitor.PropertyRenames.get(name)!.get(propertyName)!;
+								}
+								if (Visitor.PropertyFilters.has(name) && Visitor.PropertyFilters.get(name)?.has(propertyName)) {
+									continue;
+								}
+								const entry: EnumerationEntry = { name: propertyName, value: value };
 								this.fillDocProperties(variable, entry);
 								enumerations.push(entry);
 							}
@@ -824,7 +854,12 @@ export default class Visitor {
 									if (openSet && !fixedSet) {
 										enumeration.supportsCustomValues = true;
 									}
-									this.fillDocProperties(declaration, enumeration);
+									// First fill the documentation from the namespace and then from the
+									// type declaration.
+									this.fillDocProperties(namespace, enumeration);
+									if (enumeration.documentation === undefined) {
+										this.fillDocProperties(namespace, enumeration);
+									}
 									return enumeration;
 								}
 							}
@@ -863,6 +898,9 @@ export default class Visitor {
 					continue;
 				}
 				const entry: EnumerationEntry = { name: item.getName(), value: value };
+				if (Visitor.PropertyFilters.has(name) && Visitor.PropertyFilters.get(name)?.has(entry.name)) {
+					continue;
+				}
 				this.fillDocProperties(declaration, entry);
 				entries.push(entry);
 			}
@@ -1008,7 +1046,7 @@ export default class Visitor {
 		return text.substring(1, text.length - 1);
 	}
 
-	private fillDocProperties(node: ts.Node, value: JsonRequest | JsonNotification | Property | Structure | StructureLiteral | EnumerationEntry | Enumeration | TypeAlias): void {
+	private fillDocProperties(node: ts.Node, value: JsonRequest | JsonNotification | Property | Structure | StructureLiteral | EnumerationEntry | Enumeration | TypeAlias | LiteralInfo): void {
 		const filePath = node.getSourceFile().fileName;
 		const fileName = path.basename(filePath);
 		const tags = ts.getJSDocTags(node);
