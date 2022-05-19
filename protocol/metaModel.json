@@ -12597,31 +12597,39 @@
 				},
 				{
 					"name": "jsonrpcReservedErrorRangeStart",
-					"value": -32099
+					"value": -32099,
+					"documentation": "This is the start range of JSON RPC reserved error codes.\nIt doesn't denote a real error code. No application error codes should\nbe defined between the start and end range. For backwards\ncompatibility the `ServerNotInitialized` and the `UnknownErrorCode`\nare left in the range.\n\n@since 3.16.0",
+					"since": "3.16.0"
 				},
 				{
 					"name": "serverErrorStart",
-					"value": -32099
+					"value": -32099,
+					"documentation": "@deprecated use  jsonrpcReservedErrorRangeStart */"
 				},
 				{
 					"name": "MessageWriteError",
-					"value": -32099
+					"value": -32099,
+					"documentation": "An error occurred when write a message to the transport layer."
 				},
 				{
 					"name": "MessageReadError",
-					"value": -32098
+					"value": -32098,
+					"documentation": "An error occurred when reading a message from the transport layer."
 				},
 				{
 					"name": "PendingResponseRejected",
-					"value": -32097
+					"value": -32097,
+					"documentation": "The connection got disposed or lost and all pending responses got\nrejected."
 				},
 				{
 					"name": "ConnectionInactive",
-					"value": -32096
+					"value": -32096,
+					"documentation": "The connection is inactive and a use of it failed."
 				},
 				{
 					"name": "ServerNotInitialized",
-					"value": -32002
+					"value": -32002,
+					"documentation": "Error code indicating that a server received a notification or\nrequest before the server has received the `initialize` request."
 				},
 				{
 					"name": "UnknownErrorCode",
@@ -12629,11 +12637,14 @@
 				},
 				{
 					"name": "jsonrpcReservedErrorRangeEnd",
-					"value": -32000
+					"value": -32000,
+					"documentation": "This is the end range of JSON RPC reserved error codes.\nIt doesn't denote a real error code.\n\n@since 3.16.0",
+					"since": "3.16.0"
 				},
 				{
 					"name": "serverErrorEnd",
-					"value": -32000
+					"value": -32000,
+					"documentation": "@deprecated use  jsonrpcReservedErrorRangeEnd */"
 				}
 			],
 			"supportsCustomValues": true
@@ -12647,27 +12658,37 @@
 			"values": [
 				{
 					"name": "lspReservedErrorRangeStart",
-					"value": -32899
+					"value": -32899,
+					"documentation": "This is the start range of LSP reserved error codes.\nIt doesn't denote a real error code.\n\n@since 3.16.0",
+					"since": "3.16.0"
 				},
 				{
 					"name": "RequestFailed",
-					"value": -32803
+					"value": -32803,
+					"documentation": "A request failed but it was syntactically correct, e.g the\nmethod name was known and the parameters were valid. The error\nmessage should contain human readable information about why\nthe request failed.\n\n@since 3.17.0",
+					"since": "3.17.0"
 				},
 				{
 					"name": "ServerCancelled",
-					"value": -32802
+					"value": -32802,
+					"documentation": "The server cancelled the request. This error code should\nonly be used for requests that explicitly support being\nserver cancellable.\n\n@since 3.17.0",
+					"since": "3.17.0"
 				},
 				{
 					"name": "ContentModified",
-					"value": -32801
+					"value": -32801,
+					"documentation": "The server detected that the content of a document got\nmodified outside normal conditions. A server should\nNOT send this error code if it detects a content change\nin it unprocessed messages. The result even computed\non an older state might still be useful for the client.\n\nIf a client decides that a result is not of any use anymore\nthe client should cancel the request."
 				},
 				{
 					"name": "RequestCancelled",
-					"value": -32800
+					"value": -32800,
+					"documentation": "The client has canceled a request and a server as detected\nthe cancel."
 				},
 				{
 					"name": "lspReservedErrorRangeEnd",
-					"value": -32800
+					"value": -32800,
+					"documentation": "This is the end range of LSP reserved error codes.\nIt doesn't denote a real error code.\n\n@since 3.16.0",
+					"since": "3.16.0"
 				}
 			],
 			"supportsCustomValues": true
@@ -12681,15 +12702,18 @@
 			"values": [
 				{
 					"name": "Comment",
-					"value": "comment"
+					"value": "comment",
+					"documentation": "Folding range for a comment"
 				},
 				{
 					"name": "Imports",
-					"value": "imports"
+					"value": "imports",
+					"documentation": "Folding range for a imports or includes"
 				},
 				{
 					"name": "Region",
-					"value": "region"
+					"value": "region",
+					"documentation": "Folding range for a region (e.g. `#region`)"
 				}
 			],
 			"supportsCustomValues": true,
@@ -12817,7 +12841,8 @@
 			"values": [
 				{
 					"name": "Deprecated",
-					"value": 1
+					"value": 1,
+					"documentation": "Render a symbol as obsolete, usually using a strike-out."
 				}
 			]
 		},
@@ -12830,23 +12855,28 @@
 			"values": [
 				{
 					"name": "document",
-					"value": "document"
+					"value": "document",
+					"documentation": "The moniker is only unique inside a document"
 				},
 				{
 					"name": "project",
-					"value": "project"
+					"value": "project",
+					"documentation": "The moniker is unique inside a project for which a dump got created"
 				},
 				{
 					"name": "group",
-					"value": "group"
+					"value": "group",
+					"documentation": "The moniker is unique inside the group to which a project belongs"
 				},
 				{
 					"name": "scheme",
-					"value": "scheme"
+					"value": "scheme",
+					"documentation": "The moniker is unique inside the moniker scheme."
 				},
 				{
 					"name": "global",
-					"value": "global"
+					"value": "global",
+					"documentation": "The moniker is globally unique"
 				}
 			]
 		},
@@ -12859,15 +12889,18 @@
 			"values": [
 				{
 					"name": "$import",
-					"value": "import"
+					"value": "import",
+					"documentation": "The moniker represent a symbol that is imported into a project"
 				},
 				{
 					"name": "$export",
-					"value": "export"
+					"value": "export",
+					"documentation": "The moniker represents a symbol that is exported from a project"
 				},
 				{
 					"name": "local",
-					"value": "local"
+					"value": "local",
+					"documentation": "The moniker represents a symbol that is local to a project (e.g. a local\nvariable of a function, a class not visible outside the project, ...)"
 				}
 			]
 		},
@@ -12880,11 +12913,13 @@
 			"values": [
 				{
 					"name": "Type",
-					"value": 1
+					"value": 1,
+					"documentation": "An inlay hint that for a type annotation."
 				},
 				{
 					"name": "Parameter",
-					"value": 2
+					"value": 2,
+					"documentation": "An inlay hint that is for a parameter."
 				}
 			]
 		},
@@ -12897,19 +12932,23 @@
 			"values": [
 				{
 					"name": "Error",
-					"value": 1
+					"value": 1,
+					"documentation": "An error message."
 				},
 				{
 					"name": "Warning",
-					"value": 2
+					"value": 2,
+					"documentation": "A warning message."
 				},
 				{
 					"name": "Info",
-					"value": 3
+					"value": 3,
+					"documentation": "An information message."
 				},
 				{
 					"name": "Log",
-					"value": 4
+					"value": 4,
+					"documentation": "A log message."
 				}
 			]
 		},
@@ -12922,15 +12961,18 @@
 			"values": [
 				{
 					"name": "None",
-					"value": 0
+					"value": 0,
+					"documentation": "Documents should not be synced at all."
 				},
 				{
 					"name": "Full",
-					"value": 1
+					"value": 1,
+					"documentation": "Documents are synced by always sending the full content\nof the document."
 				},
 				{
 					"name": "Incremental",
-					"value": 2
+					"value": 2,
+					"documentation": "Documents are synced by sending the full content on open.\nAfter that only incremental updates to the document are\nsend."
 				}
 			]
 		},
@@ -12943,15 +12985,18 @@
 			"values": [
 				{
 					"name": "Manual",
-					"value": 1
+					"value": 1,
+					"documentation": "Manually triggered, e.g. by the user pressing save, by starting debugging,\nor by an API call."
 				},
 				{
 					"name": "AfterDelay",
-					"value": 2
+					"value": 2,
+					"documentation": "Automatic after a delay."
 				},
 				{
 					"name": "FocusOut",
-					"value": 3
+					"value": 3,
+					"documentation": "When the editor lost focus."
 				}
 			]
 		},
@@ -13073,7 +13118,8 @@
 			"values": [
 				{
 					"name": "Deprecated",
-					"value": 1
+					"value": 1,
+					"documentation": "Render a completion as obsolete, usually using a strike-out."
 				}
 			]
 		},
@@ -13086,11 +13132,13 @@
 			"values": [
 				{
 					"name": "PlainText",
-					"value": 1
+					"value": 1,
+					"documentation": "The primary text to be inserted is treated as a plain string."
 				},
 				{
 					"name": "Snippet",
-					"value": 2
+					"value": 2,
+					"documentation": "The primary text to be inserted is treated as a snippet.\n\nA snippet can define tab stops and placeholders with `$1`, `$2`\nand `${3:foo}`. `$0` defines the final tab stop, it defaults to\nthe end of the snippet. Placeholders with equal identifiers are linked,\nthat is typing in one will update others too.\n\nSee also: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#snippet_syntax"
 				}
 			]
 		},
@@ -13103,11 +13151,13 @@
 			"values": [
 				{
 					"name": "asIs",
-					"value": 1
+					"value": 1,
+					"documentation": "The insertion or replace strings is taken as it is. If the\nvalue is multi line the lines below the cursor will be\ninserted using the indentation defined in the string value.\nThe client will not apply any kind of adjustments to the\nstring."
 				},
 				{
 					"name": "adjustIndentation",
-					"value": 2
+					"value": 2,
+					"documentation": "The editor adjusts leading whitespace of new lines so that\nthey match the indentation up to the cursor of the line for\nwhich the item is accepted.\n\nConsider a line like this: <2tabs><cursor><3tabs>foo. Accepting a\nmulti line completion item is indented using 2 tabs and all\nfollowing lines inserted will be indented using 2 tabs as well."
 				}
 			]
 		},
@@ -13120,15 +13170,18 @@
 			"values": [
 				{
 					"name": "Text",
-					"value": 1
+					"value": 1,
+					"documentation": "A textual occurrence."
 				},
 				{
 					"name": "Read",
-					"value": 2
+					"value": 2,
+					"documentation": "Read-access of a symbol, like reading a variable."
 				},
 				{
 					"name": "Write",
-					"value": 3
+					"value": 3,
+					"documentation": "Write-access of a symbol, like writing to a variable."
 				}
 			]
 		},
@@ -13141,39 +13194,49 @@
 			"values": [
 				{
 					"name": "Empty",
-					"value": ""
+					"value": "",
+					"documentation": "Empty kind."
 				},
 				{
 					"name": "QuickFix",
-					"value": "quickfix"
+					"value": "quickfix",
+					"documentation": "Base kind for quickfix actions: 'quickfix'"
 				},
 				{
 					"name": "Refactor",
-					"value": "refactor"
+					"value": "refactor",
+					"documentation": "Base kind for refactoring actions: 'refactor'"
 				},
 				{
 					"name": "RefactorExtract",
-					"value": "refactor.extract"
+					"value": "refactor.extract",
+					"documentation": "Base kind for refactoring extraction actions: 'refactor.extract'\n\nExample extract actions:\n\n- Extract method\n- Extract function\n- Extract variable\n- Extract interface from class\n- ..."
 				},
 				{
 					"name": "RefactorInline",
-					"value": "refactor.inline"
+					"value": "refactor.inline",
+					"documentation": "Base kind for refactoring inline actions: 'refactor.inline'\n\nExample inline actions:\n\n- Inline function\n- Inline variable\n- Inline constant\n- ..."
 				},
 				{
 					"name": "RefactorRewrite",
-					"value": "refactor.rewrite"
+					"value": "refactor.rewrite",
+					"documentation": "Base kind for refactoring rewrite actions: 'refactor.rewrite'\n\nExample rewrite actions:\n\n- Convert JavaScript function to class\n- Add or remove parameter\n- Encapsulate field\n- Make method static\n- Move method to base class\n- ..."
 				},
 				{
 					"name": "Source",
-					"value": "source"
+					"value": "source",
+					"documentation": "Base kind for source actions: `source`\n\nSource code actions apply to the entire file."
 				},
 				{
 					"name": "SourceOrganizeImports",
-					"value": "source.organizeImports"
+					"value": "source.organizeImports",
+					"documentation": "Base kind for an organize imports source action: `source.organizeImports`"
 				},
 				{
 					"name": "SourceFixAll",
-					"value": "source.fixAll"
+					"value": "source.fixAll",
+					"documentation": "Base kind for auto-fix source actions: `source.fixAll`.\n\nFix all actions automatically fix errors that have a clear fix that do not require user input.\nThey should not suppress errors or perform unsafe fixes such as generating new types or classes.\n\n@since 3.15.0",
+					"since": "3.15.0"
 				}
 			],
 			"supportsCustomValues": true,
@@ -13188,19 +13251,23 @@
 			"values": [
 				{
 					"name": "Off",
-					"value": "off"
+					"value": "off",
+					"documentation": "Turn tracing off."
 				},
 				{
 					"name": "Messages",
-					"value": "messages"
+					"value": "messages",
+					"documentation": "Trace messages only."
 				},
 				{
 					"name": "Compact",
-					"value": "compact"
+					"value": "compact",
+					"documentation": "Compact message tracing."
 				},
 				{
 					"name": "Verbose",
-					"value": "verbose"
+					"value": "verbose",
+					"documentation": "Verbose message tracing."
 				}
 			]
 		},
@@ -13213,11 +13280,13 @@
 			"values": [
 				{
 					"name": "PlainText",
-					"value": "plaintext"
+					"value": "plaintext",
+					"documentation": "Plain text is supported as a content format"
 				},
 				{
 					"name": "Markdown",
-					"value": "markdown"
+					"value": "markdown",
+					"documentation": "Markdown is supported as a content format"
 				}
 			]
 		},
@@ -13230,15 +13299,18 @@
 			"values": [
 				{
 					"name": "UTF8",
-					"value": "utf-8"
+					"value": "utf-8",
+					"documentation": "Character offsets count UTF-8 code units."
 				},
 				{
 					"name": "UTF16",
-					"value": "utf-16"
+					"value": "utf-16",
+					"documentation": "Character offsets count UTF-16 code units.\n\nThis is the default and must always be supported\nby servers"
 				},
 				{
 					"name": "UTF32",
-					"value": "utf-32"
+					"value": "utf-32",
+					"documentation": "Character offsets count UTF-32 code units.\n\nImplementation note: these are the same as Unicode code points,\nso this `PositionEncodingKind` may also be used for an\nencoding-agnostic representation of character offsets."
 				}
 			],
 			"supportsCustomValues": true,
@@ -13254,15 +13326,18 @@
 			"values": [
 				{
 					"name": "Created",
-					"value": 1
+					"value": 1,
+					"documentation": "The file got created."
 				},
 				{
 					"name": "Changed",
-					"value": 2
+					"value": 2,
+					"documentation": "The file got changed."
 				},
 				{
 					"name": "Deleted",
-					"value": 3
+					"value": 3,
+					"documentation": "The file got deleted."
 				}
 			]
 		},
@@ -13275,15 +13350,18 @@
 			"values": [
 				{
 					"name": "Create",
-					"value": 1
+					"value": 1,
+					"documentation": "Interested in create events."
 				},
 				{
 					"name": "Change",
-					"value": 2
+					"value": 2,
+					"documentation": "Interested in change events"
 				},
 				{
 					"name": "Delete",
-					"value": 4
+					"value": 4,
+					"documentation": "Interested in delete events"
 				}
 			],
 			"supportsCustomValues": true
@@ -13297,19 +13375,23 @@
 			"values": [
 				{
 					"name": "Error",
-					"value": 1
+					"value": 1,
+					"documentation": "Reports an error."
 				},
 				{
 					"name": "Warning",
-					"value": 2
+					"value": 2,
+					"documentation": "Reports a warning."
 				},
 				{
 					"name": "Information",
-					"value": 3
+					"value": 3,
+					"documentation": "Reports an information."
 				},
 				{
 					"name": "Hint",
-					"value": 4
+					"value": 4,
+					"documentation": "Reports a hint."
 				}
 			]
 		},
@@ -13322,11 +13404,13 @@
 			"values": [
 				{
 					"name": "Unnecessary",
-					"value": 1
+					"value": 1,
+					"documentation": "Unused or unnecessary code.\n\nClients are allowed to render diagnostics with this tag faded out instead of having\nan error squiggle."
 				},
 				{
 					"name": "Deprecated",
-					"value": 2
+					"value": 2,
+					"documentation": "Deprecated or obsolete code.\n\nClients are allowed to rendered diagnostics with this tag strike through."
 				}
 			]
 		},
@@ -13339,15 +13423,18 @@
 			"values": [
 				{
 					"name": "Invoked",
-					"value": 1
+					"value": 1,
+					"documentation": "Completion was triggered by typing an identifier (24x7 code\ncomplete), manual invocation (e.g Ctrl+Space) or via API."
 				},
 				{
 					"name": "TriggerCharacter",
-					"value": 2
+					"value": 2,
+					"documentation": "Completion was triggered by a trigger character specified by\nthe `triggerCharacters` properties of the `CompletionRegistrationOptions`."
 				},
 				{
 					"name": "TriggerForIncompleteCompletions",
-					"value": 3
+					"value": 3,
+					"documentation": "Completion was re-triggered as current completion list is incomplete"
 				}
 			]
 		},
@@ -13360,15 +13447,18 @@
 			"values": [
 				{
 					"name": "Invoked",
-					"value": 1
+					"value": 1,
+					"documentation": "Signature help was invoked manually by the user or by a command."
 				},
 				{
 					"name": "TriggerCharacter",
-					"value": 2
+					"value": 2,
+					"documentation": "Signature help was triggered by a trigger character."
 				},
 				{
 					"name": "ContentChange",
-					"value": 3
+					"value": 3,
+					"documentation": "Signature help was triggered by the cursor moving or by the document content changing."
 				}
 			]
 		},
@@ -13381,11 +13471,13 @@
 			"values": [
 				{
 					"name": "Invoked",
-					"value": 1
+					"value": 1,
+					"documentation": "Code actions were explicitly requested by the user or by an extension."
 				},
 				{
 					"name": "Automatic",
-					"value": 2
+					"value": 2,
+					"documentation": "Code actions were requested automatically.\n\nThis typically happens when current selection in a file changes, but can\nalso be triggered when file content changes."
 				}
 			]
 		},
@@ -13398,11 +13490,13 @@
 			"values": [
 				{
 					"name": "file",
-					"value": "file"
+					"value": "file",
+					"documentation": "The pattern matches a file only."
 				},
 				{
 					"name": "folder",
-					"value": "folder"
+					"value": "folder",
+					"documentation": "The pattern matches a folder only."
 				}
 			]
 		},
@@ -13415,11 +13509,13 @@
 			"values": [
 				{
 					"name": "Markup",
-					"value": 1
+					"value": 1,
+					"documentation": "A markup-cell is formatted source that is used for display."
 				},
 				{
 					"name": "Code",
-					"value": 2
+					"value": 2,
+					"documentation": "A code-cell is source code."
 				}
 			]
 		},
@@ -13432,15 +13528,18 @@
 			"values": [
 				{
 					"name": "Create",
-					"value": "create"
+					"value": "create",
+					"documentation": "Supports creating new files and folders."
 				},
 				{
 					"name": "Rename",
-					"value": "rename"
+					"value": "rename",
+					"documentation": "Supports renaming existing files and folders."
 				},
 				{
 					"name": "Delete",
-					"value": "delete"
+					"value": "delete",
+					"documentation": "Supports deleting existing files and folders."
 				}
 			],
 			"documentation": "The kind of resource operations supported by the client."
@@ -13454,19 +13553,23 @@
 			"values": [
 				{
 					"name": "Abort",
-					"value": "abort"
+					"value": "abort",
+					"documentation": "Applying the workspace change is simply aborted if one of the changes provided\nfails. All operations executed before the failing operation stay executed."
 				},
 				{
 					"name": "Transactional",
-					"value": "transactional"
+					"value": "transactional",
+					"documentation": "All operations are executed transactional. That means they either all\nsucceed or no changes at all are applied to the workspace."
 				},
 				{
 					"name": "TextOnlyTransactional",
-					"value": "textOnlyTransactional"
+					"value": "textOnlyTransactional",
+					"documentation": "If the workspace edit contains only textual file changes they are executed transactional.\nIf resource changes (create, rename or delete file) are part of the change the failure\nhandling strategy is abort."
 				},
 				{
 					"name": "Undo",
-					"value": "undo"
+					"value": "undo",
+					"documentation": "The client tries to undo the operations already executed. But there is no\nguarantee that this is succeeding."
 				}
 			]
 		},
@@ -13479,7 +13582,8 @@
 			"values": [
 				{
 					"name": "Identifier",
-					"value": 1
+					"value": 1,
+					"documentation": "The client's default behavior is to select the identifier\naccording the to language's syntax rule."
 				}
 			]
 		},
