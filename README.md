@@ -34,7 +34,7 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 
 ## History
 
-## 3.17.0-next.* Protocol, 8.0.0-next.* JSON-RPC, 8.0.0-next.* Client and 8.0.0-next.* Server.
+## 3.17.0 Protocol, 8.0.0 JSON-RPC, 8.0.0 Client and 8.0.0 Server.
 
 Library specific changes are:
 
