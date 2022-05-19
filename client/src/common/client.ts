@@ -1043,7 +1043,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 							return { success: true };
 						}
 					} catch (error) {
-						return { success: true };
+						return { success: false };
 					}
 				};
 				const middleware = this._clientOptions.middleware.window?.showDocument;
