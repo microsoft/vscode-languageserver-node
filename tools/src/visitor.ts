@@ -843,7 +843,12 @@ export default class Visitor {
 									if (openSet && !fixedSet) {
 										enumeration.supportsCustomValues = true;
 									}
-									this.fillDocProperties(declaration, enumeration);
+									// First fill the documentation from the namespace and then from the
+									// type declaration.
+									this.fillDocProperties(namespace, enumeration);
+									if (enumeration.documentation === undefined) {
+										this.fillDocProperties(namespace, enumeration);
+									}
 									return enumeration;
 								}
 							}

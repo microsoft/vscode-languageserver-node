@@ -12725,7 +12725,8 @@
 					"documentation": "@deprecated use  jsonrpcReservedErrorRangeEnd */"
 				}
 			],
-			"supportsCustomValues": true
+			"supportsCustomValues": true,
+			"documentation": "Predefined error codes."
 		},
 		{
 			"name": "LSPErrorCodes",
@@ -12795,7 +12796,7 @@
 				}
 			],
 			"supportsCustomValues": true,
-			"documentation": "The type is a string since the value set is extensible"
+			"documentation": "A set of predefined range kinds."
 		},
 		{
 			"name": "SymbolKind",
@@ -12908,7 +12909,8 @@
 					"name": "TypeParameter",
 					"value": 26
 				}
-			]
+			],
+			"documentation": "A symbol kind."
 		},
 		{
 			"name": "SymbolTag",
@@ -12922,7 +12924,9 @@
 					"value": 1,
 					"documentation": "Render a symbol as obsolete, usually using a strike-out."
 				}
-			]
+			],
+			"documentation": "Symbol tags are extra annotations that tweak the rendering of a symbol.\n@since 3.16",
+			"since": "3.16"
 		},
 		{
 			"name": "UniquenessLevel",
@@ -12956,7 +12960,9 @@
 					"value": "global",
 					"documentation": "The moniker is globally unique"
 				}
-			]
+			],
+			"documentation": "Moniker uniqueness level to define scope of the moniker.\n\n@since 3.16.0",
+			"since": "3.16.0"
 		},
 		{
 			"name": "MonikerKind",
@@ -12980,7 +12986,9 @@
 					"value": "local",
 					"documentation": "The moniker represents a symbol that is local to a project (e.g. a local\nvariable of a function, a class not visible outside the project, ...)"
 				}
-			]
+			],
+			"documentation": "The moniker kind.\n\n@since 3.16.0",
+			"since": "3.16.0"
 		},
 		{
 			"name": "InlayHintKind",
@@ -12999,7 +13007,9 @@
 					"value": 2,
 					"documentation": "An inlay hint that is for a parameter."
 				}
-			]
+			],
+			"documentation": "Inlay hint kinds.\n\n@since 3.17.0",
+			"since": "3.17.0"
 		},
 		{
 			"name": "MessageType",
@@ -13028,7 +13038,8 @@
 					"value": 4,
 					"documentation": "A log message."
 				}
-			]
+			],
+			"documentation": "The message type"
 		},
 		{
 			"name": "TextDocumentSyncKind",
@@ -13052,7 +13063,8 @@
 					"value": 2,
 					"documentation": "Documents are synced by sending the full content on open.\nAfter that only incremental updates to the document are\nsend."
 				}
-			]
+			],
+			"documentation": "Defines how the host (editor) should sync\ndocument changes to the language server."
 		},
 		{
 			"name": "TextDocumentSaveReason",
@@ -13076,7 +13088,8 @@
 					"value": 3,
 					"documentation": "When the editor lost focus."
 				}
-			]
+			],
+			"documentation": "Represents reasons why a text document is saved."
 		},
 		{
 			"name": "CompletionItemKind",
@@ -13185,7 +13198,8 @@
 					"name": "TypeParameter",
 					"value": 25
 				}
-			]
+			],
+			"documentation": "The kind of a completion entry."
 		},
 		{
 			"name": "CompletionItemTag",
@@ -13199,7 +13213,9 @@
 					"value": 1,
 					"documentation": "Render a completion as obsolete, usually using a strike-out."
 				}
-			]
+			],
+			"documentation": "Completion item tags are extra annotations that tweak the rendering of a completion\nitem.\n\n@since 3.15.0",
+			"since": "3.15.0"
 		},
 		{
 			"name": "InsertTextFormat",
@@ -13218,7 +13234,8 @@
 					"value": 2,
 					"documentation": "The primary text to be inserted is treated as a snippet.\n\nA snippet can define tab stops and placeholders with `$1`, `$2`\nand `${3:foo}`. `$0` defines the final tab stop, it defaults to\nthe end of the snippet. Placeholders with equal identifiers are linked,\nthat is typing in one will update others too.\n\nSee also: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#snippet_syntax"
 				}
-			]
+			],
+			"documentation": "Defines whether the insert text in a completion item should be interpreted as\nplain text or a snippet."
 		},
 		{
 			"name": "InsertTextMode",
@@ -13237,7 +13254,9 @@
 					"value": 2,
 					"documentation": "The editor adjusts leading whitespace of new lines so that\nthey match the indentation up to the cursor of the line for\nwhich the item is accepted.\n\nConsider a line like this: <2tabs><cursor><3tabs>foo. Accepting a\nmulti line completion item is indented using 2 tabs and all\nfollowing lines inserted will be indented using 2 tabs as well."
 				}
-			]
+			],
+			"documentation": "How whitespace and indentation is handled during completion\nitem insertion.\n\n@since 3.16.0",
+			"since": "3.16.0"
 		},
 		{
 			"name": "DocumentHighlightKind",
@@ -13261,7 +13280,8 @@
 					"value": 3,
 					"documentation": "Write-access of a symbol, like writing to a variable."
 				}
-			]
+			],
+			"documentation": "A document highlight kind."
 		},
 		{
 			"name": "CodeActionKind",
@@ -13318,7 +13338,7 @@
 				}
 			],
 			"supportsCustomValues": true,
-			"documentation": "The kind of a code action.\n\nKinds are a hierarchical list of identifiers separated by `.`, e.g. `\"refactor.extract.function\"`.\n\nThe set of kinds is open and client needs to announce the kinds it supports to the server during\ninitialization."
+			"documentation": "A set of predefined code action kinds"
 		},
 		{
 			"name": "TraceValues",
@@ -13361,7 +13381,8 @@
 					"value": "markdown",
 					"documentation": "Markdown is supported as a content format"
 				}
-			]
+			],
+			"documentation": "Describes the content type that a client supports in various\nresult literals like `Hover`, `ParameterInfo` or `CompletionItem`.\n\nPlease note that `MarkupKinds` must not start with a `$`. This kinds\nare reserved for internal usage."
 		},
 		{
 			"name": "PositionEncodingKind",
@@ -13387,7 +13408,7 @@
 				}
 			],
 			"supportsCustomValues": true,
-			"documentation": "A type indicating how positions are encoded,\nspecifically what column offsets mean.\n\n@since 3.17.0",
+			"documentation": "A set of predefined position encoding kinds.\n\n@since 3.17.0",
 			"since": "3.17.0"
 		},
 		{
@@ -13412,7 +13433,8 @@
 					"value": 3,
 					"documentation": "The file got deleted."
 				}
-			]
+			],
+			"documentation": "The file event type"
 		},
 		{
 			"name": "WatchKind",
@@ -13466,7 +13488,8 @@
 					"value": 4,
 					"documentation": "Reports a hint."
 				}
-			]
+			],
+			"documentation": "The diagnostic's severity."
 		},
 		{
 			"name": "DiagnosticTag",
@@ -13485,7 +13508,9 @@
 					"value": 2,
 					"documentation": "Deprecated or obsolete code.\n\nClients are allowed to rendered diagnostics with this tag strike through."
 				}
-			]
+			],
+			"documentation": "The diagnostic tags.\n\n@since 3.15.0",
+			"since": "3.15.0"
 		},
 		{
 			"name": "CompletionTriggerKind",
@@ -13509,7 +13534,8 @@
 					"value": 3,
 					"documentation": "Completion was re-triggered as current completion list is incomplete"
 				}
-			]
+			],
+			"documentation": "How a completion was triggered"
 		},
 		{
 			"name": "SignatureHelpTriggerKind",
@@ -13533,7 +13559,9 @@
 					"value": 3,
 					"documentation": "Signature help was triggered by the cursor moving or by the document content changing."
 				}
-			]
+			],
+			"documentation": "How a signature help was triggered.\n\n@since 3.15.0",
+			"since": "3.15.0"
 		},
 		{
 			"name": "CodeActionTriggerKind",
@@ -13552,7 +13580,9 @@
 					"value": 2,
 					"documentation": "Code actions were requested automatically.\n\nThis typically happens when current selection in a file changes, but can\nalso be triggered when file content changes."
 				}
-			]
+			],
+			"documentation": "The reason why code actions were requested.\n\n@since 3.17.0",
+			"since": "3.17.0"
 		},
 		{
 			"name": "FileOperationPatternKind",
@@ -13571,7 +13601,9 @@
 					"value": "folder",
 					"documentation": "The pattern matches a folder only."
 				}
-			]
+			],
+			"documentation": "A pattern kind describing if a glob pattern matches a file a folder or\nboth.\n\n@since 3.16.0",
+			"since": "3.16.0"
 		},
 		{
 			"name": "NotebookCellKind",
@@ -13590,7 +13622,9 @@
 					"value": 2,
 					"documentation": "A code-cell is source code."
 				}
-			]
+			],
+			"documentation": "A notebook cell kind.\n\n@since 3.17.0",
+			"since": "3.17.0"
 		},
 		{
 			"name": "ResourceOperationKind",
@@ -13614,8 +13648,7 @@
 					"value": "delete",
 					"documentation": "Supports deleting existing files and folders."
 				}
-			],
-			"documentation": "The kind of resource operations supported by the client."
+			]
 		},
 		{
 			"name": "FailureHandlingKind",
