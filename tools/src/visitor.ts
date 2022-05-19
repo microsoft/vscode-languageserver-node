@@ -21,6 +21,7 @@ namespace MapKeyType {
 		return value.kind === 'reference' || (value.kind === 'base' && (value.name === 'string' || value.name === 'integer' || value.name === 'DocumentUri' || value.name === 'Uri'));
 	}
 }
+type LiteralInfo = { type: TypeInfo; optional: boolean; documentation?: string; since?: string; proposed?: boolean };
 
 type TypeInfo =
 {
@@ -51,7 +52,7 @@ type TypeInfo =
 	items: TypeInfo[];
 } | {
 	kind: 'literal';
-	items: Map<string, { type: TypeInfo; optional: boolean }>;
+	items: Map<string, LiteralInfo>;
 } | {
 	kind: 'stringLiteral';
 	value: string;
@@ -100,8 +101,18 @@ namespace TypeInfo {
 				const literal: StructureLiteral = { properties: [] };
 				for (const entry of info.items) {
 					const property: Property = { name: entry[0], type: asJsonType(entry[1].type) };
-					if (entry[1].optional) {
+					const value = entry[1];
+					if (value.optional === true) {
 						property.optional = true;
+					}
+					if (value.documentation !== undefined) {
+						property.documentation = value.documentation;
+					}
+					if (value.since !== undefined) {
+						property.since = value.since;
+					}
+					if (value.proposed === true) {
+						property.proposed = true;
 					}
 					literal.properties.push(property);
 				}
@@ -611,7 +622,9 @@ export default class Visitor {
 					if (propertyType === undefined) {
 						throw new Error(`Can't parse property ${member.getName()} of structure ${symbol.getName()}`);
 					}
-					items.set(member.getName(), { type: propertyType, optional: Symbols.isOptional(member) });
+					const literalInfo: LiteralInfo = { type: propertyType, optional: Symbols.isOptional(member) };
+					this.fillDocProperties(declaration, literalInfo);
+					items.set(member.getName(), literalInfo);
 				});
 				return { kind: 'literal', items };
 			}
@@ -1017,7 +1030,7 @@ export default class Visitor {
 		return text.substring(1, text.length - 1);
 	}
 
-	private fillDocProperties(node: ts.Node, value: JsonRequest | JsonNotification | Property | Structure | StructureLiteral | EnumerationEntry | Enumeration | TypeAlias): void {
+	private fillDocProperties(node: ts.Node, value: JsonRequest | JsonNotification | Property | Structure | StructureLiteral | EnumerationEntry | Enumeration | TypeAlias | LiteralInfo): void {
 		const filePath = node.getSourceFile().fileName;
 		const fileName = path.basename(filePath);
 		const tags = ts.getJSDocTags(node);
