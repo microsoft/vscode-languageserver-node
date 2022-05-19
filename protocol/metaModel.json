@@ -13260,11 +13260,6 @@
 					"documentation": "Trace messages only."
 				},
 				{
-					"name": "Compact",
-					"value": "compact",
-					"documentation": "Compact message tracing."
-				},
-				{
 					"name": "Verbose",
 					"value": "verbose",
 					"documentation": "Verbose message tracing."

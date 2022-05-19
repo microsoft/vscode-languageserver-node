@@ -682,6 +682,9 @@ export default class Visitor {
 	}
 
 	private static readonly Mixins: Set<string> = new Set(['WorkDoneProgressParams', 'PartialResultParams', 'StaticRegistrationOptions', 'WorkDoneProgressOptions']);
+	private static readonly PropertyFilters: Map<string, Set<string>> = new Map([
+		['TraceValues', new Set(['Compact'])]
+	]);
 	private processSymbol(name: string, symbol: ts.Symbol): Structure | Enumeration | TypeAlias | undefined {
 		// We can't define LSPAny in the protocol right now due to TS issues.
 		// So we predefine it and emit it.
@@ -812,6 +815,9 @@ export default class Visitor {
 									break;
 								}
 								const entry: EnumerationEntry = { name: declaration.name.getText(), value: value };
+								if (Visitor.PropertyFilters.has(name) && Visitor.PropertyFilters.get(name)?.has(entry.name)) {
+									continue;
+								}
 								this.fillDocProperties(variable, entry);
 								enumerations.push(entry);
 							}
@@ -863,6 +869,9 @@ export default class Visitor {
 					continue;
 				}
 				const entry: EnumerationEntry = { name: item.getName(), value: value };
+				if (Visitor.PropertyFilters.has(name) && Visitor.PropertyFilters.get(name)?.has(entry.name)) {
+					continue;
+				}
 				this.fillDocProperties(declaration, entry);
 				entries.push(entry);
 			}
