@@ -696,7 +696,8 @@ export default class Visitor {
 
 	private static readonly Mixins: Set<string> = new Set(['WorkDoneProgressParams', 'PartialResultParams', 'StaticRegistrationOptions', 'WorkDoneProgressOptions']);
 	private static readonly PropertyFilters: Map<string, Set<string>> = new Map([
-		['TraceValues', new Set(['Compact'])]
+		['TraceValues', new Set(['Compact'])],
+		['ErrorCodes', new Set(['MessageWriteError', 'MessageReadError', 'PendingResponseRejected', 'ConnectionInactive'])]
 	]);
 	private processSymbol(name: string, symbol: ts.Symbol): Structure | Enumeration | TypeAlias | undefined {
 		// We can't define LSPAny in the protocol right now due to TS issues.

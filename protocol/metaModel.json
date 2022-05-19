@@ -12685,26 +12685,6 @@
 					"documentation": "@deprecated use  jsonrpcReservedErrorRangeStart */"
 				},
 				{
-					"name": "MessageWriteError",
-					"value": -32099,
-					"documentation": "An error occurred when write a message to the transport layer."
-				},
-				{
-					"name": "MessageReadError",
-					"value": -32098,
-					"documentation": "An error occurred when reading a message from the transport layer."
-				},
-				{
-					"name": "PendingResponseRejected",
-					"value": -32097,
-					"documentation": "The connection got disposed or lost and all pending responses got\nrejected."
-				},
-				{
-					"name": "ConnectionInactive",
-					"value": -32096,
-					"documentation": "The connection is inactive and a use of it failed."
-				},
-				{
 					"name": "ServerNotInitialized",
 					"value": -32002,
 					"documentation": "Error code indicating that a server received a notification or\nrequest before the server has received the `initialize` request."
