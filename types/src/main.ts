@@ -281,7 +281,7 @@ export interface LocationLink {
 
 	/**
 	 * The range that should be selected and revealed when this link is being followed, e.g the name of a function.
-	 * Must be contained by the the `targetRange`. See also `DocumentSymbol#range`
+	 * Must be contained by the `targetRange`. See also `DocumentSymbol#range`
 	 */
 	targetSelectionRange: Range;
 }
@@ -2888,14 +2888,14 @@ export interface DocumentSymbol {
 
 	/**
 	 * The range enclosing this symbol not including leading/trailing whitespace but everything else
-	 * like comments. This information is typically used to determine if the the clients cursor is
+	 * like comments. This information is typically used to determine if the clients cursor is
 	 * inside the symbol to reveal in the symbol in the UI.
 	 */
 	range: Range;
 
 	/**
 	 * The range that should be selected and revealed when this symbol is being picked, e.g the name of a function.
-	 * Must be contained by the the `range`.
+	 * Must be contained by the `range`.
 	 */
 	selectionRange: Range;
 
