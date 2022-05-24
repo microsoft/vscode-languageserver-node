@@ -437,6 +437,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private _idleInterval: Disposable | undefined;
 	private readonly _ignoredRegistrations: Set<string>;
 	// private _idleStart: number | undefined;
+	private readonly _listeners: Disposable[];
 
 	private readonly _notificationHandlers: Map<string, GenericNotificationHandler>;
 	private readonly _notificationDisposables: Map<string, Disposable>;
@@ -512,6 +513,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 		this._state = ClientState.Initial;
 		this._ignoredRegistrations = new Set();
+		this._listeners = [];
 
 		this._notificationHandlers = new Map();
 		this._pendingNotificationHandlers = new Map();
@@ -1280,6 +1282,11 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this._fileEvents = [];
 		this._fileEventDelayer.cancel();
 
+		const disposables = this._listeners.splice(0, this._listeners.length);
+		for (const disposable of disposables) {
+			disposable.dispose();
+		}
+
 		if (this._syncedDocuments) {
 			this._syncedDocuments.clear();
 		}
@@ -1469,9 +1476,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	private hookConfigurationChanged(connection: Connection): void {
-		Workspace.onDidChangeConfiguration(() => {
+		this._listeners.push(Workspace.onDidChangeConfiguration(() => {
 			this.refreshTrace(connection, true);
-		});
+		}));
 	}
 
 	private refreshTrace(connection: Connection, sendNotification: boolean = false): void {

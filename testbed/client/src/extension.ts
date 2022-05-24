@@ -10,7 +10,7 @@ import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, No
 
 let client: LanguageClient;
 
-export function activate(context: ExtensionContext) {
+export async function activate(context: ExtensionContext) {
 	// We need to go one level up since an extension compile the js code into
 	// the output folder.
 	let module = path.join(__dirname, '..', '..', 'server', 'out', 'server.js');
@@ -63,7 +63,11 @@ export function activate(context: ExtensionContext) {
 		console.log(`Telemetry event received: ${JSON.stringify(data)}`);
 	});
 	const not: NotificationType<string[]> = new NotificationType<string[]>('testbed/notification');
-	client.start().catch((error)=> client.error(`Start failed`, error, 'force'));
+	try {
+		await client.start();
+	} catch (error) {
+		client.error(`Start failed`, error, 'force');
+	}
 	client.sendNotification(not, ['dirk', 'baeumer']).catch((error) => client.error(`Sending test notification failed`, error, 'force'));
 	commands.registerCommand('testbed.myCommand.invoked', () => {
 		void commands.executeCommand('testbed.myCommand').then(value => {
