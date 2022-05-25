@@ -51,7 +51,10 @@ import {
 
 import { DiagnosticFeature, DiagnosticProviderMiddleware, DiagnosticProviderShape, $DiagnosticPullOptions } from './diagnostic';
 import { NotebookDocumentMiddleware, $NotebookDocumentOptions, NotebookDocumentProviderShape, NotebookDocumentSyncFeature } from './notebook';
-import { ConfigurationFeature, ConfigurationMiddleware, $ConfigurationOptions, DidChangeConfigurationMiddleware, SyncConfigurationFeature, SynchronizeOptions } from './configuration';
+import {
+	ConfigurationFeature, ConfigurationMiddleware, $ConfigurationOptions, DidChangeConfigurationMiddleware, SyncConfigurationFeature,
+	SynchronizeOptions
+} from './configuration';
 import {
 	DidChangeTextDocumentFeature, DidChangeTextDocumentFeatureShape, DidCloseTextDocumentFeature, DidCloseTextDocumentFeatureShape, DidOpenTextDocumentFeature,
 	DidOpenTextDocumentFeatureShape, DidSaveTextDocumentFeature, DidSaveTextDocumentFeatureShape, ResolvedTextDocumentSyncCapabilities, TextDocumentSynchronizationMiddleware, WillSaveFeature,
@@ -87,7 +90,6 @@ import { WorkspaceFolderMiddleware } from './workspaceFolder';
 import { FileOperationsMiddleware } from './fileOperations';
 import { FileSystemWatcherFeature } from './fileSystemWatcher';
 import { ColorProviderFeature } from './colorProvider';
-import { ConfigurationFeature as PullConfigurationFeature } from './configuration';
 import { ImplementationFeature } from './implementation';
 import { TypeDefinitionFeature } from './typeDefinition';
 import { WorkspaceFoldersFeature } from './workspaceFolder';
@@ -1426,7 +1428,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 	protected handleConnectionClosed(): void {
 		// Check whether this is a normal shutdown in progress or the client stopped normally.
-		if (this.$state === ClientState.Stopped) {
+		if (this.$state === ClientState.Stopping || this.$state === ClientState.Stopped) {
 			return;
 		}
 		try {
@@ -1437,7 +1439,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			// Disposing a connection could fail if error cases.
 		}
 		let handlerResult: CloseHandlerResult = { action: CloseAction.DoNotRestart };
-		if (this.$state !== ClientState.Stopping) {
+		if (this.$state === ClientState.Running) {
 			try {
 				handlerResult = this._clientOptions.errorHandler!.closed();
 			} catch (error) {
@@ -1617,7 +1619,6 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this.registerFeature(new DocumentLinkFeature(this));
 		this.registerFeature(new ExecuteCommandFeature(this));
 		this.registerFeature(new SyncConfigurationFeature(this));
-		this.registerFeature(new PullConfigurationFeature(this));
 		this.registerFeature(new TypeDefinitionFeature(this));
 		this.registerFeature(new ImplementationFeature(this));
 		this.registerFeature(new ColorProviderFeature(this));
