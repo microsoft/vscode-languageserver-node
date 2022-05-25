@@ -68,7 +68,11 @@ export async function activate(context: ExtensionContext) {
 	} catch (error) {
 		client.error(`Start failed`, error, 'force');
 	}
-	client.sendNotification(not, ['dirk', 'baeumer']).catch((error) => client.error(`Sending test notification failed`, error, 'force'));
+	try {
+		await client.sendNotification(not, ['dirk', 'baeumer']);
+	} catch(error) {
+		client.error(`Sending test notification failed`, error, 'force');
+	}
 	commands.registerCommand('testbed.myCommand.invoked', () => {
 		void commands.executeCommand('testbed.myCommand').then(value => {
 			console.log(value);
