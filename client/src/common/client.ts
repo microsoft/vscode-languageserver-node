@@ -935,18 +935,17 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	public async start(): Promise<void> {
+		if (this.$state === ClientState.Stopping) {
+			throw new Error(`Client is currently stopping. Can only restart a full stopped client`);
+		}
+		// We are already running or are in the process of getting up
+		// to speed.
 		if (this._onStart !== undefined) {
 			return this._onStart;
 		}
 		const [promise, resolve, reject] = this.createOnStartPromise();
 		this._onStart = promise;
 
-		// We are currently stopping the language client. Await the stop
-		// before continuing.
-		if (this._onStop !== undefined) {
-			await this._onStop;
-			this._onStop = undefined;
-		}
 		// If we restart then the diagnostics collection is reused.
 		if (this._diagnostics === undefined) {
 			this._diagnostics = this._clientOptions.diagnosticCollectionName
@@ -1227,24 +1226,28 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		return this.shutdown('stop', timeout);
 	}
 
-	public suspend(): Promise<void> {
-		// Wait 5 seconds on suspend.
-		return this.shutdown('suspend', 5000);
-	}
-
 	private async shutdown(mode: 'suspend' | 'stop', timeout: number): Promise<void> {
-		// If the client is in stopped state simple return.
-		// It could also be that the client failed to stop
-		// which puts it into the stopped state as well.
+		// If the client is stopped or in its initial state return.
 		if (this.$state === ClientState.Stopped || this.$state === ClientState.Initial) {
 			return;
 		}
-		if (this.$state === ClientState.Stopping && this._onStop) {
-			return this._onStop;
+
+		// If we are stopping the client and have a stop promise return it.
+		if (this.$state === ClientState.Stopping) {
+			if (this._onStop !== undefined) {
+				return this._onStop;
+			} else {
+				throw new Error(`Client is stopping but no stop promise available.`);
+			}
 		}
 
-		// To ensure proper shutdown we need a proper created connection.
-		const connection = await this.$start();
+		const connection = this.activeConnection();
+
+		// We can't stop a client that is not running (e.g. has no connection). Especially not
+		// on that us starting since it can't be correctly synchronized.
+		if (connection === undefined || this.$state !== ClientState.Running) {
+			throw new Error(`Client is not running and can't be stopped. It's current state is: ${this.$state}`);
+		}
 
 		this._initializeResult = undefined;
 		this.$state = ClientState.Stopping;
@@ -1428,7 +1431,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 	protected handleConnectionClosed(): void {
 		// Check whether this is a normal shutdown in progress or the client stopped normally.
-		if (this.$state === ClientState.Stopping || this.$state === ClientState.Stopped) {
+		if (this.$state === ClientState.Stopped) {
 			return;
 		}
 		try {
@@ -1439,7 +1442,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			// Disposing a connection could fail if error cases.
 		}
 		let handlerResult: CloseHandlerResult = { action: CloseAction.DoNotRestart };
-		if (this.$state === ClientState.Running) {
+		if (this.$state !== ClientState.Stopping) {
 			try {
 				handlerResult = this._clientOptions.errorHandler!.closed();
 			} catch (error) {

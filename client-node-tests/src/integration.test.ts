@@ -1590,7 +1590,7 @@ suite('Server tests', () => {
 		}, /Stopping the server timed out/);
 	});
 
-	test('Server can be stopped right after start', async() => {
+	test('Server can\'t be stopped right after start', async() => {
 		const serverOptions: lsclient.ServerOptions = {
 			module: path.join(__dirname, './servers/startStopServer.js'),
 			transport: lsclient.TransportKind.ipc,
@@ -1598,9 +1598,11 @@ suite('Server tests', () => {
 		const clientOptions: lsclient.LanguageClientOptions = {};
 		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
 		void client.start();
-		await client.stop();
+		await assert.rejects(async () => {
+			await client.stop();
+		}, /Client is not running and can't be stopped/);
 
-		void client.start();
+		await client.start();
 		await client.stop();
 	});
 
