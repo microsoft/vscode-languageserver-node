@@ -655,7 +655,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		try {
 			// Ensure we have a connection before we force the document sync.
 			const connection = await this.$start();
-			this.forceDocumentSync();
+			await this.forceDocumentSync();
 			return connection.sendRequest<R>(type, ...params);
 		} catch (error) {
 			this.error(`Sending request ${Is.string(type) ? type : type.method} failed.`, error);
@@ -718,7 +718,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		try {
 			// Ensure we have a connection before we force the document sync.
 			const connection = await this.$start();
-			this.forceDocumentSync();
+			await this.forceDocumentSync();
 			return connection.sendNotification(type, params);
 		} catch (error) {
 			this.error(`Sending notification ${Is.string(type) ? type : type.method} failed.`, error);
@@ -1324,7 +1324,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			client._fileEvents.push(event);
 			return client._fileEventDelayer.trigger(async (): Promise<void> => {
 				const connection = await client.$start();
-				client.forceDocumentSync();
+				await client.forceDocumentSync();
 				const result = connection.sendNotification(DidChangeWatchedFilesNotification.type, { changes: client._fileEvents });
 				client._fileEvents = [];
 				return result;
@@ -1337,11 +1337,11 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	private _didChangeTextDocumentFeature: DidChangeTextDocumentFeature | undefined;
-	private forceDocumentSync(): void {
+	private async forceDocumentSync(): Promise<void> {
 		if (this._didChangeTextDocumentFeature === undefined) {
 			this._didChangeTextDocumentFeature = this._dynamicFeatures.get(DidChangeTextDocumentNotification.type.method) as DidChangeTextDocumentFeature;
 		}
-		this._didChangeTextDocumentFeature.forceDelivery();
+		return this._didChangeTextDocumentFeature.forceDelivery();
 	}
 
 	private _diagnosticQueue: Map<string, Diagnostic[]> = new Map();

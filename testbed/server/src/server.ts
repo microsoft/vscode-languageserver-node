@@ -124,7 +124,8 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 				textDocumentSync: TextDocumentSyncKind.Full,
 				hoverProvider: true,
 				completionProvider: {
-					allCommitCharacters: ['.', ','],
+					triggerCharacters: ['.'],
+					allCommitCharacters: [';'],
 					resolveProvider: false,
 				},
 				signatureHelpProvider: {

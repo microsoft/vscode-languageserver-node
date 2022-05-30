@@ -176,7 +176,7 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 	private _listener: Disposable | undefined;
 	private readonly _changeData: Map<string, DidChangeTextDocumentData>;
 	private _forcingDelivery: boolean = false;
-	private _changeDelayer: { uri: string; delayer: Delayer<void> } | undefined;
+	private _changeDelayer: { uri: string; delayer: Delayer<Promise<void>> } | undefined;
 	private readonly _onNotificationSent: EventEmitter<NotificationSendEvent<TextDocumentChangeEvent, DidChangeTextDocumentParams>>;
 
 	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>) {
@@ -253,15 +253,23 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 						if (this._changeDelayer) {
 							if (this._changeDelayer.uri !== event.document.uri.toString()) {
 								// Use this force delivery to track boolean state. Otherwise we might call two times.
-								this.forceDelivery();
+								await this.forceDelivery();
 								this._changeDelayer.uri = event.document.uri.toString();
 							}
+							// Usually we return the promise that signals that the data has been
+							// handed of to the network. With delayed change notification we can't
+							// do that since it would make the sendNotification call wait until the
+							// change delayer resolves and would therefore defeat the purpose. We
+							// instead return the change delayer and ensure via forceDocumentSync
+							// that before sending other notification / request the document sync
+							// has actually happened.
 							return this._changeDelayer.delayer.trigger(() => doSend(event));
 						} else {
 							this._changeDelayer = {
 								uri: event.document.uri.toString(),
-								delayer: new Delayer<void>(200)
+								delayer: new Delayer<Promise<void>>(200)
 							};
+							// See comment above.
 							return this._changeDelayer.delayer.trigger(() => doSend(event), -1);
 						}
 					};
@@ -304,13 +312,13 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 		}
 	}
 
-	public forceDelivery() {
+	public async forceDelivery(): Promise<void> {
 		if (this._forcingDelivery || !this._changeDelayer) {
 			return;
 		}
 		try {
 			this._forcingDelivery = true;
-			this._changeDelayer.delayer.forceDelivery();
+			return this._changeDelayer.delayer.forceDelivery();
 		} finally {
 			this._forcingDelivery = false;
 		}
