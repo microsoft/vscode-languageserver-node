@@ -108,7 +108,7 @@ export type NotebookDocumentChangeEvent = {
 
 class CellTextDocumentConnection implements TextDocumentConnection {
 
-	private static readonly NULL_DISPOSE = Object.freeze({ dispose: () => { }});
+	private static readonly NULL_DISPOSE = Object.freeze({ dispose: () => { } });
 
 	private openHandler: NotificationHandler<DidOpenTextDocumentParams> | undefined;
 	private changeHandler: NotificationHandler<DidChangeTextDocumentParams> | undefined;
@@ -154,7 +154,7 @@ class CellTextDocumentConnection implements TextDocumentConnection {
 	}
 }
 
-export class NotebookDocuments<T extends {  uri: DocumentUri }> {
+export class NotebookDocuments<T extends { uri: DocumentUri }> {
 
 	private readonly notebookDocuments: Map<URI, NotebookDocument>;
 	private readonly notebookCellMap: Map<DocumentUri, [NotebookCell, NotebookDocument]>;
@@ -172,7 +172,7 @@ export class NotebookDocuments<T extends {  uri: DocumentUri }> {
 		} else {
 			this._cellTextDocuments = new TextDocuments<T>(configurationOrTextDocuments);
 		}
-		this.notebookDocuments= new Map();
+		this.notebookDocuments = new Map();
 		this.notebookCellMap = new Map();
 		this._onDidOpen = new Emitter();
 		this._onDidChange = new Emitter();
@@ -222,7 +222,7 @@ export class NotebookDocuments<T extends {  uri: DocumentUri }> {
 	/**
 	 * Listens for `low level` notification on the given connection to
 	 * update the notebook documents managed by this instance.
-     *
+	 *
 	 * Please note that the connection only provides handlers not an event model. Therefore
 	 * listening on a connection will overwrite the following handlers on a connection:
 	 * `onDidOpenNotebookDocument`, `onDidChangeNotebookDocument`, `onDidSaveNotebookDocument`,

@@ -10,7 +10,13 @@ import { ProtocolRequestType0, ProtocolNotificationType } from './messages';
 
 export interface WorkspaceFoldersInitializeParams {
 	/**
-	 * The actual configured workspace folders.
+	 * The workspace folders configured in the client when the server starts.
+	 *
+	 * This property is only available if the client supports workspace folders.
+	 * It can be `null` if the client supports workspace folders but none are
+	 * configured.
+	 *
+	 * @since 3.6.0
 	 */
 	workspaceFolders?: WorkspaceFolder[] | null;
 }
@@ -18,7 +24,7 @@ export interface WorkspaceFoldersInitializeParams {
 export interface WorkspaceFoldersServerCapabilities {
 
 	/**
-	 * The Server has support for workspace folders
+	 * The server has support for workspace folders
 	 */
 	supported?: boolean;
 
@@ -26,7 +32,7 @@ export interface WorkspaceFoldersServerCapabilities {
 	 * Whether the server wants to receive workspace folder
 	 * change notifications.
 	 *
-	 * If a strings is provided the string is treated as a ID
+	 * If a string is provided the string is treated as an ID
 	 * under which the notification is registered on the client
 	 * side. The ID can be used to unregister for these events
 	 * using the `client/unregisterCapability` request.

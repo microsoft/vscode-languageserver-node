@@ -50,7 +50,7 @@ export interface CallHierarchyPrepareParams extends TextDocumentPositionParams, 
 
 /**
  * A request to result a `CallHierarchyItem` in a document at a given position.
- * Can be used as an input to a incoming or outgoing call hierarchy.
+ * Can be used as an input to an incoming or outgoing call hierarchy.
  *
  * @since 3.16.0
  */

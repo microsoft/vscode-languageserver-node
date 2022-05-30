@@ -42,7 +42,7 @@ export interface FoldingRangeClientCapabilities {
 	 *
 	 * @since 3.17.0
 	 */
-	foldingRangeKind? : {
+	foldingRangeKind?: {
 		/**
 		 * The folding range kind values the client supports. When this
 		 * property exists the client also guarantees that it will
@@ -54,6 +54,7 @@ export interface FoldingRangeClientCapabilities {
 
 	/**
 	 * Specific options for the folding range.
+	 *
 	 * @since 3.17.0
 	 */
 	foldingRange?: {

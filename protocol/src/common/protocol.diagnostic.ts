@@ -111,7 +111,7 @@ export namespace DiagnosticServerCancellationData {
  *
  * @since 3.17.0
  */
-export type DocumentDiagnosticParams =  WorkDoneProgressParams & PartialResultParams & {
+export type DocumentDiagnosticParams = WorkDoneProgressParams & PartialResultParams & {
 	/**
 	 * The text document.
 	 */
@@ -231,14 +231,14 @@ export type RelatedUnchangedDocumentDiagnosticReport = UnchangedDocumentDiagnost
 	 * @since 3.17.0
 	 */
 	relatedDocuments?: {
-		[uri: DocumentUri ]: FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport;
+		[uri: DocumentUri]: FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport;
 	};
 };
 
 /**
  * The result of a document diagnostic pull request. A report can
  * either be a full report containing all diagnostics for the
- * requested document or a unchanged report indicating that nothing
+ * requested document or an unchanged report indicating that nothing
  * has changed in terms of diagnostics in comparison to the last
  * pull request.
  *

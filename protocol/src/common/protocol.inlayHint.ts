@@ -10,7 +10,7 @@ import { ProtocolRequestType, ProtocolRequestType0 } from './messages';
 import type { StaticRegistrationOptions, TextDocumentRegistrationOptions, WorkDoneProgressOptions, WorkDoneProgressParams } from './protocol';
 
 /**
- * Inlay hint client capabilities
+ * Inlay hint client capabilities.
  *
  * @since 3.17.0
  */
@@ -22,7 +22,7 @@ export type InlayHintClientCapabilities = {
 	dynamicRegistration?: boolean;
 
 	/**
-	 * Indicates which properties a client can resolve lazily on a inlay
+	 * Indicates which properties a client can resolve lazily on an inlay
 	 * hint.
 	 */
 	resolveSupport?: {
@@ -74,7 +74,7 @@ export type InlayHintOptions = WorkDoneProgressOptions & {
 export type InlayHintRegistrationOptions = InlayHintOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions;
 
 /**
- * A parameter literal used in inlay hints requests.
+ * A parameter literal used in inlay hint requests.
  *
  * @since 3.17.0
  */
@@ -104,7 +104,7 @@ export namespace InlayHintRequest {
 }
 
 /**
- * A request to resolve additional properties for a inlay hint.
+ * A request to resolve additional properties for an inlay hint.
  * The request's parameter is of type [InlayHint](#InlayHint), the response is
  * of type [InlayHint](#InlayHint) or a Thenable that resolves to such.
  *
