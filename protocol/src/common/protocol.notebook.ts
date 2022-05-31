@@ -41,13 +41,13 @@ export type NotebookDocumentSyncClientCapabilities = {
 export namespace NotebookCellKind {
 
 	/**
-     * A markup-cell is formatted source that is used for display.
-     */
+	 * A markup-cell is formatted source that is used for display.
+	 */
 	export const Markup: 1 = 1;
 
 	/**
-     * A code-cell is source code.
-     */
+	 * A code-cell is source code.
+	 */
 	export const Code: 2 = 2;
 
 	export function is(value: any): value is NotebookCellKind {
@@ -298,7 +298,7 @@ export type VersionedNotebookDocumentIdentifier = {
  * Options specific to a notebook plus its cells
  * to be synced to the server.
  *
- * If a selector provide a notebook document
+ * If a selector provides a notebook document
  * filter but no cell selector all cells of a
  * matching notebook document will be synced.
  *
@@ -316,8 +316,8 @@ export type NotebookDocumentSyncOptions = {
 	notebookSelector: ({
 		/**
 		 * The notebook to be synced If a string
-	 	 * value is provided it matches against the
-	     * notebook type. '*' matches every notebook.
+		 * value is provided it matches against the
+		 * notebook type. '*' matches every notebook.
 		 */
 		notebook: string | NotebookDocumentFilter;
 
@@ -328,8 +328,8 @@ export type NotebookDocumentSyncOptions = {
 	} | {
 		/**
 		 * The notebook to be synced If a string
-	 	 * value is provided it matches against the
-	     * notebook type. '*' matches every notebook.
+		 * value is provided it matches against the
+		 * notebook type. '*' matches every notebook.
 		 */
 		notebook?: string | NotebookDocumentFilter;
 
@@ -359,7 +359,7 @@ export namespace NotebookDocumentSyncRegistrationType {
 }
 
 /**
- * The params sent in a open notebook document notification.
+ * The params sent in an open notebook document notification.
  *
  * @since 3.17.0
  */
@@ -470,8 +470,8 @@ export type NotebookDocumentChangeEvent = {
 		data?: NotebookCell[];
 
 		/**
-    	 * Changes to the text content of notebook cells.
-     	 */
+		 * Changes to the text content of notebook cells.
+		 */
 		textContent?: {
 			document: VersionedTextDocumentIdentifier;
 			changes: TextDocumentContentChangeEvent[];

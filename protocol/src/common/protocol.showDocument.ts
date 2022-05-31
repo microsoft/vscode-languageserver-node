@@ -8,13 +8,13 @@ import { Range, URI } from 'vscode-languageserver-types';
 import { ProtocolRequestType } from './messages';
 
 /**
- * Client capabilities for the show document request.
+ * Client capabilities for the showDocument request.
  *
  * @since 3.16.0
  */
 export interface ShowDocumentClientCapabilities {
 	/**
-	 * The client has support for the show document
+	 * The client has support for the showDocument
 	 * request.
 	 */
 	support: boolean;
@@ -42,7 +42,7 @@ export interface ShowDocumentParams {
 	 * An optional property to indicate whether the editor
 	 * showing the document should take focus or not.
 	 * Clients might ignore this property if an external
-	 * program in started.
+	 * program is started.
 	 */
 	takeFocus?: boolean;
 
@@ -56,7 +56,7 @@ export interface ShowDocumentParams {
 }
 
 /**
- * The result of an show document request.
+ * The result of a showDocument request.
  *
  * @since 3.16.0
  */

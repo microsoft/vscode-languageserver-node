@@ -15,32 +15,32 @@ import { ProtocolNotificationType, ProtocolRequestType } from './messages';
 export interface FileOperationOptions {
 
 	/**
-	* The server is interested in didCreateFiles notifications.
+	* The server is interested in receiving didCreateFiles notifications.
 	*/
 	didCreate?: FileOperationRegistrationOptions;
 
 	/**
-	* The server is interested in willCreateFiles requests.
+	* The server is interested in receiving willCreateFiles requests.
 	*/
 	willCreate?: FileOperationRegistrationOptions;
 
 	/**
-	* The server is interested in didRenameFiles notifications.
+	* The server is interested in receiving didRenameFiles notifications.
 	*/
 	didRename?: FileOperationRegistrationOptions;
 
 	/**
-	* The server is interested in willRenameFiles requests.
+	* The server is interested in receiving willRenameFiles requests.
 	*/
 	willRename?: FileOperationRegistrationOptions;
 
 	/**
-	* The server is interested in didDeleteFiles file notifications.
+	* The server is interested in receiving didDeleteFiles file notifications.
 	*/
 	didDelete?: FileOperationRegistrationOptions;
 
 	/**
-	* The server is interested in willDeleteFiles file requests.
+	* The server is interested in receiving willDeleteFiles file requests.
 	*/
 	willDelete?: FileOperationRegistrationOptions;
 }
@@ -94,7 +94,7 @@ export interface FileOperationPatternOptions {
 
 /**
  * A pattern to describe in which file operation requests or notifications
- * the server is interested in.
+ * the server is interested in receiving.
  *
  * @since 3.16.0
  */
@@ -126,14 +126,14 @@ interface FileOperationPattern {
 
 /**
  * A filter to describe in which file operation requests or notifications
- * the server is interested in.
+ * the server is interested in receiving.
  *
  * @since 3.16.0
  */
 export interface FileOperationFilter {
 
 	/**
-	 * A Uri like `file` or `untitled`.
+	 * A Uri scheme like `file` or `untitled`.
 	 */
 	scheme?: string;
 
@@ -164,7 +164,7 @@ export interface FileOperationClientCapabilities {
 	didCreate?: boolean;
 
 	/**
-	 * The client has support for willCreateFiles requests.
+	 * The client has support for sending willCreateFiles requests.
 	 */
 	willCreate?: boolean;
 
@@ -174,7 +174,7 @@ export interface FileOperationClientCapabilities {
 	didRename?: boolean;
 
 	/**
-	 * The client has support for willRenameFiles requests.
+	 * The client has support for sending willRenameFiles requests.
 	 */
 	willRename?: boolean;
 
@@ -184,13 +184,14 @@ export interface FileOperationClientCapabilities {
 	didDelete?: boolean;
 
 	/**
-	 * The client has support for willDeleteFiles requests.
+	 * The client has support for sending willDeleteFiles requests.
 	 */
 	willDelete?: boolean;
 }
 
 /**
- * The parameters sent in file create requests/notifications.
+ * The parameters sent in notifications/requests for user-initiated creation of
+ * files.
  *
  * @since 3.16.0
  */
@@ -216,7 +217,8 @@ export interface FileCreate {
 }
 
 /**
- * The parameters sent in file rename requests/notifications.
+ * The parameters sent in notifications/requests for user-initiated renames of
+ * files.
  *
  * @since 3.16.0
  */
@@ -248,7 +250,8 @@ export interface FileRename {
 }
 
 /**
- * The parameters sent in file delete requests/notifications.
+ * The parameters sent in notifications/requests for user-initiated deletes of
+ * files.
  *
  * @since 3.16.0
  */

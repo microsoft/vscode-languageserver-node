@@ -28,13 +28,13 @@ export interface Position {
 	line: number;
 
 	/**
-	 * Character offset on a line in a document (zero-based). Assuming that the line is
-	 * represented as a string, the `character` value represents the gap between the
-	 * `character` and `character + 1`.
+	 * Character offset on a line in a document (zero-based).
+	 *
+	 * The meaning of this offset is determined by the negotiated
+	 * `PositionEncodingKind`.
 	 *
 	 * If the character value is greater than the line length it defaults back to the
 	 * line length.
-	 * If a line number is negative, it defaults to 0.
 	 */
 	character: number;
 }
@@ -54,7 +54,7 @@ export interface Position {
  */
 export interface Range {
 	/**
-	 * The range's start position
+	 * The range's start position.
 	 */
 	start: Position;
 
@@ -338,7 +338,7 @@ export namespace TextDocument {
 	 *
 	 * @param document the document to update. Only documents created by TextDocument.create are valid inputs.
 	 * @param changes the changes to apply to the document.
-     * @param version the changes version for the document.
+	 * @param version the changes version for the document.
 	 * @returns The updated TextDocument. Note: That's the same document instance passed in as first parameter.
 	 *
 	 */

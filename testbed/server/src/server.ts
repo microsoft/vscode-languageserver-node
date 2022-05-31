@@ -107,11 +107,14 @@ function computeLegend(capability: SemanticTokensClientCapabilities): SemanticTo
 connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> | ResponseError<InitializeError> | InitializeResult => {
 	progress.begin('Initializing test server');
 
-	for (let folder of params.workspaceFolders) {
-		connection.console.log(`${folder.name} ${folder.uri}`);
-	}
-	if (params.workspaceFolders && params.workspaceFolders.length > 0) {
-		folder = params.workspaceFolders[0].uri;
+	const workspaceFolders = params.workspaceFolders;
+	if (workspaceFolders !== undefined && workspaceFolders !== null) {
+		for (let folder of workspaceFolders) {
+			connection.console.log(`${folder.name} ${folder.uri}`);
+		}
+		if (workspaceFolders.length > 0) {
+			folder = params.workspaceFolders[0].uri;
+		}
 	}
 
 	semanticTokensLegend = computeLegend(params.capabilities.textDocument!.semanticTokens!);
@@ -121,7 +124,8 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 				textDocumentSync: TextDocumentSyncKind.Full,
 				hoverProvider: true,
 				completionProvider: {
-					allCommitCharacters: ['.', ','],
+					triggerCharacters: ['.'],
+					allCommitCharacters: [';'],
 					resolveProvider: false,
 				},
 				signatureHelpProvider: {
@@ -201,7 +205,7 @@ connection.onInitialized((params) => {
 });
 
 connection.onShutdown((_handler) => {
-	// connection.console.log('Shutdown received');
+	connection.console.log('Shutdown received');
 	// return new Promise((resolve, reject) => {
 	// 	setTimeout(() => {
 	// 		resolve(undefined);
