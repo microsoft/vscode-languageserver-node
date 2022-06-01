@@ -641,6 +641,9 @@ class DiagnosticRequestor implements Disposable {
 			}
 			this.openRequests.set(key, { state: RequestStateKind.outDated, document: request.document });
 		}
+		
+		// cleanup old diagnostics
+		this.diagnostics.dispose();
 	}
 }
 
