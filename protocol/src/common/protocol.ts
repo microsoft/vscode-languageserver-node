@@ -2097,7 +2097,7 @@ export namespace WatchKind {
 	 */
 	export const Delete: 4 = 4;
 }
-export type WatchKind = uinteger;
+export type WatchKind = 1 | 2 | 4;
 
 //---- Diagnostic notification ----
 

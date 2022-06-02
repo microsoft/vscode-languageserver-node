@@ -847,7 +847,7 @@ export default class Visitor {
 							}
 							if (isEnum) {
 								const type: EnumerationType | undefined = enumValues
-									? (typeof enumValues[0] === 'string') ? { kind: 'base', name: 'string'} : { kind: 'base', name: 'integer' }
+									? this.getEnumBaseType(enumValues)
 									: openSet ? target as EnumerationType : undefined;
 								if (type !== undefined) {
 									const enumeration: Enumeration = { name: name, type: type, values: enumerations };
@@ -883,6 +883,7 @@ export default class Visitor {
 		} else if (Symbols.isRegularEnum(symbol)) {
 			const entries: EnumerationEntry[] = [];
 			const exports = this.typeChecker.getExportsOfModule(symbol);
+			let enumBaseType: 'string' | 'integer' | 'uinteger' | undefined = undefined;
 			for (const item of exports) {
 				const declaration = this.getDeclaration(item, ts.SyntaxKind.EnumMember);
 				if (declaration === undefined || !ts.isEnumMember(declaration) || declaration.initializer === undefined) {
@@ -891,8 +892,14 @@ export default class Visitor {
 				let value: string | number | undefined;
 				if (ts.isNumericLiteral(declaration.initializer)) {
 					value = Number.parseInt(declaration.initializer.getText());
+					if (value >= 0 && enumBaseType === undefined) {
+						enumBaseType = 'uinteger';
+					} else {
+						enumBaseType = 'integer';
+					}
 				} else if (ts.isStringLiteral(declaration.initializer)) {
 					value = this.removeQuotes(declaration.initializer.getText());
+					enumBaseType = 'string';
 				}
 				if (value === undefined) {
 					continue;
@@ -904,9 +911,9 @@ export default class Visitor {
 				this.fillDocProperties(declaration, entry);
 				entries.push(entry);
 			}
-			const type: EnumerationType = (entries.length === 0 || typeof entries[0].value === 'number')
-				? { kind: 'base', name: 'integer' }
-				: { kind: 'base', name: 'string' };
+			const type: EnumerationType = enumBaseType === undefined
+				? { kind: 'base', name: 'uinteger' }
+				: { kind: 'base', name: enumBaseType };
 			const result: Enumeration = { name: name, type: type, values: entries };
 			const declaration = this.getDeclaration(symbol, ts.SyntaxKind.EnumDeclaration);
 			if (declaration !== undefined) {
@@ -1036,6 +1043,22 @@ export default class Visitor {
 			return this.removeQuotes(enumValueNode.getText());
 		}
 		return undefined;
+	}
+
+	getEnumBaseType(values: string[] | number[]) : EnumerationType | undefined {
+		if (values.length === 0) {
+			return undefined;
+		}
+		const first = values[0];
+		if (typeof first === 'string') {
+			return { kind: 'base', name: 'string' };
+		}
+		for (const value of (values as number[])) {
+			if (value < 0) {
+				return { kind: 'base', name: 'integer' };
+			}
+		}
+		return { kind: 'base', name: 'uinteger' };
 	}
 
 	private removeQuotes(text: string): string {
