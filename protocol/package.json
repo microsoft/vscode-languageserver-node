@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageserver-protocol",
 	"description": "VSCode Language Server Protocol implementation",
-	"version": "3.17.2-next.3",
+	"version": "3.17.2-next.5",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"repository": {
