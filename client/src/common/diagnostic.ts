@@ -196,8 +196,8 @@ class Tabs {
 		};
 		openTabsHandler();
 
-		if (Window.tabGroups.onDidChangeTabGroups !== undefined) {
-			this.disposable = Window.tabGroups.onDidChangeTabGroups(openTabsHandler);
+		if (Window.tabGroups.onDidChangeTabs !== undefined) {
+			this.disposable = Window.tabGroups.onDidChangeTabs(openTabsHandler);
 		} else {
 			this.disposable = { dispose: () => {} };
 		}
