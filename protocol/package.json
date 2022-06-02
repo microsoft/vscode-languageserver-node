@@ -22,7 +22,7 @@
 		"vscode-languageserver-types": "3.17.2-next.2"
 	},
 	"scripts": {
-		"prepublishOnly": "git clean -xfd . && npm install && npm run clean && npm run compile && npm test",
+		"prepublishOnly": "git clean -xfd . && npm install && npm run clean && npm run compile && npm test && cd .. && npm run generate:metaModel && npm run generate:metaModelSchema && cd ./protocol",
 		"postpublish": "node ../build/npm/post-publish.js",
 		"preversion": "npm test",
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json",
