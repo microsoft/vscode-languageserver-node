@@ -28,7 +28,8 @@
 		"shx": "^0.3.4",
 		"typescript": "^4.6.4",
 		"webpack": "^5.72.0",
-		"webpack-cli": "^4.9.2"
+		"webpack-cli": "^4.9.2",
+		"ts-json-schema-generator": "^1.0.0"
 	},
 	"scripts": {
 		"postinstall": "node ./build/bin/all.js install && cd testbed && npm install && cd .. && npm run symlink:testbed",
@@ -53,6 +54,7 @@
 		"rebuildAll": "npm run clean && npm run symlink && npm run compile && npm run test",
 		"audit:all": "node ./build/bin/all.js audit",
 		"audit:all:fix": "node ./build/bin/all.js audit fix",
-		"generate:metaModel": "node ./tools/lib/main.js -p ./protocol/src/common/tsconfig.json > ./protocol/metaModel.json"
+		"generate:metaModel": "node ./tools/lib/main.js -p ./protocol/src/common/tsconfig.json > ./protocol/metaModel.json",
+		"generate:metaModelSchema": "ts-json-schema-generator --path ./tools/src/metaModel.ts > ./protocol/metaModel.schema.json"
 	}
 }

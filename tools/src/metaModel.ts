@@ -385,7 +385,7 @@ export type EnumerationEntry = {
 	proposed?: boolean;
 };
 
-export type EnumerationType = { kind: 'base'; name: 'string' | 'integer' };
+export type EnumerationType = { kind: 'base'; name: 'string' | 'integer' | 'uinteger' };
 
 /**
  * Defines an enumeration.
