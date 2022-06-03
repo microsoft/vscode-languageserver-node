@@ -961,7 +961,7 @@ export interface ClientCapabilities {
 	/**
 	 * Experimental client capabilities.
 	 */
-	experimental?: object;
+	experimental?: LSPAny;
 }
 
 /**
@@ -1042,7 +1042,7 @@ export namespace WorkDoneProgressOptions {
  * Defines the capabilities provided by a language
  * server.
  */
-export interface ServerCapabilities<T = any> {
+export interface ServerCapabilities<T = LSPAny> {
 
 	/**
 	 * The position encoding the server picked from the encodings offered

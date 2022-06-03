@@ -948,7 +948,10 @@ export default class Visitor {
 			if (typeInfo === undefined) {
 				throw new Error(`Can't parse property ${member.getName()} of structure ${symbol.getName()}`);
 			}
-			const property: Property = { name: member.getName(), type: TypeInfo.asJsonType(typeInfo) };
+
+			const property: Property = (result.name === 'ServerCapabilities' && member.getName() === 'experimental' && typeInfo.kind === 'reference' && typeInfo.name === 'T')
+				? { name: member.getName(), type: TypeInfo.asJsonType({ kind: 'reference', name: 'LSPAny', symbol: typeInfo.symbol }) }
+				: { name: member.getName(), type: TypeInfo.asJsonType(typeInfo) };
 			if (Symbols.isOptional(member)) {
 				property.optional = true;
 			}
