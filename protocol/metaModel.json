@@ -8355,7 +8355,7 @@
 					"name": "experimental",
 					"type": {
 						"kind": "reference",
-						"name": "T"
+						"name": "LSPAny"
 					},
 					"optional": true,
 					"documentation": "Experimental server capabilities."
