@@ -196,8 +196,8 @@ class Tabs {
 		};
 		openTabsHandler();
 
-		if (Window.tabGroups.onDidChangeTabGroups !== undefined) {
-			this.disposable = Window.tabGroups.onDidChangeTabGroups(openTabsHandler);
+		if (Window.tabGroups.onDidChangeTabs !== undefined) {
+			this.disposable = Window.tabGroups.onDidChangeTabs(openTabsHandler);
 		} else {
 			this.disposable = { dispose: () => {} };
 		}
@@ -641,6 +641,9 @@ class DiagnosticRequestor implements Disposable {
 			}
 			this.openRequests.set(key, { state: RequestStateKind.outDated, document: request.document });
 		}
+		
+		// cleanup old diagnostics
+		this.diagnostics.dispose();
 	}
 }
 
