@@ -9951,10 +9951,6 @@
 			"since": "3.16.0"
 		},
 		{
-			"name": "T",
-			"properties": []
-		},
-		{
 			"name": "CodeDescription",
 			"properties": [
 				{
@@ -12684,7 +12680,7 @@
 				{
 					"name": "serverErrorStart",
 					"value": -32099,
-					"documentation": "@deprecated use  jsonrpcReservedErrorRangeStart */"
+					"documentation": "@deprecated use  jsonrpcReservedErrorRangeStart"
 				},
 				{
 					"name": "ServerNotInitialized",
@@ -12704,7 +12700,7 @@
 				{
 					"name": "serverErrorEnd",
 					"value": -32000,
-					"documentation": "@deprecated use  jsonrpcReservedErrorRangeEnd */"
+					"documentation": "@deprecated use  jsonrpcReservedErrorRangeEnd"
 				}
 			],
 			"supportsCustomValues": true,
@@ -14100,7 +14096,7 @@
 										"kind": "base",
 										"name": "string"
 									},
-									"documentation": "A language id, like `typescript`. */"
+									"documentation": "A language id, like `typescript`."
 								},
 								{
 									"name": "scheme",
@@ -14109,7 +14105,7 @@
 										"name": "string"
 									},
 									"optional": true,
-									"documentation": "A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */"
+									"documentation": "A Uri [scheme](#Uri.scheme), like `file` or `untitled`."
 								},
 								{
 									"name": "pattern",
@@ -14118,7 +14114,7 @@
 										"name": "string"
 									},
 									"optional": true,
-									"documentation": "A glob pattern, like `*.{ts,js}`. */"
+									"documentation": "A glob pattern, like `*.{ts,js}`."
 								}
 							]
 						}
@@ -14134,7 +14130,7 @@
 										"name": "string"
 									},
 									"optional": true,
-									"documentation": "A language id, like `typescript`. */"
+									"documentation": "A language id, like `typescript`."
 								},
 								{
 									"name": "scheme",
@@ -14142,7 +14138,7 @@
 										"kind": "base",
 										"name": "string"
 									},
-									"documentation": "A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */"
+									"documentation": "A Uri [scheme](#Uri.scheme), like `file` or `untitled`."
 								},
 								{
 									"name": "pattern",
@@ -14151,7 +14147,7 @@
 										"name": "string"
 									},
 									"optional": true,
-									"documentation": "A glob pattern, like `*.{ts,js}`. */"
+									"documentation": "A glob pattern, like `*.{ts,js}`."
 								}
 							]
 						}
@@ -14167,7 +14163,7 @@
 										"name": "string"
 									},
 									"optional": true,
-									"documentation": "A language id, like `typescript`. */"
+									"documentation": "A language id, like `typescript`."
 								},
 								{
 									"name": "scheme",
@@ -14176,7 +14172,7 @@
 										"name": "string"
 									},
 									"optional": true,
-									"documentation": "A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */"
+									"documentation": "A Uri [scheme](#Uri.scheme), like `file` or `untitled`."
 								},
 								{
 									"name": "pattern",
@@ -14184,7 +14180,7 @@
 										"kind": "base",
 										"name": "string"
 									},
-									"documentation": "A glob pattern, like `*.{ts,js}`. */"
+									"documentation": "A glob pattern, like `*.{ts,js}`."
 								}
 							]
 						}
@@ -14209,7 +14205,7 @@
 										"kind": "base",
 										"name": "string"
 									},
-									"documentation": "The type of the enclosing notebook. */"
+									"documentation": "The type of the enclosing notebook."
 								},
 								{
 									"name": "scheme",
@@ -14218,7 +14214,7 @@
 										"name": "string"
 									},
 									"optional": true,
-									"documentation": "A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */"
+									"documentation": "A Uri [scheme](#Uri.scheme), like `file` or `untitled`."
 								},
 								{
 									"name": "pattern",
@@ -14227,7 +14223,7 @@
 										"name": "string"
 									},
 									"optional": true,
-									"documentation": "A glob pattern. */"
+									"documentation": "A glob pattern."
 								}
 							]
 						}
@@ -14243,7 +14239,7 @@
 										"name": "string"
 									},
 									"optional": true,
-									"documentation": "The type of the enclosing notebook. */"
+									"documentation": "The type of the enclosing notebook."
 								},
 								{
 									"name": "scheme",
@@ -14251,7 +14247,7 @@
 										"kind": "base",
 										"name": "string"
 									},
-									"documentation": "A Uri [scheme](#Uri.scheme), like `file` or `untitled`.*/"
+									"documentation": "A Uri [scheme](#Uri.scheme), like `file` or `untitled`."
 								},
 								{
 									"name": "pattern",
@@ -14260,7 +14256,7 @@
 										"name": "string"
 									},
 									"optional": true,
-									"documentation": "A glob pattern. */"
+									"documentation": "A glob pattern."
 								}
 							]
 						}
@@ -14276,7 +14272,7 @@
 										"name": "string"
 									},
 									"optional": true,
-									"documentation": "The type of the enclosing notebook. */"
+									"documentation": "The type of the enclosing notebook."
 								},
 								{
 									"name": "scheme",
@@ -14285,7 +14281,7 @@
 										"name": "string"
 									},
 									"optional": true,
-									"documentation": "A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */"
+									"documentation": "A Uri [scheme](#Uri.scheme), like `file` or `untitled`."
 								},
 								{
 									"name": "pattern",
@@ -14293,7 +14289,7 @@
 										"kind": "base",
 										"name": "string"
 									},
-									"documentation": "A glob pattern. */"
+									"documentation": "A glob pattern."
 								}
 							]
 						}
