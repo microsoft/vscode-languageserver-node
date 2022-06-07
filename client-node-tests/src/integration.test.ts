@@ -1714,12 +1714,35 @@ suite('Server activation', () => {
 		await client.stop();
 	});
 
+	test('Start server fails on request when stopped once', async () => {
+		const client = createClient();
+		assert.strictEqual(client.state, lsclient.State.Stopped);
+		const result: number = await client.sendRequest('request', { value: 10 });
+		assert.strictEqual(client.state, lsclient.State.Running);
+		assert.strictEqual(result, 11);
+		await client.stop();
+		await assert.rejects(async () => {
+			await client.sendRequest('request', { value: 10 });
+		}, /Client is not running/);
+	});
+
 	test('Start server on notification', async () => {
 		const client = createClient();
 		assert.strictEqual(client.state, lsclient.State.Stopped);
 		await client.sendNotification('notification');
 		assert.strictEqual(client.state, lsclient.State.Running);
 		await client.stop();
+	});
+
+	test('Start server fails on notification when stopped once', async () => {
+		const client = createClient();
+		assert.strictEqual(client.state, lsclient.State.Stopped);
+		await client.sendNotification('notification');
+		assert.strictEqual(client.state, lsclient.State.Running);
+		await client.stop();
+		await assert.rejects(async () => {
+			await client.sendNotification('notification');
+		}, /Client is not running/);
 	});
 
 	test('Add pending request handler', async () => {
