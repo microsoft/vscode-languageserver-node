@@ -50,6 +50,16 @@
 	"editor.codeActionsOnSave": {
 		"source.fixAll.eslint": true
 	},
+	"mochaExplorer.files": [
+		"textDocument/lib/umd/test/*.js",
+		"types/lib/umd/test/*.js",
+		"jsonrpc/lib/common/test/*.js",
+		"jsonrpc/lib/node/test/*.js",
+		"protocol/lib/node/test/*.js",
+		"server/lib/*/test/*.js"
+	],
+	"mochaExplorer.ui": "tdd",
+	"mochaExplorer.require": "source-map-support/register",
 	"cSpell.words": [
 		"ASAR",
 		"asColorInformations",
