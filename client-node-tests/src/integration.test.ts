@@ -1769,6 +1769,15 @@ suite('Server activation', () => {
 		await client.stop();
 	});
 
+	test('Starting disposed server fails', async () => {
+		const client = createClient();
+		await client.start();
+		await client.dispose();
+		await assert.rejects(async () => {
+			await client.start();
+		}, /Client got disposed and can't be restarted./);
+	});
+
 	async function checkServerStart(client: LanguageClient, disposable: vscode.Disposable): Promise<void> {
 		return new Promise((resolve, reject) => {
 			const timeout = setTimeout(() => {

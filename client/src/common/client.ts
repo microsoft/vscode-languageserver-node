@@ -440,6 +440,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private readonly _ignoredRegistrations: Set<string>;
 	// private _idleStart: number | undefined;
 	private readonly _listeners: Disposable[];
+	private _disposed: 'disposing' | 'disposed' | undefined;
 
 	private readonly _notificationHandlers: Map<string, GenericNotificationHandler>;
 	private readonly _notificationDisposables: Map<string, Disposable>;
@@ -769,6 +770,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	public async sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): Promise<void> {
+		if (this.$state === ClientState.StartFailed || this.$state === ClientState.Stopping || this.$state === ClientState.Stopped) {
+			return Promise.reject(new ResponseError(ErrorCodes.ConnectionInactive, `Client is not running`));
+		}
 		try {
 			// Ensure we have a connection before we force the document sync.
 			const connection = await this.$start();
@@ -935,6 +939,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	public async start(): Promise<void> {
+		if (this._disposed === 'disposing' || this._disposed === 'disposed') {
+			throw new Error(`Client got disposed and can't be restarted.`);
+		}
 		if (this.$state === ClientState.Stopping) {
 			throw new Error(`Client is currently stopping. Can only restart a full stopped client`);
 		}
@@ -1224,6 +1231,15 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	public stop(timeout: number = 2000): Promise<void> {
 		// Wait 2 seconds on stop
 		return this.shutdown('stop', timeout);
+	}
+
+	public dispose(timeout: number = 2000): Promise<void> {
+		try {
+			this._disposed = 'disposing';
+			return this.stop(timeout);
+		} finally {
+			this._disposed = 'disposed';
+		}
 	}
 
 	private async shutdown(mode: 'suspend' | 'stop', timeout: number): Promise<void> {
