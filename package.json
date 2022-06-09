@@ -26,10 +26,11 @@
 		"rimraf": "^3.0.2",
 		"shelljs": "^0.8.5",
 		"shx": "^0.3.4",
+		"source-map-support": "^0.5.21",
+		"ts-json-schema-generator": "^1.0.0",
 		"typescript": "^4.6.4",
 		"webpack": "^5.72.0",
-		"webpack-cli": "^4.9.2",
-		"ts-json-schema-generator": "^1.0.0"
+		"webpack-cli": "^4.9.2"
 	},
 	"scripts": {
 		"postinstall": "node ./build/bin/all.js install && cd testbed && npm install && cd .. && npm run symlink:testbed",
