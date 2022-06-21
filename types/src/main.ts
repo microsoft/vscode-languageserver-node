@@ -254,7 +254,7 @@ export namespace Location {
 	 */
 	export function is(value: any): value is Location {
 		let candidate = value as Location;
-		return Is.defined(candidate) && Range.is(candidate.range) && (Is.string(candidate.uri) || Is.undefined(candidate.uri));
+		return Is.objectLiteral(candidate) && Range.is(candidate.range) && (Is.string(candidate.uri) || Is.undefined(candidate.uri));
 	}
 }
 
@@ -312,7 +312,7 @@ export namespace LocationLink {
 	 */
 	export function is(value: any): value is LocationLink {
 		let candidate = value as LocationLink;
-		return Is.defined(candidate) && Range.is(candidate.targetRange) && Is.string(candidate.targetUri)
+		return Is.objectLiteral(candidate) && Range.is(candidate.targetRange) && Is.string(candidate.targetUri)
 			&& Range.is(candidate.targetSelectionRange)
 			&& (Range.is(candidate.originSelectionRange) || Is.undefined(candidate.originSelectionRange));
 	}

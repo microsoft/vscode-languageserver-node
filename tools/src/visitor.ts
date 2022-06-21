@@ -949,7 +949,8 @@ export default class Visitor {
 				throw new Error(`Can't parse property ${member.getName()} of structure ${symbol.getName()}`);
 			}
 
-			const property: Property = (result.name === 'ServerCapabilities' && member.getName() === 'experimental' && typeInfo.kind === 'reference' && typeInfo.name === 'T')
+			const isExperimentalProperty = (result.name === 'ServerCapabilities' && member.getName() === 'experimental' && typeInfo.kind === 'reference' && typeInfo.name === 'T');
+			const property: Property = isExperimentalProperty
 				? { name: member.getName(), type: TypeInfo.asJsonType({ kind: 'reference', name: 'LSPAny', symbol: typeInfo.symbol }) }
 				: { name: member.getName(), type: TypeInfo.asJsonType(typeInfo) };
 			if (Symbols.isOptional(member)) {
@@ -957,7 +958,9 @@ export default class Visitor {
 			}
 			this.fillDocProperties(declaration, property);
 			result.properties.push(property);
-			this.queueTypeInfo(typeInfo);
+			if (!isExperimentalProperty) {
+				this.queueTypeInfo(typeInfo);
+			}
 		});
 	}
 
@@ -1094,7 +1097,13 @@ export default class Visitor {
 				const buffer: string[] = [];
 				const lines = text.split(/\r?\n/);
 				for (let i= 0; i < lines.length; i++) {
-					let noComment = lines[i].replace(/^(\s*\/\*\*)|^(\s*\*\/)|^(\s*\*)/, '');
+					let noComment = lines[i].replace(/^\s*\/\*\*(.*)\s*\*\/\s*$|^(\s*\/\*\*)|^(\s*\*\/\s*)$|^(\s*\*)/, (_match, m1) => {
+						if (m1) {
+							return m1;
+						} else {
+							return '';
+						}
+					});
 					// First line
 					if (i === 0 || i === lines.length - 1) {
 						noComment = noComment.trim();
