@@ -8,6 +8,11 @@ export type BaseTypes = 'Uri' | 'DocumentUri' | 'integer' | 'uinteger' | 'decima
 export type TypeKind = 'base' | 'reference' | 'array' | 'map' | 'and' | 'or' | 'tuple' | 'literal' | 'stringLiteral' | 'integerLiteral' | 'booleanLiteral';
 
 /**
+ * Indicates in which direction a message is sent in the protocol.
+ */
+export type MessageDirection = 'clientToServer' | 'serverToClient' | 'both';
+
+/**
  * Represents a base type like `string` or `DocumentUri`.
  */
 export type BaseType = {
@@ -158,6 +163,12 @@ export type Request = {
 	 */
 	registrationOptions?: Type;
 
+    /**
+     * The direction in which this request is sent
+     * in the protocol.
+     */
+	messageDirection: MessageDirection;
+
 	/**
 	 * An optional documentation;
 	 */
@@ -201,6 +212,12 @@ export type Notification = {
 	 * supports dynamic registration.
 	 */
 	registrationOptions?: Type;
+
+    /**
+     * The direction in which this notification is sent
+     * in the protocol.
+     */
+	messageDirection: MessageDirection;
 
 	/**
 	 * An optional documentation;
