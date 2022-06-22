@@ -5,6 +5,12 @@
 
 import { RequestType, RequestType0, NotificationType, NotificationType0, ProgressType, _EM, ParameterStructures } from 'vscode-jsonrpc';
 
+export enum MessageDirection {
+  clientToServer = 'clientToServer',
+  serverToClient = 'serverToClient',
+  both = 'both'
+}
+
 export class RegistrationType<RO> {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.

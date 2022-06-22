@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { ProtocolRequestType } from './messages';
+import { MessageDirection, ProtocolRequestType } from './messages';
 import type {
 	WorkDoneProgressOptions, WorkDoneProgressParams, PartialResultParams, TextDocumentRegistrationOptions, TextDocumentPositionParams
 } from './protocol';
@@ -128,5 +128,6 @@ export interface MonikerParams extends TextDocumentPositionParams, WorkDoneProgr
  */
 export namespace MonikerRequest {
 	export const method: 'textDocument/moniker' = 'textDocument/moniker';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<MonikerParams, Moniker[] | null, Moniker[], void, MonikerRegistrationOptions>(method);
 }

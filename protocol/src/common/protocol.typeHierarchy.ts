@@ -6,7 +6,7 @@
 import { RequestHandler } from 'vscode-jsonrpc';
 import { TypeHierarchyItem } from 'vscode-languageserver-types';
 
-import { ProtocolRequestType } from './messages';
+import { MessageDirection, ProtocolRequestType } from './messages';
 import type {
 	TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams, PartialResultParams,
 	WorkDoneProgressParams, WorkDoneProgressOptions
@@ -53,6 +53,7 @@ export type TypeHierarchyPrepareParams = TextDocumentPositionParams & WorkDonePr
  */
 export namespace TypeHierarchyPrepareRequest {
 	export const method: 'textDocument/prepareTypeHierarchy' = 'textDocument/prepareTypeHierarchy';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<TypeHierarchyPrepareParams, TypeHierarchyItem[] | null, never, void, TypeHierarchyRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<TypeHierarchyPrepareParams, TypeHierarchyItem[] | null, void>;
 }
@@ -73,6 +74,7 @@ export type TypeHierarchySupertypesParams = WorkDoneProgressParams & PartialResu
  */
 export namespace TypeHierarchySupertypesRequest {
 	export const method: 'typeHierarchy/supertypes' = 'typeHierarchy/supertypes';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<TypeHierarchySupertypesParams, TypeHierarchyItem[] | null, TypeHierarchyItem[], void, void>(method);
 	export type HandlerSignature = RequestHandler<TypeHierarchySupertypesParams, TypeHierarchyItem[] | null, void>;
 }
@@ -93,6 +95,7 @@ export type TypeHierarchySubtypesParams = WorkDoneProgressParams & PartialResult
  */
 export namespace TypeHierarchySubtypesRequest {
 	export const method: 'typeHierarchy/subtypes' = 'typeHierarchy/subtypes';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<TypeHierarchySubtypesParams, TypeHierarchyItem[] | null, TypeHierarchyItem[], void, void>(method);
 	export type HandlerSignature = RequestHandler<TypeHierarchySubtypesParams, TypeHierarchyItem[] | null, void>;
 }

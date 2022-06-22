@@ -6,7 +6,7 @@
 import { RequestHandler } from 'vscode-jsonrpc';
 import { TextDocumentIdentifier, uinteger, FoldingRange, FoldingRangeKind } from 'vscode-languageserver-types';
 
-import { ProtocolRequestType } from './messages';
+import { MessageDirection, ProtocolRequestType } from './messages';
 import type {
 	TextDocumentRegistrationOptions, StaticRegistrationOptions, PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions
 } from './protocol';
@@ -92,6 +92,7 @@ export interface FoldingRangeParams extends WorkDoneProgressParams, PartialResul
  */
 export namespace FoldingRangeRequest {
 	export const method: 'textDocument/foldingRange' = 'textDocument/foldingRange';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<FoldingRangeParams, FoldingRange[] | null, FoldingRange[], void, FoldingRangeRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<FoldingRangeParams, FoldingRange[] | null, void>;
 }

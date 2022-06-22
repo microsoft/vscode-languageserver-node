@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import { RequestHandler } from 'vscode-jsonrpc';
-import { Definition, DefinitionLink, LocationLink, Location } from 'vscode-languageserver-types';
+import { MessageDirection, Definition, DefinitionLink, LocationLink, Location } from 'vscode-languageserver-types';
 
 import { ProtocolRequestType } from './messages';
 import type {
@@ -51,6 +51,7 @@ export interface TypeDefinitionParams extends TextDocumentPositionParams, WorkDo
  */
 export namespace TypeDefinitionRequest {
 	export const method: 'textDocument/typeDefinition' = 'textDocument/typeDefinition';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<TypeDefinitionParams, Definition | DefinitionLink[] | null, Location[] | DefinitionLink[], void, TypeDefinitionRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<TypeDefinitionParams, Definition | DefinitionLink[] | null, void>;
 }

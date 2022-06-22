@@ -6,7 +6,7 @@
 import { LogTraceParams, SetTraceParams, ProgressToken, ErrorCodes } from 'vscode-jsonrpc';
 import { SemanticTokenTypes, SemanticTokenModifiers, LSPAny } from 'vscode-languageserver-types';
 
-import { ProtocolNotificationType } from './messages';
+import { MessageDirection, ProtocolNotificationType } from './messages';
 import { LSPErrorCodes } from './api';
 import { WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressReport } from './protocol.progress';
 
@@ -15,12 +15,16 @@ import { WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressReport } fr
 
 // @ts-ignore 6196
 namespace SetTraceNotification {
-	export const type = new ProtocolNotificationType<SetTraceParams, void>('$/setTrace');
+  export const method: '$/setTrace' = '$/setTrace';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
+	export const type = new ProtocolNotificationType<SetTraceParams, void>(method);
 }
 
 // @ts-ignore 6196
 namespace LogTraceNotification {
-	export const type = new ProtocolNotificationType<LogTraceParams, void>('$/logTrace');
+  export const method: '$/logTrace' = '$/logTrace';
+	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
+	export const type = new ProtocolNotificationType<LogTraceParams, void>(method);
 }
 
 // @ts-ignore 6196
@@ -44,7 +48,9 @@ interface CancelParams {
 
 // @ts-ignore 6196
 namespace CancelNotification {
-	export const type = new ProtocolNotificationType<CancelParams, void>('$/cancelRequest');
+  export const method: '$/cancelRequest' = '$/cancelRequest';
+	export const messageDirection: MessageDirection = MessageDirection.both;
+	export const type = new ProtocolNotificationType<CancelParams, void>(method);
 }
 
 interface ProgressParams {
@@ -61,7 +67,9 @@ interface ProgressParams {
 
 // @ts-ignore 6196
 namespace ProgressNotification {
-	export const type = new ProtocolNotificationType<ProgressParams, void>('$/progress');
+  export const method: '$/progress' = '$/progress';
+	export const messageDirection: MessageDirection = MessageDirection.both;
+	export const type = new ProtocolNotificationType<ProgressParams, void>(method);
 }
 
 // @ts-ignore 6196

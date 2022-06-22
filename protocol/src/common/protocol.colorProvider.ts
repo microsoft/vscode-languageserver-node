@@ -6,7 +6,7 @@
 import { RequestHandler } from 'vscode-jsonrpc';
 import { TextDocumentIdentifier, Range, Color, ColorInformation, ColorPresentation } from 'vscode-languageserver-types';
 
-import { ProtocolRequestType } from './messages';
+import { MessageDirection, ProtocolRequestType } from './messages';
 import type {
 	TextDocumentRegistrationOptions, StaticRegistrationOptions, PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions
 } from './protocol';
@@ -48,6 +48,7 @@ export interface DocumentColorParams extends WorkDoneProgressParams, PartialResu
  */
 export namespace DocumentColorRequest {
 	export const method: 'textDocument/documentColor' = 'textDocument/documentColor';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<DocumentColorParams, ColorInformation[], ColorInformation[], void, DocumentColorRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<DocumentColorParams, ColorInformation[], void>;
 }
@@ -79,6 +80,8 @@ export interface ColorPresentationParams extends WorkDoneProgressParams, Partial
  * that resolves to such.
  */
 export namespace ColorPresentationRequest {
-	export const type = new ProtocolRequestType<ColorPresentationParams, ColorPresentation[], ColorPresentation[], void, WorkDoneProgressOptions & TextDocumentRegistrationOptions>('textDocument/colorPresentation');
+	export const method: 'textDocument/colorPresentation' = 'textDocument/colorPresentation';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
+	export const type = new ProtocolRequestType<ColorPresentationParams, ColorPresentation[], ColorPresentation[], void, WorkDoneProgressOptions & TextDocumentRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<ColorPresentationParams, ColorPresentation[], void>;
 }
