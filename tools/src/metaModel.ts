@@ -147,6 +147,12 @@ export type Request = {
 	errorData?: Type;
 
 	/**
+	 * Optional a dynamic registration method if it
+	 * different from the request's method.
+	 */
+	registrationMethod?: string;
+
+	/**
 	 * Optional registration options if the request
 	 * supports dynamic registration.
 	 */
@@ -155,7 +161,7 @@ export type Request = {
 	/**
 	 * An optional documentation;
 	 */
-	 documentation?: string;
+	documentation?: string;
 
 	/**
 	 * Since when (release number) this request is
@@ -185,6 +191,12 @@ export type Notification = {
 	params?: Type | Type[];
 
 	/**
+	 * Optional a dynamic registration method if it
+	 * different from the request's method.
+	 */
+	registrationMethod?: string;
+
+	/**
 	 * Optional registration options if the notification
 	 * supports dynamic registration.
 	 */
@@ -193,7 +205,7 @@ export type Notification = {
 	/**
 	 * An optional documentation;
 	 */
-	 documentation?: string;
+	documentation?: string;
 
 	/**
 	 * Since when (release number) this notification is

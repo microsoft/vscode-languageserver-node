@@ -339,6 +339,10 @@
           "description": "Whether this is a proposed notification. If omitted the notification is final.",
           "type": "boolean"
         },
+        "registrationMethod": {
+          "description": "Optional a dynamic registration method if it different from the request's method.",
+          "type": "string"
+        },
         "registrationOptions": {
           "$ref": "#/definitions/Type",
           "description": "Optional registration options if the notification supports dynamic registration."
@@ -464,6 +468,10 @@
         "proposed": {
           "description": "Whether this is a proposed feature. If omitted the feature is final.",
           "type": "boolean"
+        },
+        "registrationMethod": {
+          "description": "Optional a dynamic registration method if it different from the request's method.",
+          "type": "string"
         },
         "registrationOptions": {
           "$ref": "#/definitions/Type",

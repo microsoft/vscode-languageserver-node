@@ -183,6 +183,7 @@ export interface SemanticTokensParams extends WorkDoneProgressParams, PartialRes
 export namespace SemanticTokensRequest {
 	export const method: 'textDocument/semanticTokens/full' = 'textDocument/semanticTokens/full';
 	export const type = new ProtocolRequestType<SemanticTokensParams, SemanticTokens | null, SemanticTokensPartialResult, void, SemanticTokensRegistrationOptions>(method);
+	export const registrationMethod: typeof SemanticTokensRegistrationType.method  = SemanticTokensRegistrationType.method;
 	export type HandlerSignature = RequestHandler<SemanticTokensDeltaParams, SemanticTokens | null, void>;
 }
 
@@ -210,6 +211,7 @@ export interface SemanticTokensDeltaParams extends WorkDoneProgressParams, Parti
 export namespace SemanticTokensDeltaRequest {
 	export const method: 'textDocument/semanticTokens/full/delta' = 'textDocument/semanticTokens/full/delta';
 	export const type = new ProtocolRequestType<SemanticTokensDeltaParams, SemanticTokens | SemanticTokensDelta | null, SemanticTokensPartialResult | SemanticTokensDeltaPartialResult, void, SemanticTokensRegistrationOptions>(method);
+	export const registrationMethod: typeof SemanticTokensRegistrationType.method  = SemanticTokensRegistrationType.method;
 	export type HandlerSignature = RequestHandler<SemanticTokensDeltaParams, SemanticTokens | SemanticTokensDelta | null, void>;
 }
 
@@ -236,6 +238,7 @@ export interface SemanticTokensRangeParams extends WorkDoneProgressParams, Parti
 export namespace SemanticTokensRangeRequest {
 	export const method: 'textDocument/semanticTokens/range' = 'textDocument/semanticTokens/range';
 	export const type = new ProtocolRequestType<SemanticTokensRangeParams, SemanticTokens | null, SemanticTokensPartialResult, void, void>(method);
+	export const registrationMethod: typeof SemanticTokensRegistrationType.method  = SemanticTokensRegistrationType.method;
 	export type HandlerSignature = RequestHandler<SemanticTokensRangeParams, SemanticTokens | null, void>;
 }
 

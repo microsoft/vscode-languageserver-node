@@ -321,6 +321,7 @@ export default class Visitor {
 		result.params = requestTypes.param !== undefined ? asJsonType(requestTypes.param) : undefined;
 		result.partialResult = asJsonType(requestTypes.partialResult);
 		result.errorData = asJsonType(requestTypes.errorData);
+		result.registrationMethod = this.getRegistrationMethodName(symbol);
 		result.registrationOptions = asJsonType(requestTypes.registrationOptions);
 		this.fillDocProperties(node, result);
 		return result;
@@ -353,6 +354,7 @@ export default class Visitor {
 		};
 		const result: JsonNotification = { method: methodName };
 		result.params = notificationTypes.param !== undefined ? asJsonType(notificationTypes.param) : undefined;
+		result.registrationMethod = this.getRegistrationMethodName(symbol);
 		result.registrationOptions = asJsonType(notificationTypes.registrationOptions);
 		this.fillDocProperties(node, result);
 		return result;
@@ -454,6 +456,30 @@ export default class Visitor {
 			text = args[0].getText();
 		}
 		return this.removeQuotes(text);
+	}
+
+	private getRegistrationMethodName(namespace: ts.Symbol): string | undefined {
+		const registrationMethod = namespace.exports?.get('registrationMethod' as ts.__String);
+		if (registrationMethod === undefined) {
+			return undefined;
+		}
+		const declaration = this.getFirstDeclaration(registrationMethod);
+		if (declaration === undefined || !ts.isVariableDeclaration(declaration) || declaration.initializer === undefined || !ts.isPropertyAccessExpression(declaration.initializer)) {
+			return undefined;
+		}
+		const initializerSymbol = this.typeChecker.getSymbolAtLocation(declaration.initializer.name);
+		if (initializerSymbol === undefined || initializerSymbol.valueDeclaration === undefined) {
+			return undefined;
+		}
+		const valueDeclaration = initializerSymbol.valueDeclaration;
+		if (!ts.isVariableDeclaration(valueDeclaration)) {
+			return undefined;
+		}
+		if (valueDeclaration.initializer === undefined || (!ts.isStringLiteral(valueDeclaration.initializer) && !ts.isNoSubstitutionTemplateLiteral(valueDeclaration.initializer))) {
+			return undefined;
+		}
+
+		return this.removeQuotes(valueDeclaration.initializer.getText());
 	}
 
 	private getRequestTypes(symbol: ts.Symbol): RequestTypes | undefined {
