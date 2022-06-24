@@ -941,6 +941,9 @@ export default class Visitor {
 				? { kind: 'base', name: 'uinteger' }
 				: { kind: 'base', name: enumBaseType };
 			const result: Enumeration = { name: name, type: type, values: entries };
+			if (name === 'SemanticTokenTypes' || name === 'SemanticTokenModifiers') {
+				result.supportsCustomValues = true;
+			}
 			const declaration = this.getDeclaration(symbol, ts.SyntaxKind.EnumDeclaration);
 			if (declaration !== undefined) {
 				this.fillDocProperties(declaration, result);
