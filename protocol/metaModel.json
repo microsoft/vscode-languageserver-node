@@ -12597,6 +12597,7 @@
 					"since": "3.17.0"
 				}
 			],
+			"supportsCustomValues": true,
 			"documentation": "A set of predefined token types. This set is not fixed\nan clients can specify additional token types via the\ncorresponding client capabilities.\n\n@since 3.16.0",
 			"since": "3.16.0"
 		},
@@ -12648,6 +12649,7 @@
 					"value": "defaultLibrary"
 				}
 			],
+			"supportsCustomValues": true,
 			"documentation": "A set of predefined token modifiers. This set is not fixed\nan clients can specify additional token types via the\ncorresponding client capabilities.\n\n@since 3.16.0",
 			"since": "3.16.0"
 		},
