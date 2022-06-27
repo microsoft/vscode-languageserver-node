@@ -332,7 +332,7 @@ export interface RegistrationParams {
  * handler on the client side.
  */
 export namespace RegistrationRequest {
-  export const method: 'client/registerCapability' = 'client/registerCapability';
+	export const method: 'client/registerCapability' = 'client/registerCapability';
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType<RegistrationParams, void, never, void, void>(method);
 }
@@ -365,7 +365,7 @@ export interface UnregistrationParams {
  * handler on the client side.
  */
 export namespace UnregistrationRequest {
-  export const method: 'client/unregisterCapability' = 'client/unregisterCapability';
+	export const method: 'client/unregisterCapability' = 'client/unregisterCapability';
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType<UnregistrationParams, void, never, void, void>(method);
 }
@@ -1278,7 +1278,7 @@ export interface ServerCapabilities<T = LSPAny> {
  * resolves to such.
  */
 export namespace InitializeRequest {
-  export const method: 'initialize' = 'initialize';
+	export const method: 'initialize' = 'initialize';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<InitializeParams, InitializeResult, never, InitializeError, void>(method);
 }
@@ -1431,7 +1431,7 @@ export interface InitializedParams {
  * is allowed to send requests from the server to the client.
  */
 export namespace InitializedNotification {
-  export const method: 'initialized' = 'initialized';
+	export const method: 'initialized' = 'initialized';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<InitializedParams, void>(method);
 }
@@ -1445,7 +1445,7 @@ export namespace InitializedNotification {
  * is the exit event.
  */
 export namespace ShutdownRequest {
-  export const method: 'shutdown' = 'shutdown';
+	export const method: 'shutdown' = 'shutdown';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType0<void, never, void, void>(method);
 }
@@ -1457,7 +1457,7 @@ export namespace ShutdownRequest {
  * ask the server to exit its process.
  */
 export namespace ExitNotification {
-  export const method: 'exit' = 'exit';
+	export const method: 'exit' = 'exit';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType0<void>(method);
 }
@@ -1477,7 +1477,7 @@ export interface DidChangeConfigurationClientCapabilities {
  * the changed configuration as defined by the language client.
  */
 export namespace DidChangeConfigurationNotification {
-  export const method: 'workspace/didChangeConfiguration' = 'workspace/didChangeConfiguration';
+	export const method: 'workspace/didChangeConfiguration' = 'workspace/didChangeConfiguration';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<DidChangeConfigurationParams, DidChangeConfigurationRegistrationOptions>(method);
 }
@@ -1542,7 +1542,7 @@ export interface ShowMessageParams {
  * the client to display a particular message in the user interface.
  */
 export namespace ShowMessageNotification {
-  export const method: 'window/showMessage' = 'window/showMessage';
+	export const method: 'window/showMessage' = 'window/showMessage';
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolNotificationType<ShowMessageParams, void>(method);
 }
@@ -1600,7 +1600,7 @@ export interface ShowMessageRequestParams {
  * and a set of options actions to the user.
  */
 export namespace ShowMessageRequest {
-  export const method: 'window/showMessageRequest' = 'window/showMessageRequest';
+	export const method: 'window/showMessageRequest' = 'window/showMessageRequest';
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType<ShowMessageRequestParams, MessageActionItem | null, never, void, void>(method);
 }
@@ -1610,7 +1610,7 @@ export namespace ShowMessageRequest {
  * the client to log a particular message.
  */
 export namespace LogMessageNotification {
-  export const method: 'window/logMessage' = 'window/logMessage';
+	export const method: 'window/logMessage' = 'window/logMessage';
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolNotificationType<LogMessageParams, void>(method);
 }
@@ -1637,7 +1637,7 @@ export interface LogMessageParams {
  * the client to log telemetry data.
  */
 export namespace TelemetryEventNotification {
-  export const method: 'telemetry/event' = 'telemetry/event';
+	export const method: 'telemetry/event' = 'telemetry/event';
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolNotificationType<LSPAny, void>(method);
 }
@@ -1989,7 +1989,7 @@ export interface DidChangeWatchedFilesClientCapabilities {
  * the client detects changes to file watched by the language client.
  */
 export namespace DidChangeWatchedFilesNotification {
-  export const method: 'workspace/didChangeWatchedFiles' = 'workspace/didChangeWatchedFiles';
+	export const method: 'workspace/didChangeWatchedFiles' = 'workspace/didChangeWatchedFiles';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<DidChangeWatchedFilesParams, DidChangeWatchedFilesRegistrationOptions>(method);
 }
@@ -2205,7 +2205,7 @@ export interface PublishDiagnosticsParams {
  * results of validation runs.
  */
 export namespace PublishDiagnosticsNotification {
-  export const method: 'textDocument/publishDiagnostics' = 'textDocument/publishDiagnostics';
+	export const method: 'textDocument/publishDiagnostics' = 'textDocument/publishDiagnostics';
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolNotificationType<PublishDiagnosticsParams, void>(method);
 }
@@ -3680,7 +3680,7 @@ export interface ExecuteCommandRegistrationOptions extends ExecuteCommandOptions
  * a workspace edit which the client will apply to the workspace.
  */
 export namespace ExecuteCommandRequest {
-  export const method: 'workspace/executeCommand' = 'workspace/executeCommand';
+	export const method: 'workspace/executeCommand' = 'workspace/executeCommand';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<ExecuteCommandParams, LSPAny | null, never, void, ExecuteCommandRegistrationOptions>(method);
 }
@@ -3788,7 +3788,7 @@ export type ApplyWorkspaceEditResponse = ApplyWorkspaceEditResult;
  * A request sent from the server to the client to modified certain resources.
  */
 export namespace ApplyWorkspaceEditRequest {
-  export const method: 'workspace/applyEdit' = 'workspace/applyEdit';
+	export const method: 'workspace/applyEdit' = 'workspace/applyEdit';
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType<ApplyWorkspaceEditParams, ApplyWorkspaceEditResult, never, void, void>('workspace/applyEdit');
 }
