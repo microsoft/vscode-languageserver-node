@@ -4,9 +4,9 @@
  * ------------------------------------------------------------------------------------------ */
 
 import { RequestHandler } from 'vscode-jsonrpc';
-import { MessageDirection, Definition, DefinitionLink, LocationLink, Location } from 'vscode-languageserver-types';
+import { Definition, DefinitionLink, LocationLink, Location } from 'vscode-languageserver-types';
 
-import { ProtocolRequestType } from './messages';
+import { MessageDirection, ProtocolRequestType } from './messages';
 import type {
 	TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams, PartialResultParams, WorkDoneProgressParams,
 	WorkDoneProgressOptions
