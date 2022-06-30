@@ -6,7 +6,7 @@
 import { RequestHandler, HandlerResult, CancellationToken } from 'vscode-jsonrpc';
 import { LSPAny } from 'vscode-languageserver-types';
 
-import { ProtocolRequestType } from './messages';
+import { MessageDirection, ProtocolRequestType } from './messages';
 import type { PartialResultParams } from './protocol';
 
 //---- Get Configuration request ----
@@ -21,7 +21,9 @@ import type { PartialResultParams } from './protocol';
  * change event and empty the cache if such an event is received.
  */
 export namespace ConfigurationRequest {
-	export const type = new ProtocolRequestType<ConfigurationParams & PartialResultParams, LSPAny[], never, void, void>('workspace/configuration');
+	export const method: 'workspace/configuration' = 'workspace/configuration';
+	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
+	export const type = new ProtocolRequestType<ConfigurationParams & PartialResultParams, LSPAny[], never, void, void>(method);
 	export type HandlerSignature = RequestHandler<ConfigurationParams, LSPAny[], void>;
 	export type MiddlewareSignature = (params: ConfigurationParams, token: CancellationToken, next: HandlerSignature) => HandlerResult<LSPAny[], void>;
 }

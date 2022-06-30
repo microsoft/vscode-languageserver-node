@@ -5,7 +5,7 @@
 
 import { RequestHandler, RequestHandler0 } from 'vscode-jsonrpc';
 import { Range, TextDocumentIdentifier, InlayHint } from 'vscode-languageserver-types';
-import { ProtocolRequestType, ProtocolRequestType0 } from './messages';
+import { MessageDirection, ProtocolRequestType, ProtocolRequestType0 } from './messages';
 
 import type { StaticRegistrationOptions, TextDocumentRegistrationOptions, WorkDoneProgressOptions, WorkDoneProgressParams } from './protocol';
 
@@ -99,6 +99,7 @@ export type InlayHintParams = WorkDoneProgressParams & {
  */
 export namespace InlayHintRequest {
 	export const method: 'textDocument/inlayHint' = 'textDocument/inlayHint';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<InlayHintParams, InlayHint[] | null, InlayHint[], void, InlayHintRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<InlayHintParams, InlayHint[] | null, void>;
 }
@@ -112,6 +113,7 @@ export namespace InlayHintRequest {
  */
 export namespace InlayHintResolveRequest {
 	export const method: 'inlayHint/resolve' = 'inlayHint/resolve';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<InlayHint, InlayHint, never, void, void>(method);
 	export type HandlerSignature = RequestHandler<InlayHint, InlayHint, void>;
 }
@@ -121,6 +123,7 @@ export namespace InlayHintResolveRequest {
  */
 export namespace InlayHintRefreshRequest {
 	export const method: `workspace/inlayHint/refresh` = `workspace/inlayHint/refresh`;
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType0<void, void, void, void>(method);
 	export type HandlerSignature = RequestHandler0<void, void>;
 }

@@ -9,7 +9,7 @@ import {
 } from 'vscode-languageserver-types';
 
 import * as Is from './utils/is';
-import { ProtocolNotificationType, RegistrationType } from './messages';
+import { MessageDirection, ProtocolNotificationType, RegistrationType } from './messages';
 import type { StaticRegistrationOptions, NotebookDocumentFilter, TextDocumentContentChangeEvent } from './protocol';
 
 /**
@@ -355,6 +355,7 @@ export type NotebookDocumentSyncRegistrationOptions = NotebookDocumentSyncOption
 
 export namespace NotebookDocumentSyncRegistrationType {
 	export const method: 'notebookDocument/sync' = 'notebookDocument/sync';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new RegistrationType<NotebookDocumentSyncRegistrationOptions>(method);
 }
 
@@ -384,6 +385,7 @@ export type DidOpenNotebookDocumentParams = {
  */
 export namespace DidOpenNotebookDocumentNotification {
 	export const method: 'notebookDocument/didOpen' = 'notebookDocument/didOpen';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<DidOpenNotebookDocumentParams, void>(method);
 	export const registrationMethod: typeof NotebookDocumentSyncRegistrationType.method = NotebookDocumentSyncRegistrationType.method;
 }
@@ -515,6 +517,7 @@ export type DidChangeNotebookDocumentParams = {
 
 export namespace DidChangeNotebookDocumentNotification {
 	export const method: 'notebookDocument/didChange' = 'notebookDocument/didChange';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<DidChangeNotebookDocumentParams, void>(method);
 	export const registrationMethod: typeof NotebookDocumentSyncRegistrationType.method = NotebookDocumentSyncRegistrationType.method;
 }
@@ -538,6 +541,7 @@ export type DidSaveNotebookDocumentParams = {
  */
 export namespace DidSaveNotebookDocumentNotification {
 	export const method: 'notebookDocument/didSave' = 'notebookDocument/didSave';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<DidSaveNotebookDocumentParams, void>(method);
 	export const registrationMethod: typeof NotebookDocumentSyncRegistrationType.method = NotebookDocumentSyncRegistrationType.method;
 }
@@ -568,6 +572,7 @@ export type DidCloseNotebookDocumentParams = {
  */
 export namespace DidCloseNotebookDocumentNotification {
 	export const method: 'notebookDocument/didClose' = 'notebookDocument/didClose';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<DidCloseNotebookDocumentParams, void>(method);
 	export const registrationMethod: typeof NotebookDocumentSyncRegistrationType.method = NotebookDocumentSyncRegistrationType.method;
 }

@@ -6,7 +6,7 @@
 import { RequestHandler } from 'vscode-jsonrpc';
 import { TextDocumentIdentifier, Position, SelectionRange } from 'vscode-languageserver-types';
 
-import { ProtocolRequestType } from './messages';
+import { MessageDirection, ProtocolRequestType } from './messages';
 import type {
 	TextDocumentRegistrationOptions, WorkDoneProgressOptions, StaticRegistrationOptions, WorkDoneProgressParams, PartialResultParams
 } from './protocol';
@@ -51,6 +51,7 @@ export interface SelectionRangeParams extends WorkDoneProgressParams, PartialRes
  */
 export namespace SelectionRangeRequest {
 	export const method: 'textDocument/selectionRange' = 'textDocument/selectionRange';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<SelectionRangeParams, SelectionRange[] | null, SelectionRange[], void, SelectionRangeRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<SelectionRangeParams, SelectionRange[] | null, void>;
 }

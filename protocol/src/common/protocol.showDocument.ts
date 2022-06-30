@@ -5,7 +5,7 @@
 
 import { HandlerResult, RequestHandler } from 'vscode-jsonrpc';
 import { Range, URI } from 'vscode-languageserver-types';
-import { ProtocolRequestType } from './messages';
+import { MessageDirection, ProtocolRequestType } from './messages';
 
 /**
  * Client capabilities for the showDocument request.
@@ -77,6 +77,7 @@ export interface ShowDocumentResult {
 */
 export namespace ShowDocumentRequest {
 	export const method: 'window/showDocument' = 'window/showDocument';
+	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType<ShowDocumentParams, ShowDocumentResult, void, void, void>(method);
 	export type HandlerSignature = RequestHandler<ShowDocumentParams, ShowDocumentResult, void>;
 	export type MiddlewareSignature = (params: ShowDocumentParams, next: HandlerSignature) => HandlerResult<ShowDocumentResult, void>;

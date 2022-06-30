@@ -6,7 +6,7 @@
 import { RequestHandler } from 'vscode-jsonrpc';
 import { Definition, DefinitionLink, Location, LocationLink } from 'vscode-languageserver-types';
 
-import { ProtocolRequestType } from './messages';
+import { MessageDirection, ProtocolRequestType } from './messages';
 import type {
 	TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams, PartialResultParams, WorkDoneProgressParams,
 	WorkDoneProgressOptions
@@ -51,6 +51,7 @@ export interface ImplementationParams extends TextDocumentPositionParams, WorkDo
  */
 export namespace ImplementationRequest {
 	export const method: 'textDocument/implementation' = 'textDocument/implementation';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<ImplementationParams, Definition | DefinitionLink[] | null, Location[] | DefinitionLink[], void, ImplementationRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<ImplementationParams, Definition | DefinitionLink[] | null, void>;
 }

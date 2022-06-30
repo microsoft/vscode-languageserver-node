@@ -6,7 +6,7 @@
 import { RequestHandler } from 'vscode-jsonrpc';
 import { Range } from 'vscode-languageserver-types';
 
-import { ProtocolRequestType } from './messages';
+import { MessageDirection, ProtocolRequestType } from './messages';
 import type {
 	StaticRegistrationOptions, TextDocumentPositionParams, TextDocumentRegistrationOptions, WorkDoneProgressOptions,
 	WorkDoneProgressParams
@@ -62,6 +62,7 @@ export interface LinkedEditingRanges {
  */
 export namespace LinkedEditingRangeRequest {
 	export const method: 'textDocument/linkedEditingRange' = 'textDocument/linkedEditingRange';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<LinkedEditingRangeParams, LinkedEditingRanges | null, void, void, LinkedEditingRangeRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<LinkedEditingRangeParams, LinkedEditingRanges | null, void>;
 }
