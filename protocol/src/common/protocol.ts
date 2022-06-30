@@ -3282,6 +3282,7 @@ export namespace CodeLensResolveRequest {
  */
 export namespace CodeLensRefreshRequest {
 	export const method: `workspace/codeLens/refresh` = `workspace/codeLens/refresh`;
+	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType0<void, void, void, void>(method);
 }
 //---- Document Links ----------------------------------------------

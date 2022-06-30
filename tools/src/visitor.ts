@@ -7,7 +7,7 @@ import * as ts from 'typescript';
 
 import { Symbols } from './typescripts';
 
-import { Type as JsonType, Request as JsonRequest, Notification as JsonNotification, Structure, Property, StructureLiteral, BaseTypes, TypeAlias, MetaModel, Enumeration, EnumerationEntry, EnumerationType } from './metaModel';
+import { Type as JsonType, Request as JsonRequest, Notification as JsonNotification, Structure, Property, StructureLiteral, BaseTypes, TypeAlias, MetaModel, Enumeration, EnumerationEntry, EnumerationType, MessageDirection } from './metaModel';
 import path = require('path');
 
 const LSPBaseTypes = new Set(['Uri', 'DocumentUri', 'integer', 'uinteger', 'decimal']);
@@ -141,6 +141,15 @@ type NotificationTypes = {
 	registrationOptions: TypeInfo;
 };
 
+namespace MessageDirection {
+	export const clientToServer: 'clientToServer' = 'clientToServer';
+	export const serverToClient: 'serverToClient' = 'serverToClient';
+	export const both: 'both' = 'both';
+
+	export function is(value: string): value is MessageDirection {
+		return value === clientToServer || value === serverToClient || value === both;
+	}
+}
 
 export default class Visitor {
 
@@ -317,7 +326,11 @@ export default class Visitor {
 			}
 			return TypeInfo.asJsonType(info);
 		};
-		const result: JsonRequest = { method: methodName, result: TypeInfo.isVoid(requestTypes.result) ? TypeInfo.asJsonType({ kind: 'base', name: 'null' }) : TypeInfo.asJsonType(requestTypes.result) };
+		const result: JsonRequest = {
+			method: methodName,
+			result: TypeInfo.isVoid(requestTypes.result) ? TypeInfo.asJsonType({ kind: 'base', name: 'null' }) : TypeInfo.asJsonType(requestTypes.result),
+			messageDirection: this.getMessageDirection(symbol)
+		};
 		result.params = requestTypes.param !== undefined ? asJsonType(requestTypes.param) : undefined;
 		result.partialResult = asJsonType(requestTypes.partialResult);
 		result.errorData = asJsonType(requestTypes.errorData);
@@ -352,7 +365,10 @@ export default class Visitor {
 			}
 			return TypeInfo.asJsonType(info);
 		};
-		const result: JsonNotification = { method: methodName };
+		const result: JsonNotification = {
+			method: methodName,
+			messageDirection: this.getMessageDirection(symbol)
+		};
 		result.params = notificationTypes.param !== undefined ? asJsonType(notificationTypes.param) : undefined;
 		result.registrationMethod = this.getRegistrationMethodName(symbol);
 		result.registrationOptions = asJsonType(notificationTypes.registrationOptions);
@@ -480,6 +496,34 @@ export default class Visitor {
 		}
 
 		return this.removeQuotes(valueDeclaration.initializer.getText());
+	}
+
+	private getMessageDirection(namespace: ts.Symbol): MessageDirection {
+		const errorMessage = `No message direction specified for request ${namespace.getName()}`;
+		const messageDirection = namespace.exports?.get('messageDirection' as ts.__String);
+		if (messageDirection === undefined) {
+			throw new Error(errorMessage);
+		}
+		const declaration = this.getFirstDeclaration(messageDirection);
+		if (declaration === undefined || !ts.isVariableDeclaration(declaration) || declaration.initializer === undefined || !ts.isPropertyAccessExpression(declaration.initializer)) {
+			throw new Error(errorMessage);
+		}
+		const initializerSymbol = this.typeChecker.getSymbolAtLocation(declaration.initializer.name);
+		if (initializerSymbol === undefined || initializerSymbol.valueDeclaration === undefined) {
+			throw new Error(errorMessage);
+		}
+		const valueDeclaration = initializerSymbol.valueDeclaration;
+		if (!ts.isEnumMember(valueDeclaration)) {
+			throw new Error(errorMessage);
+		}
+		if (valueDeclaration.initializer === undefined || !ts.isStringLiteral(valueDeclaration.initializer)) {
+			throw new Error(errorMessage);
+		}
+		const value = this.removeQuotes(valueDeclaration.initializer.getText());
+		if (!MessageDirection.is(value)) {
+			throw new Error(errorMessage);
+		}
+		return value;
 	}
 
 	private getRequestTypes(symbol: ts.Symbol): RequestTypes | undefined {

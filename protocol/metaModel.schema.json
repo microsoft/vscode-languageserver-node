@@ -260,6 +260,15 @@
       ],
       "type": "object"
     },
+    "MessageDirection": {
+      "description": "Indicates in which direction a message is sent in the protocol.",
+      "enum": [
+        "clientToServer",
+        "serverToClient",
+        "both"
+      ],
+      "type": "string"
+    },
     "MetaModel": {
       "additionalProperties": false,
       "description": "The actual meta model.",
@@ -317,6 +326,10 @@
           "description": "An optional documentation;",
           "type": "string"
         },
+        "messageDirection": {
+          "$ref": "#/definitions/MessageDirection",
+          "description": "The direction in which this notification is sent in the protocol."
+        },
         "method": {
           "description": "The request's method name.",
           "type": "string"
@@ -353,7 +366,8 @@
         }
       },
       "required": [
-        "method"
+        "method",
+        "messageDirection"
       ],
       "type": "object"
     },
@@ -443,6 +457,10 @@
           "$ref": "#/definitions/Type",
           "description": "An optional error data type."
         },
+        "messageDirection": {
+          "$ref": "#/definitions/MessageDirection",
+          "description": "The direction in which this request is sent in the protocol."
+        },
         "method": {
           "description": "The request's method name.",
           "type": "string"
@@ -488,7 +506,8 @@
       },
       "required": [
         "method",
-        "result"
+        "result",
+        "messageDirection"
       ],
       "type": "object"
     },

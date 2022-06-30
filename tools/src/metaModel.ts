@@ -163,12 +163,11 @@ export type Request = {
 	 */
 	registrationOptions?: Type;
 
-	// TODO: make this mandatory when we fill it in
 	/**
 	 * The direction in which this request is sent
 	 * in the protocol.
 	 */
-	messageDirection?: MessageDirection;
+	messageDirection: MessageDirection;
 
 	/**
 	 * An optional documentation;
@@ -214,12 +213,11 @@ export type Notification = {
 	 */
 	registrationOptions?: Type;
 
-	// TODO: make this mandatory when we fill it in
 	/**
 	 * The direction in which this notification is sent
 	 * in the protocol.
 	 */
-	messageDirection?: MessageDirection;
+	messageDirection: MessageDirection;
 
 	/**
 	 * An optional documentation;

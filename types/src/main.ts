@@ -1114,8 +1114,8 @@ export namespace CreateFile {
 			candidate.options === undefined ||
 			((candidate.options.overwrite === undefined || Is.boolean(candidate.options.overwrite)) && (candidate.options.ignoreIfExists === undefined || Is.boolean(candidate.options.ignoreIfExists)))
 		) && (
-				candidate.annotationId === undefined || ChangeAnnotationIdentifier.is(candidate.annotationId)
-			);
+			candidate.annotationId === undefined || ChangeAnnotationIdentifier.is(candidate.annotationId)
+		);
 	}
 }
 
@@ -1181,8 +1181,8 @@ export namespace RenameFile {
 			candidate.options === undefined ||
 			((candidate.options.overwrite === undefined || Is.boolean(candidate.options.overwrite)) && (candidate.options.ignoreIfExists === undefined || Is.boolean(candidate.options.ignoreIfExists)))
 		) && (
-				candidate.annotationId === undefined || ChangeAnnotationIdentifier.is(candidate.annotationId)
-			);
+			candidate.annotationId === undefined || ChangeAnnotationIdentifier.is(candidate.annotationId)
+		);
 	}
 }
 
@@ -1242,8 +1242,8 @@ export namespace DeleteFile {
 			candidate.options === undefined ||
 			((candidate.options.recursive === undefined || Is.boolean(candidate.options.recursive)) && (candidate.options.ignoreIfNotExists === undefined || Is.boolean(candidate.options.ignoreIfNotExists)))
 		) && (
-				candidate.annotationId === undefined || ChangeAnnotationIdentifier.is(candidate.annotationId)
-			);
+			candidate.annotationId === undefined || ChangeAnnotationIdentifier.is(candidate.annotationId)
+		);
 	}
 }
 
@@ -2451,8 +2451,8 @@ export namespace Hover {
 			MarkedString.is(candidate.contents) ||
 			Is.typedArray(candidate.contents, MarkedString.is)
 		) && (
-				value.range === undefined || Range.is(value.range)
-			);
+			value.range === undefined || Range.is(value.range)
+		);
 	}
 }
 
