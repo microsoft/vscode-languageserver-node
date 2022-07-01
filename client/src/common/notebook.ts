@@ -818,14 +818,9 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 			return undefined;
 		}
 		for (const item of this.options.notebookSelector) {
-			if (item.notebook === undefined) {
-				if (item.cells === undefined) {
-					return undefined;
-				}
+			if (item.notebook === undefined || $NotebookDocumentFilter.matchNotebook(item.notebook, notebookDocument)) {
 				const filtered = this.filterCells(notebookDocument, cells, item.cells);
 				return filtered.length === 0 ? undefined : filtered;
-			} else if ($NotebookDocumentFilter.matchNotebook(item.notebook, notebookDocument)){
-				return item.cells === undefined ? cells : this.filterCells(notebookDocument, cells, item.cells);
 			}
 		}
 		return undefined;
@@ -836,14 +831,14 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 		return cells !== undefined && cells[0] === cell;
 	}
 
-	private filterCells(notebookDocument: vscode.NotebookDocument,  cells: vscode.NotebookCell[], cellSelector: { language: string }[]): vscode.NotebookCell[] {
-		const result = cells.filter((cell) => {
+	private filterCells(notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[], cellSelector: undefined | { language: string }[]): vscode.NotebookCell[] {
+		const filtered = cellSelector !== undefined ? cells.filter((cell) => {
 			const cellLanguage = cell.document.languageId;
 			return cellSelector.some((filter => (filter.language === '*' || cellLanguage === filter.language)));
-		});
+		}) : cells;
 		return typeof this.client.clientOptions.notebookDocumentOptions?.filterCells === 'function'
-			? this.client.clientOptions.notebookDocumentOptions.filterCells(notebookDocument, cells)
-			: result;
+			? this.client.clientOptions.notebookDocumentOptions.filterCells(notebookDocument, filtered)
+			: filtered;
 
 	}
 }
