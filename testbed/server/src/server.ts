@@ -259,15 +259,16 @@ function validate(document: TextDocument): Diagnostic[] {
 	// 		clearInterval(interval);
 	// 	});
 	// });
-	connection.console.log('Validating document ' + document.uri);
-	return [ {
-		range: Range.create(0, 0, 0, 10),
-		message: 'An error message',
-		tags: [
-			DiagnosticTag.Unnecessary
-		],
-		data: '11316630-392c-4227-a2c7-3b26cd68f241'
-	}];
+	// connection.console.log('Validating document ' + document.uri);
+	// return [ {
+	// 	range: Range.create(0, 0, 0, 10),
+	// 	message: 'An error message',
+	// 	tags: [
+	// 		DiagnosticTag.Unnecessary
+	// 	],
+	// 	data: '11316630-392c-4227-a2c7-3b26cd68f241'
+	// }];
+	return [];
 }
 
 connection.onHover((textPosition): Hover => {
