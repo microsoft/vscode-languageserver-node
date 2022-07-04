@@ -126,7 +126,7 @@ export type DiagnosticPullOptions = {
 	 * An optional filter method that is consulted when triggering a
 	 * diagnostic pull during document change or document save.
 	 *
-	 * @param document the document that changes or got save
+	 * @param document the document that changed or got saved
 	 * @param mode the mode
 	 */
 	filter?(document: TextDocument, mode: DiagnosticPullMode): boolean;
@@ -141,11 +141,11 @@ export type DiagnosticPullOptions = {
 	onTabs?: boolean;
 
 	/**
-	 * A optional match method that is consulted when pulling for diagnostics
+	 * An optional match method that is consulted when pulling for diagnostics
 	 * when only a URI is known (e.g. for not instantiated tabs)
 	 *
 	 * @param documentSelector the document selector
-	 * @param resource the resource.
+	 * @param resource the resource
 	 */
 	match?(documentSelector: DocumentSelector, resource: Uri): boolean;
 };
@@ -641,7 +641,7 @@ class DiagnosticRequestor implements Disposable {
 			}
 			this.openRequests.set(key, { state: RequestStateKind.outDated, document: request.document });
 		}
-		
+
 		// cleanup old diagnostics
 		this.diagnostics.dispose();
 	}
