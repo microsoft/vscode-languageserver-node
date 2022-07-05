@@ -51,7 +51,10 @@ import {
 
 import { DiagnosticFeature, DiagnosticProviderMiddleware, DiagnosticProviderShape, $DiagnosticPullOptions } from './diagnostic';
 import { NotebookDocumentMiddleware, $NotebookDocumentOptions, NotebookDocumentProviderShape, NotebookDocumentSyncFeature } from './notebook';
-import { ConfigurationFeature, ConfigurationMiddleware, $ConfigurationOptions, DidChangeConfigurationMiddleware, SyncConfigurationFeature, SynchronizeOptions } from './configuration';
+import {
+	ConfigurationFeature, ConfigurationMiddleware, $ConfigurationOptions, DidChangeConfigurationMiddleware, SyncConfigurationFeature,
+	SynchronizeOptions
+} from './configuration';
 import {
 	DidChangeTextDocumentFeature, DidChangeTextDocumentFeatureShape, DidCloseTextDocumentFeature, DidCloseTextDocumentFeatureShape, DidOpenTextDocumentFeature,
 	DidOpenTextDocumentFeatureShape, DidSaveTextDocumentFeature, DidSaveTextDocumentFeatureShape, ResolvedTextDocumentSyncCapabilities, TextDocumentSynchronizationMiddleware, WillSaveFeature,
@@ -87,7 +90,6 @@ import { WorkspaceFolderMiddleware } from './workspaceFolder';
 import { FileOperationsMiddleware } from './fileOperations';
 import { FileSystemWatcherFeature } from './fileSystemWatcher';
 import { ColorProviderFeature } from './colorProvider';
-import { ConfigurationFeature as PullConfigurationFeature } from './configuration';
 import { ImplementationFeature } from './implementation';
 import { TypeDefinitionFeature } from './typeDefinition';
 import { WorkspaceFoldersFeature } from './workspaceFolder';
@@ -439,6 +441,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private _idleInterval: Disposable | undefined;
 	private readonly _ignoredRegistrations: Set<string>;
 	// private _idleStart: number | undefined;
+	private readonly _listeners: Disposable[];
+	private _disposed: 'disposing' | 'disposed' | undefined;
 
 	private readonly _notificationHandlers: Map<string, GenericNotificationHandler>;
 	private readonly _notificationDisposables: Map<string, Disposable>;
@@ -514,6 +518,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 		this._state = ClientState.Initial;
 		this._ignoredRegistrations = new Set();
+		this._listeners = [];
 
 		this._notificationHandlers = new Map();
 		this._pendingNotificationHandlers = new Map();
@@ -653,7 +658,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		try {
 			// Ensure we have a connection before we force the document sync.
 			const connection = await this.$start();
-			this.forceDocumentSync();
+			await this.forceDocumentSync();
 			return connection.sendRequest<R>(type, ...params);
 		} catch (error) {
 			this.error(`Sending request ${Is.string(type) ? type : type.method} failed.`, error);
@@ -716,7 +721,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		try {
 			// Ensure we have a connection before we force the document sync.
 			const connection = await this.$start();
-			this.forceDocumentSync();
+			await this.forceDocumentSync();
 			return connection.sendNotification(type, params);
 		} catch (error) {
 			this.error(`Sending notification ${Is.string(type) ? type : type.method} failed.`, error);
@@ -767,6 +772,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	public async sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): Promise<void> {
+		if (this.$state === ClientState.StartFailed || this.$state === ClientState.Stopping || this.$state === ClientState.Stopped) {
+			return Promise.reject(new ResponseError(ErrorCodes.ConnectionInactive, `Client is not running`));
+		}
 		try {
 			// Ensure we have a connection before we force the document sync.
 			const connection = await this.$start();
@@ -933,18 +941,20 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	public async start(): Promise<void> {
+		if (this._disposed === 'disposing' || this._disposed === 'disposed') {
+			throw new Error(`Client got disposed and can't be restarted.`);
+		}
+		if (this.$state === ClientState.Stopping) {
+			throw new Error(`Client is currently stopping. Can only restart a full stopped client`);
+		}
+		// We are already running or are in the process of getting up
+		// to speed.
 		if (this._onStart !== undefined) {
 			return this._onStart;
 		}
 		const [promise, resolve, reject] = this.createOnStartPromise();
 		this._onStart = promise;
 
-		// We are currently stopping the language client. Await the stop
-		// before continuing.
-		if (this._onStop !== undefined) {
-			await this._onStop;
-			this._onStop = undefined;
-		}
 		// If we restart then the diagnostics collection is reused.
 		if (this._diagnostics === undefined) {
 			this._diagnostics = this._clientOptions.diagnosticCollectionName
@@ -1045,7 +1055,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 							return { success: true };
 						}
 					} catch (error) {
-						return { success: true };
+						return { success: false };
 					}
 				};
 				const middleware = this._clientOptions.middleware.window?.showDocument;
@@ -1225,24 +1235,37 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		return this.shutdown('stop', timeout);
 	}
 
-	public suspend(): Promise<void> {
-		// Wait 5 seconds on suspend.
-		return this.shutdown('suspend', 5000);
+	public dispose(timeout: number = 2000): Promise<void> {
+		try {
+			this._disposed = 'disposing';
+			return this.stop(timeout);
+		} finally {
+			this._disposed = 'disposed';
+		}
 	}
 
 	private async shutdown(mode: 'suspend' | 'stop', timeout: number): Promise<void> {
-		// If the client is in stopped state simple return.
-		// It could also be that the client failed to stop
-		// which puts it into the stopped state as well.
+		// If the client is stopped or in its initial state return.
 		if (this.$state === ClientState.Stopped || this.$state === ClientState.Initial) {
 			return;
 		}
-		if (this.$state === ClientState.Stopping && this._onStop) {
-			return this._onStop;
+
+		// If we are stopping the client and have a stop promise return it.
+		if (this.$state === ClientState.Stopping) {
+			if (this._onStop !== undefined) {
+				return this._onStop;
+			} else {
+				throw new Error(`Client is stopping but no stop promise available.`);
+			}
 		}
 
-		// To ensure proper shutdown we need a proper created connection.
-		const connection = await this.$start();
+		const connection = this.activeConnection();
+
+		// We can't stop a client that is not running (e.g. has no connection). Especially not
+		// on that us starting since it can't be correctly synchronized.
+		if (connection === undefined || this.$state !== ClientState.Running) {
+			throw new Error(`Client is not running and can't be stopped. It's current state is: ${this.$state}`);
+		}
 
 		this._initializeResult = undefined;
 		this.$state = ClientState.Stopping;
@@ -1282,6 +1305,11 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this._fileEvents = [];
 		this._fileEventDelayer.cancel();
 
+		const disposables = this._listeners.splice(0, this._listeners.length);
+		for (const disposable of disposables) {
+			disposable.dispose();
+		}
+
 		if (this._syncedDocuments) {
 			this._syncedDocuments.clear();
 		}
@@ -1314,7 +1342,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			client._fileEvents.push(event);
 			return client._fileEventDelayer.trigger(async (): Promise<void> => {
 				const connection = await client.$start();
-				client.forceDocumentSync();
+				await client.forceDocumentSync();
 				const result = connection.sendNotification(DidChangeWatchedFilesNotification.type, { changes: client._fileEvents });
 				client._fileEvents = [];
 				return result;
@@ -1327,11 +1355,11 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	private _didChangeTextDocumentFeature: DidChangeTextDocumentFeature | undefined;
-	private forceDocumentSync(): void {
+	private async forceDocumentSync(): Promise<void> {
 		if (this._didChangeTextDocumentFeature === undefined) {
 			this._didChangeTextDocumentFeature = this._dynamicFeatures.get(DidChangeTextDocumentNotification.type.method) as DidChangeTextDocumentFeature;
 		}
-		this._didChangeTextDocumentFeature.forceDelivery();
+		return this._didChangeTextDocumentFeature.forceDelivery();
 	}
 
 	private _diagnosticQueue: Map<string, Diagnostic[]> = new Map();
@@ -1471,9 +1499,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	private hookConfigurationChanged(connection: Connection): void {
-		Workspace.onDidChangeConfiguration(() => {
+		this._listeners.push(Workspace.onDidChangeConfiguration(() => {
 			this.refreshTrace(connection, true);
-		});
+		}));
 	}
 
 	private refreshTrace(connection: Connection, sendNotification: boolean = false): void {
@@ -1612,7 +1640,6 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this.registerFeature(new DocumentLinkFeature(this));
 		this.registerFeature(new ExecuteCommandFeature(this));
 		this.registerFeature(new SyncConfigurationFeature(this));
-		this.registerFeature(new PullConfigurationFeature(this));
 		this.registerFeature(new TypeDefinitionFeature(this));
 		this.registerFeature(new ImplementationFeature(this));
 		this.registerFeature(new ColorProviderFeature(this));

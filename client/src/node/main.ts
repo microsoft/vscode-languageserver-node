@@ -8,8 +8,6 @@ import ChildProcess = cp.ChildProcess;
 import * as fs from 'fs';
 import * as path from 'path';
 
-import * as SemVer from 'semver';
-
 import { workspace as Workspace, Disposable, version as VSCodeVersion } from 'vscode';
 
 import * as Is from '../common/utils/is';
@@ -17,6 +15,10 @@ import { BaseLanguageClient, LanguageClientOptions, MessageTransports } from '..
 
 import { terminate } from './processes';
 import { StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageWriter, createClientPipeTransport, generateRandomPipeName, createClientSocketTransport, InitializeParams} from 'vscode-languageserver-protocol/node';
+
+// Import SemVer functions individually to avoid circular dependencies in SemVer
+import semverParse = require('semver/functions/parse');
+import semverSatisfies = require('semver/functions/satisfies');
 
 export * from 'vscode-languageserver-protocol/node';
 export * from '../common/api';
@@ -168,7 +170,7 @@ export class LanguageClient extends BaseLanguageClient {
 	}
 
 	private checkVersion() {
-		const codeVersion = SemVer.parse(VSCodeVersion);
+		const codeVersion = semverParse(VSCodeVersion);
 		if (!codeVersion) {
 			throw new Error(`No valid VS Code version detected. Version string is: ${VSCodeVersion}`);
 		}
@@ -176,7 +178,7 @@ export class LanguageClient extends BaseLanguageClient {
 		if (codeVersion.prerelease && codeVersion.prerelease.length > 0) {
 			codeVersion.prerelease = [];
 		}
-		if (!SemVer.satisfies(codeVersion, REQUIRED_VSCODE_VERSION)) {
+		if (!semverSatisfies(codeVersion, REQUIRED_VSCODE_VERSION)) {
 			throw new Error(`The language client requires VS Code version ${REQUIRED_VSCODE_VERSION} but received version ${VSCodeVersion}`);
 		}
 	}

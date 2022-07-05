@@ -5,12 +5,12 @@
 
 import { RequestHandler, RequestHandler0 } from 'vscode-jsonrpc';
 import { Range, TextDocumentIdentifier, InlayHint } from 'vscode-languageserver-types';
-import { ProtocolRequestType, ProtocolRequestType0 } from './messages';
+import { MessageDirection, ProtocolRequestType, ProtocolRequestType0 } from './messages';
 
 import type { StaticRegistrationOptions, TextDocumentRegistrationOptions, WorkDoneProgressOptions, WorkDoneProgressParams } from './protocol';
 
 /**
- * Inlay hint client capabilities
+ * Inlay hint client capabilities.
  *
  * @since 3.17.0
  */
@@ -22,7 +22,7 @@ export type InlayHintClientCapabilities = {
 	dynamicRegistration?: boolean;
 
 	/**
-	 * Indicates which properties a client can resolve lazily on a inlay
+	 * Indicates which properties a client can resolve lazily on an inlay
 	 * hint.
 	 */
 	resolveSupport?: {
@@ -74,7 +74,7 @@ export type InlayHintOptions = WorkDoneProgressOptions & {
 export type InlayHintRegistrationOptions = InlayHintOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions;
 
 /**
- * A parameter literal used in inlay hints requests.
+ * A parameter literal used in inlay hint requests.
  *
  * @since 3.17.0
  */
@@ -99,12 +99,13 @@ export type InlayHintParams = WorkDoneProgressParams & {
  */
 export namespace InlayHintRequest {
 	export const method: 'textDocument/inlayHint' = 'textDocument/inlayHint';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<InlayHintParams, InlayHint[] | null, InlayHint[], void, InlayHintRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<InlayHintParams, InlayHint[] | null, void>;
 }
 
 /**
- * A request to resolve additional properties for a inlay hint.
+ * A request to resolve additional properties for an inlay hint.
  * The request's parameter is of type [InlayHint](#InlayHint), the response is
  * of type [InlayHint](#InlayHint) or a Thenable that resolves to such.
  *
@@ -112,6 +113,7 @@ export namespace InlayHintRequest {
  */
 export namespace InlayHintResolveRequest {
 	export const method: 'inlayHint/resolve' = 'inlayHint/resolve';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<InlayHint, InlayHint, never, void, void>(method);
 	export type HandlerSignature = RequestHandler<InlayHint, InlayHint, void>;
 }
@@ -121,6 +123,7 @@ export namespace InlayHintResolveRequest {
  */
 export namespace InlayHintRefreshRequest {
 	export const method: `workspace/inlayHint/refresh` = `workspace/inlayHint/refresh`;
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType0<void, void, void, void>(method);
 	export type HandlerSignature = RequestHandler0<void, void>;
 }

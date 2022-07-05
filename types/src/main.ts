@@ -123,13 +123,17 @@ export type LSPArray = any[];
 export interface Position {
 	/**
 	 * Line position in a document (zero-based).
+	 *
+	 * If a line number is greater than the number of lines in a document, it defaults back to the number of lines in the document.
+	 * If a line number is negative, it defaults to 0.
 	 */
 	line: uinteger;
 
 	/**
-	 * Character offset on a line in a document (zero-based). Assuming that the line is
-	 * represented as a string, the `character` value represents the gap between the
-	 * `character` and `character + 1`.
+	 * Character offset on a line in a document (zero-based).
+	 *
+	 * The meaning of this offset is determined by the negotiated
+	 * `PositionEncodingKind`.
 	 *
 	 * If the character value is greater than the line length it defaults back to the
 	 * line length.
@@ -176,7 +180,7 @@ export namespace Position {
  */
 export interface Range {
 	/**
-	 * The range's start position
+	 * The range's start position.
 	 */
 	start: Position;
 
@@ -250,7 +254,7 @@ export namespace Location {
 	 */
 	export function is(value: any): value is Location {
 		let candidate = value as Location;
-		return Is.defined(candidate) && Range.is(candidate.range) && (Is.string(candidate.uri) || Is.undefined(candidate.uri));
+		return Is.objectLiteral(candidate) && Range.is(candidate.range) && (Is.string(candidate.uri) || Is.undefined(candidate.uri));
 	}
 }
 
@@ -262,7 +266,7 @@ export interface LocationLink {
 	/**
 	 * Span of the origin of this link.
 	 *
-	 * Used as the underlined span for mouse definition hover. Defaults to the word range at
+	 * Used as the underlined span for mouse interaction. Defaults to the word range at
 	 * the definition position.
 	 */
 	originSelectionRange?: Range;
@@ -281,7 +285,7 @@ export interface LocationLink {
 
 	/**
 	 * The range that should be selected and revealed when this link is being followed, e.g the name of a function.
-	 * Must be contained by the the `targetRange`. See also `DocumentSymbol#range`
+	 * Must be contained by the `targetRange`. See also `DocumentSymbol#range`
 	 */
 	targetSelectionRange: Range;
 }
@@ -308,7 +312,7 @@ export namespace LocationLink {
 	 */
 	export function is(value: any): value is LocationLink {
 		let candidate = value as LocationLink;
-		return Is.defined(candidate) && Range.is(candidate.targetRange) && Is.string(candidate.targetUri)
+		return Is.objectLiteral(candidate) && Range.is(candidate.targetRange) && Is.string(candidate.targetUri)
 			&& Range.is(candidate.targetSelectionRange)
 			&& (Range.is(candidate.originSelectionRange) || Is.undefined(candidate.originSelectionRange));
 	}
@@ -466,7 +470,7 @@ export namespace FoldingRangeKind {
 	export const Comment = 'comment';
 
 	/**
-	 * Folding range for a imports or includes
+	 * Folding range for an import or include
 	 */
 	export const Imports = 'imports';
 
@@ -477,6 +481,8 @@ export namespace FoldingRangeKind {
 }
 
 /**
+ * A predefined folding range kind.
+ *
  * The type is a string since the value set is extensible
  */
 export type FoldingRangeKind = string;
@@ -511,8 +517,8 @@ export interface FoldingRange {
 
 	/**
 	 * Describes the kind of the folding range such as `comment' or 'region'. The kind
-	 * is used to categorize folding ranges. See [FoldingRangeKind](#FoldingRangeKind)
-	 * for an enumeration of standardized kinds.
+	 * is used to categorize folding ranges and used by commands like 'Fold all comments'.
+	 * See [FoldingRangeKind](#FoldingRangeKind) for an enumeration of standardized kinds.
 	 */
 	kind?: FoldingRangeKind;
 
@@ -864,7 +870,7 @@ export namespace TextEdit {
 		return { range, newText };
 	}
 	/**
-	 * Creates a insert text edit.
+	 * Creates an insert text edit.
 	 * @param position The position to insert the text at.
 	 * @param newText The text to be inserted.
 	 */
@@ -894,15 +900,15 @@ export namespace TextEdit {
  */
 export interface ChangeAnnotation {
 	/**
-     * A human-readable string describing the actual change. The string
+	 * A human-readable string describing the actual change. The string
 	 * is rendered prominent in the user interface.
-     */
+	 */
 	label: string;
 
 	/**
-     * A flag which indicates that user confirmation is needed
+	 * A flag which indicates that user confirmation is needed
 	 * before applying the change.
-     */
+	 */
 	needsConfirmation?: boolean;
 
 	/**
@@ -1806,7 +1812,7 @@ export interface TextDocumentItem {
 	uri: DocumentUri;
 
 	/**
-	 * The text document's language identifier
+	 * The text document's language identifier.
 	 */
 	languageId: string;
 
@@ -2079,13 +2085,13 @@ export type InsertTextMode = 1 | 2;
 export interface CompletionItemLabelDetails {
 	/**
 	 * An optional string which is rendered less prominently directly after {@link CompletionItem.label label},
-	 * without any spacing. Should be used for function signatures or type annotations.
+	 * without any spacing. Should be used for function signatures and type annotations.
 	 */
 	detail?: string;
 
 	/**
 	 * An optional string which is rendered less prominently after {@link CompletionItem.detail}. Should be used
-	 * for fully qualified names or file path.
+	 * for fully qualified names and file paths.
 	 */
 	description?: string;
 }
@@ -2202,7 +2208,7 @@ export interface CompletionItem {
 
 	/**
 	 * How whitespace and indentation is handled during completion
-	 * item insertion. If ignored the clients default value depends on
+	 * item insertion. If not provided the clients default value depends on
 	 * the `textDocument.completion.insertTextMode` client capability.
 	 *
 	 * @since 3.16.0
@@ -2214,15 +2220,15 @@ export interface CompletionItem {
 	 * this completion. When an edit is provided the value of
 	 * [insertText](#CompletionItem.insertText) is ignored.
 	 *
-	 * Most editors support two different operation when accepting a completion
+	 * Most editors support two different operations when accepting a completion
 	 * item. One is to insert a completion text and the other is to replace an
-	 * existing text with a completion text. Since this can usually not
+	 * existing text with a completion text. Since this can usually not be
 	 * predetermined by a server it can report both ranges. Clients need to
 	 * signal support for `InsertReplaceEdits` via the
 	 * `textDocument.completion.insertReplaceSupport` client capability
 	 * property.
 	 *
-	 * *Note 1:* The text edit's range as well as both ranges from a insert
+	 * *Note 1:* The text edit's range as well as both ranges from an insert
 	 * replace edit must be a [single line] and they must contain the position
 	 * at which completion has been requested.
 	 * *Note 2:* If an `InsertReplaceEdit` is returned the edit's insert range
@@ -2300,6 +2306,9 @@ export namespace CompletionItem {
 export interface CompletionList {
 	/**
 	 * This list it not complete. Further typing results in recomputing this list.
+	 *
+	 * Recomputed lists have all their items replaced (not appended) in the
+	 * incomplete completion sessions.
 	 */
 	isIncomplete: boolean;
 
@@ -2425,7 +2434,8 @@ export interface Hover {
 	contents: MarkupContent | MarkedString | MarkedString[];
 
 	/**
-	 * An optional range
+	 * An optional range inside the text document that is used to
+	 * visualize the hover, e.g. by changing the background color.
 	 */
 	range?: Range;
 }
@@ -2465,7 +2475,7 @@ export interface ParameterInformation {
 	label: string | [uinteger, uinteger];
 
 	/**
-	 * The human-readable doc-comment of this signature. Will be shown
+	 * The human-readable doc-comment of this parameter. Will be shown
 	 * in the UI but can be omitted.
 	 */
 	documentation?: string | MarkupContent;
@@ -2572,7 +2582,7 @@ export interface SignatureHelp {
 	 * mandatory to better express the active parameter if the
 	 * active signature does have any.
 	 */
-	 activeParameter?: uinteger;
+	activeParameter?: uinteger;
 }
 
 /**
@@ -2714,6 +2724,7 @@ export type SymbolKind = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 |
 
 /**
  * Symbol tags are extra annotations that tweak the rendering of a symbol.
+ *
  * @since 3.16
  */
 export namespace SymbolTag {
@@ -2742,7 +2753,7 @@ export interface BaseSymbolInformation {
 	kind: SymbolKind;
 
 	/**
-	 * Tags for this completion item.
+	 * Tags for this symbol.
 	 *
 	 * @since 3.16.0
 	 */
@@ -2774,9 +2785,9 @@ export interface SymbolInformation extends BaseSymbolInformation {
 	 * to reveal the location in the editor. If the symbol is selected in the
 	 * tool the range's start information is used to position the cursor. So
 	 * the range usually spans more than the actual symbol's name and does
-	 * normally include thinks like visibility modifiers.
+	 * normally include things like visibility modifiers.
 	 *
-	 * The range doesn't have to denote a node range in the sense of a abstract
+	 * The range doesn't have to denote a node range in the sense of an abstract
 	 * syntax tree. It can therefore not be used to re-construct a hierarchy of
 	 * the symbols.
 	 */
@@ -2888,14 +2899,14 @@ export interface DocumentSymbol {
 
 	/**
 	 * The range enclosing this symbol not including leading/trailing whitespace but everything else
-	 * like comments. This information is typically used to determine if the the clients cursor is
+	 * like comments. This information is typically used to determine if the clients cursor is
 	 * inside the symbol to reveal in the symbol in the UI.
 	 */
 	range: Range;
 
 	/**
 	 * The range that should be selected and revealed when this symbol is being picked, e.g the name of a function.
-	 * Must be contained by the the `range`.
+	 * Must be contained by the `range`.
 	 */
 	selectionRange: Range;
 
@@ -3159,14 +3170,14 @@ export interface CodeAction {
 	 *
 	 * Clients should follow the following guidelines regarding disabled code actions:
 	 *
-	 *   - Disabled code actions are not shown in automatic [lightbulb](https://code.visualstudio.com/docs/editor/editingevolved#_code-action)
-	 *     code action menu.
+	 *   - Disabled code actions are not shown in automatic [lightbulbs](https://code.visualstudio.com/docs/editor/editingevolved#_code-action)
+	 *     code action menus.
 	 *
-	 *   - Disabled actions are shown as faded out in the code action menu when the user request a more specific type
+	 *   - Disabled actions are shown as faded out in the code action menu when the user requests a more specific type
 	 *     of code action, such as refactorings.
 	 *
 	 *   - If the user has a [keybinding](https://code.visualstudio.com/docs/editor/refactoring#_keybindings-for-code-actions)
-	 *     that auto applies a code action and only a disabled code actions are returned, the client should show the user an
+	 *     that auto applies a code action and only disabled code actions are returned, the client should show the user an
 	 *     error message with `reason` in the editor.
 	 *
 	 * @since 3.16.0
@@ -3188,7 +3199,7 @@ export interface CodeAction {
 
 	/**
 	 * A command this code action executes. If a code action
-	 * provides a edit and a command, first the edit is
+	 * provides an edit and a command, first the edit is
 	 * executed and then the command.
 	 */
 	command?: Command;
@@ -3262,7 +3273,7 @@ export namespace CodeAction {
  * source text, like the number of references, a way to run tests, etc.
  *
  * A code lens is _unresolved_ when no command is associated to it. For performance
- * reasons the creation of a code lens and resolving should be done to two stages.
+ * reasons the creation of a code lens and resolving should be done in two stages.
  */
 export interface CodeLens {
 	/**
@@ -3320,7 +3331,7 @@ export interface FormattingOptions {
 	insertSpaces: boolean;
 
 	/**
-	 * Trim trailing whitespaces on a line.
+	 * Trim trailing whitespace on a line.
 	 *
 	 * @since 3.15.0
 	 */
@@ -3378,7 +3389,7 @@ export interface DocumentLink {
 	range: Range;
 
 	/**
-	 * The uri this link points to.
+	 * The uri this link points to. If missing a resolve request is sent later.
 	 */
 	target?: string;
 
@@ -4048,7 +4059,7 @@ export type InlayHint = {
 	paddingRight?: boolean;
 
 	/**
-	 * A data entry field that is preserved on a inlay hint between
+	 * A data entry field that is preserved on an inlay hint between
 	 * a `textDocument/inlayHint` and a `inlayHint/resolve` request.
 	 */
 	data?: LSPAny;

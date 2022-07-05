@@ -36,8 +36,8 @@ export interface TextDocumentsConfiguration<T extends { uri: DocumentUri }> {
  */
 export interface TextDocumentChangeEvent<T> {
 	/**
-     * The document that has changed.
-     */
+	 * The document that has changed.
+	 */
 	document: T;
 }
 
@@ -46,12 +46,12 @@ export interface TextDocumentChangeEvent<T> {
  */
 export interface TextDocumentWillSaveEvent<T> {
 	/**
-     * The document that will be saved
-     */
+	 * The document that will be saved
+	 */
 	document: T;
 	/**
-     * The reason why save was triggered.
-     */
+	 * The reason why save was triggered.
+	 */
 	reason: TextDocumentSaveReason;
 }
 
@@ -172,7 +172,7 @@ export class TextDocuments<T extends { uri: DocumentUri }> {
 	/**
 	 * Listens for `low level` notification on the given connection to
 	 * update the text documents managed by this instance.
-     *
+	 *
 	 * Please note that the connection only provides handlers not an event model. Therefore
 	 * listening on a connection will overwrite the following handlers on a connection:
 	 * `onDidOpenTextDocument`, `onDidChangeTextDocument`, `onDidCloseTextDocument`,

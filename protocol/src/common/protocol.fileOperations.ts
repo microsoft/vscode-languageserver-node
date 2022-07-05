@@ -5,7 +5,7 @@
 
 import { NotificationHandler, RequestHandler } from 'vscode-jsonrpc';
 import { WorkspaceEdit } from 'vscode-languageserver-types';
-import { ProtocolNotificationType, ProtocolRequestType } from './messages';
+import { MessageDirection, ProtocolNotificationType, ProtocolRequestType } from './messages';
 
 /**
  * Options for notifications/requests for user operations on files.
@@ -15,32 +15,32 @@ import { ProtocolNotificationType, ProtocolRequestType } from './messages';
 export interface FileOperationOptions {
 
 	/**
-	* The server is interested in didCreateFiles notifications.
+	* The server is interested in receiving didCreateFiles notifications.
 	*/
 	didCreate?: FileOperationRegistrationOptions;
 
 	/**
-	* The server is interested in willCreateFiles requests.
+	* The server is interested in receiving willCreateFiles requests.
 	*/
 	willCreate?: FileOperationRegistrationOptions;
 
 	/**
-	* The server is interested in didRenameFiles notifications.
+	* The server is interested in receiving didRenameFiles notifications.
 	*/
 	didRename?: FileOperationRegistrationOptions;
 
 	/**
-	* The server is interested in willRenameFiles requests.
+	* The server is interested in receiving willRenameFiles requests.
 	*/
 	willRename?: FileOperationRegistrationOptions;
 
 	/**
-	* The server is interested in didDeleteFiles file notifications.
+	* The server is interested in receiving didDeleteFiles file notifications.
 	*/
 	didDelete?: FileOperationRegistrationOptions;
 
 	/**
-	* The server is interested in willDeleteFiles file requests.
+	* The server is interested in receiving willDeleteFiles file requests.
 	*/
 	willDelete?: FileOperationRegistrationOptions;
 }
@@ -94,7 +94,7 @@ export interface FileOperationPatternOptions {
 
 /**
  * A pattern to describe in which file operation requests or notifications
- * the server is interested in.
+ * the server is interested in receiving.
  *
  * @since 3.16.0
  */
@@ -126,14 +126,14 @@ interface FileOperationPattern {
 
 /**
  * A filter to describe in which file operation requests or notifications
- * the server is interested in.
+ * the server is interested in receiving.
  *
  * @since 3.16.0
  */
 export interface FileOperationFilter {
 
 	/**
-	 * A Uri like `file` or `untitled`.
+	 * A Uri scheme like `file` or `untitled`.
 	 */
 	scheme?: string;
 
@@ -164,7 +164,7 @@ export interface FileOperationClientCapabilities {
 	didCreate?: boolean;
 
 	/**
-	 * The client has support for willCreateFiles requests.
+	 * The client has support for sending willCreateFiles requests.
 	 */
 	willCreate?: boolean;
 
@@ -174,7 +174,7 @@ export interface FileOperationClientCapabilities {
 	didRename?: boolean;
 
 	/**
-	 * The client has support for willRenameFiles requests.
+	 * The client has support for sending willRenameFiles requests.
 	 */
 	willRename?: boolean;
 
@@ -184,13 +184,14 @@ export interface FileOperationClientCapabilities {
 	didDelete?: boolean;
 
 	/**
-	 * The client has support for willDeleteFiles requests.
+	 * The client has support for sending willDeleteFiles requests.
 	 */
 	willDelete?: boolean;
 }
 
 /**
- * The parameters sent in file create requests/notifications.
+ * The parameters sent in notifications/requests for user-initiated creation of
+ * files.
  *
  * @since 3.16.0
  */
@@ -216,7 +217,8 @@ export interface FileCreate {
 }
 
 /**
- * The parameters sent in file rename requests/notifications.
+ * The parameters sent in notifications/requests for user-initiated renames of
+ * files.
  *
  * @since 3.16.0
  */
@@ -248,7 +250,8 @@ export interface FileRename {
 }
 
 /**
- * The parameters sent in file delete requests/notifications.
+ * The parameters sent in notifications/requests for user-initiated deletes of
+ * files.
  *
  * @since 3.16.0
  */
@@ -282,6 +285,7 @@ export interface FileDelete {
  */
 export namespace WillCreateFilesRequest {
 	export const method: 'workspace/willCreateFiles' = 'workspace/willCreateFiles';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<CreateFilesParams, WorkspaceEdit | null, never, void, FileOperationRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<CreateFilesParams, WorkspaceEdit | undefined | null, void>;
 }
@@ -294,6 +298,7 @@ export namespace WillCreateFilesRequest {
  */
 export namespace DidCreateFilesNotification {
 	export const method: 'workspace/didCreateFiles' = 'workspace/didCreateFiles';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<CreateFilesParams, FileOperationRegistrationOptions>(method);
 	export type HandlerSignature = NotificationHandler<CreateFilesParams>;
 }
@@ -306,6 +311,7 @@ export namespace DidCreateFilesNotification {
  */
 export namespace WillRenameFilesRequest {
 	export const method: 'workspace/willRenameFiles' = 'workspace/willRenameFiles';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<RenameFilesParams, WorkspaceEdit | null, never, void, FileOperationRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<RenameFilesParams, WorkspaceEdit | undefined | null, void>;
 }
@@ -318,6 +324,7 @@ export namespace WillRenameFilesRequest {
  */
 export namespace DidRenameFilesNotification {
 	export const method: 'workspace/didRenameFiles' = 'workspace/didRenameFiles';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<RenameFilesParams, FileOperationRegistrationOptions>(method);
 	export type HandlerSignature = NotificationHandler<RenameFilesParams>;
 }
@@ -330,6 +337,7 @@ export namespace DidRenameFilesNotification {
  */
 export namespace DidDeleteFilesNotification {
 	export const method: 'workspace/didDeleteFiles' = 'workspace/didDeleteFiles';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<DeleteFilesParams, FileOperationRegistrationOptions>(method);
 	export type HandlerSignature = NotificationHandler<DeleteFilesParams>;
 }
@@ -342,6 +350,7 @@ export namespace DidDeleteFilesNotification {
  */
 export namespace WillDeleteFilesRequest {
 	export const method: 'workspace/willDeleteFiles' = 'workspace/willDeleteFiles';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<DeleteFilesParams, WorkspaceEdit | null, never, void, FileOperationRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<DeleteFilesParams, WorkspaceEdit | undefined | null, void>;
 }
