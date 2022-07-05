@@ -12,6 +12,51 @@ type SharableOptions = {
 	types?: string[];
 };
 
+namespace SharableOptions {
+	export function flatten(options: SharableOptions): SharableOptions {
+		if (options.extends === undefined) {
+			return options;
+		}
+		let result: SharableOptions = {};
+		for (const option of options.extends) {
+			result = mergeOptions(result, flatten(option));
+		}
+		return mergeOptions(options, result);
+	}
+
+	export function mergeInto(options: SharableOptions, compilerOptions: ts.CompilerOptions): void {
+		if (options.rootDir !== undefined) {
+			compilerOptions.rootDir = options.rootDir;
+		}
+		if (options.types !== undefined) {
+			compilerOptions.types = options.types;
+		}
+		if (options.lib !== undefined) {
+			compilerOptions.lib = options.lib;
+		}
+	}
+
+	function mergeOptions(opt1: SharableOptions, opt2: SharableOptions): SharableOptions {
+		const result: SharableOptions = { };
+		result.rootDir = opt1.rootDir ?? opt2.rootDir;
+		result.exclude = mergeArray(opt1.exclude, opt2.exclude);
+		result.include = mergeArray(opt1.include, opt2.include);
+		result.types = mergeArray(opt1.types, opt2.types);
+		result.lib = mergeArray(opt1.lib, opt2.lib);
+		return result;
+	}
+
+	function mergeArray<T>(arr1: T[] | undefined, arr2:T[] | undefined): T[] | undefined {
+		if (arr1 === undefined) {
+			return arr2;
+		}
+		if (arr2 === undefined) {
+			return arr1;
+		}
+		return arr1.concat(...arr2);
+	}
+}
+
 type SourceFolderOptions = {
 	path: string;
 	references?: string[];
@@ -20,7 +65,10 @@ type SourceFolderOptions = {
 type ProjectDescription = {
 	name: string;
 	path: string;
-	outDir: string;
+	out: {
+		dir: string;
+		buildInfoFile?: string;
+	};
 	files?: string[];
 	references?: SourceFolderOptions[];
 };
@@ -39,18 +87,22 @@ const browser: SharableOptions = {
 	lib: [ 'es2017', 'webworker']
 };
 
-const test: SharableOptions = {
+const testMixin: SharableOptions = {
 	types: ['mocha']
 };
 
 const node: SharableOptions = {
+	extends: [ common ],
 	types: ['node']
 };
 
 const jsonrpc: ProjectDescription = {
 	name: 'jsonrpc',
 	path: 'jsonrpc',
-	outDir: './lib',
+	out: {
+		dir: './lib',
+		buildInfoFile: '${buildInfoFile}.tsbuildInfo'
+	},
 	references: [
 		{
 			path: './src/common',
@@ -59,7 +111,7 @@ const jsonrpc: ProjectDescription = {
 		},
 		{
 			path: './src/common/test',
-			extends: [ common, test ],
+			extends: [ common, testMixin ],
 			references: [ '..' ]
 		},
 		{
@@ -68,7 +120,7 @@ const jsonrpc: ProjectDescription = {
 			exclude: [ 'test' ]
 		},
 		{
-			extends: [ browser, test ],
+			extends: [ browser, testMixin ],
 			path: './src/browser/test',
 			references: [ '..' ]
 		},
@@ -78,7 +130,7 @@ const jsonrpc: ProjectDescription = {
 			exclude: [ 'test' ]
 		},
 		{
-			extends: [ node, test ],
+			extends: [ node, testMixin ],
 			path: './src/node/test',
 			references: [ '..' ]
 		}
@@ -100,7 +152,24 @@ type TsConfigFile = {
 
 type ProjectOptions = {
 	tsconfig?: string;
+	variables?: Map<string, string>;
+	compilerOptions?: ts.CompilerOptions;
 };
+
+namespace ProjectOptions {
+	export function resolveVariables(value: string, options: ProjectOptions): string {
+		if (options.variables === undefined) {
+			return value;
+		}
+		return value.replace(/(\$\{([^\}]*)\})/g, (match, m1, m2) => {
+			if (m1 === undefined || m2 === undefined) {
+				return match;
+			}
+			const value = options.variables!.get(m2);
+			return value ?? match;
+		});
+	}
+}
 
 class Project {
 
@@ -109,7 +178,7 @@ class Project {
 
 	constructor(description: ProjectDescription, options: ProjectOptions) {
 		this.description = description;
-		this.options = Object.assign({}, { tsconfig: 'tsconfig.json' }, options);
+		this.options = Object.assign({}, { tsconfig: 'tsconfig.json', variables: new Map(), compilerOptions: {} }, options);
 	}
 
 	public emit(): void {
@@ -119,9 +188,12 @@ class Project {
 
 		if (description.files !== undefined) {
 			result.files = description.files;
-			if (description.outDir !== undefined) {
-				result.compilerOptions = result.compilerOptions ?? { };
-				result.compilerOptions.outDir = description.outDir;
+			if (description.out !== undefined) {
+				result.compilerOptions = result.compilerOptions ??  { };
+				result.compilerOptions.outDir = description.out.dir;
+				if (description.out.buildInfoFile !== undefined) {
+
+				}
 			}
 		} else if (description.references !== undefined) {
 			result.compilerOptions = result.compilerOptions ?? { };
@@ -135,7 +207,7 @@ class Project {
 				result.references.push({
 					path: path.join(reference.path, this.options.tsconfig)
 				});
-				sourceFolders.push(new SourceFolder(reference, description.outDir, this.options));
+				sourceFolders.push(new SourceFolder(reference, description, this.options));
 			}
 		}
 		console.log(JSON.stringify(result, undefined, 4));
@@ -148,20 +220,21 @@ class Project {
 class SourceFolder {
 
 	private readonly description: SourceFolderOptions;
-	private readonly outDir: string;
+	private readonly projectDescription: ProjectDescription;
 	private readonly options: Required<ProjectOptions>;
 
-	constructor(description: SourceFolderOptions, outDir: string, options: Required<ProjectOptions>) {
+	constructor(description: SourceFolderOptions, projectDescription: ProjectDescription, options: Required<ProjectOptions>) {
 		this.description = description;
-		this.outDir = outDir;
+		this.projectDescription = projectDescription;
 		this.options = options;
 	}
 
 	public emit(): void {
 		const result: TsConfigFile = { };
-		result.compilerOptions = {};
+		result.compilerOptions = this.options.compilerOptions !== undefined ? Object.assign({}, this.options.compilerOptions) : {};
 		const description = this.description;
-		const outAbsolute = path.isAbsolute(this.outDir) ? this.outDir : path.join('/', this.outDir);
+		const out = this.projectDescription.out;
+		const outAbsolute = path.isAbsolute(out.dir) ? out.dir : path.join('/', out.dir);
 		const sourceAbsolute = path.isAbsolute(description.path) ? description.path : path.join('/', description.path);
 		let outDir = path.relative(sourceAbsolute, outAbsolute);
 		const outSplit = outAbsolute.split(path.sep);
@@ -172,46 +245,40 @@ class SourceFolder {
 			}
 		}
 		result.compilerOptions.outDir = outDir;
-		const options = this.flattenOptions(description);
+		if (out.buildInfoFile !== undefined) {
+			result.compilerOptions.tsBuildInfoFile = path.join(outDir, ProjectOptions.resolveVariables(out.buildInfoFile, this.options));
+		}
+		const options = SharableOptions.flatten(description);
 		if (options.include !== undefined) {
 			result.include = options.include;
 		}
 		if (options.exclude !== undefined) {
 			result.exclude = options.exclude;
 		}
-		if (options.rootDir !== undefined) {
-			result.compilerOptions.rootDir = options.rootDir;
-		}
-		if (options.types !== undefined) {
-			result.compilerOptions.types = options.types;
-		}
-		if (options.lib !== undefined) {
-			result.compilerOptions.lib = options.lib;
-		}
+		SharableOptions.mergeInto(options, result.compilerOptions);
 		if (description.references) {
 			result.references = [];
 			for (const reference of description.references) {
 				result.references.push({ path: path.join(reference, this.options.tsconfig) });
 			}
 		}
-
 		console.log(JSON.stringify(result, undefined, 4));
-	}
-
-	private flattenOptions(options: SharableOptions): SharableOptions {
-		if (options.extends === undefined) {
-			return options;
-		}
-		let result: SharableOptions = {};
-		for (const option of options.extends) {
-			result = Object.assign(result, this.flattenOptions(option));
-		}
-		return Object.assign(result, options);
 	}
 }
 
 function main() {
-	const project = new Project(jsonrpc, { tsconfig: 'tsconfig.json'} );
+	const project = new Project(jsonrpc, {
+		tsconfig: 'tsconfig.json',
+		variables: new Map([['buildInfoFile', 'compile']]),
+		compilerOptions: {
+			'strict': true,
+			'noImplicitAny': true,
+			'noImplicitReturns': true,
+			'noImplicitThis': true,
+			'noUnusedLocals': true,
+			'noUnusedParameters': true,
+		}
+	});
 	project.emit();
 }
 
