@@ -5,13 +5,13 @@
 // @ts-check
 'use strict';
 
-const { CompilerOptions } = require('../lib/types');
+const { CompilerOptions } = require('vscode-tsconfig-gen');
 
 /**
- * @typedef {import('./types').SharableOptions} SharableOptions
- * @typedef {import('./types').ProjectDescription} ProjectDescription
- * @typedef {import('./types').ProjectOptions} ProjectOptions
- * @typedef {import('./types').Projects} Projects
+ * @typedef {import('vscode-tsconfig-gen').SharableOptions} SharableOptions
+ * @typedef {import('vscode-tsconfig-gen').ProjectDescription} ProjectDescription
+ * @typedef {import('vscode-tsconfig-gen').ProjectOptions} ProjectOptions
+ * @typedef {import('vscode-tsconfig-gen').Projects} Projects
  */
 
 /** @type SharableOptions */

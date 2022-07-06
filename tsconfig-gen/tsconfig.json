@@ -4,7 +4,6 @@
 		"tsBuildInfoFile":"./lib/compile.tsbuildInfo"
 	},
 	"include": [
-		"./src/**/*.ts",
-		"src/.tsconfigrc.js"
+		"./src/**/*.ts"
 	]
 }

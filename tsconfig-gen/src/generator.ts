@@ -6,7 +6,7 @@
 import * as _p from 'path';
 const path = _p.posix;
 
-import { CompilerOptions, ProjectDescription, SharableOptions, SourceFolderDescription, Arrays, ProjectOptions, Projects } from './types';
+import { CompilerOptions, ProjectDescription, SharableOptions, SourceFolderDescription, Arrays, ProjectOptions } from './types';
 
 namespace SharableOptions {
 	export function flatten(options: SharableOptions): SharableOptions {
@@ -57,7 +57,12 @@ namespace ProjectOptions {
 	}
 }
 
-export class ProjectEmitter {
+export type GeneratorResultEntry = {
+	path: string;
+	tsconfig: TsConfigFile;
+};
+
+export class ProjectGenerator {
 
 	private readonly description: ProjectDescription;
 	private readonly options: Required<ProjectOptions>;
@@ -67,43 +72,45 @@ export class ProjectEmitter {
 		this.options = Object.freeze(Object.assign({}, { tsconfig: 'tsconfig.json', variables: new Map(), compilerOptions: {} }, options));
 	}
 
-	public emit(): void {
-		const result: TsConfigFile = {};
+	public generate(root: string): GeneratorResultEntry[] {
+		const tsconfig: TsConfigFile = {};
 		const description = this.description;
-		const sourceFolders: SourceFolderEmitter[] = [];
+		const sourceFolders: SourceFolderGenerator[] = [];
 
 		if (description.files !== undefined) {
-			result.files = description.files;
-			result.compilerOptions = result.compilerOptions ?? Object.assign({}, this.options.compilerOptions);
+			tsconfig.files = description.files;
+			tsconfig.compilerOptions = tsconfig.compilerOptions ?? Object.assign({}, this.options.compilerOptions);
 			if (description.out !== undefined) {
-				result.compilerOptions.outDir = description.out.dir;
+				tsconfig.compilerOptions.outDir = description.out.dir;
 				if (description.out.buildInfoFile !== undefined) {
-					result.compilerOptions.tsBuildInfoFile = path.join(description.out.dir, ProjectOptions.resolveVariables(description.out.buildInfoFile, this.options));
+					tsconfig.compilerOptions.tsBuildInfoFile = path.join(description.out.dir, ProjectOptions.resolveVariables(description.out.buildInfoFile, this.options));
 				}
 			}
 		} else if (description.references !== undefined) {
-			result.compilerOptions = result.compilerOptions ?? {};
+			tsconfig.compilerOptions = tsconfig.compilerOptions ?? {};
 			if (description.files === undefined) {
-				result.files = [];
-				result.compilerOptions.composite = true;
-				result.compilerOptions.incremental = true;
+				tsconfig.files = [];
+				tsconfig.compilerOptions.composite = true;
+				tsconfig.compilerOptions.incremental = true;
 			}
-			result.references = [];
+			tsconfig.references = [];
 			for (const reference of description.references) {
-				result.references.push({
+				tsconfig.references.push({
 					path: path.join(reference.path, this.options.tsconfig)
 				});
-				sourceFolders.push(new SourceFolderEmitter(reference, description, this.options));
+				sourceFolders.push(new SourceFolderGenerator(reference, description, this.options));
 			}
 		}
-		console.log(JSON.stringify(result, undefined, 4));
+		const result: GeneratorResultEntry[] = [];
+		result.push({ path: _p.join(root, description.path),tsconfig });
 		for (const sourceFolder of sourceFolders) {
-			sourceFolder.emit();
+			result.push(sourceFolder.generate(_p.join(root, description.path)));
 		}
+		return result;
 	}
 }
 
-class SourceFolderEmitter {
+class SourceFolderGenerator {
 
 	private readonly description: SourceFolderDescription;
 	private readonly projectDescription: ProjectDescription;
@@ -115,7 +122,7 @@ class SourceFolderEmitter {
 		this.options = options;
 	}
 
-	public emit(): void {
+	public generate(root: string):GeneratorResultEntry {
 		const result: TsConfigFile = { };
 		result.compilerOptions = Object.assign({}, this.options.compilerOptions);
 		const description = this.description;
@@ -156,20 +163,6 @@ class SourceFolderEmitter {
 				result.references.push({ path: path.join(reference, this.options.tsconfig) });
 			}
 		}
-		console.log(JSON.stringify(result, undefined, 4));
+		return { path: _p.join(root, description.path), tsconfig: result };
 	}
-}
-
-const projects: Projects = require('../src/.tsconfigrc');
-
-function main() {
-	for (const project of projects) {
-		const emitter = new ProjectEmitter(project[0], project[1][0]);
-		emitter.emit();
-	}
-}
-
-
-if (require.main === module) {
-	main();
 }
