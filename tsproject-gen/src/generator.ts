@@ -6,7 +6,7 @@
 import * as _p from 'path';
 const path = _p.posix;
 
-import { CompilerOptions, ProjectDescription, SharableOptions, SourceFolderDescription, Arrays, ProjectOptions } from './types';
+import { CompilerOptions, ProjectDescription, SharableOptions, SourceFolderDescription, Arrays, ProjectOptions, Projects } from './types';
 
 namespace SharableOptions {
 	export function flatten(options: SharableOptions): SharableOptions {
@@ -57,7 +57,7 @@ namespace ProjectOptions {
 	}
 }
 
-export class Project {
+export class ProjectEmitter {
 
 	private readonly description: ProjectDescription;
 	private readonly options: Required<ProjectOptions>;
@@ -70,7 +70,7 @@ export class Project {
 	public emit(): void {
 		const result: TsConfigFile = {};
 		const description = this.description;
-		const sourceFolders: SourceFolder[] = [];
+		const sourceFolders: SourceFolderEmitter[] = [];
 
 		if (description.files !== undefined) {
 			result.files = description.files;
@@ -93,7 +93,7 @@ export class Project {
 				result.references.push({
 					path: path.join(reference.path, this.options.tsconfig)
 				});
-				sourceFolders.push(new SourceFolder(reference, description, this.options));
+				sourceFolders.push(new SourceFolderEmitter(reference, description, this.options));
 			}
 		}
 		console.log(JSON.stringify(result, undefined, 4));
@@ -103,7 +103,7 @@ export class Project {
 	}
 }
 
-class SourceFolder {
+class SourceFolderEmitter {
 
 	private readonly description: SourceFolderDescription;
 	private readonly projectDescription: ProjectDescription;
@@ -160,7 +160,13 @@ class SourceFolder {
 	}
 }
 
+const projects: Projects = require('../src/.tsconfigrc');
+
 function main() {
+	for (const project of projects) {
+		const emitter = new ProjectEmitter(project[0], project[1][0]);
+		emitter.emit();
+	}
 }
 
 

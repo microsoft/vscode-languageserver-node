@@ -2,16 +2,14 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
+// @ts-check
 'use strict';
 
-const { CompilerOptions } = require('./types');
-
-// @ts-check
+const { CompilerOptions } = require('../lib/types');
 
 /**
  * @typedef {import('./types').SharableOptions} SharableOptions
  * @typedef {import('./types').ProjectDescription} ProjectDescription
- * @typedef {import('./types').CompilerOptions} CompilerOptions
  * @typedef {import('./types').ProjectOptions} ProjectOptions
  * @typedef {import('./types').Projects} Projects
  */
@@ -192,10 +190,10 @@ const protocol = {
 
 /** @type CompilerOptions */
 const defaultCompilerOptions = {
-	'strict': true,
-	'noImplicitAny': true,
-	'noImplicitReturns': true,
-	'noImplicitThis': true,
+	strict: true,
+	noImplicitAny: true,
+	noImplicitReturns: true,
+	noImplicitThis: true,
 };
 
 /** @type CompilerOptions */
@@ -205,10 +203,10 @@ const compileCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
 });
 
 /** @type ProjectOptions */
-const defaultProjectOptions = {
+const compileProjectOptions = {
 	tsconfig: 'tsconfig.json',
 	variables: new Map([['buildInfoFile', 'compile']]),
-	compilerOptions: defaultCompilerOptions
+	compilerOptions: compileCompilerOptions
 };
 
 /** @type CompilerOptions */
@@ -259,14 +257,15 @@ const esmCompilerOptions = {
 const esmProjectOptions = {
 	tsconfig: 'tsconfig.esm.json',
 	variables: new Map([['target', 'esm'], ['buildInfoFile', 'compile']]),
-	compilerOptions: umdCompilerOptions
+	compilerOptions: esmCompilerOptions
 };
 
 /** @type Projects */
 const projects = [
-	[ textDocuments, [ umdProjectOptions, esmCompilerOptions ] ],
-	[ types, [ umdCompilerOptions, esmCompilerOptions ] ],
-	[ jsonrpc, [ defaultProjectOptions, watchProjectOptions ] ]
+	[ textDocuments, [ umdProjectOptions, esmProjectOptions ] ],
+	[ types, [ umdProjectOptions, esmProjectOptions ] ],
+	[ jsonrpc, [ compileProjectOptions, watchProjectOptions ] ],
+	[ protocol, [ compileProjectOptions, watchProjectOptions ] ],
 ];
 
 module.exports = projects;

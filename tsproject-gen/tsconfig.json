@@ -5,6 +5,6 @@
 	},
 	"include": [
 		"./src/**/*.ts",
-		"./src/project.js"
+		"src/.tsconfigrc.js"
 	]
 }
