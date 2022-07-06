@@ -24,7 +24,17 @@ const general = {
 
 /** @type SharableOptions */
 const common = {
-	extends: [ general ]
+	extends: [ general ],
+	/**
+	 * Even under browser we compile to node and commonjs and
+	 * rely on webpack to package everything correctly.
+	 */
+	compilerOptions: {
+		"target": "es2020",
+		"module": "commonjs",
+		"moduleResolution": "node",
+		"lib": [ "es2020" ],
+	}
 };
 
 /** @type SharableOptions */
@@ -62,9 +72,9 @@ const node = {
 };
 
 /** @type ProjectDescription */
-const textDocuments = {
-	name: 'textDocuments',
-	path: './textDocuments',
+const textDocument = {
+	name: 'textDocument',
+	path: './textDocument',
 	sourceFolders: [
 		{
 			path: './src/',
@@ -124,6 +134,9 @@ const jsonrpc = {
 	sourceFolders: [
 		{
 			path: './src/common',
+			compilerOptions: {
+				composite: true
+			},
 			extends: [ common ],
 			exclude: [ 'test' ],
 		},
@@ -135,6 +148,9 @@ const jsonrpc = {
 		{
 			extends: [ browser ],
 			path: './src/browser',
+			compilerOptions: {
+				composite: true
+			},
 			exclude: [ 'test' ],
 			references: [ '../common' ]
 		},
@@ -146,6 +162,9 @@ const jsonrpc = {
 		{
 			extends: [ node ],
 			path: './src/node',
+			compilerOptions: {
+				composite: true
+			},
 			exclude: [ 'test' ],
 			references: [ '../common' ]
 		},
@@ -280,7 +299,7 @@ const client_node_tests = {
 const root = {
 	name: 'root',
 	path: './',
-	references: [ textDocuments, types, jsonrpc, protocol, client, server, client_node_tests ]
+	references: [ textDocument, types, jsonrpc, protocol, client, server, client_node_tests ]
 }
 
 /** @type CompilerOptions */
@@ -357,7 +376,7 @@ const esmProjectOptions = {
 
 /** @type Projects */
 const projects = [
-	[ textDocuments, [ umdProjectOptions, esmProjectOptions ] ],
+	[ textDocument, [ umdProjectOptions, esmProjectOptions ] ],
 	[ types, [ umdProjectOptions, esmProjectOptions ] ],
 	[ jsonrpc, [ compileProjectOptions, watchProjectOptions ] ],
 	[ protocol, [ compileProjectOptions, watchProjectOptions ] ],
