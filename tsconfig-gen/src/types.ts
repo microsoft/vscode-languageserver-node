@@ -3,9 +3,9 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import * as ts from 'typescript';
+import type { CompilerOptions as TCompilerOptions } from 'typescript';
 
-export type CompilerOptions = Omit<ts.CompilerOptions, 'target' | 'module'> & { target?: string; module?: string };
+export type CompilerOptions = Omit<TCompilerOptions, 'target' | 'module'> & { target?: string; module?: string };
 
 export namespace CompilerOptions {
 	export function assign(opt1: CompilerOptions, opt2: CompilerOptions): CompilerOptions;
@@ -76,7 +76,8 @@ export type ProjectDescription = {
 		buildInfoFile?: string;
 	};
 	files?: string[];
-	references?: SourceFolderDescription[];
+	sourceFolders?: SourceFolderDescription[];
+	references?: ProjectDescription[];
 };
 
 export type ProjectOptions = {

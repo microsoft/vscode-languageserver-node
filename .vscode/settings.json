@@ -45,7 +45,7 @@
 		"./client-node-tests",
 		"./testbed",
 		"./tools",
-		"./tsproject-gen"
+		"./tsconfig-gen"
 	],
 	"typescript.tsc.autoDetect": "off",
 	"editor.codeActionsOnSave": {

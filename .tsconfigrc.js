@@ -43,6 +43,13 @@ const testMixin = {
 };
 
 /** @type SharableOptions */
+const vscodeMixin = {
+	compilerOptions: {
+		types: ['vscode']
+	}
+};
+
+/** @type SharableOptions */
 const node = {
 	extends: [ common ],
 	compilerOptions: {
@@ -58,7 +65,7 @@ const node = {
 const textDocuments = {
 	name: 'textDocuments',
 	path: './textDocuments',
-	references: [
+	sourceFolders: [
 		{
 			path: './src/',
 			extends: [ common ],
@@ -84,7 +91,7 @@ const textDocuments = {
 const types = {
 	name: 'types',
 	path: './types',
-	references: [
+	sourceFolders: [
 		{
 			path: './src/',
 			extends: [ common ],
@@ -114,7 +121,7 @@ const jsonrpc = {
 		dir: './lib',
 		buildInfoFile: '${buildInfoFile}.tsbuildInfo'
 	},
-	references: [
+	sourceFolders: [
 		{
 			path: './src/common',
 			extends: [ common ],
@@ -158,7 +165,7 @@ const protocol = {
 		dir: './lib',
 		buildInfoFile: '${buildInfoFile}.tsbuildInfo'
 	},
-	references: [
+	sourceFolders: [
 		{
 			path: './src/common',
 			extends: [ common ]
@@ -185,8 +192,96 @@ const protocol = {
 			path: './src/node/test',
 			references: [ '..' ]
 		}
+	],
+	references: [
+		types, jsonrpc
 	]
 };
+
+/** @type ProjectDescription */
+const server = {
+	name: 'server',
+	path: './server',
+	out: {
+		dir: './lib',
+		buildInfoFile: '${buildInfoFile}.tsbuildInfo'
+	},
+	sourceFolders: [
+		{
+			path: './src/common',
+			extends: [ common ]
+		},
+		{
+			extends: [ browser ],
+			path: './src/browser',
+			references: [ '../common' ]
+		},
+		{
+			extends: [ node ],
+			path: './src/node',
+			exclude: [ 'test' ],
+			references: [ '../common' ]
+		},
+		{
+			extends: [ node, testMixin ],
+			path: './src/node/test',
+			references: [ '..' ]
+		}
+	],
+	references: [ protocol ]
+}
+
+/** @type ProjectDescription */
+const client = {
+	name: 'client',
+	path: './client',
+	out: {
+		dir: './lib',
+		buildInfoFile: '${buildInfoFile}.tsbuildInfo'
+	},
+	sourceFolders: [
+		{
+			path: './src/common',
+			extends: [ common, vscodeMixin ]
+		},
+		{
+			extends: [ browser, vscodeMixin ],
+			path: './src/browser',
+			references: [ '../common' ]
+		},
+		{
+			extends: [ node, vscodeMixin ],
+			path: './src/node',
+			references: [ '../common' ]
+		}
+	],
+	references: [ protocol ]
+}
+
+
+/** @type ProjectDescription */
+const client_node_tests = {
+	name: 'client-node-tests',
+	path: './client-node-tests',
+	out: {
+		dir: './lib',
+		buildInfoFile: '${buildInfoFile}.tsbuildInfo'
+	},
+	sourceFolders: [
+		{
+			path: './src',
+			extends: [ node, vscodeMixin, testMixin ]
+		}
+	],
+	references: [ protocol, client, server ]
+}
+
+/** @type ProjectDescription */
+const root = {
+	name: 'root',
+	path: './',
+	references: [ textDocuments, types, jsonrpc, protocol, client, server, client_node_tests ]
+}
 
 /** @type CompilerOptions */
 const defaultCompilerOptions = {
@@ -266,6 +361,10 @@ const projects = [
 	[ types, [ umdProjectOptions, esmProjectOptions ] ],
 	[ jsonrpc, [ compileProjectOptions, watchProjectOptions ] ],
 	[ protocol, [ compileProjectOptions, watchProjectOptions ] ],
+	[ server, [ compileProjectOptions, watchProjectOptions ] ],
+	[ client, [ compileProjectOptions, watchProjectOptions ] ],
+	[ client_node_tests, [ compileProjectOptions, watchProjectOptions ] ],
+	[ root, [ compileProjectOptions, watchProjectOptions ] ]
 ];
 
 module.exports = projects;

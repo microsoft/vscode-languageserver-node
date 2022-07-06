@@ -86,7 +86,7 @@ export class ProjectGenerator {
 					tsconfig.compilerOptions.tsBuildInfoFile = path.join(description.out.dir, ProjectOptions.resolveVariables(description.out.buildInfoFile, this.options));
 				}
 			}
-		} else if (description.references !== undefined) {
+		} else if (description.sourceFolders !== undefined) {
 			tsconfig.compilerOptions = tsconfig.compilerOptions ?? {};
 			if (description.files === undefined) {
 				tsconfig.files = [];
@@ -94,15 +94,27 @@ export class ProjectGenerator {
 				tsconfig.compilerOptions.incremental = true;
 			}
 			tsconfig.references = [];
+			for (const sourceFolder of description.sourceFolders) {
+				let sfp = path.join(sourceFolder.path, this.options.tsconfig);
+				if (!path.isAbsolute(sfp) && !sfp.startsWith('./')) {
+					sfp = `./${sfp}`;
+				}
+				tsconfig.references.push({
+					path: sfp
+				});
+				sourceFolders.push(new SourceFolderGenerator(sourceFolder, description, this.options));
+			}
+		}
+		if (description.references !== undefined) {
+			tsconfig.references = tsconfig.references ?? [];
 			for (const reference of description.references) {
 				tsconfig.references.push({
-					path: path.join(reference.path, this.options.tsconfig)
+					path: path.join(root, '..', reference.path, this.options.tsconfig)
 				});
-				sourceFolders.push(new SourceFolderGenerator(reference, description, this.options));
 			}
 		}
 		const result: GeneratorResultEntry[] = [];
-		result.push({ path: _p.join(root, description.path),tsconfig });
+		result.push({ path: _p.join(root, description.path, this.options.tsconfig), tsconfig });
 		for (const sourceFolder of sourceFolders) {
 			result.push(sourceFolder.generate(_p.join(root, description.path)));
 		}
@@ -163,6 +175,6 @@ class SourceFolderGenerator {
 				result.references.push({ path: path.join(reference, this.options.tsconfig) });
 			}
 		}
-		return { path: _p.join(root, description.path), tsconfig: result };
+		return { path: _p.join(root, description.path, this.options.tsconfig), tsconfig: result };
 	}
 }

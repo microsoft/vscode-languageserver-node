@@ -14,15 +14,18 @@
 	},
 	"main": "./lib/main.js",
 	"typings": "./lib/main.d.ts",
+	"dependencies": {
+		"yargs": "^17.5.1"
+	},
+	"devDependencies": {
+		"@types/yargs": "^17.0.10"
+	},
 	"scripts": {
-		"prepublishOnly": "git clean -xfd . && npm install && npm run clean && npm run compile:esm && npm run compile && npm run test",
+		"prepublishOnly": "git clean -xfd . && npm install && npm run clean && npm run compile && npm run test",
 		"postpublish": "node ../build/npm/post-publish.js",
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json",
-		"compile:esm": "node ../build/bin/tsc -b ./tsconfig.esm.json",
 		"clean": "node ../node_modules/rimraf/bin.js lib",
 		"watch": "node ../build/bin/tsc -b ./tsconfig-watch.json -w",
-		"lint": "node ../node_modules/eslint/bin/eslint.js --ext ts src",
-		"test": "node ../node_modules/mocha/bin/_mocha",
-		"preversion": "npm test"
+		"lint": "node ../node_modules/eslint/bin/eslint.js --ext ts src"
 	}
 }
