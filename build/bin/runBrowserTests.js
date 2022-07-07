@@ -68,7 +68,7 @@ class EchoRunner extends events.EventEmitter {
 async function runTests(location) {
 	return new Promise((resolve, reject) => {
 		const root = path.join(__dirname, '..', '..');
-		const server = httpServer.createServer({ root: root, showDir: true, });
+		const server = httpServer.createServer({ root: root, showDir: true });
 		server.listen(8080, '127.0.0.1', async () => {
 			let failCount = 0;
 			const browser = await playwright['chromium'].launch({ headless: true, devtools: false });
