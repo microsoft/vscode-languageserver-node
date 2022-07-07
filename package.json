@@ -15,7 +15,7 @@
 	"devDependencies": {
 		"@types/assert": "^1.5.6",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "16.11.33",
+		"@types/node": "16.11.43",
 		"@typescript-eslint/eslint-plugin": "^5.23.0",
 		"@typescript-eslint/parser": "^5.23.0",
 		"assert": "^2.0.0",

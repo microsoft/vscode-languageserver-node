@@ -42,6 +42,23 @@ type TsConfigFile = {
 	references?: TSProjectReference[];
 };
 
+namespace TSConfigFile {
+	export function assign(config: TsConfigFile, options: SharableOptions): TsConfigFile {
+		const result: TsConfigFile = Object.assign({}, config);
+		result.compilerOptions = CompilerOptions.assign(result.compilerOptions, options.compilerOptions);
+		result.include = Arrays.assign(result.include, options.include);
+		result.exclude = Arrays.assign(result.exclude, options.exclude);
+		result.files = Arrays.assign(result.files, options.files);
+		return result;
+	}
+
+	export function assertCompilerOptions(config: TsConfigFile): asserts config is TsConfigFile & { compilerOptions: CompilerOptions } {
+		if (config.compilerOptions === undefined) {
+			throw new Error(`No compiler options sets although expected`);
+		}
+	}
+}
+
 namespace ProjectOptions {
 	export function resolveVariables(value: string, options: ProjectOptions): string {
 		if (options.variables === undefined) {
@@ -73,28 +90,48 @@ export class ProjectGenerator {
 	}
 
 	public generate(root: string): GeneratorResultEntry[] {
-		const tsconfig: TsConfigFile = {};
+		let tsconfig: TsConfigFile = {};
 		const description = this.description;
 		const sourceFolders: SourceFolderGenerator[] = [];
+		const options = SharableOptions.flatten(description);
+		const singleSource = description.sourceFolders === undefined && description.out !== undefined;
 
-		if (description.files !== undefined) {
-			tsconfig.files = description.files;
-			tsconfig.compilerOptions = tsconfig.compilerOptions ?? Object.assign({}, this.options.compilerOptions);
-			if (description.out !== undefined) {
-				tsconfig.compilerOptions.outDir = description.out.dir;
-				if (description.out.buildInfoFile !== undefined) {
-					tsconfig.compilerOptions.tsBuildInfoFile = path.join(description.out.dir, ProjectOptions.resolveVariables(description.out.buildInfoFile, this.options));
-					tsconfig.compilerOptions.incremental = true;
-				}
-			}
-		} else if (description.sourceFolders !== undefined) {
-			tsconfig.compilerOptions = tsconfig.compilerOptions ?? {};
-			if (description.files === undefined) {
-				tsconfig.files = [];
-				tsconfig.compilerOptions.composite = true;
+		if (singleSource) {
+			tsconfig = TSConfigFile.assign(tsconfig, options);
+			tsconfig.compilerOptions = CompilerOptions.assign(tsconfig.compilerOptions, this.options.compilerOptions);
+			tsconfig.compilerOptions.outDir = description.out!.dir;
+			if (description.out!.buildInfoFile !== undefined) {
+				tsconfig.compilerOptions.tsBuildInfoFile = path.join(description.out!.dir, ProjectOptions.resolveVariables(description.out!.buildInfoFile, this.options));
 				tsconfig.compilerOptions.incremental = true;
 			}
-			tsconfig.references = [];
+		} else {
+			if (description.sourceFolders !== undefined || description.references !== undefined) {
+				tsconfig.compilerOptions = tsconfig.compilerOptions ?? {};
+				tsconfig.compilerOptions.incremental = true;
+				tsconfig.compilerOptions.composite = true;
+				tsconfig.files = [];
+			}
+		}
+
+		if (description.references !== undefined) {
+			tsconfig.references = tsconfig.references ?? [];
+			for (const reference of description.references) {
+				const parentLevels = this.parentLevels();
+				const referencePath = parentLevels === undefined
+					? path.join(root, reference.path, this.options.tsconfig)
+					: path.join(root, parentLevels, reference.path, this.options.tsconfig);
+				tsconfig.references.push({
+					path: referencePath
+				});
+				if (tsconfig.files === undefined) {
+					tsconfig.files = [];
+				}
+			}
+		}
+
+		if (description.sourceFolders !== undefined) {
+			tsconfig.compilerOptions = tsconfig.compilerOptions ?? {};
+			tsconfig.references = tsconfig.references ?? [];
 			for (const sourceFolder of description.sourceFolders) {
 				let sfp = path.join(sourceFolder.path, this.options.tsconfig);
 				if (!path.isAbsolute(sfp) && !sfp.startsWith('./')) {
@@ -104,14 +141,6 @@ export class ProjectGenerator {
 					path: sfp
 				});
 				sourceFolders.push(new SourceFolderGenerator(sourceFolder, description, this.options));
-			}
-		}
-		if (description.references !== undefined) {
-			tsconfig.references = tsconfig.references ?? [];
-			for (const reference of description.references) {
-				tsconfig.references.push({
-					path: path.join(root, '..', reference.path, this.options.tsconfig)
-				});
 			}
 		}
 		const result: GeneratorResultEntry[] = [];
@@ -139,6 +168,18 @@ export class ProjectGenerator {
 		}
 		return result;
 	}
+
+	private parentLevels(): string | undefined {
+		const normalized = path.normalize(this.description.path);
+		if (normalized === '.' || normalized === './') {
+			return undefined;
+		}
+		const split = normalized.split(path.sep);
+		for (let i = 0; i < split.length; i++) {
+			split[i] = '..';
+		}
+		return split.join(path.sep);
+	}
 }
 
 class SourceFolderGenerator {
@@ -154,11 +195,14 @@ class SourceFolderGenerator {
 	}
 
 	public generate(root: string): { result: GeneratorResultEntry; compositeTargets?: string[] } {
-		const result: TsConfigFile = { };
-		result.compilerOptions = Object.assign({}, this.options.compilerOptions);
+		let result: TsConfigFile = { };
 		const description = this.description;
+		const options = SharableOptions.flatten(description);
+		result = TSConfigFile.assign(result, options);
+		result.compilerOptions = CompilerOptions.assign(result.compilerOptions, this.options.compilerOptions);
 		if (description.out !== undefined) {
 			const out = description.out;
+			result.compilerOptions = result.compilerOptions ?? {};
 			result.compilerOptions.outDir = ProjectOptions.resolveVariables(out.dir, this.options);
 			if (out.buildInfoFile !== undefined) {
 				result.compilerOptions.tsBuildInfoFile = ProjectOptions.resolveVariables(out.buildInfoFile, this.options);
@@ -176,19 +220,13 @@ class SourceFolderGenerator {
 					outDir = path.join(outDir, sourceSplit[i]);
 				}
 			}
+			result.compilerOptions = result.compilerOptions ?? {};
 			result.compilerOptions.outDir = outDir;
 			if (out.buildInfoFile !== undefined) {
 				result.compilerOptions.tsBuildInfoFile = path.join(outDir, ProjectOptions.resolveVariables(out.buildInfoFile, this.options));
+				result.compilerOptions.incremental = true;
 			}
 		}
-		const options = SharableOptions.flatten(description);
-		if (options.include !== undefined) {
-			result.include = options.include;
-		}
-		if (options.exclude !== undefined) {
-			result.exclude = options.exclude;
-		}
-		result.compilerOptions =  CompilerOptions.assign(result.compilerOptions, options.compilerOptions);
 		const compositeTargets: string[] = [];
 		if (description.references) {
 			result.references = [];

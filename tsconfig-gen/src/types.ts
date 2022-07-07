@@ -66,6 +66,7 @@ export type SharableOptions = {
 	compilerOptions?: CompilerOptions;
 	include?: string[];
 	exclude?: string[];
+	files?: string[];
 };
 
 export type SourceFolderDescription = {
@@ -84,6 +85,7 @@ export type ProjectDescription = {
 		dir: string;
 		buildInfoFile?: string;
 	};
+	compilerOptions?: CompilerOptions;
 	files?: string[];
 	sourceFolders?: SourceFolderDescription[];
 	references?: ProjectDescription[];

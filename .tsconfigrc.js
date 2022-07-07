@@ -16,32 +16,15 @@ const { CompilerOptions } = require('vscode-tsconfig-gen');
 
 /** @type SharableOptions */
 const general = {
-	compilerOptions: {
-		rootDir: '.',
-	},
-	include: ['.']
-};
-
-/** @type SharableOptions */
-const common = {
-	extends: [ general ],
 	/**
 	 * Even under browser we compile to node and commonjs and
 	 * rely on webpack to package everything correctly.
 	 */
 	compilerOptions: {
-		"target": "es2020",
-		"module": "commonjs",
-		"moduleResolution": "node",
-		"lib": [ "es2020" ],
-	}
-};
-
-/** @type SharableOptions */
-const browser = {
-	extends: [ common ],
-	compilerOptions: {
-		lib: [ 'es2017', 'webworker']
+		module: 'commonjs',
+		moduleResolution: 'node',
+		target: 'es2020',
+		lib: [ 'es2020' ],
 	}
 };
 
@@ -60,15 +43,33 @@ const vscodeMixin = {
 };
 
 /** @type SharableOptions */
-const node = {
-	extends: [ common ],
+const common = {
+	extends: [ general ],
 	compilerOptions: {
-		target: 'es2020',
-		module: 'commonjs',
-		moduleResolution: 'node',
-		lib: [ 'es2020' ],
+		rootDir: '.'
+	},
+	include: ['.']
+};
+
+/** @type SharableOptions */
+const browser = {
+	extends: [ general ],
+	compilerOptions: {
+		rootDir: '.',
+		types: [],
+		lib: [ 'webworker' ]
+	},
+	include: ['.']
+};
+
+/** @type SharableOptions */
+const node = {
+	extends: [ general ],
+	compilerOptions: {
+		rootDir: '.',
 		types: ['node']
-	}
+	},
+	include: ['.']
 };
 
 /** @type ProjectDescription */
@@ -89,8 +90,8 @@ const textDocument = {
 			path: './src/test',
 			extends: [ common, testMixin ],
 			out: {
-				dir: '../lib/${target}/test',
-				buildInfoFile: '../lib/${target}/test/${buildInfoFile}.tsbuildInfo'
+				dir: '../../lib/${target}/test',
+				buildInfoFile: '../../lib/${target}/test/${buildInfoFile}.tsbuildInfo'
 			},
 			references: [ '..' ]
 		}
@@ -115,8 +116,8 @@ const types = {
 			path: './src/test',
 			extends: [ common, testMixin ],
 			out: {
-				dir: '../lib/${target}/test',
-				buildInfoFile: '../lib/${target}/test/${buildInfoFile}.tsbuildInfo'
+				dir: '../../lib/${target}/test',
+				buildInfoFile: '../../lib/${target}/test/${buildInfoFile}.tsbuildInfo'
 			},
 			references: [ '..' ]
 		}
@@ -143,25 +144,25 @@ const jsonrpc = {
 			references: [ '..' ]
 		},
 		{
-			extends: [ browser ],
 			path: './src/browser',
+			extends: [ browser ],
 			exclude: [ 'test' ],
 			references: [ '../common' ]
 		},
 		{
-			extends: [ browser, testMixin ],
 			path: './src/browser/test',
+			extends: [ browser, testMixin ],
 			references: [ '..' ]
 		},
 		{
-			extends: [ node ],
 			path: './src/node',
+			extends: [ node ],
 			exclude: [ 'test' ],
 			references: [ '../common' ]
 		},
 		{
-			extends: [ node, testMixin ],
 			path: './src/node/test',
+			extends: [ node, testMixin ],
 			references: [ '..' ]
 		}
 	]
@@ -181,25 +182,25 @@ const protocol = {
 			extends: [ common ]
 		},
 		{
-			extends: [ browser ],
 			path: './src/browser',
+			extends: [ browser ],
 			exclude: [ 'test' ],
 			references: [ '../common' ]
 		},
 		{
-			extends: [ browser, testMixin ],
 			path: './src/browser/test',
+			extends: [ browser, testMixin ],
 			references: [ '..' ]
 		},
 		{
-			extends: [ node ],
 			path: './src/node',
+			extends: [ node ],
 			exclude: [ 'test' ],
 			references: [ '../common' ]
 		},
 		{
-			extends: [ node, testMixin ],
 			path: './src/node/test',
+			extends: [ node, testMixin ],
 			references: [ '..' ]
 		}
 	],
@@ -222,19 +223,19 @@ const server = {
 			extends: [ common ]
 		},
 		{
-			extends: [ browser ],
 			path: './src/browser',
+			extends: [ browser ],
 			references: [ '../common' ]
 		},
 		{
-			extends: [ node ],
 			path: './src/node',
+			extends: [ node ],
 			exclude: [ 'test' ],
 			references: [ '../common' ]
 		},
 		{
-			extends: [ node, testMixin ],
 			path: './src/node/test',
+			extends: [ node, testMixin ],
 			references: [ '..' ]
 		}
 	],
@@ -255,13 +256,13 @@ const client = {
 			extends: [ common, vscodeMixin ]
 		},
 		{
-			extends: [ browser, vscodeMixin ],
 			path: './src/browser',
+			extends: [ browser, vscodeMixin ],
 			references: [ '../common' ]
 		},
 		{
-			extends: [ node, vscodeMixin ],
 			path: './src/node',
+			extends: [ node, vscodeMixin ],
 			references: [ '../common' ]
 		}
 	],
@@ -287,10 +288,38 @@ const client_node_tests = {
 }
 
 /** @type ProjectDescription */
+const tools = {
+	name: 'tools',
+	path: './tools',
+	extends: [ node ],
+	out: {
+		dir: './lib',
+		buildInfoFile: '${buildInfoFile}.tsbuildInfo'
+	},
+	compilerOptions: {
+		rootDir: './src'
+	}
+}
+
+/** @type ProjectDescription */
+const tsconfig_gen = {
+	name: 'tsconfig-gen',
+	path: './tsconfig-gen',
+	extends: [ node ],
+	out: {
+		dir: './lib',
+		buildInfoFile: '${buildInfoFile}.tsbuildInfo'
+	},
+	compilerOptions: {
+		rootDir: './src'
+	}
+}
+
+/** @type ProjectDescription */
 const root = {
 	name: 'root',
 	path: './',
-	references: [ textDocument, types, jsonrpc, protocol, client, server, client_node_tests ]
+	references: [ textDocument, types, jsonrpc, protocol, client, server, client_node_tests, tools, tsconfig_gen ]
 }
 
 /** @type CompilerOptions */
@@ -299,12 +328,14 @@ const defaultCompilerOptions = {
 	noImplicitAny: true,
 	noImplicitReturns: true,
 	noImplicitThis: true,
+	declaration: true,
+	stripInternal: true
 };
 
 /** @type CompilerOptions */
 const compileCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
-	'noUnusedLocals': true,
-	'noUnusedParameters': true,
+	noUnusedLocals: true,
+	noUnusedParameters: true,
 });
 
 /** @type ProjectOptions */
@@ -316,9 +347,9 @@ const compileProjectOptions = {
 
 /** @type CompilerOptions */
 const watchCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
-	'noUnusedLocals': false,
-	'noUnusedParameters': false,
-	'assumeChangesOnlyAffectDirectDependencies': true,
+	noUnusedLocals: false,
+	noUnusedParameters: false,
+	assumeChangesOnlyAffectDirectDependencies: true,
 });
 
 /** @type ProjectOptions */
@@ -330,14 +361,14 @@ const watchProjectOptions = {
 
 /** @type CompilerOptions */
 const umdCompilerOptions = {
-	'incremental': true,
-	'composite': true,
-	'sourceMap': true,
-	'declaration': true,
-	'stripInternal': true,
-	'target': 'es5',
-	'module': 'umd',
-	'lib': [ 'es2015' ],
+	incremental: true,
+	composite: true,
+	sourceMap: true,
+	declaration: true,
+	stripInternal: true,
+	target: 'es5',
+	module: 'umd',
+	lib: [ 'es2015' ],
 };
 
 /** @type ProjectOptions */
@@ -349,13 +380,13 @@ const umdProjectOptions = {
 
 /** @type CompilerOptions */
 const esmCompilerOptions = {
-	'incremental': true,
-	'target': 'es5',
-	'module': 'es6',
-	'sourceMap': false,
-	'declaration': true,
-	'stripInternal': true,
-	'lib': [ 'es2015' ],
+	incremental: true,
+	target: 'es5',
+	module: 'es6',
+	sourceMap: false,
+	declaration: true,
+	stripInternal: true,
+	lib: [ 'es2015' ]
 };
 
 /** @type ProjectOptions */
@@ -374,6 +405,8 @@ const projects = [
 	[ server, [ compileProjectOptions, watchProjectOptions ] ],
 	[ client, [ compileProjectOptions, watchProjectOptions ] ],
 	[ client_node_tests, [ compileProjectOptions, watchProjectOptions ] ],
+	[ tools, [ compileProjectOptions, watchProjectOptions ] ],
+	[ tsconfig_gen, [ compileProjectOptions, watchProjectOptions ] ],
 	[ root, [ compileProjectOptions, watchProjectOptions ] ]
 ];
 
