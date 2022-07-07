@@ -77,7 +77,7 @@ const textDocument = {
 	path: './textDocument',
 	sourceFolders: [
 		{
-			path: './src/',
+			path: './src',
 			extends: [ common ],
 			out: {
 				dir: '../lib/${target}',
@@ -103,7 +103,7 @@ const types = {
 	path: './types',
 	sourceFolders: [
 		{
-			path: './src/',
+			path: './src',
 			extends: [ common ],
 			out: {
 				dir: '../lib/${target}',
@@ -134,9 +134,6 @@ const jsonrpc = {
 	sourceFolders: [
 		{
 			path: './src/common',
-			compilerOptions: {
-				composite: true
-			},
 			extends: [ common ],
 			exclude: [ 'test' ],
 		},
@@ -148,9 +145,6 @@ const jsonrpc = {
 		{
 			extends: [ browser ],
 			path: './src/browser',
-			compilerOptions: {
-				composite: true
-			},
 			exclude: [ 'test' ],
 			references: [ '../common' ]
 		},
@@ -162,9 +156,6 @@ const jsonrpc = {
 		{
 			extends: [ node ],
 			path: './src/node',
-			compilerOptions: {
-				composite: true
-			},
 			exclude: [ 'test' ],
 			references: [ '../common' ]
 		},

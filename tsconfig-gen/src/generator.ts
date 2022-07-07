@@ -84,6 +84,7 @@ export class ProjectGenerator {
 				tsconfig.compilerOptions.outDir = description.out.dir;
 				if (description.out.buildInfoFile !== undefined) {
 					tsconfig.compilerOptions.tsBuildInfoFile = path.join(description.out.dir, ProjectOptions.resolveVariables(description.out.buildInfoFile, this.options));
+					tsconfig.compilerOptions.incremental = true;
 				}
 			}
 		} else if (description.sourceFolders !== undefined) {
@@ -115,8 +116,26 @@ export class ProjectGenerator {
 		}
 		const result: GeneratorResultEntry[] = [];
 		result.push({ path: _p.join(root, description.path, this.options.tsconfig), tsconfig });
+		const compositeSourceFolders = new Set<string>();
+		const sourceFolderResults: Map<string, GeneratorResultEntry> = new Map();
 		for (const sourceFolder of sourceFolders) {
-			result.push(sourceFolder.generate(_p.join(root, description.path)));
+			const sfr =  sourceFolder.generate(_p.join(root, description.path));
+			result.push(sfr.result);
+			sourceFolderResults.set(path.normalize(sourceFolder.description.path), sfr.result);
+			if (sfr.compositeTargets) {
+				for (const compositeTarget of sfr.compositeTargets) {
+					compositeSourceFolders.add(compositeTarget);
+				}
+			}
+		}
+		if (compositeSourceFolders.size > 0) {
+			for (const compositeSourceFolder of compositeSourceFolders) {
+				const sourceFolder = sourceFolderResults.get(compositeSourceFolder);
+				if (sourceFolder !== undefined) {
+					sourceFolder.tsconfig.compilerOptions = sourceFolder.tsconfig.compilerOptions ?? {};
+					sourceFolder.tsconfig.compilerOptions.composite = true;
+				}
+			}
 		}
 		return result;
 	}
@@ -124,7 +143,7 @@ export class ProjectGenerator {
 
 class SourceFolderGenerator {
 
-	private readonly description: SourceFolderDescription;
+	public readonly description: SourceFolderDescription;
 	private readonly projectDescription: ProjectDescription;
 	private readonly options: Required<ProjectOptions>;
 
@@ -134,7 +153,7 @@ class SourceFolderGenerator {
 		this.options = options;
 	}
 
-	public generate(root: string):GeneratorResultEntry {
+	public generate(root: string): { result: GeneratorResultEntry; compositeTargets?: string[] } {
 		const result: TsConfigFile = { };
 		result.compilerOptions = Object.assign({}, this.options.compilerOptions);
 		const description = this.description;
@@ -143,6 +162,7 @@ class SourceFolderGenerator {
 			result.compilerOptions.outDir = ProjectOptions.resolveVariables(out.dir, this.options);
 			if (out.buildInfoFile !== undefined) {
 				result.compilerOptions.tsBuildInfoFile = ProjectOptions.resolveVariables(out.buildInfoFile, this.options);
+				result.compilerOptions.incremental = true;
 			}
 		} else  if (this.projectDescription.out !== undefined) {
 			const out = this.projectDescription.out;
@@ -169,12 +189,16 @@ class SourceFolderGenerator {
 			result.exclude = options.exclude;
 		}
 		result.compilerOptions =  CompilerOptions.assign(result.compilerOptions, options.compilerOptions);
+		const compositeTargets: string[] = [];
 		if (description.references) {
 			result.references = [];
 			for (const reference of description.references) {
 				result.references.push({ path: path.join(reference, this.options.tsconfig) });
+				if (!path.isAbsolute(reference)) {
+					compositeTargets.push(path.normalize(path.join(description.path, reference)));
+				}
 			}
 		}
-		return { path: _p.join(root, description.path, this.options.tsconfig), tsconfig: result };
+		return { result: { path: _p.join(root, description.path, this.options.tsconfig), tsconfig: result }, compositeTargets };
 	}
 }

@@ -3,9 +3,18 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import type { CompilerOptions as TCompilerOptions } from 'typescript';
+import { CompilerOptions as TCompilerOptions, ImportsNotUsedAsValues, JsxEmit, ModuleKind, ModuleResolutionKind, ModuleDetectionKind, NewLineKind, ScriptTarget } from 'typescript';
 
-export type CompilerOptions = Omit<TCompilerOptions, 'target' | 'module'> & { target?: string; module?: string };
+type ConvertCompilerOptionsValue<T> =
+	T extends ImportsNotUsedAsValues | JsxEmit | ModuleKind | ModuleResolutionKind | ModuleDetectionKind | NewLineKind | ScriptTarget
+		? string
+		: T;
+
+type CompilerOptionsMap<T extends TCompilerOptions> = {
+	[k in keyof T]: ConvertCompilerOptionsValue<T[k]>;
+};
+
+export type CompilerOptions = CompilerOptionsMap<TCompilerOptions>;
 
 export namespace CompilerOptions {
 	export function assign(opt1: CompilerOptions, opt2: CompilerOptions): CompilerOptions;
