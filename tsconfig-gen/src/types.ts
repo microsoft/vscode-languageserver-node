@@ -92,6 +92,7 @@ export type ProjectDescription = {
 };
 
 export type ProjectOptions = {
+	tags: string;
 	tsconfig?: string;
 	variables?: Map<string, string>;
 	compilerOptions?: CompilerOptions;

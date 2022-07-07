@@ -334,12 +334,14 @@ const defaultCompilerOptions = {
 
 /** @type CompilerOptions */
 const compileCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
+	sourceMap: true,
 	noUnusedLocals: true,
 	noUnusedParameters: true,
 });
 
 /** @type ProjectOptions */
 const compileProjectOptions = {
+	tags: ['compile'],
 	tsconfig: 'tsconfig.json',
 	variables: new Map([['buildInfoFile', 'compile']]),
 	compilerOptions: compileCompilerOptions
@@ -347,6 +349,7 @@ const compileProjectOptions = {
 
 /** @type CompilerOptions */
 const watchCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
+	sourceMap: true,
 	noUnusedLocals: false,
 	noUnusedParameters: false,
 	assumeChangesOnlyAffectDirectDependencies: true,
@@ -354,43 +357,56 @@ const watchCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
 
 /** @type ProjectOptions */
 const watchProjectOptions = {
+	tags: ['watch'],
 	tsconfig: 'tsconfig.watch.json',
 	variables: new Map([['buildInfoFile', 'watch']]),
 	compilerOptions: watchCompilerOptions
 };
 
 /** @type CompilerOptions */
-const umdCompilerOptions = {
-	incremental: true,
-	composite: true,
+const umdCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
 	sourceMap: true,
-	declaration: true,
-	stripInternal: true,
+	noUnusedLocals: true,
+	noUnusedParameters: true,
 	target: 'es5',
 	module: 'umd',
 	lib: [ 'es2015' ],
-};
+});
 
 /** @type ProjectOptions */
 const umdProjectOptions = {
+	tags: ['umd', 'compile'],
 	tsconfig: 'tsconfig.json',
 	variables: new Map([['target', 'umd'], ['buildInfoFile', 'compile']]),
 	compilerOptions: umdCompilerOptions
 };
 
 /** @type CompilerOptions */
-const esmCompilerOptions = {
-	incremental: true,
+const umdWatchOptions = CompilerOptions.assign(umdCompilerOptions, {
+	noUnusedLocals: false,
+	noUnusedParameters: false,
+	assumeChangesOnlyAffectDirectDependencies: true,
+});
+
+/** @type ProjectOptions */
+const umdWatchProjectOptions = {
+	tags: ['watch'],
+	tsconfig: 'tsconfig.watch.json',
+	variables: new Map([['target', 'umd'], ['buildInfoFile', 'watch']]),
+	compilerOptions: umdCompilerOptions
+};
+
+/** @type CompilerOptions */
+const esmCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
+	sourceMap: false,
 	target: 'es5',
 	module: 'es6',
-	sourceMap: false,
-	declaration: true,
-	stripInternal: true,
 	lib: [ 'es2015' ]
-};
+});
 
 /** @type ProjectOptions */
 const esmProjectOptions = {
+	tags: ['esm', 'publish'],
 	tsconfig: 'tsconfig.esm.json',
 	variables: new Map([['target', 'esm'], ['buildInfoFile', 'compile']]),
 	compilerOptions: esmCompilerOptions
@@ -398,8 +414,8 @@ const esmProjectOptions = {
 
 /** @type Projects */
 const projects = [
-	[ textDocument, [ umdProjectOptions, esmProjectOptions ] ],
-	[ types, [ umdProjectOptions, esmProjectOptions ] ],
+	[ textDocument, [ umdProjectOptions, umdWatchProjectOptions, esmProjectOptions ] ],
+	[ types, [ umdProjectOptions, umdWatchProjectOptions, esmProjectOptions ] ],
 	[ jsonrpc, [ compileProjectOptions, watchProjectOptions ] ],
 	[ protocol, [ compileProjectOptions, watchProjectOptions ] ],
 	[ server, [ compileProjectOptions, watchProjectOptions ] ],
