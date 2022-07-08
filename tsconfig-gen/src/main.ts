@@ -11,7 +11,7 @@ import { ProjectOptions, Projects } from './types';
 
 export * from './types';
 
-function main(): number {
+export function main(): number {
 	const args = yargs.
 		parserConfiguration({ 'camel-case-expansion': false }).
 		exitProcess(false).
