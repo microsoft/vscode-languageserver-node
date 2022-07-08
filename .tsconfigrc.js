@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
+
 // @ts-check
 'use strict';
 
@@ -103,7 +104,7 @@ const textDocument_publish = {
 	name: 'textDocument_publish',
 	path: './textDocument',
 	references: [ './tsconfig.esm.publish.json', './tsconfig.umd.publish.json' ]
-}
+};
 
 
 /** @type ProjectDescription */
@@ -137,7 +138,7 @@ const types_publish = {
 	name: 'types_publish',
 	path: './types',
 	references: [ './tsconfig.esm.publish.json', './tsconfig.umd.publish.json' ]
-}
+};
 
 /** @type ProjectDescription */
 const jsonrpc = {
@@ -255,7 +256,7 @@ const server = {
 		}
 	],
 	references: [ protocol ]
-}
+};
 
 /** @type ProjectDescription */
 const client = {
@@ -282,7 +283,7 @@ const client = {
 		}
 	],
 	references: [ protocol ]
-}
+};
 
 
 /** @type ProjectDescription */
@@ -300,7 +301,7 @@ const client_node_tests = {
 		}
 	],
 	references: [ protocol, client, server ]
-}
+};
 
 /** @type ProjectDescription */
 const tools = {
@@ -314,7 +315,7 @@ const tools = {
 	compilerOptions: {
 		rootDir: './src'
 	}
-}
+};
 
 /** @type ProjectDescription */
 const tsconfig_gen = {
@@ -328,20 +329,20 @@ const tsconfig_gen = {
 	compilerOptions: {
 		rootDir: './src'
 	}
-}
+};
 
 /** @type ProjectDescription */
 const root = {
 	name: 'root',
 	path: './',
 	references: [ textDocument, types, jsonrpc, protocol, client, server, client_node_tests, tools, tsconfig_gen ]
-}
+};
 
 const root_publish = {
 	name: 'root_publish',
 	path: './',
 	references: [ textDocument, types_publish, jsonrpc, protocol, client, server ]
-}
+};
 
 /** @type CompilerOptions */
 const defaultCompilerOptions = {
@@ -397,7 +398,7 @@ const publishProjectOptions = {
 	tsconfig: 'tsconfig.publish.json',
 	variables: new Map([['buildInfoFile', 'publish']]),
 	compilerOptions: publishCompilerOptions
-}
+};
 
 /** @type CompilerOptions */
 const umdCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {

@@ -85,14 +85,12 @@ export type ProjectDescription = {
 		dir: string;
 		buildInfoFile?: string;
 	};
-	compilerOptions?: CompilerOptions;
-	files?: string[];
 	sourceFolders?: SourceFolderDescription[];
 	references?: (ProjectDescription | string)[];
-};
+} & SharableOptions;
 
 export type ProjectOptions = {
-	tags: string;
+	tags: string[];
 	tsconfig?: string;
 	variables?: Map<string, string>;
 	compilerOptions?: CompilerOptions;
