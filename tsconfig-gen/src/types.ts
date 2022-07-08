@@ -88,7 +88,7 @@ export type ProjectDescription = {
 	compilerOptions?: CompilerOptions;
 	files?: string[];
 	sourceFolders?: SourceFolderDescription[];
-	references?: ProjectDescription[];
+	references?: (ProjectDescription | string)[];
 };
 
 export type ProjectOptions = {

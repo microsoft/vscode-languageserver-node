@@ -116,16 +116,26 @@ export class ProjectGenerator {
 		if (description.references !== undefined) {
 			tsconfig.references = tsconfig.references ?? [];
 			for (const reference of description.references) {
-				const parentLevels = this.parentLevels();
-				const referencePath = parentLevels === undefined
-					? path.join(root, reference.path, this.options.tsconfig)
-					: path.join(root, parentLevels, reference.path, this.options.tsconfig);
-				tsconfig.references.push({
-					path: referencePath
-				});
-				if (tsconfig.files === undefined) {
-					tsconfig.files = [];
+				if (typeof reference === 'string') {
+					const basename = path.basename(reference);
+					if (basename.match(/tsconfig(\.[^\.]+)*\.json/)) {
+						tsconfig.references.push({ path: reference });
+					} else {
+						tsconfig.references.push({ path: path.join(reference, this.options.tsconfig) });
+					}
+				} else {
+					const parentLevels = this.parentLevels();
+					let referencePath = parentLevels === undefined
+						? path.join(root, reference.path, this.options.tsconfig)
+						: path.join(root, parentLevels, reference.path, this.options.tsconfig);
+					if (!path.isAbsolute(referencePath) && !referencePath.startsWith('./')) {
+						referencePath = `./${referencePath}`;
+					}
+					tsconfig.references.push({ path: referencePath });
 				}
+			}
+			if (tsconfig.files === undefined) {
+				tsconfig.files = [];
 			}
 		}
 
