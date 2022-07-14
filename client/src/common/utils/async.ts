@@ -156,7 +156,17 @@ export class Semaphore<T = void> {
 	}
 }
 
+let $test: boolean = false;
+export function setTestMode() {
+	$test = true;
+}
+export function clearTestMode() {
+	$test = false;
+}
+
 const defaultYieldTimeout: number = 15 /*ms*/;
+
+declare const console: any;
 
 class Timer {
 
@@ -167,7 +177,7 @@ class Timer {
 	private counterInterval: number;
 
 	constructor(yieldAfter: number = defaultYieldTimeout) {
-		this.yieldAfter = Math.max(yieldAfter, defaultYieldTimeout);
+		this.yieldAfter = $test === true ? Math.max(yieldAfter, 2) : Math.max(yieldAfter, defaultYieldTimeout);
 		this.startTime = Date.now();
 		this.counter = 0;
 		this.total = 0;
@@ -175,6 +185,9 @@ class Timer {
 		this.counterInterval = 1;
 	}
 	public start() {
+		this.counter = 0;
+		this.total = 0;
+		this.counterInterval = 1;
 		this.startTime = Date.now();
 	}
 	public shouldYield(): boolean {

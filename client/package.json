@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageclient",
 	"description": "VSCode Language client implementation",
-	"version": "8.0.2-next.5",
+	"version": "8.0.2",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"engines": {
@@ -15,8 +15,7 @@
 	"bugs": {
 		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
 	},
-	"enabledApiProposals": [
-	],
+	"enabledApiProposals": [],
 	"main": "./lib/node/main.js",
 	"browser": {
 		"./lib/node/main.js": "./lib/browser/main.js"
@@ -31,7 +30,7 @@
 	"dependencies": {
 		"minimatch": "^3.0.4",
 		"semver": "^7.3.5",
-		"vscode-languageserver-protocol": "3.17.2-next.6"
+		"vscode-languageserver-protocol": "3.17.2"
 	},
 	"scripts": {
 		"prepublishOnly": "git clean -xfd . && npm install && npm run clean && node ./bin/updateVSCode.js && npm run compile && npm test",
