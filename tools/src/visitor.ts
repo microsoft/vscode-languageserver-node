@@ -767,7 +767,7 @@ export default class Visitor {
 	private static readonly Mixins: Set<string> = new Set(['WorkDoneProgressParams', 'PartialResultParams', 'StaticRegistrationOptions', 'WorkDoneProgressOptions']);
 	private static readonly PropertyFilters: Map<string, Set<string>> = new Map([
 		['TraceValues', new Set(['Compact'])],
-		['ErrorCodes', new Set(['MessageWriteError', 'MessageReadError', 'PendingResponseRejected', 'ConnectionInactive'])]
+		['ErrorCodes', new Set(['jsonrpcReservedErrorRangeStart', 'serverErrorStart', 'MessageWriteError', 'MessageReadError', 'PendingResponseRejected', 'ConnectionInactive', 'jsonrpcReservedErrorRangeEnd', 'serverErrorEnd'])],
 	]);
 	private static readonly PropertyRenames: Map<string, Map<string, string>> = new Map([
 		['MonikerKind', new Map([

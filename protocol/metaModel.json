@@ -12771,17 +12771,6 @@
 					"value": -32603
 				},
 				{
-					"name": "jsonrpcReservedErrorRangeStart",
-					"value": -32099,
-					"documentation": "This is the start range of JSON RPC reserved error codes.\nIt doesn't denote a real error code. No application error codes should\nbe defined between the start and end range. For backwards\ncompatibility the `ServerNotInitialized` and the `UnknownErrorCode`\nare left in the range.\n\n@since 3.16.0",
-					"since": "3.16.0"
-				},
-				{
-					"name": "serverErrorStart",
-					"value": -32099,
-					"documentation": "@deprecated use  jsonrpcReservedErrorRangeStart"
-				},
-				{
 					"name": "ServerNotInitialized",
 					"value": -32002,
 					"documentation": "Error code indicating that a server received a notification or\nrequest before the server has received the `initialize` request."
@@ -12789,17 +12778,6 @@
 				{
 					"name": "UnknownErrorCode",
 					"value": -32001
-				},
-				{
-					"name": "jsonrpcReservedErrorRangeEnd",
-					"value": -32000,
-					"documentation": "This is the end range of JSON RPC reserved error codes.\nIt doesn't denote a real error code.\n\n@since 3.16.0",
-					"since": "3.16.0"
-				},
-				{
-					"name": "serverErrorEnd",
-					"value": -32000,
-					"documentation": "@deprecated use  jsonrpcReservedErrorRangeEnd"
 				}
 			],
 			"supportsCustomValues": true,
