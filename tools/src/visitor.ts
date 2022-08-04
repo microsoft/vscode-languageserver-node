@@ -947,6 +947,11 @@ export default class Visitor {
 				return result;
 			} else {
 				this.queueTypeInfo(target);
+
+				// In the protocol document filter can't be a string but the implementation allows it for backwards compatibility
+				if (name === 'DocumentSelector') {
+					return PreDefined.DocumentSelector;
+				}
 				const result: TypeAlias = { name: name, type: TypeInfo.asJsonType(target) };
 				this.fillDocProperties(declaration, result);
 				return result;
@@ -1208,65 +1213,78 @@ export default class Visitor {
 
 namespace PreDefined {
 	export const LSPAny: TypeAlias = {
-		'name': 'LSPAny',
-		'type': {
-			'kind': 'or',
-			'items': [
+		name: 'LSPAny',
+		type: {
+			kind: 'or',
+			items: [
 				{
-					'kind': 'reference',
-					'name': 'LSPObject'
+					kind: 'reference',
+					name: 'LSPObject'
 				},
 				{
-					'kind': 'reference',
-					'name': 'LSPArray'
+					kind: 'reference',
+					name: 'LSPArray'
 				},
 				{
-					'kind': 'base',
-					'name': 'string'
+					kind: 'base',
+					name: 'string'
 				},
 				{
-					'kind': 'base',
-					'name': 'integer'
+					kind: 'base',
+					name: 'integer'
 				},
 				{
-					'kind': 'base',
-					'name': 'uinteger'
+					kind: 'base',
+					name: 'uinteger'
 				},
 				{
-					'kind': 'base',
-					'name': 'decimal'
+					kind: 'base',
+					name: 'decimal'
 				},
 				{
-					'kind': 'base',
-					'name': 'boolean'
+					kind: 'base',
+					name: 'boolean'
 				},
 				{
-					'kind': 'base',
-					'name': 'null'
+					kind: 'base',
+					name: 'null'
 				}
 			]
 		},
-		'documentation': 'The LSP any type.\nPlease note that strictly speaking a property with the value `undefined`\ncan\'t be converted into JSON preserving the property name. However for\nconvenience it is allowed and assumed that all these properties are\noptional as well.\n@since 3.17.0',
-		'since': '3.17.0'
+		documentation: 'The LSP any type.\nPlease note that strictly speaking a property with the value `undefined`\ncan\'t be converted into JSON preserving the property name. However for\nconvenience it is allowed and assumed that all these properties are\noptional as well.\n@since 3.17.0',
+		since: '3.17.0'
 	};
 
 	export const LSPObject: Structure = {
-		'name': 'LSPObject',
-		'properties': [],
-		'documentation': 'LSP object definition.\n@since 3.17.0',
-		'since': '3.17.0'
+		name: 'LSPObject',
+		properties: [],
+		documentation: 'LSP object definition.\n@since 3.17.0',
+		since: '3.17.0'
 	};
 
 	export const LSPArray: TypeAlias = {
-		'name': 'LSPArray',
-		'type': {
-			'kind': 'array',
-			'element': {
-				'kind': 'reference',
-				'name': 'LSPAny'
+		name: 'LSPArray',
+		type: {
+			kind: 'array',
+			element: {
+				kind: 'reference',
+				name: 'LSPAny'
 			}
 		},
-		'documentation': 'LSP arrays.\n@since 3.17.0',
-		'since': '3.17.0'
+		documentation: 'LSP arrays.\n@since 3.17.0',
+		since: '3.17.0'
+	};
+
+	export const DocumentSelector: TypeAlias = {
+		name: 'DocumentSelector',
+		type: {
+			kind: 'array',
+			element: {
+				kind: 'reference',
+				name: 'DocumentFilter'
+			}
+		},
+		documentation: 'A document selector is the combination of one or many document filters.\n\n@sample `let sel:DocumentSelector = [{ language: \'typescript\' }, { language: \'json\', pattern: \'**∕tsconfig.json\' }]`;\n\nThe use of a string as a document filter is deprecated @since 3.16.0.',
+		since: '3.16.0.'
 	};
 }

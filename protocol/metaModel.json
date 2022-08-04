@@ -13978,17 +13978,8 @@
 			"type": {
 				"kind": "array",
 				"element": {
-					"kind": "or",
-					"items": [
-						{
-							"kind": "base",
-							"name": "string"
-						},
-						{
-							"kind": "reference",
-							"name": "DocumentFilter"
-						}
-					]
+					"kind": "reference",
+					"name": "DocumentFilter"
 				}
 			},
 			"documentation": "A document selector is the combination of one or many document filters.\n\n@sample `let sel:DocumentSelector = [{ language: 'typescript' }, { language: 'json', pattern: '**∕tsconfig.json' }]`;\n\nThe use of a string as a document filter is deprecated @since 3.16.0.",
