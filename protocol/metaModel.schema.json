@@ -60,7 +60,7 @@
     },
     "BaseTypes": {
       "enum": [
-        "Uri",
+        "URI",
         "DocumentUri",
         "integer",
         "uinteger",
@@ -218,7 +218,7 @@
             },
             "name": {
               "enum": [
-                "Uri",
+                "URI",
                 "DocumentUri",
                 "string",
                 "integer"

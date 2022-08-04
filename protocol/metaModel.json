@@ -2172,7 +2172,7 @@
 				{
 					"name": "uri",
 					"type": {
-						"kind": "reference",
+						"kind": "base",
 						"name": "URI"
 					},
 					"documentation": "The associated URI for this workspace folder."
@@ -3078,7 +3078,7 @@
 				{
 					"name": "uri",
 					"type": {
-						"kind": "reference",
+						"kind": "base",
 						"name": "URI"
 					},
 					"documentation": "The document uri to show."
@@ -7360,7 +7360,7 @@
 				{
 					"name": "uri",
 					"type": {
-						"kind": "reference",
+						"kind": "base",
 						"name": "URI"
 					},
 					"documentation": "The notebook document's uri."
@@ -7457,7 +7457,7 @@
 				{
 					"name": "uri",
 					"type": {
-						"kind": "reference",
+						"kind": "base",
 						"name": "URI"
 					},
 					"documentation": "The notebook document's uri."
@@ -7588,7 +7588,7 @@
 				{
 					"name": "uri",
 					"type": {
-						"kind": "reference",
+						"kind": "base",
 						"name": "URI"
 					},
 					"documentation": "The notebook document's uri."
@@ -10053,7 +10053,7 @@
 				{
 					"name": "href",
 					"type": {
-						"kind": "reference",
+						"kind": "base",
 						"name": "URI"
 					},
 					"documentation": "An URI to open with more information about the diagnostic error."
@@ -10770,7 +10770,7 @@
 								"name": "WorkspaceFolder"
 							},
 							{
-								"kind": "reference",
+								"kind": "base",
 								"name": "URI"
 							}
 						]
@@ -13947,15 +13947,6 @@
 					}
 				]
 			}
-		},
-		{
-			"name": "URI",
-			"type": {
-				"kind": "base",
-				"name": "string"
-			},
-			"documentation": "A tagging type for string properties that are actually URIs\n\n@since 3.16.0",
-			"since": "3.16.0"
 		},
 		{
 			"name": "ProgressToken",
