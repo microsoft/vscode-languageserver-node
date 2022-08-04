@@ -214,7 +214,14 @@ export default class Visitor {
 	}
 
 	public getMetaModel(): MetaModel {
-		return { requests: this.requests, notifications: this.notifications, structures: this.structures, enumerations: this.enumerations, typeAliases: this.typeAliases };
+		return {
+			metaData: { version: '3.17.0' },
+			requests: this.requests,
+			notifications: this.notifications,
+			structures: this.structures,
+			enumerations: this.enumerations,
+			typeAliases: this.typeAliases
+		};
 	}
 
 	protected visit(node: ts.Node): void {

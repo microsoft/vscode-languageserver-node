@@ -1,4 +1,7 @@
 {
+	"metaData": {
+		"version": "3.17.0"
+	},
 	"requests": [
 		{
 			"method": "textDocument/implementation",

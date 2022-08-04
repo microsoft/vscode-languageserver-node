@@ -269,6 +269,19 @@
       ],
       "type": "string"
     },
+    "MetaData": {
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "description": "The protocol version.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "version"
+      ],
+      "type": "object"
+    },
     "MetaModel": {
       "additionalProperties": false,
       "description": "The actual meta model.",
@@ -279,6 +292,10 @@
             "$ref": "#/definitions/Enumeration"
           },
           "type": "array"
+        },
+        "metaData": {
+          "$ref": "#/definitions/MetaData",
+          "description": "Additional meta data."
         },
         "notifications": {
           "description": "The notifications.",
@@ -310,6 +327,7 @@
         }
       },
       "required": [
+        "metaData",
         "requests",
         "notifications",
         "structures",

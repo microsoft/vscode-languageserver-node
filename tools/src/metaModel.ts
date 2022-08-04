@@ -460,10 +460,22 @@ export type Enumeration = {
 	proposed?: boolean;
 };
 
+export type MetaData = {
+	/**
+	 * The protocol version.
+	 */
+	version: string;
+};
+
 /**
  * The actual meta model.
  */
 export type MetaModel = {
+	/**
+	 * Additional meta data.
+	 */
+	metaData: MetaData;
+
 	/**
 	 * The requests.
 	 */
