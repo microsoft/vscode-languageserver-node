@@ -768,6 +768,7 @@ export default class Visitor {
 	private static readonly PropertyFilters: Map<string, Set<string>> = new Map([
 		['TraceValues', new Set(['Compact'])],
 		['ErrorCodes', new Set(['jsonrpcReservedErrorRangeStart', 'serverErrorStart', 'MessageWriteError', 'MessageReadError', 'PendingResponseRejected', 'ConnectionInactive', 'jsonrpcReservedErrorRangeEnd', 'serverErrorEnd'])],
+		['LSPErrorCodes', new Set(['lspReservedErrorRangeStart', 'lspReservedErrorRangeEnd'])]
 	]);
 	private static readonly PropertyRenames: Map<string, Map<string, string>> = new Map([
 		['MonikerKind', new Map([

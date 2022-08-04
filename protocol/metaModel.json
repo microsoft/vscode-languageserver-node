@@ -12791,12 +12791,6 @@
 			},
 			"values": [
 				{
-					"name": "lspReservedErrorRangeStart",
-					"value": -32899,
-					"documentation": "This is the start range of LSP reserved error codes.\nIt doesn't denote a real error code.\n\n@since 3.16.0",
-					"since": "3.16.0"
-				},
-				{
 					"name": "RequestFailed",
 					"value": -32803,
 					"documentation": "A request failed but it was syntactically correct, e.g the\nmethod name was known and the parameters were valid. The error\nmessage should contain human readable information about why\nthe request failed.\n\n@since 3.17.0",
@@ -12817,12 +12811,6 @@
 					"name": "RequestCancelled",
 					"value": -32800,
 					"documentation": "The client has canceled a request and a server as detected\nthe cancel."
-				},
-				{
-					"name": "lspReservedErrorRangeEnd",
-					"value": -32800,
-					"documentation": "This is the end range of LSP reserved error codes.\nIt doesn't denote a real error code.\n\n@since 3.16.0",
-					"since": "3.16.0"
 				}
 			],
 			"supportsCustomValues": true
