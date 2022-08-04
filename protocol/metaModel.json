@@ -1,4 +1,7 @@
 {
+	"metaData": {
+		"version": "3.17.0"
+	},
 	"requests": [
 		{
 			"method": "textDocument/implementation",
@@ -2172,7 +2175,7 @@
 				{
 					"name": "uri",
 					"type": {
-						"kind": "reference",
+						"kind": "base",
 						"name": "URI"
 					},
 					"documentation": "The associated URI for this workspace folder."
@@ -3078,7 +3081,7 @@
 				{
 					"name": "uri",
 					"type": {
-						"kind": "reference",
+						"kind": "base",
 						"name": "URI"
 					},
 					"documentation": "The document uri to show."
@@ -7360,7 +7363,7 @@
 				{
 					"name": "uri",
 					"type": {
-						"kind": "reference",
+						"kind": "base",
 						"name": "URI"
 					},
 					"documentation": "The notebook document's uri."
@@ -7457,7 +7460,7 @@
 				{
 					"name": "uri",
 					"type": {
-						"kind": "reference",
+						"kind": "base",
 						"name": "URI"
 					},
 					"documentation": "The notebook document's uri."
@@ -7588,7 +7591,7 @@
 				{
 					"name": "uri",
 					"type": {
-						"kind": "reference",
+						"kind": "base",
 						"name": "URI"
 					},
 					"documentation": "The notebook document's uri."
@@ -10053,7 +10056,7 @@
 				{
 					"name": "href",
 					"type": {
-						"kind": "reference",
+						"kind": "base",
 						"name": "URI"
 					},
 					"documentation": "An URI to open with more information about the diagnostic error."
@@ -10770,7 +10773,7 @@
 								"name": "WorkspaceFolder"
 							},
 							{
-								"kind": "reference",
+								"kind": "base",
 								"name": "URI"
 							}
 						]
@@ -12771,17 +12774,6 @@
 					"value": -32603
 				},
 				{
-					"name": "jsonrpcReservedErrorRangeStart",
-					"value": -32099,
-					"documentation": "This is the start range of JSON RPC reserved error codes.\nIt doesn't denote a real error code. No application error codes should\nbe defined between the start and end range. For backwards\ncompatibility the `ServerNotInitialized` and the `UnknownErrorCode`\nare left in the range.\n\n@since 3.16.0",
-					"since": "3.16.0"
-				},
-				{
-					"name": "serverErrorStart",
-					"value": -32099,
-					"documentation": "@deprecated use  jsonrpcReservedErrorRangeStart"
-				},
-				{
 					"name": "ServerNotInitialized",
 					"value": -32002,
 					"documentation": "Error code indicating that a server received a notification or\nrequest before the server has received the `initialize` request."
@@ -12789,17 +12781,6 @@
 				{
 					"name": "UnknownErrorCode",
 					"value": -32001
-				},
-				{
-					"name": "jsonrpcReservedErrorRangeEnd",
-					"value": -32000,
-					"documentation": "This is the end range of JSON RPC reserved error codes.\nIt doesn't denote a real error code.\n\n@since 3.16.0",
-					"since": "3.16.0"
-				},
-				{
-					"name": "serverErrorEnd",
-					"value": -32000,
-					"documentation": "@deprecated use  jsonrpcReservedErrorRangeEnd"
 				}
 			],
 			"supportsCustomValues": true,
@@ -12812,12 +12793,6 @@
 				"name": "integer"
 			},
 			"values": [
-				{
-					"name": "lspReservedErrorRangeStart",
-					"value": -32899,
-					"documentation": "This is the start range of LSP reserved error codes.\nIt doesn't denote a real error code.\n\n@since 3.16.0",
-					"since": "3.16.0"
-				},
 				{
 					"name": "RequestFailed",
 					"value": -32803,
@@ -12839,12 +12814,6 @@
 					"name": "RequestCancelled",
 					"value": -32800,
 					"documentation": "The client has canceled a request and a server as detected\nthe cancel."
-				},
-				{
-					"name": "lspReservedErrorRangeEnd",
-					"value": -32800,
-					"documentation": "This is the end range of LSP reserved error codes.\nIt doesn't denote a real error code.\n\n@since 3.16.0",
-					"since": "3.16.0"
 				}
 			],
 			"supportsCustomValues": true
@@ -13983,15 +13952,6 @@
 			}
 		},
 		{
-			"name": "URI",
-			"type": {
-				"kind": "base",
-				"name": "string"
-			},
-			"documentation": "A tagging type for string properties that are actually URIs\n\n@since 3.16.0",
-			"since": "3.16.0"
-		},
-		{
 			"name": "ProgressToken",
 			"type": {
 				"kind": "or",
@@ -14012,17 +13972,8 @@
 			"type": {
 				"kind": "array",
 				"element": {
-					"kind": "or",
-					"items": [
-						{
-							"kind": "base",
-							"name": "string"
-						},
-						{
-							"kind": "reference",
-							"name": "DocumentFilter"
-						}
-					]
+					"kind": "reference",
+					"name": "DocumentFilter"
 				}
 			},
 			"documentation": "A document selector is the combination of one or many document filters.\n\n@sample `let sel:DocumentSelector = [{ language: 'typescript' }, { language: 'json', pattern: '**∕tsconfig.json' }]`;\n\nThe use of a string as a document filter is deprecated @since 3.16.0.",
