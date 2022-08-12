@@ -160,6 +160,12 @@ export interface TextDocument {
 	 *
 	 * @param offset A zero-based offset.
 	 * @return A valid [position](#Position).
+	 * @example The text document "ab\ncd" produces:
+	 * * position { line: 0, character: 0 } for `offset` 0.
+	 * * position { line: 0, character: 1 } for `offset` 1.
+	 * * position { line: 0, character: 2 } for `offset` 2.
+	 * * position { line: 1, character: 0 } for `offset` 3.
+	 * * position { line: 1, character: 1 } for `offset` 4.
 	 */
 	positionAt(offset: number): Position;
 
