@@ -10,15 +10,15 @@ import { Symbols } from './typescripts';
 import { Type as JsonType, Request as JsonRequest, Notification as JsonNotification, Structure, Property, StructureLiteral, BaseTypes, TypeAlias, MetaModel, Enumeration, EnumerationEntry, EnumerationType, MessageDirection } from './metaModel';
 import path = require('path');
 
-const LSPBaseTypes = new Set(['Uri', 'DocumentUri', 'integer', 'uinteger', 'decimal']);
-type BaseTypeInfoKind = 'string' | 'boolean' | 'Uri' | 'DocumentUri' | 'integer' | 'uinteger' | 'decimal' | 'void' | 'never' | 'unknown' | 'null' | 'undefined' | 'any' | 'object';
+const LSPBaseTypes = new Set(['URI', 'DocumentUri', 'integer', 'uinteger', 'decimal']);
+type BaseTypeInfoKind = 'string' | 'boolean' | 'URI' | 'DocumentUri' | 'integer' | 'uinteger' | 'decimal' | 'void' | 'never' | 'unknown' | 'null' | 'undefined' | 'any' | 'object';
 
 export type TypeInfoKind = 'base' | 'reference' | 'array' | 'map' | 'intersection' | 'union' | 'tuple' | 'literal' | 'stringLiteral' | 'integerLiteral' | 'booleanLiteral';
 
-type MapKeyType = { kind: 'base'; name: 'Uri' | 'DocumentUri' | 'string' | 'integer' } | { kind: 'reference'; name: string; symbol: ts.Symbol };
+type MapKeyType = { kind: 'base'; name: 'URI' | 'DocumentUri' | 'string' | 'integer' } | { kind: 'reference'; name: string; symbol: ts.Symbol };
 namespace MapKeyType {
 	export function is(value: TypeInfo): value is MapKeyType {
-		return value.kind === 'reference' || (value.kind === 'base' && (value.name === 'string' || value.name === 'integer' || value.name === 'DocumentUri' || value.name === 'Uri'));
+		return value.kind === 'reference' || (value.kind === 'base' && (value.name === 'string' || value.name === 'integer' || value.name === 'DocumentUri' || value.name === 'URI'));
 	}
 }
 type LiteralInfo = { type: TypeInfo; optional: boolean; documentation?: string; since?: string; proposed?: boolean };
@@ -74,7 +74,7 @@ namespace TypeInfo {
 		return info.kind === 'base' && info.name === 'void';
 	}
 
-	const baseSet = new Set(['null', 'void', 'string', 'boolean', 'Uri', 'DocumentUri', 'integer', 'uinteger', 'decimal']);
+	const baseSet = new Set(['null', 'void', 'string', 'boolean', 'URI', 'DocumentUri', 'integer', 'uinteger', 'decimal']);
 	export function asJsonType(info: TypeInfo): JsonType {
 		switch (info.kind) {
 			case 'base':
@@ -214,7 +214,14 @@ export default class Visitor {
 	}
 
 	public getMetaModel(): MetaModel {
-		return { requests: this.requests, notifications: this.notifications, structures: this.structures, enumerations: this.enumerations, typeAliases: this.typeAliases };
+		return {
+			metaData: { version: '3.17.0' },
+			requests: this.requests,
+			notifications: this.notifications,
+			structures: this.structures,
+			enumerations: this.enumerations,
+			typeAliases: this.typeAliases
+		};
 	}
 
 	protected visit(node: ts.Node): void {
@@ -767,7 +774,8 @@ export default class Visitor {
 	private static readonly Mixins: Set<string> = new Set(['WorkDoneProgressParams', 'PartialResultParams', 'StaticRegistrationOptions', 'WorkDoneProgressOptions']);
 	private static readonly PropertyFilters: Map<string, Set<string>> = new Map([
 		['TraceValues', new Set(['Compact'])],
-		['ErrorCodes', new Set(['MessageWriteError', 'MessageReadError', 'PendingResponseRejected', 'ConnectionInactive'])]
+		['ErrorCodes', new Set(['jsonrpcReservedErrorRangeStart', 'serverErrorStart', 'MessageWriteError', 'MessageReadError', 'PendingResponseRejected', 'ConnectionInactive', 'jsonrpcReservedErrorRangeEnd', 'serverErrorEnd'])],
+		['LSPErrorCodes', new Set(['lspReservedErrorRangeStart', 'lspReservedErrorRangeEnd'])]
 	]);
 	private static readonly PropertyRenames: Map<string, Map<string, string>> = new Map([
 		['MonikerKind', new Map([
@@ -946,6 +954,11 @@ export default class Visitor {
 				return result;
 			} else {
 				this.queueTypeInfo(target);
+
+				// In the protocol document filter can't be a string but the implementation allows it for backwards compatibility
+				if (name === 'DocumentSelector') {
+					return PreDefined.DocumentSelector;
+				}
 				const result: TypeAlias = { name: name, type: TypeInfo.asJsonType(target) };
 				this.fillDocProperties(declaration, result);
 				return result;
@@ -1207,65 +1220,78 @@ export default class Visitor {
 
 namespace PreDefined {
 	export const LSPAny: TypeAlias = {
-		'name': 'LSPAny',
-		'type': {
-			'kind': 'or',
-			'items': [
+		name: 'LSPAny',
+		type: {
+			kind: 'or',
+			items: [
 				{
-					'kind': 'reference',
-					'name': 'LSPObject'
+					kind: 'reference',
+					name: 'LSPObject'
 				},
 				{
-					'kind': 'reference',
-					'name': 'LSPArray'
+					kind: 'reference',
+					name: 'LSPArray'
 				},
 				{
-					'kind': 'base',
-					'name': 'string'
+					kind: 'base',
+					name: 'string'
 				},
 				{
-					'kind': 'base',
-					'name': 'integer'
+					kind: 'base',
+					name: 'integer'
 				},
 				{
-					'kind': 'base',
-					'name': 'uinteger'
+					kind: 'base',
+					name: 'uinteger'
 				},
 				{
-					'kind': 'base',
-					'name': 'decimal'
+					kind: 'base',
+					name: 'decimal'
 				},
 				{
-					'kind': 'base',
-					'name': 'boolean'
+					kind: 'base',
+					name: 'boolean'
 				},
 				{
-					'kind': 'base',
-					'name': 'null'
+					kind: 'base',
+					name: 'null'
 				}
 			]
 		},
-		'documentation': 'The LSP any type.\nPlease note that strictly speaking a property with the value `undefined`\ncan\'t be converted into JSON preserving the property name. However for\nconvenience it is allowed and assumed that all these properties are\noptional as well.\n@since 3.17.0',
-		'since': '3.17.0'
+		documentation: 'The LSP any type.\nPlease note that strictly speaking a property with the value `undefined`\ncan\'t be converted into JSON preserving the property name. However for\nconvenience it is allowed and assumed that all these properties are\noptional as well.\n@since 3.17.0',
+		since: '3.17.0'
 	};
 
 	export const LSPObject: Structure = {
-		'name': 'LSPObject',
-		'properties': [],
-		'documentation': 'LSP object definition.\n@since 3.17.0',
-		'since': '3.17.0'
+		name: 'LSPObject',
+		properties: [],
+		documentation: 'LSP object definition.\n@since 3.17.0',
+		since: '3.17.0'
 	};
 
 	export const LSPArray: TypeAlias = {
-		'name': 'LSPArray',
-		'type': {
-			'kind': 'array',
-			'element': {
-				'kind': 'reference',
-				'name': 'LSPAny'
+		name: 'LSPArray',
+		type: {
+			kind: 'array',
+			element: {
+				kind: 'reference',
+				name: 'LSPAny'
 			}
 		},
-		'documentation': 'LSP arrays.\n@since 3.17.0',
-		'since': '3.17.0'
+		documentation: 'LSP arrays.\n@since 3.17.0',
+		since: '3.17.0'
+	};
+
+	export const DocumentSelector: TypeAlias = {
+		name: 'DocumentSelector',
+		type: {
+			kind: 'array',
+			element: {
+				kind: 'reference',
+				name: 'DocumentFilter'
+			}
+		},
+		documentation: 'A document selector is the combination of one or many document filters.\n\n@sample `let sel:DocumentSelector = [{ language: \'typescript\' }, { language: \'json\', pattern: \'**∕tsconfig.json\' }]`;\n\nThe use of a string as a document filter is deprecated @since 3.16.0.',
+		since: '3.16.0.'
 	};
 }

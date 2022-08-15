@@ -45,7 +45,7 @@ export interface TypeDefinitionParams extends TextDocumentPositionParams, WorkDo
 
 /**
  * A request to resolve the type definition locations of a symbol at a given text
- * document position. The request's parameter is of type [TextDocumentPositioParams]
+ * document position. The request's parameter is of type [TextDocumentPositionParams]
  * (#TextDocumentPositionParams) the response is of type [Definition](#Definition) or a
  * Thenable that resolves to such.
  */

@@ -1,0 +1,9 @@
+{
+	"extends": "./tsconfig.base.json",
+	"compilerOptions": {
+		"tsBuildInfoFile":"./lib/compile.tsbuildInfo"
+	},
+	"include": [
+		"./src/**/*.ts"
+	]
+}

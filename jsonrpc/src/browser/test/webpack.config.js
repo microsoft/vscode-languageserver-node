@@ -7,10 +7,15 @@
 
 'use strict';
 
+const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
+
 module.exports = [{
 	context: __dirname,
 	mode: 'none',
 	target: 'webworker',
+	plugins: [
+		new NodePolyfillPlugin()
+	],
 	resolve: {
 		mainFields: ['module', 'main'],
 		extensions: ['.js']
@@ -26,6 +31,9 @@ module.exports = [{
 	context: __dirname,
 	mode: 'none',
 	target: 'webworker',
+	plugins: [
+		new NodePolyfillPlugin()
+	],
 	resolve: {
 		mainFields: ['module', 'main'],
 		extensions: ['.js']

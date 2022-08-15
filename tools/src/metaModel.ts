@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-export type BaseTypes = 'Uri' | 'DocumentUri' | 'integer' | 'uinteger' | 'decimal' | 'RegExp' | 'string' | 'boolean' | 'null';
+export type BaseTypes = 'URI' | 'DocumentUri' | 'integer' | 'uinteger' | 'decimal' | 'RegExp' | 'string' | 'boolean' | 'null';
 
 export type TypeKind = 'base' | 'reference' | 'array' | 'map' | 'and' | 'or' | 'tuple' | 'literal' | 'stringLiteral' | 'integerLiteral' | 'booleanLiteral';
 
@@ -44,7 +44,7 @@ export type ArrayType = {
  * type must either resolve to a `string` or `integer`
  * type. (e.g. `type ChangeAnnotationIdentifier === string`).
  */
-export type MapKeyType = { kind: 'base'; name: 'Uri' | 'DocumentUri' | 'string' | 'integer' } | ReferenceType;
+export type MapKeyType = { kind: 'base'; name: 'URI' | 'DocumentUri' | 'string' | 'integer' } | ReferenceType;
 
 /**
  * Represents a JSON object map
@@ -460,10 +460,22 @@ export type Enumeration = {
 	proposed?: boolean;
 };
 
+export type MetaData = {
+	/**
+	 * The protocol version.
+	 */
+	version: string;
+};
+
 /**
  * The actual meta model.
  */
 export type MetaModel = {
+	/**
+	 * Additional meta data.
+	 */
+	metaData: MetaData;
+
 	/**
 	 * The requests.
 	 */

@@ -38,4 +38,8 @@ const root = path.dirname(path.dirname(__dirname));
 	await ln.tryLinkProtocol(extensionFolder);
 	await ln.tryLink(extensionFolder, 'vscode-languageserver', path.join('..', '..', 'server'));
 	await ln.tryLink(extensionFolder, 'vscode-languageclient', path.join('..', '..', 'client'));
+
+	// tsconfig
+	let generator = path.join(root, 'tsconfig-gen');
+	await ln.softLink(generator, path.join(root, 'node_modules', 'vscode-tsconfig-gen'));
 })();
