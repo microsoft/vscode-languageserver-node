@@ -7,7 +7,8 @@ import * as minimatch from 'minimatch';
 
 import {
 	Disposable, languages as Languages, window as Window, workspace as Workspace, CancellationToken, ProviderResult, Diagnostic as VDiagnostic,
-	CancellationTokenSource, TextDocument, CancellationError, Event as VEvent, EventEmitter, DiagnosticCollection, Uri, TabInputText, TabInputTextDiff
+	CancellationTokenSource, TextDocument, CancellationError, Event as VEvent, EventEmitter, DiagnosticCollection, Uri, TabInputText, TabInputTextDiff,
+	TabChangeEvent, Event
 } from 'vscode';
 
 import {
@@ -126,7 +127,7 @@ export type DiagnosticPullOptions = {
 	 * An optional filter method that is consulted when triggering a
 	 * diagnostic pull during document change or document save.
 	 *
-	 * @param document the document that changes or got save
+	 * @param document the document that changed or got saved
 	 * @param mode the mode
 	 */
 	filter?(document: TextDocument, mode: DiagnosticPullMode): boolean;
@@ -141,11 +142,11 @@ export type DiagnosticPullOptions = {
 	onTabs?: boolean;
 
 	/**
-	 * A optional match method that is consulted when pulling for diagnostics
+	 * An optional match method that is consulted when pulling for diagnostics
 	 * when only a URI is known (e.g. for not instantiated tabs)
 	 *
 	 * @param documentSelector the document selector
-	 * @param resource the resource.
+	 * @param resource the resource
 	 */
 	match?(documentSelector: DocumentSelector, resource: Uri): boolean;
 };
@@ -174,33 +175,71 @@ type RequestState = {
 	document: TextDocument | Uri;
 };
 
+
+/**
+ * Manages the open tabs. We don't directly use the tab API since for
+ * diagnostics we need to de-dupe tabs that show the same resources since
+ * we pull on the model not the UI.
+ */
 class Tabs {
 
-	private readonly open: Set<string>;
+	private open: Set<string>;
+	private readonly _onOpen: EventEmitter<Set<Uri>>;
+	private readonly _onClose: EventEmitter<Set<Uri>>;
 	private readonly disposable: Disposable;
 
 	constructor() {
 		this.open = new Set();
-		const openTabsHandler = () => {
-			this.open.clear();
-			for (const group of Window.tabGroups.all) {
-				for (const tab of group.tabs) {
-					const input = tab.input;
-					if (input instanceof TabInputText) {
-						this.open.add(input.uri.toString());
-					} else if (input instanceof TabInputTextDiff) {
-						this.open.add(input.modified.toString());
-					}
+		this._onOpen = new EventEmitter();
+		this._onClose = new EventEmitter();
+		Tabs.fillTabResources(this.open);
+		const openTabsHandler = (event: TabChangeEvent) => {
+			if (event.closed.length === 0 && event.opened.length === 0) {
+				return;
+			}
+			const oldTabs = this.open;
+			const currentTabs: Set<string> = new Set();
+			Tabs.fillTabResources(currentTabs);
+
+			const closed: Set<string> = new Set();
+			const opened: Set<string> = new Set(currentTabs);
+			for (const tab of oldTabs.values()) {
+				if (currentTabs.has(tab)) {
+					opened.delete(tab);
+				} else {
+					closed.add(tab);
 				}
 			}
+			this.open = currentTabs;
+			if (closed.size > 0) {
+				const toFire: Set<Uri> = new Set();
+				for (const item of closed) {
+					toFire.add(Uri.parse(item));
+				}
+				this._onClose.fire(toFire);
+			}
+			if (opened.size > 0) {
+				const toFire: Set<Uri> = new Set();
+				for (const item of opened) {
+					toFire.add(Uri.parse(item));
+				}
+				this._onOpen.fire(toFire);
+			}
 		};
-		openTabsHandler();
 
-		if (Window.tabGroups.onDidChangeTabGroups !== undefined) {
-			this.disposable = Window.tabGroups.onDidChangeTabGroups(openTabsHandler);
+		if (Window.tabGroups.onDidChangeTabs !== undefined) {
+			this.disposable = Window.tabGroups.onDidChangeTabs(openTabsHandler);
 		} else {
 			this.disposable = { dispose: () => {} };
 		}
+	}
+
+	public get onClose(): Event<Set<Uri>> {
+		return this._onClose.event;
+	}
+
+	public get onOpen(): Event<Set<Uri>> {
+		return this._onOpen.event;
 	}
 
 	public dispose(): void {
@@ -218,19 +257,29 @@ class Tabs {
 		return this.open.has(uri.toString());
 	}
 
-	public getTabResources(): Uri[] {
-		const result: Uri[] = [];
+	public getTabResources(): Set<Uri> {
+		const result: Set<Uri> = new Set();
+		Tabs.fillTabResources(new Set(), result);
+		return result;
+	}
+
+	private static fillTabResources(strings: Set<string> | undefined, uris?: Set<Uri>): void {
+		const seen = strings ?? new Set();
 		for (const group of Window.tabGroups.all) {
 			for (const tab of group.tabs) {
 				const input = tab.input;
+				let uri: Uri | undefined;
 				if (input instanceof TabInputText) {
-					result.push(input.uri);
+					uri = input.uri;
 				} else if (input instanceof TabInputTextDiff) {
-					result.push(input.modified);
+					uri = input.modified;
+				}
+				if (uri !== undefined && !seen.has(uri.toString())) {
+					seen.add(uri.toString());
+					uris !== undefined && uris.add(uri);
 				}
 			}
 		}
-		return result;
 	}
 }
 
@@ -294,16 +343,12 @@ class DocumentPullStateTracker {
 		states.delete(key);
 	}
 
-	public tracks(kind: PullState, textDocument: TextDocument): boolean;
-	public tracks(kind: PullState, uri: Uri): boolean;
 	public tracks(kind: PullState, document: TextDocument | Uri): boolean {
 		const key = document instanceof Uri ? document.toString() : document.uri.toString();
 		const states = kind === PullState.document ? this.documentPullStates : this.workspacePullStates;
 		return states.has(key);
 	}
 
-	public getResultId(kind: PullState, document: TextDocument): string | undefined;
-	public getResultId(kind: PullState, document: Uri): string | undefined;
 	public getResultId(kind: PullState, document: TextDocument | Uri): string | undefined {
 		const key = document instanceof Uri ? document.toString() : document.uri.toString();
 		const states = kind === PullState.document ? this.documentPullStates : this.workspacePullStates;
@@ -356,8 +401,12 @@ class DiagnosticRequestor implements Disposable {
 		this.workspaceErrorCounter = 0;
 	}
 
-	public knows(kind: PullState, textDocument: TextDocument): boolean {
-		return this.documentStates.tracks(kind, textDocument);
+	public knows(kind: PullState, document: TextDocument | Uri): boolean {
+		return this.documentStates.tracks(kind, document);
+	}
+
+	public forget(kind: PullState, document: TextDocument | Uri): void {
+		this.documentStates.unTrack(kind, document);
 	}
 
 	public pull(document: TextDocument | Uri, cb?: () => void): void {
@@ -440,17 +489,24 @@ class DiagnosticRequestor implements Disposable {
 		}
 	}
 
-	public cleanupPull(document: TextDocument | Uri): void {
+	public forgetDocument(document: TextDocument | Uri): void {
 		const uri = document instanceof Uri ? document : document.uri;
 		const key = uri.toString();
 		const request = this.openRequests.get(key);
-		if (this.options.workspaceDiagnostics || this.options.interFileDependencies) {
+		if (this.options.workspaceDiagnostics) {
+			// If we run workspace diagnostic pull a last time for the diagnostics
+			// and the rely on getting them from the workspace result.
 			if (request !== undefined) {
 				this.openRequests.set(key, { state: RequestStateKind.reschedule, document: document });
 			} else {
-				this.pull(document);
+				this.pull(document, () => {
+					this.forget(PullState.document, document);
+				});
 			}
 		} else {
+			// We have normal pull or inter file dependencies. In this case we
+			// clear the diagnostics (to have the same start as after startup).
+			// We also cancel outstanding requests.
 			if (request !== undefined) {
 				if (request.state === RequestStateKind.active) {
 					request.tokenSource.cancel();
@@ -458,6 +514,7 @@ class DiagnosticRequestor implements Disposable {
 				this.openRequests.set(key, { state: RequestStateKind.outDated, document: document });
 			}
 			this.diagnostics.delete(uri);
+			this.forget(PullState.document, document);
 		}
 	}
 
@@ -641,6 +698,9 @@ class DiagnosticRequestor implements Disposable {
 			}
 			this.openRequests.set(key, { state: RequestStateKind.outDated, document: request.document });
 		}
+
+		// cleanup old diagnostics
+		this.diagnostics.dispose();
 	}
 }
 
@@ -811,6 +871,13 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 			}
 		});
 
+		// For pull model diagnostics we pull for documents visible in the UI.
+		// From an eventing point of view we still rely on open document events
+		// and filter the documents that are not visible in the UI instead of
+		// listening to Tab events. Major reason is event timing since we need
+		// to ensure that the pull is send after the document open has reached
+		// the server.
+
 		// We always pull on open.
 		const openFeature = client.getFeature(DidOpenTextDocumentNotification.method);
 		disposables.push(openFeature.onNotificationSent((event) => {
@@ -821,22 +888,30 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 		}));
 
 		// Pull all diagnostics for documents that are already open
-		const pullTextDocuments: Set<string> = new Set();
+		const pulledTextDocuments: Set<string> = new Set();
 		for (const textDocument of Workspace.textDocuments) {
 			if (matches(textDocument)) {
 				this.diagnosticRequestor.pull(textDocument, () => { addToBackgroundIfNeeded(textDocument); });
-				pullTextDocuments.add(textDocument.uri.toString());
+				pulledTextDocuments.add(textDocument.uri.toString());
 			}
 		}
 
-		// Pull all tabs if not already pull as text document
+		// Pull all tabs if not already pulled as text document
 		if (diagnosticPullOptions.onTabs === true) {
 			for (const resource of tabs.getTabResources()) {
-				if (!pullTextDocuments.has(resource.toString()) && matches(resource)) {
+				if (!pulledTextDocuments.has(resource.toString()) && matches(resource)) {
 					this.diagnosticRequestor.pull(resource, () => { addToBackgroundIfNeeded(resource); });
 				}
 			}
 		}
+
+		tabs.onOpen((opened) => {
+			for (const document of opened) {
+				if (matches(document) && !this.diagnosticRequestor.knows(PullState.document, document)) {
+					this.diagnosticRequestor.pull(document, () => { addToBackgroundIfNeeded(document); });
+				}
+			}
+		});
 
 		if (diagnosticPullOptions.onChange === true) {
 			const changeFeature = client.getFeature(DidChangeTextDocumentNotification.method);
@@ -861,10 +936,15 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 		// When the document closes clear things up
 		const closeFeature = client.getFeature(DidCloseTextDocumentNotification.method);
 		disposables.push(closeFeature.onNotificationSent((event) => {
-			const textDocument = event.original;
-			this.diagnosticRequestor.cleanupPull(textDocument);
-			this.backgroundScheduler.remove(textDocument);
+			this.cleanUpDocument(event.original);
 		}));
+
+		// Same when a tabs closes.
+		tabs.onClose((closed) => {
+			for (const document of closed) {
+				this.cleanUpDocument(document);
+			}
+		});
 
 		// We received a did change from the server.
 		this.diagnosticRequestor.onDidChangeDiagnosticsEmitter.event(() => {
@@ -889,6 +969,13 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 
 	public get diagnostics(): vsdiag.DiagnosticProvider {
 		return this.diagnosticRequestor.provider;
+	}
+
+	private cleanUpDocument(document: TextDocument | Uri): void {
+		if (this.diagnosticRequestor.knows(PullState.document, document)) {
+			this.diagnosticRequestor.forgetDocument(document);
+			this.backgroundScheduler.remove(document);
+		}
 	}
 }
 

@@ -12,7 +12,7 @@ import * as vscode from 'vscode';
 import * as lsclient from 'vscode-languageclient/node';
 import { MemoryFileSystemProvider } from './memoryFileSystemProvider';
 import { vsdiag, DiagnosticProviderMiddleware } from 'vscode-languageclient/lib/common/diagnostic';
-import { LanguageClient } from 'vscode-languageclient';
+import { LanguageClient } from 'vscode-languageclient/node';
 
 namespace GotNotifiedRequest {
 	export const method: 'testing/gotNotified' = 'testing/gotNotified';
@@ -1590,7 +1590,7 @@ suite('Server tests', () => {
 		}, /Stopping the server timed out/);
 	});
 
-	test('Server can be stopped right after start', async() => {
+	test('Server can\'t be stopped right after start', async() => {
 		const serverOptions: lsclient.ServerOptions = {
 			module: path.join(__dirname, './servers/startStopServer.js'),
 			transport: lsclient.TransportKind.ipc,
@@ -1598,9 +1598,11 @@ suite('Server tests', () => {
 		const clientOptions: lsclient.LanguageClientOptions = {};
 		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
 		void client.start();
-		await client.stop();
+		await assert.rejects(async () => {
+			await client.stop();
+		}, /Client is not running and can't be stopped/);
 
-		void client.start();
+		await client.start();
 		await client.stop();
 	});
 
@@ -1712,12 +1714,35 @@ suite('Server activation', () => {
 		await client.stop();
 	});
 
+	test('Start server fails on request when stopped once', async () => {
+		const client = createClient();
+		assert.strictEqual(client.state, lsclient.State.Stopped);
+		const result: number = await client.sendRequest('request', { value: 10 });
+		assert.strictEqual(client.state, lsclient.State.Running);
+		assert.strictEqual(result, 11);
+		await client.stop();
+		await assert.rejects(async () => {
+			await client.sendRequest('request', { value: 10 });
+		}, /Client is not running/);
+	});
+
 	test('Start server on notification', async () => {
 		const client = createClient();
 		assert.strictEqual(client.state, lsclient.State.Stopped);
 		await client.sendNotification('notification');
 		assert.strictEqual(client.state, lsclient.State.Running);
 		await client.stop();
+	});
+
+	test('Start server fails on notification when stopped once', async () => {
+		const client = createClient();
+		assert.strictEqual(client.state, lsclient.State.Stopped);
+		await client.sendNotification('notification');
+		assert.strictEqual(client.state, lsclient.State.Running);
+		await client.stop();
+		await assert.rejects(async () => {
+			await client.sendNotification('notification');
+		}, /Client is not running/);
 	});
 
 	test('Add pending request handler', async () => {
@@ -1742,6 +1767,15 @@ suite('Server activation', () => {
 		await client.sendRequest('triggerNotification');
 		assert.strictEqual(notificationReceived, true);
 		await client.stop();
+	});
+
+	test('Starting disposed server fails', async () => {
+		const client = createClient();
+		await client.start();
+		await client.dispose();
+		await assert.rejects(async () => {
+			await client.start();
+		}, /Client got disposed and can't be restarted./);
 	});
 
 	async function checkServerStart(client: LanguageClient, disposable: vscode.Disposable): Promise<void> {

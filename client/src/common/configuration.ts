@@ -23,7 +23,7 @@ interface ConfigurationWorkspaceMiddleware {
 }
 
 /**
- * Configuration pull model. Form server to client.
+ * Configuration pull model. From server to client.
  */
 export class ConfigurationFeature implements StaticFeature {
 

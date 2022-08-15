@@ -7,7 +7,7 @@ import { RequestHandler0, RequestHandler, ProgressType } from 'vscode-jsonrpc';
 import { TextDocumentIdentifier, Diagnostic, DocumentUri, integer } from 'vscode-languageserver-types';
 
 import * as Is from './utils/is';
-import { ProtocolRequestType0, ProtocolRequestType } from './messages';
+import { MessageDirection, ProtocolRequestType0, ProtocolRequestType } from './messages';
 import type {
 	PartialResultParams, StaticRegistrationOptions, WorkDoneProgressParams, TextDocumentRegistrationOptions, WorkDoneProgressOptions
 } from './protocol';
@@ -111,7 +111,7 @@ export namespace DiagnosticServerCancellationData {
  *
  * @since 3.17.0
  */
-export type DocumentDiagnosticParams =  WorkDoneProgressParams & PartialResultParams & {
+export type DocumentDiagnosticParams = WorkDoneProgressParams & PartialResultParams & {
 	/**
 	 * The text document.
 	 */
@@ -231,14 +231,14 @@ export type RelatedUnchangedDocumentDiagnosticReport = UnchangedDocumentDiagnost
 	 * @since 3.17.0
 	 */
 	relatedDocuments?: {
-		[uri: DocumentUri ]: FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport;
+		[uri: DocumentUri]: FullDocumentDiagnosticReport | UnchangedDocumentDiagnosticReport;
 	};
 };
 
 /**
  * The result of a document diagnostic pull request. A report can
  * either be a full report containing all diagnostics for the
- * requested document or a unchanged report indicating that nothing
+ * requested document or an unchanged report indicating that nothing
  * has changed in terms of diagnostics in comparison to the last
  * pull request.
  *
@@ -264,6 +264,7 @@ export type DocumentDiagnosticReportPartialResult = {
  */
 export namespace DocumentDiagnosticRequest {
 	export const method: 'textDocument/diagnostic' = 'textDocument/diagnostic';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<DocumentDiagnosticParams, DocumentDiagnosticReport, DocumentDiagnosticReportPartialResult, DiagnosticServerCancellationData, DiagnosticRegistrationOptions>(method);
 	export const partialResult = new ProgressType<DocumentDiagnosticReportPartialResult>();
 	export type HandlerSignature = RequestHandler<DocumentDiagnosticParams, DocumentDiagnosticReport, void>;
@@ -376,6 +377,7 @@ export type WorkspaceDiagnosticReportPartialResult = {
  */
 export namespace WorkspaceDiagnosticRequest {
 	export const method: 'workspace/diagnostic' = 'workspace/diagnostic';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<WorkspaceDiagnosticParams, WorkspaceDiagnosticReport, WorkspaceDiagnosticReportPartialResult, DiagnosticServerCancellationData, void>(method);
 	export const partialResult = new ProgressType<WorkspaceDiagnosticReportPartialResult>();
 	export type HandlerSignature = RequestHandler<WorkspaceDiagnosticParams, WorkspaceDiagnosticReport | null, void>;
@@ -388,6 +390,7 @@ export namespace WorkspaceDiagnosticRequest {
  */
 export namespace DiagnosticRefreshRequest {
 	export const method: `workspace/diagnostic/refresh` = `workspace/diagnostic/refresh`;
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType0<void, void, void, void>(method);
 	export type HandlerSignature = RequestHandler0<void, void>;
 }

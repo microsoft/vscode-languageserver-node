@@ -7,20 +7,21 @@ import * as ts from 'typescript';
 
 import { Symbols } from './typescripts';
 
-import { Type as JsonType, Request as JsonRequest, Notification as JsonNotification, Structure, Property, StructureLiteral, BaseTypes, TypeAlias, MetaModel, Enumeration, EnumerationEntry, EnumerationType } from './metaModel';
+import { Type as JsonType, Request as JsonRequest, Notification as JsonNotification, Structure, Property, StructureLiteral, BaseTypes, TypeAlias, MetaModel, Enumeration, EnumerationEntry, EnumerationType, MessageDirection } from './metaModel';
 import path = require('path');
 
-const LSPBaseTypes = new Set(['Uri', 'DocumentUri', 'integer', 'uinteger', 'decimal']);
-type BaseTypeInfoKind = 'string' | 'boolean' | 'Uri' | 'DocumentUri' | 'integer' | 'uinteger' | 'decimal' | 'void' | 'never' | 'unknown' | 'null' | 'undefined' | 'any' | 'object';
+const LSPBaseTypes = new Set(['URI', 'DocumentUri', 'integer', 'uinteger', 'decimal']);
+type BaseTypeInfoKind = 'string' | 'boolean' | 'URI' | 'DocumentUri' | 'integer' | 'uinteger' | 'decimal' | 'void' | 'never' | 'unknown' | 'null' | 'undefined' | 'any' | 'object';
 
 export type TypeInfoKind = 'base' | 'reference' | 'array' | 'map' | 'intersection' | 'union' | 'tuple' | 'literal' | 'stringLiteral' | 'integerLiteral' | 'booleanLiteral';
 
-type MapKeyType = { kind: 'base'; name: 'Uri' | 'DocumentUri' | 'string' | 'integer' } | { kind: 'reference'; name: string; symbol: ts.Symbol };
+type MapKeyType = { kind: 'base'; name: 'URI' | 'DocumentUri' | 'string' | 'integer' } | { kind: 'reference'; name: string; symbol: ts.Symbol };
 namespace MapKeyType {
 	export function is(value: TypeInfo): value is MapKeyType {
-		return value.kind === 'reference' || (value.kind === 'base' && (value.name === 'string' || value.name === 'integer' || value.name === 'DocumentUri' || value.name === 'Uri'));
+		return value.kind === 'reference' || (value.kind === 'base' && (value.name === 'string' || value.name === 'integer' || value.name === 'DocumentUri' || value.name === 'URI'));
 	}
 }
+type LiteralInfo = { type: TypeInfo; optional: boolean; documentation?: string; since?: string; proposed?: boolean };
 
 type TypeInfo =
 {
@@ -51,7 +52,7 @@ type TypeInfo =
 	items: TypeInfo[];
 } | {
 	kind: 'literal';
-	items: Map<string, { type: TypeInfo; optional: boolean }>;
+	items: Map<string, LiteralInfo>;
 } | {
 	kind: 'stringLiteral';
 	value: string;
@@ -73,7 +74,7 @@ namespace TypeInfo {
 		return info.kind === 'base' && info.name === 'void';
 	}
 
-	const baseSet = new Set(['null', 'void', 'string', 'boolean', 'Uri', 'DocumentUri', 'integer', 'uinteger', 'decimal']);
+	const baseSet = new Set(['null', 'void', 'string', 'boolean', 'URI', 'DocumentUri', 'integer', 'uinteger', 'decimal']);
 	export function asJsonType(info: TypeInfo): JsonType {
 		switch (info.kind) {
 			case 'base':
@@ -100,8 +101,18 @@ namespace TypeInfo {
 				const literal: StructureLiteral = { properties: [] };
 				for (const entry of info.items) {
 					const property: Property = { name: entry[0], type: asJsonType(entry[1].type) };
-					if (entry[1].optional) {
+					const value = entry[1];
+					if (value.optional === true) {
 						property.optional = true;
+					}
+					if (value.documentation !== undefined) {
+						property.documentation = value.documentation;
+					}
+					if (value.since !== undefined) {
+						property.since = value.since;
+					}
+					if (value.proposed === true) {
+						property.proposed = true;
 					}
 					literal.properties.push(property);
 				}
@@ -130,6 +141,15 @@ type NotificationTypes = {
 	registrationOptions: TypeInfo;
 };
 
+namespace MessageDirection {
+	export const clientToServer: 'clientToServer' = 'clientToServer';
+	export const serverToClient: 'serverToClient' = 'serverToClient';
+	export const both: 'both' = 'both';
+
+	export function is(value: string): value is MessageDirection {
+		return value === clientToServer || value === serverToClient || value === both;
+	}
+}
 
 export default class Visitor {
 
@@ -194,7 +214,14 @@ export default class Visitor {
 	}
 
 	public getMetaModel(): MetaModel {
-		return { requests: this.requests, notifications: this.notifications, structures: this.structures, enumerations: this.enumerations, typeAliases: this.typeAliases };
+		return {
+			metaData: { version: '3.17.0' },
+			requests: this.requests,
+			notifications: this.notifications,
+			structures: this.structures,
+			enumerations: this.enumerations,
+			typeAliases: this.typeAliases
+		};
 	}
 
 	protected visit(node: ts.Node): void {
@@ -306,10 +333,15 @@ export default class Visitor {
 			}
 			return TypeInfo.asJsonType(info);
 		};
-		const result: JsonRequest = { method: methodName, result: TypeInfo.isVoid(requestTypes.result) ? TypeInfo.asJsonType({ kind: 'base', name: 'null' }) : TypeInfo.asJsonType(requestTypes.result) };
+		const result: JsonRequest = {
+			method: methodName,
+			result: TypeInfo.isVoid(requestTypes.result) ? TypeInfo.asJsonType({ kind: 'base', name: 'null' }) : TypeInfo.asJsonType(requestTypes.result),
+			messageDirection: this.getMessageDirection(symbol)
+		};
 		result.params = requestTypes.param !== undefined ? asJsonType(requestTypes.param) : undefined;
 		result.partialResult = asJsonType(requestTypes.partialResult);
 		result.errorData = asJsonType(requestTypes.errorData);
+		result.registrationMethod = this.getRegistrationMethodName(symbol);
 		result.registrationOptions = asJsonType(requestTypes.registrationOptions);
 		this.fillDocProperties(node, result);
 		return result;
@@ -340,8 +372,12 @@ export default class Visitor {
 			}
 			return TypeInfo.asJsonType(info);
 		};
-		const result: JsonNotification = { method: methodName };
+		const result: JsonNotification = {
+			method: methodName,
+			messageDirection: this.getMessageDirection(symbol)
+		};
 		result.params = notificationTypes.param !== undefined ? asJsonType(notificationTypes.param) : undefined;
+		result.registrationMethod = this.getRegistrationMethodName(symbol);
 		result.registrationOptions = asJsonType(notificationTypes.registrationOptions);
 		this.fillDocProperties(node, result);
 		return result;
@@ -443,6 +479,58 @@ export default class Visitor {
 			text = args[0].getText();
 		}
 		return this.removeQuotes(text);
+	}
+
+	private getRegistrationMethodName(namespace: ts.Symbol): string | undefined {
+		const registrationMethod = namespace.exports?.get('registrationMethod' as ts.__String);
+		if (registrationMethod === undefined) {
+			return undefined;
+		}
+		const declaration = this.getFirstDeclaration(registrationMethod);
+		if (declaration === undefined || !ts.isVariableDeclaration(declaration) || declaration.initializer === undefined || !ts.isPropertyAccessExpression(declaration.initializer)) {
+			return undefined;
+		}
+		const initializerSymbol = this.typeChecker.getSymbolAtLocation(declaration.initializer.name);
+		if (initializerSymbol === undefined || initializerSymbol.valueDeclaration === undefined) {
+			return undefined;
+		}
+		const valueDeclaration = initializerSymbol.valueDeclaration;
+		if (!ts.isVariableDeclaration(valueDeclaration)) {
+			return undefined;
+		}
+		if (valueDeclaration.initializer === undefined || (!ts.isStringLiteral(valueDeclaration.initializer) && !ts.isNoSubstitutionTemplateLiteral(valueDeclaration.initializer))) {
+			return undefined;
+		}
+
+		return this.removeQuotes(valueDeclaration.initializer.getText());
+	}
+
+	private getMessageDirection(namespace: ts.Symbol): MessageDirection {
+		const errorMessage = `No message direction specified for request ${namespace.getName()}`;
+		const messageDirection = namespace.exports?.get('messageDirection' as ts.__String);
+		if (messageDirection === undefined) {
+			throw new Error(errorMessage);
+		}
+		const declaration = this.getFirstDeclaration(messageDirection);
+		if (declaration === undefined || !ts.isVariableDeclaration(declaration) || declaration.initializer === undefined || !ts.isPropertyAccessExpression(declaration.initializer)) {
+			throw new Error(errorMessage);
+		}
+		const initializerSymbol = this.typeChecker.getSymbolAtLocation(declaration.initializer.name);
+		if (initializerSymbol === undefined || initializerSymbol.valueDeclaration === undefined) {
+			throw new Error(errorMessage);
+		}
+		const valueDeclaration = initializerSymbol.valueDeclaration;
+		if (!ts.isEnumMember(valueDeclaration)) {
+			throw new Error(errorMessage);
+		}
+		if (valueDeclaration.initializer === undefined || !ts.isStringLiteral(valueDeclaration.initializer)) {
+			throw new Error(errorMessage);
+		}
+		const value = this.removeQuotes(valueDeclaration.initializer.getText());
+		if (!MessageDirection.is(value)) {
+			throw new Error(errorMessage);
+		}
+		return value;
 	}
 
 	private getRequestTypes(symbol: ts.Symbol): RequestTypes | undefined {
@@ -611,7 +699,9 @@ export default class Visitor {
 					if (propertyType === undefined) {
 						throw new Error(`Can't parse property ${member.getName()} of structure ${symbol.getName()}`);
 					}
-					items.set(member.getName(), { type: propertyType, optional: Symbols.isOptional(member) });
+					const literalInfo: LiteralInfo = { type: propertyType, optional: Symbols.isOptional(member) };
+					this.fillDocProperties(declaration, literalInfo);
+					items.set(member.getName(), literalInfo);
 				});
 				return { kind: 'literal', items };
 			}
@@ -682,6 +772,17 @@ export default class Visitor {
 	}
 
 	private static readonly Mixins: Set<string> = new Set(['WorkDoneProgressParams', 'PartialResultParams', 'StaticRegistrationOptions', 'WorkDoneProgressOptions']);
+	private static readonly PropertyFilters: Map<string, Set<string>> = new Map([
+		['TraceValues', new Set(['Compact'])],
+		['ErrorCodes', new Set(['jsonrpcReservedErrorRangeStart', 'serverErrorStart', 'MessageWriteError', 'MessageReadError', 'PendingResponseRejected', 'ConnectionInactive', 'jsonrpcReservedErrorRangeEnd', 'serverErrorEnd'])],
+		['LSPErrorCodes', new Set(['lspReservedErrorRangeStart', 'lspReservedErrorRangeEnd'])]
+	]);
+	private static readonly PropertyRenames: Map<string, Map<string, string>> = new Map([
+		['MonikerKind', new Map([
+			['$export', 'export'],
+			['$import', 'import']
+		])]
+	]);
 	private processSymbol(name: string, symbol: ts.Symbol): Structure | Enumeration | TypeAlias | undefined {
 		// We can't define LSPAny in the protocol right now due to TS issues.
 		// So we predefine it and emit it.
@@ -811,21 +912,32 @@ export default class Visitor {
 									isEnum = false;
 									break;
 								}
-								const entry: EnumerationEntry = { name: declaration.name.getText(), value: value };
-								// Use the declaration statement since enum declaration only have one declaration.
-								this.fillDocProperties(variable.declarationList, entry);
+								let propertyName = declaration.name.getText();
+								if (Visitor.PropertyRenames.has(name) && Visitor.PropertyRenames.get(name)?.has(propertyName)) {
+									propertyName = Visitor.PropertyRenames.get(name)!.get(propertyName)!;
+								}
+								if (Visitor.PropertyFilters.has(name) && Visitor.PropertyFilters.get(name)?.has(propertyName)) {
+									continue;
+								}
+								const entry: EnumerationEntry = { name: propertyName, value: value };
+								this.fillDocProperties(variable, entry);
 								enumerations.push(entry);
 							}
 							if (isEnum) {
 								const type: EnumerationType | undefined = enumValues
-									? (typeof enumValues[0] === 'string') ? { kind: 'base', name: 'string'} : { kind: 'base', name: 'integer' }
+									? this.getEnumBaseType(enumValues)
 									: openSet ? target as EnumerationType : undefined;
 								if (type !== undefined) {
 									const enumeration: Enumeration = { name: name, type: type, values: enumerations };
 									if (openSet && !fixedSet) {
 										enumeration.supportsCustomValues = true;
 									}
-									this.fillDocProperties(declaration, enumeration);
+									// First fill the documentation from the namespace and then from the
+									// type declaration.
+									this.fillDocProperties(namespace, enumeration);
+									if (enumeration.documentation === undefined) {
+										this.fillDocProperties(namespace, enumeration);
+									}
 									return enumeration;
 								}
 							}
@@ -842,6 +954,11 @@ export default class Visitor {
 				return result;
 			} else {
 				this.queueTypeInfo(target);
+
+				// In the protocol document filter can't be a string but the implementation allows it for backwards compatibility
+				if (name === 'DocumentSelector') {
+					return PreDefined.DocumentSelector;
+				}
 				const result: TypeAlias = { name: name, type: TypeInfo.asJsonType(target) };
 				this.fillDocProperties(declaration, result);
 				return result;
@@ -849,6 +966,7 @@ export default class Visitor {
 		} else if (Symbols.isRegularEnum(symbol)) {
 			const entries: EnumerationEntry[] = [];
 			const exports = this.typeChecker.getExportsOfModule(symbol);
+			let enumBaseType: 'string' | 'integer' | 'uinteger' | undefined = undefined;
 			for (const item of exports) {
 				const declaration = this.getDeclaration(item, ts.SyntaxKind.EnumMember);
 				if (declaration === undefined || !ts.isEnumMember(declaration) || declaration.initializer === undefined) {
@@ -857,20 +975,32 @@ export default class Visitor {
 				let value: string | number | undefined;
 				if (ts.isNumericLiteral(declaration.initializer)) {
 					value = Number.parseInt(declaration.initializer.getText());
+					if (value >= 0 && enumBaseType === undefined) {
+						enumBaseType = 'uinteger';
+					} else {
+						enumBaseType = 'integer';
+					}
 				} else if (ts.isStringLiteral(declaration.initializer)) {
 					value = this.removeQuotes(declaration.initializer.getText());
+					enumBaseType = 'string';
 				}
 				if (value === undefined) {
 					continue;
 				}
 				const entry: EnumerationEntry = { name: item.getName(), value: value };
+				if (Visitor.PropertyFilters.has(name) && Visitor.PropertyFilters.get(name)?.has(entry.name)) {
+					continue;
+				}
 				this.fillDocProperties(declaration, entry);
 				entries.push(entry);
 			}
-			const type: EnumerationType = (entries.length === 0 || typeof entries[0].value === 'number')
-				? { kind: 'base', name: 'integer' }
-				: { kind: 'base', name: 'string' };
+			const type: EnumerationType = enumBaseType === undefined
+				? { kind: 'base', name: 'uinteger' }
+				: { kind: 'base', name: enumBaseType };
 			const result: Enumeration = { name: name, type: type, values: entries };
+			if (name === 'SemanticTokenTypes' || name === 'SemanticTokenModifiers') {
+				result.supportsCustomValues = true;
+			}
 			const declaration = this.getDeclaration(symbol, ts.SyntaxKind.EnumDeclaration);
 			if (declaration !== undefined) {
 				this.fillDocProperties(declaration, result);
@@ -904,13 +1034,19 @@ export default class Visitor {
 			if (typeInfo === undefined) {
 				throw new Error(`Can't parse property ${member.getName()} of structure ${symbol.getName()}`);
 			}
-			const property: Property = { name: member.getName(), type: TypeInfo.asJsonType(typeInfo) };
+
+			const isExperimentalProperty = (result.name === 'ServerCapabilities' && member.getName() === 'experimental' && typeInfo.kind === 'reference' && typeInfo.name === 'T');
+			const property: Property = isExperimentalProperty
+				? { name: member.getName(), type: TypeInfo.asJsonType({ kind: 'reference', name: 'LSPAny', symbol: typeInfo.symbol }) }
+				: { name: member.getName(), type: TypeInfo.asJsonType(typeInfo) };
 			if (Symbols.isOptional(member)) {
 				property.optional = true;
 			}
 			this.fillDocProperties(declaration, property);
 			result.properties.push(property);
-			this.queueTypeInfo(typeInfo);
+			if (!isExperimentalProperty) {
+				this.queueTypeInfo(typeInfo);
+			}
 		});
 	}
 
@@ -1001,6 +1137,22 @@ export default class Visitor {
 		return undefined;
 	}
 
+	getEnumBaseType(values: string[] | number[]) : EnumerationType | undefined {
+		if (values.length === 0) {
+			return undefined;
+		}
+		const first = values[0];
+		if (typeof first === 'string') {
+			return { kind: 'base', name: 'string' };
+		}
+		for (const value of (values as number[])) {
+			if (value < 0) {
+				return { kind: 'base', name: 'integer' };
+			}
+		}
+		return { kind: 'base', name: 'uinteger' };
+	}
+
 	private removeQuotes(text: string): string {
 		const first = text[0];
 		if ((first !== '\'' && first !== '"' && first !== '`') || first !== text[text.length - 1]) {
@@ -1009,7 +1161,7 @@ export default class Visitor {
 		return text.substring(1, text.length - 1);
 	}
 
-	private fillDocProperties(node: ts.Node, value: JsonRequest | JsonNotification | Property | Structure | StructureLiteral | EnumerationEntry | Enumeration | TypeAlias): void {
+	private fillDocProperties(node: ts.Node, value: JsonRequest | JsonNotification | Property | Structure | StructureLiteral | EnumerationEntry | Enumeration | TypeAlias | LiteralInfo): void {
 		const filePath = node.getSourceFile().fileName;
 		const fileName = path.basename(filePath);
 		const tags = ts.getJSDocTags(node);
@@ -1031,7 +1183,13 @@ export default class Visitor {
 				const buffer: string[] = [];
 				const lines = text.split(/\r?\n/);
 				for (let i= 0; i < lines.length; i++) {
-					let noComment = lines[i].replace(/^(\s*\/\*\*)|^(\s*\*\/)|^(\s*\*)/, '');
+					let noComment = lines[i].replace(/^\s*\/\*\*(.*)\s*\*\/\s*$|^(\s*\/\*\*)|^(\s*\*\/\s*)$|^(\s*\*)/, (_match, m1) => {
+						if (m1) {
+							return m1;
+						} else {
+							return '';
+						}
+					});
 					// First line
 					if (i === 0 || i === lines.length - 1) {
 						noComment = noComment.trim();
@@ -1062,65 +1220,78 @@ export default class Visitor {
 
 namespace PreDefined {
 	export const LSPAny: TypeAlias = {
-		'name': 'LSPAny',
-		'type': {
-			'kind': 'or',
-			'items': [
+		name: 'LSPAny',
+		type: {
+			kind: 'or',
+			items: [
 				{
-					'kind': 'reference',
-					'name': 'LSPObject'
+					kind: 'reference',
+					name: 'LSPObject'
 				},
 				{
-					'kind': 'reference',
-					'name': 'LSPArray'
+					kind: 'reference',
+					name: 'LSPArray'
 				},
 				{
-					'kind': 'base',
-					'name': 'string'
+					kind: 'base',
+					name: 'string'
 				},
 				{
-					'kind': 'base',
-					'name': 'integer'
+					kind: 'base',
+					name: 'integer'
 				},
 				{
-					'kind': 'base',
-					'name': 'uinteger'
+					kind: 'base',
+					name: 'uinteger'
 				},
 				{
-					'kind': 'base',
-					'name': 'decimal'
+					kind: 'base',
+					name: 'decimal'
 				},
 				{
-					'kind': 'base',
-					'name': 'boolean'
+					kind: 'base',
+					name: 'boolean'
 				},
 				{
-					'kind': 'base',
-					'name': 'null'
+					kind: 'base',
+					name: 'null'
 				}
 			]
 		},
-		'documentation': 'The LSP any type.\nPlease note that strictly speaking a property with the value `undefined`\ncan\'t be converted into JSON preserving the property name. However for\nconvenience it is allowed and assumed that all these properties are\noptional as well.\n@since 3.17.0',
-		'since': '3.17.0'
+		documentation: 'The LSP any type.\nPlease note that strictly speaking a property with the value `undefined`\ncan\'t be converted into JSON preserving the property name. However for\nconvenience it is allowed and assumed that all these properties are\noptional as well.\n@since 3.17.0',
+		since: '3.17.0'
 	};
 
 	export const LSPObject: Structure = {
-		'name': 'LSPObject',
-		'properties': [],
-		'documentation': 'LSP object definition.\n@since 3.17.0',
-		'since': '3.17.0'
+		name: 'LSPObject',
+		properties: [],
+		documentation: 'LSP object definition.\n@since 3.17.0',
+		since: '3.17.0'
 	};
 
 	export const LSPArray: TypeAlias = {
-		'name': 'LSPArray',
-		'type': {
-			'kind': 'array',
-			'element': {
-				'kind': 'reference',
-				'name': 'LSPAny'
+		name: 'LSPArray',
+		type: {
+			kind: 'array',
+			element: {
+				kind: 'reference',
+				name: 'LSPAny'
 			}
 		},
-		'documentation': 'LSP arrays.\n@since 3.17.0',
-		'since': '3.17.0'
+		documentation: 'LSP arrays.\n@since 3.17.0',
+		since: '3.17.0'
+	};
+
+	export const DocumentSelector: TypeAlias = {
+		name: 'DocumentSelector',
+		type: {
+			kind: 'array',
+			element: {
+				kind: 'reference',
+				name: 'DocumentFilter'
+			}
+		},
+		documentation: 'A document selector is the combination of one or many document filters.\n\n@sample `let sel:DocumentSelector = [{ language: \'typescript\' }, { language: \'json\', pattern: \'**∕tsconfig.json\' }]`;\n\nThe use of a string as a document filter is deprecated @since 3.16.0.',
+		since: '3.16.0.'
 	};
 }

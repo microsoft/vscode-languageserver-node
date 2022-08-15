@@ -9,7 +9,7 @@ import {
 } from 'vscode-languageserver-types';
 
 import * as Is from './utils/is';
-import { ProtocolNotificationType, RegistrationType } from './messages';
+import { MessageDirection, ProtocolNotificationType, RegistrationType } from './messages';
 import type { StaticRegistrationOptions, NotebookDocumentFilter, TextDocumentContentChangeEvent } from './protocol';
 
 /**
@@ -41,13 +41,13 @@ export type NotebookDocumentSyncClientCapabilities = {
 export namespace NotebookCellKind {
 
 	/**
-     * A markup-cell is formatted source that is used for display.
-     */
+	 * A markup-cell is formatted source that is used for display.
+	 */
 	export const Markup: 1 = 1;
 
 	/**
-     * A code-cell is source code.
-     */
+	 * A code-cell is source code.
+	 */
 	export const Code: 2 = 2;
 
 	export function is(value: any): value is NotebookCellKind {
@@ -298,7 +298,7 @@ export type VersionedNotebookDocumentIdentifier = {
  * Options specific to a notebook plus its cells
  * to be synced to the server.
  *
- * If a selector provide a notebook document
+ * If a selector provides a notebook document
  * filter but no cell selector all cells of a
  * matching notebook document will be synced.
  *
@@ -316,8 +316,8 @@ export type NotebookDocumentSyncOptions = {
 	notebookSelector: ({
 		/**
 		 * The notebook to be synced If a string
-	 	 * value is provided it matches against the
-	     * notebook type. '*' matches every notebook.
+		 * value is provided it matches against the
+		 * notebook type. '*' matches every notebook.
 		 */
 		notebook: string | NotebookDocumentFilter;
 
@@ -328,8 +328,8 @@ export type NotebookDocumentSyncOptions = {
 	} | {
 		/**
 		 * The notebook to be synced If a string
-	 	 * value is provided it matches against the
-	     * notebook type. '*' matches every notebook.
+		 * value is provided it matches against the
+		 * notebook type. '*' matches every notebook.
 		 */
 		notebook?: string | NotebookDocumentFilter;
 
@@ -355,11 +355,12 @@ export type NotebookDocumentSyncRegistrationOptions = NotebookDocumentSyncOption
 
 export namespace NotebookDocumentSyncRegistrationType {
 	export const method: 'notebookDocument/sync' = 'notebookDocument/sync';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new RegistrationType<NotebookDocumentSyncRegistrationOptions>(method);
 }
 
 /**
- * The params sent in a open notebook document notification.
+ * The params sent in an open notebook document notification.
  *
  * @since 3.17.0
  */
@@ -384,7 +385,9 @@ export type DidOpenNotebookDocumentParams = {
  */
 export namespace DidOpenNotebookDocumentNotification {
 	export const method: 'notebookDocument/didOpen' = 'notebookDocument/didOpen';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<DidOpenNotebookDocumentParams, void>(method);
+	export const registrationMethod: typeof NotebookDocumentSyncRegistrationType.method = NotebookDocumentSyncRegistrationType.method;
 }
 
 /**
@@ -470,8 +473,8 @@ export type NotebookDocumentChangeEvent = {
 		data?: NotebookCell[];
 
 		/**
-    	 * Changes to the text content of notebook cells.
-     	 */
+		 * Changes to the text content of notebook cells.
+		 */
 		textContent?: {
 			document: VersionedTextDocumentIdentifier;
 			changes: TextDocumentContentChangeEvent[];
@@ -514,7 +517,9 @@ export type DidChangeNotebookDocumentParams = {
 
 export namespace DidChangeNotebookDocumentNotification {
 	export const method: 'notebookDocument/didChange' = 'notebookDocument/didChange';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<DidChangeNotebookDocumentParams, void>(method);
+	export const registrationMethod: typeof NotebookDocumentSyncRegistrationType.method = NotebookDocumentSyncRegistrationType.method;
 }
 
 /**
@@ -536,7 +541,9 @@ export type DidSaveNotebookDocumentParams = {
  */
 export namespace DidSaveNotebookDocumentNotification {
 	export const method: 'notebookDocument/didSave' = 'notebookDocument/didSave';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<DidSaveNotebookDocumentParams, void>(method);
+	export const registrationMethod: typeof NotebookDocumentSyncRegistrationType.method = NotebookDocumentSyncRegistrationType.method;
 }
 
 /**
@@ -565,5 +572,7 @@ export type DidCloseNotebookDocumentParams = {
  */
 export namespace DidCloseNotebookDocumentNotification {
 	export const method: 'notebookDocument/didClose' = 'notebookDocument/didClose';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<DidCloseNotebookDocumentParams, void>(method);
+	export const registrationMethod: typeof NotebookDocumentSyncRegistrationType.method = NotebookDocumentSyncRegistrationType.method;
 }

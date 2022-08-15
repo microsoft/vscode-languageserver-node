@@ -34,11 +34,27 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 
 ## History
 
-## 3.17.0-next.* Protocol, 8.0.0-next.* JSON-RPC, 8.0.0-next.* Client and 8.0.0-next.* Server.
+## 3.17.2 Protocol, 8.0.2 JSON-RPC, 8.0.2 Client and 8.0.2 Server.
+
+- make client more robust against unwanted restarts
+- added a LanguageClient#dispose method to fully dispose a client
+- [various bug fixes](https://github.com/microsoft/vscode-languageserver-node/issues?q=is%3Aclosed+milestone%3A8.0.2).
+
+## 3.17.0 Protocol, 8.0.0 JSON-RPC, 8.0.0 Client and 8.0.0 Server.
 
 Library specific changes are:
 
-- cleanup of client `start` and `stop` methods. Both methods now return a promise since these methods are async. This is a breaking change since start returned a disposable before. Extensions should now implement a deactivate function in their extension main file and correctly return the `stop` promise from the deactivate call. As a consequence the `onReady()` got removed since extensions can await the `start()` call (even multiple times).
+- cleanup of client `start` and `stop` methods. Both methods now return a promise since these methods are async. This is a breaking change since start returned a disposable before. Extensions should now implement a deactivate function in their extension main file and correctly return the `stop` promise from the deactivate call. As a consequence the `onReady()` got removed since extensions can await the `start()` call now. Old code like this
+```typescript
+const client: LanguageClient = ...;
+client.start();
+await client.onReady();
+```
+should become:
+```typescript
+const client: LanguageClient = ...;
+await client.start();
+```
 - notification and request handler registration can now happen before the client is started. This ensures that no messages from the server are missed.
 - if an extension sends a notification or request before the client got started the client will auto start.
 - all `sendNotification` methods now return a promise. Returning a promise was necessary since the actual writing of the message to the underlying transport is async and a client for example could not determine if a notification was handed off to the transport. This is a breaking change in the sense that it might result in floating promise and might be flagged by a linter.
