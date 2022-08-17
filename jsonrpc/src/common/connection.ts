@@ -393,25 +393,14 @@ export namespace CancellationStrategy {
 	}
 }
 
-export interface MessageStrategy {
-	handleMessage(message: Message, next: (message: Message) => void): void;
-}
-export namespace MessageStrategy {
-	export function is(value: any): value is MessageStrategy {
-		const candidate: MessageStrategy = value;
-		return candidate && Is.func(candidate.handleMessage);
-	}
-}
-
 export interface ConnectionOptions {
 	cancellationStrategy?: CancellationStrategy;
 	connectionStrategy?: ConnectionStrategy;
-	messageStrategy?: MessageStrategy;
 }
 export namespace ConnectionOptions {
 	export function is(value: any): value is ConnectionOptions {
 		const candidate: ConnectionOptions = value;
-		return candidate && (CancellationStrategy.is(candidate.cancellationStrategy) || ConnectionStrategy.is(candidate.connectionStrategy)) || MessageStrategy.is(candidate.messageStrategy);
+		return candidate && (CancellationStrategy.is(candidate.cancellationStrategy) || ConnectionStrategy.is(candidate.connectionStrategy));
 	}
 }
 
@@ -626,28 +615,21 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			processMessageQueue();
 		});
 	}
-	function handleMessage (message: Message) {
-		if (Message.isRequest(message)) {
-			handleRequest(message);
-		} else if (Message.isNotification(message)) {
-			handleNotification(message);
-		} else if (Message.isResponse(message)) {
-			handleResponse(message);
-		} else {
-			handleInvalidMessage(message);
-		}
-	}
+
 	function processMessageQueue(): void {
 		if (messageQueue.size === 0) {
 			return;
 		}
 		const message = messageQueue.shift()!;
 		try {
-			const messageStrategy = options?.messageStrategy;
-			if (MessageStrategy.is(messageStrategy)) {
-				messageStrategy.handleMessage(message, handleMessage);
+			if (Message.isRequest(message)) {
+				handleRequest(message);
+			} else if (Message.isNotification(message)) {
+				handleNotification(message);
+			} else if (Message.isResponse(message)) {
+				handleResponse(message);
 			} else {
-				handleMessage(message);
+				handleInvalidMessage(message);
 			}
 		} finally {
 			triggerMessageQueue();
