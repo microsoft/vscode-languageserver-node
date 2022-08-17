@@ -34,7 +34,7 @@ import {
 	DocumentOnTypeFormattingRequest, RenameRequest, DocumentSymbolRequest, DocumentLinkRequest, DocumentColorRequest, DeclarationRequest, FoldingRangeRequest,
 	ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, CallHierarchyPrepareRequest, SemanticTokensRegistrationType, LinkedEditingRangeRequest,
 	TypeHierarchyPrepareRequest, InlineValueRequest, InlayHintRequest, WorkspaceSymbolRequest, TextDocumentRegistrationOptions, FileOperationRegistrationOptions,
-	ConnectionOptions, PositionEncodingKind, DocumentDiagnosticRequest, NotebookDocumentSyncRegistrationType, NotebookDocumentSyncRegistrationOptions, ErrorCodes
+	ConnectionOptions, PositionEncodingKind, DocumentDiagnosticRequest, NotebookDocumentSyncRegistrationType, NotebookDocumentSyncRegistrationOptions, ErrorCodes, MessageStrategy
 } from 'vscode-languageserver-protocol';
 
 import * as c2p from './codeConverter';
@@ -333,7 +333,8 @@ export type LanguageClientOptions = {
 	};
 	workspaceFolder?: VWorkspaceFolder;
 	connectionOptions?: {
-		cancellationStrategy: CancellationStrategy;
+		cancellationStrategy?: CancellationStrategy;
+		messageStrategy?: MessageStrategy;
 		maxRestartCount?: number;
 	};
 	markdown?: {
@@ -364,7 +365,8 @@ type ResolvedClientOptions = {
 	};
 	workspaceFolder?: VWorkspaceFolder;
 	connectionOptions?: {
-		cancellationStrategy: CancellationStrategy;
+		cancellationStrategy?: CancellationStrategy;
+		messageStrategy?: MessageStrategy;
 		maxRestartCount?: number;
 	};
 	markdown: {
