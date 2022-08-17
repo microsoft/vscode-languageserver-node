@@ -20,14 +20,14 @@ export class BrowserMessageReader extends AbstractMessageReader implements Messa
 	private _onData: Emitter<Message>;
 	private _messageListener: (event: MessageEvent) => void;
 
-	public constructor(context: Worker | DedicatedWorkerGlobalScope) {
+	public constructor(port: MessagePort | Worker | DedicatedWorkerGlobalScope) {
 		super();
 		this._onData = new Emitter<Message>();
 		this._messageListener = (event: MessageEvent) => {
 			this._onData.fire(event.data);
 		};
-		context.addEventListener('error', (event) => this.fireError(event));
-		context.onmessage = this._messageListener;
+		port.addEventListener('error', (event) => this.fireError(event));
+		port.onmessage = this._messageListener;
 	}
 
 	public listen(callback: DataCallback): Disposable {
@@ -39,15 +39,15 @@ export class BrowserMessageWriter extends AbstractMessageWriter implements Messa
 
 	private errorCount: number;
 
-	public constructor(private context: Worker | DedicatedWorkerGlobalScope) {
+	public constructor(private port: MessagePort | Worker | DedicatedWorkerGlobalScope) {
 		super();
 		this.errorCount = 0;
-		context.addEventListener('error', (event) => this.fireError(event));
+		port.addEventListener('error', (event) => this.fireError(event));
 	}
 
 	public write(msg: Message): Promise<void> {
 		try {
-			this.context.postMessage(msg);
+			this.port.postMessage(msg);
 			return Promise.resolve();
 		} catch (error) {
 			this.handleError(error, msg);
