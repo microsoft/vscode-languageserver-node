@@ -13,6 +13,7 @@ import { CancellationTokenSource, RequestType, RequestType3, ResponseError, Noti
 import * as hostConnection from '../main';
 import { getCustomCancellationStrategy } from './customCancellationStrategy';
 import { ParameterStructures } from '../../common/messages';
+import { MessageChannel } from 'worker_threads';
 
 interface TestDuplex extends Duplex {
 }
@@ -21,7 +22,7 @@ interface TestDuplexConstructor {
 	new (name?: string, dbg?: boolean): TestDuplex;
 }
 
-let TestDuplex: TestDuplexConstructor = function (): TestDuplexConstructor {
+const TestDuplex: TestDuplexConstructor = function (): TestDuplexConstructor {
 	function TestDuplex(this: any, name: string = 'ds1', dbg = false) {
 		Duplex.call(this);
 		this.name = name;
@@ -44,7 +45,7 @@ let TestDuplex: TestDuplexConstructor = function (): TestDuplexConstructor {
 suite('Connection', () => {
 
 	test('Test Duplex Stream', (done) => {
-		let stream = new TestDuplex('ds1');
+		const stream = new TestDuplex('ds1');
 		stream.on('data', (chunk) => {
 			assert.strictEqual('Hello World', chunk.toString());
 			done();
@@ -53,11 +54,11 @@ suite('Connection', () => {
 	});
 
 	test('Test Duplex Stream Connection', (done) => {
-		let type = new RequestType<string, string, void>('test/handleSingleRequest');
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const type = new RequestType<string, string, void>('test/handleSingleRequest');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
-		let connection = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const connection = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		connection.listen();
 		let counter = 0;
 		let content: string = '';
@@ -72,11 +73,11 @@ suite('Connection', () => {
 	});
 
 	test('Primitive param as positional', (done) => {
-		let type = new RequestType<boolean, number, void>('test/handleSingleRequest');
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const type = new RequestType<boolean, number, void>('test/handleSingleRequest');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
-		let connection = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const connection = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		connection.listen();
 		let counter = 0;
 		let content: string = '';
@@ -91,11 +92,11 @@ suite('Connection', () => {
 	});
 
 	test('Array param as positional', (done) => {
-		let type = new RequestType<boolean[], number, void>('test/handleSingleRequest');
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const type = new RequestType<boolean[], number, void>('test/handleSingleRequest');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
-		let connection = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const connection = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		connection.listen();
 		let counter = 0;
 		let content: string = '';
@@ -110,11 +111,11 @@ suite('Connection', () => {
 	});
 
 	test('Literal param as named', (done) => {
-		let type = new RequestType<{ value: boolean }, number, void>('test/handleSingleRequest');
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const type = new RequestType<{ value: boolean }, number, void>('test/handleSingleRequest');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
-		let connection = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const connection = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		connection.listen();
 		let counter = 0;
 		let content: string = '';
@@ -129,11 +130,11 @@ suite('Connection', () => {
 	});
 
 	test('Literal param as positional', (done) => {
-		let type = new RequestType<{ value: boolean }, number, void>('test/handleSingleRequest', ParameterStructures.byPosition);
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const type = new RequestType<{ value: boolean }, number, void>('test/handleSingleRequest', ParameterStructures.byPosition);
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
-		let connection = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const connection = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		connection.listen();
 		let counter = 0;
 		let content: string = '';
@@ -148,18 +149,18 @@ suite('Connection', () => {
 	});
 
 	test('Handle Single Request', (done) => {
-		let type = new RequestType<string, string, void>('test/handleSingleRequest');
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const type = new RequestType<string, string, void>('test/handleSingleRequest');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
-		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
 		server.onRequest(type, (p1, _token) => {
 			assert.strictEqual(p1, 'foo');
 			return p1;
 		});
 		server.listen();
 
-		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
 		void client.sendRequest(type, 'foo').then((result) => {
 			assert.strictEqual(result, 'foo');
@@ -168,19 +169,19 @@ suite('Connection', () => {
 	});
 
 	test('Handle Multiple Requests', (done) => {
-		let type = new RequestType<string, string, void>('test/handleSingleRequest');
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const type = new RequestType<string, string, void>('test/handleSingleRequest');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
-		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
 		server.onRequest(type, (p1, _token) => {
 			return p1;
 		});
 		server.listen();
 
-		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
-		let promises: Promise<string>[] = [];
+		const promises: Promise<string>[] = [];
 		promises.push(client.sendRequest(type, 'foo'));
 		promises.push(client.sendRequest(type, 'bar'));
 
@@ -194,14 +195,14 @@ suite('Connection', () => {
 
 
 	test('Unhandled Request', (done) => {
-		let type = new RequestType<string, string, void>('test/handleSingleRequest');
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const type = new RequestType<string, string, void>('test/handleSingleRequest');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
-		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
 		server.listen();
 
-		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
 		client.sendRequest(type, 'foo').then((_result) => {
 		}, (error: ResponseError<any>) => {
@@ -211,18 +212,18 @@ suite('Connection', () => {
 	});
 
 	test('Receives undefined param as null', (done) => {
-		let type = new RequestType<string, string, void>('test/handleSingleRequest');
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const type = new RequestType<string, string, void>('test/handleSingleRequest');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
-		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
 		server.onRequest(type, (param) => {
 			assert.strictEqual(param, null);
 			return '';
 		});
 		server.listen();
 
-		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
 		void client.sendRequest(type, undefined).then((_result) => {
 			done();
@@ -230,18 +231,18 @@ suite('Connection', () => {
 	});
 
 	test('Receives null as null', (done) => {
-		let type = new RequestType<string | null, string | null, void>('test/handleSingleRequest');
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const type = new RequestType<string | null, string | null, void>('test/handleSingleRequest');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
-		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
 		server.onRequest(type, (param) => {
 			assert.strictEqual(param, null);
 			return null;
 		});
 		server.listen();
 
-		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
 		void client.sendRequest(type, null).then(result => {
 			assert.deepEqual(result, null);
@@ -250,18 +251,18 @@ suite('Connection', () => {
 	});
 
 	test('Receives 0 as 0', (done) => {
- 		let type = new RequestType<number, number, void>('test/handleSingleRequest');
- 		let duplexStream1 = new TestDuplex('ds1');
- 		let duplexStream2 = new TestDuplex('ds2');
+ 		const type = new RequestType<number, number, void>('test/handleSingleRequest');
+ 		const duplexStream1 = new TestDuplex('ds1');
+ 		const duplexStream2 = new TestDuplex('ds2');
 
- 		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+ 		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
  		server.onRequest(type, (param) => {
  			assert.strictEqual(param, 0);
  			return 0;
  		});
  		server.listen();
 
- 		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+ 		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
  		client.listen();
  		void client.sendRequest(type, 0).then(result => {
  			assert.deepEqual(result, 0);
@@ -269,47 +270,47 @@ suite('Connection', () => {
  		});
  	});
 
-	let testNotification = new NotificationType<{ value: boolean }>('testNotification');
+	const testNotification = new NotificationType<{ value: boolean }>('testNotification');
 	test('Send and Receive Notification', (done) => {
 
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
-		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
 		server.onNotification(testNotification, (param) => {
 			assert.strictEqual(param.value, true);
 			done();
 		});
 		server.listen();
 
-		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
 		void client.sendNotification(testNotification, { value: true });
 	});
 
 	test('Unhandled notification event', (done) => {
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
-		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
 		server.onUnhandledNotification((message) => {
 			assert.strictEqual(message.method, testNotification.method);
 			done();
 		});
 		server.listen();
 
-		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
 		void client.sendNotification(testNotification, { value: true });
 	});
 
 	test('Dispose connection', (done) => {
-		let type = new RequestType<string | null, string | null, void>('test/handleSingleRequest');
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const type = new RequestType<string | null, string | null, void>('test/handleSingleRequest');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
-		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
-		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
 		server.onRequest(type, (_param) => {
 			client.dispose();
 			return '';
@@ -325,10 +326,10 @@ suite('Connection', () => {
 	});
 
 	test('Disposed connection throws', (done) => {
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
-		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
 		client.dispose();
 		try {
@@ -340,10 +341,10 @@ suite('Connection', () => {
 	});
 
 	test('Two listen throw', (done) => {
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
-		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
 		try {
 			client.listen();
@@ -354,10 +355,10 @@ suite('Connection', () => {
 	});
 
 	test('Notify on connection dispose', (done) => {
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
-		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
 		client.onDispose(() => {
 			done();
@@ -366,11 +367,11 @@ suite('Connection', () => {
 	});
 
 	test('N params in notifications', (done) => {
-		let type = new NotificationType2<number, string>('test');
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const type = new NotificationType2<number, string>('test');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
-		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
 		server.onNotification(type, (p1, p2) => {
 			assert.strictEqual(p1, 10);
 			assert.strictEqual(p2, 'vscode');
@@ -378,17 +379,17 @@ suite('Connection', () => {
 		});
 		server.listen();
 
-		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
 		void client.sendNotification(type, 10, 'vscode');
 	});
 
 	test('N params in request / response', (done) => {
-		let type = new RequestType3<number, number, number, number, void>('add');
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const type = new RequestType3<number, number, number, number, void>('add');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
-		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
 		server.onRequest(type, (p1, p2, p3) => {
 			assert.strictEqual(p1, 10);
 			assert.strictEqual(p2, 20);
@@ -397,7 +398,7 @@ suite('Connection', () => {
 		});
 		server.listen();
 
-		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
 		client.sendRequest(type, 10, 20, 30).then(result => {
 			assert.strictEqual(result, 60);
@@ -409,11 +410,11 @@ suite('Connection', () => {
 	});
 
 	test('N params in request / response with token', (done) => {
-		let type = new RequestType3<number, number, number, number, void>('add');
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const type = new RequestType3<number, number, number, number, void>('add');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
-		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
 		server.onRequest(type, (p1, p2, p3, _token) => {
 			assert.strictEqual(p1, 10);
 			assert.strictEqual(p2, 20);
@@ -422,8 +423,8 @@ suite('Connection', () => {
 		});
 		server.listen();
 
-		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
-		let token = new CancellationTokenSource().token;
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const token = new CancellationTokenSource().token;
 		client.listen();
 		client.sendRequest(type, 10, 20, 30, token).then(result => {
 			assert.strictEqual(result, 60);
@@ -435,11 +436,11 @@ suite('Connection', () => {
 	});
 
 	test('One Param as array in request', (done) => {
-		let type = new RequestType<number[], number, void>('add', ParameterStructures.byPosition);
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const type = new RequestType<number[], number, void>('add', ParameterStructures.byPosition);
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
-		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
 		server.onRequest(type, (p1) => {
 			assert(Array.isArray(p1));
 			assert.strictEqual(p1[0], 10);
@@ -449,8 +450,8 @@ suite('Connection', () => {
 		});
 		server.listen();
 
-		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
-		let token = new CancellationTokenSource().token;
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const token = new CancellationTokenSource().token;
 		client.listen();
 		client.sendRequest(type, [10, 20, 30], token).then(result => {
 			assert.strictEqual(result, 60);
@@ -462,11 +463,11 @@ suite('Connection', () => {
 	});
 
 	test('One Param as array in notification', (done) => {
-		let type = new NotificationType<number[]>('add', ParameterStructures.byPosition);
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const type = new NotificationType<number[]>('add', ParameterStructures.byPosition);
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
-		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
 		server.onNotification(type, (p1) => {
 			assert(Array.isArray(p1));
 			assert.strictEqual(p1[0], 10);
@@ -476,16 +477,16 @@ suite('Connection', () => {
 		});
 		server.listen();
 
-		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
 		void client.sendNotification(type, [10, 20, 30]);
 	});
 
 	test('Untyped request / response', (done) => {
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
-		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
 		server.onRequest('test', (p1, p2, p3, _token) => {
 			assert.strictEqual(p1, 10);
 			assert.strictEqual(p2, 20);
@@ -494,8 +495,8 @@ suite('Connection', () => {
 		});
 		server.listen();
 
-		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
-		let token = new CancellationTokenSource().token;
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const token = new CancellationTokenSource().token;
 		client.listen();
 		client.sendRequest('test', 10, 20, 30, token).then((result) => {
 			assert.strictEqual(result, 60);
@@ -507,18 +508,18 @@ suite('Connection', () => {
 	});
 
 	test('Untyped request / response with parameter structure', (done) => {
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
-		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
 		server.onRequest('test', (p1, _token) => {
 			assert.strictEqual(p1.value, 10);
 			return p1.value;
 		});
 		server.listen();
 
-		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
-		let token = new CancellationTokenSource().token;
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const token = new CancellationTokenSource().token;
 		client.listen();
 		client.sendRequest('test', ParameterStructures.byPosition, { value: 10 }, token).then((result) => {
 			assert.strictEqual(result, 10);
@@ -530,11 +531,11 @@ suite('Connection', () => {
 	});
 
 	test('Cancellation token is undefined', (done) => {
-		let type = new RequestType3<number, number, number, number, void>('add');
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const type = new RequestType3<number, number, number, number, void>('add');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
-		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
 		server.onRequest(type, (p1, p2, p3, _token) => {
 			assert.strictEqual(p1, 10);
 			assert.strictEqual(p2, 20);
@@ -543,7 +544,7 @@ suite('Connection', () => {
 		});
 		server.listen();
 
-		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
 		client.sendRequest(type, 10, 20, 30, undefined).then(result => {
 			assert.strictEqual(result, 60);
@@ -555,11 +556,11 @@ suite('Connection', () => {
 	});
 
 	test('Missing params in request', (done) => {
-		let type = new RequestType3<number, number, number, number, void>('add');
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const type = new RequestType3<number, number, number, number, void>('add');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
-		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
 		server.onRequest(type, (p1, p2, p3, _token) => {
 			assert.strictEqual(p1, 10);
 			assert.strictEqual(p2, 20);
@@ -568,7 +569,7 @@ suite('Connection', () => {
 		});
 		server.listen();
 
-		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
 		(client.sendRequest as Function)(type, 10, 20).then((result: any) => {
 			assert.strictEqual(result, 30);
@@ -580,11 +581,11 @@ suite('Connection', () => {
 	});
 
 	test('Missing params in notifications', (done) => {
-		let type = new NotificationType2<number, string>('test');
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const type = new NotificationType2<number, string>('test');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
-		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
 		server.onNotification(type, (p1, p2) => {
 			assert.strictEqual(p1, 10);
 			assert.strictEqual(p2, null);
@@ -592,18 +593,18 @@ suite('Connection', () => {
 		});
 		server.listen();
 
-		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
 		(client.sendNotification as Function)(type, 10);
 	});
 
 	test('Regular Cancellation', (done) => {
-		let type = new hostConnection.RequestType0<void, void>('cancelTest');
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const type = new hostConnection.RequestType0<void, void>('cancelTest');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
 		const source = new CancellationTokenSource();
-		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
 		server.onRequest(type, async t => {
 			source.cancel();
 
@@ -616,7 +617,7 @@ suite('Connection', () => {
 		});
 		server.listen();
 
-		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
 		void client.sendRequest(type, source.token);
 
@@ -626,15 +627,15 @@ suite('Connection', () => {
 	});
 
 	test('Custom Cancellation', (done) => {
-		let type = new hostConnection.RequestType0<void, void>('cancelTest');
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const type = new hostConnection.RequestType0<void, void>('cancelTest');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
 		const source = new CancellationTokenSource();
 		const strategy = getCustomCancellationStrategy();
 		const options = { cancellationStrategy: strategy };
 
-		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, options);
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, options);
 		server.onRequest(type, t => {
 			source.cancel();
 
@@ -647,8 +648,28 @@ suite('Connection', () => {
 		});
 		server.listen();
 
-		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger, options);
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger, options);
 		client.listen();
 		void client.sendRequest(type, source.token);
+	});
+
+	test('Message ports', async () => {
+		const type = new RequestType<string, string, void>('test/handleSingleRequest');
+		const messageChannel = new MessageChannel();
+		const clientPort = messageChannel.port1;
+		const serverPort = messageChannel.port2;
+		const server = hostConnection.createMessageConnection(new hostConnection.PortMessageReader(serverPort), new hostConnection.PortMessageWriter(serverPort));
+		server.onRequest(type, (param) => {
+			assert.strictEqual(param, 'foo');
+			return param;
+		});
+		server.listen();
+
+		const client = hostConnection.createMessageConnection(new hostConnection.PortMessageReader(clientPort), new hostConnection.PortMessageWriter(clientPort));
+		client.listen();
+		const result = await client.sendRequest(type, 'foo');
+		assert.strictEqual(result, 'foo');
+		clientPort.unref();
+		serverPort.unref();
 	});
 });
