@@ -1,0 +1,20 @@
+{
+	"extends": "../../../tsconfig.base.json",
+	"compilerOptions": {
+		"tsBuildInfoFile":"../../../lib/jshost/test/compile.tsbuildInfo",
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
+		"rootDir": ".",
+		"outDir": "../../../lib/jshost/test",
+		"lib": [ "es2017"],
+		"types": [
+			"mocha", "node"
+		]
+	},
+	"include": [
+		"."
+	],
+	"references": [
+		{ "path": "../tsconfig.json" },
+	]
+}

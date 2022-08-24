@@ -8,5 +8,7 @@
 		{ "path": "./src/node/test/tsconfig.json" },
 		{ "path": "./src/browser/tsconfig.json" },
 		{ "path": "./src/browser/test/tsconfig.json" },
+		{ "path": "./src/jshost/tsconfig.json" },
+		{ "path": "./src/jshost/test/tsconfig.json" }
 	]
 }

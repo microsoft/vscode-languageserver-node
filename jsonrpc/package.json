@@ -21,6 +21,7 @@
 	},
 	"typings": "./lib/common/api.d.ts",
 	"devDependencies": {
+		"text-decoding": "^1.0.0",
 		"@types/msgpack-lite": "^0.1.7",
 		"msgpack-lite": "^0.1.26"
 	},
@@ -35,8 +36,13 @@
 		"test": "npm run test:node && npm run test:browser",
 		"test:node": "node ../node_modules/mocha/bin/_mocha",
 		"test:browser": "npm run webpack:test:silent && node ../build/bin/runBrowserTests.js  http://127.0.0.1:8080/jsonrpc/src/browser/test/",
+		"test:jshost": "node ../node_modules/mocha/bin/_mocha",
 		"webpack": "node ../build/bin/webpack  --mode none --config ./webpack.config.js",
-		"webpack:test": "node ../build/bin/webpack --mode none --config ./src/browser/test/webpack.config.js",
-		"webpack:test:silent": "node ../build/bin/webpack --no-stats --mode none --config ./src/browser/test/webpack.config.js"
+		"webpack:test": "npm run webpack:test:browser && npm run webpack:test:jshost",
+		"webpack:test:silent": "npm run webpack:test:browser:silent && npm run webpack:test:jshost:silent",
+		"webpack:test:browser": "node ../build/bin/webpack --mode none --config ./src/browser/test/webpack.config.js",
+		"webpack:test:browser:silent": "node ../build/bin/webpack --no-stats --mode none --config ./src/browser/test/webpack.config.js ",
+		"webpack:test:jshost": "node ../build/bin/webpack --mode none --config ./src/jshost/test/webpack.config.js",
+		"webpack:test:jshost:silent": "node ../build/bin/webpack --no-stats --mode none --config ./src/jshost/test/webpack.config.js"
 	}
 }

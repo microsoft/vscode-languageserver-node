@@ -7,35 +7,21 @@
 
 'use strict';
 
-const browserConfig = {
-	context: __dirname,
-	mode: 'none',
-	target: 'webworker',
-	resolve: {
-		mainFields: ['module', 'main'],
-		extensions: ['.js'] // support ts-files and js-files
-	},
-	entry: {
-		extension: './lib/browser/main.js',
-	},
-	devtool: 'source-map',
-	output: {
-		filename: 'main.js'
-	}
-};
+const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
 
-const jshostConfig = {
+module.exports = {
 	context: __dirname,
 	mode: 'none',
 	target: 'node',
+	plugins: [
+		new NodePolyfillPlugin()
+	],
 	resolve: {
 		mainFields: ['module', 'main'],
-		extensions: ['.js'] // support ts-files and js-files
+		extensions: ['.js']
 	},
 	entry: {
-		main: './lib/jshost/main.js',
-		messageChannel: './lib/jshost/messageChannel.js',
-		messagePort: '/lib/jshost/messagePort.js',
+		extension: '../../../lib/jshost/test/test.js',
 	},
 	resolve: {
 		alias: {
@@ -43,11 +29,6 @@ const jshostConfig = {
 	},
 	devtool: 'source-map',
 	output: {
-		filename: '[name].jshost.js'
+		filename: 'tests.jshost.js'
 	}
 };
-
-module.exports = [
-	browserConfig,
-	jshostConfig
-];
