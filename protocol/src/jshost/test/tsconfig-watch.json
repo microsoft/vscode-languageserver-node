@@ -1,0 +1,12 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"noUnusedLocals": false,
+		"noUnusedParameters": false,
+		"assumeChangesOnlyAffectDirectDependencies": true,
+		"tsBuildInfoFile":"../../../lib/jshost/test/watch.tsbuildInfo",
+	},
+	"references": [
+		{ "path": "../tsconfig-watch.json" },
+	]
+}

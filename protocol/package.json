@@ -32,7 +32,12 @@
 		"test": "npm run test:node && npm run test:browser",
 		"test:node": "node ../node_modules/mocha/bin/_mocha",
 		"test:browser": "npm run webpack:test:silent && node ../build/bin/runBrowserTests.js  http://127.0.0.1:8080/protocol/src/browser/test/",
-		"webpack:test": "cd ../types && npm run compile:esm && cd ../protocol && node ../build/bin/webpack --mode none --config ./src/browser/test/webpack.config.js",
-		"webpack:test:silent": "cd ../types && npm run compile:esm && cd ../protocol && node ../build/bin/webpack --no-stats --mode none --config ./src/browser/test/webpack.config.js"
+		"test:jshost": "node ../node_modules/mocha/bin/_mocha",
+		"webpack:test": "npm run webpack:test:browser && npm run webpack:test:jshost",
+		"webpack:test:silent": "npm run webpack:test:browser:silent && npm run webpack:test:jshost:silent",
+		"webpack:test:browser": "cd ../types && npm run compile:esm && cd ../protocol && node ../build/bin/webpack --mode none --config ./src/browser/test/webpack.config.js",
+		"webpack:test:browser:silent": "cd ../types && npm run compile:esm && cd ../protocol && node ../build/bin/webpack --no-stats --mode none --config ./src/browser/test/webpack.config.js",
+		"webpack:test:jshost": "cd ../types && npm run compile:esm && cd ../protocol && node ../build/bin/webpack --mode none --config ./src/jshost/test/webpack.config.js",
+		"webpack:test:jshost:silent": "cd ../types && npm run compile:esm && cd ../protocol && node ../build/bin/webpack --no-stats --mode none --config ./src/jshost/test/webpack.config.js"
 	}
 }
