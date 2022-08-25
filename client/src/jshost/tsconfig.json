@@ -1,0 +1,17 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"tsBuildInfoFile":"../../lib/jshost/compile.tsbuildInfo",
+		"rootDir": ".",
+		"outDir": "../../lib/jshost",
+		"types": [ "node" ],
+		"lib": [ "es2017"]
+	},
+	"include": [
+		"."
+	],
+	"references": [
+		{ "path": "../common/tsconfig.json" },
+		{ "path": "../../../protocol/src/jshost/tsconfig.json" }
+	]
+}
