@@ -7,19 +7,18 @@ import RIL from './ril';
 // Install the node runtime abstract.
 RIL.install();
 
-import RAL from '../common/ral';
-import {
-	AbstractMessageReader, DataCallback, AbstractMessageWriter, Message, ReadableStreamMessageReader, WriteableStreamMessageWriter,
-	MessageWriterOptions, MessageReaderOptions, MessageReader, MessageWriter, NullLogger, ConnectionStrategy, ConnectionOptions,
-	MessageConnection, Logger, createMessageConnection as _createMessageConnection, Disposable, Emitter
-} from '../common/api';
-
 import * as path from 'path';
 import * as os from 'os';
 import { ChildProcess } from 'child_process';
 import { randomBytes } from 'crypto';
 import { Server, Socket, createServer, createConnection } from 'net';
 import { MessagePort } from 'worker_threads';
+
+import {
+	RAL, AbstractMessageReader, DataCallback, AbstractMessageWriter, Message, ReadableStreamMessageReader, WriteableStreamMessageWriter,
+	MessageWriterOptions, MessageReaderOptions, MessageReader, MessageWriter, NullLogger, ConnectionStrategy, ConnectionOptions,
+	MessageConnection, Logger, createMessageConnection as _createMessageConnection, Disposable, Emitter
+} from '../common/api';
 
 export * from '../common/api';
 
