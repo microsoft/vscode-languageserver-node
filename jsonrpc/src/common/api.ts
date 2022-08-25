@@ -17,6 +17,8 @@ import { Event, Emitter } from './events';
 import { AbstractCancellationTokenSource, CancellationTokenSource, CancellationToken } from './cancellation';
 import { MessageReader, AbstractMessageReader, ReadableStreamMessageReader, DataCallback, MessageReaderOptions, PartialMessageInfo } from './messageReader';
 import { MessageWriter, AbstractMessageWriter, WriteableStreamMessageWriter, MessageWriterOptions } from './messageWriter';
+import { AbstractMessageBuffer } from './messageBuffer';
+import { ContentTypeEncoderOptions, ContentTypeDecoderOptions } from './encoding';
 import {
 	Logger, ConnectionStrategy, ConnectionOptions, MessageConnection, NullLogger, createMessageConnection,
 	ProgressToken, ProgressType, HandlerResult, StarRequestHandler, GenericRequestHandler,
@@ -48,6 +50,10 @@ export {
 	MessageReader, AbstractMessageReader, ReadableStreamMessageReader, DataCallback, MessageReaderOptions, PartialMessageInfo,
 	// Export from message write
 	MessageWriter, AbstractMessageWriter, WriteableStreamMessageWriter, MessageWriterOptions,
+	// Export from abstract message buffer
+	AbstractMessageBuffer,
+	// Export from encodings
+	ContentTypeEncoderOptions, ContentTypeDecoderOptions,
 	// Export from connection
 	Logger, ConnectionStrategy, ConnectionOptions, MessageConnection, NullLogger, createMessageConnection,
 	ProgressToken, ProgressType, HandlerResult, StarRequestHandler, GenericRequestHandler,

@@ -3,13 +3,11 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import RAL from '../common/ral';
 import { TextDecoder } from 'util';
 
-import { Disposable } from '../common/disposable';
-import { Message } from '../common/messages';
-import { ContentTypeEncoderOptions, ContentTypeDecoderOptions } from '../common/encoding';
-import { AbstractMessageBuffer } from '../common/messageBuffer';
+import {
+	RAL, Disposable, Message, ContentTypeEncoderOptions, ContentTypeDecoderOptions, AbstractMessageBuffer
+} from '../common/api';
 
 class MessageBuffer extends AbstractMessageBuffer {
 
