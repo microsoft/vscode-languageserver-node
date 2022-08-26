@@ -9,6 +9,9 @@
 	"files.eol": "\n",
 	"files.trimTrailingWhitespace": true,
 
+	"task.allowAutomaticTasks": "on",
+
+	"typescript.tsc.autoDetect": "off",
 	"typescript.tsdk": "./node_modules/typescript/lib",
 	"typescript.tsserver.trace": "off",
 	"typescript.format.insertSpaceAfterCommaDelimiter": true,
@@ -47,7 +50,6 @@
 		"./tools",
 		"./tsconfig-gen"
 	],
-	"typescript.tsc.autoDetect": "off",
 	"editor.codeActionsOnSave": {
 		"source.fixAll.eslint": true
 	},
