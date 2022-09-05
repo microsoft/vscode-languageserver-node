@@ -9,6 +9,7 @@ import { SemanticTokenTypes, SemanticTokenModifiers, LSPAny } from 'vscode-langu
 import { MessageDirection, ProtocolNotificationType } from './messages';
 import { LSPErrorCodes } from './api';
 import { WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressReport } from './protocol.progress';
+import { DocumentDiagnosticReportKind } from './protocol.diagnostic';
 
 // This file is used to define the $ notification partly specified in JSON-RPC
 // so that we generate proper data for them in the meta model.
@@ -32,6 +33,9 @@ type $SemanticTokenTypes = SemanticTokenTypes;
 
 // @ts-ignore 6196
 type $SemanticTokenModifiers = SemanticTokenModifiers;
+
+// @ts-ignore 6196
+type $DocumentDiagnosticReportKind = DocumentDiagnosticReportKind;
 
 // @ts-ignore 6196
 const $ErrorCodes = ErrorCodes;
