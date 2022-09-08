@@ -12747,6 +12747,27 @@
 			"since": "3.16.0"
 		},
 		{
+			"name": "DocumentDiagnosticReportKind",
+			"type": {
+				"kind": "base",
+				"name": "string"
+			},
+			"values": [
+				{
+					"name": "Full",
+					"value": "full",
+					"documentation": "A diagnostic report with a full\nset of problems."
+				},
+				{
+					"name": "Unchanged",
+					"value": "unchanged",
+					"documentation": "A report indicating that the last\nreturned report is still accurate."
+				}
+			],
+			"documentation": "The document diagnostic report kinds.\n\n@since 3.17.0",
+			"since": "3.17.0"
+		},
+		{
 			"name": "ErrorCodes",
 			"type": {
 				"kind": "base",

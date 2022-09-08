@@ -294,6 +294,12 @@ enum PullState {
 	workspace = 2
 }
 
+namespace DocumentOrUri {
+	export function asKey(document: TextDocument | Uri): string {
+		return document instanceof Uri ? document.toString() : document.uri.toString();
+	}
+}
+
 class DocumentPullStateTracker {
 
 	private readonly documentPullStates: Map<string, DocumentPullState>;
@@ -338,19 +344,19 @@ class DocumentPullStateTracker {
 	}
 
 	public unTrack(kind: PullState, document: TextDocument | Uri): void {
-		const key = document instanceof Uri ? document.toString() : document.uri.toString();
+		const key = DocumentOrUri.asKey(document);
 		const states = kind === PullState.document ? this.documentPullStates : this.workspacePullStates;
 		states.delete(key);
 	}
 
 	public tracks(kind: PullState, document: TextDocument | Uri): boolean {
-		const key = document instanceof Uri ? document.toString() : document.uri.toString();
+		const key = DocumentOrUri.asKey(document);
 		const states = kind === PullState.document ? this.documentPullStates : this.workspacePullStates;
 		return states.has(key);
 	}
 
 	public getResultId(kind: PullState, document: TextDocument | Uri): string | undefined {
-		const key = document instanceof Uri ? document.toString() : document.uri.toString();
+		const key = DocumentOrUri.asKey(document);
 		const states = kind === PullState.document ? this.documentPullStates : this.workspacePullStates;
 		return states.get(key)?.resultId;
 	}
@@ -402,7 +408,8 @@ class DiagnosticRequestor implements Disposable {
 	}
 
 	public knows(kind: PullState, document: TextDocument | Uri): boolean {
-		return this.documentStates.tracks(kind, document);
+		const uri = document instanceof Uri ? document : document.uri;
+		return this.documentStates.tracks(kind, document) || this.openRequests.has(uri.toString());
 	}
 
 	public forget(kind: PullState, document: TextDocument | Uri): void {
@@ -731,7 +738,7 @@ class BackgroundScheduler implements Disposable {
 		if (this.isDisposed === true) {
 			return;
 		}
-		const key = document instanceof Uri ? document.toString() : document.uri.toString();
+		const key = DocumentOrUri.asKey(document);
 		if (this.documents.has(key)) {
 			return;
 		}
@@ -740,7 +747,7 @@ class BackgroundScheduler implements Disposable {
 	}
 
 	public remove(document: TextDocument | Uri): void {
-		const key = document instanceof Uri ? document.toString() : document.uri.toString();
+		const key = DocumentOrUri.asKey(document);
 		if (this.documents.has(key)) {
 			this.documents.delete(key);
 			// Do a last pull
@@ -749,7 +756,7 @@ class BackgroundScheduler implements Disposable {
 		// No more documents. Stop background activity.
 		if (this.documents.size === 0) {
 			this.stop();
-		} else if (document === this.endDocument) {
+		} else if (key === this.endDocumentKey()) {
 			// Make sure we have a correct last document. It could have
 			this.endDocument = this.documents.last;
 		}
@@ -769,10 +776,10 @@ class BackgroundScheduler implements Disposable {
 		this.intervalHandle = RAL().timer.setInterval(() => {
 			const document = this.documents.first;
 			if (document !== undefined) {
-				const key = document instanceof Uri ? document.toString() : document.uri.toString();
+				const key = DocumentOrUri.asKey(document);
 				this.diagnosticRequestor.pull(document);
 				this.documents.set(key, document, Touch.Last);
-				if (document === this.endDocument) {
+				if (key === this.endDocumentKey()) {
 					this.stop();
 				}
 			}
@@ -789,6 +796,10 @@ class BackgroundScheduler implements Disposable {
 		this.intervalHandle?.dispose();
 		this.intervalHandle = undefined;
 		this.endDocument = undefined;
+	}
+
+	private endDocumentKey(): string | undefined {
+		return this.endDocument !== undefined ? DocumentOrUri.asKey(this.endDocument) : undefined;
 	}
 }
 
@@ -905,13 +916,9 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 			}
 		}
 
-		tabs.onOpen((opened) => {
-			for (const document of opened) {
-				if (matches(document) && !this.diagnosticRequestor.knows(PullState.document, document)) {
-					this.diagnosticRequestor.pull(document, () => { addToBackgroundIfNeeded(document); });
-				}
-			}
-		});
+		// We don't need to pull on tab open since we will receive a document open as well later on
+		// and that event allows us to use a document for a match check which will have a set
+		// language id.
 
 		if (diagnosticPullOptions.onChange === true) {
 			const changeFeature = client.getFeature(DidChangeTextDocumentNotification.method);
