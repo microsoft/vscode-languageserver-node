@@ -7,6 +7,7 @@ import * as assert from 'assert';
 
 import { Duplex  } from 'stream';
 import { inherits } from 'util';
+import { AsyncLocalStorage } from 'async_hooks';
 
 import { CancellationTokenSource, RequestType, RequestType3, ResponseError, NotificationType, NotificationType2, ErrorCodes } from '../main';
 
@@ -651,6 +652,33 @@ suite('Connection', () => {
 		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger, options);
 		client.listen();
 		void client.sendRequest(type, source.token);
+	});
+
+	test('Uses custom message handler', (done) => {
+		let type = new RequestType<number, number, void>('test/handleSingleRequest');
+		let duplexStream1 = new TestDuplex('ds1');
+		let duplexStream2 = new TestDuplex('ds2');
+
+		const asyncLocalStorage = new AsyncLocalStorage();
+
+		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, {
+			messageStrategy: {
+				handleMessage(message, next) {
+					asyncLocalStorage.run(1, () => next(message));
+				}
+			}
+		});
+		server.onRequest(type, (_p1, _token) => {
+			return asyncLocalStorage.getStore();
+		});
+		server.listen();
+
+		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		client.listen();
+		void client.sendRequest(type, 0).then((res) => {
+			assert.strictEqual(res, 1);
+			done();
+		});
 	});
 
 	test('Message ports', async () => {
