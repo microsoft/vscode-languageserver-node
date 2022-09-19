@@ -19,6 +19,8 @@ connection.onRequest(type, (token) => {
 			if (token.isCancellationRequested) {
 				resolve(true);
 			}
-		}, 50);
+		}, 10);
 	});
 });
+
+connection.listen();
