@@ -341,10 +341,61 @@ export namespace ConnectionStrategy {
 }
 
 export type CancellationId = number | string;
-export interface CancellationReceiverStrategy {
+
+export interface IdCancellationReceiverStrategy {
+
+	kind?: 'id';
+
+	/**
+	 * Creates a CancellationTokenSource from a cancellation id.
+	 *
+	 * @param id The cancellation id.
+	 */
 	createCancellationTokenSource(id: CancellationId): AbstractCancellationTokenSource;
+
+	/**
+	 * An optional method to dispose the strategy.
+	 */
 	dispose?(): void;
 }
+
+export namespace IdCancellationReceiverStrategy {
+	export function is(value: any): value is IdCancellationReceiverStrategy {
+		const candidate: IdCancellationReceiverStrategy = value;
+		return candidate &&  (candidate.kind === undefined || candidate.kind === 'id') && Is.func(candidate.createCancellationTokenSource) && (candidate.dispose === undefined || Is.func(candidate.dispose));
+	}
+}
+
+export interface RequestCancellationReceiverStrategy {
+
+	kind: 'request';
+
+	/**
+	 * Create a cancellation token source from a given request message.
+	 *
+	 * @param requestMessage The request message.
+	 */
+	createCancellationTokenSource(requestMessage: RequestMessage): AbstractCancellationTokenSource;
+
+	/**
+	 * An optional method to dispose the strategy.
+	 */
+	dispose?(): void;
+}
+
+export namespace RequestCancellationReceiverStrategy {
+	export function is(value: any): value is RequestCancellationReceiverStrategy {
+		const candidate: RequestCancellationReceiverStrategy = value;
+		return candidate && candidate.kind === 'request' && Is.func(candidate.createCancellationTokenSource) && (candidate.dispose === undefined || Is.func(candidate.dispose));
+	}
+}
+
+/**
+ * This will break with the next major version and will become
+ * export type CancellationReceiverStrategy = IdCancellationReceiverStrategy | RequestCancellationReceiverStrategy;
+ */
+export type CancellationReceiverStrategy = IdCancellationReceiverStrategy;
+
 export namespace CancellationReceiverStrategy {
 	export const Message: CancellationReceiverStrategy = Object.freeze({
 		createCancellationTokenSource(_: CancellationId): AbstractCancellationTokenSource {
@@ -353,14 +404,37 @@ export namespace CancellationReceiverStrategy {
 	});
 
 	export function is(value: any): value is CancellationReceiverStrategy {
-		const candidate: CancellationReceiverStrategy = value;
-		return candidate && Is.func(candidate.createCancellationTokenSource);
+		return IdCancellationReceiverStrategy.is(value) || RequestCancellationReceiverStrategy.is(value);
 	}
 }
 
 export interface CancellationSenderStrategy {
+	/**
+	 * Hook to enable cancellation for the given request.
+	 *
+	 * @param request The request to enable cancellation for.
+	 */
+	enableCancellation?(request: RequestMessage): void;
+
+	/**
+	 * Send cancellation for the given cancellation id
+	 *
+	 * @param conn The connection used.
+	 * @param id The cancellation id.
+	 */
 	sendCancellation(conn: MessageConnection, id: CancellationId): Promise<void>;
+
+	/**
+	 * Cleanup any cancellation state for the given cancellation id. After this
+	 * method has been call no cancellation will be sent anymore for the given id.
+	 *
+	 * @param id The cancellation id.
+	 */
 	cleanup(id: CancellationId): void;
+
+	/**
+	 * An optional method to dispose the strategy.
+	 */
 	dispose?(): void;
 }
 export namespace CancellationSenderStrategy {
@@ -378,7 +452,7 @@ export namespace CancellationSenderStrategy {
 }
 
 export interface CancellationStrategy {
-	receiver: CancellationReceiverStrategy;
+	receiver: CancellationReceiverStrategy | RequestCancellationReceiverStrategy;
 	sender: CancellationSenderStrategy;
 }
 export namespace CancellationStrategy {
@@ -751,7 +825,10 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		const startTime = Date.now();
 		if (requestHandler || starRequestHandler) {
 			const tokenKey = requestMessage.id ?? String(Date.now()); //
-			const cancellationSource = cancellationStrategy.receiver.createCancellationTokenSource(tokenKey);
+			const cancellationSource = IdCancellationReceiverStrategy.is(cancellationStrategy.receiver)
+				? cancellationStrategy.receiver.createCancellationTokenSource(tokenKey)
+				: cancellationStrategy.receiver.createCancellationTokenSource(requestMessage);
+
 			if (requestMessage.id !== null && knownCanceledRequests.has(requestMessage.id)) {
 				cancellationSource.cancel();
 			}
@@ -1352,6 +1429,9 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				let responsePromise: ResponsePromise | null = { method: method, timerStart: Date.now(), resolve: resolveWithCleanup, reject: rejectWithCleanup };
 				traceSendingRequest(requestMessage);
 				try {
+					if (typeof cancellationStrategy.sender.enableCancellation === 'function') {
+						cancellationStrategy.sender.enableCancellation(requestMessage);
+					}
 					messageWriter.write(requestMessage).catch(() => logger.error(`Sending request failed.`));
 				} catch (e: any) {
 					// Writing the message failed. So we need to reject the promise.
