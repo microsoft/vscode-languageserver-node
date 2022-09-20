@@ -3,11 +3,10 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { Emitter, Event } from './events';
+import { Event } from './events';
 import { RequestMessage } from './messages';
 import { AbstractCancellationTokenSource, CancellationToken, CancellationTokenSource } from './cancellation';
 import { CancellationId,RequestCancellationReceiverStrategy, CancellationSenderStrategy, MessageConnection } from './connection';
-import RAL from './ral';
 
 interface RequestMessageWithCancelData extends RequestMessage {
 	$cancellationToken: SharedArrayBuffer;
@@ -58,50 +57,17 @@ export class SharedArraySenderStrategy implements CancellationSenderStrategy {
 class SharedArrayBufferCancellationToken implements CancellationToken {
 
 	private readonly data: Int32Array;
-	private isCanceled: boolean;
-	private emitter: Emitter<void> | undefined;
 
 	constructor(buffer: SharedArrayBuffer) {
 		this.data = new Int32Array(buffer, 0, 1);
-		this.isCanceled = false;
 	}
 
 	public get isCancellationRequested(): boolean {
-		const result = Atomics.load(this.data, 0) === CancellationState.Cancelled;
-		if (result && !this.isCanceled) {
-			this.isCanceled = true;
-			if (this.emitter !== undefined) {
-				try {
-					this.emitter.fire();
-				} catch (error) {
-					RAL().console.error(error);
-				}
-			}
-		}
-		return result;
+		return Atomics.load(this.data, 0) === CancellationState.Cancelled;
 	}
 
 	public get onCancellationRequested(): Event<void> {
-		if (!this.emitter) {
-			this.emitter = new Emitter();
-		}
-		return this.emitter.event;
-	}
-
-	public cancel(): void {
-		if (this.isCanceled) {
-			return;
-		}
-		Atomics.store(this.data, 0, CancellationState.Cancelled);
-		this.isCanceled = true;
-
-		if (this.emitter !== undefined) {
-			try {
-				this.emitter.fire();
-			} catch (error) {
-				RAL().console.error(error);
-			}
-		}
+		throw new Error(`Cancellation over SharedArrayBuffer doesn't support cancellation events`);
 	}
 }
 
@@ -114,7 +80,6 @@ class SharedArrayBufferCancellationTokenSource implements AbstractCancellationTo
 	}
 
 	cancel(): void {
-		this.token.cancel();
 	}
 
 	dispose(): void {
