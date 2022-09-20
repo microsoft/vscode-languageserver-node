@@ -5,8 +5,9 @@
 
 import * as assert from 'assert';
 
-import { RequestMessage, ResponseMessage } from '../../common/api';
-import { BrowserMessageReader, BrowserMessageWriter } from '../main';
+import { CancellationTokenSource, RequestMessage, RequestType0, ResponseMessage } from '../../common/api';
+import { SharedArrayReceiverStrategy, SharedArraySenderStrategy } from '../../common/sharedArrayCancellation';
+import { BrowserMessageReader, BrowserMessageWriter, createMessageConnection } from '../main';
 import RIL from '../ril';
 
 function assertDefined<T>(value: T | undefined | null): asserts value is T {
@@ -89,5 +90,23 @@ suite('Browser IPC Reader / Writer', () => {
 				assert.strictEqual(item.label, `label${i}`);
 			}
 		}
+	});
+
+	test('Cancellation via SharedArrayBuffer', (done) => {
+		debugger;
+		const worker = new Worker('/jsonrpc/dist/cancelWorker.js');
+		const reader = new BrowserMessageReader(worker);
+		const writer = new BrowserMessageWriter(worker);
+
+		const type = new RequestType0<boolean, void>('test/handleCancel');
+		const connection = createMessageConnection(reader, writer, undefined, { cancellationStrategy: { sender: new SharedArraySenderStrategy(), receiver: new SharedArrayReceiverStrategy() } });
+		connection.listen();
+		const tokenSource = new CancellationTokenSource();
+		void connection.sendRequest(type, tokenSource.token).then((value) => {
+			if (value) {
+				done();
+			}
+		});
+		tokenSource.cancel();
 	});
 });
