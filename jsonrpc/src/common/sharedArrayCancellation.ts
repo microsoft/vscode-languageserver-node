@@ -3,17 +3,18 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { Event } from './events';
+import { Emitter, Event } from './events';
 import { RequestMessage } from './messages';
 import { AbstractCancellationTokenSource, CancellationToken, CancellationTokenSource } from './cancellation';
 import { CancellationId,RequestCancellationReceiverStrategy, CancellationSenderStrategy, MessageConnection } from './connection';
+import RAL from './ral';
 
 interface RequestMessageWithCancelData extends RequestMessage {
-	$cancellation: SharedArrayBuffer;
+	$cancellationToken: SharedArrayBuffer;
 }
 
 namespace CancellationState {
-	export const Running: number = 0;
+	export const Continue: number = 0;
 	export const Cancelled: number = 1;
 }
 
@@ -31,9 +32,9 @@ export class SharedArraySenderStrategy implements CancellationSenderStrategy {
 		}
 		const buffer = new SharedArrayBuffer(4);
 		const data = new Int32Array(buffer, 0, 1);
-		data[0] = CancellationState.Running;
+		data[0] = CancellationState.Continue;
 		this.buffers.set(request.id, buffer);
-		(request as RequestMessageWithCancelData).$cancellation = buffer;
+		(request as RequestMessageWithCancelData).$cancellationToken = buffer;
 	}
 
 	async sendCancellation(_conn: MessageConnection, id: CancellationId): Promise<void> {
@@ -57,29 +58,63 @@ export class SharedArraySenderStrategy implements CancellationSenderStrategy {
 class SharedArrayBufferCancellationToken implements CancellationToken {
 
 	private readonly data: Int32Array;
+	private isCanceled: boolean;
+	private emitter: Emitter<void> | undefined;
 
 	constructor(buffer: SharedArrayBuffer) {
 		this.data = new Int32Array(buffer, 0, 1);
+		this.isCanceled = false;
 	}
 
 	public get isCancellationRequested(): boolean {
-		return Atomics.load(this.data, 0) === CancellationState.Cancelled;
+		const result = Atomics.load(this.data, 0) === CancellationState.Cancelled;
+		if (result && !this.isCanceled) {
+			this.isCanceled = true;
+			if (this.emitter !== undefined) {
+				try {
+					this.emitter.fire();
+				} catch (error) {
+					RAL().console.error(error);
+				}
+			}
+		}
+		return result;
 	}
 
-	public get onCancellationRequested(): Event<any> {
-		throw new Error(`Cancellation tokens on shared array buffers don't support cancellation events`);
+	public get onCancellationRequested(): Event<void> {
+		if (!this.emitter) {
+			this.emitter = new Emitter();
+		}
+		return this.emitter.event;
+	}
+
+	public cancel(): void {
+		if (this.isCanceled) {
+			return;
+		}
+		Atomics.store(this.data, 0, CancellationState.Cancelled);
+		this.isCanceled = true;
+
+		if (this.emitter !== undefined) {
+			try {
+				this.emitter.fire();
+			} catch (error) {
+				RAL().console.error(error);
+			}
+		}
 	}
 }
 
 class SharedArrayBufferCancellationTokenSource implements AbstractCancellationTokenSource {
 
-	public readonly token: CancellationToken;
+	public readonly token: SharedArrayBufferCancellationToken;
 
 	constructor(buffer: SharedArrayBuffer) {
 		this.token = new SharedArrayBufferCancellationToken(buffer);
 	}
 
 	cancel(): void {
+		this.token.cancel();
 	}
 
 	dispose(): void {
@@ -90,7 +125,7 @@ export class SharedArrayReceiverStrategy implements RequestCancellationReceiverS
 	public readonly kind = 'request' as const;
 
 	createCancellationTokenSource(request: RequestMessage): AbstractCancellationTokenSource {
-		const buffer = (request as RequestMessageWithCancelData).$cancellation;
+		const buffer = (request as RequestMessageWithCancelData).$cancellationToken;
 		if (buffer === undefined) {
 			return new CancellationTokenSource();
 		}

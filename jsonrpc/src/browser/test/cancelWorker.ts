@@ -15,7 +15,7 @@ const type = new RequestType0<boolean, void>('test/handleCancel');
 const connection = createMessageConnection(reader, writer, undefined, { cancellationStrategy: { sender: new SharedArraySenderStrategy(), receiver: new SharedArrayReceiverStrategy() } });
 connection.onRequest(type, (token) => {
 	const start = Date.now();
-	while(Date.now() - start < 2000) {
+	while(Date.now() - start < 1000) {
 		if (token.isCancellationRequested) {
 			return true;
 		}
