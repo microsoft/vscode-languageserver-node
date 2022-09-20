@@ -8,8 +8,8 @@ import { RequestMessage } from './messages';
 import { AbstractCancellationTokenSource, CancellationToken, CancellationTokenSource } from './cancellation';
 import { CancellationId,RequestCancellationReceiverStrategy, CancellationSenderStrategy, MessageConnection } from './connection';
 
-interface RequestMessageWithCancelData extends RequestMessage {
-	$cancellationToken: SharedArrayBuffer;
+interface RequestMessageWithCancellationData extends RequestMessage {
+	$cancellationData: SharedArrayBuffer;
 }
 
 namespace CancellationState {
@@ -33,7 +33,7 @@ export class SharedArraySenderStrategy implements CancellationSenderStrategy {
 		const data = new Int32Array(buffer, 0, 1);
 		data[0] = CancellationState.Continue;
 		this.buffers.set(request.id, buffer);
-		(request as RequestMessageWithCancelData).$cancellationToken = buffer;
+		(request as RequestMessageWithCancellationData).$cancellationData = buffer;
 	}
 
 	async sendCancellation(_conn: MessageConnection, id: CancellationId): Promise<void> {
@@ -90,7 +90,7 @@ export class SharedArrayReceiverStrategy implements RequestCancellationReceiverS
 	public readonly kind = 'request' as const;
 
 	createCancellationTokenSource(request: RequestMessage): AbstractCancellationTokenSource {
-		const buffer = (request as RequestMessageWithCancelData).$cancellationToken;
+		const buffer = (request as RequestMessageWithCancellationData).$cancellationData;
 		if (buffer === undefined) {
 			return new CancellationTokenSource();
 		}
