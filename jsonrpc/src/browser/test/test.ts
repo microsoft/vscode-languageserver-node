@@ -92,7 +92,7 @@ suite('Browser IPC Reader / Writer', () => {
 		}
 	});
 
-	test('Cancellation via SharedArrayBuffer', (done) => {
+	test('Cancellation via SharedArrayBuffer', async () => {
 		debugger;
 		const worker = new Worker('/jsonrpc/dist/cancelWorker.js');
 		const reader = new BrowserMessageReader(worker);
@@ -102,11 +102,9 @@ suite('Browser IPC Reader / Writer', () => {
 		const connection = createMessageConnection(reader, writer, undefined, { cancellationStrategy: { sender: new SharedArraySenderStrategy(), receiver: new SharedArrayReceiverStrategy() } });
 		connection.listen();
 		const tokenSource = new CancellationTokenSource();
-		void connection.sendRequest(type, tokenSource.token).then((value) => {
-			if (value) {
-				done();
-			}
-		});
+		const promise = connection.sendRequest(type, tokenSource.token);
 		tokenSource.cancel();
+		const result = await promise;
+		assert.ok(result, 'Cancellation failed');
 	});
 });
