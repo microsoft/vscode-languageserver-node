@@ -12,7 +12,7 @@ import * as os from 'os';
 import { ChildProcess } from 'child_process';
 import { randomBytes } from 'crypto';
 import { Server, Socket, createServer, createConnection } from 'net';
-import { MessagePort } from 'worker_threads';
+import { MessagePort, Worker } from 'worker_threads';
 
 import {
 	RAL, AbstractMessageReader, DataCallback, AbstractMessageWriter, Message, ReadableStreamMessageReader, WriteableStreamMessageWriter,
@@ -86,7 +86,7 @@ export class PortMessageReader extends AbstractMessageReader implements MessageR
 
 	private onData: Emitter<Message>;
 
-	public constructor(port: MessagePort) {
+	public constructor(port: MessagePort | Worker) {
 		super();
 		this.onData = new Emitter<Message>;
 		port.on('close', () => this.fireClose);
@@ -103,10 +103,10 @@ export class PortMessageReader extends AbstractMessageReader implements MessageR
 
 export class PortMessageWriter extends AbstractMessageWriter implements MessageWriter {
 
-	private readonly port: MessagePort;
+	private readonly port: MessagePort | Worker;
 	private errorCount: number;
 
-	public constructor(port: MessagePort) {
+	public constructor(port: MessagePort | Worker) {
 		super();
 		this.port = port;
 		this.errorCount = 0;
