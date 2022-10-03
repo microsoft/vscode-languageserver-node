@@ -127,8 +127,11 @@ export type DiagnosticPullOptions = {
 	 * An optional filter method that is consulted when triggering a
 	 * diagnostic pull during document change or document save.
 	 *
-	 * @param document the document that changed or got saved
-	 * @param mode the mode
+	 * The document gets filtered if the method returns `true`.
+	 *
+	 * @param document The document that changed or got saved.
+	 * @param mode The pull mode.
+	 * @returns whether the document should be filtered (`true`) or not.
 	 */
 	filter?(document: TextDocument, mode: DiagnosticPullMode): boolean;
 
@@ -145,8 +148,12 @@ export type DiagnosticPullOptions = {
 	 * An optional match method that is consulted when pulling for diagnostics
 	 * when only a URI is known (e.g. for not instantiated tabs)
 	 *
-	 * @param documentSelector the document selector
-	 * @param resource the resource
+	 * The method should return `true` if the document selector matches the
+	 * given resource. See also the `vscode.languages.match` function.
+	 *
+	 * @param documentSelector The document selector.
+	 * @param resource The resource.
+	 * @returns whether the resource is matched by the given document selector.
 	 */
 	match?(documentSelector: DocumentSelector, resource: Uri): boolean;
 };
