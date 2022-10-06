@@ -1,0 +1,12 @@
+.vscode/
+lib/test/
+lib/*.map
+lib/compile.tsbuildInfo
+src/
+test/
+.eslintrc.json
+.gitignore
+.npmignore
+tsconfig.json
+tsconfig.base.json
+tsconfig.watch.json

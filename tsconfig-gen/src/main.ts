@@ -17,7 +17,7 @@ export function main(): number {
 		exitProcess(false).
 		usage(`TSConfig Generator\nVersion: ${require('../package.json').version}\nUsage: tsconfig-gen [options] file`).
 		example(`tsconfig-gen .tsconfigrc.js`, `Creates tsconfig.json files based on the configuration in .tsconfigrc.js`).
-		example(`tsconfig-gen -i compile -f .tsconfigrc.js`, `Creates tsconfig.json files for the 'compile' variant based on the configuration in .tsconfigrc.js`).
+		example(`tsconfig-gen -t compile -f .tsconfigrc.js`, `Creates tsconfig.json files for the 'compile' variant based on the configuration in .tsconfigrc.js`).
 		version(false).
 		wrap(Math.min(100, yargs.terminalWidth())).
 		option('d', {
@@ -27,12 +27,12 @@ export function main(): number {
 		}).
 		option('t', {
 			alias: 'tag',
-			description: 'Only the compile variants with the give tag are generated. If omitted all variants are generated.',
+			description: 'Only variants with the give tag are generated. If omitted all variants are generated.',
 			array: true
 		}).
 		option('f', {
 			alias: 'file',
-			description: 'The input file. This option is useful together with the i option.',
+			description: 'The input file.',
 			string: true,
 		}).
 		option('v', {
