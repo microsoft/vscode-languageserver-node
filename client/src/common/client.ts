@@ -201,7 +201,7 @@ export interface ErrorHandler {
 	/**
 	 * The connection to the server got closed.
 	 */
-	closed(): CloseHandlerResult;
+	closed(): Promise<CloseHandlerResult>;
 }
 
 /**
@@ -390,7 +390,7 @@ class DefaultErrorHandler implements ErrorHandler {
 		return { action: ErrorAction.Shutdown };
 	}
 
-	public closed(): CloseHandlerResult {
+	public async closed(): Promise<CloseHandlerResult> {
 		this.restarts.push(Date.now());
 		if (this.restarts.length <= this.maxRestartCount) {
 			return { action: CloseAction.Restart };
@@ -1459,33 +1459,42 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		} catch (error) {
 			// Disposing a connection could fail if error cases.
 		}
-		let handlerResult: CloseHandlerResult = { action: CloseAction.DoNotRestart };
-		if (this.$state !== ClientState.Stopping) {
-			try {
-				handlerResult = this._clientOptions.errorHandler!.closed();
-			} catch (error) {
-				// Ignore errors coming from the error handler.
-			}
-		}
-		this._connection = undefined;
-		if (handlerResult.action === CloseAction.DoNotRestart) {
-			this.error(handlerResult.message ?? 'Connection to server got closed. Server will not be restarted.', undefined, 'force');
-			this.cleanUp('stop');
-			if (this.$state === ClientState.Starting) {
-				this.$state = ClientState.StartFailed;
+
+		const handlerResultPromise = new Promise<CloseHandlerResult>(resolve => {
+			let handlerResult: CloseHandlerResult = { action: CloseAction.DoNotRestart };
+			if (this.$state !== ClientState.Stopping) {
+				this._clientOptions.errorHandler!.closed().then(handlerResult => {
+					resolve(handlerResult);
+				}, () => {
+					// Ignore errors coming from the error handler
+				});
 			} else {
-				this.$state = ClientState.Stopped;
+				resolve(handlerResult);
 			}
-			this._onStop = Promise.resolve();
-			this._onStart = undefined;
-		} else if (handlerResult.action === CloseAction.Restart) {
-			this.info(handlerResult.message ?? 'Connection to server got closed. Server will restart.');
-			this.cleanUp('restart');
-			this.$state = ClientState.Initial;
-			this._onStop = Promise.resolve();
-			this._onStart = undefined;
-			this.start().catch((error) => this.error(`Restarting server failed`, error, 'force'));
-		}
+		});
+		this._connection = undefined;
+		handlerResultPromise.then(handlerResult => {
+			if (handlerResult.action === CloseAction.DoNotRestart) {
+				this.error(handlerResult.message ?? 'Connection to server got closed. Server will not be restarted.', undefined, 'force');
+				this.cleanUp('stop');
+				if (this.$state === ClientState.Starting) {
+					this.$state = ClientState.StartFailed;
+				} else {
+					this.$state = ClientState.Stopped;
+				}
+				this._onStop = Promise.resolve();
+				this._onStart = undefined;
+			} else if (handlerResult.action === CloseAction.Restart) {
+				this.info(handlerResult.message ?? 'Connection to server got closed. Server will restart.');
+				this.cleanUp('restart');
+				this.$state = ClientState.Initial;
+				this._onStop = Promise.resolve();
+				this._onStart = undefined;
+				this.start().catch((error) => this.error(`Restarting server failed`, error, 'force'));
+			}
+		}, () => {
+			// Ignore errors
+		});
 	}
 
 	private handleConnectionError(error: Error, message: Message | undefined, count: number | undefined): void {
