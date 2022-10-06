@@ -149,9 +149,11 @@ export type $ConfigurationOptions = {
 
 export class SyncConfigurationFeature implements DynamicFeature<DidChangeConfigurationRegistrationOptions> {
 
+	private isDisposed: boolean;
 	private readonly _listeners: Map<string, Disposable>;
 
 	constructor(private _client: FeatureClient<DidChangeConfigurationWorkspaceMiddleware, $ConfigurationOptions>) {
+		this.isDisposed = false;
 		this._listeners = new Map();
 	}
 
@@ -202,9 +204,13 @@ export class SyncConfigurationFeature implements DynamicFeature<DidChangeConfigu
 			disposable.dispose();
 		}
 		this._listeners.clear();
+		this.isDisposed = true;
 	}
 
 	private onDidChangeConfiguration(configurationSection: string | string[] | undefined, event: ConfigurationChangeEvent | undefined): void {
+		if (this.isDisposed) {
+			return;
+		}
 		let sections: string[] | undefined;
 		if (Is.string(configurationSection)) {
 			sections = [configurationSection];
