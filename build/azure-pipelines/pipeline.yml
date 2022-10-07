@@ -1,0 +1,103 @@
+name: $(Date:yyyyMMdd)$(Rev:.r)
+
+trigger:
+  branches:
+    include:
+      - main
+pr: none
+
+resources:
+  repositories:
+    - repository: templates
+      type: github
+      name: microsoft/vscode-engineering
+      ref: main
+      endpoint: Monaco
+
+parameters:
+  - name: publishPackage1
+    displayName: 🚀 Publish vscode-languageserver-types
+    type: boolean
+    default: false
+  - name: publishPackage2
+    displayName: 🚀 Publish vscode-jsonrpc
+    type: boolean
+    default: false
+  - name: publishPackage3
+    displayName: 🚀 Publish vscode-languageserver-protocol
+    type: boolean
+    default: false
+  - name: publishPackage4
+    displayName: 🚀 Publish vscode-languageserver
+    type: boolean
+    default: false
+  - name: publishPackage5
+    displayName: 🚀 Publish vscode-languageclient
+    type: boolean
+    default: false
+
+extends:
+  template: azure-pipelines/npm-package/pipeline.yml@templates
+  parameters:
+    npmPackages:
+      - name: vscode-languageserver-types
+
+        buildPlatforms:
+          - name: Linux
+            nodeVersions:
+              - 14.x
+              - 16.x
+
+        buildSteps:
+          - script: npm install
+            displayName: Install dependencies
+
+      - name: vscode-jsonrpc
+
+        buildPlatforms:
+          - name: Linux
+            nodeVersions:
+              - 14.x
+              - 16.x
+
+        buildSteps:
+          - script: npm install
+            displayName: Install dependencies
+
+      - name: vscode-languageserver-protocol
+
+        buildPlatforms:
+          - name: Linux
+            nodeVersions:
+              - 14.x
+              - 16.x
+
+        buildSteps:
+          - script: npm install
+            displayName: Install dependencies
+
+      - name: vscode-languageserver
+
+        buildPlatforms:
+          - name: Linux
+            nodeVersions:
+              - 14.x
+              - 16.x
+
+        buildSteps:
+          - script: npm install
+            displayName: Install dependencies
+
+      - name: vscode-languageclient
+
+        buildPlatforms:
+          - name: Linux
+            nodeVersions:
+              - 14.x
+              - 16.x
+
+        buildSteps:
+          - script: npm install
+            displayName: Install dependencies
+
+    publishPackage: ${{ or(parameters.publishPackage1, parameters.publishPackage2, parameters.publishPackage3, parameters.publishPackage4, parameters.publishPackage5) }}
