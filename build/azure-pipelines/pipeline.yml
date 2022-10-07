@@ -16,23 +16,23 @@ resources:
 
 parameters:
   - name: publishPackage1
-    displayName: 🚀 Publish vscode-languageserver-types
+    displayName: 🚀 Publish languageserver-types
     type: boolean
     default: false
   - name: publishPackage2
-    displayName: 🚀 Publish vscode-jsonrpc
+    displayName: 🚀 Publish jsonrpc
     type: boolean
     default: false
   - name: publishPackage3
-    displayName: 🚀 Publish vscode-languageserver-protocol
+    displayName: 🚀 Publish languageserver-protocol
     type: boolean
     default: false
   - name: publishPackage4
-    displayName: 🚀 Publish vscode-languageserver
+    displayName: 🚀 Publish languageserver
     type: boolean
     default: false
   - name: publishPackage5
-    displayName: 🚀 Publish vscode-languageclient
+    displayName: 🚀 Publish languageclient
     type: boolean
     default: false
 
@@ -41,39 +41,39 @@ extends:
   parameters:
     npmPackages:
       - ${{ if eq(parameters.publishPackage1, true) }}:
-          - name: vscode-languageserver-types
+          - name: languageserver-types
 
             buildSteps:
               - script: npm install
                 displayName: Install dependencies
 
       - ${{ if eq(parameters.publishPackage2, true) }}:
-          - name: vscode-jsonrpc
-            dependsOn: vscode-languageserver-types
+          - name: jsonrpc
+            dependsOn: languageserver-types
 
             buildSteps:
               - script: npm install
                 displayName: Install dependencies
 
       - ${{ if eq(parameters.publishPackage3, true) }}:
-          - name: vscode-languageserver-protocol
-            dependsOn: vscode-jsonrpc
+          - name: languageserver-protocol
+            dependsOn: jsonrpc
 
             buildSteps:
               - script: npm install
                 displayName: Install dependencies
 
       - ${{ if eq(parameters.publishPackage4, true) }}:
-          - name: vscode-languageserver
-            dependsOn: vscode-languageserver-protocol
+          - name: languageserver
+            dependsOn: languageserver-protocol
 
             buildSteps:
               - script: npm install
                 displayName: Install dependencies
 
       - ${{ if eq(parameters.publishPackage5, true) }}:
-          - name: vscode-languageclient
-            dependsOn: vscode-languageserver
+          - name: languageclient
+            dependsOn: languageserver
 
             buildSteps:
               - script: npm install
