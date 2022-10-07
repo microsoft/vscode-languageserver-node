@@ -47,24 +47,28 @@ extends:
             displayName: Install dependencies
 
       - name: vscode-jsonrpc
+        dependsOn: vscode-languageserver-types
 
         buildSteps:
           - script: npm install
             displayName: Install dependencies
 
       - name: vscode-languageserver-protocol
+        dependsOn: vscode-jsonrpc
 
         buildSteps:
           - script: npm install
             displayName: Install dependencies
 
       - name: vscode-languageserver
+        dependsOn: vscode-languageserver-protocol
 
         buildSteps:
           - script: npm install
             displayName: Install dependencies
 
       - name: vscode-languageclient
+        dependsOn: vscode-languageserver
 
         buildSteps:
           - script: npm install
