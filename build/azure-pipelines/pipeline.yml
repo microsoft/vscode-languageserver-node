@@ -55,28 +55,28 @@ extends:
               - script: npm install
                 displayName: Install dependencies
 
-      # - {{ if eq(parameters.publishPackage3, true) }}:
-      #   - name: vscode-languageserver-protocol
-      #     dependsOn: vscode-jsonrpc
+      - ${{ if eq(parameters.publishPackage3, true) }}:
+          - name: vscode-languageserver-protocol
+            dependsOn: vscode-jsonrpc
 
-      #     buildSteps:
-      #       - script: npm install
-      #         displayName: Install dependencies
+            buildSteps:
+              - script: npm install
+                displayName: Install dependencies
 
-      # - {{ if eq(parameters.publishPackage4, true) }}:
-      #   - name: vscode-languageserver
-      #     dependsOn: vscode-languageserver-protocol
+      - ${{ if eq(parameters.publishPackage4, true) }}:
+          - name: vscode-languageserver
+            dependsOn: vscode-languageserver-protocol
 
-      #     buildSteps:
-      #       - script: npm install
-      #         displayName: Install dependencies
+            buildSteps:
+              - script: npm install
+                displayName: Install dependencies
 
-      # - {{ if eq(parameters.publishPackage5, true) }}:
-      #   - name: vscode-languageclient
-      #     dependsOn: vscode-languageserver
+      - ${{ if eq(parameters.publishPackage5, true) }}:
+          - name: vscode-languageclient
+            dependsOn: vscode-languageserver
 
-      #     buildSteps:
-      #       - script: npm install
-      #         displayName: Install dependencies
+            buildSteps:
+              - script: npm install
+                displayName: Install dependencies
 
     publishPackage: ${{ or(parameters.publishPackage1, parameters.publishPackage2, parameters.publishPackage3, parameters.publishPackage4, parameters.publishPackage5) }}
