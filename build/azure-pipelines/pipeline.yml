@@ -11,7 +11,7 @@ resources:
     - repository: templates
       type: github
       name: microsoft/vscode-engineering
-      ref: main
+      ref: lszomoru/partial-publish
       endpoint: Monaco
 
 parameters:
@@ -40,43 +40,36 @@ extends:
   template: azure-pipelines/npm-package/pipeline.yml@templates
   parameters:
     npmPackages:
-      - ${{ if eq(parameters.publishPackage1, true) }}:
-          - name: types
+      - name: types
+        buildSteps:
+          - script: npm install
+            displayName: Install dependencies
+        publishPackage: ${{ parameters.publishPackage1 }}
 
-            buildSteps:
-              - script: npm install
-                displayName: Install dependencies
+      - name: jsonrpc
+        dependsOn: types
+        buildSteps:
+          - script: npm install
+            displayName: Install dependencies
+        publishPackage: ${{ parameters.publishPackage2 }}
 
-      - ${{ if eq(parameters.publishPackage2, true) }}:
-          - name: jsonrpc
-            dependsOn: types
+      - name: protocol
+        dependsOn: jsonrpc
+        buildSteps:
+          - script: npm install
+            displayName: Install dependencies
+        publishPackage: ${{ parameters.publishPackage3 }}
 
-            buildSteps:
-              - script: npm install
-                displayName: Install dependencies
+      - name: server
+        dependsOn: protocol
+        buildSteps:
+          - script: npm install
+            displayName: Install dependencies
+        publishPackage: ${{ parameters.publishPackage4 }}
 
-      - ${{ if eq(parameters.publishPackage3, true) }}:
-          - name: protocol
-            dependsOn: jsonrpc
-
-            buildSteps:
-              - script: npm install
-                displayName: Install dependencies
-
-      - ${{ if eq(parameters.publishPackage4, true) }}:
-          - name: server
-            dependsOn: protocol
-
-            buildSteps:
-              - script: npm install
-                displayName: Install dependencies
-
-      - ${{ if eq(parameters.publishPackage5, true) }}:
-          - name: client
-            dependsOn: server
-
-            buildSteps:
-              - script: npm install
-                displayName: Install dependencies
-
-    publishPackage: ${{ or(parameters.publishPackage1, parameters.publishPackage2, parameters.publishPackage3, parameters.publishPackage4, parameters.publishPackage5) }}
+      - name: client
+        dependsOn: server
+        buildSteps:
+          - script: npm install
+            displayName: Install dependencies
+        publishPackage: ${{ parameters.publishPackage5 }}
