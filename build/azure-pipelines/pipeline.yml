@@ -42,23 +42,11 @@ extends:
     npmPackages:
       - name: vscode-languageserver-types
 
-        buildPlatforms:
-          - name: Linux
-            nodeVersions:
-              - 14.x
-              - 16.x
-
         buildSteps:
           - script: npm install
             displayName: Install dependencies
 
       - name: vscode-jsonrpc
-
-        buildPlatforms:
-          - name: Linux
-            nodeVersions:
-              - 14.x
-              - 16.x
 
         buildSteps:
           - script: npm install
@@ -66,35 +54,17 @@ extends:
 
       - name: vscode-languageserver-protocol
 
-        buildPlatforms:
-          - name: Linux
-            nodeVersions:
-              - 14.x
-              - 16.x
-
         buildSteps:
           - script: npm install
             displayName: Install dependencies
 
       - name: vscode-languageserver
 
-        buildPlatforms:
-          - name: Linux
-            nodeVersions:
-              - 14.x
-              - 16.x
-
         buildSteps:
           - script: npm install
             displayName: Install dependencies
 
       - name: vscode-languageclient
-
-        buildPlatforms:
-          - name: Linux
-            nodeVersions:
-              - 14.x
-              - 16.x
 
         buildSteps:
           - script: npm install
