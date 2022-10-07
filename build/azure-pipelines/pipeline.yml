@@ -52,6 +52,10 @@ extends:
           - script: npm install
             displayName: Install dependencies
 
+        testSteps:
+          - script: npm install
+            displayName: Test npm package
+
       - name: vscode-jsonrpc
 
         buildPlatforms:
@@ -63,6 +67,10 @@ extends:
         buildSteps:
           - script: npm install
             displayName: Install dependencies
+
+        testSteps:
+          - script: npm install
+            displayName: Test npm package
 
       - name: vscode-languageserver-protocol
 
@@ -76,6 +84,10 @@ extends:
           - script: npm install
             displayName: Install dependencies
 
+        testSteps:
+          - script: npm install
+            displayName: Test npm package
+
       - name: vscode-languageserver
 
         buildPlatforms:
@@ -88,6 +100,10 @@ extends:
           - script: npm install
             displayName: Install dependencies
 
+        testSteps:
+          - script: npm install
+            displayName: Test npm package
+
       - name: vscode-languageclient
 
         buildPlatforms:
@@ -99,5 +115,9 @@ extends:
         buildSteps:
           - script: npm install
             displayName: Install dependencies
+
+        testSteps:
+          - script: npm install
+            displayName: Test npm package
 
     publishPackage: ${{ or(parameters.publishPackage1, parameters.publishPackage2, parameters.publishPackage3, parameters.publishPackage4, parameters.publishPackage5) }}
