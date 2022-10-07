@@ -16,7 +16,7 @@ resources:
 
 parameters:
   - name: publishPackage1
-    displayName: 🚀 Publish languageserver-types
+    displayName: 🚀 Publish types
     type: boolean
     default: false
   - name: publishPackage2
@@ -24,15 +24,15 @@ parameters:
     type: boolean
     default: false
   - name: publishPackage3
-    displayName: 🚀 Publish languageserver-protocol
+    displayName: 🚀 Publish protocol
     type: boolean
     default: false
   - name: publishPackage4
-    displayName: 🚀 Publish languageserver
+    displayName: 🚀 Publish server
     type: boolean
     default: false
   - name: publishPackage5
-    displayName: 🚀 Publish languageclient
+    displayName: 🚀 Publish client
     type: boolean
     default: false
 
@@ -41,7 +41,7 @@ extends:
   parameters:
     npmPackages:
       - ${{ if eq(parameters.publishPackage1, true) }}:
-          - name: languageserver-types
+          - name: types
 
             buildSteps:
               - script: npm install
@@ -49,14 +49,14 @@ extends:
 
       - ${{ if eq(parameters.publishPackage2, true) }}:
           - name: jsonrpc
-            dependsOn: languageserver-types
+            dependsOn: types
 
             buildSteps:
               - script: npm install
                 displayName: Install dependencies
 
       - ${{ if eq(parameters.publishPackage3, true) }}:
-          - name: languageserver-protocol
+          - name: protocol
             dependsOn: jsonrpc
 
             buildSteps:
@@ -64,16 +64,16 @@ extends:
                 displayName: Install dependencies
 
       - ${{ if eq(parameters.publishPackage4, true) }}:
-          - name: languageserver
-            dependsOn: languageserver-protocol
+          - name: server
+            dependsOn: protocol
 
             buildSteps:
               - script: npm install
                 displayName: Install dependencies
 
       - ${{ if eq(parameters.publishPackage5, true) }}:
-          - name: languageclient
-            dependsOn: languageserver
+          - name: client
+            dependsOn: server
 
             buildSteps:
               - script: npm install
