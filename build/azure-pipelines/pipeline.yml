@@ -51,6 +51,7 @@ extends:
         buildSteps:
           - script: npm install
             displayName: Install dependencies
+        publishDependsOn: ${{ parameters.publishPackage1 }}
         publishPackage: ${{ parameters.publishPackage2 }}
 
       - name: protocol
@@ -58,6 +59,7 @@ extends:
         buildSteps:
           - script: npm install
             displayName: Install dependencies
+        publishDependsOn: ${{ parameters.publishPackage2 }}
         publishPackage: ${{ parameters.publishPackage3 }}
 
       - name: server
@@ -65,6 +67,7 @@ extends:
         buildSteps:
           - script: npm install
             displayName: Install dependencies
+        publishDependsOn: ${{ parameters.publishPackage3 }}
         publishPackage: ${{ parameters.publishPackage4 }}
 
       - name: client
@@ -72,4 +75,5 @@ extends:
         buildSteps:
           - script: npm install
             displayName: Install dependencies
+        publishDependsOn: ${{ parameters.publishPackage4 }}
         publishPackage: ${{ parameters.publishPackage5 }}
