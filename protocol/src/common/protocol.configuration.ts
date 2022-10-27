@@ -7,7 +7,6 @@ import { RequestHandler, HandlerResult, CancellationToken } from 'vscode-jsonrpc
 import { LSPAny } from 'vscode-languageserver-types';
 
 import { MessageDirection, ProtocolRequestType } from './messages';
-import type { PartialResultParams } from './protocol';
 
 //---- Get Configuration request ----
 
@@ -23,7 +22,7 @@ import type { PartialResultParams } from './protocol';
 export namespace ConfigurationRequest {
 	export const method: 'workspace/configuration' = 'workspace/configuration';
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
-	export const type = new ProtocolRequestType<ConfigurationParams & PartialResultParams, LSPAny[], never, void, void>(method);
+	export const type = new ProtocolRequestType<ConfigurationParams, LSPAny[], never, void, void>(method);
 	export type HandlerSignature = RequestHandler<ConfigurationParams, LSPAny[], void>;
 	export type MiddlewareSignature = (params: ConfigurationParams, token: CancellationToken, next: HandlerSignature) => HandlerResult<LSPAny[], void>;
 }
