@@ -1617,7 +1617,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	protected registerBuiltinFeatures() {
 		this.registerFeature(new ConfigurationFeature(this));
 		this.registerFeature(new DidOpenTextDocumentFeature(this, this._syncedDocuments));
-		this.registerFeature(new DidChangeTextDocumentFeature(this));
+		this.registerFeature(new DidChangeTextDocumentFeature(this, this._syncedDocuments));
 		this.registerFeature(new WillSaveFeature(this));
 		this.registerFeature(new WillSaveWaitUntilFeature(this));
 		this.registerFeature(new DidSaveTextDocumentFeature(this));

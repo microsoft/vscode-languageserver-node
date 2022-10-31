@@ -390,7 +390,7 @@ export abstract class TextDocumentEventFeature<P, E, M> extends DynamicDocumentF
 	private async callback(data: E): Promise<void> {
 		const doSend = async (data: E): Promise<void> => {
 			const params = this._createParams(data);
-			await this._client.sendNotification(this._type, params).catch();
+			await this._client.sendNotification(this._type, params);
 			this.notificationSent(data, this._type, params);
 		};
 		if (this.matches(data)) {
