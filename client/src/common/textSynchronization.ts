@@ -179,10 +179,13 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 	private _changeDelayer: { uri: string; delayer: Delayer<Promise<void>> } | undefined;
 	private readonly _onNotificationSent: EventEmitter<NotificationSendEvent<TextDocumentChangeEvent, DidChangeTextDocumentParams>>;
 
-	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>) {
+	private readonly _syncedDocuments: Map<string, TextDocument>;
+
+	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>, syncedDocuments: Map<string, TextDocument>) {
 		super(client);
 		this._changeData = new Map<string, DidChangeTextDocumentData>();
 		this._onNotificationSent = new EventEmitter();
+		this._syncedDocuments = syncedDocuments;
 	}
 
 	public get registrationType(): RegistrationType<TextDocumentChangeRegistrationOptions> {
@@ -313,7 +316,11 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 	}
 
 	public async forceDelivery(): Promise<void> {
-		if (this._forcingDelivery || !this._changeDelayer) {
+		// See https://github.com/microsoft/vscode-languageserver-node/issues/1105
+		// If we have a change delayer and its URI is not yet synced then the open
+		// event has not been delivered yet. So don't force the sync.
+		if (this._forcingDelivery || !this._changeDelayer || !this._syncedDocuments.has(this._changeDelayer.uri)) {
+
 			return;
 		}
 		try {
