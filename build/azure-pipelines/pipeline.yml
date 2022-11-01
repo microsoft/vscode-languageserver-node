@@ -15,12 +15,12 @@ resources:
       endpoint: Monaco
 
 parameters:
-  - name: publishTypes
-    displayName: 🚀 Publish types
-    type: boolean
-    default: false
   - name: publishTextDocument
     displayName: 🚀 Publish textDocument
+    type: boolean
+    default: false
+  - name: publishTypes
+    displayName: 🚀 Publish types
     type: boolean
     default: false
   - name: publishJsonrpc
@@ -73,6 +73,7 @@ extends:
         workingDirectory: $(Build.SourcesDirectory)/textDocument
 
       - name: types
+        dependsOn: textDocument
         buildPlatforms:
           - name: Linux
             nodeVersions:
@@ -98,6 +99,7 @@ extends:
             workingDirectory: $(Build.SourcesDirectory)/types
             displayName: Run tests
         publishPackage: ${{ parameters.publishTypes }}
+        publishDependsOn: ${{ parameters.publishTextDocument }}
         workingDirectory: $(Build.SourcesDirectory)/types
 
       - name: jsonrpc
@@ -190,6 +192,9 @@ extends:
           - script: npm install
             workingDirectory: $(Build.SourcesDirectory)
             displayName: Install dependencies
+          - script: npm run compile
+            workingDirectory: $(Build.SourcesDirectory)/textDocument
+            displayName: Compile Text Documents for tests
           - script: npm run compile
             workingDirectory: $(Build.SourcesDirectory)/server
             displayName: Compile package
