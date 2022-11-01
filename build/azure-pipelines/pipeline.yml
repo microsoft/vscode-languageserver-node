@@ -45,6 +45,16 @@ extends:
   parameters:
     npmPackages:
       - name: textDocument
+        buildPlatforms:
+          - name: Linux
+            nodeVersions:
+              - 16.14.2
+          - name: MacOS
+            nodeVersions:
+              - 16.14.2
+          - name: Windows
+            nodeVersions:
+              - 16.14.2
         buildSteps:
           - script: npm install
             workingDirectory: $(Build.SourcesDirectory)
@@ -63,6 +73,16 @@ extends:
         workingDirectory: $(Build.SourcesDirectory)/textDocument
 
       - name: types
+        buildPlatforms:
+          - name: Linux
+            nodeVersions:
+              - 16.14.2
+          - name: MacOS
+            nodeVersions:
+              - 16.14.2
+          - name: Windows
+            nodeVersions:
+              - 16.14.2
         buildSteps:
           - script: npm install
             workingDirectory: $(Build.SourcesDirectory)
@@ -82,6 +102,16 @@ extends:
 
       - name: jsonrpc
         dependsOn: types
+        buildPlatforms:
+          - name: Linux
+            nodeVersions:
+              - 16.14.2
+          - name: MacOS
+            nodeVersions:
+              - 16.14.2
+          - name: Windows
+            nodeVersions:
+              - 16.14.2
         buildSteps:
           - script: npm install
             workingDirectory: $(Build.SourcesDirectory)
@@ -109,6 +139,16 @@ extends:
 
       - name: protocol
         dependsOn: jsonrpc
+        buildPlatforms:
+          - name: Linux
+            nodeVersions:
+              - 16.14.2
+          - name: MacOS
+            nodeVersions:
+              - 16.14.2
+          - name: Windows
+            nodeVersions:
+              - 16.14.2
         buildSteps:
           - script: npm install
             workingDirectory: $(Build.SourcesDirectory)
@@ -136,6 +176,16 @@ extends:
 
       - name: server
         dependsOn: protocol
+        buildPlatforms:
+          - name: Linux
+            nodeVersions:
+              - 16.14.2
+          - name: MacOS
+            nodeVersions:
+              - 16.14.2
+          - name: Windows
+            nodeVersions:
+              - 16.14.2
         buildSteps:
           - script: npm install
             workingDirectory: $(Build.SourcesDirectory)
@@ -156,6 +206,16 @@ extends:
 
       - name: client
         dependsOn: server
+        buildPlatforms:
+          - name: Linux
+            nodeVersions:
+              - 16.14.2
+          - name: MacOS
+            nodeVersions:
+              - 16.14.2
+          - name: Windows
+            nodeVersions:
+              - 16.14.2
         buildSteps:
           - script: npm install
             workingDirectory: $(Build.SourcesDirectory)
