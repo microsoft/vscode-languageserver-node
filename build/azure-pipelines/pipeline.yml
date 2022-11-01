@@ -15,23 +15,27 @@ resources:
       endpoint: Monaco
 
 parameters:
-  - name: publishPackage1
+  - name: publishTypes
     displayName: 🚀 Publish types
     type: boolean
     default: false
-  - name: publishPackage2
+  - name: publishTextDocument
+    displayName: 🚀 Publish textDocument
+    type: boolean
+    default: false
+  - name: publishJsonrpc
     displayName: 🚀 Publish jsonrpc
     type: boolean
     default: false
-  - name: publishPackage3
+  - name: publishProtocol
     displayName: 🚀 Publish protocol
     type: boolean
     default: false
-  - name: publishPackage4
+  - name: publishServer
     displayName: 🚀 Publish server
     type: boolean
     default: false
-  - name: publishPackage5
+  - name: publishClient
     displayName: 🚀 Publish client
     type: boolean
     default: false
@@ -40,55 +44,139 @@ extends:
   template: azure-pipelines/npm-package/pipeline.yml@templates
   parameters:
     npmPackages:
+      - name: textDocument
+        buildSteps:
+          - script: npm install
+            workingDirectory: $(Build.SourcesDirectory)/textDocument
+            displayName: Install dependencies
+          - script: npm run compile
+            workingDirectory: $(Build.SourcesDirectory)/textDocument
+            displayName: Compile package
+          - script: npm run lint
+            workingDirectory: $(Build.SourcesDirectory)/textDocument
+            displayName: Lint package
+        testSteps:
+          - script: npm run test
+            workingDirectory: $(Build.SourcesDirectory)/textDocument
+            displayName: Run tests
+        publishPackage: ${{ parameters.publishTextDocument }}
+        workingDirectory: $(Build.SourcesDirectory)/textDocument
+
       - name: types
         buildSteps:
           - script: npm install
+            workingDirectory: $(Build.SourcesDirectory)/types
             displayName: Install dependencies
+          - script: npm run compile
+            workingDirectory: $(Build.SourcesDirectory)/types
+            displayName: Compile package
+          - script: npm run lint
+            workingDirectory: $(Build.SourcesDirectory)/types
+            displayName: Lint package
         testSteps:
-          - script: npm install
-            displayName: Install dependencies
-        publishPackage: ${{ parameters.publishPackage1 }}
+          - script: npm run test
+            workingDirectory: $(Build.SourcesDirectory)/types
+            displayName: Run tests
+        publishPackage: ${{ parameters.publishTypes }}
+        workingDirectory: $(Build.SourcesDirectory)/types
 
       - name: jsonrpc
         dependsOn: types
         buildSteps:
           - script: npm install
+            workingDirectory: $(Build.SourcesDirectory)/jsonrpc
             displayName: Install dependencies
+          - script: npm run compile
+            workingDirectory: $(Build.SourcesDirectory)/jsonrpc
+            displayName: Compile package
+          - script: npm run lint
+            workingDirectory: $(Build.SourcesDirectory)/jsonrpc
+            displayName: Lint package
         testSteps:
-          - script: npm install
-            displayName: Install dependencies
-        publishDependsOn: ${{ parameters.publishPackage1 }}
-        publishPackage: ${{ parameters.publishPackage2 }}
+          - bash: |
+              /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+              echo ">>> Started xvfb"
+            displayName: Start xvfb
+            condition: eq(variables['Agent.OS'], 'Linux')
+          - script: npm run test
+            workingDirectory: $(Build.SourcesDirectory)/jsonrpc
+            displayName: Run tests
+            env:
+              DISPLAY: ':99.0'
+        publishPackage: ${{ parameters.publishJsonrpc }}
+        publishDependsOn: ${{ parameters.publishTypes }}
+        workingDirectory: $(Build.SourcesDirectory)/jsonrpc
 
       - name: protocol
         dependsOn: jsonrpc
         buildSteps:
           - script: npm install
+            workingDirectory: $(Build.SourcesDirectory)/protocol
             displayName: Install dependencies
+          - script: npm run compile
+            workingDirectory: $(Build.SourcesDirectory)/protocol
+            displayName: Compile package
+          - script: npm run lint
+            workingDirectory: $(Build.SourcesDirectory)/protocol
+            displayName: Lint package
         testSteps:
-          - script: npm install
-            displayName: Install dependencies
-        publishDependsOn: ${{ parameters.publishPackage2 }}
-        publishPackage: ${{ parameters.publishPackage3 }}
+          - bash: |
+              /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+              echo ">>> Started xvfb"
+            displayName: Start xvfb
+            condition: eq(variables['Agent.OS'], 'Linux')
+          - script: npm run test
+            workingDirectory: $(Build.SourcesDirectory)/protocol
+            displayName: Run tests
+            env:
+              DISPLAY: ':99.0'
+        publishDependsOn: ${{ parameters.publishJsonrpc }}
+        publishPackage: ${{ parameters.publishProtocol }}
+        workingDirectory: $(Build.SourcesDirectory)/protocol
 
       - name: server
         dependsOn: protocol
         buildSteps:
           - script: npm install
+            workingDirectory: $(Build.SourcesDirectory)/server
             displayName: Install dependencies
+          - script: npm run compile
+            workingDirectory: $(Build.SourcesDirectory)/server
+            displayName: Compile package
+          - script: npm run lint
+            workingDirectory: $(Build.SourcesDirectory)/server
+            displayName: Lint package
         testSteps:
-          - script: npm install
-            displayName: Install dependencies
-        publishDependsOn: ${{ parameters.publishPackage3 }}
-        publishPackage: ${{ parameters.publishPackage4 }}
+          - script: npm run test
+            workingDirectory: $(Build.SourcesDirectory)/server
+            displayName: Run tests
+        publishDependsOn: ${{ parameters.publishProtocol }}
+        publishPackage: ${{ parameters.publishServer }}
+        workingDirectory: $(Build.SourcesDirectory)/server
 
       - name: client
         dependsOn: server
         buildSteps:
           - script: npm install
+            workingDirectory: $(Build.SourcesDirectory)/client
             displayName: Install dependencies
+          - script: npm run compile
+            workingDirectory: $(Build.SourcesDirectory)/client
+            displayName: Compile package
+          - script: npm run lint
+            workingDirectory: $(Build.SourcesDirectory)/client
+            displayName: Lint package
         testSteps:
-          - script: npm install
-            displayName: Install dependencies
-        publishDependsOn: ${{ parameters.publishPackage4 }}
-        publishPackage: ${{ parameters.publishPackage5 }}
+          - bash: |
+              /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+              echo ">>> Started xvfb"
+            displayName: Start xvfb
+            condition: eq(variables['Agent.OS'], 'Linux')
+          - script: npm run test
+            workingDirectory: $(Build.SourcesDirectory)/client
+            displayName: Run tests
+            env:
+              DISPLAY: ':99.0'
+        publishDependsOn: ${{ parameters.publishServer }}
+        publishPackage: ${{ parameters.publishClient }}
+        workingDirectory: $(Build.SourcesDirectory)/client
