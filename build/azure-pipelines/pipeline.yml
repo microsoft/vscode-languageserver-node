@@ -47,7 +47,7 @@ extends:
       - name: textDocument
         buildSteps:
           - script: npm install
-            workingDirectory: $(Build.SourcesDirectory)/textDocument
+            workingDirectory: $(Build.SourcesDirectory)
             displayName: Install dependencies
           - script: npm run compile
             workingDirectory: $(Build.SourcesDirectory)/textDocument
@@ -65,7 +65,7 @@ extends:
       - name: types
         buildSteps:
           - script: npm install
-            workingDirectory: $(Build.SourcesDirectory)/types
+            workingDirectory: $(Build.SourcesDirectory)
             displayName: Install dependencies
           - script: npm run compile
             workingDirectory: $(Build.SourcesDirectory)/types
@@ -84,7 +84,7 @@ extends:
         dependsOn: types
         buildSteps:
           - script: npm install
-            workingDirectory: $(Build.SourcesDirectory)/jsonrpc
+            workingDirectory: $(Build.SourcesDirectory)
             displayName: Install dependencies
           - script: npm run compile
             workingDirectory: $(Build.SourcesDirectory)/jsonrpc
@@ -111,7 +111,7 @@ extends:
         dependsOn: jsonrpc
         buildSteps:
           - script: npm install
-            workingDirectory: $(Build.SourcesDirectory)/protocol
+            workingDirectory: $(Build.SourcesDirectory)
             displayName: Install dependencies
           - script: npm run compile
             workingDirectory: $(Build.SourcesDirectory)/protocol
@@ -138,7 +138,7 @@ extends:
         dependsOn: protocol
         buildSteps:
           - script: npm install
-            workingDirectory: $(Build.SourcesDirectory)/server
+            workingDirectory: $(Build.SourcesDirectory)
             displayName: Install dependencies
           - script: npm run compile
             workingDirectory: $(Build.SourcesDirectory)/server
@@ -158,7 +158,7 @@ extends:
         dependsOn: server
         buildSteps:
           - script: npm install
-            workingDirectory: $(Build.SourcesDirectory)/client
+            workingDirectory: $(Build.SourcesDirectory)
             displayName: Install dependencies
           - script: npm run compile
             workingDirectory: $(Build.SourcesDirectory)/client
