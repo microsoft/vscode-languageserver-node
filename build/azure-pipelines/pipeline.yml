@@ -1,0 +1,94 @@
+name: $(Date:yyyyMMdd)$(Rev:.r)
+
+trigger:
+  branches:
+    include:
+      - main
+pr: none
+
+resources:
+  repositories:
+    - repository: templates
+      type: github
+      name: microsoft/vscode-engineering
+      ref: main
+      endpoint: Monaco
+
+parameters:
+  - name: publishPackage1
+    displayName: 🚀 Publish types
+    type: boolean
+    default: false
+  - name: publishPackage2
+    displayName: 🚀 Publish jsonrpc
+    type: boolean
+    default: false
+  - name: publishPackage3
+    displayName: 🚀 Publish protocol
+    type: boolean
+    default: false
+  - name: publishPackage4
+    displayName: 🚀 Publish server
+    type: boolean
+    default: false
+  - name: publishPackage5
+    displayName: 🚀 Publish client
+    type: boolean
+    default: false
+
+extends:
+  template: azure-pipelines/npm-package/pipeline.yml@templates
+  parameters:
+    npmPackages:
+      - name: types
+        buildSteps:
+          - script: npm install
+            displayName: Install dependencies
+        testSteps:
+          - script: npm install
+            displayName: Install dependencies
+        publishPackage: ${{ parameters.publishPackage1 }}
+
+      - name: jsonrpc
+        dependsOn: types
+        buildSteps:
+          - script: npm install
+            displayName: Install dependencies
+        testSteps:
+          - script: npm install
+            displayName: Install dependencies
+        publishDependsOn: ${{ parameters.publishPackage1 }}
+        publishPackage: ${{ parameters.publishPackage2 }}
+
+      - name: protocol
+        dependsOn: jsonrpc
+        buildSteps:
+          - script: npm install
+            displayName: Install dependencies
+        testSteps:
+          - script: npm install
+            displayName: Install dependencies
+        publishDependsOn: ${{ parameters.publishPackage2 }}
+        publishPackage: ${{ parameters.publishPackage3 }}
+
+      - name: server
+        dependsOn: protocol
+        buildSteps:
+          - script: npm install
+            displayName: Install dependencies
+        testSteps:
+          - script: npm install
+            displayName: Install dependencies
+        publishDependsOn: ${{ parameters.publishPackage3 }}
+        publishPackage: ${{ parameters.publishPackage4 }}
+
+      - name: client
+        dependsOn: server
+        buildSteps:
+          - script: npm install
+            displayName: Install dependencies
+        testSteps:
+          - script: npm install
+            displayName: Install dependencies
+        publishDependsOn: ${{ parameters.publishPackage4 }}
+        publishPackage: ${{ parameters.publishPackage5 }}
