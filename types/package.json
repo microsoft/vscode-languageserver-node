@@ -17,14 +17,14 @@
 	"module": "./lib/esm/main.js",
 	"scripts": {
 		"prepublishOnly": "echo \"⛔ Can only publish from a secure pipeline ⛔\" && node ../build/npm/fail",
-		"prepack": "git clean -xfd . && npm install && npm run clean && npm run compile:esm && npm run compile && npm run test",
+		"prepack": "git clean -xfd . && npm install && npm run all",
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json",
 		"compile:esm": "node ../build/bin/tsc -b ./tsconfig.esm.json",
 		"clean": "node ../node_modules/rimraf/bin.js lib",
 		"watch": "node ../build/bin/tsc -b ./tsconfig-watch.json -w",
 		"lint": "node ../node_modules/eslint/bin/eslint.js --ext ts src",
 		"test": "node ../node_modules/mocha/bin/_mocha",
-		"all": "npm run clean && npm run compile:esm && npm run compile && npm run test",
+		"all": "npm run clean && npm run compile:esm && npm run compile && npm run lint && npm run test",
 		"preversion": "npm test"
 	}
 }

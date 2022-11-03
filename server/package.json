@@ -20,17 +20,21 @@
 	"bin": {
 		"installServerIntoExtension": "./bin/installServerIntoExtension"
 	},
+	"devDependencies": {
+		"vscode-languageserver-textdocument": "1.0.7"
+	},
 	"dependencies": {
 		"vscode-languageserver-protocol": "3.17.3-next.1"
 	},
 	"scripts": {
-		"prepublishOnly": "git clean -xfd . && npm install && npm run clean && npm run compile && npm test",
-		"postpublish": "node ../build/npm/post-publish.js",
+		"prepublishOnly": "echo \"⛔ Can only publish from a secure pipeline ⛔\" && node ../build/npm/fail",
+		"prepack": "git clean -xfd . && npm install && npm run all",
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json",
 		"watch": "node ../build/bin/tsc -b ./tsconfig-watch.json -w",
 		"clean": "node ../node_modules/rimraf/bin.js lib",
 		"lint": "node ../node_modules/eslint/bin/eslint.js --ext ts src",
 		"test": "node ../node_modules/mocha/bin/_mocha",
+		"all": "npm run clean && npm run compile && npm run lint && npm test",
 		"preversion": "npm test"
 	}
 }

@@ -24,7 +24,8 @@
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json",
 		"watch": "node ../build/bin/tsc -b ./tsconfig-watch.json -w",
 		"lint": "node ../node_modules/eslint/bin/eslint.js --ext ts src",
-		"test": "node ../build/bin/symlink-tests.js && node lib/runTests.js"
+		"test": "node ../build/bin/symlink-tests.js && node lib/runTests.js",
+		"all": "npm run clean && npm run compile && npm run lint && npm run test"
 	},
 	"dependencies": {
 		"minimatch": "^3.0.4",

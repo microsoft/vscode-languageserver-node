@@ -52,7 +52,7 @@ extends:
   parameters:
     npmPackages:
       - name: textDocument
-        buildPlatforms:
+        testPlatforms:
           - name: Linux
             nodeVersions:
               - 16.14.2
@@ -82,7 +82,7 @@ extends:
             - task: Npm@1
               inputs:
                 command: custom
-                customCommand: dist-tag add $(SetPackageSpec.PACKAGE_SPEC) ${{ parameters.quality }}
+                customCommand: dist-tag add $(SetPackageSpec.PACKAGE_SPEC) next
                 customEndpoint: NPM (vscode-bot)
                 workingDir: $(Build.SourcesDirectory)/textDocument
               displayName: npm dist-tag
@@ -90,7 +90,7 @@ extends:
 
       - name: types
         dependsOn: textDocument
-        buildPlatforms:
+        testPlatforms:
           - name: Linux
             nodeVersions:
               - 16.14.2
@@ -104,23 +104,32 @@ extends:
           - script: npm install
             workingDirectory: $(Build.SourcesDirectory)
             displayName: Install dependencies
-          - script: npm run compile
+          - script: npm run all
             workingDirectory: $(Build.SourcesDirectory)/types
-            displayName: Compile package
-          - script: npm run lint
-            workingDirectory: $(Build.SourcesDirectory)/types
-            displayName: Lint package
-        testSteps:
-          - script: npm run test
-            workingDirectory: $(Build.SourcesDirectory)/types
-            displayName: Run tests
+            displayName: Verify package
+        tag: ${{ parameters.quality }}
         publishPackage: ${{ parameters.publishTypes }}
         publishDependsOn: ${{ parameters.publishTextDocument }}
+        postPublishSteps:
+          - ${{ if eq(parameters.quality, 'latest') }}:
+            - bash: |
+                PACKAGE_SPEC=$(node -p "require(\"./package.json\").name + \"@\" + require(\"./package.json\").version")
+                echo "##vso[task.setvariable variable=PACKAGE_SPEC;isOutput=true]$PACKAGE_SPEC"
+              name: SetPackageSpec
+              displayName: Set PACKAGE_SPEC variable
+              workingDirectory: $(Build.SourcesDirectory)/types
+            - task: Npm@1
+              inputs:
+                command: custom
+                customCommand: dist-tag add $(SetPackageSpec.PACKAGE_SPEC) next
+                customEndpoint: NPM (vscode-bot)
+                workingDir: $(Build.SourcesDirectory)/types
+              displayName: npm dist-tag
         workingDirectory: $(Build.SourcesDirectory)/types
 
       - name: jsonrpc
         dependsOn: types
-        buildPlatforms:
+        testPlatforms:
           - name: Linux
             nodeVersions:
               - 16.14.2
@@ -134,30 +143,39 @@ extends:
           - script: npm install
             workingDirectory: $(Build.SourcesDirectory)
             displayName: Install dependencies
-          - script: npm run compile
-            workingDirectory: $(Build.SourcesDirectory)/jsonrpc
-            displayName: Compile package
-          - script: npm run lint
-            workingDirectory: $(Build.SourcesDirectory)/jsonrpc
-            displayName: Lint package
-        testSteps:
           - bash: |
               /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
               echo ">>> Started xvfb"
             displayName: Start xvfb
             condition: eq(variables['Agent.OS'], 'Linux')
-          - script: npm run test
+          - script: npm run all
             workingDirectory: $(Build.SourcesDirectory)/jsonrpc
-            displayName: Run tests
+            displayName: Verify package
             env:
               DISPLAY: ':99.0'
+        tag: ${{ parameters.quality }}
         publishPackage: ${{ parameters.publishJsonrpc }}
         publishDependsOn: ${{ parameters.publishTypes }}
+        postPublishSteps:
+          - ${{ if eq(parameters.quality, 'latest') }}:
+            - bash: |
+                PACKAGE_SPEC=$(node -p "require(\"./package.json\").name + \"@\" + require(\"./package.json\").version")
+                echo "##vso[task.setvariable variable=PACKAGE_SPEC;isOutput=true]$PACKAGE_SPEC"
+              name: SetPackageSpec
+              displayName: Set PACKAGE_SPEC variable
+              workingDirectory: $(Build.SourcesDirectory)/jsonrpc
+            - task: Npm@1
+              inputs:
+                command: custom
+                customCommand: dist-tag add $(SetPackageSpec.PACKAGE_SPEC) next
+                customEndpoint: NPM (vscode-bot)
+                workingDir: $(Build.SourcesDirectory)/jsonrpc
+              displayName: npm dist-tag
         workingDirectory: $(Build.SourcesDirectory)/jsonrpc
 
       - name: protocol
         dependsOn: jsonrpc
-        buildPlatforms:
+        testPlatforms:
           - name: Linux
             nodeVersions:
               - 16.14.2
@@ -171,30 +189,39 @@ extends:
           - script: npm install
             workingDirectory: $(Build.SourcesDirectory)
             displayName: Install dependencies
-          - script: npm run compile
-            workingDirectory: $(Build.SourcesDirectory)/protocol
-            displayName: Compile package
-          - script: npm run lint
-            workingDirectory: $(Build.SourcesDirectory)/protocol
-            displayName: Lint package
-        testSteps:
           - bash: |
               /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
               echo ">>> Started xvfb"
             displayName: Start xvfb
             condition: eq(variables['Agent.OS'], 'Linux')
-          - script: npm run test
+          - script: npm run all
             workingDirectory: $(Build.SourcesDirectory)/protocol
-            displayName: Run tests
+            displayName: Verify package
             env:
               DISPLAY: ':99.0'
-        publishDependsOn: ${{ parameters.publishJsonrpc }}
+        tag: ${{ parameters.quality }}
         publishPackage: ${{ parameters.publishProtocol }}
+        publishDependsOn: ${{ parameters.publishJsonrpc }}
+        postPublishSteps:
+          - ${{ if eq(parameters.quality, 'latest') }}:
+            - bash: |
+                PACKAGE_SPEC=$(node -p "require(\"./package.json\").name + \"@\" + require(\"./package.json\").version")
+                echo "##vso[task.setvariable variable=PACKAGE_SPEC;isOutput=true]$PACKAGE_SPEC"
+              name: SetPackageSpec
+              displayName: Set PACKAGE_SPEC variable
+              workingDirectory: $(Build.SourcesDirectory)/protocol
+            - task: Npm@1
+              inputs:
+                command: custom
+                customCommand: dist-tag add $(SetPackageSpec.PACKAGE_SPEC) next
+                customEndpoint: NPM (vscode-bot)
+                workingDir: $(Build.SourcesDirectory)/protocol
+              displayName: npm dist-tag
         workingDirectory: $(Build.SourcesDirectory)/protocol
 
       - name: server
         dependsOn: protocol
-        buildPlatforms:
+        testPlatforms:
           - name: Linux
             nodeVersions:
               - 16.14.2
@@ -208,26 +235,32 @@ extends:
           - script: npm install
             workingDirectory: $(Build.SourcesDirectory)
             displayName: Install dependencies
-          - script: npm run compile
-            workingDirectory: $(Build.SourcesDirectory)/textDocument
-            displayName: Compile Text Documents for tests
-          - script: npm run compile
+          - script: npm run all
             workingDirectory: $(Build.SourcesDirectory)/server
-            displayName: Compile package
-          - script: npm run lint
-            workingDirectory: $(Build.SourcesDirectory)/server
-            displayName: Lint package
-        testSteps:
-          - script: npm run test
-            workingDirectory: $(Build.SourcesDirectory)/server
-            displayName: Run tests
-        publishDependsOn: ${{ parameters.publishProtocol }}
+            displayName: Verify package
+        tag: ${{ parameters.quality }}
         publishPackage: ${{ parameters.publishServer }}
+        publishDependsOn: ${{ parameters.publishProtocol }}
+        postPublishSteps:
+          - ${{ if eq(parameters.quality, 'latest') }}:
+            - bash: |
+                PACKAGE_SPEC=$(node -p "require(\"./package.json\").name + \"@\" + require(\"./package.json\").version")
+                echo "##vso[task.setvariable variable=PACKAGE_SPEC;isOutput=true]$PACKAGE_SPEC"
+              name: SetPackageSpec
+              displayName: Set PACKAGE_SPEC variable
+              workingDirectory: $(Build.SourcesDirectory)/server
+            - task: Npm@1
+              inputs:
+                command: custom
+                customCommand: dist-tag add $(SetPackageSpec.PACKAGE_SPEC) next
+                customEndpoint: NPM (vscode-bot)
+                workingDir: $(Build.SourcesDirectory)/server
+              displayName: npm dist-tag
         workingDirectory: $(Build.SourcesDirectory)/server
 
       - name: client
         dependsOn: server
-        buildPlatforms:
+        testPlatforms:
           - name: Linux
             nodeVersions:
               - 16.14.2
@@ -241,23 +274,35 @@ extends:
           - script: npm install
             workingDirectory: $(Build.SourcesDirectory)
             displayName: Install dependencies
-          - script: npm run compile
-            workingDirectory: $(Build.SourcesDirectory)/client
-            displayName: Compile package
-          - script: npm run lint
-            workingDirectory: $(Build.SourcesDirectory)/client
-            displayName: Lint package
-        testSteps:
+          - script: npm run all
+            workingDirectory: $(Build.SourcesDirectory)/client-node-tests
+            displayName: Verify Text Documents for tests
           - bash: |
               /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
               echo ">>> Started xvfb"
             displayName: Start xvfb
             condition: eq(variables['Agent.OS'], 'Linux')
-          - script: npm run test
+          - script: npm run all
             workingDirectory: $(Build.SourcesDirectory)/client
-            displayName: Run tests
+            displayName: Verify package
             env:
               DISPLAY: ':99.0'
-        publishDependsOn: ${{ parameters.publishServer }}
+        tag: ${{ parameters.quality }}
         publishPackage: ${{ parameters.publishClient }}
+        publishDependsOn: ${{ parameters.publishServer }}
+        postPublishSteps:
+          - ${{ if eq(parameters.quality, 'latest') }}:
+            - bash: |
+                PACKAGE_SPEC=$(node -p "require(\"./package.json\").name + \"@\" + require(\"./package.json\").version")
+                echo "##vso[task.setvariable variable=PACKAGE_SPEC;isOutput=true]$PACKAGE_SPEC"
+              name: SetPackageSpec
+              displayName: Set PACKAGE_SPEC variable
+              workingDirectory: $(Build.SourcesDirectory)/client
+            - task: Npm@1
+              inputs:
+                command: custom
+                customCommand: dist-tag add $(SetPackageSpec.PACKAGE_SPEC) next
+                customEndpoint: NPM (vscode-bot)
+                workingDir: $(Build.SourcesDirectory)/client
+              displayName: npm dist-tag
         workingDirectory: $(Build.SourcesDirectory)/client

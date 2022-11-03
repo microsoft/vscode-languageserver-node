@@ -33,14 +33,15 @@
 		"vscode-languageserver-protocol": "3.17.3-next.1"
 	},
 	"scripts": {
-		"prepublishOnly": "git clean -xfd . && npm install && npm run clean && node ./bin/updateVSCode.js && npm run compile && npm test",
-		"postpublish": "node ../build/npm/post-publish.js",
+		"prepublishOnly": "echo \"⛔ Can only publish from a secure pipeline ⛔\" && node ../build/npm/fail",
+		"prepack": "git clean -xfd . && npm install && node ./bin/updateVSCode.js",
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json && shx cp src/node/terminateProcess.sh lib/node/terminateProcess.sh",
 		"compile:clean": "git clean -xfd . && npm install && npm run clean && npm run compile",
 		"watch": "node ../build/bin/tsc -b ./tsconfig-watch.json -w",
 		"lint": "node ../node_modules/eslint/bin/eslint.js --ext ts src",
 		"test": "cd ../client-node-tests && npm test && cd ../client",
 		"clean": "node ../node_modules/rimraf/bin.js lib",
+		"all": "npm run clean && npm run compile && npm run lint && npm test",
 		"preversion": "npm test",
 		"updateVSCodeVersion": "node ./bin/updateVSCode.js"
 	}
