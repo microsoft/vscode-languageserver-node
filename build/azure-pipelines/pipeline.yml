@@ -15,6 +15,13 @@ resources:
       endpoint: Monaco
 
 parameters:
+  - name: quality
+    displayName: Quality
+    type: string
+    default: latest
+    values:
+      - latest
+      - next
   - name: publishTextDocument
     displayName: 🚀 Publish textDocument
     type: boolean
@@ -69,6 +76,9 @@ extends:
           - script: npm run test
             workingDirectory: $(Build.SourcesDirectory)/textDocument
             displayName: Run tests
+        postPublishSteps:
+        - ${{ if eq(parameters.quality, 'latest') }}:
+          - script: echo calling dist-tag
         publishPackage: ${{ parameters.publishTextDocument }}
         workingDirectory: $(Build.SourcesDirectory)/textDocument
 
