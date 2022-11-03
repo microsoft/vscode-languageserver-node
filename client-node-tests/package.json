@@ -25,12 +25,14 @@
 		"watch": "node ../build/bin/tsc -b ./tsconfig-watch.json -w",
 		"lint": "node ../node_modules/eslint/bin/eslint.js --ext ts src",
 		"test": "node ../build/bin/symlink-tests.js && node lib/runTests.js",
+		"test:publish": "node ../build/bin/symlink-tests-publish.js && node lib/runTests.js",
+		"build": "npm run clean && npm run compile && npm run lint ",
 		"all": "npm run clean && npm run compile && npm run lint && npm run test"
 	},
 	"dependencies": {
 		"minimatch": "^3.0.4",
-		"vscode-languageclient": "8.0.1",
-		"vscode-languageserver": "8.0.1",
+		"vscode-languageclient": "8.1.0-next.1",
+		"vscode-languageserver": "8.1.0-next.1",
 		"vscode-uri": "3.0.3"
 	},
 	"devDependencies": {

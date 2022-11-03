@@ -9,7 +9,7 @@ import {
 	Position, Range, TextDocumentIdentifier, TextDocumentItem, VersionedTextDocumentIdentifier, Command, CodeLens, CodeActionContext,
 	Diagnostic, DiagnosticSeverity, WorkspaceChange, TextDocumentEdit, CreateFile, RenameFile, DeleteFile, ChangeAnnotation,
 	AnnotatedTextEdit
-} from 'vscode-languageserver-protocol';
+} from 'vscode-languageclient';
 
 suite('Protocol Helper Tests', () => {
 	function rangeEqual(actual: Range, expected: Range) {

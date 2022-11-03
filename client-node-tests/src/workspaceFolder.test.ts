@@ -6,7 +6,7 @@ import * as sinon from 'sinon';
 
 import { WorkspaceFoldersFeature } from 'vscode-languageclient/lib/common/workspaceFolder';
 import { BaseLanguageClient, MessageTransports, DidChangeWorkspaceFoldersParams, Disposable } from 'vscode-languageclient';
-import * as proto from 'vscode-languageserver-protocol';
+import * as proto from 'vscode-languageclient';
 
 class TestLanguageClient extends BaseLanguageClient {
 	protected createMessageTransports(): Promise<MessageTransports> {
