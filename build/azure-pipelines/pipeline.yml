@@ -66,20 +66,26 @@ extends:
           - script: npm install
             workingDirectory: $(Build.SourcesDirectory)
             displayName: Install dependencies
-          - script: npm run compile
+          - script: npm run all
             workingDirectory: $(Build.SourcesDirectory)/textDocument
-            displayName: Compile package
-          - script: npm run lint
-            workingDirectory: $(Build.SourcesDirectory)/textDocument
-            displayName: Lint package
-        testSteps:
-          - script: npm run test
-            workingDirectory: $(Build.SourcesDirectory)/textDocument
-            displayName: Run tests
-        postPublishSteps:
-        - ${{ if eq(parameters.quality, 'latest') }}:
-          - script: echo calling dist-tag
+            displayName: Verify package
+        tag: ${{ parameters.quality }}
         publishPackage: ${{ parameters.publishTextDocument }}
+        postPublishSteps:
+          - ${{ if eq(parameters.quality, 'latest') }}:
+            - bash: |
+                PACKAGE_SPEC=$(node -p "require(\"./package.json\").name + \"@\" + require(\"./package.json\").version")
+                echo "##vso[task.setvariable variable=PACKAGE_SPEC;isOutput=true]$PACKAGE_SPEC"
+              name: SetPackageSpec
+              displayName: Set PACKAGE_SPEC variable
+              workingDirectory: $(Build.SourcesDirectory)/textDocument
+            - task: Npm@1
+              inputs:
+                command: custom
+                customCommand: dist-tag add $(SetPackageSpec.PACKAGE_SPEC) ${{ parameters.quality }}
+                customEndpoint: NPM (vscode-bot)
+                workingDir: $(Build.SourcesDirectory)/textDocument
+              displayName: npm dist-tag
         workingDirectory: $(Build.SourcesDirectory)/textDocument
 
       - name: types
