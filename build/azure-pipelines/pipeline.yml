@@ -67,14 +67,14 @@ extends:
             nodeVersions:
               - 16.14.2
         testSteps:
-          - template: templates/test-steps.yml
+          - template: ./templates/test-steps.yml
             parameters:
               package: textDocument
         tag: ${{ parameters.quality }}
         publishPackage: ${{ parameters.publishTextDocument }}
         postPublishSteps:
           - ${{ if eq(parameters.quality, 'latest') }}:
-            - template: templates/postPublish-steps.yml
+            - template: ./templates/postPublish-steps.yml
               parameters:
                 package: textDocument
         workingDirectory: $(Build.SourcesDirectory)/textDocument
