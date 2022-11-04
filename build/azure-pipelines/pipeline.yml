@@ -48,16 +48,15 @@ parameters:
   #   default: false
 
 variables:
-  - testAndPackageTextDocument: ${{ or(eq(parameters.publishTextDocument, true), eq(variables['Build.Reason'], 'IndividualCI')) }}
-  - testAndPackageTypes: ${{ or(eq(parameters.publishTypes, true), eq(variables['Build.Reason'], 'IndividualCI')) }}
-  - testAndPackageJsonrpc: ${{ or(eq(parameters.publishJsonrpc, true), eq(variables['Build.Reason'], 'IndividualCI')) }}
-  - testAndPackageProtocol: ${{ or(eq(parameters.publishProtocol, true), eq(variables['Build.Reason'], 'IndividualCI')) }}
-  - testAndPackageServer: ${{ or(eq(parameters.publishServer, true), eq(variables['Build.Reason'], 'IndividualCI')) }}
-  - testAndPackageClient: ${{ or(eq(parameters.publishClient, true), eq(variables['Build.Reason'], 'IndividualCI')) }}
-  - ${{ if eq(variables.testAndPackageTextDocument, true) }}:
-    - dependsOnTypes: textDocument
-  - ${{ if eq(variables.testAndPackageTextDocument, true) }}:
-    - publishDependsOnTypes: ${{ parameters.publishTextDocument }}
+  testAndPackageTextDocument: ${{ or(eq(parameters.publishTextDocument, true), eq(variables['Build.Reason'], 'IndividualCI')) }}
+  testAndPackageTypes: ${{ or(eq(parameters.publishTypes, true), eq(variables['Build.Reason'], 'IndividualCI')) }}
+  testAndPackageJsonrpc: ${{ or(eq(parameters.publishJsonrpc, true), eq(variables['Build.Reason'], 'IndividualCI')) }}
+  testAndPackageProtocol: ${{ or(eq(parameters.publishProtocol, true), eq(variables['Build.Reason'], 'IndividualCI')) }}
+  testAndPackageServer: ${{ or(eq(parameters.publishServer, true), eq(variables['Build.Reason'], 'IndividualCI')) }}
+  testAndPackageClient: ${{ or(eq(parameters.publishClient, true), eq(variables['Build.Reason'], 'IndividualCI')) }}
+  ${{ if eq(variables.testAndPackageTextDocument, true) }}:
+    dependsOnTypes: textDocument
+    publishDependsOnTypes: ${{ parameters.publishTextDocument }}
 
 extends:
   template: azure-pipelines/npm-package/pipeline.yml@templates
