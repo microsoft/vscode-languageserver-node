@@ -70,6 +70,10 @@ extends:
           - template: /build/azure-pipelines/templates/test-steps.yml@self
             parameters:
               package: textDocument
+        buildSteps:
+          - template: /build/azure-pipelines/templates/pack-steps.yml@self
+            parameters:
+              package: textDocument
         tag: ${{ parameters.quality }}
         publishPackage: ${{ parameters.publishTextDocument }}
         postPublishSteps:
