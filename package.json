@@ -56,7 +56,7 @@
 		"rebuildAll": "npm run clean && npm run symlink && npm run compile && npm run test",
 		"audit:all": "node ./build/bin/all.js audit",
 		"audit:all:fix": "node ./build/bin/all.js audit fix",
-		"generate:metaModel": "node ./tools/lib/main.js -p ./protocol/src/common/tsconfig.json > ./protocol/metaModel.json",
-		"generate:metaModelSchema": "ts-json-schema-generator --path ./tools/src/metaModel.ts > ./protocol/metaModel.schema.json"
+		"generate:metaModel": "cd protocol && npm run generate:metaModel && cd ..",
+		"generate:metaModelSchema": "cd protocol && npm run generate:metaModelSchema && cd .."
 	}
 }
