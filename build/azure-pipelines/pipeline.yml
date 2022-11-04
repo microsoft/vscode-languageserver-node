@@ -131,7 +131,6 @@ extends:
             nodeVersions:
               - 16.14.2
         testSteps:
-          - template: templates/testSteps.yml
           - script: npm install
             workingDirectory: $(Build.SourcesDirectory)
             displayName: Install dependencies
