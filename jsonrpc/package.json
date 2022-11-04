@@ -25,8 +25,8 @@
 		"msgpack-lite": "^0.1.26"
 	},
 	"scripts": {
-		"prepublishOnly": "git clean -xfd . && npm install && npm run clean && npm run compile && npm test",
-		"postpublish": "node ../build/npm/post-publish.js",
+		"prepublishOnly": "echo \"⛔ Can only publish from a secure pipeline ⛔\" && node ../build/npm/fail",
+		"prepack": "git clean -xfd . && npm install && npm run all",
 		"preversion": "npm test",
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json",
 		"watch": "node ../build/bin/tsc -b ./tsconfig-watch.json -w",
@@ -37,6 +37,7 @@
 		"test:browser": "npm run webpack:test:silent && node ../build/bin/runBrowserTests.js  http://127.0.0.1:8080/jsonrpc/src/browser/test/",
 		"webpack": "node ../build/bin/webpack  --mode none --config ./webpack.config.js",
 		"webpack:test": "node ../build/bin/webpack --mode none --config ./src/browser/test/webpack.config.js",
-		"webpack:test:silent": "node ../build/bin/webpack --no-stats --mode none --config ./src/browser/test/webpack.config.js"
+		"webpack:test:silent": "node ../build/bin/webpack --no-stats --mode none --config ./src/browser/test/webpack.config.js",
+		"all": "npm run clean && npm run compile && npm run lint && npm run test"
 	}
 }

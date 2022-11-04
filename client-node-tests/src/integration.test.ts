@@ -2,8 +2,6 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-/// <reference path="../typings/vscode.proposed.notebookContentProvider.d.ts" />
-
 'use strict';
 
 import * as assert from 'assert';
@@ -356,7 +354,7 @@ suite('Client integration', () => {
 
 		isArray(result, vscode.Location, 2);
 		for (let i = 0; i < result.length; i++) {
-			const location = result[i];
+			const location: vscode.Location = result[i];
 			rangeEqual(location.range, i, i, i, i);
 			assert.strictEqual(location.uri.toString(), document.uri.toString());
 		}

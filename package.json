@@ -28,7 +28,7 @@
 		"shx": "^0.3.4",
 		"source-map-support": "^0.5.21",
 		"ts-json-schema-generator": "^1.0.0",
-		"typescript": "^4.7.4",
+		"typescript": "^4.8.4",
 		"webpack": "^5.73.0",
 		"webpack-cli": "^4.10.0",
 		"node-polyfill-webpack-plugin": "^2.0.0"
@@ -56,7 +56,7 @@
 		"rebuildAll": "npm run clean && npm run symlink && npm run compile && npm run test",
 		"audit:all": "node ./build/bin/all.js audit",
 		"audit:all:fix": "node ./build/bin/all.js audit fix",
-		"generate:metaModel": "node ./tools/lib/main.js -p ./protocol/src/common/tsconfig.json > ./protocol/metaModel.json",
-		"generate:metaModelSchema": "ts-json-schema-generator --path ./tools/src/metaModel.ts > ./protocol/metaModel.schema.json"
+		"generate:metaModel": "cd protocol && npm run generate:metaModel && cd ..",
+		"generate:metaModelSchema": "cd protocol && npm run generate:metaModelSchema && cd .."
 	}
 }

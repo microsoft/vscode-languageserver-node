@@ -14,7 +14,7 @@ import {
 } from 'vscode-languageserver-protocol';
 
 function access<T, K extends keyof T>(target: T | undefined, key: K): T[K] | undefined {
-	if (target === void 0) {
+	if (target === undefined || target === null) {
 		return undefined;
 	}
 	return target[key];

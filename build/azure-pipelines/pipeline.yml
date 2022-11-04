@@ -1,9 +1,9 @@
+###############################################################################################
+#  Copyright (c) Microsoft Corporation. All rights reserved.
+#  Licensed under the MIT License. See License.txt in the project root for license information.
+###############################################################################################
 name: $(Date:yyyyMMdd)$(Rev:.r)
 
-trigger:
-  branches:
-    include:
-      - main
 pr: none
 
 resources:
@@ -15,23 +15,34 @@ resources:
       endpoint: Monaco
 
 parameters:
-  - name: publishPackage1
+  - name: quality
+    displayName: Quality
+    type: string
+    default: latest
+    values:
+      - latest
+      - next
+  - name: publishTextDocument
+    displayName: 🚀 Publish textDocument
+    type: boolean
+    default: false
+  - name: publishTypes
     displayName: 🚀 Publish types
     type: boolean
     default: false
-  - name: publishPackage2
+  - name: publishJsonrpc
     displayName: 🚀 Publish jsonrpc
     type: boolean
     default: false
-  - name: publishPackage3
+  - name: publishProtocol
     displayName: 🚀 Publish protocol
     type: boolean
     default: false
-  - name: publishPackage4
+  - name: publishServer
     displayName: 🚀 Publish server
     type: boolean
     default: false
-  - name: publishPackage5
+  - name: publishClient
     displayName: 🚀 Publish client
     type: boolean
     default: false
@@ -40,55 +51,175 @@ extends:
   template: azure-pipelines/npm-package/pipeline.yml@templates
   parameters:
     npmPackages:
-      - name: types
-        buildSteps:
-          - script: npm install
-            displayName: Install dependencies
+      - name: textDocument
+        testPlatforms:
+          - name: Linux
+            nodeVersions:
+              - 16.14.2
+          - name: MacOS
+            nodeVersions:
+              - 16.14.2
+          - name: Windows
+            nodeVersions:
+              - 16.14.2
         testSteps:
-          - script: npm install
-            displayName: Install dependencies
-        publishPackage: ${{ parameters.publishPackage1 }}
+          - template: /build/azure-pipelines/templates/test-steps.yml@self
+            parameters:
+              package: textDocument
+        buildSteps:
+          - template: /build/azure-pipelines/templates/pack-steps.yml@self
+            parameters:
+              package: textDocument
+        tag: ${{ parameters.quality }}
+        publishPackage: ${{ parameters.publishTextDocument }}
+        postPublishSteps:
+          - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
+            parameters:
+              package: textDocument
+        workingDirectory: $(Build.SourcesDirectory)/textDocument
+
+      - name: types
+        dependsOn: textDocument
+        testPlatforms:
+          - name: Linux
+            nodeVersions:
+              - 16.14.2
+          - name: MacOS
+            nodeVersions:
+              - 16.14.2
+          - name: Windows
+            nodeVersions:
+              - 16.14.2
+        testSteps:
+          - template: /build/azure-pipelines/templates/test-steps.yml@self
+            parameters:
+              package: types
+        buildSteps:
+          - template: /build/azure-pipelines/templates/pack-steps.yml@self
+            parameters:
+              package: types
+        tag: ${{ parameters.quality }}
+        publishPackage: ${{ parameters.publishTypes }}
+        publishDependsOn: ${{ parameters.publishTextDocument }}
+        postPublishSteps:
+          - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
+            parameters:
+              package: types
+        workingDirectory: $(Build.SourcesDirectory)/types
 
       - name: jsonrpc
         dependsOn: types
-        buildSteps:
-          - script: npm install
-            displayName: Install dependencies
+        testPlatforms:
+          - name: Linux
+            nodeVersions:
+              - 16.14.2
+          - name: MacOS
+            nodeVersions:
+              - 16.14.2
+          - name: Windows
+            nodeVersions:
+              - 16.14.2
         testSteps:
-          - script: npm install
-            displayName: Install dependencies
-        publishDependsOn: ${{ parameters.publishPackage1 }}
-        publishPackage: ${{ parameters.publishPackage2 }}
+          - template: /build/azure-pipelines/templates/test-steps.yml@self
+            parameters:
+              package: jsonrpc
+        buildSteps:
+          - template: /build/azure-pipelines/templates/pack-steps.yml@self
+            parameters:
+              package: jsonrpc
+        tag: ${{ parameters.quality }}
+        publishPackage: ${{ parameters.publishJsonrpc }}
+        publishDependsOn: ${{ parameters.publishTypes }}
+        postPublishSteps:
+          - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
+            parameters:
+              package: jsonrpc
+        workingDirectory: $(Build.SourcesDirectory)/jsonrpc
 
       - name: protocol
         dependsOn: jsonrpc
-        buildSteps:
-          - script: npm install
-            displayName: Install dependencies
+        testPlatforms:
+          - name: Linux
+            nodeVersions:
+              - 16.14.2
+          - name: MacOS
+            nodeVersions:
+              - 16.14.2
+          - name: Windows
+            nodeVersions:
+              - 16.14.2
         testSteps:
-          - script: npm install
-            displayName: Install dependencies
-        publishDependsOn: ${{ parameters.publishPackage2 }}
-        publishPackage: ${{ parameters.publishPackage3 }}
+          - template: /build/azure-pipelines/templates/test-steps.yml@self
+            parameters:
+              package: protocol
+        buildSteps:
+          - template: /build/azure-pipelines/templates/pack-steps.yml@self
+            parameters:
+              package: protocol
+        tag: ${{ parameters.quality }}
+        publishPackage: ${{ parameters.publishProtocol }}
+        publishDependsOn: ${{ parameters.publishJsonrpc }}
+        postPublishSteps:
+          - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
+            parameters:
+              package: protocol
+        workingDirectory: $(Build.SourcesDirectory)/protocol
 
       - name: server
         dependsOn: protocol
-        buildSteps:
-          - script: npm install
-            displayName: Install dependencies
+        testPlatforms:
+          - name: Linux
+            nodeVersions:
+              - 16.14.2
+          - name: MacOS
+            nodeVersions:
+              - 16.14.2
+          - name: Windows
+            nodeVersions:
+              - 16.14.2
         testSteps:
-          - script: npm install
-            displayName: Install dependencies
-        publishDependsOn: ${{ parameters.publishPackage3 }}
-        publishPackage: ${{ parameters.publishPackage4 }}
+          - template: /build/azure-pipelines/templates/test-steps.yml@self
+            parameters:
+              package: server
+        buildSteps:
+          - template: /build/azure-pipelines/templates/pack-steps.yml@self
+            parameters:
+              package: server
+        tag: ${{ parameters.quality }}
+        publishPackage: ${{ parameters.publishServer }}
+        publishDependsOn: ${{ parameters.publishProtocol }}
+        postPublishSteps:
+          - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
+            parameters:
+              package: server
+        workingDirectory: $(Build.SourcesDirectory)/server
 
       - name: client
         dependsOn: server
-        buildSteps:
-          - script: npm install
-            displayName: Install dependencies
+        testPlatforms:
+          - name: Linux
+            nodeVersions:
+              - 16.14.2
+          - name: MacOS
+            nodeVersions:
+              - 16.14.2
+          - name: Windows
+            nodeVersions:
+              - 16.14.2
         testSteps:
-          - script: npm install
-            displayName: Install dependencies
-        publishDependsOn: ${{ parameters.publishPackage4 }}
-        publishPackage: ${{ parameters.publishPackage5 }}
+          - template: /build/azure-pipelines/templates/test-steps.yml@self
+            parameters:
+              package: client
+              script: all:pack
+        buildSteps:
+          - template: /build/azure-pipelines/templates/pack-steps.yml@self
+            parameters:
+              package: client
+        tag: ${{ parameters.quality }}
+        publishPackage: ${{ parameters.publishClient }}
+        publishDependsOn: ${{ parameters.publishServer }}
+        postPublishSteps:
+          - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
+            parameters:
+              package: client
+        workingDirectory: $(Build.SourcesDirectory)/client

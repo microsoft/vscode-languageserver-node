@@ -22,7 +22,8 @@
 		"vscode-languageserver-types": "3.17.2"
 	},
 	"scripts": {
-		"prepublishOnly": "git clean -xfd . && npm install && npm run clean && npm run compile && npm test && cd .. && npm run generate:metaModel && npm run generate:metaModelSchema && cd ./protocol",
+		"prepublishOnly": "echo \"⛔ Can only publish from a secure pipeline ⛔\" && node ../build/npm/fail",
+		"prepack": "git clean -xfd . && npm install && npm run all",
 		"postpublish": "node ../build/npm/post-publish.js",
 		"preversion": "npm test",
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json",
@@ -33,6 +34,10 @@
 		"test:node": "node ../node_modules/mocha/bin/_mocha",
 		"test:browser": "npm run webpack:test:silent && node ../build/bin/runBrowserTests.js  http://127.0.0.1:8080/protocol/src/browser/test/",
 		"webpack:test": "cd ../types && npm run compile:esm && cd ../protocol && node ../build/bin/webpack --mode none --config ./src/browser/test/webpack.config.js",
-		"webpack:test:silent": "cd ../types && npm run compile:esm && cd ../protocol && node ../build/bin/webpack --no-stats --mode none --config ./src/browser/test/webpack.config.js"
+		"webpack:test:silent": "cd ../types && npm run compile:esm && cd ../protocol && node ../build/bin/webpack --no-stats --mode none --config ./src/browser/test/webpack.config.js",
+		"compile:metaModelTool": "cd ../tools && npm run compile && cd ../protocol",
+		"generate:metaModel": "node ../tools/lib/main.js -p ./src/common/tsconfig.json > ./metaModel.json",
+		"generate:metaModelSchema": "ts-json-schema-generator --path ../tools/src/metaModel.ts > ./metaModel.schema.json",
+		"all": "npm run clean && npm run compile && npm run lint && npm run test && npm run compile:metaModelTool && npm run generate:metaModel && npm run generate:metaModelSchema"
 	}
 }

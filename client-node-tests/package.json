@@ -24,12 +24,16 @@
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json",
 		"watch": "node ../build/bin/tsc -b ./tsconfig-watch.json -w",
 		"lint": "node ../node_modules/eslint/bin/eslint.js --ext ts src",
-		"test": "node ../build/bin/symlink-tests.js && node lib/runTests.js"
+		"test": "node ../build/bin/symlink-tests.js && node lib/runTests.js",
+		"all": "npm run clean && npm run compile && npm run lint && npm run test",
+		"symlink:pack": "node ../build/bin/symlink-client-tests-publish.js",
+		"test:pack": "node lib/runTests.js",
+		"all:pack": "git clean -xfd . && npm install && npm run symlink:pack && npm run clean && npm run compile && npm run lint && npm run test:pack"
 	},
 	"dependencies": {
 		"minimatch": "^3.0.4",
-		"vscode-languageclient": "8.0.1",
-		"vscode-languageserver": "8.0.1",
+		"vscode-languageclient": "8.1.0-next.1",
+		"vscode-languageserver": "8.1.0-next.1",
 		"vscode-uri": "3.0.3"
 	},
 	"devDependencies": {
