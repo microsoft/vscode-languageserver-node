@@ -48,21 +48,63 @@ parameters:
     default: false
 
 variables:
+  # TestAndPackage
   testAndPackageTextDocument: ${{ or(eq(parameters.publishTextDocument, true), eq(variables['Build.Reason'], 'IndividualCI')) }}
   testAndPackageTypes: ${{ or(eq(parameters.publishTypes, true), eq(variables['Build.Reason'], 'IndividualCI')) }}
   testAndPackageJsonrpc: ${{ or(eq(parameters.publishJsonrpc, true), eq(variables['Build.Reason'], 'IndividualCI')) }}
   testAndPackageProtocol: ${{ or(eq(parameters.publishProtocol, true), eq(variables['Build.Reason'], 'IndividualCI')) }}
   testAndPackageServer: ${{ or(eq(parameters.publishServer, true), eq(variables['Build.Reason'], 'IndividualCI')) }}
   testAndPackageClient: ${{ or(eq(parameters.publishClient, true), eq(variables['Build.Reason'], 'IndividualCI')) }}
-  ${{ if eq(variables.testAndPackageTextDocument, true) }}:
+  #Types
+  ${{ if and(eq(variables.testAndPackageTypes, true), eq(variables.testAndPackageTextDocument, true)) }}:
     dependsOnTypes: textDocument
     publishDependsOnTypes: ${{ parameters.publishTextDocument }}
-  ${{ if eq(variables.testAndPackageTypes, true) }}:
+  # Jsonrpc
+  ${{ if and(eq(variables.testAndPackageJsonrpc, true), eq(variables.testAndPackageTypes, true)) }}:
     dependsOnJsonrpc: types
     publishDependsOnJsonrpc: ${{ parameters.publishTypes }}
-  ${{ elseif eq(variables.testAndPackageTextDocument, true) }}:
+  ${{ elseif and(eq(variables.testAndPackageJsonrpc, true), eq(variables.testAndPackageTextDocument, true)) }}:
     dependsOnJsonrpc: textDocument
     publishDependsOnJsonrpc: ${{ parameters.publishTextDocument }}
+  # Protocol
+  ${{ if and(eq(variables.testAndPackageProtocol, true), eq(variables.testAndPackageJsonrpc, true)) }}:
+    dependsOnProtocol: jsonrpc
+    publishDependsOnProtocol: ${{ parameters.publishJsonrpc }}
+  ${{ elseif and(eq(variables.testAndPackageProtocol, true), eq(variables.testAndPackageTypes, true)) }}:
+    dependsOnProtocol: types
+    publishDependsOnProtocol: ${{ parameters.publishTypes }}
+  ${{ elseif and(eq(variables.testAndPackageProtocol, true), eq(variables.testAndPackageTextDocument, true)) }}:
+    dependsOnProtocol: textDocument
+    publishDependsOnProtocol: ${{ parameters.publishTextDocument }}
+  # Server
+  ${{ if and(eq(variables.testAndPackageServer, true), eq(variables.testAndPackageProtocol, true)) }}:
+    dependsOnServer: protocol
+    publishDependsOnServer: ${{ parameters.publishProtocol }}
+  ${{ elseif and(eq(variables.testAndPackageServer, true), eq(variables.testAndPackageJsonrpc, true)) }}:
+    dependsOnServer: jsonrpc
+    publishDependsOnServer: ${{ parameters.publishJsonrpc }}
+  ${{ elseif and(eq(variables.testAndPackageServer, true), eq(variables.testAndPackageTypes, true)) }}:
+    dependsOnServer: types
+    publishDependsOnServer: ${{ parameters.publishTypes }}
+  ${{ elseif and(eq(variables.testAndPackageServer, true), eq(variables.testAndPackageTextDocument, true)) }}:
+    dependsOnServer: textDocument
+    publishDependsOnServer: ${{ parameters.publishTextDocument }}
+  # Client
+  ${{ if and(eq(variables.testAndPackageClient, true), eq(variables.testAndPackageServer, true)) }}:
+    dependsOnClient: server
+    publishDependsOnClient: ${{ parameters.publishServer }}
+  ${{ elseif and(eq(variables.testAndPackageClient, true), eq(variables.testAndPackageProtocol, true)) }}:
+    dependsOnClient: protocol
+    publishDependsOnClient: ${{ parameters.publishProtocol }}
+  ${{ elseif and(eq(variables.testAndPackageClient, true), eq(variables.testAndPackageJsonrpc, true)) }}:
+    dependsOnClient: jsonrpc
+    publishDependsOnClient: ${{ parameters.publishJsonrpc }}
+  ${{ elseif and(eq(variables.testAndPackageClient, true), eq(variables.testAndPackageTypes, true)) }}:
+    dependsOnClient: types
+    publishDependsOnClient: ${{ parameters.publishTypes }}
+  ${{ elseif and(eq(variables.testAndPackageClient, true), eq(variables.testAndPackageTextDocument, true)) }}:
+    dependsOnClient: textDocument
+    publishDependsOnClient: ${{ parameters.publishTextDocument }}
 
 extends:
   template: azure-pipelines/npm-package/pipeline.yml@templates
@@ -149,96 +191,96 @@ extends:
                 quality: ${{ parameters.quality }}
           workingDirectory: $(Build.SourcesDirectory)/jsonrpc
 
-      # - ${{ if eq(variables.testAndPackageProtocol, true) }}:
-      #   - name: protocol
-      #     dependsOn: jsonrpc
-      #     testPlatforms:
-      #       - name: Linux
-      #         nodeVersions:
-      #           - 16.14.2
-      #       - name: MacOS
-      #         nodeVersions:
-      #           - 16.14.2
-      #       - name: Windows
-      #         nodeVersions:
-      #           - 16.14.2
-      #     testSteps:
-      #       - template: /build/azure-pipelines/templates/test-steps.yml@self
-      #         parameters:
-      #           package: protocol
-      #     buildSteps:
-      #       - template: /build/azure-pipelines/templates/pack-steps.yml@self
-      #         parameters:
-      #           package: protocol
-      #     tag: ${{ parameters.quality }}
-      #     publishPackage: ${{ parameters.publishProtocol }}
-      #     publishDependsOn: ${{ parameters.publishJsonrpc }}
-      #     postPublishSteps:
-      #       - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
-      #         parameters:
-      #           package: protocol
-      #           quality: ${{ parameters.quality }}
-      #     workingDirectory: $(Build.SourcesDirectory)/protocol
+      - ${{ if eq(variables.testAndPackageProtocol, true) }}:
+        - name: protocol
+          dependsOn: ${{ variables.dependsOnProtocol }}
+          testPlatforms:
+            - name: Linux
+              nodeVersions:
+                - 16.14.2
+            - name: MacOS
+              nodeVersions:
+                - 16.14.2
+            - name: Windows
+              nodeVersions:
+                - 16.14.2
+          testSteps:
+            - template: /build/azure-pipelines/templates/test-steps.yml@self
+              parameters:
+                package: protocol
+          buildSteps:
+            - template: /build/azure-pipelines/templates/pack-steps.yml@self
+              parameters:
+                package: protocol
+          tag: ${{ parameters.quality }}
+          publishPackage: ${{ parameters.publishProtocol }}
+          publishDependsOn: ${{ variables.publishDependsOnProtocol }}
+          postPublishSteps:
+            - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
+              parameters:
+                package: protocol
+                quality: ${{ parameters.quality }}
+          workingDirectory: $(Build.SourcesDirectory)/protocol
 
-      # - ${{ if eq(variables.testAndPackageServer, true) }}:
-      #   - name: server
-      #     dependsOn: protocol
-      #     testPlatforms:
-      #       - name: Linux
-      #         nodeVersions:
-      #           - 16.14.2
-      #       - name: MacOS
-      #         nodeVersions:
-      #           - 16.14.2
-      #       - name: Windows
-      #         nodeVersions:
-      #           - 16.14.2
-      #     testSteps:
-      #       - template: /build/azure-pipelines/templates/test-steps.yml@self
-      #         parameters:
-      #           package: server
-      #     buildSteps:
-      #       - template: /build/azure-pipelines/templates/pack-steps.yml@self
-      #         parameters:
-      #           package: server
-      #     tag: ${{ parameters.quality }}
-      #     publishPackage: ${{ parameters.publishServer }}
-      #     publishDependsOn: ${{ parameters.publishProtocol }}
-      #     postPublishSteps:
-      #       - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
-      #         parameters:
-      #           package: server
-      #           quality: ${{ parameters.quality }}
-      #     workingDirectory: $(Build.SourcesDirectory)/server
+      - ${{ if eq(variables.testAndPackageServer, true) }}:
+        - name: server
+          dependsOn: ${{ variables.dependsOnServer }}
+          testPlatforms:
+            - name: Linux
+              nodeVersions:
+                - 16.14.2
+            - name: MacOS
+              nodeVersions:
+                - 16.14.2
+            - name: Windows
+              nodeVersions:
+                - 16.14.2
+          testSteps:
+            - template: /build/azure-pipelines/templates/test-steps.yml@self
+              parameters:
+                package: server
+          buildSteps:
+            - template: /build/azure-pipelines/templates/pack-steps.yml@self
+              parameters:
+                package: server
+          tag: ${{ parameters.quality }}
+          publishPackage: ${{ parameters.publishServer }}
+          publishDependsOn: ${{ variables.publishDependsOnServer }}
+          postPublishSteps:
+            - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
+              parameters:
+                package: server
+                quality: ${{ parameters.quality }}
+          workingDirectory: $(Build.SourcesDirectory)/server
 
-      # - ${{ if eq(variables.testAndPackageClient, true) }}:
-        # - name: client
-        #   dependsOn: server
-        #   testPlatforms:
-        #     - name: Linux
-        #       nodeVersions:
-        #         - 16.14.2
-        #     - name: MacOS
-        #       nodeVersions:
-        #         - 16.14.2
-        #     - name: Windows
-        #       nodeVersions:
-        #         - 16.14.2
-        #   testSteps:
-        #     - template: /build/azure-pipelines/templates/test-steps.yml@self
-        #       parameters:
-        #         package: client
-        #         script: all:pack
-        #   buildSteps:
-        #     - template: /build/azure-pipelines/templates/pack-steps.yml@self
-        #       parameters:
-        #         package: client
-        #   tag: ${{ parameters.quality }}
-        #   publishPackage: ${{ parameters.publishClient }}
-        #   publishDependsOn: ${{ parameters.publishServer }}
-        #   postPublishSteps:
-        #     - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
-        #       parameters:
-        #         package: client
-        #         quality: ${{ parameters.quality }}
-        #   workingDirectory: $(Build.SourcesDirectory)/client
+      - ${{ if eq(variables.testAndPackageClient, true) }}:
+        - name: client
+          dependsOn: ${{ variables.dependsOnClient }}
+          testPlatforms:
+            - name: Linux
+              nodeVersions:
+                - 16.14.2
+            - name: MacOS
+              nodeVersions:
+                - 16.14.2
+            - name: Windows
+              nodeVersions:
+                - 16.14.2
+          testSteps:
+            - template: /build/azure-pipelines/templates/test-steps.yml@self
+              parameters:
+                package: client
+                script: all:pack
+          buildSteps:
+            - template: /build/azure-pipelines/templates/pack-steps.yml@self
+              parameters:
+                package: client
+          tag: ${{ parameters.quality }}
+          publishPackage: ${{ parameters.publishClient }}
+          publishDependsOn: ${{ variables.publishDependsOnClient }}
+          postPublishSteps:
+            - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
+              parameters:
+                package: client
+                quality: ${{ parameters.quality }}
+          workingDirectory: $(Build.SourcesDirectory)/client
