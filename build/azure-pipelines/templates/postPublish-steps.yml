@@ -4,6 +4,9 @@
 ###############################################################################################
 parameters:
 - name: package
+  type: string
+- name: quality
+  type: string
 
 steps:
   - ${{ if eq(parameters.quality, 'latest') }}:
