@@ -4,6 +4,8 @@
 ###############################################################################################
 parameters:
 - name: package
+- name: script
+  default: 'all'
 
 steps:
   - script: npm install
@@ -14,7 +16,7 @@ steps:
       echo ">>> Started xvfb"
     displayName: Start xvfb
     condition: eq(variables['Agent.OS'], 'Linux')
-  - script: npm run all
+  - script: npm run ${{ parameters.script }}
     workingDirectory: $(Build.SourcesDirectory)/${{ parameters.package }}
     displayName: Verify package
     env:
