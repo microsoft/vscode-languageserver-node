@@ -274,17 +274,14 @@ extends:
           - script: npm install
             workingDirectory: $(Build.SourcesDirectory)
             displayName: Install dependencies
-          - script: npm run all
-            workingDirectory: $(Build.SourcesDirectory)/client-node-tests
-            displayName: Verify Text Documents for tests
           - bash: |
               /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
               echo ">>> Started xvfb"
             displayName: Start xvfb
             condition: eq(variables['Agent.OS'], 'Linux')
-          - script: npm run all
+          - script: npm run all:pack
             workingDirectory: $(Build.SourcesDirectory)/client
-            displayName: Verify package
+            displayName: Verify Package
             env:
               DISPLAY: ':99.0'
         tag: ${{ parameters.quality }}
