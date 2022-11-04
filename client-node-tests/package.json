@@ -25,9 +25,10 @@
 		"watch": "node ../build/bin/tsc -b ./tsconfig-watch.json -w",
 		"lint": "node ../node_modules/eslint/bin/eslint.js --ext ts src",
 		"test": "node ../build/bin/symlink-tests.js && node lib/runTests.js",
-		"test:publish": "node ../build/bin/symlink-tests-publish.js && node lib/runTests.js",
-		"build": "npm run clean && npm run compile && npm run lint ",
-		"all": "npm run clean && npm run compile && npm run lint && npm run test"
+		"all": "npm run clean && npm run compile && npm run lint && npm run test",
+		"symlink:pack": "node ../build/bin/symlink-client-tests-publish.js",
+		"test:pack": "node lib/runTests.js",
+		"all:pack": "git clean -xfd . && npm install && npm run symlink:pack && npm run clean && npm run compile && npm run lint && npm run test:pack"
 	},
 	"dependencies": {
 		"minimatch": "^3.0.4",

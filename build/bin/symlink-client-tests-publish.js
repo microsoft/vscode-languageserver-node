@@ -12,8 +12,9 @@ const ln = require('./linking');
 const root = path.dirname(path.dirname(__dirname));
 
 (async function main() {
-	console.log('Symlinking node modules for test setup');
+	console.log('Symlinking node modules for publish setup');
 
 	// Hard link the client to have a real path from the node_modules folder
+	const extensionFolder = path.join(root, 'client-node-tests');
 	await ln.tryHardLink(path.join(root, 'client'), path.join(extensionFolder, 'node_modules', 'vscode-languageclient'));
 })();

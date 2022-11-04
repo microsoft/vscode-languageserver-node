@@ -34,7 +34,7 @@
 	},
 	"scripts": {
 		"prepublishOnly": "echo \"⛔ Can only publish from a secure pipeline ⛔\" && node ../build/npm/fail",
-		"prepack": "git clean -xfd . && npm install && node ./bin/updateVSCode.js",
+		"prepack": "git clean -xfd . && npm install && node ./bin/updateVSCode.js && npm run all:pack",
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json && shx cp src/node/terminateProcess.sh lib/node/terminateProcess.sh",
 		"compile:clean": "git clean -xfd . && npm install && npm run clean && npm run compile",
 		"watch": "node ../build/bin/tsc -b ./tsconfig-watch.json -w",
@@ -42,6 +42,7 @@
 		"test": "cd ../client-node-tests && npm test && cd ../client",
 		"clean": "node ../node_modules/rimraf/bin.js lib",
 		"all": "npm run clean && npm run compile && npm run lint && npm test",
+		"all:pack": "npm run clean && npm run compile && npm run lint && cd ../client-node-tests && npm run all:pack && cd ..",
 		"preversion": "npm test",
 		"updateVSCodeVersion": "node ./bin/updateVSCode.js"
 	}

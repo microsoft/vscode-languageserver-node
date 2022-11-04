@@ -356,7 +356,7 @@ suite('Client integration', () => {
 
 		isArray(result, vscode.Location, 2);
 		for (let i = 0; i < result.length; i++) {
-			const location = result[i];
+			const location: vscode.Location = result[i];
 			rangeEqual(location.range, i, i, i, i);
 			assert.strictEqual(location.uri.toString(), document.uri.toString());
 		}
