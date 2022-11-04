@@ -77,10 +77,9 @@ extends:
         tag: ${{ parameters.quality }}
         publishPackage: ${{ parameters.publishTextDocument }}
         postPublishSteps:
-          - ${{ if eq(parameters.quality, 'latest') }}:
-            - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
-              parameters:
-                package: textDocument
+          - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
+            parameters:
+              package: textDocument
         workingDirectory: $(Build.SourcesDirectory)/textDocument
 
       - name: types
@@ -96,30 +95,20 @@ extends:
             nodeVersions:
               - 16.14.2
         testSteps:
-          - script: npm install
-            workingDirectory: $(Build.SourcesDirectory)
-            displayName: Install dependencies
-          - script: npm run all
-            workingDirectory: $(Build.SourcesDirectory)/types
-            displayName: Verify package
+          - template: /build/azure-pipelines/templates/test-steps.yml@self
+            parameters:
+              package: types
+        buildSteps:
+          - template: /build/azure-pipelines/templates/pack-steps.yml@self
+            parameters:
+              package: types
         tag: ${{ parameters.quality }}
         publishPackage: ${{ parameters.publishTypes }}
         publishDependsOn: ${{ parameters.publishTextDocument }}
         postPublishSteps:
-          - ${{ if eq(parameters.quality, 'latest') }}:
-            - bash: |
-                PACKAGE_SPEC=$(node -p "require(\"./package.json\").name + \"@\" + require(\"./package.json\").version")
-                echo "##vso[task.setvariable variable=PACKAGE_SPEC;isOutput=true]$PACKAGE_SPEC"
-              name: SetPackageSpec
-              displayName: Set PACKAGE_SPEC variable
-              workingDirectory: $(Build.SourcesDirectory)/types
-            - task: Npm@1
-              inputs:
-                command: custom
-                customCommand: dist-tag add $(SetPackageSpec.PACKAGE_SPEC) next
-                customEndpoint: NPM (vscode-bot)
-                workingDir: $(Build.SourcesDirectory)/types
-              displayName: npm dist-tag
+          - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
+            parameters:
+              package: types
         workingDirectory: $(Build.SourcesDirectory)/types
 
       - name: jsonrpc
@@ -135,37 +124,20 @@ extends:
             nodeVersions:
               - 16.14.2
         testSteps:
-          - script: npm install
-            workingDirectory: $(Build.SourcesDirectory)
-            displayName: Install dependencies
-          - bash: |
-              /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-              echo ">>> Started xvfb"
-            displayName: Start xvfb
-            condition: eq(variables['Agent.OS'], 'Linux')
-          - script: npm run all
-            workingDirectory: $(Build.SourcesDirectory)/jsonrpc
-            displayName: Verify package
-            env:
-              DISPLAY: ':99.0'
+          - template: /build/azure-pipelines/templates/test-steps.yml@self
+            parameters:
+              package: jsonrpc
+        buildSteps:
+          - template: /build/azure-pipelines/templates/pack-steps.yml@self
+            parameters:
+              package: jsonrpc
         tag: ${{ parameters.quality }}
         publishPackage: ${{ parameters.publishJsonrpc }}
         publishDependsOn: ${{ parameters.publishTypes }}
         postPublishSteps:
-          - ${{ if eq(parameters.quality, 'latest') }}:
-            - bash: |
-                PACKAGE_SPEC=$(node -p "require(\"./package.json\").name + \"@\" + require(\"./package.json\").version")
-                echo "##vso[task.setvariable variable=PACKAGE_SPEC;isOutput=true]$PACKAGE_SPEC"
-              name: SetPackageSpec
-              displayName: Set PACKAGE_SPEC variable
-              workingDirectory: $(Build.SourcesDirectory)/jsonrpc
-            - task: Npm@1
-              inputs:
-                command: custom
-                customCommand: dist-tag add $(SetPackageSpec.PACKAGE_SPEC) next
-                customEndpoint: NPM (vscode-bot)
-                workingDir: $(Build.SourcesDirectory)/jsonrpc
-              displayName: npm dist-tag
+          - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
+            parameters:
+              package: jsonrpc
         workingDirectory: $(Build.SourcesDirectory)/jsonrpc
 
       - name: protocol
@@ -181,37 +153,20 @@ extends:
             nodeVersions:
               - 16.14.2
         testSteps:
-          - script: npm install
-            workingDirectory: $(Build.SourcesDirectory)
-            displayName: Install dependencies
-          - bash: |
-              /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-              echo ">>> Started xvfb"
-            displayName: Start xvfb
-            condition: eq(variables['Agent.OS'], 'Linux')
-          - script: npm run all
-            workingDirectory: $(Build.SourcesDirectory)/protocol
-            displayName: Verify package
-            env:
-              DISPLAY: ':99.0'
+          - template: /build/azure-pipelines/templates/test-steps.yml@self
+            parameters:
+              package: protocol
+        buildSteps:
+          - template: /build/azure-pipelines/templates/pack-steps.yml@self
+            parameters:
+              package: protocol
         tag: ${{ parameters.quality }}
         publishPackage: ${{ parameters.publishProtocol }}
         publishDependsOn: ${{ parameters.publishJsonrpc }}
         postPublishSteps:
-          - ${{ if eq(parameters.quality, 'latest') }}:
-            - bash: |
-                PACKAGE_SPEC=$(node -p "require(\"./package.json\").name + \"@\" + require(\"./package.json\").version")
-                echo "##vso[task.setvariable variable=PACKAGE_SPEC;isOutput=true]$PACKAGE_SPEC"
-              name: SetPackageSpec
-              displayName: Set PACKAGE_SPEC variable
-              workingDirectory: $(Build.SourcesDirectory)/protocol
-            - task: Npm@1
-              inputs:
-                command: custom
-                customCommand: dist-tag add $(SetPackageSpec.PACKAGE_SPEC) next
-                customEndpoint: NPM (vscode-bot)
-                workingDir: $(Build.SourcesDirectory)/protocol
-              displayName: npm dist-tag
+          - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
+            parameters:
+              package: protocol
         workingDirectory: $(Build.SourcesDirectory)/protocol
 
       - name: server
@@ -227,30 +182,20 @@ extends:
             nodeVersions:
               - 16.14.2
         testSteps:
-          - script: npm install
-            workingDirectory: $(Build.SourcesDirectory)
-            displayName: Install dependencies
-          - script: npm run all
-            workingDirectory: $(Build.SourcesDirectory)/server
-            displayName: Verify package
+          - template: /build/azure-pipelines/templates/test-steps.yml@self
+            parameters:
+              package: server
+        buildSteps:
+          - template: /build/azure-pipelines/templates/pack-steps.yml@self
+            parameters:
+              package: server
         tag: ${{ parameters.quality }}
         publishPackage: ${{ parameters.publishServer }}
         publishDependsOn: ${{ parameters.publishProtocol }}
         postPublishSteps:
-          - ${{ if eq(parameters.quality, 'latest') }}:
-            - bash: |
-                PACKAGE_SPEC=$(node -p "require(\"./package.json\").name + \"@\" + require(\"./package.json\").version")
-                echo "##vso[task.setvariable variable=PACKAGE_SPEC;isOutput=true]$PACKAGE_SPEC"
-              name: SetPackageSpec
-              displayName: Set PACKAGE_SPEC variable
-              workingDirectory: $(Build.SourcesDirectory)/server
-            - task: Npm@1
-              inputs:
-                command: custom
-                customCommand: dist-tag add $(SetPackageSpec.PACKAGE_SPEC) next
-                customEndpoint: NPM (vscode-bot)
-                workingDir: $(Build.SourcesDirectory)/server
-              displayName: npm dist-tag
+          - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
+            parameters:
+              package: server
         workingDirectory: $(Build.SourcesDirectory)/server
 
       - name: client
