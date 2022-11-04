@@ -1,3 +1,7 @@
+###############################################################################################
+#  Copyright (c) Microsoft Corporation. All rights reserved.
+#  Licensed under the MIT License. See License.txt in the project root for license information.
+###############################################################################################
 name: $(Date:yyyyMMdd)$(Rev:.r)
 
 trigger:
@@ -62,30 +66,17 @@ extends:
           - name: Windows
             nodeVersions:
               - 16.14.2
-        buildSteps:
-          - script: npm install
-            workingDirectory: $(Build.SourcesDirectory)
-            displayName: Install dependencies
-          - script: npm run all
-            workingDirectory: $(Build.SourcesDirectory)/textDocument
-            displayName: Verify package
+        testSteps:
+          - template: templates/test-steps.yml
+            parameters:
+              package: textDocument
         tag: ${{ parameters.quality }}
         publishPackage: ${{ parameters.publishTextDocument }}
         postPublishSteps:
           - ${{ if eq(parameters.quality, 'latest') }}:
-            - bash: |
-                PACKAGE_SPEC=$(node -p "require(\"./package.json\").name + \"@\" + require(\"./package.json\").version")
-                echo "##vso[task.setvariable variable=PACKAGE_SPEC;isOutput=true]$PACKAGE_SPEC"
-              name: SetPackageSpec
-              displayName: Set PACKAGE_SPEC variable
-              workingDirectory: $(Build.SourcesDirectory)/textDocument
-            - task: Npm@1
-              inputs:
-                command: custom
-                customCommand: dist-tag add $(SetPackageSpec.PACKAGE_SPEC) next
-                customEndpoint: NPM (vscode-bot)
-                workingDir: $(Build.SourcesDirectory)/textDocument
-              displayName: npm dist-tag
+            - template: templates/postPublish-steps.yml
+              parameters:
+                package: textDocument
         workingDirectory: $(Build.SourcesDirectory)/textDocument
 
       - name: types
@@ -100,7 +91,7 @@ extends:
           - name: Windows
             nodeVersions:
               - 16.14.2
-        buildSteps:
+        testSteps:
           - script: npm install
             workingDirectory: $(Build.SourcesDirectory)
             displayName: Install dependencies
@@ -139,7 +130,8 @@ extends:
           - name: Windows
             nodeVersions:
               - 16.14.2
-        buildSteps:
+        testSteps:
+          - template: templates/testSteps.yml
           - script: npm install
             workingDirectory: $(Build.SourcesDirectory)
             displayName: Install dependencies
@@ -185,7 +177,7 @@ extends:
           - name: Windows
             nodeVersions:
               - 16.14.2
-        buildSteps:
+        testSteps:
           - script: npm install
             workingDirectory: $(Build.SourcesDirectory)
             displayName: Install dependencies
@@ -231,7 +223,7 @@ extends:
           - name: Windows
             nodeVersions:
               - 16.14.2
-        buildSteps:
+        testSteps:
           - script: npm install
             workingDirectory: $(Build.SourcesDirectory)
             displayName: Install dependencies
@@ -270,7 +262,7 @@ extends:
           - name: Windows
             nodeVersions:
               - 16.14.2
-        buildSteps:
+        testSteps:
           - script: npm install
             workingDirectory: $(Build.SourcesDirectory)
             displayName: Install dependencies
