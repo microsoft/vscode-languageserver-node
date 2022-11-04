@@ -142,6 +142,16 @@ extends:
       - ${{ if eq(variables.testAndPackageTypes, true) }}:
         - name: types
           dependsOn: ${{ variables.dependsOnTypes }}
+          testPlatforms:
+            - name: Linux
+              nodeVersions:
+                - 16.14.2
+            - name: MacOS
+              nodeVersions:
+                - 16.14.2
+            - name: Windows
+              nodeVersions:
+                - 16.14.2
           testSteps:
             - template: /build/azure-pipelines/templates/test-steps.yml@self
               parameters:
