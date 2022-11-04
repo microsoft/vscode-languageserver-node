@@ -210,33 +210,33 @@ extends:
       #     workingDirectory: $(Build.SourcesDirectory)/server
 
       # - ${{ if eq(variables.testAndPackageClient, true) }}:
-        - name: client
-          dependsOn: server
-          testPlatforms:
-            - name: Linux
-              nodeVersions:
-                - 16.14.2
-            - name: MacOS
-              nodeVersions:
-                - 16.14.2
-            - name: Windows
-              nodeVersions:
-                - 16.14.2
-          testSteps:
-            - template: /build/azure-pipelines/templates/test-steps.yml@self
-              parameters:
-                package: client
-                script: all:pack
-          buildSteps:
-            - template: /build/azure-pipelines/templates/pack-steps.yml@self
-              parameters:
-                package: client
-          tag: ${{ parameters.quality }}
-          publishPackage: ${{ parameters.publishClient }}
-          publishDependsOn: ${{ parameters.publishServer }}
-          postPublishSteps:
-            - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
-              parameters:
-                package: client
-                quality: ${{ parameters.quality }}
-          workingDirectory: $(Build.SourcesDirectory)/client
+        # - name: client
+        #   dependsOn: server
+        #   testPlatforms:
+        #     - name: Linux
+        #       nodeVersions:
+        #         - 16.14.2
+        #     - name: MacOS
+        #       nodeVersions:
+        #         - 16.14.2
+        #     - name: Windows
+        #       nodeVersions:
+        #         - 16.14.2
+        #   testSteps:
+        #     - template: /build/azure-pipelines/templates/test-steps.yml@self
+        #       parameters:
+        #         package: client
+        #         script: all:pack
+        #   buildSteps:
+        #     - template: /build/azure-pipelines/templates/pack-steps.yml@self
+        #       parameters:
+        #         package: client
+        #   tag: ${{ parameters.quality }}
+        #   publishPackage: ${{ parameters.publishClient }}
+        #   publishDependsOn: ${{ parameters.publishServer }}
+        #   postPublishSteps:
+        #     - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
+        #       parameters:
+        #         package: client
+        #         quality: ${{ parameters.quality }}
+        #   workingDirectory: $(Build.SourcesDirectory)/client
