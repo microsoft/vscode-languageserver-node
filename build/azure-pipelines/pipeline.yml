@@ -57,6 +57,12 @@ variables:
   ${{ if eq(variables.testAndPackageTextDocument, true) }}:
     dependsOnTypes: textDocument
     publishDependsOnTypes: ${{ parameters.publishTextDocument }}
+  ${{ if eq(variables.testAndPackageTypes, true) }}:
+    dependsOnJsonrpc: types
+    publishDependsOnJsonrpc: ${{ parameters.publishTypes }}
+  ${{ elseif eq(variables.testAndPackageTextDocument, true) }}:
+    dependsOnJsonrpc: textDocument
+    publishDependsOnJsonrpc: ${{ parameters.publishTextDocument }}
 
 extends:
   template: azure-pipelines/npm-package/pipeline.yml@templates
@@ -112,40 +118,36 @@ extends:
           publishDependsOn: ${{ variables.publishDependsOnTypes }}
           workingDirectory: $(Build.SourcesDirectory)/types
 
-      # - ${{ if eq(variables.testAndPackageJsonrpc, true) }}:
-      #   - name: jsonrpc
-      #     ${{ if eq(variables.testAndPackageTypes, true) }}:
-      #       dependsOn: types
-      #     ${{ elseif eq(variables.testAndPackageTextDocument, true) }}:
-      #       dependsOn: textDocument
-
-      #     testPlatforms:
-      #       - name: Linux
-      #         nodeVersions:
-      #           - 16.14.2
-      #       - name: MacOS
-      #         nodeVersions:
-      #           - 16.14.2
-      #       - name: Windows
-      #         nodeVersions:
-      #           - 16.14.2
-      #     testSteps:
-      #       - template: /build/azure-pipelines/templates/test-steps.yml@self
-      #         parameters:
-      #           package: jsonrpc
-      #     buildSteps:
-      #       - template: /build/azure-pipelines/templates/pack-steps.yml@self
-      #         parameters:
-      #           package: jsonrpc
-      #     tag: ${{ parameters.quality }}
-      #     publishPackage: ${{ parameters.publishJsonrpc }}
-      #     publishDependsOn: ${{ parameters.publishTypes }}
-      #     postPublishSteps:
-      #       - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
-      #         parameters:
-      #           package: jsonrpc
-      #           quality: ${{ parameters.quality }}
-      #     workingDirectory: $(Build.SourcesDirectory)/jsonrpc
+      - ${{ if eq(variables.testAndPackageJsonrpc, true) }}:
+        - name: jsonrpc
+          dependsOn: ${{ variables.dependsOnJsonrpc }}
+          testPlatforms:
+            - name: Linux
+              nodeVersions:
+                - 16.14.2
+            - name: MacOS
+              nodeVersions:
+                - 16.14.2
+            - name: Windows
+              nodeVersions:
+                - 16.14.2
+          testSteps:
+            - template: /build/azure-pipelines/templates/test-steps.yml@self
+              parameters:
+                package: jsonrpc
+          buildSteps:
+            - template: /build/azure-pipelines/templates/pack-steps.yml@self
+              parameters:
+                package: jsonrpc
+          tag: ${{ parameters.quality }}
+          publishPackage: ${{ parameters.publishJsonrpc }}
+          publishDependsOn: ${{ variables.publishDependsOnJsonrpc }}
+          postPublishSteps:
+            - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
+              parameters:
+                package: jsonrpc
+                quality: ${{ parameters.quality }}
+          workingDirectory: $(Build.SourcesDirectory)/jsonrpc
 
       # - ${{ if eq(variables.testAndPackageProtocol, true) }}:
       #   - name: protocol
