@@ -30,22 +30,22 @@ parameters:
     displayName: 🚀 Publish types
     type: boolean
     default: false
-  # - name: publishJsonrpc
-  #   displayName: 🚀 Publish jsonrpc
-  #   type: boolean
-  #   default: false
-  # - name: publishProtocol
-  #   displayName: 🚀 Publish protocol
-  #   type: boolean
-  #   default: false
-  # - name: publishServer
-  #   displayName: 🚀 Publish server
-  #   type: boolean
-  #   default: false
-  # - name: publishClient
-  #   displayName: 🚀 Publish client
-  #   type: boolean
-  #   default: false
+  - name: publishJsonrpc
+    displayName: 🚀 Publish jsonrpc
+    type: boolean
+    default: false
+  - name: publishProtocol
+    displayName: 🚀 Publish protocol
+    type: boolean
+    default: false
+  - name: publishServer
+    displayName: 🚀 Publish server
+    type: boolean
+    default: false
+  - name: publishClient
+    displayName: 🚀 Publish client
+    type: boolean
+    default: false
 
 variables:
   testAndPackageTextDocument: ${{ or(eq(parameters.publishTextDocument, true), eq(variables['Build.Reason'], 'IndividualCI')) }}
