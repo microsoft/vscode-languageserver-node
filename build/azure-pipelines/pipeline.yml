@@ -56,7 +56,7 @@ variables:
   - testAndPackageClient: ${{ or(eq(parameters.publishClient, true), eq(variables['Build.Reason'], 'IndividualCI')) }}
   - ${{ if eq(variables.testAndPackageTextDocument, true) }}:
     - dependsOnTypes: textDocument
-  - ${{ if eq(parameters.publishTextDocument, true) }}:
+  - ${{ if eq(variables.testAndPackageTextDocument, true) }}:
     - publishDependsOnTypes: ${{ parameters.publishTextDocument }}
 
 extends:
