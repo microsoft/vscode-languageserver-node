@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageserver-protocol",
 	"description": "VSCode Language Server Protocol implementation",
-	"version": "3.17.3-next.1",
+	"version": "3.17.3-next.2",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"repository": {
@@ -18,7 +18,7 @@
 	},
 	"typings": "./lib/common/api.d.ts",
 	"dependencies": {
-		"vscode-jsonrpc": "8.1.0-next.1",
+		"vscode-jsonrpc": "8.1.0-next.3",
 		"vscode-languageserver-types": "3.17.2"
 	},
 	"scripts": {
@@ -36,7 +36,7 @@
 		"webpack:test": "cd ../types && npm run compile:esm && cd ../protocol && node ../build/bin/webpack --mode none --config ./src/browser/test/webpack.config.js",
 		"webpack:test:silent": "cd ../types && npm run compile:esm && cd ../protocol && node ../build/bin/webpack --no-stats --mode none --config ./src/browser/test/webpack.config.js",
 		"compile:metaModelTool": "cd ../tools && npm run compile && cd ../protocol",
-		"generate:metaModel": "node ../tools/lib/main.js -p ./src/common/tsconfig.json > ./metaModel.json",
+		"generate:metaModel": "node ../tools/lib/generator-main.js -p ./src/common/tsconfig.json > ./metaModel.json",
 		"generate:metaModelSchema": "ts-json-schema-generator --path ../tools/src/metaModel.ts > ./metaModel.schema.json",
 		"all": "npm run clean && npm run compile && npm run lint && npm run test && npm run compile:metaModelTool && npm run generate:metaModel && npm run generate:metaModelSchema"
 	}

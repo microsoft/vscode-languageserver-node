@@ -57,6 +57,7 @@
 		"audit:all": "node ./build/bin/all.js audit",
 		"audit:all:fix": "node ./build/bin/all.js audit fix",
 		"generate:metaModel": "cd protocol && npm run generate:metaModel && cd ..",
-		"generate:metaModelSchema": "cd protocol && npm run generate:metaModelSchema && cd .."
+		"generate:metaModelSchema": "cd protocol && npm run generate:metaModelSchema && cd ..",
+		"validate:version": "node ./tools/lib/validate-main.js"
 	}
 }
