@@ -21,7 +21,7 @@ steps:
   - script: npm run ${{ parameters.script }}
     workingDirectory: $(Build.SourcesDirectory)/${{ parameters.package }}
     displayName: Verify package
-  - pws: $Env:Foo = 'An example'
+  - pwsh: $Env:Foo = 'An example'
     displayName: Set
-  - pws: $Env:Foo
+  - pwsh: $Env:Foo
     displayName: Read
