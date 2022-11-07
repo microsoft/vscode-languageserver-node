@@ -56,8 +56,7 @@ const clientNodeTests: Package = {
 	name: 'test-extension',
 	location: './client-node-tests',
 	dependsOn: [
-		{ kind: 'release', package: server },
-		{ kind: 'release', package: client }
+		{ kind: 'release', package: server }
 	]
 };
 
