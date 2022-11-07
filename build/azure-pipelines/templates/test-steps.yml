@@ -23,5 +23,11 @@ steps:
     displayName: Verify package
   - pwsh: $Env:Foo = 'An example'
     displayName: Set
-  - pwsh: $Env:Foo
+  - pwsh: Write-Host $Env:Foo
+    displayName: Read
+  - pwsh: |
+      [Environment]::SetEnvironmentVariable('Bar','Hello Bar!')
+    displayName: Set
+  - pwsh: |
+      [Environment]::GetEnvironmentVariable('Foo')
     displayName: Read
