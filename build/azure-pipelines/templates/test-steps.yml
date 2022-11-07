@@ -9,9 +9,6 @@ parameters:
   type: string
   default: 'all'
 
-variables:
-  TEST: "Hello!!!"
-
 steps:
   - script: npm install
     workingDirectory: $(Build.SourcesDirectory)

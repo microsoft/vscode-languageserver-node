@@ -47,6 +47,9 @@ parameters:
     type: boolean
     default: false
 
+variables:
+  TEST: "Hello Wolrd!"
+
 extends:
   template: azure-pipelines/npm-package/pipeline.yml@templates
   parameters:
