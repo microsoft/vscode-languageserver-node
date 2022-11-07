@@ -29,5 +29,5 @@ steps:
       [Environment]::SetEnvironmentVariable('Bar','Hello Bar!')
     displayName: Set
   - pwsh: |
-      [Environment]::GetEnvironmentVariable('Foo')
+      Write-Host [Environment]::GetEnvironmentVariable('Bar')
     displayName: Read
