@@ -42,9 +42,22 @@ async function go() {
 		const workspaceFolder = path.join(testDir, 'workspace');
 		fs.mkdirSync(workspaceFolder);
 
+		// Under Linux we quite often run the tests using Xvfb.
+		// In case we have no display set and Xvfb is running use
+		// the Xvfb display port as a DISPLAY setting
 		let extensionTestsEnv: NodeJS.ProcessEnv | undefined = undefined;
 		if (process.platform === 'linux' && !process.env['DISPLAY']) {
-			extensionTestsEnv = { 'DISPLAY': ':99' };
+			let display: string | undefined;
+			const processes = await find('name', '/usr/bin/Xvfb');
+			for (const item of processes) {
+				if (item.name !== 'Xvfb') {
+					continue;
+				}
+				if (item.cmd !== undefined && item.cmd.length > 0) {
+					display = item.cmd.split(' ')[1];
+				}
+			}
+			extensionTestsEnv = { 'DISPLAY': display };
 		}
 
 		/**
