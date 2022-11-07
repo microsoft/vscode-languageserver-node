@@ -11,7 +11,7 @@ steps:
     displayName: Install dependencies
   - bash: |
       /usr/bin/Xvfb :0 -screen 0 1024x768x24 > /dev/null 2>&1 &
-      echo ">>> echo $DISPLAY" &
+      echo ">>> Display set to: $DISPLAY" &
       echo ">>> Started xvfb" &
     displayName: Start xvfb
     condition: eq(variables['Agent.OS'], 'Linux')
