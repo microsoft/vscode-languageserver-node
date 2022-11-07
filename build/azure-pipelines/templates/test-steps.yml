@@ -21,13 +21,9 @@ steps:
   - script: npm run ${{ parameters.script }}
     workingDirectory: $(Build.SourcesDirectory)/${{ parameters.package }}
     displayName: Verify package
-  - pwsh: $Env:Foo = 'An example'
+  - bash: |
+      echo 'TEST="hi"' >> $HOME/.profile
     displayName: Set
-  - pwsh: Write-Host $Env:Foo
-    displayName: Read
-  - pwsh: |
-      [Environment]::SetEnvironmentVariable('Bar','Hello Bar!')
-    displayName: Set
-  - pwsh: |
-      Write-Host [Environment]::GetEnvironmentVariable('Bar')
+  - bash: |
+      echo $TEST
     displayName: Read
