@@ -9,6 +9,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as uuid from 'uuid';
 
+import find = require('find-process');
 import { runTests } from 'vscode-test';
 
 function rimraf(location: string) {
@@ -26,7 +27,6 @@ function rimraf(location: string) {
 		}
 	}
 }
-
 
 async function go() {
 	try {
