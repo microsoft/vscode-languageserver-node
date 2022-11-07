@@ -42,6 +42,11 @@ async function go() {
 		const workspaceFolder = path.join(testDir, 'workspace');
 		fs.mkdirSync(workspaceFolder);
 
+		let extensionTestsEnv: NodeJS.ProcessEnv | undefined = undefined;
+		if (process.platform === 'linux' && !process.env['DISPLAY']) {
+			extensionTestsEnv = { 'DISPLAY': ':99' };
+		}
+
 		/**
 		 * Basic usage
 		 */
@@ -54,7 +59,8 @@ async function go() {
 				'--extensions-dir', extensionDir,
 				'--enable-proposed-api', 'ms-vscode.test-extension',
 				workspaceFolder
-			]
+			],
+			extensionTestsEnv
 		});
 		rimraf(testDir);
 	} catch (err) {
