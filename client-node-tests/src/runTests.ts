@@ -62,5 +62,8 @@ async function go() {
 		process.exitCode = 1;
 	}
 }
+process.on('uncaughtException', (error: any) => {
+	console.error(error);
+});
 
 go().catch(console.error);
