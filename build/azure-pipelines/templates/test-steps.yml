@@ -22,7 +22,7 @@ steps:
     workingDirectory: $(Build.SourcesDirectory)/${{ parameters.package }}
     displayName: Verify package
   - bash: |
-      echo 'TEST="hi"' >> $HOME/.profile
+      echo 'TEST="hi"' >> $HOME/.bash_profile
     displayName: Set
   - bash: |
       echo $TEST
