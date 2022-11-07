@@ -9,6 +9,9 @@ parameters:
   type: string
   default: 'all'
 
+variables:
+  TEST: "Hello!!!"
+
 steps:
   - script: npm install
     workingDirectory: $(Build.SourcesDirectory)
@@ -21,9 +24,6 @@ steps:
   - script: npm run ${{ parameters.script }}
     workingDirectory: $(Build.SourcesDirectory)/${{ parameters.package }}
     displayName: Verify package
-  - bash: |
-      echo 'TEST="hi"' >> $HOME/.bash_profile
-    displayName: Set
   - bash: |
       echo $TEST
     displayName: Read
