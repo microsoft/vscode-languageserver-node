@@ -80,7 +80,6 @@ extends:
         workingDirectory: $(Build.SourcesDirectory)/textDocument
 
       - name: types
-        dependsOn: textDocument
         testPlatforms:
           - name: Linux
             nodeVersions:
@@ -101,7 +100,6 @@ extends:
               package: types
         tag: ${{ parameters.quality }}
         publishPackage: ${{ parameters.publishTypes }}
-        publishDependsOn: ${{ parameters.publishTextDocument }}
         postPublishSteps:
           - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
             parameters:
@@ -110,7 +108,6 @@ extends:
         workingDirectory: $(Build.SourcesDirectory)/types
 
       - name: jsonrpc
-        dependsOn: types
         testPlatforms:
           - name: Linux
             nodeVersions:
@@ -131,7 +128,6 @@ extends:
               package: jsonrpc
         tag: ${{ parameters.quality }}
         publishPackage: ${{ parameters.publishJsonrpc }}
-        publishDependsOn: ${{ parameters.publishTypes }}
         postPublishSteps:
           - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
             parameters:
@@ -140,7 +136,6 @@ extends:
         workingDirectory: $(Build.SourcesDirectory)/jsonrpc
 
       - name: protocol
-        dependsOn: jsonrpc
         testPlatforms:
           - name: Linux
             nodeVersions:
@@ -161,7 +156,6 @@ extends:
               package: protocol
         tag: ${{ parameters.quality }}
         publishPackage: ${{ parameters.publishProtocol }}
-        publishDependsOn: ${{ parameters.publishJsonrpc }}
         postPublishSteps:
           - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
             parameters:
@@ -170,7 +164,6 @@ extends:
         workingDirectory: $(Build.SourcesDirectory)/protocol
 
       - name: server
-        dependsOn: protocol
         testPlatforms:
           - name: Linux
             nodeVersions:
@@ -191,7 +184,6 @@ extends:
               package: server
         tag: ${{ parameters.quality }}
         publishPackage: ${{ parameters.publishServer }}
-        publishDependsOn: ${{ parameters.publishProtocol }}
         postPublishSteps:
           - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
             parameters:
@@ -200,7 +192,6 @@ extends:
         workingDirectory: $(Build.SourcesDirectory)/server
 
       - name: client
-        dependsOn: server
         testPlatforms:
           - name: Linux
             nodeVersions:
@@ -222,7 +213,6 @@ extends:
               package: client
         tag: ${{ parameters.quality }}
         publishPackage: ${{ parameters.publishClient }}
-        publishDependsOn: ${{ parameters.publishServer }}
         postPublishSteps:
           - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
             parameters:
