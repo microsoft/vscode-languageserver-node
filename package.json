@@ -58,6 +58,7 @@
 		"audit:all:fix": "node ./build/bin/all.js audit fix",
 		"generate:metaModel": "cd protocol && npm run generate:metaModel && cd ..",
 		"generate:metaModelSchema": "cd protocol && npm run generate:metaModelSchema && cd ..",
-		"validate:version": "node ./tools/lib/validate-main.js"
+		"validate:version": "node ./tools/lib/validate-main.js",
+		"update:lock": "git clean -xfd . && npm install && cd ./client && npm run updateVSCodeVersion && cd .."
 	}
 }
