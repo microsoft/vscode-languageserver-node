@@ -15,7 +15,6 @@ import * as Is from 'vscode-languageclient/lib/common/utils/is';
 import * as async from 'vscode-languageclient/lib/common/utils/async';
 
 import * as vscode from 'vscode';
-import { CompletionItemTag, InsertTextMode, SymbolTag } from 'vscode-languageserver-protocol';
 
 const c2p: codeConverter.Converter = codeConverter.createConverter();
 const p2c: protocolConverter.Converter = protocolConverter.createConverter(undefined, false, false);
@@ -413,7 +412,7 @@ suite('Protocol Converter', () => {
 
 		const result = p2c.asCompletionItem(completionItem);
 		strictEqual(result.label, completionItem.label);
-		strictEqual(result.tags![0], CompletionItemTag.Deprecated);
+		strictEqual(result.tags![0], proto.CompletionItemTag.Deprecated);
 	});
 
 	test('Completion Item - Deprecated tag', () => {
@@ -424,7 +423,7 @@ suite('Protocol Converter', () => {
 
 		const result = p2c.asCompletionItem(completionItem);
 		strictEqual(result.label, completionItem.label);
-		strictEqual(result.tags![0], CompletionItemTag.Deprecated);
+		strictEqual(result.tags![0], proto.CompletionItemTag.Deprecated);
 	});
 
 	test('Completion Item - Full', async () => {
@@ -460,7 +459,7 @@ suite('Protocol Converter', () => {
 		strictEqual(result.command!.title, command.title);
 		strictEqual(result.command!.command, command.command);
 		strictEqual(result.command!.arguments, command.arguments);
-		strictEqual(result.tags![0], CompletionItemTag.Deprecated);
+		strictEqual(result.tags![0], proto.CompletionItemTag.Deprecated);
 		strictEqual(result.commitCharacters!.length, 1);
 		strictEqual(result.commitCharacters![0], '.');
 		ok(result.additionalTextEdits![0] instanceof vscode.TextEdit);
@@ -683,7 +682,7 @@ suite('Protocol Converter', () => {
 		const completionItem: proto.CompletionItem = {
 			label: 'item',
 			kind: Number.MAX_VALUE as any,
-			insertTextMode: InsertTextMode.asIs
+			insertTextMode: proto.InsertTextMode.asIs
 		};
 		const result = p2c.asCompletionItem(completionItem);
 		strictEqual(result.kind, vscode.CompletionItemKind.Text);
@@ -691,14 +690,14 @@ suite('Protocol Converter', () => {
 
 		const back = c2p.asCompletionItem(result);
 		strictEqual(back.kind, Number.MAX_VALUE);
-		strictEqual(back.insertTextMode, InsertTextMode.asIs);
+		strictEqual(back.insertTextMode, proto.InsertTextMode.asIs);
 	});
 
 	test('Completion Item - InsertTextMode.adjustIndentation', () => {
 		const completionItem: proto.CompletionItem = {
 			label: 'item',
 			kind: Number.MAX_VALUE as any,
-			insertTextMode: InsertTextMode.adjustIndentation
+			insertTextMode: proto.InsertTextMode.adjustIndentation
 		};
 		const result = p2c.asCompletionItem(completionItem);
 		strictEqual(result.kind, vscode.CompletionItemKind.Text);
@@ -706,7 +705,7 @@ suite('Protocol Converter', () => {
 
 		const back = c2p.asCompletionItem(result);
 		strictEqual(back.kind, Number.MAX_VALUE);
-		strictEqual(back.insertTextMode, InsertTextMode.adjustIndentation);
+		strictEqual(back.insertTextMode, proto.InsertTextMode.adjustIndentation);
 	});
 
 	test('Completion Item - Label Details', () => {
@@ -1072,7 +1071,7 @@ suite('Protocol Converter', () => {
 		const symbolInformation: proto.SymbolInformation = {
 			name: 'name',
 			kind: proto.SymbolKind.Array,
-			tags: [Number.MAX_VALUE as SymbolTag],
+			tags: [Number.MAX_VALUE as proto.SymbolTag],
 			location: location
 		};
 		const result = p2c.asSymbolInformation(symbolInformation);
@@ -1429,7 +1428,7 @@ suite('Code Converter', () => {
 		assertTextEdit(result.textEdit);
 		rangeEqual(result.textEdit.range, item.textEdit.range);
 		strictEqual(result.textEdit.newText, item.textEdit.newText);
-		strictEqual(result.insertTextMode, InsertTextMode.adjustIndentation);
+		strictEqual(result.insertTextMode, proto.InsertTextMode.adjustIndentation);
 	});
 
 	test('DiagnosticSeverity', () => {

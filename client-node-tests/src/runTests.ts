@@ -9,6 +9,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as uuid from 'uuid';
 
+import find = require('find-process');
 import { runTests } from 'vscode-test';
 
 function rimraf(location: string) {
@@ -27,7 +28,6 @@ function rimraf(location: string) {
 	}
 }
 
-
 async function go() {
 	try {
 		const extensionDevelopmentPath = path.resolve(__dirname, '..');
@@ -42,6 +42,24 @@ async function go() {
 		const workspaceFolder = path.join(testDir, 'workspace');
 		fs.mkdirSync(workspaceFolder);
 
+		// Under Linux we quite often run the tests using Xvfb.
+		// In case we have no display set and Xvfb is running use
+		// the Xvfb display port as a DISPLAY setting
+		let extensionTestsEnv: NodeJS.ProcessEnv | undefined = undefined;
+		if (process.platform === 'linux' && !process.env['DISPLAY']) {
+			let display: string | undefined;
+			const processes = await find('name', '/usr/bin/Xvfb');
+			for (const item of processes) {
+				if (item.name !== 'Xvfb') {
+					continue;
+				}
+				if (item.cmd !== undefined && item.cmd.length > 0) {
+					display = item.cmd.split(' ')[1];
+				}
+			}
+			extensionTestsEnv = { 'DISPLAY': display };
+		}
+
 		/**
 		 * Basic usage
 		 */
@@ -54,7 +72,8 @@ async function go() {
 				'--extensions-dir', extensionDir,
 				'--enable-proposed-api', 'ms-vscode.test-extension',
 				workspaceFolder
-			]
+			],
+			extensionTestsEnv
 		});
 		rimraf(testDir);
 	} catch (err) {
@@ -62,5 +81,8 @@ async function go() {
 		process.exitCode = 1;
 	}
 }
+process.on('uncaughtException', (error: any) => {
+	console.error(error);
+});
 
 go().catch(console.error);
