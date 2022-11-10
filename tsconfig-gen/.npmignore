@@ -1,0 +1,11 @@
+.vscode/
+lib/*.map
+lib/*.tsbuildInfo
+src/
+test/
+.eslintrc*
+.eslintignore
+.mocharc*
+.gitignore
+gulpfile.js
+tsconfig*.json

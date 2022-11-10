@@ -32,7 +32,7 @@ export function main(): number {
 		}).
 		option('f', {
 			alias: 'file',
-			description: 'The input file. This option is useful together with the i option.',
+			description: 'The input file. This option is useful together with the t option.',
 			string: true,
 		}).
 		option('v', {
