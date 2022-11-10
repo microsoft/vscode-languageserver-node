@@ -1803,7 +1803,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (workspaceEdit.documentChanges) {
 			for (const change of workspaceEdit.documentChanges) {
 				if (TextDocumentEdit.is(change) && change.textDocument.version && change.textDocument.version >= 0) {
-					const textDocument = openTextDocuments.get(change.textDocument.uri);
+					const changeUri = this._p2c.asUri(change.textDocument.uri).toString();
+					const textDocument = openTextDocuments.get(changeUri);
 					if (textDocument && textDocument.version !== change.textDocument.version) {
 						versionMismatch = true;
 						break;
