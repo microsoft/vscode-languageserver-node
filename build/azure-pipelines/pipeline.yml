@@ -22,6 +22,10 @@ parameters:
     values:
       - latest
       - next
+  - name: publishTsconfigGen
+    displayName: 🚀 Publish tsconfig-gen
+    type: boolean
+    default: false
   - name: publishTextDocument
     displayName: 🚀 Publish textDocument
     type: boolean
@@ -51,6 +55,35 @@ extends:
   template: azure-pipelines/npm-package/pipeline.yml@templates
   parameters:
     npmPackages:
+      - name: tsconfigGen
+        generateNotice: true
+        testPlatforms:
+          - name: Linux
+            nodeVersions:
+              - 16.14.2
+          - name: MacOS
+            nodeVersions:
+              - 16.14.2
+          - name: Windows
+            nodeVersions:
+              - 16.14.2
+        testSteps:
+          - template: /build/azure-pipelines/templates/test-steps.yml@self
+            parameters:
+              package: tsconfig-gen
+        buildSteps:
+          - template: /build/azure-pipelines/templates/pack-steps.yml@self
+            parameters:
+              package: tsconfig-gen
+        tag: ${{ parameters.quality }}
+        publishPackage: ${{ parameters.publishTsconfigGen }}
+        postPublishSteps:
+          - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
+            parameters:
+              package: tsconfig-gen
+              quality: ${{ parameters.quality }}
+        workingDirectory: $(Build.SourcesDirectory)/tsconfig-gen
+
       - name: textDocument
         testPlatforms:
           - name: Linux
