@@ -21,7 +21,7 @@ export interface CancellationToken {
 	readonly isCancellationRequested: boolean;
 
 	/**
-	 * An [event](#Event) which fires upon cancellation.
+	 * An {@link Event event} which fires upon cancellation.
 	 */
 	readonly onCancellationRequested: Event<any>;
 }

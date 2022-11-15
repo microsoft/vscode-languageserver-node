@@ -880,9 +880,9 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	listen(): void;
 
 	/**
-	 * Installs a request handler described by the given [RequestType](#RequestType).
+	 * Installs a request handler described by the given {@link RequestType}.
 	 *
-	 * @param type The [RequestType](#RequestType) describing the request.
+	 * @param type The {@link RequestType} describing the request.
 	 * @param handler The handler to install
 	 */
 	onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: RequestHandler0<R, E>): Disposable;
@@ -908,7 +908,7 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	/**
 	 * Send a request to the client.
 	 *
-	 * @param type The [RequestType](#RequestType) describing the request.
+	 * @param type The {@link RequestType} describing the request.
 	 * @param params The request's parameters.
 	 */
 	sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): Promise<R>;
@@ -926,9 +926,9 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	sendRequest<R>(method: string, params: any, token?: CancellationToken): Promise<R>;
 
 	/**
-	 * Installs a notification handler described by the given [NotificationType](#NotificationType).
+	 * Installs a notification handler described by the given {@link NotificationType}.
 	 *
-	 * @param type The [NotificationType](#NotificationType) describing the notification.
+	 * @param type The {@link NotificationType} describing the notification.
 	 * @param handler The handler to install.
 	 */
 	onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): Disposable;
@@ -954,7 +954,7 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	/**
 	 * Send a notification to the client.
 	 *
-	 * @param type The [NotificationType](#NotificationType) describing the notification.
+	 * @param type The {@link NotificationType} describing the notification.
 	 * @param params The notification's parameters.
 	 */
 	sendNotification<RO>(type: ProtocolNotificationType0<RO>): Promise<void>;
@@ -1234,7 +1234,7 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	onCodeActionResolve(handler: RequestHandler<CodeAction, CodeAction, void>): Disposable;
 
 	/**
-	 * Compute a list of [lenses](#CodeLens). This call should return as fast as possible and if
+	 * Compute a list of {@link CodeLens lenses}. This call should return as fast as possible and if
 	 * computing the commands is expensive implementers should only return code lens objects with the
 	 * range set and handle the resolve request.
 	 *

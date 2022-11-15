@@ -75,7 +75,7 @@ export interface FoldingRangeRegistrationOptions extends TextDocumentRegistratio
 }
 
 /**
- * Parameters for a [FoldingRangeRequest](#FoldingRangeRequest).
+ * Parameters for a {@link FoldingRangeRequest}.
  */
 export interface FoldingRangeParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
@@ -86,8 +86,8 @@ export interface FoldingRangeParams extends WorkDoneProgressParams, PartialResul
 
 /**
  * A request to provide folding ranges in a document. The request's
- * parameter is of type [FoldingRangeParams](#FoldingRangeParams), the
- * response is of type [FoldingRangeList](#FoldingRangeList) or a Thenable
+ * parameter is of type {@link FoldingRangeParams}, the
+ * response is of type {@link FoldingRangeList} or a Thenable
  * that resolves to such.
  */
 export namespace FoldingRangeRequest {
