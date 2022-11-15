@@ -145,8 +145,8 @@ export interface TextDocument {
 	 *
 	 * @param range (optional) An range within the document to return.
 	 * If no range is passed, the full content is returned.
-	 * Invalid range positions are adjusted as described in [Position.line](#Position.line)
-	 * and [Position.character](#Position.character).
+	 * Invalid range positions are adjusted as described in {@link Position.line}
+	 * and {@link Position.character}.
 	 * If the start range position is greater than the end range position,
 	 * then the effect of getText is as if the two positions were swapped.
 
@@ -159,7 +159,7 @@ export interface TextDocument {
 	 * Converts a zero-based offset to a position.
 	 *
 	 * @param offset A zero-based offset.
-	 * @return A valid [position](#Position).
+	 * @return A valid {@link Position position}.
 	 * @example The text document "ab\ncd" produces:
 	 * * position { line: 0, character: 0 } for `offset` 0.
 	 * * position { line: 0, character: 1 } for `offset` 1.
@@ -171,8 +171,8 @@ export interface TextDocument {
 
 	/**
 	 * Converts the position to a zero-based offset.
-	 * Invalid positions are adjusted as described in [Position.line](#Position.line)
-	 * and [Position.character](#Position.character).
+	 * Invalid positions are adjusted as described in {@link Position.line}
+	 * and {@link Position.character}.
 	 *
 	 * @param position A position.
 	 * @return A valid zero-based offset.

@@ -117,7 +117,7 @@ export function createConnection(options?: ConnectionStrategy | ConnectionOption
  * @param inputStream The stream to read messages from.
  * @param outputStream The stream to write messages to.
  * @param options An optional connection strategy or connection options to control additional settings
- * @return a [connection](#IConnection)
+ * @return A {@link Connection connection}
  */
 export function createConnection(inputStream: NodeJS.ReadableStream, outputStream: NodeJS.WritableStream, options?: ConnectionStrategy | ConnectionOptions): Connection;
 
@@ -147,7 +147,7 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
  * @param inputStream The stream to read messages from.
  * @param outputStream The stream to write messages to.
  * @param options An optional connection strategy or connection options to control additional settings
- * @return a [connection](#IConnection)
+ * @return A {@link Connection connection}
  */
 export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _, PNotebooks = _>(
 	factories: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages, PNotebooks>,

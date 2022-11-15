@@ -143,7 +143,7 @@ export interface Position {
 
 /**
  * The Position namespace provides helper functions to work with
- * [Position](#Position) literals.
+ * {@link Position} literals.
  */
 export namespace Position {
 	/**
@@ -157,7 +157,7 @@ export namespace Position {
 		return { line, character };
 	}
 	/**
-	 * Checks whether the given literal conforms to the [Position](#Position) interface.
+	 * Checks whether the given literal conforms to the {@link Position} interface.
 	 */
 	export function is(value: any): value is Position {
 		let candidate = value as Position;
@@ -192,7 +192,7 @@ export interface Range {
 
 /**
  * The Range namespace provides helper functions to work with
- * [Range](#Range) literals.
+ * {@link Range} literals.
  */
 export namespace Range {
 	/**
@@ -219,7 +219,7 @@ export namespace Range {
 		}
 	}
 	/**
-	 * Checks whether the given literal conforms to the [Range](#Range) interface.
+	 * Checks whether the given literal conforms to the {@link Range} interface.
 	 */
 	export function is(value: any): value is Range {
 		let candidate = value as Range;
@@ -238,7 +238,7 @@ export interface Location {
 
 /**
  * The Location namespace provides helper functions to work with
- * [Location](#Location) literals.
+ * {@link Location} literals.
  */
 export namespace Location {
 	/**
@@ -250,7 +250,7 @@ export namespace Location {
 		return { uri, range };
 	}
 	/**
-	 * Checks whether the given literal conforms to the [Location](#Location) interface.
+	 * Checks whether the given literal conforms to the {@link Location} interface.
 	 */
 	export function is(value: any): value is Location {
 		let candidate = value as Location;
@@ -259,7 +259,7 @@ export namespace Location {
 }
 
 /**
-	 * Represents the connection of two locations. Provides additional metadata over normal [locations](#Location),
+	 * Represents the connection of two locations. Provides additional metadata over normal {@link Location locations},
 	 * including an origin range.
  */
 export interface LocationLink {
@@ -292,7 +292,7 @@ export interface LocationLink {
 
 /**
  * The LocationLink namespace provides helper functions to work with
- * [LocationLink](#LocationLink) literals.
+ * {@link LocationLink} literals.
  */
 export namespace LocationLink {
 
@@ -308,7 +308,7 @@ export namespace LocationLink {
 	}
 
 	/**
-	 * Checks whether the given literal conforms to the [LocationLink](#LocationLink) interface.
+	 * Checks whether the given literal conforms to the {@link LocationLink} interface.
 	 */
 	export function is(value: any): value is LocationLink {
 		let candidate = value as LocationLink;
@@ -346,7 +346,7 @@ export interface Color {
 
 /**
  * The Color namespace provides helper functions to work with
- * [Color](#Color) literals.
+ * {@link Color} literals.
  */
 export namespace Color {
 	/**
@@ -362,7 +362,7 @@ export namespace Color {
 	}
 
 	/**
-	 * Checks whether the given literal conforms to the [Color](#Color) interface.
+	 * Checks whether the given literal conforms to the {@link Color} interface.
 	 */
 	export function is(value: any): value is Color {
 		const candidate = value as Color;
@@ -391,7 +391,7 @@ export interface ColorInformation {
 
 /**
  * The ColorInformation namespace provides helper functions to work with
- * [ColorInformation](#ColorInformation) literals.
+ * {@link ColorInformation} literals.
  */
 export namespace ColorInformation {
 	/**
@@ -405,7 +405,7 @@ export namespace ColorInformation {
 	}
 
 	/**
-	 * Checks whether the given literal conforms to the [ColorInformation](#ColorInformation) interface.
+	 * Checks whether the given literal conforms to the {@link ColorInformation} interface.
 	 */
 	export function is(value: any): value is ColorInformation {
 		const candidate = value as ColorInformation;
@@ -421,21 +421,21 @@ export interface ColorPresentation {
 	 */
 	label: string;
 	/**
-	 * An [edit](#TextEdit) which is applied to a document when selecting
-	 * this presentation for the color.  When `falsy` the [label](#ColorPresentation.label)
+	 * An {@link TextEdit edit} which is applied to a document when selecting
+	 * this presentation for the color.  When `falsy` the {@link ColorPresentation.label label}
 	 * is used.
 	 */
 	textEdit?: TextEdit;
 	/**
-	 * An optional array of additional [text edits](#TextEdit) that are applied when
-	 * selecting this color presentation. Edits must not overlap with the main [edit](#ColorPresentation.textEdit) nor with themselves.
+	 * An optional array of additional {@link TextEdit text edits} that are applied when
+	 * selecting this color presentation. Edits must not overlap with the main {@link ColorPresentation.textEdit edit} nor with themselves.
 	 */
 	additionalTextEdits?: TextEdit[];
 }
 
 /**
  * The Color namespace provides helper functions to work with
- * [ColorPresentation](#ColorPresentation) literals.
+ * {@link ColorPresentation} literals.
  */
 export namespace ColorPresentation {
 	/**
@@ -450,7 +450,7 @@ export namespace ColorPresentation {
 	}
 
 	/**
-	 * Checks whether the given literal conforms to the [ColorInformation](#ColorInformation) interface.
+	 * Checks whether the given literal conforms to the {@link ColorInformation} interface.
 	 */
 	export function is(value: any): value is ColorPresentation {
 		const candidate = value as ColorPresentation;
@@ -518,7 +518,7 @@ export interface FoldingRange {
 	/**
 	 * Describes the kind of the folding range such as `comment' or 'region'. The kind
 	 * is used to categorize folding ranges and used by commands like 'Fold all comments'.
-	 * See [FoldingRangeKind](#FoldingRangeKind) for an enumeration of standardized kinds.
+	 * See {@link FoldingRangeKind} for an enumeration of standardized kinds.
 	 */
 	kind?: FoldingRangeKind;
 
@@ -534,7 +534,7 @@ export interface FoldingRange {
 
 /**
  * The folding range namespace provides helper functions to work with
- * [FoldingRange](#FoldingRange) literals.
+ * {@link FoldingRange} literals.
  */
 export namespace FoldingRange {
 	/**
@@ -561,7 +561,7 @@ export namespace FoldingRange {
 	}
 
 	/**
-	 * Checks whether the given literal conforms to the [FoldingRange](#FoldingRange) interface.
+	 * Checks whether the given literal conforms to the {@link FoldingRange} interface.
 	 */
 	export function is(value: any): value is FoldingRange {
 		const candidate = value as FoldingRange;
@@ -591,7 +591,7 @@ export interface DiagnosticRelatedInformation {
 
 /**
  * The DiagnosticRelatedInformation namespace provides helper functions to work with
- * [DiagnosticRelatedInformation](#DiagnosticRelatedInformation) literals.
+ * {@link DiagnosticRelatedInformation} literals.
  */
 export namespace DiagnosticRelatedInformation {
 
@@ -606,7 +606,7 @@ export namespace DiagnosticRelatedInformation {
 	}
 
 	/**
-	 * Checks whether the given literal conforms to the [DiagnosticRelatedInformation](#DiagnosticRelatedInformation) interface.
+	 * Checks whether the given literal conforms to the {@link DiagnosticRelatedInformation} interface.
 	 */
 	export function is(value: any): value is DiagnosticRelatedInformation {
 		let candidate: DiagnosticRelatedInformation = value as DiagnosticRelatedInformation;
@@ -752,7 +752,7 @@ export interface Diagnostic {
 
 /**
  * The Diagnostic namespace provides helper functions to work with
- * [Diagnostic](#Diagnostic) literals.
+ * {@link Diagnostic} literals.
  */
 export namespace Diagnostic {
 	/**
@@ -776,7 +776,7 @@ export namespace Diagnostic {
 	}
 
 	/**
-	 * Checks whether the given literal conforms to the [Diagnostic](#Diagnostic) interface.
+	 * Checks whether the given literal conforms to the {@link Diagnostic} interface.
 	 */
 	export function is(value: any): value is Diagnostic {
 		let candidate = value as Diagnostic;
@@ -817,7 +817,7 @@ export interface Command {
 
 /**
  * The Command namespace provides helper functions to work with
- * [Command](#Command) literals.
+ * {@link Command} literals.
  */
 export namespace Command {
 	/**
@@ -831,7 +831,7 @@ export namespace Command {
 		return result;
 	}
 	/**
-	 * Checks whether the given literal conforms to the [Command](#Command) interface.
+	 * Checks whether the given literal conforms to the {@link Command} interface.
 	 */
 	export function is(value: any): value is Command {
 		let candidate = value as Command;
@@ -1545,7 +1545,7 @@ export class WorkspaceChange {
 	}
 
 	/**
-	 * Returns the underlying [WorkspaceEdit](#WorkspaceEdit) literal
+	 * Returns the underlying {@link WorkspaceEdit} literal
 	 * use to be returned from a workspace edit operation like rename.
 	 */
 	public get edit(): WorkspaceEdit {
@@ -1561,7 +1561,7 @@ export class WorkspaceChange {
 	}
 
 	/**
-	 * Returns the [TextEditChange](#TextEditChange) to manage text edits
+	 * Returns the {@link TextEditChange} to manage text edits
 	 * for resources.
 	 */
 	public getTextEditChange(textDocument: OptionalVersionedTextDocumentIdentifier): TextEditChange;
@@ -1712,7 +1712,7 @@ export interface TextDocumentIdentifier {
 
 /**
  * The TextDocumentIdentifier namespace provides helper functions to work with
- * [TextDocumentIdentifier](#TextDocumentIdentifier) literals.
+ * {@link TextDocumentIdentifier} literals.
  */
 export namespace TextDocumentIdentifier {
 	/**
@@ -1723,7 +1723,7 @@ export namespace TextDocumentIdentifier {
 		return { uri };
 	}
 	/**
-	 * Checks whether the given literal conforms to the [TextDocumentIdentifier](#TextDocumentIdentifier) interface.
+	 * Checks whether the given literal conforms to the {@link TextDocumentIdentifier} interface.
 	 */
 	export function is(value: any): value is TextDocumentIdentifier {
 		let candidate = value as TextDocumentIdentifier;
@@ -1743,7 +1743,7 @@ export interface VersionedTextDocumentIdentifier extends TextDocumentIdentifier 
 
 /**
  * The VersionedTextDocumentIdentifier namespace provides helper functions to work with
- * [VersionedTextDocumentIdentifier](#VersionedTextDocumentIdentifier) literals.
+ * {@link VersionedTextDocumentIdentifier} literals.
  */
 export namespace VersionedTextDocumentIdentifier {
 	/**
@@ -1756,7 +1756,7 @@ export namespace VersionedTextDocumentIdentifier {
 	}
 
 	/**
-	 * Checks whether the given literal conforms to the [VersionedTextDocumentIdentifier](#VersionedTextDocumentIdentifier) interface.
+	 * Checks whether the given literal conforms to the {@link VersionedTextDocumentIdentifier} interface.
 	 */
 	export function is(value: any): value is VersionedTextDocumentIdentifier {
 		let candidate = value as VersionedTextDocumentIdentifier;
@@ -1780,7 +1780,7 @@ export interface OptionalVersionedTextDocumentIdentifier extends TextDocumentIde
 
 /**
  * The OptionalVersionedTextDocumentIdentifier namespace provides helper functions to work with
- * [OptionalVersionedTextDocumentIdentifier](#OptionalVersionedTextDocumentIdentifier) literals.
+ * {@link OptionalVersionedTextDocumentIdentifier} literals.
  */
 export namespace OptionalVersionedTextDocumentIdentifier {
 	/**
@@ -1793,7 +1793,7 @@ export namespace OptionalVersionedTextDocumentIdentifier {
 	}
 
 	/**
-	 * Checks whether the given literal conforms to the [OptionalVersionedTextDocumentIdentifier](#OptionalVersionedTextDocumentIdentifier) interface.
+	 * Checks whether the given literal conforms to the {@link OptionalVersionedTextDocumentIdentifier} interface.
 	 */
 	export function is(value: any): value is OptionalVersionedTextDocumentIdentifier {
 		let candidate = value as OptionalVersionedTextDocumentIdentifier;
@@ -1830,7 +1830,7 @@ export interface TextDocumentItem {
 
 /**
  * The TextDocumentItem namespace provides helper functions to work with
- * [TextDocumentItem](#TextDocumentItem) literals.
+ * {@link TextDocumentItem} literals.
  */
 export namespace TextDocumentItem {
 	/**
@@ -1845,7 +1845,7 @@ export namespace TextDocumentItem {
 	}
 
 	/**
-	 * Checks whether the given literal conforms to the [TextDocumentItem](#TextDocumentItem) interface.
+	 * Checks whether the given literal conforms to the {@link TextDocumentItem} interface.
 	 */
 	export function is(value: any): value is TextDocumentItem {
 		let candidate = value as TextDocumentItem;
@@ -1872,7 +1872,7 @@ export namespace MarkupKind {
 	export const Markdown: 'markdown' = 'markdown';
 
 	/**
-	 * Checks whether the given value is a value of the [MarkupKind](#MarkupKind) type.
+	 * Checks whether the given value is a value of the {@link MarkupKind} type.
 	 */
 	export function is(value: any): value is MarkupKind {
 		const candidate = value as MarkupKind;
@@ -1919,7 +1919,7 @@ export interface MarkupContent {
 
 export namespace MarkupContent {
 	/**
-	 * Checks whether the given value conforms to the [MarkupContent](#MarkupContent) interface.
+	 * Checks whether the given value conforms to the {@link MarkupContent} interface.
 	 */
 	export function is(value: any): value is MarkupContent {
 		const candidate = value as MarkupContent;
@@ -2039,7 +2039,7 @@ export namespace InsertReplaceEdit {
 	}
 
 	/**
-	 * Checks whether the given literal conforms to the [InsertReplaceEdit](#InsertReplaceEdit) interface.
+	 * Checks whether the given literal conforms to the {@link InsertReplaceEdit} interface.
 	 */
 	export function is(value: TextEdit | InsertReplaceEdit): value is InsertReplaceEdit {
 		const candidate: InsertReplaceEdit = value as InsertReplaceEdit;
@@ -2169,21 +2169,21 @@ export interface CompletionItem {
 
 	/**
 	 * A string that should be used when comparing this item
-	 * with other items. When `falsy` the [label](#CompletionItem.label)
+	 * with other items. When `falsy` the {@link CompletionItem.label label}
 	 * is used.
 	 */
 	sortText?: string;
 
 	/**
 	 * A string that should be used when filtering a set of
-	 * completion items. When `falsy` the [label](#CompletionItem.label)
+	 * completion items. When `falsy` the {@link CompletionItem.label label}
 	 * is used.
 	 */
 	filterText?: string;
 
 	/**
 	 * A string that should be inserted into a document when selecting
-	 * this completion. When `falsy` the [label](#CompletionItem.label)
+	 * this completion. When `falsy` the {@link CompletionItem.label label}
 	 * is used.
 	 *
 	 * The `insertText` is subject to interpretation by the client side.
@@ -2216,9 +2216,9 @@ export interface CompletionItem {
 	insertTextMode?: InsertTextMode;
 
 	/**
-	 * An [edit](#TextEdit) which is applied to a document when selecting
+	 * An {@link TextEdit edit} which is applied to a document when selecting
 	 * this completion. When an edit is provided the value of
-	 * [insertText](#CompletionItem.insertText) is ignored.
+	 * {@link CompletionItem.insertText insertText} is ignored.
 	 *
 	 * Most editors support two different operations when accepting a completion
 	 * item. One is to insert a completion text and the other is to replace an
@@ -2254,9 +2254,9 @@ export interface CompletionItem {
 	textEditText?: string;
 
 	/**
-	 * An optional array of additional [text edits](#TextEdit) that are applied when
+	 * An optional array of additional {@link TextEdit text edits} that are applied when
 	 * selecting this completion. Edits must not overlap (including the same insert position)
-	 * with the main [edit](#CompletionItem.textEdit) nor with themselves.
+	 * with the main {@link CompletionItem.textEdit edit} nor with themselves.
 	 *
 	 * Additional text edits should be used to change text unrelated to the current cursor position
 	 * (for example adding an import statement at the top of the file if the completion item will
@@ -2272,15 +2272,15 @@ export interface CompletionItem {
 	commitCharacters?: string[];
 
 	/**
-	 * An optional [command](#Command) that is executed *after* inserting this completion. *Note* that
+	 * An optional {@link Command command} that is executed *after* inserting this completion. *Note* that
 	 * additional modifications to the current document should be described with the
-	 * [additionalTextEdits](#CompletionItem.additionalTextEdits)-property.
+	 * {@link CompletionItem.additionalTextEdits additionalTextEdits}-property.
 	 */
 	command?: Command;
 
 	/**
 	 * A data entry field that is preserved on a completion item between a
-	 * [CompletionRequest](#CompletionRequest) and a [CompletionResolveRequest](#CompletionResolveRequest).
+	 * {@link CompletionRequest} and a {@link CompletionResolveRequest}.
 	 */
 	data?: LSPAny;
 }
@@ -2300,7 +2300,7 @@ export namespace CompletionItem {
 }
 
 /**
- * Represents a collection of [completion items](#CompletionItem) to be presented
+ * Represents a collection of {@link CompletionItem completion items} to be presented
  * in the editor.
  */
 export interface CompletionList {
@@ -2416,7 +2416,7 @@ export namespace MarkedString {
 	}
 
 	/**
-	 * Checks whether the given value conforms to the [MarkedString](#MarkedString) type.
+	 * Checks whether the given value conforms to the {@link MarkedString} type.
 	 */
 	export function is(value: any): value is MarkedString {
 		const candidate = value as MarkedString;
@@ -2442,7 +2442,7 @@ export interface Hover {
 
 export namespace Hover {
 	/**
-	 * Checks whether the given value conforms to the [Hover](#Hover) interface.
+	 * Checks whether the given value conforms to the {@link Hover} interface.
 	 */
 	export function is(value: any): value is Hover {
 		let candidate = value as Hover;
@@ -2483,7 +2483,7 @@ export interface ParameterInformation {
 
 /**
  * The ParameterInformation namespace provides helper functions to work with
- * [ParameterInformation](#ParameterInformation) literals.
+ * {@link ParameterInformation} literals.
  */
 export namespace ParameterInformation {
 	/**
@@ -2532,7 +2532,7 @@ export interface SignatureInformation {
 
 /**
  * The SignatureInformation namespace provides helper functions to work with
- * [SignatureInformation](#SignatureInformation) literals.
+ * {@link SignatureInformation} literals.
  */
 export namespace SignatureInformation {
 	export function create(label: string, documentation?: string, ...parameters: ParameterInformation[]): SignatureInformation {
@@ -2586,7 +2586,7 @@ export interface SignatureHelp {
 }
 
 /**
- * The definition of a symbol represented as one or many [locations](#Location).
+ * The definition of a symbol represented as one or many {@link Location locations}.
  * For most programming languages there is only one location at which a symbol is
  * defined.
  *
@@ -2598,20 +2598,20 @@ export type Definition = Location | Location[];
 /**
  * Information about where a symbol is defined.
  *
- * Provides additional metadata over normal [location](#Location) definitions, including the range of
+ * Provides additional metadata over normal {@link Location location} definitions, including the range of
  * the defining symbol
  */
 export type DefinitionLink = LocationLink;
 
 /**
- * The declaration of a symbol representation as one or many [locations](#Location).
+ * The declaration of a symbol representation as one or many {@link Location locations}.
  */
 export type Declaration = Location | Location[];
 
 /**
  * Information about where a symbol is declared.
  *
- * Provides additional metadata over normal [location](#Location) declarations, including the range of
+ * Provides additional metadata over normal {@link Location location} declarations, including the range of
  * the declaring symbol.
  *
  * Servers should prefer returning `DeclarationLink` over `Declaration` if supported
@@ -2664,14 +2664,14 @@ export interface DocumentHighlight {
 	range: Range;
 
 	/**
-	 * The highlight kind, default is [text](#DocumentHighlightKind.Text).
+	 * The highlight kind, default is {@link DocumentHighlightKind.Text text}.
 	 */
 	kind?: DocumentHighlightKind;
 }
 
 /**
  * DocumentHighlight namespace to provide helper functions to work with
- * [DocumentHighlight](#DocumentHighlight) literals.
+ * {@link DocumentHighlight} literals.
  */
 export namespace DocumentHighlight {
 	/**
@@ -2941,7 +2941,7 @@ export namespace DocumentSymbol {
 		return result;
 	}
 	/**
-	 * Checks whether the given literal conforms to the [DocumentSymbol](#DocumentSymbol) interface.
+	 * Checks whether the given literal conforms to the {@link DocumentSymbol} interface.
 	 */
 	export function is(value: any): value is DocumentSymbol {
 		let candidate: DocumentSymbol = value;
@@ -3072,7 +3072,7 @@ export type CodeActionTriggerKind = 1 | 2;
 
 /**
  * Contains additional diagnostic information about the context in which
- * a [code action](#CodeActionProvider.provideCodeActions) is run.
+ * a {@link CodeActionProvider.provideCodeActions code action} is run.
  */
 export interface CodeActionContext {
 	/**
@@ -3102,7 +3102,7 @@ export interface CodeActionContext {
 
 /**
  * The CodeActionContext namespace provides helper functions to work with
- * [CodeActionContext](#CodeActionContext) literals.
+ * {@link CodeActionContext} literals.
  */
 export namespace CodeActionContext {
 	/**
@@ -3119,7 +3119,7 @@ export namespace CodeActionContext {
 		return result;
 	}
 	/**
-	 * Checks whether the given literal conforms to the [CodeActionContext](#CodeActionContext) interface.
+	 * Checks whether the given literal conforms to the {@link CodeActionContext} interface.
 	 */
 	export function is(value: any): value is CodeActionContext {
 		let candidate = value as CodeActionContext;
@@ -3269,7 +3269,7 @@ export namespace CodeAction {
 }
 
 /**
- * A code lens represents a [command](#Command) that should be shown along with
+ * A code lens represents a {@link Command command} that should be shown along with
  * source text, like the number of references, a way to run tests, etc.
  *
  * A code lens is _unresolved_ when no command is associated to it. For performance
@@ -3288,7 +3288,7 @@ export interface CodeLens {
 
 	/**
 	 * A data entry field that is preserved on a code lens item between
-	 * a [CodeLensRequest](#CodeLensRequest) and a [CodeLensResolveRequest]
+	 * a {@link CodeLensRequest} and a [CodeLensResolveRequest]
 	 * (#CodeLensResolveRequest)
 	 */
 	data?: LSPAny;
@@ -3296,7 +3296,7 @@ export interface CodeLens {
 
 /**
  * The CodeLens namespace provides helper functions to work with
- * [CodeLens](#CodeLens) literals.
+ * {@link CodeLens} literals.
  */
 export namespace CodeLens {
 	/**
@@ -3308,7 +3308,7 @@ export namespace CodeLens {
 		return result;
 	}
 	/**
-	 * Checks whether the given literal conforms to the [CodeLens](#CodeLens) interface.
+	 * Checks whether the given literal conforms to the {@link CodeLens} interface.
 	 */
 	export function is(value: any): value is CodeLens {
 		let candidate = value as CodeLens;
@@ -3359,7 +3359,7 @@ export interface FormattingOptions {
 
 /**
  * The FormattingOptions namespace provides helper functions to work with
- * [FormattingOptions](#FormattingOptions) literals.
+ * {@link FormattingOptions} literals.
  */
 export namespace FormattingOptions {
 	/**
@@ -3369,7 +3369,7 @@ export namespace FormattingOptions {
 		return { tabSize, insertSpaces };
 	}
 	/**
-	 * Checks whether the given literal conforms to the [FormattingOptions](#FormattingOptions) interface.
+	 * Checks whether the given literal conforms to the {@link FormattingOptions} interface.
 	 */
 	export function is(value: any): value is FormattingOptions {
 		let candidate = value as FormattingOptions;
@@ -3413,7 +3413,7 @@ export interface DocumentLink {
 
 /**
  * The DocumentLink namespace provides helper functions to work with
- * [DocumentLink](#DocumentLink) literals.
+ * {@link DocumentLink} literals.
  */
 export namespace DocumentLink {
 	/**
@@ -3424,7 +3424,7 @@ export namespace DocumentLink {
 	}
 
 	/**
-	 * Checks whether the given literal conforms to the [DocumentLink](#DocumentLink) interface.
+	 * Checks whether the given literal conforms to the {@link DocumentLink} interface.
 	 */
 	export function is(value: any): value is DocumentLink {
 		let candidate = value as DocumentLink;
@@ -3439,7 +3439,7 @@ export namespace DocumentLink {
 export interface SelectionRange {
 
 	/**
-	 * The [range](#Range) of this selection range.
+	 * The {@link Range range} of this selection range.
 	 */
 	range: Range;
 
@@ -3509,7 +3509,7 @@ export interface CallHierarchyItem {
 
 	/**
 	 * The range that should be selected and revealed when this symbol is being picked, e.g. the name of a function.
-	 * Must be contained by the [`range`](#CallHierarchyItem.range).
+	 * Must be contained by the {@link CallHierarchyItem.range `range`}.
 	 */
 	selectionRange: Range;
 
@@ -3534,7 +3534,7 @@ export interface CallHierarchyIncomingCall {
 
 	/**
 	 * The ranges at which the calls appear. This is relative to the caller
-	 * denoted by [`this.from`](#CallHierarchyIncomingCall.from).
+	 * denoted by {@link CallHierarchyIncomingCall.from `this.from`}.
 	 */
 	fromRanges: Range[];
 }
@@ -3553,8 +3553,8 @@ export interface CallHierarchyOutgoingCall {
 
 	/**
 	 * The range at which this item is called. This is the range relative to the caller, e.g the item
-	 * passed to [`provideCallHierarchyOutgoingCalls`](#CallHierarchyItemProvider.provideCallHierarchyOutgoingCalls)
-	 * and not [`this.to`](#CallHierarchyOutgoingCall.to).
+	 * passed to {@link CallHierarchyItemProvider.provideCallHierarchyOutgoingCalls `provideCallHierarchyOutgoingCalls`}
+	 * and not {@link CallHierarchyOutgoingCall.to `this.to`}.
 	 */
 	fromRanges: Range[];
 }
@@ -3732,7 +3732,7 @@ export type TypeHierarchyItem = {
 	/**
 	 * The range that should be selected and revealed when this symbol is being
 	 * picked, e.g. the name of a function. Must be contained by the
-	 * [`range`](#TypeHierarchyItem.range).
+	 * {@link TypeHierarchyItem.range `range`}.
 	 */
 	selectionRange: Range;
 
@@ -3896,7 +3896,7 @@ export type InlineValueContext = {
 
 /**
  * The InlineValueContext namespace provides helper functions to work with
- * [InlineValueContext](#InlineValueContext) literals.
+ * {@link InlineValueContext} literals.
  *
  * @since 3.17.0
  */
@@ -3909,7 +3909,7 @@ export namespace InlineValueContext {
 	}
 
 	/**
-	 * Checks whether the given literal conforms to the [InlineValueContext](#InlineValueContext) interface.
+	 * Checks whether the given literal conforms to the {@link InlineValueContext} interface.
 	 */
 	export function is(value: any): value is InlineValueContext {
 		const candidate = value as InlineValueContext;
@@ -4150,8 +4150,8 @@ export interface TextDocument {
 	 *
 	 * @param range (optional) An range within the document to return.
 	 * If no range is passed, the full content is returned.
-	 * Invalid range positions are adjusted as described in [Position.line](#Position.line)
-	 * and [Position.character](#Position.character).
+	 * Invalid range positions are adjusted as described in {@link Position.line Position.line}
+	 * and {@link Position.character Position.character}.
 	 * If the start range position is greater than the end range position,
 	 * then the effect of getText is as if the two positions were swapped.
 
@@ -4164,14 +4164,14 @@ export interface TextDocument {
 	 * Converts a zero-based offset to a position.
 	 *
 	 * @param offset A zero-based offset.
-	 * @return A valid [position](#Position).
+	 * @return A valid {@link Position position}.
 	 */
 	positionAt(offset: uinteger): Position;
 
 	/**
 	 * Converts the position to a zero-based offset.
-	 * Invalid positions are adjusted as described in [Position.line](#Position.line)
-	 * and [Position.character](#Position.character).
+	 * Invalid positions are adjusted as described in {@link Position.line Position.line}
+	 * and {@link Position.character Position.character}.
 	 *
 	 * @param position A position.
 	 * @return A valid zero-based offset.
@@ -4201,7 +4201,7 @@ export namespace TextDocument {
 		return new FullTextDocument(uri, languageId, version, content);
 	}
 	/**
-	 * Checks whether the given literal conforms to the [ITextDocument](#ITextDocument) interface.
+	 * Checks whether the given literal conforms to the {@link ITextDocument} interface.
 	 */
 	export function is(value: any): value is TextDocument {
 		let candidate = value as TextDocument;

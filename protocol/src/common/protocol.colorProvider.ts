@@ -31,7 +31,7 @@ export interface DocumentColorRegistrationOptions extends TextDocumentRegistrati
 //---- Color Symbol Provider ---------------------------
 
 /**
- * Parameters for a [DocumentColorRequest](#DocumentColorRequest).
+ * Parameters for a {@link DocumentColorRequest}.
  */
 export interface DocumentColorParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
@@ -42,8 +42,8 @@ export interface DocumentColorParams extends WorkDoneProgressParams, PartialResu
 
 /**
  * A request to list all color symbols found in a given text document. The request's
- * parameter is of type [DocumentColorParams](#DocumentColorParams) the
- * response is of type [ColorInformation[]](#ColorInformation) or a Thenable
+ * parameter is of type {@link DocumentColorParams} the
+ * response is of type {@link ColorInformation ColorInformation[]} or a Thenable
  * that resolves to such.
  */
 export namespace DocumentColorRequest {
@@ -54,7 +54,7 @@ export namespace DocumentColorRequest {
 }
 
 /**
- * Parameters for a [ColorPresentationRequest](#ColorPresentationRequest).
+ * Parameters for a {@link ColorPresentationRequest}.
  */
 export interface ColorPresentationParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
@@ -75,8 +75,8 @@ export interface ColorPresentationParams extends WorkDoneProgressParams, Partial
 
 /**
  * A request to list all presentation for a color. The request's
- * parameter is of type [ColorPresentationParams](#ColorPresentationParams) the
- * response is of type [ColorInformation[]](#ColorInformation) or a Thenable
+ * parameter is of type {@link ColorPresentationParams} the
+ * response is of type {@link ColorInformation ColorInformation[]} or a Thenable
  * that resolves to such.
  */
 export namespace ColorPresentationRequest {

@@ -127,8 +127,8 @@ let __noDynamicImport: LocationLink | undefined;
 
 /**
  * A document filter denotes a document by different properties like
- * the [language](#TextDocument.languageId), the [scheme](#Uri.scheme) of
- * its resource, or a glob-pattern that is applied to the [path](#TextDocument.fileName).
+ * the {@link TextDocument.languageId language}, the {@link Uri.scheme scheme} of
+ * its resource, or a glob-pattern that is applied to the {@link TextDocument.fileName path}.
  *
  * Glob patterns can have the following syntax:
  * - `*` to match one or more characters in a path segment
@@ -146,21 +146,21 @@ let __noDynamicImport: LocationLink | undefined;
 export type TextDocumentFilter = {
 	/** A language id, like `typescript`. */
 	language: string;
-	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */
+	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
 	scheme?: string;
 	/** A glob pattern, like `*.{ts,js}`. */
 	pattern?: string;
 } | {
 	/** A language id, like `typescript`. */
 	language?: string;
-	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */
+	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
 	scheme: string;
 	/** A glob pattern, like `*.{ts,js}`. */
 	pattern?: string;
 } | {
 	/** A language id, like `typescript`. */
 	language?: string;
-	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */
+	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
 	scheme?: string;
 	/** A glob pattern, like `*.{ts,js}`. */
 	pattern: string;
@@ -168,7 +168,7 @@ export type TextDocumentFilter = {
 
 /**
  * The TextDocumentFilter namespace provides helper functions to work with
- * [TextDocumentFilter](#TextDocumentFilter) literals.
+ * {@link TextDocumentFilter} literals.
  *
  * @since 3.17.0
  */
@@ -190,7 +190,7 @@ export type NotebookDocumentFilter = {
 	/** The type of the enclosing notebook. */
 	notebookType: string;
 
-	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */
+	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
 	scheme?: string;
 
 	/** A glob pattern. */
@@ -199,7 +199,7 @@ export type NotebookDocumentFilter = {
 	/** The type of the enclosing notebook. */
 	notebookType?: string;
 
-	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`.*/
+	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.*/
 	scheme: string;
 
 	/** A glob pattern. */
@@ -208,7 +208,7 @@ export type NotebookDocumentFilter = {
 	/** The type of the enclosing notebook. */
 	notebookType?: string;
 
-	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */
+	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
 	scheme?: string;
 
 	/** A glob pattern. */
@@ -217,7 +217,7 @@ export type NotebookDocumentFilter = {
 
 /**
  * The NotebookDocumentFilter namespace provides helper functions to work with
- * [NotebookDocumentFilter](#NotebookDocumentFilter) literals.
+ * {@link NotebookDocumentFilter} literals.
  *
  * @since 3.17.0
  */
@@ -254,7 +254,7 @@ export type NotebookCellTextDocumentFilter = {
 
 /**
  * The NotebookCellTextDocumentFilter namespace provides helper functions to work with
- * [NotebookCellTextDocumentFilter](#NotebookCellTextDocumentFilter) literals.
+ * {@link NotebookCellTextDocumentFilter} literals.
  *
  * @since 3.17.0
  */
@@ -286,7 +286,7 @@ export type DocumentSelector = (string | DocumentFilter)[];
 
 /**
  * The DocumentSelector namespace provides helper functions to work with
- * [DocumentSelector](#DocumentSelector)s.
+ * {@link DocumentSelector}s.
  */
 export namespace DocumentSelector {
 	export function is(value: any[] | undefined | null): value is DocumentSelector {
@@ -982,7 +982,7 @@ export interface StaticRegistrationOptions {
 
 /**
  * The StaticRegistrationOptions namespace provides helper functions to work with
- * [StaticRegistrationOptions](#StaticRegistrationOptions) literals.
+ * {@link StaticRegistrationOptions} literals.
  */
 export namespace StaticRegistrationOptions {
 	export function hasId(value: object): value is { id: string } {
@@ -1004,7 +1004,7 @@ export interface TextDocumentRegistrationOptions {
 
 /**
  * The TextDocumentRegistrationOptions namespace provides helper functions to work with
- * [TextDocumentRegistrationOptions](#TextDocumentRegistrationOptions) literals.
+ * {@link TextDocumentRegistrationOptions} literals.
  */
 export namespace TextDocumentRegistrationOptions {
 	export function is(value: any): value is TextDocumentRegistrationOptions {
@@ -1029,7 +1029,7 @@ export interface WorkDoneProgressOptions {
 
 /**
  * The WorkDoneProgressOptions namespace provides helper functions to work with
- * [WorkDoneProgressOptions](#WorkDoneProgressOptions) literals.
+ * {@link WorkDoneProgressOptions} literals.
  */
 export namespace WorkDoneProgressOptions {
 	export function is(value: any): value is WorkDoneProgressOptions {
@@ -1273,8 +1273,8 @@ export interface ServerCapabilities<T = LSPAny> {
 /**
  * The initialize request is sent from the client to the server.
  * It is sent once as the request after starting up the server.
- * The requests parameter is of type [InitializeParams](#InitializeParams)
- * the response if of type [InitializeResult](#InitializeResult) of a Thenable that
+ * The requests parameter is of type {@link InitializeParams}
+ * the response if of type {@link InitializeResult} of a Thenable that
  * resolves to such.
  */
 export namespace InitializeRequest {
@@ -2470,19 +2470,19 @@ export interface CompletionOptions extends WorkDoneProgressOptions {
 }
 
 /**
- * Registration options for a [CompletionRequest](#CompletionRequest).
+ * Registration options for a {@link CompletionRequest}.
  */
 export interface CompletionRegistrationOptions extends TextDocumentRegistrationOptions, CompletionOptions {
 }
 
 /**
  * Request to request completion at a given text document position. The request's
- * parameter is of type [TextDocumentPosition](#TextDocumentPosition) the response
- * is of type [CompletionItem[]](#CompletionItem) or [CompletionList](#CompletionList)
+ * parameter is of type {@link TextDocumentPosition} the response
+ * is of type {@link CompletionItem CompletionItem[]} or {@link CompletionList}
  * or a Thenable that resolves to such.
  *
- * The request can delay the computation of the [`detail`](#CompletionItem.detail)
- * and [`documentation`](#CompletionItem.documentation) properties to the `completionItem/resolve`
+ * The request can delay the computation of the {@link CompletionItem.detail `detail`}
+ * and {@link CompletionItem.documentation `documentation`} properties to the `completionItem/resolve`
  * request. However, properties that are needed for the initial sorting and filtering, like `sortText`,
  * `filterText`, `insertText`, and `textEdit`, must not be changed during resolve.
  */
@@ -2494,8 +2494,8 @@ export namespace CompletionRequest {
 
 /**
  * Request to resolve additional information for a given completion item.The request's
- * parameter is of type [CompletionItem](#CompletionItem) the response
- * is of type [CompletionItem](#CompletionItem) or a Thenable that resolves to such.
+ * parameter is of type {@link CompletionItem} the response
+ * is of type {@link CompletionItem} or a Thenable that resolves to such.
  */
 export namespace CompletionResolveRequest {
 	export const method: 'completionItem/resolve' = 'completionItem/resolve';
@@ -2525,21 +2525,21 @@ export interface HoverOptions extends WorkDoneProgressOptions {
 }
 
 /**
- * Parameters for a [HoverRequest](#HoverRequest).
+ * Parameters for a {@link HoverRequest}.
  */
 export interface HoverParams extends TextDocumentPositionParams, WorkDoneProgressParams {
 }
 
 /**
- * Registration options for a [HoverRequest](#HoverRequest).
+ * Registration options for a {@link HoverRequest}.
  */
 export interface HoverRegistrationOptions extends TextDocumentRegistrationOptions, HoverOptions {
 }
 
 /**
  * Request to request hover information at a given text document position. The request's
- * parameter is of type [TextDocumentPosition](#TextDocumentPosition) the response is of
- * type [Hover](#Hover) or a Thenable that resolves to such.
+ * parameter is of type {@link TextDocumentPosition} the response is of
+ * type {@link Hover} or a Thenable that resolves to such.
  */
 export namespace HoverRequest {
 	export const method: 'textDocument/hover' = 'textDocument/hover';
@@ -2550,7 +2550,7 @@ export namespace HoverRequest {
 //---- SignatureHelp ----------------------------------
 
 /**
- * Client Capabilities for a [SignatureHelpRequest](#SignatureHelpRequest).
+ * Client Capabilities for a {@link SignatureHelpRequest}.
  */
 export interface SignatureHelpClientCapabilities {
 	/**
@@ -2603,7 +2603,7 @@ export interface SignatureHelpClientCapabilities {
 }
 
 /**
- * Server Capabilities for a [SignatureHelpRequest](#SignatureHelpRequest).
+ * Server Capabilities for a {@link SignatureHelpRequest}.
  */
 export interface SignatureHelpOptions extends WorkDoneProgressOptions {
 	/**
@@ -2679,7 +2679,7 @@ export interface SignatureHelpContext {
 }
 
 /**
- * Parameters for a [SignatureHelpRequest](#SignatureHelpRequest).
+ * Parameters for a {@link SignatureHelpRequest}.
  */
 export interface SignatureHelpParams extends TextDocumentPositionParams, WorkDoneProgressParams {
 	/**
@@ -2692,7 +2692,7 @@ export interface SignatureHelpParams extends TextDocumentPositionParams, WorkDon
 }
 
 /**
- * Registration options for a [SignatureHelpRequest](#SignatureHelpRequest).
+ * Registration options for a {@link SignatureHelpRequest}.
  */
 export interface SignatureHelpRegistrationOptions extends TextDocumentRegistrationOptions, SignatureHelpOptions {
 }
@@ -2706,7 +2706,7 @@ export namespace SignatureHelpRequest {
 //---- Goto Definition -------------------------------------
 
 /**
- * Client Capabilities for a [DefinitionRequest](#DefinitionRequest).
+ * Client Capabilities for a {@link DefinitionRequest}.
  */
 export interface DefinitionClientCapabilities {
 	/**
@@ -2723,19 +2723,19 @@ export interface DefinitionClientCapabilities {
 }
 
 /**
- * Server Capabilities for a [DefinitionRequest](#DefinitionRequest).
+ * Server Capabilities for a {@link DefinitionRequest}.
  */
 export interface DefinitionOptions extends WorkDoneProgressOptions {
 }
 
 /**
- * Parameters for a [DefinitionRequest](#DefinitionRequest).
+ * Parameters for a {@link DefinitionRequest}.
  */
 export interface DefinitionParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {
 }
 
 /**
- * Registration options for a [DefinitionRequest](#DefinitionRequest).
+ * Registration options for a {@link DefinitionRequest}.
  */
 export interface DefinitionRegistrationOptions extends TextDocumentRegistrationOptions, DefinitionOptions {
 }
@@ -2743,8 +2743,8 @@ export interface DefinitionRegistrationOptions extends TextDocumentRegistrationO
 /**
  * A request to resolve the definition location of a symbol at a given text
  * document position. The request's parameter is of type [TextDocumentPosition]
- * (#TextDocumentPosition) the response is of either type [Definition](#Definition)
- * or a typed array of [DefinitionLink](#DefinitionLink) or a Thenable that resolves
+ * (#TextDocumentPosition) the response is of either type {@link Definition}
+ * or a typed array of {@link DefinitionLink} or a Thenable that resolves
  * to such.
  */
 export namespace DefinitionRequest {
@@ -2756,7 +2756,7 @@ export namespace DefinitionRequest {
 //---- Reference Provider ----------------------------------
 
 /**
- * Client Capabilities for a [ReferencesRequest](#ReferencesRequest).
+ * Client Capabilities for a {@link ReferencesRequest}.
  */
 export interface ReferenceClientCapabilities {
 	/**
@@ -2766,7 +2766,7 @@ export interface ReferenceClientCapabilities {
 }
 
 /**
- * Parameters for a [ReferencesRequest](#ReferencesRequest).
+ * Parameters for a {@link ReferencesRequest}.
  */
 export interface ReferenceParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {
 	context: ReferenceContext;
@@ -2779,7 +2779,7 @@ export interface ReferenceOptions extends WorkDoneProgressOptions {
 }
 
 /**
- * Registration options for a [ReferencesRequest](#ReferencesRequest).
+ * Registration options for a {@link ReferencesRequest}.
  */
 export interface ReferenceRegistrationOptions extends TextDocumentRegistrationOptions, ReferenceOptions {
 }
@@ -2787,8 +2787,8 @@ export interface ReferenceRegistrationOptions extends TextDocumentRegistrationOp
 /**
  * A request to resolve project-wide references for the symbol denoted
  * by the given text document position. The request's parameter is of
- * type [ReferenceParams](#ReferenceParams) the response is of type
- * [Location[]](#Location) or a Thenable that resolves to such.
+ * type {@link ReferenceParams} the response is of type
+ * {@link Location Location[]} or a Thenable that resolves to such.
  */
 export namespace ReferencesRequest {
 	export const method: 'textDocument/references' = 'textDocument/references';
@@ -2799,7 +2799,7 @@ export namespace ReferencesRequest {
 //---- Document Highlight ----------------------------------
 
 /**
- * Client Capabilities for a [DocumentHighlightRequest](#DocumentHighlightRequest).
+ * Client Capabilities for a {@link DocumentHighlightRequest}.
  */
 export interface DocumentHighlightClientCapabilities {
 	/**
@@ -2809,25 +2809,25 @@ export interface DocumentHighlightClientCapabilities {
 }
 
 /**
- * Parameters for a [DocumentHighlightRequest](#DocumentHighlightRequest).
+ * Parameters for a {@link DocumentHighlightRequest}.
  */
 export interface DocumentHighlightParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {
 }
 
 /**
- * Provider options for a [DocumentHighlightRequest](#DocumentHighlightRequest).
+ * Provider options for a {@link DocumentHighlightRequest}.
  */
 export interface DocumentHighlightOptions extends WorkDoneProgressOptions {
 }
 
 /**
- * Registration options for a [DocumentHighlightRequest](#DocumentHighlightRequest).
+ * Registration options for a {@link DocumentHighlightRequest}.
  */
 export interface DocumentHighlightRegistrationOptions extends TextDocumentRegistrationOptions, DocumentHighlightOptions {
 }
 
 /**
- * Request to resolve a [DocumentHighlight](#DocumentHighlight) for a given
+ * Request to resolve a {@link DocumentHighlight} for a given
  * text document position. The request's parameter is of type [TextDocumentPosition]
  * (#TextDocumentPosition) the request response is of type [DocumentHighlight[]]
  * (#DocumentHighlight) or a Thenable that resolves to such.
@@ -2841,7 +2841,7 @@ export namespace DocumentHighlightRequest {
 //---- Document Symbol Provider ---------------------------
 
 /**
- * Client Capabilities for a [DocumentSymbolRequest](#DocumentSymbolRequest).
+ * Client Capabilities for a {@link DocumentSymbolRequest}.
  */
 export interface DocumentSymbolClientCapabilities {
 	/**
@@ -2896,7 +2896,7 @@ export interface DocumentSymbolClientCapabilities {
 }
 
 /**
- * Parameters for a [DocumentSymbolRequest](#DocumentSymbolRequest).
+ * Parameters for a {@link DocumentSymbolRequest}.
  */
 export interface DocumentSymbolParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
@@ -2906,7 +2906,7 @@ export interface DocumentSymbolParams extends WorkDoneProgressParams, PartialRes
 }
 
 /**
- * Provider options for a [DocumentSymbolRequest](#DocumentSymbolRequest).
+ * Provider options for a {@link DocumentSymbolRequest}.
  */
 export interface DocumentSymbolOptions extends WorkDoneProgressOptions {
 	/**
@@ -2919,15 +2919,15 @@ export interface DocumentSymbolOptions extends WorkDoneProgressOptions {
 }
 
 /**
- * Registration options for a [DocumentSymbolRequest](#DocumentSymbolRequest).
+ * Registration options for a {@link DocumentSymbolRequest}.
  */
 export interface DocumentSymbolRegistrationOptions extends TextDocumentRegistrationOptions, DocumentSymbolOptions {
 }
 
 /**
  * A request to list all symbols found in a given text document. The request's
- * parameter is of type [TextDocumentIdentifier](#TextDocumentIdentifier) the
- * response is of type [SymbolInformation[]](#SymbolInformation) or a Thenable
+ * parameter is of type {@link TextDocumentIdentifier} the
+ * response is of type {@link SymbolInformation SymbolInformation[]} or a Thenable
  * that resolves to such.
  */
 export namespace DocumentSymbolRequest {
@@ -2939,7 +2939,7 @@ export namespace DocumentSymbolRequest {
 //---- Code Action Provider ----------------------------------
 
 /**
- * The Client Capabilities of a [CodeActionRequest](#CodeActionRequest).
+ * The Client Capabilities of a {@link CodeActionRequest}.
  */
 export interface CodeActionClientCapabilities {
 	/**
@@ -3020,7 +3020,7 @@ export interface CodeActionClientCapabilities {
 }
 
 /**
- * The parameters of a [CodeActionRequest](#CodeActionRequest).
+ * The parameters of a {@link CodeActionRequest}.
  */
 export interface CodeActionParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
@@ -3040,7 +3040,7 @@ export interface CodeActionParams extends WorkDoneProgressParams, PartialResultP
 }
 
 /**
- * Provider options for a [CodeActionRequest](#CodeActionRequest).
+ * Provider options for a {@link CodeActionRequest}.
  */
 export interface CodeActionOptions extends WorkDoneProgressOptions {
 	/**
@@ -3061,7 +3061,7 @@ export interface CodeActionOptions extends WorkDoneProgressOptions {
 }
 
 /**
- * Registration options for a [CodeActionRequest](#CodeActionRequest).
+ * Registration options for a {@link CodeActionRequest}.
  */
 export interface CodeActionRegistrationOptions extends TextDocumentRegistrationOptions, CodeActionOptions {
 }
@@ -3077,8 +3077,8 @@ export namespace CodeActionRequest {
 
 /**
  * Request to resolve additional information for a given code action.The request's
- * parameter is of type [CodeAction](#CodeAction) the response
- * is of type [CodeAction](#CodeAction) or a Thenable that resolves to such.
+ * parameter is of type {@link CodeAction} the response
+ * is of type {@link CodeAction} or a Thenable that resolves to such.
  */
 export namespace CodeActionResolveRequest {
 	export const method: 'codeAction/resolve' = 'codeAction/resolve';
@@ -3089,7 +3089,7 @@ export namespace CodeActionResolveRequest {
 //---- Workspace Symbol Provider ---------------------------
 
 /**
- * Client capabilities for a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest).
+ * Client capabilities for a {@link WorkspaceSymbolRequest}.
  */
 export interface WorkspaceSymbolClientCapabilities {
 	/**
@@ -3144,7 +3144,7 @@ export interface WorkspaceSymbolClientCapabilities {
 }
 
 /**
- * The parameters of a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest).
+ * The parameters of a {@link WorkspaceSymbolRequest}.
  */
 export interface WorkspaceSymbolParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
@@ -3155,7 +3155,7 @@ export interface WorkspaceSymbolParams extends WorkDoneProgressParams, PartialRe
 }
 
 /**
- * Server capabilities for a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest).
+ * Server capabilities for a {@link WorkspaceSymbolRequest}.
  */
 export interface WorkspaceSymbolOptions extends WorkDoneProgressOptions {
 	/**
@@ -3169,15 +3169,15 @@ export interface WorkspaceSymbolOptions extends WorkDoneProgressOptions {
 
 
 /**
- * Registration options for a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest).
+ * Registration options for a {@link WorkspaceSymbolRequest}.
  */
 export interface WorkspaceSymbolRegistrationOptions extends WorkspaceSymbolOptions {
 }
 
 /**
  * A request to list project-wide symbols matching the query string given
- * by the [WorkspaceSymbolParams](#WorkspaceSymbolParams). The response is
- * of type [SymbolInformation[]](#SymbolInformation) or a Thenable that
+ * by the {@link WorkspaceSymbolParams}. The response is
+ * of type {@link SymbolInformation SymbolInformation[]} or a Thenable that
  * resolves to such.
  *
  * @since 3.17.0 - support for WorkspaceSymbol in the returned data. Clients
@@ -3206,7 +3206,7 @@ export namespace WorkspaceSymbolResolveRequest {
 //---- Code Lens Provider -------------------------------------------
 
 /**
- * The client capabilities  of a [CodeLensRequest](#CodeLensRequest).
+ * The client capabilities  of a {@link CodeLensRequest}.
  */
 export interface CodeLensClientCapabilities {
 	/**
@@ -3232,7 +3232,7 @@ export interface CodeLensWorkspaceClientCapabilities {
 }
 
 /**
- * The parameters of a [CodeLensRequest](#CodeLensRequest).
+ * The parameters of a {@link CodeLensRequest}.
  */
 export interface CodeLensParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
@@ -3242,7 +3242,7 @@ export interface CodeLensParams extends WorkDoneProgressParams, PartialResultPar
 }
 
 /**
- * Code Lens provider options of a [CodeLensRequest](#CodeLensRequest).
+ * Code Lens provider options of a {@link CodeLensRequest}.
  */
 export interface CodeLensOptions extends WorkDoneProgressOptions {
 	/**
@@ -3252,7 +3252,7 @@ export interface CodeLensOptions extends WorkDoneProgressOptions {
 }
 
 /**
- * Registration options for a [CodeLensRequest](#CodeLensRequest).
+ * Registration options for a {@link CodeLensRequest}.
  */
 export interface CodeLensRegistrationOptions extends TextDocumentRegistrationOptions, CodeLensOptions {
 }
@@ -3288,7 +3288,7 @@ export namespace CodeLensRefreshRequest {
 //---- Document Links ----------------------------------------------
 
 /**
- * The client capabilities of a [DocumentLinkRequest](#DocumentLinkRequest).
+ * The client capabilities of a {@link DocumentLinkRequest}.
  */
 export interface DocumentLinkClientCapabilities {
 	/**
@@ -3305,7 +3305,7 @@ export interface DocumentLinkClientCapabilities {
 }
 
 /**
- * The parameters of a [DocumentLinkRequest](#DocumentLinkRequest).
+ * The parameters of a {@link DocumentLinkRequest}.
  */
 export interface DocumentLinkParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
@@ -3315,7 +3315,7 @@ export interface DocumentLinkParams extends WorkDoneProgressParams, PartialResul
 }
 
 /**
- * Provider options for a [DocumentLinkRequest](#DocumentLinkRequest).
+ * Provider options for a {@link DocumentLinkRequest}.
  */
 export interface DocumentLinkOptions extends WorkDoneProgressOptions {
 	/**
@@ -3325,7 +3325,7 @@ export interface DocumentLinkOptions extends WorkDoneProgressOptions {
 }
 
 /**
- * Registration options for a [DocumentLinkRequest](#DocumentLinkRequest).
+ * Registration options for a {@link DocumentLinkRequest}.
  */
 export interface DocumentLinkRegistrationOptions extends TextDocumentRegistrationOptions, DocumentLinkOptions {
 }
@@ -3341,8 +3341,8 @@ export namespace DocumentLinkRequest {
 
 /**
  * Request to resolve additional information for a given document link. The request's
- * parameter is of type [DocumentLink](#DocumentLink) the response
- * is of type [DocumentLink](#DocumentLink) or a Thenable that resolves to such.
+ * parameter is of type {@link DocumentLink} the response
+ * is of type {@link DocumentLink} or a Thenable that resolves to such.
  */
 export namespace DocumentLinkResolveRequest {
 	export const method: 'documentLink/resolve' = 'documentLink/resolve';
@@ -3353,7 +3353,7 @@ export namespace DocumentLinkResolveRequest {
 //---- Formatting ----------------------------------------------
 
 /**
- * Client capabilities of a [DocumentFormattingRequest](#DocumentFormattingRequest).
+ * Client capabilities of a {@link DocumentFormattingRequest}.
  */
 export interface DocumentFormattingClientCapabilities {
 	/**
@@ -3363,7 +3363,7 @@ export interface DocumentFormattingClientCapabilities {
 }
 
 /**
- * The parameters of a [DocumentFormattingRequest](#DocumentFormattingRequest).
+ * The parameters of a {@link DocumentFormattingRequest}.
  */
 export interface DocumentFormattingParams extends WorkDoneProgressParams {
 	/**
@@ -3378,13 +3378,13 @@ export interface DocumentFormattingParams extends WorkDoneProgressParams {
 }
 
 /**
- * Provider options for a [DocumentFormattingRequest](#DocumentFormattingRequest).
+ * Provider options for a {@link DocumentFormattingRequest}.
  */
 export interface DocumentFormattingOptions extends WorkDoneProgressOptions {
 }
 
 /**
- * Registration options for a [DocumentFormattingRequest](#DocumentFormattingRequest).
+ * Registration options for a {@link DocumentFormattingRequest}.
  */
 export interface DocumentFormattingRegistrationOptions extends TextDocumentRegistrationOptions, DocumentFormattingOptions {
 }
@@ -3399,7 +3399,7 @@ export namespace DocumentFormattingRequest {
 }
 
 /**
- * Client capabilities of a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest).
+ * Client capabilities of a {@link DocumentRangeFormattingRequest}.
  */
 export interface DocumentRangeFormattingClientCapabilities {
 	/**
@@ -3409,7 +3409,7 @@ export interface DocumentRangeFormattingClientCapabilities {
 }
 
 /**
- * The parameters of a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest).
+ * The parameters of a {@link DocumentRangeFormattingRequest}.
  */
 export interface DocumentRangeFormattingParams extends WorkDoneProgressParams {
 	/**
@@ -3429,13 +3429,13 @@ export interface DocumentRangeFormattingParams extends WorkDoneProgressParams {
 }
 
 /**
- * Provider options for a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest).
+ * Provider options for a {@link DocumentRangeFormattingRequest}.
  */
 export interface DocumentRangeFormattingOptions extends WorkDoneProgressOptions {
 }
 
 /**
- * Registration options for a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest).
+ * Registration options for a {@link DocumentRangeFormattingRequest}.
  */
 export interface DocumentRangeFormattingRegistrationOptions extends TextDocumentRegistrationOptions, DocumentRangeFormattingOptions {
 }
@@ -3450,7 +3450,7 @@ export namespace DocumentRangeFormattingRequest {
 }
 
 /**
- * Client capabilities of a [DocumentOnTypeFormattingRequest](#DocumentOnTypeFormattingRequest).
+ * Client capabilities of a {@link DocumentOnTypeFormattingRequest}.
  */
 export interface DocumentOnTypeFormattingClientCapabilities {
 	/**
@@ -3460,7 +3460,7 @@ export interface DocumentOnTypeFormattingClientCapabilities {
 }
 
 /**
- * The parameters of a [DocumentOnTypeFormattingRequest](#DocumentOnTypeFormattingRequest).
+ * The parameters of a {@link DocumentOnTypeFormattingRequest}.
  */
 export interface DocumentOnTypeFormattingParams {
 
@@ -3491,7 +3491,7 @@ export interface DocumentOnTypeFormattingParams {
 }
 
 /**
- * Provider options for a [DocumentOnTypeFormattingRequest](#DocumentOnTypeFormattingRequest).
+ * Provider options for a {@link DocumentOnTypeFormattingRequest}.
  */
 export interface DocumentOnTypeFormattingOptions {
 	/**
@@ -3506,7 +3506,7 @@ export interface DocumentOnTypeFormattingOptions {
 }
 
 /**
- * Registration options for a [DocumentOnTypeFormattingRequest](#DocumentOnTypeFormattingRequest).
+ * Registration options for a {@link DocumentOnTypeFormattingRequest}.
  */
 export interface DocumentOnTypeFormattingRegistrationOptions extends TextDocumentRegistrationOptions, DocumentOnTypeFormattingOptions {
 }
@@ -3569,7 +3569,7 @@ export interface RenameClientCapabilities {
 }
 
 /**
- * The parameters of a [RenameRequest](#RenameRequest).
+ * The parameters of a {@link RenameRequest}.
  */
 export interface RenameParams extends WorkDoneProgressParams {
 	/**
@@ -3584,14 +3584,14 @@ export interface RenameParams extends WorkDoneProgressParams {
 
 	/**
 	 * The new name of the symbol. If the given name is not valid the
-	 * request must return a [ResponseError](#ResponseError) with an
+	 * request must return a {@link ResponseError} with an
 	 * appropriate message set.
 	 */
 	newName: string;
 }
 
 /**
- * Provider options for a [RenameRequest](#RenameRequest).
+ * Provider options for a {@link RenameRequest}.
  */
 export interface RenameOptions extends WorkDoneProgressOptions {
 	/**
@@ -3603,7 +3603,7 @@ export interface RenameOptions extends WorkDoneProgressOptions {
 }
 
 /**
- * Registration options for a [RenameRequest](#RenameRequest).
+ * Registration options for a {@link RenameRequest}.
  */
 export interface RenameRegistrationOptions extends TextDocumentRegistrationOptions, RenameOptions {
 }
@@ -3636,7 +3636,7 @@ export namespace PrepareRenameRequest {
 //---- Command Execution -------------------------------------------
 
 /**
- * The client capabilities of a [ExecuteCommandRequest](#ExecuteCommandRequest).
+ * The client capabilities of a {@link ExecuteCommandRequest}.
  */
 export interface ExecuteCommandClientCapabilities {
 	/**
@@ -3646,7 +3646,7 @@ export interface ExecuteCommandClientCapabilities {
 }
 
 /**
- * The parameters of a [ExecuteCommandRequest](#ExecuteCommandRequest).
+ * The parameters of a {@link ExecuteCommandRequest}.
  */
 export interface ExecuteCommandParams extends WorkDoneProgressParams {
 
@@ -3661,7 +3661,7 @@ export interface ExecuteCommandParams extends WorkDoneProgressParams {
 }
 
 /**
- * The server capabilities of a [ExecuteCommandRequest](#ExecuteCommandRequest).
+ * The server capabilities of a {@link ExecuteCommandRequest}.
  */
 export interface ExecuteCommandOptions extends WorkDoneProgressOptions {
 	/**
@@ -3671,7 +3671,7 @@ export interface ExecuteCommandOptions extends WorkDoneProgressOptions {
 }
 
 /**
- * Registration options for a [ExecuteCommandRequest](#ExecuteCommandRequest).
+ * Registration options for a {@link ExecuteCommandRequest}.
  */
 export interface ExecuteCommandRegistrationOptions extends ExecuteCommandOptions {
 }

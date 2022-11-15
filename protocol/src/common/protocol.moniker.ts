@@ -123,8 +123,8 @@ export interface MonikerParams extends TextDocumentPositionParams, WorkDoneProgr
 
 /**
  * A request to get the moniker of a symbol at a given text document position.
- * The request parameter is of type [TextDocumentPositionParams](#TextDocumentPositionParams).
- * The response is of type [Moniker[]](#Moniker[]) or `null`.
+ * The request parameter is of type {@link TextDocumentPositionParams}.
+ * The response is of type {@link Moniker Moniker[]} or `null`.
  */
 export namespace MonikerRequest {
 	export const method: 'textDocument/moniker' = 'textDocument/moniker';
