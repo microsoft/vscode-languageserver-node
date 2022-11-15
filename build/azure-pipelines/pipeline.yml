@@ -11,7 +11,8 @@ resources:
     - repository: templates
       type: github
       name: microsoft/vscode-engineering
-      ref: main
+      # ref: main
+      ref: lszomoru/approval-improvements
       endpoint: Monaco
 
 parameters:
