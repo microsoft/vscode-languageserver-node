@@ -1,0 +1,30 @@
+{
+    "compilerOptions": {
+        "incremental": true,
+        "composite": true
+    },
+    "files": [],
+    "references": [
+        {
+            "path": "./../types/tsconfig.watch.json"
+        },
+        {
+            "path": "./../jsonrpc/tsconfig.watch.json"
+        },
+        {
+            "path": "./src/common/tsconfig.watch.json"
+        },
+        {
+            "path": "./src/browser/tsconfig.watch.json"
+        },
+        {
+            "path": "./src/browser/test/tsconfig.watch.json"
+        },
+        {
+            "path": "./src/node/tsconfig.watch.json"
+        },
+        {
+            "path": "./src/node/test/tsconfig.watch.json"
+        }
+    ]
+}

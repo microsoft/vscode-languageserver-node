@@ -1,18 +1,34 @@
 {
-	"extends": "../../../tsconfig.base.json",
-	"compilerOptions": {
-		"incremental": true,
-		"tsBuildInfoFile":"../../lib/umd/test/compile.tsbuildInfo",
-		"rootDir": ".",
-		"outDir": "../../lib/umd/test",
-		"types": [
-			"mocha"
-		]
-	},
-	"include": [
-		"."
-	],
-	"references": [
-		{ "path": "../tsconfig.json" },
-	]
+    "compilerOptions": {
+        "types": [
+            "mocha"
+        ],
+        "module": "umd",
+        "moduleResolution": "node",
+        "rootDir": ".",
+        "strict": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "declaration": true,
+        "stripInternal": true,
+        "sourceMap": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "target": "es5",
+        "lib": [
+            "es2015"
+        ],
+        "outDir": "../../lib/umd/test",
+        "tsBuildInfoFile": "../../lib/umd/test/compile.tsbuildInfo",
+        "incremental": true
+    },
+    "include": [
+        "."
+    ],
+    "references": [
+        {
+            "path": "../tsconfig.json"
+        }
+    ]
 }

@@ -1,8 +1,0 @@
-{
-	"extends": "./tsconfig.json",
-	"files": [],
-	"references": [
-		{ "path": "./src/tsconfig-watch.json" },
-		{ "path": "./src/test/tsconfig-watch.json" }
-	]
-}

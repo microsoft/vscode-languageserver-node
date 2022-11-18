@@ -1,22 +1,30 @@
 {
-	"extends": "../../tsconfig.base.json",
-	"compilerOptions": {
-		"target": "es2020",
-		"module": "umd",
-		"sourceMap": false,
-		"declaration": true,
-		"stripInternal": true,
-		"lib": [ "es2020" ],
-		"outDir": "../lib/umd",
-		"incremental": true,
-		"composite": true,
-		"tsBuildInfoFile":"../lib/umd/compile.tsbuildInfo",
-		"rootDir": "."
-	},
-	"include": [
-		"."
-	],
-	"exclude": [
-		"test"
-	]
+    "compilerOptions": {
+        "module": "umd",
+        "moduleResolution": "node",
+        "rootDir": ".",
+        "strict": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "declaration": true,
+        "stripInternal": true,
+        "sourceMap": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "target": "es5",
+        "lib": [
+            "es2015"
+        ],
+        "outDir": "../lib/umd",
+        "tsBuildInfoFile": "../lib/umd/compile.tsbuildInfo",
+        "incremental": true,
+        "composite": true
+    },
+    "include": [
+        "."
+    ],
+    "exclude": [
+        "test"
+    ]
 }

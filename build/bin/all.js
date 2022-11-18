@@ -13,6 +13,13 @@ const child_process = require('child_process');
 const root = path.dirname(path.dirname(__dirname));
 const args = process.argv.slice(2);
 
+// When we install in a package pipeline then we don't want to call install in
+// the project directories since we need to call install there to ensure proper
+// dependency management.
+if (args[0] === 'install' && process.env['npm_config_root_only'] === 'true') {
+	return;
+}
+
 /** @type { { folder: string; scripts: string[] }[] } */
 const folders = [
 	{ folder: 'tools', scripts: ['install', 'clean', 'lint'] },

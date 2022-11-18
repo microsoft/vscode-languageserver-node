@@ -57,7 +57,9 @@ async function go() {
 					display = item.cmd.split(' ')[1];
 				}
 			}
-			extensionTestsEnv = { 'DISPLAY': display };
+			if (display !== undefined) {
+				extensionTestsEnv = { 'DISPLAY': display };
+			}
 		}
 
 		/**

@@ -1,10 +1,21 @@
 {
-	"extends": "./tsconfig.base.json",
-	"files": [],
-	"references": [
-		{ "path": "../protocol/tsconfig.json" },
-		{ "path": "./src/common/tsconfig.json" },
-		{ "path": "./src/node/tsconfig.json" },
-		{ "path": "./src/browser/tsconfig.json" }
-	]
+    "compilerOptions": {
+        "incremental": true,
+        "composite": true
+    },
+    "files": [],
+    "references": [
+        {
+            "path": "./../protocol/tsconfig.json"
+        },
+        {
+            "path": "./src/common/tsconfig.json"
+        },
+        {
+            "path": "./src/browser/tsconfig.json"
+        },
+        {
+            "path": "./src/node/tsconfig.json"
+        }
+    ]
 }

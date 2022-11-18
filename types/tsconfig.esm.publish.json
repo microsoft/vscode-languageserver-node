@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "incremental": true,
+        "composite": true
+    },
+    "files": [],
+    "references": [
+        {
+            "path": "./src/tsconfig.esm.publish.json"
+        },
+        {
+            "path": "./src/test/tsconfig.esm.publish.json"
+        }
+    ]
+}
