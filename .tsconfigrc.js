@@ -493,6 +493,7 @@ const projects = [
 	[ createPublishProjectDescription(client_node_tests), [ publishProjectOptions ] ],
 	[ tools, [ compileProjectOptions, watchProjectOptions ] ],
 	[ tsconfig_gen, [ compileProjectOptions, watchProjectOptions ] ],
+	[ createPublishProjectDescription(tsconfig_gen), [ publishProjectOptions ] ],
 	[ root, [ compileProjectOptions, watchProjectOptions ] ],
 ];
 
