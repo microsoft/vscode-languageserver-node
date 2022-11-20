@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { createConnection, Connection, InitializeParams, NotificationType0 } from '../../../server/node';
+import { createConnection, Connection, InitializeParams, NotificationType0 } from 'vscode-languageserver/node';
 
 namespace CrashNotification {
 	export const type = new NotificationType0('test/crash');

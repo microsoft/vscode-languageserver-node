@@ -12,7 +12,7 @@ import {
 	InlineValueText, InlineValueVariableLookup, InlineValueEvaluatableExpression, WorkDoneProgressCreateRequest, WillCreateFilesRequest,
 	WillRenameFilesRequest, WillDeleteFilesRequest, DidDeleteFilesNotification, DidRenameFilesNotification, DidCreateFilesNotification,
 	ProposedFeatures, Diagnostic, DiagnosticSeverity, TypeHierarchyItem, InlayHint, InlayHintLabelPart, InlayHintKind, DocumentDiagnosticReportKind
-} from '../../../server/node';
+} from 'vscode-languageserver/node';
 
 import { URI } from 'vscode-uri';
 
