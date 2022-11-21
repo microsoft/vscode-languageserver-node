@@ -6,14 +6,27 @@
 // @ts-check
 'use strict';
 
-const { CompilerOptions } = require('vscode-tsconfig-gen');
+const { CompilerOptions } = require('@vscode/tsconfig-gen');
 
 /**
- * @typedef {import('vscode-tsconfig-gen').SharableOptions} SharableOptions
- * @typedef {import('vscode-tsconfig-gen').ProjectDescription} ProjectDescription
- * @typedef {import('vscode-tsconfig-gen').ProjectOptions} ProjectOptions
- * @typedef {import('vscode-tsconfig-gen').Projects} Projects
+ * @typedef {import('@vscode/tsconfig-gen').SharableOptions} SharableOptions
+ * @typedef {import('@vscode/tsconfig-gen').ProjectDescription} ProjectDescription
+ * @typedef {import('@vscode/tsconfig-gen').ProjectOptions} ProjectOptions
+ * @typedef {import('@vscode/tsconfig-gen').Projects} Projects
  */
+
+/**
+ * Creates a publish project description from a normal project description by removing
+ * any project reference from it since it has to come via a npm dependency during publish.
+ *
+ * @param {ProjectDescription} projectDescription The project description
+ * @returns {ProjectDescription} The project description without project references
+ */
+function createPublishProjectDescription(projectDescription) {
+	const result = Object.assign({}, projectDescription);
+	delete result.references;
+	return result;
+}
 
 /** @type SharableOptions */
 const general = {
@@ -23,9 +36,7 @@ const general = {
 	 */
 	compilerOptions: {
 		module: 'commonjs',
-		moduleResolution: 'node',
-		target: 'es2020',
-		lib: [ 'es2020' ],
+		moduleResolution: 'node'
 	}
 };
 
@@ -338,12 +349,6 @@ const root = {
 	references: [ textDocument, types, jsonrpc, protocol, client, server, client_node_tests, tools, tsconfig_gen ]
 };
 
-const root_publish = {
-	name: 'root_publish',
-	path: './',
-	references: [ textDocument, types_publish, jsonrpc, protocol, client, server ]
-};
-
 /** @type CompilerOptions */
 const defaultCompilerOptions = {
 	strict: true,
@@ -359,6 +364,8 @@ const compileCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
 	sourceMap: true,
 	noUnusedLocals: true,
 	noUnusedParameters: true,
+	target: 'es2020',
+	lib: [ 'es2020' ],
 });
 
 /** @type ProjectOptions */
@@ -375,6 +382,8 @@ const watchCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
 	noUnusedLocals: false,
 	noUnusedParameters: false,
 	assumeChangesOnlyAffectDirectDependencies: true,
+	target: 'es2020',
+	lib: [ 'es2020' ],
 });
 
 /** @type ProjectOptions */
@@ -390,6 +399,9 @@ const publishCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
 	sourceMap: false,
 	noUnusedLocals: true,
 	noUnusedParameters: true,
+	target: 'es2020',
+	lib: [ 'es2020' ]
+
 });
 
 /** @type ProjectOptions */
@@ -469,15 +481,20 @@ const projects = [
 	[ textDocument_publish, [ publishProjectOptions ] ],
 	[ types, [ umdProjectOptions, umdWatchProjectOptions, esmPublishProjectOptions, umdPublishProjectOptions ] ],
 	[ types_publish, [ publishProjectOptions ]],
-	[ jsonrpc, [ compileProjectOptions, watchProjectOptions, publishProjectOptions ] ],
-	[ protocol, [ compileProjectOptions, watchProjectOptions, publishProjectOptions ] ],
-	[ server, [ compileProjectOptions, watchProjectOptions, publishProjectOptions ] ],
-	[ client, [ compileProjectOptions, watchProjectOptions, publishProjectOptions ] ],
+	[ jsonrpc, [ compileProjectOptions, watchProjectOptions ] ],
+	[ createPublishProjectDescription(jsonrpc), [ publishProjectOptions ] ],
+	[ protocol, [ compileProjectOptions, watchProjectOptions ] ],
+	[ createPublishProjectDescription(protocol), [ publishProjectOptions ] ],
+	[ server, [ compileProjectOptions, watchProjectOptions ] ],
+	[ createPublishProjectDescription(server), [ publishProjectOptions ] ],
+	[ client, [ compileProjectOptions, watchProjectOptions ] ],
+	[ createPublishProjectDescription(client), [ publishProjectOptions ] ],
 	[ client_node_tests, [ compileProjectOptions, watchProjectOptions ] ],
+	[ createPublishProjectDescription(client_node_tests), [ publishProjectOptions ] ],
 	[ tools, [ compileProjectOptions, watchProjectOptions ] ],
 	[ tsconfig_gen, [ compileProjectOptions, watchProjectOptions ] ],
+	[ createPublishProjectDescription(tsconfig_gen), [ publishProjectOptions ] ],
 	[ root, [ compileProjectOptions, watchProjectOptions ] ],
-	[ root_publish, [ publishProjectOptions ] ]
 ];
 
 module.exports = projects;

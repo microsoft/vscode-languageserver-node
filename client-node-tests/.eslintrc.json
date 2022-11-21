@@ -1,7 +1,7 @@
 {
 	"extends": "../.eslintrc.base.json",
 	"parserOptions": {
-		"project": ["./tsconfig.json"]
+		"project": ["./src/tsconfig.json"]
 	},
 	"rules": {
 	}

@@ -10,16 +10,9 @@ parameters:
 
 steps:
   - ${{ if eq(parameters.quality, 'latest') }}:
-    - bash: |
-        PACKAGE_SPEC=$(node -p "require(\"./package.json\").name + \"@\" + require(\"./package.json\").version")
-        echo "##vso[task.setvariable variable=PACKAGE_SPEC;isOutput=true]$PACKAGE_SPEC"
-      name: SetPackageSpec
-      displayName: Set PACKAGE_SPEC variable
-      workingDirectory: $(Build.SourcesDirectory)/${{ parameters.package }}
     - task: Npm@1
       inputs:
         command: custom
         customCommand: dist-tag add $(SetPackageSpec.PACKAGE_SPEC) next
         customEndpoint: NPM (vscode-bot)
-        workingDir: $(Build.SourcesDirectory)/${{ parameters.package }}
       displayName: npm dist-tag

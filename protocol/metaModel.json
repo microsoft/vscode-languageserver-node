@@ -53,7 +53,7 @@
 				"kind": "reference",
 				"name": "ImplementationRegistrationOptions"
 			},
-			"documentation": "A request to resolve the implementation locations of a symbol at a given text\ndocument position. The request's parameter is of type [TextDocumentPositionParams]\n(#TextDocumentPositionParams) the response is of type [Definition](#Definition) or a\nThenable that resolves to such."
+			"documentation": "A request to resolve the implementation locations of a symbol at a given text\ndocument position. The request's parameter is of type [TextDocumentPositionParams]\n(#TextDocumentPositionParams) the response is of type {@link Definition} or a\nThenable that resolves to such."
 		},
 		{
 			"method": "textDocument/typeDefinition",
@@ -105,7 +105,7 @@
 				"kind": "reference",
 				"name": "TypeDefinitionRegistrationOptions"
 			},
-			"documentation": "A request to resolve the type definition locations of a symbol at a given text\ndocument position. The request's parameter is of type [TextDocumentPositionParams]\n(#TextDocumentPositionParams) the response is of type [Definition](#Definition) or a\nThenable that resolves to such."
+			"documentation": "A request to resolve the type definition locations of a symbol at a given text\ndocument position. The request's parameter is of type [TextDocumentPositionParams]\n(#TextDocumentPositionParams) the response is of type {@link Definition} or a\nThenable that resolves to such."
 		},
 		{
 			"method": "workspace/workspaceFolders",
@@ -139,17 +139,8 @@
 			},
 			"messageDirection": "serverToClient",
 			"params": {
-				"kind": "and",
-				"items": [
-					{
-						"kind": "reference",
-						"name": "ConfigurationParams"
-					},
-					{
-						"kind": "reference",
-						"name": "PartialResultParams"
-					}
-				]
+				"kind": "reference",
+				"name": "ConfigurationParams"
 			},
 			"documentation": "The 'workspace/configuration' request is sent from the server to the client to fetch a certain\nconfiguration setting.\n\nThis pull model replaces the old push model were the client signaled configuration change via an\nevent. If the server still needs to react to configuration changes (since the server caches the\nresult of `workspace/configuration` requests) the server should register for an empty configuration\nchange event and empty the cache if such an event is received."
 		},
@@ -178,7 +169,7 @@
 				"kind": "reference",
 				"name": "DocumentColorRegistrationOptions"
 			},
-			"documentation": "A request to list all color symbols found in a given text document. The request's\nparameter is of type [DocumentColorParams](#DocumentColorParams) the\nresponse is of type [ColorInformation[]](#ColorInformation) or a Thenable\nthat resolves to such."
+			"documentation": "A request to list all color symbols found in a given text document. The request's\nparameter is of type {@link DocumentColorParams} the\nresponse is of type {@link ColorInformation ColorInformation[]} or a Thenable\nthat resolves to such."
 		},
 		{
 			"method": "textDocument/colorPresentation",
@@ -214,7 +205,7 @@
 					}
 				]
 			},
-			"documentation": "A request to list all presentation for a color. The request's\nparameter is of type [ColorPresentationParams](#ColorPresentationParams) the\nresponse is of type [ColorInformation[]](#ColorInformation) or a Thenable\nthat resolves to such."
+			"documentation": "A request to list all presentation for a color. The request's\nparameter is of type {@link ColorPresentationParams} the\nresponse is of type {@link ColorInformation ColorInformation[]} or a Thenable\nthat resolves to such."
 		},
 		{
 			"method": "textDocument/foldingRange",
@@ -250,7 +241,7 @@
 				"kind": "reference",
 				"name": "FoldingRangeRegistrationOptions"
 			},
-			"documentation": "A request to provide folding ranges in a document. The request's\nparameter is of type [FoldingRangeParams](#FoldingRangeParams), the\nresponse is of type [FoldingRangeList](#FoldingRangeList) or a Thenable\nthat resolves to such."
+			"documentation": "A request to provide folding ranges in a document. The request's\nparameter is of type {@link FoldingRangeParams}, the\nresponse is of type {@link FoldingRangeList} or a Thenable\nthat resolves to such."
 		},
 		{
 			"method": "textDocument/declaration",
@@ -302,7 +293,7 @@
 				"kind": "reference",
 				"name": "DeclarationRegistrationOptions"
 			},
-			"documentation": "A request to resolve the type definition locations of a symbol at a given text\ndocument position. The request's parameter is of type [TextDocumentPositionParams]\n(#TextDocumentPositionParams) the response is of type [Declaration](#Declaration)\nor a typed array of [DeclarationLink](#DeclarationLink) or a Thenable that resolves\nto such."
+			"documentation": "A request to resolve the type definition locations of a symbol at a given text\ndocument position. The request's parameter is of type [TextDocumentPositionParams]\n(#TextDocumentPositionParams) the response is of type {@link Declaration}\nor a typed array of {@link DeclarationLink} or a Thenable that resolves\nto such."
 		},
 		{
 			"method": "textDocument/selectionRange",
@@ -338,7 +329,7 @@
 				"kind": "reference",
 				"name": "SelectionRangeRegistrationOptions"
 			},
-			"documentation": "A request to provide selection ranges in a document. The request's\nparameter is of type [SelectionRangeParams](#SelectionRangeParams), the\nresponse is of type [SelectionRange[]](#SelectionRange[]) or a Thenable\nthat resolves to such."
+			"documentation": "A request to provide selection ranges in a document. The request's\nparameter is of type {@link SelectionRangeParams}, the\nresponse is of type {@link SelectionRange SelectionRange[]} or a Thenable\nthat resolves to such."
 		},
 		{
 			"method": "window/workDoneProgress/create",
@@ -720,7 +711,7 @@
 				"kind": "reference",
 				"name": "MonikerRegistrationOptions"
 			},
-			"documentation": "A request to get the moniker of a symbol at a given text document position.\nThe request parameter is of type [TextDocumentPositionParams](#TextDocumentPositionParams).\nThe response is of type [Moniker[]](#Moniker[]) or `null`."
+			"documentation": "A request to get the moniker of a symbol at a given text document position.\nThe request parameter is of type {@link TextDocumentPositionParams}.\nThe response is of type {@link Moniker Moniker[]} or `null`."
 		},
 		{
 			"method": "textDocument/prepareTypeHierarchy",
@@ -852,7 +843,7 @@
 				"kind": "reference",
 				"name": "InlineValueRegistrationOptions"
 			},
-			"documentation": "A request to provide inline values in a document. The request's parameter is of\ntype [InlineValueParams](#InlineValueParams), the response is of type\n[InlineValue[]](#InlineValue[]) or a Thenable that resolves to such.\n\n@since 3.17.0",
+			"documentation": "A request to provide inline values in a document. The request's parameter is of\ntype {@link InlineValueParams}, the response is of type\n{@link InlineValue InlineValue[]} or a Thenable that resolves to such.\n\n@since 3.17.0",
 			"since": "3.17.0"
 		},
 		{
@@ -899,7 +890,7 @@
 				"kind": "reference",
 				"name": "InlayHintRegistrationOptions"
 			},
-			"documentation": "A request to provide inlay hints in a document. The request's parameter is of\ntype [InlayHintsParams](#InlayHintsParams), the response is of type\n[InlayHint[]](#InlayHint[]) or a Thenable that resolves to such.\n\n@since 3.17.0",
+			"documentation": "A request to provide inlay hints in a document. The request's parameter is of\ntype {@link InlayHintsParams}, the response is of type\n{@link InlayHint InlayHint[]} or a Thenable that resolves to such.\n\n@since 3.17.0",
 			"since": "3.17.0"
 		},
 		{
@@ -913,7 +904,7 @@
 				"kind": "reference",
 				"name": "InlayHint"
 			},
-			"documentation": "A request to resolve additional properties for an inlay hint.\nThe request's parameter is of type [InlayHint](#InlayHint), the response is\nof type [InlayHint](#InlayHint) or a Thenable that resolves to such.\n\n@since 3.17.0",
+			"documentation": "A request to resolve additional properties for an inlay hint.\nThe request's parameter is of type {@link InlayHint}, the response is\nof type {@link InlayHint} or a Thenable that resolves to such.\n\n@since 3.17.0",
 			"since": "3.17.0"
 		},
 		{
@@ -1025,7 +1016,7 @@
 				"kind": "reference",
 				"name": "InitializeError"
 			},
-			"documentation": "The initialize request is sent from the client to the server.\nIt is sent once as the request after starting up the server.\nThe requests parameter is of type [InitializeParams](#InitializeParams)\nthe response if of type [InitializeResult](#InitializeResult) of a Thenable that\nresolves to such."
+			"documentation": "The initialize request is sent from the client to the server.\nIt is sent once as the request after starting up the server.\nThe requests parameter is of type {@link InitializeParams}\nthe response if of type {@link InitializeResult} of a Thenable that\nresolves to such."
 		},
 		{
 			"method": "shutdown",
@@ -1125,7 +1116,7 @@
 				"kind": "reference",
 				"name": "CompletionRegistrationOptions"
 			},
-			"documentation": "Request to request completion at a given text document position. The request's\nparameter is of type [TextDocumentPosition](#TextDocumentPosition) the response\nis of type [CompletionItem[]](#CompletionItem) or [CompletionList](#CompletionList)\nor a Thenable that resolves to such.\n\nThe request can delay the computation of the [`detail`](#CompletionItem.detail)\nand [`documentation`](#CompletionItem.documentation) properties to the `completionItem/resolve`\nrequest. However, properties that are needed for the initial sorting and filtering, like `sortText`,\n`filterText`, `insertText`, and `textEdit`, must not be changed during resolve."
+			"documentation": "Request to request completion at a given text document position. The request's\nparameter is of type {@link TextDocumentPosition} the response\nis of type {@link CompletionItem CompletionItem[]} or {@link CompletionList}\nor a Thenable that resolves to such.\n\nThe request can delay the computation of the {@link CompletionItem.detail `detail`}\nand {@link CompletionItem.documentation `documentation`} properties to the `completionItem/resolve`\nrequest. However, properties that are needed for the initial sorting and filtering, like `sortText`,\n`filterText`, `insertText`, and `textEdit`, must not be changed during resolve."
 		},
 		{
 			"method": "completionItem/resolve",
@@ -1138,7 +1129,7 @@
 				"kind": "reference",
 				"name": "CompletionItem"
 			},
-			"documentation": "Request to resolve additional information for a given completion item.The request's\nparameter is of type [CompletionItem](#CompletionItem) the response\nis of type [CompletionItem](#CompletionItem) or a Thenable that resolves to such."
+			"documentation": "Request to resolve additional information for a given completion item.The request's\nparameter is of type {@link CompletionItem} the response\nis of type {@link CompletionItem} or a Thenable that resolves to such."
 		},
 		{
 			"method": "textDocument/hover",
@@ -1164,7 +1155,7 @@
 				"kind": "reference",
 				"name": "HoverRegistrationOptions"
 			},
-			"documentation": "Request to request hover information at a given text document position. The request's\nparameter is of type [TextDocumentPosition](#TextDocumentPosition) the response is of\ntype [Hover](#Hover) or a Thenable that resolves to such."
+			"documentation": "Request to request hover information at a given text document position. The request's\nparameter is of type {@link TextDocumentPosition} the response is of\ntype {@link Hover} or a Thenable that resolves to such."
 		},
 		{
 			"method": "textDocument/signatureHelp",
@@ -1241,7 +1232,7 @@
 				"kind": "reference",
 				"name": "DefinitionRegistrationOptions"
 			},
-			"documentation": "A request to resolve the definition location of a symbol at a given text\ndocument position. The request's parameter is of type [TextDocumentPosition]\n(#TextDocumentPosition) the response is of either type [Definition](#Definition)\nor a typed array of [DefinitionLink](#DefinitionLink) or a Thenable that resolves\nto such."
+			"documentation": "A request to resolve the definition location of a symbol at a given text\ndocument position. The request's parameter is of type [TextDocumentPosition]\n(#TextDocumentPosition) the response is of either type {@link Definition}\nor a typed array of {@link DefinitionLink} or a Thenable that resolves\nto such."
 		},
 		{
 			"method": "textDocument/references",
@@ -1277,7 +1268,7 @@
 				"kind": "reference",
 				"name": "ReferenceRegistrationOptions"
 			},
-			"documentation": "A request to resolve project-wide references for the symbol denoted\nby the given text document position. The request's parameter is of\ntype [ReferenceParams](#ReferenceParams) the response is of type\n[Location[]](#Location) or a Thenable that resolves to such."
+			"documentation": "A request to resolve project-wide references for the symbol denoted\nby the given text document position. The request's parameter is of\ntype {@link ReferenceParams} the response is of type\n{@link Location Location[]} or a Thenable that resolves to such."
 		},
 		{
 			"method": "textDocument/documentHighlight",
@@ -1313,7 +1304,7 @@
 				"kind": "reference",
 				"name": "DocumentHighlightRegistrationOptions"
 			},
-			"documentation": "Request to resolve a [DocumentHighlight](#DocumentHighlight) for a given\ntext document position. The request's parameter is of type [TextDocumentPosition]\n(#TextDocumentPosition) the request response is of type [DocumentHighlight[]]\n(#DocumentHighlight) or a Thenable that resolves to such."
+			"documentation": "Request to resolve a {@link DocumentHighlight} for a given\ntext document position. The request's parameter is of type [TextDocumentPosition]\n(#TextDocumentPosition) the request response is of type [DocumentHighlight[]]\n(#DocumentHighlight) or a Thenable that resolves to such."
 		},
 		{
 			"method": "textDocument/documentSymbol",
@@ -1368,7 +1359,7 @@
 				"kind": "reference",
 				"name": "DocumentSymbolRegistrationOptions"
 			},
-			"documentation": "A request to list all symbols found in a given text document. The request's\nparameter is of type [TextDocumentIdentifier](#TextDocumentIdentifier) the\nresponse is of type [SymbolInformation[]](#SymbolInformation) or a Thenable\nthat resolves to such."
+			"documentation": "A request to list all symbols found in a given text document. The request's\nparameter is of type {@link TextDocumentIdentifier} the\nresponse is of type {@link SymbolInformation SymbolInformation[]} or a Thenable\nthat resolves to such."
 		},
 		{
 			"method": "textDocument/codeAction",
@@ -1435,7 +1426,7 @@
 				"kind": "reference",
 				"name": "CodeAction"
 			},
-			"documentation": "Request to resolve additional information for a given code action.The request's\nparameter is of type [CodeAction](#CodeAction) the response\nis of type [CodeAction](#CodeAction) or a Thenable that resolves to such."
+			"documentation": "Request to resolve additional information for a given code action.The request's\nparameter is of type {@link CodeAction} the response\nis of type {@link CodeAction} or a Thenable that resolves to such."
 		},
 		{
 			"method": "workspace/symbol",
@@ -1490,7 +1481,7 @@
 				"kind": "reference",
 				"name": "WorkspaceSymbolRegistrationOptions"
 			},
-			"documentation": "A request to list project-wide symbols matching the query string given\nby the [WorkspaceSymbolParams](#WorkspaceSymbolParams). The response is\nof type [SymbolInformation[]](#SymbolInformation) or a Thenable that\nresolves to such.\n\n@since 3.17.0 - support for WorkspaceSymbol in the returned data. Clients\n need to advertise support for WorkspaceSymbols via the client capability\n `workspace.symbol.resolveSupport`.\n",
+			"documentation": "A request to list project-wide symbols matching the query string given\nby the {@link WorkspaceSymbolParams}. The response is\nof type {@link SymbolInformation SymbolInformation[]} or a Thenable that\nresolves to such.\n\n@since 3.17.0 - support for WorkspaceSymbol in the returned data. Clients\n need to advertise support for WorkspaceSymbols via the client capability\n `workspace.symbol.resolveSupport`.\n",
 			"since": "3.17.0 - support for WorkspaceSymbol in the returned data. Clients\nneed to advertise support for WorkspaceSymbols via the client capability\n`workspace.symbol.resolveSupport`."
 		},
 		{
@@ -1613,7 +1604,7 @@
 				"kind": "reference",
 				"name": "DocumentLink"
 			},
-			"documentation": "Request to resolve additional information for a given document link. The request's\nparameter is of type [DocumentLink](#DocumentLink) the response\nis of type [DocumentLink](#DocumentLink) or a Thenable that resolves to such."
+			"documentation": "Request to resolve additional information for a given document link. The request's\nparameter is of type {@link DocumentLink} the response\nis of type {@link DocumentLink} or a Thenable that resolves to such."
 		},
 		{
 			"method": "textDocument/formatting",
@@ -2222,20 +2213,6 @@
 			"documentation": "The parameters of a configuration request."
 		},
 		{
-			"name": "PartialResultParams",
-			"properties": [
-				{
-					"name": "partialResultToken",
-					"type": {
-						"kind": "reference",
-						"name": "ProgressToken"
-					},
-					"optional": true,
-					"documentation": "An optional token that a server can use to report partial results (e.g. streaming) to\nthe client."
-				}
-			]
-		},
-		{
 			"name": "DocumentColorParams",
 			"properties": [
 				{
@@ -2257,7 +2234,7 @@
 					"name": "PartialResultParams"
 				}
 			],
-			"documentation": "Parameters for a [DocumentColorRequest](#DocumentColorRequest)."
+			"documentation": "Parameters for a {@link DocumentColorRequest}."
 		},
 		{
 			"name": "ColorInformation",
@@ -2339,7 +2316,7 @@
 					"name": "PartialResultParams"
 				}
 			],
-			"documentation": "Parameters for a [ColorPresentationRequest](#ColorPresentationRequest)."
+			"documentation": "Parameters for a {@link ColorPresentationRequest}."
 		},
 		{
 			"name": "ColorPresentation",
@@ -2433,7 +2410,7 @@
 					"name": "PartialResultParams"
 				}
 			],
-			"documentation": "Parameters for a [FoldingRangeRequest](#FoldingRangeRequest)."
+			"documentation": "Parameters for a {@link FoldingRangeRequest}."
 		},
 		{
 			"name": "FoldingRange",
@@ -4886,7 +4863,7 @@
 					"name": "CompletionOptions"
 				}
 			],
-			"documentation": "Registration options for a [CompletionRequest](#CompletionRequest)."
+			"documentation": "Registration options for a {@link CompletionRequest}."
 		},
 		{
 			"name": "HoverParams",
@@ -4903,7 +4880,7 @@
 					"name": "WorkDoneProgressParams"
 				}
 			],
-			"documentation": "Parameters for a [HoverRequest](#HoverRequest)."
+			"documentation": "Parameters for a {@link HoverRequest}."
 		},
 		{
 			"name": "Hover",
@@ -4957,7 +4934,7 @@
 					"name": "HoverOptions"
 				}
 			],
-			"documentation": "Registration options for a [HoverRequest](#HoverRequest)."
+			"documentation": "Registration options for a {@link HoverRequest}."
 		},
 		{
 			"name": "SignatureHelpParams",
@@ -4985,7 +4962,7 @@
 					"name": "WorkDoneProgressParams"
 				}
 			],
-			"documentation": "Parameters for a [SignatureHelpRequest](#SignatureHelpRequest)."
+			"documentation": "Parameters for a {@link SignatureHelpRequest}."
 		},
 		{
 			"name": "SignatureHelp",
@@ -5035,7 +5012,7 @@
 					"name": "SignatureHelpOptions"
 				}
 			],
-			"documentation": "Registration options for a [SignatureHelpRequest](#SignatureHelpRequest)."
+			"documentation": "Registration options for a {@link SignatureHelpRequest}."
 		},
 		{
 			"name": "DefinitionParams",
@@ -5056,7 +5033,7 @@
 					"name": "PartialResultParams"
 				}
 			],
-			"documentation": "Parameters for a [DefinitionRequest](#DefinitionRequest)."
+			"documentation": "Parameters for a {@link DefinitionRequest}."
 		},
 		{
 			"name": "DefinitionRegistrationOptions",
@@ -5071,7 +5048,7 @@
 					"name": "DefinitionOptions"
 				}
 			],
-			"documentation": "Registration options for a [DefinitionRequest](#DefinitionRequest)."
+			"documentation": "Registration options for a {@link DefinitionRequest}."
 		},
 		{
 			"name": "ReferenceParams",
@@ -5100,7 +5077,7 @@
 					"name": "PartialResultParams"
 				}
 			],
-			"documentation": "Parameters for a [ReferencesRequest](#ReferencesRequest)."
+			"documentation": "Parameters for a {@link ReferencesRequest}."
 		},
 		{
 			"name": "ReferenceRegistrationOptions",
@@ -5115,7 +5092,7 @@
 					"name": "ReferenceOptions"
 				}
 			],
-			"documentation": "Registration options for a [ReferencesRequest](#ReferencesRequest)."
+			"documentation": "Registration options for a {@link ReferencesRequest}."
 		},
 		{
 			"name": "DocumentHighlightParams",
@@ -5136,7 +5113,7 @@
 					"name": "PartialResultParams"
 				}
 			],
-			"documentation": "Parameters for a [DocumentHighlightRequest](#DocumentHighlightRequest)."
+			"documentation": "Parameters for a {@link DocumentHighlightRequest}."
 		},
 		{
 			"name": "DocumentHighlight",
@@ -5174,7 +5151,7 @@
 					"name": "DocumentHighlightOptions"
 				}
 			],
-			"documentation": "Registration options for a [DocumentHighlightRequest](#DocumentHighlightRequest)."
+			"documentation": "Registration options for a {@link DocumentHighlightRequest}."
 		},
 		{
 			"name": "DocumentSymbolParams",
@@ -5198,7 +5175,7 @@
 					"name": "PartialResultParams"
 				}
 			],
-			"documentation": "Parameters for a [DocumentSymbolRequest](#DocumentSymbolRequest)."
+			"documentation": "Parameters for a {@link DocumentSymbolRequest}."
 		},
 		{
 			"name": "SymbolInformation",
@@ -5323,7 +5300,7 @@
 					"name": "DocumentSymbolOptions"
 				}
 			],
-			"documentation": "Registration options for a [DocumentSymbolRequest](#DocumentSymbolRequest)."
+			"documentation": "Registration options for a {@link DocumentSymbolRequest}."
 		},
 		{
 			"name": "CodeActionParams",
@@ -5363,7 +5340,7 @@
 					"name": "PartialResultParams"
 				}
 			],
-			"documentation": "The parameters of a [CodeActionRequest](#CodeActionRequest)."
+			"documentation": "The parameters of a {@link CodeActionRequest}."
 		},
 		{
 			"name": "Command",
@@ -5506,7 +5483,7 @@
 					"name": "CodeActionOptions"
 				}
 			],
-			"documentation": "Registration options for a [CodeActionRequest](#CodeActionRequest)."
+			"documentation": "Registration options for a {@link CodeActionRequest}."
 		},
 		{
 			"name": "WorkspaceSymbolParams",
@@ -5530,7 +5507,7 @@
 					"name": "PartialResultParams"
 				}
 			],
-			"documentation": "The parameters of a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest)."
+			"documentation": "The parameters of a {@link WorkspaceSymbolRequest}."
 		},
 		{
 			"name": "WorkspaceSymbol",
@@ -5590,7 +5567,7 @@
 					"name": "WorkspaceSymbolOptions"
 				}
 			],
-			"documentation": "Registration options for a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest)."
+			"documentation": "Registration options for a {@link WorkspaceSymbolRequest}."
 		},
 		{
 			"name": "CodeLensParams",
@@ -5614,7 +5591,7 @@
 					"name": "PartialResultParams"
 				}
 			],
-			"documentation": "The parameters of a [CodeLensRequest](#CodeLensRequest)."
+			"documentation": "The parameters of a {@link CodeLensRequest}."
 		},
 		{
 			"name": "CodeLens",
@@ -5661,7 +5638,7 @@
 					"name": "CodeLensOptions"
 				}
 			],
-			"documentation": "Registration options for a [CodeLensRequest](#CodeLensRequest)."
+			"documentation": "Registration options for a {@link CodeLensRequest}."
 		},
 		{
 			"name": "DocumentLinkParams",
@@ -5685,7 +5662,7 @@
 					"name": "PartialResultParams"
 				}
 			],
-			"documentation": "The parameters of a [DocumentLinkRequest](#DocumentLinkRequest)."
+			"documentation": "The parameters of a {@link DocumentLinkRequest}."
 		},
 		{
 			"name": "DocumentLink",
@@ -5742,7 +5719,7 @@
 					"name": "DocumentLinkOptions"
 				}
 			],
-			"documentation": "Registration options for a [DocumentLinkRequest](#DocumentLinkRequest)."
+			"documentation": "Registration options for a {@link DocumentLinkRequest}."
 		},
 		{
 			"name": "DocumentFormattingParams",
@@ -5770,7 +5747,7 @@
 					"name": "WorkDoneProgressParams"
 				}
 			],
-			"documentation": "The parameters of a [DocumentFormattingRequest](#DocumentFormattingRequest)."
+			"documentation": "The parameters of a {@link DocumentFormattingRequest}."
 		},
 		{
 			"name": "DocumentFormattingRegistrationOptions",
@@ -5785,7 +5762,7 @@
 					"name": "DocumentFormattingOptions"
 				}
 			],
-			"documentation": "Registration options for a [DocumentFormattingRequest](#DocumentFormattingRequest)."
+			"documentation": "Registration options for a {@link DocumentFormattingRequest}."
 		},
 		{
 			"name": "DocumentRangeFormattingParams",
@@ -5821,7 +5798,7 @@
 					"name": "WorkDoneProgressParams"
 				}
 			],
-			"documentation": "The parameters of a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest)."
+			"documentation": "The parameters of a {@link DocumentRangeFormattingRequest}."
 		},
 		{
 			"name": "DocumentRangeFormattingRegistrationOptions",
@@ -5836,7 +5813,7 @@
 					"name": "DocumentRangeFormattingOptions"
 				}
 			],
-			"documentation": "Registration options for a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest)."
+			"documentation": "Registration options for a {@link DocumentRangeFormattingRequest}."
 		},
 		{
 			"name": "DocumentOnTypeFormattingParams",
@@ -5874,7 +5851,7 @@
 					"documentation": "The formatting options."
 				}
 			],
-			"documentation": "The parameters of a [DocumentOnTypeFormattingRequest](#DocumentOnTypeFormattingRequest)."
+			"documentation": "The parameters of a {@link DocumentOnTypeFormattingRequest}."
 		},
 		{
 			"name": "DocumentOnTypeFormattingRegistrationOptions",
@@ -5889,7 +5866,7 @@
 					"name": "DocumentOnTypeFormattingOptions"
 				}
 			],
-			"documentation": "Registration options for a [DocumentOnTypeFormattingRequest](#DocumentOnTypeFormattingRequest)."
+			"documentation": "Registration options for a {@link DocumentOnTypeFormattingRequest}."
 		},
 		{
 			"name": "RenameParams",
@@ -5916,7 +5893,7 @@
 						"kind": "base",
 						"name": "string"
 					},
-					"documentation": "The new name of the symbol. If the given name is not valid the\nrequest must return a [ResponseError](#ResponseError) with an\nappropriate message set."
+					"documentation": "The new name of the symbol. If the given name is not valid the\nrequest must return a {@link ResponseError} with an\nappropriate message set."
 				}
 			],
 			"mixins": [
@@ -5925,7 +5902,7 @@
 					"name": "WorkDoneProgressParams"
 				}
 			],
-			"documentation": "The parameters of a [RenameRequest](#RenameRequest)."
+			"documentation": "The parameters of a {@link RenameRequest}."
 		},
 		{
 			"name": "RenameRegistrationOptions",
@@ -5940,7 +5917,7 @@
 					"name": "RenameOptions"
 				}
 			],
-			"documentation": "Registration options for a [RenameRequest](#RenameRequest)."
+			"documentation": "Registration options for a {@link RenameRequest}."
 		},
 		{
 			"name": "PrepareRenameParams",
@@ -5988,7 +5965,7 @@
 					"name": "WorkDoneProgressParams"
 				}
 			],
-			"documentation": "The parameters of a [ExecuteCommandRequest](#ExecuteCommandRequest)."
+			"documentation": "The parameters of a {@link ExecuteCommandRequest}."
 		},
 		{
 			"name": "ExecuteCommandRegistrationOptions",
@@ -5999,7 +5976,7 @@
 					"name": "ExecuteCommandOptions"
 				}
 			],
-			"documentation": "Registration options for a [ExecuteCommandRequest](#ExecuteCommandRequest)."
+			"documentation": "Registration options for a {@link ExecuteCommandRequest}."
 		},
 		{
 			"name": "ApplyWorkspaceEditParams",
@@ -6272,6 +6249,20 @@
 					},
 					"optional": true,
 					"documentation": "An optional token that a server can use to report work done progress."
+				}
+			]
+		},
+		{
+			"name": "PartialResultParams",
+			"properties": [
+				{
+					"name": "partialResultToken",
+					"type": {
+						"kind": "reference",
+						"name": "ProgressToken"
+					},
+					"optional": true,
+					"documentation": "An optional token that a server can use to report partial results (e.g. streaming) to\nthe client."
 				}
 			]
 		},
@@ -8935,7 +8926,7 @@
 					"name": "WorkDoneProgressOptions"
 				}
 			],
-			"documentation": "Server Capabilities for a [SignatureHelpRequest](#SignatureHelpRequest)."
+			"documentation": "Server Capabilities for a {@link SignatureHelpRequest}."
 		},
 		{
 			"name": "DefinitionOptions",
@@ -8946,7 +8937,7 @@
 					"name": "WorkDoneProgressOptions"
 				}
 			],
-			"documentation": "Server Capabilities for a [DefinitionRequest](#DefinitionRequest)."
+			"documentation": "Server Capabilities for a {@link DefinitionRequest}."
 		},
 		{
 			"name": "ReferenceContext",
@@ -8982,7 +8973,7 @@
 					"name": "WorkDoneProgressOptions"
 				}
 			],
-			"documentation": "Provider options for a [DocumentHighlightRequest](#DocumentHighlightRequest)."
+			"documentation": "Provider options for a {@link DocumentHighlightRequest}."
 		},
 		{
 			"name": "BaseSymbolInformation",
@@ -9048,7 +9039,7 @@
 					"name": "WorkDoneProgressOptions"
 				}
 			],
-			"documentation": "Provider options for a [DocumentSymbolRequest](#DocumentSymbolRequest)."
+			"documentation": "Provider options for a {@link DocumentSymbolRequest}."
 		},
 		{
 			"name": "CodeActionContext",
@@ -9121,7 +9112,7 @@
 					"name": "WorkDoneProgressOptions"
 				}
 			],
-			"documentation": "Provider options for a [CodeActionRequest](#CodeActionRequest)."
+			"documentation": "Provider options for a {@link CodeActionRequest}."
 		},
 		{
 			"name": "WorkspaceSymbolOptions",
@@ -9143,7 +9134,7 @@
 					"name": "WorkDoneProgressOptions"
 				}
 			],
-			"documentation": "Server capabilities for a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest)."
+			"documentation": "Server capabilities for a {@link WorkspaceSymbolRequest}."
 		},
 		{
 			"name": "CodeLensOptions",
@@ -9164,7 +9155,7 @@
 					"name": "WorkDoneProgressOptions"
 				}
 			],
-			"documentation": "Code Lens provider options of a [CodeLensRequest](#CodeLensRequest)."
+			"documentation": "Code Lens provider options of a {@link CodeLensRequest}."
 		},
 		{
 			"name": "DocumentLinkOptions",
@@ -9185,7 +9176,7 @@
 					"name": "WorkDoneProgressOptions"
 				}
 			],
-			"documentation": "Provider options for a [DocumentLinkRequest](#DocumentLinkRequest)."
+			"documentation": "Provider options for a {@link DocumentLinkRequest}."
 		},
 		{
 			"name": "FormattingOptions",
@@ -9248,7 +9239,7 @@
 					"name": "WorkDoneProgressOptions"
 				}
 			],
-			"documentation": "Provider options for a [DocumentFormattingRequest](#DocumentFormattingRequest)."
+			"documentation": "Provider options for a {@link DocumentFormattingRequest}."
 		},
 		{
 			"name": "DocumentRangeFormattingOptions",
@@ -9259,7 +9250,7 @@
 					"name": "WorkDoneProgressOptions"
 				}
 			],
-			"documentation": "Provider options for a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest)."
+			"documentation": "Provider options for a {@link DocumentRangeFormattingRequest}."
 		},
 		{
 			"name": "DocumentOnTypeFormattingOptions",
@@ -9285,7 +9276,7 @@
 					"documentation": "More trigger characters."
 				}
 			],
-			"documentation": "Provider options for a [DocumentOnTypeFormattingRequest](#DocumentOnTypeFormattingRequest)."
+			"documentation": "Provider options for a {@link DocumentOnTypeFormattingRequest}."
 		},
 		{
 			"name": "RenameOptions",
@@ -9307,7 +9298,7 @@
 					"name": "WorkDoneProgressOptions"
 				}
 			],
-			"documentation": "Provider options for a [RenameRequest](#RenameRequest)."
+			"documentation": "Provider options for a {@link RenameRequest}."
 		},
 		{
 			"name": "ExecuteCommandOptions",
@@ -9330,7 +9321,7 @@
 					"name": "WorkDoneProgressOptions"
 				}
 			],
-			"documentation": "The server capabilities of a [ExecuteCommandRequest](#ExecuteCommandRequest)."
+			"documentation": "The server capabilities of a {@link ExecuteCommandRequest}."
 		},
 		{
 			"name": "SemanticTokensLegend",
@@ -10984,7 +10975,7 @@
 					"since": "3.17.0"
 				}
 			],
-			"documentation": "Client capabilities for a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest)."
+			"documentation": "Client capabilities for a {@link WorkspaceSymbolRequest}."
 		},
 		{
 			"name": "ExecuteCommandClientCapabilities",
@@ -10999,7 +10990,7 @@
 					"documentation": "Execute command supports dynamic registration."
 				}
 			],
-			"documentation": "The client capabilities of a [ExecuteCommandRequest](#ExecuteCommandRequest)."
+			"documentation": "The client capabilities of a {@link ExecuteCommandRequest}."
 		},
 		{
 			"name": "SemanticTokensWorkspaceClientCapabilities",
@@ -11531,7 +11522,7 @@
 					"since": "3.15.0"
 				}
 			],
-			"documentation": "Client Capabilities for a [SignatureHelpRequest](#SignatureHelpRequest)."
+			"documentation": "Client Capabilities for a {@link SignatureHelpRequest}."
 		},
 		{
 			"name": "DeclarationClientCapabilities",
@@ -11581,7 +11572,7 @@
 					"since": "3.14.0"
 				}
 			],
-			"documentation": "Client Capabilities for a [DefinitionRequest](#DefinitionRequest)."
+			"documentation": "Client Capabilities for a {@link DefinitionRequest}."
 		},
 		{
 			"name": "TypeDefinitionClientCapabilities",
@@ -11646,7 +11637,7 @@
 					"documentation": "Whether references supports dynamic registration."
 				}
 			],
-			"documentation": "Client Capabilities for a [ReferencesRequest](#ReferencesRequest)."
+			"documentation": "Client Capabilities for a {@link ReferencesRequest}."
 		},
 		{
 			"name": "DocumentHighlightClientCapabilities",
@@ -11661,7 +11652,7 @@
 					"documentation": "Whether document highlight supports dynamic registration."
 				}
 			],
-			"documentation": "Client Capabilities for a [DocumentHighlightRequest](#DocumentHighlightRequest)."
+			"documentation": "Client Capabilities for a {@link DocumentHighlightRequest}."
 		},
 		{
 			"name": "DocumentSymbolClientCapabilities",
@@ -11743,7 +11734,7 @@
 					"since": "3.16.0"
 				}
 			],
-			"documentation": "Client Capabilities for a [DocumentSymbolRequest](#DocumentSymbolRequest)."
+			"documentation": "Client Capabilities for a {@link DocumentSymbolRequest}."
 		},
 		{
 			"name": "CodeActionClientCapabilities",
@@ -11857,7 +11848,7 @@
 					"since": "3.16.0"
 				}
 			],
-			"documentation": "The Client Capabilities of a [CodeActionRequest](#CodeActionRequest)."
+			"documentation": "The Client Capabilities of a {@link CodeActionRequest}."
 		},
 		{
 			"name": "CodeLensClientCapabilities",
@@ -11872,7 +11863,7 @@
 					"documentation": "Whether code lens supports dynamic registration."
 				}
 			],
-			"documentation": "The client capabilities  of a [CodeLensRequest](#CodeLensRequest)."
+			"documentation": "The client capabilities  of a {@link CodeLensRequest}."
 		},
 		{
 			"name": "DocumentLinkClientCapabilities",
@@ -11897,7 +11888,7 @@
 					"since": "3.15.0"
 				}
 			],
-			"documentation": "The client capabilities of a [DocumentLinkRequest](#DocumentLinkRequest)."
+			"documentation": "The client capabilities of a {@link DocumentLinkRequest}."
 		},
 		{
 			"name": "DocumentColorClientCapabilities",
@@ -11926,7 +11917,7 @@
 					"documentation": "Whether formatting supports dynamic registration."
 				}
 			],
-			"documentation": "Client capabilities of a [DocumentFormattingRequest](#DocumentFormattingRequest)."
+			"documentation": "Client capabilities of a {@link DocumentFormattingRequest}."
 		},
 		{
 			"name": "DocumentRangeFormattingClientCapabilities",
@@ -11941,7 +11932,7 @@
 					"documentation": "Whether range formatting supports dynamic registration."
 				}
 			],
-			"documentation": "Client capabilities of a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest)."
+			"documentation": "Client capabilities of a {@link DocumentRangeFormattingRequest}."
 		},
 		{
 			"name": "DocumentOnTypeFormattingClientCapabilities",
@@ -11956,7 +11947,7 @@
 					"documentation": "Whether on type formatting supports dynamic registration."
 				}
 			],
-			"documentation": "Client capabilities of a [DocumentOnTypeFormattingRequest](#DocumentOnTypeFormattingRequest)."
+			"documentation": "Client capabilities of a {@link DocumentOnTypeFormattingRequest}."
 		},
 		{
 			"name": "RenameClientCapabilities",
@@ -13973,6 +13964,18 @@
 			}
 		},
 		{
+			"name": "DocumentSelector",
+			"type": {
+				"kind": "array",
+				"element": {
+					"kind": "reference",
+					"name": "DocumentFilter"
+				}
+			},
+			"documentation": "A document selector is the combination of one or many document filters.\n\n@sample `let sel:DocumentSelector = [{ language: 'typescript' }, { language: 'json', pattern: '**∕tsconfig.json' }]`;\n\nThe use of a string as a document filter is deprecated @since 3.16.0.",
+			"since": "3.16.0."
+		},
+		{
 			"name": "ProgressToken",
 			"type": {
 				"kind": "or",
@@ -13987,18 +13990,6 @@
 					}
 				]
 			}
-		},
-		{
-			"name": "DocumentSelector",
-			"type": {
-				"kind": "array",
-				"element": {
-					"kind": "reference",
-					"name": "DocumentFilter"
-				}
-			},
-			"documentation": "A document selector is the combination of one or many document filters.\n\n@sample `let sel:DocumentSelector = [{ language: 'typescript' }, { language: 'json', pattern: '**∕tsconfig.json' }]`;\n\nThe use of a string as a document filter is deprecated @since 3.16.0.",
-			"since": "3.16.0."
 		},
 		{
 			"name": "ChangeAnnotationIdentifier",
@@ -14176,7 +14167,7 @@
 										"name": "string"
 									},
 									"optional": true,
-									"documentation": "A Uri [scheme](#Uri.scheme), like `file` or `untitled`."
+									"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
 								},
 								{
 									"name": "pattern",
@@ -14209,7 +14200,7 @@
 										"kind": "base",
 										"name": "string"
 									},
-									"documentation": "A Uri [scheme](#Uri.scheme), like `file` or `untitled`."
+									"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
 								},
 								{
 									"name": "pattern",
@@ -14243,7 +14234,7 @@
 										"name": "string"
 									},
 									"optional": true,
-									"documentation": "A Uri [scheme](#Uri.scheme), like `file` or `untitled`."
+									"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
 								},
 								{
 									"name": "pattern",
@@ -14258,7 +14249,7 @@
 					}
 				]
 			},
-			"documentation": "A document filter denotes a document by different properties like\nthe [language](#TextDocument.languageId), the [scheme](#Uri.scheme) of\nits resource, or a glob-pattern that is applied to the [path](#TextDocument.fileName).\n\nGlob patterns can have the following syntax:\n- `*` to match one or more characters in a path segment\n- `?` to match on one character in a path segment\n- `**` to match any number of path segments, including none\n- `{}` to group sub patterns into an OR expression. (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)\n- `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)\n- `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)\n\n@sample A language filter that applies to typescript files on disk: `{ language: 'typescript', scheme: 'file' }`\n@sample A language filter that applies to all package.json paths: `{ language: 'json', pattern: '**package.json' }`\n\n@since 3.17.0",
+			"documentation": "A document filter denotes a document by different properties like\nthe {@link TextDocument.languageId language}, the {@link Uri.scheme scheme} of\nits resource, or a glob-pattern that is applied to the {@link TextDocument.fileName path}.\n\nGlob patterns can have the following syntax:\n- `*` to match one or more characters in a path segment\n- `?` to match on one character in a path segment\n- `**` to match any number of path segments, including none\n- `{}` to group sub patterns into an OR expression. (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)\n- `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)\n- `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)\n\n@sample A language filter that applies to typescript files on disk: `{ language: 'typescript', scheme: 'file' }`\n@sample A language filter that applies to all package.json paths: `{ language: 'json', pattern: '**package.json' }`\n\n@since 3.17.0",
 			"since": "3.17.0"
 		},
 		{
@@ -14285,7 +14276,7 @@
 										"name": "string"
 									},
 									"optional": true,
-									"documentation": "A Uri [scheme](#Uri.scheme), like `file` or `untitled`."
+									"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
 								},
 								{
 									"name": "pattern",
@@ -14318,7 +14309,7 @@
 										"kind": "base",
 										"name": "string"
 									},
-									"documentation": "A Uri [scheme](#Uri.scheme), like `file` or `untitled`."
+									"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
 								},
 								{
 									"name": "pattern",
@@ -14352,7 +14343,7 @@
 										"name": "string"
 									},
 									"optional": true,
-									"documentation": "A Uri [scheme](#Uri.scheme), like `file` or `untitled`."
+									"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
 								},
 								{
 									"name": "pattern",

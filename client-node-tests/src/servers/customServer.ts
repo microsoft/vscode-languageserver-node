@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { createConnection, Connection, InitializeParams, InitializeResult } from '../../../server/node';
+import { createConnection, Connection, InitializeParams, InitializeResult } from 'vscode-languageserver/node';
 
 const connection: Connection = createConnection();
 connection.onInitialize((_params: InitializeParams): InitializeResult => {

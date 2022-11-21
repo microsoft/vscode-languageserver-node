@@ -14,6 +14,8 @@ const root = path.dirname(path.dirname(__dirname));
 (async function main() {
 	console.log('Symlinking node modules for development setup');
 
+
+
 	// protocol folder
 	let protocolFolder = path.join(root, 'protocol');
 	await ln.tryLinkJsonRpc(protocolFolder);
@@ -42,5 +44,5 @@ const root = path.dirname(path.dirname(__dirname));
 
 	// tsconfig
 	let generator = path.join(root, 'tsconfig-gen');
-	await ln.softLink(generator, path.join(root, 'node_modules', 'vscode-tsconfig-gen'));
+	await ln.softLink(generator, path.join(root, 'node_modules', '@vscode', 'tsconfig-gen'));
 })();

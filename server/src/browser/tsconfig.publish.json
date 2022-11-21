@@ -1,0 +1,33 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "rootDir": ".",
+        "types": [],
+        "lib": [
+            "es2020",
+            "webworker"
+        ],
+        "strict": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "declaration": true,
+        "stripInternal": true,
+        "sourceMap": false,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "target": "es2020",
+        "outDir": "../../lib/browser",
+        "tsBuildInfoFile": "../../lib/browser/publish.tsbuildInfo",
+        "incremental": true
+    },
+    "include": [
+        "."
+    ],
+    "references": [
+        {
+            "path": "../common/tsconfig.publish.json"
+        }
+    ]
+}

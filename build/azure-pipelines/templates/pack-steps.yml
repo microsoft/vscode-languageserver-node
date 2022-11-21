@@ -6,7 +6,7 @@ parameters:
 - name: package
 
 steps:
-  - script: npm install
+  - script: npm install --root-only
     workingDirectory: $(Build.SourcesDirectory)
     displayName: Install dependencies
   - bash: |

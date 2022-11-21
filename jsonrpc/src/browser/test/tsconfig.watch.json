@@ -1,0 +1,36 @@
+{
+    "compilerOptions": {
+        "types": [
+            "mocha"
+        ],
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "rootDir": ".",
+        "lib": [
+            "es2020",
+            "webworker"
+        ],
+        "strict": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "declaration": true,
+        "stripInternal": true,
+        "sourceMap": true,
+        "noUnusedLocals": false,
+        "noUnusedParameters": false,
+        "assumeChangesOnlyAffectDirectDependencies": true,
+        "target": "es2020",
+        "outDir": "../../../lib/browser/test",
+        "tsBuildInfoFile": "../../../lib/browser/test/watch.tsbuildInfo",
+        "incremental": true
+    },
+    "include": [
+        "."
+    ],
+    "references": [
+        {
+            "path": "../tsconfig.watch.json"
+        }
+    ]
+}

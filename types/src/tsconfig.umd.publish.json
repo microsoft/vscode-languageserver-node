@@ -1,0 +1,30 @@
+{
+    "compilerOptions": {
+        "module": "umd",
+        "moduleResolution": "node",
+        "rootDir": ".",
+        "strict": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "declaration": true,
+        "stripInternal": true,
+        "sourceMap": false,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "target": "es5",
+        "lib": [
+            "es2015"
+        ],
+        "outDir": "../lib/umd",
+        "tsBuildInfoFile": "../lib/umd/publish.tsbuildInfo",
+        "incremental": true,
+        "composite": true
+    },
+    "include": [
+        "."
+    ],
+    "exclude": [
+        "test"
+    ]
+}

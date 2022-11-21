@@ -61,6 +61,7 @@
 		"generate:metaModel": "cd protocol && npm run generate:metaModel && cd ..",
 		"generate:metaModelSchema": "cd protocol && npm run generate:metaModelSchema && cd ..",
 		"validate:version": "node ./tools/lib/validate-main.js",
-		"update:lock": "git clean -xfd . && npm install && cd ./client && npm run updateVSCodeVersion && cd .."
+		"update:lock": "git clean -xfd . && npm install && cd ./client && npm run updateVSCodeVersion && cd ..",
+		"tsconfig-gen": "cd tsconfig-gen && npm run compile && cd .. && node ./tsconfig-gen/lib/main.js -f .tsconfigrc.js"
 	}
 }

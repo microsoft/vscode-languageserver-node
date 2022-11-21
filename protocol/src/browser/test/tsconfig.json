@@ -1,18 +1,35 @@
 {
-	"extends": "../../../tsconfig.base.json",
-	"compilerOptions": {
-		"tsBuildInfoFile":"../../../lib/browser/test/compile.tsbuildInfo",
-		"rootDir": ".",
-		"outDir": "../../../lib/browser/test",
-		"lib": [ "es2017", "webworker"],
-		"types": [
-			"mocha"
-		]
-	},
-	"include": [
-		"."
-	],
-	"references": [
-		{ "path": "../tsconfig.json" },
-	]
+    "compilerOptions": {
+        "types": [
+            "mocha"
+        ],
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "rootDir": ".",
+        "lib": [
+            "es2020",
+            "webworker"
+        ],
+        "strict": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "declaration": true,
+        "stripInternal": true,
+        "sourceMap": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "target": "es2020",
+        "outDir": "../../../lib/browser/test",
+        "tsBuildInfoFile": "../../../lib/browser/test/compile.tsbuildInfo",
+        "incremental": true
+    },
+    "include": [
+        "."
+    ],
+    "references": [
+        {
+            "path": "../tsconfig.json"
+        }
+    ]
 }

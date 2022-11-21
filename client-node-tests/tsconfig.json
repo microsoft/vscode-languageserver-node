@@ -1,29 +1,21 @@
 {
-	"extends": "../tsconfig.base.json",
-	"compilerOptions": {
-		"incremental": true,
-		"composite": true,
-		"tsBuildInfoFile":"./lib/compile.tsbuildInfo",
-		"sourceMap": true,
-		"declaration": true,
-		"stripInternal": true,
-		"target": "es2020",
-		"module": "commonjs",
-		"moduleResolution": "node",
-		"lib": [ "es2020" ],
-		"rootDir": "src",
-		"outDir": "lib",
-		"types": [
-			"node",
-			"vscode"
-		]
-	},
-	"references": [
-		{ "path": "../protocol/tsconfig.json" },
-		{ "path": "../client/tsconfig.json" },
-		{ "path": "../server/tsconfig.json" }
-	],
-	"include": [
-		"src"
-	]
+    "compilerOptions": {
+        "incremental": true,
+        "composite": true
+    },
+    "files": [],
+    "references": [
+        {
+            "path": "./../protocol/tsconfig.json"
+        },
+        {
+            "path": "./../client/tsconfig.json"
+        },
+        {
+            "path": "./../server/tsconfig.json"
+        },
+        {
+            "path": "./src/tsconfig.json"
+        }
+    ]
 }

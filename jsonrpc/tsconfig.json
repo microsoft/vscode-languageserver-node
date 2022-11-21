@@ -1,12 +1,27 @@
 {
-	"extends": "./tsconfig.base.json",
-	"files": [],
-	"references": [
-		{ "path": "./src/common/tsconfig.json" },
-		{ "path": "./src/common/test/tsconfig.json" },
-		{ "path": "./src/node/tsconfig.json" },
-		{ "path": "./src/node/test/tsconfig.json" },
-		{ "path": "./src/browser/tsconfig.json" },
-		{ "path": "./src/browser/test/tsconfig.json" },
-	]
+    "compilerOptions": {
+        "incremental": true,
+        "composite": true
+    },
+    "files": [],
+    "references": [
+        {
+            "path": "./src/common/tsconfig.json"
+        },
+        {
+            "path": "./src/common/test/tsconfig.json"
+        },
+        {
+            "path": "./src/browser/tsconfig.json"
+        },
+        {
+            "path": "./src/browser/test/tsconfig.json"
+        },
+        {
+            "path": "./src/node/tsconfig.json"
+        },
+        {
+            "path": "./src/node/test/tsconfig.json"
+        }
+    ]
 }
