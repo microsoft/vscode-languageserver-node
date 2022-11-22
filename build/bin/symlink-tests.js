@@ -19,7 +19,7 @@ const root = path.dirname(path.dirname(__dirname));
 	await ln.tryLinkJsonRpc(extensionFolder);
 	await ln.tryLinkTypes(extensionFolder);
 	await ln.tryLinkProtocol(extensionFolder);
-	await ln.tryLink(extensionFolder, 'vscode-languageserver', 'server');
+	await ln.tryLink(extensionFolder, 'vscode-languageserver', path.join('..', '..', 'server'));
 
 	// Hard link the client to have a real path from the node_modules folder
 	await ln.tryHardLink(path.join(root, 'client'), path.join(extensionFolder, 'node_modules', 'vscode-languageclient'));
