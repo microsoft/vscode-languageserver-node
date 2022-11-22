@@ -390,7 +390,7 @@ export namespace WorkspaceDiagnosticRequest {
  */
 export namespace DiagnosticRefreshRequest {
 	export const method: `workspace/diagnostic/refresh` = `workspace/diagnostic/refresh`;
-	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
+	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType0<void, void, void, void>(method);
 	export type HandlerSignature = RequestHandler0<void, void>;
 }

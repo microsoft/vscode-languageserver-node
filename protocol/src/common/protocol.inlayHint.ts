@@ -123,7 +123,7 @@ export namespace InlayHintResolveRequest {
  */
 export namespace InlayHintRefreshRequest {
 	export const method: `workspace/inlayHint/refresh` = `workspace/inlayHint/refresh`;
-	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
+	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType0<void, void, void, void>(method);
 	export type HandlerSignature = RequestHandler0<void, void>;
 }
