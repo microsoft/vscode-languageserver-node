@@ -97,7 +97,7 @@ export namespace InlineValueRequest {
  */
 export namespace InlineValueRefreshRequest {
 	export const method: `workspace/inlineValue/refresh` = `workspace/inlineValue/refresh`;
-	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
+	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType0<void, void, void, void>(method);
 	export type HandlerSignature = RequestHandler0<void, void>;
 }

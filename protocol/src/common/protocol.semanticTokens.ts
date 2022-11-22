@@ -268,7 +268,7 @@ export interface SemanticTokensWorkspaceClientCapabilities {
  */
 export namespace SemanticTokensRefreshRequest {
 	export const method: `workspace/semanticTokens/refresh` = `workspace/semanticTokens/refresh`;
-	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
+	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType0<void, void, void, void>(method);
 	export type HandlerSignature = RequestHandler0<void, void>;
 }
