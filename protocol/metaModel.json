@@ -551,7 +551,7 @@
 				"kind": "base",
 				"name": "null"
 			},
-			"messageDirection": "clientToServer",
+			"messageDirection": "serverToClient",
 			"documentation": "@since 3.16.0",
 			"since": "3.16.0"
 		},
@@ -852,7 +852,7 @@
 				"kind": "base",
 				"name": "null"
 			},
-			"messageDirection": "clientToServer",
+			"messageDirection": "serverToClient",
 			"documentation": "@since 3.17.0",
 			"since": "3.17.0"
 		},
@@ -913,7 +913,7 @@
 				"kind": "base",
 				"name": "null"
 			},
-			"messageDirection": "clientToServer",
+			"messageDirection": "serverToClient",
 			"documentation": "@since 3.17.0",
 			"since": "3.17.0"
 		},
@@ -971,7 +971,7 @@
 				"kind": "base",
 				"name": "null"
 			},
-			"messageDirection": "clientToServer",
+			"messageDirection": "serverToClient",
 			"documentation": "The diagnostic refresh request definition.\n\n@since 3.17.0",
 			"since": "3.17.0"
 		},
@@ -2336,7 +2336,7 @@
 						"name": "TextEdit"
 					},
 					"optional": true,
-					"documentation": "An [edit](#TextEdit) which is applied to a document when selecting\nthis presentation for the color.  When `falsy` the [label](#ColorPresentation.label)\nis used."
+					"documentation": "An {@link TextEdit edit} which is applied to a document when selecting\nthis presentation for the color.  When `falsy` the {@link ColorPresentation.label label}\nis used."
 				},
 				{
 					"name": "additionalTextEdits",
@@ -2348,7 +2348,7 @@
 						}
 					},
 					"optional": true,
-					"documentation": "An optional array of additional [text edits](#TextEdit) that are applied when\nselecting this color presentation. Edits must not overlap with the main [edit](#ColorPresentation.textEdit) nor with themselves."
+					"documentation": "An optional array of additional {@link TextEdit text edits} that are applied when\nselecting this color presentation. Edits must not overlap with the main {@link ColorPresentation.textEdit edit} nor with themselves."
 				}
 			]
 		},
@@ -2456,7 +2456,7 @@
 						"name": "FoldingRangeKind"
 					},
 					"optional": true,
-					"documentation": "Describes the kind of the folding range such as `comment' or 'region'. The kind\nis used to categorize folding ranges and used by commands like 'Fold all comments'.\nSee [FoldingRangeKind](#FoldingRangeKind) for an enumeration of standardized kinds."
+					"documentation": "Describes the kind of the folding range such as `comment' or 'region'. The kind\nis used to categorize folding ranges and used by commands like 'Fold all comments'.\nSee {@link FoldingRangeKind} for an enumeration of standardized kinds."
 				},
 				{
 					"name": "collapsedText",
@@ -2575,7 +2575,7 @@
 						"kind": "reference",
 						"name": "Range"
 					},
-					"documentation": "The [range](#Range) of this selection range."
+					"documentation": "The {@link Range range} of this selection range."
 				},
 				{
 					"name": "parent",
@@ -2715,7 +2715,7 @@
 						"kind": "reference",
 						"name": "Range"
 					},
-					"documentation": "The range that should be selected and revealed when this symbol is being picked, e.g. the name of a function.\nMust be contained by the [`range`](#CallHierarchyItem.range)."
+					"documentation": "The range that should be selected and revealed when this symbol is being picked, e.g. the name of a function.\nMust be contained by the {@link CallHierarchyItem.range `range`}."
 				},
 				{
 					"name": "data",
@@ -2796,7 +2796,7 @@
 							"name": "Range"
 						}
 					},
-					"documentation": "The ranges at which the calls appear. This is relative to the caller\ndenoted by [`this.from`](#CallHierarchyIncomingCall.from)."
+					"documentation": "The ranges at which the calls appear. This is relative to the caller\ndenoted by {@link CallHierarchyIncomingCall.from `this.from`}."
 				}
 			],
 			"documentation": "Represents an incoming call, e.g. a caller of a method or constructor.\n\n@since 3.16.0",
@@ -2846,7 +2846,7 @@
 							"name": "Range"
 						}
 					},
-					"documentation": "The range at which this item is called. This is the range relative to the caller, e.g the item\npassed to [`provideCallHierarchyOutgoingCalls`](#CallHierarchyItemProvider.provideCallHierarchyOutgoingCalls)\nand not [`this.to`](#CallHierarchyOutgoingCall.to)."
+					"documentation": "The range at which this item is called. This is the range relative to the caller, e.g the item\npassed to {@link CallHierarchyItemProvider.provideCallHierarchyOutgoingCalls `provideCallHierarchyOutgoingCalls`}\nand not {@link CallHierarchyOutgoingCall.to `this.to`}."
 				}
 			],
 			"documentation": "Represents an outgoing call, e.g. calling a getter from a method or a method from a constructor etc.\n\n@since 3.16.0",
@@ -3469,7 +3469,7 @@
 						"kind": "reference",
 						"name": "Range"
 					},
-					"documentation": "The range that should be selected and revealed when this symbol is being\npicked, e.g. the name of a function. Must be contained by the\n[`range`](#TypeHierarchyItem.range)."
+					"documentation": "The range that should be selected and revealed when this symbol is being\npicked, e.g. the name of a function. Must be contained by the\n{@link TypeHierarchyItem.range `range`}."
 				},
 				{
 					"name": "data",
@@ -4620,7 +4620,7 @@
 						"name": "string"
 					},
 					"optional": true,
-					"documentation": "A string that should be used when comparing this item\nwith other items. When `falsy` the [label](#CompletionItem.label)\nis used."
+					"documentation": "A string that should be used when comparing this item\nwith other items. When `falsy` the {@link CompletionItem.label label}\nis used."
 				},
 				{
 					"name": "filterText",
@@ -4629,7 +4629,7 @@
 						"name": "string"
 					},
 					"optional": true,
-					"documentation": "A string that should be used when filtering a set of\ncompletion items. When `falsy` the [label](#CompletionItem.label)\nis used."
+					"documentation": "A string that should be used when filtering a set of\ncompletion items. When `falsy` the {@link CompletionItem.label label}\nis used."
 				},
 				{
 					"name": "insertText",
@@ -4638,7 +4638,7 @@
 						"name": "string"
 					},
 					"optional": true,
-					"documentation": "A string that should be inserted into a document when selecting\nthis completion. When `falsy` the [label](#CompletionItem.label)\nis used.\n\nThe `insertText` is subject to interpretation by the client side.\nSome tools might not take the string literally. For example\nVS Code when code complete is requested in this example\n`con<cursor position>` and a completion item with an `insertText` of\n`console` is provided it will only insert `sole`. Therefore it is\nrecommended to use `textEdit` instead since it avoids additional client\nside interpretation."
+					"documentation": "A string that should be inserted into a document when selecting\nthis completion. When `falsy` the {@link CompletionItem.label label}\nis used.\n\nThe `insertText` is subject to interpretation by the client side.\nSome tools might not take the string literally. For example\nVS Code when code complete is requested in this example\n`con<cursor position>` and a completion item with an `insertText` of\n`console` is provided it will only insert `sole`. Therefore it is\nrecommended to use `textEdit` instead since it avoids additional client\nside interpretation."
 				},
 				{
 					"name": "insertTextFormat",
@@ -4675,7 +4675,7 @@
 						]
 					},
 					"optional": true,
-					"documentation": "An [edit](#TextEdit) which is applied to a document when selecting\nthis completion. When an edit is provided the value of\n[insertText](#CompletionItem.insertText) is ignored.\n\nMost editors support two different operations when accepting a completion\nitem. One is to insert a completion text and the other is to replace an\nexisting text with a completion text. Since this can usually not be\npredetermined by a server it can report both ranges. Clients need to\nsignal support for `InsertReplaceEdits` via the\n`textDocument.completion.insertReplaceSupport` client capability\nproperty.\n\n*Note 1:* The text edit's range as well as both ranges from an insert\nreplace edit must be a [single line] and they must contain the position\nat which completion has been requested.\n*Note 2:* If an `InsertReplaceEdit` is returned the edit's insert range\nmust be a prefix of the edit's replace range, that means it must be\ncontained and starting at the same position.\n\n@since 3.16.0 additional type `InsertReplaceEdit`",
+					"documentation": "An {@link TextEdit edit} which is applied to a document when selecting\nthis completion. When an edit is provided the value of\n{@link CompletionItem.insertText insertText} is ignored.\n\nMost editors support two different operations when accepting a completion\nitem. One is to insert a completion text and the other is to replace an\nexisting text with a completion text. Since this can usually not be\npredetermined by a server it can report both ranges. Clients need to\nsignal support for `InsertReplaceEdits` via the\n`textDocument.completion.insertReplaceSupport` client capability\nproperty.\n\n*Note 1:* The text edit's range as well as both ranges from an insert\nreplace edit must be a [single line] and they must contain the position\nat which completion has been requested.\n*Note 2:* If an `InsertReplaceEdit` is returned the edit's insert range\nmust be a prefix of the edit's replace range, that means it must be\ncontained and starting at the same position.\n\n@since 3.16.0 additional type `InsertReplaceEdit`",
 					"since": "3.16.0 additional type `InsertReplaceEdit`"
 				},
 				{
@@ -4698,7 +4698,7 @@
 						}
 					},
 					"optional": true,
-					"documentation": "An optional array of additional [text edits](#TextEdit) that are applied when\nselecting this completion. Edits must not overlap (including the same insert position)\nwith the main [edit](#CompletionItem.textEdit) nor with themselves.\n\nAdditional text edits should be used to change text unrelated to the current cursor position\n(for example adding an import statement at the top of the file if the completion item will\ninsert an unqualified type)."
+					"documentation": "An optional array of additional {@link TextEdit text edits} that are applied when\nselecting this completion. Edits must not overlap (including the same insert position)\nwith the main {@link CompletionItem.textEdit edit} nor with themselves.\n\nAdditional text edits should be used to change text unrelated to the current cursor position\n(for example adding an import statement at the top of the file if the completion item will\ninsert an unqualified type)."
 				},
 				{
 					"name": "commitCharacters",
@@ -4719,7 +4719,7 @@
 						"name": "Command"
 					},
 					"optional": true,
-					"documentation": "An optional [command](#Command) that is executed *after* inserting this completion. *Note* that\nadditional modifications to the current document should be described with the\n[additionalTextEdits](#CompletionItem.additionalTextEdits)-property."
+					"documentation": "An optional {@link Command command} that is executed *after* inserting this completion. *Note* that\nadditional modifications to the current document should be described with the\n{@link CompletionItem.additionalTextEdits additionalTextEdits}-property."
 				},
 				{
 					"name": "data",
@@ -4728,7 +4728,7 @@
 						"name": "LSPAny"
 					},
 					"optional": true,
-					"documentation": "A data entry field that is preserved on a completion item between a\n[CompletionRequest](#CompletionRequest) and a [CompletionResolveRequest](#CompletionResolveRequest)."
+					"documentation": "A data entry field that is preserved on a completion item between a\n{@link CompletionRequest} and a {@link CompletionResolveRequest}."
 				}
 			],
 			"documentation": "A completion item represents a text snippet that is\nproposed to complete text that is being typed."
@@ -4848,7 +4848,7 @@
 					"documentation": "The completion items."
 				}
 			],
-			"documentation": "Represents a collection of [completion items](#CompletionItem) to be presented\nin the editor."
+			"documentation": "Represents a collection of {@link CompletionItem completion items} to be presented\nin the editor."
 		},
 		{
 			"name": "CompletionRegistrationOptions",
@@ -5133,7 +5133,7 @@
 						"name": "DocumentHighlightKind"
 					},
 					"optional": true,
-					"documentation": "The highlight kind, default is [text](#DocumentHighlightKind.Text)."
+					"documentation": "The highlight kind, default is {@link DocumentHighlightKind.Text text}."
 				}
 			],
 			"documentation": "A document highlight is a range inside a text document which deserves\nspecial attention. Usually a document highlight is visualized by changing\nthe background color of its range."
@@ -5620,10 +5620,10 @@
 						"name": "LSPAny"
 					},
 					"optional": true,
-					"documentation": "A data entry field that is preserved on a code lens item between\na [CodeLensRequest](#CodeLensRequest) and a [CodeLensResolveRequest]\n(#CodeLensResolveRequest)"
+					"documentation": "A data entry field that is preserved on a code lens item between\na {@link CodeLensRequest} and a [CodeLensResolveRequest]\n(#CodeLensResolveRequest)"
 				}
 			],
-			"documentation": "A code lens represents a [command](#Command) that should be shown along with\nsource text, like the number of references, a way to run tests, etc.\n\nA code lens is _unresolved_ when no command is associated to it. For performance\nreasons the creation of a code lens and resolving should be done in two stages."
+			"documentation": "A code lens represents a {@link Command command} that should be shown along with\nsource text, like the number of references, a way to run tests, etc.\n\nA code lens is _unresolved_ when no command is associated to it. For performance\nreasons the creation of a code lens and resolving should be done in two stages."
 		},
 		{
 			"name": "CodeLensRegistrationOptions",
@@ -6303,7 +6303,7 @@
 					"documentation": "The range that should be selected and revealed when this link is being followed, e.g the name of a function.\nMust be contained by the `targetRange`. See also `DocumentSymbol#range`"
 				}
 			],
-			"documentation": "Represents the connection of two locations. Provides additional metadata over normal [locations](#Location),\nincluding an origin range."
+			"documentation": "Represents the connection of two locations. Provides additional metadata over normal {@link Location locations},\nincluding an origin range."
 		},
 		{
 			"name": "Range",
@@ -7759,25 +7759,8 @@
 				{
 					"name": "trace",
 					"type": {
-						"kind": "or",
-						"items": [
-							{
-								"kind": "stringLiteral",
-								"value": "off"
-							},
-							{
-								"kind": "stringLiteral",
-								"value": "messages"
-							},
-							{
-								"kind": "stringLiteral",
-								"value": "compact"
-							},
-							{
-								"kind": "stringLiteral",
-								"value": "verbose"
-							}
-						]
+						"kind": "reference",
+						"name": "TraceValues"
 					},
 					"optional": true,
 					"documentation": "The initial trace setting. If omitted trace is disabled ('off')."
@@ -9078,7 +9061,7 @@
 					"since": "3.17.0"
 				}
 			],
-			"documentation": "Contains additional diagnostic information about the context in which\na [code action](#CodeActionProvider.provideCodeActions) is run."
+			"documentation": "Contains additional diagnostic information about the context in which\na {@link CodeActionProvider.provideCodeActions code action} is run."
 		},
 		{
 			"name": "CodeActionOptions",
@@ -13784,7 +13767,7 @@
 					}
 				]
 			},
-			"documentation": "The definition of a symbol represented as one or many [locations](#Location).\nFor most programming languages there is only one location at which a symbol is\ndefined.\n\nServers should prefer returning `DefinitionLink` over `Definition` if supported\nby the client."
+			"documentation": "The definition of a symbol represented as one or many {@link Location locations}.\nFor most programming languages there is only one location at which a symbol is\ndefined.\n\nServers should prefer returning `DefinitionLink` over `Definition` if supported\nby the client."
 		},
 		{
 			"name": "DefinitionLink",
@@ -13792,7 +13775,7 @@
 				"kind": "reference",
 				"name": "LocationLink"
 			},
-			"documentation": "Information about where a symbol is defined.\n\nProvides additional metadata over normal [location](#Location) definitions, including the range of\nthe defining symbol"
+			"documentation": "Information about where a symbol is defined.\n\nProvides additional metadata over normal {@link Location location} definitions, including the range of\nthe defining symbol"
 		},
 		{
 			"name": "LSPArray",
@@ -13866,7 +13849,7 @@
 					}
 				]
 			},
-			"documentation": "The declaration of a symbol representation as one or many [locations](#Location)."
+			"documentation": "The declaration of a symbol representation as one or many {@link Location locations}."
 		},
 		{
 			"name": "DeclarationLink",
@@ -13874,7 +13857,7 @@
 				"kind": "reference",
 				"name": "LocationLink"
 			},
-			"documentation": "Information about where a symbol is declared.\n\nProvides additional metadata over normal [location](#Location) declarations, including the range of\nthe declaring symbol.\n\nServers should prefer returning `DeclarationLink` over `Declaration` if supported\nby the client."
+			"documentation": "Information about where a symbol is declared.\n\nProvides additional metadata over normal {@link Location location} declarations, including the range of\nthe declaring symbol.\n\nServers should prefer returning `DeclarationLink` over `Declaration` if supported\nby the client."
 		},
 		{
 			"name": "InlineValue",
