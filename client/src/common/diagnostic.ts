@@ -8,7 +8,7 @@ import * as minimatch from 'minimatch';
 import {
 	Disposable, languages as Languages, window as Window, workspace as Workspace, CancellationToken, ProviderResult, Diagnostic as VDiagnostic,
 	CancellationTokenSource, TextDocument, CancellationError, Event as VEvent, EventEmitter, DiagnosticCollection, Uri, TabInputText, TabInputTextDiff,
-	TabChangeEvent, Event
+	TabChangeEvent, Event, workspace
 } from 'vscode';
 
 import {
@@ -900,10 +900,38 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 		const openFeature = client.getFeature(DidOpenTextDocumentNotification.method);
 		disposables.push(openFeature.onNotificationSent((event) => {
 			const textDocument = event.original;
+			// We already know about this document. This can happen via a tab open.
+			if (this.diagnosticRequestor.knows(PullState.document, textDocument)) {
+				return;
+			}
 			if (matches(textDocument)) {
 				this.diagnosticRequestor.pull(textDocument, () => { addToBackgroundIfNeeded(textDocument); });
 			}
 		}));
+
+		tabs.onOpen((opened) => {
+			for (const resource of opened) {
+				// We already know about this document. This can happen via a document open.
+				if (this.diagnosticRequestor.knows(PullState.document, resource)) {
+					continue;
+				}
+				const uriStr = resource.toString();
+				let textDocument: TextDocument | undefined;
+				for (const item of workspace.textDocuments) {
+					if (uriStr === item.uri.toString()) {
+						textDocument = item;
+						break;
+					}
+				}
+				// We have an open document for the resource behind the tab.
+				if (textDocument !== undefined && matches(textDocument)) {
+					this.diagnosticRequestor.pull(textDocument, () => { addToBackgroundIfNeeded(textDocument!); });
+				} else if (matches(resource)) {
+					// Check if the resource matches
+					this.diagnosticRequestor.pull(resource, () => { addToBackgroundIfNeeded(resource); });
+				}
+			}
+		});
 
 		// Pull all diagnostics for documents that are already open
 		const pulledTextDocuments: Set<string> = new Set();
