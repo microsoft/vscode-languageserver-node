@@ -15,8 +15,8 @@
 	"contributes": {
 		"commands": [
 			{
-				"command": "testbed.helloWorld",
-				"title": "Hello World"
+				"command": "testbed.openFile",
+				"title": "Open Test File"
 			}
 		],
 		"configuration": {
