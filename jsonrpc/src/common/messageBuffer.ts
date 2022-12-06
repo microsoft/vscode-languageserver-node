@@ -37,7 +37,7 @@ export abstract class AbstractMessageBuffer implements RAL.MessageBuffer {
 		this._totalLength += toAppend.byteLength;
 	}
 
-	public tryReadHeaders(): Map<string, string> | undefined {
+	public tryReadHeaders(lowerCaseKeys: boolean = false): Map<string, string> | undefined {
 		if (this._chunks.length === 0) {
 			return undefined;
 		}
@@ -104,8 +104,7 @@ export abstract class AbstractMessageBuffer implements RAL.MessageBuffer {
 			}
 			const key = header.substr(0, index);
 			const value = header.substr(index + 1).trim();
-
-			result.set(key, value);
+			result.set(lowerCaseKeys ? key.toLowerCase() : key, value);
 		}
 		return result;
 	}

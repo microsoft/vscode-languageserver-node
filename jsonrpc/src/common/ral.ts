@@ -19,10 +19,13 @@ interface _MessageBuffer {
 
 	/**
 	 * Tries to read the headers from the buffer
+     *
+	 * @param lowerCaseKeys Whether the keys should be stored lower case. Doing
+	 * so is recommended since HTTP headers are case insensitive.
 	 *
 	 * @returns the header properties or undefined in not enough data can be read.
 	 */
-	tryReadHeaders(): Map<string, string> | undefined;
+	tryReadHeaders(lowerCaseKeys?: boolean): Map<string, string> | undefined;
 
 	/**
 	 * Tries to read the body of the given length.
