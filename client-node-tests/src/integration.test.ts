@@ -156,6 +156,7 @@ suite('Client integration', () => {
 				documentLinkProvider: {
 					resolveProvider: true
 				},
+				documentSymbolProvider: true,
 				colorProvider: true,
 				declarationProvider: true,
 				foldingRangeProvider: true,
@@ -585,6 +586,29 @@ suite('Client integration', () => {
 		await provider.resolveDocumentLink(documentLink, tokenSource.token);
 		middleware.resolveDocumentLink = undefined;
 		assert.strictEqual(middlewareCalled, 2);
+	});
+
+	test('Document Symbol', async () => {
+		const provider = client.getFeature(lsclient.DocumentSymbolRequest.method).getProvider(document);
+		isDefined(provider);
+		const result = await provider.provideDocumentSymbols(document, tokenSource.token);
+		const item = result ? result[0] : undefined;
+		isDefined(item);
+		const documentSymbol: vscode.DocumentSymbol = item as vscode.DocumentSymbol;
+		isInstanceOf(documentSymbol, vscode.DocumentSymbol);
+
+		assert.equal(documentSymbol.name, 'name');
+		rangeEqual(documentSymbol.range, 1, 1, 3, 1);
+		rangeEqual(documentSymbol.selectionRange, 2, 1, 2, 3);
+
+		let middlewareCalled: boolean = false;
+		middleware.provideDocumentSymbols = (d, t, n) => {
+			middlewareCalled = true;
+			return n(d, t);
+		};
+		await provider.provideDocumentSymbols(document, tokenSource.token);
+		middleware.provideDocumentSymbols = undefined;
+		assert.ok(middlewareCalled);
 	});
 
 	test('Document Color', async () => {

@@ -93,8 +93,9 @@ export class DocumentSymbolFeature extends TextDocumentLanguageFeature<boolean |
 		const provider: DocumentSymbolProvider = {
 			provideDocumentSymbols: (document, token) => {
 				const client = this._client;
-				const _provideDocumentSymbols: ProvideDocumentSymbolsSignature = (document, token) => {
-					return client.sendRequest(DocumentSymbolRequest.type, client.code2ProtocolConverter.asDocumentSymbolParams(document), token).then(async (data) => {
+				const _provideDocumentSymbols: ProvideDocumentSymbolsSignature = async (document, token) => {
+					try {
+						const data = await client.sendRequest(DocumentSymbolRequest.type, client.code2ProtocolConverter.asDocumentSymbolParams(document), token);
 						if (token.isCancellationRequested || data === undefined || data === null) {
 							return null;
 						}
@@ -108,9 +109,9 @@ export class DocumentSymbolFeature extends TextDocumentLanguageFeature<boolean |
 								return await client.protocol2CodeConverter.asSymbolInformations(data as SymbolInformation[], token);
 							}
 						}
-					}, (error) => {
+					} catch (error) {
 						return client.handleFailedRequest(DocumentSymbolRequest.type, token, error, null);
-					});
+					}
 				};
 				const middleware = client.middleware;
 				return middleware.provideDocumentSymbols

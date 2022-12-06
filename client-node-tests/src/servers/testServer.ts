@@ -11,7 +11,7 @@ import {
 	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, SymbolKind, ProtocolRequestType, WorkDoneProgress,
 	InlineValueText, InlineValueVariableLookup, InlineValueEvaluatableExpression, WorkDoneProgressCreateRequest, WillCreateFilesRequest,
 	WillRenameFilesRequest, WillDeleteFilesRequest, DidDeleteFilesNotification, DidRenameFilesNotification, DidCreateFilesNotification,
-	ProposedFeatures, Diagnostic, DiagnosticSeverity, TypeHierarchyItem, InlayHint, InlayHintLabelPart, InlayHintKind, DocumentDiagnosticReportKind
+	ProposedFeatures, Diagnostic, DiagnosticSeverity, TypeHierarchyItem, InlayHint, InlayHintLabelPart, InlayHintKind, DocumentDiagnosticReportKind, DocumentSymbol
 } from 'vscode-languageserver/node';
 
 import { URI } from 'vscode-uri';
@@ -83,6 +83,7 @@ connection.onInitialize((params: InitializeParams): any => {
 		documentLinkProvider: {
 			resolveProvider: true
 		},
+		documentSymbolProvider: true,
 		colorProvider: true,
 		declarationProvider: true,
 		foldingRangeProvider: true,
@@ -293,6 +294,12 @@ connection.onDocumentLinks((_params) => {
 connection.onDocumentLinkResolve((link) => {
 	link.target = URI.file('/target.txt').toString();
 	return link;
+});
+
+connection.onDocumentSymbol((_params) => {
+	return [
+		DocumentSymbol.create('name', undefined, SymbolKind.Method, Range.create(1, 1, 3, 1), Range.create(2, 1, 2, 3))
+	];
 });
 
 connection.onDocumentColor((_params) => {
