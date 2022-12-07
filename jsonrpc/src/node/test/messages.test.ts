@@ -273,10 +273,10 @@ suite('Messages', () => {
 		const buffer = RIL().messageBuffer.create('utf-8');
 		buffer.append(Buffer.from('Content-Length: 43\r\n\r\n', 'ascii'));
 		buffer.append(Buffer.from('{"jsonrpc":"2.0","id":1,"method":"example"}', 'utf8'));
-		const headers = buffer.tryReadHeaders();
+		const headers = buffer.tryReadHeaders(true);
 		assertDefined(headers);
 		assert.strictEqual(headers.size, 1);
-		assert.strictEqual(headers.get('Content-Length'), '43');
+		assert.strictEqual(headers.get('content-length'), '43');
 		const content = JSON.parse((buffer.tryReadBody(43) as Buffer).toString('utf8'));
 		assert.strictEqual(content.id, 1);
 		assert.strictEqual(content.method, 'example');
@@ -306,7 +306,7 @@ suite('Messages', () => {
 				buffer.append(payload.slice(sent, sent + piece));
 				sent = sent + piece;
 			}
-			const headers = buffer.tryReadHeaders();
+			const headers = buffer.tryReadHeaders(false);
 			assertDefined(headers);
 			assert.strictEqual(headers.size, 1);
 			const length = parseInt(headers.get('Content-Length')!);
