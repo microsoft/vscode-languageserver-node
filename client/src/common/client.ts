@@ -34,7 +34,7 @@ import {
 	DocumentOnTypeFormattingRequest, RenameRequest, DocumentSymbolRequest, DocumentLinkRequest, DocumentColorRequest, DeclarationRequest, FoldingRangeRequest,
 	ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, CallHierarchyPrepareRequest, SemanticTokensRegistrationType, LinkedEditingRangeRequest,
 	TypeHierarchyPrepareRequest, InlineValueRequest, InlayHintRequest, WorkspaceSymbolRequest, TextDocumentRegistrationOptions, FileOperationRegistrationOptions,
-	ConnectionOptions, PositionEncodingKind, DocumentDiagnosticRequest, NotebookDocumentSyncRegistrationType, NotebookDocumentSyncRegistrationOptions, ErrorCodes, MessageStrategy
+	ConnectionOptions, PositionEncodingKind, DocumentDiagnosticRequest, NotebookDocumentSyncRegistrationType, NotebookDocumentSyncRegistrationOptions, ErrorCodes, MessageStrategy, DidOpenTextDocumentParams
 } from 'vscode-languageserver-protocol';
 
 import * as c2p from './codeConverter';
@@ -435,6 +435,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private _clientOptions: ResolvedClientOptions;
 
 	private _state: ClientState;
+	private _sendSemaphore: Semaphore<any>;
 	private _onStart: Promise<void> | undefined;
 	private _onStop: Promise<void> | undefined;
 	private _connection: Connection | undefined;
@@ -516,6 +517,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		};
 		this._clientOptions.synchronize = this._clientOptions.synchronize || {};
 
+		this._sendSemaphore = new Semaphore(1);
 		this._state = ClientState.Initial;
 		this._ignoredRegistrations = new Set();
 		this._listeners = [];
@@ -655,15 +657,17 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (this.$state === ClientState.StartFailed || this.$state === ClientState.Stopping || this.$state === ClientState.Stopped) {
 			return Promise.reject(new ResponseError(ErrorCodes.ConnectionInactive, `Client is not running`));
 		}
-		try {
-			// Ensure we have a connection before we force the document sync.
-			const connection = await this.$start();
-			await this.forceDocumentSync();
-			return connection.sendRequest<R>(type, ...params);
-		} catch (error) {
-			this.error(`Sending request ${Is.string(type) ? type : type.method} failed.`, error);
-			throw error;
-		}
+		return this._sendSemaphore.lock(async () => {
+			try {
+				// Ensure we have a connection before we force the document sync.
+				const connection = await this.$start();
+				await this.forceDocumentSync(connection, undefined);
+				return await connection.sendRequest<R>(type, ...params);
+			} catch (error) {
+				this.error(`Sending request ${Is.string(type) ? type : type.method} failed.`, error);
+				throw error;
+			}
+		});
 	}
 
 	public onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: RequestHandler0<R, E>): Disposable;
@@ -718,15 +722,21 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (this.$state === ClientState.StartFailed || this.$state === ClientState.Stopping || this.$state === ClientState.Stopped) {
 			return Promise.reject(new ResponseError(ErrorCodes.ConnectionInactive, `Client is not running`));
 		}
-		try {
-			// Ensure we have a connection before we force the document sync.
-			const connection = await this.$start();
-			await this.forceDocumentSync();
-			return connection.sendNotification(type, params);
-		} catch (error) {
-			this.error(`Sending notification ${Is.string(type) ? type : type.method} failed.`, error);
-			throw error;
-		}
+		return this._sendSemaphore.lock(async () => {
+			try {
+				// Ensure we have a connection before we force the document sync.
+				const connection = await this.$start();
+				let trigger: undefined | ['open', string];
+				if (typeof type !== 'string' && type.method === DidOpenTextDocumentNotification.method) {
+					trigger = ['open', (params as DidOpenTextDocumentParams)?.textDocument.uri];
+				}
+				await this.forceDocumentSync(connection, trigger);
+				return await connection.sendNotification(type, params);
+			} catch (error) {
+				this.error(`Sending notification ${Is.string(type) ? type : type.method} failed.`, error);
+				throw error;
+			}
+		});
 	}
 
 	public onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): Disposable;
@@ -1342,7 +1352,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			client._fileEvents.push(event);
 			return client._fileEventDelayer.trigger(async (): Promise<void> => {
 				const connection = await client.$start();
-				await client.forceDocumentSync();
+				await client.forceDocumentSync(connection, undefined);
 				const result = connection.sendNotification(DidChangeWatchedFilesNotification.type, { changes: client._fileEvents });
 				client._fileEvents = [];
 				return result;
@@ -1355,11 +1365,12 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	private _didChangeTextDocumentFeature: DidChangeTextDocumentFeature | undefined;
-	private async forceDocumentSync(): Promise<void> {
+
+	private async forceDocumentSync(connection: Connection, trigger: undefined | ['open', string]): Promise<void> {
 		if (this._didChangeTextDocumentFeature === undefined) {
 			this._didChangeTextDocumentFeature = this._dynamicFeatures.get(DidChangeTextDocumentNotification.type.method) as DidChangeTextDocumentFeature;
 		}
-		return this._didChangeTextDocumentFeature.forceDelivery();
+		return this._didChangeTextDocumentFeature.forceDelivery(trigger);
 	}
 
 	private _diagnosticQueue: Map<string, Diagnostic[]> = new Map();
@@ -1615,13 +1626,14 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	protected registerBuiltinFeatures() {
+		const pendingOpenNotifications: Map<string, Promise<void>> = new Map();
 		this.registerFeature(new ConfigurationFeature(this));
-		this.registerFeature(new DidOpenTextDocumentFeature(this, this._syncedDocuments));
-		this.registerFeature(new DidChangeTextDocumentFeature(this, this._syncedDocuments));
+		this.registerFeature(new DidOpenTextDocumentFeature(this, this._syncedDocuments, pendingOpenNotifications));
+		this.registerFeature(new DidChangeTextDocumentFeature(this, pendingOpenNotifications));
 		this.registerFeature(new WillSaveFeature(this));
 		this.registerFeature(new WillSaveWaitUntilFeature(this));
 		this.registerFeature(new DidSaveTextDocumentFeature(this));
-		this.registerFeature(new DidCloseTextDocumentFeature(this, this._syncedDocuments));
+		this.registerFeature(new DidCloseTextDocumentFeature(this, this._syncedDocuments, pendingOpenNotifications));
 		this.registerFeature(new FileSystemWatcherFeature(this, (event) => this.notifyFileEvent(event)));
 		this.registerFeature(new CompletionItemFeature(this));
 		this.registerFeature(new HoverFeature(this));

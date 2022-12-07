@@ -22,7 +22,7 @@ import {
 	LinkedEditingRangeRequest, MessageSignature, NotebookDocumentSyncRegistrationOptions, NotebookDocumentSyncRegistrationType, NotificationHandler, NotificationHandler0,
 	NotificationType, NotificationType0, ProgressType,  ProtocolNotificationType, ProtocolNotificationType0, ProtocolRequestType, ProtocolRequestType0, ReferencesRequest,
 	RegistrationType, RenameRequest, RequestHandler, RequestHandler0, RequestType, RequestType0, SelectionRangeRequest, SemanticTokensRegistrationType, ServerCapabilities,
-	SignatureHelpRequest, StaticRegistrationOptions, TextDocumentRegistrationOptions, TypeDefinitionRequest, TypeHierarchyPrepareRequest, WillCreateFilesRequest,
+	SignatureHelpRequest, StaticRegistrationOptions, TextDocumentIdentifier, TextDocumentRegistrationOptions, TypeDefinitionRequest, TypeHierarchyPrepareRequest, WillCreateFilesRequest,
 	WillDeleteFilesRequest, WillRenameFilesRequest, WillSaveTextDocumentNotification, WillSaveTextDocumentWaitUntilRequest, WorkDoneProgressOptions, WorkspaceSymbolRequest
 } from 'vscode-languageserver-protocol';
 
@@ -257,14 +257,13 @@ interface CreateParamsSignature<E, P> {
 	(data: E): P;
 }
 
-export interface NotificationSendEvent<E, P> {
-	original: E;
+export interface NotificationSendEvent<P extends { textDocument: TextDocumentIdentifier }> {
 	type: ProtocolNotificationType<P, TextDocumentRegistrationOptions>;
 	params: P;
 }
 
-export interface NotifyingFeature<E, P> {
-	onNotificationSent: VEvent<NotificationSendEvent<E, P>>;
+export interface NotifyingFeature<P extends { textDocument: TextDocumentIdentifier }> {
+	onNotificationSent: VEvent<NotificationSendEvent<P>>;
 }
 
 /**
@@ -326,7 +325,7 @@ export interface TextDocumentSendFeature<T extends Function> {
  * An abstract base class to implement features that react to events
  * emitted from text documents.
  */
-export abstract class TextDocumentEventFeature<P, E, M> extends DynamicDocumentFeature<TextDocumentRegistrationOptions, M> implements TextDocumentSendFeature<(data: E) => Promise<void>>, NotifyingFeature<E, P> {
+export abstract class TextDocumentEventFeature<P extends { textDocument: TextDocumentIdentifier }, E, M> extends DynamicDocumentFeature<TextDocumentRegistrationOptions, M> implements TextDocumentSendFeature<(data: E) => Promise<void>>, NotifyingFeature<P> {
 
 	private readonly _event: Event<E>;
 	protected readonly _type: ProtocolNotificationType<P, TextDocumentRegistrationOptions>;
@@ -337,7 +336,7 @@ export abstract class TextDocumentEventFeature<P, E, M> extends DynamicDocumentF
 
 	private _listener: Disposable | undefined;
 	protected readonly _selectors: Map<string, VDocumentSelector>;
-	private readonly _onNotificationSent: EventEmitter<NotificationSendEvent<E, P>>;
+	private readonly _onNotificationSent: EventEmitter<NotificationSendEvent<P>>;
 
 	public static textDocumentFilter(selectors: IterableIterator<VDocumentSelector>, textDocument: TextDocument): boolean {
 		for (const selector of selectors) {
@@ -362,7 +361,7 @@ export abstract class TextDocumentEventFeature<P, E, M> extends DynamicDocumentF
 		this._selectorFilter = selectorFilter;
 
 		this._selectors = new Map<string, VDocumentSelector>();
-		this._onNotificationSent = new EventEmitter<NotificationSendEvent<E, P>>();
+		this._onNotificationSent = new EventEmitter<NotificationSendEvent<P>>();
 	}
 
 	protected getStateInfo(): [IterableIterator<VDocumentSelector>, boolean] {
@@ -390,8 +389,10 @@ export abstract class TextDocumentEventFeature<P, E, M> extends DynamicDocumentF
 	private async callback(data: E): Promise<void> {
 		const doSend = async (data: E): Promise<void> => {
 			const params = this._createParams(data);
-			await this._client.sendNotification(this._type, params);
-			this.notificationSent(data, this._type, params);
+			const sendPromise = this._client.sendNotification(this._type, params);
+			this.notificationSending(this._type, sendPromise);
+			await sendPromise;
+			this.notificationSent(this._type, params);
 		};
 		if (this.matches(data)) {
 			const middleware = this._middleware();
@@ -406,12 +407,15 @@ export abstract class TextDocumentEventFeature<P, E, M> extends DynamicDocumentF
 		return !this._selectorFilter || this._selectorFilter(this._selectors.values(), data);
 	}
 
-	public get onNotificationSent(): VEvent<NotificationSendEvent<E, P>> {
+	public get onNotificationSent(): VEvent<NotificationSendEvent<P>> {
 		return this._onNotificationSent.event;
 	}
 
-	protected notificationSent(data: E, type: ProtocolNotificationType<P, TextDocumentRegistrationOptions>, params: P): void {
-		this._onNotificationSent.fire({ original: data, type, params });
+	protected notificationSending(_type: ProtocolNotificationType<P, TextDocumentRegistrationOptions>, _sendPromise: Promise<void>): void {
+	}
+
+	protected notificationSent(type: ProtocolNotificationType<P, TextDocumentRegistrationOptions>, params: P): void {
+		this._onNotificationSent.fire({ type, params });
 	}
 
 	public unregister(id: string): void {

@@ -166,11 +166,11 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 				},
 				callHierarchyProvider: true,
 				selectionRangeProvider: { workDoneProgress: true },
-				diagnosticProvider: {
-					identifier: 'testbed',
-					interFileDependencies: true,
-					workspaceDiagnostics: false
-				},
+				// diagnosticProvider: {
+				// 	identifier: 'testbed',
+				// 	interFileDependencies: true,
+				// 	workspaceDiagnostics: false
+				// },
 				notebookDocumentSync: {
 					notebookSelector: [{
 						cells: [{ language: 'bat'}]
@@ -193,15 +193,15 @@ connection.onInitialized((params) => {
 			connection.console.log(`Get workspace folders: ${folder.name} ${folder.uri}`);
 		}
 	});
-	const registrationOptions: SemanticTokensRegistrationOptions = {
-		documentSelector: ['bat'],
-		legend: semanticTokensLegend,
-		range: false,
-		full: {
-			delta: true
-		}
-	};
-	void connection.client.register(SemanticTokensRegistrationType.type, registrationOptions);
+// 	const registrationOptions: SemanticTokensRegistrationOptions = {
+// 		documentSelector: ['bat'],
+// 		legend: semanticTokensLegend,
+// 		range: false,
+// 		full: {
+// 			delta: true
+// 		}
+// 	};
+// 	void connection.client.register(SemanticTokensRegistrationType.type, registrationOptions);
 });
 
 connection.onShutdown((_handler) => {
@@ -555,9 +555,11 @@ connection.onCodeLensResolve((codeLens) => {
 });
 
 connection.onDocumentFormatting((params) => {
-	return [
-		TextEdit.insert(Position.create(1,0), 'A new line\n')
-	];
+	connection.console.log(`Document Formatting: ${JSON.stringify(params.textDocument.uri)} ${JSON.stringify(params.options)}`);
+	return [];
+	// return [
+	// 	TextEdit.insert(Position.create(1,0), 'A new line\n')
+	// ];
 });
 
 connection.onDocumentRangeFormatting((params) => {

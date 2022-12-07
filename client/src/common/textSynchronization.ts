@@ -9,7 +9,7 @@ import {
 } from 'vscode';
 
 import {
-	ClientCapabilities, DidChangeTextDocumentNotification, DidChangeTextDocumentParams, DidCloseTextDocumentNotification, DidCloseTextDocumentParams, DidOpenTextDocumentNotification,
+	ClientCapabilities, ConnectionError, DidChangeTextDocumentNotification, DidChangeTextDocumentParams, DidCloseTextDocumentNotification, DidCloseTextDocumentParams, DidOpenTextDocumentNotification,
 	DidOpenTextDocumentParams, DidSaveTextDocumentNotification, DidSaveTextDocumentParams, DocumentSelector, ProtocolNotificationType, RegistrationType, SaveOptions,
 	ServerCapabilities, TextDocumentChangeRegistrationOptions, TextDocumentRegistrationOptions, TextDocumentSaveRegistrationOptions, TextDocumentSyncKind, TextDocumentSyncOptions,
 	WillSaveTextDocumentNotification, WillSaveTextDocumentParams, WillSaveTextDocumentWaitUntilRequest
@@ -20,7 +20,6 @@ import {
 	NotificationSendEvent
 } from './features';
 
-import { Delayer } from './utils/async';
 import * as UUID from './utils/uuid';
 
 export interface TextDocumentSynchronizationMiddleware {
@@ -43,8 +42,9 @@ export type ResolvedTextDocumentSyncCapabilities = {
 export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpenTextDocumentParams, TextDocument, TextDocumentSynchronizationMiddleware> implements DidOpenTextDocumentFeatureShape {
 
 	private readonly _syncedDocuments: Map<string, TextDocument>;
+	private readonly _pendingOpenNotifications: Map<string, Promise<void>>;
 
-	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>, syncedDocuments: Map<string, TextDocument>) {
+	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>, syncedDocuments: Map<string, TextDocument>, pendingOpenNotifications: Map<string, Promise<void>>) {
 		super(
 			client, Workspace.onDidOpenTextDocument, DidOpenTextDocumentNotification.type,
 			() => client.middleware.didOpen,
@@ -53,6 +53,7 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 			TextDocumentEventFeature.textDocumentFilter
 		);
 		this._syncedDocuments = syncedDocuments;
+		this._pendingOpenNotifications = pendingOpenNotifications;
 	}
 
 	public get openDocuments(): IterableIterator<TextDocument> {
@@ -98,9 +99,18 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 		});
 	}
 
-	protected notificationSent(textDocument: TextDocument, type: ProtocolNotificationType<DidOpenTextDocumentParams, TextDocumentRegistrationOptions>, params: DidOpenTextDocumentParams): void {
-		super.notificationSent(textDocument, type, params);
+	protected notificationSending(type: ProtocolNotificationType<DidOpenTextDocumentParams, TextDocumentRegistrationOptions>, sendPromise: Promise<void>): void {
+		const key = textDocument.uri.toString();
+		this._pendingOpenNotifications.set(key, sendPromise);
+		sendPromise.finally(() => {
+			this._pendingOpenNotifications.delete(key);
+		});
+		super.notificationSending(textDocument, type, sendPromise);
+	}
+
+	protected notificationSent(type: ProtocolNotificationType<DidOpenTextDocumentParams, TextDocumentRegistrationOptions>, params: DidOpenTextDocumentParams): void {
 		this._syncedDocuments.set(textDocument.uri.toString(), textDocument);
+		super.notificationSent(textDocument, type, params);
 	}
 }
 
@@ -110,8 +120,9 @@ export interface DidCloseTextDocumentFeatureShape extends DynamicFeature<TextDoc
 export class DidCloseTextDocumentFeature extends TextDocumentEventFeature<DidCloseTextDocumentParams, TextDocument, TextDocumentSynchronizationMiddleware> implements DidCloseTextDocumentFeatureShape {
 
 	private readonly _syncedDocuments: Map<string, TextDocument>;
+	private readonly _pendingOpenNotifications: Map<string, Promise<void>>;
 
-	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>, syncedDocuments: Map<string, TextDocument>) {
+	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>, syncedDocuments: Map<string, TextDocument>, pendingOpenNotifications: Map<string, Promise<void>>) {
 		super(
 			client, Workspace.onDidCloseTextDocument, DidCloseTextDocumentNotification.type,
 			() => client.middleware.didClose,
@@ -120,6 +131,7 @@ export class DidCloseTextDocumentFeature extends TextDocumentEventFeature<DidClo
 			TextDocumentEventFeature.textDocumentFilter
 		);
 		this._syncedDocuments = syncedDocuments;
+		this._pendingOpenNotifications = pendingOpenNotifications;
 	}
 
 	public get registrationType(): RegistrationType<TextDocumentRegistrationOptions> {
@@ -137,9 +149,14 @@ export class DidCloseTextDocumentFeature extends TextDocumentEventFeature<DidClo
 		}
 	}
 
+	protected notificationSending(textDocument: TextDocument, type: ProtocolNotificationType<DidOpenTextDocumentParams, TextDocumentRegistrationOptions>, sendPromise: Promise<void>): void {
+		this._pendingOpenNotifications.delete(textDocument.uri.toString());
+		super.notificationSending(textDocument, type, sendPromise);
+	}
+
 	protected notificationSent(textDocument: TextDocument, type: ProtocolNotificationType<DidCloseTextDocumentParams, TextDocumentRegistrationOptions>, params: DidCloseTextDocumentParams): void {
-		super.notificationSent(textDocument, type, params);
 		this._syncedDocuments.delete(textDocument.uri.toString());
+		super.notificationSent(textDocument, type, params);
 	}
 
 	public unregister(id: string): void {
@@ -175,17 +192,16 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 
 	private _listener: Disposable | undefined;
 	private readonly _changeData: Map<string, DidChangeTextDocumentData>;
-	private _forcingDelivery: boolean = false;
-	private _changeDelayer: { uri: string; delayer: Delayer<Promise<void>> } | undefined;
 	private readonly _onNotificationSent: EventEmitter<NotificationSendEvent<TextDocumentChangeEvent, DidChangeTextDocumentParams>>;
+	private readonly _pendingDocumentChanges: Map<string, DidChangeTextDocumentParams>;
+	private readonly _pendingOpenNotifications: Map<string, Promise<void>>;
 
-	private readonly _syncedDocuments: Map<string, TextDocument>;
-
-	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>, syncedDocuments: Map<string, TextDocument>) {
+	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>, pendingOpenNotifications: Map<string, Promise<void>>) {
 		super(client);
 		this._changeData = new Map<string, DidChangeTextDocumentData>();
 		this._onNotificationSent = new EventEmitter();
-		this._syncedDocuments = syncedDocuments;
+		this._pendingDocumentChanges = new Map();
+		this._pendingOpenNotifications = pendingOpenNotifications;
 	}
 
 	public get registrationType(): RegistrationType<TextDocumentChangeRegistrationOptions> {
@@ -248,33 +264,9 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 					promises.push(middleware.didChange ? middleware.didChange(event, event => didChange(event)) : didChange(event));
 				} else if (changeData.syncKind === TextDocumentSyncKind.Full) {
 					const didChange = async (event: TextDocumentChangeEvent): Promise<void> => {
-						const doSend = async (event: TextDocumentChangeEvent): Promise<void> => {
-							const params = this._client.code2ProtocolConverter.asChangeTextDocumentParams(event.document);
-							await this._client.sendNotification(DidChangeTextDocumentNotification.type, params);
-							this.notificationSent(event, DidChangeTextDocumentNotification.type, params);
-						};
-						if (this._changeDelayer) {
-							if (this._changeDelayer.uri !== event.document.uri.toString()) {
-								// Use this force delivery to track boolean state. Otherwise we might call two times.
-								await this.forceDelivery();
-								this._changeDelayer.uri = event.document.uri.toString();
-							}
-							// Usually we return the promise that signals that the data has been
-							// handed of to the network. With delayed change notification we can't
-							// do that since it would make the sendNotification call wait until the
-							// change delayer resolves and would therefore defeat the purpose. We
-							// instead return the change delayer and ensure via forceDocumentSync
-							// that before sending other notification / request the document sync
-							// has actually happened.
-							return this._changeDelayer.delayer.trigger(() => doSend(event));
-						} else {
-							this._changeDelayer = {
-								uri: event.document.uri.toString(),
-								delayer: new Delayer<Promise<void>>(200)
-							};
-							// See comment above.
-							return this._changeDelayer.delayer.trigger(() => doSend(event), -1);
-						}
+						const params = this._client.code2ProtocolConverter.asChangeTextDocumentParams(event.document);
+						const eventUri: string = event.document.uri.toString();
+						this._pendingDocumentChanges.set(eventUri, params);
 					};
 					promises.push(middleware.didChange ? middleware.didChange(event, event => didChange(event)) : didChange(event));
 				}
@@ -303,11 +295,7 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 	}
 
 	public dispose(): void {
-		if (this._changeDelayer !== undefined) {
-			this._changeDelayer.delayer.cancel();
-		}
-		this._changeDelayer = undefined;
-		this._forcingDelivery = false;
+		this._pendingDocumentChanges.clear();
 		this._changeData.clear();
 		if (this._listener) {
 			this._listener.dispose();
@@ -315,20 +303,20 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 		}
 	}
 
-	public async forceDelivery(): Promise<void> {
-		// See https://github.com/microsoft/vscode-languageserver-node/issues/1105
-		// If we have a change delayer and its URI is not yet synced then the open
-		// event has not been delivered yet. So don't force the sync.
-		if (this._forcingDelivery || !this._changeDelayer || !this._syncedDocuments.has(this._changeDelayer.uri)) {
-
-			return;
+	public getPendingDocumentChanges(exclude?: string): DidChangeTextDocumentParams[] {
+		let result: DidChangeTextDocumentParams[];
+		if (exclude === undefined) {
+			result = Array.from(this._pendingDocumentChanges.values());
+		} else {
+			result = [];
+			for (const entry of this._pendingDocumentChanges) {
+				if (entry[0] !== exclude) {
+					result.push(entry[1]);
+				}
+			}
 		}
-		try {
-			this._forcingDelivery = true;
-			return this._changeDelayer.delayer.forceDelivery();
-		} finally {
-			this._forcingDelivery = false;
-		}
+		this._pendingDocumentChanges.clear();
+		return result;
 	}
 
 	public getProvider(document: TextDocument): { send: (event: TextDocumentChangeEvent) => Promise<void> } | undefined {
