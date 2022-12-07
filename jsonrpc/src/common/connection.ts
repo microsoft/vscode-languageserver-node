@@ -21,6 +21,30 @@ import { CancellationTokenSource, CancellationToken, AbstractCancellationTokenSo
 import { MessageReader, DataCallback } from './messageReader';
 import { MessageWriter } from './messageWriter';
 
+export interface SendPromise<T> extends Promise<T> {
+	onDelivered: Promise<void>;
+}
+
+class SendPromiseImpl<T> extends Promise<T> implements SendPromise<T> {
+
+	private _onDeliveredResolve!: () => void;
+	private readonly _onDelivered: Promise<void>;
+
+	constructor(executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void, delivered: () => void) => void) {
+		super((_resolve, _reject) => {
+			executor(_resolve, _reject, () => {
+				this._onDeliveredResolve();
+			});
+		});
+		this._onDelivered = new Promise((resolve) => {
+			this._onDeliveredResolve = resolve;
+		});
+	}
+
+	public get onDelivered(): Promise<void> {
+		return this._onDelivered;
+	}
+}
 
 interface CancelParams {
 	/**
@@ -492,18 +516,18 @@ export namespace ConnectionOptions {
 }
 
 export interface MessageConnection {
-	sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): Promise<R>;
-	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): Promise<R>;
-	sendRequest<P1, R, E>(type: RequestType1<P1, R, E>, p1: P1, token?: CancellationToken): Promise<R>;
-	sendRequest<P1, P2, R, E>(type: RequestType2<P1, P2, R, E>, p1: P1, p2: P2, token?: CancellationToken): Promise<R>;
-	sendRequest<P1, P2, P3, R, E>(type: RequestType3<P1, P2, P3, R, E>, p1: P1, p2: P2, p3: P3, token?: CancellationToken): Promise<R>;
-	sendRequest<P1, P2, P3, P4, R, E>(type: RequestType4<P1, P2, P3, P4, R, E>, p1: P1, p2: P2, p3: P3, p4: P4, token?: CancellationToken): Promise<R>;
-	sendRequest<P1, P2, P3, P4, P5, R, E>(type: RequestType5<P1, P2, P3, P4, P5, R, E>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, token?: CancellationToken): Promise<R>;
-	sendRequest<P1, P2, P3, P4, P5, P6, R, E>(type: RequestType6<P1, P2, P3, P4, P5, P6, R, E>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, token?: CancellationToken): Promise<R>;
-	sendRequest<P1, P2, P3, P4, P5, P6, P7, R, E>(type: RequestType7<P1, P2, P3, P4, P5, P6, P7, R, E>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, token?: CancellationToken): Promise<R>;
-	sendRequest<P1, P2, P3, P4, P5, P6, P7, P8, R, E>(type: RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8, token?: CancellationToken): Promise<R>;
-	sendRequest<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E>(type: RequestType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8, p9: P9, token?: CancellationToken): Promise<R>;
-	sendRequest<R>(method: string, r0?: ParameterStructures | any, ...rest: any[]): Promise<R>;
+	sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): SendPromise<R>;
+	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): SendPromise<R>;
+	sendRequest<P1, R, E>(type: RequestType1<P1, R, E>, p1: P1, token?: CancellationToken): SendPromise<R>;
+	sendRequest<P1, P2, R, E>(type: RequestType2<P1, P2, R, E>, p1: P1, p2: P2, token?: CancellationToken): SendPromise<R>;
+	sendRequest<P1, P2, P3, R, E>(type: RequestType3<P1, P2, P3, R, E>, p1: P1, p2: P2, p3: P3, token?: CancellationToken): SendPromise<R>;
+	sendRequest<P1, P2, P3, P4, R, E>(type: RequestType4<P1, P2, P3, P4, R, E>, p1: P1, p2: P2, p3: P3, p4: P4, token?: CancellationToken): SendPromise<R>;
+	sendRequest<P1, P2, P3, P4, P5, R, E>(type: RequestType5<P1, P2, P3, P4, P5, R, E>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, token?: CancellationToken): SendPromise<R>;
+	sendRequest<P1, P2, P3, P4, P5, P6, R, E>(type: RequestType6<P1, P2, P3, P4, P5, P6, R, E>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, token?: CancellationToken): SendPromise<R>;
+	sendRequest<P1, P2, P3, P4, P5, P6, P7, R, E>(type: RequestType7<P1, P2, P3, P4, P5, P6, P7, R, E>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, token?: CancellationToken): SendPromise<R>;
+	sendRequest<P1, P2, P3, P4, P5, P6, P7, P8, R, E>(type: RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8, token?: CancellationToken): SendPromise<R>;
+	sendRequest<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E>(type: RequestType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8, p9: P9, token?: CancellationToken): SendPromise<R>;
+	sendRequest<R>(method: string, r0?: ParameterStructures | any, ...rest: any[]): SendPromise<R>;
 
 	onRequest<R, E>(type: RequestType0<R, E>, handler: RequestHandler0<R, E>): Disposable;
 	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): Disposable;
@@ -521,18 +545,18 @@ export interface MessageConnection {
 
 	hasPendingResponse(): boolean;
 
-	sendNotification(type: NotificationType0): Promise<void>;
-	sendNotification<P>(type: NotificationType<P>, params?: P): Promise<void>;
-	sendNotification<P1>(type: NotificationType1<P1>, p1: P1): Promise<void>;
-	sendNotification<P1, P2>(type: NotificationType2<P1, P2>, p1: P1, p2: P2): Promise<void>;
-	sendNotification<P1, P2, P3>(type: NotificationType3<P1, P2, P3>, p1: P1, p2: P2, p3: P3): Promise<void>;
-	sendNotification<P1, P2, P3, P4>(type: NotificationType4<P1, P2, P3, P4>, p1: P1, p2: P2, p3: P3, p4: P4): Promise<void>;
-	sendNotification<P1, P2, P3, P4, P5>(type: NotificationType5<P1, P2, P3, P4, P5>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5): Promise<void>;
-	sendNotification<P1, P2, P3, P4, P5, P6>(type: NotificationType6<P1, P2, P3, P4, P5, P6>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6): Promise<void>;
-	sendNotification<P1, P2, P3, P4, P5, P6, P7>(type: NotificationType7<P1, P2, P3, P4, P5, P6, P7>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7): Promise<void>;
-	sendNotification<P1, P2, P3, P4, P5, P6, P7, P8>(type: NotificationType8<P1, P2, P3, P4, P5, P6, P7, P8>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8): Promise<void>;
-	sendNotification<P1, P2, P3, P4, P5, P6, P7, P8, P9>(type: NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8, p9: P9): Promise<void>;
-	sendNotification(method: string, r0?: ParameterStructures | any, ...rest: any[]): Promise<void>;
+	sendNotification(type: NotificationType0): SendPromise<void>;
+	sendNotification<P>(type: NotificationType<P>, params?: P): SendPromise<void>;
+	sendNotification<P1>(type: NotificationType1<P1>, p1: P1): SendPromise<void>;
+	sendNotification<P1, P2>(type: NotificationType2<P1, P2>, p1: P1, p2: P2): SendPromise<void>;
+	sendNotification<P1, P2, P3>(type: NotificationType3<P1, P2, P3>, p1: P1, p2: P2, p3: P3): SendPromise<void>;
+	sendNotification<P1, P2, P3, P4>(type: NotificationType4<P1, P2, P3, P4>, p1: P1, p2: P2, p3: P3, p4: P4): SendPromise<void>;
+	sendNotification<P1, P2, P3, P4, P5>(type: NotificationType5<P1, P2, P3, P4, P5>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5): SendPromise<void>;
+	sendNotification<P1, P2, P3, P4, P5, P6>(type: NotificationType6<P1, P2, P3, P4, P5, P6>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6): SendPromise<void>;
+	sendNotification<P1, P2, P3, P4, P5, P6, P7>(type: NotificationType7<P1, P2, P3, P4, P5, P6, P7>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7): SendPromise<void>;
+	sendNotification<P1, P2, P3, P4, P5, P6, P7, P8>(type: NotificationType8<P1, P2, P3, P4, P5, P6, P7, P8>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8): SendPromise<void>;
+	sendNotification<P1, P2, P3, P4, P5, P6, P7, P8, P9>(type: NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8, p9: P9): SendPromise<void>;
+	sendNotification(method: string, r0?: ParameterStructures | any, ...rest: any[]): SendPromise<void>;
 
 	onNotification(type: NotificationType0, handler: NotificationHandler0): Disposable;
 	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): Disposable;
@@ -551,7 +575,7 @@ export interface MessageConnection {
 	onUnhandledNotification: Event<NotificationMessage>;
 
 	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable;
-	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): Promise<void>;
+	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): SendPromise<void>;
 
 	onUnhandledProgress: Event<ProgressParams<any>>;
 
@@ -1264,7 +1288,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 	}
 
 	const connection: MessageConnection = {
-		sendNotification: (type: string | MessageSignature, ...args: any[]): Promise<void> => {
+		sendNotification: (type: string | MessageSignature, ...args: any[]): SendPromise<void> => {
 			throwIfClosedOrDisposed();
 
 			let method: string;
@@ -1305,7 +1329,16 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				params: messageParams
 			};
 			traceSendingNotification(notificationMessage);
-			return messageWriter.write(notificationMessage).catch(() => logger.error(`Sending notification failed.`));
+			return new SendPromiseImpl<void>(async (resolve, reject, delivered) => {
+				try {
+					await messageWriter.write(notificationMessage).catch(() => logger.error(`Sending notification failed.`));
+					delivered();
+					resolve();
+				} catch (error) {
+					delivered();
+					reject(error);
+				}
+			});
 		},
 		onNotification: (type: string | MessageSignature | StarNotificationHandler, handler?: GenericNotificationHandler): Disposable => {
 			throwIfClosedOrDisposed();
@@ -1342,7 +1375,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				}
 			};
 		},
-		sendProgress: <P>(_type: ProgressType<P>, token: string | number, value: P): Promise<void> => {
+		sendProgress: <P>(_type: ProgressType<P>, token: string | number, value: P): SendPromise<void> => {
 			return connection.sendNotification(ProgressNotification.type, { token, value });
 		},
 		onUnhandledProgress: unhandledProgressEmitter.event,
@@ -1406,7 +1439,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 					}
 				});
 			}
-			const result = new Promise<R | ResponseError<E>>((resolve, reject) => {
+			const result = new SendPromiseImpl<R | ResponseError<E>>(async (resolve, reject, delivered) => {
 				const requestMessage: RequestMessage = {
 					jsonrpc: version,
 					id: id,
@@ -1432,8 +1465,11 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 					if (typeof cancellationStrategy.sender.enableCancellation === 'function') {
 						cancellationStrategy.sender.enableCancellation(requestMessage);
 					}
-					messageWriter.write(requestMessage).catch(() => logger.error(`Sending request failed.`));
+					await messageWriter.write(requestMessage);
+					delivered();
 				} catch (e: any) {
+					delivered();
+					logger.error(`Sending request failed.`);
 					// Writing the message failed. So we need to reject the promise.
 					responsePromise.reject(new ResponseError<void>(ErrorCodes.MessageWriteError, e.message ? e.message : 'Unknown reason'));
 					responsePromise = null;

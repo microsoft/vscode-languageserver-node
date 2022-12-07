@@ -899,7 +899,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 		// We always pull on open.
 		const openFeature = client.getFeature(DidOpenTextDocumentNotification.method);
 		disposables.push(openFeature.onNotificationSent((event) => {
-			const textDocument = event.original;
+			const textDocument = event.textDocument;
 			// We already know about this document. This can happen via a tab open.
 			if (this.diagnosticRequestor.knows(PullState.document, textDocument)) {
 				return;
@@ -958,7 +958,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 		if (diagnosticPullOptions.onChange === true) {
 			const changeFeature = client.getFeature(DidChangeTextDocumentNotification.method);
 			disposables.push(changeFeature.onNotificationSent(async (event) => {
-				const textDocument = event.original.document;
+				const textDocument = event.textDocument;
 				if ((diagnosticPullOptions.filter === undefined || !diagnosticPullOptions.filter(textDocument, DiagnosticPullMode.onType)) && this.diagnosticRequestor.knows(PullState.document, textDocument) && event.original.contentChanges.length > 0) {
 					this.diagnosticRequestor.pull(textDocument, () => { this.backgroundScheduler.trigger(); });
 				}
@@ -968,7 +968,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 		if (diagnosticPullOptions.onSave === true) {
 			const saveFeature = client.getFeature(DidSaveTextDocumentNotification.method);
 			disposables.push(saveFeature.onNotificationSent((event) => {
-				const textDocument = event.original;
+				const textDocument = event.textDocument;
 				if ((diagnosticPullOptions.filter === undefined || !diagnosticPullOptions.filter(textDocument, DiagnosticPullMode.onSave)) && this.diagnosticRequestor.knows(PullState.document, textDocument)) {
 					this.diagnosticRequestor.pull(event.original, () => { this.backgroundScheduler.trigger(); });
 				}
@@ -978,7 +978,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 		// When the document closes clear things up
 		const closeFeature = client.getFeature(DidCloseTextDocumentNotification.method);
 		disposables.push(closeFeature.onNotificationSent((event) => {
-			this.cleanUpDocument(event.original);
+			this.cleanUpDocument(event.textDocument);
 		}));
 
 		// Same when a tabs closes.

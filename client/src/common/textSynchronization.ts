@@ -9,7 +9,7 @@ import {
 } from 'vscode';
 
 import {
-	ClientCapabilities, ConnectionError, DidChangeTextDocumentNotification, DidChangeTextDocumentParams, DidCloseTextDocumentNotification, DidCloseTextDocumentParams, DidOpenTextDocumentNotification,
+	ClientCapabilities, DidChangeTextDocumentNotification, DidChangeTextDocumentParams, DidCloseTextDocumentNotification, DidCloseTextDocumentParams, DidOpenTextDocumentNotification,
 	DidOpenTextDocumentParams, DidSaveTextDocumentNotification, DidSaveTextDocumentParams, DocumentSelector, ProtocolNotificationType, RegistrationType, SaveOptions,
 	ServerCapabilities, TextDocumentChangeRegistrationOptions, TextDocumentRegistrationOptions, TextDocumentSaveRegistrationOptions, TextDocumentSyncKind, TextDocumentSyncOptions,
 	WillSaveTextDocumentNotification, WillSaveTextDocumentParams, WillSaveTextDocumentWaitUntilRequest
@@ -31,7 +31,7 @@ export interface TextDocumentSynchronizationMiddleware {
 	didClose?: NextSignature<TextDocument, Promise<void>>;
 }
 
-export interface DidOpenTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, TextDocumentSendFeature<(textDocument: TextDocument) => Promise<void>>, NotifyingFeature<TextDocument, DidOpenTextDocumentParams> {
+export interface DidOpenTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, TextDocumentSendFeature<(textDocument: TextDocument) => Promise<void>>, NotifyingFeature<DidOpenTextDocumentParams> {
 	openDocuments: Iterable<TextDocument>;
 }
 
@@ -42,9 +42,8 @@ export type ResolvedTextDocumentSyncCapabilities = {
 export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpenTextDocumentParams, TextDocument, TextDocumentSynchronizationMiddleware> implements DidOpenTextDocumentFeatureShape {
 
 	private readonly _syncedDocuments: Map<string, TextDocument>;
-	private readonly _pendingOpenNotifications: Map<string, Promise<void>>;
 
-	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>, syncedDocuments: Map<string, TextDocument>, pendingOpenNotifications: Map<string, Promise<void>>) {
+	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>, syncedDocuments: Map<string, TextDocument>) {
 		super(
 			client, Workspace.onDidOpenTextDocument, DidOpenTextDocumentNotification.type,
 			() => client.middleware.didOpen,
@@ -53,7 +52,6 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 			TextDocumentEventFeature.textDocumentFilter
 		);
 		this._syncedDocuments = syncedDocuments;
-		this._pendingOpenNotifications = pendingOpenNotifications;
 	}
 
 	public get openDocuments(): IterableIterator<TextDocument> {
@@ -99,30 +97,25 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 		});
 	}
 
-	protected notificationSending(type: ProtocolNotificationType<DidOpenTextDocumentParams, TextDocumentRegistrationOptions>, sendPromise: Promise<void>): void {
-		const key = textDocument.uri.toString();
-		this._pendingOpenNotifications.set(key, sendPromise);
-		sendPromise.finally(() => {
-			this._pendingOpenNotifications.delete(key);
-		});
-		super.notificationSending(textDocument, type, sendPromise);
+	protected getTextDocument(data: TextDocument): TextDocument {
+		return data;
 	}
 
-	protected notificationSent(type: ProtocolNotificationType<DidOpenTextDocumentParams, TextDocumentRegistrationOptions>, params: DidOpenTextDocumentParams): void {
+	protected notificationSent(textDocument: TextDocument, type: ProtocolNotificationType<DidOpenTextDocumentParams, TextDocumentRegistrationOptions>, params: DidOpenTextDocumentParams): void {
 		this._syncedDocuments.set(textDocument.uri.toString(), textDocument);
 		super.notificationSent(textDocument, type, params);
 	}
 }
 
-export interface DidCloseTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, TextDocumentSendFeature<(textDocument: TextDocument) => Promise<void>>, NotifyingFeature<TextDocument, DidCloseTextDocumentParams> {
+export interface DidCloseTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, TextDocumentSendFeature<(textDocument: TextDocument) => Promise<void>>, NotifyingFeature<DidCloseTextDocumentParams> {
 }
 
 export class DidCloseTextDocumentFeature extends TextDocumentEventFeature<DidCloseTextDocumentParams, TextDocument, TextDocumentSynchronizationMiddleware> implements DidCloseTextDocumentFeatureShape {
 
 	private readonly _syncedDocuments: Map<string, TextDocument>;
-	private readonly _pendingOpenNotifications: Map<string, Promise<void>>;
+	private readonly _pendingTextDocumentChanges: Map<string, TextDocument>;
 
-	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>, syncedDocuments: Map<string, TextDocument>, pendingOpenNotifications: Map<string, Promise<void>>) {
+	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>, syncedDocuments: Map<string, TextDocument>, pendingTextDocumentChanges: Map<string, TextDocument>) {
 		super(
 			client, Workspace.onDidCloseTextDocument, DidCloseTextDocumentNotification.type,
 			() => client.middleware.didClose,
@@ -131,7 +124,7 @@ export class DidCloseTextDocumentFeature extends TextDocumentEventFeature<DidClo
 			TextDocumentEventFeature.textDocumentFilter
 		);
 		this._syncedDocuments = syncedDocuments;
-		this._pendingOpenNotifications = pendingOpenNotifications;
+		this._pendingTextDocumentChanges = pendingTextDocumentChanges;
 	}
 
 	public get registrationType(): RegistrationType<TextDocumentRegistrationOptions> {
@@ -149,9 +142,13 @@ export class DidCloseTextDocumentFeature extends TextDocumentEventFeature<DidClo
 		}
 	}
 
-	protected notificationSending(textDocument: TextDocument, type: ProtocolNotificationType<DidOpenTextDocumentParams, TextDocumentRegistrationOptions>, sendPromise: Promise<void>): void {
-		this._pendingOpenNotifications.delete(textDocument.uri.toString());
-		super.notificationSending(textDocument, type, sendPromise);
+	protected callback(data: TextDocument): Promise<void> {
+		this._pendingTextDocumentChanges.delete(data.uri.toString());
+		return super.callback(data);
+	}
+
+	protected getTextDocument(data: TextDocument): TextDocument {
+		return data;
 	}
 
 	protected notificationSent(textDocument: TextDocument, type: ProtocolNotificationType<DidCloseTextDocumentParams, TextDocumentRegistrationOptions>, params: DidCloseTextDocumentParams): void {
@@ -185,23 +182,21 @@ interface DidChangeTextDocumentData {
 	documentSelector: VDocumentSelector;
 }
 
-export interface DidChangeTextDocumentFeatureShape extends DynamicFeature<TextDocumentChangeRegistrationOptions>, TextDocumentSendFeature<(event: TextDocumentChangeEvent) => Promise<void>>, NotifyingFeature<TextDocumentChangeEvent, DidChangeTextDocumentParams> {
+export interface DidChangeTextDocumentFeatureShape extends DynamicFeature<TextDocumentChangeRegistrationOptions>, TextDocumentSendFeature<(event: TextDocumentChangeEvent) => Promise<void>>, NotifyingFeature<DidChangeTextDocumentParams> {
 }
 
 export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDocumentChangeRegistrationOptions, TextDocumentSynchronizationMiddleware> implements DidChangeTextDocumentFeatureShape {
 
 	private _listener: Disposable | undefined;
 	private readonly _changeData: Map<string, DidChangeTextDocumentData>;
-	private readonly _onNotificationSent: EventEmitter<NotificationSendEvent<TextDocumentChangeEvent, DidChangeTextDocumentParams>>;
-	private readonly _pendingDocumentChanges: Map<string, DidChangeTextDocumentParams>;
-	private readonly _pendingOpenNotifications: Map<string, Promise<void>>;
+	private readonly _onNotificationSent: EventEmitter<NotificationSendEvent<DidChangeTextDocumentParams>>;
+	private readonly _pendingTextDocumentChanges: Map<string, TextDocument>;
 
-	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>, pendingOpenNotifications: Map<string, Promise<void>>) {
+	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>, pendingTextDocumentChanges: Map<string, TextDocument>) {
 		super(client);
 		this._changeData = new Map<string, DidChangeTextDocumentData>();
 		this._onNotificationSent = new EventEmitter();
-		this._pendingDocumentChanges = new Map();
-		this._pendingOpenNotifications = pendingOpenNotifications;
+		this._pendingTextDocumentChanges = pendingTextDocumentChanges;
 	}
 
 	public get registrationType(): RegistrationType<TextDocumentChangeRegistrationOptions> {
@@ -259,14 +254,13 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 					const didChange = async (event: TextDocumentChangeEvent): Promise<void> => {
 						const params = this._client.code2ProtocolConverter.asChangeTextDocumentParams(event);
 						await this._client.sendNotification(DidChangeTextDocumentNotification.type, params);
-						this.notificationSent(event, DidChangeTextDocumentNotification.type, params);
+						this.notificationSent(event.document, DidChangeTextDocumentNotification.type, params);
 					};
 					promises.push(middleware.didChange ? middleware.didChange(event, event => didChange(event)) : didChange(event));
 				} else if (changeData.syncKind === TextDocumentSyncKind.Full) {
 					const didChange = async (event: TextDocumentChangeEvent): Promise<void> => {
-						const params = this._client.code2ProtocolConverter.asChangeTextDocumentParams(event.document);
 						const eventUri: string = event.document.uri.toString();
-						this._pendingDocumentChanges.set(eventUri, params);
+						this._pendingTextDocumentChanges.set(eventUri, event.document);
 					};
 					promises.push(middleware.didChange ? middleware.didChange(event, event => didChange(event)) : didChange(event));
 				}
@@ -278,12 +272,12 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 		});
 	}
 
-	public get onNotificationSent(): Event<NotificationSendEvent<TextDocumentChangeEvent, DidChangeTextDocumentParams>> {
+	public get onNotificationSent(): Event<NotificationSendEvent<DidChangeTextDocumentParams>> {
 		return this._onNotificationSent.event;
 	}
 
-	private notificationSent(changeEvent: TextDocumentChangeEvent, type: ProtocolNotificationType<DidChangeTextDocumentParams, TextDocumentRegistrationOptions>, params: DidChangeTextDocumentParams): void {
-		this._onNotificationSent.fire({ original: changeEvent, type, params });
+	private notificationSent(textDocument: TextDocument, type: ProtocolNotificationType<DidChangeTextDocumentParams, TextDocumentRegistrationOptions>, params: DidChangeTextDocumentParams): void {
+		this._onNotificationSent.fire({ textDocument, type, params });
 	}
 
 	public unregister(id: string): void {
@@ -295,7 +289,7 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 	}
 
 	public dispose(): void {
-		this._pendingDocumentChanges.clear();
+		this._pendingTextDocumentChanges.clear();
 		this._changeData.clear();
 		if (this._listener) {
 			this._listener.dispose();
@@ -303,19 +297,19 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 		}
 	}
 
-	public getPendingDocumentChanges(exclude?: string): DidChangeTextDocumentParams[] {
-		let result: DidChangeTextDocumentParams[];
+	public getPendingDocumentChanges(exclude?: string): TextDocument[] {
+		let result: TextDocument[];
 		if (exclude === undefined) {
-			result = Array.from(this._pendingDocumentChanges.values());
+			result = Array.from(this._pendingTextDocumentChanges.values());
 		} else {
 			result = [];
-			for (const entry of this._pendingDocumentChanges) {
+			for (const entry of this._pendingTextDocumentChanges) {
 				if (entry[0] !== exclude) {
 					result.push(entry[1]);
 				}
 			}
 		}
-		this._pendingDocumentChanges.clear();
+		this._pendingTextDocumentChanges.clear();
 		return result;
 	}
 
@@ -362,6 +356,10 @@ export class WillSaveFeature extends TextDocumentEventFeature<WillSaveTextDocume
 				registerOptions: { documentSelector: documentSelector }
 			});
 		}
+	}
+
+	protected getTextDocument(data: TextDocumentWillSaveEvent): TextDocument {
+		return data.document;
 	}
 }
 
@@ -443,7 +441,7 @@ export class WillSaveWaitUntilFeature extends DynamicDocumentFeature<TextDocumen
 	}
 }
 
-export interface DidSaveTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, TextDocumentSendFeature<(textDocument: TextDocument) => Promise<void>>, NotifyingFeature<TextDocument, DidSaveTextDocumentParams> {
+export interface DidSaveTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, TextDocumentSendFeature<(textDocument: TextDocument) => Promise<void>>, NotifyingFeature<DidSaveTextDocumentParams> {
 }
 
 export class DidSaveTextDocumentFeature extends TextDocumentEventFeature<DidSaveTextDocumentParams, TextDocument, TextDocumentSynchronizationMiddleware> implements DidSaveTextDocumentFeatureShape {
@@ -485,5 +483,9 @@ export class DidSaveTextDocumentFeature extends TextDocumentEventFeature<DidSave
 	public register(data: RegistrationData<TextDocumentSaveRegistrationOptions>): void {
 		this._includeText = !!data.registerOptions.includeText;
 		super.register(data);
+	}
+
+	protected getTextDocument(data: TextDocument): TextDocument {
+		return data;
 	}
 }

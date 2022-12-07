@@ -258,6 +258,7 @@ interface CreateParamsSignature<E, P> {
 }
 
 export interface NotificationSendEvent<P extends { textDocument: TextDocumentIdentifier }> {
+	textDocument: TextDocument;
 	type: ProtocolNotificationType<P, TextDocumentRegistrationOptions>;
 	params: P;
 }
@@ -386,13 +387,11 @@ export abstract class TextDocumentEventFeature<P extends { textDocument: TextDoc
 		this._selectors.set(data.id, this._client.protocol2CodeConverter.asDocumentSelector(data.registerOptions.documentSelector));
 	}
 
-	private async callback(data: E): Promise<void> {
+	protected async callback(data: E): Promise<void> {
 		const doSend = async (data: E): Promise<void> => {
 			const params = this._createParams(data);
-			const sendPromise = this._client.sendNotification(this._type, params);
-			this.notificationSending(this._type, sendPromise);
-			await sendPromise;
-			this.notificationSent(this._type, params);
+			await this._client.sendNotification(this._type, params);
+			this.notificationSent(this.getTextDocument(data), this._type, params);
 		};
 		if (this.matches(data)) {
 			const middleware = this._middleware();
@@ -411,12 +410,11 @@ export abstract class TextDocumentEventFeature<P extends { textDocument: TextDoc
 		return this._onNotificationSent.event;
 	}
 
-	protected notificationSending(_type: ProtocolNotificationType<P, TextDocumentRegistrationOptions>, _sendPromise: Promise<void>): void {
+	protected notificationSent(textDocument: TextDocument, type: ProtocolNotificationType<P, TextDocumentRegistrationOptions>, params: P): void {
+		this._onNotificationSent.fire({ textDocument, type, params });
 	}
 
-	protected notificationSent(type: ProtocolNotificationType<P, TextDocumentRegistrationOptions>, params: P): void {
-		this._onNotificationSent.fire({ type, params });
-	}
+	protected abstract getTextDocument(data: E): TextDocument;
 
 	public unregister(id: string): void {
 		this._selectors.delete(id);

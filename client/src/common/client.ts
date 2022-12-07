@@ -34,7 +34,8 @@ import {
 	DocumentOnTypeFormattingRequest, RenameRequest, DocumentSymbolRequest, DocumentLinkRequest, DocumentColorRequest, DeclarationRequest, FoldingRangeRequest,
 	ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, CallHierarchyPrepareRequest, SemanticTokensRegistrationType, LinkedEditingRangeRequest,
 	TypeHierarchyPrepareRequest, InlineValueRequest, InlayHintRequest, WorkspaceSymbolRequest, TextDocumentRegistrationOptions, FileOperationRegistrationOptions,
-	ConnectionOptions, PositionEncodingKind, DocumentDiagnosticRequest, NotebookDocumentSyncRegistrationType, NotebookDocumentSyncRegistrationOptions, ErrorCodes, MessageStrategy, DidOpenTextDocumentParams
+	ConnectionOptions, PositionEncodingKind, DocumentDiagnosticRequest, NotebookDocumentSyncRegistrationType, NotebookDocumentSyncRegistrationOptions, ErrorCodes,
+	MessageStrategy, DidOpenTextDocumentParams, SendPromise
 } from 'vscode-languageserver-protocol';
 
 import * as c2p from './codeConverter';
@@ -657,16 +658,20 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (this.$state === ClientState.StartFailed || this.$state === ClientState.Stopping || this.$state === ClientState.Stopped) {
 			return Promise.reject(new ResponseError(ErrorCodes.ConnectionInactive, `Client is not running`));
 		}
-		return this._sendSemaphore.lock(async () => {
-			try {
-				// Ensure we have a connection before we force the document sync.
-				const connection = await this.$start();
-				await this.forceDocumentSync(connection, undefined);
-				return await connection.sendRequest<R>(type, ...params);
-			} catch (error) {
-				this.error(`Sending request ${Is.string(type) ? type : type.method} failed.`, error);
-				throw error;
-			}
+		return new Promise<R>(async(resolve, reject) => {
+			this._sendSemaphore.lock(async () => {
+				try {
+					// Ensure we have a connection before we force the document sync.
+					const connection = await this.$start();
+					await this.forceDocumentSync(connection, undefined);
+					const sendPromise = connection.sendRequest<R>(type, ...params);
+					sendPromise.then(resolve, reject);
+					return sendPromise.onDelivered;
+				} catch (error) {
+					this.error(`Sending request ${Is.string(type) ? type : type.method} failed.`, error);
+					throw error;
+				}
+			}).catch(reject);
 		});
 	}
 
@@ -722,20 +727,24 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (this.$state === ClientState.StartFailed || this.$state === ClientState.Stopping || this.$state === ClientState.Stopped) {
 			return Promise.reject(new ResponseError(ErrorCodes.ConnectionInactive, `Client is not running`));
 		}
-		return this._sendSemaphore.lock(async () => {
-			try {
-				// Ensure we have a connection before we force the document sync.
-				const connection = await this.$start();
-				let trigger: undefined | ['open', string];
-				if (typeof type !== 'string' && type.method === DidOpenTextDocumentNotification.method) {
-					trigger = ['open', (params as DidOpenTextDocumentParams)?.textDocument.uri];
+		return new Promise<void>((resolve, reject) => {
+			this._sendSemaphore.lock(async () => {
+				try {
+					// Ensure we have a connection before we force the document sync.
+					const connection = await this.$start();
+					let trigger: undefined | ['open', string];
+					if (typeof type !== 'string' && type.method === DidOpenTextDocumentNotification.method) {
+						trigger = ['open', (params as DidOpenTextDocumentParams)?.textDocument.uri];
+					}
+					await this.forceDocumentSync(connection, trigger);
+					const sendPromise = connection.sendNotification(type, params);
+					sendPromise.then(resolve, reject);
+					return sendPromise.onDelivered;
+				} catch (error) {
+					this.error(`Sending notification ${Is.string(type) ? type : type.method} failed.`, error);
+					throw error;
 				}
-				await this.forceDocumentSync(connection, trigger);
-				return await connection.sendNotification(type, params);
-			} catch (error) {
-				this.error(`Sending notification ${Is.string(type) ? type : type.method} failed.`, error);
-				throw error;
-			}
+			}).catch(reject);
 		});
 	}
 
@@ -1366,11 +1375,11 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 	private _didChangeTextDocumentFeature: DidChangeTextDocumentFeature | undefined;
 
-	private async forceDocumentSync(connection: Connection, trigger: undefined | ['open', string]): Promise<void> {
+	private getPendingFullTextDocumentChanges(exclude?: string): TextDocument[] {
 		if (this._didChangeTextDocumentFeature === undefined) {
 			this._didChangeTextDocumentFeature = this._dynamicFeatures.get(DidChangeTextDocumentNotification.type.method) as DidChangeTextDocumentFeature;
 		}
-		return this._didChangeTextDocumentFeature.forceDelivery(trigger);
+		return this._didChangeTextDocumentFeature.getPendingDocumentChanges(exclude);
 	}
 
 	private _diagnosticQueue: Map<string, Diagnostic[]> = new Map();
@@ -1958,13 +1967,13 @@ interface Connection {
 
 	listen(): void;
 
-	sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): Promise<R>;
-	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: P, token?: CancellationToken): Promise<R>;
-	sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): Promise<R>;
-	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): Promise<R>;
-	sendRequest<R>(method: string, token?: CancellationToken): Promise<R>;
-	sendRequest<R>(method: string, param: any, token?: CancellationToken): Promise<R>;
-	sendRequest<R>(type: string | MessageSignature, ...params: any[]): Promise<R>;
+	sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): SendPromise<R>;
+	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: P, token?: CancellationToken): SendPromise<R>;
+	sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): SendPromise<R>;
+	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): SendPromise<R>;
+	sendRequest<R>(method: string, token?: CancellationToken): SendPromise<R>;
+	sendRequest<R>(method: string, param: any, token?: CancellationToken): SendPromise<R>;
+	sendRequest<R>(type: string | MessageSignature, ...params: any[]): SendPromise<R>;
 
 	onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: RequestHandler0<R, E>): Disposable;
 	onRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, handler: RequestHandler<P, R, E>): Disposable;
@@ -1975,13 +1984,13 @@ interface Connection {
 
 	hasPendingResponse(): boolean;
 
-	sendNotification<RO>(type: ProtocolNotificationType0<RO>): Promise<void>;
-	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): Promise<void>;
-	sendNotification(type: NotificationType0): Promise<void>;
-	sendNotification<P>(type: NotificationType<P>, params?: P): Promise<void>;
-	sendNotification(method: string): Promise<void>;
-	sendNotification(method: string, params: any): Promise<void>;
-	sendNotification(method: string | MessageSignature, params?: any): Promise<void>;
+	sendNotification<RO>(type: ProtocolNotificationType0<RO>): SendPromise<void>;
+	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): SendPromise<void>;
+	sendNotification(type: NotificationType0): SendPromise<void>;
+	sendNotification<P>(type: NotificationType<P>, params?: P): SendPromise<void>;
+	sendNotification(method: string): SendPromise<void>;
+	sendNotification(method: string, params: any): SendPromise<void>;
+	sendNotification(method: string | MessageSignature, params?: any): SendPromise<void>;
 
 	onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): Disposable;
 	onNotification<P, RO>(type: ProtocolNotificationType<P, RO>, handler: NotificationHandler<P>): Disposable;
@@ -1991,7 +2000,7 @@ interface Connection {
 	onNotification(method: string | MessageSignature, handler: GenericNotificationHandler): Disposable;
 
 	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable;
-	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): Promise<void>;
+	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): SendPromise<void>;
 
 	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): Promise<void>;
 	trace(value: Trace, tracer: Tracer, traceOptions?: TraceOptions): Promise<void>;
@@ -2045,7 +2054,7 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 
 		listen: (): void => connection.listen(),
 
-		sendRequest: <R>(type: string | MessageSignature, ...params: any[]): Promise<R> => {
+		sendRequest: <R>(type: string | MessageSignature, ...params: any[]): SendPromise<R> => {
 			_lastUsed = Date.now();
 			return connection.sendRequest(type as string, ...params);
 		},
@@ -2053,7 +2062,7 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 
 		hasPendingResponse: (): boolean => connection.hasPendingResponse(),
 
-		sendNotification: (type: string | MessageSignature, params?: any): Promise<void> => {
+		sendNotification: (type: string | MessageSignature, params?: any): SendPromise<void> => {
 			_lastUsed = Date.now();
 			return connection.sendNotification(type, params);
 		},
