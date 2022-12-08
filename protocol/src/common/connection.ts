@@ -7,7 +7,7 @@ import {
 	Message, NotificationMessage, CancellationToken, RequestHandler0, RequestHandler, GenericRequestHandler,
 	NotificationHandler0, NotificationHandler, GenericNotificationHandler, ProgressType, Trace, Tracer, TraceOptions,
 	Disposable, Event, MessageReader, MessageWriter, Logger, ConnectionStrategy, ConnectionOptions, createMessageConnection,
-	RequestType0, RequestType, NotificationType0, NotificationType, MessageSignature, SendPromise
+	RequestType0, RequestType, NotificationType0, NotificationType, MessageSignature
 } from 'vscode-jsonrpc';
 
 import {
@@ -23,8 +23,8 @@ export interface ProtocolConnection {
 	 * @param token An optional cancellation token.
 	 * @returns A promise resolving to the request's result.
 	 */
-	sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): SendPromise<R>;
-	sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): SendPromise<R>;
+	sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): Promise<R>;
+	sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): Promise<R>;
 
 	/**
 	 * Sends a request and returns a promise resolving to the result of the request.
@@ -34,8 +34,8 @@ export interface ProtocolConnection {
 	 * @param token An optional cancellation token.
 	 * @returns A promise resolving to the request's result.
 	 */
-	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: P, token?: CancellationToken): SendPromise<R>;
-	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): SendPromise<R>;
+	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: P, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): Promise<R>;
 
 	/**
 	 * Sends a request and returns a promise resolving to the result of the request.
@@ -44,7 +44,7 @@ export interface ProtocolConnection {
 	 * @param token An optional cancellation token.
 	 * @returns A promise resolving to the request's result.
 	 */
-	sendRequest<R>(method: MessageSignature | string, token?: CancellationToken): SendPromise<R>;
+	sendRequest<R>(method: MessageSignature | string, token?: CancellationToken): Promise<R>;
 
 	/**
 	 * Sends a request and returns a promise resolving to the result of the request.
@@ -54,7 +54,7 @@ export interface ProtocolConnection {
 	 * @param token An optional cancellation token.
 	 * @returns A promise resolving to the request's result.
 	 */
-	sendRequest<R>(method: MessageSignature | string, param: any, token?: CancellationToken): SendPromise<R>;
+	sendRequest<R>(method: MessageSignature | string, param: any, token?: CancellationToken): Promise<R>;
 
 	/**
 	 * Installs a request handler.
@@ -98,8 +98,8 @@ export interface ProtocolConnection {
 	 * @returns A promise that resolves when the notification is written to the
 	 * network layer.
 	 */
-	sendNotification(type: NotificationType0): SendPromise<void>;
-	sendNotification<RO>(type: ProtocolNotificationType0<RO>): SendPromise<void>;
+	sendNotification(type: NotificationType0): Promise<void>;
+	sendNotification<RO>(type: ProtocolNotificationType0<RO>): Promise<void>;
 
 	/**
 	 * Sends a notification.
@@ -109,8 +109,8 @@ export interface ProtocolConnection {
 	 * @returns A promise that resolves when the notification is written to the
 	 * network layer.
 	 */
-	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): SendPromise<void>;
-	sendNotification<P>(type: NotificationType<P>, params?: P): SendPromise<void>;
+	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): Promise<void>;
+	sendNotification<P>(type: NotificationType<P>, params?: P): Promise<void>;
 
 	/**
 	 * Sends a notification.
@@ -119,7 +119,7 @@ export interface ProtocolConnection {
 	 * @returns A promise that resolves when the notification is written to the
 	 * network layer.
 	 */
-	sendNotification(method: MessageSignature | string): SendPromise<void>;
+	sendNotification(method: MessageSignature | string): Promise<void>;
 
 	/**
 	 * Sends a notification.
@@ -129,7 +129,7 @@ export interface ProtocolConnection {
 	 * @returns A promise that resolves when the notification is written to the
 	 * network layer.
 	 */
-	sendNotification(method: MessageSignature | string, params: any): SendPromise<void>;
+	sendNotification(method: MessageSignature | string, params: any): Promise<void>;
 
 	/**
 	 * Installs a notification handler.
@@ -177,7 +177,7 @@ export interface ProtocolConnection {
 	 * @returns A promise that resolves when the progress is written to the
 	 * network layer.
 	 */
-	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): SendPromise<void>;
+	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): Promise<void>;
 
 	/**
 	 * Enables tracing mode for the connection.

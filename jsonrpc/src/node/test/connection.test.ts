@@ -604,10 +604,13 @@ suite('Connection', () => {
 		const duplexStream1 = new TestDuplex('ds1');
 		const duplexStream2 = new TestDuplex('ds2');
 
+		function delay(ms: number) {
+			return new Promise(resolve => setTimeout(resolve, ms));
+		}
+
 		const source = new CancellationTokenSource();
 		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
 		server.onRequest(type, async t => {
-			source.cancel();
 
 			while (!t.isCancellationRequested) {
 				// regular cancellation requires async for it to work
@@ -621,10 +624,7 @@ suite('Connection', () => {
 		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
 		void client.sendRequest(type, source.token);
-
-		function delay(ms: number) {
-			return new Promise(resolve => setTimeout(resolve, ms));
-		}
+		source.cancel();
 	});
 
 	test('Custom Cancellation', (done) => {
@@ -638,7 +638,6 @@ suite('Connection', () => {
 
 		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, options);
 		server.onRequest(type, t => {
-			source.cancel();
 
 			while (!t.isCancellationRequested) {
 				// custom cancellation that doesn't require async to work
@@ -652,6 +651,7 @@ suite('Connection', () => {
 		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger, options);
 		client.listen();
 		void client.sendRequest(type, source.token);
+		source.cancel();
 	});
 
 	test('Uses custom message handler', (done) => {

@@ -142,9 +142,9 @@ export class DidCloseTextDocumentFeature extends TextDocumentEventFeature<DidClo
 		}
 	}
 
-	protected callback(data: TextDocument): Promise<void> {
+	protected async callback(data: TextDocument): Promise<void> {
+		await super.callback(data);
 		this._pendingTextDocumentChanges.delete(data.uri.toString());
-		return super.callback(data);
 	}
 
 	protected getTextDocument(data: TextDocument): TextDocument {
@@ -298,18 +298,22 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 	}
 
 	public getPendingDocumentChanges(exclude?: string): TextDocument[] {
+		if (this._pendingTextDocumentChanges.size === 0) {
+			return [];
+		}
 		let result: TextDocument[];
 		if (exclude === undefined) {
 			result = Array.from(this._pendingTextDocumentChanges.values());
+			this._pendingTextDocumentChanges.clear();
 		} else {
 			result = [];
 			for (const entry of this._pendingTextDocumentChanges) {
 				if (entry[0] !== exclude) {
 					result.push(entry[1]);
+					this._pendingTextDocumentChanges.delete(entry[0]);
 				}
 			}
 		}
-		this._pendingTextDocumentChanges.clear();
 		return result;
 	}
 

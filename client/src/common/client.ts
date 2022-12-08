@@ -35,7 +35,7 @@ import {
 	ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, CallHierarchyPrepareRequest, SemanticTokensRegistrationType, LinkedEditingRangeRequest,
 	TypeHierarchyPrepareRequest, InlineValueRequest, InlayHintRequest, WorkspaceSymbolRequest, TextDocumentRegistrationOptions, FileOperationRegistrationOptions,
 	ConnectionOptions, PositionEncodingKind, DocumentDiagnosticRequest, NotebookDocumentSyncRegistrationType, NotebookDocumentSyncRegistrationOptions, ErrorCodes,
-	MessageStrategy, DidOpenTextDocumentParams, SendPromise
+	MessageStrategy, DidOpenTextDocumentParams
 } from 'vscode-languageserver-protocol';
 
 import * as c2p from './codeConverter';
@@ -436,7 +436,6 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private _clientOptions: ResolvedClientOptions;
 
 	private _state: ClientState;
-	private _sendSemaphore: Semaphore<any>;
 	private _onStart: Promise<void> | undefined;
 	private _onStop: Promise<void> | undefined;
 	private _connection: Connection | undefined;
@@ -518,7 +517,6 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		};
 		this._clientOptions.synchronize = this._clientOptions.synchronize || {};
 
-		this._sendSemaphore = new Semaphore(1);
 		this._state = ClientState.Initial;
 		this._ignoredRegistrations = new Set();
 		this._listeners = [];
@@ -658,21 +656,15 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (this.$state === ClientState.StartFailed || this.$state === ClientState.Stopping || this.$state === ClientState.Stopped) {
 			return Promise.reject(new ResponseError(ErrorCodes.ConnectionInactive, `Client is not running`));
 		}
-		return new Promise<R>(async(resolve, reject) => {
-			this._sendSemaphore.lock(async () => {
-				try {
-					// Ensure we have a connection before we force the document sync.
-					const connection = await this.$start();
-					await this.forceDocumentSync(connection, undefined);
-					const sendPromise = connection.sendRequest<R>(type, ...params);
-					sendPromise.then(resolve, reject);
-					return sendPromise.onDelivered;
-				} catch (error) {
-					this.error(`Sending request ${Is.string(type) ? type : type.method} failed.`, error);
-					throw error;
-				}
-			}).catch(reject);
-		});
+		try {
+			// Ensure we have a connection before we force the document sync.
+			const connection = await this.$start();
+			await this.sendPendingFullTextDocumentChanges(connection);
+			return await connection.sendRequest<R>(type, ...params);
+		} catch (error) {
+			this.error(`Sending request ${Is.string(type) ? type : type.method} failed.`, error);
+			throw error;
+		}
 	}
 
 	public onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: RequestHandler0<R, E>): Disposable;
@@ -727,25 +719,19 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (this.$state === ClientState.StartFailed || this.$state === ClientState.Stopping || this.$state === ClientState.Stopped) {
 			return Promise.reject(new ResponseError(ErrorCodes.ConnectionInactive, `Client is not running`));
 		}
-		return new Promise<void>((resolve, reject) => {
-			this._sendSemaphore.lock(async () => {
-				try {
-					// Ensure we have a connection before we force the document sync.
-					const connection = await this.$start();
-					let trigger: undefined | ['open', string];
-					if (typeof type !== 'string' && type.method === DidOpenTextDocumentNotification.method) {
-						trigger = ['open', (params as DidOpenTextDocumentParams)?.textDocument.uri];
-					}
-					await this.forceDocumentSync(connection, trigger);
-					const sendPromise = connection.sendNotification(type, params);
-					sendPromise.then(resolve, reject);
-					return sendPromise.onDelivered;
-				} catch (error) {
-					this.error(`Sending notification ${Is.string(type) ? type : type.method} failed.`, error);
-					throw error;
-				}
-			}).catch(reject);
-		});
+		try {
+			// Ensure we have a connection before we force the document sync.
+			const connection = await this.$start();
+			let exclude: string | undefined;
+			if (typeof type !== 'string' && type.method === DidOpenTextDocumentNotification.method) {
+				exclude = (params as DidOpenTextDocumentParams)?.textDocument.uri;
+			}
+			await this.sendPendingFullTextDocumentChanges(connection, exclude);
+			return await connection.sendNotification(type, params);
+		} catch (error) {
+			this.error(`Sending notification ${Is.string(type) ? type : type.method} failed.`, error);
+			throw error;
+		}
 	}
 
 	public onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): Disposable;
@@ -1360,11 +1346,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		async function didChangeWatchedFile(this: void, event: FileEvent): Promise<void> {
 			client._fileEvents.push(event);
 			return client._fileEventDelayer.trigger(async (): Promise<void> => {
-				const connection = await client.$start();
-				await client.forceDocumentSync(connection, undefined);
-				const result = connection.sendNotification(DidChangeWatchedFilesNotification.type, { changes: client._fileEvents });
+				await client.sendNotification(DidChangeWatchedFilesNotification.type, { changes: client._fileEvents });
 				client._fileEvents = [];
-				return result;
 			});
 		}
 		const workSpaceMiddleware = this.clientOptions.middleware?.workspace;
@@ -1374,12 +1357,23 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	private _didChangeTextDocumentFeature: DidChangeTextDocumentFeature | undefined;
-
-	private getPendingFullTextDocumentChanges(exclude?: string): TextDocument[] {
+	private _sendPendingChangesSemaphore: Semaphore<void> = new Semaphore(1);
+	private async sendPendingFullTextDocumentChanges(connection: Connection, exclude?: string): Promise<void> {
 		if (this._didChangeTextDocumentFeature === undefined) {
 			this._didChangeTextDocumentFeature = this._dynamicFeatures.get(DidChangeTextDocumentNotification.type.method) as DidChangeTextDocumentFeature;
 		}
-		return this._didChangeTextDocumentFeature.getPendingDocumentChanges(exclude);
+		return this._sendPendingChangesSemaphore.lock(async () => {
+			const changes = this._didChangeTextDocumentFeature!.getPendingDocumentChanges(exclude);
+			if (changes.length === 0) {
+				return;
+			}
+			for (const document of changes) {
+				const params = this.code2ProtocolConverter.asChangeTextDocumentParams(document);
+				// We await the send and not the delivery since it is more or less the same for
+				// notifications.
+				await connection.sendNotification(DidChangeTextDocumentNotification.type, params);
+			}
+		});
 	}
 
 	private _diagnosticQueue: Map<string, Diagnostic[]> = new Map();
@@ -1635,14 +1629,14 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	protected registerBuiltinFeatures() {
-		const pendingOpenNotifications: Map<string, Promise<void>> = new Map();
+		const pendingFullTextDocumentChanges: Map<string, TextDocument> = new Map();
 		this.registerFeature(new ConfigurationFeature(this));
-		this.registerFeature(new DidOpenTextDocumentFeature(this, this._syncedDocuments, pendingOpenNotifications));
-		this.registerFeature(new DidChangeTextDocumentFeature(this, pendingOpenNotifications));
+		this.registerFeature(new DidOpenTextDocumentFeature(this, this._syncedDocuments));
+		this.registerFeature(new DidChangeTextDocumentFeature(this, pendingFullTextDocumentChanges));
 		this.registerFeature(new WillSaveFeature(this));
 		this.registerFeature(new WillSaveWaitUntilFeature(this));
 		this.registerFeature(new DidSaveTextDocumentFeature(this));
-		this.registerFeature(new DidCloseTextDocumentFeature(this, this._syncedDocuments, pendingOpenNotifications));
+		this.registerFeature(new DidCloseTextDocumentFeature(this, this._syncedDocuments, pendingFullTextDocumentChanges));
 		this.registerFeature(new FileSystemWatcherFeature(this, (event) => this.notifyFileEvent(event)));
 		this.registerFeature(new CompletionItemFeature(this));
 		this.registerFeature(new HoverFeature(this));
@@ -1967,13 +1961,13 @@ interface Connection {
 
 	listen(): void;
 
-	sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): SendPromise<R>;
-	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: P, token?: CancellationToken): SendPromise<R>;
-	sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): SendPromise<R>;
-	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): SendPromise<R>;
-	sendRequest<R>(method: string, token?: CancellationToken): SendPromise<R>;
-	sendRequest<R>(method: string, param: any, token?: CancellationToken): SendPromise<R>;
-	sendRequest<R>(type: string | MessageSignature, ...params: any[]): SendPromise<R>;
+	sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: P, token?: CancellationToken): Promise<R>;
+	sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): Promise<R>;
+	sendRequest<R>(method: string, token?: CancellationToken): Promise<R>;
+	sendRequest<R>(method: string, param: any, token?: CancellationToken): Promise<R>;
+	sendRequest<R>(type: string | MessageSignature, ...params: any[]): Promise<R>;
 
 	onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: RequestHandler0<R, E>): Disposable;
 	onRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, handler: RequestHandler<P, R, E>): Disposable;
@@ -1984,13 +1978,13 @@ interface Connection {
 
 	hasPendingResponse(): boolean;
 
-	sendNotification<RO>(type: ProtocolNotificationType0<RO>): SendPromise<void>;
-	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): SendPromise<void>;
-	sendNotification(type: NotificationType0): SendPromise<void>;
-	sendNotification<P>(type: NotificationType<P>, params?: P): SendPromise<void>;
-	sendNotification(method: string): SendPromise<void>;
-	sendNotification(method: string, params: any): SendPromise<void>;
-	sendNotification(method: string | MessageSignature, params?: any): SendPromise<void>;
+	sendNotification<RO>(type: ProtocolNotificationType0<RO>): Promise<void>;
+	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): Promise<void>;
+	sendNotification(type: NotificationType0): Promise<void>;
+	sendNotification<P>(type: NotificationType<P>, params?: P): Promise<void>;
+	sendNotification(method: string): Promise<void>;
+	sendNotification(method: string, params: any): Promise<void>;
+	sendNotification(method: string | MessageSignature, params?: any): Promise<void>;
 
 	onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): Disposable;
 	onNotification<P, RO>(type: ProtocolNotificationType<P, RO>, handler: NotificationHandler<P>): Disposable;
@@ -2000,7 +1994,7 @@ interface Connection {
 	onNotification(method: string | MessageSignature, handler: GenericNotificationHandler): Disposable;
 
 	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable;
-	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): SendPromise<void>;
+	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): Promise<void>;
 
 	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): Promise<void>;
 	trace(value: Trace, tracer: Tracer, traceOptions?: TraceOptions): Promise<void>;
@@ -2054,16 +2048,20 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 
 		listen: (): void => connection.listen(),
 
-		sendRequest: <R>(type: string | MessageSignature, ...params: any[]): SendPromise<R> => {
+		sendRequest: <R>(type: string | MessageSignature, ...params: any[]): Promise<R> => {
 			_lastUsed = Date.now();
+			// This needs to return and MUST not be await to avoid any async
+			// scheduling. Otherwise messages might overtake each other.
 			return connection.sendRequest(type as string, ...params);
 		},
 		onRequest: <R, E>(type: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable => connection.onRequest(type, handler),
 
 		hasPendingResponse: (): boolean => connection.hasPendingResponse(),
 
-		sendNotification: (type: string | MessageSignature, params?: any): SendPromise<void> => {
+		sendNotification: (type: string | MessageSignature, params?: any): Promise<void> => {
 			_lastUsed = Date.now();
+			// This needs to return and MUST not be await to avoid any async
+			// scheduling. Otherwise messages might overtake each other.
 			return connection.sendNotification(type, params);
 		},
 		onNotification: (type: string | MessageSignature, handler: GenericNotificationHandler): Disposable => connection.onNotification(type, handler),
@@ -2088,14 +2086,20 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 
 		initialize: (params: InitializeParams) => {
 			_lastUsed = Date.now();
+			// This needs to return and MUST not be await to avoid any async
+			// scheduling. Otherwise messages might overtake each other.
 			return connection.sendRequest(InitializeRequest.type, params);
 		},
 		shutdown: () => {
 			_lastUsed = Date.now();
+			// This needs to return and MUST not be await to avoid any async
+			// scheduling. Otherwise messages might overtake each other.
 			return connection.sendRequest(ShutdownRequest.type, undefined);
 		},
 		exit: () => {
 			_lastUsed = Date.now();
+			// This needs to return and MUST not be await to avoid any async
+			// scheduling. Otherwise messages might overtake each other.
 			return connection.sendNotification(ExitNotification.type);
 		},
 

@@ -959,7 +959,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 			const changeFeature = client.getFeature(DidChangeTextDocumentNotification.method);
 			disposables.push(changeFeature.onNotificationSent(async (event) => {
 				const textDocument = event.textDocument;
-				if ((diagnosticPullOptions.filter === undefined || !diagnosticPullOptions.filter(textDocument, DiagnosticPullMode.onType)) && this.diagnosticRequestor.knows(PullState.document, textDocument) && event.original.contentChanges.length > 0) {
+				if ((diagnosticPullOptions.filter === undefined || !diagnosticPullOptions.filter(textDocument, DiagnosticPullMode.onType)) && this.diagnosticRequestor.knows(PullState.document, textDocument)) {
 					this.diagnosticRequestor.pull(textDocument, () => { this.backgroundScheduler.trigger(); });
 				}
 			}));
@@ -970,7 +970,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 			disposables.push(saveFeature.onNotificationSent((event) => {
 				const textDocument = event.textDocument;
 				if ((diagnosticPullOptions.filter === undefined || !diagnosticPullOptions.filter(textDocument, DiagnosticPullMode.onSave)) && this.diagnosticRequestor.knows(PullState.document, textDocument)) {
-					this.diagnosticRequestor.pull(event.original, () => { this.backgroundScheduler.trigger(); });
+					this.diagnosticRequestor.pull(event.textDocument, () => { this.backgroundScheduler.trigger(); });
 				}
 			}));
 		}

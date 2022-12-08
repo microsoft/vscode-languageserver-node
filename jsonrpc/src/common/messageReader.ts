@@ -10,6 +10,7 @@ import { Event, Emitter } from './events';
 import { Message } from './messages';
 import { ContentDecoder, ContentTypeDecoder } from './encoding';
 import { Disposable } from './api';
+import { Semaphore } from './semaphore';
 
 /**
  * A callback that receives each incoming JSON-RPC message.
@@ -175,6 +176,7 @@ export class ReadableStreamMessageReader extends AbstractMessageReader {
 	private buffer: RAL.MessageBuffer;
 	private partialMessageTimer: Disposable | undefined;
 	private _partialMessageTimeout: number;
+	private readSemaphore: Semaphore<void>;
 
 	public constructor(readable: RAL.ReadableStream, options?: RAL.MessageBufferEncoding | MessageReaderOptions) {
 		super();
@@ -184,6 +186,7 @@ export class ReadableStreamMessageReader extends AbstractMessageReader {
 		this._partialMessageTimeout = 10000;
 		this.nextMessageLength = -1;
 		this.messageToken = 0;
+		this.readSemaphore = new Semaphore(1);
 	}
 
 	public set partialMessageTimeout(timeout: number) {
@@ -233,19 +236,17 @@ export class ReadableStreamMessageReader extends AbstractMessageReader {
 			}
 			this.clearPartialMessageTimer();
 			this.nextMessageLength = -1;
-			let p: Promise<Uint8Array>;
-			if (this.options.contentDecoder !== undefined) {
-				p = this.options.contentDecoder.decode(body);
-			} else {
-				p = Promise.resolve(body);
-			}
-			p.then((value) => {
-				this.options.contentTypeDecoder.decode(value, this.options).then((msg: Message) => {
-					this.callback(msg);
-				}, (error) => {
-					this.fireError(error);
-				});
-			}, (error) => {
+			// Make sure that we convert one received message after the
+			// other. Otherwise it could happen that a decoding of a second
+			// smaller message finished before the decoding of a first larger
+			// message and then we would deliver the second message first.
+			this.readSemaphore.lock(async () => {
+				const bytes: Uint8Array = this.options.contentDecoder !== undefined
+					? await this.options.contentDecoder.decode(body)
+					: body;
+				const message = await this.options.contentTypeDecoder.decode(bytes, this.options);
+				this.callback(message);
+			}).catch((error) => {
 				this.fireError(error);
 			});
 		}
