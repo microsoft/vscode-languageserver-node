@@ -211,11 +211,11 @@ export class ReadableStreamMessageReader extends AbstractMessageReader {
 		this.buffer.append(data);
 		while (true) {
 			if (this.nextMessageLength === -1) {
-				const headers = this.buffer.tryReadHeaders();
+				const headers = this.buffer.tryReadHeaders(true);
 				if (!headers) {
 					return;
 				}
-				const contentLength = headers.get('Content-Length');
+				const contentLength = headers.get('content-length');
 				if (!contentLength) {
 					throw new Error('Header must provide a Content-Length property.');
 				}

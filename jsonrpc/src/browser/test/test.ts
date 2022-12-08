@@ -38,10 +38,10 @@ suite('Browser IPC Reader / Writer', () => {
 		const encoder: TextEncoder = new TextEncoder();
 		buffer.append(encoder.encode('Content-Length: 43\r\n\r\n'));
 		buffer.append(encoder.encode('{"jsonrpc":"2.0","id":1,"method":"example"}'));
-		const headers = buffer.tryReadHeaders();
+		const headers = buffer.tryReadHeaders(true);
 		assertDefined(headers);
 		assert.strictEqual(headers.size, 1);
-		assert.strictEqual(headers.get('Content-Length'), '43');
+		assert.strictEqual(headers.get('content-length'), '43');
 		const decoder = new TextDecoder('utf-8');
 		const content = JSON.parse(decoder.decode(buffer.tryReadBody(43)));
 		assert.strictEqual(content.id, 1);
@@ -75,7 +75,7 @@ suite('Browser IPC Reader / Writer', () => {
 				buffer.append(payload.slice(sent, sent + piece));
 				sent = sent + piece;
 			}
-			const headers = buffer.tryReadHeaders();
+			const headers = buffer.tryReadHeaders(false);
 			assertDefined(headers);
 			assert.strictEqual(headers.size, 1);
 			const length = parseInt(headers.get('Content-Length')!);
