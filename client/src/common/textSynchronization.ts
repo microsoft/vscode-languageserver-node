@@ -190,13 +190,23 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 	private _listener: Disposable | undefined;
 	private readonly _changeData: Map<string, DidChangeTextDocumentData>;
 	private readonly _onNotificationSent: EventEmitter<NotificationSendEvent<DidChangeTextDocumentParams>>;
+	private readonly _onPendingChangeAdded: EventEmitter<void>;
 	private readonly _pendingTextDocumentChanges: Map<string, TextDocument>;
 
 	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>, pendingTextDocumentChanges: Map<string, TextDocument>) {
 		super(client);
 		this._changeData = new Map<string, DidChangeTextDocumentData>();
 		this._onNotificationSent = new EventEmitter();
+		this._onPendingChangeAdded = new EventEmitter();
 		this._pendingTextDocumentChanges = pendingTextDocumentChanges;
+	}
+
+	public get onNotificationSent(): Event<NotificationSendEvent<DidChangeTextDocumentParams>> {
+		return this._onNotificationSent.event;
+	}
+
+	public get onPendingChangeAdded(): Event<void> {
+		return this._onPendingChangeAdded.event;
 	}
 
 	public get registrationType(): RegistrationType<TextDocumentChangeRegistrationOptions> {
@@ -261,6 +271,7 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 					const didChange = async (event: TextDocumentChangeEvent): Promise<void> => {
 						const eventUri: string = event.document.uri.toString();
 						this._pendingTextDocumentChanges.set(eventUri, event.document);
+						this._onPendingChangeAdded.fire();
 					};
 					promises.push(middleware.didChange ? middleware.didChange(event, event => didChange(event)) : didChange(event));
 				}
@@ -272,11 +283,7 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 		});
 	}
 
-	public get onNotificationSent(): Event<NotificationSendEvent<DidChangeTextDocumentParams>> {
-		return this._onNotificationSent.event;
-	}
-
-	private notificationSent(textDocument: TextDocument, type: ProtocolNotificationType<DidChangeTextDocumentParams, TextDocumentRegistrationOptions>, params: DidChangeTextDocumentParams): void {
+	public notificationSent(textDocument: TextDocument, type: ProtocolNotificationType<DidChangeTextDocumentParams, TextDocumentRegistrationOptions>, params: DidChangeTextDocumentParams): void {
 		this._onNotificationSent.fire({ textDocument, type, params });
 	}
 

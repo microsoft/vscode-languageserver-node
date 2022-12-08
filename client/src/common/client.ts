@@ -464,6 +464,10 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private _diagnostics: DiagnosticCollection | undefined;
 	private _syncedDocuments: Map<string, TextDocument>;
 
+	private _didChangeTextDocumentFeature: DidChangeTextDocumentFeature | undefined;
+	private readonly _pendingChangeSemaphore: Semaphore<void>;
+	private readonly _pendingChangeDelayer: Delayer<void>;
+
 	private _fileEvents: FileEvent[];
 	private _fileEventDelayer: Delayer<void>;
 
@@ -543,6 +547,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		}
 		this._traceOutputChannel = clientOptions.traceOutputChannel;
 		this._diagnostics = undefined;
+
+		this._pendingChangeSemaphore = new Semaphore(1);
+		this._pendingChangeDelayer = new Delayer<void>(250);
 
 		this._fileEvents = [];
 		this._fileEventDelayer = new Delayer<void>(250);
@@ -1356,13 +1363,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		});
 	}
 
-	private _didChangeTextDocumentFeature: DidChangeTextDocumentFeature | undefined;
-	private _sendPendingChangesSemaphore: Semaphore<void> = new Semaphore(1);
 	private async sendPendingFullTextDocumentChanges(connection: Connection, exclude?: string): Promise<void> {
-		if (this._didChangeTextDocumentFeature === undefined) {
-			this._didChangeTextDocumentFeature = this._dynamicFeatures.get(DidChangeTextDocumentNotification.type.method) as DidChangeTextDocumentFeature;
-		}
-		return this._sendPendingChangesSemaphore.lock(async () => {
+		return this._pendingChangeSemaphore.lock(async () => {
 			const changes = this._didChangeTextDocumentFeature!.getPendingDocumentChanges(exclude);
 			if (changes.length === 0) {
 				return;
@@ -1372,8 +1374,21 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 				// We await the send and not the delivery since it is more or less the same for
 				// notifications.
 				await connection.sendNotification(DidChangeTextDocumentNotification.type, params);
+				this._didChangeTextDocumentFeature!.notificationSent(document, DidChangeTextDocumentNotification.type, params);
 			}
 		});
+	}
+
+	private triggerPendingChangeDelivery(): void {
+		this._pendingChangeDelayer.trigger(async () => {
+			const connection = this.activeConnection();
+			if (connection === undefined) {
+				this.triggerPendingChangeDelivery();
+				return;
+			}
+			await this.sendPendingFullTextDocumentChanges(connection);
+
+		}).catch((error) => this.error(`Delivering pending changes failed`, error));
 	}
 
 	private _diagnosticQueue: Map<string, Diagnostic[]> = new Map();
@@ -1632,7 +1647,11 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		const pendingFullTextDocumentChanges: Map<string, TextDocument> = new Map();
 		this.registerFeature(new ConfigurationFeature(this));
 		this.registerFeature(new DidOpenTextDocumentFeature(this, this._syncedDocuments));
-		this.registerFeature(new DidChangeTextDocumentFeature(this, pendingFullTextDocumentChanges));
+		this._didChangeTextDocumentFeature = new DidChangeTextDocumentFeature(this, pendingFullTextDocumentChanges);
+		this._didChangeTextDocumentFeature.onPendingChangeAdded(() => {
+			this.triggerPendingChangeDelivery();
+		});
+		this.registerFeature(this._didChangeTextDocumentFeature);
 		this.registerFeature(new WillSaveFeature(this));
 		this.registerFeature(new WillSaveWaitUntilFeature(this));
 		this.registerFeature(new DidSaveTextDocumentFeature(this));
