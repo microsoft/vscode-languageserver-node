@@ -166,11 +166,11 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 				},
 				callHierarchyProvider: true,
 				selectionRangeProvider: { workDoneProgress: true },
-				// diagnosticProvider: {
-				// 	identifier: 'testbed',
-				// 	interFileDependencies: true,
-				// 	workspaceDiagnostics: false
-				// },
+				diagnosticProvider: {
+					identifier: 'testbed',
+					interFileDependencies: true,
+					workspaceDiagnostics: false
+				},
 				notebookDocumentSync: {
 					notebookSelector: [{
 						cells: [{ language: 'bat'}]
@@ -193,15 +193,15 @@ connection.onInitialized((params) => {
 			connection.console.log(`Get workspace folders: ${folder.name} ${folder.uri}`);
 		}
 	});
-// 	const registrationOptions: SemanticTokensRegistrationOptions = {
-// 		documentSelector: ['bat'],
-// 		legend: semanticTokensLegend,
-// 		range: false,
-// 		full: {
-// 			delta: true
-// 		}
-// 	};
-// 	void connection.client.register(SemanticTokensRegistrationType.type, registrationOptions);
+	const registrationOptions: SemanticTokensRegistrationOptions = {
+		documentSelector: ['bat'],
+		legend: semanticTokensLegend,
+		range: false,
+		full: {
+			delta: true
+		}
+	};
+	void connection.client.register(SemanticTokensRegistrationType.type, registrationOptions);
 });
 
 connection.onShutdown((_handler) => {
@@ -213,9 +213,9 @@ connection.onShutdown((_handler) => {
 	// });
 });
 
-documents.onDidChangeContent((event) => {
-	let document = event.document;
-	void connection.sendDiagnostics({ uri: document.uri, diagnostics: validate(document) });
+documents.onDidChangeContent((_event) => {
+	// let document = event.document;
+	// void connection.sendDiagnostics({ uri: document.uri, diagnostics: validate(document) });
 });
 
 documents.onDidSave((event) => {
@@ -224,15 +224,15 @@ documents.onDidSave((event) => {
 
 connection.onDidChangeWatchedFiles((params) => {
 	connection.console.log('File change event received');
-	documents.all().forEach(document => {
-		void connection.sendDiagnostics({ uri: document.uri, diagnostics: validate(document) });
-	});
+	// documents.all().forEach(document => {
+	// 	void connection.sendDiagnostics({ uri: document.uri, diagnostics: validate(document) });
+	// });
 });
 
 connection.onDidChangeConfiguration((params) => {
-	documents.all().forEach(document => {
-		void connection.sendDiagnostics({ uri: document.uri, diagnostics: validate(document) });
-	});
+	// documents.all().forEach(document => {
+	// 	void connection.sendDiagnostics({ uri: document.uri, diagnostics: validate(document) });
+	// });
 	void connection.workspace.getConfiguration('testbed').then((value) => {
 		connection.console.log('Configuration received');
 	});
@@ -555,11 +555,9 @@ connection.onCodeLensResolve((codeLens) => {
 });
 
 connection.onDocumentFormatting((params) => {
-	connection.console.log(`Document Formatting: ${JSON.stringify(params.textDocument.uri)} ${JSON.stringify(params.options)}`);
-	return [];
-	// return [
-	// 	TextEdit.insert(Position.create(1,0), 'A new line\n')
-	// ];
+	return [
+		TextEdit.insert(Position.create(1,0), 'A new line\n')
+	];
 });
 
 connection.onDocumentRangeFormatting((params) => {

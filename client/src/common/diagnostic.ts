@@ -755,11 +755,7 @@ class BackgroundScheduler implements Disposable {
 
 	public remove(document: TextDocument | Uri): void {
 		const key = DocumentOrUri.asKey(document);
-		if (this.documents.has(key)) {
-			this.documents.delete(key);
-			// Do a last pull
-			this.diagnosticRequestor.pull(document);
-		}
+		this.documents.delete(key);
 		// No more documents. Stop background activity.
 		if (this.documents.size === 0) {
 			this.stop();
