@@ -1,4 +1,5 @@
 {
-	"testbed.trace.server": "off",
-	"editor.formatOnType": true
+	"testbed.trace.server": "verbose",
+	"editor.formatOnSave": true,
+	"editor.defaultFormatter": "vscode.testbed"
 }

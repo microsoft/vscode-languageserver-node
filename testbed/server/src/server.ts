@@ -213,9 +213,9 @@ connection.onShutdown((_handler) => {
 	// });
 });
 
-documents.onDidChangeContent((event) => {
-	let document = event.document;
-	void connection.sendDiagnostics({ uri: document.uri, diagnostics: validate(document) });
+documents.onDidChangeContent((_event) => {
+	// let document = event.document;
+	// void connection.sendDiagnostics({ uri: document.uri, diagnostics: validate(document) });
 });
 
 documents.onDidSave((event) => {
@@ -224,15 +224,15 @@ documents.onDidSave((event) => {
 
 connection.onDidChangeWatchedFiles((params) => {
 	connection.console.log('File change event received');
-	documents.all().forEach(document => {
-		void connection.sendDiagnostics({ uri: document.uri, diagnostics: validate(document) });
-	});
+	// documents.all().forEach(document => {
+	// 	void connection.sendDiagnostics({ uri: document.uri, diagnostics: validate(document) });
+	// });
 });
 
 connection.onDidChangeConfiguration((params) => {
-	documents.all().forEach(document => {
-		void connection.sendDiagnostics({ uri: document.uri, diagnostics: validate(document) });
-	});
+	// documents.all().forEach(document => {
+	// 	void connection.sendDiagnostics({ uri: document.uri, diagnostics: validate(document) });
+	// });
 	void connection.workspace.getConfiguration('testbed').then((value) => {
 		connection.console.log('Configuration received');
 	});

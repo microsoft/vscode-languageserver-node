@@ -21,7 +21,6 @@ import { CancellationTokenSource, CancellationToken, AbstractCancellationTokenSo
 import { MessageReader, DataCallback } from './messageReader';
 import { MessageWriter } from './messageWriter';
 
-
 interface CancelParams {
 	/**
 	 * The request id to cancel.
@@ -1305,7 +1304,10 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				params: messageParams
 			};
 			traceSendingNotification(notificationMessage);
-			return messageWriter.write(notificationMessage).catch(() => logger.error(`Sending notification failed.`));
+			return messageWriter.write(notificationMessage).catch((error) => {
+				logger.error(`Sending notification failed.`);
+				throw error;
+			});
 		},
 		onNotification: (type: string | MessageSignature | StarNotificationHandler, handler?: GenericNotificationHandler): Disposable => {
 			throwIfClosedOrDisposed();
@@ -1343,6 +1345,8 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			};
 		},
 		sendProgress: <P>(_type: ProgressType<P>, token: string | number, value: P): Promise<void> => {
+			// This should not await but simple return to ensure that we don't have another
+			// async scheduling. Otherwise one send could overtake another send.
 			return connection.sendNotification(ProgressNotification.type, { token, value });
 		},
 		onUnhandledProgress: unhandledProgressEmitter.event,
@@ -1406,14 +1410,20 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 					}
 				});
 			}
-			const result = new Promise<R | ResponseError<E>>((resolve, reject) => {
-				const requestMessage: RequestMessage = {
-					jsonrpc: version,
-					id: id,
-					method: method,
-					params: messageParams
-				};
 
+			const requestMessage: RequestMessage = {
+				jsonrpc: version,
+				id: id,
+				method: method,
+				params: messageParams
+			};
+
+			traceSendingRequest(requestMessage);
+			if (typeof cancellationStrategy.sender.enableCancellation === 'function') {
+				cancellationStrategy.sender.enableCancellation(requestMessage);
+			}
+
+			return new Promise<R | ResponseError<E>>(async (resolve, reject) => {
 				const resolveWithCleanup = (r: any) => {
 					resolve(r);
 					cancellationStrategy.sender.cleanup(id);
@@ -1425,24 +1435,17 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 					cancellationStrategy.sender.cleanup(id);
 					disposable?.dispose();
 				};
-
-				let responsePromise: ResponsePromise | null = { method: method, timerStart: Date.now(), resolve: resolveWithCleanup, reject: rejectWithCleanup };
-				traceSendingRequest(requestMessage);
+				const responsePromise: ResponsePromise | null = { method: method, timerStart: Date.now(), resolve: resolveWithCleanup, reject: rejectWithCleanup };
 				try {
-					if (typeof cancellationStrategy.sender.enableCancellation === 'function') {
-						cancellationStrategy.sender.enableCancellation(requestMessage);
-					}
-					messageWriter.write(requestMessage).catch(() => logger.error(`Sending request failed.`));
-				} catch (e: any) {
-					// Writing the message failed. So we need to reject the promise.
-					responsePromise.reject(new ResponseError<void>(ErrorCodes.MessageWriteError, e.message ? e.message : 'Unknown reason'));
-					responsePromise = null;
-				}
-				if (responsePromise) {
+					await messageWriter.write(requestMessage);
 					responsePromises.set(id, responsePromise);
+				} catch (error: any) {
+					logger.error(`Sending request failed.`);
+					// Writing the message failed. So we need to reject the promise.
+					responsePromise.reject(new ResponseError<void>(ErrorCodes.MessageWriteError, error.message ? error.message : 'Unknown reason'));
+					throw error;
 				}
 			});
-			return result;
 		},
 		onRequest: <R, E>(type: string | MessageSignature | StarRequestHandler, handler?: GenericRequestHandler<R, E>): Disposable => {
 			throwIfClosedOrDisposed();

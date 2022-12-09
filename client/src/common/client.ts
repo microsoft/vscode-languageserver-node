@@ -34,7 +34,8 @@ import {
 	DocumentOnTypeFormattingRequest, RenameRequest, DocumentSymbolRequest, DocumentLinkRequest, DocumentColorRequest, DeclarationRequest, FoldingRangeRequest,
 	ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, CallHierarchyPrepareRequest, SemanticTokensRegistrationType, LinkedEditingRangeRequest,
 	TypeHierarchyPrepareRequest, InlineValueRequest, InlayHintRequest, WorkspaceSymbolRequest, TextDocumentRegistrationOptions, FileOperationRegistrationOptions,
-	ConnectionOptions, PositionEncodingKind, DocumentDiagnosticRequest, NotebookDocumentSyncRegistrationType, NotebookDocumentSyncRegistrationOptions, ErrorCodes, MessageStrategy
+	ConnectionOptions, PositionEncodingKind, DocumentDiagnosticRequest, NotebookDocumentSyncRegistrationType, NotebookDocumentSyncRegistrationOptions, ErrorCodes,
+	MessageStrategy, DidOpenTextDocumentParams
 } from 'vscode-languageserver-protocol';
 
 import * as c2p from './codeConverter';
@@ -463,6 +464,10 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private _diagnostics: DiagnosticCollection | undefined;
 	private _syncedDocuments: Map<string, TextDocument>;
 
+	private _didChangeTextDocumentFeature: DidChangeTextDocumentFeature | undefined;
+	private readonly _pendingChangeSemaphore: Semaphore<void>;
+	private readonly _pendingChangeDelayer: Delayer<void>;
+
 	private _fileEvents: FileEvent[];
 	private _fileEventDelayer: Delayer<void>;
 
@@ -542,6 +547,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		}
 		this._traceOutputChannel = clientOptions.traceOutputChannel;
 		this._diagnostics = undefined;
+
+		this._pendingChangeSemaphore = new Semaphore(1);
+		this._pendingChangeDelayer = new Delayer<void>(250);
 
 		this._fileEvents = [];
 		this._fileEventDelayer = new Delayer<void>(250);
@@ -658,8 +666,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		try {
 			// Ensure we have a connection before we force the document sync.
 			const connection = await this.$start();
-			await this.forceDocumentSync();
-			return connection.sendRequest<R>(type, ...params);
+			await this.sendPendingFullTextDocumentChanges(connection);
+			return await connection.sendRequest<R>(type, ...params);
 		} catch (error) {
 			this.error(`Sending request ${Is.string(type) ? type : type.method} failed.`, error);
 			throw error;
@@ -721,8 +729,12 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		try {
 			// Ensure we have a connection before we force the document sync.
 			const connection = await this.$start();
-			await this.forceDocumentSync();
-			return connection.sendNotification(type, params);
+			let exclude: string | undefined;
+			if (typeof type !== 'string' && type.method === DidOpenTextDocumentNotification.method) {
+				exclude = (params as DidOpenTextDocumentParams)?.textDocument.uri;
+			}
+			await this.sendPendingFullTextDocumentChanges(connection, exclude);
+			return await connection.sendNotification(type, params);
 		} catch (error) {
 			this.error(`Sending notification ${Is.string(type) ? type : type.method} failed.`, error);
 			throw error;
@@ -1341,11 +1353,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		async function didChangeWatchedFile(this: void, event: FileEvent): Promise<void> {
 			client._fileEvents.push(event);
 			return client._fileEventDelayer.trigger(async (): Promise<void> => {
-				const connection = await client.$start();
-				await client.forceDocumentSync();
-				const result = connection.sendNotification(DidChangeWatchedFilesNotification.type, { changes: client._fileEvents });
+				await client.sendNotification(DidChangeWatchedFilesNotification.type, { changes: client._fileEvents });
 				client._fileEvents = [];
-				return result;
 			});
 		}
 		const workSpaceMiddleware = this.clientOptions.middleware?.workspace;
@@ -1354,12 +1363,32 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		});
 	}
 
-	private _didChangeTextDocumentFeature: DidChangeTextDocumentFeature | undefined;
-	private async forceDocumentSync(): Promise<void> {
-		if (this._didChangeTextDocumentFeature === undefined) {
-			this._didChangeTextDocumentFeature = this._dynamicFeatures.get(DidChangeTextDocumentNotification.type.method) as DidChangeTextDocumentFeature;
-		}
-		return this._didChangeTextDocumentFeature.forceDelivery();
+	private async sendPendingFullTextDocumentChanges(connection: Connection, exclude?: string): Promise<void> {
+		return this._pendingChangeSemaphore.lock(async () => {
+			const changes = this._didChangeTextDocumentFeature!.getPendingDocumentChanges(exclude);
+			if (changes.length === 0) {
+				return;
+			}
+			for (const document of changes) {
+				const params = this.code2ProtocolConverter.asChangeTextDocumentParams(document);
+				// We await the send and not the delivery since it is more or less the same for
+				// notifications.
+				await connection.sendNotification(DidChangeTextDocumentNotification.type, params);
+				this._didChangeTextDocumentFeature!.notificationSent(document, DidChangeTextDocumentNotification.type, params);
+			}
+		});
+	}
+
+	private triggerPendingChangeDelivery(): void {
+		this._pendingChangeDelayer.trigger(async () => {
+			const connection = this.activeConnection();
+			if (connection === undefined) {
+				this.triggerPendingChangeDelivery();
+				return;
+			}
+			await this.sendPendingFullTextDocumentChanges(connection);
+
+		}).catch((error) => this.error(`Delivering pending changes failed`, error));
 	}
 
 	private _diagnosticQueue: Map<string, Diagnostic[]> = new Map();
@@ -1615,13 +1644,18 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	protected registerBuiltinFeatures() {
+		const pendingFullTextDocumentChanges: Map<string, TextDocument> = new Map();
 		this.registerFeature(new ConfigurationFeature(this));
 		this.registerFeature(new DidOpenTextDocumentFeature(this, this._syncedDocuments));
-		this.registerFeature(new DidChangeTextDocumentFeature(this, this._syncedDocuments));
+		this._didChangeTextDocumentFeature = new DidChangeTextDocumentFeature(this, pendingFullTextDocumentChanges);
+		this._didChangeTextDocumentFeature.onPendingChangeAdded(() => {
+			this.triggerPendingChangeDelivery();
+		});
+		this.registerFeature(this._didChangeTextDocumentFeature);
 		this.registerFeature(new WillSaveFeature(this));
 		this.registerFeature(new WillSaveWaitUntilFeature(this));
 		this.registerFeature(new DidSaveTextDocumentFeature(this));
-		this.registerFeature(new DidCloseTextDocumentFeature(this, this._syncedDocuments));
+		this.registerFeature(new DidCloseTextDocumentFeature(this, this._syncedDocuments, pendingFullTextDocumentChanges));
 		this.registerFeature(new FileSystemWatcherFeature(this, (event) => this.notifyFileEvent(event)));
 		this.registerFeature(new CompletionItemFeature(this));
 		this.registerFeature(new HoverFeature(this));
@@ -2035,6 +2069,8 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 
 		sendRequest: <R>(type: string | MessageSignature, ...params: any[]): Promise<R> => {
 			_lastUsed = Date.now();
+			// This needs to return and MUST not be await to avoid any async
+			// scheduling. Otherwise messages might overtake each other.
 			return connection.sendRequest(type as string, ...params);
 		},
 		onRequest: <R, E>(type: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable => connection.onRequest(type, handler),
@@ -2043,6 +2079,8 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 
 		sendNotification: (type: string | MessageSignature, params?: any): Promise<void> => {
 			_lastUsed = Date.now();
+			// This needs to return and MUST not be await to avoid any async
+			// scheduling. Otherwise messages might overtake each other.
 			return connection.sendNotification(type, params);
 		},
 		onNotification: (type: string | MessageSignature, handler: GenericNotificationHandler): Disposable => connection.onNotification(type, handler),
@@ -2067,14 +2105,20 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 
 		initialize: (params: InitializeParams) => {
 			_lastUsed = Date.now();
+			// This needs to return and MUST not be await to avoid any async
+			// scheduling. Otherwise messages might overtake each other.
 			return connection.sendRequest(InitializeRequest.type, params);
 		},
 		shutdown: () => {
 			_lastUsed = Date.now();
+			// This needs to return and MUST not be await to avoid any async
+			// scheduling. Otherwise messages might overtake each other.
 			return connection.sendRequest(ShutdownRequest.type, undefined);
 		},
 		exit: () => {
 			_lastUsed = Date.now();
+			// This needs to return and MUST not be await to avoid any async
+			// scheduling. Otherwise messages might overtake each other.
 			return connection.sendNotification(ExitNotification.type);
 		},
 

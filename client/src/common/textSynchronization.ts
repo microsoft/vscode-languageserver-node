@@ -20,7 +20,6 @@ import {
 	NotificationSendEvent
 } from './features';
 
-import { Delayer } from './utils/async';
 import * as UUID from './utils/uuid';
 
 export interface TextDocumentSynchronizationMiddleware {
@@ -32,7 +31,7 @@ export interface TextDocumentSynchronizationMiddleware {
 	didClose?: NextSignature<TextDocument, Promise<void>>;
 }
 
-export interface DidOpenTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, TextDocumentSendFeature<(textDocument: TextDocument) => Promise<void>>, NotifyingFeature<TextDocument, DidOpenTextDocumentParams> {
+export interface DidOpenTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, TextDocumentSendFeature<(textDocument: TextDocument) => Promise<void>>, NotifyingFeature<DidOpenTextDocumentParams> {
 	openDocuments: Iterable<TextDocument>;
 }
 
@@ -98,20 +97,25 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 		});
 	}
 
+	protected getTextDocument(data: TextDocument): TextDocument {
+		return data;
+	}
+
 	protected notificationSent(textDocument: TextDocument, type: ProtocolNotificationType<DidOpenTextDocumentParams, TextDocumentRegistrationOptions>, params: DidOpenTextDocumentParams): void {
-		super.notificationSent(textDocument, type, params);
 		this._syncedDocuments.set(textDocument.uri.toString(), textDocument);
+		super.notificationSent(textDocument, type, params);
 	}
 }
 
-export interface DidCloseTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, TextDocumentSendFeature<(textDocument: TextDocument) => Promise<void>>, NotifyingFeature<TextDocument, DidCloseTextDocumentParams> {
+export interface DidCloseTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, TextDocumentSendFeature<(textDocument: TextDocument) => Promise<void>>, NotifyingFeature<DidCloseTextDocumentParams> {
 }
 
 export class DidCloseTextDocumentFeature extends TextDocumentEventFeature<DidCloseTextDocumentParams, TextDocument, TextDocumentSynchronizationMiddleware> implements DidCloseTextDocumentFeatureShape {
 
 	private readonly _syncedDocuments: Map<string, TextDocument>;
+	private readonly _pendingTextDocumentChanges: Map<string, TextDocument>;
 
-	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>, syncedDocuments: Map<string, TextDocument>) {
+	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>, syncedDocuments: Map<string, TextDocument>, pendingTextDocumentChanges: Map<string, TextDocument>) {
 		super(
 			client, Workspace.onDidCloseTextDocument, DidCloseTextDocumentNotification.type,
 			() => client.middleware.didClose,
@@ -120,6 +124,7 @@ export class DidCloseTextDocumentFeature extends TextDocumentEventFeature<DidClo
 			TextDocumentEventFeature.textDocumentFilter
 		);
 		this._syncedDocuments = syncedDocuments;
+		this._pendingTextDocumentChanges = pendingTextDocumentChanges;
 	}
 
 	public get registrationType(): RegistrationType<TextDocumentRegistrationOptions> {
@@ -137,9 +142,18 @@ export class DidCloseTextDocumentFeature extends TextDocumentEventFeature<DidClo
 		}
 	}
 
+	protected async callback(data: TextDocument): Promise<void> {
+		await super.callback(data);
+		this._pendingTextDocumentChanges.delete(data.uri.toString());
+	}
+
+	protected getTextDocument(data: TextDocument): TextDocument {
+		return data;
+	}
+
 	protected notificationSent(textDocument: TextDocument, type: ProtocolNotificationType<DidCloseTextDocumentParams, TextDocumentRegistrationOptions>, params: DidCloseTextDocumentParams): void {
-		super.notificationSent(textDocument, type, params);
 		this._syncedDocuments.delete(textDocument.uri.toString());
+		super.notificationSent(textDocument, type, params);
 	}
 
 	public unregister(id: string): void {
@@ -168,24 +182,31 @@ interface DidChangeTextDocumentData {
 	documentSelector: VDocumentSelector;
 }
 
-export interface DidChangeTextDocumentFeatureShape extends DynamicFeature<TextDocumentChangeRegistrationOptions>, TextDocumentSendFeature<(event: TextDocumentChangeEvent) => Promise<void>>, NotifyingFeature<TextDocumentChangeEvent, DidChangeTextDocumentParams> {
+export interface DidChangeTextDocumentFeatureShape extends DynamicFeature<TextDocumentChangeRegistrationOptions>, TextDocumentSendFeature<(event: TextDocumentChangeEvent) => Promise<void>>, NotifyingFeature<DidChangeTextDocumentParams> {
 }
 
 export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDocumentChangeRegistrationOptions, TextDocumentSynchronizationMiddleware> implements DidChangeTextDocumentFeatureShape {
 
 	private _listener: Disposable | undefined;
 	private readonly _changeData: Map<string, DidChangeTextDocumentData>;
-	private _forcingDelivery: boolean = false;
-	private _changeDelayer: { uri: string; delayer: Delayer<Promise<void>> } | undefined;
-	private readonly _onNotificationSent: EventEmitter<NotificationSendEvent<TextDocumentChangeEvent, DidChangeTextDocumentParams>>;
+	private readonly _onNotificationSent: EventEmitter<NotificationSendEvent<DidChangeTextDocumentParams>>;
+	private readonly _onPendingChangeAdded: EventEmitter<void>;
+	private readonly _pendingTextDocumentChanges: Map<string, TextDocument>;
 
-	private readonly _syncedDocuments: Map<string, TextDocument>;
-
-	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>, syncedDocuments: Map<string, TextDocument>) {
+	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>, pendingTextDocumentChanges: Map<string, TextDocument>) {
 		super(client);
 		this._changeData = new Map<string, DidChangeTextDocumentData>();
 		this._onNotificationSent = new EventEmitter();
-		this._syncedDocuments = syncedDocuments;
+		this._onPendingChangeAdded = new EventEmitter();
+		this._pendingTextDocumentChanges = pendingTextDocumentChanges;
+	}
+
+	public get onNotificationSent(): Event<NotificationSendEvent<DidChangeTextDocumentParams>> {
+		return this._onNotificationSent.event;
+	}
+
+	public get onPendingChangeAdded(): Event<void> {
+		return this._onPendingChangeAdded.event;
 	}
 
 	public get registrationType(): RegistrationType<TextDocumentChangeRegistrationOptions> {
@@ -243,38 +264,14 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 					const didChange = async (event: TextDocumentChangeEvent): Promise<void> => {
 						const params = this._client.code2ProtocolConverter.asChangeTextDocumentParams(event);
 						await this._client.sendNotification(DidChangeTextDocumentNotification.type, params);
-						this.notificationSent(event, DidChangeTextDocumentNotification.type, params);
+						this.notificationSent(event.document, DidChangeTextDocumentNotification.type, params);
 					};
 					promises.push(middleware.didChange ? middleware.didChange(event, event => didChange(event)) : didChange(event));
 				} else if (changeData.syncKind === TextDocumentSyncKind.Full) {
 					const didChange = async (event: TextDocumentChangeEvent): Promise<void> => {
-						const doSend = async (event: TextDocumentChangeEvent): Promise<void> => {
-							const params = this._client.code2ProtocolConverter.asChangeTextDocumentParams(event.document);
-							await this._client.sendNotification(DidChangeTextDocumentNotification.type, params);
-							this.notificationSent(event, DidChangeTextDocumentNotification.type, params);
-						};
-						if (this._changeDelayer) {
-							if (this._changeDelayer.uri !== event.document.uri.toString()) {
-								// Use this force delivery to track boolean state. Otherwise we might call two times.
-								await this.forceDelivery();
-								this._changeDelayer.uri = event.document.uri.toString();
-							}
-							// Usually we return the promise that signals that the data has been
-							// handed of to the network. With delayed change notification we can't
-							// do that since it would make the sendNotification call wait until the
-							// change delayer resolves and would therefore defeat the purpose. We
-							// instead return the change delayer and ensure via forceDocumentSync
-							// that before sending other notification / request the document sync
-							// has actually happened.
-							return this._changeDelayer.delayer.trigger(() => doSend(event));
-						} else {
-							this._changeDelayer = {
-								uri: event.document.uri.toString(),
-								delayer: new Delayer<Promise<void>>(200)
-							};
-							// See comment above.
-							return this._changeDelayer.delayer.trigger(() => doSend(event), -1);
-						}
+						const eventUri: string = event.document.uri.toString();
+						this._pendingTextDocumentChanges.set(eventUri, event.document);
+						this._onPendingChangeAdded.fire();
 					};
 					promises.push(middleware.didChange ? middleware.didChange(event, event => didChange(event)) : didChange(event));
 				}
@@ -286,12 +283,8 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 		});
 	}
 
-	public get onNotificationSent(): Event<NotificationSendEvent<TextDocumentChangeEvent, DidChangeTextDocumentParams>> {
-		return this._onNotificationSent.event;
-	}
-
-	private notificationSent(changeEvent: TextDocumentChangeEvent, type: ProtocolNotificationType<DidChangeTextDocumentParams, TextDocumentRegistrationOptions>, params: DidChangeTextDocumentParams): void {
-		this._onNotificationSent.fire({ original: changeEvent, type, params });
+	public notificationSent(textDocument: TextDocument, type: ProtocolNotificationType<DidChangeTextDocumentParams, TextDocumentRegistrationOptions>, params: DidChangeTextDocumentParams): void {
+		this._onNotificationSent.fire({ textDocument, type, params });
 	}
 
 	public unregister(id: string): void {
@@ -303,11 +296,7 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 	}
 
 	public dispose(): void {
-		if (this._changeDelayer !== undefined) {
-			this._changeDelayer.delayer.cancel();
-		}
-		this._changeDelayer = undefined;
-		this._forcingDelivery = false;
+		this._pendingTextDocumentChanges.clear();
 		this._changeData.clear();
 		if (this._listener) {
 			this._listener.dispose();
@@ -315,20 +304,24 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 		}
 	}
 
-	public async forceDelivery(): Promise<void> {
-		// See https://github.com/microsoft/vscode-languageserver-node/issues/1105
-		// If we have a change delayer and its URI is not yet synced then the open
-		// event has not been delivered yet. So don't force the sync.
-		if (this._forcingDelivery || !this._changeDelayer || !this._syncedDocuments.has(this._changeDelayer.uri)) {
-
-			return;
+	public getPendingDocumentChanges(exclude?: string): TextDocument[] {
+		if (this._pendingTextDocumentChanges.size === 0) {
+			return [];
 		}
-		try {
-			this._forcingDelivery = true;
-			return this._changeDelayer.delayer.forceDelivery();
-		} finally {
-			this._forcingDelivery = false;
+		let result: TextDocument[];
+		if (exclude === undefined) {
+			result = Array.from(this._pendingTextDocumentChanges.values());
+			this._pendingTextDocumentChanges.clear();
+		} else {
+			result = [];
+			for (const entry of this._pendingTextDocumentChanges) {
+				if (entry[0] !== exclude) {
+					result.push(entry[1]);
+					this._pendingTextDocumentChanges.delete(entry[0]);
+				}
+			}
 		}
+		return result;
 	}
 
 	public getProvider(document: TextDocument): { send: (event: TextDocumentChangeEvent) => Promise<void> } | undefined {
@@ -374,6 +367,10 @@ export class WillSaveFeature extends TextDocumentEventFeature<WillSaveTextDocume
 				registerOptions: { documentSelector: documentSelector }
 			});
 		}
+	}
+
+	protected getTextDocument(data: TextDocumentWillSaveEvent): TextDocument {
+		return data.document;
 	}
 }
 
@@ -455,7 +452,7 @@ export class WillSaveWaitUntilFeature extends DynamicDocumentFeature<TextDocumen
 	}
 }
 
-export interface DidSaveTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, TextDocumentSendFeature<(textDocument: TextDocument) => Promise<void>>, NotifyingFeature<TextDocument, DidSaveTextDocumentParams> {
+export interface DidSaveTextDocumentFeatureShape extends DynamicFeature<TextDocumentRegistrationOptions>, TextDocumentSendFeature<(textDocument: TextDocument) => Promise<void>>, NotifyingFeature<DidSaveTextDocumentParams> {
 }
 
 export class DidSaveTextDocumentFeature extends TextDocumentEventFeature<DidSaveTextDocumentParams, TextDocument, TextDocumentSynchronizationMiddleware> implements DidSaveTextDocumentFeatureShape {
@@ -497,5 +494,9 @@ export class DidSaveTextDocumentFeature extends TextDocumentEventFeature<DidSave
 	public register(data: RegistrationData<TextDocumentSaveRegistrationOptions>): void {
 		this._includeText = !!data.registerOptions.includeText;
 		super.register(data);
+	}
+
+	protected getTextDocument(data: TextDocument): TextDocument {
+		return data;
 	}
 }
