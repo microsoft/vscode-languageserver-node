@@ -132,7 +132,7 @@ export function generateRandomPipeName(): string {
 	}
 
 	const limit = safeIpcPathLengths.get(process.platform);
-	if (limit !== undefined && result.length >= limit) {
+	if (limit !== undefined && result.length > limit) {
 		RIL().console.warn(`WARNING: IPC handle "${result}" is longer than ${limit} characters.`);
 	}
 	return result;
